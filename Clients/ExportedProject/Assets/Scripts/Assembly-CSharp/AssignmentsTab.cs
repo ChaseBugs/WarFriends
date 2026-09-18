@@ -1,63 +1,146 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
-public class AssignmentsTab : MonoBehaviour
+public class AssignmentsTab : Core_BaseScript
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Header("Core")]
+	public UIPanel[] panels;
 
-	1. No dll files were provided to AssetRipper.
+	[Header("Daily")]
+	public GameObject dailyPart;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public WinStreakCounter newDailyCounter;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public AssignmentsTabDailyRecord[] dailyRecords;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	[Header("Starter")]
+	public GameObject starterPart;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public UILabel starterDeadline;
 
-	3. Assembly Reconstruction has not been implemented.
+	public AssignmentsTabStarterRecord currentStarterAssignment;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public UILabel rewardsTitle;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	private bool mInitializedTime;
 
-	4. This script is unnecessary.
+	public void AnimatePanels(float time, float toAlpha)
+	{
+		for (int i = 0; i < panels.Length; i++)
+		{
+			TweenAlpha.Begin(panels[i].gameObject, time, toAlpha);
+		}
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public void InstaShow()
+	{
+		for (int i = 0; i < panels.Length; i++)
+		{
+			TweenAlpha component = panels[i].gameObject.GetComponent<TweenAlpha>();
+			if (component != null)
+			{
+				component.enabled = false;
+			}
+			panels[i].alpha1 = 1f;
+		}
+	}
 
-	5. Script Content Level 0
+	public void InitControls()
+	{
+		for (int i = 0; i < dailyRecords.Length; i++)
+		{
+			dailyRecords[i].InitControls();
+		}
+		currentStarterAssignment.InitControls();
+		AssignmentsManager.instance.AssignmentsLoaded += delegate
+		{
+			if (base.gameObject.activeSelf)
+			{
+				InitGUIValues();
+			}
+		};
+	}
 
-		AssetRipper was set to not load any script information.
+	public void InitGUIValues()
+	{
+		bool isActiveAndNotCompleted = StarterAssignmentsManager.instance.isActiveAndNotCompleted;
+		dailyPart.SetActive(!isActiveAndNotCompleted);
+		starterPart.SetActive(isActiveAndNotCompleted);
+		if (isActiveAndNotCompleted)
+		{
+			StarterAssignmentsManager.instance.Evaluate();
+			CounterManager instance = Singleton<CounterManager>.instance;
+			instance.updateCounterBySecond = (Action)Delegate.Remove(instance.updateCounterBySecond, new Action(UpdateTimer));
+			CounterManager instance2 = Singleton<CounterManager>.instance;
+			instance2.updateCounterBySecond = (Action)Delegate.Combine(instance2.updateCounterBySecond, new Action(UpdateTimer));
+			currentStarterAssignment.Initialize(StarterAssignmentsManager.instance.currentAssignment);
+			return;
+		}
+		if (!mInitializedTime)
+		{
+			newDailyCounter.counterLabel.text = Localization.Localize("ID_LOADING");
+			int num = ((AssignmentsManager.instance.data != null) ? AssignmentsManager.instance.data.tomorrow : (-1));
+			Debug.Log("Day = " + num);
+			SetAssignmentCounter(num);
+		}
+		List<Assignment> assignments = AssignmentsManager.instance.GetAssignments(update: false);
+		for (int i = 0; i < 3; i++)
+		{
+			bool flag = assignments != null && assignments.Count > i && assignments[i] != null;
+			dailyRecords[i].gameObject.SetActive(flag);
+			if (flag)
+			{
+				try
+				{
+					dailyRecords[i].Initialize(assignments[i]);
+				}
+				catch (Exception e)
+				{
+					Crittercism.LogHandledException(e);
+				}
+			}
+		}
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public void UpdateTimer()
+	{
+		if (StarterAssignmentsManager.instance.isAllCompleted)
+		{
+			starterDeadline.text = Colours.stringWhite + Localization.Localize("ID_COMPLETED");
+			rewardsTitle.text = Localization.Localize("ID_YOURREWARDS");
+			return;
+		}
+		int remainingTime = StarterAssignmentsManager.instance.remainingTime;
+		if (remainingTime == 0)
+		{
+			starterDeadline.text = Localization.Localize("ID_EXPIRED");
+			rewardsTitle.text = Localization.Localize("ID_STARTERASSIGNMENTSEXPIRED");
+		}
+		else
+		{
+			starterDeadline.text = string.Format("{0} {1}{2}", MiscTools.PrintableTime(remainingTime, "ID_READYTIME", string.Empty), Colours.stringWhite, Localization.Localize("ID_TOCOMPLETE"));
+			rewardsTitle.text = Localization.Localize("ID_GETREWARDSFORSTARTERASSIGNMENTS");
+		}
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	private void SetAssignmentCounter(int assignmnetEndTimestamp)
+	{
+		if (assignmnetEndTimestamp >= Singleton<BeanstalkServerManager>.instance.currentTimestamp)
+		{
+			mInitializedTime = true;
+			newDailyCounter.StartCountingTo(assignmnetEndTimestamp);
+			WinStreakCounter winStreakCounter = newDailyCounter;
+			winStreakCounter.winStreakTimer = (Action)Delegate.Remove(winStreakCounter.winStreakTimer, new Action(EndCounter));
+			WinStreakCounter winStreakCounter2 = newDailyCounter;
+			winStreakCounter2.winStreakTimer = (Action)Delegate.Combine(winStreakCounter2.winStreakTimer, new Action(EndCounter));
+		}
+	}
 
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	private void EndCounter()
+	{
+		newDailyCounter.counterLabel.text = Localization.Localize("ID_NOW");
+		mInitializedTime = false;
+		Singleton<BeanstalkServerManager>.instance.GetNewAssignments();
+	}
 }

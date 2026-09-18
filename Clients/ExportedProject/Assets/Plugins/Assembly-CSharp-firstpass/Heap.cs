@@ -1,63 +1,175 @@
-using UnityEngine;
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
 
-public class Heap : MonoBehaviour
+public abstract class Heap<T> : IEnumerable, IEnumerable<T>
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	private const int InitialCapacity = 0;
 
-	1. No dll files were provided to AssetRipper.
+	private const int GrowFactor = 2;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	private const int MinGrow = 1;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	private int _capacity;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	private T[] _heap = new T[0];
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	private int _tail;
 
-	3. Assembly Reconstruction has not been implemented.
+	public int Count => _tail;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public int Capacity => _capacity;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	protected Comparer<T> Comparer { get; private set; }
 
-	4. This script is unnecessary.
+	protected Heap()
+		: this(Comparer<T>.Default)
+	{
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	protected Heap(Comparer<T> comparer)
+		: this(Enumerable.Empty<T>(), comparer)
+	{
+	}
 
-	5. Script Content Level 0
+	protected Heap(IEnumerable<T> collection)
+		: this(collection, Comparer<T>.Default)
+	{
+	}
 
-		AssetRipper was set to not load any script information.
+	protected Heap(IEnumerable<T> collection, Comparer<T> comparer)
+	{
+		if (collection == null)
+		{
+			throw new ArgumentNullException("collection");
+		}
+		if (comparer == null)
+		{
+			throw new ArgumentNullException("comparer");
+		}
+		Comparer = comparer;
+		foreach (T item in collection)
+		{
+			if (Count == Capacity)
+			{
+				Grow();
+			}
+			_heap[_tail++] = item;
+		}
+		for (int num = Parent(_tail - 1); num >= 0; num--)
+		{
+			BubbleDown(num);
+		}
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	IEnumerator IEnumerable.GetEnumerator()
+	{
+		return GetEnumerator();
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	protected abstract bool Dominates(T x, T y);
 
-	7. An incorrect path was provided to AssetRipper.
+	public void Add(T item)
+	{
+		if (Count == Capacity)
+		{
+			Grow();
+		}
+		_heap[_tail++] = item;
+		BubbleUp(_tail - 1);
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	private void BubbleUp(int i)
+	{
+		if (i != 0 && !Dominates(_heap[Parent(i)], _heap[i]))
+		{
+			Swap(i, Parent(i));
+			BubbleUp(Parent(i));
+		}
+	}
 
-	*/
+	public T GetMin()
+	{
+		if (Count == 0)
+		{
+			throw new InvalidOperationException("Heap is empty");
+		}
+		return _heap[0];
+	}
+
+	public T ExtractDominating()
+	{
+		if (Count == 0)
+		{
+			throw new InvalidOperationException("Heap is empty");
+		}
+		T result = _heap[0];
+		_tail--;
+		Swap(_tail, 0);
+		BubbleDown(0);
+		return result;
+	}
+
+	private void BubbleDown(int i)
+	{
+		int num = Dominating(i);
+		if (num != i)
+		{
+			Swap(i, num);
+			BubbleDown(num);
+		}
+	}
+
+	private int Dominating(int i)
+	{
+		int dominatingNode = i;
+		dominatingNode = GetDominating(YoungChild(i), dominatingNode);
+		return GetDominating(OldChild(i), dominatingNode);
+	}
+
+	private int GetDominating(int newNode, int dominatingNode)
+	{
+		if (newNode < _tail && !Dominates(_heap[dominatingNode], _heap[newNode]))
+		{
+			return newNode;
+		}
+		return dominatingNode;
+	}
+
+	private void Swap(int i, int j)
+	{
+		T val = _heap[i];
+		_heap[i] = _heap[j];
+		_heap[j] = val;
+	}
+
+	private static int Parent(int i)
+	{
+		return (i + 1) / 2 - 1;
+	}
+
+	private static int YoungChild(int i)
+	{
+		return (i + 1) * 2 - 1;
+	}
+
+	private static int OldChild(int i)
+	{
+		return YoungChild(i) + 1;
+	}
+
+	private void Grow()
+	{
+		int num = _capacity * 2 + 1;
+		T[] array = new T[num];
+		Array.Copy(_heap, array, _capacity);
+		_heap = array;
+		_capacity = num;
+	}
+
+	public IEnumerator<T> GetEnumerator()
+	{
+		return _heap.Take(Count).GetEnumerator();
+	}
 }

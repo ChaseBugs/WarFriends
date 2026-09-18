@@ -1,0 +1,1444 @@
+{
+  "mainData:104": {
+    "m_GameObject": {
+      "m_FileID": 0,
+      "m_PathID": 54
+    },
+    "m_Enabled": 1,
+    "m_Script": {
+      "m_FileID": 16777216,
+      "m_PathID": 8690597888
+    },
+    "m_Name": "",
+    "debug": 0,
+    "eventReceiverMask": {
+      "m_Bits": 2048
+    },
+    "clipRaycasts": 1,
+    "tooltipDelay": 1.0,
+    "stickyTooltip": 1,
+    "mouseDragThreshold": 26.66666603088379,
+    "mouseClickThreshold": 26.66666603088379,
+    "touchDragThreshold": 26.66666603088379,
+    "touchClickThreshold": 26.66666603088379,
+    "rangeDistance": -1.0,
+    "scrollAxisName": "Mouse ScrollWheel",
+    "verticalAxisName": "Vertical",
+    "horizontalAxisName": "Horizontal",
+    "submitKey0": 13,
+    "submitKey1": 330,
+    "cancelKey0": 27,
+    "cancelKey1": 331
+  },
+  "mainData:105": {
+    "m_GameObject": {
+      "m_FileID": 0,
+      "m_PathID": 50
+    },
+    "m_Enabled": 1,
+    "m_Script": {
+      "m_FileID": 16777216,
+      "m_PathID": 9143582720
+    },
+    "m_Name": "",
+    "scalingStyle": 4,
+    "automatic": 0,
+    "manualHeight": 1280,
+    "manualWidth": 1920,
+    "minimumHeight": 480,
+    "maximumHeight": 2000,
+    "runOnlyOnce": 0
+  },
+  "mainData:106": {
+    "m_GameObject": {
+      "m_FileID": 0,
+      "m_PathID": 41
+    },
+    "m_Enabled": 1,
+    "m_Script": {
+      "m_FileID": 16777216,
+      "m_PathID": 5939134464
+    },
+    "m_Name": "",
+    "mMat": {
+      "m_FileID": 1,
+      "m_PathID": 4
+    },
+    "mColor": {
+      "r": 1.0,
+      "g": 1.0,
+      "b": 1.0,
+      "a": 1.0
+    },
+    "mPivot": 4,
+    "mDepth": 0,
+    "mAtlas": {
+      "m_FileID": 1,
+      "m_PathID": 2914
+    },
+    "mSpriteName": "whiteRectangle",
+    "mFillCenter": 1,
+    "mType": 0,
+    "mFillDirection": 6,
+    "mFillAmount": 1.0,
+    "mFillAmountBack": 1.0,
+    "mInvert": 0,
+    "mTiledScale": 1.0,
+    "mUseInnerUVs": 1,
+    "mFillSlopePixels": 0.0
+  },
+  "mainData:107": {
+    "m_GameObject": {
+      "m_FileID": 0,
+      "m_PathID": 42
+    },
+    "m_Enabled": 1,
+    "m_Script": {
+      "m_FileID": 16777216,
+      "m_PathID": 44862275584
+    },
+    "m_Name": "",
+    "canLogoutEventLikeLoginFailed": 0,
+    "isAuthenticated": 0,
+    "gcName": "",
+    "gcId": "",
+    "hasResponse": 0
+  },
+  "mainData:108": {
+    "m_GameObject": {
+      "m_FileID": 0,
+      "m_PathID": 43
+    },
+    "m_Enabled": 1,
+    "m_Script": {
+      "m_FileID": 16777216,
+      "m_PathID": 5939134464
+    },
+    "m_Name": "",
+    "mMat": {
+      "m_FileID": 1,
+      "m_PathID": 4
+    },
+    "mColor": {
+      "r": 1.0,
+      "g": 1.0,
+      "b": 1.0,
+      "a": 1.0
+    },
+    "mPivot": 4,
+    "mDepth": 2,
+    "mAtlas": {
+      "m_FileID": 1,
+      "m_PathID": 2914
+    },
+    "mSpriteName": "af-logo",
+    "mFillCenter": 1,
+    "mType": 0,
+    "mFillDirection": 6,
+    "mFillAmount": 1.0,
+    "mFillAmountBack": 1.0,
+    "mInvert": 0,
+    "mTiledScale": 1.0,
+    "mUseInnerUVs": 0,
+    "mFillSlopePixels": 0.0
+  },
+  "mainData:109": {
+    "m_GameObject": {
+      "m_FileID": 0,
+      "m_PathID": 44
+    },
+    "m_Enabled": 1,
+    "m_Script": {
+      "m_FileID": 16777216,
+      "m_PathID": 22229811200
+    },
+    "m_Name": "",
+    "AndroidAppID": "76e544a0-32c5-4775-9716-ff04c6fbaaa3",
+    "iOSAppID": "6c771dc4-510b-4402-a4f9-0c08579edd37",
+    "StartAutomatically": 0,
+    "GCM_SenderID": "",
+    "registerForPushNotifications": 0,
+    "logging": 0,
+    "editorSessions": 0,
+    "standaloneSessions": 0,
+    "androidIAB": 1,
+    "androidUnibill": 0,
+    "iosStoreKit": 1,
+    "iosUnibill": 0,
+    "soomlaStore": 0
+  },
+  "mainData:110": {
+    "m_GameObject": {
+      "m_FileID": 0,
+      "m_PathID": 45
+    },
+    "m_Enabled": 1,
+    "m_Script": {
+      "m_FileID": 16777216,
+      "m_PathID": 42479910912
+    },
+    "m_Name": "",
+    "CrittercismiOSAppID": "90173b5371ea4a34b231d9234dd803d900444503",
+    "CrittercismAndroidAppID": "a05359c1f1494bd4ba1b72aa6650ebb800444503"
+  },
+  "mainData:111": {
+    "m_GameObject": {
+      "m_FileID": 0,
+      "m_PathID": 30
+    },
+    "m_Enabled": 1,
+    "m_Script": {
+      "m_FileID": 16777216,
+      "m_PathID": 44442845184
+    },
+    "m_Name": "",
+    "mMat": {
+      "m_FileID": 0,
+      "m_PathID": 0
+    },
+    "mColor": {
+      "r": 0.9191176295280457,
+      "g": 0.8920847773551941,
+      "b": 0.8920847773551941,
+      "a": 1.0
+    },
+    "mPivot": 1,
+    "mDepth": 7,
+    "mFont": {
+      "m_FileID": 1,
+      "m_PathID": 2916
+    },
+    "mText": "Do you want to download additional content ? ",
+    "mMaxLineWidth": 1380,
+    "mEncoding": 1,
+    "mMaxLineCount": 5,
+    "mPassword": 0,
+    "mShowLastChar": 0,
+    "mEffectStyle": 0,
+    "mEffectColor": {
+      "r": 0.0,
+      "g": 0.0,
+      "b": 0.0,
+      "a": 1.0
+    },
+    "mSymbols": 1,
+    "mEffectDistance": {
+      "x": 1.0,
+      "y": 1.0
+    },
+    "mShrinkToFit": 0,
+    "useLocalization": 0,
+    "mRescaleLocalization": 0,
+    "mDefaultScale": 40.0,
+    "mMinimalScale": 20.0,
+    "mRescaleWidth": 0,
+    "mDynamicFontSize": 80,
+    "mLineWidth": 0.0,
+    "mMultiline": 1
+  },
+  "mainData:112": {
+    "m_GameObject": {
+      "m_FileID": 0,
+      "m_PathID": 46
+    },
+    "m_Enabled": 1,
+    "m_Script": {
+      "m_FileID": 16777216,
+      "m_PathID": 5939134464
+    },
+    "m_Name": "",
+    "mMat": {
+      "m_FileID": 0,
+      "m_PathID": 0
+    },
+    "mColor": {
+      "r": 1.0,
+      "g": 1.0,
+      "b": 1.0,
+      "a": 1.0
+    },
+    "mPivot": 4,
+    "mDepth": 0,
+    "mAtlas": {
+      "m_FileID": 1,
+      "m_PathID": 2914
+    },
+    "mSpriteName": "whiteRectangle",
+    "mFillCenter": 1,
+    "mType": 0,
+    "mFillDirection": 6,
+    "mFillAmount": 1.0,
+    "mFillAmountBack": 1.0,
+    "mInvert": 0,
+    "mTiledScale": 1.0,
+    "mUseInnerUVs": 1,
+    "mFillSlopePixels": 0.0
+  },
+  "mainData:113": {
+    "m_GameObject": {
+      "m_FileID": 0,
+      "m_PathID": 25
+    },
+    "m_Enabled": 1,
+    "m_Script": {
+      "m_FileID": 16777216,
+      "m_PathID": 5939134464
+    },
+    "m_Name": "",
+    "mMat": {
+      "m_FileID": 1,
+      "m_PathID": 3
+    },
+    "mColor": {
+      "r": 0.2196079045534134,
+      "g": 0.2235293984413147,
+      "b": 0.2392157018184662,
+      "a": 1.0
+    },
+    "mPivot": 4,
+    "mDepth": 8,
+    "mAtlas": {
+      "m_FileID": 1,
+      "m_PathID": 2915
+    },
+    "mSpriteName": "whiteRectangle",
+    "mFillCenter": 1,
+    "mType": 0,
+    "mFillDirection": 6,
+    "mFillAmount": 1.0,
+    "mFillAmountBack": 1.0,
+    "mInvert": 0,
+    "mTiledScale": 1.0,
+    "mUseInnerUVs": 1,
+    "mFillSlopePixels": 0.0
+  },
+  "mainData:114": {
+    "m_GameObject": {
+      "m_FileID": 0,
+      "m_PathID": 28
+    },
+    "m_Enabled": 1,
+    "m_Script": {
+      "m_FileID": 16777216,
+      "m_PathID": 17985175552
+    },
+    "m_Name": "",
+    "tweenTarget": {
+      "m_FileID": 0,
+      "m_PathID": 0
+    },
+    "hover": {
+      "x": 1.100000023841858,
+      "y": 1.100000023841858,
+      "z": 1.0
+    },
+    "pressed": {
+      "x": 1.0499999523162842,
+      "y": 1.0499999523162842,
+      "z": 1.0
+    }
+  },
+  "mainData:115": {
+    "m_GameObject": {
+      "m_FileID": 0,
+      "m_PathID": 28
+    },
+    "m_Enabled": 1,
+    "m_Script": {
+      "m_FileID": 16777216,
+      "m_PathID": 6727663616
+    },
+    "m_Name": "",
+    "tweenTarget": {
+      "m_FileID": 0,
+      "m_PathID": 27
+    },
+    "extratweenTargets": [],
+    "hover": {
+      "r": 1.0,
+      "g": 1.0,
+      "b": 1.0,
+      "a": 1.0
+    },
+    "pressed": {
+      "r": 1.0,
+      "g": 1.0,
+      "b": 1.0,
+      "a": 1.0
+    },
+    "duration": 0.20000000298023224,
+    "disabledColor": {
+      "r": 0.5,
+      "g": 0.5,
+      "b": 0.5,
+      "a": 1.0
+    },
+    "sprites": [],
+    "labels": []
+  },
+  "mainData:116": {
+    "m_GameObject": {
+      "m_FileID": 0,
+      "m_PathID": 31
+    },
+    "m_Enabled": 1,
+    "m_Script": {
+      "m_FileID": 16777216,
+      "m_PathID": 17985175552
+    },
+    "m_Name": "",
+    "tweenTarget": {
+      "m_FileID": 0,
+      "m_PathID": 0
+    },
+    "hover": {
+      "x": 1.100000023841858,
+      "y": 1.100000023841858,
+      "z": 1.0
+    },
+    "pressed": {
+      "x": 1.0499999523162842,
+      "y": 1.0499999523162842,
+      "z": 1.0
+    }
+  },
+  "mainData:117": {
+    "m_GameObject": {
+      "m_FileID": 0,
+      "m_PathID": 31
+    },
+    "m_Enabled": 1,
+    "m_Script": {
+      "m_FileID": 16777216,
+      "m_PathID": 6727663616
+    },
+    "m_Name": "",
+    "tweenTarget": {
+      "m_FileID": 0,
+      "m_PathID": 26
+    },
+    "extratweenTargets": [],
+    "hover": {
+      "r": 1.0,
+      "g": 1.0,
+      "b": 1.0,
+      "a": 1.0
+    },
+    "pressed": {
+      "r": 1.0,
+      "g": 1.0,
+      "b": 1.0,
+      "a": 1.0
+    },
+    "duration": 0.20000000298023224,
+    "disabledColor": {
+      "r": 0.5,
+      "g": 0.5,
+      "b": 0.5,
+      "a": 1.0
+    },
+    "sprites": [],
+    "labels": []
+  },
+  "mainData:118": {
+    "m_GameObject": {
+      "m_FileID": 0,
+      "m_PathID": 26
+    },
+    "m_Enabled": 1,
+    "m_Script": {
+      "m_FileID": 16777216,
+      "m_PathID": 5939134464
+    },
+    "m_Name": "",
+    "mMat": {
+      "m_FileID": 1,
+      "m_PathID": 3
+    },
+    "mColor": {
+      "r": 1.0,
+      "g": 1.0,
+      "b": 1.0,
+      "a": 1.0
+    },
+    "mPivot": 4,
+    "mDepth": 11,
+    "mAtlas": {
+      "m_FileID": 1,
+      "m_PathID": 2915
+    },
+    "mSpriteName": "menu-button-small-white",
+    "mFillCenter": 1,
+    "mType": 1,
+    "mFillDirection": 6,
+    "mFillAmount": 1.0,
+    "mFillAmountBack": 1.0,
+    "mInvert": 0,
+    "mTiledScale": 1.0,
+    "mUseInnerUVs": 0,
+    "mFillSlopePixels": 0.0
+  },
+  "mainData:119": {
+    "m_GameObject": {
+      "m_FileID": 0,
+      "m_PathID": 48
+    },
+    "m_Enabled": 1,
+    "m_Script": {
+      "m_FileID": 16777216,
+      "m_PathID": 40718303232
+    },
+    "m_Name": "",
+    "mMat": {
+      "m_FileID": 0,
+      "m_PathID": 0
+    },
+    "mColor": {
+      "r": 1.0,
+      "g": 1.0,
+      "b": 1.0,
+      "a": 0.35899999737739563
+    },
+    "mPivot": 4,
+    "mDepth": 0,
+    "mRect": {
+      "x": 0.0,
+      "y": 0.0,
+      "width": 1.0,
+      "height": 1.0
+    },
+    "mShader": {
+      "m_FileID": 1,
+      "m_PathID": 12
+    },
+    "mTexture": {
+      "m_FileID": 0,
+      "m_PathID": 0
+    }
+  },
+  "mainData:120": {
+    "m_GameObject": {
+      "m_FileID": 0,
+      "m_PathID": 39
+    },
+    "m_Enabled": 1,
+    "m_Script": {
+      "m_FileID": 16777216,
+      "m_PathID": 34376515584
+    },
+    "m_Name": "",
+    "dialogTitle": {
+      "m_FileID": 0,
+      "m_PathID": 124
+    },
+    "dialogText": {
+      "m_FileID": 0,
+      "m_PathID": 111
+    },
+    "yesButton": {
+      "m_FileID": 0,
+      "m_PathID": 115
+    },
+    "yesLabel": {
+      "m_FileID": 0,
+      "m_PathID": 131
+    },
+    "cancelButton": {
+      "m_FileID": 0,
+      "m_PathID": 117
+    },
+    "cancelLabel": {
+      "m_FileID": 0,
+      "m_PathID": 126
+    }
+  },
+  "mainData:121": {
+    "m_GameObject": {
+      "m_FileID": 0,
+      "m_PathID": 29
+    },
+    "m_Enabled": 1,
+    "m_Script": {
+      "m_FileID": 16777216,
+      "m_PathID": 5939134464
+    },
+    "m_Name": "",
+    "mMat": {
+      "m_FileID": 0,
+      "m_PathID": 0
+    },
+    "mColor": {
+      "r": 1.0,
+      "g": 1.0,
+      "b": 1.0,
+      "a": 1.0
+    },
+    "mPivot": 1,
+    "mDepth": 3,
+    "mAtlas": {
+      "m_FileID": 1,
+      "m_PathID": 2915
+    },
+    "mSpriteName": "menu-top",
+    "mFillCenter": 1,
+    "mType": 0,
+    "mFillDirection": 3,
+    "mFillAmount": 1.0,
+    "mFillAmountBack": 1.0,
+    "mInvert": 1,
+    "mTiledScale": 1.0,
+    "mUseInnerUVs": 1,
+    "mFillSlopePixels": 0.0
+  },
+  "mainData:122": {
+    "m_GameObject": {
+      "m_FileID": 0,
+      "m_PathID": 33
+    },
+    "m_Enabled": 1,
+    "m_Script": {
+      "m_FileID": 16777216,
+      "m_PathID": 5939134464
+    },
+    "m_Name": "",
+    "mMat": {
+      "m_FileID": 1,
+      "m_PathID": 3
+    },
+    "mColor": {
+      "r": 1.0,
+      "g": 1.0,
+      "b": 1.0,
+      "a": 1.0
+    },
+    "mPivot": 4,
+    "mDepth": 2,
+    "mAtlas": {
+      "m_FileID": 1,
+      "m_PathID": 2915
+    },
+    "mSpriteName": "menu-lightbox-bg",
+    "mFillCenter": 1,
+    "mType": 1,
+    "mFillDirection": 6,
+    "mFillAmount": 1.0,
+    "mFillAmountBack": 1.0,
+    "mInvert": 0,
+    "mTiledScale": 1.0,
+    "mUseInnerUVs": 0,
+    "mFillSlopePixels": 0.0
+  },
+  "mainData:123": {
+    "m_GameObject": {
+      "m_FileID": 0,
+      "m_PathID": 51
+    },
+    "m_Enabled": 1,
+    "m_Script": {
+      "m_FileID": 16777216,
+      "m_PathID": 5939134464
+    },
+    "m_Name": "",
+    "mMat": {
+      "m_FileID": 0,
+      "m_PathID": 0
+    },
+    "mColor": {
+      "r": 1.0,
+      "g": 1.0,
+      "b": 1.0,
+      "a": 1.0
+    },
+    "mPivot": 4,
+    "mDepth": 2,
+    "mAtlas": {
+      "m_FileID": 1,
+      "m_PathID": 2914
+    },
+    "mSpriteName": "Chillingo-logo",
+    "mFillCenter": 1,
+    "mType": 0,
+    "mFillDirection": 6,
+    "mFillAmount": 1.0,
+    "mFillAmountBack": 1.0,
+    "mInvert": 0,
+    "mTiledScale": 1.0,
+    "mUseInnerUVs": 0,
+    "mFillSlopePixels": 0.0
+  },
+  "mainData:124": {
+    "m_GameObject": {
+      "m_FileID": 0,
+      "m_PathID": 22
+    },
+    "m_Enabled": 1,
+    "m_Script": {
+      "m_FileID": 16777216,
+      "m_PathID": 44442845184
+    },
+    "m_Name": "",
+    "mMat": {
+      "m_FileID": 1,
+      "m_PathID": 2
+    },
+    "mColor": {
+      "r": 0.04313725605607033,
+      "g": 0.7372549176216125,
+      "b": 1.0,
+      "a": 1.0
+    },
+    "mPivot": 4,
+    "mDepth": 5,
+    "mFont": {
+      "m_FileID": 1,
+      "m_PathID": 2916
+    },
+    "mText": "CONFIRM",
+    "mMaxLineWidth": 0,
+    "mEncoding": 1,
+    "mMaxLineCount": 0,
+    "mPassword": 0,
+    "mShowLastChar": 0,
+    "mEffectStyle": 0,
+    "mEffectColor": {
+      "r": 0.0,
+      "g": 0.0,
+      "b": 0.0,
+      "a": 1.0
+    },
+    "mSymbols": 1,
+    "mEffectDistance": {
+      "x": 1.0,
+      "y": 1.0
+    },
+    "mShrinkToFit": 0,
+    "useLocalization": 0,
+    "mRescaleLocalization": 0,
+    "mDefaultScale": 40.0,
+    "mMinimalScale": 20.0,
+    "mRescaleWidth": 0,
+    "mDynamicFontSize": 80,
+    "mLineWidth": 0.0,
+    "mMultiline": 1
+  },
+  "mainData:125": {
+    "m_GameObject": {
+      "m_FileID": 0,
+      "m_PathID": 52
+    },
+    "m_Enabled": 1,
+    "m_Script": {
+      "m_FileID": 16777216,
+      "m_PathID": 5939134464
+    },
+    "m_Name": "",
+    "mMat": {
+      "m_FileID": 1,
+      "m_PathID": 4
+    },
+    "mColor": {
+      "r": 1.0,
+      "g": 0.0,
+      "b": 0.0,
+      "a": 1.0
+    },
+    "mPivot": 4,
+    "mDepth": -1,
+    "mAtlas": {
+      "m_FileID": 1,
+      "m_PathID": 2914
+    },
+    "mSpriteName": "whiteRectangle",
+    "mFillCenter": 1,
+    "mType": 0,
+    "mFillDirection": 6,
+    "mFillAmount": 1.0,
+    "mFillAmountBack": 1.0,
+    "mInvert": 0,
+    "mTiledScale": 1.0,
+    "mUseInnerUVs": 1,
+    "mFillSlopePixels": 0.0
+  },
+  "mainData:126": {
+    "m_GameObject": {
+      "m_FileID": 0,
+      "m_PathID": 24
+    },
+    "m_Enabled": 1,
+    "m_Script": {
+      "m_FileID": 16777216,
+      "m_PathID": 44442845184
+    },
+    "m_Name": "",
+    "mMat": {
+      "m_FileID": 1,
+      "m_PathID": 2
+    },
+    "mColor": {
+      "r": 0.0,
+      "g": 0.0,
+      "b": 0.0,
+      "a": 1.0
+    },
+    "mPivot": 4,
+    "mDepth": 12,
+    "mFont": {
+      "m_FileID": 1,
+      "m_PathID": 2916
+    },
+    "mText": "NO",
+    "mMaxLineWidth": 0,
+    "mEncoding": 1,
+    "mMaxLineCount": 0,
+    "mPassword": 0,
+    "mShowLastChar": 0,
+    "mEffectStyle": 0,
+    "mEffectColor": {
+      "r": 0.0,
+      "g": 0.0,
+      "b": 0.0,
+      "a": 1.0
+    },
+    "mSymbols": 1,
+    "mEffectDistance": {
+      "x": 1.0,
+      "y": 1.0
+    },
+    "mShrinkToFit": 0,
+    "useLocalization": 0,
+    "mRescaleLocalization": 0,
+    "mDefaultScale": 40.0,
+    "mMinimalScale": 20.0,
+    "mRescaleWidth": 0,
+    "mDynamicFontSize": 80,
+    "mLineWidth": 0.0,
+    "mMultiline": 1
+  },
+  "mainData:127": {
+    "m_GameObject": {
+      "m_FileID": 0,
+      "m_PathID": 53
+    },
+    "m_Enabled": 1,
+    "m_Script": {
+      "m_FileID": 16777216,
+      "m_PathID": 9428795392
+    },
+    "m_Name": "",
+    "chillingoLogo": {
+      "m_FileID": 0,
+      "m_PathID": 56
+    },
+    "ourLogo": {
+      "m_FileID": 0,
+      "m_PathID": 47
+    },
+    "splashes": {
+      "m_FileID": 1,
+      "m_PathID": 2914
+    },
+    "downloadAssetsDialog": {
+      "m_FileID": 0,
+      "m_PathID": 120
+    },
+    "downloadOBB": 1,
+    "logo": {
+      "m_FileID": 0,
+      "m_PathID": 51
+    },
+    "splashCamera": {
+      "m_FileID": 0,
+      "m_PathID": 98
+    },
+    "scales": [
+      {
+        "width": 1334,
+        "height": 750,
+        "scale": 1.1699999570846558
+      },
+      {
+        "width": 1280,
+        "height": 720,
+        "scale": 1.1699999570846558
+      }
+    ]
+  },
+  "mainData:128": {
+    "m_GameObject": {
+      "m_FileID": 0,
+      "m_PathID": 27
+    },
+    "m_Enabled": 1,
+    "m_Script": {
+      "m_FileID": 16777216,
+      "m_PathID": 5939134464
+    },
+    "m_Name": "",
+    "mMat": {
+      "m_FileID": 0,
+      "m_PathID": 0
+    },
+    "mColor": {
+      "r": 1.0,
+      "g": 1.0,
+      "b": 1.0,
+      "a": 1.0
+    },
+    "mPivot": 4,
+    "mDepth": 9,
+    "mAtlas": {
+      "m_FileID": 1,
+      "m_PathID": 2915
+    },
+    "mSpriteName": "menu-button-small",
+    "mFillCenter": 1,
+    "mType": 1,
+    "mFillDirection": 6,
+    "mFillAmount": 1.0,
+    "mFillAmountBack": 1.0,
+    "mInvert": 0,
+    "mTiledScale": 1.0,
+    "mUseInnerUVs": 0,
+    "mFillSlopePixels": 0.0
+  },
+  "mainData:129": {
+    "m_GameObject": {
+      "m_FileID": 0,
+      "m_PathID": 40
+    },
+    "m_Enabled": 1,
+    "m_Script": {
+      "m_FileID": 16777216,
+      "m_PathID": 1811939328
+    },
+    "m_Name": ""
+  },
+  "mainData:130": {
+    "m_GameObject": {
+      "m_FileID": 0,
+      "m_PathID": 40
+    },
+    "m_Enabled": 1,
+    "m_Script": {
+      "m_FileID": 16777216,
+      "m_PathID": 21625831424
+    },
+    "m_Name": "",
+    "kochavaAppId": "kowarfriends-ios-lwv4",
+    "kochavaAppIdIOS": "kowarfriends-ios-lwv4",
+    "kochavaAppIdAndroid": "kowarfriends-android-70o2q",
+    "kochavaAppIdKindle": "",
+    "kochavaAppIdBlackberry": "",
+    "kochavaAppIdWindowsPhone": "",
+    "debugMode": 0,
+    "incognitoMode": 0,
+    "requestAttribution": 1,
+    "appVersion": "1.2.1",
+    "partnerName": "",
+    "appLimitAdTracking": 0,
+    "userAgent": "",
+    "adidSupressed": 0,
+    "appCurrency": "USD",
+    "sessionTracking": 0
+  },
+  "mainData:131": {
+    "m_GameObject": {
+      "m_FileID": 0,
+      "m_PathID": 23
+    },
+    "m_Enabled": 1,
+    "m_Script": {
+      "m_FileID": 16777216,
+      "m_PathID": 44442845184
+    },
+    "m_Name": "",
+    "mMat": {
+      "m_FileID": 1,
+      "m_PathID": 2
+    },
+    "mColor": {
+      "r": 0.0,
+      "g": 0.0,
+      "b": 0.0,
+      "a": 1.0
+    },
+    "mPivot": 4,
+    "mDepth": 10,
+    "mFont": {
+      "m_FileID": 1,
+      "m_PathID": 2916
+    },
+    "mText": "YES",
+    "mMaxLineWidth": 0,
+    "mEncoding": 1,
+    "mMaxLineCount": 0,
+    "mPassword": 0,
+    "mShowLastChar": 0,
+    "mEffectStyle": 0,
+    "mEffectColor": {
+      "r": 0.0,
+      "g": 0.0,
+      "b": 0.0,
+      "a": 1.0
+    },
+    "mSymbols": 1,
+    "mEffectDistance": {
+      "x": 1.0,
+      "y": 1.0
+    },
+    "mShrinkToFit": 0,
+    "useLocalization": 0,
+    "mRescaleLocalization": 0,
+    "mDefaultScale": 40.0,
+    "mMinimalScale": 20.0,
+    "mRescaleWidth": 0,
+    "mDynamicFontSize": 80,
+    "mLineWidth": 0.0,
+    "mMultiline": 1
+  },
+  "mainData:132": {
+    "m_GameObject": {
+      "m_FileID": 0,
+      "m_PathID": 32
+    },
+    "m_Enabled": 1,
+    "m_Script": {
+      "m_FileID": 16777216,
+      "m_PathID": 5939134464
+    },
+    "m_Name": "",
+    "mMat": {
+      "m_FileID": 1,
+      "m_PathID": 3
+    },
+    "mColor": {
+      "r": 0.2196079045534134,
+      "g": 0.2235293984413147,
+      "b": 0.2392157018184662,
+      "a": 1.0
+    },
+    "mPivot": 4,
+    "mDepth": 6,
+    "mAtlas": {
+      "m_FileID": 1,
+      "m_PathID": 2915
+    },
+    "mSpriteName": "whiteRectangle",
+    "mFillCenter": 1,
+    "mType": 0,
+    "mFillDirection": 6,
+    "mFillAmount": 1.0,
+    "mFillAmountBack": 1.0,
+    "mInvert": 0,
+    "mTiledScale": 1.0,
+    "mUseInnerUVs": 1,
+    "mFillSlopePixels": 0.0
+  },
+  "mainData:133": {
+    "m_GameObject": {
+      "m_FileID": 0,
+      "m_PathID": 34
+    },
+    "m_Enabled": 1,
+    "m_Script": {
+      "m_FileID": 16777216,
+      "m_PathID": 28739371008
+    },
+    "m_Name": "",
+    "uiCamera": {
+      "m_FileID": 0,
+      "m_PathID": 98
+    },
+    "widgetContainer": {
+      "m_FileID": 0,
+      "m_PathID": 0
+    },
+    "panelContainer": {
+      "m_FileID": 0,
+      "m_PathID": 0
+    },
+    "style": 3,
+    "runOnlyOnce": 0,
+    "relativeSize": {
+      "x": 1.0,
+      "y": 1.0
+    },
+    "initialSize": {
+      "x": 1.0,
+      "y": 1.0
+    }
+  },
+  "mainData:134": {
+    "m_GameObject": {
+      "m_FileID": 0,
+      "m_PathID": 34
+    },
+    "m_Enabled": 1,
+    "m_Script": {
+      "m_FileID": 16777216,
+      "m_PathID": 5939134464
+    },
+    "m_Name": "",
+    "mMat": {
+      "m_FileID": 1,
+      "m_PathID": 3
+    },
+    "mColor": {
+      "r": 0.6764705777168274,
+      "g": 0.6764705777168274,
+      "b": 0.6764705777168274,
+      "a": 0.6840000152587891
+    },
+    "mPivot": 4,
+    "mDepth": 1,
+    "mAtlas": {
+      "m_FileID": 1,
+      "m_PathID": 2915
+    },
+    "mSpriteName": "whiteRectangle",
+    "mFillCenter": 1,
+    "mType": 0,
+    "mFillDirection": 6,
+    "mFillAmount": 1.0,
+    "mFillAmountBack": 1.0,
+    "mInvert": 0,
+    "mTiledScale": 1.0,
+    "mUseInnerUVs": 1,
+    "mFillSlopePixels": 0.0
+  },
+  "mainData:135": {
+    "m_GameObject": {
+      "m_FileID": 0,
+      "m_PathID": 58
+    },
+    "m_Enabled": 1,
+    "m_Script": {
+      "m_FileID": 16777216,
+      "m_PathID": 22431137792
+    },
+    "m_Name": ""
+  },
+  "mainData:136": {
+    "m_GameObject": {
+      "m_FileID": 0,
+      "m_PathID": 59
+    },
+    "m_Enabled": 1,
+    "m_Script": {
+      "m_FileID": 16777216,
+      "m_PathID": 38671482880
+    },
+    "m_Name": ""
+  },
+  "mainData:137": {
+    "m_GameObject": {
+      "m_FileID": 0,
+      "m_PathID": 47
+    },
+    "m_Enabled": 1,
+    "m_Script": {
+      "m_FileID": 16777216,
+      "m_PathID": 33436991488
+    },
+    "m_Name": "",
+    "showInPanelTool": 1,
+    "generateNormals": 0,
+    "depthPass": 0,
+    "widgetsAreStatic": 0,
+    "cullWhileDragging": 0,
+    "worldToLocal": {
+      "m00": 639.7952880859375,
+      "m10": 0.0,
+      "m20": 0.0,
+      "m30": -30988.220703125,
+      "m01": 0.0,
+      "m11": 639.7952880859375,
+      "m21": 0.0,
+      "m31": -118.51545715332031,
+      "m02": 0.0,
+      "m12": 0.0,
+      "m22": 639.7952880859375,
+      "m32": -3919.97802734375,
+      "m03": 0.0,
+      "m13": 0.0,
+      "m23": 0.0,
+      "m33": 1.0
+    },
+    "mAlpha": 1.0,
+    "mDebugInfo": 1,
+    "mClipping": 0,
+    "mClipRange": {
+      "x": 0.0,
+      "y": 0.0,
+      "z": 0.0,
+      "w": 0.0
+    },
+    "mClipSoftness": {
+      "x": 40.0,
+      "y": 40.0
+    },
+    "isFreezed": 0
+  },
+  "mainData:138": {
+    "m_GameObject": {
+      "m_FileID": 0,
+      "m_PathID": 39
+    },
+    "m_Enabled": 1,
+    "m_Script": {
+      "m_FileID": 16777216,
+      "m_PathID": 33436991488
+    },
+    "m_Name": "",
+    "showInPanelTool": 1,
+    "generateNormals": 0,
+    "depthPass": 0,
+    "widgetsAreStatic": 0,
+    "cullWhileDragging": 0,
+    "worldToLocal": {
+      "m00": 639.7952880859375,
+      "m10": 0.0,
+      "m20": 0.0,
+      "m30": -30988.220703125,
+      "m01": 0.0,
+      "m11": 639.7952880859375,
+      "m21": 0.0,
+      "m31": -118.51545715332031,
+      "m02": 0.0,
+      "m12": 0.0,
+      "m22": 639.7952880859375,
+      "m32": -1919.97802734375,
+      "m03": 0.0,
+      "m13": 0.0,
+      "m23": 0.0,
+      "m33": 1.0
+    },
+    "mAlpha": 1.0,
+    "mDebugInfo": 1,
+    "mClipping": 0,
+    "mClipRange": {
+      "x": 0.0,
+      "y": 0.0,
+      "z": 0.0,
+      "w": 0.0
+    },
+    "mClipSoftness": {
+      "x": 40.0,
+      "y": 40.0
+    },
+    "isFreezed": 0
+  },
+  "mainData:139": {
+    "m_GameObject": {
+      "m_FileID": 0,
+      "m_PathID": 56
+    },
+    "m_Enabled": 1,
+    "m_Script": {
+      "m_FileID": 16777216,
+      "m_PathID": 33436991488
+    },
+    "m_Name": "",
+    "showInPanelTool": 1,
+    "generateNormals": 0,
+    "depthPass": 0,
+    "widgetsAreStatic": 0,
+    "cullWhileDragging": 0,
+    "worldToLocal": {
+      "m00": 640.0,
+      "m10": 0.0,
+      "m20": 0.0,
+      "m30": -1280000.0,
+      "m01": 0.0,
+      "m11": 640.0,
+      "m21": 0.0,
+      "m31": -0.0,
+      "m02": 0.0,
+      "m12": 0.0,
+      "m22": 640.0,
+      "m32": -2000.0,
+      "m03": 0.0,
+      "m13": 0.0,
+      "m23": 0.0,
+      "m33": 1.0
+    },
+    "mAlpha": 1.0,
+    "mDebugInfo": 1,
+    "mClipping": 0,
+    "mClipRange": {
+      "x": 0.0,
+      "y": 0.0,
+      "z": 0.0,
+      "w": 0.0
+    },
+    "mClipSoftness": {
+      "x": 40.0,
+      "y": 40.0
+    },
+    "isFreezed": 0
+  },
+  "mainData:140": {
+    "m_GameObject": {
+      "m_FileID": 0,
+      "m_PathID": 38
+    },
+    "m_Enabled": 1,
+    "m_Script": {
+      "m_FileID": 16777216,
+      "m_PathID": 38352715776
+    },
+    "m_Name": "",
+    "uiCamera": {
+      "m_FileID": 0,
+      "m_PathID": 98
+    },
+    "widgetContainer": {
+      "m_FileID": 0,
+      "m_PathID": 0
+    },
+    "panelContainer": {
+      "m_FileID": 0,
+      "m_PathID": 0
+    },
+    "side": 8,
+    "halfPixelOffset": 1,
+    "runOnlyOnce": 0,
+    "relativeOffset": {
+      "x": 0.0,
+      "y": 0.0
+    }
+  },
+  "sharedassets0.assets:2914": {
+    "m_GameObject": {
+      "m_FileID": 0,
+      "m_PathID": 2909
+    },
+    "m_Enabled": 1,
+    "m_Script": {
+      "m_FileID": 0,
+      "m_PathID": 15367929856
+    },
+    "m_Name": "",
+    "material": {
+      "m_FileID": 0,
+      "m_PathID": 4
+    },
+    "sprites": [
+      {
+        "name": "Chillingo-logo",
+        "outer": {
+          "x": 0.0,
+          "y": 6.0,
+          "width": 1360.0,
+          "height": 315.0
+        },
+        "inner": {
+          "x": 0.0,
+          "y": 6.0,
+          "width": 1360.0,
+          "height": 315.0
+        },
+        "rotated": 0,
+        "paddingLeft": 0.0,
+        "paddingRight": 0.0,
+        "paddingTop": 0.0,
+        "paddingBottom": 0.0
+      },
+      {
+        "name": "whiteRectangle",
+        "outer": {
+          "x": 2025.0,
+          "y": 1014.0,
+          "width": 10.0,
+          "height": 10.0
+        },
+        "inner": {
+          "x": 2027.0,
+          "y": 1016.0,
+          "width": 6.0,
+          "height": 6.0
+        },
+        "rotated": 0,
+        "paddingLeft": 0.0,
+        "paddingRight": 0.0,
+        "paddingTop": 0.0,
+        "paddingBottom": 0.0
+      },
+      {
+        "name": "af-logo",
+        "outer": {
+          "x": 0.0,
+          "y": 326.0,
+          "width": 1200.0,
+          "height": 698.0
+        },
+        "inner": {
+          "x": 0.0,
+          "y": 326.0,
+          "width": 1200.0,
+          "height": 698.0
+        },
+        "rotated": 0,
+        "paddingLeft": 0.0,
+        "paddingRight": 0.0,
+        "paddingTop": 0.0,
+        "paddingBottom": 0.0
+      },
+      {
+        "name": "menu-logo 1",
+        "outer": {
+          "x": 1205.0,
+          "y": 945.0,
+          "width": 638.0,
+          "height": 79.0
+        },
+        "inner": {
+          "x": 1205.0,
+          "y": 945.0,
+          "width": 638.0,
+          "height": 79.0
+        },
+        "rotated": 0,
+        "paddingLeft": 0.0,
+        "paddingRight": 0.0,
+        "paddingTop": 0.0,
+        "paddingBottom": 0.0
+      },
+      {
+        "name": "menu-bg-tile",
+        "outer": {
+          "x": 1848.0,
+          "y": 850.0,
+          "width": 172.0,
+          "height": 174.0
+        },
+        "inner": {
+          "x": 1848.0,
+          "y": 850.0,
+          "width": 172.0,
+          "height": 174.0
+        },
+        "rotated": 0,
+        "paddingLeft": 0.0,
+        "paddingRight": 0.0,
+        "paddingTop": 0.0,
+        "paddingBottom": 0.0
+      }
+    ],
+    "mCoordinates": 0,
+    "mPixelSize": 1.0,
+    "mReplacement": {
+      "m_FileID": 0,
+      "m_PathID": 0
+    },
+    "pngPath": "GuiAtlasSplash",
+    "pngHalfPath": "",
+    "replaceTexture": {
+      "m_FileID": 0,
+      "m_PathID": 7
+    },
+    "useBinaryData": 0,
+    "textureWidth": 2048,
+    "textureHeight": 1024
+  }
+}

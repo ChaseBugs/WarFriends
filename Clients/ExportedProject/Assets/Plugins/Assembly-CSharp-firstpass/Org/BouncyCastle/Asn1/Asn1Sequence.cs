@@ -1,66 +1,208 @@
-using UnityEngine;
+using System;
+using System.Collections;
+using System.IO;
+using Org.BouncyCastle.Utilities;
+using Org.BouncyCastle.Utilities.Collections;
 
 namespace Org.BouncyCastle.Asn1
 {
-	public class Asn1Sequence : MonoBehaviour
+public abstract class Asn1Sequence : Asn1Object, IEnumerable
+{
+	private class Asn1SequenceParserImpl : Asn1SequenceParser, IAsn1Convertible
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
+		private readonly Asn1Sequence outer;
 
-		1. No dll files were provided to AssetRipper.
+		private readonly int max;
 
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
+		private int index;
 
-		2. Incorrect dll files were provided to AssetRipper.
+		public Asn1SequenceParserImpl(Asn1Sequence outer)
+		{
+			this.outer = outer;
+			max = outer.Count;
+		}
 
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
+		public IAsn1Convertible ReadObject()
+		{
+			if (index == max)
+			{
+				return null;
+			}
+			Asn1Encodable asn1Encodable = outer[index++];
+			if (asn1Encodable is Asn1Sequence)
+			{
+				return ((Asn1Sequence)asn1Encodable).Parser;
+			}
+			if (asn1Encodable is Asn1Set)
+			{
+				return ((Asn1Set)asn1Encodable).Parser;
+			}
+			return asn1Encodable;
+		}
 
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
+		public Asn1Object ToAsn1Object()
+		{
+			return outer;
+		}
 	}
+
+	private readonly IList seq;
+
+	public virtual Asn1SequenceParser Parser => new Asn1SequenceParserImpl(this);
+
+	public virtual Asn1Encodable this[int index] => (Asn1Encodable)seq[index];
+
+	[Obsolete("Use 'Count' property instead")]
+	public int Size => Count;
+
+	public virtual int Count => seq.Count;
+
+	protected internal Asn1Sequence(int capacity)
+	{
+		seq = Platform.CreateArrayList(capacity);
+	}
+
+	public static Asn1Sequence GetInstance(object obj)
+	{
+		if (obj == null || obj is Asn1Sequence)
+		{
+			return (Asn1Sequence)obj;
+		}
+		if (obj is Asn1SequenceParser)
+		{
+			return GetInstance(((Asn1SequenceParser)obj).ToAsn1Object());
+		}
+		if (obj is byte[])
+		{
+			try
+			{
+				return GetInstance(Asn1Object.FromByteArray((byte[])obj));
+			}
+			catch (IOException ex)
+			{
+				throw new ArgumentException("failed to construct sequence from byte[]: " + ex.Message);
+			}
+		}
+		if (obj is Asn1Encodable)
+		{
+			Asn1Object asn1Object = ((Asn1Encodable)obj).ToAsn1Object();
+			if (asn1Object is Asn1Sequence)
+			{
+				return (Asn1Sequence)asn1Object;
+			}
+		}
+		throw new ArgumentException("Unknown object in GetInstance: " + obj.GetType().FullName, "obj");
+	}
+
+	public static Asn1Sequence GetInstance(Asn1TaggedObject obj, bool explicitly)
+	{
+		Asn1Object asn1Object = obj.GetObject();
+		if (explicitly)
+		{
+			if (!obj.IsExplicit())
+			{
+				throw new ArgumentException("object implicit - explicit expected.");
+			}
+			return (Asn1Sequence)asn1Object;
+		}
+		if (obj.IsExplicit())
+		{
+			if (obj is BerTaggedObject)
+			{
+				return new BerSequence(asn1Object);
+			}
+			return new DerSequence(asn1Object);
+		}
+		if (asn1Object is Asn1Sequence)
+		{
+			return (Asn1Sequence)asn1Object;
+		}
+		throw new ArgumentException("Unknown object in GetInstance: " + obj.GetType().FullName, "obj");
+	}
+
+	public virtual IEnumerator GetEnumerator()
+	{
+		return seq.GetEnumerator();
+	}
+
+	[Obsolete("Use GetEnumerator() instead")]
+	public IEnumerator GetObjects()
+	{
+		return GetEnumerator();
+	}
+
+	[Obsolete("Use 'object[index]' syntax instead")]
+	public Asn1Encodable GetObjectAt(int index)
+	{
+		return this[index];
+	}
+
+	protected override int Asn1GetHashCode()
+	{
+		int num = Count;
+		IEnumerator enumerator = GetEnumerator();
+		try
+		{
+			while (enumerator.MoveNext())
+			{
+				object current = enumerator.Current;
+				num *= 17;
+				num = ((current != null) ? (num ^ current.GetHashCode()) : (num ^ DerNull.Instance.GetHashCode()));
+			}
+			return num;
+		}
+		finally
+		{
+			IDisposable disposable = enumerator as IDisposable;
+			if (disposable != null)
+			{
+				disposable.Dispose();
+			}
+		}
+	}
+
+	protected override bool Asn1Equals(Asn1Object asn1Object)
+	{
+		if (!(asn1Object is Asn1Sequence asn1Sequence))
+		{
+			return false;
+		}
+		if (Count != asn1Sequence.Count)
+		{
+			return false;
+		}
+		IEnumerator enumerator = GetEnumerator();
+		IEnumerator enumerator2 = asn1Sequence.GetEnumerator();
+		while (enumerator.MoveNext() && enumerator2.MoveNext())
+		{
+			Asn1Object asn1Object2 = GetCurrent(enumerator).ToAsn1Object();
+			Asn1Object obj = GetCurrent(enumerator2).ToAsn1Object();
+			if (!asn1Object2.Equals(obj))
+			{
+				return false;
+			}
+		}
+		return true;
+	}
+
+	private Asn1Encodable GetCurrent(IEnumerator e)
+	{
+		Asn1Encodable asn1Encodable = (Asn1Encodable)e.Current;
+		if (asn1Encodable == null)
+		{
+			return DerNull.Instance;
+		}
+		return asn1Encodable;
+	}
+
+	protected internal void AddObject(Asn1Encodable obj)
+	{
+		seq.Add(obj);
+	}
+
+	public override string ToString()
+	{
+		return CollectionUtilities.ToString(seq);
+	}
+}
 }

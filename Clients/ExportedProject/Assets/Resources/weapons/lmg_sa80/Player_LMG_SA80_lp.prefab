@@ -74,6 +74,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5e59aac156d8b7c09624901e4cd5735f, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  pivot: {fileID: 0}
+  highPolyPrefabName: AssaultRifleAK47
 --- !u!1001 &100100000
 Prefab:
   serializedVersion: 2

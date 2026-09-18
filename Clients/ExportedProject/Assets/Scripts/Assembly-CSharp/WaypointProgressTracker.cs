@@ -2,62 +2,117 @@ using UnityEngine;
 
 public class WaypointProgressTracker : MonoBehaviour
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public enum ProgressStyle
+	{
+		SmoothAlongRoute,
+		PointToPoint
+	}
 
-	1. No dll files were provided to AssetRipper.
+	public WaypointCircuit circuit;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	[SerializeField]
+	private float lookAheadForTargetOffset = 5f;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	[SerializeField]
+	private float lookAheadForTargetFactor = 0.1f;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	[SerializeField]
+	private float lookAheadForSpeedOffset = 10f;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	[SerializeField]
+	private float lookAheadForSpeedFactor = 0.2f;
 
-	3. Assembly Reconstruction has not been implemented.
+	[SerializeField]
+	private ProgressStyle progressStyle;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	[SerializeField]
+	private float pointToPointThreshold = 4f;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public Transform target;
 
-	4. This script is unnecessary.
+	private float progressDistance;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private int progressNum;
 
-	5. Script Content Level 0
+	private Vector3 lastPosition;
 
-		AssetRipper was set to not load any script information.
+	private float speed;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public WaypointCircuit.RoutePoint targetPoint { get; private set; }
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public WaypointCircuit.RoutePoint speedPoint { get; private set; }
 
-	7. An incorrect path was provided to AssetRipper.
+	public WaypointCircuit.RoutePoint progressPoint { get; private set; }
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	private void Start()
+	{
+		if (target == null)
+		{
+			target = new GameObject(base.name + " Waypoint Target").transform;
+		}
+		Reset();
+	}
 
-	*/
+	public void Reset()
+	{
+		progressDistance = 0f;
+		progressNum = 0;
+		if (progressStyle == ProgressStyle.PointToPoint)
+		{
+			target.position = circuit.Waypoints[progressNum].position;
+			target.rotation = circuit.Waypoints[progressNum].rotation;
+		}
+	}
+
+	private void Update()
+	{
+		if (circuit == null)
+		{
+			return;
+		}
+		if (progressStyle == ProgressStyle.SmoothAlongRoute)
+		{
+			if (Time.deltaTime > 0f)
+			{
+				speed = Mathf.Lerp(speed, (lastPosition - base.transform.position).magnitude / Time.deltaTime, Time.deltaTime);
+			}
+			target.position = circuit.GetRoutePoint(progressDistance + lookAheadForTargetOffset + lookAheadForTargetFactor * speed).position;
+			target.rotation = Quaternion.LookRotation(circuit.GetRoutePoint(progressDistance + lookAheadForSpeedOffset + lookAheadForSpeedFactor * speed).direction);
+			progressPoint = circuit.GetRoutePoint(progressDistance);
+			Vector3 lhs = progressPoint.position - base.transform.position;
+			if (Vector3.Dot(lhs, progressPoint.direction) < 0f)
+			{
+				progressDistance += lhs.magnitude * 0.5f;
+			}
+			lastPosition = base.transform.position;
+		}
+		else
+		{
+			if ((target.position - base.transform.position).magnitude < pointToPointThreshold)
+			{
+				progressNum = (progressNum + 1) % circuit.Waypoints.Length;
+			}
+			target.position = circuit.Waypoints[progressNum].position;
+			target.rotation = circuit.Waypoints[progressNum].rotation;
+			progressPoint = circuit.GetRoutePoint(progressDistance);
+			Vector3 lhs2 = progressPoint.position - base.transform.position;
+			if (Vector3.Dot(lhs2, progressPoint.direction) < 0f)
+			{
+				progressDistance += lhs2.magnitude;
+			}
+			lastPosition = base.transform.position;
+		}
+	}
+
+	private void OnDrawGizmos()
+	{
+		if (!(circuit == null) && Application.isPlaying)
+		{
+			Gizmos.color = Color.green;
+			Gizmos.DrawLine(base.transform.position, target.position);
+			Gizmos.DrawWireSphere(circuit.GetRoutePosition(progressDistance), 1f);
+			Gizmos.color = Color.yellow;
+			Gizmos.DrawLine(target.position, target.position + target.forward);
+		}
+	}
 }

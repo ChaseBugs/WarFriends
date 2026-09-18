@@ -1,63 +1,90 @@
+using System.Collections.Generic;
 using UnityEngine;
 
-public class FlashGrenadeAmmo : MonoBehaviour
+public class FlashGrenadeAmmo : GrenadeAmmoContent
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public override void LoadAmmoSetup(AmmoSetup setup)
+	{
+		base.LoadAmmoSetup(setup);
+	}
 
-	1. No dll files were provided to AssetRipper.
+	public override void ExplodeImplementation(Vector3 position)
+	{
+		base.ExplodeImplementation(position);
+		DoFlash();
+	}
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public override void ExplodeRPCImplementation(Vector3 position)
+	{
+		base.ExplodeRPCImplementation(position);
+		DoFlash();
+	}
 
-	2. Incorrect dll files were provided to AssetRipper.
+	private void DoFlash()
+	{
+		Singleton<HitParticleSystem>.instance.PlayParticle(base.transform.position, Vector3.up, "FlashGrenade");
+		CheckForDestroyableObjects();
+		grenade.DestroyPooled();
+	}
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
-
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-	3. Assembly Reconstruction has not been implemented.
-
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
-
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
-
-	4. This script is unnecessary.
-
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
-
-	5. Script Content Level 0
-
-		AssetRipper was set to not load any script information.
-
-	6. Cpp2IL failed to decompile Il2Cpp data
-
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	private void CheckForDestroyableObjects()
+	{
+		FlashGrenadeAmmoSetup flashGrenadeAmmoSetup = base.mSetup as FlashGrenadeAmmoSetup;
+		Collider[] array = Physics.OverlapSphere(base.transform.position, flashGrenadeAmmoSetup.radius, TagsAndLayers.destroyableObjectsMask);
+		List<DestroyableObject> list = new List<DestroyableObject>();
+		Collider[] array2 = array;
+		foreach (Collider collider in array2)
+		{
+			if (!TagsAndLayers.IsDestroyableObject(collider.gameObject))
+			{
+				continue;
+			}
+			DestroyableObject component = collider.gameObject.GetComponent<DestroyableObject>();
+			if (component == null)
+			{
+				continue;
+			}
+			if (component is DestroyableObjectpart)
+			{
+				DestroyableObjectpart destroyableObjectpart = component as DestroyableObjectpart;
+				if (!(destroyableObjectpart != null) || !(destroyableObjectpart.ownerDestroyableObject != null) || !list.Contains(destroyableObjectpart.ownerDestroyableObject))
+				{
+					list.Add(destroyableObjectpart.ownerDestroyableObject);
+				}
+			}
+			else
+			{
+				list.Add(component);
+			}
+		}
+		foreach (DestroyableObject item in list)
+		{
+			EnemyController enemyController = item.owner as EnemyController;
+			if (enemyController != null)
+			{
+			}
+			PlayerController playerController = item.owner as PlayerController;
+			if (!(playerController != null))
+			{
+				continue;
+			}
+			playerController.MakeBlind(flashGrenadeAmmoSetup.lastTime);
+			if (playerController.isCurrentPlayer)
+			{
+				DestroyableObjectpart destroyableObjectpart2 = playerController.destroyableParts.parts[1];
+				Vector3 up = destroyableObjectpart2.transform.up;
+				up.y = 0f;
+				Vector3 to = base.transform.position - playerController.transform.position;
+				to.y = 0f;
+				float num = Vector3.Angle(up, to);
+				float num2 = 1.1f - num / 180f * 0.5f;
+				if (num < 30f)
+				{
+					num2 = 1f;
+				}
+				Debug.Log("Angle: " + num + "intensity: " + num2);
+				GuiScreenSingle<HudScreen>.instance.PlayFlash(3f, num2);
+			}
+		}
+	}
 }

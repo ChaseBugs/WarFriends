@@ -1,63 +1,288 @@
 using UnityEngine;
 
-public class CardPackRecord : MonoBehaviour
+public class CardPackRecord : Core_BaseScript
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	private const float mMiddleMove = 150f;
 
-	1. No dll files were provided to AssetRipper.
+	[Header("Content")]
+	public UISprite background;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public GameObject content;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public BoxCollider boxCollider;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	[Header("Sale")]
+	public GameObject salePart;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public UILabel salePercentLabel;
 
-	3. Assembly Reconstruction has not been implemented.
+	[Header("Watch Video")]
+	public UITable watchVideoTable;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public UILabel topText;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public UISprite topBackground;
 
-	4. This script is unnecessary.
+	public UILabel middleText;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public UISprite middleSpacer;
 
-	5. Script Content Level 0
+	public UILabel bottomText;
 
-		AssetRipper was set to not load any script information.
+	public UISprite bottomSpacer;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	[Header("Special Packs")]
+	public UITable specialPacksTable;
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public UILabel packName;
 
-	7. An incorrect path was provided to AssetRipper.
+	public UISprite packNameSpacer;
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	public GameObject middlePart;
 
-	*/
+	public UISprite underline;
+
+	public UISprite leftWing;
+
+	public UILabel packText;
+
+	public UISprite packTextSpacer;
+
+	public UISprite rightWing;
+
+	[Header("Bottom Button")]
+	public GameObject bottomButton;
+
+	public UISprite bottomButtonBackground;
+
+	public UILabel bottomButtonName;
+
+	[Header("Atlases")]
+	public UIAtlas bigMenuAtlas;
+
+	public UIAtlas cardAtlas;
+
+	[HideInInspector]
+	public CardPack typePack;
+
+	private Vector3 mBasePosition;
+
+	private bool mAnimating;
+
+	public bool isAnimating => mAnimating;
+
+	protected override void Awake()
+	{
+		base.Awake();
+		watchVideoTable.onReposition = delegate
+		{
+			float y = Mathf.Clamp(Mathf.Abs(bottomText.transform.parent.transform.localPosition.y) - 38f, watchVideoTable.transform.localPosition.y, 180f);
+			watchVideoTable.transform.localPosition = new Vector3(watchVideoTable.transform.localPosition.x, y, 0f);
+		};
+		specialPacksTable.onReposition = delegate
+		{
+			float val = Mathf.Min(98f, -55f + packNameSpacer.transform.localScale.y + packTextSpacer.transform.localScale.y);
+			specialPacksTable.transform.localPosition = specialPacksTable.transform.localPosition.ReplaceY(val);
+		};
+	}
+
+	public void SetBasePosition()
+	{
+		mBasePosition = base.transform.localPosition;
+	}
+
+	internal void Initialize(CardPack namePack)
+	{
+		typePack = namePack;
+		mAnimating = false;
+		if (typePack == CardPack.None)
+		{
+			SetVideoRewardPack(Singleton<EventTrackingManager>.instance.IsRewardVideoPreloaded(RewardType.RandomCard));
+			return;
+		}
+		bool flag = typePack == CardPack.Starter || typePack == CardPack.Value;
+		background.atlas = bigMenuAtlas;
+		background.spriteName = GameVariables.cardpackLook[typePack].Value2;
+		background.MakePixelPerfect();
+		background.transform.localPosition = new Vector3(0f, -54f, 1f);
+		background.color = Color.white;
+		SetSale();
+		watchVideoTable.gameObject.SetActive(value: false);
+		specialPacksTable.gameObject.SetActive(flag);
+		if (flag)
+		{
+			SetSpecialPackText(typePack);
+		}
+		bottomButton.SetActive(value: true);
+		bottomButton.transform.localPosition = bottomButton.transform.localPosition.ReplaceX((!flag) ? (-1f) : 25f);
+		bottomButtonBackground.transform.localScale = bottomButtonBackground.transform.localScale.ReplaceX(326f);
+		bottomButtonName.text = Localization.Localize("ID_PACKDETAILS");
+		MiscTools.SetUILabelRescale(bottomButtonName, 40f, 20f, 300);
+	}
+
+	public void SetVideoRewardPack(bool isVideoReady)
+	{
+		background.atlas = cardAtlas;
+		background.spriteName = GameVariables.cardpackLook[CardPack.None].Value2;
+		background.MakePixelPerfect();
+		background.transform.localPosition = new Vector3(0f, 0f, 1f);
+		background.transform.localScale = new Vector3(background.transform.localScale.x * 1.74f, background.transform.localScale.y * 1.74f, 1f);
+		background.color = Colours.grayButton;
+		background.alpha = ((!isVideoReady) ? 0.375f : 1f);
+		boxCollider.enabled = isVideoReady;
+		salePart.SetActive(value: false);
+		float num = ((!isVideoReady) ? 250f : 220f);
+		specialPacksTable.gameObject.SetActive(value: false);
+		watchVideoTable.gameObject.SetActive(value: true);
+		watchVideoTable.repositionNow = true;
+		topText.text = ((!isVideoReady) ? Localization.Localize("ID_WAITVIDEO1") : Localization.Localize("ID_VIDEOREADY1"));
+		middleText.text = ((!isVideoReady) ? Localization.Localize("ID_WAITVIDEO2") : Localization.Localize("ID_VIDEOREADY2"));
+		bottomText.text = ((!isVideoReady) ? Localization.Localize("ID_WAITVIDEO3") : Localization.Localize("ID_VIDEOREADY3"));
+		float num2 = Mathf.Clamp(num / bottomText.relativeSize.x, 20f, 80f);
+		float y = Mathf.Round(num2 / 0.826f);
+		MiscTools.SetUILabelRescale(bottomText, num2, 20f, (int)num);
+		bottomSpacer.transform.localScale = new Vector3(num, y, 1f);
+		float num3 = Mathf.Clamp(num / middleText.relativeSize.x, 20f, 50f);
+		float y2 = Mathf.Round(num3 / 0.826f);
+		MiscTools.SetUILabelRescale(middleText, num3, 20f, (int)num);
+		middleSpacer.transform.localScale = new Vector3(num, y2, 1f);
+		float max = 180f - (num2 + num3);
+		float num4 = Mathf.Clamp(num / topText.relativeSize.x, 20f, max);
+		float num5 = num4 / 5f;
+		float num6 = Mathf.Max(0f, num5 / 2f - (num - topText.relativeSize.x * num4));
+		float x = Mathf.Max(topText.relativeSize.x * topText.transform.localScale.x + num5, num);
+		MiscTools.SetUILabelRescale(topText, num4, 20f, (int)num);
+		topBackground.gameObject.SetActive(isVideoReady);
+		if (isVideoReady)
+		{
+			float y3 = Mathf.Round(num4 / 0.826f);
+			topBackground.transform.localScale = new Vector3(x, y3, 1f);
+		}
+		watchVideoTable.transform.localPosition = new Vector3(-125f - num6, (!isVideoReady) ? 144f : 164f, 0f);
+		bottomButton.SetActive(isVideoReady);
+		if (isVideoReady)
+		{
+			bottomButton.transform.localPosition = bottomButton.transform.localPosition.ReplaceX(6f);
+			bottomButtonBackground.transform.localScale = bottomButtonBackground.transform.localScale.ReplaceX(333f);
+			bottomButtonName.text = Localization.Localize("ID_WATCHVIDEO");
+			MiscTools.SetUILabelRescale(bottomButtonName, 40f, 20f, 300);
+		}
+	}
+
+	private void SetSpecialPackText(CardPack namePack)
+	{
+		string value = GameVariables.cardpackLook[typePack].Value1;
+		packName.text = ((!string.IsNullOrEmpty(value)) ? Localization.Localize(value) : string.Empty);
+		MiscTools.SetUILabelRescale(packName, 70f, 20f, 250);
+		float val = Mathf.Round(packName.transform.localScale.y / 0.826f);
+		packNameSpacer.transform.localScale = packNameSpacer.transform.localScale.ReplaceY(val);
+		packText.text = Localization.Localize("ID_PACK");
+		MiscTools.SetUILabelRescale(packText, 70f, 20f, 158);
+		float val2 = Mathf.Max(45f, Mathf.Round(packText.transform.localScale.y / 0.826f));
+		packTextSpacer.transform.localScale = packTextSpacer.transform.localScale.ReplaceY(val2);
+		underline.color = ((namePack != CardPack.Starter) ? Colours.valuePack : Colours.starterPack);
+		underline.alpha = 0.5f;
+		leftWing.color = ((namePack != CardPack.Starter) ? Colours.valuePack : Colours.starterPack);
+		leftWing.alpha = 0.5f;
+		rightWing.color = ((namePack != CardPack.Starter) ? Colours.valuePack : Colours.starterPack);
+		rightWing.alpha = 0.5f;
+		specialPacksTable.repositionNow = true;
+	}
+
+	public void SetSale()
+	{
+		if (typePack != CardPack.Bronze && typePack != CardPack.Silver && typePack != CardPack.Gold)
+		{
+			salePart.SetActive(value: false);
+			return;
+		}
+		int num = Singleton<OfferManager>.instance.DiscountedCardpack(typePack);
+		bool flag = num > 0;
+		salePart.SetActive(flag);
+		if (flag)
+		{
+			salePercentLabel.text = Localization.LocalizeFormat("ID_SALEPERCENTLINE", num);
+		}
+	}
+
+	public void InitGuiValues()
+	{
+		boxCollider.enabled = true;
+		background.alpha = 1f;
+		watchVideoTable.gameObject.SetActive(typePack == CardPack.None);
+		specialPacksTable.gameObject.SetActive(typePack == CardPack.Starter || typePack == CardPack.Value);
+		bottomButton.SetActive(value: true);
+		TweenPosition component = GetComponent<TweenPosition>();
+		if (component != null)
+		{
+			component.enabled = false;
+		}
+		TweenRotationSpecial component2 = content.GetComponent<TweenRotationSpecial>();
+		if (component2 != null)
+		{
+			component2.enabled = false;
+		}
+		TweenScale component3 = GetComponent<TweenScale>();
+		if (component3 != null)
+		{
+			component3.enabled = false;
+		}
+		base.transform.localPosition = mBasePosition;
+		content.transform.localRotation = Quaternion.identity;
+		base.transform.localScale = Vector3.one;
+		SetSale();
+		StopAllCoroutines();
+		base.gameObject.SetActive(value: true);
+	}
+
+	public void PlayBuyAnimation(Transform owerlayTransform)
+	{
+		mAnimating = true;
+		Vector3 middlePos = mBasePosition;
+		middlePos.z = -24450f;
+		base.transform.localPosition = middlePos;
+		Vector3 vector = owerlayTransform.localPosition - base.transform.parent.parent.localPosition - base.transform.parent.localPosition;
+		middlePos.y = 150f + vector.y;
+		middlePos.x = vector.x;
+		boxCollider.enabled = false;
+		salePart.SetActive(value: false);
+		specialPacksTable.gameObject.SetActive(value: false);
+		bottomButton.SetActive(value: false);
+		watchVideoTable.gameObject.SetActive(value: false);
+		TweenPosition tweenPosition = TweenPosition.Begin(base.gameObject, 0.6f, middlePos);
+		tweenPosition.delay = 0.2f;
+		middlePos.y -= 150f;
+		tweenPosition.onFinished = delegate
+		{
+			TweenPosition.Begin(base.gameObject, 0.2f, middlePos).delay = 0f;
+			TweenScale ts = TweenScale.Begin(base.gameObject, 0.2f, Vector3.one * 1.2f);
+			ts.delay = 0f;
+			ts.onFinished = delegate
+			{
+				ts = TweenScale.Begin(base.gameObject, 0.2f, Vector3.one * 1.3f);
+				ts.onFinished = delegate
+				{
+					InvokeAfter(delegate
+					{
+						HideCardPack();
+					}, 0.1f);
+				};
+			};
+		};
+		TweenRotationSpecial.Begin(content, 0.6f, new Vector3(0f, 1f, 0f), 0f, 360f).delay = 0.2f;
+	}
+
+	private void HideCardPack()
+	{
+		mAnimating = false;
+		base.gameObject.SetActive(value: false);
+	}
+
+	public void StopAnimationAndHide()
+	{
+		TweenPosition.Begin(base.gameObject, 0f, base.transform.localPosition).onFinished = null;
+		TweenScale.Begin(base.gameObject, 0f, Vector3.one).onFinished = null;
+		TweenRotationSpecial.Begin(content, 0f, new Vector3(0f, 1f, 0f), 0f, 0f).delay = 0f;
+		HideCardPack();
+	}
 }

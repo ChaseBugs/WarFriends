@@ -1,63 +1,191 @@
 using UnityEngine;
 
-public class CameraPathOrientationList : MonoBehaviour
+[ExecuteInEditMode]
+public class CameraPathOrientationList : CameraPathPointList
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public enum Interpolation
+	{
+		None,
+		Linear,
+		SmoothStep,
+		Hermite,
+		Cubic
+	}
 
-	1. No dll files were provided to AssetRipper.
+	public Interpolation interpolation = Interpolation.Cubic;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public new CameraPathOrientation this[int index] => (CameraPathOrientation)base[index];
 
-	2. Incorrect dll files were provided to AssetRipper.
+	private void OnEnable()
+	{
+		base.hideFlags = HideFlags.HideInInspector;
+	}
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public override void Init(CameraPath _cameraPath)
+	{
+		if (!initialised)
+		{
+			pointTypeName = "Orientation";
+			base.Init(_cameraPath);
+			cameraPath.PathPointAddedEvent += AddOrientation;
+			initialised = true;
+		}
+	}
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public override void CleanUp()
+	{
+		base.CleanUp();
+		cameraPath.PathPointAddedEvent -= AddOrientation;
+		initialised = false;
+	}
 
-	3. Assembly Reconstruction has not been implemented.
+	public void AddOrientation(CameraPathControlPoint atPoint)
+	{
+		CameraPathOrientation cameraPathOrientation = base.gameObject.AddComponent<CameraPathOrientation>();
+		if (atPoint.forwardControlPoint != Vector3.zero)
+		{
+			cameraPathOrientation.rotation = Quaternion.LookRotation(atPoint.forwardControlPoint);
+		}
+		else
+		{
+			cameraPathOrientation.rotation = Quaternion.LookRotation(cameraPath.GetPathDirection(atPoint.percentage));
+		}
+		cameraPathOrientation.hideFlags = HideFlags.HideInInspector;
+		AddPoint(cameraPathOrientation, atPoint);
+		RecalculatePoints();
+	}
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public CameraPathOrientation AddOrientation(CameraPathControlPoint curvePointA, CameraPathControlPoint curvePointB, float curvePercetage, Quaternion rotation)
+	{
+		CameraPathOrientation cameraPathOrientation = base.gameObject.AddComponent<CameraPathOrientation>();
+		cameraPathOrientation.rotation = rotation;
+		cameraPathOrientation.hideFlags = HideFlags.HideInInspector;
+		AddPoint(cameraPathOrientation, curvePointA, curvePointB, curvePercetage);
+		RecalculatePoints();
+		return cameraPathOrientation;
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public void RemovePoint(CameraPathOrientation orientation)
+	{
+		RemovePoint((CameraPathPoint)orientation);
+		RecalculatePoints();
+	}
 
-	4. This script is unnecessary.
+	public Quaternion GetOrientation(float percentage)
+	{
+		if (base.realNumberOfPoints < 2)
+		{
+			if (base.realNumberOfPoints == 1)
+			{
+				return this[0].rotation;
+			}
+			return Quaternion.identity;
+		}
+		if (float.IsNaN(percentage))
+		{
+			percentage = 0f;
+		}
+		percentage = Mathf.Clamp(percentage, 0f, 1f);
+		Quaternion identity = Quaternion.identity;
+		switch (interpolation)
+		{
+		case Interpolation.Cubic:
+			identity = CubicInterpolation(percentage);
+			break;
+		case Interpolation.Hermite:
+			identity = CubicInterpolation(percentage);
+			break;
+		case Interpolation.SmoothStep:
+			identity = SmootStepInterpolation(percentage);
+			break;
+		case Interpolation.Linear:
+			identity = LinearInterpolation(percentage);
+			break;
+		case Interpolation.None:
+		{
+			CameraPathOrientation cameraPathOrientation = (CameraPathOrientation)GetPoint(GetNextPointIndex(percentage));
+			identity = cameraPathOrientation.rotation;
+			break;
+		}
+		default:
+			identity = Quaternion.LookRotation(Vector3.forward);
+			break;
+		}
+		if (float.IsNaN(identity.x))
+		{
+			return Quaternion.identity;
+		}
+		return identity;
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private Quaternion LinearInterpolation(float percentage)
+	{
+		int lastPointIndex = GetLastPointIndex(percentage);
+		CameraPathOrientation cameraPathOrientation = (CameraPathOrientation)GetPoint(lastPointIndex);
+		CameraPathOrientation cameraPathOrientation2 = (CameraPathOrientation)GetPoint(lastPointIndex + 1);
+		float percent = cameraPathOrientation.percent;
+		float num = cameraPathOrientation2.percent;
+		if (percent > num)
+		{
+			num += 1f;
+		}
+		float num2 = num - percent;
+		float num3 = percentage - percent;
+		float t = num3 / num2;
+		return Quaternion.Lerp(cameraPathOrientation.rotation, cameraPathOrientation2.rotation, t);
+	}
 
-	5. Script Content Level 0
+	private Quaternion SmootStepInterpolation(float percentage)
+	{
+		int lastPointIndex = GetLastPointIndex(percentage);
+		CameraPathOrientation cameraPathOrientation = (CameraPathOrientation)GetPoint(lastPointIndex);
+		CameraPathOrientation cameraPathOrientation2 = (CameraPathOrientation)GetPoint(lastPointIndex + 1);
+		float percent = cameraPathOrientation.percent;
+		float num = cameraPathOrientation2.percent;
+		if (percent > num)
+		{
+			num += 1f;
+		}
+		float num2 = num - percent;
+		float num3 = percentage - percent;
+		float val = num3 / num2;
+		return Quaternion.Lerp(cameraPathOrientation.rotation, cameraPathOrientation2.rotation, CPMath.SmoothStep(val));
+	}
 
-		AssetRipper was set to not load any script information.
+	private Quaternion CubicInterpolation(float percentage)
+	{
+		int lastPointIndex = GetLastPointIndex(percentage);
+		CameraPathOrientation cameraPathOrientation = (CameraPathOrientation)GetPoint(lastPointIndex);
+		CameraPathOrientation cameraPathOrientation2 = (CameraPathOrientation)GetPoint(lastPointIndex + 1);
+		CameraPathOrientation cameraPathOrientation3 = (CameraPathOrientation)GetPoint(lastPointIndex - 1);
+		CameraPathOrientation cameraPathOrientation4 = (CameraPathOrientation)GetPoint(lastPointIndex + 2);
+		float percent = cameraPathOrientation.percent;
+		float num = cameraPathOrientation2.percent;
+		if (percent > num)
+		{
+			num += 1f;
+		}
+		float num2 = num - percent;
+		float num3 = percentage - percent;
+		float t = num3 / num2;
+		Quaternion result = CPMath.CalculateCubic(cameraPathOrientation.rotation, cameraPathOrientation3.rotation, cameraPathOrientation4.rotation, cameraPathOrientation2.rotation, t);
+		if (float.IsNaN(result.x))
+		{
+			Debug.Log(percentage + " " + cameraPathOrientation.fullName + " " + cameraPathOrientation2.fullName + " " + cameraPathOrientation3.fullName + " " + cameraPathOrientation4.fullName);
+		}
+		return result;
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
-
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	protected override void RecalculatePoints()
+	{
+		base.RecalculatePoints();
+		for (int i = 0; i < base.realNumberOfPoints; i++)
+		{
+			CameraPathOrientation cameraPathOrientation = this[i];
+			if (cameraPathOrientation.lookAt != null)
+			{
+				cameraPathOrientation.rotation = Quaternion.LookRotation(cameraPathOrientation.lookAt.transform.position - cameraPathOrientation.worldPosition);
+			}
+		}
+	}
 }

@@ -39,6 +39,1421 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ea9f040b2b6bd4bf069e31e0ace12f73, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  material: {fileID: 2100000, guid: 6a57a329452ceaa40bcd97035306b0f3, type: 2}
+  sprites:
+  - name: menu-camos-paratrooper
+    outer:
+      serializedVersion: 2
+      x: 1829
+      y: 1412
+      width: 183
+      height: 226
+    inner:
+      serializedVersion: 2
+      x: 1829
+      y: 1412
+      width: 183
+      height: 226
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-camos-machinegunner
+    outer:
+      serializedVersion: 2
+      x: 744
+      y: 1826
+      width: 216
+      height: 222
+    inner:
+      serializedVersion: 2
+      x: 744
+      y: 1826
+      width: 216
+      height: 222
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-helmets-helmet
+    outer:
+      serializedVersion: 2
+      x: 1051
+      y: 1191
+      width: 188
+      height: 200
+    inner:
+      serializedVersion: 2
+      x: 1051
+      y: 1191
+      width: 188
+      height: 200
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-helmets-backcap
+    outer:
+      serializedVersion: 2
+      x: 1245
+      y: 1233
+      width: 242
+      height: 155
+    inner:
+      serializedVersion: 2
+      x: 1245
+      y: 1233
+      width: 242
+      height: 155
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-camos-default
+    outer:
+      serializedVersion: 2
+      x: 1206
+      y: 1623
+      width: 197
+      height: 227
+    inner:
+      serializedVersion: 2
+      x: 1206
+      y: 1623
+      width: 197
+      height: 227
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-accessories-sunglasses
+    outer:
+      serializedVersion: 2
+      x: 1665
+      y: 1057
+      width: 289
+      height: 119
+    inner:
+      serializedVersion: 2
+      x: 1665
+      y: 1057
+      width: 289
+      height: 119
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-helmets-bluebarret
+    outer:
+      serializedVersion: 2
+      x: 1093
+      y: 603
+      width: 230
+      height: 119
+    inner:
+      serializedVersion: 2
+      x: 1093
+      y: 603
+      width: 230
+      height: 119
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-accessories-sportsunglasses
+    outer:
+      serializedVersion: 2
+      x: 1788
+      y: 581
+      width: 228
+      height: 104
+    inner:
+      serializedVersion: 2
+      x: 1788
+      y: 581
+      width: 228
+      height: 104
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-empty
+    outer:
+      serializedVersion: 2
+      x: 896
+      y: 453
+      width: 142
+      height: 142
+    inner:
+      serializedVersion: 2
+      x: 896
+      y: 453
+      width: 142
+      height: 142
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-accessories-bigcigar
+    outer:
+      serializedVersion: 2
+      x: 1600
+      y: 510
+      width: 168
+      height: 119
+    inner:
+      serializedVersion: 2
+      x: 1600
+      y: 510
+      width: 168
+      height: 119
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-accessories-eyepatch
+    outer:
+      serializedVersion: 2
+      x: 480
+      y: 1862
+      width: 258
+      height: 186
+    inner:
+      serializedVersion: 2
+      x: 480
+      y: 1862
+      width: 258
+      height: 186
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-helmets-cap
+    outer:
+      serializedVersion: 2
+      x: 1453
+      y: 1853
+      width: 231
+      height: 195
+    inner:
+      serializedVersion: 2
+      x: 1453
+      y: 1853
+      width: 231
+      height: 195
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-accessories-burglar
+    outer:
+      serializedVersion: 2
+      x: 1690
+      y: 1871
+      width: 250
+      height: 177
+    inner:
+      serializedVersion: 2
+      x: 1690
+      y: 1871
+      width: 250
+      height: 177
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-helmets-helmethorns
+    outer:
+      serializedVersion: 2
+      x: 1608
+      y: 1442
+      width: 215
+      height: 196
+    inner:
+      serializedVersion: 2
+      x: 1608
+      y: 1442
+      width: 215
+      height: 196
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-accessories-gasmask
+    outer:
+      serializedVersion: 2
+      x: 645
+      y: 1427
+      width: 246
+      height: 162
+    inner:
+      serializedVersion: 2
+      x: 645
+      y: 1427
+      width: 246
+      height: 162
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-accessories-gangsterscarf
+    outer:
+      serializedVersion: 2
+      x: 1015
+      y: 981
+      width: 181
+      height: 204
+    inner:
+      serializedVersion: 2
+      x: 1015
+      y: 981
+      width: 181
+      height: 204
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-accessories-nightgoggles
+    outer:
+      serializedVersion: 2
+      x: 757
+      y: 829
+      width: 216
+      height: 170
+    inner:
+      serializedVersion: 2
+      x: 757
+      y: 829
+      width: 216
+      height: 170
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-helmets-santacap
+    outer:
+      serializedVersion: 2
+      x: 222
+      y: 867
+      width: 225
+      height: 160
+    inner:
+      serializedVersion: 2
+      x: 222
+      y: 867
+      width: 225
+      height: 160
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-helmets-hawk
+    outer:
+      serializedVersion: 2
+      x: 358
+      y: 539
+      width: 175
+      height: 198
+    inner:
+      serializedVersion: 2
+      x: 358
+      y: 539
+      width: 175
+      height: 198
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-accessories-specialistglasses
+    outer:
+      serializedVersion: 2
+      x: 1665
+      y: 924
+      width: 268
+      height: 127
+    inner:
+      serializedVersion: 2
+      x: 1665
+      y: 924
+      width: 268
+      height: 127
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-helmets-reaper
+    outer:
+      serializedVersion: 2
+      x: 172
+      y: 440
+      width: 159
+      height: 205
+    inner:
+      serializedVersion: 2
+      x: 172
+      y: 440
+      width: 159
+      height: 205
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-accessories-clownface
+    outer:
+      serializedVersion: 2
+      x: 539
+      y: 504
+      width: 172
+      height: 181
+    inner:
+      serializedVersion: 2
+      x: 539
+      y: 504
+      width: 172
+      height: 181
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-helmets-football
+    outer:
+      serializedVersion: 2
+      x: 0
+      y: 330
+      width: 159
+      height: 195
+    inner:
+      serializedVersion: 2
+      x: 0
+      y: 330
+      width: 159
+      height: 195
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-helmets-jason
+    outer:
+      serializedVersion: 2
+      x: 165
+      y: 243
+      width: 160
+      height: 191
+    inner:
+      serializedVersion: 2
+      x: 165
+      y: 243
+      width: 160
+      height: 191
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-helmets-drillinstructor
+    outer:
+      serializedVersion: 2
+      x: 1351
+      y: 679
+      width: 256
+      height: 119
+    inner:
+      serializedVersion: 2
+      x: 1351
+      y: 679
+      width: 256
+      height: 119
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-helmets-mohawk
+    outer:
+      serializedVersion: 2
+      x: 717
+      y: 481
+      width: 142
+      height: 204
+    inner:
+      serializedVersion: 2
+      x: 717
+      y: 481
+      width: 142
+      height: 204
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-helmets-spartan
+    outer:
+      serializedVersion: 2
+      x: 499
+      y: 279
+      width: 129
+      height: 219
+    inner:
+      serializedVersion: 2
+      x: 499
+      y: 279
+      width: 129
+      height: 219
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-accessories-hipsterbeard
+    outer:
+      serializedVersion: 2
+      x: 1613
+      y: 635
+      width: 169
+      height: 161
+    inner:
+      serializedVersion: 2
+      x: 1613
+      y: 635
+      width: 169
+      height: 161
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-accessories-kglasses
+    outer:
+      serializedVersion: 2
+      x: 1329
+      y: 572
+      width: 265
+      height: 101
+    inner:
+      serializedVersion: 2
+      x: 1329
+      y: 572
+      width: 265
+      height: 101
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-accessories-johnglasses
+    outer:
+      serializedVersion: 2
+      x: 1788
+      y: 691
+      width: 239
+      height: 105
+    inner:
+      serializedVersion: 2
+      x: 1788
+      y: 691
+      width: 239
+      height: 105
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-camos-cowboy
+    outer:
+      serializedVersion: 2
+      x: 0
+      y: 1601
+      width: 223
+      height: 222
+    inner:
+      serializedVersion: 2
+      x: 0
+      y: 1601
+      width: 223
+      height: 222
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-camos-ninja
+    outer:
+      serializedVersion: 2
+      x: 966
+      y: 1621
+      width: 197
+      height: 223
+    inner:
+      serializedVersion: 2
+      x: 966
+      y: 1621
+      width: 197
+      height: 223
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-camos-scientist
+    outer:
+      serializedVersion: 2
+      x: 1790
+      y: 1182
+      width: 183
+      height: 224
+    inner:
+      serializedVersion: 2
+      x: 1790
+      y: 1182
+      width: 183
+      height: 224
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-camos-zombie
+    outer:
+      serializedVersion: 2
+      x: 1169
+      y: 1397
+      width: 186
+      height: 220
+    inner:
+      serializedVersion: 2
+      x: 1169
+      y: 1397
+      width: 186
+      height: 220
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-camos-suitguy
+    outer:
+      serializedVersion: 2
+      x: 1493
+      y: 984
+      width: 166
+      height: 221
+    inner:
+      serializedVersion: 2
+      x: 1493
+      y: 984
+      width: 166
+      height: 221
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-camos-alien
+    outer:
+      serializedVersion: 2
+      x: 0
+      y: 1141
+      width: 174
+      height: 223
+    inner:
+      serializedVersion: 2
+      x: 0
+      y: 1141
+      width: 174
+      height: 223
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-camos-rambo
+    outer:
+      serializedVersion: 2
+      x: 1690
+      y: 1644
+      width: 194
+      height: 221
+    inner:
+      serializedVersion: 2
+      x: 1690
+      y: 1644
+      width: 194
+      height: 221
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-camos-oren
+    outer:
+      serializedVersion: 2
+      x: 1409
+      y: 1394
+      width: 186
+      height: 225
+    inner:
+      serializedVersion: 2
+      x: 1409
+      y: 1394
+      width: 186
+      height: 225
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-camos-rapper
+    outer:
+      serializedVersion: 2
+      x: 1409
+      y: 1625
+      width: 193
+      height: 222
+    inner:
+      serializedVersion: 2
+      x: 1409
+      y: 1625
+      width: 193
+      height: 222
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-camos-sarah
+    outer:
+      serializedVersion: 2
+      x: 584
+      y: 978
+      width: 167
+      height: 221
+    inner:
+      serializedVersion: 2
+      x: 584
+      y: 978
+      width: 167
+      height: 221
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-camos-commando
+    outer:
+      serializedVersion: 2
+      x: 229
+      y: 1597
+      width: 212
+      height: 220
+    inner:
+      serializedVersion: 2
+      x: 229
+      y: 1597
+      width: 212
+      height: 220
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-camos-specops
+    outer:
+      serializedVersion: 2
+      x: 643
+      y: 1205
+      width: 178
+      height: 216
+    inner:
+      serializedVersion: 2
+      x: 643
+      y: 1205
+      width: 178
+      height: 216
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-accessories-engineereliteglasses
+    outer:
+      serializedVersion: 2
+      x: 1093
+      y: 479
+      width: 226
+      height: 118
+    inner:
+      serializedVersion: 2
+      x: 1093
+      y: 479
+      width: 226
+      height: 118
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-accessories-grenadierelitemask
+    outer:
+      serializedVersion: 2
+      x: 0
+      y: 749
+      width: 176
+      height: 204
+    inner:
+      serializedVersion: 2
+      x: 0
+      y: 749
+      width: 176
+      height: 204
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-accessories-grenadiermask
+    outer:
+      serializedVersion: 2
+      x: 0
+      y: 126
+      width: 148
+      height: 198
+    inner:
+      serializedVersion: 2
+      x: 0
+      y: 126
+      width: 148
+      height: 198
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-accessories-scifigrenadiermask
+    outer:
+      serializedVersion: 2
+      x: 331
+      y: 135
+      width: 136
+      height: 194
+    inner:
+      serializedVersion: 2
+      x: 331
+      y: 135
+      width: 136
+      height: 194
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-accessories-swatglasses
+    outer:
+      serializedVersion: 2
+      x: 1642
+      y: 802
+      width: 268
+      height: 116
+    inner:
+      serializedVersion: 2
+      x: 1642
+      y: 802
+      width: 268
+      height: 116
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-helmets-cowboyhat
+    outer:
+      serializedVersion: 2
+      x: 615
+      y: 691
+      width: 268
+      height: 132
+    inner:
+      serializedVersion: 2
+      x: 615
+      y: 691
+      width: 268
+      height: 132
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-helmets-engineer
+    outer:
+      serializedVersion: 2
+      x: 1202
+      y: 910
+      width: 234
+      height: 156
+    inner:
+      serializedVersion: 2
+      x: 1202
+      y: 910
+      width: 234
+      height: 156
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-helmets-engineerelite
+    outer:
+      serializedVersion: 2
+      x: 421
+      y: 1241
+      width: 216
+      height: 184
+    inner:
+      serializedVersion: 2
+      x: 421
+      y: 1241
+      width: 216
+      height: 184
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-helmets-grenadier
+    outer:
+      serializedVersion: 2
+      x: 889
+      y: 601
+      width: 198
+      height: 158
+    inner:
+      serializedVersion: 2
+      x: 889
+      y: 601
+      width: 198
+      height: 158
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-helmets-assault
+    outer:
+      serializedVersion: 2
+      x: 827
+      y: 1005
+      width: 182
+      height: 206
+    inner:
+      serializedVersion: 2
+      x: 827
+      y: 1005
+      width: 182
+      height: 206
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-helmets-grenadierelite
+    outer:
+      serializedVersion: 2
+      x: 966
+      y: 1850
+      width: 234
+      height: 198
+    inner:
+      serializedVersion: 2
+      x: 966
+      y: 1850
+      width: 234
+      height: 198
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-helmets-rocketlauncherelite
+    outer:
+      serializedVersion: 2
+      x: 0
+      y: 531
+      width: 166
+      height: 212
+    inner:
+      serializedVersion: 2
+      x: 0
+      y: 531
+      width: 166
+      height: 212
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-helmets-flamethrower
+    outer:
+      serializedVersion: 2
+      x: 1890
+      y: 1655
+      width: 142
+      height: 210
+    inner:
+      serializedVersion: 2
+      x: 1890
+      y: 1655
+      width: 142
+      height: 210
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-helmets-scifiminigunner
+    outer:
+      serializedVersion: 2
+      x: 979
+      y: 765
+      width: 172
+      height: 210
+    inner:
+      serializedVersion: 2
+      x: 979
+      y: 765
+      width: 172
+      height: 210
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-helmets-rocketlauncher
+    outer:
+      serializedVersion: 2
+      x: 1157
+      y: 728
+      width: 188
+      height: 176
+    inner:
+      serializedVersion: 2
+      x: 1157
+      y: 728
+      width: 188
+      height: 176
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-accessories-rocketlaunchermask
+    outer:
+      serializedVersion: 2
+      x: 0
+      y: 959
+      width: 216
+      height: 176
+    inner:
+      serializedVersion: 2
+      x: 0
+      y: 959
+      width: 216
+      height: 176
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-helmets-madmax
+    outer:
+      serializedVersion: 2
+      x: 1442
+      y: 804
+      width: 194
+      height: 174
+    inner:
+      serializedVersion: 2
+      x: 1442
+      y: 804
+      width: 194
+      height: 174
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-accessories-machinegunnerband
+    outer:
+      serializedVersion: 2
+      x: 827
+      y: 1217
+      width: 218
+      height: 174
+    inner:
+      serializedVersion: 2
+      x: 827
+      y: 1217
+      width: 218
+      height: 174
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-accessories-machinegunnerglasses
+    outer:
+      serializedVersion: 2
+      x: 634
+      y: 385
+      width: 256
+      height: 90
+    inner:
+      serializedVersion: 2
+      x: 634
+      y: 385
+      width: 256
+      height: 90
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-helmets-swathat
+    outer:
+      serializedVersion: 2
+      x: 1245
+      y: 1072
+      width: 242
+      height: 155
+    inner:
+      serializedVersion: 2
+      x: 1245
+      y: 1072
+      width: 242
+      height: 155
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-accessories-madmaxglasses
+    outer:
+      serializedVersion: 2
+      x: 0
+      y: 14
+      width: 266
+      height: 106
+    inner:
+      serializedVersion: 2
+      x: 0
+      y: 14
+      width: 266
+      height: 106
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-helmets-swatelite
+    outer:
+      serializedVersion: 2
+      x: 337
+      y: 335
+      width: 156
+      height: 198
+    inner:
+      serializedVersion: 2
+      x: 337
+      y: 335
+      width: 156
+      height: 198
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-helmets-scifiminigunnerelite
+    outer:
+      serializedVersion: 2
+      x: 182
+      y: 651
+      width: 170
+      height: 210
+    inner:
+      serializedVersion: 2
+      x: 182
+      y: 651
+      width: 170
+      height: 210
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-helmets-shotgunner
+    outer:
+      serializedVersion: 2
+      x: 388
+      y: 1033
+      width: 190
+      height: 202
+    inner:
+      serializedVersion: 2
+      x: 388
+      y: 1033
+      width: 190
+      height: 202
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-camos-dusty
+    outer:
+      serializedVersion: 2
+      x: 249
+      y: 1823
+      width: 225
+      height: 225
+    inner:
+      serializedVersion: 2
+      x: 249
+      y: 1823
+      width: 225
+      height: 225
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-camos-madmax
+    outer:
+      serializedVersion: 2
+      x: 729
+      y: 1595
+      width: 193
+      height: 225
+    inner:
+      serializedVersion: 2
+      x: 729
+      y: 1595
+      width: 193
+      height: 225
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-camos-assault
+    outer:
+      serializedVersion: 2
+      x: 208
+      y: 1152
+      width: 174
+      height: 225
+    inner:
+      serializedVersion: 2
+      x: 208
+      y: 1152
+      width: 174
+      height: 225
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-camos-eliteengineer
+    outer:
+      serializedVersion: 2
+      x: 0
+      y: 1370
+      width: 202
+      height: 225
+    inner:
+      serializedVersion: 2
+      x: 0
+      y: 1370
+      width: 202
+      height: 225
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-camos-rocketlauncher
+    outer:
+      serializedVersion: 2
+      x: 928
+      y: 1397
+      width: 184
+      height: 218
+    inner:
+      serializedVersion: 2
+      x: 928
+      y: 1397
+      width: 184
+      height: 218
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-camos-eliteparatrooper
+    outer:
+      serializedVersion: 2
+      x: 447
+      y: 1431
+      width: 192
+      height: 226
+    inner:
+      serializedVersion: 2
+      x: 447
+      y: 1431
+      width: 192
+      height: 226
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-camos-brucelee
+    outer:
+      serializedVersion: 2
+      x: 453
+      y: 743
+      width: 156
+      height: 229
+    inner:
+      serializedVersion: 2
+      x: 453
+      y: 743
+      width: 156
+      height: 229
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-camos-scientist2
+    outer:
+      serializedVersion: 2
+      x: 1601
+      y: 1211
+      width: 183
+      height: 225
+    inner:
+      serializedVersion: 2
+      x: 1601
+      y: 1211
+      width: 183
+      height: 225
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-helmets-assault-elite
+    outer:
+      serializedVersion: 2
+      x: 208
+      y: 1383
+      width: 207
+      height: 208
+    inner:
+      serializedVersion: 2
+      x: 208
+      y: 1383
+      width: 207
+      height: 208
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-helmets-crownbronze
+    outer:
+      serializedVersion: 2
+      x: 1206
+      y: 1856
+      width: 241
+      height: 192
+    inner:
+      serializedVersion: 2
+      x: 1206
+      y: 1856
+      width: 241
+      height: 192
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-helmets-crownsilver
+    outer:
+      serializedVersion: 2
+      x: 480
+      y: 1663
+      width: 243
+      height: 193
+    inner:
+      serializedVersion: 2
+      x: 480
+      y: 1663
+      width: 243
+      height: 193
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-helmets-crowngold
+    outer:
+      serializedVersion: 2
+      x: 0
+      y: 1829
+      width: 243
+      height: 219
+    inner:
+      serializedVersion: 2
+      x: 0
+      y: 1829
+      width: 243
+      height: 219
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  mCoordinates: 0
+  mPixelSize: 1
+  mReplacement: {fileID: 0}
+  pngPath: GuiAtlasVisuals
+  pngHalfPath:
+  replaceTexture: {fileID: 2800000, guid: ca666a8d2deeaad4b9ac75a8e490e182, type: 3}
+  useBinaryData: 0
+  textureWidth: 2048
+  textureHeight: 2048
 --- !u!1001 &100100000
 Prefab:
   serializedVersion: 2

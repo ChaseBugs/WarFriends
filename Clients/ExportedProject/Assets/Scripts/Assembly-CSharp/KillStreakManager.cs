@@ -1,63 +1,292 @@
+using System.Collections.Generic;
+using Google2u;
 using UnityEngine;
 
-public class KillStreakManager : MonoBehaviour
+public class KillStreakManager : Singleton<KillStreakManager>
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	private class BonusActivation
+	{
+		public KillStreakBonusBox box;
 
-	1. No dll files were provided to AssetRipper.
+		public double shotTime;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+		public PlayerController player;
+	}
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public List<KillStreakBonus> bonusesPrefabs;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	private Queue<int> alliesBonusses = new Queue<int>();
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	private Queue<int> enemyBonusses = new Queue<int>();
 
-	3. Assembly Reconstruction has not been implemented.
+	public KillStreakBonusBox killStreakBonusBoxPrefab;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public BonusTakeDisplayer bonusTakeDisplayerPrefab;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public KillStreakBonus boobyTrapBonus;
 
-	4. This script is unnecessary.
+	public Tuple<bool, bool> canBoobyTrap;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private PhotonView mPhotonView;
 
-	5. Script Content Level 0
+	private int mLastBonusIndex;
 
-		AssetRipper was set to not load any script information.
+	public int numberOfDestroyedBoxesInLastGame;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	private Dictionary<int, BonusActivation> bonusesActivations = new Dictionary<int, BonusActivation>();
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public Crates crates { get; private set; }
 
-	7. An incorrect path was provided to AssetRipper.
+	protected override void Awake()
+	{
+		base.Awake();
+		Singleton<GameController>.instance.GameStarted += InstanceOnGameStarted;
+		Singleton<GameController>.instance.GameEnded += InstanceOnGameEnded;
+		Singleton<GameController>.instance.BeforeGameStarted += InstanceOnBeforeGameStarted;
+		Singleton<GameController>.instance.SceneFreed += InstanceOnSceneFreed;
+		mPhotonView = GetComponent<PhotonView>();
+		foreach (KillStreakBonus bonusesPrefab in bonusesPrefabs)
+		{
+			bonusesPrefab.Init();
+		}
+		Singleton<BeanstalkServerManager>.instance.AfterPlayerDataLoaded += InstanceOnPlayerDataLoaded;
+		canBoobyTrap = new Tuple<bool, bool>(val1: false, val2: false);
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	private void InstanceOnSceneFreed()
+	{
+		foreach (KillStreakBonus bonusesPrefab in bonusesPrefabs)
+		{
+			bonusesPrefab.SceneFreed();
+		}
+	}
 
-	*/
+	private void InstanceOnBeforeGameStarted()
+	{
+		foreach (KillStreakBonus bonusesPrefab in bonusesPrefabs)
+		{
+			bonusesPrefab.BeforeGameStarted();
+		}
+	}
+
+	private void InstanceOnPlayerDataLoaded()
+	{
+		crates = GetComponent<Crates>();
+		Grenade component = Singleton<KillStreakManager>.instance.GetComponent<Grenade>();
+		if (component != null)
+		{
+			ExplosiveSetup explosiveSetup = component.ammoSetup as ExplosiveSetup;
+			if (explosiveSetup != null)
+			{
+				explosiveSetup.playerBehindShieldRatio = Singleton<GameVariables>.instance.cardConstants.GetRow(CardConstants.rowIds.ClusterGrenadePlayerBehindShieldConstant).FLOATVALUE;
+				explosiveSetup.damageToPlayerCoeficient = Singleton<GameVariables>.instance.cardConstants.GetRow(CardConstants.rowIds.ClusterGrenadePlayerDamageConstant).FLOATVALUE;
+				explosiveSetup.damageToPlayerOvertimeCoeficient = Singleton<GameVariables>.instance.cardConstants.GetRow(CardConstants.rowIds.ClusterGrenadePlayerDamageOvertimeConstant).FLOATVALUE;
+			}
+		}
+	}
+
+	private void InstanceOnGameStarted()
+	{
+		alliesBonusses.Clear();
+		enemyBonusses.Clear();
+		Tuple<bool, bool> tuple = canBoobyTrap;
+		bool flag = false;
+		canBoobyTrap.Value2 = flag;
+		tuple.Value1 = flag;
+		KillStreakBonus.activeBonusses = new List<KillStreakBonus>();
+		numberOfDestroyedBoxesInLastGame = 0;
+		bonusesActivations.Clear();
+	}
+
+	private void InstanceOnGameEnded(GameController.GameEndReason gameEndReason)
+	{
+		ObjectPoolDatabase.networkPool.FreeObjectsWithPrefab(killStreakBonusBoxPrefab);
+	}
+
+	public void GenerateNewBonus(PlayerController owner)
+	{
+		InvokeAfter(delegate
+		{
+			SpawnBonus(owner);
+		}, 1.5f);
+	}
+
+	public void EnqueueNewBonus(int index, Fractions fraction)
+	{
+		if (fraction == Fractions.Allies)
+		{
+			alliesBonusses.Enqueue(index);
+		}
+		else
+		{
+			enemyBonusses.Enqueue(index);
+		}
+	}
+
+	private void SpawnBonus(PlayerController owner)
+	{
+		KillStreakBonus killStreakBonus = bonusesPrefabs[0];
+		int i = -1;
+		Queue<int> queue = ((owner.fraction != Fractions.Allies) ? enemyBonusses : alliesBonusses);
+		if (queue.Count > 0)
+		{
+			i = queue.Dequeue();
+		}
+		if (i < 0)
+		{
+			i = 0;
+			float num = 0f;
+			for (int j = 0; j < bonusesPrefabs.Count; j++)
+			{
+				float num2 = ((j != mLastBonusIndex) ? bonusesPrefabs[j].GetBonusProbability(owner) : 0f);
+				num += num2;
+			}
+			float num3 = Random.Range(0f, num);
+			num = 0f;
+			for (i = 0; i < bonusesPrefabs.Count; i++)
+			{
+				KillStreakBonus killStreakBonus2 = bonusesPrefabs[i];
+				num += ((i != mLastBonusIndex) ? killStreakBonus2.GetBonusProbability(owner) : 0f);
+				killStreakBonus = killStreakBonus2;
+				if (num3 < num)
+				{
+					break;
+				}
+			}
+		}
+		else
+		{
+			killStreakBonus = bonusesPrefabs[i];
+		}
+		mLastBonusIndex = i;
+		KillStreakBonus killStreakBonus3 = killStreakBonus;
+		if (killStreakBonus3 == null)
+		{
+			SpawnBonus(owner);
+			return;
+		}
+		int num4 = Random.Range(int.MinValue, int.MaxValue);
+		if (!(Singleton<MapManager>.instance.currentMapDef != null) || Singleton<MapManager>.instance.currentMapDef.spawnAreas == null)
+		{
+			return;
+		}
+		BoxCollider boxCollider = Singleton<MapManager>.instance.currentMapDef.spawnAreas[Random.Range(0, Singleton<MapManager>.instance.currentMapDef.spawnAreas.Count)];
+		Bounds bounds = boxCollider.bounds;
+		Vector3 vector = new Vector3(Random.Range(bounds.min.x, bounds.max.x), Random.Range(bounds.min.y, bounds.max.y), Random.Range(bounds.min.z, bounds.max.z));
+		KillStreakBonusBox killStreakBonusBox = ObjectPoolDatabase.networkPool.Instantiate(killStreakBonusBoxPrefab, vector, Quaternion.identity) as KillStreakBonusBox;
+		if (killStreakBonusBox != null)
+		{
+			bool flag = owner.fraction == PlayerController.currentPlayer.fraction;
+			if (flag)
+			{
+				StatsManager.instance.matchStats.scorestreakGained++;
+			}
+			killStreakBonusBox.bonusToActivate = killStreakBonus3;
+			killStreakBonusBox.owner = owner;
+			killStreakBonusBox.GetComponent<Renderer>().sharedMaterial = ((!flag) ? killStreakBonusBox.redMat : killStreakBonusBox.blueMat);
+			killStreakBonusBox.boxID = num4;
+			mPhotonView.RPC("SpawnBonusNetwork", PhotonTargets.Others, (byte)killStreakBonusBox.indexInObjectPool, vector, i, (byte)owner.playerNetworkId, num4);
+		}
+	}
+
+	[PunRPC]
+	private void SpawnBonusNetwork(byte boxIndexInObjectPool, Vector3 position, int bonusIndex, byte playerID, int boxId)
+	{
+		KillStreakBonusBox killStreakBonusBox = (KillStreakBonusBox)ObjectPoolDatabase.networkPool.ReInstantiate(killStreakBonusBoxPrefab, boxIndexInObjectPool, position, Quaternion.identity);
+		if (killStreakBonusBox != null)
+		{
+			bool flag = PlayerController.players[playerID].fraction == PlayerController.currentPlayer.fraction;
+			if (flag)
+			{
+				StatsManager.instance.matchStats.scorestreakGained++;
+			}
+			KillStreakBonus bonusToActivate = bonusesPrefabs[bonusIndex];
+			killStreakBonusBox.owner = PlayerController.players[playerID];
+			killStreakBonusBox.GetComponent<Renderer>().sharedMaterial = ((!flag) ? killStreakBonusBox.redMat : killStreakBonusBox.blueMat);
+			killStreakBonusBox.bonusToActivate = bonusToActivate;
+			killStreakBonusBox.boxID = boxId;
+		}
+	}
+
+	public void TestSpawnBonus()
+	{
+		SpawnBonus(PlayerController.currentPlayer);
+	}
+
+	public void ActivateBonus(KillStreakBonusBox box, PlayerController player)
+	{
+		bonusesActivations[box.boxID] = new BonusActivation
+		{
+			shotTime = PhotonNetwork.time,
+			box = box,
+			player = player
+		};
+		if (PhotonNetwork.room == null)
+		{
+			Debug.LogError("PhotonNetwork.room == null!");
+			ActivateBonusResultRPC(box.boxID, res: true);
+		}
+		else if (PhotonNetwork.room.playerCount == 2)
+		{
+			mPhotonView.RPC("TryActivateBonusRPC", PhotonTargets.Others, box.boxID, PhotonNetwork.time);
+		}
+		else
+		{
+			ActivateBonusResultRPC(box.boxID, res: true);
+		}
+	}
+
+	[PunRPC]
+	private void ActivateBonusResultRPC(int id, bool res)
+	{
+		bonusesActivations[id].box.ActivateBonus(bonusesActivations[id].player, res);
+	}
+
+	[PunRPC]
+	private void TryActivateBonusRPC(int boxID, double serverTime)
+	{
+		if (bonusesActivations.ContainsKey(boxID))
+		{
+			BonusActivation bonusActivation = bonusesActivations[boxID];
+			mPhotonView.RPC("ActivateBonusResultRPC", PhotonTargets.Others, boxID, bonusActivation.shotTime > serverTime);
+		}
+		else
+		{
+			mPhotonView.RPC("ActivateBonusResultRPC", PhotonTargets.Others, boxID, true);
+		}
+	}
+
+	public bool CanBoobyTrap(Fractions fraction)
+	{
+		return (fraction != Fractions.Allies) ? canBoobyTrap.Value2 : canBoobyTrap.Value1;
+	}
+
+	public void BoobyTrapSet(bool allowed, Fractions fraction)
+	{
+		if (fraction == Fractions.Allies)
+		{
+			canBoobyTrap.Value1 = allowed;
+		}
+		else
+		{
+			canBoobyTrap.Value2 = allowed;
+		}
+		byte b = 0;
+		if (canBoobyTrap.Value1)
+		{
+			b++;
+		}
+		if (canBoobyTrap.Value2)
+		{
+			b += 2;
+		}
+		mPhotonView.RPC("BoobyTrapSetRPC", PhotonTargets.Others, b);
+	}
+
+	[PunRPC]
+	private void BoobyTrapSetRPC(byte bits)
+	{
+		canBoobyTrap.Value1 = (bits & 1) > 0;
+		canBoobyTrap.Value2 = (bits & 2) > 0;
+	}
 }

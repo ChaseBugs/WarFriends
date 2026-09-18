@@ -1,66 +1,205 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Prime31
 {
-	public class FacebookAndroid : MonoBehaviour
+public class FacebookAndroid
+{
+	private static AndroidJavaObject _facebookPlugin;
+
+	static FacebookAndroid()
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
+		if (Application.platform == RuntimePlatform.Android)
+		{
+			using (AndroidJavaClass androidJavaClass = new AndroidJavaClass("com.prime31.FacebookPlugin"))
+			{
+				_facebookPlugin = androidJavaClass.CallStatic<AndroidJavaObject>("instance", new object[0]);
+			}
+			FacebookManager.preLoginSucceededEvent += delegate
+			{
+				Facebook.instance.accessToken = getAccessToken();
+			};
+		}
 	}
+
+	internal static void babysitRequest(bool requiresPublishPermissions, Action afterAuthAction)
+	{
+		new FacebookAuthHelper(requiresPublishPermissions, afterAuthAction).start();
+	}
+
+	public static void init(bool printKeyHash = true)
+	{
+		if (Application.platform == RuntimePlatform.Android)
+		{
+			_facebookPlugin.Call("init", printKeyHash);
+			Facebook.instance.accessToken = getAccessToken();
+		}
+	}
+
+	public static string getAppLaunchUrl()
+	{
+		if (Application.platform != RuntimePlatform.Android)
+		{
+			return string.Empty;
+		}
+		return _facebookPlugin.Call<string>("getAppLaunchUrl", new object[0]);
+	}
+
+	public static void setSessionLoginBehavior(FacebookSessionLoginBehavior loginBehavior)
+	{
+		if (Application.platform == RuntimePlatform.Android)
+		{
+			_facebookPlugin.Call("setSessionLoginBehavior", loginBehavior.ToString());
+		}
+	}
+
+	public static void setDefaultAudience(FacebookSessionDefaultAudience defaultAudience)
+	{
+		if (Application.platform == RuntimePlatform.Android)
+		{
+			_facebookPlugin.Call("setDefaultAudience", defaultAudience.ToString());
+		}
+	}
+
+	public static bool isSessionValid()
+	{
+		if (Application.platform != RuntimePlatform.Android)
+		{
+			return false;
+		}
+		return _facebookPlugin.Call<bool>("isSessionValid", new object[0]);
+	}
+
+	public static string getAccessToken()
+	{
+		if (Application.platform != RuntimePlatform.Android)
+		{
+			return string.Empty;
+		}
+		return _facebookPlugin.Call<string>("getAccessToken", new object[0]);
+	}
+
+	public static List<object> getSessionPermissions()
+	{
+		if (Application.platform == RuntimePlatform.Android)
+		{
+			string json = _facebookPlugin.Call<string>("getSessionPermissions", new object[0]);
+			return json.listFromJson();
+		}
+		return new List<object>();
+	}
+
+	public static void login()
+	{
+		loginWithReadPermissions(new string[0]);
+	}
+
+	public static void loginWithReadPermissions(string[] permissions)
+	{
+		if (Application.platform == RuntimePlatform.Android)
+		{
+			_facebookPlugin.Call("loginWithReadPermissions", new object[1] { permissions });
+		}
+	}
+
+	public static void loginWithPublishPermissions(string[] permissions)
+	{
+		if (Application.platform == RuntimePlatform.Android)
+		{
+			_facebookPlugin.Call("loginWithPublishPermissions", new object[1] { permissions });
+		}
+	}
+
+	public static void logout()
+	{
+		if (Application.platform == RuntimePlatform.Android)
+		{
+			_facebookPlugin.Call("logout");
+			Facebook.instance.accessToken = string.Empty;
+		}
+	}
+
+	public static void showFacebookShareDialog(FacebookShareContent parameters)
+	{
+		if (Application.platform == RuntimePlatform.Android)
+		{
+			_facebookPlugin.Call("showFacebookShareDialog", Json.encode(parameters));
+		}
+	}
+
+	public static void showAppInviteDialog(string appLinkUrl, string previewImageUrl = null)
+	{
+		if (Application.platform == RuntimePlatform.Android)
+		{
+			_facebookPlugin.Call("showAppInviteDialog", appLinkUrl, previewImageUrl);
+		}
+	}
+
+	public static void showGameRequestDialog(FacebookGameRequestContent content)
+	{
+		if (Application.platform == RuntimePlatform.Android)
+		{
+			_facebookPlugin.Call("showGameRequestDialog", Json.encode(content));
+		}
+	}
+
+	public static void graphRequest(string graphPath, string httpMethod, Dictionary<string, string> parameters)
+	{
+		if (Application.platform != RuntimePlatform.Android)
+		{
+			return;
+		}
+		parameters = parameters ?? new Dictionary<string, string>();
+		if (!isSessionValid())
+		{
+			babysitRequest(requiresPublishPermissions: true, delegate
+			{
+				_facebookPlugin.Call("graphRequest", graphPath, httpMethod, parameters.toJson());
+			});
+		}
+		else
+		{
+			_facebookPlugin.Call("graphRequest", graphPath, httpMethod, parameters.toJson());
+		}
+	}
+
+	public static void logEvent(string eventName, Dictionary<string, object> parameters = null)
+	{
+		if (Application.platform == RuntimePlatform.Android)
+		{
+			if (parameters != null)
+			{
+				_facebookPlugin.Call("logEventWithParameters", eventName, Json.encode(parameters));
+			}
+			else
+			{
+				_facebookPlugin.Call("logEvent", eventName);
+			}
+		}
+	}
+
+	public static void logPurchaseEvent(double amount, string currency)
+	{
+		if (Application.platform == RuntimePlatform.Android)
+		{
+			_facebookPlugin.Call("logPurchaseEvent", amount, currency);
+		}
+	}
+
+	public static void logEvent(string eventName, double valueToSum, Dictionary<string, object> parameters = null)
+	{
+		if (Application.platform == RuntimePlatform.Android)
+		{
+			if (parameters != null)
+			{
+				_facebookPlugin.Call("logEventAndValueToSumWithParameters", eventName, valueToSum, Json.encode(parameters));
+			}
+			else
+			{
+				_facebookPlugin.Call("logEventAndValueToSum", eventName, valueToSum);
+			}
+		}
+	}
+}
 }

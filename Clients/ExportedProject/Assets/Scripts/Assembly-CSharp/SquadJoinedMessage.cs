@@ -1,63 +1,153 @@
+using System;
+using Google2u;
+using Newtonsoft.Json.Linq;
 using UnityEngine;
 
-public class SquadJoinedMessage : MonoBehaviour
+internal class SquadJoinedMessage : DatabaseMessage
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public string squadId;
 
-	1. No dll files were provided to AssetRipper.
+	public DatabasePlayer newMember;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public bool isSquadPrivate;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public bool wasAcceptedFromRequest;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public long goldReward;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public override bool actionLeavesLobby => true;
 
-	3. Assembly Reconstruction has not been implemented.
+	public override bool processNextMessage => true;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public SquadJoinedMessage(bool isMe)
+		: base("testingidsquadjoined", Type.SquadJoined)
+	{
+		if (isMe)
+		{
+			newMember = GameLoginManager.currentPlayer;
+			wasAcceptedFromRequest = true;
+			isSquadPrivate = true;
+			messageId += newMember.id;
+		}
+		else
+		{
+			newMember = new DatabasePlayer();
+			newMember.accountName = "Testing Player";
+			newMember.level = 6;
+			newMember.squadName = "Squad";
+			newMember.id = "newMember";
+			messageId += newMember.id;
+		}
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public SquadJoinedMessage(JToken dict)
+		: base(dict)
+	{
+		newMember = new DatabasePlayer();
+		if (dict["PlayerName"] != null)
+		{
+			newMember.accountName = StringParser.ParseString("PlayerName", "S", dict, string.Empty);
+		}
+		if (dict["Level"] != null)
+		{
+			newMember.level = StringParser.ParseIntToken(dict["Level"]["N"]);
+		}
+		if (dict["SquadId"] != null)
+		{
+			newMember.squadName = StringParser.ParseString("SquadId", "S", dict, string.Empty);
+		}
+		squadId = newMember.squadName;
+		if (dict["NewPlayerMemberId"] != null)
+		{
+			newMember.id = StringParser.ParseString("NewPlayerMemberId", "S", dict, string.Empty);
+		}
+		if (dict["SquadRank"] != null)
+		{
+			newMember.squadRank = (SquadRank)StringParser.ParseIntToken(dict["SquadRank"]["N"]);
+		}
+		if (dict["Gold"] != null)
+		{
+			goldReward = StringParser.ParseLongToken(dict["Gold"]["N"], 0L);
+		}
+		if (dict["SquadIsPrivate"] != null)
+		{
+			isSquadPrivate = true;
+		}
+		if (dict["AcceptedFromRequest"] != null)
+		{
+			wasAcceptedFromRequest = true;
+		}
+	}
 
-	4. This script is unnecessary.
+	public override void Show()
+	{
+		base.Show();
+		Debug.Log("Player " + newMember.name + " succesfully joined squad " + squadId);
+		if (wasAcceptedFromRequest)
+		{
+			Debug.Log("Player was accepted to squad via Squad Join Request!");
+		}
+		bool flag = newMember.id == GameLoginManager.currentPlayer.id;
+		bool flag2 = messageTime + 60 > Singleton<BeanstalkServerManager>.instance.currentTimestamp;
+		bool flag3 = flag && isSquadPrivate && wasAcceptedFromRequest;
+		bool shouldChat = Singleton<Chat>.instance.shouldChat;
+		bool flag4 = GameLoginManager.currentPlayer.squadRank == SquadRank.Leader;
+		bool flag5 = Singleton<BeanstalkServerManager>.instance.timestampPlayerDataLoaded > messageTime;
+		if (flag && !string.IsNullOrEmpty(squadId) && !flag5)
+		{
+			GameLoginManager.instance.AddPlayerToSquad(squadId, SquadRank.Member);
+		}
+		else if (flag2)
+		{
+			string squadName = GameLoginManager.currentPlayer.squadName;
+			Singleton<BeanstalkServerManager>.instance.GetAllSquadMembers(squadName, forceUpdate: true);
+		}
+		if (flag)
+		{
+			string dBKEY = Singleton<GameVariables>.instance.constants.GetRow(Constants.rowIds.GoldRewardFirstTimeSquad).DBKEY;
+			if (goldReward > 0 && !PlayerAnalytics.instance.WasOneTimeRewardAdded(dBKEY))
+			{
+				Singleton<Wallet>.instance.AddGoldReward(goldReward);
+				Singleton<MessageManager>.instance.AddMessage(new RewardMessage(RewardDialogType.Gold, goldReward));
+				PlayerAnalytics.instance.AddOneTimeReward(dBKEY);
+			}
+		}
+		if (shouldChat)
+		{
+			GuiElementSingle<ChatGuiElement>.instance.chatContent.AddDatabaseMessageToSquadChat(this, !flag);
+		}
+		if ((flag3 || (!shouldChat && flag4)) && !base.messageShown)
+		{
+			GuiElementSingle<ChatGuiElement>.instance.messageContent.AddMessage(this);
+		}
+		Confirm();
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	internal override Action InitMessageCenterRecord(MessageCenterRecord record)
+	{
+		record.SetAppearance_SquadJoined(messageType, messageTime, newMember);
+		return delegate
+		{
+			GuiScreenSingle<SquadScreen>.instance.ShowSquadMembers();
+		};
+	}
 
-	5. Script Content Level 0
+	public override void UpdatePlayer(DatabasePlayerInfo player)
+	{
+		if (newMember.id == player.id)
+		{
+			newMember.level = player.level;
+		}
+	}
 
-		AssetRipper was set to not load any script information.
-
-	6. Cpp2IL failed to decompile Il2Cpp data
-
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public override void Confirm()
+	{
+		bool flag = !string.IsNullOrEmpty(GameLoginManager.currentPlayer.squadName);
+		bool flag2 = messageTime + 172800 < Singleton<BeanstalkServerManager>.instance.currentTimestamp;
+		if (!flag || flag2)
+		{
+			Debug.LogError(string.Format("Removing squad joined message - message time:{0}, server time:{1}, isInSquad:{2}", MiscTools.PrintableTime(messageTime, "ID_READYTIME", string.Empty), MiscTools.PrintableTime(Singleton<BeanstalkServerManager>.instance.currentTimestamp, "ID_READYTIME", string.Empty), flag));
+			Ignore();
+		}
+	}
 }

@@ -1,63 +1,129 @@
+using System;
+using System.Collections.Generic;
+using Google2u;
 using UnityEngine;
+using UnityEngine.SocialPlatforms;
 
-public class AchievementsManager : MonoBehaviour
+public class AchievementsManager : Singleton<AchievementsManager>
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Serializable]
+	public class AchievementDefinition
+	{
+		public Achievement achievememt;
 
-	1. No dll files were provided to AssetRipper.
+		[ClassSelection(typeof(Achievement))]
+		public string achievementType;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+		public Achievements.rowIds rowId;
+	}
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public List<AchievementDefinition> achievements;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	private Achievements mAchievementsXls;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	private readonly List<Type> mAchievementTypes = new List<Type>
+	{
+		typeof(AchievementFinishBootcamp),
+		typeof(AchievementCompleteWarpath),
+		typeof(AchievementAchieveRank),
+		typeof(AchievementDeployUnits),
+		typeof(AchievementWinRankedBattles)
+	};
 
-	3. Assembly Reconstruction has not been implemented.
+	public bool isEnabled { get; set; }
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	private Type GetAchievementType(string type)
+	{
+		foreach (Type mAchievementType in mAchievementTypes)
+		{
+			if (mAchievementType.Name == type)
+			{
+				return mAchievementType;
+			}
+		}
+		return null;
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	protected override void Awake()
+	{
+		base.Awake();
+		isEnabled = true;
+		mAchievementsXls = GetComponent<Achievements>();
+		Singleton<BeanstalkServerManager>.instance.PlayerDataLoaded += OnPlayerDataLoaded;
+		foreach (AchievementDefinition achievement in achievements)
+		{
+			AchievementsRow row = mAchievementsXls.GetRow(achievement.rowId);
+			Type achievementType = GetAchievementType(achievement.achievementType);
+			(achievement.achievememt = (Achievement)Activator.CreateInstance(achievementType)).Init(row, achievement.rowId);
+		}
+	}
 
-	4. This script is unnecessary.
+	private void OnPlayerDataLoaded()
+	{
+		if (GameLoginManager.currentPlayer.isGooglePlayConnected && Singleton<GooglePlayGameService>.instance.isLoggedIn)
+		{
+			Social.Active.LoadAchievements(AchievementsRecieved);
+		}
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private void AchievementsRecieved(IAchievement[] iAchievements)
+	{
+		Debug.Log("AchievementsRecieved: ");
+		foreach (IAchievement achievement in iAchievements)
+		{
+			foreach (AchievementDefinition achievement2 in achievements)
+			{
+				if (achievement.id == achievement2.achievememt.androidId)
+				{
+					achievement2.achievememt.Connect(achievement);
+					break;
+				}
+			}
+		}
+	}
 
-	5. Script Content Level 0
+	public void CompleteAchievements<T>() where T : Achievement
+	{
+		if (!isEnabled)
+		{
+			return;
+		}
+		foreach (AchievementDefinition achievement in achievements)
+		{
+			if (achievement.achievememt.GetType() == typeof(T))
+			{
+				achievement.achievememt.CompleteAchievement();
+			}
+		}
+	}
 
-		AssetRipper was set to not load any script information.
+	public void EvaluateAchievements<T>() where T : Achievement
+	{
+		if (!isEnabled)
+		{
+			return;
+		}
+		foreach (AchievementDefinition achievement in achievements)
+		{
+			if (achievement.achievememt.GetType() == typeof(T) && !achievement.achievememt.completed)
+			{
+				achievement.achievememt.Evaluate();
+			}
+		}
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
-
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public void EvaluateAchievements(Achievement.Evaluation evaluation)
+	{
+		if (!isEnabled)
+		{
+			return;
+		}
+		foreach (AchievementDefinition achievement in achievements)
+		{
+			if ((achievement.achievememt.evaluation & evaluation) != Achievement.Evaluation.None && !achievement.achievememt.completed)
+			{
+				achievement.achievememt.Evaluate();
+			}
+		}
+	}
 }

@@ -1,63 +1,261 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
-public class MainScreenAssignments : MonoBehaviour
+public class MainScreenAssignments : Core_BaseScript
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Header("Core")]
+	public BoxCollider boxCollider;
 
-	1. No dll files were provided to AssetRipper.
+	public GameObject assignmentNotificationObject;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public GameObject assignmentNotificationGold;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public GameObject assignmentNotificationWarbucks;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	[Header("Starter")]
+	public GameObject starterPart;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public WinStreakCounter starterCounter;
 
-	3. Assembly Reconstruction has not been implemented.
+	public StarterAssignmentComplete[] starterCompleted;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	[Header("Daily")]
+	public GameObject dailyPart;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public UILabel dailyProgressLabel;
 
-	4. This script is unnecessary.
+	public UISprite[] dailyAssignmentProgress;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public UISprite dailyDayProgress;
 
-	5. Script Content Level 0
+	public UISprite[] dailyDayCompleted;
 
-		AssetRipper was set to not load any script information.
+	public BoxCollider dailyPartClaimCollider;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	[Header("-Hint")]
+	public BoxCollider dailyMegaRewardHint;
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public UISprite dailyMegaRewardHintButtonSprite;
 
-	7. An incorrect path was provided to AssetRipper.
+	public UIPanel hintDialog;
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	public BoxCollider hintCollider;
 
-	*/
+	public UITable hintTable;
+
+	public GameObject hintLengthObject;
+
+	public UISprite hintDialogBackground;
+
+	public void InitControls()
+	{
+		AssignmentsManager.instance.AssignmentsLoaded += UpdateGui;
+		AssignmentsManager.instance.AssignmentClaimed += delegate
+		{
+			UpdateGui();
+		};
+		StarterAssignmentsManager.instance.AssignmentClaimed += UpdateGui;
+		Singleton<BeanstalkServerManager>.instance.DataLoaded += OnDataLoaded;
+		hintTable.repositionNow = true;
+		UITable uITable = hintTable;
+		uITable.onReposition = (UITable.OnReposition)Delegate.Combine(uITable.onReposition, new UITable.OnReposition(OnHintReposition));
+		UIEventListener uIEventListener = UIEventListener.Get(boxCollider.gameObject);
+		uIEventListener.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener.onClick, new UIEventListener.VoidDelegate(AssignmentsClick));
+		UIEventListener uIEventListener2 = UIEventListener.Get(dailyMegaRewardHint.gameObject);
+		uIEventListener2.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener2.onClick, new UIEventListener.VoidDelegate(HintButtonClick));
+		UIEventListener uIEventListener3 = UIEventListener.Get(hintDialog.gameObject);
+		uIEventListener3.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener3.onClick, new UIEventListener.VoidDelegate(HintDialogClick));
+		UIEventListener uIEventListener4 = UIEventListener.Get(dailyPartClaimCollider.gameObject);
+		uIEventListener4.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener4.onClick, new UIEventListener.VoidDelegate(ClaimMegaRewardClick));
+	}
+
+	private void OnDataLoaded(DatabaseAction action)
+	{
+		if (action == DatabaseAction.CompleteStarterAssignments || action == DatabaseAction.ClaimAssignmentMegaReward)
+		{
+			UpdateGui();
+		}
+	}
+
+	private void UpdateGui()
+	{
+		if (GuiScreenSingle<MainScreen>.instance.isShowed)
+		{
+			InitGuiValues();
+		}
+	}
+
+	private void OnHintReposition()
+	{
+		float num = Mathf.Abs(hintLengthObject.transform.localPosition.y);
+		hintDialogBackground.transform.localScale = hintDialogBackground.transform.localScale.ReplaceY(num + 60f);
+		hintCollider.center = hintCollider.center.ReplaceY((0f - num) / 2f - 30f);
+		hintCollider.size = hintCollider.size.ReplaceY(num + 100f);
+	}
+
+	private void AssignmentsClick(GameObject go)
+	{
+		Singleton<GuiManager>.instance.ShowGui(GuiScreenSingle<AssignmentsScreen>.instance);
+	}
+
+	private void HintButtonClick(GameObject go)
+	{
+		SoundsManager.Instance.PlayButtonClickedSound();
+		if (hintDialog.gameObject.activeSelf)
+		{
+			HideHint();
+		}
+		else
+		{
+			ShowHint();
+		}
+	}
+
+	private void HintDialogClick(GameObject go)
+	{
+		SoundsManager.Instance.PlayButtonClickedSound();
+		HideHint();
+	}
+
+	private void ClaimMegaRewardClick(GameObject go)
+	{
+		dailyPartClaimCollider.enabled = false;
+		SoundsManager.Instance.PlaySound(SoundsManager.SoundsEnum.AssignmentMegaReward);
+		Singleton<BeanstalkServerManager>.instance.ClaimAssignmentMegaReward();
+	}
+
+	public void InitGuiValues()
+	{
+		bool isActiveAndNotCompleted = StarterAssignmentsManager.instance.isActiveAndNotCompleted;
+		dailyPart.SetActive(!isActiveAndNotCompleted);
+		starterPart.SetActive(isActiveAndNotCompleted);
+		AssignmentNotification();
+		if (isActiveAndNotCompleted)
+		{
+			UpdateStarterLook();
+		}
+		else
+		{
+			UpdateDailyLook();
+		}
+	}
+
+	private void UpdateStarterLook()
+	{
+		StarterAssignment currentAssignment = StarterAssignmentsManager.instance.currentAssignment;
+		int num = ((currentAssignment == null) ? StarterAssignmentsManager.instance.assignmentsCount : (currentAssignment.order - 1));
+		for (int i = 0; i < starterCompleted.Length; i++)
+		{
+			if (i < num)
+			{
+				starterCompleted[i].SetCompleted();
+			}
+			else if (i == num)
+			{
+				starterCompleted[i].SetCurrent();
+			}
+			else
+			{
+				starterCompleted[i].SetDefault();
+			}
+		}
+		starterCounter.StopCounter();
+		starterCounter.StartCounter(StarterAssignmentsManager.instance.remainingTime);
+	}
+
+	private void UpdateDailyLook()
+	{
+		List<Assignment> assignments = AssignmentsManager.instance.GetAssignments(update: false);
+		int num = 0;
+		for (int i = 0; i < dailyAssignmentProgress.Length; i++)
+		{
+			float fillAmount = ((assignments.Count > i) ? assignments[i].GetProgress() : 0f);
+			dailyAssignmentProgress[i].fillAmount = fillAmount;
+			if (assignments.Count > i && assignments[i].currentState == Assignment.State.Claimed)
+			{
+				num++;
+			}
+		}
+		dailyProgressLabel.text = $"{num} / {assignments.Count}";
+		int completedDaysAssignments = AssignmentsManager.instance.completedDaysAssignments;
+		for (int j = 0; j < dailyDayCompleted.Length; j++)
+		{
+			dailyDayCompleted[j].gameObject.SetActive(j < completedDaysAssignments);
+		}
+		if (completedDaysAssignments >= 7)
+		{
+			dailyDayProgress.fillAmount = 1f;
+		}
+		else if (completedDaysAssignments <= 0)
+		{
+			dailyDayProgress.fillAmount = 0f;
+		}
+		else
+		{
+			dailyDayProgress.fillAmount = (90f + 70f * (float)(completedDaysAssignments - 1)) / 600f;
+		}
+		InstantHideHint();
+		bool active = completedDaysAssignments >= dailyDayCompleted.Length;
+		dailyPartClaimCollider.gameObject.SetActive(active);
+		dailyPartClaimCollider.enabled = true;
+	}
+
+	private void AssignmentNotification()
+	{
+		if (!StarterAssignmentsManager.instance.isActiveAndNotCompleted && Singleton<NotificationManager>.instance.GetNumberOfAssignmentNotifications() > 0)
+		{
+			assignmentNotificationObject.SetActive(value: true);
+			assignmentNotificationGold.gameObject.SetActive(value: true);
+			assignmentNotificationWarbucks.gameObject.SetActive(value: false);
+		}
+		else if (Singleton<NotificationManager>.instance.NotificationStarterAssignments())
+		{
+			assignmentNotificationObject.SetActive(value: true);
+			assignmentNotificationGold.gameObject.SetActive(!StarterAssignmentsManager.instance.isWBReward);
+			assignmentNotificationWarbucks.gameObject.SetActive(StarterAssignmentsManager.instance.isWBReward);
+		}
+		else
+		{
+			assignmentNotificationObject.SetActive(value: false);
+		}
+	}
+
+	private void ShowHint()
+	{
+		dailyMegaRewardHintButtonSprite.spriteName = MiscTools.closeButtonSprite;
+		dailyMegaRewardHintButtonSprite.MakePixelPerfect();
+		hintDialog.gameObject.SetActive(value: true);
+		hintDialog.alpha1 = 0.005f;
+		TweenAlpha.Begin(hintDialog.gameObject, 0.4f, 1f).onFinished = null;
+		hintDialog.transform.localPosition = new Vector3(302f, -20f, -50f);
+		TweenPosition tweenPosition = TweenPosition.Begin(hintDialog.gameObject, 0.25f, new Vector3(302f, -115f, -50f), new Vector3(302f, -85f, -50f));
+		tweenPosition.method = UITweener.Method.EaseIn;
+		tweenPosition.onFinished = delegate
+		{
+			TweenPosition tweenPosition2 = TweenPosition.Begin(hintDialog.gameObject, 0.15f, new Vector3(302f, -95f, -50f));
+			tweenPosition2.method = UITweener.Method.EaseOut;
+			tweenPosition2.onFinished = null;
+		};
+	}
+
+	private void HideHint()
+	{
+		dailyMegaRewardHintButtonSprite.spriteName = MiscTools.infoButtonSprite;
+		dailyMegaRewardHintButtonSprite.MakePixelPerfect();
+		TweenAlpha.Begin(hintDialog.gameObject, 0.4f, 0f).onFinished = null;
+		TweenPosition tweenPosition = TweenPosition.Begin(hintDialog.gameObject, 0.4f, new Vector3(302f, -115f, -50f));
+		tweenPosition.method = UITweener.Method.EaseIn;
+		tweenPosition.onFinished = delegate
+		{
+			InstantHideHint();
+		};
+	}
+
+	private void InstantHideHint()
+	{
+		hintDialog.gameObject.SetActive(value: false);
+		dailyMegaRewardHintButtonSprite.spriteName = MiscTools.infoButtonSprite;
+		dailyMegaRewardHintButtonSprite.MakePixelPerfect();
+	}
 }

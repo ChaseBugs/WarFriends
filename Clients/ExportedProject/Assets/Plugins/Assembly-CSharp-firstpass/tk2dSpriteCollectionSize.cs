@@ -1,63 +1,134 @@
-using UnityEngine;
+using System;
 
-public class tk2dSpriteCollectionSize : MonoBehaviour
+[Serializable]
+public class tk2dSpriteCollectionSize
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public enum Type
+	{
+		Explicit,
+		PixelsPerMeter
+	}
 
-	1. No dll files were provided to AssetRipper.
+	public Type type = Type.PixelsPerMeter;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public float orthoSize = 10f;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public float pixelsPerMeter = 20f;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public float width = 960f;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public float height = 640f;
 
-	3. Assembly Reconstruction has not been implemented.
+	public float OrthoSize
+	{
+		get
+		{
+			switch (type)
+			{
+				case Type.Explicit: return orthoSize;
+				case Type.PixelsPerMeter: return 0.5f;
+				default: return orthoSize;
+			}
+		}
+	}
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public float TargetHeight
+	{
+		get
+		{
+			switch (type)
+			{
+				case Type.Explicit: return height;
+				case Type.PixelsPerMeter: return pixelsPerMeter;
+				default: return height;
+			}
+		}
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public static tk2dSpriteCollectionSize Explicit(float orthoSize, float targetHeight)
+	{
+		return ForResolution(orthoSize, targetHeight, targetHeight);
+	}
 
-	4. This script is unnecessary.
+	public static tk2dSpriteCollectionSize PixelsPerMeter(float pixelsPerMeter)
+	{
+		tk2dSpriteCollectionSize tk2dSpriteCollectionSize2 = new tk2dSpriteCollectionSize();
+		tk2dSpriteCollectionSize2.type = Type.PixelsPerMeter;
+		tk2dSpriteCollectionSize2.pixelsPerMeter = pixelsPerMeter;
+		return tk2dSpriteCollectionSize2;
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public static tk2dSpriteCollectionSize ForResolution(float orthoSize, float width, float height)
+	{
+		tk2dSpriteCollectionSize tk2dSpriteCollectionSize2 = new tk2dSpriteCollectionSize();
+		tk2dSpriteCollectionSize2.type = Type.Explicit;
+		tk2dSpriteCollectionSize2.orthoSize = orthoSize;
+		tk2dSpriteCollectionSize2.width = width;
+		tk2dSpriteCollectionSize2.height = height;
+		return tk2dSpriteCollectionSize2;
+	}
 
-	5. Script Content Level 0
+	public static tk2dSpriteCollectionSize ForTk2dCamera()
+	{
+		tk2dSpriteCollectionSize tk2dSpriteCollectionSize2 = new tk2dSpriteCollectionSize();
+		tk2dSpriteCollectionSize2.type = Type.PixelsPerMeter;
+		tk2dSpriteCollectionSize2.pixelsPerMeter = 1f;
+		return tk2dSpriteCollectionSize2;
+	}
 
-		AssetRipper was set to not load any script information.
+	public static tk2dSpriteCollectionSize ForTk2dCamera(tk2dCamera camera)
+	{
+		tk2dSpriteCollectionSize tk2dSpriteCollectionSize2 = new tk2dSpriteCollectionSize();
+		tk2dCameraSettings cameraSettings = camera.SettingsRoot.CameraSettings;
+		if (cameraSettings.projection == tk2dCameraSettings.ProjectionType.Orthographic)
+		{
+			switch (cameraSettings.orthographicType)
+			{
+			case tk2dCameraSettings.OrthographicType.PixelsPerMeter:
+				tk2dSpriteCollectionSize2.type = Type.PixelsPerMeter;
+				tk2dSpriteCollectionSize2.pixelsPerMeter = cameraSettings.orthographicPixelsPerMeter;
+				break;
+			case tk2dCameraSettings.OrthographicType.OrthographicSize:
+				tk2dSpriteCollectionSize2.type = Type.Explicit;
+				tk2dSpriteCollectionSize2.height = camera.nativeResolutionHeight;
+				tk2dSpriteCollectionSize2.orthoSize = cameraSettings.orthographicSize;
+				break;
+			}
+		}
+		else if (cameraSettings.projection == tk2dCameraSettings.ProjectionType.Perspective)
+		{
+			tk2dSpriteCollectionSize2.type = Type.PixelsPerMeter;
+			tk2dSpriteCollectionSize2.pixelsPerMeter = 20f;
+		}
+		return tk2dSpriteCollectionSize2;
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public static tk2dSpriteCollectionSize Default()
+	{
+		return PixelsPerMeter(20f);
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public void CopyFromLegacy(bool useTk2dCamera, float orthoSize, float targetHeight)
+	{
+		if (useTk2dCamera)
+		{
+			type = Type.PixelsPerMeter;
+			pixelsPerMeter = 1f;
+		}
+		else
+		{
+			type = Type.Explicit;
+			height = targetHeight;
+			this.orthoSize = orthoSize;
+		}
+	}
 
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public void CopyFrom(tk2dSpriteCollectionSize source)
+	{
+		type = source.type;
+		width = source.width;
+		height = source.height;
+		orthoSize = source.orthoSize;
+		pixelsPerMeter = source.pixelsPerMeter;
+	}
 }

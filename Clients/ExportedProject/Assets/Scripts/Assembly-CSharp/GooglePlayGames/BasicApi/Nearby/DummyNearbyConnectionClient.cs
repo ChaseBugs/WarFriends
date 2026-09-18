@@ -1,66 +1,100 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace GooglePlayGames.BasicApi.Nearby
 {
-	public class DummyNearbyConnectionClient : MonoBehaviour
+public class DummyNearbyConnectionClient : INearbyConnectionClient
+{
+	public int MaxUnreliableMessagePayloadLength()
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
+		return 1168;
 	}
+
+	public int MaxReliableMessagePayloadLength()
+	{
+		return 4096;
+	}
+
+	public void SendReliable(List<string> recipientEndpointIds, byte[] payload)
+	{
+		Debug.LogError("SendReliable called from dummy implementation");
+	}
+
+	public void SendUnreliable(List<string> recipientEndpointIds, byte[] payload)
+	{
+		Debug.LogError("SendUnreliable called from dummy implementation");
+	}
+
+	public void StartAdvertising(string name, List<string> appIdentifiers, TimeSpan? advertisingDuration, Action<AdvertisingResult> resultCallback, Action<ConnectionRequest> connectionRequestCallback)
+	{
+		AdvertisingResult obj = new AdvertisingResult(ResponseStatus.LicenseCheckFailed, string.Empty);
+		resultCallback(obj);
+	}
+
+	public void StopAdvertising()
+	{
+		Debug.LogError("StopAvertising in dummy implementation called");
+	}
+
+	public void SendConnectionRequest(string name, string remoteEndpointId, byte[] payload, Action<ConnectionResponse> responseCallback, IMessageListener listener)
+	{
+		Debug.LogError("SendConnectionRequest called from dummy implementation");
+		if (responseCallback != null)
+		{
+			ConnectionResponse obj = ConnectionResponse.Rejected(0L, string.Empty);
+			responseCallback(obj);
+		}
+	}
+
+	public void AcceptConnectionRequest(string remoteEndpointId, byte[] payload, IMessageListener listener)
+	{
+		Debug.LogError("AcceptConnectionRequest in dummy implementation called");
+	}
+
+	public void StartDiscovery(string serviceId, TimeSpan? advertisingTimeout, IDiscoveryListener listener)
+	{
+		Debug.LogError("StartDiscovery in dummy implementation called");
+	}
+
+	public void StopDiscovery(string serviceId)
+	{
+		Debug.LogError("StopDiscovery in dummy implementation called");
+	}
+
+	public void RejectConnectionRequest(string requestingEndpointId)
+	{
+		Debug.LogError("RejectConnectionRequest in dummy implementation called");
+	}
+
+	public void DisconnectFromEndpoint(string remoteEndpointId)
+	{
+		Debug.LogError("DisconnectFromEndpoint in dummy implementation called");
+	}
+
+	public void StopAllConnections()
+	{
+		Debug.LogError("StopAllConnections in dummy implementation called");
+	}
+
+	public string LocalEndpointId()
+	{
+		return string.Empty;
+	}
+
+	public string LocalDeviceId()
+	{
+		return "DummyDevice";
+	}
+
+	public string GetAppBundleId()
+	{
+		return "dummy.bundle.id";
+	}
+
+	public string GetServiceId()
+	{
+		return "dummy.service.id";
+	}
+}
 }

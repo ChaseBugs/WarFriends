@@ -1,63 +1,76 @@
+using System.Collections;
 using UnityEngine;
 
+[RequireComponent(typeof(MeshFilter))]
 public class WFX_BulletHoleDecal : MonoBehaviour
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	private static Vector2[] quadUVs = new Vector2[4]
+	{
+		new Vector2(0f, 0f),
+		new Vector2(0f, 1f),
+		new Vector2(1f, 0f),
+		new Vector2(1f, 1f)
+	};
 
-	1. No dll files were provided to AssetRipper.
+	public float lifetime = 10f;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public float fadeoutpercent = 80f;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public Vector2 frames;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public bool randomRotation;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public bool deactivate;
 
-	3. Assembly Reconstruction has not been implemented.
+	private float life;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	private float fadeout;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	private Color color;
 
-	4. This script is unnecessary.
+	private float orgAlpha;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private void Awake()
+	{
+		color = GetComponent<Renderer>().material.GetColor("_TintColor");
+		orgAlpha = color.a;
+	}
 
-	5. Script Content Level 0
+	private void OnEnable()
+	{
+		int num = Random.Range(0, (int)(frames.x * frames.y));
+		int num2 = (int)((float)num % frames.x);
+		int num3 = (int)((float)num / frames.y);
+		Vector2[] array = new Vector2[4];
+		for (int i = 0; i < 4; i++)
+		{
+			array[i].x = (quadUVs[i].x + (float)num2) * (1f / frames.x);
+			array[i].y = (quadUVs[i].y + (float)num3) * (1f / frames.y);
+		}
+		GetComponent<MeshFilter>().mesh.uv = array;
+		if (randomRotation)
+		{
+			base.transform.Rotate(0f, 0f, Random.Range(0f, 360f), Space.Self);
+		}
+		life = lifetime;
+		fadeout = life * (fadeoutpercent / 100f);
+		color.a = orgAlpha;
+		GetComponent<Renderer>().material.SetColor("_TintColor", color);
+		StopAllCoroutines();
+		StartCoroutine("holeUpdate");
+	}
 
-		AssetRipper was set to not load any script information.
-
-	6. Cpp2IL failed to decompile Il2Cpp data
-
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	private IEnumerator holeUpdate()
+	{
+		while (life > 0f)
+		{
+			life -= Time.deltaTime;
+			if (life <= fadeout)
+			{
+				color.a = Mathf.Lerp(0f, orgAlpha, life / fadeout);
+				GetComponent<Renderer>().material.SetColor("_TintColor", color);
+			}
+			yield return null;
+		}
+	}
 }

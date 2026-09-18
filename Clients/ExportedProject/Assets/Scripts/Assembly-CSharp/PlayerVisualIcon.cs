@@ -1,63 +1,177 @@
 using UnityEngine;
 
-public class PlayerVisualIcon : MonoBehaviour
+public class PlayerVisualIcon : Core_BaseScript
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Header("Core")]
+	public UISprite background;
 
-	1. No dll files were provided to AssetRipper.
+	public UISprite highlight;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public UISprite icon;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public UISprite powerBandIcon;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	[Header("-Packs")]
+	public GameObject packs;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	[Header("-Parts")]
+	public UILabel partsProgress;
 
-	3. Assembly Reconstruction has not been implemented.
+	public GameObject partsPart;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public UISprite partsBackground;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public UILabel partsRarity;
 
-	4. This script is unnecessary.
+	public UISprite partsLocked;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	[Header("-Arena")]
+	public GameObject arenaPart;
 
-	5. Script Content Level 0
+	public UISprite arenaLocked;
 
-		AssetRipper was set to not load any script information.
+	[Header("-Equiped")]
+	public UISprite equipedIcon;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	[Header("---Locked")]
+	public GameObject locked;
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public UILabel lockedRank;
 
-	7. An incorrect path was provided to AssetRipper.
+	[Header("---Not Bought")]
+	public GameObject notBought;
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	public UISprite buyGoldIcon;
 
-	*/
+	public UISprite buyWbIcon;
+
+	[Header("---Power Band Info")]
+	public GameObject powerBandInfo;
+
+	public UILabel powerBandValue;
+
+	public UISprite powerBandMiniIcon;
+
+	[Header("---Rented")]
+	public UILabel rentedLabel;
+
+	[Header("-Sale")]
+	public GameObject salePart;
+
+	[Header("-Notification")]
+	public GameObject notification;
+
+	private PlayerVisual mVisual;
+
+	public PlayerVisual visual => mVisual;
+
+	public void Initialize(PlayerVisual visual)
+	{
+		mVisual = visual;
+		bool purchasableInShop = visual.purchasableInShop;
+		bool isFromArena = visual.isFromArena;
+		int num = 2;
+		if (purchasableInShop)
+		{
+			num = ((visual.numberOfPartsMax > 0) ? 3 : 0);
+		}
+		else if (isFromArena)
+		{
+			num = 1;
+		}
+		int num2 = 2;
+		if (visual.isBought)
+		{
+			num2 = 0;
+		}
+		else if (visual.numberOfParts > 0)
+		{
+			num2 = 1;
+		}
+		base.gameObject.name = $"{num} {num2} {(int)visual.rarity} {visual.id}";
+		powerBandIcon.gameObject.SetActive(value: false);
+		locked.SetActive(value: false);
+		notBought.SetActive(value: false);
+		rentedLabel.gameObject.SetActive(value: false);
+		powerBandInfo.SetActive(value: false);
+		arenaPart.SetActive(value: false);
+		icon.gameObject.SetActive(value: true);
+		icon.spriteName = visual.icon;
+		icon.MakePixelPerfect();
+		if (icon.transform.localScale.y > 200f)
+		{
+			icon.transform.localPosition = icon.transform.localPosition.ReplaceY((icon.transform.localScale.y - 200f) / 2f);
+		}
+		partsProgress.color = GameVariables.rarityColours[visual.rarity];
+		partsBackground.color = partsProgress.color.ReplaceA(0.5f);
+		partsRarity.text = ((!visual.isDefault || visual.owner.categoryNumber <= 0) ? visual.rarityName : string.Empty);
+		MiscTools.SetUILabelRescale(partsRarity, 30f, 20f, 212);
+		SetHighlight(isSelected: false);
+		SetEquipped();
+		InitGuiValuesGraphics();
+	}
+
+	public void InitGuiValuesGraphics()
+	{
+		UpdateGraphics();
+	}
+
+	private void Update()
+	{
+		if (visual != null && visual.isFromArena && !arenaLocked.gameObject.activeSelf)
+		{
+			arenaLocked.gameObject.SetActive(!visual.isBought);
+		}
+	}
+
+	public void SetHighlight(bool isSelected)
+	{
+		highlight.gameObject.SetActive(isSelected);
+	}
+
+	internal void SetEquipped()
+	{
+		bool isEquipped = mVisual.isEquipped;
+		background.color = (isEquipped ? Colours.blueEquipped : ((!mVisual.purchasableInShop && !mVisual.isFromArena) ? Color.yellow : Color.white));
+		equipedIcon.alpha = ((!isEquipped) ? 0f : 1f);
+	}
+
+	internal void ShowHideNotification()
+	{
+		notification.SetActive(Singleton<NotificationManager>.instance.NotificationForVisual(mVisual));
+	}
+
+	internal void UpdateGraphics()
+	{
+		bool isBought = mVisual.isBought;
+		bool purchasableInShop = mVisual.purchasableInShop;
+		bool isFromArena = mVisual.isFromArena;
+		bool flag = !isBought && mVisual.numberOfParts > 0;
+		bool flag2 = mVisual.isDefault && mVisual.owner.categoryNumber > 0;
+		partsPart.SetActive(purchasableInShop && !flag2);
+		partsLocked.gameObject.SetActive(!isBought);
+		partsRarity.transform.localPosition = partsRarity.transform.localPosition.ReplaceX((!isBought) ? 24f : 0f);
+		partsProgress.gameObject.SetActive(flag);
+		if (flag)
+		{
+			partsProgress.text = $"{visual.numberOfParts}{Colours.stringGrayParts}/{Colours.stringWhite}{visual.numberOfPartsMax}";
+		}
+		packs.SetActive(!isBought && !purchasableInShop && !isFromArena);
+		ShowHideNotification();
+		SetSale();
+		arenaPart.SetActive(isFromArena);
+		arenaLocked.gameObject.SetActive(!isBought);
+	}
+
+	public void SetSale()
+	{
+		salePart.SetActive(value: false);
+	}
+
+	private void OnClick()
+	{
+		SoundsManager.Instance.PlayButtonClickedSound();
+		GuiScreenSingle<CamosScreen>.instance.Select(this);
+		ShowHideNotification();
+	}
 }

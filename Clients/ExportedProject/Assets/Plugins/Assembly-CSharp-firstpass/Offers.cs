@@ -1,63 +1,160 @@
+using System.Runtime.InteropServices;
 using UnityEngine;
 
-public class Offers : MonoBehaviour
+public class Offers
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public enum OffersCallbackIdentifier
+	{
+		PAUSEDRAWING,
+		RESTARTDRAWING,
+		OFFERSRELEASED,
+		OFFERSCLOSED
+	}
 
-	1. No dll files were provided to AssetRipper.
+	public enum OffersInterfaceOrientationMask
+	{
+		OffersInterfaceOrientationMaskPortrait = 2,
+		OffersInterfaceOrientationMaskLandscapeLeft = 8,
+		OffersInterfaceOrientationMaskLandscapeRight = 16,
+		OffersInterfaceOrientationMaskPortraitUpsideDown = 4,
+		OffersInterfaceOrientationMaskLandscapeAll = 24,
+		OffersInterfaceOrientationMaskPortraitAll = 6,
+		OffersInterfaceOrientationMaskAll = 30,
+		OffersInterfaceOrientationMaskAllButUpsideDown = 26
+	}
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public enum OffersAndroidStoreType
+	{
+		GOOGLE_PLAY,
+		AMAZON,
+		SAMSUNG
+	}
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public enum OffersCornerToDisplayFrom
+	{
+		BottomRight,
+		BottomLeft,
+		TopLeft,
+		TopRight
+	}
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public enum OffersUIFrameInterval
+	{
+		VeryLow = 1,
+		Low,
+		Medium,
+		High,
+		VeryHigh
+	}
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public enum OffersUIUpdateMethod
+	{
+		DisplayLink,
+		Timer
+	}
+#if (UNITY_ANDROID || UNITY_IOS) && !UNITY_EDITOR
 
-	3. Assembly Reconstruction has not been implemented.
+	[DllImport("offersunity")]
+	private static extern void _registerForOffersNotification(OffersCallbackIdentifier identifier, string objectName, string methodName);
+#endif
+#if (UNITY_ANDROID || UNITY_IOS) && !UNITY_EDITOR
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	[DllImport("offersunity")]
+	private static extern void _initialiseOffersSession(string theme, OffersInterfaceOrientationMask orientationMask, OffersAndroidStoreType androidStoreType);
+#endif
+#if (UNITY_ANDROID || UNITY_IOS) && !UNITY_EDITOR
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	[DllImport("offersunity")]
+	private static extern void _closeOffersSession();
+#endif
+#if (UNITY_ANDROID || UNITY_IOS) && !UNITY_EDITOR
 
-	4. This script is unnecessary.
+	[DllImport("offersunity")]
+	private static extern void _activateOffersUI(OffersCornerToDisplayFrom corner);
+#endif
+#if (UNITY_ANDROID || UNITY_IOS) && !UNITY_EDITOR
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	[DllImport("offersunity")]
+	private static extern bool _deactivateOffersUI();
+#endif
+#if (UNITY_ANDROID || UNITY_IOS) && !UNITY_EDITOR
 
-	5. Script Content Level 0
+	[DllImport("offersunity")]
+	private static extern void _setOffersFrameInterval(OffersUIFrameInterval interval);
+#endif
+#if (UNITY_ANDROID || UNITY_IOS) && !UNITY_EDITOR
 
-		AssetRipper was set to not load any script information.
+	[DllImport("offersunity")]
+	private static extern void _setOffersUpdateMethod(OffersUIUpdateMethod method);
+#endif
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public static void registerForOffersNotification(OffersCallbackIdentifier notificationId, string objectName, string methodName)
+	{
+		if (Application.platform == RuntimePlatform.IPhonePlayer || Application.platform == RuntimePlatform.Android)
+		{
+#if (UNITY_ANDROID || UNITY_IOS) && !UNITY_EDITOR
+			_registerForOffersNotification(notificationId, objectName, methodName);
+#endif
+		}
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public static void initialiseOffersSession(string theme, OffersInterfaceOrientationMask orientationMask, OffersAndroidStoreType androidStoreType)
+	{
+		if (Application.platform == RuntimePlatform.IPhonePlayer || Application.platform == RuntimePlatform.Android)
+		{
+#if (UNITY_ANDROID || UNITY_IOS) && !UNITY_EDITOR
+			_initialiseOffersSession(theme, orientationMask, androidStoreType);
+#endif
+		}
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	public static void closeOffersSession()
+	{
+		if (Application.platform == RuntimePlatform.IPhonePlayer || Application.platform == RuntimePlatform.Android)
+		{
+#if (UNITY_ANDROID || UNITY_IOS) && !UNITY_EDITOR
+			_closeOffersSession();
+#endif
+		}
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	public static void activateOffersUI(OffersCornerToDisplayFrom corner)
+	{
+		if (Application.platform == RuntimePlatform.IPhonePlayer || Application.platform == RuntimePlatform.Android)
+		{
+#if (UNITY_ANDROID || UNITY_IOS) && !UNITY_EDITOR
+			_activateOffersUI(corner);
+#endif
+		}
+	}
 
-	*/
+	public static void deactivateOffersUI()
+	{
+		if (Application.platform == RuntimePlatform.IPhonePlayer || Application.platform == RuntimePlatform.Android)
+		{
+#if (UNITY_ANDROID || UNITY_IOS) && !UNITY_EDITOR
+			_deactivateOffersUI();
+#endif
+		}
+	}
+
+	public static void setOffersFrameInterval(OffersUIFrameInterval interval)
+	{
+		if (Application.platform == RuntimePlatform.IPhonePlayer || Application.platform == RuntimePlatform.Android)
+		{
+#if (UNITY_ANDROID || UNITY_IOS) && !UNITY_EDITOR
+			_setOffersFrameInterval(interval);
+#endif
+		}
+	}
+
+	public static void setOffersUpdateMethod(OffersUIUpdateMethod method)
+	{
+		if (Application.platform == RuntimePlatform.IPhonePlayer || Application.platform == RuntimePlatform.Android)
+		{
+#if (UNITY_ANDROID || UNITY_IOS) && !UNITY_EDITOR
+			_setOffersUpdateMethod(method);
+#endif
+		}
+	}
 }

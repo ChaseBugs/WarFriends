@@ -1,63 +1,166 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class CameraLineRenderer : MonoBehaviour
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	private struct Line
+	{
+		public Vector3 StartPosition;
 
-	1. No dll files were provided to AssetRipper.
+		public Vector3 EndPosition;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+		public Color Color;
+	}
 
-	2. Incorrect dll files were provided to AssetRipper.
+	private const int circleParts = 16;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public Material lineMaterial;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	private List<Line> _lines = new List<Line>();
 
-	3. Assembly Reconstruction has not been implemented.
+	private static CameraLineRenderer _instance;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	private Dictionary<string, List<Line>> StaticLines = new Dictionary<string, List<Line>>();
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public static CameraLineRenderer Instance
+	{
+		get
+		{
+			_instance = _instance ?? (UnityEngine.Object.FindObjectOfType(typeof(CameraLineRenderer)) as CameraLineRenderer);
+			return _instance;
+		}
+	}
 
-	4. This script is unnecessary.
+	private static void CreateLineMaterial()
+	{
+		if (!Instance.lineMaterial)
+		{
+			Instance.lineMaterial = new Material(Shader.Find("Lines/Colored Blended"));
+			Instance.lineMaterial.hideFlags = HideFlags.HideAndDontSave;
+			Instance.lineMaterial.shader.hideFlags = HideFlags.HideAndDontSave;
+		}
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private void Awake()
+	{
+		_instance = this;
+		lineMaterial = new Material(Shader.Find("Lines/Colored Blended"));
+		lineMaterial.hideFlags = HideFlags.HideAndDontSave;
+		lineMaterial.shader.hideFlags = HideFlags.HideAndDontSave;
+	}
 
-	5. Script Content Level 0
+	private void OnPostRender()
+	{
+		CreateLineMaterial();
+		lineMaterial.SetPass(0);
+		DrawLines(_lines);
+		foreach (KeyValuePair<string, List<Line>> staticLine in StaticLines)
+		{
+			DrawLines(staticLine.Value);
+		}
+		_lines = new List<Line>();
+	}
 
-		AssetRipper was set to not load any script information.
+	private static void DrawLines(List<Line> lines)
+	{
+		if (!DebugSettings.drawCameraLines)
+		{
+			return;
+		}
+		GL.Begin(1);
+		foreach (Line line in lines)
+		{
+			GL.Color(line.Color);
+			GL.Vertex3(line.StartPosition.x, line.StartPosition.y, line.StartPosition.z);
+			GL.Vertex3(line.EndPosition.x, line.EndPosition.y, line.EndPosition.z);
+		}
+		GL.End();
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public void DrawL(Vector3 start, Vector3 end, Color color)
+	{
+		if (DebugSettings.drawCameraLines)
+		{
+			_lines.Add(new Line
+			{
+				StartPosition = start,
+				EndPosition = end,
+				Color = color
+			});
+		}
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public static void DrawLine(Vector3 start, Vector3 end, Color color)
+	{
+		Instance.DrawL(start, end, color);
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	public void ClearStaticLine(string lineName)
+	{
+		if (StaticLines.TryGetValue(lineName, out var value))
+		{
+			value = new List<Line>();
+			StaticLines[lineName] = new List<Line>();
+		}
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	public void DrawStaticL(string lineName, Vector3 start, Vector3 end, Color color)
+	{
+		Instance.DrawL(start, end, color);
+		if (!StaticLines.TryGetValue(lineName, out var value))
+		{
+			value = new List<Line>();
+			StaticLines[lineName] = new List<Line>();
+		}
+		value.Add(new Line
+		{
+			StartPosition = start,
+			EndPosition = end,
+			Color = color
+		});
+	}
 
-	*/
+	public static void DrawStaticLine(string lineName, Vector3 start, Vector3 end, Color color)
+	{
+		Instance.DrawStaticL(lineName, start, end, color);
+	}
+
+	public static void DrawCross(Vector3 pos, float size, Color c)
+	{
+		DrawLine(pos - 0.5f * size * Vector3.left, pos - 0.5f * size * Vector3.right, c);
+		DrawLine(pos - 0.5f * size * Vector3.up, pos - 0.5f * size * Vector3.down, c);
+		DrawLine(pos - 0.5f * size * Vector3.forward, pos - 0.5f * size * Vector3.back, c);
+	}
+
+	public static void DrawGizmoCross(Vector3 pos, float size, Color c)
+	{
+		Gizmos.DrawLine(pos - 0.5f * size * Vector3.left, pos - 0.5f * size * Vector3.right);
+		Gizmos.DrawLine(pos - 0.5f * size * Vector3.up, pos - 0.5f * size * Vector3.down);
+		Gizmos.DrawLine(pos - 0.5f * size * Vector3.forward, pos - 0.5f * size * Vector3.back);
+	}
+
+	public static void DrawSphere(Vector3 pos, float size, Color c)
+	{
+		DrawCircle(pos, size, c, Quaternion.Euler(0f, 0f, 0f));
+		DrawCircle(pos, size, c, Quaternion.Euler(0f, 30f, 0f));
+		DrawCircle(pos, size, c, Quaternion.Euler(0f, 60f, 0f));
+		DrawCircle(pos, size, c, Quaternion.Euler(0f, 90f, 0f));
+	}
+
+	public static void DrawCircle(Vector3 pos, float size, Color c, Quaternion q)
+	{
+		for (int i = 1; i <= 16; i++)
+		{
+			float f = (float)(22 * (i - 1)) * ((float)Math.PI / 180f);
+			float num = Mathf.Cos(f);
+			float num2 = 0f - Mathf.Sin(f);
+			Vector3 vector = q * new Vector3(num * size, num2 * size, 0f);
+			f = (float)(22 * i) * ((float)Math.PI / 180f);
+			num = Mathf.Cos(f);
+			num2 = 0f - Mathf.Sin(f);
+			Vector3 vector2 = q * new Vector3(num * size, num2 * size, 0f);
+			DrawLine(vector + pos, vector2 + pos, c);
+		}
+	}
 }

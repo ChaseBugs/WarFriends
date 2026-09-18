@@ -1,63 +1,156 @@
+using System.Collections.Generic;
 using UnityEngine;
 
-public class RibbonsStats : MonoBehaviour
+public class RibbonsStats : Core_BaseScript
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Header("Empty")]
+	public UIPanel emptyPanel;
 
-	1. No dll files were provided to AssetRipper.
+	public UILabel emptyLabel;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	[Header("Core")]
+	public RibbonGuiRecord ribbonGuiRecordPrefab;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public int maxRibbons = 18;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public UIDraggablePanel ribbonDraggablePanel;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public UIPooledGrid ribbonsGrid;
 
-	3. Assembly Reconstruction has not been implemented.
+	private List<Tuple<RibbonManager.RibbonItemDefinition, int>> mRibbons = new List<Tuple<RibbonManager.RibbonItemDefinition, int>>();
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public void Animate(bool showTab, bool instant)
+	{
+		if (showTab && !base.gameObject.activeSelf)
+		{
+			base.gameObject.SetActive(value: true);
+			InitGUIValues();
+		}
+		if (base.gameObject.activeSelf)
+		{
+			TweenAlpha.Begin(emptyPanel.gameObject, (!instant) ? (GuiScreenSingle<PlayerStatsScreen>.instance.dur * 2f) : 0.01f, (!showTab) ? 0f : 1f);
+			TweenAlpha.Begin(ribbonDraggablePanel.gameObject, (!instant) ? (GuiScreenSingle<PlayerStatsScreen>.instance.dur * 2f) : 0.01f, (!showTab) ? 0f : 1f).onFinished = delegate
+			{
+				if (!showTab)
+				{
+					base.gameObject.SetActive(value: false);
+					DoAfterHide();
+				}
+			};
+		}
+		else if (!showTab)
+		{
+			InstantHideTab();
+		}
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public void InitControls()
+	{
+		SetSizes();
+	}
 
-	4. This script is unnecessary.
+	public void InitGUIValues()
+	{
+		CreateDataRibbons();
+		emptyLabel.gameObject.SetActive(mRibbons.Count == 0);
+		ShowRibbons();
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public void DoAfterHide()
+	{
+		ribbonsGrid.MakeEmpty();
+		mRibbons.Clear();
+	}
 
-	5. Script Content Level 0
+	public void InstantHideTab()
+	{
+		TweenAlpha component = ribbonDraggablePanel.GetComponent<TweenAlpha>();
+		if (component != null)
+		{
+			component.enabled = false;
+		}
+		base.gameObject.SetActive(value: false);
+		DoAfterHide();
+	}
 
-		AssetRipper was set to not load any script information.
+	private void CreateDataRibbons()
+	{
+		mRibbons.Clear();
+		foreach (KeyValuePair<RibbonManager.RibbonItemDefinition, int> allTimeRibbon in StatsManager.instance.GetAllTimeRibbons())
+		{
+			int value = allTimeRibbon.Value;
+			if (value > 0)
+			{
+				mRibbons.Add(new Tuple<RibbonManager.RibbonItemDefinition, int>(allTimeRibbon.Key, value));
+			}
+		}
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	private void ShowRibbons()
+	{
+		if (GuiScreenSingle<PlayerStatsScreen>.instance.isShowed && base.gameObject.activeSelf)
+		{
+			ribbonsGrid.MakeEmpty();
+			ribbonsGrid.init(mRibbons.Count, RibbonInstantiate, RibbonFree, ribbonDraggablePanel);
+			ribbonDraggablePanel.UpdateScrollbars(recalculateBounds: true);
+			ribbonDraggablePanel.AlignToPos(instant: true);
+		}
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	private Transform RibbonInstantiate(int index)
+	{
+		if (index >= 0 && index < mRibbons.Count)
+		{
+			RibbonGuiRecord ribbonGuiRecord = Singleton<GuiManager>.instance.objectPool.InstantiateAsChild(ribbonGuiRecordPrefab, ribbonsGrid.gameObject, "Ribbon Record " + (index + 1).ToString("D2")) as RibbonGuiRecord;
+			if (ribbonGuiRecord != null)
+			{
+				ribbonGuiRecord.Initialize(mRibbons[index].Value1, mRibbons[index].Value2, showMoney: false);
+				return ribbonGuiRecord.transform;
+			}
+		}
+		return null;
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	private void RibbonFree(Transform obj)
+	{
+		if (!(obj == null))
+		{
+			RibbonGuiRecord component = obj.GetComponent<RibbonGuiRecord>();
+			if (component != null)
+			{
+				component.DestroyPooled();
+			}
+		}
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	private void SetSizes()
+	{
+		float num = UIRoot.list[0].activeHeight;
+		float activeWidth = UIRoot.list[0].activeWidth;
+		float num2 = activeWidth - 120f;
+		float num3 = num2 / 2f;
+		float num4 = num - GuiScreenSingle<PlayerStatsScreen>.instance.headerHeight;
+		float y = num / 2f - GuiScreenSingle<PlayerStatsScreen>.instance.headerHeight - num4 / 2f;
+		float num5 = 570f;
+		int num6 = Mathf.CeilToInt(num / 410f) + 2;
+		int a = maxRibbons / num6;
+		int b = Mathf.FloorToInt(num2 / num5);
+		int num7 = Mathf.Min(a, b);
+		float num8 = (num2 - (float)num7 * num5) / (float)Mathf.Max(1, num7 - 1);
+		UIPanel component = ribbonDraggablePanel.gameObject.GetComponent<UIPanel>();
+		if (component != null)
+		{
+			component.clipRange = new Vector4(component.clipRange.x, y, component.clipRange.z, num4);
+		}
+		BoxCollider component2 = ribbonDraggablePanel.gameObject.GetComponent<BoxCollider>();
+		if (component2 != null)
+		{
+			component2.center = new Vector3(component2.center.x, y, component2.center.z);
+			component2.size = new Vector3(component2.size.x, num4, component2.size.z);
+		}
+		ribbonDraggablePanel.transform.localPosition = Vector3.zero;
+		ribbonsGrid.maxPerLine = num7;
+		ribbonsGrid.cellWidth = num5 + num8;
+		ribbonsGrid.transform.localPosition = new Vector3(0f - num3 + num5 / 2f, ribbonsGrid.transform.localPosition.y, 0f);
+	}
 }

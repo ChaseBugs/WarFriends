@@ -1,63 +1,149 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
-public class SoldierBehaviourWarper : MonoBehaviour
+public class SoldierBehaviourWarper : SoldierBehaviourRusher<SoldierBehaviourDefinititonFlamethrower>
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public float thinTrailDistance = 2f;
 
-	1. No dll files were provided to AssetRipper.
+	public Material transparentWarp;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	private WarpTrails mWarpTrails;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	private Material mOriginalmaterial;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public void ChangeToTransparent()
+	{
+		base.mSoldierMeshChanger.ChangeMaterial(transparentWarp);
+		base.mSoldierMeshChanger.bodyAttachemnts.SetAttachmentsMaterial(transparentWarp);
+		base.mSoldierMeshChanger.helmetAttachments.SetAttachmentsMaterial(transparentWarp);
+		currentWeapon.gameObject.SetActive(value: false);
+		if (mWarpTrails != null)
+		{
+			mWarpTrails.mainTrail.gameObject.SetActive(value: true);
+			mWarpTrails.additionalTrail.gameObject.SetActive(value: true);
+		}
+		Singleton<SoundsManager3D>.instance.PlayOneShot(base.gameObject, Sounds3DEnum.WarpSound);
+	}
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public void ChangeToNormalMat()
+	{
+		base.mSoldierMeshChanger.ChangeMaterial(mOriginalmaterial);
+		base.mSoldierMeshChanger.bodyAttachemnts.SetAttachmentsMaterial(mOriginalmaterial);
+		base.mSoldierMeshChanger.helmetAttachments.SetAttachmentsMaterial(mOriginalmaterial);
+		currentWeapon.gameObject.SetActive(value: true);
+		mEnemyBasicInventory.SwitchWeapon(0);
+	}
 
-	3. Assembly Reconstruction has not been implemented.
+	public override void UpdateVisual()
+	{
+		if (mOriginalmaterial == null)
+		{
+			mOriginalmaterial = base.mSoldierMeshChanger.material;
+		}
+		if (mWarpTrails == null)
+		{
+			mWarpTrails = controller.GetComponent<WarpTrails>();
+		}
+		if (mOriginalmaterial != null)
+		{
+			base.mSoldierMeshChanger.ChangeMaterial(mOriginalmaterial);
+		}
+		base.UpdateVisual();
+	}
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public override void StartEnemyBehaviour()
+	{
+		controller.StartEnemyBehaviour(EnemyController.EnemyAIState.Warp);
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public override SpawnPoint PickSpawnPoint(IEnumerable<SpawnPoint> spawns)
+	{
+		List<SpawnPoint> list = new List<SpawnPoint>();
+		foreach (SpawnPoint spawn in spawns)
+		{
+			if (AcceptSpawnPoint(spawn))
+			{
+				list.Add(spawn);
+			}
+		}
+		if (list.Count <= 0)
+		{
+			throw new Exception("Enemy could not be spawned");
+		}
+		PlayerController pl = PlayerController.GetEnemyOf(controller.fraction);
+		list.Sort(delegate(SpawnPoint a, SpawnPoint b)
+		{
+			float sqrMagnitude = (pl.transform.position - a.transform.position).sqrMagnitude;
+			return (pl.transform.position - b.transform.position).sqrMagnitude.CompareTo(sqrMagnitude);
+		});
+		return list[0];
+	}
 
-	4. This script is unnecessary.
+	protected override void ApplyWeaponsSetup()
+	{
+		base.ApplyWeaponsSetup();
+		mWeapons[0].cadence = 0.2f;
+		ShotGunBulletSetup shotGunBulletSetup = (ShotGunBulletSetup)mWeapons[0].ammoSetup;
+		shotGunBulletSetup.maxDamage = base.soldierBehaviourDefinititon.damage;
+		shotGunBulletSetup.minDamage = (float)base.soldierBehaviourDefinititon.damage * 0.1f;
+		shotGunBulletSetup.realShotTexture = "shotReal";
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	protected override void OnBeforeFire()
+	{
+		base.OnBeforeFire();
+		BulletSetup bulletSetup = currentWeapon.ammoSetup as BulletSetup;
+		if (bulletSetup != null)
+		{
+			PlayerController enemyOf = PlayerController.GetEnemyOf(controller.fraction);
+			float num = controller.transform.position.PlanarDistance(enemyOf.position);
+			bulletSetup.useThinTrail = num < thinTrailDistance;
+		}
+	}
 
-	5. Script Content Level 0
+	public override void ShootJustStarted()
+	{
+		base.ShootJustStarted();
+		if (controller.enemyAiState == EnemyController.EnemyAIState.Rusher)
+		{
+			InvokeAfter(delegate
+			{
+				controller.WarpAgain();
+			}, 1f);
+		}
+	}
 
-		AssetRipper was set to not load any script information.
+	public override void OnDeath(DestroyableObject.DamageInfo damageInfo)
+	{
+		base.OnDeath(damageInfo);
+		ChangeToNormalMat();
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public override void DestroyBehaviour()
+	{
+		base.DestroyBehaviour();
+		if (mWarpTrails != null)
+		{
+			mWarpTrails.mainTrail.gameObject.SetActive(value: false);
+			mWarpTrails.additionalTrail.gameObject.SetActive(value: false);
+		}
+		if (controller != null)
+		{
+			controller.agent.speed = 0.8f;
+		}
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public override void Copy(AIObject to)
+	{
+		base.Copy(to);
+		WarpTrails component = GetComponent<WarpTrails>();
+		WarpTrails warpTrails = to.gameObject.AddComponent<WarpTrails>();
+		warpTrails.mainTrail = UnityEngine.Object.Instantiate(component.mainTrail);
+		warpTrails.additionalTrail = UnityEngine.Object.Instantiate(component.additionalTrail);
+		warpTrails.mainTrail.gameObject.transform.parent = to.gameObject.transform;
+		warpTrails.mainTrail.gameObject.transform.localPosition = component.mainTrail.transform.localPosition;
+		warpTrails.additionalTrail.gameObject.transform.parent = to.gameObject.transform;
+		warpTrails.additionalTrail.gameObject.transform.localPosition = component.additionalTrail.transform.localPosition;
+	}
 }

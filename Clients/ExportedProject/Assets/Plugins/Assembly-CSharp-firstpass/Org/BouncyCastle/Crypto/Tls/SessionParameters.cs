@@ -1,66 +1,154 @@
-using UnityEngine;
+using System;
+using System.Collections;
+using System.IO;
+using Org.BouncyCastle.Utilities;
 
 namespace Org.BouncyCastle.Crypto.Tls
 {
-	public class SessionParameters : MonoBehaviour
+public sealed class SessionParameters
+{
+	public sealed class Builder
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
+		private int mCipherSuite = -1;
 
-		1. No dll files were provided to AssetRipper.
+		private short mCompressionAlgorithm = -1;
 
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
+		private byte[] mMasterSecret;
 
-		2. Incorrect dll files were provided to AssetRipper.
+		private Certificate mPeerCertificate;
 
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
+		private byte[] mPskIdentity;
 
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+		private byte[] mSrpIdentity;
 
-		3. Assembly Reconstruction has not been implemented.
+		private byte[] mEncodedServerExtensions;
 
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
+		public SessionParameters Build()
+		{
+			Validate(mCipherSuite >= 0, "cipherSuite");
+			Validate(mCompressionAlgorithm >= 0, "compressionAlgorithm");
+			Validate(mMasterSecret != null, "masterSecret");
+			return new SessionParameters(mCipherSuite, (byte)mCompressionAlgorithm, mMasterSecret, mPeerCertificate, mPskIdentity, mSrpIdentity, mEncodedServerExtensions);
+		}
 
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
+		public Builder SetCipherSuite(int cipherSuite)
+		{
+			mCipherSuite = cipherSuite;
+			return this;
+		}
 
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
+		public Builder SetCompressionAlgorithm(byte compressionAlgorithm)
+		{
+			mCompressionAlgorithm = compressionAlgorithm;
+			return this;
+		}
 
-		5. Script Content Level 0
+		public Builder SetMasterSecret(byte[] masterSecret)
+		{
+			mMasterSecret = masterSecret;
+			return this;
+		}
 
-			AssetRipper was set to not load any script information.
+		public Builder SetPeerCertificate(Certificate peerCertificate)
+		{
+			mPeerCertificate = peerCertificate;
+			return this;
+		}
 
-		6. Cpp2IL failed to decompile Il2Cpp data
+		public Builder SetPskIdentity(byte[] pskIdentity)
+		{
+			mPskIdentity = pskIdentity;
+			return this;
+		}
 
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+		public Builder SetSrpIdentity(byte[] srpIdentity)
+		{
+			mSrpIdentity = srpIdentity;
+			return this;
+		}
 
-		7. An incorrect path was provided to AssetRipper.
+		public Builder SetServerExtensions(IDictionary serverExtensions)
+		{
+			if (serverExtensions == null)
+			{
+				mEncodedServerExtensions = null;
+			}
+			else
+			{
+				MemoryStream memoryStream = new MemoryStream();
+				TlsProtocol.WriteExtensions(memoryStream, serverExtensions);
+				mEncodedServerExtensions = memoryStream.ToArray();
+			}
+			return this;
+		}
 
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
+		private void Validate(bool condition, string parameter)
+		{
+			if (!condition)
+			{
+				throw new InvalidOperationException("Required session parameter '" + parameter + "' not configured");
+			}
+		}
 	}
+
+	private int mCipherSuite;
+
+	private byte mCompressionAlgorithm;
+
+	private byte[] mMasterSecret;
+
+	private Certificate mPeerCertificate;
+
+	private byte[] mPskIdentity;
+
+	private byte[] mSrpIdentity;
+
+	private byte[] mEncodedServerExtensions;
+
+	public int CipherSuite => mCipherSuite;
+
+	public byte CompressionAlgorithm => mCompressionAlgorithm;
+
+	public byte[] MasterSecret => mMasterSecret;
+
+	public Certificate PeerCertificate => mPeerCertificate;
+
+	public byte[] PskIdentity => mPskIdentity;
+
+	public byte[] SrpIdentity => mSrpIdentity;
+
+	private SessionParameters(int cipherSuite, byte compressionAlgorithm, byte[] masterSecret, Certificate peerCertificate, byte[] pskIdentity, byte[] srpIdentity, byte[] encodedServerExtensions)
+	{
+		mCipherSuite = cipherSuite;
+		mCompressionAlgorithm = compressionAlgorithm;
+		mMasterSecret = Arrays.Clone(masterSecret);
+		mPeerCertificate = peerCertificate;
+		mPskIdentity = Arrays.Clone(pskIdentity);
+		mSrpIdentity = Arrays.Clone(srpIdentity);
+		mEncodedServerExtensions = encodedServerExtensions;
+	}
+
+	public void Clear()
+	{
+		if (mMasterSecret != null)
+		{
+			Arrays.Fill(mMasterSecret, 0);
+		}
+	}
+
+	public SessionParameters Copy()
+	{
+		return new SessionParameters(mCipherSuite, mCompressionAlgorithm, mMasterSecret, mPeerCertificate, mPskIdentity, mSrpIdentity, mEncodedServerExtensions);
+	}
+
+	public IDictionary ReadServerExtensions()
+	{
+		if (mEncodedServerExtensions == null)
+		{
+			return null;
+		}
+		MemoryStream input = new MemoryStream(mEncodedServerExtensions, writable: false);
+		return TlsProtocol.ReadExtensions(input);
+	}
+}
 }

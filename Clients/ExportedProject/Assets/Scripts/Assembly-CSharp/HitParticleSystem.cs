@@ -1,63 +1,103 @@
+using System.Collections.Generic;
 using UnityEngine;
 
-public class HitParticleSystem : MonoBehaviour
+public class HitParticleSystem : Singleton<HitParticleSystem>
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public SpawnPool normalSpawnPool;
 
-	1. No dll files were provided to AssetRipper.
+	public SpawnPool metalSpawnPool;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public List<HitParticles> allNormalHitParticlesPrefabs;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public List<HitParticles> allMetalHitParticlesPrefabs;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public Dictionary<string, int> particlesIndices;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	private SpawnPool mSpawnPool;
 
-	3. Assembly Reconstruction has not been implemented.
+	private List<HitParticles> mAllHitParticlesPrefabs;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public SpawnPool spawnPool => mSpawnPool;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	protected override void Awake()
+	{
+		base.Awake();
+		if (Singleton<PerformanceManager>.instance.performance == Performance.Best)
+		{
+			mSpawnPool = metalSpawnPool;
+			mAllHitParticlesPrefabs = allMetalHitParticlesPrefabs;
+		}
+		else
+		{
+			mSpawnPool = normalSpawnPool;
+			mAllHitParticlesPrefabs = allNormalHitParticlesPrefabs;
+		}
+		mSpawnPool.gameObject.SetActive(value: true);
+		particlesIndices = new Dictionary<string, int>();
+		for (int i = 0; i < mAllHitParticlesPrefabs.Count; i++)
+		{
+			HitParticles hitParticles = mAllHitParticlesPrefabs[i];
+			particlesIndices.Add(hitParticles.name, i);
+		}
+	}
 
-	4. This script is unnecessary.
+	public ParticleSystem PlayParticle(Vector3 position, Vector3 normal, int index)
+	{
+		if (mAllHitParticlesPrefabs[index].particleType == HitParticles.ParticleType.Blood && !DebugSettings.instance.data.playBlood)
+		{
+			return null;
+		}
+		HitParticles component = mSpawnPool.Spawn(mAllHitParticlesPrefabs[index].transform, position, Quaternion.LookRotation(normal)).GetComponent<HitParticles>();
+		return component.Play(this);
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public void PlayParticles(Vector3 position, Vector3 normal, params string[] names)
+	{
+		foreach (string text in names)
+		{
+			PlayParticle(position, normal, text);
+		}
+	}
 
-	5. Script Content Level 0
+	public ParticleSystem PlayParticle(Vector3 position, Vector3 normal, string name)
+	{
+		if (particlesIndices.TryGetValue(name, out var value))
+		{
+			return PlayParticle(position, normal, value);
+		}
+		Debug.LogError("Particle with name: " + name + "doesnt exist");
+		return null;
+	}
 
-		AssetRipper was set to not load any script information.
+	public ParticleSystem PlayParticle(Transform transform, Vector3 normal, string name)
+	{
+		if (particlesIndices.TryGetValue(name, out var value))
+		{
+			return PlayParticle(transform, normal, value);
+		}
+		Debug.LogError("Particle with name: " + name + "doesnt exist");
+		return null;
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	private ParticleSystem PlayParticle(Transform transform, Vector3 normal, int index)
+	{
+		HitParticles component = mSpawnPool.Spawn(mAllHitParticlesPrefabs[index].transform, transform.position, Quaternion.LookRotation(normal)).GetComponent<HitParticles>();
+		return component.Play(this, transform);
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public void HideAllParticles(HitParticles.ParticleType particlesType)
+	{
+		foreach (KeyValuePair<string, PrefabPool> prefabPool in mSpawnPool.prefabPools)
+		{
+			HitParticles component = prefabPool.Value.prefab.GetComponent<HitParticles>();
+			if (!(component != null) || component.particleType != particlesType)
+			{
+				continue;
+			}
+			foreach (Transform item in prefabPool.Value.spawned)
+			{
+				mSpawnPool.Despawn(item);
+			}
+		}
+	}
 }

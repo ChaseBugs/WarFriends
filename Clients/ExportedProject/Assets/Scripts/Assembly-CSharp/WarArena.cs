@@ -1,63 +1,340 @@
+using System;
+using System.Collections.Generic;
+using CodeStage.AntiCheat.ObscuredTypes;
+using Google2u;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using UnityEngine;
 
-public class WarArena : MonoBehaviour
+public class WarArena : DatabaseSerializedObjectGeneric<WarArena.WarArenaData>
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Serializable]
+	public class WarArenaData
+	{
+		public ObscuredInt wins;
 
-	1. No dll files were provided to AssetRipper.
+		public ObscuredInt lives = 3;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+		public List<string> opponents = new List<string>();
 
-	2. Incorrect dll files were provided to AssetRipper.
+		public string arenaId;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+		public int runs;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+		public string visualType;
 
-	3. Assembly Reconstruction has not been implemented.
+		public int visualTimestamp;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+		public int flawless;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+		public int topRun;
 
-	4. This script is unnecessary.
+		public int shields;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+		public bool played;
 
-	5. Script Content Level 0
+		public bool heartDialogShown;
+	}
 
-		AssetRipper was set to not load any script information.
+	private static WarArena mInstance;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public List<WarArenaRule> allRulles = new List<WarArenaRule>();
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public TextAsset config;
 
-	7. An incorrect path was provided to AssetRipper.
+	public WarArenaConfig warArenaConfig;
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	public WararenaLootboxReward lastLootboxReward;
 
-	*/
+	private WarArenaParameters mWarArenaParameters;
+
+	private List<WarArenaRule> mCurrenArenaRules = new List<WarArenaRule>();
+
+	private ArenaLootboxes mArenaLootboxes;
+
+	private bool mIsDownloadingNewArena;
+
+	private bool mWasOpened = true;
+
+	public static WarArena instance
+	{
+		get
+		{
+			mInstance = mInstance ?? ((WarArena)UnityEngine.Object.FindObjectsOfType(typeof(WarArena))[0]);
+			return mInstance;
+		}
+	}
+
+	public WarArenaParameters warArenaParameters => mWarArenaParameters;
+
+	public ArenaLootboxes arenaLootboxes => mArenaLootboxes ?? (mArenaLootboxes = GetComponent<ArenaLootboxes>());
+
+	public WarArenaParameters wararenaParameters => mWarArenaParameters ?? (mWarArenaParameters = GetComponent<WarArenaParameters>());
+
+	public bool isArenaTicketBought => warArenaConfig.id == data.arenaId && (int)data.lives > 0 && (int)data.wins < warArenaConfig.battles && isOpened;
+
+	public bool isGoodPing => RoomConnectionWarArena.hasGoodPing;
+
+	public bool isOpened
+	{
+		get
+		{
+			if (warArenaConfig == null)
+			{
+				return false;
+			}
+			int currentTimestamp = Singleton<BeanstalkServerManager>.instance.currentTimestamp;
+			bool flag = warArenaConfig != null && data != null && warArenaConfig.start <= currentTimestamp && !isExpired;
+			bool flag2 = mWasOpened;
+			mWasOpened = flag;
+			if (!flag2 && flag)
+			{
+				ArenaOpened();
+			}
+			return flag;
+		}
+	}
+
+	public bool isExpired
+	{
+		get
+		{
+			if (warArenaConfig == null)
+			{
+				return true;
+			}
+			int currentTimestamp = Singleton<BeanstalkServerManager>.instance.currentTimestamp;
+			bool flag = currentTimestamp > warArenaConfig.end;
+			return warArenaConfig != null && data != null && flag;
+		}
+	}
+
+	public bool isReminderTime
+	{
+		get
+		{
+			if (warArenaConfig == null)
+			{
+				return false;
+			}
+			int currentTimestamp = Singleton<BeanstalkServerManager>.instance.currentTimestamp;
+			int num = (int)(float)wararenaParameters.GetRow(WarArenaParameters.rowIds.WarArenaReminderHours).FLOATVALUE;
+			int num2 = num * 3600;
+			int num3 = warArenaConfig.start - num2;
+			return num3 <= currentTimestamp && currentTimestamp <= warArenaConfig.start;
+		}
+	}
+
+	public int remainigTimeTillStart => Mathf.Max(0, warArenaConfig.start - Singleton<BeanstalkServerManager>.instance.currentTimestamp);
+
+	public int remainigTimeTillEnd => Mathf.Max(0, warArenaConfig.end - Singleton<BeanstalkServerManager>.instance.currentTimestamp);
+
+	public bool goldShieldsActive => data.shields > Singleton<BeanstalkServerManager>.instance.currentTimestamp;
+
+	public int phaseNumber => warArenaConfig.phaseNumber;
+
+	public int wararenaTicketPrize
+	{
+		get
+		{
+			if (!data.played)
+			{
+				return 0;
+			}
+			if (data.arenaId != warArenaConfig.id)
+			{
+				data.runs = 0;
+			}
+			return warArenaConfig.WarArenaTicketPrice(data.runs);
+		}
+	}
+
+	public int extraLiveCost
+	{
+		get
+		{
+			if (warArenaConfig.nodes.Count == 0)
+			{
+				return 0;
+			}
+			int index = Mathf.Clamp(data.wins, 0, warArenaConfig.nodes.Count);
+			WarArenaConfig.Node node = warArenaConfig.nodes[index];
+			return node.reviveCost;
+		}
+	}
+
+	public List<WarArenaRule> currenArenaRules => mCurrenArenaRules;
+
+	public event Action WarArenaDataChanged;
+
+	public event Action<int> LivesChanged;
+
+	public event Action WarArenaExpired;
+
+	public event Action WarArenaStarter;
+
+	public void OnDestroy()
+	{
+		mInstance = null;
+	}
+
+	protected override void Awake()
+	{
+		base.Awake();
+		Singleton<GameController>.instance.GameEnded += OnGameEnded;
+		mWarArenaParameters = GetComponent<WarArenaParameters>();
+	}
+
+	public void LoadWarArenaConfig(JToken dict)
+	{
+		warArenaConfig = new WarArenaConfig(dict);
+		string rules = warArenaConfig.rules;
+		mCurrenArenaRules = DeserializeRules(rules);
+		PushNotificationManager.instance.ScheduleWarArenaReminder(warArenaConfig.start);
+		bool isArenaStart = true;
+		int phaseStartTime = TimeOfStartArenaOrPhase(out isArenaStart);
+		PushNotificationManager.instance.ScheduleWarArenaStart(phaseStartTime, isArenaStart);
+		mIsDownloadingNewArena = false;
+		if (this.WarArenaDataChanged != null)
+		{
+			this.WarArenaDataChanged();
+		}
+	}
+
+	protected override void Load(JToken dictionary)
+	{
+		base.Load(dictionary);
+		Debug.Log($"dialog shonw = {data.heartDialogShown}, lives = {data.lives}");
+		if (isOpened && !data.heartDialogShown && (int)data.lives == 0)
+		{
+			Singleton<MessageManager>.instance.AddMessage(new BuyHearthArenaMessage(instance.warArenaConfig.id));
+		}
+	}
+
+	public void TryGetNewArena()
+	{
+		if (Singleton<BeanstalkServerManager>.instance.shouldGetMessages && isExpired && !mIsDownloadingNewArena)
+		{
+			DownloadNewArenaData();
+			mIsDownloadingNewArena = true;
+			if (this.WarArenaExpired != null)
+			{
+				this.WarArenaExpired();
+			}
+		}
+	}
+
+	private void DownloadNewArenaData()
+	{
+		WarArenaEndedRequest.Send();
+	}
+
+	private void OnGameEnded(GameController.GameEndReason gameEndReason)
+	{
+		if (Singleton<GameController>.instance.isWarArena)
+		{
+			data.opponents.Add(Singleton<GameController>.instance.opponent.playerProperties.playerID);
+		}
+	}
+
+	public void FailedDownloadWarArena()
+	{
+		mIsDownloadingNewArena = false;
+	}
+
+	public void TakePlayerLive()
+	{
+		UpdateLives(Mathf.Clamp((int)data.lives - 1, 0, int.MaxValue));
+		Singleton<BeanstalkServerManager>.instance.TakeArenaLife();
+	}
+
+	public void UpdateLives(int lives)
+	{
+		int num = lives - (int)data.lives;
+		data.lives = lives;
+		if (this.LivesChanged != null && num != 0)
+		{
+			this.LivesChanged(num);
+		}
+	}
+
+	private int TimeOfStartArenaOrPhase(out bool isArenaStart)
+	{
+		isArenaStart = true;
+		int currentTimestamp = Singleton<BeanstalkServerManager>.instance.currentTimestamp;
+		int start = warArenaConfig.start;
+		int end = warArenaConfig.end;
+		if (end < currentTimestamp)
+		{
+			return start;
+		}
+		if (start < currentTimestamp)
+		{
+			WarArenaConfig.PlayWindow nextWindow = warArenaConfig.nextWindow;
+			isArenaStart = nextWindow == null;
+			return (!isArenaStart) ? nextWindow.startTimestamp : start;
+		}
+		return start;
+	}
+
+	private void ArenaOpened()
+	{
+		WarArenaShownRequest.Send();
+		data.topRun = 0;
+		data.flawless = 0;
+		if (this.WarArenaStarter != null)
+		{
+			this.WarArenaStarter();
+		}
+	}
+
+	public bool SetupRules()
+	{
+		Singleton<GameController>.instance.gameControllerWarArena.ResetRules();
+		bool flag = true;
+		foreach (WarArenaRule mCurrenArenaRule in mCurrenArenaRules)
+		{
+			bool flag2 = mCurrenArenaRule.SetupRule();
+			Debug.Log($"Mode with name {mCurrenArenaRule.GetType()} met criteria {flag2} ");
+			flag = flag && flag2;
+		}
+		return flag;
+	}
+
+	public void ApplyRules()
+	{
+		if (!Singleton<GameController>.instance.isWarArena)
+		{
+			return;
+		}
+		foreach (WarArenaRule mCurrenArenaRule in mCurrenArenaRules)
+		{
+			mCurrenArenaRule.ApplyRule();
+		}
+	}
+
+	private WarArenaRule GetRule(string ruleName)
+	{
+		foreach (WarArenaRule allRulle in allRulles)
+		{
+			if (allRulle.GetType().ToString() == ruleName)
+			{
+				return allRulle;
+			}
+		}
+		return null;
+	}
+
+	public List<WarArenaRule> DeserializeRules(string rulesJson)
+	{
+		List<WarArenaRule> list = new List<WarArenaRule>();
+		Dictionary<string, JToken> dictionary = JsonConvert.DeserializeObject<Dictionary<string, JToken>>(rulesJson);
+		foreach (KeyValuePair<string, JToken> item in dictionary)
+		{
+			WarArenaRule rule = GetRule(item.Key);
+			rule.DeSerialize(item.Value);
+			list.Add(rule);
+		}
+		return list;
+	}
 }

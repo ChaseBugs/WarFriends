@@ -1,63 +1,97 @@
+using System;
 using UnityEngine;
 
+[Serializable]
+[RequireComponent(typeof(QuickRope2))]
+[ExecuteInEditMode]
 public class QuickRope2Mesh : MonoBehaviour
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public bool meshStatic;
 
-	1. No dll files were provided to AssetRipper.
+	public int maxRadius = 5;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public float textureTiling = 1f;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	[SerializeField]
+	public AnimationCurve curve = new AnimationCurve(new Keyframe(0f, 0.3f), new Keyframe(1f, 0.3f));
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public Color[] grad;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public int crossSegments = 6;
 
-	3. Assembly Reconstruction has not been implemented.
+	[SerializeField]
+	public RopeTubeRenderer tube;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	[SerializeField]
+	private QuickRope2 rope;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	[SerializeField]
+	private MeshFilter mFilter;
 
-	4. This script is unnecessary.
+	private void Awake()
+	{
+		rope = GetComponent<QuickRope2>();
+		rope.OnInitializeMesh += OnInitializeMesh;
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private void OnEnable()
+	{
+	}
 
-	5. Script Content Level 0
+	private void OnDisable()
+	{
+		if (rope != null)
+		{
+			rope.ClearJointObjects();
+		}
+	}
 
-		AssetRipper was set to not load any script information.
+	private void OnDestroy()
+	{
+		rope.OnInitializeMesh -= OnInitializeMesh;
+		if (rope != null)
+		{
+			rope.ClearJointObjects();
+		}
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public void OnInitializeMesh()
+	{
+		if (tube == null)
+		{
+			tube = new RopeTubeRenderer(base.gameObject, useMeshOnly: false);
+		}
+		tube.calculateTangents = true;
+		UpdateMesh();
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public void UpdateMesh()
+	{
+		tube.SetPointsAndRotations(rope.JointPositions, rope.GetRotations(rope.JointPositions));
+		tube.SetEdgeCount(crossSegments);
+		float[] array = new float[rope.JointPositions.Length];
+		for (int i = 0; i < array.Length; i++)
+		{
+			array[i] = curve.Evaluate((float)i * (1f / (float)array.Length));
+		}
+		tube.SetRadiuses(array);
+		tube.Update();
+		base.gameObject.GetComponent<Renderer>().sharedMaterial.mainTextureScale = new Vector2((float)rope.Joints.Count * textureTiling, 1f);
+	}
 
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	private void Update()
+	{
+		if (!meshStatic && Application.isPlaying)
+		{
+			float[] array = new float[rope.JointPositions.Length];
+			for (int i = 0; i < array.Length; i++)
+			{
+				array[i] = curve.Evaluate((float)i * (1f / (float)array.Length));
+			}
+			tube.SetPointsAndRotations(rope.JointPositions, rope.GetRotations(rope.JointPositions));
+			tube.SetRadiuses(array);
+			tube.Update();
+			base.gameObject.GetComponent<Renderer>().material.mainTextureScale = new Vector2((float)rope.Joints.Count * textureTiling, 1f);
+		}
+	}
 }

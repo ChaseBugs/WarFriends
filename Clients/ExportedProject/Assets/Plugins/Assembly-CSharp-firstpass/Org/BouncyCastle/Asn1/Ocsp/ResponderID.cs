@@ -1,66 +1,85 @@
-using UnityEngine;
+using System;
+using Org.BouncyCastle.Asn1.X509;
 
 namespace Org.BouncyCastle.Asn1.Ocsp
 {
-	public class ResponderID : MonoBehaviour
+public class ResponderID : Asn1Encodable, IAsn1Choice
+{
+	private readonly Asn1Encodable id;
+
+	public virtual X509Name Name
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
+		get
+		{
+			if (id is Asn1OctetString)
+			{
+				return null;
+			}
+			return X509Name.GetInstance(id);
+		}
 	}
+
+	public ResponderID(Asn1OctetString id)
+	{
+		if (id == null)
+		{
+			throw new ArgumentNullException("id");
+		}
+		this.id = id;
+	}
+
+	public ResponderID(X509Name id)
+	{
+		if (id == null)
+		{
+			throw new ArgumentNullException("id");
+		}
+		this.id = id;
+	}
+
+	public static ResponderID GetInstance(object obj)
+	{
+		if (obj == null || obj is ResponderID)
+		{
+			return (ResponderID)obj;
+		}
+		if (obj is DerOctetString)
+		{
+			return new ResponderID((DerOctetString)obj);
+		}
+		if (obj is Asn1TaggedObject)
+		{
+			Asn1TaggedObject asn1TaggedObject = (Asn1TaggedObject)obj;
+			if (asn1TaggedObject.TagNo == 1)
+			{
+				return new ResponderID(X509Name.GetInstance(asn1TaggedObject, explicitly: true));
+			}
+			return new ResponderID(Asn1OctetString.GetInstance(asn1TaggedObject, isExplicit: true));
+		}
+		return new ResponderID(X509Name.GetInstance(obj));
+	}
+
+	public static ResponderID GetInstance(Asn1TaggedObject obj, bool isExplicit)
+	{
+		return GetInstance(obj.GetObject());
+	}
+
+	public virtual byte[] GetKeyHash()
+	{
+		if (id is Asn1OctetString)
+		{
+			return ((Asn1OctetString)id).GetOctets();
+		}
+		return null;
+	}
+
+	public override Asn1Object ToAsn1Object()
+	{
+		if (id is Asn1OctetString)
+		{
+			return new DerTaggedObject(explicitly: true, 2, id);
+		}
+		return new DerTaggedObject(explicitly: true, 1, id);
+	}
+}
 }

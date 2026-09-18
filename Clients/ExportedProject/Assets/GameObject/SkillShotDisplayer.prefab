@@ -39,6 +39,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 01bf518ceca5607e0dfe5cfe45283f7d, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  isActivated: 0
 --- !u!1001 &100100000
 Prefab:
   serializedVersion: 2

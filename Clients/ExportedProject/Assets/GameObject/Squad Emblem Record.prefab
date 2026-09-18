@@ -75,6 +75,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c01782d5de944466d4d9fc9dc2860a08, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  isActivated: 0
+  squadIcon: {fileID: 11470521}
+  background: {fileID: 11443158}
 --- !u!65 &6554010
 BoxCollider:
   serializedVersion: 2
@@ -98,6 +101,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 920c39b46ee788b96e35170fd87a659d, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  audioClip: {fileID: 0}
+  trigger: 0
+  volume: 1
+  pitch: 1
+  uiButton: {fileID: 0}
+  lockedPart: {fileID: 0}
+  enabledPart: {fileID: 0}
 --- !u!4 &484216
 Transform:
   m_ObjectHideFlags: 0
@@ -121,6 +131,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 0}
+  mColor: {r: 0.043137256, g: 0.7372549, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 16
+  mAtlas: {fileID: 11409266, guid: 9582f38df100b244993ee2e1fa9a9888, type: 2}
+  mSpriteName: whiteRectangle
+  mFillCenter: 0
+  mType: 0
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 1
+  mFillSlopePixels: 0
 --- !u!4 &431434
 Transform:
   m_ObjectHideFlags: 0
@@ -144,6 +169,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 96562d0799d618a7fb9b1a37343d8235, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 0}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 19
+  mRect:
+    serializedVersion: 2
+    x: 0
+    y: 0
+    width: 1
+    height: 1
+  mShader: {fileID: 4800000, guid: 0be4260a50cecf84aabd5d8be5cfbc9c, type: 3}
+  mTexture: {fileID: 0}
 --- !u!1001 &100100000
 Prefab:
   serializedVersion: 2

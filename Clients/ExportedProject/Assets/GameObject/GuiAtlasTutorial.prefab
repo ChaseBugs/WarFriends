@@ -39,6 +39,107 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ea9f040b2b6bd4bf069e31e0ace12f73, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  material: {fileID: 2100000, guid: 8f4b2912a2278fe498cd0478d7deccde, type: 2}
+  sprites:
+  - name: game-tutorial-grenadier
+    outer:
+      serializedVersion: 2
+      x: 0
+      y: 1472
+      width: 600
+      height: 576
+    inner:
+      serializedVersion: 2
+      x: 0
+      y: 1472
+      width: 600
+      height: 576
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-tilegfx-tutorial
+    outer:
+      serializedVersion: 2
+      x: 606
+      y: 1472
+      width: 549
+      height: 576
+    inner:
+      serializedVersion: 2
+      x: 606
+      y: 1472
+      width: 549
+      height: 576
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-tutorial-minigunner
+    outer:
+      serializedVersion: 2
+      x: 1161
+      y: 1472
+      width: 437
+      height: 576
+    inner:
+      serializedVersion: 2
+      x: 1161
+      y: 1472
+      width: 437
+      height: 576
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-tutorial-infantry
+    outer:
+      serializedVersion: 2
+      x: 1604
+      y: 1472
+      width: 437
+      height: 576
+    inner:
+      serializedVersion: 2
+      x: 1604
+      y: 1472
+      width: 437
+      height: 576
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-energy-ico-big
+    outer:
+      serializedVersion: 2
+      x: 0
+      y: 1335
+      width: 144
+      height: 131
+    inner:
+      serializedVersion: 2
+      x: 0
+      y: 1335
+      width: 144
+      height: 131
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  mCoordinates: 0
+  mPixelSize: 1
+  mReplacement: {fileID: 0}
+  pngPath: GuiAtlasTutorial
+  pngHalfPath:
+  replaceTexture: {fileID: 2800000, guid: 0a5be6e80d4454244a02f5e8c712f76e, type: 3}
+  useBinaryData: 0
+  textureWidth: 2048
+  textureHeight: 2048
 --- !u!1001 &100100000
 Prefab:
   serializedVersion: 2

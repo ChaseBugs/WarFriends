@@ -1,63 +1,260 @@
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
-public class Crane : MonoBehaviour
+public class Crane : Core_BaseScript
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public List<DropPoint> dropPoints;
 
-	1. No dll files were provided to AssetRipper.
+	public DropPoint startDropPoint;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	private DropPoint mDropPoint;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	private MagneticObject mMagneticObject;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public List<MagneticObject> magneticObjects;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public QuickRope2 rope;
 
-	3. Assembly Reconstruction has not been implemented.
+	public Transform snapPoint;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public float speed = 1f;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public Transform craneHead;
 
-	4. This script is unnecessary.
+	public Transform craneArm;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private Vector3 mStartPos;
 
-	5. Script Content Level 0
+	private bool mAnimating;
 
-		AssetRipper was set to not load any script information.
+	private Vector3 mFrom;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	private Vector3 mTo;
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	private float mAnimTime;
 
-	7. An incorrect path was provided to AssetRipper.
+	private float mT;
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	private PhotonView mPhotonView;
 
-	*/
+	private float mStartTime;
+
+	protected override void Awake()
+	{
+		base.Awake();
+		mPhotonView = GetComponent<PhotonView>();
+		Singleton<GameController>.instance.GameStarted += InstanceOnGameStarted;
+		mStartPos = base.transform.position;
+	}
+
+	private void OnDestroy()
+	{
+		Singleton<GameController>.instance.GameStarted -= InstanceOnGameStarted;
+	}
+
+	private void InstanceOnGameStarted()
+	{
+		Singleton<GameController>.instance.GameStarted -= InstanceOnGameStarted;
+		if (mPhotonView.isMine)
+		{
+			StartCrane(3f);
+		}
+	}
+
+	private void StartCrane(float time)
+	{
+		PickDropPoint();
+		PickMagneticObject();
+		mStartTime = time;
+		if (mPhotonView.isMine)
+		{
+			mPhotonView.RPC("StartCraneAnimationRPC", PhotonTargets.Others, time);
+		}
+	}
+
+	[PunRPC]
+	protected void StartCraneAnimationRPC(float time)
+	{
+		mStartTime = time;
+	}
+
+	protected override void Start()
+	{
+		base.Start();
+		ConfigurableJoint component = rope.Joints[rope.Joints.Count - 2].GetComponent<ConfigurableJoint>();
+		component.lowAngularXLimit = new SoftJointLimit
+		{
+			limit = -35f
+		};
+		component.highAngularXLimit = new SoftJointLimit
+		{
+			limit = 35f
+		};
+		foreach (GameObject joint in rope.Joints)
+		{
+			joint.GetComponent<Rigidbody>().interpolation = RigidbodyInterpolation.Interpolate;
+		}
+	}
+
+	private void Update()
+	{
+		Vector3 forward = base.transform.position - craneHead.position;
+		forward.y = 0f;
+		craneHead.rotation = Quaternion.LookRotation(forward);
+		Vector3 position = base.transform.position;
+		position.y = mStartPos.y;
+		Vector3 forward2 = position - craneArm.position;
+		craneArm.rotation = Quaternion.LookRotation(forward2);
+		if (PhotonNetwork.time > (double)mStartTime && mStartTime != 0f)
+		{
+			mStartTime = 0f;
+			StartCoroutine(MoveObject());
+		}
+	}
+
+	[PunRPC]
+	private void PickMagneticObjectRPC(byte index)
+	{
+		mMagneticObject = magneticObjects[index];
+		if (mMagneticObject.dropPoint != null)
+		{
+			mMagneticObject.dropPoint.droppedObject = null;
+			mMagneticObject.dropPoint = null;
+		}
+	}
+
+	private void PickMagneticObject()
+	{
+		List<MagneticObject> list = new List<MagneticObject>();
+		foreach (MagneticObject magneticObject in magneticObjects)
+		{
+			list.Add(magneticObject);
+		}
+		mMagneticObject = list[Random.Range(0, list.Count)];
+		int num = magneticObjects.IndexOf(mMagneticObject);
+		if (mMagneticObject.dropPoint != null)
+		{
+			mMagneticObject.dropPoint.droppedObject = null;
+			mMagneticObject.dropPoint = null;
+		}
+		mPhotonView.RPC("PickMagneticObjectRPC", PhotonTargets.Others, (byte)num);
+	}
+
+	[PunRPC]
+	private void PickDropPointRPC(byte index)
+	{
+		mDropPoint = dropPoints[index];
+	}
+
+	private void PickDropPoint()
+	{
+		List<DropPoint> list = new List<DropPoint>();
+		int num = 0;
+		foreach (DropPoint dropPoint in dropPoints)
+		{
+			if (dropPoint.droppedObject != null && !dropPoint.startPoint)
+			{
+				num++;
+			}
+		}
+		foreach (DropPoint dropPoint2 in dropPoints)
+		{
+			if (num == 0)
+			{
+				if (dropPoint2.droppedObject == null)
+				{
+					list.Add(dropPoint2);
+				}
+			}
+			else if (dropPoint2.droppedObject == null && dropPoint2.startPoint)
+			{
+				list.Add(dropPoint2);
+			}
+		}
+		mDropPoint = list[Random.Range(0, list.Count)];
+		int num2 = dropPoints.IndexOf(mDropPoint);
+		mPhotonView.RPC("PickDropPointRPC", PhotonTargets.Others, (byte)num2);
+	}
+
+	private IEnumerator MoveObject()
+	{
+		Vector3 from = base.transform.position;
+		Vector3 to = mMagneticObject.snapPoint.transform.position;
+		to.y = from.y;
+		mAnimTime = Vector3.Distance(from, to) / speed;
+		StartAnim(from, to);
+		while (mAnimating)
+		{
+			yield return null;
+		}
+		from = base.transform.position;
+		float d = Vector3.Distance(snapPoint.transform.position, mMagneticObject.snapPoint.transform.position);
+		to = base.transform.position - d * Vector3.up;
+		mAnimTime = Vector3.Distance(from, to) / speed;
+		StartAnim(from, to);
+		while (mAnimating)
+		{
+			yield return null;
+		}
+		from = base.transform.position;
+		mMagneticObject.GetComponent<Rigidbody>().isKinematic = true;
+		mMagneticObject.pinned = true;
+		mMagneticObject.Pick(snapPoint);
+		to = base.transform.position + d * Vector3.up;
+		mAnimTime = Vector3.Distance(from, to) / speed;
+		StartAnim(from, to);
+		while (mAnimating)
+		{
+			yield return null;
+		}
+		mMagneticObject.IsUp();
+		from = base.transform.position;
+		to = mDropPoint.transform.position;
+		to.y = from.y;
+		StartAnim(from, to);
+		while (mAnimating)
+		{
+			yield return null;
+		}
+		yield return new WaitForSeconds(2f);
+		mMagneticObject.Drop(mDropPoint);
+		yield return null;
+		yield return new WaitForSeconds(2f);
+		if (mPhotonView.isMine)
+		{
+			StartCrane(Random.Range(10, 15));
+		}
+	}
+
+	private void StartAnim(Vector3 from, Vector3 to)
+	{
+		mAnimating = true;
+		mFrom = from;
+		mTo = to;
+		mAnimTime = Vector3.Distance(from, to) / speed;
+		mT = 0f;
+	}
+
+	private void FixedUpdate()
+	{
+		if (mAnimating)
+		{
+			mT += Time.fixedDeltaTime / mAnimTime;
+			base.transform.position = Vector3.Lerp(mFrom, mTo, mT);
+			if (mT >= 1f)
+			{
+				mAnimating = false;
+			}
+		}
+		if (mMagneticObject != null && mMagneticObject.pinned)
+		{
+			mMagneticObject.transform.rotation = snapPoint.transform.rotation;
+			mMagneticObject.transform.position = snapPoint.transform.position - snapPoint.transform.rotation * mMagneticObject.snapPoint.transform.localPosition;
+		}
+	}
+
+	private void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
+	{
+	}
 }

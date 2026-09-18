@@ -1,66 +1,75 @@
-using UnityEngine;
+using System;
+using System.Globalization;
 
 namespace FullSerializer.Internal
 {
-	public class fsDateConverter : MonoBehaviour
+public class fsDateConverter : fsConverter
+{
+	private const string DefaultDateTimeFormatString = "o";
+
+	private const string DateTimeOffsetFormatString = "o";
+
+	private string DateTimeFormatString => fsConfig.CustomDateTimeFormatString ?? "o";
+
+	public override bool CanProcess(Type type)
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
+		return type == typeof(DateTime) || type == typeof(DateTimeOffset) || type == typeof(TimeSpan);
 	}
+
+	public override fsResult TrySerialize(object instance, out fsData serialized, Type storageType)
+	{
+		if (instance is DateTime dateTime)
+		{
+			serialized = new fsData(dateTime.ToString(DateTimeFormatString));
+			return fsResult.Success;
+		}
+		if (instance is DateTimeOffset dateTimeOffset)
+		{
+			serialized = new fsData(dateTimeOffset.ToString("o"));
+			return fsResult.Success;
+		}
+		if (instance is TimeSpan timeSpan)
+		{
+			serialized = new fsData(timeSpan.ToString());
+			return fsResult.Success;
+		}
+		throw new InvalidOperationException("FullSerializer Internal Error -- Unexpected serialization type");
+	}
+
+	public override fsResult TryDeserialize(fsData data, ref object instance, Type storageType)
+	{
+		if (!data.IsString)
+		{
+			return fsResult.Fail("Date deserialization requires a string, not " + data.Type);
+		}
+		if (storageType == typeof(DateTime))
+		{
+			if (DateTime.TryParse(data.AsString, null, DateTimeStyles.RoundtripKind, out var result))
+			{
+				instance = result;
+				return fsResult.Success;
+			}
+			return fsResult.Fail("Unable to parse " + data.AsString + " into a DateTime");
+		}
+		if (storageType == typeof(DateTimeOffset))
+		{
+			if (DateTimeOffset.TryParse(data.AsString, null, DateTimeStyles.RoundtripKind, out var result2))
+			{
+				instance = result2;
+				return fsResult.Success;
+			}
+			return fsResult.Fail("Unable to parse " + data.AsString + " into a DateTimeOffset");
+		}
+		if (storageType == typeof(TimeSpan))
+		{
+			if (TimeSpan.TryParse(data.AsString, out var result3))
+			{
+				instance = result3;
+				return fsResult.Success;
+			}
+			return fsResult.Fail("Unable to parse " + data.AsString + " into a TimeSpan");
+		}
+		throw new InvalidOperationException("FullSerializer Internal Error -- Unexpected deserialization type");
+	}
+}
 }

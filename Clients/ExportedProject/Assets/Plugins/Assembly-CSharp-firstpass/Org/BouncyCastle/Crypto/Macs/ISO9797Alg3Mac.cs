@@ -1,66 +1,177 @@
-using UnityEngine;
+using System;
+using Org.BouncyCastle.Crypto.Engines;
+using Org.BouncyCastle.Crypto.Modes;
+using Org.BouncyCastle.Crypto.Paddings;
+using Org.BouncyCastle.Crypto.Parameters;
 
 namespace Org.BouncyCastle.Crypto.Macs
 {
-	public class ISO9797Alg3Mac : MonoBehaviour
+public class ISO9797Alg3Mac : IMac
+{
+	private byte[] mac;
+
+	private byte[] buf;
+
+	private int bufOff;
+
+	private IBlockCipher cipher;
+
+	private IBlockCipherPadding padding;
+
+	private int macSize;
+
+	private KeyParameter lastKey2;
+
+	private KeyParameter lastKey3;
+
+	public string AlgorithmName => "ISO9797Alg3";
+
+	public ISO9797Alg3Mac(IBlockCipher cipher)
+		: this(cipher, cipher.GetBlockSize() * 8, null)
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
 	}
+
+	public ISO9797Alg3Mac(IBlockCipher cipher, IBlockCipherPadding padding)
+		: this(cipher, cipher.GetBlockSize() * 8, padding)
+	{
+	}
+
+	public ISO9797Alg3Mac(IBlockCipher cipher, int macSizeInBits)
+		: this(cipher, macSizeInBits, null)
+	{
+	}
+
+	public ISO9797Alg3Mac(IBlockCipher cipher, int macSizeInBits, IBlockCipherPadding padding)
+	{
+		if (macSizeInBits % 8 != 0)
+		{
+			throw new ArgumentException("MAC size must be multiple of 8");
+		}
+		if (!(cipher is DesEngine))
+		{
+			throw new ArgumentException("cipher must be instance of DesEngine");
+		}
+		this.cipher = new CbcBlockCipher(cipher);
+		this.padding = padding;
+		macSize = macSizeInBits / 8;
+		mac = new byte[cipher.GetBlockSize()];
+		buf = new byte[cipher.GetBlockSize()];
+		bufOff = 0;
+	}
+
+	public void Init(ICipherParameters parameters)
+	{
+		Reset();
+		if (!(parameters is KeyParameter) && !(parameters is ParametersWithIV))
+		{
+			throw new ArgumentException("parameters must be an instance of KeyParameter or ParametersWithIV");
+		}
+		KeyParameter keyParameter = ((!(parameters is KeyParameter)) ? ((KeyParameter)((ParametersWithIV)parameters).Parameters) : ((KeyParameter)parameters));
+		byte[] key = keyParameter.GetKey();
+		KeyParameter parameters2;
+		if (key.Length == 16)
+		{
+			parameters2 = new KeyParameter(key, 0, 8);
+			lastKey2 = new KeyParameter(key, 8, 8);
+			lastKey3 = parameters2;
+		}
+		else
+		{
+			if (key.Length != 24)
+			{
+				throw new ArgumentException("Key must be either 112 or 168 bit long");
+			}
+			parameters2 = new KeyParameter(key, 0, 8);
+			lastKey2 = new KeyParameter(key, 8, 8);
+			lastKey3 = new KeyParameter(key, 16, 8);
+		}
+		if (parameters is ParametersWithIV)
+		{
+			cipher.Init(forEncryption: true, new ParametersWithIV(parameters2, ((ParametersWithIV)parameters).GetIV()));
+		}
+		else
+		{
+			cipher.Init(forEncryption: true, parameters2);
+		}
+	}
+
+	public int GetMacSize()
+	{
+		return macSize;
+	}
+
+	public void Update(byte input)
+	{
+		if (bufOff == buf.Length)
+		{
+			cipher.ProcessBlock(buf, 0, mac, 0);
+			bufOff = 0;
+		}
+		buf[bufOff++] = input;
+	}
+
+	public void BlockUpdate(byte[] input, int inOff, int len)
+	{
+		if (len < 0)
+		{
+			throw new ArgumentException("Can't have a negative input length!");
+		}
+		int blockSize = cipher.GetBlockSize();
+		int num = 0;
+		int num2 = blockSize - bufOff;
+		if (len > num2)
+		{
+			Array.Copy(input, inOff, buf, bufOff, num2);
+			num += cipher.ProcessBlock(buf, 0, mac, 0);
+			bufOff = 0;
+			len -= num2;
+			inOff += num2;
+			while (len > blockSize)
+			{
+				num += cipher.ProcessBlock(input, inOff, mac, 0);
+				len -= blockSize;
+				inOff += blockSize;
+			}
+		}
+		Array.Copy(input, inOff, buf, bufOff, len);
+		bufOff += len;
+	}
+
+	public int DoFinal(byte[] output, int outOff)
+	{
+		int blockSize = cipher.GetBlockSize();
+		if (padding == null)
+		{
+			while (bufOff < blockSize)
+			{
+				buf[bufOff++] = 0;
+			}
+		}
+		else
+		{
+			if (bufOff == blockSize)
+			{
+				cipher.ProcessBlock(buf, 0, mac, 0);
+				bufOff = 0;
+			}
+			padding.AddPadding(buf, bufOff);
+		}
+		cipher.ProcessBlock(buf, 0, mac, 0);
+		DesEngine desEngine = new DesEngine();
+		desEngine.Init(forEncryption: false, lastKey2);
+		desEngine.ProcessBlock(mac, 0, mac, 0);
+		desEngine.Init(forEncryption: true, lastKey3);
+		desEngine.ProcessBlock(mac, 0, mac, 0);
+		Array.Copy(mac, 0, output, outOff, macSize);
+		Reset();
+		return macSize;
+	}
+
+	public void Reset()
+	{
+		Array.Clear(buf, 0, buf.Length);
+		bufOff = 0;
+		cipher.Reset();
+	}
+}
 }

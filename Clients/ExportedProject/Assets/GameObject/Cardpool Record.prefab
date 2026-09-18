@@ -3676,6 +3676,39 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d637862f01a63c28bd2c45268f24235d, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  isActivated: 0
+  buttonSetter: {fileID: 11426211}
+  highlight: {fileID: 11426796}
+  position: {fileID: 11443171}
+  avatar: {fileID: 11439132}
+  playerIconButton: {fileID: 119550}
+  countryIcon: {fileID: 11498443}
+  rankIcon: {fileID: 11441888}
+  rankNumber: {fileID: 11458688}
+  nickLabel: {fileID: 11474009}
+  playerButton: {fileID: 6566526}
+  reputationTable: {fileID: 11477091}
+  reputationLabel: {fileID: 11430477}
+  emptyCardpool: {fileID: 155190}
+  notifyButton: {fileID: 176054}
+  cardPoolPart: {fileID: 151504}
+  cards:
+  - {fileID: 11491477}
+  - {fileID: 11431462}
+  - {fileID: 11495478}
+  - {fileID: 11451317}
+  - {fileID: 11405596}
+  - {fileID: 11477699}
+  - {fileID: 11498961}
+  - {fileID: 11475631}
+  - {fileID: 11493143}
+  - {fileID: 11421002}
+  - {fileID: 11413900}
+  withdrawButton: {fileID: 6552090}
+  withdrawBackground: {fileID: 11428764}
+  withdrawIcon: {fileID: 11473978}
+  withdrawLabel: {fileID: 11496304}
+  depositButton: {fileID: 128410}
 --- !u!114 &11426211
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3687,6 +3720,29 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 44d52d196a1901b30dbacb1bcd0c32b2, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  moveInDirection: 8
+  keepBaseSpaceAround: 1
+  baseSize: {x: 1800, y: 140}
+  minSize: {x: 1800, y: 140}
+  maxSize: {x: 0, y: 140}
+  backgrounds:
+  - background: {fileID: 11419936}
+    addSize: {x: 0, y: 0}
+  - background: {fileID: 11426796}
+    addSize: {x: 40, y: 40}
+  isClickable: 0
+  boxCollider: {fileID: 0}
+  addColliderSize: {x: 0, y: 0}
+  labels:
+  - label: {fileID: 11474009}
+    addX: -1492
+  leftAnchors:
+  - {fileID: 105782}
+  rightAnchors:
+  - {fileID: 144804}
+  topAnchors: []
+  bottomAnchors: []
+  initializationResizeDone: 1
 --- !u!4 &469316
 Transform:
   m_ObjectHideFlags: 0
@@ -3710,6 +3766,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 995cff53e4ec203488dc398f0f8f32e5, type: 2}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 1
+  mAtlas: {fileID: 11409266, guid: 9582f38df100b244993ee2e1fa9a9888, type: 2}
+  mSpriteName: menu-leagues-bar-bg
+  mFillCenter: 1
+  mType: 1
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &423022
 Transform:
   m_ObjectHideFlags: 0
@@ -3733,6 +3804,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 995cff53e4ec203488dc398f0f8f32e5, type: 2}
+  mColor: {r: 0.043137256, g: 0.7372549, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 2
+  mAtlas: {fileID: 11409266, guid: 9582f38df100b244993ee2e1fa9a9888, type: 2}
+  mSpriteName: menu-stroke-whiteglow
+  mFillCenter: 0
+  mType: 1
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &473856
 Transform:
   m_ObjectHideFlags: 0
@@ -3770,6 +3856,30 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f54891d0b7e1a01a23bc64463aeafd37, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 5b605186162b42244b30fe94c1806c2f, type: 2}
+  mColor: {r: 0.043137256, g: 0.7372549, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 3
+  mFont: {fileID: 11409266, guid: 2ac3a3ab35adb5d45b8c056aa7026f89, type: 2}
+  mText: '?.'
+  mMaxLineWidth: 0
+  mEncoding: 1
+  mMaxLineCount: 0
+  mPassword: 0
+  mShowLastChar: 0
+  mEffectStyle: 0
+  mEffectColor: {r: 0, g: 0, b: 0, a: 1}
+  mSymbols: 1
+  mEffectDistance: {x: 1, y: 1}
+  mShrinkToFit: 0
+  useLocalization: 0
+  mRescaleLocalization: 0
+  mDefaultScale: 40
+  mMinimalScale: 20
+  mRescaleWidth: 0
+  mDynamicFontSize: 0
+  mLineWidth: 0
+  mMultiline: 1
 --- !u!4 &415575
 Transform:
   m_ObjectHideFlags: 0
@@ -3825,6 +3935,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dfac223674a804adf3fffb2de07784c9, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  tweenTarget: {fileID: 0}
+  hover: {x: 1.05, y: 1.05, z: 1}
+  pressed: {x: 1.05, y: 1.05, z: 1}
 --- !u!4 &452444
 Transform:
   m_ObjectHideFlags: 0
@@ -3848,6 +3961,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 995cff53e4ec203488dc398f0f8f32e5, type: 2}
+  mColor: {r: 0.015686275, g: 0.015686275, b: 0.015686275, a: 1}
+  mPivot: 4
+  mDepth: 4
+  mAtlas: {fileID: 11409266, guid: 9582f38df100b244993ee2e1fa9a9888, type: 2}
+  mSpriteName: whiteRectangle
+  mFillCenter: 1
+  mType: 0
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 1
+  mFillSlopePixels: 0
 --- !u!4 &420492
 Transform:
   m_ObjectHideFlags: 0
@@ -3871,6 +3999,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 96562d0799d618a7fb9b1a37343d8235, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 0}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 5
+  mRect:
+    serializedVersion: 2
+    x: 0
+    y: 0
+    width: 1
+    height: 1
+  mShader: {fileID: 4800000, guid: aee460bec679bc74c83e73f2ad1b8edc, type: 3}
+  mTexture: {fileID: 2800000, guid: 5c4b2e7825ae6f24e82c47bceb197619, type: 3}
 --- !u!114 &11439132
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3882,6 +4022,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fbc2ea3a1d195692214db079ede23fc1, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  nameLabel: {fileID: 11474009}
 --- !u!4 &496477
 Transform:
   m_ObjectHideFlags: 0
@@ -3905,6 +4046,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: c372aad65c3883549aca1eedac03d68b, type: 2}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 6
+  mAtlas: {fileID: 11409266, guid: 074026fc6c3eeb749b9cb245336aaa43, type: 2}
+  mSpriteName: country-czech-republic
+  mFillCenter: 1
+  mType: 0
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &446858
 Transform:
   m_ObjectHideFlags: 0
@@ -3942,6 +4098,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: c372aad65c3883549aca1eedac03d68b, type: 2}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 7
+  mAtlas: {fileID: 11409266, guid: 074026fc6c3eeb749b9cb245336aaa43, type: 2}
+  mSpriteName: 1
+  mFillCenter: 1
+  mType: 0
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &496523
 Transform:
   m_ObjectHideFlags: 0
@@ -3965,6 +4136,30 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f54891d0b7e1a01a23bc64463aeafd37, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 5b605186162b42244b30fe94c1806c2f, type: 2}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 8
+  mFont: {fileID: 11409266, guid: 2ac3a3ab35adb5d45b8c056aa7026f89, type: 2}
+  mText: 1
+  mMaxLineWidth: 0
+  mEncoding: 1
+  mMaxLineCount: 0
+  mPassword: 0
+  mShowLastChar: 0
+  mEffectStyle: 2
+  mEffectColor: {r: 0, g: 0, b: 0, a: 1}
+  mSymbols: 1
+  mEffectDistance: {x: 1, y: 1}
+  mShrinkToFit: 0
+  useLocalization: 0
+  mRescaleLocalization: 0
+  mDefaultScale: 40
+  mMinimalScale: 20
+  mRescaleWidth: 0
+  mDynamicFontSize: 0
+  mLineWidth: 0
+  mMultiline: 1
 --- !u!4 &427680
 Transform:
   m_ObjectHideFlags: 0
@@ -3988,6 +4183,30 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f54891d0b7e1a01a23bc64463aeafd37, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 5b605186162b42244b30fe94c1806c2f, type: 2}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 3
+  mDepth: 9
+  mFont: {fileID: 11409266, guid: 2ac3a3ab35adb5d45b8c056aa7026f89, type: 2}
+  mText: Warfriend 55555
+  mMaxLineWidth: 0
+  mEncoding: 0
+  mMaxLineCount: 0
+  mPassword: 0
+  mShowLastChar: 0
+  mEffectStyle: 0
+  mEffectColor: {r: 0, g: 0, b: 0, a: 1}
+  mSymbols: 1
+  mEffectDistance: {x: 1, y: 1}
+  mShrinkToFit: 0
+  useLocalization: 0
+  mRescaleLocalization: 0
+  mDefaultScale: 40
+  mMinimalScale: 20
+  mRescaleWidth: 0
+  mDynamicFontSize: 0
+  mLineWidth: 0
+  mMultiline: 1
 --- !u!4 &478937
 Transform:
   m_ObjectHideFlags: 0
@@ -4038,6 +4257,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d1c6ef6f42069c0e54cf0e5de6267bbf, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  columns: 3
+  direction: 0
+  padding: {x: 6, y: 0}
+  sorted: 0
+  hideInactive: 1
+  repositionNow: 0
+  keepWithinPanel: 0
 --- !u!4 &443874
 Transform:
   m_ObjectHideFlags: 0
@@ -4075,6 +4301,30 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f54891d0b7e1a01a23bc64463aeafd37, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 5b605186162b42244b30fe94c1806c2f, type: 2}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 3
+  mDepth: 9
+  mFont: {fileID: 11409266, guid: 2ac3a3ab35adb5d45b8c056aa7026f89, type: 2}
+  mText: ID_REPUTATION
+  mMaxLineWidth: 0
+  mEncoding: 1
+  mMaxLineCount: 0
+  mPassword: 0
+  mShowLastChar: 0
+  mEffectStyle: 0
+  mEffectColor: {r: 0, g: 0, b: 0, a: 1}
+  mSymbols: 1
+  mEffectDistance: {x: 1, y: 1}
+  mShrinkToFit: 0
+  useLocalization: 1
+  mRescaleLocalization: 0
+  mDefaultScale: 40
+  mMinimalScale: 20
+  mRescaleWidth: 0
+  mDynamicFontSize: 0
+  mLineWidth: 0
+  mMultiline: 1
 --- !u!4 &452113
 Transform:
   m_ObjectHideFlags: 0
@@ -4098,6 +4348,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 0}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 0
+  mAtlas: {fileID: 0}
+  mSpriteName:
+  mFillCenter: 1
+  mType: 0
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &426041
 Transform:
   m_ObjectHideFlags: 0
@@ -4121,6 +4386,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 995cff53e4ec203488dc398f0f8f32e5, type: 2}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 10
+  mAtlas: {fileID: 11409266, guid: 9582f38df100b244993ee2e1fa9a9888, type: 2}
+  mSpriteName: menu-cardpool-reputation-ico
+  mFillCenter: 1
+  mType: 0
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &404670
 Transform:
   m_ObjectHideFlags: 0
@@ -4158,6 +4438,30 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f54891d0b7e1a01a23bc64463aeafd37, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 5b605186162b42244b30fe94c1806c2f, type: 2}
+  mColor: {r: 0.9333334, g: 0.40000004, b: 0.9568628, a: 1}
+  mPivot: 4
+  mDepth: 0
+  mFont: {fileID: 11409266, guid: 2ac3a3ab35adb5d45b8c056aa7026f89, type: 2}
+  mText: 0
+  mMaxLineWidth: 0
+  mEncoding: 1
+  mMaxLineCount: 0
+  mPassword: 0
+  mShowLastChar: 0
+  mEffectStyle: 0
+  mEffectColor: {r: 0, g: 0, b: 0, a: 1}
+  mSymbols: 1
+  mEffectDistance: {x: 1, y: 1}
+  mShrinkToFit: 0
+  useLocalization: 0
+  mRescaleLocalization: 0
+  mDefaultScale: 40
+  mMinimalScale: 20
+  mRescaleWidth: 0
+  mDynamicFontSize: 0
+  mLineWidth: 0
+  mMultiline: 1
 --- !u!4 &411872
 Transform:
   m_ObjectHideFlags: 0
@@ -4181,6 +4485,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 0}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 0
+  mAtlas: {fileID: 0}
+  mSpriteName:
+  mFillCenter: 1
+  mType: 0
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &466579
 Transform:
   m_ObjectHideFlags: 0
@@ -4246,6 +4565,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dfac223674a804adf3fffb2de07784c9, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  tweenTarget: {fileID: 0}
+  hover: {x: 1.1, y: 1.1, z: 1}
+  pressed: {x: 1.05, y: 1.05, z: 1}
 --- !u!4 &470349
 Transform:
   m_ObjectHideFlags: 0
@@ -4269,6 +4591,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 004bf51e44960d04eae9440074f7edfe, type: 2}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 12
+  mAtlas: {fileID: 11409266, guid: 495417da82574ed49be200e5350c2c0a, type: 2}
+  mSpriteName: menu-cardpool-button-smallwithdraw
+  mFillCenter: 1
+  mType: 1
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &427022
 Transform:
   m_ObjectHideFlags: 0
@@ -4306,6 +4643,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 004bf51e44960d04eae9440074f7edfe, type: 2}
+  mColor: {r: 0, g: 0, b: 0, a: 1}
+  mPivot: 4
+  mDepth: 13
+  mAtlas: {fileID: 11409266, guid: 495417da82574ed49be200e5350c2c0a, type: 2}
+  mSpriteName: whiteRectangle
+  mFillCenter: 1
+  mType: 0
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 1
+  mFillSlopePixels: 0
 --- !u!4 &426743
 Transform:
   m_ObjectHideFlags: 0
@@ -4329,6 +4681,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 004bf51e44960d04eae9440074f7edfe, type: 2}
+  mColor: {r: 0, g: 0, b: 0, a: 1}
+  mPivot: 4
+  mDepth: 14
+  mAtlas: {fileID: 11409266, guid: 495417da82574ed49be200e5350c2c0a, type: 2}
+  mSpriteName: whiteRectangle
+  mFillCenter: 1
+  mType: 0
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 1
+  mFillSlopePixels: 0
 --- !u!4 &483675
 Transform:
   m_ObjectHideFlags: 0
@@ -4352,6 +4719,30 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f54891d0b7e1a01a23bc64463aeafd37, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: d808305656a8601409466191d759059d, type: 3}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 5
+  mDepth: 15
+  mFont: {fileID: 11409266, guid: 2ac3a3ab35adb5d45b8c056aa7026f89, type: 2}
+  mText: ID_DEPOSITEDNOWARCARDS
+  mMaxLineWidth: 0
+  mEncoding: 1
+  mMaxLineCount: 0
+  mPassword: 0
+  mShowLastChar: 0
+  mEffectStyle: 0
+  mEffectColor: {r: 0, g: 0, b: 0, a: 1}
+  mSymbols: 1
+  mEffectDistance: {x: 1, y: 1}
+  mShrinkToFit: 0
+  useLocalization: 1
+  mRescaleLocalization: 0
+  mDefaultScale: 40
+  mMinimalScale: 20
+  mRescaleWidth: 0
+  mDynamicFontSize: 0
+  mLineWidth: 0
+  mMultiline: 1
 --- !u!4 &445277
 Transform:
   m_ObjectHideFlags: 0
@@ -4394,6 +4785,25 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 15bf9f5c0ff4bb7d3326d742fc1229b4, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  widgets:
+  - {fileID: 11403593}
+  - {fileID: 11410177}
+  - {fileID: 11415606}
+  - {fileID: 11410923}
+  - {fileID: 11430045}
+  - {fileID: 11425784}
+  - {fileID: 11430196}
+  emptyPart: {fileID: 199646}
+  borderEmpty: {fileID: 11410177}
+  cardPart: {fileID: 182909}
+  cardBackground: {fileID: 11419750}
+  cardTexture: {fileID: 11452583}
+  cardIcon: {fileID: 11446136}
+  cardBonusIcon: {fileID: 11464628}
+  cardBonusLabel: {fileID: 11439558}
+  depositBuddyPart: {fileID: 134916}
+  waitingBuddyPart: {fileID: 125385}
+  waitingTime: {fileID: 11476810}
 --- !u!65 &6557954
 BoxCollider:
   serializedVersion: 2
@@ -4443,6 +4853,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 995cff53e4ec203488dc398f0f8f32e5, type: 2}
+  mColor: {r: 0.13725491, g: 0.14117648, b: 0.17254902, a: 1}
+  mPivot: 4
+  mDepth: 12
+  mAtlas: {fileID: 11409266, guid: 9582f38df100b244993ee2e1fa9a9888, type: 2}
+  mSpriteName: menu-crafting-cardplaceholder
+  mFillCenter: 1
+  mType: 1
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &436431
 Transform:
   m_ObjectHideFlags: 0
@@ -4466,6 +4891,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 995cff53e4ec203488dc398f0f8f32e5, type: 2}
+  mColor: {r: 0.29803923, g: 0.3019608, b: 0.36078432, a: 1}
+  mPivot: 4
+  mDepth: 13
+  mAtlas: {fileID: 11409266, guid: 9582f38df100b244993ee2e1fa9a9888, type: 2}
+  mSpriteName: menu-cardselection-stroke
+  mFillCenter: 1
+  mType: 1
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &495607
 Transform:
   m_ObjectHideFlags: 0
@@ -4504,6 +4944,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 004bf51e44960d04eae9440074f7edfe, type: 2}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 14
+  mAtlas: {fileID: 11409266, guid: 495417da82574ed49be200e5350c2c0a, type: 2}
+  mSpriteName: menu-cardpool-buddycardplaceholder
+  mFillCenter: 1
+  mType: 1
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &427960
 Transform:
   m_ObjectHideFlags: 0
@@ -4527,6 +4982,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 004bf51e44960d04eae9440074f7edfe, type: 2}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 15
+  mAtlas: {fileID: 11409266, guid: 495417da82574ed49be200e5350c2c0a, type: 2}
+  mSpriteName: menu-cardpool-soldier-ico
+  mFillCenter: 1
+  mType: 0
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &407410
 Transform:
   m_ObjectHideFlags: 0
@@ -4550,6 +5020,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 004bf51e44960d04eae9440074f7edfe, type: 2}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 16
+  mAtlas: {fileID: 11409266, guid: 495417da82574ed49be200e5350c2c0a, type: 2}
+  mSpriteName: menu-cardpool-depositarrow
+  mFillCenter: 1
+  mType: 0
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!114 &11486761
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4561,6 +5046,36 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e3b2cec1a418fb5742374dba269174f3, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  method: 3
+  style: 2
+  animationCurve:
+    serializedVersion: 2
+    m_Curve:
+    - time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 1
+      tangentMode: 0
+    - time: 1
+      value: 1
+      inSlope: 1
+      outSlope: 0
+      tangentMode: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+  ignoreTimeScale: 1
+  delay: 0
+  duration: 0.6
+  steeperCurves: 0
+  tweenGroup: 0
+  eventReceiver: {fileID: 0}
+  callWhenFinished:
+  NumOfRepetitions: 0
+  id: 0
+  dontResetCurve: 0
+  from: {x: 0, y: -25, z: 0}
+  to: {x: 0, y: -35, z: 0}
+  useLocal: 1
 --- !u!4 &429195
 Transform:
   m_ObjectHideFlags: 0
@@ -4598,6 +5113,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 004bf51e44960d04eae9440074f7edfe, type: 2}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 17
+  mAtlas: {fileID: 11409266, guid: 495417da82574ed49be200e5350c2c0a, type: 2}
+  mSpriteName: menu-cardpool-buddycardplaceholder
+  mFillCenter: 1
+  mType: 1
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &447421
 Transform:
   m_ObjectHideFlags: 0
@@ -4621,6 +5151,30 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f54891d0b7e1a01a23bc64463aeafd37, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: d808305656a8601409466191d759059d, type: 3}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 3
+  mDepth: 18
+  mFont: {fileID: 11409266, guid: 2ac3a3ab35adb5d45b8c056aa7026f89, type: 2}
+  mText: "04h\n12m"
+  mMaxLineWidth: 60
+  mEncoding: 1
+  mMaxLineCount: 0
+  mPassword: 0
+  mShowLastChar: 0
+  mEffectStyle: 0
+  mEffectColor: {r: 0, g: 0, b: 0, a: 1}
+  mSymbols: 1
+  mEffectDistance: {x: 1, y: 1}
+  mShrinkToFit: 0
+  useLocalization: 0
+  mRescaleLocalization: 0
+  mDefaultScale: 40
+  mMinimalScale: 20
+  mRescaleWidth: 0
+  mDynamicFontSize: 0
+  mLineWidth: 0
+  mMultiline: 1
 --- !u!114 &11476810
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4632,6 +5186,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 077b9e34e9b770eda0d5ad1dec73f486, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  counterLabel: {fileID: 11430196}
+  timerBar: {fileID: 0}
 --- !u!4 &408336
 Transform:
   m_ObjectHideFlags: 0
@@ -4672,6 +5228,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 34246ee25fb287548a2455364e0758cc, type: 2}
+  mColor: {r: 0.9333334, g: 0.40000004, b: 0.9568628, a: 1}
+  mPivot: 4
+  mDepth: 19
+  mAtlas: {fileID: 11409266, guid: 6b7d937aae653334fb9798602794ec44, type: 2}
+  mSpriteName: game-card-silver
+  mFillCenter: 1
+  mType: 0
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &466903
 Transform:
   m_ObjectHideFlags: 0
@@ -4695,6 +5266,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 34246ee25fb287548a2455364e0758cc, type: 2}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 20
+  mAtlas: {fileID: 11409266, guid: 6b7d937aae653334fb9798602794ec44, type: 2}
+  mSpriteName: game-card-ammobox
+  mFillCenter: 1
+  mType: 0
+  mFillDirection: 0
+  mFillAmount: 0.802
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &485647
 Transform:
   m_ObjectHideFlags: 0
@@ -4718,6 +5304,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 96562d0799d618a7fb9b1a37343d8235, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 0}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 0
+  mRect:
+    serializedVersion: 2
+    x: 0
+    y: 0
+    width: 1
+    height: 1
+  mShader: {fileID: 4800000, guid: 0be4260a50cecf84aabd5d8be5cfbc9c, type: 3}
+  mTexture: {fileID: 0}
 --- !u!4 &488770
 Transform:
   m_ObjectHideFlags: 0
@@ -4741,6 +5339,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 004bf51e44960d04eae9440074f7edfe, type: 2}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 21
+  mAtlas: {fileID: 11409266, guid: 495417da82574ed49be200e5350c2c0a, type: 2}
+  mSpriteName: game-card-ico-ammo
+  mFillCenter: 1
+  mType: 0
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &446620
 Transform:
   m_ObjectHideFlags: 0
@@ -4764,6 +5377,30 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f54891d0b7e1a01a23bc64463aeafd37, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: d808305656a8601409466191d759059d, type: 3}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 5
+  mDepth: 22
+  mFont: {fileID: 11409266, guid: 2ac3a3ab35adb5d45b8c056aa7026f89, type: 2}
+  mText: +25%
+  mMaxLineWidth: 0
+  mEncoding: 1
+  mMaxLineCount: 0
+  mPassword: 0
+  mShowLastChar: 0
+  mEffectStyle: 2
+  mEffectColor: {r: 0, g: 0, b: 0, a: 1}
+  mSymbols: 1
+  mEffectDistance: {x: 1, y: 1}
+  mShrinkToFit: 0
+  useLocalization: 0
+  mRescaleLocalization: 0
+  mDefaultScale: 40
+  mMinimalScale: 20
+  mRescaleWidth: 0
+  mDynamicFontSize: 0
+  mLineWidth: 0
+  mMultiline: 1
 --- !u!4 &452230
 Transform:
   m_ObjectHideFlags: 0
@@ -4797,6 +5434,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 79b4a85c6b739bd645e34bbc82ba5fb4, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  arrangement: 0
+  maxPerLine: 10
+  cellWidth: 105
+  cellHeight: 140
+  repositionNow: 0
+  sorted: 0
+  hideInactive: 1
 --- !u!4 &418142
 Transform:
   m_ObjectHideFlags: 0
@@ -4824,6 +5468,25 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 15bf9f5c0ff4bb7d3326d742fc1229b4, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  widgets:
+  - {fileID: 11421148}
+  - {fileID: 11472589}
+  - {fileID: 11476788}
+  - {fileID: 11493056}
+  - {fileID: 11423638}
+  - {fileID: 11434711}
+  - {fileID: 11427517}
+  emptyPart: {fileID: 188432}
+  borderEmpty: {fileID: 11472589}
+  cardPart: {fileID: 191078}
+  cardBackground: {fileID: 11493073}
+  cardTexture: {fileID: 11487704}
+  cardIcon: {fileID: 11494799}
+  cardBonusIcon: {fileID: 11470469}
+  cardBonusLabel: {fileID: 11465525}
+  depositBuddyPart: {fileID: 120844}
+  waitingBuddyPart: {fileID: 160213}
+  waitingTime: {fileID: 11442894}
 --- !u!65 &6534231
 BoxCollider:
   serializedVersion: 2
@@ -4873,6 +5536,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 995cff53e4ec203488dc398f0f8f32e5, type: 2}
+  mColor: {r: 0.13725491, g: 0.14117648, b: 0.17254902, a: 1}
+  mPivot: 4
+  mDepth: 12
+  mAtlas: {fileID: 11409266, guid: 9582f38df100b244993ee2e1fa9a9888, type: 2}
+  mSpriteName: menu-crafting-cardplaceholder
+  mFillCenter: 1
+  mType: 1
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &401531
 Transform:
   m_ObjectHideFlags: 0
@@ -4896,6 +5574,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 995cff53e4ec203488dc398f0f8f32e5, type: 2}
+  mColor: {r: 0.29803923, g: 0.3019608, b: 0.36078432, a: 1}
+  mPivot: 4
+  mDepth: 13
+  mAtlas: {fileID: 11409266, guid: 9582f38df100b244993ee2e1fa9a9888, type: 2}
+  mSpriteName: menu-cardselection-stroke
+  mFillCenter: 1
+  mType: 1
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &451498
 Transform:
   m_ObjectHideFlags: 0
@@ -4934,6 +5627,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 004bf51e44960d04eae9440074f7edfe, type: 2}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 14
+  mAtlas: {fileID: 11409266, guid: 495417da82574ed49be200e5350c2c0a, type: 2}
+  mSpriteName: menu-cardpool-buddycardplaceholder
+  mFillCenter: 1
+  mType: 1
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &492510
 Transform:
   m_ObjectHideFlags: 0
@@ -4957,6 +5665,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 004bf51e44960d04eae9440074f7edfe, type: 2}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 15
+  mAtlas: {fileID: 11409266, guid: 495417da82574ed49be200e5350c2c0a, type: 2}
+  mSpriteName: menu-cardpool-soldier-ico
+  mFillCenter: 1
+  mType: 0
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &483944
 Transform:
   m_ObjectHideFlags: 0
@@ -4980,6 +5703,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 004bf51e44960d04eae9440074f7edfe, type: 2}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 16
+  mAtlas: {fileID: 11409266, guid: 495417da82574ed49be200e5350c2c0a, type: 2}
+  mSpriteName: menu-cardpool-depositarrow
+  mFillCenter: 1
+  mType: 0
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!114 &11469080
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4991,6 +5729,36 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e3b2cec1a418fb5742374dba269174f3, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  method: 3
+  style: 2
+  animationCurve:
+    serializedVersion: 2
+    m_Curve:
+    - time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 1
+      tangentMode: 0
+    - time: 1
+      value: 1
+      inSlope: 1
+      outSlope: 0
+      tangentMode: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+  ignoreTimeScale: 1
+  delay: 0
+  duration: 0.6
+  steeperCurves: 0
+  tweenGroup: 0
+  eventReceiver: {fileID: 0}
+  callWhenFinished:
+  NumOfRepetitions: 0
+  id: 0
+  dontResetCurve: 0
+  from: {x: 0, y: -25, z: 0}
+  to: {x: 0, y: -35, z: 0}
+  useLocal: 1
 --- !u!4 &440051
 Transform:
   m_ObjectHideFlags: 0
@@ -5028,6 +5796,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 004bf51e44960d04eae9440074f7edfe, type: 2}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 17
+  mAtlas: {fileID: 11409266, guid: 495417da82574ed49be200e5350c2c0a, type: 2}
+  mSpriteName: menu-cardpool-buddycardplaceholder
+  mFillCenter: 1
+  mType: 1
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &467631
 Transform:
   m_ObjectHideFlags: 0
@@ -5051,6 +5834,30 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f54891d0b7e1a01a23bc64463aeafd37, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: d808305656a8601409466191d759059d, type: 3}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 3
+  mDepth: 18
+  mFont: {fileID: 11409266, guid: 2ac3a3ab35adb5d45b8c056aa7026f89, type: 2}
+  mText: "04h\n12m"
+  mMaxLineWidth: 60
+  mEncoding: 1
+  mMaxLineCount: 0
+  mPassword: 0
+  mShowLastChar: 0
+  mEffectStyle: 0
+  mEffectColor: {r: 0, g: 0, b: 0, a: 1}
+  mSymbols: 1
+  mEffectDistance: {x: 1, y: 1}
+  mShrinkToFit: 0
+  useLocalization: 0
+  mRescaleLocalization: 0
+  mDefaultScale: 40
+  mMinimalScale: 20
+  mRescaleWidth: 0
+  mDynamicFontSize: 0
+  mLineWidth: 0
+  mMultiline: 1
 --- !u!114 &11442894
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5062,6 +5869,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 077b9e34e9b770eda0d5ad1dec73f486, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  counterLabel: {fileID: 11427517}
+  timerBar: {fileID: 0}
 --- !u!4 &421557
 Transform:
   m_ObjectHideFlags: 0
@@ -5102,6 +5911,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 34246ee25fb287548a2455364e0758cc, type: 2}
+  mColor: {r: 0.9333334, g: 0.40000004, b: 0.9568628, a: 1}
+  mPivot: 4
+  mDepth: 19
+  mAtlas: {fileID: 11409266, guid: 6b7d937aae653334fb9798602794ec44, type: 2}
+  mSpriteName: game-card-silver
+  mFillCenter: 1
+  mType: 0
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &435059
 Transform:
   m_ObjectHideFlags: 0
@@ -5125,6 +5949,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 34246ee25fb287548a2455364e0758cc, type: 2}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 20
+  mAtlas: {fileID: 11409266, guid: 6b7d937aae653334fb9798602794ec44, type: 2}
+  mSpriteName: game-card-ammobox
+  mFillCenter: 1
+  mType: 0
+  mFillDirection: 0
+  mFillAmount: 0.802
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &440601
 Transform:
   m_ObjectHideFlags: 0
@@ -5148,6 +5987,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 96562d0799d618a7fb9b1a37343d8235, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 0}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 0
+  mRect:
+    serializedVersion: 2
+    x: 0
+    y: 0
+    width: 1
+    height: 1
+  mShader: {fileID: 4800000, guid: 0be4260a50cecf84aabd5d8be5cfbc9c, type: 3}
+  mTexture: {fileID: 0}
 --- !u!4 &493611
 Transform:
   m_ObjectHideFlags: 0
@@ -5171,6 +6022,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 004bf51e44960d04eae9440074f7edfe, type: 2}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 21
+  mAtlas: {fileID: 11409266, guid: 495417da82574ed49be200e5350c2c0a, type: 2}
+  mSpriteName: game-card-ico-ammo
+  mFillCenter: 1
+  mType: 0
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &401909
 Transform:
   m_ObjectHideFlags: 0
@@ -5194,6 +6060,30 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f54891d0b7e1a01a23bc64463aeafd37, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: d808305656a8601409466191d759059d, type: 3}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 5
+  mDepth: 22
+  mFont: {fileID: 11409266, guid: 2ac3a3ab35adb5d45b8c056aa7026f89, type: 2}
+  mText: +25%
+  mMaxLineWidth: 0
+  mEncoding: 1
+  mMaxLineCount: 0
+  mPassword: 0
+  mShowLastChar: 0
+  mEffectStyle: 2
+  mEffectColor: {r: 0, g: 0, b: 0, a: 1}
+  mSymbols: 1
+  mEffectDistance: {x: 1, y: 1}
+  mShrinkToFit: 0
+  useLocalization: 0
+  mRescaleLocalization: 0
+  mDefaultScale: 40
+  mMinimalScale: 20
+  mRescaleWidth: 0
+  mDynamicFontSize: 0
+  mLineWidth: 0
+  mMultiline: 1
 --- !u!4 &444252
 Transform:
   m_ObjectHideFlags: 0
@@ -5221,6 +6111,30 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 15bf9f5c0ff4bb7d3326d742fc1229b4, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: d808305656a8601409466191d759059d, type: 3}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 5
+  mDepth: 22
+  mFont: {fileID: 11409266, guid: 2ac3a3ab35adb5d45b8c056aa7026f89, type: 2}
+  mText: +25%
+  mMaxLineWidth: 0
+  mEncoding: 1
+  mMaxLineCount: 0
+  mPassword: 0
+  mShowLastChar: 0
+  mEffectStyle: 2
+  mEffectColor: {r: 0, g: 0, b: 0, a: 1}
+  mSymbols: 1
+  mEffectDistance: {x: 1, y: 1}
+  mShrinkToFit: 0
+  useLocalization: 0
+  mRescaleLocalization: 0
+  mDefaultScale: 40
+  mMinimalScale: 20
+  mRescaleWidth: 0
+  mDynamicFontSize: 0
+  mLineWidth: 0
+  mMultiline: 1
 --- !u!65 &6527187
 BoxCollider:
   serializedVersion: 2
@@ -5270,6 +6184,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 995cff53e4ec203488dc398f0f8f32e5, type: 2}
+  mColor: {r: 0.13725491, g: 0.14117648, b: 0.17254902, a: 1}
+  mPivot: 4
+  mDepth: 12
+  mAtlas: {fileID: 11409266, guid: 9582f38df100b244993ee2e1fa9a9888, type: 2}
+  mSpriteName: menu-crafting-cardplaceholder
+  mFillCenter: 1
+  mType: 1
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &416798
 Transform:
   m_ObjectHideFlags: 0
@@ -5293,6 +6222,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 995cff53e4ec203488dc398f0f8f32e5, type: 2}
+  mColor: {r: 0.29803923, g: 0.3019608, b: 0.36078432, a: 1}
+  mPivot: 4
+  mDepth: 13
+  mAtlas: {fileID: 11409266, guid: 9582f38df100b244993ee2e1fa9a9888, type: 2}
+  mSpriteName: menu-cardselection-stroke
+  mFillCenter: 1
+  mType: 1
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &491783
 Transform:
   m_ObjectHideFlags: 0
@@ -5331,6 +6275,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 004bf51e44960d04eae9440074f7edfe, type: 2}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 14
+  mAtlas: {fileID: 11409266, guid: 495417da82574ed49be200e5350c2c0a, type: 2}
+  mSpriteName: menu-cardpool-buddycardplaceholder
+  mFillCenter: 1
+  mType: 1
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &483085
 Transform:
   m_ObjectHideFlags: 0
@@ -5354,6 +6313,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 004bf51e44960d04eae9440074f7edfe, type: 2}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 15
+  mAtlas: {fileID: 11409266, guid: 495417da82574ed49be200e5350c2c0a, type: 2}
+  mSpriteName: menu-cardpool-soldier-ico
+  mFillCenter: 1
+  mType: 0
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &452173
 Transform:
   m_ObjectHideFlags: 0
@@ -5377,6 +6351,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 004bf51e44960d04eae9440074f7edfe, type: 2}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 16
+  mAtlas: {fileID: 11409266, guid: 495417da82574ed49be200e5350c2c0a, type: 2}
+  mSpriteName: menu-cardpool-depositarrow
+  mFillCenter: 1
+  mType: 0
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!114 &11401568
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5388,6 +6377,36 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e3b2cec1a418fb5742374dba269174f3, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  method: 3
+  style: 2
+  animationCurve:
+    serializedVersion: 2
+    m_Curve:
+    - time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 1
+      tangentMode: 0
+    - time: 1
+      value: 1
+      inSlope: 1
+      outSlope: 0
+      tangentMode: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+  ignoreTimeScale: 1
+  delay: 0
+  duration: 0.6
+  steeperCurves: 0
+  tweenGroup: 0
+  eventReceiver: {fileID: 0}
+  callWhenFinished:
+  NumOfRepetitions: 0
+  id: 0
+  dontResetCurve: 0
+  from: {x: 0, y: -25, z: 0}
+  to: {x: 0, y: -35, z: 0}
+  useLocal: 1
 --- !u!4 &447332
 Transform:
   m_ObjectHideFlags: 0
@@ -5425,6 +6444,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 004bf51e44960d04eae9440074f7edfe, type: 2}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 17
+  mAtlas: {fileID: 11409266, guid: 495417da82574ed49be200e5350c2c0a, type: 2}
+  mSpriteName: menu-cardpool-buddycardplaceholder
+  mFillCenter: 1
+  mType: 1
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &432695
 Transform:
   m_ObjectHideFlags: 0
@@ -5448,6 +6482,30 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f54891d0b7e1a01a23bc64463aeafd37, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: d808305656a8601409466191d759059d, type: 3}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 3
+  mDepth: 18
+  mFont: {fileID: 11409266, guid: 2ac3a3ab35adb5d45b8c056aa7026f89, type: 2}
+  mText: "04h\n12m"
+  mMaxLineWidth: 60
+  mEncoding: 1
+  mMaxLineCount: 0
+  mPassword: 0
+  mShowLastChar: 0
+  mEffectStyle: 0
+  mEffectColor: {r: 0, g: 0, b: 0, a: 1}
+  mSymbols: 1
+  mEffectDistance: {x: 1, y: 1}
+  mShrinkToFit: 0
+  useLocalization: 0
+  mRescaleLocalization: 0
+  mDefaultScale: 40
+  mMinimalScale: 20
+  mRescaleWidth: 0
+  mDynamicFontSize: 0
+  mLineWidth: 0
+  mMultiline: 1
 --- !u!114 &11404072
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5459,6 +6517,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 077b9e34e9b770eda0d5ad1dec73f486, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  counterLabel: {fileID: 11476149}
+  timerBar: {fileID: 0}
 --- !u!4 &492775
 Transform:
   m_ObjectHideFlags: 0
@@ -5499,6 +6559,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 34246ee25fb287548a2455364e0758cc, type: 2}
+  mColor: {r: 0.9333334, g: 0.40000004, b: 0.9568628, a: 1}
+  mPivot: 4
+  mDepth: 19
+  mAtlas: {fileID: 11409266, guid: 6b7d937aae653334fb9798602794ec44, type: 2}
+  mSpriteName: game-card-silver
+  mFillCenter: 1
+  mType: 0
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &477655
 Transform:
   m_ObjectHideFlags: 0
@@ -5522,6 +6597,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 34246ee25fb287548a2455364e0758cc, type: 2}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 20
+  mAtlas: {fileID: 11409266, guid: 6b7d937aae653334fb9798602794ec44, type: 2}
+  mSpriteName: game-card-ammobox
+  mFillCenter: 1
+  mType: 0
+  mFillDirection: 0
+  mFillAmount: 0.802
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &454631
 Transform:
   m_ObjectHideFlags: 0
@@ -5545,6 +6635,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 96562d0799d618a7fb9b1a37343d8235, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 0}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 0
+  mRect:
+    serializedVersion: 2
+    x: 0
+    y: 0
+    width: 1
+    height: 1
+  mShader: {fileID: 4800000, guid: 0be4260a50cecf84aabd5d8be5cfbc9c, type: 3}
+  mTexture: {fileID: 0}
 --- !u!4 &481671
 Transform:
   m_ObjectHideFlags: 0
@@ -5568,6 +6670,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 004bf51e44960d04eae9440074f7edfe, type: 2}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 21
+  mAtlas: {fileID: 11409266, guid: 495417da82574ed49be200e5350c2c0a, type: 2}
+  mSpriteName: game-card-ico-ammo
+  mFillCenter: 1
+  mType: 0
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &452004
 Transform:
   m_ObjectHideFlags: 0
@@ -5591,6 +6708,30 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f54891d0b7e1a01a23bc64463aeafd37, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: d808305656a8601409466191d759059d, type: 3}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 5
+  mDepth: 22
+  mFont: {fileID: 11409266, guid: 2ac3a3ab35adb5d45b8c056aa7026f89, type: 2}
+  mText: +25%
+  mMaxLineWidth: 0
+  mEncoding: 1
+  mMaxLineCount: 0
+  mPassword: 0
+  mShowLastChar: 0
+  mEffectStyle: 2
+  mEffectColor: {r: 0, g: 0, b: 0, a: 1}
+  mSymbols: 1
+  mEffectDistance: {x: 1, y: 1}
+  mShrinkToFit: 0
+  useLocalization: 0
+  mRescaleLocalization: 0
+  mDefaultScale: 40
+  mMinimalScale: 20
+  mRescaleWidth: 0
+  mDynamicFontSize: 0
+  mLineWidth: 0
+  mMultiline: 1
 --- !u!4 &419448
 Transform:
   m_ObjectHideFlags: 0
@@ -5618,6 +6759,25 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 15bf9f5c0ff4bb7d3326d742fc1229b4, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  widgets:
+  - {fileID: 11405713}
+  - {fileID: 11416383}
+  - {fileID: 11468847}
+  - {fileID: 11457836}
+  - {fileID: 11449978}
+  - {fileID: 11401470}
+  - {fileID: 11494585}
+  emptyPart: {fileID: 195861}
+  borderEmpty: {fileID: 11416383}
+  cardPart: {fileID: 111975}
+  cardBackground: {fileID: 11470032}
+  cardTexture: {fileID: 11474531}
+  cardIcon: {fileID: 11461302}
+  cardBonusIcon: {fileID: 11411758}
+  cardBonusLabel: {fileID: 11479090}
+  depositBuddyPart: {fileID: 168999}
+  waitingBuddyPart: {fileID: 113056}
+  waitingTime: {fileID: 11451710}
 --- !u!65 &6551828
 BoxCollider:
   serializedVersion: 2
@@ -5667,6 +6827,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 995cff53e4ec203488dc398f0f8f32e5, type: 2}
+  mColor: {r: 0.13725491, g: 0.14117648, b: 0.17254902, a: 1}
+  mPivot: 4
+  mDepth: 12
+  mAtlas: {fileID: 11409266, guid: 9582f38df100b244993ee2e1fa9a9888, type: 2}
+  mSpriteName: menu-crafting-cardplaceholder
+  mFillCenter: 1
+  mType: 1
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &480683
 Transform:
   m_ObjectHideFlags: 0
@@ -5690,6 +6865,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 995cff53e4ec203488dc398f0f8f32e5, type: 2}
+  mColor: {r: 0.29803923, g: 0.3019608, b: 0.36078432, a: 1}
+  mPivot: 4
+  mDepth: 13
+  mAtlas: {fileID: 11409266, guid: 9582f38df100b244993ee2e1fa9a9888, type: 2}
+  mSpriteName: menu-cardselection-stroke
+  mFillCenter: 1
+  mType: 1
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &460330
 Transform:
   m_ObjectHideFlags: 0
@@ -5728,6 +6918,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 004bf51e44960d04eae9440074f7edfe, type: 2}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 14
+  mAtlas: {fileID: 11409266, guid: 495417da82574ed49be200e5350c2c0a, type: 2}
+  mSpriteName: menu-cardpool-buddycardplaceholder
+  mFillCenter: 1
+  mType: 1
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &455320
 Transform:
   m_ObjectHideFlags: 0
@@ -5751,6 +6956,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 004bf51e44960d04eae9440074f7edfe, type: 2}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 15
+  mAtlas: {fileID: 11409266, guid: 495417da82574ed49be200e5350c2c0a, type: 2}
+  mSpriteName: menu-cardpool-soldier-ico
+  mFillCenter: 1
+  mType: 0
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &426124
 Transform:
   m_ObjectHideFlags: 0
@@ -5774,6 +6994,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 004bf51e44960d04eae9440074f7edfe, type: 2}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 16
+  mAtlas: {fileID: 11409266, guid: 495417da82574ed49be200e5350c2c0a, type: 2}
+  mSpriteName: menu-cardpool-depositarrow
+  mFillCenter: 1
+  mType: 0
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!114 &11425130
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5785,6 +7020,36 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e3b2cec1a418fb5742374dba269174f3, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  method: 3
+  style: 2
+  animationCurve:
+    serializedVersion: 2
+    m_Curve:
+    - time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 1
+      tangentMode: 0
+    - time: 1
+      value: 1
+      inSlope: 1
+      outSlope: 0
+      tangentMode: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+  ignoreTimeScale: 1
+  delay: 0
+  duration: 0.6
+  steeperCurves: 0
+  tweenGroup: 0
+  eventReceiver: {fileID: 0}
+  callWhenFinished:
+  NumOfRepetitions: 0
+  id: 0
+  dontResetCurve: 0
+  from: {x: 0, y: -25, z: 0}
+  to: {x: 0, y: -35, z: 0}
+  useLocal: 1
 --- !u!4 &434288
 Transform:
   m_ObjectHideFlags: 0
@@ -5822,6 +7087,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 004bf51e44960d04eae9440074f7edfe, type: 2}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 17
+  mAtlas: {fileID: 11409266, guid: 495417da82574ed49be200e5350c2c0a, type: 2}
+  mSpriteName: menu-cardpool-buddycardplaceholder
+  mFillCenter: 1
+  mType: 1
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &481166
 Transform:
   m_ObjectHideFlags: 0
@@ -5845,6 +7125,30 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f54891d0b7e1a01a23bc64463aeafd37, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: d808305656a8601409466191d759059d, type: 3}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 3
+  mDepth: 18
+  mFont: {fileID: 11409266, guid: 2ac3a3ab35adb5d45b8c056aa7026f89, type: 2}
+  mText: "04h\n12m"
+  mMaxLineWidth: 60
+  mEncoding: 1
+  mMaxLineCount: 0
+  mPassword: 0
+  mShowLastChar: 0
+  mEffectStyle: 0
+  mEffectColor: {r: 0, g: 0, b: 0, a: 1}
+  mSymbols: 1
+  mEffectDistance: {x: 1, y: 1}
+  mShrinkToFit: 0
+  useLocalization: 0
+  mRescaleLocalization: 0
+  mDefaultScale: 40
+  mMinimalScale: 20
+  mRescaleWidth: 0
+  mDynamicFontSize: 0
+  mLineWidth: 0
+  mMultiline: 1
 --- !u!114 &11451710
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5856,6 +7160,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 077b9e34e9b770eda0d5ad1dec73f486, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  counterLabel: {fileID: 11494585}
+  timerBar: {fileID: 0}
 --- !u!4 &479768
 Transform:
   m_ObjectHideFlags: 0
@@ -5896,6 +7202,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 34246ee25fb287548a2455364e0758cc, type: 2}
+  mColor: {r: 0.9333334, g: 0.40000004, b: 0.9568628, a: 1}
+  mPivot: 4
+  mDepth: 19
+  mAtlas: {fileID: 11409266, guid: 6b7d937aae653334fb9798602794ec44, type: 2}
+  mSpriteName: game-card-silver
+  mFillCenter: 1
+  mType: 0
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &454770
 Transform:
   m_ObjectHideFlags: 0
@@ -5919,6 +7240,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 34246ee25fb287548a2455364e0758cc, type: 2}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 20
+  mAtlas: {fileID: 11409266, guid: 6b7d937aae653334fb9798602794ec44, type: 2}
+  mSpriteName: game-card-ammobox
+  mFillCenter: 1
+  mType: 0
+  mFillDirection: 0
+  mFillAmount: 0.802
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &451006
 Transform:
   m_ObjectHideFlags: 0
@@ -5942,6 +7278,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 96562d0799d618a7fb9b1a37343d8235, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 0}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 0
+  mRect:
+    serializedVersion: 2
+    x: 0
+    y: 0
+    width: 1
+    height: 1
+  mShader: {fileID: 4800000, guid: 0be4260a50cecf84aabd5d8be5cfbc9c, type: 3}
+  mTexture: {fileID: 0}
 --- !u!4 &460477
 Transform:
   m_ObjectHideFlags: 0
@@ -5965,6 +7313,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 004bf51e44960d04eae9440074f7edfe, type: 2}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 21
+  mAtlas: {fileID: 11409266, guid: 495417da82574ed49be200e5350c2c0a, type: 2}
+  mSpriteName: game-card-ico-ammo
+  mFillCenter: 1
+  mType: 0
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &447065
 Transform:
   m_ObjectHideFlags: 0
@@ -5988,6 +7351,30 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f54891d0b7e1a01a23bc64463aeafd37, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: d808305656a8601409466191d759059d, type: 3}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 5
+  mDepth: 22
+  mFont: {fileID: 11409266, guid: 2ac3a3ab35adb5d45b8c056aa7026f89, type: 2}
+  mText: +25%
+  mMaxLineWidth: 0
+  mEncoding: 1
+  mMaxLineCount: 0
+  mPassword: 0
+  mShowLastChar: 0
+  mEffectStyle: 2
+  mEffectColor: {r: 0, g: 0, b: 0, a: 1}
+  mSymbols: 1
+  mEffectDistance: {x: 1, y: 1}
+  mShrinkToFit: 0
+  useLocalization: 0
+  mRescaleLocalization: 0
+  mDefaultScale: 40
+  mMinimalScale: 20
+  mRescaleWidth: 0
+  mDynamicFontSize: 0
+  mLineWidth: 0
+  mMultiline: 1
 --- !u!4 &441695
 Transform:
   m_ObjectHideFlags: 0
@@ -6015,6 +7402,25 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 15bf9f5c0ff4bb7d3326d742fc1229b4, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  widgets:
+  - {fileID: 11449881}
+  - {fileID: 11468343}
+  - {fileID: 11497415}
+  - {fileID: 11488438}
+  - {fileID: 11481289}
+  - {fileID: 11478709}
+  - {fileID: 11404232}
+  emptyPart: {fileID: 158972}
+  borderEmpty: {fileID: 11468343}
+  cardPart: {fileID: 133468}
+  cardBackground: {fileID: 11414066}
+  cardTexture: {fileID: 11425834}
+  cardIcon: {fileID: 11452635}
+  cardBonusIcon: {fileID: 11410403}
+  cardBonusLabel: {fileID: 11483431}
+  depositBuddyPart: {fileID: 132167}
+  waitingBuddyPart: {fileID: 164753}
+  waitingTime: {fileID: 11415485}
 --- !u!65 &6504347
 BoxCollider:
   serializedVersion: 2
@@ -6064,6 +7470,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 995cff53e4ec203488dc398f0f8f32e5, type: 2}
+  mColor: {r: 0.13725491, g: 0.14117648, b: 0.17254902, a: 1}
+  mPivot: 4
+  mDepth: 12
+  mAtlas: {fileID: 11409266, guid: 9582f38df100b244993ee2e1fa9a9888, type: 2}
+  mSpriteName: menu-crafting-cardplaceholder
+  mFillCenter: 1
+  mType: 1
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &451928
 Transform:
   m_ObjectHideFlags: 0
@@ -6087,6 +7508,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 995cff53e4ec203488dc398f0f8f32e5, type: 2}
+  mColor: {r: 0.29803923, g: 0.3019608, b: 0.36078432, a: 1}
+  mPivot: 4
+  mDepth: 13
+  mAtlas: {fileID: 11409266, guid: 9582f38df100b244993ee2e1fa9a9888, type: 2}
+  mSpriteName: menu-cardselection-stroke
+  mFillCenter: 1
+  mType: 1
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &461024
 Transform:
   m_ObjectHideFlags: 0
@@ -6125,6 +7561,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 004bf51e44960d04eae9440074f7edfe, type: 2}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 14
+  mAtlas: {fileID: 11409266, guid: 495417da82574ed49be200e5350c2c0a, type: 2}
+  mSpriteName: menu-cardpool-buddycardplaceholder
+  mFillCenter: 1
+  mType: 1
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &423734
 Transform:
   m_ObjectHideFlags: 0
@@ -6148,6 +7599,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 004bf51e44960d04eae9440074f7edfe, type: 2}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 15
+  mAtlas: {fileID: 11409266, guid: 495417da82574ed49be200e5350c2c0a, type: 2}
+  mSpriteName: menu-cardpool-soldier-ico
+  mFillCenter: 1
+  mType: 0
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &402919
 Transform:
   m_ObjectHideFlags: 0
@@ -6171,6 +7637,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 004bf51e44960d04eae9440074f7edfe, type: 2}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 16
+  mAtlas: {fileID: 11409266, guid: 495417da82574ed49be200e5350c2c0a, type: 2}
+  mSpriteName: menu-cardpool-depositarrow
+  mFillCenter: 1
+  mType: 0
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!114 &11448878
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6182,6 +7663,36 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e3b2cec1a418fb5742374dba269174f3, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  method: 3
+  style: 2
+  animationCurve:
+    serializedVersion: 2
+    m_Curve:
+    - time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 1
+      tangentMode: 0
+    - time: 1
+      value: 1
+      inSlope: 1
+      outSlope: 0
+      tangentMode: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+  ignoreTimeScale: 1
+  delay: 0
+  duration: 0.6
+  steeperCurves: 0
+  tweenGroup: 0
+  eventReceiver: {fileID: 0}
+  callWhenFinished:
+  NumOfRepetitions: 0
+  id: 0
+  dontResetCurve: 0
+  from: {x: 0, y: -25, z: 0}
+  to: {x: 0, y: -35, z: 0}
+  useLocal: 1
 --- !u!4 &439699
 Transform:
   m_ObjectHideFlags: 0
@@ -6219,6 +7730,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 004bf51e44960d04eae9440074f7edfe, type: 2}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 17
+  mAtlas: {fileID: 11409266, guid: 495417da82574ed49be200e5350c2c0a, type: 2}
+  mSpriteName: menu-cardpool-buddycardplaceholder
+  mFillCenter: 1
+  mType: 1
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &427137
 Transform:
   m_ObjectHideFlags: 0
@@ -6242,6 +7768,30 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f54891d0b7e1a01a23bc64463aeafd37, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: d808305656a8601409466191d759059d, type: 3}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 3
+  mDepth: 18
+  mFont: {fileID: 11409266, guid: 2ac3a3ab35adb5d45b8c056aa7026f89, type: 2}
+  mText: "04h\n12m"
+  mMaxLineWidth: 60
+  mEncoding: 1
+  mMaxLineCount: 0
+  mPassword: 0
+  mShowLastChar: 0
+  mEffectStyle: 0
+  mEffectColor: {r: 0, g: 0, b: 0, a: 1}
+  mSymbols: 1
+  mEffectDistance: {x: 1, y: 1}
+  mShrinkToFit: 0
+  useLocalization: 0
+  mRescaleLocalization: 0
+  mDefaultScale: 40
+  mMinimalScale: 20
+  mRescaleWidth: 0
+  mDynamicFontSize: 0
+  mLineWidth: 0
+  mMultiline: 1
 --- !u!114 &11415485
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6253,6 +7803,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 077b9e34e9b770eda0d5ad1dec73f486, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  counterLabel: {fileID: 11404232}
+  timerBar: {fileID: 0}
 --- !u!4 &457379
 Transform:
   m_ObjectHideFlags: 0
@@ -6293,6 +7845,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 34246ee25fb287548a2455364e0758cc, type: 2}
+  mColor: {r: 0.9333334, g: 0.40000004, b: 0.9568628, a: 1}
+  mPivot: 4
+  mDepth: 19
+  mAtlas: {fileID: 11409266, guid: 6b7d937aae653334fb9798602794ec44, type: 2}
+  mSpriteName: game-card-silver
+  mFillCenter: 1
+  mType: 0
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &482292
 Transform:
   m_ObjectHideFlags: 0
@@ -6316,6 +7883,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 34246ee25fb287548a2455364e0758cc, type: 2}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 20
+  mAtlas: {fileID: 11409266, guid: 6b7d937aae653334fb9798602794ec44, type: 2}
+  mSpriteName: game-card-ammobox
+  mFillCenter: 1
+  mType: 0
+  mFillDirection: 0
+  mFillAmount: 0.802
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &481991
 Transform:
   m_ObjectHideFlags: 0
@@ -6339,6 +7921,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 96562d0799d618a7fb9b1a37343d8235, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 0}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 0
+  mRect:
+    serializedVersion: 2
+    x: 0
+    y: 0
+    width: 1
+    height: 1
+  mShader: {fileID: 4800000, guid: 0be4260a50cecf84aabd5d8be5cfbc9c, type: 3}
+  mTexture: {fileID: 0}
 --- !u!4 &452470
 Transform:
   m_ObjectHideFlags: 0
@@ -6362,6 +7956,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 004bf51e44960d04eae9440074f7edfe, type: 2}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 21
+  mAtlas: {fileID: 11409266, guid: 495417da82574ed49be200e5350c2c0a, type: 2}
+  mSpriteName: game-card-ico-ammo
+  mFillCenter: 1
+  mType: 0
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &485579
 Transform:
   m_ObjectHideFlags: 0
@@ -6385,6 +7994,30 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f54891d0b7e1a01a23bc64463aeafd37, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: d808305656a8601409466191d759059d, type: 3}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 5
+  mDepth: 22
+  mFont: {fileID: 11409266, guid: 2ac3a3ab35adb5d45b8c056aa7026f89, type: 2}
+  mText: +25%
+  mMaxLineWidth: 0
+  mEncoding: 1
+  mMaxLineCount: 0
+  mPassword: 0
+  mShowLastChar: 0
+  mEffectStyle: 2
+  mEffectColor: {r: 0, g: 0, b: 0, a: 1}
+  mSymbols: 1
+  mEffectDistance: {x: 1, y: 1}
+  mShrinkToFit: 0
+  useLocalization: 0
+  mRescaleLocalization: 0
+  mDefaultScale: 40
+  mMinimalScale: 20
+  mRescaleWidth: 0
+  mDynamicFontSize: 0
+  mLineWidth: 0
+  mMultiline: 1
 --- !u!4 &491825
 Transform:
   m_ObjectHideFlags: 0
@@ -6412,6 +8045,25 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 15bf9f5c0ff4bb7d3326d742fc1229b4, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  widgets:
+  - {fileID: 11425019}
+  - {fileID: 11439858}
+  - {fileID: 11409183}
+  - {fileID: 11462883}
+  - {fileID: 11403007}
+  - {fileID: 11452610}
+  - {fileID: 11427787}
+  emptyPart: {fileID: 188901}
+  borderEmpty: {fileID: 11439858}
+  cardPart: {fileID: 146705}
+  cardBackground: {fileID: 11401982}
+  cardTexture: {fileID: 11481611}
+  cardIcon: {fileID: 11483732}
+  cardBonusIcon: {fileID: 11477689}
+  cardBonusLabel: {fileID: 11495478}
+  depositBuddyPart: {fileID: 187779}
+  waitingBuddyPart: {fileID: 117540}
+  waitingTime: {fileID: 11417769}
 --- !u!65 &6538063
 BoxCollider:
   serializedVersion: 2
@@ -6461,6 +8113,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 995cff53e4ec203488dc398f0f8f32e5, type: 2}
+  mColor: {r: 0.13725491, g: 0.14117648, b: 0.17254902, a: 1}
+  mPivot: 4
+  mDepth: 12
+  mAtlas: {fileID: 11409266, guid: 9582f38df100b244993ee2e1fa9a9888, type: 2}
+  mSpriteName: menu-crafting-cardplaceholder
+  mFillCenter: 1
+  mType: 1
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &429106
 Transform:
   m_ObjectHideFlags: 0
@@ -6484,6 +8151,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 995cff53e4ec203488dc398f0f8f32e5, type: 2}
+  mColor: {r: 0.29803923, g: 0.3019608, b: 0.36078432, a: 1}
+  mPivot: 4
+  mDepth: 13
+  mAtlas: {fileID: 11409266, guid: 9582f38df100b244993ee2e1fa9a9888, type: 2}
+  mSpriteName: menu-cardselection-stroke
+  mFillCenter: 1
+  mType: 1
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &444336
 Transform:
   m_ObjectHideFlags: 0
@@ -6522,6 +8204,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 004bf51e44960d04eae9440074f7edfe, type: 2}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 14
+  mAtlas: {fileID: 11409266, guid: 495417da82574ed49be200e5350c2c0a, type: 2}
+  mSpriteName: menu-cardpool-buddycardplaceholder
+  mFillCenter: 1
+  mType: 1
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &448267
 Transform:
   m_ObjectHideFlags: 0
@@ -6545,6 +8242,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 004bf51e44960d04eae9440074f7edfe, type: 2}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 15
+  mAtlas: {fileID: 11409266, guid: 495417da82574ed49be200e5350c2c0a, type: 2}
+  mSpriteName: menu-cardpool-soldier-ico
+  mFillCenter: 1
+  mType: 0
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &446422
 Transform:
   m_ObjectHideFlags: 0
@@ -6568,6 +8280,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 004bf51e44960d04eae9440074f7edfe, type: 2}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 16
+  mAtlas: {fileID: 11409266, guid: 495417da82574ed49be200e5350c2c0a, type: 2}
+  mSpriteName: menu-cardpool-depositarrow
+  mFillCenter: 1
+  mType: 0
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!114 &11400950
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6579,6 +8306,36 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e3b2cec1a418fb5742374dba269174f3, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  method: 3
+  style: 2
+  animationCurve:
+    serializedVersion: 2
+    m_Curve:
+    - time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 1
+      tangentMode: 0
+    - time: 1
+      value: 1
+      inSlope: 1
+      outSlope: 0
+      tangentMode: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+  ignoreTimeScale: 1
+  delay: 0
+  duration: 0.6
+  steeperCurves: 0
+  tweenGroup: 0
+  eventReceiver: {fileID: 0}
+  callWhenFinished:
+  NumOfRepetitions: 0
+  id: 0
+  dontResetCurve: 0
+  from: {x: 0, y: -25, z: 0}
+  to: {x: 0, y: -35, z: 0}
+  useLocal: 1
 --- !u!4 &408587
 Transform:
   m_ObjectHideFlags: 0
@@ -6616,6 +8373,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 004bf51e44960d04eae9440074f7edfe, type: 2}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 17
+  mAtlas: {fileID: 11409266, guid: 495417da82574ed49be200e5350c2c0a, type: 2}
+  mSpriteName: menu-cardpool-buddycardplaceholder
+  mFillCenter: 1
+  mType: 1
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &415828
 Transform:
   m_ObjectHideFlags: 0
@@ -6639,6 +8411,30 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f54891d0b7e1a01a23bc64463aeafd37, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: d808305656a8601409466191d759059d, type: 3}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 3
+  mDepth: 18
+  mFont: {fileID: 11409266, guid: 2ac3a3ab35adb5d45b8c056aa7026f89, type: 2}
+  mText: "04h\n12m"
+  mMaxLineWidth: 60
+  mEncoding: 1
+  mMaxLineCount: 0
+  mPassword: 0
+  mShowLastChar: 0
+  mEffectStyle: 0
+  mEffectColor: {r: 0, g: 0, b: 0, a: 1}
+  mSymbols: 1
+  mEffectDistance: {x: 1, y: 1}
+  mShrinkToFit: 0
+  useLocalization: 0
+  mRescaleLocalization: 0
+  mDefaultScale: 40
+  mMinimalScale: 20
+  mRescaleWidth: 0
+  mDynamicFontSize: 0
+  mLineWidth: 0
+  mMultiline: 1
 --- !u!114 &11417769
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6650,6 +8446,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 077b9e34e9b770eda0d5ad1dec73f486, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  counterLabel: {fileID: 11427787}
+  timerBar: {fileID: 0}
 --- !u!4 &429261
 Transform:
   m_ObjectHideFlags: 0
@@ -6690,6 +8488,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 34246ee25fb287548a2455364e0758cc, type: 2}
+  mColor: {r: 0.9333334, g: 0.40000004, b: 0.9568628, a: 1}
+  mPivot: 4
+  mDepth: 19
+  mAtlas: {fileID: 11409266, guid: 6b7d937aae653334fb9798602794ec44, type: 2}
+  mSpriteName: game-card-silver
+  mFillCenter: 1
+  mType: 0
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &462972
 Transform:
   m_ObjectHideFlags: 0
@@ -6713,6 +8526,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 34246ee25fb287548a2455364e0758cc, type: 2}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 20
+  mAtlas: {fileID: 11409266, guid: 6b7d937aae653334fb9798602794ec44, type: 2}
+  mSpriteName: game-card-ammobox
+  mFillCenter: 1
+  mType: 0
+  mFillDirection: 0
+  mFillAmount: 0.802
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &417838
 Transform:
   m_ObjectHideFlags: 0
@@ -6736,6 +8564,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 96562d0799d618a7fb9b1a37343d8235, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 0}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 0
+  mRect:
+    serializedVersion: 2
+    x: 0
+    y: 0
+    width: 1
+    height: 1
+  mShader: {fileID: 4800000, guid: 0be4260a50cecf84aabd5d8be5cfbc9c, type: 3}
+  mTexture: {fileID: 0}
 --- !u!4 &428509
 Transform:
   m_ObjectHideFlags: 0
@@ -6759,6 +8599,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 004bf51e44960d04eae9440074f7edfe, type: 2}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 21
+  mAtlas: {fileID: 11409266, guid: 495417da82574ed49be200e5350c2c0a, type: 2}
+  mSpriteName: game-card-ico-ammo
+  mFillCenter: 1
+  mType: 0
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &404128
 Transform:
   m_ObjectHideFlags: 0
@@ -6782,6 +8637,30 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f54891d0b7e1a01a23bc64463aeafd37, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: d808305656a8601409466191d759059d, type: 3}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 5
+  mDepth: 22
+  mFont: {fileID: 11409266, guid: 2ac3a3ab35adb5d45b8c056aa7026f89, type: 2}
+  mText: +25%
+  mMaxLineWidth: 0
+  mEncoding: 1
+  mMaxLineCount: 0
+  mPassword: 0
+  mShowLastChar: 0
+  mEffectStyle: 2
+  mEffectColor: {r: 0, g: 0, b: 0, a: 1}
+  mSymbols: 1
+  mEffectDistance: {x: 1, y: 1}
+  mShrinkToFit: 0
+  useLocalization: 0
+  mRescaleLocalization: 0
+  mDefaultScale: 40
+  mMinimalScale: 20
+  mRescaleWidth: 0
+  mDynamicFontSize: 0
+  mLineWidth: 0
+  mMultiline: 1
 --- !u!4 &417687
 Transform:
   m_ObjectHideFlags: 0
@@ -6809,6 +8688,25 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 15bf9f5c0ff4bb7d3326d742fc1229b4, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  widgets:
+  - {fileID: 11404321}
+  - {fileID: 11471393}
+  - {fileID: 11411242}
+  - {fileID: 11488550}
+  - {fileID: 11451357}
+  - {fileID: 11417927}
+  - {fileID: 11428049}
+  emptyPart: {fileID: 110883}
+  borderEmpty: {fileID: 11471393}
+  cardPart: {fileID: 177090}
+  cardBackground: {fileID: 11454468}
+  cardTexture: {fileID: 11413257}
+  cardIcon: {fileID: 11403554}
+  cardBonusIcon: {fileID: 11441962}
+  cardBonusLabel: {fileID: 11479986}
+  depositBuddyPart: {fileID: 186581}
+  waitingBuddyPart: {fileID: 100119}
+  waitingTime: {fileID: 11487804}
 --- !u!65 &6592879
 BoxCollider:
   serializedVersion: 2
@@ -6858,6 +8756,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 995cff53e4ec203488dc398f0f8f32e5, type: 2}
+  mColor: {r: 0.13725491, g: 0.14117648, b: 0.17254902, a: 1}
+  mPivot: 4
+  mDepth: 12
+  mAtlas: {fileID: 11409266, guid: 9582f38df100b244993ee2e1fa9a9888, type: 2}
+  mSpriteName: menu-crafting-cardplaceholder
+  mFillCenter: 1
+  mType: 1
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &434546
 Transform:
   m_ObjectHideFlags: 0
@@ -6881,6 +8794,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 995cff53e4ec203488dc398f0f8f32e5, type: 2}
+  mColor: {r: 0.29803923, g: 0.3019608, b: 0.36078432, a: 1}
+  mPivot: 4
+  mDepth: 13
+  mAtlas: {fileID: 11409266, guid: 9582f38df100b244993ee2e1fa9a9888, type: 2}
+  mSpriteName: menu-cardselection-stroke
+  mFillCenter: 1
+  mType: 1
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &476832
 Transform:
   m_ObjectHideFlags: 0
@@ -6919,6 +8847,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 004bf51e44960d04eae9440074f7edfe, type: 2}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 14
+  mAtlas: {fileID: 11409266, guid: 495417da82574ed49be200e5350c2c0a, type: 2}
+  mSpriteName: menu-cardpool-buddycardplaceholder
+  mFillCenter: 1
+  mType: 1
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &482024
 Transform:
   m_ObjectHideFlags: 0
@@ -6942,6 +8885,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 004bf51e44960d04eae9440074f7edfe, type: 2}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 15
+  mAtlas: {fileID: 11409266, guid: 495417da82574ed49be200e5350c2c0a, type: 2}
+  mSpriteName: menu-cardpool-soldier-ico
+  mFillCenter: 1
+  mType: 0
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &464733
 Transform:
   m_ObjectHideFlags: 0
@@ -6965,6 +8923,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 004bf51e44960d04eae9440074f7edfe, type: 2}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 16
+  mAtlas: {fileID: 11409266, guid: 495417da82574ed49be200e5350c2c0a, type: 2}
+  mSpriteName: menu-cardpool-depositarrow
+  mFillCenter: 1
+  mType: 0
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!114 &11486921
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6976,6 +8949,36 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e3b2cec1a418fb5742374dba269174f3, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  method: 3
+  style: 2
+  animationCurve:
+    serializedVersion: 2
+    m_Curve:
+    - time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 1
+      tangentMode: 0
+    - time: 1
+      value: 1
+      inSlope: 1
+      outSlope: 0
+      tangentMode: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+  ignoreTimeScale: 1
+  delay: 0
+  duration: 0.6
+  steeperCurves: 0
+  tweenGroup: 0
+  eventReceiver: {fileID: 0}
+  callWhenFinished:
+  NumOfRepetitions: 0
+  id: 0
+  dontResetCurve: 0
+  from: {x: 0, y: -25, z: 0}
+  to: {x: 0, y: -35, z: 0}
+  useLocal: 1
 --- !u!4 &466406
 Transform:
   m_ObjectHideFlags: 0
@@ -7013,6 +9016,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 004bf51e44960d04eae9440074f7edfe, type: 2}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 17
+  mAtlas: {fileID: 11409266, guid: 495417da82574ed49be200e5350c2c0a, type: 2}
+  mSpriteName: menu-cardpool-buddycardplaceholder
+  mFillCenter: 1
+  mType: 1
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &436040
 Transform:
   m_ObjectHideFlags: 0
@@ -7036,6 +9054,30 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f54891d0b7e1a01a23bc64463aeafd37, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: d808305656a8601409466191d759059d, type: 3}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 3
+  mDepth: 18
+  mFont: {fileID: 11409266, guid: 2ac3a3ab35adb5d45b8c056aa7026f89, type: 2}
+  mText: "04h\n12m"
+  mMaxLineWidth: 60
+  mEncoding: 1
+  mMaxLineCount: 0
+  mPassword: 0
+  mShowLastChar: 0
+  mEffectStyle: 0
+  mEffectColor: {r: 0, g: 0, b: 0, a: 1}
+  mSymbols: 1
+  mEffectDistance: {x: 1, y: 1}
+  mShrinkToFit: 0
+  useLocalization: 0
+  mRescaleLocalization: 0
+  mDefaultScale: 40
+  mMinimalScale: 20
+  mRescaleWidth: 0
+  mDynamicFontSize: 0
+  mLineWidth: 0
+  mMultiline: 1
 --- !u!114 &11487804
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7047,6 +9089,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 077b9e34e9b770eda0d5ad1dec73f486, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  counterLabel: {fileID: 11428049}
+  timerBar: {fileID: 0}
 --- !u!4 &485403
 Transform:
   m_ObjectHideFlags: 0
@@ -7087,6 +9131,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 34246ee25fb287548a2455364e0758cc, type: 2}
+  mColor: {r: 0.9333334, g: 0.40000004, b: 0.9568628, a: 1}
+  mPivot: 4
+  mDepth: 19
+  mAtlas: {fileID: 11409266, guid: 6b7d937aae653334fb9798602794ec44, type: 2}
+  mSpriteName: game-card-silver
+  mFillCenter: 1
+  mType: 0
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &440522
 Transform:
   m_ObjectHideFlags: 0
@@ -7110,6 +9169,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 34246ee25fb287548a2455364e0758cc, type: 2}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 20
+  mAtlas: {fileID: 11409266, guid: 6b7d937aae653334fb9798602794ec44, type: 2}
+  mSpriteName: game-card-ammobox
+  mFillCenter: 1
+  mType: 0
+  mFillDirection: 0
+  mFillAmount: 0.802
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &488676
 Transform:
   m_ObjectHideFlags: 0
@@ -7133,6 +9207,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 96562d0799d618a7fb9b1a37343d8235, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 0}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 0
+  mRect:
+    serializedVersion: 2
+    x: 0
+    y: 0
+    width: 1
+    height: 1
+  mShader: {fileID: 4800000, guid: 0be4260a50cecf84aabd5d8be5cfbc9c, type: 3}
+  mTexture: {fileID: 0}
 --- !u!4 &472862
 Transform:
   m_ObjectHideFlags: 0
@@ -7156,6 +9242,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 004bf51e44960d04eae9440074f7edfe, type: 2}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 21
+  mAtlas: {fileID: 11409266, guid: 495417da82574ed49be200e5350c2c0a, type: 2}
+  mSpriteName: game-card-ico-ammo
+  mFillCenter: 1
+  mType: 0
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &416137
 Transform:
   m_ObjectHideFlags: 0
@@ -7179,6 +9280,30 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f54891d0b7e1a01a23bc64463aeafd37, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: d808305656a8601409466191d759059d, type: 3}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 5
+  mDepth: 22
+  mFont: {fileID: 11409266, guid: 2ac3a3ab35adb5d45b8c056aa7026f89, type: 2}
+  mText: +25%
+  mMaxLineWidth: 0
+  mEncoding: 1
+  mMaxLineCount: 0
+  mPassword: 0
+  mShowLastChar: 0
+  mEffectStyle: 2
+  mEffectColor: {r: 0, g: 0, b: 0, a: 1}
+  mSymbols: 1
+  mEffectDistance: {x: 1, y: 1}
+  mShrinkToFit: 0
+  useLocalization: 0
+  mRescaleLocalization: 0
+  mDefaultScale: 40
+  mMinimalScale: 20
+  mRescaleWidth: 0
+  mDynamicFontSize: 0
+  mLineWidth: 0
+  mMultiline: 1
 --- !u!4 &411395
 Transform:
   m_ObjectHideFlags: 0
@@ -7206,6 +9331,25 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 15bf9f5c0ff4bb7d3326d742fc1229b4, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  widgets:
+  - {fileID: 11416530}
+  - {fileID: 11410764}
+  - {fileID: 11442142}
+  - {fileID: 11446702}
+  - {fileID: 11431191}
+  - {fileID: 11424336}
+  - {fileID: 11488725}
+  emptyPart: {fileID: 116363}
+  borderEmpty: {fileID: 11410764}
+  cardPart: {fileID: 179075}
+  cardBackground: {fileID: 11421062}
+  cardTexture: {fileID: 11461584}
+  cardIcon: {fileID: 11495346}
+  cardBonusIcon: {fileID: 11473273}
+  cardBonusLabel: {fileID: 11439388}
+  depositBuddyPart: {fileID: 130250}
+  waitingBuddyPart: {fileID: 106061}
+  waitingTime: {fileID: 11433117}
 --- !u!65 &6573387
 BoxCollider:
   serializedVersion: 2
@@ -7255,6 +9399,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 995cff53e4ec203488dc398f0f8f32e5, type: 2}
+  mColor: {r: 0.13725491, g: 0.14117648, b: 0.17254902, a: 1}
+  mPivot: 4
+  mDepth: 12
+  mAtlas: {fileID: 11409266, guid: 9582f38df100b244993ee2e1fa9a9888, type: 2}
+  mSpriteName: menu-crafting-cardplaceholder
+  mFillCenter: 1
+  mType: 1
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &479551
 Transform:
   m_ObjectHideFlags: 0
@@ -7278,6 +9437,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 995cff53e4ec203488dc398f0f8f32e5, type: 2}
+  mColor: {r: 0.29803923, g: 0.3019608, b: 0.36078432, a: 1}
+  mPivot: 4
+  mDepth: 13
+  mAtlas: {fileID: 11409266, guid: 9582f38df100b244993ee2e1fa9a9888, type: 2}
+  mSpriteName: menu-cardselection-stroke
+  mFillCenter: 1
+  mType: 1
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &451101
 Transform:
   m_ObjectHideFlags: 0
@@ -7316,6 +9490,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 004bf51e44960d04eae9440074f7edfe, type: 2}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 14
+  mAtlas: {fileID: 11409266, guid: 495417da82574ed49be200e5350c2c0a, type: 2}
+  mSpriteName: menu-cardpool-buddycardplaceholder
+  mFillCenter: 1
+  mType: 1
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &491013
 Transform:
   m_ObjectHideFlags: 0
@@ -7339,6 +9528,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 004bf51e44960d04eae9440074f7edfe, type: 2}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 15
+  mAtlas: {fileID: 11409266, guid: 495417da82574ed49be200e5350c2c0a, type: 2}
+  mSpriteName: menu-cardpool-soldier-ico
+  mFillCenter: 1
+  mType: 0
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &425039
 Transform:
   m_ObjectHideFlags: 0
@@ -7362,6 +9566,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 004bf51e44960d04eae9440074f7edfe, type: 2}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 16
+  mAtlas: {fileID: 11409266, guid: 495417da82574ed49be200e5350c2c0a, type: 2}
+  mSpriteName: menu-cardpool-depositarrow
+  mFillCenter: 1
+  mType: 0
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!114 &11433217
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7373,6 +9592,36 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e3b2cec1a418fb5742374dba269174f3, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  method: 3
+  style: 2
+  animationCurve:
+    serializedVersion: 2
+    m_Curve:
+    - time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 1
+      tangentMode: 0
+    - time: 1
+      value: 1
+      inSlope: 1
+      outSlope: 0
+      tangentMode: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+  ignoreTimeScale: 1
+  delay: 0
+  duration: 0.6
+  steeperCurves: 0
+  tweenGroup: 0
+  eventReceiver: {fileID: 0}
+  callWhenFinished:
+  NumOfRepetitions: 0
+  id: 0
+  dontResetCurve: 0
+  from: {x: 0, y: -25, z: 0}
+  to: {x: 0, y: -35, z: 0}
+  useLocal: 1
 --- !u!4 &426689
 Transform:
   m_ObjectHideFlags: 0
@@ -7410,6 +9659,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 004bf51e44960d04eae9440074f7edfe, type: 2}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 17
+  mAtlas: {fileID: 11409266, guid: 495417da82574ed49be200e5350c2c0a, type: 2}
+  mSpriteName: menu-cardpool-buddycardplaceholder
+  mFillCenter: 1
+  mType: 1
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &435133
 Transform:
   m_ObjectHideFlags: 0
@@ -7433,6 +9697,30 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f54891d0b7e1a01a23bc64463aeafd37, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: d808305656a8601409466191d759059d, type: 3}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 3
+  mDepth: 18
+  mFont: {fileID: 11409266, guid: 2ac3a3ab35adb5d45b8c056aa7026f89, type: 2}
+  mText: "04h\n12m"
+  mMaxLineWidth: 60
+  mEncoding: 1
+  mMaxLineCount: 0
+  mPassword: 0
+  mShowLastChar: 0
+  mEffectStyle: 0
+  mEffectColor: {r: 0, g: 0, b: 0, a: 1}
+  mSymbols: 1
+  mEffectDistance: {x: 1, y: 1}
+  mShrinkToFit: 0
+  useLocalization: 0
+  mRescaleLocalization: 0
+  mDefaultScale: 40
+  mMinimalScale: 20
+  mRescaleWidth: 0
+  mDynamicFontSize: 0
+  mLineWidth: 0
+  mMultiline: 1
 --- !u!114 &11433117
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7444,6 +9732,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 077b9e34e9b770eda0d5ad1dec73f486, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  counterLabel: {fileID: 11488725}
+  timerBar: {fileID: 0}
 --- !u!4 &467876
 Transform:
   m_ObjectHideFlags: 0
@@ -7484,6 +9774,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 34246ee25fb287548a2455364e0758cc, type: 2}
+  mColor: {r: 0.9333334, g: 0.40000004, b: 0.9568628, a: 1}
+  mPivot: 4
+  mDepth: 19
+  mAtlas: {fileID: 11409266, guid: 6b7d937aae653334fb9798602794ec44, type: 2}
+  mSpriteName: game-card-silver
+  mFillCenter: 1
+  mType: 0
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &415805
 Transform:
   m_ObjectHideFlags: 0
@@ -7507,6 +9812,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 34246ee25fb287548a2455364e0758cc, type: 2}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 20
+  mAtlas: {fileID: 11409266, guid: 6b7d937aae653334fb9798602794ec44, type: 2}
+  mSpriteName: game-card-ammobox
+  mFillCenter: 1
+  mType: 0
+  mFillDirection: 0
+  mFillAmount: 0.802
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &483004
 Transform:
   m_ObjectHideFlags: 0
@@ -7530,6 +9850,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 96562d0799d618a7fb9b1a37343d8235, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 0}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 0
+  mRect:
+    serializedVersion: 2
+    x: 0
+    y: 0
+    width: 1
+    height: 1
+  mShader: {fileID: 4800000, guid: 0be4260a50cecf84aabd5d8be5cfbc9c, type: 3}
+  mTexture: {fileID: 0}
 --- !u!4 &475998
 Transform:
   m_ObjectHideFlags: 0
@@ -7553,6 +9885,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 004bf51e44960d04eae9440074f7edfe, type: 2}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 21
+  mAtlas: {fileID: 11409266, guid: 495417da82574ed49be200e5350c2c0a, type: 2}
+  mSpriteName: game-card-ico-ammo
+  mFillCenter: 1
+  mType: 0
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &431099
 Transform:
   m_ObjectHideFlags: 0
@@ -7576,6 +9923,30 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f54891d0b7e1a01a23bc64463aeafd37, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: d808305656a8601409466191d759059d, type: 3}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 5
+  mDepth: 22
+  mFont: {fileID: 11409266, guid: 2ac3a3ab35adb5d45b8c056aa7026f89, type: 2}
+  mText: +25%
+  mMaxLineWidth: 0
+  mEncoding: 1
+  mMaxLineCount: 0
+  mPassword: 0
+  mShowLastChar: 0
+  mEffectStyle: 2
+  mEffectColor: {r: 0, g: 0, b: 0, a: 1}
+  mSymbols: 1
+  mEffectDistance: {x: 1, y: 1}
+  mShrinkToFit: 0
+  useLocalization: 0
+  mRescaleLocalization: 0
+  mDefaultScale: 40
+  mMinimalScale: 20
+  mRescaleWidth: 0
+  mDynamicFontSize: 0
+  mLineWidth: 0
+  mMultiline: 1
 --- !u!4 &498923
 Transform:
   m_ObjectHideFlags: 0
@@ -7603,6 +9974,25 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 15bf9f5c0ff4bb7d3326d742fc1229b4, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  widgets:
+  - {fileID: 11404912}
+  - {fileID: 11420735}
+  - {fileID: 11462798}
+  - {fileID: 11492299}
+  - {fileID: 11481432}
+  - {fileID: 11440489}
+  - {fileID: 11454913}
+  emptyPart: {fileID: 122290}
+  borderEmpty: {fileID: 11420735}
+  cardPart: {fileID: 198423}
+  cardBackground: {fileID: 11493152}
+  cardTexture: {fileID: 11456106}
+  cardIcon: {fileID: 11435744}
+  cardBonusIcon: {fileID: 11437173}
+  cardBonusLabel: {fileID: 11468792}
+  depositBuddyPart: {fileID: 127850}
+  waitingBuddyPart: {fileID: 150066}
+  waitingTime: {fileID: 11428647}
 --- !u!65 &6579653
 BoxCollider:
   serializedVersion: 2
@@ -7652,6 +10042,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 995cff53e4ec203488dc398f0f8f32e5, type: 2}
+  mColor: {r: 0.13725491, g: 0.14117648, b: 0.17254902, a: 1}
+  mPivot: 4
+  mDepth: 12
+  mAtlas: {fileID: 11409266, guid: 9582f38df100b244993ee2e1fa9a9888, type: 2}
+  mSpriteName: menu-crafting-cardplaceholder
+  mFillCenter: 1
+  mType: 1
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &456215
 Transform:
   m_ObjectHideFlags: 0
@@ -7675,6 +10080,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 995cff53e4ec203488dc398f0f8f32e5, type: 2}
+  mColor: {r: 0.29803923, g: 0.3019608, b: 0.36078432, a: 1}
+  mPivot: 4
+  mDepth: 13
+  mAtlas: {fileID: 11409266, guid: 9582f38df100b244993ee2e1fa9a9888, type: 2}
+  mSpriteName: menu-cardselection-stroke
+  mFillCenter: 1
+  mType: 1
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &406592
 Transform:
   m_ObjectHideFlags: 0
@@ -7713,6 +10133,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 004bf51e44960d04eae9440074f7edfe, type: 2}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 14
+  mAtlas: {fileID: 11409266, guid: 495417da82574ed49be200e5350c2c0a, type: 2}
+  mSpriteName: menu-cardpool-buddycardplaceholder
+  mFillCenter: 1
+  mType: 1
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &485097
 Transform:
   m_ObjectHideFlags: 0
@@ -7736,6 +10171,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 004bf51e44960d04eae9440074f7edfe, type: 2}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 15
+  mAtlas: {fileID: 11409266, guid: 495417da82574ed49be200e5350c2c0a, type: 2}
+  mSpriteName: menu-cardpool-soldier-ico
+  mFillCenter: 1
+  mType: 0
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &440565
 Transform:
   m_ObjectHideFlags: 0
@@ -7759,6 +10209,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 004bf51e44960d04eae9440074f7edfe, type: 2}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 16
+  mAtlas: {fileID: 11409266, guid: 495417da82574ed49be200e5350c2c0a, type: 2}
+  mSpriteName: menu-cardpool-depositarrow
+  mFillCenter: 1
+  mType: 0
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!114 &11405171
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7770,6 +10235,36 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e3b2cec1a418fb5742374dba269174f3, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  method: 3
+  style: 2
+  animationCurve:
+    serializedVersion: 2
+    m_Curve:
+    - time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 1
+      tangentMode: 0
+    - time: 1
+      value: 1
+      inSlope: 1
+      outSlope: 0
+      tangentMode: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+  ignoreTimeScale: 1
+  delay: 0
+  duration: 0.6
+  steeperCurves: 0
+  tweenGroup: 0
+  eventReceiver: {fileID: 0}
+  callWhenFinished:
+  NumOfRepetitions: 0
+  id: 0
+  dontResetCurve: 0
+  from: {x: 0, y: -25, z: 0}
+  to: {x: 0, y: -35, z: 0}
+  useLocal: 1
 --- !u!4 &444649
 Transform:
   m_ObjectHideFlags: 0
@@ -7807,6 +10302,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 004bf51e44960d04eae9440074f7edfe, type: 2}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 17
+  mAtlas: {fileID: 11409266, guid: 495417da82574ed49be200e5350c2c0a, type: 2}
+  mSpriteName: menu-cardpool-buddycardplaceholder
+  mFillCenter: 1
+  mType: 1
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &477480
 Transform:
   m_ObjectHideFlags: 0
@@ -7830,6 +10340,30 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f54891d0b7e1a01a23bc64463aeafd37, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: d808305656a8601409466191d759059d, type: 3}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 3
+  mDepth: 18
+  mFont: {fileID: 11409266, guid: 2ac3a3ab35adb5d45b8c056aa7026f89, type: 2}
+  mText: "04h\n12m"
+  mMaxLineWidth: 60
+  mEncoding: 1
+  mMaxLineCount: 0
+  mPassword: 0
+  mShowLastChar: 0
+  mEffectStyle: 0
+  mEffectColor: {r: 0, g: 0, b: 0, a: 1}
+  mSymbols: 1
+  mEffectDistance: {x: 1, y: 1}
+  mShrinkToFit: 0
+  useLocalization: 0
+  mRescaleLocalization: 0
+  mDefaultScale: 40
+  mMinimalScale: 20
+  mRescaleWidth: 0
+  mDynamicFontSize: 0
+  mLineWidth: 0
+  mMultiline: 1
 --- !u!114 &11428647
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7841,6 +10375,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 077b9e34e9b770eda0d5ad1dec73f486, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  counterLabel: {fileID: 11454913}
+  timerBar: {fileID: 0}
 --- !u!4 &465082
 Transform:
   m_ObjectHideFlags: 0
@@ -7881,6 +10417,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 34246ee25fb287548a2455364e0758cc, type: 2}
+  mColor: {r: 0.9333334, g: 0.40000004, b: 0.9568628, a: 1}
+  mPivot: 4
+  mDepth: 19
+  mAtlas: {fileID: 11409266, guid: 6b7d937aae653334fb9798602794ec44, type: 2}
+  mSpriteName: game-card-silver
+  mFillCenter: 1
+  mType: 0
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &457210
 Transform:
   m_ObjectHideFlags: 0
@@ -7904,6 +10455,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 34246ee25fb287548a2455364e0758cc, type: 2}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 20
+  mAtlas: {fileID: 11409266, guid: 6b7d937aae653334fb9798602794ec44, type: 2}
+  mSpriteName: game-card-ammobox
+  mFillCenter: 1
+  mType: 0
+  mFillDirection: 0
+  mFillAmount: 0.802
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &424962
 Transform:
   m_ObjectHideFlags: 0
@@ -7927,6 +10493,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 96562d0799d618a7fb9b1a37343d8235, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 0}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 0
+  mRect:
+    serializedVersion: 2
+    x: 0
+    y: 0
+    width: 1
+    height: 1
+  mShader: {fileID: 4800000, guid: 0be4260a50cecf84aabd5d8be5cfbc9c, type: 3}
+  mTexture: {fileID: 0}
 --- !u!4 &468900
 Transform:
   m_ObjectHideFlags: 0
@@ -7950,6 +10528,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 004bf51e44960d04eae9440074f7edfe, type: 2}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 21
+  mAtlas: {fileID: 11409266, guid: 495417da82574ed49be200e5350c2c0a, type: 2}
+  mSpriteName: game-card-ico-ammo
+  mFillCenter: 1
+  mType: 0
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &419704
 Transform:
   m_ObjectHideFlags: 0
@@ -7973,6 +10566,30 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f54891d0b7e1a01a23bc64463aeafd37, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: d808305656a8601409466191d759059d, type: 3}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 5
+  mDepth: 22
+  mFont: {fileID: 11409266, guid: 2ac3a3ab35adb5d45b8c056aa7026f89, type: 2}
+  mText: +25%
+  mMaxLineWidth: 0
+  mEncoding: 1
+  mMaxLineCount: 0
+  mPassword: 0
+  mShowLastChar: 0
+  mEffectStyle: 2
+  mEffectColor: {r: 0, g: 0, b: 0, a: 1}
+  mSymbols: 1
+  mEffectDistance: {x: 1, y: 1}
+  mShrinkToFit: 0
+  useLocalization: 0
+  mRescaleLocalization: 0
+  mDefaultScale: 40
+  mMinimalScale: 20
+  mRescaleWidth: 0
+  mDynamicFontSize: 0
+  mLineWidth: 0
+  mMultiline: 1
 --- !u!4 &407840
 Transform:
   m_ObjectHideFlags: 0
@@ -8000,6 +10617,25 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 15bf9f5c0ff4bb7d3326d742fc1229b4, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  widgets:
+  - {fileID: 11470844}
+  - {fileID: 11465771}
+  - {fileID: 11413223}
+  - {fileID: 11463479}
+  - {fileID: 11423863}
+  - {fileID: 11492684}
+  - {fileID: 11482681}
+  emptyPart: {fileID: 176772}
+  borderEmpty: {fileID: 11465771}
+  cardPart: {fileID: 130575}
+  cardBackground: {fileID: 11423766}
+  cardTexture: {fileID: 11428314}
+  cardIcon: {fileID: 11426895}
+  cardBonusIcon: {fileID: 11412779}
+  cardBonusLabel: {fileID: 11461268}
+  depositBuddyPart: {fileID: 196482}
+  waitingBuddyPart: {fileID: 108667}
+  waitingTime: {fileID: 11485275}
 --- !u!65 &6500381
 BoxCollider:
   serializedVersion: 2
@@ -8049,6 +10685,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 995cff53e4ec203488dc398f0f8f32e5, type: 2}
+  mColor: {r: 0.13725491, g: 0.14117648, b: 0.17254902, a: 1}
+  mPivot: 4
+  mDepth: 12
+  mAtlas: {fileID: 11409266, guid: 9582f38df100b244993ee2e1fa9a9888, type: 2}
+  mSpriteName: menu-crafting-cardplaceholder
+  mFillCenter: 1
+  mType: 1
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &485200
 Transform:
   m_ObjectHideFlags: 0
@@ -8072,6 +10723,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 995cff53e4ec203488dc398f0f8f32e5, type: 2}
+  mColor: {r: 0.29803923, g: 0.3019608, b: 0.36078432, a: 1}
+  mPivot: 4
+  mDepth: 13
+  mAtlas: {fileID: 11409266, guid: 9582f38df100b244993ee2e1fa9a9888, type: 2}
+  mSpriteName: menu-cardselection-stroke
+  mFillCenter: 1
+  mType: 1
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &447729
 Transform:
   m_ObjectHideFlags: 0
@@ -8110,6 +10776,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 004bf51e44960d04eae9440074f7edfe, type: 2}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 14
+  mAtlas: {fileID: 11409266, guid: 495417da82574ed49be200e5350c2c0a, type: 2}
+  mSpriteName: menu-cardpool-buddycardplaceholder
+  mFillCenter: 1
+  mType: 1
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &455762
 Transform:
   m_ObjectHideFlags: 0
@@ -8133,6 +10814,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 004bf51e44960d04eae9440074f7edfe, type: 2}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 15
+  mAtlas: {fileID: 11409266, guid: 495417da82574ed49be200e5350c2c0a, type: 2}
+  mSpriteName: menu-cardpool-soldier-ico
+  mFillCenter: 1
+  mType: 0
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &405729
 Transform:
   m_ObjectHideFlags: 0
@@ -8156,6 +10852,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 004bf51e44960d04eae9440074f7edfe, type: 2}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 16
+  mAtlas: {fileID: 11409266, guid: 495417da82574ed49be200e5350c2c0a, type: 2}
+  mSpriteName: menu-cardpool-depositarrow
+  mFillCenter: 1
+  mType: 0
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!114 &11432447
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -8167,6 +10878,36 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e3b2cec1a418fb5742374dba269174f3, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  method: 3
+  style: 2
+  animationCurve:
+    serializedVersion: 2
+    m_Curve:
+    - time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 1
+      tangentMode: 0
+    - time: 1
+      value: 1
+      inSlope: 1
+      outSlope: 0
+      tangentMode: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+  ignoreTimeScale: 1
+  delay: 0
+  duration: 0.6
+  steeperCurves: 0
+  tweenGroup: 0
+  eventReceiver: {fileID: 0}
+  callWhenFinished:
+  NumOfRepetitions: 0
+  id: 0
+  dontResetCurve: 0
+  from: {x: 0, y: -25, z: 0}
+  to: {x: 0, y: -35, z: 0}
+  useLocal: 1
 --- !u!4 &412763
 Transform:
   m_ObjectHideFlags: 0
@@ -8204,6 +10945,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 004bf51e44960d04eae9440074f7edfe, type: 2}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 17
+  mAtlas: {fileID: 11409266, guid: 495417da82574ed49be200e5350c2c0a, type: 2}
+  mSpriteName: menu-cardpool-buddycardplaceholder
+  mFillCenter: 1
+  mType: 1
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &492571
 Transform:
   m_ObjectHideFlags: 0
@@ -8227,6 +10983,30 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f54891d0b7e1a01a23bc64463aeafd37, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: d808305656a8601409466191d759059d, type: 3}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 3
+  mDepth: 18
+  mFont: {fileID: 11409266, guid: 2ac3a3ab35adb5d45b8c056aa7026f89, type: 2}
+  mText: "04h\n12m"
+  mMaxLineWidth: 60
+  mEncoding: 1
+  mMaxLineCount: 0
+  mPassword: 0
+  mShowLastChar: 0
+  mEffectStyle: 0
+  mEffectColor: {r: 0, g: 0, b: 0, a: 1}
+  mSymbols: 1
+  mEffectDistance: {x: 1, y: 1}
+  mShrinkToFit: 0
+  useLocalization: 0
+  mRescaleLocalization: 0
+  mDefaultScale: 40
+  mMinimalScale: 20
+  mRescaleWidth: 0
+  mDynamicFontSize: 0
+  mLineWidth: 0
+  mMultiline: 1
 --- !u!114 &11485275
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -8238,6 +11018,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 077b9e34e9b770eda0d5ad1dec73f486, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  counterLabel: {fileID: 11482681}
+  timerBar: {fileID: 0}
 --- !u!4 &452743
 Transform:
   m_ObjectHideFlags: 0
@@ -8278,6 +11060,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 34246ee25fb287548a2455364e0758cc, type: 2}
+  mColor: {r: 0.9333334, g: 0.40000004, b: 0.9568628, a: 1}
+  mPivot: 4
+  mDepth: 19
+  mAtlas: {fileID: 11409266, guid: 6b7d937aae653334fb9798602794ec44, type: 2}
+  mSpriteName: game-card-silver
+  mFillCenter: 1
+  mType: 0
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &455631
 Transform:
   m_ObjectHideFlags: 0
@@ -8301,6 +11098,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 34246ee25fb287548a2455364e0758cc, type: 2}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 20
+  mAtlas: {fileID: 11409266, guid: 6b7d937aae653334fb9798602794ec44, type: 2}
+  mSpriteName: game-card-ammobox
+  mFillCenter: 1
+  mType: 0
+  mFillDirection: 0
+  mFillAmount: 0.802
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &420751
 Transform:
   m_ObjectHideFlags: 0
@@ -8324,6 +11136,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 96562d0799d618a7fb9b1a37343d8235, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 0}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 0
+  mRect:
+    serializedVersion: 2
+    x: 0
+    y: 0
+    width: 1
+    height: 1
+  mShader: {fileID: 4800000, guid: 0be4260a50cecf84aabd5d8be5cfbc9c, type: 3}
+  mTexture: {fileID: 0}
 --- !u!4 &461713
 Transform:
   m_ObjectHideFlags: 0
@@ -8347,6 +11171,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 004bf51e44960d04eae9440074f7edfe, type: 2}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 21
+  mAtlas: {fileID: 11409266, guid: 495417da82574ed49be200e5350c2c0a, type: 2}
+  mSpriteName: game-card-ico-ammo
+  mFillCenter: 1
+  mType: 0
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &483670
 Transform:
   m_ObjectHideFlags: 0
@@ -8370,6 +11209,30 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f54891d0b7e1a01a23bc64463aeafd37, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: d808305656a8601409466191d759059d, type: 3}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 5
+  mDepth: 22
+  mFont: {fileID: 11409266, guid: 2ac3a3ab35adb5d45b8c056aa7026f89, type: 2}
+  mText: +25%
+  mMaxLineWidth: 0
+  mEncoding: 1
+  mMaxLineCount: 0
+  mPassword: 0
+  mShowLastChar: 0
+  mEffectStyle: 2
+  mEffectColor: {r: 0, g: 0, b: 0, a: 1}
+  mSymbols: 1
+  mEffectDistance: {x: 1, y: 1}
+  mShrinkToFit: 0
+  useLocalization: 0
+  mRescaleLocalization: 0
+  mDefaultScale: 40
+  mMinimalScale: 20
+  mRescaleWidth: 0
+  mDynamicFontSize: 0
+  mLineWidth: 0
+  mMultiline: 1
 --- !u!4 &494046
 Transform:
   m_ObjectHideFlags: 0
@@ -8397,6 +11260,25 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 15bf9f5c0ff4bb7d3326d742fc1229b4, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  widgets:
+  - {fileID: 11404264}
+  - {fileID: 11449636}
+  - {fileID: 11451950}
+  - {fileID: 11472622}
+  - {fileID: 11416006}
+  - {fileID: 11409697}
+  - {fileID: 11494370}
+  emptyPart: {fileID: 134459}
+  borderEmpty: {fileID: 11449636}
+  cardPart: {fileID: 127792}
+  cardBackground: {fileID: 11422609}
+  cardTexture: {fileID: 11434425}
+  cardIcon: {fileID: 11461974}
+  cardBonusIcon: {fileID: 11442814}
+  cardBonusLabel: {fileID: 11433401}
+  depositBuddyPart: {fileID: 183503}
+  waitingBuddyPart: {fileID: 146592}
+  waitingTime: {fileID: 11444926}
 --- !u!65 &6553587
 BoxCollider:
   serializedVersion: 2
@@ -8446,6 +11328,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 995cff53e4ec203488dc398f0f8f32e5, type: 2}
+  mColor: {r: 0.13725491, g: 0.14117648, b: 0.17254902, a: 1}
+  mPivot: 4
+  mDepth: 12
+  mAtlas: {fileID: 11409266, guid: 9582f38df100b244993ee2e1fa9a9888, type: 2}
+  mSpriteName: menu-crafting-cardplaceholder
+  mFillCenter: 1
+  mType: 1
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &489629
 Transform:
   m_ObjectHideFlags: 0
@@ -8469,6 +11366,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 995cff53e4ec203488dc398f0f8f32e5, type: 2}
+  mColor: {r: 0.29803923, g: 0.3019608, b: 0.36078432, a: 1}
+  mPivot: 4
+  mDepth: 13
+  mAtlas: {fileID: 11409266, guid: 9582f38df100b244993ee2e1fa9a9888, type: 2}
+  mSpriteName: menu-cardselection-stroke
+  mFillCenter: 1
+  mType: 1
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &448929
 Transform:
   m_ObjectHideFlags: 0
@@ -8507,6 +11419,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 004bf51e44960d04eae9440074f7edfe, type: 2}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 14
+  mAtlas: {fileID: 11409266, guid: 495417da82574ed49be200e5350c2c0a, type: 2}
+  mSpriteName: menu-cardpool-buddycardplaceholder
+  mFillCenter: 1
+  mType: 1
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &432118
 Transform:
   m_ObjectHideFlags: 0
@@ -8530,6 +11457,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 004bf51e44960d04eae9440074f7edfe, type: 2}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 15
+  mAtlas: {fileID: 11409266, guid: 495417da82574ed49be200e5350c2c0a, type: 2}
+  mSpriteName: menu-cardpool-soldier-ico
+  mFillCenter: 1
+  mType: 0
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &472554
 Transform:
   m_ObjectHideFlags: 0
@@ -8553,6 +11495,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 004bf51e44960d04eae9440074f7edfe, type: 2}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 16
+  mAtlas: {fileID: 11409266, guid: 495417da82574ed49be200e5350c2c0a, type: 2}
+  mSpriteName: menu-cardpool-depositarrow
+  mFillCenter: 1
+  mType: 0
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!114 &11466260
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -8564,6 +11521,36 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e3b2cec1a418fb5742374dba269174f3, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  method: 3
+  style: 2
+  animationCurve:
+    serializedVersion: 2
+    m_Curve:
+    - time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 1
+      tangentMode: 0
+    - time: 1
+      value: 1
+      inSlope: 1
+      outSlope: 0
+      tangentMode: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+  ignoreTimeScale: 1
+  delay: 0
+  duration: 0.6
+  steeperCurves: 0
+  tweenGroup: 0
+  eventReceiver: {fileID: 0}
+  callWhenFinished:
+  NumOfRepetitions: 0
+  id: 0
+  dontResetCurve: 0
+  from: {x: 0, y: -25, z: 0}
+  to: {x: 0, y: -35, z: 0}
+  useLocal: 1
 --- !u!4 &416744
 Transform:
   m_ObjectHideFlags: 0
@@ -8601,6 +11588,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 004bf51e44960d04eae9440074f7edfe, type: 2}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 17
+  mAtlas: {fileID: 11409266, guid: 495417da82574ed49be200e5350c2c0a, type: 2}
+  mSpriteName: menu-cardpool-buddycardplaceholder
+  mFillCenter: 1
+  mType: 1
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &431747
 Transform:
   m_ObjectHideFlags: 0
@@ -8624,6 +11626,30 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f54891d0b7e1a01a23bc64463aeafd37, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: d808305656a8601409466191d759059d, type: 3}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 3
+  mDepth: 18
+  mFont: {fileID: 11409266, guid: 2ac3a3ab35adb5d45b8c056aa7026f89, type: 2}
+  mText: "04h\n12m"
+  mMaxLineWidth: 60
+  mEncoding: 1
+  mMaxLineCount: 0
+  mPassword: 0
+  mShowLastChar: 0
+  mEffectStyle: 0
+  mEffectColor: {r: 0, g: 0, b: 0, a: 1}
+  mSymbols: 1
+  mEffectDistance: {x: 1, y: 1}
+  mShrinkToFit: 0
+  useLocalization: 0
+  mRescaleLocalization: 0
+  mDefaultScale: 40
+  mMinimalScale: 20
+  mRescaleWidth: 0
+  mDynamicFontSize: 0
+  mLineWidth: 0
+  mMultiline: 1
 --- !u!114 &11444926
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -8635,6 +11661,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 077b9e34e9b770eda0d5ad1dec73f486, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  counterLabel: {fileID: 11494370}
+  timerBar: {fileID: 0}
 --- !u!4 &493552
 Transform:
   m_ObjectHideFlags: 0
@@ -8675,6 +11703,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 34246ee25fb287548a2455364e0758cc, type: 2}
+  mColor: {r: 0.9333334, g: 0.40000004, b: 0.9568628, a: 1}
+  mPivot: 4
+  mDepth: 19
+  mAtlas: {fileID: 11409266, guid: 6b7d937aae653334fb9798602794ec44, type: 2}
+  mSpriteName: game-card-silver
+  mFillCenter: 1
+  mType: 0
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &434580
 Transform:
   m_ObjectHideFlags: 0
@@ -8698,6 +11741,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 34246ee25fb287548a2455364e0758cc, type: 2}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 20
+  mAtlas: {fileID: 11409266, guid: 6b7d937aae653334fb9798602794ec44, type: 2}
+  mSpriteName: game-card-ammobox
+  mFillCenter: 1
+  mType: 0
+  mFillDirection: 0
+  mFillAmount: 0.802
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &456796
 Transform:
   m_ObjectHideFlags: 0
@@ -8721,6 +11779,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 96562d0799d618a7fb9b1a37343d8235, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 0}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 0
+  mRect:
+    serializedVersion: 2
+    x: 0
+    y: 0
+    width: 1
+    height: 1
+  mShader: {fileID: 4800000, guid: 0be4260a50cecf84aabd5d8be5cfbc9c, type: 3}
+  mTexture: {fileID: 0}
 --- !u!4 &484715
 Transform:
   m_ObjectHideFlags: 0
@@ -8744,6 +11814,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 004bf51e44960d04eae9440074f7edfe, type: 2}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 21
+  mAtlas: {fileID: 11409266, guid: 495417da82574ed49be200e5350c2c0a, type: 2}
+  mSpriteName: game-card-ico-ammo
+  mFillCenter: 1
+  mType: 0
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &441153
 Transform:
   m_ObjectHideFlags: 0
@@ -8767,6 +11852,30 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f54891d0b7e1a01a23bc64463aeafd37, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: d808305656a8601409466191d759059d, type: 3}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 5
+  mDepth: 22
+  mFont: {fileID: 11409266, guid: 2ac3a3ab35adb5d45b8c056aa7026f89, type: 2}
+  mText: +25%
+  mMaxLineWidth: 0
+  mEncoding: 1
+  mMaxLineCount: 0
+  mPassword: 0
+  mShowLastChar: 0
+  mEffectStyle: 2
+  mEffectColor: {r: 0, g: 0, b: 0, a: 1}
+  mSymbols: 1
+  mEffectDistance: {x: 1, y: 1}
+  mShrinkToFit: 0
+  useLocalization: 0
+  mRescaleLocalization: 0
+  mDefaultScale: 40
+  mMinimalScale: 20
+  mRescaleWidth: 0
+  mDynamicFontSize: 0
+  mLineWidth: 0
+  mMultiline: 1
 --- !u!4 &493965
 Transform:
   m_ObjectHideFlags: 0
@@ -8819,6 +11928,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dfac223674a804adf3fffb2de07784c9, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  tweenTarget: {fileID: 0}
+  hover: {x: 1.1, y: 1.1, z: 1}
+  pressed: {x: 1.05, y: 1.05, z: 1}
 --- !u!4 &499154
 Transform:
   m_ObjectHideFlags: 0
@@ -8842,6 +11954,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 004bf51e44960d04eae9440074f7edfe, type: 2}
+  mColor: {r: 0.9333334, g: 0.40000004, b: 0.9568628, a: 1}
+  mPivot: 4
+  mDepth: 150
+  mAtlas: {fileID: 11409266, guid: 495417da82574ed49be200e5350c2c0a, type: 2}
+  mSpriteName: menu-cardpool-button-smallwithdraw
+  mFillCenter: 1
+  mType: 1
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &455731
 Transform:
   m_ObjectHideFlags: 0
@@ -8865,6 +11992,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 004bf51e44960d04eae9440074f7edfe, type: 2}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 151
+  mAtlas: {fileID: 11409266, guid: 495417da82574ed49be200e5350c2c0a, type: 2}
+  mSpriteName: menu-cardpool-depositsmall-ico
+  mFillCenter: 1
+  mType: 0
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &459947
 Transform:
   m_ObjectHideFlags: 0
@@ -8888,6 +12030,30 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f54891d0b7e1a01a23bc64463aeafd37, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 5b605186162b42244b30fe94c1806c2f, type: 2}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 152
+  mFont: {fileID: 11409266, guid: 2ac3a3ab35adb5d45b8c056aa7026f89, type: 2}
+  mText: ID_DEPOSIT
+  mMaxLineWidth: 0
+  mEncoding: 1
+  mMaxLineCount: 0
+  mPassword: 0
+  mShowLastChar: 0
+  mEffectStyle: 0
+  mEffectColor: {r: 0, g: 0, b: 0, a: 1}
+  mSymbols: 1
+  mEffectDistance: {x: 1, y: 1}
+  mShrinkToFit: 0
+  useLocalization: 1
+  mRescaleLocalization: 0
+  mDefaultScale: 40
+  mMinimalScale: 20
+  mRescaleWidth: 0
+  mDynamicFontSize: 0
+  mLineWidth: 0
+  mMultiline: 1
 --- !u!4 &490159
 Transform:
   m_ObjectHideFlags: 0
@@ -8926,6 +12092,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dfac223674a804adf3fffb2de07784c9, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  tweenTarget: {fileID: 0}
+  hover: {x: 1.1, y: 1.1, z: 1}
+  pressed: {x: 1.05, y: 1.05, z: 1}
 --- !u!4 &414407
 Transform:
   m_ObjectHideFlags: 0
@@ -8949,6 +12118,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 004bf51e44960d04eae9440074f7edfe, type: 2}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 153
+  mAtlas: {fileID: 11409266, guid: 495417da82574ed49be200e5350c2c0a, type: 2}
+  mSpriteName: menu-cardpool-button-smallwithdraw
+  mFillCenter: 1
+  mType: 1
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &486923
 Transform:
   m_ObjectHideFlags: 0
@@ -8972,6 +12156,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 004bf51e44960d04eae9440074f7edfe, type: 2}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 154
+  mAtlas: {fileID: 11409266, guid: 495417da82574ed49be200e5350c2c0a, type: 2}
+  mSpriteName: menu-cardpool-withdrawsmall-ico
+  mFillCenter: 1
+  mType: 0
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &453013
 Transform:
   m_ObjectHideFlags: 0
@@ -8995,6 +12194,30 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f54891d0b7e1a01a23bc64463aeafd37, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: d808305656a8601409466191d759059d, type: 3}
+  mColor: {r: 0, g: 0, b: 0, a: 1}
+  mPivot: 4
+  mDepth: 155
+  mFont: {fileID: 11409266, guid: 2ac3a3ab35adb5d45b8c056aa7026f89, type: 2}
+  mText: ID_WITHDRAW
+  mMaxLineWidth: 0
+  mEncoding: 1
+  mMaxLineCount: 0
+  mPassword: 0
+  mShowLastChar: 0
+  mEffectStyle: 0
+  mEffectColor: {r: 0, g: 0, b: 0, a: 1}
+  mSymbols: 1
+  mEffectDistance: {x: 1, y: 1}
+  mShrinkToFit: 0
+  useLocalization: 1
+  mRescaleLocalization: 0
+  mDefaultScale: 40
+  mMinimalScale: 20
+  mRescaleWidth: 0
+  mDynamicFontSize: 0
+  mLineWidth: 0
+  mMultiline: 1
 --- !u!1001 &100100000
 Prefab:
   serializedVersion: 2

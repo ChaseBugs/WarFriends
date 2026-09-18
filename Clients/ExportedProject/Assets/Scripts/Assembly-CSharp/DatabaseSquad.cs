@@ -1,63 +1,175 @@
-using UnityEngine;
+using System.Text.RegularExpressions;
+using Newtonsoft.Json.Linq;
 
-public class DatabaseSquad : MonoBehaviour
+public class DatabaseSquad
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public static int maxMedalsRequirement = 5000;
 
-	1. No dll files were provided to AssetRipper.
+	public static int maxSquadName = 15;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public static int maxSquadMessage = 100;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public int experience;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public string icon;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public bool isPublic;
 
-	3. Assembly Reconstruction has not been implemented.
+	public long levelExperience;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public string message;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public string name;
 
-	4. This script is unnecessary.
+	public int rank;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public string roundId;
 
-	5. Script Content Level 0
+	public int squadWarDivision;
 
-		AssetRipper was set to not load any script information.
+	public int size;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public int skill;
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public int skillRequirement;
 
-	7. An incorrect path was provided to AssetRipper.
+	public int squadPoints;
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	public int globalPosition;
 
-	*/
+	public int warsPosition;
+
+	public int bestSkill;
+
+	public string division;
+
+	public int battlesLost;
+
+	public int battlesWon;
+
+	public int cardsPlayed;
+
+	public int kills;
+
+	public int unitsDeployed;
+
+	public int tiersCompleted;
+
+	public int squadPointsBest;
+
+	public int squadWarWins;
+
+	public bool isInDivision => squadPoints > 0 && !string.IsNullOrEmpty(roundId) && division != "placement";
+
+	public int battlesPlayed => battlesWon + battlesLost;
+
+	public float winLoseRatio
+	{
+		get
+		{
+			if (battlesLost == 0)
+			{
+				return -1f;
+			}
+			return (float)battlesWon / (float)battlesLost;
+		}
+	}
+
+	internal static DatabaseSquad CreateFromDatabase(JToken item)
+	{
+		DatabaseSquad databaseSquad = new DatabaseSquad();
+		if (item == null)
+		{
+			return databaseSquad;
+		}
+		if (item["Id"] != null)
+		{
+			databaseSquad.name = GetString(item, "Id");
+		}
+		if (item["IsPublic"] != null)
+		{
+			int num = GetInt(item, "IsPublic");
+			databaseSquad.isPublic = num != 0;
+		}
+		databaseSquad.globalPosition = GetInt(item, "Position");
+		databaseSquad.message = GetString(item, "Message");
+		databaseSquad.roundId = GetString(item, "RoundId");
+		databaseSquad.division = StringParser.ParseString(Regex.Replace(databaseSquad.roundId, "^[0-9]*-", string.Empty), string.Empty);
+		int result = 1;
+		int.TryParse(Regex.Replace(databaseSquad.roundId, "-[^-]*$", string.Empty), out result);
+		databaseSquad.squadWarDivision = result;
+		databaseSquad.size = GetInt(item, "Size");
+		databaseSquad.skill = GetInt(item, "Skill");
+		databaseSquad.rank = GetInt(item, "Level");
+		databaseSquad.skillRequirement = GetInt(item, "SkillRequirement");
+		databaseSquad.squadPoints = GetInt(item, "SquadPoints");
+		string squadWarsId = Singleton<ServerResultsCache>.instance.squadWarsId;
+		if (!string.IsNullOrEmpty(squadWarsId))
+		{
+			databaseSquad.squadPoints += GetInt(item, squadWarsId);
+		}
+		databaseSquad.experience = GetInt(item, "Experience");
+		databaseSquad.levelExperience = GetLong(item, "LevelExperience");
+		databaseSquad.icon = GetString(item, "Icon");
+		databaseSquad.kills = GetInt(item, "Kills");
+		databaseSquad.battlesLost = GetInt(item, "BattlesLost");
+		databaseSquad.battlesWon = GetInt(item, "BattlesWon");
+		databaseSquad.cardsPlayed = GetInt(item, "CardsPlayed");
+		databaseSquad.bestSkill = GetInt(item, "BestSkill");
+		if (databaseSquad.bestSkill == 0 && databaseSquad.skill > 0)
+		{
+			databaseSquad.bestSkill = databaseSquad.skill;
+		}
+		databaseSquad.unitsDeployed = GetInt(item, "UnitsDeployed");
+		databaseSquad.tiersCompleted = GetInt(item, "TiersCompleted");
+		databaseSquad.squadPointsBest = GetInt(item, "SquadPointsBest");
+		if (databaseSquad.squadPointsBest == 0 || databaseSquad.squadPointsBest < databaseSquad.squadPoints)
+		{
+			databaseSquad.squadPointsBest = databaseSquad.squadPoints;
+		}
+		databaseSquad.squadWarWins = GetInt(item, "SquadWarWins");
+		return databaseSquad;
+	}
+
+	public int GetPlacesLeft()
+	{
+		int squadRankSize = Singleton<GameVariables>.instance.GetSquadRankSize(rank);
+		return squadRankSize - size;
+	}
+
+	public bool IsFull()
+	{
+		int squadRankSize = Singleton<GameVariables>.instance.GetSquadRankSize(rank);
+		return squadRankSize <= size;
+	}
+
+	private static string GetString(JToken item, string key)
+	{
+		if (item[key] == null)
+		{
+			return string.Empty;
+		}
+		JToken jToken = item[key];
+		return (jToken is JValue) ? StringParser.ParseString(jToken, string.Empty) : StringParser.ParseString(key, "S", item, string.Empty);
+	}
+
+	private static int GetInt(JToken item, string key)
+	{
+		if (item[key] == null)
+		{
+			return 0;
+		}
+		JToken jToken = item[key];
+		return (jToken is JValue) ? StringParser.ParseIntToken(jToken) : StringParser.ParseInt(key, "N", item);
+	}
+
+	private static long GetLong(JToken item, string key)
+	{
+		if (item[key] == null)
+		{
+			return 0L;
+		}
+		JToken jToken = item[key];
+		return (jToken is JValue) ? StringParser.ParseLongToken(jToken, 0L) : StringParser.ParseLong(key, "N", item);
+	}
 }

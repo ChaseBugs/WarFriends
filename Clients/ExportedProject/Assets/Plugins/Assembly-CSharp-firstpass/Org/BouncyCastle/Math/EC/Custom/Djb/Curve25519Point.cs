@@ -1,66 +1,272 @@
-using UnityEngine;
+using System;
+using Org.BouncyCastle.Math.Raw;
 
 namespace Org.BouncyCastle.Math.EC.Custom.Djb
 {
-	public class Curve25519Point : MonoBehaviour
+internal class Curve25519Point : AbstractFpPoint
+{
+	public Curve25519Point(ECCurve curve, ECFieldElement x, ECFieldElement y)
+		: this(curve, x, y, withCompression: false)
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
 	}
+
+	public Curve25519Point(ECCurve curve, ECFieldElement x, ECFieldElement y, bool withCompression)
+		: base(curve, x, y, withCompression)
+	{
+		if (x == null != (y == null))
+		{
+			throw new ArgumentException("Exactly one of the field elements is null");
+		}
+	}
+
+	internal Curve25519Point(ECCurve curve, ECFieldElement x, ECFieldElement y, ECFieldElement[] zs, bool withCompression)
+		: base(curve, x, y, zs, withCompression)
+	{
+	}
+
+	protected override ECPoint Detach()
+	{
+		return new Curve25519Point(null, AffineXCoord, AffineYCoord);
+	}
+
+	public override ECFieldElement GetZCoord(int index)
+	{
+		if (index == 1)
+		{
+			return GetJacobianModifiedW();
+		}
+		return base.GetZCoord(index);
+	}
+
+	public override ECPoint Add(ECPoint b)
+	{
+		if (base.IsInfinity)
+		{
+			return b;
+		}
+		if (b.IsInfinity)
+		{
+			return this;
+		}
+		if (this == b)
+		{
+			return Twice();
+		}
+		ECCurve curve = Curve;
+		Curve25519FieldElement curve25519FieldElement = (Curve25519FieldElement)base.RawXCoord;
+		Curve25519FieldElement curve25519FieldElement2 = (Curve25519FieldElement)base.RawYCoord;
+		Curve25519FieldElement curve25519FieldElement3 = (Curve25519FieldElement)base.RawZCoords[0];
+		Curve25519FieldElement curve25519FieldElement4 = (Curve25519FieldElement)b.RawXCoord;
+		Curve25519FieldElement curve25519FieldElement5 = (Curve25519FieldElement)b.RawYCoord;
+		Curve25519FieldElement curve25519FieldElement6 = (Curve25519FieldElement)b.RawZCoords[0];
+		uint[] array = Nat256.CreateExt();
+		uint[] array2 = Nat256.Create();
+		uint[] array3 = Nat256.Create();
+		uint[] array4 = Nat256.Create();
+		bool isOne = curve25519FieldElement3.IsOne;
+		uint[] array5;
+		uint[] array6;
+		if (isOne)
+		{
+			array5 = curve25519FieldElement4.x;
+			array6 = curve25519FieldElement5.x;
+		}
+		else
+		{
+			array6 = array3;
+			Curve25519Field.Square(curve25519FieldElement3.x, array6);
+			array5 = array2;
+			Curve25519Field.Multiply(array6, curve25519FieldElement4.x, array5);
+			Curve25519Field.Multiply(array6, curve25519FieldElement3.x, array6);
+			Curve25519Field.Multiply(array6, curve25519FieldElement5.x, array6);
+		}
+		bool isOne2 = curve25519FieldElement6.IsOne;
+		uint[] array7;
+		uint[] array8;
+		if (isOne2)
+		{
+			array7 = curve25519FieldElement.x;
+			array8 = curve25519FieldElement2.x;
+		}
+		else
+		{
+			array8 = array4;
+			Curve25519Field.Square(curve25519FieldElement6.x, array8);
+			array7 = array;
+			Curve25519Field.Multiply(array8, curve25519FieldElement.x, array7);
+			Curve25519Field.Multiply(array8, curve25519FieldElement6.x, array8);
+			Curve25519Field.Multiply(array8, curve25519FieldElement2.x, array8);
+		}
+		uint[] array9 = Nat256.Create();
+		Curve25519Field.Subtract(array7, array5, array9);
+		uint[] array10 = array2;
+		Curve25519Field.Subtract(array8, array6, array10);
+		if (Nat256.IsZero(array9))
+		{
+			if (Nat256.IsZero(array10))
+			{
+				return Twice();
+			}
+			return curve.Infinity;
+		}
+		uint[] array11 = Nat256.Create();
+		Curve25519Field.Square(array9, array11);
+		uint[] array12 = Nat256.Create();
+		Curve25519Field.Multiply(array11, array9, array12);
+		uint[] array13 = array3;
+		Curve25519Field.Multiply(array11, array7, array13);
+		Curve25519Field.Negate(array12, array12);
+		Nat256.Mul(array8, array12, array);
+		uint x = Nat256.AddBothTo(array13, array13, array12);
+		Curve25519Field.Reduce27(x, array12);
+		Curve25519FieldElement curve25519FieldElement7 = new Curve25519FieldElement(array4);
+		Curve25519Field.Square(array10, curve25519FieldElement7.x);
+		Curve25519Field.Subtract(curve25519FieldElement7.x, array12, curve25519FieldElement7.x);
+		Curve25519FieldElement curve25519FieldElement8 = new Curve25519FieldElement(array12);
+		Curve25519Field.Subtract(array13, curve25519FieldElement7.x, curve25519FieldElement8.x);
+		Curve25519Field.MultiplyAddToExt(curve25519FieldElement8.x, array10, array);
+		Curve25519Field.Reduce(array, curve25519FieldElement8.x);
+		Curve25519FieldElement curve25519FieldElement9 = new Curve25519FieldElement(array9);
+		if (!isOne)
+		{
+			Curve25519Field.Multiply(curve25519FieldElement9.x, curve25519FieldElement3.x, curve25519FieldElement9.x);
+		}
+		if (!isOne2)
+		{
+			Curve25519Field.Multiply(curve25519FieldElement9.x, curve25519FieldElement6.x, curve25519FieldElement9.x);
+		}
+		uint[] zSquared = ((!isOne || !isOne2) ? null : array11);
+		Curve25519FieldElement curve25519FieldElement10 = CalculateJacobianModifiedW(curve25519FieldElement9, zSquared);
+		ECFieldElement[] zs = new ECFieldElement[2] { curve25519FieldElement9, curve25519FieldElement10 };
+		return new Curve25519Point(curve, curve25519FieldElement7, curve25519FieldElement8, zs, base.IsCompressed);
+	}
+
+	public override ECPoint Twice()
+	{
+		if (base.IsInfinity)
+		{
+			return this;
+		}
+		ECCurve curve = Curve;
+		ECFieldElement rawYCoord = base.RawYCoord;
+		if (rawYCoord.IsZero)
+		{
+			return curve.Infinity;
+		}
+		return TwiceJacobianModified(calculateW: true);
+	}
+
+	public override ECPoint TwicePlus(ECPoint b)
+	{
+		if (this == b)
+		{
+			return ThreeTimes();
+		}
+		if (base.IsInfinity)
+		{
+			return b;
+		}
+		if (b.IsInfinity)
+		{
+			return Twice();
+		}
+		ECFieldElement rawYCoord = base.RawYCoord;
+		if (rawYCoord.IsZero)
+		{
+			return b;
+		}
+		return TwiceJacobianModified(calculateW: false).Add(b);
+	}
+
+	public override ECPoint ThreeTimes()
+	{
+		if (base.IsInfinity || base.RawYCoord.IsZero)
+		{
+			return this;
+		}
+		return TwiceJacobianModified(calculateW: false).Add(this);
+	}
+
+	public override ECPoint Negate()
+	{
+		if (base.IsInfinity)
+		{
+			return this;
+		}
+		return new Curve25519Point(Curve, base.RawXCoord, base.RawYCoord.Negate(), base.RawZCoords, base.IsCompressed);
+	}
+
+	protected virtual Curve25519FieldElement CalculateJacobianModifiedW(Curve25519FieldElement Z, uint[] ZSquared)
+	{
+		Curve25519FieldElement curve25519FieldElement = (Curve25519FieldElement)Curve.A;
+		if (Z.IsOne)
+		{
+			return curve25519FieldElement;
+		}
+		Curve25519FieldElement curve25519FieldElement2 = new Curve25519FieldElement();
+		if (ZSquared == null)
+		{
+			ZSquared = curve25519FieldElement2.x;
+			Curve25519Field.Square(Z.x, ZSquared);
+		}
+		Curve25519Field.Square(ZSquared, curve25519FieldElement2.x);
+		Curve25519Field.Multiply(curve25519FieldElement2.x, curve25519FieldElement.x, curve25519FieldElement2.x);
+		return curve25519FieldElement2;
+	}
+
+	protected virtual Curve25519FieldElement GetJacobianModifiedW()
+	{
+		ECFieldElement[] rawZCoords = base.RawZCoords;
+		Curve25519FieldElement curve25519FieldElement = (Curve25519FieldElement)rawZCoords[1];
+		if (curve25519FieldElement == null)
+		{
+			curve25519FieldElement = (Curve25519FieldElement)(rawZCoords[1] = CalculateJacobianModifiedW((Curve25519FieldElement)rawZCoords[0], null));
+		}
+		return curve25519FieldElement;
+	}
+
+	protected virtual Curve25519Point TwiceJacobianModified(bool calculateW)
+	{
+		Curve25519FieldElement curve25519FieldElement = (Curve25519FieldElement)base.RawXCoord;
+		Curve25519FieldElement curve25519FieldElement2 = (Curve25519FieldElement)base.RawYCoord;
+		Curve25519FieldElement curve25519FieldElement3 = (Curve25519FieldElement)base.RawZCoords[0];
+		Curve25519FieldElement jacobianModifiedW = GetJacobianModifiedW();
+		uint[] array = Nat256.Create();
+		Curve25519Field.Square(curve25519FieldElement.x, array);
+		uint num = Nat256.AddBothTo(array, array, array);
+		num += Nat256.AddTo(jacobianModifiedW.x, array);
+		Curve25519Field.Reduce27(num, array);
+		uint[] array2 = Nat256.Create();
+		Curve25519Field.Twice(curve25519FieldElement2.x, array2);
+		uint[] array3 = Nat256.Create();
+		Curve25519Field.Multiply(array2, curve25519FieldElement2.x, array3);
+		uint[] array4 = Nat256.Create();
+		Curve25519Field.Multiply(array3, curve25519FieldElement.x, array4);
+		Curve25519Field.Twice(array4, array4);
+		uint[] array5 = Nat256.Create();
+		Curve25519Field.Square(array3, array5);
+		Curve25519Field.Twice(array5, array5);
+		Curve25519FieldElement curve25519FieldElement4 = new Curve25519FieldElement(array3);
+		Curve25519Field.Square(array, curve25519FieldElement4.x);
+		Curve25519Field.Subtract(curve25519FieldElement4.x, array4, curve25519FieldElement4.x);
+		Curve25519Field.Subtract(curve25519FieldElement4.x, array4, curve25519FieldElement4.x);
+		Curve25519FieldElement curve25519FieldElement5 = new Curve25519FieldElement(array4);
+		Curve25519Field.Subtract(array4, curve25519FieldElement4.x, curve25519FieldElement5.x);
+		Curve25519Field.Multiply(curve25519FieldElement5.x, array, curve25519FieldElement5.x);
+		Curve25519Field.Subtract(curve25519FieldElement5.x, array5, curve25519FieldElement5.x);
+		Curve25519FieldElement curve25519FieldElement6 = new Curve25519FieldElement(array2);
+		if (!Nat256.IsOne(curve25519FieldElement3.x))
+		{
+			Curve25519Field.Multiply(curve25519FieldElement6.x, curve25519FieldElement3.x, curve25519FieldElement6.x);
+		}
+		Curve25519FieldElement curve25519FieldElement7 = null;
+		if (calculateW)
+		{
+			curve25519FieldElement7 = new Curve25519FieldElement(array5);
+			Curve25519Field.Multiply(curve25519FieldElement7.x, jacobianModifiedW.x, curve25519FieldElement7.x);
+			Curve25519Field.Twice(curve25519FieldElement7.x, curve25519FieldElement7.x);
+		}
+		return new Curve25519Point(Curve, curve25519FieldElement4, curve25519FieldElement5, new ECFieldElement[2] { curve25519FieldElement6, curve25519FieldElement7 }, base.IsCompressed);
+	}
+}
 }

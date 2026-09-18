@@ -11,3 +11,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2ddd4cb620d1ee8a2b480e9f27d39b42, type: 3}
   m_Name: WarArenaRuleOverTime
   m_EditorClassIdentifier:
+  data:
+    showRule: 1
+    overtimeAfter: 25

@@ -1,63 +1,202 @@
+using Google2u;
 using UnityEngine;
 
-public class AICarBuggy : MonoBehaviour
+[RequireComponent(typeof(CarController))]
+public class AICarBuggy : AICarBase<CarBuggyBehaviour>
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public EnemyPointVehicle coDriverPoint;
 
-	1. No dll files were provided to AssetRipper.
+	public EnemyPointVehicle driverPoint;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	private bool mIsWaitingForDriver;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public TurretWeaponMultipleWeapons cannon;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public TurretWeaponBasic turret;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public override void UpgradesLoaded()
+	{
+		base.UpgradesLoaded();
+		mDestroyableObject.maxHealth = base.currentBeh.carBuggyBehaviourDefinititon.health;
+		mDestroyableObject.RefillOffline();
+		mDestroyableObject.shotCoeficient = Singleton<GameVariables>.instance.constants.GetRow(Constants.rowIds.ArmoredVehicleShotCoeficient).FLOATVALUE;
+		BulletSetup bulletSetup = (BulletSetup)turret.batchedWeapon.weapon.ammoSetup;
+		bulletSetup.damageAmount = base.currentBeh.carBuggyBehaviourDefinititon.damage;
+		bulletSetup.damageToPlayerCoeficient = behaviour.upgradeSlots.playerDamageRatio;
+		bulletSetup.damageToPlayerOvertimeCoeficient = behaviour.upgradeSlots.playerDamageOvertimeRatio;
+		turret.batchSizeMax = base.currentBeh.carBuggyBehaviourDefinititon.fireBatchSizeMax;
+		turret.batchSizeMin = base.currentBeh.carBuggyBehaviourDefinititon.fireBatchSizeMin;
+		turret.minShootTime = base.currentBeh.carBuggyBehaviourDefinititon.minShootTime;
+		turret.maxShootTime = base.currentBeh.carBuggyBehaviourDefinititon.maxShootTime;
+		turret.realShotProbability = base.currentBeh.carBuggyBehaviourDefinititon.probabilityOfRealShot;
+		MissileSetup missileSetup = (MissileSetup)cannon.batchedWeapon.weapon.ammoSetup;
+		missileSetup.explodeDamageAmount = base.currentBeh.carBuggyBehaviourDefinititon.damageCannon * 0.5f;
+		missileSetup.playerBehindShieldRatio = preparedBehaviour.upgradeSlots.playerBehindShieldDamageRatio;
+		missileSetup.damageToPlayerCoeficient = behaviour.upgradeSlots.playerDamageRatio;
+		missileSetup.damageToPlayerOvertimeCoeficient = behaviour.upgradeSlots.playerDamageOvertimeRatio;
+		missileSetup.speed = base.currentBeh.carBuggyBehaviourDefinititon.shotSpeed;
+		BatchedWeapon[] secondaryBatchedWeapons = cannon.secondaryBatchedWeapons;
+		foreach (BatchedWeapon batchedWeapon in secondaryBatchedWeapons)
+		{
+			missileSetup = (MissileSetup)batchedWeapon.weapon.ammoSetup;
+			missileSetup.explodeDamageAmount = base.currentBeh.carBuggyBehaviourDefinititon.damageCannon * 0.5f;
+			missileSetup.playerBehindShieldRatio = preparedBehaviour.upgradeSlots.playerBehindShieldDamageRatio;
+			missileSetup.damageToPlayerCoeficient = behaviour.upgradeSlots.playerDamageRatio;
+			missileSetup.damageToPlayerOvertimeCoeficient = behaviour.upgradeSlots.playerDamageOvertimeRatio;
+			missileSetup.speed = base.currentBeh.carBuggyBehaviourDefinititon.shotSpeed;
+		}
+		cannon.batchSizeMax = 1;
+		cannon.batchSizeMin = 1;
+		cannon.minShootTime = base.currentBeh.carBuggyBehaviourDefinititon.minShootTimeCannon;
+		cannon.maxShootTime = base.currentBeh.carBuggyBehaviourDefinititon.maxShootTimeCannon;
+		cannon.realShotProbability = 1f;
+		cannon.playerShieldProbability = behaviour.upgradeSlots.shieldHitProbability;
+		turret.gameObject.SetActive(base.hasSpecial);
+	}
 
-	3. Assembly Reconstruction has not been implemented.
+	public override void UpdatePreview(bool inGame)
+	{
+		base.UpdatePreview(inGame);
+		if (inGame)
+		{
+			ChangeWheels(0.5f, 0.14f);
+		}
+		else
+		{
+			ChangeWheels(0f, 0f);
+		}
+		turret.gameObject.SetActive(base.hasSpecial);
+		EnemyController enemyController = GeneratePreviewEnemy(Singleton<LevelBehaviourManager>.instance.levelBehaviours[0].behaviour, coDriverPoint, disableWeapon: true);
+		enemyController.SittingIdle();
+		enemyController = GeneratePreviewEnemy(Singleton<LevelBehaviourManager>.instance.levelBehaviours[0].behaviour, driverPoint, disableWeapon: true);
+		enemyController.SittingIdle();
+	}
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public override void OnInstancied()
+	{
+		base.OnInstancied();
+		cannon.ResetAiming();
+		turret.ResetAiming();
+		if (!isPrewiev)
+		{
+			if (photonView.isMine)
+			{
+				GenerateEnemy(isFirst: true, driverPoint);
+				GenerateEnemy(isFirst: true, coDriverPoint);
+				SetTarget(spawnedFrom.waypointCircuit, ((SpawnPointCar)spawnedFrom).target);
+				mIsWaitingForDriver = false;
+				cannon.enabled = true;
+				turret.enabled = true;
+			}
+			cannon.Reset();
+			turret.Reset();
+			ChangeWheels(0.5f, 0.14f);
+		}
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	protected override void Update()
+	{
+		if (isPrewiev)
+		{
+			return;
+		}
+		base.Update();
+		if (mIsWaitingForDriver && driverPoint.enemyAtPoint != null)
+		{
+			EnemyController enemyController = driverPoint.enemyAtPoint as EnemyController;
+			if (enemyController != null && enemyController.enemyAiState == EnemyController.EnemyAIState.Vehicle)
+			{
+				mIsWaitingForDriver = false;
+				obstacleCollider.gameObject.SetActive(value: false);
+				mDriving = true;
+				brakeCondition = BrakeCondition.TargetDirectionDifference;
+			}
+		}
+		if (Singleton<PhotonConnectionManager>.instance.isMasterClient && Singleton<GameController>.instance.gameIsRunning && isAlive)
+		{
+			if (TimeManager.realTimeWithoutPauses > coDriverPoint.nextSpawnTime && coDriverPoint.enemyAtPoint == null)
+			{
+				GenerateEnemy(isFirst: false, coDriverPoint);
+			}
+			if (TimeManager.realTimeWithoutPauses > driverPoint.nextSpawnTime && driverPoint.enemyAtPoint == null)
+			{
+				GenerateEnemy(isFirst: false, driverPoint);
+			}
+		}
+	}
 
-	4. This script is unnecessary.
+	private void SoldierOnKilled(IGameMainEntity gameMainEntity, DestroyableObject.DamageInfo arg3)
+	{
+		gameMainEntity.Killed -= SoldierOnKilled;
+		EnemyController enemyController = (EnemyController)gameMainEntity;
+		if (enemyController.enemyPoint == driverPoint)
+		{
+			enemyController.ClearEnemyPoint();
+			mDriving = false;
+			brakeCondition = BrakeCondition.Stop;
+			mIsWaitingForDriver = true;
+			driverPoint.nextSpawnTime = TimeManager.realTimeWithoutPauses + behaviour.upgradeSlots.soldierRespawnRate;
+		}
+		if (enemyController.enemyPoint == coDriverPoint)
+		{
+			cannon.enabled = false;
+			cannon.Reset();
+			turret.enabled = false;
+			turret.Reset();
+			enemyController.ClearEnemyPoint();
+			coDriverPoint.nextSpawnTime = TimeManager.realTimeWithoutPauses + behaviour.upgradeSlots.soldierRespawnRate;
+		}
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	protected override void OnKilled(DestroyableObject.DamageInfo arg2)
+	{
+		DestroySoldier(driverPoint, arg2, SoldierOnKilled);
+		DestroySoldier(coDriverPoint, arg2, SoldierOnKilled);
+		base.OnKilled(arg2);
+	}
 
-	5. Script Content Level 0
+	private void GenerateEnemy(bool isFirst, EnemyPointVehicle point)
+	{
+		EnemyController enemyController = (EnemyController)Singleton<LevelBehaviourManager>.instance.GenerateNewEnemy(Singleton<LevelBehaviourManager>.instance.levelBehaviours[0].behaviour);
+		point.enemyAtPoint = null;
+		if (enemyController != null)
+		{
+			enemyController.DisableSpawn();
+			int actualLevelForIndex = behaviour.upgradeSlots.GetActualLevelForIndex(unitUpgrades.slotUpgradeindex);
+			enemyController.SpawnByCard((float)actualLevelForIndex / (float)behaviour.upgradeSlots.maxLevelOfUnit, behaviour.cardId);
+			SpawningManager.instance.Spawn(enemyController, fraction, useEnergy: false, point.position, startBehaviour: false);
+			point.enemyAtPoint = enemyController;
+			enemyController.enemyPoint = point;
+			enemyController.StartEnemyBehaviour(EnemyController.EnemyAIState.Vehicle);
+			enemyController.SetMaxHealthAndRefill(behaviour.upgradeSlots.GetSoldierHpInMechanic(unitUpgrades.slotUpgradeindex) * unitUpgrades.scaleHp);
+			if (point == coDriverPoint)
+			{
+				enemyController.behaviour.botProperties.dangerCoeficient = preparedBehaviour.dangerCoef - 1;
+				CarBuggyBehaviourDefinititon carBuggyBehaviourDefinititon = base.currentBeh.carBuggyBehaviourDefinititon;
+				cannon.enabled = true;
+				cannon.Reset();
+				turret.enabled = true;
+				turret.Reset();
+			}
+			else
+			{
+				enemyController.behaviour.botProperties.dangerCoeficient = preparedBehaviour.dangerCoef - 1;
+				CarBuggyBehaviourDefinititon carBuggyBehaviourDefinititon2 = base.currentBeh.carBuggyBehaviourDefinititon;
+			}
+			enemyController.SittingIdle();
+			enemyController.Killed += SoldierOnKilled;
+		}
+	}
 
-		AssetRipper was set to not load any script information.
+	protected override void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
+	{
+		base.OnPhotonSerializeView(stream, info);
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
-
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public override void DestroyPooled()
+	{
+		base.DestroyPooled();
+		ClearEnemyPoint(coDriverPoint, SoldierOnKilled);
+		ClearEnemyPoint(driverPoint, SoldierOnKilled);
+	}
 }

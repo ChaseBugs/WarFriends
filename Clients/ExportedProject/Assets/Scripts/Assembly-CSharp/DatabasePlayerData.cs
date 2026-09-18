@@ -1,63 +1,262 @@
+using System;
+using System.Collections.Generic;
+using System.Text.RegularExpressions;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using UnityEngine;
 
-public class DatabasePlayerData : MonoBehaviour
+public class DatabasePlayerData : IDatabasePlayer
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public int armyPower;
 
-	1. No dll files were provided to AssetRipper.
+	public long experience;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public long facebookId;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public string id;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public int level;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public int levelExperience;
 
-	3. Assembly Reconstruction has not been implemented.
+	public string accountName;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public int skill;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public string squadId;
 
-	4. This script is unnecessary.
+	public string country;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public string leagueDivision;
 
-	5. Script Content Level 0
+	public string leagueId;
 
-		AssetRipper was set to not load any script information.
+	public League leagueTier = League.Bronze3;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public int beginnersLeague;
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public int leaderboardPosition;
 
-	7. An incorrect path was provided to AssetRipper.
+	public CamosManager.DecalManagerData decalData;
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	private WarArena.WarArenaData mWarArenaData;
 
-	*/
+	public int armyPowerX10 => 10 * armyPower;
+
+	public bool isInBeginnersLeague => beginnersLeague > 0 && string.IsNullOrEmpty(leagueId);
+
+	public bool isInLeague
+	{
+		get
+		{
+			if (leagueDivision == "placement" || isInBeginnersLeague)
+			{
+				return false;
+			}
+			return !string.IsNullOrEmpty(leagueDivision);
+		}
+	}
+
+	public WarArenaCrown warArenaCrown
+	{
+		get
+		{
+			if (mWarArenaData == null)
+			{
+				return WarArenaCrown.None;
+			}
+			if (mWarArenaData.visualTimestamp < Singleton<BeanstalkServerManager>.instance.currentTimestamp)
+			{
+				return WarArenaCrown.None;
+			}
+			switch (mWarArenaData.visualType)
+			{
+				case "bronze":
+					return WarArenaCrown.BronzeCrown;
+				case "silver":
+					return WarArenaCrown.SilverCrown;
+				case "gold":
+					return WarArenaCrown.GoldCrown;
+				case "flawless":
+					return WarArenaCrown.Flawless;
+				default:
+					return WarArenaCrown.None;
+			}
+		}
+	}
+
+	public bool hasFlawlessRun => mWarArenaData.flawless > 0;
+
+	public int heroWins => (!hasFlawlessRun) ? mWarArenaData.topRun : mWarArenaData.flawless;
+
+	public string name => accountName;
+
+	public string visualsDebugLog
+	{
+		get
+		{
+			if (decalData.slots == null)
+			{
+				return "visuals: null";
+			}
+			if (decalData.slots.Count != 4)
+			{
+				string arg = string.Empty;
+				foreach (KeyValuePair<int, CamosManager.SavedPlayerVisualSlot> slot in decalData.slots)
+				{
+					arg = " " + slot.Value.equippedID;
+				}
+				return $"visuals: wrong number {decalData.slots.Count} -{arg}";
+			}
+			return $"visuals: {decalData.slots[0].equippedID} {decalData.slots[1].equippedID} {decalData.slots[2].equippedID} {decalData.slots[3].equippedID}";
+		}
+	}
+
+	public static DatabasePlayerData currentPlayer
+	{
+		get
+		{
+			DatabasePlayerData databasePlayerData = new DatabasePlayerData();
+			databasePlayerData.armyPower = LevelManager.instance.armyPower;
+			databasePlayerData.experience = LevelManager.instance.experience;
+			databasePlayerData.facebookId = GameLoginManager.currentPlayer.facebookId;
+			databasePlayerData.id = GameLoginManager.currentPlayer.id;
+			databasePlayerData.level = LevelManager.instance.currentLevel.index;
+			databasePlayerData.levelExperience = LevelManager.instance.levelExperience;
+			databasePlayerData.accountName = GameLoginManager.currentPlayer.accountName;
+			databasePlayerData.skill = GameLoginManager.currentPlayer.skill;
+			databasePlayerData.squadId = GameLoginManager.currentPlayer.squadName;
+			databasePlayerData.leaderboardPosition = PlayerAnalytics.instance.globalPositon;
+			databasePlayerData.decalData = CamosManager.instance.data;
+			databasePlayerData.country = GameLoginManager.currentPlayer.country;
+			databasePlayerData.leagueTier = GameLoginManager.currentPlayer.leagueTier;
+			databasePlayerData.leagueDivision = GameLoginManager.currentPlayer.leagueDivision;
+			databasePlayerData.mWarArenaData = WarArena.instance.data;
+			return databasePlayerData;
+		}
+	}
+
+	internal static DatabasePlayerData CreateFromDatabase(JToken item)
+	{
+		DatabasePlayerData databasePlayerData = new DatabasePlayerData();
+		if (item["PlayerId"] != null)
+		{
+			databasePlayerData.id = StringParser.ParseString("PlayerId", "S", item, string.Empty);
+		}
+		if (item["PlayerName"] != null)
+		{
+			databasePlayerData.accountName = StringParser.ParseString("PlayerName", "S", item, string.Empty);
+		}
+		if (item["Experience"] != null)
+		{
+			databasePlayerData.experience = StringParser.ParseLong("Experience", "N", item);
+		}
+		if (item["Level"] != null)
+		{
+			databasePlayerData.level = StringParser.ParseInt("Level", "N", item);
+		}
+		if (item["LevelExperience"] != null)
+		{
+			databasePlayerData.levelExperience = StringParser.ParseInt("LevelExperience", "N", item);
+		}
+		if (item["ArmyPower"] != null)
+		{
+			databasePlayerData.armyPower = StringParser.ParseInt("ArmyPower", "N", item);
+		}
+		if (item["Skill"] != null)
+		{
+			databasePlayerData.skill = StringParser.ParseInt("Skill", "N", item);
+		}
+		if (item["FacebookId"] != null)
+		{
+			databasePlayerData.facebookId = StringParser.ParseLong("FacebookId", "S", item);
+		}
+		if (item["SquadId"] != null)
+		{
+			databasePlayerData.squadId = StringParser.ParseString("SquadId", "S", item, string.Empty);
+		}
+		if (item["Position"] != null)
+		{
+			databasePlayerData.leaderboardPosition = StringParser.ParseInt("Position", "N", item);
+		}
+		if (item["LeagueId"] != null)
+		{
+			databasePlayerData.leagueId = StringParser.ParseString("LeagueId", "S", item, string.Empty);
+			databasePlayerData.leagueTier = (League)StringParser.ParseInt(Regex.Replace(databasePlayerData.leagueId, "-[^-]*$", string.Empty));
+			databasePlayerData.leagueDivision = StringParser.ParseString(Regex.Replace(databasePlayerData.leagueId, "^[0-9]*-", string.Empty), string.Empty);
+		}
+		if (item["BeginnersLeague"] != null)
+		{
+			databasePlayerData.beginnersLeague = StringParser.ParseInt("BeginnersLeague", "N", item);
+		}
+		if (item["BeginnersLeague"] == null && item["LeagueId"] == null)
+		{
+			databasePlayerData.leagueId = "1-placement";
+			databasePlayerData.leagueTier = (League)StringParser.ParseInt(Regex.Replace(databasePlayerData.leagueId, "-[^-]*$", string.Empty));
+			databasePlayerData.leagueDivision = StringParser.ParseString(Regex.Replace(databasePlayerData.leagueId, "^[0-9]*-", string.Empty), string.Empty);
+		}
+		if (item["Country"] != null)
+		{
+			databasePlayerData.country = StringParser.ParseString("Country", "S", item, string.Empty);
+		}
+		if (item["WarArenaData"] != null)
+		{
+			try
+			{
+				databasePlayerData.mWarArenaData = JsonConvert.DeserializeObject<WarArena.WarArenaData>(StringParser.ParseString("WarArenaData", "S", item, string.Empty));
+			}
+			catch (Exception exception)
+			{
+				Debug.LogError("Bad War Arena Data");
+				Singleton<BeanstalkServerManager>.instance.SendErrorMessage(exception, "Bad WAR ARENA Data, data= " + StringParser.ParseString("WarArenaData", "S", item, string.Empty), Environment.StackTrace);
+			}
+		}
+		if (item["DecalManagerData"] != null)
+		{
+			try
+			{
+				CamosManager.DecalManagerData decalManagerData = new CamosManager.DecalManagerData();
+				object obj = JsonConvert.DeserializeObject(StringParser.ParseString("DecalManagerData", "S", item, string.Empty));
+				JToken jToken = (JToken)obj;
+				JToken jToken2 = jToken["slots"];
+				if (jToken2 != null)
+				{
+					foreach (JToken item2 in jToken2.Children())
+					{
+						if (item2 is JProperty jProperty && jProperty.First is JToken first)
+						{
+							CamosManager.SavedPlayerVisualSlot savedPlayerVisualSlot = new CamosManager.SavedPlayerVisualSlot();
+							if (first["equippedID"] != null)
+							{
+								savedPlayerVisualSlot.equippedID = first["equippedID"].ToObject<string>();
+							}
+							decalManagerData.slots.Add(Convert.ToInt32(jProperty.Name), savedPlayerVisualSlot);
+						}
+					}
+				}
+				databasePlayerData.decalData = decalManagerData;
+			}
+			catch (Exception exception2)
+			{
+				Debug.LogError("Bad Decal Manager Data");
+				Singleton<BeanstalkServerManager>.instance.SendErrorMessage(exception2, "Bad Decal Manager Data, data= " + StringParser.ParseString("DecalManagerData", "S", item, string.Empty), Environment.StackTrace);
+			}
+		}
+		return databasePlayerData;
+	}
+
+	public string GetSquadId()
+	{
+		return squadId;
+	}
+
+	public string GetId()
+	{
+		return id;
+	}
+
+	public void SetSquadId(string newSquadId)
+	{
+		squadId = newSquadId;
+	}
 }

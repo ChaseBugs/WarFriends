@@ -1,63 +1,79 @@
+using System;
+using Google2u;
 using UnityEngine;
 
-public class CurrentBundleVersion : MonoBehaviour
+public class CurrentBundleVersion : Singleton<CurrentBundleVersion>
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public string revision;
 
-	1. No dll files were provided to AssetRipper.
+	public string ourVersion;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	private string mFinalVersion;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	private string mFinalVersionShort;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public string version
+	{
+		get
+		{
+			if (mFinalVersion == null)
+			{
+				mFinalVersion = GetModifiedVersion();
+			}
+			return mFinalVersion;
+		}
+	}
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public string shortVersion
+	{
+		get
+		{
+			if (mFinalVersionShort == null)
+			{
+				string[] value = version.Split('.');
+				mFinalVersionShort = string.Join(".", value, 0, 3);
+			}
+			return mFinalVersionShort;
+		}
+	}
 
-	3. Assembly Reconstruction has not been implemented.
+	public string photonVersion
+	{
+		get
+		{
+			string empty = string.Empty;
+			empty = Singleton<GameVariables>.instance.versions.GetRow(Versions.rowIds.photonVersionAndroid).VALUE;
+			return empty + ".c";
+		}
+	}
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public string matchMakingVersionRanked
+	{
+		get
+		{
+			string empty = string.Empty;
+			empty = Singleton<GameVariables>.instance.versions.GetRow(Versions.rowIds.photonVersionAndroidMatchMaking).VALUE;
+			return empty + ".c";
+		}
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	private string GetModifiedVersion()
+	{
+		string originalVersion = GetOriginalVersion();
+		Debug.LogWarningFormat("CurrentBundleVersion.GetModifiedVersion - version is '{0}'", originalVersion ?? "null");
+		string[] array = originalVersion.Split('.');
+		string value = array[0];
+		float num = Convert.ToSingle(value);
+		array[0] = ((!(num > 100f)) ? num : (num - 100f)).ToString();
+		return string.Join(".", array);
+	}
 
-	4. This script is unnecessary.
-
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
-
-	5. Script Content Level 0
-
-		AssetRipper was set to not load any script information.
-
-	6. Cpp2IL failed to decompile Il2Cpp data
-
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	private string GetOriginalVersion()
+	{
+		if (string.IsNullOrEmpty(ourVersion))
+		{
+			ourVersion = "0.0";
+		}
+		return BuildVersion.ClientVersion + "." + ourVersion;
+	}
 }

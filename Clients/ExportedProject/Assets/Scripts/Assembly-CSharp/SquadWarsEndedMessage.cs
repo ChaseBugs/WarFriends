@@ -1,63 +1,130 @@
+using System;
+using System.Collections.Generic;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using UnityEngine;
 
-public class SquadWarsEndedMessage : MonoBehaviour
+public class SquadWarsEndedMessage : DatabaseMessage
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public int position;
 
-	1. No dll files were provided to AssetRipper.
+	public string squadName;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public string squadIcon;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public int goldReward;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public int previousSquadDivision;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public int newSquadDivision;
 
-	3. Assembly Reconstruction has not been implemented.
+	public int squadsInWar;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public List<DatabasePlayer> squadMembers;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public bool showDialog;
 
-	4. This script is unnecessary.
+	public SquadWarsEndedMessage(int squadPosition, int yourReward, int squadDivision, int squadNewDivision, int squadsCount, List<DatabasePlayer> members)
+		: base("testingidsquadwarsend", Type.SquadWarEnd)
+	{
+		messageId += squadPosition;
+		position = squadPosition;
+		squadName = GameLoginManager.currentPlayer.squadName;
+		squadIcon = "menu-squad-8";
+		goldReward = yourReward;
+		previousSquadDivision = squadDivision;
+		newSquadDivision = squadNewDivision;
+		squadsInWar = squadsCount;
+		squadMembers = members;
+		showDialog = true;
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public SquadWarsEndedMessage(JToken dict)
+		: base(dict)
+	{
+		if (dict["Position"] != null)
+		{
+			position = dict["Position"]["N"].ToObject<int>();
+		}
+		if (dict["SquadId"] != null)
+		{
+			squadName = dict["SquadId"]["S"].ToObject<string>();
+		}
+		if (dict["SquadIcon"] != null)
+		{
+			squadIcon = dict["SquadIcon"]["S"].ToObject<string>();
+		}
+		if (dict["RewardGold"] != null)
+		{
+			float num = dict["RewardGold"]["N"].ToObject<float>();
+			if (num != Mathf.Round(num))
+			{
+				Debug.LogError("Squad Wars reward gold is FLOAT not INT!!! : " + num);
+				goldReward = Mathf.FloorToInt(num);
+			}
+			else
+			{
+				goldReward = dict["RewardGold"]["N"].ToObject<int>();
+			}
+		}
+		if (dict["PrevLevelId"] != null)
+		{
+			previousSquadDivision = dict["PrevLevelId"]["N"].ToObject<int>();
+		}
+		if (dict["NewLevelId"] != null)
+		{
+			newSquadDivision = dict["NewLevelId"]["N"].ToObject<int>();
+		}
+		squadMembers = new List<DatabasePlayer>();
+		if (dict["SquadMembers"] != null)
+		{
+			JArray jArray = JsonConvert.DeserializeObject<JArray>(dict["SquadMembers"]["S"].ToObject<string>());
+			foreach (JToken item2 in jArray)
+			{
+				DatabasePlayer item = DatabasePlayer.CreateFromDatabase(item2);
+				squadMembers.Add(item);
+			}
+		}
+		squadsInWar = 50;
+		showDialog = true;
+	}
 
-	5. Script Content Level 0
+	public override void OnAdd()
+	{
+		if (Singleton<MessageManager>.instance.lastRewardMessage != null)
+		{
+			Singleton<MessageManager>.instance.lastRewardMessage.showDialog = false;
+		}
+		Singleton<MessageManager>.instance.lastRewardMessage = this;
+	}
 
-		AssetRipper was set to not load any script information.
+	public override void Show()
+	{
+		base.Show();
+		Singleton<BeanstalkServerManager>.instance.GetSquadDetails(squadName, checkCache: false);
+		if (showDialog)
+		{
+			GuiElementSingle<SquadWarEndDialog>.instance.ShowDialog(squadName, squadIcon, position, squadsInWar, goldReward, previousSquadDivision, newSquadDivision, squadMembers, this);
+			Singleton<ServerResultsCache>.instance.isSquadWarsProcessing = false;
+		}
+		else
+		{
+			GuiElementSingle<ChatGuiElement>.instance.messageContent.AddMessage(this);
+		}
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	internal override Action InitMessageCenterRecord(MessageCenterRecord record)
+	{
+		record.SetAppearance_SquadWarsEnded(Type.SquadWarEnd, messageTime, position, goldReward, squadName);
+		return delegate
+		{
+			Confirm();
+		};
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public override void Confirm()
+	{
+		Debug.Log($"SquadWarsFinishedMessage: Claiming gold: {goldReward}");
+		Singleton<BeanstalkServerManager>.instance.ClaimReward(this);
+	}
 }

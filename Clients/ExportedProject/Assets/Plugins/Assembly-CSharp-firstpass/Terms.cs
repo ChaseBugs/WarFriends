@@ -1,63 +1,258 @@
+using System.Runtime.InteropServices;
 using UnityEngine;
 
-public class Terms : MonoBehaviour
+public class Terms
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	private static string sCriteriaMetObjectName;
 
-	1. No dll files were provided to AssetRipper.
+	private static string sCriteriaMetMethodName;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public enum AgeVerificationCallbackIdentifier
+	{
+		CRITERIA_MET,
+		CRITERIA_NOT_MET,
+		PENDING_DIALOG_DISPLAY,
+		COUNTRY_IS_REAL_NAME_SENSITIVE,
+		GAPP_DIALOG_PENDING_DISPLAY
+	}
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public enum ComplianceLevel
+	{
+		FULLY_COMPLIANT,
+		AGE_SENSETIVE,
+		AGE_GATED,
+		FULLY_COMPLIANT_CHILD_SAFE_CONTENT,
+		FULLY_COMPLIANT_ADULT_CONTENT
+	}
+#if (UNITY_ANDROID || UNITY_IOS) && !UNITY_EDITOR
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	[DllImport("termsunity")]
+	private static extern void _registerForTermsNotification(AgeVerificationCallbackIdentifier identifier, string objectName, string methodName);
+#endif
+#if (UNITY_ANDROID || UNITY_IOS) && !UNITY_EDITOR
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	[DllImport("termsunity")]
+	private static extern void _initialiseTermsSession(bool preCOPPA, bool useCustomSkin, ComplianceLevel complianceLevel, bool isChinaOnly, string resourcePackageName);
+#endif
+#if (UNITY_ANDROID || UNITY_IOS) && !UNITY_EDITOR
 
-	3. Assembly Reconstruction has not been implemented.
+	[DllImport("termsunity")]
+	private static extern void _closeTermsSession();
+#endif
+#if (UNITY_ANDROID || UNITY_IOS) && !UNITY_EDITOR
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	[DllImport("termsunity")]
+	private static extern void _showTermsUI();
+#endif
+#if (UNITY_ANDROID || UNITY_IOS) && !UNITY_EDITOR
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	[DllImport("termsunity")]
+	private static extern void _showGAPPAdvisory();
+#endif
+#if (UNITY_ANDROID || UNITY_IOS) && !UNITY_EDITOR
 
-	4. This script is unnecessary.
+	[DllImport("termsunity")]
+	private static extern bool _isGAPPAdvisoryRequired();
+#endif
+#if (UNITY_ANDROID || UNITY_IOS) && !UNITY_EDITOR
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	[DllImport("termsunity")]
+	private static extern string _termsUrlForEULA();
+#endif
+#if (UNITY_ANDROID || UNITY_IOS) && !UNITY_EDITOR
 
-	5. Script Content Level 0
+	[DllImport("termsunity")]
+	private static extern string _termsUrlForTOS();
+#endif
+#if (UNITY_ANDROID || UNITY_IOS) && !UNITY_EDITOR
 
-		AssetRipper was set to not load any script information.
+	[DllImport("termsunity")]
+	private static extern string _termsUrlForPrivacyPolicy();
+#endif
+#if (UNITY_ANDROID || UNITY_IOS) && !UNITY_EDITOR
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	[DllImport("termsunity")]
+	private static extern string _termsTextForEULAButton();
+#endif
+#if (UNITY_ANDROID || UNITY_IOS) && !UNITY_EDITOR
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	[DllImport("termsunity")]
+	private static extern string _termsTextForTOSButton();
+#endif
+#if (UNITY_ANDROID || UNITY_IOS) && !UNITY_EDITOR
 
-	7. An incorrect path was provided to AssetRipper.
+	[DllImport("termsunity")]
+	private static extern string _termsTextForPrivacyPolicyButton();
+#endif
+#if (UNITY_ANDROID || UNITY_IOS) && !UNITY_EDITOR
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	[DllImport("termsunity")]
+	private static extern string _termsTextForRealNameSensitiveDialog();
+#endif
 
-	*/
+	public static void registerForTermsNotification(AgeVerificationCallbackIdentifier notificationId, string objectName, string methodName)
+	{
+		if (notificationId == AgeVerificationCallbackIdentifier.CRITERIA_MET)
+		{
+			sCriteriaMetObjectName = objectName;
+			sCriteriaMetMethodName = methodName;
+		}
+		if (Application.platform == RuntimePlatform.IPhonePlayer || Application.platform == RuntimePlatform.Android)
+		{
+#if (UNITY_ANDROID || UNITY_IOS) && !UNITY_EDITOR
+			_registerForTermsNotification(notificationId, objectName, methodName);
+#endif
+		}
+	}
+
+	public static void initialiseTermsSession(bool preCOPPA, bool useCustomSkin, ComplianceLevel complianceLevel)
+	{
+		initialiseTermsSession(preCOPPA, useCustomSkin, complianceLevel, isChinaOnly: false, null);
+	}
+
+	public static void initialiseTermsSession(bool preCOPPA, bool useCustomSkin, ComplianceLevel complianceLevel, bool isChinaOnly)
+	{
+		initialiseTermsSession(preCOPPA, useCustomSkin, complianceLevel, isChinaOnly, null);
+	}
+
+	public static void initialiseTermsSession(bool preCOPPA, bool useCustomSkin, ComplianceLevel complianceLevel, bool isChinaOnly, string resourcePackageName)
+	{
+		bool nativeSessionStarted = false;
+		if (Application.platform == RuntimePlatform.IPhonePlayer || Application.platform == RuntimePlatform.Android)
+		{
+#if (UNITY_ANDROID || UNITY_IOS) && !UNITY_EDITOR
+			_initialiseTermsSession(preCOPPA, useCustomSkin, complianceLevel, isChinaOnly, resourcePackageName);
+			nativeSessionStarted = true;
+#endif
+		}
+		if (!nativeSessionStarted && !string.IsNullOrEmpty(sCriteriaMetObjectName))
+		{
+			GameObject obj = GameObject.Find(sCriteriaMetObjectName);
+			if (obj != null)
+			{
+				obj.SendMessage(sCriteriaMetMethodName, string.Empty, SendMessageOptions.DontRequireReceiver);
+			}
+		}
+	}
+
+	public static void closeTermsSession()
+	{
+		if (Application.platform == RuntimePlatform.IPhonePlayer || Application.platform == RuntimePlatform.Android)
+		{
+#if (UNITY_ANDROID || UNITY_IOS) && !UNITY_EDITOR
+			_closeTermsSession();
+#endif
+		}
+	}
+
+	public static void showTermsUI()
+	{
+		if (Application.platform == RuntimePlatform.IPhonePlayer || Application.platform == RuntimePlatform.Android)
+		{
+#if (UNITY_ANDROID || UNITY_IOS) && !UNITY_EDITOR
+			_showTermsUI();
+#endif
+		}
+	}
+
+	public static void showGAPPAdvisory()
+	{
+		if (Application.platform == RuntimePlatform.IPhonePlayer || Application.platform == RuntimePlatform.Android)
+		{
+#if (UNITY_ANDROID || UNITY_IOS) && !UNITY_EDITOR
+			_showGAPPAdvisory();
+#endif
+		}
+	}
+
+	public static bool isGAPPAdvisoryRequired()
+	{
+		if (Application.platform == RuntimePlatform.IPhonePlayer || Application.platform == RuntimePlatform.Android)
+		{
+#if (UNITY_ANDROID || UNITY_IOS) && !UNITY_EDITOR
+			return _isGAPPAdvisoryRequired();
+#endif
+		}
+		return false;
+	}
+
+	public static string urlForEULA()
+	{
+		string result = null;
+		if (Application.platform == RuntimePlatform.IPhonePlayer || Application.platform == RuntimePlatform.Android)
+		{
+#if (UNITY_ANDROID || UNITY_IOS) && !UNITY_EDITOR
+			result = _termsUrlForEULA();
+#endif
+		}
+		return result;
+	}
+
+	public static string urlForTOS()
+	{
+		string result = null;
+		if (Application.platform == RuntimePlatform.IPhonePlayer || Application.platform == RuntimePlatform.Android)
+		{
+#if (UNITY_ANDROID || UNITY_IOS) && !UNITY_EDITOR
+			result = _termsUrlForTOS();
+#endif
+		}
+		return result;
+	}
+
+	public static string urlForPrivacyPolicy()
+	{
+		string result = null;
+		if (Application.platform == RuntimePlatform.IPhonePlayer || Application.platform == RuntimePlatform.Android)
+		{
+#if (UNITY_ANDROID || UNITY_IOS) && !UNITY_EDITOR
+			result = _termsUrlForPrivacyPolicy();
+#endif
+		}
+		return result;
+	}
+
+	public static string textForEULAButton()
+	{
+		if (Application.platform == RuntimePlatform.IPhonePlayer || Application.platform == RuntimePlatform.Android)
+		{
+#if (UNITY_ANDROID || UNITY_IOS) && !UNITY_EDITOR
+			return _termsTextForEULAButton();
+#endif
+		}
+		return null;
+	}
+
+	public static string textForTOSButton()
+	{
+		if (Application.platform == RuntimePlatform.IPhonePlayer || Application.platform == RuntimePlatform.Android)
+		{
+#if (UNITY_ANDROID || UNITY_IOS) && !UNITY_EDITOR
+			return _termsTextForTOSButton();
+#endif
+		}
+		return null;
+	}
+
+	public static string textForPrivacyPolicyButton()
+	{
+		if (Application.platform == RuntimePlatform.IPhonePlayer || Application.platform == RuntimePlatform.Android)
+		{
+#if (UNITY_ANDROID || UNITY_IOS) && !UNITY_EDITOR
+			return _termsTextForPrivacyPolicyButton();
+#endif
+		}
+		return null;
+	}
+
+	public static string textForRealNameSensitiveDialog()
+	{
+		if (Application.platform == RuntimePlatform.IPhonePlayer || Application.platform == RuntimePlatform.Android)
+		{
+#if (UNITY_ANDROID || UNITY_IOS) && !UNITY_EDITOR
+			return _termsTextForRealNameSensitiveDialog();
+#endif
+		}
+		return null;
+	}
 }

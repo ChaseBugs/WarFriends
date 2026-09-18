@@ -1,63 +1,496 @@
+using System;
+using System.Collections.Generic;
+using Beebyte.Obfuscator;
+using Google2u;
 using UnityEngine;
 
-public class ReminderManager : MonoBehaviour
+[Skip]
+public class ReminderManager : InGameSerializedObjectGeneric<ReminderManager.SaveData>
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Skip]
+	public enum ReminderType
+	{
+		VipRunningOut,
+		VipExpired,
+		Cards,
+		UpgradeWeapon,
+		UpgradeUnit,
+		PowerBand,
+		SquadJoinCreate,
+		ConnectFb,
+		VipPurchase,
+		MoneyPackRunningOut,
+		StarterPackRunningOut,
+		DailyAssignments
+	}
 
-	1. No dll files were provided to AssetRipper.
+	[Skip]
+	public class SaveData
+	{
+		public Dictionary<ReminderType, int> remindersTimeDefinitions;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+		public int losesStreaks;
 
-	2. Incorrect dll files were provided to AssetRipper.
+		public bool lastSessionVIPStatus;
+	}
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	private static ReminderManager mInstance;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public WeaponLevelsSetup weaponForUpgrade;
 
-	3. Assembly Reconstruction has not been implemented.
+	private int mLastTimeFromWeaponUpgrade;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	private bool mAnyAvailableWeaponCanBeUpgraded;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	private bool mAnyWeaponDeliveringDelivered;
 
-	4. This script is unnecessary.
+	public LevelBehaviour unitForUpgrade;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private int mLastTimeFromUnitUpgrade;
 
-	5. Script Content Level 0
+	private bool mAnyAvailableUnitCanBeUpgraded;
 
-		AssetRipper was set to not load any script information.
+	private bool mAnyUnitDeliveringDelivered;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public int losesStreaks
+	{
+		get
+		{
+			return data.losesStreaks;
+		}
+		set
+		{
+			data.losesStreaks = value;
+			Save();
+		}
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public bool lastSessionVIPStatus
+	{
+		get
+		{
+			return data.lastSessionVIPStatus;
+		}
+		set
+		{
+			data.lastSessionVIPStatus = value;
+			Save();
+		}
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	private bool isUpgradeTutorialRunning => TutorialManagerStage4.instance.isTutorialRunning || TutorialManagerStage5.instance.isTutorialRunning;
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	public static ReminderManager instance
+	{
+		get
+		{
+			mInstance = mInstance ?? ((ReminderManager)UnityEngine.Object.FindObjectsOfType(typeof(ReminderManager))[0]);
+			return mInstance;
+		}
+	}
 
-	*/
+	public int vipRunningOutSeconds => (int)(float)Singleton<GameVariables>.instance.constants.GetRow(Constants.rowIds.VipRunningOutSeconds).FLOATVALUE;
+
+	public int minTimeSinceLastWeaponUpgrade => (int)(float)Singleton<GameVariables>.instance.constants.GetRow(Constants.rowIds.MinTimeSinceLastWeaponUpgrade).FLOATVALUE;
+
+	public int minTimeSinceLastUnitUpgrade => (int)(float)Singleton<GameVariables>.instance.constants.GetRow(Constants.rowIds.MinTimeSinceLastUnitUpgrade).FLOATVALUE;
+
+	public int minLevelForCardsReminder => (int)(float)Singleton<GameVariables>.instance.constants.GetRow(Constants.rowIds.MinLevelForCardsReminder).FLOATVALUE;
+
+	public int lowNumberOfCards => (int)(float)Singleton<GameVariables>.instance.constants.GetRow(Constants.rowIds.LowNumberOfCards).FLOATVALUE;
+
+	public int minLevelForSquadJoinOrCreateReminder => (int)(float)Singleton<GameVariables>.instance.constants.GetRow(Constants.rowIds.MinLevelForSquadJoinOrCreateReminder).FLOATVALUE;
+
+	public int minTimeSinceLastVipPurchase => (int)(float)Singleton<GameVariables>.instance.constants.GetRow(Constants.rowIds.MinTimeSinceLastVipPurchase).FLOATVALUE;
+
+	public int rateAppMaxShow => (int)(float)Singleton<GameVariables>.instance.constants.GetRow(Constants.rowIds.RateAppMaxShow).FLOATVALUE;
+
+	public int notificationAllowWinsNeed => (int)(float)Singleton<GameVariables>.instance.constants.GetRow(Constants.rowIds.NotificationAllowWinsNeed).FLOATVALUE;
+
+	public int notificationAllowTimeBetween => (int)(float)Singleton<GameVariables>.instance.constants.GetRow(Constants.rowIds.NotificationAllowHoursBetween).FLOATVALUE * 3600;
+
+	public int notificationAllowMaxShow => (int)(float)Singleton<GameVariables>.instance.constants.GetRow(Constants.rowIds.NotificationAllowMaxShow).FLOATVALUE * 3600;
+
+	public int nameChangeReminderGamesAfterFbLogin => (int)(float)Singleton<GameVariables>.instance.constants.GetRow(Constants.rowIds.NameChangeReminderGamesAfterFbLogin).FLOATVALUE;
+
+	public int facebookRemindDialogShow1After => (int)(float)Singleton<GameVariables>.instance.constants.GetRow(Constants.rowIds.FacebookLoginReminder1After).FLOATVALUE * 3600;
+
+	public int facebookRemindDialogShow2After => (int)(float)Singleton<GameVariables>.instance.constants.GetRow(Constants.rowIds.FacebookLoginReminder2After).FLOATVALUE * 3600;
+
+	public int facebookRemindDialogShow3After => (int)(float)Singleton<GameVariables>.instance.constants.GetRow(Constants.rowIds.FacebookLoginReminder3After).FLOATVALUE * 3600;
+
+	public int vipReminderBetweenTime => (int)(float)Singleton<GameVariables>.instance.constants.GetRow(Constants.rowIds.TimeBetweenVIPreminderShown).FLOATVALUE * 3600;
+
+	public int weaponReminderBetweenTime => (int)(float)Singleton<GameVariables>.instance.constants.GetRow(Constants.rowIds.TimeBetweenWeaponUpgradeReminderShown).FLOATVALUE * 3600;
+
+	public int unitReminderBetweenTime => (int)(float)Singleton<GameVariables>.instance.constants.GetRow(Constants.rowIds.TimeBetweenUnitUpgradeReminderShown).FLOATVALUE * 3600;
+
+	public int squadReminderBetweenTime => (int)(float)Singleton<GameVariables>.instance.constants.GetRow(Constants.rowIds.TimeBetweenSquadReminderShown).FLOATVALUE * 3600;
+
+	public int unitCategoriesReminderAfterGames => (int)(float)Singleton<GameVariables>.instance.constants.GetRow(Constants.rowIds.UnitCategoriesReminderAfterGames).FLOATVALUE;
+
+	public int moneyPackRunningOutSeconds => (int)(float)Singleton<GameVariables>.instance.constants.GetRow(Constants.rowIds.MoneyPackRunningOutSeconds).FLOATVALUE * 3600;
+
+	public int rateAppShowAfterBattles => (int)(float)Singleton<GameVariables>.instance.constants.GetRow(Constants.rowIds.RateAppShowAfterBattles).FLOATVALUE;
+
+	public int rateAppShowAfterLevel => (int)(float)Singleton<GameVariables>.instance.constants.GetRow(Constants.rowIds.RateAppShowAfterLevel).FLOATVALUE;
+
+	public int rateAppShowSecondTimeAfterLevel => (int)(float)Singleton<GameVariables>.instance.constants.GetRow(Constants.rowIds.RateAppShowSecondTimeAfterLevel).FLOATVALUE;
+
+	public int starterPackRunningOutSeconds => (int)(float)Singleton<GameVariables>.instance.constants.GetRow(Constants.rowIds.StarterPackRunningOutSeconds).FLOATVALUE * 3600;
+
+	public string debugMoneyPackRunningOut
+	{
+		get
+		{
+			int num = (data.remindersTimeDefinitions.ContainsKey(ReminderType.MoneyPackRunningOut) ? data.remindersTimeDefinitions[ReminderType.MoneyPackRunningOut] : 0);
+			return string.Format("Show money pack: {0}\tConfiguration time: {1}\tTime till end time: {2}\tLast shown: {3}", PlayerAnalytics.instance.showMoneyPack, MiscTools.PrintableTime(moneyPackRunningOutSeconds, "ID_READYTIME", string.Empty), MiscTools.PrintableTime(PlayerAnalytics.instance.data.moneyPackDeadline - Singleton<BeanstalkServerManager>.instance.currentTimestamp, "ID_READYTIME", string.Empty), MiscTools.PrintableTime(Singleton<BeanstalkServerManager>.instance.currentTimestamp - num, "ID_READYTIME", string.Empty));
+		}
+	}
+
+	public string debugStarterPackRunningOut
+	{
+		get
+		{
+			int num = (data.remindersTimeDefinitions.ContainsKey(ReminderType.StarterPackRunningOut) ? data.remindersTimeDefinitions[ReminderType.StarterPackRunningOut] : 0);
+			return string.Format("Show starter pack: {0}\tConfiguration time: {1}\tTime till end time: {2}\tLast shown: {3}", PlayerAnalytics.instance.showMoneyPack, MiscTools.PrintableTime(starterPackRunningOutSeconds, "ID_READYTIME", string.Empty), MiscTools.PrintableTime(PlayerAnalytics.instance.data.starterPackDeadline - Singleton<BeanstalkServerManager>.instance.currentTimestamp, "ID_READYTIME", string.Empty), MiscTools.PrintableTime(Singleton<BeanstalkServerManager>.instance.currentTimestamp - num, "ID_READYTIME", string.Empty));
+		}
+	}
+
+	public string debugVipRunningOut
+	{
+		get
+		{
+			int num = (data.remindersTimeDefinitions.ContainsKey(ReminderType.VipRunningOut) ? data.remindersTimeDefinitions[ReminderType.VipRunningOut] : 0);
+			return string.Format("VIP active: {0}\tConfiguration time: {1}\tTime till end time: {2}\tLast shown: {3}", Singleton<VipManager>.instance.IsVipActive(), MiscTools.PrintableTime(vipRunningOutSeconds, "ID_READYTIME", string.Empty), MiscTools.PrintableTime(Singleton<VipManager>.instance.vipExpiration - Singleton<VipManager>.instance.vipStart, "ID_READYTIME", string.Empty), MiscTools.PrintableTime(Singleton<BeanstalkServerManager>.instance.currentTimestamp - num, "ID_READYTIME", string.Empty));
+		}
+	}
+
+	public string debugVipExpired
+	{
+		get
+		{
+			int num = (data.remindersTimeDefinitions.ContainsKey(ReminderType.VipExpired) ? data.remindersTimeDefinitions[ReminderType.VipExpired] : 0);
+			return string.Format("VIP active: {0}\tLast time VIP active: {1}\tLast shown: {2}", Singleton<VipManager>.instance.IsVipActive(), lastSessionVIPStatus, MiscTools.PrintableTime(Singleton<BeanstalkServerManager>.instance.currentTimestamp - num, "ID_READYTIME", string.Empty));
+		}
+	}
+
+	public bool canShowWeaponUpgradeReminder
+	{
+		get
+		{
+			CountAllVariablesForWeaponUpgrade();
+			return TutorialManagerStage4.instance.wasFinished && !mAnyWeaponDeliveringDelivered && mAnyAvailableWeaponCanBeUpgraded && Singleton<BeanstalkServerManager>.instance.currentTimestamp - mLastTimeFromWeaponUpgrade > minTimeSinceLastWeaponUpgrade;
+		}
+	}
+
+	public string debugWeaponUpgradeConditions
+	{
+		get
+		{
+			CountAllVariablesForWeaponUpgrade();
+			return string.Format("Tutorial for weapon upgraded shown: {0}\tAny weapon delivering/delivered: {1}\tAny weapon can be upgraded: {2}\tTime since last update: {3}\tChosen Weapon: {4}", TutorialManagerStage4.instance.wasFinished, mAnyWeaponDeliveringDelivered, mAnyAvailableWeaponCanBeUpgraded, MiscTools.PrintableTime(Singleton<BeanstalkServerManager>.instance.currentTimestamp - mLastTimeFromWeaponUpgrade, "ID_READYTIME", string.Empty), (!(weaponForUpgrade == null)) ? weaponForUpgrade.weaponName : "null");
+		}
+	}
+
+	public bool canShowUnitUpgradeReminder
+	{
+		get
+		{
+			CountAllVariablesForUnitUpgrade();
+			return TutorialManagerStage5.instance.wasFinished && !mAnyUnitDeliveringDelivered && mAnyAvailableUnitCanBeUpgraded && Singleton<BeanstalkServerManager>.instance.currentTimestamp - mLastTimeFromUnitUpgrade > minTimeSinceLastUnitUpgrade;
+		}
+	}
+
+	public string debugUnitUpgradeConditions
+	{
+		get
+		{
+			CountAllVariablesForUnitUpgrade();
+			return string.Format("Tutorial for unit upgraded shown: {0}\tAny unit delivering/delivered: {1}\tAny unit can be upgraded: {2}\tTime since last update: {3}\tChosen Unit: {4}", TutorialManagerStage5.instance.wasFinished, mAnyUnitDeliveringDelivered, mAnyAvailableUnitCanBeUpgraded, MiscTools.PrintableTime(Singleton<BeanstalkServerManager>.instance.currentTimestamp - mLastTimeFromUnitUpgrade, "ID_READYTIME", string.Empty), (!(unitForUpgrade == null)) ? unitForUpgrade.unitName : "null");
+		}
+	}
+
+	private void CheckDictionary()
+	{
+		if (data.remindersTimeDefinitions == null)
+		{
+			data.remindersTimeDefinitions = new Dictionary<ReminderType, int>();
+			data.remindersTimeDefinitions.Add(ReminderType.VipRunningOut, 0);
+			data.remindersTimeDefinitions.Add(ReminderType.VipExpired, 0);
+			data.remindersTimeDefinitions.Add(ReminderType.Cards, 0);
+			data.remindersTimeDefinitions.Add(ReminderType.MoneyPackRunningOut, 0);
+			data.remindersTimeDefinitions.Add(ReminderType.StarterPackRunningOut, 0);
+			data.remindersTimeDefinitions.Add(ReminderType.DailyAssignments, 0);
+			data.losesStreaks = 0;
+			data.lastSessionVIPStatus = false;
+			Save();
+		}
+	}
+
+	private void SaveShowTime(ReminderType typ)
+	{
+		CheckDictionary();
+		if (data.remindersTimeDefinitions.ContainsKey(typ))
+		{
+			data.remindersTimeDefinitions[typ] = Singleton<BeanstalkServerManager>.instance.currentTimestamp;
+		}
+		else
+		{
+			data.remindersTimeDefinitions.Add(typ, Singleton<BeanstalkServerManager>.instance.currentTimestamp);
+		}
+		Save();
+	}
+
+	private bool WasShownInLast24Hours(ReminderType typ)
+	{
+		CheckDictionary();
+		if (data.remindersTimeDefinitions.ContainsKey(typ))
+		{
+			int num = Singleton<BeanstalkServerManager>.instance.currentTimestamp - data.remindersTimeDefinitions[typ];
+			return num < 86400;
+		}
+		return false;
+	}
+
+	private bool WasShownInLast7Days(ReminderType typ)
+	{
+		CheckDictionary();
+		if (data.remindersTimeDefinitions.ContainsKey(typ))
+		{
+			int num = Singleton<BeanstalkServerManager>.instance.currentTimestamp - data.remindersTimeDefinitions[typ];
+			return num < 604800;
+		}
+		return false;
+	}
+
+	private bool WasShownToday(ReminderType typ)
+	{
+		CheckDictionary();
+		if (data.remindersTimeDefinitions.ContainsKey(typ))
+		{
+			int timeSpan = data.remindersTimeDefinitions[typ];
+			DateTime dateTime = MiscTools.GetDateTime(timeSpan);
+			DateTime currentDateTime = Singleton<BeanstalkServerManager>.instance.currentDateTime;
+			return dateTime.Day == currentDateTime.Day && dateTime.Month == currentDateTime.Month && dateTime.Year == currentDateTime.Year;
+		}
+		return false;
+	}
+
+	public void OnDestroy()
+	{
+		mInstance = null;
+	}
+
+	protected override void Awake()
+	{
+		base.Awake();
+		CheckDictionary();
+		Singleton<GameController>.instance.GameStarted -= OnGameStarted;
+		Singleton<GameController>.instance.GameStarted += OnGameStarted;
+		Singleton<GameController>.instance.GameEnded -= OnGameEnded;
+		Singleton<GameController>.instance.GameEnded += OnGameEnded;
+		Singleton<BeanstalkServerManager>.instance.AfterPlayerDataLoaded += OnAfterPlayerDataLoaded;
+		Singleton<VipManager>.instance.VipStatusChanged += OnVipStatusChanged;
+	}
+
+	private void OnGameStarted()
+	{
+		StopAllCoroutines();
+	}
+
+	private void OnGameEnded(GameController.GameEndReason gameEndReason)
+	{
+		if (!Singleton<GameController>.instance.isTutorial)
+		{
+			losesStreaks = ((!Singleton<GameController>.instance.wonLastGame) ? (losesStreaks + 1) : 0);
+		}
+	}
+
+	private void OnAfterPlayerDataLoaded()
+	{
+		if (!Singleton<GameController>.instance.isTutorial)
+		{
+			Debug.Log($"Reminder Manager: CLIENT REMINDERS AFTER PLAYER DATA LOADED:\n{debugMoneyPackRunningOut}\n{debugStarterPackRunningOut}\n{debugVipRunningOut}\n{debugVipExpired}");
+			ShowMoneyPackRunningOut();
+			ShowStarterPackRunningOut();
+			ShowVipRunningOut();
+			ShowVipExpired();
+			lastSessionVIPStatus = Singleton<VipManager>.instance.IsVipActive();
+		}
+	}
+
+	private void OnVipStatusChanged(bool isVip)
+	{
+		if (!isVip)
+		{
+			lastSessionVIPStatus = true;
+		}
+		ShowVipExpired();
+		lastSessionVIPStatus = isVip;
+	}
+
+	private void ShowMoneyPackRunningOut()
+	{
+		if (PlayerAnalytics.instance.showMoneyPack && PlayerAnalytics.instance.data.moneyPackDeadline - Singleton<BeanstalkServerManager>.instance.currentTimestamp < moneyPackRunningOutSeconds && !WasShownInLast24Hours(ReminderType.MoneyPackRunningOut))
+		{
+			Singleton<MessageManager>.instance.AddMessage(new TimeLimitedOffer(isRunningOut: true));
+			SaveShowTime(ReminderType.MoneyPackRunningOut);
+		}
+	}
+
+	private void ShowStarterPackRunningOut()
+	{
+		if (PlayerAnalytics.instance.showStarterPack && PlayerAnalytics.instance.data.starterPackDeadline - Singleton<BeanstalkServerManager>.instance.currentTimestamp < starterPackRunningOutSeconds && !WasShownInLast24Hours(ReminderType.StarterPackRunningOut))
+		{
+			Singleton<MessageManager>.instance.AddMessage(new StarterPackTimeLimitedOffer(isRunningOut: true));
+			SaveShowTime(ReminderType.StarterPackRunningOut);
+		}
+	}
+
+	private void ShowVipRunningOut()
+	{
+		if (Singleton<VipManager>.instance.IsVipActive() && Singleton<VipManager>.instance.vipExpiration - Singleton<VipManager>.instance.vipStart >= vipRunningOutSeconds + 10 && Singleton<VipManager>.instance.vipExpiration - Singleton<BeanstalkServerManager>.instance.currentTimestamp <= vipRunningOutSeconds && !WasShownInLast24Hours(ReminderType.VipRunningOut))
+		{
+			Singleton<MessageManager>.instance.AddMessage(new VIPMemeberShipAlmostEnded());
+			SaveShowTime(ReminderType.VipRunningOut);
+		}
+	}
+
+	private void ShowVipExpired()
+	{
+		if (!Singleton<VipManager>.instance.IsVipActive() && lastSessionVIPStatus && !WasShownInLast24Hours(ReminderType.VipExpired))
+		{
+			Singleton<MessageManager>.instance.AddMessage(new VIPMembershipExpired());
+			SaveShowTime(ReminderType.VipExpired);
+		}
+	}
+
+	private void CountAllVariablesForWeaponUpgrade()
+	{
+		weaponForUpgrade = null;
+		mAnyAvailableWeaponCanBeUpgraded = false;
+		mAnyWeaponDeliveringDelivered = false;
+		mLastTimeFromWeaponUpgrade = 0;
+		List<WeaponLevelsSetup> list = new List<WeaponLevelsSetup>();
+		int num = 0;
+		foreach (PlayerInventory.InventorySlot inventorySlot in PlayerInventory.instance.inventorySlots)
+		{
+			if (inventorySlot.category != WeaponCategory.Pistol)
+			{
+				WeaponLevelsSetup weaponLevelsSetup = inventorySlot.weaponLevelsSetup;
+				if (weaponLevelsSetup.canBeUpgraded && !weaponLevelsSetup.tryOutWeapon)
+				{
+					list.Add(weaponLevelsSetup);
+				}
+			}
+		}
+		foreach (WeaponLevelsSetup weaponLevelsSetup2 in LevelManager.instance.weaponLevelsSetups)
+		{
+			if (weaponLevelsSetup2.bought && !weaponLevelsSetup2.tryOutWeapon)
+			{
+				if (mLastTimeFromWeaponUpgrade < (int)weaponLevelsSetup2.endDeliveryTime)
+				{
+					mLastTimeFromWeaponUpgrade = (int)weaponLevelsSetup2.endDeliveryTime;
+				}
+				mAnyWeaponDeliveringDelivered = mAnyWeaponDeliveringDelivered || weaponLevelsSetup2.delivering || weaponLevelsSetup2.deliveryActivationNeeded;
+			}
+		}
+		mAnyAvailableWeaponCanBeUpgraded = list.Count > 0;
+		if (mAnyAvailableWeaponCanBeUpgraded)
+		{
+			weaponForUpgrade = list[UnityEngine.Random.Range(0, list.Count)];
+		}
+	}
+
+	private void CountAllVariablesForUnitUpgrade()
+	{
+		unitForUpgrade = null;
+		mAnyAvailableUnitCanBeUpgraded = false;
+		mAnyUnitDeliveringDelivered = false;
+		mLastTimeFromUnitUpgrade = 0;
+		List<LevelBehaviour> list = new List<LevelBehaviour>();
+		int num = 0;
+		List<LevelBehaviour> list2 = new List<LevelBehaviour>();
+		foreach (LevelBehaviour behaviour in LevelManager.instance.behaviours)
+		{
+			if (!behaviour.upgradeSlots.bought || behaviour.upgradeSlots.borrowed)
+			{
+				continue;
+			}
+			if (mLastTimeFromUnitUpgrade < (int)behaviour.upgradeSlots.endDeliveryTime)
+			{
+				mLastTimeFromUnitUpgrade = (int)behaviour.upgradeSlots.endDeliveryTime;
+			}
+			if (behaviour.upgradeSlots.canBeUpgraded)
+			{
+				list2.Add(behaviour);
+				if (behaviour.upgradeSlots.actualTier > num)
+				{
+					num = behaviour.upgradeSlots.actualTier;
+				}
+			}
+			mAnyUnitDeliveringDelivered = mAnyUnitDeliveringDelivered || behaviour.upgradeSlots.delivering || behaviour.upgradeSlots.deliveryActivationNeeded;
+		}
+		foreach (LevelBehaviour item in list2)
+		{
+			if (item.upgradeSlots.actualTier == num)
+			{
+				list.Add(item);
+			}
+		}
+		mAnyAvailableUnitCanBeUpgraded = list.Count > 0;
+		if (mAnyAvailableUnitCanBeUpgraded)
+		{
+			unitForUpgrade = list[UnityEngine.Random.Range(0, list.Count)];
+		}
+	}
+
+	public PlayerVisual GetRandomPowerBand()
+	{
+		int displayNumber = LevelManager.instance.currentLevel.displayNumber;
+		List<PlayerVisual> list = new List<PlayerVisual>();
+		PlayerVisual playerVisual = null;
+		foreach (PlayerVisual allVisual in CamosManager.instance.playerVisualCategories[3].allVisuals)
+		{
+			if (allVisual.timeActive > 0)
+			{
+				if (playerVisual == null)
+				{
+					playerVisual = allVisual;
+				}
+				if (!allVisual.isVipOnly && displayNumber <= allVisual.unlockLevel.displayNumber)
+				{
+					list.Add(allVisual);
+				}
+			}
+		}
+		return (list.Count != 0) ? list[UnityEngine.Random.Range(0, list.Count - 1)] : playerVisual;
+	}
+
+	public bool ShowWarcardsReminder()
+	{
+		if (CardManager.instance.data.GetCardAmount() >= lowNumberOfCards || GameLoginManager.generatedCurrentPlayer.level < minLevelForCardsReminder || isUpgradeTutorialRunning)
+		{
+			return false;
+		}
+		if (WasShownInLast24Hours(ReminderType.Cards))
+		{
+			return false;
+		}
+		Singleton<MessageManager>.instance.AddMessage(new BuyCardsReminder());
+		SaveShowTime(ReminderType.Cards);
+		return true;
+	}
+
+	public bool ShowDailyAssignmentsReminder()
+	{
+		if (WasShownToday(ReminderType.DailyAssignments))
+		{
+			return false;
+		}
+		Singleton<MessageManager>.instance.AddMessage(new DailyAssignmentsReminder());
+		SaveShowTime(ReminderType.DailyAssignments);
+		return true;
+	}
 }

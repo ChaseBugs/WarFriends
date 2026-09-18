@@ -1,63 +1,151 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
-public class EnemyLeveledWeapon : MonoBehaviour
+public class EnemyLeveledWeapon : Core_BaseScript
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Serializable]
+	public class WeaponModelRecord
+	{
+		public int level;
 
-	1. No dll files were provided to AssetRipper.
+		public Sounds3DEnum shotSound = Sounds3DEnum.SHOT_ASSAULT_1;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+		public string weaponModelPath;
 
-	2. Incorrect dll files were provided to AssetRipper.
+		public string assetBundleName;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+		public Vector3 scale = Vector3.one;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+		public void Generate()
+		{
+		}
+	}
 
-	3. Assembly Reconstruction has not been implemented.
+	private static Dictionary<string, GameWeaponModel> mLoadedModels = new Dictionary<string, GameWeaponModel>();
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public List<WeaponModelRecord> weaponRecords;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public MeshRenderer weaponRenderer;
 
-	4. This script is unnecessary.
+	public Weapon weapon;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public void SetLevel(int level, bool highPoly = false)
+	{
+		foreach (WeaponModelRecord weaponRecord in weaponRecords)
+		{
+			if (level != weaponRecord.level)
+			{
+				continue;
+			}
+			if (weapon != null)
+			{
+				weapon.shotSound = weaponRecord.shotSound;
+			}
+			if (mLoadedModels.TryGetValue(weaponRecord.weaponModelPath, out var value))
+			{
+				weaponRenderer.sharedMaterial = value.GetComponent<Renderer>().sharedMaterial;
+				weaponRenderer.GetComponent<MeshFilter>().sharedMesh = value.GetComponent<MeshFilter>().sharedMesh;
+				weaponRenderer.useLightProbes = true;
+				weaponRenderer.transform.localPosition = -value.pivot.transform.localPosition;
+				weaponRenderer.transform.localScale = weaponRecord.scale;
+				ReloadMaterials(weaponRenderer.gameObject);
+			}
+			else
+			{
+				if (!mLoadedModels.ContainsKey(weaponRecord.weaponModelPath))
+				{
+					break;
+				}
+				SetLevel(level);
+			}
+		}
+	}
 
-	5. Script Content Level 0
+	public static void ClearModels()
+	{
+		mLoadedModels.Clear();
+	}
 
-		AssetRipper was set to not load any script information.
+	private string GetWeaponPath(int level)
+	{
+		foreach (WeaponModelRecord weaponRecord in weaponRecords)
+		{
+			if (level == weaponRecord.level)
+			{
+				return weaponRecord.weaponModelPath;
+			}
+		}
+		return string.Empty;
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public void UnloadModels(int weaponNumber)
+	{
+		string weaponPath = GetWeaponPath(weaponNumber);
+		GameWeaponModel gameWeaponModel = null;
+		foreach (KeyValuePair<string, GameWeaponModel> mLoadedModel in mLoadedModels)
+		{
+			if (weaponPath != mLoadedModel.Key)
+			{
+				Material sharedMaterial = mLoadedModel.Value.GetComponent<Renderer>().sharedMaterial;
+				Mesh sharedMesh = mLoadedModel.Value.GetComponent<MeshFilter>().sharedMesh;
+				Resources.UnloadAsset(sharedMesh);
+				Resources.UnloadAsset(sharedMaterial.mainTexture);
+				Resources.UnloadAsset(sharedMaterial);
+			}
+			else
+			{
+				gameWeaponModel = mLoadedModel.Value;
+			}
+		}
+		ClearModels();
+		if (gameWeaponModel != null)
+		{
+			mLoadedModels[weaponPath] = gameWeaponModel;
+		}
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	private void OnDisable()
+	{
+		weaponRenderer.sharedMaterial = null;
+		weaponRenderer.GetComponent<MeshFilter>().sharedMesh = null;
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	public IEnumerator PrepareAsync(int level)
+	{
+		foreach (WeaponModelRecord record in weaponRecords)
+		{
+			if (level != record.level)
+			{
+				continue;
+			}
+			if (!mLoadedModels.ContainsKey(record.weaponModelPath))
+			{
+				string bundle = "Weapons/" + record.assetBundleName;
+				string assetname = record.weaponModelPath.Split('/')[1];
+				string path = bundle + "/" + assetname;
+				GameObject model = Resources.Load<GameObject>(path);
+				if (model != null)
+				{
+					GameWeaponModel c = model.GetComponent<GameWeaponModel>();
+					mLoadedModels[record.weaponModelPath] = c;
+					ReloadMaterials(model.gameObject);
+				}
+				Singleton<SoundsManager3D>.instance.UseSound(record.shotSound);
+			}
+			break;
+		}
+		yield break;
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public static void ReloadMaterials(GameObject obj)
+	{
+		Material sharedMaterial = obj.GetComponent<Renderer>().sharedMaterial;
+		Mesh sharedMesh = obj.GetComponent<MeshFilter>().sharedMesh;
+		Texture mainTexture = sharedMaterial.mainTexture;
+		int width = mainTexture.width;
+		sharedMaterial.mainTexture = null;
+		sharedMaterial.mainTexture = mainTexture;
+	}
 }

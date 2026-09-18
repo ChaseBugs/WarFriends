@@ -1,66 +1,260 @@
-using UnityEngine;
+using System;
 
 namespace BestHTTP.Decompression.Zlib
 {
-	public class ZlibCodec : MonoBehaviour
+internal sealed class ZlibCodec
+{
+	public byte[] InputBuffer;
+
+	public int NextIn;
+
+	public int AvailableBytesIn;
+
+	public long TotalBytesIn;
+
+	public byte[] OutputBuffer;
+
+	public int NextOut;
+
+	public int AvailableBytesOut;
+
+	public long TotalBytesOut;
+
+	public string Message;
+
+	internal DeflateManager dstate;
+
+	internal InflateManager istate;
+
+	internal uint _Adler32;
+
+	public CompressionLevel CompressLevel = CompressionLevel.Default;
+
+	public int WindowBits = 15;
+
+	public CompressionStrategy Strategy;
+
+	public int Adler32 => (int)_Adler32;
+
+	public ZlibCodec()
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
 	}
+
+	public ZlibCodec(CompressionMode mode)
+	{
+		switch (mode)
+		{
+		case CompressionMode.Compress:
+			if (InitializeDeflate() != 0)
+			{
+				throw new ZlibException("Cannot initialize for deflate.");
+			}
+			break;
+		case CompressionMode.Decompress:
+			if (InitializeInflate() != 0)
+			{
+				throw new ZlibException("Cannot initialize for inflate.");
+			}
+			break;
+		default:
+			throw new ZlibException("Invalid ZlibStreamFlavor.");
+		}
+	}
+
+	public int InitializeInflate()
+	{
+		return InitializeInflate(WindowBits);
+	}
+
+	public int InitializeInflate(bool expectRfc1950Header)
+	{
+		return InitializeInflate(WindowBits, expectRfc1950Header);
+	}
+
+	public int InitializeInflate(int windowBits)
+	{
+		WindowBits = windowBits;
+		return InitializeInflate(windowBits, expectRfc1950Header: true);
+	}
+
+	public int InitializeInflate(int windowBits, bool expectRfc1950Header)
+	{
+		WindowBits = windowBits;
+		if (dstate != null)
+		{
+			throw new ZlibException("You may not call InitializeInflate() after calling InitializeDeflate().");
+		}
+		istate = new InflateManager(expectRfc1950Header);
+		return istate.Initialize(this, windowBits);
+	}
+
+	public int Inflate(FlushType flush)
+	{
+		if (istate == null)
+		{
+			throw new ZlibException("No Inflate State!");
+		}
+		return istate.Inflate(flush);
+	}
+
+	public int EndInflate()
+	{
+		if (istate == null)
+		{
+			throw new ZlibException("No Inflate State!");
+		}
+		int result = istate.End();
+		istate = null;
+		return result;
+	}
+
+	public int SyncInflate()
+	{
+		if (istate == null)
+		{
+			throw new ZlibException("No Inflate State!");
+		}
+		return istate.Sync();
+	}
+
+	public int InitializeDeflate()
+	{
+		return _InternalInitializeDeflate(wantRfc1950Header: true);
+	}
+
+	public int InitializeDeflate(CompressionLevel level)
+	{
+		CompressLevel = level;
+		return _InternalInitializeDeflate(wantRfc1950Header: true);
+	}
+
+	public int InitializeDeflate(CompressionLevel level, bool wantRfc1950Header)
+	{
+		CompressLevel = level;
+		return _InternalInitializeDeflate(wantRfc1950Header);
+	}
+
+	public int InitializeDeflate(CompressionLevel level, int bits)
+	{
+		CompressLevel = level;
+		WindowBits = bits;
+		return _InternalInitializeDeflate(wantRfc1950Header: true);
+	}
+
+	public int InitializeDeflate(CompressionLevel level, int bits, bool wantRfc1950Header)
+	{
+		CompressLevel = level;
+		WindowBits = bits;
+		return _InternalInitializeDeflate(wantRfc1950Header);
+	}
+
+	private int _InternalInitializeDeflate(bool wantRfc1950Header)
+	{
+		if (istate != null)
+		{
+			throw new ZlibException("You may not call InitializeDeflate() after calling InitializeInflate().");
+		}
+		dstate = new DeflateManager();
+		dstate.WantRfc1950HeaderBytes = wantRfc1950Header;
+		return dstate.Initialize(this, CompressLevel, WindowBits, Strategy);
+	}
+
+	public int Deflate(FlushType flush)
+	{
+		if (dstate == null)
+		{
+			throw new ZlibException("No Deflate State!");
+		}
+		return dstate.Deflate(flush);
+	}
+
+	public int EndDeflate()
+	{
+		if (dstate == null)
+		{
+			throw new ZlibException("No Deflate State!");
+		}
+		dstate = null;
+		return 0;
+	}
+
+	public void ResetDeflate()
+	{
+		if (dstate == null)
+		{
+			throw new ZlibException("No Deflate State!");
+		}
+		dstate.Reset();
+	}
+
+	public int SetDeflateParams(CompressionLevel level, CompressionStrategy strategy)
+	{
+		if (dstate == null)
+		{
+			throw new ZlibException("No Deflate State!");
+		}
+		return dstate.SetParams(level, strategy);
+	}
+
+	public int SetDictionary(byte[] dictionary)
+	{
+		if (istate != null)
+		{
+			return istate.SetDictionary(dictionary);
+		}
+		if (dstate != null)
+		{
+			return dstate.SetDictionary(dictionary);
+		}
+		throw new ZlibException("No Inflate or Deflate state!");
+	}
+
+	internal void flush_pending()
+	{
+		int num = dstate.pendingCount;
+		if (num > AvailableBytesOut)
+		{
+			num = AvailableBytesOut;
+		}
+		if (num != 0)
+		{
+			if (dstate.pending.Length <= dstate.nextPending || OutputBuffer.Length <= NextOut || dstate.pending.Length < dstate.nextPending + num || OutputBuffer.Length < NextOut + num)
+			{
+				throw new ZlibException($"Invalid State. (pending.Length={dstate.pending.Length}, pendingCount={dstate.pendingCount})");
+			}
+			Array.Copy(dstate.pending, dstate.nextPending, OutputBuffer, NextOut, num);
+			NextOut += num;
+			dstate.nextPending += num;
+			TotalBytesOut += num;
+			AvailableBytesOut -= num;
+			dstate.pendingCount -= num;
+			if (dstate.pendingCount == 0)
+			{
+				dstate.nextPending = 0;
+			}
+		}
+	}
+
+	internal int read_buf(byte[] buf, int start, int size)
+	{
+		int num = AvailableBytesIn;
+		if (num > size)
+		{
+			num = size;
+		}
+		if (num == 0)
+		{
+			return 0;
+		}
+		AvailableBytesIn -= num;
+		if (dstate.WantRfc1950HeaderBytes)
+		{
+			_Adler32 = Adler.Adler32(_Adler32, InputBuffer, NextIn, num);
+		}
+		Array.Copy(InputBuffer, NextIn, buf, start, num);
+		NextIn += num;
+		TotalBytesIn += num;
+		return num;
+	}
+}
 }

@@ -1,63 +1,189 @@
 using UnityEngine;
 
-public class UIDragObject : MonoBehaviour
+[AddComponentMenu("NGUI/Interaction/Drag Object")]
+public class UIDragObject : IgnoreTimeScale
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public enum DragEffect
+	{
+		None,
+		Momentum,
+		MomentumAndSpring
+	}
 
-	1. No dll files were provided to AssetRipper.
+	public Transform target;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public Vector3 scale = Vector3.one;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public float scrollWheelFactor;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public bool restrictWithinPanel;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public DragEffect dragEffect = DragEffect.MomentumAndSpring;
 
-	3. Assembly Reconstruction has not been implemented.
+	public float momentumAmount = 35f;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	private Plane mPlane;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	private Vector3 mLastPos;
 
-	4. This script is unnecessary.
+	private UIPanel mPanel;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private bool mPressed;
 
-	5. Script Content Level 0
+	private Vector3 mMomentum = Vector3.zero;
 
-		AssetRipper was set to not load any script information.
+	private float mScroll;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	private Bounds mBounds;
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	private void FindPanel()
+	{
+		mPanel = ((!(target != null)) ? null : UIPanel.Find(target.transform, createIfMissing: false));
+		if (mPanel == null)
+		{
+			restrictWithinPanel = false;
+		}
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	private void OnPress(bool pressed)
+	{
+		if (!base.enabled || !NGUITools.GetActive(base.gameObject) || !(target != null))
+		{
+			return;
+		}
+		mPressed = pressed;
+		if (pressed)
+		{
+			if (restrictWithinPanel && mPanel == null)
+			{
+				FindPanel();
+			}
+			if (restrictWithinPanel)
+			{
+				mBounds = NGUIMath.CalculateRelativeWidgetBounds(mPanel.cachedTransform, target);
+			}
+			mMomentum = Vector3.zero;
+			mScroll = 0f;
+			SpringPosition component = target.GetComponent<SpringPosition>();
+			if (component != null)
+			{
+				component.enabled = false;
+			}
+			mLastPos = UICamera.lastHit.point;
+			Transform transform = UICamera.currentCamera.transform;
+			mPlane = new Plane(((!(mPanel != null)) ? transform.rotation : mPanel.cachedTransform.rotation) * Vector3.back, mLastPos);
+		}
+		else if (restrictWithinPanel && mPanel.clipping != UIDrawCall.Clipping.None && dragEffect == DragEffect.MomentumAndSpring)
+		{
+			mPanel.ConstrainTargetToBounds(target, ref mBounds, immediate: false);
+		}
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	private void OnDrag(Vector2 delta)
+	{
+		if (!base.enabled || !NGUITools.GetActive(base.gameObject) || !(target != null))
+		{
+			return;
+		}
+		UICamera.currentTouch.clickNotification = UICamera.ClickNotification.BasedOnDelta;
+		Ray ray = UICamera.currentCamera.ScreenPointToRay(UICamera.currentTouch.pos);
+		float enter = 0f;
+		if (!mPlane.Raycast(ray, out enter))
+		{
+			return;
+		}
+		Vector3 point = ray.GetPoint(enter);
+		Vector3 vector = point - mLastPos;
+		mLastPos = point;
+		if (vector.x != 0f || vector.y != 0f)
+		{
+			vector = target.InverseTransformDirection(vector);
+			vector.Scale(scale);
+			vector = target.TransformDirection(vector);
+		}
+		if (dragEffect != DragEffect.None)
+		{
+			mMomentum = Vector3.Lerp(mMomentum, mMomentum + vector * (0.01f * momentumAmount), 0.67f);
+		}
+		if (restrictWithinPanel)
+		{
+			Vector3 localPosition = target.localPosition;
+			target.position += vector;
+			mBounds.center += target.localPosition - localPosition;
+			if (dragEffect != DragEffect.MomentumAndSpring && mPanel.clipping != UIDrawCall.Clipping.None && mPanel.ConstrainTargetToBounds(target, ref mBounds, immediate: true))
+			{
+				mMomentum = Vector3.zero;
+				mScroll = 0f;
+			}
+		}
+		else
+		{
+			target.position += vector;
+		}
+	}
 
-	*/
+	private void LateUpdate()
+	{
+		float deltaTime = UpdateRealTimeDelta();
+		if (target == null)
+		{
+			return;
+		}
+		if (mPressed)
+		{
+			SpringPosition component = target.GetComponent<SpringPosition>();
+			if (component != null)
+			{
+				component.enabled = false;
+			}
+			mScroll = 0f;
+		}
+		else
+		{
+			mMomentum += scale * ((0f - mScroll) * 0.05f);
+			mScroll = NGUIMath.SpringLerp(mScroll, 0f, 20f, deltaTime);
+			if (mMomentum.magnitude > 0.0001f)
+			{
+				if (mPanel == null)
+				{
+					FindPanel();
+				}
+				if (mPanel != null)
+				{
+					target.position += NGUIMath.SpringDampen(ref mMomentum, 9f, deltaTime);
+					if (!restrictWithinPanel || mPanel.clipping == UIDrawCall.Clipping.None)
+					{
+						return;
+					}
+					mBounds = NGUIMath.CalculateRelativeWidgetBounds(mPanel.cachedTransform, target);
+					if (!mPanel.ConstrainTargetToBounds(target, ref mBounds, dragEffect == DragEffect.None))
+					{
+						SpringPosition component2 = target.GetComponent<SpringPosition>();
+						if (component2 != null)
+						{
+							component2.enabled = false;
+						}
+					}
+					return;
+				}
+			}
+			else
+			{
+				mScroll = 0f;
+			}
+		}
+		NGUIMath.SpringDampen(ref mMomentum, 9f, deltaTime);
+	}
+
+	private void OnScroll(float delta)
+	{
+		if (base.enabled && NGUITools.GetActive(base.gameObject))
+		{
+			if (Mathf.Sign(mScroll) != Mathf.Sign(delta))
+			{
+				mScroll = 0f;
+			}
+			mScroll += delta * scrollWheelFactor;
+		}
+	}
 }

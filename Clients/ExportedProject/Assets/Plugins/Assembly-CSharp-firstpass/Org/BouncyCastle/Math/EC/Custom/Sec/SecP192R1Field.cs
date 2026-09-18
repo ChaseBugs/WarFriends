@@ -1,66 +1,251 @@
-using UnityEngine;
+using Org.BouncyCastle.Math.Raw;
 
 namespace Org.BouncyCastle.Math.EC.Custom.Sec
 {
-	public class SecP192R1Field : MonoBehaviour
+internal class SecP192R1Field
+{
+	private const uint P5 = uint.MaxValue;
+
+	private const uint PExt11 = uint.MaxValue;
+
+	internal static readonly uint[] P = new uint[6] { 4294967295u, 4294967295u, 4294967294u, 4294967295u, 4294967295u, 4294967295u };
+
+	internal static readonly uint[] PExt = new uint[12]
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
+		1u, 0u, 2u, 0u, 1u, 0u, 4294967294u, 4294967295u, 4294967293u, 4294967295u,
+		4294967295u, 4294967295u
+	};
 
-		1. No dll files were provided to AssetRipper.
+	private static readonly uint[] PExtInv = new uint[9] { 4294967295u, 4294967295u, 4294967293u, 4294967295u, 4294967294u, 4294967295u, 1u, 0u, 2u };
 
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
+	public static void Add(uint[] x, uint[] y, uint[] z)
+	{
+		if (Nat192.Add(x, y, z) != 0 || (z[5] == uint.MaxValue && Nat192.Gte(z, P)))
+		{
+			AddPInvTo(z);
+		}
 	}
+
+	public static void AddExt(uint[] xx, uint[] yy, uint[] zz)
+	{
+		if ((Nat.Add(12, xx, yy, zz) != 0 || (zz[11] == uint.MaxValue && Nat.Gte(12, zz, PExt))) && Nat.AddTo(PExtInv.Length, PExtInv, zz) != 0)
+		{
+			Nat.IncAt(12, zz, PExtInv.Length);
+		}
+	}
+
+	public static void AddOne(uint[] x, uint[] z)
+	{
+		if (Nat.Inc(6, x, z) != 0 || (z[5] == uint.MaxValue && Nat192.Gte(z, P)))
+		{
+			AddPInvTo(z);
+		}
+	}
+
+	public static uint[] FromBigInteger(BigInteger x)
+	{
+		uint[] array = Nat192.FromBigInteger(x);
+		if (array[5] == uint.MaxValue && Nat192.Gte(array, P))
+		{
+			Nat192.SubFrom(P, array);
+		}
+		return array;
+	}
+
+	public static void Half(uint[] x, uint[] z)
+	{
+		if ((x[0] & 1) == 0)
+		{
+			Nat.ShiftDownBit(6, x, 0u, z);
+			return;
+		}
+		uint c = Nat192.Add(x, P, z);
+		Nat.ShiftDownBit(6, z, c);
+	}
+
+	public static void Multiply(uint[] x, uint[] y, uint[] z)
+	{
+		uint[] array = Nat192.CreateExt();
+		Nat192.Mul(x, y, array);
+		Reduce(array, z);
+	}
+
+	public static void MultiplyAddToExt(uint[] x, uint[] y, uint[] zz)
+	{
+		if ((Nat192.MulAddTo(x, y, zz) != 0 || (zz[11] == uint.MaxValue && Nat.Gte(12, zz, PExt))) && Nat.AddTo(PExtInv.Length, PExtInv, zz) != 0)
+		{
+			Nat.IncAt(12, zz, PExtInv.Length);
+		}
+	}
+
+	public static void Negate(uint[] x, uint[] z)
+	{
+		if (Nat192.IsZero(x))
+		{
+			Nat192.Zero(z);
+		}
+		else
+		{
+			Nat192.Sub(P, x, z);
+		}
+	}
+
+	public static void Reduce(uint[] xx, uint[] z)
+	{
+		ulong num = xx[6];
+		ulong num2 = xx[7];
+		ulong num3 = xx[8];
+		ulong num4 = xx[9];
+		ulong num5 = xx[10];
+		ulong num6 = xx[11];
+		ulong num7 = num + num5;
+		ulong num8 = num2 + num6;
+		ulong num9 = 0uL;
+		num9 += xx[0] + num7;
+		uint num10 = (uint)num9;
+		num9 >>= 32;
+		num9 += xx[1] + num8;
+		z[1] = (uint)num9;
+		num9 >>= 32;
+		num7 += num3;
+		num8 += num4;
+		num9 += xx[2] + num7;
+		ulong num11 = (uint)num9;
+		num9 >>= 32;
+		num9 += xx[3] + num8;
+		z[3] = (uint)num9;
+		num9 >>= 32;
+		num7 -= num;
+		num8 -= num2;
+		num9 += xx[4] + num7;
+		z[4] = (uint)num9;
+		num9 >>= 32;
+		num9 += xx[5] + num8;
+		z[5] = (uint)num9;
+		num9 >>= 32;
+		num11 += num9;
+		num9 += num10;
+		z[0] = (uint)num9;
+		num9 >>= 32;
+		if (num9 != 0L)
+		{
+			num9 += z[1];
+			z[1] = (uint)num9;
+			num11 += num9 >> 32;
+		}
+		z[2] = (uint)num11;
+		num9 = num11 >> 32;
+		if ((num9 != 0L && Nat.IncAt(6, z, 3) != 0) || (z[5] == uint.MaxValue && Nat192.Gte(z, P)))
+		{
+			AddPInvTo(z);
+		}
+	}
+
+	public static void Reduce32(uint x, uint[] z)
+	{
+		ulong num = 0uL;
+		if (x != 0)
+		{
+			num += (ulong)((long)z[0] + (long)x);
+			z[0] = (uint)num;
+			num >>= 32;
+			if (num != 0L)
+			{
+				num += z[1];
+				z[1] = (uint)num;
+				num >>= 32;
+			}
+			num += (ulong)((long)z[2] + (long)x);
+			z[2] = (uint)num;
+			num >>= 32;
+		}
+		if ((num != 0L && Nat.IncAt(6, z, 3) != 0) || (z[5] == uint.MaxValue && Nat192.Gte(z, P)))
+		{
+			AddPInvTo(z);
+		}
+	}
+
+	public static void Square(uint[] x, uint[] z)
+	{
+		uint[] array = Nat192.CreateExt();
+		Nat192.Square(x, array);
+		Reduce(array, z);
+	}
+
+	public static void SquareN(uint[] x, int n, uint[] z)
+	{
+		uint[] array = Nat192.CreateExt();
+		Nat192.Square(x, array);
+		Reduce(array, z);
+		while (--n > 0)
+		{
+			Nat192.Square(z, array);
+			Reduce(array, z);
+		}
+	}
+
+	public static void Subtract(uint[] x, uint[] y, uint[] z)
+	{
+		if (Nat192.Sub(x, y, z) != 0)
+		{
+			SubPInvFrom(z);
+		}
+	}
+
+	public static void SubtractExt(uint[] xx, uint[] yy, uint[] zz)
+	{
+		if (Nat.Sub(12, xx, yy, zz) != 0 && Nat.SubFrom(PExtInv.Length, PExtInv, zz) != 0)
+		{
+			Nat.DecAt(12, zz, PExtInv.Length);
+		}
+	}
+
+	public static void Twice(uint[] x, uint[] z)
+	{
+		if (Nat.ShiftUpBit(6, x, 0u, z) != 0 || (z[5] == uint.MaxValue && Nat192.Gte(z, P)))
+		{
+			AddPInvTo(z);
+		}
+	}
+
+	private static void AddPInvTo(uint[] z)
+	{
+		long num = (long)z[0] + 1L;
+		z[0] = (uint)num;
+		num >>= 32;
+		if (num != 0L)
+		{
+			num += z[1];
+			z[1] = (uint)num;
+			num >>= 32;
+		}
+		num += (long)z[2] + 1L;
+		z[2] = (uint)num;
+		num >>= 32;
+		if (num != 0L)
+		{
+			Nat.IncAt(6, z, 3);
+		}
+	}
+
+	private static void SubPInvFrom(uint[] z)
+	{
+		long num = (long)z[0] - 1L;
+		z[0] = (uint)num;
+		num >>= 32;
+		if (num != 0L)
+		{
+			num += z[1];
+			z[1] = (uint)num;
+			num >>= 32;
+		}
+		num += (long)z[2] - 1L;
+		z[2] = (uint)num;
+		num >>= 32;
+		if (num != 0L)
+		{
+			Nat.DecAt(6, z, 3);
+		}
+	}
+}
 }

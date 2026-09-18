@@ -1,63 +1,239 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
-public class SquadWarManager : MonoBehaviour
+public class SquadWarManager : Core_BaseScript
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	private List<DatabaseSquad> mSquadsInSquadWar;
 
-	1. No dll files were provided to AssetRipper.
+	private List<DatabasePlayer> mMembersInSquad;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	private static SquadWarManager mInstance;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public static SquadWarManager instance
+	{
+		get
+		{
+			mInstance = mInstance ?? ((SquadWarManager)UnityEngine.Object.FindObjectsOfType(typeof(SquadWarManager))[0]);
+			return mInstance;
+		}
+	}
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public event Action SquadWarSquadsUpdated;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public event Action SquadWarMembersUpdated;
 
-	3. Assembly Reconstruction has not been implemented.
+	public void OnDestroy()
+	{
+		mInstance = null;
+	}
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public List<DatabaseSquad> GetSquadWarSquads()
+	{
+		if (mSquadsInSquadWar == null)
+		{
+			mSquadsInSquadWar = new List<DatabaseSquad>();
+		}
+		return mSquadsInSquadWar;
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public List<DatabasePlayer> GetSquadWarMembers()
+	{
+		if (mMembersInSquad == null)
+		{
+			mMembersInSquad = new List<DatabasePlayer>();
+		}
+		return mMembersInSquad;
+	}
 
-	4. This script is unnecessary.
+	protected override void Awake()
+	{
+		base.Awake();
+		Singleton<BeanstalkServerManager>.instance.DataLoaded += OnDataLoaded;
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private void OnDataLoaded(DatabaseAction action)
+	{
+		if (!Singleton<BeanstalkServerManager>.instance.isPlayerDataLoaded)
+		{
+			return;
+		}
+		switch (action)
+		{
+		case DatabaseAction.GetSquadWarsDivision:
+		{
+			string squadName = GameLoginManager.currentPlayer.squadName;
+			if (string.IsNullOrEmpty(squadName))
+			{
+				mSquadsInSquadWar = null;
+				if (this.SquadWarSquadsUpdated != null)
+				{
+					this.SquadWarSquadsUpdated();
+				}
+				break;
+			}
+			DatabaseSquad squad = Singleton<ServerResultsCache>.instance.GetSquad(squadName, ommitTime: true);
+			List<DatabaseSquad> list2 = Singleton<ServerResultsCache>.instance.GetSquadsFromLeague(squad.roundId);
+			if (list2 == null)
+			{
+				list2 = new List<DatabaseSquad>();
+			}
+			int num3 = list2.FindIndex((DatabaseSquad s1) => s1.name == squadName);
+			if (num3 >= 0)
+			{
+				list2[num3] = squad;
+			}
+			else
+			{
+				list2.Add(squad);
+			}
+			for (int num4 = list2.Count - 1; num4 >= 0; num4--)
+			{
+				if (string.IsNullOrEmpty(list2[num4].name))
+				{
+					list2.RemoveAt(num4);
+				}
+			}
+			list2.Sort(SortFunctionSquads);
+			mSquadsInSquadWar = list2;
+			if (this.SquadWarSquadsUpdated != null)
+			{
+				this.SquadWarSquadsUpdated();
+			}
+			break;
+		}
+		case DatabaseAction.GetAllSquadMembers:
+		{
+			List<DatabasePlayer> list = Singleton<ServerResultsCache>.instance.GetSquadMembers(GameLoginManager.currentPlayer.squadName);
+			if (list == null)
+			{
+				list = new List<DatabasePlayer>();
+			}
+			int num = list.FindIndex((DatabasePlayer p) => p.id == GameLoginManager.currentPlayer.id);
+			if (num >= 0)
+			{
+				list[num].playerVisuals = GameLoginManager.generatedCurrentPlayer.playerVisuals;
+			}
+			else
+			{
+				list.Add(GameLoginManager.generatedCurrentPlayer);
+			}
+			for (int num2 = list.Count - 1; num2 >= 0; num2--)
+			{
+				if (string.IsNullOrEmpty(list[num2].name))
+				{
+					list.RemoveAt(num2);
+				}
+			}
+			list.Sort(SortFunctionPlayers);
+			mMembersInSquad = list;
+			if (this.SquadWarMembersUpdated != null)
+			{
+				this.SquadWarMembersUpdated();
+			}
+			break;
+		}
+		}
+	}
 
-	5. Script Content Level 0
+	public int SortFunctionPlayers(DatabasePlayer a, DatabasePlayer b)
+	{
+		if (a.squadPoints != b.squadPoints)
+		{
+			return b.squadPoints.CompareTo(a.squadPoints);
+		}
+		if (a.level != b.level)
+		{
+			return b.level.CompareTo(a.level);
+		}
+		if (string.IsNullOrEmpty(a.name))
+		{
+			return (!string.IsNullOrEmpty(b.name)) ? (-1) : 0;
+		}
+		return a.name.CompareTo(b.name);
+	}
 
-		AssetRipper was set to not load any script information.
+	private int SortFunctionSquads(DatabaseSquad a, DatabaseSquad b)
+	{
+		if (a.squadPoints != b.squadPoints)
+		{
+			return b.squadPoints.CompareTo(a.squadPoints);
+		}
+		if (a.rank != b.rank)
+		{
+			return b.rank.CompareTo(a.rank);
+		}
+		if (string.IsNullOrEmpty(a.name))
+		{
+			return (!string.IsNullOrEmpty(b.name)) ? (-1) : 0;
+		}
+		return a.name.CompareTo(b.name);
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public List<DatabaseSquad> GenerateFakeSquads(int squadsInWar, int squadPosition, int minSquadPoints, int maxSquadPoints)
+	{
+		List<DatabaseSquad> list = new List<DatabaseSquad>();
+		DatabaseSquad squad = Singleton<ServerResultsCache>.instance.GetSquad(GameLoginManager.currentPlayer.squadName, ommitTime: true);
+		List<string> list2 = FakeSquadNames(squadsInWar - 1);
+		string division = squad.division;
+		int squadPoints = squad.squadPoints;
+		if (squadPosition == 1)
+		{
+			maxSquadPoints = squadPoints;
+		}
+		if (squadPosition == squadsInWar)
+		{
+			minSquadPoints = squadPoints;
+		}
+		int num = 0;
+		int num2 = squadPosition - 1;
+		for (int i = 0; i < squadsInWar; i++)
+		{
+			if (i + 1 == squadPosition)
+			{
+				list.Add(squad);
+			}
+			else if (i + 1 < squadPosition)
+			{
+				int num3 = Mathf.Max(0, maxSquadPoints - squadPoints - 1);
+				float num4 = (float)(num2 - i) / (float)num2;
+				int squadPoints2 = Mathf.RoundToInt((float)num3 * num4) + squadPoints + 1;
+				list.Add(GenerateFakeSquad(list2[num], squad, squadPoints2));
+				num++;
+			}
+			else
+			{
+				int num5 = Mathf.Max(0, squadPoints - minSquadPoints - 1);
+				float num6 = (float)(squadsInWar - i) / (float)(squadsInWar - num2);
+				int squadPoints3 = Mathf.RoundToInt((float)num5 * num6);
+				list.Add(GenerateFakeSquad(list2[num], squad, squadPoints3));
+				num++;
+			}
+			list[i].division = division;
+		}
+		return list;
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	private List<string> FakeSquadNames(int count)
+	{
+		List<string> list = new List<string>();
+		for (int i = 1; i <= count; i++)
+		{
+			string item = $"FakeDoNotClick{i:2}";
+			list.Add(item);
+		}
+		return list;
+	}
 
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	private DatabaseSquad GenerateFakeSquad(string name, DatabaseSquad mySquad, int squadPoints)
+	{
+		DatabaseSquad databaseSquad = new DatabaseSquad();
+		databaseSquad.name = name;
+		databaseSquad.icon = $"menu-squad-{UnityEngine.Random.Range(1, 37)}";
+		databaseSquad.squadPoints = squadPoints;
+		databaseSquad.rank = mySquad.rank;
+		databaseSquad.division = mySquad.division;
+		databaseSquad.size = UnityEngine.Random.Range(4, 12);
+		return databaseSquad;
+	}
 }

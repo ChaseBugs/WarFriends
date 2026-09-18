@@ -435,6 +435,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b4a724618246aca85d97e6634a199627, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  isActivated: 0
+  widthSetter: {fileID: 11492819}
+  headerPart: {fileID: 179954}
+  headerBackground: {fileID: 11451504}
+  border: {fileID: 11499646}
+  labelReward: {fileID: 11484583}
+  tierReward: {fileID: 11482909}
+  checkSprite: {fileID: 11406298}
+  tierLabel: {fileID: 11434916}
+  tierProgress: {fileID: 11426462}
+  assignmentPart: {fileID: 103859}
+  progressBar: {fileID: 11411718}
+  assignmentIcon: {fileID: 11460213}
+  assignmentDescription: {fileID: 11482579}
+  assignmentProgress: {fileID: 11448483}
 --- !u!114 &11492819
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -446,6 +461,37 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 44d52d196a1901b30dbacb1bcd0c32b2, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  moveInDirection: 8
+  keepBaseSpaceAround: 1
+  baseSize: {x: 1800, y: 112}
+  minSize: {x: 1800, y: 112}
+  maxSize: {x: 0, y: 112}
+  backgrounds:
+  - background: {fileID: 11499646}
+    addSize: {x: 0, y: 0}
+  - background: {fileID: 11451504}
+    addSize: {x: 0, y: 0}
+  - background: {fileID: 11488432}
+    addSize: {x: 0, y: 38}
+  - background: {fileID: 11461517}
+    addSize: {x: -2, y: -102}
+  - background: {fileID: 11411718}
+    addSize: {x: -2, y: -102}
+  isClickable: 0
+  boxCollider: {fileID: 0}
+  addColliderSize: {x: 0, y: 0}
+  labels:
+  - label: {fileID: 11482579}
+    addX: -600
+  leftAnchors:
+  - {fileID: 161526}
+  - {fileID: 191323}
+  rightAnchors:
+  - {fileID: 196012}
+  - {fileID: 134467}
+  topAnchors: []
+  bottomAnchors: []
+  initializationResizeDone: 1
 --- !u!4 &465029
 Transform:
   m_ObjectHideFlags: 0
@@ -486,6 +532,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 995cff53e4ec203488dc398f0f8f32e5, type: 2}
+  mColor: {r: 1, g: 1, b: 1, a: 0.14509805}
+  mPivot: 4
+  mDepth: 20
+  mAtlas: {fileID: 11409266, guid: 9582f38df100b244993ee2e1fa9a9888, type: 2}
+  mSpriteName: whiteRectangle
+  mFillCenter: 1
+  mType: 3
+  mFillDirection: 0
+  mFillAmount: 0.588
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 1
+  mFillSlopePixels: 0
 --- !u!4 &431555
 Transform:
   m_ObjectHideFlags: 0
@@ -509,6 +570,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 995cff53e4ec203488dc398f0f8f32e5, type: 2}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 21
+  mAtlas: {fileID: 11409266, guid: 9582f38df100b244993ee2e1fa9a9888, type: 2}
+  mSpriteName: menu-stroke-1px
+  mFillCenter: 0
+  mType: 1
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &407524
 Transform:
   m_ObjectHideFlags: 0
@@ -545,6 +621,30 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f54891d0b7e1a01a23bc64463aeafd37, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: d808305656a8601409466191d759059d, type: 3}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 3
+  mDepth: 22
+  mFont: {fileID: 11409266, guid: 2ac3a3ab35adb5d45b8c056aa7026f89, type: 2}
+  mText: TIER 1
+  mMaxLineWidth: 0
+  mEncoding: 1
+  mMaxLineCount: 0
+  mPassword: 0
+  mShowLastChar: 0
+  mEffectStyle: 0
+  mEffectColor: {r: 0, g: 0, b: 0, a: 1}
+  mSymbols: 1
+  mEffectDistance: {x: 1, y: 1}
+  mShrinkToFit: 0
+  useLocalization: 0
+  mRescaleLocalization: 0
+  mDefaultScale: 40
+  mMinimalScale: 20
+  mRescaleWidth: 0
+  mDynamicFontSize: 0
+  mLineWidth: 0
+  mMultiline: 1
 --- !u!4 &491709
 Transform:
   m_ObjectHideFlags: 0
@@ -584,6 +684,30 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f54891d0b7e1a01a23bc64463aeafd37, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: d808305656a8601409466191d759059d, type: 3}
+  mColor: {r: 0.99607843, g: 0.99607843, b: 0.99607843, a: 1}
+  mPivot: 5
+  mDepth: 23
+  mFont: {fileID: 11409266, guid: 2ac3a3ab35adb5d45b8c056aa7026f89, type: 2}
+  mText: ID_REWARD
+  mMaxLineWidth: 0
+  mEncoding: 1
+  mMaxLineCount: 0
+  mPassword: 0
+  mShowLastChar: 0
+  mEffectStyle: 0
+  mEffectColor: {r: 0, g: 0, b: 0, a: 1}
+  mSymbols: 1
+  mEffectDistance: {x: 1, y: 1}
+  mShrinkToFit: 0
+  useLocalization: 1
+  mRescaleLocalization: 0
+  mDefaultScale: 40
+  mMinimalScale: 20
+  mRescaleWidth: 0
+  mDynamicFontSize: 0
+  mLineWidth: 0
+  mMultiline: 1
 --- !u!4 &425385
 Transform:
   m_ObjectHideFlags: 0
@@ -607,6 +731,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 995cff53e4ec203488dc398f0f8f32e5, type: 2}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 24
+  mAtlas: {fileID: 11409266, guid: 9582f38df100b244993ee2e1fa9a9888, type: 2}
+  mSpriteName: menu-gold
+  mFillCenter: 1
+  mType: 0
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 1
+  mFillSlopePixels: 0
 --- !u!4 &427192
 Transform:
   m_ObjectHideFlags: 0
@@ -630,6 +769,30 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f54891d0b7e1a01a23bc64463aeafd37, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: d808305656a8601409466191d759059d, type: 3}
+  mColor: {r: 0.99607843, g: 0.99607843, b: 0.99607843, a: 1}
+  mPivot: 3
+  mDepth: 25
+  mFont: {fileID: 11409266, guid: 2ac3a3ab35adb5d45b8c056aa7026f89, type: 2}
+  mText: 500
+  mMaxLineWidth: 0
+  mEncoding: 1
+  mMaxLineCount: 0
+  mPassword: 0
+  mShowLastChar: 0
+  mEffectStyle: 0
+  mEffectColor: {r: 0, g: 0, b: 0, a: 1}
+  mSymbols: 1
+  mEffectDistance: {x: 1, y: 1}
+  mShrinkToFit: 0
+  useLocalization: 0
+  mRescaleLocalization: 0
+  mDefaultScale: 40
+  mMinimalScale: 20
+  mRescaleWidth: 0
+  mDynamicFontSize: 0
+  mLineWidth: 0
+  mMultiline: 1
 --- !u!4 &474717
 Transform:
   m_ObjectHideFlags: 0
@@ -653,6 +816,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 995cff53e4ec203488dc398f0f8f32e5, type: 2}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 3
+  mDepth: 26
+  mAtlas: {fileID: 11409266, guid: 9582f38df100b244993ee2e1fa9a9888, type: 2}
+  mSpriteName: menu-check-gold
+  mFillCenter: 1
+  mType: 0
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 1
+  mFillSlopePixels: 0
 --- !u!4 &435660
 Transform:
   m_ObjectHideFlags: 0
@@ -689,6 +867,30 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f54891d0b7e1a01a23bc64463aeafd37, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: d808305656a8601409466191d759059d, type: 3}
+  mColor: {r: 0.99607843, g: 0.99607843, b: 0.99607843, a: 1}
+  mPivot: 5
+  mDepth: 27
+  mFont: {fileID: 11409266, guid: 2ac3a3ab35adb5d45b8c056aa7026f89, type: 2}
+  mText: 50%
+  mMaxLineWidth: 0
+  mEncoding: 1
+  mMaxLineCount: 0
+  mPassword: 0
+  mShowLastChar: 0
+  mEffectStyle: 0
+  mEffectColor: {r: 0, g: 0, b: 0, a: 1}
+  mSymbols: 1
+  mEffectDistance: {x: 1, y: 1}
+  mShrinkToFit: 0
+  useLocalization: 0
+  mRescaleLocalization: 0
+  mDefaultScale: 40
+  mMinimalScale: 20
+  mRescaleWidth: 0
+  mDynamicFontSize: 0
+  mLineWidth: 0
+  mMultiline: 1
 --- !u!4 &405464
 Transform:
   m_ObjectHideFlags: 0
@@ -729,6 +931,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 0}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 20
+  mAtlas: {fileID: 11409266, guid: 9582f38df100b244993ee2e1fa9a9888, type: 2}
+  mSpriteName: menu-leagues-bar-bg
+  mFillCenter: 1
+  mType: 1
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &463426
 Transform:
   m_ObjectHideFlags: 0
@@ -752,6 +969,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 0}
+  mColor: {r: 0, g: 0, b: 0, a: 0.344}
+  mPivot: 4
+  mDepth: 22
+  mAtlas: {fileID: 11409266, guid: 9582f38df100b244993ee2e1fa9a9888, type: 2}
+  mSpriteName: whiteRectangle
+  mFillCenter: 1
+  mType: 0
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 1
+  mFillSlopePixels: 0
 --- !u!4 &420844
 Transform:
   m_ObjectHideFlags: 0
@@ -775,6 +1007,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 0}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 23
+  mAtlas: {fileID: 11409266, guid: 9582f38df100b244993ee2e1fa9a9888, type: 2}
+  mSpriteName: whiteRectangle
+  mFillCenter: 1
+  mType: 3
+  mFillDirection: 0
+  mFillAmount: 0.509
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 1
+  mFillSlopePixels: 0
 --- !u!4 &463256
 Transform:
   m_ObjectHideFlags: 0
@@ -812,6 +1059,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 0}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 21
+  mAtlas: {fileID: 11409266, guid: 9582f38df100b244993ee2e1fa9a9888, type: 2}
+  mSpriteName: menu-assignments-type-destroy
+  mFillCenter: 1
+  mType: 0
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &462687
 Transform:
   m_ObjectHideFlags: 0
@@ -835,6 +1097,30 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f54891d0b7e1a01a23bc64463aeafd37, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 0}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 3
+  mDepth: 24
+  mFont: {fileID: 11409266, guid: 2ac3a3ab35adb5d45b8c056aa7026f89, type: 2}
+  mText: Kill 100000 enemies
+  mMaxLineWidth: 1200
+  mEncoding: 1
+  mMaxLineCount: 2
+  mPassword: 0
+  mShowLastChar: 0
+  mEffectStyle: 0
+  mEffectColor: {r: 0, g: 0, b: 0, a: 1}
+  mSymbols: 1
+  mEffectDistance: {x: 1, y: 1}
+  mShrinkToFit: 0
+  useLocalization: 0
+  mRescaleLocalization: 0
+  mDefaultScale: 40
+  mMinimalScale: 20
+  mRescaleWidth: 0
+  mDynamicFontSize: 0
+  mLineWidth: 0
+  mMultiline: 1
 --- !u!4 &491078
 Transform:
   m_ObjectHideFlags: 0
@@ -886,6 +1172,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 0}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 25
+  mAtlas: {fileID: 11409266, guid: 9582f38df100b244993ee2e1fa9a9888, type: 2}
+  mSpriteName: menu-assignments-rewardbox
+  mFillCenter: 0
+  mType: 1
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &410128
 Transform:
   m_ObjectHideFlags: 0
@@ -909,6 +1210,30 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f54891d0b7e1a01a23bc64463aeafd37, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 0}
+  mColor: {r: 0.09803922, g: 0.7921569, b: 1, a: 1}
+  mPivot: 5
+  mDepth: 26
+  mFont: {fileID: 11409266, guid: 2ac3a3ab35adb5d45b8c056aa7026f89, type: 2}
+  mText: 50%
+  mMaxLineWidth: 0
+  mEncoding: 1
+  mMaxLineCount: 0
+  mPassword: 0
+  mShowLastChar: 0
+  mEffectStyle: 0
+  mEffectColor: {r: 0, g: 0, b: 0, a: 1}
+  mSymbols: 1
+  mEffectDistance: {x: 1, y: 1}
+  mShrinkToFit: 0
+  useLocalization: 0
+  mRescaleLocalization: 0
+  mDefaultScale: 40
+  mMinimalScale: 20
+  mRescaleWidth: 0
+  mDynamicFontSize: 0
+  mLineWidth: 0
+  mMultiline: 1
 --- !u!4 &473647
 Transform:
   m_ObjectHideFlags: 0
@@ -932,6 +1257,30 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f54891d0b7e1a01a23bc64463aeafd37, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 0}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 27
+  mFont: {fileID: 11409266, guid: 2ac3a3ab35adb5d45b8c056aa7026f89, type: 2}
+  mText: ID_PROGRESS
+  mMaxLineWidth: 0
+  mEncoding: 1
+  mMaxLineCount: 0
+  mPassword: 0
+  mShowLastChar: 0
+  mEffectStyle: 0
+  mEffectColor: {r: 0, g: 0, b: 0, a: 1}
+  mSymbols: 1
+  mEffectDistance: {x: 1, y: 1}
+  mShrinkToFit: 0
+  useLocalization: 1
+  mRescaleLocalization: 0
+  mDefaultScale: 40
+  mMinimalScale: 20
+  mRescaleWidth: 0
+  mDynamicFontSize: 0
+  mLineWidth: 0
+  mMultiline: 1
 --- !u!4 &456797
 Transform:
   m_ObjectHideFlags: 0
@@ -955,6 +1304,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 0}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 0
+  mAtlas: {fileID: 0}
+  mSpriteName:
+  mFillCenter: 1
+  mType: 0
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!1001 &100100000
 Prefab:
   serializedVersion: 2

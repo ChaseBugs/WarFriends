@@ -1,66 +1,84 @@
-using UnityEngine;
+using System;
+using GooglePlayGames.BasicApi.Events;
+using GooglePlayGames.BasicApi.Multiplayer;
+using GooglePlayGames.BasicApi.Quests;
+using GooglePlayGames.BasicApi.SavedGame;
+using UnityEngine.SocialPlatforms;
 
 namespace GooglePlayGames.BasicApi
 {
-	public class IPlayGamesClient : MonoBehaviour
-	{
-		/*
-		Dummy class. This could have happened for several reasons:
+public interface IPlayGamesClient
+{
+	void Authenticate(Action<bool, string> callback, bool silent);
 
-		1. No dll files were provided to AssetRipper.
+	bool IsAuthenticated();
 
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
+	void SignOut();
 
-		2. Incorrect dll files were provided to AssetRipper.
+	string GetToken();
 
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
+	string GetUserId();
 
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	void LoadFriends(Action<bool> callback);
 
-		3. Assembly Reconstruction has not been implemented.
+	string GetUserDisplayName();
 
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
+	void GetIdToken(Action<string> idTokenCallback);
 
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
+	string GetAccessToken();
 
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
+	void GetServerAuthCode(string serverClientId, Action<CommonStatusCodes, string> callback);
 
-		5. Script Content Level 0
+	string GetUserEmail();
 
-			AssetRipper was set to not load any script information.
+	void GetUserEmail(Action<CommonStatusCodes, string> callback);
 
-		6. Cpp2IL failed to decompile Il2Cpp data
+	string GetUserImageUrl();
 
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	void GetPlayerStats(Action<CommonStatusCodes, PlayerStats> callback);
 
-		7. An incorrect path was provided to AssetRipper.
+	void LoadUsers(string[] userIds, Action<IUserProfile[]> callback);
 
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
+	Achievement GetAchievement(string achievementId);
 
-		*/
-	}
+	void LoadAchievements(Action<Achievement[]> callback);
+
+	void UnlockAchievement(string achievementId, Action<bool> successOrFailureCalllback);
+
+	void RevealAchievement(string achievementId, Action<bool> successOrFailureCalllback);
+
+	void IncrementAchievement(string achievementId, int steps, Action<bool> successOrFailureCalllback);
+
+	void SetStepsAtLeast(string achId, int steps, Action<bool> callback);
+
+	void ShowAchievementsUI(Action<UIStatus> callback);
+
+	void ShowLeaderboardUI(string leaderboardId, LeaderboardTimeSpan span, Action<UIStatus> callback);
+
+	void LoadScores(string leaderboardId, LeaderboardStart start, int rowCount, LeaderboardCollection collection, LeaderboardTimeSpan timeSpan, Action<LeaderboardScoreData> callback);
+
+	void LoadMoreScores(ScorePageToken token, int rowCount, Action<LeaderboardScoreData> callback);
+
+	int LeaderboardMaxResults();
+
+	void SubmitScore(string leaderboardId, long score, Action<bool> successOrFailureCalllback);
+
+	void SubmitScore(string leaderboardId, long score, string metadata, Action<bool> successOrFailureCalllback);
+
+	IRealTimeMultiplayerClient GetRtmpClient();
+
+	ITurnBasedMultiplayerClient GetTbmpClient();
+
+	ISavedGameClient GetSavedGameClient();
+
+	IEventsClient GetEventsClient();
+
+	IQuestsClient GetQuestsClient();
+
+	void RegisterInvitationDelegate(InvitationReceivedDelegate invitationDelegate);
+
+	IUserProfile[] GetFriends();
+
+	IntPtr GetApiClient();
+}
 }

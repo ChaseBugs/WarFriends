@@ -1,63 +1,105 @@
 using UnityEngine;
 
-public class InventoryHintText : MonoBehaviour
+public class InventoryHintText : Core_BaseScript
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Header("Animating Parts")]
+	public UISprite rectangle;
 
-	1. No dll files were provided to AssetRipper.
+	public UISprite arrow;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public UILabel text;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	private Vector3 mArrowPosition;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public void Activate(bool shownContent)
+	{
+		mArrowPosition = arrow.transform.localPosition;
+		if (shownContent)
+		{
+			StartAnimation();
+		}
+		else
+		{
+			HideEverything();
+		}
+	}
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	private void HideEverything()
+	{
+		TweenAlpha tweenAlpha = TweenAlpha.Begin(rectangle.gameObject, 0.01f, 0f);
+		tweenAlpha.delay = 0f;
+		tweenAlpha.style = UITweener.Style.Once;
+		tweenAlpha.onFinished = null;
+		TweenAlpha tweenAlpha2 = TweenAlpha.Begin(arrow.gameObject, 0.01f, 0f);
+		tweenAlpha2.delay = 0f;
+		tweenAlpha2.style = UITweener.Style.Once;
+		tweenAlpha2.onFinished = null;
+		TweenAlpha tweenAlpha3 = TweenAlpha.Begin(text.gameObject, 0.01f, 0f);
+		tweenAlpha3.delay = 0f;
+		tweenAlpha3.style = UITweener.Style.Once;
+		tweenAlpha3.onFinished = delegate(UITweener tween)
+		{
+			tween.onFinished = null;
+			base.gameObject.SetActive(value: true);
+		};
+	}
 
-	3. Assembly Reconstruction has not been implemented.
+	private void StartAnimation()
+	{
+		base.gameObject.SetActive(value: true);
+		TweenAlpha tweenAlpha = TweenAlpha.Begin(rectangle.gameObject, 0.3f, 0f, 0.7f);
+		tweenAlpha.delay = 0f;
+		tweenAlpha.onFinished = null;
+		tweenAlpha.style = UITweener.Style.Once;
+		TweenAlpha tweenAlpha2 = TweenAlpha.Begin(text.gameObject, 0.3f, 0f, 0.7f);
+		tweenAlpha2.onFinished = null;
+		TweenPosition tweenPosition = TweenPosition.Begin(rectangle.gameObject, 0.3f, new Vector3(0f, -8f, 0f), new Vector3(0f, 10f, 0f));
+		tweenPosition.method = UITweener.Method.EaseIn;
+		tweenPosition.onFinished = delegate
+		{
+			TweenPosition.Begin(rectangle.gameObject, 0.3f, new Vector3(0f, 0f, 0f)).method = UITweener.Method.EaseOut;
+			TweenAlpha.Begin(rectangle.gameObject, 0.3f, 1f);
+		};
+		float textX = text.transform.localPosition.x;
+		TweenPosition tweenPosition2 = TweenPosition.Begin(text.gameObject, 0.3f, new Vector3(textX, -8f, -2f), new Vector3(textX, 10f, -2f));
+		tweenPosition2.method = UITweener.Method.EaseIn;
+		tweenPosition2.onFinished = delegate(UITweener tween2)
+		{
+			tween2.onFinished = null;
+			TweenPosition.Begin(text.gameObject, 0.3f, new Vector3(textX, 0f, -2f)).method = UITweener.Method.EaseOut;
+			TweenAlpha.Begin(text.gameObject, 0.3f, 1f).onFinished = delegate
+			{
+				AnimateBlicking();
+			};
+		};
+		TweenAlpha tweenAlpha3 = TweenAlpha.Begin(arrow.gameObject, 0.5f, 0f, 1f);
+		tweenAlpha3.delay = 0f;
+		tweenAlpha3.onFinished = null;
+		tweenAlpha3.style = UITweener.Style.Once;
+		TweenPosition tweenPosition3 = TweenPosition.Begin(arrow.gameObject, 0.4f, new Vector3(0f, -150f, 0f), mArrowPosition.ReplaceY(mArrowPosition.y));
+		tweenPosition3.method = UITweener.Method.EaseIn;
+	}
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
-
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
-
-	4. This script is unnecessary.
-
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
-
-	5. Script Content Level 0
-
-		AssetRipper was set to not load any script information.
-
-	6. Cpp2IL failed to decompile Il2Cpp data
-
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	private void AnimateBlicking()
+	{
+		float alpha0 = 0.7f;
+		float alpha1 = 1f;
+		float duration = 0.3f;
+		float t2 = 0.3f;
+		TweenAlpha tweenAlpha = TweenAlpha.Begin(rectangle.gameObject, duration, alpha0, alpha1);
+		tweenAlpha.method = UITweener.Method.EaseOut;
+		TweenAlpha tweenAlpha2 = TweenAlpha.Begin(text.gameObject, duration, alpha0, alpha1);
+		tweenAlpha2.method = UITweener.Method.EaseOut;
+		tweenAlpha.onFinished = delegate
+		{
+			TweenAlpha tweenAlpha3 = TweenAlpha.Begin(rectangle.gameObject, t2, alpha1, alpha0);
+			tweenAlpha3.method = UITweener.Method.EaseIn;
+			TweenAlpha tweenAlpha4 = TweenAlpha.Begin(text.gameObject, t2, alpha1, alpha0);
+			tweenAlpha4.method = UITweener.Method.EaseIn;
+			tweenAlpha3.onFinished = delegate
+			{
+				AnimateBlicking();
+			};
+		};
+	}
 }

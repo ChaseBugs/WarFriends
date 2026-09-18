@@ -1,66 +1,57 @@
-using UnityEngine;
-
 namespace Org.BouncyCastle.Math.EC.Multiplier
 {
-	public class FixedPointUtilities : MonoBehaviour
+public class FixedPointUtilities
+{
+	public static readonly string PRECOMP_NAME = "bc_fixed_point";
+
+	public static int GetCombSize(ECCurve c)
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
+		return c.Order?.BitLength ?? (c.FieldSize + 1);
 	}
+
+	public static FixedPointPreCompInfo GetFixedPointPreCompInfo(PreCompInfo preCompInfo)
+	{
+		if (preCompInfo != null && preCompInfo is FixedPointPreCompInfo)
+		{
+			return (FixedPointPreCompInfo)preCompInfo;
+		}
+		return new FixedPointPreCompInfo();
+	}
+
+	public static FixedPointPreCompInfo Precompute(ECPoint p, int minWidth)
+	{
+		ECCurve curve = p.Curve;
+		int num = 1 << minWidth;
+		FixedPointPreCompInfo fixedPointPreCompInfo = GetFixedPointPreCompInfo(curve.GetPreCompInfo(p, PRECOMP_NAME));
+		ECPoint[] preComp = fixedPointPreCompInfo.PreComp;
+		if (preComp == null || preComp.Length < num)
+		{
+			int combSize = GetCombSize(curve);
+			int e = (combSize + minWidth - 1) / minWidth;
+			ECPoint[] array = new ECPoint[minWidth];
+			array[0] = p;
+			for (int i = 1; i < minWidth; i++)
+			{
+				array[i] = array[i - 1].TimesPow2(e);
+			}
+			curve.NormalizeAll(array);
+			preComp = new ECPoint[num];
+			preComp[0] = curve.Infinity;
+			for (int num2 = minWidth - 1; num2 >= 0; num2--)
+			{
+				ECPoint b = array[num2];
+				int num3 = 1 << num2;
+				for (int j = num3; j < num; j += num3 << 1)
+				{
+					preComp[j] = preComp[j - num3].Add(b);
+				}
+			}
+			curve.NormalizeAll(preComp);
+			fixedPointPreCompInfo.PreComp = preComp;
+			fixedPointPreCompInfo.Width = minWidth;
+			curve.SetPreCompInfo(p, PRECOMP_NAME, fixedPointPreCompInfo);
+		}
+		return fixedPointPreCompInfo;
+	}
+}
 }

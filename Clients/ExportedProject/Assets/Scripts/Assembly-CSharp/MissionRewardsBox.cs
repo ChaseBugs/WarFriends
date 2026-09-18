@@ -1,63 +1,86 @@
 using UnityEngine;
 
-public class MissionRewardsBox : MonoBehaviour
+public class MissionRewardsBox : Core_BaseScript
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Header("Icons")]
+	public UISprite warbucksSprite;
 
-	1. No dll files were provided to AssetRipper.
+	public UISprite goldSprite;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public GameObject cardObject;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public UISprite cardBackgroundSprite;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public UILabel xpLabel;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	[Header("Text")]
+	public UILabel amountLabel;
 
-	3. Assembly Reconstruction has not been implemented.
+	[Header("Claimed Part")]
+	public UISprite border;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public UISprite background;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public UISprite claimedSprite;
 
-	4. This script is unnecessary.
+	public void InitializeWarbucks(int amount)
+	{
+		warbucksSprite.gameObject.SetActive(value: true);
+		goldSprite.gameObject.SetActive(value: false);
+		cardObject.gameObject.SetActive(value: false);
+		xpLabel.gameObject.SetActive(value: false);
+		amountLabel.text = MiscTools.FormatBigNumber(amount);
+		ClaimedPart(claimed: false);
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public void InitializeGold(int amount, bool claimed)
+	{
+		warbucksSprite.gameObject.SetActive(value: false);
+		goldSprite.gameObject.SetActive(value: true);
+		cardObject.gameObject.SetActive(value: false);
+		xpLabel.gameObject.SetActive(value: false);
+		amountLabel.text = MiscTools.FormatBigNumber(amount);
+		ClaimedPart(claimed);
+	}
 
-	5. Script Content Level 0
+	public void InitializeCard(CardManager.CardType type, bool claimed)
+	{
+		warbucksSprite.gameObject.SetActive(value: false);
+		goldSprite.gameObject.SetActive(value: false);
+		cardObject.gameObject.SetActive(value: true);
+		xpLabel.gameObject.SetActive(value: false);
+		cardBackgroundSprite.spriteName = Card.CardBackground(type);
+		amountLabel.text = Localization.Localize("ID_WARCARD");
+		ClaimedPart(claimed);
+	}
 
-		AssetRipper was set to not load any script information.
+	public void InitializeXP(int amount)
+	{
+		warbucksSprite.gameObject.SetActive(value: false);
+		goldSprite.gameObject.SetActive(value: false);
+		cardObject.gameObject.SetActive(value: false);
+		xpLabel.gameObject.SetActive(value: true);
+		amountLabel.text = MiscTools.FormatBigNumber(amount);
+		ClaimedPart(claimed: false);
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public void Hide()
+	{
+		warbucksSprite.gameObject.SetActive(value: false);
+		goldSprite.gameObject.SetActive(value: false);
+		cardObject.gameObject.SetActive(value: false);
+		xpLabel.gameObject.SetActive(value: false);
+		amountLabel.text = string.Empty;
+		ClaimedPart(claimed: false);
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	private void ClaimedPart(bool claimed)
+	{
+		claimedSprite.gameObject.SetActive(claimed);
+		goldSprite.color = ((!claimed) ? Color.white : Colours.gray);
+		cardBackgroundSprite.color = ((!claimed) ? Color.white : Colours.gray);
+		amountLabel.color = ((!claimed) ? Color.white : Colours.gray);
+		background.alpha = ((!claimed) ? 0.0625f : (1f / 32f));
+		border.alpha = ((!claimed) ? 0.125f : 0.0625f);
+	}
 }

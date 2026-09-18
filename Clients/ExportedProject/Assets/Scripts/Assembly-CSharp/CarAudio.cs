@@ -1,63 +1,149 @@
 using UnityEngine;
 
+[RequireComponent(typeof(CarController))]
 public class CarAudio : MonoBehaviour
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public enum EngineAudioOptions
+	{
+		Simple,
+		FourChannel
+	}
 
-	1. No dll files were provided to AssetRipper.
+	public EngineAudioOptions engineSoundStyle = EngineAudioOptions.FourChannel;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public AudioClip lowAccelClip;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public AudioClip lowDecelClip;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public AudioClip highAccelClip;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public AudioClip highDecelClip;
 
-	3. Assembly Reconstruction has not been implemented.
+	public AudioClip skidClip;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public float pitchMultiplier = 1f;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public float lowPitchMin = 1f;
 
-	4. This script is unnecessary.
+	public float lowPitchMax = 6f;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public float highPitchMultiplier = 0.25f;
 
-	5. Script Content Level 0
+	public float maxRolloffDistance = 500f;
 
-		AssetRipper was set to not load any script information.
+	public float dopplerLevel = 1f;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public bool useDoppler = true;
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	private AudioSource lowAccel;
 
-	7. An incorrect path was provided to AssetRipper.
+	private AudioSource lowDecel;
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	private AudioSource highAccel;
 
-	*/
+	private AudioSource highDecel;
+
+	private AudioSource skidSource;
+
+	private bool startedSound;
+
+	private CarController carController;
+
+	private void StartSound()
+	{
+		carController = GetComponent<CarController>();
+		highAccel = SetUpEngineAudioSource(highAccelClip);
+		if (engineSoundStyle == EngineAudioOptions.FourChannel)
+		{
+			lowAccel = SetUpEngineAudioSource(lowAccelClip);
+			lowDecel = SetUpEngineAudioSource(lowDecelClip);
+			highDecel = SetUpEngineAudioSource(highDecelClip);
+		}
+		skidSource = SetUpEngineAudioSource(skidClip);
+		startedSound = true;
+	}
+
+	private void StopSound()
+	{
+		AudioSource[] components = GetComponents<AudioSource>();
+		foreach (AudioSource obj in components)
+		{
+			Object.Destroy(obj);
+		}
+		startedSound = false;
+	}
+
+	private void Update()
+	{
+		float sqrMagnitude = (Camera.main.transform.position - base.transform.position).sqrMagnitude;
+		if (startedSound && sqrMagnitude > maxRolloffDistance * maxRolloffDistance)
+		{
+			StopSound();
+		}
+		if (!startedSound && sqrMagnitude < maxRolloffDistance * maxRolloffDistance)
+		{
+			StartSound();
+		}
+		if (startedSound)
+		{
+			float b = ULerp(lowPitchMin, lowPitchMax, carController.RevsFactor);
+			b = Mathf.Min(lowPitchMax, b);
+			if (engineSoundStyle == EngineAudioOptions.Simple)
+			{
+				highAccel.pitch = b * pitchMultiplier * highPitchMultiplier;
+				highAccel.dopplerLevel = ((!useDoppler) ? 0f : dopplerLevel);
+				highAccel.volume = 1f;
+			}
+			else
+			{
+				lowAccel.pitch = b * pitchMultiplier;
+				lowDecel.pitch = b * pitchMultiplier;
+				highAccel.pitch = b * highPitchMultiplier * pitchMultiplier;
+				highDecel.pitch = b * highPitchMultiplier * pitchMultiplier;
+				float num = Mathf.Abs(carController.AccelInput);
+				float num2 = 1f - num;
+				float num3 = Mathf.InverseLerp(0.2f, 0.8f, carController.RevsFactor);
+				float num4 = 1f - num3;
+				num3 = 1f - (1f - num3) * (1f - num3);
+				num4 = 1f - (1f - num4) * (1f - num4);
+				num = 1f - (1f - num) * (1f - num);
+				num2 = 1f - (1f - num2) * (1f - num2);
+				lowAccel.volume = num4 * num;
+				lowDecel.volume = num4 * num2;
+				highAccel.volume = num3 * num;
+				highDecel.volume = num3 * num2;
+				highAccel.dopplerLevel = ((!useDoppler) ? 0f : dopplerLevel);
+				lowAccel.dopplerLevel = ((!useDoppler) ? 0f : dopplerLevel);
+				highDecel.dopplerLevel = ((!useDoppler) ? 0f : dopplerLevel);
+				lowDecel.dopplerLevel = ((!useDoppler) ? 0f : dopplerLevel);
+			}
+			skidSource.volume = Mathf.Clamp01(carController.AvgSkid * 3f - 1f);
+			skidSource.pitch = Mathf.Lerp(0.8f, 1.3f, carController.SpeedFactor);
+			skidSource.dopplerLevel = ((!useDoppler) ? 0f : dopplerLevel);
+		}
+	}
+
+	private AudioSource SetUpEngineAudioSource(AudioClip clip)
+	{
+		AudioSource audioSource = base.gameObject.AddComponent<AudioSource>();
+		audioSource.clip = clip;
+		audioSource.volume = 0f;
+		audioSource.loop = true;
+		audioSource.time = Random.Range(0f, clip.length);
+		audioSource.Play();
+		audioSource.minDistance = 5f;
+		audioSource.maxDistance = maxRolloffDistance;
+		audioSource.dopplerLevel = 0f;
+		return audioSource;
+	}
+
+	private float ULerp(float from, float to, float value)
+	{
+		return (1f - value) * from + value * to;
+	}
+
+	private float UInverseLerp(float from, float to, float value)
+	{
+		return (value - from) / (to - from);
+	}
 }

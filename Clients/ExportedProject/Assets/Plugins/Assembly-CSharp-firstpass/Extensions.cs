@@ -1,63 +1,146 @@
+using System.Collections;
+using System.Collections.Generic;
+using System.Reflection;
+using ExitGames.Client.Photon;
 using UnityEngine;
 
-public class Extensions : MonoBehaviour
+public static class Extensions
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public static Dictionary<MethodInfo, ParameterInfo[]> ParametersOfMethods = new Dictionary<MethodInfo, ParameterInfo[]>();
 
-	1. No dll files were provided to AssetRipper.
+	public static ParameterInfo[] GetCachedParemeters(this MethodInfo mo)
+	{
+		if (!ParametersOfMethods.TryGetValue(mo, out var value))
+		{
+			value = mo.GetParameters();
+			ParametersOfMethods[mo] = value;
+		}
+		return value;
+	}
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public static PhotonView[] GetPhotonViewsInChildren(this GameObject go)
+	{
+		return go.GetComponentsInChildren<PhotonView>(includeInactive: true);
+	}
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public static PhotonView GetPhotonView(this GameObject go)
+	{
+		return go.GetComponent<PhotonView>();
+	}
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public static bool AlmostEquals(this Vector3 target, Vector3 second, float sqrMagnitudePrecision)
+	{
+		return (target - second).sqrMagnitude < sqrMagnitudePrecision;
+	}
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public static bool AlmostEquals(this Vector2 target, Vector2 second, float sqrMagnitudePrecision)
+	{
+		return (target - second).sqrMagnitude < sqrMagnitudePrecision;
+	}
 
-	3. Assembly Reconstruction has not been implemented.
+	public static bool AlmostEquals(this Quaternion target, Quaternion second, float maxAngle)
+	{
+		return Quaternion.Angle(target, second) < maxAngle;
+	}
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public static bool AlmostEquals(this float target, float second, float floatDiff)
+	{
+		return Mathf.Abs(target - second) < floatDiff;
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public static void Merge(this IDictionary target, IDictionary addHash)
+	{
+		if (addHash == null || target.Equals(addHash))
+		{
+			return;
+		}
+		foreach (object key in addHash.Keys)
+		{
+			target[key] = addHash[key];
+		}
+	}
 
-	4. This script is unnecessary.
+	public static void MergeStringKeys(this IDictionary target, IDictionary addHash)
+	{
+		if (addHash == null || target.Equals(addHash))
+		{
+			return;
+		}
+		foreach (object key in addHash.Keys)
+		{
+			if (key is string)
+			{
+				target[key] = addHash[key];
+			}
+		}
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public static string ToStringFull(this IDictionary origin)
+	{
+		return SupportClass.DictionaryToString(origin, includeTypes: false);
+	}
 
-	5. Script Content Level 0
+	public static string ToStringFull(this object[] data)
+	{
+		if (data == null)
+		{
+			return "null";
+		}
+		string[] array = new string[data.Length];
+		for (int i = 0; i < data.Length; i++)
+		{
+			object obj = data[i];
+			array[i] = ((obj == null) ? "null" : obj.ToString());
+		}
+		return string.Join(", ", array);
+	}
 
-		AssetRipper was set to not load any script information.
+	public static ExitGames.Client.Photon.Hashtable StripToStringKeys(this IDictionary original)
+	{
+		ExitGames.Client.Photon.Hashtable hashtable = new ExitGames.Client.Photon.Hashtable();
+		if (original != null)
+		{
+			foreach (object key in original.Keys)
+			{
+				if (key is string)
+				{
+					hashtable[key] = original[key];
+				}
+			}
+		}
+		return hashtable;
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public static void StripKeysWithNullValues(this IDictionary original)
+	{
+		object[] array = new object[original.Count];
+		int num = 0;
+		foreach (object key2 in original.Keys)
+		{
+			array[num++] = key2;
+		}
+		foreach (object key in array)
+		{
+			if (original[key] == null)
+			{
+				original.Remove(key);
+			}
+		}
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public static bool Contains(this int[] target, int nr)
+	{
+		if (target == null)
+		{
+			return false;
+		}
+		for (int i = 0; i < target.Length; i++)
+		{
+			if (target[i] == nr)
+			{
+				return true;
+			}
+		}
+		return false;
+	}
 }

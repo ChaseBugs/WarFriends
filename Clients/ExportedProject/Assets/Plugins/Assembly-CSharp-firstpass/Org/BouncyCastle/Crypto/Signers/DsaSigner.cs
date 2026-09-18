@@ -1,66 +1,111 @@
-using UnityEngine;
+using System;
+using Org.BouncyCastle.Crypto.Parameters;
+using Org.BouncyCastle.Math;
+using Org.BouncyCastle.Security;
 
 namespace Org.BouncyCastle.Crypto.Signers
 {
-	public class DsaSigner : MonoBehaviour
+public class DsaSigner : IDsa
+{
+	protected readonly IDsaKCalculator kCalculator;
+
+	protected DsaKeyParameters key;
+
+	protected SecureRandom random;
+
+	public virtual string AlgorithmName => "DSA";
+
+	public DsaSigner()
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
+		kCalculator = new RandomDsaKCalculator();
 	}
+
+	public DsaSigner(IDsaKCalculator kCalculator)
+	{
+		this.kCalculator = kCalculator;
+	}
+
+	public virtual void Init(bool forSigning, ICipherParameters parameters)
+	{
+		SecureRandom provided = null;
+		if (forSigning)
+		{
+			if (parameters is ParametersWithRandom)
+			{
+				ParametersWithRandom parametersWithRandom = (ParametersWithRandom)parameters;
+				provided = parametersWithRandom.Random;
+				parameters = parametersWithRandom.Parameters;
+			}
+			if (!(parameters is DsaPrivateKeyParameters))
+			{
+				throw new InvalidKeyException("DSA private key required for signing");
+			}
+			key = (DsaPrivateKeyParameters)parameters;
+		}
+		else
+		{
+			if (!(parameters is DsaPublicKeyParameters))
+			{
+				throw new InvalidKeyException("DSA public key required for verification");
+			}
+			key = (DsaPublicKeyParameters)parameters;
+		}
+		random = InitSecureRandom(forSigning && !kCalculator.IsDeterministic, provided);
+	}
+
+	public virtual BigInteger[] GenerateSignature(byte[] message)
+	{
+		DsaParameters parameters = key.Parameters;
+		BigInteger q = parameters.Q;
+		BigInteger bigInteger = CalculateE(q, message);
+		BigInteger x = ((DsaPrivateKeyParameters)key).X;
+		if (kCalculator.IsDeterministic)
+		{
+			kCalculator.Init(q, x, message);
+		}
+		else
+		{
+			kCalculator.Init(q, random);
+		}
+		BigInteger bigInteger2 = kCalculator.NextK();
+		BigInteger bigInteger3 = parameters.G.ModPow(bigInteger2, parameters.P).Mod(q);
+		bigInteger2 = bigInteger2.ModInverse(q).Multiply(bigInteger.Add(x.Multiply(bigInteger3)));
+		BigInteger bigInteger4 = bigInteger2.Mod(q);
+		return new BigInteger[2] { bigInteger3, bigInteger4 };
+	}
+
+	public virtual bool VerifySignature(byte[] message, BigInteger r, BigInteger s)
+	{
+		DsaParameters parameters = key.Parameters;
+		BigInteger q = parameters.Q;
+		BigInteger bigInteger = CalculateE(q, message);
+		if (r.SignValue <= 0 || q.CompareTo(r) <= 0)
+		{
+			return false;
+		}
+		if (s.SignValue <= 0 || q.CompareTo(s) <= 0)
+		{
+			return false;
+		}
+		BigInteger val = s.ModInverse(q);
+		BigInteger e = bigInteger.Multiply(val).Mod(q);
+		BigInteger e2 = r.Multiply(val).Mod(q);
+		BigInteger p = parameters.P;
+		e = parameters.G.ModPow(e, p);
+		e2 = ((DsaPublicKeyParameters)key).Y.ModPow(e2, p);
+		BigInteger bigInteger2 = e.Multiply(e2).Mod(p).Mod(q);
+		return bigInteger2.Equals(r);
+	}
+
+	protected virtual BigInteger CalculateE(BigInteger n, byte[] message)
+	{
+		int length = System.Math.Min(message.Length, n.BitLength / 8);
+		return new BigInteger(1, message, 0, length);
+	}
+
+	protected virtual SecureRandom InitSecureRandom(bool needed, SecureRandom provided)
+	{
+		return (!needed) ? null : ((provided == null) ? new SecureRandom() : provided);
+	}
+}
 }

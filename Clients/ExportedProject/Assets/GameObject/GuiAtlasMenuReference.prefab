@@ -39,6 +39,431 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ea9f040b2b6bd4bf069e31e0ace12f73, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  material: {fileID: 2100000, guid: 995cff53e4ec203488dc398f0f8f32e5, type: 2}
+  sprites:
+  - name: circle
+    outer:
+      serializedVersion: 2
+      x: 0.39648438
+      y: 0.7480469
+      width: 0.10644531
+      height: 0.21289062
+    inner:
+      serializedVersion: 2
+      x: 0.39648438
+      y: 0.7480469
+      width: 0.10644531
+      height: 0.21289062
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: whiteDot
+    outer:
+      serializedVersion: 2
+      x: 0.59765625
+      y: 0.265625
+      width: 0.0625
+      height: 0.125
+    inner:
+      serializedVersion: 2
+      x: 0.59765625
+      y: 0.265625
+      width: 0.0625
+      height: 0.125
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: sinperRifle1
+    outer:
+      serializedVersion: 2
+      x: 0.81347656
+      y: 0.65234375
+      width: 0.14648438
+      height: 0.07421875
+    inner:
+      serializedVersion: 2
+      x: 0.81347656
+      y: 0.65234375
+      width: 0.14648438
+      height: 0.07421875
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: rifle1
+    outer:
+      serializedVersion: 2
+      x: 0.81347656
+      y: 0.53125
+      width: 0.14648438
+      height: 0.109375
+    inner:
+      serializedVersion: 2
+      x: 0.81347656
+      y: 0.53125
+      width: 0.14648438
+      height: 0.109375
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: whiteRectangle
+    outer:
+      serializedVersion: 2
+      x: 0.39648438
+      y: 0
+      width: 0.1953125
+      height: 0.390625
+    inner:
+      serializedVersion: 2
+      x: 0.39648438
+      y: 0
+      width: 0.1953125
+      height: 0.390625
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: tick_64
+    outer:
+      serializedVersion: 2
+      x: 0.9033203
+      y: 0.73828125
+      width: 0.0625
+      height: 0.125
+    inner:
+      serializedVersion: 2
+      x: 0.9033203
+      y: 0.73828125
+      width: 0.0625
+      height: 0.125
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: circle2
+    outer:
+      serializedVersion: 2
+      x: 0.39648438
+      y: 0.40234375
+      width: 0.16699219
+      height: 0.33398438
+    inner:
+      serializedVersion: 2
+      x: 0.39648438
+      y: 0.40234375
+      width: 0.16699219
+      height: 0.33398438
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: hitmark30003
+    outer:
+      serializedVersion: 2
+      x: 0.86328125
+      y: 0
+      width: 0.12695312
+      height: 0.25390625
+    inner:
+      serializedVersion: 2
+      x: 0.86328125
+      y: 0
+      width: 0.12695312
+      height: 0.25390625
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: hitmark30004
+    outer:
+      serializedVersion: 2
+      x: 0.83496094
+      y: 0.265625
+      width: 0.12695312
+      height: 0.25390625
+    inner:
+      serializedVersion: 2
+      x: 0.83496094
+      y: 0.265625
+      width: 0.12695312
+      height: 0.25390625
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: hitmark30001
+    outer:
+      serializedVersion: 2
+      x: 0.70214844
+      y: 0.265625
+      width: 0.12695312
+      height: 0.25390625
+    inner:
+      serializedVersion: 2
+      x: 0.70214844
+      y: 0.265625
+      width: 0.12695312
+      height: 0.25390625
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: hitmark30000
+    outer:
+      serializedVersion: 2
+      x: 0.56933594
+      y: 0.40234375
+      width: 0.12695312
+      height: 0.25390625
+    inner:
+      serializedVersion: 2
+      x: 0.56933594
+      y: 0.40234375
+      width: 0.12695312
+      height: 0.25390625
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: hitmark30005
+    outer:
+      serializedVersion: 2
+      x: 0.56933594
+      y: 0.66796875
+      width: 0.12695312
+      height: 0.25390625
+    inner:
+      serializedVersion: 2
+      x: 0.56933594
+      y: 0.66796875
+      width: 0.12695312
+      height: 0.25390625
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: hitmark30002
+    outer:
+      serializedVersion: 2
+      x: 0.59765625
+      y: 0
+      width: 0.12695312
+      height: 0.25390625
+    inner:
+      serializedVersion: 2
+      x: 0.59765625
+      y: 0
+      width: 0.12695312
+      height: 0.25390625
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: hitmark30006
+    outer:
+      serializedVersion: 2
+      x: 0.73046875
+      y: 0
+      width: 0.12695312
+      height: 0.25390625
+    inner:
+      serializedVersion: 2
+      x: 0.73046875
+      y: 0
+      width: 0.12695312
+      height: 0.25390625
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: bullettime-overlay
+    outer:
+      serializedVersion: 2
+      x: 0
+      y: 0
+      width: 0.390625
+      height: 0.78125
+    inner:
+      serializedVersion: 2
+      x: 0
+      y: 0
+      width: 0.390625
+      height: 0.78125
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: shotgun1
+    outer:
+      serializedVersion: 2
+      x: 0
+      y: 0.79296875
+      width: 0.14648438
+      height: 0.06640625
+    inner:
+      serializedVersion: 2
+      x: 0
+      y: 0.79296875
+      width: 0.14648438
+      height: 0.06640625
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-slomo-bg
+    outer:
+      serializedVersion: 2
+      x: 0.70214844
+      y: 0.53125
+      width: 0.10546875
+      height: 0.2109375
+    inner:
+      serializedVersion: 2
+      x: 0.70214844
+      y: 0.53125
+      width: 0.10546875
+      height: 0.2109375
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-slomo-fill
+    outer:
+      serializedVersion: 2
+      x: 0.70214844
+      y: 0.75390625
+      width: 0.09472656
+      height: 0.18945312
+    inner:
+      serializedVersion: 2
+      x: 0.70214844
+      y: 0.75390625
+      width: 0.09472656
+      height: 0.18945312
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-slomo-fill-empty
+    outer:
+      serializedVersion: 2
+      x: 0.8027344
+      y: 0.75390625
+      width: 0.09472656
+      height: 0.18945312
+    inner:
+      serializedVersion: 2
+      x: 0.8027344
+      y: 0.75390625
+      width: 0.09472656
+      height: 0.18945312
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-slomo-ico-fill
+    outer:
+      serializedVersion: 2
+      x: 0.6660156
+      y: 0.265625
+      width: 0.030273438
+      height: 0.07421875
+    inner:
+      serializedVersion: 2
+      x: 0.6660156
+      y: 0.265625
+      width: 0.030273438
+      height: 0.07421875
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-slomo-ico-fill-empty
+    outer:
+      serializedVersion: 2
+      x: 0.9033203
+      y: 0.875
+      width: 0.030273438
+      height: 0.07421875
+    inner:
+      serializedVersion: 2
+      x: 0.9033203
+      y: 0.875
+      width: 0.030273438
+      height: 0.07421875
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-bracket-horizontal
+    outer:
+      serializedVersion: 2
+      x: 0.50878906
+      y: 0.93359375
+      width: 0.08300781
+      height: 0.01171875
+    inner:
+      serializedVersion: 2
+      x: 0.50878906
+      y: 0.93359375
+      width: 0.08300781
+      height: 0.01171875
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-bracket
+    outer:
+      serializedVersion: 2
+      x: 0.59765625
+      y: 0.93359375
+      width: 0.00390625
+      height: 0.041015625
+    inner:
+      serializedVersion: 2
+      x: 0.59765625
+      y: 0.93359375
+      width: 0.00390625
+      height: 0.041015625
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  mCoordinates: 1
+  mPixelSize: 1
+  mReplacement: {fileID: 11409266, guid: 9582f38df100b244993ee2e1fa9a9888, type: 2}
+  pngPath:
+  pngHalfPath:
+  replaceTexture: {fileID: 0}
+  useBinaryData: 0
+  textureWidth: 4096
+  textureHeight: 2048
 --- !u!1001 &100100000
 Prefab:
   serializedVersion: 2

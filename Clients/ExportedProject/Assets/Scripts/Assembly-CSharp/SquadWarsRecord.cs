@@ -1,63 +1,149 @@
+using System;
 using UnityEngine;
 
-public class SquadWarsRecord : MonoBehaviour
+public class SquadWarsRecord : PoolableObject
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Header("Width Setter")]
+	public UIButtonSetter widthSetter;
 
-	1. No dll files were provided to AssetRipper.
+	[Header("Header Part")]
+	public GameObject headerPart;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public UISprite headerBackground;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public UITable table;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public UILabel rewardLabel;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public UISprite goldIcon;
 
-	3. Assembly Reconstruction has not been implemented.
+	public UILabel goldReward;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public UILabel actionAndDivision;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public UISprite[] arrows;
 
-	4. This script is unnecessary.
+	[Header("Squad Record")]
+	public GameObject recordPart;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public UISprite recordBackground;
 
-	5. Script Content Level 0
+	public GameObject squadButton;
 
-		AssetRipper was set to not load any script information.
+	public UILabel positionLabel;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public UITexture squadIconTexture;
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public UILabel squadName;
 
-	7. An incorrect path was provided to AssetRipper.
+	public UILabel squadMembers;
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	public UILabel squadPoints;
 
-	*/
+	public UISprite squadPointsBox;
+
+	public UISprite highlight;
+
+	public void Initialize(SquadWarsContent.SquadWarsInternal data, float width)
+	{
+		headerPart.SetActive(!data.isRecord);
+		recordPart.SetActive(data.isRecord);
+		widthSetter.SetWidth(width);
+		if (data.isRecord)
+		{
+			recordBackground.color = BackgroundColor(data.type);
+			positionLabel.color = PositionColor(data.type);
+			squadPointsBox.color = positionLabel.color;
+			highlight.color = HighlightColor(data.type).ReplaceA((!(data.squadName == GameLoginManager.currentPlayer.squadName)) ? 0f : 1f);
+			positionLabel.text = MiscTools.FormatNumberToOrdinalPoint(data.position);
+			squadIconTexture.mainTexture = Resources.Load<Texture>("SquadIcons/" + data.squadIcon);
+			squadIconTexture.MakePixelPerfect();
+			squadIconTexture.transform.localScale = squadIconTexture.transform.localScale.MultiplyXY(0.5f);
+			squadName.text = data.squadName;
+			TweenColor.Begin(squadName.gameObject, 0f, Color.white);
+			MiscTools.SetUILabelRescale(squadName, 37f, 23f);
+			squadMembers.text = Localization.LocalizeFormat("ID_NUMMEMBERS", data.squadSize);
+			squadPoints.text = MiscTools.FormatBigNumber(data.squadPoints);
+			UIEventListener uIEventListener = UIEventListener.Get(squadButton);
+			uIEventListener.onClick = (UIEventListener.VoidDelegate)Delegate.Remove(uIEventListener.onClick, new UIEventListener.VoidDelegate(ShowSquad));
+			UIEventListener uIEventListener2 = UIEventListener.Get(squadButton);
+			uIEventListener2.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener2.onClick, new UIEventListener.VoidDelegate(ShowSquad));
+			return;
+		}
+		headerBackground.color = BackgroundColor(data.type);
+		bool flag = data.goldReward > 0;
+		table.repositionNow = true;
+		rewardLabel.text = Localization.Localize((!flag) ? "ID_NOREWARD" : "ID_REWARD");
+		rewardLabel.color = ((!flag) ? Colours.grayButton : Colours.goldWar);
+		goldIcon.alpha = ((!flag) ? 0f : 1f);
+		goldReward.alpha = ((!flag) ? 0f : 1f);
+		goldReward.text = MiscTools.FormatBigNumber(data.goldReward);
+		string key = ((data.headerAction > 0) ? "ID_PROMOTETODIVISION" : ((data.headerAction >= 0) ? "ID_STAYINDIVISION" : "ID_DEMOTETODIVISION"));
+		int num = ((data.headerAction > 0) ? (data.headerDivision + 1) : ((data.headerAction >= 0) ? data.headerDivision : (data.headerDivision - 1)));
+		actionAndDivision.text = string.Format("{0} {1}{2} {3}", Localization.Localize(key), Colours.stringGoldWar, Localization.Localize("ID_DIVISION"), 9 - num);
+		actionAndDivision.transform.localPosition = actionAndDivision.transform.localPosition.ReplaceX(-44f - (float)(num - 1) * 13.7f);
+		for (int i = 0; i < arrows.Length; i++)
+		{
+			arrows[i].gameObject.SetActive(i < num);
+		}
+	}
+
+	private void ShowSquad(GameObject go)
+	{
+		if (recordPart.activeSelf)
+		{
+			TweenColor tweenColor = TweenColor.Begin(squadName.gameObject, GameVariables.durationOfNameButtonColor, Color.white, Colours.blue);
+			tweenColor.NumOfRepetitions = 2;
+			tweenColor.style = UITweener.Style.PingPong;
+			SoundsManager.Instance.PlayButtonClickedSound();
+			GuiElementSingle<SquadDetailsDialog>.instance.ShowDialog(squadName.text);
+		}
+	}
+
+	public override void DestroyPooled()
+	{
+		base.DestroyPooled();
+		squadIconTexture.mainTexture = null;
+		UIEventListener uIEventListener = UIEventListener.Get(squadButton);
+		uIEventListener.onClick = (UIEventListener.VoidDelegate)Delegate.Remove(uIEventListener.onClick, new UIEventListener.VoidDelegate(ShowSquad));
+	}
+
+	private Color BackgroundColor(LeagueType type)
+	{
+		switch (type)
+		{
+			case LeagueType.Promote:
+				return Colours.greenSquadWar;
+			case LeagueType.Demote:
+				return Colours.redSquadWar;
+			default:
+				return Color.white;
+		}
+	}
+
+	private Color PositionColor(LeagueType type)
+	{
+		switch (type)
+		{
+			case LeagueType.Promote:
+				return Colours.greenSquadWar;
+			case LeagueType.Demote:
+				return Colours.redSquadWar;
+			default:
+				return Colours.goldSquadWar;
+		}
+	}
+
+	private Color HighlightColor(LeagueType type)
+	{
+		switch (type)
+		{
+			case LeagueType.Promote:
+				return Colours.greenSquadWar;
+			case LeagueType.Demote:
+				return Colours.redSquadWar;
+			default:
+				return Colours.blue;
+		}
+	}
 }

@@ -1,66 +1,93 @@
+using System;
+using GooglePlayGames.BasicApi;
+using GooglePlayGames.Native.Cwrapper;
 using UnityEngine;
 
 namespace GooglePlayGames.Native
 {
-	public class ConversionUtils : MonoBehaviour
+internal static class ConversionUtils
+{
+	internal static ResponseStatus ConvertResponseStatus(CommonErrorStatus.ResponseStatus status)
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
+		switch (status)
+		{
+			case CommonErrorStatus.ResponseStatus.VALID:
+				return ResponseStatus.Success;
+			case CommonErrorStatus.ResponseStatus.VALID_BUT_STALE:
+				return ResponseStatus.SuccessWithStale;
+			case CommonErrorStatus.ResponseStatus.ERROR_INTERNAL:
+				return ResponseStatus.InternalError;
+			case CommonErrorStatus.ResponseStatus.ERROR_LICENSE_CHECK_FAILED:
+				return ResponseStatus.LicenseCheckFailed;
+			case CommonErrorStatus.ResponseStatus.ERROR_NOT_AUTHORIZED:
+				return ResponseStatus.NotAuthorized;
+			case CommonErrorStatus.ResponseStatus.ERROR_TIMEOUT:
+				return ResponseStatus.Timeout;
+			case CommonErrorStatus.ResponseStatus.ERROR_VERSION_UPDATE_REQUIRED:
+				return ResponseStatus.VersionUpdateRequired;
+			default:
+				throw new InvalidOperationException("Unknown status: " + status);
+		}
 	}
+
+	internal static CommonStatusCodes ConvertResponseStatusToCommonStatus(CommonErrorStatus.ResponseStatus status)
+	{
+		switch (status)
+		{
+		case CommonErrorStatus.ResponseStatus.VALID:
+			return CommonStatusCodes.Success;
+		case CommonErrorStatus.ResponseStatus.VALID_BUT_STALE:
+			return CommonStatusCodes.SuccessCached;
+		case CommonErrorStatus.ResponseStatus.ERROR_INTERNAL:
+			return CommonStatusCodes.InternalError;
+		case CommonErrorStatus.ResponseStatus.ERROR_LICENSE_CHECK_FAILED:
+			return CommonStatusCodes.LicenseCheckFailed;
+		case CommonErrorStatus.ResponseStatus.ERROR_NOT_AUTHORIZED:
+			return CommonStatusCodes.AuthApiAccessForbidden;
+		case CommonErrorStatus.ResponseStatus.ERROR_TIMEOUT:
+			return CommonStatusCodes.Timeout;
+		case CommonErrorStatus.ResponseStatus.ERROR_VERSION_UPDATE_REQUIRED:
+			return CommonStatusCodes.ServiceVersionUpdateRequired;
+		default:
+			Debug.LogWarning(string.Concat("Unknown ResponseStatus: ", status, ", defaulting to CommonStatusCodes.Error"));
+			return CommonStatusCodes.Error;
+		}
+	}
+
+	internal static UIStatus ConvertUIStatus(CommonErrorStatus.UIStatus status)
+	{
+		switch (status)
+		{
+			case CommonErrorStatus.UIStatus.VALID:
+				return UIStatus.Valid;
+			case CommonErrorStatus.UIStatus.ERROR_INTERNAL:
+				return UIStatus.InternalError;
+			case CommonErrorStatus.UIStatus.ERROR_NOT_AUTHORIZED:
+				return UIStatus.NotAuthorized;
+			case CommonErrorStatus.UIStatus.ERROR_TIMEOUT:
+				return UIStatus.Timeout;
+			case CommonErrorStatus.UIStatus.ERROR_VERSION_UPDATE_REQUIRED:
+				return UIStatus.VersionUpdateRequired;
+			case CommonErrorStatus.UIStatus.ERROR_CANCELED:
+				return UIStatus.UserClosedUI;
+			case CommonErrorStatus.UIStatus.ERROR_UI_BUSY:
+				return UIStatus.UiBusy;
+			default:
+				throw new InvalidOperationException("Unknown status: " + status);
+		}
+	}
+
+	internal static GooglePlayGames.Native.Cwrapper.Types.DataSource AsDataSource(DataSource source)
+	{
+		switch (source)
+		{
+			case DataSource.ReadCacheOrNetwork:
+				return GooglePlayGames.Native.Cwrapper.Types.DataSource.CACHE_OR_NETWORK;
+			case DataSource.ReadNetworkOnly:
+				return GooglePlayGames.Native.Cwrapper.Types.DataSource.NETWORK_ONLY;
+			default:
+				throw new InvalidOperationException("Found unhandled DataSource: " + source);
+		}
+	}
+}
 }

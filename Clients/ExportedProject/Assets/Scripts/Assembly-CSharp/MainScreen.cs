@@ -1,63 +1,253 @@
+using System;
 using UnityEngine;
 
-public class MainScreen : MonoBehaviour
+public class MainScreen : GuiScreenSingle<MainScreen>
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Header("Left")]
+	public LeftGoldenSuitcase goldenSuitcaseLeft;
 
-	1. No dll files were provided to AssetRipper.
+	public GameObject dailyRewardButton;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public GameObject dailyRewardBadge;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public IntroductionDeals dealsOnRight;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	[Header("Top")]
+	public MainScreenAssignments assignments;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	[Header("Right")]
+	public MainScreenSocial social;
 
-	3. Assembly Reconstruction has not been implemented.
+	public GameObject gpgsButton;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public UILabel gpgsLabel;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	[Header("Bottom Left")]
+	public IntroductionSquadButton squadButton;
 
-	4. This script is unnecessary.
+	[Header("Bottom")]
+	public MainScreenLeaguePlayers bottomLeaguePlayers;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	[Header("Bottom Right")]
+	public UIButton nextButton;
 
-	5. Script Content Level 0
+	public GameObject notificationObject;
 
-		AssetRipper was set to not load any script information.
+	public UILabel notificationText;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public GameObject positionForTutorialText;
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public GameObject positionForTutorialHand;
 
-	7. An incorrect path was provided to AssetRipper.
+	private bool mShowAchievementsAfterGPGSLogin;
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	public override void InitEvents()
+	{
+		base.InitEvents();
+		Singleton<BeanstalkServerManager>.instance.DataLoaded += OnDataLoaded;
+		Singleton<BeanstalkServerManager>.instance.AfterPlayerDataLoaded += OnAfterPlayerDataLoaded;
+		goldenSuitcaseLeft.InitEvents();
+		dealsOnRight.InitEvents();
+		social.InitEvents();
+		squadButton.InitEvents();
+		bottomLeaguePlayers.InitEvents();
+	}
 
-	*/
+	private void OnDataLoaded(DatabaseAction action)
+	{
+		if (!isShowed)
+		{
+			return;
+		}
+		switch (action)
+		{
+		case DatabaseAction.CheckDailyReward:
+		case DatabaseAction.ClaimDailyReward:
+			if (StatsManager.instance.dailyRewardData != null)
+			{
+				UpdateDailyrewadButton();
+			}
+			break;
+		case DatabaseAction.LoginToCustomAccount:
+		case DatabaseAction.AddFacebook:
+		case DatabaseAction.CreateGcAccount:
+		case DatabaseAction.RemoveFacebook:
+		case DatabaseAction.AddGooglePlay:
+		case DatabaseAction.RemoveGooglePlay:
+			UpdateDailyrewadButton();
+			GPGSLook();
+			break;
+		}
+	}
+
+	private void OnAfterPlayerDataLoaded()
+	{
+		if (isShowed)
+		{
+			InitGUIValues();
+		}
+	}
+
+	protected override void InitControls()
+	{
+		goldenSuitcaseLeft.InitControls();
+		dealsOnRight.InitControls();
+		assignments.InitControls();
+		social.InitControls();
+		squadButton.InitControls();
+		bottomLeaguePlayers.InitControls();
+		UIEventListener uIEventListener = UIEventListener.Get(nextButton.gameObject);
+		uIEventListener.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener.onClick, new UIEventListener.VoidDelegate(NextButtonClick));
+		UIEventListener uIEventListener2 = UIEventListener.Get(dailyRewardButton);
+		uIEventListener2.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener2.onClick, new UIEventListener.VoidDelegate(DailyRewardButtonClick));
+		UIEventListener uIEventListener3 = UIEventListener.Get(gpgsButton);
+		uIEventListener3.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener3.onClick, (UIEventListener.VoidDelegate)delegate
+		{
+			if (GameLoginManager.instance.data.currentPlayer.isGooglePlayConnected && Singleton<GooglePlayGameService>.instance.isLoggedIn)
+			{
+				Singleton<GooglePlayGameService>.instance.ShowAchievementsUI();
+			}
+			else if (GameLoginManager.instance.data.currentPlayer.isGooglePlayConnected)
+			{
+				mShowAchievementsAfterGPGSLogin = true;
+				GameLoginManager.instance.LoginToGoogle();
+			}
+			else
+			{
+				GameLoginManager.instance.LoginToGoogle();
+			}
+		});
+		Singleton<GooglePlayGameService>.instance.LoggedIn += OnGooglePlayGameServiceLoggedIn;
+		Singleton<GooglePlayGameService>.instance.LoggedInFromInit += delegate
+		{
+			GPGSLook();
+		};
+		Singleton<GooglePlayGameService>.instance.LoggedOut += delegate
+		{
+			GPGSLook();
+		};
+		Singleton<NotificationManager>.instance.UnitDelivered += UpdateNextNotifications;
+		Singleton<NotificationManager>.instance.WeaponDelivered += UpdateNextNotifications;
+	}
+
+	private void NextButtonClick(GameObject go)
+	{
+		Singleton<GuiManager>.instance.ShowGui(GuiScreenSingle<BattlePreparationScreen>.instance);
+	}
+
+	private void DailyRewardButtonClick(GameObject go)
+	{
+		GuiScreenSingle<DailyRewardMonthScreen>.instance.showedFromDialog = false;
+		Singleton<GuiManager>.instance.ShowGui(GuiScreenSingle<DailyRewardMonthScreen>.instance);
+	}
+
+	private void UpdateNextNotifications()
+	{
+		if (isShowed)
+		{
+			NextNotifications();
+		}
+	}
+
+	private void NextNotifications()
+	{
+		int numberOfMenuNotifications = Singleton<NotificationManager>.instance.GetNumberOfMenuNotifications();
+		notificationText.text = MiscTools.FormatBigNumber(numberOfMenuNotifications);
+		notificationObject.SetActive(numberOfMenuNotifications > 0);
+	}
+
+	public override void InitGUIValues()
+	{
+		goldenSuitcaseLeft.InitGuiValues();
+		UpdateDailyrewadButton();
+		dealsOnRight.InitGuiValues();
+		assignments.InitGuiValues();
+		social.InitGUIValues();
+		GPGSLook();
+		squadButton.InitGuiValues();
+		bottomLeaguePlayers.InitGuiValues();
+		if (Singleton<BeanstalkServerManager>.instance.isPlayerDataLoaded)
+		{
+			NextNotifications();
+		}
+		mShowAchievementsAfterGPGSLogin = false;
+	}
+
+	public override void AnimateShow(bool forceFadeIn)
+	{
+		base.AnimateShow(forceFadeIn);
+		bottomLeaguePlayers.AnimateShow();
+		dealsOnRight.AnimateShow();
+	}
+
+	public override void DoBeforeHide()
+	{
+		base.DoBeforeHide();
+		dealsOnRight.DoBeforeHide();
+	}
+
+	public override void DoAfterHide()
+	{
+		base.DoAfterHide();
+		bottomLeaguePlayers.DoAfterHide();
+		goldenSuitcaseLeft.DoAfterHide();
+		squadButton.DoAfterHide();
+	}
+
+	private void UpdateDailyrewadButton()
+	{
+		if (Singleton<GameController>.instance.isTutorial)
+		{
+			dailyRewardButton.SetActive(value: false);
+		}
+		else if (LevelManager.instance.isDailyRewardsLocked)
+		{
+			dailyRewardButton.SetActive(value: false);
+		}
+		else if (StatsManager.instance.dailyRewardData == null)
+		{
+			dailyRewardButton.SetActive(value: false);
+			Singleton<BeanstalkServerManager>.instance.checkDaylyRewards();
+		}
+		else
+		{
+			dailyRewardButton.SetActive(value: true);
+			dailyRewardBadge.SetActive(StatsManager.instance.dailyRewardData.canClaim);
+		}
+	}
+
+	private void GPGSLook()
+	{
+		bool isGooglePlayConnected = GameLoginManager.instance.data.currentPlayer.isGooglePlayConnected;
+		gpgsLabel.text = Localization.Localize((!isGooglePlayConnected) ? "ID_CONNECTTOGOOGLEPLAY" : "ID_GOOGLEPLAYACHIEVEMENTS");
+	}
+
+	public override void OnBack()
+	{
+		ConfirmDialog.ShowChoice(Localization.Localize("ID_CONFIRM_EXIT"), Localization.Localize("ID_CONFIRM_EXITWARFRIENDS"), delegate(ConfirmDialog dialog, bool result)
+		{
+			if (result)
+			{
+				Application.Quit();
+			}
+		}, Localization.Localize("ID_YES"), Localization.Localize("ID_NO"));
+	}
+
+	public void OnApplicationFocus()
+	{
+		GPGSLook();
+	}
+
+	public void OnGooglePlayGameServiceLoggedIn(bool success)
+	{
+		GPGSLook();
+		if (mShowAchievementsAfterGPGSLogin)
+		{
+			mShowAchievementsAfterGPGSLogin = false;
+			if (success)
+			{
+				Singleton<GooglePlayGameService>.instance.ShowAchievementsUI();
+			}
+		}
+	}
 }

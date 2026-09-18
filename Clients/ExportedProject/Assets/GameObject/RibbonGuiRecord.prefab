@@ -422,6 +422,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e415c35bc65679352d78e1cfd50de902, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  isActivated: 0
+  ribbonName: {fileID: 11451504}
+  ribbonHeaderBackground: {fileID: 11465029}
+  background: {fileID: 11407524}
+  ribbonIcon: {fileID: 11405055}
+  ribbonIconBg: {fileID: 11484583}
+  countObject: {fileID: 188124}
+  counText: {fileID: 11461517}
+  ribbonDescription: {fileID: 11400463}
+  bottomPart: {fileID: 159786}
+  warbugsIco: {fileID: 11439548}
+  warbugsLabel: {fileID: 11485712}
+  endScreenSpacer: {fileID: 144804}
+  playerStatsSpacer: {fileID: 155190}
 --- !u!4 &433324
 Transform:
   m_ObjectHideFlags: 0
@@ -459,6 +473,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 995cff53e4ec203488dc398f0f8f32e5, type: 2}
+  mColor: {r: 0, g: 0, b: 0, a: 0.5019608}
+  mPivot: 4
+  mDepth: 2
+  mAtlas: {fileID: 11409266, guid: 9582f38df100b244993ee2e1fa9a9888, type: 2}
+  mSpriteName: whiteRectangle
+  mFillCenter: 1
+  mType: 0
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 1
+  mFillSlopePixels: 0
 --- !u!4 &492514
 Transform:
   m_ObjectHideFlags: 0
@@ -482,6 +511,30 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f54891d0b7e1a01a23bc64463aeafd37, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: d808305656a8601409466191d759059d, type: 3}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 3
+  mFont: {fileID: 11409266, guid: 2ac3a3ab35adb5d45b8c056aa7026f89, type: 2}
+  mText: VEHICLE DESTROYED RIBBON
+  mMaxLineWidth: 540
+  mEncoding: 1
+  mMaxLineCount: 0
+  mPassword: 0
+  mShowLastChar: 0
+  mEffectStyle: 0
+  mEffectColor: {r: 0, g: 0, b: 0, a: 1}
+  mSymbols: 1
+  mEffectDistance: {x: 1, y: 1}
+  mShrinkToFit: 0
+  useLocalization: 0
+  mRescaleLocalization: 0
+  mDefaultScale: 40
+  mMinimalScale: 20
+  mRescaleWidth: 0
+  mDynamicFontSize: 0
+  mLineWidth: 0
+  mMultiline: 1
 --- !u!4 &431555
 Transform:
   m_ObjectHideFlags: 0
@@ -521,6 +574,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 004bf51e44960d04eae9440074f7edfe, type: 2}
+  mColor: {r: 0, g: 0, b: 0, a: 0.2509804}
+  mPivot: 4
+  mDepth: 1
+  mAtlas: {fileID: 11409266, guid: 495417da82574ed49be200e5350c2c0a, type: 2}
+  mSpriteName: whiteRectangle
+  mFillCenter: 1
+  mType: 0
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 1
+  mFillSlopePixels: 0
 --- !u!4 &452907
 Transform:
   m_ObjectHideFlags: 0
@@ -560,6 +628,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 004bf51e44960d04eae9440074f7edfe, type: 2}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 7
+  mAtlas: {fileID: 11409266, guid: 495417da82574ed49be200e5350c2c0a, type: 2}
+  mSpriteName: game-ribbon-stroke
+  mFillCenter: 0
+  mType: 1
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &454360
 Transform:
   m_ObjectHideFlags: 0
@@ -583,6 +666,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 004bf51e44960d04eae9440074f7edfe, type: 2}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 4
+  mAtlas: {fileID: 11409266, guid: 495417da82574ed49be200e5350c2c0a, type: 2}
+  mSpriteName: game-ribbon-headshot-bg
+  mFillCenter: 1
+  mType: 0
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 1
+  mFillSlopePixels: 0
 --- !u!4 &425385
 Transform:
   m_ObjectHideFlags: 0
@@ -606,6 +704,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 004bf51e44960d04eae9440074f7edfe, type: 2}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 5
+  mAtlas: {fileID: 11409266, guid: 495417da82574ed49be200e5350c2c0a, type: 2}
+  mSpriteName: game-ribbon-headshot
+  mFillCenter: 1
+  mType: 0
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 1
+  mFillSlopePixels: 0
 --- !u!4 &427192
 Transform:
   m_ObjectHideFlags: 0
@@ -645,6 +758,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 004bf51e44960d04eae9440074f7edfe, type: 2}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 6
+  mAtlas: {fileID: 11409266, guid: 495417da82574ed49be200e5350c2c0a, type: 2}
+  mSpriteName: game-ribbon-line
+  mFillCenter: 0
+  mType: 0
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &406298
 Transform:
   m_ObjectHideFlags: 0
@@ -668,6 +796,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 004bf51e44960d04eae9440074f7edfe, type: 2}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 6
+  mAtlas: {fileID: 11409266, guid: 495417da82574ed49be200e5350c2c0a, type: 2}
+  mSpriteName: game-ribbon-line
+  mFillCenter: 0
+  mType: 0
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &446060
 Transform:
   m_ObjectHideFlags: 0
@@ -691,6 +834,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 004bf51e44960d04eae9440074f7edfe, type: 2}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 6
+  mAtlas: {fileID: 11409266, guid: 495417da82574ed49be200e5350c2c0a, type: 2}
+  mSpriteName: game-ribbon-line
+  mFillCenter: 0
+  mType: 0
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &405464
 Transform:
   m_ObjectHideFlags: 0
@@ -714,6 +872,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 004bf51e44960d04eae9440074f7edfe, type: 2}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 6
+  mAtlas: {fileID: 11409266, guid: 495417da82574ed49be200e5350c2c0a, type: 2}
+  mSpriteName: game-ribbon-line
+  mFillCenter: 0
+  mType: 0
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &488432
 Transform:
   m_ObjectHideFlags: 0
@@ -751,6 +924,30 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f54891d0b7e1a01a23bc64463aeafd37, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: d808305656a8601409466191d759059d, type: 3}
+  mColor: {r: 0, g: 0, b: 0, a: 1}
+  mPivot: 4
+  mDepth: 10
+  mFont: {fileID: 11409266, guid: 2ac3a3ab35adb5d45b8c056aa7026f89, type: 2}
+  mText: x10
+  mMaxLineWidth: 0
+  mEncoding: 1
+  mMaxLineCount: 0
+  mPassword: 0
+  mShowLastChar: 0
+  mEffectStyle: 0
+  mEffectColor: {r: 0, g: 0, b: 0, a: 1}
+  mSymbols: 1
+  mEffectDistance: {x: 1, y: 1}
+  mShrinkToFit: 0
+  useLocalization: 0
+  mRescaleLocalization: 0
+  mDefaultScale: 40
+  mMinimalScale: 20
+  mRescaleWidth: 0
+  mDynamicFontSize: 0
+  mLineWidth: 0
+  mMultiline: 1
 --- !u!4 &420844
 Transform:
   m_ObjectHideFlags: 0
@@ -774,6 +971,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 995cff53e4ec203488dc398f0f8f32e5, type: 2}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 9
+  mAtlas: {fileID: 11409266, guid: 9582f38df100b244993ee2e1fa9a9888, type: 2}
+  mSpriteName: menu-cardselection-numbeofcards
+  mFillCenter: 1
+  mType: 0
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &463256
 Transform:
   m_ObjectHideFlags: 0
@@ -797,6 +1009,30 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f54891d0b7e1a01a23bc64463aeafd37, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: d808305656a8601409466191d759059d, type: 3}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 4
+  mFont: {fileID: 11409266, guid: 2ac3a3ab35adb5d45b8c056aa7026f89, type: 2}
+  mText: Get 10 headshots during one game
+  mMaxLineWidth: 470
+  mEncoding: 1
+  mMaxLineCount: 0
+  mPassword: 0
+  mShowLastChar: 0
+  mEffectStyle: 0
+  mEffectColor: {r: 0, g: 0, b: 0, a: 1}
+  mSymbols: 1
+  mEffectDistance: {x: 1, y: 1}
+  mShrinkToFit: 0
+  useLocalization: 0
+  mRescaleLocalization: 0
+  mDefaultScale: 40
+  mMinimalScale: 20
+  mRescaleWidth: 0
+  mDynamicFontSize: 0
+  mLineWidth: 0
+  mMultiline: 1
 --- !u!4 &460213
 Transform:
   m_ObjectHideFlags: 0
@@ -835,6 +1071,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 995cff53e4ec203488dc398f0f8f32e5, type: 2}
+  mColor: {r: 0, g: 0, b: 0, a: 0.56078434}
+  mPivot: 4
+  mDepth: 13
+  mAtlas: {fileID: 11409266, guid: 9582f38df100b244993ee2e1fa9a9888, type: 2}
+  mSpriteName: menu-army-box-stroke
+  mFillCenter: 1
+  mType: 1
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &491078
 Transform:
   m_ObjectHideFlags: 0
@@ -858,6 +1109,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 995cff53e4ec203488dc398f0f8f32e5, type: 2}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 11
+  mAtlas: {fileID: 11409266, guid: 9582f38df100b244993ee2e1fa9a9888, type: 2}
+  mSpriteName: menu-warbucks
+  mFillCenter: 1
+  mType: 0
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &468680
 Transform:
   m_ObjectHideFlags: 0
@@ -881,6 +1147,30 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f54891d0b7e1a01a23bc64463aeafd37, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: d808305656a8601409466191d759059d, type: 3}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 3
+  mDepth: 12
+  mFont: {fileID: 11409266, guid: 2ac3a3ab35adb5d45b8c056aa7026f89, type: 2}
+  mText: 150
+  mMaxLineWidth: 0
+  mEncoding: 1
+  mMaxLineCount: 0
+  mPassword: 0
+  mShowLastChar: 0
+  mEffectStyle: 0
+  mEffectColor: {r: 0, g: 0, b: 0, a: 1}
+  mSymbols: 1
+  mEffectDistance: {x: 1, y: 1}
+  mShrinkToFit: 0
+  useLocalization: 0
+  mRescaleLocalization: 0
+  mDefaultScale: 40
+  mMinimalScale: 20
+  mRescaleWidth: 0
+  mDynamicFontSize: 0
+  mLineWidth: 0
+  mMultiline: 1
 --- !u!4 &410128
 Transform:
   m_ObjectHideFlags: 0
@@ -904,6 +1194,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 0}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 0
+  mAtlas: {fileID: 0}
+  mSpriteName:
+  mFillCenter: 1
+  mType: 0
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &473647
 Transform:
   m_ObjectHideFlags: 0
@@ -927,6 +1232,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 0}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 0
+  mAtlas: {fileID: 0}
+  mSpriteName:
+  mFillCenter: 1
+  mType: 0
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!1001 &100100000
 Prefab:
   serializedVersion: 2

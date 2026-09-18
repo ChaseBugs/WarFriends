@@ -1,63 +1,334 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using Beebyte.Obfuscator;
 using UnityEngine;
 
-public class SoundsManager : MonoBehaviour
+[Skip]
+[ExecuteInEditMode]
+public class SoundsManager : InGameSerializedObjectGeneric<SoundsManager.SoundSettingsSerialized>
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public enum SoundsEnum
+	{
+		Button,
+		LabelShowGame,
+		SwitchWeapon_Primary,
+		DeplyUnits,
+		Ribbon,
+		Critical,
+		Buy,
+		Upgrade,
+		ActivateUpgrade,
+		CounterSoundExperience,
+		CardEquiped,
+		AssigmentCompleted,
+		AirStrikeJet,
+		CounterSoundMoney,
+		OpponentFound,
+		Overtime,
+		OvertimeAlarm,
+		SwitchWeapon_Secondary,
+		SwitchWeapon_Explosive,
+		SwitchWeapon_Pistol,
+		CardReturn,
+		AssigmentBarCompleted,
+		BootcampDialog,
+		BootcampObjectiveComplete,
+		BootcampCongratulations,
+		BootcampIntro,
+		BootcampEnemyPresent,
+		BootcampWoosh,
+		BootcampUnitPresent,
+		BootcampClick,
+		BootcampDialogDissapear,
+		AssignmentDayCompleted,
+		AssignmentMegaReward,
+		DogTagUsed,
+		LevelUp,
+		LevelUpUnlockedItem,
+		LeagueIconShowed,
+		LeagueRewardShowed,
+		EquipWeapon,
+		PromoteUnit,
+		BuyVIP,
+		CardFlip,
+		DailyRewardShow,
+		DailyRewardClaim,
+		DailyVIPCardsShow,
+		CoinPurchase,
+		KilledInAction,
+		FlashEndScreen,
+		StarGained,
+		CardPlayed,
+		EnemyCardPlayed,
+		OpponentSearch,
+		DogTagGain,
+		Fight,
+		GameOverWin,
+		GameOverLost,
+		CraftingStart,
+		CraftingClaim,
+		CountdownSound,
+		StartGameVsSound,
+		StartGamePhotoSound,
+		OpenLootbox,
+		OpenLootboxCompleted,
+		OpenLootboxLegendary
+	}
 
-	1. No dll files were provided to AssetRipper.
+	[Serializable]
+	public class SoundEntry2D : SoundEntry
+	{
+		[SerializeField]
+		public SoundsEnum soundEnum;
+	}
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	[Skip]
+	public class SoundSettingsSerialized
+	{
+		public float musicVolume;
 
-	2. Incorrect dll files were provided to AssetRipper.
+		public float soundVolume;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+		public SoundSettingsSerialized()
+		{
+			soundVolume = 1f;
+			musicVolume = 1f;
+		}
+	}
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	private static SoundsManager mInstance;
 
-	3. Assembly Reconstruction has not been implemented.
+	public AudioSource musicMenu;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	private string mMenuAssetBundle = "audio/menu";
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	private readonly string[] mGameAssetBundles = new string[2] { "audio/game0", "audio/game1" };
 
-	4. This script is unnecessary.
+	private AudioClip mMusicClip;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public List<SoundEntry2D> SoundEntries;
 
-	5. Script Content Level 0
+	private Dictionary<SoundsEnum, SoundEntry2D> mAllSounds;
 
-		AssetRipper was set to not load any script information.
+	private AudioListener mListener;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	private AudioSource _audioSource;
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	private bool mMusicFadingIn;
 
-	7. An incorrect path was provided to AssetRipper.
+	private bool mMusicFadingOut;
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	public bool autoLoad = true;
 
-	*/
+	public List<AudioClip> clipsForGame;
+
+	private int mClipsCounter;
+
+	public static SoundsManager Instance
+	{
+		get
+		{
+			mInstance = mInstance ?? ((SoundsManager)UnityEngine.Object.FindObjectsOfType(typeof(SoundsManager))[0]);
+			return mInstance;
+		}
+	}
+
+	public float soundsVolume
+	{
+		get
+		{
+			return data.soundVolume;
+		}
+		set
+		{
+			data.soundVolume = value;
+			if (this.onSoundVolumeChange != null)
+			{
+				this.onSoundVolumeChange();
+			}
+		}
+	}
+
+	public float musicVolume
+	{
+		get
+		{
+			return data.musicVolume;
+		}
+		set
+		{
+			data.musicVolume = value;
+			if (musicMenu.isPlaying && value < 0.05f)
+			{
+				musicMenu.Stop();
+			}
+			else if (!musicMenu.isPlaying && value > 0.05f)
+			{
+				musicMenu.Play();
+			}
+			musicMenu.volume = 0.7f * data.musicVolume;
+		}
+	}
+
+	public event Action onSoundVolumeChange;
+
+	public void OnDestroy()
+	{
+		mInstance = null;
+	}
+
+	public void DisableMusic()
+	{
+		musicMenu.volume = 0f;
+	}
+
+	public void EnableMusic()
+	{
+		musicMenu.volume = 0.7f * data.musicVolume;
+	}
+
+	protected override void Awake()
+	{
+		if (!Application.isPlaying)
+		{
+			return;
+		}
+		base.Awake();
+		mAllSounds = new Dictionary<SoundsEnum, SoundEntry2D>();
+		foreach (SoundEntry2D soundEntry in SoundEntries)
+		{
+			mAllSounds[soundEntry.soundEnum] = soundEntry;
+		}
+		Singleton<GameController>.instance.GameEnded += InstanceOnGameEnded;
+		UIButtonSound.onClicked = PlayButtonClickedSound;
+		_audioSource = base.gameObject.GetComponent<AudioSource>() ?? base.gameObject.AddComponent<AudioSource>();
+		StartCoroutine(StartMenuMusic());
+		if (autoLoad)
+		{
+			LoadSounds();
+		}
+	}
+
+	private IEnumerator StartMenuMusic()
+	{
+		yield return null;
+		yield return null;
+		yield return StartCoroutine(LoadMusic(mMenuAssetBundle));
+		if (data.musicVolume > 0.05f)
+		{
+			StartCoroutine(DoFadeIn(musicMenu, 2f, 0.7f));
+		}
+	}
+
+	private IEnumerator StartGameMusic()
+	{
+		yield return StartCoroutine(LoadMusic(mGameAssetBundles[UnityEngine.Random.Range(0, mGameAssetBundles.Length)]));
+		musicMenu.Play();
+		musicMenu.volume = 0.35f * data.musicVolume;
+	}
+
+	private IEnumerator LoadMusic(string musicName)
+	{
+		mMusicClip = Resources.Load<AudioClip>(musicName);
+		musicMenu.clip = mMusicClip;
+		yield break;
+	}
+
+	private void InstanceOnGameEnded(GameController.GameEndReason obj)
+	{
+		mMusicFadingOut = false;
+		if (data.musicVolume > 0.05f)
+		{
+			musicMenu.Play();
+		}
+		musicMenu.volume = 0.7f * data.musicVolume;
+		StartCoroutine(StartMenuMusic());
+	}
+
+	private IEnumerator DoFadeOut(AudioSource audio, float timeToFade, float volume)
+	{
+		float startTime = Time.time;
+		float elapsedTime = 0f;
+		do
+		{
+			elapsedTime = Time.time - startTime;
+			audio.volume = Mathf.Lerp(volume, 0f, elapsedTime / timeToFade);
+			yield return null;
+		}
+		while (mMusicFadingOut && elapsedTime < timeToFade);
+		if (!mMusicFadingIn)
+		{
+			mMusicFadingIn = false;
+			audio.Stop();
+		}
+	}
+
+	private IEnumerator DoFadeIn(AudioSource audio, float timeToFade, float volume)
+	{
+		audio.Play();
+		mMusicFadingIn = true;
+		float startTime = Time.time;
+		float elapsedTime = 0f;
+		do
+		{
+			elapsedTime = Time.time - startTime;
+			audio.volume = Mathf.Lerp(0f, volume * data.musicVolume, elapsedTime / timeToFade);
+			yield return null;
+		}
+		while (mMusicFadingIn && elapsedTime < timeToFade);
+	}
+
+	public void PlaySound(AudioClip sound, float volume = 1f)
+	{
+		if (data.soundVolume > 0.01f)
+		{
+			_audioSource.PlayOneShot(sound, volume * data.soundVolume);
+		}
+	}
+
+	public void PlayButtonClickedSound()
+	{
+		PlaySound(SoundsEnum.Button);
+	}
+
+	public void PlaySound(SoundsEnum sound, float volume = 1f)
+	{
+		if (mAllSounds.TryGetValue(sound, out var value))
+		{
+			_audioSource.PlayOneShot(value.GetClip(), volume * value.volume * data.soundVolume);
+		}
+	}
+
+	public void PlayGameMusic()
+	{
+		mMusicFadingIn = false;
+		musicMenu.Stop();
+		mClipsCounter++;
+		StartCoroutine(StartGameMusic());
+	}
+
+	public void LoadSounds()
+	{
+		foreach (SoundEntry2D soundEntry in SoundEntries)
+		{
+			soundEntry.Load();
+		}
+	}
+
+	public void UnloadSounds()
+	{
+		foreach (SoundEntry2D soundEntry in SoundEntries)
+		{
+			soundEntry.UnLoad();
+		}
+	}
+
+	public void UseSound(SoundsEnum sound)
+	{
+		if (mAllSounds.TryGetValue(sound, out var value))
+		{
+			value.MarkAsUsed();
+		}
+	}
 }

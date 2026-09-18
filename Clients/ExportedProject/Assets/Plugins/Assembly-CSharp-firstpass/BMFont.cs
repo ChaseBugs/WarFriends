@@ -1,63 +1,146 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
-public class BMFont : MonoBehaviour
+[Serializable]
+public class BMFont
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[SerializeField]
+	[HideInInspector]
+	private int mSize;
 
-	1. No dll files were provided to AssetRipper.
+	[SerializeField]
+	[HideInInspector]
+	private int mBase;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	[HideInInspector]
+	[SerializeField]
+	private int mWidth;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	[HideInInspector]
+	[SerializeField]
+	private int mHeight;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	[HideInInspector]
+	[SerializeField]
+	private string mSpriteName;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	[HideInInspector]
+	[SerializeField]
+	private List<BMGlyph> mSaved = new List<BMGlyph>();
 
-	3. Assembly Reconstruction has not been implemented.
+	private Dictionary<int, BMGlyph> mDict = new Dictionary<int, BMGlyph>();
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public bool isValid => mSaved.Count > 0;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public int charSize
+	{
+		get
+		{
+			return mSize;
+		}
+		set
+		{
+			mSize = value;
+		}
+	}
 
-	4. This script is unnecessary.
+	public int baseOffset
+	{
+		get
+		{
+			return mBase;
+		}
+		set
+		{
+			mBase = value;
+		}
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public int texWidth
+	{
+		get
+		{
+			return mWidth;
+		}
+		set
+		{
+			mWidth = value;
+		}
+	}
 
-	5. Script Content Level 0
+	public int texHeight
+	{
+		get
+		{
+			return mHeight;
+		}
+		set
+		{
+			mHeight = value;
+		}
+	}
 
-		AssetRipper was set to not load any script information.
+	public int glyphCount => isValid ? mSaved.Count : 0;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public string spriteName
+	{
+		get
+		{
+			return mSpriteName;
+		}
+		set
+		{
+			mSpriteName = value;
+		}
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public BMGlyph GetGlyph(int index, bool createIfMissing)
+	{
+		if (index == 272)
+		{
+			index = 208;
+		}
+		BMGlyph value = null;
+		if (mDict.Count == 0)
+		{
+			int i = 0;
+			for (int count = mSaved.Count; i < count; i++)
+			{
+				BMGlyph bMGlyph = mSaved[i];
+				mDict.Add(bMGlyph.index, bMGlyph);
+			}
+		}
+		if (!mDict.TryGetValue(index, out value) && createIfMissing)
+		{
+			value = new BMGlyph();
+			value.index = index;
+			mSaved.Add(value);
+			mDict.Add(index, value);
+		}
+		return value;
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	public BMGlyph GetGlyph(int index)
+	{
+		return GetGlyph(index, createIfMissing: false);
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	public void Clear()
+	{
+		mDict.Clear();
+		mSaved.Clear();
+	}
 
-	*/
+	public void Trim(int xMin, int yMin, int xMax, int yMax)
+	{
+		if (isValid)
+		{
+			int i = 0;
+			for (int count = mSaved.Count; i < count; i++)
+			{
+				mSaved[i]?.Trim(xMin, yMin, xMax, yMax);
+			}
+		}
+	}
 }

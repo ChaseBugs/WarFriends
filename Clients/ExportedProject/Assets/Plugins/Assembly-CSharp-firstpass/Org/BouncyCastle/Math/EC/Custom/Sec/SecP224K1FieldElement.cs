@@ -1,66 +1,202 @@
-using UnityEngine;
+using System;
+using Org.BouncyCastle.Math.Raw;
+using Org.BouncyCastle.Utilities;
 
 namespace Org.BouncyCastle.Math.EC.Custom.Sec
 {
-	public class SecP224K1FieldElement : MonoBehaviour
+internal class SecP224K1FieldElement : ECFieldElement
+{
+	public static readonly BigInteger Q = SecP224K1Curve.q;
+
+	private static readonly uint[] PRECOMP_POW2 = new uint[7] { 868209154u, 3707425075u, 579297866u, 3280018344u, 2824165628u, 514782679u, 2396984652u };
+
+	protected internal readonly uint[] x;
+
+	public override bool IsZero => Nat224.IsZero(x);
+
+	public override bool IsOne => Nat224.IsOne(x);
+
+	public override string FieldName => "SecP224K1Field";
+
+	public override int FieldSize => Q.BitLength;
+
+	public SecP224K1FieldElement(BigInteger x)
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
+		if (x == null || x.SignValue < 0 || x.CompareTo(Q) >= 0)
+		{
+			throw new ArgumentException("value invalid for SecP224K1FieldElement", "x");
+		}
+		this.x = SecP224K1Field.FromBigInteger(x);
 	}
+
+	public SecP224K1FieldElement()
+	{
+		x = Nat224.Create();
+	}
+
+	protected internal SecP224K1FieldElement(uint[] x)
+	{
+		this.x = x;
+	}
+
+	public override bool TestBitZero()
+	{
+		return Nat224.GetBit(x, 0) == 1;
+	}
+
+	public override BigInteger ToBigInteger()
+	{
+		return Nat224.ToBigInteger(x);
+	}
+
+	public override ECFieldElement Add(ECFieldElement b)
+	{
+		uint[] z = Nat224.Create();
+		SecP224K1Field.Add(x, ((SecP224K1FieldElement)b).x, z);
+		return new SecP224K1FieldElement(z);
+	}
+
+	public override ECFieldElement AddOne()
+	{
+		uint[] z = Nat224.Create();
+		SecP224K1Field.AddOne(x, z);
+		return new SecP224K1FieldElement(z);
+	}
+
+	public override ECFieldElement Subtract(ECFieldElement b)
+	{
+		uint[] z = Nat224.Create();
+		SecP224K1Field.Subtract(x, ((SecP224K1FieldElement)b).x, z);
+		return new SecP224K1FieldElement(z);
+	}
+
+	public override ECFieldElement Multiply(ECFieldElement b)
+	{
+		uint[] z = Nat224.Create();
+		SecP224K1Field.Multiply(x, ((SecP224K1FieldElement)b).x, z);
+		return new SecP224K1FieldElement(z);
+	}
+
+	public override ECFieldElement Divide(ECFieldElement b)
+	{
+		uint[] z = Nat224.Create();
+		Mod.Invert(SecP224K1Field.P, ((SecP224K1FieldElement)b).x, z);
+		SecP224K1Field.Multiply(z, x, z);
+		return new SecP224K1FieldElement(z);
+	}
+
+	public override ECFieldElement Negate()
+	{
+		uint[] z = Nat224.Create();
+		SecP224K1Field.Negate(x, z);
+		return new SecP224K1FieldElement(z);
+	}
+
+	public override ECFieldElement Square()
+	{
+		uint[] z = Nat224.Create();
+		SecP224K1Field.Square(x, z);
+		return new SecP224K1FieldElement(z);
+	}
+
+	public override ECFieldElement Invert()
+	{
+		uint[] z = Nat224.Create();
+		Mod.Invert(SecP224K1Field.P, x, z);
+		return new SecP224K1FieldElement(z);
+	}
+
+	public override ECFieldElement Sqrt()
+	{
+		uint[] y = x;
+		if (Nat224.IsZero(y) || Nat224.IsOne(y))
+		{
+			return this;
+		}
+		uint[] array = Nat224.Create();
+		SecP224K1Field.Square(y, array);
+		SecP224K1Field.Multiply(array, y, array);
+		uint[] array2 = array;
+		SecP224K1Field.Square(array, array2);
+		SecP224K1Field.Multiply(array2, y, array2);
+		uint[] array3 = Nat224.Create();
+		SecP224K1Field.Square(array2, array3);
+		SecP224K1Field.Multiply(array3, y, array3);
+		uint[] array4 = Nat224.Create();
+		SecP224K1Field.SquareN(array3, 4, array4);
+		SecP224K1Field.Multiply(array4, array3, array4);
+		uint[] array5 = Nat224.Create();
+		SecP224K1Field.SquareN(array4, 3, array5);
+		SecP224K1Field.Multiply(array5, array2, array5);
+		uint[] array6 = array5;
+		SecP224K1Field.SquareN(array5, 8, array6);
+		SecP224K1Field.Multiply(array6, array4, array6);
+		uint[] array7 = array4;
+		SecP224K1Field.SquareN(array6, 4, array7);
+		SecP224K1Field.Multiply(array7, array3, array7);
+		uint[] array8 = array3;
+		SecP224K1Field.SquareN(array7, 19, array8);
+		SecP224K1Field.Multiply(array8, array6, array8);
+		uint[] array9 = Nat224.Create();
+		SecP224K1Field.SquareN(array8, 42, array9);
+		SecP224K1Field.Multiply(array9, array8, array9);
+		uint[] z = array8;
+		SecP224K1Field.SquareN(array9, 23, z);
+		SecP224K1Field.Multiply(z, array7, z);
+		uint[] array10 = array7;
+		SecP224K1Field.SquareN(z, 84, array10);
+		SecP224K1Field.Multiply(array10, array9, array10);
+		uint[] z2 = array10;
+		SecP224K1Field.SquareN(z2, 20, z2);
+		SecP224K1Field.Multiply(z2, array6, z2);
+		SecP224K1Field.SquareN(z2, 3, z2);
+		SecP224K1Field.Multiply(z2, y, z2);
+		SecP224K1Field.SquareN(z2, 2, z2);
+		SecP224K1Field.Multiply(z2, y, z2);
+		SecP224K1Field.SquareN(z2, 4, z2);
+		SecP224K1Field.Multiply(z2, array2, z2);
+		SecP224K1Field.Square(z2, z2);
+		uint[] array11 = array9;
+		SecP224K1Field.Square(z2, array11);
+		if (Nat224.Eq(y, array11))
+		{
+			return new SecP224K1FieldElement(z2);
+		}
+		SecP224K1Field.Multiply(z2, PRECOMP_POW2, z2);
+		SecP224K1Field.Square(z2, array11);
+		if (Nat224.Eq(y, array11))
+		{
+			return new SecP224K1FieldElement(z2);
+		}
+		return null;
+	}
+
+	public override bool Equals(object obj)
+	{
+		return Equals(obj as SecP224K1FieldElement);
+	}
+
+	public override bool Equals(ECFieldElement other)
+	{
+		return Equals(other as SecP224K1FieldElement);
+	}
+
+	public virtual bool Equals(SecP224K1FieldElement other)
+	{
+		if (this == other)
+		{
+			return true;
+		}
+		if (other == null)
+		{
+			return false;
+		}
+		return Nat224.Eq(x, other.x);
+	}
+
+	public override int GetHashCode()
+	{
+		return Q.GetHashCode() ^ Arrays.GetHashCode(x, 0, 7);
+	}
+}
 }

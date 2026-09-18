@@ -1,66 +1,125 @@
-using UnityEngine;
+using System;
+using Org.BouncyCastle.Crypto.Engines;
+using Org.BouncyCastle.Crypto.Generators;
+using Org.BouncyCastle.Crypto.Macs;
+using Org.BouncyCastle.Crypto.Parameters;
+using Org.BouncyCastle.Crypto.Utilities;
+using Org.BouncyCastle.Security;
+using Org.BouncyCastle.Utilities;
 
 namespace Org.BouncyCastle.Crypto.Tls
 {
-	public class Chacha20Poly1305 : MonoBehaviour
+public class Chacha20Poly1305 : TlsCipher
+{
+	protected readonly TlsContext context;
+
+	protected readonly ChaChaEngine encryptCipher;
+
+	protected readonly ChaChaEngine decryptCipher;
+
+	public Chacha20Poly1305(TlsContext context)
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
+		if (!TlsUtilities.IsTlsV12(context))
+		{
+			throw new TlsFatalAlert(80);
+		}
+		this.context = context;
+		byte[] key = TlsUtilities.CalculateKeyBlock(context, 64);
+		KeyParameter keyParameter = new KeyParameter(key, 0, 32);
+		KeyParameter keyParameter2 = new KeyParameter(key, 32, 32);
+		encryptCipher = new ChaChaEngine(20);
+		decryptCipher = new ChaChaEngine(20);
+		KeyParameter parameters;
+		KeyParameter parameters2;
+		if (context.IsServer)
+		{
+			parameters = keyParameter2;
+			parameters2 = keyParameter;
+		}
+		else
+		{
+			parameters = keyParameter;
+			parameters2 = keyParameter2;
+		}
+		byte[] iv = new byte[8];
+		encryptCipher.Init(forEncryption: true, new ParametersWithIV(parameters, iv));
+		decryptCipher.Init(forEncryption: false, new ParametersWithIV(parameters2, iv));
 	}
+
+	public virtual int GetPlaintextLimit(int ciphertextLimit)
+	{
+		return ciphertextLimit - 16;
+	}
+
+	public virtual byte[] EncodePlaintext(long seqNo, byte type, byte[] plaintext, int offset, int len)
+	{
+		int num = len + 16;
+		KeyParameter macKey = InitRecordMac(encryptCipher, forEncryption: true, seqNo);
+		byte[] array = new byte[num];
+		encryptCipher.ProcessBytes(plaintext, offset, len, array, 0);
+		byte[] additionalData = GetAdditionalData(seqNo, type, len);
+		byte[] array2 = CalculateRecordMac(macKey, additionalData, array, 0, len);
+		Array.Copy(array2, 0, array, len, array2.Length);
+		return array;
+	}
+
+	public virtual byte[] DecodeCiphertext(long seqNo, byte type, byte[] ciphertext, int offset, int len)
+	{
+		if (GetPlaintextLimit(len) < 0)
+		{
+			throw new TlsFatalAlert(50);
+		}
+		int num = len - 16;
+		byte[] b = Arrays.CopyOfRange(ciphertext, offset + num, offset + len);
+		KeyParameter macKey = InitRecordMac(decryptCipher, forEncryption: false, seqNo);
+		byte[] additionalData = GetAdditionalData(seqNo, type, num);
+		byte[] a = CalculateRecordMac(macKey, additionalData, ciphertext, offset, num);
+		if (!Arrays.ConstantTimeAreEqual(a, b))
+		{
+			throw new TlsFatalAlert(20);
+		}
+		byte[] array = new byte[num];
+		decryptCipher.ProcessBytes(ciphertext, offset, num, array, 0);
+		return array;
+	}
+
+	protected virtual KeyParameter InitRecordMac(ChaChaEngine cipher, bool forEncryption, long seqNo)
+	{
+		byte[] array = new byte[8];
+		TlsUtilities.WriteUint64(seqNo, array, 0);
+		cipher.Init(forEncryption, new ParametersWithIV(null, array));
+		byte[] array2 = new byte[64];
+		cipher.ProcessBytes(array2, 0, array2.Length, array2, 0);
+		Array.Copy(array2, 0, array2, 32, 16);
+		KeyParameter keyParameter = new KeyParameter(array2, 16, 32);
+		Poly1305KeyGenerator.Clamp(keyParameter.GetKey());
+		return keyParameter;
+	}
+
+	protected virtual byte[] CalculateRecordMac(KeyParameter macKey, byte[] additionalData, byte[] buf, int off, int len)
+	{
+		IMac mac = new Poly1305();
+		mac.Init(macKey);
+		UpdateRecordMac(mac, additionalData, 0, additionalData.Length);
+		UpdateRecordMac(mac, buf, off, len);
+		return MacUtilities.DoFinal(mac);
+	}
+
+	protected virtual void UpdateRecordMac(IMac mac, byte[] buf, int off, int len)
+	{
+		mac.BlockUpdate(buf, off, len);
+		byte[] array = Pack.UInt64_To_LE((ulong)len);
+		mac.BlockUpdate(array, 0, array.Length);
+	}
+
+	protected virtual byte[] GetAdditionalData(long seqNo, byte type, int len)
+	{
+		byte[] array = new byte[13];
+		TlsUtilities.WriteUint64(seqNo, array, 0);
+		TlsUtilities.WriteUint8(type, array, 8);
+		TlsUtilities.WriteVersion(context.ServerVersion, array, 9);
+		TlsUtilities.WriteUint16(len, array, 11);
+		return array;
+	}
+}
 }

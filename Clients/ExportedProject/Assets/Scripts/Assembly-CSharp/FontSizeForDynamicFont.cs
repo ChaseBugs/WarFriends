@@ -1,63 +1,139 @@
 using UnityEngine;
 
+[ExecuteInEditMode]
 public class FontSizeForDynamicFont : MonoBehaviour
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Header("Settings")]
+	public float breakPoint = 50f;
 
-	1. No dll files were provided to AssetRipper.
+	[Header("Test")]
+	public bool printSetSizeForDynamicFont;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public bool checkLabelDynamic;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	[Header("Repair")]
+	public bool setLabelDynamic;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	[Header("Game Object Layers")]
+	public int layerNumber = 11;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public bool checkGOLayers;
 
-	3. Assembly Reconstruction has not been implemented.
+	private void Update()
+	{
+		if (printSetSizeForDynamicFont)
+		{
+			printSetSizeForDynamicFont = false;
+			PrintSetSizeForDynamicFont();
+		}
+		if (checkLabelDynamic)
+		{
+			checkLabelDynamic = false;
+			CheckLabelDynamic();
+		}
+		if (setLabelDynamic)
+		{
+			setLabelDynamic = false;
+			SetLabelDynamic();
+		}
+		if (checkGOLayers)
+		{
+			checkGOLayers = false;
+			CheckGOLayers();
+		}
+	}
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	private void PrintSetSizeForDynamicFont()
+	{
+		string text = "PrintSetSizeForDynamicFont: \n";
+		UILabel[] componentsInChildren = base.gameObject.GetComponentsInChildren<UILabel>(includeInactive: true);
+		foreach (UILabel uILabel in componentsInChildren)
+		{
+			if (uILabel.font.isDynamic)
+			{
+				int dynamicFontSize = uILabel.dynamicFontSize;
+				if (dynamicFontSize > 0)
+				{
+					text += $"WRONG dynamic font size: {dynamicFontSize} for label: {ScenePath(uILabel.gameObject)}\n";
+				}
+			}
+		}
+		Debug.Log(text);
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	private void CheckLabelDynamic()
+	{
+		LabelsDynamic();
+	}
 
-	4. This script is unnecessary.
+	private void SetLabelDynamic()
+	{
+		LabelsDynamic(debugTry: false);
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private void LabelsDynamic(bool debugTry = true)
+	{
+		UILabel[] componentsInChildren = base.gameObject.GetComponentsInChildren<UILabel>(includeInactive: true);
+		foreach (UILabel uILabel in componentsInChildren)
+		{
+			if (uILabel.font.isDynamic)
+			{
+				float x = uILabel.transform.localScale.x;
+				int dynamicFontSize = uILabel.dynamicFontSize;
+				if (x < breakPoint)
+				{
+					if (dynamicFontSize > 0)
+					{
+						Debug.LogFormat("WRONG dynamic font size: {0} for scale: {1} for label: {2}", dynamicFontSize, x, ScenePath(uILabel.gameObject));
+						if (!debugTry)
+						{
+							uILabel.dynamicFontSize = 0;
+						}
+					}
+				}
+				else if (dynamicFontSize != 80)
+				{
+					Debug.LogFormat("WRONG dynamic font size: {0} for scale: {1} for label: {2}", dynamicFontSize, x, ScenePath(uILabel.gameObject));
+					if (!debugTry)
+					{
+						uILabel.dynamicFontSize = 80;
+					}
+				}
+			}
+			else
+			{
+				Debug.LogErrorFormat("NOT DYNAMIC FONT: {0}", ScenePath(uILabel.gameObject));
+			}
+		}
+		Debug.Log((!debugTry) ? "SetLabelDynamic - Done" : "CheckLabelDynamic - Done");
+	}
 
-	5. Script Content Level 0
+	private void CheckGOLayers()
+	{
+		Transform[] componentsInChildren = base.gameObject.GetComponentsInChildren<Transform>(includeInactive: true);
+		foreach (Transform transform in componentsInChildren)
+		{
+			if (!(transform == null) && !(transform.gameObject == null) && transform.gameObject.layer != layerNumber)
+			{
+				Debug.LogErrorFormat("WRONG GAMEOBJECT LAYER ({0}) FOR: {1} LAYER:{2}", transform.gameObject.layer, ScenePath(transform.gameObject), transform.gameObject.layer);
+			}
+		}
+		Debug.Log("CheckGOLayers - Done");
+	}
 
-		AssetRipper was set to not load any script information.
-
-	6. Cpp2IL failed to decompile Il2Cpp data
-
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	private string ScenePath(GameObject go)
+	{
+		if (go == null)
+		{
+			return string.Empty;
+		}
+		string text = go.name;
+		Transform parent = go.transform;
+		while (parent.parent != null)
+		{
+			parent = parent.parent;
+			text = $"{parent.gameObject.name} -> {text}";
+		}
+		return text;
+	}
 }

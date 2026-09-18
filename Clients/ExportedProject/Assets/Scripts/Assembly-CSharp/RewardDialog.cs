@@ -1,63 +1,372 @@
+using System;
+using System.Collections;
+using Newtonsoft.Json.Linq;
 using UnityEngine;
 
-public class RewardDialog : MonoBehaviour
+public class RewardDialog : GuiElementSingle<RewardDialog>, IGuiDialog
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Header("Core")]
+	public UISprite background;
 
-	1. No dll files were provided to AssetRipper.
+	public UILabel title;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public UISprite rewardBackground;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public UISprite icon;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public UISprite glow;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	[Header("-DogTag Part")]
+	public UISprite dogtagIcon;
 
-	3. Assembly Reconstruction has not been implemented.
+	[Header("-Card Part")]
+	public GameObject cardHolder;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public CardRecord cardRecord;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	[Header("-Reward Number Or Text")]
+	public GameObject rewardHolder;
 
-	4. This script is unnecessary.
+	public UILabel rewardValue;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	[Header("-Power Band")]
+	public GameObject powerBandHolder;
 
-	5. Script Content Level 0
+	public UISprite powerBandIcon;
 
-		AssetRipper was set to not load any script information.
+	public UISprite powerBandInfoBackground;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public UISprite powerBandSmallIco;
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public UILabel powerBandValue;
 
-	7. An incorrect path was provided to AssetRipper.
+	public UILabel powerBandType;
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	[Header("-CardPack")]
+	public UISprite cardPackIcon;
 
-	*/
+	[Header("Bottom")]
+	public GameObject oneButtonBottom;
+
+	public GameObject thanksButton;
+
+	public GameObject collectButton;
+
+	public GameObject twoButtonsBottom;
+
+	public GameObject laterButton;
+
+	public GameObject getMoreButton;
+
+	[Header("Animation")]
+	public CardMenuOwerlay cardAnimation;
+
+	private RewardDialogType mRewardType;
+
+	private long mAmount;
+
+	private Card mCard;
+
+	private PlayerVisual mPowerBand;
+
+	private CardPack mCardPack;
+
+	private Card[] mCards;
+
+	private RadicalRoutine mCheckDogtags;
+
+	private int mDailyRewardDay;
+
+	public void ShowDialog(RewardDialogType type)
+	{
+		mRewardType = type;
+		Singleton<GuiManager>.instance.ShowDialog(this, 0f);
+	}
+
+	public void ShowDialog(RewardDialogType type, long amount)
+	{
+		mRewardType = type;
+		mAmount = amount;
+		Singleton<GuiManager>.instance.ShowDialog(this, 0f);
+	}
+
+	public void ShowDialog(RewardDialogType type, JToken card)
+	{
+		mRewardType = type;
+		mCard = ((card != null) ? CardManager.instance.GetCardInstance(card.ToString()) : null);
+		Singleton<GuiManager>.instance.ShowDialog(this, 0f);
+	}
+
+	public void ShowDialog(RewardDialogType type, PlayerVisual powerBand, long seconds)
+	{
+		mRewardType = type;
+		mPowerBand = powerBand;
+		mAmount = seconds;
+		Singleton<GuiManager>.instance.ShowDialog(this, 0f);
+	}
+
+	public void ShowDialog(RewardDialogType type, CardPack cardPackType, Card[] cards)
+	{
+		mRewardType = type;
+		mCardPack = cardPackType;
+		mCards = cards;
+		Singleton<GuiManager>.instance.ShowDialog(this, 0f);
+	}
+
+	public void ShowDialog(RewardDialogType type, long collectReward, int day)
+	{
+		mRewardType = type;
+		mAmount = collectReward;
+		mDailyRewardDay = day;
+		Singleton<GuiManager>.instance.ShowDialog(this, 0f);
+	}
+
+	public override void InitControls()
+	{
+		UIEventListener uIEventListener = UIEventListener.Get(thanksButton);
+		uIEventListener.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener.onClick, new UIEventListener.VoidDelegate(CloseDialog));
+		UIEventListener uIEventListener2 = UIEventListener.Get(collectButton);
+		uIEventListener2.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener2.onClick, new UIEventListener.VoidDelegate(CollectClick));
+		UIEventListener uIEventListener3 = UIEventListener.Get(laterButton);
+		uIEventListener3.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener3.onClick, new UIEventListener.VoidDelegate(CloseDialog));
+		UIEventListener uIEventListener4 = UIEventListener.Get(getMoreButton);
+		uIEventListener4.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener4.onClick, new UIEventListener.VoidDelegate(WatchAgain));
+	}
+
+	private void CollectClick(GameObject go)
+	{
+		if (base.isFullyShowed)
+		{
+			HideDialog();
+		}
+		Singleton<EventTrackingManager>.instance.Claim7DayInApp(mDailyRewardDay);
+	}
+
+	private void CloseDialog(GameObject go)
+	{
+		if (base.isFullyShowed)
+		{
+			HideDialog();
+		}
+	}
+
+	private void WatchAgain(GameObject go)
+	{
+		if (base.isFullyShowed)
+		{
+			Singleton<EventTrackingManager>.instance.ShowRewardedVideo(RewardType.Dogtag);
+			HideDialog();
+		}
+	}
+
+	public override void InitGUIValues()
+	{
+		oneButtonBottom.SetActive(value: true);
+		twoButtonsBottom.SetActive(value: false);
+		background.transform.localScale = background.transform.localScale.ReplaceY(862f);
+		Color color = ((mRewardType != RewardDialogType.Tickets && mRewardType != RewardDialogType.Scraps) ? Colours.blue : Colours.greenArena);
+		glow.color = color;
+		title.text = Localization.Localize((mRewardType != RewardDialogType.DailyGold) ? "ID_YOURREWARD" : "ID_DAILYGOLDBOOSTER");
+		icon.gameObject.SetActive(mRewardType == RewardDialogType.Gold || mRewardType == RewardDialogType.Warbucks || mRewardType == RewardDialogType.VIP || mRewardType == RewardDialogType.DailyGold || mRewardType == RewardDialogType.Tickets || mRewardType == RewardDialogType.Scraps);
+		rewardHolder.SetActive(mRewardType == RewardDialogType.Gold || mRewardType == RewardDialogType.Warbucks || mRewardType == RewardDialogType.VIP || mRewardType == RewardDialogType.PowerBand || mRewardType == RewardDialogType.DailyGold || mRewardType == RewardDialogType.Tickets || mRewardType == RewardDialogType.Scraps);
+		dogtagIcon.gameObject.SetActive(mRewardType == RewardDialogType.Dogtag);
+		cardHolder.SetActive(mRewardType == RewardDialogType.WarCard);
+		cardPackIcon.gameObject.SetActive(mRewardType == RewardDialogType.CardPack);
+		powerBandHolder.SetActive(mRewardType == RewardDialogType.PowerBand);
+		if (mRewardType == RewardDialogType.Gold || mRewardType == RewardDialogType.Warbucks || mRewardType == RewardDialogType.DailyGold || mRewardType == RewardDialogType.Scraps)
+		{
+			SetAmountReward(mAmount);
+		}
+		else if (mRewardType == RewardDialogType.VIP || mRewardType == RewardDialogType.PowerBand)
+		{
+			SetTimeReward(mAmount);
+		}
+		else if (mRewardType == RewardDialogType.Tickets)
+		{
+			SetTextReward(Localization.LocalizeFormat("ID_XARENATICKETS", MiscTools.FormatBigNumberLong(mAmount)));
+		}
+		switch (mRewardType)
+		{
+		case RewardDialogType.Gold:
+		case RewardDialogType.DailyGold:
+			SetIcon("menu-gold", 1.5f, Quaternion.Euler(0f, 180f, 0f));
+			break;
+		case RewardDialogType.Dogtag:
+			InitializeDogtagLook();
+			StartCheck();
+			break;
+		case RewardDialogType.WarCard:
+			SetCard(mCard);
+			break;
+		case RewardDialogType.Warbucks:
+			SetIcon("menu-warbucks", 1.5f, Quaternion.Euler(0f, 0f, 0f));
+			break;
+		case RewardDialogType.VIP:
+			SetIcon("menu-hub-multiplayer-vipico", 2f, Quaternion.Euler(0f, 0f, 0f));
+			break;
+		case RewardDialogType.PowerBand:
+			SetPowerBand(mPowerBand);
+			break;
+		case RewardDialogType.CardPack:
+			SetCardPack(mCardPack);
+			break;
+		case RewardDialogType.Tickets:
+			SetIcon("menu-arena-ticket", 2.5f, Quaternion.Euler(0f, 0f, 0f));
+			break;
+		case RewardDialogType.Scraps:
+			SetIcon("menu-arena-scrap-ico", 3f, Quaternion.Euler(0f, 0f, 0f));
+			break;
+		}
+		thanksButton.SetActive(mRewardType != RewardDialogType.DailyGold);
+		collectButton.SetActive(mRewardType == RewardDialogType.DailyGold);
+		cardAnimation.ResetDraw();
+	}
+
+	private void SetIcon(string name, float scaleFactor, Quaternion rotation)
+	{
+		icon.spriteName = name;
+		icon.MakePixelPerfect();
+		icon.transform.localScale = icon.transform.localScale.MultiplyXY(scaleFactor);
+		icon.transform.localRotation = rotation;
+	}
+
+	public void SetCard(Card card)
+	{
+		if (card == null)
+		{
+			Debug.LogError("null card in reward dialog");
+			cardHolder.SetActive(value: false);
+		}
+		else
+		{
+			cardRecord.Initialize(card);
+		}
+	}
+
+	private void SetCardPack(CardPack type)
+	{
+		cardPackIcon.spriteName = GameVariables.cardpackLook[type].Value2;
+		cardPackIcon.MakePixelPerfect();
+		cardPackIcon.transform.localScale = cardPackIcon.transform.localScale.MultiplyXY(0.9f);
+	}
+
+	private void SetTextReward(string text)
+	{
+		rewardValue.text = text;
+		float val = 60f + rewardValue.relativeSize.x * rewardValue.transform.localScale.x;
+		rewardBackground.transform.localScale = rewardBackground.transform.localScale.ReplaceX(val);
+	}
+
+	private void SetAmountReward(long amount)
+	{
+		rewardValue.text = MiscTools.FormatBigNumberLong(amount);
+		float val = 60f + rewardValue.relativeSize.x * rewardValue.transform.localScale.x;
+		rewardBackground.transform.localScale = rewardBackground.transform.localScale.ReplaceX(val);
+	}
+
+	private void SetTimeReward(long amount)
+	{
+		int seconds = (int)amount;
+		rewardValue.text = MiscTools.PrintableTimeVipConvert(seconds);
+		float val = 60f + rewardValue.relativeSize.x * rewardValue.transform.localScale.x;
+		rewardBackground.transform.localScale = rewardBackground.transform.localScale.ReplaceX(val);
+	}
+
+	private void SetPowerBand(PlayerVisual powerBand)
+	{
+		powerBandIcon.spriteName = powerBand.icon;
+		powerBandIcon.MakePixelPerfect();
+		powerBandIcon.transform.localScale = powerBandIcon.transform.localScale.MultiplyXY(2f);
+		powerBandSmallIco.spriteName = powerBand.decalMiniIcon;
+		powerBandSmallIco.color = powerBand.decalMiniIconColor;
+		powerBandValue.text = powerBand.decalValueString;
+		powerBandType.text = powerBand.decalShortName;
+	}
+
+	public override void DoBeforeShowUp()
+	{
+		base.DoBeforeShowUp();
+		UIDraggablePanel.panelDisabled = true;
+	}
+
+	public override void DoAfterShowUp()
+	{
+		base.DoAfterShowUp();
+		if (mCards != null && mCards.Length > 0)
+		{
+			cardAnimation.StartShowAnimation(mCards, 0.5f);
+		}
+	}
+
+	public override void DoBeforeHide()
+	{
+		base.DoBeforeHide();
+		UIDraggablePanel.panelDisabled = false;
+	}
+
+	public override void DoAfterHide()
+	{
+		base.DoAfterHide();
+		mCards = new Card[0];
+		mAmount = 0L;
+		mCard = null;
+		mPowerBand = null;
+		mCardPack = CardPack.None;
+		StopCheck();
+	}
+
+	public void StartCheck()
+	{
+		StopCheck();
+		mCheckDogtags = RadicalRoutine.Create(CheckDogtags());
+		StartCoroutine(RadicalRoutine.Run(mCheckDogtags.enumerator));
+	}
+
+	private void StopCheck()
+	{
+		if (mCheckDogtags != null)
+		{
+			mCheckDogtags.Cancel();
+			mCheckDogtags = null;
+		}
+	}
+
+	private IEnumerator CheckDogtags()
+	{
+		while (isShowed)
+		{
+			if (Singleton<DogTagManager>.instance.isFull || Singleton<EventTrackingManager>.instance.IsRewardVideoPreloaded(RewardType.Dogtag))
+			{
+				InitializeDogtagLook();
+			}
+			yield return new WaitForRealSeconds(0.333f);
+		}
+	}
+
+	private void InitializeDogtagLook()
+	{
+		bool flag = Singleton<EventTrackingManager>.instance.IsRewardVideoPreloaded(RewardType.Dogtag);
+		bool isFull = Singleton<DogTagManager>.instance.isFull;
+		bool flag2 = flag && !isFull;
+		oneButtonBottom.SetActive(!flag2);
+		twoButtonsBottom.SetActive(flag2);
+		background.transform.localScale = background.transform.localScale.ReplaceY((!flag2) ? 862f : 972f);
+	}
+
+	public GuiElement GetGuiElement()
+	{
+		return this;
+	}
+
+	public override void OnBack()
+	{
+		if (thanksButton.activeSelf)
+		{
+			CloseDialog(thanksButton.gameObject);
+		}
+		else if (collectButton.activeSelf)
+		{
+			CloseDialog(collectButton.gameObject);
+		}
+	}
 }

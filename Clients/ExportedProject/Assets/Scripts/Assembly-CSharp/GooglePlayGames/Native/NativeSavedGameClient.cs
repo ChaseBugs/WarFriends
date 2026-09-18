@@ -1,66 +1,488 @@
-using UnityEngine;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text.RegularExpressions;
+using GooglePlayGames.BasicApi;
+using GooglePlayGames.BasicApi.SavedGame;
+using GooglePlayGames.Native.Cwrapper;
+using GooglePlayGames.Native.PInvoke;
+using GooglePlayGames.OurUtils;
 
 namespace GooglePlayGames.Native
 {
-	public class NativeSavedGameClient : MonoBehaviour
+internal class NativeSavedGameClient : ISavedGameClient
+{
+	private class NativeConflictResolver : IConflictResolver
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
+		private readonly GooglePlayGames.Native.PInvoke.SnapshotManager mManager;
 
-		1. No dll files were provided to AssetRipper.
+		private readonly string mConflictId;
 
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
+		private readonly NativeSnapshotMetadata mOriginal;
 
-		2. Incorrect dll files were provided to AssetRipper.
+		private readonly NativeSnapshotMetadata mUnmerged;
 
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
+		private readonly Action<SavedGameRequestStatus, ISavedGameMetadata> mCompleteCallback;
 
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+		private readonly Action mRetryFileOpen;
 
-		3. Assembly Reconstruction has not been implemented.
+		internal NativeConflictResolver(GooglePlayGames.Native.PInvoke.SnapshotManager manager, string conflictId, NativeSnapshotMetadata original, NativeSnapshotMetadata unmerged, Action<SavedGameRequestStatus, ISavedGameMetadata> completeCallback, Action retryOpen)
+		{
+			mManager = Misc.CheckNotNull(manager);
+			mConflictId = Misc.CheckNotNull(conflictId);
+			mOriginal = Misc.CheckNotNull(original);
+			mUnmerged = Misc.CheckNotNull(unmerged);
+			mCompleteCallback = Misc.CheckNotNull(completeCallback);
+			mRetryFileOpen = Misc.CheckNotNull(retryOpen);
+		}
 
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
+		public void ChooseMetadata(ISavedGameMetadata chosenMetadata)
+		{
+			NativeSnapshotMetadata nativeSnapshotMetadata = chosenMetadata as NativeSnapshotMetadata;
+			if (nativeSnapshotMetadata != mOriginal && nativeSnapshotMetadata != mUnmerged)
+			{
+				Logger.e("Caller attempted to choose a version of the metadata that was not part of the conflict");
+				mCompleteCallback(SavedGameRequestStatus.BadInputError, null);
+				return;
+			}
+			mManager.Resolve(nativeSnapshotMetadata, new NativeSnapshotMetadataChange.Builder().Build(), mConflictId, delegate(GooglePlayGames.Native.PInvoke.SnapshotManager.CommitResponse response)
+			{
+				if (!response.RequestSucceeded())
+				{
+					mCompleteCallback(AsRequestStatus(response.ResponseStatus()), null);
+				}
+				else
+				{
+					mRetryFileOpen();
+				}
+			});
+		}
 	}
+
+	private class Prefetcher
+	{
+		private readonly object mLock = new object();
+
+		private bool mOriginalDataFetched;
+
+		private byte[] mOriginalData;
+
+		private bool mUnmergedDataFetched;
+
+		private byte[] mUnmergedData;
+
+		private Action<SavedGameRequestStatus, ISavedGameMetadata> completedCallback;
+
+		private readonly Action<byte[], byte[]> mDataFetchedCallback;
+
+		internal Prefetcher(Action<byte[], byte[]> dataFetchedCallback, Action<SavedGameRequestStatus, ISavedGameMetadata> completedCallback)
+		{
+			mDataFetchedCallback = Misc.CheckNotNull(dataFetchedCallback);
+			this.completedCallback = Misc.CheckNotNull(completedCallback);
+		}
+
+		internal void OnOriginalDataRead(GooglePlayGames.Native.PInvoke.SnapshotManager.ReadResponse readResponse)
+		{
+			lock (mLock)
+			{
+				if (!readResponse.RequestSucceeded())
+				{
+					Logger.e("Encountered error while prefetching original data.");
+					completedCallback(AsRequestStatus(readResponse.ResponseStatus()), null);
+					completedCallback = delegate
+					{
+					};
+				}
+				else
+				{
+					Logger.d("Successfully fetched original data");
+					mOriginalDataFetched = true;
+					mOriginalData = readResponse.Data();
+					MaybeProceed();
+				}
+			}
+		}
+
+		internal void OnUnmergedDataRead(GooglePlayGames.Native.PInvoke.SnapshotManager.ReadResponse readResponse)
+		{
+			lock (mLock)
+			{
+				if (!readResponse.RequestSucceeded())
+				{
+					Logger.e("Encountered error while prefetching unmerged data.");
+					completedCallback(AsRequestStatus(readResponse.ResponseStatus()), null);
+					completedCallback = delegate
+					{
+					};
+				}
+				else
+				{
+					Logger.d("Successfully fetched unmerged data");
+					mUnmergedDataFetched = true;
+					mUnmergedData = readResponse.Data();
+					MaybeProceed();
+				}
+			}
+		}
+
+		private void MaybeProceed()
+		{
+			if (mOriginalDataFetched && mUnmergedDataFetched)
+			{
+				Logger.d("Fetched data for original and unmerged, proceeding");
+				mDataFetchedCallback(mOriginalData, mUnmergedData);
+				return;
+			}
+			Logger.d("Not all data fetched - original:" + mOriginalDataFetched + " unmerged:" + mUnmergedDataFetched);
+		}
+	}
+
+	private static readonly Regex ValidFilenameRegex = new Regex("\\A[a-zA-Z0-9-._~]{1,100}\\Z");
+
+	private readonly GooglePlayGames.Native.PInvoke.SnapshotManager mSnapshotManager;
+
+	internal NativeSavedGameClient(GooglePlayGames.Native.PInvoke.SnapshotManager manager)
+	{
+		mSnapshotManager = Misc.CheckNotNull(manager);
+	}
+
+	public void OpenWithAutomaticConflictResolution(string filename, DataSource source, ConflictResolutionStrategy resolutionStrategy, Action<SavedGameRequestStatus, ISavedGameMetadata> callback)
+	{
+		Misc.CheckNotNull(filename);
+		Misc.CheckNotNull(callback);
+		callback = ToOnGameThread(callback);
+		if (!IsValidFilename(filename))
+		{
+			Logger.e("Received invalid filename: " + filename);
+			callback(SavedGameRequestStatus.BadInputError, null);
+			return;
+		}
+		OpenWithManualConflictResolution(filename, source, prefetchDataOnConflict: false, delegate(IConflictResolver resolver, ISavedGameMetadata original, byte[] originalData, ISavedGameMetadata unmerged, byte[] unmergedData)
+		{
+			switch (resolutionStrategy)
+			{
+			case ConflictResolutionStrategy.UseOriginal:
+				resolver.ChooseMetadata(original);
+				break;
+			case ConflictResolutionStrategy.UseUnmerged:
+				resolver.ChooseMetadata(unmerged);
+				break;
+			case ConflictResolutionStrategy.UseLongestPlaytime:
+				if (original.TotalTimePlayed >= unmerged.TotalTimePlayed)
+				{
+					resolver.ChooseMetadata(original);
+				}
+				else
+				{
+					resolver.ChooseMetadata(unmerged);
+				}
+				break;
+			default:
+				Logger.e("Unhandled strategy " + resolutionStrategy);
+				callback(SavedGameRequestStatus.InternalError, null);
+				break;
+			}
+		}, callback);
+	}
+
+	private ConflictCallback ToOnGameThread(ConflictCallback conflictCallback)
+	{
+		return delegate(IConflictResolver resolver, ISavedGameMetadata original, byte[] originalData, ISavedGameMetadata unmerged, byte[] unmergedData)
+		{
+			Logger.d("Invoking conflict callback");
+			PlayGamesHelperObject.RunOnGameThread(delegate
+			{
+				conflictCallback(resolver, original, originalData, unmerged, unmergedData);
+			});
+		};
+	}
+
+	public void OpenWithManualConflictResolution(string filename, DataSource source, bool prefetchDataOnConflict, ConflictCallback conflictCallback, Action<SavedGameRequestStatus, ISavedGameMetadata> completedCallback)
+	{
+		Misc.CheckNotNull(filename);
+		Misc.CheckNotNull(conflictCallback);
+		Misc.CheckNotNull(completedCallback);
+		conflictCallback = ToOnGameThread(conflictCallback);
+		completedCallback = ToOnGameThread(completedCallback);
+		if (!IsValidFilename(filename))
+		{
+			Logger.e("Received invalid filename: " + filename);
+			completedCallback(SavedGameRequestStatus.BadInputError, null);
+		}
+		else
+		{
+			InternalManualOpen(filename, source, prefetchDataOnConflict, conflictCallback, completedCallback);
+		}
+	}
+
+	private void InternalManualOpen(string filename, DataSource source, bool prefetchDataOnConflict, ConflictCallback conflictCallback, Action<SavedGameRequestStatus, ISavedGameMetadata> completedCallback)
+	{
+		mSnapshotManager.Open(filename, AsDataSource(source), Types.SnapshotConflictPolicy.MANUAL, delegate(GooglePlayGames.Native.PInvoke.SnapshotManager.OpenResponse response)
+		{
+			if (!response.RequestSucceeded())
+			{
+				completedCallback(AsRequestStatus(response.ResponseStatus()), null);
+			}
+			else if (response.ResponseStatus() == CommonErrorStatus.SnapshotOpenStatus.VALID)
+			{
+				completedCallback(SavedGameRequestStatus.Success, response.Data());
+			}
+			else if (response.ResponseStatus() == CommonErrorStatus.SnapshotOpenStatus.VALID_WITH_CONFLICT)
+			{
+				NativeSnapshotMetadata original = response.ConflictOriginal();
+				NativeSnapshotMetadata unmerged = response.ConflictUnmerged();
+				NativeConflictResolver resolver = new NativeConflictResolver(mSnapshotManager, response.ConflictId(), original, unmerged, completedCallback, delegate
+				{
+					InternalManualOpen(filename, source, prefetchDataOnConflict, conflictCallback, completedCallback);
+				});
+				if (!prefetchDataOnConflict)
+				{
+					conflictCallback(resolver, original, null, unmerged, null);
+				}
+				else
+				{
+					Prefetcher prefetcher = new Prefetcher(delegate(byte[] originalData, byte[] unmergedData)
+					{
+						conflictCallback(resolver, original, originalData, unmerged, unmergedData);
+					}, completedCallback);
+					mSnapshotManager.Read(original, prefetcher.OnOriginalDataRead);
+					mSnapshotManager.Read(unmerged, prefetcher.OnUnmergedDataRead);
+				}
+			}
+			else
+			{
+				Logger.e("Unhandled response status");
+				completedCallback(SavedGameRequestStatus.InternalError, null);
+			}
+		});
+	}
+
+	public void ReadBinaryData(ISavedGameMetadata metadata, Action<SavedGameRequestStatus, byte[]> completedCallback)
+	{
+		Misc.CheckNotNull(metadata);
+		Misc.CheckNotNull(completedCallback);
+		completedCallback = ToOnGameThread(completedCallback);
+		if (!(metadata is NativeSnapshotMetadata nativeSnapshotMetadata))
+		{
+			Logger.e("Encountered metadata that was not generated by this ISavedGameClient");
+			completedCallback(SavedGameRequestStatus.BadInputError, null);
+			return;
+		}
+		if (!nativeSnapshotMetadata.IsOpen)
+		{
+			Logger.e("This method requires an open ISavedGameMetadata.");
+			completedCallback(SavedGameRequestStatus.BadInputError, null);
+			return;
+		}
+		mSnapshotManager.Read(nativeSnapshotMetadata, delegate(GooglePlayGames.Native.PInvoke.SnapshotManager.ReadResponse response)
+		{
+			if (!response.RequestSucceeded())
+			{
+				completedCallback(AsRequestStatus(response.ResponseStatus()), null);
+			}
+			else
+			{
+				completedCallback(SavedGameRequestStatus.Success, response.Data());
+			}
+		});
+	}
+
+	public void ShowSelectSavedGameUI(string uiTitle, uint maxDisplayedSavedGames, bool showCreateSaveUI, bool showDeleteSaveUI, Action<SelectUIStatus, ISavedGameMetadata> callback)
+	{
+		Misc.CheckNotNull(uiTitle);
+		Misc.CheckNotNull(callback);
+		callback = ToOnGameThread(callback);
+		if (maxDisplayedSavedGames == 0)
+		{
+			Logger.e("maxDisplayedSavedGames must be greater than 0");
+			callback(SelectUIStatus.BadInputError, null);
+		}
+		else
+		{
+			mSnapshotManager.SnapshotSelectUI(showCreateSaveUI, showDeleteSaveUI, maxDisplayedSavedGames, uiTitle, delegate(GooglePlayGames.Native.PInvoke.SnapshotManager.SnapshotSelectUIResponse response)
+			{
+				callback(AsUIStatus(response.RequestStatus()), (!response.RequestSucceeded()) ? null : response.Data());
+			});
+		}
+	}
+
+	public void CommitUpdate(ISavedGameMetadata metadata, SavedGameMetadataUpdate updateForMetadata, byte[] updatedBinaryData, Action<SavedGameRequestStatus, ISavedGameMetadata> callback)
+	{
+		Misc.CheckNotNull(metadata);
+		Misc.CheckNotNull(updatedBinaryData);
+		Misc.CheckNotNull(callback);
+		callback = ToOnGameThread(callback);
+		if (!(metadata is NativeSnapshotMetadata nativeSnapshotMetadata))
+		{
+			Logger.e("Encountered metadata that was not generated by this ISavedGameClient");
+			callback(SavedGameRequestStatus.BadInputError, null);
+			return;
+		}
+		if (!nativeSnapshotMetadata.IsOpen)
+		{
+			Logger.e("This method requires an open ISavedGameMetadata.");
+			callback(SavedGameRequestStatus.BadInputError, null);
+			return;
+		}
+		mSnapshotManager.Commit(nativeSnapshotMetadata, AsMetadataChange(updateForMetadata), updatedBinaryData, delegate(GooglePlayGames.Native.PInvoke.SnapshotManager.CommitResponse response)
+		{
+			if (!response.RequestSucceeded())
+			{
+				callback(AsRequestStatus(response.ResponseStatus()), null);
+			}
+			else
+			{
+				callback(SavedGameRequestStatus.Success, response.Data());
+			}
+		});
+	}
+
+	public void FetchAllSavedGames(DataSource source, Action<SavedGameRequestStatus, List<ISavedGameMetadata>> callback)
+	{
+		Misc.CheckNotNull(callback);
+		callback = ToOnGameThread(callback);
+		mSnapshotManager.FetchAll(AsDataSource(source), delegate(GooglePlayGames.Native.PInvoke.SnapshotManager.FetchAllResponse response)
+		{
+			if (!response.RequestSucceeded())
+			{
+				callback(AsRequestStatus(response.ResponseStatus()), new List<ISavedGameMetadata>());
+			}
+			else
+			{
+				callback(SavedGameRequestStatus.Success, response.Data().Cast<ISavedGameMetadata>().ToList());
+			}
+		});
+	}
+
+	public void Delete(ISavedGameMetadata metadata)
+	{
+		Misc.CheckNotNull(metadata);
+		mSnapshotManager.Delete((NativeSnapshotMetadata)metadata);
+	}
+
+	internal static bool IsValidFilename(string filename)
+	{
+		if (filename == null)
+		{
+			return false;
+		}
+		return ValidFilenameRegex.IsMatch(filename);
+	}
+
+	private static Types.SnapshotConflictPolicy AsConflictPolicy(ConflictResolutionStrategy strategy)
+	{
+		switch (strategy)
+		{
+			case ConflictResolutionStrategy.UseLongestPlaytime:
+				return Types.SnapshotConflictPolicy.LONGEST_PLAYTIME;
+			case ConflictResolutionStrategy.UseOriginal:
+				return Types.SnapshotConflictPolicy.LAST_KNOWN_GOOD;
+			case ConflictResolutionStrategy.UseUnmerged:
+				return Types.SnapshotConflictPolicy.MOST_RECENTLY_MODIFIED;
+			default:
+				throw new InvalidOperationException("Found unhandled strategy: " + strategy);
+		}
+	}
+
+	private static SavedGameRequestStatus AsRequestStatus(CommonErrorStatus.SnapshotOpenStatus status)
+	{
+		switch (status)
+		{
+		case CommonErrorStatus.SnapshotOpenStatus.VALID:
+			return SavedGameRequestStatus.Success;
+		case CommonErrorStatus.SnapshotOpenStatus.ERROR_NOT_AUTHORIZED:
+			return SavedGameRequestStatus.AuthenticationError;
+		case CommonErrorStatus.SnapshotOpenStatus.ERROR_TIMEOUT:
+			return SavedGameRequestStatus.TimeoutError;
+		default:
+			Logger.e("Encountered unknown status: " + status);
+			return SavedGameRequestStatus.InternalError;
+		}
+	}
+
+	private static Types.DataSource AsDataSource(DataSource source)
+	{
+		switch (source)
+		{
+			case DataSource.ReadCacheOrNetwork:
+				return Types.DataSource.CACHE_OR_NETWORK;
+			case DataSource.ReadNetworkOnly:
+				return Types.DataSource.NETWORK_ONLY;
+			default:
+				throw new InvalidOperationException("Found unhandled DataSource: " + source);
+		}
+	}
+
+	private static SavedGameRequestStatus AsRequestStatus(CommonErrorStatus.ResponseStatus status)
+	{
+		switch (status)
+		{
+		case CommonErrorStatus.ResponseStatus.ERROR_INTERNAL:
+			return SavedGameRequestStatus.InternalError;
+		case CommonErrorStatus.ResponseStatus.ERROR_LICENSE_CHECK_FAILED:
+			Logger.e("User attempted to use the game without a valid license.");
+			return SavedGameRequestStatus.AuthenticationError;
+		case CommonErrorStatus.ResponseStatus.ERROR_NOT_AUTHORIZED:
+			Logger.e("User was not authorized (they were probably not logged in).");
+			return SavedGameRequestStatus.AuthenticationError;
+		case CommonErrorStatus.ResponseStatus.ERROR_TIMEOUT:
+			return SavedGameRequestStatus.TimeoutError;
+		case CommonErrorStatus.ResponseStatus.VALID:
+		case CommonErrorStatus.ResponseStatus.VALID_BUT_STALE:
+			return SavedGameRequestStatus.Success;
+		default:
+			Logger.e("Unknown status: " + status);
+			return SavedGameRequestStatus.InternalError;
+		}
+	}
+
+	private static SelectUIStatus AsUIStatus(CommonErrorStatus.UIStatus uiStatus)
+	{
+		switch (uiStatus)
+		{
+		case CommonErrorStatus.UIStatus.VALID:
+			return SelectUIStatus.SavedGameSelected;
+		case CommonErrorStatus.UIStatus.ERROR_CANCELED:
+			return SelectUIStatus.UserClosedUI;
+		case CommonErrorStatus.UIStatus.ERROR_INTERNAL:
+			return SelectUIStatus.InternalError;
+		case CommonErrorStatus.UIStatus.ERROR_NOT_AUTHORIZED:
+			return SelectUIStatus.AuthenticationError;
+		case CommonErrorStatus.UIStatus.ERROR_TIMEOUT:
+			return SelectUIStatus.TimeoutError;
+		default:
+			Logger.e("Encountered unknown UI Status: " + uiStatus);
+			return SelectUIStatus.InternalError;
+		}
+	}
+
+	private static NativeSnapshotMetadataChange AsMetadataChange(SavedGameMetadataUpdate update)
+	{
+		NativeSnapshotMetadataChange.Builder builder = new NativeSnapshotMetadataChange.Builder();
+		if (update.IsCoverImageUpdated)
+		{
+			builder.SetCoverImageFromPngData(update.UpdatedPngCoverImage);
+		}
+		if (update.IsDescriptionUpdated)
+		{
+			builder.SetDescription(update.UpdatedDescription);
+		}
+		if (update.IsPlayedTimeUpdated)
+		{
+			builder.SetPlayedTime((ulong)update.UpdatedPlayedTime.Value.TotalMilliseconds);
+		}
+		return builder.Build();
+	}
+
+	private static Action<T1, T2> ToOnGameThread<T1, T2>(Action<T1, T2> toConvert)
+	{
+		return delegate(T1 val1, T2 val2)
+		{
+			PlayGamesHelperObject.RunOnGameThread(delegate
+			{
+				toConvert(val1, val2);
+			});
+		};
+	}
+}
 }

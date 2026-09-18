@@ -1,63 +1,91 @@
 using UnityEngine;
 
-public class ChillingoSdkManager : MonoBehaviour
+public class ChillingoSdkManager : Singleton<ChillingoSdkManager>
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	private bool mOffersShown;
 
-	1. No dll files were provided to AssetRipper.
+	protected override void Awake()
+	{
+		base.Awake();
+		Offers.registerForOffersNotification(Offers.OffersCallbackIdentifier.PAUSEDRAWING, "ChillingoSdkManager", "OnPauseDrawing");
+		Offers.registerForOffersNotification(Offers.OffersCallbackIdentifier.RESTARTDRAWING, "ChillingoSdkManager", "OnRestartDrawing");
+		Offers.registerForOffersNotification(Offers.OffersCallbackIdentifier.OFFERSRELEASED, "ChillingoSdkManager", "OnOffersReleased");
+		Offers.registerForOffersNotification(Offers.OffersCallbackIdentifier.OFFERSCLOSED, "ChillingoSdkManager", "OnOffersClosed");
+		Offers.setOffersUpdateMethod(Offers.OffersUIUpdateMethod.Timer);
+	}
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	private void OnPauseDrawing(string str)
+	{
+		Debug.Log("Chillingo: On Pause Drawing " + str);
+	}
 
-	2. Incorrect dll files were provided to AssetRipper.
+	private void OnRestartDrawing(string str)
+	{
+		Debug.Log("Chillingo: On Restart Drawing " + str);
+	}
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	private void OnOffersReleased(string str)
+	{
+		Debug.Log("Chillingo: On Offers Released" + str);
+	}
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	private void OnOffersClosed(string str)
+	{
+		Debug.Log("Chillingo: On Offers Closed " + str);
+	}
 
-	3. Assembly Reconstruction has not been implemented.
+	private void OnAgeVerificationPendingDialogDisplay(string str)
+	{
+		Debug.Log("Chillingo: On Age Verification Pending Dialog Display " + str);
+	}
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	protected override void Start()
+	{
+		base.Start();
+		bool preCOPPA = false;
+		bool useCustomSkin = false;
+		Init(preCOPPA, useCustomSkin);
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	private void Init(bool preCOPPA, bool useCustomSkin)
+	{
+		Offers.initialiseOffersSession("universal", Offers.OffersInterfaceOrientationMask.OffersInterfaceOrientationMaskPortrait, Offers.OffersAndroidStoreType.GOOGLE_PLAY);
+		Offers.setOffersUpdateMethod(Offers.OffersUIUpdateMethod.Timer);
+	}
 
-	4. This script is unnecessary.
+	public void activateOffers()
+	{
+		if (Singleton<PerformanceManager>.instance.enableBubbles && !mOffersShown)
+		{
+			mOffersShown = true;
+			Debug.Log("Chillingo SDK: activate offers");
+			Offers.activateOffersUI(Offers.OffersCornerToDisplayFrom.BottomLeft);
+		}
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public void deactivateOffers()
+	{
+		mOffersShown = false;
+		Debug.Log("Chillingo SDK: deactivate offers");
+		Offers.deactivateOffersUI();
+	}
 
-	5. Script Content Level 0
+	private void OnApplicationQuit()
+	{
+		Offers.closeOffersSession();
+	}
 
-		AssetRipper was set to not load any script information.
+	private void OnApplicationPause(bool pauseStatus)
+	{
+		if (pauseStatus)
+		{
+			Debug.Log("ChillingoSDK: Application is paused, closing session");
+			Offers.closeOffersSession();
+		}
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
-
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	private void OnApplicationResumed()
+	{
+		Init(preCOPPA: false, useCustomSkin: false);
+	}
 }

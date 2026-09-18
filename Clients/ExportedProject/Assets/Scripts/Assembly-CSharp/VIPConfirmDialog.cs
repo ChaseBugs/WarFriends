@@ -1,63 +1,105 @@
+using System;
+using Google2u;
 using UnityEngine;
 
-public class VIPConfirmDialog : MonoBehaviour
+public class VIPConfirmDialog : GuiElementSingle<VIPConfirmDialog>, IGuiDialog
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[SerializeField]
+	[Header("Core")]
+	private GameObject mCloseButton;
 
-	1. No dll files were provided to AssetRipper.
+	[SerializeField]
+	private UILabel mVipTimeLabel;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	[SerializeField]
+	private UILabel mTextLabel;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	[SerializeField]
+	private GameObject mBuyButton;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	[SerializeField]
+	private UITable mPriceTable;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	[SerializeField]
+	private UILabel mGoldLabel;
 
-	3. Assembly Reconstruction has not been implemented.
+	private VIP.rowIds mRowId;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	private Action<bool> mDialogResponse;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public void ShowDialog(VIP.rowIds rowId, Action<bool> dialogResponse)
+	{
+		mRowId = rowId;
+		mDialogResponse = dialogResponse;
+		Singleton<GuiManager>.instance.ShowDialog(GuiElementSingle<VIPConfirmDialog>.instance, 0f);
+	}
 
-	4. This script is unnecessary.
+	public override void InitControls()
+	{
+		UIEventListener uIEventListener = UIEventListener.Get(mCloseButton);
+		uIEventListener.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener.onClick, new UIEventListener.VoidDelegate(CloseClick));
+		UIEventListener uIEventListener2 = UIEventListener.Get(mBuyButton.gameObject);
+		uIEventListener2.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener2.onClick, new UIEventListener.VoidDelegate(BuyClick));
+		mPriceTable.onReposition = delegate
+		{
+			float val = 0f - mPriceTable.padding.x - (mGoldLabel.transform.parent.localPosition.x - mPriceTable.padding.x) / 2f;
+			mPriceTable.transform.localPosition = mPriceTable.transform.localPosition.ReplaceX(val);
+		};
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private void BuyClick(GameObject go)
+	{
+		if (base.isFullyShowed)
+		{
+			if (mDialogResponse != null)
+			{
+				mDialogResponse(obj: true);
+			}
+			HideDialog();
+		}
+	}
 
-	5. Script Content Level 0
+	private void CloseClick(GameObject go)
+	{
+		if (base.isFullyShowed)
+		{
+			if (mDialogResponse != null)
+			{
+				mDialogResponse(obj: false);
+			}
+			HideDialog();
+		}
+	}
 
-		AssetRipper was set to not load any script information.
+	public override void InitGUIValues()
+	{
+		mVipTimeLabel.text = MiscTools.PrintableTimeVipConvert(Singleton<GameVariables>.instance.vip.GetRow(mRowId).SECONDS);
+		MiscTools.SetUILabelRescale(mVipTimeLabel, 47f, 20f, 230);
+		int num = Singleton<OfferManager>.instance.DiscountedVIP();
+		bool flag = num > 0;
+		int num2 = Singleton<GameVariables>.instance.vip.GetRow(mRowId).GOLD;
+		if (flag)
+		{
+			num2 = num2 * (100 - num) / 100;
+		}
+		mGoldLabel.text = MiscTools.FormatBigNumber(num2);
+		mPriceTable.repositionNow = true;
+		mTextLabel.text = Localization.LocalizeFormat("ID_ACTIVATEXVIPFORYGOLD", mVipTimeLabel.text, mGoldLabel.text);
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public override void DoAfterHide()
+	{
+		base.DoAfterHide();
+		mDialogResponse = null;
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public GuiElement GetGuiElement()
+	{
+		return this;
+	}
 
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public override void OnBack()
+	{
+		CloseClick(mCloseButton);
+	}
 }

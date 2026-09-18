@@ -1,63 +1,236 @@
+using System;
 using UnityEngine;
 
-public class GuiScreen : MonoBehaviour
+[RequireComponent(typeof(UIPanel))]
+public abstract class GuiScreen : SwitchableGui
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public enum HeaderType
+	{
+		None,
+		Normal,
+		League,
+		Arena
+	}
 
-	1. No dll files were provided to AssetRipper.
+	public bool UseOverlay = true;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public HeaderType headerType;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public bool showChat;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public bool showActiveUnits;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public bool showBackground;
 
-	3. Assembly Reconstruction has not been implemented.
+	public Background.Type backgroundType;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public bool showDialogs;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public static Action ChangingScreen;
 
-	4. This script is unnecessary.
+	private bool mFirstEnable = true;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public virtual bool dialogsEnabled => showDialogs;
 
-	5. Script Content Level 0
+	public bool showHeaderPart => headerType == HeaderType.Normal || headerType == HeaderType.League || headerType == HeaderType.Arena;
 
-		AssetRipper was set to not load any script information.
+	public bool showHeaderLeaguePart => headerType == HeaderType.League;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public bool showHeaderDogtagPart => headerType == HeaderType.Normal || headerType == HeaderType.League;
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public bool showHeaderTicketPart => headerType == HeaderType.Arena;
 
-	7. An incorrect path was provided to AssetRipper.
+	public event Action BeforeShowUp;
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	public event Action AfterShowUp;
 
-	*/
+	public event Action BeforeHide;
+
+	public event Action AfterHide;
+
+	public virtual void OnDestroy()
+	{
+		ChangingScreen = null;
+		this.BeforeShowUp = null;
+		this.AfterShowUp = null;
+		this.BeforeHide = null;
+		this.AfterHide = null;
+	}
+
+	protected override void OnEnable()
+	{
+		base.OnEnable();
+		if (mFirstEnable)
+		{
+			GuiElement[] componentsInChildren = GetComponentsInChildren<GuiElement>(includeInactive: true);
+			foreach (GuiElement guiElement in componentsInChildren)
+			{
+				guiElement.guiScreen = this;
+			}
+			try
+			{
+				InitControls();
+			}
+			catch (Exception ex)
+			{
+				Debug.LogError($"OBJECT: {base.gameObject.name}\nERROR: {ex.Message}\nSTACKTRACE: {ex.StackTrace}");
+				if (DebugSettings.debugEnabled)
+				{
+					WarningDialog.ShowError(Localization.Localize("ID_DEBUG_STACKTRACEINCONSOLE"), Localization.Localize("ID_DEBUG_GUIERROR"), 0f, null, string.Empty, useDialogBackground: true);
+				}
+				Crittercism.LogHandledException(ex);
+			}
+			mFirstEnable = false;
+		}
+		try
+		{
+			InitGUIValues();
+		}
+		catch (Exception ex2)
+		{
+			Debug.LogError($"OBJECT: {base.gameObject.name}\nERROR: {ex2.Message}\nSTACKTRACE: {ex2.StackTrace}");
+			if (DebugSettings.debugEnabled)
+			{
+				WarningDialog.ShowError(Localization.Localize("ID_DEBUG_STACKTRACEINCONSOLE"), Localization.Localize("ID_DEBUG_GUIERROR"), 0f, null, string.Empty, useDialogBackground: true);
+			}
+			Crittercism.LogHandledException(ex2);
+		}
+	}
+
+	public override void AnimateShow(bool forceFadeIn)
+	{
+		base.AnimateShow(forceFadeIn);
+		GuiScreen guiScreen = base.previousScreenForElementsToHide;
+		GuiElementSingle<Background>.instance.ShowVariant(backgroundType);
+		if (guiScreen == null)
+		{
+			if (showChat || showActiveUnits)
+			{
+				Singleton<GuiManager>.instance.FadeIn(GuiElementSingle<ChatGuiElement>.instance);
+			}
+			if (showHeaderPart)
+			{
+				Singleton<GuiManager>.instance.FadeIn(GuiElementSingle<MenuHeader>.instance);
+			}
+			if (showHeaderLeaguePart)
+			{
+				Singleton<GuiManager>.instance.FadeIn(GuiElementSingle<HeaderLeagueButton>.instance);
+			}
+			if (showHeaderDogtagPart)
+			{
+				Singleton<GuiManager>.instance.FadeIn(GuiElementSingle<HeaderDogtagButton>.instance);
+			}
+			if (showHeaderTicketPart)
+			{
+				Singleton<GuiManager>.instance.FadeIn(GuiElementSingle<HeaderTicketsButton>.instance);
+			}
+			if (showBackground)
+			{
+				Singleton<GuiManager>.instance.FadeIn(GuiElementSingle<Background>.instance);
+			}
+			if (!showBackground)
+			{
+				Singleton<GuiManager>.instance.FadeOut(GuiElementSingle<Background>.instance);
+			}
+		}
+		else
+		{
+			AnimateShowElement((!showBackground) ? null : GuiElementSingle<Background>.instance, (!guiScreen.showBackground) ? null : GuiElementSingle<Background>.instance);
+			AnimateShowElement((!showChat && !showActiveUnits) ? null : GuiElementSingle<ChatGuiElement>.instance, (!guiScreen.showChat && !guiScreen.showActiveUnits) ? null : GuiElementSingle<ChatGuiElement>.instance);
+			AnimateShowElement((!showHeaderPart) ? null : GuiElementSingle<MenuHeader>.instance, (!guiScreen.showHeaderPart) ? null : GuiElementSingle<MenuHeader>.instance);
+			AnimateShowElement((!showHeaderLeaguePart) ? null : GuiElementSingle<HeaderLeagueButton>.instance, (!guiScreen.showHeaderLeaguePart) ? null : GuiElementSingle<HeaderLeagueButton>.instance);
+			AnimateShowElement((!showHeaderDogtagPart) ? null : GuiElementSingle<HeaderDogtagButton>.instance, (!guiScreen.showHeaderDogtagPart) ? null : GuiElementSingle<HeaderDogtagButton>.instance);
+			AnimateShowElement((!showHeaderTicketPart) ? null : GuiElementSingle<HeaderTicketsButton>.instance, (!guiScreen.showHeaderTicketPart) ? null : GuiElementSingle<HeaderTicketsButton>.instance);
+		}
+		GuiElementSingle<ChatGuiElement>.instance.ShowContent(showChat, showActiveUnits);
+	}
+
+	private void AnimateShowElement(GuiElement element, GuiElement prevScreenElement)
+	{
+		if (element != null)
+		{
+			if (prevScreenElement == null || !element.isShowed)
+			{
+				Singleton<GuiManager>.instance.FadeIn(element);
+			}
+			else if (prevScreenElement != element)
+			{
+				prevScreenElement.DoBeforeHide();
+				prevScreenElement.AnimateHide(forceFadeOut: true);
+				Singleton<GuiManager>.instance.FadeIn(element);
+				Debug.Log("Show: " + element.name);
+			}
+		}
+		else if (prevScreenElement != null)
+		{
+			prevScreenElement.DoBeforeHide();
+			prevScreenElement.AnimateHide(forceFadeOut: true);
+		}
+	}
+
+	public override void DoBeforeShowUp()
+	{
+		base.DoBeforeShowUp();
+		if (UseOverlay)
+		{
+			Singleton<GuiManager>.instance.ShowOverlay();
+		}
+		else
+		{
+			Singleton<GuiManager>.instance.HideOverlay();
+		}
+		if (ChangingScreen != null)
+		{
+			ChangingScreen();
+		}
+		if (this.BeforeShowUp != null)
+		{
+			this.BeforeShowUp();
+		}
+	}
+
+	public override void DoAfterShowUp()
+	{
+		base.DoAfterShowUp();
+		Singleton<GuiManager>.instance.TurnOnInput();
+		if (showDialogs)
+		{
+			Singleton<MessageManager>.instance.StartMessageCoroutine();
+		}
+		if (this.AfterShowUp != null)
+		{
+			this.AfterShowUp();
+		}
+	}
+
+	public override void DoBeforeHide()
+	{
+		base.DoBeforeHide();
+		if (showDialogs)
+		{
+			Singleton<MessageManager>.instance.StopMessageCoroutine();
+		}
+		if (this.BeforeHide != null)
+		{
+			this.BeforeHide();
+		}
+	}
+
+	public override void DoAfterHide()
+	{
+		base.DoAfterHide();
+		Singleton<GuiManager>.instance.TurnOnInput();
+		if (this.AfterHide != null)
+		{
+			this.AfterHide();
+		}
+	}
+
+	protected abstract void InitControls();
+
+	public abstract void InitGUIValues();
+
+	protected virtual void FixedUpdate()
+	{
+	}
 }

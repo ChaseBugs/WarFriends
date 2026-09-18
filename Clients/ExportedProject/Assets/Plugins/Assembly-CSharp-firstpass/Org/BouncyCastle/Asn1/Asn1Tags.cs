@@ -1,66 +1,61 @@
-using UnityEngine;
-
 namespace Org.BouncyCastle.Asn1
 {
-	public class Asn1Tags : MonoBehaviour
-	{
-		/*
-		Dummy class. This could have happened for several reasons:
+public class Asn1Tags
+{
+	public const int Boolean = 1;
 
-		1. No dll files were provided to AssetRipper.
+	public const int Integer = 2;
 
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
+	public const int BitString = 3;
 
-		2. Incorrect dll files were provided to AssetRipper.
+	public const int OctetString = 4;
 
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
+	public const int Null = 5;
 
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public const int ObjectIdentifier = 6;
 
-		3. Assembly Reconstruction has not been implemented.
+	public const int External = 8;
 
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
+	public const int Enumerated = 10;
 
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
+	public const int Sequence = 16;
 
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
+	public const int SequenceOf = 16;
 
-		5. Script Content Level 0
+	public const int Set = 17;
 
-			AssetRipper was set to not load any script information.
+	public const int SetOf = 17;
 
-		6. Cpp2IL failed to decompile Il2Cpp data
+	public const int NumericString = 18;
 
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public const int PrintableString = 19;
 
-		7. An incorrect path was provided to AssetRipper.
+	public const int T61String = 20;
 
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
+	public const int VideotexString = 21;
 
-		*/
-	}
+	public const int IA5String = 22;
+
+	public const int UtcTime = 23;
+
+	public const int GeneralizedTime = 24;
+
+	public const int GraphicString = 25;
+
+	public const int VisibleString = 26;
+
+	public const int GeneralString = 27;
+
+	public const int UniversalString = 28;
+
+	public const int BmpString = 30;
+
+	public const int Utf8String = 12;
+
+	public const int Constructed = 32;
+
+	public const int Application = 64;
+
+	public const int Tagged = 128;
+}
 }

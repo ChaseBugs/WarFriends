@@ -1,63 +1,229 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
-public class InstantBattleAnimation : MonoBehaviour
+public class InstantBattleAnimation : Core_BaseScript
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Serializable]
+	private class EnemyDefinition
+	{
+		public Transform position;
 
-	1. No dll files were provided to AssetRipper.
+		public Transform shootPosition;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+		public LevelBehaviour unitBehavior;
 
-	2. Incorrect dll files were provided to AssetRipper.
+		internal EnemyController mInstance;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+		internal int mHits;
+	}
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	[SerializeField]
+	private PlayerPoint mPlayerPoint;
 
-	3. Assembly Reconstruction has not been implemented.
+	[SerializeField]
+	private List<EnemyDefinition> enemies;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	[SerializeField]
+	private Camera camera;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	private bool mIsPlaying;
 
-	4. This script is unnecessary.
+	private string toolkitAtlasName = "spriteCollectionTextureCompressed";
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public event Action Showed;
 
-	5. Script Content Level 0
+	public event Action FInished;
 
-		AssetRipper was set to not load any script information.
+	public void Update()
+	{
+		if (mIsPlaying)
+		{
+			PlayerController mainPlayer = CamosManager.instance.mainPlayer;
+			PlayerWeapon currentWeapon = mainPlayer.weaponInventory.currentWeapon;
+			currentWeapon.UpdateWeapon();
+		}
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	private new void Awake()
+	{
+		camera.gameObject.SetActive(value: false);
+		Weapon.OnShotHit += WeaponOnOnShotHit;
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public Camera GetCamera()
+	{
+		return camera;
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	private void WeaponOnOnShotHit(Weapon weapon, Ammo ammo, Vector3 arg3, bool isNetwork, DestroyableObject hit)
+	{
+		PlayerController mainPlayer = CamosManager.instance.mainPlayer;
+		if (!(hit != null) || !mIsPlaying || weapon.owner != mainPlayer)
+		{
+			return;
+		}
+		foreach (EnemyDefinition enemy in enemies)
+		{
+			if (enemy.mInstance.destroyableObj == hit.mainDestroyableObject)
+			{
+				enemy.mHits++;
+				if (enemy.mHits == 3)
+				{
+					enemy.mInstance.PlayShotRagdoll(new DestroyableObject.DamageInfo
+					{
+						force = (hit.transform.position - mainPlayer.transform.position).normalized * 5f
+					});
+				}
+			}
+		}
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	public void StartAnimation()
+	{
+		StartCoroutine(PlayAnimation());
+	}
 
-	*/
+	public void Show()
+	{
+		StopAllCoroutines();
+		StartCoroutine(ShowCoroutine());
+	}
+
+	private IEnumerator ShowCoroutine()
+	{
+		mIsPlaying = true;
+		PhotonConnectionManager.JoinOfflineGame();
+		InitPlayer();
+		yield return null;
+		AtlasPreparer.Load2DToolkitTexture(toolkitAtlasName);
+		yield return null;
+		yield return StartCoroutine(InitOpponents());
+		camera.gameObject.SetActive(value: true);
+		yield return new WaitForSeconds(0.1f);
+		if (this.Showed != null)
+		{
+			this.Showed();
+		}
+	}
+
+	private IEnumerator InitOpponents()
+	{
+		foreach (EnemyDefinition enemyDefinition in enemies)
+		{
+			LevelBehaviour behavior = enemyDefinition.unitBehavior;
+			yield return StartCoroutine(behavior.PrepareVisualsForGameCoroutine(UnitUpgradeDefinition.GetPreviewUpgrades(behavior, 1f), bought: true, mine: false));
+			AIObject enemy = Singleton<LevelBehaviourManager>.instance.GenerateNewEnemy(behavior);
+			if (enemy != null && enemy.prefab != null)
+			{
+				enemy.isPrewiev = true;
+				enemy.fraction = Fractions.Enemies;
+				EnemyController instance = (EnemyController)ObjectPoolDatabase.networkPool.ReInstantiate(enemy);
+				instance.transform.parent = base.transform;
+				instance.transform.position = enemyDefinition.position.position;
+				instance.transform.rotation = Quaternion.LookRotation(mPlayerPoint.transform.position - enemyDefinition.position.position);
+				instance.UpdatePreview(inGame: false);
+				instance.soldierParts.ShadowSetActive(active: true);
+				enemyDefinition.mInstance = instance;
+				enemyDefinition.mHits = 0;
+			}
+		}
+	}
+
+	private void InitPlayer()
+	{
+		PlayerController mainPlayer = CamosManager.instance.mainPlayer;
+		mainPlayer.gameObject.SetActive(value: true);
+		mainPlayer.InitPlayerForCamera();
+		mainPlayer.Preview(idle: false);
+		mainPlayer.fraction = Fractions.Allies;
+		mainPlayer.currentPlayerPoint = new MapDefinition.DefendPosition
+		{
+			point = mPlayerPoint
+		};
+		CamosManager.instance.UpdateVisuals(mainPlayer);
+		mainPlayer.soldierParts.ShadowSetActive(active: true);
+		mainPlayer.transform.parent = base.transform;
+		mainPlayer.transform.rotation = mPlayerPoint.transform.rotation;
+		mainPlayer.transform.position = mPlayerPoint.transform.position;
+		mainPlayer.transform.localScale = Vector3.one;
+		mainPlayer.soldierAnimator.ForceInScreen();
+		PlayerWeapon currentWeapon = mainPlayer.weaponInventory.currentWeapon;
+		currentWeapon.weapon.ammoLeftInClip = 20;
+		currentWeapon.weapon.clipSize = 20;
+		currentWeapon.weapon.cadence = 0.12f;
+		LightMachinegun lightMachinegun = currentWeapon.weapon as LightMachinegun;
+		if (lightMachinegun != null)
+		{
+			lightMachinegun.missProbability = 0f;
+		}
+		Singleton<SoundsManager3D>.instance.LoadNow(currentWeapon.weapon.shotSound);
+		Singleton<GameCamera>.instance.transform.position = mainPlayer.transform.position + 2f * Vector3.up;
+		Singleton<GameCamera>.instance.transform.rotation = mainPlayer.transform.rotation;
+		mainPlayer.soldierAnimator.Idle(currentWeapon.weapon.weaponType);
+	}
+
+	private IEnumerator PlayAnimation()
+	{
+		mIsPlaying = true;
+		TimeManager.Begin(0f, 1f, 1f);
+		yield return new WaitForSeconds(1f);
+		PlayerController mainPlayer = CamosManager.instance.mainPlayer;
+		PlayerWeapon playerWeapon = mainPlayer.weaponInventory.currentWeapon;
+		for (int index = 0; index < enemies.Count; index++)
+		{
+			EnemyDefinition enemyDefinition = enemies[index];
+			for (int i = 0; i < 3; i++)
+			{
+				int h = enemyDefinition.mHits;
+				while (!playerWeapon.weapon.willShoot)
+				{
+					yield return null;
+				}
+				Vibration.iPhoneVibrate(Vibration.iPhoneVibrateType.VibrateLight);
+				playerWeapon.ShootForBot(enemyDefinition.mInstance.destroyableObject.parts[1].transform.position);
+				yield return new WaitForSeconds(0.1f);
+				if (i == 0)
+				{
+					GuiScreenSingle<InstantBattleResultsScreen>.instance.ShowLabels(enemyDefinition.mInstance.destroyableObject.parts[1].transform.position, index);
+				}
+				float s = ((index != 0 || i != 0) ? 0.1f : 0.2f);
+				yield return new WaitForSeconds(s);
+			}
+			yield return new WaitForSeconds(0.2f);
+		}
+		if (this.FInished != null)
+		{
+			this.FInished();
+		}
+	}
+
+	public void Hide()
+	{
+		StopAllCoroutines();
+		mIsPlaying = false;
+		camera.gameObject.SetActive(value: false);
+		PlayerController mainPlayer = CamosManager.instance.mainPlayer;
+		mainPlayer.gameObject.SetActive(value: false);
+		mainPlayer.transform.parent = Singleton<MainSceneRoot>.instance.transform;
+		mainPlayer.transform.localScale = Vector3.one;
+		DestroyEnemies();
+		AtlasPreparer.UnLoad2DToolkitTexture(toolkitAtlasName);
+	}
+
+	public void DestroyEnemies()
+	{
+		foreach (EnemyDefinition enemy in enemies)
+		{
+			if (enemy.mInstance != null)
+			{
+				enemy.mInstance.DestroyPooled(changeParentBack: true);
+			}
+			if (enemy.unitBehavior != null)
+			{
+				enemy.unitBehavior.Unload();
+			}
+		}
+	}
 }

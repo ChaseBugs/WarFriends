@@ -1,63 +1,80 @@
 using UnityEngine;
 
-public class LootBoxCharacter : MonoBehaviour
+public class LootBoxCharacter : Core_BaseScript, ICharacter
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[SerializeField]
+	private SoldierMeshChanger mMeshChanger;
 
-	1. No dll files were provided to AssetRipper.
+	public Animation characterAnimation;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public Material solidMaterial;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public Material transparentMaterial;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public SoldierMeshChanger meshChanger => mMeshChanger;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public string[] playerVisuals { get; set; }
 
-	3. Assembly Reconstruction has not been implemented.
+	public PlayerVisualCategoryCamos.PlayerVisualCamo equippedCamo { get; set; }
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public PlayerVisualCategoryHelmets.PlayerVisualHelmet equippedHelmet { get; set; }
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public PlayerVisualCategoryHeadAccesories.PlayerVisualHeadAccesory equippedHeadAccesory { get; set; }
 
-	4. This script is unnecessary.
+	public PlayerVisualCategoryPowerBands.PlayerVisualPowerBand equippedPowerBand { get; set; }
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public void Prepare()
+	{
+		playerVisuals = new string[4];
+		SamplemAnimation("engineer_idle", 0f);
+	}
 
-	5. Script Content Level 0
+	public void SetAccesory(int id)
+	{
+		switch (id)
+		{
+		case 0:
+			EnableParts(body: true, helmet: false, attachment: false);
+			break;
+		case 1:
+			EnableParts(body: false, helmet: true, attachment: false);
+			break;
+		case 2:
+			EnableParts(body: false, helmet: false, attachment: true);
+			break;
+		}
+	}
 
-		AssetRipper was set to not load any script information.
+	public void SetSolidMaterial()
+	{
+		meshChanger.skinnedMeshRenderer.material = solidMaterial;
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	private void EnableParts(bool body, bool helmet, bool attachment)
+	{
+		meshChanger.skinnedMeshRenderer.enabled = true;
+		if (!body)
+		{
+			transparentMaterial.mainTexture = meshChanger.skinnedMeshRenderer.material.mainTexture;
+			meshChanger.skinnedMeshRenderer.material = transparentMaterial;
+			meshChanger.hair.GetComponent<MeshRenderer>().sharedMaterial = transparentMaterial;
+		}
+		else
+		{
+			meshChanger.hair.GetComponent<MeshRenderer>().sharedMaterial = meshChanger.skinnedMeshRenderer.material;
+		}
+		meshChanger.helmet.gameObject.SetActive(helmet);
+		meshChanger.helmetAttachments.modelAttachments[0].parent.gameObject.SetActive(attachment);
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	private void SamplemAnimation(string mAnimationName, float normalizedTime)
+	{
+		characterAnimation.Stop();
+		AnimationState animationState = characterAnimation[mAnimationName];
+		animationState.enabled = true;
+		animationState.weight = 1f;
+		animationState.normalizedTime = normalizedTime;
+		characterAnimation.Sample();
+		animationState.enabled = false;
+	}
 }

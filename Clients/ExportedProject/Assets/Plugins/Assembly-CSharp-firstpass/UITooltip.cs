@@ -1,63 +1,153 @@
 using UnityEngine;
 
+[AddComponentMenu("NGUI/UI/Tooltip")]
 public class UITooltip : MonoBehaviour
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	private static UITooltip mInstance;
 
-	1. No dll files were provided to AssetRipper.
+	public Camera uiCamera;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public UILabel text;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public UISprite background;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public float appearSpeed = 10f;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public bool scalingTransitions = true;
 
-	3. Assembly Reconstruction has not been implemented.
+	private Transform mTrans;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	private float mTarget;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	private float mCurrent;
 
-	4. This script is unnecessary.
+	private Vector3 mPos;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private Vector3 mSize;
 
-	5. Script Content Level 0
+	private UIWidget[] mWidgets;
 
-		AssetRipper was set to not load any script information.
+	private void Awake()
+	{
+		mInstance = this;
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	private void OnDestroy()
+	{
+		mInstance = null;
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	private void Start()
+	{
+		mTrans = base.transform;
+		mWidgets = GetComponentsInChildren<UIWidget>();
+		mPos = mTrans.localPosition;
+		mSize = mTrans.localScale;
+		if (uiCamera == null)
+		{
+			uiCamera = NGUITools.FindCameraForLayer(base.gameObject.layer);
+		}
+		SetAlpha(0f);
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	private void Update()
+	{
+		if (mCurrent != mTarget)
+		{
+			mCurrent = Mathf.Lerp(mCurrent, mTarget, Time.deltaTime * appearSpeed);
+			if (Mathf.Abs(mCurrent - mTarget) < 0.001f)
+			{
+				mCurrent = mTarget;
+			}
+			SetAlpha(mCurrent * mCurrent);
+			if (scalingTransitions)
+			{
+				Vector3 vector = mSize * 0.25f;
+				vector.y = 0f - vector.y;
+				Vector3 localScale = Vector3.one * (1.5f - mCurrent * 0.5f);
+				Vector3 localPosition = Vector3.Lerp(mPos - vector, mPos, mCurrent);
+				mTrans.localPosition = localPosition;
+				mTrans.localScale = localScale;
+			}
+		}
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	private void SetAlpha(float val)
+	{
+		int i = 0;
+		for (int num = mWidgets.Length; i < num; i++)
+		{
+			UIWidget uIWidget = mWidgets[i];
+			Color color = uIWidget.color;
+			color.a = val;
+			uIWidget.color = color;
+		}
+	}
 
-	*/
+	private void SetText(string tooltipText)
+	{
+		if (text != null && !string.IsNullOrEmpty(tooltipText))
+		{
+			mTarget = 1f;
+			if (text != null)
+			{
+				text.text = tooltipText;
+			}
+			mPos = Input.mousePosition;
+			if (background != null)
+			{
+				Transform transform = background.transform;
+				Transform transform2 = text.transform;
+				Vector3 localPosition = transform2.localPosition;
+				Vector3 localScale = transform2.localScale;
+				mSize = text.relativeSize;
+				mSize.x *= localScale.x;
+				mSize.y *= localScale.y;
+				mSize.x += background.border.x + background.border.z + (localPosition.x - background.border.x) * 2f;
+				mSize.y += background.border.y + background.border.w + (0f - localPosition.y - background.border.y) * 2f;
+				mSize.z = 1f;
+				transform.localScale = mSize;
+			}
+			if (uiCamera != null)
+			{
+				mPos.x = Mathf.Clamp01(mPos.x / (float)Screen.width);
+				mPos.y = Mathf.Clamp01(mPos.y / (float)Screen.height);
+				float num = uiCamera.orthographicSize / mTrans.parent.lossyScale.y;
+				float num2 = (float)Screen.height * 0.5f / num;
+				Vector2 vector = new Vector2(num2 * mSize.x / (float)Screen.width, num2 * mSize.y / (float)Screen.height);
+				mPos.x = Mathf.Min(mPos.x, 1f - vector.x);
+				mPos.y = Mathf.Max(mPos.y, vector.y);
+				mTrans.position = uiCamera.ViewportToWorldPoint(mPos);
+				mPos = mTrans.localPosition;
+				mPos.x = Mathf.Round(mPos.x);
+				mPos.y = Mathf.Round(mPos.y);
+				mTrans.localPosition = mPos;
+			}
+			else
+			{
+				if (mPos.x + mSize.x > (float)Screen.width)
+				{
+					mPos.x = (float)Screen.width - mSize.x;
+				}
+				if (mPos.y - mSize.y < 0f)
+				{
+					mPos.y = mSize.y;
+				}
+				mPos.x -= (float)Screen.width * 0.5f;
+				mPos.y -= (float)Screen.height * 0.5f;
+			}
+		}
+		else
+		{
+			mTarget = 0f;
+		}
+	}
+
+	public static void ShowText(string tooltipText)
+	{
+		if (mInstance != null)
+		{
+			mInstance.SetText(tooltipText);
+		}
+	}
 }

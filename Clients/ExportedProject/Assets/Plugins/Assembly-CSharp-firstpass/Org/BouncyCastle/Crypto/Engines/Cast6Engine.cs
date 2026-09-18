@@ -1,66 +1,163 @@
-using UnityEngine;
+using Org.BouncyCastle.Crypto.Utilities;
 
 namespace Org.BouncyCastle.Crypto.Engines
 {
-	public class Cast6Engine : MonoBehaviour
+public sealed class Cast6Engine : Cast5Engine
+{
+	private const int ROUNDS = 12;
+
+	private const int BLOCK_SIZE = 16;
+
+	private int[] _Kr = new int[48];
+
+	private uint[] _Km = new uint[48];
+
+	private int[] _Tr = new int[192];
+
+	private uint[] _Tm = new uint[192];
+
+	private uint[] _workingKey = new uint[8];
+
+	public override string AlgorithmName => "CAST6";
+
+	public override void Reset()
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
 	}
+
+	public override int GetBlockSize()
+	{
+		return 16;
+	}
+
+	internal override void SetKey(byte[] key)
+	{
+		uint num = 1518500249u;
+		uint num2 = 1859775393u;
+		int num3 = 19;
+		int num4 = 17;
+		for (int i = 0; i < 24; i++)
+		{
+			for (int j = 0; j < 8; j++)
+			{
+				_Tm[i * 8 + j] = num;
+				num += num2;
+				_Tr[i * 8 + j] = num3;
+				num3 = (num3 + num4) & 0x1F;
+			}
+		}
+		byte[] array = new byte[64];
+		key.CopyTo(array, 0);
+		for (int k = 0; k < 8; k++)
+		{
+			_workingKey[k] = Pack.BE_To_UInt32(array, k * 4);
+		}
+		for (int l = 0; l < 12; l++)
+		{
+			int num5 = l * 2 * 8;
+			_workingKey[6] ^= Cast5Engine.F1(_workingKey[7], _Tm[num5], _Tr[num5]);
+			_workingKey[5] ^= Cast5Engine.F2(_workingKey[6], _Tm[num5 + 1], _Tr[num5 + 1]);
+			_workingKey[4] ^= Cast5Engine.F3(_workingKey[5], _Tm[num5 + 2], _Tr[num5 + 2]);
+			_workingKey[3] ^= Cast5Engine.F1(_workingKey[4], _Tm[num5 + 3], _Tr[num5 + 3]);
+			_workingKey[2] ^= Cast5Engine.F2(_workingKey[3], _Tm[num5 + 4], _Tr[num5 + 4]);
+			_workingKey[1] ^= Cast5Engine.F3(_workingKey[2], _Tm[num5 + 5], _Tr[num5 + 5]);
+			_workingKey[0] ^= Cast5Engine.F1(_workingKey[1], _Tm[num5 + 6], _Tr[num5 + 6]);
+			_workingKey[7] ^= Cast5Engine.F2(_workingKey[0], _Tm[num5 + 7], _Tr[num5 + 7]);
+			num5 = (l * 2 + 1) * 8;
+			_workingKey[6] ^= Cast5Engine.F1(_workingKey[7], _Tm[num5], _Tr[num5]);
+			_workingKey[5] ^= Cast5Engine.F2(_workingKey[6], _Tm[num5 + 1], _Tr[num5 + 1]);
+			_workingKey[4] ^= Cast5Engine.F3(_workingKey[5], _Tm[num5 + 2], _Tr[num5 + 2]);
+			_workingKey[3] ^= Cast5Engine.F1(_workingKey[4], _Tm[num5 + 3], _Tr[num5 + 3]);
+			_workingKey[2] ^= Cast5Engine.F2(_workingKey[3], _Tm[num5 + 4], _Tr[num5 + 4]);
+			_workingKey[1] ^= Cast5Engine.F3(_workingKey[2], _Tm[num5 + 5], _Tr[num5 + 5]);
+			_workingKey[0] ^= Cast5Engine.F1(_workingKey[1], _Tm[num5 + 6], _Tr[num5 + 6]);
+			_workingKey[7] ^= Cast5Engine.F2(_workingKey[0], _Tm[num5 + 7], _Tr[num5 + 7]);
+			_Kr[l * 4] = (int)(_workingKey[0] & 0x1F);
+			_Kr[l * 4 + 1] = (int)(_workingKey[2] & 0x1F);
+			_Kr[l * 4 + 2] = (int)(_workingKey[4] & 0x1F);
+			_Kr[l * 4 + 3] = (int)(_workingKey[6] & 0x1F);
+			_Km[l * 4] = _workingKey[7];
+			_Km[l * 4 + 1] = _workingKey[5];
+			_Km[l * 4 + 2] = _workingKey[3];
+			_Km[l * 4 + 3] = _workingKey[1];
+		}
+	}
+
+	internal override int EncryptBlock(byte[] src, int srcIndex, byte[] dst, int dstIndex)
+	{
+		uint a = Pack.BE_To_UInt32(src, srcIndex);
+		uint b = Pack.BE_To_UInt32(src, srcIndex + 4);
+		uint c = Pack.BE_To_UInt32(src, srcIndex + 8);
+		uint d = Pack.BE_To_UInt32(src, srcIndex + 12);
+		uint[] array = new uint[4];
+		CAST_Encipher(a, b, c, d, array);
+		Pack.UInt32_To_BE(array[0], dst, dstIndex);
+		Pack.UInt32_To_BE(array[1], dst, dstIndex + 4);
+		Pack.UInt32_To_BE(array[2], dst, dstIndex + 8);
+		Pack.UInt32_To_BE(array[3], dst, dstIndex + 12);
+		return 16;
+	}
+
+	internal override int DecryptBlock(byte[] src, int srcIndex, byte[] dst, int dstIndex)
+	{
+		uint a = Pack.BE_To_UInt32(src, srcIndex);
+		uint b = Pack.BE_To_UInt32(src, srcIndex + 4);
+		uint c = Pack.BE_To_UInt32(src, srcIndex + 8);
+		uint d = Pack.BE_To_UInt32(src, srcIndex + 12);
+		uint[] array = new uint[4];
+		CAST_Decipher(a, b, c, d, array);
+		Pack.UInt32_To_BE(array[0], dst, dstIndex);
+		Pack.UInt32_To_BE(array[1], dst, dstIndex + 4);
+		Pack.UInt32_To_BE(array[2], dst, dstIndex + 8);
+		Pack.UInt32_To_BE(array[3], dst, dstIndex + 12);
+		return 16;
+	}
+
+	private void CAST_Encipher(uint A, uint B, uint C, uint D, uint[] result)
+	{
+		for (int i = 0; i < 6; i++)
+		{
+			int num = i * 4;
+			C ^= Cast5Engine.F1(D, _Km[num], _Kr[num]);
+			B ^= Cast5Engine.F2(C, _Km[num + 1], _Kr[num + 1]);
+			A ^= Cast5Engine.F3(B, _Km[num + 2], _Kr[num + 2]);
+			D ^= Cast5Engine.F1(A, _Km[num + 3], _Kr[num + 3]);
+		}
+		for (int j = 6; j < 12; j++)
+		{
+			int num2 = j * 4;
+			D ^= Cast5Engine.F1(A, _Km[num2 + 3], _Kr[num2 + 3]);
+			A ^= Cast5Engine.F3(B, _Km[num2 + 2], _Kr[num2 + 2]);
+			B ^= Cast5Engine.F2(C, _Km[num2 + 1], _Kr[num2 + 1]);
+			C ^= Cast5Engine.F1(D, _Km[num2], _Kr[num2]);
+		}
+		result[0] = A;
+		result[1] = B;
+		result[2] = C;
+		result[3] = D;
+	}
+
+	private void CAST_Decipher(uint A, uint B, uint C, uint D, uint[] result)
+	{
+		for (int i = 0; i < 6; i++)
+		{
+			int num = (11 - i) * 4;
+			C ^= Cast5Engine.F1(D, _Km[num], _Kr[num]);
+			B ^= Cast5Engine.F2(C, _Km[num + 1], _Kr[num + 1]);
+			A ^= Cast5Engine.F3(B, _Km[num + 2], _Kr[num + 2]);
+			D ^= Cast5Engine.F1(A, _Km[num + 3], _Kr[num + 3]);
+		}
+		for (int j = 6; j < 12; j++)
+		{
+			int num2 = (11 - j) * 4;
+			D ^= Cast5Engine.F1(A, _Km[num2 + 3], _Kr[num2 + 3]);
+			A ^= Cast5Engine.F3(B, _Km[num2 + 2], _Kr[num2 + 2]);
+			B ^= Cast5Engine.F2(C, _Km[num2 + 1], _Kr[num2 + 1]);
+			C ^= Cast5Engine.F1(D, _Km[num2], _Kr[num2]);
+		}
+		result[0] = A;
+		result[1] = B;
+		result[2] = C;
+		result[3] = D;
+	}
+}
 }

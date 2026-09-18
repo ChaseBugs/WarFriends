@@ -1,66 +1,292 @@
-using UnityEngine;
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.IO;
+using System.Text;
 
 namespace FullSerializer
 {
-	public class fsJsonPrinter : MonoBehaviour
+public static class fsJsonPrinter
+{
+	private static void InsertSpacing(TextWriter stream, int count)
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
+		for (int i = 0; i < count; i++)
+		{
+			stream.Write("    ");
+		}
 	}
+
+	private static string EscapeString(string str)
+	{
+		bool flag = false;
+		foreach (char c in str)
+		{
+			int num = Convert.ToInt32(c);
+			if (num < 0 || num > 127)
+			{
+				flag = true;
+				break;
+			}
+			switch (c)
+			{
+			case '\0':
+			case '\a':
+			case '\b':
+			case '\t':
+			case '\n':
+			case '\f':
+			case '\r':
+			case '"':
+			case '\\':
+				flag = true;
+				break;
+			}
+			if (flag)
+			{
+				break;
+			}
+		}
+		if (!flag)
+		{
+			return str;
+		}
+		StringBuilder stringBuilder = new StringBuilder();
+		foreach (char c2 in str)
+		{
+			int num2 = Convert.ToInt32(c2);
+			if (num2 < 0 || num2 > 127)
+			{
+				stringBuilder.Append($"\\u{num2:x4} ".Trim());
+				continue;
+			}
+			switch (c2)
+			{
+			case '"':
+				stringBuilder.Append("\\\"");
+				break;
+			case '\\':
+				stringBuilder.Append("\\\\");
+				break;
+			case '\a':
+				stringBuilder.Append("\\a");
+				break;
+			case '\b':
+				stringBuilder.Append("\\b");
+				break;
+			case '\f':
+				stringBuilder.Append("\\f");
+				break;
+			case '\n':
+				stringBuilder.Append("\\n");
+				break;
+			case '\r':
+				stringBuilder.Append("\\r");
+				break;
+			case '\t':
+				stringBuilder.Append("\\t");
+				break;
+			case '\0':
+				stringBuilder.Append("\\0");
+				break;
+			default:
+				stringBuilder.Append(c2);
+				break;
+			}
+		}
+		return stringBuilder.ToString();
+	}
+
+	private static void BuildCompressedString(fsData data, TextWriter stream)
+	{
+		switch (data.Type)
+		{
+		case fsDataType.Null:
+			stream.Write("null");
+			break;
+		case fsDataType.Boolean:
+			if (data.AsBool)
+			{
+				stream.Write("true");
+			}
+			else
+			{
+				stream.Write("false");
+			}
+			break;
+		case fsDataType.Double:
+			stream.Write(ConvertDoubleToString(data.AsDouble));
+			break;
+		case fsDataType.Int64:
+			stream.Write(data.AsInt64);
+			break;
+		case fsDataType.String:
+			stream.Write('"');
+			stream.Write(EscapeString(data.AsString));
+			stream.Write('"');
+			break;
+		case fsDataType.Object:
+		{
+			stream.Write('{');
+			bool flag2 = false;
+			foreach (KeyValuePair<string, fsData> item in data.AsDictionary)
+			{
+				if (flag2)
+				{
+					stream.Write(',');
+				}
+				flag2 = true;
+				stream.Write('"');
+				stream.Write(item.Key);
+				stream.Write('"');
+				stream.Write(":");
+				BuildCompressedString(item.Value, stream);
+			}
+			stream.Write('}');
+			break;
+		}
+		case fsDataType.Array:
+		{
+			stream.Write('[');
+			bool flag = false;
+			foreach (fsData @as in data.AsList)
+			{
+				if (flag)
+				{
+					stream.Write(',');
+				}
+				flag = true;
+				BuildCompressedString(@as, stream);
+			}
+			stream.Write(']');
+			break;
+		}
+		}
+	}
+
+	private static void BuildPrettyString(fsData data, TextWriter stream, int depth)
+	{
+		switch (data.Type)
+		{
+		case fsDataType.Null:
+			stream.Write("null");
+			break;
+		case fsDataType.Boolean:
+			if (data.AsBool)
+			{
+				stream.Write("true");
+			}
+			else
+			{
+				stream.Write("false");
+			}
+			break;
+		case fsDataType.Double:
+			stream.Write(ConvertDoubleToString(data.AsDouble));
+			break;
+		case fsDataType.Int64:
+			stream.Write(data.AsInt64);
+			break;
+		case fsDataType.String:
+			stream.Write('"');
+			stream.Write(EscapeString(data.AsString));
+			stream.Write('"');
+			break;
+		case fsDataType.Object:
+		{
+			stream.Write('{');
+			stream.WriteLine();
+			bool flag2 = false;
+			foreach (KeyValuePair<string, fsData> item in data.AsDictionary)
+			{
+				if (flag2)
+				{
+					stream.Write(',');
+					stream.WriteLine();
+				}
+				flag2 = true;
+				InsertSpacing(stream, depth + 1);
+				stream.Write('"');
+				stream.Write(item.Key);
+				stream.Write('"');
+				stream.Write(": ");
+				BuildPrettyString(item.Value, stream, depth + 1);
+			}
+			stream.WriteLine();
+			InsertSpacing(stream, depth);
+			stream.Write('}');
+			break;
+		}
+		case fsDataType.Array:
+		{
+			if (data.AsList.Count == 0)
+			{
+				stream.Write("[]");
+				break;
+			}
+			bool flag = false;
+			stream.Write('[');
+			stream.WriteLine();
+			foreach (fsData @as in data.AsList)
+			{
+				if (flag)
+				{
+					stream.Write(',');
+					stream.WriteLine();
+				}
+				flag = true;
+				InsertSpacing(stream, depth + 1);
+				BuildPrettyString(@as, stream, depth + 1);
+			}
+			stream.WriteLine();
+			InsertSpacing(stream, depth);
+			stream.Write(']');
+			break;
+		}
+		}
+	}
+
+	public static void PrettyJson(fsData data, TextWriter outputStream)
+	{
+		BuildPrettyString(data, outputStream, 0);
+	}
+
+	public static string PrettyJson(fsData data)
+	{
+		StringBuilder stringBuilder = new StringBuilder();
+		using (StringWriter stream = new StringWriter(stringBuilder))
+		{
+		BuildPrettyString(data, stream, 0);
+		return stringBuilder.ToString();
+		}
+}
+
+	public static void CompressedJson(fsData data, StreamWriter outputStream)
+	{
+		BuildCompressedString(data, outputStream);
+	}
+
+	public static string CompressedJson(fsData data)
+	{
+		StringBuilder stringBuilder = new StringBuilder();
+		using (StringWriter stream = new StringWriter(stringBuilder))
+		{
+		BuildCompressedString(data, stream);
+		return stringBuilder.ToString();
+		}
+}
+
+	private static string ConvertDoubleToString(double d)
+	{
+		if (double.IsInfinity(d) || double.IsNaN(d))
+		{
+			return d.ToString(CultureInfo.InvariantCulture);
+		}
+		string text = d.ToString(CultureInfo.InvariantCulture);
+		if (!text.Contains("."))
+		{
+			text += ".0";
+		}
+		return text;
+	}
+}
 }

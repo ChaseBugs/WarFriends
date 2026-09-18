@@ -1,63 +1,188 @@
+using System;
 using UnityEngine;
 
 public class MechAnimator : MonoBehaviour
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public AudioSource mechSource;
 
-	1. No dll files were provided to AssetRipper.
+	[SerializeField]
+	private Animation mAnimation;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	[SerializeField]
+	private Transform mRoot;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	[SerializeField]
+	private Transform mUpperBody;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	private Quaternion absoluteRotation;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	private Quaternion local;
 
-	3. Assembly Reconstruction has not been implemented.
+	private bool mKeepAimed;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	private PhotonView mPhotonView;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public Action Aimed;
 
-	4. This script is unnecessary.
+	private Quaternion mWantedRootRotation;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public float strafeSpeed = 1f;
 
-	5. Script Content Level 0
+	private bool mStopShoot;
 
-		AssetRipper was set to not load any script information.
+	private void Awake()
+	{
+		mPhotonView = GetComponent<PhotonView>();
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	private void Start()
+	{
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	[PunRPC]
+	public void Walk()
+	{
+		if (mPhotonView.isMine)
+		{
+			mPhotonView.RPC("Walk", PhotonTargets.Others);
+		}
+		mAnimation.CrossFade("walk_cycle");
+		StarWalkSound();
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	[PunRPC]
+	public void Shoot()
+	{
+		if (mPhotonView.isMine)
+		{
+			mPhotonView.RPC("Shoot", PhotonTargets.Others);
+		}
+		mAnimation.CrossFade("fire");
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	[PunRPC]
+	public void StopShoot()
+	{
+		if (mPhotonView.isMine)
+		{
+			mPhotonView.RPC("StopShoot", PhotonTargets.Others);
+		}
+		mStopShoot = true;
+	}
 
-	*/
+	[PunRPC]
+	public void Idle()
+	{
+		if (mPhotonView.isMine)
+		{
+			mPhotonView.RPC("Idle", PhotonTargets.Others);
+		}
+		mAnimation.CrossFade("idle");
+		StopWalkSound();
+	}
+
+	[PunRPC]
+	public void Strafe(bool left)
+	{
+		string animation = ((!left) ? "strafing_right" : "strafing_left");
+		mAnimation.CrossFade(animation);
+		mAnimation[animation].speed = strafeSpeed;
+		if (mPhotonView.isMine)
+		{
+			mPhotonView.RPC("Strafe", PhotonTargets.Others, left);
+		}
+		StarWalkSound();
+	}
+
+	public void PreviewIdle()
+	{
+		mAnimation.CrossFade("idle", 0f);
+	}
+
+	public void LookAt(Vector3 position, bool keepAimed)
+	{
+		absoluteRotation = Quaternion.LookRotation(position - mRoot.transform.parent.position);
+		local = Quaternion.Inverse(mRoot.transform.parent.rotation) * absoluteRotation;
+		mKeepAimed = keepAimed;
+		if (mKeepAimed)
+		{
+			return;
+		}
+		TweenRotation tweenRotation = TweenRotation.Begin(mRoot.gameObject, 1f, local);
+		tweenRotation.onFinished = (UITweener.OnFinished)Delegate.Combine(tweenRotation.onFinished, (UITweener.OnFinished)delegate
+		{
+			if (Aimed != null)
+			{
+				Aimed();
+			}
+		});
+	}
+
+	public void Reset()
+	{
+		mAnimation["fire"].layer = 4;
+		mAnimation["fire"].blendMode = AnimationBlendMode.Blend;
+		mAnimation["fire"].wrapMode = WrapMode.Loop;
+		mAnimation["fire"].AddMixingTransform(mUpperBody);
+		local = Quaternion.identity;
+		mKeepAimed = false;
+		TweenRotation.Begin(mRoot.gameObject, 0f, local);
+		mWantedRootRotation = Quaternion.identity;
+		mStopShoot = false;
+	}
+
+	private void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
+	{
+		if (stream.isWriting)
+		{
+			stream.SendNext(mRoot.localRotation);
+		}
+		else
+		{
+			mWantedRootRotation = (Quaternion)stream.ReceiveNext();
+		}
+	}
+
+	private void Update()
+	{
+		if (mKeepAimed)
+		{
+			Quaternion b = Quaternion.Inverse(mRoot.transform.parent.rotation) * absoluteRotation;
+			Quaternion localRotation = mRoot.localRotation;
+			Quaternion localRotation2 = Quaternion.Lerp(localRotation, b, Time.deltaTime * 8f);
+			mRoot.localRotation = localRotation2;
+		}
+		if (!mPhotonView.isMine)
+		{
+			mRoot.localRotation = Quaternion.Lerp(mRoot.localRotation, mWantedRootRotation, Time.deltaTime * 8f);
+		}
+		if (mStopShoot)
+		{
+			float weight = mAnimation["fire"].weight;
+			weight -= Time.deltaTime * 3f;
+			if (weight <= 0f)
+			{
+				weight = 0f;
+				mAnimation["fire"].enabled = false;
+				mStopShoot = false;
+			}
+			mAnimation["fire"].weight = weight;
+		}
+		if (Time.timeScale < 0.01f != mechSource.mute)
+		{
+			mechSource.mute = Time.timeScale < 0.01f;
+		}
+	}
+
+	private void StarWalkSound()
+	{
+		mechSource.loop = true;
+		Singleton<SoundsManager3D>.instance.Play(mechSource, Sounds3DEnum.MechSound);
+	}
+
+	public void StopWalkSound()
+	{
+		mechSource.Stop();
+		mechSource.loop = false;
+	}
 }

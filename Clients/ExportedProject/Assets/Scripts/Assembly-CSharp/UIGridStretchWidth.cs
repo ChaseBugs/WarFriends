@@ -1,63 +1,127 @@
+using System.Collections.Generic;
 using UnityEngine;
 
+[ExecuteInEditMode]
+[AddComponentMenu("NGUI/Interaction/Grid Extended")]
 public class UIGridStretchWidth : MonoBehaviour
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public enum Arrangement
+	{
+		Horizontal,
+		Vertical
+	}
 
-	1. No dll files were provided to AssetRipper.
+	public delegate void OnReposition();
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public Arrangement arrangement;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public int maxPerLine;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public int columns = 3;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public float cellHeight = 200f;
 
-	3. Assembly Reconstruction has not been implemented.
+	public bool repositionNow;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public bool sorted;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public bool hideInactive = true;
 
-	4. This script is unnecessary.
+	public OnReposition onReposition;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private bool mStarted;
 
-	5. Script Content Level 0
+	private void Start()
+	{
+		mStarted = true;
+		Reposition();
+	}
 
-		AssetRipper was set to not load any script information.
+	private void Update()
+	{
+		if (repositionNow)
+		{
+			repositionNow = false;
+			Reposition();
+		}
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public static int SortByName(Transform a, Transform b)
+	{
+		return string.Compare(a.name, b.name);
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public void Reposition()
+	{
+		if (!mStarted)
+		{
+			repositionNow = true;
+			return;
+		}
+		UIRoot uIRoot = ((UIRoot.list != null && UIRoot.list.Count != 0) ? UIRoot.list[0] : null);
+		Vector2 vector = new Vector2(Screen.width, Screen.height);
+		if (uIRoot != null)
+		{
+			vector *= uIRoot.GetPixelSizeAdjustment(Screen.height, Screen.width);
+		}
+		float x = vector.x;
+		float num = x / (float)columns;
+		Transform transform = base.transform;
+		int num2 = 0;
+		int num3 = 0;
+		if (sorted)
+		{
+			List<Transform> list = new List<Transform>();
+			for (int i = 0; i < transform.childCount; i++)
+			{
+				Transform child = transform.GetChild(i);
+				if ((bool)child && (!hideInactive || NGUITools.GetActive(child.gameObject)))
+				{
+					list.Add(child);
+				}
+			}
+			list.Sort(SortByName);
+			int j = 0;
+			for (int count = list.Count; j < count; j++)
+			{
+				Transform transform2 = list[j];
+				if (NGUITools.GetActive(transform2.gameObject) || !hideInactive)
+				{
+					float z = transform2.localPosition.z;
+					transform2.localPosition = ((arrangement != Arrangement.Horizontal) ? new Vector3(num * (float)num3, (0f - cellHeight) * (float)num2, z) : new Vector3(num * (float)num2, (0f - cellHeight) * (float)num3, z));
+					if (++num2 >= maxPerLine && maxPerLine > 0)
+					{
+						num2 = 0;
+						num3++;
+					}
+				}
+			}
+		}
+		else
+		{
+			for (int k = 0; k < transform.childCount; k++)
+			{
+				Transform child2 = transform.GetChild(k);
+				if (NGUITools.GetActive(child2.gameObject) || !hideInactive)
+				{
+					float z2 = child2.localPosition.z;
+					child2.localPosition = ((arrangement != Arrangement.Horizontal) ? new Vector3(num * (float)num3, (0f - cellHeight) * (float)num2, z2) : new Vector3(num * (float)num2, (0f - cellHeight) * (float)num3, z2));
+					if (++num2 >= maxPerLine && maxPerLine > 0)
+					{
+						num2 = 0;
+						num3++;
+					}
+				}
+			}
+		}
+		if (onReposition != null)
+		{
+			onReposition();
+		}
+		UIDraggablePanel uIDraggablePanel = NGUITools.FindInParents<UIDraggablePanel>(base.gameObject);
+		if (uIDraggablePanel != null)
+		{
+			uIDraggablePanel.UpdateScrollbars(recalculateBounds: true);
+		}
+	}
 }

@@ -1,63 +1,308 @@
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using Beebyte.Obfuscator;
+using Google2u;
+using Newtonsoft.Json;
 using UnityEngine;
 
-public class AssignmentsManager : MonoBehaviour
+[Skip]
+public class AssignmentsManager : DatabaseSerializedObjectGeneric<AssignmentsManager.AssignmentData>
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Skip]
+	public class AssignmentData
+	{
+		public List<DatabaseAssignment> assignments;
 
-	1. No dll files were provided to AssetRipper.
+		public int tomorrow;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+		public int completed;
 
-	2. Incorrect dll files were provided to AssetRipper.
+		public int issued;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+		public int rewardCounter;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+		public int days;
+	}
 
-	3. Assembly Reconstruction has not been implemented.
+	[Skip]
+	public class DatabaseAssignment
+	{
+		public int id;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+		public bool done;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+		public bool claimed;
 
-	4. This script is unnecessary.
+		public float completeFract;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+		public float lastCompletedFract;
 
-	5. Script Content Level 0
+		public int target;
 
-		AssetRipper was set to not load any script information.
+		public int secondTarget;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+		public int tutorialId;
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+		public DatabaseAssignment(int assignmentId, int assignmentTarget)
+		{
+			id = assignmentId;
+			target = assignmentTarget;
+		}
 
-	7. An incorrect path was provided to AssetRipper.
+		public string GetSecondTargetAsString()
+		{
+			TaskDefinitionsRow row = instance.taskDefinitions.GetRow("ID_" + id);
+			if (string.IsNullOrEmpty(row.SECONDTARGETPARAMETER))
+			{
+				return null;
+			}
+			return secondTarget.ToString(CultureInfo.InvariantCulture);
+		}
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	private static AssignmentsManager mInstance;
 
-	*/
+	private AssignmentDefinitions mDefinitions;
+
+	private TaskDefinitions mTaskDefinitions;
+
+	public List<Assignment> preparedAssignments = new List<Assignment>();
+
+	public static AssignmentsManager instance
+	{
+		get
+		{
+			mInstance = mInstance ?? ((AssignmentsManager)UnityEngine.Object.FindObjectsOfType(typeof(AssignmentsManager))[0]);
+			return mInstance;
+		}
+	}
+
+	public TaskDefinitions taskDefinitions
+	{
+		get
+		{
+			if (mTaskDefinitions == null)
+			{
+				mTaskDefinitions = GetComponent<TaskDefinitions>();
+			}
+			return mTaskDefinitions;
+		}
+	}
+
+	public static string blueProgressBar => "menu-assignments-bar-blue";
+
+	public static string redProgressBar => "menu-assignments-bar-red";
+
+	public static string goldProgressBar => "menu-assignments-bar-gold";
+
+	public static string dayNotCompleted => "menu-7days-assignment";
+
+	public static string dayCompleted => "menu-7days-assignment-completed";
+
+	public bool dailyAssignmentsClaimed
+	{
+		get
+		{
+			if (data == null || data.assignments == null || preparedAssignments == null || preparedAssignments.Count == 0)
+			{
+				return false;
+			}
+			bool flag = true;
+			foreach (Assignment preparedAssignment in preparedAssignments)
+			{
+				flag &= preparedAssignment.claimed;
+			}
+			return flag;
+		}
+	}
+
+	public int completedDaysAssignments
+	{
+		get
+		{
+			return (data != null) ? data.rewardCounter : 0;
+		}
+		set
+		{
+			data.rewardCounter = value;
+		}
+	}
+
+	public event Action AssignmentsLoaded;
+
+	public event Action<int> AssignmentClaimed;
+
+	public void OnDestroy()
+	{
+		mInstance = null;
+	}
+
+	public void AssignmentHide()
+	{
+		string text = "Assignments Manager: *** Saving local assignment (Marking as Done) *************\n";
+		foreach (Assignment preparedAssignment in preparedAssignments)
+		{
+			text += preparedAssignment.Hide();
+		}
+		Debug.Log(text + "**************************************************");
+	}
+
+	private float[] UpdateAssignments()
+	{
+		float[] array = new float[3];
+		if (Singleton<GameController>.instance.isTutorial || StarterAssignmentsManager.instance.isActiveAndNotCompleted)
+		{
+			return array;
+		}
+		for (int i = 0; i < preparedAssignments.Count; i++)
+		{
+			if (preparedAssignments[i].isNewAssignment || preparedAssignments[i].done)
+			{
+				continue;
+			}
+			try
+			{
+				array[i] = preparedAssignments[i].Update();
+			}
+			catch (Exception ex)
+			{
+				Debug.LogError($"Assignments Manager: Assignment ID: {preparedAssignments[i].id}\nERROR: {ex.Message}\nSTACKTRACE: {ex.StackTrace}");
+				if (DebugSettings.debugEnabled)
+				{
+					WarningDialog.ShowError(Localization.Localize("ID_DEBUG_STACKTRACEINCONSOLE"), Localization.Localize("ID_DEBUG_ASSIGNMENTUPDATE"), 0f, null, string.Empty, useDialogBackground: true);
+				}
+				Crittercism.LogHandledException(ex);
+			}
+		}
+		return array;
+	}
+
+	public List<Assignment> GetAssignments(bool update = true)
+	{
+		if (update)
+		{
+			UpdateAssignments();
+		}
+		return preparedAssignments;
+	}
+
+	internal float[] GetAssignmentsUpdate()
+	{
+		float[] array = UpdateAssignments();
+		string text = "Assignments Manager: *** Counting new parts of completition of assignments to send to server: ***********\n";
+		for (int i = 0; i < 3; i++)
+		{
+			text += $"Assignment {i + 1}: counted progress part: {array[i]}\n";
+		}
+		Debug.Log(text + "**************************************************");
+		return array;
+	}
+
+	protected override void Awake()
+	{
+		base.Awake();
+		if (mInstance == null)
+		{
+			mInstance = this;
+		}
+		Singleton<GameController>.instance.GameStarted += OnGameStart;
+		Singleton<BeanstalkServerManager>.instance.AfterPlayerDataLoaded += OnPlayerDataLoaded;
+	}
+
+	private void OnGameStart()
+	{
+		foreach (Assignment preparedAssignment in preparedAssignments)
+		{
+			preparedAssignment.isNewAssignment = false;
+		}
+	}
+
+	private void OnPlayerDataLoaded()
+	{
+		InvokeAfterFrame(delegate
+		{
+			PrepareAssignments();
+		});
+	}
+
+	private void PrepareAssignments()
+	{
+		preparedAssignments = new List<Assignment>();
+		if (data != null && data.assignments != null && !StarterAssignmentsManager.instance.isActiveAndNotCompleted)
+		{
+			foreach (DatabaseAssignment assignment in data.assignments)
+			{
+				preparedAssignments.Add(Assignment.CreateAssignment(assignment, isSquadEvent: false, string.Empty, -1f));
+			}
+		}
+		if (this.AssignmentsLoaded != null)
+		{
+			this.AssignmentsLoaded();
+		}
+	}
+
+	internal void LoadData(string assignmentData)
+	{
+		Debug.Log("Assignments Manager: ASSIGNMENT MESSAGE:\n" + assignmentData);
+		SerializedObject = JsonConvert.DeserializeObject<AssignmentData>(assignmentData);
+		PrepareAssignments();
+	}
+
+	public int GetCompletedAssignments()
+	{
+		if (data == null)
+		{
+			return 0;
+		}
+		return data.completed;
+	}
+
+	public void FakeAssignments()
+	{
+		foreach (Assignment preparedAssignment in preparedAssignments)
+		{
+			preparedAssignment.Fake();
+		}
+	}
+
+	public void SetAllAssignmentsCompletedDebug()
+	{
+		Debug.Log("Assignments Manager: Debug Setting all assignments to done.");
+		List<DatabaseAssignment> assignments = instance.data.assignments;
+		foreach (DatabaseAssignment item in assignments)
+		{
+			item.done = true;
+			item.completeFract = 1f;
+		}
+		if (this.AssignmentsLoaded != null)
+		{
+			this.AssignmentsLoaded();
+		}
+	}
+
+	internal void SendClaimAssignment(DatabaseAssignment databaseAssignment, int addedReward)
+	{
+		RequestBuffer requestBuffer = RequestBufferManager.instance.GetRequestBuffer();
+		requestBuffer.AddRequest(DatabaseAction.ClaimAssignment, JsonConvert.SerializeObject(new Dictionary<string, object>
+		{
+			{ "AssignmentId", databaseAssignment.id },
+			{ "Reward", addedReward }
+		}), 0, 0, string.Empty);
+		for (int i = 0; i < preparedAssignments.Count; i++)
+		{
+			if (preparedAssignments[i].id == databaseAssignment.id && this.AssignmentClaimed != null)
+			{
+				this.AssignmentClaimed(i);
+			}
+		}
+	}
+
+	public void GetAssignmentsAfterStarterEnd()
+	{
+		if (!StarterAssignmentsManager.instance.isActiveAndNotCompleted && preparedAssignments.Count == 0)
+		{
+			Singleton<BeanstalkServerManager>.instance.GetNewAssignments();
+		}
+	}
 }

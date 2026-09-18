@@ -1,63 +1,164 @@
+using System.Collections;
+using System.Collections.Generic;
+using Google2u;
 using UnityEngine;
 
-public class UpgradeSlotsBaseSoldier : MonoBehaviour
+public class UpgradeSlotsBaseSoldier<T> : UpgradeSlotsGeneric<T> where T : Google2uComponentBase
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Header("Visuals")]
+	public List<TechnologyVisualDefinition> visualsBody;
 
-	1. No dll files were provided to AssetRipper.
+	public List<TechnologyVisualDefinition> visualsHelmet;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public List<TechnologyVisualDefinition> visualsWeapon;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	[Header("Elite Visuals")]
+	public List<TechnologyVisualDefinition> eliteVisualsBody;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public List<TechnologyVisualDefinition> eliteVisualsHelmet;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public List<TechnologyVisualDefinition> eliteVisualsWeapon;
 
-	3. Assembly Reconstruction has not been implemented.
+	public override float damage
+	{
+		get
+		{
+			int rowIndex = upgradeSlot.boughtIndex;
+			return (float)base.excel.GetValue(rowIndex, "damage");
+		}
+	}
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	protected override void LoadDefinitionFromXLS(BehaviourDefinititon def, int rowIndex)
+	{
+		base.LoadDefinitionFromXLS(def, rowIndex);
+		SoldierBehaviourDefinititon soldierBehaviourDefinititon = (SoldierBehaviourDefinititon)def;
+		soldierBehaviourDefinititon.health = (float)soldierBehaviourDefinititon.health + (float)base.excel.GetValue(rowIndex, "HP");
+		soldierBehaviourDefinititon.probabilityOfRealShot += (float)base.excel.GetValue(rowIndex, "realShotProbability");
+		soldierBehaviourDefinititon.fireBatchSizeMin += (int)base.excel.GetValue(rowIndex, "batchSizeMin");
+		soldierBehaviourDefinititon.fireBatchSizeMax += (int)base.excel.GetValue(rowIndex, "batchSizeMax");
+		soldierBehaviourDefinititon.minShootTime += (float)base.excel.GetValue(rowIndex, "ShotFrequencyMin");
+		soldierBehaviourDefinititon.maxShootTime += (float)base.excel.GetValue(rowIndex, "ShotFrequencyMax");
+		soldierBehaviourDefinititon.walkShotTimeMin += (float)base.excel.GetValue(rowIndex, "ShotFrequencyMin");
+		soldierBehaviourDefinititon.walkShotTimeMax += (float)base.excel.GetValue(rowIndex, "ShotFrequencyMax");
+		soldierBehaviourDefinititon.damage = (float)soldierBehaviourDefinititon.damage + (float)base.excel.GetValue(rowIndex, "damage");
+		if (base.excel.HasColumn("special"))
+		{
+			soldierBehaviourDefinititon.special += (float)base.excel.GetValue(rowIndex, "special");
+		}
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public override List<Tuple<string, float[]>> GetGuiStats(UpgradeSlot slot)
+	{
+		List<Tuple<string, float[]>> list = new List<Tuple<string, float[]>>();
+		list.Add(StatsFor(slot, "DPS", "ID_ATTACK"));
+		list.Add(StatsFor(slot, "HP", "ID_HEALTH"));
+		return list;
+	}
 
-	4. This script is unnecessary.
+	public override IEnumerator LoadMineVisualsCoroutine(UnitUpgrades unitUpgrades, bool bought)
+	{
+		if (unitUpgrades.isElite)
+		{
+			yield return StartCoroutine(LoadMineVisualAsync(unitUpgrades.slotUpgradeindex, bought, eliteVisualsBody));
+			yield return StartCoroutine(LoadMineVisualAsync(unitUpgrades.slotUpgradeindex, bought, eliteVisualsHelmet));
+		}
+		else
+		{
+			yield return StartCoroutine(LoadMineVisualAsync(unitUpgrades.slotUpgradeindex, bought, visualsBody));
+			yield return StartCoroutine(LoadMineVisualAsync(unitUpgrades.slotUpgradeindex, bought, visualsHelmet));
+		}
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public override IEnumerator LoadOponentVisualsCoroutine(UnitUpgrades unitUpgrades, bool bought)
+	{
+		if (unitUpgrades.isElite)
+		{
+			yield return StartCoroutine(LoadOpponentVisualAsync(unitUpgrades.slotUpgradeindex, bought, eliteVisualsBody));
+			yield return StartCoroutine(LoadOpponentVisualAsync(unitUpgrades.slotUpgradeindex, bought, eliteVisualsHelmet));
+		}
+		else
+		{
+			yield return StartCoroutine(LoadOpponentVisualAsync(unitUpgrades.slotUpgradeindex, bought, visualsBody));
+			yield return StartCoroutine(LoadOpponentVisualAsync(unitUpgrades.slotUpgradeindex, bought, visualsHelmet));
+		}
+	}
 
-	5. Script Content Level 0
+	public override void NullOpponentVisuals()
+	{
+		foreach (TechnologyVisualDefinition item in visualsBody)
+		{
+			item.NullOpponent();
+		}
+		foreach (TechnologyVisualDefinition item2 in eliteVisualsBody)
+		{
+			item2.NullOpponent();
+		}
+		foreach (TechnologyVisualDefinition item3 in visualsHelmet)
+		{
+			item3.NullOpponent();
+		}
+		foreach (TechnologyVisualDefinition item4 in eliteVisualsHelmet)
+		{
+			item4.NullOpponent();
+		}
+	}
 
-		AssetRipper was set to not load any script information.
+	public override void NullMineVisuals()
+	{
+		foreach (TechnologyVisualDefinition item in visualsBody)
+		{
+			item.NullMine();
+		}
+		foreach (TechnologyVisualDefinition item2 in eliteVisualsBody)
+		{
+			item2.NullMine();
+		}
+		foreach (TechnologyVisualDefinition item3 in visualsHelmet)
+		{
+			item3.NullMine();
+		}
+		foreach (TechnologyVisualDefinition item4 in eliteVisualsHelmet)
+		{
+			item4.NullMine();
+		}
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public override void UnloadVisuals()
+	{
+		base.UnloadVisuals();
+		foreach (TechnologyVisualDefinition item in visualsBody)
+		{
+			item.UnloadAll();
+		}
+		foreach (TechnologyVisualDefinition item2 in eliteVisualsBody)
+		{
+			item2.UnloadAll();
+		}
+		foreach (TechnologyVisualDefinition item3 in visualsHelmet)
+		{
+			item3.UnloadAll();
+		}
+		foreach (TechnologyVisualDefinition item4 in eliteVisualsHelmet)
+		{
+			item4.UnloadAll();
+		}
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public override List<TechnologyVisualDefinition> GetVisuals(UnitUpgrades unitUpgrades)
+	{
+		List<TechnologyVisualDefinition> list = new List<TechnologyVisualDefinition>();
+		if (unitUpgrades.isElite)
+		{
+			list.Add(GetTechnologyVisualDefinition(unitUpgrades.slotUpgradeindex, eliteVisualsBody));
+			list.Add(GetTechnologyVisualDefinition(unitUpgrades.slotUpgradeindex, eliteVisualsHelmet));
+			list.Add(GetTechnologyVisualDefinition(unitUpgrades.slotUpgradeindex, eliteVisualsWeapon));
+		}
+		else
+		{
+			list.Add(GetTechnologyVisualDefinition(unitUpgrades.slotUpgradeindex, visualsBody));
+			list.Add(GetTechnologyVisualDefinition(unitUpgrades.slotUpgradeindex, visualsHelmet));
+			list.Add(GetTechnologyVisualDefinition(unitUpgrades.slotUpgradeindex, visualsWeapon));
+		}
+		return list;
+	}
 }

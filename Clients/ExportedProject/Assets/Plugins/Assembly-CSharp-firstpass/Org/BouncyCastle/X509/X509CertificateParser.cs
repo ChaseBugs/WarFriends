@@ -1,66 +1,135 @@
-using UnityEngine;
+using System;
+using System.Collections;
+using System.IO;
+using Org.BouncyCastle.Asn1;
+using Org.BouncyCastle.Asn1.Pkcs;
+using Org.BouncyCastle.Asn1.X509;
+using Org.BouncyCastle.Security.Certificates;
+using Org.BouncyCastle.Utilities;
+using Org.BouncyCastle.Utilities.IO;
 
 namespace Org.BouncyCastle.X509
 {
-	public class X509CertificateParser : MonoBehaviour
+public class X509CertificateParser
+{
+	private static readonly PemParser PemCertParser = new PemParser("CERTIFICATE");
+
+	private Asn1Set sData;
+
+	private int sDataObjectCount;
+
+	private Stream currentStream;
+
+	private X509Certificate ReadDerCertificate(Asn1InputStream dIn)
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
+		Asn1Sequence asn1Sequence = (Asn1Sequence)dIn.ReadObject();
+		if (asn1Sequence.Count > 1 && asn1Sequence[0] is DerObjectIdentifier && asn1Sequence[0].Equals(PkcsObjectIdentifiers.SignedData))
+		{
+			sData = SignedData.GetInstance(Asn1Sequence.GetInstance((Asn1TaggedObject)asn1Sequence[1], explicitly: true)).Certificates;
+			return GetCertificate();
+		}
+		return CreateX509Certificate(X509CertificateStructure.GetInstance(asn1Sequence));
 	}
+
+	private X509Certificate GetCertificate()
+	{
+		if (sData != null)
+		{
+			while (sDataObjectCount < sData.Count)
+			{
+				object obj = sData[sDataObjectCount++];
+				if (obj is Asn1Sequence)
+				{
+					return CreateX509Certificate(X509CertificateStructure.GetInstance(obj));
+				}
+			}
+		}
+		return null;
+	}
+
+	private X509Certificate ReadPemCertificate(Stream inStream)
+	{
+		Asn1Sequence asn1Sequence = PemCertParser.ReadPemObject(inStream);
+		return (asn1Sequence != null) ? CreateX509Certificate(X509CertificateStructure.GetInstance(asn1Sequence)) : null;
+	}
+
+	protected virtual X509Certificate CreateX509Certificate(X509CertificateStructure c)
+	{
+		return new X509Certificate(c);
+	}
+
+	public X509Certificate ReadCertificate(byte[] input)
+	{
+		return ReadCertificate(new MemoryStream(input, writable: false));
+	}
+
+	public ICollection ReadCertificates(byte[] input)
+	{
+		return ReadCertificates(new MemoryStream(input, writable: false));
+	}
+
+	public X509Certificate ReadCertificate(Stream inStream)
+	{
+		if (inStream == null)
+		{
+			throw new ArgumentNullException("inStream");
+		}
+		if (!inStream.CanRead)
+		{
+			throw new ArgumentException("inStream must be read-able", "inStream");
+		}
+		if (currentStream == null)
+		{
+			currentStream = inStream;
+			sData = null;
+			sDataObjectCount = 0;
+		}
+		else if (currentStream != inStream)
+		{
+			currentStream = inStream;
+			sData = null;
+			sDataObjectCount = 0;
+		}
+		try
+		{
+			if (sData != null)
+			{
+				if (sDataObjectCount != sData.Count)
+				{
+					return GetCertificate();
+				}
+				sData = null;
+				sDataObjectCount = 0;
+				return null;
+			}
+			PushbackStream pushbackStream = new PushbackStream(inStream);
+			int num = pushbackStream.ReadByte();
+			if (num < 0)
+			{
+				return null;
+			}
+			pushbackStream.Unread(num);
+			if (num != 48)
+			{
+				return ReadPemCertificate(pushbackStream);
+			}
+			return ReadDerCertificate(new Asn1InputStream(pushbackStream));
+		}
+		catch (Exception exception)
+		{
+			throw new CertificateException("Failed to read certificate", exception);
+		}
+	}
+
+	public ICollection ReadCertificates(Stream inStream)
+	{
+		IList list = Platform.CreateArrayList();
+		X509Certificate value;
+		while ((value = ReadCertificate(inStream)) != null)
+		{
+			list.Add(value);
+		}
+		return list;
+	}
+}
 }

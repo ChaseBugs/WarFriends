@@ -1,63 +1,126 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
-public class WarArenaRuleWeaponsReload : MonoBehaviour
+public class WarArenaRuleWeaponsReload : WarArenaRuleGeneric<WarArenaRuleWeaponsReload.Data>
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Serializable]
+	public class Data : RuleData
+	{
+		public List<WeaponConfig> weapons = new List<WeaponConfig>();
+	}
 
-	1. No dll files were provided to AssetRipper.
+	[Serializable]
+	public class WeaponConfig
+	{
+		public WeaponCategory category = WeaponCategory.Any;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+		public float reloadTimeMultiplier;
+	}
 
-	2. Incorrect dll files were provided to AssetRipper.
+	private enum RuleReload
+	{
+		NoReload,
+		FasterReload,
+		SlowerReload,
+		Other
+	}
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	private Dictionary<RuleReload, string> mText = new Dictionary<RuleReload, string>
+	{
+		{
+			RuleReload.NoReload,
+			"ID_ARENARULES_NORELOADING"
+		},
+		{
+			RuleReload.FasterReload,
+			"ID_ARENARULES_FASTERRELOADING"
+		},
+		{
+			RuleReload.SlowerReload,
+			"ID_ARENARULES_SLOWERRELOADING"
+		}
+	};
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	private RuleReload GetReloadType(float reloadMultiplier)
+	{
+		if (reloadMultiplier <= 0f)
+		{
+			return RuleReload.NoReload;
+		}
+		if (reloadMultiplier > 0f && reloadMultiplier < 1f)
+		{
+			return RuleReload.FasterReload;
+		}
+		if (reloadMultiplier > 1f)
+		{
+			return RuleReload.SlowerReload;
+		}
+		return RuleReload.Other;
+	}
 
-	3. Assembly Reconstruction has not been implemented.
+	protected override WarArenaRuleGui GetGenericRule()
+	{
+		RuleReload ruleReload = ((data.weapons.Count <= 0) ? RuleReload.Other : GetReloadType(data.weapons[0].reloadTimeMultiplier));
+		for (int i = 1; i < data.weapons.Count; i++)
+		{
+			RuleReload reloadType = GetReloadType(data.weapons[i].reloadTimeMultiplier);
+			if (ruleReload != reloadType)
+			{
+				ruleReload = RuleReload.Other;
+				break;
+			}
+		}
+		if (ruleReload != RuleReload.Other)
+		{
+			string showText = Colours.stringGreenArena + Localization.Localize(mText[ruleReload]);
+			return new WarArenaRuleGui(showText);
+		}
+		return base.GetGenericRule();
+	}
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	private WeaponConfig GetConfigForWeapon(WeaponCategory category)
+	{
+		foreach (WeaponConfig weapon in data.weapons)
+		{
+			if (weapon.category == category)
+			{
+				return weapon;
+			}
+		}
+		return null;
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
-
-	4. This script is unnecessary.
-
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
-
-	5. Script Content Level 0
-
-		AssetRipper was set to not load any script information.
-
-	6. Cpp2IL failed to decompile Il2Cpp data
-
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public override void ApplyRule()
+	{
+		base.ApplyRule();
+		WeaponInventory weaponInventory = PlayerController.currentPlayer.weaponInventory;
+		for (int i = 0; i < weaponInventory.usedWeapons.Count; i++)
+		{
+			PlayerWeapon playerWeapon = weaponInventory.usedWeapons[i];
+			WeaponConfig configForWeapon = GetConfigForWeapon(playerWeapon.weaponLevelSetup.weaponCategory);
+			if (configForWeapon == null || Mathf.Approximately(configForWeapon.reloadTimeMultiplier, 1f))
+			{
+				continue;
+			}
+			if (playerWeapon.weapon.reloadableWeapon)
+			{
+				if (configForWeapon.reloadTimeMultiplier <= 0f)
+				{
+					playerWeapon.weapon.reloadTime = 0f;
+					continue;
+				}
+				Weapon weapon = playerWeapon.weapon;
+				weapon.reloadTime = (float)weapon.reloadTime * configForWeapon.reloadTimeMultiplier;
+			}
+			else if (configForWeapon.reloadTimeMultiplier <= 0f)
+			{
+				playerWeapon.weapon.cadence = 0f;
+			}
+			else
+			{
+				playerWeapon.weapon.cadence = configForWeapon.reloadTimeMultiplier;
+			}
+		}
+	}
 }

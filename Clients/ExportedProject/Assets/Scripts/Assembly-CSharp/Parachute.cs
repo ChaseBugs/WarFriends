@@ -1,63 +1,157 @@
+using System;
 using UnityEngine;
 
-public class Parachute : MonoBehaviour
+public class Parachute : PoolableObject
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public float parachuteDrag = 1f;
 
-	1. No dll files were provided to AssetRipper.
+	public float speed = 1f;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public Vector3 flyDirection = Vector3.forward;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	private float hangingTimeOffset;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public MeshRenderer parashuteRenderer;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public PhysicsEventsListener physicsEventsListenerWeight;
 
-	3. Assembly Reconstruction has not been implemented.
+	public Rigidbody weight;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public Transform snapTransform;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	private Color mColor;
 
-	4. This script is unnecessary.
+	private bool mFreezed;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private PhotonView mPhotonView;
 
-	5. Script Content Level 0
+	private readonly PhotonTransform mPhotonTransform = new PhotonTransform();
 
-		AssetRipper was set to not load any script information.
+	private bool mWasCollision;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public Action Landed;
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	protected override void Awake()
+	{
+		base.Awake();
+		mPhotonView = GetComponent<PhotonView>();
+		snapTransform = weight.transform;
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	public override void SafeStart()
+	{
+		base.SafeStart();
+		PhysicsEventsListener physicsEventsListener = physicsEventsListenerWeight;
+		physicsEventsListener.onCollisionEnter = (Action<Collision>)Delegate.Combine(physicsEventsListener.onCollisionEnter, new Action<Collision>(OnCollisionEnter));
+		mColor = parashuteRenderer.material.GetColor("_Color");
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	public override void BeforeInstancied()
+	{
+		base.BeforeInstancied();
+		StopAllCoroutines();
+		mWasCollision = false;
+		Landed = null;
+		mColor = Color.white;
+		mColor.a = 0f;
+		parashuteRenderer.material.SetColor("_Color", mColor);
+		parashuteRenderer.material.shader = Shader.Find("Mobile/Diffuse");
+		hangingTimeOffset = UnityEngine.Random.value;
+		if (mPhotonView.isMine)
+		{
+			weight.isKinematic = false;
+		}
+		else
+		{
+			weight.isKinematic = true;
+		}
+		mPhotonTransform.Reset();
+		mFreezed = false;
+	}
 
-	*/
+	public void Freeze(bool freeze)
+	{
+		weight.isKinematic = freeze;
+		mFreezed = freeze;
+	}
+
+	public override void OnInstancied()
+	{
+		base.OnInstancied();
+		mColor = Color.white;
+		parashuteRenderer.material.SetColor("_Color", mColor);
+	}
+
+	private void OnCollisionEnter(Collision collision)
+	{
+		if (!mWasCollision)
+		{
+			mWasCollision = true;
+			parashuteRenderer.material.shader = Shader.Find("Legacy Shaders/Transparent/DiffuseNew");
+			if (Landed != null)
+			{
+				Landed();
+			}
+			DestroyPooled(3f);
+			mPhotonView.RPC("LandedNetwork", PhotonTargets.Others);
+		}
+	}
+
+	[PunRPC]
+	private void LandedNetwork()
+	{
+		if (!mWasCollision)
+		{
+			mWasCollision = true;
+			parashuteRenderer.material.shader = Shader.Find("Legacy Shaders/Transparent/DiffuseNew");
+			DestroyPooled(3f);
+		}
+	}
+
+	public override void DestroyPooled()
+	{
+		base.DestroyPooled();
+		base.transform.position = new Vector3(1000f, 1000f, 1000f);
+		mPhotonTransform.Reset();
+	}
+
+	private void FixedUpdate()
+	{
+		if (mPhotonView.isMine && !mFreezed)
+		{
+			if (!mWasCollision)
+			{
+				float num = (((int)(Time.time * 0.5f + hangingTimeOffset) % 2 != 0) ? (-1f) : 1f);
+				Vector3 vector = Vector3.up + 0.3f * num * Vector3.Cross(Vector3.up, flyDirection);
+				vector.Normalize();
+				float num2 = Vector3.Angle(vector, base.transform.up) / 180f;
+				Vector3 vector2 = Vector3.Cross(Vector3.up, vector) * parachuteDrag * num2;
+				Vector3 torque = vector2 - weight.angularVelocity;
+				weight.AddTorque(torque, ForceMode.VelocityChange);
+				weight.AddForce(flyDirection * speed * 0.2f);
+			}
+			else
+			{
+				weight.AddForce(flyDirection * speed * 0.05f);
+			}
+		}
+	}
+
+	protected void Update()
+	{
+		if (mWasCollision)
+		{
+			mColor.a -= 0.5f * Time.deltaTime;
+			parashuteRenderer.material.SetColor("_Color", mColor);
+		}
+		if (!mPhotonView.isMine)
+		{
+			mPhotonTransform.Update(snapTransform);
+		}
+	}
+
+	private void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
+	{
+		mPhotonTransform.OnPhotonSerializeView(snapTransform, stream, info);
+	}
 }

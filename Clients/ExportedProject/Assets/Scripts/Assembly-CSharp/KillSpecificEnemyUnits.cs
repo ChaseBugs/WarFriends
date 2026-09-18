@@ -1,63 +1,106 @@
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using Beebyte.Obfuscator;
+using Google2u;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using UnityEngine;
 
-public class KillSpecificEnemyUnits : MonoBehaviour
+[Skip]
+internal class KillSpecificEnemyUnits : Assignment
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	protected override string basicDescription
+	{
+		get
+		{
+			int num = Convert.ToInt32(data[0]);
+			Type value = Mission.behavioursDictionary[(string)data[1]].Value1;
+			LevelBehaviour behaviour = LevelManager.instance.GetBehaviour(value);
+			return Localization.LocalizeFormat(base.translationId, MiscTools.FormatAssignmentNumber(num), behaviour.unitName);
+		}
+	}
 
-	1. No dll files were provided to AssetRipper.
+	private bool isVehicle
+	{
+		get
+		{
+			if (data == null || data.Length < 2)
+			{
+				return false;
+			}
+			string key = Convert.ToString(data[1]);
+			if (!Mission.behavioursDictionary.ContainsKey(key))
+			{
+				return false;
+			}
+			Type value = Mission.behavioursDictionary[key].Value1;
+			return value.IsAssignableFrom(typeof(VehicleBehaviour));
+		}
+	}
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public override string assignmentPicture => (!isVehicle) ? "menu-assignments-type-kill" : "menu-assignments-type-destroy";
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public override bool hasHint => LevelManager.instance.currentLevel.displayNumber >= LevelManager.instance.warpathUnlockLevel;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public override string hintText => Localization.Localize("ID_ASSIGNMENTHINTWARPATH");
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public KillSpecificEnemyUnits(AssignmentsManager.DatabaseAssignment dbAssignment, float levelProgress, string secondParameter = "")
+		: base(dbAssignment, levelProgress)
+	{
+		Debug.Log("Assignment: Kill Specific Enemy Units");
+		data = new object[2];
+		float playerLevelProgress = LevelManager.instance.GetPlayerLevelProgress();
+		TaskDefinitionsRow row = AssignmentsManager.instance.taskDefinitions.GetRow("ID_" + 4);
+		if (row == null)
+		{
+			Debug.Log("Assignment: Error, task definition not found for id = " + base.id);
+			return;
+		}
+		if (string.IsNullOrEmpty(secondParameter))
+		{
+			secondParameter = dbAssignment.secondTarget.ToString(CultureInfo.InvariantCulture);
+		}
+		JToken unit = GetUnit(row, playerLevelProgress, secondParameter);
+		if (unit != null)
+		{
+			data[0] = dbAssignment.target * StringParser.ParseIntToken(unit["SPAWNCOUNT"]);
+			string text = unit["NAME"].ToObject<string>();
+			data[1] = text;
+		}
+	}
 
-	3. Assembly Reconstruction has not been implemented.
+	private JToken GetUnit(TaskDefinitionsRow definition, float playerLevelProgress, string param)
+	{
+		Dictionary<string, object> dictionary = JsonConvert.DeserializeObject<Dictionary<string, object>>(definition.SECONDTARGETPARAMETER);
+		if (dictionary == null)
+		{
+			return null;
+		}
+		if (!string.IsNullOrEmpty(param))
+		{
+			return (JToken)dictionary[param];
+		}
+		int num = Assignment.InterpolateValue(definition.SECONDTARGETMIN, definition.SECONDTARGETMAX, playerLevelProgress);
+		List<string> list = new List<string>();
+		foreach (KeyValuePair<string, object> item in dictionary)
+		{
+			int num2 = StringParser.ParseInt(item.Key);
+			if (num2 <= num)
+			{
+				list.Add(item.Key);
+			}
+		}
+		System.Random random = new System.Random();
+		int index = random.Next(0, list.Count - 1);
+		return (JToken)dictionary[list[index]];
+	}
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
-
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
-
-	4. This script is unnecessary.
-
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
-
-	5. Script Content Level 0
-
-		AssetRipper was set to not load any script information.
-
-	6. Cpp2IL failed to decompile Il2Cpp data
-
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public override float Update()
+	{
+		string unitName = Convert.ToString(data[1]);
+		int unitKilledCount = Singleton<ScoreManager>.instance.GetUnitKilledCount(unitName);
+		base.completeFract = CompareIntAndInt(unitKilledCount, Convert.ToInt32(data[0]));
+		return base.completeFract;
+	}
 }

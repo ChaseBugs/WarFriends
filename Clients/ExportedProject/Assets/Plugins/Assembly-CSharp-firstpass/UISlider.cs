@@ -1,63 +1,299 @@
+using System;
 using UnityEngine;
 
-public class UISlider : MonoBehaviour
+[AddComponentMenu("NGUI/Interaction/Slider")]
+public class UISlider : IgnoreTimeScale
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public enum Direction
+	{
+		Horizontal,
+		Vertical
+	}
 
-	1. No dll files were provided to AssetRipper.
+	public delegate void OnValueChange(float val);
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public static UISlider current;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public Transform foreground;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public Transform thumb;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public Direction direction;
 
-	3. Assembly Reconstruction has not been implemented.
+	public GameObject eventReceiver;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public string functionName = "OnSliderChange";
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public OnValueChange onValueChange;
 
-	4. This script is unnecessary.
+	public int numberOfSteps;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	[SerializeField]
+	[HideInInspector]
+	private float rawValue = 1f;
 
-	5. Script Content Level 0
+	private BoxCollider mCol;
 
-		AssetRipper was set to not load any script information.
+	private Transform mTrans;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	private Transform mFGTrans;
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	private UIWidget mFGWidget;
 
-	7. An incorrect path was provided to AssetRipper.
+	private UISprite mFGFilled;
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	private bool mInitDone;
 
-	*/
+	private Vector2 mSize = Vector2.zero;
+
+	private Vector2 mCenter = Vector3.zero;
+
+	public float sliderValue
+	{
+		get
+		{
+			float num = rawValue;
+			if (numberOfSteps > 1)
+			{
+				num = Mathf.Round(num * (float)(numberOfSteps - 1)) / (float)(numberOfSteps - 1);
+			}
+			return num;
+		}
+		set
+		{
+			Set(value, force: false);
+		}
+	}
+
+	public Vector2 fullSize
+	{
+		get
+		{
+			return mSize;
+		}
+		set
+		{
+			if (mSize != value)
+			{
+				mSize = value;
+				ForceUpdate();
+			}
+		}
+	}
+
+	private void Init()
+	{
+		mInitDone = true;
+		if (foreground != null)
+		{
+			mFGWidget = foreground.GetComponent<UIWidget>();
+			mFGFilled = ((!(mFGWidget != null)) ? null : (mFGWidget as UISprite));
+			mFGTrans = foreground.transform;
+			if (mSize == Vector2.zero)
+			{
+				mSize = foreground.localScale;
+			}
+			if (mCenter == Vector2.zero)
+			{
+				mCenter = foreground.localPosition + foreground.localScale * 0.5f;
+			}
+		}
+		else if (mCol != null)
+		{
+			if (mSize == Vector2.zero)
+			{
+				mSize = mCol.size;
+			}
+			if (mCenter == Vector2.zero)
+			{
+				mCenter = mCol.center;
+			}
+		}
+		else
+		{
+			Debug.LogWarning("UISlider expected to find a foreground object or a box collider to work with", this);
+		}
+	}
+
+	private void Awake()
+	{
+		mTrans = base.transform;
+		mCol = GetComponent<Collider>() as BoxCollider;
+	}
+
+	private void Start()
+	{
+		Init();
+		if (Application.isPlaying && thumb != null && thumb.GetComponent<Collider>() != null)
+		{
+			UIEventListener uIEventListener = UIEventListener.Get(thumb.gameObject);
+			uIEventListener.onPress = (UIEventListener.BoolDelegate)Delegate.Combine(uIEventListener.onPress, new UIEventListener.BoolDelegate(OnPressThumb));
+			uIEventListener.onDrag = (UIEventListener.VectorDelegate)Delegate.Combine(uIEventListener.onDrag, new UIEventListener.VectorDelegate(OnDragThumb));
+		}
+		Set(rawValue, force: true);
+	}
+
+	private void OnPress(bool pressed)
+	{
+		if (pressed && UICamera.currentTouchID != -100)
+		{
+			UpdateDrag();
+		}
+	}
+
+	private void OnDrag(Vector2 delta)
+	{
+		UpdateDrag();
+	}
+
+	private void OnPressThumb(GameObject go, bool pressed)
+	{
+		if (pressed)
+		{
+			UpdateDrag();
+		}
+	}
+
+	private void OnDragThumb(GameObject go, Vector2 delta)
+	{
+		UpdateDrag();
+	}
+
+	private void OnKey(KeyCode key)
+	{
+		float num = ((!((float)numberOfSteps > 1f)) ? 0.125f : (1f / (float)(numberOfSteps - 1)));
+		if (direction == Direction.Horizontal)
+		{
+			switch (key)
+			{
+			case KeyCode.LeftArrow:
+				Set(rawValue - num, force: false);
+				break;
+			case KeyCode.RightArrow:
+				Set(rawValue + num, force: false);
+				break;
+			}
+		}
+		else
+		{
+			switch (key)
+			{
+			case KeyCode.DownArrow:
+				Set(rawValue - num, force: false);
+				break;
+			case KeyCode.UpArrow:
+				Set(rawValue + num, force: false);
+				break;
+			}
+		}
+	}
+
+	private void UpdateDrag()
+	{
+		if (!(mCol == null) && !(UICamera.currentCamera == null) && UICamera.currentTouch != null)
+		{
+			UICamera.currentTouch.clickNotification = UICamera.ClickNotification.None;
+			Ray ray = UICamera.currentCamera.ScreenPointToRay(UICamera.currentTouch.pos);
+			if (new Plane(mTrans.rotation * Vector3.back, mTrans.position).Raycast(ray, out var enter))
+			{
+				Vector3 vector = mTrans.localPosition + (Vector3)(mCenter - mSize * 0.5f);
+				Vector3 vector2 = mTrans.localPosition - vector;
+				Vector3 vector3 = mTrans.InverseTransformPoint(ray.GetPoint(enter));
+				Vector3 vector4 = vector3 + vector2;
+				Set((direction != Direction.Horizontal) ? (vector4.y / mSize.y) : (vector4.x / mSize.x), force: false);
+			}
+		}
+	}
+
+	private void Set(float input, bool force)
+	{
+		if (!mInitDone)
+		{
+			Init();
+		}
+		float num = Mathf.Clamp01(input);
+		if (num < 0.001f)
+		{
+			num = 0f;
+		}
+		float num2 = sliderValue;
+		rawValue = num;
+		float num3 = sliderValue;
+		if (!force && num2 == num3)
+		{
+			return;
+		}
+		Vector3 localScale = mSize;
+		if (direction == Direction.Horizontal)
+		{
+			localScale.x *= num3;
+		}
+		else
+		{
+			localScale.y *= num3;
+		}
+		if (mFGFilled != null && mFGFilled.type == UISprite.Type.Filled)
+		{
+			mFGFilled.fillAmount = num3;
+		}
+		else if (foreground != null)
+		{
+			mFGTrans.localScale = localScale;
+			if (mFGWidget != null)
+			{
+				if (num3 > 0.001f)
+				{
+					mFGWidget.enabled = true;
+					mFGWidget.MarkAsChanged();
+				}
+				else
+				{
+					mFGWidget.enabled = false;
+				}
+			}
+		}
+		if (thumb != null)
+		{
+			Vector3 localPosition = thumb.localPosition;
+			if (mFGFilled != null && mFGFilled.type == UISprite.Type.Filled)
+			{
+				if (mFGFilled.fillDirection == UISprite.FillDirection.Horizontal)
+				{
+					localPosition.x = ((!mFGFilled.invert) ? localScale.x : (mSize.x - localScale.x));
+				}
+				else if (mFGFilled.fillDirection == UISprite.FillDirection.Vertical)
+				{
+					localPosition.y = ((!mFGFilled.invert) ? localScale.y : (mSize.y - localScale.y));
+				}
+				else
+				{
+					Debug.LogWarning("Slider thumb is only supported with Horizontal or Vertical fill direction", this);
+				}
+			}
+			else if (direction == Direction.Horizontal)
+			{
+				localPosition.x = localScale.x;
+			}
+			else
+			{
+				localPosition.y = localScale.y;
+			}
+			thumb.localPosition = localPosition;
+		}
+		current = this;
+		if (eventReceiver != null && !string.IsNullOrEmpty(functionName) && Application.isPlaying)
+		{
+			eventReceiver.SendMessage(functionName, num3, SendMessageOptions.DontRequireReceiver);
+		}
+		if (onValueChange != null)
+		{
+			onValueChange(num3);
+		}
+		current = null;
+	}
+
+	public void ForceUpdate()
+	{
+		Set(rawValue, force: true);
+	}
 }

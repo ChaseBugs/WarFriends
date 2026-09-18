@@ -1,66 +1,125 @@
-using UnityEngine;
+#define UNITY
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace ExitGames.Client.Photon.Chat
 {
-	public class ChatPeer : MonoBehaviour
+public class ChatPeer : PhotonPeer
+{
+	public const string NameServerHost = "ns.exitgames.com";
+
+	public const string NameServerHttp = "http://ns.exitgamescloud.com:80/photon/n";
+
+	private static readonly Dictionary<ConnectionProtocol, int> ProtocolToNameServerPort = new Dictionary<ConnectionProtocol, int>
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
+		{
+			ConnectionProtocol.Udp,
+			5058
+		},
+		{
+			ConnectionProtocol.Tcp,
+			4533
+		},
+		{
+			ConnectionProtocol.WebSocket,
+			9093
+		},
+		{
+			ConnectionProtocol.WebSocketSecure,
+			19093
+		}
+	};
 
-		1. No dll files were provided to AssetRipper.
+	public string NameServerAddress => GetNameServerAddress();
 
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
+	internal virtual bool IsProtocolSecure => base.UsedProtocol == ConnectionProtocol.WebSocketSecure;
 
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
+	public ChatPeer(IPhotonPeerListener listener, ConnectionProtocol protocol)
+		: base(listener, protocol)
+	{
+		ConfigUnitySockets();
 	}
+
+	[Conditional("UNITY")]
+	private void ConfigUnitySockets()
+	{
+		Type type = Type.GetType("ExitGames.Client.Photon.SocketWebTcp, Assembly-CSharp", throwOnError: false);
+		if (type == null)
+		{
+			type = Type.GetType("ExitGames.Client.Photon.SocketWebTcp, Assembly-CSharp-firstpass", throwOnError: false);
+		}
+		if (type != null)
+		{
+			SocketImplementationConfig[ConnectionProtocol.WebSocket] = type;
+			SocketImplementationConfig[ConnectionProtocol.WebSocketSecure] = type;
+		}
+	}
+
+	private string GetNameServerAddress()
+	{
+		int value = 0;
+		ProtocolToNameServerPort.TryGetValue(base.TransportProtocol, out value);
+		switch (base.TransportProtocol)
+		{
+		case ConnectionProtocol.Udp:
+		case ConnectionProtocol.Tcp:
+			return string.Format("{0}:{1}", "ns.exitgames.com", value);
+		case ConnectionProtocol.WebSocket:
+			return string.Format("ws://{0}:{1}", "ns.exitgames.com", value);
+		case ConnectionProtocol.WebSocketSecure:
+			return string.Format("wss://{0}:{1}", "ns.exitgames.com", value);
+		default:
+			throw new ArgumentOutOfRangeException();
+		}
+	}
+
+	public bool Connect()
+	{
+		if ((int)DebugOut >= 3)
+		{
+			base.Listener.DebugReturn(DebugLevel.INFO, "Connecting to nameserver " + NameServerAddress);
+		}
+		return Connect(NameServerAddress, "NameServer");
+	}
+
+	public bool AuthenticateOnNameServer(string appId, string appVersion, string region, AuthenticationValues authValues)
+	{
+		if ((int)DebugOut >= 3)
+		{
+			base.Listener.DebugReturn(DebugLevel.INFO, "OpAuthenticate()");
+		}
+		Dictionary<byte, object> dictionary = new Dictionary<byte, object>();
+		dictionary[220] = appVersion;
+		dictionary[224] = appId;
+		dictionary[210] = region;
+		if (authValues != null)
+		{
+			if (!string.IsNullOrEmpty(authValues.UserId))
+			{
+				dictionary[225] = authValues.UserId;
+			}
+			if (authValues != null && authValues.AuthType != CustomAuthenticationType.None)
+			{
+				dictionary[217] = (byte)authValues.AuthType;
+				if (!string.IsNullOrEmpty(authValues.Token))
+				{
+					dictionary[221] = authValues.Token;
+				}
+				else
+				{
+					if (!string.IsNullOrEmpty(authValues.AuthGetParameters))
+					{
+						dictionary[216] = authValues.AuthGetParameters;
+					}
+					if (authValues.AuthPostData != null)
+					{
+						dictionary[214] = authValues.AuthPostData;
+					}
+				}
+			}
+		}
+		return OpCustom(230, dictionary, sendReliable: true, 0, base.IsEncryptionAvailable);
+	}
+}
 }

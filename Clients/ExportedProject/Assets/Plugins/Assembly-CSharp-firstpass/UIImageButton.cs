@@ -1,63 +1,85 @@
 using UnityEngine;
 
+[ExecuteInEditMode]
+[AddComponentMenu("NGUI/UI/Image Button")]
 public class UIImageButton : MonoBehaviour
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public UISprite target;
 
-	1. No dll files were provided to AssetRipper.
+	public string normalSprite;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public string hoverSprite;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public string pressedSprite;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public string disabledSprite;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public bool isEnabled
+	{
+		get
+		{
+			Collider component = GetComponent<Collider>();
+			return (bool)component && component.enabled;
+		}
+		set
+		{
+			Collider component = GetComponent<Collider>();
+			if ((bool)component && component.enabled != value)
+			{
+				component.enabled = value;
+				UpdateImage();
+			}
+		}
+	}
 
-	3. Assembly Reconstruction has not been implemented.
+	private void Awake()
+	{
+		if (target == null)
+		{
+			target = GetComponentInChildren<UISprite>();
+		}
+	}
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	private void OnEnable()
+	{
+		UpdateImage();
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	private void UpdateImage()
+	{
+		if (target != null)
+		{
+			if (isEnabled)
+			{
+				target.spriteName = ((!UICamera.IsHighlighted(base.gameObject)) ? normalSprite : hoverSprite);
+			}
+			else
+			{
+				target.spriteName = disabledSprite;
+			}
+			target.MakePixelPerfect();
+		}
+	}
 
-	4. This script is unnecessary.
+	private void OnHover(bool isOver)
+	{
+		if (isEnabled && target != null)
+		{
+			target.spriteName = ((!isOver) ? normalSprite : hoverSprite);
+			target.MakePixelPerfect();
+		}
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
-
-	5. Script Content Level 0
-
-		AssetRipper was set to not load any script information.
-
-	6. Cpp2IL failed to decompile Il2Cpp data
-
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	private void OnPress(bool pressed)
+	{
+		if (pressed)
+		{
+			target.spriteName = pressedSprite;
+			target.MakePixelPerfect();
+		}
+		else
+		{
+			UpdateImage();
+		}
+	}
 }

@@ -1,66 +1,194 @@
+using System;
+using CodeStage.AntiCheat.Detectors;
 using UnityEngine;
 
 namespace CodeStage.AntiCheat.ObscuredTypes
 {
-	public class ObscuredLong : MonoBehaviour
+[Serializable]
+public struct ObscuredLong : IFormattable, IEquatable<ObscuredLong>
+{
+	private static long cryptoKey = 444442L;
+
+	[SerializeField]
+	private long currentCryptoKey;
+
+	[SerializeField]
+	private long hiddenValue;
+
+	[SerializeField]
+	private long fakeValue;
+
+	[SerializeField]
+	private bool inited;
+
+	private ObscuredLong(long value)
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
+		currentCryptoKey = cryptoKey;
+		hiddenValue = value;
+		fakeValue = 0L;
+		inited = true;
 	}
+
+	public static void SetNewCryptoKey(long newKey)
+	{
+		cryptoKey = newKey;
+	}
+
+	public static long Encrypt(long value)
+	{
+		return Encrypt(value, 0L);
+	}
+
+	public static long Decrypt(long value)
+	{
+		return Decrypt(value, 0L);
+	}
+
+	public static long Encrypt(long value, long key)
+	{
+		if (key == 0L)
+		{
+			return value ^ cryptoKey;
+		}
+		return value ^ key;
+	}
+
+	public static long Decrypt(long value, long key)
+	{
+		if (key == 0L)
+		{
+			return value ^ cryptoKey;
+		}
+		return value ^ key;
+	}
+
+	public void ApplyNewCryptoKey()
+	{
+		if (currentCryptoKey != cryptoKey)
+		{
+			hiddenValue = Encrypt(InternalDecrypt(), cryptoKey);
+			currentCryptoKey = cryptoKey;
+		}
+	}
+
+	public void RandomizeCryptoKey()
+	{
+		long value = InternalDecrypt();
+		currentCryptoKey = UnityEngine.Random.seed;
+		hiddenValue = Encrypt(value, currentCryptoKey);
+	}
+
+	public long GetEncrypted()
+	{
+		ApplyNewCryptoKey();
+		return hiddenValue;
+	}
+
+	public void SetEncrypted(long encrypted)
+	{
+		inited = true;
+		hiddenValue = encrypted;
+		if (ObscuredCheatingDetector.IsRunning)
+		{
+			fakeValue = InternalDecrypt();
+		}
+	}
+
+	private long InternalDecrypt()
+	{
+		if (!inited)
+		{
+			currentCryptoKey = cryptoKey;
+			hiddenValue = Encrypt(0L);
+			fakeValue = 0L;
+			inited = true;
+		}
+		long num = Decrypt(hiddenValue, currentCryptoKey);
+		if (ObscuredCheatingDetector.IsRunning && fakeValue != 0L && num != fakeValue)
+		{
+			ObscuredCheatingDetector.Instance.OnCheatingDetected();
+		}
+		return num;
+	}
+
+	public override bool Equals(object obj)
+	{
+		if (!(obj is ObscuredLong))
+		{
+			return false;
+		}
+		return Equals((ObscuredLong)obj);
+	}
+
+	public bool Equals(ObscuredLong obj)
+	{
+		if (currentCryptoKey == obj.currentCryptoKey)
+		{
+			return hiddenValue == obj.hiddenValue;
+		}
+		return Decrypt(hiddenValue, currentCryptoKey) == Decrypt(obj.hiddenValue, obj.currentCryptoKey);
+	}
+
+	public override int GetHashCode()
+	{
+		return InternalDecrypt().GetHashCode();
+	}
+
+	public override string ToString()
+	{
+		return InternalDecrypt().ToString();
+	}
+
+	public string ToString(string format)
+	{
+		return InternalDecrypt().ToString(format);
+	}
+
+	public string ToString(IFormatProvider provider)
+	{
+		return InternalDecrypt().ToString(provider);
+	}
+
+	public string ToString(string format, IFormatProvider provider)
+	{
+		return InternalDecrypt().ToString(format, provider);
+	}
+
+	public static implicit operator ObscuredLong(long value)
+	{
+		ObscuredLong result = new ObscuredLong(Encrypt(value));
+		if (ObscuredCheatingDetector.IsRunning)
+		{
+			result.fakeValue = value;
+		}
+		return result;
+	}
+
+	public static implicit operator long(ObscuredLong value)
+	{
+		return value.InternalDecrypt();
+	}
+
+	public static ObscuredLong operator ++(ObscuredLong input)
+	{
+		long value = input.InternalDecrypt() + 1;
+		input.hiddenValue = Encrypt(value, input.currentCryptoKey);
+		if (ObscuredCheatingDetector.IsRunning)
+		{
+			input.fakeValue = value;
+		}
+		return input;
+	}
+
+	public static ObscuredLong operator --(ObscuredLong input)
+	{
+		long value = input.InternalDecrypt() - 1;
+		input.hiddenValue = Encrypt(value, input.currentCryptoKey);
+		if (ObscuredCheatingDetector.IsRunning)
+		{
+			input.fakeValue = value;
+		}
+		return input;
+	}
+}
 }

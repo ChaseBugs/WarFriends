@@ -1,66 +1,114 @@
-using UnityEngine;
+using System;
+using System.Collections.Generic;
+using System.Text;
+using FullSerializer.Internal;
 
 namespace FullSerializer
 {
-	public class fsAotCompilationManager : MonoBehaviour
+public class fsAotCompilationManager
+{
+	private struct AotCompilation
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
+		public Type Type;
 
-		1. No dll files were provided to AssetRipper.
+		public fsMetaProperty[] Members;
 
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
+		public bool IsConstructorPublic;
 	}
+
+	private static Dictionary<Type, string> _computedAotCompilations = new Dictionary<Type, string>();
+
+	private static List<AotCompilation> _uncomputedAotCompilations = new List<AotCompilation>();
+
+	public static Dictionary<Type, string> AvailableAotCompilations
+	{
+		get
+		{
+			for (int i = 0; i < _uncomputedAotCompilations.Count; i++)
+			{
+				AotCompilation aotCompilation = _uncomputedAotCompilations[i];
+				_computedAotCompilations[aotCompilation.Type] = GenerateDirectConverterForTypeInCSharp(aotCompilation.Type, aotCompilation.Members, aotCompilation.IsConstructorPublic);
+			}
+			_uncomputedAotCompilations.Clear();
+			return _computedAotCompilations;
+		}
+	}
+
+	public static bool TryToPerformAotCompilation(Type type, out string aotCompiledClassInCSharp)
+	{
+		if (fsMetaType.Get(type).EmitAotData())
+		{
+			aotCompiledClassInCSharp = AvailableAotCompilations[type];
+			return true;
+		}
+		aotCompiledClassInCSharp = null;
+		return false;
+	}
+
+	public static void AddAotCompilation(Type type, fsMetaProperty[] members, bool isConstructorPublic)
+	{
+		_uncomputedAotCompilations.Add(new AotCompilation
+		{
+			Type = type,
+			Members = members,
+			IsConstructorPublic = isConstructorPublic
+		});
+	}
+
+	private static string GenerateDirectConverterForTypeInCSharp(Type type, fsMetaProperty[] members, bool isConstructorPublic)
+	{
+		StringBuilder stringBuilder = new StringBuilder();
+		string text = type.CSharpName(includeNamespace: true);
+		string text2 = type.CSharpName(includeNamespace: true, ensureSafeDeclarationName: true);
+		stringBuilder.AppendLine("using System;");
+		stringBuilder.AppendLine("using System.Collections.Generic;");
+		stringBuilder.AppendLine();
+		stringBuilder.AppendLine("namespace FullSerializer {");
+		stringBuilder.AppendLine("    partial class fsConverterRegistrar {");
+		stringBuilder.AppendLine("        public static Speedup." + text2 + "_DirectConverter Register_" + text2 + ";");
+		stringBuilder.AppendLine("    }");
+		stringBuilder.AppendLine("}");
+		stringBuilder.AppendLine();
+		stringBuilder.AppendLine("namespace FullSerializer.Speedup {");
+		stringBuilder.AppendLine("    public class " + text2 + "_DirectConverter : fsDirectConverter<" + text + "> {");
+		stringBuilder.AppendLine("        protected override fsResult DoSerialize(" + text + " model, Dictionary<string, fsData> serialized) {");
+		stringBuilder.AppendLine("            var result = fsResult.Success;");
+		stringBuilder.AppendLine();
+		foreach (fsMetaProperty fsMetaProperty2 in members)
+		{
+			stringBuilder.AppendLine("            result += SerializeMember(serialized, \"" + fsMetaProperty2.JsonName + "\", model." + fsMetaProperty2.MemberName + ");");
+		}
+		stringBuilder.AppendLine();
+		stringBuilder.AppendLine("            return result;");
+		stringBuilder.AppendLine("        }");
+		stringBuilder.AppendLine();
+		stringBuilder.AppendLine("        protected override fsResult DoDeserialize(Dictionary<string, fsData> data, ref " + text + " model) {");
+		stringBuilder.AppendLine("            var result = fsResult.Success;");
+		stringBuilder.AppendLine();
+		for (int j = 0; j < members.Length; j++)
+		{
+			fsMetaProperty fsMetaProperty3 = members[j];
+			stringBuilder.AppendLine("            var t" + j + " = model." + fsMetaProperty3.MemberName + ";");
+			stringBuilder.AppendLine("            result += DeserializeMember(data, \"" + fsMetaProperty3.JsonName + "\", out t" + j + ");");
+			stringBuilder.AppendLine("            model." + fsMetaProperty3.MemberName + " = t" + j + ";");
+			stringBuilder.AppendLine();
+		}
+		stringBuilder.AppendLine("            return result;");
+		stringBuilder.AppendLine("        }");
+		stringBuilder.AppendLine();
+		stringBuilder.AppendLine("        public override object CreateInstance(fsData data, Type storageType) {");
+		if (isConstructorPublic)
+		{
+			stringBuilder.AppendLine("            return new " + text + "();");
+		}
+		else
+		{
+			stringBuilder.AppendLine("            return Activator.CreateInstance(typeof(" + text + "), /*nonPublic:*/true);");
+		}
+		stringBuilder.AppendLine("        }");
+		stringBuilder.AppendLine("    }");
+		stringBuilder.AppendLine("}");
+		return stringBuilder.ToString();
+	}
+}
 }

@@ -1,66 +1,170 @@
-using UnityEngine;
+using System;
+using System.IO;
+using Org.BouncyCastle.Utilities;
 
 namespace Org.BouncyCastle.Asn1
 {
-	public class DerApplicationSpecific : MonoBehaviour
+public class DerApplicationSpecific : Asn1Object
+{
+	private readonly bool isConstructed;
+
+	private readonly int tag;
+
+	private readonly byte[] octets;
+
+	public int ApplicationTag => tag;
+
+	internal DerApplicationSpecific(bool isConstructed, int tag, byte[] octets)
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
+		this.isConstructed = isConstructed;
+		this.tag = tag;
+		this.octets = octets;
 	}
+
+	public DerApplicationSpecific(int tag, byte[] octets)
+		: this(isConstructed: false, tag, octets)
+	{
+	}
+
+	public DerApplicationSpecific(int tag, Asn1Encodable obj)
+		: this(isExplicit: true, tag, obj)
+	{
+	}
+
+	public DerApplicationSpecific(bool isExplicit, int tag, Asn1Encodable obj)
+	{
+		Asn1Object asn1Object = obj.ToAsn1Object();
+		byte[] derEncoded = asn1Object.GetDerEncoded();
+		isConstructed = isExplicit || asn1Object is Asn1Set || asn1Object is Asn1Sequence;
+		this.tag = tag;
+		if (isExplicit)
+		{
+			octets = derEncoded;
+			return;
+		}
+		int lengthOfHeader = GetLengthOfHeader(derEncoded);
+		byte[] array = new byte[derEncoded.Length - lengthOfHeader];
+		Array.Copy(derEncoded, lengthOfHeader, array, 0, array.Length);
+		octets = array;
+	}
+
+	public DerApplicationSpecific(int tagNo, Asn1EncodableVector vec)
+	{
+		tag = tagNo;
+		isConstructed = true;
+		MemoryStream memoryStream = new MemoryStream();
+		for (int i = 0; i != vec.Count; i++)
+		{
+			try
+			{
+				byte[] derEncoded = vec[i].GetDerEncoded();
+				memoryStream.Write(derEncoded, 0, derEncoded.Length);
+			}
+			catch (IOException innerException)
+			{
+				throw new InvalidOperationException("malformed object", innerException);
+			}
+		}
+		octets = memoryStream.ToArray();
+	}
+
+	private int GetLengthOfHeader(byte[] data)
+	{
+		int num = data[1];
+		if (num == 128)
+		{
+			return 2;
+		}
+		if (num > 127)
+		{
+			int num2 = num & 0x7F;
+			if (num2 > 4)
+			{
+				throw new InvalidOperationException("DER length more than 4 bytes: " + num2);
+			}
+			return num2 + 2;
+		}
+		return 2;
+	}
+
+	public bool IsConstructed()
+	{
+		return isConstructed;
+	}
+
+	public byte[] GetContents()
+	{
+		return octets;
+	}
+
+	public Asn1Object GetObject()
+	{
+		return Asn1Object.FromByteArray(GetContents());
+	}
+
+	public Asn1Object GetObject(int derTagNo)
+	{
+		if (derTagNo >= 31)
+		{
+			throw new IOException("unsupported tag number");
+		}
+		byte[] encoded = GetEncoded();
+		byte[] array = ReplaceTagNumber(derTagNo, encoded);
+		if ((encoded[0] & 0x20) != 0)
+		{
+			array[0] |= 32;
+		}
+		return Asn1Object.FromByteArray(array);
+	}
+
+	internal override void Encode(DerOutputStream derOut)
+	{
+		int num = 64;
+		if (isConstructed)
+		{
+			num |= 0x20;
+		}
+		derOut.WriteEncoded(num, tag, octets);
+	}
+
+	protected override bool Asn1Equals(Asn1Object asn1Object)
+	{
+		if (!(asn1Object is DerApplicationSpecific derApplicationSpecific))
+		{
+			return false;
+		}
+		return isConstructed == derApplicationSpecific.isConstructed && tag == derApplicationSpecific.tag && Arrays.AreEqual(octets, derApplicationSpecific.octets);
+	}
+
+	protected override int Asn1GetHashCode()
+	{
+		return isConstructed.GetHashCode() ^ tag.GetHashCode() ^ Arrays.GetHashCode(octets);
+	}
+
+	private byte[] ReplaceTagNumber(int newTag, byte[] input)
+	{
+		int num = input[0] & 0x1F;
+		int num2 = 1;
+		if (num == 31)
+		{
+			num = 0;
+			int num3 = input[num2++] & 0xFF;
+			if ((num3 & 0x7F) == 0)
+			{
+				throw new InvalidOperationException("corrupted stream - invalid high tag number found");
+			}
+			while (num3 >= 0 && (num3 & 0x80) != 0)
+			{
+				num |= num3 & 0x7F;
+				num <<= 7;
+				num3 = input[num2++] & 0xFF;
+			}
+			num |= num3 & 0x7F;
+		}
+		byte[] array = new byte[input.Length - num2 + 1];
+		Array.Copy(input, num2, array, 1, array.Length - 1);
+		array[0] = (byte)newTag;
+		return array;
+	}
+}
 }

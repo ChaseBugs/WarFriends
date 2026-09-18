@@ -1,63 +1,170 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
-public class NotEnoughDialog : MonoBehaviour
+public class NotEnoughDialog : GuiElementSingle<NotEnoughDialog>, IGuiDialog
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public enum Type
+	{
+		BUY,
+		UPGRADE,
+		TRAIN,
+		DELIVER,
+		UPGRADESPECIAL,
+		TRAINSPECIAL,
+		DELIVERSPECIAL,
+		TRAINELITE,
+		UPGRADEELITE
+	}
 
-	1. No dll files were provided to AssetRipper.
+	[Header("Content")]
+	public UILabel header;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public UILabel description;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public GameObject warbucks;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public GameObject gold;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	[Header("Buttons")]
+	public UILabel buttonLabel;
 
-	3. Assembly Reconstruction has not been implemented.
+	public UIButton close;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public UIButton buttonGet;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	private bool mIsWarbucks;
 
-	4. This script is unnecessary.
+	private int mNumber;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private string mItem;
 
-	5. Script Content Level 0
+	private Type mType;
 
-		AssetRipper was set to not load any script information.
+	private static Dictionary<Type, string> mText = new Dictionary<Type, string>
+	{
+		{
+			Type.BUY,
+			"ID_YOUNEEDMONEYTOBUY"
+		},
+		{
+			Type.UPGRADE,
+			"ID_YOUNEEDMONEYTOUPGRADE"
+		},
+		{
+			Type.TRAIN,
+			"ID_YOUNEEDMONEYTOTRAIN"
+		},
+		{
+			Type.DELIVER,
+			"ID_YOUNEEDMONEYTODELIVER"
+		},
+		{
+			Type.UPGRADESPECIAL,
+			"ID_YOUNEEDMONEYTOUPGRADESPECIAL"
+		},
+		{
+			Type.TRAINSPECIAL,
+			"ID_YOUNEEDMONEYTOTRAINSPECIAL"
+		},
+		{
+			Type.DELIVERSPECIAL,
+			"ID_YOUNEEDMONEYTODELIVERSPECIAL"
+		},
+		{
+			Type.TRAINELITE,
+			"ID_YOUNEEDMONEYTOTRAINELITE"
+		},
+		{
+			Type.UPGRADEELITE,
+			"ID_YOUNEEDMONEYTOUPGRADEELITE"
+		}
+	};
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public void ShowWarbucks(int number, string item, Type type = Type.BUY)
+	{
+		mIsWarbucks = true;
+		mNumber = number;
+		mItem = item;
+		mType = type;
+		Singleton<GuiManager>.instance.ShowDialog(this, 0f);
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public void ShowGold(int number, string item, Type type = Type.BUY)
+	{
+		mIsWarbucks = false;
+		mNumber = number;
+		mItem = item;
+		mType = type;
+		Singleton<GuiManager>.instance.ShowDialog(this, 0f);
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	public override void InitControls()
+	{
+		UIEventListener uIEventListener = UIEventListener.Get(close.gameObject);
+		uIEventListener.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener.onClick, new UIEventListener.VoidDelegate(CloseDialog));
+		UIEventListener uIEventListener2 = UIEventListener.Get(buttonGet.gameObject);
+		uIEventListener2.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener2.onClick, new UIEventListener.VoidDelegate(ButtonGetClick));
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	private void CloseDialog(GameObject go)
+	{
+		if (base.isFullyShowed)
+		{
+			GuiElementSingle<InappScreen>.instance.routeToStore = string.Empty;
+			HideDialog();
+		}
+	}
 
-	*/
+	private void ButtonGetClick(GameObject go)
+	{
+		if (base.isFullyShowed)
+		{
+			HideDialog();
+			if (mIsWarbucks)
+			{
+				GuiElementSingle<InappScreen>.instance.ShowWarshopWarbucks();
+			}
+			else
+			{
+				GuiElementSingle<InappScreen>.instance.ShowWarshopGold();
+			}
+		}
+	}
+
+	public override void InitGUIValues()
+	{
+		warbucks.SetActive(mIsWarbucks);
+		gold.SetActive(!mIsWarbucks);
+		header.text = Localization.Localize((!mIsWarbucks) ? "ID_NOTENOUGHGOLD" : "ID_NOTENOUGHWARBUCKS");
+		MiscTools.SetUILabelRescale(header, 74f, 50f, 1180);
+		buttonLabel.text = Localization.Localize((!mIsWarbucks) ? "ID_GETSOMEGOLD" : "ID_GETSOMEWARBUCKS");
+		description.text = Localization.LocalizeFormat(mText[mType], (!mIsWarbucks) ? Colours.stringGoldOld : Colours.stringGreenWarbucks, MiscTools.FormatBigNumber(mNumber), Localization.Localize((!mIsWarbucks) ? "ID_GOLD" : "ID_WARBUCKS").ToUpperInvariant(), Colours.stringWhite, Colours.stringBlue, mItem);
+	}
+
+	public override void DoAfterShowUp()
+	{
+		base.DoAfterShowUp();
+		UIEventListener uIEventListener = UIEventListener.Get(overlayBackground.gameObject);
+		uIEventListener.onClick = (UIEventListener.VoidDelegate)Delegate.Remove(uIEventListener.onClick, new UIEventListener.VoidDelegate(CloseDialog));
+		UIEventListener uIEventListener2 = UIEventListener.Get(overlayBackground.gameObject);
+		uIEventListener2.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener2.onClick, new UIEventListener.VoidDelegate(CloseDialog));
+	}
+
+	public override void DoBeforeHide()
+	{
+		base.DoBeforeHide();
+		UIEventListener uIEventListener = UIEventListener.Get(overlayBackground.gameObject);
+		uIEventListener.onClick = (UIEventListener.VoidDelegate)Delegate.Remove(uIEventListener.onClick, new UIEventListener.VoidDelegate(CloseDialog));
+	}
+
+	public GuiElement GetGuiElement()
+	{
+		return this;
+	}
+
+	public override void OnBack()
+	{
+		CloseDialog(close.gameObject);
+	}
 }

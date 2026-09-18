@@ -108,6 +108,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 34ffc0ae4f0e7f3fb7d6dc8694f61c0b, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  isActivated: 0
+  leagueTexture: {fileID: 11477035}
+  arrows:
+  - {fileID: 11469566}
+  - {fileID: 11424449}
 --- !u!65 &6584216
 BoxCollider:
   serializedVersion: 2
@@ -131,6 +136,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dfac223674a804adf3fffb2de07784c9, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  tweenTarget: {fileID: 470521}
+  hover: {x: 1.1, y: 1.1, z: 1}
+  pressed: {x: 1.05, y: 1.05, z: 1}
 --- !u!114 &11431434
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -142,6 +150,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 920c39b46ee788b96e35170fd87a659d, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  audioClip: {fileID: 0}
+  trigger: 0
+  volume: 1
+  pitch: 1
+  uiButton: {fileID: 0}
+  lockedPart: {fileID: 0}
+  enabledPart: {fileID: 0}
 --- !u!4 &470521
 Transform:
   m_ObjectHideFlags: 0
@@ -178,6 +193,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 96562d0799d618a7fb9b1a37343d8235, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 0}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 0
+  mRect:
+    serializedVersion: 2
+    x: 0
+    y: 0
+    width: 1
+    height: 1
+  mShader: {fileID: 4800000, guid: 0be4260a50cecf84aabd5d8be5cfbc9c, type: 3}
+  mTexture: {fileID: 0}
 --- !u!4 &403859
 Transform:
   m_ObjectHideFlags: 0
@@ -201,6 +228,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 995cff53e4ec203488dc398f0f8f32e5, type: 2}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 6
+  mAtlas: {fileID: 11409266, guid: 9582f38df100b244993ee2e1fa9a9888, type: 2}
+  mSpriteName: menu-leaguebrowser-arrow
+  mFillCenter: 1
+  mType: 0
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &488124
 Transform:
   m_ObjectHideFlags: 0
@@ -224,6 +266,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 995cff53e4ec203488dc398f0f8f32e5, type: 2}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 5
+  mAtlas: {fileID: 11409266, guid: 9582f38df100b244993ee2e1fa9a9888, type: 2}
+  mSpriteName: menu-leaguebrowser-arrow
+  mFillCenter: 1
+  mType: 0
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!1001 &100100000
 Prefab:
   serializedVersion: 2

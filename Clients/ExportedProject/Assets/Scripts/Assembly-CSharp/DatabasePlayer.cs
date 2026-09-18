@@ -1,63 +1,699 @@
+using System;
+using System.Collections.Generic;
+using System.Text.RegularExpressions;
+using Beebyte.Obfuscator;
+using Google2u;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using UnityEngine;
 
-public class DatabasePlayer : MonoBehaviour
+[Skip]
+public class DatabasePlayer : IDatabasePlayer
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public static int maxPlayerName = 15;
 
-	1. No dll files were provided to AssetRipper.
+	public string accountName;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public AccountType accountType;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public int armyPower;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public string deviceToken;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public long experience;
 
-	3. Assembly Reconstruction has not been implemented.
+	public long facebookId;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public string googlePlayId;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public string id;
 
-	4. This script is unnecessary.
+	public int lastAction;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public int reputation;
 
-	5. Script Content Level 0
+	public string leagueDivision;
 
-		AssetRipper was set to not load any script information.
+	public string leagueId;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public int vipExpiration;
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public League leagueTier = League.Bronze3;
 
-	7. An incorrect path was provided to AssetRipper.
+	public Dictionary<string, string> depositedCardsDic;
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	public int level;
 
-	*/
+	public string country;
+
+	public int sendLogsValue;
+
+	public int beginnersLeague;
+
+	public Dictionary<int, CamosManager.SavedPlayerVisualSlot> playerVisuals;
+
+	public PlayerInventory.InventoryData inventoryData;
+
+	public LevelManager.LevelManagerData levelManagerData;
+
+	public int skill;
+
+	public int medalsBalance;
+
+	public int remainingMatches;
+
+	public string squadName;
+
+	public int squadPoints;
+
+	public SquadRank squadRank;
+
+	public PlayerStatus status;
+
+	public string gameCenterId;
+
+	public StatsManager.StatisticsData statisticsData;
+
+	public bool awaitingSquadMember;
+
+	public string visualType;
+
+	public int visualTimestamp;
+
+	[JsonIgnore]
+	public Dictionary<CloudRegionCode, int> bestRegions;
+
+	public InternetConnection connectionType;
+
+	private static DatabasePlayer mFakePlayer;
+
+	public int armyPowerX10 => 10 * armyPower;
+
+	public bool isInBeginnersLeague => beginnersLeague > 0 && statisticsData != null && statisticsData.mmmGames > 0;
+
+	public Dictionary<string, LevelManager.SavedArmySlots> equippedUnits
+	{
+		get
+		{
+			if (levelManagerData == null)
+			{
+				levelManagerData = new LevelManager.LevelManagerData();
+			}
+			return levelManagerData.savedArmies;
+		}
+		set
+		{
+			if (levelManagerData == null)
+			{
+				levelManagerData = new LevelManager.LevelManagerData();
+			}
+			levelManagerData.savedArmies = value;
+		}
+	}
+
+	public WarArenaCrown warArenaCrown
+	{
+		get
+		{
+			if (visualTimestamp < Singleton<BeanstalkServerManager>.instance.currentTimestamp)
+			{
+				return WarArenaCrown.None;
+			}
+			switch (visualType)
+			{
+				case "bronze":
+					return WarArenaCrown.BronzeCrown;
+				case "silver":
+					return WarArenaCrown.SilverCrown;
+				case "gold":
+					return WarArenaCrown.GoldCrown;
+				case "flawless":
+					return WarArenaCrown.Flawless;
+				default:
+					return WarArenaCrown.None;
+			}
+		}
+	}
+
+	public bool isInLeague => remainingMatches == 0 && leagueDivision != "placement";
+
+	public bool canPlayerSendLogs => sendLogsValue == 1;
+
+	public bool isFacebookConnected => facebookId != -1;
+
+	public bool isGameCenterConnected => !string.IsNullOrEmpty(gameCenterId);
+
+	public bool isGooglePlayConnected => !string.IsNullOrEmpty(googlePlayId);
+
+	public string name
+	{
+		get
+		{
+			DatabasePlayer currentPlayer = GameLoginManager.currentPlayer;
+			if (currentPlayer == null)
+			{
+				return null;
+			}
+			if (currentPlayer == this)
+			{
+				return accountName;
+			}
+			if (currentPlayer.id == id && currentPlayer.accountName != accountName)
+			{
+				return currentPlayer.accountName;
+			}
+			return accountName;
+		}
+	}
+
+	public string visualsDebugLog
+	{
+		get
+		{
+			if (playerVisuals == null)
+			{
+				return "visuals: null";
+			}
+			if (playerVisuals.Count != 4)
+			{
+				string arg = string.Empty;
+				foreach (KeyValuePair<int, CamosManager.SavedPlayerVisualSlot> playerVisual in playerVisuals)
+				{
+					arg = " " + playerVisual.Value.equippedID;
+				}
+				return $"visuals: wrong number {playerVisuals.Count} -{arg}";
+			}
+			return $"visuals: {playerVisuals[0].equippedID} {playerVisuals[1].equippedID} {playerVisuals[2].equippedID} {playerVisuals[3].equippedID}";
+		}
+	}
+
+	public string debugBasicInformation => string.Format("DatabasePlayer Name: {0}  Id: {1}  Level: {2}  SquadRank: {3}", (name != null) ? name : "null", (id != null) ? id : "null", level, squadRank);
+
+	public string debugSquadInformation => string.Format("Squad: {0}  SquadPoints: {1}  Reputations: {2}  SquadRank: {3}", (squadName != null) ? squadName : "null", squadPoints, reputation, squadRank);
+
+	public string debugLeagueInformation
+	{
+		get
+		{
+			if (isInBeginnersLeague)
+			{
+				return $"Beginners League:{beginnersLeague}  LeagueMedals: {medalsBalance}  GLobalMedals: {skill}";
+			}
+			return string.Format("League: {0}  LeagueId: {1}  LeagueDivision: {2}  WeeklyMedals: {3}  GLobalMedals: {4}", leagueTier, (leagueId != null) ? leagueId : "null", (leagueDivision != null) ? leagueDivision : "null", medalsBalance, skill);
+		}
+	}
+
+	public string debugDepositedWarcards
+	{
+		get
+		{
+			string text = "Deposited Warcards: ";
+			if (depositedCardsDic != null && depositedCardsDic.Count > 0)
+			{
+				foreach (KeyValuePair<string, string> item in depositedCardsDic)
+				{
+					text += string.Format("\"{0}\" ", (item.Key != null) ? item.Key : "null");
+				}
+			}
+			else
+			{
+				text += "None";
+			}
+			return text;
+		}
+	}
+
+	public static DatabasePlayer fakePlayer
+	{
+		get
+		{
+			if (mFakePlayer == null)
+			{
+				mFakePlayer = new DatabasePlayer();
+				mFakePlayer.accountName = "FakePlayer";
+				mFakePlayer.accountType = AccountType.Guest;
+				mFakePlayer.armyPower = 22123;
+				mFakePlayer.experience = LevelManager.instance.experience;
+				mFakePlayer.id = "fake-player-id";
+				mFakePlayer.lastAction = Singleton<BeanstalkServerManager>.instance.currentTimestamp;
+				mFakePlayer.reputation = 0;
+				mFakePlayer.leagueDivision = "fake-division";
+				mFakePlayer.vipExpiration = 0;
+				mFakePlayer.leagueTier = League.Bronze3;
+				mFakePlayer.level = LevelManager.instance.currentLevel.displayNumber;
+				mFakePlayer.playerVisuals = GameLoginManager.currentPlayer.playerVisuals;
+				mFakePlayer.inventoryData = GameLoginManager.currentPlayer.inventoryData;
+				mFakePlayer.levelManagerData = GameLoginManager.currentPlayer.levelManagerData;
+				mFakePlayer.skill = 500;
+				mFakePlayer.medalsBalance = 0;
+				mFakePlayer.remainingMatches = 0;
+				mFakePlayer.squadName = GameLoginManager.currentPlayer.squadName;
+				mFakePlayer.squadPoints = 0;
+				mFakePlayer.squadRank = SquadRank.Member;
+				mFakePlayer.status = PlayerStatus.Online;
+				mFakePlayer.statisticsData = GameLoginManager.currentPlayer.statisticsData;
+				mFakePlayer.awaitingSquadMember = false;
+				mFakePlayer.connectionType = InternetConnection.None;
+			}
+			return mFakePlayer;
+		}
+	}
+
+	public string CompareToOtherInstance(DatabasePlayer secondInstance)
+	{
+		if (id != secondInstance.id)
+		{
+			return null;
+		}
+		string text = $"Comparing player {name} with id {id}:\n";
+		if (name != secondInstance.name)
+		{
+			text += $"Different names \"{name}\" and \"{secondInstance.name}\"\n";
+		}
+		if (level != secondInstance.level)
+		{
+			text += $"Different levels \"{level}\" and \"{secondInstance.level}\"\n";
+		}
+		if (squadName != secondInstance.squadName)
+		{
+			text += string.Format("Different squads \"{0}\" and \"{1}\"\n", (squadName != null) ? squadName : "null", (secondInstance.squadName != null) ? secondInstance.squadName : "null");
+		}
+		if (skill != secondInstance.skill)
+		{
+			text += $"Different medals \"{skill}\" and \"{secondInstance.skill}\"\n";
+		}
+		if (armyPower != secondInstance.armyPower)
+		{
+			text += $"Different army power \"{armyPower}\" and \"{secondInstance.armyPower}\"\n";
+		}
+		if (squadPoints != secondInstance.squadPoints)
+		{
+			text += $"Different squad points \"{squadPoints}\" and \"{secondInstance.squadPoints}\"\n";
+		}
+		if (leagueTier != secondInstance.leagueTier)
+		{
+			text += $"Different league \"{leagueTier}\" and \"{secondInstance.leagueTier}\"\n";
+		}
+		if (visualsDebugLog != secondInstance.visualsDebugLog)
+		{
+			text += $"Different player visuals \"{visualsDebugLog}\" and \"{secondInstance.visualsDebugLog}\"\n";
+		}
+		return text;
+	}
+
+	public string CompareToOtherInstance(DatabasePlayerData secondInstance)
+	{
+		if (id != secondInstance.id)
+		{
+			return null;
+		}
+		string text = $"Comparing player {name} with id {id}:\n";
+		if (name != secondInstance.name)
+		{
+			text += $"Different names \"{name}\" and \"{secondInstance.name}\"\n";
+		}
+		if (level != secondInstance.level)
+		{
+			text += $"Different levels \"{level}\" and \"{secondInstance.level}\"\n";
+		}
+		if (squadName != secondInstance.squadId)
+		{
+			text += string.Format("Different squads \"{0}\" and \"{1}\"\n", (squadName != null) ? squadName : "null", (secondInstance.squadId != null) ? secondInstance.squadId : "null");
+		}
+		if (skill != secondInstance.skill)
+		{
+			text += $"Different medals \"{skill}\" and \"{secondInstance.skill}\"\n";
+		}
+		if (armyPower != secondInstance.armyPower)
+		{
+			text += $"Different army power \"{armyPower}\" and \"{secondInstance.armyPower}\"\n";
+		}
+		if (visualsDebugLog != secondInstance.visualsDebugLog)
+		{
+			text += $"Different player visuals \"{visualsDebugLog}\" and \"{secondInstance.visualsDebugLog}\"\n";
+		}
+		return text;
+	}
+
+	internal Card[] GetDepositedCards()
+	{
+		if (depositedCardsDic == null)
+		{
+			return new Card[0];
+		}
+		List<Card> list = new List<Card>();
+		foreach (KeyValuePair<string, string> item in depositedCardsDic)
+		{
+			CardManager.BuddyCardData buddyCardData = JsonConvert.DeserializeObject<CardManager.BuddyCardData>(item.Value);
+			if (!string.IsNullOrEmpty(buddyCardData.buddyName))
+			{
+				list.Add(CardManager.instance.GetSquadCardInstance(item.Key, buddyCardData));
+				continue;
+			}
+			int num = buddyCardData.amount;
+			if (num == 0)
+			{
+				num = 1;
+			}
+			for (int i = 0; i < num; i++)
+			{
+				list.Add(CardManager.instance.GetSquadCardInstance(item.Key));
+			}
+		}
+		return list.ToArray();
+	}
+
+	internal bool IsDepositedBuddyCard()
+	{
+		if (depositedCardsDic == null)
+		{
+			return false;
+		}
+		foreach (KeyValuePair<string, string> item in depositedCardsDic)
+		{
+			CardManager.BuddyCardData buddyCardData = JsonConvert.DeserializeObject<CardManager.BuddyCardData>(item.Value);
+			if (!string.IsNullOrEmpty(buddyCardData.buddyName))
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public static DatabasePlayer CreateFromDatabase(JToken item, DatabasePlayer result = null)
+	{
+		if (result == null)
+		{
+			result = new DatabasePlayer();
+		}
+		if (item == null)
+		{
+			return result;
+		}
+		if (item["Regions"] != null)
+		{
+			try
+			{
+				result.bestRegions = JsonConvert.DeserializeObject<Dictionary<CloudRegionCode, int>>(StringParser.ParseString("Regions", "S", item, string.Empty));
+			}
+			catch (Exception exception)
+			{
+				Debug.LogError("Bad Player Regions!");
+				Singleton<BeanstalkServerManager>.instance.SendErrorMessage(exception, "Bad player regiones, data= " + StringParser.ParseString("Regions", "S", item, string.Empty), Environment.StackTrace);
+			}
+		}
+		if (item["Id"] != null)
+		{
+			result.id = StringParser.ParseString("Id", "S", item, string.Empty);
+		}
+		if (item["DepositedCards"] != null)
+		{
+			result.depositedCardsDic = new Dictionary<string, string>();
+			foreach (JToken item2 in (IEnumerable<JToken>)item["DepositedCards"]["M"])
+			{
+				JProperty jProperty = (JProperty)item2;
+				if (jProperty.Value["S"] != null)
+				{
+					string value = jProperty.Value["S"].ToObject<string>();
+					if (Regex.IsMatch(jProperty.Name, "^\\d*-\\d*$"))
+					{
+						result.depositedCardsDic.Add(jProperty.Name, value);
+					}
+					continue;
+				}
+				try
+				{
+					int num = StringParser.ParseInt(jProperty.Value["M"]["Amount"]["N"].ToString());
+					if (num > 0)
+					{
+						result.depositedCardsDic.Add(jProperty.Name, JsonConvert.SerializeObject(new CardManager.CardData
+						{
+							amount = num
+						}));
+					}
+				}
+				catch (Exception)
+				{
+					Debug.LogError("ERROR : Couldnt parse deposited card = " + jProperty.Name);
+				}
+			}
+			if (result.id == GameLoginManager.instance.playerId)
+			{
+				GameLoginManager.instance.SetDepositedCards(result.depositedCardsDic);
+			}
+		}
+		if (item["Level"] != null)
+		{
+			result.level = StringParser.ParseInt("Level", "N", item);
+		}
+		if (item["Reputation"] != null)
+		{
+			result.reputation = StringParser.ParseInt("Reputation", "N", item);
+			if (result.id == GameLoginManager.instance.playerId)
+			{
+				GameLoginManager.instance.UpdateReputation(result.reputation);
+			}
+		}
+		if (item["SquadPoints"] != null)
+		{
+			result.squadPoints = StringParser.ParseInt("SquadPoints", "N", item);
+		}
+		string squadWarsId = Singleton<ServerResultsCache>.instance.squadWarsId;
+		if (!string.IsNullOrEmpty(squadWarsId) && item[squadWarsId] != null)
+		{
+			result.squadPoints += StringParser.ParseInt(squadWarsId, "N", item);
+		}
+		if (item["Name"] != null)
+		{
+			result.accountName = StringParser.ParseString("Name", "S", item, string.Empty);
+		}
+		if (item["VisualType"] != null)
+		{
+			result.visualType = StringParser.ParseString("VisualType", "S", item, string.Empty);
+		}
+		if (item["VisualTimestamp"] != null)
+		{
+			result.visualTimestamp = StringParser.ParseInt("VisualTimestamp", "N", item);
+		}
+		if (item["Experience"] != null)
+		{
+			result.experience = StringParser.ParseLong("Experience", "N", item);
+		}
+		if (item["Country"] != null)
+		{
+			result.country = StringParser.ParseString("Country", "S", item, string.Empty);
+		}
+		if (item["SendLogs"] != null)
+		{
+			result.sendLogsValue = StringParser.ParseInt("SendLogs", "N", item);
+		}
+		else
+		{
+			result.sendLogsValue = 0;
+		}
+		if (item["InventoryData"] != null)
+		{
+			try
+			{
+				result.inventoryData = JsonConvert.DeserializeObject<PlayerInventory.InventoryData>(StringParser.ParseString("InventoryData", "S", item, string.Empty));
+			}
+			catch (Exception exception2)
+			{
+				Debug.LogError("Bad Inventory Data!");
+				Singleton<BeanstalkServerManager>.instance.SendErrorMessage(exception2, "Bad inventory data, data= " + StringParser.ParseString("InventoryData", "S", item, string.Empty), Environment.StackTrace);
+			}
+		}
+		if (item["DeviceToken"] != null)
+		{
+			result.deviceToken = StringParser.ParseString("DeviceToken", "S", item, string.Empty);
+		}
+		if (item["LastAction"] != null)
+		{
+			result.lastAction = StringParser.ParseInt("LastAction", "N", item);
+		}
+		if (item["PlayerVisuals"] != null)
+		{
+			try
+			{
+				result.playerVisuals = JsonConvert.DeserializeObject<Dictionary<int, CamosManager.SavedPlayerVisualSlot>>(StringParser.ParseString("PlayerVisuals", "S", item, string.Empty));
+			}
+			catch (Exception exception3)
+			{
+				Debug.LogError("Bad Player Visuals!");
+				Singleton<BeanstalkServerManager>.instance.SendErrorMessage(exception3, "Bad player visuals, data= " + StringParser.ParseString("PlayerVisuals", "S", item, string.Empty), Environment.StackTrace);
+			}
+		}
+		if (item["LevelManagerData"] != null)
+		{
+			try
+			{
+				result.levelManagerData = JsonConvert.DeserializeObject<LevelManager.LevelManagerData>(StringParser.ParseString("LevelManagerData", "S", item, string.Empty));
+			}
+			catch (Exception exception4)
+			{
+				Debug.LogError("Bad Level Manager Data!");
+				Singleton<BeanstalkServerManager>.instance.SendErrorMessage(exception4, "Bad level manager data, data= " + StringParser.ParseString("LevelManagerData", "S", item, string.Empty), Environment.StackTrace);
+			}
+		}
+		if (item["ArmyPower"] != null)
+		{
+			result.armyPower = StringParser.ParseInt("ArmyPower", "N", item);
+		}
+		if (item["Status"] != null)
+		{
+			result.status = (PlayerStatus)StringParser.ParseInt("Status", "N", item);
+		}
+		if (item["StatisticsData"] != null)
+		{
+			try
+			{
+				result.statisticsData = JsonConvert.DeserializeObject<StatsManager.StatisticsData>(StringParser.ParseString("StatisticsData", "S", item, string.Empty));
+			}
+			catch (Exception exception5)
+			{
+				Debug.LogError("Bad Statistics in DatabasePlayer!");
+				Singleton<BeanstalkServerManager>.instance.SendErrorMessage(exception5, "Bad player statistics, data= " + StringParser.ParseString("StatisticsData", "S", item, string.Empty), Environment.StackTrace);
+			}
+		}
+		else
+		{
+			result.statisticsData = new StatsManager.StatisticsData();
+		}
+		if (item["BeginnersLeague"] != null)
+		{
+			result.beginnersLeague = StringParser.ParseInt("BeginnersLeague", "N", item);
+		}
+		if (item["Vip"] != null)
+		{
+			Debug.Log("VIP EXPIRATION RECEIVED");
+			result.vipExpiration = StringParser.ParseInt("Vip", "N", item);
+		}
+		if (item["LeagueId"] != null)
+		{
+			result.leagueId = StringParser.ParseString("LeagueId", "S", item, string.Empty);
+			string[] array = result.leagueId.Split('-');
+			result.leagueTier = (League)StringParser.ParseInt(array[0]);
+			result.leagueDivision = StringParser.ParseString(array[array.Length - 1], string.Empty);
+		}
+		else
+		{
+			string text = ((item["EligibleLeagueId"] == null) ? "1" : StringParser.ParseString("EligibleLeagueId", "N", item, string.Empty));
+			result.leagueId = text + "-placement";
+			result.leagueTier = (League)StringParser.ParseInt(text);
+			result.leagueDivision = "placement";
+		}
+		if (item["AccountType"] != null)
+		{
+			result.accountType = (AccountType)StringParser.ParseInt("AccountType", "N", item);
+		}
+		if (item["Skill"] != null)
+		{
+			result.skill = StringParser.ParseInt("Skill", "N", item);
+		}
+		if (item["PlacementMatchesRequired"] != null)
+		{
+			result.remainingMatches = StringParser.ParseInt("PlacementMatchesRequired", "N", item);
+		}
+		else
+		{
+			result.remainingMatches = (int)(float)Singleton<GameVariables>.instance.constants.GetRow(Constants.rowIds.LeaguePlacementMatches).FLOATVALUE;
+		}
+		if (item["MedalsBalance"] != null)
+		{
+			result.medalsBalance = StringParser.ParseInt("MedalsBalance", "N", item);
+		}
+		if (!string.IsNullOrEmpty(Singleton<ServerResultsCache>.instance.playerLeaguesId) && item[Singleton<ServerResultsCache>.instance.playerLeaguesId] != null)
+		{
+			result.medalsBalance += StringParser.ParseInt(Singleton<ServerResultsCache>.instance.playerLeaguesId, "N", item);
+		}
+		if (item["SquadId"] != null)
+		{
+			result.squadName = StringParser.ParseString("SquadId", "S", item, string.Empty);
+		}
+		if (item["SquadRank"] != null)
+		{
+			result.squadRank = (SquadRank)StringParser.ParseInt("SquadRank", "N", item);
+		}
+		result.facebookId = ((item["FacebookId"] == null) ? (-1) : StringParser.ParseLong("FacebookId", "S", item));
+		if (item["GameCenterId"] != null)
+		{
+			result.gameCenterId = StringParser.ParseString("GameCenterId", "S", item, string.Empty);
+		}
+		if (item["GooglePlayId"] != null)
+		{
+			result.googlePlayId = StringParser.ParseString("GooglePlayId", "S", item, string.Empty);
+		}
+		if (DebugSettings.debugEnabled && GameLoginManager.currentPlayer != null && result.id != null && result.id == GameLoginManager.currentPlayer.id)
+		{
+			Debug.Log(item);
+			Debug.LogFormat("Player Data from server - initial:\n{0}\n{1}\n{2}\n{3}\n{4}", result.debugBasicInformation, result.debugLeagueInformation, result.debugSquadInformation, result.debugDepositedWarcards, result.visualsDebugLog);
+		}
+		return result;
+	}
+
+	internal PlayerStatus GetRealStatus()
+	{
+		if (id == GameLoginManager.currentPlayer.id)
+		{
+			return PlayerStatus.Online;
+		}
+		int currentTimestamp = Singleton<BeanstalkServerManager>.instance.currentTimestamp;
+		return (currentTimestamp - lastAction <= 2700) ? status : PlayerStatus.Offline;
+	}
+
+	public static DatabasePlayer CreateFromDatabasePlayerData(DatabasePlayerData playerData)
+	{
+		DatabasePlayer databasePlayer = new DatabasePlayer();
+		databasePlayer.id = playerData.id;
+		databasePlayer.accountName = playerData.name;
+		databasePlayer.facebookId = playerData.facebookId;
+		databasePlayer.playerVisuals = playerData.decalData.slots;
+		return databasePlayer;
+	}
+
+	public static DatabasePlayer CreateFromDatabasePlayerMissionLeaderboard(DatabasePlayerMissionLeaderboard missionLeaderboard)
+	{
+		DatabasePlayer databasePlayer = new DatabasePlayer();
+		databasePlayer.id = missionLeaderboard.id;
+		databasePlayer.accountName = missionLeaderboard.name;
+		databasePlayer.facebookId = missionLeaderboard.fbId;
+		if (missionLeaderboard.decalData == null)
+		{
+			Debug.LogError("Mission Leaderboard player visuals is NULL for id: " + missionLeaderboard.id);
+		}
+		else
+		{
+			databasePlayer.playerVisuals = missionLeaderboard.decalData.slots;
+		}
+		return databasePlayer;
+	}
+
+	public void AddGameCenter(string gcId, string gcName)
+	{
+		gameCenterId = gcId;
+	}
+
+	public string GetSquadId()
+	{
+		return squadName;
+	}
+
+	public string GetId()
+	{
+		return id;
+	}
+
+	public void SetSquadId(string squadId)
+	{
+		squadName = squadId;
+	}
+
+	public string GetOriginalGooglePlayId()
+	{
+		if (googlePlayId == null)
+		{
+			return null;
+		}
+		return (!googlePlayId.StartsWith("GooglePlay")) ? googlePlayId : googlePlayId.Substring("GooglePlay".Length);
+	}
 }

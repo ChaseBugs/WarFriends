@@ -1,63 +1,209 @@
+using System.Collections.Generic;
 using UnityEngine;
 
-public class LeagueRepresentation : MonoBehaviour
+public class LeagueRepresentation : Core_BaseScript
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Header("Core")]
+	public UISprite background;
 
-	1. No dll files were provided to AssetRipper.
+	[Header("Top Part")]
+	public GameObject topAnchor;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public UITexture leagueIcon;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public GameObject leagueInfo;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public UILabel leagueName;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public UILabel leagueMinMedals;
 
-	3. Assembly Reconstruction has not been implemented.
+	[Header("Bottom Part")]
+	public UISprite border;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public UIGrid bottomGrid;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public GameObject warbucksRewardPart;
 
-	4. This script is unnecessary.
+	public UILabel warbucksRewardLabel;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public GameObject squadPointsRewardPart;
 
-	5. Script Content Level 0
+	public UILabel squadPointsRewardLabel;
 
-		AssetRipper was set to not load any script information.
+	private float mMinHeight = 476f;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public static Dictionary<League, Color> leagueColours = new Dictionary<League, Color>
+	{
+		{
+			League.NoLeague,
+			Colours.whiteTransparent
+		},
+		{
+			League.Bronze3,
+			Colours.bronzeLeague
+		},
+		{
+			League.Bronze2,
+			Colours.bronzeLeague
+		},
+		{
+			League.Bronze1,
+			Colours.bronzeLeague
+		},
+		{
+			League.Silver3,
+			Colours.silverLeague
+		},
+		{
+			League.Silver2,
+			Colours.silverLeague
+		},
+		{
+			League.Silver1,
+			Colours.silverLeague
+		},
+		{
+			League.Gold3,
+			Colours.goldLeague
+		},
+		{
+			League.Gold2,
+			Colours.goldLeague
+		},
+		{
+			League.Gold1,
+			Colours.goldLeague
+		},
+		{
+			League.Elite3,
+			Colours.eliteLeague
+		},
+		{
+			League.Elite2,
+			Colours.eliteLeague
+		},
+		{
+			League.Elite1,
+			Colours.eliteLeague
+		},
+		{
+			League.Master3,
+			Colours.masterLeague
+		},
+		{
+			League.Master2,
+			Colours.masterLeague
+		},
+		{
+			League.Master1,
+			Colours.masterLeague
+		},
+		{
+			League.Champion,
+			Colours.championLeague
+		}
+	};
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public static Dictionary<League, Tuple<Vector3, Vector3, float>> leaguePositions = new Dictionary<League, Tuple<Vector3, Vector3, float>>
+	{
+		{
+			League.NoLeague,
+			new Tuple<Vector3, Vector3, float>(new Vector3(340f, 340f, 1f), new Vector3(0f, -170f, 0f), 0f)
+		},
+		{
+			League.Bronze3,
+			new Tuple<Vector3, Vector3, float>(new Vector3(340f, 340f, 1f), new Vector3(0f, -170f, 0f), 0f)
+		},
+		{
+			League.Bronze2,
+			new Tuple<Vector3, Vector3, float>(new Vector3(340f, 340f, 1f), new Vector3(0f, -170f, 0f), 0f)
+		},
+		{
+			League.Bronze1,
+			new Tuple<Vector3, Vector3, float>(new Vector3(340f, 340f, 1f), new Vector3(0f, -170f, 0f), 0f)
+		},
+		{
+			League.Silver3,
+			new Tuple<Vector3, Vector3, float>(new Vector3(340f, 340f, 1f), new Vector3(0f, -170f, 0f), 10f)
+		},
+		{
+			League.Silver2,
+			new Tuple<Vector3, Vector3, float>(new Vector3(340f, 340f, 1f), new Vector3(0f, -170f, 0f), 10f)
+		},
+		{
+			League.Silver1,
+			new Tuple<Vector3, Vector3, float>(new Vector3(340f, 340f, 1f), new Vector3(0f, -170f, 0f), 10f)
+		},
+		{
+			League.Gold3,
+			new Tuple<Vector3, Vector3, float>(new Vector3(340f, 340f, 1f), new Vector3(0f, -170f, 0f), 27f)
+		},
+		{
+			League.Gold2,
+			new Tuple<Vector3, Vector3, float>(new Vector3(340f, 340f, 1f), new Vector3(0f, -170f, 0f), 27f)
+		},
+		{
+			League.Gold1,
+			new Tuple<Vector3, Vector3, float>(new Vector3(340f, 340f, 1f), new Vector3(0f, -170f, 0f), 27f)
+		},
+		{
+			League.Elite3,
+			new Tuple<Vector3, Vector3, float>(new Vector3(320f, 320f, 1f), new Vector3(0f, -174f, 0f), 29f)
+		},
+		{
+			League.Elite2,
+			new Tuple<Vector3, Vector3, float>(new Vector3(320f, 320f, 1f), new Vector3(0f, -174f, 0f), 29f)
+		},
+		{
+			League.Elite1,
+			new Tuple<Vector3, Vector3, float>(new Vector3(320f, 320f, 1f), new Vector3(0f, -174f, 0f), 29f)
+		},
+		{
+			League.Master3,
+			new Tuple<Vector3, Vector3, float>(new Vector3(316f, 316f, 1f), new Vector3(0f, -178f, 0f), 35f)
+		},
+		{
+			League.Master2,
+			new Tuple<Vector3, Vector3, float>(new Vector3(316f, 316f, 1f), new Vector3(0f, -178f, 0f), 35f)
+		},
+		{
+			League.Master1,
+			new Tuple<Vector3, Vector3, float>(new Vector3(316f, 316f, 1f), new Vector3(0f, -178f, 0f), 35f)
+		},
+		{
+			League.Champion,
+			new Tuple<Vector3, Vector3, float>(new Vector3(361f, 361f, 1f), new Vector3(0f, -178f, 0f), 41f)
+		}
+	};
 
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public void Initialization(League league, float maxHeight)
+	{
+		if (maxHeight < mMinHeight)
+		{
+			maxHeight = mMinHeight;
+		}
+		float num = mMinHeight + (maxHeight - mMinHeight) * Singleton<GameVariables>.instance.LeagueProgress(league);
+		background.transform.localScale = new Vector3(background.transform.localScale.x, num, 1f);
+		topAnchor.transform.localPosition = new Vector3(topAnchor.transform.localScale.x, num - leaguePositions[league].Value3, topAnchor.transform.localScale.z);
+		background.color = leagueColours[league];
+		leagueInfo.transform.localPosition = leaguePositions[league].Value2;
+		leagueIcon.mainTexture = Resources.Load<Texture>("Medals/" + GameVariables.leagueNames[league].Value2);
+		leagueIcon.transform.localScale = leaguePositions[league].Value1;
+		leagueName.text = GameVariables.leagueNames[league].Value1;
+		leagueMinMedals.text = string.Empty;
+		int num2 = Singleton<GameVariables>.instance.MedalsWarbucksBonusLeague(league);
+		int num3 = Singleton<GameVariables>.instance.MedalsSquadPointsBonusLeague(league);
+		int num4 = MiscTools.Sign(num2) + MiscTools.Sign(num3);
+		float num5 = (float)num4 * 60f;
+		float y = num5 + 48f;
+		float y2 = num5 + 78f;
+		border.transform.localScale = new Vector3(border.transform.localScale.x, y2, 1f);
+		border.color = ((league != League.Champion) ? Colours.whiteGray : Colours.goldChampion);
+		bottomGrid.transform.localPosition = new Vector3(bottomGrid.transform.localPosition.x, y, bottomGrid.transform.localPosition.z);
+		bottomGrid.repositionNow = true;
+		warbucksRewardPart.SetActive(num2 > 0);
+		warbucksRewardLabel.text = $"+{MiscTools.FormatBigNumber(num2)}";
+		squadPointsRewardPart.SetActive(num3 > 0);
+		squadPointsRewardLabel.text = $"+{MiscTools.FormatBigNumber(num3)}";
+	}
 }

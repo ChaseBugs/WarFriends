@@ -39,6 +39,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9e5aca99ec63f2d49c41df3267fc5e49, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  dictionaryTranslationId: ID_BONUS-WARBUCKS
+  bonusName: WARBUCKS
+  iconName: game-scorestreak-ico-warbucks
+  bgSuffix: -warbucks
 --- !u!1001 &100100000
 Prefab:
   serializedVersion: 2

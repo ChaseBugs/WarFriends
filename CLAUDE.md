@@ -7,8 +7,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 This is **not** a from-source game project. It is a **reverse-engineering / asset-recovery
 workspace** for the mobile game *WarFriends* (`com.chillingo.warfriends.android.gplay`,
 originally Chillingo/EA). The goal is to reconstruct an openable, buildable Unity project
-from shipped APK/XAPK/OBB binaries. Recovered C# is decompiled output, so most method
-bodies are stubs or approximations — treat gameplay code as lossy, not authoritative.
+from shipped APK/XAPK/OBB binaries. Recovered C# is decompiled output: IL2CPP output is
+often stubbed, while Mono assemblies can retain readable method bodies. Treat both as
+version-specific recovery evidence rather than original source.
 
 Recovery procedure (unpack XAPK→APK+OBB, merge `assets/bin/Data`, recombine `.split*`
 files, detect Mono vs IL2CPP, run AssetRipper) is documented in `how_to.md` (Korean).
@@ -18,11 +19,18 @@ files, detect Mono vs IL2CPP, run AssetRipper) is documented in `how_to.md` (Kor
 | Path | Unity version | Role |
 |------|--------------|------|
 | `Client/ExportedProject` | **2018.4.23f1** | **The active/primary project** — a *hybrid*: 4.9.5 game resources + patched 1.6.0 Mono runtime. |
+| `Clients/ExportedProject` | **5.2.5f1** | Read-only WarFriends 1.4.0 Mono/AssetRipper extraction; not yet buildable. |
 | (source binaries) | — | `*.apk` / `*.xapk` / OBB in repo root are the recovery inputs. |
 
 The duplicate raw 1.6.0 Unity export was removed after its required C# runtime was integrated into
 `Client/ExportedProject/Assets/Scripts/Gameplay*`. Those active folders are now also the Server's
 protocol and behavioral-contract source.
+
+The 1.4.0 extraction is separate from that hybrid. It contains 3,465 recovered C#
+files and complete GUID-to-script metadata coverage, but AssetRipper logged a duplicate
+`P31RestKit` collision, 32 components are unbound, and the original managed DLL archive
+is not present. Do not use its current Unity 2018 project metadata or compiler errors as
+1.4.0 behavioral authority. See `Clients/README.md`.
 
 > **Unity version note:** the hybrid was originally assembled in **2020.3.49f1**, but the
 > working target is **2018.4.23f1** (the version installed across the dev fleet). It was

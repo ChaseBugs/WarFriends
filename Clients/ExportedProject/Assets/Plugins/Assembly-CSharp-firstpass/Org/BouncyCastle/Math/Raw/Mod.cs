@@ -1,66 +1,163 @@
-using UnityEngine;
+using System;
+using Org.BouncyCastle.Crypto.Utilities;
 
 namespace Org.BouncyCastle.Math.Raw
 {
-	public class Mod : MonoBehaviour
+internal abstract class Mod
+{
+	public static void Invert(uint[] p, uint[] x, uint[] z)
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
+		int num = p.Length;
+		if (Nat.IsZero(num, x))
+		{
+			throw new ArgumentException("cannot be 0", "x");
+		}
+		if (Nat.IsOne(num, x))
+		{
+			Array.Copy(x, 0, z, 0, num);
+			return;
+		}
+		uint[] array = Nat.Copy(num, x);
+		uint[] array2 = Nat.Create(num);
+		array2[0] = 1u;
+		int xc = 0;
+		if ((array[0] & 1) == 0)
+		{
+			InversionStep(p, array, num, array2, ref xc);
+		}
+		if (Nat.IsOne(num, array))
+		{
+			InversionResult(p, xc, array2, z);
+			return;
+		}
+		uint[] array3 = Nat.Copy(num, p);
+		uint[] array4 = Nat.Create(num);
+		int xc2 = 0;
+		int num2 = num;
+		while (true)
+		{
+			if (array[num2 - 1] == 0 && array3[num2 - 1] == 0)
+			{
+				num2--;
+			}
+			else if (Nat.Gte(num, array, array3))
+			{
+				Nat.SubFrom(num, array3, array);
+				xc += Nat.SubFrom(num, array4, array2) - xc2;
+				InversionStep(p, array, num2, array2, ref xc);
+				if (Nat.IsOne(num, array))
+				{
+					InversionResult(p, xc, array2, z);
+					return;
+				}
+			}
+			else
+			{
+				Nat.SubFrom(num, array, array3);
+				xc2 += Nat.SubFrom(num, array2, array4) - xc;
+				InversionStep(p, array3, num2, array4, ref xc2);
+				if (Nat.IsOne(num, array3))
+				{
+					break;
+				}
+			}
+		}
+		InversionResult(p, xc2, array4, z);
 	}
+
+	public static uint[] Random(uint[] p)
+	{
+		int num = p.Length;
+		Random random = new Random();
+		uint[] array = Nat.Create(num);
+		uint num2 = p[num - 1];
+		num2 |= num2 >> 1;
+		num2 |= num2 >> 2;
+		num2 |= num2 >> 4;
+		num2 |= num2 >> 8;
+		num2 |= num2 >> 16;
+		do
+		{
+			byte[] array2 = new byte[num << 2];
+			random.NextBytes(array2);
+			Pack.BE_To_UInt32(array2, 0, array);
+			array[num - 1] &= num2;
+		}
+		while (Nat.Gte(num, array, p));
+		return array;
+	}
+
+	public static void Add(uint[] p, uint[] x, uint[] y, uint[] z)
+	{
+		int len = p.Length;
+		if (Nat.Add(len, x, y, z) != 0)
+		{
+			Nat.SubFrom(len, p, z);
+		}
+	}
+
+	public static void Subtract(uint[] p, uint[] x, uint[] y, uint[] z)
+	{
+		int len = p.Length;
+		if (Nat.Sub(len, x, y, z) != 0)
+		{
+			Nat.AddTo(len, p, z);
+		}
+	}
+
+	private static void InversionResult(uint[] p, int ac, uint[] a, uint[] z)
+	{
+		if (ac < 0)
+		{
+			Nat.Add(p.Length, a, p, z);
+		}
+		else
+		{
+			Array.Copy(a, 0, z, 0, p.Length);
+		}
+	}
+
+	private static void InversionStep(uint[] p, uint[] u, int uLen, uint[] x, ref int xc)
+	{
+		int len = p.Length;
+		int num = 0;
+		while (u[0] == 0)
+		{
+			Nat.ShiftDownWord(uLen, u, 0u);
+			num += 32;
+		}
+		int trailingZeroes = GetTrailingZeroes(u[0]);
+		if (trailingZeroes > 0)
+		{
+			Nat.ShiftDownBits(uLen, u, trailingZeroes, 0u);
+			num += trailingZeroes;
+		}
+		for (int i = 0; i < num; i++)
+		{
+			if ((x[0] & 1) != 0)
+			{
+				if (xc < 0)
+				{
+					xc += (int)Nat.AddTo(len, p, x);
+				}
+				else
+				{
+					xc += Nat.SubFrom(len, p, x);
+				}
+			}
+			Nat.ShiftDownBit(len, x, (uint)xc);
+		}
+	}
+
+	private static int GetTrailingZeroes(uint x)
+	{
+		int num = 0;
+		while ((x & 1) == 0)
+		{
+			x >>= 1;
+			num++;
+		}
+		return num;
+	}
+}
 }

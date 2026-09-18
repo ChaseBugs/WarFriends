@@ -127,6 +127,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c9725f48deee8df49b08200a80aae571, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  isActivated: 0
+  bgSpriteBottom: {fileID: 11455190}
+  bgSpriteTop: {fileID: 11424449}
+  move: {fileID: 443158}
+  textBottom: {fileID: 10259786}
+  textTop: {fileID: 10296012}
 --- !u!4 &443158
 Transform:
   m_ObjectHideFlags: 0
@@ -213,6 +219,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f700cdbb1ef330b26b332599df454d05, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mTextMesh: {fileID: 10296012}
 --- !u!4 &403859
 Transform:
   m_ObjectHideFlags: 0
@@ -269,6 +276,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 94ab48e3b8066840cd07a3613abbe986, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  collection: {fileID: 11409266, guid: d17e4726e9fbd6249bf8946ea14b8ac9, type: 2}
+  _color: {r: 0.03137255, g: 0.65882355, b: 0.9490197, a: 1}
+  _scale: {x: 2.7607923, y: 0.6679205, z: 1}
+  _spriteId: 20
+  boxCollider: {fileID: 0}
+  meshCollider: {fileID: 0}
+  meshColliderPositions: []
+  meshColliderMesh: {fileID: 0}
+  renderLayer: 0
 --- !u!4 &491323
 Transform:
   m_ObjectHideFlags: 0
@@ -339,6 +355,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f700cdbb1ef330b26b332599df454d05, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mTextMesh: {fileID: 10259786}
 --- !u!4 &472700
 Transform:
   m_ObjectHideFlags: 0
@@ -395,6 +412,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 94ab48e3b8066840cd07a3613abbe986, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  collection: {fileID: 11409266, guid: d17e4726e9fbd6249bf8946ea14b8ac9, type: 2}
+  _color: {r: 1, g: 1, b: 1, a: 1}
+  _scale: {x: 4.303767, y: 0.71648467, z: 1}
+  _spriteId: 20
+  boxCollider: {fileID: 0}
+  meshCollider: {fileID: 0}
+  meshColliderPositions: []
+  meshColliderMesh: {fileID: 0}
+  renderLayer: 0
 --- !u!1001 &100100000
 Prefab:
   serializedVersion: 2

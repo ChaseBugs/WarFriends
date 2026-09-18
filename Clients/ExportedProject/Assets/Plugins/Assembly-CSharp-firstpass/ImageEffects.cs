@@ -1,63 +1,121 @@
+using System;
 using UnityEngine;
 
-public class ImageEffects : MonoBehaviour
+[AddComponentMenu("")]
+public class ImageEffects
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	private static Material[] m_BlitMaterials = new Material[6];
 
-	1. No dll files were provided to AssetRipper.
+	public static Material GetBlitMaterial(BlendMode mode)
+	{
+		if (m_BlitMaterials[(int)mode] != null)
+		{
+			return m_BlitMaterials[(int)mode];
+		}
+		m_BlitMaterials[0] = new Material(Shader.Find("BlitCopy"));
+		m_BlitMaterials[1] = new Material(Shader.Find("BlitMultiply"));
+		m_BlitMaterials[2] = new Material(Shader.Find("BlitMultiplyDouble"));
+		m_BlitMaterials[3] = new Material(Shader.Find("BlitAdd"));
+		m_BlitMaterials[4] = new Material(Shader.Find("BlitAddSmooth"));
+		m_BlitMaterials[5] = new Material(Shader.Find("BlitBlend"));
+		for (int i = 0; i < m_BlitMaterials.Length; i++)
+		{
+			m_BlitMaterials[i].hideFlags = HideFlags.HideAndDontSave;
+			m_BlitMaterials[i].shader.hideFlags = HideFlags.HideAndDontSave;
+		}
+		return m_BlitMaterials[(int)mode];
+	}
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public static void Blit(RenderTexture source, RenderTexture dest, BlendMode blendMode)
+	{
+		Blit(source, new Rect(0f, 0f, 1f, 1f), dest, new Rect(0f, 0f, 1f, 1f), blendMode);
+	}
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public static void Blit(RenderTexture source, RenderTexture dest)
+	{
+		Blit(source, dest, BlendMode.Copy);
+	}
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public static void Blit(RenderTexture source, Rect sourceRect, RenderTexture dest, Rect destRect, BlendMode blendMode)
+	{
+		RenderTexture.active = dest;
+		source.SetGlobalShaderProperty("__RenderTex");
+		bool invertY = source.texelSize.y < 0f;
+		GL.PushMatrix();
+		GL.LoadOrtho();
+		Material blitMaterial = GetBlitMaterial(blendMode);
+		for (int i = 0; i < blitMaterial.passCount; i++)
+		{
+			blitMaterial.SetPass(i);
+			DrawQuad(invertY);
+		}
+		GL.PopMatrix();
+	}
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public static void BlitWithMaterial(Material material, RenderTexture source, RenderTexture destination)
+	{
+		Graphics.Blit(source, destination, material);
+	}
 
-	3. Assembly Reconstruction has not been implemented.
+	public static void RenderDistortion(Material material, RenderTexture source, RenderTexture destination, float angle, Vector2 center, Vector2 radius)
+	{
+		if (source.texelSize.y < 0f)
+		{
+			center.y = 1f - center.y;
+			angle = 0f - angle;
+		}
+		Matrix4x4 matrix = Matrix4x4.TRS(Vector3.zero, Quaternion.Euler(0f, 0f, angle), Vector3.one);
+		material.SetMatrix("_RotationMatrix", matrix);
+		material.SetVector("_CenterRadius", new Vector4(center.x, center.y, radius.x, radius.y));
+		material.SetFloat("_Angle", angle * ((float)Math.PI / 180f));
+		Graphics.Blit(source, destination, material);
+	}
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public static void DrawQuad(bool invertY)
+	{
+		GL.Begin(7);
+		float y;
+		float y2;
+		if (invertY)
+		{
+			y = 1f;
+			y2 = 0f;
+		}
+		else
+		{
+			y = 0f;
+			y2 = 1f;
+		}
+		GL.TexCoord2(0f, y);
+		GL.Vertex3(0f, 0f, 0.1f);
+		GL.TexCoord2(1f, y);
+		GL.Vertex3(1f, 0f, 0.1f);
+		GL.TexCoord2(1f, y2);
+		GL.Vertex3(1f, 1f, 0.1f);
+		GL.TexCoord2(0f, y2);
+		GL.Vertex3(0f, 1f, 0.1f);
+		GL.End();
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
-
-	4. This script is unnecessary.
-
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
-
-	5. Script Content Level 0
-
-		AssetRipper was set to not load any script information.
-
-	6. Cpp2IL failed to decompile Il2Cpp data
-
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public static void DrawGrid(int xSize, int ySize)
+	{
+		GL.Begin(7);
+		float num = 1f / (float)xSize;
+		float num2 = 1f / (float)ySize;
+		for (int i = 0; i < xSize; i++)
+		{
+			for (int j = 0; j < ySize; j++)
+			{
+				GL.TexCoord2((float)j * num, (float)i * num2);
+				GL.Vertex3((float)j * num, (float)i * num2, 0.1f);
+				GL.TexCoord2((float)(j + 1) * num, (float)i * num2);
+				GL.Vertex3((float)(j + 1) * num, (float)i * num2, 0.1f);
+				GL.TexCoord2((float)(j + 1) * num, (float)(i + 1) * num2);
+				GL.Vertex3((float)(j + 1) * num, (float)(i + 1) * num2, 0.1f);
+				GL.TexCoord2((float)j * num, (float)(i + 1) * num2);
+				GL.Vertex3((float)j * num, (float)(i + 1) * num2, 0.1f);
+			}
+		}
+		GL.End();
+	}
 }

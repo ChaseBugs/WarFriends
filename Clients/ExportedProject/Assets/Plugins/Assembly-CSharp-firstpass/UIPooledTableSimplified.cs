@@ -1,63 +1,129 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class UIPooledTableSimplified : MonoBehaviour
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public delegate float PooledSize(int index, Transform trans);
 
-	1. No dll files were provided to AssetRipper.
+	public int padding;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public float defaultSize = 116f;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public Transform topHelperSprite;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public Transform downHelperSprite;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public int containItems;
 
-	3. Assembly Reconstruction has not been implemented.
+	private List<Transform> items = new List<Transform>();
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	private List<float> sizes = new List<float>();
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	private UIDraggablePanel mDragPanel;
 
-	4. This script is unnecessary.
+	private UIPooledGrid.PooledTransform getTransform;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private Action<Transform> makeFree;
 
-	5. Script Content Level 0
+	private PooledSize getSize;
 
-		AssetRipper was set to not load any script information.
+	public void Init(int count, UIPooledGrid.PooledTransform getter, Action<Transform> free, PooledSize sizeGetter, UIDraggablePanel dragPanel)
+	{
+		getTransform = getter;
+		makeFree = free;
+		getSize = sizeGetter;
+		mDragPanel = dragPanel;
+		mDragPanel.onMovePerformed = PositionChanged;
+		containItems = count;
+		for (int i = items.Count; i < containItems; i++)
+		{
+			items.Add(null);
+			sizes.Add(0f);
+		}
+		if (base.gameObject.activeInHierarchy)
+		{
+			PositionChanged();
+		}
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public void MakeEmpty()
+	{
+		for (int i = 0; i < containItems && i < items.Count; i++)
+		{
+			if (items[i] != null)
+			{
+				if (makeFree != null)
+				{
+					makeFree(items[i]);
+				}
+				items[i] = null;
+			}
+			sizes[i] = 0f;
+		}
+		if (mDragPanel != null)
+		{
+			UIDraggablePanel uIDraggablePanel = mDragPanel;
+			uIDraggablePanel.onMovePerformed = (Action)Delegate.Remove(uIDraggablePanel.onMovePerformed, new Action(PositionChanged));
+		}
+		getTransform = null;
+		makeFree = null;
+		items.Clear();
+		sizes.Clear();
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	private void PositionChanged()
+	{
+		if (makeFree == null || getTransform == null || getSize == null)
+		{
+			Debug.LogError("some delegates for pooling missing for: " + base.name);
+			return;
+		}
+		Vector4 clipRange = mDragPanel.panel.clipRange;
+		float num = clipRange.y - clipRange.w / 2f - base.transform.localPosition.y;
+		float num2 = num + clipRange.w;
+		topHelperSprite.localPosition = topHelperSprite.localPosition.ReplaceY((0f - topHelperSprite.localScale.y) * 0.5f);
+		Vector3 zero = Vector3.zero;
+		for (int i = 0; i < containItems && i < items.Count; i++)
+		{
+			if (sizes[i] == 0f)
+			{
+				sizes[i] = getSize(i, items[i]);
+			}
+			if ((!(zero.y - sizes[i] - (float)padding <= num2 + 15f) || !(zero.y >= num - 15f)) && items[i] != null)
+			{
+				makeFree(items[i]);
+				items[i] = null;
+			}
+			zero.y -= sizes[i] + (float)padding;
+		}
+		zero = Vector3.zero;
+		for (int j = 0; j < containItems && j < items.Count; j++)
+		{
+			if (zero.y - sizes[j] - (float)padding <= num2 + 15f && zero.y >= num - 15f && items[j] == null)
+			{
+				items[j] = getTransform(j);
+				items[j].localPosition = zero;
+			}
+			zero.y -= sizes[j] + (float)padding;
+		}
+		downHelperSprite.localPosition = downHelperSprite.localPosition.ReplaceY(zero.y + downHelperSprite.localScale.y * 0.5f);
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	private void OnEnable()
+	{
+		if (makeFree != null && getTransform != null && getSize != null && mDragPanel != null)
+		{
+			PositionChanged();
+		}
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public Transform GetItemOnIndex(int index)
+	{
+		if (index < 0 || index >= containItems || index >= items.Count)
+		{
+			return null;
+		}
+		return items[index];
+	}
 }

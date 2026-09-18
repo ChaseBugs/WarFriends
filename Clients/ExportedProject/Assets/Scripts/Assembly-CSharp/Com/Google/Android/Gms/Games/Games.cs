@@ -1,66 +1,86 @@
-using UnityEngine;
+using System;
+using Com.Google.Android.Gms.Common.Api;
+using Com.Google.Android.Gms.Games.Stats;
+using Google.Developers;
 
 namespace Com.Google.Android.Gms.Games
 {
-	public class Games : MonoBehaviour
+public class Games : JavaObjWrapper
+{
+	private const string CLASS_NAME = "com/google/android/gms/games/Games";
+
+	public static string EXTRA_PLAYER_IDS => JavaObjWrapper.GetStaticStringField("com/google/android/gms/games/Games", "EXTRA_PLAYER_IDS");
+
+	public static string EXTRA_STATUS => JavaObjWrapper.GetStaticStringField("com/google/android/gms/games/Games", "EXTRA_STATUS");
+
+	public static object SCOPE_GAMES => JavaObjWrapper.GetStaticObjectField<object>("com/google/android/gms/games/Games", "SCOPE_GAMES", "Lcom/google/android/gms/common/api/Scope;");
+
+	public static object API => JavaObjWrapper.GetStaticObjectField<object>("com/google/android/gms/games/Games", "API", "Lcom/google/android/gms/common/api/Api;");
+
+	public static object GamesMetadata => JavaObjWrapper.GetStaticObjectField<object>("com/google/android/gms/games/Games", "GamesMetadata", "Lcom/google/android/gms/games/GamesMetadata;");
+
+	public static object Achievements => JavaObjWrapper.GetStaticObjectField<object>("com/google/android/gms/games/Games", "Achievements", "Lcom/google/android/gms/games/achievement/Achievements;");
+
+	public static object Events => JavaObjWrapper.GetStaticObjectField<object>("com/google/android/gms/games/Games", "Events", "Lcom/google/android/gms/games/event/Events;");
+
+	public static object Leaderboards => JavaObjWrapper.GetStaticObjectField<object>("com/google/android/gms/games/Games", "Leaderboards", "Lcom/google/android/gms/games/leaderboard/Leaderboards;");
+
+	public static object Invitations => JavaObjWrapper.GetStaticObjectField<object>("com/google/android/gms/games/Games", "Invitations", "Lcom/google/android/gms/games/multiplayer/Invitations;");
+
+	public static object TurnBasedMultiplayer => JavaObjWrapper.GetStaticObjectField<object>("com/google/android/gms/games/Games", "TurnBasedMultiplayer", "Lcom/google/android/gms/games/multiplayer/turnbased/TurnBasedMultiplayer;");
+
+	public static object RealTimeMultiplayer => JavaObjWrapper.GetStaticObjectField<object>("com/google/android/gms/games/Games", "RealTimeMultiplayer", "Lcom/google/android/gms/games/multiplayer/realtime/RealTimeMultiplayer;");
+
+	public static object Players => JavaObjWrapper.GetStaticObjectField<object>("com/google/android/gms/games/Games", "Players", "Lcom/google/android/gms/games/Players;");
+
+	public static object Notifications => JavaObjWrapper.GetStaticObjectField<object>("com/google/android/gms/games/Games", "Notifications", "Lcom/google/android/gms/games/Notifications;");
+
+	public static object Quests => JavaObjWrapper.GetStaticObjectField<object>("com/google/android/gms/games/Games", "Quests", "Lcom/google/android/gms/games/quest/Quests;");
+
+	public static object Requests => JavaObjWrapper.GetStaticObjectField<object>("com/google/android/gms/games/Games", "Requests", "Lcom/google/android/gms/games/request/Requests;");
+
+	public static object Snapshots => JavaObjWrapper.GetStaticObjectField<object>("com/google/android/gms/games/Games", "Snapshots", "Lcom/google/android/gms/games/snapshot/Snapshots;");
+
+	public static StatsObject Stats => JavaObjWrapper.GetStaticObjectField<StatsObject>("com/google/android/gms/games/Games", "Stats", "Lcom/google/android/gms/games/stats/Stats;");
+
+	public Games(IntPtr ptr)
+		: base(ptr)
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
 	}
+
+	public static string getAppId(GoogleApiClient arg_GoogleApiClient_1)
+	{
+		return JavaObjWrapper.StaticInvokeCall<string>("com/google/android/gms/games/Games", "getAppId", "(Lcom/google/android/gms/common/api/GoogleApiClient;)Ljava/lang/String;", new object[1] { arg_GoogleApiClient_1 });
+	}
+
+	public static string getCurrentAccountName(GoogleApiClient arg_GoogleApiClient_1)
+	{
+		return JavaObjWrapper.StaticInvokeCall<string>("com/google/android/gms/games/Games", "getCurrentAccountName", "(Lcom/google/android/gms/common/api/GoogleApiClient;)Ljava/lang/String;", new object[1] { arg_GoogleApiClient_1 });
+	}
+
+	public static int getSdkVariant(GoogleApiClient arg_GoogleApiClient_1)
+	{
+		return JavaObjWrapper.StaticInvokeCall<int>("com/google/android/gms/games/Games", "getSdkVariant", "(Lcom/google/android/gms/common/api/GoogleApiClient;)I", new object[1] { arg_GoogleApiClient_1 });
+	}
+
+	public static object getSettingsIntent(GoogleApiClient arg_GoogleApiClient_1)
+	{
+		return JavaObjWrapper.StaticInvokeCall<object>("com/google/android/gms/games/Games", "getSettingsIntent", "(Lcom/google/android/gms/common/api/GoogleApiClient;)Landroid/content/Intent;", new object[1] { arg_GoogleApiClient_1 });
+	}
+
+	public static void setGravityForPopups(GoogleApiClient arg_GoogleApiClient_1, int arg_int_2)
+	{
+		JavaObjWrapper.StaticInvokeCallVoid("com/google/android/gms/games/Games", "setGravityForPopups", "(Lcom/google/android/gms/common/api/GoogleApiClient;I)V", arg_GoogleApiClient_1, arg_int_2);
+	}
+
+	public static void setViewForPopups(GoogleApiClient arg_GoogleApiClient_1, object arg_object_2)
+	{
+		JavaObjWrapper.StaticInvokeCallVoid("com/google/android/gms/games/Games", "setViewForPopups", "(Lcom/google/android/gms/common/api/GoogleApiClient;Landroid/view/View;)V", arg_GoogleApiClient_1, arg_object_2);
+	}
+
+	public static PendingResult<Status> signOut(GoogleApiClient arg_GoogleApiClient_1)
+	{
+		return JavaObjWrapper.StaticInvokeCall<PendingResult<Status>>("com/google/android/gms/games/Games", "signOut", "(Lcom/google/android/gms/common/api/GoogleApiClient;)Lcom/google/android/gms/common/api/PendingResult;", new object[1] { arg_GoogleApiClient_1 });
+	}
+}
 }

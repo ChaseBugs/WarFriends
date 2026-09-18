@@ -1,63 +1,123 @@
 using UnityEngine;
 
-public class PhotonTransformView : MonoBehaviour
+[AddComponentMenu("Photon Networking/Photon Transform View")]
+[RequireComponent(typeof(PhotonView))]
+public class PhotonTransformView : MonoBehaviour, IPunObservable
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[SerializeField]
+	private PhotonTransformViewPositionModel m_PositionModel = new PhotonTransformViewPositionModel();
 
-	1. No dll files were provided to AssetRipper.
+	[SerializeField]
+	private PhotonTransformViewRotationModel m_RotationModel = new PhotonTransformViewRotationModel();
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	[SerializeField]
+	private PhotonTransformViewScaleModel m_ScaleModel = new PhotonTransformViewScaleModel();
 
-	2. Incorrect dll files were provided to AssetRipper.
+	private PhotonTransformViewPositionControl m_PositionControl;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	private PhotonTransformViewRotationControl m_RotationControl;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	private PhotonTransformViewScaleControl m_ScaleControl;
 
-	3. Assembly Reconstruction has not been implemented.
+	private PhotonView m_PhotonView;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	private bool m_ReceivedNetworkUpdate;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	private bool m_firstTake;
 
-	4. This script is unnecessary.
+	private void Awake()
+	{
+		m_PhotonView = GetComponent<PhotonView>();
+		m_PositionControl = new PhotonTransformViewPositionControl(m_PositionModel);
+		m_RotationControl = new PhotonTransformViewRotationControl(m_RotationModel);
+		m_ScaleControl = new PhotonTransformViewScaleControl(m_ScaleModel);
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private void OnEnable()
+	{
+		m_firstTake = true;
+	}
 
-	5. Script Content Level 0
+	private void Update()
+	{
+		if (!(m_PhotonView == null) && !m_PhotonView.isMine && PhotonNetwork.connected)
+		{
+			UpdatePosition();
+			UpdateRotation();
+			UpdateScale();
+		}
+	}
 
-		AssetRipper was set to not load any script information.
+	private void UpdatePosition()
+	{
+		if (m_PositionModel.SynchronizeEnabled && m_ReceivedNetworkUpdate)
+		{
+			base.transform.localPosition = m_PositionControl.UpdatePosition(base.transform.localPosition);
+		}
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	private void UpdateRotation()
+	{
+		if (m_RotationModel.SynchronizeEnabled && m_ReceivedNetworkUpdate)
+		{
+			base.transform.localRotation = m_RotationControl.GetRotation(base.transform.localRotation);
+		}
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	private void UpdateScale()
+	{
+		if (m_ScaleModel.SynchronizeEnabled && m_ReceivedNetworkUpdate)
+		{
+			base.transform.localScale = m_ScaleControl.GetScale(base.transform.localScale);
+		}
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	public void SetSynchronizedValues(Vector3 speed, float turnSpeed)
+	{
+		m_PositionControl.SetSynchronizedValues(speed, turnSpeed);
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
+	{
+		m_PositionControl.OnPhotonSerializeView(base.transform.localPosition, stream, info);
+		m_RotationControl.OnPhotonSerializeView(base.transform.localRotation, stream, info);
+		m_ScaleControl.OnPhotonSerializeView(base.transform.localScale, stream, info);
+		if (!m_PhotonView.isMine && m_PositionModel.DrawErrorGizmo)
+		{
+			DoDrawEstimatedPositionError();
+		}
+		if (!stream.isReading)
+		{
+			return;
+		}
+		m_ReceivedNetworkUpdate = true;
+		if (m_firstTake)
+		{
+			m_firstTake = false;
+			if (m_PositionModel.SynchronizeEnabled)
+			{
+				base.transform.localPosition = m_PositionControl.GetNetworkPosition();
+			}
+			if (m_RotationModel.SynchronizeEnabled)
+			{
+				base.transform.localRotation = m_RotationControl.GetNetworkRotation();
+			}
+			if (m_ScaleModel.SynchronizeEnabled)
+			{
+				base.transform.localScale = m_ScaleControl.GetNetworkScale();
+			}
+		}
+	}
 
-	*/
+	private void DoDrawEstimatedPositionError()
+	{
+		Vector3 vector = m_PositionControl.GetNetworkPosition();
+		if (base.transform.parent != null)
+		{
+			vector = base.transform.parent.position + vector;
+		}
+		Debug.DrawLine(vector, base.transform.position, Color.red, 2f);
+		Debug.DrawLine(base.transform.position, base.transform.position + Vector3.up, Color.green, 2f);
+		Debug.DrawLine(vector, vector + Vector3.up, Color.red, 2f);
+	}
 }

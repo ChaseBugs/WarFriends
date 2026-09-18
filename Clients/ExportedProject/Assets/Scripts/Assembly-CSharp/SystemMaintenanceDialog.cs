@@ -1,63 +1,122 @@
+using System;
 using UnityEngine;
 
-public class SystemMaintenanceDialog : MonoBehaviour
+public class SystemMaintenanceDialog : GuiElementSingle<SystemMaintenanceDialog>, IGuiDialog
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Header("Animation Background")]
+	public UISprite glow;
 
-	1. No dll files were provided to AssetRipper.
+	[Header("Dialog")]
+	public UIPanel dialogPanel;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public UILabel header;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public UILabel description;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public UIButton buttonRoger;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	private bool mHiding;
 
-	3. Assembly Reconstruction has not been implemented.
+	public void ShowBannedFromChat(bool permanent, int time = 0)
+	{
+		header.text = Localization.Localize("ID_BANNEDFROMCHAT");
+		MiscTools.SetUILabelRescale(header, 74f, 37f, 1000);
+		description.text = Localization.LocalizeFormat("ID_WEHAVERECEIVEDCOMPLAINTSREGARDING", Localization.Localize((!permanent) ? "ID_TEMPORARY" : "ID_PERMANENT"));
+		Singleton<GuiManager>.instance.ShowDialog(this, 0f);
+	}
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public void ShowSystemMaintenance(string date, string from)
+	{
+		header.text = Localization.Localize("ID_SYSTEMMAINTENANCE");
+		MiscTools.SetUILabelRescale(header, 74f, 37f, 1000);
+		description.text = Localization.LocalizeFormat("ID_SCHEDULEDMAINTENANCEOFSERVER", Colours.stringRed, date, Colours.stringWhite, from);
+		Singleton<GuiManager>.instance.ShowDialog(this, 0f);
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public override void InitControls()
+	{
+		UIEventListener uIEventListener = UIEventListener.Get(buttonRoger.gameObject);
+		uIEventListener.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener.onClick, new UIEventListener.VoidDelegate(RogerClick));
+	}
 
-	4. This script is unnecessary.
+	public override void InitGUIValues()
+	{
+		mHiding = false;
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public override void AnimateShow(bool forceFadeIn)
+	{
+		base.AnimateShow(forceFadeIn);
+		AnimateShowMaintenanceDialog(0.7f);
+	}
 
-	5. Script Content Level 0
+	private void RogerClick(GameObject go)
+	{
+		if (!mHiding)
+		{
+			mHiding = true;
+			AnimateHideMaintenanceDialog(0.5f);
+		}
+	}
 
-		AssetRipper was set to not load any script information.
+	private void AnimateShowMaintenanceDialog(float time)
+	{
+		base.gameObject.SetActive(value: true);
+		float dur = time / 15f;
+		float zzz = base.transform.localPosition.z;
+		TweenAlpha.Begin(dialogPanel.gameObject, time, 0.005f, 1f);
+		TweenPosition tweenPosition = TweenPosition.Begin(base.gameObject, dur * 6f, new Vector3(0f, -4f * mDistance, zzz), new Vector3(0f, -4f * mDistance, zzz));
+		tweenPosition.onFinished = delegate
+		{
+			TweenPosition tweenPosition2 = TweenPosition.Begin(base.gameObject, dur * 5f, new Vector3(0f, mDistance, zzz));
+			tweenPosition2.method = UITweener.Method.Linear;
+			tweenPosition2.onFinished = delegate
+			{
+				TweenPosition tweenPosition3 = TweenPosition.Begin(base.gameObject, dur * 4f, new Vector3(0f, 0f, zzz));
+				tweenPosition3.method = UITweener.Method.EaseOut;
+			};
+		};
+		TweenAlpha.Begin(base.gameObject, dur, 0.005f, 1f).onFinished = null;
+		Vector3 UpScale = new Vector3(3425f, 1356f, 1f);
+		Vector3 EndScale = new Vector3(2740f, 1017f, 1f);
+		TweenAlpha.Begin(overlayBackground.gameObject, dur * 6f, 0f, 0.84f);
+		TweenScale tweenScale = TweenScale.Begin(glow.gameObject, dur * 11f, Vector3.one, Vector3.one);
+		tweenScale.onFinished = delegate
+		{
+			TweenScale tweenScale2 = TweenScale.Begin(glow.gameObject, dur * 2f, Vector3.one, UpScale);
+			tweenScale2.method = UITweener.Method.Linear;
+			tweenScale2.onFinished = delegate
+			{
+				TweenScale tweenScale3 = TweenScale.Begin(glow.gameObject, dur * 2f, EndScale);
+				tweenScale3.method = UITweener.Method.EaseOut;
+			};
+		};
+		TweenAlpha.Begin(glow.gameObject, dur * 9f, 0f, 0f).onFinished = delegate
+		{
+			TweenAlpha.Begin(glow.gameObject, dur * 2f, 1f);
+		};
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	private void AnimateHideMaintenanceDialog(float time)
+	{
+		TweenAlpha.Begin(dialogPanel.gameObject, time, 0.005f);
+		TweenAlpha.Begin(overlayBackground.gameObject, time, 0f);
+		TweenScale.Begin(glow.gameObject, time, Vector3.one).onFinished = null;
+		TweenAlpha.Begin(glow.gameObject, time, 0f);
+		TweenAlpha.Begin(base.gameObject, time, 0.005f).onFinished = delegate
+		{
+			HideDialog();
+			mHiding = false;
+		};
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public GuiElement GetGuiElement()
+	{
+		return this;
+	}
 
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public override void OnBack()
+	{
+		RogerClick(buttonRoger.gameObject);
+	}
 }

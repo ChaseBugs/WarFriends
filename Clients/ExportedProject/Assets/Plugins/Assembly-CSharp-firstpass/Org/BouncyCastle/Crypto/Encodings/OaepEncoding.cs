@@ -1,66 +1,207 @@
-using UnityEngine;
+using System;
+using Org.BouncyCastle.Crypto.Digests;
+using Org.BouncyCastle.Crypto.Parameters;
+using Org.BouncyCastle.Security;
 
 namespace Org.BouncyCastle.Crypto.Encodings
 {
-	public class OaepEncoding : MonoBehaviour
+public class OaepEncoding : IAsymmetricBlockCipher
+{
+	private byte[] defHash;
+
+	private IDigest hash;
+
+	private IDigest mgf1Hash;
+
+	private IAsymmetricBlockCipher engine;
+
+	private SecureRandom random;
+
+	private bool forEncryption;
+
+	public string AlgorithmName => engine.AlgorithmName + "/OAEPPadding";
+
+	public OaepEncoding(IAsymmetricBlockCipher cipher)
+		: this(cipher, new Sha1Digest(), null)
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
 	}
+
+	public OaepEncoding(IAsymmetricBlockCipher cipher, IDigest hash)
+		: this(cipher, hash, null)
+	{
+	}
+
+	public OaepEncoding(IAsymmetricBlockCipher cipher, IDigest hash, byte[] encodingParams)
+		: this(cipher, hash, hash, encodingParams)
+	{
+	}
+
+	public OaepEncoding(IAsymmetricBlockCipher cipher, IDigest hash, IDigest mgf1Hash, byte[] encodingParams)
+	{
+		engine = cipher;
+		this.hash = hash;
+		this.mgf1Hash = mgf1Hash;
+		defHash = new byte[hash.GetDigestSize()];
+		if (encodingParams != null)
+		{
+			hash.BlockUpdate(encodingParams, 0, encodingParams.Length);
+		}
+		hash.DoFinal(defHash, 0);
+	}
+
+	public IAsymmetricBlockCipher GetUnderlyingCipher()
+	{
+		return engine;
+	}
+
+	public void Init(bool forEncryption, ICipherParameters param)
+	{
+		if (param is ParametersWithRandom)
+		{
+			ParametersWithRandom parametersWithRandom = (ParametersWithRandom)param;
+			random = parametersWithRandom.Random;
+		}
+		else
+		{
+			random = new SecureRandom();
+		}
+		engine.Init(forEncryption, param);
+		this.forEncryption = forEncryption;
+	}
+
+	public int GetInputBlockSize()
+	{
+		int inputBlockSize = engine.GetInputBlockSize();
+		if (forEncryption)
+		{
+			return inputBlockSize - 1 - 2 * defHash.Length;
+		}
+		return inputBlockSize;
+	}
+
+	public int GetOutputBlockSize()
+	{
+		int outputBlockSize = engine.GetOutputBlockSize();
+		if (forEncryption)
+		{
+			return outputBlockSize;
+		}
+		return outputBlockSize - 1 - 2 * defHash.Length;
+	}
+
+	public byte[] ProcessBlock(byte[] inBytes, int inOff, int inLen)
+	{
+		if (forEncryption)
+		{
+			return EncodeBlock(inBytes, inOff, inLen);
+		}
+		return DecodeBlock(inBytes, inOff, inLen);
+	}
+
+	private byte[] EncodeBlock(byte[] inBytes, int inOff, int inLen)
+	{
+		byte[] array = new byte[GetInputBlockSize() + 1 + 2 * defHash.Length];
+		Array.Copy(inBytes, inOff, array, array.Length - inLen, inLen);
+		array[array.Length - inLen - 1] = 1;
+		Array.Copy(defHash, 0, array, defHash.Length, defHash.Length);
+		byte[] array2 = random.GenerateSeed(defHash.Length);
+		byte[] array3 = maskGeneratorFunction1(array2, 0, array2.Length, array.Length - defHash.Length);
+		for (int i = defHash.Length; i != array.Length; i++)
+		{
+			array[i] ^= array3[i - defHash.Length];
+		}
+		Array.Copy(array2, 0, array, 0, defHash.Length);
+		array3 = maskGeneratorFunction1(array, defHash.Length, array.Length - defHash.Length, defHash.Length);
+		for (int j = 0; j != defHash.Length; j++)
+		{
+			array[j] ^= array3[j];
+		}
+		return engine.ProcessBlock(array, 0, array.Length);
+	}
+
+	private byte[] DecodeBlock(byte[] inBytes, int inOff, int inLen)
+	{
+		byte[] array = engine.ProcessBlock(inBytes, inOff, inLen);
+		byte[] array2;
+		if (array.Length < engine.GetOutputBlockSize())
+		{
+			array2 = new byte[engine.GetOutputBlockSize()];
+			Array.Copy(array, 0, array2, array2.Length - array.Length, array.Length);
+		}
+		else
+		{
+			array2 = array;
+		}
+		if (array2.Length < 2 * defHash.Length + 1)
+		{
+			throw new InvalidCipherTextException("data too short");
+		}
+		byte[] array3 = maskGeneratorFunction1(array2, defHash.Length, array2.Length - defHash.Length, defHash.Length);
+		for (int i = 0; i != defHash.Length; i++)
+		{
+			array2[i] ^= array3[i];
+		}
+		array3 = maskGeneratorFunction1(array2, 0, defHash.Length, array2.Length - defHash.Length);
+		for (int j = defHash.Length; j != array2.Length; j++)
+		{
+			array2[j] ^= array3[j - defHash.Length];
+		}
+		int num = 0;
+		for (int k = 0; k < defHash.Length; k++)
+		{
+			num |= (byte)(defHash[k] ^ array2[defHash.Length + k]);
+		}
+		if (num != 0)
+		{
+			throw new InvalidCipherTextException("data hash wrong");
+		}
+		int l;
+		for (l = 2 * defHash.Length; l != array2.Length && array2[l] == 0; l++)
+		{
+		}
+		if (l >= array2.Length - 1 || array2[l] != 1)
+		{
+			throw new InvalidCipherTextException("data start wrong " + l);
+		}
+		l++;
+		byte[] array4 = new byte[array2.Length - l];
+		Array.Copy(array2, l, array4, 0, array4.Length);
+		return array4;
+	}
+
+	private void ItoOSP(int i, byte[] sp)
+	{
+		sp[0] = (byte)((uint)i >> 24);
+		sp[1] = (byte)((uint)i >> 16);
+		sp[2] = (byte)((uint)i >> 8);
+		sp[3] = (byte)i;
+	}
+
+	private byte[] maskGeneratorFunction1(byte[] Z, int zOff, int zLen, int length)
+	{
+		byte[] array = new byte[length];
+		byte[] array2 = new byte[mgf1Hash.GetDigestSize()];
+		byte[] array3 = new byte[4];
+		int num = 0;
+		hash.Reset();
+		do
+		{
+			ItoOSP(num, array3);
+			mgf1Hash.BlockUpdate(Z, zOff, zLen);
+			mgf1Hash.BlockUpdate(array3, 0, array3.Length);
+			mgf1Hash.DoFinal(array2, 0);
+			Array.Copy(array2, 0, array, num * array2.Length, array2.Length);
+		}
+		while (++num < length / array2.Length);
+		if (num * array2.Length < length)
+		{
+			ItoOSP(num, array3);
+			mgf1Hash.BlockUpdate(Z, zOff, zLen);
+			mgf1Hash.BlockUpdate(array3, 0, array3.Length);
+			mgf1Hash.DoFinal(array2, 0);
+			Array.Copy(array2, 0, array, num * array2.Length, array.Length - num * array2.Length);
+		}
+		return array;
+	}
+}
 }

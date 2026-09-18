@@ -1,63 +1,189 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
-public class ArmyCategoriesDialog : MonoBehaviour
+public class ArmyCategoriesDialog : GuiElementSingle<ArmyCategoriesDialog>, IGuiDialog
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Header("Core")]
+	public GameObject dialogCenter;
 
-	1. No dll files were provided to AssetRipper.
+	public UISprite background;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public GameObject closeButton;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public GameObject bottomPart;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public GameObject bottomButton;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	[Header("Icons")]
+	public UISprite defenderIcon;
 
-	3. Assembly Reconstruction has not been implemented.
+	public UISprite rusherIcon;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public UISprite shooterIcon;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public UISprite explosiveIcon;
 
-	4. This script is unnecessary.
+	[Header("Setting")]
+	public float fadeAnimationDuration = 0.4f;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private bool mReminderType;
 
-	5. Script Content Level 0
+	private float mTime;
 
-		AssetRipper was set to not load any script information.
+	private List<string> mDefendersSprite = new List<string>();
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	private List<string> mRushersSprite = new List<string>();
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	private List<string> mShootersSprite = new List<string>();
 
-	7. An incorrect path was provided to AssetRipper.
+	private List<string> mExplosiveSprite = new List<string>();
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	private int mType;
 
-	*/
+	private int mDefendersIndex;
+
+	private int mRushersIndex;
+
+	private int mShootersIndex;
+
+	private int mExplosiveIndex;
+
+	public void ShowDialog(bool reminderType = false)
+	{
+		mReminderType = reminderType;
+		Singleton<GuiManager>.instance.ShowDialog(this, 0f);
+	}
+
+	public override void InitControls()
+	{
+		UIEventListener uIEventListener = UIEventListener.Get(closeButton);
+		uIEventListener.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener.onClick, new UIEventListener.VoidDelegate(CloseDialog));
+		UIEventListener uIEventListener2 = UIEventListener.Get(bottomButton);
+		uIEventListener2.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener2.onClick, new UIEventListener.VoidDelegate(CloseDialog));
+		foreach (LevelBehaviour behaviour in LevelManager.instance.behaviours)
+		{
+			switch (behaviour.unitType)
+			{
+			case LevelBehaviour.UnitType.Defender:
+				mDefendersSprite.Add(behaviour.upgradeSlots.iconName);
+				break;
+			case LevelBehaviour.UnitType.AttackerRusher:
+				mRushersSprite.Add(behaviour.upgradeSlots.iconName);
+				break;
+			case LevelBehaviour.UnitType.AttackerShooter:
+				mShootersSprite.Add(behaviour.upgradeSlots.iconName);
+				break;
+			case LevelBehaviour.UnitType.AttackerExplosive:
+				mExplosiveSprite.Add(behaviour.upgradeSlots.iconName);
+				break;
+			}
+		}
+	}
+
+	private void CloseDialog(GameObject go)
+	{
+		if (base.isFullyShowed)
+		{
+			HideDialog();
+		}
+	}
+
+	public override void InitGUIValues()
+	{
+		dialogCenter.transform.localPosition = new Vector3(0f, (!mReminderType) ? (-126f) : 0f, 0f);
+		background.transform.localScale = new Vector3(background.transform.localScale.x, (!mReminderType) ? 1038f : 1240f, 1f);
+		closeButton.SetActive(!mReminderType);
+		bottomPart.SetActive(mReminderType);
+		if (mReminderType)
+		{
+			UIEventListener uIEventListener = UIEventListener.Get(overlayBackground);
+			uIEventListener.onClick = (UIEventListener.VoidDelegate)Delegate.Remove(uIEventListener.onClick, new UIEventListener.VoidDelegate(CloseDialog));
+		}
+		else
+		{
+			UIEventListener uIEventListener2 = UIEventListener.Get(overlayBackground);
+			uIEventListener2.onClick = (UIEventListener.VoidDelegate)Delegate.Remove(uIEventListener2.onClick, new UIEventListener.VoidDelegate(CloseDialog));
+			UIEventListener uIEventListener3 = UIEventListener.Get(overlayBackground);
+			uIEventListener3.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener3.onClick, new UIEventListener.VoidDelegate(CloseDialog));
+		}
+		mTime = 0f;
+		TweenAlpha.Begin(defenderIcon.gameObject, 0f, 1f).onFinished = null;
+		TweenAlpha.Begin(rusherIcon.gameObject, 0f, 1f).onFinished = null;
+		TweenAlpha.Begin(shooterIcon.gameObject, 0f, 1f).onFinished = null;
+		TweenAlpha.Begin(explosiveIcon.gameObject, 0f, 1f).onFinished = null;
+	}
+
+	protected override void Update()
+	{
+		base.Update();
+		mTime += Time.deltaTime;
+		if (mTime > 1f)
+		{
+			mTime = 0f;
+			ChangeIcon();
+		}
+	}
+
+	private void ChangeIcon()
+	{
+		switch (mType)
+		{
+		case 0:
+			AnimateChange(defenderIcon, (mDefendersSprite.Count <= mDefendersIndex) ? string.Empty : mDefendersSprite[mDefendersIndex]);
+			if (++mDefendersIndex >= mDefendersSprite.Count)
+			{
+				mDefendersIndex = 0;
+			}
+			break;
+		case 1:
+			AnimateChange(rusherIcon, (mRushersSprite.Count <= mRushersIndex) ? string.Empty : mRushersSprite[mRushersIndex]);
+			if (++mRushersIndex >= mRushersSprite.Count)
+			{
+				mRushersIndex = 0;
+			}
+			break;
+		case 2:
+			AnimateChange(shooterIcon, (mShootersSprite.Count <= mShootersIndex) ? string.Empty : mShootersSprite[mShootersIndex]);
+			if (++mShootersIndex >= mShootersSprite.Count)
+			{
+				mShootersIndex = 0;
+			}
+			break;
+		case 3:
+			AnimateChange(explosiveIcon, (mExplosiveSprite.Count <= mExplosiveIndex) ? string.Empty : mExplosiveSprite[mExplosiveIndex]);
+			if (++mExplosiveIndex >= mExplosiveSprite.Count)
+			{
+				mExplosiveIndex = 0;
+			}
+			break;
+		}
+		if (++mType > 3)
+		{
+			mType = 0;
+		}
+	}
+
+	private void AnimateChange(UISprite spriteObject, string spriteName)
+	{
+		if (!string.IsNullOrEmpty(spriteName) && !(spriteObject.spriteName == spriteName))
+		{
+			TweenAlpha.Begin(spriteObject.gameObject, fadeAnimationDuration, 0f).onFinished = delegate
+			{
+				spriteObject.spriteName = spriteName;
+				spriteObject.MakePixelPerfect();
+				TweenAlpha.Begin(spriteObject.gameObject, fadeAnimationDuration, 1f).onFinished = null;
+			};
+		}
+	}
+
+	public GuiElement GetGuiElement()
+	{
+		return this;
+	}
+
+	public override void OnBack()
+	{
+		CloseDialog(closeButton.gameObject);
+	}
 }

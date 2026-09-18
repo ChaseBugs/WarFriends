@@ -1,63 +1,215 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
-public class Train : MonoBehaviour
+public class Train : Core_BaseScript
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Serializable]
+	public class TrainLoad
+	{
+		public Mesh mesh;
 
-	1. No dll files were provided to AssetRipper.
+		public Mesh collider;
+	}
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public Transform startPosition;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public Transform endPosition;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public float speed = 5f;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public PhysicsEventsListener frontCollider;
 
-	3. Assembly Reconstruction has not been implemented.
+	public PhysicsEventsListener trainTrigger;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	private float mCarveCubeMovementOffset = 4f;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	private bool mIsAnimating;
 
-	4. This script is unnecessary.
+	private float mStartMovementTime;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private PhotonView mPhotonView;
 
-	5. Script Content Level 0
+	private double mStartAnimTime;
 
-		AssetRipper was set to not load any script information.
+	public List<TrainLoad> loads;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public List<GameObject> carriages;
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	private bool mReverse;
 
-	7. An incorrect path was provided to AssetRipper.
+	protected override void Awake()
+	{
+		base.Awake();
+		mPhotonView = GetComponent<PhotonView>();
+		PhysicsEventsListener physicsEventsListener = frontCollider;
+		physicsEventsListener.onTriggerEnter = (Action<Collider>)Delegate.Combine(physicsEventsListener.onTriggerEnter, new Action<Collider>(OnFrontTriggerEnter));
+		PhysicsEventsListener physicsEventsListener2 = trainTrigger;
+		physicsEventsListener2.onTriggerEnter = (Action<Collider>)Delegate.Combine(physicsEventsListener2.onTriggerEnter, new Action<Collider>(OnTrainTriggerEnter));
+		PhysicsEventsListener physicsEventsListener3 = trainTrigger;
+		physicsEventsListener3.onTriggerExit = (Action<Collider>)Delegate.Combine(physicsEventsListener3.onTriggerExit, new Action<Collider>(OnTrainTriggerExit));
+		mStartMovementTime = Time.time + (float)UnityEngine.Random.Range(15, 120);
+		mStartAnimTime = 0.0;
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	protected override void Start()
+	{
+		base.Start();
+	}
 
-	*/
+	public void StartAnimation()
+	{
+		mIsAnimating = true;
+		mStartAnimTime = PhotonNetwork.time + 3.0;
+		mReverse = UnityEngine.Random.value > 0.5f;
+		int num = UnityEngine.Random.Range(2, 6);
+		byte[] array = new byte[num];
+		for (int i = 0; i < carriages.Count; i++)
+		{
+			if (i < num)
+			{
+				int num2 = UnityEngine.Random.Range(0, loads.Count);
+				array[i] = (byte)num2;
+			}
+		}
+		SetUpTrain(array);
+		mPhotonView.RPC("StartMovementAtTimeRPC", PhotonTargets.Others, mStartAnimTime, array, mReverse);
+	}
+
+	private void SetUpTrain(byte[] array)
+	{
+		for (int i = 0; i < carriages.Count; i++)
+		{
+			if (i < array.Length)
+			{
+				byte index = array[i];
+				carriages[i].gameObject.transform.parent.gameObject.SetActive(value: true);
+				MeshFilter component = carriages[i].GetComponent<MeshFilter>();
+				MeshCollider component2 = carriages[i].GetComponent<MeshCollider>();
+				component.mesh = loads[index].mesh;
+				component2.sharedMesh = loads[index].collider;
+			}
+			else
+			{
+				carriages[i].gameObject.transform.parent.gameObject.SetActive(value: false);
+			}
+		}
+		BoxCollider component3 = trainTrigger.GetComponent<BoxCollider>();
+		Vector3 size = component3.size;
+		Vector3 center = component3.center;
+		size.z = (float)(array.Length + 1) * 2.565354f;
+		center.z = (float)(array.Length + 1) * 2.565354f * 0.5f;
+		component3.center = center;
+		component3.size = size;
+	}
+
+	private void StarMOvement()
+	{
+		float num = Vector3.Distance(startPosition.transform.position, endPosition.transform.position);
+		Vector3 vector = ((!mReverse) ? startPosition.position : endPosition.position);
+		Vector3 vector2 = ((!mReverse) ? endPosition.position : startPosition.position);
+		TweenPosition tweenPosition = TweenPosition.Begin(base.gameObject, num / speed, vector, vector2, useLocal: false);
+		base.gameObject.transform.rotation = Quaternion.LookRotation(vector - vector2);
+		tweenPosition.method = UITweener.Method.Linear;
+		tweenPosition.onFinished = (UITweener.OnFinished)Delegate.Combine(tweenPosition.onFinished, new UITweener.OnFinished(OnFinished));
+		tweenPosition.ignoreTimeScale = false;
+		mIsAnimating = true;
+	}
+
+	[PunRPC]
+	private void StartMovementAtTimeRPC(double time, byte[] array, bool reverse)
+	{
+		SetUpTrain(array);
+		mStartAnimTime = time;
+		mReverse = reverse;
+	}
+
+	protected void Update()
+	{
+		if (mPhotonView.isMine)
+		{
+			if (DebugSettings.debugEnabled && Input.GetKeyDown(KeyCode.Alpha1))
+			{
+				StartAnimation();
+			}
+			if (Time.time > mStartMovementTime && !mIsAnimating)
+			{
+				StartAnimation();
+			}
+		}
+		if (mStartAnimTime != 0.0 && PhotonNetwork.time > mStartAnimTime)
+		{
+			mStartAnimTime = 0.0;
+			StarMOvement();
+		}
+	}
+
+	private void OnFrontTriggerEnter(Collider collider1)
+	{
+		if (mPhotonView.isMine && TagsAndLayers.IsDestroyableObject(collider1.gameObject))
+		{
+			DestroyableObject component = collider1.gameObject.GetComponent<DestroyableObject>();
+			if (component != null)
+			{
+				component.DoDamage(new DestroyableObject.DamageInfo
+				{
+					damageAmount = 1000f,
+					force = Vector3.zero,
+					isNetwork = false,
+					owner = null,
+					type = DestroyableObject.DamageType.Basic
+				});
+			}
+		}
+	}
+
+	private void OnTrainTriggerEnter(Collider obj)
+	{
+		if (!mPhotonView.isMine || !TagsAndLayers.IsDestroyableObject(obj.gameObject))
+		{
+			return;
+		}
+		DestroyableObjectpart destroyableObjectpart = obj.gameObject.GetComponent<DestroyableObject>() as DestroyableObjectpart;
+		if (!(destroyableObjectpart != null))
+		{
+			return;
+		}
+		DestroyableObjectMultipleParts ownerDestroyableObject = destroyableObjectpart.ownerDestroyableObject;
+		if (ownerDestroyableObject != null)
+		{
+			EnemyController component = ownerDestroyableObject.GetComponent<EnemyController>();
+			if (component != null)
+			{
+				component.Wait(2f);
+			}
+		}
+	}
+
+	private void OnTrainTriggerExit(Collider obj)
+	{
+		if (!mPhotonView.isMine || !TagsAndLayers.IsDestroyableObject(obj.gameObject))
+		{
+			return;
+		}
+		DestroyableObjectpart destroyableObjectpart = obj.gameObject.GetComponent<DestroyableObject>() as DestroyableObjectpart;
+		if (destroyableObjectpart != null)
+		{
+			DestroyableObjectMultipleParts ownerDestroyableObject = destroyableObjectpart.ownerDestroyableObject;
+			EnemyController component = ownerDestroyableObject.GetComponent<EnemyController>();
+			if (component != null)
+			{
+				component.Resume();
+			}
+		}
+	}
+
+	private void OnFinished(UITweener tween)
+	{
+		mIsAnimating = false;
+		mStartMovementTime = Time.time + (float)UnityEngine.Random.Range(10, 60);
+	}
+
+	private void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
+	{
+	}
 }

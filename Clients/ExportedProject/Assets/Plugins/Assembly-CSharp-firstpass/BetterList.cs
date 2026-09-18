@@ -1,63 +1,208 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
-public class BetterList : MonoBehaviour
+public class BetterList<T>
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public T[] buffer;
 
-	1. No dll files were provided to AssetRipper.
+	public int size;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public T this[int i]
+	{
+		get
+		{
+			return buffer[i];
+		}
+		set
+		{
+			buffer[i] = value;
+		}
+	}
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public IEnumerator<T> GetEnumerator()
+	{
+		if (buffer != null)
+		{
+			for (int i = 0; i < size; i++)
+			{
+				yield return buffer[i];
+			}
+		}
+	}
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	private void AllocateMore()
+	{
+		T[] array = ((buffer == null) ? new T[32] : new T[Mathf.Max(buffer.Length << 1, 32)]);
+		if (buffer != null && size > 0)
+		{
+			buffer.CopyTo(array, 0);
+		}
+		buffer = array;
+	}
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public void Trim()
+	{
+		if (size > 0)
+		{
+			if (size < buffer.Length)
+			{
+				T[] destinationArray = new T[size];
+				Array.Copy(buffer, destinationArray, size);
+				buffer = destinationArray;
+			}
+		}
+		else
+		{
+			buffer = null;
+		}
+	}
 
-	3. Assembly Reconstruction has not been implemented.
+	public void TrimTo128()
+	{
+		if (size > 0)
+		{
+			if (buffer.Length > 128 && size <= 128)
+			{
+				T[] array = new T[128];
+				for (int i = 0; i < size; i++)
+				{
+					array[i] = buffer[i];
+				}
+				buffer = array;
+			}
+		}
+		else
+		{
+			buffer = null;
+		}
+	}
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public void Clear()
+	{
+		size = 0;
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public void Release()
+	{
+		size = 0;
+		buffer = null;
+	}
 
-	4. This script is unnecessary.
+	public void Add(T item)
+	{
+		if (buffer == null || size == buffer.Length)
+		{
+			AllocateMore();
+		}
+		buffer[size++] = item;
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public void Insert(int index, T item)
+	{
+		if (buffer == null || size == buffer.Length)
+		{
+			AllocateMore();
+		}
+		if (index < size)
+		{
+			for (int num = size; num > index; num--)
+			{
+				buffer[num] = buffer[num - 1];
+			}
+			buffer[index] = item;
+			size++;
+		}
+		else
+		{
+			Add(item);
+		}
+	}
 
-	5. Script Content Level 0
+	public bool Contains(T item)
+	{
+		if (buffer == null)
+		{
+			return false;
+		}
+		for (int i = 0; i < size; i++)
+		{
+			if (buffer[i].Equals(item))
+			{
+				return true;
+			}
+		}
+		return false;
+	}
 
-		AssetRipper was set to not load any script information.
+	public bool Remove(T item)
+	{
+		if (buffer != null)
+		{
+			EqualityComparer<T> equalityComparer = EqualityComparer<T>.Default;
+			for (int i = 0; i < size; i++)
+			{
+				if (equalityComparer.Equals(buffer[i], item))
+				{
+					size--;
+					buffer[i] = default(T);
+					for (int j = i; j < size; j++)
+					{
+						buffer[j] = buffer[j + 1];
+					}
+					return true;
+				}
+			}
+		}
+		return false;
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public void RemoveAt(int index)
+	{
+		if (buffer != null && index < size)
+		{
+			size--;
+			buffer[index] = default(T);
+			for (int i = index; i < size; i++)
+			{
+				buffer[i] = buffer[i + 1];
+			}
+		}
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public T Pop()
+	{
+		if (buffer != null && size != 0)
+		{
+			T result = buffer[--size];
+			buffer[size] = default(T);
+			return result;
+		}
+		return default(T);
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	public T[] ToArray()
+	{
+		Trim();
+		return buffer;
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public void Sort(Comparison<T> comparer)
+	{
+		bool flag = true;
+		while (flag)
+		{
+			flag = false;
+			for (int i = 1; i < size; i++)
+			{
+				if (comparer(buffer[i - 1], buffer[i]) > 0)
+				{
+					T val = buffer[i];
+					buffer[i] = buffer[i - 1];
+					buffer[i - 1] = val;
+					flag = true;
+				}
+			}
+		}
+	}
 }

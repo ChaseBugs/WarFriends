@@ -1,66 +1,62 @@
-using UnityEngine;
+using System;
+using Org.BouncyCastle.Crypto.Digests;
+using Org.BouncyCastle.Crypto.Encodings;
+using Org.BouncyCastle.Crypto.Engines;
+using Org.BouncyCastle.Crypto.Parameters;
+using Org.BouncyCastle.Crypto.Signers;
 
 namespace Org.BouncyCastle.Crypto.Tls
 {
-	public class TlsRsaSigner : MonoBehaviour
+public class TlsRsaSigner : AbstractTlsSigner
+{
+	public override byte[] GenerateRawSignature(SignatureAndHashAlgorithm algorithm, AsymmetricKeyParameter privateKey, byte[] hash)
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
+		ISigner signer = MakeSigner(algorithm, raw: true, forSigning: true, new ParametersWithRandom(privateKey, mContext.SecureRandom));
+		signer.BlockUpdate(hash, 0, hash.Length);
+		return signer.GenerateSignature();
 	}
+
+	public override bool VerifyRawSignature(SignatureAndHashAlgorithm algorithm, byte[] sigBytes, AsymmetricKeyParameter publicKey, byte[] hash)
+	{
+		ISigner signer = MakeSigner(algorithm, raw: true, forSigning: false, publicKey);
+		signer.BlockUpdate(hash, 0, hash.Length);
+		return signer.VerifySignature(sigBytes);
+	}
+
+	public override ISigner CreateSigner(SignatureAndHashAlgorithm algorithm, AsymmetricKeyParameter privateKey)
+	{
+		return MakeSigner(algorithm, raw: false, forSigning: true, new ParametersWithRandom(privateKey, mContext.SecureRandom));
+	}
+
+	public override ISigner CreateVerifyer(SignatureAndHashAlgorithm algorithm, AsymmetricKeyParameter publicKey)
+	{
+		return MakeSigner(algorithm, raw: false, forSigning: false, publicKey);
+	}
+
+	public override bool IsValidPublicKey(AsymmetricKeyParameter publicKey)
+	{
+		return publicKey is RsaKeyParameters && !publicKey.IsPrivate;
+	}
+
+	protected virtual ISigner MakeSigner(SignatureAndHashAlgorithm algorithm, bool raw, bool forSigning, ICipherParameters cp)
+	{
+		if (algorithm != null != TlsUtilities.IsTlsV12(mContext))
+		{
+			throw new InvalidOperationException();
+		}
+		if (algorithm != null && algorithm.Signature != 1)
+		{
+			throw new InvalidOperationException();
+		}
+		IDigest digest = (raw ? new NullDigest() : ((algorithm != null) ? TlsUtilities.CreateHash(algorithm.Hash) : new CombinedHash()));
+		ISigner signer = ((algorithm == null) ? ((ISigner)new GenericSigner(CreateRsaImpl(), digest)) : ((ISigner)new RsaDigestSigner(digest, TlsUtilities.GetOidForHashAlgorithm(algorithm.Hash))));
+		signer.Init(forSigning, cp);
+		return signer;
+	}
+
+	protected virtual IAsymmetricBlockCipher CreateRsaImpl()
+	{
+		return new Pkcs1Encoding(new RsaBlindedEngine());
+	}
+}
 }

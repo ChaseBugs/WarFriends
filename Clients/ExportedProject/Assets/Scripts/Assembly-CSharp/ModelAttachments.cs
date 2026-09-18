@@ -1,63 +1,118 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
-public class ModelAttachments : MonoBehaviour
+public class ModelAttachments : Core_BaseScript
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Serializable]
+	public class ModelAttachment
+	{
+		public Transform parent;
 
-	1. No dll files were provided to AssetRipper.
+		public int id;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+		internal MeshRenderer mPrefab;
 
-	2. Incorrect dll files were provided to AssetRipper.
+		internal MeshRenderer mInstance;
+	}
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public List<ModelAttachment> modelAttachments;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	private Dictionary<int, ModelAttachment> attachmentInstancies = new Dictionary<int, ModelAttachment>();
 
-	3. Assembly Reconstruction has not been implemented.
+	public void HideAllAttachments()
+	{
+		foreach (KeyValuePair<int, ModelAttachment> attachmentInstancy in attachmentInstancies)
+		{
+			if (attachmentInstancy.Value.mInstance != null)
+			{
+				attachmentInstancy.Value.mInstance.gameObject.SetActive(value: false);
+			}
+		}
+	}
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public void AddAttachment(MeshRenderer prefab, int slotId, Material sharedmat = null, PlayerVisualHead.CamoTransform camoTransform = null)
+	{
+		ModelAttachment value = null;
+		if (attachmentInstancies.TryGetValue(slotId, out value))
+		{
+			MeshRenderer obj = value.mInstance;
+			if (value.mPrefab != prefab)
+			{
+				if (value.mInstance != null)
+				{
+					UnityEngine.Object.Destroy(value.mInstance.gameObject);
+				}
+				value.mPrefab = prefab;
+				obj = UnityEngine.Object.Instantiate(prefab);
+				attachmentInstancies[slotId] = value;
+			}
+			AttachObject(value, obj, sharedmat, camoTransform);
+			value.mInstance.gameObject.SetActive(value: true);
+			return;
+		}
+		foreach (ModelAttachment modelAttachment in modelAttachments)
+		{
+			if (modelAttachment.id == slotId)
+			{
+				value = modelAttachment;
+				break;
+			}
+		}
+		if (value != null)
+		{
+			value.mPrefab = prefab;
+			AttachObject(obj: value.mInstance = UnityEngine.Object.Instantiate(prefab), m: value, sharedmat: sharedmat, camoTransform: camoTransform);
+			attachmentInstancies[slotId] = value;
+			value.mInstance.gameObject.SetActive(value: true);
+		}
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public void SetAttachmentsMaterial(Material material)
+	{
+		foreach (KeyValuePair<int, ModelAttachment> attachmentInstancy in attachmentInstancies)
+		{
+			MeshRenderer[] componentsInChildren = attachmentInstancy.Value.mInstance.GetComponentsInChildren<MeshRenderer>();
+			MeshRenderer[] array = componentsInChildren;
+			foreach (MeshRenderer meshRenderer in array)
+			{
+				meshRenderer.sharedMaterial = material;
+			}
+		}
+	}
 
-	4. This script is unnecessary.
+	private void AttachObject(ModelAttachment m, MeshRenderer obj, Material sharedmat, PlayerVisualHead.CamoTransform camoTransform)
+	{
+		m.mInstance = obj;
+		obj.transform.parent = m.parent;
+		obj.transform.localPosition = Vector3.zero;
+		obj.transform.localRotation = Quaternion.identity;
+		obj.transform.localScale = Vector3.one;
+		obj.gameObject.layer = base.gameObject.layer;
+		obj.useLightProbes = true;
+		if (sharedmat != null)
+		{
+			MeshRenderer[] componentsInChildren = obj.GetComponentsInChildren<MeshRenderer>(includeInactive: true);
+			MeshRenderer[] array = componentsInChildren;
+			foreach (MeshRenderer meshRenderer in array)
+			{
+				meshRenderer.sharedMaterial = sharedmat;
+				meshRenderer.useLightProbes = true;
+			}
+		}
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
-
-	5. Script Content Level 0
-
-		AssetRipper was set to not load any script information.
-
-	6. Cpp2IL failed to decompile Il2Cpp data
-
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public void NullTextures()
+	{
+		foreach (KeyValuePair<int, ModelAttachment> attachmentInstancy in attachmentInstancies)
+		{
+			MeshRenderer mInstance = attachmentInstancy.Value.mInstance;
+			MeshRenderer[] componentsInChildren = mInstance.GetComponentsInChildren<MeshRenderer>(includeInactive: true);
+			MeshRenderer[] array = componentsInChildren;
+			foreach (MeshRenderer meshRenderer in array)
+			{
+				meshRenderer.sharedMaterial = null;
+			}
+		}
+	}
 }

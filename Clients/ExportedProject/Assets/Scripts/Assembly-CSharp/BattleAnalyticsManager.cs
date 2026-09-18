@@ -1,63 +1,132 @@
+using System.Collections.Generic;
 using UnityEngine;
 
-public class BattleAnalyticsManager : MonoBehaviour
+public class BattleAnalyticsManager : Core_BaseScript
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public class PlayerStats
+	{
+		public float damageReceivedArmy;
 
-	1. No dll files were provided to AssetRipper.
+		public float damageReceivedOtherPlayer;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+		public float maxDamage;
 
-	2. Incorrect dll files were provided to AssetRipper.
+		public int shots;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+		public int hitsToOpponent;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+		public int criticalHits;
 
-	3. Assembly Reconstruction has not been implemented.
+		public float finalHP;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+		public Dictionary<string, int> equippedWeapons = new Dictionary<string, int>();
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+		public Dictionary<string, int> equippedUnits = new Dictionary<string, int>();
+	}
 
-	4. This script is unnecessary.
+	public class BattleData
+	{
+		public PlayerStats playerOpponent;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+		public PlayerStats playerCurrent;
 
-	5. Script Content Level 0
+		public GameController.GameEndReason gameEndReason;
 
-		AssetRipper was set to not load any script information.
+		public float matchTime;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+		public BattleData()
+		{
+			playerCurrent = new PlayerStats();
+			playerOpponent = new PlayerStats();
+		}
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public BattleData battleData = new BattleData();
 
-	7. An incorrect path was provided to AssetRipper.
+	private static BattleAnalyticsManager mInstance;
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	public static BattleAnalyticsManager instance
+	{
+		get
+		{
+			mInstance = mInstance ?? ((BattleAnalyticsManager)Object.FindObjectsOfType(typeof(BattleAnalyticsManager))[0]);
+			return mInstance;
+		}
+	}
 
-	*/
+	public void OnDestroy()
+	{
+		mInstance = null;
+	}
+
+	protected override void Awake()
+	{
+		base.Awake();
+		Singleton<GameController>.instance.GameStarted += OnGameStarted;
+		Weapon.OnShotFired += WeaponOnOnShotFired;
+	}
+
+	private void WeaponOnOnShotFired(Weapon weapon, Vector3 target)
+	{
+		PlayerController playerController = weapon.owner as PlayerController;
+		if (playerController != null)
+		{
+			PlayerStats stats = GetStats(playerController);
+			stats.shots++;
+		}
+	}
+
+	private void OnGameStarted()
+	{
+		battleData = new BattleData();
+	}
+
+	private PlayerStats GetStats(PlayerController player)
+	{
+		return (!player.isCurrentPlayer) ? battleData.playerCurrent : battleData.playerOpponent;
+	}
+
+	public void DoPlayerDamage(PlayerController player, DestroyableObject.DamageInfo dmg)
+	{
+		if (player == null)
+		{
+			return;
+		}
+		PlayerStats stats = GetStats(player);
+		if (dmg.isCritical)
+		{
+			stats.criticalHits++;
+		}
+		if (dmg.owner is AIObject)
+		{
+			stats.damageReceivedArmy += dmg.damageAmount;
+		}
+		else if (dmg.owner is PlayerController)
+		{
+			stats.damageReceivedOtherPlayer += dmg.damageAmount;
+			PlayerStats stats2 = GetStats((PlayerController)dmg.owner);
+			stats2.hitsToOpponent++;
+			if (stats2.maxDamage < dmg.damageAmount)
+			{
+				stats2.maxDamage = dmg.damageAmount;
+			}
+		}
+	}
+
+	public void FinishGame()
+	{
+		battleData.matchTime = Singleton<MatchManager>.instance.matchTime;
+		battleData.gameEndReason = Singleton<GameController>.instance.gameEndReason;
+		PlayerStats stats = GetStats(PlayerController.currentPlayer);
+		stats.equippedWeapons = PlayerController.currentPlayer.playerProperties.GetWeaponsForStats();
+		stats.equippedUnits = PlayerController.currentPlayer.playerProperties.GetArmyForStats();
+		stats.finalHP = PlayerController.currentPlayer.destroyableParts.health;
+		if (Singleton<GameController>.instance.opponent != null)
+		{
+			PlayerStats stats2 = GetStats(Singleton<GameController>.instance.opponent);
+			stats2.equippedWeapons = Singleton<GameController>.instance.opponent.playerProperties.GetWeaponsForStats();
+			stats2.equippedUnits = Singleton<GameController>.instance.opponent.playerProperties.GetArmyForStats();
+			stats2.finalHP = Singleton<GameController>.instance.opponent.destroyableParts.health;
+		}
+	}
 }

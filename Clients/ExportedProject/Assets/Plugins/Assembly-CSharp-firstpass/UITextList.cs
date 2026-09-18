@@ -1,63 +1,178 @@
+using System.Collections.Generic;
+using System.Text;
 using UnityEngine;
 
+[AddComponentMenu("NGUI/UI/Text List")]
 public class UITextList : MonoBehaviour
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public enum Style
+	{
+		Text,
+		Chat
+	}
 
-	1. No dll files were provided to AssetRipper.
+	protected class Paragraph
+	{
+		public string text;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+		public string[] lines;
+	}
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public Style style;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public UILabel textLabel;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public float maxWidth;
 
-	3. Assembly Reconstruction has not been implemented.
+	public float maxHeight;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public int maxEntries = 50;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public bool supportScrollWheel = true;
 
-	4. This script is unnecessary.
+	protected char[] mSeparator = new char[1] { '\n' };
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	protected List<Paragraph> mParagraphs = new List<Paragraph>();
 
-	5. Script Content Level 0
+	protected float mScroll;
 
-		AssetRipper was set to not load any script information.
+	protected bool mSelected;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	protected int mTotalLines;
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public void Clear()
+	{
+		mParagraphs.Clear();
+		UpdateVisibleText();
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	public void Add(string text)
+	{
+		Add(text, updateVisible: true);
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	protected void Add(string text, bool updateVisible)
+	{
+		Paragraph paragraph = null;
+		if (mParagraphs.Count < maxEntries)
+		{
+			paragraph = new Paragraph();
+		}
+		else
+		{
+			paragraph = mParagraphs[0];
+			mParagraphs.RemoveAt(0);
+		}
+		paragraph.text = text;
+		mParagraphs.Add(paragraph);
+		if (textLabel != null && textLabel.font != null)
+		{
+			paragraph.lines = textLabel.font.WrapText(paragraph.text, maxWidth / textLabel.transform.localScale.y, textLabel.maxLineCount, textLabel.supportEncoding, textLabel.symbolStyle).Split(mSeparator);
+			mTotalLines = 0;
+			int i = 0;
+			for (int count = mParagraphs.Count; i < count; i++)
+			{
+				mTotalLines += mParagraphs[i].lines.Length;
+			}
+		}
+		if (updateVisible)
+		{
+			UpdateVisibleText();
+		}
+	}
 
-	*/
+	private void Awake()
+	{
+		if (textLabel == null)
+		{
+			textLabel = GetComponentInChildren<UILabel>();
+		}
+		if (textLabel != null)
+		{
+			textLabel.lineWidth = 0;
+		}
+		Collider component = GetComponent<Collider>();
+		if (component != null)
+		{
+			if (maxHeight <= 0f)
+			{
+				maxHeight = component.bounds.size.y / base.transform.lossyScale.y;
+			}
+			if (maxWidth <= 0f)
+			{
+				maxWidth = component.bounds.size.x / base.transform.lossyScale.x;
+			}
+		}
+	}
+
+	private void OnSelect(bool selected)
+	{
+		mSelected = selected;
+	}
+
+	protected void UpdateVisibleText()
+	{
+		if (!(textLabel != null))
+		{
+			return;
+		}
+		UIFont font = textLabel.font;
+		if (!(font != null))
+		{
+			return;
+		}
+		int num = 0;
+		int num2 = ((!(maxHeight > 0f)) ? 100000 : Mathf.FloorToInt(maxHeight / textLabel.cachedTransform.localScale.y));
+		int num3 = Mathf.RoundToInt(mScroll);
+		if (num2 + num3 > mTotalLines)
+		{
+			num3 = Mathf.Max(0, mTotalLines - num2);
+			mScroll = num3;
+		}
+		if (style == Style.Chat)
+		{
+			num3 = Mathf.Max(0, mTotalLines - num2 - num3);
+		}
+		StringBuilder stringBuilder = new StringBuilder();
+		int i = 0;
+		for (int count = mParagraphs.Count; i < count; i++)
+		{
+			Paragraph paragraph = mParagraphs[i];
+			int j = 0;
+			for (int num4 = paragraph.lines.Length; j < num4; j++)
+			{
+				string value = paragraph.lines[j];
+				if (num3 > 0)
+				{
+					num3--;
+					continue;
+				}
+				if (stringBuilder.Length > 0)
+				{
+					stringBuilder.Append("\n");
+				}
+				stringBuilder.Append(value);
+				num++;
+				if (num >= num2)
+				{
+					break;
+				}
+			}
+			if (num >= num2)
+			{
+				break;
+			}
+		}
+		textLabel.text = stringBuilder.ToString();
+	}
+
+	private void OnScroll(float val)
+	{
+		if (mSelected && supportScrollWheel)
+		{
+			val *= ((style != Style.Chat) ? (-10f) : 10f);
+			mScroll = Mathf.Max(0f, mScroll + val);
+			UpdateVisibleText();
+		}
+	}
 }

@@ -1,63 +1,204 @@
+using System;
+using System.Collections;
 using UnityEngine;
 
-public class SettingsGeneralContent : MonoBehaviour
+public class SettingsGeneralContent : Core_BaseScript
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Header("Top")]
+	public UISlider musicSlider;
 
-	1. No dll files were provided to AssetRipper.
+	public BoxCollider musicCollider;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public UISlider sfxSlider;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public BoxCollider soundEffectsCollider;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public BoxCollider underSliders;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	[Header("Middle")]
+	public GameObject restorePurchasesButton;
 
-	3. Assembly Reconstruction has not been implemented.
+	public GameObject languageButton;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public GameObject creditsButton;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public GameObject privacyButton;
 
-	4. This script is unnecessary.
+	public GameObject googlePlayAchievmentsButton;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	[Header("Bottom")]
+	public GameObject eaButton;
 
-	5. Script Content Level 0
+	public GameObject bugButton;
 
-		AssetRipper was set to not load any script information.
+	public GameObject wikiButton;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public GameObject mobcrushButton;
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public UILabel clientVersion;
 
-	7. An incorrect path was provided to AssetRipper.
+	public UILabel playerID;
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	public UILabel configsVersion;
 
-	*/
+	private RadicalRoutine mCountdown;
+
+	private GameObject mLastClickedGameObject;
+
+	public void InitControls()
+	{
+		UISlider uISlider = musicSlider;
+		uISlider.onValueChange = (UISlider.OnValueChange)Delegate.Combine(uISlider.onValueChange, (UISlider.OnValueChange)delegate(float val)
+		{
+			SoundsManager.Instance.musicVolume = val;
+		});
+		UISlider uISlider2 = sfxSlider;
+		uISlider2.onValueChange = (UISlider.OnValueChange)Delegate.Combine(uISlider2.onValueChange, (UISlider.OnValueChange)delegate(float val)
+		{
+			SoundsManager.Instance.soundsVolume = val;
+		});
+		UIEventListener uIEventListener = UIEventListener.Get(musicSlider.gameObject);
+		uIEventListener.onPress = (UIEventListener.BoolDelegate)Delegate.Combine(uIEventListener.onPress, new UIEventListener.BoolDelegate(OnMusicPress));
+		UIEventListener uIEventListener2 = UIEventListener.Get(sfxSlider.gameObject);
+		uIEventListener2.onPress = (UIEventListener.BoolDelegate)Delegate.Combine(uIEventListener2.onPress, new UIEventListener.BoolDelegate(OnEffectPress));
+		UIEventListener uIEventListener3 = UIEventListener.Get(underSliders.gameObject);
+		uIEventListener3.onPress = (UIEventListener.BoolDelegate)Delegate.Combine(uIEventListener3.onPress, new UIEventListener.BoolDelegate(OnUnderPress));
+		UIEventListener uIEventListener4 = UIEventListener.Get(restorePurchasesButton.gameObject);
+		uIEventListener4.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener4.onClick, (UIEventListener.VoidDelegate)delegate
+		{
+			Singleton<BeanstalkServerManager>.instance.RestoreTransactions();
+		});
+		UIEventListener uIEventListener5 = UIEventListener.Get(languageButton.gameObject);
+		uIEventListener5.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener5.onClick, (UIEventListener.VoidDelegate)delegate
+		{
+			Singleton<GuiManager>.instance.ShowDialog(GuiElementSingle<LanguageDialog>.instance, 0f);
+		});
+		UIEventListener uIEventListener6 = UIEventListener.Get(creditsButton.gameObject);
+		uIEventListener6.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener6.onClick, (UIEventListener.VoidDelegate)delegate
+		{
+			Singleton<GuiManager>.instance.ShowDialog(GuiElementSingle<CreditsDialog>.instance, 0f);
+		});
+		UIEventListener uIEventListener7 = UIEventListener.Get(privacyButton.gameObject);
+		uIEventListener7.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener7.onClick, (UIEventListener.VoidDelegate)delegate
+		{
+			Singleton<GuiManager>.instance.ShowDialog(GuiElementSingle<PrivacyDialog>.instance, 0f);
+		});
+		UIEventListener uIEventListener8 = UIEventListener.Get(googlePlayAchievmentsButton);
+		uIEventListener8.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener8.onClick, new UIEventListener.VoidDelegate(GooglePlayAchievementsClick));
+		UIEventListener uIEventListener9 = UIEventListener.Get(eaButton.gameObject);
+		uIEventListener9.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener9.onClick, (UIEventListener.VoidDelegate)delegate
+		{
+			Application.OpenURL("http://www.about-fun.com/warfriends-answershq");
+		});
+		UIEventListener uIEventListener10 = UIEventListener.Get(bugButton.gameObject);
+		uIEventListener10.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener10.onClick, (UIEventListener.VoidDelegate)delegate
+		{
+			Application.OpenURL("http://www.about-fun.com/warfriends-reportissue");
+		});
+		UIEventListener uIEventListener11 = UIEventListener.Get(wikiButton.gameObject);
+		uIEventListener11.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener11.onClick, (UIEventListener.VoidDelegate)delegate
+		{
+			Application.OpenURL("http://www.about-fun.com/warfriends-wiki");
+		});
+		UIEventListener uIEventListener12 = UIEventListener.Get(mobcrushButton.gameObject);
+		uIEventListener12.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener12.onClick, (UIEventListener.VoidDelegate)delegate
+		{
+			Application.OpenURL("http://www.about-fun.com/warfriends-mobcrush");
+		});
+	}
+
+	private void OnMusicPress(GameObject go, bool clicked)
+	{
+		if (clicked)
+		{
+			soundEffectsCollider.enabled = false;
+			StopCoutdown();
+		}
+		else
+		{
+			StartCoutdown();
+			mLastClickedGameObject = go;
+		}
+	}
+
+	private void OnEffectPress(GameObject go, bool clicked)
+	{
+		if (clicked)
+		{
+			musicCollider.enabled = false;
+			StopCoutdown();
+		}
+		else
+		{
+			StartCoutdown();
+			mLastClickedGameObject = go;
+		}
+	}
+
+	private void OnUnderPress(GameObject go, bool clicked)
+	{
+		if (clicked)
+		{
+			if (mLastClickedGameObject != go)
+			{
+				StopCoutdown();
+			}
+		}
+		else
+		{
+			StartCoutdown();
+			mLastClickedGameObject = go;
+		}
+	}
+
+	private void GooglePlayAchievementsClick(GameObject go)
+	{
+		if (GameLoginManager.currentPlayer.isGooglePlayConnected && Singleton<GooglePlayGameService>.instance.isLoggedIn)
+		{
+			Singleton<GooglePlayGameService>.instance.ShowAchievementsUI();
+		}
+		else
+		{
+			GameLoginManager.instance.LoginToGoogle();
+		}
+	}
+
+	public void InitGUIValues()
+	{
+		musicSlider.sliderValue = SoundsManager.Instance.musicVolume;
+		sfxSlider.sliderValue = SoundsManager.Instance.soundsVolume;
+		soundEffectsCollider.enabled = true;
+		musicCollider.enabled = true;
+		clientVersion.text = string.Format("{0} {1}", Localization.Localize("ID_VERSION"), Singleton<CurrentBundleVersion>.instance.version);
+		playerID.text = Localization.LocalizeFormat("ID_PLAYERIDNUMBER", GameLoginManager.currentPlayer.id);
+		configsVersion.text = Localization.LocalizeFormat("ID_CONFIGURATIONSVERSION", Singleton<CurrentBundleVersion>.instance.shortVersion, GameConfigurationManager.instance.data.sheetConfiguration);
+	}
+
+	public void DoBeforeHide()
+	{
+		StopCoutdown();
+	}
+
+	public void StartCoutdown()
+	{
+		StopCoutdown();
+		mCountdown = RadicalRoutine.Create(Countdown());
+		StartCoroutine(RadicalRoutine.Run(mCountdown.enumerator));
+	}
+
+	private void StopCoutdown()
+	{
+		if (mCountdown != null)
+		{
+			mCountdown.Cancel();
+			mCountdown = null;
+		}
+	}
+
+	private IEnumerator Countdown()
+	{
+		yield return new WaitForRealSeconds(0.4f);
+		soundEffectsCollider.enabled = true;
+		musicCollider.enabled = true;
+	}
 }

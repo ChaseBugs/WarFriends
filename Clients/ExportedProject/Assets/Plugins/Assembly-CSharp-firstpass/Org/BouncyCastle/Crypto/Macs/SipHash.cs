@@ -1,66 +1,185 @@
-using UnityEngine;
+using System;
+using Org.BouncyCastle.Crypto.Parameters;
+using Org.BouncyCastle.Crypto.Utilities;
 
 namespace Org.BouncyCastle.Crypto.Macs
 {
-	public class SipHash : MonoBehaviour
+public class SipHash : IMac
+{
+	protected readonly int c;
+
+	protected readonly int d;
+
+	protected long k0;
+
+	protected long k1;
+
+	protected long v0;
+
+	protected long v1;
+
+	protected long v2;
+
+	protected long v3;
+
+	protected long m;
+
+	protected int wordPos;
+
+	protected int wordCount;
+
+	public virtual string AlgorithmName => "SipHash-" + c + "-" + d;
+
+	public SipHash()
+		: this(2, 4)
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
 	}
+
+	public SipHash(int c, int d)
+	{
+		this.c = c;
+		this.d = d;
+	}
+
+	public virtual int GetMacSize()
+	{
+		return 8;
+	}
+
+	public virtual void Init(ICipherParameters parameters)
+	{
+		if (!(parameters is KeyParameter keyParameter))
+		{
+			throw new ArgumentException("must be an instance of KeyParameter", "parameters");
+		}
+		byte[] key = keyParameter.GetKey();
+		if (key.Length != 16)
+		{
+			throw new ArgumentException("must be a 128-bit key", "parameters");
+		}
+		k0 = (long)Pack.LE_To_UInt64(key, 0);
+		k1 = (long)Pack.LE_To_UInt64(key, 8);
+		Reset();
+	}
+
+	public virtual void Update(byte input)
+	{
+		m = ((long)((ulong)(m) >> (8))) | (long)((ulong)input << 56);
+		if (++wordPos == 8)
+		{
+			ProcessMessageWord();
+			wordPos = 0;
+		}
+	}
+
+	public virtual void BlockUpdate(byte[] input, int offset, int length)
+	{
+		int i = 0;
+		int num = length & -8;
+		if (wordPos == 0)
+		{
+			for (; i < num; i += 8)
+			{
+				m = (long)Pack.LE_To_UInt64(input, offset + i);
+				ProcessMessageWord();
+			}
+			for (; i < length; i++)
+			{
+				m = ((long)((ulong)(m) >> (8))) | (long)((ulong)input[offset + i] << 56);
+			}
+			wordPos = length - num;
+			return;
+		}
+		int num2 = wordPos << 3;
+		for (; i < num; i += 8)
+		{
+			ulong num3 = Pack.LE_To_UInt64(input, offset + i);
+			m = (long)(num3 << num2) | ((long)((ulong)(m) >> (-num2)));
+			ProcessMessageWord();
+			m = (long)num3;
+		}
+		for (; i < length; i++)
+		{
+			m = ((long)((ulong)(m) >> (8))) | (long)((ulong)input[offset + i] << 56);
+			if (++wordPos == 8)
+			{
+				ProcessMessageWord();
+				wordPos = 0;
+			}
+		}
+	}
+
+	public virtual long DoFinal()
+	{
+		m = (long)((ulong)m >> (7 - wordPos << 3));
+		m = (long)((ulong)m >> (8));
+		m |= (long)((wordCount << 3) + wordPos) << 56;
+		ProcessMessageWord();
+		v2 ^= 255L;
+		ApplySipRounds(d);
+		long result = v0 ^ v1 ^ v2 ^ v3;
+		Reset();
+		return result;
+	}
+
+	public virtual int DoFinal(byte[] output, int outOff)
+	{
+		long n = DoFinal();
+		Pack.UInt64_To_LE((ulong)n, output, outOff);
+		return 8;
+	}
+
+	public virtual void Reset()
+	{
+		v0 = k0 ^ 0x736F6D6570736575L;
+		v1 = k1 ^ 0x646F72616E646F6DL;
+		v2 = k0 ^ 0x6C7967656E657261L;
+		v3 = k1 ^ 0x7465646279746573L;
+		m = 0L;
+		wordPos = 0;
+		wordCount = 0;
+	}
+
+	protected virtual void ProcessMessageWord()
+	{
+		wordCount++;
+		v3 ^= m;
+		ApplySipRounds(c);
+		v0 ^= m;
+	}
+
+	protected virtual void ApplySipRounds(int n)
+	{
+		long num = v0;
+		long num2 = v1;
+		long num3 = v2;
+		long num4 = v3;
+		for (int i = 0; i < n; i++)
+		{
+			num += num2;
+			num3 += num4;
+			num2 = RotateLeft(num2, 13);
+			num4 = RotateLeft(num4, 16);
+			num2 ^= num;
+			num4 ^= num3;
+			num = RotateLeft(num, 32);
+			num3 += num2;
+			num += num4;
+			num2 = RotateLeft(num2, 17);
+			num4 = RotateLeft(num4, 21);
+			num2 ^= num3;
+			num4 ^= num;
+			num3 = RotateLeft(num3, 32);
+		}
+		v0 = num;
+		v1 = num2;
+		v2 = num3;
+		v3 = num4;
+	}
+
+	protected static long RotateLeft(long x, int n)
+	{
+		return (x << n) | ((long)((ulong)(x) >> (-n)));
+	}
+}
 }

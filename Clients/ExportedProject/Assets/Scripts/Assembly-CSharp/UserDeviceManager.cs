@@ -1,63 +1,112 @@
+using System.Collections.Generic;
+using Beebyte.Obfuscator;
+using CodeStage.AdvancedFPSCounter;
+using Google2u;
+using Newtonsoft.Json;
 using UnityEngine;
 
-public class UserDeviceManager : MonoBehaviour
+[Skip]
+public class UserDeviceManager : DatabaseSerializedObjectGeneric<UserDeviceManager.UserDevices>
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Skip]
+	public class UserDevices
+	{
+		public Dictionary<string, UserDevice> userDevices = new Dictionary<string, UserDevice>();
+	}
 
-	1. No dll files were provided to AssetRipper.
+	[Skip]
+	public class UserDevice
+	{
+		public List<int> lastAverageFps = new List<int>();
+	}
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	private static UserDeviceManager mInstance;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public static UserDeviceManager instance
+	{
+		get
+		{
+			mInstance = mInstance ?? ((UserDeviceManager)Object.FindObjectsOfType(typeof(UserDeviceManager))[0]);
+			return mInstance;
+		}
+	}
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public void OnDestroy()
+	{
+		mInstance = null;
+	}
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	protected override void Awake()
+	{
+		base.Awake();
+		Singleton<GameController>.instance.GameEnded += InstanceOnGameEnded;
+		Singleton<BeanstalkServerManager>.instance.AfterPlayerDataLoaded += OnInstanceOnAfterPlayerDataLoaded;
+	}
 
-	3. Assembly Reconstruction has not been implemented.
+	private void OnInstanceOnAfterPlayerDataLoaded()
+	{
+		Debug.Log("IS SLOW DEVICE?? " + ((!IsSlowDevice()) ? "NO" : "YES"));
+	}
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	private void InstanceOnGameEnded(GameController.GameEndReason gameEndReason)
+	{
+		string deviceModel = SystemInfo.deviceModel;
+		if (!data.userDevices.TryGetValue(deviceModel, out var value))
+		{
+			value = new UserDevice();
+			data.userDevices.Add(deviceModel, value);
+		}
+		if (value.lastAverageFps.Count > 4)
+		{
+			for (int i = 0; i < value.lastAverageFps.Count - 1; i++)
+			{
+				value.lastAverageFps[i] = value.lastAverageFps[i + 1];
+			}
+			value.lastAverageFps[value.lastAverageFps.Count - 1] = AFPSCounter.Instance.fpsCounter.lastAverageValue;
+		}
+		else
+		{
+			value.lastAverageFps.Add(AFPSCounter.Instance.fpsCounter.lastAverageValue);
+		}
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public Tuple<string, string> GetUserDeviceData()
+	{
+		string deviceModel = SystemInfo.deviceModel;
+		if (data.userDevices.ContainsKey(deviceModel))
+		{
+			return new Tuple<string, string>(deviceModel, JsonConvert.SerializeObject(data.userDevices[deviceModel]));
+		}
+		return null;
+	}
 
-	4. This script is unnecessary.
+	public float GetAverageMatchFPS()
+	{
+		string deviceModel = SystemInfo.deviceModel;
+		if (!data.userDevices.TryGetValue(deviceModel, out var value) && data.userDevices.Count > 0)
+		{
+			using (Dictionary<string, UserDevice>.Enumerator enumerator = data.userDevices.GetEnumerator())
+			{
+			if (enumerator.MoveNext())
+			{
+				value = enumerator.Current.Value;
+			}
+				}
+}
+		if (value != null)
+		{
+			float num = 0f;
+			foreach (int lastAverageFp in value.lastAverageFps)
+			{
+				num += (float)lastAverageFp;
+			}
+			return num / (float)value.lastAverageFps.Count;
+		}
+		return 0f;
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
-
-	5. Script Content Level 0
-
-		AssetRipper was set to not load any script information.
-
-	6. Cpp2IL failed to decompile Il2Cpp data
-
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public bool IsSlowDevice()
+	{
+		return GetAverageMatchFPS() < Singleton<GameVariables>.instance.matchMakingConstants.GetRow(MatchMakingConstants.rowIds.MatchmakingMinAverageFps).FLOATVALUE;
+	}
 }

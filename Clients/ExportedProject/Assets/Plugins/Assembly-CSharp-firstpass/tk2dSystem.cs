@@ -1,63 +1,125 @@
+using System;
 using UnityEngine;
 
-public class tk2dSystem : MonoBehaviour
+public class tk2dSystem : ScriptableObject
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public const string guidPrefix = "tk2d/tk2d_";
 
-	1. No dll files were provided to AssetRipper.
+	public const string assetName = "tk2d/tk2dSystem";
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public const string assetFileName = "tk2dSystem.asset";
 
-	2. Incorrect dll files were provided to AssetRipper.
+	[NonSerialized]
+	public tk2dAssetPlatform[] assetPlatforms = new tk2dAssetPlatform[3]
+	{
+		new tk2dAssetPlatform("1x", 1f),
+		new tk2dAssetPlatform("2x", 2f),
+		new tk2dAssetPlatform("4x", 4f)
+	};
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	private static tk2dSystem _inst;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	private static string currentPlatform = string.Empty;
 
-	3. Assembly Reconstruction has not been implemented.
+	[SerializeField]
+	private tk2dResourceTocEntry[] allResourceEntries = new tk2dResourceTocEntry[0];
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public static tk2dSystem inst
+	{
+		get
+		{
+			if (_inst == null)
+			{
+				_inst = Resources.Load("tk2d/tk2dSystem", typeof(tk2dSystem)) as tk2dSystem;
+				if (_inst == null)
+				{
+					_inst = ScriptableObject.CreateInstance<tk2dSystem>();
+				}
+				UnityEngine.Object.DontDestroyOnLoad(_inst);
+			}
+			return _inst;
+		}
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public static tk2dSystem inst_NoCreate
+	{
+		get
+		{
+			if (_inst == null)
+			{
+				_inst = Resources.Load("tk2d/tk2dSystem", typeof(tk2dSystem)) as tk2dSystem;
+			}
+			return _inst;
+		}
+	}
 
-	4. This script is unnecessary.
+	public static string CurrentPlatform
+	{
+		get
+		{
+			return currentPlatform;
+		}
+		set
+		{
+			if (value != currentPlatform)
+			{
+				currentPlatform = value;
+			}
+		}
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public static bool OverrideBuildMaterial => false;
 
-	5. Script Content Level 0
+	private tk2dSystem()
+	{
+	}
 
-		AssetRipper was set to not load any script information.
+	public static tk2dAssetPlatform GetAssetPlatform(string platform)
+	{
+		tk2dSystem tk2dSystem2 = inst_NoCreate;
+		if (tk2dSystem2 == null)
+		{
+			return null;
+		}
+		for (int i = 0; i < tk2dSystem2.assetPlatforms.Length; i++)
+		{
+			if (tk2dSystem2.assetPlatforms[i].name == platform)
+			{
+				return tk2dSystem2.assetPlatforms[i];
+			}
+		}
+		return null;
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	private T LoadResourceByGUIDImpl<T>(string guid) where T : UnityEngine.Object
+	{
+		tk2dResource tk2dResource2 = Resources.Load("tk2d/tk2d_" + guid, typeof(tk2dResource)) as tk2dResource;
+		if (tk2dResource2 != null)
+		{
+			return tk2dResource2.objectReference as T;
+		}
+		return (T)null;
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	private T LoadResourceByNameImpl<T>(string name) where T : UnityEngine.Object
+	{
+		for (int i = 0; i < allResourceEntries.Length; i++)
+		{
+			if (allResourceEntries[i] != null && allResourceEntries[i].assetName == name)
+			{
+				return LoadResourceByGUIDImpl<T>(allResourceEntries[i].assetGUID);
+			}
+		}
+		return (T)null;
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	public static T LoadResourceByGUID<T>(string guid) where T : UnityEngine.Object
+	{
+		return inst.LoadResourceByGUIDImpl<T>(guid);
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public static T LoadResourceByName<T>(string guid) where T : UnityEngine.Object
+	{
+		return inst.LoadResourceByNameImpl<T>(guid);
+	}
 }

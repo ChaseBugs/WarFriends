@@ -1,0 +1,14 @@
+namespace FuseMisc
+{
+public enum FuseError
+{
+	NONE,
+	NOT_CONNECTED,
+	REQUEST_FAILED,
+	SERVER_ERROR,
+	BAD_DATA,
+	SESSION_FAILURE,
+	INVALID_REQUEST,
+	UNDEFINED
+}
+}

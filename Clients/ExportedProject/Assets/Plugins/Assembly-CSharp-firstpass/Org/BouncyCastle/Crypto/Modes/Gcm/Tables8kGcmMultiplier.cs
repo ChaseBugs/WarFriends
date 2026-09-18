@@ -1,66 +1,92 @@
-using UnityEngine;
+using Org.BouncyCastle.Crypto.Utilities;
+using Org.BouncyCastle.Utilities;
 
 namespace Org.BouncyCastle.Crypto.Modes.Gcm
 {
-	public class Tables8kGcmMultiplier : MonoBehaviour
+public class Tables8kGcmMultiplier : IGcmMultiplier
+{
+	private byte[] H;
+
+	private uint[][][] M;
+
+	public void Init(byte[] H)
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
+		if (M == null)
+		{
+			M = new uint[32][][];
+		}
+		else if (Arrays.AreEqual(this.H, H))
+		{
+			return;
+		}
+		this.H = Arrays.Clone(H);
+		M[0] = new uint[16][];
+		M[1] = new uint[16][];
+		M[0][0] = new uint[4];
+		M[1][0] = new uint[4];
+		M[1][8] = GcmUtilities.AsUints(H);
+		for (int num = 4; num >= 1; num >>= 1)
+		{
+			uint[] array = (uint[])M[1][num + num].Clone();
+			GcmUtilities.MultiplyP(array);
+			M[1][num] = array;
+		}
+		uint[] array2 = (uint[])M[1][1].Clone();
+		GcmUtilities.MultiplyP(array2);
+		M[0][8] = array2;
+		for (int num2 = 4; num2 >= 1; num2 >>= 1)
+		{
+			uint[] array3 = (uint[])M[0][num2 + num2].Clone();
+			GcmUtilities.MultiplyP(array3);
+			M[0][num2] = array3;
+		}
+		int num3 = 0;
+		while (true)
+		{
+			for (int i = 2; i < 16; i += i)
+			{
+				for (int j = 1; j < i; j++)
+				{
+					uint[] array4 = (uint[])M[num3][i].Clone();
+					GcmUtilities.Xor(array4, M[num3][j]);
+					M[num3][i + j] = array4;
+				}
+			}
+			if (++num3 == 32)
+			{
+				break;
+			}
+			if (num3 > 1)
+			{
+				M[num3] = new uint[16][];
+				M[num3][0] = new uint[4];
+				for (int num4 = 8; num4 > 0; num4 >>= 1)
+				{
+					uint[] array5 = (uint[])M[num3 - 2][num4].Clone();
+					GcmUtilities.MultiplyP8(array5);
+					M[num3][num4] = array5;
+				}
+			}
+		}
 	}
+
+	public void MultiplyH(byte[] x)
+	{
+		uint[] array = new uint[4];
+		for (int num = 15; num >= 0; num--)
+		{
+			uint[] array2 = M[num + num][x[num] & 0xF];
+			array[0] ^= array2[0];
+			array[1] ^= array2[1];
+			array[2] ^= array2[2];
+			array[3] ^= array2[3];
+			array2 = M[num + num + 1][(x[num] & 0xF0) >> 4];
+			array[0] ^= array2[0];
+			array[1] ^= array2[1];
+			array[2] ^= array2[2];
+			array[3] ^= array2[3];
+		}
+		Pack.UInt32_To_BE(array, x, 0);
+	}
+}
 }

@@ -1,63 +1,72 @@
 using UnityEngine;
 
-public class PlayerStatsScreenRecord : MonoBehaviour
+public class PlayerStatsScreenRecord : PoolableObject
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Header("Header")]
+	public UILabel titleLabel;
 
-	1. No dll files were provided to AssetRipper.
+	[Header("Content")]
+	public UILabel contentLabel;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	[Header("Left Part")]
+	public UISprite medalsIcon;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public UISprite leagueIcon;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public UISprite missionIcon;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public GameObject coopIcon;
 
-	3. Assembly Reconstruction has not been implemented.
+	public UISprite starsIcon;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public UISprite armyPowerIcon;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public UISprite squadPointsIcon;
 
-	4. This script is unnecessary.
-
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
-
-	5. Script Content Level 0
-
-		AssetRipper was set to not load any script information.
-
-	6. Cpp2IL failed to decompile Il2Cpp data
-
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public void Init(OverallStats.PlayerStat statToShow)
+	{
+		titleLabel.text = statToShow.statisticsName;
+		MiscTools.SetUILabelRescale(titleLabel, 37f, 20f, 500);
+		contentLabel.color = ((statToShow.statisticsType == OverallStats.PlayerStat.StatType.ArmyPower) ? Colours.greenArmyPower : ((statToShow.statisticsType != OverallStats.PlayerStat.StatType.SquadPoints) ? Colours.blue : Colours.goldWar));
+		switch (statToShow.statisticsType)
+		{
+		case OverallStats.PlayerStat.StatType.SimpleInt:
+		case OverallStats.PlayerStat.StatType.Medals:
+		case OverallStats.PlayerStat.StatType.ArmyPower:
+		case OverallStats.PlayerStat.StatType.SquadPoints:
+			contentLabel.text = ((statToShow.statisticSimpleInt >= 0) ? MiscTools.FormatBigNumber(statToShow.statisticSimpleInt) : "-");
+			break;
+		case OverallStats.PlayerStat.StatType.SimpleFloat:
+			contentLabel.text = ((!(statToShow.statisticsSimpleFloat < 0f)) ? MiscTools.FormatFloatNumberRoundOne(statToShow.statisticsSimpleFloat) : "-");
+			break;
+		case OverallStats.PlayerStat.StatType.SimplePercent:
+			contentLabel.text = ((statToShow.statisticSimpleInt >= 0) ? MiscTools.FormatNumberAsPercent(statToShow.statisticSimpleInt) : "-");
+			break;
+		case OverallStats.PlayerStat.StatType.SimpleTime:
+			contentLabel.text = MiscTools.PrintableWholeTime(statToShow.statisticSimpleInt, showSeconds: false);
+			break;
+		case OverallStats.PlayerStat.StatType.SimpleIntInt:
+		case OverallStats.PlayerStat.StatType.Missions:
+		case OverallStats.PlayerStat.StatType.Coop:
+		case OverallStats.PlayerStat.StatType.Stars:
+			contentLabel.text = $"{MiscTools.FormatBigNumber(statToShow.statisticSimpleInt)} {Colours.stringGrayLight}/ {MiscTools.FormatBigNumber(statToShow.statisticsSecondInt)}";
+			break;
+		case OverallStats.PlayerStat.StatType.League:
+			contentLabel.text = GameVariables.leagueNames[statToShow.statisticsLeague].Value1;
+			leagueIcon.alpha = ((statToShow.statisticsLeague != League.NoLeague) ? 1f : 0f);
+			leagueIcon.spriteName = GameVariables.leagueNames[statToShow.statisticsLeague].Value2;
+			leagueIcon.MakePixelPerfect();
+			break;
+		case OverallStats.PlayerStat.StatType.SimpleLong:
+			contentLabel.text = ((statToShow.statisticSimpleLong >= 0) ? MiscTools.FormatBigNumberLong(statToShow.statisticSimpleLong) : "-");
+			break;
+		}
+		medalsIcon.gameObject.SetActive(statToShow.statisticsType == OverallStats.PlayerStat.StatType.Medals);
+		leagueIcon.gameObject.SetActive(statToShow.statisticsType == OverallStats.PlayerStat.StatType.League);
+		missionIcon.gameObject.SetActive(statToShow.statisticsType == OverallStats.PlayerStat.StatType.Missions);
+		coopIcon.SetActive(statToShow.statisticsType == OverallStats.PlayerStat.StatType.Coop);
+		starsIcon.gameObject.SetActive(statToShow.statisticsType == OverallStats.PlayerStat.StatType.Stars);
+		armyPowerIcon.gameObject.SetActive(statToShow.statisticsType == OverallStats.PlayerStat.StatType.ArmyPower);
+		squadPointsIcon.gameObject.SetActive(statToShow.statisticsType == OverallStats.PlayerStat.StatType.SquadPoints);
+	}
 }

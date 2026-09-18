@@ -1,66 +1,179 @@
 using UnityEngine;
+using UnityEngine.Events;
 
 namespace CodeStage.AntiCheat.Detectors
 {
-	public class ObscuredCheatingDetector : MonoBehaviour
+[AddComponentMenu("Code Stage/Anti-Cheat Toolkit/Obscured Cheating Detector")]
+public class ObscuredCheatingDetector : ActDetectorBase
+{
+	internal const string COMPONENT_NAME = "Obscured Cheating Detector";
+
+	private static int instancesInScene;
+
+	[Tooltip("Max allowed difference between encrypted and fake values in ObscuredFloat. Increase in case of false positives.")]
+	public float floatEpsilon = 0.0001f;
+
+	[Tooltip("Max allowed difference between encrypted and fake values in ObscuredVector2. Increase in case of false positives.")]
+	public float vector2Epsilon = 0.1f;
+
+	[Tooltip("Max allowed difference between encrypted and fake values in ObscuredVector3. Increase in case of false positives.")]
+	public float vector3Epsilon = 0.1f;
+
+	[Tooltip("Max allowed difference between encrypted and fake values in ObscuredQuaternion. Increase in case of false positives.")]
+	public float quaternionEpsilon = 0.1f;
+
+	public static ObscuredCheatingDetector Instance { get; private set; }
+
+	private static ObscuredCheatingDetector GetOrCreateInstance
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
+		get
+		{
+			if (Instance != null)
+			{
+				return Instance;
+			}
+			if (ActDetectorBase.detectorsContainer == null)
+			{
+				ActDetectorBase.detectorsContainer = new GameObject("Anti-Cheat Toolkit Detectors");
+			}
+			Instance = ActDetectorBase.detectorsContainer.AddComponent<ObscuredCheatingDetector>();
+			return Instance;
+		}
 	}
+
+	internal static bool IsRunning => (object)Instance != null && Instance.isRunning;
+
+	private ObscuredCheatingDetector()
+	{
+	}
+
+	public static void StartDetection()
+	{
+		if (Instance != null)
+		{
+			Instance.StartDetectionInternal(null);
+		}
+		else
+		{
+			Debug.LogError("[ACTk] Obscured Cheating Detector can't be started since it doesn't exists in scene or not yet initialized!");
+		}
+	}
+
+	public static void StartDetection(UnityAction callback)
+	{
+		GetOrCreateInstance.StartDetectionInternal(callback);
+	}
+
+	public static void StopDetection()
+	{
+		if (Instance != null)
+		{
+			Instance.StopDetectionInternal();
+		}
+	}
+
+	public static void Dispose()
+	{
+		if (Instance != null)
+		{
+			Instance.DisposeInternal();
+		}
+	}
+
+	private void Awake()
+	{
+		instancesInScene++;
+		if (Init(Instance, "Obscured Cheating Detector"))
+		{
+			Instance = this;
+		}
+	}
+
+	protected override void OnDestroy()
+	{
+		base.OnDestroy();
+		instancesInScene--;
+	}
+
+	private void OnLevelWasLoaded(int index)
+	{
+		if (instancesInScene < 2)
+		{
+			if (!keepAlive)
+			{
+				DisposeInternal();
+			}
+		}
+		else if (!keepAlive && Instance != this)
+		{
+			DisposeInternal();
+		}
+	}
+
+	private void StartDetectionInternal(UnityAction callback)
+	{
+		if (isRunning)
+		{
+			Debug.LogWarning("[ACTk] Obscured Cheating Detector already running!", this);
+			return;
+		}
+		if (!base.enabled)
+		{
+			Debug.LogWarning("[ACTk] Obscured Cheating Detector disabled but StartDetection still called from somewhere (see stack trace for this message)!", this);
+			return;
+		}
+		if (callback != null && detectionEventHasListener)
+		{
+			Debug.LogWarning("[ACTk] Obscured Cheating Detector has properly configured Detection Event in the inspector, but still get started with Action callback. Both Action and Detection Event will be called on detection. Are you sure you wish to do this?", this);
+		}
+		if (callback == null && !detectionEventHasListener)
+		{
+			Debug.LogWarning("[ACTk] Obscured Cheating Detector was started without any callbacks. Please configure Detection Event in the inspector, or pass the callback Action to the StartDetection method.", this);
+			base.enabled = false;
+		}
+		else
+		{
+			detectionAction = callback;
+			started = true;
+			isRunning = true;
+		}
+	}
+
+	protected override void StartDetectionAutomatically()
+	{
+		StartDetectionInternal(null);
+	}
+
+	protected override void PauseDetector()
+	{
+		isRunning = false;
+	}
+
+	protected override void ResumeDetector()
+	{
+		if (detectionAction != null || detectionEventHasListener)
+		{
+			isRunning = true;
+		}
+	}
+
+	protected override void StopDetectionInternal()
+	{
+		if (started)
+		{
+			detectionAction = null;
+			started = false;
+			isRunning = false;
+		}
+	}
+
+	protected override void DisposeInternal()
+	{
+		base.DisposeInternal();
+		if (Instance == this)
+		{
+			Instance = null;
+		}
+	}
+}
 }

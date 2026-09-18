@@ -1,63 +1,294 @@
+using System;
+using System.Collections.Generic;
+using ExitGames.Client.Photon;
 using UnityEngine;
 
-public class PhotonPlayer : MonoBehaviour
+public class PhotonPlayer : IComparable<PhotonPlayer>, IComparable<int>, IEquatable<PhotonPlayer>, IEquatable<int>
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	private int actorID = -1;
 
-	1. No dll files were provided to AssetRipper.
+	private string nameField = string.Empty;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public readonly bool IsLocal;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public object TagObject;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public int ID => actorID;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public string NickName
+	{
+		get
+		{
+			return nameField;
+		}
+		set
+		{
+			if (!IsLocal)
+			{
+				Debug.LogError("Error: Cannot change the name of a remote player!");
+			}
+			else if (!string.IsNullOrEmpty(value) && !value.Equals(nameField))
+			{
+				nameField = value;
+				PhotonNetwork.playerName = value;
+			}
+		}
+	}
 
-	3. Assembly Reconstruction has not been implemented.
+	public string UserId { get; internal set; }
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public bool IsMasterClient => PhotonNetwork.networkingPeer.mMasterClientId == ID;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public bool IsInactive { get; set; }
 
-	4. This script is unnecessary.
+	public Hashtable CustomProperties { get; internal set; }
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public Hashtable AllProperties
+	{
+		get
+		{
+			Hashtable hashtable = new Hashtable();
+			hashtable.Merge(CustomProperties);
+			hashtable[byte.MaxValue] = NickName;
+			return hashtable;
+		}
+	}
 
-	5. Script Content Level 0
+	[Obsolete("Please use NickName (updated case for naming).")]
+	public string name
+	{
+		get
+		{
+			return NickName;
+		}
+		set
+		{
+			NickName = value;
+		}
+	}
 
-		AssetRipper was set to not load any script information.
+	[Obsolete("Please use UserId (updated case for naming).")]
+	public string userId
+	{
+		get
+		{
+			return UserId;
+		}
+		internal set
+		{
+			UserId = value;
+		}
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	[Obsolete("Please use IsLocal (updated case for naming).")]
+	public bool isLocal => IsLocal;
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	[Obsolete("Please use IsMasterClient (updated case for naming).")]
+	public bool isMasterClient => IsMasterClient;
 
-	7. An incorrect path was provided to AssetRipper.
+	[Obsolete("Please use IsInactive (updated case for naming).")]
+	public bool isInactive
+	{
+		get
+		{
+			return IsInactive;
+		}
+		set
+		{
+			IsInactive = value;
+		}
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	[Obsolete("Please use CustomProperties (updated case for naming).")]
+	public Hashtable customProperties
+	{
+		get
+		{
+			return CustomProperties;
+		}
+		internal set
+		{
+			CustomProperties = value;
+		}
+	}
 
-	*/
+	[Obsolete("Please use AllProperties (updated case for naming).")]
+	public Hashtable allProperties => AllProperties;
+
+	public PhotonPlayer(bool isLocal, int actorID, string name)
+	{
+		CustomProperties = new Hashtable();
+		IsLocal = isLocal;
+		this.actorID = actorID;
+		nameField = name;
+	}
+
+	protected internal PhotonPlayer(bool isLocal, int actorID, Hashtable properties)
+	{
+		CustomProperties = new Hashtable();
+		IsLocal = isLocal;
+		this.actorID = actorID;
+		InternalCacheProperties(properties);
+	}
+
+	public override bool Equals(object p)
+	{
+		return p is PhotonPlayer photonPlayer && GetHashCode() == photonPlayer.GetHashCode();
+	}
+
+	public override int GetHashCode()
+	{
+		return ID;
+	}
+
+	internal void InternalChangeLocalID(int newID)
+	{
+		if (!IsLocal)
+		{
+			Debug.LogError("ERROR You should never change PhotonPlayer IDs!");
+		}
+		else
+		{
+			actorID = newID;
+		}
+	}
+
+	internal void InternalCacheProperties(Hashtable properties)
+	{
+		if (properties != null && properties.Count != 0 && !CustomProperties.Equals(properties))
+		{
+			if (properties.ContainsKey(byte.MaxValue))
+			{
+				nameField = (string)properties[byte.MaxValue];
+			}
+			if (properties.ContainsKey((byte)253))
+			{
+				UserId = (string)properties[(byte)253];
+			}
+			if (properties.ContainsKey((byte)254))
+			{
+				IsInactive = (bool)properties[(byte)254];
+			}
+			CustomProperties.MergeStringKeys(properties);
+			CustomProperties.StripKeysWithNullValues();
+		}
+	}
+
+	public void SetCustomProperties(Hashtable propertiesToSet, Hashtable expectedValues = null, bool webForward = false)
+	{
+		if (propertiesToSet != null)
+		{
+			Hashtable hashtable = propertiesToSet.StripToStringKeys();
+			Hashtable hashtable2 = expectedValues.StripToStringKeys();
+			bool flag = hashtable2 == null || hashtable2.Count == 0;
+			bool flag2 = actorID > 0 && !PhotonNetwork.offlineMode;
+			if (flag)
+			{
+				CustomProperties.Merge(hashtable);
+				CustomProperties.StripKeysWithNullValues();
+			}
+			if (flag2)
+			{
+				PhotonNetwork.networkingPeer.OpSetPropertiesOfActor(actorID, hashtable, hashtable2, webForward);
+			}
+			if (!flag2 || flag)
+			{
+				InternalCacheProperties(hashtable);
+				NetworkingPeer.SendMonoMessage(PhotonNetworkingMessage.OnPhotonPlayerPropertiesChanged, this, hashtable);
+			}
+		}
+	}
+
+	public static PhotonPlayer Find(int ID)
+	{
+		if (PhotonNetwork.networkingPeer != null)
+		{
+			return PhotonNetwork.networkingPeer.GetPlayerWithId(ID);
+		}
+		return null;
+	}
+
+	public PhotonPlayer Get(int id)
+	{
+		return Find(id);
+	}
+
+	public PhotonPlayer GetNext()
+	{
+		return GetNextFor(ID);
+	}
+
+	public PhotonPlayer GetNextFor(PhotonPlayer currentPlayer)
+	{
+		if (currentPlayer == null)
+		{
+			return null;
+		}
+		return GetNextFor(currentPlayer.ID);
+	}
+
+	public PhotonPlayer GetNextFor(int currentPlayerId)
+	{
+		if (PhotonNetwork.networkingPeer == null || PhotonNetwork.networkingPeer.mActors == null || PhotonNetwork.networkingPeer.mActors.Count < 2)
+		{
+			return null;
+		}
+		Dictionary<int, PhotonPlayer> mActors = PhotonNetwork.networkingPeer.mActors;
+		int num = int.MaxValue;
+		int num2 = currentPlayerId;
+		foreach (int key in mActors.Keys)
+		{
+			if (key < num2)
+			{
+				num2 = key;
+			}
+			else if (key > currentPlayerId && key < num)
+			{
+				num = key;
+			}
+		}
+		return (num == int.MaxValue) ? mActors[num2] : mActors[num];
+	}
+
+	public int CompareTo(PhotonPlayer other)
+	{
+		if (other == null)
+		{
+			return 0;
+		}
+		return GetHashCode().CompareTo(other.GetHashCode());
+	}
+
+	public int CompareTo(int other)
+	{
+		return GetHashCode().CompareTo(other);
+	}
+
+	public bool Equals(PhotonPlayer other)
+	{
+		if (other == null)
+		{
+			return false;
+		}
+		return GetHashCode().Equals(other.GetHashCode());
+	}
+
+	public bool Equals(int other)
+	{
+		return GetHashCode().Equals(other);
+	}
+
+	public override string ToString()
+	{
+		if (string.IsNullOrEmpty(NickName))
+		{
+			return string.Format("#{0:00}{1}{2}", ID, (!IsInactive) ? " " : " (inactive)", (!IsMasterClient) ? string.Empty : "(master)");
+		}
+		return string.Format("'{0}'{1}{2}", NickName, (!IsInactive) ? " " : " (inactive)", (!IsMasterClient) ? string.Empty : "(master)");
+	}
+
+	public string ToStringFull()
+	{
+		return string.Format("#{0:00} '{1}'{2} {3}", ID, NickName, (!IsInactive) ? string.Empty : " (inactive)", CustomProperties.ToStringFull());
+	}
 }

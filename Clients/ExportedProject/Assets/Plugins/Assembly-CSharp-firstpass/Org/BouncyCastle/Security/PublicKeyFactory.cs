@@ -1,66 +1,186 @@
-using UnityEngine;
+using System;
+using System.IO;
+using Org.BouncyCastle.Asn1;
+using Org.BouncyCastle.Asn1.CryptoPro;
+using Org.BouncyCastle.Asn1.Oiw;
+using Org.BouncyCastle.Asn1.Pkcs;
+using Org.BouncyCastle.Asn1.X509;
+using Org.BouncyCastle.Asn1.X9;
+using Org.BouncyCastle.Crypto;
+using Org.BouncyCastle.Crypto.Generators;
+using Org.BouncyCastle.Crypto.Parameters;
+using Org.BouncyCastle.Math;
+using Org.BouncyCastle.Math.EC;
 
 namespace Org.BouncyCastle.Security
 {
-	public class PublicKeyFactory : MonoBehaviour
+public sealed class PublicKeyFactory
+{
+	private PublicKeyFactory()
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
 	}
+
+	public static AsymmetricKeyParameter CreateKey(byte[] keyInfoData)
+	{
+		return CreateKey(SubjectPublicKeyInfo.GetInstance(Asn1Object.FromByteArray(keyInfoData)));
+	}
+
+	public static AsymmetricKeyParameter CreateKey(Stream inStr)
+	{
+		return CreateKey(SubjectPublicKeyInfo.GetInstance(Asn1Object.FromStream(inStr)));
+	}
+
+	public static AsymmetricKeyParameter CreateKey(SubjectPublicKeyInfo keyInfo)
+	{
+		AlgorithmIdentifier algorithmID = keyInfo.AlgorithmID;
+		DerObjectIdentifier objectID = algorithmID.ObjectID;
+		if (objectID.Equals(PkcsObjectIdentifiers.RsaEncryption) || objectID.Equals(X509ObjectIdentifiers.IdEARsa) || objectID.Equals(PkcsObjectIdentifiers.IdRsassaPss) || objectID.Equals(PkcsObjectIdentifiers.IdRsaesOaep))
+		{
+			RsaPublicKeyStructure instance = RsaPublicKeyStructure.GetInstance(keyInfo.GetPublicKey());
+			return new RsaKeyParameters(isPrivate: false, instance.Modulus, instance.PublicExponent);
+		}
+		if (objectID.Equals(X9ObjectIdentifiers.DHPublicNumber))
+		{
+			Asn1Sequence instance2 = Asn1Sequence.GetInstance(algorithmID.Parameters.ToAsn1Object());
+			DHPublicKey instance3 = DHPublicKey.GetInstance(keyInfo.GetPublicKey());
+			BigInteger value = instance3.Y.Value;
+			if (IsPkcsDHParam(instance2))
+			{
+				return ReadPkcsDHParam(objectID, value, instance2);
+			}
+			DHDomainParameters instance4 = DHDomainParameters.GetInstance(instance2);
+			BigInteger value2 = instance4.P.Value;
+			BigInteger value3 = instance4.G.Value;
+			BigInteger value4 = instance4.Q.Value;
+			BigInteger j = null;
+			if (instance4.J != null)
+			{
+				j = instance4.J.Value;
+			}
+			DHValidationParameters validation = null;
+			DHValidationParms validationParms = instance4.ValidationParms;
+			if (validationParms != null)
+			{
+				byte[] bytes = validationParms.Seed.GetBytes();
+				BigInteger value5 = validationParms.PgenCounter.Value;
+				validation = new DHValidationParameters(bytes, value5.IntValue);
+			}
+			return new DHPublicKeyParameters(value, new DHParameters(value2, value3, value4, j, validation));
+		}
+		if (objectID.Equals(PkcsObjectIdentifiers.DhKeyAgreement))
+		{
+			Asn1Sequence instance5 = Asn1Sequence.GetInstance(algorithmID.Parameters.ToAsn1Object());
+			DerInteger derInteger = (DerInteger)keyInfo.GetPublicKey();
+			return ReadPkcsDHParam(objectID, derInteger.Value, instance5);
+		}
+		if (objectID.Equals(OiwObjectIdentifiers.ElGamalAlgorithm))
+		{
+			ElGamalParameter elGamalParameter = new ElGamalParameter(Asn1Sequence.GetInstance(algorithmID.Parameters.ToAsn1Object()));
+			DerInteger derInteger2 = (DerInteger)keyInfo.GetPublicKey();
+			return new ElGamalPublicKeyParameters(derInteger2.Value, new ElGamalParameters(elGamalParameter.P, elGamalParameter.G));
+		}
+		if (objectID.Equals(X9ObjectIdentifiers.IdDsa) || objectID.Equals(OiwObjectIdentifiers.DsaWithSha1))
+		{
+			DerInteger derInteger3 = (DerInteger)keyInfo.GetPublicKey();
+			Asn1Encodable parameters = algorithmID.Parameters;
+			DsaParameters parameters2 = null;
+			if (parameters != null)
+			{
+				DsaParameter instance6 = DsaParameter.GetInstance(parameters.ToAsn1Object());
+				parameters2 = new DsaParameters(instance6.P, instance6.Q, instance6.G);
+			}
+			return new DsaPublicKeyParameters(derInteger3.Value, parameters2);
+		}
+		if (objectID.Equals(X9ObjectIdentifiers.IdECPublicKey))
+		{
+			X962Parameters x962Parameters = new X962Parameters(algorithmID.Parameters.ToAsn1Object());
+			X9ECParameters x9ECParameters = ((!x962Parameters.IsNamedCurve) ? new X9ECParameters((Asn1Sequence)x962Parameters.Parameters) : ECKeyPairGenerator.FindECCurveByOid((DerObjectIdentifier)x962Parameters.Parameters));
+			Asn1OctetString s = new DerOctetString(keyInfo.PublicKeyData.GetBytes());
+			X9ECPoint x9ECPoint = new X9ECPoint(x9ECParameters.Curve, s);
+			ECPoint point = x9ECPoint.Point;
+			if (x962Parameters.IsNamedCurve)
+			{
+				return new ECPublicKeyParameters("EC", point, (DerObjectIdentifier)x962Parameters.Parameters);
+			}
+			ECDomainParameters parameters3 = new ECDomainParameters(x9ECParameters.Curve, x9ECParameters.G, x9ECParameters.N, x9ECParameters.H, x9ECParameters.GetSeed());
+			return new ECPublicKeyParameters(point, parameters3);
+		}
+		if (objectID.Equals(CryptoProObjectIdentifiers.GostR3410x2001))
+		{
+			Gost3410PublicKeyAlgParameters gost3410PublicKeyAlgParameters = new Gost3410PublicKeyAlgParameters((Asn1Sequence)algorithmID.Parameters);
+			Asn1OctetString asn1OctetString;
+			try
+			{
+				asn1OctetString = (Asn1OctetString)keyInfo.GetPublicKey();
+			}
+			catch (IOException)
+			{
+				throw new ArgumentException("invalid info structure in GOST3410 public key");
+			}
+			byte[] octets = asn1OctetString.GetOctets();
+			byte[] array = new byte[32];
+			byte[] array2 = new byte[32];
+			for (int i = 0; i != array2.Length; i++)
+			{
+				array[i] = octets[31 - i];
+			}
+			for (int k = 0; k != array.Length; k++)
+			{
+				array2[k] = octets[63 - k];
+			}
+			ECDomainParameters byOid = ECGost3410NamedCurves.GetByOid(gost3410PublicKeyAlgParameters.PublicKeyParamSet);
+			if (byOid == null)
+			{
+				return null;
+			}
+			ECPoint q = byOid.Curve.CreatePoint(new BigInteger(1, array), new BigInteger(1, array2));
+			return new ECPublicKeyParameters("ECGOST3410", q, gost3410PublicKeyAlgParameters.PublicKeyParamSet);
+		}
+		if (objectID.Equals(CryptoProObjectIdentifiers.GostR3410x94))
+		{
+			Gost3410PublicKeyAlgParameters gost3410PublicKeyAlgParameters2 = new Gost3410PublicKeyAlgParameters((Asn1Sequence)algorithmID.Parameters);
+			DerOctetString derOctetString;
+			try
+			{
+				derOctetString = (DerOctetString)keyInfo.GetPublicKey();
+			}
+			catch (IOException)
+			{
+				throw new ArgumentException("invalid info structure in GOST3410 public key");
+			}
+			byte[] octets2 = derOctetString.GetOctets();
+			byte[] array3 = new byte[octets2.Length];
+			for (int l = 0; l != octets2.Length; l++)
+			{
+				array3[l] = octets2[octets2.Length - 1 - l];
+			}
+			BigInteger y = new BigInteger(1, array3);
+			return new Gost3410PublicKeyParameters(y, gost3410PublicKeyAlgParameters2.PublicKeyParamSet);
+		}
+		throw new SecurityUtilityException("algorithm identifier in key not recognised: " + objectID);
+	}
+
+	private static bool IsPkcsDHParam(Asn1Sequence seq)
+	{
+		if (seq.Count == 2)
+		{
+			return true;
+		}
+		if (seq.Count > 3)
+		{
+			return false;
+		}
+		DerInteger instance = DerInteger.GetInstance(seq[2]);
+		DerInteger instance2 = DerInteger.GetInstance(seq[0]);
+		return instance.Value.CompareTo(BigInteger.ValueOf(instance2.Value.BitLength)) <= 0;
+	}
+
+	private static DHPublicKeyParameters ReadPkcsDHParam(DerObjectIdentifier algOid, BigInteger y, Asn1Sequence seq)
+	{
+		DHParameter dHParameter = new DHParameter(seq);
+		int l = dHParameter.L?.IntValue ?? 0;
+		DHParameters parameters = new DHParameters(dHParameter.P, dHParameter.G, null, l);
+		return new DHPublicKeyParameters(y, parameters, algOid);
+	}
+}
 }

@@ -1,63 +1,116 @@
-using UnityEngine;
-
-public class LevelUpUnlock : MonoBehaviour
+public class LevelUpUnlock
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public enum ItemType
+	{
+		None,
+		UnitUnlock,
+		WeaponUnlock,
+		MapUnlock,
+		WarpathUnlock,
+		JoinSquadUnlock,
+		CreateSquadUnlock,
+		WarCardsUnlock,
+		DogTagRefill,
+		GoldReceived,
+		InstantBattleUnlock,
+		WarArenaUnlock
+	}
 
-	1. No dll files were provided to AssetRipper.
+	public ItemType type;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public LevelBehaviour unit;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public WeaponLevelsSetup weapon;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public MapManager.MapEntry mapEntry;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public int goldReward;
 
-	3. Assembly Reconstruction has not been implemented.
+	public static LevelUpUnlock CreateGold(int gold)
+	{
+		LevelUpUnlock levelUpUnlock = new LevelUpUnlock();
+		levelUpUnlock.type = ItemType.GoldReceived;
+		levelUpUnlock.goldReward = gold;
+		return levelUpUnlock;
+	}
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public static LevelUpUnlock CreateDogTag()
+	{
+		LevelUpUnlock levelUpUnlock = new LevelUpUnlock();
+		levelUpUnlock.type = ItemType.DogTagRefill;
+		return levelUpUnlock;
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public static LevelUpUnlock CreateWarCards()
+	{
+		LevelUpUnlock levelUpUnlock = new LevelUpUnlock();
+		levelUpUnlock.type = ItemType.WarCardsUnlock;
+		return levelUpUnlock;
+	}
 
-	4. This script is unnecessary.
+	public static LevelUpUnlock CreateSquadCreate()
+	{
+		LevelUpUnlock levelUpUnlock = new LevelUpUnlock();
+		levelUpUnlock.type = ItemType.CreateSquadUnlock;
+		return levelUpUnlock;
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public static LevelUpUnlock CreateSquadJoin()
+	{
+		LevelUpUnlock levelUpUnlock = new LevelUpUnlock();
+		levelUpUnlock.type = ItemType.JoinSquadUnlock;
+		return levelUpUnlock;
+	}
 
-	5. Script Content Level 0
+	public static LevelUpUnlock CreateWarpath()
+	{
+		LevelUpUnlock levelUpUnlock = new LevelUpUnlock();
+		levelUpUnlock.type = ItemType.WarpathUnlock;
+		return levelUpUnlock;
+	}
 
-		AssetRipper was set to not load any script information.
+	public static LevelUpUnlock CreateMap(MapManager.MapEntry map)
+	{
+		LevelUpUnlock levelUpUnlock = new LevelUpUnlock();
+		levelUpUnlock.type = ItemType.MapUnlock;
+		levelUpUnlock.mapEntry = map;
+		return levelUpUnlock;
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public static LevelUpUnlock CreateWeapon(WeaponLevelsSetup setup)
+	{
+		LevelUpUnlock levelUpUnlock = new LevelUpUnlock();
+		levelUpUnlock.type = ItemType.WeaponUnlock;
+		levelUpUnlock.weapon = setup;
+		return levelUpUnlock;
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public static LevelUpUnlock CreateUnit(LevelBehaviour army)
+	{
+		LevelUpUnlock levelUpUnlock = new LevelUpUnlock();
+		levelUpUnlock.type = ItemType.UnitUnlock;
+		levelUpUnlock.unit = army;
+		return levelUpUnlock;
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	public static LevelUpUnlock CreateInstantBattle()
+	{
+		LevelUpUnlock levelUpUnlock = new LevelUpUnlock();
+		levelUpUnlock.type = ItemType.InstantBattleUnlock;
+		return levelUpUnlock;
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	public static LevelUpUnlock CreateWarArena()
+	{
+		LevelUpUnlock levelUpUnlock = new LevelUpUnlock();
+		levelUpUnlock.type = ItemType.WarArenaUnlock;
+		return levelUpUnlock;
+	}
 
-	*/
+	public static LevelUpUnlock CreateEmpty()
+	{
+		LevelUpUnlock levelUpUnlock = new LevelUpUnlock();
+		levelUpUnlock.type = ItemType.None;
+		return levelUpUnlock;
+	}
 }

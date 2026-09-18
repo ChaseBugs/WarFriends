@@ -11,3 +11,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7176b3584352012813c132fbfa8f2b0c, type: 3}
   m_Name: WarArenaRulePlayerHp
   m_EditorClassIdentifier:
+  data:
+    showRule: 1
+    playerHp: 0

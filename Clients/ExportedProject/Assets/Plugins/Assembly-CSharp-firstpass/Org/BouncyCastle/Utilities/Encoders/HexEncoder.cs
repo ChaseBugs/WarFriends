@@ -1,66 +1,109 @@
-using UnityEngine;
+using System.IO;
 
 namespace Org.BouncyCastle.Utilities.Encoders
 {
-	public class HexEncoder : MonoBehaviour
+public class HexEncoder : IEncoder
+{
+	protected readonly byte[] encodingTable = new byte[16]
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
+		48, 49, 50, 51, 52, 53, 54, 55, 56, 57,
+		97, 98, 99, 100, 101, 102
+	};
 
-		1. No dll files were provided to AssetRipper.
+	protected readonly byte[] decodingTable = new byte[128];
 
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
+	public HexEncoder()
+	{
+		InitialiseDecodingTable();
 	}
+
+	protected void InitialiseDecodingTable()
+	{
+		Arrays.Fill(decodingTable, byte.MaxValue);
+		for (int i = 0; i < encodingTable.Length; i++)
+		{
+			decodingTable[encodingTable[i]] = (byte)i;
+		}
+		decodingTable[65] = decodingTable[97];
+		decodingTable[66] = decodingTable[98];
+		decodingTable[67] = decodingTable[99];
+		decodingTable[68] = decodingTable[100];
+		decodingTable[69] = decodingTable[101];
+		decodingTable[70] = decodingTable[102];
+	}
+
+	public int Encode(byte[] data, int off, int length, Stream outStream)
+	{
+		for (int i = off; i < off + length; i++)
+		{
+			int num = data[i];
+			outStream.WriteByte(encodingTable[num >> 4]);
+			outStream.WriteByte(encodingTable[num & 0xF]);
+		}
+		return length * 2;
+	}
+
+	private static bool Ignore(char c)
+	{
+		return c == '\n' || c == '\r' || c == '\t' || c == ' ';
+	}
+
+	public int Decode(byte[] data, int off, int length, Stream outStream)
+	{
+		int num = 0;
+		int num2 = off + length;
+		while (num2 > off && Ignore((char)data[num2 - 1]))
+		{
+			num2--;
+		}
+		int i = off;
+		while (i < num2)
+		{
+			for (; i < num2 && Ignore((char)data[i]); i++)
+			{
+			}
+			byte b = decodingTable[data[i++]];
+			for (; i < num2 && Ignore((char)data[i]); i++)
+			{
+			}
+			byte b2 = decodingTable[data[i++]];
+			if ((b | b2) >= 128)
+			{
+				throw new IOException("invalid characters encountered in Hex data");
+			}
+			outStream.WriteByte((byte)((b << 4) | b2));
+			num++;
+		}
+		return num;
+	}
+
+	public int DecodeString(string data, Stream outStream)
+	{
+		int num = 0;
+		int num2 = data.Length;
+		while (num2 > 0 && Ignore(data[num2 - 1]))
+		{
+			num2--;
+		}
+		int i = 0;
+		while (i < num2)
+		{
+			for (; i < num2 && Ignore(data[i]); i++)
+			{
+			}
+			byte b = decodingTable[(uint)data[i++]];
+			for (; i < num2 && Ignore(data[i]); i++)
+			{
+			}
+			byte b2 = decodingTable[(uint)data[i++]];
+			if ((b | b2) >= 128)
+			{
+				throw new IOException("invalid characters encountered in Hex data");
+			}
+			outStream.WriteByte((byte)((b << 4) | b2));
+			num++;
+		}
+		return num;
+	}
+}
 }

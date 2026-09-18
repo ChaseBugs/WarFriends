@@ -1,63 +1,176 @@
+using System;
 using UnityEngine;
 
-public class InputController : MonoBehaviour
+public class InputController : Singleton<InputController>
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public class RawSwipeInputController
+	{
+		private int? mFingerId;
 
-	1. No dll files were provided to AssetRipper.
+		private Vector2? mSwipePosition;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+		private Vector2 mSwipeStart;
 
-	2. Incorrect dll files were provided to AssetRipper.
+		private Vector2 mSwipeEnd;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+		private bool mSwipeDone;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+		private bool mSwipeStarted;
 
-	3. Assembly Reconstruction has not been implemented.
+		public bool swiping => mFingerId.HasValue;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+		public bool swipeStarted => mSwipeStarted;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+		public bool swipeDone => mSwipeDone;
 
-	4. This script is unnecessary.
+		public Vector2 swipeStart => mSwipeStart;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+		public Vector2 swipeEnd => mSwipeEnd;
 
-	5. Script Content Level 0
+		public Vector2 swipePosition => (!mSwipePosition.HasValue) ? Vector2.zero : mSwipePosition.Value;
 
-		AssetRipper was set to not load any script information.
+		public void Update()
+		{
+			mSwipeDone = false;
+			mSwipeStarted = false;
+			if (!mFingerId.HasValue && Input.GetMouseButton(0))
+			{
+				mFingerId = 0;
+				mSwipeStarted = true;
+				mSwipeStart = Input.mousePosition;
+			}
+			if (mFingerId.HasValue)
+			{
+				if (Input.GetMouseButtonUp(0))
+				{
+					mSwipeDone = true;
+					mSwipeEnd = Input.mousePosition;
+				}
+				mSwipePosition = Input.mousePosition;
+				if (!mSwipePosition.HasValue || mSwipeDone)
+				{
+					mFingerId = null;
+				}
+			}
+		}
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public float timeToDetectTap = 0.1f;
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public float swipeMinLength = 0.05f;
 
-	7. An incorrect path was provided to AssetRipper.
+	private float diagonal;
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	private Vector3 mPressPos;
 
-	*/
+	private bool mIsTapping;
+
+	private bool mIsTapStarted;
+
+	private bool mIsSwipe;
+
+	private bool mSwipeEnded;
+
+	private Vector3 mSwipePosition;
+
+	private bool mClickProcessed;
+
+	private float mAccumTime;
+
+	private RawSwipeInputController mRawSwipeInput = new RawSwipeInputController();
+
+	public bool isTapping => mIsTapping;
+
+	public bool isTappingStarted => mIsTapStarted;
+
+	public RawSwipeInputController rawSwipeInput => mRawSwipeInput;
+
+	public bool isSwipe => mIsSwipe;
+
+	public bool swipeEnded => mSwipeEnded;
+
+	public Vector3 pressPosition => mPressPos;
+
+	public Vector3 touchPosition => Input.mousePosition;
+
+	public Vector3 swipePosition => mSwipePosition;
+
+	protected override void Awake()
+	{
+		base.Awake();
+		mRawSwipeInput = new RawSwipeInputController();
+		diagonal = (float)Math.Sqrt(Screen.width * Screen.width + Screen.height * Screen.height);
+	}
+
+	protected override void Start()
+	{
+		base.Start();
+		Debug.LogWarningFormat("InputController - Start");
+	}
+
+	protected void Update()
+	{
+		mRawSwipeInput.Update();
+		mIsTapStarted = false;
+		mSwipeEnded = false;
+		if (!Input.GetMouseButton(0) && mClickProcessed)
+		{
+			mIsTapping = false;
+		}
+		if (Input.GetMouseButtonUp(0))
+		{
+			if (!mClickProcessed)
+			{
+				mClickProcessed = true;
+				if (Vector3.Distance(Input.mousePosition, pressPosition) > swipeMinLength * diagonal)
+				{
+					mIsSwipe = true;
+					mIsTapping = false;
+				}
+				else
+				{
+					mIsSwipe = false;
+					mIsTapping = true;
+					mIsTapStarted = true;
+				}
+			}
+			if (mIsSwipe)
+			{
+				mSwipePosition = Input.mousePosition;
+				mSwipeEnded = true;
+			}
+		}
+		if (Input.GetMouseButtonDown(0))
+		{
+			mPressPos = Input.mousePosition;
+			mClickProcessed = false;
+			mIsTapStarted = false;
+			mAccumTime = 0f - Time.unscaledDeltaTime;
+		}
+		if (!Input.GetMouseButton(0))
+		{
+			return;
+		}
+		mAccumTime += Time.unscaledDeltaTime;
+		if (mAccumTime > timeToDetectTap && !mClickProcessed)
+		{
+			mClickProcessed = true;
+			if (Vector3.Distance(Input.mousePosition, pressPosition) > swipeMinLength * diagonal)
+			{
+				mIsSwipe = true;
+				mIsTapping = false;
+			}
+			else
+			{
+				mIsSwipe = false;
+				mIsTapping = true;
+				mIsTapStarted = true;
+			}
+		}
+	}
+
+	public void CancelClick()
+	{
+		mClickProcessed = true;
+	}
 }

@@ -1,66 +1,175 @@
-using UnityEngine;
+using System;
+using Org.BouncyCastle.Crypto.Parameters;
+using Org.BouncyCastle.Crypto.Utilities;
 
 namespace Org.BouncyCastle.Crypto.Engines
 {
-	public class NoekeonEngine : MonoBehaviour
+public class NoekeonEngine : IBlockCipher
+{
+	private const int GenericSize = 16;
+
+	private static readonly uint[] nullVector = new uint[4];
+
+	private static readonly uint[] roundConstants = new uint[17]
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
+		128u, 27u, 54u, 108u, 216u, 171u, 77u, 154u, 47u, 94u,
+		188u, 99u, 198u, 151u, 53u, 106u, 212u
+	};
 
-		1. No dll files were provided to AssetRipper.
+	private uint[] state = new uint[4];
 
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
+	private uint[] subKeys = new uint[4];
 
-		2. Incorrect dll files were provided to AssetRipper.
+	private uint[] decryptKeys = new uint[4];
 
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
+	private bool _initialised;
 
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	private bool _forEncryption;
 
-		3. Assembly Reconstruction has not been implemented.
+	public virtual string AlgorithmName => "Noekeon";
 
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
+	public virtual bool IsPartialBlockOkay => false;
 
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
+	public NoekeonEngine()
+	{
+		_initialised = false;
 	}
+
+	public virtual int GetBlockSize()
+	{
+		return 16;
+	}
+
+	public virtual void Init(bool forEncryption, ICipherParameters parameters)
+	{
+		if (!(parameters is KeyParameter))
+		{
+			throw new ArgumentException("Invalid parameters passed to Noekeon init - " + parameters.GetType().Name, "parameters");
+		}
+		_forEncryption = forEncryption;
+		_initialised = true;
+		KeyParameter keyParameter = (KeyParameter)parameters;
+		setKey(keyParameter.GetKey());
+	}
+
+	public virtual int ProcessBlock(byte[] input, int inOff, byte[] output, int outOff)
+	{
+		if (!_initialised)
+		{
+			throw new InvalidOperationException(AlgorithmName + " not initialised");
+		}
+		Check.DataLength(input, inOff, 16, "input buffer too short");
+		Check.OutputLength(output, outOff, 16, "output buffer too short");
+		return (!_forEncryption) ? decryptBlock(input, inOff, output, outOff) : encryptBlock(input, inOff, output, outOff);
+	}
+
+	public virtual void Reset()
+	{
+	}
+
+	private void setKey(byte[] key)
+	{
+		subKeys[0] = Pack.BE_To_UInt32(key, 0);
+		subKeys[1] = Pack.BE_To_UInt32(key, 4);
+		subKeys[2] = Pack.BE_To_UInt32(key, 8);
+		subKeys[3] = Pack.BE_To_UInt32(key, 12);
+	}
+
+	private int encryptBlock(byte[] input, int inOff, byte[] output, int outOff)
+	{
+		state[0] = Pack.BE_To_UInt32(input, inOff);
+		state[1] = Pack.BE_To_UInt32(input, inOff + 4);
+		state[2] = Pack.BE_To_UInt32(input, inOff + 8);
+		state[3] = Pack.BE_To_UInt32(input, inOff + 12);
+		int i;
+		for (i = 0; i < 16; i++)
+		{
+			state[0] ^= roundConstants[i];
+			theta(state, subKeys);
+			pi1(state);
+			gamma(state);
+			pi2(state);
+		}
+		state[0] ^= roundConstants[i];
+		theta(state, subKeys);
+		Pack.UInt32_To_BE(state[0], output, outOff);
+		Pack.UInt32_To_BE(state[1], output, outOff + 4);
+		Pack.UInt32_To_BE(state[2], output, outOff + 8);
+		Pack.UInt32_To_BE(state[3], output, outOff + 12);
+		return 16;
+	}
+
+	private int decryptBlock(byte[] input, int inOff, byte[] output, int outOff)
+	{
+		state[0] = Pack.BE_To_UInt32(input, inOff);
+		state[1] = Pack.BE_To_UInt32(input, inOff + 4);
+		state[2] = Pack.BE_To_UInt32(input, inOff + 8);
+		state[3] = Pack.BE_To_UInt32(input, inOff + 12);
+		Array.Copy(subKeys, 0, decryptKeys, 0, subKeys.Length);
+		theta(decryptKeys, nullVector);
+		int num;
+		for (num = 16; num > 0; num--)
+		{
+			theta(state, decryptKeys);
+			state[0] ^= roundConstants[num];
+			pi1(state);
+			gamma(state);
+			pi2(state);
+		}
+		theta(state, decryptKeys);
+		state[0] ^= roundConstants[num];
+		Pack.UInt32_To_BE(state[0], output, outOff);
+		Pack.UInt32_To_BE(state[1], output, outOff + 4);
+		Pack.UInt32_To_BE(state[2], output, outOff + 8);
+		Pack.UInt32_To_BE(state[3], output, outOff + 12);
+		return 16;
+	}
+
+	private void gamma(uint[] a)
+	{
+		a[1] ^= ~a[3] & ~a[2];
+		a[0] ^= a[2] & a[1];
+		uint num = a[3];
+		a[3] = a[0];
+		a[0] = num;
+		a[2] ^= a[0] ^ a[1] ^ a[3];
+		a[1] ^= ~a[3] & ~a[2];
+		a[0] ^= a[2] & a[1];
+	}
+
+	private void theta(uint[] a, uint[] k)
+	{
+		uint num = a[0] ^ a[2];
+		num ^= rotl(num, 8) ^ rotl(num, 24);
+		a[1] ^= num;
+		a[3] ^= num;
+		for (int i = 0; i < 4; i++)
+		{
+			a[i] ^= k[i];
+		}
+		num = a[1] ^ a[3];
+		num ^= rotl(num, 8) ^ rotl(num, 24);
+		a[0] ^= num;
+		a[2] ^= num;
+	}
+
+	private void pi1(uint[] a)
+	{
+		a[1] = rotl(a[1], 1);
+		a[2] = rotl(a[2], 5);
+		a[3] = rotl(a[3], 2);
+	}
+
+	private void pi2(uint[] a)
+	{
+		a[1] = rotl(a[1], 31);
+		a[2] = rotl(a[2], 27);
+		a[3] = rotl(a[3], 30);
+	}
+
+	private uint rotl(uint x, int y)
+	{
+		return (x << y) | (x >> 32 - y);
+	}
+}
 }

@@ -1,63 +1,253 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
-public class MapManager : MonoBehaviour
+public class MapManager : Singleton<MapManager>
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Serializable]
+	public class MapEntry
+	{
+		public int id;
 
-	1. No dll files were provided to AssetRipper.
+		public string name;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+		public string levelSingleName;
 
-	2. Incorrect dll files were provided to AssetRipper.
+		public string levelPVPName;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+		public string guiName;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+		public string iconName;
 
-	3. Assembly Reconstruction has not been implemented.
+		public int unlockLevel;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+		public bool local;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+		public string bundleNameSingle;
 
-	4. This script is unnecessary.
+		public string bundleNameMultiplayer;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+		public bool unlocked => LevelManager.instance.currentLevel.displayNumber >= unlockLevel || DebugSettings.debugEnabled;
 
-	5. Script Content Level 0
+		public string sceneName
+		{
+			get
+			{
+				if (Singleton<GameController>.instance.isCoop || Singleton<GameController>.instance.isCampaign)
+				{
+					return levelSingleName;
+				}
+				return levelPVPName;
+			}
+		}
+	}
 
-		AssetRipper was set to not load any script information.
+	public MapDefinition currentMapDef;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public bool levelIsChanging;
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public List<MapEntry> mapEntries;
 
-	7. An incorrect path was provided to AssetRipper.
+	private AsyncOperation async;
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	private MapEntry mCurrentMap;
 
-	*/
+	private bool mIsRandom;
+
+	private List<Transform> transforms = new List<Transform>();
+
+	public MapEntry currentMap
+	{
+		get
+		{
+			if (mCurrentMap == null)
+			{
+				mCurrentMap = mapEntries[0];
+			}
+			return mCurrentMap;
+		}
+		set
+		{
+			mCurrentMap = value;
+			mIsRandom = false;
+		}
+	}
+
+	public bool isRandomMap => mIsRandom;
+
+	public int unlockedmaps
+	{
+		get
+		{
+			int num = 0;
+			foreach (MapEntry mapEntry in mapEntries)
+			{
+				if (mapEntry.unlocked)
+				{
+					num++;
+				}
+			}
+			return num;
+		}
+	}
+
+	public float loadProgress => async.progress;
+
+	public List<MapEntry> mapUnlocks
+	{
+		get
+		{
+			List<MapEntry> list = new List<MapEntry>();
+			foreach (MapEntry mapEntry in mapEntries)
+			{
+				if (mapEntry.unlockLevel == LevelManager.instance.currentLevel.displayNumber)
+				{
+					list.Add(mapEntry);
+				}
+			}
+			return list;
+		}
+	}
+
+	public event Action NewLevelLoaded;
+
+	public void SetRandomMap()
+	{
+		mIsRandom = true;
+		List<MapEntry> list = new List<MapEntry>();
+		foreach (MapEntry mapEntry in mapEntries)
+		{
+			if (mapEntry.unlocked)
+			{
+				list.Add(mapEntry);
+			}
+		}
+		if (list.Count == 0)
+		{
+			list.Add(mapEntries[0]);
+		}
+		mCurrentMap = list[UnityEngine.Random.Range(0, list.Count)];
+	}
+
+	public void SelectCurrentMap(string mapName)
+	{
+		foreach (MapEntry mapEntry in mapEntries)
+		{
+			if (mapEntry.name == mapName)
+			{
+				currentMap = mapEntry;
+				break;
+			}
+		}
+	}
+
+	public void SelectCurrentMap(int id)
+	{
+		currentMap = mapEntries[id];
+	}
+
+	protected override void Awake()
+	{
+		base.Awake();
+		GetCurrentMapDefinition();
+		currentMap = mapEntries[0];
+		foreach (MapEntry mapEntry in mapEntries)
+		{
+			mapEntry.guiName = Localization.Localize(mapEntry.guiName);
+		}
+	}
+
+	private void GetCurrentMapDefinition()
+	{
+		GameObject[] array = GameObject.FindGameObjectsWithTag(TagsAndLayers.mapDefinition);
+		GameObject[] array2 = array;
+		foreach (GameObject gameObject in array2)
+		{
+			MapDefinition component = gameObject.GetComponent<MapDefinition>();
+			if (component != null && component != currentMapDef)
+			{
+				currentMapDef = component;
+				currentMapDef.Init();
+			}
+		}
+	}
+
+	public void LoadNewlevel(string levelName)
+	{
+		StartCoroutine(Load(levelName));
+		levelIsChanging = true;
+	}
+
+	public MapEntry GetSceneName(string levelName)
+	{
+		foreach (MapEntry mapEntry in mapEntries)
+		{
+			if (mapEntry.name == levelName)
+			{
+				return mapEntry;
+			}
+		}
+		Debug.LogError("Scene could not be find");
+		return null;
+	}
+
+	private void FindChild(Transform tr)
+	{
+		foreach (Transform item in tr)
+		{
+			FindChild(item);
+		}
+		transforms.Add(tr);
+	}
+
+	public void DestroyCurrentScene()
+	{
+		if (currentMapDef != null)
+		{
+			UnityEngine.Object.Destroy(currentMapDef.gameObject);
+			currentMapDef = null;
+		}
+	}
+
+	public void DeactivateScene()
+	{
+		if (currentMapDef != null)
+		{
+			currentMapDef.gameObject.SetActive(value: false);
+		}
+	}
+
+	public IEnumerator Load(string levelName)
+	{
+		MapEntry mapEntry = Singleton<MapManager>.instance.GetSceneName(levelName);
+		if (currentMapDef == null || currentMapDef.levelName != mapEntry.sceneName)
+		{
+			Debug.Log("Load map");
+			if (currentMapDef != null && currentMapDef.gameObject != null)
+			{
+				UnityEngine.Object.Destroy(currentMapDef.gameObject);
+			}
+			Application.backgroundLoadingPriority = ThreadPriority.High;
+			AsyncOperation async = Application.LoadLevelAsync(mapEntry.sceneName);
+			async.allowSceneActivation = true;
+			yield return async;
+			Debug.Log("GetCurrentMapDefinition");
+			GetCurrentMapDefinition();
+		}
+		if (this.NewLevelLoaded != null)
+		{
+			this.NewLevelLoaded();
+		}
+		Debug.Log("Map Loaded");
+		yield return null;
+	}
+
+	public void ResyncShields()
+	{
+		foreach (MapDefinition.DefendPosition playersPosition in currentMapDef.playersPositions)
+		{
+			playersPosition.point.shield.Resync();
+		}
+	}
 }

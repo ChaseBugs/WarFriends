@@ -1,66 +1,117 @@
-using UnityEngine;
+using System;
+using System.Collections.Generic;
+using System.Reflection;
 
 namespace FullSerializer.Internal
 {
-	public class fsVersionManager : MonoBehaviour
+public static class fsVersionManager
+{
+	private static readonly Dictionary<Type, fsOption<fsVersionedType>> _cache = new Dictionary<Type, fsOption<fsVersionedType>>();
+
+	public static fsResult GetVersionImportPath(string currentVersion, fsVersionedType targetVersion, out List<fsVersionedType> path)
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
+		path = new List<fsVersionedType>();
+		if (!GetVersionImportPathRecursive(path, currentVersion, targetVersion))
+		{
+			return fsResult.Fail("There is no migration path from \"" + currentVersion + "\" to \"" + targetVersion.VersionString + "\"");
+		}
+		path.Add(targetVersion);
+		return fsResult.Success;
 	}
+
+	private static bool GetVersionImportPathRecursive(List<fsVersionedType> path, string currentVersion, fsVersionedType current)
+	{
+		for (int i = 0; i < current.Ancestors.Length; i++)
+		{
+			fsVersionedType fsVersionedType2 = current.Ancestors[i];
+			if (fsVersionedType2.VersionString == currentVersion || GetVersionImportPathRecursive(path, currentVersion, fsVersionedType2))
+			{
+				path.Add(fsVersionedType2);
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public static fsOption<fsVersionedType> GetVersionedType(Type type)
+	{
+		if (!_cache.TryGetValue(type, out var value))
+		{
+			fsObjectAttribute attribute = fsPortableReflection.GetAttribute<fsObjectAttribute>(type);
+			if (attribute != null && (!string.IsNullOrEmpty(attribute.VersionString) || attribute.PreviousModels != null))
+			{
+				if (attribute.PreviousModels != null && string.IsNullOrEmpty(attribute.VersionString))
+				{
+					throw new Exception(string.Concat("fsObject attribute on ", type, " contains a PreviousModels specifier - it must also include a VersionString modifier"));
+				}
+				fsVersionedType[] array = new fsVersionedType[(attribute.PreviousModels != null) ? attribute.PreviousModels.Length : 0];
+				for (int i = 0; i < array.Length; i++)
+				{
+					fsOption<fsVersionedType> versionedType = GetVersionedType(attribute.PreviousModels[i]);
+					if (versionedType.IsEmpty)
+					{
+						throw new Exception(string.Concat("Unable to create versioned type for ancestor ", versionedType, "; please add an [fsObject(VersionString=\"...\")] attribute"));
+					}
+					ref fsVersionedType reference = ref array[i];
+					reference = versionedType.Value;
+				}
+				fsVersionedType fsVersionedType2 = new fsVersionedType
+				{
+					Ancestors = array,
+					VersionString = attribute.VersionString,
+					ModelType = type
+				};
+				VerifyUniqueVersionStrings(fsVersionedType2);
+				VerifyConstructors(fsVersionedType2);
+				value = fsOption.Just(fsVersionedType2);
+			}
+			_cache[type] = value;
+		}
+		return value;
+	}
+
+	private static void VerifyConstructors(fsVersionedType type)
+	{
+		ConstructorInfo[] declaredConstructors = type.ModelType.GetDeclaredConstructors();
+		for (int i = 0; i < type.Ancestors.Length; i++)
+		{
+			Type modelType = type.Ancestors[i].ModelType;
+			bool flag = false;
+			for (int j = 0; j < declaredConstructors.Length; j++)
+			{
+				ParameterInfo[] parameters = declaredConstructors[j].GetParameters();
+				if (parameters.Length == 1 && parameters[0].ParameterType == modelType)
+				{
+					flag = true;
+					break;
+				}
+			}
+			if (!flag)
+			{
+				throw new fsMissingVersionConstructorException(type.ModelType, modelType);
+			}
+		}
+	}
+
+	private static void VerifyUniqueVersionStrings(fsVersionedType type)
+	{
+		Dictionary<string, Type> dictionary = new Dictionary<string, Type>();
+		Queue<fsVersionedType> queue = new Queue<fsVersionedType>();
+		queue.Enqueue(type);
+		while (queue.Count > 0)
+		{
+			fsVersionedType fsVersionedType2 = queue.Dequeue();
+			if (dictionary.ContainsKey(fsVersionedType2.VersionString) && dictionary[fsVersionedType2.VersionString] != fsVersionedType2.ModelType)
+			{
+				throw new fsDuplicateVersionNameException(dictionary[fsVersionedType2.VersionString], fsVersionedType2.ModelType, fsVersionedType2.VersionString);
+			}
+			dictionary[fsVersionedType2.VersionString] = fsVersionedType2.ModelType;
+			fsVersionedType[] ancestors = fsVersionedType2.Ancestors;
+			foreach (fsVersionedType item in ancestors)
+			{
+				queue.Enqueue(item);
+			}
+		}
+	}
+}
 }

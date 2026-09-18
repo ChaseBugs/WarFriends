@@ -1,66 +1,35 @@
-using UnityEngine;
-
 namespace Org.BouncyCastle.Crypto.Tls
 {
-	public class HandshakeType : MonoBehaviour
-	{
-		/*
-		Dummy class. This could have happened for several reasons:
+public abstract class HandshakeType
+{
+	public const byte hello_request = 0;
 
-		1. No dll files were provided to AssetRipper.
+	public const byte client_hello = 1;
 
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
+	public const byte server_hello = 2;
 
-		2. Incorrect dll files were provided to AssetRipper.
+	public const byte certificate = 11;
 
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
+	public const byte server_key_exchange = 12;
 
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public const byte certificate_request = 13;
 
-		3. Assembly Reconstruction has not been implemented.
+	public const byte server_hello_done = 14;
 
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
+	public const byte certificate_verify = 15;
 
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
+	public const byte client_key_exchange = 16;
 
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
+	public const byte finished = 20;
 
-		5. Script Content Level 0
+	public const byte certificate_url = 21;
 
-			AssetRipper was set to not load any script information.
+	public const byte certificate_status = 22;
 
-		6. Cpp2IL failed to decompile Il2Cpp data
+	public const byte hello_verify_request = 3;
 
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public const byte supplemental_data = 23;
 
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
-	}
+	public const byte session_ticket = 4;
+}
 }

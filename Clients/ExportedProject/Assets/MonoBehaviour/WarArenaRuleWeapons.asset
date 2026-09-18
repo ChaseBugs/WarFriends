@@ -11,3 +11,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 944adcd5e4b51a04d9f22081d356fef5, type: 3}
   m_Name: WarArenaRuleWeapons
   m_EditorClassIdentifier:
+  data:
+    showRule: 1
+    weapons:
+    - category: 0
+    - category: 0
+    - category: 80
+    - category: 0

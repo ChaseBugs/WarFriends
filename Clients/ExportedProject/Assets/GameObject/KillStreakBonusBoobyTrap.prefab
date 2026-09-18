@@ -39,6 +39,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7c53775a6d9ba4f5e3a9aa873fe6147a, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  dictionaryTranslationId: ID_BONUS-BOOBY_TRAP
+  bonusName: "BOOBY\nTRAP"
+  iconName: game-scorestreak-ico-boobytrap
+  bgSuffix:
 --- !u!1001 &100100000
 Prefab:
   serializedVersion: 2

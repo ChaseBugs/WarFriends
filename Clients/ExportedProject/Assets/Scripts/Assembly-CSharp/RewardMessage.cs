@@ -1,63 +1,116 @@
+using System.Collections.Generic;
+using Newtonsoft.Json.Linq;
 using UnityEngine;
 
-public class RewardMessage : MonoBehaviour
+internal class RewardMessage : DatabaseMessage
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	private RewardDialogType mType;
 
-	1. No dll files were provided to AssetRipper.
+	private JToken mRewardCard;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	private PlayerVisual mPowerBand;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	private long mAmount;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	private CardPack mPackId;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	private Card[] mCards;
 
-	3. Assembly Reconstruction has not been implemented.
+	private List<LootboxContent> mLootboxes;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	private int mNumberOfPlayedGames;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public RewardMessage(RewardDialogType type, JToken card)
+		: base("RewardMessage", Type.RewardMessage)
+	{
+		mType = type;
+		messageId += $"-{type}-{Singleton<BeanstalkServerManager>.instance.currentTimestamp}";
+		mRewardCard = card;
+	}
 
-	4. This script is unnecessary.
+	public RewardMessage(RewardDialogType type)
+		: base("RewardMessage", Type.RewardMessage)
+	{
+		mType = type;
+		messageId += $"-{type}-{Singleton<BeanstalkServerManager>.instance.currentTimestamp}";
+		mNumberOfPlayedGames = StatsManager.instance.totalGames;
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public RewardMessage(RewardDialogType type, long amount)
+		: base("RewardMessage", Type.RewardMessage)
+	{
+		mType = type;
+		messageId += $"-{type}-{Singleton<BeanstalkServerManager>.instance.currentTimestamp}";
+		mAmount = amount;
+	}
 
-	5. Script Content Level 0
+	public RewardMessage(RewardDialogType type, PlayerVisual powerBand, long time)
+		: base("RewardMessage", Type.RewardMessage)
+	{
+		mType = type;
+		messageId += $"-{type}-{Singleton<BeanstalkServerManager>.instance.currentTimestamp}";
+		mPowerBand = powerBand;
+		mAmount = time;
+	}
 
-		AssetRipper was set to not load any script information.
+	public RewardMessage(RewardDialogType type, CardPack cardPack, Card[] cards)
+		: base("RewardMessage", Type.RewardMessage)
+	{
+		mType = type;
+		messageId += $"-{type}-{Singleton<BeanstalkServerManager>.instance.currentTimestamp}";
+		mPackId = cardPack;
+		mCards = cards;
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public RewardMessage(RewardDialogType type, List<LootboxContent> lootboxes)
+		: base("RewardMessage", Type.RewardMessage)
+	{
+		mType = type;
+		messageId += $"-{type}-{Singleton<BeanstalkServerManager>.instance.currentTimestamp}";
+		mLootboxes = lootboxes;
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public override void Show()
+	{
+		base.Show();
+		switch (mType)
+		{
+		case RewardDialogType.WarCard:
+			GuiElementSingle<RewardDialog>.instance.ShowDialog(mType, mRewardCard);
+			break;
+		case RewardDialogType.PowerBand:
+			GuiElementSingle<RewardDialog>.instance.ShowDialog(mType, mPowerBand, mAmount);
+			break;
+		case RewardDialogType.CardPack:
+			GuiElementSingle<RewardDialog>.instance.ShowDialog(mType, mPackId, mCards);
+			break;
+		case RewardDialogType.Lootboxes:
+			GuiElementSingle<LootBoxDialog>.instance.ShowDialogMoreBoxes(mLootboxes, showVideoButton: false);
+			break;
+		case RewardDialogType.Dogtag:
+			if (mNumberOfPlayedGames < StatsManager.instance.totalGames)
+			{
+				Debug.Log("DOGTAG REWARD DIALOG - not showing because player already played one match and spent gained dogtag");
+			}
+			else
+			{
+				GuiElementSingle<RewardDialog>.instance.ShowDialog(mType);
+			}
+			break;
+		case RewardDialogType.Gold:
+		case RewardDialogType.Warbucks:
+		case RewardDialogType.VIP:
+		case RewardDialogType.Tickets:
+		case RewardDialogType.Scraps:
+			GuiElementSingle<RewardDialog>.instance.ShowDialog(mType, mAmount);
+			break;
+		case RewardDialogType.DailyGold:
+			break;
+		}
+	}
 
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public override bool CanShow()
+	{
+		return base.CanShow() || (mType == RewardDialogType.Lootboxes && DialogManager.instance.numberOfShownDialogues == 1 && GuiElementSingle<InappScreen>.instance.gameObject.activeSelf);
+	}
 }

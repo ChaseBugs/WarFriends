@@ -1,63 +1,89 @@
+using System;
 using UnityEngine;
 
+[Serializable]
+[RequireComponent(typeof(AudioSource))]
 public class FlockChildSound : MonoBehaviour
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public AudioClip[] _idleSounds;
 
-	1. No dll files were provided to AssetRipper.
+	public float _idleSoundRandomChance;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public AudioClip[] _flightSounds;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public float _flightSoundRandomChance;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public AudioClip[] _scareSounds;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public float _pitchMin;
 
-	3. Assembly Reconstruction has not been implemented.
+	public float _pitchMax;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public float _volumeMin;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public float _volumeMax;
 
-	4. This script is unnecessary.
+	private FlockChild _flockChild;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private AudioSource _audio;
 
-	5. Script Content Level 0
+	private bool _hasLanded;
 
-		AssetRipper was set to not load any script information.
+	public FlockChildSound()
+	{
+		_idleSoundRandomChance = 0.05f;
+		_flightSoundRandomChance = 0.05f;
+		_pitchMin = 0.85f;
+		_pitchMax = 1f;
+		_volumeMin = 0.6f;
+		_volumeMax = 0.8f;
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public virtual void Start()
+	{
+		_flockChild = (FlockChild)GetComponent(typeof(FlockChild));
+		_audio = (AudioSource)GetComponent(typeof(AudioSource));
+		InvokeRepeating("PlayRandomSound", UnityEngine.Random.value + 1f, 1f);
+		if (_scareSounds.Length > 0)
+		{
+			InvokeRepeating("ScareSound", 1f, 0.01f);
+		}
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public virtual void PlayRandomSound()
+	{
+		if (gameObject.activeInHierarchy)
+		{
+			if (!_audio.isPlaying && _flightSounds.Length > 0 && !(_flightSoundRandomChance <= UnityEngine.Random.value) && !_flockChild._landing)
+			{
+				_audio.clip = _flightSounds[UnityEngine.Random.Range(0, _flightSounds.Length)];
+				_audio.pitch = UnityEngine.Random.Range(_pitchMin, _pitchMax);
+				_audio.volume = UnityEngine.Random.Range(_volumeMin, _volumeMax);
+				_audio.Play();
+			}
+			else if (!_audio.isPlaying && _idleSounds.Length > 0 && !(_idleSoundRandomChance <= UnityEngine.Random.value) && _flockChild._landing)
+			{
+				_audio.clip = _idleSounds[UnityEngine.Random.Range(0, _idleSounds.Length)];
+				_audio.pitch = UnityEngine.Random.Range(_pitchMin, _pitchMax);
+				_audio.volume = UnityEngine.Random.Range(_volumeMin, _volumeMax);
+				_audio.Play();
+				_hasLanded = true;
+			}
+		}
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	public virtual void ScareSound()
+	{
+		if (gameObject.activeInHierarchy && _hasLanded && !_flockChild._landing && !(_idleSoundRandomChance * 2f <= UnityEngine.Random.value))
+		{
+			_audio.clip = _scareSounds[UnityEngine.Random.Range(0, _scareSounds.Length)];
+			_audio.volume = UnityEngine.Random.Range(_volumeMin, _volumeMax);
+			_audio.PlayDelayed(UnityEngine.Random.value * 0.2f);
+			_hasLanded = false;
+		}
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public virtual void Main()
+	{
+	}
 }

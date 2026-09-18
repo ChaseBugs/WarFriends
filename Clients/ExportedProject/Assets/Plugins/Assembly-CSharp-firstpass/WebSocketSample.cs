@@ -1,63 +1,101 @@
+using System;
+using BestHTTP;
+using BestHTTP.Examples;
+using BestHTTP.WebSocket;
 using UnityEngine;
 
 public class WebSocketSample : MonoBehaviour
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	private string address = "wss://echo.websocket.org";
 
-	1. No dll files were provided to AssetRipper.
+	private string msgToSend = "Hello World!";
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	private string Text = string.Empty;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	private WebSocket webSocket;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	private Vector2 scrollPos;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	private void OnDestroy()
+	{
+		if (webSocket != null)
+		{
+			webSocket.Close();
+		}
+	}
 
-	3. Assembly Reconstruction has not been implemented.
+	private void OnGUI()
+	{
+		GUIHelper.DrawArea(GUIHelper.ClientArea, drawHeader: true, delegate
+		{
+			scrollPos = GUILayout.BeginScrollView(scrollPos);
+			GUILayout.Label(Text);
+			GUILayout.EndScrollView();
+			GUILayout.Space(5f);
+			GUILayout.FlexibleSpace();
+			address = GUILayout.TextField(address);
+			if (webSocket == null && GUILayout.Button("Open Web Socket"))
+			{
+				webSocket = new WebSocket(new Uri(address));
+				if (HTTPManager.Proxy != null)
+				{
+					webSocket.InternalRequest.Proxy = new HTTPProxy(HTTPManager.Proxy.Address, HTTPManager.Proxy.Credentials, isTransparent: false);
+				}
+				WebSocket obj = webSocket;
+				obj.OnOpen = (OnWebSocketOpenDelegate)Delegate.Combine(obj.OnOpen, new OnWebSocketOpenDelegate(OnOpen));
+				WebSocket obj2 = webSocket;
+				obj2.OnMessage = (OnWebSocketMessageDelegate)Delegate.Combine(obj2.OnMessage, new OnWebSocketMessageDelegate(OnMessageReceived));
+				WebSocket obj3 = webSocket;
+				obj3.OnClosed = (OnWebSocketClosedDelegate)Delegate.Combine(obj3.OnClosed, new OnWebSocketClosedDelegate(OnClosed));
+				WebSocket obj4 = webSocket;
+				obj4.OnError = (OnWebSocketErrorDelegate)Delegate.Combine(obj4.OnError, new OnWebSocketErrorDelegate(OnError));
+				webSocket.Open();
+				Text += "Opening Web Socket...\n";
+			}
+			if (webSocket != null && webSocket.IsOpen)
+			{
+				GUILayout.Space(10f);
+				GUILayout.BeginHorizontal();
+				msgToSend = GUILayout.TextField(msgToSend);
+				if (GUILayout.Button("Send", GUILayout.MaxWidth(70f)))
+				{
+					Text += "Sending message...\n";
+					webSocket.Send(msgToSend);
+				}
+				GUILayout.EndHorizontal();
+				GUILayout.Space(10f);
+				if (GUILayout.Button("Close"))
+				{
+					webSocket.Close(1000, "Bye!");
+				}
+			}
+		});
+	}
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	private void OnOpen(WebSocket ws)
+	{
+		Text += $"-WebSocket Open!\n";
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	private void OnMessageReceived(WebSocket ws, string message)
+	{
+		Text += $"-Message received: {message}\n";
+	}
 
-	4. This script is unnecessary.
+	private void OnClosed(WebSocket ws, ushort code, string message)
+	{
+		Text += $"-WebSocket closed! Code: {code} Message: {message}\n";
+		webSocket = null;
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
-
-	5. Script Content Level 0
-
-		AssetRipper was set to not load any script information.
-
-	6. Cpp2IL failed to decompile Il2Cpp data
-
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	private void OnError(WebSocket ws, Exception ex)
+	{
+		string text = string.Empty;
+		if (ws.InternalRequest.Response != null)
+		{
+			text = $"Status Code from Server: {ws.InternalRequest.Response.StatusCode} and Message: {ws.InternalRequest.Response.Message}";
+		}
+		Text += string.Format("-An error occured: {0}\n", (ex == null) ? ("Unknown Error " + text) : ex.Message);
+		webSocket = null;
+	}
 }

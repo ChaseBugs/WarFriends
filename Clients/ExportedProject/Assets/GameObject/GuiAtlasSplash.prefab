@@ -39,6 +39,107 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ea9f040b2b6bd4bf069e31e0ace12f73, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  material: {fileID: 2100000, guid: c40108948856b6042852e9d1906b53be, type: 2}
+  sprites:
+  - name: Chillingo-logo
+    outer:
+      serializedVersion: 2
+      x: 0
+      y: 6
+      width: 1360
+      height: 315
+    inner:
+      serializedVersion: 2
+      x: 0
+      y: 6
+      width: 1360
+      height: 315
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: whiteRectangle
+    outer:
+      serializedVersion: 2
+      x: 2025
+      y: 1014
+      width: 10
+      height: 10
+    inner:
+      serializedVersion: 2
+      x: 2027
+      y: 1016
+      width: 6
+      height: 6
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: af-logo
+    outer:
+      serializedVersion: 2
+      x: 0
+      y: 326
+      width: 1200
+      height: 698
+    inner:
+      serializedVersion: 2
+      x: 0
+      y: 326
+      width: 1200
+      height: 698
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-logo 1
+    outer:
+      serializedVersion: 2
+      x: 1205
+      y: 945
+      width: 638
+      height: 79
+    inner:
+      serializedVersion: 2
+      x: 1205
+      y: 945
+      width: 638
+      height: 79
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-bg-tile
+    outer:
+      serializedVersion: 2
+      x: 1848
+      y: 850
+      width: 172
+      height: 174
+    inner:
+      serializedVersion: 2
+      x: 1848
+      y: 850
+      width: 172
+      height: 174
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  mCoordinates: 0
+  mPixelSize: 1
+  mReplacement: {fileID: 0}
+  pngPath: GuiAtlasSplash
+  pngHalfPath:
+  replaceTexture: {fileID: 2800000, guid: bd895ed2e97dbdf4d9725b645b86be48, type: 3}
+  useBinaryData: 0
+  textureWidth: 2048
+  textureHeight: 1024
 --- !u!1001 &100100000
 Prefab:
   serializedVersion: 2

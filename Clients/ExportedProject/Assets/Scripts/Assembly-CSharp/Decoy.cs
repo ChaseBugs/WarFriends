@@ -1,63 +1,170 @@
+using System;
+using System.Collections;
+using Google2u;
 using UnityEngine;
 
-public class Decoy : MonoBehaviour
+public class Decoy : MainGameEntity
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public Renderer bodyRenderer;
 
-	1. No dll files were provided to AssetRipper.
+	public float toGroundTime;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public float fromGroundTime;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public AnimationCurve fromGroundAnimation;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public AudioClip destroySound;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	private EnemyPointObstacle mEnemyPoint;
 
-	3. Assembly Reconstruction has not been implemented.
+	private DestroyableObject mDestroyableObject;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	private float mAngle;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public Fractions mFraction = Fractions.Enemies;
 
-	4. This script is unnecessary.
+	public override Fractions fraction
+	{
+		get
+		{
+			return mFraction;
+		}
+		set
+		{
+			mFraction = value;
+		}
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public override IFraction owner
+	{
+		get
+		{
+			return this;
+		}
+		set
+		{
+		}
+	}
 
-	5. Script Content Level 0
+	public override int power
+	{
+		get
+		{
+			return 0;
+		}
+		set
+		{
+		}
+	}
 
-		AssetRipper was set to not load any script information.
+	public override event Action<IGameMainEntity, DestroyableObject.DamageInfo> Killed;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	protected override void Awake()
+	{
+		base.Awake();
+		mDestroyableObject = base.gameObject.GetComponent<DestroyableObject>();
+		mDestroyableObject.OnDamage += OnDamage;
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public void Setup(EnemyPointObstacle enemyPoint)
+	{
+		mFraction = enemyPoint.fraction;
+		mDestroyableObject.owner = enemyPoint.owner;
+		mDestroyableObject.healthbarColor = ((PlayerController.currentPlayer.fraction == mFraction) ? Color.green : Color.red);
+		mDestroyableObject.ChangeLayer(mFraction, isFlying: false);
+		bodyRenderer.material.mainTexture = ((PlayerController.currentPlayer.fraction == mFraction) ? CardDecoy.mBlueTexture : CardDecoy.mRedTexture);
+		PlayerController player = PlayerController.GetPlayer(mFraction);
+		float t = (float)player.playerProperties.level / (float)LevelManager.instance.maxDisplayLevel;
+		float maxHealth = Mathf.Lerp(Singleton<GameVariables>.instance.cardConstants.GetRow(CardConstants.rowIds.DecoyHpMin).FLOATVALUE, Singleton<GameVariables>.instance.cardConstants.GetRow(CardConstants.rowIds.DecoyHpMax).FLOATVALUE, t);
+		mDestroyableObject.maxHealth = maxHealth;
+		mDestroyableObject.Refill();
+		mEnemyPoint = enemyPoint;
+		mEnemyPoint.isFree = false;
+		mDestroyableObject.OnDeath -= OnDeath;
+		mDestroyableObject.OnDeath += OnDeath;
+		photonView.RPC("SetupRPC", PhotonTargets.Others, (byte)fraction);
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	[PunRPC]
+	protected void SetupRPC(byte fr)
+	{
+		mFraction = (Fractions)fr;
+		mDestroyableObject.healthbarColor = ((PlayerController.currentPlayer.fraction == mFraction) ? Color.green : Color.red);
+		mDestroyableObject.ChangeLayer(mFraction, isFlying: false);
+		bodyRenderer.material.mainTexture = ((PlayerController.currentPlayer.fraction == mFraction) ? CardDecoy.mBlueTexture : CardDecoy.mRedTexture);
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	private void OnDeath(DestroyableObject arg1, DestroyableObject.DamageInfo arg2)
+	{
+		mDestroyableObject.OnDeath -= OnDeath;
+		mEnemyPoint.isFree = true;
+		ProcessDeath();
+		photonView.RPC("OnDeathRPC", PhotonTargets.Others);
+	}
 
-	*/
+	[PunRPC]
+	protected void OnDeathRPC()
+	{
+		ProcessDeath();
+	}
+
+	public override void DestroyPooled()
+	{
+		base.DestroyPooled();
+		bodyRenderer.material.mainTexture = null;
+	}
+
+	private void OnDamage(DestroyableObject obj, DestroyableObject.DamageInfo info)
+	{
+		MonoBehaviour monoBehaviour = info.owner as MonoBehaviour;
+		if (monoBehaviour != null && Vector3.Dot(monoBehaviour.transform.position - base.transform.position, base.transform.forward) > 0f)
+		{
+			StopCoroutine(AnimateHit());
+			StartCoroutine(AnimateHit());
+		}
+	}
+
+	private void ProcessDeath()
+	{
+		AudioSource audioSource = Singleton<SoundsManager3D>.instance.Play(base.transform.position, destroySound);
+		Singleton<HitParticleSystem>.instance.PlayParticle(base.transform.position, Vector3.up, "groundBoxHit");
+		DestroyPooled();
+	}
+
+	private IEnumerator AnimateHit()
+	{
+		float phase = Mathf.Clamp01(mAngle / 90f);
+		phase *= phase;
+		while (phase < 1f)
+		{
+			phase = Mathf.Clamp01(phase + TimeManager.deltaTimeWithoutPauses / toGroundTime);
+			SetAngle(90f * Mathf.Sqrt(phase));
+			yield return 0;
+		}
+		phase = 0f;
+		while (phase < 1f)
+		{
+			phase = Mathf.Clamp01(phase + TimeManager.deltaTimeWithoutPauses / fromGroundTime);
+			SetAngle(90f * fromGroundAnimation.Evaluate(phase));
+			yield return 0;
+		}
+	}
+
+	private void SetAngle(float angle)
+	{
+		mAngle = angle;
+		bodyRenderer.transform.localRotation = Quaternion.Euler(0f - mAngle, 0f, 0f);
+	}
+
+	public override void BeforeInstancied()
+	{
+		base.BeforeInstancied();
+		SetAngle(0f);
+	}
+
+	public override void DestroyPooled(bool changeParentBack)
+	{
+		base.DestroyPooled(changeParentBack);
+		StopCoroutine(AnimateHit());
+	}
 }

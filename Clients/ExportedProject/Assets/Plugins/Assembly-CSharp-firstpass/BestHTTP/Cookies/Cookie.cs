@@ -1,66 +1,263 @@
-using UnityEngine;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using BestHTTP.Extensions;
 
 namespace BestHTTP.Cookies
 {
-	public class Cookie : MonoBehaviour
+public sealed class Cookie : IComparable<Cookie>, IEquatable<Cookie>
+{
+	private const int Version = 1;
+
+	public string Name { get; private set; }
+
+	public string Value { get; private set; }
+
+	public DateTime Date { get; internal set; }
+
+	public DateTime LastAccess { get; set; }
+
+	public DateTime Expires { get; private set; }
+
+	public long MaxAge { get; private set; }
+
+	public bool IsSession { get; private set; }
+
+	public string Domain { get; private set; }
+
+	public string Path { get; private set; }
+
+	public bool IsSecure { get; private set; }
+
+	public bool IsHttpOnly { get; private set; }
+
+	public Cookie(string name, string value)
+		: this(name, value, "/", string.Empty)
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
 	}
+
+	public Cookie(string name, string value, string path)
+		: this(name, value, path, string.Empty)
+	{
+	}
+
+	public Cookie(string name, string value, string path, string domain)
+		: this()
+	{
+		Name = name;
+		Value = value;
+		Path = path;
+		Domain = domain;
+	}
+
+	public Cookie(Uri uri, string name, string value, DateTime expires, bool isSession = true)
+		: this(name, value, uri.AbsolutePath, uri.Host)
+	{
+		Expires = expires;
+		IsSession = isSession;
+		Date = DateTime.UtcNow;
+	}
+
+	public Cookie(Uri uri, string name, string value, long maxAge = -1, bool isSession = true)
+		: this(name, value, uri.AbsolutePath, uri.Host)
+	{
+		MaxAge = maxAge;
+		IsSession = isSession;
+		Date = DateTime.UtcNow;
+	}
+
+	internal Cookie()
+	{
+		IsSession = true;
+		MaxAge = -1L;
+		LastAccess = DateTime.UtcNow;
+	}
+
+	public bool WillExpireInTheFuture()
+	{
+		if (IsSession)
+		{
+			return true;
+		}
+		return (MaxAge == -1) ? (Expires > DateTime.UtcNow) : (Math.Max(0L, (long)(DateTime.UtcNow - Date).TotalSeconds) < MaxAge);
+	}
+
+	public uint GuessSize()
+	{
+		return (uint)(((Name != null) ? (Name.Length * 2) : 0) + ((Value != null) ? (Value.Length * 2) : 0) + ((Domain != null) ? (Domain.Length * 2) : 0) + ((Path != null) ? (Path.Length * 2) : 0) + 32 + 3);
+	}
+
+	public static Cookie Parse(string header, Uri defaultDomain)
+	{
+		Cookie cookie = new Cookie();
+		try
+		{
+			List<HeaderValue> list = ParseCookieHeader(header);
+			foreach (HeaderValue item in list)
+			{
+				switch (item.Key.ToLowerInvariant())
+				{
+				case "path":
+				{
+					object path;
+					if (string.IsNullOrEmpty(item.Value) || !item.Value.StartsWith("/"))
+					{
+						path = "/";
+					}
+					else
+					{
+						string text = (cookie.Path = item.Value);
+						path = text;
+					}
+					cookie.Path = (string)path;
+					break;
+				}
+				case "domain":
+					if (string.IsNullOrEmpty(item.Value))
+					{
+						return null;
+					}
+					cookie.Domain = ((!item.Value.StartsWith(".")) ? item.Value : item.Value.Substring(1));
+					break;
+				case "expires":
+					cookie.Expires = item.Value.ToDateTime(DateTime.FromBinary(0L));
+					cookie.IsSession = false;
+					break;
+				case "max-age":
+					cookie.MaxAge = item.Value.ToInt64(-1L);
+					cookie.IsSession = false;
+					break;
+				case "secure":
+					cookie.IsSecure = true;
+					break;
+				case "httponly":
+					cookie.IsHttpOnly = true;
+					break;
+				default:
+					cookie.Name = item.Key;
+					cookie.Value = item.Value;
+					break;
+				}
+			}
+			if (HTTPManager.EnablePrivateBrowsing)
+			{
+				cookie.IsSession = true;
+			}
+			if (string.IsNullOrEmpty(cookie.Domain))
+			{
+				cookie.Domain = defaultDomain.Host;
+			}
+			if (string.IsNullOrEmpty(cookie.Path))
+			{
+				cookie.Path = defaultDomain.AbsolutePath;
+			}
+			DateTime date = (cookie.LastAccess = DateTime.UtcNow);
+			cookie.Date = date;
+		}
+		catch
+		{
+		}
+		return cookie;
+	}
+
+	internal void SaveTo(BinaryWriter stream)
+	{
+		stream.Write(1);
+		stream.Write(Name ?? string.Empty);
+		stream.Write(Value ?? string.Empty);
+		stream.Write(Date.ToBinary());
+		stream.Write(LastAccess.ToBinary());
+		stream.Write(Expires.ToBinary());
+		stream.Write(MaxAge);
+		stream.Write(IsSession);
+		stream.Write(Domain ?? string.Empty);
+		stream.Write(Path ?? string.Empty);
+		stream.Write(IsSecure);
+		stream.Write(IsHttpOnly);
+	}
+
+	internal void LoadFrom(BinaryReader stream)
+	{
+		stream.ReadInt32();
+		Name = stream.ReadString();
+		Value = stream.ReadString();
+		Date = DateTime.FromBinary(stream.ReadInt64());
+		LastAccess = DateTime.FromBinary(stream.ReadInt64());
+		Expires = DateTime.FromBinary(stream.ReadInt64());
+		MaxAge = stream.ReadInt64();
+		IsSession = stream.ReadBoolean();
+		Domain = stream.ReadString();
+		Path = stream.ReadString();
+		IsSecure = stream.ReadBoolean();
+		IsHttpOnly = stream.ReadBoolean();
+	}
+
+	public override string ToString()
+	{
+		return Name + "=" + Value;
+	}
+
+	public override bool Equals(object obj)
+	{
+		if (obj == null)
+		{
+			return false;
+		}
+		return Equals(obj as Cookie);
+	}
+
+	public bool Equals(Cookie cookie)
+	{
+		if (cookie == null)
+		{
+			return false;
+		}
+		if (object.ReferenceEquals(this, cookie))
+		{
+			return true;
+		}
+		return Name.Equals(cookie.Name, StringComparison.Ordinal) && ((Domain == null && cookie.Domain == null) || Domain.Equals(cookie.Domain, StringComparison.Ordinal)) && ((Path == null && cookie.Path == null) || Path.Equals(cookie.Path, StringComparison.Ordinal));
+	}
+
+	public override int GetHashCode()
+	{
+		return ToString().GetHashCode();
+	}
+
+	private static string ReadValue(string str, ref int pos)
+	{
+		string empty = string.Empty;
+		if (str == null)
+		{
+			return empty;
+		}
+		return str.Read(ref pos, ';');
+	}
+
+	private static List<HeaderValue> ParseCookieHeader(string str)
+	{
+		List<HeaderValue> list = new List<HeaderValue>();
+		if (str == null)
+		{
+			return list;
+		}
+		int pos = 0;
+		while (pos < str.Length)
+		{
+			string key = str.Read(ref pos, (char ch) => ch != '=' && ch != ';').Trim();
+			HeaderValue headerValue = new HeaderValue(key);
+			if (pos < str.Length && str[pos - 1] == '=')
+			{
+				headerValue.Value = ReadValue(str, ref pos);
+			}
+			list.Add(headerValue);
+		}
+		return list;
+	}
+
+	public int CompareTo(Cookie other)
+	{
+		return LastAccess.CompareTo(other.LastAccess);
+	}
+}
 }

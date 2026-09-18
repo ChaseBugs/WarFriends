@@ -1,63 +1,345 @@
+using System;
+using System.Collections.Generic;
+using Beebyte.Obfuscator;
 using UnityEngine;
 
-public class SavingLastSelected : MonoBehaviour
+[Skip]
+public class SavingLastSelected : InGameSerializedObjectGeneric<SavingLastSelected.SaveData>
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Skip]
+	public class SaveData
+	{
+		public bool endOfFirstGame;
 
-	1. No dll files were provided to AssetRipper.
+		public string selectedArmy;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+		public Dictionary<string, int> selectedSlotArmy;
 
-	2. Incorrect dll files were provided to AssetRipper.
+		public Dictionary<string, bool> usedInGame = new Dictionary<string, bool>();
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+		public int lastCategoryIndex;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+		public List<string> selectedWeapons;
 
-	3. Assembly Reconstruction has not been implemented.
+		public Dictionary<string, int> selectedSlotWeapon;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+		public int lastVisualCategoryIndex;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+		public List<string> selectedVisuals;
 
-	4. This script is unnecessary.
+		public List<string> selectedCards = new List<string>();
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+		public List<string> selectedCardsWarArena = new List<string>();
 
-	5. Script Content Level 0
+		public List<Tuple<int, string>> usedBotNames = new List<Tuple<int, string>>();
 
-		AssetRipper was set to not load any script information.
+		public int leaderboardTab;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+		public int lastViewedStarterAssignmentId;
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+		public bool goldCardCrafted;
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	private static SavingLastSelected mInstance;
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	public static SavingLastSelected instance
+	{
+		get
+		{
+			mInstance = mInstance ?? ((SavingLastSelected)UnityEngine.Object.FindObjectsOfType(typeof(SavingLastSelected))[0]);
+			return mInstance;
+		}
+	}
 
-	*/
+	public bool firstTutorialGameEnded
+	{
+		get
+		{
+			return data != null && data.endOfFirstGame;
+		}
+		set
+		{
+			if (data.endOfFirstGame != value)
+			{
+				data.endOfFirstGame = value;
+				Save();
+			}
+		}
+	}
+
+	public void OnDestroy()
+	{
+		mInstance = null;
+	}
+
+	protected override void Awake()
+	{
+		base.Awake();
+		Singleton<GameController>.instance.GameEnded += OnGameEnded;
+	}
+
+	private void OnGameEnded(GameController.GameEndReason endReason)
+	{
+		firstTutorialGameEnded = true;
+		SaveSelectedCards();
+	}
+
+	public void SaveSelectedCards()
+	{
+		data.selectedCards = new List<string>();
+		data.selectedCardsWarArena = new List<string>();
+		foreach (Card item in Singleton<GameController>.instance.gameControllerDeathMatch.cardsForGame)
+		{
+			data.selectedCards.Add(item.id);
+		}
+		foreach (Card item2 in Singleton<GameController>.instance.gameControllerWarArena.cardsForGame)
+		{
+			data.selectedCardsWarArena.Add(item2.id);
+		}
+		Save();
+	}
+
+	public void LoadSelectedCards()
+	{
+		Singleton<GameController>.instance.gameControllerDeathMatch.cardsForGame = new List<Card>();
+		foreach (string selectedCard in data.selectedCards)
+		{
+			Card cardInstance = CardManager.instance.GetCardInstance(selectedCard);
+			if (cardInstance != null)
+			{
+				Singleton<GameController>.instance.gameControllerDeathMatch.cardsForGame.Add(cardInstance);
+			}
+		}
+		Singleton<GameController>.instance.gameControllerWarArena.cardsForGame = new List<Card>();
+		foreach (string item in data.selectedCardsWarArena)
+		{
+			Card cardInstance2 = CardManager.instance.GetCardInstance(item);
+			if (cardInstance2 != null)
+			{
+				Singleton<GameController>.instance.gameControllerWarArena.cardsForGame.Add(cardInstance2);
+			}
+		}
+	}
+
+	internal void StarterAssignmentViewed(StarterAssignment assignment)
+	{
+		data.lastViewedStarterAssignmentId = assignment.order;
+		Save();
+	}
+
+	private void CheckExistingDictionary()
+	{
+		if (data.selectedSlotArmy == null)
+		{
+			data.selectedSlotArmy = new Dictionary<string, int>();
+			Save();
+		}
+		if (data.selectedSlotWeapon == null)
+		{
+			data.selectedSlotWeapon = new Dictionary<string, int>();
+			Save();
+		}
+		if (data.selectedWeapons == null)
+		{
+			data.selectedWeapons = new List<string>();
+			data.selectedWeapons.Add(string.Empty);
+			data.selectedWeapons.Add(string.Empty);
+			data.selectedWeapons.Add(string.Empty);
+			data.selectedWeapons.Add(string.Empty);
+			Save();
+		}
+		if (data.selectedVisuals == null)
+		{
+			data.selectedVisuals = new List<string>();
+			data.selectedVisuals.Add(string.Empty);
+			data.selectedVisuals.Add(string.Empty);
+			data.selectedVisuals.Add(string.Empty);
+			data.selectedVisuals.Add(string.Empty);
+			Save();
+		}
+	}
+
+	public void SaveLastUnit(LevelBehaviour behaviour)
+	{
+		if (behaviour == null)
+		{
+			Debug.LogError("Null cannot be saved as last unit.");
+			return;
+		}
+		data.selectedArmy = behaviour.unitDictionaryId;
+		Save();
+	}
+
+	public void SaveLastWeapon(WeaponLevelsSetup setup)
+	{
+		CheckExistingDictionary();
+		if (setup == null)
+		{
+			Debug.LogError("Null cannot be saved as last weapon.");
+			return;
+		}
+		if (setup.weaponCategory == (setup.weaponCategory & WeaponCategory.Primary))
+		{
+			data.lastCategoryIndex = 0;
+		}
+		else if (setup.weaponCategory == (setup.weaponCategory & WeaponCategory.Special))
+		{
+			data.lastCategoryIndex = 1;
+		}
+		else if (setup.weaponCategory == (setup.weaponCategory & WeaponCategory.Explosive))
+		{
+			data.lastCategoryIndex = 2;
+		}
+		else
+		{
+			data.lastCategoryIndex = 3;
+		}
+		data.selectedWeapons[data.lastCategoryIndex] = setup.weaponDictionaryId;
+		Save();
+	}
+
+	public void SaveLastVisual(PlayerVisual visual)
+	{
+		CheckExistingDictionary();
+		if (visual == null)
+		{
+			Debug.LogError("Null cannot be saved as last customization.");
+			return;
+		}
+		for (int i = 0; i < CamosManager.instance.playerVisualCategories.Count; i++)
+		{
+			if (visual.owner == CamosManager.instance.playerVisualCategories[i])
+			{
+				data.lastVisualCategoryIndex = i;
+			}
+		}
+		data.selectedVisuals[data.lastVisualCategoryIndex] = visual.id;
+		Save();
+	}
+
+	public LevelBehaviour GetLastUnit()
+	{
+		if (string.IsNullOrEmpty(data.selectedArmy))
+		{
+			return null;
+		}
+		int num = LevelManager.instance.behaviours.FindIndex((LevelBehaviour behav) => behav.unitDictionaryId == data.selectedArmy);
+		if (num == -1)
+		{
+			return null;
+		}
+		return LevelManager.instance.behaviours[num];
+	}
+
+	public WeaponLevelsSetup GetLastWeapon()
+	{
+		if (data.selectedWeapons == null)
+		{
+			return null;
+		}
+		int num = LevelManager.instance.weaponLevelsSetups.FindIndex((WeaponLevelsSetup setup) => setup.weaponDictionaryId == data.selectedWeapons[data.lastCategoryIndex]);
+		if (num == -1)
+		{
+			return null;
+		}
+		return LevelManager.instance.weaponLevelsSetups[num];
+	}
+
+	public WeaponLevelsSetup GetLastWeaponForIndex(int categ)
+	{
+		if (data.selectedWeapons == null || categ < 0 || categ >= data.selectedWeapons.Count)
+		{
+			return null;
+		}
+		int num = LevelManager.instance.weaponLevelsSetups.FindIndex((WeaponLevelsSetup setup) => setup.weaponDictionaryId == data.selectedWeapons[categ]);
+		if (num == -1)
+		{
+			return null;
+		}
+		data.lastCategoryIndex = categ;
+		Save();
+		return LevelManager.instance.weaponLevelsSetups[num];
+	}
+
+	public bool WasBotNameUsed(string botName)
+	{
+		foreach (Tuple<int, string> usedBotName in data.usedBotNames)
+		{
+			if (botName == usedBotName.Value2)
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public void AddUsedBotName(string botName)
+	{
+		Tuple<int, string> item = new Tuple<int, string>(Singleton<BeanstalkServerManager>.instance.currentTimestamp, botName);
+		List<Tuple<int, string>> list = new List<Tuple<int, string>>();
+		DateTime currentDateTime = Singleton<BeanstalkServerManager>.instance.currentDateTime;
+		foreach (Tuple<int, string> usedBotName in data.usedBotNames)
+		{
+			DateTime dateTime = MiscTools.GetDateTime(usedBotName.Value1);
+			if ((currentDateTime - dateTime).TotalHours < 24.0)
+			{
+				list.Add(usedBotName);
+			}
+		}
+		list.Add(item);
+		data.usedBotNames = list;
+		Save();
+	}
+
+	public PlayerVisual GetLastVisual()
+	{
+		if (data.selectedVisuals == null)
+		{
+			return null;
+		}
+		foreach (PlayerVisualCategory playerVisualCategory in CamosManager.instance.playerVisualCategories)
+		{
+			if (playerVisualCategory is PlayerVisualCategoryPowerBands)
+			{
+				continue;
+			}
+			foreach (PlayerVisual allVisual in playerVisualCategory.allVisuals)
+			{
+				if (allVisual.id == data.selectedVisuals[data.lastVisualCategoryIndex])
+				{
+					return allVisual;
+				}
+			}
+		}
+		return null;
+	}
+
+	public PlayerVisual GetLastVisualForIndex(int categ)
+	{
+		if (data.selectedVisuals == null || categ < 0 || categ >= data.selectedVisuals.Count)
+		{
+			return null;
+		}
+		foreach (PlayerVisual allVisual in CamosManager.instance.playerVisualCategories[categ].allVisuals)
+		{
+			if (allVisual.id == data.selectedVisuals[categ])
+			{
+				data.lastVisualCategoryIndex = categ;
+				Save();
+				return allVisual;
+			}
+		}
+		return null;
+	}
+
+	public void SaveLastLeaderboardTab(int tabIndex)
+	{
+		data.leaderboardTab = tabIndex;
+		Save();
+	}
+
+	public int GetLastLeaderboardTab()
+	{
+		return (data != null) ? data.leaderboardTab : 0;
+	}
 }

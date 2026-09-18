@@ -1,63 +1,89 @@
 using UnityEngine;
 
-public class SkillShotControllerPlayer : MonoBehaviour
+public class SkillShotControllerPlayer : Core_BaseScript
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	private PlayerController mGameEntity;
 
-	1. No dll files were provided to AssetRipper.
+	public Transform mPosition;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	private PhotonView mPhotonView;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	private int mFlameDamageIgnoreCounter = 6;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	private float mFlameDamageIgnoreTimer;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	protected override void Awake()
+	{
+		base.Awake();
+		mGameEntity = GetComponent<PlayerController>();
+		mGameEntity.destroyableParts.OnDamage += PlayerOnDamage;
+	}
 
-	3. Assembly Reconstruction has not been implemented.
+	private void PlayerOnDamage(DestroyableObject destroyableObject, DestroyableObject.DamageInfo info)
+	{
+		if (info.type == DestroyableObject.DamageType.Poison || info.type == DestroyableObject.DamageType.Immortal)
+		{
+			return;
+		}
+		if (info.type == DestroyableObject.DamageType.Flame)
+		{
+			if (mFlameDamageIgnoreCounter < 6 && TimeManager.realTimeWithoutPauses <= mFlameDamageIgnoreTimer)
+			{
+				mFlameDamageIgnoreCounter++;
+				mFlameDamageIgnoreTimer = TimeManager.realTimeWithoutPauses + 0.5f;
+				return;
+			}
+			mFlameDamageIgnoreCounter = 0;
+			mFlameDamageIgnoreTimer = TimeManager.realTimeWithoutPauses + 0.5f;
+		}
+		PlayerController playerController = info.owner as PlayerController;
+		SkillShot skillShot;
+		if (playerController != null && mGameEntity != playerController)
+		{
+			skillShot = new SkillShot();
+			skillShot.type = SkillShot.SkillShotType.EnemyPlayerHit;
+			SkillShot skillShot2 = skillShot;
+			if (mGameEntity.playerState == PlayerController.PlayerStatex.Walking)
+			{
+				skillShot2.type |= SkillShot.SkillShotType.OnTheMove;
+			}
+			Singleton<SkillShotManager>.instance.AddSkillshot(skillShot2, playerController);
+			if (playerController.isCurrentPlayer)
+			{
+				PlaySkillshot(skillShot2, info.isCritical, 0);
+			}
+		}
+		AIObject aIObject = info.owner as AIObject;
+		if (!(aIObject != null) || aIObject.fraction == mGameEntity.fraction)
+		{
+			return;
+		}
+		skillShot = new SkillShot();
+		skillShot.type = SkillShot.SkillShotType.ArmyPlayerHit;
+		SkillShot skillShot3 = skillShot;
+		PlayerController player = PlayerController.GetPlayer(aIObject.fraction);
+		if (player != null)
+		{
+			Singleton<SkillShotManager>.instance.AddSkillshot(skillShot3, player);
+			if (player.isCurrentPlayer)
+			{
+				PlaySkillshot(skillShot3, info.isCritical, 0);
+			}
+		}
+	}
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
-
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
-
-	4. This script is unnecessary.
-
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
-
-	5. Script Content Level 0
-
-		AssetRipper was set to not load any script information.
-
-	6. Cpp2IL failed to decompile Il2Cpp data
-
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	protected void PlaySkillshot(SkillShot skillShot, bool isCritical, int power)
+	{
+		SkillShotDisplayer skillShotDisplayer = (SkillShotDisplayer)Singleton<ObjectPoolDatabase>.instance.mainObjectPool.Instantiate(Singleton<ObjectPoolDatabase>.instance.skillShotDisplayer);
+		if (skillShotDisplayer != null)
+		{
+			Vector3 point = Camera.main.WorldToNormalizedViewportPoint(mPosition.transform.position);
+			skillShotDisplayer.transform.position = HealthBarManager.instance.guiCamera.NormalizedViewportToWorldPoint(point);
+			skillShotDisplayer.PlayDeath(power, skillShot);
+			if (isCritical)
+			{
+				skillShotDisplayer.PlayCritical();
+			}
+		}
+	}
 }

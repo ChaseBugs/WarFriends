@@ -1,63 +1,70 @@
+using Google2u;
 using UnityEngine;
 
-public class CardDisarmedAndLocked : MonoBehaviour
+public class CardDisarmedAndLocked : Card
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public const string ingameIcoName = "game-card-ico-disarmed";
 
-	1. No dll files were provided to AssetRipper.
+	private PlayerWeapon mSavedWeapon;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	private float mRemainingTime;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	private bool mUsed;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	private PlayerController mPlayer;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	private ICardManager cardManager;
 
-	3. Assembly Reconstruction has not been implemented.
+	public float buffTime => Singleton<GameVariables>.instance.cardConstants.GetRow(CardConstants.rowIds.DisarmedTime).FLOATVALUE;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public override string description => Localization.LocalizeFormat(mDescriptionID, MiscTools.PrintableTimeDescription(buffTime));
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public override void UseCard(ICardManager cardManager, Fractions fraction)
+	{
+		cardManager.CardWasUsed(this, fraction);
+	}
 
-	4. This script is unnecessary.
+	public override void UseCardOnline(ICardManager cardManager, Fractions fraction)
+	{
+		this.cardManager = cardManager;
+		mPlayer = PlayerController.GetEnemyOf(fraction);
+		cardManager.timeLockWeaponSwitch = TimeManager.realTimeWithoutPauses + buffTime - 0.1f;
+		Debug.Log("Start TimeLock: " + CardManager.instance.timeLockWeaponSwitch);
+		if (mPlayer.weaponInventory.cannotChange)
+		{
+			cardManager.grenadeSaved = mPlayer.weaponInventory.currentWeapon;
+			mPlayer.weaponInventory.cannotChange = false;
+			cardManager.timeLockWeaponSwitch += 1000f;
+		}
+		mPlayer.weaponInventory.currentWeapon = mPlayer.weaponInventory.pistol;
+		mPlayer.weaponInventory.cannotChange = true;
+		mPlayer.weaponInventory.canNotChangeFract = 1f;
+		mRemainingTime = buffTime;
+		mUsed = true;
+		mPlayer.cardIconIndicator.Show("game-card-ico-disarmed", show: true);
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
-
-	5. Script Content Level 0
-
-		AssetRipper was set to not load any script information.
-
-	6. Cpp2IL failed to decompile Il2Cpp data
-
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	protected void Update()
+	{
+		if (mUsed)
+		{
+			if (mRemainingTime > 0f)
+			{
+				mRemainingTime -= Time.deltaTime;
+				float num = mRemainingTime / buffTime;
+				mPlayer.cardIconIndicator.UpdateIndicator("game-card-ico-disarmed", num);
+				mPlayer.weaponInventory.canNotChangeFract = num;
+			}
+			else
+			{
+				mPlayer.weaponInventory.cannotChange = false;
+				mPlayer.weaponInventory.canNotChangeFract = 0f;
+				Debug.Log("Ending TimeLock: " + CardManager.instance.timeLockWeaponSwitch);
+				cardManager.timeLockWeaponSwitch = TimeManager.realTimeWithoutPauses;
+				mRemainingTime = 0f;
+				mUsed = false;
+				mPlayer.cardIconIndicator.Show("game-card-ico-disarmed", show: false);
+			}
+		}
+	}
 }

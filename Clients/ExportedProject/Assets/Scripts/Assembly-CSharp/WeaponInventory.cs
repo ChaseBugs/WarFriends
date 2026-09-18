@@ -1,63 +1,230 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
-public class WeaponInventory : MonoBehaviour
+[ExecuteInEditMode]
+public class WeaponInventory : Core_BaseScript
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public List<PlayerWeapon> allWeapons;
 
-	1. No dll files were provided to AssetRipper.
+	public Mine landMine;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public int startGameWithIndex;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public List<PlayerWeapon> usedWeapons;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	private PhotonView mPhotonView;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	private PlayerController mPlayerController;
 
-	3. Assembly Reconstruction has not been implemented.
+	public bool cannotChange;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public float canNotChangeFract;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public int weaponIndex { get; private set; }
 
-	4. This script is unnecessary.
+	public PlayerWeapon pistol
+	{
+		get
+		{
+			foreach (PlayerWeapon usedWeapon in usedWeapons)
+			{
+				if (usedWeapon.weapon is Pistol)
+				{
+					return usedWeapon;
+				}
+			}
+			Debug.LogError("Player should have at least one pistol");
+			return null;
+		}
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public PlayerWeapon currentWeapon
+	{
+		get
+		{
+			return usedWeapons[weaponIndex];
+		}
+		set
+		{
+			if (cannotChange)
+			{
+				return;
+			}
+			currentWeapon.gameObject.SetActive(value: false);
+			for (int i = 0; i < usedWeapons.Count; i++)
+			{
+				PlayerWeapon playerWeapon = usedWeapons[i];
+				if (playerWeapon == value)
+				{
+					weaponIndex = i;
+					mPhotonView.RPC("ChangeWeapon", PhotonTargets.Others, (byte)i);
+				}
+				else
+				{
+					playerWeapon.isActiveWeapon = false;
+				}
+			}
+			if (this.SelectedWeaponChanged != null)
+			{
+				this.SelectedWeaponChanged(currentWeapon);
+			}
+			currentWeapon.gameObject.SetActive(value: true);
+			currentWeapon.isActiveWeapon = true;
+		}
+	}
 
-	5. Script Content Level 0
+	public event Action<PlayerWeapon> SelectedWeaponChanged;
 
-		AssetRipper was set to not load any script information.
+	protected override void Awake()
+	{
+		base.Awake();
+		if (!Application.isPlaying)
+		{
+			return;
+		}
+		usedWeapons.Add(allWeapons[0]);
+		mPhotonView = GetComponent<PhotonView>();
+		Singleton<GameController>.instance.SceneFreed += OnSceneFreed;
+		mPlayerController = GetComponent<PlayerController>();
+		List<WeaponLevelsSetup> weaponLevelsSetups = LevelManager.instance.weaponLevelsSetups;
+		foreach (WeaponLevelsSetup item in weaponLevelsSetups)
+		{
+			PlayerWeapon playerWeapon = allWeapons[item.indexInWeaponInventory];
+			playerWeapon.weaponLevelSetup = item;
+		}
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	private void OnSceneFreed()
+	{
+		foreach (PlayerWeapon usedWeapon in usedWeapons)
+		{
+			usedWeapon.DestroyModel();
+		}
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	private void InitWeapons()
+	{
+		PlayerInventory.EquippedWeapon[] weapons = mPlayerController.playerProperties.weapons;
+		List<WeaponLevelsSetup> weaponLevelsSetups = LevelManager.instance.weaponLevelsSetups;
+		usedWeapons = new List<PlayerWeapon>();
+		weaponIndex = startGameWithIndex;
+		foreach (WeaponLevelsSetup item in weaponLevelsSetups)
+		{
+			PlayerWeapon playerWeapon = allWeapons[item.indexInWeaponInventory];
+			playerWeapon.weaponLevelSetup = item;
+		}
+		for (int i = 0; i < weapons.Length; i++)
+		{
+			PlayerInventory.EquippedWeapon equippedWeapon = weapons[i];
+			WeaponLevelsSetup weaponLevelsSetup = weaponLevelsSetups[equippedWeapon.weaponId];
+			weaponLevelsSetup.weaponInventory = this;
+			weaponLevelsSetup.LoadDefinition((byte)weapons[i].weaponUpgrade, mPlayerController.playerProperties.level);
+			weaponLevelsSetup.weaponInventory = PlayerController.currentPlayer.weaponInventory;
+			PlayerWeapon playerWeapon2 = allWeapons[weaponLevelsSetup.indexInWeaponInventory];
+			playerWeapon2.isEnabled = equippedWeapon.enabled;
+			usedWeapons.Add(playerWeapon2);
+		}
+		foreach (PlayerWeapon allWeapon in allWeapons)
+		{
+			allWeapon.gameObject.SetActive(value: false);
+			allWeapon.isActiveWeapon = false;
+			allWeapon.weapon.infiniteAmmo = false;
+		}
+		currentWeapon.gameObject.SetActive(value: true);
+		Debug.Log("Set active weapon");
+		currentWeapon.isActiveWeapon = true;
+		foreach (PlayerWeapon usedWeapon in usedWeapons)
+		{
+			AmmoSetup ammoSetup = usedWeapon.weapon.ammoSetup;
+			usedWeapon.weapon.friendKill = true;
+			if (usedWeapon is PlayerZoomOnTouchWeapon)
+			{
+				(usedWeapon as PlayerZoomOnTouchWeapon).SetWaitTime(0.8f);
+			}
+			string text = string.Concat("#VAVRO# affect weapon:", usedWeapon.name, "before: critical: ", ammoSetup.criticalProbability, "damage:", ammoSetup.damageAmount);
+			ammoSetup.ScaleDamage(mPlayerController.weaponDamageCoef);
+			Weapon weapon = usedWeapon.weapon;
+			if (mPlayerController.weaponReloadCoef > 0f)
+			{
+				if (weapon.reloadableWeapon)
+				{
+					weapon.reloadTime = (float)weapon.reloadTime * mPlayerController.weaponReloadCoef;
+				}
+				else
+				{
+					weapon.cadence = (float)weapon.cadence * mPlayerController.weaponReloadCoef;
+				}
+			}
+			string text2 = text;
+			text = string.Concat(text2, " AFTER: critical: ", ammoSetup.criticalProbability, "damage:", ammoSetup.damageAmount);
+		}
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	private void SetWeapons(byte[] indices)
+	{
+		usedWeapons = new List<PlayerWeapon>();
+		List<WeaponLevelsSetup> weaponLevelsSetups = LevelManager.instance.weaponLevelsSetups;
+		weaponIndex = 0;
+		foreach (byte index in indices)
+		{
+			PlayerWeapon item = allWeapons[weaponLevelsSetups[index].indexInWeaponInventory];
+			usedWeapons.Add(item);
+		}
+		foreach (PlayerWeapon allWeapon in allWeapons)
+		{
+			allWeapon.gameObject.SetActive(value: false);
+			allWeapon.isActiveWeapon = false;
+		}
+		currentWeapon.gameObject.SetActive(value: true);
+		currentWeapon.isActiveWeapon = true;
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	public void SetWeapons(PlayerInventory.EquippedWeapon[] equippedWeapons)
+	{
+		if (equippedWeapons != null)
+		{
+			byte[] array = new byte[equippedWeapons.Length];
+			for (int i = 0; i < equippedWeapons.Length; i++)
+			{
+				PlayerInventory.EquippedWeapon equippedWeapon = equippedWeapons[i];
+				array[i] = (byte)equippedWeapon.weaponId;
+			}
+			SetWeapons(array);
+		}
+	}
 
-	*/
+	[PunRPC]
+	private void ChangeWeapon(byte weaponIndex)
+	{
+		currentWeapon.gameObject.SetActive(value: false);
+		currentWeapon.isActiveWeapon = false;
+		this.weaponIndex = weaponIndex;
+		currentWeapon.gameObject.SetActive(value: true);
+		currentWeapon.isActiveWeapon = true;
+		if (this.SelectedWeaponChanged != null)
+		{
+			this.SelectedWeaponChanged(currentWeapon);
+		}
+	}
+
+	public IEnumerator LoadWeapons()
+	{
+		InitWeapons();
+		foreach (PlayerWeapon playerWeapon in usedWeapons)
+		{
+			yield return Singleton<AssetBundleManager>.instance.StartCoroutine(playerWeapon.LoadWeapon());
+		}
+	}
+
+	public void SetUpPlayer(PlayerController playerController)
+	{
+		landMine.owner = playerController;
+		foreach (PlayerWeapon allWeapon in allWeapons)
+		{
+			allWeapon.weapon.owner = playerController;
+			allWeapon.playerController = playerController;
+		}
+	}
 }

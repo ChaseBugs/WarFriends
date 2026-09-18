@@ -1,66 +1,173 @@
-using UnityEngine;
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Reflection;
 
 namespace FullSerializer.Internal
 {
-	public class fsDictionaryConverter : MonoBehaviour
+public class fsDictionaryConverter : fsConverter
+{
+	public override bool CanProcess(Type type)
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
+		return typeof(IDictionary).IsAssignableFrom(type);
 	}
+
+	public override object CreateInstance(fsData data, Type storageType)
+	{
+		return fsMetaType.Get(storageType).CreateInstance();
+	}
+
+	public override fsResult TryDeserialize(fsData data, ref object instance_, Type storageType)
+	{
+		IDictionary dictionary = (IDictionary)instance_;
+		fsResult success = fsResult.Success;
+		GetKeyValueTypes(dictionary.GetType(), out var keyStorageType, out var valueStorageType);
+		if (data.IsList)
+		{
+			List<fsData> asList = data.AsList;
+			for (int i = 0; i < asList.Count; i++)
+			{
+				fsData data2 = asList[i];
+				if ((success += CheckType(data2, fsDataType.Object)).Failed)
+				{
+					return success;
+				}
+				if ((success += CheckKey(data2, "Key", out var subitem)).Failed)
+				{
+					return success;
+				}
+				if ((success += CheckKey(data2, "Value", out var subitem2)).Failed)
+				{
+					return success;
+				}
+				object result = null;
+				object result2 = null;
+				if ((success += Serializer.TryDeserialize(subitem, keyStorageType, ref result)).Failed)
+				{
+					return success;
+				}
+				if ((success += Serializer.TryDeserialize(subitem2, valueStorageType, ref result2)).Failed)
+				{
+					return success;
+				}
+				AddItemToDictionary(dictionary, result, result2);
+			}
+		}
+		else
+		{
+			if (!data.IsDictionary)
+			{
+				return FailExpectedType(data, fsDataType.Array, fsDataType.Object);
+			}
+			foreach (KeyValuePair<string, fsData> item in data.AsDictionary)
+			{
+				if (!fsSerializer.IsReservedKeyword(item.Key))
+				{
+					fsData data3 = new fsData(item.Key);
+					fsData value = item.Value;
+					object result3 = null;
+					object result4 = null;
+					fsResult fsResult2 = (success += Serializer.TryDeserialize(data3, keyStorageType, ref result3));
+					if (fsResult2.Failed)
+					{
+						return success;
+					}
+					if ((success += Serializer.TryDeserialize(value, valueStorageType, ref result4)).Failed)
+					{
+						return success;
+					}
+					AddItemToDictionary(dictionary, result3, result4);
+				}
+			}
+		}
+		return success;
+	}
+
+	public override fsResult TrySerialize(object instance_, out fsData serialized, Type storageType)
+	{
+		serialized = fsData.Null;
+		fsResult success = fsResult.Success;
+		IDictionary dictionary = (IDictionary)instance_;
+		GetKeyValueTypes(dictionary.GetType(), out var keyStorageType, out var valueStorageType);
+		IDictionaryEnumerator enumerator = dictionary.GetEnumerator();
+		bool flag = true;
+		List<fsData> list = new List<fsData>(dictionary.Count);
+		List<fsData> list2 = new List<fsData>(dictionary.Count);
+		while (enumerator.MoveNext())
+		{
+			if ((success += Serializer.TrySerialize(keyStorageType, enumerator.Key, out var data)).Failed)
+			{
+				return success;
+			}
+			if ((success += Serializer.TrySerialize(valueStorageType, enumerator.Value, out var data2)).Failed)
+			{
+				return success;
+			}
+			list.Add(data);
+			list2.Add(data2);
+			flag &= data.IsString;
+		}
+		if (flag)
+		{
+			serialized = fsData.CreateDictionary();
+			Dictionary<string, fsData> asDictionary = serialized.AsDictionary;
+			for (int i = 0; i < list.Count; i++)
+			{
+				fsData fsData2 = list[i];
+				fsData value = list2[i];
+				asDictionary[fsData2.AsString] = value;
+			}
+		}
+		else
+		{
+			serialized = fsData.CreateList(list.Count);
+			List<fsData> asList = serialized.AsList;
+			for (int j = 0; j < list.Count; j++)
+			{
+				fsData value2 = list[j];
+				fsData value3 = list2[j];
+				Dictionary<string, fsData> dictionary2 = new Dictionary<string, fsData>();
+				dictionary2["Key"] = value2;
+				dictionary2["Value"] = value3;
+				asList.Add(new fsData(dictionary2));
+			}
+		}
+		return success;
+	}
+
+	private fsResult AddItemToDictionary(IDictionary dictionary, object key, object value)
+	{
+		if (key == null || value == null)
+		{
+			Type type = fsReflectionUtility.GetInterface(dictionary.GetType(), typeof(ICollection<>));
+			if (type == null)
+			{
+				return fsResult.Warn(string.Concat(dictionary.GetType(), " does not extend ICollection"));
+			}
+			Type type2 = type.GetGenericArguments()[0];
+			object obj = Activator.CreateInstance(type2, key, value);
+			MethodInfo flattenedMethod = type.GetFlattenedMethod("Add");
+			flattenedMethod.Invoke(dictionary, new object[1] { obj });
+			return fsResult.Success;
+		}
+		dictionary[key] = value;
+		return fsResult.Success;
+	}
+
+	private static void GetKeyValueTypes(Type dictionaryType, out Type keyStorageType, out Type valueStorageType)
+	{
+		Type type = fsReflectionUtility.GetInterface(dictionaryType, typeof(IDictionary<, >));
+		if (type != null)
+		{
+			Type[] genericArguments = type.GetGenericArguments();
+			keyStorageType = genericArguments[0];
+			valueStorageType = genericArguments[1];
+		}
+		else
+		{
+			keyStorageType = typeof(object);
+			valueStorageType = typeof(object);
+		}
+	}
+}
 }

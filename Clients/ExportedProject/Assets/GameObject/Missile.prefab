@@ -166,6 +166,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c7a51ab742a0b8e58ee6ed4e42534818, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  isActivated: 0
+  ammoDamageAmount: 40
+  isFake: 0
+  weapon: {fileID: 0}
+  type: 0
+  isNetworkCopy: 0
+  photonView: {fileID: 0}
+  projectileModel: {fileID: 105782}
+  smallParticles: {fileID: 154010}
+  bigParticles: {fileID: 161526}
+  burningSmokeParticles: {fileID: 109266}
+  trail: {fileID: 9696012}
+  particles: {fileID: 19803859}
 --- !u!114 &11470521
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -177,6 +190,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f19ea4a15c3ca43dcc180d756f7a82b3, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  ownerId: 0
+  group: 0
+  OwnerShipWasTransfered: 0
+  prefixBackup: -1
+  synchronization: 0
+  onSerializeTransformOption: 3
+  onSerializeRigidBodyOption: 2
+  ownershipTransfer: 0
+  ObservedComponents:
+  - {fileID: 0}
+  viewIdField: 0
+  instantiationId: -1
+  currentMasterID: -1
+  didAwake: 0
+  isRuntimeInstantiated: 0
 --- !u!96 &9696012
 TrailRenderer:
   m_ObjectHideFlags: 0

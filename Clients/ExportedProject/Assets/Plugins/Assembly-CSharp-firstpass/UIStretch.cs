@@ -1,63 +1,177 @@
 using UnityEngine;
 
+[AddComponentMenu("NGUI/UI/Stretch")]
+[ExecuteInEditMode]
 public class UIStretch : MonoBehaviour
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public enum Style
+	{
+		None,
+		Horizontal,
+		Vertical,
+		Both,
+		BasedOnHeight,
+		FillKeepingRatio,
+		FitInternalKeepingRatio
+	}
 
-	1. No dll files were provided to AssetRipper.
+	public Camera uiCamera;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public UIWidget widgetContainer;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public UIPanel panelContainer;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public Style style;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public bool runOnlyOnce;
 
-	3. Assembly Reconstruction has not been implemented.
+	public Vector2 relativeSize = Vector2.one;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public Vector2 initialSize = Vector2.one;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	private Transform mTrans;
 
-	4. This script is unnecessary.
+	private UIRoot mRoot;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private Animation mAnim;
 
-	5. Script Content Level 0
+	private Rect mRect;
 
-		AssetRipper was set to not load any script information.
+	private void Awake()
+	{
+		mAnim = GetComponent<Animation>();
+		mRect = default(Rect);
+		mTrans = base.transform;
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	private void Start()
+	{
+		if (uiCamera == null)
+		{
+			uiCamera = NGUITools.FindCameraForLayer(base.gameObject.layer);
+		}
+		mRoot = NGUITools.FindInParents<UIRoot>(base.gameObject);
+		Update();
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	private void Update()
+	{
+		if ((mAnim != null && mAnim.isPlaying) || style == Style.None)
+		{
+			return;
+		}
+		float num = 1f;
+		if (panelContainer != null)
+		{
+			if (panelContainer.clipping == UIDrawCall.Clipping.None)
+			{
+				mRect.xMin = (float)(-Screen.width) * 0.5f;
+				mRect.yMin = (float)(-Screen.height) * 0.5f;
+				mRect.xMax = 0f - mRect.xMin;
+				mRect.yMax = 0f - mRect.yMin;
+			}
+			else
+			{
+				Vector4 clipRange = panelContainer.clipRange;
+				mRect.x = clipRange.x - clipRange.z * 0.5f;
+				mRect.y = clipRange.y - clipRange.w * 0.5f;
+				mRect.width = clipRange.z;
+				mRect.height = clipRange.w;
+			}
+		}
+		else if (widgetContainer != null)
+		{
+			Transform cachedTransform = widgetContainer.cachedTransform;
+			Vector3 localScale = cachedTransform.localScale;
+			Vector3 localPosition = cachedTransform.localPosition;
+			Vector3 vector = widgetContainer.relativeSize;
+			Vector3 vector2 = widgetContainer.pivotOffset;
+			vector2.y -= 1f;
+			vector2.x *= widgetContainer.relativeSize.x * localScale.x;
+			vector2.y *= widgetContainer.relativeSize.y * localScale.y;
+			mRect.x = localPosition.x + vector2.x;
+			mRect.y = localPosition.y + vector2.y;
+			mRect.width = vector.x * localScale.x;
+			mRect.height = vector.y * localScale.y;
+		}
+		else
+		{
+			if (!(uiCamera != null))
+			{
+				return;
+			}
+			mRect = uiCamera.pixelRect;
+			if (mRoot != null)
+			{
+				num = mRoot.pixelSizeAdjustment;
+			}
+		}
+		float num2 = mRect.width;
+		float num3 = mRect.height;
+		if (num != 1f && num3 > 1f)
+		{
+			float num4 = (float)mRoot.activeHeight / num3;
+			num2 *= num4;
+			num3 *= num4;
+		}
+		Vector3 localScale2 = mTrans.localScale;
+		if (style == Style.BasedOnHeight)
+		{
+			localScale2.x = relativeSize.x * num3;
+			localScale2.y = relativeSize.y * num3;
+		}
+		else if (style == Style.FillKeepingRatio)
+		{
+			float num5 = num2 / num3;
+			float num6 = initialSize.x / initialSize.y;
+			if (num6 < num5)
+			{
+				float num7 = num2 / initialSize.x;
+				localScale2.x = num2;
+				localScale2.y = initialSize.y * num7;
+			}
+			else
+			{
+				float num8 = num3 / initialSize.y;
+				localScale2.x = initialSize.x * num8;
+				localScale2.y = num3;
+			}
+		}
+		else if (style == Style.FitInternalKeepingRatio)
+		{
+			float num9 = num2 / num3;
+			float num10 = initialSize.x / initialSize.y;
+			if (num10 > num9)
+			{
+				float num11 = num2 / initialSize.x;
+				localScale2.x = num2;
+				localScale2.y = initialSize.y * num11;
+			}
+			else
+			{
+				float num12 = num3 / initialSize.y;
+				localScale2.x = initialSize.x * num12;
+				localScale2.y = num3;
+			}
+		}
+		else
+		{
+			if (style == Style.Both || style == Style.Horizontal)
+			{
+				localScale2.x = relativeSize.x * num2 + 2f;
+			}
+			if (style == Style.Both || style == Style.Vertical)
+			{
+				localScale2.y = relativeSize.y * num3 + 2f;
+			}
+		}
+		if (mTrans.localScale != localScale2)
+		{
+			mTrans.localScale = localScale2;
+		}
+		if (runOnlyOnce && Application.isPlaying)
+		{
+			Object.Destroy(this);
+		}
+	}
 }

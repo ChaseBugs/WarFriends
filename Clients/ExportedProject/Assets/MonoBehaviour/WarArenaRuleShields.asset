@@ -11,3 +11,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 364376e506126fdfc0c5b1a74c322080, type: 3}
   m_Name: WarArenaRuleShields
   m_EditorClassIdentifier:
+  data:
+    showRule: 1
+    immortalShieds: 0
+    noShields: 1
+    noRespawn: 0
+    respawnTime: 0
+    shieldHP: 0

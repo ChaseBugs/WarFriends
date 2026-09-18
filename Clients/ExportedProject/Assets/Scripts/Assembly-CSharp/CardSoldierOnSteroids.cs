@@ -1,63 +1,109 @@
+using System;
+using Google2u;
 using UnityEngine;
 
-public class CardSoldierOnSteroids : MonoBehaviour
+public class CardSoldierOnSteroids : Card
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	private const string ingameIconName = "game-card-ico-meatheads-full";
 
-	1. No dll files were provided to AssetRipper.
+	private bool mRegisterEvents;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	private Fractions mFraction;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	private bool mStarted;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	private SpawningManagerDeathMatch.ArmyUnitDefinition mUsedDefinition;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	private bool mWasSoilder;
 
-	3. Assembly Reconstruction has not been implemented.
+	private float damageMult => Singleton<GameVariables>.instance.cardConstants.GetRow(CardConstants.rowIds.SoldierOnSteroidsCoef).FLOATVALUE;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public override string description => Localization.LocalizeFormat(mDescriptionID, MiscTools.FormatFloatNumberAsPercent(damageMult));
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	protected override string mBonusName => MiscTools.FormatFloatNumberAsPlusPercent(damageMult);
 
-	4. This script is unnecessary.
+	public override void UseCard(ICardManager cardManager, Fractions fraction)
+	{
+		if (PhotonNetwork.isMasterClient)
+		{
+			RegisterEvents(fraction);
+		}
+		cardManager.CardWasUsed(this, fraction);
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public override void UseCardOnline(ICardManager cardManager, Fractions fraction)
+	{
+		if (base.isOnlineMaster)
+		{
+			RegisterEvents(fraction);
+		}
+	}
 
-	5. Script Content Level 0
+	private void RegisterEvents(Fractions fraction)
+	{
+		mWasSoilder = false;
+		mFraction = fraction;
+		mUsedDefinition = null;
+		if (mStarted)
+		{
+			Debug.LogError("[CardSoldierOnSteroids] - used agan after spawning start, but before finish!!!");
+			mStarted = false;
+		}
+		if (!mRegisterEvents)
+		{
+			mRegisterEvents = true;
+			SpawningManagerDeathMatch instance = Singleton<SpawningManagerDeathMatch>.instance;
+			instance.onStartSpawning = (Action<Fractions, SpawningManagerDeathMatch.ArmyUnitDefinition>)Delegate.Combine(instance.onStartSpawning, new Action<Fractions, SpawningManagerDeathMatch.ArmyUnitDefinition>(SpawningStarted));
+			SpawningManagerDeathMatch instance2 = Singleton<SpawningManagerDeathMatch>.instance;
+			instance2.onFinishSpawning = (Action<Fractions, SpawningManagerDeathMatch.ArmyUnitDefinition>)Delegate.Combine(instance2.onFinishSpawning, new Action<Fractions, SpawningManagerDeathMatch.ArmyUnitDefinition>(SpawningFinished));
+			AIObject.AfterSpawned += SpawnedArmy;
+		}
+	}
 
-		AssetRipper was set to not load any script information.
+	private void SpawnedArmy(AIObject aiObject)
+	{
+		if (mStarted && aiObject.fraction == mFraction)
+		{
+			EnemyController enemyController = aiObject as EnemyController;
+			if (enemyController != null && enemyController.canBeFreezed)
+			{
+				enemyController.destroyableObj.maxHealth *= 1f + damageMult;
+				enemyController.destroyableObj.Refill();
+				enemyController.ImproveAllWeapons(1f + damageMult);
+				enemyController.cardIconIndicator.Show("game-card-ico-meatheads-full", show: true);
+				mWasSoilder = true;
+			}
+		}
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	private void SpawningStarted(Fractions fraction, SpawningManagerDeathMatch.ArmyUnitDefinition def)
+	{
+		if (fraction == mFraction)
+		{
+			mStarted = true;
+			mUsedDefinition = def;
+		}
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	private void SpawningFinished(Fractions fraction, SpawningManagerDeathMatch.ArmyUnitDefinition def)
+	{
+		if (fraction == mFraction && mStarted && def == mUsedDefinition && mUsedDefinition != null && mWasSoilder)
+		{
+			DisconnectEvents();
+		}
+	}
 
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public override void DisconnectEvents()
+	{
+		if (mRegisterEvents)
+		{
+			SpawningManagerDeathMatch instance = Singleton<SpawningManagerDeathMatch>.instance;
+			instance.onStartSpawning = (Action<Fractions, SpawningManagerDeathMatch.ArmyUnitDefinition>)Delegate.Remove(instance.onStartSpawning, new Action<Fractions, SpawningManagerDeathMatch.ArmyUnitDefinition>(SpawningStarted));
+			SpawningManagerDeathMatch instance2 = Singleton<SpawningManagerDeathMatch>.instance;
+			instance2.onFinishSpawning = (Action<Fractions, SpawningManagerDeathMatch.ArmyUnitDefinition>)Delegate.Remove(instance2.onFinishSpawning, new Action<Fractions, SpawningManagerDeathMatch.ArmyUnitDefinition>(SpawningFinished));
+			AIObject.AfterSpawned -= SpawnedArmy;
+			mRegisterEvents = false;
+			mStarted = false;
+		}
+	}
 }

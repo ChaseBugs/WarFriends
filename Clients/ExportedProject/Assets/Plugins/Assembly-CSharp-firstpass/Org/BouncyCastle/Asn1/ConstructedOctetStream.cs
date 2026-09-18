@@ -1,66 +1,93 @@
-using UnityEngine;
+using System.IO;
+using Org.BouncyCastle.Utilities.IO;
 
 namespace Org.BouncyCastle.Asn1
 {
-	public class ConstructedOctetStream : MonoBehaviour
+internal class ConstructedOctetStream : BaseInputStream
+{
+	private readonly Asn1StreamParser _parser;
+
+	private bool _first = true;
+
+	private Stream _currentStream;
+
+	internal ConstructedOctetStream(Asn1StreamParser parser)
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
+		_parser = parser;
 	}
+
+	public override int Read(byte[] buffer, int offset, int count)
+	{
+		if (_currentStream == null)
+		{
+			if (!_first)
+			{
+				return 0;
+			}
+			Asn1OctetStringParser asn1OctetStringParser = (Asn1OctetStringParser)_parser.ReadObject();
+			if (asn1OctetStringParser == null)
+			{
+				return 0;
+			}
+			_first = false;
+			_currentStream = asn1OctetStringParser.GetOctetStream();
+		}
+		int num = 0;
+		while (true)
+		{
+			int num2 = _currentStream.Read(buffer, offset + num, count - num);
+			if (num2 > 0)
+			{
+				num += num2;
+				if (num == count)
+				{
+					return num;
+				}
+				continue;
+			}
+			Asn1OctetStringParser asn1OctetStringParser2 = (Asn1OctetStringParser)_parser.ReadObject();
+			if (asn1OctetStringParser2 == null)
+			{
+				break;
+			}
+			_currentStream = asn1OctetStringParser2.GetOctetStream();
+		}
+		_currentStream = null;
+		return num;
+	}
+
+	public override int ReadByte()
+	{
+		if (_currentStream == null)
+		{
+			if (!_first)
+			{
+				return 0;
+			}
+			Asn1OctetStringParser asn1OctetStringParser = (Asn1OctetStringParser)_parser.ReadObject();
+			if (asn1OctetStringParser == null)
+			{
+				return 0;
+			}
+			_first = false;
+			_currentStream = asn1OctetStringParser.GetOctetStream();
+		}
+		while (true)
+		{
+			int num = _currentStream.ReadByte();
+			if (num >= 0)
+			{
+				return num;
+			}
+			Asn1OctetStringParser asn1OctetStringParser2 = (Asn1OctetStringParser)_parser.ReadObject();
+			if (asn1OctetStringParser2 == null)
+			{
+				break;
+			}
+			_currentStream = asn1OctetStringParser2.GetOctetStream();
+		}
+		_currentStream = null;
+		return -1;
+	}
+}
 }

@@ -1,63 +1,103 @@
+using System.Globalization;
+using System.Text.RegularExpressions;
 using UnityEngine;
 
-public class TweenTextCounterLong : MonoBehaviour
+[AddComponentMenu("NGUI/Tween/Text Long Counter Tween")]
+internal class TweenTextCounterLong : UITweener
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public long from;
 
-	1. No dll files were provided to AssetRipper.
+	public long to;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public bool useSound;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public SoundsManager.SoundsEnum soundType = SoundsManager.SoundsEnum.CounterSoundExperience;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	private string mPrefix = string.Empty;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	private UILabel mUiLabel;
 
-	3. Assembly Reconstruction has not been implemented.
+	private float mLastSound;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public long Text
+	{
+		get
+		{
+			if (mUiLabel != null)
+			{
+				long result = 0L;
+				if (long.TryParse(Regex.Replace(mUiLabel.text, "[.,]*", string.Empty), out result))
+				{
+					if (mUiLabel.text.ToCharArray()[0] == '+')
+					{
+						mPrefix = "+";
+					}
+					return result;
+				}
+				mPrefix = Regex.Replace(mUiLabel.text, "[0-9.,]*", string.Empty);
+				string s = Regex.Replace(mUiLabel.text, "^\\D*", string.Empty);
+				return int.Parse(s, NumberStyles.AllowThousands, CultureInfo.InvariantCulture);
+			}
+			return 0L;
+		}
+		set
+		{
+			if (mUiLabel != null)
+			{
+				mUiLabel.text = ((value < 0) ? MiscTools.FormatBigNumberLong(value) : (mPrefix + MiscTools.FormatBigNumberLong(value)));
+			}
+		}
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public void Awake()
+	{
+		mUiLabel = GetComponent<UILabel>();
+		long result = 0L;
+		if (!long.TryParse(mUiLabel.text, out result))
+		{
+			mPrefix = Regex.Replace(mUiLabel.text, "[0-9.,]*", string.Empty);
+		}
+	}
 
-	4. This script is unnecessary.
+	protected override void OnUpdate(float factor, bool isFinished)
+	{
+		if (mUiLabel != null)
+		{
+			string text = mUiLabel.text;
+			Text = (long)Mathf.Lerp(from, to, factor);
+			if (useSound && duration * factor > mLastSound + 0.065f && text != mUiLabel.text)
+			{
+				SoundsManager.Instance.PlaySound(soundType);
+				mLastSound = duration * factor;
+			}
+		}
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public static TweenTextCounterLong Begin(GameObject go, float duration, LongObject fromText, LongObject toText)
+	{
+		TweenTextCounterLong tweenTextCounterLong = UITweener.Begin<TweenTextCounterLong>(go, duration);
+		tweenTextCounterLong.from = fromText.val;
+		tweenTextCounterLong.to = toText.val;
+		tweenTextCounterLong.mLastSound = 0f;
+		if (duration <= 0f)
+		{
+			tweenTextCounterLong.Sample(1f, isFinished: true);
+			tweenTextCounterLong.enabled = false;
+		}
+		return tweenTextCounterLong;
+	}
 
-	5. Script Content Level 0
-
-		AssetRipper was set to not load any script information.
-
-	6. Cpp2IL failed to decompile Il2Cpp data
-
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public static TweenTextCounterLong Begin(GameObject go, float duration, LongObject toText)
+	{
+		TweenTextCounterLong tweenTextCounterLong = UITweener.Begin<TweenTextCounterLong>(go, duration);
+		tweenTextCounterLong.from = tweenTextCounterLong.Text;
+		tweenTextCounterLong.to = toText.val;
+		tweenTextCounterLong.mLastSound = 0f;
+		if (duration <= 0f)
+		{
+			tweenTextCounterLong.Sample(1f, isFinished: true);
+			tweenTextCounterLong.enabled = false;
+		}
+		return tweenTextCounterLong;
+	}
 }

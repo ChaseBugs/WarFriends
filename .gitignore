@@ -131,7 +131,9 @@ Client-Hybrid-*-Test/
 assetripper_server.log
 *.fields.csv
 *.fields.csv.meta
+
 WarFriends 1.4.0.apk
+main.14008.com.chillingo.warfriends.android.gplay.obb
 
 # Common local editor and OS files
 .idea/

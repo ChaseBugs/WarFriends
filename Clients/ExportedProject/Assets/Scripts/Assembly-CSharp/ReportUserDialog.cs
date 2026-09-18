@@ -1,63 +1,156 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
-public class ReportUserDialog : MonoBehaviour
+public class ReportUserDialog : GuiElementSingle<ReportUserDialog>, IGuiDialog
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public const string POPUP_INSTAKILL = "ID_REPORTUSER_ITEM0";
 
-	1. No dll files were provided to AssetRipper.
+	public const string POPUP_SUSPICIOUS = "ID_REPORTUSER_ITEM1";
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public const string POPUP_OTHER = "ID_REPORTUSER_ITEM2";
 
-	2. Incorrect dll files were provided to AssetRipper.
+	[Header("Core")]
+	public GameObject butonClose;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public ChatAbusePopUpList popUpList;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public GameObject buttonCancel;
 
-	3. Assembly Reconstruction has not been implemented.
+	[Header("-Submit Button")]
+	public GameObject submitButton;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public BoxCollider submitCollider;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public UISprite submitBackground;
 
-	4. This script is unnecessary.
+	private string mPlayerId;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private UserReportType mReportType;
 
-	5. Script Content Level 0
+	private Dictionary<string, UserReportType> mReportDictionary;
 
-		AssetRipper was set to not load any script information.
+	public static void ShowReportDialog(string playerId)
+	{
+		ReportUserDialog reportUserDialog = GuiElementSingle<ReportUserDialog>.instance;
+		reportUserDialog.mPlayerId = playerId;
+		Singleton<GuiManager>.instance.ShowDialog(reportUserDialog, 0f);
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public static void ShowBotReportDialog(int botConfigNumber)
+	{
+		ReportUserDialog reportUserDialog = GuiElementSingle<ReportUserDialog>.instance;
+		reportUserDialog.mPlayerId = botConfigNumber.ToString("'bot-'0");
+		Singleton<GuiManager>.instance.ShowDialog(reportUserDialog, 0f);
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public override void InitControls()
+	{
+		UIEventListener uIEventListener = UIEventListener.Get(buttonCancel);
+		uIEventListener.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener.onClick, new UIEventListener.VoidDelegate(CloseDialog));
+		UIEventListener uIEventListener2 = UIEventListener.Get(butonClose);
+		uIEventListener2.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener2.onClick, new UIEventListener.VoidDelegate(CloseDialog));
+		UIEventListener uIEventListener3 = UIEventListener.Get(submitButton.gameObject);
+		uIEventListener3.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener3.onClick, new UIEventListener.VoidDelegate(SubmitClick));
+		popUpList.popUpList.SetDefaultValue();
+		popUpList.OnSelect += OnSelectPopUp;
+		FillDictionary();
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	private void CloseDialog(GameObject go)
+	{
+		if (base.isFullyShowed)
+		{
+			HideDialog();
+		}
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	private void SubmitClick(GameObject go)
+	{
+		if (base.isFullyShowed)
+		{
+			int armyPowerX = LevelManager.instance.armyPowerX10;
+			int displayNumber = LevelManager.instance.currentLevel.displayNumber;
+			int armyPowerX2 = Singleton<GameController>.instance.opponent.playerProperties.armyPowerX10;
+			int level = Singleton<GameController>.instance.opponent.playerProperties.level;
+			float matchTime = Singleton<MatchManager>.instance.matchTime;
+			GuiScreenSingle<EndScreen>.instance.enemy.DisableReportButton();
+			Debug.Log($"Submited: \"{mReportType}\" for player: \"{mPlayerId}\" rank:{level} AP:{MiscTools.FormatBigNumber(armyPowerX2)} and my rank:{displayNumber} AP:{MiscTools.FormatBigNumber(armyPowerX)}. Match duration: {MiscTools.PrintableTimeDigits(matchTime)}");
+			Singleton<BeanstalkServerManager>.instance.SendCheaterReport(mPlayerId, (int)mReportType, armyPowerX, displayNumber, level, armyPowerX2, matchTime);
+			HideDialog();
+		}
+	}
 
-	*/
+	private void OnSelectPopUp(string selection, UILabel label)
+	{
+		if (base.isFullyShowed)
+		{
+			SetSubmitButton(enabled: true);
+			label.color = Colours.grayDark;
+			if (!mReportDictionary.ContainsKey(selection))
+			{
+				FillDictionary();
+			}
+			if (mReportDictionary.ContainsKey(selection))
+			{
+				mReportType = mReportDictionary[selection];
+			}
+			else
+			{
+				mReportType = UserReportType.Other;
+			}
+			SoundsManager.Instance.PlayButtonClickedSound();
+		}
+	}
+
+	public override void InitGUIValues()
+	{
+		popUpList.ResetToDefault();
+		SetSubmitButton(enabled: false);
+	}
+
+	private void SetSubmitButton(bool enabled)
+	{
+		submitCollider.enabled = enabled;
+		submitBackground.color = ((!enabled) ? Color.white.ReplaceA(0.5f) : Color.white);
+	}
+
+	private void FillDictionary()
+	{
+		if (mReportDictionary == null)
+		{
+			mReportDictionary = new Dictionary<string, UserReportType>();
+		}
+		if (mReportDictionary.Count > 0)
+		{
+			mReportDictionary.Clear();
+		}
+		mReportDictionary.Add("ID_REPORTUSER_ITEM0", UserReportType.InstantKill);
+		mReportDictionary.Add("ID_REPORTUSER_ITEM1", UserReportType.SuspiciousBehaviourDuringMatch);
+		mReportDictionary.Add("ID_REPORTUSER_ITEM2", UserReportType.Other);
+	}
+
+	public override void DoBeforeShowUp()
+	{
+		base.DoBeforeShowUp();
+		UIDraggablePanel.panelDisabled = true;
+		GuiScreenSingle<EndScreen>.instance.enemy.panelEnemy.onePanelDisabled = true;
+	}
+
+	public override void DoAfterHide()
+	{
+		base.DoAfterHide();
+		UIDraggablePanel.panelDisabled = false;
+		GuiScreenSingle<EndScreen>.instance.enemy.panelEnemy.onePanelDisabled = false;
+	}
+
+	public GuiElement GetGuiElement()
+	{
+		return this;
+	}
+
+	public override void OnBack()
+	{
+		CloseDialog(buttonCancel.gameObject);
+	}
 }

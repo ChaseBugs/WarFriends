@@ -1,63 +1,390 @@
+using System.Collections.Generic;
+using ExitGames.Client.Photon;
+using Newtonsoft.Json;
 using UnityEngine;
 
-public class PlayerProperties : MonoBehaviour
+public class PlayerProperties
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public List<Tuple<string, CardManager.BuddyCardData>> buddyCards = new List<Tuple<string, CardManager.BuddyCardData>>();
 
-	1. No dll files were provided to AssetRipper.
+	public string chosenCards = string.Empty;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public string country;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public long facebookID;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public bool isInLeague;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public bool isVip;
 
-	3. Assembly Reconstruction has not been implemented.
+	public League league;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public int leagueMedals;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public int beginnersLeague;
 
-	4. This script is unnecessary.
+	private DatabasePlayerInfo mBotInfo;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public int medals;
 
-	5. Script Content Level 0
+	public string name;
 
-		AssetRipper was set to not load any script information.
+	public PhotonPlayer photonPlayer;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public string playerID;
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public string[] playerVisuals;
 
-	7. An incorrect path was provided to AssetRipper.
+	public Texture texture;
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	private List<UnitUpgradeDefinition> mUpgrades;
 
-	*/
+	public int matchMadeGames;
+
+	public WarArenaCrown warArenaCrown;
+
+	public Dictionary<string, UnitUpgradeDefinition> upgradesDictionary { get; private set; }
+
+	public bool goldShields { get; private set; }
+
+	public int level { get; set; }
+
+	public int armyPower { get; set; }
+
+	public PlayerInventory.EquippedWeapon[] weapons { get; set; }
+
+	public int armyPowerX10 => 10 * armyPower;
+
+	public bool isInBeginnersLeague => beginnersLeague > 0;
+
+	public PlayerVisualCategoryCamos.PlayerVisualCamo equippedCamo { get; set; }
+
+	public PlayerVisualCategoryHelmets.PlayerVisualHelmet equippedHelmet { get; set; }
+
+	public PlayerVisualCategoryHeadAccesories.PlayerVisualHeadAccesory equippedHeadAccesory { get; set; }
+
+	public PlayerVisualCategoryPowerBands.PlayerVisualPowerBand equippedPowerBand { get; set; }
+
+	public bool isBot { get; set; }
+
+	public static Hashtable photonPlayerProperties
+	{
+		get
+		{
+			Hashtable hashtable = new Hashtable();
+			hashtable.Add("maxMapId", Singleton<MapManager>.instance.unlockedmaps);
+			hashtable.Add("mapId", (!Singleton<MapManager>.instance.isRandomMap) ? Singleton<MapManager>.instance.currentMap.id : 10);
+			hashtable.Add("isRandomMap", Singleton<MapManager>.instance.isRandomMap ? 1 : 0);
+			hashtable.Add("level", Singleton<GameController>.instance.mainController.playerLevel);
+			hashtable.Add("playerID", GameLoginManager.instance.playerId);
+			hashtable.Add("facebookID", GameLoginManager.instance.facebookId);
+			hashtable.Add("playerVisuals", Singleton<GameController>.instance.mainController.equppedVisuals);
+			hashtable.Add("weapons", Singleton<GameController>.instance.mainController.equippedWeapons);
+			hashtable.Add("armyPower", LevelManager.instance.armyPower);
+			hashtable.Add("defendPosition", Random.Range(0, 2));
+			hashtable.Add("upgrades", JsonConvert.SerializeObject(Singleton<GameController>.instance.mainController.GetUnitsUpgrades()));
+			hashtable.Add("league", (int)GameLoginManager.currentPlayer.leagueTier);
+			hashtable.Add("isVIP", Singleton<VipManager>.instance.IsVipActive());
+			hashtable.Add("medals", GameLoginManager.instance.medals);
+			hashtable.Add("isInLeague", GameLoginManager.currentPlayer.isInLeague);
+			hashtable.Add("country", GameLoginManager.currentPlayer.country);
+			hashtable.Add("leagueMedals", GameLoginManager.currentPlayer.medalsBalance);
+			hashtable.Add("beginnersLeague", GameLoginManager.currentPlayer.beginnersLeague);
+			hashtable.Add("matchMadeGames", StatsManager.instance.matchmadeGames);
+			hashtable.Add("warArenaCrown", GameLoginManager.currentPlayer.warArenaCrown);
+			hashtable.Add("goldShields", WarArena.instance.goldShieldsActive);
+			Hashtable hashtable2 = hashtable;
+			if (Singleton<GameController>.instance.isCoop || Singleton<GameController>.instance.isCoopBot)
+			{
+				hashtable2["defendPosition"] = ((!PhotonNetwork.isMasterClient) ? 1 : 0);
+			}
+			return hashtable2;
+		}
+	}
+
+	public DatabasePlayerInfo databaseInfoBot => mBotInfo;
+
+	public List<UnitUpgradeDefinition> upgrades
+	{
+		get
+		{
+			return mUpgrades;
+		}
+		set
+		{
+			mUpgrades = value;
+			upgradesDictionary = new Dictionary<string, UnitUpgradeDefinition>();
+			for (int i = 0; i < LevelManager.instance.behaviours.Count; i++)
+			{
+				LevelBehaviour levelBehaviour = LevelManager.instance.behaviours[i];
+				upgradesDictionary[levelBehaviour.GetType().ToString()] = value[i];
+			}
+		}
+	}
+
+	public void ClearAccesories()
+	{
+		equippedCamo = null;
+		equippedHeadAccesory = null;
+		equippedHelmet = null;
+		equippedPowerBand = null;
+	}
+
+	public static PlayerProperties CreateFromPhotonPlayer(PhotonPlayer player, Fractions fraction)
+	{
+		PlayerProperties playerProperties = new PlayerProperties();
+		playerProperties.name = player.name;
+		playerProperties.photonPlayer = player;
+		playerProperties.facebookID = (long)player.customProperties["facebookID"];
+		playerProperties.playerID = player.userId;
+		playerProperties.weapons = (PlayerInventory.EquippedWeapon[])player.customProperties["weapons"];
+		playerProperties.level = (int)player.customProperties["level"];
+		playerProperties.armyPower = (int)player.customProperties["armyPower"];
+		playerProperties.texture = ((fraction != PlayerController.currentPlayer.fraction) ? Singleton<ArmyPreviewCamera>.instance.player2Texture : Singleton<ArmyPreviewCamera>.instance.player3Texture);
+		playerProperties.upgrades = JsonConvert.DeserializeObject<List<UnitUpgradeDefinition>>((string)player.customProperties["upgrades"]);
+		playerProperties.league = (League)(int)player.customProperties["league"];
+		playerProperties.isVip = (bool)player.customProperties["isVIP"];
+		playerProperties.playerVisuals = (string[])player.customProperties["playerVisuals"];
+		playerProperties.medals = (int)player.customProperties["medals"];
+		playerProperties.isBot = false;
+		playerProperties.isInLeague = (bool)player.customProperties["isInLeague"];
+		playerProperties.country = (string)player.customProperties["country"];
+		playerProperties.leagueMedals = (int)player.customProperties["leagueMedals"];
+		playerProperties.beginnersLeague = (int)player.customProperties["beginnersLeague"];
+		playerProperties.matchMadeGames = (int)player.customProperties["matchMadeGames"];
+		playerProperties.warArenaCrown = (WarArenaCrown)(int)player.customProperties["warArenaCrown"];
+		playerProperties.goldShields = (bool)player.customProperties["goldShields"];
+		return playerProperties;
+	}
+
+	public static PlayerProperties CreateForLocalPlayer()
+	{
+		PlayerProperties playerProperties = new PlayerProperties();
+		playerProperties.name = GameLoginManager.currentPlayer.name;
+		playerProperties.photonPlayer = PhotonNetwork.player;
+		playerProperties.facebookID = GameLoginManager.instance.facebookId;
+		playerProperties.playerID = GameLoginManager.instance.playerId;
+		playerProperties.level = Singleton<GameController>.instance.mainController.playerLevel;
+		playerProperties.armyPower = LevelManager.instance.armyPower;
+		playerProperties.weapons = Singleton<GameController>.instance.mainController.equippedWeapons;
+		playerProperties.texture = Singleton<ArmyPreviewCamera>.instance.player1Texture;
+		playerProperties.upgrades = Singleton<GameController>.instance.mainController.GetUnitsUpgrades();
+		playerProperties.league = GameLoginManager.currentPlayer.leagueTier;
+		playerProperties.isVip = Singleton<VipManager>.instance.IsVipActive();
+		playerProperties.playerVisuals = Singleton<GameController>.instance.mainController.equppedVisuals;
+		playerProperties.medals = GameLoginManager.currentPlayer.skill;
+		playerProperties.isBot = false;
+		playerProperties.isInLeague = GameLoginManager.currentPlayer.isInLeague;
+		playerProperties.country = GameLoginManager.currentPlayer.country;
+		playerProperties.leagueMedals = (GameLoginManager.currentPlayer.isInLeague ? GameLoginManager.currentPlayer.medalsBalance : 0);
+		playerProperties.beginnersLeague = GameLoginManager.currentPlayer.beginnersLeague;
+		playerProperties.matchMadeGames = StatsManager.instance.matchmadeGames;
+		playerProperties.warArenaCrown = GameLoginManager.currentPlayer.warArenaCrown;
+		playerProperties.goldShields = WarArena.instance.goldShieldsActive;
+		playerProperties.chosenCards = CardManager.instance.selectedCards;
+		playerProperties.buddyCards = CardManager.instance.selectedBuddyCards;
+		return playerProperties;
+	}
+
+	public static PlayerProperties CreateForLocalPlayerLight()
+	{
+		PlayerProperties playerProperties = new PlayerProperties();
+		playerProperties.name = GameLoginManager.currentPlayer.name;
+		playerProperties.armyPower = LevelManager.instance.armyPower;
+		playerProperties.weapons = PlayerInventory.instance.equippedWeapons;
+		playerProperties.upgrades = LevelManager.instance.GetUpgrades();
+		playerProperties.level = LevelManager.instance.currentLevel.displayNumber;
+		return playerProperties;
+	}
+
+	public void UpdateSelectedUnits(string json)
+	{
+		upgrades = JsonConvert.DeserializeObject<List<UnitUpgradeDefinition>>(json);
+	}
+
+	public void CreateFakeDataForBot(bool isInSquad)
+	{
+		mBotInfo = new DatabasePlayerInfo
+		{
+			accountName = name,
+			level = level - 1,
+			skill = medals,
+			armyPower = armyPower,
+			leagueTier = league,
+			remainingMatches = GameLoginManager.currentPlayer.remainingMatches,
+			facebookId = -1L,
+			status = PlayerStatus.Online,
+			lastAction = Singleton<BeanstalkServerManager>.instance.currentTimestamp,
+			country = country,
+			beginnersLeague = beginnersLeague
+		};
+		bool flag = level > LevelManager.instance.warcardsUnlockLevel;
+		mBotInfo.playerVisuals = new Dictionary<int, CamosManager.SavedPlayerVisualSlot>();
+		for (int i = 0; i < playerVisuals.Length; i++)
+		{
+			string equippedID = playerVisuals[i];
+			mBotInfo.playerVisuals[i] = new CamosManager.SavedPlayerVisualSlot
+			{
+				equippedID = equippedID
+			};
+		}
+		StatsManager.StatisticsData statisticsData = new StatsManager.StatisticsData();
+		mBotInfo.statisticsData = statisticsData;
+		float num = Random.Range(0.8f, 2.2f);
+		int num2 = medals - GameLoginManager.currentPlayer.skill;
+		float num3 = (float)num2 / (float)GameLoginManager.currentPlayer.skill;
+		float a = (float)StatsManager.instance.data.battlesWonRanked + num3 * (float)StatsManager.instance.data.battlesWonRanked + Random.Range(0f, (float)medals / 200f);
+		int num4 = medals - 500;
+		float b = (float)num4 / 9f + Random.Range(0f, 6f);
+		a = Mathf.Max(a, b);
+		statisticsData.battlesWonRanked = (int)a;
+		statisticsData.battlesLostRanked = (int)((float)statisticsData.battlesWonRanked / num);
+		statisticsData.mmmGames = statisticsData.battlesWonRanked + statisticsData.battlesLostRanked;
+		matchMadeGames = statisticsData.mmmGames;
+		statisticsData.unitsDeployedSpecific = new Dictionary<int, int>();
+		for (int j = 0; j < upgrades.Count; j++)
+		{
+			UnitUpgradeDefinition unitUpgradeDefinition = upgrades[j];
+			if (unitUpgradeDefinition.isEquipped)
+			{
+				statisticsData.unitsDeployedSpecific[j] = Random.Range(0, 100);
+			}
+		}
+		statisticsData.weaponKills = new Dictionary<int, int>();
+		for (int k = 0; k < weapons.Length; k++)
+		{
+			int weaponId = weapons[k].weaponId;
+			statisticsData.weaponKills[weaponId] = Random.Range(0, 100);
+		}
+		List<Card> cards = CardManager.instance.cards;
+		Card card = cards[Random.Range(0, cards.Count)];
+		while (card.isBuddyCard)
+		{
+			card = cards[Random.Range(0, cards.Count)];
+		}
+		statisticsData.cardsPlayedSeparately = new Dictionary<string, int>();
+		if (flag)
+		{
+			statisticsData.cardsPlayedSeparately[card.id] = 100;
+		}
+		mBotInfo.levelManagerData = new LevelManager.LevelManagerData();
+		for (int l = 0; l < weapons.Length; l++)
+		{
+			int weaponId2 = weapons[l].weaponId;
+			WeaponLevelsSetup weaponLevelsSetup = LevelManager.instance.weaponLevelsSetups[weaponId2];
+			mBotInfo.levelManagerData.savedWeapons[weaponLevelsSetup.GetSheetName()] = new LevelManager.SavedWeaponSlots
+			{
+				bought = true,
+				boughtIndex = ((weapons != null) ? weapons[l].weaponUpgrade : 0)
+			};
+		}
+		mBotInfo.equippedUnits = new Dictionary<string, LevelManager.SavedArmySlots>();
+		for (int m = 0; m < upgrades.Count; m++)
+		{
+			UnitUpgradeDefinition unitUpgradeDefinition2 = upgrades[m];
+			string sheetName = LevelManager.instance.behaviours[m].upgradeSlots.GetSheetName();
+			if (unitUpgradeDefinition2.isEquipped)
+			{
+				mBotInfo.equippedUnits[sheetName] = new LevelManager.SavedArmySlots
+				{
+					equipped = unitUpgradeDefinition2.isEquipped,
+					boughtIndex = unitUpgradeDefinition2.unitUpgrades.slotUpgradeindex,
+					tier = unitUpgradeDefinition2.tier
+				};
+			}
+		}
+		mBotInfo.inventoryData = new PlayerInventory.InventoryData();
+		for (int n = 0; n < weapons.Length; n++)
+		{
+			PlayerInventory.EquippedWeapon equippedWeapon = weapons[n];
+			mBotInfo.inventoryData.slots[n] = new PlayerInventory.SerializedSlotDetail
+			{
+				weaponIndex = equippedWeapon.weaponId
+			};
+		}
+		mBotInfo.statisticsData.maxMedals = ((!(Random.value < 0.3f)) ? medals : Mathf.Clamp((int)((float)medals * Random.Range(1f, 1.02f)), 500, int.MaxValue));
+		if (!isInSquad)
+		{
+			return;
+		}
+		List<DatabaseSquad> globalSquadLeaderboard = Singleton<ServerResultsCache>.instance.GetGlobalSquadLeaderboard(ommitTime: true);
+		if (globalSquadLeaderboard != null && globalSquadLeaderboard.Count > 1)
+		{
+			DatabaseSquad databaseSquad = null;
+			do
+			{
+				databaseSquad = globalSquadLeaderboard[Random.Range(0, globalSquadLeaderboard.Count)];
+			}
+			while (databaseSquad.name == GameLoginManager.currentPlayer.squadName);
+			mBotInfo.squadName = databaseSquad.name;
+			mBotInfo.squadEmblem = databaseSquad.icon;
+			mBotInfo.squadPoints = databaseSquad.squadPoints / Mathf.Max(databaseSquad.size, 1);
+			mBotInfo.reputation = (flag ? (Random.Range(0, 24) * 5) : 0);
+		}
+	}
+
+	public Dictionary<string, int> GetWeaponsForStats()
+	{
+		Dictionary<string, int> dictionary = new Dictionary<string, int>();
+		if (weapons != null)
+		{
+			for (int i = 0; i < weapons.Length; i++)
+			{
+				int weaponId = weapons[i].weaponId;
+				WeaponLevelsSetup weaponLevelsSetup = LevelManager.instance.weaponLevelsSetups[weaponId];
+				dictionary[weaponLevelsSetup.GetSheetName().Replace("Google2u.", string.Empty)] = ((weapons != null) ? weapons[i].weaponUpgrade : 0);
+			}
+		}
+		return dictionary;
+	}
+
+	public Dictionary<string, int> GetArmyForStats()
+	{
+		Dictionary<string, int> dictionary = new Dictionary<string, int>();
+		for (int i = 0; i < upgrades.Count; i++)
+		{
+			UnitUpgradeDefinition unitUpgradeDefinition = upgrades[i];
+			string key = LevelManager.instance.behaviours[i].upgradeSlots.GetSheetName().Replace("Google2u.DBUpgradeSlots", string.Empty);
+			if (unitUpgradeDefinition.isEquipped)
+			{
+				dictionary[key] = unitUpgradeDefinition.unitUpgrades.slotUpgradeindex;
+			}
+		}
+		return dictionary;
+	}
+
+	public void EndMatch(bool loose)
+	{
+		if (mBotInfo != null)
+		{
+			int value = (int)(0.05f * (float)Mathf.Abs(mBotInfo.skill - PlayerController.currentPlayer.playerProperties.medals));
+			value = Mathf.Clamp(value, 7, 13);
+			value = Random.Range(value - 2, value + 2);
+			value = Mathf.Clamp(value, 7, 13);
+			if (loose)
+			{
+				mBotInfo.statisticsData.battlesLostRanked++;
+				mBotInfo.skill -= value;
+				medals -= value;
+			}
+			else
+			{
+				mBotInfo.statisticsData.battlesWonRanked++;
+				mBotInfo.skill += value;
+				mBotInfo.statisticsData.maxMedals = Mathf.Max(mBotInfo.statisticsData.maxMedals, mBotInfo.skill);
+				medals += value;
+			}
+			matchMadeGames++;
+			if (mBotInfo.statisticsData.mmmGames == 0)
+			{
+				mBotInfo.beginnersLeague = 1;
+			}
+			mBotInfo.statisticsData.mmmGames++;
+			if (!mBotInfo.isInBeginnersLeague && mBotInfo.remainingMatches > 0)
+			{
+				isInLeague = mBotInfo.remainingMatches == 1;
+				mBotInfo.remainingMatches--;
+			}
+		}
+	}
 }

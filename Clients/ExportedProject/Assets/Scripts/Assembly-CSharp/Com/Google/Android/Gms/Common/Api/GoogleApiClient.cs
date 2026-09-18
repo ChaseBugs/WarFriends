@@ -1,66 +1,125 @@
-using UnityEngine;
+using System;
+using Google.Developers;
 
 namespace Com.Google.Android.Gms.Common.Api
 {
-	public class GoogleApiClient : MonoBehaviour
+public class GoogleApiClient : JavaObjWrapper
+{
+	private const string CLASS_NAME = "com/google/android/gms/common/api/GoogleApiClient";
+
+	public GoogleApiClient(IntPtr ptr)
+		: base(ptr)
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
 	}
+
+	public GoogleApiClient()
+		: base("com.google.android.gms.common.api.GoogleApiClient")
+	{
+	}
+
+	public object getContext()
+	{
+		return InvokeCall<object>("getContext", "()Landroid/content/Context;", new object[0]);
+	}
+
+	public void connect()
+	{
+		InvokeCallVoid("connect", "()V");
+	}
+
+	public void disconnect()
+	{
+		InvokeCallVoid("disconnect", "()V");
+	}
+
+	public void dump(string arg_string_1, object arg_object_2, object arg_object_3, string[] arg_string_4)
+	{
+		InvokeCallVoid("dump", "(Ljava/lang/String;Ljava/io/FileDescriptor;Ljava/io/PrintWriter;[Ljava/lang/String;)V", arg_string_1, arg_object_2, arg_object_3, arg_string_4);
+	}
+
+	public ConnectionResult blockingConnect(long arg_long_1, object arg_object_2)
+	{
+		return InvokeCall<ConnectionResult>("blockingConnect", "(JLjava/util/concurrent/TimeUnit;)Lcom/google/android/gms/common/ConnectionResult;", new object[2] { arg_long_1, arg_object_2 });
+	}
+
+	public ConnectionResult blockingConnect()
+	{
+		return InvokeCall<ConnectionResult>("blockingConnect", "()Lcom/google/android/gms/common/ConnectionResult;", new object[0]);
+	}
+
+	public PendingResult<Status> clearDefaultAccountAndReconnect()
+	{
+		return InvokeCall<PendingResult<Status>>("clearDefaultAccountAndReconnect", "()Lcom/google/android/gms/common/api/PendingResult;", new object[0]);
+	}
+
+	public ConnectionResult getConnectionResult(object arg_object_1)
+	{
+		return InvokeCall<ConnectionResult>("getConnectionResult", "(Lcom/google/android/gms/common/api/Api;)Lcom/google/android/gms/common/ConnectionResult;", new object[1] { arg_object_1 });
+	}
+
+	public int getSessionId()
+	{
+		return InvokeCall<int>("getSessionId", "()I", new object[0]);
+	}
+
+	public bool isConnecting()
+	{
+		return InvokeCall<bool>("isConnecting", "()Z", new object[0]);
+	}
+
+	public bool isConnectionCallbacksRegistered(object arg_object_1)
+	{
+		return InvokeCall<bool>("isConnectionCallbacksRegistered", "(Lcom/google/android/gms/common/api/GoogleApiClient$ConnectionCallbacks;)Z", new object[1] { arg_object_1 });
+	}
+
+	public bool isConnectionFailedListenerRegistered(object arg_object_1)
+	{
+		return InvokeCall<bool>("isConnectionFailedListenerRegistered", "(Lcom/google/android/gms/common/api/GoogleApiClient$OnConnectionFailedListener;)Z", new object[1] { arg_object_1 });
+	}
+
+	public void reconnect()
+	{
+		InvokeCallVoid("reconnect", "()V");
+	}
+
+	public void registerConnectionCallbacks(object arg_object_1)
+	{
+		InvokeCallVoid("registerConnectionCallbacks", "(Lcom/google/android/gms/common/api/GoogleApiClient$ConnectionCallbacks;)V", arg_object_1);
+	}
+
+	public void registerConnectionFailedListener(object arg_object_1)
+	{
+		InvokeCallVoid("registerConnectionFailedListener", "(Lcom/google/android/gms/common/api/GoogleApiClient$OnConnectionFailedListener;)V", arg_object_1);
+	}
+
+	public void stopAutoManage(object arg_object_1)
+	{
+		InvokeCallVoid("stopAutoManage", "(Landroid/support/v4/app/FragmentActivity;)V", arg_object_1);
+	}
+
+	public void unregisterConnectionCallbacks(object arg_object_1)
+	{
+		InvokeCallVoid("unregisterConnectionCallbacks", "(Lcom/google/android/gms/common/api/GoogleApiClient$ConnectionCallbacks;)V", arg_object_1);
+	}
+
+	public void unregisterConnectionFailedListener(object arg_object_1)
+	{
+		InvokeCallVoid("unregisterConnectionFailedListener", "(Lcom/google/android/gms/common/api/GoogleApiClient$OnConnectionFailedListener;)V", arg_object_1);
+	}
+
+	public bool hasConnectedApi(object arg_object_1)
+	{
+		return InvokeCall<bool>("hasConnectedApi", "(Lcom/google/android/gms/common/api/Api;)Z", new object[1] { arg_object_1 });
+	}
+
+	public object getLooper()
+	{
+		return InvokeCall<object>("getLooper", "()Landroid/os/Looper;", new object[0]);
+	}
+
+	public bool isConnected()
+	{
+		return InvokeCall<bool>("isConnected", "()Z", new object[0]);
+	}
+}
 }

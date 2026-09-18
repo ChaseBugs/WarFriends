@@ -1,63 +1,216 @@
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
-public class GainedCardsAnimation : MonoBehaviour
+public class GainedCardsAnimation : Core_BaseScript
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Header("Header")]
+	public UILabel header;
 
-	1. No dll files were provided to AssetRipper.
+	[Header("Animation")]
+	public GameObject cardCenter;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public CardRecord cardRecordPrefab;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	private ObjectPool mPool;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	private List<CardRecord> mCards;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	private int mCount;
 
-	3. Assembly Reconstruction has not been implemented.
+	public void InitControls()
+	{
+		header.alpha = 0f;
+		mPool = Singleton<GuiManager>.instance.objectPool;
+		mCards = new List<CardRecord>();
+		Singleton<BeanstalkServerManager>.instance.ErrorReceived += delegate(DatabaseAction action)
+		{
+			if (GuiScreenSingle<EndScreen>.instance.isShowed && action == DatabaseAction.AddVideoReward)
+			{
+				WaitingDialog.Hide();
+			}
+		};
+	}
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public void InitGUIValues()
+	{
+		mCards.Clear();
+		foreach (Card obtainedCard in CardManager.instance.obtainedCards)
+		{
+			CardRecord cardRecord = (CardRecord)mPool.InstantiateAsChild(cardRecordPrefab, cardCenter, $"Player Card {5 - obtainedCard.rarityNumber} {obtainedCard.cardName} {mCount++}");
+			if (cardRecord != null)
+			{
+				cardRecord.Initialize(obtainedCard);
+				cardRecord.SetInvisible();
+				mCards.Add(cardRecord);
+			}
+		}
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public IEnumerator PlayAnimation()
+	{
+		base.gameObject.SetActive(value: true);
+		yield return StartCoroutine(LootboxesAnimationCoroutine());
+		GuiScreenSingle<EndScreen>.instance.isEndScreenLootboxAnimations = false;
+		if (mCards.Count == 0)
+		{
+			base.gameObject.SetActive(value: false);
+			yield break;
+		}
+		Vector3 headerPosition = header.transform.localPosition;
+		TweenAlpha.Begin(header.gameObject, 0.4f, 0f, 1f);
+		TweenPosition tw = TweenPosition.Begin(header.gameObject, 0.4f, headerPosition, headerPosition + new Vector3(0f, 50f, 0f));
+		tw.method = UITweener.Method.Linear;
+		tw.onFinished = delegate
+		{
+			TweenPosition tweenPosition = TweenPosition.Begin(header.gameObject, 0.4f, headerPosition);
+			tweenPosition.method = UITweener.Method.Linear;
+			TweenAlpha.Begin(header.gameObject, 0.2f, 1f, 1f).onFinished = delegate
+			{
+			};
+		};
+		yield return new WaitForSeconds(0.6f);
+		yield return StartCoroutine(CardsAnimationCoroutine());
+	}
 
-	4. This script is unnecessary.
+	private IEnumerator CardsAnimationCoroutine()
+	{
+		foreach (CardRecord cardObject in mCards)
+		{
+			cardObject.EndScreenAnimation(Singleton<GameController>.instance.isTutorial);
+			float time = Time.time + 1.4f + ((!Singleton<GameController>.instance.isTutorial) ? 0f : 2f);
+			bool clicked = false;
+			while (Time.time < time)
+			{
+				if (Input.GetMouseButtonDown(0))
+				{
+					clicked = true;
+				}
+				yield return null;
+				if (clicked && cardObject.cardFlipped)
+				{
+					cardObject.UnhookAndStopAllTweens();
+					cardObject.HideCardInEndScreen();
+					clicked = false;
+					break;
+				}
+			}
+		}
+		foreach (CardRecord cardObject2 in mCards)
+		{
+			while (cardObject2.isAnimatingCard)
+			{
+				yield return null;
+			}
+		}
+		TweenAlpha.Begin(header.gameObject, 0.2f, 0f);
+		yield return new WaitForSeconds(0.1f);
+		FinishTweens();
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private void FinishTweens()
+	{
+		base.gameObject.SetActive(value: false);
+		foreach (CardRecord mCard in mCards)
+		{
+			mCard.DestroyPooled();
+		}
+		mCards.Clear();
+	}
 
-	5. Script Content Level 0
-
-		AssetRipper was set to not load any script information.
-
-	6. Cpp2IL failed to decompile Il2Cpp data
-
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	private IEnumerator LootboxesAnimationCoroutine()
+	{
+		Debug.Log("Start of lootbox coroutine");
+		if (Singleton<ServerResultsCache>.instance.lastGameReward == null)
+		{
+			Debug.LogError("End of lootbox coroutine - no rewards for game from server!");
+			yield break;
+		}
+		List<LootboxContent> lootboxes = Singleton<ServerResultsCache>.instance.lastGameReward.lootboxesReward;
+		if (lootboxes == null || lootboxes.Count == 0)
+		{
+			Debug.Log("End of lootbox coroutine - empty lootboxes in rewards");
+			yield break;
+		}
+		GuiElementSingle<LootBoxDialog>.instance.ShowDialogMoreBoxes(lootboxes);
+		int deviceTime = Singleton<BeanstalkServerManager>.instance.currentTimestamp;
+		yield return new WaitForSeconds(0.1f);
+		while (GuiElementSingle<LootBoxDialog>.instance.gameObject.activeSelf)
+		{
+			yield return null;
+		}
+		if (!GuiScreenSingle<EndScreen>.instance.shouldGetLootboxForAd)
+		{
+			yield break;
+		}
+		yield return new WaitForSeconds(0.6f);
+		if (Singleton<EventTrackingManager>.instance.isAdVideoPlaying || deviceTime + 15 < Singleton<BeanstalkServerManager>.instance.currentTimestamp)
+		{
+			Debug.Log("User was watching ad - waiting for server reward");
+		}
+		else
+		{
+			Debug.Log("User was watching ad - advertisement did not started");
+			float addTimeOut = 0f;
+			WaitingDialog.ShowDialog("ID_WAITINGFORADVERTISEMENT");
+			while (!Singleton<EventTrackingManager>.instance.isAdVideoPlaying && addTimeOut < 30f)
+			{
+				addTimeOut += Time.deltaTime;
+				yield return null;
+			}
+			while (!GuiElementSingle<WaitingDialog>.instance.isFullyShowed)
+			{
+				yield return null;
+			}
+			if (GuiElementSingle<WaitingDialog>.instance.isFullyShowed)
+			{
+				WaitingDialog.Hide();
+			}
+			if (addTimeOut >= 30f)
+			{
+				WarningDialog.ShowError(Localization.Localize("ID_WARNING_ADVERTISEMENTVIDEODIDNOTSTART"), Localization.Localize("ID_WARNING_CONNECTIONERROR"), 0f, null, string.Empty);
+				yield break;
+			}
+		}
+		while (Singleton<EventTrackingManager>.instance.isAdVideoPlaying)
+		{
+			yield return null;
+		}
+		while (GuiElementSingle<WaitingDialog>.instance.gameObject.activeSelf)
+		{
+			yield return null;
+		}
+		WaitingDialog.ShowDialog("ID_WAITINGFORLOOTBOX");
+		yield return new WaitForSeconds(0.1f);
+		float serverTimeOut = 0f;
+		while (GuiElementSingle<WaitingDialog>.instance.gameObject.activeSelf && serverTimeOut < 30f)
+		{
+			serverTimeOut += Time.deltaTime;
+			if (GuiElementSingle<WaitingDialog>.instance.isFullyShowed && GuiScreenSingle<EndScreen>.instance.videoRewardLootbox != null && GuiScreenSingle<EndScreen>.instance.videoRewardLootbox.Count > 0)
+			{
+				Debug.Log("User was watching add - waiting for server reward - reward came");
+				WaitingDialog.Hide();
+			}
+			yield return null;
+		}
+		if (GuiScreenSingle<EndScreen>.instance.videoRewardLootbox != null && GuiScreenSingle<EndScreen>.instance.videoRewardLootbox.Count > 0)
+		{
+			Debug.Log("User was watching add - showing reward");
+			GuiElementSingle<LootBoxDialog>.instance.ShowDialogMoreBoxes(GuiScreenSingle<EndScreen>.instance.videoRewardLootbox, showVideoButton: false);
+			yield return new WaitForSeconds(0.1f);
+		}
+		else if (serverTimeOut > 30f)
+		{
+			WarningDialog.ShowError(Localization.Localize("ID_WARNING_REWARDNOTLOADED"), Localization.Localize("ID_WARNING_CONNECTIONERROR"), 0f, null, string.Empty);
+			yield break;
+		}
+		if (GuiElementSingle<WaitingDialog>.instance.isFullyShowed)
+		{
+			WaitingDialog.Hide();
+		}
+		while (GuiElementSingle<WaitingDialog>.instance.gameObject.activeSelf || GuiElementSingle<LootBoxDialog>.instance.gameObject.activeSelf)
+		{
+			yield return null;
+		}
+	}
 }

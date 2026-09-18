@@ -39,6 +39,30 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 25513f16c3906782bfd27429d86d0f19, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 5b605186162b42244b30fe94c1806c2f, type: 2}
+  mUVRect:
+    serializedVersion: 2
+    x: 0
+    y: 0
+    width: 1
+    height: 1
+  mFont:
+    mSize: 0
+    mBase: 0
+    mWidth: 0
+    mHeight: 0
+    mSpriteName:
+    mSaved: []
+  mSpacingX: 0
+  mSpacingY: 0
+  mLineSpacing: 1.1
+  mAtlas: {fileID: 0}
+  mReplacement: {fileID: 0}
+  mPixelSize: 1.2
+  mSymbols: []
+  mDynamicFont: {fileID: 12800000, guid: d808305656a8601409466191d759059d, type: 3}
+  mDynamicFontSize: 40
+  mDynamicFontStyle: 0
 --- !u!1001 &100100000
 Prefab:
   serializedVersion: 2

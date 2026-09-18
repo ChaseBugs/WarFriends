@@ -1,63 +1,84 @@
 using UnityEngine;
 
-public class WarbucksButtonRecord : MonoBehaviour
+public class WarbucksButtonRecord : Core_BaseScript
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Header("Settings")]
+	public bool isBig;
 
-	1. No dll files were provided to AssetRipper.
+	[Header("Sale Part")]
+	public GameObject salePart;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public UILabel saleLabel;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	[Header("Icons")]
+	public GameObject[] warbucksIcons;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	[Header("Labels")]
+	public UILabel amountLabel;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	[Header("Bottom Part")]
+	public UILabel priceLabel;
 
-	3. Assembly Reconstruction has not been implemented.
+	private InappScreen.InappDefinition mDefinition;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public void Initialize(InappScreen.InappDefinition inappDefinition)
+	{
+		mDefinition = inappDefinition;
+		int amount = inappDefinition.amount;
+		int sale = inappDefinition.sale;
+		salePart.SetActive(sale > 0);
+		if (sale > 0)
+		{
+			saleLabel.text = Localization.LocalizeFormat((!isBig) ? "ID_FREEPERCENTLINE" : "ID_FREEPERCENT", sale);
+			if (isBig)
+			{
+				MiscTools.SetUILabelRescale(saleLabel, 47f, 24f, 250);
+			}
+			else
+			{
+				MiscTools.SetUILabelRescale(saleLabel, 25f, 20f, 150);
+			}
+		}
+		amountLabel.text = MiscTools.FormatBigNumber(amount);
+		priceLabel.text = inappDefinition.formatedPrice;
+		MiscTools.SetUILabelRescale(priceLabel, 42f, 22f, 230);
+		SetButtonIcons(amount);
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public void ButtonClicked(GameObject go)
+	{
+		if (mDefinition != null)
+		{
+			Debug.Log("BUY: " + mDefinition.id);
+			Singleton<BeanstalkServerManager>.instance.BuyInApp(mDefinition.id);
+		}
+	}
 
-	4. This script is unnecessary.
-
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
-
-	5. Script Content Level 0
-
-		AssetRipper was set to not load any script information.
-
-	6. Cpp2IL failed to decompile Il2Cpp data
-
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	private void SetButtonIcons(int amount)
+	{
+		if (!isBig)
+		{
+			int num = 0;
+			if (amount > 500000)
+			{
+				num = 4;
+			}
+			else if (amount > 150000)
+			{
+				num = 3;
+			}
+			else if (amount > 70000)
+			{
+				num = 2;
+			}
+			else if (amount > 20000)
+			{
+				num = 1;
+			}
+			for (int i = 0; i < warbucksIcons.Length; i++)
+			{
+				warbucksIcons[i].SetActive(num == i);
+			}
+		}
+	}
 }

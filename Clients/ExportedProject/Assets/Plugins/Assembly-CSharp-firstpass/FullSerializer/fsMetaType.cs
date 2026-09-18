@@ -1,66 +1,254 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
+using System.Runtime.CompilerServices;
+using System.Runtime.Serialization;
+using FullSerializer.Internal;
 using UnityEngine;
 
 namespace FullSerializer
 {
-	public class fsMetaType : MonoBehaviour
+public class fsMetaType
+{
+	private static Dictionary<Type, fsMetaType> _metaTypes = new Dictionary<Type, fsMetaType>();
+
+	public Type ReflectedType;
+
+	private bool _hasEmittedAotData;
+
+	private bool? _hasDefaultConstructorCache;
+
+	private bool _isDefaultConstructorPublic;
+
+	public fsMetaProperty[] Properties { get; private set; }
+
+	public bool HasDefaultConstructor
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
+		get
+		{
+			if (!_hasDefaultConstructorCache.HasValue)
+			{
+				if (ReflectedType.Resolve().IsArray)
+				{
+					_hasDefaultConstructorCache = true;
+					_isDefaultConstructorPublic = true;
+				}
+				else if (ReflectedType.Resolve().IsValueType)
+				{
+					_hasDefaultConstructorCache = true;
+					_isDefaultConstructorPublic = true;
+				}
+				else
+				{
+					ConstructorInfo declaredConstructor = ReflectedType.GetDeclaredConstructor(fsPortableReflection.EmptyTypes);
+					_hasDefaultConstructorCache = declaredConstructor != null;
+					if (declaredConstructor != null)
+					{
+						_isDefaultConstructorPublic = declaredConstructor.IsPublic;
+					}
+				}
+			}
+			return _hasDefaultConstructorCache.Value;
+		}
 	}
+
+	private fsMetaType(Type reflectedType)
+	{
+		ReflectedType = reflectedType;
+		List<fsMetaProperty> list = new List<fsMetaProperty>();
+		CollectProperties(list, reflectedType);
+		Properties = list.ToArray();
+	}
+
+	public static fsMetaType Get(Type type)
+	{
+		if (!_metaTypes.TryGetValue(type, out var value))
+		{
+			value = new fsMetaType(type);
+			_metaTypes[type] = value;
+		}
+		return value;
+	}
+
+	public static void ClearCache()
+	{
+		_metaTypes = new Dictionary<Type, fsMetaType>();
+	}
+
+	private static void CollectProperties(List<fsMetaProperty> properties, Type reflectedType)
+	{
+		bool flag = fsConfig.DefaultMemberSerialization == fsMemberSerialization.OptIn;
+		bool flag2 = fsConfig.DefaultMemberSerialization == fsMemberSerialization.OptOut;
+		fsObjectAttribute attribute = fsPortableReflection.GetAttribute<fsObjectAttribute>(reflectedType);
+		if (attribute != null)
+		{
+			flag = attribute.MemberSerialization == fsMemberSerialization.OptIn;
+			flag2 = attribute.MemberSerialization == fsMemberSerialization.OptOut;
+		}
+		MemberInfo[] declaredMembers = reflectedType.GetDeclaredMembers();
+		MemberInfo[] array = declaredMembers;
+		MemberInfo member;
+		for (int i = 0; i < array.Length; i++)
+		{
+			member = array[i];
+			if (fsConfig.IgnoreSerializeAttributes.Any((Type t) => fsPortableReflection.HasAttribute(member, t)))
+			{
+				continue;
+			}
+			PropertyInfo propertyInfo = member as PropertyInfo;
+			FieldInfo fieldInfo = member as FieldInfo;
+			if ((flag && !fsConfig.SerializeAttributes.Any((Type t) => fsPortableReflection.HasAttribute(member, t))) || (flag2 && fsConfig.IgnoreSerializeAttributes.Any((Type t) => fsPortableReflection.HasAttribute(member, t))))
+			{
+				continue;
+			}
+			if (propertyInfo != null)
+			{
+				if (CanSerializeProperty(propertyInfo, declaredMembers, flag2))
+				{
+					properties.Add(new fsMetaProperty(propertyInfo));
+				}
+			}
+			else if (fieldInfo != null && CanSerializeField(fieldInfo, flag2))
+			{
+				properties.Add(new fsMetaProperty(fieldInfo));
+			}
+		}
+		if (reflectedType.Resolve().BaseType != null)
+		{
+			CollectProperties(properties, reflectedType.Resolve().BaseType);
+		}
+	}
+
+	private static bool IsAutoProperty(PropertyInfo property, MemberInfo[] members)
+	{
+		if (!property.CanWrite || !property.CanRead)
+		{
+			return false;
+		}
+		string text = "<" + property.Name + ">k__BackingField";
+		for (int i = 0; i < members.Length; i++)
+		{
+			if (members[i].Name == text)
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private static bool CanSerializeProperty(PropertyInfo property, MemberInfo[] members, bool annotationFreeValue)
+	{
+		if (typeof(Delegate).IsAssignableFrom(property.PropertyType))
+		{
+			return false;
+		}
+		MethodInfo getMethod = property.GetGetMethod(nonPublic: false);
+		MethodInfo setMethod = property.GetSetMethod(nonPublic: false);
+		if ((getMethod != null && getMethod.IsStatic) || (setMethod != null && setMethod.IsStatic))
+		{
+			return false;
+		}
+		if (fsConfig.SerializeAttributes.Any((Type t) => fsPortableReflection.HasAttribute(property, t)))
+		{
+			return true;
+		}
+		if (!property.CanRead || !property.CanWrite)
+		{
+			return false;
+		}
+		if ((fsConfig.SerializeNonAutoProperties || IsAutoProperty(property, members)) && getMethod != null && (fsConfig.SerializeNonPublicSetProperties || setMethod != null))
+		{
+			return true;
+		}
+		return annotationFreeValue;
+	}
+
+	private static bool CanSerializeField(FieldInfo field, bool annotationFreeValue)
+	{
+		if (typeof(Delegate).IsAssignableFrom(field.FieldType))
+		{
+			return false;
+		}
+		if (field.IsDefined(typeof(CompilerGeneratedAttribute), inherit: false))
+		{
+			return false;
+		}
+		if (field.IsStatic)
+		{
+			return false;
+		}
+		if (fsConfig.SerializeAttributes.Any((Type t) => fsPortableReflection.HasAttribute(field, t)))
+		{
+			return true;
+		}
+		if (!annotationFreeValue && !field.IsPublic)
+		{
+			return false;
+		}
+		return true;
+	}
+
+	public bool EmitAotData()
+	{
+		if (!_hasEmittedAotData)
+		{
+			_hasEmittedAotData = true;
+			for (int i = 0; i < Properties.Length; i++)
+			{
+				if (!Properties[i].IsPublic)
+				{
+					return false;
+				}
+			}
+			if (!HasDefaultConstructor)
+			{
+				return false;
+			}
+			fsAotCompilationManager.AddAotCompilation(ReflectedType, Properties, _isDefaultConstructorPublic);
+			return true;
+		}
+		return false;
+	}
+
+	public object CreateInstance()
+	{
+		if (ReflectedType.Resolve().IsInterface || ReflectedType.Resolve().IsAbstract)
+		{
+			throw new Exception("Cannot create an instance of an interface or abstract type for " + ReflectedType);
+		}
+		if (typeof(ScriptableObject).IsAssignableFrom(ReflectedType))
+		{
+			return ScriptableObject.CreateInstance(ReflectedType);
+		}
+		if (typeof(string) == ReflectedType)
+		{
+			return string.Empty;
+		}
+		if (!HasDefaultConstructor)
+		{
+			return FormatterServices.GetSafeUninitializedObject(ReflectedType);
+		}
+		if (ReflectedType.Resolve().IsArray)
+		{
+			return Array.CreateInstance(ReflectedType.GetElementType(), 0);
+		}
+		try
+		{
+			return Activator.CreateInstance(ReflectedType, nonPublic: true);
+		}
+		catch (MissingMethodException innerException)
+		{
+			throw new InvalidOperationException(string.Concat("Unable to create instance of ", ReflectedType, "; there is no default constructor"), innerException);
+		}
+		catch (TargetInvocationException innerException2)
+		{
+			throw new InvalidOperationException(string.Concat("Constructor of ", ReflectedType, " threw an exception when creating an instance"), innerException2);
+		}
+		catch (MemberAccessException innerException3)
+		{
+			throw new InvalidOperationException("Unable to access constructor of " + ReflectedType, innerException3);
+		}
+	}
+}
 }

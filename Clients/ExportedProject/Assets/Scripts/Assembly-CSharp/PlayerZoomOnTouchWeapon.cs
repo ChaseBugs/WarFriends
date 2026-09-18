@@ -1,63 +1,242 @@
 using UnityEngine;
 
-public class PlayerZoomOnTouchWeapon : MonoBehaviour
+public class PlayerZoomOnTouchWeapon : PlayerWeapon
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	private bool mIsFirstShot;
 
-	1. No dll files were provided to AssetRipper.
+	private bool mShootRight;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	private bool mShootingStarted = true;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	private Vector3 mAimPosition;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	private bool mIsAiming;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	private Vector3 mTouchViewPortPosition;
 
-	3. Assembly Reconstruction has not been implemented.
+	private Vector3 dif;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	private float mTouchTime;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public float zoomTresholdSqrDistance = 1f;
 
-	4. This script is unnecessary.
+	public float zoomTresholdTime = 0.3f;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public float fov;
 
-	5. Script Content Level 0
+	private bool mFovAnim;
 
-		AssetRipper was set to not load any script information.
+	private bool mShowedScope;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	private bool mWillShoot;
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	private bool mWeaponStartShooting;
 
-	7. An incorrect path was provided to AssetRipper.
+	public int scopeNum = 1;
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	private bool mBotWillShoot;
 
-	*/
+	private PlayerController.PlayerStatex mLastState;
+
+	private float mBotShootWaitTime = 0.8f;
+
+	private float mBotShootTime;
+
+	private Plane mCollisionPlane;
+
+	public override bool isActiveWeapon
+	{
+		get
+		{
+			return base.isActiveWeapon;
+		}
+		set
+		{
+			base.isActiveWeapon = value;
+			mBotWillShoot = false;
+			if (!isActiveWeapon && base.playerController.isCurrentPlayer)
+			{
+				Singleton<SniperScope>.instance.Hide();
+			}
+			if (isActiveWeapon && base.playerController.isCurrentPlayer)
+			{
+				Singleton<SniperScope>.instance.SetScope(scopeNum);
+				mIsAiming = false;
+			}
+			if (value)
+			{
+				mCollisionPlane = new Plane(Vector3.up, base.playerController.currentPlayerPoint.point.transform.position);
+			}
+		}
+	}
+
+	private bool mPlayerStateCHanged => mLastState != base.playerController.playerState;
+
+	public override void UpdateWeapon()
+	{
+		base.UpdateWeapon();
+		if (base.playerController.isCurrentPlayer)
+		{
+			if (Singleton<InputController>.instance.isTappingStarted && !base.weapon.isReloading)
+			{
+				Singleton<SniperScope>.instance.touchCamera.fieldOfView = 9f;
+				mIsAiming = true;
+				mTouchViewPortPosition = Camera.main.ScreenToViewportPoint(Input.mousePosition);
+				mTouchTime = Time.realtimeSinceStartup;
+				dif = Vector3.zero;
+				mFovAnim = false;
+				mShowedScope = false;
+				mWillShoot = false;
+				if (!base.weapon.willShoot && !base.weapon.outOfAmmo)
+				{
+					GuiScreenSingle<HudScreen>.instance.PlayWeaponReloading(this);
+				}
+			}
+			if (mIsAiming)
+			{
+				if (Singleton<InputController>.instance.isTapping)
+				{
+					if (base.weapon.willShoot && !mWillShoot)
+					{
+						mWillShoot = true;
+						mTouchTime = Time.realtimeSinceStartup;
+						mWeaponStartShooting = true;
+					}
+					if (mWillShoot)
+					{
+						Vector3 vector = Camera.main.ScreenToViewportPoint(Input.mousePosition);
+						Vector3 b = vector - mTouchViewPortPosition;
+						b *= 100000f;
+						dif = Vector3.Lerp(dif, b, TimeManager.GetTimeScaledInterval(Time.deltaTime, ignoreTimeScale: true) * 28f);
+						if (!mFovAnim && Time.realtimeSinceStartup > mTouchTime + zoomTresholdTime && dif.sqrMagnitude < zoomTresholdSqrDistance)
+						{
+							Singleton<SniperScope>.instance.AnimFov(fov);
+							mFovAnim = true;
+						}
+						if (!mShowedScope && Time.realtimeSinceStartup > mTouchTime + 0.17f)
+						{
+							Singleton<SniperScope>.instance.Show();
+							mShowedScope = true;
+						}
+						Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+						mTouchViewPortPosition = vector;
+						float enter;
+						Vector3 vector2 = ((!mCollisionPlane.Raycast(ray, out enter)) ? Singleton<GameCamera>.instance.camera.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, Singleton<GameCamera>.instance.camera.farClipPlane)) : ray.GetPoint(enter));
+						Vector3 v = vector2 - base.playerController.transform.position;
+						v.y = 0f;
+						if (base.playerController.playerState == PlayerController.PlayerStatex.HidingBehindShield)
+						{
+							base.playerController.soldierAnimator.LookAt(v.normalized);
+						}
+						else
+						{
+							base.playerController.soldierAnimator.LookAtUpperBody(v.normalized);
+						}
+						bool flag = GeometryTools.AngleSigned(base.playerController.currentPlayerPoint.point.transform.forward, v, Vector3.up) > 0f;
+						if (flag != mShootRight || mWeaponStartShooting || mPlayerStateCHanged)
+						{
+							mShootRight = flag;
+							mWeaponStartShooting = false;
+							base.playerController.Uncover(mShootRight, hideBack: false);
+						}
+					}
+					else
+					{
+						Vector3 vector3 = Camera.main.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, 4f));
+						Vector3 v2 = vector3 - base.playerController.transform.position;
+						v2.y = 0f;
+						bool right = GeometryTools.AngleSigned(base.playerController.currentPlayerPoint.point.transform.forward, v2, Vector3.up) > 0f;
+						base.playerController.Uncover(right, hideBack: false);
+					}
+				}
+				if (Input.GetMouseButtonUp(0) && !Singleton<InputController>.instance.swipeEnded)
+				{
+					if (base.weapon.willShoot && mShowedScope)
+					{
+						mAimPosition = Singleton<AimingHelper>.instance.Aim(base.weapon);
+						if (CanShootAngle(mAimPosition))
+						{
+							Vector3 direction = mAimPosition - base.playerController.transform.position;
+							direction.y = 0f;
+							base.playerController.PlayShotAnimation(base.weapon.weaponType, mShootRight, direction);
+							Shoot(mAimPosition);
+						}
+						else
+						{
+							base.playerController.Uncover(mShootRight, hideBack: true);
+						}
+					}
+					else
+					{
+						base.playerController.Uncover(mShootRight, hideBack: true);
+						if (!base.weapon.willShoot && !base.weapon.outOfAmmo)
+						{
+							GuiScreenSingle<HudScreen>.instance.PlayWeaponReloading(this);
+						}
+					}
+				}
+			}
+			if (Input.GetMouseButtonUp(0) && mIsAiming)
+			{
+				Singleton<SniperScope>.instance.Hide();
+				mShowedScope = false;
+				mIsAiming = false;
+			}
+		}
+		else if (mBotWillShoot && TimeManager.realTimeWithoutPauses > mBotShootTime)
+		{
+			mBotWillShoot = false;
+			Shoot(mAimPosition);
+			bool right2 = GeometryTools.AngleSigned(base.playerController.currentPlayerPoint.point.transform.forward, mAimPosition - base.playerController.transform.position, Vector3.up) > 0f;
+			base.playerController.PlayShotAnimation(base.weapon.weaponType, right2, mAimPosition - base.playerController.transform.position);
+		}
+		mLastState = base.playerController.playerState;
+	}
+
+	public override void MouseUpAndNoUpdate()
+	{
+		if (Input.GetMouseButtonUp(0) && mIsAiming)
+		{
+			Singleton<SniperScope>.instance.Hide();
+			mShowedScope = false;
+			mIsAiming = false;
+		}
+	}
+
+	protected void Update()
+	{
+		if (Input.GetMouseButtonUp(0) && mIsAiming && base.playerController.isCurrentPlayer)
+		{
+			Singleton<SniperScope>.instance.Hide();
+			base.playerController.Uncover(mShootRight, hideBack: true);
+		}
+	}
+
+	public void SetWaitTime(float value)
+	{
+		mBotShootWaitTime = value;
+	}
+
+	public override void ShootForBot(Vector3 position)
+	{
+		base.ShootForBot(position);
+		if (base.weapon.willShoot && !mBotWillShoot)
+		{
+			bool right = GeometryTools.AngleSigned(base.playerController.currentPlayerPoint.point.transform.forward, position - base.playerController.transform.position, Vector3.up) > 0f;
+			Vector3 vector = position - base.playerController.transform.position;
+			vector.y = 0f;
+			base.playerController.soldierAnimator.LookAt(vector.normalized);
+			base.playerController.Uncover(right, hideBack: false);
+			mBotWillShoot = true;
+			mBotShootTime = TimeManager.realTimeWithoutPauses + mBotShootWaitTime;
+			mAimPosition = position;
+		}
+	}
+
+	private void Shoot(Vector3 shootPosition)
+	{
+		base.weapon.Fire(shootPosition);
+		PlayTouchCircle(shootPosition);
+		ShakeCamera();
+	}
 }

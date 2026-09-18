@@ -39,6 +39,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fcd4c9ac1d417e33b88b84690650e26f, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  dictionaryTranslationId: ID_BONUS-AMMO
+  bonusName: AMMO
+  iconName: game-scorestreak-ico-ammo
+  bgSuffix:
 --- !u!1001 &100100000
 Prefab:
   serializedVersion: 2

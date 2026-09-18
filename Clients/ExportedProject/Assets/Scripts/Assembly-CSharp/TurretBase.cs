@@ -1,63 +1,170 @@
+using UnityEngine.AI;
 using UnityEngine;
 
-public class TurretBase : MonoBehaviour
+public class TurretBase<T, U> : MechanicalUnit<T> where T : TurretBaseBehaviourG<U> where U : VehicleBehaviourDefinititon
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public TurretWeaponBasic turretWeapon;
 
-	1. No dll files were provided to AssetRipper.
+	protected PhotonView mPhotonView;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	protected DestroyableObject mDestroyableObject;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	private TurretPosition mTurretPosition;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public GameObject shadow;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public override DestroyableObject destroyableObj => mDestroyableObject;
 
-	3. Assembly Reconstruction has not been implemented.
+	protected override void Awake()
+	{
+		base.Awake();
+		mPhotonView = GetComponent<PhotonView>();
+		mDestroyableObject = GetComponent<DestroyableObject>();
+		mDestroyableObject.isMetal = true;
+		mDestroyableObject.OnDeath += DestroyableObjectOnOnDeath;
+		turretWeapon.turretParent = base.gameObject.transform;
+		mSpawnEnabled = false;
+	}
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public override void OnInstancied()
+	{
+		base.OnInstancied();
+		turretWeapon.Reset();
+		turretWeapon.ResetAiming();
+		turretWeapon.enabled = true;
+		if (shadow != null)
+		{
+			shadow.gameObject.SetActive(value: true);
+		}
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public override void DestroyPooled()
+	{
+		base.DestroyPooled();
+		mSpawnEnabled = false;
+		if (mTurretPosition != null)
+		{
+			mTurretPosition.used = false;
+			mTurretPosition = null;
+		}
+	}
 
-	4. This script is unnecessary.
+	public override void UpgradesLoaded()
+	{
+		base.UpgradesLoaded();
+		DestroyableObject destroyableObject = mDestroyableObject;
+		T val = base.currentBeh;
+		destroyableObject.maxHealth = val.turretBehaviour.health;
+		mDestroyableObject.RefillOffline();
+		AmmoSetup ammoSetup = turretWeapon.batchedWeapon.weapon.ammoSetup;
+		T val2 = base.currentBeh;
+		ammoSetup.damageAmount = val2.turretBehaviour.damage;
+		ammoSetup.damageToPlayerCoeficient = behaviour.upgradeSlots.playerDamageRatio;
+		ammoSetup.damageToPlayerOvertimeCoeficient = behaviour.upgradeSlots.playerDamageOvertimeRatio;
+		TurretWeaponBasic turretWeaponBasic = turretWeapon;
+		T val3 = base.currentBeh;
+		turretWeaponBasic.minShootTime = val3.turretBehaviour.minShootTime;
+		TurretWeaponBasic turretWeaponBasic2 = turretWeapon;
+		T val4 = base.currentBeh;
+		turretWeaponBasic2.maxShootTime = val4.turretBehaviour.maxShootTime;
+		TurretWeaponBasic turretWeaponBasic3 = turretWeapon;
+		T val5 = base.currentBeh;
+		turretWeaponBasic3.batchSizeMin = val5.turretBehaviour.fireBatchSizeMin;
+		TurretWeaponBasic turretWeaponBasic4 = turretWeapon;
+		T val6 = base.currentBeh;
+		turretWeaponBasic4.batchSizeMax = val6.turretBehaviour.fireBatchSizeMax;
+		BulletSetup bulletSetup = ammoSetup as BulletSetup;
+		if (bulletSetup != null)
+		{
+			T val7 = base.currentBeh;
+			bulletSetup.speed = val7.turretBehaviour.shotSpeed;
+		}
+		turretWeapon.Reset();
+		if (isPrewiev)
+		{
+			turretWeapon.enabled = false;
+		}
+		turretWeapon.playerShieldProbability = behaviour.upgradeSlots.shieldHitProbability;
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private void DestroyableObjectOnOnDeath(DestroyableObject destroyableObject, DestroyableObject.DamageInfo damageInfo)
+	{
+		Singleton<HitParticleSystem>.instance.PlayParticles(base.transform.position, Vector3.up, "metalExplosion", "grenadeExplosion");
+		OnKilled(damageInfo);
+		DestroyEntity(0.2f);
+		if (damageInfo.type != DestroyableObject.DamageType.Explosion)
+		{
+			Explosion.PlayEffects(Explosion.ExplosionType.Medium, damageInfo.hitPosition);
+		}
+	}
 
-	5. Script Content Level 0
+	public override void Spawn()
+	{
+		base.Spawn();
+		if (!photonView.isMine || !mSpawnEnabled)
+		{
+			return;
+		}
+		PlayerController player = PlayerController.GetPlayer(fraction);
+		if (!(player != null))
+		{
+			return;
+		}
+		float num = float.MaxValue;
+		TurretPosition turretPosition = null;
+		int num2 = -1;
+		int num3 = -1;
+		for (int i = 0; i < Singleton<MapManager>.instance.currentMapDef.playersPositions.Count; i++)
+		{
+			MapDefinition.DefendPosition defendPosition = Singleton<MapManager>.instance.currentMapDef.playersPositions[i];
+			if (defendPosition.fraction != fraction)
+			{
+				continue;
+			}
+			for (int j = 0; j < defendPosition.point.turretPositions.Count; j++)
+			{
+				TurretPosition turretPosition2 = defendPosition.point.turretPositions[j];
+				if (!turretPosition2.used)
+				{
+					float sqrMagnitude = (player.position - turretPosition2.transform.position).sqrMagnitude;
+					if (sqrMagnitude < num)
+					{
+						num = sqrMagnitude;
+						turretPosition = turretPosition2;
+						num2 = i;
+						num3 = j;
+					}
+				}
+			}
+		}
+		if (turretPosition != null)
+		{
+			mTurretPosition = turretPosition;
+			mTurretPosition.used = true;
+			SetTurretWorldPosition();
+			mPhotonView.RPC("SetShieldPositionRPC", PhotonTargets.Others, num2, num3);
+		}
+	}
 
-		AssetRipper was set to not load any script information.
+	private void SetTurretWorldPosition()
+	{
+		NavMesh.SamplePosition(mTurretPosition.transform.position, out var hit, 10f, 1);
+		Vector3 position = hit.position;
+		base.transform.position = position;
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	[PunRPC]
+	protected void SetShieldPositionRPC(int playerPositionIndex, int turretPositionIndex)
+	{
+		mTurretPosition = Singleton<MapManager>.instance.currentMapDef.playersPositions[playerPositionIndex].point.turretPositions[turretPositionIndex];
+		SetTurretWorldPosition();
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public void HideShadow()
+	{
+		if (shadow != null)
+		{
+			shadow.gameObject.SetActive(value: false);
+		}
+	}
 }

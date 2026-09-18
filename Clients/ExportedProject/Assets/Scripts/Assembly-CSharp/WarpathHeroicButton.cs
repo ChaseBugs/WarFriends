@@ -1,63 +1,124 @@
+using System;
 using UnityEngine;
 
-public class WarpathHeroicButton : MonoBehaviour
+public class WarpathHeroicButton : Core_BaseScript
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public enum Type
+	{
+		Locked,
+		Normal,
+		Heroic,
+		HeroicCompleted
+	}
 
-	1. No dll files were provided to AssetRipper.
+	[Header("Core")]
+	public BoxCollider warpathCollider;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public UISprite warpathBorder;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public UILabel warpathLabel;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public UIPanel heroicPanel;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	[Header("Locked Warpath")]
+	public GameObject lockedWarpathPart;
 
-	3. Assembly Reconstruction has not been implemented.
+	public UILabel lockedWarpathLabel;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	[Header("Locked Heroic")]
+	public GameObject lockedHeroicPart;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	[Header("Heroic In Progress")]
+	public UITable heroicTable;
 
-	4. This script is unnecessary.
+	public UILabel heroicFirstLabel;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public UILabel heroicSecondLabel;
 
-	5. Script Content Level 0
+	public UISprite heroicGoldIcon;
 
-		AssetRipper was set to not load any script information.
+	public UISprite heroicWarbucksIcon;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	[Header("Heroic Done")]
+	public GameObject heroicCompletedPart;
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	[Header("Unlocked Part")]
+	public GameObject warpathNotification;
 
-	7. An incorrect path was provided to AssetRipper.
+	public bool isColliderEnabled => mCurrentType != Type.Locked;
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	private Type mCurrentType
+	{
+		get
+		{
+			if (LevelManager.instance.isWarpathLocked)
+			{
+				return Type.Locked;
+			}
+			if (MissionsManager.instance.isHeroicLocked)
+			{
+				return Type.Normal;
+			}
+			if (MissionsManager.instance.isHeroicMissionCompleted)
+			{
+				return Type.HeroicCompleted;
+			}
+			return Type.Heroic;
+		}
+	}
 
-	*/
+	public bool showNotification => mCurrentType != Type.Locked && Singleton<NotificationManager>.instance.NotificationWarpath();
+
+	public void InitControls()
+	{
+		UIEventListener uIEventListener = UIEventListener.Get(warpathCollider.gameObject);
+		uIEventListener.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener.onClick, new UIEventListener.VoidDelegate(WarpathClick));
+		warpathLabel.text = Localization.Localize("ID_WARPATH");
+	}
+
+	private void WarpathClick(GameObject go)
+	{
+		Singleton<GameController>.instance.SwitchToSinglePlayer();
+		Singleton<GuiManager>.instance.ShowGui(GuiScreenSingle<MissionScreen>.instance);
+	}
+
+	public void InitGuiValues()
+	{
+		Type type = mCurrentType;
+		warpathCollider.enabled = isColliderEnabled;
+		warpathBorder.alpha = ((type != Type.Locked) ? 1f : 0.2f);
+		warpathLabel.transform.localPosition = warpathLabel.transform.localPosition.ReplaceY((type != Type.Locked) ? 25f : 22f);
+		warpathLabel.transform.localScale = ((type != Type.Locked) ? new Vector3(52f, 52f, 1f) : new Vector3(37f, 37f, 1f));
+		MiscTools.SetUILabelRescale(warpathLabel, (type != Type.Locked) ? 52f : 37f, 20f, (type != Type.Locked) ? 370 : 260);
+		lockedWarpathPart.SetActive(type == Type.Locked);
+		heroicPanel.gameObject.SetActive(type != Type.Locked);
+		lockedHeroicPart.SetActive(type == Type.Normal);
+		heroicTable.gameObject.SetActive(type == Type.Heroic);
+		heroicCompletedPart.SetActive(type == Type.HeroicCompleted);
+		if (type == Type.Locked)
+		{
+			lockedWarpathLabel.text = Localization.LocalizeFormat("ID_UNLOCKEDATRANKX", LevelManager.instance.warpathUnlockLevel);
+			MiscTools.SetUILabelRescale(lockedWarpathLabel, 30f, 20f, 260);
+		}
+		if (type == Type.Heroic)
+		{
+			int num = 104;
+			int num2 = 58;
+			heroicFirstLabel.text = Localization.Localize("ID_HEROIC");
+			heroicSecondLabel.text = Localization.Localize("ID_GET");
+			float value = Mathf.Min((float)num / heroicFirstLabel.relativeSize.x, (float)num2 / heroicSecondLabel.relativeSize.x);
+			value = Mathf.Clamp(value, 20f, 30f);
+			MiscTools.SetUILabelRescale(heroicFirstLabel, value, 20f, num);
+			MiscTools.SetUILabelRescale(heroicSecondLabel, value, 20f, num2);
+			heroicWarbucksIcon.gameObject.SetActive(MissionsManager.instance.heroicMission.heroicRewardGold <= 0);
+			heroicGoldIcon.gameObject.SetActive(MissionsManager.instance.heroicMission.heroicRewardGold > 0);
+			heroicTable.repositionNow = true;
+		}
+		InitializeNotification();
+	}
+
+	private void InitializeNotification()
+	{
+		warpathNotification.SetActive(showNotification);
+	}
 }

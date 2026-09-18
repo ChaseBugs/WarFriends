@@ -1,66 +1,272 @@
+using System;
+using System.Reflection;
+using System.Runtime.InteropServices;
 using UnityEngine;
 
 namespace Google.Developers
 {
-	public class JavaObjWrapper : MonoBehaviour
+public class JavaObjWrapper
+{
+	private IntPtr raw;
+
+	private IntPtr cachedRawClass = IntPtr.Zero;
+
+	public IntPtr RawObject => raw;
+
+	public virtual IntPtr RawClass
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
+		get
+		{
+			if (cachedRawClass == IntPtr.Zero && raw != IntPtr.Zero)
+			{
+				cachedRawClass = AndroidJNI.GetObjectClass(raw);
+			}
+			return cachedRawClass;
+		}
 	}
+
+	protected JavaObjWrapper()
+	{
+	}
+
+	public JavaObjWrapper(string clazzName)
+	{
+		raw = AndroidJNI.AllocObject(AndroidJNI.FindClass(clazzName));
+	}
+
+	public JavaObjWrapper(IntPtr rawObject)
+	{
+		raw = rawObject;
+	}
+
+	public void CreateInstance(string clazzName, params object[] args)
+	{
+		if (raw != IntPtr.Zero)
+		{
+			throw new Exception("Java object already set");
+		}
+		IntPtr constructorID = AndroidJNIHelper.GetConstructorID(RawClass, args);
+		jvalue[] args2 = ConstructArgArray(args);
+		raw = AndroidJNI.NewObject(RawClass, constructorID, args2);
+	}
+
+	protected static jvalue[] ConstructArgArray(object[] theArgs)
+	{
+		object[] array = new object[theArgs.Length];
+		for (int i = 0; i < theArgs.Length; i++)
+		{
+			if (theArgs[i] is JavaObjWrapper)
+			{
+				array[i] = ((JavaObjWrapper)theArgs[i]).raw;
+			}
+			else
+			{
+				array[i] = theArgs[i];
+			}
+		}
+		jvalue[] array2 = AndroidJNIHelper.CreateJNIArgArray(array);
+		for (int j = 0; j < theArgs.Length; j++)
+		{
+			if (theArgs[j] is JavaObjWrapper)
+			{
+				array2[j].l = ((JavaObjWrapper)theArgs[j]).raw;
+			}
+			else if (theArgs[j] is JavaInterfaceProxy)
+			{
+				IntPtr l = AndroidJNIHelper.CreateJavaProxy((AndroidJavaProxy)theArgs[j]);
+				array2[j].l = l;
+			}
+		}
+		if (array2.Length == 1)
+		{
+			for (int k = 0; k < array2.Length; k++)
+			{
+				Debug.Log("---- [" + k + "] -- " + array2[k].l);
+			}
+		}
+		return array2;
+	}
+
+	public static T StaticInvokeObjectCall<T>(string type, string name, string sig, params object[] args)
+	{
+		IntPtr clazz = AndroidJNI.FindClass(type);
+		IntPtr staticMethodID = AndroidJNI.GetStaticMethodID(clazz, name, sig);
+		jvalue[] args2 = ConstructArgArray(args);
+		IntPtr intPtr = AndroidJNI.CallStaticObjectMethod(clazz, staticMethodID, args2);
+		ConstructorInfo constructor = typeof(T).GetConstructor(new Type[1] { intPtr.GetType() });
+		if (constructor != null)
+		{
+			return (T)constructor.Invoke(new object[1] { intPtr });
+		}
+		if (typeof(T).IsArray)
+		{
+			return AndroidJNIHelper.ConvertFromJNIArray<T>(intPtr);
+		}
+		Debug.Log("Trying cast....");
+		Type typeFromHandle = typeof(T);
+		return (T)Marshal.PtrToStructure(intPtr, typeFromHandle);
+	}
+
+	public static void StaticInvokeCallVoid(string type, string name, string sig, params object[] args)
+	{
+		IntPtr clazz = AndroidJNI.FindClass(type);
+		IntPtr staticMethodID = AndroidJNI.GetStaticMethodID(clazz, name, sig);
+		jvalue[] args2 = ConstructArgArray(args);
+		AndroidJNI.CallStaticVoidMethod(clazz, staticMethodID, args2);
+	}
+
+	public static T GetStaticObjectField<T>(string clsName, string name, string sig)
+	{
+		IntPtr clazz = AndroidJNI.FindClass(clsName);
+		IntPtr staticFieldID = AndroidJNI.GetStaticFieldID(clazz, name, sig);
+		IntPtr staticObjectField = AndroidJNI.GetStaticObjectField(clazz, staticFieldID);
+		ConstructorInfo constructor = typeof(T).GetConstructor(new Type[1] { staticObjectField.GetType() });
+		if (constructor != null)
+		{
+			return (T)constructor.Invoke(new object[1] { staticObjectField });
+		}
+		Type typeFromHandle = typeof(T);
+		return (T)Marshal.PtrToStructure(staticObjectField, typeFromHandle);
+	}
+
+	public static int GetStaticIntField(string clsName, string name)
+	{
+		IntPtr clazz = AndroidJNI.FindClass(clsName);
+		IntPtr staticFieldID = AndroidJNI.GetStaticFieldID(clazz, name, "I");
+		return AndroidJNI.GetStaticIntField(clazz, staticFieldID);
+	}
+
+	public static string GetStaticStringField(string clsName, string name)
+	{
+		IntPtr clazz = AndroidJNI.FindClass(clsName);
+		IntPtr staticFieldID = AndroidJNI.GetStaticFieldID(clazz, name, "Ljava/lang/String;");
+		return AndroidJNI.GetStaticStringField(clazz, staticFieldID);
+	}
+
+	public static float GetStaticFloatField(string clsName, string name)
+	{
+		IntPtr clazz = AndroidJNI.FindClass(clsName);
+		IntPtr staticFieldID = AndroidJNI.GetStaticFieldID(clazz, name, "F");
+		return AndroidJNI.GetStaticFloatField(clazz, staticFieldID);
+	}
+
+	public void InvokeCallVoid(string name, string sig, params object[] args)
+	{
+		IntPtr methodID = AndroidJNI.GetMethodID(RawClass, name, sig);
+		jvalue[] args2 = ConstructArgArray(args);
+		AndroidJNI.CallVoidMethod(raw, methodID, args2);
+	}
+
+	public T InvokeCall<T>(string name, string sig, params object[] args)
+	{
+		Type typeFromHandle = typeof(T);
+		IntPtr methodID = AndroidJNI.GetMethodID(RawClass, name, sig);
+		jvalue[] args2 = ConstructArgArray(args);
+		if (methodID == IntPtr.Zero)
+		{
+			Debug.LogError("Cannot get method for " + name);
+			throw new Exception("Cannot get method for " + name);
+		}
+		if (typeFromHandle == typeof(bool))
+		{
+			return (T)(object)AndroidJNI.CallBooleanMethod(raw, methodID, args2);
+		}
+		if (typeFromHandle == typeof(string))
+		{
+			return (T)(object)AndroidJNI.CallStringMethod(raw, methodID, args2);
+		}
+		if (typeFromHandle == typeof(int))
+		{
+			return (T)(object)AndroidJNI.CallIntMethod(raw, methodID, args2);
+		}
+		if (typeFromHandle == typeof(float))
+		{
+			return (T)(object)AndroidJNI.CallFloatMethod(raw, methodID, args2);
+		}
+		if (typeFromHandle == typeof(double))
+		{
+			return (T)(object)AndroidJNI.CallDoubleMethod(raw, methodID, args2);
+		}
+		if (typeFromHandle == typeof(byte))
+		{
+			return (T)(object)AndroidJNI.CallByteMethod(raw, methodID, args2);
+		}
+		if (typeFromHandle == typeof(char))
+		{
+			return (T)(object)AndroidJNI.CallCharMethod(raw, methodID, args2);
+		}
+		if (typeFromHandle == typeof(long))
+		{
+			return (T)(object)AndroidJNI.CallLongMethod(raw, methodID, args2);
+		}
+		if (typeFromHandle == typeof(short))
+		{
+			return (T)(object)AndroidJNI.CallShortMethod(raw, methodID, args2);
+		}
+		return InvokeObjectCall<T>(name, sig, args);
+	}
+
+	public static T StaticInvokeCall<T>(string type, string name, string sig, params object[] args)
+	{
+		Type typeFromHandle = typeof(T);
+		IntPtr clazz = AndroidJNI.FindClass(type);
+		IntPtr staticMethodID = AndroidJNI.GetStaticMethodID(clazz, name, sig);
+		jvalue[] args2 = ConstructArgArray(args);
+		if (typeFromHandle == typeof(bool))
+		{
+			return (T)(object)AndroidJNI.CallStaticBooleanMethod(clazz, staticMethodID, args2);
+		}
+		if (typeFromHandle == typeof(string))
+		{
+			return (T)(object)AndroidJNI.CallStaticStringMethod(clazz, staticMethodID, args2);
+		}
+		if (typeFromHandle == typeof(int))
+		{
+			return (T)(object)AndroidJNI.CallStaticIntMethod(clazz, staticMethodID, args2);
+		}
+		if (typeFromHandle == typeof(float))
+		{
+			return (T)(object)AndroidJNI.CallStaticFloatMethod(clazz, staticMethodID, args2);
+		}
+		if (typeFromHandle == typeof(double))
+		{
+			return (T)(object)AndroidJNI.CallStaticDoubleMethod(clazz, staticMethodID, args2);
+		}
+		if (typeFromHandle == typeof(byte))
+		{
+			return (T)(object)AndroidJNI.CallStaticByteMethod(clazz, staticMethodID, args2);
+		}
+		if (typeFromHandle == typeof(char))
+		{
+			return (T)(object)AndroidJNI.CallStaticCharMethod(clazz, staticMethodID, args2);
+		}
+		if (typeFromHandle == typeof(long))
+		{
+			return (T)(object)AndroidJNI.CallStaticLongMethod(clazz, staticMethodID, args2);
+		}
+		if (typeFromHandle == typeof(short))
+		{
+			return (T)(object)AndroidJNI.CallStaticShortMethod(clazz, staticMethodID, args2);
+		}
+		return StaticInvokeObjectCall<T>(type, name, sig, args);
+	}
+
+	public T InvokeObjectCall<T>(string name, string sig, params object[] theArgs)
+	{
+		IntPtr methodID = AndroidJNI.GetMethodID(RawClass, name, sig);
+		jvalue[] args = ConstructArgArray(theArgs);
+		IntPtr intPtr = AndroidJNI.CallObjectMethod(raw, methodID, args);
+		if (intPtr.Equals(IntPtr.Zero))
+		{
+			return default(T);
+		}
+		ConstructorInfo constructor = typeof(T).GetConstructor(new Type[1] { intPtr.GetType() });
+		if (constructor != null)
+		{
+			return (T)constructor.Invoke(new object[1] { intPtr });
+		}
+		Type typeFromHandle = typeof(T);
+		return (T)Marshal.PtrToStructure(intPtr, typeFromHandle);
+	}
+}
 }

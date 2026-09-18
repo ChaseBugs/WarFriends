@@ -1,63 +1,176 @@
+using System;
 using UnityEngine;
 
-public class BulletBase : MonoBehaviour
+[RequireComponent(typeof(TweenPosition))]
+public abstract class BulletBase : Ammo
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public float speed = 1f;
 
-	1. No dll files were provided to AssetRipper.
+	public float distanceToCheck = 1.5f;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	protected LineTrailRenderer mlineTrailRenderer;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	protected Vector3 mDirection;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	protected bool mCheckHit;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public float trailSize = 1f;
 
-	3. Assembly Reconstruction has not been implemented.
+	protected BulletSetup mBulletSetup;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	protected float hitForce;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public bool isStatic;
 
-	4. This script is unnecessary.
+	protected Transform mTransform;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public bool fast;
 
-	5. Script Content Level 0
+	private RaycastHit? mRaycastHit1;
 
-		AssetRipper was set to not load any script information.
+	protected RaycastHit? mRaycastHit
+	{
+		get
+		{
+			return mRaycastHit1;
+		}
+		set
+		{
+			mRaycastHit1 = value;
+		}
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public override void OnInstancied()
+	{
+		base.OnInstancied();
+		isStatic = false;
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	protected override void Awake()
+	{
+		base.Awake();
+		mlineTrailRenderer = GetComponent<LineTrailRenderer>();
+		mTransform = base.transform;
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	public override void Fire(Vector3 from, Vector3 to)
+	{
+		if (weapon == null)
+		{
+			throw new NullReferenceException("WEAPON IS NULL");
+		}
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	public void AnimateShot(Vector3 from, Vector3 to, bool checkCollision)
+	{
+		mCheckHit = checkCollision;
+		mDirection = to - from;
+		mTransform.rotation = Quaternion.LookRotation(from - to) * Quaternion.AngleAxis(-90f, Vector3.up);
+		float num = Vector3.Distance(from, to);
+		float num2 = 1f - Mathf.Clamp01(distanceToCheck / num);
+		if (!mCheckHit)
+		{
+			num2 = 1f;
+		}
+		Vector3 toPos = from + num2 * mDirection;
+		speed = ((!isFake) ? speed : mBulletSetup.fakeSpeed);
+		float num3 = num / speed;
+		mlineTrailRenderer.Reset();
+		if (isFake)
+		{
+			if (!string.IsNullOrEmpty(mBulletSetup.fakeShotTexture))
+			{
+				mlineTrailRenderer.SetSprite(mBulletSetup.fakeShotTexture);
+			}
+			mlineTrailRenderer.SetWidth(mBulletSetup.GetTrailFakeWidth());
+			mlineTrailRenderer.trailLength = trailSize;
+			mlineTrailRenderer.disapearTime = TimeManager.GetTimeScaledInterval(trailSize / speed, ignoreTimeScale);
+		}
+		else
+		{
+			if (type == ShotType.Real && !string.IsNullOrEmpty(mBulletSetup.realShotTexture))
+			{
+				mlineTrailRenderer.SetSprite(mBulletSetup.realShotTexture);
+			}
+			if (type == ShotType.Shield && !string.IsNullOrEmpty(mBulletSetup.shieldShotTexture))
+			{
+				mlineTrailRenderer.SetSprite(mBulletSetup.shieldShotTexture);
+			}
+			mlineTrailRenderer.SetWidth(mBulletSetup.GetTrailWidth());
+			mlineTrailRenderer.trailLength = trailSize * 2f;
+			mlineTrailRenderer.disapearTime = TimeManager.GetTimeScaledInterval(trailSize / speed, ignoreTimeScale);
+		}
+		if (!isFake)
+		{
+			TweenPosition tweenPosition = TweenPosition.Begin(base.gameObject, num3, from, toPos, useLocal: false);
+			tweenPosition.ignoreTimeScale = ignoreTimeScale;
+			tweenPosition.method = UITweener.Method.Linear;
+			tweenPosition.onFinished = TryKill;
+		}
+		else
+		{
+			TweenPosition tweenPosition2 = TweenPosition.Begin(base.gameObject, num3 * 2f, from, to + mDirection, useLocal: false);
+			tweenPosition2.onFinished = delegate
+			{
+				DestroyPooled();
+			};
+		}
+	}
 
-	*/
+	private void TryKill(UITweener tween)
+	{
+		OnTryKill();
+	}
+
+	protected abstract void OnTryKill();
+
+	protected virtual void OnHit()
+	{
+		TweenPosition component = GetComponent<TweenPosition>();
+		if ((bool)component)
+		{
+			component.enabled = false;
+		}
+		if (mRaycastHit.HasValue)
+		{
+			DestroyableObject damagedObject = null;
+			if (!(mRaycastHit.Value.collider != null) || !DoDamage(mRaycastHit.Value.collider.gameObject, mRaycastHit.Value, mDirection.normalized * hitForce, flameDamage: false, out damagedObject))
+			{
+				Singleton<HitParticleSystem>.instance.PlayParticle(mRaycastHit.Value.point, mRaycastHit.Value.normal, 0);
+				DecalSystem.Instance.PlayDecal(mRaycastHit.Value.point, mRaycastHit.Value.normal, 0);
+			}
+			if (weapon != null)
+			{
+				weapon.ReportShotHit(this, mRaycastHit.Value.point, isNetworkCopy, damagedObject);
+			}
+			else
+			{
+				Debug.LogError("Bullet with NO weapon");
+			}
+		}
+		DestroyPooled(0.5f);
+	}
+
+	public override void LoadAmmoSetup(AmmoSetup setup)
+	{
+		base.LoadAmmoSetup(setup);
+		BulletSetup bulletSetup = setup as BulletSetup;
+		if (bulletSetup != null)
+		{
+			mBulletSetup = bulletSetup;
+			speed = bulletSetup.bulletSpeed;
+			distanceToCheck = bulletSetup.checkDistance;
+			trailSize = bulletSetup.GetTrailSize();
+			hitForce = bulletSetup.hitForce;
+		}
+		else
+		{
+			Debug.LogError("You probably assigned bad type of AmmoSetup to gun");
+		}
+	}
+
+	public override void DestroyPooled()
+	{
+		base.DestroyPooled();
+	}
 }

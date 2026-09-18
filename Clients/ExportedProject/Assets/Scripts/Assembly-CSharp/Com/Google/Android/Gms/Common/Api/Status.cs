@@ -1,66 +1,108 @@
-using UnityEngine;
+using System;
+using Google.Developers;
 
 namespace Com.Google.Android.Gms.Common.Api
 {
-	public class Status : MonoBehaviour
+public class Status : JavaObjWrapper, Result
+{
+	private const string CLASS_NAME = "com/google/android/gms/common/api/Status";
+
+	public static object CREATOR => JavaObjWrapper.GetStaticObjectField<object>("com/google/android/gms/common/api/Status", "CREATOR", "Landroid/os/Parcelable$Creator;");
+
+	public static string NULL => JavaObjWrapper.GetStaticStringField("com/google/android/gms/common/api/Status", "NULL");
+
+	public static int CONTENTS_FILE_DESCRIPTOR => JavaObjWrapper.GetStaticIntField("com/google/android/gms/common/api/Status", "CONTENTS_FILE_DESCRIPTOR");
+
+	public static int PARCELABLE_WRITE_RETURN_VALUE => JavaObjWrapper.GetStaticIntField("com/google/android/gms/common/api/Status", "PARCELABLE_WRITE_RETURN_VALUE");
+
+	public Status(IntPtr ptr)
+		: base(ptr)
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
 	}
+
+	public Status(int arg_int_1, string arg_string_2, object arg_object_3)
+	{
+		CreateInstance("com/google/android/gms/common/api/Status", arg_int_1, arg_string_2, arg_object_3);
+	}
+
+	public Status(int arg_int_1, string arg_string_2)
+	{
+		CreateInstance("com/google/android/gms/common/api/Status", arg_int_1, arg_string_2);
+	}
+
+	public Status(int arg_int_1)
+	{
+		CreateInstance("com/google/android/gms/common/api/Status", arg_int_1);
+	}
+
+	public bool equals(object arg_object_1)
+	{
+		return InvokeCall<bool>("equals", "(Ljava/lang/Object;)Z", new object[1] { arg_object_1 });
+	}
+
+	public string toString()
+	{
+		return InvokeCall<string>("toString", "()Ljava/lang/String;", new object[0]);
+	}
+
+	public int hashCode()
+	{
+		return InvokeCall<int>("hashCode", "()I", new object[0]);
+	}
+
+	public bool isInterrupted()
+	{
+		return InvokeCall<bool>("isInterrupted", "()Z", new object[0]);
+	}
+
+	public Status getStatus()
+	{
+		return InvokeCall<Status>("getStatus", "()Lcom/google/android/gms/common/api/Status;", new object[0]);
+	}
+
+	public bool isCanceled()
+	{
+		return InvokeCall<bool>("isCanceled", "()Z", new object[0]);
+	}
+
+	public int describeContents()
+	{
+		return InvokeCall<int>("describeContents", "()I", new object[0]);
+	}
+
+	public object getResolution()
+	{
+		return InvokeCall<object>("getResolution", "()Landroid/app/PendingIntent;", new object[0]);
+	}
+
+	public int getStatusCode()
+	{
+		return InvokeCall<int>("getStatusCode", "()I", new object[0]);
+	}
+
+	public string getStatusMessage()
+	{
+		return InvokeCall<string>("getStatusMessage", "()Ljava/lang/String;", new object[0]);
+	}
+
+	public bool hasResolution()
+	{
+		return InvokeCall<bool>("hasResolution", "()Z", new object[0]);
+	}
+
+	public void startResolutionForResult(object arg_object_1, int arg_int_2)
+	{
+		InvokeCallVoid("startResolutionForResult", "(Landroid/app/Activity;I)V", arg_object_1, arg_int_2);
+	}
+
+	public void writeToParcel(object arg_object_1, int arg_int_2)
+	{
+		InvokeCallVoid("writeToParcel", "(Landroid/os/Parcel;I)V", arg_object_1, arg_int_2);
+	}
+
+	public bool isSuccess()
+	{
+		return InvokeCall<bool>("isSuccess", "()Z", new object[0]);
+	}
+}
 }

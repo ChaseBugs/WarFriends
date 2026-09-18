@@ -1,66 +1,207 @@
-using UnityEngine;
+using System;
+using System.IO;
 
 namespace Org.BouncyCastle.Utilities.Zlib
 {
-	public class ZOutputStream : MonoBehaviour
+public class ZOutputStream : Stream
+{
+	private const int BufferSize = 512;
+
+	protected ZStream z;
+
+	protected int flushLevel;
+
+	protected byte[] buf = new byte[512];
+
+	protected byte[] buf1 = new byte[1];
+
+	protected bool compress;
+
+	protected Stream output;
+
+	protected bool closed;
+
+	public sealed override bool CanRead => false;
+
+	public sealed override bool CanSeek => false;
+
+	public sealed override bool CanWrite => !closed;
+
+	public virtual int FlushMode
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
+		get
+		{
+			return flushLevel;
+		}
+		set
+		{
+			flushLevel = value;
+		}
 	}
+
+	public sealed override long Length
+	{
+		get
+		{
+			throw new NotSupportedException();
+		}
+	}
+
+	public sealed override long Position
+	{
+		get
+		{
+			throw new NotSupportedException();
+		}
+		set
+		{
+			throw new NotSupportedException();
+		}
+	}
+
+	public virtual long TotalIn => z.total_in;
+
+	public virtual long TotalOut => z.total_out;
+
+	public ZOutputStream(Stream output)
+		: this(output, null)
+	{
+	}
+
+	public ZOutputStream(Stream output, ZStream z)
+	{
+		if (z == null)
+		{
+			z = new ZStream();
+			z.inflateInit();
+		}
+		this.output = output;
+		this.z = z;
+		compress = false;
+	}
+
+	public ZOutputStream(Stream output, int level)
+		: this(output, level, nowrap: false)
+	{
+	}
+
+	public ZOutputStream(Stream output, int level, bool nowrap)
+	{
+		this.output = output;
+		z = new ZStream();
+		z.deflateInit(level, nowrap);
+		compress = true;
+	}
+
+	protected override void Dispose(bool disposing)
+	{
+		if (closed)
+		{
+			return;
+		}
+		try
+		{
+			Finish();
+		}
+		catch (IOException)
+		{
+		}
+		finally
+		{
+			closed = true;
+			End();
+			output.Dispose();
+			output = null;
+		}
+		base.Dispose(disposing);
+	}
+
+	public virtual void End()
+	{
+		if (z != null)
+		{
+			if (compress)
+			{
+				z.deflateEnd();
+			}
+			else
+			{
+				z.inflateEnd();
+			}
+			z.free();
+			z = null;
+		}
+	}
+
+	public virtual void Finish()
+	{
+		do
+		{
+			z.next_out = buf;
+			z.next_out_index = 0;
+			z.avail_out = buf.Length;
+			int num = ((!compress) ? z.inflate(4) : z.deflate(4));
+			if (num != 1 && num != 0)
+			{
+				throw new IOException(((!compress) ? "in" : "de") + "flating: " + z.msg);
+			}
+			int num2 = buf.Length - z.avail_out;
+			if (num2 > 0)
+			{
+				output.Write(buf, 0, num2);
+			}
+		}
+		while (z.avail_in > 0 || z.avail_out == 0);
+		Flush();
+	}
+
+	public override void Flush()
+	{
+		output.Flush();
+	}
+
+	public sealed override int Read(byte[] buffer, int offset, int count)
+	{
+		throw new NotSupportedException();
+	}
+
+	public sealed override long Seek(long offset, SeekOrigin origin)
+	{
+		throw new NotSupportedException();
+	}
+
+	public sealed override void SetLength(long value)
+	{
+		throw new NotSupportedException();
+	}
+
+	public override void Write(byte[] b, int off, int len)
+	{
+		if (len == 0)
+		{
+			return;
+		}
+		z.next_in = b;
+		z.next_in_index = off;
+		z.avail_in = len;
+		do
+		{
+			z.next_out = buf;
+			z.next_out_index = 0;
+			z.avail_out = buf.Length;
+			if (((!compress) ? z.inflate(flushLevel) : z.deflate(flushLevel)) != 0)
+			{
+				throw new IOException(((!compress) ? "in" : "de") + "flating: " + z.msg);
+			}
+			output.Write(buf, 0, buf.Length - z.avail_out);
+		}
+		while (z.avail_in > 0 || z.avail_out == 0);
+	}
+
+	public override void WriteByte(byte b)
+	{
+		buf1[0] = b;
+		Write(buf1, 0, 1);
+	}
+}
 }

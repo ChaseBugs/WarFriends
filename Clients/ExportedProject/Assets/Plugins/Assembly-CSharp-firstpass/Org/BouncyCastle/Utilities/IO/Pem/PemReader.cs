@@ -1,66 +1,77 @@
-using UnityEngine;
+using System;
+using System.Collections;
+using System.IO;
+using System.Text;
+using Org.BouncyCastle.Utilities.Encoders;
 
 namespace Org.BouncyCastle.Utilities.IO.Pem
 {
-	public class PemReader : MonoBehaviour
+public class PemReader
+{
+	private const string BeginString = "-----BEGIN ";
+
+	private const string EndString = "-----END ";
+
+	private readonly TextReader reader;
+
+	public TextReader Reader => reader;
+
+	public PemReader(TextReader reader)
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
+		if (reader == null)
+		{
+			throw new ArgumentNullException("reader");
+		}
+		this.reader = reader;
 	}
+
+	public PemObject ReadPemObject()
+	{
+		string text = reader.ReadLine();
+		if (text != null && text.StartsWith("-----BEGIN "))
+		{
+			text = text.Substring("-----BEGIN ".Length);
+			int num = text.IndexOf('-');
+			string type = text.Substring(0, num);
+			if (num > 0)
+			{
+				return LoadObject(type);
+			}
+		}
+		return null;
+	}
+
+	private PemObject LoadObject(string type)
+	{
+		string text = "-----END " + type;
+		IList list = Platform.CreateArrayList();
+		StringBuilder stringBuilder = new StringBuilder();
+		string text2;
+		while ((text2 = reader.ReadLine()) != null && text2.IndexOf(text) == -1)
+		{
+			int num = text2.IndexOf(':');
+			if (num == -1)
+			{
+				stringBuilder.Append(text2.Trim());
+				continue;
+			}
+			string text3 = text2.Substring(0, num).Trim();
+			if (text3.StartsWith("X-"))
+			{
+				text3 = text3.Substring(2);
+			}
+			string val = text2.Substring(num + 1).Trim();
+			list.Add(new PemHeader(text3, val));
+		}
+		if (text2 == null)
+		{
+			throw new IOException(text + " not found");
+		}
+		if (stringBuilder.Length % 4 != 0)
+		{
+			throw new IOException("base64 data appears to be truncated");
+		}
+		return new PemObject(type, list, Base64.Decode(stringBuilder.ToString()));
+	}
+}
 }

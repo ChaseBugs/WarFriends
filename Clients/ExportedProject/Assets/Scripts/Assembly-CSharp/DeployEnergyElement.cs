@@ -1,63 +1,138 @@
+using Google2u;
 using UnityEngine;
 
-public class DeployEnergyElement : MonoBehaviour
+public class DeployEnergyElement : Core_BaseScript
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Header("Core")]
+	public UISprite myEnergyBar;
 
-	1. No dll files were provided to AssetRipper.
+	public UILabel myEnergyLabel;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public UISprite opponentEnergyBar;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public UILabel opponentEnergyLabel;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public UISprite opponentEnergyIcon;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	private int mMyEnergy;
 
-	3. Assembly Reconstruction has not been implemented.
+	private FloatObject mMyActualEnergy = new FloatObject(0f);
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	private int mOpponentEnergy;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	private FloatObject mOpponentActualEnergy = new FloatObject(0f);
 
-	4. This script is unnecessary.
+	private float mTimer;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public bool shouldUpdate
+	{
+		set
+		{
+			if (!value)
+			{
+				StopAnimations();
+			}
+			base.gameObject.SetActive(value);
+			if (value)
+			{
+				StopAnimations();
+			}
+		}
+	}
 
-	5. Script Content Level 0
+	private int mMaxEnergy => 2 * (int)(float)Singleton<GameVariables>.instance.constants.GetRow(Constants.rowIds.MaxEnergy).FLOATVALUE;
 
-		AssetRipper was set to not load any script information.
+	private void Update()
+	{
+		mTimer += Time.deltaTime;
+		if (mTimer >= 0.333f)
+		{
+			mTimer -= 0.333f;
+			UpdateValues();
+			UpdateGui();
+		}
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public void InstantUpdate()
+	{
+		UpdateValues();
+		StopAnimations();
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	private void UpdateValues()
+	{
+		mMyEnergy = Singleton<SpawningManagerDeathMatch>.instance.powerLeft;
+		mOpponentEnergy = Singleton<SpawningManagerDeathMatch>.instance.powerLeftEnemy;
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	private void UpdateGui()
+	{
+		string text = MiscTools.FormatBigNumber(mMyEnergy);
+		if (!myEnergyLabel.text.Equals(text))
+		{
+			myEnergyLabel.text = text;
+			TweenScale tweenScale = TweenScale.Begin(myEnergyLabel.gameObject, 0.2f, new Vector3(35f, 35f, 1f), new Vector3(45f, 45f, 1f));
+			tweenScale.NumOfRepetitions = 2;
+			tweenScale.style = UITweener.Style.PingPong;
+		}
+		if (mMyEnergy != Mathf.RoundToInt(mMyActualEnergy.val * (float)mMaxEnergy))
+		{
+			mMyActualEnergy.val = (float)mMyEnergy / (float)mMaxEnergy;
+			TweenProgressBar.Begin(myEnergyBar.gameObject, 0.25f, mMyActualEnergy).method = UITweener.Method.Linear;
+		}
+		if (TutorialManagerStage1.instance.isTutorialRunning)
+		{
+			opponentEnergyLabel.text = string.Empty;
+			TweenProgressBar component = opponentEnergyBar.gameObject.GetComponent<TweenProgressBar>();
+			if (component != null)
+			{
+				component.enabled = false;
+			}
+			opponentEnergyBar.fillAmount = 0f;
+			opponentEnergyIcon.gameObject.SetActive(value: false);
+			return;
+		}
+		opponentEnergyIcon.gameObject.SetActive(value: true);
+		string text2 = MiscTools.FormatBigNumber(mOpponentEnergy);
+		if (!opponentEnergyLabel.text.Equals(text2))
+		{
+			opponentEnergyLabel.text = text2;
+			TweenScale tweenScale2 = TweenScale.Begin(opponentEnergyLabel.gameObject, 0.2f, new Vector3(35f, 35f, 1f), new Vector3(45f, 45f, 1f));
+			tweenScale2.NumOfRepetitions = 2;
+			tweenScale2.style = UITweener.Style.PingPong;
+		}
+		if (mOpponentEnergy != Mathf.RoundToInt(mOpponentActualEnergy.val * (float)mMaxEnergy))
+		{
+			mOpponentActualEnergy.val = (float)mOpponentEnergy / (float)mMaxEnergy;
+			TweenProgressBar.Begin(opponentEnergyBar.gameObject, 0.25f, mOpponentActualEnergy).method = UITweener.Method.Linear;
+		}
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	private void StopAnimations()
+	{
+		TweenProgressBar component = myEnergyBar.gameObject.GetComponent<TweenProgressBar>();
+		if (component != null)
+		{
+			component.enabled = false;
+		}
+		myEnergyBar.fillAmount = (float)mMyEnergy / (float)mMaxEnergy;
+		TweenScale component2 = myEnergyLabel.gameObject.GetComponent<TweenScale>();
+		if (component2 != null)
+		{
+			component2.enabled = false;
+		}
+		myEnergyLabel.text = MiscTools.FormatBigNumber(mMyEnergy);
+		component = opponentEnergyBar.gameObject.GetComponent<TweenProgressBar>();
+		if (component != null)
+		{
+			component.enabled = false;
+		}
+		opponentEnergyBar.fillAmount = (float)mOpponentEnergy / (float)mMaxEnergy;
+		component2 = opponentEnergyLabel.gameObject.GetComponent<TweenScale>();
+		if (component2 != null)
+		{
+			component2.enabled = false;
+		}
+		opponentEnergyLabel.text = MiscTools.FormatBigNumber(mOpponentEnergy);
+	}
 }

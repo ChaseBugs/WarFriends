@@ -1,66 +1,107 @@
-using UnityEngine;
+using System;
+using System.Runtime.InteropServices;
+using System.Text;
+using AOT;
+using GooglePlayGames.Native.Cwrapper;
+using GooglePlayGames.OurUtils;
 
 namespace GooglePlayGames.Native.PInvoke
 {
-	public class GameServices : MonoBehaviour
+internal class GameServices : BaseReferenceHolder
+{
+	internal class FetchServerAuthCodeResponse : BaseReferenceHolder
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
+		internal FetchServerAuthCodeResponse(IntPtr selfPointer)
+			: base(selfPointer)
+		{
+		}
 
-		1. No dll files were provided to AssetRipper.
+		internal CommonErrorStatus.ResponseStatus Status()
+		{
+			return GooglePlayGames.Native.Cwrapper.GameServices.GameServices_FetchServerAuthCodeResponse_GetStatus(SelfPtr());
+		}
 
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
+		internal string Code()
+		{
+			return PInvokeUtilities.OutParamsToString((StringBuilder out_string, UIntPtr out_size) => GooglePlayGames.Native.Cwrapper.GameServices.GameServices_FetchServerAuthCodeResponse_GetCode(SelfPtr(), out_string, out_size));
+		}
 
-		2. Incorrect dll files were provided to AssetRipper.
+		protected override void CallDispose(HandleRef selfPointer)
+		{
+			GooglePlayGames.Native.Cwrapper.GameServices.GameServices_FetchServerAuthCodeResponse_Dispose(selfPointer);
+		}
 
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
+		internal static FetchServerAuthCodeResponse FromPointer(IntPtr pointer)
+		{
+			if (pointer.Equals(IntPtr.Zero))
+			{
+				return null;
+			}
+			return new FetchServerAuthCodeResponse(pointer);
+		}
 	}
+
+	internal GameServices(IntPtr selfPointer)
+		: base(selfPointer)
+	{
+	}
+
+	internal bool IsAuthenticated()
+	{
+		return GooglePlayGames.Native.Cwrapper.GameServices.GameServices_IsAuthorized(SelfPtr());
+	}
+
+	internal void SignOut()
+	{
+		GooglePlayGames.Native.Cwrapper.GameServices.GameServices_SignOut(SelfPtr());
+	}
+
+	internal void StartAuthorizationUI()
+	{
+		GooglePlayGames.Native.Cwrapper.GameServices.GameServices_StartAuthorizationUI(SelfPtr());
+	}
+
+	public AchievementManager AchievementManager()
+	{
+		return new AchievementManager(this);
+	}
+
+	public LeaderboardManager LeaderboardManager()
+	{
+		return new LeaderboardManager(this);
+	}
+
+	public PlayerManager PlayerManager()
+	{
+		return new PlayerManager(this);
+	}
+
+	public StatsManager StatsManager()
+	{
+		return new StatsManager(this);
+	}
+
+	internal HandleRef AsHandle()
+	{
+		return SelfPtr();
+	}
+
+	protected override void CallDispose(HandleRef selfPointer)
+	{
+		GooglePlayGames.Native.Cwrapper.GameServices.GameServices_Dispose(selfPointer);
+	}
+
+	internal void FetchServerAuthCode(string server_client_id, Action<FetchServerAuthCodeResponse> callback)
+	{
+		Misc.CheckNotNull(callback);
+		Misc.CheckNotNull(server_client_id);
+		GooglePlayGames.Native.Cwrapper.GameServices.GameServices_FetchServerAuthCode(AsHandle(), server_client_id, InternalFetchServerAuthCodeCallback, Callbacks.ToIntPtr(callback, FetchServerAuthCodeResponse.FromPointer));
+	}
+
+	[MonoPInvokeCallback(typeof(GooglePlayGames.Native.Cwrapper.GameServices.FetchServerAuthCodeCallback))]
+	private static void InternalFetchServerAuthCodeCallback(IntPtr response, IntPtr data)
+	{
+		Callbacks.PerformInternalCallback("GameServices#InternalFetchServerAuthCodeCallback", Callbacks.Type.Temporary, response, data);
+	}
+}
 }

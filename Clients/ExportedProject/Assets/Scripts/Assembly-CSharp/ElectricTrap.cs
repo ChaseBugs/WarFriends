@@ -1,63 +1,115 @@
+using UnityEngine.AI;
+using System;
+using System.Collections;
 using UnityEngine;
 
-public class ElectricTrap : MonoBehaviour
+public class ElectricTrap : Core_BaseScript
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public PhysicsEventsListener trigger;
 
-	1. No dll files were provided to AssetRipper.
+	public Shield shield;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public PhotonView photonView;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public GameObject handle;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public Renderer electricityRenderer;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public float electricityEffectPeriod;
 
-	3. Assembly Reconstruction has not been implemented.
+	public int electricityEffectFrames;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public GameObject leftInsulator;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public GameObject rightInsulator;
 
-	4. This script is unnecessary.
+	public GameObject effect;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private DestroyableObject mDestroyableObject;
 
-	5. Script Content Level 0
+	private bool mAnimating;
 
-		AssetRipper was set to not load any script information.
+	protected override void Awake()
+	{
+		base.Awake();
+		PhysicsEventsListener physicsEventsListener = trigger;
+		physicsEventsListener.onTriggerEnter = (Action<Collider>)Delegate.Combine(physicsEventsListener.onTriggerEnter, new Action<Collider>(TriggerOnTriggerEnter));
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	private void TriggerOnTriggerEnter(Collider other)
+	{
+		if (TagsAndLayers.IsDestroyableObject(other.transform.gameObject))
+		{
+			DestroyableObject component = other.GetComponent<DestroyableObject>();
+			if (component != null && shield.fraction != component.fraction && component.owner is EnemyController && photonView.isMine)
+			{
+				component.Shiver(component.health, Vector3.zero, null, shield, isNetworkCopy: false);
+				Explode(component.transform.position);
+			}
+		}
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	private void SetVisibility(bool visible)
+	{
+		handle.SetActive(visible);
+		if (visible)
+		{
+			handle.transform.localPosition = new Vector3(handle.transform.localPosition.x, (!Singleton<MapManager>.instance.currentMapDef.moveElectricTraps) ? 0.05f : (-0.15f), handle.transform.localPosition.z);
+			NavMesh.SamplePosition(leftInsulator.transform.position, out var hit, 10f, 1);
+			leftInsulator.transform.position = hit.position;
+			NavMesh.SamplePosition(rightInsulator.transform.position, out hit, 10f, 1);
+			rightInsulator.transform.position = hit.position;
+			effect.transform.localPosition = effect.transform.localPosition.ReplaceY((leftInsulator.transform.localPosition.y + rightInsulator.transform.localPosition.y) / 2f + 0.125f);
+			if (!mAnimating)
+			{
+				mAnimating = true;
+				StartCoroutine(Animate());
+			}
+		}
+		else if (mAnimating)
+		{
+			mAnimating = false;
+			StopCoroutine(Animate());
+		}
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	public void SetTrap(bool visible)
+	{
+		SetVisibility(visible);
+		photonView.RPC("SetTrapRPC", PhotonTargets.Others, visible);
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	[PunRPC]
+	protected void SetTrapRPC(bool visible)
+	{
+		SetVisibility(visible);
+	}
 
-	*/
+	protected void Explode(Vector3 position)
+	{
+		photonView.RPC("ExplodeRPC", PhotonTargets.Others, position);
+		ExplodeRPC(position);
+	}
+
+	[PunRPC]
+	protected void ExplodeRPC(Vector3 position)
+	{
+		Singleton<SoundsManager3D>.instance.Play(base.gameObject, Sounds3DEnum.ElectricalBurst);
+		Singleton<HitParticleSystem>.instance.PlayParticle(position, Vector3.up, "electricTrap");
+		SetVisibility(visible: false);
+	}
+
+	private IEnumerator Animate()
+	{
+		int currentIndex = UnityEngine.Random.Range(0, electricityEffectFrames);
+		float height = 1f / (float)electricityEffectFrames;
+		electricityRenderer.material.mainTextureScale = new Vector2(1f, height);
+		while (true)
+		{
+			int num = currentIndex + 1;
+			currentIndex = num % electricityEffectFrames;
+			electricityRenderer.material.mainTextureOffset = new Vector2(0f, height * (float)currentIndex);
+			yield return new WaitForSeconds(electricityEffectPeriod);
+		}
+	}
 }

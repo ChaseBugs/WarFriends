@@ -1,63 +1,103 @@
+using System.Collections.Generic;
 using UnityEngine;
 
-public class TutorialProgressShower : MonoBehaviour
+public class TutorialProgressShower : Singleton<TutorialProgressShower>
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public List<TutorialCheckBox> checkBoxes;
 
-	1. No dll files were provided to AssetRipper.
+	public UILabel title;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public UISprite titleBG;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	private UIPanel panel;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	private float bigStepX = 115f;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	private float bigY = -160f;
 
-	3. Assembly Reconstruction has not been implemented.
+	private float smallStepX = 35f;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	private float smallY = -80f;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	private bool mShowed;
 
-	4. This script is unnecessary.
+	protected override void Awake()
+	{
+		base.Awake();
+		base.gameObject.SetActive(value: false);
+		panel = GetComponent<UIPanel>();
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public void Show(string titleText, int numCheckBoxes)
+	{
+		title.text = titleText;
+		Vector3 localScale = titleBG.cachedTransform.localScale;
+		localScale.x = title.relativeSize.x * title.cachedTransform.localScale.x + 100f;
+		titleBG.cachedTransform.localScale = localScale;
+		while (checkBoxes.Count < numCheckBoxes)
+		{
+			TutorialCheckBox tutorialCheckBox = Object.Instantiate(checkBoxes[0]);
+			tutorialCheckBox.transform.parent = checkBoxes[0].transform.parent;
+			checkBoxes.Add(tutorialCheckBox);
+		}
+		Vector3 localPosition = ((numCheckBoxes >= 4) ? new Vector3((0f - smallStepX) * (float)(numCheckBoxes - 1), smallY, 0f) : new Vector3((0f - bigStepX) * (float)(numCheckBoxes - 1), bigY, 0f));
+		for (int i = 0; i < checkBoxes.Count; i++)
+		{
+			if (i < numCheckBoxes)
+			{
+				checkBoxes[i].Clear();
+				checkBoxes[i].transform.localPosition = localPosition;
+				if (numCheckBoxes < 4)
+				{
+					checkBoxes[i].ShowBig();
+					localPosition.x += bigStepX * 2f;
+				}
+				else
+				{
+					checkBoxes[i].ShowSmall();
+					localPosition.x += smallStepX * 2f;
+				}
+			}
+			else
+			{
+				checkBoxes[i].Hide();
+			}
+		}
+		panel.alpha1 = 0f;
+		TweenAlpha.Begin(base.gameObject, 0.5f, 1f);
+		base.gameObject.SetActive(value: true);
+		mShowed = true;
+	}
 
-	5. Script Content Level 0
+	protected void Update()
+	{
+		if (mShowed)
+		{
+			panel.alpha1 = ((!Singleton<SniperScope>.instance.showed) ? 1f : 0.3f);
+		}
+	}
 
-		AssetRipper was set to not load any script information.
+	public void CheckNum(int index, bool playSound = true)
+	{
+		if (playSound)
+		{
+			SoundsManager.Instance.PlaySound(SoundsManager.SoundsEnum.BootcampObjectiveComplete);
+		}
+		checkBoxes[index].SetChecked();
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public void Hide()
+	{
+		TweenAlpha.Begin(base.gameObject, 0.25f, 0f).onFinished = delegate
+		{
+			base.gameObject.SetActive(value: false);
+			mShowed = false;
+		};
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public void Disable()
+	{
+		base.gameObject.SetActive(value: false);
+		mShowed = false;
+	}
 }

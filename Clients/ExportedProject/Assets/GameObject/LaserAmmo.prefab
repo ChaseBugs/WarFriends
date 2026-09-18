@@ -126,6 +126,33 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8e7617dbd31597a58650b067ff1832dc, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  LaserBeamActive: 0
+  LevelUpEffect: {fileID: 0}
+  LevelIndicatorRenderers: []
+  TurretColorRender: {fileID: 0}
+  LaserFireEmitPointTrans: {fileID: 496012}
+  LaserFireCenterEmitter: {fileID: 19877035}
+  FiringParticleSize: 0.2
+  TargetHitTransform: {fileID: 469566}
+  TargetHitEmitter: {fileID: 19888124}
+  HitParticleSize: 0.2
+  InnerLaserLineRender: {fileID: 12070521}
+  OuterLaserLineRender: {fileID: 0}
+  LaserBeamColor: {r: 0.48965526, g: 1, b: 0, a: 1}
+  LaserYBeamMaterial: {fileID: 2100000, guid: fa4e646dc09e5c54784908408cb33c0a, type: 2}
+  LaserFiring: 0
+  InnerLaserStartWidth: 0.1
+  InnerLaserEndWidth: 0.1
+  OuterLaserStartWidth: 0.2
+  OuterLaserEndWidth: 0.2
+  LaserGrowSpeed: 1
+  innerLaserTileAmount: 1
+  outerLaserTileAmount: 1
+  FireSpeed: 50
+  OffsetMaterialTexture: 1
+  ScrollSpeed: 5
+  LaserFireTime: 0.6
+  CurrentTarget: {fileID: 491323}
 --- !u!114 &11443158
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -137,6 +164,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0e2252e52c33037e86e5e54efa7a7986, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  isActivated: 0
+  ammoDamageAmount: 40
+  isFake: 0
+  weapon: {fileID: 0}
+  type: 0
+  isNetworkCopy: 0
 --- !u!4 &431434
 Transform:
   m_ObjectHideFlags: 0

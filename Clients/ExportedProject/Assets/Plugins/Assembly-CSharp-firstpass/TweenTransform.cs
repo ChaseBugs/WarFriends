@@ -1,63 +1,68 @@
 using UnityEngine;
 
-public class TweenTransform : MonoBehaviour
+[AddComponentMenu("NGUI/Tween/Transform")]
+public class TweenTransform : UITweener
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public Transform from;
 
-	1. No dll files were provided to AssetRipper.
+	public Transform to;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public bool parentWhenFinished;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public Transform mTrans;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	private Vector3 mPos;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	private Quaternion mRot;
 
-	3. Assembly Reconstruction has not been implemented.
+	private Vector3 mScale;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	protected override void OnUpdate(float factor, bool isFinished)
+	{
+		if (to != null)
+		{
+			if (mTrans == null)
+			{
+				mTrans = base.transform;
+				mPos = mTrans.position;
+				mRot = mTrans.rotation;
+				mScale = mTrans.localScale;
+			}
+			if (from != null)
+			{
+				mTrans.position = from.position * (1f - factor) + to.position * factor;
+				mTrans.localScale = from.localScale * (1f - factor) + to.localScale * factor;
+				mTrans.rotation = Quaternion.Slerp(from.rotation, to.rotation, factor);
+			}
+			else
+			{
+				mTrans.position = mPos * (1f - factor) + to.position * factor;
+				mTrans.localScale = mScale * (1f - factor) + to.localScale * factor;
+				mTrans.rotation = Quaternion.Slerp(mRot, to.rotation, factor);
+			}
+			if (parentWhenFinished && isFinished)
+			{
+				mTrans.parent = to;
+			}
+		}
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public static TweenTransform Begin(GameObject go, float duration, Transform to)
+	{
+		return Begin(go, duration, null, to);
+	}
 
-	4. This script is unnecessary.
-
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
-
-	5. Script Content Level 0
-
-		AssetRipper was set to not load any script information.
-
-	6. Cpp2IL failed to decompile Il2Cpp data
-
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public static TweenTransform Begin(GameObject go, float duration, Transform from, Transform to)
+	{
+		TweenTransform tweenTransform = UITweener.Begin<TweenTransform>(go, duration);
+		tweenTransform.from = from;
+		tweenTransform.to = to;
+		tweenTransform.mTrans = null;
+		if (duration <= 0f)
+		{
+			tweenTransform.Sample(1f, isFinished: true);
+			tweenTransform.enabled = false;
+		}
+		return tweenTransform;
+	}
 }

@@ -1,63 +1,89 @@
 using UnityEngine;
 
-public class DestroyableObjectpart : MonoBehaviour
+public class DestroyableObjectpart : DestroyableObject
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public DestroyableObjectMultipleParts ownerDestroyableObject;
 
-	1. No dll files were provided to AssetRipper.
+	public float weight = 1f;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public byte index;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	private float baseWeight = 1f;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public override bool destroyableByBonusBox => ownerDestroyableObject.destroyableByBonusBox;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public override IFraction owner
+	{
+		get
+		{
+			return ownerDestroyableObject.owner;
+		}
+		set
+		{
+			ownerDestroyableObject.owner = value;
+		}
+	}
 
-	3. Assembly Reconstruction has not been implemented.
+	public override float health
+	{
+		get
+		{
+			if (ownerDestroyableObject == null)
+			{
+				return 0f;
+			}
+			return ownerDestroyableObject.health;
+		}
+	}
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public override float healthRatio
+	{
+		get
+		{
+			if (ownerDestroyableObject == null)
+			{
+				return 0f;
+			}
+			return ownerDestroyableObject.healthRatio;
+		}
+		set
+		{
+			if (ownerDestroyableObject != null)
+			{
+				ownerDestroyableObject.healthRatio = value;
+			}
+		}
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public override DestroyableObject mainDestroyableObject => ownerDestroyableObject;
 
-	4. This script is unnecessary.
+	protected override void Awake()
+	{
+		base.gameObject.layer = TagsAndLayers.destroyableEntitiesLayerNumber;
+		mCachedTransform = base.transform;
+		baseWeight = weight;
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public void ResetWeight()
+	{
+		weight = baseWeight;
+	}
 
-	5. Script Content Level 0
+	public override void PlaySound(Sounds3DEnum sound)
+	{
+		ownerDestroyableObject.PlaySound(sound);
+	}
 
-		AssetRipper was set to not load any script information.
+	public override void Shoot(float damage, Vector3 hitPos, Vector3 force, Weapon source, IFraction objectOwner, bool isNetworkCopy, bool isCritical)
+	{
+		shotCoeficient = ownerDestroyableObject.shotCoeficient;
+		base.Shoot(damage, hitPos, force, source, objectOwner, isNetworkCopy, isCritical);
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
-
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public override bool DoDamage(DamageInfo info, DestroyableObject obj)
+	{
+		info.damageAmount *= weight;
+		info.partIndex = index;
+		return ownerDestroyableObject.DoDamage(info, obj);
+	}
 }

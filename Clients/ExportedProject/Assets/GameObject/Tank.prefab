@@ -2332,6 +2332,49 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4d6316386184580ee22c6b4f5b47f7d7, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  isActivated: 0
+  photonView: {fileID: 0}
+  hudObjectIndicator: {fileID: 0}
+  preparedBehaviour: {fileID: 0}
+  behaviour: {fileID: 0}
+  mFraction: 1
+  isPrewiev: 0
+  visuals: {fileID: 11487586}
+  engine: {fileID: 11438774}
+  modelLoader: {fileID: 0}
+  speed: 1
+  pathRadius: 0.45
+  enemyPointTurret: {fileID: 11411808}
+  enemyPointCannon: {fileID: 11444252}
+  tankAnimationRight: {fileID: 11127850}
+  tankAnimationLeft: {fileID: 11127187}
+  carveCollider: {fileID: 104843}
+  obstacleColliders: {fileID: 198350}
+  cannon: {fileID: 11492654}
+  turret: {fileID: 11430575}
+  steerForce:
+    serializedVersion: 2
+    m_Curve:
+    - time: 0
+      value: 0.99946994
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+    - time: 0.7467094
+      value: 1.0021168
+      inSlope: 0.03218651
+      outSlope: 0.03218651
+      tangentMode: 0
+    - time: 0.99896747
+      value: 1.9256068
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+  torqueMultiplayer: 3
+  reverseMultiplier: 0.6
+  reverseMaxSpeed: 0.6
 --- !u!54 &5496281
 Rigidbody:
   serializedVersion: 2
@@ -2358,6 +2401,26 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d94d9d4266081e75df24b8687850c33d, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMaxHealth:
+    currentCryptoKey: 230887
+    hiddenValue: e7857944
+    fakeValue: 1000
+    inited: 1
+  mDestroyableByBonusBox: 0
+  healthBarPosition: {fileID: 481528}
+  forceHealthBar: 0
+  offset: {x: 0, y: 0, z: 0}
+  displayHealthBar: 1
+  playMainHitParticle: 0
+  isMetal: 0
+  shotCoeficient: 0.4
+  shotParticleNames:
+  - sparklesMetal
+  healthBarStyle: 0
+  mHealthbarColor: {r: 0, g: 1, b: 0, a: 1}
+  healthbar: {fileID: 0}
+  shotHitSound: 14
+  parts: []
 --- !u!114 &11478679
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2369,6 +2432,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f19ea4a15c3ca43dcc180d756f7a82b3, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  ownerId: 0
+  group: 0
+  OwnerShipWasTransfered: 0
+  prefixBackup: -1
+  synchronization: 3
+  onSerializeTransformOption: 3
+  onSerializeRigidBodyOption: 2
+  ownershipTransfer: 0
+  ObservedComponents:
+  - {fileID: 11422647}
+  viewIdField: 0
+  instantiationId: -1
+  currentMasterID: -1
+  didAwake: 0
+  isRuntimeInstantiated: 0
 --- !u!114 &11454731
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2380,6 +2458,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a551e0a4c5224adf6c7c791cacc35f6a, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  middle: {fileID: 473387}
+  scale: 0.25
+  slots:
+  - slotPosition: {fileID: 465624}
+    slotID: 0
+  - slotPosition: {fileID: 479551}
+    slotID: 1
+  - slotPosition: {fileID: 416530}
+    slotID: 2
+  - slotPosition: {fileID: 410764}
+    slotID: 3
 --- !u!114 &11484179
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2391,6 +2480,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 486a9acbd9d8b9c34ac18b91e89b7bef, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  skillshotPosition: {fileID: 481528}
 --- !u!114 &11400119
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2402,6 +2492,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5bfbf978d76daea62a5ea6e2af5801d1, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mPosition: {fileID: 481528}
 --- !u!114 &11464506
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2413,6 +2504,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3cf4d7761af3ce98d7a08bebfe4e8861, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  shootTargets: []
+  targets:
+  - transform: {fileID: 473387}
+    type: 1
+  visible: 1
 --- !u!114 &11487586
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2424,6 +2520,78 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c452d4ec3c54130d0b8b40a7db84146e, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  modelAttachments: {fileID: 11477090}
+  mainRenderer: {fileID: 2301929}
+  renderedParts:
+  - {fileID: 2304321}
+  - {fileID: 2376832}
+  - {fileID: 2382024}
+  - {fileID: 2351357}
+  - {fileID: 2369649}
+  - {fileID: 2328049}
+  - {fileID: 2316157}
+  - {fileID: 2365956}
+  - {fileID: 2370349}
+  - {fileID: 2359425}
+  - {fileID: 2369075}
+  - {fileID: 2345277}
+  - {fileID: 2357954}
+  - {fileID: 2303593}
+  - {fileID: 2395607}
+  - {fileID: 2327960}
+  - {fileID: 2330045}
+  - {fileID: 2329928}
+  - {fileID: 2330196}
+  - {fileID: 2368216}
+  - {fileID: 2346136}
+  - {fileID: 2388770}
+  - {fileID: 2339558}
+  - {fileID: 2318142}
+  - {fileID: 2325764}
+  - {fileID: 2301531}
+  - {fileID: 2348961}
+  - {fileID: 2393056}
+  - {fileID: 2369080}
+  - {fileID: 2334711}
+  - {fileID: 2342894}
+  - {fileID: 2393073}
+  - {fileID: 2340601}
+  - {fileID: 2370469}
+  - {fileID: 2351828}
+  - {fileID: 2305713}
+  - {fileID: 2360330}
+  - {fileID: 2355320}
+  - {fileID: 2349978}
+  - {fileID: 2390746}
+  - {fileID: 2394585}
+  - {fileID: 2375870}
+  - {fileID: 2361302}
+  - {fileID: 2360477}
+  - {fileID: 2379090}
+  - {fileID: 2304347}
+  - {fileID: 2349881}
+  - {fileID: 2361024}
+  - {fileID: 2323734}
+  - {fileID: 2381289}
+  - {fileID: 2386138}
+  - {fileID: 2304232}
+  - {fileID: 2380033}
+  - {fileID: 2352635}
+  - {fileID: 2352470}
+  - {fileID: 2383431}
+  - {fileID: 2338063}
+  - {fileID: 2325019}
+  - {fileID: 2344336}
+  - {fileID: 2348267}
+  - {fileID: 2303007}
+  - {fileID: 2388188}
+  - {fileID: 2327787}
+  - {fileID: 2354192}
+  - {fileID: 2383732}
+  - {fileID: 2328509}
+  - {fileID: 2395478}
+  - {fileID: 2392879}
+  - {fileID: 2355025}
 --- !u!114 &11477090
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2435,6 +2603,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0dfd54bd9851b07f2dc75544b2e170c3, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  modelAttachments:
+  - parent: {fileID: 422290}
+    id: 0
+  - parent: {fileID: 422290}
+    id: 1
+  - parent: {fileID: 422290}
+    id: 2
+  - parent: {fileID: 436455}
+    id: 3
+  - parent: {fileID: 414133}
+    id: 4
 --- !u!4 &461818
 Transform:
   m_ObjectHideFlags: 0
@@ -2490,6 +2669,27 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2b87d014f018a182ff3631ab01ac442e, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMaxHealth:
+    currentCryptoKey: 230887
+    hiddenValue: e7857944
+    fakeValue: 1000
+    inited: 1
+  mDestroyableByBonusBox: 1
+  healthBarPosition: {fileID: 0}
+  forceHealthBar: 0
+  offset: {x: 0, y: 0, z: 0}
+  displayHealthBar: 0
+  playMainHitParticle: 1
+  isMetal: 0
+  shotCoeficient: 1
+  shotParticleNames: []
+  healthBarStyle: 0
+  mHealthbarColor: {r: 0, g: 1, b: 0, a: 1}
+  healthbar: {fileID: 0}
+  shotHitSound: 14
+  ownerDestroyableObject: {fileID: 0}
+  weight: 1
+  index: 0
 --- !u!4 &498932
 Transform:
   m_ObjectHideFlags: 0
@@ -2525,6 +2725,27 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2b87d014f018a182ff3631ab01ac442e, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMaxHealth:
+    currentCryptoKey: 230887
+    hiddenValue: e7857944
+    fakeValue: 0
+    inited: 1
+  mDestroyableByBonusBox: 1
+  healthBarPosition: {fileID: 0}
+  forceHealthBar: 0
+  offset: {x: 0, y: 0, z: 0}
+  displayHealthBar: 0
+  playMainHitParticle: 1
+  isMetal: 0
+  shotCoeficient: 1
+  shotParticleNames: []
+  healthBarStyle: 0
+  mHealthbarColor: {r: 0, g: 1, b: 0, a: 1}
+  healthbar: {fileID: 0}
+  shotHitSound: 14
+  ownerDestroyableObject: {fileID: 0}
+  weight: 1
+  index: 0
 --- !u!4 &439935
 Transform:
   m_ObjectHideFlags: 0
@@ -2560,6 +2781,27 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2b87d014f018a182ff3631ab01ac442e, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMaxHealth:
+    currentCryptoKey: 230887
+    hiddenValue: e7857944
+    fakeValue: 1000
+    inited: 1
+  mDestroyableByBonusBox: 1
+  healthBarPosition: {fileID: 0}
+  forceHealthBar: 0
+  offset: {x: 0, y: 0, z: 0}
+  displayHealthBar: 0
+  playMainHitParticle: 1
+  isMetal: 0
+  shotCoeficient: 1
+  shotParticleNames: []
+  healthBarStyle: 0
+  mHealthbarColor: {r: 0, g: 1, b: 0, a: 1}
+  healthbar: {fileID: 0}
+  shotHitSound: 14
+  ownerDestroyableObject: {fileID: 0}
+  weight: 1
+  index: 0
 --- !u!4 &423964
 Transform:
   m_ObjectHideFlags: 0
@@ -2595,6 +2837,27 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2b87d014f018a182ff3631ab01ac442e, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMaxHealth:
+    currentCryptoKey: 230887
+    hiddenValue: e7857944
+    fakeValue: 1000
+    inited: 1
+  mDestroyableByBonusBox: 1
+  healthBarPosition: {fileID: 0}
+  forceHealthBar: 0
+  offset: {x: 0, y: 0, z: 0}
+  displayHealthBar: 0
+  playMainHitParticle: 1
+  isMetal: 0
+  shotCoeficient: 1
+  shotParticleNames: []
+  healthBarStyle: 0
+  mHealthbarColor: {r: 0, g: 1, b: 0, a: 1}
+  healthbar: {fileID: 0}
+  shotHitSound: 14
+  ownerDestroyableObject: {fileID: 0}
+  weight: 1
+  index: 0
 --- !u!4 &406061
 Transform:
   m_ObjectHideFlags: 0
@@ -2630,6 +2893,27 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2b87d014f018a182ff3631ab01ac442e, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMaxHealth:
+    currentCryptoKey: 230887
+    hiddenValue: e7857944
+    fakeValue: 1000
+    inited: 1
+  mDestroyableByBonusBox: 1
+  healthBarPosition: {fileID: 0}
+  forceHealthBar: 0
+  offset: {x: 0, y: 0, z: 0}
+  displayHealthBar: 0
+  playMainHitParticle: 1
+  isMetal: 0
+  shotCoeficient: 1
+  shotParticleNames: []
+  healthBarStyle: 0
+  mHealthbarColor: {r: 0, g: 1, b: 0, a: 1}
+  healthbar: {fileID: 0}
+  shotHitSound: 14
+  ownerDestroyableObject: {fileID: 0}
+  weight: 1
+  index: 0
 --- !u!4 &479075
 Transform:
   m_ObjectHideFlags: 0
@@ -2665,6 +2949,27 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2b87d014f018a182ff3631ab01ac442e, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMaxHealth:
+    currentCryptoKey: 230887
+    hiddenValue: e7857944
+    fakeValue: 1000
+    inited: 1
+  mDestroyableByBonusBox: 1
+  healthBarPosition: {fileID: 0}
+  forceHealthBar: 0
+  offset: {x: 0, y: 0, z: 0}
+  displayHealthBar: 0
+  playMainHitParticle: 1
+  isMetal: 0
+  shotCoeficient: 1
+  shotParticleNames: []
+  healthBarStyle: 0
+  mHealthbarColor: {r: 0, g: 1, b: 0, a: 1}
+  healthbar: {fileID: 0}
+  shotHitSound: 14
+  ownerDestroyableObject: {fileID: 0}
+  weight: 1
+  index: 0
 --- !u!4 &414717
 Transform:
   m_ObjectHideFlags: 0
@@ -2700,6 +3005,27 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2b87d014f018a182ff3631ab01ac442e, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMaxHealth:
+    currentCryptoKey: 230887
+    hiddenValue: e7857944
+    fakeValue: 1000
+    inited: 1
+  mDestroyableByBonusBox: 1
+  healthBarPosition: {fileID: 0}
+  forceHealthBar: 0
+  offset: {x: 0, y: 0, z: 0}
+  displayHealthBar: 0
+  playMainHitParticle: 1
+  isMetal: 0
+  shotCoeficient: 1
+  shotParticleNames: []
+  healthBarStyle: 0
+  mHealthbarColor: {r: 0, g: 1, b: 0, a: 1}
+  healthbar: {fileID: 0}
+  shotHitSound: 14
+  ownerDestroyableObject: {fileID: 0}
+  weight: 1
+  index: 0
 --- !u!4 &481528
 Transform:
   m_ObjectHideFlags: 0
@@ -2841,6 +3167,42 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7dbdcb960c59480e8d582e12488a6640, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  isActivated: 0
+  bulletPrefab: {fileID: 11431434, guid: 60be7eeb14f5a354c99c9ce23dbc5554, type: 2}
+  cadence:
+    currentCryptoKey: 230887
+    hiddenValue: e7850340
+    fakeValue: 2
+    inited: 1
+  clipSize:
+    currentCryptoKey: 444444
+    hiddenValue: 444424
+    fakeValue: 20
+    inited: 1
+  reloadTime:
+    currentCryptoKey: 230887
+    hiddenValue: e785a340
+    fakeValue: 5
+    inited: 1
+  friendKill: 0
+  infiniteAmmo: 1
+  reloadableWeapon: 0
+  disableSync: 0
+  spawnPoint: {fileID: 428410}
+  startingAmmmoCount:
+    currentCryptoKey: 444444
+    hiddenValue: 444444
+    fakeValue: 0
+    inited: 1
+  useAiming: 1
+  isFake: 0
+  shotType: 0
+  ignoreLayersMask: 0
+  reloadSound: 11
+  shotSound: 73
+  soundVolume: 1
+  weaponType: 0
+  shootOffset: {x: 0, y: 0, z: 0}
 --- !u!114 &11493784
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2852,6 +3214,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f19ea4a15c3ca43dcc180d756f7a82b3, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  ownerId: 0
+  group: 0
+  OwnerShipWasTransfered: 0
+  prefixBackup: -1
+  synchronization: 3
+  onSerializeTransformOption: 3
+  onSerializeRigidBodyOption: 2
+  ownershipTransfer: 0
+  ObservedComponents:
+  - {fileID: 11474264}
+  viewIdField: 0
+  instantiationId: -1
+  currentMasterID: -1
+  didAwake: 0
+  isRuntimeInstantiated: 0
 --- !u!114 &11450066
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2863,6 +3240,68 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f03796e42ada0b04d780e337084293fc, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  damageAmount:
+    currentCryptoKey: 230887
+    hiddenValue: e785a341
+    fakeValue: 20
+    inited: 1
+  hitForce: 20
+  criticalProbability:
+    currentCryptoKey: 230887
+    hiddenValue: e7850300
+    fakeValue: 0
+    inited: 1
+  criticalAmount:
+    currentCryptoKey: 230887
+    hiddenValue: e7850340
+    fakeValue: 2
+    inited: 1
+  damageToPlayerCoeficient:
+    currentCryptoKey: 230887
+    hiddenValue: e785833f
+    fakeValue: 1
+    inited: 1
+  damageToPlayerOvertimeCoeficient:
+    currentCryptoKey: 230887
+    hiddenValue: e785833f
+    fakeValue: 1
+    inited: 1
+  playerBehindShieldRatio: 0.1
+  speed: 8
+  hurtRadius: 1.2
+  deadRadius: 1
+  exposionCoef: {x: 1.5, y: 3, z: 1.5}
+  additionalUpForce: 5
+  stopTime: 0
+  explodeDamageAmount:
+    currentCryptoKey: 230887
+    hiddenValue: e785ac43
+    fakeValue: 350
+    inited: 1
+  missileType: 2
+  curvedTrajectory: 0
+  minMaxRotations: {x: 0.8, y: 1.6}
+  rotationProfile:
+    serializedVersion: 2
+    m_Curve:
+    - time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 1
+      tangentMode: 0
+    - time: 0.5
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+    - time: 1
+      value: 0
+      inSlope: -1
+      outSlope: 0
+      tangentMode: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+  baseRotationMagnitude: 0.45
 --- !u!114 &11492654
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2874,6 +3313,29 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 71b516e3f1c29506c1c10fb8054e06b4, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  aimTime: 20
+  batchSizeMax: 5
+  batchSizeMin: 1
+  aimOffset: {x: 0, y: 0, z: 0}
+  playerShieldProbability: 1
+  batchedWeapon: {fileID: 11446016}
+  jointVertical: {fileID: 0}
+  jontHorizontal: {fileID: 436455}
+  maxShootTime: 5
+  maxShotRotation: 360
+  minShootTime: 1
+  primTarget: 2
+  turretParent: {fileID: 410883}
+  useUnitTarget: 0
+  primaryTargetOnly: 0
+  needToSeePrimaryTarget: 0
+  needToSeeSecondaryTarget: 0
+  seeEnemyTransform: {fileID: 0}
+  predictPosition: 0
+  primaryTarget: 0
+  secondaryTargets:
+  realShotProbability: 1
+  keepAimed: 1
 --- !u!114 &11446016
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2885,6 +3347,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a7637fba3d3838c87126404c48361b7e, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  weapon: {fileID: 11474264}
+  fakeShotDispersion: 1
 --- !u!82 &8298423
 AudioSource:
   serializedVersion: 4
@@ -3012,6 +3476,27 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2b87d014f018a182ff3631ab01ac442e, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMaxHealth:
+    currentCryptoKey: 230887
+    hiddenValue: e7857944
+    fakeValue: 0
+    inited: 1
+  mDestroyableByBonusBox: 1
+  healthBarPosition: {fileID: 0}
+  forceHealthBar: 0
+  offset: {x: 0, y: 0, z: 0}
+  displayHealthBar: 0
+  playMainHitParticle: 1
+  isMetal: 0
+  shotCoeficient: 1
+  shotParticleNames: []
+  healthBarStyle: 0
+  mHealthbarColor: {r: 0, g: 1, b: 0, a: 1}
+  healthbar: {fileID: 0}
+  shotHitSound: 14
+  ownerDestroyableObject: {fileID: 0}
+  weight: 1
+  index: 0
 --- !u!4 &448018
 Transform:
   m_ObjectHideFlags: 0
@@ -3047,6 +3532,27 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2b87d014f018a182ff3631ab01ac442e, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMaxHealth:
+    currentCryptoKey: 230887
+    hiddenValue: e7857944
+    fakeValue: 0
+    inited: 1
+  mDestroyableByBonusBox: 1
+  healthBarPosition: {fileID: 0}
+  forceHealthBar: 0
+  offset: {x: 0, y: 0, z: 0}
+  displayHealthBar: 0
+  playMainHitParticle: 1
+  isMetal: 0
+  shotCoeficient: 1
+  shotParticleNames: []
+  healthBarStyle: 0
+  mHealthbarColor: {r: 0, g: 1, b: 0, a: 1}
+  healthbar: {fileID: 0}
+  shotHitSound: 14
+  ownerDestroyableObject: {fileID: 0}
+  weight: 1
+  index: 0
 --- !u!4 &444191
 Transform:
   m_ObjectHideFlags: 0
@@ -3082,6 +3588,27 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2b87d014f018a182ff3631ab01ac442e, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMaxHealth:
+    currentCryptoKey: 230887
+    hiddenValue: e7857944
+    fakeValue: 0
+    inited: 1
+  mDestroyableByBonusBox: 1
+  healthBarPosition: {fileID: 0}
+  forceHealthBar: 0
+  offset: {x: 0, y: 0, z: 0}
+  displayHealthBar: 0
+  playMainHitParticle: 1
+  isMetal: 0
+  shotCoeficient: 1
+  shotParticleNames: []
+  healthBarStyle: 0
+  mHealthbarColor: {r: 0, g: 1, b: 0, a: 1}
+  healthbar: {fileID: 0}
+  shotHitSound: 14
+  ownerDestroyableObject: {fileID: 0}
+  weight: 1
+  index: 0
 --- !u!4 &494303
 Transform:
   m_ObjectHideFlags: 0
@@ -3117,6 +3644,27 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2b87d014f018a182ff3631ab01ac442e, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMaxHealth:
+    currentCryptoKey: 230887
+    hiddenValue: e7857944
+    fakeValue: 0
+    inited: 1
+  mDestroyableByBonusBox: 1
+  healthBarPosition: {fileID: 0}
+  forceHealthBar: 0
+  offset: {x: 0, y: 0, z: 0}
+  displayHealthBar: 0
+  playMainHitParticle: 1
+  isMetal: 0
+  shotCoeficient: 1
+  shotParticleNames: []
+  healthBarStyle: 0
+  mHealthbarColor: {r: 0, g: 1, b: 0, a: 1}
+  healthbar: {fileID: 0}
+  shotHitSound: 14
+  ownerDestroyableObject: {fileID: 0}
+  weight: 1
+  index: 0
 --- !u!4 &408667
 Transform:
   m_ObjectHideFlags: 0
@@ -3140,6 +3688,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 588f2f712fbccb3dc98b538e56612279, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  enemyAtPoint: {fileID: 0}
+  switchState: 0
+  indexInEnemyPointArray: 0
+  mFraction: 1
 --- !u!4 &481733
 Transform:
   m_ObjectHideFlags: 0
@@ -3164,6 +3716,29 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 71b516e3f1c29506c1c10fb8054e06b4, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  aimTime: 4
+  batchSizeMax: 5
+  batchSizeMin: 1
+  aimOffset: {x: 0, y: 0, z: 0}
+  playerShieldProbability: 0.5
+  batchedWeapon: {fileID: 11491429}
+  jointVertical: {fileID: 0}
+  jontHorizontal: {fileID: 420819}
+  maxShootTime: 5
+  maxShotRotation: 60
+  minShootTime: 1
+  primTarget: 2
+  turretParent: {fileID: 436455}
+  useUnitTarget: 0
+  primaryTargetOnly: 0
+  needToSeePrimaryTarget: 0
+  needToSeeSecondaryTarget: 0
+  seeEnemyTransform: {fileID: 0}
+  predictPosition: 1
+  primaryTarget: 3
+  secondaryTargets:
+  realShotProbability: 1
+  keepAimed: 1
 --- !u!114 &11491429
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3175,6 +3750,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a7637fba3d3838c87126404c48361b7e, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  weapon: {fileID: 11473880}
+  fakeShotDispersion: 1
 --- !u!114 &11473880
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3186,6 +3763,45 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0f903c73702fdea77bdc0ea60b3f9740, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  isActivated: 0
+  bulletPrefab: {fileID: 11409266, guid: 855689762fa6e774aaee190652b08c6f, type: 2}
+  cadence:
+    currentCryptoKey: 230887
+    hiddenValue: 2a49cf3d
+    fakeValue: 0.1
+    inited: 1
+  clipSize:
+    currentCryptoKey: 444444
+    hiddenValue: 444424
+    fakeValue: 20
+    inited: 1
+  reloadTime:
+    currentCryptoKey: 230887
+    hiddenValue: e785a340
+    fakeValue: 5
+    inited: 1
+  friendKill: 0
+  infiniteAmmo: 1
+  reloadableWeapon: 0
+  disableSync: 0
+  spawnPoint: {fileID: 477120}
+  startingAmmmoCount:
+    currentCryptoKey: 444444
+    hiddenValue: 444444
+    fakeValue: 0
+    inited: 1
+  useAiming: 1
+  isFake: 0
+  shotType: 0
+  ignoreLayersMask: 0
+  reloadSound: 11
+  shotSound: 2
+  soundVolume: 1
+  weaponType: 0
+  muzzleFlash: {fileID: 11446592}
+  shotOffset: {x: 0, y: 0.1, z: 0}
+  ammoParticles: {fileID: 0}
+  fastBullet: 0
 --- !u!114 &11428164
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3197,6 +3813,48 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4ceecd6f3ff0e22dc65ce39c3a1fce86, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  damageAmount:
+    currentCryptoKey: 230887
+    hiddenValue: e785a341
+    fakeValue: 20
+    inited: 1
+  hitForce: 4
+  criticalProbability:
+    currentCryptoKey: 230887
+    hiddenValue: e7850300
+    fakeValue: 0
+    inited: 1
+  criticalAmount:
+    currentCryptoKey: 230887
+    hiddenValue: e7850340
+    fakeValue: 2
+    inited: 1
+  damageToPlayerCoeficient:
+    currentCryptoKey: 230887
+    hiddenValue: e785833f
+    fakeValue: 1
+    inited: 1
+  damageToPlayerOvertimeCoeficient:
+    currentCryptoKey: 230887
+    hiddenValue: e785833f
+    fakeValue: 1
+    inited: 1
+  speed: 16
+  checkDistance: 0.5
+  trailSize: 0.6
+  trailWidth: 0.06
+  trailFakeWidth: 0.04
+  thinTrailSize: 0.2
+  thinTrailWidth: 0.03
+  thinTrailFakeWidth: 0.03
+  fakeSpeedFactor: 1.5
+  fakeShotTexture: shotFake
+  realShotTexture: shotReal
+  shieldShotTexture: shotShield
+  speedMultiplayer: 1
+  poisonTime: 0
+  poisonRatio: 0
+  useThinTrail: 0
 --- !u!114 &11480656
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3208,6 +3866,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f19ea4a15c3ca43dcc180d756f7a82b3, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  ownerId: 0
+  group: 0
+  OwnerShipWasTransfered: 0
+  prefixBackup: -1
+  synchronization: 3
+  onSerializeTransformOption: 3
+  onSerializeRigidBodyOption: 2
+  ownershipTransfer: 0
+  ObservedComponents:
+  - {fileID: 11473880}
+  viewIdField: 0
+  instantiationId: -1
+  currentMasterID: -1
+  didAwake: 0
+  isRuntimeInstantiated: 0
 --- !u!82 &8297538
 AudioSource:
   serializedVersion: 4
@@ -3327,6 +4000,27 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2b87d014f018a182ff3631ab01ac442e, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMaxHealth:
+    currentCryptoKey: 230887
+    hiddenValue: e7857944
+    fakeValue: 1000
+    inited: 1
+  mDestroyableByBonusBox: 1
+  healthBarPosition: {fileID: 0}
+  forceHealthBar: 0
+  offset: {x: 0, y: 0, z: 0}
+  displayHealthBar: 0
+  playMainHitParticle: 1
+  isMetal: 0
+  shotCoeficient: 1
+  shotParticleNames: []
+  healthBarStyle: 0
+  mHealthbarColor: {r: 0, g: 1, b: 0, a: 1}
+  healthbar: {fileID: 0}
+  shotHitSound: 14
+  ownerDestroyableObject: {fileID: 0}
+  weight: 1
+  index: 0
 --- !u!4 &483503
 Transform:
   m_ObjectHideFlags: 0
@@ -3397,6 +4091,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4090235689019e8dade2fb65364f77e3, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  m_ForceShow: 0
 --- !u!4 &414133
 Transform:
   m_ObjectHideFlags: 0
@@ -3589,6 +4284,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4090235689019e8dade2fb65364f77e3, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  m_ForceShow: 0
 --- !u!4 &431692
 Transform:
   m_ObjectHideFlags: 0
@@ -5559,6 +6255,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 588f2f712fbccb3dc98b538e56612279, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  enemyAtPoint: {fileID: 0}
+  switchState: 0
+  indexInEnemyPointArray: 0
+  mFraction: 1
 --- !u!4 &495478
 Transform:
   m_ObjectHideFlags: 0
@@ -8183,6 +8883,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0ff5f7341956507b1f19adfb98938625, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  startSound: 68
+  loopSound: 69
+  deathSound: 70
+  audioSource: {fileID: 8242142}
 --- !u!82 &8242142
 AudioSource:
   serializedVersion: 4

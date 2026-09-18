@@ -1,66 +1,265 @@
-using UnityEngine;
+using System.Collections;
 
 namespace EeekSoft.Text
 {
-	public class StringSearch : MonoBehaviour
+public class StringSearch : IStringSearchAlgorithm
+{
+	private class TreeNode
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
+		private char _char;
 
-		1. No dll files were provided to AssetRipper.
+		private TreeNode _parent;
 
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
+		private ArrayList _results;
 
-		2. Incorrect dll files were provided to AssetRipper.
+		private string[] _resultsAr;
 
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
+		private Hashtable _transHash;
 
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+		private TreeNode[] _transitionsAr;
 
-		3. Assembly Reconstruction has not been implemented.
+		public char Char => _char;
 
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
+		public TreeNode Parent => _parent;
 
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
+		public TreeNode Failure { get; set; }
 
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
+		public TreeNode[] Transitions => _transitionsAr;
 
-		5. Script Content Level 0
+		public string[] Results => _resultsAr;
 
-			AssetRipper was set to not load any script information.
+		public TreeNode(TreeNode parent, char c)
+		{
+			_char = c;
+			_parent = parent;
+			_results = new ArrayList();
+			_resultsAr = new string[0];
+			_transitionsAr = new TreeNode[0];
+			_transHash = new Hashtable();
+		}
 
-		6. Cpp2IL failed to decompile Il2Cpp data
+		public void AddResult(string result)
+		{
+			if (!_results.Contains(result))
+			{
+				_results.Add(result);
+				_resultsAr = (string[])_results.ToArray(typeof(string));
+			}
+		}
 
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+		public void AddTransition(TreeNode node)
+		{
+			_transHash.Add(node.Char, node);
+			TreeNode[] array = new TreeNode[_transHash.Values.Count];
+			_transHash.Values.CopyTo(array, 0);
+			_transitionsAr = array;
+		}
 
-		7. An incorrect path was provided to AssetRipper.
+		public TreeNode GetTransition(char c)
+		{
+			return (TreeNode)_transHash[c];
+		}
 
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
+		public bool ContainsTransition(char c)
+		{
+			return GetTransition(c) != null;
+		}
 	}
+
+	private string[] _keywords;
+
+	private TreeNode _root;
+
+	public string[] Keywords
+	{
+		get
+		{
+			return _keywords;
+		}
+		set
+		{
+			_keywords = value;
+			BuildTree();
+		}
+	}
+
+	public StringSearch(string[] keywords)
+	{
+		Keywords = keywords;
+	}
+
+	public StringSearch()
+	{
+	}
+
+	private void BuildTree()
+	{
+		_root = new TreeNode(null, ' ');
+		string[] keywords = _keywords;
+		foreach (string text in keywords)
+		{
+			TreeNode treeNode = _root;
+			string text2 = text;
+			foreach (char c in text2)
+			{
+				TreeNode treeNode2 = null;
+				TreeNode[] transitions = treeNode.Transitions;
+				foreach (TreeNode treeNode3 in transitions)
+				{
+					if (treeNode3.Char == c)
+					{
+						treeNode2 = treeNode3;
+						break;
+					}
+				}
+				if (treeNode2 == null)
+				{
+					treeNode2 = new TreeNode(treeNode, c);
+					treeNode.AddTransition(treeNode2);
+				}
+				treeNode = treeNode2;
+			}
+			treeNode.AddResult(text);
+		}
+		ArrayList arrayList = new ArrayList();
+		TreeNode[] transitions2 = _root.Transitions;
+		foreach (TreeNode treeNode4 in transitions2)
+		{
+			treeNode4.Failure = _root;
+			TreeNode[] transitions3 = treeNode4.Transitions;
+			foreach (TreeNode value in transitions3)
+			{
+				arrayList.Add(value);
+			}
+		}
+		while (arrayList.Count != 0)
+		{
+			ArrayList arrayList2 = new ArrayList();
+			foreach (TreeNode item in arrayList)
+			{
+				TreeNode failure = item.Parent.Failure;
+				char c2 = item.Char;
+				while (failure != null && !failure.ContainsTransition(c2))
+				{
+					failure = failure.Failure;
+				}
+				if (failure == null)
+				{
+					item.Failure = _root;
+				}
+				else
+				{
+					item.Failure = failure.GetTransition(c2);
+					string[] results = item.Failure.Results;
+					foreach (string result in results)
+					{
+						item.AddResult(result);
+					}
+				}
+				TreeNode[] transitions4 = item.Transitions;
+				foreach (TreeNode value2 in transitions4)
+				{
+					arrayList2.Add(value2);
+				}
+			}
+			arrayList = arrayList2;
+		}
+		_root.Failure = _root;
+	}
+
+	public StringSearchResult[] FindAll(string text)
+	{
+		ArrayList arrayList = new ArrayList();
+		TreeNode treeNode = _root;
+		for (int i = 0; i < text.Length; i++)
+		{
+			TreeNode treeNode2 = null;
+			while (treeNode2 == null)
+			{
+				treeNode2 = treeNode.GetTransition(text[i]);
+				if (treeNode == _root)
+				{
+					break;
+				}
+				if (treeNode2 == null)
+				{
+					treeNode = treeNode.Failure;
+				}
+			}
+			if (treeNode2 != null)
+			{
+				treeNode = treeNode2;
+			}
+			string[] results = treeNode.Results;
+			foreach (string text2 in results)
+			{
+				arrayList.Add(new StringSearchResult(i - text2.Length + 1, text2));
+			}
+		}
+		return (StringSearchResult[])arrayList.ToArray(typeof(StringSearchResult));
+	}
+
+	public StringSearchResult FindFirst(string text)
+	{
+		TreeNode treeNode = _root;
+		for (int i = 0; i < text.Length; i++)
+		{
+			TreeNode treeNode2 = null;
+			while (treeNode2 == null)
+			{
+				treeNode2 = treeNode.GetTransition(text[i]);
+				if (treeNode == _root)
+				{
+					break;
+				}
+				if (treeNode2 == null)
+				{
+					treeNode = treeNode.Failure;
+				}
+			}
+			if (treeNode2 != null)
+			{
+				treeNode = treeNode2;
+			}
+			string[] results = treeNode.Results;
+			int num = 0;
+			if (num < results.Length)
+			{
+				string text2 = results[num];
+				return new StringSearchResult(i - text2.Length + 1, text2);
+			}
+		}
+		return StringSearchResult.Empty;
+	}
+
+	public bool ContainsAny(string text)
+	{
+		TreeNode treeNode = _root;
+		for (int i = 0; i < text.Length; i++)
+		{
+			TreeNode treeNode2 = null;
+			while (treeNode2 == null)
+			{
+				treeNode2 = treeNode.GetTransition(text[i]);
+				if (treeNode == _root)
+				{
+					break;
+				}
+				if (treeNode2 == null)
+				{
+					treeNode = treeNode.Failure;
+				}
+			}
+			if (treeNode2 != null)
+			{
+				treeNode = treeNode2;
+			}
+			if (treeNode.Results.Length > 0)
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+}
 }

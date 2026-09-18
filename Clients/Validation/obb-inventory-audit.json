@@ -1,0 +1,21 @@
+{
+  "inventory": {
+    "AnimationClip": 152,
+    "Avatar": 12,
+    "Font": 1,
+    "GameObject": 351,
+    "Material": 417,
+    "Mesh": 724,
+    "MonoBehaviour": 12,
+    "NavMeshData": 11,
+    "PhysicMaterial": 1,
+    "RenderTexture": 5,
+    "Resources": 1513,
+    "Scenes": 44,
+    "Shader": 60,
+    "TextAsset": 1,
+    "Texture2D": 337
+  },
+  "missing": [],
+  "binaryDifferences": []
+}

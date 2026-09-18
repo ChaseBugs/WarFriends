@@ -91,6 +91,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5e59aac156d8b7c09624901e4cd5735f, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  pivot: {fileID: 484216}
+  highPolyPrefabName: SMG_MP5
 --- !u!64 &6419550
 MeshCollider:
   serializedVersion: 2

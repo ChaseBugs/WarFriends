@@ -1,63 +1,109 @@
+using Google2u;
 using UnityEngine;
 
-public class VIPButton : MonoBehaviour
+public class VIPButton : Core_BaseScript
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Header("Core")]
+	public bool oneLinePercent = true;
 
-	1. No dll files were provided to AssetRipper.
+	public GameObject savePart;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public UILabel savePercent;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public UILabel timeDuration;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public UITable goldTable;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public GameObject goldTableLastItem;
 
-	3. Assembly Reconstruction has not been implemented.
+	public UILabel goldPrize;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	[Header("-Sale")]
+	public GameObject salePart;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public UILabel salePercentLabel;
 
-	4. This script is unnecessary.
+	public WinStreakCounter saleTimeCounter;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	[Header("-Overlay")]
+	public GameObject purchaseProtectionOverlay;
 
-	5. Script Content Level 0
+	public GameObject purchaseWaiting;
 
-		AssetRipper was set to not load any script information.
+	public GameObject bottomPartOverlay;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	private VIP.rowIds mRowId;
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public void FirstInitialize(VIP.rowIds rowId)
+	{
+		mRowId = rowId;
+		int num = SavePercentVip(rowId);
+		savePercent.text = Localization.LocalizeFormat((!oneLinePercent) ? "ID_SAVEPERCENT" : "ID_SAVEPERCENTLINE", num);
+		if (oneLinePercent)
+		{
+			MiscTools.SetUILabelRescale(savePercent, 37f, 20f, 230);
+		}
+		else
+		{
+			MiscTools.SetUILabelRescale(savePercent, 30f, 20f, 160);
+		}
+		savePart.SetActive(num > 0);
+		timeDuration.text = MiscTools.PrintableTimeVipConvert(Singleton<GameVariables>.instance.vip.GetRow(rowId).SECONDS);
+		goldTable.onReposition = delegate
+		{
+			float val = 0f - goldTable.padding.x - (goldTableLastItem.transform.localPosition.x - goldTable.padding.x) / 2f;
+			goldTable.transform.localPosition = goldTable.transform.localPosition.ReplaceX(val);
+		};
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	public void InitializeGUI()
+	{
+		int num = Singleton<OfferManager>.instance.DiscountedVIP();
+		bool flag = num > 0;
+		int num2 = Singleton<GameVariables>.instance.vip.GetRow(mRowId).GOLD;
+		salePart.SetActive(flag);
+		if (flag)
+		{
+			num2 = num2 * (100 - num) / 100;
+			salePercentLabel.text = Localization.LocalizeFormat("ID_SALEPERCENTLINE", num);
+			saleTimeCounter.StartCountingTo(Singleton<OfferManager>.instance.DiscountedVIPEndtime(), upperCaseCountdown: true);
+			saleTimeCounter.winStreakTimer = delegate
+			{
+				salePart.SetActive(value: false);
+				goldPrize.text = MiscTools.FormatBigNumber(Singleton<GameVariables>.instance.vip.GetRow(mRowId).GOLD);
+				goldTable.repositionNow = true;
+			};
+		}
+		else
+		{
+			saleTimeCounter.StopCountingTo();
+			saleTimeCounter.winStreakTimer = null;
+		}
+		goldPrize.text = MiscTools.FormatBigNumber(num2);
+		goldTable.repositionNow = true;
+		InitializePurchaseProtection();
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	public void InitializePurchaseProtection()
+	{
+		purchaseProtectionOverlay.SetActive(Singleton<PurchaseProtection>.instance.IsAnyVIPPurchasing());
+		purchaseWaiting.SetActive(Singleton<PurchaseProtection>.instance.IsVIPPurchasing(mRowId.ToString()));
+		bottomPartOverlay.SetActive(salePart.activeSelf);
+	}
 
-	*/
+	public void StopCounter()
+	{
+		saleTimeCounter.StopCountingTo();
+		saleTimeCounter.winStreakTimer = null;
+	}
+
+	private int SavePercentVip(VIP.rowIds rowId)
+	{
+		int sECONDS = Singleton<GameVariables>.instance.vip.GetRow(VIP.rowIds.VIP_1).SECONDS;
+		int gOLD = Singleton<GameVariables>.instance.vip.GetRow(VIP.rowIds.VIP_1).GOLD;
+		int sECONDS2 = Singleton<GameVariables>.instance.vip.GetRow(rowId).SECONDS;
+		int gOLD2 = Singleton<GameVariables>.instance.vip.GetRow(rowId).GOLD;
+		float num = (float)gOLD * (float)sECONDS2 / (float)sECONDS;
+		return Mathf.FloorToInt(100f * (1f - (float)gOLD2 / num));
+	}
 }

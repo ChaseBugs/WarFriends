@@ -39,6 +39,125 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ea9f040b2b6bd4bf069e31e0ace12f73, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  material: {fileID: 2100000, guid: b1739c8a3521f7e4090c2f16965feb09, type: 2}
+  sprites:
+  - name: menu-main-image
+    outer:
+      serializedVersion: 2
+      x: 0
+      y: 968
+      width: 1920
+      height: 1080
+    inner:
+      serializedVersion: 2
+      x: 0
+      y: 968
+      width: 1920
+      height: 1080
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-map-2
+    outer:
+      serializedVersion: 2
+      x: 0
+      y: 100
+      width: 366
+      height: 428
+    inner:
+      serializedVersion: 2
+      x: 0
+      y: 100
+      width: 366
+      height: 428
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-map-1
+    outer:
+      serializedVersion: 2
+      x: 372
+      y: 100
+      width: 366
+      height: 428
+    inner:
+      serializedVersion: 2
+      x: 372
+      y: 100
+      width: 366
+      height: 428
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-map-3
+    outer:
+      serializedVersion: 2
+      x: 0
+      y: 534
+      width: 366
+      height: 428
+    inner:
+      serializedVersion: 2
+      x: 0
+      y: 534
+      width: 366
+      height: 428
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-map-4
+    outer:
+      serializedVersion: 2
+      x: 372
+      y: 534
+      width: 366
+      height: 428
+    inner:
+      serializedVersion: 2
+      x: 372
+      y: 534
+      width: 366
+      height: 428
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-map-5
+    outer:
+      serializedVersion: 2
+      x: 744
+      y: 534
+      width: 366
+      height: 428
+    inner:
+      serializedVersion: 2
+      x: 744
+      y: 534
+      width: 366
+      height: 428
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  mCoordinates: 0
+  mPixelSize: 1
+  mReplacement: {fileID: 0}
+  pngPath: GuiAtlasMission
+  pngHalfPath: Assets/StreamingAssets/GuiAtlasMissionHalf.png
+  replaceTexture: {fileID: 2800000, guid: fe7dd5bb5f474d44ca710f2b67935620, type: 3}
+  useBinaryData: 0
+  textureWidth: 2048
+  textureHeight: 2048
 --- !u!1001 &100100000
 Prefab:
   serializedVersion: 2

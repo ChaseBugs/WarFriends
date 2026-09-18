@@ -1,63 +1,101 @@
 using UnityEngine;
 
+[AddComponentMenu("NGUI/Interaction/Center On Child")]
 public class UICenterOnChild : MonoBehaviour
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public float springStrength = 8f;
 
-	1. No dll files were provided to AssetRipper.
+	public SpringPanel.OnFinished onFinished;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	private UIDraggablePanel mDrag;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	private GameObject mCenteredObject;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public GameObject centeredObject => mCenteredObject;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	private void OnEnable()
+	{
+		Recenter();
+	}
 
-	3. Assembly Reconstruction has not been implemented.
+	private void OnDragFinished()
+	{
+		if (base.enabled)
+		{
+			Recenter();
+		}
+	}
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
-
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
-
-	4. This script is unnecessary.
-
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
-
-	5. Script Content Level 0
-
-		AssetRipper was set to not load any script information.
-
-	6. Cpp2IL failed to decompile Il2Cpp data
-
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public void Recenter()
+	{
+		if (mDrag == null)
+		{
+			mDrag = NGUITools.FindInParents<UIDraggablePanel>(base.gameObject);
+			if (mDrag == null)
+			{
+				Debug.LogWarning(string.Concat(GetType(), " requires ", typeof(UIDraggablePanel), " on a parent object in order to work"), this);
+				base.enabled = false;
+				return;
+			}
+			mDrag.onDragFinished = OnDragFinished;
+			if (mDrag.horizontalScrollBar != null)
+			{
+				mDrag.horizontalScrollBar.onDragFinished = OnDragFinished;
+			}
+			if (mDrag.verticalScrollBar != null)
+			{
+				mDrag.verticalScrollBar.onDragFinished = OnDragFinished;
+			}
+		}
+		if (mDrag.panel == null)
+		{
+			return;
+		}
+		Vector4 clipRange = mDrag.panel.clipRange;
+		Transform cachedTransform = mDrag.panel.cachedTransform;
+		Vector3 localPosition = cachedTransform.localPosition;
+		localPosition.x += clipRange.x;
+		localPosition.y += clipRange.y;
+		localPosition = cachedTransform.parent.TransformPoint(localPosition);
+		Vector3 vector = localPosition - mDrag.currentMomentum * (mDrag.momentumAmount * 0.1f);
+		mDrag.currentMomentum = Vector3.zero;
+		float num = float.MaxValue;
+		Transform transform = null;
+		Transform transform2 = base.transform;
+		int i = 0;
+		for (int childCount = transform2.childCount; i < childCount; i++)
+		{
+			Transform child = transform2.GetChild(i);
+			float num2 = Vector3.SqrMagnitude(child.position - vector);
+			if (num2 < num)
+			{
+				num = num2;
+				transform = child;
+			}
+		}
+		if (transform != null)
+		{
+			mCenteredObject = transform.gameObject;
+			Vector3 vector2 = cachedTransform.InverseTransformPoint(transform.position);
+			Vector3 vector3 = cachedTransform.InverseTransformPoint(localPosition);
+			Vector3 vector4 = vector2 - vector3;
+			if (mDrag.scale.x == 0f)
+			{
+				vector4.x = 0f;
+			}
+			if (mDrag.scale.y == 0f)
+			{
+				vector4.y = 0f;
+			}
+			if (mDrag.scale.z == 0f)
+			{
+				vector4.z = 0f;
+			}
+			SpringPanel.Begin(mDrag.gameObject, cachedTransform.localPosition - vector4, springStrength).onFinished = onFinished;
+		}
+		else
+		{
+			mCenteredObject = null;
+		}
+	}
 }

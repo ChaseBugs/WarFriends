@@ -1,63 +1,138 @@
+using System;
+using System.Collections.Generic;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using UnityEngine;
 
-public class InGameMessage : MonoBehaviour
+public class InGameMessage : DatabaseMessage
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public string translatedTitle;
 
-	1. No dll files were provided to AssetRipper.
+	public string translatedSubtitle;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public string translatedText;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public float textSize;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public DailyRewardMonthScreen.DailyRewardDataForDay[] rewards;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public int deadline;
 
-	3. Assembly Reconstruction has not been implemented.
+	public int creationTime;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public bool isNew;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public bool shouldShowAsDialog;
 
-	4. This script is unnecessary.
+	public DateTime timeCreated => MiscTools.GetDateTime(creationTime).ToLocalTime();
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public InGameMessage(string title, string subtitle, string text, float size, DailyRewardMonthScreen.DailyRewardDataForDay[] rew)
+		: base($"InGameMessage-{subtitle}", Type.InGameMessage)
+	{
+		translatedTitle = title;
+		translatedSubtitle = subtitle;
+		translatedText = text;
+		textSize = size;
+		rewards = rew;
+		deadline = Singleton<BeanstalkServerManager>.instance.currentTimestamp + 604800;
+		creationTime = Singleton<BeanstalkServerManager>.instance.currentTimestamp;
+		isNew = true;
+		shouldShowAsDialog = true;
+	}
 
-	5. Script Content Level 0
+	public InGameMessage(JToken dict)
+		: base(dict)
+	{
+		if (dict["Title"] != null)
+		{
+			translatedTitle = StringParser.ParseString("Title", "S", dict, string.Empty);
+		}
+		if (dict["FontSize"] != null)
+		{
+			textSize = StringParser.ParseFloatToken(dict["FontSize"]["N"], 0f);
+		}
+		if (dict["Subtitle"] != null)
+		{
+			translatedSubtitle = StringParser.ParseString("Subtitle", "S", dict, string.Empty);
+		}
+		if (dict["Text"] != null)
+		{
+			translatedText = StringParser.ParseString("Text", "S", dict, string.Empty);
+		}
+		List<DailyRewardMonthScreen.DailyRewardDataForDay> list = new List<DailyRewardMonthScreen.DailyRewardDataForDay>();
+		if (dict["Rewards"] != null)
+		{
+			List<JToken> list2 = JsonConvert.DeserializeObject<List<JToken>>(StringParser.ParseString("Rewards", "S", dict, string.Empty));
+			foreach (JToken item in list2)
+			{
+				list.Add(new DailyRewardMonthScreen.DailyRewardDataForDay(item));
+			}
+		}
+		rewards = list.ToArray();
+		if (dict["Deadline"] != null)
+		{
+			deadline = StringParser.ParseIntToken(dict["Deadline"]["N"]);
+		}
+		if (dict["CreationTime"] != null)
+		{
+			creationTime = StringParser.ParseIntToken(dict["CreationTime"]["N"]);
+		}
+		isNew = dict["ShowNew"] != null;
+		shouldShowAsDialog = true;
+	}
 
-		AssetRipper was set to not load any script information.
+	public override void Show()
+	{
+		base.Show();
+		if (CanBeShown())
+		{
+			if (shouldShowAsDialog && isNew)
+			{
+				GuiElementSingle<InGameMessageDialog>.instance.ShowDialog(this);
+			}
+			else if (isNew)
+			{
+				GuiElementSingle<ChatGuiElement>.instance.messageContent.AddMessage(this);
+			}
+			else
+			{
+				GuiElementSingle<ChatGuiElement>.instance.messageContent.AddMessageWithoutNotification(this);
+			}
+			isNew = false;
+		}
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	private bool CanBeShown()
+	{
+		if (rewards.Length > 0 && Singleton<BeanstalkServerManager>.instance.currentTimestamp > deadline)
+		{
+			Confirm();
+			return false;
+		}
+		if (rewards.Length == 0 && creationTime + 2592000 < Singleton<BeanstalkServerManager>.instance.currentTimestamp)
+		{
+			Confirm();
+			return false;
+		}
+		return true;
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public override void Confirm()
+	{
+		Debug.Log(string.Format("InGameMessage: {0} Rewards - Claiming", (rewards.Length <= 0) ? "No" : "With"));
+		Singleton<BeanstalkServerManager>.instance.ClaimReward(this);
+	}
 
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	internal override Action InitMessageCenterRecord(MessageCenterRecord record)
+	{
+		record.SetAppearance_InGameMessage(messageType, messageTime, isNew, translatedTitle, timeCreated);
+		return delegate
+		{
+			if (CanBeShown())
+			{
+				GuiElementSingle<InGameMessageDialog>.instance.ShowDialog(this);
+				GuiElementSingle<ChatGuiElement>.instance.HideRightContent();
+			}
+		};
+	}
 }

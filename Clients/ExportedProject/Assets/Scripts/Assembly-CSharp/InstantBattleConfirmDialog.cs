@@ -1,63 +1,100 @@
+using System;
+using System.Collections.Generic;
+using Google2u;
 using UnityEngine;
 
-public class InstantBattleConfirmDialog : MonoBehaviour
+public class InstantBattleConfirmDialog : GuiElementSingle<InstantBattleConfirmDialog>, IGuiDialog
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[SerializeField]
+	[Header("Top")]
+	private BoxCollider mCloseButton;
 
-	1. No dll files were provided to AssetRipper.
+	[Header("Middle")]
+	[SerializeField]
+	private UILabel mDescription;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	[SerializeField]
+	[Header("Bottom")]
+	private BoxCollider mBottomButton;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	[SerializeField]
+	private UILabel mButtonText;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	[SerializeField]
+	private UITable mPriceTable;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	[SerializeField]
+	private UILabel mButtonPrice;
 
-	3. Assembly Reconstruction has not been implemented.
+	private int mGoldCost;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public override void InitControls()
+	{
+		UIEventListener uIEventListener = UIEventListener.Get(mBottomButton.gameObject);
+		uIEventListener.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener.onClick, new UIEventListener.VoidDelegate(NextBattleButtonClick));
+		UIEventListener uIEventListener2 = UIEventListener.Get(overlayBackground.gameObject);
+		uIEventListener2.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener2.onClick, new UIEventListener.VoidDelegate(CloseClick));
+		UIEventListener uIEventListener3 = UIEventListener.Get(mCloseButton.gameObject);
+		uIEventListener3.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener3.onClick, new UIEventListener.VoidDelegate(CloseClick));
+		mPriceTable.onReposition = delegate
+		{
+			float val = 0f - mPriceTable.padding.x - (mButtonPrice.transform.parent.localPosition.x - mPriceTable.padding.x) / 2f;
+			mPriceTable.transform.localPosition = mPriceTable.transform.localPosition.ReplaceX(val);
+		};
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	private void NextBattleButtonClick(GameObject go)
+	{
+		if (Singleton<Wallet>.instance.CanBuyGold(mGoldCost))
+		{
+			Singleton<Wallet>.instance.GoldSpent(mGoldCost);
+			List<Tuple<string, string>> list = new List<Tuple<string, string>>();
+			list.Add(new Tuple<string, string>("IsPaid", mGoldCost.ToString()));
+			Singleton<BeanstalkServerManager>.instance.SendServerRequest(DatabaseAction.InstantBattle, list);
+			int instantBattles = (int)(float)Singleton<GameVariables>.instance.constants.GetRow(Constants.rowIds.InstantBattleMax).FLOATVALUE;
+			GuiScreenSingle<InstantBattleResultsScreen>.instance.instantBattles = instantBattles;
+			if (GuiElementSingle<InstantBattleResultsDialog>.instance.isShowed)
+			{
+				GuiElementSingle<InstantBattleResultsDialog>.instance.PlayAgain();
+			}
+			else
+			{
+				Singleton<GuiManager>.instance.ShowGui(GuiScreenSingle<InstantBattleResultsScreen>.instance);
+			}
+			HideDialog();
+		}
+		else
+		{
+			GuiElementSingle<NotEnoughDialog>.instance.ShowGold(mGoldCost, Localization.Localize("ID_INSTANTBATTLE"));
+		}
+	}
 
-	4. This script is unnecessary.
+	private void CloseClick(GameObject go)
+	{
+		if (base.isFullyShowed)
+		{
+			HideDialog();
+		}
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public override void InitGUIValues()
+	{
+		mGoldCost = PlayerAnalytics.instance.data.GetInstantBattleCost();
+		int num = (int)(float)Singleton<GameVariables>.instance.constants.GetRow(Constants.rowIds.InstantBattleMax).FLOATVALUE;
+		mButtonPrice.text = MiscTools.FormatBigNumber(mGoldCost);
+		MiscTools.SetUILabelRescale(mButtonPrice, 59f, 20f, 650);
+		mDescription.text = Localization.LocalizeFormat("ID_ACTIVATEXMOREINSTANTBATTLES", Colours.stringBlue, num, mButtonPrice.text);
+		mButtonText.text = Localization.LocalizeFormat("ID_5SKIRMISHES", num);
+		mPriceTable.repositionNow = true;
+	}
 
-	5. Script Content Level 0
+	public GuiElement GetGuiElement()
+	{
+		return this;
+	}
 
-		AssetRipper was set to not load any script information.
-
-	6. Cpp2IL failed to decompile Il2Cpp data
-
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public override void OnBack()
+	{
+		CloseClick(mBottomButton.gameObject);
+	}
 }

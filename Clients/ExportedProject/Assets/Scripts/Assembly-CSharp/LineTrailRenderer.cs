@@ -1,63 +1,104 @@
 using UnityEngine;
 
-public class LineTrailRenderer : MonoBehaviour
+public class LineTrailRenderer : Core_BaseScript
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	private const float lengtCoef = 1.3f;
 
-	1. No dll files were provided to AssetRipper.
+	public float disapearTime = 1f;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	private float mDisappearTimeProgress;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	private float mDistance;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	private bool mIsReset = true;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	private Vector3 mLastPosition;
 
-	3. Assembly Reconstruction has not been implemented.
+	private MeshFilter mMeshFilter;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	private Transform mReferenceCamera;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	private Vector3 mStartPosition;
 
-	4. This script is unnecessary.
+	private Quaternion mStartRot;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private Transform mTransform;
 
-	5. Script Content Level 0
+	private float mYScale;
 
-		AssetRipper was set to not load any script information.
+	private float rot;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public float trailLength = 1f;
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public void SetWidth(float w1)
+	{
+		mYScale = w1 / 0.1f;
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	protected override void Awake()
+	{
+		base.Awake();
+		mIsReset = true;
+		mTransform = base.transform;
+		mReferenceCamera = Camera.main.transform;
+		mMeshFilter = GetComponent<MeshFilter>();
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	public void SetSprite(string spriteName)
+	{
+		mMeshFilter.mesh = Singleton<BulletModels>.instance.GetMesh(spriteName);
+	}
 
-	*/
+	protected void Update()
+	{
+		if (mIsReset)
+		{
+			mDisappearTimeProgress = 0f;
+			mIsReset = false;
+			mStartPosition = mTransform.position;
+			mStartRot = mTransform.rotation;
+			mTransform.localScale.ReplaceX(0f);
+		}
+		else if (mLastPosition != mTransform.position)
+		{
+			mDistance = Vector3.Distance(mTransform.position, mStartPosition);
+			if (mDistance > trailLength)
+			{
+				Vector3 localScale = mTransform.localScale;
+				localScale.x = trailLength * 1.3f;
+				localScale.y = mYScale;
+				mTransform.localScale = localScale;
+			}
+			else
+			{
+				float x = mDistance / trailLength * 1.3f * 0.7f;
+				Vector3 localScale2 = mTransform.localScale;
+				localScale2.x = x;
+				localScale2.y = mYScale;
+				mTransform.localScale = localScale2;
+			}
+		}
+		else
+		{
+			mDisappearTimeProgress += Time.deltaTime / disapearTime;
+			mDisappearTimeProgress = Mathf.Clamp01(mDisappearTimeProgress);
+			float num = 1f - mDisappearTimeProgress;
+			Vector3 localScale3 = mTransform.localScale;
+			localScale3.x = num * 1.3f;
+			localScale3.y = mYScale;
+			mTransform.localScale = localScale3;
+		}
+		rot += Time.deltaTime * 200f;
+		float angle = Vector3.Angle(mReferenceCamera.forward, mStartRot * Vector3.forward);
+		Quaternion quaternion = Quaternion.AngleAxis(angle, mStartRot * Vector3.right);
+		mTransform.rotation = quaternion * mStartRot;
+		mLastPosition = mTransform.position;
+	}
+
+	public void Reset()
+	{
+		mIsReset = true;
+		mDisappearTimeProgress = 0f;
+		mTransform.localScale = new Vector3(0f, 0f, 1f);
+	}
 }

@@ -1,66 +1,264 @@
-using UnityEngine;
+using System.Collections;
+using Org.BouncyCastle.Utilities;
 
 namespace Org.BouncyCastle.Crypto.Tls
 {
-	public class AbstractTlsServer : MonoBehaviour
+public abstract class AbstractTlsServer : AbstractTlsPeer, TlsPeer, TlsServer
+{
+	protected TlsCipherFactory mCipherFactory;
+
+	protected TlsServerContext mContext;
+
+	protected ProtocolVersion mClientVersion;
+
+	protected int[] mOfferedCipherSuites;
+
+	protected byte[] mOfferedCompressionMethods;
+
+	protected IDictionary mClientExtensions;
+
+	protected bool mEncryptThenMacOffered;
+
+	protected short mMaxFragmentLengthOffered;
+
+	protected bool mTruncatedHMacOffered;
+
+	protected IList mSupportedSignatureAlgorithms;
+
+	protected bool mEccCipherSuitesOffered;
+
+	protected int[] mNamedCurves;
+
+	protected byte[] mClientECPointFormats;
+
+	protected byte[] mServerECPointFormats;
+
+	protected ProtocolVersion mServerVersion;
+
+	protected int mSelectedCipherSuite;
+
+	protected byte mSelectedCompressionMethod;
+
+	protected IDictionary mServerExtensions;
+
+	protected virtual bool AllowEncryptThenMac => true;
+
+	protected virtual bool AllowTruncatedHMac => false;
+
+	protected virtual ProtocolVersion MaximumVersion => ProtocolVersion.TLSv11;
+
+	protected virtual ProtocolVersion MinimumVersion => ProtocolVersion.TLSv10;
+
+	public AbstractTlsServer()
+		: this(new DefaultTlsCipherFactory())
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
 	}
+
+	public AbstractTlsServer(TlsCipherFactory cipherFactory)
+	{
+		mCipherFactory = cipherFactory;
+	}
+
+	protected virtual IDictionary CheckServerExtensions()
+	{
+		return mServerExtensions = TlsExtensionsUtilities.EnsureExtensionsInitialised(mServerExtensions);
+	}
+
+	protected abstract int[] GetCipherSuites();
+
+	protected byte[] GetCompressionMethods()
+	{
+		return new byte[1];
+	}
+
+	protected virtual bool SupportsClientEccCapabilities(int[] namedCurves, byte[] ecPointFormats)
+	{
+		if (namedCurves == null)
+		{
+			return TlsEccUtilities.HasAnySupportedNamedCurves();
+		}
+		foreach (int namedCurve in namedCurves)
+		{
+			if (NamedCurve.IsValid(namedCurve) && (!NamedCurve.RefersToASpecificNamedCurve(namedCurve) || TlsEccUtilities.IsSupportedNamedCurve(namedCurve)))
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public virtual void Init(TlsServerContext context)
+	{
+		mContext = context;
+	}
+
+	public virtual void NotifyClientVersion(ProtocolVersion clientVersion)
+	{
+		mClientVersion = clientVersion;
+	}
+
+	public virtual void NotifyFallback(bool isFallback)
+	{
+		if (isFallback && MaximumVersion.IsLaterVersionOf(mClientVersion))
+		{
+			throw new TlsFatalAlert(86);
+		}
+	}
+
+	public virtual void NotifyOfferedCipherSuites(int[] offeredCipherSuites)
+	{
+		mOfferedCipherSuites = offeredCipherSuites;
+		mEccCipherSuitesOffered = TlsEccUtilities.ContainsEccCipherSuites(mOfferedCipherSuites);
+	}
+
+	public virtual void NotifyOfferedCompressionMethods(byte[] offeredCompressionMethods)
+	{
+		mOfferedCompressionMethods = offeredCompressionMethods;
+	}
+
+	public virtual void ProcessClientExtensions(IDictionary clientExtensions)
+	{
+		mClientExtensions = clientExtensions;
+		if (clientExtensions != null)
+		{
+			mEncryptThenMacOffered = TlsExtensionsUtilities.HasEncryptThenMacExtension(clientExtensions);
+			mMaxFragmentLengthOffered = TlsExtensionsUtilities.GetMaxFragmentLengthExtension(clientExtensions);
+			if (mMaxFragmentLengthOffered >= 0 && !MaxFragmentLength.IsValid((byte)mMaxFragmentLengthOffered))
+			{
+				throw new TlsFatalAlert(47);
+			}
+			mTruncatedHMacOffered = TlsExtensionsUtilities.HasTruncatedHMacExtension(clientExtensions);
+			mSupportedSignatureAlgorithms = TlsUtilities.GetSignatureAlgorithmsExtension(clientExtensions);
+			if (mSupportedSignatureAlgorithms != null && !TlsUtilities.IsSignatureAlgorithmsExtensionAllowed(mClientVersion))
+			{
+				throw new TlsFatalAlert(47);
+			}
+			mNamedCurves = TlsEccUtilities.GetSupportedEllipticCurvesExtension(clientExtensions);
+			mClientECPointFormats = TlsEccUtilities.GetSupportedPointFormatsExtension(clientExtensions);
+		}
+		if (!mEccCipherSuitesOffered && (mNamedCurves != null || mClientECPointFormats != null))
+		{
+			throw new TlsFatalAlert(47);
+		}
+	}
+
+	public virtual ProtocolVersion GetServerVersion()
+	{
+		if (MinimumVersion.IsEqualOrEarlierVersionOf(mClientVersion))
+		{
+			ProtocolVersion maximumVersion = MaximumVersion;
+			if (mClientVersion.IsEqualOrEarlierVersionOf(maximumVersion))
+			{
+				return mServerVersion = mClientVersion;
+			}
+			if (mClientVersion.IsLaterVersionOf(maximumVersion))
+			{
+				return mServerVersion = maximumVersion;
+			}
+		}
+		throw new TlsFatalAlert(70);
+	}
+
+	public virtual int GetSelectedCipherSuite()
+	{
+		bool flag = SupportsClientEccCapabilities(mNamedCurves, mClientECPointFormats);
+		int[] cipherSuites = GetCipherSuites();
+		foreach (int num in cipherSuites)
+		{
+			if (Arrays.Contains(mOfferedCipherSuites, num) && (flag || !TlsEccUtilities.IsEccCipherSuite(num)) && TlsUtilities.IsValidCipherSuiteForVersion(num, mServerVersion))
+			{
+				return mSelectedCipherSuite = num;
+			}
+		}
+		throw new TlsFatalAlert(40);
+	}
+
+	public virtual byte GetSelectedCompressionMethod()
+	{
+		byte[] compressionMethods = GetCompressionMethods();
+		for (int i = 0; i < compressionMethods.Length; i++)
+		{
+			if (Arrays.Contains(mOfferedCompressionMethods, compressionMethods[i]))
+			{
+				return mSelectedCompressionMethod = compressionMethods[i];
+			}
+		}
+		throw new TlsFatalAlert(40);
+	}
+
+	public virtual IDictionary GetServerExtensions()
+	{
+		if (mEncryptThenMacOffered && AllowEncryptThenMac && TlsUtilities.IsBlockCipherSuite(mSelectedCipherSuite))
+		{
+			TlsExtensionsUtilities.AddEncryptThenMacExtension(CheckServerExtensions());
+		}
+		if (mMaxFragmentLengthOffered >= 0 && TlsUtilities.IsValidUint8(mMaxFragmentLengthOffered) && MaxFragmentLength.IsValid((byte)mMaxFragmentLengthOffered))
+		{
+			TlsExtensionsUtilities.AddMaxFragmentLengthExtension(CheckServerExtensions(), (byte)mMaxFragmentLengthOffered);
+		}
+		if (mTruncatedHMacOffered && AllowTruncatedHMac)
+		{
+			TlsExtensionsUtilities.AddTruncatedHMacExtension(CheckServerExtensions());
+		}
+		if (mClientECPointFormats != null && TlsEccUtilities.IsEccCipherSuite(mSelectedCipherSuite))
+		{
+			mServerECPointFormats = new byte[3] { 0, 1, 2 };
+			TlsEccUtilities.AddSupportedPointFormatsExtension(CheckServerExtensions(), mServerECPointFormats);
+		}
+		return mServerExtensions;
+	}
+
+	public virtual IList GetServerSupplementalData()
+	{
+		return null;
+	}
+
+	public abstract TlsCredentials GetCredentials();
+
+	public virtual CertificateStatus GetCertificateStatus()
+	{
+		return null;
+	}
+
+	public abstract TlsKeyExchange GetKeyExchange();
+
+	public virtual CertificateRequest GetCertificateRequest()
+	{
+		return null;
+	}
+
+	public virtual void ProcessClientSupplementalData(IList clientSupplementalData)
+	{
+		if (clientSupplementalData != null)
+		{
+			throw new TlsFatalAlert(10);
+		}
+	}
+
+	public virtual void NotifyClientCertificate(Certificate clientCertificate)
+	{
+		throw new TlsFatalAlert(80);
+	}
+
+	public override TlsCompression GetCompression()
+	{
+		if (mSelectedCompressionMethod == 0)
+		{
+			return new TlsNullCompression();
+		}
+		throw new TlsFatalAlert(80);
+	}
+
+	public override TlsCipher GetCipher()
+	{
+		int encryptionAlgorithm = TlsUtilities.GetEncryptionAlgorithm(mSelectedCipherSuite);
+		int macAlgorithm = TlsUtilities.GetMacAlgorithm(mSelectedCipherSuite);
+		return mCipherFactory.CreateCipher(mContext, encryptionAlgorithm, macAlgorithm);
+	}
+
+	public virtual NewSessionTicket GetNewSessionTicket()
+	{
+		return new NewSessionTicket(0L, TlsUtilities.EmptyBytes);
+	}
+}
 }

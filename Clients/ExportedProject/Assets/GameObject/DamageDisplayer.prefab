@@ -149,6 +149,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4539d8c71aaba2f42a03cf923d1e79cd, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  isActivated: 0
+  text: {fileID: 11403859}
+  mAnimator: {fileID: 11470521}
 --- !u!114 &11431434
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -160,6 +163,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3eb393d18e44963b2feda410867e4106, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  allTweens: []
+  play: 0
 --- !u!114 &11470521
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -171,6 +176,58 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3eb393d18e44963b2feda410867e4106, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  allTweens:
+  - id: 0
+    type: 2
+    time: 0.3
+    delay: 0
+    method: 3
+    style: 0
+    playAfterId: -1
+    tweenTarget: {fileID: 0}
+    numOfRepetitions: 1
+    soundEnum: 0
+  - id: 1
+    type: 0
+    time: 0.7
+    delay: 0
+    method: 1
+    style: 0
+    playAfterId: -1
+    tweenTarget: {fileID: 0}
+    numOfRepetitions: 1
+    soundEnum: 0
+  - id: 2
+    type: 4
+    time: 0.3
+    delay: 0
+    method: 1
+    style: 0
+    playAfterId: -1
+    tweenTarget: {fileID: 147589}
+    numOfRepetitions: 1
+    soundEnum: 0
+  - id: 3
+    type: 4
+    time: 0.2
+    delay: 0
+    method: 2
+    style: 0
+    playAfterId: 2
+    tweenTarget: {fileID: 147589}
+    numOfRepetitions: 1
+    soundEnum: 0
+  - id: 4
+    type: 2
+    time: 0.3
+    delay: 0.1
+    method: 3
+    style: 0
+    playAfterId: 1
+    tweenTarget: {fileID: 0}
+    numOfRepetitions: 1
+    soundEnum: 0
+  play: 0
 --- !u!114 &11496012
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -182,6 +239,36 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 19f7069a40d286a3284966ac58a8c868, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  method: 3
+  style: 0
+  animationCurve:
+    serializedVersion: 2
+    m_Curve:
+    - time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 1
+      tangentMode: 0
+    - time: 1
+      value: 1
+      inSlope: 1
+      outSlope: 0
+      tangentMode: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+  ignoreTimeScale: 1
+  delay: 0
+  duration: 1
+  steeperCurves: 0
+  tweenGroup: 0
+  eventReceiver: {fileID: 0}
+  callWhenFinished:
+  NumOfRepetitions: 0
+  id: 0
+  dontResetCurve: 0
+  from: {x: 1, y: 1, z: 1}
+  to: {x: 1, y: 1, z: 1}
+  updateTable: 0
 --- !u!4 &477035
 Transform:
   m_ObjectHideFlags: 0
@@ -210,6 +297,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5c597ca6b52d35bba3dccb20ec3e0c21, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  stroke:
+  - {fileID: 10224449}
+  - {fileID: 10234467}
+  - {fileID: 10255190}
+  - {fileID: 10292819}
+  strokeSize: 0.2
+  mainText: {fileID: 10231555}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  strokeColor: {r: 0, g: 0, b: 0, a: 0}
+  mText: -52
 --- !u!4 &469566
 Transform:
   m_ObjectHideFlags: 0
@@ -280,6 +377,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f700cdbb1ef330b26b332599df454d05, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mTextMesh: {fileID: 10224449}
 --- !u!4 &469143
 Transform:
   m_ObjectHideFlags: 0
@@ -350,6 +448,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f700cdbb1ef330b26b332599df454d05, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mTextMesh: {fileID: 10234467}
 --- !u!4 &469857
 Transform:
   m_ObjectHideFlags: 0
@@ -420,6 +519,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f700cdbb1ef330b26b332599df454d05, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mTextMesh: {fileID: 10255190}
 --- !u!4 &496729
 Transform:
   m_ObjectHideFlags: 0
@@ -490,6 +590,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f700cdbb1ef330b26b332599df454d05, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mTextMesh: {fileID: 10292819}
 --- !u!4 &492514
 Transform:
   m_ObjectHideFlags: 0
@@ -560,6 +661,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f700cdbb1ef330b26b332599df454d05, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mTextMesh: {fileID: 10231555}
 --- !u!1001 &100100000
 Prefab:
   serializedVersion: 2

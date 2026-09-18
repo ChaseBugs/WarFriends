@@ -1,63 +1,106 @@
-using UnityEngine;
-
-public class ObjectPoolDatabase : MonoBehaviour
+public class ObjectPoolDatabase : Singleton<ObjectPoolDatabase>
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public EnemyController enemy;
 
-	1. No dll files were provided to AssetRipper.
+	public Healthbar healthbarPrefab;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public Healthbar verticalHealthBar;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public SkillShotDisplayer skillShotDisplayer;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public SkillShotDisplayerItem skillShotDisplayerItem;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public CustomDisplayerItem customDisplayerItem;
 
-	3. Assembly Reconstruction has not been implemented.
+	public HudObjectIndicator2D indicator;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public DamageDisplayer damageDisplayer;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public NewUnitDisplayerItem newUnitDisplayer;
 
-	4. This script is unnecessary.
+	public Drone drone;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public AICar humvee;
 
-	5. Script Content Level 0
+	public AICarBuggy buggy;
 
-		AssetRipper was set to not load any script information.
+	public AICarTransporter transporter;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public Helicopter helicopter;
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public Tank tank;
 
-	7. An incorrect path was provided to AssetRipper.
+	public Turret turret;
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	public TurretRockets turretRockets;
 
-	*/
+	public Mech mech;
+
+	public HeavyTurret heavyTurret;
+
+	public AssaultHelicopter assaultHelicopter;
+
+	public Decoy decoy;
+
+	public MiniDrone miniDrone;
+
+	public PlayerController player;
+
+	public ShootableBox shootableBox;
+
+	public Parachute parachute;
+
+	public ObjectPool mainObjectPool;
+
+	private static ObjectPool mAmmoPool;
+
+	private static NetworkObjectPool mNetworkPool;
+
+	public NoMoveIndikator noMoveIndikator;
+
+	public BuddyNameDisplayer buddyNameDisplayer;
+
+	public BulletSlow bulletSlow;
+
+	public BulletPoison bulletPoison;
+
+	public static ObjectPool ammoPool
+	{
+		get
+		{
+			if (mAmmoPool == null)
+			{
+				mAmmoPool = ObjectPool.GetPool("AmmoPool");
+			}
+			return mAmmoPool;
+		}
+		set
+		{
+			mAmmoPool = value;
+		}
+	}
+
+	public static NetworkObjectPool networkPool
+	{
+		get
+		{
+			if (mNetworkPool == null)
+			{
+				mNetworkPool = ObjectPool.GetPool("NetworkPool") as NetworkObjectPool;
+			}
+			return mNetworkPool;
+		}
+		set
+		{
+			mNetworkPool = value;
+		}
+	}
+
+	public static ObjectPool mainPool => Singleton<ObjectPoolDatabase>.instance.mainObjectPool;
+
+	protected override void Awake()
+	{
+		base.Awake();
+		mainObjectPool = GetComponent<ObjectPool>();
+	}
 }

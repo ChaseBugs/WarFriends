@@ -1,63 +1,181 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
-public class LootBoxCameraArena : MonoBehaviour
+public class LootBoxCameraArena : Singleton<LootBoxCameraArena>
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[SerializeField]
+	private GameObject mBackground;
 
-	1. No dll files were provided to AssetRipper.
+	[SerializeField]
+	private Transform mCharacterParent;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	[SerializeField]
+	private Camera mDialogCamera;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	[SerializeField]
+	private Camera mLootboxCamera;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	[SerializeField]
+	private Animation mLootBoxOpenAnimation;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	[SerializeField]
+	private Animation mLootBoxShowUpAnimation;
 
-	3. Assembly Reconstruction has not been implemented.
+	[SerializeField]
+	private RotateCamera mRotateCamera;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	[SerializeField]
+	private ParticleSystem mScreenShowParticles;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	[SerializeField]
+	private ParticleSystem mLootBoxOpenParticles;
 
-	4. This script is unnecessary.
+	[SerializeField]
+	private List<Material> mLootBoxMaterials;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	[SerializeField]
+	private GameObject mLootBox;
 
-	5. Script Content Level 0
+	private LevelBehaviour mDisplayedBehaviour;
 
-		AssetRipper was set to not load any script information.
+	private Transform mLootBoxPrent;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	private AIObject mInstance;
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public event Action LootBoxShowedUp;
 
-	7. An incorrect path was provided to AssetRipper.
+	protected override void Awake()
+	{
+		base.Awake();
+		mLootBoxPrent = mLootBoxOpenAnimation.transform;
+		mBackground.gameObject.SetActive(value: false);
+		AnimationEvent component = mLootBoxOpenAnimation.GetComponent<AnimationEvent>();
+		if (component != null)
+		{
+			component.OnAnimationEvent = (Action<string>)Delegate.Combine(component.OnAnimationEvent, new Action<string>(OnAnimationEvent));
+		}
+		mDialogCamera.gameObject.SetActive(value: false);
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	public void DisplayModel(LevelBehaviour behaviour, bool isLootboxReward)
+	{
+		UpgradeSlots.showElite = true;
+		mCharacterParent.transform.parent.localScale = ((!isLootboxReward) ? (Vector3.one * 2.3f) : (Vector3.one * 2.85f));
+		mBackground.SetActive(isLootboxReward);
+		Show(showBackground: false);
+		mDisplayedBehaviour = behaviour;
+		mRotateCamera.Reset();
+		mLootBoxPrent.gameObject.SetActive(value: false);
+		mCharacterParent.gameObject.SetActive(value: true);
+		StartCoroutine(DisplayModelCoroutine(mDisplayedBehaviour));
+	}
 
-	*/
+	public void HideModel()
+	{
+		mCharacterParent.gameObject.SetActive(value: false);
+	}
+
+	public void PlayParticles()
+	{
+		mScreenShowParticles.Play();
+	}
+
+	public void ShowUpLootBox(WarArenaConfig.LootBoxType lootBoxType)
+	{
+		mCharacterParent.transform.parent.localScale = Vector3.one * 2.85f;
+		Show(showBackground: true);
+		mScreenShowParticles.Play();
+		AnimationState animationState = mLootBoxOpenAnimation["open"];
+		animationState.normalizedTime = 0f;
+		animationState.weight = 1f;
+		animationState.enabled = true;
+		mLootBoxOpenAnimation.Sample();
+		animationState.enabled = false;
+		mLootBoxShowUpAnimation.Play("LootBoxShowUp");
+		mLootBoxShowUpAnimation.PlayQueued("LootBoxRotation");
+		SkinnedMeshRenderer componentInChildren = mLootBox.GetComponentInChildren<SkinnedMeshRenderer>();
+		componentInChildren.material = mLootBoxMaterials[(int)lootBoxType];
+		InvokeAfter(OpenLootBox, 0.5f);
+	}
+
+	public void Hide()
+	{
+		UpgradeSlots.showElite = false;
+		mLootboxCamera.enabled = false;
+		mRotateCamera.enabled = false;
+		mBackground.gameObject.SetActive(value: false);
+		DestroyModel(unload: true);
+	}
+
+	private void DestroyModel(bool unload)
+	{
+		if (mInstance != null)
+		{
+			mInstance.DestroyPooled(changeParentBack: true);
+			mInstance.transform.localPosition = default(Vector3);
+			mInstance.transform.localScale = Vector3.one;
+			if (unload)
+			{
+				mInstance.preparedBehaviour.Unload();
+			}
+			mInstance = null;
+		}
+	}
+
+	private IEnumerator DisplayModelCoroutine(LevelBehaviour behavior)
+	{
+		PlayerController.currentPlayer.fraction = Fractions.Allies;
+		ArmyUnit3DModel s = null;
+		DestroyModel(unload: true);
+		yield return StartCoroutine(behavior.PrepareVisualsForGameCoroutine(UnitUpgradeDefinition.GetPreviewUpgrades(behavior, 1f), bought: true, mine: true, unloadWeapon: true));
+		DestroyModel(unload: false);
+		AIObject enemy = Singleton<LevelBehaviourManager>.instance.GenerateNewEnemy(behavior);
+		if (enemy != null && enemy.prefab != null)
+		{
+			enemy.isPrewiev = true;
+			enemy.fraction = Fractions.Allies;
+			mInstance = (AIObject)ObjectPoolDatabase.networkPool.ReInstantiate(enemy);
+			mInstance.transform.parent = mCharacterParent;
+			mInstance.transform.localRotation = Quaternion.identity;
+		}
+		s = mInstance.GetComponent<ArmyUnit3DModel>();
+		mInstance.transform.localPosition = -s.middle.localPosition;
+		mInstance.transform.localScale = Vector3.one;
+		mCharacterParent.localScale = s.scale * Vector3.one;
+		mInstance.isPrewiev = true;
+		mInstance.UpdatePreview(inGame: false);
+		mCharacterParent.localPosition = behavior.modelPosition;
+	}
+
+	private void Show(bool showBackground)
+	{
+		mLootboxCamera.enabled = true;
+		mRotateCamera.enabled = true;
+		if (showBackground)
+		{
+			mBackground.SetActive(value: true);
+		}
+		mLootBoxPrent.gameObject.SetActive(value: true);
+		mCharacterParent.gameObject.SetActive(value: false);
+	}
+
+	private void OpenLootBox()
+	{
+		mLootBoxOpenAnimation.Play("open");
+		SoundsManager.Instance.PlaySound(SoundsManager.SoundsEnum.OpenLootbox);
+	}
+
+	private void OnAnimationEvent(string s)
+	{
+		if (s == "boxOpen")
+		{
+			mLootBoxOpenParticles.Play();
+		}
+		if (s == "animationEnd" && this.LootBoxShowedUp != null)
+		{
+			this.LootBoxShowedUp();
+		}
+	}
 }

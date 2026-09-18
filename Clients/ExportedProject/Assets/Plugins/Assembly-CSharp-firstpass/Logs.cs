@@ -1,63 +1,196 @@
+using System;
+using System.Collections.Generic;
+using System.Text;
 using UnityEngine;
 
-public class Logs : MonoBehaviour
+public class Logs : Singleton<Logs>
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public class LogEntry
+	{
+		public string output = string.Empty;
 
-	1. No dll files were provided to AssetRipper.
+		public string stack = string.Empty;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+		public LogType type;
+	}
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public readonly Queue<LogEntry> logs = new Queue<LogEntry>();
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public GUIStyle CustomGUIStyle;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public Rect guiRect = new Rect(0f, 0f, 250f, 300f);
 
-	3. Assembly Reconstruction has not been implemented.
+	private StringBuilder mBuilder = new StringBuilder();
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	private bool mIsIn;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	private bool mOldIsIn;
 
-	4. This script is unnecessary.
+	private float mPressTime;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private bool mShowed;
 
-	5. Script Content Level 0
+	public Vector2 scrollPos;
 
-		AssetRipper was set to not load any script information.
+	public GUISkin sk;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public Texture2D texture;
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public Camera camera;
 
-	7. An incorrect path was provided to AssetRipper.
+	private ScreenLogsGui mScreenLogsGui;
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	public Action SendLogsAction;
 
-	*/
+	public bool logsSent;
+
+	public string logId = string.Empty;
+
+	private bool isIn
+	{
+		get
+		{
+			return mIsIn;
+		}
+		set
+		{
+			mIsIn = value;
+		}
+	}
+
+	private void OnEnable()
+	{
+		Application.logMessageReceived += HandleLog;
+		texture = new Texture2D(1, 1);
+		texture.SetPixel(0, 0, Colours.grayLog);
+		texture.Apply();
+		InvokeAfterRealTime(delegate
+		{
+			guiRect = new Rect(0f, 0f, Screen.width, Screen.height);
+		}, 1f);
+		mScreenLogsGui = base.gameObject.AddComponent<ScreenLogsGui>();
+		mScreenLogsGui.enabled = false;
+		mScreenLogsGui.logs = this;
+	}
+
+	private void OnDisable()
+	{
+		Application.RegisterLogCallback(null);
+	}
+
+	private void HandleLog(string logString, string stackTrace, LogType logType)
+	{
+		if (logs.Count < 500)
+		{
+			logs.Enqueue(new LogEntry
+			{
+				stack = stackTrace,
+				output = logString,
+				type = logType
+			});
+		}
+		else
+		{
+			LogEntry logEntry = logs.Dequeue();
+			logEntry.output = logString;
+			logEntry.stack = stackTrace;
+			logEntry.type = logType;
+			logs.Enqueue(logEntry);
+		}
+	}
+
+	private bool isInCornerLeftBottom(Vector3 point)
+	{
+		return point.x < 0.1f && (double)point.y < 0.1;
+	}
+
+	private bool isInCornerRightBottom(Vector3 point)
+	{
+		return point.x > 0.9f && (double)point.y < 0.1;
+	}
+
+	private Vector2 ScreenToWieport(Vector3 pos)
+	{
+		Vector3 mousePosition = Input.mousePosition;
+		Vector2 zero = Vector2.zero;
+		zero.x = mousePosition.x / (float)Screen.width;
+		zero.y = mousePosition.y / (float)Screen.height;
+		return zero;
+	}
+
+	protected void Update()
+	{
+		bool flag = false;
+		bool flag2 = false;
+		Touch[] touches = Input.touches;
+		foreach (Touch touch in touches)
+		{
+			Vector2 vector = camera.ScreenToViewportPoint(touch.position);
+			if (isInCornerLeftBottom(vector))
+			{
+				flag = true;
+			}
+			if (isInCornerRightBottom(vector))
+			{
+				flag2 = true;
+			}
+		}
+		isIn = flag && flag2;
+		if (Application.platform == RuntimePlatform.WindowsPlayer || Application.platform == RuntimePlatform.WindowsEditor || Application.platform == RuntimePlatform.OSXPlayer)
+		{
+			isIn = Input.GetMouseButton(0) && isInCornerLeftBottom(camera.ScreenToViewportPoint(Input.mousePosition));
+		}
+		if (mOldIsIn != isIn)
+		{
+			if (isIn)
+			{
+				Debug.Log("Pressed LOG");
+				mPressTime = Time.realtimeSinceStartup;
+			}
+			else
+			{
+				mPressTime = 0f;
+			}
+		}
+		if (isIn && Time.realtimeSinceStartup > mPressTime + 0.5f && mPressTime != 0f)
+		{
+			ShowHide();
+			mPressTime = 0f;
+		}
+		mOldIsIn = mIsIn;
+	}
+
+	public Color GetColor(LogType type)
+	{
+		switch (type)
+		{
+			case LogType.Error:
+				return Color.red;
+			case LogType.Exception:
+				return Color.red;
+			case LogType.Warning:
+				return Color.yellow;
+			default:
+				return Color.white;
+		}
+	}
+
+	private void ShowHide()
+	{
+		mShowed = !mShowed;
+		mScreenLogsGui.enabled = mShowed;
+		if (mShowed)
+		{
+			scrollPos = new Vector2(0f, 4.5464646E+10f);
+			logsSent = false;
+		}
+	}
+
+	public void SendLogs()
+	{
+		if (SendLogsAction != null)
+		{
+			SendLogsAction();
+		}
+	}
 }

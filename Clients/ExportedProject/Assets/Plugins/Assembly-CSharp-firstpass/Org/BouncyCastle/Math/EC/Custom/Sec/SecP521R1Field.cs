@@ -1,66 +1,151 @@
-using UnityEngine;
+using Org.BouncyCastle.Math.Raw;
 
 namespace Org.BouncyCastle.Math.EC.Custom.Sec
 {
-	public class SecP521R1Field : MonoBehaviour
+internal class SecP521R1Field
+{
+	private const int P16 = 511;
+
+	internal static readonly uint[] P = new uint[17]
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
+		4294967295u, 4294967295u, 4294967295u, 4294967295u, 4294967295u, 4294967295u, 4294967295u, 4294967295u, 4294967295u, 4294967295u,
+		4294967295u, 4294967295u, 4294967295u, 4294967295u, 4294967295u, 4294967295u, 511u
+	};
 
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
+	public static void Add(uint[] x, uint[] y, uint[] z)
+	{
+		uint num = Nat.Add(16, x, y, z) + x[16] + y[16];
+		if (num > 511 || (num == 511 && Nat.Eq(16, z, P)))
+		{
+			num += Nat.Inc(16, z);
+			num &= 0x1FF;
+		}
+		z[16] = num;
 	}
+
+	public static void AddOne(uint[] x, uint[] z)
+	{
+		uint num = Nat.Inc(16, x, z) + x[16];
+		if (num > 511 || (num == 511 && Nat.Eq(16, z, P)))
+		{
+			num += Nat.Inc(16, z);
+			num &= 0x1FF;
+		}
+		z[16] = num;
+	}
+
+	public static uint[] FromBigInteger(BigInteger x)
+	{
+		uint[] array = Nat.FromBigInteger(521, x);
+		if (Nat.Eq(17, array, P))
+		{
+			Nat.Zero(17, array);
+		}
+		return array;
+	}
+
+	public static void Half(uint[] x, uint[] z)
+	{
+		uint num = x[16];
+		uint num2 = Nat.ShiftDownBit(16, x, num, z);
+		z[16] = (num >> 1) | (num2 >> 23);
+	}
+
+	public static void Multiply(uint[] x, uint[] y, uint[] z)
+	{
+		uint[] array = Nat.Create(33);
+		ImplMultiply(x, y, array);
+		Reduce(array, z);
+	}
+
+	public static void Negate(uint[] x, uint[] z)
+	{
+		if (Nat.IsZero(17, x))
+		{
+			Nat.Zero(17, z);
+		}
+		else
+		{
+			Nat.Sub(17, P, x, z);
+		}
+	}
+
+	public static void Reduce(uint[] xx, uint[] z)
+	{
+		uint num = xx[32];
+		uint num2 = Nat.ShiftDownBits(16, xx, 16, 9, num, z, 0) >> 23;
+		num2 += num >> 9;
+		num2 += Nat.AddTo(16, xx, z);
+		if (num2 > 511 || (num2 == 511 && Nat.Eq(16, z, P)))
+		{
+			num2 += Nat.Inc(16, z);
+			num2 &= 0x1FF;
+		}
+		z[16] = num2;
+	}
+
+	public static void Reduce23(uint[] z)
+	{
+		uint num = z[16];
+		uint num2 = Nat.AddWordTo(16, num >> 9, z) + (num & 0x1FF);
+		if (num2 > 511 || (num2 == 511 && Nat.Eq(16, z, P)))
+		{
+			num2 += Nat.Inc(16, z);
+			num2 &= 0x1FF;
+		}
+		z[16] = num2;
+	}
+
+	public static void Square(uint[] x, uint[] z)
+	{
+		uint[] array = Nat.Create(33);
+		ImplSquare(x, array);
+		Reduce(array, z);
+	}
+
+	public static void SquareN(uint[] x, int n, uint[] z)
+	{
+		uint[] array = Nat.Create(33);
+		ImplSquare(x, array);
+		Reduce(array, z);
+		while (--n > 0)
+		{
+			ImplSquare(z, array);
+			Reduce(array, z);
+		}
+	}
+
+	public static void Subtract(uint[] x, uint[] y, uint[] z)
+	{
+		int num = Nat.Sub(16, x, y, z) + (int)(x[16] - y[16]);
+		if (num < 0)
+		{
+			num += Nat.Dec(16, z);
+			num &= 0x1FF;
+		}
+		z[16] = (uint)num;
+	}
+
+	public static void Twice(uint[] x, uint[] z)
+	{
+		uint num = x[16];
+		uint num2 = Nat.ShiftUpBit(16, x, num << 23, z) | (num << 1);
+		z[16] = num2 & 0x1FF;
+	}
+
+	protected static void ImplMultiply(uint[] x, uint[] y, uint[] zz)
+	{
+		Nat512.Mul(x, y, zz);
+		uint num = x[16];
+		uint num2 = y[16];
+		zz[32] = Nat.Mul31BothAdd(16, num, y, num2, x, zz, 16) + num * num2;
+	}
+
+	protected static void ImplSquare(uint[] x, uint[] zz)
+	{
+		Nat512.Square(x, zz);
+		uint num = x[16];
+		zz[32] = Nat.MulWordAddTo(16, num << 1, x, 0, zz, 16) + num * num;
+	}
+}
 }

@@ -1,63 +1,247 @@
+using System;
 using UnityEngine;
 
-public class CircleProgress : MonoBehaviour
+public class CircleProgress : Core_BaseScript
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Header("Circle Part")]
+	public GameObject circlePartPrefab;
 
-	1. No dll files were provided to AssetRipper.
+	[Header("Recolor Parts")]
+	public bool recolor;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public Color backColor = Colours.backCircle;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public Color frontColor = Colours.frontCircle;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	[Header("Constants")]
+	public float multiplierConstant = 1.5f;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public int lengthOfPart = 30;
 
-	3. Assembly Reconstruction has not been implemented.
+	private float mRadius = 334f;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	private UISprite[] parts = new UISprite[180];
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	private float mLastProgress;
 
-	4. This script is unnecessary.
+	private bool mCircleCreated;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private bool mDeliveringAnimation;
 
-	5. Script Content Level 0
+	private float mDelTime;
 
-		AssetRipper was set to not load any script information.
+	private int mLoadingDeliver;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	private bool mFirstRound;
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	private bool mAfterAnimation;
 
-	7. An incorrect path was provided to AssetRipper.
+	private int mAfterStep;
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	public bool deliveringAnimation
+	{
+		get
+		{
+			return mDeliveringAnimation;
+		}
+		set
+		{
+			if (mDeliveringAnimation != value)
+			{
+				mDeliveringAnimation = value;
+				if (value)
+				{
+					mAfterAnimation = false;
+					mDelTime = 0f;
+					mLoadingDeliver = 0;
+					mFirstRound = true;
+				}
+				else
+				{
+					mAfterAnimation = true;
+					mAfterStep = 0;
+				}
+			}
+		}
+	}
 
-	*/
+	public void CreateCircle()
+	{
+		if (!mCircleCreated)
+		{
+			backColor = Colours.backCircle;
+			frontColor = Colours.frontCircle;
+			for (int i = 0; i < 180; i++)
+			{
+				GameObject gameObject = UnityEngine.Object.Instantiate(circlePartPrefab);
+				gameObject.name = "Circle Part " + i;
+				gameObject.gameObject.SetActive(value: true);
+				gameObject.transform.parent = base.transform;
+				gameObject.transform.localScale = circlePartPrefab.transform.localScale;
+				gameObject.transform.localRotation = Quaternion.Euler(0f, 0f, 180 - i * 2);
+				gameObject.transform.localPosition = new Vector3(mRadius * Mathf.Cos((float)(-90 - 2 * i) * ((float)Math.PI / 180f)), mRadius * Mathf.Sin((float)(-90 - 2 * i) * ((float)Math.PI / 180f)), 0f);
+				parts[i] = gameObject.GetComponent<UISprite>();
+				parts[i].color = backColor;
+			}
+			mCircleCreated = true;
+		}
+	}
+
+	public void FillCircle(float progress)
+	{
+		if (!mCircleCreated)
+		{
+			CreateCircle();
+		}
+		mDeliveringAnimation = false;
+		mLastProgress = Mathf.Clamp01(progress);
+		if (mLastProgress == 0f)
+		{
+			mLastProgress = -0.01f;
+		}
+		for (int i = 0; i < 180; i++)
+		{
+			parts[i].color = ((!((float)i / 180f > mLastProgress)) ? frontColor : backColor);
+		}
+	}
+
+	public void StartStopAnim()
+	{
+		deliveringAnimation = !mDeliveringAnimation;
+	}
+
+	public void PlayEndAnimation()
+	{
+		mDeliveringAnimation = false;
+		mAfterAnimation = true;
+		mAfterStep = 0;
+	}
+
+	protected void Update()
+	{
+		if (recolor)
+		{
+			FillCircle(mLastProgress);
+			recolor = false;
+		}
+		if (mDeliveringAnimation)
+		{
+			DeliveringAnimation();
+		}
+		if (mAfterAnimation)
+		{
+			AfterAnimationStepper();
+		}
+	}
+
+	private void DeliveringAnimation()
+	{
+		mDelTime += Time.deltaTime;
+		if (!(mDelTime < 0f))
+		{
+			int num = Mathf.FloorToInt(mDelTime * 60f);
+			mDelTime -= (float)num / 60f;
+			mLoadingDeliver += Mathf.FloorToInt(multiplierConstant * (float)num);
+			if (mLoadingDeliver > 179)
+			{
+				mLoadingDeliver -= 180;
+				mFirstRound = false;
+			}
+			if (!mCircleCreated)
+			{
+				CreateCircle();
+			}
+			for (int i = 0; i < 180; i++)
+			{
+				int num2 = mLoadingDeliver;
+				int num3 = ((mLoadingDeliver - lengthOfPart >= 0) ? (mLoadingDeliver - lengthOfPart) : ((!mFirstRound) ? (180 + (mLoadingDeliver - lengthOfPart)) : 180));
+				parts[i].color = (((num2 <= i || num2 - lengthOfPart >= i) && (num3 >= i || num3 + lengthOfPart <= i)) ? backColor : frontColor);
+			}
+		}
+	}
+
+	private void AfterAnimationStepper()
+	{
+		switch (mAfterStep)
+		{
+		case 0:
+			mAfterStep = FillCircleStep(mAfterStep);
+			break;
+		case 1:
+			mAfterStep = WaitStep(mAfterStep);
+			break;
+		case 2:
+			mAfterStep = EmptyCircleStep(mAfterStep);
+			break;
+		case 3:
+			mAfterStep = WaitStep(mAfterStep);
+			break;
+		case 4:
+			mAfterStep = FillCircleStep(mAfterStep);
+			break;
+		case 5:
+			mAfterStep = WaitStep(mAfterStep);
+			break;
+		case 6:
+			mAfterStep = EmptyCircleStep(mAfterStep);
+			break;
+		case 7:
+			mAfterStep = WaitStep(mAfterStep);
+			break;
+		case 8:
+			mAfterStep = FillCircleStep(mAfterStep);
+			break;
+		case 9:
+			mAfterStep = WaitStep(mAfterStep);
+			break;
+		case 10:
+			mAfterStep = EmptyCircleStep(mAfterStep);
+			break;
+		case 11:
+			mAfterStep = WaitStep(mAfterStep);
+			break;
+		default:
+			FillCircle(mLastProgress);
+			mAfterAnimation = false;
+			break;
+		}
+	}
+
+	private int WaitStep(int actualStep)
+	{
+		mDelTime += Time.deltaTime;
+		if (mDelTime > 0.07f)
+		{
+			return actualStep + 1;
+		}
+		return actualStep;
+	}
+
+	private int FillCircleStep(int actualStep)
+	{
+		if (!mCircleCreated)
+		{
+			CreateCircle();
+		}
+		for (int i = 0; i < 180; i++)
+		{
+			parts[i].color = frontColor;
+		}
+		mDelTime = 0f;
+		return actualStep + 1;
+	}
+
+	private int EmptyCircleStep(int actualStep)
+	{
+		if (!mCircleCreated)
+		{
+			CreateCircle();
+		}
+		for (int i = 0; i < 180; i++)
+		{
+			parts[i].color = backColor;
+		}
+		mDelTime = 0f;
+		return actualStep + 1;
+	}
 }

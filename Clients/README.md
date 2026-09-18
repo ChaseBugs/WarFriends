@@ -1,4 +1,4 @@
-# bf96d555b094d74baedd9c3cc87ee3bf1503545934 - Recovered Unity Project
+# WarFriends 1.4.0 - Recovered Unity Project
 
 Rebuilt from an Android package by `Tools/New-UnityProjectFromApk.ps1` on 2026-09-18 17:37.
 
@@ -6,11 +6,19 @@ Rebuilt from an Android package by `Tools/New-UnityProjectFromApk.ps1` on 2026-0
 > asset-ripper output. Comments, formatting, and original local variable names
 > are gone, and some data is intentionally absent rather than lost.
 
+**Asset recovery update, 2026-09-18:** the root OBB has been verified and a
+corrected APK+OBB extraction restored 22,921 component payloads across 365 files.
+The earlier export's duplicate P31RestKit assembly prevented script-field
+recovery. All 12 scenes now retain the recovered data, including the GUI and
+weapon-preview bindings. Static reference checks pass; current Unity validation
+is pending completion of the owner's library updates. See
+[the recovery report](Validation/OBB_RECOVERY.md) for evidence and limitations.
+
 ## At a glance
 
 | Property | Value |
 | --- | --- |
-| Unity version | **5.2.5f1** |
+| Source Unity versions | **5.2.5f1** and `5.2.1p3` |
 | Scripting backend | **Mono** |
 | Native ABI kept | `armeabi-v7a` |
 | Source archives merged | 2 |
@@ -19,11 +27,13 @@ Rebuilt from an Android package by `Tools/New-UnityProjectFromApk.ps1` on 2026-0
 
 ## Opening the project
 
-1. Install Unity **5.2.5f1** - this exact version.
+1. Install Unity **5.2.5f1** - this is the compatibility target.
    Older releases are under <https://unity.com/releases/editor/archive>.
 2. In Unity Hub choose **Add project from disk** and pick the `ExportedProject/` folder.
 3. Expect a long first import while Unity builds its Library cache.
 
+> `ProjectSettings/ProjectVersion.txt` currently says `2018.3.0f2` and has local
+> modifications; it is not evidence that the assets were authored for Unity 2018.
 > Unity asset serialization is version-sensitive. Opening this with a newer
 > editor triggers an automatic upgrade that can break prefab, shader, and
 > material references in ways that are hard to undo. If you must upgrade,
@@ -36,7 +46,6 @@ ExportedProject/      the Unity project - open this one
   Assets/             recovered assets, grouped by type
   ProjectSettings/    ProjectVersion.txt, tags, layers, physics, quality
 AuxiliaryFiles/
-  GameAssemblies/     the original managed DLLs shipped in the package
   path_id_map.json    exported asset -> original PathID mapping
 DecompiledCSharp/     ILSpy output, one folder per assembly
 recovery-summary.json machine-readable result of this run
@@ -54,8 +63,11 @@ readable.
 | Recovered | class/member names, **method bodies**, serialized data, enum values |
 | Not recovered | comments, formatting, original local variable names |
 
-Decompiled sources are in `DecompiledCSharp/`. For interactive inspection or
-patching, open the DLLs in `AuxiliaryFiles/GameAssemblies/` with dnSpyEx.
+Decompiled sources are in `DecompiledCSharp/`. All 34 original managed DLLs
+have now been extracted from the workspace APK into `AuxiliaryFiles/GameAssemblies/`
+for fidelity checks. Matching Photon3Unity3D, JsonFx.Json, and Newtonsoft.Json
+binaries are restored under `ExportedProject/Assets/Plugins`; their decompiled
+copies are kept outside Assets to avoid duplicate definitions.
 
 ## Asset inventory
 
@@ -79,7 +91,9 @@ Top-level `Assets/` folders: `AnimationClip`, `Avatar`, `Font`, `GameObject`, `M
 
 ## How this was produced
 
-Source package: `bf96d555b094d74baedd9c3cc87ee3bf1503545934.apk`
+Source package recorded by the recovery: `bf96d555b094d74baedd9c3cc87ee3bf1503545934.apk`.
+That filename is not a verified SHA-1 for the workspace `WarFriends 1.4.0.apk`:
+its SHA-1 is `c1d0379ffbf7c02ab3a81cf298c7c67ed275c515`.
 
 Archives merged into a single Android root, in this order:
 
@@ -119,6 +133,17 @@ Reproduce this run:
 | Comments, formatting, local variable names | Not recoverable |
 | Complete shader source | Partial - see the shader export mode above |
 | Server logic, API signatures, auth tokens | Not in the package; must be rebuilt |
+
+## Validation status
+
+The export is an inspection-quality recovery, not yet a buildable Unity project.
+All 1,052 serialized script GUIDs resolve to exported C# metadata, but 32
+MonoBehaviour components in 11 scenes retain an unbound `m_Script: {fileID: 0}`.
+AssetRipper also logged a duplicate `P31RestKit` assembly collision and fell back
+to the unknown scripting backend. The saved Unity compilation log contains 6,820
+diagnostics, including C#-8 syntax unsupported by the source Unity generation and
+cascading assembly-layout errors. Repair assembly boundaries and the language level
+before reconstructing individual gameplay scripts from compiler output.
 
 A null mesh, missing material slot, or empty reference is often intentional
 (runtime-generated, optional, or absent in the original) rather than conversion

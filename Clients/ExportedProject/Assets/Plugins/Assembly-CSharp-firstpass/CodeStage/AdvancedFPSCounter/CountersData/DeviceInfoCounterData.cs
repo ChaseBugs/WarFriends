@@ -1,66 +1,282 @@
+using System;
+using System.Text;
+using CodeStage.AdvancedFPSCounter.Labels;
 using UnityEngine;
 
 namespace CodeStage.AdvancedFPSCounter.CountersData
 {
-	public class DeviceInfoCounterData : MonoBehaviour
+[Serializable]
+public class DeviceInfoCounterData : BaseCounterData
+{
+	[HideInInspector]
+	public string lastValue = string.Empty;
+
+	[SerializeField]
+	private bool cpuModel = true;
+
+	[SerializeField]
+	private bool gpuModel = true;
+
+	[SerializeField]
+	private bool ramSize = true;
+
+	[SerializeField]
+	private bool screenData = true;
+
+	private bool inited;
+
+	public bool CpuModel
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
+		get
+		{
+			return cpuModel;
+		}
+		set
+		{
+			if (cpuModel != value && Application.isPlaying)
+			{
+				cpuModel = value;
+				if (enabled)
+				{
+					Refresh();
+				}
+			}
+		}
 	}
+
+	public bool GpuModel
+	{
+		get
+		{
+			return gpuModel;
+		}
+		set
+		{
+			if (gpuModel != value && Application.isPlaying)
+			{
+				gpuModel = value;
+				if (enabled)
+				{
+					Refresh();
+				}
+			}
+		}
+	}
+
+	public bool RamSize
+	{
+		get
+		{
+			return ramSize;
+		}
+		set
+		{
+			if (ramSize != value && Application.isPlaying)
+			{
+				ramSize = value;
+				if (enabled)
+				{
+					Refresh();
+				}
+			}
+		}
+	}
+
+	public bool ScreenData
+	{
+		get
+		{
+			return screenData;
+		}
+		set
+		{
+			if (screenData != value && Application.isPlaying)
+			{
+				screenData = value;
+				if (enabled)
+				{
+					Refresh();
+				}
+			}
+		}
+	}
+
+	internal DeviceInfoCounterData()
+	{
+		color = new Color32(172, 172, 172, byte.MaxValue);
+		anchor = LabelAnchor.LowerLeft;
+	}
+
+	protected override void CacheCurrentColor()
+	{
+		colorCached = "<color=#" + AFPSCounter.Color32ToHex(color) + ">";
+	}
+
+	internal override void Activate()
+	{
+		if (enabled && !inited && HasData())
+		{
+			base.Activate();
+			inited = true;
+			if (main.OperationMode == AFPSCounterOperationMode.Normal && colorCached == null)
+			{
+				colorCached = "<color=#" + AFPSCounter.Color32ToHex(color) + ">";
+			}
+			if (text == null)
+			{
+				text = new StringBuilder();
+			}
+			else
+			{
+				text.Remove(0, text.Length);
+			}
+			UpdateValue();
+		}
+	}
+
+	internal override void Deactivate()
+	{
+		if (inited)
+		{
+			base.Deactivate();
+			if (text != null)
+			{
+				text.Length = 0;
+			}
+			main.MakeDrawableLabelDirty(anchor);
+			inited = false;
+		}
+	}
+
+	internal override void UpdateValue(bool force)
+	{
+		if (!inited && HasData())
+		{
+			Activate();
+		}
+		else if (inited && !HasData())
+		{
+			Deactivate();
+		}
+		else
+		{
+			if (!enabled)
+			{
+				return;
+			}
+			bool flag = false;
+			text.Remove(0, text.Length);
+			if (cpuModel)
+			{
+				text.Append("CPU: ").Append(SystemInfo.processorType).Append(" (")
+					.Append(SystemInfo.processorCount)
+					.Append(" threads)");
+				flag = true;
+			}
+			if (gpuModel)
+			{
+				if (flag)
+				{
+					text.Append(AFPSCounter.NEW_LINE);
+				}
+				text.Append("GPU: ").Append(SystemInfo.graphicsDeviceName);
+				bool flag2 = false;
+				switch (SystemInfo.graphicsShaderLevel)
+				{
+				case 20:
+					text.Append(" (SM: 2.0");
+					flag2 = true;
+					break;
+				case 30:
+					text.Append(" (SM: 3.0");
+					flag2 = true;
+					break;
+				case 40:
+					text.Append(" (SM: 4.0");
+					flag2 = true;
+					break;
+				case 41:
+					text.Append(" (SM: 4.1");
+					flag2 = true;
+					break;
+				case 50:
+					text.Append(" (SM: 5.0");
+					flag2 = true;
+					break;
+				}
+				int graphicsMemorySize = SystemInfo.graphicsMemorySize;
+				if (graphicsMemorySize > 0)
+				{
+					if (flag2)
+					{
+						text.Append(", VRAM: ").Append(graphicsMemorySize).Append(" MB)");
+					}
+					else
+					{
+						text.Append("(VRAM: ").Append(graphicsMemorySize).Append(" MB)");
+					}
+				}
+				else if (flag2)
+				{
+					text.Append(")");
+				}
+				flag = true;
+			}
+			if (ramSize)
+			{
+				if (flag)
+				{
+					text.Append(AFPSCounter.NEW_LINE);
+				}
+				int systemMemorySize = SystemInfo.systemMemorySize;
+				if (systemMemorySize > 0)
+				{
+					text.Append("RAM: ").Append(systemMemorySize).Append(" MB");
+					flag = true;
+				}
+			}
+			if (screenData)
+			{
+				if (flag)
+				{
+					text.Append(AFPSCounter.NEW_LINE);
+				}
+				Resolution currentResolution = Screen.currentResolution;
+				text.Append("Screen: ").Append(currentResolution.width).Append("x")
+					.Append(currentResolution.height)
+					.Append("@")
+					.Append(currentResolution.refreshRate)
+					.Append("Hz (window size: ")
+					.Append(Screen.width)
+					.Append("x")
+					.Append(Screen.height);
+				float dpi = Screen.dpi;
+				if (dpi <= 0f)
+				{
+					text.Append(")");
+				}
+				else
+				{
+					text.Append(", DPI: ").Append(dpi).Append(")");
+				}
+			}
+			lastValue = text.ToString();
+			if (main.OperationMode == AFPSCounterOperationMode.Normal)
+			{
+				text.Insert(0, colorCached);
+				text.Append("</color>");
+			}
+			else
+			{
+				text.Length = 0;
+			}
+			dirty = true;
+		}
+	}
+
+	private bool HasData()
+	{
+		return cpuModel || gpuModel || ramSize || screenData;
+	}
+}
 }

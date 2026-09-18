@@ -2,62 +2,72 @@ using UnityEngine;
 
 public class TiltCamera : MonoBehaviour
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public bool tiltSteerActive = true;
 
-	1. No dll files were provided to AssetRipper.
+	public float smooth = 10f;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	private float lerpingFactor;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public float tiltSpeedX = 1f;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public float tiltSpeedY = 1f;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	private Vector3 localPosition;
 
-	3. Assembly Reconstruction has not been implemented.
+	private Vector3 betweenLerp;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	private float speedX;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	private float speedY;
 
-	4. This script is unnecessary.
+	public float offsetX;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public float offsetY;
 
-	5. Script Content Level 0
+	private Vector3 mStartPos;
 
-		AssetRipper was set to not load any script information.
+	public float maxDistanceX = 1f;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public float maxDistanceY = 0.1f;
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	private void Start()
+	{
+		Input.gyro.enabled = true;
+		mStartPos = base.transform.position;
+	}
 
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	private void Update()
+	{
+		lerpingFactor = 1f / smooth;
+		if (tiltSteerActive)
+		{
+			Vector3 position = base.transform.position;
+			speedY = Input.gyro.rotationRateUnbiased.x * tiltSpeedX;
+			speedX = Input.gyro.rotationRateUnbiased.y * tiltSpeedY;
+			localPosition.y = (0f - speedY) * Mathf.Exp(2f) + offsetY;
+			localPosition.x = speedX * Mathf.Exp(2f) + offsetX;
+			localPosition.z = 0f;
+			betweenLerp = Vector3.Lerp(position, position + localPosition, 0.1f);
+			Vector3 vector = Vector3.Lerp(position, betweenLerp, lerpingFactor);
+			Vector3 vector2 = vector - mStartPos;
+			if (Mathf.Abs(vector2.x) > maxDistanceX)
+			{
+				vector2.x = ((!(vector2.x > 0f)) ? (0f - maxDistanceX) : maxDistanceX);
+			}
+			if (Mathf.Abs(vector2.y) > maxDistanceY)
+			{
+				vector2.y = ((!(vector2.y > 0f)) ? (0f - maxDistanceY) : maxDistanceY);
+			}
+			vector = mStartPos + vector2;
+			base.transform.position = vector;
+		}
+		if (tiltSteerActive && !Input.gyro.enabled)
+		{
+			Input.gyro.enabled = true;
+		}
+		if (!tiltSteerActive && Input.gyro.enabled)
+		{
+			Input.gyro.enabled = false;
+		}
+	}
 }

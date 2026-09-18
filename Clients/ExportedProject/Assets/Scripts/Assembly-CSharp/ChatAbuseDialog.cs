@@ -1,63 +1,167 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
-public class ChatAbuseDialog : MonoBehaviour
+public class ChatAbuseDialog : GuiElementSingle<ChatAbuseDialog>, IGuiDialog
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public const string POPUP_REALLIFE = "ID_GUI_REPORTABUSE_LISTITEM0";
 
-	1. No dll files were provided to AssetRipper.
+	public const string POPUP_CHILD = "ID_GUI_REPORTABUSE_LISTITEM1";
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public const string POPUP_SEXUAL = "ID_GUI_REPORTABUSE_LISTITEM2";
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public const string POPUP_HATE = "ID_GUI_REPORTABUSE_LISTITEM3";
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public const string POPUP_HARRASMENT = "ID_GUI_REPORTABUSE_LISTITEM4";
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public const string POPUP_SPAM = "ID_GUI_REPORTABUSE_LISTITEM5";
 
-	3. Assembly Reconstruction has not been implemented.
+	public const string POPUP_CHEAT = "ID_GUI_REPORTABUSE_LISTITEM6";
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public const string POPUP_OFFENSIVE = "ID_GUI_REPORTABUSE_LISTITEM7";
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public const string POPUP_SCROLLING = "ID_GUI_REPORTABUSE_LISTITEM8";
 
-	4. This script is unnecessary.
+	[Header("Core")]
+	public ChatAbusePopUpList popUpList;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	[Header("Buttons")]
+	public UIButton butonClose;
 
-	5. Script Content Level 0
+	public UIButton buttonCancel;
 
-		AssetRipper was set to not load any script information.
+	[Header("-Submit")]
+	public UIButton submitButton;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public BoxCollider submitCollider;
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public UISprite submitBackground;
 
-	7. An incorrect path was provided to AssetRipper.
+	private string mPlayerId;
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	private string mMessage;
 
-	*/
+	private ChatReportType mReportType;
+
+	private Dictionary<string, ChatReportType> mReportDictionary;
+
+	public static void ShowAbuseDialog(string playerId, string message)
+	{
+		ChatAbuseDialog chatAbuseDialog = GuiElementSingle<ChatAbuseDialog>.instance;
+		chatAbuseDialog.mPlayerId = playerId;
+		chatAbuseDialog.mMessage = message;
+		Singleton<GuiManager>.instance.ShowDialog(chatAbuseDialog, 0f);
+	}
+
+	public override void InitControls()
+	{
+		UIEventListener uIEventListener = UIEventListener.Get(buttonCancel.gameObject);
+		uIEventListener.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener.onClick, new UIEventListener.VoidDelegate(CloseDialog));
+		UIEventListener uIEventListener2 = UIEventListener.Get(butonClose.gameObject);
+		uIEventListener2.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener2.onClick, new UIEventListener.VoidDelegate(CloseDialog));
+		UIEventListener uIEventListener3 = UIEventListener.Get(submitButton.gameObject);
+		uIEventListener3.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener3.onClick, new UIEventListener.VoidDelegate(SubmitButtonClick));
+		FillDictionary();
+		popUpList.popUpList.SetDefaultValue();
+		popUpList.OnSelect += OnSelect;
+	}
+
+	private void CloseDialog(GameObject go)
+	{
+		if (base.isFullyShowed)
+		{
+			HideDialog();
+		}
+	}
+
+	private void SubmitButtonClick(GameObject go)
+	{
+		if (base.isFullyShowed)
+		{
+			Singleton<BeanstalkServerManager>.instance.SendPlayerReport(mPlayerId, mMessage, (int)mReportType);
+			HideDialog();
+		}
+	}
+
+	private void OnSelect(string selection, UILabel label)
+	{
+		if (base.isFullyShowed)
+		{
+			SetSubmitButton(enabled: true);
+			label.color = Colours.grayDark;
+			if (!mReportDictionary.ContainsKey(selection))
+			{
+				FillDictionary();
+			}
+			if (mReportDictionary.ContainsKey(selection))
+			{
+				mReportType = mReportDictionary[selection];
+			}
+			else
+			{
+				mReportType = ChatReportType.Advertising;
+			}
+			SoundsManager.Instance.PlayButtonClickedSound();
+		}
+	}
+
+	public override void InitGUIValues()
+	{
+		popUpList.ResetToDefault();
+		SetSubmitButton(enabled: false);
+	}
+
+	public override void DoBeforeShowUp()
+	{
+		base.DoBeforeShowUp();
+		UIDraggablePanel.panelDisabled = true;
+		GuiElementSingle<ChatGuiElement>.instance.chatContent.draggablePanel.forceDrag = false;
+		GuiElementSingle<ChatGuiElement>.instance.messageContent.draggablePanel.forceDrag = false;
+	}
+
+	public override void DoAfterHide()
+	{
+		base.DoAfterHide();
+		UIDraggablePanel.panelDisabled = false;
+		GuiElementSingle<ChatGuiElement>.instance.chatContent.draggablePanel.forceDrag = true;
+		GuiElementSingle<ChatGuiElement>.instance.messageContent.draggablePanel.forceDrag = true;
+	}
+
+	private void SetSubmitButton(bool enabled)
+	{
+		submitCollider.enabled = enabled;
+		submitBackground.color = ((!enabled) ? Color.white.ReplaceA(0.5f) : Color.white);
+		submitButton.enabled = enabled;
+	}
+
+	private void FillDictionary()
+	{
+		if (mReportDictionary == null)
+		{
+			mReportDictionary = new Dictionary<string, ChatReportType>();
+		}
+		if (mReportDictionary.Count > 0)
+		{
+			mReportDictionary.Clear();
+		}
+		mReportDictionary.Add("ID_GUI_REPORTABUSE_LISTITEM6", ChatReportType.CheatInfo);
+		mReportDictionary.Add("ID_GUI_REPORTABUSE_LISTITEM1", ChatReportType.ChildSolicitation);
+		mReportDictionary.Add("ID_GUI_REPORTABUSE_LISTITEM4", ChatReportType.HarassmentOrStalking);
+		mReportDictionary.Add("ID_GUI_REPORTABUSE_LISTITEM3", ChatReportType.HateSpeech);
+		mReportDictionary.Add("ID_GUI_REPORTABUSE_LISTITEM7", ChatReportType.OffensiveLanguage);
+		mReportDictionary.Add("ID_GUI_REPORTABUSE_LISTITEM0", ChatReportType.RealLifeThreat);
+		mReportDictionary.Add("ID_GUI_REPORTABUSE_LISTITEM8", ChatReportType.ExcessiveSpamming);
+		mReportDictionary.Add("ID_GUI_REPORTABUSE_LISTITEM2", ChatReportType.SexualOrVulgarContent);
+		mReportDictionary.Add("ID_GUI_REPORTABUSE_LISTITEM5", ChatReportType.Advertising);
+	}
+
+	public GuiElement GetGuiElement()
+	{
+		return this;
+	}
+
+	public override void OnBack()
+	{
+		CloseDialog(buttonCancel.gameObject);
+	}
 }

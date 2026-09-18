@@ -1,63 +1,144 @@
+using System;
 using UnityEngine;
 
+[AddComponentMenu("AQUAS/Buoyancy")]
+[RequireComponent(typeof(Rigidbody))]
 public class AQUAS_Buoyancy : MonoBehaviour
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public enum debugModes
+	{
+		none,
+		showAffectedFaces,
+		showForceRepresentation,
+		showReferenceVolume
+	}
 
-	1. No dll files were provided to AssetRipper.
+	public float waterLevel;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public float waterDensity;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	[Space(5f)]
+	public bool useBalanceFactor;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public Vector3 balanceFactor;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	[Space(20f)]
+	[Range(0f, 1f)]
+	public float dynamicSurface = 0.3f;
 
-	3. Assembly Reconstruction has not been implemented.
+	[Range(1f, 10f)]
+	public float bounceFrequency = 3f;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	[Header("Debugging can be ver performance heavy!")]
+	[Space(5f)]
+	public debugModes debug;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	private Vector3[] vertices;
 
-	4. This script is unnecessary.
+	private int[] triangles;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private Mesh mesh;
 
-	5. Script Content Level 0
+	private Rigidbody rb;
 
-		AssetRipper was set to not load any script information.
+	private float effWaterDensity;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	private float regWaterDensity;
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	private float maxWaterDensity;
 
-	7. An incorrect path was provided to AssetRipper.
+	private void Start()
+	{
+		mesh = GetComponent<MeshFilter>().mesh;
+		vertices = mesh.vertices;
+		triangles = mesh.triangles;
+		rb = GetComponent<Rigidbody>();
+		regWaterDensity = waterDensity;
+		maxWaterDensity = regWaterDensity + regWaterDensity * 0.5f * dynamicSurface;
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	private void FixedUpdate()
+	{
+		if (balanceFactor.x < 0.001f)
+		{
+			balanceFactor.x = 0.001f;
+		}
+		if (balanceFactor.y < 0.001f)
+		{
+			balanceFactor.y = 0.001f;
+		}
+		if (balanceFactor.z < 0.001f)
+		{
+			balanceFactor.z = 0.001f;
+		}
+		AddForce();
+	}
 
-	*/
+	private void Update()
+	{
+		regWaterDensity = waterDensity;
+		maxWaterDensity = regWaterDensity + regWaterDensity * 0.5f * dynamicSurface;
+		effWaterDensity = (maxWaterDensity - regWaterDensity) / 2f + regWaterDensity + Mathf.Sin(Time.time * bounceFrequency) * (maxWaterDensity - regWaterDensity) / 2f;
+	}
+
+	private void AddForce()
+	{
+		for (int i = 0; i < triangles.Length; i += 3)
+		{
+			Vector3 vector = vertices[triangles[i]];
+			Vector3 vector2 = vertices[triangles[i + 1]];
+			Vector3 vector3 = vertices[triangles[i + 2]];
+			float num = waterLevel - Center(vector, vector2, vector3).y;
+			if (num > 0f && Center(vector, vector2, vector3).y > (Center(vector, vector2, vector3) + Normal(vector, vector2, vector3)).y)
+			{
+				float y = effWaterDensity * Physics.gravity.y * num * Area(vector, vector2, vector3) * Normal(vector, vector2, vector3).normalized.y;
+				if (useBalanceFactor)
+				{
+					rb.AddForceAtPosition(new Vector3(0f, y, 0f), base.transform.TransformPoint(new Vector3(base.transform.InverseTransformPoint(Center(vector, vector2, vector3)).x / (balanceFactor.x * base.transform.localScale.x * 1000f), base.transform.InverseTransformPoint(Center(vector, vector2, vector3)).y / (balanceFactor.y * base.transform.localScale.x * 1000f), base.transform.InverseTransformPoint(Center(vector, vector2, vector3)).z / (balanceFactor.z * base.transform.localScale.x * 1000f))));
+				}
+				else
+				{
+					rb.AddForceAtPosition(new Vector3(0f, y, 0f), base.transform.TransformPoint(new Vector3(base.transform.InverseTransformPoint(Center(vector, vector2, vector3)).x, base.transform.InverseTransformPoint(Center(vector, vector2, vector3)).y, base.transform.InverseTransformPoint(Center(vector, vector2, vector3)).z)));
+				}
+				if (debug == debugModes.showAffectedFaces)
+				{
+					Debug.DrawLine(Center(vector, vector2, vector3), Center(vector, vector2, vector3) + Normal(vector, vector2, vector3), Color.white);
+				}
+				if (debug == debugModes.showForceRepresentation)
+				{
+					Debug.DrawRay(Center(vector, vector2, vector3), new Vector3(0f, y, 0f), Color.red);
+				}
+				if (debug == debugModes.showReferenceVolume)
+				{
+					Debug.DrawLine(new Vector3(base.transform.TransformPoint(vector).x, Center(vector, vector2, vector3).y, base.transform.TransformPoint(vector).z), new Vector3(base.transform.TransformPoint(vector2).x, Center(vector, vector2, vector3).y, base.transform.TransformPoint(vector2).z), Color.green);
+					Debug.DrawLine(new Vector3(base.transform.TransformPoint(vector2).x, Center(vector, vector2, vector3).y, base.transform.TransformPoint(vector2).z), new Vector3(base.transform.TransformPoint(vector3).x, Center(vector, vector2, vector3).y, base.transform.TransformPoint(vector3).z), Color.green);
+					Debug.DrawLine(new Vector3(base.transform.TransformPoint(vector3).x, Center(vector, vector2, vector3).y, base.transform.TransformPoint(vector3).z), new Vector3(base.transform.TransformPoint(vector).x, Center(vector, vector2, vector3).y, base.transform.TransformPoint(vector).z), Color.green);
+					Debug.DrawLine(new Vector3(base.transform.TransformPoint(vector).x, waterLevel, base.transform.TransformPoint(vector).z), new Vector3(base.transform.TransformPoint(vector2).x, waterLevel, base.transform.TransformPoint(vector2).z), Color.green);
+					Debug.DrawLine(new Vector3(base.transform.TransformPoint(vector2).x, waterLevel, base.transform.TransformPoint(vector2).z), new Vector3(base.transform.TransformPoint(vector3).x, waterLevel, base.transform.TransformPoint(vector3).z), Color.green);
+					Debug.DrawLine(new Vector3(base.transform.TransformPoint(vector3).x, waterLevel, base.transform.TransformPoint(vector3).z), new Vector3(base.transform.TransformPoint(vector).x, waterLevel, base.transform.TransformPoint(vector).z), Color.green);
+					Debug.DrawLine(new Vector3(base.transform.TransformPoint(vector).x, waterLevel, base.transform.TransformPoint(vector).z), new Vector3(base.transform.TransformPoint(vector).x, Center(vector, vector2, vector3).y, base.transform.TransformPoint(vector).z), Color.green);
+					Debug.DrawLine(new Vector3(base.transform.TransformPoint(vector2).x, waterLevel, base.transform.TransformPoint(vector2).z), new Vector3(base.transform.TransformPoint(vector2).x, Center(vector, vector2, vector3).y, base.transform.TransformPoint(vector2).z), Color.green);
+					Debug.DrawLine(new Vector3(base.transform.TransformPoint(vector3).x, waterLevel, base.transform.TransformPoint(vector3).z), new Vector3(base.transform.TransformPoint(vector3).x, Center(vector, vector2, vector3).y, base.transform.TransformPoint(vector3).z), Color.green);
+				}
+			}
+		}
+	}
+
+	private Vector3 Center(Vector3 p1, Vector3 p2, Vector3 p3)
+	{
+		Vector3 position = (p1 + p2 + p3) / 3f;
+		return base.transform.TransformPoint(position);
+	}
+
+	private Vector3 Normal(Vector3 p1, Vector3 p2, Vector3 p3)
+	{
+		return Vector3.Cross(base.transform.TransformPoint(p2) - base.transform.TransformPoint(p1), base.transform.TransformPoint(p3) - base.transform.TransformPoint(p1)).normalized;
+	}
+
+	private float Area(Vector3 p1, Vector3 p2, Vector3 p3)
+	{
+		float num = Vector3.Distance(new Vector3(base.transform.TransformPoint(p1).x, Center(p1, p2, p3).y, base.transform.TransformPoint(p1).z), new Vector3(base.transform.TransformPoint(p2).x, Center(p1, p2, p3).y, base.transform.TransformPoint(p2).z));
+		float num2 = Vector3.Distance(new Vector3(base.transform.TransformPoint(p3).x, Center(p1, p2, p3).y, base.transform.TransformPoint(p3).z), new Vector3(base.transform.TransformPoint(p1).x, Center(p1, p2, p3).y, base.transform.TransformPoint(p1).z));
+		return num * num2 * Mathf.Sin(Vector3.Angle(new Vector3(base.transform.TransformPoint(p2).x, Center(p1, p2, p3).y, base.transform.TransformPoint(p2).z) - new Vector3(base.transform.TransformPoint(p1).x, Center(p1, p2, p3).y, base.transform.TransformPoint(p1).z), new Vector3(base.transform.TransformPoint(p3).x, Center(p1, p2, p3).y, base.transform.TransformPoint(p3).z) - new Vector3(base.transform.TransformPoint(p1).x, Center(p1, p2, p3).y, base.transform.TransformPoint(p1).z)) * ((float)Math.PI / 180f)) / 2f;
+	}
 }

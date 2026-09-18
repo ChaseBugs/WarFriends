@@ -1,63 +1,55 @@
+using System.Collections.Generic;
 using UnityEngine;
 
-public class ResultsRewardsNA : MonoBehaviour
+public class ResultsRewardsNA : ResultsRewards
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Header("Differentiate Types")]
+	public GameObject resultsNA;
 
-	1. No dll files were provided to AssetRipper.
+	public GameObject resultsValues;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	private TweenAnimator mAnimatorNoValues;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public TweenAnimator animatorNoValues => mAnimatorNoValues;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public override TweenAnimator InitControls(bool headerAnimation = true)
+	{
+		mAnimatorNoValues = CreateAnimatorForMoney();
+		return base.InitControls(headerAnimation);
+	}
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	private TweenAnimator CreateAnimatorForMoney()
+	{
+		float time = 0.4f;
+		TweenAnimator tweenAnimator = rewardsPanel.gameObject.AddComponent<TweenAnimator>();
+		tweenAnimator.allTweens = new List<TweenAnimator.TweenRecord>();
+		Vector3 localPosition = rewardsPanel.transform.localPosition;
+		tweenAnimator.AddTween(1, TweenAnimator.TweenType.Alpha, rewardsPanel.gameObject, time, 1f, 0f, -1, 0f);
+		tweenAnimator.AddTween(from: localPosition + new Vector3(0f, -20f, 0f), id: 2, tweenType: TweenAnimator.TweenType.Position, tweenTarget: rewardsPanel.gameObject, time: time, to: localPosition + new Vector3(0f, 10f, 0f), delay: 0f);
+		tweenAnimator.AddTween(3, TweenAnimator.TweenType.Position, rewardsPanel.gameObject, time, localPosition, 0f, 2);
+		return tweenAnimator;
+	}
 
-	3. Assembly Reconstruction has not been implemented.
+	public TweenAnimator InitGuiValuesEmpty()
+	{
+		resultsNA.SetActive(value: true);
+		resultsValues.SetActive(value: false);
+		InitializeObjects();
+		return mAnimatorNoValues;
+	}
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public TweenAnimator InitGuiValuesAssign()
+	{
+		resultsNA.SetActive(value: false);
+		resultsValues.SetActive(value: false);
+		InitializeObjects();
+		return mAnimatorNoValues;
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
-
-	4. This script is unnecessary.
-
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
-
-	5. Script Content Level 0
-
-		AssetRipper was set to not load any script information.
-
-	6. Cpp2IL failed to decompile Il2Cpp data
-
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public override TweenAnimator InitGuiValuesSimple(bool isVip, int warbucks, int gold, int warbucksVIP, int goldVIP, long walletWb, long walletGold)
+	{
+		resultsNA.SetActive(value: false);
+		resultsValues.SetActive(value: true);
+		return base.InitGuiValuesSimple(isVip, warbucks, gold, warbucksVIP, goldVIP, walletWb, walletGold);
+	}
 }

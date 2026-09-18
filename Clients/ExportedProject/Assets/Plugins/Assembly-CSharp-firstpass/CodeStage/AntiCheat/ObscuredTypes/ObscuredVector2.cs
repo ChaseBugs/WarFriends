@@ -1,66 +1,261 @@
+using System;
+using CodeStage.AntiCheat.Detectors;
 using UnityEngine;
 
 namespace CodeStage.AntiCheat.ObscuredTypes
 {
-	public class ObscuredVector2 : MonoBehaviour
+[Serializable]
+public struct ObscuredVector2
+{
+	[Serializable]
+	public struct RawEncryptedVector2
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
+		public int x;
 
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
+		public int y;
 	}
+
+	private static int cryptoKey = 120206;
+
+	private static readonly Vector2 initialFakeValue = Vector2.zero;
+
+	[SerializeField]
+	private int currentCryptoKey;
+
+	[SerializeField]
+	private RawEncryptedVector2 hiddenValue;
+
+	[SerializeField]
+	private Vector2 fakeValue;
+
+	[SerializeField]
+	private bool inited;
+
+	public float x
+	{
+		get
+		{
+			float num = InternalDecryptField(hiddenValue.x);
+			if (ObscuredCheatingDetector.IsRunning && !fakeValue.Equals(initialFakeValue) && Math.Abs(num - fakeValue.x) > ObscuredCheatingDetector.Instance.vector2Epsilon)
+			{
+				ObscuredCheatingDetector.Instance.OnCheatingDetected();
+			}
+			return num;
+		}
+		set
+		{
+			hiddenValue.x = InternalEncryptField(value);
+			if (ObscuredCheatingDetector.IsRunning)
+			{
+				fakeValue.x = value;
+			}
+		}
+	}
+
+	public float y
+	{
+		get
+		{
+			float num = InternalDecryptField(hiddenValue.y);
+			if (ObscuredCheatingDetector.IsRunning && !fakeValue.Equals(initialFakeValue) && Math.Abs(num - fakeValue.y) > ObscuredCheatingDetector.Instance.vector2Epsilon)
+			{
+				ObscuredCheatingDetector.Instance.OnCheatingDetected();
+			}
+			return num;
+		}
+		set
+		{
+			hiddenValue.y = InternalEncryptField(value);
+			if (ObscuredCheatingDetector.IsRunning)
+			{
+				fakeValue.y = value;
+			}
+		}
+	}
+
+	public float this[int index]
+	{
+		get
+		{
+			switch (index)
+			{
+				case 0:
+					return x;
+				case 1:
+					return y;
+				default:
+					throw new IndexOutOfRangeException("Invalid ObscuredVector2 index!");
+			}
+		}
+		set
+		{
+			switch (index)
+			{
+			case 0:
+				x = value;
+				break;
+			case 1:
+				y = value;
+				break;
+			default:
+				throw new IndexOutOfRangeException("Invalid ObscuredVector2 index!");
+			}
+		}
+	}
+
+	private ObscuredVector2(RawEncryptedVector2 value)
+	{
+		currentCryptoKey = cryptoKey;
+		hiddenValue = value;
+		fakeValue = initialFakeValue;
+		inited = true;
+	}
+
+	public static void SetNewCryptoKey(int newKey)
+	{
+		cryptoKey = newKey;
+	}
+
+	public static RawEncryptedVector2 Encrypt(Vector2 value)
+	{
+		return Encrypt(value, 0);
+	}
+
+	public static RawEncryptedVector2 Encrypt(Vector2 value, int key)
+	{
+		if (key == 0)
+		{
+			key = cryptoKey;
+		}
+		RawEncryptedVector2 result = default(RawEncryptedVector2);
+		result.x = ObscuredFloat.Encrypt(value.x, key);
+		result.y = ObscuredFloat.Encrypt(value.y, key);
+		return result;
+	}
+
+	public static Vector2 Decrypt(RawEncryptedVector2 value)
+	{
+		return Decrypt(value, 0);
+	}
+
+	public static Vector2 Decrypt(RawEncryptedVector2 value, int key)
+	{
+		if (key == 0)
+		{
+			key = cryptoKey;
+		}
+		Vector2 result = default(Vector2);
+		result.x = ObscuredFloat.Decrypt(value.x, key);
+		result.y = ObscuredFloat.Decrypt(value.y, key);
+		return result;
+	}
+
+	public void ApplyNewCryptoKey()
+	{
+		if (currentCryptoKey != cryptoKey)
+		{
+			hiddenValue = Encrypt(InternalDecrypt(), cryptoKey);
+			currentCryptoKey = cryptoKey;
+		}
+	}
+
+	public void RandomizeCryptoKey()
+	{
+		Vector2 value = InternalDecrypt();
+		currentCryptoKey = UnityEngine.Random.seed;
+		hiddenValue = Encrypt(value, currentCryptoKey);
+	}
+
+	public RawEncryptedVector2 GetEncrypted()
+	{
+		ApplyNewCryptoKey();
+		return hiddenValue;
+	}
+
+	public void SetEncrypted(RawEncryptedVector2 encrypted)
+	{
+		inited = true;
+		hiddenValue = encrypted;
+		if (ObscuredCheatingDetector.IsRunning)
+		{
+			fakeValue = InternalDecrypt();
+		}
+	}
+
+	private Vector2 InternalDecrypt()
+	{
+		if (!inited)
+		{
+			currentCryptoKey = cryptoKey;
+			hiddenValue = Encrypt(initialFakeValue);
+			fakeValue = initialFakeValue;
+			inited = true;
+		}
+		Vector2 vector = default(Vector2);
+		vector.x = ObscuredFloat.Decrypt(hiddenValue.x, currentCryptoKey);
+		vector.y = ObscuredFloat.Decrypt(hiddenValue.y, currentCryptoKey);
+		if (ObscuredCheatingDetector.IsRunning && !fakeValue.Equals(initialFakeValue) && !CompareVectorsWithTolerance(vector, fakeValue))
+		{
+			ObscuredCheatingDetector.Instance.OnCheatingDetected();
+		}
+		return vector;
+	}
+
+	private bool CompareVectorsWithTolerance(Vector2 vector1, Vector2 vector2)
+	{
+		float vector2Epsilon = ObscuredCheatingDetector.Instance.vector2Epsilon;
+		return Math.Abs(vector1.x - vector2.x) < vector2Epsilon && Math.Abs(vector1.y - vector2.y) < vector2Epsilon;
+	}
+
+	private float InternalDecryptField(int encrypted)
+	{
+		int key = cryptoKey;
+		if (currentCryptoKey != cryptoKey)
+		{
+			key = currentCryptoKey;
+		}
+		return ObscuredFloat.Decrypt(encrypted, key);
+	}
+
+	private int InternalEncryptField(float encrypted)
+	{
+		return ObscuredFloat.Encrypt(encrypted, cryptoKey);
+	}
+
+	public override int GetHashCode()
+	{
+		return InternalDecrypt().GetHashCode();
+	}
+
+	public override string ToString()
+	{
+		return InternalDecrypt().ToString();
+	}
+
+	public string ToString(string format)
+	{
+		return InternalDecrypt().ToString(format);
+	}
+
+	public static implicit operator ObscuredVector2(Vector2 value)
+	{
+		ObscuredVector2 result = new ObscuredVector2(Encrypt(value));
+		if (ObscuredCheatingDetector.IsRunning)
+		{
+			result.fakeValue = value;
+		}
+		return result;
+	}
+
+	public static implicit operator Vector2(ObscuredVector2 value)
+	{
+		return value.InternalDecrypt();
+	}
+
+	public static implicit operator Vector3(ObscuredVector2 value)
+	{
+		Vector2 vector = value.InternalDecrypt();
+		return new Vector3(vector.x, vector.y, 0f);
+	}
+}
 }

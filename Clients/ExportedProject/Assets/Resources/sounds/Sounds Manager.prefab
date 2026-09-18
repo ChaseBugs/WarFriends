@@ -331,6 +331,396 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 905ce6b7c191b6556941d52f4213170f, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  musicMenu: {fileID: 8255190}
+  SoundEntries:
+  - Name: LabelShowGame
+    volume: 1
+    persistent: 1
+    mClipPath: Sounds/SFX/game/ZOBRAZENILABELU_bullet_casing_9mm_drop_on_dirt_02
+    mClipPaths: []
+    soundEnum: 1
+  - Name: Button
+    volume: 0.5
+    persistent: 1
+    mClipPath: Sounds/SFX/menu/new/CLICK_V1
+    mClipPaths: []
+    soundEnum: 0
+  - Name: SwitchWeapon_Primary
+    volume: 0.8
+    persistent: 1
+    mClipPath: Sounds/SFX/game/New/WEAPON_SWITCH_PRIMARY
+    mClipPaths: []
+    soundEnum: 2
+  - Name: DeplyUnits
+    volume: 0.8
+    persistent: 1
+    mClipPath: Sounds/SFX/game/New/DEPLOY_UNITS
+    mClipPaths: []
+    soundEnum: 3
+  - Name: Ribbon
+    volume: 0.7
+    persistent: 1
+    mClipPath: Sounds/SFX/game/New/RIBBON
+    mClipPaths: []
+    soundEnum: 4
+  - Name: Critical
+    volume: 1
+    persistent: 1
+    mClipPath:
+    mClipPaths:
+    - Sounds/SFX/game/New/CRITICAL_HIT_1
+    - Sounds/SFX/game/New/CRITICAL_HIT_2
+    soundEnum: 5
+  - Name: Buy
+    volume: 1
+    persistent: 1
+    mClipPath: Sounds/SFX/menu/new/BUY_DEFAULT
+    mClipPaths: []
+    soundEnum: 6
+  - Name: Upgrade
+    volume: 1
+    persistent: 1
+    mClipPath: Sounds/SFX/menu/new/UPGRADE
+    mClipPaths: []
+    soundEnum: 7
+  - Name: ActivateUpgrade
+    volume: 1
+    persistent: 1
+    mClipPath: Sounds/SFX/menu/new/UPGRADE_ACTIVATE
+    mClipPaths: []
+    soundEnum: 8
+  - Name: CounterSoundExperience
+    volume: 0.054
+    persistent: 1
+    mClipPath: Sounds/SFX/menu/COUNTERelectronicblip01
+    mClipPaths: []
+    soundEnum: 9
+  - Name: CardEquiped
+    volume: 0.85
+    persistent: 1
+    mClipPath: Sounds/SFX/menu/new/CARD_REWARD
+    mClipPaths: []
+    soundEnum: 10
+  - Name: CardReturn
+    volume: 1
+    persistent: 1
+    mClipPath: Sounds/SFX/menu/new/CARD_RETURN
+    mClipPaths: []
+    soundEnum: 20
+  - Name: AssigmentCompleted
+    volume: 0.3
+    persistent: 1
+    mClipPath: Sounds/SFX/menu/new/CLAIM_DAILY_ASSIGNMENTS_MONO
+    mClipPaths: []
+    soundEnum: 11
+  - Name: AirStrikeJet
+    volume: 1
+    persistent: 1
+    mClipPath: Sounds/SFX/game/New/AIRSTRIKE
+    mClipPaths: []
+    soundEnum: 12
+  - Name: CounterSoundMoney
+    volume: 0.054
+    persistent: 1
+    mClipPath: Sounds/SFX/menu/new/RESULT_COUNTER_BEEP
+    mClipPaths: []
+    soundEnum: 13
+  - Name: OpponentFound
+    volume: 1
+    persistent: 1
+    mClipPath: Sounds/SFX/menu/new/OPONENT_FOUND_V1
+    mClipPaths: []
+    soundEnum: 14
+  - Name: Overtime
+    volume: 1
+    persistent: 1
+    mClipPath: Sounds/SFX/game/New/OVERTIME
+    mClipPaths: []
+    soundEnum: 15
+  - Name: OvertimeAlarm
+    volume: 0.8
+    persistent: 1
+    mClipPath: Sounds/SFX/game/New/OVERTIME_ALARM
+    mClipPaths: []
+    soundEnum: 16
+  - Name: SwitchWeapon_Secondary
+    volume: 1
+    persistent: 1
+    mClipPath: Sounds/SFX/game/New/WEAPON_SWITCH_SECONDARY
+    mClipPaths: []
+    soundEnum: 17
+  - Name: SwitchWeapon_Explosive
+    volume: 1
+    persistent: 1
+    mClipPath: Sounds/SFX/game/New/WEAPON_SWITCH_EXPLOSIVE
+    mClipPaths: []
+    soundEnum: 18
+  - Name: SwitchWeapon_Pistol
+    volume: 1
+    persistent: 1
+    mClipPath: Sounds/SFX/game/New/WEAPON_SWITCH_HANDGUN
+    mClipPaths: []
+    soundEnum: 19
+  - Name: AssigmentBarCompleted
+    volume: 0.3
+    persistent: 1
+    mClipPath: Sounds/SFX/menu/new/DAILY_ASSIGNMENTS_MONO
+    mClipPaths: []
+    soundEnum: 21
+  - Name: BootcampDialog
+    volume: 0.7
+    persistent: 1
+    mClipPath: Sounds/SFX/menu/new/BOOTCAMP_DIALOG_POPUP
+    mClipPaths: []
+    soundEnum: 22
+  - Name: BootcampObjectiveComplete
+    volume: 0.8
+    persistent: 1
+    mClipPath: Sounds/SFX/menu/new/BOOTCAMP_OBJECTIVE_COMPLETE
+    mClipPaths: []
+    soundEnum: 23
+  - Name: BootcampCongratulations
+    volume: 1
+    persistent: 1
+    mClipPath: Sounds/SFX/menu/new/CONGRATULATIONS_SCREEN_BOOTCAMP
+    mClipPaths: []
+    soundEnum: 24
+  - Name: BootcampIntro
+    volume: 1
+    persistent: 1
+    mClipPath: Sounds/SFX/menu/new/BOOTCAMP_INTRO
+    mClipPaths: []
+    soundEnum: 25
+  - Name: BootcampEnemyPresent
+    volume: 1
+    persistent: 1
+    mClipPath: Sounds/SFX/menu/new/BOOTCAMP_ENEMY_PRESENT
+    mClipPaths: []
+    soundEnum: 26
+  - Name: BootcampWoosh
+    volume: 1
+    persistent: 1
+    mClipPath: Sounds/SFX/menu/new/BOOTCAMP_WOOSH
+    mClipPaths: []
+    soundEnum: 27
+  - Name: BootcampUnitPresent
+    volume: 1
+    persistent: 1
+    mClipPath: Sounds/SFX/menu/new/BOOTCAMP_UNIT_PRESENT
+    mClipPaths: []
+    soundEnum: 28
+  - Name: BootcampClick
+    volume: 1
+    persistent: 1
+    mClipPath: Sounds/SFX/menu/new/BOOTCAMP_CLICK
+    mClipPaths: []
+    soundEnum: 29
+  - Name: BootcampDialogDissapear
+    volume: 0.5
+    persistent: 1
+    mClipPath: Sounds/SFX/menu/new/BOOTCAMP_DIALOG_DISSAPEAR
+    mClipPaths: []
+    soundEnum: 30
+  - Name: AssignmentDayCompleted
+    volume: 0.3
+    persistent: 1
+    mClipPath: Sounds/SFX/menu/new/ODMENA_OBECNE_V1
+    mClipPaths: []
+    soundEnum: 31
+  - Name: AssignmentMegaReward
+    volume: 1
+    persistent: 1
+    mClipPath: Sounds/SFX/menu/new/Reward
+    mClipPaths: []
+    soundEnum: 32
+  - Name: DogTagUsed
+    volume: 1
+    persistent: 1
+    mClipPath: Sounds/SFX/menu/new/DOGTAG_LOST
+    mClipPaths: []
+    soundEnum: 33
+  - Name: LevelUp
+    volume: 1
+    persistent: 1
+    mClipPath: Sounds/SFX/menu/new/RANK_UP
+    mClipPaths: []
+    soundEnum: 34
+  - Name: LevelUpUnlockedItem
+    volume: 1
+    persistent: 1
+    mClipPath: Sounds/SFX/menu/new/UNLOCK_V2
+    mClipPaths: []
+    soundEnum: 35
+  - Name: LeagueIconShowed
+    volume: 1
+    persistent: 1
+    mClipPath: Sounds/SFX/menu/cinematic_hit_explosion_05
+    mClipPaths: []
+    soundEnum: 36
+  - Name: LeagueRewardShowed
+    volume: 1
+    persistent: 1
+    mClipPath: Sounds/SFX/menu/new/Promoted
+    mClipPaths: []
+    soundEnum: 37
+  - Name: EquipWeapon
+    volume: 1
+    persistent: 1
+    mClipPath: Sounds/SFX/menu/new/WEAPON_EQUIP_CLICK_V1
+    mClipPaths: []
+    soundEnum: 38
+  - Name: PromoteUnit
+    volume: 1
+    persistent: 1
+    mClipPath: Sounds/SFX/menu/unit-promoted
+    mClipPaths: []
+    soundEnum: 39
+  - Name: BuyVIP
+    volume: 1
+    persistent: 1
+    mClipPath: Sounds/SFX/menu/new/BUY_VIP
+    mClipPaths: []
+    soundEnum: 40
+  - Name: CardFlip
+    volume: 1
+    persistent: 1
+    mClipPath: Sounds/SFX/menu/new/CARD_REWARD
+    mClipPaths: []
+    soundEnum: 41
+  - Name: DailyRewardShow
+    volume: 1
+    persistent: 1
+    mClipPath: Sounds/SFX/menu/new/Reward
+    mClipPaths: []
+    soundEnum: 42
+  - Name: DailyRewardClaim
+    volume: 1
+    persistent: 1
+    mClipPath: Sounds/SFX/game/success_playful_23
+    mClipPaths: []
+    soundEnum: 43
+  - Name: DailyVIPCardsShow
+    volume: 1
+    persistent: 1
+    mClipPath: Sounds/SFX/menu/new/Reward
+    mClipPaths: []
+    soundEnum: 44
+  - Name: CoinPurchase
+    volume: 1
+    persistent: 1
+    mClipPath: Sounds/SFX/menu/new/COINS_V1
+    mClipPaths: []
+    soundEnum: 45
+  - Name: KilledInAction
+    volume: 1
+    persistent: 1
+    mClipPath: Sounds/SFX/menu/bwv_mechanical_stamp_02
+    mClipPaths: []
+    soundEnum: 46
+  - Name: FlashEndScreen
+    volume: 1
+    persistent: 1
+    mClipPath: Sounds/SFX/menu/new/RESULT_SCREEN_FLASH
+    mClipPaths: []
+    soundEnum: 47
+  - Name: StarGained
+    volume: 1
+    persistent: 1
+    mClipPath: Sounds/SFX/menu/new/STAR
+    mClipPaths: []
+    soundEnum: 48
+  - Name: CardPlayed
+    volume: 0.8
+    persistent: 1
+    mClipPath: Sounds/SFX/game/New/CARD_PLAYER
+    mClipPaths: []
+    soundEnum: 49
+  - Name: EnemyCardPlayed
+    volume: 1
+    persistent: 1
+    mClipPath: Sounds/SFX/game/New/CARD_ENEMY
+    mClipPaths: []
+    soundEnum: 50
+  - Name: OpponentSearch
+    volume: 0.25
+    persistent: 1
+    mClipPath: Sounds/SFX/menu/new/OPONENT_SEARCH
+    mClipPaths: []
+    soundEnum: 51
+  - Name: DogTagGain
+    volume: 0.5
+    persistent: 1
+    mClipPath: Sounds/SFX/menu/new/DOGTAG_GAIN
+    mClipPaths: []
+    soundEnum: 52
+  - Name: Fight
+    volume: 1
+    persistent: 1
+    mClipPath: Sounds/SFX/game/New/FIGHT
+    mClipPaths: []
+    soundEnum: 53
+  - Name: GameOverWin
+    volume: 1
+    persistent: 1
+    mClipPath: Sounds/SFX/game/New/WIN_SOUND
+    mClipPaths: []
+    soundEnum: 54
+  - Name: GameOverLost
+    volume: 1
+    persistent: 1
+    mClipPath: Sounds/SFX/game/New/YOULOST
+    mClipPaths: []
+    soundEnum: 55
+  - Name: CraftingStart
+    volume: 1
+    persistent: 1
+    mClipPath: Sounds/SFX/menu/new/BOOTCAMP_DIALOG_POPUP_V3
+    mClipPaths: []
+    soundEnum: 56
+  - Name: CraftingClaim
+    volume: 1
+    persistent: 1
+    mClipPath: Sounds/SFX/menu/new/BOOTCAMP_ENEMY_PRESENT
+    mClipPaths: []
+    soundEnum: 57
+  - Name: CountdownSound
+    volume: 1
+    persistent: 1
+    mClipPath: Sounds/SFX/menu/new/COUNTDOWN_BEEP_V1
+    mClipPaths: []
+    soundEnum: 58
+  - Name: StartGameVsSound
+    volume: 1
+    persistent: 1
+    mClipPath: Sounds/SFX/game/New/INTRODUCTION_VS
+    mClipPaths: []
+    soundEnum: 59
+  - Name: StartGamePhotoSound
+    volume: 1
+    persistent: 1
+    mClipPath: Sounds/SFX/game/New/INTRODUCTION
+    mClipPaths: []
+    soundEnum: 60
+  - Name: OpenLootbox
+    volume: 1
+    persistent: 1
+    mClipPath: Sounds/SFX/menu/new/openlootbox
+    mClipPaths: []
+    soundEnum: 61
+  - Name: OpenLootboxCompleted
+    volume: 1
+    persistent: 1
+    mClipPath: Sounds/SFX/menu/new/openlootbox-ending-itemcompleted
+    mClipPaths: []
+    soundEnum: 62
+  - Name: OpenLootboxLegendary
+    volume: 1
+    persistent: 1
+    mClipPath: Sounds/SFX/menu/new/openlootbox-ending-legendary
+    mClipPaths: []
+    soundEnum: 63
+  autoLoad: 1
+  clipsForGame: []
 --- !u!114 &11472700
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -342,6 +732,496 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 40cbae3d408101334659c2e95c8b53ef, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  SoundEntries:
+  - Name: ExplosionBig
+    volume: 1
+    persistent: 1
+    mClipPath: Sounds/SFX/game/New/EXPLOSION_LARGE
+    mClipPaths: []
+    soundEnum: 1
+  - Name: SHOT_ASSAULT_1
+    volume: 1
+    persistent: 0
+    mClipPath: Sounds/SFX/weapons/assaultrifle/SHOT_ASSAULT_1
+    mClipPaths: []
+    soundEnum: 2
+  - Name: SHOT_ASSAULT_2
+    volume: 1
+    persistent: 0
+    mClipPath: Sounds/SFX/weapons/assaultrifle/SHOT_ASSAULT_2
+    mClipPaths: []
+    soundEnum: 3
+  - Name: SHOT_ASSAULT_3
+    volume: 1
+    persistent: 0
+    mClipPath: Sounds/SFX/weapons/assaultrifle/SHOT_ASSAULT_3
+    mClipPaths: []
+    soundEnum: 4
+  - Name: SHOT_ASSAULT_4
+    volume: 1
+    persistent: 0
+    mClipPath: Sounds/SFX/weapons/assaultrifle/SHOT_ASSAULT_4
+    mClipPaths: []
+    soundEnum: 30
+  - Name: SHOT_ASSAULT_5
+    volume: 1
+    persistent: 0
+    mClipPath: Sounds/SFX/weapons/assaultrifle/SHOT_ASSAULT_5
+    mClipPaths: []
+    soundEnum: 31
+  - Name: SHOT_ASSAULT_6
+    volume: 1
+    persistent: 0
+    mClipPath: Sounds/SFX/weapons/assaultrifle/SHOT_ASSAULT_6
+    mClipPaths: []
+    soundEnum: 32
+  - Name: SHOT_PISTOL_1
+    volume: 1
+    persistent: 0
+    mClipPath: Sounds/SFX/weapons/handgun/SHOT_PISTOL_1
+    mClipPaths: []
+    soundEnum: 5
+  - Name: SHOT_PISTOL_2
+    volume: 1
+    persistent: 0
+    mClipPath: Sounds/SFX/weapons/handgun/SHOT_PISTOL_2
+    mClipPaths: []
+    soundEnum: 6
+  - Name: SHOT_PISTOL_3
+    volume: 1
+    persistent: 0
+    mClipPath: Sounds/SFX/weapons/handgun/SHOT_PISTOL_3
+    mClipPaths: []
+    soundEnum: 7
+  - Name: SHOT_PISTOL_4
+    volume: 1
+    persistent: 0
+    mClipPath: Sounds/SFX/weapons/handgun/SHOT_PISTOL_4
+    mClipPaths: []
+    soundEnum: 18
+  - Name: SHOT_PISTOL_5
+    volume: 1
+    persistent: 0
+    mClipPath: Sounds/SFX/weapons/handgun/SHOT_PISTOL_5
+    mClipPaths: []
+    soundEnum: 33
+  - Name: SHOT_SNIPER_1
+    volume: 1
+    persistent: 0
+    mClipPath: Sounds/SFX/weapons/sniper/SHOT_SNIPER_1
+    mClipPaths: []
+    soundEnum: 8
+  - Name: SHOT_SNIPER_2
+    volume: 1
+    persistent: 0
+    mClipPath: Sounds/SFX/weapons/sniper/SHOT_SNIPER_2
+    mClipPaths: []
+    soundEnum: 9
+  - Name: SHOT_SNIPER_3
+    volume: 1
+    persistent: 0
+    mClipPath: Sounds/SFX/weapons/sniper/SHOT_SNIPER_3
+    mClipPaths: []
+    soundEnum: 10
+  - Name: SHOT_SNIPER_4
+    volume: 1
+    persistent: 0
+    mClipPath: Sounds/SFX/weapons/sniper/SHOT_SNIPER_4
+    mClipPaths: []
+    soundEnum: 27
+  - Name: SHOT_SNIPER_5
+    volume: 1
+    persistent: 0
+    mClipPath: Sounds/SFX/weapons/sniper/SHOT_SNIPER_5
+    mClipPaths: []
+    soundEnum: 34
+  - Name: RELOAD_ASSAULT
+    volume: 0.8
+    persistent: 1
+    mClipPath: Sounds/SFX/game/New/RELOAD_1
+    mClipPaths: []
+    soundEnum: 11
+  - Name: SHOT_LAUNCHER_1
+    volume: 1
+    persistent: 0
+    mClipPath: Sounds/SFX/weapons/launchers/SHOT_LAUNCHER_1
+    mClipPaths: []
+    soundEnum: 12
+  - Name: SHOT_LAUNCHER_2
+    volume: 1
+    persistent: 0
+    mClipPath: Sounds/SFX/weapons/launchers/SHOT_LAUNCHER_2
+    mClipPaths: []
+    soundEnum: 19
+  - Name: SHOT_LAUNCHER_3
+    volume: 1
+    persistent: 0
+    mClipPath: Sounds/SFX/weapons/launchers/SHOT_LAUNCHER_3
+    mClipPaths: []
+    soundEnum: 20
+  - Name: SHOT_LAUNCHER_4
+    volume: 1
+    persistent: 0
+    mClipPath: Sounds/SFX/weapons/launchers/SHOT_LAUNCHER_4
+    mClipPaths: []
+    soundEnum: 28
+  - Name: SHOT_LAUNCHER_5
+    volume: 1
+    persistent: 0
+    mClipPath: Sounds/SFX/weapons/launchers/SHOT_LAUNCHER_5
+    mClipPaths: []
+    soundEnum: 40
+  - Name: SHOT_LAUNCHER_6
+    volume: 1
+    persistent: 0
+    mClipPath: Sounds/SFX/weapons/launchers/SHOT_LAUNCHER_6
+    mClipPaths: []
+    soundEnum: 41
+  - Name: PlayerHit
+    volume: 0.8
+    persistent: 1
+    mClipPath:
+    mClipPaths:
+    - Sounds/SFX/game/New/PLAYER_HIT_1
+    - Sounds/SFX/game/New/PLAYER_HIT_2
+    - Sounds/SFX/game/New/PLAYER_HIT_3
+    - Sounds/SFX/game/New/PLAYER_HIT_4
+    soundEnum: 13
+  - Name: ShieldHit
+    volume: 0.35
+    persistent: 1
+    mClipPath:
+    mClipPaths:
+    - Sounds/SFX/game/New/SHIELD_HIT_1
+    - Sounds/SFX/game/New/SHIELD_HIT_2
+    - Sounds/SFX/game/New/SHIELD_HIT_3
+    - Sounds/SFX/game/New/SHIELD_HIT_4
+    - Sounds/SFX/game/New/SHIELD_HIT_5
+    - Sounds/SFX/game/New/SHIELD_HIT_6
+    - Sounds/SFX/game/New/SHIELD_HIT_7
+    - Sounds/SFX/game/New/SHIELD_HIT_8
+    soundEnum: 14
+  - Name: SHOT_LMG_1
+    volume: 1
+    persistent: 0
+    mClipPath: Sounds/SFX/weapons/lmg/SHOT_LMG_1
+    mClipPaths: []
+    soundEnum: 21
+  - Name: SHOT_LMG_2
+    volume: 1
+    persistent: 0
+    mClipPath: Sounds/SFX/weapons/lmg/SHOT_LMG_2
+    mClipPaths: []
+    soundEnum: 22
+  - Name: SHOT_LMG_3
+    volume: 1
+    persistent: 0
+    mClipPath: Sounds/SFX/weapons/lmg/SHOT_LMG_3
+    mClipPaths: []
+    soundEnum: 23
+  - Name: SHOT_LMG_4
+    volume: 1
+    persistent: 0
+    mClipPath: Sounds/SFX/weapons/lmg/SHOT_LMG_4
+    mClipPaths: []
+    soundEnum: 35
+  - Name: SHOT_LMG_5
+    volume: 1
+    persistent: 0
+    mClipPath: Sounds/SFX/weapons/lmg/SHOT_LMG_5
+    mClipPaths: []
+    soundEnum: 36
+  - Name: SHOT_LMG_6
+    volume: 1
+    persistent: 0
+    mClipPath: Sounds/SFX/weapons/minigun/SHOT_MINIGUN
+    mClipPaths: []
+    soundEnum: 42
+  - Name: SHOT_SHOTGUN_1
+    volume: 1
+    persistent: 0
+    mClipPath: Sounds/SFX/weapons/shotgun/SHOT_SHOTGUN_1
+    mClipPaths: []
+    soundEnum: 15
+  - Name: SHOT_SHOTGUN_2
+    volume: 1
+    persistent: 0
+    mClipPath: Sounds/SFX/weapons/shotgun/SHOT_SHOTGUN_2
+    mClipPaths: []
+    soundEnum: 43
+  - Name: SHOT_SHOTGUN_3
+    volume: 1
+    persistent: 0
+    mClipPath: Sounds/SFX/weapons/shotgun/SHOT_SHOTGUN_3
+    mClipPaths: []
+    soundEnum: 44
+  - Name: SHOT_SHOTGUN_4
+    volume: 1
+    persistent: 0
+    mClipPath: Sounds/SFX/weapons/shotgun/SHOT_SHOTGUN_4
+    mClipPaths: []
+    soundEnum: 45
+  - Name: SHOT_SMG_1
+    volume: 1
+    persistent: 0
+    mClipPath: Sounds/SFX/weapons/smg/SHOT_SMG_1
+    mClipPaths: []
+    soundEnum: 24
+  - Name: SHOT_SMG_2
+    volume: 1
+    persistent: 0
+    mClipPath: Sounds/SFX/weapons/smg/SHOT_SMG_2
+    mClipPaths: []
+    soundEnum: 25
+  - Name: SHOT_SMG_3
+    volume: 1
+    persistent: 0
+    mClipPath: Sounds/SFX/weapons/smg/SHOT_SMG_3
+    mClipPaths: []
+    soundEnum: 26
+  - Name: SHOT_SMG_4
+    volume: 1
+    persistent: 0
+    mClipPath: Sounds/SFX/weapons/smg/SHOT_SMG_4
+    mClipPaths: []
+    soundEnum: 37
+  - Name: SHOT_SMG_5
+    volume: 1
+    persistent: 0
+    mClipPath: Sounds/SFX/weapons/smg/SHOT_SMG_5
+    mClipPaths: []
+    soundEnum: 38
+  - Name: SHOT_TURRET
+    volume: 1
+    persistent: 1
+    mClipPath: Sounds/SFX/game/New/TURRET
+    mClipPaths: []
+    soundEnum: 29
+  - Name: SHOT_SPECIAL_1
+    volume: 1
+    persistent: 0
+    mClipPath: Sounds/SFX/weapons/special/SHOT_FLAMER
+    mClipPaths: []
+    soundEnum: 39
+  - Name: SHOT_GRENADE_1
+    volume: 1
+    persistent: 0
+    mClipPath: Sounds/SFX/weapons/grenade/grenade_throw
+    mClipPaths: []
+    soundEnum: 16
+  - Name: SHOT_GRENADE_2
+    volume: 1
+    persistent: 0
+    mClipPath: Sounds/SFX/weapons/grenade/coctail_throw
+    mClipPaths: []
+    soundEnum: 46
+  - Name: ElectricalBurst
+    volume: 0.95
+    persistent: 1
+    mClipPath:
+    mClipPaths:
+    - Sounds/SFX/game/New/ELECTRIC_TRAP_KILL_1
+    - Sounds/SFX/game/New/ELECTRIC_TRAP_KILL_2
+    soundEnum: 17
+  - Name: MolotovImpact
+    volume: 1
+    persistent: 1
+    mClipPath: Sounds/SFX/weapons/grenade/coctail_impact
+    mClipPaths: []
+    soundEnum: 47
+  - Name: RELOAD_PISTOL
+    volume: 0.8
+    persistent: 1
+    mClipPath: Sounds/SFX/game/New/RELOAD_PISTOL
+    mClipPaths: []
+    soundEnum: 48
+  - Name: ExplosionMedium
+    volume: 1
+    persistent: 1
+    mClipPath: Sounds/SFX/game/New/EXPLOSION_MEDIUM
+    mClipPaths: []
+    soundEnum: 49
+  - Name: ExplosionSmall
+    volume: 1
+    persistent: 1
+    mClipPath: Sounds/SFX/game/New/EXPLOSION_SMALL
+    mClipPaths: []
+    soundEnum: 50
+  - Name: ExplosionBarel
+    volume: 1
+    persistent: 1
+    mClipPath: Sounds/SFX/game/New/EXPLOSION_BAREL
+    mClipPaths: []
+    soundEnum: 51
+  - Name: ExplosionMolotov
+    volume: 1
+    persistent: 1
+    mClipPath: Sounds/SFX/game/New/EXPLOSION_MOLOTOV
+    mClipPaths: []
+    soundEnum: 52
+  - Name: BuggyEngineStart
+    volume: 1
+    persistent: 0
+    mClipPath: Sounds/SFX/vehicles/new/BUGGY/BUGGY_START
+    mClipPaths: []
+    soundEnum: 53
+  - Name: BuggyEngineLoop
+    volume: 1
+    persistent: 0
+    mClipPath: Sounds/SFX/vehicles/new/BUGGY/BUGGY_ENGINE LOOP
+    mClipPaths: []
+    soundEnum: 54
+  - Name: BuggyEngineDeath
+    volume: 1
+    persistent: 0
+    mClipPath: Sounds/SFX/vehicles/new/BUGGY/BUGGY_DEATH
+    mClipPaths: []
+    soundEnum: 55
+  - Name: AssaultHelicopterEngineStart
+    volume: 1
+    persistent: 0
+    mClipPath: Sounds/SFX/vehicles/new/cobra/COBRA_START
+    mClipPaths: []
+    soundEnum: 56
+  - Name: AssaultHelicopterEngineLoop
+    volume: 1
+    persistent: 0
+    mClipPath: Sounds/SFX/vehicles/new/cobra/COBRA_ENGINE_LOOP
+    mClipPaths: []
+    soundEnum: 57
+  - Name: AssaultHelicopterEngineDeath
+    volume: 1
+    persistent: 0
+    mClipPath: Sounds/SFX/vehicles/new/cobra/COBRA_DEATH
+    mClipPaths: []
+    soundEnum: 58
+  - Name: DroneEngineStart
+    volume: 0.65
+    persistent: 0
+    mClipPath: Sounds/SFX/vehicles/new/drone/DRONE_START
+    mClipPaths: []
+    soundEnum: 59
+  - Name: DroneEngineLoop
+    volume: 0.65
+    persistent: 0
+    mClipPath: Sounds/SFX/vehicles/new/drone/DRONE_ENGINE_LOOP
+    mClipPaths: []
+    soundEnum: 60
+  - Name: DroneEngineDeath
+    volume: 0.65
+    persistent: 0
+    mClipPath: Sounds/SFX/vehicles/new/drone/DRONE_DEATH
+    mClipPaths: []
+    soundEnum: 61
+  - Name: HumveeEngineStart
+    volume: 1
+    persistent: 0
+    mClipPath: Sounds/SFX/vehicles/new/HUMVEE/HUMVEE_START
+    mClipPaths: []
+    soundEnum: 62
+  - Name: HumveeEngineLoop
+    volume: 1
+    persistent: 0
+    mClipPath: Sounds/SFX/vehicles/new/HUMVEE/HUMVEE_ENGINE_LOOP
+    mClipPaths: []
+    soundEnum: 63
+  - Name: HumveeEngineDeath
+    volume: 1
+    persistent: 0
+    mClipPath: Sounds/SFX/vehicles/new/HUMVEE/HUMVEE_DEATH
+    mClipPaths: []
+    soundEnum: 64
+  - Name: HelicopterEngineStart
+    volume: 1
+    persistent: 0
+    mClipPath: Sounds/SFX/vehicles/new/ORCA/ORCA_START
+    mClipPaths: []
+    soundEnum: 65
+  - Name: HelicopterEngineLoop
+    volume: 1
+    persistent: 0
+    mClipPath: Sounds/SFX/vehicles/new/ORCA/ORCA_ENGINE_LOOP
+    mClipPaths: []
+    soundEnum: 66
+  - Name: HelicopterEngineDeath
+    volume: 1
+    persistent: 0
+    mClipPath: Sounds/SFX/vehicles/new/ORCA/ORCA_DEATH
+    mClipPaths: []
+    soundEnum: 67
+  - Name: TankEngineStart
+    volume: 1
+    persistent: 0
+    mClipPath: Sounds/SFX/vehicles/new/TITAN/TITAN_START
+    mClipPaths: []
+    soundEnum: 68
+  - Name: TankEngineLoop
+    volume: 1
+    persistent: 0
+    mClipPath: Sounds/SFX/vehicles/new/TITAN/TITAN_ENGINE_LOOP
+    mClipPaths: []
+    soundEnum: 69
+  - Name: TankEngineDeath
+    volume: 1
+    persistent: 0
+    mClipPath: Sounds/SFX/vehicles/new/TITAN/TITAN_DEATH
+    mClipPaths: []
+    soundEnum: 70
+  - Name: MedkitDrop
+    volume: 1
+    persistent: 1
+    mClipPath: Sounds/SFX/vehicles/new/cobra/COBRA_MEDKIT_DROP
+    mClipPaths: []
+    soundEnum: 71
+  - Name: MedkitPickup
+    volume: 1
+    persistent: 1
+    mClipPath: Sounds/SFX/vehicles/new/cobra/COBRA_MEDKIT_PICKUP
+    mClipPaths: []
+    soundEnum: 72
+  - Name: SHOT_TANK
+    volume: 1
+    persistent: 1
+    mClipPath: Sounds/SFX/vehicles/new/TITAN/TITAN_CANON_SHOT
+    mClipPaths: []
+    soundEnum: 73
+  - Name: PredatorEngineStart
+    volume: 1
+    persistent: 0
+    mClipPath: Sounds/SFX/vehicles/new/PREDATOR/PREDATOR_START
+    mClipPaths: []
+    soundEnum: 74
+  - Name: PredatorEngineLoop
+    volume: 1
+    persistent: 0
+    mClipPath: Sounds/SFX/vehicles/new/PREDATOR/PREDATOR_ENGINE_LOOP
+    mClipPaths: []
+    soundEnum: 75
+  - Name: PredatorEngineDeath
+    volume: 1
+    persistent: 0
+    mClipPath: Sounds/SFX/vehicles/new/PREDATOR/PREDATOR_DEATH
+    mClipPaths: []
+    soundEnum: 76
+  - Name: PredatorDeployRepairDrone
+    volume: 1
+    persistent: 0
+    mClipPath: Sounds/SFX/vehicles/new/PREDATOR/PREDATOR_DEPLOY_REPAIR_DRONE
+    mClipPaths: []
+    soundEnum: 77
+  - Name: WarpSound
+    volume: 1
+    persistent: 0
+    mClipPath: Sounds/SFX/vehicles/new/Warper/Laser Noise_05(warp)-short
+    mClipPaths: []
+    soundEnum: 78
+  - Name: MechSound
+    volume: 0.75
+    persistent: 0
+    mClipPath: Sounds/SFX/vehicles/new/Mech/crusher-walk-short
+    mClipPaths: []
+    soundEnum: 79
+  audioSourcesParent: {fileID: 109266}
 --- !u!82 &8269857
 AudioSource:
   serializedVersion: 4

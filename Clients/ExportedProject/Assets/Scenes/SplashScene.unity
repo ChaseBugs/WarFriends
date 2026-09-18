@@ -56,7 +56,7 @@ LightmapSettings:
     m_FinalGather: 0
     m_FinalGatherRayCount: 256
     m_ReflectionCompression: 2
-  m_LightmapSnapshot: {fileID: 112000000, guid: 64517dd0ade1c804cb630c1e07e8e669, type: 2}
+  m_LightmapSnapshot: {fileID: 0}
   m_RuntimeCPUUsage: 25
 --- !u!1 &22
 GameObject:
@@ -1238,6 +1238,25 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d329c6e8320ccbb2fdecc42473e11841, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  debug: 0
+  eventReceiverMask:
+    serializedVersion: 2
+    m_Bits: 2048
+  clipRaycasts: 1
+  tooltipDelay: 1
+  stickyTooltip: 1
+  mouseDragThreshold: 26.666666
+  mouseClickThreshold: 26.666666
+  touchDragThreshold: 26.666666
+  touchClickThreshold: 26.666666
+  rangeDistance: -1
+  scrollAxisName: Mouse ScrollWheel
+  verticalAxisName: Vertical
+  horizontalAxisName: Horizontal
+  submitKey0: 13
+  submitKey1: 330
+  cancelKey0: 27
+  cancelKey1: 331
 --- !u!114 &105
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1249,6 +1268,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 18655a7572bf97abcb6cb6553c941e5e, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  scalingStyle: 4
+  automatic: 0
+  manualHeight: 1280
+  manualWidth: 1920
+  minimumHeight: 480
+  maximumHeight: 2000
+  runOnlyOnce: 0
 --- !u!114 &106
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1260,6 +1286,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: c40108948856b6042852e9d1906b53be, type: 2}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 0
+  mAtlas: {fileID: 11409266, guid: 83fd73145898f2e4ba47afb51fc70ff5, type: 2}
+  mSpriteName: whiteRectangle
+  mFillCenter: 1
+  mType: 0
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 1
+  mFillSlopePixels: 0
 --- !u!114 &107
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1271,6 +1312,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bae63f2a093708268798e877ef22f2c5, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  canLogoutEventLikeLoginFailed: 0
+  isAuthenticated: 0
+  gcName:
+  gcId:
+  hasResponse: 0
 --- !u!114 &108
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1282,6 +1328,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: c40108948856b6042852e9d1906b53be, type: 2}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 2
+  mAtlas: {fileID: 11409266, guid: 83fd73145898f2e4ba47afb51fc70ff5, type: 2}
+  mSpriteName: af-logo
+  mFillCenter: 1
+  mType: 0
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!114 &109
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1293,6 +1354,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 706f114414c2b3737445fcd993f43437, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  AndroidAppID: 76e544a0-32c5-4775-9716-ff04c6fbaaa3
+  iOSAppID: 6c771dc4-510b-4402-a4f9-0c08579edd37
+  StartAutomatically: 0
+  GCM_SenderID:
+  registerForPushNotifications: 0
+  logging: 0
+  editorSessions: 0
+  standaloneSessions: 0
+  androidIAB: 1
+  androidUnibill: 0
+  iosStoreKit: 1
+  iosUnibill: 0
+  soomlaStore: 0
 --- !u!114 &110
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1304,6 +1378,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 77fb6824cf80ec4a81cb8e16a8d4d78d, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  CrittercismiOSAppID: 90173b5371ea4a34b231d9234dd803d900444503
+  CrittercismAndroidAppID: a05359c1f1494bd4ba1b72aa6650ebb800444503
 --- !u!114 &111
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1315,6 +1391,30 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f54891d0b7e1a01a23bc64463aeafd37, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 0}
+  mColor: {r: 0.9191176, g: 0.8920848, b: 0.8920848, a: 1}
+  mPivot: 1
+  mDepth: 7
+  mFont: {fileID: 11409266, guid: 2ac3a3ab35adb5d45b8c056aa7026f89, type: 2}
+  mText: 'Do you want to download additional content ? '
+  mMaxLineWidth: 1380
+  mEncoding: 1
+  mMaxLineCount: 5
+  mPassword: 0
+  mShowLastChar: 0
+  mEffectStyle: 0
+  mEffectColor: {r: 0, g: 0, b: 0, a: 1}
+  mSymbols: 1
+  mEffectDistance: {x: 1, y: 1}
+  mShrinkToFit: 0
+  useLocalization: 0
+  mRescaleLocalization: 0
+  mDefaultScale: 40
+  mMinimalScale: 20
+  mRescaleWidth: 0
+  mDynamicFontSize: 80
+  mLineWidth: 0
+  mMultiline: 1
 --- !u!114 &112
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1326,6 +1426,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 0}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 0
+  mAtlas: {fileID: 11409266, guid: 83fd73145898f2e4ba47afb51fc70ff5, type: 2}
+  mSpriteName: whiteRectangle
+  mFillCenter: 1
+  mType: 0
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 1
+  mFillSlopePixels: 0
 --- !u!114 &113
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1337,6 +1452,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: dffdc48f0e39be244a1dbd05bf443a5c, type: 2}
+  mColor: {r: 0.2196079, g: 0.2235294, b: 0.2392157, a: 1}
+  mPivot: 4
+  mDepth: 8
+  mAtlas: {fileID: 11409266, guid: fd3d609ce40597f46b2cd0996a1b2849, type: 2}
+  mSpriteName: whiteRectangle
+  mFillCenter: 1
+  mType: 0
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 1
+  mFillSlopePixels: 0
 --- !u!114 &114
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1348,6 +1478,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dfac223674a804adf3fffb2de07784c9, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  tweenTarget: {fileID: 0}
+  hover: {x: 1.1, y: 1.1, z: 1}
+  pressed: {x: 1.05, y: 1.05, z: 1}
 --- !u!114 &115
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1359,6 +1492,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 43fa3fd176a1b68b175397cf2f126cbe, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  tweenTarget: {fileID: 27}
+  extratweenTargets: []
+  hover: {r: 1, g: 1, b: 1, a: 1}
+  pressed: {r: 1, g: 1, b: 1, a: 1}
+  duration: 0.2
+  disabledColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+  sprites: []
+  labels: []
 --- !u!114 &116
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1370,6 +1511,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dfac223674a804adf3fffb2de07784c9, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  tweenTarget: {fileID: 0}
+  hover: {x: 1.1, y: 1.1, z: 1}
+  pressed: {x: 1.05, y: 1.05, z: 1}
 --- !u!114 &117
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1381,6 +1525,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 43fa3fd176a1b68b175397cf2f126cbe, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  tweenTarget: {fileID: 26}
+  extratweenTargets: []
+  hover: {r: 1, g: 1, b: 1, a: 1}
+  pressed: {r: 1, g: 1, b: 1, a: 1}
+  duration: 0.2
+  disabledColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+  sprites: []
+  labels: []
 --- !u!114 &118
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1392,6 +1544,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: dffdc48f0e39be244a1dbd05bf443a5c, type: 2}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 11
+  mAtlas: {fileID: 11409266, guid: fd3d609ce40597f46b2cd0996a1b2849, type: 2}
+  mSpriteName: menu-button-small-white
+  mFillCenter: 1
+  mType: 1
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!114 &119
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1403,6 +1570,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 96562d0799d618a7fb9b1a37343d8235, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 0}
+  mColor: {r: 1, g: 1, b: 1, a: 0.359}
+  mPivot: 4
+  mDepth: 0
+  mRect:
+    serializedVersion: 2
+    x: 0
+    y: 0
+    width: 1
+    height: 1
+  mShader: {fileID: 4800000, guid: 0be4260a50cecf84aabd5d8be5cfbc9c, type: 3}
+  mTexture: {fileID: 0}
 --- !u!114 &120
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1414,6 +1593,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b9d846b7ee463ec91b4685cc1e626f9c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  dialogTitle: {fileID: 124}
+  dialogText: {fileID: 111}
+  yesButton: {fileID: 115}
+  yesLabel: {fileID: 131}
+  cancelButton: {fileID: 117}
+  cancelLabel: {fileID: 126}
 --- !u!114 &121
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1425,6 +1610,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 0}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 1
+  mDepth: 3
+  mAtlas: {fileID: 11409266, guid: fd3d609ce40597f46b2cd0996a1b2849, type: 2}
+  mSpriteName: menu-top
+  mFillCenter: 1
+  mType: 0
+  mFillDirection: 3
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 1
+  mTiledScale: 1
+  mUseInnerUVs: 1
+  mFillSlopePixels: 0
 --- !u!114 &122
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1436,6 +1636,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: dffdc48f0e39be244a1dbd05bf443a5c, type: 2}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 2
+  mAtlas: {fileID: 11409266, guid: fd3d609ce40597f46b2cd0996a1b2849, type: 2}
+  mSpriteName: menu-lightbox-bg
+  mFillCenter: 1
+  mType: 1
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!114 &123
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1447,6 +1662,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 0}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 2
+  mAtlas: {fileID: 11409266, guid: 83fd73145898f2e4ba47afb51fc70ff5, type: 2}
+  mSpriteName: Chillingo-logo
+  mFillCenter: 1
+  mType: 0
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!114 &124
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1458,6 +1688,30 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f54891d0b7e1a01a23bc64463aeafd37, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 5b605186162b42244b30fe94c1806c2f, type: 2}
+  mColor: {r: 0.043137256, g: 0.7372549, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 5
+  mFont: {fileID: 11409266, guid: 2ac3a3ab35adb5d45b8c056aa7026f89, type: 2}
+  mText: CONFIRM
+  mMaxLineWidth: 0
+  mEncoding: 1
+  mMaxLineCount: 0
+  mPassword: 0
+  mShowLastChar: 0
+  mEffectStyle: 0
+  mEffectColor: {r: 0, g: 0, b: 0, a: 1}
+  mSymbols: 1
+  mEffectDistance: {x: 1, y: 1}
+  mShrinkToFit: 0
+  useLocalization: 0
+  mRescaleLocalization: 0
+  mDefaultScale: 40
+  mMinimalScale: 20
+  mRescaleWidth: 0
+  mDynamicFontSize: 80
+  mLineWidth: 0
+  mMultiline: 1
 --- !u!114 &125
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1469,6 +1723,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: c40108948856b6042852e9d1906b53be, type: 2}
+  mColor: {r: 1, g: 0, b: 0, a: 1}
+  mPivot: 4
+  mDepth: -1
+  mAtlas: {fileID: 11409266, guid: 83fd73145898f2e4ba47afb51fc70ff5, type: 2}
+  mSpriteName: whiteRectangle
+  mFillCenter: 1
+  mType: 0
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 1
+  mFillSlopePixels: 0
 --- !u!114 &126
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1480,6 +1749,30 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f54891d0b7e1a01a23bc64463aeafd37, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 5b605186162b42244b30fe94c1806c2f, type: 2}
+  mColor: {r: 0, g: 0, b: 0, a: 1}
+  mPivot: 4
+  mDepth: 12
+  mFont: {fileID: 11409266, guid: 2ac3a3ab35adb5d45b8c056aa7026f89, type: 2}
+  mText: NO
+  mMaxLineWidth: 0
+  mEncoding: 1
+  mMaxLineCount: 0
+  mPassword: 0
+  mShowLastChar: 0
+  mEffectStyle: 0
+  mEffectColor: {r: 0, g: 0, b: 0, a: 1}
+  mSymbols: 1
+  mEffectDistance: {x: 1, y: 1}
+  mShrinkToFit: 0
+  useLocalization: 0
+  mRescaleLocalization: 0
+  mDefaultScale: 40
+  mMinimalScale: 20
+  mRescaleWidth: 0
+  mDynamicFontSize: 80
+  mLineWidth: 0
+  mMultiline: 1
 --- !u!114 &127
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1491,6 +1784,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: afa63b05fddc8fcf6a0d6b94cf2a11ce, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  chillingoLogo: {fileID: 56}
+  ourLogo: {fileID: 47}
+  splashes: {fileID: 11409266, guid: 83fd73145898f2e4ba47afb51fc70ff5, type: 2}
+  downloadAssetsDialog: {fileID: 120}
+  downloadOBB: 0
+  logo: {fileID: 51}
+  splashCamera: {fileID: 98}
+  scales:
+  - width: 1334
+    height: 750
+    scale: 1.17
+  - width: 1280
+    height: 720
+    scale: 1.17
 --- !u!114 &128
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1502,6 +1809,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 0}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 9
+  mAtlas: {fileID: 11409266, guid: fd3d609ce40597f46b2cd0996a1b2849, type: 2}
+  mSpriteName: menu-button-small
+  mFillCenter: 1
+  mType: 1
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!114 &129
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1524,6 +1846,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9a83e204d87fc5718bca070bbea268f5, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  kochavaAppId: kowarfriends-ios-lwv4
+  kochavaAppIdIOS: kowarfriends-ios-lwv4
+  kochavaAppIdAndroid: kowarfriends-android-70o2q
+  kochavaAppIdKindle:
+  kochavaAppIdBlackberry:
+  kochavaAppIdWindowsPhone:
+  debugMode: 0
+  incognitoMode: 0
+  requestAttribution: 1
+  appVersion: 1.2.1
+  partnerName:
+  appLimitAdTracking: 0
+  userAgent:
+  adidSupressed: 0
+  appCurrency: USD
+  sessionTracking: 0
 --- !u!114 &131
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1535,6 +1873,30 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f54891d0b7e1a01a23bc64463aeafd37, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 5b605186162b42244b30fe94c1806c2f, type: 2}
+  mColor: {r: 0, g: 0, b: 0, a: 1}
+  mPivot: 4
+  mDepth: 10
+  mFont: {fileID: 11409266, guid: 2ac3a3ab35adb5d45b8c056aa7026f89, type: 2}
+  mText: YES
+  mMaxLineWidth: 0
+  mEncoding: 1
+  mMaxLineCount: 0
+  mPassword: 0
+  mShowLastChar: 0
+  mEffectStyle: 0
+  mEffectColor: {r: 0, g: 0, b: 0, a: 1}
+  mSymbols: 1
+  mEffectDistance: {x: 1, y: 1}
+  mShrinkToFit: 0
+  useLocalization: 0
+  mRescaleLocalization: 0
+  mDefaultScale: 40
+  mMinimalScale: 20
+  mRescaleWidth: 0
+  mDynamicFontSize: 80
+  mLineWidth: 0
+  mMultiline: 1
 --- !u!114 &132
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1546,6 +1908,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: dffdc48f0e39be244a1dbd05bf443a5c, type: 2}
+  mColor: {r: 0.2196079, g: 0.2235294, b: 0.2392157, a: 1}
+  mPivot: 4
+  mDepth: 6
+  mAtlas: {fileID: 11409266, guid: fd3d609ce40597f46b2cd0996a1b2849, type: 2}
+  mSpriteName: whiteRectangle
+  mFillCenter: 1
+  mType: 0
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 1
+  mFillSlopePixels: 0
 --- !u!114 &133
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1557,6 +1934,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2f1063ce4962f04a30a7b9175f2391f0, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  uiCamera: {fileID: 98}
+  widgetContainer: {fileID: 0}
+  panelContainer: {fileID: 0}
+  style: 3
+  runOnlyOnce: 0
+  relativeSize: {x: 1, y: 1}
+  initialSize: {x: 1, y: 1}
 --- !u!114 &134
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1568,6 +1952,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: dffdc48f0e39be244a1dbd05bf443a5c, type: 2}
+  mColor: {r: 0.6764706, g: 0.6764706, b: 0.6764706, a: 0.684}
+  mPivot: 4
+  mDepth: 1
+  mAtlas: {fileID: 11409266, guid: fd3d609ce40597f46b2cd0996a1b2849, type: 2}
+  mSpriteName: whiteRectangle
+  mFillCenter: 1
+  mType: 0
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 1
+  mFillSlopePixels: 0
 --- !u!114 &135
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1601,6 +2000,34 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bb70fb1d0e0085b2584da035910762fa, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  showInPanelTool: 1
+  generateNormals: 0
+  depthPass: 0
+  widgetsAreStatic: 0
+  cullWhileDragging: 0
+  worldToLocal:
+    e00: 639.7953
+    e01: 0
+    e02: 0
+    e03: -30988.22
+    e10: 0
+    e11: 639.7953
+    e12: 0
+    e13: -118.51546
+    e20: 0
+    e21: 0
+    e22: 639.7953
+    e23: -3919.978
+    e30: 0
+    e31: 0
+    e32: 0
+    e33: 1
+  mAlpha: 1
+  mDebugInfo: 1
+  mClipping: 0
+  mClipRange: {x: 0, y: 0, z: 0, w: 0}
+  mClipSoftness: {x: 40, y: 40}
+  isFreezed: 0
 --- !u!114 &138
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1612,6 +2039,34 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bb70fb1d0e0085b2584da035910762fa, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  showInPanelTool: 1
+  generateNormals: 0
+  depthPass: 0
+  widgetsAreStatic: 0
+  cullWhileDragging: 0
+  worldToLocal:
+    e00: 639.7953
+    e01: 0
+    e02: 0
+    e03: -30988.22
+    e10: 0
+    e11: 639.7953
+    e12: 0
+    e13: -118.51546
+    e20: 0
+    e21: 0
+    e22: 639.7953
+    e23: -1919.978
+    e30: 0
+    e31: 0
+    e32: 0
+    e33: 1
+  mAlpha: 1
+  mDebugInfo: 1
+  mClipping: 0
+  mClipRange: {x: 0, y: 0, z: 0, w: 0}
+  mClipSoftness: {x: 40, y: 40}
+  isFreezed: 0
 --- !u!114 &139
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1623,6 +2078,34 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bb70fb1d0e0085b2584da035910762fa, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  showInPanelTool: 1
+  generateNormals: 0
+  depthPass: 0
+  widgetsAreStatic: 0
+  cullWhileDragging: 0
+  worldToLocal:
+    e00: 640
+    e01: 0
+    e02: 0
+    e03: -1280000
+    e10: 0
+    e11: 640
+    e12: 0
+    e13: -0
+    e20: 0
+    e21: 0
+    e22: 640
+    e23: -2000
+    e30: 0
+    e31: 0
+    e32: 0
+    e33: 1
+  mAlpha: 1
+  mDebugInfo: 1
+  mClipping: 0
+  mClipRange: {x: 0, y: 0, z: 0, w: 0}
+  mClipSoftness: {x: 40, y: 40}
+  isFreezed: 0
 --- !u!114 &140
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1634,3 +2117,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b57cefd5b275d0d5648f3834cd062398, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  uiCamera: {fileID: 98}
+  widgetContainer: {fileID: 0}
+  panelContainer: {fileID: 0}
+  side: 8
+  halfPixelOffset: 1
+  runOnlyOnce: 0
+  relativeOffset: {x: 0, y: 0}

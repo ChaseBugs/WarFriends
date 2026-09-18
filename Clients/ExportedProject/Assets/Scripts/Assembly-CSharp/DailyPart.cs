@@ -1,63 +1,216 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
-public class DailyPart : MonoBehaviour
+public class DailyPart : Core_BaseScript
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Header("Core")]
+	public UIPanel[] panels;
 
-	1. No dll files were provided to AssetRipper.
+	[Header("Left Part")]
+	public AssignmentProgress assignmentProgress;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public DailyProgress daysProgress;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	[Header("Center Part")]
+	public GameObject centerPart;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	[Header("Right Part")]
+	public GameObject rightPart;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public UITable rightTable;
 
-	3. Assembly Reconstruction has not been implemented.
+	public WinStreakCounter timeCounter;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	[Header("3 Assignments")]
+	public UIGrid grid;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public List<AssignmentScreenRecord> assignmentRecords;
 
-	4. This script is unnecessary.
+	private bool mInitializedTime;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private bool mIsActive;
 
-	5. Script Content Level 0
+	public void Animate(bool showTab, bool instant)
+	{
+		mIsActive = showTab;
+		if (mIsActive && !base.gameObject.activeSelf)
+		{
+			base.gameObject.SetActive(value: true);
+			InitGUIValues();
+		}
+		if (base.gameObject.activeSelf)
+		{
+			AnimatePanels((!instant) ? (GuiScreenSingle<AssignmentsScreen>.instance.dur * 2f) : 0.01f, (!mIsActive) ? 0f : 1f);
+			TweenAlpha.Begin(base.gameObject, (!instant) ? (GuiScreenSingle<AssignmentsScreen>.instance.dur * 2f) : 0.01f, (!mIsActive) ? 0f : 1f).onFinished = delegate
+			{
+				if (!mIsActive)
+				{
+					DoAfterHide();
+				}
+			};
+		}
+		else if (!mIsActive)
+		{
+			InstantHideTab();
+		}
+	}
 
-		AssetRipper was set to not load any script information.
+	private void AnimatePanels(float duration, float toAlpha)
+	{
+		for (int i = 0; i < panels.Length; i++)
+		{
+			if (panels[i].gameObject.activeSelf)
+			{
+				TweenAlpha.Begin(panels[i].gameObject, duration, toAlpha);
+			}
+		}
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public void InstantHideTab()
+	{
+		DoAfterHide();
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public void InitEvents()
+	{
+		Singleton<BeanstalkServerManager>.instance.DataLoaded += OnDataLoaded;
+		Singleton<BeanstalkServerManager>.instance.ErrorReceived += OnDataLoaded;
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	private void OnDataLoaded(DatabaseAction action)
+	{
+		switch (action)
+		{
+		case DatabaseAction.SkipAssignment:
+		case DatabaseAction.GetNewAssignments:
+			UpdateAssignments();
+			break;
+		case DatabaseAction.ClaimAssignmentMegaReward:
+			if (base.gameObject.activeInHierarchy)
+			{
+				InitGUIValues();
+			}
+			break;
+		}
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	public void InitControls()
+	{
+		float activeWidth = UIRoot.list[0].activeWidth;
+		centerPart.transform.localPosition = new Vector3(activeWidth / 2f, 0f, 0f);
+		rightPart.transform.localPosition = new Vector3(activeWidth - 60f, 0f, 0f);
+		float num = 1.3333334f;
+		float num2 = 1.7777778f;
+		float num3 = Mathf.Clamp(activeWidth / (float)UIRoot.list[0].activeHeight, num, num2);
+		float num4 = (num2 - num3) / (num2 - num);
+		grid.cellHeight = 240f + 18f * num4;
+		grid.transform.localPosition = new Vector3(0f, -200f - 20f * num4, 0f);
+		grid.repositionNow = true;
+		assignmentRecords[0].InitControls();
+		assignmentRecords[1].InitControls();
+		assignmentRecords[2].InitControls();
+		AssignmentsManager.instance.AssignmentsLoaded += delegate
+		{
+			if (base.gameObject.activeInHierarchy)
+			{
+				InitGUIValues();
+			}
+		};
+		AssignmentsManager.instance.AssignmentClaimed += AssignmentClaimedEvent;
+		assignmentProgress.AllClaimed += DailyAssignmentsClaimed;
+		rightTable.onReposition = delegate
+		{
+			rightTable.transform.localPosition = new Vector3(0f - timeCounter.transform.localPosition.x, rightTable.transform.localPosition.y, 0f);
+		};
+		daysProgress.InitControls();
+	}
 
-	*/
+	private void AssignmentClaimedEvent(int index)
+	{
+		assignmentProgress.AnimateClaim(index);
+		List<Assignment> assignments = AssignmentsManager.instance.GetAssignments(update: false);
+		if (assignments != null && assignments.Count == 3 && assignmentRecords[index].gameObject.activeSelf && !assignmentRecords[index].isAnimatingClaim)
+		{
+			assignmentRecords[index].Init(assignments[index]);
+		}
+	}
+
+	private void DailyAssignmentsClaimed()
+	{
+		daysProgress.Show();
+	}
+
+	public void InitGUIValues()
+	{
+		UpdateAssignments();
+		CounterManager instance = Singleton<CounterManager>.instance;
+		instance.updateCounterBySecond = (Action)Delegate.Remove(instance.updateCounterBySecond, new Action(UpdateTable));
+		CounterManager instance2 = Singleton<CounterManager>.instance;
+		instance2.updateCounterBySecond = (Action)Delegate.Combine(instance2.updateCounterBySecond, new Action(UpdateTable));
+		daysProgress.Initialize();
+		bool flag = AssignmentsManager.instance.preparedAssignments != null && AssignmentsManager.instance.preparedAssignments.Count > 0 && AssignmentsManager.instance.preparedAssignments[0] != null && AssignmentsManager.instance.preparedAssignments[0].claimed;
+		bool flag2 = AssignmentsManager.instance.preparedAssignments != null && AssignmentsManager.instance.preparedAssignments.Count > 1 && AssignmentsManager.instance.preparedAssignments[1] != null && AssignmentsManager.instance.preparedAssignments[1].claimed;
+		bool flag3 = AssignmentsManager.instance.preparedAssignments != null && AssignmentsManager.instance.preparedAssignments.Count > 2 && AssignmentsManager.instance.preparedAssignments[2] != null && AssignmentsManager.instance.preparedAssignments[2].claimed;
+		bool flag4 = AssignmentsManager.instance.completedDaysAssignments >= 7;
+		bool flag5 = flag && flag2 && flag3;
+		bool showProgress = !flag4 && !flag5;
+		assignmentProgress.Initialize(flag, flag2, flag3, showProgress);
+	}
+
+	public void DoAfterHide()
+	{
+		base.gameObject.SetActive(value: false);
+		CounterManager instance = Singleton<CounterManager>.instance;
+		instance.updateCounterBySecond = (Action)Delegate.Remove(instance.updateCounterBySecond, new Action(UpdateTable));
+	}
+
+	private void UpdateAssignments()
+	{
+		if (!mInitializedTime)
+		{
+			timeCounter.counterLabel.text = Localization.Localize("ID_LOADING");
+			Debug.Log("Day = " + AssignmentsManager.instance.data.tomorrow);
+			SetAssignmentCounter(AssignmentsManager.instance.data.tomorrow);
+		}
+		List<Assignment> assignments = AssignmentsManager.instance.GetAssignments(update: false);
+		for (int i = 0; i < 3; i++)
+		{
+			bool flag = assignments != null && assignments.Count > i && assignments[i] != null;
+			assignmentRecords[i].gameObject.SetActive(flag);
+			if (flag)
+			{
+				try
+				{
+					assignmentRecords[i].Init(assignments[i]);
+				}
+				catch (Exception e)
+				{
+					Crittercism.LogHandledException(e);
+				}
+			}
+		}
+	}
+
+	private void SetAssignmentCounter(int assignmnetEndTimestamp)
+	{
+		mInitializedTime = true;
+		timeCounter.StartCountingTo(assignmnetEndTimestamp);
+		WinStreakCounter winStreakCounter = timeCounter;
+		winStreakCounter.winStreakTimer = (Action)Delegate.Remove(winStreakCounter.winStreakTimer, new Action(EndCounter));
+		WinStreakCounter winStreakCounter2 = timeCounter;
+		winStreakCounter2.winStreakTimer = (Action)Delegate.Combine(winStreakCounter2.winStreakTimer, new Action(EndCounter));
+	}
+
+	private void EndCounter()
+	{
+		timeCounter.counterLabel.text = Localization.Localize("ID_NOW");
+		mInitializedTime = false;
+		Singleton<BeanstalkServerManager>.instance.GetNewAssignments();
+	}
+
+	private void UpdateTable()
+	{
+		rightTable.repositionNow = true;
+	}
 }

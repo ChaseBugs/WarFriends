@@ -1,63 +1,361 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
-public class AtlasPreparer : MonoBehaviour
+[ExecuteInEditMode]
+public class AtlasPreparer : Singleton<AtlasPreparer>
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public enum AtlasMode
+	{
+		Game,
+		Menu,
+		Both,
+		Tutorial,
+		Map
+	}
 
-	1. No dll files were provided to AssetRipper.
+	public enum ResourceMode
+	{
+		Resource,
+		AssetBundle
+	}
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	[Serializable]
+	public class TextureDatasNgui
+	{
+		public UIAtlas atlas;
 
-	2. Incorrect dll files were provided to AssetRipper.
+		public AtlasMode mode = AtlasMode.Menu;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+		public ResourceMode resourceMode = ResourceMode.AssetBundle;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+		public bool translate;
 
-	3. Assembly Reconstruction has not been implemented.
+		public Language language;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+		public UIAtlas atlasReference;
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	[Serializable]
+	public class TextureDatas2DToolkit
+	{
+		public Material material;
 
-	4. This script is unnecessary.
+		public AtlasMode mode = AtlasMode.Menu;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+		public string textureName;
+	}
 
-	5. Script Content Level 0
+	public string buildTime;
 
-		AssetRipper was set to not load any script information.
+	public UIFont font;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public List<TextureDatasNgui> nGuiSpriteSheets = new List<TextureDatasNgui>();
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public List<TextureDatas2DToolkit> toolkitSrites = new List<TextureDatas2DToolkit>();
 
-	7. An incorrect path was provided to AssetRipper.
+	public Texture2D substitueTexture;
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	public bool test;
 
-	*/
+	private bool mBuildPrepared;
+
+	protected override void Awake()
+	{
+		base.Awake();
+		if (font != null)
+			font.Clear();
+		if (Application.isPlaying)
+		{
+			StartCoroutine(LoadImagesCoroutine());
+		}
+		if (Application.isPlaying)
+		{
+		}
+		if (Application.isPlaying)
+			UnityEngine.Object.DontDestroyOnLoad(this);
+	}
+
+	public static void Load2DToolkitTexture(string textureName)
+	{
+		foreach (TextureDatas2DToolkit toolkitSrite in Singleton<AtlasPreparer>.instance.toolkitSrites)
+		{
+			if (textureName == toolkitSrite.textureName)
+			{
+				string textureName2 = toolkitSrite.textureName;
+				Texture2D mainTexture = Resources.Load<Texture2D>("GUI/2Dtoolkit/" + textureName2);
+				toolkitSrite.material.mainTexture = mainTexture;
+			}
+		}
+	}
+
+	public static void UnLoad2DToolkitTexture(string textureName)
+	{
+		foreach (TextureDatas2DToolkit toolkitSrite in Singleton<AtlasPreparer>.instance.toolkitSrites)
+		{
+			if (textureName == toolkitSrite.textureName)
+			{
+				Resources.UnloadAsset(toolkitSrite.material.mainTexture);
+				toolkitSrite.material.mainTexture = null;
+			}
+		}
+	}
+
+	private static void Load2DToolkitTexture(TextureDatas2DToolkit atlas)
+	{
+		string textureName = atlas.textureName;
+		Texture2D mainTexture = Resources.Load<Texture2D>("GUI/2Dtoolkit/" + textureName);
+		atlas.material.mainTexture = mainTexture;
+	}
+
+	private static void UnLoad2DToolkitTexture(TextureDatas2DToolkit atlas)
+	{
+		if (atlas.material.mainTexture != null)
+		{
+			Resources.UnloadAsset(atlas.material.mainTexture);
+			atlas.material.mainTexture = null;
+		}
+	}
+
+	public void PrepareBuild()
+	{
+		if (mBuildPrepared)
+		{
+			return;
+		}
+		Debug.Log("AtlasPreparer - PREPARING BUILD");
+		for (int i = 0; i < nGuiSpriteSheets.Count; i++)
+		{
+			Debug.Log("AtlasPreparer - WHITENING ATLAS " + nGuiSpriteSheets[i].atlas.name);
+			nGuiSpriteSheets[i].atlas.spriteMaterial.mainTexture = nGuiSpriteSheets[i].atlas.replaceTexture;
+		}
+		foreach (TextureDatas2DToolkit toolkitSrite in toolkitSrites)
+		{
+			toolkitSrite.material.mainTexture = null;
+		}
+	}
+
+	public void UnloadTutorial()
+	{
+		foreach (TextureDatasNgui nGuiSpriteSheet in nGuiSpriteSheets)
+		{
+			if (nGuiSpriteSheet.mode == AtlasMode.Tutorial)
+			{
+				Debug.Log("AtlasPreparer - CLEARING ATLAS " + nGuiSpriteSheet.atlas.name);
+				Texture mainTexture = nGuiSpriteSheet.atlas.spriteMaterial.mainTexture;
+				nGuiSpriteSheet.atlas.spriteMaterial.mainTexture = substitueTexture;
+				Resources.UnloadAsset(mainTexture);
+			}
+		}
+	}
+
+	public void UnloadMissionMaps()
+	{
+		foreach (TextureDatasNgui nGuiSpriteSheet in nGuiSpriteSheets)
+		{
+			if (nGuiSpriteSheet.mode == AtlasMode.Map)
+			{
+				Debug.Log("AtlasPreparer - CLEARING ATLAS " + nGuiSpriteSheet.atlas.name);
+				Texture mainTexture = nGuiSpriteSheet.atlas.spriteMaterial.mainTexture;
+				nGuiSpriteSheet.atlas.spriteMaterial.mainTexture = substitueTexture;
+				Resources.UnloadAsset(mainTexture);
+			}
+		}
+	}
+
+	public void LoadTextureForAtlas(TextureDatasNgui data)
+	{
+		UIAtlas atlas = data.atlas;
+		Language language = LanguageProperties.GetLanguage(Localization.instance.currentLanguage);
+		if (!data.translate || (data.translate && data.language == language))
+		{
+			string pngPath = atlas.pngPath;
+			pngPath = pngPath.Replace("Assets/StreamingAssets/", string.Empty).Replace(".png", string.Empty);
+			Texture2D mainTexture = Resources.Load<Texture2D>("GUI/" + pngPath);
+			atlas.spriteMaterial.mainTexture = mainTexture;
+			atlas.spriteMaterial.mainTexture.name = pngPath;
+			atlas.pixelSize = 1f;
+			if (data.atlasReference != null)
+			{
+				data.atlasReference.replacement = data.atlas;
+			}
+		}
+	}
+
+	public IEnumerator LoadMenuClearGameCoroutine()
+	{
+		foreach (TextureDatasNgui textureDatasNgui in nGuiSpriteSheets)
+		{
+			if (textureDatasNgui.mode == AtlasMode.Game)
+			{
+				Texture texture = textureDatasNgui.atlas.spriteMaterial.mainTexture;
+				textureDatasNgui.atlas.spriteMaterial.mainTexture = substitueTexture;
+				Resources.UnloadAsset(texture);
+			}
+		}
+		foreach (TextureDatas2DToolkit textureDatas2DToolkit in toolkitSrites)
+		{
+			if (textureDatas2DToolkit.mode == AtlasMode.Game)
+			{
+				UnLoad2DToolkitTexture(textureDatas2DToolkit);
+			}
+		}
+		yield return StartCoroutine(LoadMenuCoroutine());
+	}
+
+	public IEnumerator ClearMenuLoadGameCoroutine()
+	{
+		foreach (TextureDatasNgui textureDatasNgui in nGuiSpriteSheets)
+		{
+			if (textureDatasNgui.mode == AtlasMode.Menu)
+			{
+				Texture texture = textureDatasNgui.atlas.spriteMaterial.mainTexture;
+				textureDatasNgui.atlas.spriteMaterial.mainTexture = substitueTexture;
+				Resources.UnloadAsset(texture);
+			}
+		}
+		foreach (TextureDatas2DToolkit textureDatas2DToolkit in toolkitSrites)
+		{
+			if (textureDatas2DToolkit.mode == AtlasMode.Menu)
+			{
+				UnLoad2DToolkitTexture(textureDatas2DToolkit);
+			}
+		}
+		yield return StartCoroutine(LoadGameCoroutine());
+	}
+
+	private IEnumerator LoadImagesCoroutine()
+	{
+		yield return StartCoroutine(LoadCommonCoroutine());
+		yield return StartCoroutine(LoadMenuCoroutine());
+	}
+
+	public IEnumerator LoadCommonCoroutine()
+	{
+		foreach (TextureDatasNgui textureDatasNgui in nGuiSpriteSheets)
+		{
+			if (textureDatasNgui.mode == AtlasMode.Both && textureDatasNgui.resourceMode == ResourceMode.Resource)
+			{
+				LoadTextureForAtlas(textureDatasNgui);
+			}
+		}
+		foreach (TextureDatasNgui textureDatasNgui2 in nGuiSpriteSheets)
+		{
+			if (textureDatasNgui2.mode == AtlasMode.Both && textureDatasNgui2.resourceMode == ResourceMode.AssetBundle)
+			{
+				yield return StartCoroutine(LoadTextureForAtlasCoroutine(textureDatasNgui2.atlas));
+			}
+		}
+	}
+
+	public IEnumerator LoadTutorialCoroutine()
+	{
+		foreach (TextureDatasNgui textureDatasNgui in nGuiSpriteSheets)
+		{
+			if (textureDatasNgui.mode == AtlasMode.Tutorial && textureDatasNgui.resourceMode == ResourceMode.Resource)
+			{
+				LoadTextureForAtlas(textureDatasNgui);
+			}
+		}
+		foreach (TextureDatasNgui textureDatasNgui2 in nGuiSpriteSheets)
+		{
+			if (textureDatasNgui2.mode == AtlasMode.Tutorial && textureDatasNgui2.resourceMode == ResourceMode.AssetBundle)
+			{
+				yield return StartCoroutine(LoadTextureForAtlasCoroutine(textureDatasNgui2.atlas));
+			}
+		}
+	}
+
+	public IEnumerator LoadMissionMapsCoroutine()
+	{
+		foreach (TextureDatasNgui textureDatasNgui in nGuiSpriteSheets)
+		{
+			if (textureDatasNgui.mode == AtlasMode.Map && textureDatasNgui.resourceMode == ResourceMode.Resource)
+			{
+				LoadTextureForAtlas(textureDatasNgui);
+			}
+		}
+		foreach (TextureDatasNgui textureDatasNgui2 in nGuiSpriteSheets)
+		{
+			if (textureDatasNgui2.mode == AtlasMode.Map && textureDatasNgui2.resourceMode == ResourceMode.AssetBundle)
+			{
+				yield return StartCoroutine(LoadTextureForAtlasCoroutine(textureDatasNgui2.atlas));
+			}
+		}
+	}
+
+	public IEnumerator LoadMenuCoroutine()
+	{
+		foreach (TextureDatasNgui textureDatasNgui in nGuiSpriteSheets)
+		{
+			if (textureDatasNgui.mode == AtlasMode.Menu && textureDatasNgui.resourceMode == ResourceMode.Resource)
+			{
+				LoadTextureForAtlas(textureDatasNgui);
+			}
+		}
+		foreach (TextureDatasNgui textureDatasNgui2 in nGuiSpriteSheets)
+		{
+			if (textureDatasNgui2.mode == AtlasMode.Menu && textureDatasNgui2.resourceMode == ResourceMode.AssetBundle)
+			{
+				yield return StartCoroutine(LoadTextureForAtlasCoroutine(textureDatasNgui2.atlas));
+			}
+		}
+		foreach (TextureDatas2DToolkit textureDatas2DToolkit in toolkitSrites)
+		{
+			if (textureDatas2DToolkit.mode == AtlasMode.Menu)
+			{
+				Load2DToolkitTexture(textureDatas2DToolkit);
+			}
+		}
+	}
+
+	public IEnumerator LoadGameCoroutine()
+	{
+		foreach (TextureDatasNgui textureDatasNgui in nGuiSpriteSheets)
+		{
+			if (textureDatasNgui.mode == AtlasMode.Game && textureDatasNgui.resourceMode == ResourceMode.Resource)
+			{
+				LoadTextureForAtlas(textureDatasNgui);
+			}
+		}
+		foreach (TextureDatasNgui textureDatasNgui2 in Singleton<AtlasPreparer>.instance.nGuiSpriteSheets)
+		{
+			if (textureDatasNgui2.mode == AtlasMode.Game && textureDatasNgui2.resourceMode == ResourceMode.AssetBundle)
+			{
+				yield return StartCoroutine(LoadTextureForAtlasCoroutine(textureDatasNgui2.atlas));
+			}
+		}
+		foreach (TextureDatas2DToolkit textureDatas2DToolkit in toolkitSrites)
+		{
+			if (textureDatas2DToolkit.mode == AtlasMode.Game)
+			{
+				Load2DToolkitTexture(textureDatas2DToolkit);
+			}
+		}
+	}
+
+	public IEnumerator LoadTextureForAtlasCoroutine(UIAtlas atlas)
+	{
+		Debug.Log("AtlasPreparer - LOADING ATLAS FOR " + Screen.height + "px :\n " + atlas.name);
+		string path = atlas.pngPath;
+		string assetBundle = "GUI/" + path;
+		assetBundle = assetBundle.ToLower();
+		AssetBundleReference assetBundleRef = Singleton<AssetBundleManager>.instance.GetReference(assetBundle);
+		while (assetBundleRef == null || !assetBundleRef.cached)
+		{
+			if (assetBundleRef == null)
+			{
+				assetBundleRef = Singleton<AssetBundleManager>.instance.GetReference(assetBundle);
+			}
+			yield return null;
+		}
+		AssetBundleLoadAssetOperation op = Singleton<AssetBundleManager>.instance.LoadAssetAsync(assetBundle, atlas.pngPath, typeof(Texture2D));
+		yield return StartCoroutine(op);
+		Texture2D texture = op.GetAsset<Texture2D>();
+		atlas.spriteMaterial.mainTexture = texture;
+		AssetBundleManager.UnloadAssetBundle(assetBundle);
+		atlas.pixelSize = 1f;
+		yield return null;
+	}
 }

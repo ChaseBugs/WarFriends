@@ -1,63 +1,458 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
-public class SpawnPool : MonoBehaviour
+[AddComponentMenu("Path-o-logical/PoolManager/SpawnPool")]
+public sealed class SpawnPool : MonoBehaviour, IEnumerable, IList<Transform>, ICollection<Transform>, IEnumerable<Transform>
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public string poolName = string.Empty;
 
-	1. No dll files were provided to AssetRipper.
+	public bool matchPoolScale;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public bool matchPoolLayer;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public bool dontReparent;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public bool dontDestroyOnLoad;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public bool logMessages;
 
-	3. Assembly Reconstruction has not been implemented.
+	public List<PrefabPool> _perPrefabPoolOptions = new List<PrefabPool>();
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public Dictionary<object, bool> prefabsFoldOutStates = new Dictionary<object, bool>();
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	[HideInInspector]
+	public float maxParticleDespawnTime = 60f;
 
-	4. This script is unnecessary.
+	public PrefabsDict prefabs = new PrefabsDict();
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public Dictionary<object, bool> _editorListItemStates = new Dictionary<object, bool>();
 
-	5. Script Content Level 0
+	private List<PrefabPool> _prefabPools = new List<PrefabPool>();
 
-		AssetRipper was set to not load any script information.
+	internal List<Transform> _spawned = new List<Transform>();
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public Transform group { get; private set; }
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public Dictionary<string, PrefabPool> prefabPools
+	{
+		get
+		{
+			Dictionary<string, PrefabPool> dictionary = new Dictionary<string, PrefabPool>();
+			foreach (PrefabPool prefabPool in _prefabPools)
+			{
+				dictionary[prefabPool.prefabGO.name] = prefabPool;
+			}
+			return dictionary;
+		}
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	public Transform this[int index]
+	{
+		get
+		{
+			return _spawned[index];
+		}
+		set
+		{
+			throw new NotImplementedException("Read-only.");
+		}
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	public int Count => _spawned.Count;
 
-	*/
+	public bool IsReadOnly
+	{
+		get
+		{
+			throw new NotImplementedException();
+		}
+	}
+
+	IEnumerator IEnumerable.GetEnumerator()
+	{
+		foreach (Transform item in _spawned)
+		{
+			yield return item;
+		}
+	}
+
+	bool ICollection<Transform>.Remove(Transform item)
+	{
+		throw new NotImplementedException();
+	}
+
+	private void Awake()
+	{
+		if (dontDestroyOnLoad)
+		{
+			UnityEngine.Object.DontDestroyOnLoad(base.gameObject);
+		}
+		group = base.transform;
+		if (poolName == string.Empty)
+		{
+			poolName = group.name.Replace("Pool", string.Empty);
+			poolName = poolName.Replace("(Clone)", string.Empty);
+		}
+		if (logMessages)
+		{
+			Debug.Log($"SpawnPool {poolName}: Initializing..");
+		}
+		foreach (PrefabPool perPrefabPoolOption in _perPrefabPoolOptions)
+		{
+			if (perPrefabPoolOption.prefab == null)
+			{
+				Debug.LogWarning($"Initialization Warning: Pool '{poolName}' contains a PrefabPool with no prefab reference. Skipping.");
+				continue;
+			}
+			perPrefabPoolOption.inspectorInstanceConstructor();
+			CreatePrefabPool(perPrefabPoolOption);
+		}
+		PoolManager.Pools.Add(this);
+	}
+
+	private void OnDestroy()
+	{
+		if (logMessages)
+		{
+			Debug.Log($"SpawnPool {poolName}: Destroying...");
+		}
+		PoolManager.Pools.Remove(this);
+		StopAllCoroutines();
+		_spawned.Clear();
+		foreach (PrefabPool prefabPool in _prefabPools)
+		{
+			prefabPool.SelfDestruct();
+		}
+		_prefabPools.Clear();
+		prefabs._Clear();
+	}
+
+	public void CreatePrefabPool(PrefabPool prefabPool)
+	{
+		if (GetPrefab(prefabPool.prefab) == null && 0 == 0)
+		{
+			prefabPool.spawnPool = this;
+			_prefabPools.Add(prefabPool);
+			prefabs._Add(prefabPool.prefab.name, prefabPool.prefab);
+		}
+		if (!prefabPool.preloaded)
+		{
+			if (logMessages)
+			{
+				Debug.Log($"SpawnPool {poolName}: Preloading {prefabPool.preloadAmount} {prefabPool.prefab.name}");
+			}
+			prefabPool.PreloadInstances();
+		}
+	}
+
+	public void Add(Transform instance, string prefabName, bool despawn, bool parent)
+	{
+		foreach (PrefabPool prefabPool in _prefabPools)
+		{
+			if (prefabPool.prefabGO == null)
+			{
+				Debug.LogError("Unexpected Error: PrefabPool.prefabGO is null");
+				return;
+			}
+			if (prefabPool.prefabGO.name == prefabName)
+			{
+				prefabPool.AddUnpooled(instance, despawn);
+				if (logMessages)
+				{
+					Debug.Log($"SpawnPool {poolName}: Adding previously unpooled instance {instance.name}");
+				}
+				if (parent)
+				{
+					instance.parent = group;
+				}
+				if (!despawn)
+				{
+					_spawned.Add(instance);
+				}
+				return;
+			}
+		}
+		Debug.LogError($"SpawnPool {poolName}: PrefabPool {prefabName} not found.");
+	}
+
+	public void Add(Transform item)
+	{
+		string message = "Use SpawnPool.Spawn() to properly add items to the pool.";
+		throw new NotImplementedException(message);
+	}
+
+	public void Remove(Transform item)
+	{
+		string message = "Use Despawn() to properly manage items that should remain in the pool but be deactivated.";
+		throw new NotImplementedException(message);
+	}
+
+	public Transform Spawn(Transform prefab, Vector3 pos, Quaternion rot)
+	{
+		Transform transform;
+		foreach (PrefabPool prefabPool2 in _prefabPools)
+		{
+			if (prefabPool2.prefabGO == prefab.gameObject)
+			{
+				transform = prefabPool2.SpawnInstance(pos, rot);
+				if (transform == null)
+				{
+					return null;
+				}
+				if (!dontReparent && transform.parent != group)
+				{
+					transform.parent = group;
+				}
+				_spawned.Add(transform);
+				return transform;
+			}
+		}
+		PrefabPool prefabPool = new PrefabPool(prefab);
+		CreatePrefabPool(prefabPool);
+		transform = prefabPool.SpawnInstance(pos, rot);
+		transform.parent = group;
+		_spawned.Add(transform);
+		return transform;
+	}
+
+	public Transform Spawn(Transform prefab, Vector3 pos, Quaternion rot, Transform parent)
+	{
+		Transform transform = Spawn(prefab, pos, rot);
+		transform.parent = parent;
+		return transform;
+	}
+
+	public Transform Spawn(Transform prefab)
+	{
+		return Spawn(prefab, Vector3.zero, Quaternion.identity);
+	}
+
+	public Transform Spawn(Transform prefab, Transform parent)
+	{
+		Transform transform = Spawn(prefab, Vector3.zero, Quaternion.identity);
+		transform.parent = parent;
+		return transform;
+	}
+
+	public Transform Spawn(string prefabName)
+	{
+		Transform prefab = prefabs[prefabName];
+		return Spawn(prefab, Vector3.zero, Quaternion.identity);
+	}
+
+	public Transform Spawn(string prefabName, Transform parent)
+	{
+		Transform prefab = prefabs[prefabName];
+		Transform transform = Spawn(prefab, Vector3.zero, Quaternion.identity);
+		transform.parent = parent;
+		return transform;
+	}
+
+	public Transform Spawn(string prefabName, Vector3 pos, Quaternion rot)
+	{
+		Transform prefab = prefabs[prefabName];
+		return Spawn(prefab, pos, rot);
+	}
+
+	public Transform Spawn(string prefabName, Vector3 pos, Quaternion rot, Transform parent)
+	{
+		Transform prefab = prefabs[prefabName];
+		Transform transform = Spawn(prefab, pos, rot);
+		transform.parent = parent;
+		return transform;
+	}
+
+	public ParticleSystem Spawn(ParticleSystem prefab, Vector3 pos, Quaternion quat)
+	{
+		Transform transform = Spawn(prefab.transform, pos, quat);
+		if (transform == null)
+		{
+			return null;
+		}
+		ParticleSystem component = transform.GetComponent<ParticleSystem>();
+		StartCoroutine(ListenForEmitDespawn(component));
+		return component;
+	}
+
+	public void Despawn(Transform instance)
+	{
+		bool flag = false;
+		foreach (PrefabPool prefabPool in _prefabPools)
+		{
+			if (prefabPool._spawned.Contains(instance))
+			{
+				flag = prefabPool.DespawnInstance(instance);
+				break;
+			}
+			if (prefabPool._despawned.Contains(instance))
+			{
+				Debug.LogError($"SpawnPool {poolName}: {instance.name} has already been despawned. You cannot despawn something more than once!");
+				return;
+			}
+		}
+		if (!flag)
+		{
+			Debug.LogError($"SpawnPool {poolName}: {instance.name} not found in SpawnPool");
+		}
+		else
+		{
+			_spawned.Remove(instance);
+		}
+	}
+
+	public void Despawn(Transform instance, Transform parent)
+	{
+		instance.parent = parent;
+		Despawn(instance);
+	}
+
+	public void Despawn(Transform instance, float seconds)
+	{
+		StartCoroutine(DoDespawnAfterSeconds(instance, seconds, useParent: false, null));
+	}
+
+	public void Despawn(Transform instance, float seconds, Transform parent)
+	{
+		StartCoroutine(DoDespawnAfterSeconds(instance, seconds, useParent: true, parent));
+	}
+
+	private IEnumerator DoDespawnAfterSeconds(Transform instance, float seconds, bool useParent, Transform parent)
+	{
+		GameObject go = instance.gameObject;
+		while (seconds > 0f)
+		{
+			yield return null;
+			if (!go.activeInHierarchy)
+			{
+				yield break;
+			}
+			seconds -= Time.deltaTime;
+		}
+		if (useParent)
+		{
+			Despawn(instance, parent);
+		}
+		else
+		{
+			Despawn(instance);
+		}
+	}
+
+	public void DespawnAll()
+	{
+		List<Transform> list = new List<Transform>(_spawned);
+		foreach (Transform item in list)
+		{
+			Despawn(item);
+		}
+	}
+
+	public bool IsSpawned(Transform instance)
+	{
+		return _spawned.Contains(instance);
+	}
+
+	public Transform GetPrefab(Transform prefab)
+	{
+		foreach (PrefabPool prefabPool in _prefabPools)
+		{
+			if (prefabPool.prefabGO == null)
+			{
+				Debug.LogError($"SpawnPool {poolName}: PrefabPool.prefabGO is null");
+			}
+			if (prefabPool.prefabGO == prefab.gameObject)
+			{
+				return prefabPool.prefab;
+			}
+		}
+		return null;
+	}
+
+	public GameObject GetPrefab(GameObject prefab)
+	{
+		foreach (PrefabPool prefabPool in _prefabPools)
+		{
+			if (prefabPool.prefabGO == null)
+			{
+				Debug.LogError($"SpawnPool {poolName}: PrefabPool.prefabGO is null");
+			}
+			if (prefabPool.prefabGO == prefab)
+			{
+				return prefabPool.prefabGO;
+			}
+		}
+		return null;
+	}
+
+	private IEnumerator ListenForEmitDespawn(ParticleSystem emitter)
+	{
+		yield return new WaitForSeconds(emitter.startDelay + 0.25f);
+		float safetimer = 0f;
+		while (emitter.IsAlive(withChildren: true))
+		{
+			if (!PoolManagerUtils.activeInHierarchy(emitter.gameObject))
+			{
+				emitter.Clear(withChildren: true);
+				yield break;
+			}
+			safetimer += Time.deltaTime;
+			if (safetimer > maxParticleDespawnTime)
+			{
+				Debug.LogWarning($"SpawnPool {poolName}: Timed out while listening for all particles to die. Waited for {maxParticleDespawnTime}sec.");
+			}
+			yield return null;
+		}
+		Despawn(emitter.transform);
+	}
+
+	public override string ToString()
+	{
+		List<string> list = new List<string>();
+		foreach (Transform item in _spawned)
+		{
+			list.Add(item.name);
+		}
+		return string.Join(", ", list.ToArray());
+	}
+
+	public bool Contains(Transform item)
+	{
+		string message = "Use IsSpawned(Transform instance) instead.";
+		throw new NotImplementedException(message);
+	}
+
+	public void CopyTo(Transform[] array, int arrayIndex)
+	{
+		_spawned.CopyTo(array, arrayIndex);
+	}
+
+	public IEnumerator<Transform> GetEnumerator()
+	{
+		foreach (Transform item in _spawned)
+		{
+			yield return item;
+		}
+	}
+
+	public int IndexOf(Transform item)
+	{
+		throw new NotImplementedException();
+	}
+
+	public void Insert(int index, Transform item)
+	{
+		throw new NotImplementedException();
+	}
+
+	public void RemoveAt(int index)
+	{
+		throw new NotImplementedException();
+	}
+
+	public void Clear()
+	{
+		throw new NotImplementedException();
+	}
 }

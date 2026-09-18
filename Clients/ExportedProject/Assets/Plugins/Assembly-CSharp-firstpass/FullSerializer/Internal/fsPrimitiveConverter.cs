@@ -1,66 +1,118 @@
-using UnityEngine;
+using System;
 
 namespace FullSerializer.Internal
 {
-	public class fsPrimitiveConverter : MonoBehaviour
+public class fsPrimitiveConverter : fsConverter
+{
+	public override bool CanProcess(Type type)
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
+		return type.Resolve().IsPrimitive || type == typeof(string) || type == typeof(decimal);
 	}
+
+	public override bool RequestCycleSupport(Type storageType)
+	{
+		return false;
+	}
+
+	public override bool RequestInheritanceSupport(Type storageType)
+	{
+		return false;
+	}
+
+	private static bool UseBool(Type type)
+	{
+		return type == typeof(bool);
+	}
+
+	private static bool UseInt64(Type type)
+	{
+		return type == typeof(sbyte) || type == typeof(byte) || type == typeof(short) || type == typeof(ushort) || type == typeof(int) || type == typeof(uint) || type == typeof(long) || type == typeof(ulong);
+	}
+
+	private static bool UseDouble(Type type)
+	{
+		return type == typeof(float) || type == typeof(double) || type == typeof(decimal);
+	}
+
+	private static bool UseString(Type type)
+	{
+		return type == typeof(string) || type == typeof(char);
+	}
+
+	public override fsResult TrySerialize(object instance, out fsData serialized, Type storageType)
+	{
+		Type type = instance.GetType();
+		if (fsConfig.Serialize64BitIntegerAsString && (type == typeof(long) || type == typeof(ulong)))
+		{
+			serialized = new fsData((string)Convert.ChangeType(instance, typeof(string)));
+			return fsResult.Success;
+		}
+		if (UseBool(type))
+		{
+			serialized = new fsData((bool)instance);
+			return fsResult.Success;
+		}
+		if (UseInt64(type))
+		{
+			serialized = new fsData((long)Convert.ChangeType(instance, typeof(long)));
+			return fsResult.Success;
+		}
+		if (UseDouble(type))
+		{
+			serialized = new fsData((double)Convert.ChangeType(instance, typeof(double)));
+			return fsResult.Success;
+		}
+		if (UseString(type))
+		{
+			serialized = new fsData((string)Convert.ChangeType(instance, typeof(string)));
+			return fsResult.Success;
+		}
+		serialized = null;
+		return fsResult.Fail("Unhandled primitive type " + instance.GetType());
+	}
+
+	public override fsResult TryDeserialize(fsData storage, ref object instance, Type storageType)
+	{
+		fsResult success = fsResult.Success;
+		if (UseBool(storageType))
+		{
+			fsResult fsResult2 = (success += CheckType(storage, fsDataType.Boolean));
+			if (fsResult2.Succeeded)
+			{
+				instance = storage.AsBool;
+			}
+			return success;
+		}
+		if (UseDouble(storageType) || UseInt64(storageType))
+		{
+			if (storage.IsDouble)
+			{
+				instance = Convert.ChangeType(storage.AsDouble, storageType);
+			}
+			else if (storage.IsInt64)
+			{
+				instance = Convert.ChangeType(storage.AsInt64, storageType);
+			}
+			else
+			{
+				if (!fsConfig.Serialize64BitIntegerAsString || !storage.IsString || (storageType != typeof(long) && storageType != typeof(ulong)))
+				{
+					return fsResult.Fail(string.Concat(GetType().Name, " expected number but got ", storage.Type, " in ", storage));
+				}
+				instance = Convert.ChangeType(storage.AsString, storageType);
+			}
+			return fsResult.Success;
+		}
+		if (UseString(storageType))
+		{
+			fsResult fsResult3 = (success += CheckType(storage, fsDataType.String));
+			if (fsResult3.Succeeded)
+			{
+				instance = storage.AsString;
+			}
+			return success;
+		}
+		return fsResult.Fail(GetType().Name + ": Bad data; expected bool, number, string, but got " + storage);
+	}
+}
 }

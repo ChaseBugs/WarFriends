@@ -372,6 +372,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: aa35b3d583dad289daf4e3c28046d057, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  _spawner: {fileID: 0}
+  _wayPoint: {x: 0, y: 0, z: 0}
+  _speed: 10
+  _dived: 1
+  _stuckCounter: 0
+  _damping: 0
+  _soar: 1
+  _landing: 0
+  _targetSpeed: 0
+  _move: 1
+  _model: {fileID: 179954}
+  _modelT: {fileID: 476054}
+  _avoidValue: 0
+  _avoidDistance: 0
+  _avoid: 1
+  _thisT: {fileID: 444804}
 --- !u!4 &476054
 Transform:
   m_ObjectHideFlags: 0

@@ -1,66 +1,131 @@
-using UnityEngine;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace FullSerializer
 {
-	public class fsResult : MonoBehaviour
+public struct fsResult
+{
+	private static readonly string[] EmptyStringArray = new string[0];
+
+	private bool _success;
+
+	private List<string> _messages;
+
+	public static fsResult Success = new fsResult
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
+		_success = true
+	};
 
-		1. No dll files were provided to AssetRipper.
+	public bool Failed => !_success;
 
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
+	public bool Succeeded => _success;
 
-		2. Incorrect dll files were provided to AssetRipper.
+	public bool HasWarnings => _messages != null && _messages.Any();
 
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
+	public Exception AsException
+	{
+		get
+		{
+			if (!Failed && !RawMessages.Any())
+			{
+				throw new Exception("Only a failed result can be converted to an exception");
+			}
+			return new Exception(FormattedMessages);
+		}
 	}
+
+	public IEnumerable<string> RawMessages
+	{
+		get
+		{
+			if (_messages != null)
+			{
+				return _messages;
+			}
+			return EmptyStringArray;
+		}
+	}
+
+	public string FormattedMessages => string.Join(",\n", RawMessages.ToArray());
+
+	public void AddMessage(string message)
+	{
+		if (_messages == null)
+		{
+			_messages = new List<string>();
+		}
+		_messages.Add(message);
+	}
+
+	public void AddMessages(fsResult result)
+	{
+		if (result._messages != null)
+		{
+			if (_messages == null)
+			{
+				_messages = new List<string>();
+			}
+			_messages.AddRange(result._messages);
+		}
+	}
+
+	public fsResult Merge(fsResult other)
+	{
+		_success = _success && other._success;
+		if (other._messages != null)
+		{
+			if (_messages == null)
+			{
+				_messages = new List<string>(other._messages);
+			}
+			else
+			{
+				_messages.AddRange(other._messages);
+			}
+		}
+		return this;
+	}
+
+	public static fsResult Warn(string warning)
+	{
+		return new fsResult
+		{
+			_success = true,
+			_messages = new List<string> { warning }
+		};
+	}
+
+	public static fsResult Fail(string warning)
+	{
+		return new fsResult
+		{
+			_success = false,
+			_messages = new List<string> { warning }
+		};
+	}
+
+	public fsResult AssertSuccess()
+	{
+		if (Failed)
+		{
+			throw AsException;
+		}
+		return this;
+	}
+
+	public fsResult AssertSuccessWithoutWarnings()
+	{
+		if (Failed || RawMessages.Any())
+		{
+			throw AsException;
+		}
+		return this;
+	}
+
+	public static fsResult operator +(fsResult a, fsResult b)
+	{
+		return a.Merge(b);
+	}
+}
 }

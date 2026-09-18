@@ -39,6 +39,6659 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ea9f040b2b6bd4bf069e31e0ace12f73, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  material: {fileID: 2100000, guid: 995cff53e4ec203488dc398f0f8f32e5, type: 2}
+  sprites:
+  - name: whiteRectangle
+    outer:
+      serializedVersion: 2
+      x: 73
+      y: 191
+      width: 10
+      height: 10
+    inner:
+      serializedVersion: 2
+      x: 76
+      y: 194
+      width: 4
+      height: 4
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: brackets-universal-horizontal
+    outer:
+      serializedVersion: 2
+      x: 793
+      y: 393
+      width: 43
+      height: 43
+    inner:
+      serializedVersion: 2
+      x: 807
+      y: 406
+      width: 19
+      height: 16
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-close
+    outer:
+      serializedVersion: 2
+      x: 1000
+      y: 691
+      width: 67
+      height: 67
+    inner:
+      serializedVersion: 2
+      x: 1000
+      y: 691
+      width: 67
+      height: 67
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-endscreen-ico-results
+    outer:
+      serializedVersion: 2
+      x: 443
+      y: 99
+      width: 92
+      height: 42
+    inner:
+      serializedVersion: 2
+      x: 443
+      y: 99
+      width: 92
+      height: 42
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-endscreen-ico-ribbons
+    outer:
+      serializedVersion: 2
+      x: 744
+      y: 442
+      width: 92
+      height: 21
+    inner:
+      serializedVersion: 2
+      x: 744
+      y: 442
+      width: 92
+      height: 21
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-skillshot-longshot
+    outer:
+      serializedVersion: 2
+      x: 0
+      y: 9
+      width: 72
+      height: 46
+    inner:
+      serializedVersion: 2
+      x: 0
+      y: 9
+      width: 72
+      height: 46
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-skillshot-covered
+    outer:
+      serializedVersion: 2
+      x: 883
+      y: 567
+      width: 55
+      height: 55
+    inner:
+      serializedVersion: 2
+      x: 883
+      y: 567
+      width: 55
+      height: 55
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-skillshot-runner
+    outer:
+      serializedVersion: 2
+      x: 802
+      y: 7
+      width: 36
+      height: 30
+    inner:
+      serializedVersion: 2
+      x: 802
+      y: 7
+      width: 36
+      height: 30
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-vs-bg
+    outer:
+      serializedVersion: 2
+      x: 684
+      y: 377
+      width: 49
+      height: 49
+    inner:
+      serializedVersion: 2
+      x: 699
+      y: 392
+      width: 20
+      height: 19
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-rank-progress-bg
+    outer:
+      serializedVersion: 2
+      x: 648
+      y: 683
+      width: 12
+      height: 31
+    inner:
+      serializedVersion: 2
+      x: 653
+      y: 688
+      width: 2
+      height: 21
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-bg-tile
+    outer:
+      serializedVersion: 2
+      x: 0
+      y: 1369
+      width: 172
+      height: 174
+    inner:
+      serializedVersion: 2
+      x: 9
+      y: 1378
+      width: 154
+      height: 156
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-tile
+    outer:
+      serializedVersion: 2
+      x: 155
+      y: 405
+      width: 31
+      height: 334
+    inner:
+      serializedVersion: 2
+      x: 165
+      y: 415
+      width: 11
+      height: 294
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-top
+    outer:
+      serializedVersion: 2
+      x: 203
+      y: 592
+      width: 5
+      height: 147
+    inner:
+      serializedVersion: 2
+      x: 205
+      y: 593
+      width: 1
+      height: 126
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-button-back
+    outer:
+      serializedVersion: 2
+      x: 0
+      y: 345
+      width: 94
+      height: 108
+    inner:
+      serializedVersion: 2
+      x: 0
+      y: 345
+      width: 94
+      height: 108
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-button
+    outer:
+      serializedVersion: 2
+      x: 284
+      y: 992
+      width: 76
+      height: 200
+    inner:
+      serializedVersion: 2
+      x: 319
+      y: 1027
+      width: 6
+      height: 120
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-header
+    outer:
+      serializedVersion: 2
+      x: 1202
+      y: 1047
+      width: 35
+      height: 54
+    inner:
+      serializedVersion: 2
+      x: 1206
+      y: 1077
+      width: 3
+      height: 19
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-army-progress-bg
+    outer:
+      serializedVersion: 2
+      x: 908
+      y: 155
+      width: 25
+      height: 40
+    inner:
+      serializedVersion: 2
+      x: 915
+      y: 162
+      width: 11
+      height: 26
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-button-arrow
+    outer:
+      serializedVersion: 2
+      x: 848
+      y: 342
+      width: 30
+      height: 49
+    inner:
+      serializedVersion: 2
+      x: 848
+      y: 342
+      width: 30
+      height: 49
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-dogtag
+    outer:
+      serializedVersion: 2
+      x: 359
+      y: 723
+      width: 70
+      height: 122
+    inner:
+      serializedVersion: 2
+      x: 359
+      y: 723
+      width: 70
+      height: 122
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-lightbox-bg
+    outer:
+      serializedVersion: 2
+      x: 262
+      y: 193
+      width: 59
+      height: 90
+    inner:
+      serializedVersion: 2
+      x: 290
+      y: 237
+      width: 3
+      height: 2
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: glow
+    outer:
+      serializedVersion: 2
+      x: 576
+      y: 1768
+      width: 500
+      height: 109
+    inner:
+      serializedVersion: 2
+      x: 576
+      y: 1768
+      width: 500
+      height: 109
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-header-small
+    outer:
+      serializedVersion: 2
+      x: 880
+      y: 1187
+      width: 172
+      height: 52
+    inner:
+      serializedVersion: 2
+      x: 932
+      y: 1192
+      width: 69
+      height: 42
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-KIA
+    outer:
+      serializedVersion: 2
+      x: 381
+      y: 505
+      width: 120
+      height: 57
+    inner:
+      serializedVersion: 2
+      x: 381
+      y: 505
+      width: 120
+      height: 57
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-sidetab-bg-box
+    outer:
+      serializedVersion: 2
+      x: 623
+      y: 240
+      width: 14
+      height: 234
+    inner:
+      serializedVersion: 2
+      x: 628
+      y: 315
+      width: 4
+      height: 144
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-tile-glow
+    outer:
+      serializedVersion: 2
+      x: 2032
+      y: 1333
+      width: 7
+      height: 165
+    inner:
+      serializedVersion: 2
+      x: 2034
+      y: 1338
+      width: 3
+      height: 155
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-button-tile
+    outer:
+      serializedVersion: 2
+      x: 391
+      y: 110
+      width: 45
+      height: 111
+    inner:
+      serializedVersion: 2
+      x: 401
+      y: 150
+      width: -5
+      height: 46
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-sidetab-bg-box-button
+    outer:
+      serializedVersion: 2
+      x: 669
+      y: 682
+      width: 46
+      height: 156
+    inner:
+      serializedVersion: 2
+      x: 669
+      y: 682
+      width: 46
+      height: 156
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-sidetab-bg
+    outer:
+      serializedVersion: 2
+      x: 915
+      y: 761
+      width: 79
+      height: 76
+    inner:
+      serializedVersion: 2
+      x: 916
+      y: 762
+      width: 77
+      height: 74
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-notification-label
+    outer:
+      serializedVersion: 2
+      x: 643
+      y: 308
+      width: 53
+      height: 58
+    inner:
+      serializedVersion: 2
+      x: 643
+      y: 308
+      width: 53
+      height: 58
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-button-small
+    outer:
+      serializedVersion: 2
+      x: 1652
+      y: 873
+      width: 79
+      height: 124
+    inner:
+      serializedVersion: 2
+      x: 1682
+      y: 908
+      width: 19
+      height: 44
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-button-small-white
+    outer:
+      serializedVersion: 2
+      x: 0
+      y: 61
+      width: 79
+      height: 124
+    inner:
+      serializedVersion: 2
+      x: 30
+      y: 96
+      width: 19
+      height: 44
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-sidetab-chatico
+    outer:
+      serializedVersion: 2
+      x: 1146
+      y: 715
+      width: 66
+      height: 49
+    inner:
+      serializedVersion: 2
+      x: 1146
+      y: 715
+      width: 66
+      height: 49
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-sidetab-notificationico
+    outer:
+      serializedVersion: 2
+      x: 762
+      y: 469
+      width: 36
+      height: 81
+    inner:
+      serializedVersion: 2
+      x: 762
+      y: 469
+      width: 36
+      height: 81
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-stroke
+    outer:
+      serializedVersion: 2
+      x: 862
+      y: 493
+      width: 16
+      height: 16
+    inner:
+      serializedVersion: 2
+      x: 868
+      y: 499
+      width: 4
+      height: 4
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-button-oneside
+    outer:
+      serializedVersion: 2
+      x: 840
+      y: 694
+      width: 40
+      height: 124
+    inner:
+      serializedVersion: 2
+      x: 870
+      y: 704
+      width: 5
+      height: 64
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-button-oneside-white
+    outer:
+      serializedVersion: 2
+      x: 721
+      y: 562
+      width: 40
+      height: 124
+    inner:
+      serializedVersion: 2
+      x: 751
+      y: 572
+      width: 5
+      height: 64
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-button-insidestroke
+    outer:
+      serializedVersion: 2
+      x: 983
+      y: 19
+      width: 24
+      height: 24
+    inner:
+      serializedVersion: 2
+      x: 986
+      y: 22
+      width: 18
+      height: 16
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-top-rankup-bg
+    outer:
+      serializedVersion: 2
+      x: 984
+      y: 1107
+      width: 260
+      height: 34
+    inner:
+      serializedVersion: 2
+      x: 984
+      y: 1107
+      width: 260
+      height: 34
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-top-settings
+    outer:
+      serializedVersion: 2
+      x: 1139
+      y: 659
+      width: 51
+      height: 50
+    inner:
+      serializedVersion: 2
+      x: 1139
+      y: 659
+      width: 51
+      height: 50
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-top-box
+    outer:
+      serializedVersion: 2
+      x: 1014
+      y: 79
+      width: 24
+      height: 24
+    inner:
+      serializedVersion: 2
+      x: 1018
+      y: 83
+      width: 16
+      height: 16
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-top-rankup-fill
+    outer:
+      serializedVersion: 2
+      x: 1163
+      y: 1310
+      width: 18
+      height: 26
+    inner:
+      serializedVersion: 2
+      x: 1164
+      y: 1311
+      width: 16
+      height: 24
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-stroke-1px
+    outer:
+      serializedVersion: 2
+      x: 915
+      y: 932
+      width: 10
+      height: 10
+    inner:
+      serializedVersion: 2
+      x: 918
+      y: 935
+      width: 4
+      height: 4
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-gold
+    outer:
+      serializedVersion: 2
+      x: 247
+      y: 1600
+      width: 275
+      height: 184
+    inner:
+      serializedVersion: 2
+      x: 247
+      y: 1600
+      width: 275
+      height: 184
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-warbucks
+    outer:
+      serializedVersion: 2
+      x: 614
+      y: 1292
+      width: 167
+      height: 98
+    inner:
+      serializedVersion: 2
+      x: 614
+      y: 1292
+      width: 167
+      height: 98
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-top-vip
+    outer:
+      serializedVersion: 2
+      x: 1592
+      y: 1072
+      width: 126
+      height: 102
+    inner:
+      serializedVersion: 2
+      x: 1592
+      y: 1072
+      width: 126
+      height: 102
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-stroke-2px
+    outer:
+      serializedVersion: 2
+      x: 886
+      y: 428
+      width: 34
+      height: 34
+    inner:
+      serializedVersion: 2
+      x: 892
+      y: 434
+      width: 22
+      height: 22
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-hub-multiplayer-vipico
+    outer:
+      serializedVersion: 2
+      x: 1287
+      y: 1608
+      width: 228
+      height: 189
+    inner:
+      serializedVersion: 2
+      x: 1287
+      y: 1608
+      width: 228
+      height: 189
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-tile-glow-corner
+    outer:
+      serializedVersion: 2
+      x: 576
+      y: 1883
+      width: 380
+      height: 165
+    inner:
+      serializedVersion: 2
+      x: 576
+      y: 1883
+      width: 380
+      height: 165
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-campaign-star-bg
+    outer:
+      serializedVersion: 2
+      x: 1035
+      y: 1246
+      width: 122
+      height: 122
+    inner:
+      serializedVersion: 2
+      x: 1045
+      y: 1256
+      width: 77
+      height: 82
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-campaign-star-gold
+    outer:
+      serializedVersion: 2
+      x: 524
+      y: 895
+      width: 96
+      height: 94
+    inner:
+      serializedVersion: 2
+      x: 524
+      y: 895
+      width: 96
+      height: 94
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-campaign-star-empty
+    outer:
+      serializedVersion: 2
+      x: 425
+      y: 317
+      width: 78
+      height: 74
+    inner:
+      serializedVersion: 2
+      x: 425
+      y: 317
+      width: 78
+      height: 74
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-campaign-coop
+    outer:
+      serializedVersion: 2
+      x: 1521
+      y: 1722
+      width: 58
+      height: 75
+    inner:
+      serializedVersion: 2
+      x: 1521
+      y: 1722
+      width: 58
+      height: 75
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-campaign-ico-completed
+    outer:
+      serializedVersion: 2
+      x: 692
+      y: 26
+      width: 50
+      height: 46
+    inner:
+      serializedVersion: 2
+      x: 692
+      y: 26
+      width: 50
+      height: 46
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-campaign-ico
+    outer:
+      serializedVersion: 2
+      x: 734
+      y: 206
+      width: 48
+      height: 44
+    inner:
+      serializedVersion: 2
+      x: 734
+      y: 206
+      width: 48
+      height: 44
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-campaign-star-progress-fill
+    outer:
+      serializedVersion: 2
+      x: 694
+      y: 562
+      width: 18
+      height: 114
+    inner:
+      serializedVersion: 2
+      x: 696
+      y: 565
+      width: 14
+      height: 108
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-campaign-map-mission
+    outer:
+      serializedVersion: 2
+      x: 0
+      y: 1199
+      width: 134
+      height: 164
+    inner:
+      serializedVersion: 2
+      x: 0
+      y: 1199
+      width: 134
+      height: 164
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-army-unit-bg
+    outer:
+      serializedVersion: 2
+      x: 1962
+      y: 1824
+      width: 77
+      height: 224
+    inner:
+      serializedVersion: 2
+      x: 1982
+      y: 1864
+      width: 17
+      height: 154
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-army-select-bg
+    outer:
+      serializedVersion: 2
+      x: 1394
+      y: 912
+      width: 116
+      height: 52
+    inner:
+      serializedVersion: 2
+      x: 1444
+      y: 962
+      width: 16
+      height: 1
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-army-unit-selected
+    outer:
+      serializedVersion: 2
+      x: 181
+      y: 194
+      width: 75
+      height: 71
+    inner:
+      serializedVersion: 2
+      x: 201
+      y: 239
+      width: 10
+      height: 6
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-upgrade-ico
+    outer:
+      serializedVersion: 2
+      x: 1671
+      y: 1365
+      width: 48
+      height: 56
+    inner:
+      serializedVersion: 2
+      x: 1671
+      y: 1365
+      width: 48
+      height: 56
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-army-box-stroke
+    outer:
+      serializedVersion: 2
+      x: 886
+      y: 400
+      width: 38
+      height: 22
+    inner:
+      serializedVersion: 2
+      x: 896
+      y: 410
+      width: 18
+      height: 2
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-army-upgradebar
+    outer:
+      serializedVersion: 2
+      x: 886
+      y: 769
+      width: 20
+      height: 22
+    inner:
+      serializedVersion: 2
+      x: 892
+      y: 777
+      width: 8
+      height: 6
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-locked
+    outer:
+      serializedVersion: 2
+      x: 140
+      y: 1191
+      width: 115
+      height: 135
+    inner:
+      serializedVersion: 2
+      x: 140
+      y: 1191
+      width: 115
+      height: 135
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-army-upgrade-point-bg
+    outer:
+      serializedVersion: 2
+      x: 645
+      y: 948
+      width: 96
+      height: 96
+    inner:
+      serializedVersion: 2
+      x: 645
+      y: 948
+      width: 96
+      height: 96
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-weapons-tab
+    outer:
+      serializedVersion: 2
+      x: 178
+      y: 1441
+      width: 62
+      height: 102
+    inner:
+      serializedVersion: 2
+      x: 183
+      y: 1472
+      width: 27
+      height: 66
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-weapons-tab-active
+    outer:
+      serializedVersion: 2
+      x: 429
+      y: 397
+      width: 62
+      height: 102
+    inner:
+      serializedVersion: 2
+      x: 439
+      y: 432
+      width: 17
+      height: 57
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-weapons-primary-ico
+    outer:
+      serializedVersion: 2
+      x: 1058
+      y: 1196
+      width: 97
+      height: 44
+    inner:
+      serializedVersion: 2
+      x: 1058
+      y: 1196
+      width: 97
+      height: 44
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-weapons-special-ico
+    outer:
+      serializedVersion: 2
+      x: 442
+      y: 147
+      width: 108
+      height: 38
+    inner:
+      serializedVersion: 2
+      x: 442
+      y: 147
+      width: 108
+      height: 38
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-weapons-explosive-ico
+    outer:
+      serializedVersion: 2
+      x: 1218
+      y: 698
+      width: 49
+      height: 53
+    inner:
+      serializedVersion: 2
+      x: 1218
+      y: 698
+      width: 49
+      height: 53
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-weapons-sidearm-ico
+    outer:
+      serializedVersion: 2
+      x: 565
+      y: 15
+      width: 62
+      height: 39
+    inner:
+      serializedVersion: 2
+      x: 565
+      y: 15
+      width: 62
+      height: 39
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-weapons-comparisonarrow-ico
+    outer:
+      serializedVersion: 2
+      x: 1230
+      y: 822
+      width: 28
+      height: 24
+    inner:
+      serializedVersion: 2
+      x: 1230
+      y: 822
+      width: 28
+      height: 24
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-weapons-equipbg
+    outer:
+      serializedVersion: 2
+      x: 1188
+      y: 852
+      width: 70
+      height: 74
+    inner:
+      serializedVersion: 2
+      x: 1188
+      y: 852
+      width: 70
+      height: 74
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-skillshot-multikill
+    outer:
+      serializedVersion: 2
+      x: 1292
+      y: 970
+      width: 67
+      height: 53
+    inner:
+      serializedVersion: 2
+      x: 1292
+      y: 970
+      width: 67
+      height: 53
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-skillshot-tripplekill
+    outer:
+      serializedVersion: 2
+      x: 883
+      y: 628
+      width: 60
+      height: 53
+    inner:
+      serializedVersion: 2
+      x: 883
+      y: 628
+      width: 60
+      height: 53
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-skillshot-doublekill
+    outer:
+      serializedVersion: 2
+      x: 1073
+      y: 671
+      width: 60
+      height: 53
+    inner:
+      serializedVersion: 2
+      x: 1073
+      y: 671
+      width: 60
+      height: 53
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-skillshot-onehitkill
+    outer:
+      serializedVersion: 2
+      x: 643
+      y: 252
+      width: 48
+      height: 50
+    inner:
+      serializedVersion: 2
+      x: 643
+      y: 252
+      width: 48
+      height: 50
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-skillshot-slowmotionkill
+    outer:
+      serializedVersion: 2
+      x: 508
+      y: 195
+      width: 38
+      height: 50
+    inner:
+      serializedVersion: 2
+      x: 508
+      y: 195
+      width: 38
+      height: 50
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-skillshot-explosivekill
+    outer:
+      serializedVersion: 2
+      x: 788
+      y: 238
+      width: 52
+      height: 35
+    inner:
+      serializedVersion: 2
+      x: 788
+      y: 238
+      width: 52
+      height: 35
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-skillshot-vehicledestroyed
+    outer:
+      serializedVersion: 2
+      x: 822
+      y: 98
+      width: 46
+      height: 34
+    inner:
+      serializedVersion: 2
+      x: 822
+      y: 98
+      width: 46
+      height: 34
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-skillshot-enemyplayerhit
+    outer:
+      serializedVersion: 2
+      x: 846
+      y: 241
+      width: 39
+      height: 39
+    inner:
+      serializedVersion: 2
+      x: 846
+      y: 241
+      width: 39
+      height: 39
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-skillshot-armykill
+    outer:
+      serializedVersion: 2
+      x: 874
+      y: 105
+      width: 34
+      height: 31
+    inner:
+      serializedVersion: 2
+      x: 874
+      y: 105
+      width: 34
+      height: 31
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-skillshot-enviromentalkill
+    outer:
+      serializedVersion: 2
+      x: 881
+      y: 65
+      width: 28
+      height: 34
+    inner:
+      serializedVersion: 2
+      x: 881
+      y: 65
+      width: 28
+      height: 34
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-skillshot-onthemove
+    outer:
+      serializedVersion: 2
+      x: 1908
+      y: 900
+      width: 36
+      height: 26
+    inner:
+      serializedVersion: 2
+      x: 1908
+      y: 900
+      width: 36
+      height: 26
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-skillshot-revengekill
+    outer:
+      serializedVersion: 2
+      x: 535
+      y: 6
+      width: 24
+      height: 22
+    inner:
+      serializedVersion: 2
+      x: 535
+      y: 6
+      width: 24
+      height: 22
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-skillshot-headshot
+    outer:
+      serializedVersion: 2
+      x: 332
+      y: 628
+      width: 86
+      height: 89
+    inner:
+      serializedVersion: 2
+      x: 332
+      y: 628
+      width: 86
+      height: 89
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-skillshot-tankdestroyed
+    outer:
+      serializedVersion: 2
+      x: 192
+      y: 409
+      width: 42
+      height: 24
+    inner:
+      serializedVersion: 2
+      x: 192
+      y: 409
+      width: 42
+      height: 24
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-button-highlight
+    outer:
+      serializedVersion: 2
+      x: 1671
+      y: 1180
+      width: 101
+      height: 178
+    inner:
+      serializedVersion: 2
+      x: 1715
+      y: 1224
+      width: 13
+      height: 90
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-chat-button
+    outer:
+      serializedVersion: 2
+      x: 332
+      y: 223
+      width: 53
+      height: 103
+    inner:
+      serializedVersion: 2
+      x: 362
+      y: 248
+      width: 11
+      height: 58
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-chat-input-bg
+    outer:
+      serializedVersion: 2
+      x: 1592
+      y: 1193
+      width: 68
+      height: 96
+    inner:
+      serializedVersion: 2
+      x: 1607
+      y: 1208
+      width: 38
+      height: 66
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-chat-box-bg
+    outer:
+      serializedVersion: 2
+      x: 656
+      y: 372
+      width: 22
+      height: 174
+    inner:
+      serializedVersion: 2
+      x: 664
+      y: 392
+      width: 6
+      height: 124
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-chat-tab
+    outer:
+      serializedVersion: 2
+      x: 804
+      y: 492
+      width: 52
+      height: 53
+    inner:
+      serializedVersion: 2
+      x: 806
+      y: 517
+      width: 25
+      height: 26
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-endscreen-ico-enemy
+    outer:
+      serializedVersion: 2
+      x: 1191
+      y: 1615
+      width: 78
+      height: 35
+    inner:
+      serializedVersion: 2
+      x: 1191
+      y: 1615
+      width: 78
+      height: 35
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-endscreen-ico-cards
+    outer:
+      serializedVersion: 2
+      x: 618
+      y: 132
+      width: 64
+      height: 38
+    inner:
+      serializedVersion: 2
+      x: 618
+      y: 132
+      width: 64
+      height: 38
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-tilegfx-facebook
+    outer:
+      serializedVersion: 2
+      x: 843
+      y: 948
+      width: 91
+      height: 91
+    inner:
+      serializedVersion: 2
+      x: 843
+      y: 948
+      width: 91
+      height: 91
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-endscreen-winner-wings
+    outer:
+      serializedVersion: 2
+      x: 1357
+      y: 1452
+      width: 150
+      height: 150
+    inner:
+      serializedVersion: 2
+      x: 1357
+      y: 1452
+      width: 150
+      height: 150
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-endscreen-winner-ribbon
+    outer:
+      serializedVersion: 2
+      x: 614
+      y: 1396
+      width: 142
+      height: 150
+    inner:
+      serializedVersion: 2
+      x: 614
+      y: 1396
+      width: 142
+      height: 150
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-cardselection-stroke
+    outer:
+      serializedVersion: 2
+      x: 0
+      y: 634
+      width: 78
+      height: 144
+    inner:
+      serializedVersion: 2
+      x: 15
+      y: 699
+      width: 23
+      height: 9
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-cardselection-selected
+    outer:
+      serializedVersion: 2
+      x: 1588
+      y: 1718
+      width: 134
+      height: 330
+    inner:
+      serializedVersion: 2
+      x: 1623
+      y: 1873
+      width: 7
+      height: 10
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-cardselection-numbeofcards
+    outer:
+      serializedVersion: 2
+      x: 1433
+      y: 1049
+      width: 100
+      height: 112
+    inner:
+      serializedVersion: 2
+      x: 1433
+      y: 1049
+      width: 100
+      height: 112
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-playervisuals-accessories-ico
+    outer:
+      serializedVersion: 2
+      x: 1365
+      y: 1052
+      width: 62
+      height: 54
+    inner:
+      serializedVersion: 2
+      x: 1365
+      y: 1052
+      width: 62
+      height: 54
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-playervisuals-helmets-ico
+    outer:
+      serializedVersion: 2
+      x: 0
+      y: 574
+      width: 62
+      height: 54
+    inner:
+      serializedVersion: 2
+      x: 0
+      y: 574
+      width: 62
+      height: 54
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-playervisuals-decals-ico
+    outer:
+      serializedVersion: 2
+      x: 684
+      y: 432
+      width: 54
+      height: 54
+    inner:
+      serializedVersion: 2
+      x: 684
+      y: 432
+      width: 54
+      height: 54
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-playervisuals-camos-ico
+    outer:
+      serializedVersion: 2
+      x: 678
+      y: 78
+      width: 48
+      height: 48
+    inner:
+      serializedVersion: 2
+      x: 678
+      y: 78
+      width: 48
+      height: 48
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-check-gold
+    outer:
+      serializedVersion: 2
+      x: 417
+      y: 13
+      width: 72
+      height: 59
+    inner:
+      serializedVersion: 2
+      x: 417
+      y: 13
+      width: 72
+      height: 59
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-input
+    outer:
+      serializedVersion: 2
+      x: 460
+      y: 191
+      width: 42
+      height: 120
+    inner:
+      serializedVersion: 2
+      x: 468
+      y: 199
+      width: 26
+      height: 104
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-search-ico
+    outer:
+      serializedVersion: 2
+      x: 1230
+      y: 757
+      width: 59
+      height: 59
+    inner:
+      serializedVersion: 2
+      x: 1230
+      y: 757
+      width: 59
+      height: 59
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-skillshot-armyplayerhit
+    outer:
+      serializedVersion: 2
+      x: 842
+      y: 397
+      width: 38
+      height: 39
+    inner:
+      serializedVersion: 2
+      x: 842
+      y: 397
+      width: 38
+      height: 39
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-medals-ico-big
+    outer:
+      serializedVersion: 2
+      x: 106
+      y: 745
+      width: 106
+      height: 106
+    inner:
+      serializedVersion: 2
+      x: 106
+      y: 745
+      width: 106
+      height: 106
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-armypower-ico
+    outer:
+      serializedVersion: 2
+      x: 807
+      y: 551
+      width: 49
+      height: 61
+    inner:
+      serializedVersion: 2
+      x: 807
+      y: 551
+      width: 49
+      height: 61
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-army-units-circle-part
+    outer:
+      serializedVersion: 2
+      x: 2028
+      y: 812
+      width: 14
+      height: 80
+    inner:
+      serializedVersion: 2
+      x: 2028
+      y: 812
+      width: 14
+      height: 80
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-assignments-type-destroy
+    outer:
+      serializedVersion: 2
+      x: 1728
+      y: 1702
+      width: 228
+      height: 170
+    inner:
+      serializedVersion: 2
+      x: 1728
+      y: 1702
+      width: 228
+      height: 170
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-assignments-type-kill
+    outer:
+      serializedVersion: 2
+      x: 1728
+      y: 1878
+      width: 228
+      height: 170
+    inner:
+      serializedVersion: 2
+      x: 1728
+      y: 1878
+      width: 228
+      height: 170
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-assignments-rewardbox
+    outer:
+      serializedVersion: 2
+      x: 449
+      y: 1558
+      width: 68
+      height: 36
+    inner:
+      serializedVersion: 2
+      x: 503
+      y: 1561
+      width: 11
+      height: 30
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-assignments-bg
+    outer:
+      serializedVersion: 2
+      x: 2030
+      y: 1504
+      width: 6
+      height: 218
+    inner:
+      serializedVersion: 2
+      x: 2031
+      y: 1505
+      width: 4
+      height: 216
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-assignments-bar-blue
+    outer:
+      serializedVersion: 2
+      x: 177
+      y: 134
+      width: 6
+      height: 54
+    inner:
+      serializedVersion: 2
+      x: 178
+      y: 135
+      width: 4
+      height: 52
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-assignments-bar-gold
+    outer:
+      serializedVersion: 2
+      x: 68
+      y: 574
+      width: 6
+      height: 54
+    inner:
+      serializedVersion: 2
+      x: 69
+      y: 575
+      width: 4
+      height: 52
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-upgrade-delivering-ico
+    outer:
+      serializedVersion: 2
+      x: 565
+      y: 60
+      width: 56
+      height: 56
+    inner:
+      serializedVersion: 2
+      x: 565
+      y: 60
+      width: 56
+      height: 56
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-weapons-equipped
+    outer:
+      serializedVersion: 2
+      x: 797
+      y: 1059
+      width: 74
+      height: 72
+    inner:
+      serializedVersion: 2
+      x: 797
+      y: 1059
+      width: 74
+      height: 72
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-squadpoint-ico
+    outer:
+      serializedVersion: 2
+      x: 428
+      y: 1255
+      width: 126
+      height: 126
+    inner:
+      serializedVersion: 2
+      x: 428
+      y: 1255
+      width: 126
+      height: 126
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-squadpoint-ico-bw
+    outer:
+      serializedVersion: 2
+      x: 1188
+      y: 1310
+      width: 126
+      height: 126
+    inner:
+      serializedVersion: 2
+      x: 1188
+      y: 1310
+      width: 126
+      height: 126
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-leagues-infobox-header
+    outer:
+      serializedVersion: 2
+      x: 1521
+      y: 1536
+      width: 198
+      height: 176
+    inner:
+      serializedVersion: 2
+      x: 1614
+      y: 1538
+      width: 8
+      height: 99
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-leagues-bar-bg
+    outer:
+      serializedVersion: 2
+      x: 73
+      y: 207
+      width: 21
+      height: 132
+    inner:
+      serializedVersion: 2
+      x: 77
+      y: 211
+      width: 13
+      height: 124
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-leagues-infobox-stroke
+    outer:
+      serializedVersion: 2
+      x: 100
+      y: 131
+      width: 31
+      height: 322
+    inner:
+      serializedVersion: 2
+      x: 107
+      y: 138
+      width: 17
+      height: 308
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-squad-ico
+    outer:
+      serializedVersion: 2
+      x: 189
+      y: 11
+      width: 75
+      height: 61
+    inner:
+      serializedVersion: 2
+      x: 189
+      y: 11
+      width: 75
+      height: 61
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-squadrank-ico
+    outer:
+      serializedVersion: 2
+      x: 813
+      y: 618
+      width: 64
+      height: 70
+    inner:
+      serializedVersion: 2
+      x: 813
+      y: 618
+      width: 64
+      height: 70
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-wings-small
+    outer:
+      serializedVersion: 2
+      x: 645
+      y: 1050
+      width: 25
+      height: 26
+    inner:
+      serializedVersion: 2
+      x: 668
+      y: 1074
+      width: 1
+      height: 1
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-top-vip-not
+    outer:
+      serializedVersion: 2
+      x: 1301
+      y: 1112
+      width: 126
+      height: 102
+    inner:
+      serializedVersion: 2
+      x: 1301
+      y: 1112
+      width: 126
+      height: 102
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-viponly
+    outer:
+      serializedVersion: 2
+      x: 962
+      y: 1896
+      width: 379
+      height: 152
+    inner:
+      serializedVersion: 2
+      x: 962
+      y: 1896
+      width: 379
+      height: 152
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-addsoldier-ico
+    outer:
+      serializedVersion: 2
+      x: 738
+      y: 161
+      width: 54
+      height: 39
+    inner:
+      serializedVersion: 2
+      x: 738
+      y: 161
+      width: 54
+      height: 39
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-exmark
+    outer:
+      serializedVersion: 2
+      x: 256
+      y: 1013
+      width: 20
+      height: 64
+    inner:
+      serializedVersion: 2
+      x: 256
+      y: 1013
+      width: 20
+      height: 64
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-button-promote-ico
+    outer:
+      serializedVersion: 2
+      x: 950
+      y: 50
+      width: 27
+      height: 28
+    inner:
+      serializedVersion: 2
+      x: 950
+      y: 50
+      width: 27
+      height: 28
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-pack-starter-top
+    outer:
+      serializedVersion: 2
+      x: 528
+      y: 1684
+      width: 434
+      height: 78
+    inner:
+      serializedVersion: 2
+      x: 528
+      y: 1684
+      width: 434
+      height: 78
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-pack-starter-bottom
+    outer:
+      serializedVersion: 2
+      x: 880
+      y: 1147
+      width: 415
+      height: 33
+    inner:
+      serializedVersion: 2
+      x: 880
+      y: 1147
+      width: 415
+      height: 33
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-pack-starter-left
+    outer:
+      serializedVersion: 2
+      x: 218
+      y: 527
+      width: 34
+      height: 324
+    inner:
+      serializedVersion: 2
+      x: 218
+      y: 527
+      width: 34
+      height: 324
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-pack-starter-right
+    outer:
+      serializedVersion: 2
+      x: 566
+      y: 329
+      width: 18
+      height: 324
+    inner:
+      serializedVersion: 2
+      x: 566
+      y: 329
+      width: 18
+      height: 324
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-gradienbg
+    outer:
+      serializedVersion: 2
+      x: 192
+      y: 575
+      width: 5
+      height: 164
+    inner:
+      serializedVersion: 2
+      x: 194
+      y: 579
+      width: 1
+      height: 156
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menul-offer-label
+    outer:
+      serializedVersion: 2
+      x: 424
+      y: 568
+      width: 119
+      height: 58
+    inner:
+      serializedVersion: 2
+      x: 478
+      y: 575
+      width: 12
+      height: 37
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-assignments-type-win
+    outer:
+      serializedVersion: 2
+      x: 1506
+      y: 1295
+      width: 159
+      height: 126
+    inner:
+      serializedVersion: 2
+      x: 1506
+      y: 1295
+      width: 159
+      height: 126
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-assignments-type-ribbon
+    outer:
+      serializedVersion: 2
+      x: 762
+      y: 1398
+      width: 148
+      height: 126
+    inner:
+      serializedVersion: 2
+      x: 762
+      y: 1398
+      width: 148
+      height: 126
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-assignments-type-crate
+    outer:
+      serializedVersion: 2
+      x: 1052
+      y: 1374
+      width: 130
+      height: 130
+    inner:
+      serializedVersion: 2
+      x: 1052
+      y: 1374
+      width: 130
+      height: 130
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-assignments-type-skillshot
+    outer:
+      serializedVersion: 2
+      x: 127
+      y: 955
+      width: 123
+      height: 122
+    inner:
+      serializedVersion: 2
+      x: 127
+      y: 955
+      width: 123
+      height: 122
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-assignments-type-score
+    outer:
+      serializedVersion: 2
+      x: 109
+      y: 857
+      width: 152
+      height: 92
+    inner:
+      serializedVersion: 2
+      x: 109
+      y: 857
+      width: 152
+      height: 92
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-assignments-type-warpathmission
+    outer:
+      serializedVersion: 2
+      x: 1724
+      y: 1003
+      width: 107
+      height: 101
+    inner:
+      serializedVersion: 2
+      x: 1724
+      y: 1003
+      width: 107
+      height: 101
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-cardselection-container
+    outer:
+      serializedVersion: 2
+      x: 1947
+      y: 1442
+      width: 77
+      height: 254
+    inner:
+      serializedVersion: 2
+      x: 1967
+      y: 1512
+      width: 7
+      height: 99
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-cardselection-bracket
+    outer:
+      serializedVersion: 2
+      x: 248
+      y: 386
+      width: 28
+      height: 47
+    inner:
+      serializedVersion: 2
+      x: 272
+      y: 390
+      width: 2
+      height: 16
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-dailyreward-check
+    outer:
+      serializedVersion: 2
+      x: 838
+      y: 63
+      width: 37
+      height: 29
+    inner:
+      serializedVersion: 2
+      x: 838
+      y: 63
+      width: 37
+      height: 29
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-button-main-glow
+    outer:
+      serializedVersion: 2
+      x: 907
+      y: 1245
+      width: 122
+      height: 123
+    inner:
+      serializedVersion: 2
+      x: 967
+      y: 1305
+      width: 2
+      height: 3
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-button-warpath
+    outer:
+      serializedVersion: 2
+      x: 84
+      y: 571
+      width: 65
+      height: 168
+    inner:
+      serializedVersion: 2
+      x: 114
+      y: 601
+      width: 6
+      height: 90
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-button-main-vs
+    outer:
+      serializedVersion: 2
+      x: 341
+      y: 332
+      width: 78
+      height: 79
+    inner:
+      serializedVersion: 2
+      x: 341
+      y: 332
+      width: 78
+      height: 79
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-sale-bg
+    outer:
+      serializedVersion: 2
+      x: 312
+      y: 1790
+      width: 258
+      height: 258
+    inner:
+      serializedVersion: 2
+      x: 312
+      y: 1790
+      width: 258
+      height: 258
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-wings-vipgold
+    outer:
+      serializedVersion: 2
+      x: 127
+      y: 1083
+      width: 151
+      height: 102
+    inner:
+      serializedVersion: 2
+      x: 144
+      y: 1133
+      width: 6
+      height: 5
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-button-main-inactive
+    outer:
+      serializedVersion: 2
+      x: 1942
+      y: 1030
+      width: 76
+      height: 200
+    inner:
+      serializedVersion: 2
+      x: 1973
+      y: 1062
+      width: 14
+      height: 116
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-randomcard-ico
+    outer:
+      serializedVersion: 2
+      x: 1737
+      y: 765
+      width: 78
+      height: 118
+    inner:
+      serializedVersion: 2
+      x: 1737
+      y: 765
+      width: 78
+      height: 118
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-vip-star
+    outer:
+      serializedVersion: 2
+      x: 192
+      y: 439
+      width: 84
+      height: 82
+    inner:
+      serializedVersion: 2
+      x: 192
+      y: 439
+      width: 84
+      height: 82
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-wings-double
+    outer:
+      serializedVersion: 2
+      x: 623
+      y: 176
+      width: 53
+      height: 58
+    inner:
+      serializedVersion: 2
+      x: 671
+      y: 204
+      width: 3
+      height: 2
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-sale-pricestrikethrough
+    outer:
+      serializedVersion: 2
+      x: 1202
+      y: 1030
+      width: 41
+      height: 11
+    inner:
+      serializedVersion: 2
+      x: 1218
+      y: 1035
+      width: 9
+      height: 1
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-cardselection-scrollbar
+    outer:
+      serializedVersion: 2
+      x: 178
+      y: 1431
+      width: 58
+      height: 4
+    inner:
+      serializedVersion: 2
+      x: 178
+      y: 1431
+      width: 58
+      height: 4
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-button-white-oneside-top
+    outer:
+      serializedVersion: 2
+      x: 648
+      y: 552
+      width: 40
+      height: 124
+    inner:
+      serializedVersion: 2
+      x: 677
+      y: 582
+      width: 8
+      height: 72
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-gold-singlebrick
+    outer:
+      serializedVersion: 2
+      x: 528
+      y: 1552
+      width: 263
+      height: 126
+    inner:
+      serializedVersion: 2
+      x: 528
+      y: 1552
+      width: 263
+      height: 126
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-sidetab-servermaintenance-ico
+    outer:
+      serializedVersion: 2
+      x: 0
+      y: 459
+      width: 102
+      height: 106
+    inner:
+      serializedVersion: 2
+      x: 0
+      y: 459
+      width: 102
+      height: 106
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-sidetab-joinedsquad
+    outer:
+      serializedVersion: 2
+      x: 1539
+      y: 965
+      width: 107
+      height: 101
+    inner:
+      serializedVersion: 2
+      x: 1539
+      y: 965
+      width: 107
+      height: 101
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-sidetab-challenge-start
+    outer:
+      serializedVersion: 2
+      x: 85
+      y: 29
+      width: 98
+      height: 96
+    inner:
+      serializedVersion: 2
+      x: 85
+      y: 29
+      width: 98
+      height: 96
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-sidetab-challenge
+    outer:
+      serializedVersion: 2
+      x: 880
+      y: 1045
+      width: 98
+      height: 96
+    inner:
+      serializedVersion: 2
+      x: 880
+      y: 1045
+      width: 98
+      height: 96
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-sidetab-invite
+    outer:
+      serializedVersion: 2
+      x: 1099
+      y: 1018
+      width: 97
+      height: 83
+    inner:
+      serializedVersion: 2
+      x: 1099
+      y: 1018
+      width: 97
+      height: 83
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-sidetab-bg-box-button-gold
+    outer:
+      serializedVersion: 2
+      x: 596
+      y: 558
+      width: 46
+      height: 156
+    inner:
+      serializedVersion: 2
+      x: 596
+      y: 558
+      width: 46
+      height: 156
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-chat-reportabuse-ico
+    outer:
+      serializedVersion: 2
+      x: 842
+      y: 442
+      width: 36
+      height: 44
+    inner:
+      serializedVersion: 2
+      x: 842
+      y: 442
+      width: 36
+      height: 44
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-endscreen-ico-assignments
+    outer:
+      serializedVersion: 2
+      x: 442
+      y: 935
+      width: 76
+      height: 26
+    inner:
+      serializedVersion: 2
+      x: 442
+      y: 935
+      width: 76
+      height: 26
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-endscreen-ico-skillshotswin
+    outer:
+      serializedVersion: 2
+      x: 1433
+      y: 1170
+      width: 36
+      height: 44
+    inner:
+      serializedVersion: 2
+      x: 1433
+      y: 1170
+      width: 36
+      height: 44
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-button-stroke
+    outer:
+      serializedVersion: 2
+      x: 556
+      y: 184
+      width: 61
+      height: 61
+    inner:
+      serializedVersion: 2
+      x: 586
+      y: 214
+      width: 1
+      height: 1
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-button-dropdown
+    outer:
+      serializedVersion: 2
+      x: 388
+      y: 1137
+      width: 138
+      height: 112
+    inner:
+      serializedVersion: 2
+      x: 484
+      y: 1137
+      width: 21
+      height: 112
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-button-straightright
+    outer:
+      serializedVersion: 2
+      x: 381
+      y: 569
+      width: 37
+      height: 53
+    inner:
+      serializedVersion: 2
+      x: 409
+      y: 576
+      width: 5
+      height: 1
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-line-glow
+    outer:
+      serializedVersion: 2
+      x: 189
+      y: 78
+      width: 248
+      height: 20
+    inner:
+      serializedVersion: 2
+      x: 312
+      y: 87
+      width: 2
+      height: 2
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-tab-small-active
+    outer:
+      serializedVersion: 2
+      x: 267
+      y: 839
+      width: 86
+      height: 147
+    inner:
+      serializedVersion: 2
+      x: 289
+      y: 893
+      width: 15
+      height: 86
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-tab-small
+    outer:
+      serializedVersion: 2
+      x: 315
+      y: 507
+      width: 60
+      height: 115
+    inner:
+      serializedVersion: 2
+      x: 321
+      y: 548
+      width: 17
+      height: 73
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-tab-small-active-line
+    outer:
+      serializedVersion: 2
+      x: 748
+      y: 7
+      width: 48
+      height: 30
+    inner:
+      serializedVersion: 2
+      x: 762
+      y: 21
+      width: 20
+      height: 2
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-top-shop-ico
+    outer:
+      serializedVersion: 2
+      x: 435
+      y: 632
+      width: 90
+      height: 86
+    inner:
+      serializedVersion: 2
+      x: 435
+      y: 632
+      width: 90
+      height: 86
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-army-tier-star
+    outer:
+      serializedVersion: 2
+      x: 915
+      y: 84
+      width: 30
+      height: 29
+    inner:
+      serializedVersion: 2
+      x: 915
+      y: 84
+      width: 30
+      height: 29
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-lightbox-reminder-vip-ico
+    outer:
+      serializedVersion: 2
+      x: 449
+      y: 1387
+      width: 159
+      height: 159
+    inner:
+      serializedVersion: 2
+      x: 449
+      y: 1387
+      width: 159
+      height: 159
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-sidetab-player-demote
+    outer:
+      serializedVersion: 2
+      x: 676
+      y: 1050
+      width: 115
+      height: 81
+    inner:
+      serializedVersion: 2
+      x: 676
+      y: 1050
+      width: 115
+      height: 81
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-sidetab-player-promote
+    outer:
+      serializedVersion: 2
+      x: 524
+      y: 995
+      width: 115
+      height: 81
+    inner:
+      serializedVersion: 2
+      x: 524
+      y: 995
+      width: 115
+      height: 81
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-sidetab-player-kick
+    outer:
+      serializedVersion: 2
+      x: 1250
+      y: 1029
+      width: 109
+      height: 77
+    inner:
+      serializedVersion: 2
+      x: 1250
+      y: 1029
+      width: 109
+      height: 77
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-sidetab-player-add
+    outer:
+      serializedVersion: 2
+      x: 984
+      y: 1025
+      width: 109
+      height: 76
+    inner:
+      serializedVersion: 2
+      x: 984
+      y: 1025
+      width: 109
+      height: 76
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-sidetab-invite-game
+    outer:
+      serializedVersion: 2
+      x: 1477
+      y: 1167
+      width: 109
+      height: 122
+    inner:
+      serializedVersion: 2
+      x: 1477
+      y: 1167
+      width: 109
+      height: 122
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-settings-drag
+    outer:
+      serializedVersion: 2
+      x: 483
+      y: 809
+      width: 108
+      height: 80
+    inner:
+      serializedVersion: 2
+      x: 483
+      y: 809
+      width: 108
+      height: 80
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-settings-music
+    outer:
+      serializedVersion: 2
+      x: 1724
+      y: 1118
+      width: 48
+      height: 56
+    inner:
+      serializedVersion: 2
+      x: 1724
+      y: 1118
+      width: 48
+      height: 56
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-settings-sound
+    outer:
+      serializedVersion: 2
+      x: 578
+      y: 256
+      width: 36
+      height: 58
+    inner:
+      serializedVersion: 2
+      x: 578
+      y: 256
+      width: 36
+      height: 58
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-army-upgradebar-gray
+    outer:
+      serializedVersion: 2
+      x: 332
+      y: 811
+      width: 20
+      height: 22
+    inner:
+      serializedVersion: 2
+      x: 338
+      y: 819
+      width: 8
+      height: 6
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-army-tier-star-empty
+    outer:
+      serializedVersion: 2
+      x: 950
+      y: 137
+      width: 30
+      height: 29
+    inner:
+      serializedVersion: 2
+      x: 950
+      y: 137
+      width: 30
+      height: 29
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-army-tier-bar
+    outer:
+      serializedVersion: 2
+      x: 798
+      y: 162
+      width: 14
+      height: 16
+    inner:
+      serializedVersion: 2
+      x: 803
+      y: 167
+      width: 4
+      height: 6
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-matchmaking-arrow-bg
+    outer:
+      serializedVersion: 2
+      x: 787
+      y: 1252
+      width: 114
+      height: 140
+    inner:
+      serializedVersion: 2
+      x: 897
+      y: 1321
+      width: 3
+      height: 2
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-matchmaking-arrow
+    outer:
+      serializedVersion: 2
+      x: 1833
+      y: 786
+      width: 69
+      height: 140
+    inner:
+      serializedVersion: 2
+      x: 1833
+      y: 786
+      width: 69
+      height: 140
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-twitter
+    outer:
+      serializedVersion: 2
+      x: 435
+      y: 724
+      width: 98
+      height: 79
+    inner:
+      serializedVersion: 2
+      x: 435
+      y: 724
+      width: 98
+      height: 79
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-assignments-type-playvs
+    outer:
+      serializedVersion: 2
+      x: 1725
+      y: 1538
+      width: 216
+      height: 158
+    inner:
+      serializedVersion: 2
+      x: 1725
+      y: 1538
+      width: 216
+      height: 158
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-assignments-type-cards
+    outer:
+      serializedVersion: 2
+      x: 247
+      y: 1430
+      width: 196
+      height: 164
+    inner:
+      serializedVersion: 2
+      x: 247
+      y: 1430
+      width: 196
+      height: 164
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-assignments-type-deploy
+    outer:
+      serializedVersion: 2
+      x: 797
+      y: 1530
+      width: 190
+      height: 148
+    inner:
+      serializedVersion: 2
+      x: 797
+      y: 1530
+      width: 190
+      height: 148
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-assignments-type-crateenemy
+    outer:
+      serializedVersion: 2
+      x: 916
+      y: 1374
+      width: 130
+      height: 130
+    inner:
+      serializedVersion: 2
+      x: 916
+      y: 1374
+      width: 130
+      height: 130
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-closebutton
+    outer:
+      serializedVersion: 2
+      x: 1163
+      y: 1186
+      width: 118
+      height: 118
+    inner:
+      serializedVersion: 2
+      x: 1163
+      y: 1186
+      width: 118
+      height: 118
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-ico-trashbin
+    outer:
+      serializedVersion: 2
+      x: 1264
+      y: 822
+      width: 68
+      height: 72
+    inner:
+      serializedVersion: 2
+      x: 1264
+      y: 822
+      width: 68
+      height: 72
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-activeunits-stroke
+    outer:
+      serializedVersion: 2
+      x: 694
+      y: 492
+      width: 62
+      height: 64
+    inner:
+      serializedVersion: 2
+      x: 707
+      y: 518
+      width: 23
+      height: 25
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-activeunits-mechanical-ico
+    outer:
+      serializedVersion: 2
+      x: 936
+      y: 206
+      width: 30
+      height: 33
+    inner:
+      serializedVersion: 2
+      x: 936
+      y: 206
+      width: 30
+      height: 33
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-dailyrewards-glow
+    outer:
+      serializedVersion: 2
+      x: 0
+      y: 1803
+      width: 306
+      height: 245
+    inner:
+      serializedVersion: 2
+      x: 0
+      y: 1803
+      width: 306
+      height: 245
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-tab-notificationcenter-ico
+    outer:
+      serializedVersion: 2
+      x: 261
+      y: 1198
+      width: 121
+      height: 128
+    inner:
+      serializedVersion: 2
+      x: 261
+      y: 1198
+      width: 121
+      height: 128
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-tab-chat-ico
+    outer:
+      serializedVersion: 2
+      x: 0
+      y: 1065
+      width: 121
+      height: 128
+    inner:
+      serializedVersion: 2
+      x: 0
+      y: 1065
+      width: 121
+      height: 128
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-activeunits-unitbg
+    outer:
+      serializedVersion: 2
+      x: 1320
+      y: 1322
+      width: 31
+      height: 114
+    inner:
+      serializedVersion: 2
+      x: 1329
+      y: 1340
+      width: 4
+      height: 87
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-dailyrewards-vip-ico
+    outer:
+      serializedVersion: 2
+      x: 993
+      y: 637
+      width: 66
+      height: 48
+    inner:
+      serializedVersion: 2
+      x: 993
+      y: 637
+      width: 66
+      height: 48
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-dailyrewards-stroke
+    outer:
+      serializedVersion: 2
+      x: 751
+      y: 279
+      width: 44
+      height: 43
+    inner:
+      serializedVersion: 2
+      x: 756
+      y: 306
+      width: 12
+      height: 11
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-dailyrewards-top
+    outer:
+      serializedVersion: 2
+      x: 754
+      y: 337
+      width: 45
+      height: 42
+    inner:
+      serializedVersion: 2
+      x: 761
+      y: 367
+      width: 8
+      height: 5
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-activeunits-stroke-basic
+    outer:
+      serializedVersion: 2
+      x: 914
+      y: 119
+      width: 30
+      height: 30
+    inner:
+      serializedVersion: 2
+      x: 921
+      y: 135
+      width: 7
+      height: 7
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-tilebg-base
+    outer:
+      serializedVersion: 2
+      x: 1953
+      y: 898
+      width: 80
+      height: 126
+    inner:
+      serializedVersion: 2
+      x: 1985
+      y: 930
+      width: 16
+      height: 50
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-tilebg-glow
+    outer:
+      serializedVersion: 2
+      x: 1725
+      y: 1364
+      width: 201
+      height: 168
+    inner:
+      serializedVersion: 2
+      x: 1725
+      y: 1364
+      width: 201
+      height: 168
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-tab-activeunits-bg
+    outer:
+      serializedVersion: 2
+      x: 192
+      y: 530
+      width: 19
+      height: 39
+    inner:
+      serializedVersion: 2
+      x: 209
+      y: 548
+      width: 1
+      height: 3
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-tab-notificationcenter-ico-bg
+    outer:
+      serializedVersion: 2
+      x: 983
+      y: 77
+      width: 25
+      height: 26
+    inner:
+      serializedVersion: 2
+      x: 1001
+      y: 79
+      width: 5
+      height: 6
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-tab-chat-ico-bg
+    outer:
+      serializedVersion: 2
+      x: 886
+      y: 797
+      width: 22
+      height: 21
+    inner:
+      serializedVersion: 2
+      x: 903
+      y: 814
+      width: 3
+      height: 2
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-dailyrewards-ico
+    outer:
+      serializedVersion: 2
+      x: 1908
+      y: 698
+      width: 92
+      height: 104
+    inner:
+      serializedVersion: 2
+      x: 1908
+      y: 698
+      width: 92
+      height: 104
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-golden-suitcase
+    outer:
+      serializedVersion: 2
+      x: 1357
+      y: 1300
+      width: 143
+      height: 146
+    inner:
+      serializedVersion: 2
+      x: 1357
+      y: 1300
+      width: 143
+      height: 146
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-warpath-button-small
+    outer:
+      serializedVersion: 2
+      x: 1338
+      y: 806
+      width: 40
+      height: 88
+    inner:
+      serializedVersion: 2
+      x: 1343
+      y: 837
+      width: 9
+      height: 35
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-warpath-box-gradientstroke
+    outer:
+      serializedVersion: 2
+      x: 884
+      y: 468
+      width: 29
+      height: 41
+    inner:
+      serializedVersion: 2
+      x: 889
+      y: 473
+      width: 19
+      height: 31
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-badge-sale
+    outer:
+      serializedVersion: 2
+      x: 676
+      y: 1142
+      width: 56
+      height: 46
+    inner:
+      serializedVersion: 2
+      x: 701
+      y: 1163
+      width: 6
+      height: 1
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-assignments-bar-red
+    outer:
+      serializedVersion: 2
+      x: 497
+      y: 400
+      width: 4
+      height: 28
+    inner:
+      serializedVersion: 2
+      x: 498
+      y: 401
+      width: 2
+      height: 26
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-assignments-claimbutton
+    outer:
+      serializedVersion: 2
+      x: 1539
+      y: 1073
+      width: 46
+      height: 88
+    inner:
+      serializedVersion: 2
+      x: 1573
+      y: 1109
+      width: 5
+      height: 34
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-weaponstats-criticalchance
+    outer:
+      serializedVersion: 2
+      x: 1086
+      y: 885
+      width: 36
+      height: 36
+    inner:
+      serializedVersion: 2
+      x: 1086
+      y: 885
+      width: 36
+      height: 36
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-weaponstats-accuracy
+    outer:
+      serializedVersion: 2
+      x: 874
+      y: 25
+      width: 32
+      height: 32
+    inner:
+      serializedVersion: 2
+      x: 874
+      y: 25
+      width: 32
+      height: 32
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-weaponstats-rateoffire
+    outer:
+      serializedVersion: 2
+      x: 137
+      y: 131
+      width: 34
+      height: 20
+    inner:
+      serializedVersion: 2
+      x: 137
+      y: 131
+      width: 34
+      height: 20
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-weaponstats-totalammo
+    outer:
+      serializedVersion: 2
+      x: 983
+      y: 109
+      width: 30
+      height: 22
+    inner:
+      serializedVersion: 2
+      x: 983
+      y: 109
+      width: 30
+      height: 22
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-weaponstats-burstsize
+    outer:
+      serializedVersion: 2
+      x: 983
+      y: 49
+      width: 28
+      height: 22
+    inner:
+      serializedVersion: 2
+      x: 983
+      y: 49
+      width: 28
+      height: 22
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-weaponstats-shotvelocity
+    outer:
+      serializedVersion: 2
+      x: 738
+      y: 147
+      width: 36
+      height: 8
+    inner:
+      serializedVersion: 2
+      x: 738
+      y: 147
+      width: 36
+      height: 8
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-facebook-like
+    outer:
+      serializedVersion: 2
+      x: 1837
+      y: 932
+      width: 110
+      height: 92
+    inner:
+      serializedVersion: 2
+      x: 1837
+      y: 932
+      width: 110
+      height: 92
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-7days-assignment-crate
+    outer:
+      serializedVersion: 2
+      x: 1883
+      y: 597
+      width: 94
+      height: 95
+    inner:
+      serializedVersion: 2
+      x: 1883
+      y: 597
+      width: 94
+      height: 95
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-7days-assignment
+    outer:
+      serializedVersion: 2
+      x: 626
+      y: 844
+      width: 90
+      height: 98
+    inner:
+      serializedVersion: 2
+      x: 626
+      y: 844
+      width: 90
+      height: 98
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-7days-assignment-completed
+    outer:
+      serializedVersion: 2
+      x: 747
+      y: 946
+      width: 90
+      height: 98
+    inner:
+      serializedVersion: 2
+      x: 747
+      y: 946
+      width: 90
+      height: 98
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-assignments-line
+    outer:
+      serializedVersion: 2
+      x: 258
+      y: 529
+      width: 51
+      height: 24
+    inner:
+      serializedVersion: 2
+      x: 281
+      y: 530
+      width: 5
+      height: 22
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-info-close-ico
+    outer:
+      serializedVersion: 2
+      x: 888
+      y: 305
+      width: 34
+      height: 40
+    inner:
+      serializedVersion: 2
+      x: 888
+      y: 305
+      width: 34
+      height: 40
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-info-ico
+    outer:
+      serializedVersion: 2
+      x: 884
+      y: 351
+      width: 34
+      height: 40
+    inner:
+      serializedVersion: 2
+      x: 884
+      y: 351
+      width: 34
+      height: 40
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: leaderboard-ico
+    outer:
+      serializedVersion: 2
+      x: 532
+      y: 1197
+      width: 20
+      height: 16
+    inner:
+      serializedVersion: 2
+      x: 532
+      y: 1197
+      width: 20
+      height: 16
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-squad-join-request-ico
+    outer:
+      serializedVersion: 2
+      x: 531
+      y: 635
+      width: 28
+      height: 18
+    inner:
+      serializedVersion: 2
+      x: 531
+      y: 635
+      width: 28
+      height: 18
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-squad-join-private-ico
+    outer:
+      serializedVersion: 2
+      x: 1162
+      y: 854
+      width: 20
+      height: 24
+    inner:
+      serializedVersion: 2
+      x: 1162
+      y: 854
+      width: 20
+      height: 24
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-crafting-cardplaceholder
+    outer:
+      serializedVersion: 2
+      x: 0
+      y: 191
+      width: 67
+      height: 148
+    inner:
+      serializedVersion: 2
+      x: 15
+      y: 259
+      width: 13
+      height: 11
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-cardpool-button-deposit
+    outer:
+      serializedVersion: 2
+      x: 108
+      y: 469
+      width: 41
+      height: 96
+    inner:
+      serializedVersion: 2
+      x: 122
+      y: 490
+      width: 6
+      height: 38
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-cardpool-deposit-ico
+    outer:
+      serializedVersion: 2
+      x: 862
+      y: 515
+      width: 62
+      height: 46
+    inner:
+      serializedVersion: 2
+      x: 862
+      y: 515
+      width: 62
+      height: 46
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-cardpool-reputation-ico
+    outer:
+      serializedVersion: 2
+      x: 140
+      y: 1333
+      width: 32
+      height: 30
+    inner:
+      serializedVersion: 2
+      x: 140
+      y: 1333
+      width: 32
+      height: 30
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-cardpool-removecard-ico
+    outer:
+      serializedVersion: 2
+      x: 801
+      y: 286
+      width: 40
+      height: 45
+    inner:
+      serializedVersion: 2
+      x: 801
+      y: 286
+      width: 40
+      height: 45
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-reputation-bg
+    outer:
+      serializedVersion: 2
+      x: 532
+      y: 1219
+      width: 21
+      height: 30
+    inner:
+      serializedVersion: 2
+      x: 536
+      y: 1233
+      width: 4
+      height: 1
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-reputationbig-ico
+    outer:
+      serializedVersion: 2
+      x: 1035
+      y: 927
+      width: 88
+      height: 85
+    inner:
+      serializedVersion: 2
+      x: 1035
+      y: 927
+      width: 88
+      height: 85
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-crafting-craftclaimbutton
+    outer:
+      serializedVersion: 2
+      x: 1295
+      y: 732
+      width: 36
+      height: 84
+    inner:
+      serializedVersion: 2
+      x: 1301
+      y: 753
+      width: 6
+      height: 50
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-crafting-progressfill
+    outer:
+      serializedVersion: 2
+      x: 939
+      y: 158
+      width: 4
+      height: 8
+    inner:
+      serializedVersion: 2
+      x: 940
+      y: 158
+      width: 2
+      height: 8
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-unitstats-energycost
+    outer:
+      serializedVersion: 2
+      x: 847
+      y: 288
+      width: 35
+      height: 45
+    inner:
+      serializedVersion: 2
+      x: 847
+      y: 288
+      width: 35
+      height: 45
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-unitstats-movementspeed
+    outer:
+      serializedVersion: 2
+      x: 939
+      y: 172
+      width: 32
+      height: 28
+    inner:
+      serializedVersion: 2
+      x: 939
+      y: 172
+      width: 32
+      height: 28
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-unitstats-deployamount
+    outer:
+      serializedVersion: 2
+      x: 912
+      y: 31
+      width: 32
+      height: 28
+    inner:
+      serializedVersion: 2
+      x: 912
+      y: 31
+      width: 32
+      height: 28
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-unitstats-shotdamage
+    outer:
+      serializedVersion: 2
+      x: 951
+      y: 105
+      width: 26
+      height: 26
+    inner:
+      serializedVersion: 2
+      x: 951
+      y: 105
+      width: 26
+      height: 26
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-unitstats-deploycooldown
+    outer:
+      serializedVersion: 2
+      x: 1013
+      y: 19
+      width: 24
+      height: 24
+    inner:
+      serializedVersion: 2
+      x: 1013
+      y: 19
+      width: 24
+      height: 24
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-earlyunlockbadge-bg
+    outer:
+      serializedVersion: 2
+      x: 1778
+      y: 1224
+      width: 134
+      height: 134
+    inner:
+      serializedVersion: 2
+      x: 1778
+      y: 1224
+      width: 134
+      height: 134
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-sidetab-messageicon
+    outer:
+      serializedVersion: 2
+      x: 1737
+      y: 889
+      width: 90
+      height: 108
+    inner:
+      serializedVersion: 2
+      x: 1737
+      y: 889
+      width: 90
+      height: 108
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-arrow
+    outer:
+      serializedVersion: 2
+      x: 597
+      y: 845
+      width: 19
+      height: 44
+    inner:
+      serializedVersion: 2
+      x: 597
+      y: 845
+      width: 19
+      height: 44
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-train-button-close
+    outer:
+      serializedVersion: 2
+      x: 1821
+      y: 620
+      width: 56
+      height: 160
+    inner:
+      serializedVersion: 2
+      x: 1853
+      y: 639
+      width: 15
+      height: 97
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-train-bg-blue
+    outer:
+      serializedVersion: 2
+      x: 597
+      y: 720
+      width: 66
+      height: 118
+    inner:
+      serializedVersion: 2
+      x: 608
+      y: 758
+      width: 13
+      height: 74
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-train-bg-yellow
+    outer:
+      serializedVersion: 2
+      x: 722
+      y: 822
+      width: 66
+      height: 118
+    inner:
+      serializedVersion: 2
+      x: 732
+      y: 862
+      width: 17
+      height: 71
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-train-ability-bg
+    outer:
+      serializedVersion: 2
+      x: 1202
+      y: 932
+      width: 84
+      height: 91
+    inner:
+      serializedVersion: 2
+      x: 1202
+      y: 932
+      width: 84
+      height: 91
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-train-button-yellow
+    outer:
+      serializedVersion: 2
+      x: 1129
+      y: 884
+      width: 53
+      height: 128
+    inner:
+      serializedVersion: 2
+      x: 1163
+      y: 921
+      width: 12
+      height: 67
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-train-button-blue
+    outer:
+      serializedVersion: 2
+      x: 189
+      y: 271
+      width: 53
+      height: 128
+    inner:
+      serializedVersion: 2
+      x: 222
+      y: 306
+      width: 12
+      height: 69
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-train-bg-glow
+    outer:
+      serializedVersion: 2
+      x: 560
+      y: 1299
+      width: 45
+      height: 82
+    inner:
+      serializedVersion: 2
+      x: 565
+      y: 1336
+      width: 3
+      height: 39
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-train-button-promote
+    outer:
+      serializedVersion: 2
+      x: 282
+      y: 373
+      width: 53
+      height: 128
+    inner:
+      serializedVersion: 2
+      x: 315
+      y: 406
+      width: 13
+      height: 71
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-train-button-inactive
+    outer:
+      serializedVersion: 2
+      x: 507
+      y: 434
+      width: 53
+      height: 128
+    inner:
+      serializedVersion: 2
+      x: 541
+      y: 470
+      width: 9
+      height: 68
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-train-upgradeability-ico
+    outer:
+      serializedVersion: 2
+      x: 341
+      y: 417
+      width: 82
+      height: 82
+    inner:
+      serializedVersion: 2
+      x: 341
+      y: 417
+      width: 82
+      height: 82
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-train-button-deliver
+    outer:
+      serializedVersion: 2
+      x: 958
+      y: 645
+      width: 29
+      height: 110
+    inner:
+      serializedVersion: 2
+      x: 968
+      y: 657
+      width: 11
+      height: 74
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-train-button-glow
+    outer:
+      serializedVersion: 2
+      x: 940
+      y: 929
+      width: 89
+      height: 90
+    inner:
+      serializedVersion: 2
+      x: 995
+      y: 984
+      width: 8
+      height: 9
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-train-button-square-glow
+    outer:
+      serializedVersion: 2
+      x: 1086
+      y: 808
+      width: 70
+      height: 70
+    inner:
+      serializedVersion: 2
+      x: 1112
+      y: 834
+      width: 18
+      height: 18
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-starter-assignment-bg-active-big
+    outer:
+      serializedVersion: 2
+      x: 0
+      y: 921
+      width: 103
+      height: 138
+    inner:
+      serializedVersion: 2
+      x: 13
+      y: 931
+      width: 9
+      height: 117
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-starter-assignment-bg-active
+    outer:
+      serializedVersion: 2
+      x: 391
+      y: 227
+      width: 63
+      height: 84
+    inner:
+      serializedVersion: 2
+      x: 403
+      y: 237
+      width: 5
+      height: 52
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-starter-assignment-bg
+    outer:
+      serializedVersion: 2
+      x: 189
+      y: 104
+      width: 63
+      height: 84
+    inner:
+      serializedVersion: 2
+      x: 197
+      y: 115
+      width: 12
+      height: 51
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-minmax-ico
+    outer:
+      serializedVersion: 2
+      x: 748
+      y: 45
+      width: 42
+      height: 42
+    inner:
+      serializedVersion: 2
+      x: 748
+      y: 45
+      width: 42
+      height: 42
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-vs-bg-arrow
+    outer:
+      serializedVersion: 2
+      x: 495
+      y: 7
+      width: 34
+      height: 21
+    inner:
+      serializedVersion: 2
+      x: 506
+      y: 17
+      width: 12
+      height: 1
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-divisionshint-arrow-bg
+    outer:
+      serializedVersion: 2
+      x: 1513
+      y: 1427
+      width: 204
+      height: 103
+    inner:
+      serializedVersion: 2
+      x: 1614
+      y: 1524
+      width: 2
+      height: 5
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-divisionshint-arrow
+    outer:
+      serializedVersion: 2
+      x: 1778
+      y: 1110
+      width: 158
+      height: 108
+    inner:
+      serializedVersion: 2
+      x: 1778
+      y: 1110
+      width: 158
+      height: 108
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-activeunits-button
+    outer:
+      serializedVersion: 2
+      x: 1365
+      y: 970
+      width: 114
+      height: 73
+    inner:
+      serializedVersion: 2
+      x: 1402
+      y: 1005
+      width: 76
+      height: 3
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-divisions-bg-left
+    outer:
+      serializedVersion: 2
+      x: 633
+      y: 24
+      width: 53
+      height: 44
+    inner:
+      serializedVersion: 2
+      x: 681
+      y: 24
+      width: 2
+      height: 44
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-divisions-bg-arrrow
+    outer:
+      serializedVersion: 2
+      x: 891
+      y: 255
+      width: 30
+      height: 44
+    inner:
+      serializedVersion: 2
+      x: 891
+      y: 255
+      width: 30
+      height: 44
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-divisions-bg-right
+    outer:
+      serializedVersion: 2
+      x: 844
+      y: 13
+      width: 24
+      height: 44
+    inner:
+      serializedVersion: 2
+      x: 845
+      y: 34
+      width: 1
+      height: 2
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-divisions-bg-arrrow-small
+    outer:
+      serializedVersion: 2
+      x: 1163
+      y: 1342
+      width: 18
+      height: 26
+    inner:
+      serializedVersion: 2
+      x: 1163
+      y: 1342
+      width: 18
+      height: 26
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-divisions-bg-right-small
+    outer:
+      serializedVersion: 2
+      x: 84
+      y: 752
+      width: 16
+      height: 26
+    inner:
+      serializedVersion: 2
+      x: 85
+      y: 764
+      width: 3
+      height: 2
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-dailygold-calendar-ico
+    outer:
+      serializedVersion: 2
+      x: 1076
+      y: 730
+      width: 64
+      height: 72
+    inner:
+      serializedVersion: 2
+      x: 1076
+      y: 730
+      width: 64
+      height: 72
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-heroic-wing
+    outer:
+      serializedVersion: 2
+      x: 886
+      y: 687
+      width: 66
+      height: 68
+    inner:
+      serializedVersion: 2
+      x: 886
+      y: 687
+      width: 66
+      height: 68
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-heroic-button
+    outer:
+      serializedVersion: 2
+      x: 590
+      y: 320
+      width: 24
+      height: 154
+    inner:
+      serializedVersion: 2
+      x: 598
+      y: 331
+      width: 7
+      height: 117
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-heroic-skullico
+    outer:
+      serializedVersion: 2
+      x: 1485
+      y: 971
+      width: 48
+      height: 72
+    inner:
+      serializedVersion: 2
+      x: 1485
+      y: 971
+      width: 48
+      height: 72
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-heroic-check
+    outer:
+      serializedVersion: 2
+      x: 886
+      y: 201
+      width: 44
+      height: 34
+    inner:
+      serializedVersion: 2
+      x: 886
+      y: 201
+      width: 44
+      height: 34
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-replaykit-ico
+    outer:
+      serializedVersion: 2
+      x: 682
+      y: 198
+      width: 46
+      height: 48
+    inner:
+      serializedVersion: 2
+      x: 682
+      y: 198
+      width: 46
+      height: 48
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-googleplay-ico2
+    outer:
+      serializedVersion: 2
+      x: 1908
+      y: 808
+      width: 114
+      height: 84
+    inner:
+      serializedVersion: 2
+      x: 1908
+      y: 808
+      width: 114
+      height: 84
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-customisation-part-ico
+    outer:
+      serializedVersion: 2
+      x: 950
+      y: 17
+      width: 27
+      height: 27
+    inner:
+      serializedVersion: 2
+      x: 955
+      y: 22
+      width: 17
+      height: 17
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-rankpower-ico
+    outer:
+      serializedVersion: 2
+      x: 868
+      y: 142
+      width: 34
+      height: 44
+    inner:
+      serializedVersion: 2
+      x: 868
+      y: 142
+      width: 34
+      height: 44
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-lootbox-part-ico
+    outer:
+      serializedVersion: 2
+      x: 345
+      y: 6
+      width: 66
+      height: 66
+    inner:
+      serializedVersion: 2
+      x: 345
+      y: 6
+      width: 66
+      height: 66
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-rankup-wing2
+    outer:
+      serializedVersion: 2
+      x: 1287
+      y: 1220
+      width: 184
+      height: 74
+    inner:
+      serializedVersion: 2
+      x: 1355
+      y: 1221
+      width: 50
+      height: 72
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-rankup-wing
+    outer:
+      serializedVersion: 2
+      x: 359
+      y: 851
+      width: 118
+      height: 74
+    inner:
+      serializedVersion: 2
+      x: 359
+      y: 851
+      width: 118
+      height: 74
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-rankup-shield-ico
+    outer:
+      serializedVersion: 2
+      x: 688
+      y: 143
+      width: 44
+      height: 49
+    inner:
+      serializedVersion: 2
+      x: 688
+      y: 143
+      width: 44
+      height: 49
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-rankup-health-ico
+    outer:
+      serializedVersion: 2
+      x: 732
+      y: 93
+      width: 48
+      height: 44
+    inner:
+      serializedVersion: 2
+      x: 732
+      y: 93
+      width: 48
+      height: 44
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-rankup-cards-ico
+    outer:
+      serializedVersion: 2
+      x: 702
+      y: 328
+      width: 46
+      height: 43
+    inner:
+      serializedVersion: 2
+      x: 702
+      y: 328
+      width: 46
+      height: 43
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-notification-label-new
+    outer:
+      serializedVersion: 2
+      x: 442
+      y: 191
+      width: 12
+      height: 30
+    inner:
+      serializedVersion: 2
+      x: 442
+      y: 191
+      width: 12
+      height: 30
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-valuepack-savebg
+    outer:
+      serializedVersion: 2
+      x: 560
+      y: 1194
+      width: 172
+      height: 92
+    inner:
+      serializedVersion: 2
+      x: 643
+      y: 1194
+      width: 6
+      height: 92
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-valuepack-buybutton
+    outer:
+      serializedVersion: 2
+      x: 258
+      y: 559
+      width: 51
+      height: 144
+    inner:
+      serializedVersion: 2
+      x: 288
+      y: 569
+      width: 11
+      height: 84
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-valuepack-line
+    outer:
+      serializedVersion: 2
+      x: 930
+      y: 245
+      width: 4
+      height: 316
+    inner:
+      serializedVersion: 2
+      x: 930
+      y: 245
+      width: 4
+      height: 316
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-elitepack-buybutton
+    outer:
+      serializedVersion: 2
+      x: 539
+      y: 659
+      width: 51
+      height: 144
+    inner:
+      serializedVersion: 2
+      x: 571
+      y: 668
+      width: 12
+      height: 83
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-elitepack-label
+    outer:
+      serializedVersion: 2
+      x: 805
+      y: 339
+      width: 37
+      height: 48
+    inner:
+      serializedVersion: 2
+      x: 821
+      y: 340
+      width: 5
+      height: 46
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-carousel-dot
+    outer:
+      serializedVersion: 2
+      x: 541
+      y: 100
+      width: 16
+      height: 16
+    inner:
+      serializedVersion: 2
+      x: 541
+      y: 100
+      width: 16
+      height: 16
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-banned-bg
+    outer:
+      serializedVersion: 2
+      x: 137
+      y: 157
+      width: 34
+      height: 94
+    inner:
+      serializedVersion: 2
+      x: 139
+      y: 158
+      width: 1
+      height: 92
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-leaguebrowser-arrow
+    outer:
+      serializedVersion: 2
+      x: 435
+      y: 809
+      width: 38
+      height: 36
+    inner:
+      serializedVersion: 2
+      x: 435
+      y: 809
+      width: 38
+      height: 36
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-broadcast-mobcrush
+    outer:
+      serializedVersion: 2
+      x: 915
+      y: 843
+      width: 80
+      height: 80
+    inner:
+      serializedVersion: 2
+      x: 915
+      y: 843
+      width: 80
+      height: 80
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-broadcast-youtube
+    outer:
+      serializedVersion: 2
+      x: 1292
+      y: 900
+      width: 96
+      height: 64
+    inner:
+      serializedVersion: 2
+      x: 1292
+      y: 900
+      width: 96
+      height: 64
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-arc-base
+    outer:
+      serializedVersion: 2
+      x: 0
+      y: 1549
+      width: 241
+      height: 248
+    inner:
+      serializedVersion: 2
+      x: 1
+      y: 1550
+      width: 237
+      height: 246
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-arc-arrow
+    outer:
+      serializedVersion: 2
+      x: 1837
+      y: 1030
+      width: 85
+      height: 74
+    inner:
+      serializedVersion: 2
+      x: 1837
+      y: 1030
+      width: 85
+      height: 74
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-arc-bg
+    outer:
+      serializedVersion: 2
+      x: 2024
+      y: 1113
+      width: 14
+      height: 117
+    inner:
+      serializedVersion: 2
+      x: 2025
+      y: 1113
+      width: 12
+      height: 117
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-arc-white-full
+    outer:
+      serializedVersion: 2
+      x: 1347
+      y: 1803
+      width: 235
+      height: 245
+    inner:
+      serializedVersion: 2
+      x: 1349
+      y: 1804
+      width: 232
+      height: 243
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-dailyassignments-bg
+    outer:
+      serializedVersion: 2
+      x: 949
+      y: 537
+      width: 30
+      height: 102
+    inner:
+      serializedVersion: 2
+      x: 951
+      y: 563
+      width: 4
+      height: 50
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-dailyassignments-fill
+    outer:
+      serializedVersion: 2
+      x: 744
+      y: 474
+      width: 10
+      height: 12
+    inner:
+      serializedVersion: 2
+      x: 745
+      y: 475
+      width: 8
+      height: 10
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-arc-header-bg
+    outer:
+      serializedVersion: 2
+      x: 1516
+      y: 911
+      width: 118
+      height: 48
+    inner:
+      serializedVersion: 2
+      x: 1567
+      y: 915
+      width: 16
+      height: 40
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-mainscreen-starter-blue
+    outer:
+      serializedVersion: 2
+      x: 796
+      y: 43
+      width: 36
+      height: 48
+    inner:
+      serializedVersion: 2
+      x: 800
+      y: 47
+      width: 4
+      height: 40
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-mainscreen-starter-gray
+    outer:
+      serializedVersion: 2
+      x: 798
+      y: 184
+      width: 36
+      height: 48
+    inner:
+      serializedVersion: 2
+      x: 802
+      y: 188
+      width: 4
+      height: 40
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-stroke-whiteglow
+    outer:
+      serializedVersion: 2
+      x: 985
+      y: 581
+      width: 50
+      height: 50
+    inner:
+      serializedVersion: 2
+      x: 1005
+      y: 601
+      width: 10
+      height: 10
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-mainscreen-dailyassignment-bg
+    outer:
+      serializedVersion: 2
+      x: 721
+      y: 692
+      width: 40
+      height: 124
+    inner:
+      serializedVersion: 2
+      x: 723
+      y: 720
+      width: 10
+      height: 56
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-mainscreen-facebook-bg
+    outer:
+      serializedVersion: 2
+      x: 329
+      y: 123
+      width: 40
+      height: 94
+    inner:
+      serializedVersion: 2
+      x: 331
+      y: 203
+      width: 8
+      height: 4
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-squadwar-equal
+    outer:
+      serializedVersion: 2
+      x: 1287
+      y: 1194
+      width: 8
+      height: 20
+    inner:
+      serializedVersion: 2
+      x: 1290
+      y: 1197
+      width: 2
+      height: 10
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-settings-ea-ico
+    outer:
+      serializedVersion: 2
+      x: 822
+      y: 138
+      width: 40
+      height: 40
+    inner:
+      serializedVersion: 2
+      x: 822
+      y: 138
+      width: 40
+      height: 40
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-settings-bug-ico
+    outer:
+      serializedVersion: 2
+      x: 738
+      y: 1253
+      width: 36
+      height: 33
+    inner:
+      serializedVersion: 2
+      x: 738
+      y: 1253
+      width: 36
+      height: 33
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-settings-wiki-ico
+    outer:
+      serializedVersion: 2
+      x: 483
+      y: 895
+      width: 34
+      height: 34
+    inner:
+      serializedVersion: 2
+      x: 483
+      y: 895
+      width: 34
+      height: 34
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-settings-mobcrush-ico
+    outer:
+      serializedVersion: 2
+      x: 1250
+      y: 1113
+      width: 40
+      height: 28
+    inner:
+      serializedVersion: 2
+      x: 1250
+      y: 1113
+      width: 40
+      height: 28
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-skirmish-ico
+    outer:
+      serializedVersion: 2
+      x: 840
+      y: 192
+      width: 40
+      height: 40
+    inner:
+      serializedVersion: 2
+      x: 840
+      y: 192
+      width: 40
+      height: 40
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-skirmish-bgtrans
+    outer:
+      serializedVersion: 2
+      x: 1394
+      y: 881
+      width: 230
+      height: 24
+    inner:
+      serializedVersion: 2
+      x: 1400
+      y: 887
+      width: 218
+      height: 12
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-mapselector-random
+    outer:
+      serializedVersion: 2
+      x: 590
+      y: 480
+      width: 60
+      height: 66
+    inner:
+      serializedVersion: 2
+      x: 590
+      y: 480
+      width: 60
+      height: 66
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-mapselector-stroke
+    outer:
+      serializedVersion: 2
+      x: 1065
+      y: 610
+      width: 46
+      height: 55
+    inner:
+      serializedVersion: 2
+      x: 1073
+      y: 618
+      width: 30
+      height: 39
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-arrow-blue
+    outer:
+      serializedVersion: 2
+      x: 739
+      y: 385
+      width: 48
+      height: 41
+    inner:
+      serializedVersion: 2
+      x: 739
+      y: 385
+      width: 48
+      height: 41
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-arena-toplogo-strokefull
+    outer:
+      serializedVersion: 2
+      x: 1082
+      y: 1656
+      width: 199
+      height: 234
+    inner:
+      serializedVersion: 2
+      x: 1082
+      y: 1656
+      width: 199
+      height: 234
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-arena-bottom-button
+    outer:
+      serializedVersion: 2
+      x: 993
+      y: 1510
+      width: 192
+      height: 140
+    inner:
+      serializedVersion: 2
+      x: 1085
+      y: 1524
+      width: 8
+      height: 108
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-arena-bottom-bg
+    outer:
+      serializedVersion: 2
+      x: 1191
+      y: 1442
+      width: 160
+      height: 160
+    inner:
+      serializedVersion: 2
+      x: 1193
+      y: 1492
+      width: 11
+      height: 96
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-arena-toplogo-a
+    outer:
+      serializedVersion: 2
+      x: 738
+      y: 1137
+      width: 136
+      height: 109
+    inner:
+      serializedVersion: 2
+      x: 738
+      y: 1137
+      width: 136
+      height: 109
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-arena-toplogo-stroke
+    outer:
+      serializedVersion: 2
+      x: 178
+      y: 1332
+      width: 244
+      height: 92
+    inner:
+      serializedVersion: 2
+      x: 180
+      y: 1334
+      width: 240
+      height: 10
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-arena-wins-stroke
+    outer:
+      serializedVersion: 2
+      x: 1983
+      y: 562
+      width: 57
+      height: 130
+    inner:
+      serializedVersion: 2
+      x: 1984
+      y: 563
+      width: 54
+      height: 128
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-arena-winico
+    outer:
+      serializedVersion: 2
+      x: 1962
+      y: 1728
+      width: 77
+      height: 90
+    inner:
+      serializedVersion: 2
+      x: 1962
+      y: 1728
+      width: 77
+      height: 90
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-arena-wins-bgwin
+    outer:
+      serializedVersion: 2
+      x: 509
+      y: 316
+      width: 49
+      height: 112
+    inner:
+      serializedVersion: 2
+      x: 510
+      y: 317
+      width: 44
+      height: 110
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-arena-button-arena
+    outer:
+      serializedVersion: 2
+      x: 1287
+      y: 1828
+      width: 52
+      height: 62
+    inner:
+      serializedVersion: 2
+      x: 1309
+      y: 1829
+      width: 8
+      height: 60
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-arena-heart-black
+    outer:
+      serializedVersion: 2
+      x: 556
+      y: 122
+      width: 56
+      height: 56
+    inner:
+      serializedVersion: 2
+      x: 556
+      y: 122
+      width: 56
+      height: 56
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-arena-wins-bg-side
+    outer:
+      serializedVersion: 2
+      x: 697
+      y: 256
+      width: 48
+      height: 46
+    inner:
+      serializedVersion: 2
+      x: 735
+      y: 260
+      width: 8
+      height: 37
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-arena-wins-bg
+    outer:
+      serializedVersion: 2
+      x: 366
+      y: 1146
+      width: 13
+      height: 46
+    inner:
+      serializedVersion: 2
+      x: 369
+      y: 1152
+      width: 7
+      height: 35
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-arena-bottom-bg-center
+    outer:
+      serializedVersion: 2
+      x: 862
+      y: 573
+      width: 14
+      height: 39
+    inner:
+      serializedVersion: 2
+      x: 865
+      y: 589
+      width: 8
+      height: 18
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-mainscreen-button-claim
+    outer:
+      serializedVersion: 2
+      x: 258
+      y: 111
+      width: 65
+      height: 76
+    inner:
+      serializedVersion: 2
+      x: 285
+      y: 119
+      width: 12
+      height: 25
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-button-insideglow
+    outer:
+      serializedVersion: 2
+      x: 2006
+      y: 702
+      width: 33
+      height: 100
+    inner:
+      serializedVersion: 2
+      x: 2009
+      y: 731
+      width: 2
+      height: 68
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-arena-ticket
+    outer:
+      serializedVersion: 2
+      x: 0
+      y: 784
+      width: 100
+      height: 131
+    inner:
+      serializedVersion: 2
+      x: 0
+      y: 784
+      width: 100
+      height: 131
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-arena-flawless-bgbox
+    outer:
+      serializedVersion: 2
+      x: 1162
+      y: 770
+      width: 62
+      height: 76
+    inner:
+      serializedVersion: 2
+      x: 1191
+      y: 807
+      width: 4
+      height: 2
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-arena-flawless-rules-box
+    outer:
+      serializedVersion: 2
+      x: 270
+      y: 8
+      width: 69
+      height: 64
+    inner:
+      serializedVersion: 2
+      x: 304
+      y: 53
+      width: 2
+      height: 4
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-arena-phase-arrow
+    outer:
+      serializedVersion: 2
+      x: 1264
+      y: 902
+      width: 21
+      height: 24
+    inner:
+      serializedVersion: 2
+      x: 1264
+      y: 902
+      width: 21
+      height: 24
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-arena-phase-bg-green
+    outer:
+      serializedVersion: 2
+      x: 1320
+      y: 1302
+      width: 31
+      height: 14
+    inner:
+      serializedVersion: 2
+      x: 1330
+      y: 1308
+      width: 14
+      height: 2
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-arena-phase-bg
+    outer:
+      serializedVersion: 2
+      x: 751
+      y: 259
+      width: 31
+      height: 14
+    inner:
+      serializedVersion: 2
+      x: 760
+      y: 265
+      width: 13
+      height: 2
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-arena-flawless-rules-check
+    outer:
+      serializedVersion: 2
+      x: 1962
+      y: 1702
+      width: 16
+      height: 20
+    inner:
+      serializedVersion: 2
+      x: 1962
+      y: 1702
+      width: 16
+      height: 20
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-arena-lootbox-gold
+    outer:
+      serializedVersion: 2
+      x: 508
+      y: 251
+      width: 64
+      height: 59
+    inner:
+      serializedVersion: 2
+      x: 508
+      y: 251
+      width: 64
+      height: 59
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-arena-lootbox-silver
+    outer:
+      serializedVersion: 2
+      x: 1652
+      y: 1007
+      width: 64
+      height: 59
+    inner:
+      serializedVersion: 2
+      x: 1652
+      y: 1007
+      width: 64
+      height: 59
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-arena-lootbox-bronze
+    outer:
+      serializedVersion: 2
+      x: 495
+      y: 34
+      width: 64
+      height: 59
+    inner:
+      serializedVersion: 2
+      x: 495
+      y: 34
+      width: 64
+      height: 59
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-arena-heart-a
+    outer:
+      serializedVersion: 2
+      x: 786
+      y: 97
+      width: 30
+      height: 58
+    inner:
+      serializedVersion: 2
+      x: 787
+      y: 98
+      width: 28
+      height: 56
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-arena-heart-b
+    outer:
+      serializedVersion: 2
+      x: 388
+      y: 1268
+      width: 30
+      height: 58
+    inner:
+      serializedVersion: 2
+      x: 389
+      y: 1269
+      width: 28
+      height: 56
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-button-arena
+    outer:
+      serializedVersion: 2
+      x: 366
+      y: 931
+      width: 70
+      height: 200
+    inner:
+      serializedVersion: 2
+      x: 396
+      y: 966
+      width: 10
+      height: 110
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-arena-bottom-button-stroke
+    outer:
+      serializedVersion: 2
+      x: 532
+      y: 1082
+      width: 138
+      height: 106
+    inner:
+      serializedVersion: 2
+      x: 599
+      y: 1092
+      width: 4
+      height: 86
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-button-arena-small
+    outer:
+      serializedVersion: 2
+      x: 258
+      y: 709
+      width: 68
+      height: 124
+    inner:
+      serializedVersion: 2
+      x: 288
+      y: 746
+      width: 4
+      height: 40
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-arena-scrap-ico
+    outer:
+      serializedVersion: 2
+      x: 1001
+      y: 840
+      width: 79
+      height: 81
+    inner:
+      serializedVersion: 2
+      x: 1001
+      y: 840
+      width: 79
+      height: 81
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-button-arena-small-cut
+    outer:
+      serializedVersion: 2
+      x: 767
+      y: 556
+      width: 34
+      height: 124
+    inner:
+      serializedVersion: 2
+      x: 795
+      y: 567
+      width: 2
+      height: 67
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-arena-winico-white
+    outer:
+      serializedVersion: 2
+      x: 993
+      y: 1672
+      width: 77
+      height: 90
+    inner:
+      serializedVersion: 2
+      x: 993
+      y: 1672
+      width: 77
+      height: 90
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-train-bg-green
+    outer:
+      serializedVersion: 2
+      x: 843
+      y: 824
+      width: 66
+      height: 118
+    inner:
+      serializedVersion: 2
+      x: 853
+      y: 863
+      width: 16
+      height: 72
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-arena-rewards-bg
+    outer:
+      serializedVersion: 2
+      x: 137
+      y: 257
+      width: 38
+      height: 142
+    inner:
+      serializedVersion: 2
+      x: 147
+      y: 277
+      width: 8
+      height: 112
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-mainscreen-arenapromo-unitbg
+    outer:
+      serializedVersion: 2
+      x: 1932
+      y: 1236
+      width: 94
+      height: 200
+    inner:
+      serializedVersion: 2
+      x: 1934
+      y: 1238
+      width: 90
+      height: 196
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-mainscreen-arenapromo-top
+    outer:
+      serializedVersion: 2
+      x: 442
+      y: 967
+      width: 76
+      height: 164
+    inner:
+      serializedVersion: 2
+      x: 445
+      y: 970
+      width: 71
+      height: 158
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-upgrade-perk-ico
+    outer:
+      serializedVersion: 2
+      x: 248
+      y: 289
+      width: 78
+      height: 78
+    inner:
+      serializedVersion: 2
+      x: 248
+      y: 289
+      width: 78
+      height: 78
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-button-convert
+    outer:
+      serializedVersion: 2
+      x: 794
+      y: 816
+      width: 40
+      height: 124
+    inner:
+      serializedVersion: 2
+      x: 822
+      y: 844
+      width: 4
+      height: 84
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-button-upgrade-perk
+    outer:
+      serializedVersion: 2
+      x: 767
+      y: 686
+      width: 40
+      height: 124
+    inner:
+      serializedVersion: 2
+      x: 795
+      y: 714
+      width: 4
+      height: 84
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-convert-to-parts-ico
+    outer:
+      serializedVersion: 2
+      x: 1000
+      y: 764
+      width: 70
+      height: 70
+    inner:
+      serializedVersion: 2
+      x: 1000
+      y: 764
+      width: 70
+      height: 70
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-upgrade-convert-arrow
+    outer:
+      serializedVersion: 2
+      x: 627
+      y: 74
+      width: 45
+      height: 52
+    inner:
+      serializedVersion: 2
+      x: 627
+      y: 74
+      width: 45
+      height: 52
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  mCoordinates: 0
+  mPixelSize: 1
+  mReplacement: {fileID: 0}
+  pngPath: GuiAtlasMenuMain
+  pngHalfPath: Assets/StreamingAssets/GuiAtlasMenuMainHalf.png
+  replaceTexture: {fileID: 2800000, guid: 2fb7ca68775976344b362335e0bd6e46, type: 3}
+  useBinaryData: 0
+  textureWidth: 2048
+  textureHeight: 2048
 --- !u!1001 &100100000
 Prefab:
   serializedVersion: 2

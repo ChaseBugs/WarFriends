@@ -1,66 +1,163 @@
-using UnityEngine;
+using System;
+using Org.BouncyCastle.Crypto.Parameters;
+using Org.BouncyCastle.Crypto.Utilities;
 
 namespace Org.BouncyCastle.Crypto.Engines
 {
-	public class HC256Engine : MonoBehaviour
+public class HC256Engine : IStreamCipher
+{
+	private uint[] p = new uint[1024];
+
+	private uint[] q = new uint[1024];
+
+	private uint cnt;
+
+	private byte[] key;
+
+	private byte[] iv;
+
+	private bool initialised;
+
+	private byte[] buf = new byte[4];
+
+	private int idx;
+
+	public virtual string AlgorithmName => "HC-256";
+
+	private uint Step()
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
+		uint num = cnt & 0x3FF;
+		uint result;
+		if (cnt < 1024)
+		{
+			uint num2 = p[(num - 3) & 0x3FF];
+			uint num3 = p[(num - 1023) & 0x3FF];
+			p[num] += p[(num - 10) & 0x3FF] + (RotateRight(num2, 10) ^ RotateRight(num3, 23)) + q[(num2 ^ num3) & 0x3FF];
+			num2 = p[(num - 12) & 0x3FF];
+			result = (q[num2 & 0xFF] + q[((num2 >> 8) & 0xFF) + 256] + q[((num2 >> 16) & 0xFF) + 512] + q[((num2 >> 24) & 0xFF) + 768]) ^ p[num];
+		}
+		else
+		{
+			uint num4 = q[(num - 3) & 0x3FF];
+			uint num5 = q[(num - 1023) & 0x3FF];
+			q[num] += q[(num - 10) & 0x3FF] + (RotateRight(num4, 10) ^ RotateRight(num5, 23)) + p[(num4 ^ num5) & 0x3FF];
+			num4 = q[(num - 12) & 0x3FF];
+			result = (p[num4 & 0xFF] + p[((num4 >> 8) & 0xFF) + 256] + p[((num4 >> 16) & 0xFF) + 512] + p[((num4 >> 24) & 0xFF) + 768]) ^ q[num];
+		}
+		cnt = (cnt + 1) & 0x7FF;
+		return result;
 	}
+
+	private void Init()
+	{
+		if (key.Length != 32 && key.Length != 16)
+		{
+			throw new ArgumentException("The key must be 128/256 bits long");
+		}
+		if (iv.Length < 16)
+		{
+			throw new ArgumentException("The IV must be at least 128 bits long");
+		}
+		if (key.Length != 32)
+		{
+			byte[] destinationArray = new byte[32];
+			Array.Copy(key, 0, destinationArray, 0, key.Length);
+			Array.Copy(key, 0, destinationArray, 16, key.Length);
+			key = destinationArray;
+		}
+		if (iv.Length < 32)
+		{
+			byte[] array = new byte[32];
+			Array.Copy(iv, 0, array, 0, iv.Length);
+			Array.Copy(iv, 0, array, iv.Length, array.Length - iv.Length);
+			iv = array;
+		}
+		cnt = 0u;
+		uint[] array2 = new uint[2560];
+		for (int i = 0; i < 32; i++)
+		{
+			array2[i >> 2] |= (uint)(key[i] << 8 * (i & 3));
+		}
+		for (int j = 0; j < 32; j++)
+		{
+			array2[(j >> 2) + 8] |= (uint)(iv[j] << 8 * (j & 3));
+		}
+		for (uint num = 16u; num < 2560; num++)
+		{
+			uint num2 = array2[num - 2];
+			uint num3 = array2[num - 15];
+			array2[num] = (RotateRight(num2, 17) ^ RotateRight(num2, 19) ^ (num2 >> 10)) + array2[num - 7] + (RotateRight(num3, 7) ^ RotateRight(num3, 18) ^ (num3 >> 3)) + array2[num - 16] + num;
+		}
+		Array.Copy(array2, 512, p, 0, 1024);
+		Array.Copy(array2, 1536, q, 0, 1024);
+		for (int k = 0; k < 4096; k++)
+		{
+			Step();
+		}
+		cnt = 0u;
+	}
+
+	public virtual void Init(bool forEncryption, ICipherParameters parameters)
+	{
+		ICipherParameters cipherParameters = parameters;
+		if (parameters is ParametersWithIV)
+		{
+			iv = ((ParametersWithIV)parameters).GetIV();
+			cipherParameters = ((ParametersWithIV)parameters).Parameters;
+		}
+		else
+		{
+			iv = new byte[0];
+		}
+		if (cipherParameters is KeyParameter)
+		{
+			key = ((KeyParameter)cipherParameters).GetKey();
+			Init();
+			initialised = true;
+			return;
+		}
+		throw new ArgumentException("Invalid parameter passed to HC256 init - " + parameters.GetType().Name, "parameters");
+	}
+
+	private byte GetByte()
+	{
+		if (idx == 0)
+		{
+			Pack.UInt32_To_LE(Step(), buf);
+		}
+		byte result = buf[idx];
+		idx = (idx + 1) & 3;
+		return result;
+	}
+
+	public virtual void ProcessBytes(byte[] input, int inOff, int len, byte[] output, int outOff)
+	{
+		if (!initialised)
+		{
+			throw new InvalidOperationException(AlgorithmName + " not initialised");
+		}
+		Check.DataLength(input, inOff, len, "input buffer too short");
+		Check.OutputLength(output, outOff, len, "output buffer too short");
+		for (int i = 0; i < len; i++)
+		{
+			output[outOff + i] = (byte)(input[inOff + i] ^ GetByte());
+		}
+	}
+
+	public virtual void Reset()
+	{
+		idx = 0;
+		Init();
+	}
+
+	public virtual byte ReturnByte(byte input)
+	{
+		return (byte)(input ^ GetByte());
+	}
+
+	private static uint RotateRight(uint x, int bits)
+	{
+		return (x >> bits) | (x << -bits);
+	}
+}
 }

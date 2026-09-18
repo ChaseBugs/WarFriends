@@ -1,66 +1,200 @@
-using UnityEngine;
+using System;
+using System.Collections.Generic;
+using System.Text;
+using BestHTTP.Extensions;
 
 namespace BestHTTP.Authentication
 {
-	public class Digest : MonoBehaviour
+internal sealed class Digest
+{
+	public Uri Uri { get; private set; }
+
+	public AuthenticationTypes Type { get; private set; }
+
+	public string Realm { get; private set; }
+
+	public bool Stale { get; private set; }
+
+	private string Nonce { get; set; }
+
+	private string Opaque { get; set; }
+
+	private string Algorithm { get; set; }
+
+	public List<string> ProtectedUris { get; private set; }
+
+	private string QualityOfProtections { get; set; }
+
+	private int NonceCount { get; set; }
+
+	private string HA1Sess { get; set; }
+
+	internal Digest(Uri uri)
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
+		Uri = uri;
+		Algorithm = "md5";
 	}
+
+	public void ParseChallange(string header)
+	{
+		Type = AuthenticationTypes.Unknown;
+		Stale = false;
+		Opaque = null;
+		HA1Sess = null;
+		NonceCount = 0;
+		QualityOfProtections = null;
+		if (ProtectedUris != null)
+		{
+			ProtectedUris.Clear();
+		}
+		WWWAuthenticateHeaderParser wWWAuthenticateHeaderParser = new WWWAuthenticateHeaderParser(header);
+		foreach (HeaderValue value in wWWAuthenticateHeaderParser.Values)
+		{
+			switch (value.Key)
+			{
+			case "basic":
+				Type = AuthenticationTypes.Basic;
+				break;
+			case "digest":
+				Type = AuthenticationTypes.Digest;
+				break;
+			case "realm":
+				Realm = value.Value;
+				break;
+			case "domain":
+				if (!string.IsNullOrEmpty(value.Value) && value.Value.Length != 0)
+				{
+					if (ProtectedUris == null)
+					{
+						ProtectedUris = new List<string>();
+					}
+					int pos = 0;
+					string item = value.Value.Read(ref pos, ' ');
+					do
+					{
+						ProtectedUris.Add(item);
+						item = value.Value.Read(ref pos, ' ');
+					}
+					while (pos < value.Value.Length);
+				}
+				break;
+			case "nonce":
+				Nonce = value.Value;
+				break;
+			case "qop":
+				QualityOfProtections = value.Value;
+				break;
+			case "stale":
+				Stale = bool.Parse(value.Value);
+				break;
+			case "opaque":
+				Opaque = value.Value;
+				break;
+			case "algorithm":
+				Algorithm = value.Value;
+				break;
+			}
+		}
+	}
+
+	public string GenerateResponseHeader(HTTPRequest request, Credentials credentials)
+	{
+		try
+		{
+			switch (Type)
+			{
+			case AuthenticationTypes.Basic:
+				return "Basic " + Convert.ToBase64String(Encoding.UTF8.GetBytes($"{credentials.UserName}:{credentials.Password}"));
+			case AuthenticationTypes.Digest:
+			{
+				NonceCount++;
+				string empty = string.Empty;
+				string text = new Random(request.GetHashCode()).Next(int.MinValue, int.MaxValue).ToString("X8");
+				string text2 = NonceCount.ToString("X8");
+				switch (Algorithm.TrimAndLower())
+				{
+				default:
+				{
+					if (Algorithm.TrimAndLower() == "md5-sess")
+					{
+						if (string.IsNullOrEmpty(HA1Sess))
+						{
+							HA1Sess = $"{credentials.UserName}:{Realm}:{credentials.Password}:{Nonce}:{text2}".CalculateMD5Hash();
+						}
+						empty = HA1Sess;
+						break;
+					}
+					return string.Empty;
+				}
+				case "md5":
+					empty = $"{credentials.UserName}:{Realm}:{credentials.Password}".CalculateMD5Hash();
+					break;
+				}
+				string empty2 = string.Empty;
+				string text3 = ((QualityOfProtections == null) ? null : QualityOfProtections.TrimAndLower());
+				if (text3 == null)
+				{
+					string arg = (request.MethodType.ToString().ToUpper() + ":" + request.CurrentUri.PathAndQuery).CalculateMD5Hash();
+					empty2 = $"{empty}:{Nonce}:{arg}".CalculateMD5Hash();
+				}
+				else if (text3.Contains("auth-int"))
+				{
+					text3 = "auth-int";
+					byte[] array = request.GetEntityBody();
+					if (array == null)
+					{
+						array = string.Empty.GetASCIIBytes();
+					}
+					string text4 = $"{request.MethodType.ToString().ToUpper()}:{request.CurrentUri.PathAndQuery}:{array.CalculateMD5Hash()}".CalculateMD5Hash();
+					empty2 = $"{empty}:{Nonce}:{text2}:{text}:{text3}:{text4}".CalculateMD5Hash();
+				}
+				else
+				{
+					if (!text3.Contains("auth"))
+					{
+						return string.Empty;
+					}
+					text3 = "auth";
+					string text5 = (request.MethodType.ToString().ToUpper() + ":" + request.CurrentUri.PathAndQuery).CalculateMD5Hash();
+					empty2 = $"{empty}:{Nonce}:{text2}:{text}:{text3}:{text5}".CalculateMD5Hash();
+				}
+				string text6 = $"Digest username=\"{credentials.UserName}\", realm=\"{Realm}\", nonce=\"{Nonce}\", uri=\"{request.Uri.PathAndQuery}\", cnonce=\"{text}\", response=\"{empty2}\"";
+				if (text3 != null)
+				{
+					text6 = string.Concat(text6, ", qop=\"" + text3 + "\", nc=" + text2);
+				}
+				if (!string.IsNullOrEmpty(Opaque))
+				{
+					text6 = text6 + ", opaque=\"" + Opaque + "\"";
+				}
+				return text6;
+			}
+			}
+		}
+		catch
+		{
+		}
+		return string.Empty;
+	}
+
+	public bool IsUriProtected(Uri uri)
+	{
+		if (string.CompareOrdinal(uri.Host, Uri.Host) != 0)
+		{
+			return false;
+		}
+		string text = uri.ToString();
+		if (ProtectedUris != null && ProtectedUris.Count > 0)
+		{
+			for (int i = 0; i < ProtectedUris.Count; i++)
+			{
+				if (text.Contains(ProtectedUris[i]))
+				{
+					return true;
+				}
+			}
+		}
+		return true;
+	}
+}
 }

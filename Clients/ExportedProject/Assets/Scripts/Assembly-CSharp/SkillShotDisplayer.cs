@@ -1,63 +1,102 @@
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
-public class SkillShotDisplayer : MonoBehaviour
+public class SkillShotDisplayer : PoolableObject
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	private List<SkillShotManager.SkillShotItemDefinition> res = new List<SkillShotManager.SkillShotItemDefinition>();
 
-	1. No dll files were provided to AssetRipper.
+	private List<SkillShotDisplayerItem> mSkillShotDisplayerItems;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	private int mPower;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public bool isPlaying { get; private set; }
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public void PlayDeath(int power, SkillShot skillShot)
+	{
+		if (DebugSettings.instance.data.showHud)
+		{
+			isPlaying = true;
+			Singleton<SkillShotManager>.instance.GetItemDefinitions(skillShot, ref res);
+			mPower = power;
+			StartCoroutine(Show());
+		}
+	}
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public override void OnInstancied()
+	{
+		base.OnInstancied();
+		isPlaying = false;
+	}
 
-	3. Assembly Reconstruction has not been implemented.
+	private IEnumerator Show()
+	{
+		Vector3 pos = new Vector3(6f, 6.5f, 0f);
+		mSkillShotDisplayerItems = new List<SkillShotDisplayerItem>();
+		pos += 0.5f * Vector3.up;
+		bool showDeployIcon = false;
+		foreach (SkillShotManager.SkillShotItemDefinition skillShotItemDefinition in res)
+		{
+			if (skillShotItemDefinition.skillShotType == SkillShot.SkillShotType.Kill)
+			{
+				showDeployIcon = true;
+			}
+			if (skillShotItemDefinition.skillShotType == SkillShot.SkillShotType.ArmyKill)
+			{
+				showDeployIcon = true;
+			}
+		}
+		if (showDeployIcon & (mPower > 0))
+		{
+			DeathMatchUnitsGuiElement.instance.DeployEnergyIconAnimation(base.transform.position, mPower);
+		}
+		foreach (SkillShotManager.SkillShotItemDefinition skillShotItemDefinition2 in res)
+		{
+			pos += 6f * Vector3.up;
+			SkillShotDisplayerItem obj = Singleton<SkillShotManager>.instance.objectPool.InstantiateAsChild(Singleton<ObjectPoolDatabase>.instance.skillShotDisplayerItem, pos, Quaternion.identity, base.gameObject) as SkillShotDisplayerItem;
+			if (obj != null)
+			{
+				obj.Play(skillShotItemDefinition2);
+				mSkillShotDisplayerItems.Add(obj);
+				SoundsManager.Instance.PlaySound(SoundsManager.SoundsEnum.LabelShowGame);
+			}
+			yield return new WaitForSeconds(TimeManager.GetTimeScaledInterval(0.15f, ignoreTimeScale: true));
+		}
+		yield return new WaitForSeconds(3f);
+		isPlaying = false;
+		DestroyPooled();
+	}
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public override void DestroyPooled()
+	{
+		if (!isPlaying)
+		{
+			base.DestroyPooled();
+		}
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public void PlayCritical()
+	{
+		Vector3 localPostion = new Vector3(6f, -3f, 0f);
+		SkillShotDisplayerItem skillShotDisplayerItem = Singleton<SkillShotManager>.instance.objectPool.InstantiateAsChild(Singleton<ObjectPoolDatabase>.instance.skillShotDisplayerItem, localPostion, Quaternion.identity, base.gameObject) as SkillShotDisplayerItem;
+		if (skillShotDisplayerItem != null)
+		{
+			skillShotDisplayerItem.PlayCritical();
+		}
+		SoundsManager.Instance.PlaySound(SoundsManager.SoundsEnum.Critical);
+	}
 
-	4. This script is unnecessary.
-
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
-
-	5. Script Content Level 0
-
-		AssetRipper was set to not load any script information.
-
-	6. Cpp2IL failed to decompile Il2Cpp data
-
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public void PlayBoxStolen(bool wasStolen)
+	{
+		Vector3 localPostion = new Vector3(6f, -6f, 0f);
+		if (!wasStolen)
+		{
+			localPostion.y = 22f;
+		}
+		SkillShotDisplayerItem skillShotDisplayerItem = Singleton<SkillShotManager>.instance.objectPool.InstantiateAsChild(Singleton<ObjectPoolDatabase>.instance.skillShotDisplayerItem, localPostion, Quaternion.identity, base.gameObject) as SkillShotDisplayerItem;
+		if (skillShotDisplayerItem != null)
+		{
+			skillShotDisplayerItem.PlayBoxStolen(wasStolen);
+		}
+	}
 }

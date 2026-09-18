@@ -1,63 +1,89 @@
+using System;
 using UnityEngine;
 
-public class GameCenterProvider : MonoBehaviour
+public class GameCenterProvider : Singleton<GameCenterProvider>
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public bool canLogoutEventLikeLoginFailed;
 
-	1. No dll files were provided to AssetRipper.
+	public bool isAuthenticated;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public string gcName;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public string gcId;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public bool hasResponse;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public event Action<bool> Authenticated;
 
-	3. Assembly Reconstruction has not been implemented.
+	protected override void Awake()
+	{
+		base.Awake();
+		hasResponse = false;
+		UnityEngine.Object.DontDestroyOnLoad(base.gameObject);
+		InitEvents();
+	}
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public void Authenticate(bool canShowLoginDialog = true)
+	{
+		Debug.Log("GameCenterManager: Authenticate called - canShowDialog:" + canShowLoginDialog);
+		OnAuthenticatedFailure("Not in editor");
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	private void InitEvents()
+	{
+	}
 
-	4. This script is unnecessary.
+	private void OnPlayerAuthenticationRequired()
+	{
+		hasResponse = true;
+		Debug.Log("GameCenterProvider function OnPlayerAuthenticationRequired() called => Can GC login screen");
+		PlayerLoggedOutEvent();
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private void PlayerLoggedOutEvent()
+	{
+		hasResponse = true;
+		Debug.LogError("GameCenterProvider function PlayerLoggedOutEvent() called => GC: Player logged out event - can autenticate fail: " + canLogoutEventLikeLoginFailed);
+		if (canLogoutEventLikeLoginFailed)
+		{
+			isAuthenticated = false;
+			gcId = string.Empty;
+			gcName = string.Empty;
+			if (this.Authenticated != null)
+			{
+				this.Authenticated(obj: false);
+			}
+		}
+	}
 
-	5. Script Content Level 0
+	private void OnAuthenticated()
+	{
+		hasResponse = true;
+		isAuthenticated = true;
+		gcId = GetHashedId("123456789");
+		gcName = "Slon";
+		Debug.LogError("GameCenterProvider function OnAuthenticated() called => GC: Authenticated with " + gcName);
+		if (this.Authenticated != null)
+		{
+			this.Authenticated(obj: true);
+		}
+	}
 
-		AssetRipper was set to not load any script information.
+	private void OnAuthenticatedFailure(string error)
+	{
+		hasResponse = true;
+		isAuthenticated = false;
+		gcId = string.Empty;
+		gcName = string.Empty;
+		Debug.Log("GameCenterProvider function OnAuthenticatedFailure() called => GC: Authenticated failure " + error);
+		if (this.Authenticated != null)
+		{
+			this.Authenticated(obj: false);
+		}
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
-
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	private string GetHashedId(string playerId)
+	{
+		return MiscTools.Md5(playerId + "apple");
+	}
 }

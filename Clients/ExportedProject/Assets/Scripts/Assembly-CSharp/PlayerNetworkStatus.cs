@@ -1,63 +1,148 @@
+using System;
 using UnityEngine;
 
-public class PlayerNetworkStatus : MonoBehaviour
+public class PlayerNetworkStatus
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public enum ConnectionState
+	{
+		Connected,
+		Disconnected
+	}
 
-	1. No dll files were provided to AssetRipper.
+	public enum MatchState
+	{
+		ConnectingToPhoton,
+		Connected,
+		CardsChosen,
+		GameLoading,
+		LoadingFinished,
+		Playing,
+		GameFinished,
+		Rematch
+	}
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	private ConnectionState mConnectionState;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	private ConnectionState mPreviousConnectionState;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	private MatchState mMatchState;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	private bool mStartAnimationFinished;
 
-	3. Assembly Reconstruction has not been implemented.
+	private bool mConnectionOff;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public PlayerController owner { get; private set; }
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public bool connectionOff
+	{
+		get
+		{
+			bool flag = owner.isCurrentPlayer && CachedApplicationInternetReachability.internetReachability == NetworkReachability.NotReachable;
+			if (flag != mConnectionOff)
+			{
+				mConnectionOff = flag;
+				Debug.Log($"Internet off: {flag} {DateTime.UtcNow}");
+			}
+			return flag;
+		}
+	}
 
-	4. This script is unnecessary.
+	public bool disconected => connectionOff || connectionState == ConnectionState.Disconnected;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public bool startAnimationFinished
+	{
+		get
+		{
+			return mStartAnimationFinished;
+		}
+		set
+		{
+			mStartAnimationFinished = value;
+		}
+	}
 
-	5. Script Content Level 0
+	public int stateCounter { get; set; }
 
-		AssetRipper was set to not load any script information.
+	public bool active { get; set; }
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public bool canRematch => mConnectionState == ConnectionState.Connected && matchState >= MatchState.GameFinished;
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public int reconnectsCount { get; private set; }
 
-	7. An incorrect path was provided to AssetRipper.
+	public int pausesCount { get; set; }
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	public MatchState matchState
+	{
+		get
+		{
+			return mMatchState;
+		}
+		set
+		{
+			mMatchState = value;
+			Debug.Log($"Player match state {mMatchState} to player {owner.name}");
+			if (PlayerNetworkStatus.MatchStateChanged != null)
+			{
+				PlayerNetworkStatus.MatchStateChanged(mMatchState, owner);
+			}
+		}
+	}
 
-	*/
+	public ConnectionState connectionState
+	{
+		get
+		{
+			return mConnectionState;
+		}
+		set
+		{
+			if (mConnectionState != value)
+			{
+				mPreviousConnectionState = mConnectionState;
+				mConnectionState = value;
+				Debug.Log($"Player connectionState {mConnectionState} to player {owner.name}");
+				if (value == ConnectionState.Disconnected)
+				{
+					reconnectsCount++;
+				}
+			}
+		}
+	}
+
+	public static event Action<MatchState, PlayerController> MatchStateChanged;
+
+	public PlayerNetworkStatus(PlayerController owner)
+	{
+		this.owner = owner;
+	}
+
+	public void Reset()
+	{
+		matchState = MatchState.ConnectingToPhoton;
+		mConnectionState = ConnectionState.Connected;
+		mPreviousConnectionState = ConnectionState.Connected;
+		startAnimationFinished = false;
+		stateCounter = 0;
+		active = true;
+		reconnectsCount = 0;
+		pausesCount = 0;
+		mConnectionOff = false;
+	}
+
+	public bool SetState(MatchState state, int stateCounter)
+	{
+		if (stateCounter > this.stateCounter)
+		{
+			this.stateCounter = stateCounter;
+			matchState = state;
+			return true;
+		}
+		Debug.LogError($"Error setting match state {state} to player {owner.name}");
+		return false;
+	}
+
+	public void IncreaseDisconnects()
+	{
+		reconnectsCount++;
+	}
 }

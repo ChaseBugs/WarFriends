@@ -1,63 +1,67 @@
+using System;
+using Google2u;
 using UnityEngine;
 
-public class InstantBattleUnlockDialog : MonoBehaviour
+public class InstantBattleUnlockDialog : GuiElementSingle<InstantBattleUnlockDialog>, IGuiDialog
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[SerializeField]
+	[Header("Middle Left")]
+	private GameObject mHintLowLeft;
 
-	1. No dll files were provided to AssetRipper.
+	[SerializeField]
+	private UILabel mHintUpLeftText;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	[Header("Middle Right")]
+	[SerializeField]
+	private GameObject mHintLowRight;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	[SerializeField]
+	private UILabel mHintUpRightText;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	[SerializeField]
+	private UILabel mHintLowRightText;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	[Header("Bottom")]
+	[SerializeField]
+	private BoxCollider mButton;
 
-	3. Assembly Reconstruction has not been implemented.
+	public override void InitControls()
+	{
+		UIEventListener uIEventListener = UIEventListener.Get(mButton.gameObject);
+		uIEventListener.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener.onClick, new UIEventListener.VoidDelegate(CloseClick));
+	}
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	private void CloseClick(GameObject go)
+	{
+		if (isShowed)
+		{
+			HideDialog();
+		}
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public override void InitGUIValues()
+	{
+		int num = (int)(float)Singleton<GameVariables>.instance.constants.GetRow(Constants.rowIds.InstantBattleMax).FLOATVALUE;
+		int instantBattleCost = PlayerAnalytics.instance.data.GetInstantBattleCost();
+		int num2 = (int)(float)Singleton<GameVariables>.instance.constants.GetRow(Constants.rowIds.InstantBattleReload).FLOATVALUE;
+		mHintUpLeftText.text = Localization.LocalizeFormat("ID_INSTANTBATTLEHINT1", Colours.stringBlue, num);
+		mHintUpRightText.text = Localization.LocalizeFormat("ID_INSTANTBATTLEHINT2", num, Colours.stringBlue, instantBattleCost);
+		mHintLowRightText.text = Localization.LocalizeFormat("ID_INSTANTBATTLEHINT4", Colours.stringBlue, MiscTools.PrintableTime((float)num2 * 60f, "ID_READYTIME", string.Empty));
+		float num3 = -376f;
+		float num4 = 65f;
+		float num5 = mHintUpLeftText.transform.localScale.y * mHintUpLeftText.relativeSize.y;
+		float num6 = mHintUpRightText.transform.localScale.y * mHintUpRightText.relativeSize.y;
+		mHintLowLeft.transform.localPosition = mHintLowLeft.transform.localPosition.ReplaceY(num3 - num5 - num4);
+		mHintLowRight.transform.localPosition = mHintLowRight.transform.localPosition.ReplaceY(num3 - num6 - num4);
+	}
 
-	4. This script is unnecessary.
+	public GuiElement GetGuiElement()
+	{
+		return this;
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
-
-	5. Script Content Level 0
-
-		AssetRipper was set to not load any script information.
-
-	6. Cpp2IL failed to decompile Il2Cpp data
-
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public override void OnBack()
+	{
+		CloseClick(mButton.gameObject);
+	}
 }

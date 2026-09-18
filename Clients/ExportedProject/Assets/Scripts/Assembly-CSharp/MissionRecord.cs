@@ -1,63 +1,172 @@
+using System.Collections.Generic;
 using UnityEngine;
 
-public class MissionRecord : MonoBehaviour
+public class MissionRecord : PoolableObject
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Header("Both")]
+	public UIButtonScale buttonScale;
 
-	1. No dll files were provided to AssetRipper.
+	public UILabel missionLabel;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public UISprite labelBg;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	[Header("-Locked")]
+	public GameObject lockedGraphics;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public UISprite lockIcon;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public UISprite lockedBackground;
 
-	3. Assembly Reconstruction has not been implemented.
+	[Header("-Unlocked")]
+	public GameObject unlockedGraphics;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public UISprite shadowBg;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	[Header("--Stars")]
+	public UISprite star1Sprite;
 
-	4. This script is unnecessary.
+	public UISprite star2Sprite;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public UISprite star3Sprite;
 
-	5. Script Content Level 0
+	public List<UISprite> starShadows;
 
-		AssetRipper was set to not load any script information.
+	[Header("--Completed")]
+	public GameObject completedInCoop;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public GameObject completedAlone;
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	[Header("Heroic")]
+	public GameObject heroicPart;
 
-	7. An incorrect path was provided to AssetRipper.
+	public GameObject heroicSingle;
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	public GameObject heroicCoop;
 
-	*/
+	[Header("Setting")]
+	public int missionNumber;
+
+	[HideInInspector]
+	public static Vector3 lockedScale = new Vector3(172f, 135f, 0f);
+
+	[HideInInspector]
+	public static Vector3 unlockedScale = new Vector3(338f, 135f, 0f);
+
+	[HideInInspector]
+	public static Vector3 lockIconScale = new Vector3(115f, 135f, 0f);
+
+	[HideInInspector]
+	public static Vector3 lockedBgPos = new Vector3(120f, 14.5f, 0f);
+
+	[HideInInspector]
+	public static Vector3 unlockedBgPos = new Vector3(205f, 14.5f, 0f);
+
+	private Mission mMission;
+
+	public Mission GetMission()
+	{
+		return mMission;
+	}
+
+	public void SetUnlocked()
+	{
+		lockedGraphics.SetActive(value: false);
+		unlockedGraphics.SetActive(value: true);
+		SetButtonScale(activeScale: true);
+		if (mMission.numberOfStars == 3)
+		{
+			labelBg.color = Colours.orange;
+			missionLabel.color = Color.white;
+		}
+		else
+		{
+			labelBg.color = Color.white;
+			missionLabel.color = Color.black;
+		}
+		InitializeToDefault();
+		completedAlone.SetActive(mMission.completedAlone);
+		completedInCoop.SetActive(mMission.completedInCoop);
+	}
+
+	public void SetLocked(bool disableScale = true)
+	{
+		lockedGraphics.SetActive(value: true);
+		unlockedGraphics.SetActive(value: false);
+		SetButtonScale(!disableScale);
+		labelBg.color = Color.black;
+		missionLabel.color = Color.white;
+		InitializeToDefault();
+		completedAlone.SetActive(value: false);
+		completedInCoop.SetActive(value: false);
+	}
+
+	public void SetActual(bool overrideCompleted = false)
+	{
+		if (overrideCompleted || !(mMission != null) || !mMission.completed)
+		{
+			SetButtonScale(activeScale: true);
+			missionLabel.color = Color.white;
+			shadowBg.color = Colours.blueShadow;
+			labelBg.color = Colours.blueMission;
+			TweenColor.Begin(missionLabel.gameObject, 0.01f, Color.white);
+			TweenColor.Begin(shadowBg.gameObject, 0.01f, Colours.blueShadow);
+			TweenColor.Begin(labelBg.gameObject, 0.01f, Colours.blueMission);
+		}
+	}
+
+	private void InitializeToDefault()
+	{
+		shadowBg.color = Colours.blackShadow;
+		lockedBackground.color = Colours.blackShadow;
+		TweenAlpha.Begin(lockIcon.gameObject, 0f, 1f);
+		TweenScale.Begin(shadowBg.gameObject, 0f, unlockedScale);
+		TweenScale.Begin(lockedBackground.gameObject, 0f, lockedScale);
+		TweenScale.Begin(lockIcon.gameObject, 0f, lockIconScale);
+		foreach (UISprite starShadow in starShadows)
+		{
+			Vector3 localPosition = starShadow.transform.localPosition;
+			localPosition.y = 0f;
+			TweenPosition.Begin(starShadow.gameObject, 0f, localPosition);
+		}
+		TweenPosition.Begin(lockedBackground.gameObject, 0f, lockedBgPos);
+		TweenPosition.Begin(shadowBg.gameObject, 0f, unlockedBgPos);
+	}
+
+	internal void Init(Mission missionReference)
+	{
+		if (missionReference == null)
+		{
+			SetLocked();
+			Debug.LogError("Missing mission reference in mission screen button initialization. Mission number: " + missionNumber + ". Mission index: " + (missionNumber - 1));
+			return;
+		}
+		mMission = missionReference;
+		if (mMission.opened)
+		{
+			SetUnlocked();
+		}
+		else
+		{
+			SetLocked();
+		}
+		missionLabel.text = missionNumber.ToString();
+		int numberOfStars = mMission.numberOfStars;
+		star1Sprite.gameObject.SetActive(numberOfStars > 0);
+		star2Sprite.gameObject.SetActive(numberOfStars > 1);
+		star3Sprite.gameObject.SetActive(numberOfStars > 2);
+		if (MissionsManager.instance.isHeroicLocked)
+		{
+			heroicPart.SetActive(value: false);
+			return;
+		}
+		heroicPart.SetActive(mMission.isHeroic);
+		heroicSingle.SetActive(mMission.heroicType == MissionsManager.HeroicType.Single);
+		heroicCoop.SetActive(mMission.heroicType == MissionsManager.HeroicType.Coop);
+	}
+
+	private void SetButtonScale(bool activeScale)
+	{
+		buttonScale.hover = ((!activeScale) ? Vector3.one : new Vector3(1.1f, 1.1f, 1f));
+		buttonScale.pressed = ((!activeScale) ? Vector3.one : new Vector3(1.05f, 1.05f, 1f));
+	}
 }

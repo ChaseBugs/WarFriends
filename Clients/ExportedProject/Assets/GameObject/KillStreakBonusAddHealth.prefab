@@ -39,6 +39,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 93805b819a1e5a9a6d912d32427f74c5, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  dictionaryTranslationId: ID_BONUS-HEALTH
+  bonusName: "HEALTH\nREFILL"
+  iconName: game-scorestreak-ico-health
+  bgSuffix:
 --- !u!1001 &100100000
 Prefab:
   serializedVersion: 2

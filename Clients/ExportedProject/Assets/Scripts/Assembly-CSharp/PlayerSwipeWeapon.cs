@@ -1,63 +1,243 @@
 using UnityEngine;
 
-public class PlayerSwipeWeapon : MonoBehaviour
+public class PlayerSwipeWeapon : PlayerWeapon
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public float maxDistance = 5f;
 
-	1. No dll files were provided to AssetRipper.
+	public float maxDistanceShot = 5f;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public float maxThrowTime = 1f;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public float minDistance;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public float minDistanceShot = 2f;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public float minThrowTime = 0.1f;
 
-	3. Assembly Reconstruction has not been implemented.
+	public float throwfactor = 1f;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public float distanceTreshold = 0.5f;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public Transform spawnPointLeft;
 
-	4. This script is unnecessary.
+	public Transform spawnPointRight;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private Plane mCollisionPlane;
 
-	5. Script Content Level 0
+	private Vector3 mSwipeEnd;
 
-		AssetRipper was set to not load any script information.
+	private Vector3 mSwipeStart;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	private Vector3 mShotPosition;
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	private bool mIsTutorial;
 
-	7. An incorrect path was provided to AssetRipper.
+	private float mPressedTime;
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	private Vector3 mTutorialPosition;
 
-	*/
+	private bool mWillShoot;
+
+	private bool mIsPressed;
+
+	private bool mBotIsShooting;
+
+	private float mShootTime;
+
+	private bool mRight;
+
+	public override bool isActiveWeapon
+	{
+		get
+		{
+			return base.isActiveWeapon;
+		}
+		set
+		{
+			base.isActiveWeapon = value;
+			mWillShoot = false;
+			mIsTutorial = false;
+			mBotIsShooting = false;
+			mIsPressed = false;
+			if (value)
+			{
+				mCollisionPlane = new Plane(Vector3.up, base.playerController.currentPlayerPoint.point.transform.position);
+			}
+		}
+	}
+
+	public override void UpdateWeapon()
+	{
+		base.UpdateWeapon();
+		if (base.playerController.isAlive && base.playerController.isCurrentPlayer)
+		{
+			if (Singleton<InputController>.instance.rawSwipeInput.swipeStarted)
+			{
+				mPressedTime = Time.realtimeSinceStartup;
+			}
+			if (Singleton<InputController>.instance.rawSwipeInput.swipeDone)
+			{
+				Vector3 vector = Singleton<InputController>.instance.rawSwipeInput.swipeEnd - Singleton<InputController>.instance.rawSwipeInput.swipeStart;
+				float num = Vector3.Angle(vector, Vector3.up);
+				if (vector.magnitude > (float)Screen.width * 0.05f && num <= 70f)
+				{
+					if (base.weapon.willShoot && base.playerController.playerState == PlayerController.PlayerStatex.HidingBehindShield)
+					{
+						if (TryRaycastSwipe(ref mSwipeStart, ref mSwipeEnd))
+						{
+							float num2 = Mathf.Clamp(Time.realtimeSinceStartup - mPressedTime, minThrowTime, maxThrowTime);
+							float num3 = Mathf.Clamp(Vector3.Distance(mSwipeEnd, mSwipeStart), minDistance, maxDistance);
+							float value = num3 / num2 * throwfactor;
+							if (num3 > distanceTreshold)
+							{
+								value = Mathf.Clamp(value, minDistanceShot, maxDistanceShot);
+								Vector3 vector2 = (mSwipeEnd - mSwipeStart).normalized * value;
+								mShotPosition = base.playerController.transform.position + vector2;
+								mRight = GeometryTools.AngleSigned(base.playerController.currentPlayerPoint.point.transform.forward, vector2, Vector3.up) > 0f;
+								Vector3 direction = mShotPosition - base.playerController.transform.position;
+								direction.y = 0f;
+								base.playerController.PlayShotAnimation(base.weapon.weaponType, mRight, direction);
+								SwitchModel(mRight);
+								if (CanShootAngle(mShotPosition))
+								{
+									mWillShoot = true;
+									mShootTime = TimeManager.realTimeWithoutPauses + firstShotWaitTime;
+									if (mIsTutorial)
+									{
+										float num4 = Vector3.Distance(mShotPosition, mTutorialPosition);
+										mShotPosition = ((!(num4 < 3.5f)) ? mShotPosition : mTutorialPosition);
+									}
+								}
+								else
+								{
+									Debug.LogWarning($"Can't shoot angle!!");
+								}
+							}
+							else
+							{
+								Debug.Log("#Swipe failed, distance threshold condition");
+							}
+						}
+					}
+					else
+					{
+						GuiScreenSingle<HudScreen>.instance.ShowReloadingIco(this);
+						GuiElementSingle<InventoryGuiElement>.instance.PlayWeaponReloading(this);
+					}
+				}
+			}
+			if (mWillShoot && TimeManager.realTimeWithoutPauses >= mShootTime)
+			{
+				SwitchModel(right: false);
+				mWillShoot = false;
+				base.weapon.spawnPoint = (mRight ? spawnPointLeft : spawnPointRight);
+				Ammo ammo = base.weapon.Fire(mShotPosition);
+				if (Singleton<GameController>.instance.isTutorialStage2)
+				{
+					ammo.enabled = true;
+				}
+				PlayTouchCircle(mShotPosition);
+				ShakeCamera();
+			}
+			if (DebugSettings.debugEnabled)
+			{
+				CameraLineRenderer.DrawCross(mSwipeEnd, 0.5f, Color.green);
+				CameraLineRenderer.DrawCross(mSwipeStart, 0.5f, Color.green);
+				CameraLineRenderer.DrawCross(mShotPosition, 0.5f, Color.red);
+			}
+		}
+		mModel.gameObject.SetActive(base.weapon.hasAmmo);
+	}
+
+	public void SetTutorialPosition(Vector3 tutorialPosition)
+	{
+		mTutorialPosition = tutorialPosition;
+		mIsTutorial = true;
+	}
+
+	private void OnEnable()
+	{
+		if (mModel != null)
+		{
+			mModel.SetActive(value: true);
+		}
+	}
+
+	private void OnDisable()
+	{
+		if (mModel != null)
+		{
+			mModel.SetActive(value: false);
+		}
+	}
+
+	private void SwitchModel(bool right)
+	{
+		if (mModel != null)
+		{
+			if (!right)
+			{
+				Quaternion localRotation = mModel.transform.localRotation;
+				mModel.transform.parent = spawnPointRight.transform;
+				mModel.transform.localPosition = default(Vector3);
+				mModel.transform.localRotation = localRotation;
+			}
+			else
+			{
+				Quaternion localRotation2 = mModel.transform.localRotation;
+				mModel.transform.parent = spawnPointLeft.transform;
+				mModel.transform.localPosition = default(Vector3);
+				mModel.transform.localRotation = localRotation2;
+			}
+		}
+	}
+
+	public override void ShootForBot(Vector3 position)
+	{
+		base.ShootForBot(position);
+		if (base.weapon.willShoot && !mBotIsShooting)
+		{
+			bool right = GeometryTools.AngleSigned(base.playerController.currentPlayerPoint.point.transform.forward, position - base.playerController.transform.position, Vector3.up) > 0f;
+			Vector3 dir = position - base.playerController.transform.position;
+			base.playerController.PlayShotAnimation(base.weapon.weaponType, right, dir);
+			dir = Vector3.ClampMagnitude(dir, maxDistanceShot);
+			mBotIsShooting = true;
+			InvokeAfterRealTimeWithoutPause(delegate
+			{
+				mBotIsShooting = false;
+				Vector3 to = base.playerController.transform.position + dir;
+				base.weapon.Fire(to);
+			}, firstShotWaitTime);
+		}
+	}
+
+	private bool TryRaycastSwipe(ref Vector3 swipeStart, ref Vector3 swipeEnd)
+	{
+		Ray ray = Singleton<GameCamera>.instance.camera.ScreenPointToRay(Singleton<InputController>.instance.rawSwipeInput.swipeStart);
+		Ray ray2 = Singleton<GameCamera>.instance.camera.ScreenPointToRay(Singleton<InputController>.instance.rawSwipeInput.swipeEnd);
+		float enter = 0f;
+		float enter2 = 0f;
+		if (mCollisionPlane.Raycast(ray, out enter))
+		{
+			swipeStart = ray.GetPoint(enter);
+			if (mCollisionPlane.Raycast(ray2, out enter2))
+			{
+				swipeEnd = ray2.GetPoint(enter2);
+				return true;
+			}
+			Ray ray3 = Singleton<GameCamera>.instance.camera.ScreenPointToRay(Singleton<InputController>.instance.rawSwipeInput.swipeStart + (Singleton<InputController>.instance.rawSwipeInput.swipeEnd - Singleton<InputController>.instance.rawSwipeInput.swipeStart).normalized);
+			if (mCollisionPlane.Raycast(ray3, out var enter3))
+			{
+				Vector3 point = ray3.GetPoint(enter3);
+				swipeEnd = swipeStart + (point - swipeStart).normalized * maxDistance;
+				return true;
+			}
+			Debug.LogError($"Swipe Raycasts End FAILED!");
+		}
+		else
+		{
+			Debug.LogError($"Swipe Raycasts Start FAILED!");
+		}
+		return false;
+	}
 }

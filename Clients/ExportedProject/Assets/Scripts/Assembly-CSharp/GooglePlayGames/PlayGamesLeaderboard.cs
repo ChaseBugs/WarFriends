@@ -1,66 +1,183 @@
+using System;
+using System.Collections.Generic;
+using GooglePlayGames.BasicApi;
 using UnityEngine;
+using UnityEngine.SocialPlatforms;
 
 namespace GooglePlayGames
 {
-	public class PlayGamesLeaderboard : MonoBehaviour
+public class PlayGamesLeaderboard : ILeaderboard
+{
+	private string mId;
+
+	private UserScope mUserScope;
+
+	private Range mRange;
+
+	private TimeScope mTimeScope;
+
+	private string[] mFilteredUserIds;
+
+	private bool mLoading;
+
+	private IScore mLocalUserScore;
+
+	private uint mMaxRange;
+
+	private List<PlayGamesScore> mScoreList = new List<PlayGamesScore>();
+
+	private string mTitle;
+
+	public bool loading
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
+		get
+		{
+			return mLoading;
+		}
+		internal set
+		{
+			mLoading = value;
+		}
 	}
+
+	public string id
+	{
+		get
+		{
+			return mId;
+		}
+		set
+		{
+			mId = value;
+		}
+	}
+
+	public UserScope userScope
+	{
+		get
+		{
+			return mUserScope;
+		}
+		set
+		{
+			mUserScope = value;
+		}
+	}
+
+	public Range range
+	{
+		get
+		{
+			return mRange;
+		}
+		set
+		{
+			mRange = value;
+		}
+	}
+
+	public TimeScope timeScope
+	{
+		get
+		{
+			return mTimeScope;
+		}
+		set
+		{
+			mTimeScope = value;
+		}
+	}
+
+	public IScore localUserScore => mLocalUserScore;
+
+	public uint maxRange => mMaxRange;
+
+	public IScore[] scores
+	{
+		get
+		{
+			PlayGamesScore[] array = new PlayGamesScore[mScoreList.Count];
+			mScoreList.CopyTo(array);
+			return array;
+		}
+	}
+
+	public string title => mTitle;
+
+	public int ScoreCount => mScoreList.Count;
+
+	public PlayGamesLeaderboard(string id)
+	{
+		mId = id;
+	}
+
+	public void SetUserFilter(string[] userIDs)
+	{
+		mFilteredUserIds = userIDs;
+	}
+
+	public void LoadScores(Action<bool> callback)
+	{
+		PlayGamesPlatform.Instance.LoadScores(this, callback);
+	}
+
+	internal bool SetFromData(LeaderboardScoreData data)
+	{
+		if (data.Valid)
+		{
+			Debug.Log("Setting leaderboard from: " + data);
+			SetMaxRange(data.ApproximateCount);
+			SetTitle(data.Title);
+			SetLocalUserScore((PlayGamesScore)data.PlayerScore);
+			IScore[] array = data.Scores;
+			foreach (IScore score in array)
+			{
+				AddScore((PlayGamesScore)score);
+			}
+			mLoading = data.Scores.Length == 0 || HasAllScores();
+		}
+		return data.Valid;
+	}
+
+	internal void SetMaxRange(ulong val)
+	{
+		mMaxRange = (uint)val;
+	}
+
+	internal void SetTitle(string value)
+	{
+		mTitle = value;
+	}
+
+	internal void SetLocalUserScore(PlayGamesScore score)
+	{
+		mLocalUserScore = score;
+	}
+
+	internal int AddScore(PlayGamesScore score)
+	{
+		if (mFilteredUserIds == null || mFilteredUserIds.Length == 0)
+		{
+			mScoreList.Add(score);
+		}
+		else
+		{
+			string[] array = mFilteredUserIds;
+			foreach (string text in array)
+			{
+				if (text.Equals(score.userID))
+				{
+					return mScoreList.Count;
+				}
+			}
+			mScoreList.Add(score);
+		}
+		return mScoreList.Count;
+	}
+
+	internal bool HasAllScores()
+	{
+		return mScoreList.Count >= mRange.count || mScoreList.Count >= maxRange;
+	}
+}
 }

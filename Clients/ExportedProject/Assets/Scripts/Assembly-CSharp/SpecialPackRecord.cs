@@ -1,63 +1,373 @@
+using System;
 using UnityEngine;
 
-public class SpecialPackRecord : MonoBehaviour
+public class SpecialPackRecord : PoolableObject
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Header("Core")]
+	public BoxCollider boxCollider;
 
-	1. No dll files were provided to AssetRipper.
+	public UIPanel[] otherPanels;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	[Header("-Background")]
+	public UISprite background;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public UISprite backgroundTop;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public UISprite backgroundBottom;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public UISprite backgroundLeft;
 
-	3. Assembly Reconstruction has not been implemented.
+	public UISprite backgroundRight;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	[Header("-Header")]
+	public GameObject headerPart;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public UILabel packNameLabel;
 
-	4. This script is unnecessary.
+	public UISprite packLeftWing;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public UISprite packRightWing;
 
-	5. Script Content Level 0
+	[Header("-Offer Active")]
+	public GameObject offerActive;
 
-		AssetRipper was set to not load any script information.
+	public UILabel offerActiveTime;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	[Header("-Sale")]
+	public GameObject salePart;
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public UILabel salePercent;
 
-	7. An incorrect path was provided to AssetRipper.
+	[Header("-Starter Pack Content")]
+	public GameObject starterPackPart;
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	[Header("-Value Pack Content")]
+	public GameObject valuePackPart;
 
-	*/
+	[Header("-Boxes")]
+	public SpecialPackBoxItem[] boxes;
+
+	[Header("-Bottom Button")]
+	public UILabel packPrize;
+
+	public StrikethroughPrize packPrizeStrikeThroughSetter;
+
+	public UILabel packRealPrize;
+
+	[Header("-Purchased")]
+	public GameObject packPurchased;
+
+	private SpecialPackContent mPackToShow;
+
+	private int mEndTime;
+
+	public void InitializeStarterPack()
+	{
+		mPackToShow = Singleton<GameVariables>.instance.starterPack;
+		UIEventListener uIEventListener = UIEventListener.Get(boxCollider.gameObject);
+		uIEventListener.onClick = (UIEventListener.VoidDelegate)Delegate.Remove(uIEventListener.onClick, new UIEventListener.VoidDelegate(BuyPack));
+		UIEventListener uIEventListener2 = UIEventListener.Get(boxCollider.gameObject);
+		uIEventListener2.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener2.onClick, new UIEventListener.VoidDelegate(BuyPack));
+		starterPackPart.SetActive(value: true);
+		valuePackPart.SetActive(value: false);
+		packNameLabel.text = Localization.Localize("ID_STARTERPACK");
+		MiscTools.SetUILabelRescale(packNameLabel, 62f, 31f, 450);
+		float num = packNameLabel.relativeSize.x * packNameLabel.transform.localScale.x / 2f + 34f;
+		packLeftWing.transform.localPosition = packLeftWing.transform.localPosition.ReplaceX(0f - num);
+		packRightWing.transform.localPosition = packRightWing.transform.localPosition.ReplaceX(num);
+		mEndTime = PlayerAnalytics.instance.data.starterPackDeadline;
+		bool active = mEndTime != 0;
+		offerActive.SetActive(active);
+		UpdateOfferTime();
+		CounterManager instance = Singleton<CounterManager>.instance;
+		instance.updateCounterBySecond = (Action)Delegate.Remove(instance.updateCounterBySecond, new Action(UpdateOfferTime));
+		CounterManager instance2 = Singleton<CounterManager>.instance;
+		instance2.updateCounterBySecond = (Action)Delegate.Combine(instance2.updateCounterBySecond, new Action(UpdateOfferTime));
+		float num2 = Singleton<GameVariables>.instance.SaleOfPack(CardPack.Starter);
+		bool flag = num2 > 0f;
+		salePart.SetActive(flag);
+		if (flag)
+		{
+			salePercent.text = Localization.LocalizeFormat("ID_SALEPERCENT", MiscTools.RoundToInt(num2 * 100f));
+			MiscTools.SetUILabelRescale(salePercent, 52f, 26f, 290);
+		}
+		headerPart.transform.localPosition = new Vector3((!flag) ? 0f : (-40f), headerPart.transform.localPosition.y, headerPart.transform.localPosition.z);
+		HideAllBoxes();
+		boxes[0].Initialize(2, 5, mPackToShow.contentOfPack[0]);
+		boxes[0].freeSticker.SetActive(mPackToShow.contentOfPack[0].type != SpecialPackContent.ContentType.Customization);
+		boxes[0].gameObject.SetActive(value: true);
+		boxes[1].Initialize(3, 5, mPackToShow.contentOfPack[1]);
+		boxes[1].freeSticker.SetActive(mPackToShow.contentOfPack[1].type != SpecialPackContent.ContentType.Customization);
+		boxes[1].gameObject.SetActive(value: true);
+		boxes[2].Initialize(4, 5, mPackToShow.contentOfPack[2]);
+		boxes[2].freeSticker.SetActive(mPackToShow.contentOfPack[2].type != SpecialPackContent.ContentType.Customization);
+		boxes[2].gameObject.SetActive(value: true);
+		boxes[3].Initialize(5, 5, mPackToShow.contentOfPack[3]);
+		boxes[3].freeSticker.SetActive(mPackToShow.contentOfPack[3].type != SpecialPackContent.ContentType.Customization);
+		boxes[3].gameObject.SetActive(value: true);
+		string value = Singleton<GameVariables>.instance.PriceOfPack(CardPack.Starter).Value2;
+		string value2 = Singleton<GameVariables>.instance.RegularPriceOfPack(CardPack.Starter).Value2;
+		SetBottomButton(flag, value, value2);
+		bool purchased = PlayerAnalytics.instance.data.IsPackBought(CardPack.Starter);
+		SetPurchased(purchased);
+	}
+
+	public void InitializeValuePack()
+	{
+		mPackToShow = Singleton<GameVariables>.instance.valuePack;
+		UIEventListener uIEventListener = UIEventListener.Get(boxCollider.gameObject);
+		uIEventListener.onClick = (UIEventListener.VoidDelegate)Delegate.Remove(uIEventListener.onClick, new UIEventListener.VoidDelegate(BuyPack));
+		UIEventListener uIEventListener2 = UIEventListener.Get(boxCollider.gameObject);
+		uIEventListener2.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener2.onClick, new UIEventListener.VoidDelegate(BuyPack));
+		starterPackPart.SetActive(value: false);
+		valuePackPart.SetActive(value: true);
+		packNameLabel.text = Localization.Localize("ID_VALUEPACK");
+		MiscTools.SetUILabelRescale(packNameLabel, 62f, 31f, 450);
+		float num = packNameLabel.relativeSize.x * packNameLabel.transform.localScale.x / 2f + 34f;
+		packLeftWing.transform.localPosition = packLeftWing.transform.localPosition.ReplaceX(0f - num);
+		packRightWing.transform.localPosition = packRightWing.transform.localPosition.ReplaceX(num);
+		mEndTime = 0;
+		offerActive.SetActive(value: false);
+		float num2 = Singleton<GameVariables>.instance.SaleOfPack(CardPack.Value);
+		bool flag = num2 > 0f;
+		salePart.SetActive(flag);
+		if (flag)
+		{
+			salePercent.text = Localization.LocalizeFormat("ID_SALEPERCENT", MiscTools.RoundToInt(num2 * 100f));
+			MiscTools.SetUILabelRescale(salePercent, 52f, 26f, 290);
+		}
+		headerPart.transform.localPosition = new Vector3((!flag) ? 0f : (-40f), headerPart.transform.localPosition.y, headerPart.transform.localPosition.z);
+		HideAllBoxes();
+		boxes[0].Initialize(2, 5, mPackToShow.contentOfPack[0]);
+		boxes[0].freeSticker.SetActive(mPackToShow.contentOfPack[0].type != SpecialPackContent.ContentType.Customization);
+		boxes[0].gameObject.SetActive(value: true);
+		if (mPackToShow.contentOfPack[0].type == SpecialPackContent.ContentType.Customization && mPackToShow.contentOfPack[0].visual.owner.categoryNumber != 0)
+		{
+			boxes[0].AlterShownCustomization(2, 5);
+		}
+		boxes[1].Initialize(3, 5, mPackToShow.contentOfPack[1]);
+		boxes[1].freeSticker.SetActive(mPackToShow.contentOfPack[1].type != SpecialPackContent.ContentType.Customization);
+		boxes[1].gameObject.SetActive(value: true);
+		if (mPackToShow.contentOfPack[1].type == SpecialPackContent.ContentType.Customization && mPackToShow.contentOfPack[1].visual.owner.categoryNumber != 0)
+		{
+			boxes[1].AlterShownCustomization(3, 5);
+		}
+		boxes[2].Initialize(4, 5, mPackToShow.contentOfPack[2]);
+		boxes[2].freeSticker.SetActive(mPackToShow.contentOfPack[2].type != SpecialPackContent.ContentType.Customization);
+		boxes[2].gameObject.SetActive(value: true);
+		if (mPackToShow.contentOfPack[2].type == SpecialPackContent.ContentType.Customization && mPackToShow.contentOfPack[2].visual.owner.categoryNumber != 0)
+		{
+			boxes[2].AlterShownCustomization(4, 5);
+		}
+		boxes[3].Initialize(5, 5, mPackToShow.contentOfPack[3]);
+		boxes[3].freeSticker.SetActive(mPackToShow.contentOfPack[3].type != SpecialPackContent.ContentType.Customization);
+		boxes[3].gameObject.SetActive(value: true);
+		if (mPackToShow.contentOfPack[3].type == SpecialPackContent.ContentType.Customization && mPackToShow.contentOfPack[3].visual.owner.categoryNumber != 0)
+		{
+			boxes[3].AlterShownCustomization(5, 5);
+		}
+		string value = Singleton<GameVariables>.instance.PriceOfPack(CardPack.Value).Value2;
+		string value2 = Singleton<GameVariables>.instance.RegularPriceOfPack(CardPack.Value).Value2;
+		SetBottomButton(flag, value, value2);
+		bool purchased = PlayerAnalytics.instance.data.IsPackBought(CardPack.Value);
+		SetPurchased(purchased);
+	}
+
+	public void InitializeMoneyPack()
+	{
+		mPackToShow = Singleton<GameVariables>.instance.moneyPack;
+		UIEventListener uIEventListener = UIEventListener.Get(boxCollider.gameObject);
+		uIEventListener.onClick = (UIEventListener.VoidDelegate)Delegate.Remove(uIEventListener.onClick, new UIEventListener.VoidDelegate(BuyPack));
+		UIEventListener uIEventListener2 = UIEventListener.Get(boxCollider.gameObject);
+		uIEventListener2.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener2.onClick, new UIEventListener.VoidDelegate(BuyPack));
+		starterPackPart.SetActive(value: false);
+		valuePackPart.SetActive(value: false);
+		packNameLabel.text = Localization.Localize("ID_MONEYPACK");
+		MiscTools.SetUILabelRescale(packNameLabel, 62f, 31f, 450);
+		float num = packNameLabel.relativeSize.x * packNameLabel.transform.localScale.x / 2f + 34f;
+		packLeftWing.transform.localPosition = packLeftWing.transform.localPosition.ReplaceX(0f - num);
+		packRightWing.transform.localPosition = packRightWing.transform.localPosition.ReplaceX(num);
+		mEndTime = PlayerAnalytics.instance.data.moneyPackDeadline;
+		bool active = mEndTime != 0;
+		offerActive.SetActive(active);
+		UpdateOfferTime();
+		CounterManager instance = Singleton<CounterManager>.instance;
+		instance.updateCounterBySecond = (Action)Delegate.Remove(instance.updateCounterBySecond, new Action(UpdateOfferTime));
+		CounterManager instance2 = Singleton<CounterManager>.instance;
+		instance2.updateCounterBySecond = (Action)Delegate.Combine(instance2.updateCounterBySecond, new Action(UpdateOfferTime));
+		float num2 = Singleton<GameVariables>.instance.SaleOfPack(CardPack.Money);
+		bool flag = num2 > 0f;
+		salePart.SetActive(flag);
+		if (flag)
+		{
+			salePercent.text = Localization.LocalizeFormat("ID_SALEPERCENT", MiscTools.RoundToInt(num2 * 100f));
+			MiscTools.SetUILabelRescale(salePercent, 52f, 26f, 290);
+		}
+		headerPart.transform.localPosition = new Vector3((!flag) ? 0f : (-40f), headerPart.transform.localPosition.y, headerPart.transform.localPosition.z);
+		HideAllBoxes();
+		boxes[0].Initialize(1, 3, mPackToShow.contentOfPack[0]);
+		boxes[0].freeSticker.SetActive(value: false);
+		boxes[0].gameObject.SetActive(value: true);
+		boxes[1].Initialize(2, 3, mPackToShow.contentOfPack[1]);
+		boxes[1].freeSticker.SetActive(value: false);
+		boxes[1].gameObject.SetActive(value: true);
+		boxes[2].Initialize(3, 3, mPackToShow.contentOfPack[2]);
+		boxes[2].freeSticker.SetActive(value: false);
+		boxes[2].gameObject.SetActive(value: true);
+		string value = Singleton<GameVariables>.instance.PriceOfPack(CardPack.Money).Value2;
+		string value2 = Singleton<GameVariables>.instance.RegularPriceOfPack(CardPack.Money).Value2;
+		SetBottomButton(flag, value, value2);
+		bool purchased = PlayerAnalytics.instance.data.IsPackBought(CardPack.Money);
+		SetPurchased(purchased);
+	}
+
+	public void Initialize(SpecialPackContent packToShow)
+	{
+		if (!EnoughtBoxes())
+		{
+			Debug.LogError("Missing references in Special Pack Record: " + base.gameObject.name);
+			return;
+		}
+		mPackToShow = packToShow;
+		UIEventListener uIEventListener = UIEventListener.Get(boxCollider.gameObject);
+		uIEventListener.onClick = (UIEventListener.VoidDelegate)Delegate.Remove(uIEventListener.onClick, new UIEventListener.VoidDelegate(BuyPack));
+		UIEventListener uIEventListener2 = UIEventListener.Get(boxCollider.gameObject);
+		uIEventListener2.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener2.onClick, new UIEventListener.VoidDelegate(BuyPack));
+		starterPackPart.SetActive(value: false);
+		valuePackPart.SetActive(value: false);
+		packNameLabel.text = packToShow.name;
+		MiscTools.SetUILabelRescale(packNameLabel, 62f, 31f, 450);
+		float num = packNameLabel.relativeSize.x * packNameLabel.transform.localScale.x / 2f + 34f;
+		packLeftWing.transform.localPosition = packLeftWing.transform.localPosition.ReplaceX(0f - num);
+		packRightWing.transform.localPosition = packRightWing.transform.localPosition.ReplaceX(num);
+		mEndTime = packToShow.finishAt;
+		bool active = mEndTime != 0;
+		offerActive.SetActive(active);
+		UpdateOfferTime();
+		CounterManager instance = Singleton<CounterManager>.instance;
+		instance.updateCounterBySecond = (Action)Delegate.Remove(instance.updateCounterBySecond, new Action(UpdateOfferTime));
+		CounterManager instance2 = Singleton<CounterManager>.instance;
+		instance2.updateCounterBySecond = (Action)Delegate.Combine(instance2.updateCounterBySecond, new Action(UpdateOfferTime));
+		bool flag = packToShow.sale > 0f;
+		salePart.SetActive(flag);
+		if (flag)
+		{
+			salePercent.text = Localization.LocalizeFormat("ID_SALEPERCENT", MiscTools.RoundToInt(packToShow.sale * 100f));
+			MiscTools.SetUILabelRescale(salePercent, 52f, 26f, 290);
+		}
+		headerPart.transform.localPosition = new Vector3((!flag) ? 0f : (-40f), headerPart.transform.localPosition.y, headerPart.transform.localPosition.z);
+		HideAllBoxes();
+		int num2 = packToShow.contentOfPack.Length;
+		if (num2 < 2)
+		{
+			if (num2 == 1)
+			{
+				boxes[0].Initialize(1, 2, packToShow.contentOfPack[0]);
+				boxes[0].gameObject.SetActive(value: true);
+			}
+		}
+		else
+		{
+			for (int i = 1; i <= num2 && i <= 6; i++)
+			{
+				SpecialPackContent.Content content = packToShow.contentOfPack[i - 1];
+				boxes[i - 1].Initialize(i, num2, content);
+				boxes[i - 1].gameObject.SetActive(value: true);
+				if (packToShow.packId.StartsWith("elitepack") && (content.type == SpecialPackContent.ContentType.Gold || content.type == SpecialPackContent.ContentType.Gold))
+				{
+					boxes[i - 1].freeSticker.SetActive(value: true);
+				}
+			}
+		}
+		SetBottomButton(flag, packToShow.currentPrize, packToShow.realPrize);
+		bool purchased = PlayerAnalytics.instance.IsPackBought(packToShow.packId);
+		SetPurchased(purchased);
+	}
+
+	public void AnimatePanels(bool instant, bool show)
+	{
+		float duration = ((!instant) ? (GuiElementSingle<InappScreen>.instance.dur * 2f) : 0.01f);
+		float num = ((!show) ? 0f : 1f);
+		if (otherPanels != null)
+		{
+			for (int i = 0; i < otherPanels.Length; i++)
+			{
+				if (!(otherPanels[i] == null) && otherPanels[i].gameObject.activeSelf)
+				{
+					TweenAlpha.Begin(otherPanels[i].gameObject, duration, num);
+				}
+			}
+		}
+		for (int j = 0; j < boxes.Length; j++)
+		{
+			boxes[j].OverrideTweenPanels(duration, num);
+		}
+	}
+
+	private void SetPurchased(bool purchased)
+	{
+		packPurchased.SetActive(purchased);
+		boxCollider.enabled = !purchased;
+		if (purchased)
+		{
+			TweenAlpha.Begin(packPurchased, 0f, 1f);
+		}
+	}
+
+	private void BuyPack(GameObject go)
+	{
+		if (!packPurchased.activeSelf)
+		{
+			Debug.Log("Clicked buy on " + mPackToShow.packId);
+			SoundsManager.Instance.PlayButtonClickedSound();
+			Singleton<BeanstalkServerManager>.instance.BuyPack(mPackToShow.packId, "WarShop");
+		}
+	}
+
+	private void SetBottomButton(bool isSale, string prizeOfPack, string fullPrize)
+	{
+		packPrize.text = prizeOfPack;
+		MiscTools.SetUILabelRescale(packPrize, 42f, 22f, 230);
+		packRealPrize.transform.localPosition = packRealPrize.transform.localPosition.ReplaceY(packPrize.transform.localPosition.y);
+		packRealPrize.transform.localScale = packPrize.transform.localScale;
+		packRealPrize.text = ((!isSale) ? string.Empty : fullPrize);
+		packPrizeStrikeThroughSetter.gameObject.SetActive(isSale);
+		if (isSale)
+		{
+			packPrizeStrikeThroughSetter.SetUpStrikeThrought();
+		}
+	}
+
+	private void UpdateOfferTime()
+	{
+		if (mEndTime > 0)
+		{
+			int num = mEndTime - Singleton<BeanstalkServerManager>.instance.currentTimestamp;
+			offerActiveTime.text = string.Format("{0} {1}", Localization.Localize("ID_OFFERACTIVE"), MiscTools.PrintableTime(num, "-", string.Empty, localizeReadyString: false));
+			MiscTools.SetUILabelRescale(offerActiveTime, 33f, 20f, 360);
+		}
+	}
+
+	private void HideAllBoxes()
+	{
+		SpecialPackBoxItem[] array = boxes;
+		foreach (SpecialPackBoxItem specialPackBoxItem in array)
+		{
+			specialPackBoxItem.gameObject.SetActive(value: false);
+		}
+	}
+
+	private bool EnoughtBoxes()
+	{
+		return boxes.Length >= 6;
+	}
+
+	public override void DestroyPooled()
+	{
+		CounterManager instance = Singleton<CounterManager>.instance;
+		instance.updateCounterBySecond = (Action)Delegate.Remove(instance.updateCounterBySecond, new Action(UpdateOfferTime));
+		UIEventListener uIEventListener = UIEventListener.Get(boxCollider.gameObject);
+		uIEventListener.onClick = (UIEventListener.VoidDelegate)Delegate.Remove(uIEventListener.onClick, new UIEventListener.VoidDelegate(BuyPack));
+		base.DestroyPooled();
+	}
 }

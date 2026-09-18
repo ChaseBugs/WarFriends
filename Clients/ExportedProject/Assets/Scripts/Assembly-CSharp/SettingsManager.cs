@@ -1,63 +1,151 @@
+using Beebyte.Obfuscator;
+using Newtonsoft.Json;
 using UnityEngine;
 
-public class SettingsManager : MonoBehaviour
+[Skip]
+public class SettingsManager : DatabaseSerializedObjectGeneric<SettingsManager.Settings>
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Skip]
+	public class Settings
+	{
+		public bool challenge;
 
-	1. No dll files were provided to AssetRipper.
+		public bool squadStatus;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+		public bool squadEvents;
 
-	2. Incorrect dll files were provided to AssetRipper.
+		public bool maintenance;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+		public bool playerLeague;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+		public bool dailyRewardNotification;
+	}
 
-	3. Assembly Reconstruction has not been implemented.
+	private static SettingsManager mInstance;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	private bool mShouldUpdateServer;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public static SettingsManager instance
+	{
+		get
+		{
+			mInstance = mInstance ?? ((SettingsManager)Object.FindObjectsOfType(typeof(SettingsManager))[0]);
+			return mInstance;
+		}
+	}
 
-	4. This script is unnecessary.
+	public bool challenge
+	{
+		get
+		{
+			return BundleVersionBindings.pushNotificationEnabled && data.challenge;
+		}
+		set
+		{
+			mShouldUpdateServer = true;
+			data.challenge = value;
+		}
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public bool squadStatus
+	{
+		get
+		{
+			return BundleVersionBindings.pushNotificationEnabled && data.squadStatus;
+		}
+		set
+		{
+			mShouldUpdateServer = true;
+			data.squadStatus = value;
+		}
+	}
 
-	5. Script Content Level 0
+	public bool squadEvents
+	{
+		get
+		{
+			return BundleVersionBindings.pushNotificationEnabled && data.squadEvents;
+		}
+		set
+		{
+			mShouldUpdateServer = true;
+			data.squadEvents = value;
+		}
+	}
 
-		AssetRipper was set to not load any script information.
+	public bool maintenance
+	{
+		get
+		{
+			return BundleVersionBindings.pushNotificationEnabled && data.maintenance;
+		}
+		set
+		{
+			mShouldUpdateServer = true;
+			data.maintenance = value;
+		}
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public bool dailyRewardNotification
+	{
+		get
+		{
+			return BundleVersionBindings.pushNotificationEnabled && data.dailyRewardNotification;
+		}
+		set
+		{
+			mShouldUpdateServer = true;
+			data.dailyRewardNotification = value;
+		}
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public bool playerLeague
+	{
+		get
+		{
+			return BundleVersionBindings.pushNotificationEnabled && data.playerLeague;
+		}
+		set
+		{
+			mShouldUpdateServer = true;
+			data.playerLeague = value;
+		}
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	public void OnDestroy()
+	{
+		mInstance = null;
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	protected override void LoadEmpty()
+	{
+		base.LoadEmpty();
+		data.playerLeague = true;
+		data.challenge = true;
+		data.squadStatus = true;
+		data.dailyRewardNotification = true;
+		data.squadEvents = true;
+	}
 
-	*/
+	protected override void Awake()
+	{
+		base.Awake();
+		Singleton<BeanstalkServerManager>.instance.DataLoaded += OnDataLoaded;
+	}
+
+	private void OnDataLoaded(DatabaseAction action)
+	{
+		if (action == DatabaseAction.UpdateSettings)
+		{
+			mShouldUpdateServer = false;
+		}
+	}
+
+	internal void OnDialogClose()
+	{
+		if (mShouldUpdateServer)
+		{
+			Singleton<BeanstalkServerManager>.instance.UpdateSettings(JsonConvert.SerializeObject(data));
+		}
+	}
 }

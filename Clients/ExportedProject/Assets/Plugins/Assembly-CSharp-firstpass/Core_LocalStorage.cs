@@ -2,62 +2,96 @@ using UnityEngine;
 
 public class Core_LocalStorage : MonoBehaviour
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	protected const string GLOBAL_STORAGE_PREFAB_NAME = "GlobalStoragePrefab";
 
-	1. No dll files were provided to AssetRipper.
+	public bool CAN_INIT_FOR_EDITOR;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	protected bool _isInitialized;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public Object GlobalStoragePrefab;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	private GlobalStorage _globalStorage;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public bool IsInitialized => _isInitialized;
 
-	3. Assembly Reconstruction has not been implemented.
+	public GlobalStorage GlobalStorage
+	{
+		get
+		{
+			if (!_isInitialized)
+			{
+				if (Debug.isDebugBuild)
+				{
+					Debug.LogWarning("LocalStorage: Not initialized, access to get_GlobalStorage() denied");
+				}
+				return null;
+			}
+			if (_globalStorage == null)
+			{
+				GameObject gameObject = GameObject.Find("GlobalStoragePrefab");
+				if (gameObject != null)
+				{
+					if (Debug.isDebugBuild)
+					{
+						Debug.Log("Global storage found");
+					}
+					_globalStorage = GetGlobalStorageScript(gameObject);
+					if (_globalStorage == null && Debug.isDebugBuild)
+					{
+						Debug.LogError("LocalStorage: Error in GlobalStorage Prefab - GlobalStorage script not found");
+					}
+				}
+				else
+				{
+					if (GlobalStoragePrefab == null && Debug.isDebugBuild)
+					{
+						Debug.LogError("LocalStorage: GlobalStoragePrefab not assigned");
+					}
+					gameObject = Object.Instantiate(GlobalStoragePrefab) as GameObject;
+					gameObject.name = "GlobalStoragePrefab";
+					_globalStorage = GetGlobalStorageScript(gameObject);
+				}
+			}
+			return _globalStorage;
+		}
+	}
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	protected virtual GlobalStorage GetGlobalStorageScript(GameObject globalStorageObject)
+	{
+		return globalStorageObject.GetComponent<GlobalStorage>();
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	protected virtual void Awake()
+	{
+		_isInitialized = true;
+	}
 
-	4. This script is unnecessary.
+	protected void OnApplicationQuit()
+	{
+		if (_globalStorage != null)
+		{
+			_globalStorage = null;
+			GameObject gameObject = GameObject.Find("GlobalStoragePrefab");
+			if (gameObject != null)
+			{
+				Object.Destroy(gameObject);
+			}
+		}
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
-
-	5. Script Content Level 0
-
-		AssetRipper was set to not load any script information.
-
-	6. Cpp2IL failed to decompile Il2Cpp data
-
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public void InitForEditor()
+	{
+		if (GlobalStoragePrefab == null)
+		{
+			if (Debug.isDebugBuild)
+			{
+				Debug.LogError("LocalStorage: Cannot init for Editor: GlobalStoragePrefab relation is missing");
+			}
+		}
+		else if (CAN_INIT_FOR_EDITOR)
+		{
+			_isInitialized = true;
+			GlobalStorage.InitForEditor();
+		}
+	}
 }

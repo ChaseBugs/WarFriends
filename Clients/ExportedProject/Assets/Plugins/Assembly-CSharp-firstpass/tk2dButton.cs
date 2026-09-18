@@ -1,63 +1,302 @@
+using System.Collections;
 using UnityEngine;
 
+[AddComponentMenu("2D Toolkit/Deprecated/GUI/tk2dButton")]
 public class tk2dButton : MonoBehaviour
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public delegate void ButtonHandlerDelegate(tk2dButton source);
 
-	1. No dll files were provided to AssetRipper.
+	public Camera viewCamera;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public string buttonDownSprite = "button_down";
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public string buttonUpSprite = "button_up";
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public string buttonPressedSprite = "button_up";
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	private int buttonDownSpriteId = -1;
 
-	3. Assembly Reconstruction has not been implemented.
+	private int buttonUpSpriteId = -1;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	private int buttonPressedSpriteId = -1;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public AudioClip buttonDownSound;
 
-	4. This script is unnecessary.
+	public AudioClip buttonUpSound;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public AudioClip buttonPressedSound;
 
-	5. Script Content Level 0
+	public GameObject targetObject;
 
-		AssetRipper was set to not load any script information.
+	public string messageName = string.Empty;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	private tk2dBaseSprite sprite;
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	private bool buttonDown;
 
-	7. An incorrect path was provided to AssetRipper.
+	public float targetScale = 1.1f;
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	public float scaleTime = 0.05f;
 
-	*/
+	public float pressedWaitTime = 0.3f;
+
+	public event ButtonHandlerDelegate ButtonPressedEvent;
+
+	public event ButtonHandlerDelegate ButtonAutoFireEvent;
+
+	public event ButtonHandlerDelegate ButtonDownEvent;
+
+	public event ButtonHandlerDelegate ButtonUpEvent;
+
+	private void OnEnable()
+	{
+		buttonDown = false;
+	}
+
+	private void Start()
+	{
+		if (viewCamera == null)
+		{
+			Transform parent = base.transform;
+			while ((bool)parent && parent.GetComponent<Camera>() == null)
+			{
+				parent = parent.parent;
+			}
+			if ((bool)parent && parent.GetComponent<Camera>() != null)
+			{
+				viewCamera = parent.GetComponent<Camera>();
+			}
+			if (viewCamera == null && (bool)tk2dCamera.Instance)
+			{
+				viewCamera = tk2dCamera.Instance.GetComponent<Camera>();
+			}
+			if (viewCamera == null)
+			{
+				viewCamera = Camera.main;
+			}
+		}
+		sprite = GetComponent<tk2dBaseSprite>();
+		if ((bool)sprite)
+		{
+			UpdateSpriteIds();
+		}
+		if (GetComponent<Collider>() == null)
+		{
+			BoxCollider boxCollider = base.gameObject.AddComponent<BoxCollider>();
+			Vector3 size = boxCollider.size;
+			size.z = 0.2f;
+			boxCollider.size = size;
+		}
+		if ((buttonDownSound != null || buttonPressedSound != null || buttonUpSound != null) && GetComponent<AudioSource>() == null)
+		{
+			AudioSource audioSource = base.gameObject.AddComponent<AudioSource>();
+			audioSource.playOnAwake = false;
+		}
+	}
+
+	public void UpdateSpriteIds()
+	{
+		buttonDownSpriteId = ((buttonDownSprite.Length <= 0) ? (-1) : sprite.GetSpriteIdByName(buttonDownSprite));
+		buttonUpSpriteId = ((buttonUpSprite.Length <= 0) ? (-1) : sprite.GetSpriteIdByName(buttonUpSprite));
+		buttonPressedSpriteId = ((buttonPressedSprite.Length <= 0) ? (-1) : sprite.GetSpriteIdByName(buttonPressedSprite));
+	}
+
+	private void PlaySound(AudioClip source)
+	{
+		if ((bool)GetComponent<AudioSource>() && (bool)source)
+		{
+			GetComponent<AudioSource>().PlayOneShot(source);
+		}
+	}
+
+	private IEnumerator coScale(Vector3 defaultScale, float startScale, float endScale)
+	{
+		float t0 = Time.realtimeSinceStartup;
+		Vector3 scale = defaultScale;
+		for (float s = 0f; s < scaleTime; s = Time.realtimeSinceStartup - t0)
+		{
+			float t1 = Mathf.Clamp01(s / scaleTime);
+			float scl = Mathf.Lerp(startScale, endScale, t1);
+			scale = defaultScale * scl;
+			base.transform.localScale = scale;
+			yield return 0;
+		}
+		base.transform.localScale = defaultScale * endScale;
+	}
+
+	private IEnumerator LocalWaitForSeconds(float seconds)
+	{
+		float t0 = Time.realtimeSinceStartup;
+		for (float s = 0f; s < seconds; s = Time.realtimeSinceStartup - t0)
+		{
+			yield return 0;
+		}
+	}
+
+	private IEnumerator coHandleButtonPress(int fingerId)
+	{
+		buttonDown = true;
+		bool buttonPressed = true;
+		Vector3 defaultScale = base.transform.localScale;
+		if (targetScale != 1f)
+		{
+			yield return StartCoroutine(coScale(defaultScale, 1f, targetScale));
+		}
+		PlaySound(buttonDownSound);
+		if (buttonDownSpriteId != -1)
+		{
+			sprite.spriteId = buttonDownSpriteId;
+		}
+		if (this.ButtonDownEvent != null)
+		{
+			this.ButtonDownEvent(this);
+		}
+		while (true)
+		{
+			Vector3 cursorPosition = Vector3.zero;
+			bool cursorActive = true;
+			if (fingerId != -1)
+			{
+				bool found = false;
+				for (int i = 0; i < Input.touchCount; i++)
+				{
+					Touch touch = Input.GetTouch(i);
+					if (touch.fingerId == fingerId)
+					{
+						if (touch.phase == TouchPhase.Ended || touch.phase == TouchPhase.Canceled)
+						{
+							break;
+						}
+						cursorPosition = touch.position;
+						found = true;
+					}
+				}
+				if (!found)
+				{
+					cursorActive = false;
+				}
+			}
+			else
+			{
+				if (!Input.GetMouseButton(0))
+				{
+					cursorActive = false;
+				}
+				cursorPosition = Input.mousePosition;
+			}
+			if (!cursorActive)
+			{
+				break;
+			}
+			Ray ray = viewCamera.ScreenPointToRay(cursorPosition);
+			RaycastHit hitInfo;
+			bool colliderHit = GetComponent<Collider>().Raycast(ray, out hitInfo, float.PositiveInfinity);
+			if (buttonPressed && !colliderHit)
+			{
+				if (targetScale != 1f)
+				{
+					yield return StartCoroutine(coScale(defaultScale, targetScale, 1f));
+				}
+				PlaySound(buttonUpSound);
+				if (buttonUpSpriteId != -1)
+				{
+					sprite.spriteId = buttonUpSpriteId;
+				}
+				if (this.ButtonUpEvent != null)
+				{
+					this.ButtonUpEvent(this);
+				}
+				buttonPressed = false;
+			}
+			else if (!buttonPressed && colliderHit)
+			{
+				if (targetScale != 1f)
+				{
+					yield return StartCoroutine(coScale(defaultScale, 1f, targetScale));
+				}
+				PlaySound(buttonDownSound);
+				if (buttonDownSpriteId != -1)
+				{
+					sprite.spriteId = buttonDownSpriteId;
+				}
+				if (this.ButtonDownEvent != null)
+				{
+					this.ButtonDownEvent(this);
+				}
+				buttonPressed = true;
+			}
+			if (buttonPressed && this.ButtonAutoFireEvent != null)
+			{
+				this.ButtonAutoFireEvent(this);
+			}
+			yield return 0;
+		}
+		if (buttonPressed)
+		{
+			if (targetScale != 1f)
+			{
+				yield return StartCoroutine(coScale(defaultScale, targetScale, 1f));
+			}
+			PlaySound(buttonPressedSound);
+			if (buttonPressedSpriteId != -1)
+			{
+				sprite.spriteId = buttonPressedSpriteId;
+			}
+			if ((bool)targetObject)
+			{
+				targetObject.SendMessage(messageName);
+			}
+			if (this.ButtonUpEvent != null)
+			{
+				this.ButtonUpEvent(this);
+			}
+			if (this.ButtonPressedEvent != null)
+			{
+				this.ButtonPressedEvent(this);
+			}
+			if (base.gameObject.activeInHierarchy)
+			{
+				yield return StartCoroutine(LocalWaitForSeconds(pressedWaitTime));
+			}
+			if (buttonUpSpriteId != -1)
+			{
+				sprite.spriteId = buttonUpSpriteId;
+			}
+		}
+		buttonDown = false;
+	}
+
+	private void Update()
+	{
+		if (buttonDown)
+		{
+			return;
+		}
+		bool flag = false;
+		if (Input.multiTouchEnabled)
+		{
+			for (int i = 0; i < Input.touchCount; i++)
+			{
+				Touch touch = Input.GetTouch(i);
+				if (touch.phase == TouchPhase.Began)
+				{
+					Ray ray = viewCamera.ScreenPointToRay(touch.position);
+					if (GetComponent<Collider>().Raycast(ray, out var hitInfo, 100000000f) && !Physics.Raycast(ray, hitInfo.distance - 0.01f))
+					{
+						StartCoroutine(coHandleButtonPress(touch.fingerId));
+						flag = true;
+						break;
+					}
+				}
+			}
+		}
+		if (!flag && Input.GetMouseButtonDown(0))
+		{
+			Ray ray2 = viewCamera.ScreenPointToRay(Input.mousePosition);
+			if (GetComponent<Collider>().Raycast(ray2, out var hitInfo2, 100000000f) && !Physics.Raycast(ray2, hitInfo2.distance - 0.01f))
+			{
+				StartCoroutine(coHandleButtonPress(-1));
+			}
+		}
+	}
 }

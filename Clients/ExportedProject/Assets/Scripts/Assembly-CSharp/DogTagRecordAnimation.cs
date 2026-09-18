@@ -1,63 +1,113 @@
+using System.Collections;
 using UnityEngine;
 
-public class DogTagRecordAnimation : MonoBehaviour
+public class DogTagRecordAnimation : Core_BaseScript
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Header("Setting")]
+	public bool isVIPDogtag;
 
-	1. No dll files were provided to AssetRipper.
+	[Header("Animation part")]
+	public UIPanel panel;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public UISprite topPart;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public UISprite bottomPart;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public float speed = 0.3f;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	[Header("Audio")]
+	public float lostSoundWaitTime = 0.75f;
 
-	3. Assembly Reconstruction has not been implemented.
+	public void StartAnimation()
+	{
+		Initialize();
+		Animation_DogTagConsumed();
+		StartCoroutine(PlayLostSound());
+	}
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public void StopAnimation()
+	{
+		StopAllCoroutines();
+		EndOfAnimation();
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public void SetDepthsAndColor(bool VIPDogtag)
+	{
+		topPart.depth = 100;
+		bottomPart.depth = topPart.depth + 1;
+		topPart.color = ((!VIPDogtag) ? Color.white : Colours.goldDogtag);
+		bottomPart.color = ((!VIPDogtag) ? Color.white : Colours.goldDogtag);
+	}
 
-	4. This script is unnecessary.
+	private IEnumerator PlayLostSound()
+	{
+		yield return new WaitForSeconds(lostSoundWaitTime);
+		SoundsManager.Instance.PlaySound(SoundsManager.SoundsEnum.DogTagUsed);
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private void Initialize()
+	{
+		base.gameObject.SetActive(value: true);
+		base.transform.localScale = Vector3.one;
+		base.transform.localPosition = new Vector3(0f, 0f, -15f);
+		topPart.transform.localPosition = Vector3.zero;
+		bottomPart.transform.localPosition = Vector3.zero;
+		panel.alpha1 = 0f;
+		TweenAlpha component = base.gameObject.GetComponent<TweenAlpha>();
+		if (component != null)
+		{
+			component.enabled = false;
+		}
+		TweenScale component2 = base.gameObject.GetComponent<TweenScale>();
+		if (component2 != null)
+		{
+			component2.enabled = false;
+		}
+		TweenPosition component3 = base.gameObject.GetComponent<TweenPosition>();
+		if (component3 != null)
+		{
+			component3.enabled = false;
+		}
+		TweenPosition component4 = topPart.gameObject.GetComponent<TweenPosition>();
+		if (component4 != null)
+		{
+			component4.enabled = false;
+		}
+		TweenPosition component5 = bottomPart.gameObject.GetComponent<TweenPosition>();
+		if (component5 != null)
+		{
+			component5.enabled = false;
+		}
+	}
 
-	5. Script Content Level 0
+	private void Animation_DogTagConsumed()
+	{
+		panel.alpha1 = 0f;
+		TweenAlpha tweenAlpha = TweenAlpha.Begin(base.gameObject, speed * 1.1f, 0f, 1f);
+		tweenAlpha.delay = 0f;
+		tweenAlpha.onFinished = delegate
+		{
+			TweenAlpha tweenAlpha2 = TweenAlpha.Begin(base.gameObject, speed * 2.16f, 1f, 0f);
+			tweenAlpha2.delay = 2.8f * speed;
+			tweenAlpha2.onFinished = delegate
+			{
+				EndOfAnimation();
+			};
+		};
+		TweenScale.Begin(base.gameObject, speed, Vector3.one, new Vector3(1.55f, 1.55f, 1f)).onFinished = delegate
+		{
+			TweenScale.Begin(base.gameObject, speed, new Vector3(1.55f, 1.55f, 1f), new Vector3(1.4f, 1.4f, 1f)).onFinished = null;
+		};
+		TweenPosition tweenPosition = TweenPosition.Begin(base.gameObject, speed * 0.8f, new Vector3(0f, 0f, -15f), new Vector3(0f, -150f, -15f));
+		tweenPosition.delay = 3.1f * speed;
+		TweenPosition tweenPosition2 = TweenPosition.Begin(topPart.gameObject, speed * 1.2f, Vector3.zero, new Vector3(-150f, 0f, 0f));
+		tweenPosition2.delay = 3.9f * speed;
+		TweenPosition tweenPosition3 = TweenPosition.Begin(bottomPart.gameObject, speed * 1.2f, Vector3.zero, new Vector3(150f, 0f, 0f));
+		tweenPosition3.delay = 3.9f * speed;
+	}
 
-		AssetRipper was set to not load any script information.
-
-	6. Cpp2IL failed to decompile Il2Cpp data
-
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	private void EndOfAnimation()
+	{
+		base.gameObject.SetActive(value: false);
+	}
 }

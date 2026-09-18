@@ -1,63 +1,224 @@
+using System.Collections;
 using UnityEngine;
 
+[AddComponentMenu("AQUAS/Reflection")]
+[ExecuteInEditMode]
 public class AQUAS_Reflection : MonoBehaviour
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public bool m_DisablePixelLights = true;
 
-	1. No dll files were provided to AssetRipper.
+	public int m_TextureSize = 256;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public float m_ClipPlaneOffset = 0.07f;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public LayerMask m_ReflectLayers = -1;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	private Hashtable m_ReflectionCameras = new Hashtable();
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	private RenderTexture m_ReflectionTexture;
 
-	3. Assembly Reconstruction has not been implemented.
+	private int m_OldReflectionTextureSize;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	private static bool s_InsideRendering;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public bool ignoreOcclusionCulling;
 
-	4. This script is unnecessary.
+	public void OnWillRenderObject()
+	{
+		if (!base.enabled || !GetComponent<Renderer>() || !GetComponent<Renderer>().sharedMaterial || !GetComponent<Renderer>().enabled)
+		{
+			return;
+		}
+		Camera current = Camera.current;
+		if (!current || s_InsideRendering)
+		{
+			return;
+		}
+		s_InsideRendering = true;
+		CreateMirrorObjects(current, out var reflectionCamera);
+		Vector3 position = base.transform.position;
+		Vector3 up = base.transform.up;
+		int pixelLightCount = QualitySettings.pixelLightCount;
+		if (m_DisablePixelLights)
+		{
+			QualitySettings.pixelLightCount = 0;
+		}
+		UpdateCameraModes(current, reflectionCamera);
+		float w = 0f - Vector3.Dot(up, position) - m_ClipPlaneOffset;
+		Vector4 plane = new Vector4(up.x, up.y, up.z, w);
+		if (ignoreOcclusionCulling)
+		{
+			reflectionCamera.useOcclusionCulling = false;
+		}
+		else
+		{
+			reflectionCamera.useOcclusionCulling = true;
+		}
+		Matrix4x4 reflectionMat = Matrix4x4.zero;
+		CalculateReflectionMatrix(ref reflectionMat, plane);
+		Vector3 position2 = current.transform.position;
+		Vector3 position3 = reflectionMat.MultiplyPoint(position2);
+		reflectionCamera.worldToCameraMatrix = current.worldToCameraMatrix * reflectionMat;
+		Vector4 clipPlane = CameraSpacePlane(reflectionCamera, position, up, 1f);
+		Matrix4x4 projection = current.projectionMatrix;
+		CalculateObliqueMatrix(ref projection, clipPlane);
+		reflectionCamera.projectionMatrix = projection;
+		reflectionCamera.cullingMask = -17 & m_ReflectLayers.value;
+		reflectionCamera.targetTexture = m_ReflectionTexture;
+		GL.SetRevertBackfacing(revertBackFaces: true);
+		reflectionCamera.transform.position = position3;
+		Vector3 eulerAngles = current.transform.eulerAngles;
+		reflectionCamera.transform.eulerAngles = new Vector3(0f, eulerAngles.y, eulerAngles.z);
+		reflectionCamera.Render();
+		reflectionCamera.transform.position = position2;
+		GL.SetRevertBackfacing(revertBackFaces: false);
+		Material[] sharedMaterials = GetComponent<Renderer>().sharedMaterials;
+		Material[] array = sharedMaterials;
+		foreach (Material material in array)
+		{
+			if (material.HasProperty("_ReflectionTex"))
+			{
+				material.SetTexture("_ReflectionTex", m_ReflectionTexture);
+			}
+		}
+		Matrix4x4 matrix4x = Matrix4x4.TRS(new Vector3(0.5f, 0.5f, 0.5f), Quaternion.identity, new Vector3(0.5f, 0.5f, 0.5f));
+		Vector3 lossyScale = base.transform.lossyScale;
+		Matrix4x4 matrix4x2 = base.transform.localToWorldMatrix * Matrix4x4.Scale(new Vector3(1f / lossyScale.x, 1f / lossyScale.y, 1f / lossyScale.z));
+		matrix4x2 = matrix4x * current.projectionMatrix * current.worldToCameraMatrix * matrix4x2;
+		Material[] array2 = sharedMaterials;
+		foreach (Material material2 in array2)
+		{
+			material2.SetMatrix("_ProjMatrix", matrix4x2);
+		}
+		if (m_DisablePixelLights)
+		{
+			QualitySettings.pixelLightCount = pixelLightCount;
+		}
+		s_InsideRendering = false;
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private void OnDisable()
+	{
+		if ((bool)m_ReflectionTexture)
+		{
+			Object.DestroyImmediate(m_ReflectionTexture);
+			m_ReflectionTexture = null;
+		}
+		foreach (DictionaryEntry reflectionCamera in m_ReflectionCameras)
+		{
+			Object.DestroyImmediate(((Camera)reflectionCamera.Value).gameObject);
+		}
+		m_ReflectionCameras.Clear();
+	}
 
-	5. Script Content Level 0
+	private void UpdateCameraModes(Camera src, Camera dest)
+	{
+		if (dest == null)
+		{
+			return;
+		}
+		dest.clearFlags = src.clearFlags;
+		dest.backgroundColor = src.backgroundColor;
+		if (src.clearFlags == CameraClearFlags.Skybox)
+		{
+			Skybox skybox = src.GetComponent(typeof(Skybox)) as Skybox;
+			Skybox skybox2 = dest.GetComponent(typeof(Skybox)) as Skybox;
+			if (!skybox || !skybox.material)
+			{
+				skybox2.enabled = false;
+			}
+			else
+			{
+				skybox2.enabled = true;
+				skybox2.material = skybox.material;
+			}
+		}
+		dest.farClipPlane = src.farClipPlane;
+		dest.nearClipPlane = src.nearClipPlane;
+		dest.orthographic = src.orthographic;
+		dest.fieldOfView = src.fieldOfView;
+		dest.aspect = src.aspect;
+		dest.orthographicSize = src.orthographicSize;
+	}
 
-		AssetRipper was set to not load any script information.
+	private void CreateMirrorObjects(Camera currentCamera, out Camera reflectionCamera)
+	{
+		reflectionCamera = null;
+		if (!m_ReflectionTexture || m_OldReflectionTextureSize != m_TextureSize)
+		{
+			if ((bool)m_ReflectionTexture)
+			{
+				Object.DestroyImmediate(m_ReflectionTexture);
+			}
+			m_ReflectionTexture = new RenderTexture(m_TextureSize, m_TextureSize, 16);
+			m_ReflectionTexture.name = "__MirrorReflection" + GetInstanceID();
+			m_ReflectionTexture.isPowerOfTwo = true;
+			m_ReflectionTexture.hideFlags = HideFlags.DontSave;
+			m_OldReflectionTextureSize = m_TextureSize;
+		}
+		reflectionCamera = m_ReflectionCameras[currentCamera] as Camera;
+		if (!reflectionCamera)
+		{
+			GameObject gameObject = new GameObject("Mirror Refl Camera id" + GetInstanceID() + " for " + currentCamera.GetInstanceID(), typeof(Camera), typeof(Skybox));
+			reflectionCamera = gameObject.GetComponent<Camera>();
+			reflectionCamera.enabled = false;
+			reflectionCamera.transform.position = base.transform.position;
+			reflectionCamera.transform.rotation = base.transform.rotation;
+			reflectionCamera.gameObject.AddComponent<FlareLayer>();
+			gameObject.hideFlags = HideFlags.HideAndDontSave;
+			m_ReflectionCameras[currentCamera] = reflectionCamera;
+		}
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	private static float sgn(float a)
+	{
+		if (a > 0f)
+		{
+			return 1f;
+		}
+		if (a < 0f)
+		{
+			return -1f;
+		}
+		return 0f;
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	private Vector4 CameraSpacePlane(Camera cam, Vector3 pos, Vector3 normal, float sideSign)
+	{
+		Vector3 v = pos + normal * m_ClipPlaneOffset;
+		Matrix4x4 worldToCameraMatrix = cam.worldToCameraMatrix;
+		Vector3 lhs = worldToCameraMatrix.MultiplyPoint(v);
+		Vector3 rhs = worldToCameraMatrix.MultiplyVector(normal).normalized * sideSign;
+		return new Vector4(rhs.x, rhs.y, rhs.z, 0f - Vector3.Dot(lhs, rhs));
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	private static void CalculateObliqueMatrix(ref Matrix4x4 projection, Vector4 clipPlane)
+	{
+		Vector4 b = projection.inverse * new Vector4(sgn(clipPlane.x), sgn(clipPlane.y), 1f, 1f);
+		Vector4 vector = clipPlane * (2f / Vector4.Dot(clipPlane, b));
+		projection[2] = vector.x - projection[3];
+		projection[6] = vector.y - projection[7];
+		projection[10] = vector.z - projection[11];
+		projection[14] = vector.w - projection[15];
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	private static void CalculateReflectionMatrix(ref Matrix4x4 reflectionMat, Vector4 plane)
+	{
+		reflectionMat.m00 = 1f - 2f * plane[0] * plane[0];
+		reflectionMat.m01 = -2f * plane[0] * plane[1];
+		reflectionMat.m02 = -2f * plane[0] * plane[2];
+		reflectionMat.m03 = -2f * plane[3] * plane[0];
+		reflectionMat.m10 = -2f * plane[1] * plane[0];
+		reflectionMat.m11 = 1f - 2f * plane[1] * plane[1];
+		reflectionMat.m12 = -2f * plane[1] * plane[2];
+		reflectionMat.m13 = -2f * plane[3] * plane[1];
+		reflectionMat.m20 = -2f * plane[2] * plane[0];
+		reflectionMat.m21 = -2f * plane[2] * plane[1];
+		reflectionMat.m22 = 1f - 2f * plane[2] * plane[2];
+		reflectionMat.m23 = -2f * plane[3] * plane[2];
+		reflectionMat.m30 = 0f;
+		reflectionMat.m31 = 0f;
+		reflectionMat.m32 = 0f;
+		reflectionMat.m33 = 1f;
+	}
 }

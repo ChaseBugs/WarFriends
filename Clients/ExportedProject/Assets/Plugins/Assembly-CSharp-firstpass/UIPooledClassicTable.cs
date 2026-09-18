@@ -1,63 +1,212 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class UIPooledClassicTable : MonoBehaviour
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public delegate Transform PooledTransform(int index);
 
-	1. No dll files were provided to AssetRipper.
+	public delegate float PooledSize(int index);
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public int padding;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public Transform topHelperSprite;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public Transform downHelperSprite;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public float topBreakPoint = 15f;
 
-	3. Assembly Reconstruction has not been implemented.
+	public float bottomBreakPoint = 15f;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public int containItems;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	private List<Transform> mItems = new List<Transform>();
 
-	4. This script is unnecessary.
+	private List<float> mSizes = new List<float>();
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private UIDraggablePanel mDragPanel;
 
-	5. Script Content Level 0
+	private PooledTransform getTransform;
 
-		AssetRipper was set to not load any script information.
+	private Action<Transform> makeFree;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	private PooledSize getSize;
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public void Initialize(int count, PooledTransform getter, Action<Transform> free, PooledSize sizeGetter, UIDraggablePanel dragPanel)
+	{
+		getTransform = getter;
+		makeFree = free;
+		getSize = sizeGetter;
+		mDragPanel = dragPanel;
+		mDragPanel.onMovePerformed = PositionChanged;
+		containItems = count;
+		for (int i = mItems.Count; i < containItems; i++)
+		{
+			mItems.Add(null);
+			mSizes.Add(0f);
+		}
+		if (base.gameObject.activeInHierarchy)
+		{
+			PositionChanged();
+		}
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	public void MakeEmpty()
+	{
+		for (int i = 0; i < containItems && i < mItems.Count; i++)
+		{
+			mSizes[i] = 0f;
+			if (mItems[i] != null)
+			{
+				if (makeFree != null)
+				{
+					makeFree(mItems[i]);
+				}
+				mItems[i] = null;
+			}
+		}
+		if (mDragPanel != null)
+		{
+			UIDraggablePanel uIDraggablePanel = mDragPanel;
+			uIDraggablePanel.onMovePerformed = (Action)Delegate.Remove(uIDraggablePanel.onMovePerformed, new Action(PositionChanged));
+		}
+		getTransform = null;
+		makeFree = null;
+		getSize = null;
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	public void PositionChanged()
+	{
+		if (makeFree == null || getTransform == null || getSize == null)
+		{
+			Debug.LogError("UIPooledClassicTable - some delegates for pooling missing for: " + base.name);
+			return;
+		}
+		if (mDragPanel == null)
+		{
+			Debug.LogError("UIPooledClassicTable - drag panel is null");
+			return;
+		}
+		if (mDragPanel.panel == null)
+		{
+			Debug.LogError("UIPooledClassicTable - drag panel UIPanel is null");
+			return;
+		}
+		Vector4 clipRange = mDragPanel.panel.clipRange;
+		float num = clipRange.y - clipRange.w / 2f - base.transform.localPosition.y;
+		float num2 = num + clipRange.w;
+		num -= bottomBreakPoint;
+		num2 += topBreakPoint;
+		int num3 = int.MaxValue;
+		int num4 = -1;
+		for (int i = 0; i < containItems && i < mItems.Count; i++)
+		{
+			if (!(mItems[i] != null))
+			{
+				continue;
+			}
+			float num5 = mItems[i].localPosition.y - ((float)padding + mSizes[i]);
+			float y = mItems[i].localPosition.y;
+			if (num5 > num2 || y < num)
+			{
+				makeFree(mItems[i]);
+				mItems[i] = null;
+				continue;
+			}
+			num4 = i;
+			if (num3 > i)
+			{
+				num3 = i;
+			}
+		}
+		FreeNotUsedItems();
+		if (num4 < 0)
+		{
+			FirstReposition(num, num2);
+			return;
+		}
+		Vector3 localPosition = mItems[num3].localPosition;
+		int num6 = num3 - 1;
+		while (num6 >= 0 && localPosition.y < num2)
+		{
+			mItems[num6] = getTransform(num6);
+			mSizes[num6] = getSize(num6);
+			localPosition.y += (float)padding + mSizes[num6];
+			mItems[num6].localPosition = localPosition;
+			num6--;
+		}
+		localPosition = mItems[num4].localPosition;
+		localPosition.y -= (float)padding + mSizes[num4];
+		for (int j = num4 + 1; j < containItems; j++)
+		{
+			if (!(localPosition.y > num))
+			{
+				break;
+			}
+			mItems[j] = getTransform(j);
+			mSizes[j] = getSize(j);
+			mItems[j].localPosition = localPosition;
+			localPosition.y -= (float)padding + mSizes[j];
+		}
+	}
 
-	*/
+	private void FreeNotUsedItems()
+	{
+		for (int i = containItems; i < mItems.Count; i++)
+		{
+			mSizes[i] = 0f;
+			if (mItems[i] != null)
+			{
+				makeFree(mItems[i]);
+				mItems[i] = null;
+			}
+		}
+	}
+
+	private void FirstReposition(float bottomLimit, float topLimit)
+	{
+		Vector3 zero = Vector3.zero;
+		zero.y = topHelperSprite.localScale.y * 0.5f;
+		topHelperSprite.localPosition = zero;
+		zero = Vector3.zero;
+		for (int i = 0; i < containItems; i++)
+		{
+			mSizes[i] = getSize(i);
+			if (zero.y > bottomLimit && zero.y - ((float)padding + mSizes[i]) < topLimit)
+			{
+				mItems[i] = getTransform(i);
+				mItems[i].localPosition = zero;
+			}
+			zero.y -= (float)padding + mSizes[i];
+		}
+		zero.y -= downHelperSprite.localScale.y * 0.5f;
+		downHelperSprite.localPosition = zero;
+	}
+
+	private void OnEnable()
+	{
+		if (makeFree != null && getTransform != null && getSize != null && mDragPanel != null)
+		{
+			PositionChanged();
+		}
+	}
+
+	public Transform GetItemOnIndex(int index)
+	{
+		if (index < 0 || index >= containItems || index >= mItems.Count)
+		{
+			return null;
+		}
+		return mItems[index];
+	}
+
+	public Vector3 GetPositionForIndex(int index)
+	{
+		float num = (float)padding * (float)index;
+		for (int i = 0; i < index && i < mItems.Count; i++)
+		{
+			num += ((!(mSizes[i] > 0f)) ? getSize(i) : mSizes[i]);
+		}
+		return new Vector3(0f, 0f - num, 0f);
+	}
 }

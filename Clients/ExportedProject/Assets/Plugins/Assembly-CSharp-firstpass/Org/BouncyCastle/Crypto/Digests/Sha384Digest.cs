@@ -1,66 +1,63 @@
-using UnityEngine;
+using Org.BouncyCastle.Crypto.Utilities;
+using Org.BouncyCastle.Utilities;
 
 namespace Org.BouncyCastle.Crypto.Digests
 {
-	public class Sha384Digest : MonoBehaviour
+public class Sha384Digest : LongDigest
+{
+	private const int DigestLength = 48;
+
+	public override string AlgorithmName => "SHA-384";
+
+	public Sha384Digest()
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
 	}
+
+	public Sha384Digest(Sha384Digest t)
+		: base(t)
+	{
+	}
+
+	public override int GetDigestSize()
+	{
+		return 48;
+	}
+
+	public override int DoFinal(byte[] output, int outOff)
+	{
+		Finish();
+		Pack.UInt64_To_BE(H1, output, outOff);
+		Pack.UInt64_To_BE(H2, output, outOff + 8);
+		Pack.UInt64_To_BE(H3, output, outOff + 16);
+		Pack.UInt64_To_BE(H4, output, outOff + 24);
+		Pack.UInt64_To_BE(H5, output, outOff + 32);
+		Pack.UInt64_To_BE(H6, output, outOff + 40);
+		Reset();
+		return 48;
+	}
+
+	public override void Reset()
+	{
+		base.Reset();
+		H1 = 14680500436340154072uL;
+		H2 = 7105036623409894663uL;
+		H3 = 10473403895298186519uL;
+		H4 = 1526699215303891257uL;
+		H5 = 7436329637833083697uL;
+		H6 = 10282925794625328401uL;
+		H7 = 15784041429090275239uL;
+		H8 = 5167115440072839076uL;
+	}
+
+	public override IMemoable Copy()
+	{
+		return new Sha384Digest(this);
+	}
+
+	public override void Reset(IMemoable other)
+	{
+		Sha384Digest t = (Sha384Digest)other;
+		CopyIn(t);
+	}
+}
 }

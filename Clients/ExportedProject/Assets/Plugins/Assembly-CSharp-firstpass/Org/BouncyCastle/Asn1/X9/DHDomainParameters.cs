@@ -1,66 +1,108 @@
-using UnityEngine;
+using System;
+using System.Collections;
 
 namespace Org.BouncyCastle.Asn1.X9
 {
-	public class DHDomainParameters : MonoBehaviour
+public class DHDomainParameters : Asn1Encodable
+{
+	private readonly DerInteger p;
+
+	private readonly DerInteger g;
+
+	private readonly DerInteger q;
+
+	private readonly DerInteger j;
+
+	private readonly DHValidationParms validationParms;
+
+	public DerInteger P => p;
+
+	public DerInteger G => g;
+
+	public DerInteger Q => q;
+
+	public DerInteger J => j;
+
+	public DHValidationParms ValidationParms => validationParms;
+
+	public DHDomainParameters(DerInteger p, DerInteger g, DerInteger q, DerInteger j, DHValidationParms validationParms)
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
+		if (p == null)
+		{
+			throw new ArgumentNullException("p");
+		}
+		if (g == null)
+		{
+			throw new ArgumentNullException("g");
+		}
+		if (q == null)
+		{
+			throw new ArgumentNullException("q");
+		}
+		this.p = p;
+		this.g = g;
+		this.q = q;
+		this.j = j;
+		this.validationParms = validationParms;
 	}
+
+	private DHDomainParameters(Asn1Sequence seq)
+	{
+		if (seq.Count < 3 || seq.Count > 5)
+		{
+			throw new ArgumentException("Bad sequence size: " + seq.Count, "seq");
+		}
+		IEnumerator enumerator = seq.GetEnumerator();
+		p = DerInteger.GetInstance(GetNext(enumerator));
+		g = DerInteger.GetInstance(GetNext(enumerator));
+		q = DerInteger.GetInstance(GetNext(enumerator));
+		Asn1Encodable next = GetNext(enumerator);
+		if (next != null && next is DerInteger)
+		{
+			j = DerInteger.GetInstance(next);
+			next = GetNext(enumerator);
+		}
+		if (next != null)
+		{
+			validationParms = DHValidationParms.GetInstance(next.ToAsn1Object());
+		}
+	}
+
+	public static DHDomainParameters GetInstance(Asn1TaggedObject obj, bool isExplicit)
+	{
+		return GetInstance(Asn1Sequence.GetInstance(obj, isExplicit));
+	}
+
+	public static DHDomainParameters GetInstance(object obj)
+	{
+		if (obj == null || obj is DHDomainParameters)
+		{
+			return (DHDomainParameters)obj;
+		}
+		if (obj is Asn1Sequence)
+		{
+			return new DHDomainParameters((Asn1Sequence)obj);
+		}
+		throw new ArgumentException("Invalid DHDomainParameters: " + obj.GetType().FullName, "obj");
+	}
+
+	private static Asn1Encodable GetNext(IEnumerator e)
+	{
+		return (!e.MoveNext()) ? null : ((Asn1Encodable)e.Current);
+	}
+
+	public override Asn1Object ToAsn1Object()
+	{
+		Asn1EncodableVector asn1EncodableVector = new Asn1EncodableVector(p, g, q);
+		if (j != null)
+		{
+			asn1EncodableVector.Add(j);
+		}
+		if (validationParms != null)
+		{
+			asn1EncodableVector.Add(validationParms);
+		}
+		return new DerSequence(asn1EncodableVector);
+	}
+}
 }

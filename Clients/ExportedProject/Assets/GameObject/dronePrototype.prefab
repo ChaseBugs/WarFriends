@@ -353,6 +353,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 86bf7443ae747a9d46e3cda93dc15c54, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  isActivated: 0
+  photonView: {fileID: 0}
+  hudObjectIndicator: {fileID: 11465029}
+  preparedBehaviour: {fileID: 0}
+  behaviour: {fileID: 0}
+  mFraction: 0
+  isPrewiev: 0
+  visuals: {fileID: 11499646}
+  engine: {fileID: 11463256}
+  modelLoader: {fileID: 11452907}
+  eliteDrone: {fileID: 103859}
+  fireDamage: {fileID: 19874717}
+  normalDrone: {fileID: 143158}
+  normalMaterial: {fileID: 0}
+  transparentMaterial: {fileID: 2100000, guid: 94d7467c7c3d14d46ad82309dc661880, type: 2}
+  weapon: {fileID: 11434916}
 --- !u!114 &11434467
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -364,6 +380,25 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a503568e23092a0b9255b6fcb6b62be2, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMaxHealth:
+    currentCryptoKey: 230887
+    hiddenValue: e7857944
+    fakeValue: 1000
+    inited: 1
+  mDestroyableByBonusBox: 0
+  healthBarPosition: {fileID: 491709}
+  forceHealthBar: 0
+  offset: {x: 0, y: 0, z: 0}
+  displayHealthBar: 1
+  playMainHitParticle: 0
+  isMetal: 0
+  shotCoeficient: 1
+  shotParticleNames:
+  - sparklesMetal
+  healthBarStyle: 0
+  mHealthbarColor: {r: 0, g: 1, b: 0, a: 1}
+  healthbar: {fileID: 0}
+  shotHitSound: 14
 --- !u!114 &11472700
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -375,6 +410,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3cf4d7761af3ce98d7a08bebfe4e8861, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  shootTargets:
+  - {fileID: 454360}
+  targets: []
+  visible: 1
 --- !u!54 &5469857
 Rigidbody:
   serializedVersion: 2
@@ -413,6 +452,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 486a9acbd9d8b9c34ac18b91e89b7bef, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  skillshotPosition: {fileID: 491709}
 --- !u!114 &11476054
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -424,6 +464,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5bfbf978d76daea62a5ea6e2af5801d1, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mPosition: {fileID: 491709}
 --- !u!114 &11496729
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -435,6 +476,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f19ea4a15c3ca43dcc180d756f7a82b3, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  ownerId: 0
+  group: 0
+  OwnerShipWasTransfered: 0
+  prefixBackup: -1
+  synchronization: 3
+  onSerializeTransformOption: 3
+  onSerializeRigidBodyOption: 2
+  ownershipTransfer: 0
+  ObservedComponents:
+  - {fileID: 11407524}
+  viewIdField: 0
+  instantiationId: -1
+  currentMasterID: -1
+  didAwake: 0
+  isRuntimeInstantiated: 0
 --- !u!114 &11433324
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -446,6 +502,45 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1cb9d4e3bc85c63a43096be5a40016e7, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  isActivated: 0
+  bulletPrefab: {fileID: 11409266, guid: 855689762fa6e774aaee190652b08c6f, type: 2}
+  cadence:
+    currentCryptoKey: 230887
+    hiddenValue: 9c912d3e
+    fakeValue: 0.17
+    inited: 1
+  clipSize:
+    currentCryptoKey: 444444
+    hiddenValue: 444424
+    fakeValue: 20
+    inited: 1
+  reloadTime:
+    currentCryptoKey: 230887
+    hiddenValue: e785a340
+    fakeValue: 5
+    inited: 1
+  friendKill: 1
+  infiniteAmmo: 1
+  reloadableWeapon: 0
+  disableSync: 0
+  spawnPoint: {fileID: 484583}
+  startingAmmmoCount:
+    currentCryptoKey: 444444
+    hiddenValue: 444444
+    fakeValue: 0
+    inited: 1
+  useAiming: 1
+  isFake: 0
+  shotType: 0
+  ignoreLayersMask: 0
+  reloadSound: 11
+  shotSound: 2
+  soundVolume: 1
+  weaponType: 0
+  muzzleFlash: {fileID: 11427192}
+  shotOffset: {x: 0, y: 0, z: 0}
+  ammoParticles: {fileID: 0}
+  fastBullet: 0
 --- !u!114 &11492819
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -457,6 +552,48 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4ceecd6f3ff0e22dc65ce39c3a1fce86, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  damageAmount:
+    currentCryptoKey: 230887
+    hiddenValue: e785a341
+    fakeValue: 20
+    inited: 1
+  hitForce: 2
+  criticalProbability:
+    currentCryptoKey: 230887
+    hiddenValue: e7850300
+    fakeValue: 0
+    inited: 1
+  criticalAmount:
+    currentCryptoKey: 230887
+    hiddenValue: e7850340
+    fakeValue: 2
+    inited: 1
+  damageToPlayerCoeficient:
+    currentCryptoKey: 230887
+    hiddenValue: e785833f
+    fakeValue: 1
+    inited: 1
+  damageToPlayerOvertimeCoeficient:
+    currentCryptoKey: 230887
+    hiddenValue: e785833f
+    fakeValue: 1
+    inited: 1
+  speed: 9
+  checkDistance: 1
+  trailSize: 0.35
+  trailWidth: 0.06
+  trailFakeWidth: 0.04
+  thinTrailSize: 0.2
+  thinTrailWidth: 0.03
+  thinTrailFakeWidth: 0.03
+  fakeSpeedFactor: 1.5
+  fakeShotTexture: shotFake
+  realShotTexture: shotReal
+  shieldShotTexture: shotShield
+  speedMultiplayer: 1
+  poisonTime: 0
+  poisonRatio: 0
+  useThinTrail: 0
 --- !u!114 &11465029
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -468,6 +605,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: aa5336f805f636a26d269afa08d8ccb0, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  snapTransform: {fileID: 491709}
+  show: 0
+  spriteName: game-revenge-indicator
+  indicatorOffset: {x: 0, y: 0, z: 0}
+  alwaysOnTop: 0
+  updateScale: 1
 --- !u!114 &11492514
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -479,6 +622,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a551e0a4c5224adf6c7c791cacc35f6a, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  middle: {fileID: 460213}
+  scale: 0.7
+  slots:
+  - slotPosition: {fileID: 0}
+    slotID: 0
+  - slotPosition: {fileID: 0}
+    slotID: 1
+  - slotPosition: {fileID: 0}
+    slotID: 2
+  - slotPosition: {fileID: 0}
+    slotID: 3
 --- !u!82 &8251504
 AudioSource:
   serializedVersion: 4
@@ -560,6 +714,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0dfd54bd9851b07f2dc75544b2e170c3, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  modelAttachments:
+  - parent: {fileID: 460213}
+    id: 0
+  - parent: {fileID: 460213}
+    id: 1
+  - parent: {fileID: 460213}
+    id: 2
+  - parent: {fileID: 460213}
+    id: 3
+  - parent: {fileID: 460213}
+    id: 4
+  - parent: {fileID: 460213}
+    id: 5
 --- !u!114 &11499646
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -571,6 +738,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c452d4ec3c54130d0b8b40a7db84146e, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  modelAttachments: {fileID: 11431555}
+  mainRenderer: {fileID: 2382579}
+  renderedParts:
+  - {fileID: 2385712}
+  - {fileID: 2356797}
 --- !u!114 &11407524
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -582,6 +754,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 72c70e5b7e4060a143fc0f2572aeff9c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  breakDistance: 0.6
+  breakSpeed: 0.5
+  dir: 1
+  loop: 1
+  mass: 80
+  multiplier: 150000
+  path: {fileID: 0}
+  speed: 0.87
+  cornerDelayTime: 0.5
+  gizmoSize: 100
+  lookTarget: {fileID: 0}
 --- !u!114 &11452907
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -593,6 +776,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1ea9bd9ef3acf8cc028548b0326497c0, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  modelParts:
+  - {fileID: 3362687}
+  - {fileID: 3368680}
+  - {fileID: 3334586}
+  modelSkinnedParts: []
 --- !u!114 &11434916
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -604,6 +792,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a7637fba3d3838c87126404c48361b7e, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  weapon: {fileID: 11433324}
+  fakeShotDispersion: 1
 --- !u!4 &491709
 Transform:
   m_ObjectHideFlags: 0
@@ -685,6 +875,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4090235689019e8dade2fb65364f77e3, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  m_ForceShow: 0
 --- !u!4 &482909
 Transform:
   m_ObjectHideFlags: 0
@@ -3919,6 +4110,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1f61fafee80c4e2bbfb2332402131901, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  targetCollider: {fileID: 147589}
+  offset: {x: 0, y: 0.07, z: 0}
+  isClickable: 0
+  clickableLayer: 0
+  referenceVelocityTarget: {fileID: 0}
+  isActive: 1
+  ignoreLayer: 0
 --- !u!54 &5420844
 Rigidbody:
   serializedVersion: 2
@@ -3957,6 +4155,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0ff5f7341956507b1f19adfb98938625, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  startSound: 59
+  loopSound: 60
+  deathSound: 61
+  audioSource: {fileID: 8200463}
 --- !u!82 &8200463
 AudioSource:
   serializedVersion: 4
@@ -4143,6 +4345,37 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5936eb71775d995a03be18ec309d5f74, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  method: 0
+  style: 1
+  animationCurve:
+    serializedVersion: 2
+    m_Curve:
+    - time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 1
+      tangentMode: 0
+    - time: 1
+      value: 1
+      inSlope: 1
+      outSlope: 0
+      tangentMode: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+  ignoreTimeScale: 0
+  delay: 0.15
+  duration: 0.1
+  steeperCurves: 0
+  tweenGroup: 0
+  eventReceiver: {fileID: 0}
+  callWhenFinished:
+  NumOfRepetitions: 0
+  id: 0
+  dontResetCurve: 0
+  from: 0
+  to: 360
+  rotationAxis: {x: 0, y: 0, z: 1}
+  baseRotation: {x: 0, y: 0, z: 0}
 --- !u!4 &448483
 Transform:
   m_ObjectHideFlags: 0
@@ -4212,6 +4445,37 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5936eb71775d995a03be18ec309d5f74, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  method: 0
+  style: 1
+  animationCurve:
+    serializedVersion: 2
+    m_Curve:
+    - time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 1
+      tangentMode: 0
+    - time: 1
+      value: 1
+      inSlope: 1
+      outSlope: 0
+      tangentMode: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+  ignoreTimeScale: 0
+  delay: 0.15
+  duration: 0.1
+  steeperCurves: 0
+  tweenGroup: 0
+  eventReceiver: {fileID: 0}
+  callWhenFinished:
+  NumOfRepetitions: 0
+  id: 0
+  dontResetCurve: 0
+  from: 0
+  to: 360
+  rotationAxis: {x: 0, y: 0, z: 1}
+  baseRotation: {x: 0, y: 0, z: 0}
 --- !u!4 &409877
 Transform:
   m_ObjectHideFlags: 0
@@ -4317,6 +4581,37 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5936eb71775d995a03be18ec309d5f74, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  method: 0
+  style: 1
+  animationCurve:
+    serializedVersion: 2
+    m_Curve:
+    - time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 1
+      tangentMode: 0
+    - time: 1
+      value: 1
+      inSlope: 1
+      outSlope: 0
+      tangentMode: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+  ignoreTimeScale: 0
+  delay: 0.1
+  duration: 0.1
+  steeperCurves: 0
+  tweenGroup: 0
+  eventReceiver: {fileID: 0}
+  callWhenFinished:
+  NumOfRepetitions: 0
+  id: 0
+  dontResetCurve: 0
+  from: 0
+  to: 360
+  rotationAxis: {x: 0, y: 1, z: 0}
+  baseRotation: {x: -90, y: 0, z: 0}
 --- !u!4 &429211
 Transform:
   m_ObjectHideFlags: 0
@@ -4373,6 +4668,37 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5936eb71775d995a03be18ec309d5f74, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  method: 0
+  style: 1
+  animationCurve:
+    serializedVersion: 2
+    m_Curve:
+    - time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 1
+      tangentMode: 0
+    - time: 1
+      value: 1
+      inSlope: 1
+      outSlope: 0
+      tangentMode: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+  ignoreTimeScale: 0
+  delay: 0.1
+  duration: 0.1
+  steeperCurves: 0
+  tweenGroup: 0
+  eventReceiver: {fileID: 0}
+  callWhenFinished:
+  NumOfRepetitions: 0
+  id: 0
+  dontResetCurve: 0
+  from: 0
+  to: 360
+  rotationAxis: {x: 0, y: 1, z: 0}
+  baseRotation: {x: -90, y: 0, z: 0}
 --- !u!4 &486885
 Transform:
   m_ObjectHideFlags: 0
@@ -4429,6 +4755,37 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5936eb71775d995a03be18ec309d5f74, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  method: 0
+  style: 1
+  animationCurve:
+    serializedVersion: 2
+    m_Curve:
+    - time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 1
+      tangentMode: 0
+    - time: 1
+      value: 1
+      inSlope: 1
+      outSlope: 0
+      tangentMode: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+  ignoreTimeScale: 0
+  delay: 0.1
+  duration: 0.1
+  steeperCurves: 0
+  tweenGroup: 0
+  eventReceiver: {fileID: 0}
+  callWhenFinished:
+  NumOfRepetitions: 0
+  id: 0
+  dontResetCurve: 0
+  from: 0
+  to: 360
+  rotationAxis: {x: 0, y: 1, z: 0}
+  baseRotation: {x: -90, y: 0, z: 0}
 --- !u!4 &491029
 Transform:
   m_ObjectHideFlags: 0
@@ -4485,6 +4842,37 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5936eb71775d995a03be18ec309d5f74, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  method: 0
+  style: 1
+  animationCurve:
+    serializedVersion: 2
+    m_Curve:
+    - time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 1
+      tangentMode: 0
+    - time: 1
+      value: 1
+      inSlope: 1
+      outSlope: 0
+      tangentMode: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+  ignoreTimeScale: 0
+  delay: 0.1
+  duration: 0.1
+  steeperCurves: 0
+  tweenGroup: 0
+  eventReceiver: {fileID: 0}
+  callWhenFinished:
+  NumOfRepetitions: 0
+  id: 0
+  dontResetCurve: 0
+  from: 0
+  to: 360
+  rotationAxis: {x: 0, y: 1, z: 0}
+  baseRotation: {x: -90, y: 0, z: 0}
 --- !u!1001 &100100000
 Prefab:
   serializedVersion: 2

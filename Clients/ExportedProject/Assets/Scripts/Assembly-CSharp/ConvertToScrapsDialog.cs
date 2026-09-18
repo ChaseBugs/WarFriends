@@ -1,63 +1,118 @@
+using System;
+using CodeStage.AntiCheat.ObscuredTypes;
+using Google2u;
 using UnityEngine;
 
-public class ConvertToScrapsDialog : MonoBehaviour
+public class ConvertToScrapsDialog : GuiElementSingle<ConvertToScrapsDialog>, IGuiDialog
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Header("Top")]
+	[SerializeField]
+	private GameObject mCloseButton;
 
-	1. No dll files were provided to AssetRipper.
+	[SerializeField]
+	private UILabel mTopText;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	[SerializeField]
+	[Header("Middle")]
+	private UISprite mUnitIcon;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	[SerializeField]
+	private UILabel mUnitEliteParts;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	[SerializeField]
+	private UITable mScrapsTable;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	[SerializeField]
+	private UILabel mScrapsLabel;
 
-	3. Assembly Reconstruction has not been implemented.
+	[Header("Bottom")]
+	[SerializeField]
+	private GameObject mBottomButton;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	private LevelBehaviour mUnit;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	private Action<bool> mDialogResponse;
 
-	4. This script is unnecessary.
+	public void ShowDialog(LevelBehaviour unit, Action<bool> dialogResponse)
+	{
+		mUnit = unit;
+		mDialogResponse = dialogResponse;
+		Singleton<GuiManager>.instance.ShowDialog(this, 0f);
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public override void InitControls()
+	{
+		UIEventListener uIEventListener = UIEventListener.Get(mCloseButton);
+		uIEventListener.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener.onClick, new UIEventListener.VoidDelegate(CloseClick));
+		UIEventListener uIEventListener2 = UIEventListener.Get(mBottomButton);
+		uIEventListener2.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener2.onClick, new UIEventListener.VoidDelegate(ConvertClick));
+		mScrapsTable.onReposition = delegate
+		{
+			float val = 0f - mScrapsTable.padding.x - (mScrapsLabel.transform.parent.localPosition.x - mScrapsTable.padding.x) / 2f;
+			mScrapsTable.transform.localPosition = mScrapsTable.transform.localPosition.ReplaceX(val);
+		};
+	}
 
-	5. Script Content Level 0
+	private void CloseClick(GameObject go)
+	{
+		if (base.isFullyShowed)
+		{
+			if (mDialogResponse != null)
+			{
+				mDialogResponse(obj: false);
+			}
+			HideDialog();
+		}
+	}
 
-		AssetRipper was set to not load any script information.
+	private void ConvertClick(GameObject go)
+	{
+		if (base.isFullyShowed)
+		{
+			if (mDialogResponse != null)
+			{
+				mDialogResponse(obj: true);
+			}
+			HideDialog();
+		}
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public override void InitGUIValues()
+	{
+		int currentParts = mUnit.upgradeSlots.upgradeSlotElite.currentParts;
+		ObscuredFloat fLOATVALUE = Singleton<GameVariables>.instance.constants.GetRow(Constants.rowIds.PartToScrapsSell).FLOATVALUE;
+		int num = (int)((float)currentParts * (float)fLOATVALUE);
+		mTopText.text = Localization.LocalizeFormat("ID_AREYOUSUREYOUWANTTOCONVERTPARTS", Colours.stringGreenArena, MiscTools.FormatBigNumber(currentParts), mUnit.unitElitePartsName, MiscTools.FormatBigNumber(num));
+		mUnitIcon.spriteName = mUnit.upgradeSlots.iconNameElite;
+		mUnitIcon.MakePixelPerfect();
+		if (mUnit.isSoldier)
+		{
+			float multiplier = 126f / mUnitIcon.transform.localScale.y;
+			mUnitIcon.transform.localScale = mUnitIcon.transform.localScale.MultiplyXY(multiplier);
+		}
+		else
+		{
+			float multiplier2 = Mathf.Min(180f / mUnitIcon.transform.localScale.x, 116f / mUnitIcon.transform.localScale.y);
+			mUnitIcon.transform.localScale = mUnitIcon.transform.localScale.MultiplyXY(multiplier2);
+		}
+		mUnitEliteParts.text = MiscTools.FormatBigNumber(currentParts);
+		mScrapsLabel.text = MiscTools.FormatBigNumber(num);
+		mScrapsTable.repositionNow = true;
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public override void DoAfterHide()
+	{
+		base.DoAfterHide();
+		mDialogResponse = null;
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	public GuiElement GetGuiElement()
+	{
+		return this;
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public override void OnBack()
+	{
+		CloseClick(mBottomButton);
+	}
 }

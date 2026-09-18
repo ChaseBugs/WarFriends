@@ -1,63 +1,191 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
-public class PlayerVisualCategoryCamos : MonoBehaviour
+public class PlayerVisualCategoryCamos : PlayerVisualCategoryGeneric<PlayerVisualCategoryCamos.PlayerVisualCamo>
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Serializable]
+	public class PlayerVisualCamo : PlayerVisual
+	{
+		[SerializeField]
+		private string modelPath;
 
-	1. No dll files were provided to AssetRipper.
+		[SerializeField]
+		private string previewModelPath;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+		[SerializeField]
+		private string camoTexturePath;
 
-	2. Incorrect dll files were provided to AssetRipper.
+		[SerializeField]
+		private string camoTextureSmallPath;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+		private SkinnedMeshRenderer mMeshBody;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+		private SkinnedMeshRenderer mPreviewMeshBody;
 
-	3. Assembly Reconstruction has not been implemented.
+		private Texture2D mCamoTexture;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+		private Texture2D mCamoTextureSmall;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+		private List<MeshFilter> hairMeshes;
 
-	4. This script is unnecessary.
+		public override void ApplyVisual(ICharacter character, bool useHighRes = false)
+		{
+			base.ApplyVisual(character, useHighRes);
+			character.meshChanger.ChangeCamo((!useHighRes) ? GetPreviewMeshBody() : GetMeshBody(), (!useHighRes) ? GetTextureSmall() : GetTexture());
+			if (Application.isPlaying)
+			{
+				if (character.equippedCamo != null && character.equippedCamo != this && useHighRes)
+				{
+					character.equippedCamo.UnloadBigTexture();
+					character.equippedCamo.UnloadMesh();
+				}
+				character.equippedCamo = this;
+				if (character.equippedHelmet != null)
+				{
+					character.equippedHelmet.ApplyVisual(character);
+				}
+				if (character.equippedHeadAccesory != null)
+				{
+					character.equippedHeadAccesory.ApplyVisual(character);
+				}
+				if (character.equippedPowerBand != null)
+				{
+					character.equippedPowerBand.ApplyVisual(character);
+				}
+			}
+		}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+		private void GetHairModels(GameObject model)
+		{
+			MeshFilter[] componentsInChildren = model.GetComponentsInChildren<MeshFilter>(includeInactive: true);
+			hairMeshes = new List<MeshFilter>();
+			MeshFilter[] array = componentsInChildren;
+			foreach (MeshFilter meshFilter in array)
+			{
+				if (meshFilter.name.Contains("hair"))
+				{
+					hairMeshes.Add(meshFilter);
+				}
+			}
+			hairMeshes.Sort((MeshFilter x, MeshFilter y) => x.name.CompareTo(y.name));
+		}
 
-	5. Script Content Level 0
+		public SkinnedMeshRenderer GetMeshBody()
+		{
+			if (mMeshBody == null)
+			{
+				GameObject gameObject = Resources.Load<GameObject>(modelPath);
+				if (gameObject != null)
+				{
+					SkinnedMeshRenderer[] componentsInChildren = gameObject.GetComponentsInChildren<SkinnedMeshRenderer>(includeInactive: true);
+					if (componentsInChildren.Length == 1)
+					{
+						mMeshBody = componentsInChildren[0];
+						mMeshBody.sharedMaterial.mainTexture = null;
+					}
+					else
+					{
+						Debug.LogError($"PlayerVisualCamo Error - SkinnedMeshRenderer count is 0 at {modelPath}!");
+					}
+				}
+				else
+				{
+					Debug.LogError($"Camo load error: {modelPath}");
+				}
+				GetHairModels(gameObject);
+			}
+			return mMeshBody;
+		}
 
-		AssetRipper was set to not load any script information.
+		public SkinnedMeshRenderer GetPreviewMeshBody()
+		{
+			if (mPreviewMeshBody == null)
+			{
+				GameObject gameObject = Resources.Load<GameObject>(previewModelPath);
+				if (gameObject != null)
+				{
+					SkinnedMeshRenderer[] componentsInChildren = gameObject.GetComponentsInChildren<SkinnedMeshRenderer>(includeInactive: true);
+					if (componentsInChildren.Length == 1)
+					{
+						mPreviewMeshBody = componentsInChildren[0];
+						mPreviewMeshBody.sharedMaterial.mainTexture = null;
+					}
+					else
+					{
+						Debug.LogError($"PlayerVisualCamo Error - SkinnedMeshRenderer count is 0 at {previewModelPath}!");
+					}
+				}
+				else
+				{
+					Debug.LogError($"Camo load error: {previewModelPath}");
+				}
+				GetHairModels(gameObject);
+			}
+			return mPreviewMeshBody;
+		}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+		public override void Null()
+		{
+			base.Null();
+			mMeshBody = null;
+			mPreviewMeshBody = null;
+			mCamoTextureSmall = null;
+			mCamoTexture = null;
+			hairMeshes = null;
+		}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+		public override void Load()
+		{
+			base.Load();
+			GetPreviewMeshBody();
+			GetTextureSmall();
+		}
 
-	7. An incorrect path was provided to AssetRipper.
+		public Texture2D GetTexture()
+		{
+			if (mCamoTexture == null)
+			{
+				mCamoTexture = Resources.Load<Texture2D>(camoTexturePath);
+			}
+			return mCamoTexture;
+		}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+		public Texture2D GetTextureSmall()
+		{
+			if (mCamoTextureSmall == null)
+			{
+				mCamoTextureSmall = Resources.Load<Texture2D>(camoTextureSmallPath);
+			}
+			return mCamoTextureSmall;
+		}
 
-	*/
+		public Mesh GetHairMesh(int index)
+		{
+			if (hairMeshes != null && index < hairMeshes.Count)
+			{
+				return hairMeshes[index].sharedMesh;
+			}
+			return null;
+		}
+
+		private void UnloadBigTexture()
+		{
+			Resources.UnloadAsset(mCamoTexture);
+		}
+
+		private void UnloadMesh()
+		{
+			if (mMeshBody != null)
+			{
+				Resources.UnloadAsset(mMeshBody.sharedMesh);
+			}
+			mMeshBody = null;
+		}
+
+		public override void LoadPathsForEditor()
+		{
+			base.LoadPathsForEditor();
+		}
+	}
 }

@@ -2,16 +2,18 @@
 %TAG !u! tag:unity3d.com,2011:
 --- !u!43 &4300000
 Mesh:
-  serializedVersion: 8
   m_ObjectHideFlags: 0
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 0}
-  m_Name: camo_rambo
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: camo_rambo_0
+  serializedVersion: 9
   m_SubMeshes:
   - serializedVersion: 2
     firstByte: 0
     indexCount: 6987
     topology: 0
+    baseVertex: 0
     firstVertex: 0
     vertexCount: 1816
     localAABB:
@@ -23,17 +25,17 @@ Mesh:
     channels: []
     fullWeights: []
   m_BindPose:
-  - e00: 7.937408E-07
-    e01: 4.7666782E-07
+  - e00: 0.0000007937408
+    e01: 0.00000047666782
     e02: -0.9999999
     e03: 0.25927335
     e10: 0.006402311
     e11: -0.9999795
-    e12: -4.7243452E-07
+    e12: -0.00000047243452
     e13: 0.011890477
     e20: -0.9999795
     e21: -0.0064022974
-    e22: -7.950108E-07
+    e22: -0.0000007950108
     e23: -0.0003426727
     e30: 0
     e31: 0
@@ -91,7 +93,7 @@ Mesh:
     e01: 0.9944184
     e02: -0.002547069
     e03: -0.022033855
-    e10: -1.6330318E-05
+    e10: -0.000016330318
     e11: 0.0025632165
     e12: 0.9999967
     e13: -0.0064052176
@@ -103,18 +105,18 @@ Mesh:
     e31: 0
     e32: 0
     e33: 1
-  - e00: 3.335828E-07
-    e01: 4.7412783E-07
+  - e00: 0.0000003335828
+    e01: 0.00000047412783
     e02: -1
     e03: 0.10317574
     e10: 0.006402162
     e11: -0.9999795
-    e12: -4.673546E-07
+    e12: -0.0000004673546
     e13: 0.0055393633
     e20: -0.9999796
     e21: -0.0064020804
-    e22: -3.217296E-07
-    e23: 3.282912E-08
+    e22: -0.0000003217296
+    e23: 0.00000003282912
     e30: 0
     e31: 0
     e32: 0
@@ -203,7 +205,7 @@ Mesh:
     e01: 0.9929757
     e02: -0.0022156334
     e03: -0.022036415
-    e10: 2.2869635E-05
+    e10: 0.000022869635
     e11: 0.0022340256
     e12: 0.9999974
     e13: -0.006398931
@@ -327,32 +329,32 @@ Mesh:
     e31: 0
     e32: 0
     e33: 1
-  - e00: 3.190838E-07
-    e01: 4.673546E-07
+  - e00: 0.0000003190838
+    e01: 0.0000004673546
     e02: -1
     e03: 0.40789807
     e10: 0.0064020595
     e11: -0.9999794
-    e12: -4.7412783E-07
+    e12: -0.00000047412783
     e13: -0.005559077
     e20: -0.9999795
     e21: -0.00640206
-    e22: -3.2212648E-07
+    e22: -0.00000032212648
     e23: -0.0002907631
     e30: 0
     e31: 0
     e32: 0
     e33: 1
-  m_BoneNameHashes: 245db61579e2e4609569ed431997330bd12d33182c3c5b53b13183,084d18b)72525c612c4ebd0/63b88a6+631e8980a67f85b48c94cef+f597b11)613a48d0377783d(61a70be6854ce8f65a2bf2d7c
+  m_BoneNameHashes: 245db61579e2e4609569ed431997330bd12d33182c3c5b53b13183c084d18b972525c612c4ebd0f63b88a6b631e8980a67f85b48c94cefbf597b119613a48d0377783d861a70be6854ce8f65a2bf2d7c
   m_RootBoneNameHash: 1398488108
   m_MeshCompression: 3
   m_IsReadable: 0
-  m_KeepVertices: 1
-  m_KeepIndices: 1
-  m_IndexBuffer:
-  m_Skin: []
+  m_KeepVertices: 0
+  m_KeepIndices: 0
+  m_IndexFormat: 0
+  m_IndexBuffer: 
   m_VertexData:
-    m_CurrentChannels: 0
+    serializedVersion: 2
     m_VertexCount: 0
     m_Channels:
     - stream: 0
@@ -387,8 +389,32 @@ Mesh:
       offset: 0
       format: 0
       dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
     m_DataSize: 0
-    _typelessdata:
+    _typelessdata: 
   m_CompressedMesh:
     m_Vertices:
       m_NumItems: 5448
@@ -412,7 +438,7 @@ Mesh:
       m_NumItems: 0
       m_Range: 0
       m_Start: 0
-      m_Data:
+      m_Data: 
       m_BitSize: 0
     m_Weights:
       m_NumItems: 2610
@@ -424,13 +450,13 @@ Mesh:
       m_BitSize: 1
     m_TangentSigns:
       m_NumItems: 0
-      m_Data:
+      m_Data: 
       m_BitSize: 0
     m_FloatColors:
       m_NumItems: 0
       m_Range: 0
       m_Start: 0
-      m_Data:
+      m_Data: 
       m_BitSize: 0
     m_BoneIndices:
       m_NumItems: 2610
@@ -445,6 +471,12 @@ Mesh:
     m_Center: {x: 0.0001180619, y: -0.010211993, z: 0.2440857}
     m_Extent: {x: 0.2546339, y: 0.101072, z: 0.24596429}
   m_MeshUsageFlags: 1
-  m_BakedConvexCollisionMesh:
-  m_BakedTriangleCollisionMesh:
+  m_BakedConvexCollisionMesh: 
+  m_BakedTriangleCollisionMesh: 
+  m_MeshMetrics[0]: 1
+  m_MeshMetrics[1]: 1
   m_MeshOptimized: 1
+  m_StreamData:
+    offset: 0
+    size: 0
+    path: 

@@ -97,6 +97,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f8e408fc2ba7007ea64b0b254abb0f6d, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  isActivated: 0
+  ammoDamageAmount: 40
+  isFake: 0
+  weapon: {fileID: 0}
+  type: 0
+  isNetworkCopy: 0
+  photonView: {fileID: 0}
+  flashGrenade: {fileID: 11469566}
+  molotovGrenade: {fileID: 11488124}
+  fragGrenade: {fileID: 11496012}
+  grenadeContent: {fileID: 11496012}
+  mSetup: {fileID: 0}
+  posionGrenade: {fileID: 11477035}
+  smokeGrenade: {fileID: 11403859}
+  meshRenderer: {fileID: 2369143}
 --- !u!54 &5419550
 Rigidbody:
   serializedVersion: 2
@@ -123,6 +138,24 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a503568e23092a0b9255b6fcb6b62be2, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMaxHealth:
+    currentCryptoKey: 230887
+    hiddenValue: e7857944
+    fakeValue: 1000
+    inited: 1
+  mDestroyableByBonusBox: 1
+  healthBarPosition: {fileID: 0}
+  forceHealthBar: 0
+  offset: {x: 0, y: 0, z: 0}
+  displayHealthBar: 0
+  playMainHitParticle: 1
+  isMetal: 1
+  shotCoeficient: 1
+  shotParticleNames: []
+  healthBarStyle: 0
+  mHealthbarColor: {r: 0, g: 1, b: 0, a: 1}
+  healthbar: {fileID: 0}
+  shotHitSound: 14
 --- !u!114 &11443158
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -134,6 +167,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: aa5336f805f636a26d269afa08d8ccb0, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  snapTransform: {fileID: 0}
+  show: 1
+  spriteName: game-throwgrenade-iconHD
+  indicatorOffset: {x: -13, y: 8, z: 0}
+  alwaysOnTop: 1
+  updateScale: 1
 --- !u!114 &11431434
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -145,6 +184,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f19ea4a15c3ca43dcc180d756f7a82b3, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  ownerId: 0
+  group: 0
+  OwnerShipWasTransfered: 0
+  prefixBackup: -1
+  synchronization: 0
+  onSerializeTransformOption: 3
+  onSerializeRigidBodyOption: 2
+  ownershipTransfer: 0
+  ObservedComponents:
+  - {fileID: 11454010}
+  viewIdField: 0
+  instantiationId: -1
+  currentMasterID: -1
+  didAwake: 0
+  isRuntimeInstantiated: 0
 --- !u!82 &8270521
 AudioSource:
   serializedVersion: 4
@@ -226,6 +280,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 184e6ae08e7d8c0828fd891a36e7a9ba, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  grenade: {fileID: 0}
 --- !u!114 &11477035
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -237,6 +292,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9efc9c6436b67762ac914d82bd3aaad5, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  grenade: {fileID: 0}
 --- !u!114 &11403859
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -248,6 +304,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 30c15e4c165d9d6af215ed83cfc8d2c8, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  grenade: {fileID: 0}
 --- !u!114 &11469566
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -259,6 +316,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 55bfb348c64dc35163bcd8cfa22cd19d, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  grenade: {fileID: 0}
 --- !u!114 &11488124
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -270,6 +328,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c2b06adaf2829646739b69a67e3a52d5, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  grenade: {fileID: 0}
 --- !u!4 &424449
 Transform:
   m_ObjectHideFlags: 0

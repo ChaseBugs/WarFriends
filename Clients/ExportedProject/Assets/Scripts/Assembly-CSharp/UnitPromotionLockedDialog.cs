@@ -1,63 +1,120 @@
+using System;
 using UnityEngine;
 
-public class UnitPromotionLockedDialog : MonoBehaviour
+public class UnitPromotionLockedDialog : GuiElementSingle<UnitPromotionLockedDialog>, IGuiDialog
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Header("Header")]
+	public UIButton closeButton;
 
-	1. No dll files were provided to AssetRipper.
+	[Header("Content")]
+	public UISprite unitLeftIcon;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public UILabel unitPromotionLockedLabel;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public UISprite unitRightIcon;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	[Header("Buttons")]
+	public UIButton viewUnitButton;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public UILabel viewButtonLabel;
 
-	3. Assembly Reconstruction has not been implemented.
+	private LevelBehaviour mUnitToPurchase;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	private LevelBehaviour mUnitToPromote;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public void ShowDialog(LevelBehaviour unitToPromote, LevelBehaviour unitToPurchase)
+	{
+		mUnitToPurchase = unitToPurchase;
+		mUnitToPromote = unitToPromote;
+		Singleton<GuiManager>.instance.ShowDialog(this, 0f);
+	}
 
-	4. This script is unnecessary.
+	public override void InitControls()
+	{
+		UIEventListener uIEventListener = UIEventListener.Get(closeButton.gameObject);
+		uIEventListener.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener.onClick, new UIEventListener.VoidDelegate(CloseDialog));
+		UIEventListener uIEventListener2 = UIEventListener.Get(overlayBackground.gameObject);
+		uIEventListener2.onClick = (UIEventListener.VoidDelegate)Delegate.Remove(uIEventListener2.onClick, new UIEventListener.VoidDelegate(CloseDialog));
+		UIEventListener uIEventListener3 = UIEventListener.Get(overlayBackground.gameObject);
+		uIEventListener3.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener3.onClick, new UIEventListener.VoidDelegate(CloseDialog));
+		UIEventListener uIEventListener4 = UIEventListener.Get(viewUnitButton.gameObject);
+		uIEventListener4.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener4.onClick, (UIEventListener.VoidDelegate)delegate
+		{
+			if (base.isFullyShowed)
+			{
+				HideDialog();
+				if (!(mUnitToPurchase == null))
+				{
+					GuiScreenSingle<ArmyScreen>.instance.SelectUnit(mUnitToPurchase);
+					if (GuiScreenSingle<ArmyScreen>.instance.isShowed)
+					{
+						GuiScreenSingle<ArmyScreen>.instance.InitGUIValues();
+					}
+					else
+					{
+						Singleton<GuiManager>.instance.ShowGui(GuiScreenSingle<ArmyScreen>.instance);
+					}
+				}
+			}
+		});
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private void CloseDialog(GameObject go)
+	{
+		if (base.isFullyShowed)
+		{
+			HideDialog();
+		}
+	}
 
-	5. Script Content Level 0
+	public override void InitGUIValues()
+	{
+		if (!(mUnitToPromote == null) && !(mUnitToPurchase == null))
+		{
+			unitLeftIcon.spriteName = mUnitToPromote.upgradeSlots.iconName;
+			unitLeftIcon.MakePixelPerfect();
+			float multiplier = Mathf.Min(350f / unitLeftIcon.transform.localScale.x, 340f / unitLeftIcon.transform.localScale.y);
+			unitLeftIcon.transform.localScale = unitLeftIcon.transform.localScale.MultiplyXY(multiplier);
+			unitRightIcon.spriteName = mUnitToPurchase.upgradeSlots.iconName;
+			unitRightIcon.MakePixelPerfect();
+			multiplier = Mathf.Min(350f / unitRightIcon.transform.localScale.x, 340f / unitRightIcon.transform.localScale.y);
+			unitRightIcon.transform.localScale = new Vector3(multiplier * unitRightIcon.transform.localScale.x, multiplier * unitRightIcon.transform.localScale.y, 1f);
+			unitPromotionLockedLabel.text = Localization.LocalizeFormat("ID_RECRUITUNITTOARMYTOPROMOTE", Colours.stringBlue, mUnitToPurchase.unitName.ToUpper(), Colours.stringWhite, mUnitToPromote.unitName.ToUpper(), Colours.stringGoldTier, mUnitToPromote.upgradeSlots.actualTier + 1);
+			viewButtonLabel.text = Localization.LocalizeFormat("ID_VIEWUNIT", mUnitToPurchase.unitName.ToUpper());
+			MiscTools.SetUILabelRescale(viewButtonLabel, 57f, 28f, 900);
+		}
+	}
 
-		AssetRipper was set to not load any script information.
+	public override void DoAfterShowUp()
+	{
+		base.DoAfterShowUp();
+		UIEventListener uIEventListener = UIEventListener.Get(overlayBackground.gameObject);
+		uIEventListener.onClick = (UIEventListener.VoidDelegate)Delegate.Remove(uIEventListener.onClick, new UIEventListener.VoidDelegate(CloseDialog));
+		UIEventListener uIEventListener2 = UIEventListener.Get(overlayBackground.gameObject);
+		uIEventListener2.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener2.onClick, new UIEventListener.VoidDelegate(CloseDialog));
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public override void DoBeforeHide()
+	{
+		base.DoBeforeHide();
+		UIEventListener uIEventListener = UIEventListener.Get(overlayBackground.gameObject);
+		uIEventListener.onClick = (UIEventListener.VoidDelegate)Delegate.Remove(uIEventListener.onClick, new UIEventListener.VoidDelegate(CloseDialog));
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public override void DoAfterHide()
+	{
+		base.DoAfterHide();
+		mUnitToPurchase = null;
+		mUnitToPromote = null;
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	public GuiElement GetGuiElement()
+	{
+		return this;
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public override void OnBack()
+	{
+		CloseDialog(closeButton.gameObject);
+	}
 }

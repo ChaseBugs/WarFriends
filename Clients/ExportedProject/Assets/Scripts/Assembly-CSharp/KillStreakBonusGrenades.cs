@@ -1,63 +1,70 @@
+using System.Collections;
+using System.Collections.Generic;
+using Google2u;
 using UnityEngine;
 
-public class KillStreakBonusGrenades : MonoBehaviour
+public class KillStreakBonusGrenades : KillStreakBonus
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	private Grenade mGrenade;
 
-	1. No dll files were provided to AssetRipper.
+	public int numberOfgrenades = 3;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public int maxDistance = 3;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public override bool ActivateBonus(GameObject killStreakBonusBox, PlayerController player)
+	{
+		if (base.ActivateBonus(killStreakBonusBox, player))
+		{
+			Singleton<KillStreakManager>.instance.StartCoroutine(SpawnGrenades(killStreakBonusBox, player));
+			return true;
+		}
+		return false;
+	}
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
-
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-	3. Assembly Reconstruction has not been implemented.
-
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
-
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
-
-	4. This script is unnecessary.
-
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
-
-	5. Script Content Level 0
-
-		AssetRipper was set to not load any script information.
-
-	6. Cpp2IL failed to decompile Il2Cpp data
-
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	private IEnumerator SpawnGrenades(GameObject killStreakBonusBox, PlayerController player)
+	{
+		mGrenade = Singleton<KillStreakManager>.instance.GetComponent<Grenade>();
+		mGrenade.spawnPoint = killStreakBonusBox.transform;
+		mGrenade.owner = player;
+		List<GameShootableEntity> enemies = GameShootableEntity.GetOpponents(PlayerController.currentPlayer.fraction);
+		GameObject killStreakBonusBox2 = default(GameObject);
+		enemies.Sort(delegate(GameShootableEntity a, GameShootableEntity b)
+		{
+			float sqrMagnitude = (killStreakBonusBox2.transform.position - a.transform.position).sqrMagnitude;
+			float sqrMagnitude2 = (killStreakBonusBox2.transform.position - b.transform.position).sqrMagnitude;
+			return sqrMagnitude.CompareTo(sqrMagnitude2);
+		});
+		int min = Mathf.Min(numberOfgrenades, enemies.Count);
+		yield return new WaitForSeconds(1f);
+		int shots = 0;
+		if (enemies.Count > 0)
+		{
+			for (int i = 0; i < min; i++)
+			{
+				if (i >= 0 && i < enemies.Count)
+				{
+					GameShootableEntity enemy = enemies[i];
+					if (Vector3.Distance(enemy.transform.position, killStreakBonusBox.transform.position) < (float)maxDistance)
+					{
+						shots++;
+						mGrenade.Fire(enemy.transform.position);
+						yield return new WaitForSeconds(0.2f);
+					}
+				}
+			}
+		}
+		for (int j = shots; j < numberOfgrenades; j++)
+		{
+			GrenadeAmmoSetup setup = (GrenadeAmmoSetup)mGrenade.ammoSetup;
+			if ((bool)setup)
+			{
+				float explodeDamage = Mathf.Lerp(t: (float)player.playerProperties.level / (float)LevelManager.instance.maxDisplayLevel, a: Singleton<GameVariables>.instance.cardConstants.GetRow(CardConstants.rowIds.ClusterGrenadeDamageMin).FLOATVALUE, b: Singleton<GameVariables>.instance.cardConstants.GetRow(CardConstants.rowIds.ClusterGrenadeDamageMax).FLOATVALUE);
+				setup.explodeDamageAmount = explodeDamage;
+				setup.damageAmount = explodeDamage * 0.1f;
+			}
+			mGrenade.Fire(killStreakBonusBox.transform.position + new Vector3(Random.Range(-1.5f, 1.5f), 0f, Random.Range(-1.5f, 1.5f)));
+			yield return new WaitForSeconds(0.2f);
+		}
+		yield return new WaitForSeconds(1f);
+	}
 }

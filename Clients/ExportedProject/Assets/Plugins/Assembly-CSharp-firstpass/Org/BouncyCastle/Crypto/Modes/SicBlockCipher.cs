@@ -1,66 +1,78 @@
-using UnityEngine;
+using System;
+using Org.BouncyCastle.Crypto.Parameters;
 
 namespace Org.BouncyCastle.Crypto.Modes
 {
-	public class SicBlockCipher : MonoBehaviour
+public class SicBlockCipher : IBlockCipher
+{
+	private readonly IBlockCipher cipher;
+
+	private readonly int blockSize;
+
+	private readonly byte[] IV;
+
+	private readonly byte[] counter;
+
+	private readonly byte[] counterOut;
+
+	public string AlgorithmName => cipher.AlgorithmName + "/SIC";
+
+	public bool IsPartialBlockOkay => true;
+
+	public SicBlockCipher(IBlockCipher cipher)
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
+		this.cipher = cipher;
+		blockSize = cipher.GetBlockSize();
+		IV = new byte[blockSize];
+		counter = new byte[blockSize];
+		counterOut = new byte[blockSize];
 	}
+
+	public IBlockCipher GetUnderlyingCipher()
+	{
+		return cipher;
+	}
+
+	public void Init(bool forEncryption, ICipherParameters parameters)
+	{
+		if (parameters is ParametersWithIV)
+		{
+			ParametersWithIV parametersWithIV = (ParametersWithIV)parameters;
+			byte[] iV = parametersWithIV.GetIV();
+			Array.Copy(iV, 0, IV, 0, IV.Length);
+			Reset();
+			if (parametersWithIV.Parameters != null)
+			{
+				cipher.Init(forEncryption: true, parametersWithIV.Parameters);
+			}
+			return;
+		}
+		throw new ArgumentException("SIC mode requires ParametersWithIV", "parameters");
+	}
+
+	public int GetBlockSize()
+	{
+		return cipher.GetBlockSize();
+	}
+
+	public int ProcessBlock(byte[] input, int inOff, byte[] output, int outOff)
+	{
+		cipher.ProcessBlock(counter, 0, counterOut, 0);
+		for (int i = 0; i < counterOut.Length; i++)
+		{
+			output[outOff + i] = (byte)(counterOut[i] ^ input[inOff + i]);
+		}
+		int num = counter.Length;
+		while (--num >= 0 && ++counter[num] == 0)
+		{
+		}
+		return counter.Length;
+	}
+
+	public void Reset()
+	{
+		Array.Copy(IV, 0, counter, 0, counter.Length);
+		cipher.Reset();
+	}
+}
 }

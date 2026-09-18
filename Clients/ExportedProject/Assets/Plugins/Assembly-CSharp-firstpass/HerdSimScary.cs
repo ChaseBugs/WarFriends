@@ -2,62 +2,83 @@ using UnityEngine;
 
 public class HerdSimScary : MonoBehaviour
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public HerdSimCore _chase;
 
-	1. No dll files were provided to AssetRipper.
+	public int[] _scareType;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public bool _canChase;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public float _scaryInterval = 0.25f;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public LayerMask _herdLayerMask = -1;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public void Start()
+	{
+		Init();
+	}
 
-	3. Assembly Reconstruction has not been implemented.
+	public void Init()
+	{
+		if (_scareType.Length > 0)
+		{
+			InvokeRepeating("BeScary", Random.value * _scaryInterval + 1f, _scaryInterval);
+			InvokeRepeating("CheckChase", 2f, 2f);
+		}
+		else
+		{
+			Debug.Log(base.transform.name + " has nothing to scare; Please assigne ScareType");
+		}
+	}
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public void CheckChase()
+	{
+		_canChase = !_canChase;
+		if (!_canChase)
+		{
+			_chase = null;
+		}
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
-
-	4. This script is unnecessary.
-
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
-
-	5. Script Content Level 0
-
-		AssetRipper was set to not load any script information.
-
-	6. Cpp2IL failed to decompile Il2Cpp data
-
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public void BeScary()
+	{
+		Collider[] array = Physics.OverlapSphere(base.transform.position, 4f, _herdLayerMask);
+		HerdSimCore herdSimCore = null;
+		for (int i = 0; i < array.Length; i++)
+		{
+			Transform parent = array[i].transform.parent;
+			if (parent != null)
+			{
+				herdSimCore = parent.GetComponent<HerdSimCore>();
+			}
+			if (!(herdSimCore != null))
+			{
+				continue;
+			}
+			bool flag = false;
+			for (int j = 0; j < _scareType.Length; j++)
+			{
+				if (herdSimCore._type == _scareType[j])
+				{
+					flag = true;
+				}
+			}
+			if (flag)
+			{
+				herdSimCore.Scare(base.transform);
+				if (_chase == null && _canChase)
+				{
+					_chase = herdSimCore;
+				}
+			}
+		}
+		if (_chase != null)
+		{
+			HerdSimCore component = GetComponent<HerdSimCore>();
+			if (component != null)
+			{
+				component._waypoint = _chase.transform.position;
+				component._mode = 2;
+			}
+		}
+	}
 }

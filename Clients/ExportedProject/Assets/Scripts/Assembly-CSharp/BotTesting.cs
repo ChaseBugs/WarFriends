@@ -1,63 +1,156 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Text;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using UnityEngine;
 
-public class BotTesting : MonoBehaviour
+public class BotTesting : Core_BaseScript
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public TextAsset players;
 
-	1. No dll files were provided to AssetRipper.
+	public bool compute;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	private List<List<string>> rowData = new List<List<string>>();
 
-	2. Incorrect dll files were provided to AssetRipper.
+	private PlayerProperties playerProperties;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	private bool mComputing;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	private int mI;
 
-	3. Assembly Reconstruction has not been implemented.
+	private List<string> lines;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	protected override void Awake()
+	{
+		base.Awake();
+		GameController instance = Singleton<GameController>.instance;
+		instance.gameObject.SetActive(value: false);
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public void Update()
+	{
+		if (compute)
+		{
+			compute = false;
+			mComputing = true;
+			mI = 0;
+			lines = TextAssetToList(players);
+			InitCsv();
+			Singleton<BeanstalkServerManager>.instance.disableErrorrs = true;
+		}
+		if (mComputing && lines != null)
+		{
+			LoadPlayer(lines[mI], mI);
+			TestBotsForPlayer();
+			mI++;
+			if (mI == lines.Count)
+			{
+				mComputing = false;
+				Debug.Log("Saving CSV");
+				SaveCsv();
+				Debug.Log("CSV saved");
+			}
+		}
+	}
 
-	4. This script is unnecessary.
+	private static List<string> TextAssetToList(TextAsset ta)
+	{
+		return new List<string>(ta.text.Split('\n'));
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private void TestBotsForPlayer()
+	{
+		for (int i = -10; i < 20; i++)
+		{
+			try
+			{
+				PlayerProperties playerProperties = new PlayerProperties();
+				StatsManager.instance.data.deathMatchOfflineWinLooseStreak = i;
+				int botLevel = BotManager.GetBotLevel(LevelManager.instance.currentLevel.displayNumber);
+				float botUnitPower = 0f;
+				UnitUpgradeDefinition[] collection = BotManager.PickBotUnits(out botUnitPower, botLevel);
+				playerProperties.upgrades = new List<UnitUpgradeDefinition>(collection);
+				PlayerInventory.EquippedWeapon[] equippedWeapons;
+				float value = BotManager.PickWeapons(botLevel, out equippedWeapons);
+				int num = MiscTools.RoundToInt(botUnitPower) + MiscTools.RoundToInt(value) + LevelManager.instance.GetRankPower(botLevel);
+				playerProperties.weapons = equippedWeapons;
+				rowData.Add(new List<string>
+				{
+					"\"" + this.playerProperties.name + "\"",
+					"\"" + JsonConvert.SerializeObject(this.playerProperties.GetArmyForStats()) + "\"",
+					"\"" + JsonConvert.SerializeObject(this.playerProperties.GetWeaponsForStats()) + "\"",
+					LevelManager.instance.armyPower.ToString(),
+					LevelManager.instance.unitPower.ToString(),
+					LevelManager.instance.weaponPower.ToString(),
+					LevelManager.instance.currentLevel.displayNumber.ToString(),
+					i.ToString(),
+					"\"" + JsonConvert.SerializeObject(playerProperties.GetArmyForStats()) + "\"",
+					"\"" + JsonConvert.SerializeObject(playerProperties.GetWeaponsForStats()) + "\"",
+					num.ToString(),
+					MiscTools.RoundToInt(botUnitPower).ToString(),
+					MiscTools.RoundToInt(value).ToString(),
+					botLevel.ToString()
+				});
+			}
+			catch (Exception ex)
+			{
+				Debug.LogError(ex.Message);
+				Debug.LogError(ex.StackTrace);
+			}
+		}
+	}
 
-	5. Script Content Level 0
+	private void InitCsv()
+	{
+		rowData.Add(new List<string>
+		{
+			"PlayerName", "PlayerUnits", "PlayerWeapons", "PlayerArmyPower", "PlayerUnitPower", "PlayerWeaponPower", "PlayerLevel", "WinLooseStreak", "BotUnits", "BotWeapons",
+			"BotArmyPower", "BotUnitPower", "BotWeaponPower", "BotLevel"
+		});
+	}
 
-		AssetRipper was set to not load any script information.
+	private void LoadPlayer(string line, int i)
+	{
+		LevelManager.instance.Init();
+		JToken jToken = JsonConvert.DeserializeObject<JToken>(line);
+		if (jToken != null)
+		{
+			string text = ((jToken["PlayerName"] == null) ? "default" : StringParser.ParseString("PlayerName", "S", jToken, string.Empty));
+			DatabaseSerializedObject.TryLoadObjects(jToken);
+			PlayerInventory.instance.Init();
+			int level = ((jToken["Level"] == null) ? 4 : StringParser.ParseInt("Level", "N", jToken, 14));
+			int loadedArmyPower = ((jToken["ArmyPower"] == null) ? 1 : StringParser.ParseInt("ArmyPower", "N", jToken, 1));
+			LevelManager.instance.LoadData(level, 0, 0L, loadedArmyPower);
+			playerProperties = PlayerProperties.CreateForLocalPlayerLight();
+			playerProperties.name = text;
+			Debug.Log($"Done: {i} players");
+		}
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	private void SaveCsv()
+	{
+		string[][] array = new string[rowData.Count][];
+		for (int i = 0; i < array.Length; i++)
+		{
+			array[i] = rowData[i].ToArray();
+		}
+		int length = array.GetLength(0);
+		string separator = ";";
+		StringBuilder stringBuilder = new StringBuilder();
+		for (int j = 0; j < length; j++)
+		{
+			stringBuilder.AppendLine(string.Join(separator, array[j]));
+		}
+		string path = getPath();
+		StreamWriter streamWriter = File.CreateText(path);
+		streamWriter.WriteLine(stringBuilder);
+		streamWriter.Close();
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	private string getPath()
+	{
+		return Application.persistentDataPath + "Saved_data.csv";
+	}
 }

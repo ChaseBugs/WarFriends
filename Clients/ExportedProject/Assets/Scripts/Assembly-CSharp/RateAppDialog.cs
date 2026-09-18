@@ -1,63 +1,130 @@
+using System;
+using Google2u;
 using UnityEngine;
 
-public class RateAppDialog : MonoBehaviour
+public class RateAppDialog : GuiElementSingle<RateAppDialog>, IGuiDialog
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Header("Content")]
+	[SerializeField]
+	private UILabel mRateAppText;
 
-	1. No dll files were provided to AssetRipper.
+	[Header("Buttons")]
+	[SerializeField]
+	private GameObject mButtonCancel;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	[SerializeField]
+	private GameObject mButtonRateNow;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	[SerializeField]
+	private UILabel mLonelyLabel;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	[SerializeField]
+	private UITable mTable;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	[SerializeField]
+	private UILabel mGoldRewardNumber;
 
-	3. Assembly Reconstruction has not been implemented.
+	[Header("Buttons")]
+	[SerializeField]
+	private SettingsNotificationButton mDontAskAgainCheckbox;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	private int mRandom = 1;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	private bool mAfterUpdate;
 
-	4. This script is unnecessary.
+	private int mCount;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private bool mCheckbox;
 
-	5. Script Content Level 0
+	private string mVariant => mRandom.ToString();
 
-		AssetRipper was set to not load any script information.
+	private string mTranslationId => string.Format("{0}{1}", (!mAfterUpdate) ? string.Empty : "U", mRandom);
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	private string mUser => (!mAfterUpdate) ? "_New_User" : "_Existing_User";
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public void ShowDialog(bool afterUpdate, int count)
+	{
+		mAfterUpdate = afterUpdate;
+		mCount = count;
+		Singleton<GuiManager>.instance.ShowDialog(this, 0f);
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	public override void InitControls()
+	{
+		UIEventListener uIEventListener = UIEventListener.Get(mButtonCancel);
+		uIEventListener.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener.onClick, new UIEventListener.VoidDelegate(CancelClick));
+		UIEventListener uIEventListener2 = UIEventListener.Get(mButtonRateNow);
+		uIEventListener2.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener2.onClick, new UIEventListener.VoidDelegate(RateClick));
+		UIEventListener uIEventListener3 = UIEventListener.Get(mDontAskAgainCheckbox.gameObject);
+		uIEventListener3.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener3.onClick, new UIEventListener.VoidDelegate(OnCheckboxClick));
+		UITable uITable = mTable;
+		uITable.onReposition = (UITable.OnReposition)Delegate.Combine(uITable.onReposition, (UITable.OnReposition)delegate
+		{
+			float val = 0f - mTable.padding.x - (mGoldRewardNumber.transform.parent.transform.localPosition.x - mTable.padding.x) / 2f;
+			mTable.transform.localPosition = mTable.transform.localPosition.ReplaceX(val);
+		});
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	private void CancelClick(GameObject go)
+	{
+		if (base.isFullyShowed)
+		{
+			if (mCheckbox)
+			{
+				DialogManager.instance.NoMoreRateAppInThisVersion();
+				Singleton<EventTrackingManager>.instance.RegisterStarRating($"Ignore_Text_{mVariant}{mUser}_Dont_Ask_Again", mCount);
+			}
+			else
+			{
+				Singleton<EventTrackingManager>.instance.RegisterStarRating($"Ignore_Text_{mVariant}{mUser}", mCount);
+			}
+			HideDialog();
+		}
+	}
 
-	*/
+	private void RateClick(GameObject go)
+	{
+		if (base.isFullyShowed)
+		{
+			Singleton<EventTrackingManager>.instance.RegisterStarRating($"Rate_Text_{mVariant}{mUser}", mCount);
+			Application.OpenURL(GameVariables.GooglePlayMarketURL);
+			DialogManager.instance.GameWasRated();
+			HideDialog();
+		}
+	}
+
+	private void OnCheckboxClick(GameObject go)
+	{
+		if (base.isFullyShowed)
+		{
+			mCheckbox = !mCheckbox;
+			mDontAskAgainCheckbox.SetHighlight(mCheckbox);
+		}
+	}
+
+	public override void InitGUIValues()
+	{
+		mRandom = (mAfterUpdate ? 1 : UnityEngine.Random.Range(1, 5));
+		mRateAppText.text = Localization.Localize("ID_RATEAPPTEXT" + mTranslationId);
+		int num = (int)(float)Singleton<GameVariables>.instance.constants.GetRow(Constants.rowIds.RateAppReward).FLOATVALUE;
+		mLonelyLabel.gameObject.SetActive(num <= 0);
+		mTable.gameObject.SetActive(num > 0);
+		if (num > 0)
+		{
+			mGoldRewardNumber.text = MiscTools.FormatBigNumber(num);
+			mTable.repositionNow = true;
+		}
+		mCheckbox = false;
+		mDontAskAgainCheckbox.SetHighlight(mCheckbox);
+	}
+
+	public GuiElement GetGuiElement()
+	{
+		return this;
+	}
+
+	public override void OnBack()
+	{
+		CancelClick(mButtonCancel.gameObject);
+	}
 }

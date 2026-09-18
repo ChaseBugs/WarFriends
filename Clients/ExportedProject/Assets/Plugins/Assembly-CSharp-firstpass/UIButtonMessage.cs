@@ -1,63 +1,102 @@
 using UnityEngine;
 
+[AddComponentMenu("NGUI/Interaction/Button Message")]
 public class UIButtonMessage : MonoBehaviour
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public enum Trigger
+	{
+		OnClick,
+		OnMouseOver,
+		OnMouseOut,
+		OnPress,
+		OnRelease,
+		OnDoubleClick
+	}
 
-	1. No dll files were provided to AssetRipper.
+	public GameObject target;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public string functionName;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public Trigger trigger;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public bool includeChildren;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	private bool mStarted;
 
-	3. Assembly Reconstruction has not been implemented.
+	private bool mHighlighted;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	private void Start()
+	{
+		mStarted = true;
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	private void OnEnable()
+	{
+		if (mStarted && mHighlighted)
+		{
+			OnHover(UICamera.IsHighlighted(base.gameObject));
+		}
+	}
 
-	4. This script is unnecessary.
+	private void OnHover(bool isOver)
+	{
+		if (base.enabled)
+		{
+			if ((isOver && trigger == Trigger.OnMouseOver) || (!isOver && trigger == Trigger.OnMouseOut))
+			{
+				Send();
+			}
+			mHighlighted = isOver;
+		}
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private void OnPress(bool isPressed)
+	{
+		if (base.enabled && ((isPressed && trigger == Trigger.OnPress) || (!isPressed && trigger == Trigger.OnRelease)))
+		{
+			Send();
+		}
+	}
 
-	5. Script Content Level 0
+	private void OnClick()
+	{
+		if (base.enabled && trigger == Trigger.OnClick)
+		{
+			Send();
+		}
+	}
 
-		AssetRipper was set to not load any script information.
+	private void OnDoubleClick()
+	{
+		if (base.enabled && trigger == Trigger.OnDoubleClick)
+		{
+			Send();
+		}
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
-
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	private void Send()
+	{
+		if (string.IsNullOrEmpty(functionName))
+		{
+			return;
+		}
+		if (target == null)
+		{
+			target = base.gameObject;
+		}
+		if (includeChildren)
+		{
+			Transform[] componentsInChildren = target.GetComponentsInChildren<Transform>();
+			int i = 0;
+			for (int num = componentsInChildren.Length; i < num; i++)
+			{
+				Transform transform = componentsInChildren[i];
+				transform.gameObject.SendMessage(functionName, base.gameObject, SendMessageOptions.DontRequireReceiver);
+			}
+		}
+		else
+		{
+			target.SendMessage(functionName, base.gameObject, SendMessageOptions.DontRequireReceiver);
+		}
+	}
 }

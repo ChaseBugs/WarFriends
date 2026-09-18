@@ -1,63 +1,192 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
-public class PlayerStatsScreen : MonoBehaviour
+public class PlayerStatsScreen : GuiScreenSingle<PlayerStatsScreen>
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public enum Tab
+	{
+		Overall,
+		Ribbons
+	}
 
-	1. No dll files were provided to AssetRipper.
+	[Header("Header Buttons")]
+	public UITable buttonsTable;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public List<SquadButton> tabButtons;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public UISprite leftHighlight;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public UISprite rightHighlight;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	[Header("Contents")]
+	public OverallStats overallStats;
 
-	3. Assembly Reconstruction has not been implemented.
+	public RibbonsStats ribbonsStats;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	[HideInInspector]
+	public float dur = 0.2f;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	private Tab mActiveTab;
 
-	4. This script is unnecessary.
+	public float headerHeight => 450f;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public override void InitEvents()
+	{
+		overallStats.InitEvents();
+		overallStats.gameObject.SetActive(value: false);
+		ribbonsStats.gameObject.SetActive(value: false);
+	}
 
-	5. Script Content Level 0
+	protected override void InitControls()
+	{
+		rightHighlight.transform.localPosition = new Vector3(UIRoot.list[0].activeWidth - 48f, rightHighlight.transform.localPosition.y, 0f);
+		tabButtons[0].Initialize(Localization.Localize("ID_OVERALL"), dur);
+		tabButtons[1].Initialize(Localization.Localize("ID_RIBBONS"), dur);
+		buttonsTable.repositionNow = true;
+		buttonsTable.onReposition = delegate
+		{
+			SetAndAnimateHighlights(instant: true);
+		};
+		foreach (SquadButton tabButton in tabButtons)
+		{
+			UIEventListener uIEventListener = UIEventListener.Get(tabButton.gameObject);
+			uIEventListener.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener.onClick, new UIEventListener.VoidDelegate(HeaderButtonClick));
+		}
+		overallStats.InitControls();
+		ribbonsStats.InitControls();
+	}
 
-		AssetRipper was set to not load any script information.
+	private void HeaderButtonClick(GameObject go)
+	{
+		SquadButton button = go.GetComponentsInChildren<SquadButton>(includeInactive: true)[0];
+		int num = tabButtons.FindIndex((SquadButton a) => a == button);
+		if (!tabButtons[num].pressed)
+		{
+			SelectTab((Tab)num);
+		}
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public override void InitGUIValues()
+	{
+		SelectTab(mActiveTab, instant: true);
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public override void DoBeforeHide()
+	{
+		base.DoBeforeHide();
+		if (mActiveTab == Tab.Overall)
+		{
+			overallStats.Animate(showTab: false, instant: false);
+		}
+		if (mActiveTab == Tab.Ribbons)
+		{
+			ribbonsStats.Animate(showTab: false, instant: false);
+		}
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	public override void DoAfterHide()
+	{
+		base.DoAfterHide();
+		overallStats.InstantHideTab();
+		ribbonsStats.InstantHideTab();
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	private void SelectTab(Tab selectedTab, bool instant = false)
+	{
+		mActiveTab = selectedTab;
+		SetAndAnimateButtons(instant);
+		SetAndAnimateHighlights(instant);
+		SetAndAnimateContent(instant);
+	}
 
-	*/
+	private void SetAndAnimateButtons(bool instant)
+	{
+		if (instant)
+		{
+			for (int i = 0; i < tabButtons.Count; i++)
+			{
+				tabButtons[i].InstantAnimate(i == (int)mActiveTab);
+			}
+		}
+		else
+		{
+			tabButtons[0].Animate(toHighlight: false);
+			tabButtons[1].Animate(toHighlight: false).onFinished = delegate
+			{
+				tabButtons[(int)mActiveTab].Animate(toHighlight: true);
+			};
+		}
+	}
+
+	private void SetAndAnimateHighlights(bool instant)
+	{
+		float activeWidth = UIRoot.list[0].activeWidth;
+		float posX = tabButtons[(int)mActiveTab].posX;
+		float width = tabButtons[(int)mActiveTab].width;
+		float num = posX - width / 2f;
+		float num2 = posX + width / 2f;
+		float leftScale = Mathf.Max(28f, 28f + num - 60f);
+		float rightScale = Mathf.Max(28f, 28f + (activeWidth - num2) - 60f);
+		bool showLeft = true;
+		bool showRight = true;
+		AnimateHighlights(showLeft, leftScale, showRight, rightScale, instant);
+	}
+
+	private void SetHighlights(float leftScale, float rightScale)
+	{
+		leftHighlight.transform.localScale = new Vector3(leftScale, leftHighlight.transform.localScale.y, 0f);
+		rightHighlight.transform.localScale = new Vector3(rightScale, rightHighlight.transform.localScale.y, 0f);
+	}
+
+	private void AnimateHighlights(bool showLeft, float leftScale, bool showRight, float rightScale, bool instant)
+	{
+		if (instant)
+		{
+			SetHighlights(leftScale, rightScale);
+			leftHighlight.alpha = ((!showLeft) ? 0f : 1f);
+			rightHighlight.alpha = ((!showRight) ? 0f : 1f);
+			TweenAlpha component = leftHighlight.gameObject.GetComponent<TweenAlpha>();
+			if (component != null)
+			{
+				component.enabled = false;
+			}
+			TweenAlpha component2 = rightHighlight.gameObject.GetComponent<TweenAlpha>();
+			if (component2 != null)
+			{
+				component2.onFinished = null;
+				component2.enabled = false;
+			}
+		}
+		else
+		{
+			TweenAlpha.Begin(leftHighlight.gameObject, dur, 0f);
+			TweenAlpha.Begin(rightHighlight.gameObject, dur, 0f).onFinished = delegate
+			{
+				SetHighlights(leftScale, rightScale);
+				TweenAlpha.Begin(leftHighlight.gameObject, dur, (!showLeft) ? 0f : 1f);
+				TweenAlpha.Begin(rightHighlight.gameObject, dur, (!showRight) ? 0f : 1f).onFinished = null;
+			};
+		}
+	}
+
+	private void SetAndAnimateContent(bool instant)
+	{
+		bool flag = mActiveTab == Tab.Overall;
+		bool flag2 = mActiveTab == Tab.Ribbons;
+		if (instant)
+		{
+			overallStats.Animate(flag, instant: true);
+			ribbonsStats.Animate(flag2, instant: true);
+			return;
+		}
+		if (overallStats.gameObject.activeSelf || flag)
+		{
+			overallStats.Animate(flag, instant: false);
+		}
+		if (ribbonsStats.gameObject.activeSelf || flag2)
+		{
+			ribbonsStats.Animate(flag2, instant: false);
+		}
+	}
 }

@@ -1,66 +1,100 @@
-using UnityEngine;
+using System;
+using System.Collections.Generic;
+using System.Runtime.InteropServices;
+using System.Text;
 
 namespace GooglePlayGames.Native.PInvoke
 {
-	public class PInvokeUtilities : MonoBehaviour
+internal static class PInvokeUtilities
+{
+	internal delegate UIntPtr OutStringMethod(StringBuilder out_string, UIntPtr out_size);
+
+	internal delegate UIntPtr OutMethod<T>([In][Out] T[] out_bytes, UIntPtr out_size);
+
+	private static readonly DateTime UnixEpoch = DateTime.SpecifyKind(new DateTime(1970, 1, 1), DateTimeKind.Utc);
+
+	internal static HandleRef CheckNonNull(HandleRef reference)
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
+		if (IsNull(reference))
+		{
+			throw new InvalidOperationException();
+		}
+		return reference;
 	}
+
+	internal static bool IsNull(HandleRef reference)
+	{
+		return IsNull(HandleRef.ToIntPtr(reference));
+	}
+
+	internal static bool IsNull(IntPtr pointer)
+	{
+		return pointer.Equals(IntPtr.Zero);
+	}
+
+	internal static DateTime FromMillisSinceUnixEpoch(long millisSinceEpoch)
+	{
+		return UnixEpoch.Add(TimeSpan.FromMilliseconds(millisSinceEpoch));
+	}
+
+	internal static string OutParamsToString(OutStringMethod outStringMethod)
+	{
+		UIntPtr out_size = outStringMethod(null, UIntPtr.Zero);
+		if (out_size.Equals(UIntPtr.Zero))
+		{
+			return null;
+		}
+		StringBuilder stringBuilder = new StringBuilder((int)out_size.ToUInt32());
+		outStringMethod(stringBuilder, out_size);
+		return stringBuilder.ToString();
+	}
+
+	internal static T[] OutParamsToArray<T>(OutMethod<T> outMethod)
+	{
+		UIntPtr out_size = outMethod(null, UIntPtr.Zero);
+		if (out_size.Equals(UIntPtr.Zero))
+		{
+			return new T[0];
+		}
+		T[] array = new T[out_size.ToUInt64()];
+		outMethod(array, out_size);
+		return array;
+	}
+
+	internal static IEnumerable<T> ToEnumerable<T>(UIntPtr size, Func<UIntPtr, T> getElement)
+	{
+		for (ulong i = 0uL; i < size.ToUInt64(); i++)
+		{
+			yield return getElement(new UIntPtr(i));
+		}
+	}
+
+	internal static IEnumerator<T> ToEnumerator<T>(UIntPtr size, Func<UIntPtr, T> getElement)
+	{
+		return ToEnumerable(size, getElement).GetEnumerator();
+	}
+
+	internal static UIntPtr ArrayToSizeT<T>(T[] array)
+	{
+		if (array == null)
+		{
+			return UIntPtr.Zero;
+		}
+		return new UIntPtr((ulong)array.Length);
+	}
+
+	internal static long ToMilliseconds(TimeSpan span)
+	{
+		double totalMilliseconds = span.TotalMilliseconds;
+		if (totalMilliseconds > 9.223372036854776E+18)
+		{
+			return long.MaxValue;
+		}
+		if (totalMilliseconds < -9.223372036854776E+18)
+		{
+			return long.MinValue;
+		}
+		return Convert.ToInt64(totalMilliseconds);
+	}
+}
 }

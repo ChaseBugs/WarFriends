@@ -1,63 +1,186 @@
+using System;
+using Google2u;
 using UnityEngine;
 
-public class InappVIP : MonoBehaviour
+public class InappVIP : Core_BaseScript
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Header("Benefits")]
+	public BenefitsPart benefitsPart;
 
-	1. No dll files were provided to AssetRipper.
+	[Header("VIP Buttons")]
+	public VIPButton[] vipButtons;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	[Header("Panels")]
+	public UIPanel vipPanel;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public UIPanel[] otherPanels;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public void Animate(bool showTab, bool instant)
+	{
+		if (showTab && !base.gameObject.activeSelf)
+		{
+			base.gameObject.SetActive(value: true);
+			InitGUIValues();
+		}
+		if (base.gameObject.activeSelf)
+		{
+			AnimateOtherPanels(instant, showTab);
+			TweenAlpha.Begin(vipPanel.gameObject, (!instant) ? (GuiElementSingle<InappScreen>.instance.dur * 2f) : 0.01f, (!showTab) ? 0f : 1f).onFinished = delegate
+			{
+				if (!showTab)
+				{
+					base.gameObject.SetActive(value: false);
+					DoAfterHide();
+				}
+			};
+		}
+		else if (!showTab)
+		{
+			InstantHideTab();
+		}
+	}
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public void InitControls()
+	{
+		UIEventListener uIEventListener = UIEventListener.Get(vipButtons[0].gameObject);
+		uIEventListener.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener.onClick, (UIEventListener.VoidDelegate)delegate
+		{
+			if (GuiElementSingle<InappScreen>.instance.isShowed && GuiElementSingle<InappScreen>.instance.isFullyShowed)
+			{
+				BuyVip(VIP.rowIds.VIP_1);
+			}
+		});
+		UIEventListener uIEventListener2 = UIEventListener.Get(vipButtons[1].gameObject);
+		uIEventListener2.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener2.onClick, (UIEventListener.VoidDelegate)delegate
+		{
+			if (GuiElementSingle<InappScreen>.instance.isShowed && GuiElementSingle<InappScreen>.instance.isFullyShowed)
+			{
+				BuyVip(VIP.rowIds.VIP_2);
+			}
+		});
+		UIEventListener uIEventListener3 = UIEventListener.Get(vipButtons[2].gameObject);
+		uIEventListener3.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener3.onClick, (UIEventListener.VoidDelegate)delegate
+		{
+			if (GuiElementSingle<InappScreen>.instance.isShowed && GuiElementSingle<InappScreen>.instance.isFullyShowed)
+			{
+				BuyVip(VIP.rowIds.VIP_3);
+			}
+		});
+		UIEventListener uIEventListener4 = UIEventListener.Get(vipButtons[3].gameObject);
+		uIEventListener4.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener4.onClick, (UIEventListener.VoidDelegate)delegate
+		{
+			if (GuiElementSingle<InappScreen>.instance.isShowed && GuiElementSingle<InappScreen>.instance.isFullyShowed)
+			{
+				BuyVip(VIP.rowIds.VIP_4);
+			}
+		});
+		Singleton<OfferManager>.instance.SalesChanged += delegate
+		{
+			if (GuiElementSingle<InappScreen>.instance.isShowed)
+			{
+				InitializeGUIButtons();
+			}
+		};
+		Singleton<BeanstalkServerManager>.instance.DataLoaded += OnDataLoaded;
+		Singleton<BeanstalkServerManager>.instance.ErrorReceived += OnErrorReceived;
+		vipButtons[0].FirstInitialize(VIP.rowIds.VIP_1);
+		vipButtons[1].FirstInitialize(VIP.rowIds.VIP_2);
+		vipButtons[2].FirstInitialize(VIP.rowIds.VIP_3);
+		vipButtons[3].FirstInitialize(VIP.rowIds.VIP_4);
+	}
 
-	3. Assembly Reconstruction has not been implemented.
+	private void BuyVip(VIP.rowIds row)
+	{
+		int discount = Singleton<OfferManager>.instance.DiscountedVIP();
+		int cost = Singleton<GameVariables>.instance.vip.GetRow(row).GOLD * (100 - discount) / 100;
+		string id = Singleton<GameVariables>.instance.vip.GetRow(row).NAME;
+		if (!Singleton<Wallet>.instance.CanBuyGold(cost))
+		{
+			GuiElementSingle<NotEnoughDialog>.instance.ShowGold(cost, Localization.Localize("ID_VIPSTATUS"));
+			GuiElementSingle<InappScreen>.instance.routeToStore = "VIP";
+			return;
+		}
+		GuiElementSingle<VIPConfirmDialog>.instance.ShowDialog(row, delegate(bool buyClicked)
+		{
+			if (buyClicked)
+			{
+				SoundsManager.Instance.PlaySound(SoundsManager.SoundsEnum.BuyVIP);
+				Singleton<PurchaseProtection>.instance.BuyingVIP(row.ToString());
+				InitializePurchaseProtection();
+				Singleton<BeanstalkServerManager>.instance.BuyVip(cost, id, discount);
+			}
+		});
+	}
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	private void OnDataLoaded(DatabaseAction action)
+	{
+		if (GuiElementSingle<InappScreen>.instance.isShowed && base.gameObject.activeSelf && action == DatabaseAction.BuyVip)
+		{
+			InitializeGUIButtons();
+		}
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	private void OnErrorReceived(DatabaseAction action)
+	{
+		if (GuiElementSingle<InappScreen>.instance.isShowed && base.gameObject.activeSelf)
+		{
+			InitializeGUIButtons();
+		}
+	}
 
-	4. This script is unnecessary.
+	public void InitGUIValues()
+	{
+		InitializeGUIButtons();
+		benefitsPart.Initialize();
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private void InitializeGUIButtons()
+	{
+		vipButtons[0].InitializeGUI();
+		vipButtons[1].InitializeGUI();
+		vipButtons[2].InitializeGUI();
+		vipButtons[3].InitializeGUI();
+	}
 
-	5. Script Content Level 0
+	private void InitializePurchaseProtection()
+	{
+		for (int i = 0; i < vipButtons.Length; i++)
+		{
+			vipButtons[i].InitializePurchaseProtection();
+		}
+	}
 
-		AssetRipper was set to not load any script information.
+	public void DoAfterHide()
+	{
+		vipButtons[0].StopCounter();
+		vipButtons[1].StopCounter();
+		vipButtons[2].StopCounter();
+		vipButtons[3].StopCounter();
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public void InstantHideTab()
+	{
+		TweenAlpha component = vipPanel.GetComponent<TweenAlpha>();
+		if (component != null)
+		{
+			component.enabled = false;
+		}
+		base.gameObject.SetActive(value: false);
+		DoAfterHide();
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	private void AnimateOtherPanels(bool instant, bool show)
+	{
+		if (otherPanels == null)
+		{
+			return;
+		}
+		for (int i = 0; i < otherPanels.Length; i++)
+		{
+			if (!(otherPanels[i] == null) && otherPanels[i].gameObject.activeSelf)
+			{
+				TweenAlpha.Begin(otherPanels[i].gameObject, (!instant) ? (GuiElementSingle<InappScreen>.instance.dur * 2f) : 0.01f, (!show) ? 0f : 1f);
+			}
+		}
+	}
 }

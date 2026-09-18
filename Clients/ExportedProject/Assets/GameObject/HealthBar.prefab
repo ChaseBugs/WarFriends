@@ -216,6 +216,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 45e90c2128b739e35eb01fa7686399b6, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  isActivated: 0
+  generator: {fileID: 0}
+  vertical: 1
+  bg: {fileID: 109266}
+  hb: {fileID: 11444804}
+  border: {fileID: 11433324}
+  levelLabel: {fileID: 11465029}
+  buffs: {fileID: 11405055}
+  debuffs: {fileID: 11406298}
 --- !u!114 &11403859
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -227,6 +236,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3eb393d18e44963b2feda410867e4106, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  allTweens:
+  - id: 0
+    type: 0
+    time: 0
+    delay: 0
+    method: 0
+    style: 0
+    playAfterId: 0
+    tweenTarget: {fileID: 0}
+    numOfRepetitions: 0
+    soundEnum: 0
+  play: 0
 --- !u!4 &469566
 Transform:
   m_ObjectHideFlags: 0
@@ -298,6 +319,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 94ab48e3b8066840cd07a3613abbe986, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  collection: {fileID: 11409266, guid: d17e4726e9fbd6249bf8946ea14b8ac9, type: 2}
+  _color: {r: 0, g: 0, b: 0, a: 0.36078432}
+  _scale: {x: 1.7406288, y: 1.5022438, z: 1}
+  _spriteId: 95
+  boxCollider: {fileID: 0}
+  meshCollider: {fileID: 0}
+  meshColliderPositions: []
+  meshColliderMesh: {fileID: 0}
+  renderLayer: 0
 --- !u!4 &459786
 Transform:
   m_ObjectHideFlags: 0
@@ -367,6 +397,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ac0dc836222e389492da4c2a119958d0, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  collection: {fileID: 11409266, guid: d17e4726e9fbd6249bf8946ea14b8ac9, type: 2}
+  _color: {r: 1, g: 1, b: 1, a: 1}
+  _scale: {x: 1.5022438, y: 1.7406288, z: 1.5022438}
+  _spriteId: 95
+  boxCollider: {fileID: 0}
+  meshCollider: {fileID: 0}
+  meshColliderPositions: []
+  meshColliderMesh: {fileID: 0}
+  renderLayer: 0
+  mInverse: 0
+  mDirection: 0
 --- !u!4 &455190
 Transform:
   m_ObjectHideFlags: 0
@@ -423,6 +464,24 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7228967de49788f752ec799230fd2f35, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  collection: {fileID: 11409266, guid: d17e4726e9fbd6249bf8946ea14b8ac9, type: 2}
+  _color: {r: 1, g: 1, b: 1, a: 1}
+  _scale: {x: 1, y: 1, z: 1}
+  _spriteId: 0
+  boxCollider: {fileID: 0}
+  meshCollider: {fileID: 0}
+  meshColliderPositions: []
+  meshColliderMesh: {fileID: 0}
+  renderLayer: 0
+  _dimensions: {x: 318.02664, y: 65.03467}
+  _anchor: 0
+  _borderOnly: 1
+  legacyMode: 0
+  borderTop: 0.05
+  borderBottom: 0.05
+  borderLeft: 0.05
+  borderRight: 0.05
+  _createBoxCollider: 0
 --- !u!4 &492819
 Transform:
   m_ObjectHideFlags: 0
@@ -448,6 +507,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5c597ca6b52d35bba3dccb20ec3e0c21, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  stroke:
+  - {fileID: 10234916}
+  strokeSize: 0.24
+  mainText: {fileID: 10231555}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  strokeColor: {r: 0, g: 0, b: 0, a: 1}
+  mText: 55
 --- !u!4 &492514
 Transform:
   m_ObjectHideFlags: 0
@@ -518,6 +584,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f700cdbb1ef330b26b332599df454d05, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mTextMesh: {fileID: 10231555}
 --- !u!4 &407524
 Transform:
   m_ObjectHideFlags: 0
@@ -588,6 +655,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f700cdbb1ef330b26b332599df454d05, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mTextMesh: {fileID: 10234916}
 --- !u!4 &454360
 Transform:
   m_ObjectHideFlags: 0
@@ -644,6 +712,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 94ab48e3b8066840cd07a3613abbe986, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  collection: {fileID: 11409266, guid: d17e4726e9fbd6249bf8946ea14b8ac9, type: 2}
+  _color: {r: 1, g: 1, b: 1, a: 1}
+  _scale: {x: 2, y: 2, z: 2}
+  _spriteId: 15
+  boxCollider: {fileID: 0}
+  meshCollider: {fileID: 0}
+  meshColliderPositions: []
+  meshColliderMesh: {fileID: 0}
+  renderLayer: 3
 --- !u!4 &427192
 Transform:
   m_ObjectHideFlags: 0
@@ -700,6 +777,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 94ab48e3b8066840cd07a3613abbe986, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  collection: {fileID: 11409266, guid: d17e4726e9fbd6249bf8946ea14b8ac9, type: 2}
+  _color: {r: 1, g: 1, b: 1, a: 1}
+  _scale: {x: 2, y: 2, z: 2}
+  _spriteId: 34
+  boxCollider: {fileID: 0}
+  meshCollider: {fileID: 0}
+  meshColliderPositions: []
+  meshColliderMesh: {fileID: 0}
+  renderLayer: 0
 --- !u!1001 &100100000
 Prefab:
   serializedVersion: 2

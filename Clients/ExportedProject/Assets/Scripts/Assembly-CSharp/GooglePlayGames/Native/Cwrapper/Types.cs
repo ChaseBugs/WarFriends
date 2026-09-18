@@ -1,66 +1,155 @@
-using UnityEngine;
-
 namespace GooglePlayGames.Native.Cwrapper
 {
-	public class Types : MonoBehaviour
+internal static class Types
+{
+	internal enum DataSource
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
+		CACHE_OR_NETWORK = 1,
+		NETWORK_ONLY
 	}
+
+	internal enum LogLevel
+	{
+		VERBOSE = 1,
+		INFO,
+		WARNING,
+		ERROR
+	}
+
+	internal enum AuthOperation
+	{
+		SIGN_IN = 1,
+		SIGN_OUT
+	}
+
+	internal enum ImageResolution
+	{
+		ICON = 1,
+		HI_RES
+	}
+
+	internal enum AchievementType
+	{
+		STANDARD = 1,
+		INCREMENTAL
+	}
+
+	internal enum AchievementState
+	{
+		HIDDEN = 1,
+		REVEALED,
+		UNLOCKED
+	}
+
+	internal enum EventVisibility
+	{
+		HIDDEN = 1,
+		REVEALED
+	}
+
+	internal enum LeaderboardOrder
+	{
+		LARGER_IS_BETTER = 1,
+		SMALLER_IS_BETTER
+	}
+
+	internal enum LeaderboardStart
+	{
+		TOP_SCORES = 1,
+		PLAYER_CENTERED
+	}
+
+	internal enum LeaderboardTimeSpan
+	{
+		DAILY = 1,
+		WEEKLY,
+		ALL_TIME
+	}
+
+	internal enum LeaderboardCollection
+	{
+		PUBLIC = 1,
+		SOCIAL
+	}
+
+	internal enum ParticipantStatus
+	{
+		INVITED = 1,
+		JOINED,
+		DECLINED,
+		LEFT,
+		NOT_INVITED_YET,
+		FINISHED,
+		UNRESPONSIVE
+	}
+
+	internal enum MatchResult
+	{
+		DISAGREED = 1,
+		DISCONNECTED,
+		LOSS,
+		NONE,
+		TIE,
+		WIN
+	}
+
+	internal enum MatchStatus
+	{
+		INVITED = 1,
+		THEIR_TURN,
+		MY_TURN,
+		PENDING_COMPLETION,
+		COMPLETED,
+		CANCELED,
+		EXPIRED
+	}
+
+	internal enum QuestState
+	{
+		UPCOMING = 1,
+		OPEN,
+		ACCEPTED,
+		COMPLETED,
+		EXPIRED,
+		FAILED
+	}
+
+	internal enum QuestMilestoneState
+	{
+		NOT_STARTED = 1,
+		NOT_COMPLETED,
+		COMPLETED_NOT_CLAIMED,
+		CLAIMED
+	}
+
+	internal enum MultiplayerEvent
+	{
+		UPDATED = 1,
+		UPDATED_FROM_APP_LAUNCH,
+		REMOVED
+	}
+
+	internal enum MultiplayerInvitationType
+	{
+		TURN_BASED = 1,
+		REAL_TIME
+	}
+
+	internal enum RealTimeRoomStatus
+	{
+		INVITING = 1,
+		CONNECTING,
+		AUTO_MATCHING,
+		ACTIVE,
+		DELETED
+	}
+
+	internal enum SnapshotConflictPolicy
+	{
+		MANUAL = 1,
+		LONGEST_PLAYTIME,
+		LAST_KNOWN_GOOD,
+		MOST_RECENTLY_MODIFIED
+	}
+}
 }

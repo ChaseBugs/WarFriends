@@ -1,63 +1,222 @@
 using UnityEngine;
 
-public class SwitchableGui : MonoBehaviour
+public class SwitchableGui : Core_BaseScript
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public enum ScreenAnimationType
+	{
+		Fade,
+		TweenPosition,
+		TeenPositionAndFade,
+		DialogSpecial
+	}
 
-	1. No dll files were provided to AssetRipper.
+	public bool reverseAnimation;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public float fadeOutTime = 1f;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public float fadeInTime = 1f;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public ScreenAnimationType showAnimationType;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public ScreenAnimationType hideAnimationType;
 
-	3. Assembly Reconstruction has not been implemented.
+	private bool mIsFirstEnable = true;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	private bool mDoAfterShowUpInvoked;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	private float mDoAfterShowUpInvokeTime;
 
-	4. This script is unnecessary.
+	private bool mDoAfterHideInvoked;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private float mDoAfterHideInvokeTime;
 
-	5. Script Content Level 0
+	private Vector3 mPosition;
 
-		AssetRipper was set to not load any script information.
+	protected UIPanel[] mPanels;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public bool readyToHide { get; protected set; }
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public bool readyToShowUp { get; protected set; }
 
-	7. An incorrect path was provided to AssetRipper.
+	public GuiScreen previousScreen { get; set; }
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	public GuiScreen previousScreenForElementsToHide { get; set; }
 
-	*/
+	public virtual bool isShowed { get; protected set; }
+
+	public bool isFullyShowed => isShowed && !mDoAfterShowUpInvoked;
+
+	public bool isFullyHidden => !isShowed && !readyToHide;
+
+	protected virtual void Update()
+	{
+		if (mDoAfterHideInvoked && Time.realtimeSinceStartup > mDoAfterHideInvokeTime)
+		{
+			mDoAfterHideInvoked = false;
+			DoAfterHide();
+		}
+		if (mDoAfterShowUpInvoked && Time.realtimeSinceStartup > mDoAfterShowUpInvokeTime)
+		{
+			mDoAfterShowUpInvoked = false;
+			DoAfterShowUp();
+		}
+	}
+
+	protected override void Awake()
+	{
+		base.Awake();
+		mPosition = base.transform.localPosition;
+	}
+
+	protected virtual void OnEnable()
+	{
+		StopAllCoroutines();
+		if (mIsFirstEnable)
+		{
+			mIsFirstEnable = false;
+		}
+	}
+
+	public virtual void DoBeforeShowUp()
+	{
+		readyToShowUp = true;
+		isShowed = true;
+	}
+
+	public void AnimateShow()
+	{
+		AnimateShow(forceFadeIn: false);
+	}
+
+	public virtual void AnimateShow(bool forceFadeIn)
+	{
+		float timeAfter = 0f;
+		base.gameObject.SetActive(value: true);
+		if (forceFadeIn || showAnimationType == ScreenAnimationType.Fade || showAnimationType == ScreenAnimationType.TeenPositionAndFade)
+		{
+			timeAfter = FadeIn();
+			base.transform.localPosition = mPosition;
+			TweenPosition.Begin(base.gameObject, 0f, mPosition);
+		}
+		if (showAnimationType == ScreenAnimationType.TeenPositionAndFade || showAnimationType == ScreenAnimationType.TweenPosition)
+		{
+			float z = base.transform.localPosition.z;
+			TweenPosition.Begin(base.gameObject, fadeInTime, (!reverseAnimation) ? new Vector3(0f, 1280f, z) : new Vector3(0f, -1280f, z), new Vector3(0f, 0f, z));
+			timeAfter = fadeInTime;
+		}
+		InvokeDoAfterShowUp(timeAfter);
+	}
+
+	protected void InvokeDoAfterShowUp(float timeAfter)
+	{
+		mDoAfterShowUpInvoked = true;
+		mDoAfterHideInvoked = false;
+		mDoAfterShowUpInvokeTime = Time.realtimeSinceStartup + timeAfter;
+	}
+
+	public virtual void DoAfterShowUp()
+	{
+		readyToHide = false;
+		readyToShowUp = false;
+	}
+
+	public virtual float FadeIn()
+	{
+		UIPanel[] componentsInChildren = GetComponentsInChildren<UIPanel>(includeInactive: true);
+		UIPanel[] array = componentsInChildren;
+		foreach (UIPanel uIPanel in array)
+		{
+			uIPanel.isFreezed = false;
+			uIPanel.alpha1 = 0.005f;
+			TweenAlpha tweenAlpha = TweenAlpha.Begin(uIPanel.gameObject, fadeInTime, 0.005f, 1f);
+			tweenAlpha.method = UITweener.Method.EaseInOut;
+		}
+		return fadeInTime;
+	}
+
+	public virtual void DoBeforeHide()
+	{
+		readyToHide = true;
+		isShowed = false;
+	}
+
+	public void AnimateHide()
+	{
+		AnimateHide(forceFadeOut: false);
+	}
+
+	public virtual void AnimateHide(bool forceFadeOut)
+	{
+		if (base.gameObject.activeInHierarchy)
+		{
+			float num = 0f;
+			if (forceFadeOut || hideAnimationType == ScreenAnimationType.Fade || hideAnimationType == ScreenAnimationType.TeenPositionAndFade)
+			{
+				num = FadeOut();
+			}
+			if (hideAnimationType == ScreenAnimationType.TeenPositionAndFade || hideAnimationType == ScreenAnimationType.TweenPosition)
+			{
+				float z = base.transform.localPosition.z;
+				TweenPosition.Begin(base.gameObject, fadeOutTime, new Vector3(0f, 0f, z), (!reverseAnimation) ? new Vector3(0f, -1280f, z) : new Vector3(0f, 1280f, z));
+				num = fadeOutTime;
+			}
+			InvokeDoAfterHide(num - 0.05f);
+		}
+	}
+
+	protected void InvokeDoAfterHide(float timeAfter)
+	{
+		mDoAfterHideInvoked = true;
+		mDoAfterShowUpInvoked = false;
+		mDoAfterHideInvokeTime = Time.realtimeSinceStartup + timeAfter;
+	}
+
+	public virtual void DoAfterHide()
+	{
+		readyToHide = false;
+		readyToShowUp = false;
+		TweenAlpha component = GetComponent<TweenAlpha>();
+		if (component != null)
+		{
+			component.enabled = false;
+		}
+		base.gameObject.SetActive(value: false);
+		TweenPosition.Begin(base.gameObject, 0f, mPosition);
+	}
+
+	public virtual float FadeOut()
+	{
+		mPanels = GetComponentsInChildren<UIPanel>();
+		UIPanel[] array = mPanels;
+		foreach (UIPanel uIPanel in array)
+		{
+			TweenAlpha tweenAlpha = TweenAlpha.Begin(uIPanel.gameObject, fadeOutTime, 0.0051f);
+			tweenAlpha.method = UITweener.Method.EaseInOut;
+		}
+		InvokeAfterRealTime(delegate
+		{
+			UIPanel[] array2 = mPanels;
+			foreach (UIPanel uIPanel2 in array2)
+			{
+				uIPanel2.isFreezed = true;
+			}
+		}, 0.3f);
+		return fadeOutTime;
+	}
+
+	public virtual void InitEvents()
+	{
+	}
+
+	public virtual void OnBack()
+	{
+		if (Singleton<GuiManager>.instance.currentScreen.previousScreen != null)
+		{
+			Singleton<GuiManager>.instance.ShowGui(Singleton<GuiManager>.instance.currentScreen.previousScreen);
+		}
+	}
+
+	public virtual void OnMenu()
+	{
+	}
 }

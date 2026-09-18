@@ -1,25 +1,59 @@
 Shader "Unlit/Transparent Colored (Packed) (AlphaClip)" {
+
 Properties {
- _MainTex ("Base (RGB), Alpha (A)", 2D) = "white" { }
+	_MainTex ("Base (RGB), Alpha (A)", 2D) = "white" {}
 }
-	//DummyShaderTextExporter
-	
-	SubShader{
-		Tags { "RenderType" = "Opaque" }
-		LOD 200
-		CGPROGRAM
-#pragma surface surf Lambert
-#pragma target 3.0
-		sampler2D _MainTex;
-		struct Input
-		{
-			float2 uv_MainTex;
-		};
-		void surf(Input IN, inout SurfaceOutput o)
-		{
-			float4 c = tex2D(_MainTex, IN.uv_MainTex);
-			o.Albedo = c.rgb;
-		}
-		ENDCG
+
+SubShader {
+	Tags { "Queue"="Transparent" "IgnoreProjector"="True" "RenderType"="Transparent" }
+	Lighting Off
+	Cull Off
+	ZWrite Off
+	Fog { Mode Off }
+	Blend SrcAlpha OneMinusSrcAlpha
+	ColorMask RGBA
+
+	Pass {
+CGPROGRAM
+#pragma vertex vert
+#pragma fragment frag
+#include "UnityCG.cginc"
+
+struct appdata_t {
+	float4 vertex : POSITION;
+	fixed4 color : COLOR;
+	float2 texcoord : TEXCOORD0;
+};
+
+struct v2f {
+	float4 vertex : SV_POSITION;
+	fixed4 color : COLOR;
+	half2 texcoord : TEXCOORD0;
+	float4 worldPos : TEXCOORD1;
+};
+
+sampler2D _MainTex;
+float4 _MainTex_ST;
+float4 _ClipRange0;
+
+v2f vert (appdata_t v)
+{
+	v2f o;
+	o.vertex = UnityObjectToClipPos(v.vertex);
+	o.color = v.color;
+	o.texcoord = TRANSFORM_TEX(v.texcoord, _MainTex);
+	o.worldPos = mul(unity_ObjectToWorld, v.vertex);
+	return o;
+}
+
+fixed4 frag (v2f i) : SV_Target
+{
+	fixed4 col = tex2D(_MainTex, i.texcoord) * i.color;
+	half2 factor = abs(i.worldPos.xy - _ClipRange0.xy) - _ClipRange0.zw;
+	clip(-max(factor.x, factor.y));
+	return col;
+}
+ENDCG
 	}
+}
 }

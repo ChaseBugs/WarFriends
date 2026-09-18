@@ -1,63 +1,97 @@
 using UnityEngine;
 
-public class VectorEx : MonoBehaviour
+public static class VectorEx
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public static Vector3 ReplaceX(this Vector3 lhs, float val)
+	{
+		lhs.x = val;
+		return lhs;
+	}
 
-	1. No dll files were provided to AssetRipper.
+	public static Vector3 ReplaceY(this Vector3 lhs, float val)
+	{
+		lhs.y = val;
+		return lhs;
+	}
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public static Vector3 ReplaceZ(this Vector3 lhs, float val)
+	{
+		lhs.z = val;
+		return lhs;
+	}
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public static Vector3 ReplaceXY(this Vector3 lhs, float x, float y)
+	{
+		lhs.x = x;
+		lhs.y = y;
+		return lhs;
+	}
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public static Vector3 ReplaceYZ(this Vector3 lhs, float y, float z)
+	{
+		lhs.y = y;
+		lhs.z = z;
+		return lhs;
+	}
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public static Vector3 AddX(this Vector3 lhs, float val)
+	{
+		lhs.x += val;
+		return lhs;
+	}
 
-	3. Assembly Reconstruction has not been implemented.
+	public static Vector3 AddY(this Vector3 lhs, float val)
+	{
+		lhs.y += val;
+		return lhs;
+	}
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public static Vector3 AddZ(this Vector3 lhs, float val)
+	{
+		lhs.z += val;
+		return lhs;
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public static Vector3 MultiplyXY(this Vector3 lhs, float multiplier)
+	{
+		lhs.x *= multiplier;
+		lhs.y *= multiplier;
+		return lhs;
+	}
 
-	4. This script is unnecessary.
+	public static Vector4 ReplaceX(this Vector4 lhs, float val)
+	{
+		lhs.x = val;
+		return lhs;
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public static Vector4 ReplaceZ(this Vector4 lhs, float val)
+	{
+		lhs.z = val;
+		return lhs;
+	}
 
-	5. Script Content Level 0
+	public static Vector4 ReplaceW(this Vector4 lhs, float val)
+	{
+		lhs.w = val;
+		return lhs;
+	}
 
-		AssetRipper was set to not load any script information.
+	public static float PlanarDistance(this Vector3 lhs, Vector3 vec)
+	{
+		return Vector2.Distance(new Vector2(lhs.x, lhs.z), new Vector2(vec.x, vec.z));
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
-
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public static Vector3 ClampMagnitude(this Vector3 vector, float minLength, float maxLength)
+	{
+		if ((double)vector.sqrMagnitude > (double)maxLength * (double)maxLength)
+		{
+			return vector.normalized * maxLength;
+		}
+		if ((double)vector.sqrMagnitude < (double)minLength * (double)minLength)
+		{
+			return vector.normalized * minLength;
+		}
+		return vector;
+	}
 }

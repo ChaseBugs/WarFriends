@@ -1,63 +1,114 @@
 using UnityEngine;
 
-public class WarcardpackButtonRecord : MonoBehaviour
+public class WarcardpackButtonRecord : Core_BaseScript
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Header("Core")]
+	public UILabel warcardpackTitle;
 
-	1. No dll files were provided to AssetRipper.
+	public UILabel warcardpackContains;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public UILabel warcardpackWarcards;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public UILabel warcardpackRandomWarcards;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public UILabel warcardpackHint;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	[Header("-Table")]
+	public UITable priceTable;
 
-	3. Assembly Reconstruction has not been implemented.
+	public UISprite warbucksIcon;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public UISprite goldIcon;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public UILabel warcardpackPrice;
 
-	4. This script is unnecessary.
+	[Header("-Sale")]
+	public GameObject warcardpackSalePart;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public UILabel warcardpackSaleLabel;
 
-	5. Script Content Level 0
+	public WinStreakCounter warcardpackSaleTimeCounter;
 
-		AssetRipper was set to not load any script information.
+	private CardPack mWarCardPack = CardPack.Bronze;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public CardPack warcardPack => mWarCardPack;
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public void InitControls(CardPack pack)
+	{
+		mWarCardPack = pack;
+		InitializeTexts();
+		priceTable.onReposition = delegate
+		{
+			float val = 0f - priceTable.padding.x - (warcardpackPrice.transform.parent.transform.localPosition.x - priceTable.padding.x) / 2f;
+			priceTable.transform.localPosition = priceTable.transform.localPosition.ReplaceX(val);
+		};
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	private void InitializeTexts()
+	{
+		if (mWarCardPack == CardPack.Bronze)
+		{
+			warcardpackTitle.text = Localization.Localize("ID_BRONZEPACK");
+			warcardpackContains.text = Localization.LocalizeFormat("ID_CONTAINSXWARCARDS", CardManager.instance.cardsInPack);
+			warcardpackWarcards.text = string.Format("{0} {1}", CardManager.instance.bronzePackBronzeCards, Localization.Localize("ID_BRONZEWARCARDS"));
+			warcardpackRandomWarcards.text = string.Format("{0} {1}", CardManager.instance.cardsInPack - CardManager.instance.bronzePackBronzeCards, Localization.Localize("ID_RANDOMWARCARDS"));
+			warcardpackHint.text = Localization.LocalizeFormat("ID_WITHACHANCEOFORWARCARDS", Localization.Localize(GameVariables.warcardName[CardManager.instance.bronzePackMin]).ToLower(), Localization.Localize(GameVariables.warcardName[CardManager.instance.bronzePackMax]).ToLower());
+		}
+		else if (mWarCardPack == CardPack.Silver)
+		{
+			warcardpackTitle.text = Localization.Localize("ID_SILVERPACK");
+			warcardpackContains.text = Localization.LocalizeFormat("ID_CONTAINSXWARCARDS", CardManager.instance.cardsInPack);
+			warcardpackWarcards.text = string.Format("{0} {1}", CardManager.instance.silverPackSilverCards, Localization.Localize("ID_SILVERWARCARDS"));
+			warcardpackRandomWarcards.text = string.Format("{0} {1}", CardManager.instance.cardsInPack - CardManager.instance.silverPackSilverCards, Localization.Localize("ID_RANDOMWARCARDS"));
+			warcardpackHint.text = Localization.LocalizeFormat("ID_WITHACHANCEOFORWARCARDS", Localization.Localize(GameVariables.warcardName[CardManager.instance.silverPackMin]).ToLower(), Localization.Localize(GameVariables.warcardName[CardManager.instance.silverPackMax]).ToLower());
+		}
+		else if (mWarCardPack == CardPack.Gold)
+		{
+			warcardpackTitle.text = Localization.Localize("ID_GOLDPACK");
+			warcardpackContains.text = Localization.LocalizeFormat("ID_CONTAINSXWARCARDS", CardManager.instance.cardsInPack);
+			warcardpackWarcards.text = string.Format("{0} {1}", CardManager.instance.goldPackGoldCards, Localization.Localize("ID_GOLDWARCARDS"));
+			warcardpackRandomWarcards.text = string.Format("{0} {1}", CardManager.instance.cardsInPack - CardManager.instance.goldPackGoldCards, Localization.Localize("ID_RANDOMWARCARDS"));
+			warcardpackHint.text = Localization.LocalizeFormat("ID_WITHACHANCEOFORWARCARDS", Localization.Localize(GameVariables.warcardName[CardManager.instance.goldPackMin]).ToLower(), Localization.Localize(GameVariables.warcardName[CardManager.instance.goldPackMax]).ToLower());
+		}
+		MiscTools.SetUILabelRescale(warcardpackTitle, 57f, 28f, 700);
+		MiscTools.SetUILabelRescale(warcardpackContains, 40f, 30f, 400);
+		MiscTools.SetUILabelRescale(warcardpackWarcards, 40f, 30f, 370);
+		MiscTools.SetUILabelRescale(warcardpackRandomWarcards, 38f, 30f, 370);
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	public void SetSaleAndPrize()
+	{
+		int num = Singleton<OfferManager>.instance.DiscountedCardpack(mWarCardPack);
+		bool flag = num > 0;
+		int num2 = Singleton<GameVariables>.instance.CardPackWarbucks(mWarCardPack);
+		int num3 = Singleton<GameVariables>.instance.CardPackGold(mWarCardPack);
+		int num4 = ((!flag) ? (num2 + num3) : ((num2 + num3) * (100 - num) / 100));
+		warbucksIcon.gameObject.SetActive(num2 > 0);
+		goldIcon.gameObject.SetActive(num3 > 0);
+		warcardpackPrice.text = MiscTools.FormatBigNumber(num4);
+		priceTable.repositionNow = true;
+		warcardpackSalePart.SetActive(flag);
+		if (flag)
+		{
+			warcardpackSaleLabel.text = Localization.LocalizeFormat("ID_SALEPERCENTLINE", num);
+			warcardpackSaleTimeCounter.StartCountingTo(Singleton<OfferManager>.instance.DiscountedCardpackEndtime(mWarCardPack), upperCaseCountdown: true);
+			warcardpackSaleTimeCounter.winStreakTimer = delegate
+			{
+				warcardpackSalePart.SetActive(value: false);
+				warcardpackPrice.text = MiscTools.FormatBigNumber(Singleton<GameVariables>.instance.CardPackWarbucks(mWarCardPack) + Singleton<GameVariables>.instance.CardPackGold(mWarCardPack));
+				priceTable.repositionNow = true;
+			};
+		}
+		else
+		{
+			warcardpackSaleTimeCounter.StopCountingTo();
+			warcardpackSaleTimeCounter.winStreakTimer = null;
+		}
+	}
 
-	*/
+	public void DoAfterHide()
+	{
+		warcardpackSaleTimeCounter.StopCountingTo();
+		warcardpackSaleTimeCounter.winStreakTimer = null;
+	}
 }

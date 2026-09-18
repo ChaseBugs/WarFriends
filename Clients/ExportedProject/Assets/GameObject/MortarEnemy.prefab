@@ -195,6 +195,44 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9cdb9d73ab5c07e53add3ece16e9f208, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  isActivated: 0
+  bulletPrefab: {fileID: 11431434, guid: 60be7eeb14f5a354c99c9ce23dbc5554, type: 2}
+  cadence:
+    currentCryptoKey: 230887
+    hiddenValue: e7850340
+    fakeValue: 2
+    inited: 1
+  clipSize:
+    currentCryptoKey: 444444
+    hiddenValue: 444424
+    fakeValue: 20
+    inited: 1
+  reloadTime:
+    currentCryptoKey: 230887
+    hiddenValue: e785a340
+    fakeValue: 5
+    inited: 1
+  friendKill: 0
+  infiniteAmmo: 1
+  reloadableWeapon: 0
+  disableSync: 0
+  spawnPoint: {fileID: 444804}
+  startingAmmmoCount:
+    currentCryptoKey: 444444
+    hiddenValue: 444444
+    fakeValue: 0
+    inited: 1
+  useAiming: 0
+  isFake: 0
+  shotType: 0
+  ignoreLayersMask: 0
+  reloadSound: 0
+  shotSound: 19
+  soundVolume: 1
+  weaponType: 17
+  shootOffset: {x: 0, y: 0, z: 0}
+  indicator: {fileID: 131434}
+  muzzleFlash: {fileID: 11433324}
 --- !u!114 &11477035
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -206,6 +244,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bdf38ce86a2f68e1ec5a08d9161659f6, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  NoRigidBodyObject: {fileID: 179954}
+  RigidBodyObject: {fileID: 109266}
+  noRigidBody:
+    meshFilter: {fileID: 0}
+    meshRenderer: {fileID: 0}
+  rigidBody:
+    meshFilter: {fileID: 0}
+    meshRenderer: {fileID: 0}
+  snapPoint: {fileID: 161526}
 --- !u!114 &11403859
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -217,6 +264,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f19ea4a15c3ca43dcc180d756f7a82b3, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  ownerId: 0
+  group: 0
+  OwnerShipWasTransfered: 0
+  prefixBackup: -1
+  synchronization: 0
+  onSerializeTransformOption: 3
+  onSerializeRigidBodyOption: 2
+  ownershipTransfer: 0
+  ObservedComponents:
+  - {fileID: 0}
+  viewIdField: 0
+  instantiationId: -1
+  currentMasterID: -1
+  didAwake: 0
+  isRuntimeInstantiated: 0
 --- !u!114 &11469566
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -228,6 +290,68 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f03796e42ada0b04d780e337084293fc, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  damageAmount:
+    currentCryptoKey: 230887
+    hiddenValue: e785a341
+    fakeValue: 20
+    inited: 1
+  hitForce: 20
+  criticalProbability:
+    currentCryptoKey: 230887
+    hiddenValue: e7850300
+    fakeValue: 0
+    inited: 1
+  criticalAmount:
+    currentCryptoKey: 230887
+    hiddenValue: e7850340
+    fakeValue: 2
+    inited: 1
+  damageToPlayerCoeficient:
+    currentCryptoKey: 230887
+    hiddenValue: e785833f
+    fakeValue: 1
+    inited: 1
+  damageToPlayerOvertimeCoeficient:
+    currentCryptoKey: 230887
+    hiddenValue: e785833f
+    fakeValue: 1
+    inited: 1
+  playerBehindShieldRatio: 0.1
+  speed: 3
+  hurtRadius: 1.2
+  deadRadius: 0.8
+  exposionCoef: {x: 1.5, y: 3, z: 1.5}
+  additionalUpForce: 5
+  stopTime: 0
+  explodeDamageAmount:
+    currentCryptoKey: 230887
+    hiddenValue: e785ac43
+    fakeValue: 350
+    inited: 1
+  missileType: 2
+  curvedTrajectory: 0
+  minMaxRotations: {x: 0.8, y: 1.6}
+  rotationProfile:
+    serializedVersion: 2
+    m_Curve:
+    - time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 1
+      tangentMode: 0
+    - time: 0.5
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+    - time: 1
+      value: 0
+      inSlope: -1
+      outSlope: 0
+      tangentMode: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+  baseRotationMagnitude: 0.45
 --- !u!82 &8288124
 AudioSource:
   serializedVersion: 4
@@ -309,6 +433,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6bf76f9799dec14c7c2240f1cc725df6, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  weaponRecords:
+  - level: 0
+    shotSound: 19
+    weaponModelPath: WeaponModelsUnits/Mortar_lp
+    assetBundleName: Mortar
+    scale: {x: 1, y: 1, z: 1}
+  weaponRenderer: {fileID: 2399646}
+  weapon: {fileID: 11496012}
 --- !u!4 &491323
 Transform:
   m_ObjectHideFlags: 0
@@ -457,6 +589,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4090235689019e8dade2fb65364f77e3, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  m_ForceShow: 0
 --- !u!4 &492819
 Transform:
   m_ObjectHideFlags: 0
@@ -604,6 +737,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 94ab48e3b8066840cd07a3613abbe986, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  collection: {fileID: 11409266, guid: 9c9cd68f5c05bd142a48ca4b8f45c224, type: 2}
+  _color: {r: 1, g: 1, b: 1, a: 0.459}
+  _scale: {x: 0.05, y: 0.05, z: 0.05}
+  _spriteId: 2
+  boxCollider: {fileID: 0}
+  meshCollider: {fileID: 0}
+  meshColliderPositions: []
+  meshColliderMesh: {fileID: 0}
+  renderLayer: 0
 --- !u!1001 &100100000
 Prefab:
   serializedVersion: 2

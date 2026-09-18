@@ -1,63 +1,227 @@
 using UnityEngine;
 
-public class myFilledSprite : MonoBehaviour
+[ExecuteInEditMode]
+[AddComponentMenu("2D Toolkit/Sprite/my2dFilledSprite")]
+[RequireComponent(typeof(MeshFilter))]
+[RequireComponent(typeof(MeshRenderer))]
+public class myFilledSprite : tk2dSprite
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public enum Direction
+	{
+		Vertical,
+		Horizontal
+	}
 
-	1. No dll files were provided to AssetRipper.
+	private float actualFract = 0.99999f;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	protected Vector2[] meshUVS;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	[SerializeField]
+	private bool mInverse;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	[SerializeField]
+	private Direction mDirection;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public float fillFract
+	{
+		get
+		{
+			return actualFract;
+		}
+		set
+		{
+			if (value != actualFract)
+			{
+				actualFract = Mathf.Clamp01(value);
+				UpdateVerticesImpl_();
+			}
+		}
+	}
 
-	3. Assembly Reconstruction has not been implemented.
+	public bool inverse
+	{
+		get
+		{
+			return mInverse;
+		}
+		set
+		{
+			mInverse = value;
+			UpdateVerticesImpl_();
+		}
+	}
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public Direction direction
+	{
+		get
+		{
+			return mDirection;
+		}
+		set
+		{
+			mDirection = value;
+			UpdateVerticesImpl_();
+		}
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public override void Build()
+	{
+		tk2dSpriteDefinition tk2dSpriteDefinition2 = collection.spriteDefinitions[base.spriteId];
+		meshVertices = new Vector3[tk2dSpriteDefinition2.positions.Length];
+		meshColors = new Color32[tk2dSpriteDefinition2.positions.Length];
+		meshUVS = new Vector2[tk2dSpriteDefinition2.uvs.Length];
+		meshNormals = new Vector3[0];
+		meshTangents = new Vector4[0];
+		if (tk2dSpriteDefinition2.normals != null && tk2dSpriteDefinition2.normals.Length > 0)
+		{
+			meshNormals = new Vector3[tk2dSpriteDefinition2.normals.Length];
+		}
+		if (tk2dSpriteDefinition2.tangents != null && tk2dSpriteDefinition2.tangents.Length > 0)
+		{
+			meshTangents = new Vector4[tk2dSpriteDefinition2.tangents.Length];
+		}
+		SetPositions(meshVertices, meshNormals, meshTangents);
+		SetColors(meshColors);
+		if (mesh == null)
+		{
+			mesh = new Mesh();
+			GetComponent<MeshFilter>().mesh = mesh;
+		}
+		mesh.Clear();
+		mesh.vertices = meshVertices;
+		mesh.normals = meshNormals;
+		mesh.tangents = meshTangents;
+		mesh.colors32 = meshColors;
+		mesh.uv = meshUVS;
+		mesh.triangles = tk2dSpriteDefinition2.indices;
+		UpdateMaterial();
+		CreateCollider();
+	}
 
-	4. This script is unnecessary.
+	protected override void UpdateGeometry()
+	{
+		UpdateGeometryImpl_();
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	protected override void UpdateVertices()
+	{
+		UpdateVerticesImpl_();
+	}
 
-	5. Script Content Level 0
+	protected void SetPositions()
+	{
+		tk2dSpriteDefinition tk2dSpriteDefinition2 = collection.spriteDefinitions[base.spriteId];
+		bool flag = false;
+		flag = collection.spriteDefinitions[base.spriteId].flipped != tk2dSpriteDefinition.FlipMode.None;
+		int numVertices = GetNumVertices();
+		float num = float.MaxValue;
+		float num2 = float.MaxValue;
+		if (!flag)
+		{
+			for (int i = 0; i < numVertices; i++)
+			{
+				float num3 = tk2dSpriteDefinition2.positions[i].y * _scale.y;
+				if (num3 < num)
+				{
+					num = num3;
+					num2 = tk2dSpriteDefinition2.uvs[i].y;
+				}
+			}
+			for (int j = 0; j < numVertices; j++)
+			{
+				float num4 = ((!mInverse) ? actualFract : (1f - actualFract));
+				float num5 = tk2dSpriteDefinition2.positions[j].y * _scale.y - num;
+				meshVertices[j].x = tk2dSpriteDefinition2.positions[j].x * _scale.x;
+				meshVertices[j].y = num + num5 * num4;
+				meshVertices[j].z = tk2dSpriteDefinition2.positions[j].z * _scale.z;
+				meshUVS[j].x = tk2dSpriteDefinition2.uvs[j].x;
+				num5 = tk2dSpriteDefinition2.uvs[j].y - num2;
+				meshUVS[j].y = num2 + num5 * num4;
+			}
+		}
+		else
+		{
+			for (int k = 0; k < numVertices; k++)
+			{
+				float num6 = tk2dSpriteDefinition2.positions[k].y * _scale.y;
+				if (num6 < num)
+				{
+					num = num6;
+					num2 = tk2dSpriteDefinition2.uvs[k].x;
+				}
+			}
+			for (int l = 0; l < numVertices; l++)
+			{
+				float num7 = ((!mInverse) ? actualFract : (1f - actualFract));
+				float num8 = tk2dSpriteDefinition2.positions[l].y * _scale.y - num;
+				meshVertices[l].x = tk2dSpriteDefinition2.positions[l].x * _scale.x;
+				meshVertices[l].y = num + num8 * num7;
+				meshVertices[l].z = tk2dSpriteDefinition2.positions[l].z * _scale.z;
+				meshUVS[l].y = tk2dSpriteDefinition2.uvs[l].y;
+				num8 = tk2dSpriteDefinition2.uvs[l].x - num2;
+				meshUVS[l].x = num2 + num8 * num7;
+			}
+		}
+		if (meshNormals.Length > 0)
+		{
+			for (int m = 0; m < numVertices; m++)
+			{
+				ref Vector3 reference = ref meshNormals[m];
+				reference = tk2dSpriteDefinition2.normals[m];
+			}
+		}
+		if (meshTangents.Length > 0)
+		{
+			for (int n = 0; n < numVertices; n++)
+			{
+				ref Vector4 reference2 = ref meshTangents[n];
+				reference2 = tk2dSpriteDefinition2.tangents[n];
+			}
+		}
+	}
 
-		AssetRipper was set to not load any script information.
+	protected void UpdateVerticesImpl_()
+	{
+		tk2dSpriteDefinition tk2dSpriteDefinition2 = collection.spriteDefinitions[base.spriteId];
+		if (tk2dSpriteDefinition2.normals.Length != meshNormals.Length)
+		{
+			meshNormals = ((tk2dSpriteDefinition2.normals == null || tk2dSpriteDefinition2.normals.Length <= 0) ? new Vector3[0] : new Vector3[tk2dSpriteDefinition2.normals.Length]);
+		}
+		if (tk2dSpriteDefinition2.tangents.Length != meshTangents.Length)
+		{
+			meshTangents = ((tk2dSpriteDefinition2.tangents == null || tk2dSpriteDefinition2.tangents.Length <= 0) ? new Vector4[0] : new Vector4[tk2dSpriteDefinition2.tangents.Length]);
+		}
+		SetPositions();
+		mesh.vertices = meshVertices;
+		mesh.normals = meshNormals;
+		mesh.tangents = meshTangents;
+		mesh.uv = meshUVS;
+		mesh.bounds = GetBounds();
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
-
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	protected void UpdateGeometryImpl_()
+	{
+		if (mesh == null)
+		{
+			Build();
+		}
+		tk2dSpriteDefinition tk2dSpriteDefinition2 = collection.spriteDefinitions[base.spriteId];
+		if (meshVertices == null || meshVertices.Length != tk2dSpriteDefinition2.positions.Length)
+		{
+			meshVertices = new Vector3[tk2dSpriteDefinition2.positions.Length];
+			meshNormals = ((tk2dSpriteDefinition2.normals == null || tk2dSpriteDefinition2.normals.Length <= 0) ? new Vector3[0] : new Vector3[tk2dSpriteDefinition2.normals.Length]);
+			meshTangents = ((tk2dSpriteDefinition2.tangents == null || tk2dSpriteDefinition2.tangents.Length <= 0) ? new Vector4[0] : new Vector4[tk2dSpriteDefinition2.tangents.Length]);
+			meshColors = new Color32[tk2dSpriteDefinition2.positions.Length];
+		}
+		SetPositions();
+		SetColors(meshColors);
+		mesh.Clear();
+		mesh.vertices = meshVertices;
+		mesh.normals = meshNormals;
+		mesh.tangents = meshTangents;
+		mesh.colors32 = meshColors;
+		mesh.uv = meshUVS;
+		mesh.bounds = GetBounds();
+		mesh.triangles = tk2dSpriteDefinition2.indices;
+	}
 }

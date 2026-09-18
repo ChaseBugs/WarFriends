@@ -1,63 +1,247 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Runtime.CompilerServices;
+using Boo.Lang;
 using UnityEngine;
 
+[Serializable]
 public class LandingSpotController : MonoBehaviour
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Serializable]
+	[CompilerGenerated]
+	internal sealed class _0024InstantLandOnStart_002432 : GenericGenerator<WaitForSeconds>
+	{
+		[Serializable]
+		[CompilerGenerated]
+		internal sealed class _0024 : GenericGeneratorEnumerator<WaitForSeconds>, IEnumerator
+		{
+			internal int _0024i_002433;
 
-	1. No dll files were provided to AssetRipper.
+			internal LandingSpot _0024spot_002434;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+			internal float _0024delay_002435;
 
-	2. Incorrect dll files were provided to AssetRipper.
+			internal LandingSpotController _0024self__002436;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+			public _0024(float delay, LandingSpotController self_)
+			{
+				_0024delay_002435 = delay;
+				_0024self__002436 = self_;
+			}
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+			public override bool MoveNext()
+			{
+				int result;
+				switch (_state)
+				{
+				default:
+					result = (Yield(2, new WaitForSeconds(_0024delay_002435)) ? 1 : 0);
+					break;
+				case 2:
+					for (_0024i_002433 = 0; _0024i_002433 < _0024self__002436._thisT.childCount; _0024i_002433++)
+					{
+						if ((bool)(LandingSpot)_0024self__002436._thisT.GetChild(_0024i_002433).GetComponent(typeof(LandingSpot)))
+						{
+							_0024spot_002434 = (LandingSpot)_0024self__002436._thisT.GetChild(_0024i_002433).GetComponent(typeof(LandingSpot));
+							_0024spot_002434.InstantLand();
+						}
+					}
+					YieldDefault(1);
+					goto case 1;
+				case 1:
+					result = 0;
+					break;
+				}
+				return (byte)result != 0;
+			}
+		}
 
-	3. Assembly Reconstruction has not been implemented.
+		internal float _0024delay_002437;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+		internal LandingSpotController _0024self__002438;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+		public _0024InstantLandOnStart_002432(float delay, LandingSpotController self_)
+		{
+			_0024delay_002437 = delay;
+			_0024self__002438 = self_;
+		}
 
-	4. This script is unnecessary.
+		public override IEnumerator<WaitForSeconds> GetEnumerator()
+		{
+			return new _0024(_0024delay_002437, _0024self__002438);
+		}
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	[Serializable]
+	[CompilerGenerated]
+	internal sealed class _0024InstantLand_002439 : GenericGenerator<WaitForSeconds>
+	{
+		[Serializable]
+		[CompilerGenerated]
+		internal sealed class _0024 : GenericGeneratorEnumerator<WaitForSeconds>, IEnumerator
+		{
+			internal int _0024i_002440;
 
-	5. Script Content Level 0
+			internal LandingSpot _0024spot_002441;
 
-		AssetRipper was set to not load any script information.
+			internal float _0024delay_002442;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+			internal LandingSpotController _0024self__002443;
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+			public _0024(float delay, LandingSpotController self_)
+			{
+				_0024delay_002442 = delay;
+				_0024self__002443 = self_;
+			}
 
-	7. An incorrect path was provided to AssetRipper.
+			public override bool MoveNext()
+			{
+				int result;
+				switch (_state)
+				{
+				default:
+					result = (Yield(2, new WaitForSeconds(_0024delay_002442)) ? 1 : 0);
+					break;
+				case 2:
+					for (_0024i_002440 = 0; _0024i_002440 < _0024self__002443._thisT.childCount; _0024i_002440++)
+					{
+						if ((bool)(LandingSpot)_0024self__002443._thisT.GetChild(_0024i_002440).GetComponent(typeof(LandingSpot)))
+						{
+							_0024spot_002441 = (LandingSpot)_0024self__002443._thisT.GetChild(_0024i_002440).GetComponent(typeof(LandingSpot));
+							_0024spot_002441.InstantLand();
+						}
+					}
+					YieldDefault(1);
+					goto case 1;
+				case 1:
+					result = 0;
+					break;
+				}
+				return (byte)result != 0;
+			}
+		}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+		internal float _0024delay_002444;
 
-	*/
+		internal LandingSpotController _0024self__002445;
+
+		public _0024InstantLand_002439(float delay, LandingSpotController self_)
+		{
+			_0024delay_002444 = delay;
+			_0024self__002445 = self_;
+		}
+
+		public override IEnumerator<WaitForSeconds> GetEnumerator()
+		{
+			return new _0024(_0024delay_002444, _0024self__002445);
+		}
+	}
+
+	public bool _randomRotate;
+
+	public Vector2 _autoCatchDelay;
+
+	public Vector2 _autoDismountDelay;
+
+	public float _maxBirdDistance;
+
+	public float _minBirdDistance;
+
+	public bool _takeClosest;
+
+	public FlockController _flock;
+
+	public bool _landOnStart;
+
+	public bool _soarLand;
+
+	public bool _onlyBirdsAbove;
+
+	public float _landingSpeedModifier;
+
+	public float _landingTurnSpeedModifier;
+
+	public Transform _featherPS;
+
+	public Transform _thisT;
+
+	public LandingSpotController()
+	{
+		_randomRotate = true;
+		_autoCatchDelay = new Vector2(10f, 20f);
+		_autoDismountDelay = new Vector2(10f, 20f);
+		_maxBirdDistance = 20f;
+		_minBirdDistance = 5f;
+		_soarLand = true;
+		_landingSpeedModifier = 0.5f;
+		_landingTurnSpeedModifier = 5f;
+	}
+
+	public virtual void Start()
+	{
+		if (!_thisT)
+		{
+			_thisT = transform;
+		}
+		if (!_flock)
+		{
+			_flock = (FlockController)UnityEngine.Object.FindObjectOfType(typeof(FlockController));
+			Debug.Log(this + " has no assigned FlockController, a random FlockController has been assigned");
+		}
+		if (_landOnStart)
+		{
+			StartCoroutine(InstantLandOnStart(0.1f));
+		}
+	}
+
+	public virtual void ScareAll()
+	{
+		for (int i = 0; i < _thisT.childCount; i++)
+		{
+			if ((bool)(LandingSpot)_thisT.GetChild(i).GetComponent(typeof(LandingSpot)))
+			{
+				LandingSpot landingSpot = (LandingSpot)_thisT.GetChild(i).GetComponent(typeof(LandingSpot));
+				StartCoroutine(landingSpot.ReleaseFlockChild(0f, 1f));
+			}
+		}
+	}
+
+	public virtual void ScareAll(float minDelay, float maxDelay)
+	{
+		for (int i = 0; i < _thisT.childCount; i++)
+		{
+			if ((bool)(LandingSpot)_thisT.GetChild(i).GetComponent(typeof(LandingSpot)))
+			{
+				LandingSpot landingSpot = (LandingSpot)_thisT.GetChild(i).GetComponent(typeof(LandingSpot));
+				StartCoroutine(landingSpot.ReleaseFlockChild(minDelay, maxDelay));
+			}
+		}
+	}
+
+	public virtual void LandAll()
+	{
+		for (int i = 0; i < _thisT.childCount; i++)
+		{
+			if ((bool)(LandingSpot)_thisT.GetChild(i).GetComponent(typeof(LandingSpot)))
+			{
+				LandingSpot landingSpot = (LandingSpot)_thisT.GetChild(i).GetComponent(typeof(LandingSpot));
+				StartCoroutine(landingSpot.GetFlockChild(0f, 2f));
+			}
+		}
+	}
+
+	public virtual IEnumerator InstantLandOnStart(float delay)
+	{
+		return new _0024InstantLandOnStart_002432(delay, this).GetEnumerator();
+	}
+
+	public virtual IEnumerator InstantLand(float delay)
+	{
+		return new _0024InstantLand_002439(delay, this).GetEnumerator();
+	}
+
+	public virtual void Main()
+	{
+	}
 }

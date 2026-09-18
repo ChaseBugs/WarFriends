@@ -1,63 +1,135 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Globalization;
+using System.Text.RegularExpressions;
+using FuseMisc;
+using Prime31;
 using UnityEngine;
 
 public class FuseSDK_Prime31_IAB : MonoBehaviour
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public bool logging;
 
-	1. No dll files were provided to AssetRipper.
+	public static bool debugOutput;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	private GooglePurchase savedPurchase;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	private int retryQueryAmount = 5;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	private void Start()
+	{
+		if (logging)
+		{
+			debugOutput = true;
+		}
+		RegisterActions();
+	}
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	private void RegisterActions()
+	{
+		GoogleIABManager.purchaseSucceededEvent += PurchaseSucceeded;
+		GoogleIABManager.purchaseFailedEvent += PurchaseFailed;
+	}
 
-	3. Assembly Reconstruction has not been implemented.
+	private void OnDestroy()
+	{
+		UnregisterActions();
+	}
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	private void UnregisterActions()
+	{
+		GoogleIABManager.purchaseSucceededEvent -= PurchaseSucceeded;
+		GoogleIABManager.purchaseFailedEvent -= PurchaseFailed;
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	private void PurchaseSucceeded(GooglePurchase purchase)
+	{
+		savedPurchase = purchase;
+		GoogleIABManager.queryInventorySucceededEvent += GetSkuInfo;
+		GoogleIABManager.queryInventoryFailedEvent += GetSkuFailed;
+		StartCoroutine(GetProductInfo(0.5f));
+	}
 
-	4. This script is unnecessary.
+	private void PurchaseFailed(string error, int response)
+	{
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private IEnumerator GetProductInfo(float delay)
+	{
+		yield return new WaitForSeconds(delay);
+		GoogleIAB.queryInventory(new string[1] { savedPurchase.productId });
+	}
 
-	5. Script Content Level 0
+	private void GetSkuInfo(List<GooglePurchase> purchaseInfo, List<GoogleSkuInfo> skuInfo)
+	{
+		int i;
+		for (i = 0; i < purchaseInfo.Count && savedPurchase != purchaseInfo[i]; i++)
+		{
+		}
+		if (savedPurchase == null || i >= purchaseInfo.Count || i >= skuInfo.Count)
+		{
+			GetSkuFailed("GetSkuInfo succeeded but productId " + savedPurchase.productId + " was not in the list of products.");
+			return;
+		}
+		GoogleIABManager.queryInventorySucceededEvent -= GetSkuInfo;
+		GoogleIABManager.queryInventoryFailedEvent -= GetSkuFailed;
+		string price = skuInfo[i].price;
+		double num = 0.0;
+		try
+		{
+			num = double.Parse(price, NumberStyles.Currency);
+		}
+		catch
+		{
+			Regex regex = new Regex("\\D*(?<num>[\\d\\s\\.,]+?)(?<dec>([\\.,]\\s*\\d?\\d?)?)\\D*$");
+			Match match = regex.Match(price);
+			if (match.Success)
+			{
+				string text = string.Empty;
+				try
+				{
+					string text2 = Regex.Replace(match.Groups["dec"].Value, "\\s", string.Empty);
+					text = Regex.Replace(match.Groups["num"].Value, "[^\\d]", string.Empty) + text2;
+					num = double.Parse(text, NumberStyles.Currency);
+					if (num % 1.0 == 0.0 && text2.Length > 1)
+					{
+						num /= 100.0;
+					}
+				}
+				catch
+				{
+					Debug.LogError("FuseSDK_Prime31_IAB::GetSkuInfo: Error parsing " + price + " >> Unable to parse " + text);
+				}
+			}
+			else
+			{
+				Debug.LogError("FuseSDK_Prime31_IAB::GetSkuInfo: Error parsing " + price + " >> String did not match regex");
+			}
+		}
+		GooglePurchase googlePurchase = savedPurchase;
+		FuseSDK.RegisterAndroidInAppPurchase(purchaseTime: new DateTime(googlePurchase.purchaseTime * 10000, DateTimeKind.Utc), purchaseState: (IAPState)googlePurchase.purchaseState, purchaseToken: googlePurchase.purchaseToken, productId: googlePurchase.productId, orderId: googlePurchase.orderId, developerPayload: googlePurchase.developerPayload, price: num, currency: null);
+		savedPurchase = null;
+	}
 
-		AssetRipper was set to not load any script information.
+	private void GetSkuFailed(string error)
+	{
+		retryQueryAmount--;
+		if (retryQueryAmount > 0)
+		{
+			StartCoroutine(GetProductInfo(0.5f));
+			return;
+		}
+		GoogleIABManager.queryInventorySucceededEvent -= GetSkuInfo;
+		GoogleIABManager.queryInventoryFailedEvent -= GetSkuFailed;
+		Debug.LogError("FuseSDK_Prime31_IAB: GoogleIAB.queryInventory failed with message: " + error);
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
-
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public static void FuseLog(string str)
+	{
+		if (debugOutput)
+		{
+			Debug.Log("FuseSDK: " + str);
+		}
+	}
 }

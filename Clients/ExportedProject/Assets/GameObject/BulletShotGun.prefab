@@ -39,6 +39,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fe5ad847f75dfecbebd0b6b89c63b39a, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  isActivated: 0
+  ammoDamageAmount: 40
+  isFake: 0
+  weapon: {fileID: 0}
+  type: 0
+  isNetworkCopy: 0
+  speed: 1
+  distanceToCheck: 1.5
+  trailSize: 1
+  isStatic: 0
+  fast: 0
+  bulletPrefab: {fileID: 11409266, guid: 855689762fa6e774aaee190652b08c6f, type: 2}
 --- !u!1001 &100100000
 Prefab:
   serializedVersion: 2

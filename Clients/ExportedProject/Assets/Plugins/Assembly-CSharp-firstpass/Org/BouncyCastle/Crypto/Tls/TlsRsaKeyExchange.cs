@@ -1,66 +1,117 @@
-using UnityEngine;
+using System;
+using System.Collections;
+using System.IO;
+using Org.BouncyCastle.Asn1.X509;
+using Org.BouncyCastle.Crypto.Parameters;
+using Org.BouncyCastle.Security;
+using Org.BouncyCastle.Utilities.IO;
 
 namespace Org.BouncyCastle.Crypto.Tls
 {
-	public class TlsRsaKeyExchange : MonoBehaviour
+public class TlsRsaKeyExchange : AbstractTlsKeyExchange
+{
+	protected AsymmetricKeyParameter mServerPublicKey;
+
+	protected RsaKeyParameters mRsaServerPublicKey;
+
+	protected TlsEncryptionCredentials mServerCredentials;
+
+	protected byte[] mPremasterSecret;
+
+	public TlsRsaKeyExchange(IList supportedSignatureAlgorithms)
+		: base(1, supportedSignatureAlgorithms)
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
 	}
+
+	public override void SkipServerCredentials()
+	{
+		throw new TlsFatalAlert(10);
+	}
+
+	public override void ProcessServerCredentials(TlsCredentials serverCredentials)
+	{
+		if (!(serverCredentials is TlsEncryptionCredentials))
+		{
+			throw new TlsFatalAlert(80);
+		}
+		ProcessServerCertificate(serverCredentials.Certificate);
+		mServerCredentials = (TlsEncryptionCredentials)serverCredentials;
+	}
+
+	public override void ProcessServerCertificate(Certificate serverCertificate)
+	{
+		if (serverCertificate.IsEmpty)
+		{
+			throw new TlsFatalAlert(42);
+		}
+		X509CertificateStructure certificateAt = serverCertificate.GetCertificateAt(0);
+		SubjectPublicKeyInfo subjectPublicKeyInfo = certificateAt.SubjectPublicKeyInfo;
+		try
+		{
+			mServerPublicKey = PublicKeyFactory.CreateKey(subjectPublicKeyInfo);
+		}
+		catch (Exception alertCause)
+		{
+			throw new TlsFatalAlert(43, alertCause);
+		}
+		if (mServerPublicKey.IsPrivate)
+		{
+			throw new TlsFatalAlert(80);
+		}
+		mRsaServerPublicKey = ValidateRsaPublicKey((RsaKeyParameters)mServerPublicKey);
+		TlsUtilities.ValidateKeyUsage(certificateAt, 32);
+		base.ProcessServerCertificate(serverCertificate);
+	}
+
+	public override void ValidateCertificateRequest(CertificateRequest certificateRequest)
+	{
+		byte[] certificateTypes = certificateRequest.CertificateTypes;
+		foreach (byte b in certificateTypes)
+		{
+			if (b != 1 && b != 2 && b != 64)
+			{
+				throw new TlsFatalAlert(47);
+			}
+		}
+	}
+
+	public override void ProcessClientCredentials(TlsCredentials clientCredentials)
+	{
+		if (!(clientCredentials is TlsSignerCredentials))
+		{
+			throw new TlsFatalAlert(80);
+		}
+	}
+
+	public override void GenerateClientKeyExchange(Stream output)
+	{
+		mPremasterSecret = TlsRsaUtilities.GenerateEncryptedPreMasterSecret(mContext, mRsaServerPublicKey, output);
+	}
+
+	public override void ProcessClientKeyExchange(Stream input)
+	{
+		byte[] encryptedPreMasterSecret = ((!TlsUtilities.IsSsl(mContext)) ? TlsUtilities.ReadOpaque16(input) : Streams.ReadAll(input));
+		mPremasterSecret = mServerCredentials.DecryptPreMasterSecret(encryptedPreMasterSecret);
+	}
+
+	public override byte[] GeneratePremasterSecret()
+	{
+		if (mPremasterSecret == null)
+		{
+			throw new TlsFatalAlert(80);
+		}
+		byte[] result = mPremasterSecret;
+		mPremasterSecret = null;
+		return result;
+	}
+
+	protected virtual RsaKeyParameters ValidateRsaPublicKey(RsaKeyParameters key)
+	{
+		if (!key.Exponent.IsProbablePrime(2))
+		{
+			throw new TlsFatalAlert(47);
+		}
+		return key;
+	}
+}
 }

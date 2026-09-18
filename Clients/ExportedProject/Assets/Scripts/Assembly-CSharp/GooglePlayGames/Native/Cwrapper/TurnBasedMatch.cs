@@ -1,66 +1,85 @@
-using UnityEngine;
+using System;
+using System.Runtime.InteropServices;
+using System.Text;
 
 namespace GooglePlayGames.Native.Cwrapper
 {
-	public class TurnBasedMatch : MonoBehaviour
-	{
-		/*
-		Dummy class. This could have happened for several reasons:
+internal static class TurnBasedMatch
+{
+	[DllImport("gpg")]
+	internal static extern uint TurnBasedMatch_AutomatchingSlotsAvailable(HandleRef self);
 
-		1. No dll files were provided to AssetRipper.
+	[DllImport("gpg")]
+	internal static extern ulong TurnBasedMatch_CreationTime(HandleRef self);
 
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
+	[DllImport("gpg")]
+	internal static extern UIntPtr TurnBasedMatch_Participants_Length(HandleRef self);
 
-		2. Incorrect dll files were provided to AssetRipper.
+	[DllImport("gpg")]
+	internal static extern IntPtr TurnBasedMatch_Participants_GetElement(HandleRef self, UIntPtr index);
 
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
+	[DllImport("gpg")]
+	internal static extern uint TurnBasedMatch_Version(HandleRef self);
 
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	[DllImport("gpg")]
+	internal static extern IntPtr TurnBasedMatch_ParticipantResults(HandleRef self);
 
-		3. Assembly Reconstruction has not been implemented.
+	[DllImport("gpg")]
+	internal static extern Types.MatchStatus TurnBasedMatch_Status(HandleRef self);
 
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
+	[DllImport("gpg")]
+	internal static extern UIntPtr TurnBasedMatch_Description(HandleRef self, StringBuilder out_arg, UIntPtr out_size);
 
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
+	[DllImport("gpg")]
+	internal static extern IntPtr TurnBasedMatch_PendingParticipant(HandleRef self);
 
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
+	[DllImport("gpg")]
+	internal static extern uint TurnBasedMatch_Variant(HandleRef self);
 
-		5. Script Content Level 0
+	[DllImport("gpg")]
+	[return: MarshalAs(UnmanagedType.I1)]
+	internal static extern bool TurnBasedMatch_HasPreviousMatchData(HandleRef self);
 
-			AssetRipper was set to not load any script information.
+	[DllImport("gpg")]
+	internal static extern UIntPtr TurnBasedMatch_Data(HandleRef self, [In][Out] byte[] out_arg, UIntPtr out_size);
 
-		6. Cpp2IL failed to decompile Il2Cpp data
+	[DllImport("gpg")]
+	internal static extern IntPtr TurnBasedMatch_LastUpdatingParticipant(HandleRef self);
 
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	[DllImport("gpg")]
+	[return: MarshalAs(UnmanagedType.I1)]
+	internal static extern bool TurnBasedMatch_HasData(HandleRef self);
 
-		7. An incorrect path was provided to AssetRipper.
+	[DllImport("gpg")]
+	internal static extern IntPtr TurnBasedMatch_SuggestedNextParticipant(HandleRef self);
 
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
+	[DllImport("gpg")]
+	internal static extern UIntPtr TurnBasedMatch_PreviousMatchData(HandleRef self, [In][Out] byte[] out_arg, UIntPtr out_size);
 
-		*/
-	}
+	[DllImport("gpg")]
+	internal static extern ulong TurnBasedMatch_LastUpdateTime(HandleRef self);
+
+	[DllImport("gpg")]
+	internal static extern UIntPtr TurnBasedMatch_RematchId(HandleRef self, StringBuilder out_arg, UIntPtr out_size);
+
+	[DllImport("gpg")]
+	internal static extern uint TurnBasedMatch_Number(HandleRef self);
+
+	[DllImport("gpg")]
+	[return: MarshalAs(UnmanagedType.I1)]
+	internal static extern bool TurnBasedMatch_HasRematchId(HandleRef self);
+
+	[DllImport("gpg")]
+	[return: MarshalAs(UnmanagedType.I1)]
+	internal static extern bool TurnBasedMatch_Valid(HandleRef self);
+
+	[DllImport("gpg")]
+	internal static extern IntPtr TurnBasedMatch_CreatingParticipant(HandleRef self);
+
+	[DllImport("gpg")]
+	internal static extern UIntPtr TurnBasedMatch_Id(HandleRef self, StringBuilder out_arg, UIntPtr out_size);
+
+	[DllImport("gpg")]
+	internal static extern void TurnBasedMatch_Dispose(HandleRef self);
+}
 }

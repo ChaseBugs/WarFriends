@@ -1,63 +1,149 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
-public class RibbonGuiElement : MonoBehaviour
+public class RibbonGuiElement : GuiElementSingle<RibbonGuiElement>
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public GameObject ribbonParent;
 
-	1. No dll files were provided to AssetRipper.
+	public UISprite ribbonIcon;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public UISprite ribbonIconBg;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public UILabel ribbonName;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public UILabel labelNewRibbon;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public UILabel score;
 
-	3. Assembly Reconstruction has not been implemented.
+	public UILabel scoreAdded;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	private TweenAnimator mAnimator;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public static Queue<RibbonManager.RibbonItemDefinition> events = new Queue<RibbonManager.RibbonItemDefinition>();
 
-	4. This script is unnecessary.
+	private bool mIsAnimationPlaying;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private bool mStopped;
 
-	5. Script Content Level 0
+	private UIPanel mPanel;
 
-		AssetRipper was set to not load any script information.
+	public override void InitControls()
+	{
+		events = new Queue<RibbonManager.RibbonItemDefinition>();
+		mAnimator = base.gameObject.AddComponent<TweenAnimator>();
+		mAnimator.allTweens = new List<TweenAnimator.TweenRecord>();
+		mAnimator.GenerateTweens();
+		AddAnimations();
+		Singleton<GameController>.instance.GameEnded += InstanceOnGameEnded;
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	private void InstanceOnGameEnded(GameController.GameEndReason gameEndReason)
+	{
+		mAnimator.FinishTweens();
+		events = new Queue<RibbonManager.RibbonItemDefinition>();
+		mIsAnimationPlaying = false;
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	private void AddAnimations()
+	{
+		float time = 0.4f;
+		float delay = 0.5f;
+		mAnimator.AddTween(15, TweenAnimator.TweenType.Alpha, score.gameObject, 0.2f, 0f, 0f);
+		mAnimator.AddTween(16, TweenAnimator.TweenType.Alpha, scoreAdded.gameObject, 0.2f, 0f, 0f);
+		mAnimator.AddTween(17, TweenAnimator.TweenType.Alpha, score.gameObject, 0.2f, 1f, 0f, 14);
+		mAnimator.AddTween(from: new Vector3(0f, 70f, -15f), id: 0, tweenType: TweenAnimator.TweenType.Position, tweenTarget: ribbonParent.gameObject, time: time, to: new Vector3(0f, -186f, -15f), delay: 0f);
+		time = 0.2f;
+		mAnimator.AddTween(1, TweenAnimator.TweenType.Position, ribbonParent.gameObject, time, new Vector3(0f, -160f, -15f), 0f, 0);
+		mAnimator.AddTween(4, TweenAnimator.TweenType.Position, ribbonParent.gameObject, 0.4f, new Vector3(0f, 230f, -15f), delay, 12);
+		time = 0.4f;
+		mAnimator.AddTween(from: new Vector3(0f, -433f, -2f), id: 5, tweenType: TweenAnimator.TweenType.Position, tweenTarget: labelNewRibbon.gameObject, time: time, to: new Vector3(0f, -297f, -2f), delay: 0f);
+		time = 0.2f;
+		mAnimator.AddTween(6, TweenAnimator.TweenType.Position, labelNewRibbon.gameObject, time, new Vector3(0f, -307f, -2f), 0f, 5);
+		mAnimator.AddTween(7, TweenAnimator.TweenType.Alpha, labelNewRibbon.gameObject, 0.4f, 1f, 0f);
+		mAnimator.AddTween(8, TweenAnimator.TweenType.Alpha, labelNewRibbon.gameObject, 0.08f, 1f, 0f, 6, 0f, UITweener.Method.EaseInOut, UITweener.Style.PingPong, 5);
+		mAnimator.AddTween(9, TweenAnimator.TweenType.Alpha, labelNewRibbon.gameObject, time, 0f, 0f, 8);
+		mAnimator.AddTween(10, TweenAnimator.TweenType.Position, labelNewRibbon.gameObject, 0.4f, new Vector3(350f, -307f, -2f), 0f, 8);
+		mAnimator.AddTween(11, TweenAnimator.TweenType.Alpha, ribbonName.gameObject, time, 1f, 0f, 8);
+		mAnimator.AddTween(from: new Vector3(-350f, -307f, -2f), id: 12, tweenType: TweenAnimator.TweenType.Position, tweenTarget: ribbonName.gameObject, time: 0.4f, to: new Vector3(0f, -307f, -2f), delay: 0f, playAfterIdFinished: 8);
+		time = 0.4f;
+		mAnimator.AddTween(13, TweenAnimator.TweenType.Position, ribbonName.gameObject, 0.4f, new Vector3(0f, -433f, -2f), delay, 12);
+		time = 0.2f;
+		mAnimator.AddTween(14, TweenAnimator.TweenType.Alpha, ribbonName.gameObject, time, 0f, delay, 12);
+		TweenAnimator tweenAnimator = mAnimator;
+		tweenAnimator.TweenFinished = (Action<int>)Delegate.Combine(tweenAnimator.TweenFinished, new Action<int>(TweenFinished));
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	private void TweenFinished(int obj)
+	{
+		if (obj == 17)
+		{
+			mIsAnimationPlaying = false;
+		}
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	public void Stop()
+	{
+		if (mIsAnimationPlaying)
+		{
+			mAnimator.FinishTweens();
+			mIsAnimationPlaying = false;
+		}
+		mStopped = true;
+	}
 
-	*/
+	public void Resume()
+	{
+		mStopped = false;
+		mIsAnimationPlaying = false;
+	}
+
+	public override void InitGUIValues()
+	{
+		PrepareAnimation();
+	}
+
+	private void PrepareAnimation()
+	{
+		TweenPosition.Begin(ribbonParent, 0f, new Vector3(0f, 230f, -15f));
+		ribbonName.alpha = 0f;
+		labelNewRibbon.alpha = 0f;
+	}
+
+	protected override void Awake()
+	{
+		base.Awake();
+		mPanel = GetComponent<UIPanel>();
+	}
+
+	protected override void Update()
+	{
+		base.Update();
+		if (events.Count > 0 && !mIsAnimationPlaying && !mStopped)
+		{
+			RibbonManager.RibbonItemDefinition ribbonItemDefinition = events.Peek();
+			events.Dequeue();
+			ribbonIcon.spriteName = ribbonItemDefinition.iconName;
+			ribbonIcon.MakePixelPerfect();
+			ribbonIconBg.spriteName = ribbonItemDefinition.iconBgName;
+			ribbonName.text = ribbonItemDefinition.name;
+			NewRibbon();
+			mIsAnimationPlaying = true;
+		}
+		if (mIsAnimationPlaying && mPanel != null)
+		{
+			mPanel.alpha1 = ((!Singleton<SniperScope>.instance.showed) ? 1f : 0.3f);
+		}
+		if (DebugSettings.debugEnabled && Input.GetKeyDown(KeyCode.Semicolon))
+		{
+			events.Enqueue(Singleton<RibbonManager>.instance.ribbons[0]);
+		}
+	}
+
+	public void NewRibbon()
+	{
+		PrepareAnimation();
+		mAnimator.PlayTweens();
+		SoundsManager.Instance.PlaySound(SoundsManager.SoundsEnum.Ribbon);
+	}
 }

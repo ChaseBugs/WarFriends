@@ -1,63 +1,317 @@
+using System;
+using CodeStage.AntiCheat.ObscuredTypes;
 using UnityEngine;
 
-public class Wallet : MonoBehaviour
+public class Wallet : Singleton<Wallet>
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	private ObscuredLong mGold;
 
-	1. No dll files were provided to AssetRipper.
+	private ObscuredLong mTickets;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	private ObscuredLong mScraps;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	private ObscuredLong mWarbucks;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public long gold
+	{
+		get
+		{
+			return mGold;
+		}
+		private set
+		{
+			mGold = value;
+			Singleton<EventTrackingManager>.instance.fuseboxxService.RegisterCurrency(FuseboxxService.Currency.Gold, mGold);
+		}
+	}
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public long tickets
+	{
+		get
+		{
+			return mTickets;
+		}
+		private set
+		{
+			mTickets = value;
+		}
+	}
 
-	3. Assembly Reconstruction has not been implemented.
+	public long scraps
+	{
+		get
+		{
+			return mScraps;
+		}
+		private set
+		{
+			mScraps = value;
+		}
+	}
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public long warBucks
+	{
+		get
+		{
+			return mWarbucks;
+		}
+		private set
+		{
+			mWarbucks = value;
+			Singleton<EventTrackingManager>.instance.fuseboxxService.RegisterCurrency(FuseboxxService.Currency.Warbucks, mWarbucks);
+		}
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public long warbucksAfterGame => (Singleton<ServerResultsCache>.instance.lastGameReward == null) ? warBucks : (warBucks - Singleton<ServerResultsCache>.instance.lastGameReward.GetWbTotal());
 
-	4. This script is unnecessary.
+	public long goldAfterGame => (Singleton<ServerResultsCache>.instance.lastGameReward == null) ? gold : (gold - Singleton<ServerResultsCache>.instance.lastGameReward.GetGoldTotal());
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public long warbucksAfterArena => (WarArena.instance.lastLootboxReward == null) ? warBucks : (warBucks - WarArena.instance.lastLootboxReward.warbucks);
 
-	5. Script Content Level 0
+	public long goldAfterArena => (WarArena.instance.lastLootboxReward == null) ? gold : (gold - WarArena.instance.lastLootboxReward.gold);
 
-		AssetRipper was set to not load any script information.
+	public event Action<long, long> WarbucksChanged;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public event Action<long, long> GoldChanged;
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public event Action<long, long> TicketsChanged;
 
-	7. An incorrect path was provided to AssetRipper.
+	public event Action<long, long> ScrapsChanged;
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	public bool CanBuyGold(int gold)
+	{
+		return this.gold - gold >= 0;
+	}
 
-	*/
+	public bool CanBuyW(int warBucks)
+	{
+		return this.warBucks - warBucks >= 0;
+	}
+
+	public bool CanBuyTickets(int tickets)
+	{
+		return this.tickets - tickets >= 0;
+	}
+
+	public bool CanBuyScraps(int scraps)
+	{
+		return this.scraps - scraps >= 0;
+	}
+
+	internal void Init(long initGold, long initWarBucks)
+	{
+		Debug.Log($"WALLET - initialization - GOLD {MiscTools.DifferenceString(gold, initGold)} WB {MiscTools.DifferenceString(warBucks, initWarBucks)}");
+		long arg = initGold - gold;
+		long arg2 = warBucks - initWarBucks;
+		gold = initGold;
+		warBucks = initWarBucks;
+		if (this.GoldChanged != null)
+		{
+			this.GoldChanged(gold, arg);
+		}
+		if (this.WarbucksChanged != null)
+		{
+			this.WarbucksChanged(warBucks, arg2);
+		}
+	}
+
+	internal void InitWarBucks(long initWarBucks)
+	{
+		Debug.Log($"WALLET - initialization WB {MiscTools.DifferenceString(warBucks, initWarBucks)}");
+		long arg = warBucks - initWarBucks;
+		warBucks = initWarBucks;
+		if (this.WarbucksChanged != null)
+		{
+			this.WarbucksChanged(warBucks, arg);
+		}
+	}
+
+	internal void InitGold(long initGold)
+	{
+		Debug.Log($"WALLET - initialization GOLD {MiscTools.DifferenceString(gold, initGold)}");
+		long arg = initGold - gold;
+		gold = initGold;
+		if (this.GoldChanged != null)
+		{
+			this.GoldChanged(gold, arg);
+		}
+	}
+
+	public void InitTickets(long newTickets)
+	{
+		long arg = newTickets - tickets;
+		tickets = newTickets;
+		if (this.TicketsChanged != null)
+		{
+			this.TicketsChanged(newTickets, arg);
+		}
+	}
+
+	public void InitScraps(long newScraps)
+	{
+		long arg = newScraps - scraps;
+		scraps = newScraps;
+		if (this.ScrapsChanged != null)
+		{
+			this.ScrapsChanged(newScraps, arg);
+		}
+	}
+
+	internal void AddMoneyReward(long goldAmount, long warbucksAmount)
+	{
+		Debug.Log($"WALLET - money reward - GOLD {MiscTools.DifferenceString(gold, gold + goldAmount)} WB {MiscTools.DifferenceString(warBucks, warBucks + warbucksAmount)}");
+		gold += goldAmount;
+		warBucks += warbucksAmount;
+		if (this.GoldChanged != null)
+		{
+			this.GoldChanged(gold, goldAmount);
+		}
+		if (this.WarbucksChanged != null)
+		{
+			this.WarbucksChanged(warBucks, warbucksAmount);
+		}
+	}
+
+	public void AddTickets(long amount)
+	{
+		tickets += amount;
+		if (this.TicketsChanged != null)
+		{
+			this.TicketsChanged(tickets, amount);
+		}
+	}
+
+	public void AddScraps(long amount)
+	{
+		if (!PlayerAnalytics.instance.data.elitesShown)
+		{
+			Singleton<MessageManager>.instance.AddMessage(new ElitePerkTutorialMessage());
+			ElitesFeatureShownRequest.Send();
+		}
+		scraps += amount;
+		if (this.ScrapsChanged != null)
+		{
+			this.ScrapsChanged(scraps, amount);
+		}
+	}
+
+	internal void AddGoldBought(long goldAmount)
+	{
+		Debug.Log($"WALLET - bought GOLD {MiscTools.DifferenceString(gold, gold + goldAmount)}");
+		SoundsManager.Instance.PlaySound(SoundsManager.SoundsEnum.CoinPurchase);
+		gold += goldAmount;
+		if (this.GoldChanged != null)
+		{
+			this.GoldChanged(gold, goldAmount);
+		}
+	}
+
+	internal void AddGoldReward(long goldAmount, bool animate = true)
+	{
+		Debug.Log($"WALLET - reward GOLD {MiscTools.DifferenceString(gold, gold + goldAmount)} animate:{animate}");
+		gold += goldAmount;
+		if (animate && this.GoldChanged != null)
+		{
+			this.GoldChanged(gold, goldAmount);
+		}
+	}
+
+	internal void GoldSpent(long goldAmount)
+	{
+		Debug.Log($"WALLET - spent GOLD {MiscTools.DifferenceString(gold, gold - goldAmount)}");
+		gold -= goldAmount;
+		if (this.GoldChanged != null)
+		{
+			this.GoldChanged(gold, -goldAmount);
+		}
+	}
+
+	internal void GoldSpentFake(long goldAmount)
+	{
+		Debug.Log($"WALLET - fake spent GOLD {MiscTools.DifferenceString(gold, gold - goldAmount)}");
+		gold -= goldAmount;
+		if (this.GoldChanged != null)
+		{
+			this.GoldChanged(gold, -goldAmount);
+		}
+	}
+
+	internal void AddWarbucksBought(long amount)
+	{
+		Debug.Log($"WALLET - bought WB {MiscTools.DifferenceString(warBucks, warBucks + amount)}");
+		SoundsManager.Instance.PlaySound(SoundsManager.SoundsEnum.CoinPurchase);
+		warBucks += amount;
+		if (this.WarbucksChanged != null)
+		{
+			this.WarbucksChanged(warBucks, amount);
+		}
+	}
+
+	internal void AddWarBucksReward(long amount, bool animate = true)
+	{
+		Debug.Log($"WALLET - reward WB {MiscTools.DifferenceString(warBucks, warBucks + amount)} animate:{animate}");
+		warBucks += amount;
+		if (animate && this.WarbucksChanged != null)
+		{
+			this.WarbucksChanged(warBucks, amount);
+		}
+	}
+
+	internal void WarBucksSpent(long amount)
+	{
+		Debug.Log($"WALLET - spent WB {MiscTools.DifferenceString(warBucks, warBucks - amount)}");
+		warBucks -= amount;
+		if (this.WarbucksChanged != null)
+		{
+			this.WarbucksChanged(warBucks, -amount);
+		}
+	}
+
+	internal void WarBucksSpentFake(long amount)
+	{
+		Debug.Log($"WALLET - fake spent WB {MiscTools.DifferenceString(warBucks, warBucks - amount)}");
+		warBucks -= amount;
+		if (this.WarbucksChanged != null)
+		{
+			this.WarbucksChanged(warBucks, -amount);
+		}
+	}
+
+	public void TicketsSpent(long amount)
+	{
+		Debug.Log($"WALLET - spent tickets {MiscTools.DifferenceString(tickets, tickets - amount)}");
+		tickets -= amount;
+		if (this.TicketsChanged != null)
+		{
+			this.TicketsChanged(tickets, -amount);
+		}
+	}
+
+	public void ScrapsSpent(long amount)
+	{
+		Debug.Log($"WALLET - spent scraps {MiscTools.DifferenceString(scraps, scraps - amount)}");
+		scraps -= amount;
+		if (this.ScrapsChanged != null)
+		{
+			this.ScrapsChanged(scraps, -amount);
+		}
+	}
+
+	public void SetRewardForTutorial(int gameWarbugs, int gameGold)
+	{
+		int num = (LevelManager.instance.isLevelUp ? LevelManager.instance.currentLevel.warbucks : 0);
+		gameWarbugs += num;
+		warBucks += gameWarbugs;
+		int num2 = (LevelManager.instance.isLevelUp ? LevelManager.instance.currentLevel.golds : 0);
+		gameGold += num2;
+		gold += gameGold;
+		Singleton<ServerResultsCache>.instance.lastGameReward = new DatabaseGameReward(Singleton<ScoreManager>.instance.score, gameWarbugs, gameGold);
+		StatsManager.instance.winStreak = new WinStreakManager.WinStreak(0, 0);
+	}
+
+	public void SetTutorialCurrency(int warbucks, int goldAmount)
+	{
+		gold = goldAmount;
+		warBucks = warbucks;
+	}
 }

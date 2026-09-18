@@ -1,63 +1,183 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
-public class InventoryGuiElement : MonoBehaviour
+public class InventoryGuiElement : GuiElementSingle<InventoryGuiElement>
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Header("Tutorial Hint")]
+	public InventoryItem prefab;
 
-	1. No dll files were provided to AssetRipper.
+	[HideInInspector]
+	public List<InventoryItem> invItems = new List<InventoryItem>();
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	[Header("Reloading")]
+	public UISprite progress;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public GameObject reloading;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public UILabel realoadingText;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	[Header("Out of Ammo")]
+	public GameObject autOfAmmo;
 
-	3. Assembly Reconstruction has not been implemented.
+	public UILabel autOfAmmoText;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	[Header("Tutorial Hint")]
+	public InventoryHintText hintText;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	private bool mWeaponIsReloading;
 
-	4. This script is unnecessary.
+	private bool mWeaponOutOfAmmo;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private bool mPlayNextShotProgres;
 
-	5. Script Content Level 0
+	public override void InitControls()
+	{
+	}
 
-		AssetRipper was set to not load any script information.
+	public override void InitGUIValues()
+	{
+		HideReloadAnimation();
+		HideWeaponOutofAmmo();
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public override void InitEvents()
+	{
+		base.InitEvents();
+		Singleton<GameController>.instance.GameStarted += InstanceOnAfterGameStarted;
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	private void InstanceOnAfterGameStarted()
+	{
+		WeaponsChanged();
+		mWeaponIsReloading = false;
+		mWeaponOutOfAmmo = false;
+		HideReloadAnimation();
+		HideWeaponOutofAmmo();
+		hintText.Activate(shownContent: false);
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	private void StartReloadingAnimation()
+	{
+		TweenAlphaHider tweenAlphaHider = TweenAlphaHider.Begin(reloading, 0.3f, 1f);
+		tweenAlphaHider.onFinished = (UITweener.OnFinished)Delegate.Combine(tweenAlphaHider.onFinished, (UITweener.OnFinished)delegate
+		{
+			TweenAlpha tweenAlpha = TweenAlpha.Begin(realoadingText.gameObject, 0.2f, 1f, 0f);
+			tweenAlpha.style = UITweener.Style.PingPong;
+		});
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	private void StartAoutOfAmmoAnimation()
+	{
+		autOfAmmo.gameObject.SetActive(value: true);
+		TweenAlpha tweenAlpha = TweenAlpha.Begin(autOfAmmo, 0.3f, 1f);
+		tweenAlpha.onFinished = (UITweener.OnFinished)Delegate.Combine(tweenAlpha.onFinished, (UITweener.OnFinished)delegate
+		{
+			TweenAlpha tweenAlpha2 = TweenAlpha.Begin(autOfAmmoText.gameObject, 0.2f, 1f, 0f);
+			tweenAlpha2.style = UITweener.Style.PingPong;
+		});
+	}
 
-	*/
+	public void PlayWeaponReloading(PlayerWeapon weapon)
+	{
+		if (!weapon.weapon.outOfAmmo)
+		{
+			mPlayNextShotProgres = true;
+		}
+	}
+
+	protected override void Update()
+	{
+		base.Update();
+		Weapon weapon = PlayerController.currentPlayer.weaponInventory.currentWeapon.weapon;
+		bool flag = weapon.isReloading && weapon.reloadableWeapon;
+		if (mPlayNextShotProgres)
+		{
+			flag = weapon.nextShootProgress < 0.99f;
+		}
+		if (flag != mWeaponIsReloading)
+		{
+			if (flag)
+			{
+				StartReloadingAnimation();
+			}
+			else
+			{
+				HideReloadAnimation();
+			}
+			mWeaponIsReloading = flag;
+		}
+		bool outOfAmmo = weapon.outOfAmmo;
+		if (mWeaponOutOfAmmo != outOfAmmo)
+		{
+			if (outOfAmmo)
+			{
+				StartAoutOfAmmoAnimation();
+			}
+			else
+			{
+				HideWeaponOutofAmmo();
+			}
+			mWeaponOutOfAmmo = outOfAmmo;
+		}
+		progress.fillAmount = ((!mPlayNextShotProgres) ? weapon.reloadProgress : weapon.nextShootProgress);
+	}
+
+	private void HideReloadAnimation()
+	{
+		TweenAlphaHider tweenAlphaHider = TweenAlphaHider.Begin(reloading, 0.2f, 0f);
+		tweenAlphaHider.onFinished = (UITweener.OnFinished)Delegate.Combine(tweenAlphaHider.onFinished, (UITweener.OnFinished)delegate
+		{
+			TweenAlpha.Begin(realoadingText.gameObject, 0f, 0f, 0f);
+		});
+		mPlayNextShotProgres = false;
+	}
+
+	private void HideWeaponOutofAmmo()
+	{
+		autOfAmmo.gameObject.SetActive(value: false);
+	}
+
+	public void WeaponsChanged()
+	{
+		invItems = new List<InventoryItem>();
+		WeaponInventory weaponInventory = PlayerController.currentPlayer.weaponInventory;
+		Singleton<GuiManager>.instance.objectPool.FreeObjectsWithPrefab(prefab);
+		for (int num = weaponInventory.usedWeapons.Count - 1; num >= 0; num--)
+		{
+			PlayerWeapon weapon = weaponInventory.usedWeapons[num];
+			Vector3 vector = (weaponInventory.usedWeapons.Count - 1 - num) * Vector3.left * 188f;
+			InventoryItem inventoryItem = (InventoryItem)Singleton<GuiManager>.instance.objectPool.InstantiateAsChild(prefab, prefab.transform.localPosition + vector, Quaternion.identity, base.gameObject);
+			invItems.Add(inventoryItem);
+			inventoryItem.CreateFromWeapon(weapon, weaponInventory);
+		}
+	}
+
+	public void ShowHintText()
+	{
+		hintText.Activate(shownContent: true);
+	}
+
+	public void HideHintText()
+	{
+		hintText.Activate(shownContent: false);
+	}
+
+	public void SetWeaponsShowed(int mask)
+	{
+		for (int i = 0; i < invItems.Count; i++)
+		{
+			invItems[i].SetShowed((mask & (1 << i)) > 0);
+		}
+	}
+
+	public void Hide()
+	{
+		base.gameObject.SetActive(value: false);
+	}
+
+	public void Show()
+	{
+		base.gameObject.SetActive(value: true);
+	}
 }

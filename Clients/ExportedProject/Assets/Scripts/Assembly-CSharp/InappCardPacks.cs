@@ -1,63 +1,164 @@
+using System;
 using UnityEngine;
 
-public class InappCardPacks : MonoBehaviour
+public class InappCardPacks : Core_BaseScript
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Header("Core")]
+	public UIPanel warcardPacksPanel;
 
-	1. No dll files were provided to AssetRipper.
+	public UIDraggablePanel warcardPacksDraggablePanel;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public UIPanel[] otherPanels;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	[Header("Buttons")]
+	public WarcardpackButtonRecord goldPackButton;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public WarcardpackButtonRecord silverPackButton;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public WarcardpackButtonRecord bronzePackButton;
 
-	3. Assembly Reconstruction has not been implemented.
+	[Header("-Animation")]
+	public CardMenuOwerlay owerlay;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	private int mClickTime;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public void Animate(bool showTab, bool instant)
+	{
+		if (showTab && !base.gameObject.activeSelf)
+		{
+			base.gameObject.SetActive(value: true);
+			InitGUIValues();
+		}
+		if (base.gameObject.activeSelf)
+		{
+			AnimateOtherPanels(instant, showTab);
+			TweenAlpha.Begin(warcardPacksPanel.gameObject, (!instant) ? (GuiElementSingle<InappScreen>.instance.dur * 2f) : 0.01f, (!showTab) ? 0f : 1f).onFinished = delegate
+			{
+				if (!showTab)
+				{
+					base.gameObject.SetActive(value: false);
+					DoAfterHide();
+				}
+				else
+				{
+					AlignPanel();
+				}
+			};
+		}
+		else if (!showTab)
+		{
+			InstantHideTab();
+		}
+	}
 
-	4. This script is unnecessary.
+	public void InitControls()
+	{
+		UIEventListener uIEventListener = UIEventListener.Get(bronzePackButton.gameObject);
+		uIEventListener.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener.onClick, new UIEventListener.VoidDelegate(WarCardPackClick));
+		bronzePackButton.InitControls(CardPack.Bronze);
+		UIEventListener uIEventListener2 = UIEventListener.Get(silverPackButton.gameObject);
+		uIEventListener2.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener2.onClick, new UIEventListener.VoidDelegate(WarCardPackClick));
+		silverPackButton.InitControls(CardPack.Silver);
+		UIEventListener uIEventListener3 = UIEventListener.Get(goldPackButton.gameObject);
+		uIEventListener3.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener3.onClick, new UIEventListener.VoidDelegate(WarCardPackClick));
+		goldPackButton.InitControls(CardPack.Gold);
+		Singleton<OfferManager>.instance.SalesChanged += delegate
+		{
+			if (GuiElementSingle<InappScreen>.instance.isShowed)
+			{
+				SetSaleAndPrize();
+			}
+		};
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private void WarCardPackClick(GameObject go)
+	{
+		WarcardpackButtonRecord component = go.GetComponent<WarcardpackButtonRecord>();
+		if (component == null)
+		{
+			return;
+		}
+		CardPack warcardPack = component.warcardPack;
+		Debug.Log(warcardPack.ToString() + " Button Clicked in InAppPurchase");
+		int num = Singleton<GameVariables>.instance.CardPackWarbucks(warcardPack);
+		int num2 = Singleton<GameVariables>.instance.CardPackGold(warcardPack);
+		int num3 = Singleton<OfferManager>.instance.DiscountedCardpack(warcardPack);
+		num = num * (100 - num3) / 100;
+		num2 = num2 * (100 - num3) / 100;
+		if (!Singleton<Wallet>.instance.CanBuyW(num))
+		{
+			GuiElementSingle<NotEnoughDialog>.instance.ShowWarbucks(num, Localization.Localize(warcardPack.ToString().ToUpper() + "PACK"));
+			GuiElementSingle<InappScreen>.instance.routeToStore = "WarCards";
+		}
+		else if (!Singleton<Wallet>.instance.CanBuyGold(num2))
+		{
+			GuiElementSingle<NotEnoughDialog>.instance.ShowGold(num2, Localization.Localize(warcardPack.ToString().ToUpper() + "PACK"));
+			GuiElementSingle<InappScreen>.instance.routeToStore = "WarCards";
+		}
+		else if (mClickTime + 2 <= Singleton<BeanstalkServerManager>.instance.currentTimestamp)
+		{
+			mClickTime = Singleton<BeanstalkServerManager>.instance.currentTimestamp;
+			if (num > 0)
+			{
+				Singleton<Wallet>.instance.WarBucksSpentFake(num);
+			}
+			if (num2 > 0)
+			{
+				Singleton<Wallet>.instance.GoldSpentFake(num2);
+			}
+			owerlay.StartShowAnimation(CardManager.instance.BuyCardPack(warcardPack, num, num2, num3), 0.5f);
+		}
+	}
 
-	5. Script Content Level 0
+	public void InitGUIValues()
+	{
+		owerlay.ResetDraw();
+		SetSaleAndPrize();
+		AlignPanel(instant: true);
+	}
 
-		AssetRipper was set to not load any script information.
+	private void SetSaleAndPrize()
+	{
+		bronzePackButton.SetSaleAndPrize();
+		silverPackButton.SetSaleAndPrize();
+		goldPackButton.SetSaleAndPrize();
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	private void AlignPanel(bool instant = false)
+	{
+		warcardPacksDraggablePanel.AlignToPos(instant);
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public void DoAfterHide()
+	{
+		bronzePackButton.DoAfterHide();
+		silverPackButton.DoAfterHide();
+		goldPackButton.DoAfterHide();
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	public void InstantHideTab()
+	{
+		TweenAlpha component = warcardPacksPanel.GetComponent<TweenAlpha>();
+		if (component != null)
+		{
+			component.enabled = false;
+		}
+		base.gameObject.SetActive(value: false);
+		DoAfterHide();
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	private void AnimateOtherPanels(bool instant, bool show)
+	{
+		if (otherPanels == null)
+		{
+			return;
+		}
+		for (int i = 0; i < otherPanels.Length; i++)
+		{
+			if (!(otherPanels[i] == null) && otherPanels[i].gameObject.activeSelf)
+			{
+				TweenAlpha.Begin(otherPanels[i].gameObject, (!instant) ? (GuiElementSingle<InappScreen>.instance.dur * 2f) : 0.01f, (!show) ? 0f : 1f);
+			}
+		}
+	}
 }

@@ -39,6 +39,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fef6e4681bef8c549b21abfc07c15462, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  dictionaryTranslationId: ID_BONUS-CARD-BRONZE
+  bonusName: ID_BONUS-CARD-BRONZE
+  iconName: game-scorestreak-ico-card-silver
+  bgSuffix:
+  iconNames:
+  - game-scorestreak-ico-card-bronze
+  - game-scorestreak-ico-card-silver
+  - game-scorestreak-ico-card-gold
+  bonusNames:
+  - ID_BONUS-CARD-BRONZE
+  - ID_BONUS-CARD-SILVER
+  - ID_BONUS-CARD-GOLD
 --- !u!1001 &100100000
 Prefab:
   serializedVersion: 2

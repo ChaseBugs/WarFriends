@@ -1,63 +1,194 @@
+using System;
 using UnityEngine;
 
-public class MineAmmo : MonoBehaviour
+public class MineAmmo : PhysicalAmmo
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	private float mBlinkInterval;
 
-	1. No dll files were provided to AssetRipper.
+	private float mLastSyncTime;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public HudObjectIndicator hudObjectIndicator;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	private bool mBlinkOnOff;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	private float mBlinkingTime;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	private bool mExploded;
 
-	3. Assembly Reconstruction has not been implemented.
+	private MineAmmoSetup mSetup;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public MeshRenderer mineModel;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public PhysicsEventsListener trigger;
 
-	4. This script is unnecessary.
+	private AudioSource mAudioSource;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private bool mBeep;
 
-	5. Script Content Level 0
+	public CardIconIndicator cardIconIndicator { get; private set; }
 
-		AssetRipper was set to not load any script information.
+	public float blinkInterval
+	{
+		get
+		{
+			return mBlinkInterval;
+		}
+		set
+		{
+			if (mBlinkInterval != value)
+			{
+				mBlinkInterval = value;
+				if (Time.realtimeSinceStartup > mLastSyncTime + 1f)
+				{
+					photonView.RPC("SetBlinkIntervalRPC", PhotonTargets.Others, value);
+					mLastSyncTime = Time.realtimeSinceStartup;
+				}
+			}
+		}
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public bool beep
+	{
+		get
+		{
+			return mBeep;
+		}
+		set
+		{
+			if (mBeep != value)
+			{
+				mBeep = value;
+				photonView.RPC("SetBeepRPC", PhotonTargets.Others, value);
+			}
+		}
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	protected override void Awake()
+	{
+		base.Awake();
+		photonView = GetComponent<PhotonView>();
+		PhysicsEventsListener physicsEventsListener = trigger;
+		physicsEventsListener.onTriggerEnter = (Action<Collider>)Delegate.Combine(physicsEventsListener.onTriggerEnter, new Action<Collider>(TriggerOnTriggerEnter));
+		cardIconIndicator = base.gameObject.AddComponent<CardIconIndicator>();
+		cardIconIndicator.hudObjectIndicator = hudObjectIndicator;
+		photonView.RebuildCache();
+		mAudioSource = GetComponent<AudioSource>();
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	private void TriggerOnTriggerEnter(Collider other)
+	{
+		if (photonView.isMine && !mExploded && TagsAndLayers.IsDestroyableObject(other.transform.gameObject))
+		{
+			DestroyableObject component = other.GetComponent<DestroyableObject>();
+			if (component != null && component.fraction != fraction && !component.isMetal)
+			{
+				Boom();
+			}
+		}
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	public override void Fire(Vector3 from, Vector3 to)
+	{
+		base.transform.position = to;
+	}
 
-	*/
+	public override void OnInstancied()
+	{
+		base.OnInstancied();
+		mExploded = false;
+		mBlinkInterval = 0.25f;
+		mBeep = false;
+		if (hudObjectIndicator != null)
+		{
+			hudObjectIndicator.Show(value: false);
+		}
+	}
+
+	public override void LoadAmmoSetup(AmmoSetup setup)
+	{
+		base.LoadAmmoSetup(setup);
+		MineAmmoSetup mineAmmoSetup = setup as MineAmmoSetup;
+		if (mineAmmoSetup != null)
+		{
+			mSetup = mineAmmoSetup;
+		}
+		else
+		{
+			Debug.LogError("You probably assigned bad type of AmmoSetup to mine");
+		}
+	}
+
+	protected void Update()
+	{
+		if (mExploded)
+		{
+			return;
+		}
+		Material material = mineModel.materials[1];
+		mBlinkingTime += ((!mBlinkOnOff) ? ((0f - Time.deltaTime) * 0.5f) : Time.deltaTime);
+		if ((mBlinkingTime > blinkInterval && mBlinkOnOff) || (mBlinkingTime < 0f && !mBlinkOnOff))
+		{
+			mBlinkOnOff = !mBlinkOnOff;
+			if (!mBlinkOnOff && mBeep)
+			{
+				Singleton<SoundsManager3D>.instance.Play(mAudioSource, mAudioSource.clip);
+			}
+		}
+		Color color = Color.Lerp(Color.black, new Color(1f, 0.5f, 0.5f, 1f), mBlinkingTime / blinkInterval);
+		material.SetColor("_TintColor", color);
+	}
+
+	private void Explode()
+	{
+		Explosion.ExplosionInfo explosionInfo = new Explosion.ExplosionInfo();
+		explosionInfo.position = base.transform.position;
+		explosionInfo.explodeDamage = mSetup.explodeDamageAmount;
+		explosionInfo.damageAmount = mSetup.damageAmount;
+		explosionInfo.owner = weapon.owner;
+		explosionInfo.weapon = weapon;
+		explosionInfo.deadRadius = mSetup.deadRadius;
+		explosionInfo.hurtRadius = mSetup.hurtRadius;
+		explosionInfo.exposionCoef = mSetup.exposionCoef;
+		explosionInfo.additionalUpForce = mSetup.additionalUpForce;
+		explosionInfo.isNetworkCopy = isNetworkCopy;
+		explosionInfo.playerRadiusCoef = 0.9f;
+		Explosion.ExplosionInfo i = explosionInfo;
+		Explosion.MissileExplode(i);
+	}
+
+	public void Boom()
+	{
+		if (!mExploded)
+		{
+			mExploded = true;
+			DestroyPooled(0.4f);
+			weapon.ReportShotHit(this, base.transform.position, !photonView.isMine, null);
+			Explode();
+			photonView.RPC("SendExplode", PhotonTargets.Others);
+		}
+	}
+
+	[PunRPC]
+	public void SendExplode()
+	{
+		if (!mExploded)
+		{
+			mExploded = true;
+			Explode();
+			DestroyPooled(0.4f);
+			weapon.ReportShotHit(this, base.transform.position, !photonView.isMine, null);
+		}
+	}
+
+	[PunRPC]
+	protected void SetBlinkIntervalRPC(float value)
+	{
+		mBlinkInterval = value;
+	}
+
+	[PunRPC]
+	protected void SetBeepRPC(bool value)
+	{
+		mBeep = value;
+	}
 }

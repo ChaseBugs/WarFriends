@@ -1,63 +1,106 @@
+using System;
+using System.Collections.Generic;
+using Google2u;
+using Prime31;
 using UnityEngine;
 
-public class Tweetmanager : MonoBehaviour
+public class Tweetmanager : Singleton<Tweetmanager>
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public const int followGold = 10;
 
-	1. No dll files were provided to AssetRipper.
+	public const int likeGold = 10;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	private string connectionError = "Some error occurred. Please, try again later.";
 
-	2. Incorrect dll files were provided to AssetRipper.
+	private string followingTitle = "OOOOPS";
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	private string followingText = "You are already our follower, thank you! That's great, isn’t it?";
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	private string followingButton = "IT IS";
 
-	3. Assembly Reconstruction has not been implemented.
+	private string gainCreditsTitle = "HAVE A NICE DAY";
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	private string gainCreditsText = "Thanks you for the following. Here are those well deserved {0} gold bars.";
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	private string gainCreditsButton = "THANK YOU";
 
-	4. This script is unnecessary.
+	private string rewardedBeforeTitle = "OOOOPS";
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private string rewardedBeforeText = "Thank you for the following. Once again.";
 
-	5. Script Content Level 0
+	private string rewardedBeforeButton = "OK";
 
-		AssetRipper was set to not load any script information.
+	public string consumerKey = "aYxLQ40XpBYemQhnRYMJg3VBd";
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public string consumerSecret = "nR8WfJlIwkkqu9mTB81EUGaldBpyX3eE4ErTYxs41gs6uXM51v";
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public long ownerID = 494445715L;
 
-	7. An incorrect path was provided to AssetRipper.
+	private string mStatus;
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	private bool mSendStatus;
 
-	*/
+	private bool tryTweet;
+
+	private Dictionary<string, string> twParam = new Dictionary<string, string>();
+
+	public bool isLogedIn => true;
+
+	public static event Action TweetFinished;
+
+	public static event Action RequestFinish;
+
+	private new void Start()
+	{
+		followingTitle = Localization.Localize("ID_TWITTER_FOLLOWING_TITLE");
+		followingText = Localization.Localize("ID_TWITTER_FOLLOWING_TEXT");
+		followingButton = Localization.Localize("ID_TWITTER_FOLLOWING_BUTTON");
+		gainCreditsTitle = Localization.Localize("ID_TWITTER_GAIN_TITLE");
+		gainCreditsText = Localization.Localize("ID_TWITTER_GAIN_TEXT");
+		gainCreditsButton = Localization.Localize("ID_TWITTER_GAIN_BUTTON");
+		rewardedBeforeTitle = Localization.Localize("ID_TWITTER_GAIN_AGAIN_TITLE");
+		rewardedBeforeText = Localization.Localize("ID_TWITTER_GAIN_AGAIN_TEXT");
+		rewardedBeforeButton = Localization.Localize("ID_OK");
+		TwitterManager.requestDidFinishEvent += OnRequestFinish;
+	}
+
+	private void OnRequestFinish(object obj)
+	{
+		if (Tweetmanager.RequestFinish != null)
+		{
+			Tweetmanager.RequestFinish();
+		}
+	}
+
+	private void checkFollow()
+	{
+		Dictionary<string, string> dictionary = new Dictionary<string, string>();
+		dictionary.Add("target_id", ownerID.ToString());
+		dictionary.Add("source_id", string.Empty);
+	}
+
+	public void likeUsOnFacebook()
+	{
+		Application.OpenURL("https://www.facebook.com/warfriendsgame/");
+	}
+
+	public void FollowAs()
+	{
+		Application.OpenURL("https://twitter.com/WarFriendsGame");
+		string dBKEY = Singleton<GameVariables>.instance.constants.GetRow(Constants.rowIds.TwitterFollow).DBKEY;
+		Singleton<BeanstalkServerManager>.instance.AddOneTimeReward(dBKEY);
+		PlayerAnalytics.instance.AddOneTimeReward(dBKEY);
+	}
+
+	private bool TwitterRewarded()
+	{
+		return PlayerAnalytics.instance.WasOneTimeRewardAdded(Constants.rowIds.TwitterFollow);
+	}
+
+	private void RewardTwitter()
+	{
+		string dBKEY = Singleton<GameVariables>.instance.constants.GetRow(Constants.rowIds.TwitterFollow).DBKEY;
+		Singleton<BeanstalkServerManager>.instance.AddOneTimeReward(dBKEY);
+		PlayerAnalytics.instance.AddOneTimeReward(dBKEY);
+	}
 }

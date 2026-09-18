@@ -1,63 +1,231 @@
 using UnityEngine;
 
-public class ArmyUnitStatistics : MonoBehaviour
+public class ArmyUnitStatistics : Core_BaseScript
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Header("Optional")]
+	public UISprite[] statisticIcons;
 
-	1. No dll files were provided to AssetRipper.
+	[Header("Core")]
+	public UILabel statisticValue;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public GameObject statisticBox;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public UISprite statisticBoxBorder;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public UILabel statisticBoxLabel;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public UILabel statisticBoxMaxLabel;
 
-	3. Assembly Reconstruction has not been implemented.
+	private Vector3 mNumberScale = new Vector3(75f, 75f, 1f);
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	private Vector3 mNumberBigScale = new Vector3(105f, 105f, 1f);
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public void InitializeAbilityIcon(string iconName)
+	{
+		for (int i = 0; i < statisticIcons.Length; i++)
+		{
+			statisticIcons[i].gameObject.SetActive(i == 0);
+		}
+		UISprite uISprite = statisticIcons[0];
+		uISprite.spriteName = iconName;
+		uISprite.MakePixelPerfect();
+	}
 
-	4. This script is unnecessary.
+	public void InitializeEliteIcon(LevelBehaviour unit)
+	{
+		bool isUnlocked = unit.upgradeSlots.upgradeSlotElite.isUnlocked;
+		for (int i = 0; i < statisticIcons.Length; i++)
+		{
+			statisticIcons[i].gameObject.SetActive(isUnlocked);
+		}
+		unit.SetUpEliteIcon(statisticIcons[0], statisticIcons[1]);
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public void Initialize(Tuple<string, float[]> statistic, bool isBought, bool isDelivering, bool isDamage = false)
+	{
+		float num = ((!isDamage) ? statistic.Value2[0] : LevelManager.instance.DamageFunction(statistic.Value2[0]));
+		float num2 = ((!isDamage) ? statistic.Value2[1] : LevelManager.instance.DamageFunction(statistic.Value2[1]));
+		float num3 = ((!isDamage) ? statistic.Value2[2] : LevelManager.instance.DamageFunction(statistic.Value2[2]));
+		float num4 = num3 - num;
+		bool flag = num4 > 0f;
+		bool flag2 = num == num2;
+		SetStatText(MiscTools.FormatFloatNumber(num));
+		statisticBox.SetActive(isBought);
+		if (isBought)
+		{
+			if (flag2)
+			{
+				SetMax(Colours.blue);
+			}
+			else
+			{
+				SetIncrease((!flag) ? string.Empty : $"+{MiscTools.FormatFloatNumber(num4)}");
+			}
+			if (isDelivering && flag)
+			{
+				StartDeliveryAnimation();
+			}
+			else
+			{
+				StopDeliveryAnimation();
+			}
+		}
+	}
 
-	5. Script Content Level 0
+	public void InitializeSpecial(Tuple<string, float[]> statistic, bool isBought, bool isDelivering)
+	{
+		float num = statistic.Value2[0];
+		float num2 = statistic.Value2[1];
+		float num3 = statistic.Value2[2];
+		bool flag = num3 < num;
+		float num4 = num3 - num;
+		bool flag2 = ((!flag) ? (num4 > 0f) : (num4 < 0f));
+		bool flag3 = num == num2;
+		if (statistic.Value1 == "percent")
+		{
+			SetStatText(MiscTools.FormatFloatNumberAsPercent(num));
+		}
+		else if (statistic.Value1 == "seconds")
+		{
+			SetStatText(MiscTools.FormatNumberAsSeconds(num));
+		}
+		else if (statistic.Value1 == "damage")
+		{
+			SetStatText(MiscTools.FormatFloatNumberRoundZeroOrOne(num));
+		}
+		statisticBox.SetActive(isBought);
+		if (!isBought)
+		{
+			return;
+		}
+		if (flag3)
+		{
+			SetMax(Colours.yellow);
+		}
+		else if (flag2)
+		{
+			if (statistic.Value1 == "percent")
+			{
+				SetIncrease(MiscTools.FormatFloatNumberAsPercentSigned(num4));
+			}
+			else if (statistic.Value1 == "seconds")
+			{
+				SetIncrease(string.Format((!(num4 < 0f)) ? "+{0}" : "{0}", MiscTools.FormatNumberAsSeconds(num4)));
+			}
+			else if (statistic.Value1 == "damage")
+			{
+				SetIncrease(string.Format((!(num4 < 0f)) ? "+{0}" : "{0}", MiscTools.FormatFloatNumberRoundZeroOrOne(num4)));
+			}
+		}
+		else
+		{
+			SetIncrease(string.Empty);
+		}
+		if (isDelivering && flag2)
+		{
+			StartDeliveryAnimation();
+		}
+		else
+		{
+			StopDeliveryAnimation();
+		}
+	}
 
-		AssetRipper was set to not load any script information.
+	public void InitializeElite(Tuple<string, float[]> statistic, bool isBought)
+	{
+		float num = statistic.Value2[0];
+		float num2 = statistic.Value2[1];
+		float num3 = statistic.Value2[2];
+		bool flag = num3 < num;
+		float num4 = num3 - num;
+		bool flag2 = ((!flag) ? (num4 > 0f) : (num4 < 0f));
+		bool flag3 = num == num2;
+		SetStatText(MiscTools.FormatFloatNumberAsPercent(num));
+		statisticBox.SetActive(isBought);
+		if (isBought)
+		{
+			if (flag3)
+			{
+				SetMax(Colours.greenArena);
+			}
+			else if (flag2)
+			{
+				SetIncrease(MiscTools.FormatFloatNumberAsPercentSigned(num4));
+			}
+			else
+			{
+				SetIncrease(string.Empty);
+			}
+		}
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	private void StartDeliveryAnimation()
+	{
+		statisticBoxLabel.color = Colours.greenDelivering;
+		statisticBoxBorder.gameObject.SetActive(value: true);
+		statisticBoxBorder.color = Color.white;
+		float num = 0.5f;
+		TweenAlpha tweenAlpha = TweenAlpha.Begin(statisticBoxBorder.gameObject, 2f * num, 1f, 0f);
+		tweenAlpha.style = UITweener.Style.Loop;
+		tweenAlpha.NumOfRepetitions = 0;
+		TweenScale tweenScale = TweenScale.Begin(statisticBoxBorder.gameObject, 2f * num, new Vector3(88f, 74f, 1f), new Vector3(176f, 148f, 1f));
+		tweenScale.style = UITweener.Style.Loop;
+		tweenScale.NumOfRepetitions = 0;
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	private void StopDeliveryAnimation()
+	{
+		statisticBoxLabel.color = Colours.gray;
+		TweenAlpha component = statisticBoxBorder.gameObject.GetComponent<TweenAlpha>();
+		if (component != null)
+		{
+			component.enabled = false;
+		}
+		statisticBoxBorder.alpha = 1f;
+		TweenScale component2 = statisticBoxBorder.gameObject.GetComponent<TweenScale>();
+		if (component2 != null)
+		{
+			component2.enabled = false;
+		}
+		statisticBoxBorder.transform.localScale = new Vector3(88f, 74f, 1f);
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	public void AnimateStat()
+	{
+		TweenScale tweenScale = TweenScale.Begin(statisticValue.gameObject, GuiScreenSingle<WeaponScreen>.instance.upgradeDur * 4f, mNumberScale, mNumberBigScale);
+		tweenScale.NumOfRepetitions = 2;
+		tweenScale.style = UITweener.Style.PingPong;
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	private void SetStatText(string statText)
+	{
+		TweenScale component = statisticValue.gameObject.GetComponent<TweenScale>();
+		if (component != null)
+		{
+			component.enabled = false;
+		}
+		statisticValue.transform.localScale = new Vector3(52f, 52f, 1f);
+		statisticValue.transform.localPosition = statisticValue.transform.localPosition.ReplaceY(-4f);
+		statisticValue.text = statText;
+		MiscTools.SetUILabelRescale(statisticValue, 52f, 20f, 155);
+		mNumberScale = statisticValue.transform.localScale;
+		mNumberBigScale = mNumberScale.MultiplyXY(1.4f);
+	}
 
-	*/
+	private void SetIncrease(string textValue)
+	{
+		statisticBoxBorder.gameObject.SetActive(value: false);
+		statisticBoxLabel.gameObject.SetActive(value: true);
+		statisticBoxLabel.text = textValue;
+		statisticBoxMaxLabel.gameObject.SetActive(value: false);
+	}
+
+	private void SetMax(Color colour)
+	{
+		statisticBoxBorder.gameObject.SetActive(value: true);
+		statisticBoxBorder.color = Colours.grayMax;
+		statisticBoxLabel.gameObject.SetActive(value: false);
+		statisticBoxMaxLabel.gameObject.SetActive(value: true);
+		statisticBoxMaxLabel.color = colour;
+	}
 }

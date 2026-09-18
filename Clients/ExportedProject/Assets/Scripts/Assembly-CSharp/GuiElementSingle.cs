@@ -1,63 +1,70 @@
 using UnityEngine;
 
-public class GuiElementSingle : MonoBehaviour
+public abstract class GuiElementSingle<T> : GuiElement where T : GuiElement
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	private static T _instance;
 
-	1. No dll files were provided to AssetRipper.
+	private static object _lock = new object();
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	private static bool applicationIsQuitting = false;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public static T instance
+	{
+		get
+		{
+			if (applicationIsQuitting)
+			{
+				Debug.LogWarning(string.Concat("[Singleton] Instance '", typeof(T), "' already destroyed on application quit. Won't create again - returning null."));
+				return (T)null;
+			}
+			lock (_lock)
+			{
+				if (_instance == null)
+				{
+					GuiManager manager = Singleton<GuiManager>.instance;
+					if (manager == null || manager.root == null)
+						return null;
+					T[] elements = manager.root.GetComponentsInChildren<T>(includeInactive: true);
+					if (elements.Length == 0)
+						return null;
+					_instance = elements[0];
+					if (Object.FindObjectsOfType(typeof(T)).Length > 1)
+					{
+						Debug.LogError("[Singleton] Something went really wrong  - there should never be more than 1 singleton! Reopenning the scene might fix it.");
+						Debug.LogError("Type" + typeof(T));
+						return _instance;
+					}
+					if (_instance == null)
+					{
+						GameObject gameObject = new GameObject();
+						_instance = gameObject.AddComponent<T>();
+						gameObject.name = "(singleton) " + typeof(T).ToString();
+						Object.DontDestroyOnLoad(gameObject);
+						Debug.Log(string.Concat("[Singleton] An instance of ", typeof(T), " is needed in the scene, so '", gameObject, "' was created with DontDestroyOnLoad."));
+					}
+				}
+				return _instance;
+			}
+		}
+	}
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public override void InitEvents()
+	{
+		base.InitEvents();
+		_instance = this as T;
+	}
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public void OnDestroy()
+	{
+		_instance = (T)null;
+	}
 
-	3. Assembly Reconstruction has not been implemented.
-
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
-
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
-
-	4. This script is unnecessary.
-
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
-
-	5. Script Content Level 0
-
-		AssetRipper was set to not load any script information.
-
-	6. Cpp2IL failed to decompile Il2Cpp data
-
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public virtual void HideDialog()
+	{
+		Singleton<GuiManager>.instance.FadeOut(this);
+		if (GuiElement.HidingDialog != null)
+		{
+			GuiElement.HidingDialog(this);
+		}
+	}
 }

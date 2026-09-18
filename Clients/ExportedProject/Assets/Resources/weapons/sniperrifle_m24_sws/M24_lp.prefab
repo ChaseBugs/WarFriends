@@ -90,6 +90,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5e59aac156d8b7c09624901e4cd5735f, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  pivot: {fileID: 419550}
+  highPolyPrefabName: SniperRifle_M24
 --- !u!4 &419550
 Transform:
   m_ObjectHideFlags: 0

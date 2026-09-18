@@ -1,63 +1,256 @@
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
-public class SpawningManager : MonoBehaviour
+public class SpawningManager : Singleton<SpawningManager>
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	private static SpawningManager _instance;
 
-	1. No dll files were provided to AssetRipper.
+	public List<EnemyPoint> enemyPoints;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	private List<EnemyPoint> mAllPosiblePointsForEnemy;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	private bool mDataLoaded;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	private PhotonView mPhotonView;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	private NetworkObjectPool mPool;
 
-	3. Assembly Reconstruction has not been implemented.
+	public new static SpawningManager instance
+	{
+		get
+		{
+			_instance = _instance ?? ((SpawningManager)Object.FindObjectsOfType(typeof(SpawningManager))[0]);
+			return _instance;
+		}
+	}
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public new void OnDestroy()
+	{
+		_instance = null;
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	protected override void Awake()
+	{
+		base.Awake();
+		mPhotonView = GetComponent<PhotonView>();
+		mPool = ObjectPoolDatabase.networkPool;
+		Singleton<MapManager>.instance.NewLevelLoaded += InstanceOnNewLevelLoaded;
+	}
 
-	4. This script is unnecessary.
+	private void InstanceOnNewLevelLoaded()
+	{
+		enemyPoints = Singleton<MapManager>.instance.currentMapDef.enemyPointsCollection.enemyPoints;
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public int GetBehaviourIndex(LevelBehaviour beh)
+	{
+		List<LevelBehaviourManager.BehaviourEntry> levelBehaviours = Singleton<LevelBehaviourManager>.instance.levelBehaviours;
+		for (int i = 0; i < levelBehaviours.Count; i++)
+		{
+			LevelBehaviourManager.BehaviourEntry behaviourEntry = levelBehaviours[i];
+			if (beh == behaviourEntry.behaviour)
+			{
+				return i;
+			}
+		}
+		return -1;
+	}
 
-	5. Script Content Level 0
+	public void SpawnForCard(LevelBehaviour behaviour, int count, float progress, Fractions fraction, Vector3 position, bool spawnEnabled = true)
+	{
+		if (mPhotonView.isMine)
+		{
+			StartCoroutine(RadicalRoutine.Run(SpawnUnitsByCard(behaviour, fraction, progress, count, position, spawnEnabled)));
+			return;
+		}
+		int behaviourIndex = GetBehaviourIndex(behaviour);
+		mPhotonView.RPC("SpawnForCardRPC", PhotonTargets.Others, behaviourIndex, count, progress, (byte)fraction, position, spawnEnabled);
+	}
 
-		AssetRipper was set to not load any script information.
+	[PunRPC]
+	private void SpawnForCardRPC(int behaviourIndex, int count, float progress, byte fraction, Vector3 position, bool spawnEnabled)
+	{
+		List<LevelBehaviourManager.BehaviourEntry> levelBehaviours = Singleton<LevelBehaviourManager>.instance.levelBehaviours;
+		StartCoroutine(RadicalRoutine.Run(SpawnUnitsByCard(levelBehaviours[behaviourIndex].behaviour, (Fractions)fraction, progress, count, position, spawnEnabled)));
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	private IEnumerator SpawnUnitsByCard(LevelBehaviour beh, Fractions fraction, float progress, int count, Vector3 pos, bool spawnEnabled)
+	{
+		for (int i = 0; i < count; i++)
+		{
+			AIObject enemy = SpawnCardBehaviour(beh, fraction, progress, pos, spawnEnabled);
+			yield return new WaitForRealSeconds(0.3f);
+		}
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public AIObject SpawnCardBehaviour(LevelBehaviour beh, Fractions fraction, float progress, Vector3 pos, bool spawnEnabled, string cardId = null)
+	{
+		AIObject aIObject = Singleton<LevelBehaviourManager>.instance.GenerateNewEnemy(beh);
+		if (spawnEnabled)
+		{
+			aIObject.EnableSpawn();
+		}
+		else
+		{
+			aIObject.DisableSpawn();
+		}
+		if (cardId == null)
+		{
+			cardId = beh.cardId;
+		}
+		aIObject.SpawnByCard(progress, cardId);
+		Spawn(aIObject, fraction, useEnergy: false, pos);
+		return aIObject;
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	public void Spawn(AIObject enemy, Fractions fraction, bool useEnergy, Vector3 pos, bool startBehaviour = true)
+	{
+		if (enemy != null && enemy.prefab != null)
+		{
+			int num = mPool.prefabToIndexDic[enemy.prefab];
+			mPhotonView.RPC("SpawnAIObjectRPC", PhotonTargets.Others, num, enemy.indexInObjectPool, (byte)fraction, pos);
+			enemy.fraction = fraction;
+			enemy = (AIObject)mPool.ReInstantiate(num, enemy.indexInObjectPool, pos, Quaternion.identity);
+			enemy.transform.localScale = Vector3.one;
+			if (!useEnergy)
+			{
+				enemy.power = 0;
+			}
+			if (startBehaviour)
+			{
+				enemy.StartEnemyBehaviour();
+			}
+		}
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	[PunRPC]
+	private void SpawnAIObjectRPC(int indexInPool, int indexOfObject, byte fraction, Vector3 pos)
+	{
+		AIObject aIObject = mPool.pooledObjects[indexInPool][indexOfObject] as AIObject;
+		aIObject.fraction = (Fractions)fraction;
+		AIObject aIObject2 = mPool.ReInstantiate(indexInPool, indexOfObject, pos, Quaternion.identity) as AIObject;
+		aIObject2.transform.localScale = Vector3.one;
+		aIObject2.fraction = (Fractions)fraction;
+	}
 
-	*/
+	public EnemyPoint GetNextFreeEnemyPoint(EnemyPoint enemyPoint, SoldierBehaviour soldierBehaviour)
+	{
+		mAllPosiblePointsForEnemy = new List<EnemyPoint>();
+		foreach (EnemyPoint enemyPoint2 in enemyPoints)
+		{
+			float num = Vector3.Distance(enemyPoint2.position, PlayerController.currentPlayer.transform.position);
+			if (soldierBehaviour.AcceptsPoint(enemyPoint2) && enemyPoint2.isFree && enemyPoint2 != enemyPoint)
+			{
+				mAllPosiblePointsForEnemy.Add(enemyPoint2);
+			}
+		}
+		if (mAllPosiblePointsForEnemy.Count > 0)
+		{
+			int index = Random.Range(0, mAllPosiblePointsForEnemy.Count);
+			return mAllPosiblePointsForEnemy[index];
+		}
+		return null;
+	}
+
+	public List<EnemyPoint> GetFreeEnemyPoints(EnemyPoint enemyPoint, SoldierBehaviour soldierBehaviour)
+	{
+		mAllPosiblePointsForEnemy = new List<EnemyPoint>();
+		foreach (EnemyPoint enemyPoint2 in enemyPoints)
+		{
+			if (soldierBehaviour.AcceptsPoint(enemyPoint2) && enemyPoint2.isFree && enemyPoint2 != enemyPoint)
+			{
+				mAllPosiblePointsForEnemy.Add(enemyPoint2);
+			}
+		}
+		return mAllPosiblePointsForEnemy;
+	}
+
+	public EnemyPoint GetPoint(SoldierBehaviour behaviour, float minDistance = 0f, Transform transform = null)
+	{
+		mAllPosiblePointsForEnemy = new List<EnemyPoint>();
+		foreach (EnemyPoint enemyPoint2 in enemyPoints)
+		{
+			float num = ((!(transform != null)) ? float.MaxValue : Vector3.Distance(enemyPoint2.position, transform.position));
+			if (behaviour.AcceptsPoint(enemyPoint2) && enemyPoint2.isFree && num > minDistance)
+			{
+				mAllPosiblePointsForEnemy.Add(enemyPoint2);
+			}
+		}
+		if (mAllPosiblePointsForEnemy.Count > 0)
+		{
+			EnemyPoint result = mAllPosiblePointsForEnemy[0];
+			float num2 = float.MaxValue;
+			for (int i = 0; i < mAllPosiblePointsForEnemy.Count; i++)
+			{
+				EnemyPoint enemyPoint = mAllPosiblePointsForEnemy[i];
+				float num3 = Vector3.Distance(enemyPoint.transform.position, behaviour.controller.transform.position);
+				if (num3 < num2)
+				{
+					num2 = num3;
+					result = mAllPosiblePointsForEnemy[i];
+				}
+			}
+			return result;
+		}
+		return null;
+	}
+
+	public List<EnemyPoint> GetPoints(EnemyPoint.EnemyPointType type, EnemyPoint p, Fractions fraction)
+	{
+		mAllPosiblePointsForEnemy = new List<EnemyPoint>();
+		foreach (EnemyPoint enemyPoint in enemyPoints)
+		{
+			if (enemyPoint.enemyPointType == type && enemyPoint.isFree && p != enemyPoint && fraction == enemyPoint.fraction)
+			{
+				mAllPosiblePointsForEnemy.Add(enemyPoint);
+			}
+		}
+		return mAllPosiblePointsForEnemy;
+	}
+
+	public EnemyPoint GetNearestFreePoint(SoldierBehaviour behaviour, Transform transform)
+	{
+		mAllPosiblePointsForEnemy = new List<EnemyPoint>();
+		foreach (EnemyPoint enemyPoint2 in enemyPoints)
+		{
+			if (behaviour.AcceptsPoint(enemyPoint2) && enemyPoint2.isFree)
+			{
+				mAllPosiblePointsForEnemy.Add(enemyPoint2);
+			}
+		}
+		if (mAllPosiblePointsForEnemy.Count > 0)
+		{
+			EnemyPoint result = mAllPosiblePointsForEnemy[0];
+			float num = float.MaxValue;
+			for (int i = 0; i < mAllPosiblePointsForEnemy.Count; i++)
+			{
+				EnemyPoint enemyPoint = mAllPosiblePointsForEnemy[i];
+				float num2 = Vector3.Distance(enemyPoint.position, transform.position);
+				if (num2 < num)
+				{
+					num = num2;
+					result = mAllPosiblePointsForEnemy[i];
+				}
+			}
+			return result;
+		}
+		return null;
+	}
+
+	public void ReSyncUnits()
+	{
+		NetworkObjectPool networkPool = ObjectPoolDatabase.networkPool;
+		foreach (KeyValuePair<int, List<PoolableObject>> pooledObject in networkPool.pooledObjects)
+		{
+			foreach (PoolableObject item in pooledObject.Value)
+			{
+				AIObject aIObject = item as AIObject;
+				if (aIObject != null)
+				{
+					aIObject.ReSync();
+				}
+			}
+		}
+	}
 }

@@ -1,63 +1,189 @@
-using UnityEngine;
+using System.Collections.Generic;
 
-public class WarArenaGui : MonoBehaviour
+public static class WarArenaGui
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public static List<WarArenaRule.WarArenaRuleGui> currentArenaGuiRules
+	{
+		get
+		{
+			List<WarArenaRule.WarArenaRuleGui> list = new List<WarArenaRule.WarArenaRuleGui>();
+			if (WarArena.instance.warArenaConfig == null)
+			{
+				return list;
+			}
+			foreach (WarArenaRule currenArenaRule in WarArena.instance.currenArenaRules)
+			{
+				WarArenaRule.WarArenaRuleGui guiRule = currenArenaRule.guiRule;
+				if (guiRule != null && (currenArenaRule.GetData().showRule || guiRule.type == WarArenaRule.RuleType.FulFill || guiRule.type == WarArenaRule.RuleType.DoesNotMeet))
+				{
+					list.Add(guiRule);
+				}
+			}
+			string showText = Localization.LocalizeFormat("ID_ARENARULES_BATTLES", Colours.stringGreenArena, WarArena.instance.warArenaConfig.battles);
+			list.Add(new WarArenaRule.WarArenaRuleGui(showText, WarArenaRule.RuleType.InfoText));
+			int lifeCount = WarArena.instance.warArenaConfig.lifeCount;
+			string showText2 = ((lifeCount <= 1) ? Localization.LocalizeFormat("ID_ARENARULES_LIVE", Colours.stringGreenArena) : Localization.LocalizeFormat("ID_ARENARULES_LIVES", Colours.stringGreenArena, lifeCount));
+			list.Add(new WarArenaRule.WarArenaRuleGui(showText2, WarArenaRule.RuleType.InfoText));
+			string showText3 = Localization.LocalizeFormat("ID_ARENARULES_NORMALIZATION", Colours.stringGreenArena);
+			list.Add(new WarArenaRule.WarArenaRuleGui(showText3, WarArenaRule.RuleType.InfoText));
+			list.StableSort((WarArenaRule.WarArenaRuleGui data1, WarArenaRule.WarArenaRuleGui data2) => (data1.type != data2.type) ? data1.type.CompareTo(data2.type) : 0);
+			return list;
+		}
+	}
 
-	1. No dll files were provided to AssetRipper.
+	public static List<WarArenaRule.WarArenaRuleGui> failSetupRules
+	{
+		get
+		{
+			List<WarArenaRule.WarArenaRuleGui> list = new List<WarArenaRule.WarArenaRuleGui>();
+			foreach (WarArenaRule currenArenaRule in WarArena.instance.currenArenaRules)
+			{
+				WarArenaRule.WarArenaRuleGui guiRule = currenArenaRule.guiRule;
+				if (guiRule != null && guiRule.type == WarArenaRule.RuleType.DoesNotMeet)
+				{
+					list.Add(guiRule);
+				}
+			}
+			return list;
+		}
+	}
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public static string CreateArenaTimeTextWithColour(string colourString)
+	{
+		if (WarArena.instance.warArenaConfig == null)
+		{
+			return string.Empty;
+		}
+		if (WarArena.instance.warArenaConfig.isBeforeArenaStart)
+		{
+			return Localization.LocalizeFormat("ID_ARENASHORTCUTEVENTSTART", colourString, MiscTools.PrintableTime(WarArena.instance.warArenaConfig.remainingTimeTillStart, "ID_READYTIME", string.Empty));
+		}
+		if (WarArena.instance.warArenaConfig.isAfterArenaEnd)
+		{
+			return string.Empty;
+		}
+		WarArenaConfig.PlayWindow currentWindow = WarArena.instance.warArenaConfig.currentWindow;
+		WarArenaConfig.PlayWindow nextWindow = WarArena.instance.warArenaConfig.nextWindow;
+		bool flag = nextWindow == null;
+		if (currentWindow != null)
+		{
+			if (currentWindow.isActive)
+			{
+				string keyFormat = ((!flag) ? "ID_ARENASHORTCUTPHASEEND" : "ID_ARENASHORTCUTEVENTEND");
+				return Localization.LocalizeFormat(keyFormat, colourString, MiscTools.PrintableTime(currentWindow.remainingTimeTillWindowEnd, "ID_READYTIME", string.Empty));
+			}
+			if (!flag)
+			{
+				return Localization.LocalizeFormat("ID_ARENASHORTCUTPHASESTART", colourString, MiscTools.PrintableTime(nextWindow.remainingTimeTillWindowStart, "ID_READYTIME", string.Empty));
+			}
+		}
+		return string.Empty;
+	}
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public static string CreateArenaWindowTimeText(bool encoding = false, bool moreLines = false)
+	{
+		if (WarArena.instance.warArenaConfig == null || WarArena.instance.warArenaConfig.isBeforeArenaStart || WarArena.instance.warArenaConfig.isAfterArenaEnd)
+		{
+			return string.Empty;
+		}
+		WarArenaConfig.PlayWindow currentWindow = WarArena.instance.warArenaConfig.currentWindow;
+		if (currentWindow != null)
+		{
+			if (currentWindow.isActive)
+			{
+				return Localization.LocalizeFormat((!moreLines) ? "ID_ARENAENDSTIMER" : "ID_ARENAENDSENTERTIMER", (!encoding) ? Colours.stringGreenArena : "[-]", MiscTools.PrintableTime(currentWindow.remainingTimeTillWindowEnd, "ID_READYTIME", string.Empty));
+			}
+			WarArenaConfig.PlayWindow nextWindow = WarArena.instance.warArenaConfig.nextWindow;
+			if (nextWindow != null)
+			{
+				return Localization.LocalizeFormat((!moreLines) ? "ID_ARENASTARTSTIMER" : "ID_ARENASTARTSENTERTIMER", (!encoding) ? Colours.stringGreenArena : "[-]", MiscTools.PrintableTime(nextWindow.remainingTimeTillWindowStart, "ID_READYTIME", string.Empty));
+			}
+		}
+		return string.Empty;
+	}
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public static string CreateArenaButtonTimeText()
+	{
+		if (WarArena.instance.warArenaConfig == null || WarArena.instance.warArenaConfig.isAfterArenaEnd)
+		{
+			return string.Empty;
+		}
+		if (WarArena.instance.warArenaConfig.isBeforeArenaStart)
+		{
+			return Localization.LocalizeFormat("ID_ARENASTARTSTIMER", "[-]", MiscTools.PrintableTime(WarArena.instance.remainigTimeTillStart, "ID_READYTIME", string.Empty));
+		}
+		WarArenaConfig.PlayWindow currentWindow = WarArena.instance.warArenaConfig.currentWindow;
+		if (currentWindow != null)
+		{
+			if (currentWindow.isActive)
+			{
+				return string.Empty;
+			}
+			WarArenaConfig.PlayWindow nextWindow = WarArena.instance.warArenaConfig.nextWindow;
+			if (nextWindow != null)
+			{
+				return Localization.LocalizeFormat("ID_ARENASTARTSTIMER", Colours.stringBlack, MiscTools.PrintableTime(nextWindow.remainingTimeTillWindowStart, "ID_READYTIME", string.Empty));
+			}
+		}
+		return string.Empty;
+	}
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public static bool ShouldArenaBattleButtonUpdate()
+	{
+		return WarArena.instance.warArenaConfig != null && WarArena.instance.warArenaConfig.currentWindow != null && !WarArena.instance.warArenaConfig.currentWindow.isActive;
+	}
 
-	3. Assembly Reconstruction has not been implemented.
+	public static bool ShouldArenaEnterButtonUpdate()
+	{
+		return WarArena.instance.warArenaConfig != null && WarArena.instance.warArenaConfig.isBeforeArenaStart;
+	}
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public static string CreateArenaEventTimeText()
+	{
+		if (WarArena.instance.warArenaConfig == null || WarArena.instance.warArenaConfig.isAfterArenaEnd)
+		{
+			return string.Empty;
+		}
+		if (WarArena.instance.warArenaConfig.isBeforeArenaStart)
+		{
+			return Localization.LocalizeFormat("ID_ARENAEVENTSTARTSIN", MiscTools.PrintableTime(WarArena.instance.remainigTimeTillStart, "ID_READYTIME", string.Empty));
+		}
+		return Localization.LocalizeFormat("ID_ARENAEVENTENDSIN", MiscTools.PrintableTime(WarArena.instance.remainigTimeTillEnd, "ID_READYTIME", string.Empty));
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public static bool ShouldArenaEventTimerPulsate()
+	{
+		return WarArena.instance.warArenaConfig != null && WarArena.instance.isOpened && WarArena.instance.warArenaConfig.end - Singleton<BeanstalkServerManager>.instance.currentTimestamp < 10800;
+	}
 
-	4. This script is unnecessary.
+	public static string CreateArenaEventTimeTextLowerCase()
+	{
+		if (WarArena.instance.warArenaConfig == null || WarArena.instance.warArenaConfig.isAfterArenaEnd)
+		{
+			return string.Empty;
+		}
+		if (WarArena.instance.warArenaConfig.isBeforeArenaStart)
+		{
+			return Localization.LocalizeFormat("ID_EVENTSTARTSINSMALL", Colours.stringGreenArena, MiscTools.PrintableTime(WarArena.instance.remainigTimeTillStart, "ID_READYTIME", string.Empty));
+		}
+		return Localization.LocalizeFormat("ID_EVENTENDSINSMALL", Colours.stringGreenArena, MiscTools.PrintableTime(WarArena.instance.remainigTimeTillEnd, "ID_READYTIME", string.Empty));
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
-
-	5. Script Content Level 0
-
-		AssetRipper was set to not load any script information.
-
-	6. Cpp2IL failed to decompile Il2Cpp data
-
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public static string CreateArenaButtonTitle()
+	{
+		if (WarArena.instance.warArenaConfig != null && WarArena.instance.isOpened)
+		{
+			WarArenaConfig.PlayWindow currentWindow = WarArena.instance.warArenaConfig.currentWindow;
+			if (currentWindow != null && !currentWindow.isActive)
+			{
+				WarArenaConfig.PlayWindow nextWindow = WarArena.instance.warArenaConfig.nextWindow;
+				if (nextWindow != null)
+				{
+					return Localization.LocalizeFormat("ID_STARTSINX", MiscTools.PrintableTime(nextWindow.remainingTimeTillWindowStart, "ID_READYTIME", string.Empty));
+				}
+			}
+			return Localization.Localize("ID_BATTLEINARENA");
+		}
+		return Localization.Localize("ID_ARENACLOSED");
+	}
 }

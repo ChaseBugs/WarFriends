@@ -1,63 +1,115 @@
+using UnityEngine.AI;
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
-public class CardDecoy : MonoBehaviour
+public class CardDecoy : Card
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public string mineTexturePath;
 
-	1. No dll files were provided to AssetRipper.
+	public string opponentTexturePath;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public static Texture2D mRedTexture;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public static Texture2D mBlueTexture;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	private bool mIsOpponentCard;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public override IEnumerator InitCard(bool isOpponentCard)
+	{
+		mIsOpponentCard = isOpponentCard;
+		if (mIsOpponentCard && mRedTexture == null)
+		{
+			mRedTexture = Resources.Load<Texture2D>(opponentTexturePath);
+		}
+		if (!mIsOpponentCard && mBlueTexture == null)
+		{
+			mBlueTexture = Resources.Load<Texture2D>(mineTexturePath);
+		}
+		yield break;
+	}
 
-	3. Assembly Reconstruction has not been implemented.
+	public override void ReleaseCard(bool isOpponent)
+	{
+		base.ReleaseCard(isOpponent);
+		mRedTexture = null;
+		mBlueTexture = null;
+	}
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public override void UseCard(ICardManager cardManager, Fractions fraction)
+	{
+		base.UseCard(cardManager, fraction);
+		cardManager.CardWasUsed(this, fraction);
+		StartCoroutine(SpawnDecoy(fraction));
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	private IEnumerator SpawnDecoy(Fractions fraction)
+	{
+		List<EnemyPointObstacle> freeObstacles = new List<EnemyPointObstacle>();
+		int decoysToSpawn = 3;
+		while (true)
+		{
+			foreach (EnemyPoint enemyPoint in Singleton<MapManager>.instance.currentMapDef.enemyPointsCollection.enemyPoints)
+			{
+				EnemyPointObstacle enemyPointObstacle = enemyPoint as EnemyPointObstacle;
+				if (enemyPointObstacle != null && enemyPointObstacle.isFree && enemyPointObstacle.fraction == fraction)
+				{
+					freeObstacles.Add(enemyPointObstacle);
+				}
+			}
+			if (freeObstacles.Count > 0)
+			{
+				decoysToSpawn--;
+				SpawnDecoyOnRandomPosition(fraction, freeObstacles);
+				if (decoysToSpawn <= 0)
+				{
+					break;
+				}
+				freeObstacles.Clear();
+			}
+			else
+			{
+				Debug.LogWarning(string.Format("No free position for decoy!", freeObstacles.Count));
+				yield return new WaitForRealSeconds(0.2f);
+			}
+		}
+	}
 
-	4. This script is unnecessary.
+	private void SpawnDecoyOnRandomPosition(Fractions fraction, List<EnemyPointObstacle> freeObstacles)
+	{
+		EnemyPointObstacle enemyPointObstacle = freeObstacles[Random.Range(0, freeObstacles.Count)];
+		NavMesh.SamplePosition(enemyPointObstacle.position, out var hit, 10f, 1);
+		Vector3 vector = GetLookTarget(fraction).ReplaceY(hit.position.y);
+		Quaternion rotation = Quaternion.LookRotation(vector - hit.position, Vector3.up);
+		Decoy decoy = ObjectPoolDatabase.networkPool.InstantiateNetwork(Singleton<ObjectPoolDatabase>.instance.decoy, hit.position, rotation) as Decoy;
+		decoy.Setup(enemyPointObstacle);
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private Vector3 GetLookTarget(Fractions fraction)
+	{
+		int num = 0;
+		Vector3 zero = Vector3.zero;
+		List<MapDefinition.DefendPosition> availablePoints = Singleton<MapManager>.instance.currentMapDef.availablePoints;
+		foreach (MapDefinition.DefendPosition item in availablePoints)
+		{
+			if (item.fraction != fraction)
+			{
+				num++;
+				zero += item.point.shield.shotPosition.position;
+			}
+		}
+		if (num > 0)
+		{
+			zero /= (float)num;
+		}
+		return zero;
+	}
 
-	5. Script Content Level 0
-
-		AssetRipper was set to not load any script information.
-
-	6. Cpp2IL failed to decompile Il2Cpp data
-
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public override void DisconnectEvents()
+	{
+		base.DisconnectEvents();
+		StopAllCoroutines();
+		mRedTexture = null;
+		mBlueTexture = null;
+	}
 }

@@ -1,63 +1,73 @@
+using System.Collections.Generic;
 using UnityEngine;
 
+[ExecuteInEditMode]
 public class PolygonGenerator : MonoBehaviour
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public float polygonArea;
 
-	1. No dll files were provided to AssetRipper.
+	public void GeneratePolygon(List<Tuple<Vector3, Vector2>> points)
+	{
+		Vector3[] array = new Vector3[points.Count];
+		Vector2[] array2 = new Vector2[points.Count];
+		for (int i = 0; i < points.Count; i++)
+		{
+			ref Vector3 reference = ref array[i];
+			reference = points[i].Value1;
+			ref Vector2 reference2 = ref array2[i];
+			reference2 = points[i].Value2;
+		}
+		float area;
+		int[] triangles = Triangulator.Triangulate(array, out area);
+		polygonArea = area;
+		Mesh mesh = new Mesh();
+		mesh.vertices = array;
+		mesh.triangles = triangles;
+		mesh.RecalculateBounds();
+		mesh.uv = array2;
+		MeshFilter component = base.gameObject.GetComponent<MeshFilter>();
+		component.mesh = mesh;
+	}
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
-
-	2. Incorrect dll files were provided to AssetRipper.
-
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
-
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-	3. Assembly Reconstruction has not been implemented.
-
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
-
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
-
-	4. This script is unnecessary.
-
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
-
-	5. Script Content Level 0
-
-		AssetRipper was set to not load any script information.
-
-	6. Cpp2IL failed to decompile Il2Cpp data
-
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public void GeneratePolygon(List<List<Tuple<Vector3, Vector2>>> pointsIslands)
+	{
+		List<Vector3> list = new List<Vector3>();
+		List<int> list2 = new List<int>();
+		int num = 0;
+		foreach (List<Tuple<Vector3, Vector2>> pointsIsland in pointsIslands)
+		{
+			num += pointsIsland.Count;
+		}
+		Vector2[] array = new Vector2[num];
+		polygonArea = 0f;
+		int num2 = 0;
+		foreach (List<Tuple<Vector3, Vector2>> pointsIsland2 in pointsIslands)
+		{
+			Vector3[] array2 = new Vector3[pointsIsland2.Count];
+			for (int i = 0; i < pointsIsland2.Count; i++)
+			{
+				ref Vector3 reference = ref array2[i];
+				reference = pointsIsland2[i].Value1;
+				ref Vector2 reference2 = ref array[i + num2];
+				reference2 = pointsIsland2[i].Value2;
+				list.Add(pointsIsland2[i].Value1);
+			}
+			float area;
+			int[] array3 = Triangulator.Triangulate(array2, out area);
+			polygonArea += area;
+			int[] array4 = array3;
+			foreach (int num3 in array4)
+			{
+				list2.Add(num3 + num2);
+			}
+			num2 += pointsIsland2.Count;
+		}
+		Mesh mesh = new Mesh();
+		mesh.vertices = list.ToArray();
+		mesh.triangles = list2.ToArray();
+		mesh.RecalculateBounds();
+		mesh.uv = array;
+		MeshFilter component = base.gameObject.GetComponent<MeshFilter>();
+		component.mesh = mesh;
+	}
 }

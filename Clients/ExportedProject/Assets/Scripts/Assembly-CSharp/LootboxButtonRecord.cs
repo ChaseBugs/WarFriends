@@ -1,63 +1,115 @@
+using System;
 using UnityEngine;
 
-public class LootboxButtonRecord : MonoBehaviour
+public class LootboxButtonRecord : Core_BaseScript
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Header("Settings")]
+	public bool isBig;
 
-	1. No dll files were provided to AssetRipper.
+	[Header("Sale Part")]
+	public GameObject salePart;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public UILabel saleLabel;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	[Header("Labels")]
+	public UILabel amountLabel;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	[Header("Bottom Part")]
+	public UITable priceTable;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public UILabel priceLabel;
 
-	3. Assembly Reconstruction has not been implemented.
+	[Header("Overlay")]
+	public GameObject purchaseProtectionOverlay;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public GameObject purchaseWaiting;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	[Header("-Sale")]
+	public GameObject lootboxSalePart;
 
-	4. This script is unnecessary.
+	public UILabel lootboxSaleLabel;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public WinStreakCounter lootboxSaleTimeCounter;
 
-	5. Script Content Level 0
+	private InappScreen.InappDefinition mLootboxDefinition;
 
-		AssetRipper was set to not load any script information.
+	private int mDiscount;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public string id => (mLootboxDefinition == null) ? string.Empty : mLootboxDefinition.id;
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public int gold
+	{
+		get
+		{
+			if (mLootboxDefinition == null)
+			{
+				return 0;
+			}
+			return MiscTools.RoundToInt(mLootboxDefinition.price) * (100 - mDiscount) / 100;
+		}
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	public int discount => mDiscount;
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	public void InitControls()
+	{
+		priceTable.onReposition = delegate
+		{
+			float val = 0f - priceTable.padding.x - (priceLabel.transform.parent.transform.localPosition.x - priceTable.padding.x) / 2f;
+			priceTable.transform.localPosition = priceTable.transform.localPosition.ReplaceX(val);
+		};
+	}
 
-	*/
+	public void Initialize(InappScreen.InappDefinition lootboxDefinition)
+	{
+		mLootboxDefinition = lootboxDefinition;
+		amountLabel.text = MiscTools.FormatBigNumber(mLootboxDefinition.amount);
+		SetSaleAndPrize();
+		InitializePurchaseProtection();
+	}
+
+	public void SetSaleAndPrize()
+	{
+		int sale = mLootboxDefinition.sale;
+		int num = (mDiscount = Singleton<OfferManager>.instance.DiscountedLootbox());
+		bool flag = sale > 0;
+		bool flag2 = num > 0;
+		if (flag)
+		{
+			saleLabel.text = Localization.LocalizeFormat((!isBig) ? "ID_FREEPERCENTLINE" : "ID_FREEPERCENT", sale);
+			if (isBig)
+			{
+				MiscTools.SetUILabelRescale(saleLabel, 47f, 24f, 250);
+			}
+			else
+			{
+				MiscTools.SetUILabelRescale(saleLabel, 25f, 20f, 150);
+			}
+		}
+		priceLabel.text = MiscTools.FormatBigNumber(gold);
+		priceTable.repositionNow = true;
+		salePart.SetActive(flag);
+		lootboxSalePart.SetActive(flag2);
+		if (flag2)
+		{
+			lootboxSaleLabel.text = Localization.LocalizeFormat("ID_SALEPERCENTLINE", num);
+			lootboxSaleTimeCounter.StartCountingTo(Singleton<OfferManager>.instance.DiscountedLootboxEndtime(), upperCaseCountdown: true);
+			WinStreakCounter winStreakCounter = lootboxSaleTimeCounter;
+			winStreakCounter.winStreakTimer = (Action)Delegate.Remove(winStreakCounter.winStreakTimer, new Action(SetSaleAndPrize));
+			WinStreakCounter winStreakCounter2 = lootboxSaleTimeCounter;
+			winStreakCounter2.winStreakTimer = (Action)Delegate.Combine(winStreakCounter2.winStreakTimer, new Action(SetSaleAndPrize));
+		}
+		else
+		{
+			lootboxSaleTimeCounter.StopCountingTo();
+			WinStreakCounter winStreakCounter3 = lootboxSaleTimeCounter;
+			winStreakCounter3.winStreakTimer = (Action)Delegate.Remove(winStreakCounter3.winStreakTimer, new Action(SetSaleAndPrize));
+		}
+	}
+
+	public void InitializePurchaseProtection()
+	{
+		purchaseProtectionOverlay.SetActive(Singleton<PurchaseProtection>.instance.IsAnyLootboxPurchasing());
+		purchaseWaiting.SetActive(Singleton<PurchaseProtection>.instance.IsLootboxPurchasing(id));
+	}
 }

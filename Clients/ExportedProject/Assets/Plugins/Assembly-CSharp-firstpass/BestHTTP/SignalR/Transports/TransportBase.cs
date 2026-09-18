@@ -1,66 +1,227 @@
-using UnityEngine;
+using System;
+using System.Collections.Generic;
+using BestHTTP.SignalR.JsonEncoders;
+using BestHTTP.SignalR.Messages;
 
 namespace BestHTTP.SignalR.Transports
 {
-	public class TransportBase : MonoBehaviour
+public abstract class TransportBase
+{
+	private const int MaxRetryCount = 5;
+
+	public TransportStates _state;
+
+	public string Name { get; protected set; }
+
+	public abstract bool SupportsKeepAlive { get; }
+
+	public abstract TransportTypes Type { get; }
+
+	public IConnection Connection { get; protected set; }
+
+	public TransportStates State
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
+		get
+		{
+			return _state;
+		}
+		protected set
+		{
+			TransportStates state = _state;
+			_state = value;
+			if (this.OnStateChanged != null)
+			{
+				this.OnStateChanged(this, state, _state);
+			}
+		}
 	}
+
+	public event OnTransportStateChangedDelegate OnStateChanged;
+
+	public TransportBase(string name, Connection connection)
+	{
+		Name = name;
+		Connection = connection;
+		State = TransportStates.Initial;
+	}
+
+	public abstract void Connect();
+
+	public abstract void Stop();
+
+	protected abstract void SendImpl(string json);
+
+	protected abstract void Started();
+
+	protected abstract void Aborted();
+
+	protected void OnConnected()
+	{
+		if (State != TransportStates.Reconnecting)
+		{
+			Start();
+			return;
+		}
+		Connection.TransportReconnected();
+		Started();
+		State = TransportStates.Started;
+	}
+
+	protected void Start()
+	{
+		HTTPManager.Logger.Information("Transport - " + Name, "Sending Start Request");
+		State = TransportStates.Starting;
+		if ((int)Connection.Protocol > 0)
+		{
+			HTTPRequest hTTPRequest = new HTTPRequest(Connection.BuildUri(RequestTypes.Start, this), HTTPMethods.Get, isKeepAlive: true, disableCache: true, OnStartRequestFinished);
+			hTTPRequest.Tag = 0;
+			hTTPRequest.DisableRetry = true;
+			hTTPRequest.Timeout = Connection.NegotiationResult.ConnectionTimeout + TimeSpan.FromSeconds(10.0);
+			Connection.PrepareRequest(hTTPRequest, RequestTypes.Start);
+			hTTPRequest.Send();
+		}
+		else
+		{
+			State = TransportStates.Started;
+			Started();
+			Connection.TransportStarted();
+		}
+	}
+
+	private void OnStartRequestFinished(HTTPRequest req, HTTPResponse resp)
+	{
+		HTTPRequestStates state = req.State;
+		if (state == HTTPRequestStates.Finished)
+		{
+			if (resp.IsSuccess)
+			{
+				HTTPManager.Logger.Information("Transport - " + Name, "Start - Returned: " + resp.DataAsText);
+				string text = Connection.ParseResponse(resp.DataAsText);
+				if (text != "started")
+				{
+					Connection.Error($"Expected 'started' response, but '{text}' found!");
+					return;
+				}
+				State = TransportStates.Started;
+				Started();
+				Connection.TransportStarted();
+				return;
+			}
+			HTTPManager.Logger.Warning("Transport - " + Name, $"Start - request finished Successfully, but the server sent an error. Status Code: {resp.StatusCode}-{resp.Message} Message: {resp.DataAsText} Uri: {req.CurrentUri}");
+		}
+		HTTPManager.Logger.Information("Transport - " + Name, "Start request state: " + req.State);
+		int num = (int)req.Tag;
+		if (num++ < 5)
+		{
+			req.Tag = num;
+			req.Send();
+		}
+		else
+		{
+			Connection.Error("Failed to send Start request.");
+		}
+	}
+
+	public virtual void Abort()
+	{
+		if (State == TransportStates.Started)
+		{
+			State = TransportStates.Closing;
+			HTTPRequest hTTPRequest = new HTTPRequest(Connection.BuildUri(RequestTypes.Abort, this), HTTPMethods.Get, isKeepAlive: true, disableCache: true, OnAbortRequestFinished);
+			hTTPRequest.Tag = 0;
+			hTTPRequest.DisableRetry = true;
+			Connection.PrepareRequest(hTTPRequest, RequestTypes.Abort);
+			hTTPRequest.Send();
+		}
+	}
+
+	protected void AbortFinished()
+	{
+		State = TransportStates.Closed;
+		Connection.TransportAborted();
+		Aborted();
+	}
+
+	private void OnAbortRequestFinished(HTTPRequest req, HTTPResponse resp)
+	{
+		HTTPRequestStates state = req.State;
+		if (state == HTTPRequestStates.Finished)
+		{
+			if (resp.IsSuccess)
+			{
+				HTTPManager.Logger.Information("Transport - " + Name, "Abort - Returned: " + resp.DataAsText);
+				if (State == TransportStates.Closing)
+				{
+					AbortFinished();
+				}
+				return;
+			}
+			HTTPManager.Logger.Warning("Transport - " + Name, $"Abort - Handshake request finished Successfully, but the server sent an error. Status Code: {resp.StatusCode}-{resp.Message} Message: {resp.DataAsText} Uri: {req.CurrentUri}");
+		}
+		HTTPManager.Logger.Information("Transport - " + Name, "Abort request state: " + req.State);
+		int num = (int)req.Tag;
+		if (num++ < 5)
+		{
+			req.Tag = num;
+			req.Send();
+		}
+		else
+		{
+			Connection.Error("Failed to send Abort request!");
+		}
+	}
+
+	public void Send(string jsonStr)
+	{
+		try
+		{
+			HTTPManager.Logger.Information("Transport - " + Name, "Sending: " + jsonStr);
+			SendImpl(jsonStr);
+		}
+		catch (Exception ex)
+		{
+			HTTPManager.Logger.Exception("Transport - " + Name, "Send", ex);
+		}
+	}
+
+	public void Reconnect()
+	{
+		HTTPManager.Logger.Information("Transport - " + Name, "Reconnecting");
+		Stop();
+		State = TransportStates.Reconnecting;
+		Connect();
+	}
+
+	public static IServerMessage Parse(IJsonEncoder encoder, string json)
+	{
+		if (string.IsNullOrEmpty(json))
+		{
+			HTTPManager.Logger.Error("MessageFactory", "Parse - called with empty or null string!");
+			return null;
+		}
+		if (json.Length == 2 && json == "{}")
+		{
+			return new KeepAliveMessage();
+		}
+		IDictionary<string, object> dictionary = null;
+		try
+		{
+			dictionary = encoder.DecodeMessage(json);
+		}
+		catch (Exception ex)
+		{
+			HTTPManager.Logger.Exception("MessageFactory", "Parse - encoder.DecodeMessage", ex);
+			return null;
+		}
+		if (dictionary == null)
+		{
+			HTTPManager.Logger.Error("MessageFactory", "Parse - Json Decode failed for json string: \"" + json + "\"");
+			return null;
+		}
+		IServerMessage serverMessage = null;
+		serverMessage = (dictionary.ContainsKey("C") ? new MultiMessage() : (dictionary.ContainsKey("E") ? ((IServerMessage)new FailureMessage()) : ((IServerMessage)new ResultMessage())));
+		serverMessage.Parse(dictionary);
+		return serverMessage;
+	}
+}
 }

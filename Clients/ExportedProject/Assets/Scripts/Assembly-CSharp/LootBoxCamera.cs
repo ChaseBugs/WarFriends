@@ -1,63 +1,166 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
-public class LootBoxCamera : MonoBehaviour
+public class LootBoxCamera : Singleton<LootBoxCamera>
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public GameObject background;
 
-	1. No dll files were provided to AssetRipper.
+	public Camera lootboxCamera;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public Camera dialogCamera;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public Transform characterParent;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public LootBoxCharacter lootBoxCharacter;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public Animation lootBoxOpenAnimation;
 
-	3. Assembly Reconstruction has not been implemented.
+	public ParticleSystem lootBoxOpenParticles;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public Animation lootBoxShowUpAnimation;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public ParticleSystem screenShowParticles;
 
-	4. This script is unnecessary.
+	public RotateCamera rotateCamera;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private Transform mLootBoxPrent;
 
-	5. Script Content Level 0
+	private Dictionary<int, CamosManager.SavedPlayerVisualSlot> mPlayerVisuals;
 
-		AssetRipper was set to not load any script information.
+	private int mRandomCategory;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	protected override void Awake()
+	{
+		base.Awake();
+		mLootBoxPrent = lootBoxOpenAnimation.transform;
+		background.gameObject.SetActive(value: false);
+		AnimationEvent component = lootBoxOpenAnimation.GetComponent<AnimationEvent>();
+		if (component != null)
+		{
+			component.OnAnimationEvent = (Action<string>)Delegate.Combine(component.OnAnimationEvent, new Action<string>(OnAnimationEvent));
+		}
+		dialogCamera.gameObject.SetActive(value: false);
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	protected void Update()
+	{
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	public void Test()
+	{
+		InvokeAfter(delegate
+		{
+			TestVisual();
+		}, 0f);
+		InvokeAfter(OpenLootBox, 4f);
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	public void TestVisual()
+	{
+		mRandomCategory = UnityEngine.Random.Range(0, 3);
+		mPlayerVisuals = new Dictionary<int, CamosManager.SavedPlayerVisualSlot>();
+		mPlayerVisuals[mRandomCategory] = new CamosManager.SavedPlayerVisualSlot
+		{
+			equippedID = CamosManager.instance.RandomPlayerVisual(mRandomCategory).id
+		};
+		Show();
+		ShowUpLootBox();
+	}
 
-	*/
+	public void ShowVisual(PlayerVisual visual)
+	{
+		mRandomCategory = visual.owner.categoryNumber;
+		mPlayerVisuals = new Dictionary<int, CamosManager.SavedPlayerVisualSlot>();
+		mPlayerVisuals[mRandomCategory] = new CamosManager.SavedPlayerVisualSlot
+		{
+			equippedID = visual.id
+		};
+		if (mRandomCategory != 0)
+		{
+			mPlayerVisuals[0] = new CamosManager.SavedPlayerVisualSlot
+			{
+				equippedID = CamosManager.instance.playerVisualCategories[0].equippedVisual.id
+			};
+		}
+		Show();
+		ShowUpLootBox();
+	}
+
+	public void Show()
+	{
+		lootboxCamera.enabled = true;
+		rotateCamera.enabled = true;
+		background.SetActive(value: true);
+		mLootBoxPrent.gameObject.SetActive(value: true);
+		characterParent.gameObject.SetActive(value: false);
+		screenShowParticles.Play();
+		SoundsManager.Instance.PlaySound(SoundsManager.SoundsEnum.BootcampIntro);
+	}
+
+	public void Skip()
+	{
+		DisplayModel(wasSkipped: true);
+	}
+
+	public void Hide()
+	{
+		lootboxCamera.enabled = false;
+		rotateCamera.enabled = false;
+	}
+
+	public void DisplayModel(bool wasSkipped)
+	{
+		rotateCamera.Reset();
+		mLootBoxPrent.gameObject.SetActive(value: false);
+		characterParent.gameObject.SetActive(value: true);
+		lootBoxCharacter.Prepare();
+		lootBoxCharacter.SetSolidMaterial();
+		CamosManager.instance.ApplyVisuals(lootBoxCharacter, mPlayerVisuals, useHighRes: true);
+		CamosManager.instance.mainPlayer.equippedCamo = null;
+		CamosManager.instance.ApplyVisuals(CamosManager.instance.mainPlayer, useHighRes: true);
+		lootBoxCharacter.SetAccesory(mRandomCategory);
+		lootBoxCharacter.transform.localScale = Vector3.one;
+		lootBoxCharacter.transform.localPosition = Vector3.zero;
+		lootBoxCharacter.transform.localRotation = Quaternion.identity;
+		GuiElementSingle<LootBoxDialog>.instance.ShowVisualInfo(wasSkipped);
+	}
+
+	public void ShowUpLootBox()
+	{
+		AnimationState animationState = lootBoxOpenAnimation["LootBoxOpen"];
+		animationState.normalizedTime = 0f;
+		animationState.weight = 1f;
+		animationState.enabled = true;
+		lootBoxOpenAnimation.Sample();
+		animationState.enabled = false;
+		lootBoxShowUpAnimation.Play("LootBoxShowUp");
+		lootBoxShowUpAnimation.PlayQueued("LootBoxRotation");
+	}
+
+	public void OpenLootBox()
+	{
+		lootBoxOpenAnimation.Play();
+		SoundsManager.Instance.PlaySound(SoundsManager.SoundsEnum.OpenLootbox);
+	}
+
+	private void OnAnimationEvent(string s)
+	{
+		if (s == "boxOpen")
+		{
+			lootBoxOpenParticles.Play();
+		}
+		if (s == "animationEnd")
+		{
+			EndOfLootboxOpening();
+		}
+	}
+
+	private void EndOfLootboxOpening()
+	{
+		InvokeAfter(delegate
+		{
+			GuiElementSingle<LootBoxDialog>.instance.ShowFlash();
+		}, 0.3f);
+	}
 }

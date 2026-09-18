@@ -1,63 +1,242 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Text;
 using UnityEngine;
 
-public class GameControllerCampaign : MonoBehaviour
+public class GameControllerCampaign : IGameController
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	protected PlayerController mMainPlayerController => Singleton<GameController>.instance.mainPlayerController;
 
-	1. No dll files were provided to AssetRipper.
+	public override bool dropCreates => !LevelManager.isNoob;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public override float time
+	{
+		get
+		{
+			return MissionsManager.instance.currentMission.remainingTime;
+		}
+		set
+		{
+		}
+	}
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public override List<Card> cardsForGame
+	{
+		get
+		{
+			return Singleton<GameController>.instance.gameControllerDeathMatch.cardsForGame;
+		}
+		set
+		{
+			Singleton<GameController>.instance.gameControllerDeathMatch.cardsForGame = value;
+		}
+	}
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public GameController mMainController
+	{
+		get
+		{
+			return Singleton<GameController>.instance;
+		}
+		set
+		{
+			throw new NotImplementedException();
+		}
+	}
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public override bool gameIsRunning
+	{
+		get
+		{
+			return mMainController.gameIsRunning;
+		}
+		set
+		{
+			mMainController.gameIsRunning = value;
+		}
+	}
 
-	3. Assembly Reconstruction has not been implemented.
+	public override bool canShowPause => true;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public override bool canDeployUnits => MissionsManager.instance.currentMission is BotMission;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public bool shouldLooseDogtagWhenQuit => false;
 
-	4. This script is unnecessary.
+	public override string quitText => string.Empty;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public override bool pauseCountDown => false;
 
-	5. Script Content Level 0
+	private Dictionary<string, UnitUpgradeDefinition> mUpgradedSlotsDic { get; set; }
 
-		AssetRipper was set to not load any script information.
+	public override List<UnitUpgradeDefinition> opponentUpgrades
+	{
+		get
+		{
+			List<UnitUpgradeDefinition> upgrades = MissionsManager.instance.currentMission.GetUpgrades();
+			mUpgradedSlotsDic = new Dictionary<string, UnitUpgradeDefinition>();
+			for (int i = 0; i < LevelManager.instance.behaviours.Count; i++)
+			{
+				LevelBehaviour levelBehaviour = LevelManager.instance.behaviours[i];
+				mUpgradedSlotsDic[levelBehaviour.GetType().ToString()] = upgrades[i];
+			}
+			return upgrades;
+		}
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public override IEnumerator StartGame()
+	{
+		PlayerController.players.Clear();
+		PhotonNetwork.offlineMode = true;
+		MapDefinition.DefendPosition p = null;
+		foreach (MapDefinition.DefendPosition point in Singleton<MapManager>.instance.currentMapDef.playersPositions)
+		{
+			if (point.mainPosition && point.fraction == Fractions.Allies)
+			{
+				p = point;
+			}
+			point.point.shield.player = null;
+		}
+		if (p != null)
+		{
+			mMainPlayerController.MoveTo(p.point.transform.position, p.point.transform.rotation);
+			mMainPlayerController.fraction = Fractions.Allies;
+			mMainPlayerController.currentPlayerPoint = p;
+			PlayerController.currentPlayer = mMainPlayerController;
+			PlayerController.players[0] = mMainPlayerController;
+			mMainPlayerController.playerNetworkId = 0;
+			mMainPlayerController.InitPlayer();
+		}
+		else
+		{
+			Debug.LogError("No main position was set in map definition");
+		}
+		MissionsManager.instance.PlayCurrentMission();
+		Singleton<MapManager>.instance.currentMapDef.InitShields();
+		yield return new WaitForSeconds(0.2f);
+		LoadingDialog.Hide();
+		Singleton<GuiManager>.instance.FadeIn(GuiElementSingle<PlayerHealthBars>.instance);
+		if (mMainController.isCoopBot || mMainController.isCampaignBot)
+		{
+			Singleton<GuiManager>.instance.ShowGui(GuiScreenSingle<GameStartScreen>.instance);
+			yield return StartCoroutine(Singleton<GameCamera>.instance.StartBeginAnimation());
+			yield return new WaitForSeconds(0.2f);
+		}
+		else
+		{
+			yield return StartCoroutine(Singleton<GameCamera>.instance.SingleCameraAnimation(2f));
+			yield return new WaitForSeconds(0.8f);
+		}
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public override void FinishGame()
+	{
+		if (mMainController.isCampaign)
+		{
+			TimeManager.instance.EndMission();
+		}
+		Singleton<MatchManager>.instance.matchTime = time;
+		gameIsRunning = false;
+		mMainController.FinishGame();
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	public override void LoadingStarted()
+	{
+		PhotonConnectionManager.JoinOfflineGame();
+		mMainPlayerController.playerProperties = PlayerProperties.CreateForLocalPlayer();
+		Singleton<GameController>.instance.battleId = GameLoginManager.currentPlayer.id + "-" + Singleton<BeanstalkServerManager>.instance.currentTimestamp;
+		MissionsManager.instance.currentMission.LoadingStarted();
+		Singleton<BeanstalkServerManager>.instance.GameStartedCampaign();
+		LoadingDialog.SetLook(smallLook: false);
+		LoadingDialog.ShowLoading(Localization.Localize("ID_LOADING"), showCancelButton: false, hideBackgroundElements: true);
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	public override void StopGame(bool switchScreen = true)
+	{
+		gameIsRunning = false;
+		mMainController.StopGame(switchScreen);
+	}
 
-	*/
+	public override void FreeLevel()
+	{
+	}
+
+	public override IEnumerator AquireLevelName()
+	{
+		yield break;
+	}
+
+	public virtual IEnumerator WaitForServerResponse()
+	{
+		yield break;
+	}
+
+	public override void Quit()
+	{
+		Singleton<DogTagManager>.instance.ResetLocalDogtags();
+		MissionsManager.instance.QuitCurrentMission();
+	}
+
+	public void PausematchMaking(bool pause)
+	{
+	}
+
+	public override void Forfeit()
+	{
+		mMainController.gameEndReason = GameController.GameEndReason.Forfeit;
+		MissionsManager.instance.currentMission.EndMission();
+	}
+
+	public override void PauseGame(bool focusLost)
+	{
+		if (gameIsRunning)
+		{
+			TimeManager.Pause(focusLost);
+		}
+	}
+
+	public override void FinishChoosingCards()
+	{
+		GuiScreenSingle<CardSelectionScreen>.instance.SetCardsForGame();
+		PlayerController.currentPlayer.playerProperties.chosenCards = CardManager.instance.selectedCards;
+		PlayerController.currentPlayer.playerProperties.buddyCards = CardManager.instance.selectedBuddyCards;
+		Singleton<GameController>.instance.StartGame(Singleton<MapManager>.instance.currentMap.name);
+	}
+
+	public override void Rematch()
+	{
+	}
+
+	public override void ResumeGame()
+	{
+		TimeManager.Resume();
+	}
+
+	public override void UnPauseGame()
+	{
+	}
+
+	public override void GetTimeProgressText(StringBuilder text)
+	{
+		MiscTools.PrintableTimeTwoDigits(ref text, MissionsManager.instance.time);
+	}
+
+	protected override Dictionary<string, UnitUpgradeDefinition> GetUpgradesDictionary(Fractions fraction)
+	{
+		if (fraction == PlayerController.currentPlayer.fraction)
+		{
+			return PlayerController.currentPlayer.playerProperties.upgradesDictionary;
+		}
+		return mUpgradedSlotsDic;
+	}
+
+	public override UpgradeSlots.UnitUpgrades PickUpgradesForUnit(bool isPreview, AIObject o)
+	{
+		LevelBehaviour behaviour = o.behaviour;
+		Fractions fraction = o.fraction;
+		UpgradeSlots.UnitUpgrades unitUpgrades = base.PickUpgradesForUnit(isPreview, o);
+		unitUpgrades = MissionsManager.ScaleUpgradesForMission(fraction, behaviour, unitUpgrades);
+		behaviour.behaviourDefinition.ScaleDamageAndHP(unitUpgrades.scaleDamage, unitUpgrades.scaleHp);
+		return unitUpgrades;
+	}
 }

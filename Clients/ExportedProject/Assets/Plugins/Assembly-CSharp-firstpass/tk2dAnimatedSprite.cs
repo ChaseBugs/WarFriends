@@ -1,63 +1,290 @@
+using System;
 using UnityEngine;
 
-public class tk2dAnimatedSprite : MonoBehaviour
+[AddComponentMenu("2D Toolkit/Sprite/tk2dAnimatedSprite (Obsolete)")]
+public class tk2dAnimatedSprite : tk2dSprite
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public delegate void AnimationCompleteDelegate(tk2dAnimatedSprite sprite, int clipId);
 
-	1. No dll files were provided to AssetRipper.
+	public delegate void AnimationEventDelegate(tk2dAnimatedSprite sprite, tk2dSpriteAnimationClip clip, tk2dSpriteAnimationFrame frame, int frameNum);
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	[SerializeField]
+	private tk2dSpriteAnimator _animator;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	[SerializeField]
+	private tk2dSpriteAnimation anim;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	[SerializeField]
+	private int clipId;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public bool playAutomatically;
 
-	3. Assembly Reconstruction has not been implemented.
+	public bool createCollider;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public AnimationCompleteDelegate animationCompleteDelegate;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public AnimationEventDelegate animationEventDelegate;
 
-	4. This script is unnecessary.
+	public tk2dSpriteAnimator Animator
+	{
+		get
+		{
+			CheckAddAnimatorInternal();
+			return _animator;
+		}
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public tk2dSpriteAnimation Library
+	{
+		get
+		{
+			return Animator.Library;
+		}
+		set
+		{
+			Animator.Library = value;
+		}
+	}
 
-	5. Script Content Level 0
+	public int DefaultClipId
+	{
+		get
+		{
+			return Animator.DefaultClipId;
+		}
+		set
+		{
+			Animator.DefaultClipId = value;
+		}
+	}
 
-		AssetRipper was set to not load any script information.
+	public static bool g_paused
+	{
+		get
+		{
+			return tk2dSpriteAnimator.g_Paused;
+		}
+		set
+		{
+			tk2dSpriteAnimator.g_Paused = value;
+		}
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public bool Paused
+	{
+		get
+		{
+			return Animator.Paused;
+		}
+		set
+		{
+			Animator.Paused = value;
+		}
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public tk2dSpriteAnimationClip CurrentClip => Animator.CurrentClip;
 
-	7. An incorrect path was provided to AssetRipper.
+	public float ClipTimeSeconds => Animator.ClipTimeSeconds;
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	public float ClipFps
+	{
+		get
+		{
+			return Animator.ClipFps;
+		}
+		set
+		{
+			Animator.ClipFps = value;
+		}
+	}
 
-	*/
+	public bool Playing => Animator.Playing;
+
+	public static float DefaultFps => tk2dSpriteAnimator.DefaultFps;
+
+	private void CheckAddAnimatorInternal()
+	{
+		if (_animator == null)
+		{
+			_animator = base.gameObject.GetComponent<tk2dSpriteAnimator>();
+			if (_animator == null)
+			{
+				_animator = base.gameObject.AddComponent<tk2dSpriteAnimator>();
+				_animator.Library = anim;
+				_animator.DefaultClipId = clipId;
+				_animator.playAutomatically = playAutomatically;
+			}
+		}
+	}
+
+	protected override bool NeedBoxCollider()
+	{
+		return createCollider;
+	}
+
+	private void ProxyCompletedHandler(tk2dSpriteAnimator anim, tk2dSpriteAnimationClip clip)
+	{
+		if (animationCompleteDelegate == null)
+		{
+			return;
+		}
+		int num = -1;
+		tk2dSpriteAnimationClip[] array = ((!(anim.Library != null)) ? null : anim.Library.clips);
+		if (array != null)
+		{
+			for (int i = 0; i < array.Length; i++)
+			{
+				if (array[i] == clip)
+				{
+					num = i;
+					break;
+				}
+			}
+		}
+		animationCompleteDelegate(this, num);
+	}
+
+	private void ProxyEventTriggeredHandler(tk2dSpriteAnimator anim, tk2dSpriteAnimationClip clip, int frame)
+	{
+		if (animationEventDelegate != null)
+		{
+			animationEventDelegate(this, clip, clip.frames[frame], frame);
+		}
+	}
+
+	private void OnEnable()
+	{
+		Animator.AnimationCompleted = ProxyCompletedHandler;
+		Animator.AnimationEventTriggered = ProxyEventTriggeredHandler;
+	}
+
+	private void OnDisable()
+	{
+		Animator.AnimationCompleted = null;
+		Animator.AnimationEventTriggered = null;
+	}
+
+	private void Start()
+	{
+		CheckAddAnimatorInternal();
+	}
+
+	public static tk2dAnimatedSprite AddComponent(GameObject go, tk2dSpriteAnimation anim, int clipId)
+	{
+		tk2dSpriteAnimationClip tk2dSpriteAnimationClip2 = anim.clips[clipId];
+		tk2dAnimatedSprite tk2dAnimatedSprite2 = go.AddComponent<tk2dAnimatedSprite>();
+		tk2dAnimatedSprite2.SetSprite(tk2dSpriteAnimationClip2.frames[0].spriteCollection, tk2dSpriteAnimationClip2.frames[0].spriteId);
+		tk2dAnimatedSprite2.anim = anim;
+		return tk2dAnimatedSprite2;
+	}
+
+	public void Play()
+	{
+		if (Animator.DefaultClip != null)
+		{
+			Animator.Play(Animator.DefaultClip);
+		}
+	}
+
+	public void Play(float clipStartTime)
+	{
+		if (Animator.DefaultClip != null)
+		{
+			Animator.PlayFrom(Animator.DefaultClip, clipStartTime);
+		}
+	}
+
+	public void PlayFromFrame(int frame)
+	{
+		if (Animator.DefaultClip != null)
+		{
+			Animator.PlayFromFrame(Animator.DefaultClip, frame);
+		}
+	}
+
+	public void Play(string name)
+	{
+		Animator.Play(name);
+	}
+
+	public void PlayFromFrame(string name, int frame)
+	{
+		Animator.PlayFromFrame(name, frame);
+	}
+
+	public void Play(string name, float clipStartTime)
+	{
+		Animator.PlayFrom(name, clipStartTime);
+	}
+
+	public void Play(tk2dSpriteAnimationClip clip, float clipStartTime)
+	{
+		Animator.PlayFrom(clip, clipStartTime);
+	}
+
+	public void Play(tk2dSpriteAnimationClip clip, float clipStartTime, float overrideFps)
+	{
+		Animator.Play(clip, clipStartTime, overrideFps);
+	}
+
+	public void Stop()
+	{
+		Animator.Stop();
+	}
+
+	public void StopAndResetFrame()
+	{
+		Animator.StopAndResetFrame();
+	}
+
+	[Obsolete]
+	public bool isPlaying()
+	{
+		return Animator.Playing;
+	}
+
+	public bool IsPlaying(string name)
+	{
+		return Animator.Playing;
+	}
+
+	public bool IsPlaying(tk2dSpriteAnimationClip clip)
+	{
+		return Animator.IsPlaying(clip);
+	}
+
+	public int GetClipIdByName(string name)
+	{
+		return Animator.GetClipIdByName(name);
+	}
+
+	public tk2dSpriteAnimationClip GetClipByName(string name)
+	{
+		return Animator.GetClipByName(name);
+	}
+
+	public void Pause()
+	{
+		Animator.Pause();
+	}
+
+	public void Resume()
+	{
+		Animator.Resume();
+	}
+
+	public void SetFrame(int currFrame)
+	{
+		Animator.SetFrame(currFrame);
+	}
+
+	public void SetFrame(int currFrame, bool triggerEvent)
+	{
+		Animator.SetFrame(currFrame, triggerEvent);
+	}
+
+	public void UpdateAnimation(float deltaTime)
+	{
+		Animator.UpdateAnimation(deltaTime);
+	}
 }

@@ -1,66 +1,100 @@
-using UnityEngine;
+using System;
+using Org.BouncyCastle.Utilities;
 
 namespace Org.BouncyCastle.Crypto.Tls
 {
-	public class TlsNullCipher : MonoBehaviour
+public class TlsNullCipher : TlsCipher
+{
+	protected readonly TlsContext context;
+
+	protected readonly TlsMac writeMac;
+
+	protected readonly TlsMac readMac;
+
+	public TlsNullCipher(TlsContext context)
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
+		this.context = context;
+		writeMac = null;
+		readMac = null;
 	}
+
+	public TlsNullCipher(TlsContext context, IDigest clientWriteDigest, IDigest serverWriteDigest)
+	{
+		if (clientWriteDigest == null != (serverWriteDigest == null))
+		{
+			throw new TlsFatalAlert(80);
+		}
+		this.context = context;
+		TlsMac tlsMac = null;
+		TlsMac tlsMac2 = null;
+		if (clientWriteDigest != null)
+		{
+			int num = clientWriteDigest.GetDigestSize() + serverWriteDigest.GetDigestSize();
+			byte[] key = TlsUtilities.CalculateKeyBlock(context, num);
+			int num2 = 0;
+			tlsMac = new TlsMac(context, clientWriteDigest, key, num2, clientWriteDigest.GetDigestSize());
+			num2 += clientWriteDigest.GetDigestSize();
+			tlsMac2 = new TlsMac(context, serverWriteDigest, key, num2, serverWriteDigest.GetDigestSize());
+			num2 += serverWriteDigest.GetDigestSize();
+			if (num2 != num)
+			{
+				throw new TlsFatalAlert(80);
+			}
+		}
+		if (context.IsServer)
+		{
+			writeMac = tlsMac2;
+			readMac = tlsMac;
+		}
+		else
+		{
+			writeMac = tlsMac;
+			readMac = tlsMac2;
+		}
+	}
+
+	public virtual int GetPlaintextLimit(int ciphertextLimit)
+	{
+		int num = ciphertextLimit;
+		if (writeMac != null)
+		{
+			num -= writeMac.Size;
+		}
+		return num;
+	}
+
+	public virtual byte[] EncodePlaintext(long seqNo, byte type, byte[] plaintext, int offset, int len)
+	{
+		if (writeMac == null)
+		{
+			return Arrays.CopyOfRange(plaintext, offset, offset + len);
+		}
+		byte[] array = writeMac.CalculateMac(seqNo, type, plaintext, offset, len);
+		byte[] array2 = new byte[len + array.Length];
+		Array.Copy(plaintext, offset, array2, 0, len);
+		Array.Copy(array, 0, array2, len, array.Length);
+		return array2;
+	}
+
+	public virtual byte[] DecodeCiphertext(long seqNo, byte type, byte[] ciphertext, int offset, int len)
+	{
+		if (readMac == null)
+		{
+			return Arrays.CopyOfRange(ciphertext, offset, offset + len);
+		}
+		int size = readMac.Size;
+		if (len < size)
+		{
+			throw new TlsFatalAlert(50);
+		}
+		int num = len - size;
+		byte[] a = Arrays.CopyOfRange(ciphertext, offset + num, offset + len);
+		byte[] b = readMac.CalculateMac(seqNo, type, ciphertext, offset, num);
+		if (!Arrays.ConstantTimeAreEqual(a, b))
+		{
+			throw new TlsFatalAlert(20);
+		}
+		return Arrays.CopyOfRange(ciphertext, offset, offset + num);
+	}
+}
 }

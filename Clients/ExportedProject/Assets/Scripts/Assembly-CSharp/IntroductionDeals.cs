@@ -1,63 +1,157 @@
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
-public class IntroductionDeals : MonoBehaviour
+public class IntroductionDeals : Core_BaseScript
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Header("Background")]
+	public UISprite headerBackground;
 
-	1. No dll files were provided to AssetRipper.
+	public UISprite headerCorner;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public UISprite background;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	[Header("Deals")]
+	public List<IntroductionDealsItem> deals;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	[Header("Parameters")]
+	public float dealFadeTime = 0.3f;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public float backroundFadeTime = 0.35f;
 
-	3. Assembly Reconstruction has not been implemented.
+	private RadicalRoutine mRotateCoroutine;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public void InitEvents()
+	{
+		foreach (IntroductionDealsItem deal in deals)
+		{
+			deal.gameObject.SetActive(value: true);
+			deal.InitEvents();
+		}
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public void InitControls()
+	{
+		HideBackground();
+		foreach (IntroductionDealsItem deal in deals)
+		{
+			deal.gameObject.SetActive(value: true);
+			deal.InitControls();
+		}
+	}
 
-	4. This script is unnecessary.
+	public void InitGuiValues()
+	{
+		foreach (IntroductionDealsItem deal in deals)
+		{
+			deal.gameObject.SetActive(value: true);
+			deal.InitGuiValues();
+		}
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public void AnimateShow()
+	{
+		foreach (IntroductionDealsItem deal in deals)
+		{
+			StartCoroutine(deal.Hide(0f));
+		}
+		Show();
+	}
 
-	5. Script Content Level 0
+	public void DoBeforeHide()
+	{
+		Hide();
+	}
 
-		AssetRipper was set to not load any script information.
+	private void Show()
+	{
+		mRotateCoroutine = RadicalRoutine.Create(RotateWorker());
+		StartCoroutine(RadicalRoutine.Run(mRotateCoroutine.enumerator));
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	private void Hide()
+	{
+		if (mRotateCoroutine != null)
+		{
+			mRotateCoroutine.Cancel();
+		}
+		foreach (IntroductionDealsItem deal in deals)
+		{
+			StartCoroutine(deal.Hide(0f));
+		}
+		HideBackground();
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	private void ShowBackground()
+	{
+		TweenAlpha.Begin(headerBackground.gameObject, backroundFadeTime, 0.81f);
+		TweenAlpha.Begin(headerCorner.gameObject, backroundFadeTime, 0.81f);
+		TweenAlpha.Begin(background.gameObject, backroundFadeTime, 0.5f);
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	private void HideBackground()
+	{
+		TweenAlpha.Begin(headerBackground.gameObject, backroundFadeTime, 0f);
+		TweenAlpha.Begin(headerCorner.gameObject, backroundFadeTime, 0f);
+		TweenAlpha.Begin(background.gameObject, backroundFadeTime, 0f);
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	private IEnumerator RotateWorker()
+	{
+		bool backgroundVisible = false;
+		IntroductionDealsItem currentDeal = null;
+		while (true)
+		{
+			if (currentDeal != null && currentDeal.hasMoreLooks && !currentDeal.isLastLook)
+			{
+				yield return StartCoroutine(currentDeal.Change(dealFadeTime));
+			}
+			else
+			{
+				IntroductionDealsItem nextDeal = GetNextDeal(currentDeal);
+				if (nextDeal != null && !backgroundVisible)
+				{
+					backgroundVisible = true;
+					ShowBackground();
+				}
+				if (nextDeal == null && backgroundVisible)
+				{
+					backgroundVisible = false;
+					HideBackground();
+				}
+				if (currentDeal != nextDeal)
+				{
+					if (currentDeal != null)
+					{
+						yield return StartCoroutine(currentDeal.Hide(dealFadeTime));
+					}
+					if (nextDeal != null)
+					{
+						yield return StartCoroutine(nextDeal.Show(dealFadeTime));
+					}
+					currentDeal = nextDeal;
+				}
+			}
+			do
+			{
+				yield return null;
+			}
+			while (currentDeal != null && currentDeal.IsShowTime());
+		}
+	}
 
-	*/
+	private IntroductionDealsItem GetNextDeal(IntroductionDealsItem currentDeal)
+	{
+		int num = deals.IndexOf(currentDeal);
+		num++;
+		for (int i = 0; i < deals.Count; i++)
+		{
+			IntroductionDealsItem introductionDealsItem = deals[(num + i) % deals.Count];
+			if (introductionDealsItem.IsAvailable())
+			{
+				return introductionDealsItem;
+			}
+		}
+		return null;
+	}
 }

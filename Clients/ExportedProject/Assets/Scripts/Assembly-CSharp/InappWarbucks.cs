@@ -1,63 +1,166 @@
+using System;
+using System.Collections.Generic;
+using Google2u;
 using UnityEngine;
 
-public class InappWarbucks : MonoBehaviour
+public class InappWarbucks : Core_BaseScript
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[HideInInspector]
+	public string warbucksPrefix = "warbucks";
 
-	1. No dll files were provided to AssetRipper.
+	[HideInInspector]
+	public List<InappScreen.InappDefinition> warbucksInAppDefinitions;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	[Header("Core")]
+	public WarbucksButtonRecord[] smallButtons;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public WarbucksButtonRecord bigButton;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public UIPanel warbucksPanel;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public UIDraggablePanel warbucksDraggablePanel;
 
-	3. Assembly Reconstruction has not been implemented.
+	public UIPanel[] otherPanels;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public void Animate(bool showTab, bool instant)
+	{
+		if (showTab && !base.gameObject.activeSelf)
+		{
+			base.gameObject.SetActive(value: true);
+			InitGUIValues();
+		}
+		if (base.gameObject.activeSelf)
+		{
+			AnimateOtherPanels(instant, showTab);
+			TweenAlpha.Begin(warbucksPanel.gameObject, (!instant) ? (GuiElementSingle<InappScreen>.instance.dur * 2f) : 0.01f, (!showTab) ? 0f : 1f).onFinished = delegate
+			{
+				if (!showTab)
+				{
+					base.gameObject.SetActive(value: false);
+					DoAfterHide();
+				}
+				else
+				{
+					AlignPanel();
+				}
+			};
+		}
+		else if (!showTab)
+		{
+			InstantHideTab();
+		}
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public void InitControls()
+	{
+		for (int i = 0; i < smallButtons.Length; i++)
+		{
+			UIEventListener uIEventListener = UIEventListener.Get(smallButtons[i]);
+			uIEventListener.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener.onClick, new UIEventListener.VoidDelegate(smallButtons[i].ButtonClicked));
+		}
+		UIEventListener uIEventListener2 = UIEventListener.Get(bigButton);
+		uIEventListener2.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener2.onClick, new UIEventListener.VoidDelegate(bigButton.ButtonClicked));
+		Singleton<BeanstalkServerManager>.instance.AfterPlayerDataLoaded += CreateInappDefinitions;
+		Singleton<BeanstalkServerManager>.instance.inAppHandler.ProductsLoaded += InAppHandlerOnProductsLoaded;
+		CreateInappDefinitions();
+	}
 
-	4. This script is unnecessary.
+	private void CreateInappDefinitions()
+	{
+		InApps inApps = Singleton<GameVariables>.instance.inApps;
+		if (warbucksInAppDefinitions == null)
+		{
+			warbucksInAppDefinitions = new List<InappScreen.InappDefinition>();
+		}
+		else
+		{
+			warbucksInAppDefinitions.Clear();
+		}
+		for (int i = 0; i < inApps.Rows.Count; i++)
+		{
+			InAppsRow inAppsRow = inApps.Rows[i];
+			if (inAppsRow.NAME.StartsWith(warbucksPrefix))
+			{
+				InappScreen.InappDefinition inappDefinition = InappScreen.InappDefinition.CreateInappDefinition(inAppsRow.NAME, inAppsRow.AMOUNT);
+				inappDefinition.type = InappScreen.InAppType.Warbucks;
+				warbucksInAppDefinitions.Add(inappDefinition);
+			}
+		}
+		float num = float.MaxValue;
+		for (int j = 0; j < warbucksInAppDefinitions.Count; j++)
+		{
+			float num2 = (float)warbucksInAppDefinitions[j].amount / warbucksInAppDefinitions[j].price;
+			if (num2 < num)
+			{
+				num = num2;
+			}
+		}
+		for (int k = 0; k < warbucksInAppDefinitions.Count; k++)
+		{
+			float num3 = (float)warbucksInAppDefinitions[k].amount / warbucksInAppDefinitions[k].price;
+			float num4 = Mathf.Max(0f, num3 - num);
+			warbucksInAppDefinitions[k].sale = MiscTools.RoundToInt(20f * num4 / num) * 5;
+		}
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private void InAppHandlerOnProductsLoaded()
+	{
+		if (!GuiElementSingle<InappScreen>.instance.isShowed)
+		{
+			return;
+		}
+		foreach (InappScreen.InappDefinition warbucksInAppDefinition in warbucksInAppDefinitions)
+		{
+			Tuple<float, string> itemPrice = Singleton<BeanstalkServerManager>.instance.inAppHandler.GetItemPrice(warbucksInAppDefinition.id);
+			warbucksInAppDefinition.price = itemPrice.Value1;
+			warbucksInAppDefinition.formatedPrice = itemPrice.Value2;
+		}
+		InitGUIValues();
+	}
 
-	5. Script Content Level 0
+	public void InitGUIValues()
+	{
+		int i;
+		for (i = 0; i < smallButtons.Length; i++)
+		{
+			smallButtons[i].Initialize(warbucksInAppDefinitions[i]);
+		}
+		bigButton.Initialize(warbucksInAppDefinitions[i]);
+		AlignPanel(instant: true);
+	}
 
-		AssetRipper was set to not load any script information.
+	private void AlignPanel(bool instant = false)
+	{
+		warbucksDraggablePanel.AlignToPos(instant);
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public void DoAfterHide()
+	{
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public void InstantHideTab()
+	{
+		TweenAlpha component = warbucksPanel.GetComponent<TweenAlpha>();
+		if (component != null)
+		{
+			component.enabled = false;
+		}
+		base.gameObject.SetActive(value: false);
+		DoAfterHide();
+	}
 
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	private void AnimateOtherPanels(bool instant, bool show)
+	{
+		if (otherPanels == null)
+		{
+			return;
+		}
+		for (int i = 0; i < otherPanels.Length; i++)
+		{
+			if (!(otherPanels[i] == null) && otherPanels[i].gameObject.activeSelf)
+			{
+				TweenAlpha.Begin(otherPanels[i].gameObject, (!instant) ? (GuiElementSingle<InappScreen>.instance.dur * 2f) : 0.01f, (!show) ? 0f : 1f);
+			}
+		}
+	}
 }

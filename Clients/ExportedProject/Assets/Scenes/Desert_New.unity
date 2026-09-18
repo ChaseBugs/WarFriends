@@ -2366,7 +2366,6 @@ GameObject:
   m_Component:
   - 4: {fileID: 591}
   - 131: {fileID: 1562}
-  - 114: {fileID: 1632}
   m_Layer: 0
   m_Name: LeftTouchPad
   m_TagString: Untagged
@@ -5099,7 +5098,6 @@ GameObject:
   m_PrefabInternal: {fileID: 0}
   m_Component:
   - 4: {fileID: 763}
-  - 114: {fileID: 1757}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -7409,7 +7407,6 @@ GameObject:
   m_Component:
   - 4: {fileID: 914}
   - 131: {fileID: 1563}
-  - 114: {fileID: 1866}
   m_Layer: 0
   m_Name: RightTouchPad
   m_TagString: Untagged
@@ -36966,6 +36963,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cdad9d4c281398629453bda97c433f45, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  views:
+  - {fileID: 1631}
+  - {fileID: 1634}
+  - {fileID: 1706}
+  - {fileID: 1740}
+  - {fileID: 1749}
+  - {fileID: 1763}
+  - {fileID: 1817}
+  - {fileID: 1830}
+  - {fileID: 1831}
+  - {fileID: 1909}
+  assignIds: 0
 --- !u!114 &1600
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -37054,6 +37063,46 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: be92cfcdbb78e005f3c24028576f5b51, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMaxHealth:
+    currentCryptoKey: 230887
+    hiddenValue: e7857944
+    fakeValue: 1000
+    inited: 1
+  mDestroyableByBonusBox: 1
+  healthBarPosition: {fileID: 517}
+  forceHealthBar: 0
+  offset: {x: 0, y: 0, z: 0}
+  displayHealthBar: 1
+  playMainHitParticle: 0
+  isMetal: 1
+  shotCoeficient: 1
+  shotParticleNames:
+  - sparklesMetal
+  healthBarStyle: 0
+  mHealthbarColor: {r: 1, g: 1, b: 1, a: 1}
+  healthbar: {fileID: 0}
+  shotHitSound: 14
+  audioSource: {fileID: 1555}
+  goldMaterial: {fileID: 2100000, guid: 1a3c9f3979767374680e073b22769404, type: 2}
+  hudIndicator: {fileID: 1666}
+  lockResult: 0
+  modelsLimits:
+  - 1
+  - 0.75
+  - 0.5
+  - 0.25
+  - 0
+  - -1
+  normalMaterial: {fileID: 2100000, guid: 12bf20902a34c02439ddbc354cb3f8dd, type: 2}
+  shiedModels:
+  - {fileID: 147589, guid: 4720161b9e85502498934c2beaf2975b, type: 2}
+  - {fileID: 147589, guid: 4720161b9e85502498934c2beaf2975b, type: 2}
+  - {fileID: 147589, guid: 4359fd7a85cc1e54ca65ff05d7cbce7f, type: 2}
+  - {fileID: 147589, guid: 6bfa2500079af1943ac1dbc0433d164a, type: 2}
+  - {fileID: 147589, guid: 75f65a2949b35a944ab0dfee28d8c314, type: 2}
+  shieldDestroyedSound: {fileID: 8300000, guid: 390f673cd94d3384f97c99176a374f46, type: 3}
+  shotPosition: {fileID: 525}
+  tryGetLock: 0
 --- !u!114 &1608
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -37065,6 +37114,46 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: be92cfcdbb78e005f3c24028576f5b51, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMaxHealth:
+    currentCryptoKey: 230887
+    hiddenValue: e7857944
+    fakeValue: 1000
+    inited: 1
+  mDestroyableByBonusBox: 1
+  healthBarPosition: {fileID: 539}
+  forceHealthBar: 0
+  offset: {x: 0, y: 0, z: 0}
+  displayHealthBar: 1
+  playMainHitParticle: 0
+  isMetal: 1
+  shotCoeficient: 1
+  shotParticleNames:
+  - sparklesMetal
+  healthBarStyle: 0
+  mHealthbarColor: {r: 1, g: 1, b: 1, a: 1}
+  healthbar: {fileID: 0}
+  shotHitSound: 14
+  audioSource: {fileID: 1556}
+  goldMaterial: {fileID: 2100000, guid: 1a3c9f3979767374680e073b22769404, type: 2}
+  hudIndicator: {fileID: 1728}
+  lockResult: 0
+  modelsLimits:
+  - 1
+  - 0.75
+  - 0.5
+  - 0.25
+  - 0
+  - -1
+  normalMaterial: {fileID: 2100000, guid: 12bf20902a34c02439ddbc354cb3f8dd, type: 2}
+  shiedModels:
+  - {fileID: 147589, guid: 4720161b9e85502498934c2beaf2975b, type: 2}
+  - {fileID: 147589, guid: 4720161b9e85502498934c2beaf2975b, type: 2}
+  - {fileID: 147589, guid: 4359fd7a85cc1e54ca65ff05d7cbce7f, type: 2}
+  - {fileID: 147589, guid: 6bfa2500079af1943ac1dbc0433d164a, type: 2}
+  - {fileID: 147589, guid: 75f65a2949b35a944ab0dfee28d8c314, type: 2}
+  shieldDestroyedSound: {fileID: 8300000, guid: 390f673cd94d3384f97c99176a374f46, type: 3}
+  shotPosition: {fileID: 547}
+  tryGetLock: 0
 --- !u!114 &1609
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -37076,6 +37165,46 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: be92cfcdbb78e005f3c24028576f5b51, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMaxHealth:
+    currentCryptoKey: 230887
+    hiddenValue: e7857944
+    fakeValue: 1000
+    inited: 1
+  mDestroyableByBonusBox: 1
+  healthBarPosition: {fileID: 561}
+  forceHealthBar: 0
+  offset: {x: 0, y: 0, z: 0}
+  displayHealthBar: 1
+  playMainHitParticle: 0
+  isMetal: 1
+  shotCoeficient: 1
+  shotParticleNames:
+  - sparklesMetal
+  healthBarStyle: 0
+  mHealthbarColor: {r: 1, g: 1, b: 1, a: 1}
+  healthbar: {fileID: 0}
+  shotHitSound: 14
+  audioSource: {fileID: 1557}
+  goldMaterial: {fileID: 2100000, guid: 1a3c9f3979767374680e073b22769404, type: 2}
+  hudIndicator: {fileID: 1733}
+  lockResult: 0
+  modelsLimits:
+  - 1
+  - 0.75
+  - 0.5
+  - 0.25
+  - 0
+  - -1
+  normalMaterial: {fileID: 2100000, guid: 12bf20902a34c02439ddbc354cb3f8dd, type: 2}
+  shiedModels:
+  - {fileID: 147589, guid: 4720161b9e85502498934c2beaf2975b, type: 2}
+  - {fileID: 147589, guid: 4720161b9e85502498934c2beaf2975b, type: 2}
+  - {fileID: 147589, guid: 4359fd7a85cc1e54ca65ff05d7cbce7f, type: 2}
+  - {fileID: 147589, guid: 6bfa2500079af1943ac1dbc0433d164a, type: 2}
+  - {fileID: 147589, guid: 75f65a2949b35a944ab0dfee28d8c314, type: 2}
+  shieldDestroyedSound: {fileID: 8300000, guid: 390f673cd94d3384f97c99176a374f46, type: 3}
+  shotPosition: {fileID: 569}
+  tryGetLock: 0
 --- !u!114 &1610
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -37087,6 +37216,46 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: be92cfcdbb78e005f3c24028576f5b51, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMaxHealth:
+    currentCryptoKey: 230887
+    hiddenValue: e7857944
+    fakeValue: 1000
+    inited: 1
+  mDestroyableByBonusBox: 1
+  healthBarPosition: {fileID: 498}
+  forceHealthBar: 0
+  offset: {x: 0, y: 0, z: 0}
+  displayHealthBar: 1
+  playMainHitParticle: 0
+  isMetal: 1
+  shotCoeficient: 1
+  shotParticleNames:
+  - sparklesMetal
+  healthBarStyle: 0
+  mHealthbarColor: {r: 1, g: 1, b: 1, a: 1}
+  healthbar: {fileID: 0}
+  shotHitSound: 14
+  audioSource: {fileID: 1554}
+  goldMaterial: {fileID: 2100000, guid: 1a3c9f3979767374680e073b22769404, type: 2}
+  hudIndicator: {fileID: 1781}
+  lockResult: 0
+  modelsLimits:
+  - 1
+  - 0.75
+  - 0.5
+  - 0.25
+  - 0
+  - -1
+  normalMaterial: {fileID: 2100000, guid: 12bf20902a34c02439ddbc354cb3f8dd, type: 2}
+  shiedModels:
+  - {fileID: 147589, guid: 4720161b9e85502498934c2beaf2975b, type: 2}
+  - {fileID: 147589, guid: 4720161b9e85502498934c2beaf2975b, type: 2}
+  - {fileID: 147589, guid: 4359fd7a85cc1e54ca65ff05d7cbce7f, type: 2}
+  - {fileID: 147589, guid: 6bfa2500079af1943ac1dbc0433d164a, type: 2}
+  - {fileID: 147589, guid: 75f65a2949b35a944ab0dfee28d8c314, type: 2}
+  shieldDestroyedSound: {fileID: 8300000, guid: 390f673cd94d3384f97c99176a374f46, type: 3}
+  shotPosition: {fileID: 506}
+  tryGetLock: 0
 --- !u!114 &1611
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -37098,6 +37267,25 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a503568e23092a0b9255b6fcb6b62be2, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMaxHealth:
+    currentCryptoKey: 230887
+    hiddenValue: e7854b42
+    fakeValue: 50
+    inited: 1
+  mDestroyableByBonusBox: 1
+  healthBarPosition: {fileID: 0}
+  forceHealthBar: 0
+  offset: {x: 0, y: 0, z: 0}
+  displayHealthBar: 0
+  playMainHitParticle: 0
+  isMetal: 1
+  shotCoeficient: 1
+  shotParticleNames:
+  - sparklesMetal
+  healthBarStyle: 0
+  mHealthbarColor: {r: 0, g: 1, b: 0, a: 1}
+  healthbar: {fileID: 0}
+  shotHitSound: 14
 --- !u!114 &1612
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -37109,6 +37297,25 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a503568e23092a0b9255b6fcb6b62be2, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMaxHealth:
+    currentCryptoKey: 230887
+    hiddenValue: e7854b42
+    fakeValue: 50
+    inited: 1
+  mDestroyableByBonusBox: 1
+  healthBarPosition: {fileID: 0}
+  forceHealthBar: 0
+  offset: {x: 0, y: 0, z: 0}
+  displayHealthBar: 0
+  playMainHitParticle: 0
+  isMetal: 1
+  shotCoeficient: 1
+  shotParticleNames:
+  - sparklesMetal
+  healthBarStyle: 0
+  mHealthbarColor: {r: 0, g: 1, b: 0, a: 1}
+  healthbar: {fileID: 0}
+  shotHitSound: 14
 --- !u!114 &1613
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -37120,6 +37327,25 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a503568e23092a0b9255b6fcb6b62be2, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMaxHealth:
+    currentCryptoKey: 230887
+    hiddenValue: e7854b42
+    fakeValue: 50
+    inited: 1
+  mDestroyableByBonusBox: 1
+  healthBarPosition: {fileID: 0}
+  forceHealthBar: 0
+  offset: {x: 0, y: 0, z: 0}
+  displayHealthBar: 0
+  playMainHitParticle: 0
+  isMetal: 1
+  shotCoeficient: 1
+  shotParticleNames:
+  - sparklesMetal
+  healthBarStyle: 0
+  mHealthbarColor: {r: 0, g: 1, b: 0, a: 1}
+  healthbar: {fileID: 0}
+  shotHitSound: 14
 --- !u!114 &1614
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -37131,6 +37357,25 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a503568e23092a0b9255b6fcb6b62be2, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMaxHealth:
+    currentCryptoKey: 230887
+    hiddenValue: e7854b42
+    fakeValue: 50
+    inited: 1
+  mDestroyableByBonusBox: 1
+  healthBarPosition: {fileID: 0}
+  forceHealthBar: 0
+  offset: {x: 0, y: 0, z: 0}
+  displayHealthBar: 0
+  playMainHitParticle: 0
+  isMetal: 1
+  shotCoeficient: 1
+  shotParticleNames:
+  - sparklesMetal
+  healthBarStyle: 0
+  mHealthbarColor: {r: 0, g: 1, b: 0, a: 1}
+  healthbar: {fileID: 0}
+  shotHitSound: 14
 --- !u!114 &1615
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -37142,6 +37387,25 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a503568e23092a0b9255b6fcb6b62be2, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMaxHealth:
+    currentCryptoKey: 230887
+    hiddenValue: e7854b42
+    fakeValue: 50
+    inited: 1
+  mDestroyableByBonusBox: 1
+  healthBarPosition: {fileID: 0}
+  forceHealthBar: 0
+  offset: {x: 0, y: 0, z: 0}
+  displayHealthBar: 0
+  playMainHitParticle: 0
+  isMetal: 1
+  shotCoeficient: 1
+  shotParticleNames:
+  - sparklesMetal
+  healthBarStyle: 0
+  mHealthbarColor: {r: 0, g: 1, b: 0, a: 1}
+  healthbar: {fileID: 0}
+  shotHitSound: 14
 --- !u!114 &1616
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -37153,6 +37417,25 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a503568e23092a0b9255b6fcb6b62be2, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMaxHealth:
+    currentCryptoKey: 230887
+    hiddenValue: e7854b42
+    fakeValue: 50
+    inited: 1
+  mDestroyableByBonusBox: 1
+  healthBarPosition: {fileID: 0}
+  forceHealthBar: 0
+  offset: {x: 0, y: 0, z: 0}
+  displayHealthBar: 0
+  playMainHitParticle: 0
+  isMetal: 1
+  shotCoeficient: 1
+  shotParticleNames:
+  - sparklesMetal
+  healthBarStyle: 0
+  mHealthbarColor: {r: 0, g: 1, b: 0, a: 1}
+  healthbar: {fileID: 0}
+  shotHitSound: 14
 --- !u!114 &1617
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -37219,6 +37502,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 94f02b0133f1f0d2e85a6d490fd93f95, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  enemyAtPoint: {fileID: 0}
+  switchState: 0
+  indexInEnemyPointArray: 0
+  mFraction: 1
+  index: 0
 --- !u!114 &1623
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -37252,6 +37540,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 65351fae930a5df16f470909621c2f6f, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  path: {fileID: 1652}
+  index: 4
+  stayTime: 0
 --- !u!114 &1626
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -37263,6 +37554,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 65351fae930a5df16f470909621c2f6f, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  path: {fileID: 1628}
+  index: 8
+  stayTime: 0
 --- !u!114 &1627
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -37274,6 +37568,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 65351fae930a5df16f470909621c2f6f, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  path: {fileID: 0}
+  index: 0
+  stayTime: 0
 --- !u!114 &1628
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -37285,6 +37582,27 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a604c2e26b5732c5b35329d042a09950, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  wayPoints:
+  - {fileID: 1722}
+  - {fileID: 1810}
+  - {fileID: 1807}
+  - {fileID: 1872}
+  - {fileID: 1777}
+  - {fileID: 1788}
+  - {fileID: 1753}
+  - {fileID: 1718}
+  - {fileID: 1626}
+  - {fileID: 1746}
+  - {fileID: 1847}
+  - {fileID: 1725}
+  - {fileID: 1659}
+  - {fileID: 1650}
+  - {fileID: 1797}
+  - {fileID: 1745}
+  - {fileID: 1705}
+  loadWayPoints: 0
+  Radius: 3.5
+  usedByEntity: {fileID: 0}
 --- !u!114 &1629
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -37318,17 +37636,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f19ea4a15c3ca43dcc180d756f7a82b3, type: 3}
   m_Name:
   m_EditorClassIdentifier:
---- !u!114 &1632
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 0}
-  m_GameObject: {fileID: 136}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 0}
-  m_Name:
-  m_EditorClassIdentifier:
+  ownerId: 0
+  group: 0
+  OwnerShipWasTransfered: 0
+  prefixBackup: -1
+  synchronization: 0
+  onSerializeTransformOption: 3
+  onSerializeRigidBodyOption: 2
+  ownershipTransfer: 0
+  ObservedComponents:
+  - {fileID: 0}
+  viewIdField: 4
+  instantiationId: 4
+  currentMasterID: -1
+  didAwake: 0
+  isRuntimeInstantiated: 0
 --- !u!114 &1633
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -37351,6 +37673,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f19ea4a15c3ca43dcc180d756f7a82b3, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  ownerId: 0
+  group: 0
+  OwnerShipWasTransfered: 0
+  prefixBackup: -1
+  synchronization: 0
+  onSerializeTransformOption: 3
+  onSerializeRigidBodyOption: 2
+  ownershipTransfer: 0
+  ObservedComponents:
+  - {fileID: 0}
+  viewIdField: 7
+  instantiationId: 7
+  currentMasterID: -1
+  didAwake: 0
+  isRuntimeInstantiated: 0
 --- !u!114 &1635
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -37362,6 +37699,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 65351fae930a5df16f470909621c2f6f, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  path: {fileID: 1709}
+  index: 2
+  stayTime: 0
 --- !u!114 &1636
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -37395,6 +37735,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1bc8feaee4755c3a55005f0502cd3df2, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  enemyAtPoint: {fileID: 0}
+  switchState: 4
+  indexInEnemyPointArray: 0
+  mFraction: 1
 --- !u!114 &1639
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -37406,6 +37750,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d3fc4688599a19dbd8de99aefa9ba976, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  spawnPointType: 0
+  mFraction: 1
+  pointToJoin: {fileID: 1755}
 --- !u!114 &1640
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -37417,6 +37764,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1df87ce72e28356e404e85651544fcdf, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  enemyAtPoint: {fileID: 0}
+  switchState: 10
+  indexInEnemyPointArray: 0
+  mFraction: 1
 --- !u!114 &1641
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -37428,6 +37779,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 65351fae930a5df16f470909621c2f6f, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  path: {fileID: 0}
+  index: 0
+  stayTime: 0
 --- !u!114 &1642
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -37439,6 +37793,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 21554a71485dfa727f66bff283fe83be, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  layerNumber: 13
 --- !u!114 &1643
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -37450,6 +37805,44 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b411f0a901b851ffd46140a659a89ff3, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  ConvertType:
+  EnabledLODSystem: 1
+  ObjPosition: []
+  ObjLodScript: []
+  ObjLodStatus:
+  MaxViewDistance: 60
+  LOD2Start: 20
+  LOD3Start: 40
+  Interval: 0.5
+  PlayerCamera: {fileID: 934}
+  Mode: 1
+  Master: 1
+  enabledBillboard: 1
+  BillboardPosition: []
+  BillInterval: 0.05
+  BillStatus:
+  BillMaxViewDistance: 30
+  BillScript: []
+  enabledLayerCul: 1
+  BackGroundView: 10000
+  FarView: 200
+  NormalView: 60
+  CloseView: 30
+  Axis: 0
+  LODbasedOnScript: 1
+  BilBbasedOnScript: 1
+  T4MMaterial: {fileID: 2100000, guid: 22b83e61c1d440048b7bb9fed56810c5, type: 2}
+  T4MMesh: {fileID: 1436}
+  TranslucencyColor: {r: 0.73, g: 0.85, b: 0.4, a: 1}
+  Wind: {x: 1, y: 0.4, z: 0.2, w: 0.03}
+  WindFrequency: 0.2
+  GrassWindFrequency: 2
+  ActiveWind: 1
+  LayerCullPreview: 0
+  LODPreview: 0
+  BillboardPreview: 0
+  T4MMaskTex2d: {fileID: 0}
+  T4MMaskTexd: {fileID: 0}
 --- !u!114 &1644
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -37472,6 +37865,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 65351fae930a5df16f470909621c2f6f, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  path: {fileID: 1652}
+  index: 3
+  stayTime: 0
 --- !u!114 &1646
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -37483,6 +37879,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8c0ac0a2d9d317025f60b61313425f54, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  spawnPointType: 0
+  mFraction: 1
 --- !u!114 &1647
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -37505,6 +37903,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8c0ac0a2d9d317025f60b61313425f54, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  spawnPointType: 0
+  mFraction: 1
 --- !u!114 &1649
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -37527,6 +37927,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 65351fae930a5df16f470909621c2f6f, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  path: {fileID: 1628}
+  index: 13
+  stayTime: 0
 --- !u!114 &1651
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -37538,6 +37941,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 65351fae930a5df16f470909621c2f6f, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  path: {fileID: 1862}
+  index: 2
+  stayTime: 0
 --- !u!114 &1652
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -37549,6 +37955,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a604c2e26b5732c5b35329d042a09950, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  wayPoints:
+  - {fileID: 1768}
+  - {fileID: 1894}
+  - {fileID: 1805}
+  - {fileID: 1645}
+  - {fileID: 1625}
+  - {fileID: 1876}
+  - {fileID: 1683}
+  loadWayPoints: 0
+  Radius: 3.5
+  usedByEntity: {fileID: 0}
 --- !u!114 &1653
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -37593,6 +38010,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4574a1f55bb5e4374a0ca0812e8b012d, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  isActivated: 0
+  damageParticles: {fileID: 1573}
 --- !u!114 &1657
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -37604,6 +38023,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8e9e336d4e9d43c6305ae38d9233296d, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  electricTrap: {fileID: 1780}
+  attackPositions:
+  - {fileID: 504}
+  - {fileID: 503}
+  - {fileID: 502}
+  - {fileID: 501}
+  turretPositions:
+  - {fileID: 1833}
+  - {fileID: 1791}
+  rusherPoints:
+  - {fileID: 1699}
+  - {fileID: 1854}
+  - {fileID: 1906}
+  - {fileID: 1796}
 --- !u!114 &1658
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -37626,6 +38059,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 65351fae930a5df16f470909621c2f6f, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  path: {fileID: 1628}
+  index: 12
+  stayTime: 0
 --- !u!114 &1660
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -37648,6 +38084,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1833c1e28f6f347ca2286c3c0c21b17a, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  enemyAtPoint: {fileID: 0}
+  switchState: 11
+  indexInEnemyPointArray: 0
+  mFraction: 1
 --- !u!114 &1662
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -37681,6 +38121,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1df87ce72e28356e404e85651544fcdf, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  enemyAtPoint: {fileID: 0}
+  switchState: 10
+  indexInEnemyPointArray: 0
+  mFraction: 1
 --- !u!114 &1665
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -37692,6 +38136,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ece935610721b53d700cf160f8519d50, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  trigger: {fileID: 1787}
+  shield: {fileID: 1607}
+  photonView: {fileID: 1817}
+  handle: {fileID: 38}
+  electricityRenderer: {fileID: 1046}
+  electricityEffectPeriod: 0.05
+  electricityEffectFrames: 4
+  leftInsulator: {fileID: 35}
+  rightInsulator: {fileID: 34}
+  effect: {fileID: 33}
 --- !u!114 &1666
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -37703,6 +38157,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: aa5336f805f636a26d269afa08d8ccb0, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  snapTransform: {fileID: 516}
+  show: 0
+  spriteName: game-card-ico-shieldsup
+  indicatorOffset: {x: 0, y: 0, z: 0}
+  alwaysOnTop: 0
+  updateScale: 1
 --- !u!114 &1667
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -37714,6 +38174,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3898abb99fb4e57911c797ed6da17efa, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  isActivated: 0
 --- !u!114 &1668
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -37791,6 +38252,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 65351fae930a5df16f470909621c2f6f, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  path: {fileID: 0}
+  index: 0
+  stayTime: 0
 --- !u!114 &1675
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -37802,6 +38266,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 94f02b0133f1f0d2e85a6d490fd93f95, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  enemyAtPoint: {fileID: 0}
+  switchState: 0
+  indexInEnemyPointArray: 0
+  mFraction: 1
+  index: 0
 --- !u!114 &1676
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -37813,6 +38282,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 94f02b0133f1f0d2e85a6d490fd93f95, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  enemyAtPoint: {fileID: 0}
+  switchState: 0
+  indexInEnemyPointArray: 0
+  mFraction: 1
+  index: 1
 --- !u!114 &1677
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -37824,6 +38298,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 65351fae930a5df16f470909621c2f6f, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  path: {fileID: 0}
+  index: 3
+  stayTime: 0
 --- !u!114 &1678
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -37835,6 +38312,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1df87ce72e28356e404e85651544fcdf, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  enemyAtPoint: {fileID: 0}
+  switchState: 10
+  indexInEnemyPointArray: 0
+  mFraction: 1
 --- !u!114 &1679
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -37846,6 +38327,23 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: abb157dd164c78c5a39f7e62ba27a963, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  waypointList:
+    circuit: {fileID: 1679}
+    items:
+    - {fileID: 908}
+    - {fileID: 965}
+    - {fileID: 959}
+    - {fileID: 760}
+    - {fileID: 672}
+    - {fileID: 735}
+    - {fileID: 795}
+    - {fileID: 866}
+    - {fileID: 698}
+    - {fileID: 786}
+    - {fileID: 682}
+  smoothRoute: 0
+  editorVisualisationSubsteps: 100
+  isLoop: 0
 --- !u!114 &1680
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -37879,6 +38377,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1bc8feaee4755c3a55005f0502cd3df2, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  enemyAtPoint: {fileID: 0}
+  switchState: 4
+  indexInEnemyPointArray: 0
+  mFraction: 1
 --- !u!114 &1683
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -37890,6 +38392,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 65351fae930a5df16f470909621c2f6f, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  path: {fileID: 1652}
+  index: 6
+  stayTime: 0
 --- !u!114 &1684
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -37934,6 +38439,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 94f02b0133f1f0d2e85a6d490fd93f95, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  enemyAtPoint: {fileID: 0}
+  switchState: 0
+  indexInEnemyPointArray: 0
+  mFraction: 1
+  index: 0
 --- !u!114 &1688
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -37956,6 +38466,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 65351fae930a5df16f470909621c2f6f, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  path: {fileID: 1862}
+  index: 0
+  stayTime: 0
 --- !u!114 &1690
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -37989,6 +38502,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 65351fae930a5df16f470909621c2f6f, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  path: {fileID: 0}
+  index: 0
+  stayTime: 0
 --- !u!114 &1693
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -38011,6 +38527,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8c0ac0a2d9d317025f60b61313425f54, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  spawnPointType: 0
+  mFraction: 1
 --- !u!114 &1695
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -38022,6 +38540,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 16b7423177a72a3f59048b96d341591a, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  enemyAtPoint: {fileID: 0}
+  switchState: 2
+  indexInEnemyPointArray: 0
+  mFraction: 1
+  obstacleStart: {fileID: 619}
+  obstacleEnd: {fileID: 625}
 --- !u!114 &1696
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -38033,6 +38557,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 61d832db3eebf585fb0a1ffe7e76ee26, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  used: 0
 --- !u!114 &1697
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -38055,6 +38580,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8cd43e9dc7e03a9bc0baea2cf791ea40, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  enemyAtPoint: {fileID: 0}
+  switchState: 3
+  indexInEnemyPointArray: 0
+  mFraction: 1
+  direction: {x: 1, y: 0, z: 0}
+  rightSide: 1
 --- !u!114 &1699
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -38066,6 +38597,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 94f02b0133f1f0d2e85a6d490fd93f95, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  enemyAtPoint: {fileID: 0}
+  switchState: 0
+  indexInEnemyPointArray: 0
+  mFraction: 1
+  index: 0
 --- !u!114 &1700
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -38077,6 +38613,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 65351fae930a5df16f470909621c2f6f, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  path: {fileID: 1709}
+  index: 0
+  stayTime: 0
 --- !u!114 &1701
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -38088,6 +38627,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 65351fae930a5df16f470909621c2f6f, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  path: {fileID: 0}
+  index: 0
+  stayTime: 0
 --- !u!114 &1702
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -38099,6 +38641,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 16b7423177a72a3f59048b96d341591a, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  enemyAtPoint: {fileID: 0}
+  switchState: 2
+  indexInEnemyPointArray: 0
+  mFraction: 1
+  obstacleStart: {fileID: 697}
+  obstacleEnd: {fileID: 747}
 --- !u!114 &1703
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -38132,6 +38680,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 65351fae930a5df16f470909621c2f6f, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  path: {fileID: 1628}
+  index: 16
+  stayTime: 0
 --- !u!114 &1706
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -38143,6 +38694,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f19ea4a15c3ca43dcc180d756f7a82b3, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  ownerId: 0
+  group: 0
+  OwnerShipWasTransfered: 0
+  prefixBackup: -1
+  synchronization: 0
+  onSerializeTransformOption: 3
+  onSerializeRigidBodyOption: 2
+  ownershipTransfer: 0
+  ObservedComponents:
+  - {fileID: 0}
+  viewIdField: 13
+  instantiationId: 13
+  currentMasterID: -1
+  didAwake: 0
+  isRuntimeInstantiated: 0
 --- !u!114 &1707
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -38154,6 +38720,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3162090251d1f9bff84b79cbdb1d5508, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  spawnPointType: 0
+  mFraction: 1
 --- !u!114 &1708
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -38176,6 +38744,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a604c2e26b5732c5b35329d042a09950, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  wayPoints:
+  - {fileID: 1700}
+  - {fileID: 1821}
+  - {fileID: 1635}
+  - {fileID: 1767}
+  - {fileID: 1793}
+  loadWayPoints: 0
+  Radius: 0.2
+  usedByEntity: {fileID: 0}
 --- !u!114 &1710
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -38198,6 +38775,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 65351fae930a5df16f470909621c2f6f, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  path: {fileID: 0}
+  index: 1
+  stayTime: 0
 --- !u!114 &1712
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -38209,6 +38789,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8c0ac0a2d9d317025f60b61313425f54, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  spawnPointType: 0
+  mFraction: 1
 --- !u!114 &1713
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -38220,6 +38802,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4574a1f55bb5e4374a0ca0812e8b012d, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  isActivated: 0
+  damageParticles: {fileID: 1575}
 --- !u!114 &1714
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -38231,6 +38815,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 16b7423177a72a3f59048b96d341591a, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  enemyAtPoint: {fileID: 0}
+  switchState: 2
+  indexInEnemyPointArray: 0
+  mFraction: 1
+  obstacleStart: {fileID: 581}
+  obstacleEnd: {fileID: 942}
 --- !u!114 &1715
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -38275,6 +38865,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 65351fae930a5df16f470909621c2f6f, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  path: {fileID: 1628}
+  index: 7
+  stayTime: 0
 --- !u!114 &1719
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -38286,6 +38879,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 54d72feff1734d5fe8e2d955b8703dc6, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  enemyAtPoint: {fileID: 0}
+  switchState: 4
+  indexInEnemyPointArray: 0
+  mFraction: 1
+  index: 0
 --- !u!114 &1720
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -38308,6 +38906,43 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f8e8488fbe21f6c02c9eef456d27a3b9, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mineMatCapTexture: {fileID: 2800000, guid: 07f2e4e1462f87a4894432ce3a5e1331, type: 3}
+  opponentsMatCapTexture: {fileID: 2800000, guid: 668d04c0b98bf9e4aa87ee0f837ab359, type: 3}
+  spawnPointsCollection: {fileID: 1743}
+  enemyPointsCollection: {fileID: 1845}
+  levelName: Desert
+  spawnPointsCollectionDrones: {fileID: 1748}
+  spawnPointsCollectionAssaultHelis: {fileID: 0}
+  spawnPointsCollectionCars: {fileID: 1771}
+  spawnPointsCollectionHelicopters: {fileID: 1843}
+  floorTransform: {fileID: 689}
+  playersPositions:
+  - point: {fileID: 1910}
+    fraction: 2
+    cameraPath: {fileID: 0}
+    mainPosition: 0
+    index: 0
+  - point: {fileID: 1657}
+    fraction: 2
+    cameraPath: {fileID: 0}
+    mainPosition: 1
+    index: 0
+  - point: {fileID: 1867}
+    fraction: 2
+    cameraPath: {fileID: 0}
+    mainPosition: 1
+    index: 0
+  - point: {fileID: 1772}
+    fraction: 2
+    cameraPath: {fileID: 0}
+    mainPosition: 0
+    index: 0
+  spawnAreas:
+  - {fileID: 1552}
+  - {fileID: 1550}
+  fieldArea: {fileID: 1541}
+  useWater: 0
+  moveElectricTraps: 1
 --- !u!114 &1722
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -38319,6 +38954,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 65351fae930a5df16f470909621c2f6f, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  path: {fileID: 1628}
+  index: 0
+  stayTime: 0
 --- !u!114 &1723
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -38330,6 +38968,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 61d832db3eebf585fb0a1ffe7e76ee26, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  used: 0
 --- !u!114 &1724
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -38352,6 +38991,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 65351fae930a5df16f470909621c2f6f, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  path: {fileID: 1628}
+  index: 11
+  stayTime: 0
 --- !u!114 &1726
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -38374,6 +39016,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ece935610721b53d700cf160f8519d50, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  trigger: {fileID: 1794}
+  shield: {fileID: 1608}
+  photonView: {fileID: 1740}
+  handle: {fileID: 69}
+  electricityRenderer: {fileID: 1095}
+  electricityEffectPeriod: 0.05
+  electricityEffectFrames: 4
+  leftInsulator: {fileID: 66}
+  rightInsulator: {fileID: 65}
+  effect: {fileID: 64}
 --- !u!114 &1728
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -38385,6 +39037,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: aa5336f805f636a26d269afa08d8ccb0, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  snapTransform: {fileID: 538}
+  show: 0
+  spriteName: game-card-ico-shieldsup
+  indicatorOffset: {x: 0, y: 0, z: 0}
+  alwaysOnTop: 0
+  updateScale: 1
 --- !u!114 &1729
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -38396,6 +39054,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3898abb99fb4e57911c797ed6da17efa, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  isActivated: 0
 --- !u!114 &1730
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -38407,6 +39066,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 16b7423177a72a3f59048b96d341591a, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  enemyAtPoint: {fileID: 0}
+  switchState: 2
+  indexInEnemyPointArray: 0
+  mFraction: 1
+  obstacleStart: {fileID: 611}
+  obstacleEnd: {fileID: 731}
 --- !u!114 &1731
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -38418,6 +39083,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4574a1f55bb5e4374a0ca0812e8b012d, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  isActivated: 0
+  damageParticles: {fileID: 1567}
 --- !u!114 &1732
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -38429,6 +39096,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ece935610721b53d700cf160f8519d50, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  trigger: {fileID: 1630}
+  shield: {fileID: 1609}
+  photonView: {fileID: 1631}
+  handle: {fileID: 104}
+  electricityRenderer: {fileID: 1193}
+  electricityEffectPeriod: 0.05
+  electricityEffectFrames: 4
+  leftInsulator: {fileID: 101}
+  rightInsulator: {fileID: 100}
+  effect: {fileID: 99}
 --- !u!114 &1733
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -38440,6 +39117,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: aa5336f805f636a26d269afa08d8ccb0, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  snapTransform: {fileID: 560}
+  show: 0
+  spriteName: game-card-ico-shieldsup
+  indicatorOffset: {x: 0, y: 0, z: 0}
+  alwaysOnTop: 0
+  updateScale: 1
 --- !u!114 &1734
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -38451,6 +39134,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3898abb99fb4e57911c797ed6da17efa, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  isActivated: 0
 --- !u!114 &1735
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -38462,6 +39146,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 16b7423177a72a3f59048b96d341591a, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  enemyAtPoint: {fileID: 0}
+  switchState: 2
+  indexInEnemyPointArray: 0
+  mFraction: 1
+  obstacleStart: {fileID: 622}
+  obstacleEnd: {fileID: 793}
 --- !u!114 &1736
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -38506,6 +39196,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 94f02b0133f1f0d2e85a6d490fd93f95, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  enemyAtPoint: {fileID: 0}
+  switchState: 0
+  indexInEnemyPointArray: 0
+  mFraction: 1
+  index: 1
 --- !u!114 &1740
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -38517,6 +39212,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f19ea4a15c3ca43dcc180d756f7a82b3, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  ownerId: 0
+  group: 0
+  OwnerShipWasTransfered: 0
+  prefixBackup: -1
+  synchronization: 0
+  onSerializeTransformOption: 3
+  onSerializeRigidBodyOption: 2
+  ownershipTransfer: 0
+  ObservedComponents:
+  - {fileID: 0}
+  viewIdField: 5
+  instantiationId: 5
+  currentMasterID: -1
+  didAwake: 0
+  isRuntimeInstantiated: 0
 --- !u!114 &1741
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -38539,6 +39249,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 65351fae930a5df16f470909621c2f6f, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  path: {fileID: 0}
+  index: 2
+  stayTime: 0
 --- !u!114 &1743
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -38550,6 +39263,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5d5dd785fff4ab397c02e56ac5b28692, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  loadSpawnPoints: 0
+  spawnPoints:
+  - {fileID: 1707}
+  - {fileID: 1646}
+  - {fileID: 1896}
+  - {fileID: 1694}
+  - {fileID: 1712}
+  - {fileID: 1814}
+  - {fileID: 1648}
 --- !u!114 &1744
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -38561,6 +39283,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5d5dd785fff4ab397c02e56ac5b28692, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  loadSpawnPoints: 0
+  spawnPoints:
+  - {fileID: 1858}
 --- !u!114 &1745
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -38572,6 +39297,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 65351fae930a5df16f470909621c2f6f, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  path: {fileID: 1628}
+  index: 15
+  stayTime: 0
 --- !u!114 &1746
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -38583,6 +39311,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 65351fae930a5df16f470909621c2f6f, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  path: {fileID: 1628}
+  index: 9
+  stayTime: 0
 --- !u!114 &1747
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -38605,6 +39336,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5d5dd785fff4ab397c02e56ac5b28692, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  loadSpawnPoints: 0
+  spawnPoints:
+  - {fileID: 1857}
+  - {fileID: 1779}
+  - {fileID: 1639}
+  - {fileID: 1758}
 --- !u!114 &1749
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -38616,6 +39353,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f19ea4a15c3ca43dcc180d756f7a82b3, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  ownerId: 0
+  group: 0
+  OwnerShipWasTransfered: 0
+  prefixBackup: -1
+  synchronization: 0
+  onSerializeTransformOption: 3
+  onSerializeRigidBodyOption: 2
+  ownershipTransfer: 0
+  ObservedComponents:
+  - {fileID: 0}
+  viewIdField: 6
+  instantiationId: 6
+  currentMasterID: -1
+  didAwake: 0
+  isRuntimeInstantiated: 0
 --- !u!114 &1750
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -38660,6 +39412,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 65351fae930a5df16f470909621c2f6f, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  path: {fileID: 1628}
+  index: 6
+  stayTime: 0
 --- !u!114 &1754
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -38682,6 +39437,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 65351fae930a5df16f470909621c2f6f, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  path: {fileID: 1862}
+  index: 1
+  stayTime: 0
 --- !u!114 &1756
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -38693,17 +39451,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 94f02b0133f1f0d2e85a6d490fd93f95, type: 3}
   m_Name:
   m_EditorClassIdentifier:
---- !u!114 &1757
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 0}
-  m_GameObject: {fileID: 298}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 0}
-  m_Name:
-  m_EditorClassIdentifier:
+  enemyAtPoint: {fileID: 0}
+  switchState: 0
+  indexInEnemyPointArray: 0
+  mFraction: 1
+  index: 1
 --- !u!114 &1758
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -38715,6 +39467,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d3fc4688599a19dbd8de99aefa9ba976, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  spawnPointType: 0
+  mFraction: 1
+  pointToJoin: {fileID: 1871}
 --- !u!114 &1759
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -38737,6 +39492,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 65351fae930a5df16f470909621c2f6f, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  path: {fileID: 0}
+  index: 0
+  stayTime: 0
 --- !u!114 &1761
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -38770,6 +39528,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f19ea4a15c3ca43dcc180d756f7a82b3, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  ownerId: 0
+  group: 0
+  OwnerShipWasTransfered: 0
+  prefixBackup: -1
+  synchronization: 0
+  onSerializeTransformOption: 3
+  onSerializeRigidBodyOption: 2
+  ownershipTransfer: 0
+  ObservedComponents:
+  - {fileID: 0}
+  viewIdField: 3
+  instantiationId: 3
+  currentMasterID: -1
+  didAwake: 0
+  isRuntimeInstantiated: 0
 --- !u!114 &1764
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -38814,6 +39587,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 65351fae930a5df16f470909621c2f6f, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  path: {fileID: 1709}
+  index: 3
+  stayTime: 0
 --- !u!114 &1768
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -38825,6 +39601,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 65351fae930a5df16f470909621c2f6f, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  path: {fileID: 1652}
+  index: 0
+  stayTime: 0
 --- !u!114 &1769
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -38858,6 +39637,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5d5dd785fff4ab397c02e56ac5b28692, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  loadSpawnPoints: 0
+  spawnPoints:
+  - {fileID: 1899}
 --- !u!114 &1772
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -38869,6 +39651,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8e9e336d4e9d43c6305ae38d9233296d, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  electricTrap: {fileID: 1732}
+  attackPositions:
+  - {fileID: 567}
+  - {fileID: 566}
+  - {fileID: 565}
+  - {fileID: 564}
+  turretPositions:
+  - {fileID: 1802}
+  - {fileID: 1818}
+  rusherPoints:
+  - {fileID: 1675}
+  - {fileID: 1756}
+  - {fileID: 1824}
+  - {fileID: 1904}
 --- !u!114 &1773
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -38891,6 +39687,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8cd43e9dc7e03a9bc0baea2cf791ea40, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  enemyAtPoint: {fileID: 0}
+  switchState: 0
+  indexInEnemyPointArray: 0
+  mFraction: 1
+  direction: {x: 1, y: 0, z: 0}
+  rightSide: 0
 --- !u!114 &1775
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -38902,6 +39704,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 16b7423177a72a3f59048b96d341591a, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  enemyAtPoint: {fileID: 0}
+  switchState: 2
+  indexInEnemyPointArray: 0
+  mFraction: 1
+  obstacleStart: {fileID: 814}
+  obstacleEnd: {fileID: 873}
 --- !u!114 &1776
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -38913,6 +39721,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1833c1e28f6f347ca2286c3c0c21b17a, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  enemyAtPoint: {fileID: 0}
+  switchState: 11
+  indexInEnemyPointArray: 0
+  mFraction: 1
 --- !u!114 &1777
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -38924,6 +39736,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 65351fae930a5df16f470909621c2f6f, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  path: {fileID: 1628}
+  index: 4
+  stayTime: 0
 --- !u!114 &1778
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -38946,6 +39761,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d3fc4688599a19dbd8de99aefa9ba976, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  spawnPointType: 0
+  mFraction: 1
+  pointToJoin: {fileID: 1821}
 --- !u!114 &1780
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -38957,6 +39775,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ece935610721b53d700cf160f8519d50, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  trigger: {fileID: 1691}
+  shield: {fileID: 1610}
+  photonView: {fileID: 1831}
+  handle: {fileID: 19}
+  electricityRenderer: {fileID: 1033}
+  electricityEffectPeriod: 0.05
+  electricityEffectFrames: 4
+  leftInsulator: {fileID: 16}
+  rightInsulator: {fileID: 15}
+  effect: {fileID: 14}
 --- !u!114 &1781
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -38968,6 +39796,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: aa5336f805f636a26d269afa08d8ccb0, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  snapTransform: {fileID: 497}
+  show: 0
+  spriteName: game-card-ico-shieldsup
+  indicatorOffset: {x: 0, y: 0, z: 0}
+  alwaysOnTop: 0
+  updateScale: 1
 --- !u!114 &1782
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -38979,6 +39813,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3898abb99fb4e57911c797ed6da17efa, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  isActivated: 0
 --- !u!114 &1783
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -39012,6 +39847,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 65351fae930a5df16f470909621c2f6f, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  path: {fileID: 0}
+  index: 0
+  stayTime: 0
 --- !u!114 &1786
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -39023,6 +39861,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0159ab42a0bf8959ea24ab580ac35112, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  spawnPointType: 0
+  mFraction: 1
+  wayPointToJoin: {fileID: 1768}
+  wayPointToStop: {fileID: 1894}
 --- !u!114 &1787
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -39045,6 +39887,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 65351fae930a5df16f470909621c2f6f, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  path: {fileID: 1628}
+  index: 5
+  stayTime: 0
 --- !u!114 &1789
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -39067,6 +39912,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 65351fae930a5df16f470909621c2f6f, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  path: {fileID: 0}
+  index: 0
+  stayTime: 0
 --- !u!114 &1791
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -39078,6 +39926,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 61d832db3eebf585fb0a1ffe7e76ee26, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  used: 0
 --- !u!114 &1792
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -39100,6 +39949,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 65351fae930a5df16f470909621c2f6f, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  path: {fileID: 1709}
+  index: 4
+  stayTime: 0
 --- !u!114 &1794
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -39133,6 +39985,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 94f02b0133f1f0d2e85a6d490fd93f95, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  enemyAtPoint: {fileID: 0}
+  switchState: 0
+  indexInEnemyPointArray: 0
+  mFraction: 1
+  index: 3
 --- !u!114 &1797
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -39144,6 +40001,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 65351fae930a5df16f470909621c2f6f, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  path: {fileID: 1628}
+  index: 14
+  stayTime: 0
 --- !u!114 &1798
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -39188,6 +40048,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 94f02b0133f1f0d2e85a6d490fd93f95, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  enemyAtPoint: {fileID: 0}
+  switchState: 0
+  indexInEnemyPointArray: 0
+  mFraction: 1
+  index: 3
 --- !u!114 &1802
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -39199,6 +40064,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 61d832db3eebf585fb0a1ffe7e76ee26, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  used: 0
 --- !u!114 &1803
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -39221,6 +40087,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 16b7423177a72a3f59048b96d341591a, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  enemyAtPoint: {fileID: 0}
+  switchState: 2
+  indexInEnemyPointArray: 0
+  mFraction: 1
+  obstacleStart: {fileID: 927}
+  obstacleEnd: {fileID: 839}
 --- !u!114 &1805
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -39232,6 +40104,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 65351fae930a5df16f470909621c2f6f, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  path: {fileID: 1652}
+  index: 2
+  stayTime: 0
 --- !u!114 &1806
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -39243,6 +40118,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 16b7423177a72a3f59048b96d341591a, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  enemyAtPoint: {fileID: 0}
+  switchState: 2
+  indexInEnemyPointArray: 0
+  mFraction: 1
+  obstacleStart: {fileID: 894}
+  obstacleEnd: {fileID: 896}
 --- !u!114 &1807
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -39254,6 +40135,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 65351fae930a5df16f470909621c2f6f, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  path: {fileID: 1628}
+  index: 2
+  stayTime: 0
 --- !u!114 &1808
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -39265,6 +40149,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4574a1f55bb5e4374a0ca0812e8b012d, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  isActivated: 0
+  damageParticles: {fileID: 1569}
 --- !u!114 &1809
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -39276,6 +40162,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 65351fae930a5df16f470909621c2f6f, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  path: {fileID: 0}
+  index: 0
+  stayTime: 0
 --- !u!114 &1810
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -39287,6 +40176,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 65351fae930a5df16f470909621c2f6f, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  path: {fileID: 1628}
+  index: 1
+  stayTime: 0
 --- !u!114 &1811
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -39298,6 +40190,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 61d832db3eebf585fb0a1ffe7e76ee26, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  used: 0
 --- !u!114 &1812
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -39331,6 +40224,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8c0ac0a2d9d317025f60b61313425f54, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  spawnPointType: 0
+  mFraction: 1
 --- !u!114 &1815
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -39353,6 +40248,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 65351fae930a5df16f470909621c2f6f, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  path: {fileID: 0}
+  index: 0
+  stayTime: 0
 --- !u!114 &1817
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -39364,6 +40262,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f19ea4a15c3ca43dcc180d756f7a82b3, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  ownerId: 0
+  group: 0
+  OwnerShipWasTransfered: 0
+  prefixBackup: -1
+  synchronization: 0
+  onSerializeTransformOption: 3
+  onSerializeRigidBodyOption: 2
+  ownershipTransfer: 0
+  ObservedComponents:
+  - {fileID: 0}
+  viewIdField: 2
+  instantiationId: 2
+  currentMasterID: -1
+  didAwake: 0
+  isRuntimeInstantiated: 0
 --- !u!114 &1818
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -39375,6 +40288,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 61d832db3eebf585fb0a1ffe7e76ee26, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  used: 0
 --- !u!114 &1819
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -39397,6 +40311,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 65351fae930a5df16f470909621c2f6f, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  path: {fileID: 0}
+  index: 0
+  stayTime: 0
 --- !u!114 &1821
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -39408,6 +40325,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 65351fae930a5df16f470909621c2f6f, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  path: {fileID: 1709}
+  index: 1
+  stayTime: 0
 --- !u!114 &1822
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -39430,6 +40350,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1833c1e28f6f347ca2286c3c0c21b17a, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  enemyAtPoint: {fileID: 0}
+  switchState: 11
+  indexInEnemyPointArray: 0
+  mFraction: 1
 --- !u!114 &1824
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -39441,6 +40365,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 94f02b0133f1f0d2e85a6d490fd93f95, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  enemyAtPoint: {fileID: 0}
+  switchState: 0
+  indexInEnemyPointArray: 0
+  mFraction: 1
+  index: 2
 --- !u!114 &1825
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -39463,6 +40392,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 65351fae930a5df16f470909621c2f6f, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  path: {fileID: 0}
+  index: 0
+  stayTime: 0
 --- !u!114 &1827
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -39507,6 +40439,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f19ea4a15c3ca43dcc180d756f7a82b3, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  ownerId: 0
+  group: 0
+  OwnerShipWasTransfered: 0
+  prefixBackup: -1
+  synchronization: 0
+  onSerializeTransformOption: 3
+  onSerializeRigidBodyOption: 2
+  ownershipTransfer: 0
+  ObservedComponents:
+  - {fileID: 0}
+  viewIdField: 8
+  instantiationId: 8
+  currentMasterID: -1
+  didAwake: 0
+  isRuntimeInstantiated: 0
 --- !u!114 &1831
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -39518,6 +40465,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f19ea4a15c3ca43dcc180d756f7a82b3, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  ownerId: 0
+  group: 0
+  OwnerShipWasTransfered: 0
+  prefixBackup: -1
+  synchronization: 0
+  onSerializeTransformOption: 3
+  onSerializeRigidBodyOption: 2
+  ownershipTransfer: 0
+  ObservedComponents:
+  - {fileID: 0}
+  viewIdField: 1
+  instantiationId: 1
+  currentMasterID: -1
+  didAwake: 0
+  isRuntimeInstantiated: 0
 --- !u!114 &1832
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -39529,6 +40491,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 16b7423177a72a3f59048b96d341591a, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  enemyAtPoint: {fileID: 0}
+  switchState: 2
+  indexInEnemyPointArray: 0
+  mFraction: 1
+  obstacleStart: {fileID: 911}
+  obstacleEnd: {fileID: 713}
 --- !u!114 &1833
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -39540,6 +40508,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 61d832db3eebf585fb0a1ffe7e76ee26, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  used: 0
 --- !u!114 &1834
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -39562,6 +40531,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 16b7423177a72a3f59048b96d341591a, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  enemyAtPoint: {fileID: 0}
+  switchState: 2
+  indexInEnemyPointArray: 0
+  mFraction: 1
+  obstacleStart: {fileID: 639}
+  obstacleEnd: {fileID: 740}
 --- !u!114 &1836
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -39584,6 +40559,44 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b411f0a901b851ffd46140a659a89ff3, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  ConvertType:
+  EnabledLODSystem: 1
+  ObjPosition: []
+  ObjLodScript: []
+  ObjLodStatus:
+  MaxViewDistance: 60
+  LOD2Start: 20
+  LOD3Start: 40
+  Interval: 0.5
+  PlayerCamera: {fileID: 934}
+  Mode: 1
+  Master: 1
+  enabledBillboard: 1
+  BillboardPosition: []
+  BillInterval: 0.05
+  BillStatus:
+  BillMaxViewDistance: 30
+  BillScript: []
+  enabledLayerCul: 1
+  BackGroundView: 10000
+  FarView: 200
+  NormalView: 60
+  CloseView: 30
+  Axis: 0
+  LODbasedOnScript: 1
+  BilBbasedOnScript: 1
+  T4MMaterial: {fileID: 2100000, guid: 06c8be44d4cecf246b6e3b0f4a3b9e66, type: 2}
+  T4MMesh: {fileID: 1444}
+  TranslucencyColor: {r: 0.73, g: 0.85, b: 0.4, a: 1}
+  Wind: {x: 1, y: 0.4, z: 0.2, w: 0.03}
+  WindFrequency: 0.2
+  GrassWindFrequency: 2
+  ActiveWind: 1
+  LayerCullPreview: 0
+  LODPreview: 0
+  BillboardPreview: 0
+  T4MMaskTex2d: {fileID: 0}
+  T4MMaskTexd: {fileID: 0}
 --- !u!114 &1838
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -39595,6 +40608,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 21554a71485dfa727f66bff283fe83be, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  layerNumber: 13
 --- !u!114 &1839
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -39606,6 +40620,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 65351fae930a5df16f470909621c2f6f, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  path: {fileID: 1862}
+  index: 4
+  stayTime: 0
 --- !u!114 &1840
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -39650,6 +40667,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5d5dd785fff4ab397c02e56ac5b28692, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  loadSpawnPoints: 0
+  spawnPoints:
+  - {fileID: 1786}
 --- !u!114 &1844
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -39661,6 +40681,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 65351fae930a5df16f470909621c2f6f, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  path: {fileID: 0}
+  index: 0
+  stayTime: 0
 --- !u!114 &1845
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -39672,6 +40695,34 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d9d8bf95b76e06b83a10740c1390212a, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  loadEnemyPoints: 0
+  enemyPoints:
+  - {fileID: 1698}
+  - {fileID: 1719}
+  - {fileID: 1900}
+  - {fileID: 1859}
+  - {fileID: 1775}
+  - {fileID: 1835}
+  - {fileID: 1735}
+  - {fileID: 1702}
+  - {fileID: 1905}
+  - {fileID: 1730}
+  - {fileID: 1874}
+  - {fileID: 1804}
+  - {fileID: 1714}
+  - {fileID: 1832}
+  - {fileID: 1806}
+  - {fileID: 1695}
+  - {fileID: 1664}
+  - {fileID: 1880}
+  - {fileID: 1640}
+  - {fileID: 1678}
+  - {fileID: 1682}
+  - {fileID: 1638}
+  - {fileID: 1823}
+  - {fileID: 1853}
+  - {fileID: 1661}
+  - {fileID: 1776}
 --- !u!114 &1846
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -39694,6 +40745,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 65351fae930a5df16f470909621c2f6f, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  path: {fileID: 1628}
+  index: 10
+  stayTime: 0
 --- !u!114 &1848
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -39716,6 +40770,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 94f02b0133f1f0d2e85a6d490fd93f95, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  enemyAtPoint: {fileID: 0}
+  switchState: 0
+  indexInEnemyPointArray: 0
+  mFraction: 1
+  index: 2
 --- !u!114 &1850
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -39727,6 +40786,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 65351fae930a5df16f470909621c2f6f, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  path: {fileID: 0}
+  index: 0
+  stayTime: 0
 --- !u!114 &1851
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -39738,6 +40800,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 65351fae930a5df16f470909621c2f6f, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  path: {fileID: 0}
+  index: 0
+  stayTime: 0
 --- !u!114 &1852
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -39760,6 +40825,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1833c1e28f6f347ca2286c3c0c21b17a, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  enemyAtPoint: {fileID: 0}
+  switchState: 11
+  indexInEnemyPointArray: 0
+  mFraction: 1
 --- !u!114 &1854
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -39771,6 +40840,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 94f02b0133f1f0d2e85a6d490fd93f95, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  enemyAtPoint: {fileID: 0}
+  switchState: 0
+  indexInEnemyPointArray: 0
+  mFraction: 1
+  index: 1
 --- !u!114 &1855
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -39793,6 +40867,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 65351fae930a5df16f470909621c2f6f, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  path: {fileID: 0}
+  index: 0
+  stayTime: 0
 --- !u!114 &1857
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -39804,6 +40881,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d3fc4688599a19dbd8de99aefa9ba976, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  spawnPointType: 0
+  mFraction: 1
+  pointToJoin: {fileID: 1767}
 --- !u!114 &1858
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -39815,6 +40895,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 39671db33de09250de5d38fde8f8592e, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  spawnPointType: 0
+  mFraction: 1
+  waypointCircuit: {fileID: 1912}
+  usedByEntity: {fileID: 0}
 --- !u!114 &1859
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -39826,6 +40910,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 16b7423177a72a3f59048b96d341591a, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  enemyAtPoint: {fileID: 0}
+  switchState: 2
+  indexInEnemyPointArray: 0
+  mFraction: 1
+  obstacleStart: {fileID: 684}
+  obstacleEnd: {fileID: 696}
 --- !u!114 &1860
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -39848,6 +40938,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 65351fae930a5df16f470909621c2f6f, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  path: {fileID: 0}
+  index: 0
+  stayTime: 0
 --- !u!114 &1862
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -39859,6 +40952,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a604c2e26b5732c5b35329d042a09950, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  wayPoints:
+  - {fileID: 1689}
+  - {fileID: 1755}
+  - {fileID: 1651}
+  - {fileID: 1871}
+  - {fileID: 1839}
+  loadWayPoints: 0
+  Radius: 0.2
+  usedByEntity: {fileID: 0}
 --- !u!114 &1863
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -39892,17 +40994,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e4d2be6ce794cfbbbc85072b99c22f49, type: 3}
   m_Name:
   m_EditorClassIdentifier:
---- !u!114 &1866
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 0}
-  m_GameObject: {fileID: 435}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 0}
-  m_Name:
-  m_EditorClassIdentifier:
 --- !u!114 &1867
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -39914,6 +41005,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8e9e336d4e9d43c6305ae38d9233296d, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  electricTrap: {fileID: 1727}
+  attackPositions:
+  - {fileID: 545}
+  - {fileID: 544}
+  - {fileID: 543}
+  - {fileID: 542}
+  turretPositions:
+  - {fileID: 1723}
+  - {fileID: 1696}
+  rusherPoints:
+  - {fileID: 1622}
+  - {fileID: 1676}
+  - {fileID: 1849}
+  - {fileID: 1801}
 --- !u!114 &1868
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -39958,6 +41063,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 65351fae930a5df16f470909621c2f6f, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  path: {fileID: 1862}
+  index: 3
+  stayTime: 0
 --- !u!114 &1872
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -39969,6 +41077,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 65351fae930a5df16f470909621c2f6f, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  path: {fileID: 1628}
+  index: 3
+  stayTime: 0
 --- !u!114 &1873
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -39980,6 +41091,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 65351fae930a5df16f470909621c2f6f, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  path: {fileID: 0}
+  index: 0
+  stayTime: 0
 --- !u!114 &1874
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -39991,6 +41105,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 16b7423177a72a3f59048b96d341591a, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  enemyAtPoint: {fileID: 0}
+  switchState: 2
+  indexInEnemyPointArray: 0
+  mFraction: 1
+  obstacleStart: {fileID: 739}
+  obstacleEnd: {fileID: 783}
 --- !u!114 &1875
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -40013,6 +41133,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 65351fae930a5df16f470909621c2f6f, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  path: {fileID: 1652}
+  index: 5
+  stayTime: 0
 --- !u!114 &1877
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -40035,6 +41158,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4574a1f55bb5e4374a0ca0812e8b012d, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  isActivated: 0
+  damageParticles: {fileID: 1577}
 --- !u!114 &1879
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -40057,6 +41182,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1df87ce72e28356e404e85651544fcdf, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  enemyAtPoint: {fileID: 0}
+  switchState: 10
+  indexInEnemyPointArray: 0
+  mFraction: 1
 --- !u!114 &1881
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -40068,6 +41197,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 94f02b0133f1f0d2e85a6d490fd93f95, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  enemyAtPoint: {fileID: 0}
+  switchState: 0
+  indexInEnemyPointArray: 0
+  mFraction: 1
+  index: 3
 --- !u!114 &1882
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -40090,6 +41224,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4574a1f55bb5e4374a0ca0812e8b012d, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  isActivated: 0
+  damageParticles: {fileID: 1571}
 --- !u!114 &1884
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -40112,6 +41248,64 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 60df341d7edd9e452d326b8b55a842ca, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  cameraHUD: {fileID: 0}
+  thirdPersoncameraDefinition:
+    distance: 2
+    distanceScale: 1
+    forward: 0.77
+    fwScale: 1
+    height: 1.5
+    scale: 1
+  shotPositionSpringStiffness: 0.5
+  shotPositionSpringDamping: 0.8
+  hitPositionSpringStiffness: 0.95
+  hitPositionSpringDamping: 0.5
+  radius: 0
+  deltaAngle: 0
+  positions: []
+  rotations: []
+  goBackAfter: 4
+  vehiclesGoBackAfter: 4
+  ShowNewAfter: 2
+  flyToTimeByPlayer: 1
+  flyToTimeByOther: 2
+  flyToFowTime: 0.3
+  flyToFowBackTimeByPlayer: 0.2
+  flyToFowBackTimeByOther: 0.2
+  flyToFow: 70
+  flyToParalelDistanceForShield: 0.5
+  flyToOffset: {x: 1, y: 0.25}
+  flyToLookAtPosition: 0.35
+  flyToDelay: 0.2
+  flyToCameraLean: 10
+  flyToCameraLeanAnimation:
+    serializedVersion: 2
+    m_Curve: []
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+  flyToAnimation:
+    serializedVersion: 2
+    m_Curve: []
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+  flyToFocusTargetLerp: 1
+  flyToTransitionTime: 8
+  flyToTargetLerp: 1
+  flyToRotationAnimation:
+    serializedVersion: 2
+    m_Curve: []
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+  flyToTransitionAnimation:
+    serializedVersion: 2
+    m_Curve: []
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+  flyToLeanBackAnimation:
+    serializedVersion: 2
+    m_Curve: []
+    m_PreInfinity: 2
+    m_PostInfinity: 2
 --- !u!114 &1886
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -40123,6 +41317,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 147118df48985333e764d19dc704a343, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  lineMaterial: {fileID: 0}
 --- !u!114 &1887
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -40134,6 +41329,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bd8cd10ff81024bbcc5c22fb26e63151, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  Rotation: {x: 0, y: 0, z: 0, w: 0}
 --- !u!114 &1888
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -40145,6 +41341,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1ae568aeea1453e7cc32eb23243b81ea, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  damping: 3
+  definition:
+    distance: 3
+    distanceScale: 1
+    forward: 0
+    fwScale: 1
+    height: 3
+    scale: 1
+  gyroController: {fileID: 1887}
+  maxShotRotation: 15
+  rotationDamping: 7
+  smoothRotation: 1
+  target: {fileID: 0}
 --- !u!114 &1889
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -40156,6 +41365,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8823520acb14c291a4dbd79d99341c4a, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  target: {fileID: 0}
+  dzEnabled: 0
 --- !u!114 &1890
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -40200,6 +41411,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 61d832db3eebf585fb0a1ffe7e76ee26, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  used: 0
 --- !u!114 &1894
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -40211,6 +41423,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 65351fae930a5df16f470909621c2f6f, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  path: {fileID: 1652}
+  index: 1
+  stayTime: 0
 --- !u!114 &1895
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -40233,6 +41448,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8c0ac0a2d9d317025f60b61313425f54, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  spawnPointType: 0
+  mFraction: 1
 --- !u!114 &1897
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -40244,6 +41461,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 65351fae930a5df16f470909621c2f6f, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  path: {fileID: 0}
+  index: 0
+  stayTime: 0
 --- !u!114 &1898
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -40266,6 +41486,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fb7170b49f4623f2d05aa1366ccec6a2, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  spawnPointType: 0
+  mFraction: 1
+  waypointCircuit: {fileID: 1679}
+  usedByEntity: {fileID: 0}
+  target: {fileID: 682}
 --- !u!114 &1900
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -40277,6 +41502,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 16b7423177a72a3f59048b96d341591a, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  enemyAtPoint: {fileID: 0}
+  switchState: 2
+  indexInEnemyPointArray: 0
+  mFraction: 1
+  obstacleStart: {fileID: 874}
+  obstacleEnd: {fileID: 815}
 --- !u!114 &1901
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -40321,6 +41552,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 94f02b0133f1f0d2e85a6d490fd93f95, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  enemyAtPoint: {fileID: 0}
+  switchState: 0
+  indexInEnemyPointArray: 0
+  mFraction: 1
+  index: 3
 --- !u!114 &1905
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -40332,6 +41568,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 16b7423177a72a3f59048b96d341591a, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  enemyAtPoint: {fileID: 0}
+  switchState: 2
+  indexInEnemyPointArray: 0
+  mFraction: 1
+  obstacleStart: {fileID: 707}
+  obstacleEnd: {fileID: 572}
 --- !u!114 &1906
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -40343,6 +41585,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 94f02b0133f1f0d2e85a6d490fd93f95, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  enemyAtPoint: {fileID: 0}
+  switchState: 0
+  indexInEnemyPointArray: 0
+  mFraction: 1
+  index: 2
 --- !u!114 &1907
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -40365,6 +41612,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 94f02b0133f1f0d2e85a6d490fd93f95, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  enemyAtPoint: {fileID: 0}
+  switchState: 0
+  indexInEnemyPointArray: 0
+  mFraction: 1
+  index: 2
 --- !u!114 &1909
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -40376,6 +41628,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f19ea4a15c3ca43dcc180d756f7a82b3, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  ownerId: 0
+  group: 0
+  OwnerShipWasTransfered: 0
+  prefixBackup: -1
+  synchronization: 0
+  onSerializeTransformOption: 3
+  onSerializeRigidBodyOption: 2
+  ownershipTransfer: 0
+  ObservedComponents:
+  - {fileID: 0}
+  viewIdField: 14
+  instantiationId: 14
+  currentMasterID: -1
+  didAwake: 0
+  isRuntimeInstantiated: 0
 --- !u!114 &1910
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -40387,6 +41654,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8e9e336d4e9d43c6305ae38d9233296d, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  electricTrap: {fileID: 1665}
+  attackPositions:
+  - {fileID: 523}
+  - {fileID: 522}
+  - {fileID: 521}
+  - {fileID: 520}
+  turretPositions:
+  - {fileID: 1893}
+  - {fileID: 1811}
+  rusherPoints:
+  - {fileID: 1687}
+  - {fileID: 1739}
+  - {fileID: 1908}
+  - {fileID: 1881}
 --- !u!114 &1911
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -40409,6 +41690,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: abb157dd164c78c5a39f7e62ba27a963, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  waypointList:
+    circuit: {fileID: 1912}
+    items:
+    - {fileID: 923}
+    - {fileID: 705}
+    - {fileID: 741}
+    - {fileID: 653}
+  smoothRoute: 0
+  editorVisualisationSubsteps: 100
+  isLoop: 0
 --- !u!114 &1913
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -40420,6 +41711,29 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a604c2e26b5732c5b35329d042a09950, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  wayPoints:
+  - {fileID: 1851}
+  - {fileID: 1826}
+  - {fileID: 1701}
+  - {fileID: 1856}
+  - {fileID: 1760}
+  - {fileID: 1897}
+  - {fileID: 1816}
+  - {fileID: 1674}
+  - {fileID: 1785}
+  - {fileID: 1627}
+  - {fileID: 1641}
+  - {fileID: 1861}
+  - {fileID: 1915}
+  - {fileID: 1809}
+  - {fileID: 1844}
+  - {fileID: 1850}
+  - {fileID: 1692}
+  - {fileID: 1820}
+  - {fileID: 1790}
+  loadWayPoints: 0
+  Radius: 0.3
+  usedByEntity: {fileID: 0}
 --- !u!114 &1914
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -40442,6 +41756,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 65351fae930a5df16f470909621c2f6f, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  path: {fileID: 0}
+  index: 0
+  stayTime: 0
 --- !u!114 &1916
 MonoBehaviour:
   m_ObjectHideFlags: 0

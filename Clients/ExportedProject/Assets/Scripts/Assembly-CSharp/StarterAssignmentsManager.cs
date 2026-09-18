@@ -1,63 +1,167 @@
+using System;
+using System.Collections.Generic;
+using Beebyte.Obfuscator;
+using Google2u;
+using Newtonsoft.Json;
 using UnityEngine;
 
-public class StarterAssignmentsManager : MonoBehaviour
+[Skip]
+public class StarterAssignmentsManager : DatabaseSerializedObjectGeneric<StarterAssignmentsManager.StarterAssignmentsData>
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Skip]
+	public class StarterAssignmentsData
+	{
+		[Skip]
+		public class StarterAssignmentData
+		{
+			public bool completed;
 
-	1. No dll files were provided to AssetRipper.
+			public bool claimed;
+		}
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+		public int deadline;
 
-	2. Incorrect dll files were provided to AssetRipper.
+		public Dictionary<string, StarterAssignmentData> assignments = new Dictionary<string, StarterAssignmentData>();
+	}
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	private static StarterAssignmentsManager mInstance;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	private StarterAssignments mAssignmentsXls;
 
-	3. Assembly Reconstruction has not been implemented.
+	private List<StarterAssignment> mAssignments = new List<StarterAssignment>
+	{
+		new StarterAssignmentWinPVPBattle(),
+		new StarterAssignmentDeployUnit(),
+		new StarterAssignmentPlayWarcard(),
+		new StarterAssignmentGainWeeklyMedals(),
+		new StarterAssignmentReachRankFifth(),
+		new StarterAssignmentWinMissionFirst(),
+		new StarterAssignmentUpgradeWeapon(),
+		new StarterAssignmentCraftCard(),
+		new StarterAssignmentReachRankSix(),
+		new StarterAssignmentGetSquadPoint()
+	};
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public static StarterAssignmentsManager instance
+	{
+		get
+		{
+			mInstance = mInstance ?? ((StarterAssignmentsManager)UnityEngine.Object.FindObjectsOfType(typeof(StarterAssignmentsManager))[0]);
+			return mInstance;
+		}
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public List<StarterAssignment> assignments => mAssignments;
 
-	4. This script is unnecessary.
+	public StarterAssignment currentAssignment
+	{
+		get
+		{
+			foreach (StarterAssignment assignment in assignments)
+			{
+				if (!assignment.claimed)
+				{
+					return assignment;
+				}
+			}
+			return null;
+		}
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public bool isActive => data.deadline > Singleton<BeanstalkServerManager>.instance.currentTimestamp;
 
-	5. Script Content Level 0
+	public bool isAllCompleted => assignments.Count != 0 && assignments[assignments.Count - 1].claimed;
 
-		AssetRipper was set to not load any script information.
+	public bool isActiveAndNotCompleted => isActive && !isAllCompleted;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public bool isWBReward => isActiveAndNotCompleted && currentAssignment.rewardWB > 0;
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public int assignmentsCount => assignments.Count;
 
-	7. An incorrect path was provided to AssetRipper.
+	public int remainingTime => Mathf.Max(data.deadline - Singleton<BeanstalkServerManager>.instance.currentTimestamp, 0);
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	public event Action AssignmentClaimed;
 
-	*/
+	public void OnDestroy()
+	{
+		mInstance = null;
+	}
+
+	protected override void Awake()
+	{
+		base.Awake();
+		Singleton<BeanstalkServerManager>.instance.PlayerDataLoaded += OnPlayerDataLoaded;
+		mAssignmentsXls = GetComponent<StarterAssignments>();
+	}
+
+	private void OnPlayerDataLoaded()
+	{
+		foreach (StarterAssignment assignment in assignments)
+		{
+			assignment.Init(mAssignmentsXls.GetRow(assignment.id));
+		}
+		assignments.Sort((StarterAssignment a, StarterAssignment b) => a.order.CompareTo(b.order));
+	}
+
+	public StarterAssignmentsData.StarterAssignmentData GetAssignmentData(string id)
+	{
+		if (data.assignments.TryGetValue(id, out var value))
+		{
+			return value;
+		}
+		value = new StarterAssignmentsData.StarterAssignmentData();
+		data.assignments[id] = value;
+		return value;
+	}
+
+	public void Evaluate()
+	{
+		if (!Singleton<BeanstalkServerManager>.instance.isPlayerDataLoaded || Singleton<BeanstalkServerManager>.instance.currentTimestamp > data.deadline)
+		{
+			return;
+		}
+		Debug.Log("StarterAssignments: Evaluate");
+		bool uncompleteAssignmentExists = false;
+		try
+		{
+			List<string> list = new List<string>();
+			foreach (StarterAssignment assignment in assignments)
+			{
+				bool flag = assignment.Evaluate();
+				if (!assignment.completed || !assignment.claimed)
+				{
+					uncompleteAssignmentExists = true;
+				}
+				if (flag)
+				{
+					list.Add(assignment.id);
+					Singleton<EventTrackingManager>.instance.RegisterStarterAssignmentCompleted(assignment, uncompleteAssignmentExists);
+				}
+			}
+			if (list.Count > 0)
+			{
+				MiscTools.PrintArray(list, "FinishedAssignments:");
+				Singleton<BeanstalkServerManager>.instance.CompleteStarterAssignments(list);
+			}
+		}
+		catch (Exception e)
+		{
+			Crittercism.LogHandledException(e);
+		}
+	}
+
+	internal void LoadData(string assignmentData)
+	{
+		Debug.Log("Load assignments:\n" + assignmentData);
+		SerializedObject = JsonConvert.DeserializeObject<StarterAssignmentsData>(assignmentData);
+		OnPlayerDataLoaded();
+	}
+
+	public void StarterAssignmentClaimed()
+	{
+		if (this.AssignmentClaimed != null)
+		{
+			this.AssignmentClaimed();
+		}
+	}
 }

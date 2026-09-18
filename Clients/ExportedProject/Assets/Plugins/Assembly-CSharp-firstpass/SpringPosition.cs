@@ -1,63 +1,93 @@
 using UnityEngine;
 
-public class SpringPosition : MonoBehaviour
+[AddComponentMenu("NGUI/Tween/Spring Position")]
+public class SpringPosition : IgnoreTimeScale
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public delegate void OnFinished(SpringPosition spring);
 
-	1. No dll files were provided to AssetRipper.
+	public Vector3 target = Vector3.zero;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public float strength = 10f;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public bool worldSpace;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public bool ignoreTimeScale;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public GameObject eventReceiver;
 
-	3. Assembly Reconstruction has not been implemented.
+	public string callWhenFinished;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public OnFinished onFinished;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	private Transform mTrans;
 
-	4. This script is unnecessary.
+	private float mThreshold;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private void Start()
+	{
+		mTrans = base.transform;
+	}
 
-	5. Script Content Level 0
+	private void Update()
+	{
+		float deltaTime = ((!ignoreTimeScale) ? Time.deltaTime : UpdateRealTimeDelta());
+		if (worldSpace)
+		{
+			if (mThreshold == 0f)
+			{
+				mThreshold = (target - mTrans.position).magnitude * 0.001f;
+			}
+			mTrans.position = NGUIMath.SpringLerp(mTrans.position, target, strength, deltaTime);
+			if (mThreshold >= (target - mTrans.position).magnitude)
+			{
+				mTrans.position = target;
+				if (onFinished != null)
+				{
+					onFinished(this);
+				}
+				if (eventReceiver != null && !string.IsNullOrEmpty(callWhenFinished))
+				{
+					eventReceiver.SendMessage(callWhenFinished, this, SendMessageOptions.DontRequireReceiver);
+				}
+				base.enabled = false;
+			}
+			return;
+		}
+		if (mThreshold == 0f)
+		{
+			mThreshold = (target - mTrans.localPosition).magnitude * 0.001f;
+		}
+		mTrans.localPosition = NGUIMath.SpringLerp(mTrans.localPosition, target, strength, deltaTime);
+		if (mThreshold >= (target - mTrans.localPosition).magnitude)
+		{
+			mTrans.localPosition = target;
+			if (onFinished != null)
+			{
+				onFinished(this);
+			}
+			if (eventReceiver != null && !string.IsNullOrEmpty(callWhenFinished))
+			{
+				eventReceiver.SendMessage(callWhenFinished, this, SendMessageOptions.DontRequireReceiver);
+			}
+			base.enabled = false;
+		}
+	}
 
-		AssetRipper was set to not load any script information.
-
-	6. Cpp2IL failed to decompile Il2Cpp data
-
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public static SpringPosition Begin(GameObject go, Vector3 pos, float strength)
+	{
+		SpringPosition springPosition = go.GetComponent<SpringPosition>();
+		if (springPosition == null)
+		{
+			springPosition = go.AddComponent<SpringPosition>();
+		}
+		springPosition.target = pos;
+		springPosition.strength = strength;
+		springPosition.onFinished = null;
+		if (!springPosition.enabled)
+		{
+			springPosition.mThreshold = 0f;
+			springPosition.enabled = true;
+		}
+		return springPosition;
+	}
 }

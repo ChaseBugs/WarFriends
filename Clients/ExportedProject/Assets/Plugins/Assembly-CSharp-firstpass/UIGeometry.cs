@@ -1,63 +1,100 @@
 using UnityEngine;
 
-public class UIGeometry : MonoBehaviour
+public class UIGeometry
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public BetterList<Vector3> verts = new BetterList<Vector3>();
 
-	1. No dll files were provided to AssetRipper.
+	public BetterList<Vector2> uvs = new BetterList<Vector2>();
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public BetterList<Vector2> uvs2 = new BetterList<Vector2>();
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public BetterList<Color32> cols = new BetterList<Color32>();
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	private BetterList<Vector3> mRtpVerts = new BetterList<Vector3>();
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	private Vector3 mRtpNormal;
 
-	3. Assembly Reconstruction has not been implemented.
+	private Vector4 mRtpTan;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public bool hasVertices => verts.size > 0;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public bool hasTransformed => mRtpVerts != null && mRtpVerts.size > 0 && mRtpVerts.size == verts.size;
 
-	4. This script is unnecessary.
+	public void Clear()
+	{
+		verts.Clear();
+		uvs.Clear();
+		uvs2.Clear();
+		cols.Clear();
+		mRtpVerts.Clear();
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public void ApplyOffset(Vector3 pivotOffset)
+	{
+		for (int i = 0; i < verts.size; i++)
+		{
+			verts.buffer[i] += pivotOffset;
+		}
+	}
 
-	5. Script Content Level 0
+	public void ApplyTransform(Matrix4x4 widgetToPanel)
+	{
+		if (verts.size > 0)
+		{
+			mRtpVerts.Clear();
+			int i = 0;
+			for (int size = verts.size; i < size; i++)
+			{
+				mRtpVerts.Add(widgetToPanel.MultiplyPoint3x4(verts[i]));
+			}
+			mRtpNormal = widgetToPanel.MultiplyVector(Vector3.back).normalized;
+			Vector3 normalized = widgetToPanel.MultiplyVector(Vector3.right).normalized;
+			mRtpTan = new Vector4(normalized.x, normalized.y, normalized.z, -1f);
+		}
+		else
+		{
+			mRtpVerts.Clear();
+		}
+	}
 
-		AssetRipper was set to not load any script information.
-
-	6. Cpp2IL failed to decompile Il2Cpp data
-
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public void WriteToBuffers(BetterList<Vector3> v, BetterList<Vector2> u, BetterList<Color32> c, BetterList<Vector3> n, BetterList<Vector4> t, BetterList<Vector2> u2)
+	{
+		if (mRtpVerts == null || mRtpVerts.size <= 0)
+		{
+			return;
+		}
+		if (n == null)
+		{
+			if (uvs2.size > 0)
+			{
+				for (int i = 0; i < mRtpVerts.size; i++)
+				{
+					v.Add(mRtpVerts.buffer[i]);
+					u.Add(uvs.buffer[i]);
+					c.Add(cols.buffer[i]);
+					u2.Add(uvs2.buffer[i]);
+				}
+			}
+			else
+			{
+				for (int j = 0; j < mRtpVerts.size; j++)
+				{
+					v.Add(mRtpVerts.buffer[j]);
+					u.Add(uvs.buffer[j]);
+					c.Add(cols.buffer[j]);
+				}
+			}
+		}
+		else
+		{
+			for (int k = 0; k < mRtpVerts.size; k++)
+			{
+				v.Add(mRtpVerts.buffer[k]);
+				u.Add(uvs.buffer[k]);
+				c.Add(cols.buffer[k]);
+				n.Add(mRtpNormal);
+				t.Add(mRtpTan);
+			}
+		}
+	}
 }

@@ -1,66 +1,242 @@
-using UnityEngine;
+using System;
 
 namespace Org.BouncyCastle.Utilities.Zlib
 {
-	public class ZStream : MonoBehaviour
+public sealed class ZStream
+{
+	private const int MAX_WBITS = 15;
+
+	private const int DEF_WBITS = 15;
+
+	private const int Z_NO_FLUSH = 0;
+
+	private const int Z_PARTIAL_FLUSH = 1;
+
+	private const int Z_SYNC_FLUSH = 2;
+
+	private const int Z_FULL_FLUSH = 3;
+
+	private const int Z_FINISH = 4;
+
+	private const int MAX_MEM_LEVEL = 9;
+
+	private const int Z_OK = 0;
+
+	private const int Z_STREAM_END = 1;
+
+	private const int Z_NEED_DICT = 2;
+
+	private const int Z_ERRNO = -1;
+
+	private const int Z_STREAM_ERROR = -2;
+
+	private const int Z_DATA_ERROR = -3;
+
+	private const int Z_MEM_ERROR = -4;
+
+	private const int Z_BUF_ERROR = -5;
+
+	private const int Z_VERSION_ERROR = -6;
+
+	public byte[] next_in;
+
+	public int next_in_index;
+
+	public int avail_in;
+
+	public long total_in;
+
+	public byte[] next_out;
+
+	public int next_out_index;
+
+	public int avail_out;
+
+	public long total_out;
+
+	public string msg;
+
+	internal Deflate dstate;
+
+	internal Inflate istate;
+
+	internal int data_type;
+
+	public long adler;
+
+	internal Adler32 _adler = new Adler32();
+
+	public int inflateInit()
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
+		return inflateInit(15);
 	}
+
+	public int inflateInit(bool nowrap)
+	{
+		return inflateInit(15, nowrap);
+	}
+
+	public int inflateInit(int w)
+	{
+		return inflateInit(w, nowrap: false);
+	}
+
+	public int inflateInit(int w, bool nowrap)
+	{
+		istate = new Inflate();
+		return istate.inflateInit(this, (!nowrap) ? w : (-w));
+	}
+
+	public int inflate(int f)
+	{
+		if (istate == null)
+		{
+			return -2;
+		}
+		return istate.inflate(this, f);
+	}
+
+	public int inflateEnd()
+	{
+		if (istate == null)
+		{
+			return -2;
+		}
+		int result = istate.inflateEnd(this);
+		istate = null;
+		return result;
+	}
+
+	public int inflateSync()
+	{
+		if (istate == null)
+		{
+			return -2;
+		}
+		return istate.inflateSync(this);
+	}
+
+	public int inflateSetDictionary(byte[] dictionary, int dictLength)
+	{
+		if (istate == null)
+		{
+			return -2;
+		}
+		return istate.inflateSetDictionary(this, dictionary, dictLength);
+	}
+
+	public int deflateInit(int level)
+	{
+		return deflateInit(level, 15);
+	}
+
+	public int deflateInit(int level, bool nowrap)
+	{
+		return deflateInit(level, 15, nowrap);
+	}
+
+	public int deflateInit(int level, int bits)
+	{
+		return deflateInit(level, bits, nowrap: false);
+	}
+
+	public int deflateInit(int level, int bits, bool nowrap)
+	{
+		dstate = new Deflate();
+		return dstate.deflateInit(this, level, (!nowrap) ? bits : (-bits));
+	}
+
+	public int deflate(int flush)
+	{
+		if (dstate == null)
+		{
+			return -2;
+		}
+		return dstate.deflate(this, flush);
+	}
+
+	public int deflateEnd()
+	{
+		if (dstate == null)
+		{
+			return -2;
+		}
+		int result = dstate.deflateEnd();
+		dstate = null;
+		return result;
+	}
+
+	public int deflateParams(int level, int strategy)
+	{
+		if (dstate == null)
+		{
+			return -2;
+		}
+		return dstate.deflateParams(this, level, strategy);
+	}
+
+	public int deflateSetDictionary(byte[] dictionary, int dictLength)
+	{
+		if (dstate == null)
+		{
+			return -2;
+		}
+		return dstate.deflateSetDictionary(this, dictionary, dictLength);
+	}
+
+	internal void flush_pending()
+	{
+		int pending = dstate.pending;
+		if (pending > avail_out)
+		{
+			pending = avail_out;
+		}
+		if (pending != 0)
+		{
+			if (dstate.pending_buf.Length <= dstate.pending_out || next_out.Length <= next_out_index || dstate.pending_buf.Length < dstate.pending_out + pending || next_out.Length < next_out_index + pending)
+			{
+			}
+			Array.Copy(dstate.pending_buf, dstate.pending_out, next_out, next_out_index, pending);
+			next_out_index += pending;
+			dstate.pending_out += pending;
+			total_out += pending;
+			avail_out -= pending;
+			dstate.pending -= pending;
+			if (dstate.pending == 0)
+			{
+				dstate.pending_out = 0;
+			}
+		}
+	}
+
+	internal int read_buf(byte[] buf, int start, int size)
+	{
+		int num = avail_in;
+		if (num > size)
+		{
+			num = size;
+		}
+		if (num == 0)
+		{
+			return 0;
+		}
+		avail_in -= num;
+		if (dstate.noheader == 0)
+		{
+			adler = _adler.adler32(adler, next_in, next_in_index, num);
+		}
+		Array.Copy(next_in, next_in_index, buf, start, num);
+		next_in_index += num;
+		total_in += num;
+		return num;
+	}
+
+	public void free()
+	{
+		next_in = null;
+		next_out = null;
+		msg = null;
+		_adler = null;
+	}
+}
 }

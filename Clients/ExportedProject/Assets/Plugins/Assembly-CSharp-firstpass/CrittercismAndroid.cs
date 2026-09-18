@@ -1,63 +1,295 @@
+using System;
+using System.Collections.Generic;
+using System.Net;
+using System.Text.RegularExpressions;
 using UnityEngine;
 
-public class CrittercismAndroid : MonoBehaviour
+public static class CrittercismAndroid
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	private static bool isInitialized;
 
-	1. No dll files were provided to AssetRipper.
+	private static readonly string CRITTERCISM_CLASS = "com.crittercism.app.Crittercism";
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	private static AndroidJavaClass mCrittercismsPlugin;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	private static volatile bool logUnhandledExceptionAsCrash;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public static void Init(string appID)
+	{
+		Init(appID, new CrittercismConfig());
+	}
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public static void Init(string appID, CrittercismConfig config)
+	{
+		if (isInitialized)
+		{
+			Debug.Log("CrittercismAndroid is already initialized.");
+			return;
+		}
+		Debug.Log("Initializing Crittercism with app id " + appID);
+		mCrittercismsPlugin = new AndroidJavaClass(CRITTERCISM_CLASS);
+		if (mCrittercismsPlugin == null)
+		{
+			Debug.Log("CrittercismAndroid failed to initialize.  Unable to find class " + CRITTERCISM_CLASS);
+			return;
+		}
+		using (AndroidJavaClass androidJavaClass = new AndroidJavaClass("com.unity3d.player.UnityPlayer"))
+		{
+			using (AndroidJavaObject androidJavaObject = androidJavaClass.GetStatic<AndroidJavaObject>("currentActivity"))
+			{
+			PluginCallStatic("initialize", androidJavaObject, appID, config.GetAndroidConfig());
+				}
+}
+		Application.logMessageReceived += OnLogMessageReceived;
+		isInitialized = true;
+	}
 
-	3. Assembly Reconstruction has not been implemented.
+	private static string StackTrace(Exception e)
+	{
+		string stackTrace = e.StackTrace;
+		List<Exception> list = new List<Exception>();
+		list.Add(e);
+		if (stackTrace != null)
+		{
+			stackTrace = e.GetType().FullName + " : " + e.Message + "\r\n" + stackTrace;
+			Exception innerException = e.InnerException;
+			while (innerException != null && list.IndexOf(innerException) < 0)
+			{
+				list.Add(innerException);
+				stackTrace = innerException.GetType().FullName + " : " + innerException.Message + "\r\n" + innerException.StackTrace + "\r\n" + stackTrace;
+				innerException = innerException.InnerException;
+			}
+		}
+		else
+		{
+			stackTrace = string.Empty;
+		}
+		return stackTrace;
+	}
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public static void LogHandledException(Exception e)
+	{
+		string fullName = e.GetType().FullName;
+		string message = e.Message;
+		string text = StackTrace(e);
+		PluginCallStatic("_logHandledException", fullName, message, text);
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	private static void LogUnhandledException(Exception e)
+	{
+		string fullName = e.GetType().FullName;
+		string message = e.Message;
+		string text = StackTrace(e);
+		PluginCallStatic((!logUnhandledExceptionAsCrash) ? "_logHandledException" : "_logCrashException", fullName, message, text);
+	}
 
-	4. This script is unnecessary.
+	public static void LogNetworkRequest(string method, string uriString, long latency, long bytesRead, long bytesSent, HttpStatusCode responseCode, WebExceptionStatus exceptionStatus)
+	{
+		if (isInitialized)
+		{
+			PluginCallStatic("logNetworkRequest", method, uriString, latency, bytesRead, bytesSent, (int)responseCode, (int)exceptionStatus);
+		}
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public static bool GetOptOut()
+	{
+		if (!isInitialized)
+		{
+			return false;
+		}
+		return PluginCallStatic<bool>("getOptOutStatus", new object[0]);
+	}
 
-	5. Script Content Level 0
+	public static void SetOptOut(bool optOutStatus)
+	{
+		if (isInitialized)
+		{
+			PluginCallStatic("setOptOutStatus", optOutStatus);
+		}
+	}
 
-		AssetRipper was set to not load any script information.
+	public static bool DidCrashOnLastLoad()
+	{
+		if (!isInitialized)
+		{
+			return false;
+		}
+		return PluginCallStatic<bool>("didCrashOnLastLoad", new object[0]);
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public static void SetUsername(string username)
+	{
+		if (isInitialized)
+		{
+			PluginCallStatic("setUsername", username);
+		}
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public static void SetMetadata(string[] keys, string[] values)
+	{
+		if (!isInitialized)
+		{
+			return;
+		}
+		if (keys.Length != values.Length)
+		{
+			Debug.Log("Crittercism.SetMetadata given arrays of different lengths");
+			return;
+		}
+		for (int i = 0; i < keys.Length; i++)
+		{
+			SetValue(keys[i], values[i]);
+		}
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	public static void SetValue(string key, string value)
+	{
+		if (!isInitialized)
+		{
+			return;
+		}
+		using (AndroidJavaObject androidJavaObject = new AndroidJavaObject("org.json.JSONObject"))
+		{
+		androidJavaObject.Call<AndroidJavaObject>("put", new object[2] { key, value });
+		PluginCallStatic("setMetadata", androidJavaObject);
+		}
+}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	public static void LeaveBreadcrumb(string breadcrumb)
+	{
+		if (isInitialized)
+		{
+			PluginCallStatic("leaveBreadcrumb", breadcrumb);
+		}
+	}
 
-	*/
+	public static void BeginUserflow(string userflowName)
+	{
+		if (isInitialized)
+		{
+			PluginCallStatic("beginTransaction", userflowName);
+		}
+	}
+
+	[Obsolete("BeginTransaction is deprecated, please use BeginUserflow instead.")]
+	public static void BeginTransaction(string userflowName)
+	{
+		BeginUserflow(userflowName);
+	}
+
+	public static void CancelUserflow(string userflowName)
+	{
+		if (isInitialized)
+		{
+			PluginCallStatic("cancelTransaction", userflowName);
+		}
+	}
+
+	[Obsolete("CancelTransaction is deprecated, please use CancelUserflow instead.")]
+	public static void CancelTransaction(string userflowName)
+	{
+		CancelUserflow(userflowName);
+	}
+
+	public static void EndUserflow(string userflowName)
+	{
+		if (isInitialized)
+		{
+			PluginCallStatic("endTransaction", userflowName);
+		}
+	}
+
+	[Obsolete("EndTransaction is deprecated, please use EndUserflow instead.")]
+	public static void EndTransaction(string userflowName)
+	{
+		EndUserflow(userflowName);
+	}
+
+	public static void FailUserflow(string userflowName)
+	{
+		if (isInitialized)
+		{
+			PluginCallStatic("failTransaction", userflowName);
+		}
+	}
+
+	[Obsolete("FailTransaction is deprecated, please use FailUserflow instead.")]
+	public static void FailTransaction(string userflowName)
+	{
+		FailUserflow(userflowName);
+	}
+
+	public static void SetUserflowValue(string userflowName, int value)
+	{
+		if (isInitialized)
+		{
+			PluginCallStatic("setTransactionValue", userflowName, value);
+		}
+	}
+
+	[Obsolete("SetTransactionValue is deprecated, please use SetUserflowValue instead.")]
+	public static void SetTransactionValue(string userflowName, int value)
+	{
+		SetUserflowValue(userflowName, value);
+	}
+
+	public static int GetUserflowValue(string userflowName)
+	{
+		if (!isInitialized)
+		{
+			return -1;
+		}
+		return PluginCallStatic<int>("getTransactionValue", new object[1] { userflowName });
+	}
+
+	[Obsolete("GetTransactionValue is deprecated, please use GetUserflowValue instead.")]
+	public static int GetTransactionValue(string userflowName)
+	{
+		return GetUserflowValue(userflowName);
+	}
+
+	private static void OnUnhandledException(object sender, UnhandledExceptionEventArgs args)
+	{
+		if (isInitialized && args != null && args.ExceptionObject != null)
+		{
+			Exception e = args.ExceptionObject as Exception;
+			LogUnhandledException(e);
+		}
+	}
+
+	public static void SetLogUnhandledExceptionAsCrash(bool value)
+	{
+		logUnhandledExceptionAsCrash = value;
+	}
+
+	public static bool GetLogUnhandledExceptionAsCrash()
+	{
+		return logUnhandledExceptionAsCrash;
+	}
+
+	private static void OnLogMessageReceived(string name, string stack, LogType type)
+	{
+		if (type == LogType.Exception && isInitialized)
+		{
+			if (logUnhandledExceptionAsCrash)
+			{
+				PluginCallStatic("_logCrashException", name, name, stack);
+			}
+			else
+			{
+				stack = new Regex("\r\n").Replace(stack, "\n\tat");
+				PluginCallStatic("_logHandledException", name, name, stack);
+			}
+		}
+	}
+
+	private static void PluginCallStatic(string methodName, params object[] args)
+	{
+		mCrittercismsPlugin.CallStatic(methodName, args);
+	}
+
+	private static RetType PluginCallStatic<RetType>(string methodName, params object[] args)
+	{
+		return mCrittercismsPlugin.CallStatic<RetType>(methodName, args);
+	}
 }

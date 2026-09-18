@@ -1,63 +1,112 @@
+using System;
 using UnityEngine;
 
-public class ArenaHeroRecord : MonoBehaviour
+public class ArenaHeroRecord : PoolableObject
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Header("Core")]
+	public UILabel positionAndName;
 
-	1. No dll files were provided to AssetRipper.
+	public BoxCollider nameCollider;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public UISprite winsIcon;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public UISprite flawlessIcon;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public UILabel winsLabel;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	[Header("Resize")]
+	public UISprite background;
 
-	3. Assembly Reconstruction has not been implemented.
+	public GameObject leftAnchor;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public GameObject rightAnchor;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	private string mPlayerName;
 
-	4. This script is unnecessary.
+	private string mPlayerId;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private bool mIsFlawless;
 
-	5. Script Content Level 0
+	public void Initialize(int position, DatabasePlayerData player, int count, int width = 600)
+	{
+		mPlayerName = player.name;
+		mPlayerId = player.id;
+		mIsFlawless = player.hasFlawlessRun;
+		int heroWins = player.heroWins;
+		if (player.id == DatabasePlayerData.currentPlayer.id)
+		{
+			background.alpha = 1f;
+			if (position > 2 && position < count - 1 && position < 99)
+			{
+				GuiScreenSingle<ArenaScreen>.instance.yourHeroPosition = position - 1;
+			}
+		}
+		else
+		{
+			background.alpha = 0.35f;
+		}
+		SetSize(width);
+		nameCollider.enabled = true;
+		UIEventListener uIEventListener = UIEventListener.Get(nameCollider.gameObject);
+		uIEventListener.onClick = (UIEventListener.VoidDelegate)Delegate.Remove(uIEventListener.onClick, new UIEventListener.VoidDelegate(NameClick));
+		UIEventListener uIEventListener2 = UIEventListener.Get(nameCollider.gameObject);
+		uIEventListener2.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener2.onClick, new UIEventListener.VoidDelegate(NameClick));
+		positionAndName.color = ((!mIsFlawless) ? Colours.greenArena : Colours.goldFlawless);
+		positionAndName.text = $"[FFFFFF]{MiscTools.FormatNumberToOrdinalPoint(position)}[-]  {mPlayerName}";
+		MiscTools.SetUILabelRescale(positionAndName, 32f, 20f, width - 172);
+		float num = positionAndName.relativeSize.x * positionAndName.transform.localScale.x;
+		nameCollider.size = nameCollider.size.ReplaceX(num + 10f);
+		nameCollider.center = nameCollider.center.ReplaceX(num / 2f);
+		winsIcon.gameObject.SetActive(!mIsFlawless);
+		flawlessIcon.gameObject.SetActive(mIsFlawless);
+		winsLabel.text = MiscTools.FormatBigNumber(heroWins);
+		MiscTools.SetUILabelRescale(winsLabel, 30f, 20f, 56);
+	}
 
-		AssetRipper was set to not load any script information.
+	public void InitializeYou(bool isFlawless, int winsNumber, int width = 600)
+	{
+		mPlayerName = null;
+		mPlayerId = null;
+		mIsFlawless = isFlawless;
+		background.alpha = 1f;
+		SetSize(width);
+		nameCollider.enabled = false;
+		UIEventListener uIEventListener = UIEventListener.Get(nameCollider.gameObject);
+		uIEventListener.onClick = (UIEventListener.VoidDelegate)Delegate.Remove(uIEventListener.onClick, new UIEventListener.VoidDelegate(NameClick));
+		positionAndName.color = Colours.greenArena;
+		positionAndName.text = Localization.Localize("ID_YOURBEST");
+		MiscTools.SetUILabelRescale(positionAndName, 32f, 20f, width - 172);
+		winsIcon.gameObject.SetActive(!mIsFlawless);
+		flawlessIcon.gameObject.SetActive(mIsFlawless);
+		winsLabel.text = MiscTools.FormatBigNumber(winsNumber);
+		MiscTools.SetUILabelRescale(winsLabel, 30f, 20f, 56);
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	private void SetSize(int width)
+	{
+		background.transform.localScale = background.transform.localScale.ReplaceX(width);
+		leftAnchor.transform.localPosition = leftAnchor.transform.localPosition.ReplaceX(-width / 2);
+		rightAnchor.transform.localPosition = rightAnchor.transform.localPosition.ReplaceX(width / 2);
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	private void NameClick(GameObject go)
+	{
+		if (!string.IsNullOrEmpty(mPlayerId))
+		{
+			TweenColor tweenColor = TweenColor.Begin(positionAndName.gameObject, 0.2f, (!mIsFlawless) ? Colours.greenArena : Colours.goldFlawless, Colours.blue);
+			tweenColor.NumOfRepetitions = 2;
+			tweenColor.style = UITweener.Style.PingPong;
+			SoundsManager.Instance.PlayButtonClickedSound();
+			GuiElementSingle<PlayerProfileDialog>.instance.ShowDialog(mPlayerName, mPlayerId);
+		}
+	}
 
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public override void DestroyPooled()
+	{
+		base.DestroyPooled();
+		mPlayerName = null;
+		mPlayerId = null;
+		UIEventListener uIEventListener = UIEventListener.Get(nameCollider.gameObject);
+		uIEventListener.onClick = (UIEventListener.VoidDelegate)Delegate.Remove(uIEventListener.onClick, new UIEventListener.VoidDelegate(NameClick));
+	}
 }

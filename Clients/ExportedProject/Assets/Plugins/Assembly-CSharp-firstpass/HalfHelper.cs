@@ -1,63 +1,159 @@
-using UnityEngine;
+using System;
 
-public class HalfHelper : MonoBehaviour
+internal static class HalfHelper
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	private static uint[] mantissaTable = GenerateMantissaTable();
 
-	1. No dll files were provided to AssetRipper.
+	private static uint[] exponentTable = GenerateExponentTable();
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	private static ushort[] offsetTable = GenerateOffsetTable();
 
-	2. Incorrect dll files were provided to AssetRipper.
+	private static ushort[] baseTable = GenerateBaseTable();
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	private static sbyte[] shiftTable = GenerateShiftTable();
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	private static uint ConvertMantissa(int i)
+	{
+		uint num = (uint)(i << 13);
+		uint num2 = 0u;
+		while ((num & 0x800000) == 0)
+		{
+			num2 -= 8388608;
+			num <<= 1;
+		}
+		num &= 0xFF7FFFFFu;
+		num2 += 947912704;
+		return num | num2;
+	}
 
-	3. Assembly Reconstruction has not been implemented.
+	private static uint[] GenerateMantissaTable()
+	{
+		uint[] array = new uint[2048];
+		array[0] = 0u;
+		for (int i = 1; i < 1024; i++)
+		{
+			array[i] = ConvertMantissa(i);
+		}
+		for (int j = 1024; j < 2048; j++)
+		{
+			array[j] = (uint)(939524096 + (j - 1024 << 13));
+		}
+		return array;
+	}
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	private static uint[] GenerateExponentTable()
+	{
+		uint[] array = new uint[64];
+		array[0] = 0u;
+		for (int i = 1; i < 31; i++)
+		{
+			array[i] = (uint)(i << 23);
+		}
+		array[31] = 1199570944u;
+		array[32] = 2147483648u;
+		for (int j = 33; j < 63; j++)
+		{
+			array[j] = (uint)(2147483648u + (j - 32 << 23));
+		}
+		array[63] = 3347054592u;
+		return array;
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	private static ushort[] GenerateOffsetTable()
+	{
+		ushort[] array = new ushort[64];
+		array[0] = 0;
+		for (int i = 1; i < 32; i++)
+		{
+			array[i] = 1024;
+		}
+		array[32] = 0;
+		for (int j = 33; j < 64; j++)
+		{
+			array[j] = 1024;
+		}
+		return array;
+	}
 
-	4. This script is unnecessary.
+	private static ushort[] GenerateBaseTable()
+	{
+		ushort[] array = new ushort[512];
+		for (int i = 0; i < 256; i++)
+		{
+			sbyte b = (sbyte)(127 - i);
+			if (b > 24)
+			{
+				array[i | 0] = 0;
+				array[i | 0x100] = 32768;
+			}
+			else if (b > 14)
+			{
+				array[i | 0] = (ushort)(1024 >> 18 + b);
+				array[i | 0x100] = (ushort)((1024 >> 18 + b) | 0x8000);
+			}
+			else if (b >= -15)
+			{
+				array[i | 0] = (ushort)(15 - b << 10);
+				array[i | 0x100] = (ushort)((15 - b << 10) | 0x8000);
+			}
+			else if (b > sbyte.MinValue)
+			{
+				array[i | 0] = 31744;
+				array[i | 0x100] = 64512;
+			}
+			else
+			{
+				array[i | 0] = 31744;
+				array[i | 0x100] = 64512;
+			}
+		}
+		return array;
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private static sbyte[] GenerateShiftTable()
+	{
+		sbyte[] array = new sbyte[512];
+		for (int i = 0; i < 256; i++)
+		{
+			sbyte b = (sbyte)(127 - i);
+			if (b > 24)
+			{
+				array[i | 0] = 24;
+				array[i | 0x100] = 24;
+			}
+			else if (b > 14)
+			{
+				array[i | 0] = (sbyte)(b - 1);
+				array[i | 0x100] = (sbyte)(b - 1);
+			}
+			else if (b >= -15)
+			{
+				array[i | 0] = 13;
+				array[i | 0x100] = 13;
+			}
+			else if (b > sbyte.MinValue)
+			{
+				array[i | 0] = 24;
+				array[i | 0x100] = 24;
+			}
+			else
+			{
+				array[i | 0] = 13;
+				array[i | 0x100] = 13;
+			}
+		}
+		return array;
+	}
 
-	5. Script Content Level 0
+	public static float HalfToSingle(ushort half)
+	{
+		uint value = mantissaTable[offsetTable[half >> 10] + (half & 0x3FF)] + exponentTable[half >> 10];
+		return BitConverter.ToSingle(BitConverter.GetBytes(value), 0);
+	}
 
-		AssetRipper was set to not load any script information.
-
-	6. Cpp2IL failed to decompile Il2Cpp data
-
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public static ushort SingleToHalf(float single)
+	{
+		uint num = BitConverter.ToUInt32(BitConverter.GetBytes(single), 0);
+		return (ushort)(baseTable[(num >> 23) & 0x1FF] + ((num & 0x7FFFFF) >> (int)shiftTable[num >> 23]));
+	}
 }

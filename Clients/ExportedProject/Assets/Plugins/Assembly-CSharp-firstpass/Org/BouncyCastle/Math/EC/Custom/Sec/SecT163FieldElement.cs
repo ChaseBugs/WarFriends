@@ -1,66 +1,187 @@
-using UnityEngine;
+using System;
+using Org.BouncyCastle.Math.Raw;
+using Org.BouncyCastle.Utilities;
 
 namespace Org.BouncyCastle.Math.EC.Custom.Sec
 {
-	public class SecT163FieldElement : MonoBehaviour
+internal class SecT163FieldElement : ECFieldElement
+{
+	protected readonly ulong[] x;
+
+	public override bool IsOne => Nat192.IsOne64(x);
+
+	public override bool IsZero => Nat192.IsZero64(x);
+
+	public override string FieldName => "SecT163Field";
+
+	public override int FieldSize => 163;
+
+	public virtual int Representation => 3;
+
+	public virtual int M => 163;
+
+	public virtual int K1 => 3;
+
+	public virtual int K2 => 6;
+
+	public virtual int K3 => 7;
+
+	public SecT163FieldElement(BigInteger x)
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
+		if (x == null || x.SignValue < 0)
+		{
+			throw new ArgumentException("value invalid for SecT163FieldElement", "x");
+		}
+		this.x = SecT163Field.FromBigInteger(x);
 	}
+
+	public SecT163FieldElement()
+	{
+		x = Nat192.Create64();
+	}
+
+	protected internal SecT163FieldElement(ulong[] x)
+	{
+		this.x = x;
+	}
+
+	public override bool TestBitZero()
+	{
+		return (x[0] & 1) != 0;
+	}
+
+	public override BigInteger ToBigInteger()
+	{
+		return Nat192.ToBigInteger64(x);
+	}
+
+	public override ECFieldElement Add(ECFieldElement b)
+	{
+		ulong[] z = Nat192.Create64();
+		SecT163Field.Add(x, ((SecT163FieldElement)b).x, z);
+		return new SecT163FieldElement(z);
+	}
+
+	public override ECFieldElement AddOne()
+	{
+		ulong[] z = Nat192.Create64();
+		SecT163Field.AddOne(x, z);
+		return new SecT163FieldElement(z);
+	}
+
+	public override ECFieldElement Subtract(ECFieldElement b)
+	{
+		return Add(b);
+	}
+
+	public override ECFieldElement Multiply(ECFieldElement b)
+	{
+		ulong[] z = Nat192.Create64();
+		SecT163Field.Multiply(x, ((SecT163FieldElement)b).x, z);
+		return new SecT163FieldElement(z);
+	}
+
+	public override ECFieldElement MultiplyMinusProduct(ECFieldElement b, ECFieldElement x, ECFieldElement y)
+	{
+		return MultiplyPlusProduct(b, x, y);
+	}
+
+	public override ECFieldElement MultiplyPlusProduct(ECFieldElement b, ECFieldElement x, ECFieldElement y)
+	{
+		ulong[] array = this.x;
+		ulong[] y2 = ((SecT163FieldElement)b).x;
+		ulong[] array2 = ((SecT163FieldElement)x).x;
+		ulong[] y3 = ((SecT163FieldElement)y).x;
+		ulong[] array3 = Nat192.CreateExt64();
+		SecT163Field.MultiplyAddToExt(array, y2, array3);
+		SecT163Field.MultiplyAddToExt(array2, y3, array3);
+		ulong[] z = Nat192.Create64();
+		SecT163Field.Reduce(array3, z);
+		return new SecT163FieldElement(z);
+	}
+
+	public override ECFieldElement Divide(ECFieldElement b)
+	{
+		return Multiply(b.Invert());
+	}
+
+	public override ECFieldElement Negate()
+	{
+		return this;
+	}
+
+	public override ECFieldElement Square()
+	{
+		ulong[] z = Nat192.Create64();
+		SecT163Field.Square(x, z);
+		return new SecT163FieldElement(z);
+	}
+
+	public override ECFieldElement SquareMinusProduct(ECFieldElement x, ECFieldElement y)
+	{
+		return SquarePlusProduct(x, y);
+	}
+
+	public override ECFieldElement SquarePlusProduct(ECFieldElement x, ECFieldElement y)
+	{
+		ulong[] array = this.x;
+		ulong[] array2 = ((SecT163FieldElement)x).x;
+		ulong[] y2 = ((SecT163FieldElement)y).x;
+		ulong[] array3 = Nat192.CreateExt64();
+		SecT163Field.SquareAddToExt(array, array3);
+		SecT163Field.MultiplyAddToExt(array2, y2, array3);
+		ulong[] z = Nat192.Create64();
+		SecT163Field.Reduce(array3, z);
+		return new SecT163FieldElement(z);
+	}
+
+	public override ECFieldElement SquarePow(int pow)
+	{
+		if (pow < 1)
+		{
+			return this;
+		}
+		ulong[] z = Nat192.Create64();
+		SecT163Field.SquareN(x, pow, z);
+		return new SecT163FieldElement(z);
+	}
+
+	public override ECFieldElement Invert()
+	{
+		return new SecT163FieldElement(AbstractF2mCurve.Inverse(163, new int[3] { 3, 6, 7 }, ToBigInteger()));
+	}
+
+	public override ECFieldElement Sqrt()
+	{
+		return SquarePow(M - 1);
+	}
+
+	public override bool Equals(object obj)
+	{
+		return Equals(obj as SecT163FieldElement);
+	}
+
+	public override bool Equals(ECFieldElement other)
+	{
+		return Equals(other as SecT163FieldElement);
+	}
+
+	public virtual bool Equals(SecT163FieldElement other)
+	{
+		if (this == other)
+		{
+			return true;
+		}
+		if (other == null)
+		{
+			return false;
+		}
+		return Nat192.Eq64(x, other.x);
+	}
+
+	public override int GetHashCode()
+	{
+		return 0x27FB3 ^ Arrays.GetHashCode(x, 0, 3);
+	}
+}
 }

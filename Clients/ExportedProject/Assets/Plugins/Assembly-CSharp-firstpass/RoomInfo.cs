@@ -1,63 +1,157 @@
-using UnityEngine;
+using System;
+using ExitGames.Client.Photon;
 
-public class RoomInfo : MonoBehaviour
+public class RoomInfo
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	private Hashtable customPropertiesField = new Hashtable();
 
-	1. No dll files were provided to AssetRipper.
+	protected byte maxPlayersField;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	protected string[] expectedUsersField;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	protected bool openField = true;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	protected bool visibleField = true;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	protected bool autoCleanUpField = PhotonNetwork.autoCleanUpPlayerObjects;
 
-	3. Assembly Reconstruction has not been implemented.
+	protected string nameField;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	protected internal int masterClientIdField;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public bool removedFromList { get; internal set; }
 
-	4. This script is unnecessary.
+	protected internal bool serverSideMasterClient { get; private set; }
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public Hashtable CustomProperties => customPropertiesField;
 
-	5. Script Content Level 0
+	public string Name => nameField;
 
-		AssetRipper was set to not load any script information.
+	public int PlayerCount { get; private set; }
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public bool IsLocalClientInside { get; set; }
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public byte MaxPlayers => maxPlayersField;
 
-	7. An incorrect path was provided to AssetRipper.
+	public bool IsOpen => openField;
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	public bool IsVisible => visibleField;
 
-	*/
+	[Obsolete("Please use CustomProperties (updated case for naming).")]
+	public Hashtable customProperties => CustomProperties;
+
+	[Obsolete("Please use Name (updated case for naming).")]
+	public string name => Name;
+
+	[Obsolete("Please use PlayerCount (updated case for naming).")]
+	public int playerCount
+	{
+		get
+		{
+			return PlayerCount;
+		}
+		set
+		{
+			PlayerCount = value;
+		}
+	}
+
+	[Obsolete("Please use IsLocalClientInside (updated case for naming).")]
+	public bool isLocalClientInside
+	{
+		get
+		{
+			return IsLocalClientInside;
+		}
+		set
+		{
+			IsLocalClientInside = value;
+		}
+	}
+
+	[Obsolete("Please use MaxPlayers (updated case for naming).")]
+	public byte maxPlayers => MaxPlayers;
+
+	[Obsolete("Please use IsOpen (updated case for naming).")]
+	public bool open => IsOpen;
+
+	[Obsolete("Please use IsVisible (updated case for naming).")]
+	public bool visible => IsVisible;
+
+	protected internal RoomInfo(string roomName, Hashtable properties)
+	{
+		InternalCacheProperties(properties);
+		nameField = roomName;
+	}
+
+	public override bool Equals(object other)
+	{
+		return other is RoomInfo roomInfo && Name.Equals(roomInfo.nameField);
+	}
+
+	public override int GetHashCode()
+	{
+		return nameField.GetHashCode();
+	}
+
+	public override string ToString()
+	{
+		return string.Format("Room: '{0}' {1},{2} {4}/{3} players.", nameField, (!visibleField) ? "hidden" : "visible", (!openField) ? "closed" : "open", maxPlayersField, PlayerCount);
+	}
+
+	public string ToStringFull()
+	{
+		return string.Format("Room: '{0}' {1},{2} {4}/{3} players.\ncustomProps: {5}", nameField, (!visibleField) ? "hidden" : "visible", (!openField) ? "closed" : "open", maxPlayersField, PlayerCount, customPropertiesField.ToStringFull());
+	}
+
+	protected internal void InternalCacheProperties(Hashtable propertiesToCache)
+	{
+		if (propertiesToCache == null || propertiesToCache.Count == 0 || customPropertiesField.Equals(propertiesToCache))
+		{
+			return;
+		}
+		if (propertiesToCache.ContainsKey((byte)251))
+		{
+			removedFromList = (bool)propertiesToCache[(byte)251];
+			if (removedFromList)
+			{
+				return;
+			}
+		}
+		if (propertiesToCache.ContainsKey(byte.MaxValue))
+		{
+			maxPlayersField = (byte)propertiesToCache[byte.MaxValue];
+		}
+		if (propertiesToCache.ContainsKey((byte)253))
+		{
+			openField = (bool)propertiesToCache[(byte)253];
+		}
+		if (propertiesToCache.ContainsKey((byte)254))
+		{
+			visibleField = (bool)propertiesToCache[(byte)254];
+		}
+		if (propertiesToCache.ContainsKey((byte)252))
+		{
+			PlayerCount = (byte)propertiesToCache[(byte)252];
+		}
+		if (propertiesToCache.ContainsKey((byte)249))
+		{
+			autoCleanUpField = (bool)propertiesToCache[(byte)249];
+		}
+		if (propertiesToCache.ContainsKey((byte)248))
+		{
+			serverSideMasterClient = true;
+			bool flag = masterClientIdField != 0;
+			masterClientIdField = (int)propertiesToCache[(byte)248];
+			if (flag)
+			{
+				PhotonNetwork.networkingPeer.UpdateMasterClient();
+			}
+		}
+		if (propertiesToCache.ContainsKey((byte)247))
+		{
+			expectedUsersField = (string[])propertiesToCache[(byte)247];
+		}
+		customPropertiesField.MergeStringKeys(propertiesToCache);
+	}
 }

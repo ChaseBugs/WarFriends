@@ -1,63 +1,191 @@
 using UnityEngine;
 
-public class UITexture : MonoBehaviour
+[AddComponentMenu("NGUI/UI/Texture")]
+[ExecuteInEditMode]
+public class UITexture : UIWidget
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[HideInInspector]
+	[SerializeField]
+	private Rect mRect = new Rect(0f, 0f, 1f, 1f);
 
-	1. No dll files were provided to AssetRipper.
+	[SerializeField]
+	[HideInInspector]
+	private Shader mShader;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	[SerializeField]
+	[HideInInspector]
+	private Texture mTexture;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	private Material mDynamicMat;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	private bool mCreatingMat;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	private int mPMA = -1;
 
-	3. Assembly Reconstruction has not been implemented.
+	public Rect uvRect
+	{
+		get
+		{
+			return mRect;
+		}
+		set
+		{
+			if (mRect != value)
+			{
+				mRect = value;
+				MarkAsChanged();
+			}
+		}
+	}
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public Shader shader
+	{
+		get
+		{
+			if (mShader == null)
+			{
+				Material material = this.material;
+				if (material != null)
+				{
+					mShader = material.shader;
+				}
+				if (mShader == null)
+				{
+					mShader = Shader.Find("Unlit/Texture");
+				}
+			}
+			return mShader;
+		}
+		set
+		{
+			if (mShader != value)
+			{
+				mShader = value;
+				Material material = this.material;
+				if (material != null)
+				{
+					material.shader = value;
+				}
+				mPMA = -1;
+			}
+		}
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public bool hasDynamicMaterial => mDynamicMat != null;
 
-	4. This script is unnecessary.
+	public override bool keepMaterial => true;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public override Material material
+	{
+		get
+		{
+			if (!mCreatingMat && mMat == null)
+			{
+				mCreatingMat = true;
+				if (mainTexture != null)
+				{
+					if (mShader == null)
+					{
+						mShader = Shader.Find("Unlit/Texture");
+					}
+					mDynamicMat = new Material(mShader);
+					mDynamicMat.hideFlags = HideFlags.DontSave;
+					mDynamicMat.mainTexture = mainTexture;
+					base.material = mDynamicMat;
+				}
+				mCreatingMat = false;
+			}
+			return mMat;
+		}
+		set
+		{
+			if (mDynamicMat != value && mDynamicMat != null)
+			{
+				NGUITools.Destroy(mDynamicMat);
+				mDynamicMat = null;
+			}
+			base.material = value;
+			mPMA = -1;
+		}
+	}
 
-	5. Script Content Level 0
+	public bool premultipliedAlpha
+	{
+		get
+		{
+			if (mPMA == -1)
+			{
+				Material material = this.material;
+				mPMA = ((material != null && material.shader != null && material.shader.name.Contains("Premultiplied")) ? 1 : 0);
+			}
+			return mPMA == 1;
+		}
+	}
 
-		AssetRipper was set to not load any script information.
+	public override Texture mainTexture
+	{
+		get
+		{
+			return mTexture ?? base.mainTexture;
+		}
+		set
+		{
+			if (mPanel != null && mMat != null)
+			{
+				mPanel.RemoveWidget(this);
+			}
+			if (mMat == null)
+			{
+				mDynamicMat = new Material(shader);
+				mDynamicMat.hideFlags = HideFlags.DontSave;
+				mMat = mDynamicMat;
+			}
+			mPanel = null;
+			mTex = value;
+			mTexture = value;
+			mMat.mainTexture = value;
+			if (mPanel == null && base.enabled)
+			{
+				CreatePanel();
+			}
+		}
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	private void OnDestroy()
+	{
+		NGUITools.Destroy(mDynamicMat);
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public override void MakePixelPerfect()
+	{
+		Texture texture = mainTexture;
+		if (texture != null)
+		{
+			Vector3 localScale = base.cachedTransform.localScale;
+			localScale.x = (float)texture.width * uvRect.width;
+			localScale.y = (float)texture.height * uvRect.height;
+			localScale.z = 1f;
+			base.cachedTransform.localScale = localScale;
+		}
+		base.MakePixelPerfect();
+	}
 
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public override void OnFill(BetterList<Vector3> verts, BetterList<Vector2> uvs, BetterList<Color32> cols, BetterList<Vector2> uvs2)
+	{
+		Color color = base.color;
+		color.a *= mPanel.alpha;
+		Color32 item = ((!premultipliedAlpha) ? color : NGUITools.ApplyPMA(color));
+		verts.Add(new Vector3(1f, 0f, 0f));
+		verts.Add(new Vector3(1f, -1f, 0f));
+		verts.Add(new Vector3(0f, -1f, 0f));
+		verts.Add(new Vector3(0f, 0f, 0f));
+		uvs.Add(new Vector2(mRect.xMax, mRect.yMax));
+		uvs.Add(new Vector2(mRect.xMax, mRect.yMin));
+		uvs.Add(new Vector2(mRect.xMin, mRect.yMin));
+		uvs.Add(new Vector2(mRect.xMin, mRect.yMax));
+		cols.Add(item);
+		cols.Add(item);
+		cols.Add(item);
+		cols.Add(item);
+	}
 }

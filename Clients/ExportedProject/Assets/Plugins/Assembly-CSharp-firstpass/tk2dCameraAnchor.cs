@@ -1,63 +1,215 @@
 using UnityEngine;
 
+[AddComponentMenu("2D Toolkit/Camera/tk2dCameraAnchor")]
+[ExecuteInEditMode]
 public class tk2dCameraAnchor : MonoBehaviour
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[SerializeField]
+	private int anchor = -1;
 
-	1. No dll files were provided to AssetRipper.
+	[SerializeField]
+	private tk2dBaseSprite.Anchor _anchorPoint = tk2dBaseSprite.Anchor.UpperLeft;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	[SerializeField]
+	private bool anchorToNativeBounds;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	[SerializeField]
+	private Vector2 offset = Vector2.zero;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	[SerializeField]
+	private tk2dCamera tk2dCamera;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	[SerializeField]
+	private Camera _anchorCamera;
 
-	3. Assembly Reconstruction has not been implemented.
+	private Camera _anchorCameraCached;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	private tk2dCamera _anchorTk2dCamera;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	private Transform _myTransform;
 
-	4. This script is unnecessary.
+	public tk2dBaseSprite.Anchor AnchorPoint
+	{
+		get
+		{
+			if (anchor != -1)
+			{
+				if (anchor >= 0 && anchor <= 2)
+				{
+					_anchorPoint = (tk2dBaseSprite.Anchor)(anchor + 6);
+				}
+				else if (anchor >= 6 && anchor <= 8)
+				{
+					_anchorPoint = (tk2dBaseSprite.Anchor)(anchor - 6);
+				}
+				else
+				{
+					_anchorPoint = (tk2dBaseSprite.Anchor)anchor;
+				}
+				anchor = -1;
+			}
+			return _anchorPoint;
+		}
+		set
+		{
+			_anchorPoint = value;
+		}
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public Vector2 AnchorOffsetPixels
+	{
+		get
+		{
+			return offset;
+		}
+		set
+		{
+			offset = value;
+		}
+	}
 
-	5. Script Content Level 0
+	public bool AnchorToNativeBounds
+	{
+		get
+		{
+			return anchorToNativeBounds;
+		}
+		set
+		{
+			anchorToNativeBounds = value;
+		}
+	}
 
-		AssetRipper was set to not load any script information.
+	public Camera AnchorCamera
+	{
+		get
+		{
+			if (tk2dCamera != null)
+			{
+				_anchorCamera = tk2dCamera.GetComponent<Camera>();
+				tk2dCamera = null;
+			}
+			return _anchorCamera;
+		}
+		set
+		{
+			_anchorCamera = value;
+			_anchorCameraCached = null;
+		}
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	private tk2dCamera AnchorTk2dCamera
+	{
+		get
+		{
+			if (_anchorCameraCached != _anchorCamera)
+			{
+				_anchorTk2dCamera = _anchorCamera.GetComponent<tk2dCamera>();
+				_anchorCameraCached = _anchorCamera;
+			}
+			return _anchorTk2dCamera;
+		}
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	private Transform myTransform
+	{
+		get
+		{
+			if (_myTransform == null)
+			{
+				_myTransform = base.transform;
+			}
+			return _myTransform;
+		}
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	private void Start()
+	{
+		UpdateTransform();
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	private void UpdateTransform()
+	{
+		if (AnchorCamera == null)
+		{
+			return;
+		}
+		float num = 1f;
+		Vector3 localPosition = myTransform.localPosition;
+		tk2dCamera = ((!(AnchorTk2dCamera != null) || AnchorTk2dCamera.CameraSettings.projection == tk2dCameraSettings.ProjectionType.Perspective) ? null : AnchorTk2dCamera);
+		Rect rect = default(Rect);
+		if (tk2dCamera != null)
+		{
+			rect = ((!anchorToNativeBounds) ? tk2dCamera.ScreenExtents : tk2dCamera.NativeScreenExtents);
+			num = tk2dCamera.GetSizeAtDistance(1f);
+		}
+		else
+		{
+			rect.Set(0f, 0f, AnchorCamera.pixelWidth, AnchorCamera.pixelHeight);
+		}
+		float yMin = rect.yMin;
+		float yMax = rect.yMax;
+		float y = (yMin + yMax) * 0.5f;
+		float xMin = rect.xMin;
+		float xMax = rect.xMax;
+		float x = (xMin + xMax) * 0.5f;
+		Vector3 vector = Vector3.zero;
+		switch (AnchorPoint)
+		{
+		case tk2dBaseSprite.Anchor.UpperLeft:
+			vector = new Vector3(xMin, yMax, localPosition.z);
+			break;
+		case tk2dBaseSprite.Anchor.UpperCenter:
+			vector = new Vector3(x, yMax, localPosition.z);
+			break;
+		case tk2dBaseSprite.Anchor.UpperRight:
+			vector = new Vector3(xMax, yMax, localPosition.z);
+			break;
+		case tk2dBaseSprite.Anchor.MiddleLeft:
+			vector = new Vector3(xMin, y, localPosition.z);
+			break;
+		case tk2dBaseSprite.Anchor.MiddleCenter:
+			vector = new Vector3(x, y, localPosition.z);
+			break;
+		case tk2dBaseSprite.Anchor.MiddleRight:
+			vector = new Vector3(xMax, y, localPosition.z);
+			break;
+		case tk2dBaseSprite.Anchor.LowerLeft:
+			vector = new Vector3(xMin, yMin, localPosition.z);
+			break;
+		case tk2dBaseSprite.Anchor.LowerCenter:
+			vector = new Vector3(x, yMin, localPosition.z);
+			break;
+		case tk2dBaseSprite.Anchor.LowerRight:
+			vector = new Vector3(xMax, yMin, localPosition.z);
+			break;
+		}
+		Vector3 vector2 = vector + new Vector3(num * offset.x, num * offset.y, 0f);
+		if (tk2dCamera == null)
+		{
+			Vector3 vector3 = AnchorCamera.ScreenToWorldPoint(vector2);
+			if (myTransform.position != vector3)
+			{
+				myTransform.position = vector3;
+			}
+		}
+		else
+		{
+			Vector3 localPosition2 = myTransform.localPosition;
+			if (localPosition2 != vector2)
+			{
+				myTransform.localPosition = vector2;
+			}
+		}
+	}
 
-	*/
+	public void ForceUpdateTransform()
+	{
+		UpdateTransform();
+	}
+
+	private void LateUpdate()
+	{
+		UpdateTransform();
+	}
 }

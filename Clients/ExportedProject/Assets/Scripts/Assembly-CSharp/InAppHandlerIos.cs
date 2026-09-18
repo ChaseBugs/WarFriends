@@ -1,63 +1,230 @@
+using System;
+using System.Collections.Generic;
+using Google2u;
 using UnityEngine;
 
-public class InAppHandlerIos : MonoBehaviour
+public class InAppHandlerIos : IInAppHandler
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	private static string mBundleId;
 
-	1. No dll files were provided to AssetRipper.
+	private Dictionary<string, string> mTransactions = new Dictionary<string, string>();
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	private string[] mProductIds;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	private bool mQueringProducts;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	private string mProductId = "null";
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public bool productsRecieved => false;
 
-	3. Assembly Reconstruction has not been implemented.
+	public event Action<DatabaseAction, string, bool, List<Tuple<string, string>>> InAppBought;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public event Action<DatabaseAction, string, InAppError> InAppFailed;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public event Action ProductsLoaded;
 
-	4. This script is unnecessary.
+	public InAppHandlerIos()
+	{
+		mBundleId = BundleVersionBindings.BundleID;
+		Debug.Log("IA: can make payments (is logged in): " + CanMakePayments() + " BundleID: " + mBundleId);
+		Singleton<BeanstalkServerManager>.instance.AfterPlayerDataLoaded += OnPlayerDataLoaded;
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private void GetProducstsInfo(string newBundleId)
+	{
+		if (newBundleId != null)
+		{
+			Debug.Log("Re checking product IDs");
+			mProductIds = GetInAppNames();
+			bool flag = true;
+			for (int i = 0; i < mProductIds.Length; i++)
+			{
+				if (!flag)
+				{
+					break;
+				}
+				if (mProductIds[i] == newBundleId)
+				{
+					flag = false;
+				}
+			}
+			if (flag)
+			{
+				Debug.Log("Need add new bundle");
+				string[] array = new string[mProductIds.Length + 1];
+				Array.Copy(mProductIds, array, mProductIds.Length);
+				array[array.Length - 1] = newBundleId;
+				mProductIds = array;
+			}
+		}
+		if (!mQueringProducts)
+		{
+			mQueringProducts = true;
+		}
+	}
 
-	5. Script Content Level 0
+	~InAppHandlerIos()
+	{
+	}
 
-		AssetRipper was set to not load any script information.
+	private DatabaseAction GetActionForId(string id)
+	{
+		if (id.Contains("pack"))
+		{
+			return DatabaseAction.BuyPack;
+		}
+		return DatabaseAction.BuyInApp;
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	internal void ValidateInappOnServer(string transactionId, string base64Receipt, bool isRestore)
+	{
+		string productIdFromTransactionId = GetProductIdFromTransactionId(transactionId);
+		Debug.Log("IA: Validating inapp on server... inappId = " + productIdFromTransactionId);
+		if (string.IsNullOrEmpty(productIdFromTransactionId))
+		{
+			Debug.LogError("IA: ProductID is null, not proceding ...");
+			return;
+		}
+		List<Tuple<string, string>> list = new List<Tuple<string, string>>();
+		list.Add(new Tuple<string, string>("IosReceipt", base64Receipt));
+		list.Add(new Tuple<string, string>("IosTransactionId", transactionId));
+		List<Tuple<string, string>> arg = list;
+		if (this.InAppBought != null)
+		{
+			this.InAppBought(GetActionForId(productIdFromTransactionId), productIdFromTransactionId, isRestore, arg);
+		}
+		Singleton<SessionManager>.instance.FinishInapp();
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	private string GetProductIdFromTransactionId(string transactionId)
+	{
+		string result = string.Empty;
+		if (mTransactions.ContainsKey(transactionId))
+		{
+			result = mTransactions[transactionId];
+			string oldValue = mBundleId + ".";
+			result = result.Replace(oldValue, string.Empty);
+			mTransactions.Remove(transactionId);
+		}
+		return result;
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	private void OnFuseboxxVerification(int result, string transactionId, string originalTransactionId)
+	{
+		Debug.Log("IA: Fuseboxx Verification, transaction id = " + transactionId + ", original transaction id = " + originalTransactionId + ", result = " + result);
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	private void OnPlayerDataLoaded()
+	{
+		string text = MiscTools.Md5(GameLoginManager.instance.playerId);
+		Start();
+	}
 
-	*/
+	public void PurchaseProduct(string productId)
+	{
+		string text = mBundleId + "." + productId;
+		Debug.Log("IA: purchase product, productId = " + text);
+		Singleton<SessionManager>.instance.StartInapp();
+		Debug.Log("IA: skipping app store purchase");
+		if (this.InAppBought != null)
+		{
+			this.InAppBought(GetActionForId(productId), productId, arg3: false, new List<Tuple<string, string>>());
+		}
+		Singleton<SessionManager>.instance.FinishInapp();
+	}
+
+	public void RestoreTransactions()
+	{
+		WaitingDialog.ShowDialog("ID_RESTORING_INAPPS");
+		Debug.Log("IA: restore transactions");
+		Singleton<SessionManager>.instance.StartInapp();
+	}
+
+	public void HandleRestore()
+	{
+	}
+
+	private void OnRestoreFailed(string obj)
+	{
+		Debug.Log("IA: On restore failed! " + obj);
+		WaitingDialog.Hide();
+		WarningDialog.ShowError(Localization.Localize("ID_WARNING_FAILTORESTORE"), Localization.Localize("ID_WARNING_RESTOREERROR"), 0f, null, string.Empty, useDialogBackground: true);
+		Singleton<SessionManager>.instance.FinishInapp();
+	}
+
+	private void OnRestoreFinished()
+	{
+		Debug.Log("IA: On restore finished");
+		WaitingDialog.Hide();
+		ConfirmDialog.ShowAlert(Localization.Localize("ID_CONFIRM_RESTORE"), Localization.Localize("ID_CONFIRM_TRANSACTIONSRESTORED"), 0f);
+		Singleton<SessionManager>.instance.FinishInapp();
+	}
+
+	private void OnPurchaseCancelled(string message)
+	{
+		Debug.LogError("IA: purchase was cancellled, " + message);
+		if (this.InAppFailed != null)
+		{
+			this.InAppFailed(DatabaseAction.BuyPack, message, InAppError.Canceled);
+		}
+		Singleton<SessionManager>.instance.FinishInapp();
+	}
+
+	private void OnPurchaseFailed(string message)
+	{
+		Debug.LogError("IA: Purchase failed! " + message);
+		if (this.InAppFailed != null)
+		{
+			this.InAppFailed(DatabaseAction.BuyPack, message, InAppError.Failed);
+		}
+		Singleton<EventTrackingManager>.instance.RegisterPurchaseAttempt(mProductId, isSuccess: false);
+		Singleton<SessionManager>.instance.FinishInapp();
+	}
+
+	private void OnProductListFailed(string message)
+	{
+		Debug.LogError("IA: product list fail, message = " + message);
+		mQueringProducts = false;
+	}
+
+	private bool CanMakePayments()
+	{
+		return false;
+	}
+
+	public void Start()
+	{
+		mProductIds = GetInAppNames();
+		GetProducstsInfo(null);
+	}
+
+	public static string[] GetInAppNames()
+	{
+		InApps inApps = Singleton<GameVariables>.instance.inApps;
+		string[] array = new string[inApps.Rows.Count];
+		for (int i = 0; i < inApps.Rows.Count; i++)
+		{
+			InAppsRow inAppsRow = inApps.Rows[i];
+			array[i] = mBundleId + "." + inAppsRow.NAME;
+		}
+		return array;
+	}
+
+	public Tuple<float, string> GetItemPrice(string id)
+	{
+		string text = mBundleId + "." + id;
+		return new Tuple<float, string>(-1f, string.Empty);
+	}
+
+	public string GetItemCurrencyCode(string id)
+	{
+		string text = mBundleId + "." + id;
+		return "USD";
+	}
+
+	public string GetItemCountryCode(string id)
+	{
+		string text = mBundleId + "." + id;
+		return string.Empty;
+	}
 }

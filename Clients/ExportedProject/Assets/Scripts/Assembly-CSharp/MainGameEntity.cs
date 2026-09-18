@@ -1,63 +1,113 @@
+using System;
 using UnityEngine;
 
-public class MainGameEntity : MonoBehaviour
+public abstract class MainGameEntity : PoolableObject, IFraction, IGameMainEntity
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public PhotonView photonView;
 
-	1. No dll files were provided to AssetRipper.
+	private float mRevengeEndTime;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public HudObjectIndicator hudObjectIndicator;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public CardIconIndicator cardIconIndicator { get; private set; }
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public bool isRevengeKill => Time.time < mRevengeEndTime;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public abstract Fractions fraction { get; set; }
 
-	3. Assembly Reconstruction has not been implemented.
+	public abstract IFraction owner { get; set; }
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public abstract int power { get; set; }
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public bool isAlive { get; set; }
 
-	4. This script is unnecessary.
+	public abstract event Action<IGameMainEntity, DestroyableObject.DamageInfo> Killed;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	protected override void Awake()
+	{
+		base.Awake();
+		photonView = GetComponent<PhotonView>();
+		cardIconIndicator = base.gameObject.AddComponent<CardIconIndicator>();
+		cardIconIndicator.hudObjectIndicator = hudObjectIndicator;
+		photonView.RebuildCache();
+	}
 
-	5. Script Content Level 0
+	public override void BeforeInstancied()
+	{
+		base.BeforeInstancied();
+		StopAllCoroutines();
+	}
 
-		AssetRipper was set to not load any script information.
+	public override void OnInstancied()
+	{
+		base.OnInstancied();
+		if (hudObjectIndicator != null)
+		{
+			hudObjectIndicator.Show(value: false);
+		}
+		mRevengeEndTime = 0f;
+		isAlive = true;
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public override void DestroyPooled()
+	{
+		base.DestroyPooled();
+		if (hudObjectIndicator != null && mRevengeEndTime != 0f)
+		{
+			mRevengeEndTime = 0f;
+			hudObjectIndicator.Show(value: false);
+		}
+		if (hudObjectIndicator != null)
+		{
+			hudObjectIndicator.Reset();
+		}
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	protected void DestroyEntity(float time)
+	{
+		InvokeAfter(DestroyEntity, time);
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	protected void DestroyEntity()
+	{
+		if (photonView != null)
+		{
+			if (PhotonNetwork.isMasterClient)
+			{
+				DestroyPooled();
+			}
+			else
+			{
+				DestroyPooled();
+			}
+		}
+		else
+		{
+			Debug.LogError("Main entity without photon view");
+		}
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	public void SetRevenge()
+	{
+		if (isAlive)
+		{
+			if (hudObjectIndicator != null)
+			{
+				hudObjectIndicator.Show("game-revenge-indicator", value: true, HudObjectIndicator.IndicatorAnimation.InfoIco);
+			}
+			mRevengeEndTime = Time.time + 5f;
+		}
+	}
 
-	*/
+	protected virtual void Update()
+	{
+		if (Time.time > mRevengeEndTime && mRevengeEndTime != 0f)
+		{
+			mRevengeEndTime = 0f;
+			if (hudObjectIndicator != null)
+			{
+				hudObjectIndicator.Show("game-revenge-indicator", value: false, HudObjectIndicator.IndicatorAnimation.InfoIco);
+			}
+		}
+	}
 }

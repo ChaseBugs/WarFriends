@@ -1,66 +1,309 @@
-using UnityEngine;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Text;
+using System.Threading;
 
 namespace BestHTTP.ServerSentEvents
 {
-	public class EventSourceResponse : MonoBehaviour
+internal sealed class EventSourceResponse : HTTPResponse, IProtocol
+{
+	public Action<EventSourceResponse, Message> OnMessage;
+
+	public Action<EventSourceResponse> OnClosed;
+
+	private object FrameLock = new object();
+
+	private byte[] LineBuffer = new byte[1024];
+
+	private int LineBufferPos;
+
+	private Message CurrentMessage;
+
+	private List<Message> CompletedMessages = new List<Message>();
+
+	public bool IsClosed { get; private set; }
+
+	internal EventSourceResponse(HTTPRequest request, Stream stream, bool isStreamed, bool isFromCache)
+		: base(request, stream, isStreamed, isFromCache)
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
+		base.IsClosedManually = true;
 	}
+
+	void IProtocol.HandleEvents()
+	{
+		lock (FrameLock)
+		{
+			if (CompletedMessages.Count > 0)
+			{
+				if (OnMessage != null)
+				{
+					for (int i = 0; i < CompletedMessages.Count; i++)
+					{
+						try
+						{
+							OnMessage(this, CompletedMessages[i]);
+						}
+						catch (Exception ex)
+						{
+							HTTPManager.Logger.Exception("EventSourceMessage", "HandleEvents - OnMessage", ex);
+						}
+					}
+				}
+				CompletedMessages.Clear();
+			}
+		}
+		if (!IsClosed)
+		{
+			return;
+		}
+		CompletedMessages.Clear();
+		if (OnClosed == null)
+		{
+			return;
+		}
+		try
+		{
+			OnClosed(this);
+		}
+		catch (Exception ex2)
+		{
+			HTTPManager.Logger.Exception("EventSourceMessage", "HandleEvents - OnClosed", ex2);
+		}
+		finally
+		{
+			OnClosed = null;
+		}
+	}
+
+	internal override bool Receive(int forceReadRawContentLength = -1, bool readPayloadData = true)
+	{
+		bool flag = base.Receive(forceReadRawContentLength, readPayloadData: false);
+		base.IsUpgraded = flag && base.StatusCode == 200 && HasHeaderWithValue("content-type", "text/event-stream");
+		if (!base.IsUpgraded)
+		{
+			ReadPayload(forceReadRawContentLength);
+		}
+		return flag;
+	}
+
+	internal void StartReceive()
+	{
+		if (base.IsUpgraded)
+		{
+			new Thread(ReceiveThreadFunc).Start();
+		}
+	}
+
+	private void ReceiveThreadFunc(object param)
+	{
+		try
+		{
+			if (HasHeaderWithValue("transfer-encoding", "chunked"))
+			{
+				ReadChunked(Stream);
+			}
+			else
+			{
+				ReadRaw(Stream, -1);
+			}
+		}
+		catch (ThreadAbortException)
+		{
+			baseRequest.State = HTTPRequestStates.Aborted;
+		}
+		catch (Exception exception)
+		{
+			if (HTTPUpdateDelegator.IsCreated)
+			{
+				baseRequest.Exception = exception;
+				baseRequest.State = HTTPRequestStates.Error;
+			}
+			else
+			{
+				baseRequest.State = HTTPRequestStates.Aborted;
+			}
+		}
+		finally
+		{
+			IsClosed = true;
+		}
+	}
+
+	private new void ReadChunked(Stream stream)
+	{
+		int num = ReadChunkLength(stream);
+		byte[] array = new byte[num];
+		while (num != 0)
+		{
+			if (array.Length < num)
+			{
+				Array.Resize(ref array, num);
+			}
+			int num2 = 0;
+			do
+			{
+				int num3 = stream.Read(array, num2, num - num2);
+				if (num3 == 0)
+				{
+					throw new Exception("The remote server closed the connection unexpectedly!");
+				}
+				num2 += num3;
+			}
+			while (num2 < num);
+			FeedData(array, num2);
+			HTTPResponse.ReadTo(stream, 10);
+			num = ReadChunkLength(stream);
+		}
+		ReadHeaders(stream);
+	}
+
+	private new void ReadRaw(Stream stream, int contentLength)
+	{
+		byte[] array = new byte[1024];
+		int num;
+		do
+		{
+			num = stream.Read(array, 0, array.Length);
+			FeedData(array, num);
+		}
+		while (num > 0);
+	}
+
+	public void FeedData(byte[] buffer, int count)
+	{
+		if (count == -1)
+		{
+			count = buffer.Length;
+		}
+		if (count == 0)
+		{
+			return;
+		}
+		int num = 0;
+		int num2;
+		do
+		{
+			num2 = -1;
+			int num3 = 1;
+			for (int i = num; i < count; i++)
+			{
+				if (num2 != -1)
+				{
+					break;
+				}
+				if (buffer[i] == 13)
+				{
+					if (i + 1 < count && buffer[i + 1] == 10)
+					{
+						num3 = 2;
+					}
+					num2 = i;
+				}
+				else if (buffer[i] == 10)
+				{
+					num2 = i;
+				}
+			}
+			int num4 = ((num2 != -1) ? num2 : count);
+			if (LineBuffer.Length < LineBufferPos + (num4 - num))
+			{
+				Array.Resize(ref LineBuffer, LineBufferPos + (num4 - num));
+			}
+			Array.Copy(buffer, num, LineBuffer, LineBufferPos, num4 - num);
+			LineBufferPos += num4 - num;
+			if (num2 == -1)
+			{
+				break;
+			}
+			ParseLine(LineBuffer, LineBufferPos);
+			LineBufferPos = 0;
+			num = num2 + num3;
+		}
+		while (num2 != -1 && num < count);
+	}
+
+	private void ParseLine(byte[] buffer, int count)
+	{
+		if (count == 0)
+		{
+			if (CurrentMessage != null)
+			{
+				lock (FrameLock)
+				{
+					CompletedMessages.Add(CurrentMessage);
+				}
+				CurrentMessage = null;
+			}
+		}
+		else
+		{
+			if (buffer[0] == 58)
+			{
+				return;
+			}
+			int num = -1;
+			for (int i = 0; i < count; i++)
+			{
+				if (num != -1)
+				{
+					break;
+				}
+				if (buffer[i] == 58)
+				{
+					num = i;
+				}
+			}
+			string text;
+			string text2;
+			if (num != -1)
+			{
+				text = Encoding.UTF8.GetString(buffer, 0, num);
+				if (num + 1 < count && buffer[num + 1] == 32)
+				{
+					num++;
+				}
+				num++;
+				if (num >= count)
+				{
+					return;
+				}
+				text2 = Encoding.UTF8.GetString(buffer, num, count - num);
+			}
+			else
+			{
+				text = Encoding.UTF8.GetString(buffer, 0, count);
+				text2 = string.Empty;
+			}
+			if (CurrentMessage == null)
+			{
+				CurrentMessage = new Message();
+			}
+			switch (text)
+			{
+			case "id":
+				CurrentMessage.Id = text2;
+				break;
+			case "event":
+				CurrentMessage.Event = text2;
+				break;
+			case "data":
+				if (CurrentMessage.Data != null)
+				{
+					CurrentMessage.Data += Environment.NewLine;
+				}
+				CurrentMessage.Data += text2;
+				break;
+			case "retry":
+			{
+				if (int.TryParse(text2, out var result))
+				{
+					CurrentMessage.Retry = TimeSpan.FromMilliseconds(result);
+				}
+				break;
+			}
+			}
+		}
+	}
+}
 }

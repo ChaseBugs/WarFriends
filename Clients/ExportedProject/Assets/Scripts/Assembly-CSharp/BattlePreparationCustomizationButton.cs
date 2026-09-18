@@ -1,63 +1,176 @@
+using System;
+using System.Collections;
 using UnityEngine;
 
-public class BattlePreparationCustomizationButton : MonoBehaviour
+public class BattlePreparationCustomizationButton : Core_BaseScript
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Header("Core")]
+	public GameObject camoButton;
 
-	1. No dll files were provided to AssetRipper.
+	public UITexture actualLook;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	[Header("-New Unlock")]
+	public GameObject unlockedCamoPart;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public UITable unlockedCamoTable;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public UILabel unlockedCamoNewLabel;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public UISprite unlockedCamoNewBackground;
 
-	3. Assembly Reconstruction has not been implemented.
+	public UILabel unlockedCamo;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	[Header("-Power Band Equipped")]
+	public GameObject powerBandPart;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public UISprite powerBandIcon;
 
-	4. This script is unnecessary.
+	public UILabel powerBandType;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public UISprite powerBandProgressBar;
 
-	5. Script Content Level 0
+	public UITable powerBandTable;
 
-		AssetRipper was set to not load any script information.
+	public UILabel powerBandBonus;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public UISprite powerBandBonusIcon;
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public UILabel powerBandTime;
 
-	7. An incorrect path was provided to AssetRipper.
+	[Header("-Notification")]
+	public UILabel notificationCamosNumber;
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	public GameObject notificationCamosGO;
 
-	*/
+	private RadicalRoutine mUpdatingPowerBand;
+
+	private PlayerVisual mPowerBand;
+
+	public void InitControls()
+	{
+		UIEventListener uIEventListener = UIEventListener.Get(camoButton.gameObject);
+		uIEventListener.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener.onClick, (UIEventListener.VoidDelegate)delegate
+		{
+			Singleton<GuiManager>.instance.ShowGui(GuiScreenSingle<CamosScreen>.instance);
+		});
+		unlockedCamoTable.onReposition = delegate
+		{
+			float val = 0f - unlockedCamoTable.padding.x - (unlockedCamo.transform.parent.localPosition.x - unlockedCamoTable.padding.x) / 2f;
+			unlockedCamoTable.transform.localPosition = unlockedCamoTable.transform.localPosition.ReplaceX(val);
+		};
+	}
+
+	public void InitGUIValues()
+	{
+		SetCustomizationButton();
+		NotificationCamos(Singleton<NotificationManager>.instance.GetNumberOfVisualNotifications());
+	}
+
+	public void DoAfterHide()
+	{
+		StopPowerBandUpdate();
+	}
+
+	public void InitBlank()
+	{
+		unlockedCamoPart.SetActive(value: false);
+		powerBandPart.SetActive(value: false);
+		NotificationCamos(0);
+	}
+
+	private void StartPowerBandUpdate()
+	{
+		StopPowerBandUpdate();
+		mUpdatingPowerBand = RadicalRoutine.Create(UpdatePowerBandRoutine());
+		StartCoroutine(RadicalRoutine.Run(mUpdatingPowerBand.enumerator));
+	}
+
+	private void StopPowerBandUpdate()
+	{
+		if (mUpdatingPowerBand != null)
+		{
+			mUpdatingPowerBand.Cancel();
+			mUpdatingPowerBand = null;
+		}
+	}
+
+	private IEnumerator UpdatePowerBandRoutine()
+	{
+		while (true)
+		{
+			if (!mPowerBand.isBought)
+			{
+				CamosManager.instance.CheckEquippedPowerBand();
+				CamosManager.instance.CheckEquippedHelmet();
+				SetCustomizationButton();
+			}
+			else
+			{
+				powerBandTime.text = MiscTools.PrintableTime((float)mPowerBand.remainingTime, "ID_GUI_POWERBANDOFF", string.Empty).ToUpperInvariant();
+				powerBandProgressBar.fillAmount = mPowerBand.progress;
+			}
+			yield return new WaitForRealSeconds(0.333f);
+		}
+	}
+
+	private void NotificationCamos(int number)
+	{
+		notificationCamosGO.SetActive(number > 0);
+		notificationCamosNumber.text = MiscTools.FormatBigNumber(number);
+	}
+
+	private void SetCustomizationButton()
+	{
+		StopPowerBandUpdate();
+		PlayerVisual playerVisual = CamosManager.instance.EquippedPlayerVisual(3);
+		if (!playerVisual.isEmptyPowerBand)
+		{
+			unlockedCamoPart.SetActive(value: false);
+			powerBandPart.SetActive(value: true);
+			powerBandIcon.spriteName = playerVisual.icon;
+			powerBandType.text = playerVisual.decalTypeName;
+			powerBandBonus.text = playerVisual.decalValueString;
+			powerBandBonusIcon.spriteName = playerVisual.decalMiniIcon;
+			powerBandBonusIcon.color = playerVisual.decalMiniIconColor;
+			powerBandBonusIcon.MakePixelPerfect();
+			powerBandTable.repositionNow = true;
+			mPowerBand = playerVisual;
+			if (mPowerBand.tryOutVisual)
+			{
+				powerBandTime.text = Localization.Localize("ID_RENTED");
+				powerBandProgressBar.fillAmount = 0f;
+			}
+			else
+			{
+				powerBandTime.text = MiscTools.PrintableTime((float)mPowerBand.remainingTime, "ID_GUI_POWERBANDOFF", string.Empty).ToUpperInvariant();
+				powerBandProgressBar.fillAmount = mPowerBand.progress;
+				StartPowerBandUpdate();
+			}
+		}
+		else
+		{
+			PlayerVisual unlockedVisualWithNotification = Singleton<NotificationManager>.instance.GetUnlockedVisualWithNotification();
+			if (unlockedVisualWithNotification != null)
+			{
+				unlockedCamoPart.SetActive(value: true);
+				powerBandPart.SetActive(value: false);
+				unlockedCamo.text = unlockedVisualWithNotification.name.ToUpper();
+				MiscTools.SetUILabelRescale(unlockedCamo, 30f, 20f, GuiScreenSingle<BattlePreparationScreen>.instance.widthOfMiddleButton - 88);
+				float val = 16f + unlockedCamoNewLabel.relativeSize.x * unlockedCamoNewLabel.transform.localScale.x;
+				unlockedCamoNewBackground.transform.localScale = unlockedCamoNewBackground.transform.localScale.ReplaceX(val);
+				unlockedCamoTable.repositionNow = true;
+			}
+			else
+			{
+				unlockedCamoPart.SetActive(value: false);
+				powerBandPart.SetActive(value: false);
+			}
+		}
+	}
+
+	public void RenderMainPlayer()
+	{
+		Singleton<ArmyPreviewCamera>.instance.RenderToTexture(PlayerController.currentPlayer, useBackground: false, PlayerTexturePool.RenderType.Classic);
+		actualLook.mainTexture = Singleton<ArmyPreviewCamera>.instance.player1Texture;
+	}
 }

@@ -1,66 +1,151 @@
+using System;
+using System.Collections;
+using System.IO;
 using UnityEngine;
 
 namespace Prime31
 {
-	public class EtceteraUIManager : MonoBehaviour
+public class EtceteraUIManager : MonoBehaviourGUI
+{
+	public GameObject testPlane;
+
+	private void Start()
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
+		EtceteraAndroid.initTTS();
+		EtceteraAndroid.setAlertDialogTheme(3);
 	}
+
+	private void OnEnable()
+	{
+		EtceteraAndroidManager.albumChooserSucceededEvent += imageLoaded;
+		EtceteraAndroidManager.photoChooserSucceededEvent += imageLoaded;
+	}
+
+	private void OnDisable()
+	{
+		EtceteraAndroidManager.albumChooserSucceededEvent -= imageLoaded;
+		EtceteraAndroidManager.photoChooserSucceededEvent -= imageLoaded;
+	}
+
+	private IEnumerator saveScreenshotToSDCard(Action<string> completionHandler)
+	{
+		yield return new WaitForEndOfFrame();
+		Texture2D tex = new Texture2D(Screen.width, Screen.height, TextureFormat.RGB24, mipChain: false);
+		tex.ReadPixels(new Rect(0f, 0f, Screen.width, Screen.height), 0, 0, recalculateMipMaps: false);
+		byte[] bytes = tex.EncodeToPNG();
+		UnityEngine.Object.Destroy(tex);
+		string path = Path.Combine(Application.persistentDataPath, "myImage.png");
+		File.WriteAllBytes(path, bytes);
+		completionHandler(path);
+	}
+
+	private void OnGUI()
+	{
+		beginColumn();
+		if (GUILayout.Button("Show Toast"))
+		{
+			EtceteraAndroid.showToast("Hi. Something just happened in the game and I want to tell you but not interrupt you", useShortDuration: true);
+		}
+		if (GUILayout.Button("Play Video"))
+		{
+			Debug.Log("persistance: " + Application.persistentDataPath);
+			Debug.Log("caches: " + Application.temporaryCachePath);
+			EtceteraAndroid.playMovie("http://techslides.com/demos/sample-videos/small.3gp", 16711680u, showControls: false, EtceteraAndroid.ScalingMode.AspectFit, closeOnTouch: true);
+		}
+		if (GUILayout.Button("Show Alert"))
+		{
+			EtceteraAndroid.showAlert("Alert Title Here", "Something just happened.  Do you want to have a snack?", "Yes", "Not Now");
+		}
+		if (GUILayout.Button("Single Field Prompt"))
+		{
+			EtceteraAndroid.showAlertPrompt("Enter Digits", "I'll call you if you give me your number", "phone number", "867-5309", "Send", "Not a Chance");
+		}
+		if (GUILayout.Button("Two Field Prompt"))
+		{
+			EtceteraAndroid.showAlertPromptWithTwoFields("Need Info", "Enter your credentials:", "username", "harry_potter", "password", string.Empty, "OK", "Cancel");
+		}
+		if (GUILayout.Button("Show Progress Dialog"))
+		{
+			EtceteraAndroid.showProgressDialog("Progress is happening", "it will be over in just a second...");
+			Invoke("hideProgress", 1f);
+		}
+		if (GUILayout.Button("Text to Speech Speak"))
+		{
+			EtceteraAndroid.setPitch(UnityEngine.Random.Range(0, 5));
+			EtceteraAndroid.setSpeechRate(UnityEngine.Random.Range(0.5f, 1.5f));
+			EtceteraAndroid.speak("Howdy. Im a robot voice");
+		}
+		if (GUILayout.Button("Prompt for Video"))
+		{
+			EtceteraAndroid.promptToTakeVideo("fancyVideo");
+		}
+		endColumn(hasSecondColumn: true);
+		if (GUILayout.Button("Show Web View"))
+		{
+			EtceteraAndroid.showWebView("http://prime31.com");
+		}
+		if (GUILayout.Button("Email Composer"))
+		{
+			StartCoroutine(saveScreenshotToSDCard(delegate(string path)
+			{
+				EtceteraAndroid.showEmailComposer("noone@nothing.com", "Message subject", "click <a href='http://somelink.com'>here</a> for a present", isHTML: true, path);
+			}));
+		}
+		if (GUILayout.Button("SMS Composer"))
+		{
+			EtceteraAndroid.showSMSComposer("I did something really cool in this game!");
+		}
+		if (GUILayout.Button("Share Image Natively"))
+		{
+			StartCoroutine(saveScreenshotToSDCard(delegate(string path)
+			{
+				EtceteraAndroid.shareImageWithNativeShareIntent(path, "Sharing a screenshot...");
+			}));
+		}
+		if (GUILayout.Button("Share Text and Image Natively"))
+		{
+			StartCoroutine(saveScreenshotToSDCard(delegate(string path)
+			{
+				EtceteraAndroid.shareWithNativeShareIntent("Check this out!", "Some Subject", "Sharing a screenshot and text...", path);
+			}));
+		}
+		if (GUILayout.Button("Prompt to Take Photo"))
+		{
+			EtceteraAndroid.promptToTakePhoto("photo.jpg");
+		}
+		if (GUILayout.Button("Prompt for Album Image"))
+		{
+			EtceteraAndroid.promptForPictureFromAlbum("albumImage.jpg");
+		}
+		if (GUILayout.Button("Save Image to Gallery"))
+		{
+			StartCoroutine(saveScreenshotToSDCard(delegate(string path)
+			{
+				bool flag = EtceteraAndroid.saveImageToGallery(path, "My image from Unity");
+				Debug.Log("did save to gallery: " + flag);
+			}));
+		}
+		if (GUILayout.Button("Ask For Review"))
+		{
+			EtceteraAndroid.resetAskForReview();
+			EtceteraAndroid.askForReviewNow("Please rate my app!", "It will really make me happy if you do...");
+		}
+		endColumn();
+		if (bottomRightButton("Next Scene"))
+		{
+			MonoBehaviourGUI.loadLevel("EtceteraTestSceneTwo");
+		}
+	}
+
+	private void hideProgress()
+	{
+		EtceteraAndroid.hideProgressDialog();
+	}
+
+	public void imageLoaded(string imagePath)
+	{
+		EtceteraAndroid.scaleImageAtPath(imagePath, 0.1f);
+		testPlane.GetComponent<Renderer>().material.mainTexture = EtceteraAndroid.textureFromFileAtPath(imagePath);
+	}
+}
 }

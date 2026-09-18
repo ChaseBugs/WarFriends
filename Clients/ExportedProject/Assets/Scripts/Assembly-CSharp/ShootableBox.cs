@@ -1,63 +1,96 @@
+using System.Collections.Generic;
 using UnityEngine;
 
-public class ShootableBox : MonoBehaviour
+public class ShootableBox : PoolableObject
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public enum Mode
+	{
+		Health,
+		Ammo
+	}
 
-	1. No dll files were provided to AssetRipper.
+	public AimTarget aimTarget;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	private Mode mMode;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public Material healthMat;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public Material ammoMat;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public Transform displayerPosition;
 
-	3. Assembly Reconstruction has not been implemented.
+	public Mode mode
+	{
+		get
+		{
+			return mMode;
+		}
+		set
+		{
+			mMode = value;
+			switch (mMode)
+			{
+			case Mode.Ammo:
+				GetComponent<MeshRenderer>().sharedMaterial = ammoMat;
+				break;
+			case Mode.Health:
+				GetComponent<MeshRenderer>().sharedMaterial = healthMat;
+				break;
+			}
+		}
+	}
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public float power { get; set; }
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	protected override void Awake()
+	{
+		base.Awake();
+		aimTarget.Clicked += AimTargetOnClicked;
+	}
 
-	4. This script is unnecessary.
+	public override void OnInstancied()
+	{
+		base.OnInstancied();
+		if (mode == Mode.Health)
+		{
+			Singleton<SoundsManager3D>.instance.Play(base.transform.position, Sounds3DEnum.MedkitDrop);
+		}
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
-
-	5. Script Content Level 0
-
-		AssetRipper was set to not load any script information.
-
-	6. Cpp2IL failed to decompile Il2Cpp data
-
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	private void AimTargetOnClicked()
+	{
+		CustomDisplayerItem customDisplayerItem = (CustomDisplayerItem)Singleton<ObjectPoolDatabase>.instance.mainObjectPool.Instantiate(Singleton<ObjectPoolDatabase>.instance.customDisplayerItem);
+		Vector3 point = Camera.main.WorldToNormalizedViewportPoint(base.transform.position + Vector3.up * 0.7f);
+		customDisplayerItem.transform.position = HealthBarManager.instance.guiCamera.NormalizedViewportToWorldPoint(point);
+		switch (mMode)
+		{
+		case Mode.Ammo:
+		{
+			customDisplayerItem.Play("game-box-ammo", Localization.Localize("ID_EXTRAAMMO"), Colours.blueBoxLabel, Color.black);
+			List<PlayerWeapon> usedWeapons = PlayerController.currentPlayer.weaponInventory.usedWeapons;
+			foreach (PlayerWeapon item in usedWeapons)
+			{
+				if ((int)item.weapon.clipSize > 0)
+				{
+					item.weapon.ammoLeft += Mathf.CeilToInt((float)(int)item.weapon.clipSize * power);
+				}
+				else
+				{
+					item.weapon.ammoLeft += Mathf.CeilToInt((float)(int)item.weapon.startingAmmmoCount * 0.1f * power);
+				}
+			}
+			Singleton<SoundsManager3D>.instance.Play(base.transform.position, Sounds3DEnum.MedkitPickup);
+			break;
+		}
+		case Mode.Health:
+		{
+			customDisplayerItem.Play("game-box-health", Localization.LocalizeFormat("ID_PLUSHEALTH", MiscTools.FormatFloatNumberAsPercent(power)), Color.green, Color.black);
+			PlayerController currentPlayer = PlayerController.currentPlayer;
+			currentPlayer.destroyableParts.Heal(currentPlayer.destroyableParts.maxHealth * power, isNetworkCopy: false);
+			Singleton<SoundsManager3D>.instance.Play(base.transform.position, Sounds3DEnum.MedkitPickup);
+			break;
+		}
+		}
+		DestroyPooled();
+	}
 }

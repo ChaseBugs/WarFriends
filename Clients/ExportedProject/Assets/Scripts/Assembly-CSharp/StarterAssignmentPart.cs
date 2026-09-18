@@ -1,63 +1,171 @@
+using System;
 using UnityEngine;
 
-public class StarterAssignmentPart : MonoBehaviour
+public class StarterAssignmentPart : Core_BaseScript
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Header("Core")]
+	public UIPanel panel;
 
-	1. No dll files were provided to AssetRipper.
+	public UIPanel[] panels;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	[Header("Completition")]
+	public GameObject completitionPart;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public UILabel timeToCompleteLabel;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public StarterAssignmentComplete[] completedAssignments;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	[Header("Current Assignment")]
+	public StarterAssignmentRecord currentAssignmentRecord;
 
-	3. Assembly Reconstruction has not been implemented.
+	[Header("Rewards")]
+	public GameObject rewardsPart;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public UILabel rewardsTimeToEndLabel;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public UIGrid rewardsGrid;
 
-	4. This script is unnecessary.
+	public UISprite[] rewardsIcons;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public UILabel[] rewardsTexts;
 
-	5. Script Content Level 0
+	private bool mIsActive;
 
-		AssetRipper was set to not load any script information.
+	private float mWidth;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public void Animate(bool showTab, bool instant)
+	{
+		mIsActive = showTab;
+		if (mIsActive && !base.gameObject.activeSelf)
+		{
+			base.gameObject.SetActive(value: true);
+			InitGUIValues();
+		}
+		if (base.gameObject.activeSelf)
+		{
+			AnimatePanels((!instant) ? (GuiScreenSingle<AssignmentsScreen>.instance.dur * 2f) : 0.01f, (!mIsActive) ? 0f : 1f);
+			TweenAlpha.Begin(panel.gameObject, (!instant) ? (GuiScreenSingle<AssignmentsScreen>.instance.dur * 2f) : 0.01f, (!mIsActive) ? 0f : 1f).onFinished = delegate
+			{
+				if (!mIsActive)
+				{
+					DoAfterHide();
+				}
+			};
+		}
+		else if (!mIsActive)
+		{
+			InstantHideTab();
+		}
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	private void AnimatePanels(float duration, float toAlpha)
+	{
+		for (int i = 0; i < panels.Length; i++)
+		{
+			if (panels[i].gameObject.activeSelf)
+			{
+				TweenAlpha.Begin(panels[i].gameObject, duration, toAlpha);
+			}
+		}
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	public void InstantHideTab()
+	{
+		DoAfterHide();
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	public void InitControls()
+	{
+		mWidth = UIRoot.list[0].activeWidth;
+		float num = 1.3333334f;
+		float num2 = 1.7777778f;
+		float num3 = Mathf.Clamp(mWidth / (float)UIRoot.list[0].activeHeight, num, num2);
+		float num4 = (num3 - num2) / (num - num2);
+		float num5 = (1f - num4) * 60f;
+		completitionPart.transform.localPosition = new Vector3(mWidth / 2f, -86f, 0f);
+		currentAssignmentRecord.transform.localPosition = new Vector3(60f, -290f + num5 / 2f, 0f);
+		rewardsPart.transform.localPosition = new Vector3(mWidth / 2f, -484f + num5, 0f);
+		float num6 = 326f;
+		rewardsGrid.cellWidth = num6 + (mWidth - 120f - 5f * num6) / 4f;
+		rewardsGrid.transform.localPosition = new Vector3(0f - (mWidth - 120f) / 2f + num6 / 2f, rewardsGrid.transform.localPosition.y, rewardsGrid.transform.localPosition.z);
+		currentAssignmentRecord.InitControls(mWidth);
+		StarterAssignmentsManager.instance.AssignmentClaimed += AnimateLine;
+		Singleton<BeanstalkServerManager>.instance.DataLoaded += delegate(DatabaseAction action)
+		{
+			if (base.gameObject.activeInHierarchy && DebugSettings.debugEnabled && action == DatabaseAction.CompleteStarterAssignments)
+			{
+				InitGUIValues();
+			}
+		};
+	}
 
-	*/
+	private void AnimateLine()
+	{
+		StarterAssignment starterAssignment = StarterAssignmentsManager.instance.currentAssignment;
+		if (starterAssignment == null && StarterAssignmentsManager.instance.assignmentsCount > 0)
+		{
+			starterAssignment = StarterAssignmentsManager.instance.assignments[StarterAssignmentsManager.instance.assignmentsCount - 1];
+		}
+		int num = ((starterAssignment != null) ? (starterAssignment.order - 1) : StarterAssignmentsManager.instance.assignmentsCount);
+		completedAssignments[num - 1].AnimateFinish();
+		if (num < StarterAssignmentsManager.instance.assignmentsCount)
+		{
+			completedAssignments[num].AnimateProgress();
+		}
+	}
+
+	public void InitGUIValues()
+	{
+		StarterAssignmentsManager.instance.Evaluate();
+		CounterManager instance = Singleton<CounterManager>.instance;
+		instance.updateCounterBySecond = (Action)Delegate.Remove(instance.updateCounterBySecond, new Action(UpdateTimer));
+		CounterManager instance2 = Singleton<CounterManager>.instance;
+		instance2.updateCounterBySecond = (Action)Delegate.Combine(instance2.updateCounterBySecond, new Action(UpdateTimer));
+		StarterAssignment currentAssignment = StarterAssignmentsManager.instance.currentAssignment;
+		int num = ((!StarterAssignmentsManager.instance.isAllCompleted) ? (currentAssignment.order - 1) : StarterAssignmentsManager.instance.assignmentsCount);
+		for (int i = 0; i < completedAssignments.Length; i++)
+		{
+			if (i < num)
+			{
+				completedAssignments[i].SetCompleted();
+			}
+			else if (i == num)
+			{
+				completedAssignments[i].SetCurrent();
+			}
+			else
+			{
+				completedAssignments[i].SetDefault();
+			}
+		}
+		currentAssignmentRecord.Initialize(currentAssignment);
+	}
+
+	public void DoAfterHide()
+	{
+		base.gameObject.SetActive(value: false);
+		CounterManager instance = Singleton<CounterManager>.instance;
+		instance.updateCounterBySecond = (Action)Delegate.Remove(instance.updateCounterBySecond, new Action(UpdateTimer));
+	}
+
+	public void UpdateTimer()
+	{
+		if (StarterAssignmentsManager.instance.isAllCompleted)
+		{
+			timeToCompleteLabel.text = Colours.stringWhite + Localization.Localize("ID_COMPLETED");
+			rewardsTimeToEndLabel.text = Localization.Localize("ID_YOURREWARDS");
+			return;
+		}
+		int remainingTime = StarterAssignmentsManager.instance.remainingTime;
+		if (remainingTime == 0)
+		{
+			timeToCompleteLabel.text = Localization.Localize("ID_EXPIRED");
+			rewardsTimeToEndLabel.text = Localization.Localize("ID_STARTERASSIGNMENTSEXPIRED");
+		}
+		else
+		{
+			timeToCompleteLabel.text = string.Format("{0} {1}{2}", MiscTools.PrintableTime(remainingTime, "ID_READYTIME", string.Empty), Colours.stringWhite, Localization.Localize("ID_TOCOMPLETE"));
+			rewardsTimeToEndLabel.text = Localization.LocalizeFormat("ID_COMPLETEALLTENSTARTERASSIGNMENTS", MiscTools.PrintableTime(remainingTime, "ID_READYTIME", string.Empty));
+		}
+	}
 }

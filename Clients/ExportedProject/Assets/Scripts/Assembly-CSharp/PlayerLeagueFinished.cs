@@ -1,63 +1,104 @@
+using System;
+using Newtonsoft.Json.Linq;
 using UnityEngine;
 
-public class PlayerLeagueFinished : MonoBehaviour
+internal class PlayerLeagueFinished : DatabaseMessage
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	private League newLeague;
 
-	1. No dll files were provided to AssetRipper.
+	public League fromLeague;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public int position;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public int endMedals;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public long goldReward;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public bool enoughPlayersInLeague;
 
-	3. Assembly Reconstruction has not been implemented.
+	public string formerFullLeagueId;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public PlayerLeagueFinished(JToken dict)
+		: base(dict)
+	{
+		string value = dict["LeagueId"]["N"].ToObject<string>();
+		int num = Convert.ToInt32(value);
+		newLeague = (League)num;
+		if (dict["BeforeLeagueId"] != null)
+		{
+			fromLeague = (League)StringParser.ParseIntToken(dict["BeforeLeagueId"]["N"]);
+		}
+		else
+		{
+			fromLeague = League.NoLeague;
+		}
+		if (dict["Medals"] != null)
+		{
+			endMedals = StringParser.ParseIntToken(dict["Medals"]["N"]);
+		}
+		else
+		{
+			endMedals = 0;
+		}
+		if (dict["FormerFullLeagueId"] != null)
+		{
+			formerFullLeagueId = StringParser.ParseString("FormerFullLeagueId", "S", dict, string.Empty);
+			Debug.Log("GOT FORMER FULL LEAGUE ID = " + formerFullLeagueId);
+		}
+		if (dict["RewardGold"] != null)
+		{
+			goldReward = StringParser.ParseLongToken(dict["RewardGold"]["N"], 0L);
+		}
+		if (dict["Position"] != null)
+		{
+			position = StringParser.ParseIntToken(dict["Position"]["N"]);
+		}
+		else
+		{
+			position = -1;
+		}
+		enoughPlayersInLeague = dict["NotEnoughPlayers"] == null;
+		Debug.LogFormat("PlayerLeagueFinished - Player joined {0}, leave {1}, finish on position {2}, with medals {3}", newLeague, fromLeague, position, endMedals);
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
-
-	4. This script is unnecessary.
-
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
-
-	5. Script Content Level 0
-
-		AssetRipper was set to not load any script information.
-
-	6. Cpp2IL failed to decompile Il2Cpp data
-
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public override void Show()
+	{
+		base.Show();
+		if (position > 100)
+		{
+			Debug.LogFormat("PlayerLeagueFinished - Wrong position from server after league end for current player id:{0} position:{1}", GameLoginManager.currentPlayer.id, position);
+			position = 100;
+		}
+		if (position > 0)
+		{
+			Debug.Log("PlayerLeagueFinished - SHOWING LEAGUE RESULTS DIALOG!");
+			GuiElementSingle<LeagueResultDialog>.instance.ShowDialog(fromLeague, newLeague, position);
+			Singleton<EventTrackingManager>.instance.FinishLeague(fromLeague, newLeague, position);
+		}
+		else
+		{
+			Debug.Log("PlayerLeagueFinished - POSITION WAS ZERO! Not SHOWING LEAGUE RESULT DIALOG!");
+		}
+		Debug.Log("PlayerLeagueFinished - FORMER LEAGUE ID = " + formerFullLeagueId + ", current = " + GameLoginManager.currentPlayer.leagueId);
+		if (GameLoginManager.currentPlayer.leagueId.Equals(formerFullLeagueId))
+		{
+			Debug.Log("PlayerLeagueFinished- YES - removing player from league");
+			GameLoginManager.instance.RemovePlayerFromLeague(newLeague);
+		}
+		else
+		{
+			Debug.Log("PlayerLeagueFinished - NO - player is already in new league");
+		}
+		if (goldReward == 0L)
+		{
+			Ignore();
+		}
+		else
+		{
+			Singleton<BeanstalkServerManager>.instance.ClaimReward(this);
+			Singleton<MessageManager>.instance.AddMessage(new RewardMessage(RewardDialogType.Gold, goldReward));
+		}
+		Singleton<ServerResultsCache>.instance.isPlayerLeagueProcessing = false;
+		Singleton<BeanstalkServerManager>.instance.DataWasLoaded(DatabaseAction.RemoveFromLeague);
+	}
 }

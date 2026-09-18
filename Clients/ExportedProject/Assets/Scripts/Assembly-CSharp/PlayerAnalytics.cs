@@ -1,63 +1,526 @@
+using System;
+using System.Collections.Generic;
+using Beebyte.Obfuscator;
+using Google2u;
 using UnityEngine;
 
-public class PlayerAnalytics : MonoBehaviour
+[Skip]
+public class PlayerAnalytics : DatabaseSerializedObjectGeneric<PlayerAnalytics.PlayerAnalyticsData>
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Skip]
+	public class PlayerAnalyticsData
+	{
+		public int warbucksSpent;
 
-	1. No dll files were provided to AssetRipper.
+		public int goldSpent;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+		public bool boughtInApp;
 
-	2. Incorrect dll files were provided to AssetRipper.
+		public int installTimestamp;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+		public float realMoneySpent;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+		public int numberOfSessions;
 
-	3. Assembly Reconstruction has not been implemented.
+		public int moneyPackDeadline;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+		public int starterPackDeadline;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+		public Dictionary<string, int> elitePackDeadlines = new Dictionary<string, int>();
 
-	4. This script is unnecessary.
+		public List<Transaction> transactions;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+		public Dictionary<string, int> collectedRewards = new Dictionary<string, int>();
 
-	5. Script Content Level 0
+		public int totalBattles;
 
-		AssetRipper was set to not load any script information.
+		public bool chatShown;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+		public bool elitesShown;
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+		public bool customizationShown;
 
-	7. An incorrect path was provided to AssetRipper.
+		public bool warpathShown;
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+		public bool cardpoolShown;
 
-	*/
+		public bool craftingShown;
+
+		public bool leagueLeaderboardsShown;
+
+		public bool anticheatStatus;
+
+		public int goldBonuses;
+
+		public int rateAppShownCounter;
+
+		public string rateAppFirstVersion;
+
+		public string rateAppClientVersion;
+
+		public int rateAppClickYesCounter;
+
+		public int renameCount;
+
+		public int squadCreationsCount;
+
+		public int matchesToNextLootboxes;
+
+		public int lastSeenSquadChatTimeStampDB;
+
+		public int instantBattlesTime;
+
+		public int instantBattles;
+
+		public int paidInstantBattles;
+
+		public int cardTutState;
+
+		public bool isMoneyPackAvailable => moneyPackDeadline != 0 && Singleton<BeanstalkServerManager>.instance.currentTimestamp <= moneyPackDeadline;
+
+		public bool isStarterPackAvailable => starterPackDeadline != 0 && Singleton<BeanstalkServerManager>.instance.currentTimestamp <= starterPackDeadline;
+
+		public bool IsPackAvailable(string packId)
+		{
+			return PackDeadline(packId) >= Singleton<BeanstalkServerManager>.instance.currentTimestamp;
+		}
+
+		public bool IsInstantBattlesFull()
+		{
+			return GetTimestampOfFullInstantBattles() <= Singleton<BeanstalkServerManager>.instance.currentTimestamp;
+		}
+
+		public int GetInstantBattlesReady()
+		{
+			int num = (int)(float)Singleton<GameVariables>.instance.constants.GetRow(Constants.rowIds.InstantBattleMax).FLOATVALUE;
+			if (instantBattlesTime == 0)
+			{
+				return num;
+			}
+			int num2 = Singleton<BeanstalkServerManager>.instance.currentTimestamp - instantBattlesTime;
+			int num3 = (int)(float)Singleton<GameVariables>.instance.constants.GetRow(Constants.rowIds.InstantBattleReload).FLOATVALUE;
+			int num4 = num3 * 60;
+			int value = num2 / num4;
+			return Mathf.Clamp(value, 0, num);
+		}
+
+		public int GetTimestampOfNextInstantBattle()
+		{
+			if (instantBattlesTime == 0)
+			{
+				return 0;
+			}
+			int currentTimestamp = Singleton<BeanstalkServerManager>.instance.currentTimestamp;
+			int num = currentTimestamp - instantBattlesTime;
+			int num2 = (int)(float)Singleton<GameVariables>.instance.constants.GetRow(Constants.rowIds.InstantBattleReload).FLOATVALUE;
+			int num3 = num2 * 60;
+			int num4 = (int)(float)Singleton<GameVariables>.instance.constants.GetRow(Constants.rowIds.InstantBattleMax).FLOATVALUE;
+			int num5 = num3 * num4;
+			if (num > num5)
+			{
+				return 0;
+			}
+			int num6 = num % num3;
+			int num7 = num3 - num6;
+			return currentTimestamp + num7;
+		}
+
+		public int GetInstantBattleCost()
+		{
+			int num = (int)(float)Singleton<GameVariables>.instance.constants.GetRow(Constants.rowIds.InstantBattleCostMin).FLOATVALUE;
+			int num2 = (int)(float)Singleton<GameVariables>.instance.constants.GetRow(Constants.rowIds.InstantBattleCostMax).FLOATVALUE;
+			float max = Mathf.Sqrt((float)num2 / (float)num) + 1f;
+			float num3 = Mathf.Clamp(paidInstantBattles, 0f, max);
+			int num4 = num * (int)Math.Pow(2.0, num3);
+			return (num4 <= num2) ? num4 : num2;
+		}
+
+		public int GetTimestampOfFullInstantBattles()
+		{
+			if (instantBattlesTime == 0)
+			{
+				return 0;
+			}
+			int num = (int)(float)Singleton<GameVariables>.instance.constants.GetRow(Constants.rowIds.InstantBattleReload).FLOATVALUE;
+			int num2 = num * 60;
+			int num3 = (int)(float)Singleton<GameVariables>.instance.constants.GetRow(Constants.rowIds.InstantBattleMax).FLOATVALUE;
+			int num4 = num2 * num3;
+			return instantBattlesTime + num4;
+		}
+
+		public int PackDeadline(string packId)
+		{
+			return elitePackDeadlines.ContainsKey(packId) ? elitePackDeadlines[packId] : 0;
+		}
+
+		public void SetPackDeadline(string packId, int packDeadline)
+		{
+			if (elitePackDeadlines.ContainsKey(packId))
+			{
+				elitePackDeadlines[packId] = packDeadline;
+			}
+			else
+			{
+				elitePackDeadlines.Add(packId, packDeadline);
+			}
+		}
+
+		public bool IsPackBought(CardPack pack)
+		{
+			return instance.IsPackBought(Singleton<GameVariables>.instance.PackId(pack));
+		}
+
+		public int GetInappCount()
+		{
+			if (transactions == null)
+			{
+				return 0;
+			}
+			int num = 0;
+			foreach (Transaction transaction in transactions)
+			{
+				if (transaction.id == 142)
+				{
+					num++;
+				}
+			}
+			return num;
+		}
+
+		public int GetDaysSinceInstall()
+		{
+			int num = Singleton<BeanstalkServerManager>.instance.currentTimestamp - installTimestamp;
+			return num / 86400;
+		}
+
+		public int TotalTransactions()
+		{
+			if (transactions == null)
+			{
+				return 0;
+			}
+			return transactions.Count;
+		}
+
+		public int GetPlayerLevel()
+		{
+			return LevelManager.instance.currentLevel.displayNumber;
+		}
+
+		public int HasFacebook()
+		{
+			long facebookId = GameLoginManager.instance.facebookId;
+			return (facebookId != 0L && facebookId != -1) ? 1 : 0;
+		}
+
+		public string GetCohort()
+		{
+			if ((double)realMoneySpent <= 0.001)
+			{
+				return "$0";
+			}
+			if ((double)realMoneySpent <= 5.001)
+			{
+				return "$0-$5";
+			}
+			if ((double)realMoneySpent <= 10.001)
+			{
+				return "$5-$10";
+			}
+			if ((double)realMoneySpent <= 20.001)
+			{
+				return "$10-$20";
+			}
+			if ((double)realMoneySpent <= 50.001)
+			{
+				return "$20-$50";
+			}
+			if ((double)realMoneySpent <= 100.001)
+			{
+				return "$50-$100";
+			}
+			if ((double)realMoneySpent <= 200.001)
+			{
+				return "$100-$200";
+			}
+			if ((double)realMoneySpent <= 500.001)
+			{
+				return "$200-$500";
+			}
+			return ">$500";
+		}
+
+		public int MadeInApp()
+		{
+			if (realMoneySpent > 0f)
+			{
+				return 1;
+			}
+			return 0;
+		}
+	}
+
+	[Skip]
+	public class Transaction
+	{
+		public int id;
+
+		public string p;
+
+		public int gold;
+
+		public int wb;
+
+		public float money;
+	}
+
+	private static PlayerAnalytics mInstance;
+
+	public int globalPositon;
+
+	public bool tutorialFinished;
+
+	public static PlayerAnalytics instance
+	{
+		get
+		{
+			mInstance = mInstance ?? ((PlayerAnalytics)UnityEngine.Object.FindObjectsOfType(typeof(PlayerAnalytics))[0]);
+			return mInstance;
+		}
+	}
+
+	public int lastSeenSquadChatTimeStamp
+	{
+		get
+		{
+			return (data != null) ? data.lastSeenSquadChatTimeStampDB : 0;
+		}
+		set
+		{
+			if (data.lastSeenSquadChatTimeStampDB < value)
+			{
+				data.lastSeenSquadChatTimeStampDB = value;
+				RequestBuffer requestBuffer = RequestBufferManager.instance.GetRequestBuffer();
+				requestBuffer.AddRequest(DatabaseAction.SaveLastSeenSquadChatTimeStamp, value.ToString(), 0, 0, string.Empty);
+			}
+		}
+	}
+
+	public bool showMoneyPack => data != null && data.isMoneyPackAvailable && !data.IsPackBought(CardPack.Money);
+
+	public bool showStarterPack => data != null && data.isStarterPackAvailable && !data.IsPackBought(CardPack.Starter);
+
+	public int renameGoldPrice
+	{
+		get
+		{
+			if (data == null || data.renameCount == 0)
+			{
+				return 0;
+			}
+			int num = 1 << Mathf.Clamp(data.renameCount - 1, 0, 31);
+			return num * (int)(float)Singleton<GameVariables>.instance.constants.GetRow(Constants.rowIds.SecondRenameGoldCost).FLOATVALUE;
+		}
+	}
+
+	public int createSquadWarBucksPrice
+	{
+		get
+		{
+			if (data == null)
+			{
+				return (int)(float)Singleton<GameVariables>.instance.constants.GetRow(Constants.rowIds.WarBucksCreateSquadPrice).FLOATVALUE;
+			}
+			return (data.squadCreationsCount + 1) * (int)(float)Singleton<GameVariables>.instance.constants.GetRow(Constants.rowIds.WarBucksCreateSquadPrice).FLOATVALUE;
+		}
+	}
+
+	public int remainingMatchesToNextLootbox
+	{
+		get
+		{
+			int num = (int)(float)Singleton<GameVariables>.instance.constants.GetRow(Constants.rowIds.LootboxAfterBattles).FLOATVALUE;
+			return Mathf.Clamp(data.matchesToNextLootboxes, 1, num + 1);
+		}
+	}
+
+	public bool IsAllowedGoldBonus
+	{
+		get
+		{
+			if (Singleton<GameController>.instance.gameType == GameController.GameType.DeathMatch && !Singleton<GameController>.instance.isRandomMatchMaking)
+			{
+				return false;
+			}
+			if (LevelManager.instance.currentLevel.displayNumber <= 5)
+			{
+				return true;
+			}
+			return data.goldBonuses < 3;
+		}
+	}
+
+	public bool IsAllowedMoneyBonus
+	{
+		get
+		{
+			if (Singleton<GameController>.instance.gameType == GameController.GameType.DeathMatch && !Singleton<GameController>.instance.isRandomMatchMaking)
+			{
+				return false;
+			}
+			return true;
+		}
+	}
+
+	public event Action<string> AddedOneTimeReward;
+
+	public void OnDestroy()
+	{
+		mInstance = null;
+	}
+
+	protected override void Awake()
+	{
+		base.Awake();
+		Singleton<BeanstalkServerManager>.instance.AfterPlayerDataLoaded += OnPlayerDataLoaded;
+	}
+
+	public void AddTransaction(int trId, string trParameter, int trGold, int trWarbucks, float trRealMoney)
+	{
+		if (data.transactions == null)
+		{
+			data.transactions = new List<Transaction>();
+		}
+		data.transactions.Add(new Transaction
+		{
+			id = trId,
+			gold = trGold,
+			wb = trWarbucks,
+			money = trRealMoney,
+			p = trParameter
+		});
+		data.warbucksSpent += trWarbucks;
+		data.goldSpent += trGold;
+		data.realMoneySpent += trRealMoney;
+	}
+
+	private void OutputAnalytics()
+	{
+		Debug.Log("PA: After player data loaded");
+		Debug.Log("PA: install timestamp " + data.installTimestamp);
+		Debug.Log("PA: warbucks spent " + data.warbucksSpent);
+		Debug.Log("PA: gold spent " + data.goldSpent);
+		Debug.Log("PA: number of sessions" + data.numberOfSessions);
+		if (data.transactions != null)
+		{
+			Debug.Log("PA: transactions count = " + data.transactions.Count);
+			{
+				foreach (Transaction transaction in data.transactions)
+				{
+					Debug.Log("PA:Transaction id = " + transaction.id + ", p = " + transaction.p);
+				}
+				return;
+			}
+		}
+		Debug.Log("PA: transactions NULL");
+	}
+
+	private void OnPlayerDataLoaded()
+	{
+	}
+
+	public LevelBehaviour GetLastBoughtUnit(out bool wasAlreadyUsed)
+	{
+		wasAlreadyUsed = true;
+		List<LevelBehaviour> behaviours = LevelManager.instance.behaviours;
+		LevelBehaviour levelBehaviour = behaviours[0];
+		foreach (LevelBehaviour item in behaviours)
+		{
+			if (item.upgradeSlots.bought && levelBehaviour.upgradeSlots.unlockLevelIndex < item.upgradeSlots.unlockLevelIndex)
+			{
+				levelBehaviour = item;
+			}
+		}
+		if (!SavingLastSelected.instance.data.usedInGame.ContainsKey(levelBehaviour.upgradeSlots.GetSheetName()))
+		{
+			wasAlreadyUsed = false;
+		}
+		return levelBehaviour;
+	}
+
+	public void UseLastBoughtUnit()
+	{
+		bool wasAlreadyUsed;
+		LevelBehaviour lastBoughtUnit = GetLastBoughtUnit(out wasAlreadyUsed);
+		if (!wasAlreadyUsed)
+		{
+			SavingLastSelected.instance.data.usedInGame[lastBoughtUnit.upgradeSlots.GetSheetName()] = true;
+			SavingLastSelected.instance.Save();
+		}
+	}
+
+	public void AddOneTimeReward(string rewardId)
+	{
+		data.collectedRewards[rewardId] = 1;
+		if (this.AddedOneTimeReward != null)
+		{
+			this.AddedOneTimeReward(rewardId);
+		}
+	}
+
+	public bool WasOneTimeRewardAdded(Constants.rowIds id)
+	{
+		return data.collectedRewards.ContainsKey(Singleton<GameVariables>.instance.constants.GetRow(id).DBKEY);
+	}
+
+	public bool WasOneTimeRewardAdded(string id)
+	{
+		return data.collectedRewards.ContainsKey(id);
+	}
+
+	public bool TryGetOneTimeReward(Constants.rowIds id, out int value)
+	{
+		return data.collectedRewards.TryGetValue(Singleton<GameVariables>.instance.constants.GetRow(id).DBKEY, out value);
+	}
+
+	public bool ShowPack(string packId)
+	{
+		return data != null && data.IsPackAvailable(packId) && !IsPackBought(packId);
+	}
+
+	public string GetAbTestPackId(string packId)
+	{
+		if (packId.EndsWith("B"))
+		{
+			return packId.Substring(0, packId.Length - 1);
+		}
+		return packId + "B";
+	}
+
+	public bool IsPackBought(string packId)
+	{
+		if (data == null || data.transactions == null)
+		{
+			return false;
+		}
+		string abTestPackId = GetAbTestPackId(packId);
+		foreach (Transaction transaction in data.transactions)
+		{
+			if (transaction.id == 130 && (transaction.p == packId || transaction.p == abTestPackId))
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	internal Dictionary<string, object> GetUpdates()
+	{
+		Dictionary<string, object> dictionary = new Dictionary<string, object>();
+		dictionary.Add("rateAppShownCounter", data.rateAppShownCounter);
+		dictionary.Add("rateAppFirstVersion", data.rateAppFirstVersion);
+		dictionary.Add("rateAppClientVersion", data.rateAppClientVersion);
+		dictionary.Add("rateAppClickYesCounter", data.rateAppClickYesCounter);
+		return dictionary;
+	}
 }

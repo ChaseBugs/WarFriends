@@ -1,63 +1,134 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Rendering;
 
-public class Vehicle : MonoBehaviour
+public class Vehicle<T> : MechanicalUnit<T>, IMechanicalUnit, IVehicle where T : LevelBehaviour
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	private readonly List<EnemyController> mEnemies = new List<EnemyController>();
 
-	1. No dll files were provided to AssetRipper.
+	protected bool mDoReverseAnim;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public virtual bool isParked { get; protected set; }
 
-	2. Incorrect dll files were provided to AssetRipper.
+	protected void DestroySoldier(EnemyPoint point, DestroyableObject.DamageInfo? info, Action<IGameMainEntity, DestroyableObject.DamageInfo> soldierOnKilled = null)
+	{
+		EnemyController enemyController = point.enemyAtPoint as EnemyController;
+		if (enemyController != null && enemyController.enemyPoint == point)
+		{
+			if (info.HasValue)
+			{
+				enemyController.destroyableObject.Explode(info.Value.force, float.MaxValue, info.Value.weapon, info.Value.owner, isNetworkCopy: false);
+			}
+			else
+			{
+				info = new DestroyableObject.DamageInfo
+				{
+					isNetwork = false,
+					damageAmount = float.MaxValue,
+					force = Vector3.up,
+					owner = null
+				};
+				enemyController.destroyableObject.DoDamage(info.Value);
+			}
+			if (soldierOnKilled != null)
+			{
+				enemyController.Killed -= soldierOnKilled;
+			}
+			point.enemyAtPoint = null;
+		}
+	}
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public override void DestroyPooled()
+	{
+		base.DestroyPooled();
+		foreach (EnemyController mEnemy in mEnemies)
+		{
+			mEnemy.DestroyPooled(changeParentBack: true);
+		}
+		mEnemies.Clear();
+		TweenPosition component = GetComponent<TweenPosition>();
+		if (component != null)
+		{
+			component.enabled = false;
+		}
+	}
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public override void UpdatePreview(bool inGame)
+	{
+		base.UpdatePreview(inGame);
+		if (!isPrewiev)
+		{
+			return;
+		}
+		foreach (EnemyController mEnemy in mEnemies)
+		{
+			mEnemy.DestroyPooled(changeParentBack: true);
+		}
+		mEnemies.Clear();
+	}
 
-	3. Assembly Reconstruction has not been implemented.
+	protected void SetShadowsActive(bool value)
+	{
+		MeshRenderer[] componentsInChildren = GetComponentsInChildren<MeshRenderer>(includeInactive: true);
+		MeshRenderer[] array = componentsInChildren;
+		foreach (MeshRenderer meshRenderer in array)
+		{
+			meshRenderer.shadowCastingMode = (value ? ShadowCastingMode.On : ShadowCastingMode.Off);
+			meshRenderer.enabled = true;
+		}
+		SkinnedMeshRenderer[] componentsInChildren2 = GetComponentsInChildren<SkinnedMeshRenderer>(includeInactive: true);
+		SkinnedMeshRenderer[] array2 = componentsInChildren2;
+		foreach (SkinnedMeshRenderer skinnedMeshRenderer in array2)
+		{
+			skinnedMeshRenderer.shadowCastingMode = (value ? ShadowCastingMode.On : ShadowCastingMode.Off);
+		}
+	}
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public override void BeforeInstancied()
+	{
+		base.BeforeInstancied();
+		isParked = false;
+		mDoReverseAnim = false;
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	protected EnemyController GeneratePreviewEnemy(LevelBehaviour beh, EnemyPoint point, bool disableWeapon)
+	{
+		EnemyController enemyController = (EnemyController)Singleton<LevelBehaviourManager>.instance.GenerateNewEnemy(beh);
+		if (enemyController != null)
+		{
+			enemyController.isPrewiev = true;
+			enemyController.fraction = PlayerController.currentPlayer.fraction;
+			enemyController.DisableSpawn();
+			int actualLevelForIndex = behaviour.upgradeSlots.GetActualLevelForIndex(unitUpgrades.slotUpgradeindex);
+			enemyController.SpawnByCard((float)actualLevelForIndex / (float)behaviour.upgradeSlots.maxLevelOfUnit, string.Empty);
+			enemyController = (EnemyController)ObjectPoolDatabase.networkPool.ReInstantiate(enemyController);
+			enemyController.transform.parent = point.transform;
+			enemyController.transform.localPosition = default(Vector3);
+			enemyController.transform.localRotation = Quaternion.identity;
+			enemyController.transform.localScale = Vector3.one;
+			mEnemies.Add(enemyController);
+			enemyController.UpdatePreview(inGame: false);
+			enemyController.soldierParts.MakeTrigger(value: true);
+			if (disableWeapon)
+			{
+				enemyController.soldierBehaviour.currentWeapon.gameObject.SetActive(value: false);
+			}
+		}
+		return enemyController;
+	}
 
-	4. This script is unnecessary.
+	public virtual void DoReverseAnim()
+	{
+		mDoReverseAnim = true;
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
-
-	5. Script Content Level 0
-
-		AssetRipper was set to not load any script information.
-
-	6. Cpp2IL failed to decompile Il2Cpp data
-
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	protected void ClearEnemyPoint(EnemyPointVehicle point, Action<IGameMainEntity, DestroyableObject.DamageInfo> soldierOnKilled)
+	{
+		if (point != null && point.enemyAtPoint != null)
+		{
+			point.enemyAtPoint.Killed -= soldierOnKilled;
+			point.enemyAtPoint = null;
+		}
+	}
 }

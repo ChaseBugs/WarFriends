@@ -1,66 +1,248 @@
-using UnityEngine;
-
 namespace Org.BouncyCastle.Crypto.Utilities
 {
-	public class Pack : MonoBehaviour
+internal sealed class Pack
+{
+	private Pack()
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
 	}
+
+	internal static void UInt16_To_BE(ushort n, byte[] bs)
+	{
+		bs[0] = (byte)(n >> 8);
+		bs[1] = (byte)n;
+	}
+
+	internal static void UInt16_To_BE(ushort n, byte[] bs, int off)
+	{
+		bs[off] = (byte)(n >> 8);
+		bs[off + 1] = (byte)n;
+	}
+
+	internal static ushort BE_To_UInt16(byte[] bs)
+	{
+		uint num = (uint)((bs[0] << 8) | bs[1]);
+		return (ushort)num;
+	}
+
+	internal static ushort BE_To_UInt16(byte[] bs, int off)
+	{
+		uint num = (uint)((bs[off] << 8) | bs[off + 1]);
+		return (ushort)num;
+	}
+
+	internal static byte[] UInt32_To_BE(uint n)
+	{
+		byte[] array = new byte[4];
+		UInt32_To_BE(n, array, 0);
+		return array;
+	}
+
+	internal static void UInt32_To_BE(uint n, byte[] bs)
+	{
+		bs[0] = (byte)(n >> 24);
+		bs[1] = (byte)(n >> 16);
+		bs[2] = (byte)(n >> 8);
+		bs[3] = (byte)n;
+	}
+
+	internal static void UInt32_To_BE(uint n, byte[] bs, int off)
+	{
+		bs[off] = (byte)(n >> 24);
+		bs[off + 1] = (byte)(n >> 16);
+		bs[off + 2] = (byte)(n >> 8);
+		bs[off + 3] = (byte)n;
+	}
+
+	internal static byte[] UInt32_To_BE(uint[] ns)
+	{
+		byte[] array = new byte[4 * ns.Length];
+		UInt32_To_BE(ns, array, 0);
+		return array;
+	}
+
+	internal static void UInt32_To_BE(uint[] ns, byte[] bs, int off)
+	{
+		for (int i = 0; i < ns.Length; i++)
+		{
+			UInt32_To_BE(ns[i], bs, off);
+			off += 4;
+		}
+	}
+
+	internal static uint BE_To_UInt32(byte[] bs)
+	{
+		return (uint)((bs[0] << 24) | (bs[1] << 16) | (bs[2] << 8) | bs[3]);
+	}
+
+	internal static uint BE_To_UInt32(byte[] bs, int off)
+	{
+		return (uint)((bs[off] << 24) | (bs[off + 1] << 16) | (bs[off + 2] << 8) | bs[off + 3]);
+	}
+
+	internal static void BE_To_UInt32(byte[] bs, int off, uint[] ns)
+	{
+		for (int i = 0; i < ns.Length; i++)
+		{
+			ns[i] = BE_To_UInt32(bs, off);
+			off += 4;
+		}
+	}
+
+	internal static byte[] UInt64_To_BE(ulong n)
+	{
+		byte[] array = new byte[8];
+		UInt64_To_BE(n, array, 0);
+		return array;
+	}
+
+	internal static void UInt64_To_BE(ulong n, byte[] bs)
+	{
+		UInt32_To_BE((uint)(n >> 32), bs);
+		UInt32_To_BE((uint)n, bs, 4);
+	}
+
+	internal static void UInt64_To_BE(ulong n, byte[] bs, int off)
+	{
+		UInt32_To_BE((uint)(n >> 32), bs, off);
+		UInt32_To_BE((uint)n, bs, off + 4);
+	}
+
+	internal static ulong BE_To_UInt64(byte[] bs)
+	{
+		uint num = BE_To_UInt32(bs);
+		uint num2 = BE_To_UInt32(bs, 4);
+		return ((ulong)num << 32) | num2;
+	}
+
+	internal static ulong BE_To_UInt64(byte[] bs, int off)
+	{
+		uint num = BE_To_UInt32(bs, off);
+		uint num2 = BE_To_UInt32(bs, off + 4);
+		return ((ulong)num << 32) | num2;
+	}
+
+	internal static void UInt16_To_LE(ushort n, byte[] bs)
+	{
+		bs[0] = (byte)n;
+		bs[1] = (byte)(n >> 8);
+	}
+
+	internal static void UInt16_To_LE(ushort n, byte[] bs, int off)
+	{
+		bs[off] = (byte)n;
+		bs[off + 1] = (byte)(n >> 8);
+	}
+
+	internal static ushort LE_To_UInt16(byte[] bs)
+	{
+		uint num = (uint)(bs[0] | (bs[1] << 8));
+		return (ushort)num;
+	}
+
+	internal static ushort LE_To_UInt16(byte[] bs, int off)
+	{
+		uint num = (uint)(bs[off] | (bs[off + 1] << 8));
+		return (ushort)num;
+	}
+
+	internal static byte[] UInt32_To_LE(uint n)
+	{
+		byte[] array = new byte[4];
+		UInt32_To_LE(n, array, 0);
+		return array;
+	}
+
+	internal static void UInt32_To_LE(uint n, byte[] bs)
+	{
+		bs[0] = (byte)n;
+		bs[1] = (byte)(n >> 8);
+		bs[2] = (byte)(n >> 16);
+		bs[3] = (byte)(n >> 24);
+	}
+
+	internal static void UInt32_To_LE(uint n, byte[] bs, int off)
+	{
+		bs[off] = (byte)n;
+		bs[off + 1] = (byte)(n >> 8);
+		bs[off + 2] = (byte)(n >> 16);
+		bs[off + 3] = (byte)(n >> 24);
+	}
+
+	internal static byte[] UInt32_To_LE(uint[] ns)
+	{
+		byte[] array = new byte[4 * ns.Length];
+		UInt32_To_LE(ns, array, 0);
+		return array;
+	}
+
+	internal static void UInt32_To_LE(uint[] ns, byte[] bs, int off)
+	{
+		for (int i = 0; i < ns.Length; i++)
+		{
+			UInt32_To_LE(ns[i], bs, off);
+			off += 4;
+		}
+	}
+
+	internal static uint LE_To_UInt32(byte[] bs)
+	{
+		return (uint)(bs[0] | (bs[1] << 8) | (bs[2] << 16) | (bs[3] << 24));
+	}
+
+	internal static uint LE_To_UInt32(byte[] bs, int off)
+	{
+		return (uint)(bs[off] | (bs[off + 1] << 8) | (bs[off + 2] << 16) | (bs[off + 3] << 24));
+	}
+
+	internal static void LE_To_UInt32(byte[] bs, int off, uint[] ns)
+	{
+		for (int i = 0; i < ns.Length; i++)
+		{
+			ns[i] = LE_To_UInt32(bs, off);
+			off += 4;
+		}
+	}
+
+	internal static void LE_To_UInt32(byte[] bs, int bOff, uint[] ns, int nOff, int count)
+	{
+		for (int i = 0; i < count; i++)
+		{
+			ns[nOff + i] = LE_To_UInt32(bs, bOff);
+			bOff += 4;
+		}
+	}
+
+	internal static byte[] UInt64_To_LE(ulong n)
+	{
+		byte[] array = new byte[8];
+		UInt64_To_LE(n, array, 0);
+		return array;
+	}
+
+	internal static void UInt64_To_LE(ulong n, byte[] bs)
+	{
+		UInt32_To_LE((uint)n, bs);
+		UInt32_To_LE((uint)(n >> 32), bs, 4);
+	}
+
+	internal static void UInt64_To_LE(ulong n, byte[] bs, int off)
+	{
+		UInt32_To_LE((uint)n, bs, off);
+		UInt32_To_LE((uint)(n >> 32), bs, off + 4);
+	}
+
+	internal static ulong LE_To_UInt64(byte[] bs)
+	{
+		uint num = LE_To_UInt32(bs);
+		uint num2 = LE_To_UInt32(bs, 4);
+		return ((ulong)num2 << 32) | num;
+	}
+
+	internal static ulong LE_To_UInt64(byte[] bs, int off)
+	{
+		uint num = LE_To_UInt32(bs, off);
+		uint num2 = LE_To_UInt32(bs, off + 4);
+		return ((ulong)num2 << 32) | num;
+	}
+}
 }

@@ -1,63 +1,240 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Text;
 using UnityEngine;
 
-public class PlayerTexturePool : MonoBehaviour
+public class PlayerTexturePool : Singleton<PlayerTexturePool>
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public enum RenderType
+	{
+		Small,
+		Card,
+		Classic
+	}
 
-	1. No dll files were provided to AssetRipper.
+	protected class PlayerTexturePoolItem
+	{
+		public DatabasePlayer databasePlayer;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+		public bool useBackground;
 
-	2. Incorrect dll files were provided to AssetRipper.
+		public Texture2D texture;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+		public RenderType type;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+		public int referenceCount;
 
-	3. Assembly Reconstruction has not been implemented.
+		public bool processing;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+		public string visuals = string.Empty;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+		public PlayerTexturePoolItem(Texture2D texture)
+		{
+			this.texture = texture;
+			useBackground = true;
+		}
+	}
 
-	4. This script is unnecessary.
+	public int capacity;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private List<PlayerTexturePoolItem> mPlayerTextures;
 
-	5. Script Content Level 0
+	private List<PlayerTexturePoolItem> mQueue;
 
-		AssetRipper was set to not load any script information.
+	private List<PlayerTexturePoolItem> mPool;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	private bool mQueueActive;
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	private StringBuilder mVisuals = new StringBuilder();
 
-	7. An incorrect path was provided to AssetRipper.
+	public event Action<string, Texture2D, bool> OnPlayerTextureCreated;
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	protected override void Awake()
+	{
+		base.Awake();
+		mPlayerTextures = new List<PlayerTexturePoolItem>(capacity);
+		mQueue = new List<PlayerTexturePoolItem>();
+		mPool = new List<PlayerTexturePoolItem>(capacity);
+		if (Singleton<PerformanceManager>.instance.performance != Performance.Shitty && Singleton<PerformanceManager>.instance.isHD)
+		{
+			Singleton<ArmyPreviewCamera>.instance.playerTexture = new RenderTexture(256, 256, 16, RenderTextureFormat.ARGB32);
+		}
+		for (int i = 0; i < capacity; i++)
+		{
+			Texture2D texture2D = new Texture2D(Singleton<ArmyPreviewCamera>.instance.playerTexture.width, Singleton<ArmyPreviewCamera>.instance.playerTexture.height, TextureFormat.ARGB32, mipChain: true);
+			texture2D.wrapMode = TextureWrapMode.Clamp;
+			mPool.Add(new PlayerTexturePoolItem(texture2D));
+		}
+	}
 
-	*/
+	private IEnumerator PlayerTextureRenderQueue()
+	{
+		mQueueActive = true;
+		while (mQueue.Count > 0)
+		{
+			PlayerTexturePoolItem queueItem = mQueue[0];
+			queueItem.processing = true;
+			yield return StartCoroutine(Singleton<ArmyPreviewCamera>.instance.CreatePlayerTexture(queueItem.databasePlayer, queueItem.texture, queueItem.useBackground, queueItem.type));
+			queueItem.processing = false;
+			mQueue.Remove(queueItem);
+			if (queueItem.referenceCount <= 0)
+			{
+				mPool.Add(queueItem);
+				continue;
+			}
+			mPlayerTextures.Add(queueItem);
+			if (this.OnPlayerTextureCreated != null)
+			{
+				this.OnPlayerTextureCreated(queueItem.databasePlayer.id, queueItem.texture, queueItem.useBackground);
+			}
+		}
+		mQueueActive = false;
+	}
+
+	private PlayerTexturePoolItem GetPoolItem()
+	{
+		PlayerTexturePoolItem playerTexturePoolItem = null;
+		if (mPool.Count > 0)
+		{
+			playerTexturePoolItem = mPool[0];
+			mPool.RemoveAt(0);
+		}
+		else
+		{
+			Debug.LogWarning("Increasing texture count in player texture pool!");
+			playerTexturePoolItem = new PlayerTexturePoolItem(new Texture2D(Singleton<ArmyPreviewCamera>.instance.playerTexture.width, Singleton<ArmyPreviewCamera>.instance.playerTexture.height));
+		}
+		return playerTexturePoolItem;
+	}
+
+	private string GetVisualsString(DatabasePlayer player)
+	{
+		mVisuals.Length = 0;
+		if (player != null && player.playerVisuals != null)
+		{
+			foreach (KeyValuePair<int, CamosManager.SavedPlayerVisualSlot> playerVisual in player.playerVisuals)
+			{
+				mVisuals.Append(playerVisual.Value.equippedID);
+			}
+		}
+		return mVisuals.ToString();
+	}
+
+	private bool TryGetPlayerTexture(DatabasePlayer player, bool useBackground, out PlayerTexturePoolItem playerTexture)
+	{
+		string visualsString = GetVisualsString(player);
+		foreach (PlayerTexturePoolItem mPlayerTexture in mPlayerTextures)
+		{
+			if (mPlayerTexture.databasePlayer.id == player.id && mPlayerTexture.useBackground == useBackground && visualsString == mPlayerTexture.visuals)
+			{
+				playerTexture = mPlayerTexture;
+				if (mPlayerTexture.referenceCount == 0)
+				{
+					mPool.Remove(mPlayerTexture);
+				}
+				return true;
+			}
+		}
+		playerTexture = null;
+		return false;
+	}
+
+	public int RequestPlayerTexture(DatabasePlayer player, bool useBackground = true, RenderType type = RenderType.Small)
+	{
+		int result = -1;
+		if (!TryGetPlayerTexture(player, useBackground, out var playerTexture))
+		{
+			bool flag = false;
+			foreach (PlayerTexturePoolItem item in mQueue)
+			{
+				if (item.databasePlayer.id == player.id && item.useBackground == useBackground)
+				{
+					flag = true;
+					result = ++item.referenceCount;
+					break;
+				}
+			}
+			if (!flag)
+			{
+				PlayerTexturePoolItem poolItem = GetPoolItem();
+				mPlayerTextures.Remove(poolItem);
+				poolItem.databasePlayer = player;
+				poolItem.visuals = GetVisualsString(player);
+				poolItem.useBackground = useBackground;
+				poolItem.type = type;
+				mQueue.Add(poolItem);
+				result = ++poolItem.referenceCount;
+				if (!mQueueActive)
+				{
+					StartCoroutine(PlayerTextureRenderQueue());
+				}
+			}
+		}
+		else
+		{
+			result = ++playerTexture.referenceCount;
+			if (this.OnPlayerTextureCreated != null)
+			{
+				this.OnPlayerTextureCreated(player.id, playerTexture.texture, useBackground);
+			}
+		}
+		return result;
+	}
+
+	public int FreePlayerTexture(string playerID, bool useBackground = true, bool ignoreWarnings = false, bool deleteFromPool = false)
+	{
+		DatabasePlayer databasePlayer = new DatabasePlayer();
+		databasePlayer.id = playerID;
+		DatabasePlayer player = databasePlayer;
+		return FreePlayerTexture(player, useBackground, ignoreWarnings, deleteFromPool);
+	}
+
+	public int FreePlayerTexture(DatabasePlayer player, bool useBackground = true, bool ignoreWarnings = false, bool deleteFromPool = false)
+	{
+		int result = 1234;
+		if (TryGetPlayerTexture(player, useBackground, out var playerTexture))
+		{
+			result = playerTexture.referenceCount - 1;
+			if (--playerTexture.referenceCount <= 0)
+			{
+				if (deleteFromPool)
+				{
+					mPlayerTextures.Remove(playerTexture);
+				}
+				else
+				{
+					playerTexture.referenceCount = 0;
+				}
+				mPool.Add(playerTexture);
+			}
+		}
+		else
+		{
+			bool flag = false;
+			foreach (PlayerTexturePoolItem item in mQueue)
+			{
+				if (item.databasePlayer.id == player.id && item.useBackground == useBackground)
+				{
+					result = --item.referenceCount;
+					if (item.referenceCount < 0 && !ignoreWarnings)
+					{
+						Debug.LogError("Texture reference count is less than zero!");
+					}
+					if (item.referenceCount <= 0 && !item.processing)
+					{
+						mQueue.Remove(item);
+						mPool.Add(item);
+					}
+					flag = true;
+					break;
+				}
+			}
+			if (!flag && !ignoreWarnings)
+			{
+				result = 0;
+			}
+		}
+		return result;
+	}
 }

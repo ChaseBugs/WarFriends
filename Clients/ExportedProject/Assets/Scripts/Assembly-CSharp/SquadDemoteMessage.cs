@@ -1,63 +1,210 @@
+using System;
+using System.Collections.Generic;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using UnityEngine;
 
-public class SquadDemoteMessage : MonoBehaviour
+public class SquadDemoteMessage : DatabaseMessage
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public int newRank;
 
-	1. No dll files were provided to AssetRipper.
+	public DatabasePlayer demotedPlayer;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public DatabasePlayer adminPlayer;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public bool playerClicked;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public string squadNameKickedFrom;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public List<string> cardList;
 
-	3. Assembly Reconstruction has not been implemented.
+	public override bool actionLeavesLobby => true;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public override bool processNextMessage => true;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public override bool canSquadTypeMessageBeRemovedWhenLeftSquad
+	{
+		get
+		{
+			bool flag = demotedPlayer.id == GameLoginManager.currentPlayer.id && newRank == -1;
+			return !flag;
+		}
+	}
 
-	4. This script is unnecessary.
+	public SquadDemoteMessage(DatabasePlayer player, int newRankForPlayer, DatabasePlayer byPlayer)
+		: base($"DemoteOrKickPlayer {newRankForPlayer} {Singleton<BeanstalkServerManager>.instance.currentTimestamp}", Type.SquadDemotion)
+	{
+		Debug.Log($"Fake DatabaseMessage - SquadDemoteMessage - Player:{player.debugBasicInformation}\t\tNewRank:{newRankForPlayer}");
+		playerClicked = true;
+		demotedPlayer = player;
+		newRank = newRankForPlayer;
+		adminPlayer = byPlayer;
+		squadNameKickedFrom = adminPlayer.squadName;
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public SquadDemoteMessage(DatabasePlayer player, DatabasePlayer byPlayer)
+		: base($"DemoteOrKickPlayer {Singleton<BeanstalkServerManager>.instance.currentTimestamp}", Type.SquadDemotion)
+	{
+		Debug.Log(string.Format("Fake DatabaseMessage - SquadDemoteMessage - Player:{0}", (player != null) ? player.debugBasicInformation : "null"));
+		playerClicked = true;
+		demotedPlayer = player;
+		adminPlayer = byPlayer;
+		squadNameKickedFrom = adminPlayer.squadName;
+		if (player != null)
+		{
+			newRank = (int)player.squadRank;
+		}
+	}
 
-	5. Script Content Level 0
+	public SquadDemoteMessage(JToken dict)
+		: base(dict)
+	{
+		playerClicked = false;
+		demotedPlayer = new DatabasePlayer();
+		if (dict["PlayerName"] != null)
+		{
+			demotedPlayer.accountName = StringParser.ParseString("PlayerName", "S", dict, string.Empty);
+		}
+		if (dict["Level"] != null)
+		{
+			demotedPlayer.level = StringParser.ParseIntToken(dict["Level"]["N"]);
+		}
+		if (dict["SquadId"] != null)
+		{
+			demotedPlayer.squadName = StringParser.ParseString("SquadId", "S", dict, string.Empty);
+		}
+		if (dict["KickedPlayerId"] != null)
+		{
+			demotedPlayer.id = StringParser.ParseString("KickedPlayerId", "S", dict, string.Empty);
+		}
+		if (dict["DemotedPlayerId"] != null)
+		{
+			demotedPlayer.id = StringParser.ParseString("DemotedPlayerId", "S", dict, string.Empty);
+		}
+		if (dict["SquadKickedFrom"] != null)
+		{
+			squadNameKickedFrom = StringParser.ParseString("SquadKickedFrom", "S", dict, string.Empty);
+		}
+		if (dict["SquadRank"] != null)
+		{
+			demotedPlayer.squadRank = (SquadRank)StringParser.ParseIntToken(dict["SquadRank"]["N"]);
+			newRank = (int)demotedPlayer.squadRank;
+		}
+		else
+		{
+			newRank = -1;
+		}
+		adminPlayer = new DatabasePlayer();
+		if (dict["AdminName"] != null)
+		{
+			adminPlayer.accountName = StringParser.ParseString("AdminName", "S", dict, string.Empty);
+		}
+		if (dict["AdminId"] != null)
+		{
+			adminPlayer.id = StringParser.ParseString("AdminId", "S", dict, string.Empty);
+		}
+		if (dict["AdminLevel"] != null)
+		{
+			adminPlayer.level = StringParser.ParseIntToken(dict["AdminLevel"]["N"]);
+		}
+		if (dict["KickedPlayerDepositedCards"] != null && demotedPlayer.id == GameLoginManager.currentPlayer.id && newRank == -1)
+		{
+			Debug.Log("Got kicked player deposited WarCards => pasing them to GameLoginManager");
+			cardList = JsonConvert.DeserializeObject<List<string>>(StringParser.ParseString("KickedPlayerDepositedCards", "S", dict, string.Empty));
+		}
+	}
 
-		AssetRipper was set to not load any script information.
+	public override void Show()
+	{
+		base.Show();
+		Debug.Log($"DatabaseMessage - SquadDemoteMessage:\nPlayer to be demoted/kicked: {demotedPlayer.debugBasicInformation}\nNewRank: {newRank}\nBy Player: {adminPlayer.debugBasicInformation}");
+		bool flag = adminPlayer.id == GameLoginManager.currentPlayer.id;
+		bool flag2 = demotedPlayer.id == GameLoginManager.currentPlayer.id && newRank == -1;
+		bool flag3 = messageTime + 60 > Singleton<BeanstalkServerManager>.instance.currentTimestamp;
+		bool flag4 = Singleton<BeanstalkServerManager>.instance.timestampPlayerDataLoaded > messageTime;
+		bool flag5 = GameLoginManager.currentPlayer.squadName == squadNameKickedFrom;
+		if (newRank == -1)
+		{
+			if (Singleton<Chat>.instance.shouldChat)
+			{
+				if (flag2)
+				{
+					GuiElementSingle<ChatGuiElement>.instance.messageContent.AddMessage(this);
+				}
+				else
+				{
+					GuiElementSingle<ChatGuiElement>.instance.chatContent.AddDatabaseMessageToSquadChat(this, !flag);
+				}
+			}
+			else if (!playerClicked && !flag)
+			{
+				GuiElementSingle<ChatGuiElement>.instance.messageContent.AddMessage(this);
+			}
+		}
+		else if (Singleton<Chat>.instance.shouldChat)
+		{
+			GuiElementSingle<ChatGuiElement>.instance.chatContent.AddDatabaseMessageToSquadChat(this, !flag);
+		}
+		else if (!playerClicked && !flag)
+		{
+			GuiElementSingle<ChatGuiElement>.instance.messageContent.AddMessage(this);
+		}
+		if (!playerClicked)
+		{
+			if (flag2 && !flag4 && flag5)
+			{
+				GameLoginManager.instance.RemovePlayerFromSquad(cardList);
+			}
+			string squadName = GameLoginManager.currentPlayer.squadName;
+			if (!string.IsNullOrEmpty(squadName) && flag3)
+			{
+				Singleton<BeanstalkServerManager>.instance.GetAllSquadMembers(squadName, forceUpdate: true);
+			}
+			if (!flag2)
+			{
+				Confirm();
+			}
+		}
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	internal override Action InitMessageCenterRecord(MessageCenterRecord record)
+	{
+		record.SetAppearance_SquadDemotion(messageType, messageTime, newRank, demotedPlayer, adminPlayer);
+		return delegate
+		{
+			if (demotedPlayer.id == GameLoginManager.currentPlayer.id && newRank == -1)
+			{
+				OverrideConfirm();
+			}
+			else
+			{
+				GuiScreenSingle<SquadScreen>.instance.ShowSquadMembers();
+			}
+		};
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public override void UpdatePlayer(DatabasePlayerInfo player)
+	{
+		if (demotedPlayer.id == player.id)
+		{
+			demotedPlayer.level = player.level;
+			demotedPlayer.squadName = player.squadName;
+		}
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	public override void Confirm()
+	{
+		bool flag = !string.IsNullOrEmpty(GameLoginManager.currentPlayer.squadName);
+		bool flag2 = messageTime + 172800 < Singleton<BeanstalkServerManager>.instance.currentTimestamp;
+		if (!flag || flag2)
+		{
+			Debug.LogError(string.Format("Removing squad demote/kick message - message time:{0}, server time:{1}, isInSquad:{2}", MiscTools.PrintableTime(messageTime, "ID_READYTIME", string.Empty), MiscTools.PrintableTime(Singleton<BeanstalkServerManager>.instance.currentTimestamp, "ID_READYTIME", string.Empty), flag));
+			OverrideConfirm();
+		}
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	private void OverrideConfirm()
+	{
+		Ignore();
+	}
 }

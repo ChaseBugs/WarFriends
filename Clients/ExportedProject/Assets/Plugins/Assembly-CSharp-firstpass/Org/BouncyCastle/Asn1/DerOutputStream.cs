@@ -1,66 +1,133 @@
-using UnityEngine;
+using System;
+using System.IO;
+using Org.BouncyCastle.Asn1.Utilities;
 
 namespace Org.BouncyCastle.Asn1
 {
-	public class DerOutputStream : MonoBehaviour
+public class DerOutputStream : FilterStream
+{
+	public DerOutputStream(Stream os)
+		: base(os)
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
 	}
+
+	private void WriteLength(int length)
+	{
+		if (length > 127)
+		{
+			int num = 1;
+			uint num2 = (uint)length;
+			while ((num2 >>= 8) != 0)
+			{
+				num++;
+			}
+			WriteByte((byte)(num | 0x80));
+			for (int num3 = (num - 1) * 8; num3 >= 0; num3 -= 8)
+			{
+				WriteByte((byte)(length >> num3));
+			}
+		}
+		else
+		{
+			WriteByte((byte)length);
+		}
+	}
+
+	internal void WriteEncoded(int tag, byte[] bytes)
+	{
+		WriteByte((byte)tag);
+		WriteLength(bytes.Length);
+		Write(bytes, 0, bytes.Length);
+	}
+
+	internal void WriteEncoded(int tag, byte[] bytes, int offset, int length)
+	{
+		WriteByte((byte)tag);
+		WriteLength(length);
+		Write(bytes, offset, length);
+	}
+
+	internal void WriteTag(int flags, int tagNo)
+	{
+		if (tagNo < 31)
+		{
+			WriteByte((byte)(flags | tagNo));
+			return;
+		}
+		WriteByte((byte)(flags | 0x1F));
+		if (tagNo < 128)
+		{
+			WriteByte((byte)tagNo);
+			return;
+		}
+		byte[] array = new byte[5];
+		int num = array.Length;
+		array[--num] = (byte)(tagNo & 0x7F);
+		do
+		{
+			tagNo >>= 7;
+			array[--num] = (byte)((tagNo & 0x7F) | 0x80);
+		}
+		while (tagNo > 127);
+		Write(array, num, array.Length - num);
+	}
+
+	internal void WriteEncoded(int flags, int tagNo, byte[] bytes)
+	{
+		WriteTag(flags, tagNo);
+		WriteLength(bytes.Length);
+		Write(bytes, 0, bytes.Length);
+	}
+
+	protected void WriteNull()
+	{
+		WriteByte(5);
+		WriteByte(0);
+	}
+
+	[Obsolete("Use version taking an Asn1Encodable arg instead")]
+	public virtual void WriteObject(object obj)
+	{
+		if (obj == null)
+		{
+			WriteNull();
+			return;
+		}
+		if (obj is Asn1Object)
+		{
+			((Asn1Object)obj).Encode(this);
+			return;
+		}
+		if (obj is Asn1Encodable)
+		{
+			((Asn1Encodable)obj).ToAsn1Object().Encode(this);
+			return;
+		}
+		throw new IOException("object not Asn1Object");
+	}
+
+	public virtual void WriteObject(Asn1Encodable obj)
+	{
+		if (obj == null)
+		{
+			WriteNull();
+		}
+		else
+		{
+			obj.ToAsn1Object().Encode(this);
+		}
+	}
+
+	public virtual void WriteObject(Asn1Object obj)
+	{
+		if (obj == null)
+		{
+			WriteNull();
+		}
+		else
+		{
+			obj.Encode(this);
+		}
+	}
+}
 }

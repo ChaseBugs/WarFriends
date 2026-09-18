@@ -1,63 +1,70 @@
 using UnityEngine;
 
-public class PackContentRecord : MonoBehaviour
+public class PackContentRecord : Core_BaseScript
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Header("Core")]
+	public UISprite background;
 
-	1. No dll files were provided to AssetRipper.
+	public UISprite rightLine;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public UISprite icon;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public UILabel whiteLabel;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public UILabel bigLabel;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public GameObject freeSticker;
 
-	3. Assembly Reconstruction has not been implemented.
+	public void InitializeSize(float width, bool isLast)
+	{
+		float num = width / 2f;
+		float val = num + 2f - ((!isLast) ? 0f : 40f);
+		background.transform.localScale = background.transform.localScale.ReplaceX(width * 2f);
+		rightLine.transform.localPosition = rightLine.transform.localPosition.ReplaceX(num);
+		freeSticker.transform.localPosition = freeSticker.transform.localPosition.ReplaceX(val);
+		whiteLabel.lineWidth = (int)width - 40;
+		bigLabel.lineWidth = (int)width - 40;
+		rightLine.gameObject.SetActive(!isLast);
+	}
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public void InitializeTexts(string whiteText, string bigText)
+	{
+		whiteLabel.text = whiteText;
+		MiscTools.SetUILabelRescale(whiteLabel, 32f, 20f, (int)((float)whiteLabel.lineWidth * 1.6f));
+		bigLabel.text = bigText;
+		MiscTools.SetUILabelRescale(bigLabel, 43f, 20f, (int)((float)whiteLabel.lineWidth * 1.6f));
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public void InitializeIcon(string spriteName, UIAtlas atlasReference, float height, float z, bool rotate = false)
+	{
+		icon.atlas = atlasReference;
+		icon.spriteName = spriteName;
+		icon.MakePixelPerfect();
+		float multiplier = Mathf.Min((float)whiteLabel.lineWidth / icon.transform.localScale.x, height / icon.transform.localScale.y);
+		icon.transform.localPosition = icon.transform.localPosition.ReplaceZ(z);
+		icon.transform.localRotation = Quaternion.AngleAxis((!rotate) ? 0f : (-180f), Vector3.up);
+		icon.transform.localScale = icon.transform.localScale.MultiplyXY(multiplier);
+	}
 
-	4. This script is unnecessary.
+	public void StopAnimation()
+	{
+		TweenAlpha component = background.GetComponent<TweenAlpha>();
+		if (component != null)
+		{
+			component.enabled = false;
+		}
+		background.alpha = GuiElementSingle<PackContentDialog>.instance.lowAlpha;
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public void StartAnimation()
+	{
+		TweenAlpha tweenAlpha = TweenAlpha.Begin(background.gameObject, GuiElementSingle<PackContentDialog>.instance.duration, GuiElementSingle<PackContentDialog>.instance.lowAlpha, GuiElementSingle<PackContentDialog>.instance.highAlpha);
+		tweenAlpha.NumOfRepetitions = 2;
+		tweenAlpha.style = UITweener.Style.PingPong;
+	}
 
-	5. Script Content Level 0
-
-		AssetRipper was set to not load any script information.
-
-	6. Cpp2IL failed to decompile Il2Cpp data
-
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public void ShowFree(bool showFree)
+	{
+		freeSticker.SetActive(showFree);
+	}
 }

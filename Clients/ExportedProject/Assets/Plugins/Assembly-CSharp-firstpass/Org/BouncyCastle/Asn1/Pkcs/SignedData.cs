@@ -1,66 +1,104 @@
-using UnityEngine;
+using System;
+using System.Collections;
 
 namespace Org.BouncyCastle.Asn1.Pkcs
 {
-	public class SignedData : MonoBehaviour
+public class SignedData : Asn1Encodable
+{
+	private readonly DerInteger version;
+
+	private readonly Asn1Set digestAlgorithms;
+
+	private readonly ContentInfo contentInfo;
+
+	private readonly Asn1Set certificates;
+
+	private readonly Asn1Set crls;
+
+	private readonly Asn1Set signerInfos;
+
+	public DerInteger Version => version;
+
+	public Asn1Set DigestAlgorithms => digestAlgorithms;
+
+	public ContentInfo ContentInfo => contentInfo;
+
+	public Asn1Set Certificates => certificates;
+
+	public Asn1Set Crls => crls;
+
+	public Asn1Set SignerInfos => signerInfos;
+
+	public SignedData(DerInteger _version, Asn1Set _digestAlgorithms, ContentInfo _contentInfo, Asn1Set _certificates, Asn1Set _crls, Asn1Set _signerInfos)
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
+		version = _version;
+		digestAlgorithms = _digestAlgorithms;
+		contentInfo = _contentInfo;
+		certificates = _certificates;
+		crls = _crls;
+		signerInfos = _signerInfos;
 	}
+
+	private SignedData(Asn1Sequence seq)
+	{
+		IEnumerator enumerator = seq.GetEnumerator();
+		enumerator.MoveNext();
+		version = (DerInteger)enumerator.Current;
+		enumerator.MoveNext();
+		digestAlgorithms = (Asn1Set)enumerator.Current;
+		enumerator.MoveNext();
+		contentInfo = ContentInfo.GetInstance(enumerator.Current);
+		while (enumerator.MoveNext())
+		{
+			Asn1Object asn1Object = (Asn1Object)enumerator.Current;
+			if (asn1Object is DerTaggedObject)
+			{
+				DerTaggedObject derTaggedObject = (DerTaggedObject)asn1Object;
+				switch (derTaggedObject.TagNo)
+				{
+				case 0:
+					certificates = Asn1Set.GetInstance(derTaggedObject, explicitly: false);
+					break;
+				case 1:
+					crls = Asn1Set.GetInstance(derTaggedObject, explicitly: false);
+					break;
+				default:
+					throw new ArgumentException("unknown tag value " + derTaggedObject.TagNo);
+				}
+			}
+			else
+			{
+				signerInfos = (Asn1Set)asn1Object;
+			}
+		}
+	}
+
+	public static SignedData GetInstance(object obj)
+	{
+		if (obj == null)
+		{
+			return null;
+		}
+		if (obj is SignedData result)
+		{
+			return result;
+		}
+		return new SignedData(Asn1Sequence.GetInstance(obj));
+	}
+
+	public override Asn1Object ToAsn1Object()
+	{
+		Asn1EncodableVector asn1EncodableVector = new Asn1EncodableVector(version, digestAlgorithms, contentInfo);
+		if (certificates != null)
+		{
+			asn1EncodableVector.Add(new DerTaggedObject(explicitly: false, 0, certificates));
+		}
+		if (crls != null)
+		{
+			asn1EncodableVector.Add(new DerTaggedObject(explicitly: false, 1, crls));
+		}
+		asn1EncodableVector.Add(signerInfos);
+		return new BerSequence(asn1EncodableVector);
+	}
+}
 }

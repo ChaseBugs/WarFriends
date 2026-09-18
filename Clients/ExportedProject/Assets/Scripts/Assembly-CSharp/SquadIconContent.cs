@@ -1,63 +1,239 @@
+using System.Collections.Generic;
+using Google2u;
 using UnityEngine;
 
-public class SquadIconContent : MonoBehaviour
+public class SquadIconContent : Core_BaseScript
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public enum EmblemType
+	{
+		Basic,
+		Country
+	}
 
-	1. No dll files were provided to AssetRipper.
+	public class SquadEmblemIcon
+	{
+		public string iconName;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+		public int unlockLevel;
 
-	2. Incorrect dll files were provided to AssetRipper.
+		public EmblemType type;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+		public SquadEmblemIcon(string ico, int level, string typ)
+		{
+			iconName = ico;
+			unlockLevel = level;
+			type = ((typ == "Country") ? EmblemType.Country : EmblemType.Basic);
+		}
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+		public override string ToString()
+		{
+			return string.Format("{0} Emblem {1} LVL {2}", ((type != EmblemType.Basic) ? "Z " : string.Empty) + type, iconName, unlockLevel);
+		}
+	}
 
-	3. Assembly Reconstruction has not been implemented.
+	[Header("Squad Emblems List")]
+	public UIPanel panel;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public UIDraggablePanel draggablePanel;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public UIPooledGrid emblemGrid;
 
-	4. This script is unnecessary.
+	public SquadEmblemRecord squadEmblemRecordPrefab;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public int maxEmblems = 40;
 
-	5. Script Content Level 0
+	private bool mIsActive;
 
-		AssetRipper was set to not load any script information.
+	private SquadEmblemRecord mSelectedEmblem;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	private List<SquadEmblemIcon> mIcons = new List<SquadEmblemIcon>();
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	private string mSelectedEmblemName;
 
-	7. An incorrect path was provided to AssetRipper.
+	private int mSquadDisplayLevel;
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	private EmblemType SquadEmblemType(int index)
+	{
+		index = Mathf.Clamp(index, 0, Singleton<GameVariables>.instance.squadEmblems.Rows.Count);
+		if (Singleton<GameVariables>.instance.squadEmblems.Rows[index].TYPE == "Country")
+		{
+			return EmblemType.Country;
+		}
+		return EmblemType.Basic;
+	}
 
-	*/
+	public void InitControls()
+	{
+		base.gameObject.SetActive(value: false);
+		mIsActive = false;
+		float activeWidth = UIRoot.list[0].activeWidth;
+		float num = UIRoot.list[0].activeHeight;
+		int num2 = UIRoot.list[0].activeHeight - 470;
+		Vector4 clipRange = panel.clipRange;
+		clipRange.x = activeWidth / 2f;
+		clipRange.y = (float)(-num2) / 2f;
+		clipRange.z = activeWidth;
+		clipRange.w = num2;
+		panel.clipRange = clipRange;
+		draggablePanel.transform.localPosition = new Vector3(draggablePanel.transform.localPosition.x, 0f, draggablePanel.transform.localPosition.z);
+		int num3 = Mathf.CeilToInt(num / 290f) + 2;
+		int a = maxEmblems / num3;
+		float num4 = activeWidth - 120f + 26f;
+		int b = Mathf.FloorToInt(num4 / 290f);
+		int num5 = Mathf.Min(a, b);
+		float num6 = (num4 - (float)num5 * 290f) / (float)Mathf.Max(1, num5 - 1);
+		emblemGrid.maxPerLine = num5;
+		emblemGrid.cellWidth = 290f + num6;
+		emblemGrid.offsetGrid = new Vector2(0f, 0f);
+	}
+
+	public void Animate(bool showTab, bool instant)
+	{
+		mIsActive = showTab;
+		if (mIsActive && !base.gameObject.activeSelf)
+		{
+			base.gameObject.SetActive(value: true);
+			InitGUIValues();
+		}
+		if (base.gameObject.activeSelf)
+		{
+			TweenAlpha.Begin(panel.gameObject, (!instant) ? (GuiScreenSingle<SquadScreen>.instance.dur * 2f) : 0.01f, (!mIsActive) ? 0f : 1f).onFinished = delegate
+			{
+				if (!mIsActive)
+				{
+					base.gameObject.SetActive(value: false);
+					DoAfterHide();
+				}
+			};
+		}
+		else if (!mIsActive)
+		{
+			InstantHideTab();
+		}
+	}
+
+	public void InitGUIValues()
+	{
+		HideEmblems();
+		CreateEmblems();
+		DatabaseSquad squad = Singleton<ServerResultsCache>.instance.GetSquad(GameLoginManager.currentPlayer.squadName, ommitTime: true);
+		mSquadDisplayLevel = squad.rank;
+		string icon = squad.icon;
+		bool flag = false;
+		foreach (SquadEmblemsRow row in Singleton<GameVariables>.instance.squadEmblems.Rows)
+		{
+			if (row.ICONNAME == icon)
+			{
+				flag = true;
+				mSelectedEmblemName = row.ICONNAME;
+				break;
+			}
+		}
+		if (!flag)
+		{
+			Debug.LogError("Unknown squad icon!");
+		}
+		ShowEmblems();
+	}
+
+	public void DoAfterHide()
+	{
+		HideEmblems();
+	}
+
+	public void InstantHideTab()
+	{
+		TweenAlpha component = panel.gameObject.GetComponent<TweenAlpha>();
+		if (component != null)
+		{
+			component.enabled = false;
+		}
+		base.gameObject.SetActive(value: false);
+		DoAfterHide();
+	}
+
+	private void CreateEmblems()
+	{
+		mIcons.Clear();
+		foreach (SquadEmblemsRow row in Singleton<GameVariables>.instance.squadEmblems.Rows)
+		{
+			mIcons.Add(new SquadEmblemIcon(row.ICONNAME, row.UNLOCKLEVEL, row.TYPE));
+		}
+		mIcons.Sort(SortEmblems);
+	}
+
+	private int SortEmblems(SquadEmblemIcon a, SquadEmblemIcon b)
+	{
+		if (a.type != b.type)
+		{
+			return (a.type != EmblemType.Basic) ? 1 : (-1);
+		}
+		if (a.unlockLevel != b.unlockLevel)
+		{
+			return a.unlockLevel.CompareTo(b.unlockLevel);
+		}
+		return a.iconName.CompareTo(b.iconName);
+	}
+
+	private void HideEmblems()
+	{
+		emblemGrid.MakeEmpty();
+	}
+
+	public void ShowEmblems()
+	{
+		HideEmblems();
+		emblemGrid.init(Singleton<GameVariables>.instance.squadEmblems.Rows.Count, EmblemInstantiate, EmblemFree, draggablePanel);
+		draggablePanel.AlignToCenter(emblemGrid.transform.localPosition + emblemGrid.getPositionForIndex(0), instant: true);
+		emblemGrid.PositionChanged();
+	}
+
+	private Transform EmblemInstantiate(int index)
+	{
+		if (index >= 0 && index < mIcons.Count)
+		{
+			SquadEmblemRecord squadEmblemRecord = Singleton<GuiManager>.instance.objectPool.InstantiateAsChild(squadEmblemRecordPrefab, emblemGrid.gameObject, mIcons[index].ToString()) as SquadEmblemRecord;
+			if (squadEmblemRecord != null)
+			{
+				squadEmblemRecord.Initialize(mIcons[index].iconName, mSquadDisplayLevel, mIcons[index].unlockLevel);
+				if (mIcons[index].iconName == mSelectedEmblemName)
+				{
+					mSelectedEmblem = squadEmblemRecord;
+					squadEmblemRecord.Highlight(highlight: true);
+				}
+				return squadEmblemRecord.transform;
+			}
+		}
+		return null;
+	}
+
+	private void EmblemFree(Transform obj)
+	{
+		if (obj != null)
+		{
+			SquadEmblemRecord component = obj.GetComponent<SquadEmblemRecord>();
+			if (component != null)
+			{
+				component.DestroyPooled();
+			}
+		}
+	}
+
+	public void UseEmblemClick(SquadEmblemRecord record)
+	{
+		if (!(record == null) && !(record.squadIconName == mSelectedEmblemName))
+		{
+			if (mSelectedEmblem != null && mSelectedEmblem.isInstantiated && mSelectedEmblem.squadIconName == mSelectedEmblemName)
+			{
+				mSelectedEmblem.Highlight(highlight: false);
+			}
+			Debug.Log("Updating squad emblem from: " + ((!(mSelectedEmblem == null)) ? mSelectedEmblem.squadIconName : "null") + " to: " + record.squadIconName);
+			Singleton<BeanstalkServerManager>.instance.UpdateEmblem(record.squadIconName);
+			Singleton<EventTrackingManager>.instance.RegisterSquadActivity("Change_Emblem");
+			mSelectedEmblem = record;
+			mSelectedEmblemName = mSelectedEmblem.squadIconName;
+			mSelectedEmblem.Highlight(highlight: true);
+			GuiScreenSingle<SquadScreen>.instance.SetSquadIcon(mSelectedEmblemName);
+		}
+	}
 }

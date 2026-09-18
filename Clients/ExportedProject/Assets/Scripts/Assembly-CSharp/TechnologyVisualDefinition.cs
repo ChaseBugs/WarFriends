@@ -1,63 +1,66 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
-public class TechnologyVisualDefinition : MonoBehaviour
+[Serializable]
+public class TechnologyVisualDefinition
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	private const bool useAssetBundles = false;
 
-	1. No dll files were provided to AssetRipper.
+	public int level;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public string materialTextrePathRed;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public string materialTextrePathBlue;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public List<UpgradeSlots.VisualSlotMesh> visualSlotMeshes;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public int weaponNumber;
 
-	3. Assembly Reconstruction has not been implemented.
+	public Texture2D materialTetxureRed { get; private set; }
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public Texture2D materialTetxureBlue { get; private set; }
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public IEnumerator LoadMineAsync()
+	{
+		if (materialTetxureBlue == null && !string.IsNullOrEmpty(materialTextrePathBlue))
+		{
+			materialTetxureBlue = Resources.Load<Texture2D>(materialTextrePathBlue);
+		}
+		yield break;
+	}
 
-	4. This script is unnecessary.
+	public void NullMine()
+	{
+		materialTetxureBlue = null;
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public IEnumerator LoadOpponentAsync()
+	{
+		if (materialTetxureRed == null && !string.IsNullOrEmpty(materialTextrePathRed))
+		{
+			materialTetxureRed = Resources.Load<Texture2D>(materialTextrePathRed);
+		}
+		yield break;
+	}
 
-	5. Script Content Level 0
+	public void NullOpponent()
+	{
+		materialTetxureRed = null;
+	}
 
-		AssetRipper was set to not load any script information.
-
-	6. Cpp2IL failed to decompile Il2Cpp data
-
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public void UnloadAll()
+	{
+		if (materialTetxureBlue != null)
+		{
+			Resources.UnloadAsset(materialTetxureBlue);
+		}
+		if (materialTetxureRed != null)
+		{
+			Resources.UnloadAsset(materialTetxureRed);
+		}
+		materialTetxureBlue = null;
+		materialTetxureRed = null;
+	}
 }

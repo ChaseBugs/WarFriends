@@ -1,66 +1,91 @@
-using UnityEngine;
+using System;
+using Org.BouncyCastle.Math;
+using Org.BouncyCastle.Math.EC;
+using Org.BouncyCastle.Utilities;
 
 namespace Org.BouncyCastle.Crypto.Parameters
 {
-	public class ECDomainParameters : MonoBehaviour
+public class ECDomainParameters
+{
+	internal ECCurve curve;
+
+	internal byte[] seed;
+
+	internal ECPoint g;
+
+	internal BigInteger n;
+
+	internal BigInteger h;
+
+	public ECCurve Curve => curve;
+
+	public ECPoint G => g;
+
+	public BigInteger N => n;
+
+	public BigInteger H => h;
+
+	public ECDomainParameters(ECCurve curve, ECPoint g, BigInteger n)
+		: this(curve, g, n, BigInteger.One)
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
 	}
+
+	public ECDomainParameters(ECCurve curve, ECPoint g, BigInteger n, BigInteger h)
+		: this(curve, g, n, h, null)
+	{
+	}
+
+	public ECDomainParameters(ECCurve curve, ECPoint g, BigInteger n, BigInteger h, byte[] seed)
+	{
+		if (curve == null)
+		{
+			throw new ArgumentNullException("curve");
+		}
+		if (g == null)
+		{
+			throw new ArgumentNullException("g");
+		}
+		if (n == null)
+		{
+			throw new ArgumentNullException("n");
+		}
+		if (h == null)
+		{
+			throw new ArgumentNullException("h");
+		}
+		this.curve = curve;
+		this.g = g.Normalize();
+		this.n = n;
+		this.h = h;
+		this.seed = Arrays.Clone(seed);
+	}
+
+	public byte[] GetSeed()
+	{
+		return Arrays.Clone(seed);
+	}
+
+	public override bool Equals(object obj)
+	{
+		if (obj == this)
+		{
+			return true;
+		}
+		if (!(obj is ECDomainParameters other))
+		{
+			return false;
+		}
+		return Equals(other);
+	}
+
+	protected bool Equals(ECDomainParameters other)
+	{
+		return curve.Equals(other.curve) && g.Equals(other.g) && n.Equals(other.n) && h.Equals(other.h) && Arrays.AreEqual(seed, other.seed);
+	}
+
+	public override int GetHashCode()
+	{
+		return curve.GetHashCode() ^ g.GetHashCode() ^ n.GetHashCode() ^ h.GetHashCode() ^ Arrays.GetHashCode(seed);
+	}
+}
 }

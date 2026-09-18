@@ -1,63 +1,133 @@
+using AnimationOrTween;
 using UnityEngine;
 
+[AddComponentMenu("NGUI/Interaction/Button Play Animation")]
 public class UIButtonPlayAnimation : MonoBehaviour
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public Animation target;
 
-	1. No dll files were provided to AssetRipper.
+	public string clipName;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public Trigger trigger;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public Direction playDirection = Direction.Forward;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public bool resetOnPlay;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public bool clearSelection;
 
-	3. Assembly Reconstruction has not been implemented.
+	public EnableCondition ifDisabledOnPlay;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public DisableCondition disableWhenFinished;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public GameObject eventReceiver;
 
-	4. This script is unnecessary.
+	public string callWhenFinished;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public ActiveAnimation.OnFinished onFinished;
 
-	5. Script Content Level 0
+	private bool mStarted;
 
-		AssetRipper was set to not load any script information.
+	private bool mHighlighted;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	private void Start()
+	{
+		mStarted = true;
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	private void OnEnable()
+	{
+		if (mStarted && mHighlighted)
+		{
+			OnHover(UICamera.IsHighlighted(base.gameObject));
+		}
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	private void OnHover(bool isOver)
+	{
+		if (base.enabled)
+		{
+			if (trigger == Trigger.OnHover || (trigger == Trigger.OnHoverTrue && isOver) || (trigger == Trigger.OnHoverFalse && !isOver))
+			{
+				Play(isOver);
+			}
+			mHighlighted = isOver;
+		}
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	private void OnPress(bool isPressed)
+	{
+		if (base.enabled && (trigger == Trigger.OnPress || (trigger == Trigger.OnPressTrue && isPressed) || (trigger == Trigger.OnPressFalse && !isPressed)))
+		{
+			Play(isPressed);
+		}
+	}
 
-	*/
+	private void OnClick()
+	{
+		if (base.enabled && trigger == Trigger.OnClick)
+		{
+			Play(forward: true);
+		}
+	}
+
+	private void OnDoubleClick()
+	{
+		if (base.enabled && trigger == Trigger.OnDoubleClick)
+		{
+			Play(forward: true);
+		}
+	}
+
+	private void OnSelect(bool isSelected)
+	{
+		if (base.enabled && (trigger == Trigger.OnSelect || (trigger == Trigger.OnSelectTrue && isSelected) || (trigger == Trigger.OnSelectFalse && !isSelected)))
+		{
+			Play(forward: true);
+		}
+	}
+
+	private void OnActivate(bool isActive)
+	{
+		if (base.enabled && (trigger == Trigger.OnActivate || (trigger == Trigger.OnActivateTrue && isActive) || (trigger == Trigger.OnActivateFalse && !isActive)))
+		{
+			Play(isActive);
+		}
+	}
+
+	private void Play(bool forward)
+	{
+		if (target == null)
+		{
+			target = GetComponentInChildren<Animation>();
+		}
+		if (!(target != null))
+		{
+			return;
+		}
+		if (clearSelection && UICamera.selectedObject == base.gameObject)
+		{
+			UICamera.selectedObject = null;
+		}
+		int num = 0 - playDirection;
+		Direction direction = ((!forward) ? ((Direction)num) : playDirection);
+		ActiveAnimation activeAnimation = ActiveAnimation.Play(target, clipName, direction, ifDisabledOnPlay, disableWhenFinished);
+		if (!(activeAnimation == null))
+		{
+			if (resetOnPlay)
+			{
+				activeAnimation.Reset();
+			}
+			activeAnimation.onFinished = onFinished;
+			if (eventReceiver != null && !string.IsNullOrEmpty(callWhenFinished))
+			{
+				activeAnimation.eventReceiver = eventReceiver;
+				activeAnimation.callWhenFinished = callWhenFinished;
+			}
+			else
+			{
+				activeAnimation.eventReceiver = null;
+			}
+		}
+	}
 }

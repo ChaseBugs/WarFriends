@@ -1,63 +1,96 @@
+using System;
+using Google2u;
 using UnityEngine;
 
-public class DailyGoldBoosterDialog : MonoBehaviour
+public class DailyGoldBoosterDialog : GuiElementSingle<DailyGoldBoosterDialog>, IGuiDialog
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Header("Close Button")]
+	public GameObject closeButton;
 
-	1. No dll files were provided to AssetRipper.
+	[Header("Left")]
+	public UILabel percentSave;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public UILabel description;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	[Header("Right")]
+	public GameObject buyBoosterPart;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public UILabel hint;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public UILabel prize;
 
-	3. Assembly Reconstruction has not been implemented.
+	public GameObject buyBoosterButton;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public GameObject boughtBoosterPart;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public GoldBoosterRecord[] goldRecords;
 
-	4. This script is unnecessary.
+	private InappScreen.InappDefinition mInappDefinition;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public void ShowDialog(InappScreen.InappDefinition inappDefinition)
+	{
+		mInappDefinition = inappDefinition;
+		Singleton<GuiManager>.instance.ShowDialog(this, 0f);
+	}
 
-	5. Script Content Level 0
+	public override void InitControls()
+	{
+		UIEventListener uIEventListener = UIEventListener.Get(closeButton);
+		uIEventListener.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener.onClick, new UIEventListener.VoidDelegate(CloseDialog));
+		UIEventListener uIEventListener2 = UIEventListener.Get(buyBoosterButton);
+		uIEventListener2.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener2.onClick, new UIEventListener.VoidDelegate(BuyBooster));
+	}
 
-		AssetRipper was set to not load any script information.
+	private void CloseDialog(GameObject go)
+	{
+		if (base.isFullyShowed)
+		{
+			HideDialog();
+		}
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	private void BuyBooster(GameObject go)
+	{
+		if (base.isFullyShowed)
+		{
+			Singleton<BeanstalkServerManager>.instance.BuyInApp(mInappDefinition.id);
+			HideDialog();
+		}
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public override void InitGUIValues()
+	{
+		InAppDataManager.InAppInfo dailyInApp = Singleton<BeanstalkServerManager>.instance.inAppDataManager.GetDailyInApp(Singleton<GameVariables>.instance.inApps.GetRow(InApps.rowIds.gold7daily1).NAME);
+		bool flag = dailyInApp?.isActive ?? false;
+		int sale = mInappDefinition.sale;
+		int num = MiscTools.RoundToInt((float)mInappDefinition.amount / 8f);
+		percentSave.text = MiscTools.FormatNumberAsPercent(sale);
+		description.text = Localization.LocalizeFormat("ID_COLLECTGOLDEVERYDAYFORDAYSBREAK", num);
+		MiscTools.SetUILabelRescale(description, 57f, 20f, 320);
+		buyBoosterPart.SetActive(!flag);
+		boughtBoosterPart.SetActive(flag);
+		if (flag)
+		{
+			for (int i = 0; i < goldRecords.Length; i++)
+			{
+				goldRecords[i].Initialize(i == 0 || dailyInApp.days.ContainsKey(i.ToString()));
+			}
+		}
+		else
+		{
+			string formatedPrice = mInappDefinition.formatedPrice;
+			hint.text = Localization.LocalizeFormat("ID_DAILYGOLDBOOSTERHINT1", num, sale);
+			prize.text = formatedPrice;
+		}
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	public GuiElement GetGuiElement()
+	{
+		return this;
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public override void OnBack()
+	{
+		CloseDialog(closeButton);
+	}
 }

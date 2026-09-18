@@ -1,66 +1,152 @@
-using UnityEngine;
+using System;
 
 namespace Org.BouncyCastle.Crypto.Modes
 {
-	public class CtsBlockCipher : MonoBehaviour
+public class CtsBlockCipher : BufferedBlockCipher
+{
+	private readonly int blockSize;
+
+	public CtsBlockCipher(IBlockCipher cipher)
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
+		if (cipher is OfbBlockCipher || cipher is CfbBlockCipher)
+		{
+			throw new ArgumentException("CtsBlockCipher can only accept ECB, or CBC ciphers");
+		}
+		base.cipher = cipher;
+		blockSize = cipher.GetBlockSize();
+		buf = new byte[blockSize * 2];
+		bufOff = 0;
 	}
+
+	public override int GetUpdateOutputSize(int length)
+	{
+		int num = length + bufOff;
+		int num2 = num % buf.Length;
+		if (num2 == 0)
+		{
+			return num - buf.Length;
+		}
+		return num - num2;
+	}
+
+	public override int GetOutputSize(int length)
+	{
+		return length + bufOff;
+	}
+
+	public override int ProcessByte(byte input, byte[] output, int outOff)
+	{
+		int result = 0;
+		if (bufOff == buf.Length)
+		{
+			result = cipher.ProcessBlock(buf, 0, output, outOff);
+			Array.Copy(buf, blockSize, buf, 0, blockSize);
+			bufOff = blockSize;
+		}
+		buf[bufOff++] = input;
+		return result;
+	}
+
+	public override int ProcessBytes(byte[] input, int inOff, int length, byte[] output, int outOff)
+	{
+		if (length < 0)
+		{
+			throw new ArgumentException("Can't have a negative input outLength!");
+		}
+		int num = GetBlockSize();
+		int updateOutputSize = GetUpdateOutputSize(length);
+		if (updateOutputSize > 0 && outOff + updateOutputSize > output.Length)
+		{
+			throw new DataLengthException("output buffer too short");
+		}
+		int num2 = 0;
+		int num3 = buf.Length - bufOff;
+		if (length > num3)
+		{
+			Array.Copy(input, inOff, buf, bufOff, num3);
+			num2 += cipher.ProcessBlock(buf, 0, output, outOff);
+			Array.Copy(buf, num, buf, 0, num);
+			bufOff = num;
+			length -= num3;
+			inOff += num3;
+			while (length > num)
+			{
+				Array.Copy(input, inOff, buf, bufOff, num);
+				num2 += cipher.ProcessBlock(buf, 0, output, outOff + num2);
+				Array.Copy(buf, num, buf, 0, num);
+				length -= num;
+				inOff += num;
+			}
+		}
+		Array.Copy(input, inOff, buf, bufOff, length);
+		bufOff += length;
+		return num2;
+	}
+
+	public override int DoFinal(byte[] output, int outOff)
+	{
+		if (bufOff + outOff > output.Length)
+		{
+			throw new DataLengthException("output buffer too small in doFinal");
+		}
+		int num = cipher.GetBlockSize();
+		int length = bufOff - num;
+		byte[] array = new byte[num];
+		if (forEncryption)
+		{
+			cipher.ProcessBlock(buf, 0, array, 0);
+			if (bufOff < num)
+			{
+				throw new DataLengthException("need at least one block of input for CTS");
+			}
+			for (int i = bufOff; i != buf.Length; i++)
+			{
+				buf[i] = array[i - num];
+			}
+			for (int j = num; j != bufOff; j++)
+			{
+				buf[j] ^= array[j - num];
+			}
+			IBlockCipher blockCipher;
+			if (cipher is CbcBlockCipher)
+			{
+				IBlockCipher underlyingCipher = ((CbcBlockCipher)cipher).GetUnderlyingCipher();
+				blockCipher = underlyingCipher;
+			}
+			else
+			{
+				blockCipher = cipher;
+			}
+			IBlockCipher blockCipher2 = blockCipher;
+			blockCipher2.ProcessBlock(buf, num, output, outOff);
+			Array.Copy(array, 0, output, outOff + num, length);
+		}
+		else
+		{
+			byte[] array2 = new byte[num];
+			IBlockCipher blockCipher3;
+			if (cipher is CbcBlockCipher)
+			{
+				IBlockCipher underlyingCipher = ((CbcBlockCipher)cipher).GetUnderlyingCipher();
+				blockCipher3 = underlyingCipher;
+			}
+			else
+			{
+				blockCipher3 = cipher;
+			}
+			IBlockCipher blockCipher4 = blockCipher3;
+			blockCipher4.ProcessBlock(buf, 0, array, 0);
+			for (int k = num; k != bufOff; k++)
+			{
+				array2[k - num] = (byte)(array[k - num] ^ buf[k]);
+			}
+			Array.Copy(buf, num, array, 0, length);
+			cipher.ProcessBlock(array, 0, output, outOff);
+			Array.Copy(array2, 0, output, outOff + num, length);
+		}
+		int result = bufOff;
+		Reset();
+		return result;
+	}
+}
 }

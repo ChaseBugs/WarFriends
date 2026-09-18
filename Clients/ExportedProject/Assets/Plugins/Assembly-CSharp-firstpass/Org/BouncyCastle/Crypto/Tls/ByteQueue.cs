@@ -1,66 +1,94 @@
-using UnityEngine;
+using System;
 
 namespace Org.BouncyCastle.Crypto.Tls
 {
-	public class ByteQueue : MonoBehaviour
+public class ByteQueue
+{
+	private const int DefaultCapacity = 1024;
+
+	private byte[] databuf;
+
+	private int skipped;
+
+	private int available;
+
+	public int Available => available;
+
+	public ByteQueue()
+		: this(1024)
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
 	}
+
+	public ByteQueue(int capacity)
+	{
+		databuf = new byte[capacity];
+	}
+
+	public static int NextTwoPow(int i)
+	{
+		i |= i >> 1;
+		i |= i >> 2;
+		i |= i >> 4;
+		i |= i >> 8;
+		i |= i >> 16;
+		return i + 1;
+	}
+
+	public void Read(byte[] buf, int offset, int len, int skip)
+	{
+		if (buf.Length - offset < len)
+		{
+			throw new ArgumentException("Buffer size of " + buf.Length + " is too small for a read of " + len + " bytes");
+		}
+		if (available - skip < len)
+		{
+			throw new InvalidOperationException("Not enough data to read");
+		}
+		Array.Copy(databuf, skipped + skip, buf, offset, len);
+	}
+
+	public void AddData(byte[] data, int offset, int len)
+	{
+		if (skipped + available + len > databuf.Length)
+		{
+			int num = NextTwoPow(available + len);
+			if (num > databuf.Length)
+			{
+				byte[] destinationArray = new byte[num];
+				Array.Copy(databuf, skipped, destinationArray, 0, available);
+				databuf = destinationArray;
+			}
+			else
+			{
+				Array.Copy(databuf, skipped, databuf, 0, available);
+			}
+			skipped = 0;
+		}
+		Array.Copy(data, offset, databuf, skipped + available, len);
+		available += len;
+	}
+
+	public void RemoveData(int i)
+	{
+		if (i > available)
+		{
+			throw new InvalidOperationException("Cannot remove " + i + " bytes, only got " + available);
+		}
+		available -= i;
+		skipped += i;
+	}
+
+	public void RemoveData(byte[] buf, int off, int len, int skip)
+	{
+		Read(buf, off, len, skip);
+		RemoveData(skip + len);
+	}
+
+	public byte[] RemoveData(int len, int skip)
+	{
+		byte[] array = new byte[len];
+		RemoveData(array, 0, len, skip);
+		return array;
+	}
+}
 }

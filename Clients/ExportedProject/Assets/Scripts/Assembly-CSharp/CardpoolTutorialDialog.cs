@@ -1,63 +1,140 @@
+using System;
 using UnityEngine;
 
-public class CardpoolTutorialDialog : MonoBehaviour
+public class CardpoolTutorialDialog : GuiElementSingle<CardpoolTutorialDialog>, IGuiDialog
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Header("Right")]
+	public UITable wholeTextTable;
 
-	1. No dll files were provided to AssetRipper.
+	public UITable specialLineTable;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public UILabel[] labels;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public GameObject[] hideObjects;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	[Header("Left")]
+	public CardRecord cardRecordPrefab;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public GameObject parentForInstantiate;
 
-	3. Assembly Reconstruction has not been implemented.
+	public UISprite[] arrows;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public CardpoolDialogCardRecord[] bottomContainers;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	[Header("Bottom")]
+	public GameObject continueButton;
 
-	4. This script is unnecessary.
+	private CardRecord mInstantiatedCardrecord;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private int mAnimatingObject = -1;
 
-	5. Script Content Level 0
+	public void ShowDialog()
+	{
+		Singleton<GuiManager>.instance.ShowDialog(this, 0f);
+	}
 
-		AssetRipper was set to not load any script information.
+	public override void InitControls()
+	{
+		UIEventListener uIEventListener = UIEventListener.Get(continueButton);
+		uIEventListener.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener.onClick, new UIEventListener.VoidDelegate(ContinueClick));
+		UITable uITable = specialLineTable;
+		uITable.onReposition = (UITable.OnReposition)Delegate.Combine(uITable.onReposition, new UITable.OnReposition(OnLineReposition));
+		if (Localization.instance.currentLanguage == "de" || Localization.instance.currentLanguage == "pt")
+		{
+			for (int i = 0; i < labels.Length; i++)
+			{
+				labels[i].transform.localScale = new Vector3(38f, 38f, 1f);
+			}
+		}
+		if (Localization.instance.currentLanguage == "it")
+		{
+			for (int j = 0; j < hideObjects.Length; j++)
+			{
+				hideObjects[j].SetActive(value: false);
+			}
+		}
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	private void ContinueClick(GameObject go)
+	{
+		if (base.isFullyShowed)
+		{
+			HideDialog();
+		}
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	private void OnLineReposition()
+	{
+		wholeTextTable.repositionNow = true;
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	public override void InitGUIValues()
+	{
+		specialLineTable.repositionNow = true;
+		mInstantiatedCardrecord = Singleton<GuiManager>.instance.objectPool.InstantiateAsChild(cardRecordPrefab, parentForInstantiate, "Mine Buddy Warcard") as CardRecord;
+		if (mInstantiatedCardrecord != null)
+		{
+			CardManager.instance.InitializeBuddyWarcard();
+			mInstantiatedCardrecord.Initialize(CardManager.instance.buddyCard, CardRecord.Behaviour.CountDownBuddy);
+			mInstantiatedCardrecord.behaviour = CardRecord.Behaviour.Other;
+			mInstantiatedCardrecord.countdownPart.SetActive(value: false);
+		}
+		mAnimatingObject = -1;
+		for (int i = 0; i < arrows.Length; i++)
+		{
+			TweenAlpha component = arrows[i].GetComponent<TweenAlpha>();
+			if (component != null)
+			{
+				component.enabled = false;
+			}
+			arrows[i].alpha = 1f;
+		}
+		bottomContainers[0].InitializeEmpty();
+		bottomContainers[0].boxCollider.enabled = false;
+		bottomContainers[0].closeIcon.gameObject.SetActive(value: false);
+		bottomContainers[1].InitializeCard(CardManager.instance.GetCardInstance("IMMORTAL"));
+		bottomContainers[1].boxCollider.enabled = false;
+		bottomContainers[1].closeIcon.gameObject.SetActive(value: false);
+		bottomContainers[2].InitializeEmpty();
+		bottomContainers[2].boxCollider.enabled = false;
+		bottomContainers[2].closeIcon.gameObject.SetActive(value: false);
+		Singleton<BeanstalkServerManager>.instance.CardpoolShown();
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	protected override void Update()
+	{
+		base.Update();
+		if (!base.isFullyShowed)
+		{
+			return;
+		}
+		float realtimeSinceStartup = Time.realtimeSinceStartup;
+		int num = (int)(realtimeSinceStartup * 7f) % 5;
+		if (num != mAnimatingObject)
+		{
+			mAnimatingObject = num;
+			if (mAnimatingObject > -1 && mAnimatingObject < arrows.Length)
+			{
+				TweenAlpha tweenAlpha = TweenAlpha.Begin(arrows[mAnimatingObject].gameObject, 0.2f, 1f, 0.5f);
+				tweenAlpha.style = UITweener.Style.PingPong;
+				tweenAlpha.NumOfRepetitions = 2;
+			}
+		}
+	}
 
-	*/
+	public override void DoAfterHide()
+	{
+		base.DoAfterHide();
+		mInstantiatedCardrecord.DestroyPooled();
+	}
+
+	public GuiElement GetGuiElement()
+	{
+		return this;
+	}
+
+	public override void OnBack()
+	{
+		ContinueClick(continueButton.gameObject);
+	}
 }

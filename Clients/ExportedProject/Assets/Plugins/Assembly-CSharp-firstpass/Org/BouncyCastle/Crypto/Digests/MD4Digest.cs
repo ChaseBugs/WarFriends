@@ -1,66 +1,223 @@
-using UnityEngine;
+using System;
+using Org.BouncyCastle.Utilities;
 
 namespace Org.BouncyCastle.Crypto.Digests
 {
-	public class MD4Digest : MonoBehaviour
+public class MD4Digest : GeneralDigest
+{
+	private const int DigestLength = 16;
+
+	private const int S11 = 3;
+
+	private const int S12 = 7;
+
+	private const int S13 = 11;
+
+	private const int S14 = 19;
+
+	private const int S21 = 3;
+
+	private const int S22 = 5;
+
+	private const int S23 = 9;
+
+	private const int S24 = 13;
+
+	private const int S31 = 3;
+
+	private const int S32 = 9;
+
+	private const int S33 = 11;
+
+	private const int S34 = 15;
+
+	private int H1;
+
+	private int H2;
+
+	private int H3;
+
+	private int H4;
+
+	private int[] X = new int[16];
+
+	private int xOff;
+
+	public override string AlgorithmName => "MD4";
+
+	public MD4Digest()
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
+		Reset();
 	}
+
+	public MD4Digest(MD4Digest t)
+		: base(t)
+	{
+		CopyIn(t);
+	}
+
+	private void CopyIn(MD4Digest t)
+	{
+		CopyIn((GeneralDigest)t);
+		H1 = t.H1;
+		H2 = t.H2;
+		H3 = t.H3;
+		H4 = t.H4;
+		Array.Copy(t.X, 0, X, 0, t.X.Length);
+		xOff = t.xOff;
+	}
+
+	public override int GetDigestSize()
+	{
+		return 16;
+	}
+
+	internal override void ProcessWord(byte[] input, int inOff)
+	{
+		X[xOff++] = (input[inOff] & 0xFF) | ((input[inOff + 1] & 0xFF) << 8) | ((input[inOff + 2] & 0xFF) << 16) | ((input[inOff + 3] & 0xFF) << 24);
+		if (xOff == 16)
+		{
+			ProcessBlock();
+		}
+	}
+
+	internal override void ProcessLength(long bitLength)
+	{
+		if (xOff > 14)
+		{
+			ProcessBlock();
+		}
+		X[14] = (int)(bitLength & 0xFFFFFFFFu);
+		X[15] = (int)((long)((ulong)(bitLength) >> (32)));
+	}
+
+	private void UnpackWord(int word, byte[] outBytes, int outOff)
+	{
+		outBytes[outOff] = (byte)word;
+		outBytes[outOff + 1] = (byte)((uint)word >> 8);
+		outBytes[outOff + 2] = (byte)((uint)word >> 16);
+		outBytes[outOff + 3] = (byte)((uint)word >> 24);
+	}
+
+	public override int DoFinal(byte[] output, int outOff)
+	{
+		Finish();
+		UnpackWord(H1, output, outOff);
+		UnpackWord(H2, output, outOff + 4);
+		UnpackWord(H3, output, outOff + 8);
+		UnpackWord(H4, output, outOff + 12);
+		Reset();
+		return 16;
+	}
+
+	public override void Reset()
+	{
+		base.Reset();
+		H1 = 1732584193;
+		H2 = -271733879;
+		H3 = -1732584194;
+		H4 = 271733878;
+		xOff = 0;
+		for (int i = 0; i != X.Length; i++)
+		{
+			X[i] = 0;
+		}
+	}
+
+	private int RotateLeft(int x, int n)
+	{
+		return (x << n) | ((int)((uint)(x) >> (32)) - n);
+	}
+
+	private int F(int u, int v, int w)
+	{
+		return (u & v) | (~u & w);
+	}
+
+	private int G(int u, int v, int w)
+	{
+		return (u & v) | (u & w) | (v & w);
+	}
+
+	private int H(int u, int v, int w)
+	{
+		return u ^ v ^ w;
+	}
+
+	internal override void ProcessBlock()
+	{
+		int h = H1;
+		int h2 = H2;
+		int h3 = H3;
+		int h4 = H4;
+		h = RotateLeft(h + F(h2, h3, h4) + X[0], 3);
+		h4 = RotateLeft(h4 + F(h, h2, h3) + X[1], 7);
+		h3 = RotateLeft(h3 + F(h4, h, h2) + X[2], 11);
+		h2 = RotateLeft(h2 + F(h3, h4, h) + X[3], 19);
+		h = RotateLeft(h + F(h2, h3, h4) + X[4], 3);
+		h4 = RotateLeft(h4 + F(h, h2, h3) + X[5], 7);
+		h3 = RotateLeft(h3 + F(h4, h, h2) + X[6], 11);
+		h2 = RotateLeft(h2 + F(h3, h4, h) + X[7], 19);
+		h = RotateLeft(h + F(h2, h3, h4) + X[8], 3);
+		h4 = RotateLeft(h4 + F(h, h2, h3) + X[9], 7);
+		h3 = RotateLeft(h3 + F(h4, h, h2) + X[10], 11);
+		h2 = RotateLeft(h2 + F(h3, h4, h) + X[11], 19);
+		h = RotateLeft(h + F(h2, h3, h4) + X[12], 3);
+		h4 = RotateLeft(h4 + F(h, h2, h3) + X[13], 7);
+		h3 = RotateLeft(h3 + F(h4, h, h2) + X[14], 11);
+		h2 = RotateLeft(h2 + F(h3, h4, h) + X[15], 19);
+		h = RotateLeft(h + G(h2, h3, h4) + X[0] + 1518500249, 3);
+		h4 = RotateLeft(h4 + G(h, h2, h3) + X[4] + 1518500249, 5);
+		h3 = RotateLeft(h3 + G(h4, h, h2) + X[8] + 1518500249, 9);
+		h2 = RotateLeft(h2 + G(h3, h4, h) + X[12] + 1518500249, 13);
+		h = RotateLeft(h + G(h2, h3, h4) + X[1] + 1518500249, 3);
+		h4 = RotateLeft(h4 + G(h, h2, h3) + X[5] + 1518500249, 5);
+		h3 = RotateLeft(h3 + G(h4, h, h2) + X[9] + 1518500249, 9);
+		h2 = RotateLeft(h2 + G(h3, h4, h) + X[13] + 1518500249, 13);
+		h = RotateLeft(h + G(h2, h3, h4) + X[2] + 1518500249, 3);
+		h4 = RotateLeft(h4 + G(h, h2, h3) + X[6] + 1518500249, 5);
+		h3 = RotateLeft(h3 + G(h4, h, h2) + X[10] + 1518500249, 9);
+		h2 = RotateLeft(h2 + G(h3, h4, h) + X[14] + 1518500249, 13);
+		h = RotateLeft(h + G(h2, h3, h4) + X[3] + 1518500249, 3);
+		h4 = RotateLeft(h4 + G(h, h2, h3) + X[7] + 1518500249, 5);
+		h3 = RotateLeft(h3 + G(h4, h, h2) + X[11] + 1518500249, 9);
+		h2 = RotateLeft(h2 + G(h3, h4, h) + X[15] + 1518500249, 13);
+		h = RotateLeft(h + H(h2, h3, h4) + X[0] + 1859775393, 3);
+		h4 = RotateLeft(h4 + H(h, h2, h3) + X[8] + 1859775393, 9);
+		h3 = RotateLeft(h3 + H(h4, h, h2) + X[4] + 1859775393, 11);
+		h2 = RotateLeft(h2 + H(h3, h4, h) + X[12] + 1859775393, 15);
+		h = RotateLeft(h + H(h2, h3, h4) + X[2] + 1859775393, 3);
+		h4 = RotateLeft(h4 + H(h, h2, h3) + X[10] + 1859775393, 9);
+		h3 = RotateLeft(h3 + H(h4, h, h2) + X[6] + 1859775393, 11);
+		h2 = RotateLeft(h2 + H(h3, h4, h) + X[14] + 1859775393, 15);
+		h = RotateLeft(h + H(h2, h3, h4) + X[1] + 1859775393, 3);
+		h4 = RotateLeft(h4 + H(h, h2, h3) + X[9] + 1859775393, 9);
+		h3 = RotateLeft(h3 + H(h4, h, h2) + X[5] + 1859775393, 11);
+		h2 = RotateLeft(h2 + H(h3, h4, h) + X[13] + 1859775393, 15);
+		h = RotateLeft(h + H(h2, h3, h4) + X[3] + 1859775393, 3);
+		h4 = RotateLeft(h4 + H(h, h2, h3) + X[11] + 1859775393, 9);
+		h3 = RotateLeft(h3 + H(h4, h, h2) + X[7] + 1859775393, 11);
+		h2 = RotateLeft(h2 + H(h3, h4, h) + X[15] + 1859775393, 15);
+		H1 += h;
+		H2 += h2;
+		H3 += h3;
+		H4 += h4;
+		xOff = 0;
+		for (int i = 0; i != X.Length; i++)
+		{
+			X[i] = 0;
+		}
+	}
+
+	public override IMemoable Copy()
+	{
+		return new MD4Digest(this);
+	}
+
+	public override void Reset(IMemoable other)
+	{
+		MD4Digest t = (MD4Digest)other;
+		CopyIn(t);
+	}
+}
 }

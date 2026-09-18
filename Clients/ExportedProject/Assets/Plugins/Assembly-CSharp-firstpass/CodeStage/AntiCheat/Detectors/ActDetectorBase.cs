@@ -1,66 +1,128 @@
 using UnityEngine;
+using UnityEngine.Events;
 
 namespace CodeStage.AntiCheat.Detectors
 {
-	public class ActDetectorBase : MonoBehaviour
+[AddComponentMenu("")]
+public abstract class ActDetectorBase : MonoBehaviour
+{
+	protected const string CONTAINER_NAME = "Anti-Cheat Toolkit Detectors";
+
+	protected const string MENU_PATH = "Code Stage/Anti-Cheat Toolkit/";
+
+	protected const string GAME_OBJECT_MENU_PATH = "GameObject/Create Other/Code Stage/Anti-Cheat Toolkit/";
+
+	protected static GameObject detectorsContainer;
+
+	[Tooltip("Automatically start detector. Detection Event will be called on detection.")]
+	public bool autoStart = true;
+
+	[Tooltip("Detector will survive new level (scene) load if checked.")]
+	public bool keepAlive = true;
+
+	[Tooltip("Automatically dispose Detector after firing callback.")]
+	public bool autoDispose = true;
+
+	[SerializeField]
+	protected UnityEvent detectionEvent;
+
+	protected UnityAction detectionAction;
+
+	[SerializeField]
+	protected bool detectionEventHasListener;
+
+	protected bool isRunning;
+
+	protected bool started;
+
+	private void Start()
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
+		if (detectorsContainer == null && base.gameObject.name == "Anti-Cheat Toolkit Detectors")
+		{
+			detectorsContainer = base.gameObject;
+		}
+		if (autoStart && !started)
+		{
+			StartDetectionAutomatically();
+		}
 	}
+
+	private void OnEnable()
+	{
+		if (started && (detectionEventHasListener || detectionAction != null))
+		{
+			ResumeDetector();
+		}
+	}
+
+	private void OnDisable()
+	{
+		if (started)
+		{
+			PauseDetector();
+		}
+	}
+
+	private void OnApplicationQuit()
+	{
+		DisposeInternal();
+	}
+
+	protected virtual void OnDestroy()
+	{
+		StopDetectionInternal();
+		if (base.transform.childCount == 0 && GetComponentsInChildren<Component>().Length <= 2)
+		{
+			Object.Destroy(base.gameObject);
+		}
+		else if (base.name == "Anti-Cheat Toolkit Detectors" && GetComponentsInChildren<ActDetectorBase>().Length <= 1)
+		{
+			Object.Destroy(base.gameObject);
+		}
+	}
+
+	protected virtual bool Init(ActDetectorBase instance, string detectorName)
+	{
+		if (instance != null && instance != this && instance.keepAlive)
+		{
+			Object.Destroy(this);
+			return false;
+		}
+		Object.DontDestroyOnLoad(base.gameObject);
+		return true;
+	}
+
+	protected virtual void DisposeInternal()
+	{
+		Object.Destroy(this);
+	}
+
+	internal virtual void OnCheatingDetected()
+	{
+		if (detectionAction != null)
+		{
+			detectionAction();
+		}
+		if (detectionEventHasListener)
+		{
+			detectionEvent.Invoke();
+		}
+		if (autoDispose)
+		{
+			DisposeInternal();
+		}
+		else
+		{
+			StopDetectionInternal();
+		}
+	}
+
+	protected abstract void StartDetectionAutomatically();
+
+	protected abstract void StopDetectionInternal();
+
+	protected abstract void PauseDetector();
+
+	protected abstract void ResumeDetector();
+}
 }

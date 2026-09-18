@@ -1,66 +1,150 @@
-using UnityEngine;
+using System;
+using Org.BouncyCastle.Crypto.Modes;
+using Org.BouncyCastle.Crypto.Parameters;
+using Org.BouncyCastle.Utilities;
 
 namespace Org.BouncyCastle.Crypto.Tls
 {
-	public class TlsAeadCipher : MonoBehaviour
+public class TlsAeadCipher : TlsCipher
+{
+	protected readonly TlsContext context;
+
+	protected readonly int macSize;
+
+	protected readonly int nonce_explicit_length;
+
+	protected readonly IAeadBlockCipher encryptCipher;
+
+	protected readonly IAeadBlockCipher decryptCipher;
+
+	protected readonly byte[] encryptImplicitNonce;
+
+	protected readonly byte[] decryptImplicitNonce;
+
+	public TlsAeadCipher(TlsContext context, IAeadBlockCipher clientWriteCipher, IAeadBlockCipher serverWriteCipher, int cipherKeySize, int macSize)
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
+		if (!TlsUtilities.IsTlsV12(context))
+		{
+			throw new TlsFatalAlert(80);
+		}
+		this.context = context;
+		this.macSize = macSize;
+		nonce_explicit_length = 8;
+		int num = 4;
+		int num2 = 2 * cipherKeySize + 2 * num;
+		byte[] array = TlsUtilities.CalculateKeyBlock(context, num2);
+		int num3 = 0;
+		KeyParameter keyParameter = new KeyParameter(array, num3, cipherKeySize);
+		num3 += cipherKeySize;
+		KeyParameter keyParameter2 = new KeyParameter(array, num3, cipherKeySize);
+		num3 += cipherKeySize;
+		byte[] array2 = Arrays.CopyOfRange(array, num3, num3 + num);
+		num3 += num;
+		byte[] array3 = Arrays.CopyOfRange(array, num3, num3 + num);
+		num3 += num;
+		if (num3 != num2)
+		{
+			throw new TlsFatalAlert(80);
+		}
+		KeyParameter key;
+		KeyParameter key2;
+		if (context.IsServer)
+		{
+			encryptCipher = serverWriteCipher;
+			decryptCipher = clientWriteCipher;
+			encryptImplicitNonce = array3;
+			decryptImplicitNonce = array2;
+			key = keyParameter2;
+			key2 = keyParameter;
+		}
+		else
+		{
+			encryptCipher = clientWriteCipher;
+			decryptCipher = serverWriteCipher;
+			encryptImplicitNonce = array2;
+			decryptImplicitNonce = array3;
+			key = keyParameter;
+			key2 = keyParameter2;
+		}
+		byte[] nonce = new byte[num + nonce_explicit_length];
+		encryptCipher.Init(forEncryption: true, new AeadParameters(key, 8 * macSize, nonce));
+		decryptCipher.Init(forEncryption: false, new AeadParameters(key2, 8 * macSize, nonce));
 	}
+
+	public virtual int GetPlaintextLimit(int ciphertextLimit)
+	{
+		return ciphertextLimit - macSize - nonce_explicit_length;
+	}
+
+	public virtual byte[] EncodePlaintext(long seqNo, byte type, byte[] plaintext, int offset, int len)
+	{
+		byte[] array = new byte[encryptImplicitNonce.Length + nonce_explicit_length];
+		Array.Copy(encryptImplicitNonce, 0, array, 0, encryptImplicitNonce.Length);
+		TlsUtilities.WriteUint64(seqNo, array, encryptImplicitNonce.Length);
+		int outputSize = encryptCipher.GetOutputSize(len);
+		byte[] array2 = new byte[nonce_explicit_length + outputSize];
+		Array.Copy(array, encryptImplicitNonce.Length, array2, 0, nonce_explicit_length);
+		int num = nonce_explicit_length;
+		byte[] additionalData = GetAdditionalData(seqNo, type, len);
+		AeadParameters parameters = new AeadParameters(null, 8 * macSize, array, additionalData);
+		try
+		{
+			encryptCipher.Init(forEncryption: true, parameters);
+			num += encryptCipher.ProcessBytes(plaintext, offset, len, array2, num);
+			num += encryptCipher.DoFinal(array2, num);
+		}
+		catch (Exception alertCause)
+		{
+			throw new TlsFatalAlert(80, alertCause);
+		}
+		if (num != array2.Length)
+		{
+			throw new TlsFatalAlert(80);
+		}
+		return array2;
+	}
+
+	public virtual byte[] DecodeCiphertext(long seqNo, byte type, byte[] ciphertext, int offset, int len)
+	{
+		if (GetPlaintextLimit(len) < 0)
+		{
+			throw new TlsFatalAlert(50);
+		}
+		byte[] array = new byte[decryptImplicitNonce.Length + nonce_explicit_length];
+		Array.Copy(decryptImplicitNonce, 0, array, 0, decryptImplicitNonce.Length);
+		Array.Copy(ciphertext, offset, array, decryptImplicitNonce.Length, nonce_explicit_length);
+		int inOff = offset + nonce_explicit_length;
+		int len2 = len - nonce_explicit_length;
+		int outputSize = decryptCipher.GetOutputSize(len2);
+		byte[] array2 = new byte[outputSize];
+		int num = 0;
+		byte[] additionalData = GetAdditionalData(seqNo, type, outputSize);
+		AeadParameters parameters = new AeadParameters(null, 8 * macSize, array, additionalData);
+		try
+		{
+			decryptCipher.Init(forEncryption: false, parameters);
+			num += decryptCipher.ProcessBytes(ciphertext, inOff, len2, array2, num);
+			num += decryptCipher.DoFinal(array2, num);
+		}
+		catch (Exception alertCause)
+		{
+			throw new TlsFatalAlert(20, alertCause);
+		}
+		if (num != array2.Length)
+		{
+			throw new TlsFatalAlert(80);
+		}
+		return array2;
+	}
+
+	protected virtual byte[] GetAdditionalData(long seqNo, byte type, int len)
+	{
+		byte[] array = new byte[13];
+		TlsUtilities.WriteUint64(seqNo, array, 0);
+		TlsUtilities.WriteUint8(type, array, 8);
+		TlsUtilities.WriteVersion(context.ServerVersion, array, 9);
+		TlsUtilities.WriteUint16(len, array, 11);
+		return array;
+	}
+}
 }

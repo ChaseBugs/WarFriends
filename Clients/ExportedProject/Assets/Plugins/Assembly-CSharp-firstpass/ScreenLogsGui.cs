@@ -1,63 +1,46 @@
 using UnityEngine;
 
-public class ScreenLogsGui : MonoBehaviour
+public class ScreenLogsGui : Core_BaseScript
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public Logs logs;
 
-	1. No dll files were provided to AssetRipper.
+	public void OnGUI()
+	{
+		GUI.skin.verticalScrollbar.fixedWidth = (float)Screen.width * 0.04f;
+		GUI.skin.verticalScrollbarThumb.fixedWidth = (float)Screen.width * 0.04f;
+		GUI.skin.label.wordWrap = true;
+		DrawQuad(logs.guiRect, Colours.grayLog);
+		GUILayout.BeginArea(logs.guiRect, logs.CustomGUIStyle);
+		if (GUILayout.Button((!logs.logsSent) ? "Send logs to database" : ("LOGS SENT: " + logs.logId), GUILayout.Height((float)Screen.height * 0.04f)) && !logs.logsSent)
+		{
+			logs.SendLogs();
+		}
+		logs.scrollPos = GUILayout.BeginScrollView(logs.scrollPos);
+		GUI.color = Color.white;
+		GUILayout.Label("LOGS");
+		int num = 0;
+		foreach (Logs.LogEntry log in logs.logs)
+		{
+			num++;
+			if (logs.logs.Count - num < 100)
+			{
+				GUI.contentColor = logs.GetColor(log.type);
+				GUI.skin.label.fontStyle = FontStyle.Bold;
+				GUI.skin.label.fontSize = 15;
+				GUI.skin.label.stretchHeight = true;
+				GUILayout.Label(log.output);
+				GUI.skin.label.fontSize = 13;
+				GUI.skin.label.fontStyle = FontStyle.Normal;
+				GUILayout.Label(log.stack);
+			}
+		}
+		GUILayout.EndScrollView();
+		GUILayout.EndArea();
+	}
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
-
-	2. Incorrect dll files were provided to AssetRipper.
-
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
-
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-	3. Assembly Reconstruction has not been implemented.
-
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
-
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
-
-	4. This script is unnecessary.
-
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
-
-	5. Script Content Level 0
-
-		AssetRipper was set to not load any script information.
-
-	6. Cpp2IL failed to decompile Il2Cpp data
-
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	private void DrawQuad(Rect position, Color color)
+	{
+		GUI.skin.box.normal.background = logs.texture;
+		GUI.Box(position, GUIContent.none);
+	}
 }

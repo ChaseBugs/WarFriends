@@ -1,63 +1,95 @@
 using UnityEngine;
 
-public class StarterAssignmentComplete : MonoBehaviour
+public class StarterAssignmentComplete : Core_BaseScript
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Header("Core")]
+	public bool isLast;
 
-	1. No dll files were provided to AssetRipper.
+	public UISprite foreground;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public UILabel number;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public UISprite check;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public void SetCompleted()
+	{
+		foreground.gameObject.SetActive(value: true);
+		number.gameObject.SetActive(value: false);
+		check.gameObject.SetActive(value: true);
+		StopTweens();
+		foreground.alpha = 1f;
+		check.alpha = 1f;
+		check.transform.localScale = new Vector3(37f, 29f, 1f);
+	}
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public void SetCurrent()
+	{
+		foreground.gameObject.SetActive(value: true);
+		number.gameObject.SetActive(value: true);
+		check.gameObject.SetActive(value: false);
+		StopTweens();
+		foreground.alpha = 1f;
+		number.color = ((!isLast) ? Color.white : Colours.goldTier);
+	}
 
-	3. Assembly Reconstruction has not been implemented.
+	public void SetDefault()
+	{
+		foreground.gameObject.SetActive(value: false);
+		number.gameObject.SetActive(value: true);
+		check.gameObject.SetActive(value: false);
+		StopTweens();
+		number.color = ((!isLast) ? Colours.grayLight : Colours.goldTier);
+	}
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public void AnimateFinish()
+	{
+		check.gameObject.SetActive(value: true);
+		check.alpha = 0f;
+		TweenAlpha.Begin(check.gameObject, 0.2f, 0f, 1f);
+		TweenAlpha.Begin(number.gameObject, 0.2f, 1f, 0f);
+		TweenScale.Begin(check.gameObject, 0.2f, new Vector3(111f, 87f, 1f), new Vector3(29.6f, 23.2f, 1f)).onFinished = delegate
+		{
+			TweenScale.Begin(check.gameObject, 0.2f, new Vector3(37f, 29f, 1f)).onFinished = null;
+		};
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public void AnimateProgress()
+	{
+		foreground.gameObject.SetActive(value: true);
+		foreground.alpha = 0f;
+		TweenColor.Begin(number.gameObject, 0.2f, (!isLast) ? Color.white : Colours.goldTier);
+		TweenAlpha tweenAlpha = TweenAlpha.Begin(foreground.gameObject, 0.2f, 0f, 1f);
+		tweenAlpha.NumOfRepetitions = 5;
+		tweenAlpha.style = UITweener.Style.PingPong;
+	}
 
-	4. This script is unnecessary.
-
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
-
-	5. Script Content Level 0
-
-		AssetRipper was set to not load any script information.
-
-	6. Cpp2IL failed to decompile Il2Cpp data
-
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	private void StopTweens()
+	{
+		TweenAlpha component = foreground.gameObject.GetComponent<TweenAlpha>();
+		if (component != null)
+		{
+			component.enabled = false;
+		}
+		component = check.gameObject.GetComponent<TweenAlpha>();
+		if (component != null)
+		{
+			component.enabled = false;
+		}
+		component = number.gameObject.GetComponent<TweenAlpha>();
+		if (component != null)
+		{
+			component.enabled = false;
+		}
+		TweenColor component2 = number.gameObject.GetComponent<TweenColor>();
+		if (component2 != null)
+		{
+			component2.enabled = false;
+		}
+		TweenScale component3 = check.gameObject.GetComponent<TweenScale>();
+		if (component3 != null)
+		{
+			component3.onFinished = null;
+			component3.enabled = false;
+		}
+	}
 }

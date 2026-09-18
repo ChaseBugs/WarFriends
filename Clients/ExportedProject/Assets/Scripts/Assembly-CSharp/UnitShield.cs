@@ -1,63 +1,127 @@
 using UnityEngine;
 
-public class UnitShield : MonoBehaviour
+public class UnitShield : Core_BaseScript
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public DestroyableObject destroyableObject;
 
-	1. No dll files were provided to AssetRipper.
+	public DestroyableObject shieldDestroyableObject;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public float shieldStrength = 0.2f;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public float shieldRechargeRate = 0.33f;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	private PhotonView mPhotonView;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	private float mShieldSyncTimer;
 
-	3. Assembly Reconstruction has not been implemented.
+	private int mHitCount;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	protected override void Awake()
+	{
+		base.Awake();
+		mPhotonView = GetComponent<PhotonView>();
+		shieldDestroyableObject.OnDeath += ShieldDestroyableObjectOnOnDeath;
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	private void Update()
+	{
+		if (!mPhotonView.isMine || !shieldDestroyableObject.enabled)
+		{
+			return;
+		}
+		mShieldSyncTimer += Time.deltaTime;
+		if (shieldDestroyableObject.health < shieldDestroyableObject.maxHealth)
+		{
+			shieldDestroyableObject.health += Time.deltaTime * shieldDestroyableObject.maxHealth * shieldRechargeRate;
+			if (mShieldSyncTimer > 0.2f)
+			{
+				mShieldSyncTimer -= 0.2f;
+				mPhotonView.RPC("SyncShield", PhotonTargets.Others, shieldDestroyableObject.health, mHitCount);
+			}
+		}
+	}
 
-	4. This script is unnecessary.
+	private void ShieldDestroyableObjectOnOnDeath(DestroyableObject destroyableObject, DestroyableObject.DamageInfo damageInfo)
+	{
+		ClearShield();
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private void MainObjectOnDamage(DestroyableObject destroyableObj, DestroyableObject.DamageInfo damageInfo)
+	{
+		if (!damageInfo.isNetwork)
+		{
+			if (!destroyableObject.isImmortal)
+			{
+				destroyableObject.health += Mathf.Max(0f, Mathf.Min(damageInfo.originalDamage, shieldDestroyableObject.health));
+			}
+			shieldDestroyableObject.DoDamage(new DestroyableObject.DamageInfo
+			{
+				damageAmount = Mathf.Max(0f, damageInfo.originalDamage),
+				isNetwork = false,
+				type = damageInfo.type
+			});
+			if (shieldDestroyableObject.health <= 0f)
+			{
+				ClearShield();
+			}
+			mPhotonView.RPC("SyncShield", PhotonTargets.Others, shieldDestroyableObject.health, ++mHitCount);
+		}
+	}
 
-	5. Script Content Level 0
+	public void SetUpShield(int stackIndex = 1)
+	{
+		shieldDestroyableObject.owner = destroyableObject.owner;
+		shieldDestroyableObject.healthBarPosition.transform.parent = destroyableObject.healthBarPosition.parent;
+		shieldDestroyableObject.healthBarPosition.transform.localPosition = destroyableObject.healthBarPosition.localPosition;
+		shieldDestroyableObject.offset = ((!(destroyableObject.owner is EnemyController)) ? new Vector3(0f, 3.6f * (float)stackIndex, 0f) : new Vector3(0f, 1.7f * (float)stackIndex, 0f));
+		destroyableObject.OnDamage -= MainObjectOnDamage;
+		destroyableObject.OnDamage += MainObjectOnDamage;
+		shieldDestroyableObject.enabled = true;
+		shieldDestroyableObject.maxHealth = shieldStrength * destroyableObject.maxHealth;
+		destroyableObject.forceHealthBar = true;
+		mHitCount = 0;
+		shieldDestroyableObject.Refill();
+		mPhotonView.RPC("SetUpShieldNetwork", PhotonTargets.Others, shieldDestroyableObject.maxHealth);
+	}
 
-		AssetRipper was set to not load any script information.
+	public void ClearShield()
+	{
+		destroyableObject.OnDamage -= MainObjectOnDamage;
+		shieldDestroyableObject.enabled = false;
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public bool IsActive()
+	{
+		return shieldDestroyableObject.enabled;
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	[PunRPC]
+	private void SyncShield(float health, int hitCount)
+	{
+		if (hitCount >= mHitCount)
+		{
+			shieldDestroyableObject.health = health;
+			if (shieldDestroyableObject.health <= 0f)
+			{
+				destroyableObject.OnDamage -= MainObjectOnDamage;
+				shieldDestroyableObject.enabled = false;
+			}
+			mHitCount = hitCount;
+		}
+	}
 
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	[PunRPC]
+	private void SetUpShieldNetwork(float maxHealth)
+	{
+		shieldDestroyableObject.owner = destroyableObject.owner;
+		shieldDestroyableObject.healthBarPosition.transform.parent = destroyableObject.healthBarPosition.parent;
+		shieldDestroyableObject.healthBarPosition.transform.localPosition = destroyableObject.healthBarPosition.localPosition;
+		shieldDestroyableObject.offset = ((!(destroyableObject.owner is EnemyController)) ? new Vector3(0f, 3.6f, 0f) : new Vector3(0f, 1.7f, 0f));
+		destroyableObject.OnDamage += MainObjectOnDamage;
+		shieldDestroyableObject.enabled = true;
+		shieldDestroyableObject.maxHealth = maxHealth;
+		destroyableObject.forceHealthBar = true;
+		mHitCount = 0;
+		shieldDestroyableObject.Refill();
+	}
 }

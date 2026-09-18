@@ -1,66 +1,179 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Prime31
 {
-	public class FlurryAnalytics : MonoBehaviour
+public class FlurryAnalytics
+{
+	private static AndroidJavaClass _flurryAgent;
+
+	private static AndroidJavaObject _plugin;
+
+	static FlurryAnalytics()
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
+		if (Application.platform != RuntimePlatform.Android)
+		{
+			return;
+		}
+		_flurryAgent = new AndroidJavaClass("com.flurry.android.FlurryAgent");
+		using (AndroidJavaClass androidJavaClass = new AndroidJavaClass("com.prime31.analytics.FlurryAnalytics"))
+		{
+		_plugin = androidJavaClass.CallStatic<AndroidJavaObject>("instance", new object[0]);
+		}
+}
 
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
+	public static void startSession(string apiKey, bool enableLogging = false)
+	{
+		if (Application.platform == RuntimePlatform.Android)
+		{
+			_plugin.Call("onStartSession", apiKey, enableLogging);
+		}
 	}
+
+	public static void onEndSession()
+	{
+		if (Application.platform == RuntimePlatform.Android)
+		{
+			_plugin.Call("onEndSession");
+		}
+	}
+
+	public static void addUserCookie(string key, string value)
+	{
+		if (Application.platform == RuntimePlatform.Android)
+		{
+			_plugin.Call("addUserCookie", key, value);
+		}
+	}
+
+	public static void clearUserCookies()
+	{
+		if (Application.platform == RuntimePlatform.Android)
+		{
+			_plugin.Call("clearUserCookies");
+		}
+	}
+
+	public static void setContinueSessionMillis(long milliseconds)
+	{
+		if (Application.platform == RuntimePlatform.Android)
+		{
+			_flurryAgent.CallStatic("setContinueSessionMillis", milliseconds);
+		}
+	}
+
+	public static void logEvent(string eventName)
+	{
+		logEvent(eventName, isTimed: false);
+	}
+
+	public static void logEvent(string eventName, bool isTimed)
+	{
+		if (Application.platform == RuntimePlatform.Android)
+		{
+			if (isTimed)
+			{
+				_plugin.Call("logTimedEvent", eventName);
+			}
+			else
+			{
+				_plugin.Call("logEvent", eventName);
+			}
+		}
+	}
+
+	public static void logEvent(string eventName, Dictionary<string, string> parameters)
+	{
+		logEvent(eventName, parameters, isTimed: false);
+	}
+
+	public static void logEvent(string eventName, Dictionary<string, string> parameters, bool isTimed)
+	{
+		if (Application.platform == RuntimePlatform.Android)
+		{
+			if (parameters == null)
+			{
+				Debug.LogError("attempting to call logEvent with null parameters");
+			}
+			else if (isTimed)
+			{
+				_plugin.Call("logTimedEventWithParams", eventName, parameters.toJson());
+			}
+			else
+			{
+				_plugin.Call("logEventWithParams", eventName, parameters.toJson());
+			}
+		}
+	}
+
+	public static void endTimedEvent(string eventName)
+	{
+		if (Application.platform == RuntimePlatform.Android)
+		{
+			_plugin.Call("endTimedEvent", eventName);
+		}
+	}
+
+	public static void endTimedEvent(string eventName, Dictionary<string, string> parameters)
+	{
+		if (Application.platform == RuntimePlatform.Android)
+		{
+			if (parameters == null)
+			{
+				Debug.LogError("attempting to call endTimedEvent with null parameters");
+				return;
+			}
+			_plugin.Call("endTimedEventWithParams", eventName, parameters.toJson());
+		}
+	}
+
+	public static void onPageView()
+	{
+		if (Application.platform == RuntimePlatform.Android)
+		{
+			_flurryAgent.CallStatic("onPageView");
+		}
+	}
+
+	public static void onError(string errorId, string message, string errorClass)
+	{
+		if (Application.platform == RuntimePlatform.Android)
+		{
+			_flurryAgent.CallStatic("onError", errorId, message, errorClass);
+		}
+	}
+
+	public static void setUserID(string userId)
+	{
+		if (Application.platform == RuntimePlatform.Android)
+		{
+			_flurryAgent.CallStatic("setUserId", userId);
+		}
+	}
+
+	public static void setAge(int age)
+	{
+		if (Application.platform == RuntimePlatform.Android)
+		{
+			_flurryAgent.CallStatic("setAge", age);
+		}
+	}
+
+	public static void setGender(FlurryGender gender)
+	{
+		if (Application.platform == RuntimePlatform.Android)
+		{
+			AndroidJavaObject androidJavaObject = new AndroidJavaClass("com.flurry.android.Contants").GetStatic<AndroidJavaObject>(gender.ToString().ToUpper());
+			_flurryAgent.CallStatic("setGender", androidJavaObject);
+		}
+	}
+
+	public static void setLogEnabled(bool enable)
+	{
+		if (Application.platform == RuntimePlatform.Android)
+		{
+			_flurryAgent.CallStatic("setLogEnabled", enable);
+		}
+	}
+}
 }

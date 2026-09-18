@@ -1,63 +1,102 @@
+using System;
 using UnityEngine;
 
-public class WararenaRewardRecord : MonoBehaviour
+public class WararenaRewardRecord : PoolableObject
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public enum ClickBehaviour
+	{
+		OpenDialog,
+		ChangeUnit
+	}
 
-	1. No dll files were provided to AssetRipper.
+	[Header("Core")]
+	public UISprite icon;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public UILabel rewardText;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public UISprite visualIcon;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public GameObject unitPart;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public GameObject doubleDropPart;
 
-	3. Assembly Reconstruction has not been implemented.
+	public UISprite unitIcon;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public BoxCollider previewUnit;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	private LevelBehaviour mUnit;
 
-	4. This script is unnecessary.
+	private ClickBehaviour mClickBehaviour;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public void Initialize(WarArenaReward reward, ClickBehaviour clickBehaviour)
+	{
+		WarArenaRewardUnit warArenaRewardUnit = reward as WarArenaRewardUnit;
+		WarArenaRewardCrown warArenaRewardCrown = reward as WarArenaRewardCrown;
+		bool flag = warArenaRewardUnit != null;
+		bool flag2 = warArenaRewardCrown != null;
+		rewardText.text = reward.text;
+		rewardText.transform.localPosition = rewardText.transform.localPosition.ReplaceY((!flag) ? (-73f) : (-53f));
+		icon.gameObject.SetActive(!flag2 && !flag);
+		visualIcon.gameObject.SetActive(flag2);
+		unitPart.SetActive(flag);
+		if (flag2)
+		{
+			visualIcon.spriteName = warArenaRewardCrown.spriteName;
+			visualIcon.MakePixelPerfect();
+			float multiplier = Mathf.Min(142f / visualIcon.transform.localScale.x, 126f / visualIcon.transform.localScale.x);
+			visualIcon.transform.localScale = visualIcon.transform.localScale.MultiplyXY(multiplier);
+		}
+		else if (flag)
+		{
+			mUnit = warArenaRewardUnit.behaviour;
+			mClickBehaviour = clickBehaviour;
+			doubleDropPart.SetActive(warArenaRewardUnit.doubleDrop);
+			unitIcon.spriteName = warArenaRewardUnit.spriteName;
+			unitIcon.MakePixelPerfect();
+			if (mUnit.isSoldier)
+			{
+				unitIcon.pivot = UIWidget.Pivot.Bottom;
+				unitIcon.transform.localPosition = unitIcon.transform.localPosition.ReplaceY(-65f);
+				float multiplier2 = 144f / unitIcon.transform.localScale.y;
+				unitIcon.transform.localScale = unitIcon.transform.localScale.MultiplyXY(multiplier2);
+			}
+			else
+			{
+				unitIcon.pivot = UIWidget.Pivot.Center;
+				unitIcon.transform.localPosition = unitIcon.transform.localPosition.ReplaceY(0f);
+				float multiplier3 = Mathf.Min(176f / unitIcon.transform.localScale.x, 144f / unitIcon.transform.localScale.y);
+				unitIcon.transform.localScale = unitIcon.transform.localScale.MultiplyXY(multiplier3);
+			}
+			UIEventListener uIEventListener = UIEventListener.Get(previewUnit.gameObject);
+			uIEventListener.onClick = (UIEventListener.VoidDelegate)Delegate.Remove(uIEventListener.onClick, new UIEventListener.VoidDelegate(PreviewClick));
+			UIEventListener uIEventListener2 = UIEventListener.Get(previewUnit.gameObject);
+			uIEventListener2.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener2.onClick, new UIEventListener.VoidDelegate(PreviewClick));
+		}
+		else
+		{
+			icon.spriteName = reward.spriteName;
+			icon.MakePixelPerfect();
+			icon.transform.localScale = icon.transform.localScale.MultiplyXY(reward.scaleMultiplier);
+			icon.transform.localRotation = reward.iconRotation;
+		}
+	}
 
-	5. Script Content Level 0
+	private void PreviewClick(GameObject go)
+	{
+		if (mClickBehaviour == ClickBehaviour.OpenDialog)
+		{
+			GuiElementSingle<EliteUnitPreviewDialog>.instance.ShowDialog(mUnit);
+		}
+		else
+		{
+			GuiElementSingle<ArenaOpenedDialog>.instance.ChangeUnit(mUnit);
+		}
+	}
 
-		AssetRipper was set to not load any script information.
-
-	6. Cpp2IL failed to decompile Il2Cpp data
-
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public override void DestroyPooled()
+	{
+		base.DestroyPooled();
+		UIEventListener uIEventListener = UIEventListener.Get(previewUnit.gameObject);
+		uIEventListener.onClick = (UIEventListener.VoidDelegate)Delegate.Remove(uIEventListener.onClick, new UIEventListener.VoidDelegate(PreviewClick));
+	}
 }

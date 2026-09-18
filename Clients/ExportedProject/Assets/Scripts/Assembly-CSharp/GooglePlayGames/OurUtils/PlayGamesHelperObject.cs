@@ -1,66 +1,157 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace GooglePlayGames.OurUtils
 {
-	public class PlayGamesHelperObject : MonoBehaviour
+public class PlayGamesHelperObject : MonoBehaviour
+{
+	private static PlayGamesHelperObject instance = null;
+
+	private static bool sIsDummy = false;
+
+	private static List<Action> sQueue = new List<Action>();
+
+	private List<Action> localQueue = new List<Action>();
+
+	private static volatile bool sQueueEmpty = true;
+
+	private static List<Action<bool>> sPauseCallbackList = new List<Action<bool>>();
+
+	private static List<Action<bool>> sFocusCallbackList = new List<Action<bool>>();
+
+	public static void CreateObject()
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
+		if (!(instance != null))
+		{
+			if (Application.isPlaying)
+			{
+				GameObject gameObject = new GameObject("PlayGames_QueueRunner");
+				UnityEngine.Object.DontDestroyOnLoad(gameObject);
+				instance = gameObject.AddComponent<PlayGamesHelperObject>();
+			}
+			else
+			{
+				instance = new PlayGamesHelperObject();
+				sIsDummy = true;
+			}
+		}
 	}
+
+	public void Awake()
+	{
+		UnityEngine.Object.DontDestroyOnLoad(base.gameObject);
+	}
+
+	public void OnDisable()
+	{
+		if (instance == this)
+		{
+			instance = null;
+		}
+	}
+
+	public static void RunCoroutine(IEnumerator action)
+	{
+		if (instance != null)
+		{
+			RunOnGameThread(delegate
+			{
+				instance.StartCoroutine(action);
+			});
+		}
+	}
+
+	public static void RunOnGameThread(Action action)
+	{
+		if (action == null)
+		{
+			throw new ArgumentNullException("action");
+		}
+		if (sIsDummy)
+		{
+			return;
+		}
+		lock (sQueue)
+		{
+			sQueue.Add(action);
+			sQueueEmpty = false;
+		}
+	}
+
+	public void Update()
+	{
+		if (!sIsDummy && !sQueueEmpty)
+		{
+			localQueue.Clear();
+			lock (sQueue)
+			{
+				localQueue.AddRange(sQueue);
+				sQueue.Clear();
+				sQueueEmpty = true;
+			}
+			for (int i = 0; i < localQueue.Count; i++)
+			{
+				localQueue[i]();
+			}
+		}
+	}
+
+	public void OnApplicationFocus(bool focused)
+	{
+		foreach (Action<bool> sFocusCallback in sFocusCallbackList)
+		{
+			try
+			{
+				sFocusCallback(focused);
+			}
+			catch (Exception ex)
+			{
+				Debug.LogError("Exception in OnApplicationFocus:" + ex.Message + "\n" + ex.StackTrace);
+			}
+		}
+	}
+
+	public void OnApplicationPause(bool paused)
+	{
+		foreach (Action<bool> sPauseCallback in sPauseCallbackList)
+		{
+			try
+			{
+				sPauseCallback(paused);
+			}
+			catch (Exception ex)
+			{
+				Debug.LogError("Exception in OnApplicationPause:" + ex.Message + "\n" + ex.StackTrace);
+			}
+		}
+	}
+
+	public static void AddFocusCallback(Action<bool> callback)
+	{
+		if (!sFocusCallbackList.Contains(callback))
+		{
+			sFocusCallbackList.Add(callback);
+		}
+	}
+
+	public static bool RemoveFocusCallback(Action<bool> callback)
+	{
+		return sFocusCallbackList.Remove(callback);
+	}
+
+	public static void AddPauseCallback(Action<bool> callback)
+	{
+		if (!sPauseCallbackList.Contains(callback))
+		{
+			sPauseCallbackList.Add(callback);
+		}
+	}
+
+	public static bool RemovePauseCallback(Action<bool> callback)
+	{
+		return sPauseCallbackList.Remove(callback);
+	}
+}
 }

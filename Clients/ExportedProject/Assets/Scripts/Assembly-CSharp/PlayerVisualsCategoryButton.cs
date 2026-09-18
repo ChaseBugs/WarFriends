@@ -1,63 +1,87 @@
 using UnityEngine;
 
-public class PlayerVisualsCategoryButton : MonoBehaviour
+public class PlayerVisualsCategoryButton : PoolableObject
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Header("Core")]
+	public UISprite background;
 
-	1. No dll files were provided to AssetRipper.
+	public UISprite icon;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public UILabel label;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	[Header("Notification")]
+	public UILabel notificationNumber;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public GameObject notificationGO;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	[Header("Sale")]
+	public GameObject salePart;
 
-	3. Assembly Reconstruction has not been implemented.
+	private string mSelectedBackgroundButton = "menu-weapons-tab-active";
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	private string mNormalBackgroundButton = "menu-weapons-tab";
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	private PlayerVisualCategory mCategory;
 
-	4. This script is unnecessary.
+	private bool mIsDecal;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public PlayerVisualCategory category => mCategory;
 
-	5. Script Content Level 0
+	public void Highlight(bool setOn)
+	{
+		if (mIsDecal)
+		{
+			icon.color = ((!setOn) ? Colours.yellowDecal : Colours.blue);
+			label.color = ((!setOn) ? Colours.yellowDecal : Colours.blue);
+		}
+		else
+		{
+			icon.color = ((!setOn) ? Color.white : Colours.blue);
+			label.color = ((!setOn) ? Color.white : Colours.blue);
+		}
+		background.spriteName = ((!setOn) ? mNormalBackgroundButton : mSelectedBackgroundButton);
+	}
 
-		AssetRipper was set to not load any script information.
+	public void Notification()
+	{
+		int numberOfVisualCategoryNotifications = Singleton<NotificationManager>.instance.GetNumberOfVisualCategoryNotifications(mCategory);
+		notificationGO.SetActive(numberOfVisualCategoryNotifications > 0);
+		notificationNumber.text = numberOfVisualCategoryNotifications.ToString();
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public void Sale()
+	{
+		salePart.SetActive(value: false);
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public void Initialize(PlayerVisualCategory category, int count)
+	{
+		mCategory = category;
+		mIsDecal = mCategory as PlayerVisualCategoryPowerBands != null;
+		label.text = Localization.Localize(category.buttonName);
+		Notification();
+		Sale();
+		icon.spriteName = category.icon;
+		icon.MakePixelPerfect();
+		Highlight(setOn: false);
+		float num = UIRoot.list[0].activeWidth / (float)count - 5f;
+		Vector3 localScale = background.transform.localScale;
+		localScale.x = num;
+		background.transform.localScale = localScale;
+		Vector3 localPosition = notificationGO.transform.localPosition;
+		localPosition.x = num - 50f;
+		notificationGO.transform.localPosition = localPosition;
+		BoxCollider component = GetComponent<BoxCollider>();
+		Vector3 center = component.center;
+		center.x = num / 2f;
+		component.center = center;
+		Vector3 size = component.size;
+		size.x = num + 20f;
+		component.size = size;
+	}
 
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	private void OnClick()
+	{
+		GuiScreenSingle<CamosScreen>.instance.SelectCategory(this);
+	}
 }

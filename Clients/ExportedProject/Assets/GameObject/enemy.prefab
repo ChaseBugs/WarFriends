@@ -858,6 +858,26 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d94d9d4266081e75df24b8687850c33d, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMaxHealth:
+    currentCryptoKey: 230887
+    hiddenValue: e7857944
+    fakeValue: 1000
+    inited: 1
+  mDestroyableByBonusBox: 1
+  healthBarPosition: {fileID: 487779}
+  forceHealthBar: 0
+  offset: {x: 0, y: 0, z: 0}
+  displayHealthBar: 1
+  playMainHitParticle: 1
+  isMetal: 0
+  shotCoeficient: 1
+  shotParticleNames:
+  - bloodEffect
+  healthBarStyle: 1
+  mHealthbarColor: {r: 0, g: 1, b: 0, a: 1}
+  healthbar: {fileID: 0}
+  shotHitSound: 13
+  parts: []
 --- !u!114 &11461517
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -869,6 +889,29 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 764a76c3280a3e57e4d770f6db39568a, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  isActivated: 0
+  photonView: {fileID: 0}
+  hudObjectIndicator: {fileID: 11468680}
+  preparedBehaviour: {fileID: 0}
+  behaviour: {fileID: 0}
+  mFraction: 0
+  isPrewiev: 0
+  agent: {fileID: 11420844}
+  destroyableObject: {fileID: 11463426}
+  kevlar: {fileID: 11473647}
+  shield: {fileID: 11434586}
+  enemyPoint: {fileID: 0}
+  isHeadShot: 0
+  soldierParts: {fileID: 11463256}
+  mShield: {fileID: 11430250}
+  mSoldierAnimationController: {fileID: 11475216}
+  mSoldierSoldierMeshChanger: {fileID: 11462687}
+  mTransform: {fileID: 0}
+  enemyAiState: 0
+  headSizeSetter: {fileID: 11448483}
+  mExploded: 0
+  canChangePosition: 1
+  mIsNetworkCopy: 0
 --- !u!114 &11420844
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -880,6 +923,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 74d0ea5357bfb887736447ceb5df1505, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mAgent: {fileID: 19588432}
+  mHeplperCapsule: {fileID: 11461818}
+  forceMagnitudeTreshold: 0.0001
+  avoidStopPlanarDistance: 0.35
+  flyPos: {x: 0, y: 0, z: 0}
+  mass: 8
+  updateCount: 10
 --- !u!114 &11411718
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -891,6 +941,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 59ffb5aae8aa0b88ed19eb14e4889008, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  target: {fileID: 0}
+  setNewTarget: 0
 --- !u!114 &11463256
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -902,6 +954,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b6c25eb63e91f0442efdd59a16201eed, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  aimTarget: {fileID: 11467758}
+  head: {fileID: 151504}
+  body: {fileID: 154010}
+  coltSnap: {fileID: 454731}
+  helmett: {fileID: 11405360}
+  gunSnapPointNotScaled: {fileID: 466439}
+  gunSnapPointNotScaledLeft: {fileID: 435975}
+  shieldSnapPointNotScaled: {fileID: 417017}
+  shadow: {fileID: 135660}
+  headAimTarget: {fileID: 11488901}
+  mWeaponRigidBodySwapper: {fileID: 0}
+  scifiFlamePrefab: {fileID: 19809266, guid: a96851f49fba9a94393aee7d406034a1, type: 2}
+  paticlesParents:
+  - {fileID: 486581}
+  - {fileID: 478679}
 --- !u!114 &11400463
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -913,6 +980,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 486a9acbd9d8b9c34ac18b91e89b7bef, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  skillshotPosition: {fileID: 487779}
 --- !u!114 &11460213
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -924,6 +992,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5bfbf978d76daea62a5ea6e2af5801d1, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mPosition: {fileID: 487779}
 --- !u!114 &11462687
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -935,6 +1004,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6ebc7a726136198f7d9d298714f3c452, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  skinnedMeshRenderer: {fileID: 13729211}
+  helmet: {fileID: 11405360}
+  helmetAttachments: {fileID: 11433933}
+  bodyAttachemnts: {fileID: 11449862}
+  powerband: {fileID: 2397582}
+  hair: {fileID: 3310883}
 --- !u!114 &11482579
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -946,6 +1021,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3cf4d7761af3ce98d7a08bebfe4e8861, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  shootTargets: []
+  targets:
+  - transform: {fileID: 454546}
+    type: 8
+  - transform: {fileID: 436299}
+    type: 1
+  - transform: {fileID: 496281}
+    type: 4
+  visible: 1
 --- !u!114 &11491078
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -957,6 +1041,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f19ea4a15c3ca43dcc180d756f7a82b3, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  ownerId: 0
+  group: 0
+  OwnerShipWasTransfered: 0
+  prefixBackup: -1
+  synchronization: 3
+  onSerializeTransformOption: 3
+  onSerializeRigidBodyOption: 2
+  ownershipTransfer: 0
+  ObservedComponents:
+  - {fileID: 11461517}
+  viewIdField: 0
+  instantiationId: -1
+  currentMasterID: -1
+  didAwake: 0
+  isRuntimeInstantiated: 0
 --- !u!114 &11439548
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -968,6 +1067,36 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e3b2cec1a418fb5742374dba269174f3, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  method: 3
+  style: 0
+  animationCurve:
+    serializedVersion: 2
+    m_Curve:
+    - time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 1
+      tangentMode: 0
+    - time: 1
+      value: 1
+      inSlope: 1
+      outSlope: 0
+      tangentMode: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+  ignoreTimeScale: 1
+  delay: 0
+  duration: 1
+  steeperCurves: 0
+  tweenGroup: 0
+  eventReceiver: {fileID: 0}
+  callWhenFinished:
+  NumOfRepetitions: 0
+  id: 0
+  dontResetCurve: 0
+  from: {x: 0, y: 0, z: 0}
+  to: {x: 0, y: 0, z: 0}
+  useLocal: 1
 --- !u!114 &11468680
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -979,6 +1108,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: aa5336f805f636a26d269afa08d8ccb0, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  snapTransform: {fileID: 487779}
+  show: 0
+  spriteName: game-revenge-indicator
+  indicatorOffset: {x: 0, y: 0, z: 0}
+  alwaysOnTop: 0
+  updateScale: 1
 --- !u!114 &11485712
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -990,6 +1125,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a551e0a4c5224adf6c7c791cacc35f6a, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  middle: {fileID: 439935}
+  scale: 1.25
+  slots:
+  - slotPosition: {fileID: 0}
+    slotID: 0
+  - slotPosition: {fileID: 0}
+    slotID: 1
+  - slotPosition: {fileID: 0}
+    slotID: 2
+  - slotPosition: {fileID: 468999}
+    slotID: 3
+  - slotPosition: {fileID: 468999}
+    slotID: 3
 --- !u!82 &8210128
 AudioSource:
   serializedVersion: 4
@@ -1071,6 +1219,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c419462eee45c7db0b5eaaec2b2e071b, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  headTransform: {fileID: 433468}
 --- !u!114 &11473647
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1082,6 +1231,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d9465278b6e4c795c3dc4632fa2f6d10, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  destroyableObject: {fileID: 11463426}
+  kevlarDestroyableObject: {fileID: 11400119}
+  kevlarStrength: 0.2
 --- !u!114 &11434586
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1093,6 +1245,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fd6b4cbbb49acaa83d2c949cd6ef0a1c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  destroyableObject: {fileID: 11463426}
+  shieldDestroyableObject: {fileID: 11430250}
+  shieldStrength: 0.2
+  shieldRechargeRate: 0.33
 --- !u!4 &456797
 Transform:
   m_ObjectHideFlags: 0
@@ -1116,6 +1272,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1f61fafee80c4e2bbfb2332402131901, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  targetCollider: {fileID: 109266}
+  offset: {x: 0, y: 0.19, z: 0}
+  isClickable: 0
+  clickableLayer: 0
+  referenceVelocityTarget: {fileID: 0}
+  isActive: 1
+  ignoreLayer: 0
 --- !u!135 &13509877
 SphereCollider:
   serializedVersion: 2
@@ -1315,6 +1478,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f70a841def974f3d3b25ae61a620f5f5, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  currentUpperBodyRotation: 0
+  disableLookRot: 1
+  mTransform: {fileID: 0}
+  rootBone: {fileID: 409309}
+  rootBoneInner: {fileID: 0}
+  upperBody: {fileID: 454267}
+  leftPalm: {fileID: 411857}
 --- !u!114 &11449862
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1326,6 +1496,43 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0dfd54bd9851b07f2dc75544b2e170c3, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  modelAttachments:
+  - parent: {fileID: 413056}
+    id: 0
+  - parent: {fileID: 413056}
+    id: 1
+  - parent: {fileID: 436299}
+    id: 2
+  - parent: {fileID: 436299}
+    id: 3
+  - parent: {fileID: 480871}
+    id: 4
+  - parent: {fileID: 480871}
+    id: 5
+  - parent: {fileID: 412170}
+    id: 6
+  - parent: {fileID: 480903}
+    id: 7
+  - parent: {fileID: 467818}
+    id: 8
+  - parent: {fileID: 454267}
+    id: 9
+  - parent: {fileID: 495861}
+    id: 10
+  - parent: {fileID: 450766}
+    id: 11
+  - parent: {fileID: 413056}
+    id: 12
+  - parent: {fileID: 413056}
+    id: 13
+  - parent: {fileID: 413056}
+    id: 14
+  - parent: {fileID: 413056}
+    id: 15
+  - parent: {fileID: 432167}
+    id: 16
+  - parent: {fileID: 454267}
+    id: 17
 --- !u!4 &414637
 Transform:
   m_ObjectHideFlags: 0
@@ -1435,6 +1642,27 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2b87d014f018a182ff3631ab01ac442e, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMaxHealth:
+    currentCryptoKey: 230887
+    hiddenValue: e7857944
+    fakeValue: 1000
+    inited: 1
+  mDestroyableByBonusBox: 1
+  healthBarPosition: {fileID: 0}
+  forceHealthBar: 0
+  offset: {x: 0, y: 0, z: 0}
+  displayHealthBar: 0
+  playMainHitParticle: 1
+  isMetal: 0
+  shotCoeficient: 1
+  shotParticleNames: []
+  healthBarStyle: 0
+  mHealthbarColor: {r: 0, g: 1, b: 0, a: 1}
+  healthbar: {fileID: 0}
+  shotHitSound: 14
+  ownerDestroyableObject: {fileID: 0}
+  weight: 1
+  index: 0
 --- !u!65 &6586885
 BoxCollider:
   serializedVersion: 2
@@ -1871,6 +2099,27 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2b87d014f018a182ff3631ab01ac442e, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMaxHealth:
+    currentCryptoKey: 230887
+    hiddenValue: e7857944
+    fakeValue: 1000
+    inited: 1
+  mDestroyableByBonusBox: 1
+  healthBarPosition: {fileID: 0}
+  forceHealthBar: 0
+  offset: {x: 0, y: 0, z: 0}
+  displayHealthBar: 0
+  playMainHitParticle: 1
+  isMetal: 0
+  shotCoeficient: 1
+  shotParticleNames: []
+  healthBarStyle: 0
+  mHealthbarColor: {r: 0, g: 1, b: 0, a: 1}
+  healthbar: {fileID: 0}
+  shotHitSound: 14
+  ownerDestroyableObject: {fileID: 0}
+  weight: 1.5
+  index: 0
 --- !u!54 &5493588
 Rigidbody:
   serializedVersion: 2
@@ -1962,6 +2211,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1f61fafee80c4e2bbfb2332402131901, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  targetCollider: {fileID: 151504}
+  offset: {x: 0, y: 0.03, z: 0}
+  isClickable: 0
+  clickableLayer: 0
+  referenceVelocityTarget: {fileID: 11467758}
+  isActive: 1
+  ignoreLayer: 0
 --- !u!135 &13519666
 SphereCollider:
   serializedVersion: 2
@@ -2028,6 +2284,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bdf38ce86a2f68e1ec5a08d9161659f6, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  NoRigidBodyObject: {fileID: 152907}
+  RigidBodyObject: {fileID: 134916}
+  noRigidBody:
+    meshFilter: {fileID: 0}
+    meshRenderer: {fileID: 0}
+  rigidBody:
+    meshFilter: {fileID: 0}
+    meshRenderer: {fileID: 0}
+  snapPoint: {fileID: 191709}
 --- !u!114 &11433933
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2039,6 +2304,29 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0dfd54bd9851b07f2dc75544b2e170c3, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  modelAttachments:
+  - parent: {fileID: 481936}
+    id: 0
+  - parent: {fileID: 481936}
+    id: 1
+  - parent: {fileID: 413056}
+    id: 2
+  - parent: {fileID: 413056}
+    id: 3
+  - parent: {fileID: 436299}
+    id: 4
+  - parent: {fileID: 436299}
+    id: 5
+  - parent: {fileID: 481936}
+    id: 6
+  - parent: {fileID: 480871}
+    id: 7
+  - parent: {fileID: 481936}
+    id: 8
+  - parent: {fileID: 481936}
+    id: 9
+  - parent: {fileID: 481936}
+    id: 10
 --- !u!4 &417540
 Transform:
   m_ObjectHideFlags: 0
@@ -2285,6 +2573,24 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a503568e23092a0b9255b6fcb6b62be2, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMaxHealth:
+    currentCryptoKey: 230887
+    hiddenValue: e7857944
+    fakeValue: 1000
+    inited: 1
+  mDestroyableByBonusBox: 1
+  healthBarPosition: {fileID: 464506}
+  forceHealthBar: 1
+  offset: {x: 0, y: 0, z: 0}
+  displayHealthBar: 1
+  playMainHitParticle: 1
+  isMetal: 0
+  shotCoeficient: 1
+  shotParticleNames: []
+  healthBarStyle: 1
+  mHealthbarColor: {r: 0, g: 0.5034485, b: 1, a: 1}
+  healthbar: {fileID: 0}
+  shotHitSound: 14
 --- !u!4 &464506
 Transform:
   m_ObjectHideFlags: 0
@@ -2333,6 +2639,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9bbf85f27a9ff990b653b211a68c6206, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  navigationHelperCapsuleLayerNumber: 12
+  navigationAgent: {fileID: 0}
 --- !u!54 &5464471
 Rigidbody:
   serializedVersion: 2
@@ -2415,6 +2723,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 94ab48e3b8066840cd07a3613abbe986, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  collection: {fileID: 11409266, guid: 9c9cd68f5c05bd142a48ca4b8f45c224, type: 2}
+  _color: {r: 0, g: 0, b: 0, a: 0.37254903}
+  _scale: {x: 0.15, y: 0.15, z: 1}
+  _spriteId: 4
+  boxCollider: {fileID: 0}
+  meshCollider: {fileID: 0}
+  meshColliderPositions: []
+  meshColliderMesh: {fileID: 0}
+  renderLayer: 0
 --- !u!4 &439935
 Transform:
   m_ObjectHideFlags: 0
@@ -2451,6 +2768,24 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a503568e23092a0b9255b6fcb6b62be2, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMaxHealth:
+    currentCryptoKey: 230887
+    hiddenValue: e7857944
+    fakeValue: 1000
+    inited: 1
+  mDestroyableByBonusBox: 1
+  healthBarPosition: {fileID: 423964}
+  forceHealthBar: 1
+  offset: {x: 0, y: 0, z: 0}
+  displayHealthBar: 1
+  playMainHitParticle: 1
+  isMetal: 0
+  shotCoeficient: 1
+  shotParticleNames: []
+  healthBarStyle: 1
+  mHealthbarColor: {r: 0.9843137, g: 1, b: 0, a: 1}
+  healthbar: {fileID: 0}
+  shotHitSound: 14
 --- !u!4 &423964
 Transform:
   m_ObjectHideFlags: 0

@@ -1,63 +1,100 @@
+using System;
 using UnityEngine;
 
-public class BMSymbol : MonoBehaviour
+[Serializable]
+public class BMSymbol
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public string sequence;
 
-	1. No dll files were provided to AssetRipper.
+	public string spriteName;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	private UIAtlas.Sprite mSprite;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	private bool mIsValid;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	private int mLength;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	private int mOffsetX;
 
-	3. Assembly Reconstruction has not been implemented.
+	private int mOffsetY;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	private int mWidth;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	private int mHeight;
 
-	4. This script is unnecessary.
+	private int mAdvance;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private Rect mUV;
 
-	5. Script Content Level 0
+	public int length
+	{
+		get
+		{
+			if (mLength == 0)
+			{
+				mLength = sequence.Length;
+			}
+			return mLength;
+		}
+	}
 
-		AssetRipper was set to not load any script information.
+	public int offsetX => mOffsetX;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public int offsetY => mOffsetY;
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public int width => mWidth;
 
-	7. An incorrect path was provided to AssetRipper.
+	public int height => mHeight;
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	public int advance => mAdvance;
 
-	*/
+	public Rect uvRect => mUV;
+
+	public void MarkAsDirty()
+	{
+		mIsValid = false;
+	}
+
+	public bool Validate(UIAtlas atlas)
+	{
+		if (atlas == null)
+		{
+			return false;
+		}
+		if (!mIsValid)
+		{
+			if (string.IsNullOrEmpty(spriteName))
+			{
+				return false;
+			}
+			mSprite = ((!(atlas != null)) ? null : atlas.GetSprite(spriteName));
+			if (mSprite != null)
+			{
+				Texture texture = atlas.texture;
+				if (texture == null)
+				{
+					mSprite = null;
+				}
+				else
+				{
+					Rect rect = (mUV = mSprite.outer);
+					if (atlas.coordinates == UIAtlas.Coordinates.Pixels)
+					{
+						mUV = NGUIMath.ConvertToTexCoords(mUV, texture.width, texture.height);
+					}
+					else
+					{
+						rect = NGUIMath.ConvertToPixels(rect, texture.width, texture.height, round: true);
+					}
+					mOffsetX = Mathf.RoundToInt(mSprite.paddingLeft * rect.width);
+					mOffsetY = Mathf.RoundToInt(mSprite.paddingTop * rect.width);
+					mWidth = Mathf.RoundToInt(rect.width);
+					mHeight = Mathf.RoundToInt(rect.height);
+					mAdvance = Mathf.RoundToInt(rect.width + (mSprite.paddingRight + mSprite.paddingLeft) * rect.width);
+					mIsValid = true;
+				}
+			}
+		}
+		return mSprite != null;
+	}
 }

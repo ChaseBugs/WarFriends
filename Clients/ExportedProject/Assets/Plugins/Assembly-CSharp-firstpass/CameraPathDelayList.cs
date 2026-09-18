@@ -1,63 +1,159 @@
+using System;
 using UnityEngine;
 
-public class CameraPathDelayList : MonoBehaviour
+[ExecuteInEditMode]
+public class CameraPathDelayList : CameraPathPointList
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public delegate void CameraPathDelayEventHandler(float time);
 
-	1. No dll files were provided to AssetRipper.
+	public float MINIMUM_EASE_VALUE = 0.01f;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	private float _lastPercentage;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	[SerializeField]
+	private CameraPathDelay _introPoint;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	[SerializeField]
+	private CameraPathDelay _outroPoint;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	[SerializeField]
+	private bool delayInitialised;
 
-	3. Assembly Reconstruction has not been implemented.
+	public new CameraPathDelay this[int index] => (CameraPathDelay)base[index];
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public CameraPathDelay introPoint => _introPoint;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public CameraPathDelay outroPoint => _outroPoint;
 
-	4. This script is unnecessary.
+	public event CameraPathDelayEventHandler CameraPathDelayEvent;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private void OnEnable()
+	{
+		base.hideFlags = HideFlags.HideInInspector;
+	}
 
-	5. Script Content Level 0
+	public override void Init(CameraPath _cameraPath)
+	{
+		base.Init(_cameraPath);
+		if (!delayInitialised)
+		{
+			_introPoint = base.gameObject.AddComponent<CameraPathDelay>();
+			_introPoint.customName = "Start Point";
+			_introPoint.hideFlags = HideFlags.HideInInspector;
+			AddPoint(introPoint, 0f);
+			_outroPoint = base.gameObject.AddComponent<CameraPathDelay>();
+			_outroPoint.customName = "End Point";
+			_outroPoint.hideFlags = HideFlags.HideInInspector;
+			AddPoint(outroPoint, 1f);
+			RecalculatePoints();
+			delayInitialised = true;
+		}
+		pointTypeName = "Delay";
+	}
 
-		AssetRipper was set to not load any script information.
+	public void AddDelayPoint(CameraPathControlPoint atPoint)
+	{
+		CameraPathDelay cameraPathDelay = base.gameObject.AddComponent<CameraPathDelay>();
+		cameraPathDelay.hideFlags = HideFlags.HideInInspector;
+		AddPoint(cameraPathDelay, atPoint);
+		RecalculatePoints();
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public CameraPathDelay AddDelayPoint(CameraPathControlPoint curvePointA, CameraPathControlPoint curvePointB, float curvePercetage)
+	{
+		CameraPathDelay cameraPathDelay = base.gameObject.AddComponent<CameraPathDelay>();
+		cameraPathDelay.hideFlags = HideFlags.HideInInspector;
+		AddPoint(cameraPathDelay, curvePointA, curvePointB, curvePercetage);
+		RecalculatePoints();
+		return cameraPathDelay;
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public void OnAnimationStart(float startPercentage)
+	{
+		_lastPercentage = startPercentage;
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	public void CheckEvents(float percentage)
+	{
+		if (Mathf.Abs(percentage - _lastPercentage) > 0.1f)
+		{
+			_lastPercentage = percentage;
+		}
+		else
+		{
+			if (_lastPercentage == percentage)
+			{
+				return;
+			}
+			for (int i = 0; i < base.realNumberOfPoints; i++)
+			{
+				CameraPathDelay cameraPathDelay = this[i];
+				if (cameraPathDelay == outroPoint)
+				{
+					continue;
+				}
+				if (cameraPathDelay.percent >= _lastPercentage && cameraPathDelay.percent <= percentage)
+				{
+					if (cameraPathDelay != introPoint)
+					{
+						FireDelay(cameraPathDelay);
+					}
+					else if (cameraPathDelay.time > 0f)
+					{
+						FireDelay(cameraPathDelay);
+					}
+				}
+				else if (cameraPathDelay.percent >= percentage && cameraPathDelay.percent <= _lastPercentage)
+				{
+					if (cameraPathDelay != introPoint)
+					{
+						FireDelay(cameraPathDelay);
+					}
+					else if (cameraPathDelay.time > 0f)
+					{
+						FireDelay(cameraPathDelay);
+					}
+				}
+			}
+			_lastPercentage = percentage;
+		}
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	public float CheckEase(float percent)
+	{
+		float val = 1f;
+		for (int i = 0; i < base.realNumberOfPoints; i++)
+		{
+			CameraPathDelay cameraPathDelay = this[i];
+			if (cameraPathDelay != introPoint)
+			{
+				CameraPathDelay cameraPathDelay2 = (CameraPathDelay)GetPoint(i - 1);
+				float pathPercentage = cameraPath.GetPathPercentage(cameraPathDelay2.percent, cameraPathDelay.percent, 1f - cameraPathDelay.introStartEasePercentage);
+				if (pathPercentage < percent && cameraPathDelay.percent > percent)
+				{
+					float time = (percent - pathPercentage) / (cameraPathDelay.percent - pathPercentage);
+					val = cameraPathDelay.introCurve.Evaluate(time);
+				}
+			}
+			if (cameraPathDelay != outroPoint)
+			{
+				CameraPathDelay cameraPathDelay3 = (CameraPathDelay)GetPoint(i + 1);
+				float pathPercentage2 = cameraPath.GetPathPercentage(cameraPathDelay.percent, cameraPathDelay3.percent, cameraPathDelay.outroEndEasePercentage);
+				if (cameraPathDelay.percent < percent && pathPercentage2 > percent)
+				{
+					float time2 = (percent - cameraPathDelay.percent) / (pathPercentage2 - cameraPathDelay.percent);
+					val = cameraPathDelay.outroCurve.Evaluate(time2);
+				}
+			}
+		}
+		return Math.Max(val, MINIMUM_EASE_VALUE);
+	}
 
-	*/
+	public void FireDelay(CameraPathDelay eventPoint)
+	{
+		if (this.CameraPathDelayEvent != null)
+		{
+			this.CameraPathDelayEvent(eventPoint.time);
+		}
+	}
 }

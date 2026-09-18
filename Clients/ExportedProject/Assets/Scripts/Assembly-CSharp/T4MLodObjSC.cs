@@ -2,62 +2,150 @@ using UnityEngine;
 
 public class T4MLodObjSC : MonoBehaviour
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[HideInInspector]
+	public Renderer LOD1;
 
-	1. No dll files were provided to AssetRipper.
+	[HideInInspector]
+	public Renderer LOD2;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	[HideInInspector]
+	public Renderer LOD3;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	[HideInInspector]
+	public float Interval = 0.5f;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	[HideInInspector]
+	public Transform PlayerCamera;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	[HideInInspector]
+	public int Mode;
 
-	3. Assembly Reconstruction has not been implemented.
+	private Vector3 OldPlayerPos;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	[HideInInspector]
+	public int ObjLodStatus;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	[HideInInspector]
+	public float MaxViewDistance = 60f;
 
-	4. This script is unnecessary.
+	[HideInInspector]
+	public float LOD2Start = 20f;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	[HideInInspector]
+	public float LOD3Start = 40f;
 
-	5. Script Content Level 0
+	public void ActivateLODScrpt()
+	{
+		if (Mode == 2)
+		{
+			if (PlayerCamera == null)
+			{
+				PlayerCamera = Camera.main.transform;
+			}
+			InvokeRepeating("AFLODScrpt", Random.Range(0f, Interval), Interval);
+		}
+	}
 
-		AssetRipper was set to not load any script information.
+	public void ActivateLODLay()
+	{
+		if (Mode == 2)
+		{
+			if (PlayerCamera == null)
+			{
+				PlayerCamera = Camera.main.transform;
+			}
+			InvokeRepeating("AFLODLay", Random.Range(0f, Interval), Interval);
+		}
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public void AFLODLay()
+	{
+		if (OldPlayerPos == PlayerCamera.position)
+		{
+			return;
+		}
+		OldPlayerPos = PlayerCamera.position;
+		float num = Vector3.Distance(new Vector3(base.transform.position.x, PlayerCamera.position.y, base.transform.position.z), PlayerCamera.position);
+		int layer = base.gameObject.layer;
+		if (num <= PlayerCamera.GetComponent<Camera>().layerCullDistances[layer] + 5f)
+		{
+			if (num < LOD2Start && ObjLodStatus != 1)
+			{
+				Renderer lOD = LOD3;
+				bool flag = false;
+				LOD2.enabled = flag;
+				lOD.enabled = flag;
+				LOD1.enabled = true;
+				ObjLodStatus = 1;
+			}
+			else if (num >= LOD2Start && num < LOD3Start && ObjLodStatus != 2)
+			{
+				Renderer lOD2 = LOD1;
+				bool flag = false;
+				LOD3.enabled = flag;
+				lOD2.enabled = flag;
+				LOD2.enabled = true;
+				ObjLodStatus = 2;
+			}
+			else if (num >= LOD3Start && ObjLodStatus != 3)
+			{
+				Renderer lOD3 = LOD1;
+				bool flag = false;
+				LOD2.enabled = flag;
+				lOD3.enabled = flag;
+				LOD3.enabled = true;
+				ObjLodStatus = 3;
+			}
+		}
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public void AFLODScrpt()
+	{
+		if (OldPlayerPos == PlayerCamera.position)
+		{
+			return;
+		}
+		OldPlayerPos = PlayerCamera.position;
+		float num = Vector3.Distance(new Vector3(base.transform.position.x, PlayerCamera.position.y, base.transform.position.z), PlayerCamera.position);
+		if (num <= MaxViewDistance)
+		{
+			if (num < LOD2Start && ObjLodStatus != 1)
+			{
+				Renderer lOD = LOD3;
+				bool flag = false;
+				LOD2.enabled = flag;
+				lOD.enabled = flag;
+				LOD1.enabled = true;
+				ObjLodStatus = 1;
+			}
+			else if (num >= LOD2Start && num < LOD3Start && ObjLodStatus != 2)
+			{
+				Renderer lOD2 = LOD1;
+				bool flag = false;
+				LOD3.enabled = flag;
+				lOD2.enabled = flag;
+				LOD2.enabled = true;
+				ObjLodStatus = 2;
+			}
+			else if (num >= LOD3Start && ObjLodStatus != 3)
+			{
+				Renderer lOD3 = LOD1;
+				bool flag = false;
+				LOD2.enabled = flag;
+				lOD3.enabled = flag;
+				LOD3.enabled = true;
+				ObjLodStatus = 3;
+			}
+		}
+		else if (ObjLodStatus != 0)
+		{
+			Renderer lOD4 = LOD1;
+			bool flag = false;
+			LOD3.enabled = flag;
+			flag = flag;
+			LOD2.enabled = flag;
+			lOD4.enabled = flag;
+			ObjLodStatus = 0;
+		}
+	}
 }

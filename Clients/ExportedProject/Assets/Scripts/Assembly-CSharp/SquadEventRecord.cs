@@ -1,63 +1,84 @@
 using UnityEngine;
 
-public class SquadEventRecord : MonoBehaviour
+public class SquadEventRecord : PoolableObject
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Header("Width Setter")]
+	public UIButtonSetter widthSetter;
 
-	1. No dll files were provided to AssetRipper.
+	[Header("Header Part")]
+	public GameObject headerPart;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public UISprite headerBackground;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public UISprite border;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public UILabel labelReward;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public UILabel tierReward;
 
-	3. Assembly Reconstruction has not been implemented.
+	public UISprite checkSprite;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public UILabel tierLabel;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public UILabel tierProgress;
 
-	4. This script is unnecessary.
+	[Header("Assignment Part")]
+	public GameObject assignmentPart;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public UISprite progressBar;
 
-	5. Script Content Level 0
+	public UISprite assignmentIcon;
 
-		AssetRipper was set to not load any script information.
+	public UILabel assignmentDescription;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public UILabel assignmentProgress;
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public void InitHeader(int reward, int tierNumber, float progress, float length, bool active)
+	{
+		widthSetter.SetWidth(length);
+		headerPart.SetActive(value: true);
+		assignmentPart.SetActive(value: false);
+		float num = Mathf.Clamp01(progress);
+		int num2 = Mathf.FloorToInt(num * 100f);
+		bool flag = num == 1f;
+		headerBackground.fillAmount = num;
+		headerBackground.color = (flag ? Colours.goldTier : ((!active) ? Colours.gray : Colours.blue));
+		headerBackground.alpha = 0.15f;
+		border.color = (flag ? Colours.goldTier : ((!active) ? Colours.gray : Colours.blue));
+		labelReward.color = ((!active) ? Colours.gray : Color.white);
+		tierReward.text = MiscTools.FormatAssignmentNumber(reward);
+		tierReward.color = ((!active) ? Colours.gray : Color.white);
+		checkSprite.transform.localPosition = new Vector3(89f + tierReward.relativeSize.x * tierReward.transform.localScale.x, checkSprite.transform.localPosition.y, 0f);
+		checkSprite.gameObject.SetActive(flag);
+		tierLabel.text = string.Format("{0} {1}", Localization.Localize("ID_TIER"), tierNumber);
+		tierLabel.color = (flag ? Colours.goldTier : ((!active) ? Colours.gray : Colours.blue));
+		tierProgress.text = (flag ? Localization.Localize("ID_COMPLETED") : ((!active) ? string.Format("{0} {1}", Localization.Localize("ID_COMPLETETIER"), tierNumber - 1) : MiscTools.FormatNumberAsPercent(num2)));
+		tierProgress.color = (flag ? Colours.goldTier : ((!active) ? Colours.gray : Colours.blue));
+	}
 
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public void InitAssignment(Assignment assignment, float progress, float length, bool active)
+	{
+		widthSetter.SetWidth(length);
+		headerPart.SetActive(value: false);
+		assignmentPart.SetActive(value: true);
+		float num = Mathf.Clamp01(progress);
+		int num2 = Mathf.FloorToInt(num * 100f);
+		bool flag = num == 1f;
+		progressBar.fillAmount = num;
+		progressBar.color = ((!flag) ? Colours.blue : Colours.goldTier);
+		assignmentIcon.spriteName = assignment.assignmentPicture;
+		assignmentIcon.MakePixelPerfect();
+		assignmentIcon.transform.localPosition = new Vector3(assignmentIcon.transform.localPosition.x, (!(assignmentIcon.transform.localScale.y < 170f)) ? 10f : 4f, 0f);
+		if (active)
+		{
+			assignmentDescription.text = ((!flag) ? assignment.blueDescription : assignment.goldDescription);
+		}
+		else
+		{
+			assignmentDescription.text = assignment.whiteDescription;
+		}
+		assignmentDescription.color = ((!active) ? Colours.gray : Color.white);
+		assignmentProgress.text = MiscTools.FormatNumberAsPercent(num2);
+		assignmentProgress.color = (flag ? Colours.goldTier : ((!active) ? Colours.gray : Colours.blue));
+	}
 }

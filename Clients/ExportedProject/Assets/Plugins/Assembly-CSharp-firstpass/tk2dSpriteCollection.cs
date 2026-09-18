@@ -1,63 +1,190 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
+[AddComponentMenu("2D Toolkit/Backend/tk2dSpriteCollection")]
 public class tk2dSpriteCollection : MonoBehaviour
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public enum NormalGenerationMode
+	{
+		None,
+		NormalsOnly,
+		NormalsAndTangents
+	}
 
-	1. No dll files were provided to AssetRipper.
+	public enum TextureCompression
+	{
+		Uncompressed,
+		Reduced16Bit,
+		Compressed,
+		Dithered16Bit_Alpha,
+		Dithered16Bit_NoAlpha
+	}
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	[Serializable]
+	public class AttachPointTestSprite
+	{
+		public string attachPointName = string.Empty;
 
-	2. Incorrect dll files were provided to AssetRipper.
+		public tk2dSpriteCollectionData spriteCollection;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+		public int spriteId = -1;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+		public bool CompareTo(AttachPointTestSprite src)
+		{
+			return src.attachPointName == attachPointName && src.spriteCollection == spriteCollection && src.spriteId == spriteId;
+		}
 
-	3. Assembly Reconstruction has not been implemented.
+		public void CopyFrom(AttachPointTestSprite src)
+		{
+			attachPointName = src.attachPointName;
+			spriteCollection = src.spriteCollection;
+			spriteId = src.spriteId;
+		}
+	}
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public const int CURRENT_VERSION = 4;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	[SerializeField]
+	private Texture2D[] textureRefs;
 
-	4. This script is unnecessary.
+	public tk2dSpriteSheetSource[] spriteSheets;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public tk2dSpriteCollectionFont[] fonts;
 
-	5. Script Content Level 0
+	public tk2dSpriteCollectionDefault defaults;
 
-		AssetRipper was set to not load any script information.
+	public List<tk2dSpriteCollectionPlatform> platforms = new List<tk2dSpriteCollectionPlatform>();
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public bool managedSpriteCollection;
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public bool loadable;
 
-	7. An incorrect path was provided to AssetRipper.
+	public int maxTextureSize = 2048;
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	public bool forceTextureSize;
 
-	*/
+	public int forcedTextureWidth = 2048;
+
+	public int forcedTextureHeight = 2048;
+
+	public TextureCompression textureCompression;
+
+	public int atlasWidth;
+
+	public int atlasHeight;
+
+	public bool forceSquareAtlas;
+
+	public float atlasWastage;
+
+	public bool allowMultipleAtlases;
+
+	public bool removeDuplicates = true;
+
+	public tk2dSpriteCollectionDefinition[] textureParams;
+
+	public tk2dSpriteCollectionData spriteCollection;
+
+	public bool premultipliedAlpha;
+
+	public Material[] altMaterials;
+
+	public Material[] atlasMaterials;
+
+	public Texture2D[] atlasTextures;
+
+	[SerializeField]
+	private bool useTk2dCamera;
+
+	[SerializeField]
+	private int targetHeight = 640;
+
+	[SerializeField]
+	private float targetOrthoSize = 10f;
+
+	public tk2dSpriteCollectionSize sizeDef = tk2dSpriteCollectionSize.Default();
+
+	public float globalScale = 1f;
+
+	public float globalTextureRescale = 1f;
+
+	public List<AttachPointTestSprite> attachPointTestSprites = new List<AttachPointTestSprite>();
+
+	[SerializeField]
+	private bool pixelPerfectPointSampled;
+
+	public FilterMode filterMode = FilterMode.Bilinear;
+
+	public TextureWrapMode wrapMode = TextureWrapMode.Clamp;
+
+	public bool userDefinedTextureSettings;
+
+	public bool mipmapEnabled;
+
+	public int anisoLevel = 1;
+
+	public float physicsDepth = 0.1f;
+
+	public bool disableTrimming;
+
+	public NormalGenerationMode normalGenerationMode;
+
+	public int padAmount = -1;
+
+	public bool autoUpdate = true;
+
+	public float editorDisplayScale = 1f;
+
+	public int version;
+
+	public string assetName = string.Empty;
+
+	public Texture2D[] DoNotUse__TextureRefs
+	{
+		get
+		{
+			return textureRefs;
+		}
+		set
+		{
+			textureRefs = value;
+		}
+	}
+
+	public bool HasPlatformData => platforms.Count > 1;
+
+	public void Upgrade()
+	{
+		if (version == 4)
+		{
+			return;
+		}
+		Debug.Log("SpriteCollection '" + base.name + "' - Upgraded from version " + version);
+		if (version == 0)
+		{
+			if (pixelPerfectPointSampled)
+			{
+				filterMode = FilterMode.Point;
+			}
+			else
+			{
+				filterMode = FilterMode.Bilinear;
+			}
+			userDefinedTextureSettings = true;
+		}
+		if (version < 3 && textureRefs != null && textureParams != null && textureRefs.Length == textureParams.Length)
+		{
+			for (int i = 0; i < textureRefs.Length; i++)
+			{
+				textureParams[i].texture = textureRefs[i];
+			}
+			textureRefs = null;
+		}
+		if (version < 4)
+		{
+			sizeDef.CopyFromLegacy(useTk2dCamera, targetOrthoSize, targetHeight);
+		}
+		version = 4;
+	}
 }

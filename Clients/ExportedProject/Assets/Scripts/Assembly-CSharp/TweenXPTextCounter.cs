@@ -1,63 +1,99 @@
+using System.Globalization;
+using System.Text.RegularExpressions;
 using UnityEngine;
 
-public class TweenXPTextCounter : MonoBehaviour
+[AddComponentMenu("NGUI/Tween/XP Text Counter Tween")]
+internal class TweenXPTextCounter : UITweener
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public int from;
 
-	1. No dll files were provided to AssetRipper.
+	public int to;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public int maxWidth;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public bool useSound;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public SoundsManager.SoundsEnum soundType = SoundsManager.SoundsEnum.CounterSoundExperience;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	private UILabel mUiLabel;
 
-	3. Assembly Reconstruction has not been implemented.
+	private float mLastSound;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	private float mDefaultScale;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public int Text
+	{
+		get
+		{
+			if (mUiLabel != null)
+			{
+				int num = 0;
+				string s = Regex.Replace(mUiLabel.text, "^\\D*", string.Empty);
+				return int.Parse(s, NumberStyles.AllowThousands, CultureInfo.InvariantCulture);
+			}
+			return 0;
+		}
+		set
+		{
+			if (mUiLabel != null)
+			{
+				mUiLabel.text = string.Format("{0} {1}{2}[-]", MiscTools.FormatBigNumber(value), Colours.stringBlue, "XP");
+				if (maxWidth > 0)
+				{
+					MiscTools.SetUILabelRescale(mUiLabel, mDefaultScale, 20f, maxWidth);
+				}
+			}
+		}
+	}
 
-	4. This script is unnecessary.
+	public void Awake()
+	{
+		mUiLabel = GetComponent<UILabel>();
+		if (mUiLabel != null)
+		{
+			mDefaultScale = mUiLabel.transform.localScale.y;
+		}
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	protected override void OnUpdate(float factor, bool isFinished)
+	{
+		if (mUiLabel != null)
+		{
+			string text = mUiLabel.text;
+			Text = (int)Mathf.Lerp(from, to, factor);
+			if (useSound && duration * factor > mLastSound + 0.065f && text != mUiLabel.text)
+			{
+				SoundsManager.Instance.PlaySound(soundType);
+				mLastSound = duration * factor;
+			}
+		}
+	}
 
-	5. Script Content Level 0
+	public static TweenXPTextCounter Begin(GameObject go, float duration, IntObject fromText, IntObject toText)
+	{
+		TweenXPTextCounter tweenXPTextCounter = UITweener.Begin<TweenXPTextCounter>(go, duration);
+		tweenXPTextCounter.from = fromText.val;
+		tweenXPTextCounter.to = toText.val;
+		tweenXPTextCounter.mLastSound = 0f;
+		if (duration <= 0f)
+		{
+			tweenXPTextCounter.Sample(1f, isFinished: true);
+			tweenXPTextCounter.enabled = false;
+		}
+		return tweenXPTextCounter;
+	}
 
-		AssetRipper was set to not load any script information.
-
-	6. Cpp2IL failed to decompile Il2Cpp data
-
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public static TweenXPTextCounter Begin(GameObject go, float duration, IntObject toText)
+	{
+		TweenXPTextCounter tweenXPTextCounter = UITweener.Begin<TweenXPTextCounter>(go, duration);
+		tweenXPTextCounter.from = tweenXPTextCounter.Text;
+		tweenXPTextCounter.to = toText.val;
+		tweenXPTextCounter.mLastSound = 0f;
+		if (duration <= 0f)
+		{
+			tweenXPTextCounter.Sample(1f, isFinished: true);
+			tweenXPTextCounter.enabled = false;
+		}
+		return tweenXPTextCounter;
+	}
 }

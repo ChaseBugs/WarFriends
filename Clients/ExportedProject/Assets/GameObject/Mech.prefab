@@ -641,6 +641,23 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dc84e5c496afa6dececb350dd93b4b9f, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  isActivated: 0
+  photonView: {fileID: 11425385}
+  hudObjectIndicator: {fileID: 11405055}
+  preparedBehaviour: {fileID: 0}
+  behaviour: {fileID: 0}
+  mFraction: 1
+  isPrewiev: 0
+  visuals: {fileID: 11427192}
+  engine: {fileID: 0}
+  modelLoader: {fileID: 11482909}
+  mAgent: {fileID: 11446060}
+  mDestroyableObject: {fileID: 11426462}
+  mMechAnimator: {fileID: 11405464}
+  strafeSpeed: 0.15
+  weapons:
+  - {fileID: 11439084}
+  - {fileID: 11479834}
 --- !u!114 &11425385
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -652,6 +669,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f19ea4a15c3ca43dcc180d756f7a82b3, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  ownerId: 0
+  group: 0
+  OwnerShipWasTransfered: 0
+  prefixBackup: -1
+  synchronization: 3
+  onSerializeTransformOption: 3
+  onSerializeRigidBodyOption: 2
+  ownershipTransfer: 0
+  ObservedComponents:
+  - {fileID: 11484583}
+  - {fileID: 11405464}
+  viewIdField: 0
+  instantiationId: -1
+  currentMasterID: -1
+  didAwake: 0
+  isRuntimeInstantiated: 0
 --- !u!114 &11405055
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -663,6 +696,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: aa5336f805f636a26d269afa08d8ccb0, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  snapTransform: {fileID: 454546}
+  show: 0
+  spriteName:
+  indicatorOffset: {x: 0, y: 0, z: 0}
+  alwaysOnTop: 0
+  updateScale: 0
 --- !u!114 &11427192
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -674,6 +713,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c452d4ec3c54130d0b8b40a7db84146e, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  modelAttachments: {fileID: 11474717}
+  mainRenderer: {fileID: 13719666}
+  renderedParts: []
 --- !u!114 &11482909
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -685,6 +727,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5a2849789bafcb3c40a110d33084688a, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  modelParts: []
+  modelSkinnedParts:
+  - {fileID: 13719666}
+  animation: {fileID: 11191078}
 --- !u!114 &11474717
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -696,6 +742,33 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0dfd54bd9851b07f2dc75544b2e170c3, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  modelAttachments:
+  - parent: {fileID: 468680}
+    id: 0
+  - parent: {fileID: 468680}
+    id: 1
+  - parent: {fileID: 468680}
+    id: 2
+  - parent: {fileID: 468680}
+    id: 3
+  - parent: {fileID: 401372}
+    id: 4
+  - parent: {fileID: 401372}
+    id: 5
+  - parent: {fileID: 401372}
+    id: 6
+  - parent: {fileID: 401372}
+    id: 7
+  - parent: {fileID: 495861}
+    id: 8
+  - parent: {fileID: 468999}
+    id: 9
+  - parent: {fileID: 458972}
+    id: 10
+  - parent: {fileID: 468999}
+    id: 11
+  - parent: {fileID: 458972}
+    id: 12
 --- !u!114 &11406298
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -707,6 +780,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a551e0a4c5224adf6c7c791cacc35f6a, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  middle: {fileID: 461517}
+  scale: 0.85
+  slots: []
 --- !u!195 &19535660
 NavMeshAgent:
   m_ObjectHideFlags: 0
@@ -738,6 +814,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 74d0ea5357bfb887736447ceb5df1505, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mAgent: {fileID: 19535660}
+  mHeplperCapsule: {fileID: 11463256}
+  forceMagnitudeTreshold: 0.0001
+  avoidStopPlanarDistance: 0.35
+  flyPos: {x: 0, y: 0, z: 0}
+  mass: 8
+  updateCount: 10
 --- !u!114 &11426462
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -749,6 +832,26 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d94d9d4266081e75df24b8687850c33d, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMaxHealth:
+    currentCryptoKey: 230887
+    hiddenValue: e7857944
+    fakeValue: 1000
+    inited: 1
+  mDestroyableByBonusBox: 0
+  healthBarPosition: {fileID: 452723}
+  forceHealthBar: 0
+  offset: {x: 0, y: 0, z: 0}
+  displayHealthBar: 1
+  playMainHitParticle: 0
+  isMetal: 0
+  shotCoeficient: 1
+  shotParticleNames:
+  - sparklesMetal
+  healthBarStyle: 1
+  mHealthbarColor: {r: 0, g: 1, b: 0, a: 1}
+  healthbar: {fileID: 0}
+  shotHitSound: 13
+  parts: []
 --- !u!114 &11405464
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -760,6 +863,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 69eb555365eb44a0a41a1c5455d561a5, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mechSource: {fileID: 8273647}
+  mAnimation: {fileID: 11191078}
+  mRoot: {fileID: 462687}
+  mUpperBody: {fileID: 468293}
+  strafeSpeed: 0.8
 --- !u!114 &11472182
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -771,6 +879,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5bfbf978d76daea62a5ea6e2af5801d1, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mPosition: {fileID: 454546}
 --- !u!114 &11488432
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -782,6 +891,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3cf4d7761af3ce98d7a08bebfe4e8861, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  shootTargets: []
+  targets:
+  - transform: {fileID: 403601}
+    type: 1
+  visible: 1
 --- !u!114 &11463426
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -793,6 +907,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 486a9acbd9d8b9c34ac18b91e89b7bef, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  skillshotPosition: {fileID: 452723}
 --- !u!4 &461517
 Transform:
   m_ObjectHideFlags: 0
@@ -841,6 +956,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9bbf85f27a9ff990b653b211a68c6206, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  navigationHelperCapsuleLayerNumber: 12
+  navigationAgent: {fileID: 0}
 --- !u!54 &5400463
 Rigidbody:
   serializedVersion: 2
@@ -950,6 +1067,27 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2b87d014f018a182ff3631ab01ac442e, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMaxHealth:
+    currentCryptoKey: 230887
+    hiddenValue: e7857944
+    fakeValue: 1000
+    inited: 1
+  mDestroyableByBonusBox: 1
+  healthBarPosition: {fileID: 0}
+  forceHealthBar: 0
+  offset: {x: 0, y: 0, z: 0}
+  displayHealthBar: 0
+  playMainHitParticle: 1
+  isMetal: 0
+  shotCoeficient: 1
+  shotParticleNames: []
+  healthBarStyle: 0
+  mHealthbarColor: {r: 0, g: 1, b: 0, a: 1}
+  healthbar: {fileID: 0}
+  shotHitSound: 14
+  ownerDestroyableObject: {fileID: 0}
+  weight: 1
+  index: 0
 --- !u!65 &6510128
 BoxCollider:
   serializedVersion: 2
@@ -1288,6 +1426,27 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2b87d014f018a182ff3631ab01ac442e, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMaxHealth:
+    currentCryptoKey: 230887
+    hiddenValue: e7857944
+    fakeValue: 1000
+    inited: 1
+  mDestroyableByBonusBox: 1
+  healthBarPosition: {fileID: 0}
+  forceHealthBar: 0
+  offset: {x: 0, y: 0, z: 0}
+  displayHealthBar: 0
+  playMainHitParticle: 1
+  isMetal: 0
+  shotCoeficient: 1
+  shotParticleNames: []
+  healthBarStyle: 0
+  mHealthbarColor: {r: 0, g: 1, b: 0, a: 1}
+  healthbar: {fileID: 0}
+  shotHitSound: 14
+  ownerDestroyableObject: {fileID: 0}
+  weight: 1
+  index: 0
 --- !u!65 &6538461
 BoxCollider:
   serializedVersion: 2
@@ -1336,6 +1495,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a7637fba3d3838c87126404c48361b7e, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  weapon: {fileID: 11481434}
+  fakeShotDispersion: 1
 --- !u!114 &11481434
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1347,6 +1508,45 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1cb9d4e3bc85c63a43096be5a40016e7, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  isActivated: 0
+  bulletPrefab: {fileID: 11409266, guid: 855689762fa6e774aaee190652b08c6f, type: 2}
+  cadence:
+    currentCryptoKey: 230887
+    hiddenValue: 5f9b863e
+    fakeValue: 0.26
+    inited: 1
+  clipSize:
+    currentCryptoKey: 444444
+    hiddenValue: 444424
+    fakeValue: 20
+    inited: 1
+  reloadTime:
+    currentCryptoKey: 230887
+    hiddenValue: e785a340
+    fakeValue: 5
+    inited: 1
+  friendKill: 1
+  infiniteAmmo: 1
+  reloadableWeapon: 0
+  disableSync: 0
+  spawnPoint: {fileID: 411975}
+  startingAmmmoCount:
+    currentCryptoKey: 444444
+    hiddenValue: 444444
+    fakeValue: 0
+    inited: 1
+  useAiming: 1
+  isFake: 0
+  shotType: 0
+  ignoreLayersMask: 0
+  reloadSound: 11
+  shotSound: 2
+  soundVolume: 1
+  weaponType: 0
+  muzzleFlash: {fileID: 11411857}
+  shotOffset: {x: 0, y: 0, z: 0}
+  ammoParticles: {fileID: 0}
+  fastBullet: 0
 --- !u!114 &11413056
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1358,6 +1558,48 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4ceecd6f3ff0e22dc65ce39c3a1fce86, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  damageAmount:
+    currentCryptoKey: 230887
+    hiddenValue: e785a341
+    fakeValue: 20
+    inited: 1
+  hitForce: 2
+  criticalProbability:
+    currentCryptoKey: 230887
+    hiddenValue: e7850300
+    fakeValue: 0
+    inited: 1
+  criticalAmount:
+    currentCryptoKey: 230887
+    hiddenValue: e7850340
+    fakeValue: 2
+    inited: 1
+  damageToPlayerCoeficient:
+    currentCryptoKey: 230887
+    hiddenValue: e785833f
+    fakeValue: 1
+    inited: 1
+  damageToPlayerOvertimeCoeficient:
+    currentCryptoKey: 230887
+    hiddenValue: e785833f
+    fakeValue: 1
+    inited: 1
+  speed: 9
+  checkDistance: 1
+  trailSize: 0.35
+  trailWidth: 0.06
+  trailFakeWidth: 0.04
+  thinTrailSize: 0.2
+  thinTrailWidth: 0.03
+  thinTrailFakeWidth: 0.03
+  fakeSpeedFactor: 1.5
+  fakeShotTexture: shotFake
+  realShotTexture: shotReal
+  shieldShotTexture: shotShield
+  speedMultiplayer: 1
+  poisonTime: 0
+  poisonRatio: 0
+  useThinTrail: 0
 --- !u!114 &11454267
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1369,6 +1611,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f19ea4a15c3ca43dcc180d756f7a82b3, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  ownerId: 0
+  group: 0
+  OwnerShipWasTransfered: 0
+  prefixBackup: -1
+  synchronization: 0
+  onSerializeTransformOption: 3
+  onSerializeRigidBodyOption: 2
+  ownershipTransfer: 0
+  ObservedComponents:
+  - {fileID: 0}
+  viewIdField: 0
+  instantiationId: -1
+  currentMasterID: -1
+  didAwake: 0
+  isRuntimeInstantiated: 0
 --- !u!82 &8280871
 AudioSource:
   serializedVersion: 4
@@ -1495,6 +1752,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4090235689019e8dade2fb65364f77e3, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  m_ForceShow: 0
 --- !u!4 &417017
 Transform:
   m_ObjectHideFlags: 0
@@ -1520,6 +1778,27 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2b87d014f018a182ff3631ab01ac442e, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMaxHealth:
+    currentCryptoKey: 230887
+    hiddenValue: e7857944
+    fakeValue: 1000
+    inited: 1
+  mDestroyableByBonusBox: 1
+  healthBarPosition: {fileID: 0}
+  forceHealthBar: 0
+  offset: {x: 0, y: 0, z: 0}
+  displayHealthBar: 0
+  playMainHitParticle: 1
+  isMetal: 0
+  shotCoeficient: 1
+  shotParticleNames: []
+  healthBarStyle: 0
+  mHealthbarColor: {r: 0, g: 1, b: 0, a: 1}
+  healthbar: {fileID: 0}
+  shotHitSound: 14
+  ownerDestroyableObject: {fileID: 0}
+  weight: 1
+  index: 0
 --- !u!65 &6535975
 BoxCollider:
   serializedVersion: 2
@@ -1568,6 +1847,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a7637fba3d3838c87126404c48361b7e, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  weapon: {fileID: 11432167}
+  fakeShotDispersion: 1
 --- !u!114 &11432167
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1579,6 +1860,45 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1cb9d4e3bc85c63a43096be5a40016e7, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  isActivated: 0
+  bulletPrefab: {fileID: 11409266, guid: 855689762fa6e774aaee190652b08c6f, type: 2}
+  cadence:
+    currentCryptoKey: 230887
+    hiddenValue: 5f9b863e
+    fakeValue: 0.26
+    inited: 1
+  clipSize:
+    currentCryptoKey: 444444
+    hiddenValue: 444424
+    fakeValue: 20
+    inited: 1
+  reloadTime:
+    currentCryptoKey: 230887
+    hiddenValue: e785a340
+    fakeValue: 5
+    inited: 1
+  friendKill: 1
+  infiniteAmmo: 1
+  reloadableWeapon: 0
+  disableSync: 0
+  spawnPoint: {fileID: 464753}
+  startingAmmmoCount:
+    currentCryptoKey: 444444
+    hiddenValue: 444444
+    fakeValue: 0
+    inited: 1
+  useAiming: 1
+  isFake: 0
+  shotType: 0
+  ignoreLayersMask: 0
+  reloadSound: 11
+  shotSound: 2
+  soundVolume: 1
+  weaponType: 0
+  muzzleFlash: {fileID: 11433468}
+  shotOffset: {x: 0, y: 0, z: 0}
+  ammoParticles: {fileID: 0}
+  fastBullet: 0
 --- !u!114 &11471354
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1590,6 +1910,48 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4ceecd6f3ff0e22dc65ce39c3a1fce86, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  damageAmount:
+    currentCryptoKey: 230887
+    hiddenValue: e785a341
+    fakeValue: 20
+    inited: 1
+  hitForce: 2
+  criticalProbability:
+    currentCryptoKey: 230887
+    hiddenValue: e7850300
+    fakeValue: 0
+    inited: 1
+  criticalAmount:
+    currentCryptoKey: 230887
+    hiddenValue: e7850340
+    fakeValue: 2
+    inited: 1
+  damageToPlayerCoeficient:
+    currentCryptoKey: 230887
+    hiddenValue: e785833f
+    fakeValue: 1
+    inited: 1
+  damageToPlayerOvertimeCoeficient:
+    currentCryptoKey: 230887
+    hiddenValue: e785833f
+    fakeValue: 1
+    inited: 1
+  speed: 9
+  checkDistance: 1
+  trailSize: 0.35
+  trailWidth: 0.06
+  trailFakeWidth: 0.04
+  thinTrailSize: 0.2
+  thinTrailWidth: 0.03
+  thinTrailFakeWidth: 0.03
+  fakeSpeedFactor: 1.5
+  fakeShotTexture: shotFake
+  realShotTexture: shotReal
+  shieldShotTexture: shotShield
+  speedMultiplayer: 1
+  poisonTime: 0
+  poisonRatio: 0
+  useThinTrail: 0
 --- !u!114 &11466439
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1601,6 +1963,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f19ea4a15c3ca43dcc180d756f7a82b3, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  ownerId: 0
+  group: 0
+  OwnerShipWasTransfered: 0
+  prefixBackup: -1
+  synchronization: 0
+  onSerializeTransformOption: 3
+  onSerializeRigidBodyOption: 2
+  ownershipTransfer: 0
+  ObservedComponents:
+  - {fileID: 0}
+  viewIdField: 0
+  instantiationId: -1
+  currentMasterID: -1
+  didAwake: 0
+  isRuntimeInstantiated: 0
 --- !u!82 &8233379
 AudioSource:
   serializedVersion: 4
@@ -1727,6 +2104,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4090235689019e8dade2fb65364f77e3, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  m_ForceShow: 0
 --- !u!4 &403601
 Transform:
   m_ObjectHideFlags: 0
@@ -1765,6 +2143,27 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2b87d014f018a182ff3631ab01ac442e, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMaxHealth:
+    currentCryptoKey: 230887
+    hiddenValue: e7857944
+    fakeValue: 1000
+    inited: 1
+  mDestroyableByBonusBox: 1
+  healthBarPosition: {fileID: 0}
+  forceHealthBar: 0
+  offset: {x: 0, y: 0, z: 0}
+  displayHealthBar: 0
+  playMainHitParticle: 1
+  isMetal: 0
+  shotCoeficient: 1
+  shotParticleNames: []
+  healthBarStyle: 0
+  mHealthbarColor: {r: 0, g: 1, b: 0, a: 1}
+  healthbar: {fileID: 0}
+  shotHitSound: 14
+  ownerDestroyableObject: {fileID: 0}
+  weight: 1
+  index: 0
 --- !u!65 &6552473
 BoxCollider:
   serializedVersion: 2

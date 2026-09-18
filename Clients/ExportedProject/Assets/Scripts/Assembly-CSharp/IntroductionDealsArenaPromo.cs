@@ -1,63 +1,132 @@
+using System;
+using System.Collections;
 using UnityEngine;
 
-public class IntroductionDealsArenaPromo : MonoBehaviour
+public class IntroductionDealsArenaPromo : IntroductionDealsItem
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Header("Arena promo")]
+	public Collider buttonCollider;
 
-	1. No dll files were provided to AssetRipper.
+	public UISprite unitIcon;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public UILabel timeLabel;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public GameObject leftWing;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public GameObject rightWing;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	private bool mIsAvailable;
 
-	3. Assembly Reconstruction has not been implemented.
+	private bool mIsRunning;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	private RadicalRoutine mTimeWorker;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public override void InitEvents()
+	{
+		base.InitEvents();
+		buttonCollider.enabled = false;
+		UIEventListener uIEventListener = UIEventListener.Get(buttonCollider.gameObject);
+		uIEventListener.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener.onClick, new UIEventListener.VoidDelegate(OnButtonClick));
+		WarArena.instance.WarArenaDataChanged += OnWarArenaDataChanged;
+	}
 
-	4. This script is unnecessary.
+	private void OnButtonClick(GameObject go)
+	{
+		GuiScreenSingle<ArenaScreen>.instance.ShowWarArena((WarArena.instance.isArenaTicketBought && WarArena.instance.isOpened) ? ArenaScreen.ArenaScreenMode.MainArena : ArenaScreen.ArenaScreenMode.EnterArena);
+		SetShowTimeEnd(0.5f);
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private void OnWarArenaDataChanged()
+	{
+		if (GuiScreenSingle<MainScreen>.instance.isShowed)
+		{
+			UpdateAvailable();
+		}
+	}
 
-	5. Script Content Level 0
+	public override void InitGuiValues()
+	{
+		base.InitGuiValues();
+		UpdateAvailable();
+		LevelBehaviour levelBehaviour = ((WarArena.instance.warArenaConfig != null) ? WarArena.instance.warArenaConfig.doubleDropUnit : null);
+		bool flag = levelBehaviour != null;
+		unitIcon.gameObject.SetActive(flag);
+		if (flag)
+		{
+			unitIcon.spriteName = levelBehaviour.upgradeSlots.iconNameElite;
+			unitIcon.MakePixelPerfect();
+			float multiplier = Mathf.Min(140f / unitIcon.transform.localScale.x, 120f / unitIcon.transform.localScale.y);
+			unitIcon.transform.localScale = unitIcon.transform.localScale.MultiplyXY(multiplier);
+		}
+	}
 
-		AssetRipper was set to not load any script information.
+	public override bool IsAvailable()
+	{
+		return !LevelManager.instance.isWarArenaLocked && (WarArena.instance.isOpened || WarArena.instance.isReminderTime);
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public override IEnumerator Show(float time)
+	{
+		buttonCollider.enabled = true;
+		if (!mIsRunning)
+		{
+			mIsRunning = true;
+			mTimeWorker = RadicalRoutine.Create(TimerWorker());
+			StartCoroutine(RadicalRoutine.Run(mTimeWorker.enumerator));
+		}
+		return base.Show(time);
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public override IEnumerator Hide(float time)
+	{
+		buttonCollider.enabled = false;
+		if (mIsRunning)
+		{
+			mIsRunning = false;
+			mTimeWorker.Cancel();
+		}
+		return base.Hide(time);
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	private void UpdateAvailable()
+	{
+		mIsAvailable = IsAvailable();
+		if (!mIsAvailable)
+		{
+			SetShowTimeEnd(0.5f);
+			buttonCollider.enabled = false;
+		}
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	private IEnumerator TimerWorker()
+	{
+		while (true)
+		{
+			int currentTime = Singleton<BeanstalkServerManager>.instance.currentTimestamp;
+			int arenaStartTime = ((WarArena.instance.warArenaConfig != null) ? WarArena.instance.warArenaConfig.start : 0);
+			int arenaEndTime = ((WarArena.instance.warArenaConfig != null) ? WarArena.instance.warArenaConfig.end : 0);
+			if (currentTime < arenaStartTime)
+			{
+				int time = arenaStartTime - currentTime;
+				timeLabel.text = Localization.LocalizeFormat("ID_ARENAPROMOSTARTSIN", MiscTools.PrintableTime(time, "ID_READYTIME", string.Empty));
+			}
+			else if (currentTime < arenaEndTime)
+			{
+				int time2 = arenaEndTime - currentTime;
+				timeLabel.text = Localization.LocalizeFormat("ID_ARENAPROMOENDSIN", MiscTools.PrintableTime(time2, "ID_READYTIME", string.Empty));
+			}
+			else
+			{
+				timeLabel.text = string.Empty;
+			}
+			float halfTimeLength = timeLabel.relativeSize.x * timeLabel.transform.localScale.x / 2f + 18f;
+			leftWing.transform.localPosition = leftWing.transform.localPosition.ReplaceX(0f - halfTimeLength);
+			rightWing.transform.localPosition = rightWing.transform.localPosition.ReplaceX(halfTimeLength);
+			if (WarArena.instance.isExpired)
+			{
+				WarArena.instance.TryGetNewArena();
+			}
+			yield return new WaitForRealSeconds(0.333f);
+		}
+	}
 }

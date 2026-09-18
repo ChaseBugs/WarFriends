@@ -1,66 +1,228 @@
-using UnityEngine;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using GooglePlayGames.BasicApi;
+using GooglePlayGames.BasicApi.Quests;
+using GooglePlayGames.Native.Cwrapper;
+using GooglePlayGames.Native.PInvoke;
+using GooglePlayGames.OurUtils;
 
 namespace GooglePlayGames.Native
 {
-	public class NativeQuestClient : MonoBehaviour
+internal class NativeQuestClient : IQuestsClient
+{
+	private readonly GooglePlayGames.Native.PInvoke.QuestManager mManager;
+
+	internal NativeQuestClient(GooglePlayGames.Native.PInvoke.QuestManager manager)
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
+		mManager = Misc.CheckNotNull(manager);
 	}
+
+	public void Fetch(DataSource source, string questId, Action<ResponseStatus, IQuest> callback)
+	{
+		Misc.CheckNotNull(questId);
+		Misc.CheckNotNull(callback);
+		callback = CallbackUtils.ToOnGameThread(callback);
+		mManager.Fetch(ConversionUtils.AsDataSource(source), questId, delegate(GooglePlayGames.Native.PInvoke.QuestManager.FetchResponse response)
+		{
+			ResponseStatus arg = ConversionUtils.ConvertResponseStatus(response.ResponseStatus());
+			if (!response.RequestSucceeded())
+			{
+				callback(arg, null);
+			}
+			else
+			{
+				callback(arg, response.Data());
+			}
+		});
+	}
+
+	public void FetchMatchingState(DataSource source, QuestFetchFlags flags, Action<ResponseStatus, List<IQuest>> callback)
+	{
+		Misc.CheckNotNull(callback);
+		callback = CallbackUtils.ToOnGameThread(callback);
+		mManager.FetchList(ConversionUtils.AsDataSource(source), (int)flags, delegate(GooglePlayGames.Native.PInvoke.QuestManager.FetchListResponse response)
+		{
+			ResponseStatus arg = ConversionUtils.ConvertResponseStatus(response.ResponseStatus());
+			if (!response.RequestSucceeded())
+			{
+				callback(arg, null);
+			}
+			else
+			{
+				callback(arg, response.Data().Cast<IQuest>().ToList());
+			}
+		});
+	}
+
+	public void ShowAllQuestsUI(Action<QuestUiResult, IQuest, IQuestMilestone> callback)
+	{
+		Misc.CheckNotNull(callback);
+		callback = CallbackUtils.ToOnGameThread(callback);
+		mManager.ShowAllQuestUI(FromQuestUICallback(callback));
+	}
+
+	public void ShowSpecificQuestUI(IQuest quest, Action<QuestUiResult, IQuest, IQuestMilestone> callback)
+	{
+		Misc.CheckNotNull(quest);
+		Misc.CheckNotNull(callback);
+		callback = CallbackUtils.ToOnGameThread(callback);
+		if (!(quest is NativeQuest quest2))
+		{
+			Logger.e("Encountered quest that was not generated by this IQuestClient");
+			callback(QuestUiResult.BadInput, null, null);
+		}
+		else
+		{
+			mManager.ShowQuestUI(quest2, FromQuestUICallback(callback));
+		}
+	}
+
+	private static QuestUiResult UiErrorToQuestUiResult(CommonErrorStatus.UIStatus status)
+	{
+		switch (status)
+		{
+		case CommonErrorStatus.UIStatus.ERROR_INTERNAL:
+			return QuestUiResult.InternalError;
+		case CommonErrorStatus.UIStatus.ERROR_NOT_AUTHORIZED:
+			return QuestUiResult.NotAuthorized;
+		case CommonErrorStatus.UIStatus.ERROR_CANCELED:
+			return QuestUiResult.UserCanceled;
+		case CommonErrorStatus.UIStatus.ERROR_VERSION_UPDATE_REQUIRED:
+			return QuestUiResult.VersionUpdateRequired;
+		case CommonErrorStatus.UIStatus.ERROR_TIMEOUT:
+			return QuestUiResult.Timeout;
+		case CommonErrorStatus.UIStatus.ERROR_UI_BUSY:
+			return QuestUiResult.UiBusy;
+		default:
+			Logger.e("Unknown error status: " + status);
+			return QuestUiResult.InternalError;
+		}
+	}
+
+	private static Action<GooglePlayGames.Native.PInvoke.QuestManager.QuestUIResponse> FromQuestUICallback(Action<QuestUiResult, IQuest, IQuestMilestone> callback)
+	{
+		return delegate(GooglePlayGames.Native.PInvoke.QuestManager.QuestUIResponse response)
+		{
+			if (!response.RequestSucceeded())
+			{
+				callback(UiErrorToQuestUiResult(response.RequestStatus()), null, null);
+			}
+			else
+			{
+				NativeQuest nativeQuest = response.AcceptedQuest();
+				NativeQuestMilestone nativeQuestMilestone = response.MilestoneToClaim();
+				if (nativeQuest != null)
+				{
+					callback(QuestUiResult.UserRequestsQuestAcceptance, nativeQuest, null);
+					nativeQuestMilestone.Dispose();
+				}
+				else if (nativeQuestMilestone != null)
+				{
+					callback(QuestUiResult.UserRequestsMilestoneClaiming, null, response.MilestoneToClaim());
+					nativeQuest.Dispose();
+				}
+				else
+				{
+					Logger.e("Quest UI succeeded without a quest acceptance or milestone claim.");
+					nativeQuest.Dispose();
+					nativeQuestMilestone.Dispose();
+					callback(QuestUiResult.InternalError, null, null);
+				}
+			}
+		};
+	}
+
+	public void Accept(IQuest quest, Action<QuestAcceptStatus, IQuest> callback)
+	{
+		Misc.CheckNotNull(quest);
+		Misc.CheckNotNull(callback);
+		callback = CallbackUtils.ToOnGameThread(callback);
+		if (!(quest is NativeQuest quest2))
+		{
+			Logger.e("Encountered quest that was not generated by this IQuestClient");
+			callback(QuestAcceptStatus.BadInput, null);
+			return;
+		}
+		mManager.Accept(quest2, delegate(GooglePlayGames.Native.PInvoke.QuestManager.AcceptResponse response)
+		{
+			if (response.RequestSucceeded())
+			{
+				callback(QuestAcceptStatus.Success, response.AcceptedQuest());
+			}
+			else
+			{
+				callback(FromAcceptStatus(response.ResponseStatus()), null);
+			}
+		});
+	}
+
+	private static QuestAcceptStatus FromAcceptStatus(CommonErrorStatus.QuestAcceptStatus status)
+	{
+		switch (status)
+		{
+		case CommonErrorStatus.QuestAcceptStatus.ERROR_INTERNAL:
+			return QuestAcceptStatus.InternalError;
+		case CommonErrorStatus.QuestAcceptStatus.ERROR_NOT_AUTHORIZED:
+			return QuestAcceptStatus.NotAuthorized;
+		case CommonErrorStatus.QuestAcceptStatus.ERROR_QUEST_NOT_STARTED:
+			return QuestAcceptStatus.QuestNotStarted;
+		case CommonErrorStatus.QuestAcceptStatus.ERROR_QUEST_NO_LONGER_AVAILABLE:
+			return QuestAcceptStatus.QuestNoLongerAvailable;
+		case CommonErrorStatus.QuestAcceptStatus.ERROR_TIMEOUT:
+			return QuestAcceptStatus.Timeout;
+		case CommonErrorStatus.QuestAcceptStatus.VALID:
+			return QuestAcceptStatus.Success;
+		default:
+			Logger.e("Encountered unknown status: " + status);
+			return QuestAcceptStatus.InternalError;
+		}
+	}
+
+	public void ClaimMilestone(IQuestMilestone milestone, Action<QuestClaimMilestoneStatus, IQuest, IQuestMilestone> callback)
+	{
+		Misc.CheckNotNull(milestone);
+		Misc.CheckNotNull(callback);
+		callback = CallbackUtils.ToOnGameThread(callback);
+		if (!(milestone is NativeQuestMilestone milestone2))
+		{
+			Logger.e("Encountered milestone that was not generated by this IQuestClient");
+			callback(QuestClaimMilestoneStatus.BadInput, null, null);
+			return;
+		}
+		mManager.ClaimMilestone(milestone2, delegate(GooglePlayGames.Native.PInvoke.QuestManager.ClaimMilestoneResponse response)
+		{
+			if (response.RequestSucceeded())
+			{
+				callback(QuestClaimMilestoneStatus.Success, response.Quest(), response.ClaimedMilestone());
+			}
+			else
+			{
+				callback(FromClaimStatus(response.ResponseStatus()), null, null);
+			}
+		});
+	}
+
+	private static QuestClaimMilestoneStatus FromClaimStatus(CommonErrorStatus.QuestClaimMilestoneStatus status)
+	{
+		switch (status)
+		{
+		case CommonErrorStatus.QuestClaimMilestoneStatus.VALID:
+			return QuestClaimMilestoneStatus.Success;
+		case CommonErrorStatus.QuestClaimMilestoneStatus.ERROR_INTERNAL:
+			return QuestClaimMilestoneStatus.InternalError;
+		case CommonErrorStatus.QuestClaimMilestoneStatus.ERROR_MILESTONE_ALREADY_CLAIMED:
+			return QuestClaimMilestoneStatus.MilestoneAlreadyClaimed;
+		case CommonErrorStatus.QuestClaimMilestoneStatus.ERROR_MILESTONE_CLAIM_FAILED:
+			return QuestClaimMilestoneStatus.MilestoneClaimFailed;
+		case CommonErrorStatus.QuestClaimMilestoneStatus.ERROR_NOT_AUTHORIZED:
+			return QuestClaimMilestoneStatus.NotAuthorized;
+		case CommonErrorStatus.QuestClaimMilestoneStatus.ERROR_TIMEOUT:
+			return QuestClaimMilestoneStatus.Timeout;
+		default:
+			Logger.e("Encountered unknown status: " + status);
+			return QuestClaimMilestoneStatus.InternalError;
+		}
+	}
+}
 }

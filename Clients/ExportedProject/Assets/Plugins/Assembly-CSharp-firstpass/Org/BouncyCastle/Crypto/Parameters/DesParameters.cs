@@ -1,66 +1,85 @@
-using UnityEngine;
+using System;
 
 namespace Org.BouncyCastle.Crypto.Parameters
 {
-	public class DesParameters : MonoBehaviour
+public class DesParameters : KeyParameter
+{
+	public const int DesKeyLength = 8;
+
+	private const int N_DES_WEAK_KEYS = 16;
+
+	private static readonly byte[] DES_weak_keys = new byte[128]
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
+		1, 1, 1, 1, 1, 1, 1, 1, 31, 31,
+		31, 31, 14, 14, 14, 14, 224, 224, 224, 224,
+		241, 241, 241, 241, 254, 254, 254, 254, 254, 254,
+		254, 254, 1, 254, 1, 254, 1, 254, 1, 254,
+		31, 224, 31, 224, 14, 241, 14, 241, 1, 224,
+		1, 224, 1, 241, 1, 241, 31, 254, 31, 254,
+		14, 254, 14, 254, 1, 31, 1, 31, 1, 14,
+		1, 14, 224, 254, 224, 254, 241, 254, 241, 254,
+		254, 1, 254, 1, 254, 1, 254, 1, 224, 31,
+		224, 31, 241, 14, 241, 14, 224, 1, 224, 1,
+		241, 1, 241, 1, 254, 31, 254, 31, 254, 14,
+		254, 14, 31, 1, 31, 1, 14, 1, 14, 1,
+		254, 224, 254, 224, 254, 241, 254, 241
+	};
 
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
+	public DesParameters(byte[] key)
+		: base(key)
+	{
+		if (IsWeakKey(key))
+		{
+			throw new ArgumentException("attempt to create weak DES key");
+		}
 	}
+
+	public DesParameters(byte[] key, int keyOff, int keyLen)
+		: base(key, keyOff, keyLen)
+	{
+		if (IsWeakKey(key, keyOff))
+		{
+			throw new ArgumentException("attempt to create weak DES key");
+		}
+	}
+
+	public static bool IsWeakKey(byte[] key, int offset)
+	{
+		if (key.Length - offset < 8)
+		{
+			throw new ArgumentException("key material too short.");
+		}
+		for (int i = 0; i < 16; i++)
+		{
+			bool flag = false;
+			for (int j = 0; j < 8; j++)
+			{
+				if (key[j + offset] != DES_weak_keys[i * 8 + j])
+				{
+					flag = true;
+					break;
+				}
+			}
+			if (!flag)
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public static bool IsWeakKey(byte[] key)
+	{
+		return IsWeakKey(key, 0);
+	}
+
+	public static void SetOddParity(byte[] bytes)
+	{
+		for (int i = 0; i < bytes.Length; i++)
+		{
+			int num = bytes[i];
+			bytes[i] = (byte)((num & 0xFE) | (((num >> 1) ^ (num >> 2) ^ (num >> 3) ^ (num >> 4) ^ (num >> 5) ^ (num >> 6) ^ (num >> 7) ^ 1) & 1));
+		}
+	}
+}
 }

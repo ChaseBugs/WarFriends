@@ -1,66 +1,50 @@
-using UnityEngine;
+using System;
+using Google.Developers;
 
 namespace Com.Google.Android.Gms.Common.Api
 {
-	public class PendingResult : MonoBehaviour
+public class PendingResult<R> : JavaObjWrapper where R : Result
+{
+	private const string CLASS_NAME = "com/google/android/gms/common/api/PendingResult";
+
+	public PendingResult(IntPtr ptr)
+		: base(ptr)
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
 	}
+
+	public PendingResult()
+		: base("com.google.android.gms.common.api.PendingResult")
+	{
+	}
+
+	public R await(long arg_long_1, object arg_object_2)
+	{
+		return InvokeCall<R>("await", "(JLjava/util/concurrent/TimeUnit;)Lcom/google/android/gms/common/api/Result;", new object[2] { arg_long_1, arg_object_2 });
+	}
+
+	public R await()
+	{
+		return InvokeCall<R>("await", "()Lcom/google/android/gms/common/api/Result;", new object[0]);
+	}
+
+	public bool isCanceled()
+	{
+		return InvokeCall<bool>("isCanceled", "()Z", new object[0]);
+	}
+
+	public void cancel()
+	{
+		InvokeCallVoid("cancel", "()V");
+	}
+
+	public void setResultCallback(ResultCallback<R> arg_ResultCallback_1)
+	{
+		InvokeCallVoid("setResultCallback", "(Lcom/google/android/gms/common/api/ResultCallback;)V", arg_ResultCallback_1);
+	}
+
+	public void setResultCallback(ResultCallback<R> arg_ResultCallback_1, long arg_long_2, object arg_object_3)
+	{
+		InvokeCallVoid("setResultCallback", "(Lcom/google/android/gms/common/api/ResultCallback;JLjava/util/concurrent/TimeUnit;)V", arg_ResultCallback_1, arg_long_2, arg_object_3);
+	}
+}
 }

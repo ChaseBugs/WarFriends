@@ -1,63 +1,129 @@
+using System;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using UnityEngine;
 
-public class WithdrewWarcard : MonoBehaviour
+public class WithdrewWarcard : DatabaseMessage
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public DatabasePlayer player;
 
-	1. No dll files were provided to AssetRipper.
+	public Card withdrewCard;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public int addedPoints;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public string cardId;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public CardManager.BuddyCardData buddyData;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public string idOfPlayer;
 
-	3. Assembly Reconstruction has not been implemented.
+	public override bool actionLeavesLobby => true;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public override bool processNextMessage => true;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public WithdrewWarcard(Card card, DatabasePlayer playerData, int reputationPointsAdded)
+		: base($"WithdrewWarcard-{card.id}-{playerData.name}-{Singleton<BeanstalkServerManager>.instance.currentTimestamp}", Type.SquadDepositedCardsChanged)
+	{
+		player = playerData;
+		withdrewCard = card;
+		cardId = card.id;
+		if (card.isBuddyCard)
+		{
+			buddyData = (card as CardBuddy).buddyCardData;
+		}
+		addedPoints = reputationPointsAdded;
+	}
 
-	4. This script is unnecessary.
+	public WithdrewWarcard(JToken dict)
+		: base(dict)
+	{
+		player = new DatabasePlayer();
+		if (dict["PlayerName"] != null)
+		{
+			player.accountName = StringParser.ParseString("PlayerName", "S", dict, string.Empty);
+		}
+		if (dict["Level"] != null)
+		{
+			player.level = StringParser.ParseIntToken(dict["Level"]["N"]);
+		}
+		if (dict["SquadId"] != null)
+		{
+			player.squadName = StringParser.ParseString("SquadId", "S", dict, string.Empty);
+		}
+		if (dict["SquadRank"] != null)
+		{
+			player.squadRank = (SquadRank)StringParser.ParseIntToken(dict["SquadRank"]["N"]);
+		}
+		if (dict["WithdrawerId"] != null)
+		{
+			player.id = StringParser.ParseString("WithdrawerId", "S", dict, string.Empty);
+		}
+		if (dict["OtherPlayerId"] != null)
+		{
+			idOfPlayer = StringParser.ParseString("OtherPlayerId", "S", dict, string.Empty);
+		}
+		if (dict["CardId"] != null)
+		{
+			cardId = StringParser.ParseString("CardId", "S", dict, string.Empty);
+			if (dict["BuddyCardData"] != null)
+			{
+				buddyData = JsonConvert.DeserializeObject<CardManager.BuddyCardData>(StringParser.ParseString("BuddyCardData", "S", dict, string.Empty));
+				withdrewCard = CardManager.instance.GetSquadCardInstance(cardId, buddyData);
+			}
+			else
+			{
+				withdrewCard = CardManager.instance.GetCardInstance(cardId);
+			}
+		}
+		if (dict["ReputationPointsAdded"] != null)
+		{
+			addedPoints = StringParser.ParseIntToken(dict["ReputationPointsAdded"]["N"]);
+		}
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public override void Show()
+	{
+		base.Show();
+		if (DebugSettings.debugEnabled)
+		{
+			Debug.Log($"Withdrew Warcard message - Showing for player:{idOfPlayer} and current player id is:{GameLoginManager.currentPlayer.id}");
+		}
+		DatabasePlayer currentPlayer = GameLoginManager.currentPlayer;
+		bool flag = idOfPlayer == currentPlayer.id;
+		string squadName = currentPlayer.squadName;
+		bool flag2 = 60 > Mathf.Abs(Singleton<BeanstalkServerManager>.instance.currentTimestamp - messageTime);
+		bool flag3 = Singleton<BeanstalkServerManager>.instance.timestampPlayerDataLoaded > messageTime;
+		if (!string.IsNullOrEmpty(squadName) && flag2)
+		{
+			Singleton<BeanstalkServerManager>.instance.GetAllSquadMembers(squadName, forceUpdate: true);
+		}
+		if (flag)
+		{
+			GuiElementSingle<ChatGuiElement>.instance.messageContent.AddMessage(this);
+			if (!flag3)
+			{
+				GameLoginManager.instance.RemoveCardFromDeposited(cardId);
+				Singleton<NotificationManager>.instance.ClientCardpoolNotifications();
+			}
+		}
+		else
+		{
+			Confirm();
+		}
+	}
 
-	5. Script Content Level 0
+	internal override Action InitMessageCenterRecord(MessageCenterRecord record)
+	{
+		record.SetAppearance_WarcardWithdrew(messageType, messageTime, player, withdrewCard, addedPoints);
+		return delegate
+		{
+			GuiScreenSingle<SquadScreen>.instance.ShowSquadCardpool();
+			Confirm();
+		};
+	}
 
-		AssetRipper was set to not load any script information.
-
-	6. Cpp2IL failed to decompile Il2Cpp data
-
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public override void Confirm()
+	{
+		Ignore();
+	}
 }

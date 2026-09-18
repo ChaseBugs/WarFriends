@@ -1,63 +1,126 @@
+using System;
 using UnityEngine;
 
-public class MissionLeaderboardRecord : MonoBehaviour
+public class MissionLeaderboardRecord : PoolableObject
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Header("Invite")]
+	public GameObject invitePart;
 
-	1. No dll files were provided to AssetRipper.
+	[Header("Content")]
+	public GameObject contentPart;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public UISprite background;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public UILabel playerPosition;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public PlayerIcon playerIcon;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public GameObject playerIconButton;
 
-	3. Assembly Reconstruction has not been implemented.
+	public UILabel playerName;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public GameObject playerButton;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public UILabel playerScore;
 
-	4. This script is unnecessary.
+	private DatabasePlayer mPlayer;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public void InitializeInvite()
+	{
+		contentPart.SetActive(value: false);
+		invitePart.SetActive(value: true);
+		if (GameLoginManager.currentPlayer.isFacebookConnected)
+		{
+			UIEventListener uIEventListener = UIEventListener.Get(invitePart);
+			uIEventListener.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener.onClick, (UIEventListener.VoidDelegate)delegate(GameObject go)
+			{
+				GuiElementSingle<MissionDialog>.instance.InviteFriendsButtonClick(go);
+			});
+		}
+		else
+		{
+			UIEventListener uIEventListener2 = UIEventListener.Get(invitePart);
+			uIEventListener2.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener2.onClick, (UIEventListener.VoidDelegate)delegate(GameObject go)
+			{
+				GuiElementSingle<MissionDialog>.instance.ConnectToFacebookButtonClick(go);
+			});
+		}
+	}
 
-	5. Script Content Level 0
+	public void InitializePlayer(DatabasePlayerMissionLeaderboard missionLeaderboard, int missionScore, int position)
+	{
+		contentPart.SetActive(value: true);
+		invitePart.SetActive(value: false);
+		mPlayer = DatabasePlayer.CreateFromDatabasePlayerMissionLeaderboard(missionLeaderboard);
+		playerPosition.text = MiscTools.FormatBigNumber(position);
+		background.color = ((!(mPlayer.id == GameLoginManager.currentPlayer.id)) ? Colours.whiteLeaderBoard : Colours.blueLeaderboard);
+		playerIcon.Reset();
+		if (mPlayer.playerVisuals != null)
+		{
+			Singleton<PlayerTexturePool>.instance.OnPlayerTextureCreated -= OnPlayerTextureCreated;
+			Singleton<PlayerTexturePool>.instance.OnPlayerTextureCreated += OnPlayerTextureCreated;
+			Singleton<PlayerTexturePool>.instance.RequestPlayerTexture(mPlayer);
+		}
+		SetPlayerName(mPlayer.name);
+		playerScore.text = MiscTools.FormatBigNumber(missionScore);
+		UIEventListener uIEventListener = UIEventListener.Get(playerIconButton);
+		uIEventListener.onClick = (UIEventListener.VoidDelegate)Delegate.Remove(uIEventListener.onClick, new UIEventListener.VoidDelegate(ShowPlayerIcon));
+		UIEventListener uIEventListener2 = UIEventListener.Get(playerIconButton);
+		uIEventListener2.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener2.onClick, new UIEventListener.VoidDelegate(ShowPlayerIcon));
+		UIEventListener uIEventListener3 = UIEventListener.Get(playerButton);
+		uIEventListener3.onClick = (UIEventListener.VoidDelegate)Delegate.Remove(uIEventListener3.onClick, new UIEventListener.VoidDelegate(ShowPlayer));
+		UIEventListener uIEventListener4 = UIEventListener.Get(playerButton);
+		uIEventListener4.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener4.onClick, new UIEventListener.VoidDelegate(ShowPlayer));
+	}
 
-		AssetRipper was set to not load any script information.
+	private void SetPlayerName(string newName)
+	{
+		playerName.text = newName;
+		TweenColor.Begin(playerName.gameObject, 0f, Color.white);
+		MiscTools.SetUILabelRescale(playerName, 30f, 25f);
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	private void ShowPlayer(GameObject go)
+	{
+		if (!string.IsNullOrEmpty(mPlayer.name))
+		{
+			TweenColor tweenColor = TweenColor.Begin(playerName.gameObject, GameVariables.durationOfNameButtonColor, Color.white, Colours.blue);
+			tweenColor.NumOfRepetitions = 2;
+			tweenColor.style = UITweener.Style.PingPong;
+			GuiElementSingle<PlayerProfileDialog>.instance.ShowDialog(mPlayer.name, mPlayer.id);
+		}
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	private void ShowPlayerIcon(GameObject go)
+	{
+		if (!string.IsNullOrEmpty(mPlayer.name))
+		{
+			GuiElementSingle<PlayerProfileDialog>.instance.ShowDialog(mPlayer.name, mPlayer.id);
+		}
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	private void OnPlayerTextureCreated(string playerID, Texture2D playerTexture, bool useBackground)
+	{
+		if (mPlayer != null && mPlayer.id == playerID)
+		{
+			playerIcon.avatar = playerTexture;
+			playerIcon.UpdateIcon();
+		}
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public override void DestroyPooled()
+	{
+		base.DestroyPooled();
+		UIEventListener uIEventListener = UIEventListener.Get(playerIconButton);
+		uIEventListener.onClick = (UIEventListener.VoidDelegate)Delegate.Remove(uIEventListener.onClick, new UIEventListener.VoidDelegate(ShowPlayerIcon));
+		UIEventListener uIEventListener2 = UIEventListener.Get(playerButton);
+		uIEventListener2.onClick = (UIEventListener.VoidDelegate)Delegate.Remove(uIEventListener2.onClick, new UIEventListener.VoidDelegate(ShowPlayer));
+		UIEventListener.Get(invitePart).onClick = null;
+		Singleton<PlayerTexturePool>.instance.OnPlayerTextureCreated -= OnPlayerTextureCreated;
+		if (mPlayer != null)
+		{
+			Singleton<PlayerTexturePool>.instance.FreePlayerTexture(mPlayer.id);
+		}
+		mPlayer = null;
+	}
 }

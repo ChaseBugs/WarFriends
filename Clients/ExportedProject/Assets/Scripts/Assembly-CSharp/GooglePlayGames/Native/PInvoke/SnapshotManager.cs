@@ -1,66 +1,323 @@
-using UnityEngine;
+using System;
+using System.Collections.Generic;
+using System.Runtime.InteropServices;
+using System.Text;
+using AOT;
+using GooglePlayGames.Native.Cwrapper;
+using GooglePlayGames.OurUtils;
 
 namespace GooglePlayGames.Native.PInvoke
 {
-	public class SnapshotManager : MonoBehaviour
+internal class SnapshotManager
+{
+	internal class OpenResponse : BaseReferenceHolder
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
+		internal OpenResponse(IntPtr selfPointer)
+			: base(selfPointer)
+		{
+		}
 
-		1. No dll files were provided to AssetRipper.
+		internal bool RequestSucceeded()
+		{
+			return ResponseStatus() > (CommonErrorStatus.SnapshotOpenStatus)0;
+		}
 
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
+		internal CommonErrorStatus.SnapshotOpenStatus ResponseStatus()
+		{
+			return GooglePlayGames.Native.Cwrapper.SnapshotManager.SnapshotManager_OpenResponse_GetStatus(SelfPtr());
+		}
 
-		2. Incorrect dll files were provided to AssetRipper.
+		internal string ConflictId()
+		{
+			if (ResponseStatus() != CommonErrorStatus.SnapshotOpenStatus.VALID_WITH_CONFLICT)
+			{
+				throw new InvalidOperationException("OpenResponse did not have a conflict");
+			}
+			return PInvokeUtilities.OutParamsToString((StringBuilder out_string, UIntPtr out_size) => GooglePlayGames.Native.Cwrapper.SnapshotManager.SnapshotManager_OpenResponse_GetConflictId(SelfPtr(), out_string, out_size));
+		}
 
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
+		internal NativeSnapshotMetadata Data()
+		{
+			if (ResponseStatus() != CommonErrorStatus.SnapshotOpenStatus.VALID)
+			{
+				throw new InvalidOperationException("OpenResponse had a conflict");
+			}
+			return new NativeSnapshotMetadata(GooglePlayGames.Native.Cwrapper.SnapshotManager.SnapshotManager_OpenResponse_GetData(SelfPtr()));
+		}
 
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+		internal NativeSnapshotMetadata ConflictOriginal()
+		{
+			if (ResponseStatus() != CommonErrorStatus.SnapshotOpenStatus.VALID_WITH_CONFLICT)
+			{
+				throw new InvalidOperationException("OpenResponse did not have a conflict");
+			}
+			return new NativeSnapshotMetadata(GooglePlayGames.Native.Cwrapper.SnapshotManager.SnapshotManager_OpenResponse_GetConflictOriginal(SelfPtr()));
+		}
 
-		3. Assembly Reconstruction has not been implemented.
+		internal NativeSnapshotMetadata ConflictUnmerged()
+		{
+			if (ResponseStatus() != CommonErrorStatus.SnapshotOpenStatus.VALID_WITH_CONFLICT)
+			{
+				throw new InvalidOperationException("OpenResponse did not have a conflict");
+			}
+			return new NativeSnapshotMetadata(GooglePlayGames.Native.Cwrapper.SnapshotManager.SnapshotManager_OpenResponse_GetConflictUnmerged(SelfPtr()));
+		}
 
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
+		protected override void CallDispose(HandleRef selfPointer)
+		{
+			GooglePlayGames.Native.Cwrapper.SnapshotManager.SnapshotManager_OpenResponse_Dispose(selfPointer);
+		}
 
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
+		internal static OpenResponse FromPointer(IntPtr pointer)
+		{
+			if (pointer.Equals(IntPtr.Zero))
+			{
+				return null;
+			}
+			return new OpenResponse(pointer);
+		}
 	}
+
+	internal class FetchAllResponse : BaseReferenceHolder
+	{
+		internal FetchAllResponse(IntPtr selfPointer)
+			: base(selfPointer)
+		{
+		}
+
+		internal CommonErrorStatus.ResponseStatus ResponseStatus()
+		{
+			return GooglePlayGames.Native.Cwrapper.SnapshotManager.SnapshotManager_FetchAllResponse_GetStatus(SelfPtr());
+		}
+
+		internal bool RequestSucceeded()
+		{
+			return ResponseStatus() > (CommonErrorStatus.ResponseStatus)0;
+		}
+
+		internal IEnumerable<NativeSnapshotMetadata> Data()
+		{
+			return PInvokeUtilities.ToEnumerable(GooglePlayGames.Native.Cwrapper.SnapshotManager.SnapshotManager_FetchAllResponse_GetData_Length(SelfPtr()), (UIntPtr index) => new NativeSnapshotMetadata(GooglePlayGames.Native.Cwrapper.SnapshotManager.SnapshotManager_FetchAllResponse_GetData_GetElement(SelfPtr(), index)));
+		}
+
+		protected override void CallDispose(HandleRef selfPointer)
+		{
+			GooglePlayGames.Native.Cwrapper.SnapshotManager.SnapshotManager_FetchAllResponse_Dispose(selfPointer);
+		}
+
+		internal static FetchAllResponse FromPointer(IntPtr pointer)
+		{
+			if (pointer.Equals(IntPtr.Zero))
+			{
+				return null;
+			}
+			return new FetchAllResponse(pointer);
+		}
+	}
+
+	internal class CommitResponse : BaseReferenceHolder
+	{
+		internal CommitResponse(IntPtr selfPointer)
+			: base(selfPointer)
+		{
+		}
+
+		internal CommonErrorStatus.ResponseStatus ResponseStatus()
+		{
+			return GooglePlayGames.Native.Cwrapper.SnapshotManager.SnapshotManager_CommitResponse_GetStatus(SelfPtr());
+		}
+
+		internal bool RequestSucceeded()
+		{
+			return ResponseStatus() > (CommonErrorStatus.ResponseStatus)0;
+		}
+
+		internal NativeSnapshotMetadata Data()
+		{
+			if (!RequestSucceeded())
+			{
+				throw new InvalidOperationException("Request did not succeed");
+			}
+			return new NativeSnapshotMetadata(GooglePlayGames.Native.Cwrapper.SnapshotManager.SnapshotManager_CommitResponse_GetData(SelfPtr()));
+		}
+
+		protected override void CallDispose(HandleRef selfPointer)
+		{
+			GooglePlayGames.Native.Cwrapper.SnapshotManager.SnapshotManager_CommitResponse_Dispose(selfPointer);
+		}
+
+		internal static CommitResponse FromPointer(IntPtr pointer)
+		{
+			if (pointer.Equals(IntPtr.Zero))
+			{
+				return null;
+			}
+			return new CommitResponse(pointer);
+		}
+	}
+
+	internal class ReadResponse : BaseReferenceHolder
+	{
+		internal ReadResponse(IntPtr selfPointer)
+			: base(selfPointer)
+		{
+		}
+
+		internal CommonErrorStatus.ResponseStatus ResponseStatus()
+		{
+			return GooglePlayGames.Native.Cwrapper.SnapshotManager.SnapshotManager_CommitResponse_GetStatus(SelfPtr());
+		}
+
+		internal bool RequestSucceeded()
+		{
+			return ResponseStatus() > (CommonErrorStatus.ResponseStatus)0;
+		}
+
+		internal byte[] Data()
+		{
+			if (!RequestSucceeded())
+			{
+				throw new InvalidOperationException("Request did not succeed");
+			}
+			return PInvokeUtilities.OutParamsToArray((byte[] out_bytes, UIntPtr out_size) => GooglePlayGames.Native.Cwrapper.SnapshotManager.SnapshotManager_ReadResponse_GetData(SelfPtr(), out_bytes, out_size));
+		}
+
+		protected override void CallDispose(HandleRef selfPointer)
+		{
+			GooglePlayGames.Native.Cwrapper.SnapshotManager.SnapshotManager_ReadResponse_Dispose(selfPointer);
+		}
+
+		internal static ReadResponse FromPointer(IntPtr pointer)
+		{
+			if (pointer.Equals(IntPtr.Zero))
+			{
+				return null;
+			}
+			return new ReadResponse(pointer);
+		}
+	}
+
+	internal class SnapshotSelectUIResponse : BaseReferenceHolder
+	{
+		internal SnapshotSelectUIResponse(IntPtr selfPointer)
+			: base(selfPointer)
+		{
+		}
+
+		internal CommonErrorStatus.UIStatus RequestStatus()
+		{
+			return GooglePlayGames.Native.Cwrapper.SnapshotManager.SnapshotManager_SnapshotSelectUIResponse_GetStatus(SelfPtr());
+		}
+
+		internal bool RequestSucceeded()
+		{
+			return RequestStatus() > (CommonErrorStatus.UIStatus)0;
+		}
+
+		internal NativeSnapshotMetadata Data()
+		{
+			if (!RequestSucceeded())
+			{
+				throw new InvalidOperationException("Request did not succeed");
+			}
+			return new NativeSnapshotMetadata(GooglePlayGames.Native.Cwrapper.SnapshotManager.SnapshotManager_SnapshotSelectUIResponse_GetData(SelfPtr()));
+		}
+
+		protected override void CallDispose(HandleRef selfPointer)
+		{
+			GooglePlayGames.Native.Cwrapper.SnapshotManager.SnapshotManager_SnapshotSelectUIResponse_Dispose(selfPointer);
+		}
+
+		internal static SnapshotSelectUIResponse FromPointer(IntPtr pointer)
+		{
+			if (pointer.Equals(IntPtr.Zero))
+			{
+				return null;
+			}
+			return new SnapshotSelectUIResponse(pointer);
+		}
+	}
+
+	private readonly GameServices mServices;
+
+	internal SnapshotManager(GameServices services)
+	{
+		mServices = Misc.CheckNotNull(services);
+	}
+
+	internal void FetchAll(Types.DataSource source, Action<FetchAllResponse> callback)
+	{
+		GooglePlayGames.Native.Cwrapper.SnapshotManager.SnapshotManager_FetchAll(mServices.AsHandle(), source, InternalFetchAllCallback, Callbacks.ToIntPtr(callback, FetchAllResponse.FromPointer));
+	}
+
+	[MonoPInvokeCallback(typeof(GooglePlayGames.Native.Cwrapper.SnapshotManager.FetchAllCallback))]
+	internal static void InternalFetchAllCallback(IntPtr response, IntPtr data)
+	{
+		Callbacks.PerformInternalCallback("SnapshotManager#FetchAllCallback", Callbacks.Type.Temporary, response, data);
+	}
+
+	internal void SnapshotSelectUI(bool allowCreate, bool allowDelete, uint maxSnapshots, string uiTitle, Action<SnapshotSelectUIResponse> callback)
+	{
+		GooglePlayGames.Native.Cwrapper.SnapshotManager.SnapshotManager_ShowSelectUIOperation(mServices.AsHandle(), allowCreate, allowDelete, maxSnapshots, uiTitle, InternalSnapshotSelectUICallback, Callbacks.ToIntPtr(callback, SnapshotSelectUIResponse.FromPointer));
+	}
+
+	[MonoPInvokeCallback(typeof(GooglePlayGames.Native.Cwrapper.SnapshotManager.SnapshotSelectUICallback))]
+	internal static void InternalSnapshotSelectUICallback(IntPtr response, IntPtr data)
+	{
+		Callbacks.PerformInternalCallback("SnapshotManager#SnapshotSelectUICallback", Callbacks.Type.Temporary, response, data);
+	}
+
+	internal void Open(string fileName, Types.DataSource source, Types.SnapshotConflictPolicy conflictPolicy, Action<OpenResponse> callback)
+	{
+		Misc.CheckNotNull(fileName);
+		Misc.CheckNotNull(callback);
+		GooglePlayGames.Native.Cwrapper.SnapshotManager.SnapshotManager_Open(mServices.AsHandle(), source, fileName, conflictPolicy, InternalOpenCallback, Callbacks.ToIntPtr(callback, OpenResponse.FromPointer));
+	}
+
+	[MonoPInvokeCallback(typeof(GooglePlayGames.Native.Cwrapper.SnapshotManager.OpenCallback))]
+	internal static void InternalOpenCallback(IntPtr response, IntPtr data)
+	{
+		Callbacks.PerformInternalCallback("SnapshotManager#OpenCallback", Callbacks.Type.Temporary, response, data);
+	}
+
+	internal void Commit(NativeSnapshotMetadata metadata, NativeSnapshotMetadataChange metadataChange, byte[] updatedData, Action<CommitResponse> callback)
+	{
+		Misc.CheckNotNull(metadata);
+		Misc.CheckNotNull(metadataChange);
+		GooglePlayGames.Native.Cwrapper.SnapshotManager.SnapshotManager_Commit(mServices.AsHandle(), metadata.AsPointer(), metadataChange.AsPointer(), updatedData, new UIntPtr((ulong)updatedData.Length), InternalCommitCallback, Callbacks.ToIntPtr(callback, CommitResponse.FromPointer));
+	}
+
+	internal void Resolve(NativeSnapshotMetadata metadata, NativeSnapshotMetadataChange metadataChange, string conflictId, Action<CommitResponse> callback)
+	{
+		Misc.CheckNotNull(metadata);
+		Misc.CheckNotNull(metadataChange);
+		Misc.CheckNotNull(conflictId);
+		GooglePlayGames.Native.Cwrapper.SnapshotManager.SnapshotManager_ResolveConflict(mServices.AsHandle(), metadata.AsPointer(), metadataChange.AsPointer(), conflictId, InternalCommitCallback, Callbacks.ToIntPtr(callback, CommitResponse.FromPointer));
+	}
+
+	[MonoPInvokeCallback(typeof(GooglePlayGames.Native.Cwrapper.SnapshotManager.CommitCallback))]
+	internal static void InternalCommitCallback(IntPtr response, IntPtr data)
+	{
+		Callbacks.PerformInternalCallback("SnapshotManager#CommitCallback", Callbacks.Type.Temporary, response, data);
+	}
+
+	internal void Delete(NativeSnapshotMetadata metadata)
+	{
+		Misc.CheckNotNull(metadata);
+		GooglePlayGames.Native.Cwrapper.SnapshotManager.SnapshotManager_Delete(mServices.AsHandle(), metadata.AsPointer());
+	}
+
+	internal void Read(NativeSnapshotMetadata metadata, Action<ReadResponse> callback)
+	{
+		Misc.CheckNotNull(metadata);
+		Misc.CheckNotNull(callback);
+		GooglePlayGames.Native.Cwrapper.SnapshotManager.SnapshotManager_Read(mServices.AsHandle(), metadata.AsPointer(), InternalReadCallback, Callbacks.ToIntPtr(callback, ReadResponse.FromPointer));
+	}
+
+	[MonoPInvokeCallback(typeof(GooglePlayGames.Native.Cwrapper.SnapshotManager.ReadCallback))]
+	internal static void InternalReadCallback(IntPtr response, IntPtr data)
+	{
+		Callbacks.PerformInternalCallback("SnapshotManager#ReadCallback", Callbacks.Type.Temporary, response, data);
+	}
+}
 }

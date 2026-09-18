@@ -1,63 +1,119 @@
+using System;
 using UnityEngine;
 
-public class ReconnectDialog : MonoBehaviour
+public class ReconnectDialog : GuiElementSingle<ReconnectDialog>, IGuiDialog
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Header("Core")]
+	public UISprite background;
 
-	1. No dll files were provided to AssetRipper.
+	public UILabel title;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public UILabel waitText;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public UILabel hintText;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public GameObject forfeitButton;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public void SetCause(ReconnectState reconnectState, bool allPlayersFinishetStartAnimation)
+	{
+		switch (reconnectState)
+		{
+		case ReconnectState.Me:
+			title.text = Localization.Localize("ID_YOUWEREDISCONNECTED");
+			forfeitButton.SetActive(value: true);
+			break;
+		case ReconnectState.Other:
+			title.text = Localization.Localize((!Singleton<GameController>.instance.isMission) ? "ID_OPPONENTWASDISCONNECTED" : "ID_FRIENDWASDISCONNECTED");
+			forfeitButton.SetActive(value: false);
+			break;
+		default:
+			if (!allPlayersFinishetStartAnimation)
+			{
+				title.text = Localization.Localize((!Singleton<GameController>.instance.isMission) ? "ID_STATE_WAITINGFOROPPONENT" : "ID_WAITINGFORFRIEND");
+				forfeitButton.SetActive(value: false);
+			}
+			break;
+		}
+		hintText.gameObject.SetActive(!forfeitButton.activeSelf);
+		if (hintText.gameObject.activeSelf)
+		{
+			hintText.text = Localization.Localize((!Singleton<GameController>.instance.isMission) ? "ID_RECONNECTHINT" : "ID_RECONNECTFRIENDHINT");
+			MiscTools.SetUILabelRescale(hintText, 40f, 20f, 1340);
+		}
+		background.transform.localScale = background.transform.localScale.ReplaceY((!forfeitButton.activeSelf) ? 836f : 872f);
+		MiscTools.SetUILabelRescale(title, 87f, 44f, 1420);
+	}
 
-	3. Assembly Reconstruction has not been implemented.
+	public void SetWaitTime(float time)
+	{
+		if (time > 0f)
+		{
+			waitText.text = Localization.LocalizeFormat("ID_WAITINGTIME", MiscTools.PrintableTimeTwoDigits(time));
+		}
+		else
+		{
+			waitText.text = string.Empty;
+		}
+	}
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public override void HideDialog()
+	{
+		Debug.Log("ReconnectDialog Hide");
+		base.HideDialog();
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public override void InitControls()
+	{
+		UIEventListener uIEventListener = UIEventListener.Get(forfeitButton);
+		uIEventListener.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener.onClick, new UIEventListener.VoidDelegate(OnForfeitClick));
+		Singleton<GameController>.instance.GameEnded += OnGameEnded;
+	}
 
-	4. This script is unnecessary.
+	private void OnForfeitClick(GameObject go)
+	{
+		if (!base.isFullyShowed)
+		{
+			return;
+		}
+		ConfirmDialog.ShowConfirm(Localization.Localize("ID_FORFEIT"), Localization.Localize("ID_CONFIRM_FORFEIT_TEXT"), delegate(ConfirmDialog dialog, bool b)
+		{
+			if (b)
+			{
+				Singleton<GameController>.instance.mainController.Forfeit();
+				GuiScreenSingle<BattlePreparationScreen>.instance.previousScreen = GuiScreenSingle<MainScreen>.instance;
+				GuiScreenSingle<MainScreen>.instance.previousScreen = null;
+				HideDialog();
+			}
+		}, 0f);
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private void OnGameEnded(GameController.GameEndReason endReason)
+	{
+		HideDialog();
+	}
 
-	5. Script Content Level 0
+	public override void InitGUIValues()
+	{
+	}
 
-		AssetRipper was set to not load any script information.
+	public override void AnimateShow(bool forceFadeIn)
+	{
+		base.AnimateShow(forceFadeIn);
+		Debug.Log("ReconnectDialog Show");
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public override void DoBeforeHide()
+	{
+		base.DoBeforeHide();
+		Debug.Log("ReconnectDialog: DoBeforeHide");
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public GuiElement GetGuiElement()
+	{
+		return this;
+	}
 
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public override void OnBack()
+	{
+	}
 }

@@ -1,66 +1,158 @@
-using UnityEngine;
+using System;
+using System.Globalization;
 
 namespace Org.BouncyCastle.Utilities.Net
 {
-	public class IPAddress : MonoBehaviour
+public static class IPAddress
+{
+	public static bool IsValid(string address)
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
+		return IsValidIPv4(address) || IsValidIPv6(address);
 	}
+
+	public static bool IsValidWithNetMask(string address)
+	{
+		return IsValidIPv4WithNetmask(address) || IsValidIPv6WithNetmask(address);
+	}
+
+	public static bool IsValidIPv4(string address)
+	{
+		try
+		{
+			return unsafeIsValidIPv4(address);
+		}
+		catch (FormatException)
+		{
+		}
+		catch (OverflowException)
+		{
+		}
+		return false;
+	}
+
+	private static bool unsafeIsValidIPv4(string address)
+	{
+		if (address.Length == 0)
+		{
+			return false;
+		}
+		int num = 0;
+		string text = address + ".";
+		int num2 = 0;
+		int num3;
+		while (num2 < text.Length && (num3 = text.IndexOf('.', num2)) > num2)
+		{
+			if (num == 4)
+			{
+				return false;
+			}
+			string s = text.Substring(num2, num3 - num2);
+			int num4 = int.Parse(s);
+			if (num4 < 0 || num4 > 255)
+			{
+				return false;
+			}
+			num2 = num3 + 1;
+			num++;
+		}
+		return num == 4;
+	}
+
+	public static bool IsValidIPv4WithNetmask(string address)
+	{
+		int num = address.IndexOf("/");
+		string text = address.Substring(num + 1);
+		return num > 0 && IsValidIPv4(address.Substring(0, num)) && (IsValidIPv4(text) || IsMaskValue(text, 32));
+	}
+
+	public static bool IsValidIPv6WithNetmask(string address)
+	{
+		int num = address.IndexOf("/");
+		string text = address.Substring(num + 1);
+		return num > 0 && IsValidIPv6(address.Substring(0, num)) && (IsValidIPv6(text) || IsMaskValue(text, 128));
+	}
+
+	private static bool IsMaskValue(string component, int size)
+	{
+		int num = int.Parse(component);
+		try
+		{
+			return num >= 0 && num <= size;
+		}
+		catch (FormatException)
+		{
+		}
+		catch (OverflowException)
+		{
+		}
+		return false;
+	}
+
+	public static bool IsValidIPv6(string address)
+	{
+		try
+		{
+			return unsafeIsValidIPv6(address);
+		}
+		catch (FormatException)
+		{
+		}
+		catch (OverflowException)
+		{
+		}
+		return false;
+	}
+
+	private static bool unsafeIsValidIPv6(string address)
+	{
+		if (address.Length == 0)
+		{
+			return false;
+		}
+		int num = 0;
+		string text = address + ":";
+		bool flag = false;
+		int num2 = 0;
+		int num3;
+		while (num2 < text.Length && (num3 = text.IndexOf(':', num2)) >= num2)
+		{
+			if (num == 8)
+			{
+				return false;
+			}
+			if (num2 != num3)
+			{
+				string text2 = text.Substring(num2, num3 - num2);
+				if (num3 == text.Length - 1 && text2.IndexOf('.') > 0)
+				{
+					if (!IsValidIPv4(text2))
+					{
+						return false;
+					}
+					num++;
+				}
+				else
+				{
+					string s = text.Substring(num2, num3 - num2);
+					int num4 = int.Parse(s, NumberStyles.AllowHexSpecifier);
+					if (num4 < 0 || num4 > 65535)
+					{
+						return false;
+					}
+				}
+			}
+			else
+			{
+				if (num3 != 1 && num3 != text.Length - 1 && flag)
+				{
+					return false;
+				}
+				flag = true;
+			}
+			num2 = num3 + 1;
+			num++;
+		}
+		return num == 8 || flag;
+	}
+}
 }

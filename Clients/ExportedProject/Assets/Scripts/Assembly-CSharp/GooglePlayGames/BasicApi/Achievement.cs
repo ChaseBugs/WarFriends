@@ -1,66 +1,182 @@
-using UnityEngine;
+using System;
 
 namespace GooglePlayGames.BasicApi
 {
-	public class Achievement : MonoBehaviour
+public class Achievement
+{
+	private static readonly DateTime UnixEpoch = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
+
+	private string mId = string.Empty;
+
+	private bool mIsIncremental;
+
+	private bool mIsRevealed;
+
+	private bool mIsUnlocked;
+
+	private int mCurrentSteps;
+
+	private int mTotalSteps;
+
+	private string mDescription = string.Empty;
+
+	private string mName = string.Empty;
+
+	private long mLastModifiedTime;
+
+	private ulong mPoints;
+
+	private string mRevealedImageUrl;
+
+	private string mUnlockedImageUrl;
+
+	public bool IsIncremental
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
+		get
+		{
+			return mIsIncremental;
+		}
+		set
+		{
+			mIsIncremental = value;
+		}
 	}
+
+	public int CurrentSteps
+	{
+		get
+		{
+			return mCurrentSteps;
+		}
+		set
+		{
+			mCurrentSteps = value;
+		}
+	}
+
+	public int TotalSteps
+	{
+		get
+		{
+			return mTotalSteps;
+		}
+		set
+		{
+			mTotalSteps = value;
+		}
+	}
+
+	public bool IsUnlocked
+	{
+		get
+		{
+			return mIsUnlocked;
+		}
+		set
+		{
+			mIsUnlocked = value;
+		}
+	}
+
+	public bool IsRevealed
+	{
+		get
+		{
+			return mIsRevealed;
+		}
+		set
+		{
+			mIsRevealed = value;
+		}
+	}
+
+	public string Id
+	{
+		get
+		{
+			return mId;
+		}
+		set
+		{
+			mId = value;
+		}
+	}
+
+	public string Description
+	{
+		get
+		{
+			return mDescription;
+		}
+		set
+		{
+			mDescription = value;
+		}
+	}
+
+	public string Name
+	{
+		get
+		{
+			return mName;
+		}
+		set
+		{
+			mName = value;
+		}
+	}
+
+	public DateTime LastModifiedTime
+	{
+		get
+		{
+			return UnixEpoch.AddMilliseconds(mLastModifiedTime);
+		}
+		set
+		{
+			mLastModifiedTime = (long)(value - UnixEpoch).TotalMilliseconds;
+		}
+	}
+
+	public ulong Points
+	{
+		get
+		{
+			return mPoints;
+		}
+		set
+		{
+			mPoints = value;
+		}
+	}
+
+	public string RevealedImageUrl
+	{
+		get
+		{
+			return mRevealedImageUrl;
+		}
+		set
+		{
+			mRevealedImageUrl = value;
+		}
+	}
+
+	public string UnlockedImageUrl
+	{
+		get
+		{
+			return mUnlockedImageUrl;
+		}
+		set
+		{
+			mUnlockedImageUrl = value;
+		}
+	}
+
+	public override string ToString()
+	{
+		return string.Format("[Achievement] id={0}, name={1}, desc={2}, type={3}, revealed={4}, unlocked={5}, steps={6}/{7}", mId, mName, mDescription, (!mIsIncremental) ? "STANDARD" : "INCREMENTAL", mIsRevealed, mIsUnlocked, mCurrentSteps, mTotalSteps);
+	}
+}
 }

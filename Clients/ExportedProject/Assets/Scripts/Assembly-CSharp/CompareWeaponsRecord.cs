@@ -2,62 +2,63 @@ using UnityEngine;
 
 public class CompareWeaponsRecord : MonoBehaviour
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Header("Header")]
+	public UILabel weaponSlot;
 
-	1. No dll files were provided to AssetRipper.
+	[Header("Core")]
+	public UISprite icon;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public UISprite background;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public UILabel power;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public UILabel level;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public UISprite bottom;
 
-	3. Assembly Reconstruction has not been implemented.
+	public void InitializeSlot(int slotIndex)
+	{
+		WeaponCategory category = GameVariables.slotCategory[slotIndex];
+		string weaponCategoryId = Singleton<GameVariables>.instance.GetWeaponCategoryId(category, StringCase.UpperCase);
+		weaponSlot.text = Localization.Localize(weaponCategoryId);
+	}
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
-
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
-
-	4. This script is unnecessary.
-
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
-
-	5. Script Content Level 0
-
-		AssetRipper was set to not load any script information.
-
-	6. Cpp2IL failed to decompile Il2Cpp data
-
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public void Initialize(WeaponLevelsSetup setup, int weaponBoughtIndex, WeaponLevelsSetup opponentSetup, int opponentBoughtIndex, bool isOpponent, bool isEquipped)
+	{
+		icon.spriteName = setup.playerWeapon.iconName;
+		icon.MakePixelPerfect();
+		icon.transform.localScale = icon.transform.localScale.MultiplyXY(56f / 85f);
+		background.color = Color.white;
+		if (Singleton<GameController>.instance.isWarArena)
+		{
+			power.text = string.Empty;
+			level.text = string.Empty;
+			bottom.alpha = 0f;
+			background.color = ((!isEquipped) ? Color.white.ReplaceA(0.3f) : Color.white);
+			icon.alpha = ((!isEquipped) ? 0f : 1f);
+			return;
+		}
+		background.color = Color.white;
+		icon.alpha = 1f;
+		int weaponPowerX = setup.GetWeaponPowerX10(weaponBoughtIndex);
+		power.text = MiscTools.FormatBigNumber(weaponPowerX);
+		level.text = MiscTools.FormatBigNumber(setup.GetLevel(isBought: true, weaponBoughtIndex));
+		int weaponPowerX2 = opponentSetup.GetWeaponPowerX10(opponentBoughtIndex);
+		level.transform.localPosition = new Vector3((!isOpponent) ? 42f : 155f, -100f, -2f);
+		if (weaponPowerX == weaponPowerX2)
+		{
+			power.color = Color.white;
+			bottom.color = Color.white.ReplaceA(0.15f);
+		}
+		else if (weaponPowerX > weaponPowerX2)
+		{
+			power.color = Colours.greenWeaponStats;
+			bottom.color = Colours.greenWeaponStats.ReplaceA(0.15f);
+		}
+		else
+		{
+			power.color = Colours.redWeaponStats;
+			bottom.color = Colours.redWeaponStats.ReplaceA(0.1f);
+		}
+	}
 }

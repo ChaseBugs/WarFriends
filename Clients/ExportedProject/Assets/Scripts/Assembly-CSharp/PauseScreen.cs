@@ -1,63 +1,225 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
-public class PauseScreen : MonoBehaviour
+public class PauseScreen : GuiElementSingle<PauseScreen>, IGuiDialog
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Header("Header")]
+	public UILabel title;
 
-	1. No dll files were provided to AssetRipper.
+	public GameObject heroicPart;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public UISprite heroicSingle;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public UISprite[] heroicCoop;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	[Header("Content")]
+	public GameObject missionNumberPart;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public UILabel missionNumber;
 
-	3. Assembly Reconstruction has not been implemented.
+	public UILabel objectiveLabel;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public List<AssignmentPauseRecord> assignments;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	[Header("Buttons")]
+	public UIButton forfeitButton;
 
-	4. This script is unnecessary.
+	public UILabel forfeitLabel;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public UIButton continueButton;
 
-	5. Script Content Level 0
+	public UILabel continueLabel;
 
-		AssetRipper was set to not load any script information.
+	[Header("Debug")]
+	public UIButton skipTutorialButton;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	private bool mDoNotUpdate;
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	private float mTimer;
 
-	7. An incorrect path was provided to AssetRipper.
+	public override void InitControls()
+	{
+		UIEventListener uIEventListener = UIEventListener.Get(forfeitButton);
+		uIEventListener.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener.onClick, new UIEventListener.VoidDelegate(ForfeitClick));
+		UIEventListener uIEventListener2 = UIEventListener.Get(continueButton);
+		uIEventListener2.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener2.onClick, new UIEventListener.VoidDelegate(ContinueClick));
+		UIEventListener uIEventListener3 = UIEventListener.Get(skipTutorialButton);
+		uIEventListener3.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener3.onClick, new UIEventListener.VoidDelegate(SkipTutorialClick));
+		Singleton<GameController>.instance.GameEnded += OnGameEnded;
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	public override void InitGUIValues()
+	{
+		mDoNotUpdate = false;
+		bool flag = TimeManager.instance.pauseStatus == TimeManager.PauseStatus.PausedLocaly || TimeManager.instance.pauseStatus == TimeManager.PauseStatus.PausedLocalyFocusLost || Singleton<GameController>.instance.isTutorial;
+		bool flag2 = Singleton<GameController>.instance.isMission && MissionsManager.instance.currentMission.playingInHeroicMode;
+		title.text = Localization.Localize(flag ? "ID_GAMEPAUSED" : ((!Singleton<GameController>.instance.isMission) ? "ID_OPPONENTPAUSED" : "ID_FRIENDPAUSED"));
+		heroicPart.SetActive(flag2);
+		if (flag2)
+		{
+			bool flag3 = Singleton<GameController>.instance.isCoop || Singleton<GameController>.instance.isCoopBot;
+			heroicSingle.gameObject.SetActive(!flag3);
+			for (int i = 0; i < heroicCoop.Length; i++)
+			{
+				heroicCoop[i].gameObject.SetActive(flag3);
+			}
+		}
+		missionNumberPart.SetActive(Singleton<GameController>.instance.isMission);
+		if (missionNumberPart.activeSelf)
+		{
+			missionNumber.text = MissionsManager.instance.currentMission.number.ToString();
+		}
+		if (Singleton<GameController>.instance.isMission)
+		{
+			objectiveLabel.text = MissionsManager.instance.currentMission.missionObjectiveProgress;
+		}
+		else if (Singleton<GameController>.instance.isTutorial || TutorialManagerPlayWarcards.instance.isTutorialRunning)
+		{
+			objectiveLabel.text = Localization.Localize("ID_TUTORIAL_OBJECTIVE");
+		}
+		else
+		{
+			objectiveLabel.text = Localization.Localize("ID_NORMAL_OBJECTIVE");
+		}
+		if (Singleton<GameController>.instance.isTutorial)
+		{
+			for (int j = 0; j < assignments.Count; j++)
+			{
+				assignments[j].gameObject.SetActive(value: false);
+			}
+		}
+		else if (StarterAssignmentsManager.instance.isActiveAndNotCompleted)
+		{
+			for (int k = 0; k < assignments.Count; k++)
+			{
+				assignments[k].gameObject.SetActive(value: false);
+			}
+		}
+		else
+		{
+			List<Assignment> list = AssignmentsManager.instance.GetAssignments();
+			for (int l = 0; l < assignments.Count; l++)
+			{
+				bool flag4 = list != null && list.Count > l && list[l] != null;
+				assignments[l].gameObject.SetActive(flag4);
+				if (flag4)
+				{
+					assignments[l].Initialize(list[l]);
+				}
+			}
+		}
+		continueButton.isEnabled = flag;
+		continueLabel.text = Localization.Localize("ID_CONTINUE");
+		forfeitLabel.text = Localization.Localize((!Singleton<GameController>.instance.isTutorial) ? "ID_FORFEIT" : "ID_RESTART");
+		skipTutorialButton.gameObject.SetActive(Singleton<GameController>.instance.isTutorial && DebugSettings.isOurDevice);
+	}
 
-	*/
+	public override void DoBeforeShowUp()
+	{
+		base.DoBeforeShowUp();
+		if (GuiElementSingle<CantPauseDialog>.instance.isShowed)
+		{
+			GuiElementSingle<CantPauseDialog>.instance.HideDialog();
+		}
+	}
+
+	private void OnGameEnded(GameController.GameEndReason endReason)
+	{
+		HideDialog();
+	}
+
+	private void SkipTutorialClick(GameObject go)
+	{
+		Singleton<GameController>.instance.gameControllerTutorial.SkipTutorial();
+	}
+
+	private void ContinueClick(GameObject go)
+	{
+		if (isShowed)
+		{
+			mDoNotUpdate = true;
+			Singleton<GameController>.instance.mainController.ResumeGame();
+		}
+	}
+
+	private void ForfeitClick(GameObject go)
+	{
+		if (!isShowed)
+		{
+			return;
+		}
+		if (Singleton<GameController>.instance.isWarArena)
+		{
+			ConfirmDialog.ShowConfirm(Localization.Localize("ID_CONFIRM_FORFEITARENA"), Localization.Localize("ID_CONFIRM_FORFEITARENA_TEXT"), delegate(ConfirmDialog dialog, bool b)
+			{
+				if (b)
+				{
+					Singleton<GameController>.instance.mainController.Forfeit();
+					GuiScreenSingle<BattlePreparationScreen>.instance.previousScreen = GuiScreenSingle<MainScreen>.instance;
+					GuiScreenSingle<MainScreen>.instance.previousScreen = null;
+				}
+			}, 0f);
+			return;
+		}
+		ConfirmDialog.ShowConfirm(Localization.Localize((!Singleton<GameController>.instance.isTutorial) ? "ID_FORFEIT" : "ID_RESTART"), Localization.Localize((!Singleton<GameController>.instance.isTutorial) ? "ID_CONFIRM_FORFEIT_TEXT" : "ID_CONFIRM_RESTART_TEXT"), delegate(ConfirmDialog dialog, bool b)
+		{
+			if (b)
+			{
+				Singleton<GameController>.instance.mainController.Forfeit();
+				GuiScreenSingle<BattlePreparationScreen>.instance.previousScreen = GuiScreenSingle<MainScreen>.instance;
+				GuiScreenSingle<MainScreen>.instance.previousScreen = null;
+			}
+		}, 0f);
+	}
+
+	protected override void Update()
+	{
+		base.Update();
+		if (!mDoNotUpdate)
+		{
+			mTimer += Time.deltaTime;
+			if (mTimer >= 0.333f)
+			{
+				mTimer -= 0.333f;
+				UpdateTexts();
+			}
+		}
+	}
+
+	private void UpdateTexts()
+	{
+		if (Singleton<GameController>.instance.mainController.pauseCountDown)
+		{
+			if (TimeManager.instance.pauseStatus == TimeManager.PauseStatus.PausedLocaly || TimeManager.instance.pauseStatus == TimeManager.PauseStatus.PausedLocalyFocusLost)
+			{
+				continueLabel.text = string.Format("{0} ({1})", Localization.Localize("ID_CONTINUE"), MiscTools.PrintableTimeTwoDigits(TimeManager.pauseTimeLeft));
+			}
+			else
+			{
+				continueLabel.text = string.Format("{0} ({1})", Localization.Localize("ID_WAIT"), MiscTools.PrintableTimeTwoDigits(TimeManager.pauseTimeLeft));
+			}
+			bool isEnabled = TimeManager.instance.pauseStatus == TimeManager.PauseStatus.PausedLocaly || TimeManager.instance.pauseStatus == TimeManager.PauseStatus.PausedLocalyFocusLost || Singleton<GameController>.instance.isTutorial;
+			continueButton.isEnabled = isEnabled;
+		}
+	}
+
+	public GuiElement GetGuiElement()
+	{
+		return this;
+	}
+
+	public override void OnBack()
+	{
+		if (continueButton.isEnabled)
+		{
+			ContinueClick(continueButton.gameObject);
+		}
+	}
+
+	public override void HideDialog()
+	{
+		Debug.Log("#VAVRO# PauseScreen Hide");
+		base.HideDialog();
+	}
 }

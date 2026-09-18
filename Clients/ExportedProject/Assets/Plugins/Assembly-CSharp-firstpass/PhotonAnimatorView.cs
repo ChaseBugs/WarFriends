@@ -1,63 +1,412 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
-public class PhotonAnimatorView : MonoBehaviour
+[AddComponentMenu("Photon Networking/Photon Animator View")]
+[RequireComponent(typeof(PhotonView))]
+[RequireComponent(typeof(Animator))]
+public class PhotonAnimatorView : MonoBehaviour, IPunObservable
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public enum ParameterType
+	{
+		Float = 1,
+		Int = 3,
+		Bool = 4,
+		Trigger = 9
+	}
 
-	1. No dll files were provided to AssetRipper.
+	public enum SynchronizeType
+	{
+		Disabled,
+		Discrete,
+		Continuous
+	}
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	[Serializable]
+	public class SynchronizedParameter
+	{
+		public ParameterType Type;
 
-	2. Incorrect dll files were provided to AssetRipper.
+		public SynchronizeType SynchronizeType;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+		public string Name;
+	}
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	[Serializable]
+	public class SynchronizedLayer
+	{
+		public SynchronizeType SynchronizeType;
 
-	3. Assembly Reconstruction has not been implemented.
+		public int LayerIndex;
+	}
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	private Animator m_Animator;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	private PhotonStreamQueue m_StreamQueue;
 
-	4. This script is unnecessary.
+	[SerializeField]
+	[HideInInspector]
+	private bool ShowLayerWeightsInspector = true;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	[HideInInspector]
+	[SerializeField]
+	private bool ShowParameterInspector = true;
 
-	5. Script Content Level 0
+	[HideInInspector]
+	[SerializeField]
+	private List<SynchronizedParameter> m_SynchronizeParameters = new List<SynchronizedParameter>();
 
-		AssetRipper was set to not load any script information.
+	[HideInInspector]
+	[SerializeField]
+	private List<SynchronizedLayer> m_SynchronizeLayers = new List<SynchronizedLayer>();
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	private Vector3 m_ReceiverPosition;
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	private float m_LastDeserializeTime;
 
-	7. An incorrect path was provided to AssetRipper.
+	private bool m_WasSynchronizeTypeChanged = true;
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	private PhotonView m_PhotonView;
 
-	*/
+	private List<string> m_raisedDiscreteTriggersCache = new List<string>();
+
+	private void Awake()
+	{
+		m_PhotonView = GetComponent<PhotonView>();
+		m_StreamQueue = new PhotonStreamQueue(120);
+		m_Animator = GetComponent<Animator>();
+	}
+
+	private void Update()
+	{
+		if (m_Animator.applyRootMotion && !m_PhotonView.isMine && PhotonNetwork.connected)
+		{
+			m_Animator.applyRootMotion = false;
+		}
+		if (!PhotonNetwork.inRoom || PhotonNetwork.room.PlayerCount <= 1)
+		{
+			m_StreamQueue.Reset();
+		}
+		else if (m_PhotonView.isMine)
+		{
+			SerializeDataContinuously();
+			CacheDiscreteTriggers();
+		}
+		else
+		{
+			DeserializeDataContinuously();
+		}
+	}
+
+	public void CacheDiscreteTriggers()
+	{
+		for (int i = 0; i < m_SynchronizeParameters.Count; i++)
+		{
+			SynchronizedParameter synchronizedParameter = m_SynchronizeParameters[i];
+			if (synchronizedParameter.SynchronizeType == SynchronizeType.Discrete && synchronizedParameter.Type == ParameterType.Trigger && m_Animator.GetBool(synchronizedParameter.Name) && synchronizedParameter.Type == ParameterType.Trigger)
+			{
+				m_raisedDiscreteTriggersCache.Add(synchronizedParameter.Name);
+				break;
+			}
+		}
+	}
+
+	public bool DoesLayerSynchronizeTypeExist(int layerIndex)
+	{
+		return m_SynchronizeLayers.FindIndex((SynchronizedLayer item) => item.LayerIndex == layerIndex) != -1;
+	}
+
+	public bool DoesParameterSynchronizeTypeExist(string name)
+	{
+		return m_SynchronizeParameters.FindIndex((SynchronizedParameter item) => item.Name == name) != -1;
+	}
+
+	public List<SynchronizedLayer> GetSynchronizedLayers()
+	{
+		return m_SynchronizeLayers;
+	}
+
+	public List<SynchronizedParameter> GetSynchronizedParameters()
+	{
+		return m_SynchronizeParameters;
+	}
+
+	public SynchronizeType GetLayerSynchronizeType(int layerIndex)
+	{
+		int num = m_SynchronizeLayers.FindIndex((SynchronizedLayer item) => item.LayerIndex == layerIndex);
+		if (num == -1)
+		{
+			return SynchronizeType.Disabled;
+		}
+		return m_SynchronizeLayers[num].SynchronizeType;
+	}
+
+	public SynchronizeType GetParameterSynchronizeType(string name)
+	{
+		int num = m_SynchronizeParameters.FindIndex((SynchronizedParameter item) => item.Name == name);
+		if (num == -1)
+		{
+			return SynchronizeType.Disabled;
+		}
+		return m_SynchronizeParameters[num].SynchronizeType;
+	}
+
+	public void SetLayerSynchronized(int layerIndex, SynchronizeType synchronizeType)
+	{
+		if (Application.isPlaying)
+		{
+			m_WasSynchronizeTypeChanged = true;
+		}
+		int num = m_SynchronizeLayers.FindIndex((SynchronizedLayer item) => item.LayerIndex == layerIndex);
+		if (num == -1)
+		{
+			m_SynchronizeLayers.Add(new SynchronizedLayer
+			{
+				LayerIndex = layerIndex,
+				SynchronizeType = synchronizeType
+			});
+		}
+		else
+		{
+			m_SynchronizeLayers[num].SynchronizeType = synchronizeType;
+		}
+	}
+
+	public void SetParameterSynchronized(string name, ParameterType type, SynchronizeType synchronizeType)
+	{
+		if (Application.isPlaying)
+		{
+			m_WasSynchronizeTypeChanged = true;
+		}
+		int num = m_SynchronizeParameters.FindIndex((SynchronizedParameter item) => item.Name == name);
+		if (num == -1)
+		{
+			m_SynchronizeParameters.Add(new SynchronizedParameter
+			{
+				Name = name,
+				Type = type,
+				SynchronizeType = synchronizeType
+			});
+		}
+		else
+		{
+			m_SynchronizeParameters[num].SynchronizeType = synchronizeType;
+		}
+	}
+
+	private void SerializeDataContinuously()
+	{
+		if (m_Animator == null)
+		{
+			return;
+		}
+		for (int i = 0; i < m_SynchronizeLayers.Count; i++)
+		{
+			if (m_SynchronizeLayers[i].SynchronizeType == SynchronizeType.Continuous)
+			{
+				m_StreamQueue.SendNext(m_Animator.GetLayerWeight(m_SynchronizeLayers[i].LayerIndex));
+			}
+		}
+		for (int j = 0; j < m_SynchronizeParameters.Count; j++)
+		{
+			SynchronizedParameter synchronizedParameter = m_SynchronizeParameters[j];
+			if (synchronizedParameter.SynchronizeType == SynchronizeType.Continuous)
+			{
+				switch (synchronizedParameter.Type)
+				{
+				case ParameterType.Bool:
+					m_StreamQueue.SendNext(m_Animator.GetBool(synchronizedParameter.Name));
+					break;
+				case ParameterType.Float:
+					m_StreamQueue.SendNext(m_Animator.GetFloat(synchronizedParameter.Name));
+					break;
+				case ParameterType.Int:
+					m_StreamQueue.SendNext(m_Animator.GetInteger(synchronizedParameter.Name));
+					break;
+				case ParameterType.Trigger:
+					m_StreamQueue.SendNext(m_Animator.GetBool(synchronizedParameter.Name));
+					break;
+				}
+			}
+		}
+	}
+
+	private void DeserializeDataContinuously()
+	{
+		if (!m_StreamQueue.HasQueuedObjects())
+		{
+			return;
+		}
+		for (int i = 0; i < m_SynchronizeLayers.Count; i++)
+		{
+			if (m_SynchronizeLayers[i].SynchronizeType == SynchronizeType.Continuous)
+			{
+				m_Animator.SetLayerWeight(m_SynchronizeLayers[i].LayerIndex, (float)m_StreamQueue.ReceiveNext());
+			}
+		}
+		for (int j = 0; j < m_SynchronizeParameters.Count; j++)
+		{
+			SynchronizedParameter synchronizedParameter = m_SynchronizeParameters[j];
+			if (synchronizedParameter.SynchronizeType == SynchronizeType.Continuous)
+			{
+				switch (synchronizedParameter.Type)
+				{
+				case ParameterType.Bool:
+					m_Animator.SetBool(synchronizedParameter.Name, (bool)m_StreamQueue.ReceiveNext());
+					break;
+				case ParameterType.Float:
+					m_Animator.SetFloat(synchronizedParameter.Name, (float)m_StreamQueue.ReceiveNext());
+					break;
+				case ParameterType.Int:
+					m_Animator.SetInteger(synchronizedParameter.Name, (int)m_StreamQueue.ReceiveNext());
+					break;
+				case ParameterType.Trigger:
+					m_Animator.SetBool(synchronizedParameter.Name, (bool)m_StreamQueue.ReceiveNext());
+					break;
+				}
+			}
+		}
+	}
+
+	private void SerializeDataDiscretly(PhotonStream stream)
+	{
+		for (int i = 0; i < m_SynchronizeLayers.Count; i++)
+		{
+			if (m_SynchronizeLayers[i].SynchronizeType == SynchronizeType.Discrete)
+			{
+				stream.SendNext(m_Animator.GetLayerWeight(m_SynchronizeLayers[i].LayerIndex));
+			}
+		}
+		for (int j = 0; j < m_SynchronizeParameters.Count; j++)
+		{
+			SynchronizedParameter synchronizedParameter = m_SynchronizeParameters[j];
+			if (synchronizedParameter.SynchronizeType == SynchronizeType.Discrete)
+			{
+				switch (synchronizedParameter.Type)
+				{
+				case ParameterType.Bool:
+					stream.SendNext(m_Animator.GetBool(synchronizedParameter.Name));
+					break;
+				case ParameterType.Float:
+					stream.SendNext(m_Animator.GetFloat(synchronizedParameter.Name));
+					break;
+				case ParameterType.Int:
+					stream.SendNext(m_Animator.GetInteger(synchronizedParameter.Name));
+					break;
+				case ParameterType.Trigger:
+					stream.SendNext(m_raisedDiscreteTriggersCache.Contains(synchronizedParameter.Name));
+					break;
+				}
+			}
+		}
+		m_raisedDiscreteTriggersCache.Clear();
+	}
+
+	private void DeserializeDataDiscretly(PhotonStream stream)
+	{
+		for (int i = 0; i < m_SynchronizeLayers.Count; i++)
+		{
+			if (m_SynchronizeLayers[i].SynchronizeType == SynchronizeType.Discrete)
+			{
+				m_Animator.SetLayerWeight(m_SynchronizeLayers[i].LayerIndex, (float)stream.ReceiveNext());
+			}
+		}
+		for (int j = 0; j < m_SynchronizeParameters.Count; j++)
+		{
+			SynchronizedParameter synchronizedParameter = m_SynchronizeParameters[j];
+			if (synchronizedParameter.SynchronizeType != SynchronizeType.Discrete)
+			{
+				continue;
+			}
+			switch (synchronizedParameter.Type)
+			{
+			case ParameterType.Bool:
+				if (!(stream.PeekNext() is bool))
+				{
+					return;
+				}
+				m_Animator.SetBool(synchronizedParameter.Name, (bool)stream.ReceiveNext());
+				break;
+			case ParameterType.Float:
+				if (!(stream.PeekNext() is float))
+				{
+					return;
+				}
+				m_Animator.SetFloat(synchronizedParameter.Name, (float)stream.ReceiveNext());
+				break;
+			case ParameterType.Int:
+				if (!(stream.PeekNext() is int))
+				{
+					return;
+				}
+				m_Animator.SetInteger(synchronizedParameter.Name, (int)stream.ReceiveNext());
+				break;
+			case ParameterType.Trigger:
+				if (!(stream.PeekNext() is bool))
+				{
+					return;
+				}
+				if ((bool)stream.ReceiveNext())
+				{
+					m_Animator.SetTrigger(synchronizedParameter.Name);
+				}
+				break;
+			}
+		}
+	}
+
+	private void SerializeSynchronizationTypeState(PhotonStream stream)
+	{
+		byte[] array = new byte[m_SynchronizeLayers.Count + m_SynchronizeParameters.Count];
+		for (int i = 0; i < m_SynchronizeLayers.Count; i++)
+		{
+			array[i] = (byte)m_SynchronizeLayers[i].SynchronizeType;
+		}
+		for (int j = 0; j < m_SynchronizeParameters.Count; j++)
+		{
+			array[m_SynchronizeLayers.Count + j] = (byte)m_SynchronizeParameters[j].SynchronizeType;
+		}
+		stream.SendNext(array);
+	}
+
+	private void DeserializeSynchronizationTypeState(PhotonStream stream)
+	{
+		byte[] array = (byte[])stream.ReceiveNext();
+		for (int i = 0; i < m_SynchronizeLayers.Count; i++)
+		{
+			m_SynchronizeLayers[i].SynchronizeType = (SynchronizeType)array[i];
+		}
+		for (int j = 0; j < m_SynchronizeParameters.Count; j++)
+		{
+			m_SynchronizeParameters[j].SynchronizeType = (SynchronizeType)array[m_SynchronizeLayers.Count + j];
+		}
+	}
+
+	public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
+	{
+		if (m_Animator == null)
+		{
+			return;
+		}
+		if (stream.isWriting)
+		{
+			if (m_WasSynchronizeTypeChanged)
+			{
+				m_StreamQueue.Reset();
+				SerializeSynchronizationTypeState(stream);
+				m_WasSynchronizeTypeChanged = false;
+			}
+			m_StreamQueue.Serialize(stream);
+			SerializeDataDiscretly(stream);
+		}
+		else
+		{
+			if (stream.PeekNext() is byte[])
+			{
+				DeserializeSynchronizationTypeState(stream);
+			}
+			m_StreamQueue.Deserialize(stream);
+			DeserializeDataDiscretly(stream);
+		}
+	}
 }

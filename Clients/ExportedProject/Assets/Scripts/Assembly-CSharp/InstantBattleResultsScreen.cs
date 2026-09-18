@@ -1,63 +1,176 @@
+using System;
+using Google2u;
 using UnityEngine;
 
-public class InstantBattleResultsScreen : MonoBehaviour
+public class InstantBattleResultsScreen : GuiScreenSingle<InstantBattleResultsScreen>
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Header("Core")]
+	public InstantBattleAnimation backgroundAnimation;
 
-	1. No dll files were provided to AssetRipper.
+	public UIButton skipButton;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	[Header("Animation Objects")]
+	public UISprite flash;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public GameObject[] xpLabels;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public GameObject[] wbLabels;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	[Header("Additional Info")]
+	public int instantBattles;
 
-	3. Assembly Reconstruction has not been implemented.
+	protected override void InitControls()
+	{
+		backgroundAnimation.Showed += delegate
+		{
+			backgroundAnimation.StartAnimation();
+			TweenAlpha.Begin(flash.gameObject, 0.5f, 1f, 0f);
+			skipButton.gameObject.SetActive(value: true);
+		};
+		backgroundAnimation.FInished += delegate
+		{
+			ShowDialog(base.gameObject);
+		};
+		UIEventListener uIEventListener = UIEventListener.Get(skipButton.gameObject);
+		uIEventListener.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener.onClick, new UIEventListener.VoidDelegate(ShowDialog));
+		Singleton<BeanstalkServerManager>.instance.ErrorReceived += OnErrorReceived;
+	}
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	private void ShowDialog(GameObject go)
+	{
+		if (!GuiElementSingle<InstantBattleResultsDialog>.instance.isShowed)
+		{
+			backgroundAnimation.StopAllCoroutines();
+			SoundsManager.Instance.PlaySound(SoundsManager.SoundsEnum.GameOverWin);
+			FlashScreen(delegate
+			{
+				Singleton<GuiManager>.instance.ShowDialog(GuiElementSingle<InstantBattleResultsDialog>.instance, 0f);
+			});
+			skipButton.gameObject.SetActive(value: false);
+		}
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	private void OnErrorReceived(DatabaseAction action)
+	{
+		if (isShowed && action == DatabaseAction.InstantBattle && !GuiElementSingle<InstantBattleResultsDialog>.instance.isShowed)
+		{
+			Singleton<GuiManager>.instance.ShowGui(GuiScreenSingle<BattlePreparationScreen>.instance);
+			GuiScreenSingle<BattlePreparationScreen>.instance.previousScreen = GuiScreenSingle<MainScreen>.instance;
+		}
+	}
 
-	4. This script is unnecessary.
+	public override void InitGUIValues()
+	{
+		TweenAlpha.Begin(flash.gameObject, 0.05f, 0f, 1f);
+		SoundsManager.Instance.PlaySound(SoundsManager.SoundsEnum.Fight);
+		skipButton.gameObject.SetActive(value: false);
+		backgroundAnimation.Show();
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public override void DoBeforeHide()
+	{
+		base.DoBeforeHide();
+		BeforeHideReset();
+		backgroundAnimation.Hide();
+		if (Singleton<GuiManager>.instance.toBeShowedUp != null)
+		{
+			Singleton<GuiManager>.instance.toBeShowedUp.previousScreen = GuiScreenSingle<MainScreen>.instance;
+		}
+	}
 
-	5. Script Content Level 0
+	public void BeforeHideReset()
+	{
+		LevelManager.instance.isLevelUp = false;
+		GuiElementSingle<MenuHeader>.instance.InitGUIValues();
+		if (GuiElementSingle<InstantBattleResultsDialog>.instance.isShowed)
+		{
+			GuiElementSingle<InstantBattleResultsDialog>.instance.HideDialog();
+		}
+		Singleton<MessageManager>.instance.StopMessageCoroutine();
+	}
 
-		AssetRipper was set to not load any script information.
+	public void FlashScreen(Action Action)
+	{
+		TweenAlpha tweenAlpha = TweenAlpha.Begin(flash.gameObject, 0.05f, 0f, 1f);
+		tweenAlpha.onFinished = delegate
+		{
+			TweenAlpha.Begin(flash.gameObject, 1f, 1f, 0f);
+			if (Action != null)
+			{
+				InvokeAfterRealTime(delegate
+				{
+					Action();
+				}, 0.2f);
+			}
+		};
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public void ShowAgain()
+	{
+		instantBattles = (int)(float)Singleton<GameVariables>.instance.constants.GetRow(Constants.rowIds.InstantBattleMax).FLOATVALUE;
+		backgroundAnimation.DestroyEnemies();
+		BeforeHideReset();
+		FlashScreenUp();
+		InitGUIValues();
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public void AfterDialogExit()
+	{
+		Singleton<GuiManager>.instance.ShowGui(GuiScreenSingle<BattlePreparationScreen>.instance);
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	public void FlashScreenUp()
+	{
+		TweenAlpha.Begin(flash.gameObject, 0.05f, 0f, 1f);
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	public void ShowLabels(Vector3 worldPosition, int index)
+	{
+		for (int i = 0; i < 4; i++)
+		{
+			GameObject gameObject = ((!(UnityEngine.Random.Range(0f, 1f) > 0.75f)) ? xpLabels[i + index * 4] : wbLabels[i + index * 4]);
+			Vector3 point = backgroundAnimation.GetCamera().WorldToViewportPoint(worldPosition);
+			point = Singleton<GuiManager>.instance.guiCamera.NormalizedViewportToWorldPoint(point);
+			gameObject.transform.position = point;
+			point = gameObject.transform.localPosition.ReplaceZ(0f).AddY((float)(index + 1) * 10f + 50f + (float)i * 55f);
+			gameObject.transform.localPosition = point;
+			AnimateLabel(gameObject, (float)i * 0.07f);
+		}
+	}
 
-	*/
+	private void AnimateLabel(GameObject label, float delay)
+	{
+		for (int i = 0; i < label.transform.childCount; i++)
+		{
+			if (i == 2)
+			{
+				TweenAlpha.Begin(label.transform.GetChild(i).gameObject, 0.7f, 0.8f, 0f).delay = delay;
+			}
+			else
+			{
+				TweenAlpha.Begin(label.transform.GetChild(i).gameObject, 0.25f, 0f, 0.8f).delay = delay;
+			}
+		}
+		TweenScale tweenScale = TweenScale.Begin(label, 0.25f, Vector3.one);
+		tweenScale.delay = delay;
+		tweenScale.onFinished = delegate
+		{
+			TweenScale.Begin(label, 0.7f, new Vector3(0f, 0f, 1f));
+			for (int j = 0; j < label.transform.childCount; j++)
+			{
+				if (j != 2)
+				{
+					TweenAlpha.Begin(label.transform.GetChild(j).gameObject, 0.7f, 0.8f, 0f);
+				}
+			}
+		};
+	}
+
+	public override void OnBack()
+	{
+		if (skipButton.gameObject.activeInHierarchy)
+		{
+			ShowDialog(base.gameObject);
+		}
+	}
 }

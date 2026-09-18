@@ -1,63 +1,136 @@
+using System.Collections.Generic;
 using UnityEngine;
 
-public class CardIconIndicator : MonoBehaviour
+public class CardIconIndicator : Core_BaseScript
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public class HudIcoInfo
+	{
+		private string icoName;
 
-	1. No dll files were provided to AssetRipper.
+		private float duration;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+		private float timeToFinish;
 
-	2. Incorrect dll files were provided to AssetRipper.
+		private bool anim;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+		public HudIcoInfo(string name, float time, bool animate, float fullTime)
+		{
+			icoName = name;
+			duration = fullTime;
+			timeToFinish = time;
+			anim = animate;
+		}
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+		public bool Update(HudObjectIndicator hudObjectIndicator, float deltaTime)
+		{
+			timeToFinish -= deltaTime;
+			bool flag = timeToFinish <= 0f;
+			if (flag)
+			{
+				hudObjectIndicator.Show(icoName, value: false, HudObjectIndicator.IndicatorAnimation.CardIco);
+			}
+			else if (anim)
+			{
+				hudObjectIndicator.SetProgress(icoName, timeToFinish / duration);
+			}
+			return flag;
+		}
+	}
 
-	3. Assembly Reconstruction has not been implemented.
+	public HudObjectIndicator hudObjectIndicator;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	private PhotonView mPhotonView;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	private List<HudIcoInfo> hudIcons = new List<HudIcoInfo>();
 
-	4. This script is unnecessary.
+	private int mSyncTime;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private void OnEnable()
+	{
+		hudIcons.Clear();
+	}
 
-	5. Script Content Level 0
+	protected override void Awake()
+	{
+		base.Awake();
+		mPhotonView = GetComponent<PhotonView>();
+	}
 
-		AssetRipper was set to not load any script information.
+	protected void Update()
+	{
+		int num = 0;
+		while (num < hudIcons.Count)
+		{
+			if (hudIcons[num].Update(hudObjectIndicator, Time.deltaTime))
+			{
+				if (num != hudIcons.Count - 1)
+				{
+					HudIcoInfo value = hudIcons[hudIcons.Count - 1];
+					hudIcons[hudIcons.Count - 1] = hudIcons[num];
+					hudIcons[num] = value;
+				}
+				hudIcons.RemoveAt(hudIcons.Count - 1);
+			}
+			else
+			{
+				num++;
+			}
+		}
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public void UpdateIndicator(string iconName, float fract)
+	{
+		if (!(hudObjectIndicator == null))
+		{
+			float realtimeSinceStartup = Time.realtimeSinceStartup;
+			if (mSyncTime != (int)realtimeSinceStartup)
+			{
+				mSyncTime = (int)realtimeSinceStartup;
+				int num = hudObjectIndicator.SetProgress(iconName, fract);
+				mPhotonView.RPC("UpdateIndicatorRPC", PhotonTargets.Others, num, fract);
+			}
+		}
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	[PunRPC]
+	public void UpdateIndicatorRPC(int iconId, float fract)
+	{
+		hudObjectIndicator.SetProgress(hudObjectIndicator.ConvertSpriteIDtoSpriteName(iconId), fract);
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	public void Show(string iconName, bool show, bool local = false)
+	{
+		if (!(hudObjectIndicator == null))
+		{
+			int num = hudObjectIndicator.Show(iconName, show, HudObjectIndicator.IndicatorAnimation.CardIco);
+			if (!local)
+			{
+				mPhotonView.RPC("Show2RPC", PhotonTargets.Others, num, show);
+			}
+		}
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	[PunRPC]
+	public void Show2RPC(int iconId, bool show)
+	{
+		hudObjectIndicator.Show(hudObjectIndicator.ConvertSpriteIDtoSpriteName(iconId), show, HudObjectIndicator.IndicatorAnimation.CardIco);
+	}
 
-	*/
+	public void Show(string iconName, float duration, float fullDuration, bool animated)
+	{
+		if (!(hudObjectIndicator == null))
+		{
+			int num = hudObjectIndicator.Show(iconName, value: true, HudObjectIndicator.IndicatorAnimation.CardIco);
+			hudIcons.Add(new HudIcoInfo(iconName, duration, animated, fullDuration));
+			mPhotonView.RPC("ShowRPC", PhotonTargets.Others, num, duration, fullDuration, animated);
+		}
+	}
+
+	[PunRPC]
+	public void ShowRPC(int iconId, float duration, float fullDuration, bool animated)
+	{
+		string spriteName = hudObjectIndicator.ConvertSpriteIDtoSpriteName(iconId);
+		hudObjectIndicator.Show(spriteName, value: true, HudObjectIndicator.IndicatorAnimation.CardIco);
+		hudIcons.Add(new HudIcoInfo(spriteName, duration, animated, fullDuration));
+	}
 }

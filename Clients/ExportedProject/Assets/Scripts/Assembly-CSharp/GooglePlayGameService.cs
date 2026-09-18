@@ -1,63 +1,126 @@
+using System;
+using GooglePlayGames;
+using GooglePlayGames.BasicApi;
+using GooglePlayGames.BasicApi.Multiplayer;
 using UnityEngine;
 
-public class GooglePlayGameService : MonoBehaviour
+public class GooglePlayGameService : Singleton<GooglePlayGameService>
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	private bool mLoginInProgress;
 
-	1. No dll files were provided to AssetRipper.
+	private bool mCheckLogout;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public bool isLoggedIn => PlayGamesPlatform.Instance.IsAuthenticated();
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public event Action<bool> LoggedIn;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public event Action<bool> LoggedInFromInit;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public event Action LoggedOut;
 
-	3. Assembly Reconstruction has not been implemented.
+	public event Action LoggedOutExternaly;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public void Init()
+	{
+		PlayGamesPlatform.Activate();
+		PlayGamesClientConfiguration configuration = new PlayGamesClientConfiguration.Builder().WithInvitationDelegate(InvitationDelegate).WithMatchDelegate(MatchDelegate).Build();
+		PlayGamesPlatform.InitializeInstance(configuration);
+		Debug.Log("GPGS: Silent login attempt.");
+		PlayGamesPlatform.Instance.Authenticate(OnAuthenticateFromInit, silent: true);
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	private void MatchDelegate(TurnBasedMatch match, bool shouldAutoLaunch)
+	{
+	}
 
-	4. This script is unnecessary.
+	private void InvitationDelegate(Invitation invitation, bool shouldAutoAccept)
+	{
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private void OnAuthenticateFromInit(bool success)
+	{
+		Debug.Log("GPGS: Logged In (init), Logged: " + PlayGamesPlatform.Instance.IsAuthenticated());
+		if (this.LoggedInFromInit != null)
+		{
+			this.LoggedInFromInit(success);
+		}
+	}
 
-	5. Script Content Level 0
+	private void OnAuthenticate(bool success)
+	{
+		mLoginInProgress = false;
+		Debug.Log("GPGS: Logged In (user action), Logged: " + PlayGamesPlatform.Instance.IsAuthenticated());
+		if (this.LoggedIn != null)
+		{
+			this.LoggedIn(success);
+		}
+	}
 
-		AssetRipper was set to not load any script information.
+	public void LogIn()
+	{
+		if (mLoginInProgress)
+		{
+			Debug.LogWarning("GPGS: Log In - already in progress.");
+		}
+		else if (isLoggedIn)
+		{
+			if (this.LoggedIn != null)
+			{
+				this.LoggedIn(obj: true);
+			}
+		}
+		else
+		{
+			Debug.Log("GPGS: Log In");
+			mLoginInProgress = true;
+			PlayGamesPlatform.Instance.Authenticate(OnAuthenticate);
+		}
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public void LogOut()
+	{
+		if (PlayGamesPlatform.Instance.IsAuthenticated())
+		{
+			PlayGamesPlatform.Instance.SignOut();
+			Debug.Log("GPGS: Logged Out, Logged: " + PlayGamesPlatform.Instance.IsAuthenticated());
+			if (this.LoggedOut != null)
+			{
+				this.LoggedOut();
+			}
+		}
+		else
+		{
+			Debug.LogWarning("GPGS: Logged Out called when player isn\t authenticated.");
+		}
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public void ShowAchievementsUI()
+	{
+		mCheckLogout = isLoggedIn && GameLoginManager.instance.data.currentPlayer.isGooglePlayConnected;
+		Social.ShowAchievementsUI();
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	public void ReportAchievement(string achievementID, double progress, Action<bool> callback)
+	{
+		if (isLoggedIn)
+		{
+			Social.ReportProgress(achievementID, progress, callback);
+		}
+		else
+		{
+			callback(obj: false);
+		}
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	private void OnApplicationPause(bool pauseStatus)
+	{
+		if (!pauseStatus && mCheckLogout)
+		{
+			mCheckLogout = false;
+			if (!isLoggedIn && this.LoggedOutExternaly != null)
+			{
+				this.LoggedOutExternaly();
+			}
+		}
+	}
 }

@@ -1,63 +1,262 @@
 using UnityEngine;
 
-public class BulletSlow : MonoBehaviour
+[RequireComponent(typeof(TweenPosition))]
+public class BulletSlow : BulletBase
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	private RaycastHit mHitPom = default(RaycastHit);
 
-	1. No dll files were provided to AssetRipper.
+	private int mColisionCheckCounter;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	private Ray mDirRay;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	private bool mIsRayHitTesting;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	private Vector3 mLastPos;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	protected override void Awake()
+	{
+		base.Awake();
+	}
 
-	3. Assembly Reconstruction has not been implemented.
+	public override void Fire(Vector3 from, Vector3 to)
+	{
+		if (!fast)
+		{
+			base.Fire(from, to);
+			mDirection = to - from;
+			mIsRayHitTesting = false;
+			Vector3 normalized = (to - from).normalized;
+			if (Vector3.Distance(from, to) > 50f)
+			{
+				to = from + normalized * 50f;
+				mDirection = to - from;
+			}
+			base.mRaycastHit = null;
+			Ray ray = new Ray(from + normalized * 0.1f, normalized);
+			if (isFake)
+			{
+				AnimateShot(from, to, checkCollision: false);
+			}
+			else if (Physics.Raycast(ray, out mHitPom, Vector3.Distance(from, from + normalized * (mDirection.magnitude - 0.2f)), Singleton<TagsAndLayers>.instance.GetBulletMask(weapon.fraction, weapon.ignoreLayersMask)))
+			{
+				if (TagsAndLayers.IsStatic(mHitPom.transform.gameObject))
+				{
+					AnimateShot(from, mHitPom.point, checkCollision: false);
+					base.mRaycastHit = mHitPom;
+				}
+				else
+				{
+					AnimateShot(from, mHitPom.point, checkCollision: true);
+				}
+			}
+			else
+			{
+				AnimateShot(from, from + mDirection, checkCollision: true);
+			}
+			return;
+		}
+		base.Fire(from, to);
+		mDirection = to - from;
+		Vector3 normalized2 = (to - from).normalized;
+		if (Vector3.Distance(from, to) > 50f)
+		{
+			to = from + normalized2 * 50f;
+			mDirection = to - from;
+		}
+		base.mRaycastHit = null;
+		Ray ray2 = new Ray(from + normalized2 * 0.1f, normalized2);
+		if (isFake)
+		{
+			AnimateShot(from, to, checkCollision: false);
+			return;
+		}
+		int layerMask = ((!isStatic) ? ((int)Singleton<TagsAndLayers>.instance.GetBulletMask(weapon.fraction, weapon.ignoreLayersMask)) : ((int)Singleton<TagsAndLayers>.instance.GetBulletMask(weapon.fraction, weapon.ignoreLayersMask) & ~TagsAndLayers.destroyableObjectsMask));
+		if (Physics.Raycast(ray2, out var hitInfo, float.PositiveInfinity, layerMask))
+		{
+			if (TagsAndLayers.IsStatic(hitInfo.transform.gameObject))
+			{
+				AnimateShot(from, hitInfo.point, checkCollision: false);
+				base.mRaycastHit = hitInfo;
+				return;
+			}
+			base.mRaycastHit = hitInfo;
+			AnimateShot(from, to, checkCollision: false);
+			DestroyableObject component = hitInfo.collider.transform.GetComponent<DestroyableObject>();
+			if (component != null)
+			{
+				Vector3 vector = PredictPosition(weapon, hitInfo.point, component.velocity);
+				AnimateShot(from, vector, checkCollision: false);
+				hitInfo.point = vector;
+				base.mRaycastHit = hitInfo;
+			}
+			else
+			{
+				AnimateShot(from, to, checkCollision: false);
+			}
+		}
+		else
+		{
+			AnimateShot(from, to + mDirection, checkCollision: false);
+		}
+	}
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	private Vector3 PredictPosition(Weapon weapon, Vector3 position, Vector3 velocity)
+	{
+		BulletSetup bulletSetup = weapon.ammoSetup as BulletSetup;
+		if (bulletSetup != null)
+		{
+			float num = Vector3.Distance(weapon.spawnPoint.transform.position, position);
+			float num2 = num / bulletSetup.bulletSpeed + 0.1f;
+			return position + num2 * Time.timeScale * velocity;
+		}
+		return position;
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	protected override void OnTryKill()
+	{
+		if (!fast)
+		{
+			if (ignoreTimeScale)
+			{
+				if (mCheckHit)
+				{
+					mDirRay = new Ray(mTransform.position, mDirection);
+					float num = distanceToCheck * 2f;
+					if (num > 0f && Physics.Raycast(mDirRay, out mHitPom, num, Singleton<TagsAndLayers>.instance.GetBulletMask(weapon.fraction, weapon.ignoreLayersMask)))
+					{
+						base.mRaycastHit = mHitPom;
+						mIsRayHitTesting = false;
+						float duration = Vector3.Distance(mTransform.position, mHitPom.point) / speed;
+						TweenPosition tweenPosition = TweenPosition.Begin(base.gameObject, duration, mTransform.position, mHitPom.point, useLocal: false);
+						tweenPosition.method = UITweener.Method.Linear;
+						tweenPosition.onFinished = delegate
+						{
+							OnHit();
+						};
+						tweenPosition.ignoreTimeScale = ignoreTimeScale;
+					}
+					else
+					{
+						mIsRayHitTesting = true;
+						mColisionCheckCounter = 0;
+						float duration2 = Vector3.Magnitude(mDirection.normalized * distanceToCheck * 7f) / speed;
+						TweenPosition tweenPosition2 = TweenPosition.Begin(base.gameObject, duration2, mTransform.position, mTransform.position + mDirection.normalized * distanceToCheck * 5f, useLocal: false);
+						tweenPosition2.method = UITweener.Method.Linear;
+						tweenPosition2.ignoreTimeScale = ignoreTimeScale;
+					}
+				}
+				else
+				{
+					OnHit();
+				}
+			}
+			else if (mCheckHit)
+			{
+				if (!CheckHit())
+				{
+					float duration3 = Vector3.Magnitude(mDirection.normalized * distanceToCheck * 3f) / speed;
+					TweenPosition tweenPosition3 = TweenPosition.Begin(base.gameObject, duration3, mTransform.position, mTransform.position + mDirection.normalized * distanceToCheck * 2f, useLocal: false);
+					tweenPosition3.method = UITweener.Method.Linear;
+					tweenPosition3.onFinished = OnCheckingAnimationFinished;
+					tweenPosition3.ignoreTimeScale = ignoreTimeScale;
+					mIsRayHitTesting = true;
+					mColisionCheckCounter = int.MinValue;
+				}
+			}
+			else
+			{
+				OnHit();
+			}
+		}
+		else
+		{
+			OnHit();
+		}
+	}
 
-	4. This script is unnecessary.
+	private TweenPosition MoveBullet(Vector3 from, Vector3 to)
+	{
+		float num = Vector3.Distance(from, to);
+		speed = ((!isFake) ? speed : mBulletSetup.fakeSpeed);
+		float duration = num / speed;
+		TweenPosition tweenPosition = TweenPosition.Begin(base.gameObject, duration, from, to, useLocal: false);
+		tweenPosition.ignoreTimeScale = ignoreTimeScale;
+		tweenPosition.method = UITweener.Method.Linear;
+		return tweenPosition;
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private void CheckFinished()
+	{
+		mIsRayHitTesting = false;
+		int layerMask = (int)Singleton<TagsAndLayers>.instance.GetBulletMask(weapon.fraction, weapon.ignoreLayersMask) & ~TagsAndLayers.destroyableObjectsMask;
+		mDirRay = new Ray(mLastPos, mDirection);
+		if (Physics.Raycast(mDirRay, out mHitPom, float.PositiveInfinity, layerMask))
+		{
+			base.mRaycastHit = mHitPom;
+			MoveBullet(mTransform.position, mHitPom.point).onFinished = delegate
+			{
+				OnHit();
+			};
+		}
+		else
+		{
+			MoveBullet(mTransform.position, mTransform.position + 20f * mDirection).onFinished = delegate
+			{
+				DestroyPooled();
+			};
+		}
+	}
 
-	5. Script Content Level 0
+	protected void Update()
+	{
+		if (mIsRayHitTesting)
+		{
+			mColisionCheckCounter++;
+			CheckHit();
+			if (mColisionCheckCounter > 5)
+			{
+				CheckFinished();
+			}
+		}
+		mLastPos = mTransform.position;
+	}
 
-		AssetRipper was set to not load any script information.
+	private bool CheckHit()
+	{
+		mDirRay = new Ray(mLastPos, mDirection);
+		float magnitude = (mTransform.position - mLastPos).magnitude;
+		float maxDistance = magnitude + 2f * Time.deltaTime;
+		if (magnitude > 0f && Physics.Raycast(mDirRay, out mHitPom, maxDistance, Singleton<TagsAndLayers>.instance.GetBulletMask(weapon.fraction, weapon.ignoreLayersMask)))
+		{
+			base.mRaycastHit = mHitPom;
+			OnHit();
+			mIsRayHitTesting = false;
+			return true;
+		}
+		return false;
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	private void OnCheckingAnimationFinished(UITweener tween)
+	{
+		mIsRayHitTesting = false;
+		if (!CheckHit())
+		{
+			float duration = Vector3.Magnitude(mDirection) / speed;
+			TweenPosition tweenPosition = TweenPosition.Begin(base.gameObject, duration, mTransform.position, mTransform.position + mDirection, useLocal: false);
+			tweenPosition.ignoreTimeScale = ignoreTimeScale;
+			tweenPosition.method = UITweener.Method.Linear;
+			tweenPosition.onFinished = delegate
+			{
+				DestroyPooled();
+			};
+		}
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public override void DestroyPooled()
+	{
+		base.DestroyPooled();
+		mlineTrailRenderer.Reset();
+		StopAllCoroutines();
+		GetComponent<TweenPosition>().enabled = true;
+	}
 }

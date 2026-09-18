@@ -1,63 +1,164 @@
-using UnityEngine;
+using System;
+using System.Globalization;
+using Newtonsoft.Json.Linq;
 
-public class StringParser : MonoBehaviour
+public static class StringParser
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public static int ParseInt(object inputString, int defaultSafeValue = 0)
+	{
+		try
+		{
+			return Convert.ToInt32(inputString);
+		}
+		catch (Exception)
+		{
+			try
+			{
+				return (int)Convert.ToSingle(inputString, CultureInfo.InvariantCulture);
+			}
+			catch (Exception exception)
+			{
+				Singleton<BeanstalkServerManager>.instance.SendErrorMessage(exception, inputString, Environment.StackTrace);
+				return defaultSafeValue;
+			}
+		}
+	}
 
-	1. No dll files were provided to AssetRipper.
+	public static int ParseIntToken(JToken inputString, int defaultSafeValue = 0)
+	{
+		try
+		{
+			return inputString.Value<int>();
+		}
+		catch (Exception)
+		{
+			try
+			{
+				return (int)inputString.Value<float>();
+			}
+			catch (Exception exception)
+			{
+				Singleton<BeanstalkServerManager>.instance.SendErrorMessage(exception, inputString, Environment.StackTrace);
+				return defaultSafeValue;
+			}
+		}
+	}
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public static float ParseFloatToken(JToken inputString, float defaultSafeValue = 0f)
+	{
+		try
+		{
+			return inputString.Value<float>();
+		}
+		catch (Exception exception)
+		{
+			Singleton<BeanstalkServerManager>.instance.SendErrorMessage(exception, inputString, Environment.StackTrace);
+			return defaultSafeValue;
+		}
+	}
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public static bool ParseBool(object inputString, bool defaultSafeValue = false)
+	{
+		try
+		{
+			return Convert.ToBoolean(inputString);
+		}
+		catch (Exception exception)
+		{
+			Singleton<BeanstalkServerManager>.instance.SendErrorMessage(exception, inputString, Environment.StackTrace);
+			return defaultSafeValue;
+		}
+	}
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public static long ParseLong(object inputString, long defaultSafeValue = 0L)
+	{
+		try
+		{
+			return Convert.ToInt64(inputString);
+		}
+		catch (Exception exception)
+		{
+			Singleton<BeanstalkServerManager>.instance.SendErrorMessage(exception, inputString, Environment.StackTrace);
+			return defaultSafeValue;
+		}
+	}
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public static long ParseLongToken(JToken inputString, long defaultSafeValue = 0L)
+	{
+		try
+		{
+			return inputString.Value<long>();
+		}
+		catch (Exception)
+		{
+			try
+			{
+				return (long)inputString.Value<float>();
+			}
+			catch (Exception exception)
+			{
+				Singleton<BeanstalkServerManager>.instance.SendErrorMessage(exception, inputString, Environment.StackTrace);
+				return defaultSafeValue;
+			}
+		}
+	}
 
-	3. Assembly Reconstruction has not been implemented.
+	public static int ParseInt(string key, string databaseType, JToken dictionary, int defaultSafeValue = 0)
+	{
+		try
+		{
+			return dictionary[key][databaseType].ToObject<int>();
+		}
+		catch (Exception)
+		{
+			try
+			{
+				return (int)dictionary[key][databaseType].ToObject<float>();
+			}
+			catch (Exception exception)
+			{
+				Singleton<BeanstalkServerManager>.instance.SendErrorMessage(exception, "key= " + key + ", databaseType= " + databaseType + ", dictionary= " + dictionary, Environment.StackTrace);
+				return defaultSafeValue;
+			}
+		}
+	}
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public static string ParseString(string key, string databaseType, JToken dictionary, string defaultSafeValue = "")
+	{
+		try
+		{
+			return dictionary[key][databaseType].ToObject<string>();
+		}
+		catch (Exception exception)
+		{
+			Singleton<BeanstalkServerManager>.instance.SendErrorMessage(exception, "key= " + key + ", databaseType= " + databaseType + ", dictionary= " + dictionary, Environment.StackTrace);
+			return defaultSafeValue;
+		}
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public static long ParseLong(string key, string databaseType, JToken dictionary, long defaultSafeValue = 0)
+	{
+		try
+		{
+			return dictionary[key][databaseType].ToObject<long>();
+		}
+		catch (Exception exception)
+		{
+			Singleton<BeanstalkServerManager>.instance.SendErrorMessage(exception, "key= " + key + ", databaseType= " + databaseType + ", dictionary= " + dictionary[key], Environment.StackTrace);
+			return defaultSafeValue;
+		}
+	}
 
-	4. This script is unnecessary.
-
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
-
-	5. Script Content Level 0
-
-		AssetRipper was set to not load any script information.
-
-	6. Cpp2IL failed to decompile Il2Cpp data
-
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public static string ParseString(object inputString, string defaultSafeValue = "")
+	{
+		try
+		{
+			return inputString.ToString();
+		}
+		catch (Exception exception)
+		{
+			Singleton<BeanstalkServerManager>.instance.SendErrorMessage(exception, inputString, Environment.StackTrace);
+			return defaultSafeValue;
+		}
+	}
 }

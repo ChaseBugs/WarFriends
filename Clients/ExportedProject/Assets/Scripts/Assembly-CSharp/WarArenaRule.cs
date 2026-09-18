@@ -1,63 +1,93 @@
+using Newtonsoft.Json.Linq;
 using UnityEngine;
 
-public class WarArenaRule : MonoBehaviour
+public class WarArenaRule : ScriptableObject
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public enum RuleType
+	{
+		FulFill,
+		DoesNotMeet,
+		InfoRule,
+		InfoText
+	}
 
-	1. No dll files were provided to AssetRipper.
+	public class WarArenaRuleGui
+	{
+		public RuleType type;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+		public string text;
 
-	2. Incorrect dll files were provided to AssetRipper.
+		public string alternativeText;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+		public string hint;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+		public string debugString => $"[{type.ToString().ToUpper()}] {text}";
 
-	3. Assembly Reconstruction has not been implemented.
+		public WarArenaRuleGui()
+		{
+			type = RuleType.InfoRule;
+			text = string.Empty;
+		}
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+		public WarArenaRuleGui(string showText, RuleType showType = RuleType.InfoRule)
+		{
+			type = showType;
+			text = showText;
+		}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+		public WarArenaRuleGui(string showText, string hintText, string showAlternativeText, RuleType showType)
+		{
+			type = showType;
+			hint = hintText;
+			text = showText;
+			alternativeText = showAlternativeText;
+		}
+	}
 
-	4. This script is unnecessary.
+	public WarArenaRuleGui guiRule
+	{
+		get
+		{
+			WarArenaRuleGui genericRule = GetGenericRule();
+			if (genericRule == null)
+			{
+				return null;
+			}
+			WarArenaConfig warArenaConfig = WarArena.instance.warArenaConfig;
+			if (warArenaConfig.rulesTexts.TryGetValue(GetType().ToString(), out var value))
+			{
+				genericRule.text = value.Value1;
+				genericRule.hint = value.Value2;
+			}
+			return genericRule;
+		}
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public virtual string Serialize()
+	{
+		return string.Empty;
+	}
 
-	5. Script Content Level 0
+	public virtual RuleData GetData()
+	{
+		return null;
+	}
 
-		AssetRipper was set to not load any script information.
+	public virtual void DeSerialize(JToken value)
+	{
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public virtual void ApplyRule()
+	{
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public virtual bool SetupRule()
+	{
+		return true;
+	}
 
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	protected virtual WarArenaRuleGui GetGenericRule()
+	{
+		return new WarArenaRuleGui();
+	}
 }

@@ -1,63 +1,268 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
-public class ArenaScreenMainContent : MonoBehaviour
+public class ArenaScreenMainContent : Core_BaseScript
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[SerializeField]
+	[Header("Nodes")]
+	private ArenaGridContent mNodeGrid;
 
-	1. No dll files were provided to AssetRipper.
+	[Header("Lootboxes")]
+	[SerializeField]
+	private UIGrid mBoxGrid;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	[SerializeField]
+	private ArenaBox mBoxPrefab;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	[SerializeField]
+	[Header("Buttons")]
+	private BoxCollider mArenaBattleButton;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	[SerializeField]
+	private UISprite mArenaBattleButtonBackground;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	[SerializeField]
+	private UILabel mArenaBattleButtonLabel;
 
-	3. Assembly Reconstruction has not been implemented.
+	[SerializeField]
+	private UIPanel mArenaBattleButtonReflection;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	[Header("Lives")]
+	[SerializeField]
+	private ArenaLiveRecord[] mLives;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	[HideInInspector]
+	public bool canBattle = true;
 
-	4. This script is unnecessary.
+	public List<ArenaBox> boxes = new List<ArenaBox>();
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private ArenaBox mFlawlessBox;
 
-	5. Script Content Level 0
+	private bool mLivesChanged;
 
-		AssetRipper was set to not load any script information.
+	public void InitControls()
+	{
+		for (int i = 0; i < 6; i++)
+		{
+			ArenaBox arenaBox = UnityEngine.Object.Instantiate(mBoxPrefab);
+			arenaBox.transform.parent = mBoxGrid.transform;
+			arenaBox.transform.localScale = Vector3.one;
+			arenaBox.transform.localPosition = Vector3.zero;
+			boxes.Add(arenaBox);
+		}
+		UIEventListener uIEventListener = UIEventListener.Get(mArenaBattleButton.gameObject);
+		uIEventListener.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener.onClick, new UIEventListener.VoidDelegate(OnArenaBattleClick));
+		WarArena.instance.LivesChanged += ChangeLives;
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public void InitGUIValues()
+	{
+		canBattle = true;
+		for (int i = 0; i < 6; i++)
+		{
+			boxes[i].gameObject.SetActive((i <= WarArena.instance.warArenaConfig.lootBoxesCount) ? true : false);
+		}
+		mFlawlessBox = boxes[WarArena.instance.warArenaConfig.lootBoxesCount];
+		SetBattleButton();
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public void SetBattleButton()
+	{
+		bool flag = WarArena.instance.warArenaConfig.currentWindow != null && WarArena.instance.warArenaConfig.currentWindow.isActive;
+		mArenaBattleButtonReflection.gameObject.SetActive(flag);
+		if (flag)
+		{
+			mArenaBattleButtonLabel.text = Localization.Localize("ID_BATTLEINARENA");
+			MiscTools.SetUILabelRescale(mArenaBattleButtonLabel, 62f, 20f, 700);
+		}
+		else if (WarArena.instance.warArenaConfig.isAfterArenaEnd)
+		{
+			mArenaBattleButtonLabel.text = Localization.Localize("ID_PHASECLOSED");
+			MiscTools.SetUILabelRescale(mArenaBattleButtonLabel, 62f, 20f, 700);
+		}
+		mArenaBattleButton.GetComponent<UIButtonScale>().enabled = flag;
+		mArenaBattleButtonBackground.color = ((!flag) ? Colours.gray135 : Colours.white);
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	public void UpdateBattleButtonTitle()
+	{
+		mArenaBattleButtonLabel.text = WarArenaGui.CreateArenaButtonTimeText();
+		MiscTools.SetUILabelRescale(mArenaBattleButtonLabel, 62f, 20f, 700);
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	private void SetBoxes()
+	{
+		int num = 0;
+		int num2 = -1;
+		for (int i = 0; i < WarArena.instance.warArenaConfig.nodes.Count; i++)
+		{
+			if (WarArena.instance.warArenaConfig.nodes[i].lootBoxType != WarArenaConfig.LootBoxType.None)
+			{
+				if (i < (int)WarArena.instance.data.wins - 1)
+				{
+					boxes[num].SetClaimed(isClaimed: true, WarArena.instance.warArenaConfig.nodes[i].lootBoxType);
+					num2 = num;
+				}
+				else
+				{
+					boxes[num].SetLabels(WarArena.instance.warArenaConfig.nodes[i], i + 1);
+				}
+				num++;
+			}
+		}
+		num2++;
+		mFlawlessBox.SetLabelsFlawless();
+		mBoxGrid.cellWidth = (UIRoot.list[0].activeWidth - 120f) / (float)(WarArena.instance.warArenaConfig.lootBoxesCount + 1);
+		float val = (0f - UIRoot.list[0].activeWidth + mBoxGrid.cellWidth + 120f) * 0.5f;
+		mBoxGrid.transform.localPosition = mBoxGrid.transform.localPosition.ReplaceX(val);
+		foreach (ArenaBox box in boxes)
+		{
+			box.CenterWinCountGrid();
+		}
+		List<WarArenaConfig.Node> nodes = WarArena.instance.warArenaConfig.nodes;
+		if (GuiScreenSingle<ArenaScreen>.instance.haveWon && nodes[(int)WarArena.instance.data.wins - 1].lootBoxType != WarArenaConfig.LootBoxType.None)
+		{
+			boxes[num2].SetAboutToOpen(nodes[(int)WarArena.instance.data.wins - 1].lootBoxType);
+		}
+		if (!GuiScreenSingle<ArenaScreen>.instance.haveWon && (int)WarArena.instance.data.wins > 0 && nodes[(int)WarArena.instance.data.wins - 1].lootBoxType != WarArenaConfig.LootBoxType.None)
+		{
+			boxes[num2].SetClaimed(isClaimed: true, nodes[(int)WarArena.instance.data.wins - 1].lootBoxType);
+		}
+	}
 
-	*/
+	public void HideBoxesHints()
+	{
+		foreach (ArenaBox box in boxes)
+		{
+			if (box.hintShowed)
+			{
+				box.ShowHint();
+			}
+		}
+	}
+
+	private void SetLives()
+	{
+		for (int i = 0; i < mLives.Length; i++)
+		{
+			bool flag = i < WarArena.instance.warArenaConfig.lifeCount;
+			mLives[i].gameObject.SetActive(flag);
+			if (flag)
+			{
+				if (i < (int)WarArena.instance.data.lives)
+				{
+					mLives[i].SetFull();
+				}
+				else
+				{
+					mLives[i].SetEmpty();
+				}
+			}
+		}
+	}
+
+	private void ChangeLives(int number)
+	{
+		if (number > 0)
+		{
+			canBattle = true;
+			for (int i = 0; i < (int)WarArena.instance.data.lives; i++)
+			{
+				mLives[i].SetFull();
+			}
+			if (GuiScreenSingle<ArenaScreen>.instance.isFullyShowed && GuiScreenSingle<ArenaScreen>.instance.arenaMode == ArenaScreen.ArenaScreenMode.EnterArena)
+			{
+				GuiScreenSingle<ArenaScreen>.instance.ShowArena(transition: true);
+			}
+		}
+		else if (GuiScreenSingle<ArenaScreen>.instance.isFullyShowed)
+		{
+			canBattle = false;
+			mLives[Mathf.Clamp(WarArena.instance.data.lives, 0, 2)].AnimateHeart();
+			mLivesChanged = false;
+		}
+		else
+		{
+			mLivesChanged = true;
+		}
+	}
+
+	public void DoBeforeHide()
+	{
+		foreach (ArenaBox box in boxes)
+		{
+			box.arenaLootBox.Hide();
+		}
+	}
+
+	public void DoAfterShowUp()
+	{
+		if (GuiScreenSingle<ArenaScreen>.instance.haveWon)
+		{
+			int max = WarArena.instance.warArenaConfig.battles - 1;
+			mNodeGrid.nodes[Mathf.Clamp((int)WarArena.instance.data.wins - 1, 0, max)].AnimateNode();
+			Singleton<Wallet>.instance.Init(Singleton<Wallet>.instance.goldAfterArena, Singleton<Wallet>.instance.warbucksAfterArena);
+		}
+		if (mLivesChanged || GuiScreenSingle<ArenaScreen>.instance.haveLost)
+		{
+			canBattle = false;
+			mLives[Mathf.Clamp(WarArena.instance.data.lives, 0, 2)].AnimateHeart();
+			mLivesChanged = false;
+			Singleton<Wallet>.instance.Init(Singleton<Wallet>.instance.goldAfterArena, Singleton<Wallet>.instance.warbucksAfterArena);
+		}
+	}
+
+	public void ClearData()
+	{
+		foreach (ArenaBox box in boxes)
+		{
+			box.SetClaimed(isClaimed: false);
+		}
+		mNodeGrid.Clear();
+	}
+
+	private void OnArenaBattleClick(GameObject go)
+	{
+		if (WarArena.instance.warArenaConfig.currentWindow != null && WarArena.instance.warArenaConfig.currentWindow.isActive && canBattle)
+		{
+			if (!WarArena.instance.isGoodPing)
+			{
+				WarningDialog.ShowBadConnection();
+				Singleton<EventTrackingManager>.instance.ArenaPoorConnection();
+			}
+			else if (!WarArena.instance.SetupRules())
+			{
+				GuiElementSingle<CantEnterArenaDialog>.instance.ShowDialog(WarArenaGui.failSetupRules);
+			}
+			else
+			{
+				Debug.Log("Battle Start");
+				Singleton<GameController>.instance.SwitchToWarArena();
+				Singleton<GameController>.instance.gameControllerWarArena.StartRandomMatchMaking();
+			}
+		}
+	}
+
+	public void AfterAnimation()
+	{
+		if ((int)WarArena.instance.data.lives > 0)
+		{
+			canBattle = true;
+		}
+	}
+
+	public void ShowMainArena()
+	{
+		SetLives();
+		if (mLivesChanged || GuiScreenSingle<ArenaScreen>.instance.haveLost)
+		{
+			mLives[Mathf.Clamp(WarArena.instance.data.lives, 0, 2)].SetFull();
+		}
+		mNodeGrid.ResizeNodes(WarArena.instance.warArenaConfig.battles);
+		List<WarArenaConfig.Node> nodes = WarArena.instance.warArenaConfig.nodes;
+		SetBoxes();
+		mNodeGrid.SetRewards(nodes);
+		mNodeGrid.SetNodes(completed: true, nodes);
+	}
 }

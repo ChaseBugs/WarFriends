@@ -1,63 +1,198 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
-public class SelectSquadLeaderDialog : MonoBehaviour
+public class SelectSquadLeaderDialog : GuiElementSingle<SelectSquadLeaderDialog>, IGuiDialog
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public Action<DatabasePlayer, bool> memberSelected;
 
-	1. No dll files were provided to AssetRipper.
+	[Header("Close Button")]
+	public UIButton closeButton;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	[Header("Result Lists")]
+	public MemberSelectRecord memberSelectPrefab;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public UIDraggablePanel draggablePanel;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public UIPooledGrid membersGrid;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public GameObject membersWaiting;
 
-	3. Assembly Reconstruction has not been implemented.
+	private List<DatabasePlayer> mMembersList = new List<DatabasePlayer>();
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	private UIDraggablePanel mPanelToDisable;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public static void ShowSelectNewSquadLeader(Action<DatabasePlayer, bool> memberSelect, UIDraggablePanel draggablePanelToDisable)
+	{
+		SelectSquadLeaderDialog selectSquadLeaderDialog = GuiElementSingle<SelectSquadLeaderDialog>.instance;
+		selectSquadLeaderDialog.mPanelToDisable = draggablePanelToDisable;
+		selectSquadLeaderDialog.memberSelected = memberSelect;
+		Singleton<GuiManager>.instance.ShowDialog(selectSquadLeaderDialog, 0f);
+	}
 
-	4. This script is unnecessary.
+	public override void InitEvents()
+	{
+		base.InitEvents();
+		UIEventListener uIEventListener = UIEventListener.Get(closeButton.gameObject);
+		uIEventListener.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener.onClick, new UIEventListener.VoidDelegate(CloseButtonClick));
+		Singleton<BeanstalkServerManager>.instance.DataLoaded += OnDataLoaded;
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public override void InitControls()
+	{
+		float num = (float)UIRoot.list[0].activeHeight - 454f;
+		draggablePanel.transform.localPosition = new Vector3(draggablePanel.transform.localPosition.x, 0f, draggablePanel.transform.localPosition.z);
+		BoxCollider component = draggablePanel.gameObject.GetComponent<BoxCollider>();
+		component.center = new Vector3(component.center.x, 0f - num / 2f, component.center.z);
+		component.size = new Vector3(component.size.x, num, component.size.z);
+		UIPanel component2 = draggablePanel.gameObject.GetComponent<UIPanel>();
+		component2.clipRange = new Vector4(component2.clipRange.x, 0f - num / 2f, component2.clipRange.z, num);
+	}
 
-	5. Script Content Level 0
+	private void CloseButtonClick(GameObject go)
+	{
+		if (base.isFullyShowed)
+		{
+			HideDialog();
+			if (memberSelected != null)
+			{
+				memberSelected(null, arg2: false);
+				memberSelected = null;
+			}
+		}
+	}
 
-		AssetRipper was set to not load any script information.
+	private void OnDataLoaded(DatabaseAction action)
+	{
+		if (!isShowed)
+		{
+			return;
+		}
+		if (action != DatabaseAction.GetAllSquadMembers)
+		{
+			return;
+		}
+		DatabasePlayer me = GameLoginManager.currentPlayer;
+		List<DatabasePlayer> squadMembers = Singleton<ServerResultsCache>.instance.GetSquadMembers(me.squadName);
+		if (squadMembers == null)
+		{
+			return;
+		}
+		mMembersList = new List<DatabasePlayer>(squadMembers);
+		int num = mMembersList.FindIndex((DatabasePlayer p1) => p1.id == me.id);
+		if (num > -1)
+		{
+			mMembersList.RemoveAt(num);
+		}
+		for (int num2 = mMembersList.Count - 1; num2 >= 0; num2--)
+		{
+			if (string.IsNullOrEmpty(mMembersList[num2].name))
+			{
+				mMembersList.RemoveAt(num2);
+			}
+		}
+		mMembersList.Sort(SortFunctionPlayers);
+		ShowSquadMembers();
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	private int SortFunctionPlayers(DatabasePlayer a, DatabasePlayer b)
+	{
+		if (string.IsNullOrEmpty(a.name))
+		{
+			return (!string.IsNullOrEmpty(b.name)) ? (-1) : 0;
+		}
+		return a.name.CompareTo(b.name);
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	private void ShowSquadMembers()
+	{
+		membersWaiting.SetActive(value: false);
+		membersGrid.init(mMembersList.Count, MemberInstantinate, MemberFree, draggablePanel);
+		draggablePanel.AlignToPos(instant: true);
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	private Transform MemberInstantinate(int index)
+	{
+		if (index >= 0 && index < mMembersList.Count)
+		{
+			MemberSelectRecord memberSelectRecord = Singleton<GuiManager>.instance.objectPool.InstantiateAsChild(memberSelectPrefab, membersGrid.gameObject, $"{index} {mMembersList[index].name}") as MemberSelectRecord;
+			if (memberSelectRecord != null)
+			{
+				memberSelectRecord.Initialize(mMembersList[index]);
+				return memberSelectRecord.transform;
+			}
+		}
+		return null;
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	private void MemberFree(Transform obj)
+	{
+		if (obj != null)
+		{
+			MemberSelectRecord component = obj.GetComponent<MemberSelectRecord>();
+			if (component != null)
+			{
+				component.DestroyPooled();
+			}
+		}
+	}
 
-	*/
+	public override void InitGUIValues()
+	{
+		membersWaiting.SetActive(value: true);
+		membersGrid.MakeEmpty();
+		Singleton<BeanstalkServerManager>.instance.GetAllSquadMembers(GameLoginManager.currentPlayer.squadName);
+	}
+
+	public override void DoAfterShowUp()
+	{
+		base.DoAfterShowUp();
+		draggablePanel.forceDrag = true;
+		if (mPanelToDisable != null)
+		{
+			mPanelToDisable.onePanelDisabled = true;
+		}
+		UIDraggablePanel.panelDisabled = true;
+	}
+
+	public override void DoBeforeHide()
+	{
+		base.DoBeforeHide();
+		if (mPanelToDisable != null)
+		{
+			mPanelToDisable.onePanelDisabled = false;
+			mPanelToDisable = null;
+		}
+		UIDraggablePanel.panelDisabled = false;
+	}
+
+	public override void DoAfterHide()
+	{
+		base.DoAfterHide();
+		membersGrid.MakeEmpty();
+	}
+
+	public void Select(DatabasePlayer player)
+	{
+		if (isShowed)
+		{
+			if (memberSelected != null)
+			{
+				SoundsManager.Instance.PlayButtonClickedSound();
+				memberSelected(player, arg2: true);
+				memberSelected = null;
+			}
+			HideDialog();
+		}
+	}
+
+	public GuiElement GetGuiElement()
+	{
+		return this;
+	}
+
+	public override void OnBack()
+	{
+		CloseButtonClick(closeButton.gameObject);
+	}
 }

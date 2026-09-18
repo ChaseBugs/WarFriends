@@ -1,66 +1,252 @@
-using UnityEngine;
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Linq;
+using PlatformSupport.Collections.Specialized;
 
 namespace PlatformSupport.Collections.ObjectModel
 {
-	public class ObservableDictionary : MonoBehaviour
+public class ObservableDictionary<TKey, TValue> : IDictionary<TKey, TValue>, ICollection<KeyValuePair<TKey, TValue>>, IEnumerable<KeyValuePair<TKey, TValue>>, IEnumerable, INotifyCollectionChanged, INotifyPropertyChanged
+{
+	private const string CountString = "Count";
+
+	private const string IndexerName = "Item[]";
+
+	private const string KeysName = "Keys";
+
+	private const string ValuesName = "Values";
+
+	private IDictionary<TKey, TValue> _Dictionary;
+
+	protected IDictionary<TKey, TValue> Dictionary => _Dictionary;
+
+	public ICollection<TKey> Keys => Dictionary.Keys;
+
+	public ICollection<TValue> Values => Dictionary.Values;
+
+	public TValue this[TKey key]
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
+		get
+		{
+			return Dictionary[key];
+		}
+		set
+		{
+			Insert(key, value, add: false);
+		}
 	}
+
+	public int Count => Dictionary.Count;
+
+	public bool IsReadOnly => Dictionary.IsReadOnly;
+
+	public event NotifyCollectionChangedEventHandler CollectionChanged;
+
+	public event PropertyChangedEventHandler PropertyChanged;
+
+	public ObservableDictionary()
+	{
+		_Dictionary = new Dictionary<TKey, TValue>();
+	}
+
+	public ObservableDictionary(IDictionary<TKey, TValue> dictionary)
+	{
+		_Dictionary = new Dictionary<TKey, TValue>(dictionary);
+	}
+
+	public ObservableDictionary(IEqualityComparer<TKey> comparer)
+	{
+		_Dictionary = new Dictionary<TKey, TValue>(comparer);
+	}
+
+	public ObservableDictionary(int capacity)
+	{
+		_Dictionary = new Dictionary<TKey, TValue>(capacity);
+	}
+
+	public ObservableDictionary(IDictionary<TKey, TValue> dictionary, IEqualityComparer<TKey> comparer)
+	{
+		_Dictionary = new Dictionary<TKey, TValue>(dictionary, comparer);
+	}
+
+	public ObservableDictionary(int capacity, IEqualityComparer<TKey> comparer)
+	{
+		_Dictionary = new Dictionary<TKey, TValue>(capacity, comparer);
+	}
+
+	IEnumerator IEnumerable.GetEnumerator()
+	{
+		return ((IEnumerable)Dictionary).GetEnumerator();
+	}
+
+	public void Add(TKey key, TValue value)
+	{
+		Insert(key, value, add: true);
+	}
+
+	public bool ContainsKey(TKey key)
+	{
+		return Dictionary.ContainsKey(key);
+	}
+
+	public bool Remove(TKey key)
+	{
+		if (key == null)
+		{
+			throw new ArgumentNullException("key");
+		}
+		Dictionary.TryGetValue(key, out var _);
+		bool flag = Dictionary.Remove(key);
+		if (flag)
+		{
+			OnCollectionChanged();
+		}
+		return flag;
+	}
+
+	public bool TryGetValue(TKey key, out TValue value)
+	{
+		return Dictionary.TryGetValue(key, out value);
+	}
+
+	public void Add(KeyValuePair<TKey, TValue> item)
+	{
+		Insert(item.Key, item.Value, add: true);
+	}
+
+	public void Clear()
+	{
+		if (Dictionary.Count > 0)
+		{
+			Dictionary.Clear();
+			OnCollectionChanged();
+		}
+	}
+
+	public bool Contains(KeyValuePair<TKey, TValue> item)
+	{
+		return Dictionary.Contains(item);
+	}
+
+	public void CopyTo(KeyValuePair<TKey, TValue>[] array, int arrayIndex)
+	{
+		Dictionary.CopyTo(array, arrayIndex);
+	}
+
+	public bool Remove(KeyValuePair<TKey, TValue> item)
+	{
+		return Remove(item.Key);
+	}
+
+	public IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator()
+	{
+		return Dictionary.GetEnumerator();
+	}
+
+	public void AddRange(IDictionary<TKey, TValue> items)
+	{
+		if (items == null)
+		{
+			throw new ArgumentNullException("items");
+		}
+		if (items.Count <= 0)
+		{
+			return;
+		}
+		if (Dictionary.Count > 0)
+		{
+			if (items.Keys.Any((TKey k) => Dictionary.ContainsKey(k)))
+			{
+				throw new ArgumentException("An item with the same key has already been added.");
+			}
+			foreach (KeyValuePair<TKey, TValue> item in items)
+			{
+				Dictionary.Add(item);
+			}
+		}
+		else
+		{
+			_Dictionary = new Dictionary<TKey, TValue>(items);
+		}
+		OnCollectionChanged(PlatformSupport.Collections.Specialized.NotifyCollectionChangedAction.Add, items.ToArray());
+	}
+
+	private void Insert(TKey key, TValue value, bool add)
+	{
+		if (key == null)
+		{
+			throw new ArgumentNullException("key");
+		}
+		if (Dictionary.TryGetValue(key, out var value2))
+		{
+			if (add)
+			{
+				throw new ArgumentException("An item with the same key has already been added.");
+			}
+			if (!object.Equals(value2, value))
+			{
+				Dictionary[key] = value;
+				OnCollectionChanged(PlatformSupport.Collections.Specialized.NotifyCollectionChangedAction.Replace, new KeyValuePair<TKey, TValue>(key, value), new KeyValuePair<TKey, TValue>(key, value2));
+			}
+		}
+		else
+		{
+			Dictionary[key] = value;
+			OnCollectionChanged(PlatformSupport.Collections.Specialized.NotifyCollectionChangedAction.Add, new KeyValuePair<TKey, TValue>(key, value));
+		}
+	}
+
+	private void OnPropertyChanged()
+	{
+		OnPropertyChanged("Count");
+		OnPropertyChanged("Item[]");
+		OnPropertyChanged("Keys");
+		OnPropertyChanged("Values");
+	}
+
+	protected virtual void OnPropertyChanged(string propertyName)
+	{
+		if (this.PropertyChanged != null)
+		{
+			this.PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
+		}
+	}
+
+	private void OnCollectionChanged()
+	{
+		OnPropertyChanged();
+		if (this.CollectionChanged != null)
+		{
+			this.CollectionChanged(this, new PlatformSupport.Collections.Specialized.NotifyCollectionChangedEventArgs(PlatformSupport.Collections.Specialized.NotifyCollectionChangedAction.Reset));
+		}
+	}
+
+	private void OnCollectionChanged(PlatformSupport.Collections.Specialized.NotifyCollectionChangedAction action, KeyValuePair<TKey, TValue> changedItem)
+	{
+		OnPropertyChanged();
+		if (this.CollectionChanged != null)
+		{
+			this.CollectionChanged(this, new PlatformSupport.Collections.Specialized.NotifyCollectionChangedEventArgs(action, changedItem));
+		}
+	}
+
+	private void OnCollectionChanged(PlatformSupport.Collections.Specialized.NotifyCollectionChangedAction action, KeyValuePair<TKey, TValue> newItem, KeyValuePair<TKey, TValue> oldItem)
+	{
+		OnPropertyChanged();
+		if (this.CollectionChanged != null)
+		{
+			this.CollectionChanged(this, new PlatformSupport.Collections.Specialized.NotifyCollectionChangedEventArgs(action, newItem, oldItem));
+		}
+	}
+
+	private void OnCollectionChanged(PlatformSupport.Collections.Specialized.NotifyCollectionChangedAction action, IList newItems)
+	{
+		OnPropertyChanged();
+		if (this.CollectionChanged != null)
+		{
+			this.CollectionChanged(this, new PlatformSupport.Collections.Specialized.NotifyCollectionChangedEventArgs(action, newItems));
+		}
+	}
+}
 }

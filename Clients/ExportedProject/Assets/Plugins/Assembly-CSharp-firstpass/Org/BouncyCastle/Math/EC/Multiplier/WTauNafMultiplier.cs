@@ -1,66 +1,76 @@
-using UnityEngine;
+using System;
+using Org.BouncyCastle.Math.EC.Abc;
 
 namespace Org.BouncyCastle.Math.EC.Multiplier
 {
-	public class WTauNafMultiplier : MonoBehaviour
+public class WTauNafMultiplier : AbstractECMultiplier
+{
+	internal static readonly string PRECOMP_NAME = "bc_wtnaf";
+
+	protected override ECPoint MultiplyPositive(ECPoint point, BigInteger k)
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
+		if (!(point is AbstractF2mPoint))
+		{
+			throw new ArgumentException("Only AbstractF2mPoint can be used in WTauNafMultiplier");
+		}
+		AbstractF2mPoint abstractF2mPoint = (AbstractF2mPoint)point;
+		AbstractF2mCurve abstractF2mCurve = (AbstractF2mCurve)abstractF2mPoint.Curve;
+		int fieldSize = abstractF2mCurve.FieldSize;
+		sbyte b = (sbyte)abstractF2mCurve.A.ToBigInteger().IntValue;
+		sbyte mu = Tnaf.GetMu(b);
+		BigInteger[] si = abstractF2mCurve.GetSi();
+		ZTauElement lambda = Tnaf.PartModReduction(k, fieldSize, b, si, mu, 10);
+		return MultiplyWTnaf(abstractF2mPoint, lambda, abstractF2mCurve.GetPreCompInfo(abstractF2mPoint, PRECOMP_NAME), b, mu);
 	}
+
+	private AbstractF2mPoint MultiplyWTnaf(AbstractF2mPoint p, ZTauElement lambda, PreCompInfo preCompInfo, sbyte a, sbyte mu)
+	{
+		ZTauElement[] alpha = ((a != 0) ? Tnaf.Alpha1 : Tnaf.Alpha0);
+		BigInteger tw = Tnaf.GetTw(mu, 4);
+		sbyte[] u = Tnaf.TauAdicWNaf(mu, lambda, 4, BigInteger.ValueOf(16L), tw, alpha);
+		return MultiplyFromWTnaf(p, u, preCompInfo);
+	}
+
+	private static AbstractF2mPoint MultiplyFromWTnaf(AbstractF2mPoint p, sbyte[] u, PreCompInfo preCompInfo)
+	{
+		AbstractF2mCurve abstractF2mCurve = (AbstractF2mCurve)p.Curve;
+		sbyte a = (sbyte)abstractF2mCurve.A.ToBigInteger().IntValue;
+		AbstractF2mPoint[] preComp;
+		if (preCompInfo == null || !(preCompInfo is WTauNafPreCompInfo))
+		{
+			preComp = Tnaf.GetPreComp(p, a);
+			WTauNafPreCompInfo wTauNafPreCompInfo = new WTauNafPreCompInfo();
+			wTauNafPreCompInfo.PreComp = preComp;
+			abstractF2mCurve.SetPreCompInfo(p, PRECOMP_NAME, wTauNafPreCompInfo);
+		}
+		else
+		{
+			preComp = ((WTauNafPreCompInfo)preCompInfo).PreComp;
+		}
+		AbstractF2mPoint[] array = new AbstractF2mPoint[preComp.Length];
+		for (int i = 0; i < preComp.Length; i++)
+		{
+			array[i] = (AbstractF2mPoint)preComp[i].Negate();
+		}
+		AbstractF2mPoint abstractF2mPoint = (AbstractF2mPoint)p.Curve.Infinity;
+		int num = 0;
+		for (int num2 = u.Length - 1; num2 >= 0; num2--)
+		{
+			num++;
+			int num3 = u[num2];
+			if (num3 != 0)
+			{
+				abstractF2mPoint = abstractF2mPoint.TauPow(num);
+				num = 0;
+				ECPoint b = ((num3 <= 0) ? array[-num3 >> 1] : preComp[num3 >> 1]);
+				abstractF2mPoint = (AbstractF2mPoint)abstractF2mPoint.Add(b);
+			}
+		}
+		if (num > 0)
+		{
+			abstractF2mPoint = abstractF2mPoint.TauPow(num);
+		}
+		return abstractF2mPoint;
+	}
+}
 }

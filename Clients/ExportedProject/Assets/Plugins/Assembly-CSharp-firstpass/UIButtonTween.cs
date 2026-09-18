@@ -1,63 +1,196 @@
+using AnimationOrTween;
 using UnityEngine;
 
+[AddComponentMenu("NGUI/Interaction/Button Tween")]
 public class UIButtonTween : MonoBehaviour
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public GameObject tweenTarget;
 
-	1. No dll files were provided to AssetRipper.
+	public int tweenGroup;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public Trigger trigger;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public Direction playDirection = Direction.Forward;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public bool resetOnPlay;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public EnableCondition ifDisabledOnPlay;
 
-	3. Assembly Reconstruction has not been implemented.
+	public DisableCondition disableWhenFinished;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public bool includeChildren;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public GameObject eventReceiver;
 
-	4. This script is unnecessary.
+	public string callWhenFinished;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public UITweener.OnFinished onFinished;
 
-	5. Script Content Level 0
+	private UITweener[] mTweens;
 
-		AssetRipper was set to not load any script information.
+	private bool mStarted;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	private bool mHighlighted;
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	private void Start()
+	{
+		mStarted = true;
+		if (tweenTarget == null)
+		{
+			tweenTarget = base.gameObject;
+		}
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	private void OnEnable()
+	{
+		if (mStarted && mHighlighted)
+		{
+			OnHover(UICamera.IsHighlighted(base.gameObject));
+		}
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	private void OnHover(bool isOver)
+	{
+		if (base.enabled)
+		{
+			if (trigger == Trigger.OnHover || (trigger == Trigger.OnHoverTrue && isOver) || (trigger == Trigger.OnHoverFalse && !isOver))
+			{
+				Play(isOver);
+			}
+			mHighlighted = isOver;
+		}
+	}
 
-	*/
+	private void OnPress(bool isPressed)
+	{
+		if (base.enabled && (trigger == Trigger.OnPress || (trigger == Trigger.OnPressTrue && isPressed) || (trigger == Trigger.OnPressFalse && !isPressed)))
+		{
+			Play(isPressed);
+		}
+	}
+
+	private void OnClick()
+	{
+		if (base.enabled && trigger == Trigger.OnClick)
+		{
+			Play(forward: true);
+		}
+	}
+
+	private void OnDoubleClick()
+	{
+		if (base.enabled && trigger == Trigger.OnDoubleClick)
+		{
+			Play(forward: true);
+		}
+	}
+
+	private void OnSelect(bool isSelected)
+	{
+		if (base.enabled && (trigger == Trigger.OnSelect || (trigger == Trigger.OnSelectTrue && isSelected) || (trigger == Trigger.OnSelectFalse && !isSelected)))
+		{
+			Play(forward: true);
+		}
+	}
+
+	private void OnActivate(bool isActive)
+	{
+		if (base.enabled && (trigger == Trigger.OnActivate || (trigger == Trigger.OnActivateTrue && isActive) || (trigger == Trigger.OnActivateFalse && !isActive)))
+		{
+			Play(isActive);
+		}
+	}
+
+	private void Update()
+	{
+		if (disableWhenFinished == DisableCondition.DoNotDisable || mTweens == null)
+		{
+			return;
+		}
+		bool flag = true;
+		bool flag2 = true;
+		int i = 0;
+		for (int num = mTweens.Length; i < num; i++)
+		{
+			UITweener uITweener = mTweens[i];
+			if (uITweener.tweenGroup == tweenGroup)
+			{
+				if (uITweener.enabled)
+				{
+					flag = false;
+					break;
+				}
+				if (uITweener.direction != (Direction)disableWhenFinished)
+				{
+					flag2 = false;
+				}
+			}
+		}
+		if (flag)
+		{
+			if (flag2)
+			{
+				NGUITools.SetActive(tweenTarget, state: false);
+			}
+			mTweens = null;
+		}
+	}
+
+	public void Play(bool forward)
+	{
+		GameObject gameObject = ((!(tweenTarget == null)) ? tweenTarget : base.gameObject);
+		if (!NGUITools.GetActive(gameObject))
+		{
+			if (ifDisabledOnPlay != EnableCondition.EnableThenPlay)
+			{
+				return;
+			}
+			NGUITools.SetActive(gameObject, state: true);
+		}
+		mTweens = ((!includeChildren) ? gameObject.GetComponents<UITweener>() : gameObject.GetComponentsInChildren<UITweener>());
+		if (mTweens.Length == 0)
+		{
+			if (disableWhenFinished != DisableCondition.DoNotDisable)
+			{
+				NGUITools.SetActive(tweenTarget, state: false);
+			}
+			return;
+		}
+		bool flag = false;
+		if (playDirection == Direction.Reverse)
+		{
+			forward = !forward;
+		}
+		int i = 0;
+		for (int num = mTweens.Length; i < num; i++)
+		{
+			UITweener uITweener = mTweens[i];
+			if (uITweener.tweenGroup == tweenGroup)
+			{
+				if (!flag && !NGUITools.GetActive(gameObject))
+				{
+					flag = true;
+					NGUITools.SetActive(gameObject, state: true);
+				}
+				if (playDirection == Direction.Toggle)
+				{
+					uITweener.Toggle();
+				}
+				else
+				{
+					uITweener.Play(forward);
+				}
+				if (resetOnPlay)
+				{
+					uITweener.Reset();
+				}
+				uITweener.onFinished = onFinished;
+				if (eventReceiver != null && !string.IsNullOrEmpty(callWhenFinished))
+				{
+					uITweener.eventReceiver = eventReceiver;
+					uITweener.callWhenFinished = callWhenFinished;
+				}
+			}
+		}
+	}
 }

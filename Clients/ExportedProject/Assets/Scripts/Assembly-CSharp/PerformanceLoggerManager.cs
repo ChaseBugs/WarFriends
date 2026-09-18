@@ -1,63 +1,107 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using BestHTTP;
+using CodeStage.AdvancedFPSCounter;
 using UnityEngine;
 
-public class PerformanceLoggerManager : MonoBehaviour
+public class PerformanceLoggerManager : Singleton<PerformanceLoggerManager>
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	private const string mConnectionUrl = "http://aboutfun.cust.n2n.cz/soldierz_hardware_stats.php";
 
-	1. No dll files were provided to AssetRipper.
+	private int mMemoryWarningDuringGame;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	private int mRecievedWarnings;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	private HTTPRequest mDownload;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public int memoryWarningDuringGame
+	{
+		get
+		{
+			return mMemoryWarningDuringGame;
+		}
+		set
+		{
+			mMemoryWarningDuringGame = value;
+		}
+	}
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	protected override void Awake()
+	{
+		base.Awake();
+		Singleton<GameController>.instance.GameEnded += InstanceOnGameEnded;
+		Singleton<GameController>.instance.GameStarted += InstanceOnGameStarted;
+		StartCoroutine(RadicalRoutine.Run(CheckMemoryWarnings()));
+	}
 
-	3. Assembly Reconstruction has not been implemented.
+	private void InstanceOnGameStarted()
+	{
+		memoryWarningDuringGame = 0;
+	}
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	private void InstanceOnGameEnded(GameController.GameEndReason gameEndReason)
+	{
+		if (DebugSettings.isOurDevice)
+		{
+			List<Tuple<string, object>> list = new List<Tuple<string, object>>();
+			list.Add(new Tuple<string, object>("id", SystemInfo.deviceUniqueIdentifier));
+			list.Add(new Tuple<string, object>("deviceName", SystemInfo.deviceName));
+			list.Add(new Tuple<string, object>("version", Singleton<CurrentBundleVersion>.instance.version));
+			list.Add(new Tuple<string, object>("mode", Singleton<GameController>.instance.gameType.ToString()));
+			list.Add(new Tuple<string, object>("phoneType", Application.platform.ToString()));
+			list.Add(new Tuple<string, object>("AVG_FPS", AFPSCounter.Instance.fpsCounter.lastAverageValue.ToString()));
+			list.Add(new Tuple<string, object>("MIN_FPS", AFPSCounter.Instance.fpsCounter.lastMinimumValue.ToString()));
+			list.Add(new Tuple<string, object>("MIN_FPS", AFPSCounter.Instance.fpsCounter.lastMinimumValue.ToString()));
+			list.Add(new Tuple<string, object>("allocMem", AFPSCounter.Instance.memoryCounter.lastAllocatedValue));
+			list.Add(new Tuple<string, object>("monoMem", AFPSCounter.Instance.memoryCounter.lastMonoValue));
+			list.Add(new Tuple<string, object>("totalMem", AFPSCounter.Instance.memoryCounter.lastTotalValue));
+			list.Add(new Tuple<string, object>("isMaster", PhotonNetwork.isMasterClient.ToString()));
+			list.Add(new Tuple<string, object>("memoryWarnings", memoryWarningDuringGame.ToString()));
+			list.Add(new Tuple<string, object>("Metal", Singleton<PerformanceManager>.instance.isMetal));
+			List<Tuple<string, object>> data = list;
+			StartCoroutine(SendData(data));
+		}
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	private IEnumerator CheckMemoryWarnings()
+	{
+		while (true)
+		{
+			mRecievedWarnings = 0;
+			yield return new WaitForRealSeconds(10f);
+			if (mRecievedWarnings > 0)
+			{
+				Debug.LogError($"Recieved {mRecievedWarnings} memory warnings in last 10 seconds");
+			}
+		}
+	}
 
-	4. This script is unnecessary.
+	public void ReceivedMemoryWarning(string message)
+	{
+		memoryWarningDuringGame++;
+		mRecievedWarnings++;
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private IEnumerator SendData(IEnumerable<Tuple<string, object>> data)
+	{
+		Debug.Log("Send data");
+		mDownload = new HTTPRequest(new Uri("http://aboutfun.cust.n2n.cz/soldierz_hardware_stats.php"), HTTPMethods.Post, OnRequestSend)
+		{
+			Timeout = TimeSpan.FromSeconds(20.0),
+			ConnectTimeout = TimeSpan.FromSeconds(20.0),
+			DisableRetry = true,
+			DisableCache = true
+		};
+		foreach (Tuple<string, object> tuple in data)
+		{
+			mDownload.AddField(tuple.Value1, tuple.Value2.ToString());
+		}
+		mDownload.Send();
+		yield return mDownload;
+	}
 
-	5. Script Content Level 0
-
-		AssetRipper was set to not load any script information.
-
-	6. Cpp2IL failed to decompile Il2Cpp data
-
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	private void OnRequestSend(HTTPRequest originalrequest, HTTPResponse response)
+	{
+	}
 }

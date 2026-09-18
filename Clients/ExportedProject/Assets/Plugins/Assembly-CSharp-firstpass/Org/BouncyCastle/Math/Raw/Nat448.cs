@@ -1,66 +1,99 @@
-using UnityEngine;
+using System;
+using Org.BouncyCastle.Crypto.Utilities;
 
 namespace Org.BouncyCastle.Math.Raw
 {
-	public class Nat448 : MonoBehaviour
+internal abstract class Nat448
+{
+	public static void Copy64(ulong[] x, ulong[] z)
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
+		z[0] = x[0];
+		z[1] = x[1];
+		z[2] = x[2];
+		z[3] = x[3];
+		z[4] = x[4];
+		z[5] = x[5];
+		z[6] = x[6];
 	}
+
+	public static ulong[] Create64()
+	{
+		return new ulong[7];
+	}
+
+	public static ulong[] CreateExt64()
+	{
+		return new ulong[14];
+	}
+
+	public static bool Eq64(ulong[] x, ulong[] y)
+	{
+		for (int num = 6; num >= 0; num--)
+		{
+			if (x[num] != y[num])
+			{
+				return false;
+			}
+		}
+		return true;
+	}
+
+	public static ulong[] FromBigInteger64(BigInteger x)
+	{
+		if (x.SignValue < 0 || x.BitLength > 448)
+		{
+			throw new ArgumentException();
+		}
+		ulong[] array = Create64();
+		int num = 0;
+		while (x.SignValue != 0)
+		{
+			array[num++] = (ulong)x.LongValue;
+			x = x.ShiftRight(64);
+		}
+		return array;
+	}
+
+	public static bool IsOne64(ulong[] x)
+	{
+		if (x[0] != 1)
+		{
+			return false;
+		}
+		for (int i = 1; i < 7; i++)
+		{
+			if (x[i] != 0L)
+			{
+				return false;
+			}
+		}
+		return true;
+	}
+
+	public static bool IsZero64(ulong[] x)
+	{
+		for (int i = 0; i < 7; i++)
+		{
+			if (x[i] != 0L)
+			{
+				return false;
+			}
+		}
+		return true;
+	}
+
+	public static BigInteger ToBigInteger64(ulong[] x)
+	{
+		byte[] array = new byte[56];
+		for (int i = 0; i < 7; i++)
+		{
+			ulong num = x[i];
+			if (num != 0L)
+			{
+				Pack.UInt64_To_BE(num, array, 6 - i << 3);
+			}
+		}
+		return new BigInteger(1, array);
+	}
+}
 }

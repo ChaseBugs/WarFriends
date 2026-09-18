@@ -1,63 +1,86 @@
+using System;
 using UnityEngine;
 
-public class AssignmentProgress : MonoBehaviour
+public class AssignmentProgress : Core_BaseScript
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Header("Core")]
+	public UITable table;
 
-	1. No dll files were provided to AssetRipper.
+	public UISprite[] claimedSprites;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public Transform[] claimedParents;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public UISprite dayCompleted;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	private Vector3 mClaimSpriteScale = new Vector3(1f, 1f, 1f);
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	private Vector3 mBigClaimSpriteScale = new Vector3(3.5f, 3.5f, 1f);
 
-	3. Assembly Reconstruction has not been implemented.
+	private Vector3 mCompletedSpriteScale = new Vector3(72f, 78f, 0f);
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	private Vector3 mBigCompletedSpriteScale = new Vector3(252f, 273f, 0f);
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	private Vector3 mBasicPosition = new Vector3(0f, 0f, 0f);
 
-	4. This script is unnecessary.
+	private Vector3 mOffScreenPosition = new Vector3(-900f, 0f, 0f);
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public event Action AllClaimed;
 
-	5. Script Content Level 0
+	public void Initialize(bool firstClaimed, bool secondClaimed, bool thirdClaimed, bool showProgress)
+	{
+		table.repositionNow = true;
+		if (claimedSprites.Length != 3)
+		{
+			UISprite[] array = claimedSprites;
+			foreach (UISprite uISprite in array)
+			{
+				uISprite.color = Color.white;
+			}
+			dayCompleted.spriteName = AssignmentsManager.dayNotCompleted;
+			return;
+		}
+		claimedSprites[0].color = ((!firstClaimed) ? Colours.grayMedium : Colours.goldAssignment);
+		claimedSprites[1].color = ((!secondClaimed) ? Colours.grayMedium : Colours.goldAssignment);
+		claimedSprites[2].color = ((!thirdClaimed) ? Colours.grayMedium : Colours.goldAssignment);
+		TweenScale.Begin(claimedParents[0].gameObject, 0f, mClaimSpriteScale).onFinished = null;
+		TweenScale.Begin(claimedParents[1].gameObject, 0f, mClaimSpriteScale).onFinished = null;
+		TweenScale.Begin(claimedParents[2].gameObject, 0f, mClaimSpriteScale).onFinished = null;
+		bool flag = firstClaimed && secondClaimed && thirdClaimed;
+		dayCompleted.spriteName = ((!flag) ? AssignmentsManager.dayNotCompleted : AssignmentsManager.dayCompleted);
+		TweenAlpha.Begin(dayCompleted.gameObject, 0f, 1f, 1f).onFinished = null;
+		TweenScale.Begin(dayCompleted.gameObject, 0f, mCompletedSpriteScale).onFinished = null;
+		TweenPosition.Begin(base.gameObject, 0f, mBasicPosition).onFinished = null;
+		base.gameObject.SetActive(showProgress);
+	}
 
-		AssetRipper was set to not load any script information.
-
-	6. Cpp2IL failed to decompile Il2Cpp data
-
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public void AnimateClaim(int number)
+	{
+		int num = Mathf.Clamp(number, 0, 2);
+		float dur = 0.25f;
+		dayCompleted.spriteName = AssignmentsManager.dayNotCompleted;
+		claimedSprites[num].color = Colours.goldAssignment;
+		TweenScale.Begin(claimedParents[num].gameObject, dur, mBigClaimSpriteScale, mClaimSpriteScale);
+		if (!AssignmentsManager.instance.dailyAssignmentsClaimed)
+		{
+			return;
+		}
+		TweenAlpha.Begin(dayCompleted.gameObject, dur * 0.6f, 1f, 1f).onFinished = delegate
+		{
+			dayCompleted.spriteName = AssignmentsManager.dayCompleted;
+			TweenScale.Begin(dayCompleted.gameObject, dur, mBigCompletedSpriteScale, mCompletedSpriteScale).onFinished = delegate
+			{
+				TweenPosition.Begin(base.gameObject, dur * 2f, mBasicPosition, mOffScreenPosition).onFinished = delegate
+				{
+					base.gameObject.SetActive(value: false);
+				};
+				TweenAlpha.Begin(dayCompleted.gameObject, dur * 1.2f, 1f, 1f).onFinished = delegate
+				{
+					if (this.AllClaimed != null)
+					{
+						this.AllClaimed();
+					}
+				};
+			};
+		};
+	}
 }

@@ -1,63 +1,527 @@
+using System;
 using UnityEngine;
+using tk2dRuntime;
 
-public class tk2dBaseSprite : MonoBehaviour
+[AddComponentMenu("2D Toolkit/Backend/tk2dBaseSprite")]
+public abstract class tk2dBaseSprite : MonoBehaviour, ISpriteCollectionForceBuild
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public enum Anchor
+	{
+		LowerLeft,
+		LowerCenter,
+		LowerRight,
+		MiddleLeft,
+		MiddleCenter,
+		MiddleRight,
+		UpperLeft,
+		UpperCenter,
+		UpperRight
+	}
 
-	1. No dll files were provided to AssetRipper.
+	[SerializeField]
+	public tk2dSpriteCollectionData collection;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	protected tk2dSpriteCollectionData collectionInst;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	[SerializeField]
+	protected Color _color = Color.white;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	[SerializeField]
+	protected Vector3 _scale = new Vector3(1f, 1f, 1f);
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	[SerializeField]
+	protected int _spriteId;
 
-	3. Assembly Reconstruction has not been implemented.
+	public BoxCollider boxCollider;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public MeshCollider meshCollider;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public Vector3[] meshColliderPositions;
 
-	4. This script is unnecessary.
+	public Mesh meshColliderMesh;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	[SerializeField]
+	protected int renderLayer;
 
-	5. Script Content Level 0
+	public tk2dSpriteCollectionData Collection
+	{
+		get
+		{
+			return collection;
+		}
+		set
+		{
+			collection = value;
+			collectionInst = collection.inst;
+		}
+	}
 
-		AssetRipper was set to not load any script information.
+	public Color color
+	{
+		get
+		{
+			return _color;
+		}
+		set
+		{
+			if (value != _color)
+			{
+				_color = value;
+				InitInstance();
+				UpdateColors();
+			}
+		}
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public Vector3 scale
+	{
+		get
+		{
+			return _scale;
+		}
+		set
+		{
+			if (value != _scale)
+			{
+				_scale = value;
+				InitInstance();
+				UpdateVertices();
+				UpdateCollider();
+				if (this.SpriteChanged != null)
+				{
+					this.SpriteChanged(this);
+				}
+			}
+		}
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public int SortingOrder
+	{
+		get
+		{
+			return renderLayer;
+		}
+		set
+		{
+			if (renderLayer != value)
+			{
+				renderLayer = value;
+				InitInstance();
+				UpdateVertices();
+			}
+		}
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	public bool FlipX
+	{
+		get
+		{
+			return _scale.x < 0f;
+		}
+		set
+		{
+			scale = new Vector3(Mathf.Abs(_scale.x) * (float)((!value) ? 1 : (-1)), _scale.y, _scale.z);
+		}
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	public bool FlipY
+	{
+		get
+		{
+			return _scale.y < 0f;
+		}
+		set
+		{
+			scale = new Vector3(_scale.x, Mathf.Abs(_scale.y) * (float)((!value) ? 1 : (-1)), _scale.z);
+		}
+	}
 
-	*/
+	public int spriteId
+	{
+		get
+		{
+			return _spriteId;
+		}
+		set
+		{
+			if (value != _spriteId)
+			{
+				InitInstance();
+				value = Mathf.Clamp(value, 0, collectionInst.spriteDefinitions.Length - 1);
+				if (_spriteId < 0 || _spriteId >= collectionInst.spriteDefinitions.Length || GetCurrentVertexCount() != collectionInst.spriteDefinitions[value].positions.Length || collectionInst.spriteDefinitions[_spriteId].complexGeometry != collectionInst.spriteDefinitions[value].complexGeometry)
+				{
+					_spriteId = value;
+					UpdateGeometry();
+				}
+				else
+				{
+					_spriteId = value;
+					UpdateVertices();
+				}
+				UpdateMaterial();
+				UpdateCollider();
+				if (this.SpriteChanged != null)
+				{
+					this.SpriteChanged(this);
+				}
+			}
+		}
+	}
+
+	public tk2dSpriteDefinition CurrentSprite
+	{
+		get
+		{
+			InitInstance();
+			return (!(collectionInst == null)) ? collectionInst.spriteDefinitions[_spriteId] : null;
+		}
+	}
+
+	public event Action<tk2dBaseSprite> SpriteChanged;
+
+	private void InitInstance()
+	{
+		if (collectionInst == null && collection != null)
+		{
+			collectionInst = collection.inst;
+		}
+	}
+
+	public void SetSprite(int newSpriteId)
+	{
+		spriteId = newSpriteId;
+	}
+
+	public bool SetSprite(string spriteName)
+	{
+		int spriteIdByName = collection.GetSpriteIdByName(spriteName, -1);
+		if (spriteIdByName != -1)
+		{
+			SetSprite(spriteIdByName);
+		}
+		else
+		{
+			Debug.LogError("SetSprite - Sprite not found in collection: " + spriteName + " " + base.gameObject.name);
+		}
+		return spriteIdByName != -1;
+	}
+
+	public void SetSprite(tk2dSpriteCollectionData newCollection, int newSpriteId)
+	{
+		bool flag = false;
+		if (Collection != newCollection)
+		{
+			collection = newCollection;
+			collectionInst = collection.inst;
+			_spriteId = -1;
+			flag = true;
+		}
+		spriteId = newSpriteId;
+		if (flag)
+		{
+			UpdateMaterial();
+		}
+	}
+
+	public bool SetSprite(tk2dSpriteCollectionData newCollection, string spriteName)
+	{
+		int spriteIdByName = newCollection.GetSpriteIdByName(spriteName, -1);
+		if (spriteIdByName != -1)
+		{
+			SetSprite(newCollection, spriteIdByName);
+		}
+		else
+		{
+			Debug.LogError("SetSprite - Sprite not found in collection: " + spriteName);
+		}
+		return spriteIdByName != -1;
+	}
+
+	public void MakePixelPerfect()
+	{
+		float num = 1f;
+		tk2dCamera tk2dCamera2 = tk2dCamera.CameraForLayer(base.gameObject.layer);
+		if (tk2dCamera2 != null)
+		{
+			if (Collection.version < 2)
+			{
+				Debug.LogError("Need to rebuild sprite collection.");
+			}
+			float distance = base.transform.position.z - tk2dCamera2.transform.position.z;
+			float num2 = Collection.invOrthoSize * Collection.halfTargetHeight;
+			num = tk2dCamera2.GetSizeAtDistance(distance) * num2;
+		}
+		else if ((bool)Camera.main)
+		{
+			if (Camera.main.orthographic)
+			{
+				num = Camera.main.orthographicSize;
+			}
+			else
+			{
+				float zdist = base.transform.position.z - Camera.main.transform.position.z;
+				num = tk2dPixelPerfectHelper.CalculateScaleForPerspectiveCamera(Camera.main.fieldOfView, zdist);
+			}
+			num *= Collection.invOrthoSize;
+		}
+		else
+		{
+			Debug.LogError("Main camera not found.");
+		}
+		scale = new Vector3(Mathf.Sign(scale.x) * num, Mathf.Sign(scale.y) * num, Mathf.Sign(scale.z) * num);
+	}
+
+	protected abstract void UpdateMaterial();
+
+	protected abstract void UpdateColors();
+
+	protected abstract void UpdateVertices();
+
+	protected abstract void UpdateGeometry();
+
+	protected abstract int GetCurrentVertexCount();
+
+	public abstract void Build();
+
+	public int GetSpriteIdByName(string name)
+	{
+		InitInstance();
+		return collectionInst.GetSpriteIdByName(name);
+	}
+
+	public static T AddComponent<T>(GameObject go, tk2dSpriteCollectionData spriteCollection, int spriteId) where T : tk2dBaseSprite
+	{
+		T val = go.AddComponent<T>();
+		val._spriteId = -1;
+		val.SetSprite(spriteCollection, spriteId);
+		val.Build();
+		return val;
+	}
+
+	public static T AddComponent<T>(GameObject go, tk2dSpriteCollectionData spriteCollection, string spriteName) where T : tk2dBaseSprite
+	{
+		int spriteIdByName = spriteCollection.GetSpriteIdByName(spriteName, -1);
+		if (spriteIdByName == -1)
+		{
+			Debug.LogError($"Unable to find sprite named {spriteName} in sprite collection {spriteCollection.spriteCollectionName}");
+			return (T)null;
+		}
+		return AddComponent<T>(go, spriteCollection, spriteIdByName);
+	}
+
+	protected int GetNumVertices()
+	{
+		InitInstance();
+		return collectionInst.spriteDefinitions[spriteId].positions.Length;
+	}
+
+	protected int GetNumIndices()
+	{
+		InitInstance();
+		return collectionInst.spriteDefinitions[spriteId].indices.Length;
+	}
+
+	protected void SetPositions(Vector3[] positions, Vector3[] normals, Vector4[] tangents)
+	{
+		tk2dSpriteDefinition tk2dSpriteDefinition2 = collectionInst.spriteDefinitions[spriteId];
+		int numVertices = GetNumVertices();
+		for (int i = 0; i < numVertices; i++)
+		{
+			positions[i].x = tk2dSpriteDefinition2.positions[i].x * _scale.x;
+			positions[i].y = tk2dSpriteDefinition2.positions[i].y * _scale.y;
+			positions[i].z = tk2dSpriteDefinition2.positions[i].z * _scale.z;
+		}
+		if (normals.Length > 0)
+		{
+			for (int j = 0; j < numVertices; j++)
+			{
+				ref Vector3 reference = ref normals[j];
+				reference = tk2dSpriteDefinition2.normals[j];
+			}
+		}
+		if (tangents.Length > 0)
+		{
+			for (int k = 0; k < numVertices; k++)
+			{
+				ref Vector4 reference2 = ref tangents[k];
+				reference2 = tk2dSpriteDefinition2.tangents[k];
+			}
+		}
+	}
+
+	protected void SetColors(Color32[] dest)
+	{
+		Color color = _color;
+		if (collectionInst.premultipliedAlpha)
+		{
+			color.r *= color.a;
+			color.g *= color.a;
+			color.b *= color.a;
+		}
+		Color32 color2 = color;
+		int numVertices = GetNumVertices();
+		for (int i = 0; i < numVertices; i++)
+		{
+			dest[i] = color2;
+		}
+	}
+
+	public Bounds GetBounds()
+	{
+		InitInstance();
+		tk2dSpriteDefinition tk2dSpriteDefinition2 = collectionInst.spriteDefinitions[_spriteId];
+		return new Bounds(new Vector3(tk2dSpriteDefinition2.boundsData[0].x * _scale.x, tk2dSpriteDefinition2.boundsData[0].y * _scale.y, tk2dSpriteDefinition2.boundsData[0].z * _scale.z), new Vector3(tk2dSpriteDefinition2.boundsData[1].x * Mathf.Abs(_scale.x), tk2dSpriteDefinition2.boundsData[1].y * Mathf.Abs(_scale.y), tk2dSpriteDefinition2.boundsData[1].z * Mathf.Abs(_scale.z)));
+	}
+
+	public Bounds GetUntrimmedBounds()
+	{
+		InitInstance();
+		tk2dSpriteDefinition tk2dSpriteDefinition2 = collectionInst.spriteDefinitions[_spriteId];
+		return new Bounds(new Vector3(tk2dSpriteDefinition2.untrimmedBoundsData[0].x * _scale.x, tk2dSpriteDefinition2.untrimmedBoundsData[0].y * _scale.y, tk2dSpriteDefinition2.untrimmedBoundsData[0].z * _scale.z), new Vector3(tk2dSpriteDefinition2.untrimmedBoundsData[1].x * Mathf.Abs(_scale.x), tk2dSpriteDefinition2.untrimmedBoundsData[1].y * Mathf.Abs(_scale.y), tk2dSpriteDefinition2.untrimmedBoundsData[1].z * Mathf.Abs(_scale.z)));
+	}
+
+	public static Bounds AdjustedMeshBounds(Bounds bounds, int renderLayer)
+	{
+		Vector3 center = bounds.center;
+		center.z = (float)(-renderLayer) * 0.01f;
+		bounds.center = center;
+		return bounds;
+	}
+
+	public tk2dSpriteDefinition GetCurrentSpriteDef()
+	{
+		InitInstance();
+		return (!(collectionInst == null)) ? collectionInst.spriteDefinitions[_spriteId] : null;
+	}
+
+	public virtual void ReshapeBounds(Vector3 dMin, Vector3 dMax)
+	{
+	}
+
+	protected virtual bool NeedBoxCollider()
+	{
+		return false;
+	}
+
+	protected virtual void UpdateCollider()
+	{
+		tk2dSpriteDefinition tk2dSpriteDefinition2 = collectionInst.spriteDefinitions[_spriteId];
+		if (tk2dSpriteDefinition2.colliderType == tk2dSpriteDefinition.ColliderType.Box && boxCollider == null)
+		{
+			boxCollider = base.gameObject.GetComponent<BoxCollider>();
+			if (boxCollider == null)
+			{
+				boxCollider = base.gameObject.AddComponent<BoxCollider>();
+			}
+		}
+		if (boxCollider != null)
+		{
+			if (tk2dSpriteDefinition2.colliderType == tk2dSpriteDefinition.ColliderType.Box)
+			{
+				boxCollider.center = new Vector3(tk2dSpriteDefinition2.colliderVertices[0].x * _scale.x, tk2dSpriteDefinition2.colliderVertices[0].y * _scale.y, tk2dSpriteDefinition2.colliderVertices[0].z * _scale.z);
+				boxCollider.size = new Vector3(2f * tk2dSpriteDefinition2.colliderVertices[1].x * _scale.x, 2f * tk2dSpriteDefinition2.colliderVertices[1].y * _scale.y, 2f * tk2dSpriteDefinition2.colliderVertices[1].z * _scale.z);
+			}
+			else if (tk2dSpriteDefinition2.colliderType != tk2dSpriteDefinition.ColliderType.Unset && boxCollider != null)
+			{
+				boxCollider.center = new Vector3(0f, 0f, -100000f);
+				boxCollider.size = Vector3.zero;
+			}
+		}
+	}
+
+	protected virtual void CreateCollider()
+	{
+		tk2dSpriteDefinition tk2dSpriteDefinition2 = collectionInst.spriteDefinitions[_spriteId];
+		if (tk2dSpriteDefinition2.colliderType == tk2dSpriteDefinition.ColliderType.Unset)
+		{
+			return;
+		}
+		if (GetComponent<Collider>() != null)
+		{
+			boxCollider = GetComponent<BoxCollider>();
+			meshCollider = GetComponent<MeshCollider>();
+		}
+		if ((NeedBoxCollider() || tk2dSpriteDefinition2.colliderType == tk2dSpriteDefinition.ColliderType.Box) && meshCollider == null)
+		{
+			if (boxCollider == null)
+			{
+				boxCollider = base.gameObject.AddComponent<BoxCollider>();
+			}
+		}
+		else if (tk2dSpriteDefinition2.colliderType == tk2dSpriteDefinition.ColliderType.Mesh && boxCollider == null)
+		{
+			if (meshCollider == null)
+			{
+				meshCollider = base.gameObject.AddComponent<MeshCollider>();
+			}
+			if (meshColliderMesh == null)
+			{
+				meshColliderMesh = new Mesh();
+			}
+			meshColliderMesh.Clear();
+			meshColliderPositions = new Vector3[tk2dSpriteDefinition2.colliderVertices.Length];
+			for (int i = 0; i < meshColliderPositions.Length; i++)
+			{
+				ref Vector3 reference = ref meshColliderPositions[i];
+				reference = new Vector3(tk2dSpriteDefinition2.colliderVertices[i].x * _scale.x, tk2dSpriteDefinition2.colliderVertices[i].y * _scale.y, tk2dSpriteDefinition2.colliderVertices[i].z * _scale.z);
+			}
+			meshColliderMesh.vertices = meshColliderPositions;
+			float num = _scale.x * _scale.y * _scale.z;
+			meshColliderMesh.triangles = ((!(num >= 0f)) ? tk2dSpriteDefinition2.colliderIndicesBack : tk2dSpriteDefinition2.colliderIndicesFwd);
+			meshCollider.sharedMesh = meshColliderMesh;
+			meshCollider.convex = tk2dSpriteDefinition2.colliderConvex;
+			meshCollider.smoothSphereCollisions = tk2dSpriteDefinition2.colliderSmoothSphereCollisions;
+			if ((bool)GetComponent<Rigidbody>())
+			{
+				GetComponent<Rigidbody>().centerOfMass = Vector3.zero;
+			}
+		}
+		else if (tk2dSpriteDefinition2.colliderType != tk2dSpriteDefinition.ColliderType.None && Application.isPlaying)
+		{
+			Debug.LogError("Invalid mesh collider on sprite, please remove and try again.");
+		}
+		UpdateCollider();
+	}
+
+	protected void Awake()
+	{
+		if (collection != null)
+		{
+			collectionInst = collection.inst;
+		}
+	}
+
+	public bool UsesSpriteCollection(tk2dSpriteCollectionData spriteCollection)
+	{
+		return Collection == spriteCollection;
+	}
+
+	public virtual void ForceBuild()
+	{
+		if (!(collection == null))
+		{
+			collectionInst = collection.inst;
+			if (spriteId < 0 || spriteId >= collectionInst.spriteDefinitions.Length)
+			{
+				spriteId = 0;
+			}
+			Build();
+			if (this.SpriteChanged != null)
+			{
+				this.SpriteChanged(this);
+			}
+		}
+	}
+
+	public static GameObject CreateFromTexture<T>(Texture texture, tk2dSpriteCollectionSize size, Rect region, Vector2 anchor) where T : tk2dBaseSprite
+	{
+		tk2dSpriteCollectionData tk2dSpriteCollectionData2 = SpriteCollectionGenerator.CreateFromTexture(texture, size, region, anchor);
+		if (tk2dSpriteCollectionData2 == null)
+		{
+			return null;
+		}
+		GameObject gameObject = new GameObject();
+		AddComponent<T>(gameObject, tk2dSpriteCollectionData2, 0);
+		return gameObject;
+	}
 }

@@ -1,66 +1,246 @@
+using Logger = GooglePlayGames.OurUtils.Logger;
+using System;
+using Com.Google.Android.Gms.Common.Api;
+using GooglePlayGames.BasicApi;
+using GooglePlayGames.OurUtils;
 using UnityEngine;
 
 namespace GooglePlayGames.Android
 {
-	public class AndroidTokenClient : MonoBehaviour
+internal class AndroidTokenClient : TokenClient
+{
+	private const string TokenFragmentClass = "com.google.games.bridge.TokenFragment";
+
+	private const string FetchTokenSignature = "(Landroid/app/Activity;Ljava/lang/String;Ljava/lang/String;ZZZLjava/lang/String;)Lcom/google/android/gms/common/api/PendingResult;";
+
+	private const string FetchTokenMethod = "fetchToken";
+
+	private string playerId;
+
+	private bool fetchingEmail;
+
+	private bool fetchingAccessToken;
+
+	private bool fetchingIdToken;
+
+	private string accountName;
+
+	private string accessToken;
+
+	private string idToken;
+
+	private string idTokenScope;
+
+	private Action<string> idTokenCb;
+
+	private string rationale;
+
+	private bool apiAccessDenied;
+
+	private int apiWarningFreq = 100000;
+
+	private int apiWarningCount;
+
+	private int webClientWarningFreq = 100000;
+
+	private int webClientWarningCount;
+
+	public AndroidTokenClient(string playerId)
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
+		this.playerId = playerId;
 	}
+
+	public static AndroidJavaObject GetActivity()
+	{
+		using (AndroidJavaClass androidJavaClass = new AndroidJavaClass("com.unity3d.player.UnityPlayer"))
+		{
+		return androidJavaClass.GetStatic<AndroidJavaObject>("currentActivity");
+		}
+}
+
+	public void SetRationale(string rationale)
+	{
+		this.rationale = rationale;
+	}
+
+	internal void Fetch(string scope, bool fetchEmail, bool fetchAccessToken, bool fetchIdToken, Action<CommonStatusCodes> doneCallback)
+	{
+		if (apiAccessDenied)
+		{
+			if (apiWarningCount++ % apiWarningFreq == 0)
+			{
+				Logger.w("Access to API denied");
+				apiWarningCount = apiWarningCount / apiWarningFreq + 1;
+			}
+			doneCallback(CommonStatusCodes.AuthApiAccessForbidden);
+			return;
+		}
+		PlayGamesHelperObject.RunOnGameThread(delegate
+		{
+			FetchToken(scope, playerId, rationale, fetchEmail, fetchAccessToken, fetchIdToken, delegate(int rc, string access, string id, string email)
+			{
+				if (rc != 0)
+				{
+					apiAccessDenied = rc == 3001 || rc == 16;
+					Logger.w("Non-success returned from fetch: " + rc);
+					doneCallback(CommonStatusCodes.AuthApiAccessForbidden);
+				}
+				else
+				{
+					if (fetchAccessToken)
+					{
+						Logger.d("a = " + access);
+					}
+					if (fetchEmail)
+					{
+						Logger.d("email = " + email);
+					}
+					if (fetchIdToken)
+					{
+						Logger.d("idt = " + id);
+					}
+					if (fetchAccessToken && !string.IsNullOrEmpty(access))
+					{
+						accessToken = access;
+					}
+					if (fetchIdToken && !string.IsNullOrEmpty(id))
+					{
+						idToken = id;
+						idTokenCb(idToken);
+					}
+					if (fetchEmail && !string.IsNullOrEmpty(email))
+					{
+						accountName = email;
+					}
+					doneCallback(CommonStatusCodes.Success);
+				}
+			});
+		});
+	}
+
+	internal static void FetchToken(string scope, string playerId, string rationale, bool fetchEmail, bool fetchAccessToken, bool fetchIdToken, Action<int, string, string, string> callback)
+	{
+		object[] args = new object[7];
+		jvalue[] array = AndroidJNIHelper.CreateJNIArgArray(args);
+		try
+		{
+			using (AndroidJavaClass androidJavaClass = new AndroidJavaClass("com.google.games.bridge.TokenFragment"))
+			{
+			using (AndroidJavaObject androidJavaObject = GetActivity())
+			{
+			IntPtr staticMethodID = AndroidJNI.GetStaticMethodID(androidJavaClass.GetRawClass(), "fetchToken", "(Landroid/app/Activity;Ljava/lang/String;Ljava/lang/String;ZZZLjava/lang/String;)Lcom/google/android/gms/common/api/PendingResult;");
+			array[0].l = androidJavaObject.GetRawObject();
+			array[1].l = AndroidJNI.NewStringUTF(playerId);
+			array[2].l = AndroidJNI.NewStringUTF(rationale);
+			array[3].z = fetchEmail;
+			array[4].z = fetchAccessToken;
+			array[5].z = fetchIdToken;
+			array[6].l = AndroidJNI.NewStringUTF(scope);
+			IntPtr ptr = AndroidJNI.CallStaticObjectMethod(androidJavaClass.GetRawClass(), staticMethodID, array);
+			PendingResult<TokenResult> pendingResult = new PendingResult<TokenResult>(ptr);
+			pendingResult.setResultCallback(new TokenResultCallback(callback));
+								}
+}
+}
+		catch (Exception ex)
+		{
+			Logger.e("Exception launching token request: " + ex.Message);
+			Logger.e(ex.ToString());
+		}
+		finally
+		{
+			AndroidJNIHelper.DeleteJNIArgArray(args, array);
+		}
+	}
+
+	private string GetAccountName(Action<CommonStatusCodes, string> callback)
+	{
+		if (string.IsNullOrEmpty(accountName))
+		{
+			if (!fetchingEmail)
+			{
+				fetchingEmail = true;
+				Fetch(idTokenScope, fetchEmail: true, fetchAccessToken: false, fetchIdToken: false, delegate(CommonStatusCodes status)
+				{
+					fetchingEmail = false;
+					if (callback != null)
+					{
+						callback(status, accountName);
+					}
+				});
+			}
+		}
+		else if (callback != null)
+		{
+			callback(CommonStatusCodes.Success, accountName);
+		}
+		return accountName;
+	}
+
+	public string GetEmail()
+	{
+		return GetAccountName(null);
+	}
+
+	public void GetEmail(Action<CommonStatusCodes, string> callback)
+	{
+		GetAccountName(callback);
+	}
+
+	[Obsolete("Use PlayGamesPlatform.GetServerAuthCode()")]
+	public string GetAccessToken()
+	{
+		if (string.IsNullOrEmpty(accessToken) && !fetchingAccessToken)
+		{
+			fetchingAccessToken = true;
+			Fetch(idTokenScope, fetchEmail: false, fetchAccessToken: true, fetchIdToken: false, delegate
+			{
+				fetchingAccessToken = false;
+			});
+		}
+		return accessToken;
+	}
+
+	[Obsolete("Use PlayGamesPlatform.GetServerAuthCode()")]
+	public void GetIdToken(string serverClientId, Action<string> idTokenCallback)
+	{
+		if (string.IsNullOrEmpty(serverClientId))
+		{
+			if (webClientWarningCount++ % webClientWarningFreq == 0)
+			{
+				Logger.w("serverClientId is empty, cannot get Id Token");
+				webClientWarningCount = webClientWarningCount / webClientWarningFreq + 1;
+			}
+			idTokenCallback(null);
+			return;
+		}
+		string text = "audience:server:client_id:" + serverClientId;
+		if (string.IsNullOrEmpty(idToken) || text != idTokenScope)
+		{
+			if (fetchingIdToken)
+			{
+				return;
+			}
+			fetchingIdToken = true;
+			idTokenScope = text;
+			idTokenCb = idTokenCallback;
+			Fetch(idTokenScope, fetchEmail: false, fetchAccessToken: false, fetchIdToken: true, delegate(CommonStatusCodes status)
+			{
+				fetchingIdToken = false;
+				if (status == CommonStatusCodes.Success)
+				{
+					idTokenCb(null);
+				}
+				else
+				{
+					idTokenCb(idToken);
+				}
+			});
+		}
+		else
+		{
+			idTokenCallback(idToken);
+		}
+	}
+}
 }

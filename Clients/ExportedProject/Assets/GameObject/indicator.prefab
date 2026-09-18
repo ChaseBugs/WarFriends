@@ -98,6 +98,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 63826490113eea1c35eaa8308e1e9a1b, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  isActivated: 0
+  mTransform: {fileID: 0}
+  sprite: {fileID: 11470521}
+  border: {fileID: 11488124}
+  transparentBG: {fileID: 11459786}
 --- !u!114 &11419550
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -109,6 +114,36 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e3b2cec1a418fb5742374dba269174f3, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  method: 3
+  style: 0
+  animationCurve:
+    serializedVersion: 2
+    m_Curve:
+    - time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 1
+      tangentMode: 0
+    - time: 1
+      value: 1
+      inSlope: 1
+      outSlope: 0
+      tangentMode: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+  ignoreTimeScale: 1
+  delay: 0
+  duration: 1
+  steeperCurves: 0
+  tweenGroup: 0
+  eventReceiver: {fileID: 0}
+  callWhenFinished:
+  NumOfRepetitions: 0
+  id: 0
+  dontResetCurve: 0
+  from: {x: 0, y: 0, z: 0}
+  to: {x: 0, y: 0, z: 0}
+  useLocal: 1
 --- !u!4 &484216
 Transform:
   m_ObjectHideFlags: 0
@@ -165,6 +200,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ac0dc836222e389492da4c2a119958d0, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  collection: {fileID: 11409266, guid: d17e4726e9fbd6249bf8946ea14b8ac9, type: 2}
+  _color: {r: 1, g: 1, b: 1, a: 1}
+  _scale: {x: 2, y: 2, z: 2}
+  _spriteId: 40
+  boxCollider: {fileID: 0}
+  meshCollider: {fileID: 0}
+  meshColliderPositions: []
+  meshColliderMesh: {fileID: 0}
+  renderLayer: 0
+  mInverse: 0
+  mDirection: 1
 --- !u!114 &11496012
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -176,6 +222,35 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: de90f9631fd129f8c2a9b276eb3e88f4, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  method: 3
+  style: 0
+  animationCurve:
+    serializedVersion: 2
+    m_Curve:
+    - time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 1
+      tangentMode: 0
+    - time: 1
+      value: 1
+      inSlope: 1
+      outSlope: 0
+      tangentMode: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+  ignoreTimeScale: 1
+  delay: 0
+  duration: 1
+  steeperCurves: 0
+  tweenGroup: 0
+  eventReceiver: {fileID: 0}
+  callWhenFinished:
+  NumOfRepetitions: 0
+  id: 0
+  dontResetCurve: 0
+  from: 1
+  to: 1
 --- !u!4 &477035
 Transform:
   m_ObjectHideFlags: 0
@@ -232,6 +307,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 94ab48e3b8066840cd07a3613abbe986, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  collection: {fileID: 11409266, guid: d17e4726e9fbd6249bf8946ea14b8ac9, type: 2}
+  _color: {r: 1, g: 1, b: 1, a: 1}
+  _scale: {x: 2, y: 2, z: 2}
+  _spriteId: 83
+  boxCollider: {fileID: 0}
+  meshCollider: {fileID: 0}
+  meshColliderPositions: []
+  meshColliderMesh: {fileID: 0}
+  renderLayer: 20
 --- !u!4 &424449
 Transform:
   m_ObjectHideFlags: 0
@@ -288,6 +372,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 94ab48e3b8066840cd07a3613abbe986, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  collection: {fileID: 11409266, guid: d17e4726e9fbd6249bf8946ea14b8ac9, type: 2}
+  _color: {r: 1, g: 1, b: 1, a: 0.21568628}
+  _scale: {x: 2, y: 2, z: 2}
+  _spriteId: 81
+  boxCollider: {fileID: 0}
+  meshCollider: {fileID: 0}
+  meshColliderPositions: []
+  meshColliderMesh: {fileID: 0}
+  renderLayer: 10
 --- !u!1001 &100100000
 Prefab:
   serializedVersion: 2

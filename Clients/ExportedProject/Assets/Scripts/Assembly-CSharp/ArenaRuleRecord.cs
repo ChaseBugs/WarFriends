@@ -1,63 +1,90 @@
+using System;
 using UnityEngine;
 
-public class ArenaRuleRecord : MonoBehaviour
+public class ArenaRuleRecord : PoolableObject
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Header("Core")]
+	public GameObject center;
 
-	1. No dll files were provided to AssetRipper.
+	public BoxCollider ruleCollider;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public UILabel description;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public UISprite stateIcon;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	[Header("Resize")]
+	public UISprite background;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public GameObject leftAnchor;
 
-	3. Assembly Reconstruction has not been implemented.
+	public GameObject rightAnchor;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	private WarArenaRule.WarArenaRuleGui mRuleData;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public void Initialize(WarArenaRule.WarArenaRuleGui ruleData, bool showStateIcon = true, int width = 560, int height = 80)
+	{
+		mRuleData = ruleData;
+		bool flag = ruleData.type == WarArenaRule.RuleType.InfoRule || ruleData.type == WarArenaRule.RuleType.InfoText;
+		bool flag2 = showStateIcon && !flag;
+		description.text = ruleData.text;
+		float y = description.relativeSize.y;
+		if (y > 1.1f)
+		{
+			MiscTools.SetUILabelRescale(description, 32f, 32f, 1000);
+			int num = height - 32 + Mathf.CeilToInt(32f * y);
+			SetSize(width, num);
+			center.transform.localPosition = center.transform.localPosition.ReplaceY((float)(-num) / 2f);
+		}
+		else
+		{
+			SetSize(width, height);
+			center.transform.localPosition = center.transform.localPosition.ReplaceY((float)(-height) / 2f);
+			MiscTools.SetUILabelRescale(description, 32f, 20f, width - 40 - (flag2 ? 65 : 0));
+		}
+		stateIcon.gameObject.SetActive(flag2);
+		background.color = Colours.greenArena.ReplaceA((!flag) ? 0.2f : 0.05f);
+		ruleCollider.enabled = showStateIcon && ruleData.type == WarArenaRule.RuleType.DoesNotMeet;
+		UIEventListener uIEventListener = UIEventListener.Get(ruleCollider.gameObject);
+		uIEventListener.onClick = (UIEventListener.VoidDelegate)Delegate.Remove(uIEventListener.onClick, new UIEventListener.VoidDelegate(RuleClick));
+		UIEventListener uIEventListener2 = UIEventListener.Get(ruleCollider.gameObject);
+		uIEventListener2.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener2.onClick, new UIEventListener.VoidDelegate(RuleClick));
+		if (flag2)
+		{
+			if (ruleData.type == WarArenaRule.RuleType.FulFill)
+			{
+				stateIcon.spriteName = "menu-dailyreward-check";
+				stateIcon.transform.localScale = new Vector3(37f, 29f, 1f);
+				stateIcon.color = Colours.greenArena;
+			}
+			else
+			{
+				stateIcon.spriteName = "menu-close";
+				stateIcon.transform.localScale = new Vector3(28f, 28f, 1f);
+				stateIcon.color = Colours.redArenaRule;
+			}
+		}
+	}
 
-	4. This script is unnecessary.
+	private void SetSize(int width, int height)
+	{
+		background.transform.localScale = new Vector3(width, height, 1f);
+		leftAnchor.transform.localPosition = leftAnchor.transform.localPosition.ReplaceX(-width / 2);
+		rightAnchor.transform.localPosition = rightAnchor.transform.localPosition.ReplaceX(width / 2);
+		ruleCollider.size = background.transform.localScale;
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private void RuleClick(GameObject go)
+	{
+		if (mRuleData != null && mRuleData.type == WarArenaRule.RuleType.DoesNotMeet)
+		{
+			GuiElementSingle<CantEnterArenaDialog>.instance.ShowDialog(mRuleData);
+		}
+	}
 
-	5. Script Content Level 0
-
-		AssetRipper was set to not load any script information.
-
-	6. Cpp2IL failed to decompile Il2Cpp data
-
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public override void DestroyPooled()
+	{
+		base.DestroyPooled();
+		UIEventListener uIEventListener = UIEventListener.Get(ruleCollider.gameObject);
+		uIEventListener.onClick = (UIEventListener.VoidDelegate)Delegate.Remove(uIEventListener.onClick, new UIEventListener.VoidDelegate(RuleClick));
+	}
 }

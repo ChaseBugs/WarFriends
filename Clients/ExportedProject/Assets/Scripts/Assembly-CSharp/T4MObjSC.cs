@@ -1,63 +1,408 @@
 using UnityEngine;
 
+[ExecuteInEditMode]
 public class T4MObjSC : MonoBehaviour
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[HideInInspector]
+	public string ConvertType = string.Empty;
 
-	1. No dll files were provided to AssetRipper.
+	[HideInInspector]
+	public bool EnabledLODSystem = true;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	[HideInInspector]
+	public Vector3[] ObjPosition;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	[HideInInspector]
+	public T4MLodObjSC[] ObjLodScript;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	[HideInInspector]
+	public int[] ObjLodStatus;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	[HideInInspector]
+	public float MaxViewDistance = 60f;
 
-	3. Assembly Reconstruction has not been implemented.
+	[HideInInspector]
+	public float LOD2Start = 20f;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	[HideInInspector]
+	public float LOD3Start = 40f;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	[HideInInspector]
+	public float Interval = 0.5f;
 
-	4. This script is unnecessary.
+	[HideInInspector]
+	public Transform PlayerCamera;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private Vector3 OldPlayerPos;
 
-	5. Script Content Level 0
+	[HideInInspector]
+	public int Mode = 1;
 
-		AssetRipper was set to not load any script information.
+	[HideInInspector]
+	public int Master;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	[HideInInspector]
+	public bool enabledBillboard = true;
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	[HideInInspector]
+	public Vector3[] BillboardPosition;
 
-	7. An incorrect path was provided to AssetRipper.
+	[HideInInspector]
+	public float BillInterval = 0.05f;
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	[HideInInspector]
+	public int[] BillStatus;
 
-	*/
+	[HideInInspector]
+	public float BillMaxViewDistance = 30f;
+
+	[HideInInspector]
+	public T4MBillBObjSC[] BillScript;
+
+	[HideInInspector]
+	public bool enabledLayerCul = true;
+
+	[HideInInspector]
+	public float BackGroundView = 1000f;
+
+	[HideInInspector]
+	public float FarView = 200f;
+
+	[HideInInspector]
+	public float NormalView = 60f;
+
+	[HideInInspector]
+	public float CloseView = 30f;
+
+	private float[] distances = new float[32];
+
+	[HideInInspector]
+	public int Axis;
+
+	[HideInInspector]
+	public bool LODbasedOnScript = true;
+
+	[HideInInspector]
+	public bool BilBbasedOnScript = true;
+
+	public Material T4MMaterial;
+
+	public MeshFilter T4MMesh;
+
+	public Color TranslucencyColor = new Color(0.73f, 0.85f, 0.4f, 1f);
+
+	public Vector4 Wind = new Vector4(0.85f, 0.075f, 0.4f, 0.5f);
+
+	public float WindFrequency = 0.75f;
+
+	public float GrassWindFrequency = 1.5f;
+
+	public bool ActiveWind;
+
+	public bool LayerCullPreview;
+
+	public bool LODPreview;
+
+	public bool BillboardPreview;
+
+	public Texture2D T4MMaskTex2d;
+
+	public Texture2D T4MMaskTexd;
+
+	public void Awake()
+	{
+		if (Master != 1)
+		{
+			return;
+		}
+		if (PlayerCamera == null && (bool)Camera.main)
+		{
+			PlayerCamera = Camera.main.transform;
+		}
+		else if (PlayerCamera == null && !Camera.main)
+		{
+			Camera[] array = Object.FindObjectsOfType(typeof(Camera)) as Camera[];
+			for (int i = 0; i < array.Length; i++)
+			{
+				if ((bool)array[i].GetComponent<AudioListener>())
+				{
+					PlayerCamera = array[i].transform;
+				}
+			}
+		}
+		if (enabledLayerCul && PlayerCamera != null)
+		{
+			distances[26] = CloseView;
+			distances[27] = NormalView;
+			distances[28] = FarView;
+			distances[29] = BackGroundView;
+			PlayerCamera.GetComponent<Camera>().layerCullDistances = distances;
+		}
+		if (EnabledLODSystem && ObjPosition.Length > 0 && Mode == 1)
+		{
+			if (ObjLodScript[0].gameObject != null)
+			{
+				if (LODbasedOnScript)
+				{
+					InvokeRepeating("LODScript", Random.Range(0f, Interval), Interval);
+				}
+				else
+				{
+					InvokeRepeating("LODLay", Random.Range(0f, Interval), Interval);
+				}
+			}
+		}
+		else if (EnabledLODSystem && ObjPosition.Length > 0 && Mode == 2 && ObjLodScript[0] != null)
+		{
+			for (int j = 0; j < ObjPosition.Length; j++)
+			{
+				if (ObjLodScript[j] != null)
+				{
+					if (LODbasedOnScript)
+					{
+						ObjLodScript[j].ActivateLODScrpt();
+					}
+					else
+					{
+						ObjLodScript[j].ActivateLODLay();
+					}
+				}
+			}
+		}
+		if (enabledBillboard && BillboardPosition.Length > 0 && BillScript[0] != null)
+		{
+			if (BilBbasedOnScript)
+			{
+				InvokeRepeating("BillScrpt", Random.Range(0f, BillInterval), BillInterval);
+			}
+			else
+			{
+				InvokeRepeating("BillLay", Random.Range(0f, BillInterval), BillInterval);
+			}
+		}
+	}
+
+	private void LateUpdate()
+	{
+		if (ActiveWind)
+		{
+			Color color = Wind * Mathf.Sin(Time.realtimeSinceStartup * WindFrequency);
+			color.a = Wind.w;
+			Color color2 = Wind * Mathf.Sin(Time.realtimeSinceStartup * GrassWindFrequency);
+			color2.a = Wind.w;
+			Shader.SetGlobalColor("_Wind", color);
+			Shader.SetGlobalColor("_GrassWind", color2);
+			Shader.SetGlobalColor("_TranslucencyColor", TranslucencyColor);
+			Shader.SetGlobalFloat("_TranslucencyViewDependency;", 0.65f);
+		}
+		if (!PlayerCamera || Application.isPlaying || Master != 1)
+		{
+			return;
+		}
+		if (LayerCullPreview && enabledLayerCul)
+		{
+			distances[26] = CloseView;
+			distances[27] = NormalView;
+			distances[28] = FarView;
+			distances[29] = BackGroundView;
+			PlayerCamera.GetComponent<Camera>().layerCullDistances = distances;
+		}
+		else
+		{
+			distances[26] = PlayerCamera.GetComponent<Camera>().farClipPlane;
+			distances[27] = PlayerCamera.GetComponent<Camera>().farClipPlane;
+			distances[28] = PlayerCamera.GetComponent<Camera>().farClipPlane;
+			distances[29] = PlayerCamera.GetComponent<Camera>().farClipPlane;
+			PlayerCamera.GetComponent<Camera>().layerCullDistances = distances;
+		}
+		if (LODPreview)
+		{
+			if (EnabledLODSystem && ObjPosition.Length > 0 && Mode == 1)
+			{
+				if (ObjLodScript[0].gameObject != null)
+				{
+					if (LODbasedOnScript)
+					{
+						LODScript();
+					}
+					else
+					{
+						LODLay();
+					}
+				}
+			}
+			else if (EnabledLODSystem && ObjPosition.Length > 0 && Mode == 2 && ObjLodScript[0] != null)
+			{
+				for (int i = 0; i < ObjPosition.Length; i++)
+				{
+					if (ObjLodScript[i] != null)
+					{
+						if (LODbasedOnScript)
+						{
+							ObjLodScript[i].AFLODScrpt();
+						}
+						else
+						{
+							ObjLodScript[i].AFLODLay();
+						}
+					}
+				}
+			}
+		}
+		if (BillboardPreview && enabledBillboard && BillboardPosition.Length > 0 && BillScript[0] != null)
+		{
+			if (BilBbasedOnScript)
+			{
+				BillScrpt();
+			}
+			else
+			{
+				BillLay();
+			}
+		}
+	}
+
+	private void BillScrpt()
+	{
+		for (int i = 0; i < BillboardPosition.Length; i++)
+		{
+			if (Vector3.Distance(BillboardPosition[i], PlayerCamera.position) <= BillMaxViewDistance)
+			{
+				if (BillStatus[i] != 1)
+				{
+					BillScript[i].Render.enabled = true;
+					BillStatus[i] = 1;
+				}
+				if (Axis == 0)
+				{
+					BillScript[i].Transf.LookAt(new Vector3(PlayerCamera.position.x, BillScript[i].Transf.position.y, PlayerCamera.position.z), Vector3.up);
+				}
+				else
+				{
+					BillScript[i].Transf.LookAt(PlayerCamera.position, Vector3.up);
+				}
+			}
+			else if (BillStatus[i] != 0 && !BillScript[i].Render.enabled)
+			{
+				BillScript[i].Render.enabled = false;
+				BillStatus[i] = 0;
+			}
+		}
+	}
+
+	private void BillLay()
+	{
+		for (int i = 0; i < BillboardPosition.Length; i++)
+		{
+			int layer = BillScript[i].gameObject.layer;
+			if (Vector3.Distance(BillboardPosition[i], PlayerCamera.position) <= distances[layer])
+			{
+				if (Axis == 0)
+				{
+					BillScript[i].Transf.LookAt(new Vector3(PlayerCamera.position.x, BillScript[i].Transf.position.y, PlayerCamera.position.z), Vector3.up);
+				}
+				else
+				{
+					BillScript[i].Transf.LookAt(PlayerCamera.position, Vector3.up);
+				}
+			}
+		}
+	}
+
+	private void LODScript()
+	{
+		if (OldPlayerPos == PlayerCamera.position)
+		{
+			return;
+		}
+		OldPlayerPos = PlayerCamera.position;
+		for (int i = 0; i < ObjPosition.Length; i++)
+		{
+			float num = Vector3.Distance(new Vector3(ObjPosition[i].x, PlayerCamera.position.y, ObjPosition[i].z), PlayerCamera.position);
+			if (num <= MaxViewDistance)
+			{
+				if (num < LOD2Start && ObjLodStatus[i] != 1)
+				{
+					Renderer lOD = ObjLodScript[i].LOD2;
+					bool flag = false;
+					ObjLodScript[i].LOD3.enabled = flag;
+					lOD.enabled = flag;
+					ObjLodScript[i].LOD1.enabled = true;
+					ObjLodStatus[i] = 1;
+				}
+				else if (num >= LOD2Start && num < LOD3Start && ObjLodStatus[i] != 2)
+				{
+					Renderer lOD2 = ObjLodScript[i].LOD1;
+					bool flag = false;
+					ObjLodScript[i].LOD3.enabled = flag;
+					lOD2.enabled = flag;
+					ObjLodScript[i].LOD2.enabled = true;
+					ObjLodStatus[i] = 2;
+				}
+				else if (num >= LOD3Start && ObjLodStatus[i] != 3)
+				{
+					Renderer lOD3 = ObjLodScript[i].LOD2;
+					bool flag = false;
+					ObjLodScript[i].LOD1.enabled = flag;
+					lOD3.enabled = flag;
+					ObjLodScript[i].LOD3.enabled = true;
+					ObjLodStatus[i] = 3;
+				}
+			}
+			else if (ObjLodStatus[i] != 0)
+			{
+				Renderer lOD4 = ObjLodScript[i].LOD1;
+				bool flag = false;
+				ObjLodScript[i].LOD3.enabled = flag;
+				flag = flag;
+				ObjLodScript[i].LOD2.enabled = flag;
+				lOD4.enabled = flag;
+				ObjLodStatus[i] = 0;
+			}
+		}
+	}
+
+	private void LODLay()
+	{
+		if (OldPlayerPos == PlayerCamera.position)
+		{
+			return;
+		}
+		OldPlayerPos = PlayerCamera.position;
+		for (int i = 0; i < ObjPosition.Length; i++)
+		{
+			float num = Vector3.Distance(new Vector3(ObjPosition[i].x, PlayerCamera.position.y, ObjPosition[i].z), PlayerCamera.position);
+			int layer = ObjLodScript[i].gameObject.layer;
+			if (num <= distances[layer] + 5f)
+			{
+				if (num < LOD2Start && ObjLodStatus[i] != 1)
+				{
+					Renderer lOD = ObjLodScript[i].LOD2;
+					bool flag = false;
+					ObjLodScript[i].LOD3.enabled = flag;
+					lOD.enabled = flag;
+					ObjLodScript[i].LOD1.enabled = true;
+					ObjLodStatus[i] = 1;
+				}
+				else if (num >= LOD2Start && num < LOD3Start && ObjLodStatus[i] != 2)
+				{
+					Renderer lOD2 = ObjLodScript[i].LOD1;
+					bool flag = false;
+					ObjLodScript[i].LOD3.enabled = flag;
+					lOD2.enabled = flag;
+					ObjLodScript[i].LOD2.enabled = true;
+					ObjLodStatus[i] = 2;
+				}
+				else if (num >= LOD3Start && ObjLodStatus[i] != 3)
+				{
+					Renderer lOD3 = ObjLodScript[i].LOD2;
+					bool flag = false;
+					ObjLodScript[i].LOD1.enabled = flag;
+					lOD3.enabled = flag;
+					ObjLodScript[i].LOD3.enabled = true;
+					ObjLodStatus[i] = 3;
+				}
+			}
+		}
+	}
 }

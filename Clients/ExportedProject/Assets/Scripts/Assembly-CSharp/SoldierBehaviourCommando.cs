@@ -1,63 +1,139 @@
+using System;
+using System.Collections.Generic;
+using Google2u;
 using UnityEngine;
 
-public class SoldierBehaviourCommando : MonoBehaviour
+public class SoldierBehaviourCommando : SoldierBehaviourRusher<SoldierBehaviourDefinititonFlamethrower>
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public float thinTrailDistance = 2f;
 
-	1. No dll files were provided to AssetRipper.
+	private Weapon mLeftWeapon;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	private int mCounter;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public override void ShootJustStarted()
+	{
+		if (mShotTarget != null)
+		{
+			targetPosition = Singleton<AimingHelper>.instance.PredictPosition(currentWeapon, targetPosition, mShotTarget.shootableEntity.velocity, 0.05f);
+		}
+		base.ShootJustStarted();
+	}
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public override void Restart()
+	{
+		if (controller.photonView.isMine || controller.isPrewiev)
+		{
+			mWeapons = mEnemyBasicInventory.AttachAllWeapons(mSoldierParts, controller.spawnedByCard, base.mSoldierMeshChanger);
+			currentWeapon = mEnemyBasicInventory.SwitchWeapon(0);
+			mLeftWeapon = mEnemyBasicInventory.EnableSecondaryWeapon(1);
+			SyncWeapons();
+			ApplyWeaponsSetup();
+		}
+		mShotCounter = 0;
+		StopAllCoroutines();
+		mIsNetworkShoot = false;
+		mUseExternalWeapon = false;
+	}
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	protected override void Shoot(Vector3 position, bool isFake)
+	{
+		mCounter++;
+		if (mCounter % 2 == 0)
+		{
+			currentWeapon = mWeapons[1];
+		}
+		base.Shoot(position, isFake);
+		currentWeapon = mWeapons[0];
+	}
 
-	3. Assembly Reconstruction has not been implemented.
+	public override SpawnPoint PickSpawnPoint(IEnumerable<SpawnPoint> spawns)
+	{
+		List<SpawnPoint> list = new List<SpawnPoint>();
+		foreach (SpawnPoint spawn in spawns)
+		{
+			if (AcceptSpawnPoint(spawn))
+			{
+				list.Add(spawn);
+			}
+		}
+		if (list.Count <= 0)
+		{
+			throw new Exception("Enemy could not be spawned");
+		}
+		PlayerController pl = PlayerController.GetEnemyOf(controller.fraction);
+		list.Sort(delegate(SpawnPoint a, SpawnPoint b)
+		{
+			float sqrMagnitude = (pl.transform.position - a.transform.position).sqrMagnitude;
+			return (pl.transform.position - b.transform.position).sqrMagnitude.CompareTo(sqrMagnitude);
+		});
+		return list[0];
+	}
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	private void SetWeaponParameters(Weapon w)
+	{
+		BulletSetup bulletSetup = (BulletSetup)w.ammoSetup;
+		if (controller.hasSpecial)
+		{
+			bulletSetup.realShotTexture = "shotPoison";
+			w.bulletPrefab = Singleton<ObjectPoolDatabase>.instance.bulletPoison;
+		}
+		else
+		{
+			bulletSetup.realShotTexture = "shotReal";
+			w.bulletPrefab = Singleton<ObjectPoolDatabase>.instance.bulletSlow;
+		}
+		bulletSetup.poisonTime = Singleton<GameVariables>.instance.unitsConstants.GetRow(UnitsContants.rowIds.PoisonShotTime).FLOATVALUE;
+		bulletSetup.poisonRatio = base.soldierBehaviourDefinititon.special;
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	protected override void ApplyWeaponsSetup()
+	{
+		base.ApplyWeaponsSetup();
+		mWeapons[0].cadence = 0.2f;
+		mWeapons[1].ammoSetup.damageAmount = base.soldierBehaviourDefinititon.damage;
+		mWeapons[1].ammoSetup.damageToPlayerCoeficient = upgradeSlots.playerDamageRatio;
+		mWeapons[1].ammoSetup.damageToPlayerOvertimeCoeficient = upgradeSlots.playerDamageOvertimeRatio;
+		mWeapons[1].cadence = 0.2f;
+		SetWeaponParameters(mWeapons[0]);
+		SetWeaponParameters(mWeapons[1]);
+	}
 
-	4. This script is unnecessary.
+	[PunRPC]
+	protected override void AttachWeaponsRPC(byte[] indices)
+	{
+		base.AttachWeaponsRPC(indices);
+		mLeftWeapon = mEnemyBasicInventory.EnableSecondaryWeapon(1);
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	protected override void OnBeforeFire()
+	{
+		base.OnBeforeFire();
+		BulletSetup bulletSetup = currentWeapon.ammoSetup as BulletSetup;
+		if (bulletSetup != null)
+		{
+			PlayerController enemyOf = PlayerController.GetEnemyOf(controller.fraction);
+			float num = controller.transform.position.PlanarDistance(enemyOf.position);
+			bulletSetup.useThinTrail = num < thinTrailDistance;
+		}
+	}
 
-	5. Script Content Level 0
+	protected override int[] GetWeaponLevels(UpgradeSlots.UnitUpgrades unitUpgrades)
+	{
+		List<TechnologyVisualDefinition> visuals = upgradeSlots.GetVisuals(unitUpgrades);
+		return new int[2]
+		{
+			visuals[2].weaponNumber,
+			visuals[2].weaponNumber
+		};
+	}
 
-		AssetRipper was set to not load any script information.
-
-	6. Cpp2IL failed to decompile Il2Cpp data
-
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	protected override int[] GetCardWeaponLevels()
+	{
+		return new int[2]
+		{
+			upgradeSlots.cardVisuals[2].weaponNumber,
+			upgradeSlots.cardVisuals[2].weaponNumber
+		};
+	}
 }

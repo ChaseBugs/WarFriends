@@ -1,63 +1,152 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
-public class HeaderDogtagButton : MonoBehaviour
+public class HeaderDogtagButton : GuiElementSingle<HeaderDogtagButton>
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Header("Core")]
+	[SerializeField]
+	private UIGrid mDogtagsGrid;
 
-	1. No dll files were provided to AssetRipper.
+	[SerializeField]
+	private GameObject mDogtagsButton;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	[SerializeField]
+	private DogTagRecord mDogtagPrefab;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	private List<DogTagRecord> mDogTagRecords = new List<DogTagRecord>();
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public void AnimateDogtagUse()
+	{
+		if (isShowed && mDogTagRecords.Count != 0)
+		{
+			int currentDogtags = Singleton<DogTagManager>.instance.currentDogtags;
+			int index = Mathf.Clamp(currentDogtags - 1, 0, mDogTagRecords.Count - 1);
+			DogTagRecord dogTagRecord = mDogTagRecords[index];
+			dogTagRecord.Animation_DogTagConsumed();
+		}
+	}
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public override void InitEvents()
+	{
+		base.InitEvents();
+		Singleton<DogTagManager>.instance.DogtagsChanged += OnDogtagsChanged;
+		Singleton<BeanstalkServerManager>.instance.AfterPlayerDataLoaded += OnAfterPlayerDataLoaded;
+		Singleton<BeanstalkServerManager>.instance.DataLoaded += OnDataLoaded;
+		Singleton<VipManager>.instance.VipStatusChanged += OnVipStatusChanged;
+	}
 
-	3. Assembly Reconstruction has not been implemented.
+	private void OnDogtagsChanged(int dogtags)
+	{
+		if (isShowed && mDogTagRecords.Count > 0)
+		{
+			for (int i = 0; i < mDogTagRecords.Count; i++)
+			{
+				mDogTagRecords[i].Initialize(dogtags > i);
+			}
+		}
+	}
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	private void OnAfterPlayerDataLoaded()
+	{
+		if (isShowed)
+		{
+			InitGUIValues();
+		}
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	private void OnDataLoaded(DatabaseAction action)
+	{
+		if (isShowed)
+		{
+			switch (action)
+			{
+			case DatabaseAction.RemoveFacebook:
+				InitGUIValues();
+				break;
+			case DatabaseAction.BuyVip:
+				InitializeDogtags();
+				break;
+			}
+		}
+	}
 
-	4. This script is unnecessary.
+	private void OnVipStatusChanged(bool isVIP)
+	{
+		if (isShowed)
+		{
+			InitializeDogtags();
+		}
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public override void InitControls()
+	{
+		UIEventListener uIEventListener = UIEventListener.Get(mDogtagsButton);
+		uIEventListener.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener.onClick, new UIEventListener.VoidDelegate(DogTagButtonClicked));
+	}
 
-	5. Script Content Level 0
+	private void DogTagButtonClicked(GameObject go)
+	{
+		if (!GuiElementSingle<DogtagDialog>.instance.isShowed)
+		{
+			if (!(Singleton<GuiManager>.instance.currentScreen == GuiScreenSingle<MissionScreen>.instance) || !GuiElementSingle<MissionDialog>.instance.isShowed)
+			{
+				DialogManager.instance.HideAllDialogs();
+			}
+			SoundsManager.Instance.PlayButtonClickedSound();
+			Singleton<GuiManager>.instance.ShowDialog(GuiElementSingle<DogtagDialog>.instance, 0f);
+		}
+	}
 
-		AssetRipper was set to not load any script information.
+	public override void InitGUIValues()
+	{
+		if (Singleton<BeanstalkServerManager>.instance.isPlayerDataLoaded)
+		{
+			InitializeDogtags(initGuiValues: true);
+			ShowDogtagButton(!Singleton<GameController>.instance.isTutorial);
+		}
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	private void InitializeDogtags(bool initGuiValues = false)
+	{
+		InitDogtagRecords(Singleton<DogTagManager>.instance.maximumDogtags, initGuiValues);
+		OnDogtagsChanged(Singleton<DogTagManager>.instance.currentDogtags);
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	private void InitDogtagRecords(int dogtagsCount, bool initGuiValues)
+	{
+		if (dogtagsCount != mDogTagRecords.Count)
+		{
+			Debug.Log("MenuHeader - Initializing menu dogtags in count: " + dogtagsCount);
+			ObjectPool objectPool = Singleton<GuiManager>.instance.objectPool;
+			objectPool.FreeObjectsWithPrefab(mDogtagPrefab);
+			mDogTagRecords.Clear();
+			for (int i = 0; i < dogtagsCount; i++)
+			{
+				DogTagRecord dogTagRecord = (DogTagRecord)objectPool.InstantiateAsChild(mDogtagPrefab, mDogtagsGrid.gameObject, string.Format("Dogtag {0}", i.ToString("D2")));
+				if (dogTagRecord != null)
+				{
+					dogTagRecord.SetSpritesOrder(i, dogtagsCount);
+					mDogTagRecords.Add(dogTagRecord);
+				}
+			}
+			float num = 98f;
+			mDogtagsGrid.cellWidth = Mathf.Floor(num / (float)(dogtagsCount - 1));
+			mDogtagsGrid.repositionNow = true;
+			mDogTagRecords.Sort((DogTagRecord dogtag1, DogTagRecord dogtag2) => string.Compare(dogtag1.gameObject.name, dogtag2.gameObject.name, StringComparison.Ordinal));
+		}
+		else
+		{
+			Debug.Log("MenuHeader - Already initialized dogtags in menu");
+			for (int num2 = 0; num2 < mDogTagRecords.Count; num2++)
+			{
+				mDogTagRecords[num2].StopAnimation();
+			}
+		}
+	}
 
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	private void ShowDogtagButton(bool showActive)
+	{
+		mDogtagsButton.SetActive(showActive);
+	}
 }

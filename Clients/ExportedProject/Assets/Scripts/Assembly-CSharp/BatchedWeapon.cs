@@ -1,63 +1,124 @@
+using System;
+using System.Collections.Specialized;
 using UnityEngine;
 
-public class BatchedWeapon : MonoBehaviour
+public class BatchedWeapon : Core_BaseScript
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public Weapon weapon;
 
-	1. No dll files were provided to AssetRipper.
+	public float fakeShotDispersion = 1f;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	private BitVector32 mFakeAndRealShots = new BitVector32(0);
 
-	2. Incorrect dll files were provided to AssetRipper.
+	private byte mFireBatchSize;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	private PhotonView mPhotonView;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	private bool mShootLocaly;
 
-	3. Assembly Reconstruction has not been implemented.
+	private int mShotCounter;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	private Ammo.ShotType mShotType;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	private Vector3 mTargetPosition;
 
-	4. This script is unnecessary.
+	public bool shooting { get; private set; }
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public event Action ShootEnded;
 
-	5. Script Content Level 0
+	public event Action<Vector3> Shooted;
 
-		AssetRipper was set to not load any script information.
+	protected override void Awake()
+	{
+		base.Awake();
+		mPhotonView = GetComponent<PhotonView>();
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public void ShootBatch(GameShootableEntity.ShotTarget target, Vector3 position, int batchSize, float realShotProb, Ammo.ShotType shotType)
+	{
+		mFireBatchSize = (byte)batchSize;
+		mFakeAndRealShots = new BitVector32(0);
+		for (int i = 0; i < mFireBatchSize; i++)
+		{
+			mFakeAndRealShots[1 << i] = UnityEngine.Random.value < realShotProb;
+		}
+		mShotCounter = 0;
+		shooting = true;
+		mTargetPosition = position;
+		mShotType = shotType;
+		mShootLocaly = true;
+		PlayerController playerController = target.shootableEntity.owner as PlayerController;
+		if (playerController != null && !playerController.photonView.isMine)
+		{
+			mShootLocaly = false;
+		}
+		mPhotonView.RPC("ShootBatchRPC", PhotonTargets.Others, mTargetPosition, mFakeAndRealShots.Data, !mShootLocaly, (byte)mShotType, mFireBatchSize);
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	[PunRPC]
+	private void ShootBatchRPC(Vector3 position, int fakeAndRealShotsMask, bool shootLocaly, byte shotType, byte batchSize)
+	{
+		mShotCounter = 0;
+		mFakeAndRealShots = new BitVector32(fakeAndRealShotsMask);
+		mFireBatchSize = batchSize;
+		shooting = true;
+		mTargetPosition = position;
+		mShootLocaly = shootLocaly;
+		mShotType = (Ammo.ShotType)shotType;
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	protected void Update()
+	{
+		if (!shooting || !weapon.willShoot)
+		{
+			return;
+		}
+		if (mFakeAndRealShots[1 << mShotCounter])
+		{
+			Shoot(mTargetPosition, isFake: false);
+		}
+		else
+		{
+			Vector3 vector = Vector3.Cross(base.transform.position - mTargetPosition, Vector3.up).normalized * UnityEngine.Random.Range(0.3f, 0.5f) * fakeShotDispersion;
+			if ((double)UnityEngine.Random.value < 0.5)
+			{
+				vector = -vector;
+			}
+			Shoot(mTargetPosition + vector + new Vector3(0f, 0.3f, 0f) * fakeShotDispersion, isFake: true);
+		}
+		mShotCounter++;
+		if (mShotCounter >= mFireBatchSize)
+		{
+			mShotCounter = 0;
+			shooting = false;
+			if (this.ShootEnded != null)
+			{
+				this.ShootEnded();
+			}
+		}
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	private void Shoot(Vector3 position, bool isFake)
+	{
+		if (this.Shooted != null)
+		{
+			this.Shooted(position);
+		}
+		weapon.isFake = isFake;
+		weapon.disableSync = true;
+		weapon.shotType = mShotType;
+		if (mShootLocaly)
+		{
+			weapon.Fire(position);
+		}
+		else
+		{
+			weapon.FireNetworkRPC(position, isFake, (byte)mShotType);
+		}
+	}
 
-	*/
+	public void Reset()
+	{
+		shooting = false;
+	}
 }

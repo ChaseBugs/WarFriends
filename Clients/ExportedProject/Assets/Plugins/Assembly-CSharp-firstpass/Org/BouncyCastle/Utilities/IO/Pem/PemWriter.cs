@@ -1,66 +1,86 @@
-using UnityEngine;
+using System;
+using System.IO;
+using Org.BouncyCastle.Utilities.Encoders;
 
 namespace Org.BouncyCastle.Utilities.IO.Pem
 {
-	public class PemWriter : MonoBehaviour
+public class PemWriter
+{
+	private const int LineLength = 64;
+
+	private readonly TextWriter writer;
+
+	private readonly int nlLength;
+
+	private char[] buf = new char[64];
+
+	public TextWriter Writer => writer;
+
+	public PemWriter(TextWriter writer)
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
+		if (writer == null)
+		{
+			throw new ArgumentNullException("writer");
+		}
+		this.writer = writer;
+		nlLength = Platform.NewLine.Length;
 	}
+
+	public int GetOutputSize(PemObject obj)
+	{
+		int num = 2 * (obj.Type.Length + 10 + nlLength) + 6 + 4;
+		if (obj.Headers.Count > 0)
+		{
+			foreach (PemHeader header in obj.Headers)
+			{
+				num += header.Name.Length + ": ".Length + header.Value.Length + nlLength;
+			}
+			num += nlLength;
+		}
+		int num2 = (obj.Content.Length + 2) / 3 * 4;
+		return num + (num2 + (num2 + 64 - 1) / 64 * nlLength);
+	}
+
+	public void WriteObject(PemObjectGenerator objGen)
+	{
+		PemObject pemObject = objGen.Generate();
+		WritePreEncapsulationBoundary(pemObject.Type);
+		if (pemObject.Headers.Count > 0)
+		{
+			foreach (PemHeader header in pemObject.Headers)
+			{
+				writer.Write(header.Name);
+				writer.Write(": ");
+				writer.WriteLine(header.Value);
+			}
+			writer.WriteLine();
+		}
+		WriteEncoded(pemObject.Content);
+		WritePostEncapsulationBoundary(pemObject.Type);
+	}
+
+	private void WriteEncoded(byte[] bytes)
+	{
+		bytes = Base64.Encode(bytes);
+		for (int i = 0; i < bytes.Length; i += buf.Length)
+		{
+			int j;
+			for (j = 0; j != buf.Length && i + j < bytes.Length; j++)
+			{
+				buf[j] = (char)bytes[i + j];
+			}
+			writer.WriteLine(buf, 0, j);
+		}
+	}
+
+	private void WritePreEncapsulationBoundary(string type)
+	{
+		writer.WriteLine("-----BEGIN " + type + "-----");
+	}
+
+	private void WritePostEncapsulationBoundary(string type)
+	{
+		writer.WriteLine("-----END " + type + "-----");
+	}
+}
 }

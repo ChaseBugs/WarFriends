@@ -1,63 +1,121 @@
 using UnityEngine;
 
-public class HSLColor : MonoBehaviour
+public struct HSLColor
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public float h;
 
-	1. No dll files were provided to AssetRipper.
+	public float s;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public float l;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public float a;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public HSLColor(float h, float s, float l, float a)
+	{
+		this.h = h;
+		this.s = s;
+		this.l = l;
+		this.a = a;
+	}
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public HSLColor(float h, float s, float l)
+	{
+		this.h = h;
+		this.s = s;
+		this.l = l;
+		a = 1f;
+	}
 
-	3. Assembly Reconstruction has not been implemented.
+	public HSLColor(Color c)
+	{
+		HSLColor hSLColor = FromRGBA(c);
+		h = hSLColor.h;
+		s = hSLColor.s;
+		l = hSLColor.l;
+		a = hSLColor.a;
+	}
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public static HSLColor FromRGBA(Color c)
+	{
+		float num = c.a;
+		float num2 = Mathf.Min(Mathf.Min(c.r, c.g), c.b);
+		float num3 = Mathf.Max(Mathf.Max(c.r, c.g), c.b);
+		float num4 = (num2 + num3) / 2f;
+		float num5;
+		float num6;
+		if (num2 == num3)
+		{
+			num5 = 0f;
+			num6 = 0f;
+		}
+		else
+		{
+			float num7 = num3 - num2;
+			num5 = ((!(num4 <= 0.5f)) ? (num7 / (2f - (num3 + num2))) : (num7 / (num3 + num2)));
+			num6 = 0f;
+			if (c.r == num3)
+			{
+				num6 = (c.g - c.b) / num7;
+			}
+			else if (c.g == num3)
+			{
+				num6 = 2f + (c.b - c.r) / num7;
+			}
+			else if (c.b == num3)
+			{
+				num6 = 4f + (c.r - c.g) / num7;
+			}
+			num6 = Mathf.Repeat(num6 * 60f, 360f);
+		}
+		return new HSLColor(num6, num5, num4, num);
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public Color ToRGBA()
+	{
+		float num = a;
+		float num2 = ((!(l <= 0.5f)) ? (l + s - l * s) : (l * (1f + s)));
+		float n = 2f * l - num2;
+		float r;
+		float g;
+		float b;
+		if (s == 0f)
+		{
+			r = (g = (b = l));
+		}
+		else
+		{
+			r = Value(n, num2, h + 120f);
+			g = Value(n, num2, h);
+			b = Value(n, num2, h - 120f);
+		}
+		return new Color(r, g, b, num);
+	}
 
-	4. This script is unnecessary.
+	private static float Value(float n1, float n2, float hue)
+	{
+		hue = Mathf.Repeat(hue, 360f);
+		if (hue < 60f)
+		{
+			return n1 + (n2 - n1) * hue / 60f;
+		}
+		if (hue < 180f)
+		{
+			return n2;
+		}
+		if (hue < 240f)
+		{
+			return n1 + (n2 - n1) * (240f - hue) / 60f;
+		}
+		return n1;
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public static implicit operator HSLColor(Color src)
+	{
+		return FromRGBA(src);
+	}
 
-	5. Script Content Level 0
-
-		AssetRipper was set to not load any script information.
-
-	6. Cpp2IL failed to decompile Il2Cpp data
-
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public static implicit operator Color(HSLColor src)
+	{
+		return src.ToRGBA();
+	}
 }

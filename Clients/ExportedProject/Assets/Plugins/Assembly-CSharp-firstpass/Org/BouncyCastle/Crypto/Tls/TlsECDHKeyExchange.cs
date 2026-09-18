@@ -1,66 +1,185 @@
-using UnityEngine;
+using System;
+using System.Collections;
+using System.IO;
+using Org.BouncyCastle.Asn1.X509;
+using Org.BouncyCastle.Crypto.Parameters;
+using Org.BouncyCastle.Security;
 
 namespace Org.BouncyCastle.Crypto.Tls
 {
-	public class TlsECDHKeyExchange : MonoBehaviour
+public class TlsECDHKeyExchange : AbstractTlsKeyExchange
+{
+	protected TlsSigner mTlsSigner;
+
+	protected int[] mNamedCurves;
+
+	protected byte[] mClientECPointFormats;
+
+	protected byte[] mServerECPointFormats;
+
+	protected AsymmetricKeyParameter mServerPublicKey;
+
+	protected TlsAgreementCredentials mAgreementCredentials;
+
+	protected ECPrivateKeyParameters mECAgreePrivateKey;
+
+	protected ECPublicKeyParameters mECAgreePublicKey;
+
+	public override bool RequiresServerKeyExchange
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
+		get
+		{
+			switch (mKeyExchange)
+			{
+			case 17:
+			case 19:
+			case 20:
+				return true;
+			default:
+				return false;
+			}
+		}
 	}
+
+	public TlsECDHKeyExchange(int keyExchange, IList supportedSignatureAlgorithms, int[] namedCurves, byte[] clientECPointFormats, byte[] serverECPointFormats)
+		: base(keyExchange, supportedSignatureAlgorithms)
+	{
+		switch (keyExchange)
+		{
+		case 19:
+			mTlsSigner = new TlsRsaSigner();
+			break;
+		case 17:
+			mTlsSigner = new TlsECDsaSigner();
+			break;
+		case 16:
+		case 18:
+			mTlsSigner = null;
+			break;
+		default:
+			throw new InvalidOperationException("unsupported key exchange algorithm");
+		}
+		mNamedCurves = namedCurves;
+		mClientECPointFormats = clientECPointFormats;
+		mServerECPointFormats = serverECPointFormats;
+	}
+
+	public override void Init(TlsContext context)
+	{
+		base.Init(context);
+		if (mTlsSigner != null)
+		{
+			mTlsSigner.Init(context);
+		}
+	}
+
+	public override void SkipServerCredentials()
+	{
+		throw new TlsFatalAlert(10);
+	}
+
+	public override void ProcessServerCertificate(Certificate serverCertificate)
+	{
+		if (serverCertificate.IsEmpty)
+		{
+			throw new TlsFatalAlert(42);
+		}
+		X509CertificateStructure certificateAt = serverCertificate.GetCertificateAt(0);
+		SubjectPublicKeyInfo subjectPublicKeyInfo = certificateAt.SubjectPublicKeyInfo;
+		try
+		{
+			mServerPublicKey = PublicKeyFactory.CreateKey(subjectPublicKeyInfo);
+		}
+		catch (Exception alertCause)
+		{
+			throw new TlsFatalAlert(43, alertCause);
+		}
+		if (mTlsSigner == null)
+		{
+			try
+			{
+				mECAgreePublicKey = TlsEccUtilities.ValidateECPublicKey((ECPublicKeyParameters)mServerPublicKey);
+			}
+			catch (InvalidCastException alertCause2)
+			{
+				throw new TlsFatalAlert(46, alertCause2);
+			}
+			TlsUtilities.ValidateKeyUsage(certificateAt, 8);
+		}
+		else
+		{
+			if (!mTlsSigner.IsValidPublicKey(mServerPublicKey))
+			{
+				throw new TlsFatalAlert(46);
+			}
+			TlsUtilities.ValidateKeyUsage(certificateAt, 128);
+		}
+		base.ProcessServerCertificate(serverCertificate);
+	}
+
+	public override void ValidateCertificateRequest(CertificateRequest certificateRequest)
+	{
+		byte[] certificateTypes = certificateRequest.CertificateTypes;
+		for (int i = 0; i < certificateTypes.Length; i++)
+		{
+			switch (certificateTypes[i])
+			{
+			case 1:
+			case 2:
+			case 64:
+			case 65:
+			case 66:
+				continue;
+			}
+			throw new TlsFatalAlert(47);
+		}
+	}
+
+	public override void ProcessClientCredentials(TlsCredentials clientCredentials)
+	{
+		if (clientCredentials is TlsAgreementCredentials)
+		{
+			mAgreementCredentials = (TlsAgreementCredentials)clientCredentials;
+		}
+		else if (!(clientCredentials is TlsSignerCredentials))
+		{
+			throw new TlsFatalAlert(80);
+		}
+	}
+
+	public override void GenerateClientKeyExchange(Stream output)
+	{
+		if (mAgreementCredentials == null)
+		{
+			mECAgreePrivateKey = TlsEccUtilities.GenerateEphemeralClientKeyExchange(mContext.SecureRandom, mServerECPointFormats, mECAgreePublicKey.Parameters, output);
+		}
+	}
+
+	public override void ProcessClientCertificate(Certificate clientCertificate)
+	{
+	}
+
+	public override void ProcessClientKeyExchange(Stream input)
+	{
+		if (mECAgreePublicKey == null)
+		{
+			byte[] encoding = TlsUtilities.ReadOpaque8(input);
+			ECDomainParameters parameters = mECAgreePrivateKey.Parameters;
+			mECAgreePublicKey = TlsEccUtilities.ValidateECPublicKey(TlsEccUtilities.DeserializeECPublicKey(mServerECPointFormats, parameters, encoding));
+		}
+	}
+
+	public override byte[] GeneratePremasterSecret()
+	{
+		if (mAgreementCredentials != null)
+		{
+			return mAgreementCredentials.GenerateAgreement(mECAgreePublicKey);
+		}
+		if (mECAgreePrivateKey != null)
+		{
+			return TlsEccUtilities.CalculateECDHBasicAgreement(mECAgreePublicKey, mECAgreePrivateKey);
+		}
+		throw new TlsFatalAlert(80);
+	}
+}
 }

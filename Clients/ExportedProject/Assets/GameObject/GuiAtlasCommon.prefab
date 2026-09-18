@@ -39,6 +39,1925 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ea9f040b2b6bd4bf069e31e0ace12f73, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  material: {fileID: 2100000, guid: 004bf51e44960d04eae9440074f7edfe, type: 2}
+  sprites:
+  - name: brackets-universal-horizontal
+    outer:
+      serializedVersion: 2
+      x: 832
+      y: 76
+      width: 43
+      height: 43
+    inner:
+      serializedVersion: 2
+      x: 845
+      y: 91
+      width: 22
+      height: 15
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: whiteRectangle
+    outer:
+      serializedVersion: 2
+      x: 881
+      y: 85
+      width: 10
+      height: 10
+    inner:
+      serializedVersion: 2
+      x: 884
+      y: 88
+      width: 4
+      height: 4
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-ribbon-headshot
+    outer:
+      serializedVersion: 2
+      x: 203
+      y: 307
+      width: 191
+      height: 110
+    inner:
+      serializedVersion: 2
+      x: 206
+      y: 307
+      width: 185
+      height: 110
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-ribbon-covered
+    outer:
+      serializedVersion: 2
+      x: 215
+      y: 191
+      width: 183
+      height: 110
+    inner:
+      serializedVersion: 2
+      x: 218
+      y: 191
+      width: 177
+      height: 110
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-ribbon-line
+    outer:
+      serializedVersion: 2
+      x: 996
+      y: 772
+      width: 12
+      height: 122
+    inner:
+      serializedVersion: 2
+      x: 996
+      y: 772
+      width: 12
+      height: 122
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-ribbon-stroke
+    outer:
+      serializedVersion: 2
+      x: 986
+      y: 734
+      width: 28
+      height: 32
+    inner:
+      serializedVersion: 2
+      x: 994
+      y: 742
+      width: 12
+      height: 9
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-ribbon-longshot
+    outer:
+      serializedVersion: 2
+      x: 0
+      y: 181
+      width: 209
+      height: 110
+    inner:
+      serializedVersion: 2
+      x: 3
+      y: 181
+      width: 203
+      height: 110
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-ribbon-armykill
+    outer:
+      serializedVersion: 2
+      x: 417
+      y: 75
+      width: 164
+      height: 110
+    inner:
+      serializedVersion: 2
+      x: 420
+      y: 75
+      width: 158
+      height: 110
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-ribbon-enemyplayerhit
+    outer:
+      serializedVersion: 2
+      x: 386
+      y: 594
+      width: 160
+      height: 110
+    inner:
+      serializedVersion: 2
+      x: 389
+      y: 594
+      width: 154
+      height: 110
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-ribbon-assist
+    outer:
+      serializedVersion: 2
+      x: 489
+      y: 914
+      width: 149
+      height: 110
+    inner:
+      serializedVersion: 2
+      x: 492
+      y: 914
+      width: 143
+      height: 110
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-ribbon-longshot-bg
+    outer:
+      serializedVersion: 2
+      x: 1008
+      y: 914
+      width: 8
+      height: 110
+    inner:
+      serializedVersion: 2
+      x: 1010
+      y: 914
+      width: 4
+      height: 110
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-ribbon-armykill-bg
+    outer:
+      serializedVersion: 2
+      x: 995
+      y: 286
+      width: 8
+      height: 110
+    inner:
+      serializedVersion: 2
+      x: 997
+      y: 286
+      width: 4
+      height: 110
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-ribbon-assist-bg
+    outer:
+      serializedVersion: 2
+      x: 983
+      y: 170
+      width: 8
+      height: 110
+    inner:
+      serializedVersion: 2
+      x: 985
+      y: 170
+      width: 4
+      height: 110
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-ribbon-headshot-bg
+    outer:
+      serializedVersion: 2
+      x: 1005
+      y: 402
+      width: 8
+      height: 110
+    inner:
+      serializedVersion: 2
+      x: 1007
+      y: 402
+      width: 4
+      height: 110
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-ribbon-wreckagekill
+    outer:
+      serializedVersion: 2
+      x: 0
+      y: 65
+      width: 204
+      height: 110
+    inner:
+      serializedVersion: 2
+      x: 3
+      y: 65
+      width: 198
+      height: 110
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-ribbon-explosivekill
+    outer:
+      serializedVersion: 2
+      x: 210
+      y: 65
+      width: 201
+      height: 110
+    inner:
+      serializedVersion: 2
+      x: 210
+      y: 65
+      width: 201
+      height: 110
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-ribbon-vehicledestroyed
+    outer:
+      serializedVersion: 2
+      x: 203
+      y: 423
+      width: 198
+      height: 110
+    inner:
+      serializedVersion: 2
+      x: 206
+      y: 423
+      width: 192
+      height: 110
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-ribbon-onehitkill
+    outer:
+      serializedVersion: 2
+      x: 400
+      y: 307
+      width: 175
+      height: 110
+    inner:
+      serializedVersion: 2
+      x: 403
+      y: 307
+      width: 169
+      height: 110
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-ribbon-tankdestroyed
+    outer:
+      serializedVersion: 2
+      x: 404
+      y: 191
+      width: 173
+      height: 110
+    inner:
+      serializedVersion: 2
+      x: 407
+      y: 191
+      width: 167
+      height: 110
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-ribbon-onthemove
+    outer:
+      serializedVersion: 2
+      x: 386
+      y: 710
+      width: 160
+      height: 110
+    inner:
+      serializedVersion: 2
+      x: 389
+      y: 710
+      width: 154
+      height: 110
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-ribbon-tripplekill
+    outer:
+      serializedVersion: 2
+      x: 407
+      y: 478
+      width: 150
+      height: 110
+    inner:
+      serializedVersion: 2
+      x: 410
+      y: 478
+      width: 144
+      height: 110
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-ribbon-multikill
+    outer:
+      serializedVersion: 2
+      x: 552
+      y: 798
+      width: 148
+      height: 110
+    inner:
+      serializedVersion: 2
+      x: 555
+      y: 798
+      width: 142
+      height: 110
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-ribbon-doublekill
+    outer:
+      serializedVersion: 2
+      x: 644
+      y: 914
+      width: 147
+      height: 110
+    inner:
+      serializedVersion: 2
+      x: 647
+      y: 914
+      width: 141
+      height: 110
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-ribbon-revengekill
+    outer:
+      serializedVersion: 2
+      x: 581
+      y: 420
+      width: 135
+      height: 110
+    inner:
+      serializedVersion: 2
+      x: 584
+      y: 420
+      width: 129
+      height: 110
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-ribbon-runner
+    outer:
+      serializedVersion: 2
+      x: 689
+      y: 551
+      width: 134
+      height: 110
+    inner:
+      serializedVersion: 2
+      x: 692
+      y: 551
+      width: 128
+      height: 110
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-ribbon-slowmotionkill
+    outer:
+      serializedVersion: 2
+      x: 804
+      y: 783
+      width: 128
+      height: 110
+    inner:
+      serializedVersion: 2
+      x: 807
+      y: 783
+      width: 122
+      height: 110
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-ribbon-enviromentalkill
+    outer:
+      serializedVersion: 2
+      x: 804
+      y: 667
+      width: 127
+      height: 110
+    inner:
+      serializedVersion: 2
+      x: 807
+      y: 667
+      width: 121
+      height: 110
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-ribbon-enviromentalkill-bg
+    outer:
+      serializedVersion: 2
+      x: 963
+      y: 95
+      width: 8
+      height: 110
+    inner:
+      serializedVersion: 2
+      x: 965
+      y: 95
+      width: 4
+      height: 110
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-ribbon-wreckagekill-bg
+    outer:
+      serializedVersion: 2
+      x: 977
+      y: 54
+      width: 8
+      height: 110
+    inner:
+      serializedVersion: 2
+      x: 977
+      y: 54
+      width: 8
+      height: 110
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-ribbon-onthemove-bg
+    outer:
+      serializedVersion: 2
+      x: 997
+      y: 170
+      width: 8
+      height: 110
+    inner:
+      serializedVersion: 2
+      x: 999
+      y: 170
+      width: 4
+      height: 110
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-ribbon-slowmotionkill-bg
+    outer:
+      serializedVersion: 2
+      x: 949
+      y: 95
+      width: 8
+      height: 110
+    inner:
+      serializedVersion: 2
+      x: 951
+      y: 95
+      width: 4
+      height: 110
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-ribbon-tripplekill-bg
+    outer:
+      serializedVersion: 2
+      x: 563
+      y: 420
+      width: 8
+      height: 110
+    inner:
+      serializedVersion: 2
+      x: 565
+      y: 420
+      width: 4
+      height: 110
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-ribbon-doublekill-bg
+    outer:
+      serializedVersion: 2
+      x: 1002
+      y: 618
+      width: 8
+      height: 110
+    inner:
+      serializedVersion: 2
+      x: 1004
+      y: 618
+      width: 4
+      height: 110
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-ribbon-tankdestroyed-bg
+    outer:
+      serializedVersion: 2
+      x: 1014
+      y: 798
+      width: 8
+      height: 110
+    inner:
+      serializedVersion: 2
+      x: 1016
+      y: 798
+      width: 4
+      height: 110
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-ribbon-revengekill-bg
+    outer:
+      serializedVersion: 2
+      x: 1005
+      y: 54
+      width: 8
+      height: 110
+    inner:
+      serializedVersion: 2
+      x: 1007
+      y: 54
+      width: 4
+      height: 110
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-ribbon-explosivekill-bg
+    outer:
+      serializedVersion: 2
+      x: 933
+      y: 127
+      width: 8
+      height: 110
+    inner:
+      serializedVersion: 2
+      x: 935
+      y: 127
+      width: 4
+      height: 110
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-ribbon-vehicledestroyed-bg
+    outer:
+      serializedVersion: 2
+      x: 1009
+      y: 286
+      width: 8
+      height: 110
+    inner:
+      serializedVersion: 2
+      x: 1011
+      y: 286
+      width: 4
+      height: 110
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-ribbon-onehitkill-bg
+    outer:
+      serializedVersion: 2
+      x: 1016
+      y: 618
+      width: 8
+      height: 110
+    inner:
+      serializedVersion: 2
+      x: 1018
+      y: 618
+      width: 4
+      height: 110
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-ribbon-runner-bg
+    outer:
+      serializedVersion: 2
+      x: 991
+      y: 54
+      width: 8
+      height: 110
+    inner:
+      serializedVersion: 2
+      x: 993
+      y: 54
+      width: 4
+      height: 110
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-ribbon-multikill-bg
+    outer:
+      serializedVersion: 2
+      x: 955
+      y: 211
+      width: 8
+      height: 110
+    inner:
+      serializedVersion: 2
+      x: 957
+      y: 211
+      width: 4
+      height: 110
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-ribbon-covered-bg
+    outer:
+      serializedVersion: 2
+      x: 1011
+      y: 170
+      width: 8
+      height: 110
+    inner:
+      serializedVersion: 2
+      x: 1013
+      y: 170
+      width: 4
+      height: 110
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-ribbon-enemyplayerhit-bg
+    outer:
+      serializedVersion: 2
+      x: 969
+      y: 211
+      width: 8
+      height: 110
+    inner:
+      serializedVersion: 2
+      x: 971
+      y: 211
+      width: 4
+      height: 110
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-loadingcircle
+    outer:
+      serializedVersion: 2
+      x: 0
+      y: 744
+      width: 280
+      height: 280
+    inner:
+      serializedVersion: 2
+      x: 0
+      y: 744
+      width: 280
+      height: 280
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-header
+    outer:
+      serializedVersion: 2
+      x: 811
+      y: 15
+      width: 35
+      height: 54
+    inner:
+      serializedVersion: 2
+      x: 813
+      y: 45
+      width: 3
+      height: 19
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-noammo
+    outer:
+      serializedVersion: 2
+      x: 722
+      y: 453
+      width: 93
+      height: 92
+    inner:
+      serializedVersion: 2
+      x: 722
+      y: 453
+      width: 93
+      height: 92
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-ico-heal
+    outer:
+      serializedVersion: 2
+      x: 759
+      y: 13
+      width: 46
+      height: 46
+    inner:
+      serializedVersion: 2
+      x: 759
+      y: 13
+      width: 46
+      height: 46
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-lightbox-bg
+    outer:
+      serializedVersion: 2
+      x: 821
+      y: 455
+      width: 59
+      height: 90
+    inner:
+      serializedVersion: 2
+      x: 849
+      y: 499
+      width: 3
+      height: 2
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-button-small
+    outer:
+      serializedVersion: 2
+      x: 923
+      y: 900
+      width: 79
+      height: 124
+    inner:
+      serializedVersion: 2
+      x: 953
+      y: 935
+      width: 19
+      height: 39
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-ico-bg-bronze
+    outer:
+      serializedVersion: 2
+      x: 693
+      y: 195
+      width: 104
+      height: 104
+    inner:
+      serializedVersion: 2
+      x: 693
+      y: 195
+      width: 104
+      height: 104
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-ico-bg-silver
+    outer:
+      serializedVersion: 2
+      x: 583
+      y: 195
+      width: 104
+      height: 104
+    inner:
+      serializedVersion: 2
+      x: 583
+      y: 195
+      width: 104
+      height: 104
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-ico-bg-gold
+    outer:
+      serializedVersion: 2
+      x: 587
+      y: 85
+      width: 104
+      height: 104
+    inner:
+      serializedVersion: 2
+      x: 587
+      y: 85
+      width: 104
+      height: 104
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-ico-bg
+    outer:
+      serializedVersion: 2
+      x: 706
+      y: 811
+      width: 82
+      height: 82
+    inner:
+      serializedVersion: 2
+      x: 706
+      y: 811
+      width: 82
+      height: 82
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-ico-shielddestroyed
+    outer:
+      serializedVersion: 2
+      x: 852
+      y: 395
+      width: 54
+      height: 54
+    inner:
+      serializedVersion: 2
+      x: 852
+      y: 395
+      width: 54
+      height: 54
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-ico-dead
+    outer:
+      serializedVersion: 2
+      x: 938
+      y: 842
+      width: 47
+      height: 52
+    inner:
+      serializedVersion: 2
+      x: 938
+      y: 842
+      width: 47
+      height: 52
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-ico-ammo
+    outer:
+      serializedVersion: 2
+      x: 937
+      y: 672
+      width: 59
+      height: 41
+    inner:
+      serializedVersion: 2
+      x: 937
+      y: 672
+      width: 59
+      height: 41
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-ico-healthup
+    outer:
+      serializedVersion: 2
+      x: 938
+      y: 791
+      width: 52
+      height: 45
+    inner:
+      serializedVersion: 2
+      x: 938
+      y: 791
+      width: 52
+      height: 45
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-ico-shieldup
+    outer:
+      serializedVersion: 2
+      x: 657
+      y: 10
+      width: 44
+      height: 49
+    inner:
+      serializedVersion: 2
+      x: 657
+      y: 10
+      width: 44
+      height: 49
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-ico-shieldregen
+    outer:
+      serializedVersion: 2
+      x: 859
+      y: 283
+      width: 38
+      height: 49
+    inner:
+      serializedVersion: 2
+      x: 859
+      y: 283
+      width: 38
+      height: 49
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-ico-hourglass
+    outer:
+      serializedVersion: 2
+      x: 852
+      y: 26
+      width: 42
+      height: 44
+    inner:
+      serializedVersion: 2
+      x: 852
+      y: 26
+      width: 42
+      height: 44
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-ico-card
+    outer:
+      serializedVersion: 2
+      x: 885
+      y: 180
+      width: 42
+      height: 40
+    inner:
+      serializedVersion: 2
+      x: 885
+      y: 180
+      width: 42
+      height: 40
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-ico-timer
+    outer:
+      serializedVersion: 2
+      x: 698
+      y: 316
+      width: 98
+      height: 98
+    inner:
+      serializedVersion: 2
+      x: 698
+      y: 316
+      width: 98
+      height: 98
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-ico-emptyclip
+    outer:
+      serializedVersion: 2
+      x: 486
+      y: 425
+      width: 68
+      height: 47
+    inner:
+      serializedVersion: 2
+      x: 486
+      y: 425
+      width: 68
+      height: 47
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-ico-bulletsponge
+    outer:
+      serializedVersion: 2
+      x: 803
+      y: 242
+      width: 50
+      height: 59
+    inner:
+      serializedVersion: 2
+      x: 803
+      y: 242
+      width: 50
+      height: 59
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-ico-freeze
+    outer:
+      serializedVersion: 2
+      x: 852
+      y: 338
+      width: 57
+      height: 51
+    inner:
+      serializedVersion: 2
+      x: 852
+      y: 338
+      width: 57
+      height: 51
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-ico-immortality
+    outer:
+      serializedVersion: 2
+      x: 886
+      y: 513
+      width: 54
+      height: 52
+    inner:
+      serializedVersion: 2
+      x: 886
+      y: 513
+      width: 54
+      height: 52
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-ico-reload
+    outer:
+      serializedVersion: 2
+      x: 886
+      y: 455
+      width: 53
+      height: 52
+    inner:
+      serializedVersion: 2
+      x: 886
+      y: 455
+      width: 53
+      height: 52
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-ico-rateoffire
+    outer:
+      serializedVersion: 2
+      x: 946
+      y: 518
+      width: 69
+      height: 31
+    inner:
+      serializedVersion: 2
+      x: 946
+      y: 518
+      width: 69
+      height: 31
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-ico-pistol
+    outer:
+      serializedVersion: 2
+      x: 803
+      y: 199
+      width: 53
+      height: 37
+    inner:
+      serializedVersion: 2
+      x: 803
+      y: 199
+      width: 53
+      height: 37
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-ico-slowed
+    outer:
+      serializedVersion: 2
+      x: 903
+      y: 292
+      width: 39
+      height: 40
+    inner:
+      serializedVersion: 2
+      x: 903
+      y: 292
+      width: 39
+      height: 40
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-ico-crosshair
+    outer:
+      serializedVersion: 2
+      x: 489
+      y: 850
+      width: 57
+      height: 58
+    inner:
+      serializedVersion: 2
+      x: 489
+      y: 850
+      width: 57
+      height: 58
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-tutorial-hand
+    outer:
+      serializedVersion: 2
+      x: 0
+      y: 502
+      width: 177
+      height: 236
+    inner:
+      serializedVersion: 2
+      x: 0
+      y: 502
+      width: 177
+      height: 236
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-tutorial-circle
+    outer:
+      serializedVersion: 2
+      x: 583
+      y: 305
+      width: 109
+      height: 109
+    inner:
+      serializedVersion: 2
+      x: 583
+      y: 305
+      width: 109
+      height: 109
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: whiteDot
+    outer:
+      serializedVersion: 2
+      x: 587
+      y: 15
+      width: 64
+      height: 64
+    inner:
+      serializedVersion: 2
+      x: 587
+      y: 15
+      width: 64
+      height: 64
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-ico-streakboost
+    outer:
+      serializedVersion: 2
+      x: 946
+      y: 555
+      width: 50
+      height: 50
+    inner:
+      serializedVersion: 2
+      x: 946
+      y: 555
+      width: 50
+      height: 50
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-ico-bomb
+    outer:
+      serializedVersion: 2
+      x: 937
+      y: 719
+      width: 43
+      height: 58
+    inner:
+      serializedVersion: 2
+      x: 937
+      y: 719
+      width: 43
+      height: 58
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-button-small-white
+    outer:
+      serializedVersion: 2
+      x: 697
+      y: 65
+      width: 79
+      height: 124
+    inner:
+      serializedVersion: 2
+      x: 727
+      y: 95
+      width: 19
+      height: 44
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-ico-plague
+    outer:
+      serializedVersion: 2
+      x: 782
+      y: 125
+      width: 51
+      height: 64
+    inner:
+      serializedVersion: 2
+      x: 782
+      y: 125
+      width: 51
+      height: 64
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-ico-meatheads
+    outer:
+      serializedVersion: 2
+      x: 417
+      y: 18
+      width: 61
+      height: 51
+    inner:
+      serializedVersion: 2
+      x: 417
+      y: 18
+      width: 61
+      height: 51
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-ico-crateblocker
+    outer:
+      serializedVersion: 2
+      x: 933
+      y: 611
+      width: 50
+      height: 50
+    inner:
+      serializedVersion: 2
+      x: 933
+      y: 611
+      width: 50
+      height: 50
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-ico-sickness
+    outer:
+      serializedVersion: 2
+      x: 707
+      y: 13
+      width: 46
+      height: 46
+    inner:
+      serializedVersion: 2
+      x: 707
+      y: 13
+      width: 46
+      height: 46
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-ico-explosivepistol
+    outer:
+      serializedVersion: 2
+      x: 407
+      y: 427
+      width: 73
+      height: 45
+    inner:
+      serializedVersion: 2
+      x: 407
+      y: 427
+      width: 73
+      height: 45
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-ico-supershields
+    outer:
+      serializedVersion: 2
+      x: 286
+      y: 746
+      width: 64
+      height: 74
+    inner:
+      serializedVersion: 2
+      x: 286
+      y: 746
+      width: 64
+      height: 74
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-army-cat-shooter
+    outer:
+      serializedVersion: 2
+      x: 678
+      y: 667
+      width: 120
+      height: 125
+    inner:
+      serializedVersion: 2
+      x: 678
+      y: 667
+      width: 120
+      height: 125
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-army-cat-explosive
+    outer:
+      serializedVersion: 2
+      x: 797
+      y: 899
+      width: 120
+      height: 125
+    inner:
+      serializedVersion: 2
+      x: 797
+      y: 899
+      width: 120
+      height: 125
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-army-cat-rusher
+    outer:
+      serializedVersion: 2
+      x: 552
+      y: 667
+      width: 120
+      height: 125
+    inner:
+      serializedVersion: 2
+      x: 552
+      y: 667
+      width: 120
+      height: 125
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-army-cat-defender
+    outer:
+      serializedVersion: 2
+      x: 563
+      y: 536
+      width: 120
+      height: 125
+    inner:
+      serializedVersion: 2
+      x: 563
+      y: 536
+      width: 120
+      height: 125
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-powerband-damage
+    outer:
+      serializedVersion: 2
+      x: 183
+      y: 539
+      width: 197
+      height: 199
+    inner:
+      serializedVersion: 2
+      x: 183
+      y: 539
+      width: 197
+      height: 199
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-powerband-health
+    outer:
+      serializedVersion: 2
+      x: 286
+      y: 826
+      width: 197
+      height: 198
+    inner:
+      serializedVersion: 2
+      x: 286
+      y: 826
+      width: 197
+      height: 198
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-powerband-damage-ico
+    outer:
+      serializedVersion: 2
+      x: 539
+      y: 13
+      width: 42
+      height: 56
+    inner:
+      serializedVersion: 2
+      x: 539
+      y: 13
+      width: 42
+      height: 56
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-powerband-health-ico
+    outer:
+      serializedVersion: 2
+      x: 782
+      y: 75
+      width: 44
+      height: 44
+    inner:
+      serializedVersion: 2
+      x: 782
+      y: 75
+      width: 44
+      height: 44
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-cardpool-buddycardplaceholder
+    outer:
+      serializedVersion: 2
+      x: 802
+      y: 307
+      width: 44
+      height: 140
+    inner:
+      serializedVersion: 2
+      x: 814
+      y: 347
+      width: 4
+      height: 50
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-cardpool-soldier-ico
+    outer:
+      serializedVersion: 2
+      x: 945
+      y: 457
+      width: 54
+      height: 50
+    inner:
+      serializedVersion: 2
+      x: 945
+      y: 457
+      width: 54
+      height: 50
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-cardpool-button-smallwithdraw
+    outer:
+      serializedVersion: 2
+      x: 862
+      y: 226
+      width: 33
+      height: 51
+    inner:
+      serializedVersion: 2
+      x: 871
+      y: 247
+      width: 5
+      height: 14
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-cardpool-depositarrow
+    outer:
+      serializedVersion: 2
+      x: 901
+      y: 243
+      width: 48
+      height: 34
+    inner:
+      serializedVersion: 2
+      x: 901
+      y: 243
+      width: 48
+      height: 34
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-cardpool-withdrawsmall-ico
+    outer:
+      serializedVersion: 2
+      x: 915
+      y: 363
+      width: 41
+      height: 30
+    inner:
+      serializedVersion: 2
+      x: 915
+      y: 363
+      width: 41
+      height: 30
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-cardpool-depositsmall-ico
+    outer:
+      serializedVersion: 2
+      x: 948
+      y: 327
+      width: 41
+      height: 30
+    inner:
+      serializedVersion: 2
+      x: 948
+      y: 327
+      width: 41
+      height: 30
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-cardpool-button-deposit
+    outer:
+      serializedVersion: 2
+      x: 829
+      y: 571
+      width: 46
+      height: 90
+    inner:
+      serializedVersion: 2
+      x: 838
+      y: 597
+      width: 9
+      height: 42
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-cardpool-button-withdraw
+    outer:
+      serializedVersion: 2
+      x: 881
+      y: 571
+      width: 46
+      height: 90
+    inner:
+      serializedVersion: 2
+      x: 887
+      y: 597
+      width: 14
+      height: 41
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-powerband-reload
+    outer:
+      serializedVersion: 2
+      x: 0
+      y: 297
+      width: 197
+      height: 199
+    inner:
+      serializedVersion: 2
+      x: 0
+      y: 297
+      width: 197
+      height: 199
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-army-tier-star
+    outer:
+      serializedVersion: 2
+      x: 949
+      y: 19
+      width: 30
+      height: 29
+    inner:
+      serializedVersion: 2
+      x: 949
+      y: 19
+      width: 30
+      height: 29
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-armypower-ico
+    outer:
+      serializedVersion: 2
+      x: 484
+      y: 8
+      width: 49
+      height: 61
+    inner:
+      serializedVersion: 2
+      x: 484
+      y: 8
+      width: 49
+      height: 61
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-deploy-ico
+    outer:
+      serializedVersion: 2
+      x: 912
+      y: 399
+      width: 54
+      height: 50
+    inner:
+      serializedVersion: 2
+      x: 912
+      y: 399
+      width: 54
+      height: 50
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-crown-bronze
+    outer:
+      serializedVersion: 2
+      x: 881
+      y: 101
+      width: 43
+      height: 40
+    inner:
+      serializedVersion: 2
+      x: 881
+      y: 101
+      width: 43
+      height: 40
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-crown-gold
+    outer:
+      serializedVersion: 2
+      x: 900
+      y: 55
+      width: 43
+      height: 40
+    inner:
+      serializedVersion: 2
+      x: 900
+      y: 55
+      width: 43
+      height: 40
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-crown-silver
+    outer:
+      serializedVersion: 2
+      x: 900
+      y: 9
+      width: 43
+      height: 40
+    inner:
+      serializedVersion: 2
+      x: 900
+      y: 9
+      width: 43
+      height: 40
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-arena-flawless-ico
+    outer:
+      serializedVersion: 2
+      x: 839
+      y: 147
+      width: 40
+      height: 46
+    inner:
+      serializedVersion: 2
+      x: 839
+      y: 147
+      width: 40
+      height: 46
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  mCoordinates: 0
+  mPixelSize: 1
+  mReplacement: {fileID: 0}
+  pngPath: GuiAtlasCommon
+  pngHalfPath: Assets/StreamingAssets/GuiAtlasCommonHalf.png
+  replaceTexture: {fileID: 2800000, guid: ccbf283ab8c25b241a2f53d50cda5008, type: 3}
+  useBinaryData: 0
+  textureWidth: 1024
+  textureHeight: 1024
 --- !u!1001 &100100000
 Prefab:
   serializedVersion: 2

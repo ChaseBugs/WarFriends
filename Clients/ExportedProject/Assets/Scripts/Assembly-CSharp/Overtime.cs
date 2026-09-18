@@ -1,63 +1,90 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
-public class Overtime : MonoBehaviour
+public class Overtime : GuiElementSingle<Overtime>
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public UISprite overtimeSprite;
 
-	1. No dll files were provided to AssetRipper.
+	public UISprite glow;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	private TweenAnimator mAnimator;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	private Vector3 mGlowSize = new Vector3(500f, 109f, 1f);
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	private bool mAnimationFinished;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public bool isAnimationFinished => mAnimationFinished;
 
-	3. Assembly Reconstruction has not been implemented.
+	public override void InitControls()
+	{
+		CheckOrCreateAnimator();
+		Singleton<GameController>.instance.GameStarted += OnGameStarted;
+		Singleton<MatchManager>.instance.OverTimeStarted += OnOverTimeStart;
+	}
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	private void OnGameStarted()
+	{
+		mAnimationFinished = false;
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	private void OnOverTimeStart()
+	{
+		mAnimationFinished = false;
+		mAnimator.PlayTweens();
+	}
 
-	4. This script is unnecessary.
+	public override void InitGUIValues()
+	{
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private void CheckOrCreateAnimator()
+	{
+		if (mAnimator == null)
+		{
+			mAnimator = base.gameObject.AddComponent<TweenAnimator>();
+			mAnimator.allTweens = new List<TweenAnimator.TweenRecord>();
+			AddAnimations();
+			TweenAnimator tweenAnimator = mAnimator;
+			tweenAnimator.TweenFinished = (Action<int>)Delegate.Combine(tweenAnimator.TweenFinished, new Action<int>(OnTweenFinished));
+		}
+	}
 
-	5. Script Content Level 0
+	private void OnTweenFinished(int tweenId)
+	{
+		if (tweenId == 14)
+		{
+			mAnimationFinished = true;
+		}
+	}
 
-		AssetRipper was set to not load any script information.
-
-	6. Cpp2IL failed to decompile Il2Cpp data
-
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	private void AddAnimations()
+	{
+		float num = 0.2f;
+		float num2 = 1f;
+		float time = 0.01f;
+		float time2 = 0.05f;
+		float delay = 0.05f;
+		Vector3 vector = new Vector3(mGlowSize.x * 6f, mGlowSize.y * 6f, 1f);
+		Vector3 vector2 = new Vector3(mGlowSize.x * 3f, 1f, 1f);
+		overtimeSprite.MakePixelPerfect();
+		Vector3 localScale = overtimeSprite.transform.localScale;
+		Vector3 vector3 = localScale * 1.2f;
+		vector3.z = 1f;
+		Vector3 vector4 = localScale * 1.1f;
+		vector4.z = 1f;
+		mAnimator.AddTween(1, TweenAnimator.TweenType.Alpha, glow.gameObject, time2, 1f, 0f, -1, 0f);
+		mAnimator.AddTween(from: Vector3.one, id: 2, tweenType: TweenAnimator.TweenType.Scale, tweenTarget: glow.gameObject, time: num * 3f, to: vector, delay: 0f);
+		mAnimator.AddTween(3, TweenAnimator.TweenType.Scale, glow.gameObject, num2 + num * 3f, vector2, 0f, 2);
+		mAnimator.AddTween(4, TweenAnimator.TweenType.Alpha, glow.gameObject, time2, 0f, 0f, 3);
+		mAnimator.AddTween(5, TweenAnimator.TweenType.Alpha, overtimeSprite.gameObject, time2, 1f, 0f, -1, 0f);
+		mAnimator.AddTween(from: Vector3.one, id: 6, tweenType: TweenAnimator.TweenType.Scale, tweenTarget: overtimeSprite.gameObject, time: num * 3f, to: vector3, delay: 0f, playAfterIdFinished: -1, method: UITweener.Method.Linear);
+		mAnimator.AddTween(7, TweenAnimator.TweenType.Scale, overtimeSprite.gameObject, num, vector4, 0f, 6, null, UITweener.Method.Linear);
+		mAnimator.AddTween(8, TweenAnimator.TweenType.Scale, overtimeSprite.gameObject, num2 + num * 2f, localScale, 0f, 7, null, UITweener.Method.Linear);
+		mAnimator.AddTween(10, TweenAnimator.TweenType.Alpha, overtimeSprite.gameObject, time, 0f, delay, 8);
+		mAnimator.AddTween(11, TweenAnimator.TweenType.Alpha, overtimeSprite.gameObject, time, 1f, delay, 10);
+		mAnimator.AddTween(12, TweenAnimator.TweenType.Alpha, overtimeSprite.gameObject, time, 0f, delay, 11);
+		mAnimator.AddTween(13, TweenAnimator.TweenType.Alpha, overtimeSprite.gameObject, time, 1f, delay, 12);
+		mAnimator.AddTween(14, TweenAnimator.TweenType.Alpha, overtimeSprite.gameObject, time, 0f, delay, 13);
+	}
 }

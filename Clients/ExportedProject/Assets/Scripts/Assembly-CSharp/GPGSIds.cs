@@ -1,63 +1,28 @@
-using UnityEngine;
-
-public class GPGSIds : MonoBehaviour
+public static class GPGSIds
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public const string achievement_complete_10_warpath_missions = "CgkI4b-wvsoJEAIQAg";
 
-	1. No dll files were provided to AssetRipper.
+	public const string achievement_deploy_10000_units = "CgkI4b-wvsoJEAIQBw";
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public const string achievement_win_50_ranked_player_vs_player_battles = "CgkI4b-wvsoJEAIQCQ";
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public const string achievement_complete_30_warpath_missions = "CgkI4b-wvsoJEAIQAw";
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public const string achievement_deploy_100_units = "CgkI4b-wvsoJEAIQBQ";
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public const string achievement_achieve_rank_5 = "CgkI4b-wvsoJEAIQCw";
 
-	3. Assembly Reconstruction has not been implemented.
+	public const string achievement_deploy_1000_units = "CgkI4b-wvsoJEAIQBg";
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public const string achievement_win_10_ranked_player_vs_player_battles = "CgkI4b-wvsoJEAIQCA";
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public const string achievement_win_100_ranked_player_vs_player_battles = "CgkI4b-wvsoJEAIQCg";
 
-	4. This script is unnecessary.
+	public const string achievement_achieve_rank_10 = "CgkI4b-wvsoJEAIQDA";
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public const string achievement_finish_bootcamp = "CgkI4b-wvsoJEAIQAQ";
 
-	5. Script Content Level 0
+	public const string achievement_complete_60_warpath_missions = "CgkI4b-wvsoJEAIQBA";
 
-		AssetRipper was set to not load any script information.
-
-	6. Cpp2IL failed to decompile Il2Cpp data
-
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public const string achievement_achieve_rank_15 = "CgkI4b-wvsoJEAIQDQ";
 }

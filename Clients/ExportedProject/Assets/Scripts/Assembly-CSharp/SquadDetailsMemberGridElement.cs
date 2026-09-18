@@ -1,63 +1,163 @@
+using System;
 using UnityEngine;
 
-public class SquadDetailsMemberGridElement : MonoBehaviour
+public class SquadDetailsMemberGridElement : PoolableObject
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Header("Left")]
+	public UISprite highlight;
 
-	1. No dll files were provided to AssetRipper.
+	public UILabel position;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public PlayerIcon avatar;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public GameObject playerIconButton;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public UISprite countryIcon;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public UISprite rankIcon;
 
-	3. Assembly Reconstruction has not been implemented.
+	public UILabel rankNumber;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public UITable nickTable;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public UILabel nickLabel;
 
-	4. This script is unnecessary.
+	public UISprite crownIcon;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public GameObject playerOnline;
 
-	5. Script Content Level 0
+	public GameObject playerButton;
 
-		AssetRipper was set to not load any script information.
+	public UILabel squadFunction;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	[Header("Right")]
+	public UILabel reputationPointsLabel;
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public UILabel squadPointsLabel;
 
-	7. An incorrect path was provided to AssetRipper.
+	public UILabel armyPowerLabel;
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	public UISprite leagueIcon;
 
-	*/
+	public UILabel medalsLabel;
+
+	private DatabasePlayer mSquadMember;
+
+	public void InitializeMember(DatabasePlayer squadMember, int pos)
+	{
+		mSquadMember = squadMember;
+		highlight.gameObject.SetActive(squadMember.id == GameLoginManager.currentPlayer.id);
+		avatar.Reset();
+		Singleton<PlayerTexturePool>.instance.OnPlayerTextureCreated -= OnPlayerTextureCreated;
+		Singleton<PlayerTexturePool>.instance.OnPlayerTextureCreated += OnPlayerTextureCreated;
+		Singleton<PlayerTexturePool>.instance.RequestPlayerTexture(squadMember);
+		position.text = MiscTools.FormatNumberToOrdinalPoint(pos);
+		LevelManager.GameLevel levelDefinition = LevelManager.instance.GetLevelDefinition(squadMember.level);
+		rankIcon.spriteName = levelDefinition.iconName;
+		rankIcon.MakePixelPerfect();
+		float multiplier = 50f / rankIcon.transform.localScale.x;
+		rankIcon.transform.localScale = rankIcon.transform.localScale.MultiplyXY(multiplier);
+		rankNumber.text = levelDefinition.displayString;
+		int num = 311;
+		WarArenaCrown warArenaCrown = squadMember.warArenaCrown;
+		bool flag = warArenaCrown != WarArenaCrown.None;
+		crownIcon.transform.parent.gameObject.SetActive(flag);
+		if (flag)
+		{
+			num -= 40;
+			crownIcon.spriteName = GameVariables.crownSprites[warArenaCrown];
+			crownIcon.MakePixelPerfect();
+			multiplier = Math.Min(30f / crownIcon.transform.localScale.x, 30f / crownIcon.transform.localScale.y);
+			crownIcon.transform.localScale = crownIcon.transform.localScale.MultiplyXY(multiplier);
+		}
+		bool flag2 = squadMember.GetRealStatus() != PlayerStatus.Offline;
+		playerOnline.SetActive(flag2);
+		if (flag2)
+		{
+			num -= 41;
+		}
+		nickLabel.text = squadMember.name;
+		TweenColor.Begin(nickLabel.gameObject, 0f, Color.white);
+		MiscTools.SetUILabelRescale(nickLabel, 33f, 20f, num);
+		nickTable.repositionNow = true;
+		string text = GameVariables.CountryCodeSpriteName(squadMember.country);
+		bool flag3 = !string.IsNullOrEmpty(text);
+		countryIcon.gameObject.SetActive(flag3);
+		if (flag3)
+		{
+			countryIcon.spriteName = text;
+		}
+		squadFunction.text = Localization.Localize(GameVariables.squadFunctions[squadMember.squadRank]);
+		reputationPointsLabel.text = MiscTools.FormatBigNumber(mSquadMember.reputation);
+		squadPointsLabel.text = MiscTools.FormatBigNumber(mSquadMember.squadPoints);
+		armyPowerLabel.text = MiscTools.FormatBigNumber(mSquadMember.armyPowerX10);
+		if (mSquadMember.isInBeginnersLeague)
+		{
+			leagueIcon.spriteName = Singleton<GameVariables>.instance.BeginnersLeagueIcon(mSquadMember.beginnersLeague);
+			leagueIcon.alpha = 1f;
+		}
+		else
+		{
+			bool flag4 = !mSquadMember.isInLeague;
+			League leagueTier = mSquadMember.leagueTier;
+			leagueIcon.spriteName = GameVariables.leagueNames[leagueTier].Value2;
+			leagueIcon.alpha = ((!flag4) ? 1f : 0.5f);
+		}
+		leagueIcon.MakePixelPerfect();
+		leagueIcon.transform.localScale = leagueIcon.transform.localScale.MultiplyXY(0.5f);
+		medalsLabel.text = MiscTools.FormatBigNumber(mSquadMember.skill);
+		UIEventListener uIEventListener = UIEventListener.Get(playerIconButton);
+		uIEventListener.onClick = (UIEventListener.VoidDelegate)Delegate.Remove(uIEventListener.onClick, new UIEventListener.VoidDelegate(ShowPlayerIcon));
+		UIEventListener uIEventListener2 = UIEventListener.Get(playerIconButton);
+		uIEventListener2.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener2.onClick, new UIEventListener.VoidDelegate(ShowPlayerIcon));
+		UIEventListener uIEventListener3 = UIEventListener.Get(playerButton);
+		uIEventListener3.onClick = (UIEventListener.VoidDelegate)Delegate.Remove(uIEventListener3.onClick, new UIEventListener.VoidDelegate(ShowPlayer));
+		UIEventListener uIEventListener4 = UIEventListener.Get(playerButton);
+		uIEventListener4.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener4.onClick, new UIEventListener.VoidDelegate(ShowPlayer));
+	}
+
+	private void ShowPlayer(GameObject go)
+	{
+		if (!string.IsNullOrEmpty(mSquadMember.name))
+		{
+			TweenColor tweenColor = TweenColor.Begin(nickLabel.gameObject, GameVariables.durationOfNameButtonColor, Color.white, Colours.blue);
+			tweenColor.NumOfRepetitions = 2;
+			tweenColor.style = UITweener.Style.PingPong;
+			SoundsManager.Instance.PlayButtonClickedSound();
+			GuiElementSingle<PlayerProfileDialog>.instance.ShowDialog(mSquadMember.name, mSquadMember.id, turnOffDragBackground: false);
+		}
+	}
+
+	private void ShowPlayerIcon(GameObject go)
+	{
+		if (!string.IsNullOrEmpty(mSquadMember.name))
+		{
+			SoundsManager.Instance.PlayButtonClickedSound();
+			GuiElementSingle<PlayerProfileDialog>.instance.ShowDialog(mSquadMember.name, mSquadMember.id, turnOffDragBackground: false);
+		}
+	}
+
+	private void OnPlayerTextureCreated(string playerID, Texture2D playerTexture, bool useBackground)
+	{
+		if (mSquadMember != null && mSquadMember.id == playerID)
+		{
+			avatar.avatar = playerTexture;
+			avatar.UpdateIcon();
+		}
+	}
+
+	public override void DestroyPooled()
+	{
+		base.DestroyPooled();
+		UIEventListener uIEventListener = UIEventListener.Get(playerIconButton);
+		uIEventListener.onClick = (UIEventListener.VoidDelegate)Delegate.Remove(uIEventListener.onClick, new UIEventListener.VoidDelegate(ShowPlayerIcon));
+		UIEventListener uIEventListener2 = UIEventListener.Get(playerButton);
+		uIEventListener2.onClick = (UIEventListener.VoidDelegate)Delegate.Remove(uIEventListener2.onClick, new UIEventListener.VoidDelegate(ShowPlayer));
+		Singleton<PlayerTexturePool>.instance.OnPlayerTextureCreated -= OnPlayerTextureCreated;
+		if (mSquadMember != null)
+		{
+			Singleton<PlayerTexturePool>.instance.FreePlayerTexture(mSquadMember.id);
+		}
+		mSquadMember = null;
+	}
 }

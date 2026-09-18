@@ -1,66 +1,359 @@
-using UnityEngine;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Text;
+using System.Threading;
+using BestHTTP.Extensions;
+using BestHTTP.WebSocket.Frames;
 
 namespace BestHTTP.WebSocket
 {
-	public class WebSocketResponse : MonoBehaviour
+public sealed class WebSocketResponse : HTTPResponse, IHeartbeat, IProtocol
+{
+	public Action<WebSocketResponse, string> OnText;
+
+	public Action<WebSocketResponse, byte[]> OnBinary;
+
+	public Action<WebSocketResponse, WebSocketFrameReader> OnIncompleteFrame;
+
+	public Action<WebSocketResponse, ushort, string> OnClosed;
+
+	private List<WebSocketFrameReader> IncompleteFrames = new List<WebSocketFrameReader>();
+
+	private List<WebSocketFrameReader> CompletedFrames = new List<WebSocketFrameReader>();
+
+	private WebSocketFrameReader CloseFrame;
+
+	private object FrameLock = new object();
+
+	private object SendLock = new object();
+
+	private bool closeSent;
+
+	private bool closed;
+
+	private DateTime lastPing = DateTime.MinValue;
+
+	public WebSocket WebSocket { get; internal set; }
+
+	public bool IsClosed => closed;
+
+	public TimeSpan PingFrequnecy { get; private set; }
+
+	public ushort MaxFragmentSize { get; private set; }
+
+	internal WebSocketResponse(HTTPRequest request, Stream stream, bool isStreamed, bool isFromCache)
+		: base(request, stream, isStreamed, isFromCache)
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
+		base.IsClosedManually = true;
+		closed = false;
+		MaxFragmentSize = 32767;
 	}
+
+	void IProtocol.HandleEvents()
+	{
+		lock (FrameLock)
+		{
+			for (int i = 0; i < CompletedFrames.Count; i++)
+			{
+				WebSocketFrameReader webSocketFrameReader = CompletedFrames[i];
+				try
+				{
+					switch (webSocketFrameReader.Type)
+					{
+					case WebSocketFrameTypes.Continuation:
+						if (OnIncompleteFrame != null)
+						{
+							OnIncompleteFrame(this, webSocketFrameReader);
+						}
+						break;
+					case WebSocketFrameTypes.Text:
+						if (!webSocketFrameReader.IsFinal)
+						{
+							goto case WebSocketFrameTypes.Continuation;
+						}
+						if (OnText != null)
+						{
+							OnText(this, Encoding.UTF8.GetString(webSocketFrameReader.Data, 0, webSocketFrameReader.Data.Length));
+						}
+						break;
+					case WebSocketFrameTypes.Binary:
+						if (!webSocketFrameReader.IsFinal)
+						{
+							goto case WebSocketFrameTypes.Continuation;
+						}
+						if (OnBinary != null)
+						{
+							OnBinary(this, webSocketFrameReader.Data);
+						}
+						break;
+					}
+				}
+				catch (Exception ex)
+				{
+					HTTPManager.Logger.Exception("WebSocketResponse", "HandleEvents", ex);
+				}
+			}
+			CompletedFrames.Clear();
+		}
+		if (!IsClosed || OnClosed == null || baseRequest.State != HTTPRequestStates.Processing)
+		{
+			return;
+		}
+		try
+		{
+			ushort arg = 0;
+			string arg2 = string.Empty;
+			if (CloseFrame != null && CloseFrame.Data != null && CloseFrame.Data.Length >= 2)
+			{
+				if (BitConverter.IsLittleEndian)
+				{
+					Array.Reverse(CloseFrame.Data, 0, 2);
+				}
+				arg = BitConverter.ToUInt16(CloseFrame.Data, 0);
+				if (CloseFrame.Data.Length > 2)
+				{
+					arg2 = Encoding.UTF8.GetString(CloseFrame.Data, 2, CloseFrame.Data.Length - 2);
+				}
+			}
+			OnClosed(this, arg, arg2);
+		}
+		catch (Exception ex2)
+		{
+			HTTPManager.Logger.Exception("WebSocketResponse", "HandleEvents - OnClosed", ex2);
+		}
+	}
+
+	void IHeartbeat.OnHeartbeatUpdate(TimeSpan dif)
+	{
+		if (lastPing == DateTime.MinValue)
+		{
+			lastPing = DateTime.UtcNow;
+		}
+		else if (DateTime.UtcNow - lastPing >= PingFrequnecy)
+		{
+			Send(new WebSocketFrame(WebSocket, WebSocketFrameTypes.Ping, Encoding.UTF8.GetBytes(string.Empty)));
+			lastPing = DateTime.UtcNow;
+		}
+	}
+
+	internal void StartReceive()
+	{
+		if (base.IsUpgraded)
+		{
+			new Thread(ReceiveThreadFunc).Start();
+		}
+	}
+
+	public void Send(string message)
+	{
+		if (message == null)
+		{
+			throw new ArgumentNullException("message must not be null!");
+		}
+		byte[] bytes = Encoding.UTF8.GetBytes(message);
+		Send(new WebSocketFrame(WebSocket, WebSocketFrameTypes.Text, bytes));
+	}
+
+	public void Send(byte[] data)
+	{
+		if (data == null)
+		{
+			throw new ArgumentNullException("data must not be null!");
+		}
+		WebSocketFrame webSocketFrame = new WebSocketFrame(WebSocket, WebSocketFrameTypes.Binary, data);
+		if (webSocketFrame.Data != null && webSocketFrame.Data.Length > MaxFragmentSize)
+		{
+			WebSocketFrame[] array = webSocketFrame.Fragment(MaxFragmentSize);
+			lock (SendLock)
+			{
+				Send(webSocketFrame);
+				if (array != null)
+				{
+					for (int i = 0; i < array.Length; i++)
+					{
+						Send(array[i]);
+					}
+				}
+				return;
+			}
+		}
+		Send(webSocketFrame);
+	}
+
+	public void Send(byte[] data, ulong offset, ulong count)
+	{
+		if (data == null)
+		{
+			throw new ArgumentNullException("data must not be null!");
+		}
+		if (offset + count > (ulong)data.Length)
+		{
+			throw new ArgumentOutOfRangeException("offset + count >= data.Length");
+		}
+		WebSocketFrame webSocketFrame = new WebSocketFrame(WebSocket, WebSocketFrameTypes.Binary, data, offset, count, isFinal: true, useExtensions: true);
+		if (webSocketFrame.Data != null && webSocketFrame.Data.Length > MaxFragmentSize)
+		{
+			WebSocketFrame[] array = webSocketFrame.Fragment(MaxFragmentSize);
+			lock (SendLock)
+			{
+				Send(webSocketFrame);
+				if (array != null)
+				{
+					for (int i = 0; i < array.Length; i++)
+					{
+						Send(array[i]);
+					}
+				}
+				return;
+			}
+		}
+		Send(webSocketFrame);
+	}
+
+	public void Send(WebSocketFrame frame)
+	{
+		if (frame == null)
+		{
+			throw new ArgumentNullException("frame is null!");
+		}
+		if (closed)
+		{
+			return;
+		}
+		byte[] array = frame.Get();
+		lock (SendLock)
+		{
+			Stream.Write(array, 0, array.Length);
+			Stream.Flush();
+			if (frame.Type == WebSocketFrameTypes.ConnectionClose)
+			{
+				closeSent = true;
+			}
+		}
+	}
+
+	public void Close()
+	{
+		Close(1000, "Bye!");
+	}
+
+	public void Close(ushort code, string msg)
+	{
+		if (!closed)
+		{
+			Send(new WebSocketFrame(WebSocket, WebSocketFrameTypes.ConnectionClose, WebSocket.EncodeCloseData(code, msg)));
+		}
+	}
+
+	public void StartPinging(int frequency)
+	{
+		if (frequency < 100)
+		{
+			throw new ArgumentException("frequency must be at least 100 millisec!");
+		}
+		PingFrequnecy = TimeSpan.FromMilliseconds(frequency);
+		HTTPManager.Heartbeats.Subscribe(this);
+	}
+
+	private void ReceiveThreadFunc(object param)
+	{
+		try
+		{
+			while (!closed)
+			{
+				try
+				{
+					WebSocketFrameReader webSocketFrameReader = new WebSocketFrameReader();
+					webSocketFrameReader.Read(Stream);
+					if (webSocketFrameReader.HasMask)
+					{
+						Close(1002, "Protocol Error: masked frame received from server!");
+						continue;
+					}
+					if (!webSocketFrameReader.IsFinal)
+					{
+						if (OnIncompleteFrame == null)
+						{
+							IncompleteFrames.Add(webSocketFrameReader);
+							continue;
+						}
+						lock (FrameLock)
+						{
+							CompletedFrames.Add(webSocketFrameReader);
+						}
+						continue;
+					}
+					switch (webSocketFrameReader.Type)
+					{
+					case WebSocketFrameTypes.Continuation:
+						if (OnIncompleteFrame == null)
+						{
+							webSocketFrameReader.Assemble(IncompleteFrames);
+							webSocketFrameReader.DecodeWithExtensions(WebSocket);
+							IncompleteFrames.Clear();
+							goto case WebSocketFrameTypes.Text;
+						}
+						lock (FrameLock)
+						{
+							CompletedFrames.Add(webSocketFrameReader);
+						}
+						break;
+					case WebSocketFrameTypes.Text:
+					case WebSocketFrameTypes.Binary:
+						webSocketFrameReader.DecodeWithExtensions(WebSocket);
+						lock (FrameLock)
+						{
+							CompletedFrames.Add(webSocketFrameReader);
+						}
+						break;
+					case WebSocketFrameTypes.Ping:
+						if (!closeSent && !closed)
+						{
+							Send(new WebSocketFrame(WebSocket, WebSocketFrameTypes.Pong, webSocketFrameReader.Data));
+						}
+						break;
+					case WebSocketFrameTypes.ConnectionClose:
+						CloseFrame = webSocketFrameReader;
+						if (!closeSent)
+						{
+							Send(new WebSocketFrame(WebSocket, WebSocketFrameTypes.ConnectionClose, null));
+						}
+						closed = closeSent;
+						break;
+					case (WebSocketFrameTypes)3:
+					case (WebSocketFrameTypes)4:
+					case (WebSocketFrameTypes)5:
+					case (WebSocketFrameTypes)6:
+					case (WebSocketFrameTypes)7:
+						break;
+					}
+				}
+				catch (ThreadAbortException)
+				{
+					IncompleteFrames.Clear();
+					baseRequest.State = HTTPRequestStates.Aborted;
+					closed = true;
+				}
+				catch (Exception exception)
+				{
+					if (HTTPUpdateDelegator.IsCreated)
+					{
+						baseRequest.Exception = exception;
+						baseRequest.State = HTTPRequestStates.Error;
+					}
+					else
+					{
+						baseRequest.State = HTTPRequestStates.Aborted;
+					}
+					closed = true;
+				}
+			}
+		}
+		finally
+		{
+			HTTPManager.Heartbeats.Unsubscribe(this);
+		}
+	}
+}
 }

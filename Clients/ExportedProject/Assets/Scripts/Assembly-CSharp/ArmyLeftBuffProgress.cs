@@ -1,63 +1,135 @@
+using System;
 using UnityEngine;
 
-public class ArmyLeftBuffProgress : MonoBehaviour
+public class ArmyLeftBuffProgress : Core_BaseScript
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Header("-Core")]
+	[SerializeField]
+	private UISprite mProgressBackground;
 
-	1. No dll files were provided to AssetRipper.
+	[SerializeField]
+	private UISprite mEliteIcon;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	[SerializeField]
+	private UILabel mProgressLabel;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	[SerializeField]
+	private UISprite mFlash;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	private LevelBehaviour mUnit;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	private int mCurrentParts;
 
-	3. Assembly Reconstruction has not been implemented.
+	private int mUpgradeCostParts;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	private bool mAnimatingSpend;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	private float mDuration;
 
-	4. This script is unnecessary.
+	private float mTimeOfAnimation;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public bool isAnimatingSpend => mAnimatingSpend;
 
-	5. Script Content Level 0
+	public void Initialize(LevelBehaviour unit)
+	{
+		mUnit = unit;
+		UpgradeSlotElite upgradeSlotElite = mUnit.upgradeSlots.upgradeSlotElite;
+		bool isUnlocked = upgradeSlotElite.isUnlocked;
+		int num = (isUnlocked ? upgradeSlotElite.boughtIndex : 0);
+		int num2 = (isUnlocked ? upgradeSlotElite.actualMaxLevel : 0);
+		bool flag = isUnlocked && num == num2;
+		mCurrentParts = upgradeSlotElite.currentParts;
+		mUpgradeCostParts = upgradeSlotElite.upgradePriceParts;
+		float progress = upgradeSlotElite.progress;
+		mEliteIcon.spriteName = mUnit.upgradeSlots.iconNameElite;
+		mEliteIcon.MakePixelPerfect();
+		if (mUnit.isSoldier)
+		{
+			mEliteIcon.pivot = UIWidget.Pivot.Bottom;
+			mEliteIcon.transform.localPosition = mEliteIcon.transform.localPosition.ReplaceY(-56f);
+			float multiplier = 120f / mEliteIcon.transform.localScale.y;
+			mEliteIcon.transform.localScale = mEliteIcon.transform.localScale.MultiplyXY(multiplier);
+		}
+		else
+		{
+			mEliteIcon.pivot = UIWidget.Pivot.Center;
+			mEliteIcon.transform.localPosition = mEliteIcon.transform.localPosition.ReplaceY(0f);
+			float multiplier2 = Mathf.Min(174f / mEliteIcon.transform.localScale.x, 110f / mEliteIcon.transform.localScale.y);
+			mEliteIcon.transform.localScale = mEliteIcon.transform.localScale.MultiplyXY(multiplier2);
+		}
+		mProgressBackground.fillAmount = ((!flag) ? progress : 1f);
+		mProgressLabel.text = ((!flag) ? $"{Colours.stringGreenArena}{MiscTools.FormatBigNumber(mCurrentParts)}[-] {Colours.stringGray}/[-] {MiscTools.FormatBigNumber(mUpgradeCostParts)}" : $"{Colours.stringGreenArena}{MiscTools.FormatBigNumber(mCurrentParts)}[-]");
+		bool animate = isUnlocked && !flag && mCurrentParts >= mUpgradeCostParts;
+		PulsateProgressBar(animate);
+		FinishAnimations();
+	}
 
-		AssetRipper was set to not load any script information.
+	public void AnimateSpend(float duration)
+	{
+		mAnimatingSpend = true;
+		mDuration = duration;
+		mTimeOfAnimation = 0f;
+		PulsateProgressBar(animate: false);
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	private void PulsateProgressBar(bool animate)
+	{
+		if (animate)
+		{
+			TweenAlpha tweenAlpha = TweenAlpha.Begin(mProgressBackground.gameObject, 0.4f, 0.258f, 0.656f);
+			tweenAlpha.style = UITweener.Style.PingPong;
+			tweenAlpha.NumOfRepetitions = 0;
+		}
+		else
+		{
+			TweenAlpha tweenAlpha2 = TweenAlpha.Begin(mProgressBackground.gameObject, 0.1f, 0.258f);
+			tweenAlpha2.style = UITweener.Style.Once;
+			tweenAlpha2.NumOfRepetitions = 1;
+		}
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	private void FinishAnimations()
+	{
+		mAnimatingSpend = false;
+		TweenAlpha component = mFlash.GetComponent<TweenAlpha>();
+		if (component != null)
+		{
+			component.enabled = false;
+		}
+		mFlash.alpha = 0f;
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	private float EaseInOutValue(float value)
+	{
+		value -= Mathf.Sin(value * ((float)Math.PI * 2f)) / ((float)Math.PI * 2f);
+		return value;
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	private void Update()
+	{
+		if (!mAnimatingSpend)
+		{
+			return;
+		}
+		mTimeOfAnimation += Time.deltaTime;
+		if (mTimeOfAnimation < mDuration)
+		{
+			float num = EaseInOutValue(Mathf.Clamp01(mTimeOfAnimation / mDuration));
+			int currentParts = mUnit.upgradeSlots.upgradeSlotElite.currentParts;
+			int num2 = currentParts + Mathf.RoundToInt((1f - num) * (float)(mCurrentParts - currentParts));
+			mProgressBackground.fillAmount = (float)num2 / (float)mUpgradeCostParts;
+			mProgressLabel.text = $"{Colours.stringGreenArena}{MiscTools.FormatBigNumber(num2)}[-] {Colours.stringGray}/[-] {MiscTools.FormatBigNumber(mUpgradeCostParts)}";
+		}
+		else
+		{
+			mAnimatingSpend = false;
+			TweenAlpha tweenAlpha = TweenAlpha.Begin(mFlash.gameObject, 0.02f, 0f, 1f);
+			tweenAlpha.onFinished = delegate
+			{
+				GuiScreenSingle<ArmyScreen>.instance.armyLeftContent.leftButton.buffDialog.UpdateLeftContent();
+				mFlash.alpha = 1f;
+				TweenAlpha.Begin(mFlash.gameObject, 0.2f, 1f, 0f).onFinished = null;
+			};
+		}
+	}
 }

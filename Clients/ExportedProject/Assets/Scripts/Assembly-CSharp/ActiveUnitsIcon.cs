@@ -1,63 +1,215 @@
 using UnityEngine;
 
-public class ActiveUnitsIcon : MonoBehaviour
+public class ActiveUnitsIcon : Core_BaseScript
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Header("Core")]
+	public BoxCollider boxCollider;
 
-	1. No dll files were provided to AssetRipper.
+	public UISprite background;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public UISprite highlight;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public UISprite unitIcon;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public UIPanel panel;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public UISprite mechanicalIcon;
 
-	3. Assembly Reconstruction has not been implemented.
+	public UISprite lockedIcon;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public GameObject rentedPart;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public UISprite[] tierIcons;
 
-	4. This script is unnecessary.
+	[Header("Army Power Animation")]
+	public ArmyPowerAnimation armyPowerAnimation;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private LevelBehaviour mUnit;
 
-	5. Script Content Level 0
+	private ActiveUnitsManager.ActiveUnitState mState;
 
-		AssetRipper was set to not load any script information.
+	private Vector3 mHighlightOriginalScale = new Vector3(188f, 142f, 1f);
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	private Vector3 mHighlightBigScale = new Vector3(225.6f, 170.40001f, 1f);
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public LevelBehaviour unit => mUnit;
 
-	7. An incorrect path was provided to AssetRipper.
+	public ActiveUnitsManager.ActiveUnitState state => mState;
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	public void Initialize(LevelBehaviour unit)
+	{
+		mUnit = unit;
+		unitIcon.spriteName = unit.upgradeSlots.iconName;
+		unitIcon.MakePixelPerfect();
+		unitIcon.transform.localScale = unitIcon.transform.localScale.MultiplyXY(0.5f);
+		mechanicalIcon.gameObject.SetActive(!unit.isSoldier);
+		UpdateTiers();
+	}
 
-	*/
+	public void SetMechanical(bool canBeChoosed)
+	{
+		bool flag = mState == ActiveUnitsManager.ActiveUnitState.Selected || mState == ActiveUnitsManager.ActiveUnitState.Deselecting || canBeChoosed;
+		mechanicalIcon.color = ((!flag) ? Color.red : Color.white);
+	}
+
+	public void UpdateState()
+	{
+		SetState(Singleton<ActiveUnitsManager>.instance.GetState(mUnit, inMenu: true));
+	}
+
+	public void UpdateTiers()
+	{
+		for (int i = 0; i < tierIcons.Length; i++)
+		{
+			tierIcons[i].gameObject.SetActive(i < mUnit.upgradeSlots.actualTier);
+		}
+	}
+
+	public void Show()
+	{
+		panel.alpha1 = 0.005f;
+		TweenAlpha.Begin(panel.gameObject, GuiElementSingle<ChatGuiElement>.instance.duration, 1f);
+	}
+
+	public void Hide()
+	{
+		TweenAlpha.Begin(panel.gameObject, GuiElementSingle<ChatGuiElement>.instance.duration, 0f);
+	}
+
+	private void SetState(ActiveUnitsManager.ActiveUnitState state)
+	{
+		if (mState != ActiveUnitsManager.ActiveUnitState.Deselecting && state == ActiveUnitsManager.ActiveUnitState.Deselecting)
+		{
+			StartPulse();
+		}
+		if (state == ActiveUnitsManager.ActiveUnitState.Selectable)
+		{
+			StartPulse();
+		}
+		if (mState == ActiveUnitsManager.ActiveUnitState.Deselecting && state != ActiveUnitsManager.ActiveUnitState.Deselecting)
+		{
+			StopPulse();
+		}
+		if (mState == ActiveUnitsManager.ActiveUnitState.Selectable && state != ActiveUnitsManager.ActiveUnitState.Selectable)
+		{
+			StopPulse();
+		}
+		if (state == ActiveUnitsManager.ActiveUnitState.Selected && mState != ActiveUnitsManager.ActiveUnitState.Selected && mState != ActiveUnitsManager.ActiveUnitState.Deselecting)
+		{
+			AnimateSelect();
+		}
+		mState = state;
+		boxCollider.enabled = mState == ActiveUnitsManager.ActiveUnitState.Selectable || (mState == ActiveUnitsManager.ActiveUnitState.NotSelected && (!Singleton<ActiveUnitsManager>.instance.selectingUnit || mUnit.unitType != Singleton<ActiveUnitsManager>.instance.unitToEquip.unitType)) || mState == ActiveUnitsManager.ActiveUnitState.Deselecting || mState == ActiveUnitsManager.ActiveUnitState.Selecting || mState == ActiveUnitsManager.ActiveUnitState.Selected;
+		lockedIcon.gameObject.SetActive(mState == ActiveUnitsManager.ActiveUnitState.Locked);
+		unitIcon.alpha = ((mState != ActiveUnitsManager.ActiveUnitState.Locked) ? 1f : 0.5f);
+		rentedPart.SetActive(mState == ActiveUnitsManager.ActiveUnitState.Borrowed);
+		if (mState == ActiveUnitsManager.ActiveUnitState.Selected || mState == ActiveUnitsManager.ActiveUnitState.Borrowed)
+		{
+			background.color = Colours.blue;
+			highlight.color = Colours.blue;
+		}
+		else if (mState == ActiveUnitsManager.ActiveUnitState.NotSelected)
+		{
+			background.color = GameVariables.unitCategory[mUnit.unitType].Value2;
+			background.alpha = 0.25f;
+			highlight.color = Colours.whiteTransparent;
+		}
+		else if (mState == ActiveUnitsManager.ActiveUnitState.Selecting)
+		{
+			background.color = Colours.gray;
+			highlight.color = Colours.gray;
+		}
+		else if (mState == ActiveUnitsManager.ActiveUnitState.Deselecting)
+		{
+			background.color = Colours.blue;
+			highlight.color = Color.white;
+		}
+		else if (mState == ActiveUnitsManager.ActiveUnitState.Selectable)
+		{
+			background.color = Color.white;
+			highlight.color = Color.white;
+			highlight.alpha = 0.25f;
+		}
+		else
+		{
+			background.color = Colours.whiteTransparent;
+			highlight.color = Colours.whiteTransparent;
+		}
+	}
+
+	public void ClickOnIcon(GameObject go)
+	{
+		ActiveUnitsManager.ActiveUnitState activeUnitState = mState;
+		int fakeArmyPowerX = Singleton<ActiveUnitsManager>.instance.fakeArmyPowerX10;
+		GuiElementSingle<ChatGuiElement>.instance.activeUnitsContent.Select(mUnit);
+		if (activeUnitState == ActiveUnitsManager.ActiveUnitState.NotSelected)
+		{
+			GuiElementSingle<ChatGuiElement>.instance.activeUnitsContent.recordToSelect = this;
+		}
+		SoundsManager.Instance.PlayButtonClickedSound();
+		if (activeUnitState == ActiveUnitsManager.ActiveUnitState.Selectable && mState != ActiveUnitsManager.ActiveUnitState.Selectable)
+		{
+			int fakeArmyPowerX2 = Singleton<ActiveUnitsManager>.instance.fakeArmyPowerX10;
+			int changeNumber = fakeArmyPowerX2 - fakeArmyPowerX;
+			armyPowerAnimation.StartAnimation(changeNumber, fakeArmyPowerX2, 0.05f);
+			return;
+		}
+		switch (activeUnitState)
+		{
+		case ActiveUnitsManager.ActiveUnitState.Selected:
+		{
+			int fakeArmyPowerX4 = Singleton<ActiveUnitsManager>.instance.fakeArmyPowerX10;
+			int changeNumber3 = fakeArmyPowerX4 - fakeArmyPowerX;
+			armyPowerAnimation.StartAnimation(changeNumber3, fakeArmyPowerX4, 0.05f);
+			break;
+		}
+		case ActiveUnitsManager.ActiveUnitState.Deselecting:
+		{
+			int fakeArmyPowerX3 = Singleton<ActiveUnitsManager>.instance.fakeArmyPowerX10;
+			int changeNumber2 = fakeArmyPowerX3 - fakeArmyPowerX;
+			GuiElementSingle<ChatGuiElement>.instance.activeUnitsContent.recordToSelect.armyPowerAnimation.StartAnimation(changeNumber2, fakeArmyPowerX3, 0.05f);
+			break;
+		}
+		}
+	}
+
+	private void StartPulse()
+	{
+		TweenScale component = highlight.gameObject.GetComponent<TweenScale>();
+		if (component != null)
+		{
+			component.enabled = false;
+		}
+		highlight.transform.localScale = mHighlightOriginalScale;
+		TweenAlpha tweenAlpha = TweenAlpha.Begin(highlight.gameObject, 0.5f, 1f, 0.5f);
+		tweenAlpha.NumOfRepetitions = 0;
+		tweenAlpha.style = UITweener.Style.PingPong;
+		tweenAlpha.method = UITweener.Method.Linear;
+	}
+
+	private void StopPulse()
+	{
+		TweenAlpha component = highlight.gameObject.GetComponent<TweenAlpha>();
+		if (component != null)
+		{
+			component.enabled = false;
+		}
+		TweenScale component2 = highlight.gameObject.GetComponent<TweenScale>();
+		if (component2 != null)
+		{
+			component2.enabled = false;
+		}
+		highlight.alpha = 1f;
+		highlight.transform.localScale = mHighlightOriginalScale;
+	}
+
+	private void AnimateSelect()
+	{
+		float duration = 0.4f;
+		TweenAlpha tweenAlpha = TweenAlpha.Begin(highlight.gameObject, duration, 0f, 1f);
+		tweenAlpha.style = UITweener.Style.Once;
+		tweenAlpha.NumOfRepetitions = 1;
+		tweenAlpha.method = UITweener.Method.EaseInOut;
+		TweenScale.Begin(highlight.gameObject, duration, mHighlightBigScale, mHighlightOriginalScale);
+	}
 }

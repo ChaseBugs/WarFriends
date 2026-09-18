@@ -1,63 +1,192 @@
-using UnityEngine;
+using System;
+using System.IO;
+using System.Threading;
+using BestHTTP;
 
-public class UploadStream : MonoBehaviour
+public sealed class UploadStream : Stream
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	private MemoryStream ReadBuffer = new MemoryStream();
 
-	1. No dll files were provided to AssetRipper.
+	private MemoryStream WriteBuffer = new MemoryStream();
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	private bool noMoreData;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	private AutoResetEvent ARE = new AutoResetEvent(initialState: false);
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	private object locker = new object();
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public string Name { get; private set; }
 
-	3. Assembly Reconstruction has not been implemented.
+	private bool IsReadBufferEmpty
+	{
+		get
+		{
+			lock (locker)
+			{
+				return ReadBuffer.Position == ReadBuffer.Length;
+			}
+		}
+	}
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public override bool CanRead
+	{
+		get
+		{
+			throw new NotImplementedException();
+		}
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public override bool CanSeek
+	{
+		get
+		{
+			throw new NotImplementedException();
+		}
+	}
 
-	4. This script is unnecessary.
+	public override bool CanWrite
+	{
+		get
+		{
+			throw new NotImplementedException();
+		}
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public override long Length
+	{
+		get
+		{
+			throw new NotImplementedException();
+		}
+	}
 
-	5. Script Content Level 0
+	public override long Position
+	{
+		get
+		{
+			throw new NotImplementedException();
+		}
+		set
+		{
+			throw new NotImplementedException();
+		}
+	}
 
-		AssetRipper was set to not load any script information.
+	public UploadStream(string name)
+		: this()
+	{
+		Name = name;
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public UploadStream()
+	{
+		ReadBuffer = new MemoryStream();
+		WriteBuffer = new MemoryStream();
+		Name = string.Empty;
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public override int Read(byte[] buffer, int offset, int count)
+	{
+		if (noMoreData)
+		{
+			if (ReadBuffer.Position != ReadBuffer.Length)
+			{
+				return ReadBuffer.Read(buffer, offset, count);
+			}
+			if (WriteBuffer.Length <= 0)
+			{
+				HTTPManager.Logger.Information("UploadStream", $"{Name} - Read - End Of Stream");
+				return -1;
+			}
+			SwitchBuffers();
+		}
+		if (IsReadBufferEmpty)
+		{
+			ARE.WaitOne();
+			lock (locker)
+			{
+				if (IsReadBufferEmpty && WriteBuffer.Length > 0)
+				{
+					SwitchBuffers();
+				}
+			}
+		}
+		int num = -1;
+		lock (locker)
+		{
+			return ReadBuffer.Read(buffer, offset, count);
+		}
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	public override void Write(byte[] buffer, int offset, int count)
+	{
+		if (noMoreData)
+		{
+			throw new ArgumentException("noMoreData already set!");
+		}
+		lock (locker)
+		{
+			WriteBuffer.Write(buffer, offset, count);
+			SwitchBuffers();
+		}
+		ARE.Set();
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	public override void Flush()
+	{
+		Finish();
+	}
 
-	*/
+	protected override void Dispose(bool disposing)
+	{
+		if (disposing)
+		{
+			HTTPManager.Logger.Information("UploadStream", $"{Name} - Dispose");
+			ReadBuffer.Dispose();
+			ReadBuffer = null;
+			WriteBuffer.Dispose();
+			WriteBuffer = null;
+			ARE.Close();
+			ARE = null;
+		}
+		base.Dispose(disposing);
+	}
+
+	public void Finish()
+	{
+		if (noMoreData)
+		{
+			throw new ArgumentException("noMoreData already set!");
+		}
+		HTTPManager.Logger.Information("UploadStream", $"{Name} - Finish");
+		noMoreData = true;
+		ARE.Set();
+	}
+
+	private bool SwitchBuffers()
+	{
+		lock (locker)
+		{
+			if (ReadBuffer.Position == ReadBuffer.Length)
+			{
+				WriteBuffer.Seek(0L, SeekOrigin.Begin);
+				ReadBuffer.SetLength(0L);
+				MemoryStream writeBuffer = WriteBuffer;
+				WriteBuffer = ReadBuffer;
+				ReadBuffer = writeBuffer;
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public override long Seek(long offset, SeekOrigin origin)
+	{
+		throw new NotImplementedException();
+	}
+
+	public override void SetLength(long value)
+	{
+		throw new NotImplementedException();
+	}
 }

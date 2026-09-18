@@ -1,63 +1,127 @@
+using System;
 using UnityEngine;
 
-public class RenameDialog : MonoBehaviour
+public class RenameDialog : GuiElementSingle<RenameDialog>, IGuiDialog
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Header("Core")]
+	public UIInput nickInput;
 
-	1. No dll files were provided to AssetRipper.
+	public UILabel errorLabel;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public UIButton closeButton;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	[Header("Rename Button")]
+	public UIButton renameButton;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public UILabel renameLabel;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public GameObject renamePriceBox;
 
-	3. Assembly Reconstruction has not been implemented.
+	public UITable renameTable;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public UILabel renameGoldPrice;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public override void InitEvents()
+	{
+	}
 
-	4. This script is unnecessary.
+	public override void InitControls()
+	{
+		UIEventListener uIEventListener = UIEventListener.Get(closeButton.gameObject);
+		uIEventListener.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener.onClick, new UIEventListener.VoidDelegate(CloseDialog));
+		UIEventListener uIEventListener2 = UIEventListener.Get(renameButton.gameObject);
+		uIEventListener2.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener2.onClick, new UIEventListener.VoidDelegate(CreateButtonClick));
+		GameLoginManager.instance.DeviceRegistered += InstanceOnDeviceRegistered;
+		nickInput.maxChars = DatabasePlayer.maxPlayerName;
+		renameTable.onReposition = delegate
+		{
+			float val = 0f - renameTable.padding.x - (renameGoldPrice.transform.parent.transform.localPosition.x - renameTable.padding.x) / 2f;
+			renameTable.transform.localPosition = renameTable.transform.localPosition.ReplaceX(val);
+		};
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private void CloseDialog(GameObject go)
+	{
+		if (base.isFullyShowed)
+		{
+			HideDialog();
+		}
+	}
 
-	5. Script Content Level 0
+	private void CreateButtonClick(GameObject go)
+	{
+		if (!base.isFullyShowed)
+		{
+			return;
+		}
+		errorLabel.gameObject.SetActive(value: false);
+		if (string.IsNullOrEmpty(nickInput.text))
+		{
+			errorLabel.gameObject.SetActive(value: true);
+			errorLabel.text = Localization.Localize("ID_ERRORNONICK");
+			return;
+		}
+		if (nickInput.text.Length < 4)
+		{
+			errorLabel.gameObject.SetActive(value: true);
+			errorLabel.text = Localization.Localize("ID_ERRORSHORTNICK");
+			return;
+		}
+		if (Singleton<Chat>.instance.ContainsBadWord(nickInput.text))
+		{
+			errorLabel.gameObject.SetActive(value: true);
+			errorLabel.text = Localization.Localize("ID_ERRORPROFANITYNICK");
+			return;
+		}
+		if (GameLoginManager.instance.data.isDeviceRegistered)
+		{
+			Debug.Log("Rename Cost Gold = " + PlayerAnalytics.instance.renameGoldPrice);
+			if (!Singleton<Wallet>.instance.CanBuyGold(PlayerAnalytics.instance.renameGoldPrice))
+			{
+				HideDialog();
+				GuiElementSingle<SettingsDialog>.instance.HideDialog();
+				GuiElementSingle<NotEnoughDialog>.instance.ShowGold(PlayerAnalytics.instance.renameGoldPrice, Localization.Localize("ID_CHANGENAMENOTENOUGHT"));
+				return;
+			}
+			Singleton<BeanstalkServerManager>.instance.ChangePlayerName(nickInput.text, payForRename: true);
+		}
+		HideDialog();
+	}
 
-		AssetRipper was set to not load any script information.
+	private void InstanceOnDeviceRegistered()
+	{
+		HideDialog();
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public override void InitGUIValues()
+	{
+		errorLabel.gameObject.SetActive(value: false);
+		nickInput.text = GameLoginManager.currentPlayer.name;
+		int num = PlayerAnalytics.instance.renameGoldPrice;
+		renameLabel.transform.localPosition = renameLabel.transform.localPosition.ReplaceX((num <= 0) ? 0f : (-120f));
+		renamePriceBox.SetActive(num > 0);
+		if (num > 0)
+		{
+			renameGoldPrice.text = MiscTools.FormatBigNumber(num);
+			renameTable.repositionNow = true;
+		}
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public override void DoAfterShowUp()
+	{
+		base.DoAfterShowUp();
+		string text = nickInput.text;
+		nickInput.selected = true;
+		nickInput.mKeyboard = TouchScreenKeyboard.Open(nickInput.text, TouchScreenKeyboardType.Default, autocorrection: false, multiline: false, secure: false);
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	public GuiElement GetGuiElement()
+	{
+		return this;
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public override void OnBack()
+	{
+		CloseDialog(closeButton.gameObject);
+	}
 }

@@ -1,63 +1,177 @@
 using UnityEngine;
 
-public class PlayerClickWeapon : MonoBehaviour
+public class PlayerClickWeapon : PlayerWeapon
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public bool autofire;
 
-	1. No dll files were provided to AssetRipper.
+	private Vector3 mAimPosition;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	private bool mCanFireNoAuto;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	private Vector3 mFirstShotPos;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	private bool mIsWaitingForFirstShot;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	private float mLastButtonPress;
 
-	3. Assembly Reconstruction has not been implemented.
+	private float mPressedTime;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	private bool mShootRight;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	private float mStartShootTime;
 
-	4. This script is unnecessary.
+	private float mWaitTime;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public int scopeNum;
 
-	5. Script Content Level 0
+	public bool showScope;
 
-		AssetRipper was set to not load any script information.
+	private bool stoppedShooting = true;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	private bool mShowScope => showScope && DebugSettings.showPrimaryScopes;
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public override bool isActiveWeapon
+	{
+		get
+		{
+			return base.isActiveWeapon;
+		}
+		set
+		{
+			base.isActiveWeapon = value;
+			if (!isActiveWeapon && base.playerController.isCurrentPlayer)
+			{
+				Singleton<SniperScope>.instance.Hide();
+			}
+			if (isActiveWeapon && base.playerController.isCurrentPlayer)
+			{
+				Singleton<SniperScope>.instance.SetScope(scopeNum);
+			}
+			mIsWaitingForFirstShot = false;
+		}
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	public override void UpdateWeapon()
+	{
+		base.UpdateWeapon();
+		if (Input.GetMouseButtonUp(0) && base.playerController.isCurrentPlayer && !autofire)
+		{
+			mCanFireNoAuto = true;
+		}
+		if (!base.playerController.clicked)
+		{
+			if (Singleton<GameController>.instance.gameIsRunning && base.playerController.isCurrentPlayer)
+			{
+				if (Singleton<InputController>.instance.isTappingStarted)
+				{
+					mPressedTime = TimeManager.realTimeWithoutPauses;
+				}
+				if (Singleton<InputController>.instance.isTapping && !mIsWaitingForFirstShot)
+				{
+					mLastButtonPress = TimeManager.realTimeWithoutPauses;
+					if (base.weapon.willShoot && (mCanFireNoAuto || autofire))
+					{
+						mAimPosition = Singleton<AimingHelper>.instance.Aim(base.weapon);
+						if (CanShootAngle(mAimPosition))
+						{
+							Sh(mAimPosition);
+						}
+					}
+					else if ((float)base.weapon.cadence > 1f && Singleton<InputController>.instance.isTappingStarted)
+					{
+						GuiElementSingle<InventoryGuiElement>.instance.PlayWeaponReloading(this);
+					}
+					if (base.weapon.isReloading || base.weapon.outOfAmmo)
+					{
+						stoppedShooting = true;
+						Singleton<SniperScope>.instance.Hide();
+					}
+					else if (mLastButtonPress - mPressedTime > 0.25f && mShowScope && autofire)
+					{
+						Singleton<SniperScope>.instance.Show(9f);
+					}
+				}
+			}
+			if (mIsWaitingForFirstShot && TimeManager.realTimeWithoutPauses > mStartShootTime + mWaitTime)
+			{
+				base.weapon.Fire(mFirstShotPos);
+				PlayTouchCircle(mFirstShotPos);
+				ShakeCamera();
+				mIsWaitingForFirstShot = false;
+			}
+		}
+		else
+		{
+			stoppedShooting = true;
+		}
+		if (Input.GetMouseButtonUp(0) && base.playerController.isCurrentPlayer)
+		{
+			Singleton<SniperScope>.instance.Hide();
+			mCanFireNoAuto = true;
+		}
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	public override void MouseUpAndNoUpdate()
+	{
+		if (Input.GetMouseButtonUp(0) && base.playerController.isCurrentPlayer)
+		{
+			Singleton<SniperScope>.instance.Hide();
+			mCanFireNoAuto = true;
+		}
+	}
 
-	*/
+	private void Sh(Vector3 targetPosition)
+	{
+		mWaitTime = firstShotWaitTime;
+		mCanFireNoAuto = false;
+		bool flag = false;
+		bool flag2 = GeometryTools.AngleSigned(base.playerController.currentPlayerPoint.point.transform.forward, targetPosition - base.playerController.transform.position, Vector3.up) > 0f;
+		Vector3 direction = targetPosition - base.playerController.transform.position;
+		direction.y = 0f;
+		if (base.playerController.soldierAnimator.isHiding || base.playerController.soldierAnimator.isIdle || (base.playerController.playerState == PlayerController.PlayerStatex.Walking && stoppedShooting))
+		{
+			flag = true;
+			stoppedShooting = false;
+			if (base.playerController.soldierAnimator.isHiding)
+			{
+				mWaitTime = base.playerController.soldierAnimator.hiddingTime;
+			}
+			else
+			{
+				mWaitTime = base.playerController.soldierAnimator.uncoverLength * 0.25f;
+			}
+			if (base.playerController.playerState == PlayerController.PlayerStatex.Walking)
+			{
+				mWaitTime = 0.05f;
+			}
+		}
+		else if (base.playerController.soldierAnimator.IsShooting || base.playerController.soldierAnimator.isRunning)
+		{
+			base.weapon.Fire(targetPosition);
+			PlayTouchCircle(targetPosition);
+			ShakeCamera();
+		}
+		if (flag2 != mShootRight)
+		{
+			mShootRight = flag2;
+			flag = true;
+			mWaitTime = base.playerController.soldierAnimator.uncoverLength * 0.25f;
+		}
+		base.playerController.PlayShotAnimation(base.weapon.weaponType, mShootRight, direction);
+		if (flag)
+		{
+			mStartShootTime = TimeManager.realTimeWithoutPauses;
+			mFirstShotPos = targetPosition;
+			mIsWaitingForFirstShot = true;
+		}
+	}
+
+	public override void ShootForBot(Vector3 position)
+	{
+		base.ShootForBot(position);
+		if (base.weapon.willShoot && !mIsWaitingForFirstShot)
+		{
+			Sh(position);
+		}
+	}
 }

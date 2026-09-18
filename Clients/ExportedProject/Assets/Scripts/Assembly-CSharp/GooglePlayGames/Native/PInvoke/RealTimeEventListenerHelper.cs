@@ -1,66 +1,159 @@
-using UnityEngine;
+using System;
+using System.Runtime.InteropServices;
+using AOT;
+using GooglePlayGames.Native.Cwrapper;
+using GooglePlayGames.OurUtils;
 
 namespace GooglePlayGames.Native.PInvoke
 {
-	public class RealTimeEventListenerHelper : MonoBehaviour
+internal class RealTimeEventListenerHelper : BaseReferenceHolder
+{
+	internal RealTimeEventListenerHelper(IntPtr selfPointer)
+		: base(selfPointer)
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
 	}
+
+	protected override void CallDispose(HandleRef selfPointer)
+	{
+		GooglePlayGames.Native.Cwrapper.RealTimeEventListenerHelper.RealTimeEventListenerHelper_Dispose(selfPointer);
+	}
+
+	internal RealTimeEventListenerHelper SetOnRoomStatusChangedCallback(Action<NativeRealTimeRoom> callback)
+	{
+		GooglePlayGames.Native.Cwrapper.RealTimeEventListenerHelper.RealTimeEventListenerHelper_SetOnRoomStatusChangedCallback(SelfPtr(), InternalOnRoomStatusChangedCallback, ToCallbackPointer(callback));
+		return this;
+	}
+
+	[MonoPInvokeCallback(typeof(GooglePlayGames.Native.Cwrapper.RealTimeEventListenerHelper.OnRoomStatusChangedCallback))]
+	internal static void InternalOnRoomStatusChangedCallback(IntPtr response, IntPtr data)
+	{
+		Callbacks.PerformInternalCallback("RealTimeEventListenerHelper#InternalOnRoomStatusChangedCallback", Callbacks.Type.Permanent, response, data);
+	}
+
+	internal RealTimeEventListenerHelper SetOnRoomConnectedSetChangedCallback(Action<NativeRealTimeRoom> callback)
+	{
+		GooglePlayGames.Native.Cwrapper.RealTimeEventListenerHelper.RealTimeEventListenerHelper_SetOnRoomConnectedSetChangedCallback(SelfPtr(), InternalOnRoomConnectedSetChangedCallback, ToCallbackPointer(callback));
+		return this;
+	}
+
+	[MonoPInvokeCallback(typeof(GooglePlayGames.Native.Cwrapper.RealTimeEventListenerHelper.OnRoomConnectedSetChangedCallback))]
+	internal static void InternalOnRoomConnectedSetChangedCallback(IntPtr response, IntPtr data)
+	{
+		Callbacks.PerformInternalCallback("RealTimeEventListenerHelper#InternalOnRoomConnectedSetChangedCallback", Callbacks.Type.Permanent, response, data);
+	}
+
+	internal RealTimeEventListenerHelper SetOnP2PConnectedCallback(Action<NativeRealTimeRoom, MultiplayerParticipant> callback)
+	{
+		GooglePlayGames.Native.Cwrapper.RealTimeEventListenerHelper.RealTimeEventListenerHelper_SetOnP2PConnectedCallback(SelfPtr(), InternalOnP2PConnectedCallback, Callbacks.ToIntPtr(callback));
+		return this;
+	}
+
+	[MonoPInvokeCallback(typeof(GooglePlayGames.Native.Cwrapper.RealTimeEventListenerHelper.OnP2PConnectedCallback))]
+	internal static void InternalOnP2PConnectedCallback(IntPtr room, IntPtr participant, IntPtr data)
+	{
+		PerformRoomAndParticipantCallback("InternalOnP2PConnectedCallback", room, participant, data);
+	}
+
+	internal RealTimeEventListenerHelper SetOnP2PDisconnectedCallback(Action<NativeRealTimeRoom, MultiplayerParticipant> callback)
+	{
+		GooglePlayGames.Native.Cwrapper.RealTimeEventListenerHelper.RealTimeEventListenerHelper_SetOnP2PDisconnectedCallback(SelfPtr(), InternalOnP2PDisconnectedCallback, Callbacks.ToIntPtr(callback));
+		return this;
+	}
+
+	[MonoPInvokeCallback(typeof(GooglePlayGames.Native.Cwrapper.RealTimeEventListenerHelper.OnP2PDisconnectedCallback))]
+	internal static void InternalOnP2PDisconnectedCallback(IntPtr room, IntPtr participant, IntPtr data)
+	{
+		PerformRoomAndParticipantCallback("InternalOnP2PDisconnectedCallback", room, participant, data);
+	}
+
+	internal RealTimeEventListenerHelper SetOnParticipantStatusChangedCallback(Action<NativeRealTimeRoom, MultiplayerParticipant> callback)
+	{
+		GooglePlayGames.Native.Cwrapper.RealTimeEventListenerHelper.RealTimeEventListenerHelper_SetOnParticipantStatusChangedCallback(SelfPtr(), InternalOnParticipantStatusChangedCallback, Callbacks.ToIntPtr(callback));
+		return this;
+	}
+
+	[MonoPInvokeCallback(typeof(GooglePlayGames.Native.Cwrapper.RealTimeEventListenerHelper.OnParticipantStatusChangedCallback))]
+	internal static void InternalOnParticipantStatusChangedCallback(IntPtr room, IntPtr participant, IntPtr data)
+	{
+		PerformRoomAndParticipantCallback("InternalOnParticipantStatusChangedCallback", room, participant, data);
+	}
+
+	internal static void PerformRoomAndParticipantCallback(string callbackName, IntPtr room, IntPtr participant, IntPtr data)
+	{
+		Logger.d("Entering " + callbackName);
+		try
+		{
+			NativeRealTimeRoom arg = NativeRealTimeRoom.FromPointer(room);
+			using (MultiplayerParticipant arg2 = MultiplayerParticipant.FromPointer(participant))
+			{
+			Callbacks.IntPtrToPermanentCallback<Action<NativeRealTimeRoom, MultiplayerParticipant>>(data)?.Invoke(arg, arg2);
+				}
+}
+		catch (Exception ex)
+		{
+			Logger.e("Error encountered executing " + callbackName + ". Smothering to avoid passing exception into Native: " + ex);
+		}
+	}
+
+	internal RealTimeEventListenerHelper SetOnDataReceivedCallback(Action<NativeRealTimeRoom, MultiplayerParticipant, byte[], bool> callback)
+	{
+		IntPtr callback_arg = Callbacks.ToIntPtr(callback);
+		Logger.d("OnData Callback has addr: " + callback_arg.ToInt64());
+		GooglePlayGames.Native.Cwrapper.RealTimeEventListenerHelper.RealTimeEventListenerHelper_SetOnDataReceivedCallback(SelfPtr(), InternalOnDataReceived, callback_arg);
+		return this;
+	}
+
+	[MonoPInvokeCallback(typeof(GooglePlayGames.Native.Cwrapper.RealTimeEventListenerHelper.OnDataReceivedCallback))]
+	internal static void InternalOnDataReceived(IntPtr room, IntPtr participant, IntPtr data, UIntPtr dataLength, bool isReliable, IntPtr userData)
+	{
+		Logger.d("Entering InternalOnDataReceived: " + userData.ToInt64());
+		Action<NativeRealTimeRoom, MultiplayerParticipant, byte[], bool> action = Callbacks.IntPtrToPermanentCallback<Action<NativeRealTimeRoom, MultiplayerParticipant, byte[], bool>>(userData);
+		using (NativeRealTimeRoom arg = NativeRealTimeRoom.FromPointer(room))
+		{
+		using (MultiplayerParticipant arg2 = MultiplayerParticipant.FromPointer(participant))
+		{
+		if (action == null)
+		{
+			return;
+		}
+		byte[] array = null;
+		if (dataLength.ToUInt64() != 0L)
+		{
+			array = new byte[dataLength.ToUInt32()];
+			Marshal.Copy(data, array, 0, (int)dataLength.ToUInt32());
+		}
+		try
+		{
+			action(arg, arg2, array, isReliable);
+		}
+		catch (Exception ex)
+		{
+			Logger.e("Error encountered executing InternalOnDataReceived. Smothering to avoid passing exception into Native: " + ex);
+		}
+				}
+}
+}
+
+	private static IntPtr ToCallbackPointer(Action<NativeRealTimeRoom> callback)
+	{
+		Action<IntPtr> callback2 = delegate(IntPtr result)
+		{
+			NativeRealTimeRoom nativeRealTimeRoom = NativeRealTimeRoom.FromPointer(result);
+			if (callback != null)
+			{
+				callback(nativeRealTimeRoom);
+			}
+			else
+			{
+				nativeRealTimeRoom?.Dispose();
+			}
+		};
+		return Callbacks.ToIntPtr(callback2);
+	}
+
+	internal static RealTimeEventListenerHelper Create()
+	{
+		return new RealTimeEventListenerHelper(GooglePlayGames.Native.Cwrapper.RealTimeEventListenerHelper.RealTimeEventListenerHelper_Construct());
+	}
+}
 }

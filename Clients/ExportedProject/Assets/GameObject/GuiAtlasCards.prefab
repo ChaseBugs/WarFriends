@@ -39,6 +39,1169 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ea9f040b2b6bd4bf069e31e0ace12f73, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  material: {fileID: 2100000, guid: 34246ee25fb287548a2455364e0758cc, type: 2}
+  sprites:
+  - name: game-card-electrictraps
+    outer:
+      serializedVersion: 2
+      x: 0
+      y: 1820
+      width: 397
+      height: 228
+    inner:
+      serializedVersion: 2
+      x: 0
+      y: 1820
+      width: 397
+      height: 228
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-explosivepistol
+    outer:
+      serializedVersion: 2
+      x: 399
+      y: 1809
+      width: 346
+      height: 239
+    inner:
+      serializedVersion: 2
+      x: 399
+      y: 1809
+      width: 346
+      height: 239
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-tankdestroyed
+    outer:
+      serializedVersion: 2
+      x: 0
+      y: 1588
+      width: 354
+      height: 230
+    inner:
+      serializedVersion: 2
+      x: 0
+      y: 1588
+      width: 354
+      height: 230
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-clustergrenade
+    outer:
+      serializedVersion: 2
+      x: 747
+      y: 1825
+      width: 362
+      height: 223
+    inner:
+      serializedVersion: 2
+      x: 747
+      y: 1825
+      width: 362
+      height: 223
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-airstrike
+    outer:
+      serializedVersion: 2
+      x: 1111
+      y: 1793
+      width: 304
+      height: 255
+    inner:
+      serializedVersion: 2
+      x: 1111
+      y: 1793
+      width: 304
+      height: 255
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-vehicleupgrade
+    outer:
+      serializedVersion: 2
+      x: 747
+      y: 1595
+      width: 335
+      height: 228
+    inner:
+      serializedVersion: 2
+      x: 747
+      y: 1595
+      width: 335
+      height: 228
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-plague
+    outer:
+      serializedVersion: 2
+      x: 356
+      y: 1575
+      width: 320
+      height: 232
+    inner:
+      serializedVersion: 2
+      x: 356
+      y: 1575
+      width: 320
+      height: 232
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-supershields
+    outer:
+      serializedVersion: 2
+      x: 0
+      y: 1300
+      width: 245
+      height: 286
+    inner:
+      serializedVersion: 2
+      x: 0
+      y: 1300
+      width: 245
+      height: 286
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-greatgrenadier
+    outer:
+      serializedVersion: 2
+      x: 1417
+      y: 1804
+      width: 280
+      height: 244
+    inner:
+      serializedVersion: 2
+      x: 1417
+      y: 1804
+      width: 280
+      height: 244
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-backstab
+    outer:
+      serializedVersion: 2
+      x: 1699
+      y: 1790
+      width: 255
+      height: 258
+    inner:
+      serializedVersion: 2
+      x: 1699
+      y: 1790
+      width: 255
+      height: 258
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-elitesniper
+    outer:
+      serializedVersion: 2
+      x: 1417
+      y: 1544
+      width: 254
+      height: 258
+    inner:
+      serializedVersion: 2
+      x: 1417
+      y: 1544
+      width: 254
+      height: 258
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-imafirestarter
+    outer:
+      serializedVersion: 2
+      x: 1084
+      y: 1535
+      width: 253
+      height: 256
+    inner:
+      serializedVersion: 2
+      x: 1084
+      y: 1535
+      width: 253
+      height: 256
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-disarmed
+    outer:
+      serializedVersion: 2
+      x: 678
+      y: 1358
+      width: 275
+      height: 235
+    inner:
+      serializedVersion: 2
+      x: 678
+      y: 1358
+      width: 275
+      height: 235
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-triggerhappy
+    outer:
+      serializedVersion: 2
+      x: 1673
+      y: 1555
+      width: 277
+      height: 233
+    inner:
+      serializedVersion: 2
+      x: 1673
+      y: 1555
+      width: 277
+      height: 233
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-bulletsponge
+    outer:
+      serializedVersion: 2
+      x: 1673
+      y: 1333
+      width: 291
+      height: 220
+    inner:
+      serializedVersion: 2
+      x: 1673
+      y: 1333
+      width: 291
+      height: 220
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-emptymag
+    outer:
+      serializedVersion: 2
+      x: 1339
+      y: 1342
+      width: 314
+      height: 200
+    inner:
+      serializedVersion: 2
+      x: 1339
+      y: 1342
+      width: 314
+      height: 200
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-eliteparatroopers
+    outer:
+      serializedVersion: 2
+      x: 955
+      y: 1271
+      width: 234
+      height: 262
+    inner:
+      serializedVersion: 2
+      x: 955
+      y: 1271
+      width: 234
+      height: 262
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-swiftimmortality
+    outer:
+      serializedVersion: 2
+      x: 1191
+      y: 1090
+      width: 241
+      height: 250
+    inner:
+      serializedVersion: 2
+      x: 1191
+      y: 1090
+      width: 241
+      height: 250
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-eliteswatteam
+    outer:
+      serializedVersion: 2
+      x: 247
+      y: 1321
+      width: 238
+      height: 252
+    inner:
+      serializedVersion: 2
+      x: 247
+      y: 1321
+      width: 238
+      height: 252
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-heavydrone
+    outer:
+      serializedVersion: 2
+      x: 487
+      y: 1183
+      width: 342
+      height: 173
+    inner:
+      serializedVersion: 2
+      x: 487
+      y: 1183
+      width: 342
+      height: 173
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-shieldsup
+    outer:
+      serializedVersion: 2
+      x: 247
+      y: 1061
+      width: 223
+      height: 258
+    inner:
+      serializedVersion: 2
+      x: 247
+      y: 1061
+      width: 223
+      height: 258
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-heavyturret
+    outer:
+      serializedVersion: 2
+      x: 1434
+      y: 1071
+      width: 211
+      height: 269
+    inner:
+      serializedVersion: 2
+      x: 1434
+      y: 1071
+      width: 211
+      height: 269
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-supersoldiers
+    outer:
+      serializedVersion: 2
+      x: 0
+      y: 1054
+      width: 231
+      height: 244
+    inner:
+      serializedVersion: 2
+      x: 0
+      y: 1054
+      width: 231
+      height: 244
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-belovedenemy
+    outer:
+      serializedVersion: 2
+      x: 831
+      y: 1091
+      width: 314
+      height: 178
+    inner:
+      serializedVersion: 2
+      x: 831
+      y: 1091
+      width: 314
+      height: 178
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-meatheads
+    outer:
+      serializedVersion: 2
+      x: 472
+      y: 959
+      width: 247
+      height: 222
+    inner:
+      serializedVersion: 2
+      x: 472
+      y: 959
+      width: 247
+      height: 222
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-copycat
+    outer:
+      serializedVersion: 2
+      x: 721
+      y: 866
+      width: 243
+      height: 223
+    inner:
+      serializedVersion: 2
+      x: 721
+      y: 866
+      width: 243
+      height: 223
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-mineyourstep
+    outer:
+      serializedVersion: 2
+      x: 310
+      y: 730
+      width: 236
+      height: 227
+    inner:
+      serializedVersion: 2
+      x: 310
+      y: 730
+      width: 236
+      height: 227
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-mrbigrocket
+    outer:
+      serializedVersion: 2
+      x: 0
+      y: 634
+      width: 224
+      height: 239
+    inner:
+      serializedVersion: 2
+      x: 0
+      y: 634
+      width: 224
+      height: 239
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-myfriendturret
+    outer:
+      serializedVersion: 2
+      x: 966
+      y: 861
+      width: 232
+      height: 227
+    inner:
+      serializedVersion: 2
+      x: 966
+      y: 861
+      width: 232
+      height: 227
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-rocketturret
+    outer:
+      serializedVersion: 2
+      x: 1200
+      y: 812
+      width: 190
+      height: 276
+    inner:
+      serializedVersion: 2
+      x: 1200
+      y: 812
+      width: 190
+      height: 276
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-cratetrap
+    outer:
+      serializedVersion: 2
+      x: 548
+      y: 638
+      width: 229
+      height: 226
+    inner:
+      serializedVersion: 2
+      x: 548
+      y: 638
+      width: 229
+      height: 226
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-turretcrate
+    outer:
+      serializedVersion: 2
+      x: 226
+      y: 527
+      width: 257
+      height: 201
+    inner:
+      serializedVersion: 2
+      x: 226
+      y: 527
+      width: 257
+      height: 201
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-healingstorm
+    outer:
+      serializedVersion: 2
+      x: 0
+      y: 392
+      width: 215
+      height: 240
+    inner:
+      serializedVersion: 2
+      x: 0
+      y: 392
+      width: 215
+      height: 240
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-criticalinsurance
+    outer:
+      serializedVersion: 2
+      x: 779
+      y: 679
+      width: 286
+      height: 180
+    inner:
+      serializedVersion: 2
+      x: 779
+      y: 679
+      width: 286
+      height: 180
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-shieldocalypse
+    outer:
+      serializedVersion: 2
+      x: 1647
+      y: 1097
+      width: 220
+      height: 234
+    inner:
+      serializedVersion: 2
+      x: 1647
+      y: 1097
+      width: 220
+      height: 234
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-ammothief
+    outer:
+      serializedVersion: 2
+      x: 1647
+      y: 854
+      width: 211
+      height: 241
+    inner:
+      serializedVersion: 2
+      x: 1647
+      y: 854
+      width: 211
+      height: 241
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-explosivetiming
+    outer:
+      serializedVersion: 2
+      x: 1392
+      y: 681
+      width: 297
+      height: 171
+    inner:
+      serializedVersion: 2
+      x: 1392
+      y: 681
+      width: 297
+      height: 171
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-healthiermyself
+    outer:
+      serializedVersion: 2
+      x: 1067
+      y: 566
+      width: 201
+      height: 244
+    inner:
+      serializedVersion: 2
+      x: 1067
+      y: 566
+      width: 201
+      height: 244
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-streakboost
+    outer:
+      serializedVersion: 2
+      x: 779
+      y: 453
+      width: 213
+      height: 224
+    inner:
+      serializedVersion: 2
+      x: 779
+      y: 453
+      width: 213
+      height: 224
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-decoy
+    outer:
+      serializedVersion: 2
+      x: 485
+      y: 399
+      width: 201
+      height: 237
+    inner:
+      serializedVersion: 2
+      x: 485
+      y: 399
+      width: 201
+      height: 237
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-back-small
+    outer:
+      serializedVersion: 2
+      x: 0
+      y: 150
+      width: 198
+      height: 240
+    inner:
+      serializedVersion: 2
+      x: 0
+      y: 150
+      width: 198
+      height: 240
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-silver
+    outer:
+      serializedVersion: 2
+      x: 1691
+      y: 612
+      width: 198
+      height: 240
+    inner:
+      serializedVersion: 2
+      x: 1691
+      y: 612
+      width: 198
+      height: 240
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-gold
+    outer:
+      serializedVersion: 2
+      x: 217
+      y: 285
+      width: 198
+      height: 240
+    inner:
+      serializedVersion: 2
+      x: 217
+      y: 285
+      width: 198
+      height: 240
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-bronze
+    outer:
+      serializedVersion: 2
+      x: 1270
+      y: 439
+      width: 198
+      height: 240
+    inner:
+      serializedVersion: 2
+      x: 1270
+      y: 439
+      width: 198
+      height: 240
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-ammobox
+    outer:
+      serializedVersion: 2
+      x: 1392
+      y: 869
+      width: 234
+      height: 200
+    inner:
+      serializedVersion: 2
+      x: 1392
+      y: 869
+      width: 234
+      height: 200
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-paralyzethese
+    outer:
+      serializedVersion: 2
+      x: 1470
+      y: 465
+      width: 216
+      height: 214
+    inner:
+      serializedVersion: 2
+      x: 1470
+      y: 465
+      width: 216
+      height: 214
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-ammocrate
+    outer:
+      serializedVersion: 2
+      x: 994
+      y: 361
+      width: 224
+      height: 203
+    inner:
+      serializedVersion: 2
+      x: 994
+      y: 361
+      width: 224
+      height: 203
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-healthcrate
+    outer:
+      serializedVersion: 2
+      x: 688
+      y: 255
+      width: 230
+      height: 196
+    inner:
+      serializedVersion: 2
+      x: 688
+      y: 255
+      width: 230
+      height: 196
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-headsup
+    outer:
+      serializedVersion: 2
+      x: 417
+      y: 175
+      width: 202
+      height: 222
+    inner:
+      serializedVersion: 2
+      x: 417
+      y: 175
+      width: 202
+      height: 222
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-shieldgenerator
+    outer:
+      serializedVersion: 2
+      x: 200
+      y: 47
+      width: 190
+      height: 236
+    inner:
+      serializedVersion: 2
+      x: 200
+      y: 47
+      width: 190
+      height: 236
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-randomkevlar
+    outer:
+      serializedVersion: 2
+      x: 1688
+      y: 368
+      width: 180
+      height: 242
+    inner:
+      serializedVersion: 2
+      x: 1688
+      y: 368
+      width: 180
+      height: 242
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-shieldspawner
+    outer:
+      serializedVersion: 2
+      x: 1869
+      y: 1060
+      width: 160
+      height: 271
+    inner:
+      serializedVersion: 2
+      x: 1869
+      y: 1060
+      width: 160
+      height: 271
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-crateblocker
+    outer:
+      serializedVersion: 2
+      x: 1470
+      y: 256
+      width: 208
+      height: 207
+    inner:
+      serializedVersion: 2
+      x: 1470
+      y: 256
+      width: 208
+      height: 207
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-ratatata
+    outer:
+      serializedVersion: 2
+      x: 1870
+      y: 360
+      width: 171
+      height: 250
+    inner:
+      serializedVersion: 2
+      x: 1870
+      y: 360
+      width: 171
+      height: 250
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-kevlarcrate
+    outer:
+      serializedVersion: 2
+      x: 1220
+      y: 243
+      width: 220
+      height: 194
+    inner:
+      serializedVersion: 2
+      x: 1220
+      y: 243
+      width: 220
+      height: 194
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-friendlyfireoff
+    outer:
+      serializedVersion: 2
+      x: 1680
+      y: 126
+      width: 164
+      height: 240
+    inner:
+      serializedVersion: 2
+      x: 1680
+      y: 126
+      width: 164
+      height: 240
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-landmine
+    outer:
+      serializedVersion: 2
+      x: 0
+      y: 875
+      width: 308
+      height: 177
+    inner:
+      serializedVersion: 2
+      x: 0
+      y: 875
+      width: 308
+      height: 177
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-medikit
+    outer:
+      serializedVersion: 2
+      x: 487
+      y: 1361
+      width: 176
+      height: 212
+    inner:
+      serializedVersion: 2
+      x: 487
+      y: 1361
+      width: 176
+      height: 212
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-kevlar
+    outer:
+      serializedVersion: 2
+      x: 1442
+      y: 32
+      width: 166
+      height: 222
+    inner:
+      serializedVersion: 2
+      x: 1442
+      y: 32
+      width: 166
+      height: 222
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-sickness
+    outer:
+      serializedVersion: 2
+      x: 1846
+      y: 134
+      width: 158
+      height: 224
+    inner:
+      serializedVersion: 2
+      x: 1846
+      y: 134
+      width: 158
+      height: 224
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-freeze
+    outer:
+      serializedVersion: 2
+      x: 1891
+      y: 818
+      width: 138
+      height: 240
+    inner:
+      serializedVersion: 2
+      x: 1891
+      y: 818
+      width: 138
+      height: 240
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-hourglass
+    outer:
+      serializedVersion: 2
+      x: 920
+      y: 127
+      width: 138
+      height: 232
+    inner:
+      serializedVersion: 2
+      x: 920
+      y: 127
+      width: 138
+      height: 232
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-shielddestroyed
+    outer:
+      serializedVersion: 2
+      x: 1060
+      y: 131
+      width: 138
+      height: 228
+    inner:
+      serializedVersion: 2
+      x: 1060
+      y: 131
+      width: 138
+      height: 228
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-card-headahead
+    outer:
+      serializedVersion: 2
+      x: 1200
+      y: 7
+      width: 134
+      height: 234
+    inner:
+      serializedVersion: 2
+      x: 1200
+      y: 7
+      width: 134
+      height: 234
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  mCoordinates: 0
+  mPixelSize: 1
+  mReplacement: {fileID: 0}
+  pngPath: GuiAtlasCards
+  pngHalfPath:
+  replaceTexture: {fileID: 2800000, guid: cd5c54ae911b01c4b806ae86caa69415, type: 3}
+  useBinaryData: 0
+  textureWidth: 2048
+  textureHeight: 2048
 --- !u!1001 &100100000
 Prefab:
   serializedVersion: 2

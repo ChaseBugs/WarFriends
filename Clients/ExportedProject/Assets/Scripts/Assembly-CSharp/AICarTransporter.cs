@@ -1,63 +1,197 @@
+using System.Collections.Generic;
+using Google2u;
 using UnityEngine;
 
-public class AICarTransporter : MonoBehaviour
+[RequireComponent(typeof(CarController))]
+public class AICarTransporter : AICarBase<CarTransporterBehaviour>
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public EnemyPointVehicle coDriverPoint;
 
-	1. No dll files were provided to AssetRipper.
+	public TransporterTurret turret;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public List<WayPointPath> pathsForMiniDrones;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	private List<MiniDrone> mMiniDrones = new List<MiniDrone>();
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public override void UpgradesLoaded()
+	{
+		base.UpgradesLoaded();
+		mDestroyableObject.maxHealth = base.currentBeh.carTransporterBehaviourDefinititon.health;
+		mDestroyableObject.RefillOffline();
+		mDestroyableObject.shotCoeficient = Singleton<GameVariables>.instance.constants.GetRow(Constants.rowIds.ArmoredVehicleShotCoeficient).FLOATVALUE;
+		foreach (BatchedWeapon weapon in turret.weapons)
+		{
+			BulletSetup bulletSetup = (BulletSetup)weapon.weapon.ammoSetup;
+			bulletSetup.damageAmount = base.currentBeh.carTransporterBehaviourDefinititon.damage;
+			bulletSetup.speed = base.currentBeh.carTransporterBehaviourDefinititon.shotSpeed;
+			bulletSetup.damageToPlayerCoeficient = behaviour.upgradeSlots.playerDamageRatio;
+			bulletSetup.damageToPlayerOvertimeCoeficient = behaviour.upgradeSlots.playerDamageOvertimeRatio;
+		}
+		turret.batchSizeMax = base.currentBeh.carTransporterBehaviourDefinititon.fireBatchSizeMax;
+		turret.batchSizeMin = base.currentBeh.carTransporterBehaviourDefinititon.fireBatchSizeMin;
+		turret.minShootTime = base.currentBeh.carTransporterBehaviourDefinititon.minShootTime;
+		turret.maxShootTime = base.currentBeh.carTransporterBehaviourDefinititon.maxShootTime;
+		turret.realShotProbability = base.currentBeh.carTransporterBehaviourDefinititon.probabilityOfRealShot;
+		turret.playerShieldProbability = behaviour.upgradeSlots.shieldHitProbability;
+	}
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public override void UpdatePreview(bool inGame)
+	{
+		base.UpdatePreview(inGame);
+		if (inGame)
+		{
+			ChangeWheels(0.5f, 0.09f);
+		}
+		else
+		{
+			ChangeWheels(0f, 0f);
+		}
+		EnemyController enemyController = GeneratePreviewEnemy(Singleton<LevelBehaviourManager>.instance.levelBehaviours[0].behaviour, coDriverPoint, disableWeapon: true);
+	}
 
-	3. Assembly Reconstruction has not been implemented.
+	public override void OnInstancied()
+	{
+		base.OnInstancied();
+		turret.ResetAiming();
+		carController.MaxSpeed = ((!isPrewiev) ? 1f : 1.7f);
+		if (isPrewiev)
+		{
+			return;
+		}
+		if (photonView.isMine)
+		{
+			GenerateEnemy(isFirst: true, coDriverPoint);
+			SetTarget(spawnedFrom.waypointCircuit, spawnedFrom.waypointCircuit.waypointList[spawnedFrom.waypointCircuit.waypointList.items.Length - 1]);
+			if (base.hasSpecial)
+			{
+				GenerateMiniDrones();
+			}
+		}
+		turret.enabled = true;
+		turret.Reset();
+		ChangeWheels(0.5f, 0.09f);
+	}
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	private void GenerateMiniDrones()
+	{
+		mMiniDrones.Clear();
+		foreach (WayPointPath pathsForMiniDrone in pathsForMiniDrones)
+		{
+			SpawnMiniDrone(pathsForMiniDrone);
+		}
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	private void SpawnMiniDrone(WayPointPath pathForMiniDrone)
+	{
+		Debug.Log("Spawn minidrone at: " + pathForMiniDrone.name);
+		Transform transform = pathForMiniDrone.wayPoints[0].transform;
+		MiniDrone miniDrone = (MiniDrone)ObjectPoolDatabase.networkPool.InstantiateNetwork(Singleton<ObjectPoolDatabase>.instance.miniDrone, transform.position, transform.rotation);
+		miniDrone.SetWayPoint(pathForMiniDrone);
+		miniDrone.fraction = fraction;
+		miniDrone.transporterToRepair = this;
+		miniDrone.repairRatioPerSec = base.currentBeh.carTransporterBehaviourDefinititon.special;
+		miniDrone.Killed += MiniDroneOnKilled;
+		miniDrone.destroyableObject.maxHealth = (float)base.currentBeh.carTransporterBehaviourDefinititon.health * base.currentBeh.carTransporterBehaviourDefinititon.repairBotHP;
+		miniDrone.destroyableObject.Refill();
+		mMiniDrones.Add(miniDrone);
+	}
 
-	4. This script is unnecessary.
+	private void MiniDroneOnKilled(IGameMainEntity gameMainEntity, DestroyableObject.DamageInfo damageInfo)
+	{
+		gameMainEntity.Killed -= MiniDroneOnKilled;
+		MiniDrone miniDrone = (MiniDrone)gameMainEntity;
+		mMiniDrones.Remove(miniDrone);
+		WayPointPath p = miniDrone.wayPointPath;
+		InvokeAfterRealTime(delegate
+		{
+			SpawnMiniDrone(p);
+		}, Random.Range(35f, 45f));
+		Debug.Log("Killed minidrone at: " + miniDrone.name + " path: " + p.name);
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	protected override void Update()
+	{
+		if (!isPrewiev)
+		{
+			base.Update();
+		}
+	}
 
-	5. Script Content Level 0
+	private void SoldierOnKilled(IGameMainEntity gameMainEntity, DestroyableObject.DamageInfo arg3)
+	{
+		gameMainEntity.Killed -= SoldierOnKilled;
+		EnemyController enemyController = (EnemyController)gameMainEntity;
+		if (enemyController.enemyPoint == coDriverPoint)
+		{
+			enemyController.ClearEnemyPoint();
+			InvokeAfterRealTime(delegate
+			{
+				GenerateEnemy(isFirst: false, coDriverPoint);
+			}, behaviour.upgradeSlots.soldierRespawnRate);
+			turret.enabled = false;
+			turret.Reset();
+		}
+	}
 
-		AssetRipper was set to not load any script information.
+	protected override void OnKilled(DestroyableObject.DamageInfo arg2)
+	{
+		DestroySoldier(coDriverPoint, arg2, SoldierOnKilled);
+		if (photonView.isMine)
+		{
+			DestroyableObject.DamageInfo info = new DestroyableObject.DamageInfo
+			{
+				isNetwork = false,
+				damageAmount = float.MaxValue,
+				force = Vector3.up,
+				owner = null
+			};
+			foreach (MiniDrone mMiniDrone in mMiniDrones)
+			{
+				mMiniDrone.Killed -= MiniDroneOnKilled;
+				mMiniDrone.destroyableObject.DoDamage(info);
+			}
+		}
+		base.OnKilled(arg2);
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	private void GenerateEnemy(bool isFirst, EnemyPointVehicle point)
+	{
+		EnemyController enemyController = (EnemyController)Singleton<LevelBehaviourManager>.instance.GenerateNewEnemy(Singleton<LevelBehaviourManager>.instance.levelBehaviours[0].behaviour);
+		point.enemyAtPoint = null;
+		if (enemyController != null)
+		{
+			enemyController.DisableSpawn();
+			int actualLevelForIndex = behaviour.upgradeSlots.GetActualLevelForIndex(unitUpgrades.slotUpgradeindex);
+			enemyController.SpawnByCard((float)actualLevelForIndex / (float)behaviour.upgradeSlots.maxLevelOfUnit, behaviour.cardId);
+			SpawningManager.instance.Spawn(enemyController, fraction, useEnergy: false, point.position, startBehaviour: false);
+			point.enemyAtPoint = enemyController;
+			enemyController.enemyPoint = point;
+			enemyController.StartEnemyBehaviour(EnemyController.EnemyAIState.Vehicle);
+			enemyController.SetMaxHealthAndRefill(behaviour.upgradeSlots.GetSoldierHpInMechanic(unitUpgrades.slotUpgradeindex) * unitUpgrades.scaleHp);
+			enemyController.behaviour.botProperties.dangerCoeficient = preparedBehaviour.dangerCoef - 1;
+			CarTransporterBehaviourDefinititon carTransporterBehaviourDefinititon = base.currentBeh.carTransporterBehaviourDefinititon;
+			enemyController.soldierBehaviour.soldierBehaviourDefinititon.minShootTime = carTransporterBehaviourDefinititon.minShootTime;
+			enemyController.soldierBehaviour.soldierBehaviourDefinititon.maxShootTime = carTransporterBehaviourDefinititon.maxShootTime;
+			enemyController.soldierBehaviour.soldierBehaviourDefinititon.fireBatchSizeMin = 1;
+			enemyController.soldierBehaviour.soldierBehaviourDefinititon.fireBatchSizeMax = 1;
+			enemyController.soldierBehaviour.soldierBehaviourDefinititon.probabilityOfRealShot = carTransporterBehaviourDefinititon.probabilityOfRealShot;
+			turret.enabled = true;
+			enemyController.Killed += SoldierOnKilled;
+		}
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	protected override void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
+	{
+		base.OnPhotonSerializeView(stream, info);
+	}
 
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public override void DestroyPooled()
+	{
+		base.DestroyPooled();
+		ClearEnemyPoint(coDriverPoint, SoldierOnKilled);
+		foreach (MiniDrone mMiniDrone in mMiniDrones)
+		{
+			mMiniDrone.Killed -= MiniDroneOnKilled;
+		}
+	}
 }

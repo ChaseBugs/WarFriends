@@ -1,63 +1,125 @@
+using System;
 using UnityEngine;
 
-public class AssignmentsTabStarterRecord : MonoBehaviour
+public class AssignmentsTabStarterRecord : Core_BaseScript
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Header("Core")]
+	public UILabel starterProgress;
 
-	1. No dll files were provided to AssetRipper.
+	public UILabel number;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public UISprite numberBackground;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public UILabel objective;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public UILabel allCompleted;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	[Header("Bottom")]
+	public GameObject emptyPart;
 
-	3. Assembly Reconstruction has not been implemented.
+	public GameObject claimButton;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	[Header("-Empty Reward")]
+	public UITable rewardEmptyTable;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public UISprite rewardEmptyIconGold;
 
-	4. This script is unnecessary.
+	public UISprite rewardEmptyIconWB;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public UILabel rewardEmptyValue;
 
-	5. Script Content Level 0
+	[Header("-Claim Reward")]
+	public BoxCollider buttonCollider;
 
-		AssetRipper was set to not load any script information.
+	public UITable rewardClaimTable;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public UISprite rewardClaimIconGold;
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public UISprite rewardClaimIconWB;
 
-	7. An incorrect path was provided to AssetRipper.
+	public UILabel rewardClaimValue;
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	private StarterAssignment mStarterAssignment;
 
-	*/
+	public void InitControls()
+	{
+		UIEventListener uIEventListener = UIEventListener.Get(claimButton);
+		uIEventListener.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener.onClick, (UIEventListener.VoidDelegate)delegate
+		{
+			ClaimClicked();
+		});
+		rewardEmptyTable.onReposition = delegate
+		{
+			float val = 0f - rewardEmptyTable.padding.x - (rewardEmptyValue.transform.parent.transform.localPosition.x - rewardEmptyTable.padding.x) / 2f;
+			rewardEmptyTable.transform.localPosition = rewardEmptyTable.transform.localPosition.ReplaceX(val);
+		};
+		rewardClaimTable.onReposition = delegate
+		{
+			float val = 0f - rewardClaimTable.padding.x - (rewardClaimValue.transform.parent.transform.localPosition.x - rewardClaimTable.padding.x) / 2f;
+			rewardClaimTable.transform.localPosition = rewardClaimTable.transform.localPosition.ReplaceX(val);
+		};
+	}
+
+	public void ClaimClicked()
+	{
+		buttonCollider.enabled = false;
+		mStarterAssignment.Claim();
+		InvokeAfterRealTime(delegate
+		{
+			Initialize(StarterAssignmentsManager.instance.currentAssignment);
+		}, 0.2f);
+	}
+
+	public void Initialize(StarterAssignment assignment)
+	{
+		mStarterAssignment = assignment;
+		ShowContent(assignment != null);
+		if (assignment != null)
+		{
+			if (SavingLastSelected.instance.data.lastViewedStarterAssignmentId < assignment.order)
+			{
+				Singleton<EventTrackingManager>.instance.RegisterViewStarterAssignmentTab(assignment);
+				SavingLastSelected.instance.StarterAssignmentViewed(assignment);
+			}
+			StarterAssignment starterAssignment = StarterAssignmentsManager.instance.currentAssignment;
+			if (starterAssignment == null && StarterAssignmentsManager.instance.assignmentsCount > 0)
+			{
+				starterAssignment = StarterAssignmentsManager.instance.assignments[StarterAssignmentsManager.instance.assignmentsCount - 1];
+			}
+			int num = ((starterAssignment != null) ? (starterAssignment.order - 1) : StarterAssignmentsManager.instance.assignmentsCount);
+			starterProgress.text = Localization.LocalizeFormat("ID_STARTERASSIGNMENTX", num + 1, StarterAssignmentsManager.instance.assignmentsCount);
+			number.text = assignment.order.ToString();
+			objective.text = assignment.textWithProgress;
+			rewardEmptyValue.text = MiscTools.FormatAssignmentNumber(assignment.rewardGold + assignment.rewardWB);
+			rewardClaimValue.text = rewardEmptyValue.text;
+			rewardEmptyIconGold.gameObject.SetActive(assignment.rewardGold > 0);
+			rewardEmptyIconWB.gameObject.SetActive(assignment.rewardWB > 0);
+			rewardClaimIconGold.gameObject.SetActive(rewardEmptyIconGold.gameObject.activeSelf);
+			rewardClaimIconWB.gameObject.SetActive(rewardEmptyIconWB.gameObject.activeSelf);
+			buttonCollider.enabled = assignment.completed && !assignment.claimed;
+			emptyPart.SetActive(!assignment.completed);
+			if (emptyPart.activeSelf)
+			{
+				rewardEmptyTable.repositionNow = true;
+			}
+			claimButton.SetActive(assignment.completed && !assignment.claimed);
+			if (claimButton.activeSelf)
+			{
+				rewardClaimTable.repositionNow = true;
+			}
+		}
+	}
+
+	private void ShowContent(bool active)
+	{
+		if (!active)
+		{
+			number.text = string.Empty;
+			objective.text = string.Empty;
+			emptyPart.SetActive(value: false);
+			claimButton.SetActive(value: false);
+		}
+		allCompleted.gameObject.SetActive(!active);
+		numberBackground.gameObject.SetActive(active);
+	}
 }

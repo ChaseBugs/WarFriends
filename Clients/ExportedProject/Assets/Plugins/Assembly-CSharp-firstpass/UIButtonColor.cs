@@ -1,63 +1,138 @@
+using System.Collections.Generic;
 using UnityEngine;
 
+[AddComponentMenu("NGUI/Interaction/Button Color")]
 public class UIButtonColor : MonoBehaviour
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public GameObject tweenTarget;
 
-	1. No dll files were provided to AssetRipper.
+	public List<GameObject> extratweenTargets;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	protected List<Color> mColors;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public Color hover = new Color(0.6f, 1f, 0.2f, 1f);
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public Color pressed = Color.grey;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public float duration = 0.2f;
 
-	3. Assembly Reconstruction has not been implemented.
+	protected Color mColor;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	protected bool mStarted;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	protected bool mHighlighted;
 
-	4. This script is unnecessary.
+	public Color defaultColor
+	{
+		get
+		{
+			if (!mStarted)
+			{
+				Init();
+			}
+			return mColor;
+		}
+		set
+		{
+			mColor = value;
+		}
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private void Start()
+	{
+		if (!mStarted)
+		{
+			Init();
+			mStarted = true;
+		}
+	}
 
-	5. Script Content Level 0
+	protected virtual void OnEnable()
+	{
+		if (mStarted && mHighlighted)
+		{
+			OnHover(UICamera.IsHighlighted(base.gameObject));
+		}
+	}
 
-		AssetRipper was set to not load any script information.
+	private void OnDisable()
+	{
+		if (mStarted && tweenTarget != null)
+		{
+			TweenColor component = tweenTarget.GetComponent<TweenColor>();
+			if (component != null)
+			{
+				component.color = mColor;
+				component.enabled = false;
+			}
+		}
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public void Init()
+	{
+		if (tweenTarget == null)
+		{
+			tweenTarget = base.gameObject;
+		}
+		UIWidget component = tweenTarget.GetComponent<UIWidget>();
+		mColors = new List<Color>();
+		foreach (GameObject extratweenTarget in extratweenTargets)
+		{
+			UIWidget component2 = extratweenTarget.GetComponent<UIWidget>();
+			if (component2 != null)
+			{
+				mColors.Add(component2.color);
+			}
+		}
+		if (component != null)
+		{
+			mColor = component.color;
+		}
+		else
+		{
+			Renderer component3 = tweenTarget.GetComponent<Renderer>();
+			if (component3 != null)
+			{
+				mColor = component3.material.color;
+			}
+			else
+			{
+				Light component4 = tweenTarget.GetComponent<Light>();
+				if (component4 != null)
+				{
+					mColor = component4.color;
+				}
+				else
+				{
+					base.enabled = false;
+				}
+			}
+		}
+		OnEnable();
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public virtual void OnPress(bool isPressed)
+	{
+		if (base.enabled)
+		{
+			if (!mStarted)
+			{
+				Start();
+			}
+			TweenColor.Begin(tweenTarget, duration, isPressed ? pressed : ((!UICamera.IsHighlighted(base.gameObject)) ? mColor : hover));
+		}
+	}
 
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public virtual void OnHover(bool isOver)
+	{
+		if (base.enabled)
+		{
+			if (!mStarted)
+			{
+				Start();
+			}
+			TweenColor.Begin(tweenTarget, duration, (!isOver) ? mColor : hover);
+			mHighlighted = isOver;
+		}
+	}
 }

@@ -1,63 +1,282 @@
+using System.Collections;
 using UnityEngine;
 
-public class PlayerHealthBarGuiElement : MonoBehaviour
+public class PlayerHealthBarGuiElement : Core_BaseScript
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public bool playerHealthBar;
 
-	1. No dll files were provided to AssetRipper.
+	public UISprite background;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public UISprite healthChange;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public UISprite health;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public UILabel nameLabel;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public Transform nameLabelHandle;
 
-	3. Assembly Reconstruction has not been implemented.
+	[Header("Health Change Animation")]
+	public float healthChangeDelay;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public float healthChangeMainSpeed;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public float healthChangeSpeed;
 
-	4. This script is unnecessary.
+	[Header("Healthbar fade")]
+	public float healthFadeDelay;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public float healthFadeTime;
 
-	5. Script Content Level 0
+	public float healthFadeAlpha;
 
-		AssetRipper was set to not load any script information.
+	[Header("Show Animation")]
+	public float showDelay;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public float showBackgroundTime;
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public float showHealthBarDelay;
 
-	7. An incorrect path was provided to AssetRipper.
+	public float showHealthBarTime;
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	public float showNameDelay;
 
-	*/
+	public float showNameTime;
+
+	public AnimationCurve showNamePositionAnimation;
+
+	[Header("Near Death Animation")]
+	public float nearDeathPeriod;
+
+	public AnimationCurve nearDeathAlphaAnimation;
+
+	[Header("Heartbeat")]
+	public AudioSource heartbeat;
+
+	private float mHealthWidth;
+
+	private float mBackgroundWidth;
+
+	private PlayerController mPlayer;
+
+	private float mCurrentHealthRatio;
+
+	private bool mAnimatingNearDeath;
+
+	private Coroutine mAnimateHealthChangeCoroutine;
+
+	public void Init()
+	{
+		float num = 156f;
+		float num2 = 16f;
+		mHealthWidth = UIRoot.list[0].activeWidth / 2f - num;
+		mBackgroundWidth = mHealthWidth + num2;
+		background.transform.localScale = background.transform.localScale.ReplaceX(mBackgroundWidth);
+		healthChange.transform.localScale = healthChange.transform.localScale.ReplaceX(mHealthWidth);
+		health.transform.localScale = health.transform.localScale.ReplaceX(mHealthWidth);
+		Singleton<GameController>.instance.GameStarted += OnGameStarted;
+		Singleton<GameController>.instance.GameEnded += OnGameEnded;
+	}
+
+	private void OnGameStarted()
+	{
+		if (mPlayer != null)
+		{
+			mCurrentHealthRatio = mPlayer.destroyableParts.healthRatio;
+			health.transform.localScale = health.transform.localScale.ReplaceX(mCurrentHealthRatio * mHealthWidth);
+			healthChange.transform.localScale = healthChange.transform.localScale.ReplaceX(mCurrentHealthRatio * mHealthWidth);
+			SoundsManager.Instance.onSoundVolumeChange += OnSoundVolumeChange;
+			StartCoroutine(PlayerWatcher());
+		}
+	}
+
+	private void OnGameEnded(GameController.GameEndReason endReason)
+	{
+		if (!(mPlayer != null))
+		{
+			return;
+		}
+		StopCoroutine(PlayerWatcher());
+		SoundsManager.Instance.onSoundVolumeChange -= OnSoundVolumeChange;
+		if (mAnimatingNearDeath)
+		{
+			if (heartbeat.isPlaying)
+			{
+				heartbeat.Stop();
+			}
+			StopCoroutine(AnimateNearDeath());
+		}
+		mPlayer = null;
+		mAnimatingNearDeath = false;
+		mAnimateHealthChangeCoroutine = null;
+	}
+
+	private IEnumerator PlayerWatcher()
+	{
+		while (mPlayer != null)
+		{
+			if (mCurrentHealthRatio != mPlayer.destroyableParts.healthRatio)
+			{
+				if (mAnimateHealthChangeCoroutine != null)
+				{
+					StopCoroutine(mAnimateHealthChangeCoroutine);
+					mAnimateHealthChangeCoroutine = null;
+				}
+				if (mPlayer.destroyableParts.healthRatio > mCurrentHealthRatio)
+				{
+					mCurrentHealthRatio = mPlayer.destroyableParts.healthRatio;
+					health.transform.localScale = health.transform.localScale.ReplaceX(mCurrentHealthRatio * mHealthWidth);
+					healthChange.gameObject.SetActive(value: false);
+				}
+				else
+				{
+					mCurrentHealthRatio = mPlayer.destroyableParts.healthRatio;
+					mAnimateHealthChangeCoroutine = StartCoroutine(AnimateHealthChange());
+				}
+				if (!mAnimatingNearDeath)
+				{
+					StopCoroutine(AnimateBarFade());
+					StartCoroutine(AnimateBarFade());
+				}
+			}
+			if (!mAnimatingNearDeath && mPlayer.IsNearDeath())
+			{
+				StopCoroutine(AnimateBarFade());
+				if (mPlayer.isCurrentPlayer)
+				{
+					heartbeat.volume = SoundsManager.Instance.soundsVolume;
+					heartbeat.Play();
+				}
+				StartCoroutine(AnimateNearDeath());
+			}
+			yield return null;
+		}
+	}
+
+	private IEnumerator AnimateHealthChange()
+	{
+		healthChange.gameObject.SetActive(value: true);
+		float timer = 0f;
+		float desiredWidth = mCurrentHealthRatio * mHealthWidth;
+		do
+		{
+			timer += TimeManager.deltaTimeWithoutPauses;
+			float healthDelta = mHealthWidth * TimeManager.deltaTimeWithoutPauses / healthChangeMainSpeed;
+			float healthChangeDelta = ((!(timer < healthChangeDelay)) ? (mHealthWidth * TimeManager.deltaTimeWithoutPauses / healthChangeSpeed) : 0f);
+			health.transform.localScale = health.transform.localScale.ReplaceX(Mathf.Max(desiredWidth, health.transform.localScale.x - healthDelta));
+			healthChange.transform.localScale = healthChange.transform.localScale.ReplaceX(Mathf.Max(desiredWidth, healthChange.transform.localScale.x - healthChangeDelta));
+			yield return null;
+		}
+		while (healthChange.transform.localScale.x > desiredWidth || health.transform.localScale.x > desiredWidth);
+		healthChange.gameObject.SetActive(value: false);
+	}
+
+	private IEnumerator AnimateBarFade()
+	{
+		health.color = health.color.ReplaceA(1f);
+		yield return new WaitForSeconds(healthFadeDelay);
+		float phase = 0f;
+		while (phase < 1f)
+		{
+			phase = Mathf.Clamp01(phase + TimeManager.deltaTimeWithoutPauses / healthFadeTime);
+			health.color = health.color.ReplaceA(Mathf.Lerp(1f, healthFadeAlpha, phase));
+			yield return 0;
+		}
+	}
+
+	private IEnumerator AnimateNearDeath()
+	{
+		mAnimatingNearDeath = true;
+		while (mPlayer != null && mPlayer.IsNearDeath())
+		{
+			float phase = TimeManager.realTimeWithoutPauses / nearDeathPeriod;
+			float alpha = nearDeathAlphaAnimation.Evaluate(phase);
+			health.alpha = alpha;
+			yield return null;
+		}
+		health.alpha = 1f;
+		mAnimatingNearDeath = false;
+		if (heartbeat.isPlaying)
+		{
+			heartbeat.Stop();
+		}
+	}
+
+	private IEnumerator ShowAnimation()
+	{
+		Coroutine showBackground = StartCoroutine(ShowBarAnimation(background, mBackgroundWidth, showBackgroundTime, 0f + showDelay));
+		Coroutine showHealthBar = StartCoroutine(ShowBarAnimation(health, mHealthWidth, showHealthBarTime, showHealthBarDelay + showDelay));
+		Coroutine showName = StartCoroutine(ShowName(showNameTime, showNameDelay + showDelay));
+		yield return showBackground;
+		yield return showHealthBar;
+		yield return showName;
+	}
+
+	private IEnumerator ShowBarAnimation(UISprite bar, float width, float time, float delay)
+	{
+		bar.transform.localScale = bar.transform.localScale.ReplaceX(0f);
+		yield return new WaitForSeconds(delay);
+		float phase = 0f;
+		while (phase < 1f)
+		{
+			phase = Mathf.Clamp01(phase + TimeManager.deltaTimeWithoutPauses / time);
+			bar.transform.localScale = bar.transform.localScale.ReplaceX(phase * width);
+			yield return null;
+		}
+	}
+
+	private IEnumerator ShowName(float time, float delay)
+	{
+		nameLabel.alpha = 0f;
+		yield return new WaitForSeconds(delay);
+		float phase = 0f;
+		while (phase < 1f)
+		{
+			phase = Mathf.Clamp01(phase + TimeManager.deltaTimeWithoutPauses / time);
+			nameLabel.alpha = phase;
+			nameLabelHandle.localPosition = nameLabelHandle.transform.localPosition.ReplaceY(showNamePositionAnimation.Evaluate(phase));
+			yield return null;
+		}
+	}
+
+	private void InitPlayer()
+	{
+		mPlayer = ((!playerHealthBar) ? PlayerController.GetEnemyOf(PlayerController.currentPlayer.fraction) : PlayerController.currentPlayer);
+		nameLabel.text = mPlayer.playerProperties.name;
+	}
+
+	private void OnSoundVolumeChange()
+	{
+		heartbeat.volume = SoundsManager.Instance.soundsVolume;
+	}
+
+	public void Hide()
+	{
+		StopAllCoroutines();
+		background.gameObject.SetActive(value: false);
+		healthChange.gameObject.SetActive(value: false);
+		health.gameObject.SetActive(value: false);
+		nameLabel.gameObject.SetActive(value: false);
+	}
+
+	public void ShowUp()
+	{
+		InitPlayer();
+		StopAllCoroutines();
+		background.gameObject.SetActive(value: true);
+		health.gameObject.SetActive(value: true);
+		nameLabel.gameObject.SetActive(value: true);
+		health.color = health.color.ReplaceA(healthFadeAlpha);
+		StartCoroutine(ShowAnimation());
+	}
+
+	public void FakeGameStartedAndShowUp()
+	{
+		InitPlayer();
+		StopAllCoroutines();
+		OnGameStarted();
+		background.gameObject.SetActive(value: true);
+		health.gameObject.SetActive(value: true);
+		nameLabel.gameObject.SetActive(value: true);
+		StartCoroutine(ShowAnimation());
+	}
 }

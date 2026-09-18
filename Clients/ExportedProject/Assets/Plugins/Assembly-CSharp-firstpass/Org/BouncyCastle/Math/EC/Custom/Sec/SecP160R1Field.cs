@@ -1,66 +1,168 @@
-using UnityEngine;
+using Org.BouncyCastle.Math.Raw;
 
 namespace Org.BouncyCastle.Math.EC.Custom.Sec
 {
-	public class SecP160R1Field : MonoBehaviour
+internal class SecP160R1Field
+{
+	private const uint P4 = uint.MaxValue;
+
+	private const uint PExt9 = uint.MaxValue;
+
+	private const uint PInv = 2147483649u;
+
+	internal static readonly uint[] P = new uint[5] { 2147483647u, 4294967295u, 4294967295u, 4294967295u, 4294967295u };
+
+	internal static readonly uint[] PExt = new uint[10] { 1u, 1073741825u, 0u, 0u, 0u, 4294967294u, 4294967294u, 4294967295u, 4294967295u, 4294967295u };
+
+	private static readonly uint[] PExtInv = new uint[7] { 4294967295u, 3221225470u, 4294967295u, 4294967295u, 4294967295u, 1u, 1u };
+
+	public static void Add(uint[] x, uint[] y, uint[] z)
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
+		if (Nat160.Add(x, y, z) != 0 || (z[4] == uint.MaxValue && Nat160.Gte(z, P)))
+		{
+			Nat.AddWordTo(5, 2147483649u, z);
+		}
 	}
+
+	public static void AddExt(uint[] xx, uint[] yy, uint[] zz)
+	{
+		if ((Nat.Add(10, xx, yy, zz) != 0 || (zz[9] == uint.MaxValue && Nat.Gte(10, zz, PExt))) && Nat.AddTo(PExtInv.Length, PExtInv, zz) != 0)
+		{
+			Nat.IncAt(10, zz, PExtInv.Length);
+		}
+	}
+
+	public static void AddOne(uint[] x, uint[] z)
+	{
+		if (Nat.Inc(5, x, z) != 0 || (z[4] == uint.MaxValue && Nat160.Gte(z, P)))
+		{
+			Nat.AddWordTo(5, 2147483649u, z);
+		}
+	}
+
+	public static uint[] FromBigInteger(BigInteger x)
+	{
+		uint[] array = Nat160.FromBigInteger(x);
+		if (array[4] == uint.MaxValue && Nat160.Gte(array, P))
+		{
+			Nat160.SubFrom(P, array);
+		}
+		return array;
+	}
+
+	public static void Half(uint[] x, uint[] z)
+	{
+		if ((x[0] & 1) == 0)
+		{
+			Nat.ShiftDownBit(5, x, 0u, z);
+			return;
+		}
+		uint c = Nat160.Add(x, P, z);
+		Nat.ShiftDownBit(5, z, c);
+	}
+
+	public static void Multiply(uint[] x, uint[] y, uint[] z)
+	{
+		uint[] array = Nat160.CreateExt();
+		Nat160.Mul(x, y, array);
+		Reduce(array, z);
+	}
+
+	public static void MultiplyAddToExt(uint[] x, uint[] y, uint[] zz)
+	{
+		if ((Nat160.MulAddTo(x, y, zz) != 0 || (zz[9] == uint.MaxValue && Nat.Gte(10, zz, PExt))) && Nat.AddTo(PExtInv.Length, PExtInv, zz) != 0)
+		{
+			Nat.IncAt(10, zz, PExtInv.Length);
+		}
+	}
+
+	public static void Negate(uint[] x, uint[] z)
+	{
+		if (Nat160.IsZero(x))
+		{
+			Nat160.Zero(z);
+		}
+		else
+		{
+			Nat160.Sub(P, x, z);
+		}
+	}
+
+	public static void Reduce(uint[] xx, uint[] z)
+	{
+		ulong num = xx[5];
+		ulong num2 = xx[6];
+		ulong num3 = xx[7];
+		ulong num4 = xx[8];
+		ulong num5 = xx[9];
+		ulong num6 = 0uL;
+		num6 += xx[0] + num + (num << 31);
+		z[0] = (uint)num6;
+		num6 >>= 32;
+		num6 += xx[1] + num2 + (num2 << 31);
+		z[1] = (uint)num6;
+		num6 >>= 32;
+		num6 += xx[2] + num3 + (num3 << 31);
+		z[2] = (uint)num6;
+		num6 >>= 32;
+		num6 += xx[3] + num4 + (num4 << 31);
+		z[3] = (uint)num6;
+		num6 >>= 32;
+		num6 += xx[4] + num5 + (num5 << 31);
+		z[4] = (uint)num6;
+		num6 >>= 32;
+		Reduce32((uint)num6, z);
+	}
+
+	public static void Reduce32(uint x, uint[] z)
+	{
+		if ((x != 0 && Nat160.MulWordsAdd(2147483649u, x, z, 0) != 0) || (z[4] == uint.MaxValue && Nat160.Gte(z, P)))
+		{
+			Nat.AddWordTo(5, 2147483649u, z);
+		}
+	}
+
+	public static void Square(uint[] x, uint[] z)
+	{
+		uint[] array = Nat160.CreateExt();
+		Nat160.Square(x, array);
+		Reduce(array, z);
+	}
+
+	public static void SquareN(uint[] x, int n, uint[] z)
+	{
+		uint[] array = Nat160.CreateExt();
+		Nat160.Square(x, array);
+		Reduce(array, z);
+		while (--n > 0)
+		{
+			Nat160.Square(z, array);
+			Reduce(array, z);
+		}
+	}
+
+	public static void Subtract(uint[] x, uint[] y, uint[] z)
+	{
+		if (Nat160.Sub(x, y, z) != 0)
+		{
+			Nat.SubWordFrom(5, 2147483649u, z);
+		}
+	}
+
+	public static void SubtractExt(uint[] xx, uint[] yy, uint[] zz)
+	{
+		if (Nat.Sub(10, xx, yy, zz) != 0 && Nat.SubFrom(PExtInv.Length, PExtInv, zz) != 0)
+		{
+			Nat.DecAt(10, zz, PExtInv.Length);
+		}
+	}
+
+	public static void Twice(uint[] x, uint[] z)
+	{
+		if (Nat.ShiftUpBit(5, x, 0u, z) != 0 || (z[4] == uint.MaxValue && Nat160.Gte(z, P)))
+		{
+			Nat.AddWordTo(5, 2147483649u, z);
+		}
+	}
+}
 }

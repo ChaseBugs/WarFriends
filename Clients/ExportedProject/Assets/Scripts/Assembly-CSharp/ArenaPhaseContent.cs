@@ -1,63 +1,77 @@
 using UnityEngine;
 
-public class ArenaPhaseContent : MonoBehaviour
+public class ArenaPhaseContent : Core_BaseScript
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public UISprite[] phases;
 
-	1. No dll files were provided to AssetRipper.
+	public UISprite phaseArrow;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public UILabel phaseLabel;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	private float mPhaseLength;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	private float mInterval;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	private float mBackgroundWidth => 720f;
 
-	3. Assembly Reconstruction has not been implemented.
+	public void SetPhases(int count)
+	{
+		switch (count)
+		{
+		case 1:
+			phases[0].gameObject.SetActive(value: true);
+			phases[0].transform.localScale = phases[0].transform.localScale.ReplaceX(mBackgroundWidth);
+			mPhaseLength = mBackgroundWidth;
+			return;
+		case 0:
+			return;
+		}
+		mPhaseLength = mBackgroundWidth / ((float)count + (float)(count - 1) * 0.75f);
+		mInterval = (mBackgroundWidth - mPhaseLength) / (float)(count - 1);
+		for (int i = 0; i < count; i++)
+		{
+			phases[i].gameObject.SetActive(value: true);
+			phases[i].transform.localPosition = phases[i].transform.localPosition.ReplaceX(mInterval * (float)i);
+			phases[i].transform.localScale = phases[i].transform.localScale.ReplaceX(mPhaseLength);
+		}
+	}
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public void ResetPhases()
+	{
+		phaseLabel.gameObject.SetActive(value: true);
+		phaseArrow.gameObject.SetActive(value: true);
+		UISprite[] array = phases;
+		foreach (UISprite uISprite in array)
+		{
+			uISprite.gameObject.SetActive(value: false);
+			uISprite.color = new Color(0.7f, 0.7f, 0.7f, 0.5f);
+		}
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
-
-	4. This script is unnecessary.
-
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
-
-	5. Script Content Level 0
-
-		AssetRipper was set to not load any script information.
-
-	6. Cpp2IL failed to decompile Il2Cpp data
-
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public void ActivePhase(int index)
+	{
+		UISprite[] array = phases;
+		foreach (UISprite uISprite in array)
+		{
+			uISprite.color = new Color(0.7f, 0.7f, 0.7f, 0.5f);
+		}
+		if (index > 0)
+		{
+			phaseLabel.text = Localization.LocalizeFormat("ID_PHASEX", index);
+			float num = ((!WarArena.instance.warArenaConfig.currentWindow.isActive) ? (mInterval * 0.5f) : 0f);
+			float val = mInterval * (float)(index - 1) + mPhaseLength * 0.5f + num;
+			phaseLabel.transform.localPosition = phaseLabel.transform.localPosition.ReplaceX(val);
+			phaseArrow.transform.localPosition = phaseArrow.transform.localPosition.ReplaceX(val);
+			phaseLabel.gameObject.SetActive(WarArena.instance.warArenaConfig.currentWindow.isActive);
+			if (WarArena.instance.warArenaConfig.currentWindow.isActive)
+			{
+				phases[index - 1].color = new Color(1f, 1f, 1f, 1f);
+			}
+		}
+		else
+		{
+			phaseLabel.gameObject.SetActive(value: false);
+			phaseArrow.gameObject.SetActive(value: false);
+		}
+	}
 }

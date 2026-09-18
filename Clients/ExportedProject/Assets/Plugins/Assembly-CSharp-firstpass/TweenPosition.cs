@@ -1,63 +1,85 @@
 using UnityEngine;
 
-public class TweenPosition : MonoBehaviour
+[AddComponentMenu("NGUI/Tween/Position")]
+public class TweenPosition : UITweener
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public Vector3 from;
 
-	1. No dll files were provided to AssetRipper.
+	public Vector3 to;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public bool useLocal = true;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	private Transform mTrans;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public Transform cachedTransform
+	{
+		get
+		{
+			if (mTrans == null)
+			{
+				mTrans = base.transform;
+			}
+			return mTrans;
+		}
+	}
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public Vector3 position
+	{
+		get
+		{
+			if (useLocal)
+			{
+				return cachedTransform.localPosition;
+			}
+			return cachedTransform.position;
+		}
+		set
+		{
+			if (useLocal)
+			{
+				cachedTransform.localPosition = value;
+			}
+			cachedTransform.position = value;
+		}
+	}
 
-	3. Assembly Reconstruction has not been implemented.
+	protected override void OnUpdate(float factor, bool isFinished)
+	{
+		if (useLocal)
+		{
+			cachedTransform.localPosition = from * (1f - factor) + to * factor;
+		}
+		else
+		{
+			cachedTransform.position = from * (1f - factor) + to * factor;
+		}
+	}
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public static TweenPosition Begin(GameObject go, float duration, Vector3 pos, bool useLocal = true)
+	{
+		TweenPosition tweenPosition = UITweener.Begin<TweenPosition>(go, duration);
+		tweenPosition.useLocal = useLocal;
+		tweenPosition.from = tweenPosition.position;
+		tweenPosition.to = pos;
+		if (duration <= 0f)
+		{
+			tweenPosition.Sample(1f, isFinished: true);
+			tweenPosition.enabled = false;
+		}
+		return tweenPosition;
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
-
-	4. This script is unnecessary.
-
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
-
-	5. Script Content Level 0
-
-		AssetRipper was set to not load any script information.
-
-	6. Cpp2IL failed to decompile Il2Cpp data
-
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public static TweenPosition Begin(GameObject go, float duration, Vector3 fromnPos, Vector3 toPos, bool useLocal = true)
+	{
+		TweenPosition tweenPosition = UITweener.Begin<TweenPosition>(go, duration);
+		tweenPosition.useLocal = useLocal;
+		tweenPosition.from = fromnPos;
+		tweenPosition.to = toPos;
+		if (duration <= 0f)
+		{
+			tweenPosition.Sample(1f, isFinished: true);
+			tweenPosition.enabled = false;
+		}
+		return tweenPosition;
+	}
 }

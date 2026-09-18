@@ -139,13 +139,16 @@ AssetRipper가 scene, prefab, material, texture, audio, animation, script 구조
 
 ## 9. Unity 버전을 맞춰 연다
 
-이 프로젝트는 다음 Unity 버전으로 복구되었다:
+복구 로그가 보고한 Unity 버전을 사용한다. 예를 들어 현재 `Clients/ExportedProject`
+WarFriends 1.4.0 추출본은 다음 버전을 보고한다:
 
 ```text
 2018.4.23f1
 ```
 
-Unity Hub에서 `Client` 폴더를 열면 된다.
+Unity Hub에서는 `Clients/ExportedProject` 폴더를 연다. 이 추출본의
+`ProjectVersion.txt`가 더 새로운 버전을 가리키더라도, AssetRipper 로그의 원본 asset
+버전이 우선이다. 다른 복구 프로젝트는 각자의 로그와 문서를 따른다.
 
 리유:
 
@@ -172,13 +175,15 @@ private Player GetPlayer()
 
 ## 11. 최종 프로젝트
 
-현재 정리된 최종 Unity 프로젝트 폴더:
+현재 새로 추출한 Unity 프로젝트 폴더:
 
 ```text
-Client
+Clients/ExportedProject
 ```
 
-Unity Hub에서 이 폴더를 열면 된다.
+Unity Hub에서 이 폴더를 열면 된다. Mono DLL 디컴파일 소스가 있어도 AssetRipper가
+assembly 충돌을 기록했거나 `m_Script: {fileID: 0}` 컴포넌트가 남아 있으면, 먼저
+assembly 경계와 누락된 바인딩을 복구해야 한다.
 
 ## 12. 주의
 

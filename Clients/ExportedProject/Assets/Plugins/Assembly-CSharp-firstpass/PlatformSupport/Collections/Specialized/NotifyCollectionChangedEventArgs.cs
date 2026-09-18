@@ -1,66 +1,258 @@
-using UnityEngine;
+using System;
+using System.Collections;
 
 namespace PlatformSupport.Collections.Specialized
 {
-	public class NotifyCollectionChangedEventArgs : MonoBehaviour
+public class NotifyCollectionChangedEventArgs : EventArgs
+{
+	private NotifyCollectionChangedAction _action;
+
+	private IList _newItems;
+
+	private IList _oldItems;
+
+	private int _newStartingIndex = -1;
+
+	private int _oldStartingIndex = -1;
+
+	public NotifyCollectionChangedAction Action => _action;
+
+	public IList NewItems => _newItems;
+
+	public IList OldItems => _oldItems;
+
+	public int NewStartingIndex => _newStartingIndex;
+
+	public int OldStartingIndex => _oldStartingIndex;
+
+	public NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction action)
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
+		if (action != NotifyCollectionChangedAction.Reset)
+		{
+			throw new ArgumentException("action");
+		}
+		InitializeAdd(action, null, -1);
 	}
+
+	public NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction action, object changedItem)
+	{
+		if (action != NotifyCollectionChangedAction.Add && action != NotifyCollectionChangedAction.Remove && action != NotifyCollectionChangedAction.Reset)
+		{
+			throw new ArgumentException("action");
+		}
+		if (action == NotifyCollectionChangedAction.Reset)
+		{
+			if (changedItem != null)
+			{
+				throw new ArgumentException("action");
+			}
+			InitializeAdd(action, null, -1);
+		}
+		else
+		{
+			InitializeAddOrRemove(action, new object[1] { changedItem }, -1);
+		}
+	}
+
+	public NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction action, object changedItem, int index)
+	{
+		if (action != NotifyCollectionChangedAction.Add && action != NotifyCollectionChangedAction.Remove && action != NotifyCollectionChangedAction.Reset)
+		{
+			throw new ArgumentException("action");
+		}
+		if (action == NotifyCollectionChangedAction.Reset)
+		{
+			if (changedItem != null)
+			{
+				throw new ArgumentException("action");
+			}
+			if (index != -1)
+			{
+				throw new ArgumentException("action");
+			}
+			InitializeAdd(action, null, -1);
+		}
+		else
+		{
+			InitializeAddOrRemove(action, new object[1] { changedItem }, index);
+		}
+	}
+
+	public NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction action, IList changedItems)
+	{
+		if (action != NotifyCollectionChangedAction.Add && action != NotifyCollectionChangedAction.Remove && action != NotifyCollectionChangedAction.Reset)
+		{
+			throw new ArgumentException("action");
+		}
+		if (action == NotifyCollectionChangedAction.Reset)
+		{
+			if (changedItems != null)
+			{
+				throw new ArgumentException("action");
+			}
+			InitializeAdd(action, null, -1);
+		}
+		else
+		{
+			if (changedItems == null)
+			{
+				throw new ArgumentNullException("changedItems");
+			}
+			InitializeAddOrRemove(action, changedItems, -1);
+		}
+	}
+
+	public NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction action, IList changedItems, int startingIndex)
+	{
+		if (action != NotifyCollectionChangedAction.Add && action != NotifyCollectionChangedAction.Remove && action != NotifyCollectionChangedAction.Reset)
+		{
+			throw new ArgumentException("action");
+		}
+		if (action == NotifyCollectionChangedAction.Reset)
+		{
+			if (changedItems != null)
+			{
+				throw new ArgumentException("action");
+			}
+			if (startingIndex != -1)
+			{
+				throw new ArgumentException("action");
+			}
+			InitializeAdd(action, null, -1);
+		}
+		else
+		{
+			if (changedItems == null)
+			{
+				throw new ArgumentNullException("changedItems");
+			}
+			if (startingIndex < -1)
+			{
+				throw new ArgumentException("startingIndex");
+			}
+			InitializeAddOrRemove(action, changedItems, startingIndex);
+		}
+	}
+
+	public NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction action, object newItem, object oldItem)
+	{
+		if (action != NotifyCollectionChangedAction.Replace)
+		{
+			throw new ArgumentException("action");
+		}
+		InitializeMoveOrReplace(action, new object[1] { newItem }, new object[1] { oldItem }, -1, -1);
+	}
+
+	public NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction action, object newItem, object oldItem, int index)
+	{
+		if (action != NotifyCollectionChangedAction.Replace)
+		{
+			throw new ArgumentException("action");
+		}
+		InitializeMoveOrReplace(action, new object[1] { newItem }, new object[1] { oldItem }, index, index);
+	}
+
+	public NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction action, IList newItems, IList oldItems)
+	{
+		if (action != NotifyCollectionChangedAction.Replace)
+		{
+			throw new ArgumentException("action");
+		}
+		if (newItems == null)
+		{
+			throw new ArgumentNullException("newItems");
+		}
+		if (oldItems == null)
+		{
+			throw new ArgumentNullException("oldItems");
+		}
+		InitializeMoveOrReplace(action, newItems, oldItems, -1, -1);
+	}
+
+	public NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction action, IList newItems, IList oldItems, int startingIndex)
+	{
+		if (action != NotifyCollectionChangedAction.Replace)
+		{
+			throw new ArgumentException("action");
+		}
+		if (newItems == null)
+		{
+			throw new ArgumentNullException("newItems");
+		}
+		if (oldItems == null)
+		{
+			throw new ArgumentNullException("oldItems");
+		}
+		InitializeMoveOrReplace(action, newItems, oldItems, startingIndex, startingIndex);
+	}
+
+	public NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction action, object changedItem, int index, int oldIndex)
+	{
+		if (action != NotifyCollectionChangedAction.Move)
+		{
+			throw new ArgumentException("action");
+		}
+		if (index < 0)
+		{
+			throw new ArgumentException("index");
+		}
+		object[] array = new object[1] { changedItem };
+		InitializeMoveOrReplace(action, array, array, index, oldIndex);
+	}
+
+	public NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction action, IList changedItems, int index, int oldIndex)
+	{
+		if (action != NotifyCollectionChangedAction.Move)
+		{
+			throw new ArgumentException("action");
+		}
+		if (index < 0)
+		{
+			throw new ArgumentException("index");
+		}
+		InitializeMoveOrReplace(action, changedItems, changedItems, index, oldIndex);
+	}
+
+	internal NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction action, IList newItems, IList oldItems, int newIndex, int oldIndex)
+	{
+		_action = action;
+		_newItems = ((newItems != null) ? new ReadOnlyList(newItems) : null);
+		_oldItems = ((oldItems != null) ? new ReadOnlyList(oldItems) : null);
+		_newStartingIndex = newIndex;
+		_oldStartingIndex = oldIndex;
+	}
+
+	private void InitializeAddOrRemove(NotifyCollectionChangedAction action, IList changedItems, int startingIndex)
+	{
+		switch (action)
+		{
+		case NotifyCollectionChangedAction.Add:
+			InitializeAdd(action, changedItems, startingIndex);
+			break;
+		case NotifyCollectionChangedAction.Remove:
+			InitializeRemove(action, changedItems, startingIndex);
+			break;
+		}
+	}
+
+	private void InitializeAdd(NotifyCollectionChangedAction action, IList newItems, int newStartingIndex)
+	{
+		_action = action;
+		_newItems = ((newItems != null) ? new ReadOnlyList(newItems) : null);
+		_newStartingIndex = newStartingIndex;
+	}
+
+	private void InitializeRemove(NotifyCollectionChangedAction action, IList oldItems, int oldStartingIndex)
+	{
+		_action = action;
+		_oldItems = ((oldItems != null) ? new ReadOnlyList(oldItems) : null);
+		_oldStartingIndex = oldStartingIndex;
+	}
+
+	private void InitializeMoveOrReplace(NotifyCollectionChangedAction action, IList newItems, IList oldItems, int startingIndex, int oldStartingIndex)
+	{
+		InitializeAdd(action, newItems, startingIndex);
+		InitializeRemove(action, oldItems, oldStartingIndex);
+	}
+}
 }

@@ -1,63 +1,113 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
-public class ChangeCountryDialog : MonoBehaviour
+public class ChangeCountryDialog : GuiElementSingle<ChangeCountryDialog>, IGuiDialog
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Header("Core")]
+	public UIButton closeButton;
 
-	1. No dll files were provided to AssetRipper.
+	public CountryIconButton countryIconButtonPrefab;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public UIGrid countryGrid;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public List<CountryIconButton> countryFlags;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	[HideInInspector]
+	public CountryIconButton selectedIcon;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	private CountryIconButton noCountry;
 
-	3. Assembly Reconstruction has not been implemented.
+	public override void InitControls()
+	{
+		UIEventListener uIEventListener = UIEventListener.Get(closeButton.gameObject);
+		uIEventListener.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener.onClick, new UIEventListener.VoidDelegate(CloseDialog));
+		for (int i = 0; i < GameVariables.countryCodes.Count + 1; i++)
+		{
+			CountryIconButton countryIconButton = Singleton<GuiManager>.instance.objectPool.InstantiateAsChild(countryIconButtonPrefab, countryGrid.gameObject, i.ToString("'Country 'D2")) as CountryIconButton;
+			if (countryIconButton != null)
+			{
+				countryFlags.Add(countryIconButton);
+			}
+		}
+		countryGrid.repositionNow = true;
+		int num = 0;
+		foreach (KeyValuePair<string, string> countryCode in GameVariables.countryCodes)
+		{
+			countryFlags[num].Initialize(countryCode.Value, countryCode.Key);
+			UIEventListener uIEventListener2 = UIEventListener.Get(countryFlags[num].gameObject);
+			uIEventListener2.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener2.onClick, new UIEventListener.VoidDelegate(CountryFlagChange));
+			num++;
+		}
+		noCountry = countryFlags[countryFlags.Count - 1];
+		noCountry.Initialize("country-noflag", GameLoginManager.currentPlayer.country);
+		UIEventListener uIEventListener3 = UIEventListener.Get(noCountry.gameObject);
+		uIEventListener3.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener3.onClick, new UIEventListener.VoidDelegate(CountryFlagChange));
+	}
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	private void CloseDialog(GameObject go)
+	{
+		if (base.isFullyShowed)
+		{
+			if (selectedIcon != null && GameLoginManager.currentPlayer.country != selectedIcon.countryCode)
+			{
+				Debug.Log($"Changed country to {selectedIcon.countryCode} from {GameLoginManager.currentPlayer.country}.");
+				GameLoginManager.currentPlayer.country = selectedIcon.countryCode;
+				Singleton<BeanstalkServerManager>.instance.ChangePlayerCountry(selectedIcon.countryCode);
+			}
+			HideDialog();
+		}
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	private void CountryFlagChange(GameObject go)
+	{
+		CountryIconButton component = go.GetComponent<CountryIconButton>();
+		if (!(component == null))
+		{
+			if (selectedIcon != null)
+			{
+				selectedIcon.Highlight(setHighligth: false);
+			}
+			selectedIcon = component;
+			selectedIcon.Highlight(setHighligth: true);
+		}
+	}
 
-	4. This script is unnecessary.
+	public override void InitGUIValues()
+	{
+		string country = GameLoginManager.currentPlayer.country;
+		int num = countryFlags.FindIndex((CountryIconButton countryIconButton) => countryIconButton.countryCode == country);
+		bool flag = num >= 0;
+		noCountry.gameObject.SetActive(!flag);
+		if (selectedIcon != null)
+		{
+			selectedIcon.Highlight(setHighligth: false);
+		}
+		if (flag)
+		{
+			selectedIcon = countryFlags[num];
+		}
+		else
+		{
+			noCountry.Initialize("country-noflag", GameLoginManager.currentPlayer.country);
+			selectedIcon = noCountry;
+		}
+		selectedIcon.Highlight(setHighligth: true);
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public override void DoBeforeHide()
+	{
+		base.DoBeforeHide();
+		GuiElementSingle<SettingsDialog>.instance.userContent.InitGUIValues();
+	}
 
-	5. Script Content Level 0
+	public GuiElement GetGuiElement()
+	{
+		return this;
+	}
 
-		AssetRipper was set to not load any script information.
-
-	6. Cpp2IL failed to decompile Il2Cpp data
-
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public override void OnBack()
+	{
+		CloseDialog(closeButton.gameObject);
+	}
 }

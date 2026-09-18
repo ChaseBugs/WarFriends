@@ -1,63 +1,174 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
-public class CardsContent : MonoBehaviour
+public class CardsContent : Core_BaseScript
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Header("Header")]
+	public UISprite topSpacer;
 
-	1. No dll files were provided to AssetRipper.
+	public UILabel cardsHeader;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	[Header("Left Button")]
+	public UILabel cardsCountLabel;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	[Header("List of Cards")]
+	public CardRecord cardRecordPrefab;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public UIDraggablePanel panelCards;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public UIGrid gridCards;
 
-	3. Assembly Reconstruction has not been implemented.
+	[Header("No Cards")]
+	public UILabel noCardsGained;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	[Header("Bottom")]
+	public UISprite bottomSpacer;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	private int mCount;
 
-	4. This script is unnecessary.
+	private List<CardRecord> mCardsToAnimate = new List<CardRecord>();
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private List<TweenAnimator> mAnimator = new List<TweenAnimator>();
 
-	5. Script Content Level 0
+	private ObjectPool mPool;
 
-		AssetRipper was set to not load any script information.
+	public List<TweenAnimator> Animator => mAnimator;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public void InitControls()
+	{
+		mPool = Singleton<GuiManager>.instance.objectPool;
+		mCardsToAnimate = new List<CardRecord>();
+		InitAnimators();
+		topSpacer.transform.localPosition = new Vector3(0f, (float)UIRoot.list[0].activeHeight / 2f, 0f);
+		gridCards.onReposition = delegate
+		{
+			float num = ((float)Mathf.CeilToInt((float)mCardsToAnimate.Count / 3f) - 0.35f) * gridCards.cellHeight;
+			bottomSpacer.transform.localPosition = new Vector3(0f, 0f - num, 0f);
+		};
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	private void InitAnimators()
+	{
+		mAnimator = new List<TweenAnimator>();
+		TweenAnimator tweenAnimator = base.gameObject.AddComponent<TweenAnimator>();
+		tweenAnimator.allTweens = new List<TweenAnimator.TweenRecord>();
+		mAnimator.Add(tweenAnimator);
+		TweenAnimator tweenAnimator2 = base.gameObject.AddComponent<TweenAnimator>();
+		tweenAnimator2.allTweens = new List<TweenAnimator.TweenRecord>();
+		mAnimator.Add(tweenAnimator2);
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	internal void InitGuiValues()
+	{
+		InitCardsTab();
+		InitializeCardContent();
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	public void AnimateShow(float fadeInTime)
+	{
+		PrepareAnimation();
+	}
 
-	*/
+	private void InitCardsTab()
+	{
+		List<Card> obtainedCards = CardManager.instance.obtainedCards;
+		obtainedCards.Sort((Card card1, Card card2) => string.Compare(card1.rarity.ToString() + card1.name, card2.rarity.ToString() + card2.name, StringComparison.Ordinal));
+		foreach (CardRecord item in mCardsToAnimate)
+		{
+			item.DestroyPooled();
+		}
+		mCardsToAnimate.Clear();
+		if (obtainedCards == null)
+		{
+			return;
+		}
+		string text = "********** DEBUG GAINED CARDS **********\n";
+		foreach (Card item2 in obtainedCards)
+		{
+			text += $"Card: {item2.rarity} {item2.cardName}\t\t{item2.name}\n";
+			CardRecord cardRecord = (CardRecord)mPool.InstantiateAsChild(cardRecordPrefab, gridCards.gameObject, $"Card {5 - item2.rarityNumber} {item2.cardName} {mCount++}");
+			if (cardRecord != null)
+			{
+				cardRecord.Initialize(item2);
+			}
+			mCardsToAnimate.Add(cardRecord);
+		}
+		Debug.Log(text + "********************************************");
+		GuiScreenSingle<EndScreen>.instance.results.cardsGot = obtainedCards.Count;
+		GuiScreenSingle<EndScreen>.instance.resultCampaign.cardsGot = obtainedCards.Count;
+	}
+
+	private void InitializeCardContent()
+	{
+		cardsHeader.alpha = 0f;
+		cardsCountLabel.alpha = 0f;
+		cardsCountLabel.text = "0";
+		noCardsGained.alpha = 0f;
+	}
+
+	private void PrepareAnimation()
+	{
+		TweenAnimator tweenAnimator = mAnimator[0];
+		tweenAnimator.allTweens.Clear();
+		if (mCardsToAnimate.Count > 0)
+		{
+			tweenAnimator.AddTween(0, TweenAnimator.TweenType.Alpha, cardsHeader.gameObject, 0.5f, 1f, 0f, -1, 0f);
+		}
+		tweenAnimator.AddTween(1, TweenAnimator.TweenType.Alpha, cardsCountLabel.gameObject, 0.5f, 1f, 0f);
+		int num = 2;
+		gridCards.repositionNow = true;
+		float num2 = 0.8f;
+		foreach (CardRecord item in mCardsToAnimate)
+		{
+			TweenAlpha.Begin(item.cardPanel.gameObject, 0f, 0f);
+			item.cardPanel.alpha1 = 0f;
+			tweenAnimator.AddTween(num++, TweenAnimator.TweenType.Alpha, item.gameObject, 0.5f, 1f, num2, -1, 0f);
+			num2 += 0.3f;
+		}
+		tweenAnimator.GenerateTweens();
+		mAnimator[1].allTweens.Clear();
+		if (mCardsToAnimate.Count == 0)
+		{
+			mAnimator[1].AddTween(1, TweenAnimator.TweenType.Alpha, noCardsGained.gameObject, 0.5f, 1f, 0f, -1, 0f);
+			mAnimator[1].GenerateTweens();
+		}
+	}
+
+	public void SetCardsAvailable()
+	{
+		foreach (CardRecord item in mCardsToAnimate)
+		{
+			item.SetAvailable();
+		}
+	}
+
+	internal void ResetAnimation()
+	{
+		foreach (TweenAnimator item in mAnimator)
+		{
+			item.ResetTweens();
+		}
+	}
+
+	internal void FinishAnimation()
+	{
+		foreach (TweenAnimator item in mAnimator)
+		{
+			item.FinishTweens();
+		}
+	}
+
+	public void DoAfterHide()
+	{
+		if (mCardsToAnimate == null)
+		{
+			return;
+		}
+		foreach (CardRecord item in mCardsToAnimate)
+		{
+			item.DestroyPooled();
+		}
+		mCardsToAnimate.Clear();
+	}
 }

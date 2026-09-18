@@ -1,66 +1,186 @@
-using UnityEngine;
+using Org.BouncyCastle.Crypto.Engines;
+using Org.BouncyCastle.Crypto.Modes;
 
 namespace Org.BouncyCastle.Crypto.Tls
 {
-	public class DefaultTlsCipherFactory : MonoBehaviour
+public class DefaultTlsCipherFactory : AbstractTlsCipherFactory
+{
+	public override TlsCipher CreateCipher(TlsContext context, int encryptionAlgorithm, int macAlgorithm)
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
+		switch (encryptionAlgorithm)
+		{
+			case 7:
+				return CreateDesEdeCipher(context, macAlgorithm);
+			case 102:
+				return CreateChaCha20Poly1305(context);
+			case 8:
+				return CreateAESCipher(context, 16, macAlgorithm);
+			case 15:
+				return CreateCipher_Aes_Ccm(context, 16, 16);
+			case 16:
+				return CreateCipher_Aes_Ccm(context, 16, 8);
+			case 17:
+				return CreateCipher_Aes_Ccm(context, 32, 16);
+			case 18:
+				return CreateCipher_Aes_Ccm(context, 32, 8);
+			case 10:
+				return CreateCipher_Aes_Gcm(context, 16, 16);
+			case 9:
+				return CreateAESCipher(context, 32, macAlgorithm);
+			case 11:
+				return CreateCipher_Aes_Gcm(context, 32, 16);
+			case 12:
+				return CreateCamelliaCipher(context, 16, macAlgorithm);
+			case 19:
+				return CreateCipher_Camellia_Gcm(context, 16, 16);
+			case 13:
+				return CreateCamelliaCipher(context, 32, macAlgorithm);
+			case 20:
+				return CreateCipher_Camellia_Gcm(context, 32, 16);
+			case 100:
+				return CreateSalsa20Cipher(context, 12, 32, macAlgorithm);
+			case 0:
+				return CreateNullCipher(context, macAlgorithm);
+			case 2:
+				return CreateRC4Cipher(context, 16, macAlgorithm);
+			case 101:
+				return CreateSalsa20Cipher(context, 20, 32, macAlgorithm);
+			case 14:
+				return CreateSeedCipher(context, macAlgorithm);
+			default:
+				throw new TlsFatalAlert(80);
+		}
 	}
+
+	protected virtual TlsBlockCipher CreateAESCipher(TlsContext context, int cipherKeySize, int macAlgorithm)
+	{
+		return new TlsBlockCipher(context, CreateAesBlockCipher(), CreateAesBlockCipher(), CreateHMacDigest(macAlgorithm), CreateHMacDigest(macAlgorithm), cipherKeySize);
+	}
+
+	protected virtual TlsBlockCipher CreateCamelliaCipher(TlsContext context, int cipherKeySize, int macAlgorithm)
+	{
+		return new TlsBlockCipher(context, CreateCamelliaBlockCipher(), CreateCamelliaBlockCipher(), CreateHMacDigest(macAlgorithm), CreateHMacDigest(macAlgorithm), cipherKeySize);
+	}
+
+	protected virtual TlsCipher CreateChaCha20Poly1305(TlsContext context)
+	{
+		return new Chacha20Poly1305(context);
+	}
+
+	protected virtual TlsAeadCipher CreateCipher_Aes_Ccm(TlsContext context, int cipherKeySize, int macSize)
+	{
+		return new TlsAeadCipher(context, CreateAeadBlockCipher_Aes_Ccm(), CreateAeadBlockCipher_Aes_Ccm(), cipherKeySize, macSize);
+	}
+
+	protected virtual TlsAeadCipher CreateCipher_Aes_Gcm(TlsContext context, int cipherKeySize, int macSize)
+	{
+		return new TlsAeadCipher(context, CreateAeadBlockCipher_Aes_Gcm(), CreateAeadBlockCipher_Aes_Gcm(), cipherKeySize, macSize);
+	}
+
+	protected virtual TlsAeadCipher CreateCipher_Camellia_Gcm(TlsContext context, int cipherKeySize, int macSize)
+	{
+		return new TlsAeadCipher(context, CreateAeadBlockCipher_Camellia_Gcm(), CreateAeadBlockCipher_Camellia_Gcm(), cipherKeySize, macSize);
+	}
+
+	protected virtual TlsBlockCipher CreateDesEdeCipher(TlsContext context, int macAlgorithm)
+	{
+		return new TlsBlockCipher(context, CreateDesEdeBlockCipher(), CreateDesEdeBlockCipher(), CreateHMacDigest(macAlgorithm), CreateHMacDigest(macAlgorithm), 24);
+	}
+
+	protected virtual TlsNullCipher CreateNullCipher(TlsContext context, int macAlgorithm)
+	{
+		return new TlsNullCipher(context, CreateHMacDigest(macAlgorithm), CreateHMacDigest(macAlgorithm));
+	}
+
+	protected virtual TlsStreamCipher CreateRC4Cipher(TlsContext context, int cipherKeySize, int macAlgorithm)
+	{
+		return new TlsStreamCipher(context, CreateRC4StreamCipher(), CreateRC4StreamCipher(), CreateHMacDigest(macAlgorithm), CreateHMacDigest(macAlgorithm), cipherKeySize, usesNonce: false);
+	}
+
+	protected virtual TlsStreamCipher CreateSalsa20Cipher(TlsContext context, int rounds, int cipherKeySize, int macAlgorithm)
+	{
+		return new TlsStreamCipher(context, CreateSalsa20StreamCipher(rounds), CreateSalsa20StreamCipher(rounds), CreateHMacDigest(macAlgorithm), CreateHMacDigest(macAlgorithm), cipherKeySize, usesNonce: true);
+	}
+
+	protected virtual TlsBlockCipher CreateSeedCipher(TlsContext context, int macAlgorithm)
+	{
+		return new TlsBlockCipher(context, CreateSeedBlockCipher(), CreateSeedBlockCipher(), CreateHMacDigest(macAlgorithm), CreateHMacDigest(macAlgorithm), 16);
+	}
+
+	protected virtual IBlockCipher CreateAesEngine()
+	{
+		return new AesEngine();
+	}
+
+	protected virtual IBlockCipher CreateCamelliaEngine()
+	{
+		return new CamelliaEngine();
+	}
+
+	protected virtual IBlockCipher CreateAesBlockCipher()
+	{
+		return new CbcBlockCipher(CreateAesEngine());
+	}
+
+	protected virtual IAeadBlockCipher CreateAeadBlockCipher_Aes_Ccm()
+	{
+		return new CcmBlockCipher(CreateAesEngine());
+	}
+
+	protected virtual IAeadBlockCipher CreateAeadBlockCipher_Aes_Gcm()
+	{
+		return new GcmBlockCipher(CreateAesEngine());
+	}
+
+	protected virtual IAeadBlockCipher CreateAeadBlockCipher_Camellia_Gcm()
+	{
+		return new GcmBlockCipher(CreateCamelliaEngine());
+	}
+
+	protected virtual IBlockCipher CreateCamelliaBlockCipher()
+	{
+		return new CbcBlockCipher(CreateCamelliaEngine());
+	}
+
+	protected virtual IBlockCipher CreateDesEdeBlockCipher()
+	{
+		return new CbcBlockCipher(new DesEdeEngine());
+	}
+
+	protected virtual IStreamCipher CreateRC4StreamCipher()
+	{
+		return new RC4Engine();
+	}
+
+	protected virtual IStreamCipher CreateSalsa20StreamCipher(int rounds)
+	{
+		return new Salsa20Engine(rounds);
+	}
+
+	protected virtual IBlockCipher CreateSeedBlockCipher()
+	{
+		return new CbcBlockCipher(new SeedEngine());
+	}
+
+	protected virtual IDigest CreateHMacDigest(int macAlgorithm)
+	{
+		switch (macAlgorithm)
+		{
+			case 0:
+				return null;
+			case 1:
+				return TlsUtilities.CreateHash(1);
+			case 2:
+				return TlsUtilities.CreateHash(2);
+			case 3:
+				return TlsUtilities.CreateHash(4);
+			case 4:
+				return TlsUtilities.CreateHash(5);
+			case 5:
+				return TlsUtilities.CreateHash(6);
+			default:
+				throw new TlsFatalAlert(80);
+		}
+	}
+}
 }

@@ -1,63 +1,191 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
-public class SoldierMeshChanger : MonoBehaviour
+public class SoldierMeshChanger : Core_BaseScript
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Serializable]
+	public class SoldierStyle
+	{
+		[SerializeField]
+		public Mesh helmetMesh;
 
-	1. No dll files were provided to AssetRipper.
+		public List<Material> helmetMaterials;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+		[SerializeField]
+		private string mModelPath;
 
-	2. Incorrect dll files were provided to AssetRipper.
+		public Material transparentMaterial;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+		public SkinnedMeshRenderer modelMeshRenderer { get; private set; }
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+		public void LoadPaths()
+		{
+		}
 
-	3. Assembly Reconstruction has not been implemented.
+		public void LoadModel()
+		{
+			if (!(modelMeshRenderer == null))
+			{
+				return;
+			}
+			GameObject gameObject = Resources.Load<GameObject>(mModelPath);
+			if (gameObject != null)
+			{
+				SkinnedMeshRenderer[] componentsInChildren = gameObject.GetComponentsInChildren<SkinnedMeshRenderer>(includeInactive: true);
+				if (componentsInChildren.Length > 0)
+				{
+					modelMeshRenderer = componentsInChildren[0];
+				}
+			}
+		}
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+		public void UnloadModel()
+		{
+			if (modelMeshRenderer != null)
+			{
+				Resources.UnloadAsset(modelMeshRenderer.sharedMesh);
+			}
+			modelMeshRenderer = null;
+		}
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public SkinnedMeshRenderer skinnedMeshRenderer;
 
-	4. This script is unnecessary.
+	public FakeRigidBodySwapper helmet;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public ModelAttachments helmetAttachments;
 
-	5. Script Content Level 0
+	public ModelAttachments bodyAttachemnts;
 
-		AssetRipper was set to not load any script information.
+	public MeshRenderer powerband;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public MeshFilter hair;
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	private List<SoldierStyle> mSoldierStyles;
 
-	7. An incorrect path was provided to AssetRipper.
+	private int mIndex;
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	private bool mIsInvisible;
 
-	*/
+	public Material material => skinnedMeshRenderer.materials[0];
+
+	public void SetSoldierStyle(List<SoldierStyle> soldierStyles)
+	{
+		mIndex = UnityEngine.Random.Range(0, soldierStyles.Count);
+		mSoldierStyles = soldierStyles;
+		SoldierStyle soldierStyle = soldierStyles[mIndex];
+		SkinnedMeshTools.ChangeSkins(soldierStyle.modelMeshRenderer, skinnedMeshRenderer);
+		if (soldierStyle.helmetMaterials != null && soldierStyle.helmetMaterials.Count > 0)
+		{
+			helmet.SetMesh(soldierStyle.helmetMesh, soldierStyle.helmetMaterials);
+		}
+		else
+		{
+			helmet.SetMesh(soldierStyle.helmetMesh);
+		}
+	}
+
+	private void OnEnable()
+	{
+		skinnedMeshRenderer.quality = ((Singleton<GameController>.instance.gameState == GameController.GameState.Playing) ? SkinQuality.Bone1 : SkinQuality.Bone2);
+	}
+
+	public void SetSoldierVisual(List<TechnologyVisualDefinition> currentVisuals, bool mine)
+	{
+		powerband.gameObject.SetActive(value: false);
+		if (currentVisuals.Count > 0 && currentVisuals[0] != null)
+		{
+			TechnologyVisualDefinition technologyVisualDefinition = currentVisuals[0];
+			skinnedMeshRenderer.materials[0].mainTexture = ((!mine) ? technologyVisualDefinition.materialTetxureRed : technologyVisualDefinition.materialTetxureBlue);
+			skinnedMeshRenderer.materials[0].SetTexture("_MatCap", Singleton<MatCapTextures>.instance.GetMatCap());
+			bodyAttachemnts.HideAllAttachments();
+			foreach (UpgradeSlots.VisualSlotMesh visualSlotMesh in technologyVisualDefinition.visualSlotMeshes)
+			{
+				if (visualSlotMesh.partRed != null && !mine)
+				{
+					bodyAttachemnts.AddAttachment(visualSlotMesh.partRed, visualSlotMesh.visualSlotId);
+				}
+				else if (visualSlotMesh.part != null)
+				{
+					bodyAttachemnts.AddAttachment(visualSlotMesh.part, visualSlotMesh.visualSlotId);
+				}
+			}
+		}
+		if (currentVisuals.Count <= 1 || currentVisuals[1] == null)
+		{
+			return;
+		}
+		TechnologyVisualDefinition technologyVisualDefinition2 = currentVisuals[1];
+		helmet.SetTexture((!mine) ? technologyVisualDefinition2.materialTetxureRed : technologyVisualDefinition2.materialTetxureBlue);
+		helmet.SetMatCapTexture(Singleton<MatCapTextures>.instance.GetMatCap());
+		helmetAttachments.HideAllAttachments();
+		foreach (UpgradeSlots.VisualSlotMesh visualSlotMesh2 in technologyVisualDefinition2.visualSlotMeshes)
+		{
+			if (visualSlotMesh2.partRed != null && !mine)
+			{
+				helmetAttachments.AddAttachment(visualSlotMesh2.partRed, visualSlotMesh2.visualSlotId);
+			}
+			else if (visualSlotMesh2.part != null)
+			{
+				helmetAttachments.AddAttachment(visualSlotMesh2.part, visualSlotMesh2.visualSlotId);
+			}
+		}
+	}
+
+	public void NullTexturesAndMeshes()
+	{
+		skinnedMeshRenderer.materials[0].mainTexture = null;
+		skinnedMeshRenderer.materials[0].SetTexture("_MatCap", null);
+		helmet.SetTexture(null);
+		helmet.SetMatCapTexture(null);
+		skinnedMeshRenderer.sharedMesh = null;
+		helmet.SetMesh(null);
+	}
+
+	public void ChangeCamo(SkinnedMeshRenderer rendererFrom, Texture2D texture)
+	{
+		SkinnedMeshTools.ChangeSkins(rendererFrom, skinnedMeshRenderer);
+		skinnedMeshRenderer.materials[0].mainTexture = texture;
+		skinnedMeshRenderer.materials[0].SetTexture("_MatCap", Singleton<MatCapTextures>.instance.GetMatCap());
+		hair.GetComponent<MeshRenderer>().materials[0].mainTexture = texture;
+	}
+
+	public void ChangeHelmet(PlayerVisualCategoryHelmets.PlayerVisualHelmet playerVisualHelmet)
+	{
+		MeshFilter component = playerVisualHelmet.GetMesh().GetComponent<MeshFilter>();
+		helmet.SetMesh(component.sharedMesh);
+		helmet.SetMaterials(playerVisualHelmet.GetMesh().sharedMaterials);
+	}
+
+	public void ChangeHelmetAttachment(PlayerVisualCategoryHeadAccesories.PlayerVisualHeadAccesory playerVisualHeadAccesory)
+	{
+		helmetAttachments.HideAllAttachments();
+		helmetAttachments.AddAttachment(playerVisualHeadAccesory.GetMesh(), playerVisualHeadAccesory.visualSlotId);
+	}
+
+	public void ChangeHair(PlayerVisualCategoryCamos.PlayerVisualCamo camo, int index)
+	{
+		Mesh hairMesh = camo.GetHairMesh(index);
+		if (hairMesh != null)
+		{
+			hair.sharedMesh = hairMesh;
+			hair.gameObject.SetActive(value: true);
+		}
+		else
+		{
+			hair.gameObject.SetActive(value: false);
+		}
+	}
+
+	public void ChangePowerBand(PlayerVisualCategoryPowerBands.PlayerVisualPowerBand playerVisualPowerBand)
+	{
+		powerband.gameObject.SetActive(playerVisualPowerBand.texture != null);
+		powerband.material.mainTexture = playerVisualPowerBand.texture;
+	}
+
+	public void ChangeMaterial(Material m)
+	{
+		skinnedMeshRenderer.sharedMaterial = m;
+	}
 }

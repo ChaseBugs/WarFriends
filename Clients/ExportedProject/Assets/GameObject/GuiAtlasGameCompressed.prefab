@@ -39,6 +39,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ea9f040b2b6bd4bf069e31e0ace12f73, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  material: {fileID: 2100000, guid: 55a0a0649d930d648ab9c8c560e9fb88, type: 2}
+  sprites: []
+  mCoordinates: 0
+  mPixelSize: 1
+  mReplacement: {fileID: 11409266, guid: 550cce2af67bf7a4f9fd533826af4061, type: 2}
+  pngPath:
+  pngHalfPath:
+  replaceTexture: {fileID: 0}
+  useBinaryData: 0
+  textureWidth: 0
+  textureHeight: 0
 --- !u!1001 &100100000
 Prefab:
   serializedVersion: 2

@@ -1,63 +1,47 @@
-using UnityEngine;
+using Newtonsoft.Json.Linq;
 
-public class DatabaseBattle : MonoBehaviour
+public class DatabaseBattle
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public long opponentFacebookId;
 
-	1. No dll files were provided to AssetRipper.
+	public string opponentId;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public string opponentName;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public bool playerWon;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public int skillDifference;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public int timestamp;
 
-	3. Assembly Reconstruction has not been implemented.
-
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
-
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
-
-	4. This script is unnecessary.
-
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
-
-	5. Script Content Level 0
-
-		AssetRipper was set to not load any script information.
-
-	6. Cpp2IL failed to decompile Il2Cpp data
-
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public static DatabaseBattle CreateFromDatabase(JToken item)
+	{
+		DatabaseBattle databaseBattle = new DatabaseBattle();
+		if (item["TimeStamp"] != null)
+		{
+			databaseBattle.timestamp = StringParser.ParseInt("TimeStamp", "N", item);
+		}
+		string playerId = GameLoginManager.instance.playerId;
+		string text = ((item["ClientId"] == null) ? "-1" : StringParser.ParseString("ClientId", "S", item, string.Empty));
+		string text2 = ((item["MasterId"] == null) ? "-1" : StringParser.ParseString("MasterId", "S", item, string.Empty));
+		string text3;
+		string text4;
+		if (playerId == text)
+		{
+			databaseBattle.opponentId = text2;
+			text3 = "Client";
+			text4 = "Master";
+		}
+		else
+		{
+			databaseBattle.opponentId = text;
+			text3 = "Master";
+			text4 = "Client";
+		}
+		databaseBattle.opponentName = ((item[text4 + "Name"] == null) ? "p0lski" : StringParser.ParseString(text4 + "Name", "S", item, string.Empty));
+		databaseBattle.opponentFacebookId = ((item[text4 + "FacebookId"] == null) ? (-1) : StringParser.ParseLong(text4 + "FacebookId", "S", item));
+		databaseBattle.skillDifference = ((item[text3 + "SkillDifference"] != null) ? StringParser.ParseInt(text3 + "SkillDifference", "N", item) : 0);
+		databaseBattle.playerWon = databaseBattle.skillDifference > 0;
+		return databaseBattle;
+	}
 }

@@ -1,63 +1,187 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
-public class EnemyBasicInventory : MonoBehaviour
+public class EnemyBasicInventory : Core_BaseScript
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Serializable]
+	public class InventoryWeapon
+	{
+		public Weapon weapon;
 
-	1. No dll files were provided to AssetRipper.
+		public Weapon.WeaponType type;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+		public bool leftHand;
+	}
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public List<InventoryWeapon> weapons = new List<InventoryWeapon>();
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public GameObject shield;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public List<InventoryWeapon> cardWeapons = new List<InventoryWeapon>();
 
-	3. Assembly Reconstruction has not been implemented.
+	public GameObject cardShield;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	private bool mSpawnedByCard;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	private SoldierParts mSoldierParts;
 
-	4. This script is unnecessary.
+	private List<Weapon> mWeaponInstancies;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private int[] mWeaponLevels = new int[1];
 
-	5. Script Content Level 0
+	public Weapon currentWeapon => weaponInstancies[weaponIndex];
 
-		AssetRipper was set to not load any script information.
+	public int weaponIndex { get; private set; }
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public List<Weapon> weaponInstancies => mWeaponInstancies;
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public List<Weapon> AttachAllWeapons(SoldierParts soldierParts, bool spawnedByCard, SoldierMeshChanger meshChanger)
+	{
+		weaponIndex = 0;
+		mSpawnedByCard = spawnedByCard;
+		mSoldierParts = soldierParts;
+		if (mSpawnedByCard)
+		{
+			if (cardShield != null)
+			{
+				mSoldierParts.AttachShield(cardShield);
+			}
+			mSoldierParts.ChangeShieldMat(meshChanger.skinnedMeshRenderer.material);
+			mWeaponInstancies = mSoldierParts.AttachWeapons(cardWeapons);
+		}
+		else
+		{
+			if (shield != null)
+			{
+				mSoldierParts.AttachShield(shield);
+			}
+			mWeaponInstancies = mSoldierParts.AttachWeapons(weapons);
+		}
+		SetWeaponsUpgrade(mWeaponLevels);
+		return weaponInstancies;
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	public List<Weapon> AttachAllWeapons(SoldierParts soldierParts, byte[] indices, bool spawnedByCard, SoldierMeshChanger meshChanger)
+	{
+		weaponIndex = 0;
+		mSpawnedByCard = spawnedByCard;
+		mSoldierParts = soldierParts;
+		if (mSpawnedByCard)
+		{
+			if (cardShield != null)
+			{
+				mSoldierParts.AttachShield(cardShield);
+			}
+			mWeaponInstancies = mSoldierParts.AttachWeapons(cardWeapons, indices);
+			mSoldierParts.ChangeShieldMat(meshChanger.skinnedMeshRenderer.material);
+		}
+		else
+		{
+			if (shield != null)
+			{
+				mSoldierParts.AttachShield(shield);
+			}
+			mWeaponInstancies = mSoldierParts.AttachWeapons(weapons, indices);
+		}
+		SetWeaponsUpgrade(mWeaponLevels);
+		return weaponInstancies;
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	public void DestroyWeapons()
+	{
+		if (weaponInstancies != null)
+		{
+			foreach (Weapon weaponInstancy in weaponInstancies)
+			{
+				weaponInstancy.DestroyPooled();
+			}
+		}
+		mWeaponInstancies = null;
+	}
 
-	*/
+	public Weapon SwitchWeapon(int weaponIndex)
+	{
+		Weapon result = null;
+		this.weaponIndex = weaponIndex;
+		if (weaponInstancies != null)
+		{
+			for (int i = 0; i < weaponInstancies.Count; i++)
+			{
+				Weapon weapon = weaponInstancies[i];
+				if (i != weaponIndex)
+				{
+					weapon.gameObject.SetActive(value: false);
+					continue;
+				}
+				mSoldierParts.SetWeapon(weapon);
+				EnemyLeveledWeapon component = weapon.GetComponent<EnemyLeveledWeapon>();
+				if (component != null)
+				{
+					int level = ((i < mWeaponLevels.Length) ? mWeaponLevels[i] : 0);
+					component.SetLevel(level);
+				}
+				weapon.gameObject.SetActive(value: true);
+				result = weapon;
+			}
+		}
+		return result;
+	}
+
+	public Weapon EnableSecondaryWeapon(int weaponIndex)
+	{
+		Weapon weapon = null;
+		weaponInstancies[weaponIndex].gameObject.SetActive(value: true);
+		weapon = weaponInstancies[weaponIndex];
+		EnemyLeveledWeapon component = weapon.GetComponent<EnemyLeveledWeapon>();
+		if (component != null)
+		{
+			int level = ((weaponIndex < mWeaponLevels.Length) ? mWeaponLevels[weaponIndex] : ((mWeaponLevels.Length > 0) ? mWeaponLevels[0] : 0));
+			component.SetLevel(level);
+		}
+		return weaponInstancies[weaponIndex];
+	}
+
+	public IEnumerator PrepareWeaponCoroutine(int[] level, bool forCard)
+	{
+		List<InventoryWeapon> weaponList = ((!forCard) ? weapons : cardWeapons);
+		for (int index = 0; index < weaponList.Count; index++)
+		{
+			InventoryWeapon inventoryWeapon = weaponList[index];
+			EnemyLeveledWeapon[] leveledWeapons = inventoryWeapon.weapon.GetComponentsInChildren<EnemyLeveledWeapon>(includeInactive: true);
+			if (leveledWeapons.Length > 0)
+			{
+				EnemyLeveledWeapon leveledWeapon = leveledWeapons[0];
+				yield return StartCoroutine(leveledWeapon.PrepareAsync(level[index]));
+			}
+		}
+	}
+
+	public void SetWeaponsUpgrade(int[] levels)
+	{
+		mWeaponLevels = levels;
+		if (weaponInstancies == null)
+		{
+			return;
+		}
+		for (int i = 0; i < weaponInstancies.Count; i++)
+		{
+			Weapon weapon = weaponInstancies[i];
+			EnemyLeveledWeapon component = weapon.GetComponent<EnemyLeveledWeapon>();
+			int level = ((mWeaponLevels.Length <= i) ? mWeaponLevels[0] : mWeaponLevels[i]);
+			if (component != null)
+			{
+				component.SetLevel(level);
+			}
+		}
+	}
+
+	public void SetOwner(IFraction owner)
+	{
+		foreach (Weapon weaponInstancy in weaponInstancies)
+		{
+			weaponInstancy.owner = owner;
+		}
+	}
 }

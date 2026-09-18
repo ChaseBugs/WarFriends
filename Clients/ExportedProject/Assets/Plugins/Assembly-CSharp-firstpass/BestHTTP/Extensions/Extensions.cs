@@ -1,66 +1,309 @@
-using UnityEngine;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Runtime.InteropServices;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace BestHTTP.Extensions
 {
-	public class Extensions : MonoBehaviour
+public static class Extensions
+{
+	public static string AsciiToString(this byte[] bytes)
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
+		StringBuilder stringBuilder = new StringBuilder(bytes.Length);
+		foreach (byte b in bytes)
+		{
+			stringBuilder.Append((char)((b > 127) ? 63 : b));
+		}
+		return stringBuilder.ToString();
 	}
+
+	public static byte[] GetASCIIBytes(this string str)
+	{
+		byte[] array = new byte[str.Length];
+		for (int i = 0; i < str.Length; i++)
+		{
+			char c = str[i];
+			array[i] = (byte)((c >= '\u0080') ? '?' : c);
+		}
+		return array;
+	}
+
+	public static void SendAsASCII(this BinaryWriter stream, string str)
+	{
+		foreach (char c in str)
+		{
+			stream.Write((byte)((c >= '\u0080') ? '?' : c));
+		}
+	}
+
+	public static void WriteLine(this FileStream fs)
+	{
+		fs.Write(HTTPRequest.EOL, 0, 2);
+	}
+
+	public static void WriteLine(this FileStream fs, string line)
+	{
+		byte[] aSCIIBytes = line.GetASCIIBytes();
+		fs.Write(aSCIIBytes, 0, aSCIIBytes.Length);
+		fs.WriteLine();
+	}
+
+	public static void WriteLine(this FileStream fs, string format, params object[] values)
+	{
+		byte[] aSCIIBytes = string.Format(format, values).GetASCIIBytes();
+		fs.Write(aSCIIBytes, 0, aSCIIBytes.Length);
+		fs.WriteLine();
+	}
+
+	public static string[] FindOption(this string str, string option)
+	{
+		string[] array = str.ToLower().Split(new char[1] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+		option = option.ToLower();
+		for (int i = 0; i < array.Length; i++)
+		{
+			if (array[i].Contains(option))
+			{
+				return array[i].Split(new char[1] { '=' }, StringSplitOptions.RemoveEmptyEntries);
+			}
+		}
+		return null;
+	}
+
+	public static int ToInt32(this string str, int defaultValue = 0)
+	{
+		if (str == null)
+		{
+			return defaultValue;
+		}
+		try
+		{
+			return int.Parse(str);
+		}
+		catch
+		{
+			return defaultValue;
+		}
+	}
+
+	public static long ToInt64(this string str, long defaultValue = 0L)
+	{
+		if (str == null)
+		{
+			return defaultValue;
+		}
+		try
+		{
+			return long.Parse(str);
+		}
+		catch
+		{
+			return defaultValue;
+		}
+	}
+
+	public static DateTime ToDateTime(this string str, [Optional] DateTime defaultValue)
+	{
+		if (str == null)
+		{
+			return defaultValue;
+		}
+		try
+		{
+			DateTime.TryParse(str, out defaultValue);
+			return defaultValue.ToUniversalTime();
+		}
+		catch
+		{
+			return defaultValue;
+		}
+	}
+
+	public static string ToStrOrEmpty(this string str)
+	{
+		if (str == null)
+		{
+			return string.Empty;
+		}
+		return str;
+	}
+
+	public static string CalculateMD5Hash(this string input)
+	{
+		return input.GetASCIIBytes().CalculateMD5Hash();
+	}
+
+	public static string CalculateMD5Hash(this byte[] input)
+	{
+		byte[] array = MD5.Create().ComputeHash(input);
+		StringBuilder stringBuilder = new StringBuilder();
+		byte[] array2 = array;
+		foreach (byte b in array2)
+		{
+			stringBuilder.Append(b.ToString("x2"));
+		}
+		return stringBuilder.ToString();
+	}
+
+	internal static string Read(this string str, ref int pos, char block, bool needResult = true)
+	{
+		return str.Read(ref pos, (char ch) => ch != block, needResult);
+	}
+
+	internal static string Read(this string str, ref int pos, Func<char, bool> block, bool needResult = true)
+	{
+		if (pos >= str.Length)
+		{
+			return string.Empty;
+		}
+		str.SkipWhiteSpace(ref pos);
+		int num = pos;
+		while (pos < str.Length && block(str[pos]))
+		{
+			pos++;
+		}
+		string result = ((!needResult) ? null : str.Substring(num, pos - num));
+		pos++;
+		return result;
+	}
+
+	internal static string ReadPossibleQuotedText(this string str, ref int pos)
+	{
+		string empty = string.Empty;
+		if (str == null)
+		{
+			return empty;
+		}
+		if (str[pos] == '"')
+		{
+			str.Read(ref pos, '"', needResult: false);
+			empty = str.Read(ref pos, '"');
+			str.Read(ref pos, ',', needResult: false);
+		}
+		else
+		{
+			empty = str.Read(ref pos, (char ch) => ch != ',' && ch != ';');
+		}
+		return empty;
+	}
+
+	internal static void SkipWhiteSpace(this string str, ref int pos)
+	{
+		if (pos < str.Length)
+		{
+			while (pos < str.Length && char.IsWhiteSpace(str[pos]))
+			{
+				pos++;
+			}
+		}
+	}
+
+	internal static string TrimAndLower(this string str)
+	{
+		if (str == null)
+		{
+			return null;
+		}
+		char[] array = new char[str.Length];
+		int length = 0;
+		foreach (char c in str)
+		{
+			if (!char.IsWhiteSpace(c) && !char.IsControl(c))
+			{
+				array[length++] = char.ToLowerInvariant(c);
+			}
+		}
+		return new string(array, 0, length);
+	}
+
+	internal static char? Peek(this string str, int pos)
+	{
+		if (pos < 0 || pos >= str.Length)
+		{
+			return null;
+		}
+		return str[pos];
+	}
+
+	internal static List<HeaderValue> ParseOptionalHeader(this string str)
+	{
+		List<HeaderValue> list = new List<HeaderValue>();
+		if (str == null)
+		{
+			return list;
+		}
+		int pos = 0;
+		while (pos < str.Length)
+		{
+			string key = str.Read(ref pos, (char ch) => ch != '=' && ch != ',').TrimAndLower();
+			HeaderValue headerValue = new HeaderValue(key);
+			if (str[pos - 1] == '=')
+			{
+				headerValue.Value = str.ReadPossibleQuotedText(ref pos);
+			}
+			list.Add(headerValue);
+		}
+		return list;
+	}
+
+	internal static List<HeaderValue> ParseQualityParams(this string str)
+	{
+		List<HeaderValue> list = new List<HeaderValue>();
+		if (str == null)
+		{
+			return list;
+		}
+		int pos = 0;
+		while (pos < str.Length)
+		{
+			string key = str.Read(ref pos, (char ch) => ch != ',' && ch != ';').TrimAndLower();
+			HeaderValue headerValue = new HeaderValue(key);
+			if (str[pos - 1] == ';')
+			{
+				str.Read(ref pos, '=', needResult: false);
+				headerValue.Value = str.Read(ref pos, ',');
+			}
+			list.Add(headerValue);
+		}
+		return list;
+	}
+
+	public static void ReadBuffer(this Stream stream, byte[] buffer)
+	{
+		int num = 0;
+		do
+		{
+			int num2 = stream.Read(buffer, num, buffer.Length - num);
+			if (num2 <= 0)
+			{
+				throw ExceptionHelper.ServerClosedTCPStream();
+			}
+			num += num2;
+		}
+		while (num < buffer.Length);
+	}
+
+	public static void WriteAll(this MemoryStream ms, byte[] buffer)
+	{
+		ms.Write(buffer, 0, buffer.Length);
+	}
+
+	public static void WriteString(this MemoryStream ms, string str)
+	{
+		byte[] bytes = Encoding.UTF8.GetBytes(str);
+		ms.WriteAll(bytes);
+	}
+
+	public static void WriteLine(this MemoryStream ms)
+	{
+		ms.WriteAll(HTTPRequest.EOL);
+	}
+
+	public static void WriteLine(this MemoryStream ms, string str)
+	{
+		ms.WriteString(str);
+		ms.WriteLine();
+	}
+}
 }

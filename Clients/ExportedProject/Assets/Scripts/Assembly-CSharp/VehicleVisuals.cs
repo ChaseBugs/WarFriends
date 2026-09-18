@@ -1,63 +1,74 @@
+using System.Collections.Generic;
 using UnityEngine;
 
-public class VehicleVisuals : MonoBehaviour
+public class VehicleVisuals : Core_BaseScript
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public ModelAttachments modelAttachments;
 
-	1. No dll files were provided to AssetRipper.
+	public Renderer mainRenderer;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public List<MeshRenderer> renderedParts;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public void SetVisuals(List<TechnologyVisualDefinition> currentVisuals, bool mine)
+	{
+		if (currentVisuals.Count <= 0 || currentVisuals[0] == null)
+		{
+			return;
+		}
+		TechnologyVisualDefinition technologyVisualDefinition = currentVisuals[0];
+		mainRenderer.material.mainTexture = ((!mine) ? technologyVisualDefinition.materialTetxureRed : technologyVisualDefinition.materialTetxureBlue);
+		mainRenderer.material.SetTexture("_MatCap", Singleton<MatCapTextures>.instance.GetMatCap());
+		modelAttachments.HideAllAttachments();
+		foreach (UpgradeSlots.VisualSlotMesh visualSlotMesh in technologyVisualDefinition.visualSlotMeshes)
+		{
+			if (visualSlotMesh.part != null)
+			{
+				modelAttachments.AddAttachment(visualSlotMesh.part, visualSlotMesh.visualSlotId, mainRenderer.material);
+			}
+		}
+		foreach (MeshRenderer renderedPart in renderedParts)
+		{
+			renderedPart.sharedMaterial = mainRenderer.material;
+		}
+		if (currentVisuals.Count > 1 && currentVisuals[1] != null)
+		{
+			TechnologyVisualDefinition technologyVisualDefinition2 = currentVisuals[1];
+			foreach (UpgradeSlots.VisualSlotMesh visualSlotMesh2 in technologyVisualDefinition2.visualSlotMeshes)
+			{
+				if (visualSlotMesh2.part != null)
+				{
+					modelAttachments.AddAttachment(visualSlotMesh2.part, visualSlotMesh2.visualSlotId, mainRenderer.material);
+				}
+			}
+		}
+		if (currentVisuals.Count <= 2 || currentVisuals[2] == null)
+		{
+			return;
+		}
+		TechnologyVisualDefinition technologyVisualDefinition3 = currentVisuals[2];
+		foreach (UpgradeSlots.VisualSlotMesh visualSlotMesh3 in technologyVisualDefinition3.visualSlotMeshes)
+		{
+			if (visualSlotMesh3.part != null)
+			{
+				modelAttachments.AddAttachment(visualSlotMesh3.part, visualSlotMesh3.visualSlotId, mainRenderer.material);
+			}
+		}
+	}
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public void ChangeMaterial(Material material)
+	{
+		mainRenderer.material = material;
+		foreach (MeshRenderer renderedPart in renderedParts)
+		{
+			renderedPart.sharedMaterial = material;
+		}
+		modelAttachments.SetAttachmentsMaterial(material);
+	}
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-	3. Assembly Reconstruction has not been implemented.
-
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
-
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
-
-	4. This script is unnecessary.
-
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
-
-	5. Script Content Level 0
-
-		AssetRipper was set to not load any script information.
-
-	6. Cpp2IL failed to decompile Il2Cpp data
-
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public void NullTextures()
+	{
+		mainRenderer.material.mainTexture = null;
+		mainRenderer.material.SetTexture("_MatCap", null);
+		modelAttachments.NullTextures();
+	}
 }

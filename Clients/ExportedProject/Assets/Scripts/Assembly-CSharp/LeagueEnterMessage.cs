@@ -1,63 +1,103 @@
+using System;
+using System.Text.RegularExpressions;
+using Newtonsoft.Json.Linq;
 using UnityEngine;
 
-public class LeagueEnterMessage : MonoBehaviour
+public class LeagueEnterMessage : DatabaseMessage
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public bool isLocalMessage;
 
-	1. No dll files were provided to AssetRipper.
+	public bool isFinishedBeginners;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public bool isNormalLeague;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public League placedInLeague;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public int placedInBeginnersLeague;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public bool firstTime;
 
-	3. Assembly Reconstruction has not been implemented.
+	public override bool actionLeavesLobby => true;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public LeagueEnterMessage(League league, bool firstTimeInLeagues)
+		: base("LeagueEntered", Type.LeagueEntered)
+	{
+		isLocalMessage = true;
+		isNormalLeague = true;
+		if (firstTimeInLeagues)
+		{
+			messageId += $"{league}-firstTime-{Singleton<BeanstalkServerManager>.instance.currentTimestamp}";
+		}
+		else
+		{
+			messageId += $"{league}-{Singleton<BeanstalkServerManager>.instance.currentTimestamp}";
+		}
+		placedInLeague = league;
+		firstTime = firstTimeInLeagues;
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public LeagueEnterMessage(int beginnersLeague)
+		: base("BeginnersLeagueEntered", Type.LeagueEntered)
+	{
+		isLocalMessage = true;
+		messageId += $"{beginnersLeague}-{Singleton<BeanstalkServerManager>.instance.currentTimestamp}";
+		placedInBeginnersLeague = beginnersLeague;
+	}
 
-	4. This script is unnecessary.
+	public LeagueEnterMessage(League league)
+		: base("FinishedBeginnersLeague", Type.LeagueEntered)
+	{
+		isLocalMessage = true;
+		isFinishedBeginners = true;
+		messageId = messageId + "-" + Singleton<BeanstalkServerManager>.instance.currentTimestamp;
+		placedInLeague = league;
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public LeagueEnterMessage(JToken dict)
+		: base(dict)
+	{
+		isLocalMessage = false;
+		isNormalLeague = true;
+		DatabasePlayer currentPlayer = GameLoginManager.currentPlayer;
+		string text = dict["LeagueId"]["S"].ToObject<string>();
+		int num = Convert.ToInt32(Regex.Replace(text, "-[0-9]*$", string.Empty));
+		int num2 = Convert.ToInt32(Regex.Replace(text, "^[0-9]*-", string.Empty));
+		Debug.LogFormat("Player Entered League:{0}  tier:{1}  division:{2}", text, num, num2);
+		if (currentPlayer.leagueId != text)
+		{
+			Debug.LogFormat("Different actual league Id \"{0}\" and database message - league entered - league id \"{1}\"", currentPlayer.leagueId, text);
+			GameLoginManager.instance.UpdatePlayerLeagueAndMedals(currentPlayer.beginnersLeague, text, currentPlayer.skill, currentPlayer.medalsBalance, currentPlayer.remainingMatches);
+		}
+		placedInLeague = (League)num;
+	}
 
-	5. Script Content Level 0
+	public override void Show()
+	{
+		base.Show();
+		if (isFinishedBeginners)
+		{
+			GuiElementSingle<LeagueDialog>.instance.ShowFinishedBeginnersLeague(placedInLeague);
+		}
+		else if (isNormalLeague)
+		{
+			GuiElementSingle<LeagueDialog>.instance.ShowEnterToNormalLeague(placedInLeague, firstTime);
+		}
+		else
+		{
+			GuiElementSingle<LeagueDialog>.instance.ShowEnterToBeginnersLeague(placedInBeginnersLeague);
+		}
+		if (!isLocalMessage)
+		{
+			Ignore();
+		}
+	}
 
-		AssetRipper was set to not load any script information.
-
-	6. Cpp2IL failed to decompile Il2Cpp data
-
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	internal override Action InitMessageCenterRecord(MessageCenterRecord record)
+	{
+		record.SetAppearance_LeagueEntered(messageType, messageTime, placedInLeague);
+		return delegate
+		{
+			GuiScreenSingle<LeaguesScreen>.instance.ShowPlayerLeague();
+		};
+	}
 }

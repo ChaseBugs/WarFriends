@@ -1,63 +1,278 @@
+using System;
+using ExitGames.Client.Photon;
 using UnityEngine;
 
-public class Room : MonoBehaviour
+public class Room : RoomInfo
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public new string Name
+	{
+		get
+		{
+			return nameField;
+		}
+		internal set
+		{
+			nameField = value;
+		}
+	}
 
-	1. No dll files were provided to AssetRipper.
+	public new bool IsOpen
+	{
+		get
+		{
+			return openField;
+		}
+		set
+		{
+			if (!Equals(PhotonNetwork.room))
+			{
+				Debug.LogWarning("Can't set open when not in that room.");
+			}
+			if (value != openField && !PhotonNetwork.offlineMode)
+			{
+				PhotonNetwork.networkingPeer.OpSetPropertiesOfRoom(new Hashtable { 
+				{
+					(byte)253,
+					value
+				} });
+			}
+			openField = value;
+		}
+	}
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public new bool IsVisible
+	{
+		get
+		{
+			return visibleField;
+		}
+		set
+		{
+			if (!Equals(PhotonNetwork.room))
+			{
+				Debug.LogWarning("Can't set visible when not in that room.");
+			}
+			if (value != visibleField && !PhotonNetwork.offlineMode)
+			{
+				PhotonNetwork.networkingPeer.OpSetPropertiesOfRoom(new Hashtable { 
+				{
+					(byte)254,
+					value
+				} });
+			}
+			visibleField = value;
+		}
+	}
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public string[] PropertiesListedInLobby { get; private set; }
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public bool AutoCleanUp => autoCleanUpField;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public new int MaxPlayers
+	{
+		get
+		{
+			return maxPlayersField;
+		}
+		set
+		{
+			if (!Equals(PhotonNetwork.room))
+			{
+				Debug.LogWarning("Can't set MaxPlayers when not in that room.");
+			}
+			if (value > 255)
+			{
+				Debug.LogWarning("Can't set Room.MaxPlayers to: " + value + ". Using max value: 255.");
+				value = 255;
+			}
+			if (value != maxPlayersField && !PhotonNetwork.offlineMode)
+			{
+				PhotonNetwork.networkingPeer.OpSetPropertiesOfRoom(new Hashtable { 
+				{
+					byte.MaxValue,
+					(byte)value
+				} });
+			}
+			maxPlayersField = (byte)value;
+		}
+	}
 
-	3. Assembly Reconstruction has not been implemented.
+	public new int PlayerCount
+	{
+		get
+		{
+			if (PhotonNetwork.playerList != null)
+			{
+				return PhotonNetwork.playerList.Length;
+			}
+			return 0;
+		}
+	}
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public string[] ExpectedUsers => expectedUsersField;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	protected internal int MasterClientId
+	{
+		get
+		{
+			return masterClientIdField;
+		}
+		set
+		{
+			masterClientIdField = value;
+		}
+	}
 
-	4. This script is unnecessary.
+	[Obsolete("Please use Name (updated case for naming).")]
+	public new string name
+	{
+		get
+		{
+			return Name;
+		}
+		internal set
+		{
+			Name = value;
+		}
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	[Obsolete("Please use IsOpen (updated case for naming).")]
+	public new bool open
+	{
+		get
+		{
+			return IsOpen;
+		}
+		set
+		{
+			IsOpen = value;
+		}
+	}
 
-	5. Script Content Level 0
+	[Obsolete("Please use IsVisible (updated case for naming).")]
+	public new bool visible
+	{
+		get
+		{
+			return IsVisible;
+		}
+		set
+		{
+			IsVisible = value;
+		}
+	}
 
-		AssetRipper was set to not load any script information.
+	[Obsolete("Please use PropertiesListedInLobby (updated case for naming).")]
+	public string[] propertiesListedInLobby
+	{
+		get
+		{
+			return PropertiesListedInLobby;
+		}
+		private set
+		{
+			PropertiesListedInLobby = value;
+		}
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	[Obsolete("Please use AutoCleanUp (updated case for naming).")]
+	public bool autoCleanUp => AutoCleanUp;
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	[Obsolete("Please use MaxPlayers (updated case for naming).")]
+	public new int maxPlayers
+	{
+		get
+		{
+			return MaxPlayers;
+		}
+		set
+		{
+			MaxPlayers = value;
+		}
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	[Obsolete("Please use PlayerCount (updated case for naming).")]
+	public new int playerCount => PlayerCount;
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	[Obsolete("Please use ExpectedUsers (updated case for naming).")]
+	public string[] expectedUsers => ExpectedUsers;
 
-	*/
+	[Obsolete("Please use MasterClientId (updated case for naming).")]
+	protected internal int masterClientId
+	{
+		get
+		{
+			return MasterClientId;
+		}
+		set
+		{
+			MasterClientId = value;
+		}
+	}
+
+	internal Room(string roomName, RoomOptions options)
+		: base(roomName, null)
+	{
+		if (options == null)
+		{
+			options = new RoomOptions();
+		}
+		visibleField = options.IsVisible;
+		openField = options.IsOpen;
+		maxPlayersField = options.MaxPlayers;
+		autoCleanUpField = false;
+		InternalCacheProperties(options.CustomRoomProperties);
+		PropertiesListedInLobby = options.CustomRoomPropertiesForLobby;
+	}
+
+	public void SetCustomProperties(Hashtable propertiesToSet, Hashtable expectedValues = null, bool webForward = false)
+	{
+		if (propertiesToSet != null)
+		{
+			Hashtable hashtable = propertiesToSet.StripToStringKeys();
+			Hashtable hashtable2 = expectedValues.StripToStringKeys();
+			bool flag = hashtable2 == null || hashtable2.Count == 0;
+			if (flag)
+			{
+				base.CustomProperties.Merge(hashtable);
+				base.CustomProperties.StripKeysWithNullValues();
+			}
+			if (!PhotonNetwork.offlineMode)
+			{
+				PhotonNetwork.networkingPeer.OpSetPropertiesOfRoom(hashtable, hashtable2, webForward);
+			}
+			if (PhotonNetwork.offlineMode || flag)
+			{
+				InternalCacheProperties(hashtable);
+				NetworkingPeer.SendMonoMessage(PhotonNetworkingMessage.OnPhotonCustomRoomPropertiesChanged, hashtable);
+			}
+		}
+	}
+
+	public void SetPropertiesListedInLobby(string[] propsListedInLobby)
+	{
+		Hashtable hashtable = new Hashtable();
+		hashtable[(byte)250] = propsListedInLobby;
+		PhotonNetwork.networkingPeer.OpSetPropertiesOfRoom(hashtable);
+		PropertiesListedInLobby = propsListedInLobby;
+	}
+
+	public void ClearExpectedUsers()
+	{
+		Hashtable hashtable = new Hashtable();
+		hashtable[(byte)247] = new string[0];
+		Hashtable hashtable2 = new Hashtable();
+		hashtable2[(byte)247] = ExpectedUsers;
+		PhotonNetwork.networkingPeer.OpSetPropertiesOfRoom(hashtable, hashtable2);
+	}
+
+	public override string ToString()
+	{
+		return string.Format("Room: '{0}' {1},{2} {4}/{3} players.", nameField, (!visibleField) ? "hidden" : "visible", (!openField) ? "closed" : "open", maxPlayersField, PlayerCount);
+	}
+
+	public new string ToStringFull()
+	{
+		return string.Format("Room: '{0}' {1},{2} {4}/{3} players.\ncustomProps: {5}", nameField, (!visibleField) ? "hidden" : "visible", (!openField) ? "closed" : "open", maxPlayersField, PlayerCount, base.CustomProperties.ToStringFull());
+	}
 }

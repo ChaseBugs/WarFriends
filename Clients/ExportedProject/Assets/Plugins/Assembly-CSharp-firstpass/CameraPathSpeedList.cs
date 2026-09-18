@@ -1,63 +1,141 @@
 using UnityEngine;
 
-public class CameraPathSpeedList : MonoBehaviour
+[ExecuteInEditMode]
+public class CameraPathSpeedList : CameraPathPointList
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public enum Interpolation
+	{
+		None,
+		Linear,
+		SmoothStep
+	}
 
-	1. No dll files were provided to AssetRipper.
+	public Interpolation interpolation = Interpolation.SmoothStep;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	[SerializeField]
+	private bool _enabled = true;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public new CameraPathSpeed this[int index] => (CameraPathSpeed)base[index];
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public bool listEnabled
+	{
+		get
+		{
+			return _enabled && base.realNumberOfPoints > 0;
+		}
+		set
+		{
+			_enabled = value;
+		}
+	}
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	private void OnEnable()
+	{
+		base.hideFlags = HideFlags.HideInInspector;
+	}
 
-	3. Assembly Reconstruction has not been implemented.
+	public override void Init(CameraPath _cameraPath)
+	{
+		pointTypeName = "Speed";
+		base.Init(_cameraPath);
+	}
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public void AddSpeedPoint(CameraPathControlPoint atPoint)
+	{
+		CameraPathSpeed cameraPathSpeed = base.gameObject.AddComponent<CameraPathSpeed>();
+		cameraPathSpeed.hideFlags = HideFlags.HideInInspector;
+		AddPoint(cameraPathSpeed, atPoint);
+		RecalculatePoints();
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public CameraPathSpeed AddSpeedPoint(CameraPathControlPoint curvePointA, CameraPathControlPoint curvePointB, float curvePercetage)
+	{
+		CameraPathSpeed cameraPathSpeed = base.gameObject.AddComponent<CameraPathSpeed>();
+		cameraPathSpeed.hideFlags = HideFlags.HideInInspector;
+		AddPoint(cameraPathSpeed, curvePointA, curvePointB, Mathf.Clamp01(curvePercetage));
+		RecalculatePoints();
+		return cameraPathSpeed;
+	}
 
-	4. This script is unnecessary.
+	public float GetSpeed(float percentage)
+	{
+		if (base.realNumberOfPoints < 2)
+		{
+			if (base.realNumberOfPoints == 1)
+			{
+				return this[0].speed;
+			}
+			Debug.Log("Not enough points to define a speed");
+			return 0f;
+		}
+		if (percentage >= 1f)
+		{
+			return ((CameraPathSpeed)GetPoint(base.realNumberOfPoints - 1)).speed;
+		}
+		percentage = Mathf.Clamp(percentage, 0f, 0.999f);
+		switch (interpolation)
+		{
+		case Interpolation.SmoothStep:
+			return SmoothStepInterpolation(percentage);
+		case Interpolation.Linear:
+			return LinearInterpolation(percentage);
+		case Interpolation.None:
+		{
+			CameraPathSpeed cameraPathSpeed = (CameraPathSpeed)GetPoint(GetNextPointIndex(percentage));
+			return cameraPathSpeed.speed;
+		}
+		default:
+			return LinearInterpolation(percentage);
+		}
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private float LinearInterpolation(float percentage)
+	{
+		int lastPointIndex = GetLastPointIndex(percentage);
+		CameraPathSpeed cameraPathSpeed = (CameraPathSpeed)GetPoint(lastPointIndex);
+		CameraPathSpeed cameraPathSpeed2 = (CameraPathSpeed)GetPoint(lastPointIndex + 1);
+		if (percentage < cameraPathSpeed.percent)
+		{
+			return cameraPathSpeed.speed;
+		}
+		if (percentage > cameraPathSpeed2.percent)
+		{
+			return cameraPathSpeed2.speed;
+		}
+		float percent = cameraPathSpeed.percent;
+		float num = cameraPathSpeed2.percent;
+		if (percent > num)
+		{
+			num += 1f;
+		}
+		float num2 = num - percent;
+		float num3 = percentage - percent;
+		float t = num3 / num2;
+		return Mathf.Lerp(cameraPathSpeed.speed, cameraPathSpeed2.speed, t);
+	}
 
-	5. Script Content Level 0
-
-		AssetRipper was set to not load any script information.
-
-	6. Cpp2IL failed to decompile Il2Cpp data
-
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	private float SmoothStepInterpolation(float percentage)
+	{
+		int lastPointIndex = GetLastPointIndex(percentage);
+		CameraPathSpeed cameraPathSpeed = (CameraPathSpeed)GetPoint(lastPointIndex);
+		CameraPathSpeed cameraPathSpeed2 = (CameraPathSpeed)GetPoint(lastPointIndex + 1);
+		if (percentage < cameraPathSpeed.percent)
+		{
+			return cameraPathSpeed.speed;
+		}
+		if (percentage > cameraPathSpeed2.percent)
+		{
+			return cameraPathSpeed2.speed;
+		}
+		float percent = cameraPathSpeed.percent;
+		float num = cameraPathSpeed2.percent;
+		if (percent > num)
+		{
+			num += 1f;
+		}
+		float num2 = num - percent;
+		float num3 = percentage - percent;
+		float val = num3 / num2;
+		return Mathf.Lerp(cameraPathSpeed.speed, cameraPathSpeed2.speed, CPMath.SmoothStep(val));
+	}
 }

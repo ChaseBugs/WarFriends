@@ -1,25 +1,27 @@
 Shader "Mobile/Particles/Additive Simple" {
 Properties {
- _MainTex ("Particle Texture", 2D) = "white" { }
+	_MainTex ("Particle Texture", 2D) = "white" {}
 }
-	//DummyShaderTextExporter
-	
-	SubShader{
-		Tags { "RenderType" = "Opaque" }
-		LOD 200
-		CGPROGRAM
-#pragma surface surf Lambert
-#pragma target 3.0
-		sampler2D _MainTex;
-		struct Input
-		{
-			float2 uv_MainTex;
-		};
-		void surf(Input IN, inout SurfaceOutput o)
-		{
-			float4 c = tex2D(_MainTex, IN.uv_MainTex);
-			o.Albedo = c.rgb;
-		}
-		ENDCG
+Category {
+	Tags { "Queue"="Transparent" "IgnoreProjector"="True" "RenderType"="Transparent" }
+	Blend SrcAlpha One
+	ColorMask RGB
+	Cull Off
+	Lighting Off
+	ZWrite Off
+	Fog { Color (0,0,0) }
+	BindChannels {
+		Bind "Color", color
+		Bind "Vertex", vertex
+		Bind "TexCoord", texcoord
 	}
+
+	SubShader {
+		Pass {
+			SetTexture [_MainTex] {
+				combine texture
+			}
+		}
+	}
+}
 }

@@ -75,6 +75,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 94ab48e3b8066840cd07a3613abbe986, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  collection: {fileID: 11409266, guid: d17e4726e9fbd6249bf8946ea14b8ac9, type: 2}
+  _color: {r: 0, g: 0, b: 0, a: 0.6117647}
+  _scale: {x: 0.04, y: 0.04, z: 0.01}
+  _spriteId: 2
+  boxCollider: {fileID: 0}
+  meshCollider: {fileID: 0}
+  meshColliderPositions: []
+  meshColliderMesh: {fileID: 0}
+  renderLayer: 0
 --- !u!114 &11454010
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -86,6 +95,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ee0ff71c8743866b23e10c2a4e261b7a, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  isActivated: 0
+  generator: {fileID: 0}
 --- !u!1001 &100100000
 Prefab:
   serializedVersion: 2

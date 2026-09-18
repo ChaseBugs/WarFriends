@@ -1,63 +1,249 @@
+using System;
 using UnityEngine;
 
-public class PlayerVsPlayerButton : MonoBehaviour
+public class PlayerVsPlayerButton : Core_BaseScript
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public enum Type
+	{
+		Tutorial,
+		Normal,
+		Winstreak,
+		Lootbox,
+		WinstreakAndLootbox
+	}
 
-	1. No dll files were provided to AssetRipper.
+	[Header("Core")]
+	public UIButtonSetter pvpButtonSetter;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public GameObject pvpButton;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public GameObject pvpPart;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public UITable pvpTable;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public UILabel pvpFirstLabel;
 
-	3. Assembly Reconstruction has not been implemented.
+	public UILabel pvpSecondLabel;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	[Header("-Lootbox Part")]
+	public GameObject lootboxPart;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public UILabel lootboxHint;
 
-	4. This script is unnecessary.
+	[Header("-Winstreak Part")]
+	public GameObject winstreakPart;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public UITable winstreakTable;
 
-	5. Script Content Level 0
+	public UILabel winstreakNumber;
 
-		AssetRipper was set to not load any script information.
+	public WinStreakCounter winstreakCounter;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	[Header("-Tutorial")]
+	public GameObject positionForTutorialText;
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public GameObject positionForTutorialHand;
 
-	7. An incorrect path was provided to AssetRipper.
+	public UILabel tutorialPvPLabel;
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	private float mDur = 0.2f;
 
-	*/
+	private Type mCurrentType
+	{
+		get
+		{
+			if (Singleton<GameController>.instance.isTutorial)
+			{
+				return Type.Tutorial;
+			}
+			if (TutorialManagerStage6.instance.isTutorialRunning)
+			{
+				return Type.Normal;
+			}
+			WinStreakManager.WinStreak winStreak = StatsManager.instance.winStreak;
+			if (winStreak != null && winStreak.IsActive())
+			{
+				return Type.WinstreakAndLootbox;
+			}
+			return Type.Lootbox;
+		}
+	}
+
+	public void InitEvents()
+	{
+		GameLoginManager.instance.PlayerLogOut += InitBlank;
+	}
+
+	public void InitControls()
+	{
+		UIEventListener uIEventListener = UIEventListener.Get(pvpButton);
+		uIEventListener.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener.onClick, new UIEventListener.VoidDelegate(PvPClick));
+		pvpFirstLabel.text = Localization.Localize("ID_PVP_RANKED");
+		pvpSecondLabel.text = Localization.Localize("ID_PVP_BATTLE");
+		float num = pvpFirstLabel.relativeSize.x + pvpSecondLabel.relativeSize.x;
+		float a = 450f / num;
+		float defaultHeight = Mathf.Max(a, 57f);
+		MiscTools.SetUILabelRescale(pvpFirstLabel, defaultHeight, 20f, 450);
+		MiscTools.SetUILabelRescale(pvpSecondLabel, defaultHeight, 20f, 450);
+		pvpTable.repositionNow = true;
+		winstreakTable.repositionNow = true;
+	}
+
+	public void PvPClick(GameObject go)
+	{
+		if (TutorialManagerPlayWarcards.instance.shouldStartTutorial)
+		{
+			TutorialManagerPlayWarcards.instance.StartTutorial(isContinue: false);
+		}
+		else if (Singleton<GameController>.instance.isTutorialStage1 || Singleton<GameController>.instance.isTutorialStage2)
+		{
+			Singleton<GameController>.instance.ContinueTutorialImmediately();
+		}
+		else if (!ReminderManager.instance.ShowWarcardsReminder())
+		{
+			if (Singleton<DogTagManager>.instance.CanUseDogtags(1))
+			{
+				Singleton<GameController>.instance.SwitchToDeathMatch();
+				Singleton<GameController>.instance.gameControllerDeathMatch.StartRandomMatchMaking();
+			}
+			else
+			{
+				Singleton<GuiManager>.instance.ShowDialog(GuiElementSingle<DogtagDialog>.instance, 0f);
+			}
+		}
+	}
+
+	public void InitGUIValues()
+	{
+		SetUpButton();
+	}
+
+	public void InitBlank()
+	{
+		tutorialPvPLabel.gameObject.SetActive(value: false);
+		pvpPart.SetActive(value: true);
+		winstreakPart.SetActive(value: false);
+		lootboxPart.SetActive(value: false);
+		pvpPart.transform.localPosition = pvpPart.transform.localPosition.ReplaceY(8f);
+		winstreakCounter.StopCountingTo();
+		winstreakCounter.winStreakTimer = null;
+	}
+
+	private void SetUpButton()
+	{
+		Type type = mCurrentType;
+		tutorialPvPLabel.gameObject.SetActive(type == Type.Tutorial);
+		if (type == Type.Tutorial)
+		{
+			tutorialPvPLabel.text = Localization.Localize((!Singleton<GameController>.instance.isTutorialStage1) ? "ID_CONTINUETOBOOTCAMP3" : "ID_CONTINUETOBOOTCAMP2");
+			if (Localization.isEnglish)
+			{
+				pvpButtonSetter.labels.Clear();
+				tutorialPvPLabel.lineWidth = 500;
+			}
+		}
+		pvpPart.SetActive(type != Type.Tutorial);
+		pvpPart.transform.localPosition = pvpPart.transform.localPosition.ReplaceY((type != Type.Normal) ? 30f : 8f);
+		lootboxPart.SetActive(type == Type.Lootbox || type == Type.WinstreakAndLootbox);
+		if (lootboxPart.activeSelf)
+		{
+			int remainingMatchesToNextLootbox = PlayerAnalytics.instance.remainingMatchesToNextLootbox;
+			lootboxHint.text = ((remainingMatchesToNextLootbox != 1) ? Localization.LocalizeFormat("ID_NEWLOOTBOXINBATTLES", remainingMatchesToNextLootbox) : Localization.Localize("ID_NEWLOOTBOXINBATTLE"));
+			MiscTools.SetUILabelRescale(lootboxHint, 30f, 20f, Mathf.Max(400, pvpButtonSetter.width - 386));
+		}
+		winstreakPart.SetActive(type == Type.Winstreak || type == Type.WinstreakAndLootbox);
+		if (winstreakPart.activeSelf)
+		{
+			WinStreakManager.WinStreak winStreak = StatsManager.instance.winStreak;
+			winstreakNumber.text = string.Format("{0} {1}", Localization.Localize("ID_WINSTREAK"), winStreak.winstreakNumber);
+			winstreakTable.repositionNow = true;
+			winstreakCounter.StartCountingTo(winStreak.Deadline);
+			winstreakCounter.winStreakTimer = delegate
+			{
+				SetUpButton();
+			};
+		}
+		else
+		{
+			winstreakCounter.StopCountingTo();
+			winstreakCounter.winStreakTimer = null;
+		}
+		if (type == Type.WinstreakAndLootbox)
+		{
+			WaitOnWinstreak();
+		}
+		else
+		{
+			StopAnimation();
+		}
+	}
+
+	private void StopAnimation()
+	{
+		TweenPosition component = lootboxPart.GetComponent<TweenPosition>();
+		if (component != null)
+		{
+			component.enabled = false;
+		}
+		component = winstreakPart.GetComponent<TweenPosition>();
+		if (component != null)
+		{
+			component.onFinished = null;
+			component.enabled = false;
+		}
+		lootboxPart.transform.localPosition = lootboxPart.transform.localPosition.ReplaceY(0f);
+		winstreakPart.transform.localPosition = winstreakPart.transform.localPosition.ReplaceY(18f);
+	}
+
+	private void WaitOnWinstreak()
+	{
+		lootboxPart.transform.localPosition = lootboxPart.transform.localPosition.ReplaceY(60f);
+		winstreakPart.transform.localPosition = winstreakPart.transform.localPosition.ReplaceY(18f);
+		TweenPosition component = lootboxPart.GetComponent<TweenPosition>();
+		if (component != null)
+		{
+			component.enabled = false;
+		}
+		component = TweenPosition.Begin(winstreakPart, 10f * mDur, winstreakPart.transform.localPosition, winstreakPart.transform.localPosition);
+		component.onFinished = delegate
+		{
+			ChangeToLootbox();
+		};
+	}
+
+	private void ChangeToLootbox()
+	{
+		TweenPosition.Begin(lootboxPart, mDur, lootboxPart.transform.localPosition, lootboxPart.transform.localPosition.ReplaceY(0f));
+		TweenPosition tweenPosition = TweenPosition.Begin(winstreakPart, mDur, winstreakPart.transform.localPosition, winstreakPart.transform.localPosition.ReplaceY(-42f));
+		tweenPosition.onFinished = delegate
+		{
+			WaitOnLootbox();
+		};
+	}
+
+	private void WaitOnLootbox()
+	{
+		lootboxPart.transform.localPosition = lootboxPart.transform.localPosition.ReplaceY(0f);
+		winstreakPart.transform.localPosition = winstreakPart.transform.localPosition.ReplaceY(78f);
+		TweenPosition component = lootboxPart.GetComponent<TweenPosition>();
+		if (component != null)
+		{
+			component.enabled = false;
+		}
+		component = TweenPosition.Begin(winstreakPart, 10f * mDur, winstreakPart.transform.localPosition, winstreakPart.transform.localPosition);
+		component.onFinished = delegate
+		{
+			ChangeToWinstreak();
+		};
+	}
+
+	private void ChangeToWinstreak()
+	{
+		TweenPosition.Begin(lootboxPart, mDur, lootboxPart.transform.localPosition, lootboxPart.transform.localPosition.ReplaceY(-60f));
+		TweenPosition tweenPosition = TweenPosition.Begin(winstreakPart, mDur, winstreakPart.transform.localPosition, winstreakPart.transform.localPosition.ReplaceY(18f));
+		tweenPosition.onFinished = delegate
+		{
+			WaitOnWinstreak();
+		};
+	}
 }

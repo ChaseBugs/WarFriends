@@ -1,63 +1,93 @@
+using System.Collections.Generic;
+using Google2u;
 using UnityEngine;
 
-public class CardHealMeNow : MonoBehaviour
+public class CardHealMeNow : Card
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	private const string ingameIcoName = "game-card-ico-healingstorm";
 
-	1. No dll files were provided to AssetRipper.
+	public float minimalBotHealth = 1f;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public bool instatnt = true;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	private float mRemainingTime;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	private bool mUsed;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	private PlayerController mPlayer;
 
-	3. Assembly Reconstruction has not been implemented.
+	private float mAmmoutOfHeal;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	private int mLastUpdate;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public virtual float amountOfHealMin => Singleton<GameVariables>.instance.cardConstants.GetRow(CardConstants.rowIds.MedKitCoef).FLOATVALUE;
 
-	4. This script is unnecessary.
+	public virtual float amountOfHealMax => Singleton<GameVariables>.instance.cardConstants.GetRow(CardConstants.rowIds.MedKitCoef).FLOATVALUE;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public virtual float timeInSec => 0f;
 
-	5. Script Content Level 0
+	public override string description => (!instatnt) ? Localization.LocalizeFormat(mDescriptionID, MiscTools.FormatFloatNumberAsPercent(amountOfHealMin), MiscTools.FormatFloatNumberAsPercent(amountOfHealMax), MiscTools.PrintableTimeDescription(timeInSec)) : Localization.LocalizeFormat(mDescriptionID, MiscTools.FormatFloatNumberAsPercent(amountOfHealMin));
 
-		AssetRipper was set to not load any script information.
+	protected override string mBonusName => MiscTools.FormatFloatNumberAsPlusPercent(amountOfHealMin);
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public override void UseCard(ICardManager cardManager, Fractions fraction)
+	{
+		mPlayer = PlayerController.GetPlayerOld(fraction);
+		mAmmoutOfHeal = Random.Range(amountOfHealMin, amountOfHealMax);
+		if (instatnt)
+		{
+			mPlayer.destroyableParts.Heal(mPlayer.destroyableParts.maxHealth * mAmmoutOfHeal, isNetworkCopy: false);
+			mPlayer.destroyableParts.Sync();
+			mPlayer.cardIconIndicator.Show("game-card-ico-healingstorm", 3f, 3f, animated: false);
+		}
+		else
+		{
+			mPlayer.cardIconIndicator.Show("game-card-ico-healingstorm", show: true);
+			mRemainingTime = timeInSec;
+			mUsed = true;
+		}
+		cardManager.CardWasUsed(this, fraction);
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public override bool IsViableForBotNow(Fractions botFraction, float botHealthRatio, List<GameShootableEntity> botUnits, List<GameShootableEntity> opponentUnits, List<GameShootableEntity> botMechanicalUnits, List<GameShootableEntity> opponentMechanicalUnits)
+	{
+		if (botHealthRatio >= minimalBotHealth)
+		{
+			return false;
+		}
+		return base.IsViableForBotNow(botFraction, botHealthRatio, botUnits, opponentUnits, botMechanicalUnits, opponentMechanicalUnits);
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	protected void Update()
+	{
+		if (!mUsed || instatnt)
+		{
+			return;
+		}
+		if (mRemainingTime > 0f)
+		{
+			mRemainingTime -= Time.deltaTime;
+			mPlayer.cardIconIndicator.UpdateIndicator("game-card-ico-healingstorm", mRemainingTime / timeInSec);
+			if (mLastUpdate != (int)Time.time)
+			{
+				mLastUpdate = (int)Time.time;
+				mPlayer.destroyableParts.Heal(mPlayer.destroyableParts.maxHealth * mAmmoutOfHeal / timeInSec, isNetworkCopy: false);
+			}
+		}
+		else
+		{
+			DisconnectEvents();
+		}
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public override void DisconnectEvents()
+	{
+		base.DisconnectEvents();
+		if (mUsed)
+		{
+			mRemainingTime = 0f;
+			mUsed = false;
+			mPlayer.cardIconIndicator.Show("game-card-ico-healingstorm", show: false);
+		}
+	}
 }

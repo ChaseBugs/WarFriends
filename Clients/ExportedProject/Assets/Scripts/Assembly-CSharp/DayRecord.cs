@@ -1,63 +1,125 @@
 using UnityEngine;
 
-public class DayRecord : MonoBehaviour
+public class DayRecord : Core_BaseScript
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Header("Core")]
+	public UISprite daySprite;
 
-	1. No dll files were provided to AssetRipper.
+	public UISprite progressSprite;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public UISprite[] animationSprites;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public UISprite animationDay;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	private Vector3 mVectorOneSize = new Vector3(1f, 1f, 0f);
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	private Vector3 mZeroPointEightSize = new Vector3(58f, 62f, 0f);
 
-	3. Assembly Reconstruction has not been implemented.
+	private Vector3 mOriginalSize = new Vector3(72f, 78f, 0f);
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	private Vector3 mOneAndHalfSize = new Vector3(108f, 117f, 0f);
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	private Vector3 mTwoAndHalfSize = new Vector3(180f, 195f, 0f);
 
-	4. This script is unnecessary.
+	private Vector3 mThreeAndHalfSize = new Vector3(252f, 273f, 0f);
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public void Initialize(bool dayCompleted, bool fillNextProgress)
+	{
+		daySprite.spriteName = ((!dayCompleted) ? AssignmentsManager.dayNotCompleted : AssignmentsManager.dayCompleted);
+		progressSprite.color = ((!fillNextProgress) ? Colours.grayProgress : Colours.goldProgress);
+	}
 
-	5. Script Content Level 0
+	public void StopAnimations()
+	{
+		TweenAlpha.Begin(daySprite.gameObject, 0f, 1f, 1f).onFinished = null;
+		TweenAlpha.Begin(animationDay.gameObject, 0f, 0f, 0f).onFinished = null;
+		TweenAlpha.Begin(animationSprites[0].gameObject, 0f, 0f, 0f).onFinished = null;
+		TweenAlpha.Begin(animationSprites[1].gameObject, 0f, 0f, 0f).onFinished = null;
+		TweenAlpha.Begin(animationSprites[2].gameObject, 0f, 0f, 0f).onFinished = null;
+		TweenScale.Begin(animationDay.gameObject, 0f, mVectorOneSize).onFinished = null;
+		TweenScale.Begin(animationSprites[0].gameObject, 0f, mZeroPointEightSize).onFinished = null;
+		TweenScale.Begin(animationSprites[1].gameObject, 0f, mZeroPointEightSize).onFinished = null;
+		TweenScale.Begin(animationSprites[2].gameObject, 0f, mZeroPointEightSize).onFinished = null;
+	}
 
-		AssetRipper was set to not load any script information.
+	public void Animate(float dur, float delay)
+	{
+		SoundsManager.Instance.PlaySound(SoundsManager.SoundsEnum.AssignmentDayCompleted);
+		AnimateFirstFlash(dur);
+		TweenAlpha.Begin(daySprite.gameObject, delay * 2f, 1f, 1f).onFinished = delegate
+		{
+			AnimateMiddleFlash(dur);
+		};
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	private void AnimateFirstFlash(float dur)
+	{
+		GameObject go = animationSprites[0].gameObject;
+		TweenScale.Begin(go, 0f, mZeroPointEightSize).onFinished = null;
+		TweenAlpha.Begin(go, 0f, 0f, 0f).onFinished = null;
+		TweenAlpha.Begin(go, dur * 0.5f, 0f, 0.8f).onFinished = delegate
+		{
+			TweenAlpha.Begin(go, dur * 0.2f, 0.8f, 0.6f).onFinished = null;
+			TweenScale tweenScale = TweenScale.Begin(go, dur, mZeroPointEightSize, mTwoAndHalfSize);
+			tweenScale.method = UITweener.Method.EaseIn;
+			tweenScale.onFinished = delegate
+			{
+				TweenAlpha.Begin(go, dur * 0.6f, 0.6f, 0f).onFinished = null;
+				TweenScale tweenScale2 = TweenScale.Begin(go, dur * 0.6f, mThreeAndHalfSize);
+				tweenScale2.method = UITweener.Method.EaseOut;
+				tweenScale2.onFinished = null;
+			};
+		};
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	private void AnimateMiddleFlash(float dur)
+	{
+		GameObject go = animationSprites[1].gameObject;
+		TweenScale.Begin(go, 0f, mZeroPointEightSize).onFinished = null;
+		TweenAlpha.Begin(go, 0f, 0f, 0f).onFinished = null;
+		TweenAlpha.Begin(go, dur * 0.5f, 0f, 0.8f).onFinished = delegate
+		{
+			TweenAlpha.Begin(go, dur * 0.2f, 0.8f, 0.6f).onFinished = delegate
+			{
+				TweenAlpha.Begin(go, dur * 0.6f, 0.6f, 0f).onFinished = null;
+				AnimateCompleted(dur);
+			};
+			TweenScale.Begin(go, dur * 0.8f, mZeroPointEightSize, mOneAndHalfSize).method = UITweener.Method.EaseIn;
+		};
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	private void AnimateCompleted(float dur)
+	{
+		TweenAlpha.Begin(animationDay.gameObject, dur * 0.2f, 0f, 1f).onFinished = null;
+		TweenScale tweenScale = TweenScale.Begin(animationDay.gameObject, dur * 0.6f, mVectorOneSize, mOneAndHalfSize);
+		tweenScale.method = UITweener.Method.EaseIn;
+		tweenScale.onFinished = delegate
+		{
+			AnimateLastFlash(dur);
+			TweenScale tweenScale2 = TweenScale.Begin(animationDay.gameObject, dur * 0.4f, mOriginalSize);
+			tweenScale2.method = UITweener.Method.EaseOut;
+			tweenScale2.onFinished = delegate
+			{
+				GuiScreenSingle<AssignmentsScreen>.instance.dailyPart.daysProgress.EndOfDayProgressAnimation();
+				TweenAlpha.Begin(animationDay.gameObject, dur * 3f, 1f, 1f).onFinished = delegate
+				{
+					TweenAlpha.Begin(animationDay.gameObject, 0f, 0f, 0f).onFinished = null;
+				};
+			};
+		};
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	private void AnimateLastFlash(float dur)
+	{
+		GameObject go = animationSprites[2].gameObject;
+		TweenScale.Begin(go, 0f, mZeroPointEightSize).onFinished = null;
+		TweenAlpha.Begin(go, 0f, 0.8f, 0.8f).onFinished = null;
+		TweenScale tweenScale = TweenScale.Begin(go, dur * 1f, mOneAndHalfSize, mThreeAndHalfSize);
+		tweenScale.method = UITweener.Method.EaseOut;
+		tweenScale.onFinished = null;
+		TweenAlpha.Begin(go, dur * 0.5f, 0.8f, 0.6f).onFinished = delegate
+		{
+			TweenAlpha.Begin(go, dur * 0.5f, 0.6f, 0f).onFinished = null;
+		};
+	}
 }

@@ -1,66 +1,104 @@
+using System;
 using UnityEngine;
 
 namespace BestHTTP.Examples
 {
-	public class TextureDownloadSample : MonoBehaviour
+public sealed class TextureDownloadSample : MonoBehaviour
+{
+	private const string BaseURL = "https://besthttp.azurewebsites.net/Content/";
+
+	private string[] Images = new string[9] { "One.png", "Two.png", "Three.png", "Four.png", "Five.png", "Six.png", "Seven.png", "Eight.png", "Nine.png" };
+
+	private Texture2D[] Textures = new Texture2D[9];
+
+	private bool allDownloadedFromLocalCache;
+
+	private int finishedCount;
+
+	private Vector2 scrollPos;
+
+	private void Awake()
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
+		HTTPManager.MaxConnectionPerServer = 1;
+		for (int i = 0; i < Images.Length; i++)
+		{
+			Textures[i] = new Texture2D(100, 150);
+		}
 	}
+
+	private void OnDestroy()
+	{
+		HTTPManager.MaxConnectionPerServer = 4;
+	}
+
+	private void OnGUI()
+	{
+		GUIHelper.DrawArea(GUIHelper.ClientArea, drawHeader: true, delegate
+		{
+			scrollPos = GUILayout.BeginScrollView(scrollPos);
+			GUILayout.SelectionGrid(0, Textures, 3);
+			if (finishedCount == Images.Length && allDownloadedFromLocalCache)
+			{
+				GUIHelper.DrawCenteredText("All images loaded from the local cache!");
+			}
+			GUILayout.FlexibleSpace();
+			GUILayout.BeginHorizontal();
+			GUILayout.Label("Max Connection/Server: ", GUILayout.Width(150f));
+			GUILayout.Label(HTTPManager.MaxConnectionPerServer.ToString(), GUILayout.Width(20f));
+			HTTPManager.MaxConnectionPerServer = (byte)GUILayout.HorizontalSlider((int)HTTPManager.MaxConnectionPerServer, 1f, 10f);
+			GUILayout.EndHorizontal();
+			if (GUILayout.Button("Start Download"))
+			{
+				DownloadImages();
+			}
+			GUILayout.EndScrollView();
+		});
+	}
+
+	private void DownloadImages()
+	{
+		allDownloadedFromLocalCache = true;
+		finishedCount = 0;
+		for (int i = 0; i < Images.Length; i++)
+		{
+			Textures[i] = new Texture2D(100, 150);
+			HTTPRequest hTTPRequest = new HTTPRequest(new Uri("https://besthttp.azurewebsites.net/Content/" + Images[i]), ImageDownloaded);
+			hTTPRequest.UseAlternateSSL = true;
+			hTTPRequest.Tag = Textures[i];
+			hTTPRequest.Send();
+		}
+	}
+
+	private void ImageDownloaded(HTTPRequest req, HTTPResponse resp)
+	{
+		finishedCount++;
+		switch (req.State)
+		{
+		case HTTPRequestStates.Finished:
+			if (resp.IsSuccess)
+			{
+				Texture2D texture2D = req.Tag as Texture2D;
+				texture2D.LoadImage(resp.Data);
+				allDownloadedFromLocalCache = allDownloadedFromLocalCache && resp.IsFromCache;
+			}
+			else
+			{
+				Debug.LogWarning($"Request finished Successfully, but the server sent an error. Status Code: {resp.StatusCode}-{resp.Message} Message: {resp.DataAsText}");
+			}
+			break;
+		case HTTPRequestStates.Error:
+			Debug.LogError("Request Finished with Error! " + ((req.Exception == null) ? "No Exception" : (req.Exception.Message + "\n" + req.Exception.StackTrace)));
+			break;
+		case HTTPRequestStates.Aborted:
+			Debug.LogWarning("Request Aborted!");
+			break;
+		case HTTPRequestStates.ConnectionTimedOut:
+			Debug.LogError("Connection Timed Out!");
+			break;
+		case HTTPRequestStates.TimedOut:
+			Debug.LogError("Processing the request Timed Out!");
+			break;
+		}
+	}
+}
 }

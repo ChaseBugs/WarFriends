@@ -1,63 +1,227 @@
+using System.Collections.Generic;
 using UnityEngine;
 
+[AddComponentMenu("NGUI/UI/Root")]
+[ExecuteInEditMode]
 public class UIRoot : MonoBehaviour
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public enum Scaling
+	{
+		PixelPerfect,
+		FixedSize,
+		FixedSizeOnMobiles,
+		FixedWidth,
+		FixedWidthShrinkOnly
+	}
 
-	1. No dll files were provided to AssetRipper.
+	private static List<UIRoot> mRoots = new List<UIRoot>();
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public Scaling scalingStyle = Scaling.FixedSize;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	[HideInInspector]
+	public bool automatic;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public int manualHeight = 720;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public int manualWidth = 480;
 
-	3. Assembly Reconstruction has not been implemented.
+	public int minimumHeight = 320;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public int maximumHeight = 1536;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	private Transform mTrans;
 
-	4. This script is unnecessary.
+	public bool runOnlyOnce;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public static List<UIRoot> list => mRoots;
 
-	5. Script Content Level 0
+	public float activeWidth
+	{
+		get
+		{
+			Vector2 vector = new Vector2(Screen.width, Screen.height);
+			return (vector * GetPixelSizeAdjustment(Screen.height, Screen.width)).x;
+		}
+	}
 
-		AssetRipper was set to not load any script information.
+	public int activeHeight
+	{
+		get
+		{
+			int num = Mathf.Max(2, Screen.height);
+			if (scalingStyle == Scaling.FixedSize)
+			{
+				return manualHeight;
+			}
+			if (scalingStyle == Scaling.FixedSizeOnMobiles)
+			{
+				return manualHeight;
+			}
+			if (scalingStyle == Scaling.FixedWidth)
+			{
+				float num2 = (float)manualHeight / (float)manualWidth / ((float)Screen.height / (float)Screen.width);
+				return (int)((float)manualHeight / num2);
+			}
+			if (scalingStyle == Scaling.FixedWidthShrinkOnly)
+			{
+				float num3 = (float)manualHeight / (float)manualWidth / ((float)Screen.height / (float)Screen.width);
+				if (num3 < 1f)
+				{
+					return (int)((float)manualHeight / num3);
+				}
+				return manualHeight;
+			}
+			if (num < minimumHeight)
+			{
+				return minimumHeight;
+			}
+			if (num > maximumHeight)
+			{
+				return maximumHeight;
+			}
+			return num;
+		}
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public float pixelSizeAdjustment => GetPixelSizeAdjustment(Screen.height, Screen.width);
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public float fontPixelSizeAdjustment => (float)Mathf.Min(1536, Screen.height) / (float)activeHeight * Localization.languageConstant;
 
-	7. An incorrect path was provided to AssetRipper.
+	public static float GetPixelSizeAdjustment(GameObject go)
+	{
+		UIRoot uIRoot = NGUITools.FindInParents<UIRoot>(go);
+		return (!(uIRoot != null)) ? 1f : uIRoot.pixelSizeAdjustment;
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	public float GetPixelSizeAdjustment(int height, int width)
+	{
+		height = Mathf.Max(2, height);
+		if (scalingStyle == Scaling.FixedSize)
+		{
+			return (float)manualHeight / (float)height;
+		}
+		if (scalingStyle == Scaling.FixedSizeOnMobiles)
+		{
+			return (float)manualHeight / (float)height;
+		}
+		if (scalingStyle == Scaling.FixedWidth)
+		{
+			return (float)manualWidth / (float)width;
+		}
+		if (scalingStyle == Scaling.FixedWidthShrinkOnly)
+		{
+			float num = (float)manualHeight / (float)manualWidth / ((float)height / (float)width);
+			float result = (float)manualWidth / (float)width;
+			if (num > 1f)
+			{
+				float num2 = (float)width / num;
+				result = (float)manualWidth / num2;
+			}
+			return result;
+		}
+		if (height < minimumHeight)
+		{
+			return (float)minimumHeight / (float)height;
+		}
+		if (height > maximumHeight)
+		{
+			return (float)maximumHeight / (float)height;
+		}
+		return 1f;
+	}
 
-	*/
+	private void Awake()
+	{
+		mTrans = base.transform;
+		mRoots.Add(this);
+		if (automatic)
+		{
+			scalingStyle = Scaling.PixelPerfect;
+			automatic = false;
+		}
+	}
+
+	private void OnDestroy()
+	{
+		mRoots.Remove(this);
+	}
+
+	private void Start()
+	{
+		UIOrthoCamera componentInChildren = GetComponentInChildren<UIOrthoCamera>();
+		if (componentInChildren != null)
+		{
+			if (Debug.isDebugBuild)
+			{
+				Debug.LogWarning("UIRoot should not be active at the same time as UIOrthoCamera. Disabling UIOrthoCamera.", componentInChildren);
+			}
+			Camera component = componentInChildren.gameObject.GetComponent<Camera>();
+			componentInChildren.enabled = false;
+			if (component != null)
+			{
+				component.orthographicSize = 1f;
+			}
+		}
+		CalculateScale();
+	}
+
+	private void Update()
+	{
+		if (!runOnlyOnce)
+		{
+			CalculateScale();
+		}
+	}
+
+	private void CalculateScale()
+	{
+		if (!(mTrans != null))
+		{
+			return;
+		}
+		float num = activeHeight;
+		if (num > 0f)
+		{
+			float num2 = 2f / num;
+			Vector3 localScale = mTrans.localScale;
+			if (!(Mathf.Abs(localScale.x - num2) <= float.Epsilon) || !(Mathf.Abs(localScale.y - num2) <= float.Epsilon) || !(Mathf.Abs(localScale.z - num2) <= float.Epsilon))
+			{
+				mTrans.localScale = new Vector3(num2, num2, num2);
+			}
+		}
+	}
+
+	public static void Broadcast(string funcName)
+	{
+		int i = 0;
+		for (int count = mRoots.Count; i < count; i++)
+		{
+			UIRoot uIRoot = mRoots[i];
+			if (uIRoot != null)
+			{
+				uIRoot.BroadcastMessage(funcName, SendMessageOptions.DontRequireReceiver);
+			}
+		}
+	}
+
+	public static void Broadcast(string funcName, object param)
+	{
+		if (param == null)
+		{
+			if (Debug.isDebugBuild)
+			{
+				Debug.LogError("SendMessage is bugged when you try to pass 'null' in the parameter field. It behaves as if no parameter was specified.");
+			}
+			return;
+		}
+		int i = 0;
+		for (int count = mRoots.Count; i < count; i++)
+		{
+			UIRoot uIRoot = mRoots[i];
+			if (uIRoot != null)
+			{
+				uIRoot.BroadcastMessage(funcName, param, SendMessageOptions.DontRequireReceiver);
+			}
+		}
+	}
 }

@@ -1,63 +1,130 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
-public class PlayerVisualCategoryPowerBands : MonoBehaviour
+public class PlayerVisualCategoryPowerBands : PlayerVisualCategoryGeneric<PlayerVisualCategoryPowerBands.PlayerVisualPowerBand>
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Serializable]
+	public class PlayerVisualPowerBand : PlayerVisualHead
+	{
+		public Texture2D texture;
 
-	1. No dll files were provided to AssetRipper.
+		public Vector2 position;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+		public Vector2 size;
 
-	2. Incorrect dll files were provided to AssetRipper.
+		private static Dictionary<int, string> mDecalDescription = new Dictionary<int, string>
+		{
+			{ -1, "BANDS_NO_BAND" },
+			{ 0, "BANDS_WEAPON_RELOAD" },
+			{ 1, "BANDS_WEAPON_DAMAGE" },
+			{ 2, "BANDS_HITPOINT" }
+		};
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+		private static Dictionary<int, string> mDecalMiniIcon = new Dictionary<int, string>
+		{
+			{ -1, "menu-powerband-health-ico" },
+			{ 0, "game-card-ico-reload" },
+			{ 1, "menu-powerband-damage-ico" },
+			{ 2, "menu-powerband-health-ico" }
+		};
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+		private static Dictionary<int, Color> mDecalMiniIconColor = new Dictionary<int, Color>
+		{
+			{
+				-1,
+				Color.white
+			},
+			{
+				0,
+				Colours.powerBandReload
+			},
+			{
+				1,
+				Colours.powerBandDamage
+			},
+			{
+				2,
+				Colours.powerBandHealth
+			}
+		};
 
-	3. Assembly Reconstruction has not been implemented.
+		private static Dictionary<int, Tuple<string, string>> mNameLocalizations = new Dictionary<int, Tuple<string, string>>
+		{
+			{
+				-1,
+				new Tuple<string, string>("BAND_EMPTY", "BAND_TYPE_EMPTY")
+			},
+			{
+				0,
+				new Tuple<string, string>("BAND_REWARD_RELOAD", "BAND_TYPE_RELOAD")
+			},
+			{
+				1,
+				new Tuple<string, string>("BAND_REWARD_DAMAGE", "BAND_TYPE_DAMAGE")
+			},
+			{
+				2,
+				new Tuple<string, string>("BAND_REWARD_HEALTH", "BAND_TYPE_HEALTH")
+			}
+		};
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+		public override string description => Localization.LocalizeFormat(mDecalDescription[decalType], Colours.stringBlue, base.decalValue);
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+		public override string decalMiniIcon => mDecalMiniIcon[decalType];
 
-	4. This script is unnecessary.
+		public override Color decalMiniIconColor => mDecalMiniIconColor[decalType];
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+		public override string decalShortName => Localization.Localize(mNameLocalizations[decalType].Value1);
 
-	5. Script Content Level 0
+		public override string decalTypeName => Localization.Localize(mNameLocalizations[decalType].Value2);
 
-		AssetRipper was set to not load any script information.
+		public override bool isEmptyPowerBand => decalType < 0;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+		public override bool isBought => base.timeActive == 0 || base.remainingTime > 0.0 || base.tryOutVisual;
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+		public override void ApplyVisual(ICharacter character, bool useHighRes = false)
+		{
+			base.ApplyVisual(character, useHighRes);
+			character.meshChanger.ChangePowerBand(this);
+			PlayerController playerController = character as PlayerController;
+			if (playerController != null)
+			{
+				playerController.weaponReloadCoef = 0f;
+				playerController.weaponDamageCoef = 1f;
+				playerController.playerHitPointCoef = 1f;
+				switch (decalType)
+				{
+				case 0:
+					playerController.weaponReloadCoef = 1f - row.DECALVALUE;
+					break;
+				case 1:
+					playerController.weaponDamageCoef = 1f + row.DECALVALUE;
+					break;
+				case 2:
+					playerController.playerHitPointCoef = 1f + row.DECALVALUE;
+					break;
+				}
+			}
+			if (Application.isPlaying)
+			{
+				character.equippedPowerBand = this;
+				CamoTransform value = null;
+				string text = character.playerVisuals[0];
+				if (text != null)
+				{
+					camoTransformDict.TryGetValue(text, out value);
+				}
+				CamoTransform.SetTransform(character.meshChanger.powerband.gameObject, value);
+			}
+		}
 
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+		public override void Buy()
+		{
+			base.Buy();
+			double currentTimestampDouble = Singleton<BeanstalkServerManager>.instance.currentTimestampDouble;
+			int expiresOn = Convert.ToInt32(currentTimestampDouble) + base.timeActive;
+			CamosManager.instance.data.visuals[base.id].expiresOn = expiresOn;
+		}
+	}
 }

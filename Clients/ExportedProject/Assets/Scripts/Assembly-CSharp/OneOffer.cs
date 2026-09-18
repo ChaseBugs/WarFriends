@@ -1,63 +1,272 @@
+using Newtonsoft.Json.Linq;
 using UnityEngine;
 
-public class OneOffer : MonoBehaviour
+public class OneOffer
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public string id;
 
-	1. No dll files were provided to AssetRipper.
+	public string title;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public string description;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public string buttonTitle;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public int deadline;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public int discount;
 
-	3. Assembly Reconstruction has not been implemented.
+	public string urlBig;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public string urlSmall;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public OffersDestination type;
 
-	4. This script is unnecessary.
+	public string additionalInfo;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public bool wasShowed;
 
-	5. Script Content Level 0
+	public bool isApplicable
+	{
+		get
+		{
+			switch (type)
+			{
+			case OffersDestination.ArmyScreenUnitOneBuy:
+			{
+				LevelBehaviour levelBehaviour2 = LevelManager.instance.Unit(additionalInfo);
+				return levelBehaviour2 != null && levelBehaviour2.upgradeSlots.unitState == UpgradeSlots.State.NotBuyed;
+			}
+			case OffersDestination.ArmyScreenUnitOneUpgrade:
+			{
+				LevelBehaviour levelBehaviour3 = LevelManager.instance.Unit(additionalInfo);
+				return levelBehaviour3 != null && levelBehaviour3.upgradeSlots.bought && levelBehaviour3.upgradeSlots.canBeUpgraded;
+			}
+			case OffersDestination.ArmyScreenUnitOneUpgradeBuy:
+			{
+				LevelBehaviour levelBehaviour = LevelManager.instance.Unit(additionalInfo);
+				if (levelBehaviour == null)
+				{
+					return false;
+				}
+				return levelBehaviour.upgradeSlots.unitState == UpgradeSlots.State.NotBuyed || (levelBehaviour.upgradeSlots.bought && levelBehaviour.upgradeSlots.canBeUpgraded);
+			}
+			case OffersDestination.ArmyScreenFlatBuy:
+			case OffersDestination.ArmyScreenTypeFlatBuy:
+			case OffersDestination.ArmyScreenFlatUpgrade:
+			case OffersDestination.ArmyScreenTypeFlatUpgrade:
+			case OffersDestination.ArmyScreenFlatUpgradeBuy:
+			case OffersDestination.ArmyScreenTypeFlatUpgradeBuy:
+				return IsAnyApplicableUnit();
+			case OffersDestination.WeaponScreenWeaponOneBuy:
+			{
+				WeaponLevelsSetup weaponLevelsSetup3 = LevelManager.instance.Weapon(additionalInfo);
+				return weaponLevelsSetup3 != null && weaponLevelsSetup3.weaponState == WeaponLevelsSetup.State.NotBuyed;
+			}
+			case OffersDestination.WeaponScreenWeaponOneUpgrade:
+			{
+				WeaponLevelsSetup weaponLevelsSetup2 = LevelManager.instance.Weapon(additionalInfo);
+				return weaponLevelsSetup2 != null && weaponLevelsSetup2.bought && weaponLevelsSetup2.canBeUpgraded;
+			}
+			case OffersDestination.WeaponScreenWeaponOneUpgradeBuy:
+			{
+				WeaponLevelsSetup weaponLevelsSetup = LevelManager.instance.Weapon(additionalInfo);
+				if (weaponLevelsSetup == null)
+				{
+					return false;
+				}
+				return weaponLevelsSetup.weaponState == WeaponLevelsSetup.State.NotBuyed || (weaponLevelsSetup.bought && weaponLevelsSetup.canBeUpgraded);
+			}
+			case OffersDestination.WeaponScreenFlatBuy:
+			case OffersDestination.WeaponScreenSlotFlatBuy:
+			case OffersDestination.WeaponScreenTypeFlatBuy:
+			case OffersDestination.WeaponScreenFlatUpgrade:
+			case OffersDestination.WeaponScreenSlotFlatUpgrade:
+			case OffersDestination.WeaponScreenTypeFlatUpgrade:
+			case OffersDestination.WeaponScreenFlatUpgradeBuy:
+			case OffersDestination.WeaponScreenSlotFlatUpgradeBuy:
+			case OffersDestination.WeaponScreenTypeFlatUpgradeBuy:
+				return IsAnyApplicableWeapon();
+			case OffersDestination.BuyInApp:
+				return !PlayerAnalytics.instance.IsPackBought(additionalInfo);
+			default:
+				return true;
+			}
+		}
+	}
 
-		AssetRipper was set to not load any script information.
+	private int category
+	{
+		get
+		{
+			int result = 0;
+			int.TryParse(additionalInfo, out result);
+			return result;
+		}
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public static OneOffer LoadFromJson(JToken data, string key)
+	{
+		OneOffer oneOffer = new OneOffer();
+		if (data["end"] != null && data["sale"] != null && data["offerType"] != null && data["bigURL"] != null && data["smallURL"] != null)
+		{
+			if (data["title"] == null)
+			{
+				Debug.LogError("null title for offer!");
+				return null;
+			}
+			oneOffer.id = key;
+			oneOffer.deadline = StringParser.ParseIntToken(data["end"]);
+			oneOffer.discount = StringParser.ParseIntToken(data["sale"]);
+			oneOffer.wasShowed = data["showed"] != null && StringParser.ParseIntToken(data["showed"]) == 1;
+			oneOffer.type = (OffersDestination)StringParser.ParseIntToken(data["offerType"]);
+			oneOffer.title = StringParser.ParseString(data["title"], string.Empty);
+			if (data["button"] != null)
+			{
+				oneOffer.buttonTitle = StringParser.ParseString(data["button"], string.Empty);
+			}
+			else
+			{
+				oneOffer.buttonTitle = string.Empty;
+			}
+			if (data["description"] != null)
+			{
+				oneOffer.description = StringParser.ParseString(data["description"], string.Empty);
+			}
+			else
+			{
+				oneOffer.description = string.Empty;
+			}
+			if (data["otherInfo"] != null)
+			{
+				oneOffer.additionalInfo = StringParser.ParseString(data["otherInfo"], string.Empty);
+			}
+			else
+			{
+				oneOffer.additionalInfo = string.Empty;
+			}
+			oneOffer.urlBig = StringParser.ParseString(data["bigURL"], string.Empty);
+			oneOffer.urlSmall = StringParser.ParseString(data["smallURL"], string.Empty);
+			return oneOffer;
+		}
+		return null;
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public static OneOffer CreateTestOffer(int i = 0)
+	{
+		OneOffer oneOffer = new OneOffer();
+		oneOffer.id = i.ToString("'ID'0");
+		oneOffer.title = i.ToString("'Offer '0");
+		oneOffer.description = ((i != 0) ? "Description!!!!!!! Motherfuckers :-)" : string.Empty);
+		oneOffer.buttonTitle = ((i != 1) ? "BYATCH" : "GO TO OFFER");
+		oneOffer.deadline = ((i != 3) ? (Singleton<BeanstalkServerManager>.instance.currentTimestamp + 3600) : 0);
+		oneOffer.discount = 60 - i;
+		switch (i)
+		{
+		case 0:
+			oneOffer.urlBig = "http://www.about-fun.com/img/game-war-third-bg.jpg";
+			break;
+		case 1:
+			oneOffer.urlBig = "http://www.imgawards.com/wp-content/uploads/2015/12/Cover-Winter_WarFriends.png";
+			break;
+		default:
+			oneOffer.urlBig = "http://a4.mzstatic.com/eu/r30/Purple111/v4/30/72/db/3072db24-2849-d8a8-cdf4-739c12e46a00/screen520x924.jpeg";
+			break;
+		}
+		oneOffer.urlSmall = oneOffer.urlBig;
+		oneOffer.type = (OffersDestination)(i + 12);
+		if (oneOffer.type == OffersDestination.ArmyScreenUnitOneUpgradeBuy)
+		{
+			oneOffer.additionalInfo = "Google2u.DBUpgradeSlotsCar";
+		}
+		if (oneOffer.type == OffersDestination.WeaponScreenSlotFlatBuy)
+		{
+			oneOffer.additionalInfo = "Primary";
+		}
+		oneOffer.wasShowed = true;
+		return oneOffer;
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	public static OneOffer CreateTestLootboxOffer()
+	{
+		OneOffer oneOffer = new OneOffer();
+		oneOffer.id = "LOOTBOXDISCOUNT";
+		oneOffer.title = "LOOTBOXES DISCOUNTED";
+		oneOffer.description = "Buy as many as you can";
+		oneOffer.buttonTitle = "GO TO WARSHOP";
+		oneOffer.deadline = Singleton<BeanstalkServerManager>.instance.currentTimestamp + 3600;
+		oneOffer.discount = 20;
+		oneOffer.urlBig = "https://i.ytimg.com/vi/U6Da9jKbXu0/hqdefault.jpg";
+		oneOffer.urlSmall = oneOffer.urlBig;
+		oneOffer.type = OffersDestination.WarshopLootboxesFlat;
+		oneOffer.wasShowed = false;
+		return oneOffer;
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	private bool IsAnyApplicableUnit()
+	{
+		int num = category;
+		foreach (LevelBehaviour behaviour in LevelManager.instance.behaviours)
+		{
+			int num2 = 1 << (int)behaviour.unitType;
+			if (type == OffersDestination.ArmyScreenTypeFlatBuy && (num2 & num) > 0 && behaviour.upgradeSlots.unitState == UpgradeSlots.State.NotBuyed)
+			{
+				return true;
+			}
+			if (type == OffersDestination.ArmyScreenTypeFlatUpgrade && (num2 & num) > 0 && behaviour.upgradeSlots.bought && behaviour.upgradeSlots.canBeUpgraded)
+			{
+				return true;
+			}
+			if (type == OffersDestination.ArmyScreenTypeFlatUpgradeBuy && (num2 & num) > 0 && (behaviour.upgradeSlots.unitState == UpgradeSlots.State.NotBuyed || (behaviour.upgradeSlots.bought && behaviour.upgradeSlots.canBeUpgraded)))
+			{
+				return true;
+			}
+			if (type == OffersDestination.ArmyScreenFlatBuy && behaviour.upgradeSlots.unitState == UpgradeSlots.State.NotBuyed)
+			{
+				return true;
+			}
+			if (type == OffersDestination.ArmyScreenFlatUpgrade && behaviour.upgradeSlots.bought && behaviour.upgradeSlots.canBeUpgraded)
+			{
+				return true;
+			}
+			if (type == OffersDestination.ArmyScreenFlatUpgradeBuy && (behaviour.upgradeSlots.unitState == UpgradeSlots.State.NotBuyed || (behaviour.upgradeSlots.bought && behaviour.upgradeSlots.canBeUpgraded)))
+			{
+				return true;
+			}
+		}
+		return false;
+	}
 
-	*/
+	private bool IsAnyApplicableWeapon()
+	{
+		int num = category;
+		foreach (WeaponLevelsSetup weaponLevelsSetup in LevelManager.instance.weaponLevelsSetups)
+		{
+			int weaponCategory = (int)weaponLevelsSetup.weaponCategory;
+			if ((type == OffersDestination.WeaponScreenSlotFlatBuy || type == OffersDestination.WeaponScreenTypeFlatBuy) && (weaponCategory & num) > 0 && weaponLevelsSetup.weaponState == WeaponLevelsSetup.State.NotBuyed)
+			{
+				return true;
+			}
+			if ((type == OffersDestination.WeaponScreenSlotFlatUpgrade || type == OffersDestination.WeaponScreenTypeFlatUpgrade) && (weaponCategory & num) > 0 && weaponLevelsSetup.bought && weaponLevelsSetup.canBeUpgraded)
+			{
+				return true;
+			}
+			if ((type == OffersDestination.WeaponScreenSlotFlatUpgradeBuy || type == OffersDestination.WeaponScreenTypeFlatUpgradeBuy) && (weaponCategory & num) > 0 && (weaponLevelsSetup.weaponState == WeaponLevelsSetup.State.NotBuyed || (weaponLevelsSetup.bought && weaponLevelsSetup.canBeUpgraded)))
+			{
+				return true;
+			}
+			if (type == OffersDestination.WeaponScreenFlatBuy && weaponLevelsSetup.weaponState == WeaponLevelsSetup.State.NotBuyed)
+			{
+				return true;
+			}
+			if (type == OffersDestination.WeaponScreenFlatUpgrade && weaponLevelsSetup.bought && weaponLevelsSetup.canBeUpgraded)
+			{
+				return true;
+			}
+			if (type == OffersDestination.WeaponScreenFlatUpgradeBuy && (weaponLevelsSetup.weaponState == WeaponLevelsSetup.State.NotBuyed || (weaponLevelsSetup.bought && weaponLevelsSetup.canBeUpgraded)))
+			{
+				return true;
+			}
+		}
+		return false;
+	}
 }

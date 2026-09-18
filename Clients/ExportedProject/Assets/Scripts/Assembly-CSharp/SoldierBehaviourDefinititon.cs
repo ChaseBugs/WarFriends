@@ -1,63 +1,69 @@
+using System;
 using UnityEngine;
 
-public class SoldierBehaviourDefinititon : MonoBehaviour
+[Serializable]
+public class SoldierBehaviourDefinititon : BehaviourDefinititon
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public float probabilityOfRealShot = 1f;
 
-	1. No dll files were provided to AssetRipper.
+	public int fireBatchSizeMin = 1;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public int fireBatchSizeMax = 4;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public float minShootTime = 1f;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public float maxShootTime = 5f;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public bool useSecondaryWeapon;
 
-	3. Assembly Reconstruction has not been implemented.
+	public float switchToSecondaryProb;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public bool canShootWhileRunning;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public bool canShootWhileRunningDontStop;
 
-	4. This script is unnecessary.
+	public bool canUseParachute;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public float walkShotTimeMin = 1f;
 
-	5. Script Content Level 0
+	public float walkShotTimeMax = 5f;
 
-		AssetRipper was set to not load any script information.
+	public float special;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public override void LoadZeros()
+	{
+		health = 0f;
+		probabilityOfRealShot = 0f;
+		fireBatchSizeMin = 0;
+		fireBatchSizeMax = 0;
+		minShootTime = 0f;
+		maxShootTime = 0f;
+		damage = 0f;
+		special = 0f;
+		walkShotTimeMin = 0f;
+		walkShotTimeMax = 0f;
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public override BehaviourDefinititon Interpolate(BehaviourDefinititon d1, BehaviourDefinititon d2, float ratio)
+	{
+		SoldierBehaviourDefinititon soldierBehaviourDefinititon = (SoldierBehaviourDefinititon)d1;
+		SoldierBehaviourDefinititon soldierBehaviourDefinititon2 = (SoldierBehaviourDefinititon)d2;
+		SoldierBehaviourDefinititon soldierBehaviourDefinititon3 = (SoldierBehaviourDefinititon)d1.Copy();
+		soldierBehaviourDefinititon3.health = Mathf.Lerp(soldierBehaviourDefinititon.health, soldierBehaviourDefinititon2.health, ratio);
+		soldierBehaviourDefinititon3.probabilityOfRealShot = Mathf.Lerp(soldierBehaviourDefinititon.probabilityOfRealShot, soldierBehaviourDefinititon2.probabilityOfRealShot, ratio);
+		soldierBehaviourDefinititon3.damage = Mathf.Lerp(soldierBehaviourDefinititon.damage, soldierBehaviourDefinititon2.damage, ratio);
+		soldierBehaviourDefinititon3.fireBatchSizeMin = (int)Mathf.Lerp(soldierBehaviourDefinititon.fireBatchSizeMin, soldierBehaviourDefinititon2.fireBatchSizeMin, ratio);
+		soldierBehaviourDefinititon3.fireBatchSizeMax = (int)Mathf.Lerp(soldierBehaviourDefinititon.fireBatchSizeMax, soldierBehaviourDefinititon2.fireBatchSizeMax, ratio);
+		soldierBehaviourDefinititon3.minShootTime = Mathf.Lerp(soldierBehaviourDefinititon.minShootTime, soldierBehaviourDefinititon2.minShootTime, ratio);
+		soldierBehaviourDefinititon3.maxShootTime = Mathf.Lerp(soldierBehaviourDefinititon.maxShootTime, soldierBehaviourDefinititon2.maxShootTime, ratio);
+		soldierBehaviourDefinititon3.walkShotTimeMin = Mathf.Lerp(soldierBehaviourDefinititon.walkShotTimeMin, soldierBehaviourDefinititon2.walkShotTimeMin, ratio);
+		soldierBehaviourDefinititon3.walkShotTimeMax = Mathf.Lerp(soldierBehaviourDefinititon.walkShotTimeMax, soldierBehaviourDefinititon2.walkShotTimeMax, ratio);
+		return soldierBehaviourDefinititon3;
+	}
 
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public override void ScaleByPerk(Perk perk)
+	{
+		base.ScaleByPerk(perk);
+		probabilityOfRealShot *= perk.accuracyCoef;
+	}
 }

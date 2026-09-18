@@ -1,63 +1,242 @@
+using System;
+using System.Collections.Generic;
+using BestHTTP.Examples;
+using BestHTTP.SocketIO;
 using UnityEngine;
 
-public class SocketIOChatSample : MonoBehaviour
+public sealed class SocketIOChatSample : MonoBehaviour
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	private enum ChatStates
+	{
+		Login,
+		Chat
+	}
 
-	1. No dll files were provided to AssetRipper.
+	private readonly TimeSpan TYPING_TIMER_LENGTH = TimeSpan.FromMilliseconds(700.0);
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	private SocketManager Manager;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	private ChatStates State;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	private string userName = string.Empty;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	private string message = string.Empty;
 
-	3. Assembly Reconstruction has not been implemented.
+	private string chatLog = string.Empty;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	private Vector2 scrollPos;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	private bool typing;
 
-	4. This script is unnecessary.
+	private DateTime lastTypingTime = DateTime.MinValue;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private List<string> typingUsers = new List<string>();
 
-	5. Script Content Level 0
+	private void Start()
+	{
+		State = ChatStates.Login;
+		SocketOptions socketOptions = new SocketOptions();
+		socketOptions.AutoConnect = false;
+		Manager = new SocketManager(new Uri("http://chat.socket.io/socket.io/"), socketOptions);
+		Manager.Socket.On("login", OnLogin);
+		Manager.Socket.On("new message", OnNewMessage);
+		Manager.Socket.On("user joined", OnUserJoined);
+		Manager.Socket.On("user left", OnUserLeft);
+		Manager.Socket.On("typing", OnTyping);
+		Manager.Socket.On("stop typing", OnStopTyping);
+		Manager.Socket.On(SocketIOEventTypes.Error, delegate(Socket socket, Packet packet, object[] args)
+		{
+			Debug.LogError($"Error: {args[0].ToString()}");
+		});
+		Manager.Open();
+	}
 
-		AssetRipper was set to not load any script information.
+	private void OnDestroy()
+	{
+		Manager.Close();
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	private void Update()
+	{
+		if (Input.GetKeyDown(KeyCode.Escape))
+		{
+			SampleSelector.SelectedSample.DestroyUnityObject();
+		}
+		if (typing)
+		{
+			DateTime utcNow = DateTime.UtcNow;
+			TimeSpan timeSpan = utcNow - lastTypingTime;
+			if (timeSpan >= TYPING_TIMER_LENGTH)
+			{
+				Manager.Socket.Emit("stop typing");
+				typing = false;
+			}
+		}
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	private void OnGUI()
+	{
+		switch (State)
+		{
+		case ChatStates.Login:
+			DrawLoginScreen();
+			break;
+		case ChatStates.Chat:
+			DrawChatScreen();
+			break;
+		}
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	private void DrawLoginScreen()
+	{
+		GUIHelper.DrawArea(GUIHelper.ClientArea, drawHeader: true, delegate
+		{
+			GUILayout.BeginVertical();
+			GUILayout.FlexibleSpace();
+			GUIHelper.DrawCenteredText("What's your nickname?");
+			userName = GUILayout.TextField(userName);
+			if (GUILayout.Button("Join"))
+			{
+				SetUserName();
+			}
+			GUILayout.FlexibleSpace();
+			GUILayout.EndVertical();
+		});
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	private void DrawChatScreen()
+	{
+		GUIHelper.DrawArea(GUIHelper.ClientArea, drawHeader: true, delegate
+		{
+			GUILayout.BeginVertical();
+			scrollPos = GUILayout.BeginScrollView(scrollPos);
+			GUILayout.Label(chatLog, GUILayout.ExpandWidth(expand: true), GUILayout.ExpandHeight(expand: true));
+			GUILayout.EndScrollView();
+			string text = string.Empty;
+			if (typingUsers.Count > 0)
+			{
+				text += $"{typingUsers[0]}";
+				for (int i = 1; i < typingUsers.Count; i++)
+				{
+					text += $", {typingUsers[i]}";
+				}
+				text = ((typingUsers.Count != 1) ? (text + " are typing!") : (text + " is typing!"));
+			}
+			GUILayout.Label(text);
+			GUILayout.Label("Type here:");
+			GUILayout.BeginHorizontal();
+			message = GUILayout.TextField(message);
+			if (GUILayout.Button("Send", GUILayout.MaxWidth(100f)))
+			{
+				SendMessage();
+			}
+			GUILayout.EndHorizontal();
+			if (GUI.changed)
+			{
+				UpdateTyping();
+			}
+			GUILayout.EndVertical();
+		});
+	}
 
-	*/
+	private void SetUserName()
+	{
+		if (!string.IsNullOrEmpty(userName))
+		{
+			State = ChatStates.Chat;
+			Manager.Socket.Emit("add user", userName);
+		}
+	}
+
+	private void SendMessage()
+	{
+		if (!string.IsNullOrEmpty(message))
+		{
+			Manager.Socket.Emit("new message", message);
+			chatLog += $"{userName}: {message}\n";
+			message = string.Empty;
+		}
+	}
+
+	private void UpdateTyping()
+	{
+		if (!typing)
+		{
+			typing = true;
+			Manager.Socket.Emit("typing");
+		}
+		lastTypingTime = DateTime.UtcNow;
+	}
+
+	private void addParticipantsMessage(Dictionary<string, object> data)
+	{
+		int num = Convert.ToInt32(data["numUsers"]);
+		if (num == 1)
+		{
+			chatLog += "there's 1 participant\n";
+			return;
+		}
+		string text = chatLog;
+		chatLog = text + "there are " + num + " participants\n";
+	}
+
+	private void addChatMessage(Dictionary<string, object> data)
+	{
+		string arg = data["username"] as string;
+		string arg2 = data["message"] as string;
+		chatLog += $"{arg}: {arg2}\n";
+	}
+
+	private void AddChatTyping(Dictionary<string, object> data)
+	{
+		string item = data["username"] as string;
+		typingUsers.Add(item);
+	}
+
+	private void RemoveChatTyping(Dictionary<string, object> data)
+	{
+		string username = data["username"] as string;
+		int num = typingUsers.FindIndex((string name) => name.Equals(username));
+		if (num != -1)
+		{
+			typingUsers.RemoveAt(num);
+		}
+	}
+
+	private void OnLogin(Socket socket, Packet packet, params object[] args)
+	{
+		chatLog = "Welcome to Socket.IO Chat — \n";
+		addParticipantsMessage(args[0] as Dictionary<string, object>);
+	}
+
+	private void OnNewMessage(Socket socket, Packet packet, params object[] args)
+	{
+		addChatMessage(args[0] as Dictionary<string, object>);
+	}
+
+	private void OnUserJoined(Socket socket, Packet packet, params object[] args)
+	{
+		Dictionary<string, object> dictionary = args[0] as Dictionary<string, object>;
+		string arg = dictionary["username"] as string;
+		chatLog += $"{arg} joined\n";
+		addParticipantsMessage(dictionary);
+	}
+
+	private void OnUserLeft(Socket socket, Packet packet, params object[] args)
+	{
+		Dictionary<string, object> dictionary = args[0] as Dictionary<string, object>;
+		string arg = dictionary["username"] as string;
+		chatLog += $"{arg} left\n";
+		addParticipantsMessage(dictionary);
+	}
+
+	private void OnTyping(Socket socket, Packet packet, params object[] args)
+	{
+		AddChatTyping(args[0] as Dictionary<string, object>);
+	}
+
+	private void OnStopTyping(Socket socket, Packet packet, params object[] args)
+	{
+		RemoveChatTyping(args[0] as Dictionary<string, object>);
+	}
 }

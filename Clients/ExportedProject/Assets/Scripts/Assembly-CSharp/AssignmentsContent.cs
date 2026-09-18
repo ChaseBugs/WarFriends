@@ -1,63 +1,413 @@
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
-public class AssignmentsContent : MonoBehaviour
+public class AssignmentsContent : Core_BaseScript
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Header("Left Button")]
+	public UISprite assignmentIcon;
 
-	1. No dll files were provided to AssetRipper.
+	public GameObject notificationObject;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public UISprite notificationObjectWBIcon;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public UISprite notificationObjectGoldIcon;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	[Header("Daily")]
+	public GameObject dailyPart;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public List<AssignmentRecord> assignments;
 
-	3. Assembly Reconstruction has not been implemented.
+	[Header("Starter")]
+	public GameObject starterPart;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public UILabel timeToCompleteLabel;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public StarterAssignmentComplete[] completedAssignments;
 
-	4. This script is unnecessary.
+	public StarterAssignmentRecord currentAssignmentRecord;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public UILabel rewardsTimeToEndLabel;
 
-	5. Script Content Level 0
+	private List<TweenAnimator> mAnimator = new List<TweenAnimator>();
 
-		AssetRipper was set to not load any script information.
+	private TweenAnimator mAnimatorEmpty;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	private TweenAnimator mAnimator1AssignmentProgress;
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	private TweenAnimator mAnimator2AssignmentProgress;
 
-	7. An incorrect path was provided to AssetRipper.
+	private TweenAnimator mAnimator3AssignmentProgress;
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	private TweenAnimator mAnimator1AssignmentCompleted;
 
-	*/
+	private TweenAnimator mAnimator2AssignmentCompleted;
+
+	private TweenAnimator mAnimator3AssignmentCompleted;
+
+	private FloatObject mAssignment1ProgressStart = new FloatObject(0f);
+
+	private FloatObject mAssignment1ProgressEnd = new FloatObject(0f);
+
+	private FloatObject mAssignment1CompletedStart = new FloatObject(0f);
+
+	private FloatObject mAssignment1CompletedEnd = new FloatObject(0f);
+
+	private FloatObject mAssignment2ProgressStart = new FloatObject(0f);
+
+	private FloatObject mAssignment2ProgressEnd = new FloatObject(0f);
+
+	private FloatObject mAssignment2CompletedStart = new FloatObject(0f);
+
+	private FloatObject mAssignment2CompletedEnd = new FloatObject(0f);
+
+	private FloatObject mAssignment3ProgressStart = new FloatObject(0f);
+
+	private FloatObject mAssignment3ProgressEnd = new FloatObject(0f);
+
+	private FloatObject mAssignment3CompletedStart = new FloatObject(0f);
+
+	private FloatObject mAssignment3CompletedEnd = new FloatObject(0f);
+
+	private bool mShownTab;
+
+	private bool mUpdateStarterAssignments;
+
+	private float mTimer;
+
+	public List<TweenAnimator> Animator => mAnimator;
+
+	public void InitControls()
+	{
+		InitAnimators();
+		assignments[0].InitControls();
+		assignments[1].InitControls();
+		assignments[2].InitControls();
+		AssignmentsManager.instance.AssignmentClaimed += delegate(int index)
+		{
+			UpdateNotifications();
+			List<Assignment> list = AssignmentsManager.instance.GetAssignments(update: false);
+			if (list != null && list.Count == 3 && assignments[index].gameObject.activeSelf && !assignments[index].isAnimatingClaim)
+			{
+				assignments[index].Init(list[index]);
+			}
+		};
+		AssignmentsManager.instance.AssignmentsLoaded += delegate
+		{
+			if (base.gameObject.activeSelf)
+			{
+				UpdateAssignments();
+			}
+		};
+		currentAssignmentRecord.InitControls(1476f);
+		StarterAssignmentsManager.instance.AssignmentClaimed += AnimateLine;
+	}
+
+	private void InitAnimators()
+	{
+		mAnimator = new List<TweenAnimator>();
+		mAnimatorEmpty = EmptyAnimator();
+		mAnimator1AssignmentProgress = ProgressAnimator(assignments[0], ref mAssignment1ProgressStart, ref mAssignment1ProgressEnd);
+		mAnimator2AssignmentProgress = ProgressAnimator(assignments[1], ref mAssignment2ProgressStart, ref mAssignment2ProgressEnd);
+		mAnimator3AssignmentProgress = ProgressAnimator(assignments[2], ref mAssignment3ProgressStart, ref mAssignment3ProgressEnd);
+		mAnimator1AssignmentCompleted = CompletedAnimator(assignments[0], ref mAssignment1CompletedStart, ref mAssignment1CompletedEnd);
+		mAnimator2AssignmentCompleted = CompletedAnimator(assignments[1], ref mAssignment2CompletedStart, ref mAssignment2CompletedEnd);
+		mAnimator3AssignmentCompleted = CompletedAnimator(assignments[2], ref mAssignment3CompletedStart, ref mAssignment3CompletedEnd);
+		mAnimator.Add(mAnimatorEmpty);
+		mAnimator.Add(mAnimatorEmpty);
+		mAnimator.Add(mAnimatorEmpty);
+	}
+
+	private TweenAnimator EmptyAnimator()
+	{
+		TweenAnimator tweenAnimator = base.gameObject.AddComponent<TweenAnimator>();
+		tweenAnimator.allTweens = new List<TweenAnimator.TweenRecord>();
+		return tweenAnimator;
+	}
+
+	private TweenAnimator ProgressAnimator(AssignmentRecord assignmentRecord, ref FloatObject progressStart, ref FloatObject progressEnd)
+	{
+		TweenAnimator tweenAnimator = base.gameObject.AddComponent<TweenAnimator>();
+		tweenAnimator.allTweens = new List<TweenAnimator.TweenRecord>();
+		tweenAnimator.AddTween(from: progressStart, id: 1, tweenType: TweenAnimator.TweenType.ProgressBar, tweenTarget: assignmentRecord.progress.gameObject, time: 0.4f, to: progressEnd, delay: 0.4f);
+		return tweenAnimator;
+	}
+
+	private TweenAnimator CompletedAnimator(AssignmentRecord assignmentRecord, ref FloatObject completedStart, ref FloatObject completedEnd)
+	{
+		TweenAnimator tweenAnimator = base.gameObject.AddComponent<TweenAnimator>();
+		tweenAnimator.allTweens = new List<TweenAnimator.TweenRecord>();
+		tweenAnimator.AddTween(from: completedStart, id: 1, tweenType: TweenAnimator.TweenType.ProgressBar, tweenTarget: assignmentRecord.progress.gameObject, time: 0.4f, to: completedEnd, delay: 0.4f);
+		tweenAnimator.TweenFinished = delegate(int tweenId)
+		{
+			if (tweenId == 1)
+			{
+				assignmentRecord.ChangeToCompleted();
+			}
+		};
+		return tweenAnimator;
+	}
+
+	private void AnimateLine()
+	{
+		StarterAssignment starterAssignment = StarterAssignmentsManager.instance.currentAssignment;
+		if (starterAssignment == null && StarterAssignmentsManager.instance.assignmentsCount > 0)
+		{
+			starterAssignment = StarterAssignmentsManager.instance.assignments[StarterAssignmentsManager.instance.assignmentsCount - 1];
+		}
+		int num = ((starterAssignment != null) ? (starterAssignment.order - 1) : StarterAssignmentsManager.instance.assignmentsCount);
+		if (base.gameObject.activeSelf)
+		{
+			completedAssignments[num - 1].AnimateFinish();
+			if (num < StarterAssignmentsManager.instance.assignmentsCount)
+			{
+				completedAssignments[num].AnimateProgress();
+			}
+		}
+		if (!currentAssignmentRecord.isClaimAnimating)
+		{
+			currentAssignmentRecord.Initialize(StarterAssignmentsManager.instance.currentAssignment);
+		}
+		UpdateNotifications();
+	}
+
+	internal void InitGuiValues()
+	{
+		if (Singleton<GameController>.instance.isTutorial)
+		{
+			return;
+		}
+		bool isActiveAndNotCompleted = StarterAssignmentsManager.instance.isActiveAndNotCompleted;
+		dailyPart.SetActive(!isActiveAndNotCompleted);
+		starterPart.SetActive(isActiveAndNotCompleted);
+		if (isActiveAndNotCompleted)
+		{
+			StarterAssignmentsManager.instance.Evaluate();
+			InitializeStarterAssignmentLook();
+			mUpdateStarterAssignments = true;
+			mAnimator[0] = mAnimatorEmpty;
+			mAnimator[1] = mAnimatorEmpty;
+			mAnimator[2] = mAnimatorEmpty;
+		}
+		else
+		{
+			List<Assignment> list = AssignmentsManager.instance.GetAssignments(update: false);
+			if (list == null || list.Count < 3 || list[0] == null || list[1] == null || list[2] == null)
+			{
+				assignments[0].gameObject.SetActive(value: false);
+				assignments[1].gameObject.SetActive(value: false);
+				assignments[2].gameObject.SetActive(value: false);
+				return;
+			}
+			assignments[0].gameObject.SetActive(value: true);
+			assignments[0].Init(list[0]);
+			assignments[1].gameObject.SetActive(value: true);
+			assignments[1].Init(list[1]);
+			assignments[2].gameObject.SetActive(value: true);
+			assignments[2].Init(list[2]);
+			Debug.Log($"End Screen - Assignment tab:\nAssignment1:\t{list[0].GetProgress()}\nAssignment2:\t{list[1].GetProgress()}\nAssignment3:\t{list[2].GetProgress()}\n");
+			if (list[0].currentState == Assignment.State.InProgress)
+			{
+				mAssignment1ProgressStart.val = list[0].GetStartProgress();
+				mAssignment1ProgressEnd.val = list[0].GetEndProgress();
+				mAnimator[0] = mAnimator1AssignmentProgress;
+			}
+			else if (list[0].currentState == Assignment.State.Finishing)
+			{
+				mAssignment1CompletedStart.val = list[0].GetStartProgress();
+				mAssignment1CompletedEnd.val = list[0].GetEndProgress();
+				mAnimator[0] = mAnimator1AssignmentCompleted;
+			}
+			else
+			{
+				mAnimator[0] = mAnimatorEmpty;
+			}
+			if (list[1].currentState == Assignment.State.InProgress)
+			{
+				mAssignment2ProgressStart.val = list[1].GetStartProgress();
+				mAssignment2ProgressEnd.val = list[1].GetEndProgress();
+				mAnimator[1] = mAnimator2AssignmentProgress;
+			}
+			else if (list[1].currentState == Assignment.State.Finishing)
+			{
+				mAssignment2CompletedStart.val = list[1].GetStartProgress();
+				mAssignment2CompletedEnd.val = list[1].GetEndProgress();
+				mAnimator[1] = mAnimator2AssignmentCompleted;
+			}
+			else
+			{
+				mAnimator[1] = mAnimatorEmpty;
+			}
+			if (list[2].currentState == Assignment.State.InProgress)
+			{
+				mAssignment3ProgressStart.val = list[2].GetStartProgress();
+				mAssignment3ProgressEnd.val = list[2].GetEndProgress();
+				mAnimator[2] = mAnimator3AssignmentProgress;
+			}
+			else if (list[2].currentState == Assignment.State.Finishing)
+			{
+				mAssignment3CompletedStart.val = list[2].GetStartProgress();
+				mAssignment3CompletedEnd.val = list[2].GetEndProgress();
+				mAnimator[2] = mAnimator3AssignmentCompleted;
+			}
+			else
+			{
+				mAnimator[2] = mAnimatorEmpty;
+			}
+		}
+		UpdateNotifications();
+		mShownTab = false;
+	}
+
+	private void InitializeStarterAssignmentLook()
+	{
+		StarterAssignment currentAssignment = StarterAssignmentsManager.instance.currentAssignment;
+		int num = ((!StarterAssignmentsManager.instance.isAllCompleted) ? (currentAssignment.order - 1) : StarterAssignmentsManager.instance.assignmentsCount);
+		for (int i = 0; i < completedAssignments.Length; i++)
+		{
+			if (i < num)
+			{
+				completedAssignments[i].SetCompleted();
+			}
+			else if (i == num)
+			{
+				completedAssignments[i].SetCurrent();
+			}
+			else
+			{
+				completedAssignments[i].SetDefault();
+			}
+		}
+		currentAssignmentRecord.Initialize(currentAssignment);
+	}
+
+	public void UpdateTimes()
+	{
+		if (mUpdateStarterAssignments)
+		{
+			if (StarterAssignmentsManager.instance.isAllCompleted)
+			{
+				timeToCompleteLabel.text = Colours.stringWhite + Localization.Localize("ID_COMPLETED");
+				rewardsTimeToEndLabel.text = Localization.Localize("ID_YOURREWARDS");
+			}
+			else
+			{
+				int num = Mathf.Max(StarterAssignmentsManager.instance.remainingTime, 0);
+				if (num == 0)
+				{
+					timeToCompleteLabel.text = Localization.Localize("ID_EXPIRED");
+					rewardsTimeToEndLabel.text = Localization.Localize("ID_STARTERASSIGNMENTSEXPIRED");
+				}
+				else
+				{
+					timeToCompleteLabel.text = string.Format("{0} {1}{2}", MiscTools.PrintableTime(num, "ID_READYTIME", string.Empty), Colours.stringWhite, Localization.Localize("ID_TOCOMPLETE"));
+					rewardsTimeToEndLabel.text = Localization.LocalizeFormat("ID_COMPLETEALLTENSTARTERASSIGNMENTS", MiscTools.PrintableTime(num, "ID_READYTIME", string.Empty));
+				}
+			}
+		}
+		mUpdateStarterAssignments = StarterAssignmentsManager.instance.isActive;
+	}
+
+	public void Update()
+	{
+		mTimer += Time.deltaTime;
+		if (mTimer >= 0.333f)
+		{
+			mTimer -= 0.333f;
+			UpdateTimes();
+		}
+	}
+
+	public void AnimateShow(float fadeInTime)
+	{
+	}
+
+	private void UpdateNotifications()
+	{
+		bool flag = false;
+		if (!StarterAssignmentsManager.instance.isActiveAndNotCompleted && Singleton<NotificationManager>.instance.GetNumberOfAssignmentNotifications() > 0)
+		{
+			List<Assignment> list = AssignmentsManager.instance.GetAssignments(update: false);
+			foreach (Assignment item in list)
+			{
+				if (item.currentState != Assignment.State.InProgress)
+				{
+					flag = true;
+				}
+			}
+			notificationObject.SetActive(value: true);
+			notificationObjectGoldIcon.gameObject.SetActive(value: true);
+			notificationObjectWBIcon.gameObject.SetActive(value: false);
+		}
+		else if (Singleton<NotificationManager>.instance.NotificationStarterAssignments())
+		{
+			notificationObject.SetActive(value: true);
+			notificationObjectWBIcon.gameObject.SetActive(StarterAssignmentsManager.instance.isWBReward);
+			notificationObjectGoldIcon.gameObject.SetActive(!notificationObjectWBIcon.gameObject.activeSelf);
+		}
+		else
+		{
+			notificationObject.SetActive(value: false);
+		}
+		assignmentIcon.color = ((!flag) ? Color.white : Colours.yellowAssignemnt);
+	}
+
+	public void UpdateAssignments()
+	{
+		foreach (AssignmentRecord assignment in assignments)
+		{
+			assignment.UpdateAssignmentLook(!mShownTab);
+		}
+		if (mShownTab)
+		{
+			UpdateNotifications();
+		}
+		if (StarterAssignmentsManager.instance.isActiveAndNotCompleted)
+		{
+			InitializeStarterAssignmentLook();
+		}
+		mShownTab = true;
+	}
+
+	public void ResetAssignments()
+	{
+		AssignmentsManager.instance.FakeAssignments();
+		InitGuiValues();
+		ResetAnimation();
+		UpdateAssignments();
+		StartCoroutine(PlayTabAnimator());
+	}
+
+	private IEnumerator PlayTabAnimator()
+	{
+		foreach (TweenAnimator tweenAnimator in mAnimator)
+		{
+			if (tweenAnimator.allTweens.Count > 0)
+			{
+				tweenAnimator.PlayTweens();
+				yield return new WaitForSeconds(0.3f);
+			}
+		}
+	}
+
+	internal void ResetAnimation()
+	{
+		foreach (TweenAnimator item in mAnimator)
+		{
+			item.ResetTweens();
+		}
+	}
+
+	internal void FinishAnimation()
+	{
+		foreach (TweenAnimator item in mAnimator)
+		{
+			item.FinishTweens();
+		}
+	}
+
+	public void DoAfterHide()
+	{
+		AssignmentsManager.instance.AssignmentHide();
+	}
 }

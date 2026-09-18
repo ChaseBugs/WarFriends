@@ -1,63 +1,265 @@
+using System;
 using UnityEngine;
 
-public class ScreenManager : MonoBehaviour
+public static class ScreenManager
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public enum Aligment
+	{
+		TopRight,
+		BottomRight,
+		TopLeft,
+		BottomLeft,
+		TopCenter
+	}
 
-	1. No dll files were provided to AssetRipper.
+	public static float BottomVisibleYLimit => 0f;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public static Vector3 MouseWorldPosiiton => Camera.main.ScreenToWorldPoint(Input.mousePosition);
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public static bool isSmallScreen
+	{
+		get
+		{
+			if (SystemInfo.deviceModel.Contains("iPhone"))
+			{
+				return true;
+			}
+			if (Screen.dpi != 0f)
+			{
+				float num = (float)Screen.width / Screen.dpi;
+				float num2 = (float)Screen.height / Screen.dpi;
+				double num3 = Math.Sqrt(num * num + num2 * num2);
+				return num3 < 5.599999904632568;
+			}
+			return false;
+		}
+	}
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public static float GetBottomYScreenInWorld()
+	{
+		return Camera.main.ViewportToWorldPoint(new Vector2(0f, 0f)).y;
+	}
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public static float GetLeftXScreenInWorld()
+	{
+		return Camera.main.ViewportToWorldPoint(new Vector2(0f, 0f)).x;
+	}
 
-	3. Assembly Reconstruction has not been implemented.
+	public static float GetRightXScreenInWorld()
+	{
+		return Camera.main.ViewportToWorldPoint(new Vector2(1f, 1f)).x;
+	}
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public static Vector2 GetScreenSize()
+	{
+		return new Vector2(Screen.width, Screen.height);
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public static Vector2 getInputInWorldCoordinates()
+	{
+		return Camera.main.ScreenToWorldPoint(Input.mousePosition);
+	}
 
-	4. This script is unnecessary.
+	public static bool IsFullyVisible(tk2dSprite sprite)
+	{
+		return IsCoordinateVisible(GetBottomLeft(sprite)) && IsCoordinateVisible(GetBottomRight(sprite)) && IsCoordinateVisible(GetTopLeft(sprite)) && IsCoordinateVisible(GetTopRight(sprite));
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public static bool IsPartlyVisible(tk2dSprite sprite)
+	{
+		return IsCoordinateVisible(GetBottomLeft(sprite)) || IsCoordinateVisible(GetBottomRight(sprite)) || IsCoordinateVisible(GetTopLeft(sprite)) || IsCoordinateVisible(GetTopRight(sprite));
+	}
 
-	5. Script Content Level 0
+	public static bool IsPartlyVisibleOnlyX(tk2dSprite sprite)
+	{
+		bool flag = IsCoordinateVisibleOnlyX(GetTopLeft(sprite));
+		bool flag2 = IsCoordinateVisibleOnlyX(GetTopRight(sprite));
+		return flag || flag2;
+	}
 
-		AssetRipper was set to not load any script information.
+	public static bool IsCoordinateVisibleOnlyX(Vector2 position)
+	{
+		Vector2 vector = Camera.main.WorldToViewportPoint(position);
+		if (vector.x < 1f && vector.x > 0f)
+		{
+			return true;
+		}
+		return false;
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public static bool IsOutOfScreenLeft(tk2dSprite sprite, float xOffset)
+	{
+		Vector2 position = GetTopRight(sprite);
+		return IsOutOfScreenLeft(position, xOffset);
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public static bool IsOutOfScreenLeft(Vector2 position, float xOffset)
+	{
+		if (((Vector2)Camera.main.WorldToViewportPoint(position + new Vector2(xOffset, 0f))).x < 0f)
+		{
+			return true;
+		}
+		return false;
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	public static bool IsOutOfScreenLeft(tk2dSprite sprite)
+	{
+		Vector2 position = GetTopRight(sprite);
+		return IsOutOfScreenLeft(position);
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	public static bool IsOutOfScreenLeft(Vector2 position)
+	{
+		if (((Vector2)Camera.main.WorldToViewportPoint(position)).x < 0f)
+		{
+			return true;
+		}
+		return false;
+	}
 
-	*/
+	public static bool IsInScreenRight(tk2dBaseSprite sprite)
+	{
+		Vector2 position = GetTopRight(sprite);
+		return IsInScreenRight(position);
+	}
+
+	public static bool IsInScreenRight(Vector2 position)
+	{
+		if (((Vector2)Camera.main.WorldToViewportPoint(position)).x < 1f)
+		{
+			return true;
+		}
+		return false;
+	}
+
+	public static bool IsOutOfScreenRight(tk2dSprite sprite)
+	{
+		Vector2 position = GetTopLeft(sprite);
+		return IsOutOfScreenRight(position);
+	}
+
+	public static bool IsOutOfScreenRight(Vector2 position)
+	{
+		if (((Vector2)Camera.main.WorldToViewportPoint(position)).x > 0f)
+		{
+			return true;
+		}
+		return false;
+	}
+
+	public static Vector2 GetScreencoords(Vector3 worldCoords)
+	{
+		return Camera.main.WorldToScreenPoint(worldCoords);
+	}
+
+	public static bool AreOnSameSideOfScreenX(Vector2 vector1, Vector2 vector2)
+	{
+		return (IsOnLeftSideOfScreen(vector1) && IsOnLeftSideOfScreen(vector2)) || (!IsOnLeftSideOfScreen(vector1) && !IsOnLeftSideOfScreen(vector2));
+	}
+
+	public static bool IsOnLeftSideOfScreen(tk2dSprite sprite)
+	{
+		return IsOnLeftSideOfScreen(GetTopRight(sprite));
+	}
+
+	public static bool IsOnLeftSideOfScreen(Vector2 position)
+	{
+		return Camera.main.WorldToViewportPoint(position).x < 0.5f;
+	}
+
+	public static bool IsOnBottomSideOfScreen(tk2dSprite sprite)
+	{
+		return ((Vector2)Camera.main.WorldToViewportPoint(GetCenter(sprite))).y < 0.5f;
+	}
+
+	public static bool IsCoordinateVisible(Vector2 position)
+	{
+		Vector2 vector = Camera.main.WorldToViewportPoint(position);
+		if (vector.x < 1f && vector.x > 0f && vector.y < 1f && vector.y > 0f)
+		{
+			return true;
+		}
+		return false;
+	}
+
+	public static Vector3 GetCenter(tk2dSprite sprite)
+	{
+		return sprite.transform.position + sprite.GetBounds().center;
+	}
+
+	public static Vector3 GetBottomLeft(tk2dSprite sprite)
+	{
+		return sprite.transform.position + new Vector3(sprite.GetBounds().min.x * sprite.gameObject.transform.lossyScale.x, sprite.GetBounds().min.y * sprite.gameObject.transform.lossyScale.y, sprite.GetBounds().min.z * sprite.gameObject.transform.lossyScale.z);
+	}
+
+	public static Vector3 GetBottomRight(tk2dSprite sprite)
+	{
+		Bounds bounds = sprite.GetBounds();
+		return sprite.transform.position + new Vector3(bounds.max.x * sprite.gameObject.transform.lossyScale.x, bounds.min.y * sprite.gameObject.transform.lossyScale.y, 0f);
+	}
+
+	public static Vector3 GetTopLeft(tk2dSprite sprite)
+	{
+		Bounds bounds = sprite.GetBounds();
+		return sprite.transform.position + new Vector3(bounds.min.x * sprite.gameObject.transform.lossyScale.x, bounds.max.y * sprite.gameObject.transform.lossyScale.y, 0f);
+	}
+
+	public static Vector3 GetTopRight(tk2dBaseSprite sprite)
+	{
+		return sprite.transform.position + new Vector3(sprite.GetBounds().max.x * sprite.gameObject.transform.lossyScale.x, sprite.GetBounds().max.y * sprite.gameObject.transform.lossyScale.y, sprite.GetBounds().max.z * sprite.gameObject.transform.lossyScale.z);
+	}
+
+	public static Vector3 GetSpritePosition(Aligment a, tk2dSprite sprite)
+	{
+		switch (a)
+		{
+			case Aligment.TopRight:
+				return GetTopRight(sprite);
+			case Aligment.TopLeft:
+				return GetTopLeft(sprite);
+			case Aligment.BottomLeft:
+				return GetBottomLeft(sprite);
+			case Aligment.BottomRight:
+				return GetBottomRight(sprite);
+			case Aligment.TopCenter:
+				return (GetTopLeft(sprite) + GetTopRight(sprite)) / 2f;
+			default:
+				return GetBottomRight(sprite);
+		}
+	}
+
+	public static bool IsOutOfScreen(Vector3 point, float screenOffset)
+	{
+		Vector2 vector = Camera.main.WorldToViewportPoint(point);
+		if (vector.x > 1f + screenOffset || vector.x < 0f - screenOffset || vector.y > 1f + screenOffset || vector.y < 0f - screenOffset)
+		{
+			return true;
+		}
+		return false;
+	}
+
+	public static Vector3 ClampInScreenXY(Camera c, Vector3 position, Bounds objectSize)
+	{
+		Vector3 result = position;
+		Vector3 vector = c.ViewportToWorldPoint(new Vector2(0f, 0f));
+		Vector3 vector2 = c.ViewportToWorldPoint(new Vector2(1f, 0f));
+		Vector3 vector3 = c.ViewportToWorldPoint(new Vector2(1f, 1f));
+		if (position.x - objectSize.extents.x < vector.x)
+		{
+			result.x = vector.x + objectSize.extents.x;
+		}
+		if (position.x + objectSize.extents.x > vector2.x)
+		{
+			result.x = vector2.x - objectSize.extents.x;
+		}
+		if (position.y - objectSize.extents.y < vector.y)
+		{
+			result.y = vector.y + objectSize.extents.y;
+		}
+		if (position.y + objectSize.extents.y > vector3.y)
+		{
+			result.y = vector3.y - objectSize.extents.y;
+		}
+		return result;
+	}
 }

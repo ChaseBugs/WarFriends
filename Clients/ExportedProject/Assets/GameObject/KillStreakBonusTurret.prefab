@@ -39,6 +39,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4f1ebfaf6f14281a0c36de52f944c5b7, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  dictionaryTranslationId: ID_BONUS-TURRET
+  bonusName: TURRET
+  iconName: game-scorestreak-ico-turret
+  bgSuffix:
 --- !u!1001 &100100000
 Prefab:
   serializedVersion: 2

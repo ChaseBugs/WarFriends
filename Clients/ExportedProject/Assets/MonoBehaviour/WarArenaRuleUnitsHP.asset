@@ -11,3 +11,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0a2c9422ba7d0208bb749565fd32dafd, type: 3}
   m_Name: WarArenaRuleUnitsHP
   m_EditorClassIdentifier:
+  data:
+    showRule: 1
+    healthMultiplier: 0.05

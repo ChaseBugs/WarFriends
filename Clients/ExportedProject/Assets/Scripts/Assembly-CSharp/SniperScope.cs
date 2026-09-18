@@ -1,63 +1,180 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
-public class SniperScope : MonoBehaviour
+public class SniperScope : Singleton<SniperScope>
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Serializable]
+	public class Scope
+	{
+		public Vector3 offset = new Vector3(30f, 30f, 0f);
 
-	1. No dll files were provided to AssetRipper.
+		public GameObject scope;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+		public Vector3 mStartScale;
 
-	2. Incorrect dll files were provided to AssetRipper.
+		public float maxTopOffset = 30f;
+	}
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public Camera touchCamera;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public Vector3 offset = new Vector3(30f, 30f, 0f);
 
-	3. Assembly Reconstruction has not been implemented.
+	private Renderer mTouchSpriteRenderer;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	private bool mShowed;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	private Vector3 mScale;
 
-	4. This script is unnecessary.
+	private bool mIsSmallDisplay;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private Scope mScope;
 
-	5. Script Content Level 0
+	public List<Scope> scopes;
 
-		AssetRipper was set to not load any script information.
+	public bool showed => mShowed;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public void SetScope(int scope)
+	{
+		foreach (Scope scope2 in scopes)
+		{
+			scope2.scope.SetActive(value: false);
+		}
+		scopes[scope].scope.SetActive(value: true);
+		mTouchSpriteRenderer = scopes[scope].scope.GetComponent<Renderer>();
+		offset = scopes[scope].offset;
+		mScope = scopes[scope];
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	protected override void Awake()
+	{
+		base.Awake();
+		touchCamera.gameObject.SetActive(value: false);
+		base.gameObject.SetActive(value: false);
+		mTouchSpriteRenderer = GetComponent<Renderer>();
+		Singleton<GameController>.instance.GameStarted += InstanceOnGameStarted;
+		Singleton<GameController>.instance.GameEnded += InstanceOnGameEnded;
+		mScale = base.transform.localScale;
+		mIsSmallDisplay = ScreenManager.isSmallScreen;
+		foreach (Scope scope in scopes)
+		{
+			scope.mStartScale = scope.scope.transform.localScale;
+		}
+		SetScope(0);
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	public void Show(float fov)
+	{
+		if (mIsSmallDisplay)
+		{
+			fov *= 0.57f;
+		}
+		if (!showed)
+		{
+			touchCamera.gameObject.SetActive(value: true);
+			mScope.scope.transform.localScale = Vector3.zero;
+			TweenScale.Begin(mScope.scope, 0.25f, Vector3.zero, mScope.mStartScale);
+			TweenFOV.Begin(Singleton<SniperScope>.instance.touchCamera.gameObject, 0.1f, fov);
+			base.gameObject.SetActive(value: true);
+			mShowed = true;
+		}
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	public void AnimFov(float fov)
+	{
+		if (mIsSmallDisplay)
+		{
+			fov *= 0.57f;
+		}
+		TweenFOV.Begin(touchCamera.gameObject, 0.5f, fov);
+	}
 
-	*/
+	public void Show()
+	{
+		if (!showed)
+		{
+			mScope.scope.transform.localScale = mScope.mStartScale;
+			touchCamera.gameObject.SetActive(value: true);
+			touchCamera.Render();
+			UpdatePosition();
+			base.gameObject.SetActive(value: true);
+			mShowed = true;
+		}
+	}
+
+	public void Hide()
+	{
+		touchCamera.gameObject.SetActive(value: false);
+		base.gameObject.SetActive(value: false);
+		mShowed = false;
+	}
+
+	protected void Update()
+	{
+		UpdatePosition();
+	}
+
+	private void UpdatePosition()
+	{
+		Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+		Vector3 point = Camera.main.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, 4f));
+		Vector3 normalized = ray.direction.normalized;
+		touchCamera.transform.position = Camera.main.transform.position;
+		touchCamera.transform.rotation = Quaternion.LookRotation(normalized);
+		Vector3 vector = HealthBarManager.instance.guiCamera.transform.position + new Vector3(0f, 0f, HealthBarManager.instance.guiCamera.nearClipPlane + 3f);
+		Vector3 vector2 = HealthBarManager.instance.guiCamera.NormalizedViewportToWorldPoint(Camera.main.WorldToNormalizedViewportPoint(point));
+		vector2.z = vector.z;
+		Vector3 vector3 = new Vector3(offset.x * (mScope.scope.transform.localScale.x / mScope.mStartScale.x), offset.y * (mScope.scope.transform.localScale.y / mScope.mStartScale.y), offset.z * (mScope.scope.transform.localScale.z / mScope.mStartScale.z));
+		Vector3 mousePos = vector2;
+		mousePos = ClampInScreenXY(HealthBarManager.instance.guiCamera, mousePos, vector3, mTouchSpriteRenderer.bounds);
+		base.transform.position = mousePos;
+	}
+
+	public Vector3 ClampInScreenXY(Camera c, Vector3 mousePos, Vector3 offset, Bounds objectSize)
+	{
+		Vector3 vector = mousePos + offset;
+		Vector3 result = vector;
+		Vector3 vector2 = c.ViewportToWorldPoint(new Vector2(0f, 0f));
+		Vector3 vector3 = c.ViewportToWorldPoint(new Vector2(1f, 0f));
+		Vector3 vector4 = c.ViewportToWorldPoint(new Vector2(1f, 1f));
+		if (vector.y - objectSize.extents.y < vector2.y)
+		{
+			result.y = vector2.y + objectSize.extents.y;
+		}
+		if (vector.y + objectSize.extents.y > vector4.y)
+		{
+			result.y = vector4.y - objectSize.extents.y;
+			float num = vector.y - vector4.y + objectSize.extents.y;
+			float value = num / objectSize.extents.y;
+			value = Mathf.Clamp01(value);
+			value = Mathf.Sin(value * (float)Math.PI * 0.5f);
+			num = Mathf.Clamp(num, 0f, objectSize.extents.y + mScope.offset.x);
+			num = value * mScope.maxTopOffset;
+			vector.x -= num;
+			result.x = vector.x;
+		}
+		if (vector.x - objectSize.extents.x < vector2.x)
+		{
+			result.x = vector2.x + objectSize.extents.x;
+		}
+		if (vector.x + objectSize.extents.x > vector3.x)
+		{
+			result.x = vector3.x - objectSize.extents.x;
+		}
+		return result;
+	}
+
+	private void InstanceOnGameEnded(GameController.GameEndReason gameEndReason)
+	{
+		touchCamera.gameObject.SetActive(value: false);
+		touchCamera.depthTextureMode = DepthTextureMode.None;
+		base.gameObject.SetActive(value: false);
+	}
+
+	private void InstanceOnGameStarted()
+	{
+		touchCamera.depthTextureMode = DepthTextureMode.None;
+		touchCamera.gameObject.SetActive(value: false);
+		base.gameObject.SetActive(value: false);
+	}
 }

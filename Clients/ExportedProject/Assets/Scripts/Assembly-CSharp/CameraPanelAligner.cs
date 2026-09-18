@@ -2,62 +2,154 @@ using UnityEngine;
 
 public class CameraPanelAligner : MonoBehaviour
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public enum AlignBy
+	{
+		Camera,
+		UIroot_Fixed
+	}
 
-	1. No dll files were provided to AssetRipper.
+	public enum AnchorType
+	{
+		topLeft,
+		topRight,
+		downLeft,
+		downRight,
+		center,
+		left,
+		right,
+		top,
+		down
+	}
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public AlignBy alignBy = AlignBy.UIroot_Fixed;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public Camera cam;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public UIRoot root;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public UIPanel panel;
 
-	3. Assembly Reconstruction has not been implemented.
+	public Vector2 baseCenter;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public Vector2 baseSize;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public Vector3 basePosition;
 
-	4. This script is unnecessary.
+	public Vector2 baseCameraSize = new Vector2(1280f, 1920f);
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public bool alignY = true;
 
-	5. Script Content Level 0
+	public bool alignX;
 
-		AssetRipper was set to not load any script information.
+	public AnchorType centerAlign = AnchorType.top;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public float moveXMultiplay;
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public float moveYMultiplay;
 
-	7. An incorrect path was provided to AssetRipper.
+	public UIRoot root_saveGet
+	{
+		get
+		{
+			if (root == null)
+			{
+				root = Object.FindObjectOfType(typeof(UIRoot)) as UIRoot;
+			}
+			if (root == null)
+			{
+				Debug.LogError("NO any UIroot - failed " + base.name);
+			}
+			return root;
+		}
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	private void Awake()
+	{
+		Align();
+	}
 
-	*/
+	public void Align()
+	{
+		if (panel == null)
+		{
+			return;
+		}
+		if (alignBy == AlignBy.Camera)
+		{
+			if (cam == null)
+			{
+				cam = UICamera.mainCamera;
+			}
+			float num = cam.pixelWidth;
+			float num2 = cam.pixelHeight;
+			float num3 = num - baseCameraSize.x;
+			float num4 = num2 - baseCameraSize.y;
+			Vector4 clipRange = panel.clipRange;
+			if (alignX)
+			{
+				clipRange.x = baseCenter.x - num3 / 2f;
+				clipRange.z = baseSize.x + num3;
+			}
+			if (alignY)
+			{
+				clipRange.y = baseCenter.y - num4 / 2f;
+				clipRange.w = baseSize.y + num4;
+			}
+			Vector3 zero = Vector3.zero;
+			zero.x = num3 * moveXMultiplay;
+			zero.y = num4 * moveYMultiplay;
+			panel.clipRange = clipRange;
+			panel.transform.localPosition = basePosition + zero;
+			return;
+		}
+		if (alignBy == AlignBy.UIroot_Fixed)
+		{
+			if (root_saveGet == null)
+			{
+				return;
+			}
+			Vector4 clipRange2 = panel.clipRange;
+			Vector2 vector = new Vector2(root.activeWidth, root.activeHeight);
+			Vector3 zero2 = Vector3.zero;
+			if (alignX)
+			{
+				float num5 = vector.x - baseCameraSize.x;
+				clipRange2.z = baseSize.x + num5;
+				if (centerAlign == AnchorType.left || centerAlign == AnchorType.downLeft || centerAlign == AnchorType.topLeft)
+				{
+					clipRange2.x = baseCenter.x + num5 / 2f;
+				}
+				else if (centerAlign == AnchorType.right || centerAlign == AnchorType.downRight || centerAlign == AnchorType.topRight)
+				{
+					clipRange2.x = baseCenter.x - num5 / 2f;
+				}
+				else
+				{
+					clipRange2.x = baseCenter.x;
+				}
+				zero2.x = num5 * moveXMultiplay;
+			}
+			if (alignY)
+			{
+				float num6 = vector.y - baseCameraSize.y;
+				clipRange2.w = baseSize.y + num6;
+				if (centerAlign == AnchorType.top || centerAlign == AnchorType.topLeft || centerAlign == AnchorType.topRight)
+				{
+					clipRange2.y = baseCenter.y - num6 / 2f;
+				}
+				else if (centerAlign == AnchorType.down || centerAlign == AnchorType.downLeft || centerAlign == AnchorType.downRight)
+				{
+					clipRange2.y = baseCenter.y + num6 / 2f;
+				}
+				else
+				{
+					clipRange2.y = baseCenter.y;
+				}
+				zero2.y = num6 * moveYMultiplay;
+			}
+			panel.clipRange = clipRange2;
+			panel.transform.localPosition = basePosition + zero2;
+		}
+		panel = null;
+	}
 }

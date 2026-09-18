@@ -1,63 +1,72 @@
+using System;
 using UnityEngine;
 
-public class CustomDisplayerItem : MonoBehaviour
+public class CustomDisplayerItem : PoolableObject
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public tk2dSprite iconSprite;
 
-	1. No dll files were provided to AssetRipper.
+	public TextMesh text;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public tk2dSprite bgSprite;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public TweenAnimator animator;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	private Vector3 scale;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	protected override void Awake()
+	{
+		base.Awake();
+		GenerateTweens();
+	}
 
-	3. Assembly Reconstruction has not been implemented.
+	public override void OnInstancied()
+	{
+		base.OnInstancied();
+	}
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	private void GenerateTweens()
+	{
+		animator.allTweens.Clear();
+		animator.AddTween(from: Vector3.zero, id: 0, tweenType: TweenAnimator.TweenType.Scale, tweenTarget: base.gameObject, time: 0.5f, to: new Vector3(1.3f, 1.3f, 1.3f), delay: 0f, playAfterIdFinished: -1, method: UITweener.Method.EaseIn);
+		animator.AddTween(1, TweenAnimator.TweenType.AlphaTk2d, iconSprite.gameObject, 0.5f, 1f, 0f, -1, 0f);
+		animator.AddTween(2, TweenAnimator.TweenType.AlphaTk2d, bgSprite.gameObject, 0.5f, 1f, 0f, -1, 0f);
+		animator.AddTween(3, TweenAnimator.TweenType.AlphaTk2d, text.gameObject, 0.5f, 1f, 0f, -1, 0f);
+		animator.AddTween(4, TweenAnimator.TweenType.Scale, base.gameObject, 0.2f, Vector3.one, 0f, 0, null, UITweener.Method.EaseOut);
+		animator.AddTween(6, TweenAnimator.TweenType.AlphaTk2d, iconSprite.gameObject, 0.3f, 0f, 0.1f, 4);
+		animator.AddTween(7, TweenAnimator.TweenType.AlphaTk2d, bgSprite.gameObject, 0.3f, 0f, 0.1f, 4);
+		animator.AddTween(8, TweenAnimator.TweenType.AlphaTk2d, text.gameObject, 0.3f, 0f, 0.1f, 4);
+		TweenAnimator tweenAnimator = animator;
+		tweenAnimator.TweenFinished = (Action<int>)Delegate.Combine(tweenAnimator.TweenFinished, new Action<int>(TweenFinished));
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	private void TweenFinished(int i)
+	{
+		if (i == 8)
+		{
+			DestroyPooled();
+		}
+	}
 
-	4. This script is unnecessary.
-
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
-
-	5. Script Content Level 0
-
-		AssetRipper was set to not load any script information.
-
-	6. Cpp2IL failed to decompile Il2Cpp data
-
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public void Play(string iconName, string displayText, Color bgColor, Color textColor)
+	{
+		iconSprite.SetSprite(iconName);
+		text.text = displayText;
+		Vector3 size = text.GetComponent<MeshRenderer>().bounds.size;
+		Bounds bounds = iconSprite.GetBounds();
+		float y = size.y;
+		float num = y * bounds.size.x / bounds.size.y;
+		float num2 = 0.25f * y;
+		Vector3 localScale = bgSprite.transform.localScale;
+		localScale.x = (size.x + num + num2 * 2f) / bgSprite.GetBounds().size.x;
+		localScale.y = size.y / bgSprite.GetBounds().size.y;
+		bgSprite.transform.localScale = localScale;
+		bgSprite.transform.localPosition = bgSprite.transform.localPosition.ReplaceX(num + size.x + num2 * 2f);
+		bgSprite.color = bgColor;
+		iconSprite.transform.localScale = iconSprite.transform.localScale.ReplaceXY(num / bounds.size.x, y / bounds.size.y);
+		iconSprite.transform.localPosition = iconSprite.transform.localPosition.ReplaceX(num);
+		text.color = textColor;
+		text.transform.localPosition = text.transform.localPosition.ReplaceX(num + size.x + num2);
+		animator.PlayTweens();
+		Debug.LogWarning($"ICON BOUNDS {bounds} SIZE {iconSprite.transform.localScale}");
+	}
 }

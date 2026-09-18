@@ -1,66 +1,44 @@
-using UnityEngine;
+using System;
+using System.Runtime.InteropServices;
 
 namespace GooglePlayGames.Native.Cwrapper
 {
-	public class RealTimeEventListenerHelper : MonoBehaviour
-	{
-		/*
-		Dummy class. This could have happened for several reasons:
+internal static class RealTimeEventListenerHelper
+{
+	internal delegate void OnRoomStatusChangedCallback(IntPtr arg0, IntPtr arg1);
 
-		1. No dll files were provided to AssetRipper.
+	internal delegate void OnRoomConnectedSetChangedCallback(IntPtr arg0, IntPtr arg1);
 
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
+	internal delegate void OnP2PConnectedCallback(IntPtr arg0, IntPtr arg1, IntPtr arg2);
 
-		2. Incorrect dll files were provided to AssetRipper.
+	internal delegate void OnP2PDisconnectedCallback(IntPtr arg0, IntPtr arg1, IntPtr arg2);
 
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
+	internal delegate void OnParticipantStatusChangedCallback(IntPtr arg0, IntPtr arg1, IntPtr arg2);
 
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	internal delegate void OnDataReceivedCallback(IntPtr arg0, IntPtr arg1, IntPtr arg2, UIntPtr arg3, [MarshalAs(UnmanagedType.I1)] bool arg4, IntPtr arg5);
 
-		3. Assembly Reconstruction has not been implemented.
+	[DllImport("gpg")]
+	internal static extern void RealTimeEventListenerHelper_SetOnParticipantStatusChangedCallback(HandleRef self, OnParticipantStatusChangedCallback callback, IntPtr callback_arg);
 
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
+	[DllImport("gpg")]
+	internal static extern IntPtr RealTimeEventListenerHelper_Construct();
 
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
+	[DllImport("gpg")]
+	internal static extern void RealTimeEventListenerHelper_SetOnP2PDisconnectedCallback(HandleRef self, OnP2PDisconnectedCallback callback, IntPtr callback_arg);
 
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
+	[DllImport("gpg")]
+	internal static extern void RealTimeEventListenerHelper_SetOnDataReceivedCallback(HandleRef self, OnDataReceivedCallback callback, IntPtr callback_arg);
 
-		5. Script Content Level 0
+	[DllImport("gpg")]
+	internal static extern void RealTimeEventListenerHelper_SetOnRoomStatusChangedCallback(HandleRef self, OnRoomStatusChangedCallback callback, IntPtr callback_arg);
 
-			AssetRipper was set to not load any script information.
+	[DllImport("gpg")]
+	internal static extern void RealTimeEventListenerHelper_SetOnP2PConnectedCallback(HandleRef self, OnP2PConnectedCallback callback, IntPtr callback_arg);
 
-		6. Cpp2IL failed to decompile Il2Cpp data
+	[DllImport("gpg")]
+	internal static extern void RealTimeEventListenerHelper_SetOnRoomConnectedSetChangedCallback(HandleRef self, OnRoomConnectedSetChangedCallback callback, IntPtr callback_arg);
 
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
-	}
+	[DllImport("gpg")]
+	internal static extern void RealTimeEventListenerHelper_Dispose(HandleRef self);
+}
 }

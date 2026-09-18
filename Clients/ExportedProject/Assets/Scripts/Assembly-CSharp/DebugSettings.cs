@@ -1,63 +1,338 @@
+using System;
+using System.Collections.Generic;
+using Beebyte.Obfuscator;
+using CodeStage.AntiCheat.ObscuredTypes;
+using ExitGames.Client.Photon;
 using UnityEngine;
 
-public class DebugSettings : MonoBehaviour
+[Skip]
+public class DebugSettings : InGameSerializedObjectGeneric<DebugSettings.DebugSettingsData>
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Skip]
+	public class DebugSettingsData
+	{
+		public bool debugEnabled;
 
-	1. No dll files were provided to AssetRipper.
+		public bool forceMyHB;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+		public bool forceOpponentHB = true;
 
-	2. Incorrect dll files were provided to AssetRipper.
+		public bool showHud = true;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+		public bool playBlood = true;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+		public bool showPrimaryScopes = true;
 
-	3. Assembly Reconstruction has not been implemented.
+		public bool showPlayerHealthBar = true;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+		public bool autoDeploy = true;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+		public bool vibrations = true;
 
-	4. This script is unnecessary.
+		public bool record;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+		public bool cameraOn;
 
-	5. Script Content Level 0
+		public bool microphoneOn;
 
-		AssetRipper was set to not load any script information.
+		public bool autoStartMatch;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+		public string configVersion = string.Empty;
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+		public bool warenaEnableMultipleMatches;
 
-	7. An incorrect path was provided to AssetRipper.
+		public bool warenaLoadLocalConfig;
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	public List<GameObject> objectsToDisable;
 
-	*/
+	public static bool isDevelopmentBuild = false;
+
+	private static DebugSettings mInstance;
+
+	private static bool mMaxLevels = false;
+
+	private static bool mMaxUnits = false;
+
+	public static bool debugAI = false;
+
+	public static bool drawExplosions = false;
+
+	private static bool mIsMessageQueueRunning = true;
+
+	public static bool drawCameraLines = true;
+
+	public static bool debugShooting;
+
+	public static bool debugPlayerDamage;
+
+	public static bool stopShooting = false;
+
+	public static bool botSpawns = true;
+
+	private static float mProb;
+
+	private static int mHeadIndex;
+
+	private static float[] mHeadSizes = new float[3] { 1f, 0.9f, 0.8f };
+
+	public bool alwaysShittyPerformance
+	{
+		get
+		{
+			if (ObscuredPrefs.HasKey("alwaysShittyPerformance"))
+			{
+				return ObscuredPrefs.GetInt("alwaysShittyPerformance") > 0;
+			}
+			ObscuredPrefs.SetInt("alwaysShittyPerformance", 0);
+			return false;
+		}
+		set
+		{
+			ObscuredPrefs.SetInt("alwaysShittyPerformance", value ? 1 : 0);
+		}
+	}
+
+	public bool nonEliteUnits
+	{
+		get
+		{
+			if (ObscuredPrefs.HasKey("nonEliteUnits"))
+			{
+				return ObscuredPrefs.GetInt("nonEliteUnits") > 0;
+			}
+			ObscuredPrefs.SetInt("nonEliteUnits", 0);
+			return false;
+		}
+		set
+		{
+			ObscuredPrefs.SetInt("nonEliteUnits", value ? 1 : 0);
+		}
+	}
+
+	public static bool debugEnabled
+	{
+		get
+		{
+			return false;
+		}
+		set
+		{
+			instance.data.debugEnabled = value;
+			instance.Save();
+			if (instance.Changed != null)
+			{
+				instance.Changed();
+			}
+		}
+	}
+
+	public static bool healthbarsOnOpponentUnits
+	{
+		get
+		{
+			return instance.data.forceOpponentHB;
+		}
+		set
+		{
+			instance.data.forceOpponentHB = value;
+			instance.Save();
+		}
+	}
+
+	public static bool healthbarsOnMyUnits
+	{
+		get
+		{
+			return instance.data.forceMyHB;
+		}
+		set
+		{
+			instance.data.forceMyHB = value;
+			instance.Save();
+		}
+	}
+
+	public static bool playerHealthbars
+	{
+		get
+		{
+			return instance.data.showPlayerHealthBar;
+		}
+		set
+		{
+			instance.data.showPlayerHealthBar = value;
+			instance.Save();
+		}
+	}
+
+	public static bool autoDeploy
+	{
+		get
+		{
+			return instance.data.autoDeploy;
+		}
+		set
+		{
+			instance.data.autoDeploy = value;
+			instance.Save();
+		}
+	}
+
+	public static bool vibrations
+	{
+		get
+		{
+			return instance.data.vibrations;
+		}
+		set
+		{
+			instance.data.vibrations = value;
+			instance.Save();
+		}
+	}
+
+	public static bool cameraInBroadcast
+	{
+		get
+		{
+			return instance.data.cameraOn;
+		}
+		set
+		{
+			instance.data.cameraOn = value;
+			instance.Save();
+		}
+	}
+
+	public static bool microphoneInBroadcast
+	{
+		get
+		{
+			return instance.data.microphoneOn;
+		}
+		set
+		{
+			instance.data.microphoneOn = value;
+			instance.Save();
+		}
+	}
+
+	public static bool record { get; set; }
+
+	public static DebugSettings instance
+	{
+		get
+		{
+			mInstance = mInstance ?? ((DebugSettings)UnityEngine.Object.FindObjectsOfType(typeof(DebugSettings))[0]);
+			return mInstance;
+		}
+	}
+
+	public static bool showPrimaryScopes
+	{
+		get
+		{
+			return instance.data.showPrimaryScopes;
+		}
+		set
+		{
+			instance.data.showPrimaryScopes = value;
+			instance.Save();
+			if (instance.Changed != null)
+			{
+				instance.Changed();
+			}
+		}
+	}
+
+	public static bool isOurDevice => false;
+
+	public static bool isMessageQueueRunning
+	{
+		get
+		{
+			return mIsMessageQueueRunning;
+		}
+		set
+		{
+			if (mIsMessageQueueRunning != value)
+			{
+				mIsMessageQueueRunning = value;
+				PhotonNetwork.isMessageQueueRunning = value;
+			}
+		}
+	}
+
+	public event Action Changed;
+
+	protected override void Awake()
+	{
+		base.Awake();
+		if (isOurDevice)
+		{
+			return;
+		}
+		foreach (GameObject item in objectsToDisable)
+		{
+			item.gameObject.SetActive(value: false);
+		}
+	}
+
+	public void OnDestroy()
+	{
+		mInstance = null;
+	}
+
+	protected void Update()
+	{
+		if (!drawExplosions)
+		{
+			return;
+		}
+		foreach (Tuple<Vector3, float, float, bool> explosion in Explosion.explosions)
+		{
+			if (explosion.Value4)
+			{
+				CameraLineRenderer.DrawSphere(explosion.Value1, explosion.Value2, Color.magenta);
+				CameraLineRenderer.DrawSphere(explosion.Value1, explosion.Value3, Color.black);
+			}
+			else
+			{
+				CameraLineRenderer.DrawSphere(explosion.Value1, explosion.Value2, Color.red);
+				CameraLineRenderer.DrawSphere(explosion.Value1, explosion.Value3, Color.green);
+			}
+		}
+	}
+
+	private static string GetStats(TrafficStats stats)
+	{
+		return $"TotalPacketBytes: {stats.TotalPacketBytes} TotalCommandBytes: {stats.TotalCommandBytes} TotalPacketCount: {stats.TotalPacketCount} TotalCommandsInPackets: {stats.TotalCommandsInPackets} UnreliableCommandCount: {stats.UnreliableCommandCount} ReliableCommandCount: {stats.ReliableCommandCount}";
+	}
+
+	public static string GetNetworkStatsText()
+	{
+		TrafficStatsGameLevel trafficStatsGameLevel = PhotonNetwork.networkingPeer.TrafficStatsGameLevel;
+		if (trafficStatsGameLevel != null)
+		{
+			long num = PhotonNetwork.networkingPeer.TrafficStatsElapsedMs / 1000;
+			if (num == 0L)
+			{
+				num = 1L;
+			}
+			string text = $"Out|In|Sum:\t{trafficStatsGameLevel.TotalOutgoingMessageCount,4} | {trafficStatsGameLevel.TotalIncomingMessageCount,4} | {trafficStatsGameLevel.TotalMessageCount,4}";
+			string text2 = $"{num}sec average:";
+			string text3 = $"Out|In|Sum:\t{trafficStatsGameLevel.TotalOutgoingMessageCount / num,4} | {trafficStatsGameLevel.TotalIncomingMessageCount / num,4} | {trafficStatsGameLevel.TotalMessageCount / num,4}";
+			string empty = string.Empty;
+			string empty2 = string.Empty;
+			empty = "Incoming: " + GetStats(PhotonNetwork.networkingPeer.TrafficStatsIncoming);
+			empty2 = "Outgoing: " + GetStats(PhotonNetwork.networkingPeer.TrafficStatsOutgoing);
+			string empty3 = string.Empty;
+			empty3 = string.Format("ping: {6}[+/-{7}]ms\nlongest delta between\nsend: {0,4}ms disp: {1,4}ms\nlongest time for:\nev({3}):{2,3}ms op({5}):{4,3}ms", trafficStatsGameLevel.LongestDeltaBetweenSending, trafficStatsGameLevel.LongestDeltaBetweenDispatching, trafficStatsGameLevel.LongestEventCallback, trafficStatsGameLevel.LongestEventCallbackCode, trafficStatsGameLevel.LongestOpResponseCallback, trafficStatsGameLevel.LongestOpResponseCallbackOpCode, PhotonNetwork.networkingPeer.RoundTripTime, PhotonNetwork.networkingPeer.RoundTripTimeVariance);
+			string text4 = "Out queue" + PhotonNetwork.networkingPeer.QueuedOutgoingCommands;
+			string text5 = "In queue" + PhotonNetwork.networkingPeer.QueuedOutgoingCommands;
+			return $"{text}\n{text2}\n{text3}\n{empty}\n{empty2}\n{empty3}\n{text5}\n{text4}";
+		}
+		return string.Empty;
+	}
 }

@@ -1,66 +1,190 @@
-using UnityEngine;
+using System.Collections;
+using System.Collections.Generic;
 
 namespace Org.BouncyCastle.Crypto.Tls
 {
-	public class AbstractTlsClient : MonoBehaviour
+public abstract class AbstractTlsClient : AbstractTlsPeer, TlsClient, TlsPeer
+{
+	protected TlsCipherFactory mCipherFactory;
+
+	protected TlsClientContext mContext;
+
+	protected IList mSupportedSignatureAlgorithms;
+
+	protected int[] mNamedCurves;
+
+	protected byte[] mClientECPointFormats;
+
+	protected byte[] mServerECPointFormats;
+
+	protected int mSelectedCipherSuite;
+
+	protected short mSelectedCompressionMethod;
+
+	public List<string> HostNames { get; set; }
+
+	public virtual ProtocolVersion ClientHelloRecordLayerVersion => ClientVersion;
+
+	public virtual ProtocolVersion ClientVersion => ProtocolVersion.TLSv12;
+
+	public virtual bool IsFallback => false;
+
+	public virtual ProtocolVersion MinimumVersion => ProtocolVersion.TLSv10;
+
+	public AbstractTlsClient()
+		: this(new DefaultTlsCipherFactory())
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
 	}
+
+	public AbstractTlsClient(TlsCipherFactory cipherFactory)
+	{
+		mCipherFactory = cipherFactory;
+	}
+
+	protected virtual bool AllowUnexpectedServerExtension(int extensionType, byte[] extensionData)
+	{
+		if (extensionType == 10)
+		{
+			TlsEccUtilities.ReadSupportedEllipticCurvesExtension(extensionData);
+			return true;
+		}
+		return false;
+	}
+
+	protected virtual void CheckForUnexpectedServerExtension(IDictionary serverExtensions, int extensionType)
+	{
+		byte[] extensionData = TlsUtilities.GetExtensionData(serverExtensions, extensionType);
+		if (extensionData != null && !AllowUnexpectedServerExtension(extensionType, extensionData))
+		{
+			throw new TlsFatalAlert(47);
+		}
+	}
+
+	public virtual void Init(TlsClientContext context)
+	{
+		mContext = context;
+	}
+
+	public virtual TlsSession GetSessionToResume()
+	{
+		return null;
+	}
+
+	public virtual IDictionary GetClientExtensions()
+	{
+		IDictionary dictionary = null;
+		ProtocolVersion clientVersion = mContext.ClientVersion;
+		if (TlsUtilities.IsSignatureAlgorithmsExtensionAllowed(clientVersion))
+		{
+			mSupportedSignatureAlgorithms = TlsUtilities.GetDefaultSupportedSignatureAlgorithms();
+			dictionary = TlsExtensionsUtilities.EnsureExtensionsInitialised(dictionary);
+			TlsUtilities.AddSignatureAlgorithmsExtension(dictionary, mSupportedSignatureAlgorithms);
+		}
+		if (TlsEccUtilities.ContainsEccCipherSuites(GetCipherSuites()))
+		{
+			mNamedCurves = new int[2] { 23, 24 };
+			mClientECPointFormats = new byte[3] { 0, 1, 2 };
+			dictionary = TlsExtensionsUtilities.EnsureExtensionsInitialised(dictionary);
+			TlsEccUtilities.AddSupportedEllipticCurvesExtension(dictionary, mNamedCurves);
+			TlsEccUtilities.AddSupportedPointFormatsExtension(dictionary, mClientECPointFormats);
+		}
+		if (HostNames != null && HostNames.Count > 0)
+		{
+			List<ServerName> list = new List<ServerName>(HostNames.Count);
+			for (int i = 0; i < HostNames.Count; i++)
+			{
+				list.Add(new ServerName(0, HostNames[i]));
+			}
+			TlsExtensionsUtilities.AddServerNameExtension(dictionary, new ServerNameList(list));
+		}
+		return dictionary;
+	}
+
+	public virtual void NotifyServerVersion(ProtocolVersion serverVersion)
+	{
+		if (!MinimumVersion.IsEqualOrEarlierVersionOf(serverVersion))
+		{
+			throw new TlsFatalAlert(70);
+		}
+	}
+
+	public abstract int[] GetCipherSuites();
+
+	public virtual byte[] GetCompressionMethods()
+	{
+		return new byte[1];
+	}
+
+	public virtual void NotifySessionID(byte[] sessionID)
+	{
+	}
+
+	public virtual void NotifySelectedCipherSuite(int selectedCipherSuite)
+	{
+		mSelectedCipherSuite = selectedCipherSuite;
+	}
+
+	public virtual void NotifySelectedCompressionMethod(byte selectedCompressionMethod)
+	{
+		mSelectedCompressionMethod = selectedCompressionMethod;
+	}
+
+	public virtual void ProcessServerExtensions(IDictionary serverExtensions)
+	{
+		if (serverExtensions != null)
+		{
+			CheckForUnexpectedServerExtension(serverExtensions, 13);
+			CheckForUnexpectedServerExtension(serverExtensions, 10);
+			if (TlsEccUtilities.IsEccCipherSuite(mSelectedCipherSuite))
+			{
+				mServerECPointFormats = TlsEccUtilities.GetSupportedPointFormatsExtension(serverExtensions);
+			}
+			else
+			{
+				CheckForUnexpectedServerExtension(serverExtensions, 11);
+			}
+		}
+	}
+
+	public virtual void ProcessServerSupplementalData(IList serverSupplementalData)
+	{
+		if (serverSupplementalData != null)
+		{
+			throw new TlsFatalAlert(10);
+		}
+	}
+
+	public abstract TlsKeyExchange GetKeyExchange();
+
+	public abstract TlsAuthentication GetAuthentication();
+
+	public virtual IList GetClientSupplementalData()
+	{
+		return null;
+	}
+
+	public override TlsCompression GetCompression()
+	{
+		switch (mSelectedCompressionMethod)
+		{
+			case 0:
+				return new TlsNullCompression();
+			case 1:
+				return new TlsDeflateCompression();
+			default:
+				throw new TlsFatalAlert(80);
+		}
+	}
+
+	public override TlsCipher GetCipher()
+	{
+		int encryptionAlgorithm = TlsUtilities.GetEncryptionAlgorithm(mSelectedCipherSuite);
+		int macAlgorithm = TlsUtilities.GetMacAlgorithm(mSelectedCipherSuite);
+		return mCipherFactory.CreateCipher(mContext, encryptionAlgorithm, macAlgorithm);
+	}
+
+	public virtual void NotifyNewSessionTicket(NewSessionTicket newSessionTicket)
+	{
+	}
+}
 }

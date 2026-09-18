@@ -51,6 +51,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 142e203c7cf7a5cbae15589f46e1ee0d, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  bulletMask:
+    serializedVersion: 2
+    m_Bits: 4294451711
+  alliesBulletMask:
+    serializedVersion: 2
+    m_Bits: 4223148543
+  enemiesBulletMask:
+    serializedVersion: 2
+    m_Bits: 4151845375
 --- !u!1001 &100100000
 Prefab:
   serializedVersion: 2

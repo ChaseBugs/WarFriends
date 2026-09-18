@@ -172,6 +172,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bba3d4042259093bd9483593e83aa4ca, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  isActivated: 0
+  photonView: {fileID: 0}
+  hudObjectIndicator: {fileID: 0}
+  fireDamage: {fileID: 19872700}
+  sparks: {fileID: 19854360}
 --- !u!114 &11470521
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -183,6 +188,25 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a503568e23092a0b9255b6fcb6b62be2, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMaxHealth:
+    currentCryptoKey: 230887
+    hiddenValue: e7857944
+    fakeValue: 1000
+    inited: 1
+  mDestroyableByBonusBox: 0
+  healthBarPosition: {fileID: 459786}
+  forceHealthBar: 1
+  offset: {x: 0, y: 0, z: 0}
+  displayHealthBar: 1
+  playMainHitParticle: 0
+  isMetal: 0
+  shotCoeficient: 1
+  shotParticleNames:
+  - sparklesMetal
+  healthBarStyle: 1
+  mHealthbarColor: {r: 0, g: 1, b: 0, a: 1}
+  healthbar: {fileID: 0}
+  shotHitSound: 9
 --- !u!114 &11496012
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -194,6 +218,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3cf4d7761af3ce98d7a08bebfe4e8861, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  shootTargets:
+  - {fileID: 407524}
+  targets: []
+  visible: 1
 --- !u!54 &5477035
 Rigidbody:
   serializedVersion: 2
@@ -232,6 +260,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5bfbf978d76daea62a5ea6e2af5801d1, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mPosition: {fileID: 459786}
 --- !u!114 &11488124
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -243,6 +272,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f19ea4a15c3ca43dcc180d756f7a82b3, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  ownerId: 0
+  group: 0
+  OwnerShipWasTransfered: 0
+  prefixBackup: -1
+  synchronization: 3
+  onSerializeTransformOption: 3
+  onSerializeRigidBodyOption: 2
+  ownershipTransfer: 0
+  ObservedComponents:
+  - {fileID: 11469143}
+  viewIdField: 0
+  instantiationId: -1
+  currentMasterID: -1
+  didAwake: 0
+  isRuntimeInstantiated: 0
 --- !u!82 &8224449
 AudioSource:
   serializedVersion: 4
@@ -324,6 +368,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c452d4ec3c54130d0b8b40a7db84146e, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  modelAttachments: {fileID: 0}
+  mainRenderer: {fileID: 0}
+  renderedParts:
+  - {fileID: 0}
+  - {fileID: 0}
 --- !u!114 &11469143
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -335,6 +384,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 72c70e5b7e4060a143fc0f2572aeff9c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  breakDistance: 0.4
+  breakSpeed: 0.5
+  dir: 1
+  loop: 1
+  mass: 30
+  multiplier: 150000
+  path: {fileID: 0}
+  speed: 0.4
+  cornerDelayTime: 0.3
+  gizmoSize: 100
+  lookTarget: {fileID: 0}
 --- !u!4 &459786
 Transform:
   m_ObjectHideFlags: 0
@@ -3581,6 +3641,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1f61fafee80c4e2bbfb2332402131901, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  targetCollider: {fileID: 147589}
+  offset: {x: 0, y: 0, z: 0}
+  isClickable: 0
+  clickableLayer: 0
+  referenceVelocityTarget: {fileID: 0}
+  isActive: 1
+  ignoreLayer: 0
 --- !u!54 &5451504
 Rigidbody:
   serializedVersion: 2

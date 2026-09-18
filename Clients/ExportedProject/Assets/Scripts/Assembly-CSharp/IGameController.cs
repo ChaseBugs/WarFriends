@@ -1,63 +1,177 @@
+using System.Collections;
+using System.Collections.Generic;
+using System.Text;
 using UnityEngine;
 
-public class IGameController : MonoBehaviour
+public abstract class IGameController : Core_BaseScript
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	private List<Card> mCardsForGame = new List<Card>();
 
-	1. No dll files were provided to AssetRipper.
+	public abstract float time { get; set; }
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public abstract bool dropCreates { get; }
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public abstract bool gameIsRunning { get; set; }
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public abstract bool canShowPause { get; }
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public abstract bool canDeployUnits { get; }
 
-	3. Assembly Reconstruction has not been implemented.
+	public abstract string quitText { get; }
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public virtual bool ableToQuit { get; set; }
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public abstract bool pauseCountDown { get; }
 
-	4. This script is unnecessary.
+	public virtual CardManager.CardFilter cardsFilter => CardManager.CardFilter.All;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public virtual SpawningType spawningType => SpawningType.Classic;
 
-	5. Script Content Level 0
+	public virtual List<UnitUpgradeDefinition> myUpgrades => PlayerController.currentPlayer.playerProperties.upgrades;
 
-		AssetRipper was set to not load any script information.
+	public virtual List<UnitUpgradeDefinition> opponentUpgrades => Singleton<GameController>.instance.opponent.playerProperties.upgrades;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public virtual PlayerInventory.EquippedWeapon[] equippedWeapons => PlayerInventory.instance.equippedWeapons;
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public virtual int playerLevel => LevelManager.instance.currentLevel.displayNumber;
 
-	7. An incorrect path was provided to AssetRipper.
+	public virtual string[] equppedVisuals => CamosManager.instance.equppedIndices;
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	public virtual List<Card> cardsForGame
+	{
+		get
+		{
+			return mCardsForGame;
+		}
+		set
+		{
+			mCardsForGame = value;
+		}
+	}
 
-	*/
+	public abstract IEnumerator StartGame();
+
+	public abstract void FinishGame();
+
+	public abstract void LoadingStarted();
+
+	public abstract void StopGame(bool switchScreen = true);
+
+	public abstract void FreeLevel();
+
+	public abstract IEnumerator AquireLevelName();
+
+	public abstract void Quit();
+
+	public abstract void Forfeit();
+
+	public abstract void PauseGame(bool focusLost);
+
+	public abstract void ResumeGame();
+
+	public abstract void UnPauseGame();
+
+	public abstract void FinishChoosingCards();
+
+	public abstract void Rematch();
+
+	public abstract void GetTimeProgressText(StringBuilder text);
+
+	public virtual List<UnitUpgradeDefinition> GetUnitsUpgrades()
+	{
+		List<LevelBehaviour> behaviours = LevelManager.instance.behaviours;
+		List<UnitUpgradeDefinition> list = new List<UnitUpgradeDefinition>();
+		foreach (LevelBehaviour item in behaviours)
+		{
+			UpgradeSlots.UnitUpgrades upgradeIndex = item.upgradeSlots.LoadData(item);
+			list.Add(new UnitUpgradeDefinition(item.upgradeSlots.canUseInBattle, upgradeIndex, item.upgradeSlots.isNew, item.upgradeSlots.actualTier));
+		}
+		return list;
+	}
+
+	public virtual float GetPlayerHP(PlayerController playerController)
+	{
+		return Singleton<GameVariables>.instance.balancetable.Rows[playerController.playerProperties.level].PLAYERHP;
+	}
+
+	public virtual float GetShieldHP(PlayerController playerController)
+	{
+		return Singleton<GameVariables>.instance.balancetable.Rows[playerController.playerProperties.level].SHIELDHP;
+	}
+
+	public virtual UpgradeSlots.UnitUpgrades PickUpgradesForUnit(bool isPreview, AIObject aiObject)
+	{
+		UpgradeSlots.UnitUpgrades unitUpgrades = new UpgradeSlots.UnitUpgrades(1f);
+		LevelBehaviour behaviour = aiObject.behaviour;
+		Fractions fraction = aiObject.fraction;
+		Perk perk = new Perk();
+		if (isPreview && Singleton<GameController>.instance.gameState == GameController.GameState.Menu)
+		{
+			UpgradeSlots.UnitUpgrades previewUpgrades = UnitUpgradeDefinition.GetPreviewUpgrades(behaviour, 1f);
+			unitUpgrades = behaviour.upgradeSlots.LoadData(behaviour, previewUpgrades);
+		}
+		else if (behaviour != null)
+		{
+			if (aiObject.spawnedByCard)
+			{
+				behaviour.upgradeSlots.LoadDataForCard(behaviour, aiObject.cardProgress);
+				Debug.Log($"Loading for card: hp: {behaviour.behaviourDefinition.health}, progress:{aiObject.cardProgress}, obj {aiObject.gameObject.name} ");
+			}
+			else
+			{
+				string key = behaviour.GetType().ToString();
+				Dictionary<string, UnitUpgradeDefinition> upgradesDictionary = GetUpgradesDictionary(fraction);
+				if (upgradesDictionary.TryGetValue(key, out var value))
+				{
+					unitUpgrades = value.unitUpgrades;
+				}
+				perk = CheckForPerks(behaviour, fraction);
+				behaviour.upgradeSlots.LoadData(behaviour, unitUpgrades, perk);
+			}
+		}
+		aiObject.perk = perk;
+		return unitUpgrades;
+	}
+
+	public Perk CheckForPerks(LevelBehaviour affectedBehavior, Fractions fraction)
+	{
+		Perk perk = new Perk();
+		if (Singleton<GameController>.instance.opponent != null)
+		{
+			List<LevelBehaviour> behaviours = LevelManager.instance.behaviours;
+			PlayerController friend = PlayerController.GetFriend(fraction);
+			if (friend != null)
+			{
+				List<UnitUpgradeDefinition> upgrades = friend.playerProperties.upgrades;
+				for (int i = 0; i < upgrades.Count; i++)
+				{
+					UnitUpgradeDefinition def = upgrades[i];
+					LevelBehaviour levelBehaviour = behaviours[i];
+					perk = levelBehaviour.MultipleCurrentPerkForUnit(affectedBehavior, def, perk, PerkType.Buff);
+				}
+			}
+			PlayerController enemyOf = PlayerController.GetEnemyOf(fraction);
+			if (enemyOf != null)
+			{
+				List<UnitUpgradeDefinition> upgrades2 = enemyOf.playerProperties.upgrades;
+				for (int j = 0; j < upgrades2.Count; j++)
+				{
+					UnitUpgradeDefinition def2 = upgrades2[j];
+					LevelBehaviour levelBehaviour2 = behaviours[j];
+					perk = levelBehaviour2.MultipleCurrentPerkForUnit(affectedBehavior, def2, perk, PerkType.Debuff);
+				}
+			}
+		}
+		return perk;
+	}
+
+	protected virtual Dictionary<string, UnitUpgradeDefinition> GetUpgradesDictionary(Fractions fraction)
+	{
+		return PlayerController.GetPlayer(fraction).playerProperties.upgradesDictionary;
+	}
+
+	public virtual void ShowResultsScreen()
+	{
+		Singleton<GuiManager>.instance.ShowGui(GuiScreenSingle<EndScreen>.instance);
+	}
 }

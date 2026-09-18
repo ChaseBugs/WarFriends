@@ -5,6 +5,11 @@
 > (`Client/ExportedProject/Assets/Scripts/Gameplay*`). Items that still need reverse-engineering are marked
 > **⚠ RE-NEEDED** — do not invent them, extract them from the client/assemblies.
 
+> **Version boundary:** `Clients/ExportedProject` is a separate WarFriends 1.4.0 Mono
+> extraction. It is corroborating evidence only after its recovery assembly graph is
+> repaired; this document's contracts remain grounded in the active 1.6.0 runtime
+> and 4.9.5 resource evidence.
+
 ---
 
 ## 1. Architecture — the client talks to TWO servers

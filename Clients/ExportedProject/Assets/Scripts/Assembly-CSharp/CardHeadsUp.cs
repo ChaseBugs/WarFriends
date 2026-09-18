@@ -1,63 +1,129 @@
+using System.Collections.Generic;
 using UnityEngine;
 
-public class CardHeadsUp : MonoBehaviour
+public class CardHeadsUp : Card
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	private const float multiplayer = 1.5f;
 
-	1. No dll files were provided to AssetRipper.
+	private const string ingameIcoName = "game-card-ico-headsup";
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public float buffTime = 15f;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	private NetworkObjectPool mPool;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	private bool mUsed;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	private float mRemainingTime;
 
-	3. Assembly Reconstruction has not been implemented.
+	private Fractions mFraction;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	private bool mEventLocated;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	private void GetSoldiersParts(Fractions fraction)
+	{
+		ChangeHeadWeighForActiveSoldiers(fraction);
+		if (!mEventLocated)
+		{
+			AIObject.AfterSpawned -= OnAfterSpawned;
+			AIObject.AfterSpawned += OnAfterSpawned;
+			mEventLocated = true;
+		}
+	}
 
-	4. This script is unnecessary.
+	private void ChangeHeadWeighForActiveSoldiers(Fractions fraction)
+	{
+		mFraction = fraction;
+		mPool = ObjectPoolDatabase.networkPool;
+		List<PoolableObject> objectsMadeOfPrefab = mPool.GetObjectsMadeOfPrefab(Singleton<ObjectPoolDatabase>.instance.enemy);
+		foreach (PoolableObject item in objectsMadeOfPrefab)
+		{
+			EnemyController enemyController = item as EnemyController;
+			if (enemyController != null && enemyController.fraction != Fractions.None && enemyController.isInstantiated && enemyController.isAlive)
+			{
+				enemyController.ChangeWeightForDestroyablePart(1.5f, 1);
+				enemyController.cardIconIndicator.Show("game-card-ico-headsup", buffTime, buffTime, animated: true);
+			}
+		}
+		PlayerController enemyOf = PlayerController.GetEnemyOf(fraction);
+		enemyOf.ChangeWeightForDestroyablePart(1.5f, 1);
+		enemyOf.cardIconIndicator.Show("game-card-ico-headsup", buffTime, buffTime, animated: true);
+		enemyOf = PlayerController.GetPlayerOld(fraction);
+		enemyOf.ChangeWeightForDestroyablePart(1.5f, 1);
+		enemyOf.cardIconIndicator.Show("game-card-ico-headsup", buffTime, buffTime, animated: true);
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private void OnAfterSpawned(AIObject aiObject)
+	{
+		if (aiObject.fraction != Fractions.None)
+		{
+			EnemyController enemyController = aiObject as EnemyController;
+			if (enemyController != null)
+			{
+				enemyController.ChangeWeightForDestroyablePart(1.5f, 1);
+				enemyController.cardIconIndicator.Show("game-card-ico-headsup", mRemainingTime, buffTime, animated: true);
+			}
+		}
+	}
 
-	5. Script Content Level 0
+	public override void UseCard(ICardManager cardManager, Fractions fraction)
+	{
+		if (PhotonNetwork.isMasterClient)
+		{
+			GetSoldiersParts(fraction);
+			mRemainingTime = buffTime;
+			mUsed = true;
+		}
+		cardManager.CardWasUsed(this, fraction);
+	}
 
-		AssetRipper was set to not load any script information.
+	public override void UseCardOnline(ICardManager cardManager, Fractions fraction)
+	{
+		if (base.isOnlineMaster)
+		{
+			GetSoldiersParts(fraction);
+			mRemainingTime = buffTime;
+			mUsed = true;
+		}
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	protected void Update()
+	{
+		if (mUsed)
+		{
+			if (mRemainingTime > 0f)
+			{
+				mRemainingTime -= Time.deltaTime;
+				return;
+			}
+			RemoveBuff();
+			mUsed = false;
+		}
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	private void RemoveBuff()
+	{
+		DisconnectEvents();
+		List<PoolableObject> objectsMadeOfPrefab = mPool.GetObjectsMadeOfPrefab(Singleton<ObjectPoolDatabase>.instance.enemy);
+		foreach (PoolableObject item in objectsMadeOfPrefab)
+		{
+			EnemyController enemyController = item as EnemyController;
+			if (enemyController != null && enemyController.fraction != Fractions.None && enemyController.isInstantiated && enemyController.isAlive)
+			{
+				enemyController.ChangeWeightForDestroyablePart(2f / 3f, 1);
+			}
+		}
+		PlayerController enemyOf = PlayerController.GetEnemyOf(mFraction);
+		enemyOf.ChangeWeightForDestroyablePart(2f / 3f, 1);
+		enemyOf = PlayerController.GetPlayerOld(mFraction);
+		enemyOf.ChangeWeightForDestroyablePart(2f / 3f, 1);
+	}
 
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public override void DisconnectEvents()
+	{
+		if (mEventLocated)
+		{
+			AIObject.AfterSpawned -= OnAfterSpawned;
+			mEventLocated = false;
+		}
+	}
 }

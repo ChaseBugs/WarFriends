@@ -1,63 +1,107 @@
 using UnityEngine;
 
+[AddComponentMenu("NGUI/Interaction/Forward Events")]
 public class UIForwardEvents : MonoBehaviour
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public GameObject target;
 
-	1. No dll files were provided to AssetRipper.
+	public bool onHover;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public bool onPress;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public bool onClick;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public bool onDoubleClick;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public bool onSelect;
 
-	3. Assembly Reconstruction has not been implemented.
+	public bool onDrag;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public bool onDrop;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public bool onInput;
 
-	4. This script is unnecessary.
+	public bool onSubmit;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public bool onScroll;
 
-	5. Script Content Level 0
+	private void OnHover(bool isOver)
+	{
+		if (onHover && target != null)
+		{
+			target.SendMessage("OnHover", isOver, SendMessageOptions.DontRequireReceiver);
+		}
+	}
 
-		AssetRipper was set to not load any script information.
+	private void OnPress(bool pressed)
+	{
+		if (onPress && target != null)
+		{
+			target.SendMessage("OnPress", pressed, SendMessageOptions.DontRequireReceiver);
+		}
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	private void OnClick()
+	{
+		if (onClick && target != null)
+		{
+			target.SendMessage("OnClick", SendMessageOptions.DontRequireReceiver);
+		}
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	private void OnDoubleClick()
+	{
+		if (onDoubleClick && target != null)
+		{
+			target.SendMessage("OnDoubleClick", SendMessageOptions.DontRequireReceiver);
+		}
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	private void OnSelect(bool selected)
+	{
+		if (onSelect && target != null)
+		{
+			target.SendMessage("OnSelect", selected, SendMessageOptions.DontRequireReceiver);
+		}
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	private void OnDrag(Vector2 delta)
+	{
+		if (onDrag && target != null)
+		{
+			target.SendMessage("OnDrag", delta, SendMessageOptions.DontRequireReceiver);
+		}
+	}
 
-	*/
+	private void OnDrop(GameObject go)
+	{
+		if (onDrop && target != null)
+		{
+			target.SendMessage("OnDrop", go, SendMessageOptions.DontRequireReceiver);
+		}
+	}
+
+	private void OnInput(string text)
+	{
+		if (onInput && target != null)
+		{
+			target.SendMessage("OnInput", text, SendMessageOptions.DontRequireReceiver);
+		}
+	}
+
+	private void OnSubmit()
+	{
+		if (onSubmit && target != null)
+		{
+			target.SendMessage("OnSubmit", SendMessageOptions.DontRequireReceiver);
+		}
+	}
+
+	private void OnScroll(float delta)
+	{
+		if (onScroll && target != null)
+		{
+			target.SendMessage("OnScroll", delta, SendMessageOptions.DontRequireReceiver);
+		}
+	}
 }

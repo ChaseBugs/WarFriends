@@ -1,66 +1,43 @@
-using UnityEngine;
+using System;
 
 namespace GooglePlayGames.BasicApi.Multiplayer
 {
-	public class ITurnBasedMultiplayerClient : MonoBehaviour
-	{
-		/*
-		Dummy class. This could have happened for several reasons:
+public interface ITurnBasedMultiplayerClient
+{
+	void CreateQuickMatch(uint minOpponents, uint maxOpponents, uint variant, Action<bool, TurnBasedMatch> callback);
 
-		1. No dll files were provided to AssetRipper.
+	void CreateQuickMatch(uint minOpponents, uint maxOpponents, uint variant, ulong exclusiveBitmask, Action<bool, TurnBasedMatch> callback);
 
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
+	void CreateWithInvitationScreen(uint minOpponents, uint maxOpponents, uint variant, Action<bool, TurnBasedMatch> callback);
 
-		2. Incorrect dll files were provided to AssetRipper.
+	void CreateWithInvitationScreen(uint minOpponents, uint maxOpponents, uint variant, Action<UIStatus, TurnBasedMatch> callback);
 
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
+	void GetAllInvitations(Action<Invitation[]> callback);
 
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	void GetAllMatches(Action<TurnBasedMatch[]> callback);
 
-		3. Assembly Reconstruction has not been implemented.
+	void AcceptFromInbox(Action<bool, TurnBasedMatch> callback);
 
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
+	void AcceptInvitation(string invitationId, Action<bool, TurnBasedMatch> callback);
 
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
+	void RegisterMatchDelegate(MatchDelegate del);
 
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
+	void TakeTurn(TurnBasedMatch match, byte[] data, string pendingParticipantId, Action<bool> callback);
 
-		5. Script Content Level 0
+	int GetMaxMatchDataSize();
 
-			AssetRipper was set to not load any script information.
+	void Finish(TurnBasedMatch match, byte[] data, MatchOutcome outcome, Action<bool> callback);
 
-		6. Cpp2IL failed to decompile Il2Cpp data
+	void AcknowledgeFinished(TurnBasedMatch match, Action<bool> callback);
 
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	void Leave(TurnBasedMatch match, Action<bool> callback);
 
-		7. An incorrect path was provided to AssetRipper.
+	void LeaveDuringTurn(TurnBasedMatch match, string pendingParticipantId, Action<bool> callback);
 
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
+	void Cancel(TurnBasedMatch match, Action<bool> callback);
 
-		*/
-	}
+	void Rematch(TurnBasedMatch match, Action<bool, TurnBasedMatch> callback);
+
+	void DeclineInvitation(string invitationId);
+}
 }

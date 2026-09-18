@@ -1,66 +1,166 @@
+using System;
+using CodeStage.AntiCheat.Detectors;
 using UnityEngine;
 
 namespace CodeStage.AntiCheat.ObscuredTypes
 {
-	public class ObscuredChar : MonoBehaviour
+[Serializable]
+public struct ObscuredChar : IEquatable<ObscuredChar>
+{
+	private static char cryptoKey = '—';
+
+	private char currentCryptoKey;
+
+	private char hiddenValue;
+
+	private char fakeValue;
+
+	private bool inited;
+
+	private ObscuredChar(char value)
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
+		currentCryptoKey = cryptoKey;
+		hiddenValue = value;
+		fakeValue = '\0';
+		inited = true;
 	}
+
+	public static void SetNewCryptoKey(char newKey)
+	{
+		cryptoKey = newKey;
+	}
+
+	public static char EncryptDecrypt(char value)
+	{
+		return EncryptDecrypt(value, '\0');
+	}
+
+	public static char EncryptDecrypt(char value, char key)
+	{
+		if (key == '\0')
+		{
+			return (char)(value ^ cryptoKey);
+		}
+		return (char)(value ^ key);
+	}
+
+	public void ApplyNewCryptoKey()
+	{
+		if (currentCryptoKey != cryptoKey)
+		{
+			hiddenValue = EncryptDecrypt(InternalDecrypt(), cryptoKey);
+			currentCryptoKey = cryptoKey;
+		}
+	}
+
+	public void RandomizeCryptoKey()
+	{
+		char value = InternalDecrypt();
+		currentCryptoKey = (char)(UnityEngine.Random.seed >> 24);
+		hiddenValue = EncryptDecrypt(value, currentCryptoKey);
+	}
+
+	public char GetEncrypted()
+	{
+		ApplyNewCryptoKey();
+		return hiddenValue;
+	}
+
+	public void SetEncrypted(char encrypted)
+	{
+		inited = true;
+		hiddenValue = encrypted;
+		if (ObscuredCheatingDetector.IsRunning)
+		{
+			fakeValue = InternalDecrypt();
+		}
+	}
+
+	private char InternalDecrypt()
+	{
+		if (!inited)
+		{
+			currentCryptoKey = cryptoKey;
+			hiddenValue = EncryptDecrypt('\0');
+			fakeValue = '\0';
+			inited = true;
+		}
+		char c = EncryptDecrypt(hiddenValue, currentCryptoKey);
+		if (ObscuredCheatingDetector.IsRunning && fakeValue != 0 && c != fakeValue)
+		{
+			ObscuredCheatingDetector.Instance.OnCheatingDetected();
+		}
+		return c;
+	}
+
+	public override bool Equals(object obj)
+	{
+		if (!(obj is ObscuredChar))
+		{
+			return false;
+		}
+		return Equals((ObscuredChar)obj);
+	}
+
+	public bool Equals(ObscuredChar obj)
+	{
+		if (currentCryptoKey == obj.currentCryptoKey)
+		{
+			return hiddenValue == obj.hiddenValue;
+		}
+		return EncryptDecrypt(hiddenValue, currentCryptoKey) == EncryptDecrypt(obj.hiddenValue, obj.currentCryptoKey);
+	}
+
+	public override string ToString()
+	{
+		return InternalDecrypt().ToString();
+	}
+
+	public string ToString(IFormatProvider provider)
+	{
+		return InternalDecrypt().ToString(provider);
+	}
+
+	public override int GetHashCode()
+	{
+		return InternalDecrypt().GetHashCode();
+	}
+
+	public static implicit operator ObscuredChar(char value)
+	{
+		ObscuredChar result = new ObscuredChar(EncryptDecrypt(value));
+		if (ObscuredCheatingDetector.IsRunning)
+		{
+			result.fakeValue = value;
+		}
+		return result;
+	}
+
+	public static implicit operator char(ObscuredChar value)
+	{
+		return value.InternalDecrypt();
+	}
+
+	public static ObscuredChar operator ++(ObscuredChar input)
+	{
+		char value = (char)(input.InternalDecrypt() + 1);
+		input.hiddenValue = EncryptDecrypt(value, input.currentCryptoKey);
+		if (ObscuredCheatingDetector.IsRunning)
+		{
+			input.fakeValue = value;
+		}
+		return input;
+	}
+
+	public static ObscuredChar operator --(ObscuredChar input)
+	{
+		char value = (char)(input.InternalDecrypt() - 1);
+		input.hiddenValue = EncryptDecrypt(value, input.currentCryptoKey);
+		if (ObscuredCheatingDetector.IsRunning)
+		{
+			input.fakeValue = value;
+		}
+		return input;
+	}
+}
 }

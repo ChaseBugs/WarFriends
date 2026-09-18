@@ -1,63 +1,306 @@
+using System.Collections;
+using System.Collections.Generic;
+using Beebyte.Obfuscator;
+using Google2u;
 using UnityEngine;
+using UnityEngine.Serialization;
 
-public class Card : MonoBehaviour
+[Skip]
+public class Card : Core_BaseScript
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public const float baseShowCartIcoTimeInGame = 3f;
 
-	1. No dll files were provided to AssetRipper.
+	[HideInInspector]
+	public int playerId;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	[Header("GUI Translations")]
+	[SerializeField]
+	[FormerlySerializedAs("cardName")]
+	private string mCardNameID;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	[SerializeField]
+	[FormerlySerializedAs("description")]
+	protected string mDescriptionID;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	[Header("GUI Big Card")]
+	public string iconName = string.Empty;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public float iconMultiplier = 1f;
 
-	3. Assembly Reconstruction has not been implemented.
+	public Vector3 bigCardPosition = Vector3.zero;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public Color bonusIconBackgroundColor = Color.white;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public Color bonusIconColor = Color.white;
 
-	4. This script is unnecessary.
+	[Header("GUI Small Card")]
+	public float smallCardRotation;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public Vector3 smallCardPosition = Vector3.zero;
 
-	5. Script Content Level 0
+	public Vector3 smallIconPosition = Vector3.zero;
 
-		AssetRipper was set to not load any script information.
+	public string bonusIcon = string.Empty;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public bool showBonusIconInSmallCard = true;
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public Color bonusIconSmallCardColor = Color.white;
 
-	7. An incorrect path was provided to AssetRipper.
+	public string bonusName = string.Empty;
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	[Header("Base Card Settings")]
+	public string id;
 
-	*/
+	public float cooldown = 5f;
+
+	public bool isEnemyPlayerBuff;
+
+	private CardDefinitionsRow mCardDefinition;
+
+	public virtual CardManager.CardType rarity
+	{
+		get
+		{
+			if (mCardDefinition != null)
+			{
+				return (CardManager.CardType)mCardDefinition.RARITY;
+			}
+			return CardManager.CardType.Bronze;
+		}
+	}
+
+	public virtual int newFromMission
+	{
+		get
+		{
+			if (mCardDefinition != null)
+			{
+				return mCardDefinition.FROMMISSION;
+			}
+			return 99;
+		}
+	}
+
+	public bool implemented
+	{
+		get
+		{
+			if (mCardDefinition != null)
+			{
+				return mCardDefinition.IMPLEMENTED;
+			}
+			return false;
+		}
+	}
+
+	public int rarityNumber => (int)rarity;
+
+	public bool isBuddyCard => rarity == CardManager.CardType.Buddy;
+
+	public Texture2D iconTexture { get; protected set; }
+
+	public virtual bool showInGame => true;
+
+	protected bool isOnlineMaster => PhotonNetwork.isMasterClient && !PhotonNetwork.offlineMode;
+
+	public virtual string cardName => Localization.Localize(mCardNameID);
+
+	public virtual string description => Localization.Localize(mDescriptionID);
+
+	public virtual string unitTypeSpriteName => string.Empty;
+
+	protected virtual string mBonusName => string.Empty;
+
+	public virtual int amount => CardManager.instance.data.cardData.ContainsKey(id) ? CardManager.instance.data.cardData[id].amount : 0;
+
+	public virtual IEnumerator InitCard(bool isOpponentCard)
+	{
+		yield break;
+	}
+
+	public virtual void ReleaseCard(bool isOpponent)
+	{
+	}
+
+	public void AddCard(int num = 1)
+	{
+		if (!CardManager.instance.data.cardData.ContainsKey(id))
+		{
+			CardManager.instance.data.cardData[id] = new CardManager.CardData
+			{
+				amount = num
+			};
+		}
+		else
+		{
+			CardManager.instance.data.cardData[id].amount += num;
+		}
+	}
+
+	public void AddTutorialCard()
+	{
+		if (!CardManager.instance.data.cardData.ContainsKey(id))
+		{
+			CardManager.instance.data.cardData[id] = new CardManager.CardData
+			{
+				amount = 1
+			};
+		}
+		else
+		{
+			CardManager.instance.data.cardData[id].amount = 1;
+		}
+	}
+
+	public virtual void RemoveCard()
+	{
+		if (CardManager.instance.data.cardData.ContainsKey(id))
+		{
+			if (CardManager.instance.data.cardData[id].amount == 0)
+			{
+				Debug.LogError($"Card {id} is being removed to minus values");
+			}
+			else
+			{
+				CardManager.instance.data.cardData[id].amount--;
+			}
+		}
+	}
+
+	public virtual void DisconnectEvents()
+	{
+	}
+
+	public virtual void UseCard(ICardManager cardManager, Fractions fraction)
+	{
+	}
+
+	public virtual bool IsViableForBotNow(Fractions botFraction, float botHealthRatio, List<GameShootableEntity> botUnits, List<GameShootableEntity> opponentUnits, List<GameShootableEntity> botMechanicalUnits, List<GameShootableEntity> opponentMechanicalUnits)
+	{
+		return true;
+	}
+
+	public virtual void UseCardOnline(ICardManager cardManager, Fractions fraction)
+	{
+	}
+
+	public void SetUpSmallCard(UISprite background, UISprite cardIcon, UISprite cardBonusIcon, UILabel bonusLabel, UITexture cardTexture = null)
+	{
+		background.spriteName = CardBackground(rarity);
+		background.color = CardBackgroundColor(rarity, background.alpha);
+		if (iconName == string.Empty)
+		{
+			cardIcon.gameObject.SetActive(value: false);
+			cardBonusIcon.gameObject.SetActive(value: false);
+			bonusLabel.text = string.Empty;
+			Debug.LogError("Card " + mCardNameID.ToUpper() + " does not have small variant look!!!!!");
+		}
+		else
+		{
+			cardIcon.gameObject.SetActive(!isBuddyCard);
+			if (cardIcon.gameObject.activeSelf)
+			{
+				cardIcon.spriteName = iconName;
+				cardIcon.MakePixelPerfect();
+				cardIcon.transform.localScale = cardIcon.transform.localScale.MultiplyXY(iconMultiplier);
+				cardIcon.transform.localPosition = smallCardPosition;
+				cardIcon.transform.localRotation = Quaternion.Euler(0f, 0f, smallCardRotation);
+			}
+			if (cardTexture != null)
+			{
+				cardTexture.gameObject.SetActive(value: false);
+				cardTexture.transform.localScale = new Vector3(220f, 220f, 1f);
+				cardTexture.transform.localPosition = smallCardPosition;
+			}
+			cardBonusIcon.gameObject.SetActive(showBonusIconInSmallCard);
+			if (isBuddyCard)
+			{
+				cardBonusIcon.color = Color.white;
+				cardBonusIcon.spriteName = unitTypeSpriteName;
+				cardBonusIcon.MakePixelPerfect();
+				cardBonusIcon.transform.localScale = cardBonusIcon.transform.localScale.MultiplyXY(0.5f);
+				cardBonusIcon.transform.localPosition = smallIconPosition;
+			}
+			else if (showBonusIconInSmallCard)
+			{
+				cardBonusIcon.color = bonusIconSmallCardColor;
+				cardBonusIcon.spriteName = bonusIcon;
+				cardBonusIcon.MakePixelPerfect();
+				cardBonusIcon.transform.localPosition = smallIconPosition;
+			}
+			bonusLabel.text = mBonusName;
+		}
+		PositionForBonusName(bonusLabel);
+	}
+
+	private void PositionForBonusName(UILabel bonusLabel)
+	{
+		float num = bonusLabel.relativeSize.x * bonusLabel.transform.localScale.x;
+		bonusLabel.transform.localPosition = bonusLabel.transform.localPosition.ReplaceX(-4f + Mathf.Max(0f, num - 90f));
+	}
+
+	public static string CardBigBackground(CardManager.CardType cardRarity)
+	{
+		switch (cardRarity)
+		{
+			case CardManager.CardType.Gold:
+				return "game-card-gold-big";
+			case CardManager.CardType.Silver:
+				return "game-card-silver-big";
+			case CardManager.CardType.Buddy:
+				return "game-card-silver-big";
+			default:
+				return "game-card-bronze-big";
+		}
+	}
+
+	public static string CardBackground(CardManager.CardType cardRarity)
+	{
+		switch (cardRarity)
+		{
+			case CardManager.CardType.Gold:
+				return "game-card-gold";
+			case CardManager.CardType.Silver:
+				return "game-card-silver";
+			case CardManager.CardType.Buddy:
+				return "game-card-silver";
+			default:
+				return "game-card-bronze";
+		}
+	}
+
+	public static Color CardBackgroundColor(CardManager.CardType cardRarity, float alpha = 1f)
+	{
+		Color result = ((cardRarity != CardManager.CardType.Buddy) ? Color.white : Colours.pink);
+		result.a = alpha;
+		return result;
+	}
+
+	public static string CardSmallIconBackground(CardManager.CardType cardRarity)
+	{
+		switch (cardRarity)
+		{
+			case CardManager.CardType.Gold:
+				return "game-card-ico-bg-gold";
+			case CardManager.CardType.Silver:
+				return "game-card-ico-bg-silver";
+			case CardManager.CardType.Buddy:
+				return "game-card-ico-bg-silver";
+			default:
+				return "game-card-ico-bg-bronze";
+		}
+	}
+
+	public virtual void ShowInMenu()
+	{
+	}
+
+	public virtual void HideInMenu()
+	{
+	}
+
+	public void Init(CardDefinitionsRow cardDefinition)
+	{
+		mCardDefinition = cardDefinition;
+	}
 }

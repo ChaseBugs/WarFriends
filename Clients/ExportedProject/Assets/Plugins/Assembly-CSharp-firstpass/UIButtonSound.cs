@@ -1,63 +1,54 @@
+using System;
 using UnityEngine;
 
+[AddComponentMenu("NGUI/Interaction/Button Sound")]
 public class UIButtonSound : MonoBehaviour
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public enum Trigger
+	{
+		OnClick,
+		OnMouseOver,
+		OnMouseOut,
+		OnPress,
+		OnRelease
+	}
 
-	1. No dll files were provided to AssetRipper.
+	public AudioClip audioClip;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public Trigger trigger;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public float volume = 1f;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public float pitch = 1f;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	[Header("Conditions")]
+	public UIButton uiButton;
 
-	3. Assembly Reconstruction has not been implemented.
+	public GameObject lockedPart;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public GameObject enabledPart;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public static Action onClicked;
 
-	4. This script is unnecessary.
+	private void OnHover(bool isOver)
+	{
+		if (base.enabled && (!isOver || trigger != Trigger.OnMouseOver) && !isOver && trigger != Trigger.OnMouseOut)
+		{
+		}
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private void OnPress(bool isPressed)
+	{
+		if (base.enabled && (!isPressed || trigger != Trigger.OnPress) && !isPressed && trigger != Trigger.OnRelease)
+		{
+		}
+	}
 
-	5. Script Content Level 0
-
-		AssetRipper was set to not load any script information.
-
-	6. Cpp2IL failed to decompile Il2Cpp data
-
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	private void OnClick()
+	{
+		if (base.enabled && trigger == Trigger.OnClick && onClicked != null && (uiButton == null || uiButton.isEnabled) && (lockedPart == null || !lockedPart.activeInHierarchy) && (enabledPart == null || enabledPart.activeInHierarchy))
+		{
+			onClicked();
+		}
+	}
 }

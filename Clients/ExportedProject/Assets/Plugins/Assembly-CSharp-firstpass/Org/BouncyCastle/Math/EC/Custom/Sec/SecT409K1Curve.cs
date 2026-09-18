@@ -1,66 +1,136 @@
-using UnityEngine;
+using System;
+using Org.BouncyCastle.Math.EC.Multiplier;
+using Org.BouncyCastle.Utilities.Encoders;
 
 namespace Org.BouncyCastle.Math.EC.Custom.Sec
 {
-	public class SecT409K1Curve : MonoBehaviour
+internal class SecT409K1Curve : AbstractF2mCurve
+{
+	private const int SecT409K1_DEFAULT_COORDS = 6;
+
+	protected readonly SecT409K1Point m_infinity;
+
+	public override ECPoint Infinity => m_infinity;
+
+	public override int FieldSize => 409;
+
+	public override bool IsKoblitz => true;
+
+	public virtual int M => 409;
+
+	public virtual bool IsTrinomial => true;
+
+	public virtual int K1 => 87;
+
+	public virtual int K2 => 0;
+
+	public virtual int K3 => 0;
+
+	public SecT409K1Curve()
+		: base(409, 87, 0, 0)
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
+		m_infinity = new SecT409K1Point(this, null, null);
+		m_a = FromBigInteger(BigInteger.Zero);
+		m_b = FromBigInteger(BigInteger.One);
+		m_order = new BigInteger(1, Hex.Decode("7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFE5F83B2D4EA20400EC4557D5ED3E3E7CA5B4B5C83B8E01E5FCF"));
+		m_cofactor = BigInteger.ValueOf(4L);
+		m_coord = 6;
 	}
+
+	protected override ECCurve CloneCurve()
+	{
+		return new SecT409K1Curve();
+	}
+
+	public override bool SupportsCoordinateSystem(int coord)
+	{
+		if (coord == 6)
+		{
+			return true;
+		}
+		return false;
+	}
+
+	protected override ECMultiplier CreateDefaultMultiplier()
+	{
+		return new WTauNafMultiplier();
+	}
+
+	public override ECFieldElement FromBigInteger(BigInteger x)
+	{
+		return new SecT409FieldElement(x);
+	}
+
+	protected internal override ECPoint CreateRawPoint(ECFieldElement x, ECFieldElement y, bool withCompression)
+	{
+		return new SecT409K1Point(this, x, y, withCompression);
+	}
+
+	protected internal override ECPoint CreateRawPoint(ECFieldElement x, ECFieldElement y, ECFieldElement[] zs, bool withCompression)
+	{
+		return new SecT409K1Point(this, x, y, zs, withCompression);
+	}
+
+	protected override ECPoint DecompressPoint(int yTilde, BigInteger X1)
+	{
+		ECFieldElement eCFieldElement = FromBigInteger(X1);
+		ECFieldElement eCFieldElement2 = null;
+		if (eCFieldElement.IsZero)
+		{
+			eCFieldElement2 = B.Sqrt();
+		}
+		else
+		{
+			ECFieldElement beta = eCFieldElement.Square().Invert().Multiply(B)
+				.Add(A)
+				.Add(eCFieldElement);
+			ECFieldElement eCFieldElement3 = SolveQuadraticEquation(beta);
+			if (eCFieldElement3 != null)
+			{
+				if (eCFieldElement3.TestBitZero() != (yTilde == 1))
+				{
+					eCFieldElement3 = eCFieldElement3.AddOne();
+				}
+				int coordinateSystem = CoordinateSystem;
+				eCFieldElement2 = ((coordinateSystem != 5 && coordinateSystem != 6) ? eCFieldElement3.Multiply(eCFieldElement) : eCFieldElement3.Add(eCFieldElement));
+			}
+		}
+		if (eCFieldElement2 == null)
+		{
+			throw new ArgumentException("Invalid point compression");
+		}
+		return CreateRawPoint(eCFieldElement, eCFieldElement2, withCompression: true);
+	}
+
+	private ECFieldElement SolveQuadraticEquation(ECFieldElement beta)
+	{
+		if (beta.IsZero)
+		{
+			return beta;
+		}
+		ECFieldElement eCFieldElement = FromBigInteger(BigInteger.Zero);
+		ECFieldElement eCFieldElement2 = null;
+		ECFieldElement eCFieldElement3 = null;
+		Random random = new Random();
+		do
+		{
+			ECFieldElement b = FromBigInteger(new BigInteger(409, random));
+			eCFieldElement2 = eCFieldElement;
+			ECFieldElement eCFieldElement4 = beta;
+			for (int i = 1; i < 409; i++)
+			{
+				ECFieldElement eCFieldElement5 = eCFieldElement4.Square();
+				eCFieldElement2 = eCFieldElement2.Square().Add(eCFieldElement5.Multiply(b));
+				eCFieldElement4 = eCFieldElement5.Add(beta);
+			}
+			if (!eCFieldElement4.IsZero)
+			{
+				return null;
+			}
+			eCFieldElement3 = eCFieldElement2.Square().Add(eCFieldElement2);
+		}
+		while (eCFieldElement3.IsZero);
+		return eCFieldElement2;
+	}
+}
 }

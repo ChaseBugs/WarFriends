@@ -1,63 +1,74 @@
+using System;
 using UnityEngine;
 
-public class CustomizationsTutorial : MonoBehaviour
+public class CustomizationsTutorial : GuiElementSingle<CustomizationsTutorial>, IGuiDialog
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Header("Core")]
+	public UILabel textTutorial;
 
-	1. No dll files were provided to AssetRipper.
+	public GameObject continueButton;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	private bool mContinueClicked;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	private float mTimePassed;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public override void InitControls()
+	{
+		UIEventListener uIEventListener = UIEventListener.Get(continueButton.gameObject);
+		uIEventListener.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener.onClick, new UIEventListener.VoidDelegate(ContinueClick));
+		switch (Localization.instance.currentLanguage)
+		{
+		case "fr":
+		case "de":
+		case "pt":
+			textTutorial.transform.localScale = new Vector3(40f, 40f, 1f);
+			break;
+		}
+	}
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	private void ContinueClick(GameObject go)
+	{
+		mContinueClicked = true;
+	}
 
-	3. Assembly Reconstruction has not been implemented.
+	public override void InitGUIValues()
+	{
+		mContinueClicked = false;
+		mTimePassed = 0f;
+		Singleton<BeanstalkServerManager>.instance.CustomizationShown();
+	}
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public override void AnimateShow(bool forceFadeIn)
+	{
+		base.AnimateShow(forceFadeIn);
+		StartCoroutine(Singleton<AtlasPreparer>.instance.LoadTutorialCoroutine());
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public override void DoAfterHide()
+	{
+		base.DoAfterHide();
+		Singleton<AtlasPreparer>.instance.UnloadTutorial();
+	}
 
-	4. This script is unnecessary.
+	protected override void Update()
+	{
+		base.Update();
+		mTimePassed += Time.unscaledDeltaTime;
+		if (mContinueClicked && mTimePassed > 1.5f)
+		{
+			mContinueClicked = false;
+			mTimePassed = 0f;
+			HideDialog();
+		}
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public GuiElement GetGuiElement()
+	{
+		return this;
+	}
 
-	5. Script Content Level 0
-
-		AssetRipper was set to not load any script information.
-
-	6. Cpp2IL failed to decompile Il2Cpp data
-
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public override void OnBack()
+	{
+		ContinueClick(continueButton.gameObject);
+	}
 }

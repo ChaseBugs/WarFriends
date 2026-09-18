@@ -1,63 +1,97 @@
-using UnityEngine;
+using System;
+using System.Collections.Generic;
+using Newtonsoft.Json.Linq;
 
-public class DatabaseSquadEventDefinition : MonoBehaviour
+public class DatabaseSquadEventDefinition
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public class EventTier
+	{
+		public int reward;
 
-	1. No dll files were provided to AssetRipper.
+		public int nAssignments;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+		public List<int> assignmentIds;
+	}
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public int eventStart;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public int eventEnd;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public int nTiers;
 
-	3. Assembly Reconstruction has not been implemented.
+	public List<EventTier> tiers;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	internal static DatabaseSquadEventDefinition CreateFromDatabase(Dictionary<string, object> item)
+	{
+		DatabaseSquadEventDefinition databaseSquadEventDefinition = new DatabaseSquadEventDefinition();
+		int num = 0;
+		if (item.ContainsKey("eventStart"))
+		{
+			databaseSquadEventDefinition.eventStart = Convert.ToInt32(item["eventStart"]);
+		}
+		if (item.ContainsKey("eventEnd"))
+		{
+			databaseSquadEventDefinition.eventEnd = Convert.ToInt32(item["eventEnd"]);
+		}
+		if (item.ContainsKey("tierCount"))
+		{
+			databaseSquadEventDefinition.nTiers = Convert.ToInt32(item["tierCount"]);
+		}
+		if (item.ContainsKey("assignmentCount"))
+		{
+			num = Convert.ToInt32(item["assignmentCount"]);
+		}
+		databaseSquadEventDefinition.tiers = new List<EventTier>(databaseSquadEventDefinition.nTiers);
+		for (int i = 0; i < databaseSquadEventDefinition.nTiers; i++)
+		{
+			EventTier eventTier = new EventTier();
+			eventTier.nAssignments = num;
+			eventTier.reward = Convert.ToInt32(item["T" + i + "Reward"]);
+			eventTier.assignmentIds = new List<int>(num);
+			EventTier eventTier2 = eventTier;
+			for (int j = 0; j < num; j++)
+			{
+				eventTier2.assignmentIds.Add(Convert.ToInt32(item["T" + i + "A" + j + "Id"]));
+			}
+			databaseSquadEventDefinition.tiers.Add(eventTier2);
+		}
+		return databaseSquadEventDefinition;
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
-
-	4. This script is unnecessary.
-
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
-
-	5. Script Content Level 0
-
-		AssetRipper was set to not load any script information.
-
-	6. Cpp2IL failed to decompile Il2Cpp data
-
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	internal static DatabaseSquadEventDefinition CreateFromDatabase(JToken item)
+	{
+		DatabaseSquadEventDefinition databaseSquadEventDefinition = new DatabaseSquadEventDefinition();
+		int num = 0;
+		if (item["eventStart"] != null)
+		{
+			databaseSquadEventDefinition.eventStart = item["eventStart"].ToObject<int>();
+		}
+		if (item["eventEnd"] != null)
+		{
+			databaseSquadEventDefinition.eventEnd = item["eventEnd"].ToObject<int>();
+		}
+		if (item["tierCount"] != null)
+		{
+			databaseSquadEventDefinition.nTiers = item["tierCount"].ToObject<int>();
+		}
+		if (item["assignmentCount"] != null)
+		{
+			num = item["assignmentCount"].ToObject<int>();
+		}
+		databaseSquadEventDefinition.tiers = new List<EventTier>(databaseSquadEventDefinition.nTiers);
+		for (int i = 0; i < databaseSquadEventDefinition.nTiers; i++)
+		{
+			EventTier eventTier = new EventTier();
+			eventTier.nAssignments = num;
+			eventTier.reward = item["T" + i + "Reward"].ToObject<int>();
+			eventTier.assignmentIds = new List<int>(num);
+			EventTier eventTier2 = eventTier;
+			for (int j = 0; j < num; j++)
+			{
+				eventTier2.assignmentIds.Add(item["T" + i + "A" + j + "Id"].ToObject<int>());
+			}
+			databaseSquadEventDefinition.tiers.Add(eventTier2);
+		}
+		return databaseSquadEventDefinition;
+	}
 }

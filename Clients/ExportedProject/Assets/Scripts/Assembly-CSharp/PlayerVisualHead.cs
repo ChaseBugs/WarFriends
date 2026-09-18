@@ -1,63 +1,97 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
-public class PlayerVisualHead : MonoBehaviour
+[Serializable]
+public class PlayerVisualHead : PlayerVisual
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public enum HeadPart
+	{
+		Forhead = 1,
+		Eyes = 2,
+		Mouth = 4,
+		All = 16777215
+	}
 
-	1. No dll files were provided to AssetRipper.
+	[Serializable]
+	public class CamoTransform
+	{
+		public string camoName;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+		public Vector3 position;
 
-	2. Incorrect dll files were provided to AssetRipper.
+		public Quaternion rotation;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+		public Vector3 scale;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+		public static void SetTransform(GameObject gameObject, CamoTransform camoTransform)
+		{
+			if (camoTransform != null)
+			{
+				gameObject.transform.localPosition = camoTransform.position;
+				gameObject.transform.localRotation = camoTransform.rotation;
+				gameObject.transform.localScale = camoTransform.scale;
+			}
+			else
+			{
+				gameObject.transform.localPosition = Vector3.zero;
+				gameObject.transform.localRotation = Quaternion.identity;
+				gameObject.transform.localScale = Vector3.one;
+			}
+		}
+	}
 
-	3. Assembly Reconstruction has not been implemented.
+	public string path;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	[BitMask(typeof(HeadPart))]
+	public HeadPart headPart;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public List<CamoTransform> camoTransforms;
 
-	4. This script is unnecessary.
+	public Dictionary<string, CamoTransform> camoTransformDict;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public MeshRenderer mesh { get; private set; }
 
-	5. Script Content Level 0
+	public override void LoadPathsForEditor()
+	{
+		base.LoadPathsForEditor();
+	}
 
-		AssetRipper was set to not load any script information.
+	public override void Null()
+	{
+		base.Null();
+		mesh = null;
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public override void Load()
+	{
+		base.Load();
+		if (mesh == null && !string.IsNullOrEmpty(path))
+		{
+			GameObject gameObject = Resources.Load<GameObject>(path);
+			mesh = gameObject.GetComponent<MeshRenderer>();
+		}
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public override void ApplyVisual(ICharacter character, bool useHighRes = false)
+	{
+		base.ApplyVisual(character, useHighRes);
+		Load();
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	public override void Initialize()
+	{
+		base.Initialize();
+		camoTransformDict = new Dictionary<string, CamoTransform>();
+		foreach (CamoTransform camoTransform in camoTransforms)
+		{
+			string key = CamosManager.instance.playerVisualCategories[0].idPrefix + camoTransform.camoName;
+			camoTransformDict.Add(key, camoTransform);
+		}
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public MeshRenderer GetMesh()
+	{
+		return mesh;
+	}
 }

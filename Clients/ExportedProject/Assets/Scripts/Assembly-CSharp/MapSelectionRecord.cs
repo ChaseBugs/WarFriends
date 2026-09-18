@@ -1,63 +1,132 @@
 using UnityEngine;
 
-public class MapSelectionRecord : MonoBehaviour
+public class MapSelectionRecord : Core_BaseScript
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Header("Core")]
+	public UIPanel panel;
 
-	1. No dll files were provided to AssetRipper.
+	public BoxCollider mapCollider;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public GameObject mapAnimationParent;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	[Header("Look")]
+	public UISprite mapIconSprite;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public GameObject mapRandom;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public UILabel mapNameLabel;
 
-	3. Assembly Reconstruction has not been implemented.
+	public UISprite highlight;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	[Header("Locked")]
+	public GameObject lockedPart;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public UILabel lockedLevel;
 
-	4. This script is unnecessary.
+	[Header("Animation")]
+	public UISprite animationHighlight;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public UISprite animationOverlay;
 
-	5. Script Content Level 0
+	private MapManager.MapEntry mData;
 
-		AssetRipper was set to not load any script information.
+	public void InitializeMap(MapManager.MapEntry mapData)
+	{
+		mData = mapData;
+		bool flag = mapData == null;
+		mapIconSprite.gameObject.SetActive(!flag);
+		mapRandom.SetActive(flag);
+		if (!flag)
+		{
+			mapIconSprite.spriteName = mapData.iconName;
+		}
+		mapNameLabel.text = ((!flag) ? mapData.guiName : Localization.Localize("ID_RANDOMMAP"));
+		lockedLevel.text = ((!flag) ? MiscTools.FormatBigNumber(mapData.unlockLevel) : string.Empty);
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public void UpdateGui()
+	{
+		bool active = mData != null && mData.unlockLevel > LevelManager.instance.currentLevel.displayNumber;
+		lockedPart.SetActive(active);
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public void Selected(bool selected, bool animating = false)
+	{
+		if (animating)
+		{
+			Vector3 vector = new Vector3(366f, 134f, 1f);
+			Vector3 vector2 = new Vector3(vector.x * 1.3f, vector.y * 1.05f, vector.z);
+			TweenColor.Begin(mapNameLabel.gameObject, 0.15f, (!selected) ? Color.white : Colours.blue);
+			if (selected)
+			{
+				TweenAlpha.Begin(animationHighlight.gameObject, 0.15f, 1f);
+				animationHighlight.transform.localScale = vector2;
+				TweenScale tweenScale = TweenScale.Begin(animationHighlight.gameObject, 0.3f, vector2, vector);
+				tweenScale.onFinished = delegate
+				{
+					highlight.gameObject.SetActive(value: true);
+					TweenAlpha component3 = animationHighlight.GetComponent<TweenAlpha>();
+					if (component3 != null)
+					{
+						component3.enabled = false;
+					}
+					animationHighlight.alpha = 0f;
+				};
+				TweenAlpha.Begin(animationOverlay.gameObject, 0.15f, 0.6f, 0f);
+			}
+			else
+			{
+				highlight.gameObject.SetActive(value: false);
+				animationHighlight.alpha = 1f;
+				animationHighlight.transform.localScale = vector;
+				TweenAlpha.Begin(animationHighlight.gameObject, 0.15f, 1f, 0f);
+				TweenAlpha.Begin(animationOverlay.gameObject, 0.15f, 0f);
+				TweenScale tweenScale2 = TweenScale.Begin(animationHighlight.gameObject, 0.3f, vector, vector2);
+				tweenScale2.onFinished = null;
+			}
+		}
+		else
+		{
+			TweenColor component = mapNameLabel.GetComponent<TweenColor>();
+			if (component != null)
+			{
+				component.enabled = false;
+			}
+			highlight.gameObject.SetActive(selected);
+			mapNameLabel.color = ((!selected) ? Color.white : Colours.blue);
+			TweenAlpha component2 = animationHighlight.GetComponent<TweenAlpha>();
+			if (component2 != null)
+			{
+				component2.enabled = false;
+			}
+			component2 = animationOverlay.GetComponent<TweenAlpha>();
+			if (component2 != null)
+			{
+				component2.enabled = false;
+			}
+			animationHighlight.alpha = 0f;
+			animationOverlay.alpha = 0f;
+		}
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	public MapManager.MapEntry GetMap()
+	{
+		return mData;
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	public void SetHide()
+	{
+		mapAnimationParent.transform.localPosition = mapAnimationParent.transform.localPosition.ReplaceY(136f);
+	}
 
-	*/
+	public void SetOpened()
+	{
+		mapAnimationParent.transform.localPosition = mapAnimationParent.transform.localPosition.ReplaceY(0f);
+	}
+
+	public void SetPosition(float posY)
+	{
+		posY = Mathf.Clamp(posY, 0f, 136f);
+		mapAnimationParent.transform.localPosition = mapAnimationParent.transform.localPosition.ReplaceY(posY);
+	}
 }

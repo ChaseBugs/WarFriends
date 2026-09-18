@@ -1,63 +1,163 @@
+using System;
 using UnityEngine;
 
-public class WelcomeBackSoldierDialog : MonoBehaviour
+public class WelcomeBackSoldierDialog : GuiElementSingle<WelcomeBackSoldierDialog>, IGuiDialog
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public enum WelcomeBackRewardType
+	{
+		Gold,
+		Cards,
+		Warbucks,
+		VIP
+	}
 
-	1. No dll files were provided to AssetRipper.
+	[Header("Box1")]
+	public UISprite box1Ico;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public UILabel box1Label;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public GameObject box1CardsHolder;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	[Header("Box2")]
+	public UISprite box2Ico;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public UILabel box2Label;
 
-	3. Assembly Reconstruction has not been implemented.
+	public GameObject box2CardsHolder;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	[Header("Bottom")]
+	public UIButton buttonThanks;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	private bool mIsBox1;
 
-	4. This script is unnecessary.
+	private WelcomeBackRewardType mBox1Type;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private int mBox1Amount;
 
-	5. Script Content Level 0
+	private bool mIsBox2;
 
-		AssetRipper was set to not load any script information.
+	private WelcomeBackRewardType mBox2Type;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	private int mBox2Amount;
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public void ShowDialog(Tuple<WelcomeBackRewardType, int> box1, Tuple<WelcomeBackRewardType, int> box2)
+	{
+		mIsBox1 = box1 != null;
+		if (mIsBox1)
+		{
+			mBox1Type = box1.Value1;
+			mBox1Amount = box1.Value2;
+		}
+		mIsBox2 = box2 != null;
+		if (mIsBox2)
+		{
+			mBox2Type = box2.Value1;
+			mBox2Amount = box2.Value2;
+		}
+		Singleton<GuiManager>.instance.ShowDialog(this, 0f);
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	public override void InitControls()
+	{
+		UIEventListener uIEventListener = UIEventListener.Get(buttonThanks.gameObject);
+		uIEventListener.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener.onClick, new UIEventListener.VoidDelegate(CloseDialog));
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	private void CloseDialog(GameObject go)
+	{
+		if (base.isFullyShowed)
+		{
+			HideDialog();
+		}
+	}
 
-	*/
+	public override void InitGUIValues()
+	{
+		box1Ico.transform.parent.gameObject.SetActive(mIsBox1);
+		if (mIsBox1)
+		{
+			box1Label.text = GetBoxDescription(mBox1Type, mBox1Amount);
+			MiscTools.SetUILabelRescale(box1Label, 41f, 20f, 200);
+			SetIcon(box1Ico, mBox1Type, box1CardsHolder);
+		}
+		box2Ico.transform.parent.gameObject.SetActive(mIsBox2);
+		if (mIsBox2)
+		{
+			box2Label.text = GetBoxDescription(mBox2Type, mBox2Amount);
+			MiscTools.SetUILabelRescale(box2Label, 41f, 20f, 200);
+			SetIcon(box2Ico, mBox2Type, box2CardsHolder);
+		}
+		if (box1Ico.transform.parent.gameObject.activeSelf && box2Ico.transform.parent.gameObject.activeSelf)
+		{
+			if (box1Label.transform.localScale.y < box2Label.transform.localScale.y)
+			{
+				box2Label.transform.localScale = box1Label.transform.localScale;
+				box2Label.transform.localPosition = box1Label.transform.localPosition;
+			}
+			else if (box1Label.transform.localScale.y > box2Label.transform.localScale.y)
+			{
+				box1Label.transform.localScale = box2Label.transform.localScale;
+				box1Label.transform.localPosition = box2Label.transform.localPosition;
+			}
+		}
+	}
+
+	private void SetIcon(UISprite sprite, WelcomeBackRewardType type, GameObject cardsHolder)
+	{
+		switch (type)
+		{
+		case WelcomeBackRewardType.Cards:
+			sprite.enabled = false;
+			cardsHolder.SetActive(value: true);
+			break;
+		case WelcomeBackRewardType.Gold:
+			cardsHolder.SetActive(value: false);
+			sprite.spriteName = "menu-gold";
+			sprite.MakePixelPerfect();
+			sprite.transform.localScale = sprite.transform.localScale.MultiplyXY(0.33f);
+			break;
+		case WelcomeBackRewardType.Warbucks:
+			cardsHolder.SetActive(value: false);
+			sprite.spriteName = "menu-warbucks";
+			sprite.MakePixelPerfect();
+			sprite.transform.localScale = sprite.transform.localScale.MultiplyXY(0.6f);
+			break;
+		case WelcomeBackRewardType.VIP:
+			cardsHolder.SetActive(value: false);
+			sprite.spriteName = "menu-hub-multiplayer-vipico";
+			sprite.MakePixelPerfect();
+			sprite.transform.localScale = sprite.transform.localScale.MultiplyXY(0.4f);
+			sprite.transform.localPosition = sprite.transform.localPosition.AddY(3f);
+			break;
+		}
+	}
+
+	private string GetBoxDescription(WelcomeBackRewardType type, int ammount)
+	{
+		switch (type)
+		{
+		case WelcomeBackRewardType.Cards:
+			return Localization.LocalizeFormat("ID_X_CARDS", Colours.stringYellow, ammount);
+		case WelcomeBackRewardType.Gold:
+			return $"{Colours.stringGoldOld}{MiscTools.FormatBigNumber(ammount)}";
+		case WelcomeBackRewardType.Warbucks:
+			return $"{Colours.stringGreenWarbucks}{MiscTools.FormatBigNumber(ammount)}";
+		case WelcomeBackRewardType.VIP:
+			ammount /= 86400;
+			Debug.Log("Vip days = " + ammount);
+			return Localization.LocalizeFormat((ammount <= 1) ? "ID_VIP_DAY" : "ID_VIP_DAYS", Colours.stringGoldTier, ammount);
+		default:
+			return string.Empty;
+		}
+	}
+
+	public GuiElement GetGuiElement()
+	{
+		return this;
+	}
+
+	public override void OnBack()
+	{
+		CloseDialog(buttonThanks.gameObject);
+	}
 }

@@ -1,63 +1,306 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
+using tk2dRuntime;
 
+[AddComponentMenu("2D Toolkit/Backend/tk2dSpriteCollectionData")]
 public class tk2dSpriteCollectionData : MonoBehaviour
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public const int CURRENT_VERSION = 3;
 
-	1. No dll files were provided to AssetRipper.
+	public int version;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public bool materialIdsValid;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public bool needMaterialInstance;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public tk2dSpriteDefinition[] spriteDefinitions;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	private Dictionary<string, int> spriteNameLookupDict;
 
-	3. Assembly Reconstruction has not been implemented.
+	public bool premultipliedAlpha;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public Material material;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public Material[] materials;
 
-	4. This script is unnecessary.
+	[NonSerialized]
+	public Material[] materialInsts;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public Texture[] textures;
 
-	5. Script Content Level 0
+	public bool allowMultipleAtlases;
 
-		AssetRipper was set to not load any script information.
+	public string spriteCollectionGUID;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public string spriteCollectionName;
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public string assetName = string.Empty;
 
-	7. An incorrect path was provided to AssetRipper.
+	public bool loadable;
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	public float invOrthoSize = 1f;
 
-	*/
+	public float halfTargetHeight = 1f;
+
+	public int buildKey;
+
+	public string dataGuid = string.Empty;
+
+	public bool managedSpriteCollection;
+
+	public bool hasPlatformData;
+
+	public string[] spriteCollectionPlatforms;
+
+	public string[] spriteCollectionPlatformGUIDs;
+
+	private tk2dSpriteCollectionData platformSpecificData;
+
+	public bool Transient { get; set; }
+
+	public int Count => inst.spriteDefinitions.Length;
+
+	public tk2dSpriteDefinition FirstValidDefinition
+	{
+		get
+		{
+			tk2dSpriteDefinition[] array = inst.spriteDefinitions;
+			foreach (tk2dSpriteDefinition tk2dSpriteDefinition2 in array)
+			{
+				if (tk2dSpriteDefinition2.Valid)
+				{
+					return tk2dSpriteDefinition2;
+				}
+			}
+			return null;
+		}
+	}
+
+	public int FirstValidDefinitionIndex
+	{
+		get
+		{
+			tk2dSpriteCollectionData tk2dSpriteCollectionData2 = inst;
+			for (int i = 0; i < tk2dSpriteCollectionData2.spriteDefinitions.Length; i++)
+			{
+				if (tk2dSpriteCollectionData2.spriteDefinitions[i].Valid)
+				{
+					return i;
+				}
+			}
+			return -1;
+		}
+	}
+
+	public tk2dSpriteCollectionData inst
+	{
+		get
+		{
+			if (platformSpecificData == null)
+			{
+				if (hasPlatformData)
+				{
+					string currentPlatform = tk2dSystem.CurrentPlatform;
+					string text = string.Empty;
+					for (int i = 0; i < spriteCollectionPlatforms.Length; i++)
+					{
+						if (spriteCollectionPlatforms[i] == currentPlatform)
+						{
+							text = spriteCollectionPlatformGUIDs[i];
+							break;
+						}
+					}
+					if (text.Length == 0)
+					{
+						text = spriteCollectionPlatformGUIDs[0];
+					}
+					platformSpecificData = tk2dSystem.LoadResourceByGUID<tk2dSpriteCollectionData>(text);
+				}
+				else
+				{
+					platformSpecificData = this;
+				}
+			}
+			platformSpecificData.Init();
+			return platformSpecificData;
+		}
+	}
+
+	public int GetSpriteIdByName(string name)
+	{
+		return GetSpriteIdByName(name, 0);
+	}
+
+	public int GetSpriteIdByName(string name, int defaultValue)
+	{
+		inst.InitDictionary();
+		int value = defaultValue;
+		if (!inst.spriteNameLookupDict.TryGetValue(name, out value))
+		{
+			return defaultValue;
+		}
+		return value;
+	}
+
+	public tk2dSpriteDefinition GetSpriteDefinition(string name)
+	{
+		int spriteIdByName = GetSpriteIdByName(name, -1);
+		if (spriteIdByName == -1)
+		{
+			return null;
+		}
+		return spriteDefinitions[spriteIdByName];
+	}
+
+	public void InitDictionary()
+	{
+		if (spriteNameLookupDict == null)
+		{
+			spriteNameLookupDict = new Dictionary<string, int>(spriteDefinitions.Length);
+			for (int i = 0; i < spriteDefinitions.Length; i++)
+			{
+				spriteNameLookupDict[spriteDefinitions[i].name] = i;
+			}
+		}
+	}
+
+	public bool IsValidSpriteId(int id)
+	{
+		if (id < 0 || id >= inst.spriteDefinitions.Length)
+		{
+			return false;
+		}
+		return inst.spriteDefinitions[id].Valid;
+	}
+
+	public void InitMaterialIds()
+	{
+		if (inst.materialIdsValid)
+		{
+			return;
+		}
+		int num = -1;
+		Dictionary<Material, int> dictionary = new Dictionary<Material, int>();
+		for (int i = 0; i < inst.materials.Length; i++)
+		{
+			if (num == -1 && inst.materials[i] != null)
+			{
+				num = i;
+			}
+			dictionary[materials[i]] = i;
+		}
+		if (num == -1)
+		{
+			Debug.LogError("Init material ids failed.");
+			return;
+		}
+		tk2dSpriteDefinition[] array = inst.spriteDefinitions;
+		foreach (tk2dSpriteDefinition tk2dSpriteDefinition2 in array)
+		{
+			if (!dictionary.TryGetValue(tk2dSpriteDefinition2.material, out tk2dSpriteDefinition2.materialId))
+			{
+				tk2dSpriteDefinition2.materialId = num;
+			}
+		}
+		inst.materialIdsValid = true;
+	}
+
+	private void Init()
+	{
+		if (materialInsts != null)
+		{
+			return;
+		}
+		if (spriteDefinitions == null)
+		{
+			spriteDefinitions = new tk2dSpriteDefinition[0];
+		}
+		if (materials == null)
+		{
+			materials = new Material[0];
+		}
+		materialInsts = new Material[materials.Length];
+		if (needMaterialInstance)
+		{
+			if (tk2dSystem.OverrideBuildMaterial)
+			{
+				for (int i = 0; i < materials.Length; i++)
+				{
+					materialInsts[i] = new Material(Shader.Find("tk2d/BlendVertexColor"));
+				}
+			}
+			else
+			{
+				for (int j = 0; j < materials.Length; j++)
+				{
+					materialInsts[j] = UnityEngine.Object.Instantiate(materials[j]);
+				}
+			}
+			for (int k = 0; k < spriteDefinitions.Length; k++)
+			{
+				tk2dSpriteDefinition tk2dSpriteDefinition2 = spriteDefinitions[k];
+				tk2dSpriteDefinition2.materialInst = materialInsts[tk2dSpriteDefinition2.materialId];
+			}
+		}
+		else
+		{
+			for (int l = 0; l < spriteDefinitions.Length; l++)
+			{
+				tk2dSpriteDefinition tk2dSpriteDefinition3 = spriteDefinitions[l];
+				tk2dSpriteDefinition3.materialInst = tk2dSpriteDefinition3.material;
+			}
+		}
+	}
+
+	public static tk2dSpriteCollectionData CreateFromTexture(Texture texture, tk2dSpriteCollectionSize size, string[] names, Rect[] regions, Vector2[] anchors)
+	{
+		return SpriteCollectionGenerator.CreateFromTexture(texture, size, names, regions, anchors);
+	}
+
+	public static tk2dSpriteCollectionData CreateFromTexturePacker(tk2dSpriteCollectionSize size, string texturePackerData, Texture texture)
+	{
+		return SpriteCollectionGenerator.CreateFromTexturePacker(size, texturePackerData, texture);
+	}
+
+	public void ResetPlatformData()
+	{
+		if (hasPlatformData && (bool)platformSpecificData)
+		{
+			platformSpecificData = null;
+		}
+		materialInsts = null;
+	}
+
+	public void UnloadTextures()
+	{
+		tk2dSpriteCollectionData tk2dSpriteCollectionData2 = inst;
+		Texture[] array = tk2dSpriteCollectionData2.textures;
+		for (int i = 0; i < array.Length; i++)
+		{
+			Texture2D assetToUnload = (Texture2D)array[i];
+			Resources.UnloadAsset(assetToUnload);
+		}
+	}
+
+	private void OnDestroy()
+	{
+		if (Transient)
+		{
+			Material[] array = materials;
+			foreach (Material obj in array)
+			{
+				UnityEngine.Object.DestroyImmediate(obj);
+			}
+		}
+		else if (needMaterialInstance)
+		{
+			Material[] array2 = materialInsts;
+			foreach (Material obj2 in array2)
+			{
+				UnityEngine.Object.DestroyImmediate(obj2);
+			}
+		}
+		ResetPlatformData();
+	}
 }

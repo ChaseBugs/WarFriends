@@ -1,63 +1,320 @@
+using System;
+using System.Collections.Generic;
+using Google2u;
 using UnityEngine;
 
-public class HeaderLeagueButton : MonoBehaviour
+public class HeaderLeagueButton : GuiElementSingle<HeaderLeagueButton>
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Header("Core")]
+	public GameObject parentObject;
 
-	1. No dll files were provided to AssetRipper.
+	[Header("League Arc")]
+	public LeagueArcGuiElement leagueArc;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	[Header("Hints")]
+	public GameObject hintsPart;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public UILabel hintFirstLineLabel;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public UITable hintsSecondLineTable;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public UILabel hintsSecondLineFirstLabel;
 
-	3. Assembly Reconstruction has not been implemented.
+	public UILabel hintsSecondLineLastLabel;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	private int mWidthForHints = 237;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	private bool mGameEnded;
 
-	4. This script is unnecessary.
+	public override void InitEvents()
+	{
+		base.InitEvents();
+		leagueArc.InitEvents();
+		Singleton<GameController>.instance.GameEnded += OnGameEnded;
+		Singleton<BeanstalkServerManager>.instance.DataLoaded += OnDataLoaded;
+		ServerResultsCache serverResultsCache = Singleton<ServerResultsCache>.instance;
+		serverResultsCache.PlayerLeagueProcessingChanged = (Action)Delegate.Combine(serverResultsCache.PlayerLeagueProcessingChanged, new Action(OnPlayerLeagueProcessingChanged));
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private void OnGameEnded(GameController.GameEndReason endReason)
+	{
+		mGameEnded = true;
+	}
 
-	5. Script Content Level 0
+	private void OnDataLoaded(DatabaseAction action)
+	{
+		if (isShowed)
+		{
+			if (action == DatabaseAction.DebugChangeLeague || action == DatabaseAction.DebugChangeDivision || action == DatabaseAction.DebugChangeMedals)
+			{
+				InitGuiValues();
+			}
+		}
+	}
 
-		AssetRipper was set to not load any script information.
+	private void OnPlayerLeagueProcessingChanged()
+	{
+		if (isShowed)
+		{
+			InitializeHints();
+		}
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public override void InitControls()
+	{
+		mWidthForHints = (int)UIRoot.list[0].activeWidth - 1683;
+		UIEventListener uIEventListener = UIEventListener.Get(leagueArc.boxCollider.gameObject);
+		uIEventListener.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener.onClick, new UIEventListener.VoidDelegate(MedalsClicked));
+		LeagueArcManager.instance.SorterPlayersLeague += OnSorterPlayersLeague;
+		leagueArc.InitControls();
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	private void MedalsClicked(GameObject go)
+	{
+		if (GuiScreenSingle<LeaguesScreen>.instance.isShowed)
+		{
+			SoundsManager.Instance.PlayButtonClickedSound();
+			GuiScreenSingle<LeaguesScreen>.instance.ShowPlayerLeague();
+		}
+		else if (!GuiScreenSingle<CardSelectionScreen>.instance.isShowed && !Singleton<GameController>.instance.isTutorial && !GuiScreenSingle<EndScreen>.instance.canShowLvlUp)
+		{
+			DialogManager.instance.HideAllDialogs();
+			SoundsManager.Instance.PlayButtonClickedSound();
+			bool flag = GuiScreenSingle<EndScreen>.instance.isShowed;
+			GuiScreenSingle<LeaguesScreen>.instance.ShowPlayerLeague();
+			if (flag)
+			{
+				GuiScreenSingle<LeaguesScreen>.instance.previousScreen = GuiScreenSingle<MainScreen>.instance;
+			}
+		}
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	private void OnSorterPlayersLeague(int myPosition, List<DatabasePlayer> databasePlayers)
+	{
+		if (base.gameObject.activeSelf && base.gameObject.activeInHierarchy && (!GuiScreenSingle<EndScreen>.instance.isShowed || GuiScreenSingle<EndScreen>.instance.results.leagueArc.gameObject.activeInHierarchy))
+		{
+			InitializeHintInLeague(myPosition, databasePlayers);
+		}
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	public override void InitGUIValues()
+	{
+		if (!mGameEnded)
+		{
+			InitGuiValues();
+		}
+		else if (!Singleton<GameController>.instance.isTutorial)
+		{
+			InitializeTo(LeagueArcManager.instance.GetPreviousData(), LeagueArcManager.instance.GetPreviousPlayers());
+		}
+		parentObject.SetActive(!Singleton<GameController>.instance.isTutorial);
+		mGameEnded = false;
+	}
 
-	*/
+	public void InitGuiValues()
+	{
+		InitializeHints();
+		leagueArc.InitGuiValues();
+	}
+
+	private void InitializeHints()
+	{
+		if (!Singleton<BeanstalkServerManager>.instance.isPlayerDataLoaded)
+		{
+			InitializeHintEmpty();
+		}
+		else if (LevelManager.instance.isMainScreenPartsLocked)
+		{
+			InitializeHintEmpty();
+		}
+		else if (GameLoginManager.currentPlayer.isInBeginnersLeague)
+		{
+			InitializeHintEmpty();
+		}
+		else if (Singleton<ServerResultsCache>.instance.isPlayerLeagueProcessing)
+		{
+			InitializeHintProcessing();
+		}
+		else if (GameLoginManager.currentPlayer.isInLeague)
+		{
+			InitializeHintEmpty();
+		}
+		else
+		{
+			InitializeHintNotInLeague();
+		}
+		hintsPart.transform.localPosition = hintsPart.transform.localPosition.ReplaceY(4f);
+		TweenPosition component = hintsPart.GetComponent<TweenPosition>();
+		if (component != null)
+		{
+			component.enabled = false;
+		}
+	}
+
+	public void InitializeTo(LeagueArcData data, List<DatabasePlayer> databasePlayers, bool onlyHints = false)
+	{
+		if (onlyHints)
+		{
+			leagueArc.StopAnimations();
+			leagueArc.InitializeTo(data);
+		}
+		if (data.isBeginnersLeague)
+		{
+			InitializeHintEmpty();
+		}
+		else if (data.isLeagueProcessing)
+		{
+			InitializeHintProcessing();
+		}
+		else if (data.isInLeague)
+		{
+			if (databasePlayers == null)
+			{
+				databasePlayers = new List<DatabasePlayer>();
+				databasePlayers.Add(GameLoginManager.currentPlayer);
+			}
+			int myPosition = databasePlayers.FindIndex((DatabasePlayer p1) => p1.id == GameLoginManager.currentPlayer.id) + 1;
+			InitializeHintInLeague(myPosition, databasePlayers);
+		}
+		else
+		{
+			InitializeHintNotInLeague();
+		}
+	}
+
+	public void AnimateHint()
+	{
+		Vector3 pos = hintsPart.transform.localPosition.ReplaceY(120f);
+		TweenPosition.Begin(hintsPart, 0.5f, pos).onFinished = delegate
+		{
+			if (LeagueArcManager.instance.GetWasDataUpdated())
+			{
+				InitializeTo(LeagueArcManager.instance.GetCurrentData(), LeagueArcManager.instance.GetCurrentPlayers(), onlyHints: true);
+			}
+			else
+			{
+				InitializeHintEmpty();
+			}
+			Vector3 pos2 = hintsPart.transform.localPosition.ReplaceY(4f);
+			TweenPosition.Begin(hintsPart, 0.5f, pos2).onFinished = null;
+		};
+	}
+
+	private void InitializeHintEmpty()
+	{
+		hintFirstLineLabel.text = string.Empty;
+		hintFirstLineLabel.transform.localPosition = hintFirstLineLabel.transform.localPosition.ReplaceY(0f);
+		hintsSecondLineTable.gameObject.SetActive(value: false);
+		RescaleHintsAndRepositThem();
+	}
+
+	private void InitializeHintProcessing()
+	{
+		hintFirstLineLabel.text = Localization.Localize("ID_PLAYERLEAGUEPROCESSING");
+		hintFirstLineLabel.transform.localPosition = hintFirstLineLabel.transform.localPosition.ReplaceY(0f);
+		hintsSecondLineTable.gameObject.SetActive(value: false);
+		RescaleHintsAndRepositThem();
+	}
+
+	private void InitializeHintNotInLeague()
+	{
+		hintFirstLineLabel.text = Localization.Localize("ID_PLAYPVPBATTLETOENTERLEAGUE");
+		hintFirstLineLabel.transform.localPosition = hintFirstLineLabel.transform.localPosition.ReplaceY(0f);
+		hintsSecondLineTable.gameObject.SetActive(value: false);
+		RescaleHintsAndRepositThem();
+	}
+
+	private void InitializeHintInLeague(int myPosition, List<DatabasePlayer> databasePlayers)
+	{
+		League leagueTier = GameLoginManager.currentPlayer.leagueTier;
+		int count = databasePlayers.Count;
+		int num = Singleton<GameVariables>.instance.LeaguePositionPromote(count, leagueTier);
+		int num2 = Singleton<GameVariables>.instance.LeaguePositionDemote(count, leagueTier);
+		bool flag = count > (int)(float)Singleton<GameVariables>.instance.constants.GetRow(Constants.rowIds.NotEnoughPlayersForPlayerLeague).FLOATVALUE;
+		LeagueType leagueType = Singleton<GameVariables>.instance.LeaguePositionType(!flag, leagueTier, myPosition, num, num2);
+		int medalsBalance = databasePlayers[myPosition - 1].medalsBalance;
+		if (!flag)
+		{
+			if (myPosition == 1)
+			{
+				hintFirstLineLabel.text = Localization.Localize("ID_KEEPITUPYOUARENUMBERONE");
+				hintFirstLineLabel.transform.localPosition = hintFirstLineLabel.transform.localPosition.ReplaceY(0f);
+				hintsSecondLineTable.gameObject.SetActive(value: false);
+			}
+			else
+			{
+				int num3 = databasePlayers[0].medalsBalance - medalsBalance + 1;
+				hintFirstLineLabel.text = Localization.Localize("ID_TOBENUMBERONE1");
+				hintFirstLineLabel.transform.localPosition = hintFirstLineLabel.transform.localPosition.ReplaceY(22f);
+				hintsSecondLineTable.gameObject.SetActive(value: true);
+				hintsSecondLineFirstLabel.text = Localization.Localize("ID_TOBENUMBERONE2");
+				hintsSecondLineLastLabel.text = MiscTools.FormatMedalsDifference(num3);
+			}
+		}
+		else if (myPosition == 1)
+		{
+			hintFirstLineLabel.text = Localization.Localize("ID_KEEPITUPYOUARENUMBERONE");
+			hintFirstLineLabel.transform.localPosition = hintFirstLineLabel.transform.localPosition.ReplaceY(0f);
+			hintsSecondLineTable.gameObject.SetActive(value: false);
+		}
+		else
+		{
+			switch (leagueType)
+			{
+			case LeagueType.Promote:
+			case LeagueType.Top:
+			{
+				int num6 = databasePlayers[0].medalsBalance - medalsBalance + 1;
+				hintFirstLineLabel.text = Localization.Localize("ID_TOBENUMBERONE1");
+				hintFirstLineLabel.transform.localPosition = hintFirstLineLabel.transform.localPosition.ReplaceY(22f);
+				hintsSecondLineTable.gameObject.SetActive(value: true);
+				hintsSecondLineFirstLabel.text = Localization.Localize("ID_TOBENUMBERONE2");
+				hintsSecondLineLastLabel.text = MiscTools.FormatMedalsDifference(num6);
+				break;
+			}
+			case LeagueType.Stay:
+			{
+				int num5 = databasePlayers[num - 1].medalsBalance - medalsBalance + 1;
+				hintFirstLineLabel.text = Localization.Localize("ID_GETAPROMOTION1");
+				hintFirstLineLabel.transform.localPosition = hintFirstLineLabel.transform.localPosition.ReplaceY(22f);
+				hintsSecondLineTable.gameObject.SetActive(value: true);
+				hintsSecondLineFirstLabel.text = Localization.Localize("ID_GETAPROMOTION2");
+				hintsSecondLineLastLabel.text = MiscTools.FormatMedalsDifference(num5);
+				break;
+			}
+			default:
+			{
+				int num4 = databasePlayers[num2 - 2].medalsBalance - medalsBalance + 1;
+				hintFirstLineLabel.text = Localization.Localize("ID_AVOIDRELEGATION1");
+				hintFirstLineLabel.transform.localPosition = hintFirstLineLabel.transform.localPosition.ReplaceY(22f);
+				hintsSecondLineTable.gameObject.SetActive(value: true);
+				hintsSecondLineFirstLabel.text = Localization.Localize("ID_AVOIDRELEGATION2");
+				hintsSecondLineLastLabel.text = MiscTools.FormatMedalsDifference(num4);
+				break;
+			}
+			}
+		}
+		RescaleHintsAndRepositThem();
+	}
+
+	private void RescaleHintsAndRepositThem()
+	{
+		if (hintsSecondLineTable.gameObject.activeSelf)
+		{
+			int num = 52;
+			float num2 = hintFirstLineLabel.relativeSize.x * hintFirstLineLabel.transform.localScale.x;
+			float num3 = hintsSecondLineFirstLabel.relativeSize.x * hintsSecondLineFirstLabel.transform.localScale.x + hintsSecondLineLastLabel.relativeSize.x * hintsSecondLineLastLabel.transform.localScale.x;
+			float a = (float)mWidthForHints / num2;
+			float b = (float)(mWidthForHints - num) / num3;
+			float defaultHeight = Mathf.Clamp(Mathf.Min(a, b), 20f, 30f);
+			MiscTools.SetUILabelRescale(hintFirstLineLabel, defaultHeight, 20f, mWidthForHints);
+			MiscTools.SetUILabelRescale(hintsSecondLineFirstLabel, defaultHeight, 20f, mWidthForHints);
+			MiscTools.SetUILabelRescale(hintsSecondLineLastLabel, defaultHeight, 20f, mWidthForHints);
+			hintsSecondLineTable.repositionNow = true;
+		}
+		else
+		{
+			MiscTools.SetUILabelRescale(hintFirstLineLabel, 30f, 20f, mWidthForHints);
+		}
+	}
 }

@@ -1,63 +1,51 @@
+using System;
 using UnityEngine;
 
-public class PhotonTransformViewPositionModel : MonoBehaviour
+[Serializable]
+public class PhotonTransformViewPositionModel
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public enum InterpolateOptions
+	{
+		Disabled,
+		FixedSpeed,
+		EstimatedSpeed,
+		SynchronizeValues,
+		Lerp
+	}
 
-	1. No dll files were provided to AssetRipper.
+	public enum ExtrapolateOptions
+	{
+		Disabled,
+		SynchronizeValues,
+		EstimateSpeedAndTurn,
+		FixedSpeed
+	}
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public bool SynchronizeEnabled;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public bool TeleportEnabled = true;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public float TeleportIfDistanceGreaterThan = 3f;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public InterpolateOptions InterpolateOption = InterpolateOptions.EstimatedSpeed;
 
-	3. Assembly Reconstruction has not been implemented.
+	public float InterpolateMoveTowardsSpeed = 1f;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public float InterpolateLerpSpeed = 1f;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public float InterpolateMoveTowardsAcceleration = 2f;
 
-	4. This script is unnecessary.
+	public float InterpolateMoveTowardsDeceleration = 2f;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public AnimationCurve InterpolateSpeedCurve = new AnimationCurve(new Keyframe(-1f, 0f, 0f, float.PositiveInfinity), new Keyframe(0f, 1f, 0f, 0f), new Keyframe(1f, 1f, 0f, 1f), new Keyframe(4f, 4f, 1f, 0f));
 
-	5. Script Content Level 0
+	public ExtrapolateOptions ExtrapolateOption;
 
-		AssetRipper was set to not load any script information.
+	public float ExtrapolateSpeed = 1f;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public bool ExtrapolateIncludingRoundTripTime = true;
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public int ExtrapolateNumberOfStoredPositions = 1;
 
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public bool DrawErrorGizmo = true;
 }

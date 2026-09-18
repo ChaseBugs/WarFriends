@@ -2,62 +2,669 @@ using UnityEngine;
 
 public class CameraPathAnimator : MonoBehaviour
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public enum animationModes
+	{
+		once,
+		loop,
+		reverse,
+		reverseLoop,
+		pingPong
+	}
 
-	1. No dll files were provided to AssetRipper.
+	public enum orientationModes
+	{
+		custom,
+		target,
+		mouselook,
+		followpath,
+		reverseFollowpath,
+		followTransform,
+		twoDimentions,
+		fixedOrientation,
+		none
+	}
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public delegate void AnimationStartedEventHandler();
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public delegate void AnimationPausedEventHandler();
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public delegate void AnimationStoppedEventHandler();
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public delegate void AnimationFinishedEventHandler();
 
-	3. Assembly Reconstruction has not been implemented.
+	public delegate void AnimationLoopedEventHandler();
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public delegate void AnimationPingPongEventHandler();
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public delegate void AnimationPointReachedEventHandler();
 
-	4. This script is unnecessary.
+	public delegate void AnimationCustomEventHandler(string eventName);
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public delegate void AnimationPointReachedWithNumberEventHandler(int pointNumber);
 
-	5. Script Content Level 0
+	public float MINIMUM_CAMERA_SPEED = 0.01f;
 
-		AssetRipper was set to not load any script information.
+	public Transform orientationTarget;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	[SerializeField]
+	private CameraPath _cameraPath;
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public bool playOnStart = true;
 
-	7. An incorrect path was provided to AssetRipper.
+	public Transform animationObject;
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	private Camera animationObjectCamera;
 
-	*/
+	private bool _isCamera = true;
+
+	private bool _playing;
+
+	public animationModes animationMode;
+
+	public orientationModes orientationMode;
+
+	private float pingPongDirection = 1f;
+
+	public Vector3 fixedOrientaion = Vector3.forward;
+
+	public bool normalised = true;
+
+	public float editorPercentage;
+
+	[SerializeField]
+	private float _pathTime = 10f;
+
+	[SerializeField]
+	private float _pathSpeed = 10f;
+
+	private float _percentage;
+
+	private float _lastPercentage;
+
+	public float nearestOffset;
+
+	private float delayTime;
+
+	public float sensitivity = 5f;
+
+	public float minX = -90f;
+
+	public float maxX = 90f;
+
+	private float rotationX;
+
+	private float rotationY;
+
+	public bool showPreview = true;
+
+	public GameObject editorPreview;
+
+	public bool showScenePreview = true;
+
+	private bool _animateSceneObjectInEditor;
+
+	public Vector3 animatedObjectStartPosition;
+
+	public Quaternion animatedObjectStartRotation;
+
+	public float pathSpeed
+	{
+		get
+		{
+			return _pathSpeed;
+		}
+		set
+		{
+			if (_cameraPath.speedList.listEnabled)
+			{
+				Debug.LogWarning("Path Speed in Animator component is ignored and overridden by Camera Path speed points.");
+			}
+			_pathSpeed = Mathf.Max(value, MINIMUM_CAMERA_SPEED);
+		}
+	}
+
+	public float currentTime => _pathTime * _percentage;
+
+	public bool isPlaying => _playing;
+
+	public float percentage => _percentage;
+
+	public bool pingPongGoingForward => pingPongDirection == 1f;
+
+	public CameraPath cameraPath
+	{
+		get
+		{
+			if (!_cameraPath)
+			{
+				_cameraPath = GetComponent<CameraPath>();
+			}
+			return _cameraPath;
+		}
+	}
+
+	private bool isReversed => animationMode == animationModes.reverse || animationMode == animationModes.reverseLoop || pingPongDirection < 0f;
+
+	public bool isCamera
+	{
+		get
+		{
+			if (animationObject == null)
+			{
+				_isCamera = false;
+			}
+			else
+			{
+				_isCamera = animationObjectCamera != null;
+			}
+			return _isCamera;
+		}
+	}
+
+	public bool animateSceneObjectInEditor
+	{
+		get
+		{
+			return _animateSceneObjectInEditor;
+		}
+		set
+		{
+			if (value != _animateSceneObjectInEditor)
+			{
+				_animateSceneObjectInEditor = value;
+				if (animationObject != null)
+				{
+					if (_animateSceneObjectInEditor)
+					{
+						animatedObjectStartPosition = animationObject.transform.position;
+						animatedObjectStartRotation = animationObject.transform.rotation;
+					}
+					else
+					{
+						animationObject.transform.position = animatedObjectStartPosition;
+						animationObject.transform.rotation = animatedObjectStartRotation;
+					}
+				}
+			}
+			_animateSceneObjectInEditor = value;
+		}
+	}
+
+	public event AnimationStartedEventHandler AnimationStartedEvent;
+
+	public event AnimationPausedEventHandler AnimationPausedEvent;
+
+	public event AnimationStoppedEventHandler AnimationStoppedEvent;
+
+	public event AnimationFinishedEventHandler AnimationFinishedEvent;
+
+	public event AnimationLoopedEventHandler AnimationLoopedEvent;
+
+	public event AnimationPingPongEventHandler AnimationPingPongEvent;
+
+	public event AnimationPointReachedEventHandler AnimationPointReachedEvent;
+
+	public event AnimationPointReachedWithNumberEventHandler AnimationPointReachedWithNumberEvent;
+
+	public event AnimationCustomEventHandler AnimationCustomEvent;
+
+	public void Play()
+	{
+		_playing = true;
+		if (!isReversed)
+		{
+			if (_percentage == 0f)
+			{
+				if (this.AnimationStartedEvent != null)
+				{
+					this.AnimationStartedEvent();
+				}
+				cameraPath.eventList.OnAnimationStart(0f);
+			}
+		}
+		else if (_percentage == 1f)
+		{
+			if (this.AnimationStartedEvent != null)
+			{
+				this.AnimationStartedEvent();
+			}
+			cameraPath.eventList.OnAnimationStart(1f);
+		}
+		_lastPercentage = _percentage;
+	}
+
+	public void Stop()
+	{
+		_playing = false;
+		_percentage = 0f;
+		if (this.AnimationStoppedEvent != null)
+		{
+			this.AnimationStoppedEvent();
+		}
+	}
+
+	public void Pause()
+	{
+		_playing = false;
+		if (this.AnimationPausedEvent != null)
+		{
+			this.AnimationPausedEvent();
+		}
+	}
+
+	public void Seek(float value)
+	{
+		_percentage = Mathf.Clamp01(value);
+		_lastPercentage = _percentage;
+		UpdateAnimationTime(advance: false);
+		UpdatePointReached();
+		bool playing = _playing;
+		_playing = true;
+		UpdateAnimation();
+		_playing = playing;
+	}
+
+	public void Reverse()
+	{
+		switch (animationMode)
+		{
+		case animationModes.once:
+			animationMode = animationModes.reverse;
+			break;
+		case animationModes.reverse:
+			animationMode = animationModes.once;
+			break;
+		case animationModes.pingPong:
+			pingPongDirection = ((pingPongDirection == -1f) ? 1 : (-1));
+			break;
+		case animationModes.loop:
+			animationMode = animationModes.reverseLoop;
+			break;
+		case animationModes.reverseLoop:
+			animationMode = animationModes.loop;
+			break;
+		}
+	}
+
+	public Quaternion GetAnimatedOrientation(float percent, bool ignoreNormalisation)
+	{
+		Quaternion quaternion = Quaternion.identity;
+		switch (orientationMode)
+		{
+		case orientationModes.custom:
+			quaternion = cameraPath.GetPathRotation(percent, ignoreNormalisation);
+			break;
+		case orientationModes.target:
+		{
+			Vector3 pathPosition = cameraPath.GetPathPosition(percent);
+			Vector3 forward = ((!(orientationTarget != null)) ? Vector3.forward : (orientationTarget.transform.position - pathPosition));
+			quaternion = Quaternion.LookRotation(forward);
+			break;
+		}
+		case orientationModes.followpath:
+			quaternion = Quaternion.LookRotation(cameraPath.GetPathDirection(percent));
+			quaternion *= Quaternion.Euler(base.transform.forward * (0f - cameraPath.GetPathTilt(percent)));
+			break;
+		case orientationModes.reverseFollowpath:
+			quaternion = Quaternion.LookRotation(-cameraPath.GetPathDirection(percent));
+			quaternion *= Quaternion.Euler(base.transform.forward * (0f - cameraPath.GetPathTilt(percent)));
+			break;
+		case orientationModes.mouselook:
+			if (!Application.isPlaying)
+			{
+				quaternion = Quaternion.LookRotation(cameraPath.GetPathDirection(percent));
+				quaternion *= Quaternion.Euler(base.transform.forward * (0f - cameraPath.GetPathTilt(percent)));
+			}
+			else
+			{
+				quaternion = GetMouseLook();
+			}
+			break;
+		case orientationModes.followTransform:
+		{
+			if (orientationTarget == null)
+			{
+				return Quaternion.identity;
+			}
+			float nearestPoint = cameraPath.GetNearestPoint(orientationTarget.position);
+			nearestPoint = Mathf.Clamp01(nearestPoint + nearestOffset);
+			Vector3 pathPosition = cameraPath.GetPathPosition(nearestPoint);
+			Vector3 forward = orientationTarget.transform.position - pathPosition;
+			quaternion = Quaternion.LookRotation(forward);
+			break;
+		}
+		case orientationModes.twoDimentions:
+			quaternion = Quaternion.LookRotation(Vector3.forward);
+			break;
+		case orientationModes.fixedOrientation:
+			quaternion = Quaternion.LookRotation(fixedOrientaion);
+			break;
+		case orientationModes.none:
+			quaternion = animationObject.rotation;
+			break;
+		}
+		return quaternion * base.transform.rotation;
+	}
+
+	private void Awake()
+	{
+		if (animationObject == null)
+		{
+			_isCamera = false;
+		}
+		else
+		{
+			animationObjectCamera = animationObject.GetComponentInChildren<Camera>();
+			_isCamera = animationObjectCamera != null;
+		}
+		Camera[] allCameras = Camera.allCameras;
+		if (allCameras.Length == 0)
+		{
+			Debug.LogWarning("Warning: There are no cameras in the scene");
+			_isCamera = false;
+		}
+		if (!isReversed)
+		{
+			_percentage = 0f;
+		}
+		else
+		{
+			_percentage = 1f;
+		}
+		Vector3 eulerAngles = cameraPath.GetPathRotation(0f, ignoreNormalisation: false).eulerAngles;
+		rotationX = eulerAngles.y;
+		rotationY = eulerAngles.x;
+	}
+
+	private void OnEnable()
+	{
+		cameraPath.eventList.CameraPathEventPoint += OnCustomEvent;
+		cameraPath.delayList.CameraPathDelayEvent += OnDelayEvent;
+		if (animationObject != null)
+		{
+			animationObjectCamera = animationObject.GetComponentInChildren<Camera>();
+		}
+	}
+
+	private void Start()
+	{
+		if (playOnStart)
+		{
+			Play();
+		}
+		if (Application.isPlaying && orientationTarget == null && (orientationMode == orientationModes.followTransform || orientationMode == orientationModes.target))
+		{
+			Debug.LogWarning("There has not been an orientation target specified in the Animation component of Camera Path.", base.transform);
+		}
+	}
+
+	private void Update()
+	{
+		if (!isCamera)
+		{
+			if (_playing)
+			{
+				UpdateAnimationTime();
+				UpdateAnimation();
+				UpdatePointReached();
+			}
+			else if (_cameraPath.nextPath != null && _percentage >= 1f)
+			{
+				PlayNextAnimation();
+			}
+		}
+	}
+
+	private void LateUpdate()
+	{
+		if (isCamera)
+		{
+			if (_playing)
+			{
+				UpdateAnimationTime();
+				UpdateAnimation();
+				UpdatePointReached();
+			}
+			else if (_cameraPath.nextPath != null && _percentage >= 1f)
+			{
+				PlayNextAnimation();
+			}
+		}
+	}
+
+	private void OnDisable()
+	{
+		CleanUp();
+	}
+
+	private void OnDestroy()
+	{
+		CleanUp();
+	}
+
+	private void PlayNextAnimation()
+	{
+		if (_cameraPath.nextPath != null)
+		{
+			_cameraPath.nextPath.GetComponent<CameraPathAnimator>().Play();
+			_percentage = 0f;
+			Stop();
+		}
+	}
+
+	private void UpdateAnimation()
+	{
+		if (animationObject == null)
+		{
+			Stop();
+		}
+		else
+		{
+			if (!_playing)
+			{
+				return;
+			}
+			if (cameraPath.speedList.listEnabled)
+			{
+				_pathTime = _cameraPath.pathLength / Mathf.Max(cameraPath.GetPathSpeed(_percentage), MINIMUM_CAMERA_SPEED);
+			}
+			else
+			{
+				_pathTime = _cameraPath.pathLength / Mathf.Max(_pathSpeed * cameraPath.GetPathEase(_percentage), MINIMUM_CAMERA_SPEED);
+			}
+			animationObject.position = cameraPath.GetPathPosition(_percentage);
+			if (orientationMode != orientationModes.none)
+			{
+				animationObject.rotation = GetAnimatedOrientation(_percentage, ignoreNormalisation: false);
+			}
+			if (isCamera && _cameraPath.fovList.listEnabled)
+			{
+				if (orientationMode != orientationModes.twoDimentions)
+				{
+					animationObjectCamera.fieldOfView = _cameraPath.GetPathFOV(_percentage);
+				}
+				else
+				{
+					animationObjectCamera.orthographicSize = _cameraPath.GetPathFOV(_percentage);
+				}
+			}
+			CheckEvents();
+		}
+	}
+
+	private void UpdatePointReached()
+	{
+		if (_percentage == _lastPercentage)
+		{
+			return;
+		}
+		if (Mathf.Abs(percentage - _lastPercentage) > 0.999f)
+		{
+			_lastPercentage = percentage;
+			return;
+		}
+		for (int i = 0; i < cameraPath.realNumberOfPoints; i++)
+		{
+			CameraPathControlPoint cameraPathControlPoint = cameraPath[i];
+			if ((cameraPathControlPoint.percentage >= _lastPercentage && cameraPathControlPoint.percentage <= percentage) || (cameraPathControlPoint.percentage >= percentage && cameraPathControlPoint.percentage <= _lastPercentage))
+			{
+				if (this.AnimationPointReachedEvent != null)
+				{
+					this.AnimationPointReachedEvent();
+				}
+				if (this.AnimationPointReachedWithNumberEvent != null)
+				{
+					this.AnimationPointReachedWithNumberEvent(i);
+				}
+			}
+		}
+		_lastPercentage = percentage;
+	}
+
+	private void UpdateAnimationTime()
+	{
+		UpdateAnimationTime(advance: true);
+	}
+
+	private void UpdateAnimationTime(bool advance)
+	{
+		if (orientationMode == orientationModes.followTransform)
+		{
+			return;
+		}
+		if (delayTime > 0f)
+		{
+			delayTime += 0f - Time.deltaTime;
+			return;
+		}
+		if (advance)
+		{
+			switch (animationMode)
+			{
+			case animationModes.once:
+				if (_percentage >= 1f)
+				{
+					_playing = false;
+					if (this.AnimationFinishedEvent != null)
+					{
+						this.AnimationFinishedEvent();
+					}
+				}
+				else
+				{
+					_percentage += Time.deltaTime * (1f / _pathTime);
+				}
+				break;
+			case animationModes.loop:
+				if (_percentage >= 1f)
+				{
+					_percentage = 0f;
+					_lastPercentage = 0f;
+					if (this.AnimationLoopedEvent != null)
+					{
+						this.AnimationLoopedEvent();
+					}
+				}
+				_percentage += Time.deltaTime * (1f / _pathTime);
+				break;
+			case animationModes.reverseLoop:
+				if (_percentage <= 0f)
+				{
+					_percentage = 1f;
+					_lastPercentage = 1f;
+					if (this.AnimationLoopedEvent != null)
+					{
+						this.AnimationLoopedEvent();
+					}
+				}
+				_percentage += (0f - Time.deltaTime) * (1f / _pathTime);
+				break;
+			case animationModes.reverse:
+				if (_percentage <= 0f)
+				{
+					_percentage = 0f;
+					_playing = false;
+					if (this.AnimationFinishedEvent != null)
+					{
+						this.AnimationFinishedEvent();
+					}
+				}
+				else
+				{
+					_percentage += (0f - Time.deltaTime) * (1f / _pathTime);
+				}
+				break;
+			case animationModes.pingPong:
+			{
+				float num = Time.deltaTime * (1f / _pathTime);
+				_percentage += num * pingPongDirection;
+				if (_percentage >= 1f)
+				{
+					_percentage = 1f - num;
+					_lastPercentage = 1f;
+					pingPongDirection = -1f;
+					if (this.AnimationPingPongEvent != null)
+					{
+						this.AnimationPingPongEvent();
+					}
+				}
+				if (_percentage <= 0f)
+				{
+					_percentage = num;
+					_lastPercentage = 0f;
+					pingPongDirection = 1f;
+					if (this.AnimationPingPongEvent != null)
+					{
+						this.AnimationPingPongEvent();
+					}
+				}
+				break;
+			}
+			}
+		}
+		_percentage = Mathf.Clamp01(_percentage);
+	}
+
+	private Quaternion GetMouseLook()
+	{
+		if (animationObject == null)
+		{
+			return Quaternion.identity;
+		}
+		rotationX += Input.GetAxis("Mouse X") * sensitivity;
+		rotationY += (0f - Input.GetAxis("Mouse Y")) * sensitivity;
+		rotationY = Mathf.Clamp(rotationY, minX, maxX);
+		return Quaternion.Euler(new Vector3(rotationY, rotationX, 0f));
+	}
+
+	private void CheckEvents()
+	{
+		cameraPath.CheckEvents(_percentage);
+	}
+
+	private void CleanUp()
+	{
+		cameraPath.eventList.CameraPathEventPoint += OnCustomEvent;
+		cameraPath.delayList.CameraPathDelayEvent += OnDelayEvent;
+	}
+
+	private void OnDelayEvent(float time)
+	{
+		if (time > 0f)
+		{
+			delayTime = time;
+		}
+		else
+		{
+			Pause();
+		}
+	}
+
+	private void OnCustomEvent(string eventName)
+	{
+		if (this.AnimationCustomEvent != null)
+		{
+			this.AnimationCustomEvent(eventName);
+		}
+	}
 }

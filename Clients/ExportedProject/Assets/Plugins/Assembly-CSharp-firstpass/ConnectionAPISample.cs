@@ -1,63 +1,211 @@
+using System;
+using BestHTTP.Cookies;
+using BestHTTP.Examples;
+using BestHTTP.JSON;
+using BestHTTP.SignalR;
+using BestHTTP.SignalR.JsonEncoders;
 using UnityEngine;
 
-public class ConnectionAPISample : MonoBehaviour
+public sealed class ConnectionAPISample : MonoBehaviour
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	private enum MessageTypes
+	{
+		Send,
+		Broadcast,
+		Join,
+		PrivateMessage,
+		AddToGroup,
+		RemoveFromGroup,
+		SendToGroup,
+		BroadcastExceptMe
+	}
 
-	1. No dll files were provided to AssetRipper.
+	private readonly Uri URI = new Uri("https://besthttpsignalr.azurewebsites.net/raw-connection/");
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	private Connection signalRConnection;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	private string ToEveryBodyText = string.Empty;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	private string ToMeText = string.Empty;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	private string PrivateMessageText = string.Empty;
 
-	3. Assembly Reconstruction has not been implemented.
+	private string PrivateMessageUserOrGroupName = string.Empty;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	private GUIMessageList messages = new GUIMessageList();
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	private void Start()
+	{
+		if (PlayerPrefs.HasKey("userName"))
+		{
+			CookieJar.Set(URI, new Cookie("user", PlayerPrefs.GetString("userName")));
+		}
+		signalRConnection = new Connection(URI);
+		signalRConnection.JsonEncoder = new LitJsonEncoder();
+		signalRConnection.OnStateChanged += signalRConnection_OnStateChanged;
+		signalRConnection.OnNonHubMessage += signalRConnection_OnGeneralMessage;
+		signalRConnection.Open();
+	}
 
-	4. This script is unnecessary.
+	private void OnGUI()
+	{
+		GUIHelper.DrawArea(GUIHelper.ClientArea, drawHeader: true, delegate
+		{
+			GUILayout.BeginVertical();
+			GUILayout.Label("To Everybody");
+			GUILayout.BeginHorizontal();
+			ToEveryBodyText = GUILayout.TextField(ToEveryBodyText, GUILayout.MinWidth(100f));
+			if (GUILayout.Button("Broadcast"))
+			{
+				Broadcast(ToEveryBodyText);
+			}
+			if (GUILayout.Button("Broadcast (All Except Me)"))
+			{
+				BroadcastExceptMe(ToEveryBodyText);
+			}
+			if (GUILayout.Button("Enter Name"))
+			{
+				EnterName(ToEveryBodyText);
+			}
+			if (GUILayout.Button("Join Group"))
+			{
+				JoinGroup(ToEveryBodyText);
+			}
+			if (GUILayout.Button("Leave Group"))
+			{
+				LeaveGroup(ToEveryBodyText);
+			}
+			GUILayout.EndHorizontal();
+			GUILayout.Label("To Me");
+			GUILayout.BeginHorizontal();
+			ToMeText = GUILayout.TextField(ToMeText, GUILayout.MinWidth(100f));
+			if (GUILayout.Button("Send to me"))
+			{
+				SendToMe(ToMeText);
+			}
+			GUILayout.EndHorizontal();
+			GUILayout.Label("Private Message");
+			GUILayout.BeginHorizontal();
+			GUILayout.Label("Message:");
+			PrivateMessageText = GUILayout.TextField(PrivateMessageText, GUILayout.MinWidth(100f));
+			GUILayout.Label("User or Group name:");
+			PrivateMessageUserOrGroupName = GUILayout.TextField(PrivateMessageUserOrGroupName, GUILayout.MinWidth(100f));
+			if (GUILayout.Button("Send to user"))
+			{
+				SendToUser(PrivateMessageUserOrGroupName, PrivateMessageText);
+			}
+			if (GUILayout.Button("Send to group"))
+			{
+				SendToGroup(PrivateMessageUserOrGroupName, PrivateMessageText);
+			}
+			GUILayout.EndHorizontal();
+			GUILayout.Space(20f);
+			if (signalRConnection.State == ConnectionStates.Closed)
+			{
+				if (GUILayout.Button("Start Connection"))
+				{
+					signalRConnection.Open();
+				}
+			}
+			else if (GUILayout.Button("Stop Connection"))
+			{
+				signalRConnection.Close();
+			}
+			GUILayout.Space(20f);
+			GUILayout.Label("Messages");
+			GUILayout.BeginHorizontal();
+			GUILayout.Space(20f);
+			messages.Draw(Screen.width - 20, 0f);
+			GUILayout.EndHorizontal();
+			GUILayout.EndVertical();
+		});
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private void OnDestroy()
+	{
+		signalRConnection.Close();
+	}
 
-	5. Script Content Level 0
+	private void signalRConnection_OnGeneralMessage(Connection manager, object data)
+	{
+		string text = Json.Encode(data);
+		messages.Add("[Server Message] " + text);
+	}
 
-		AssetRipper was set to not load any script information.
+	private void signalRConnection_OnStateChanged(Connection manager, ConnectionStates oldState, ConnectionStates newState)
+	{
+		messages.Add($"[State Change] {oldState.ToString()} => {newState.ToString()}");
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	private void Broadcast(string text)
+	{
+		signalRConnection.Send(new
+		{
+			Type = MessageTypes.Broadcast,
+			Value = text
+		});
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	private void BroadcastExceptMe(string text)
+	{
+		signalRConnection.Send(new
+		{
+			Type = MessageTypes.BroadcastExceptMe,
+			Value = text
+		});
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	private void EnterName(string name)
+	{
+		signalRConnection.Send(new
+		{
+			Type = MessageTypes.Join,
+			Value = name
+		});
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	private void JoinGroup(string groupName)
+	{
+		signalRConnection.Send(new
+		{
+			Type = MessageTypes.AddToGroup,
+			Value = groupName
+		});
+	}
 
-	*/
+	private void LeaveGroup(string groupName)
+	{
+		signalRConnection.Send(new
+		{
+			Type = MessageTypes.RemoveFromGroup,
+			Value = groupName
+		});
+	}
+
+	private void SendToMe(string text)
+	{
+		signalRConnection.Send(new
+		{
+			Type = MessageTypes.Send,
+			Value = text
+		});
+	}
+
+	private void SendToUser(string userOrGroupName, string text)
+	{
+		signalRConnection.Send(new
+		{
+			Type = MessageTypes.PrivateMessage,
+			Value = $"{userOrGroupName}|{text}"
+		});
+	}
+
+	private void SendToGroup(string userOrGroupName, string text)
+	{
+		signalRConnection.Send(new
+		{
+			Type = MessageTypes.SendToGroup,
+			Value = $"{userOrGroupName}|{text}"
+		});
+	}
 }

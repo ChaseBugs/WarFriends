@@ -4,136 +4,59 @@
 Material:
   serializedVersion: 6
   m_ObjectHideFlags: 0
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 0}
-  m_Name: ground
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: ground_0
   m_Shader: {fileID: 4800000, guid: df1b3ecc26aa61f49aed0bd46178468f, type: 3}
-  m_ShaderKeywords:
+  m_ShaderKeywords: 
   m_LightmapFlags: 5
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
   m_CustomRenderQueue: 2000
   stringTagMap: {}
+  disabledShaderPasses: []
   m_SavedProperties:
-    serializedVersion: 2
+    serializedVersion: 3
     m_TexEnvs:
-      data:
-        first:
-          name: _Control
-        second:
-          m_Texture: {fileID: 2800000, guid: ed93be5e7d274ef418be06aad68ba2ed, type: 3}
-          m_Scale: {x: 1, y: 1}
-          m_Offset: {x: 0, y: 0}
-      data:
-        first:
-          name: _Layer0
-        second:
-          m_Texture: {fileID: 2800000, guid: 965e661a7bdd4b2408123212884ca53f, type: 3}
-          m_Scale: {x: 18, y: 18}
-          m_Offset: {x: 0, y: 0}
-      data:
-        first:
-          name: _Layer1
-        second:
-          m_Texture: {fileID: 2800000, guid: b9ae95e767a5d0547be781eff974d2eb, type: 3}
-          m_Scale: {x: 1, y: 1}
-          m_Offset: {x: 0, y: 0}
-      data:
-        first:
-          name: _Water
-        second:
-          m_Texture: {fileID: 2800000, guid: c4b20dad241b6cc45a77199655419956, type: 3}
-          m_Scale: {x: 1, y: 1}
-          m_Offset: {x: 0, y: 0}
+    - _Control:
+        m_Texture: {fileID: 2800000, guid: ed93be5e7d274ef418be06aad68ba2ed, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Layer0:
+        m_Texture: {fileID: 2800000, guid: 965e661a7bdd4b2408123212884ca53f, type: 3}
+        m_Scale: {x: 18, y: 18}
+        m_Offset: {x: 0, y: 0}
+    - _Layer1:
+        m_Texture: {fileID: 2800000, guid: b9ae95e767a5d0547be781eff974d2eb, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Water:
+        m_Texture: {fileID: 2800000, guid: c4b20dad241b6cc45a77199655419956, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     m_Floats:
-      data:
-        first:
-          name: _BumpScale
-        second: 1
-      data:
-        first:
-          name: _Cutoff
-        second: 0.5
-      data:
-        first:
-          name: _DetailNormalMapScale
-        second: 1
-      data:
-        first:
-          name: _DstBlend
-        second: 0
-      data:
-        first:
-          name: _Gain
-        second: 3.5
-      data:
-        first:
-          name: _Glossiness
-        second: 0.5
-      data:
-        first:
-          name: _GradScale
-        second: 1
-      data:
-        first:
-          name: _Metallic
-        second: 0
-      data:
-        first:
-          name: _Mode
-        second: 0
-      data:
-        first:
-          name: _OcclusionStrength
-        second: 1
-      data:
-        first:
-          name: _Parallax
-        second: 0.02
-      data:
-        first:
-          name: _Scale
-        second: 0.092
-      data:
-        first:
-          name: _SpeedX
-        second: 0.3
-      data:
-        first:
-          name: _SpeedY
-        second: 0.3
-      data:
-        first:
-          name: _SrcBlend
-        second: 1
-      data:
-        first:
-          name: _TileX
-        second: 2
-      data:
-        first:
-          name: _TileY
-        second: 2
-      data:
-        first:
-          name: _Tiler
-        second: 1
-      data:
-        first:
-          name: _UVSec
-        second: 0
-      data:
-        first:
-          name: _Y
-        second: 0
-      data:
-        first:
-          name: _ZWrite
-        second: 1
+    - _BumpScale: 1
+    - _Cutoff: 0.5
+    - _DetailNormalMapScale: 1
+    - _DstBlend: 0
+    - _Gain: 3.5
+    - _Glossiness: 0.5
+    - _GradScale: 1
+    - _Metallic: 0
+    - _Mode: 0
+    - _OcclusionStrength: 1
+    - _Parallax: 0.02
+    - _Scale: 0.092
+    - _SpeedX: 0.3
+    - _SpeedY: 0.3
+    - _SrcBlend: 1
+    - _TileX: 2
+    - _TileY: 2
+    - _Tiler: 1
+    - _UVSec: 0
+    - _Y: 0
+    - _ZWrite: 1
     m_Colors:
-      data:
-        first:
-          name: _Color
-        second: {r: 0.8, g: 0.8, b: 0.8, a: 1}
-      data:
-        first:
-          name: _EmissionColor
-        second: {r: 0, g: 0, b: 0, a: 1}
+    - _Color: {r: 0.8, g: 0.8, b: 0.8, a: 1}
+    - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}

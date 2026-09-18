@@ -1,63 +1,350 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
-public class TweenAnimator : MonoBehaviour
+public class TweenAnimator : Core_BaseScript
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public enum TweenType
+	{
+		Position,
+		Rotation,
+		AlphaTk2d,
+		Color,
+		Scale,
+		Alpha,
+		TextCounter,
+		SufixTextCounter,
+		TextCounterSpecial,
+		TimeCounter,
+		ProgressBar,
+		AlphaHider,
+		Sound,
+		TextCounterLong
+	}
 
-	1. No dll files were provided to AssetRipper.
+	[Serializable]
+	public class TweenRecord
+	{
+		[SerializeField]
+		public int id;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+		[SerializeField]
+		public TweenType type;
 
-	2. Incorrect dll files were provided to AssetRipper.
+		[SerializeField]
+		public float time;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+		[SerializeField]
+		public float delay;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+		[SerializeField]
+		public object to;
 
-	3. Assembly Reconstruction has not been implemented.
+		[SerializeField]
+		public object from;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+		[SerializeField]
+		public UITweener.Method method = UITweener.Method.EaseInOut;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+		[SerializeField]
+		public UITweener.Style style;
 
-	4. This script is unnecessary.
+		[SerializeField]
+		public int playAfterId = -1;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+		[SerializeField]
+		public GameObject tweenTarget;
 
-	5. Script Content Level 0
+		[SerializeField]
+		public int numOfRepetitions;
 
-		AssetRipper was set to not load any script information.
+		[SerializeField]
+		public SoundsManager.SoundsEnum soundEnum;
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public List<TweenRecord> allTweens = new List<TweenRecord>();
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public Action<int> TweenFinished;
 
-	7. An incorrect path was provided to AssetRipper.
+	private bool isActive = true;
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	public bool play;
 
-	*/
+	private static Dictionary<TweenType, Type> mTypesDic = new Dictionary<TweenType, Type>
+	{
+		{
+			TweenType.Position,
+			typeof(TweenPosition)
+		},
+		{
+			TweenType.Rotation,
+			typeof(TweenRotation)
+		},
+		{
+			TweenType.AlphaTk2d,
+			typeof(TweenAlphaTk2d)
+		},
+		{
+			TweenType.Color,
+			typeof(TweenColor)
+		},
+		{
+			TweenType.Scale,
+			typeof(TweenScale)
+		},
+		{
+			TweenType.Alpha,
+			typeof(TweenAlpha)
+		},
+		{
+			TweenType.TextCounter,
+			typeof(TweenTextCounter)
+		},
+		{
+			TweenType.SufixTextCounter,
+			typeof(TweenSufixTextCounter)
+		},
+		{
+			TweenType.TextCounterSpecial,
+			typeof(TweenCounterSpecial)
+		},
+		{
+			TweenType.TimeCounter,
+			typeof(TweenTimeCounter)
+		},
+		{
+			TweenType.ProgressBar,
+			typeof(TweenProgressBar)
+		},
+		{
+			TweenType.AlphaHider,
+			typeof(TweenAlphaHider)
+		},
+		{
+			TweenType.Sound,
+			typeof(AudioClip)
+		},
+		{
+			TweenType.TextCounterLong,
+			typeof(TweenTextCounterLong)
+		}
+	};
+
+	public TweenRecord AddTween(int id, TweenType tweenType, GameObject tweenTarget, float time, object to, float delay = 0f, int playAfterIdFinished = -1, object from = null, UITweener.Method method = UITweener.Method.EaseInOut, UITweener.Style style = UITweener.Style.Once, int numOfRepetitions = 1)
+	{
+		TweenRecord tweenRecord = new TweenRecord();
+		tweenRecord.delay = delay;
+		tweenRecord.id = id;
+		tweenRecord.type = tweenType;
+		tweenRecord.time = time;
+		tweenRecord.from = from;
+		tweenRecord.to = to;
+		tweenRecord.playAfterId = playAfterIdFinished;
+		tweenRecord.method = method;
+		tweenRecord.style = style;
+		tweenRecord.tweenTarget = tweenTarget;
+		tweenRecord.numOfRepetitions = numOfRepetitions;
+		TweenRecord tweenRecord2 = tweenRecord;
+		allTweens.Add(tweenRecord2);
+		return tweenRecord2;
+	}
+
+	public TweenRecord AddSoundTween(int id, SoundsManager.SoundsEnum soundEntry, float delay = 0f, int playAfterIdFinished = -1)
+	{
+		TweenRecord tweenRecord = new TweenRecord();
+		tweenRecord.delay = delay;
+		tweenRecord.id = id;
+		tweenRecord.type = TweenType.Sound;
+		tweenRecord.playAfterId = playAfterIdFinished;
+		tweenRecord.soundEnum = soundEntry;
+		TweenRecord tweenRecord2 = tweenRecord;
+		allTweens.Add(tweenRecord2);
+		return tweenRecord2;
+	}
+
+	public void PlayTweens()
+	{
+		isActive = true;
+		foreach (TweenRecord allTween in allTweens)
+		{
+			if (allTween.playAfterId == -1)
+			{
+				PlayTween(allTween);
+			}
+		}
+	}
+
+	public TweenRecord GetTween(int i)
+	{
+		foreach (TweenRecord allTween in allTweens)
+		{
+			if (allTween.id == i)
+			{
+				return allTween;
+			}
+		}
+		return null;
+	}
+
+	private void PlayTween(TweenRecord r, bool useOnFinished = true)
+	{
+		UITweener uITweener = null;
+		switch (r.type)
+		{
+		case TweenType.Position:
+			uITweener = ((r.from != null) ? TweenPosition.Begin(r.tweenTarget, r.time, (Vector3)r.from, (Vector3)r.to) : TweenPosition.Begin(r.tweenTarget, r.time, (Vector3)r.to));
+			break;
+		case TweenType.Scale:
+			uITweener = ((r.from != null) ? TweenScale.Begin(r.tweenTarget, r.time, (Vector3)r.from, (Vector3)r.to) : TweenScale.Begin(r.tweenTarget, r.time, (Vector3)r.to));
+			break;
+		case TweenType.AlphaTk2d:
+			uITweener = ((r.from != null) ? TweenAlphaTk2d.Begin(r.tweenTarget, r.time, (float)r.from, (float)r.to) : TweenAlphaTk2d.Begin(r.tweenTarget, r.time, (float)r.to));
+			break;
+		case TweenType.Alpha:
+			uITweener = ((r.from != null) ? TweenAlpha.Begin(r.tweenTarget, r.time, (float)r.from, (float)r.to) : TweenAlpha.Begin(r.tweenTarget, r.time, (float)r.to));
+			break;
+		case TweenType.AlphaHider:
+			uITweener = ((r.from != null) ? TweenAlphaHider.Begin(r.tweenTarget, r.time, (float)r.from, (float)r.to) : TweenAlphaHider.Begin(r.tweenTarget, r.time, (float)r.to));
+			break;
+		case TweenType.ProgressBar:
+			uITweener = ((r.from != null) ? TweenProgressBar.Begin(r.tweenTarget, r.time, (FloatObject)r.from, (FloatObject)r.to) : TweenProgressBar.Begin(r.tweenTarget, r.time, (FloatObject)r.to));
+			break;
+		case TweenType.TextCounter:
+			uITweener = ((r.from != null) ? TweenTextCounter.Begin(r.tweenTarget, r.time, (IntObject)r.from, (IntObject)r.to) : TweenTextCounter.Begin(r.tweenTarget, r.time, (IntObject)r.to));
+			break;
+		case TweenType.TextCounterLong:
+			uITweener = ((r.from != null) ? TweenTextCounterLong.Begin(r.tweenTarget, r.time, (LongObject)r.from, (LongObject)r.to) : TweenTextCounterLong.Begin(r.tweenTarget, r.time, (LongObject)r.to));
+			break;
+		case TweenType.SufixTextCounter:
+			uITweener = ((r.from != null) ? TweenSufixTextCounter.Begin(r.tweenTarget, r.time, (IntObject)r.from, (IntObject)r.to) : TweenSufixTextCounter.Begin(r.tweenTarget, r.time, (IntObject)r.to));
+			break;
+		case TweenType.TextCounterSpecial:
+			uITweener = ((r.from != null) ? TweenCounterSpecial.Begin(r.tweenTarget, r.time, (IntObject)r.from, (IntObject)r.to) : TweenCounterSpecial.Begin(r.tweenTarget, r.time, (IntObject)r.to));
+			break;
+		case TweenType.TimeCounter:
+			uITweener = ((r.from != null) ? TweenTimeCounter.Begin(r.tweenTarget, r.time, (IntObject)r.from, (IntObject)r.to) : TweenTimeCounter.Begin(r.tweenTarget, r.time, (IntObject)r.to));
+			break;
+		case TweenType.Color:
+			uITweener = ((r.from != null) ? TweenColor.Begin(r.tweenTarget, r.time, (Color)r.from, (Color)r.to) : TweenColor.Begin(r.tweenTarget, r.time, (Color)r.to));
+			break;
+		case TweenType.Rotation:
+			uITweener = ((r.from != null) ? TweenRotation.Begin(r.tweenTarget, r.time, (Quaternion)r.from, (Quaternion)r.to) : TweenRotation.Begin(r.tweenTarget, r.time, (Quaternion)r.to));
+			break;
+		case TweenType.Sound:
+			if (!useOnFinished)
+			{
+				return;
+			}
+			if (r.delay > 0f)
+			{
+				InvokeAfter(delegate
+				{
+					SoundsManager.Instance.PlaySound(r.soundEnum);
+				}, r.delay);
+			}
+			else
+			{
+				SoundsManager.Instance.PlaySound(r.soundEnum);
+			}
+			return;
+		}
+		r.tweenTarget.gameObject.SetActive(value: true);
+		if (uITweener != null)
+		{
+			uITweener.delay = r.delay;
+			uITweener.method = r.method;
+			uITweener.style = r.style;
+			uITweener.NumOfRepetitions = r.numOfRepetitions;
+			uITweener.id = r.id;
+			if (useOnFinished)
+			{
+				UITweener uITweener2 = uITweener;
+				uITweener2.onFinished = (UITweener.OnFinished)Delegate.Combine(uITweener2.onFinished, new UITweener.OnFinished(OnFinished));
+			}
+		}
+	}
+
+	public void Stop()
+	{
+		isActive = false;
+	}
+
+	private void OnFinished(UITweener tween)
+	{
+		if (TweenFinished != null)
+		{
+			TweenFinished(tween.id);
+		}
+		if (!isActive)
+		{
+			return;
+		}
+		int id = tween.id;
+		foreach (TweenRecord allTween in allTweens)
+		{
+			if (allTween.playAfterId == id)
+			{
+				PlayTween(allTween);
+			}
+		}
+	}
+
+	protected void Update()
+	{
+		if (play)
+		{
+			play = false;
+			PlayTweens();
+		}
+	}
+
+	public void GenerateTweens()
+	{
+		foreach (TweenRecord allTween in allTweens)
+		{
+			if (allTween.type != TweenType.Sound)
+			{
+				Type type = mTypesDic[allTween.type];
+				Component component = allTween.tweenTarget.GetComponent(type);
+				if (component == null)
+				{
+					UITweener uITweener = (UITweener)allTween.tweenTarget.AddComponent(type);
+					uITweener.enabled = false;
+				}
+			}
+		}
+	}
+
+	public void ResetTweens()
+	{
+		foreach (TweenRecord allTween in allTweens)
+		{
+			if (allTween.type != TweenType.Sound)
+			{
+				Type type = mTypesDic[allTween.type];
+				Component component = allTween.tweenTarget.GetComponent(type);
+				if (component != null)
+				{
+					(component as UITweener).enabled = false;
+				}
+			}
+		}
+	}
+
+	public void FinishTweens()
+	{
+		foreach (TweenRecord allTween in allTweens)
+		{
+			object obj = allTween.from;
+			allTween.from = allTween.to;
+			float time = allTween.time;
+			int id = allTween.id;
+			allTween.id = -1;
+			allTween.time = 0f;
+			PlayTween(allTween, useOnFinished: false);
+			allTween.from = obj;
+			allTween.time = time;
+			allTween.id = id;
+		}
+	}
 }

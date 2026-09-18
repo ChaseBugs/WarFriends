@@ -1,66 +1,163 @@
-using UnityEngine;
+using System;
+using System.Threading;
 
 namespace BestHTTP
 {
-	public class ConnectionBase : MonoBehaviour
+internal abstract class ConnectionBase : IDisposable
+{
+	protected DateTime LastProcessTime;
+
+	protected HTTPConnectionRecycledDelegate OnConnectionRecycled;
+
+	private bool IsThreaded;
+
+	public string ServerAddress { get; protected set; }
+
+	public HTTPConnectionStates State { get; protected set; }
+
+	public bool IsFree => State == HTTPConnectionStates.Initial || State == HTTPConnectionStates.Free;
+
+	public bool IsActive => State > HTTPConnectionStates.Initial && State < HTTPConnectionStates.Free;
+
+	public HTTPRequest CurrentRequest { get; protected set; }
+
+	public bool IsRemovable => IsFree && DateTime.UtcNow - LastProcessTime > HTTPManager.MaxConnectionIdleTime;
+
+	public DateTime StartTime { get; protected set; }
+
+	public DateTime TimedOutStart { get; protected set; }
+
+	protected HTTPProxy Proxy { get; set; }
+
+	public bool HasProxy => Proxy != null;
+
+	public Uri LastProcessedUri { get; protected set; }
+
+	protected bool IsDisposed { get; private set; }
+
+	public ConnectionBase(string serverAddress)
+		: this(serverAddress, threaded: true)
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
 	}
+
+	public ConnectionBase(string serverAddress, bool threaded)
+	{
+		ServerAddress = serverAddress;
+		State = HTTPConnectionStates.Initial;
+		LastProcessTime = DateTime.UtcNow;
+		IsThreaded = threaded;
+	}
+
+	internal abstract void Abort(HTTPConnectionStates hTTPConnectionStates);
+
+	internal void Process(HTTPRequest request)
+	{
+		if (State == HTTPConnectionStates.Processing)
+		{
+			throw new Exception("Connection already processing a request!");
+		}
+		StartTime = DateTime.MaxValue;
+		State = HTTPConnectionStates.Processing;
+		CurrentRequest = request;
+		if (IsThreaded)
+		{
+			new Thread(ThreadFunc).Start();
+		}
+		else
+		{
+			ThreadFunc(null);
+		}
+	}
+
+	protected virtual void ThreadFunc(object param)
+	{
+	}
+
+	internal void HandleProgressCallback()
+	{
+		if (CurrentRequest.OnProgress != null && CurrentRequest.DownloadProgressChanged)
+		{
+			try
+			{
+				CurrentRequest.OnProgress(CurrentRequest, CurrentRequest.Downloaded, CurrentRequest.DownloadLength);
+			}
+			catch (Exception ex)
+			{
+				HTTPManager.Logger.Exception("ConnectionBase", "HandleProgressCallback - OnProgress", ex);
+			}
+			CurrentRequest.DownloadProgressChanged = false;
+		}
+		if (CurrentRequest.OnUploadProgress != null && CurrentRequest.UploadProgressChanged)
+		{
+			try
+			{
+				CurrentRequest.OnUploadProgress(CurrentRequest, CurrentRequest.Uploaded, CurrentRequest.UploadLength);
+			}
+			catch (Exception ex2)
+			{
+				HTTPManager.Logger.Exception("ConnectionBase", "HandleProgressCallback - OnUploadProgress", ex2);
+			}
+			CurrentRequest.UploadProgressChanged = false;
+		}
+	}
+
+	internal void HandleCallback()
+	{
+		try
+		{
+			HandleProgressCallback();
+			if (State == HTTPConnectionStates.Upgraded)
+			{
+				if (CurrentRequest != null && CurrentRequest.Response != null && CurrentRequest.Response.IsUpgraded)
+				{
+					CurrentRequest.UpgradeCallback();
+				}
+				State = HTTPConnectionStates.WaitForProtocolShutdown;
+			}
+			else
+			{
+				CurrentRequest.CallCallback();
+			}
+		}
+		catch (Exception ex)
+		{
+			HTTPManager.Logger.Exception("ConnectionBase", "HandleCallback", ex);
+		}
+	}
+
+	internal void Recycle(HTTPConnectionRecycledDelegate onConnectionRecycled)
+	{
+		OnConnectionRecycled = onConnectionRecycled;
+		if (State <= HTTPConnectionStates.Initial || State >= HTTPConnectionStates.WaitForProtocolShutdown || State == HTTPConnectionStates.Redirected)
+		{
+			RecycleNow();
+		}
+	}
+
+	protected void RecycleNow()
+	{
+		if (State == HTTPConnectionStates.TimedOut || State == HTTPConnectionStates.Closed)
+		{
+			LastProcessTime = DateTime.MinValue;
+		}
+		State = HTTPConnectionStates.Free;
+		CurrentRequest = null;
+		if (OnConnectionRecycled != null)
+		{
+			OnConnectionRecycled(this);
+			OnConnectionRecycled = null;
+		}
+	}
+
+	public void Dispose()
+	{
+		Dispose(disposing: true);
+		GC.SuppressFinalize(this);
+	}
+
+	protected virtual void Dispose(bool disposing)
+	{
+		IsDisposed = true;
+	}
+}
 }

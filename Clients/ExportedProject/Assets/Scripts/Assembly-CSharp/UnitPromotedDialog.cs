@@ -1,63 +1,77 @@
+using System;
 using UnityEngine;
 
-public class UnitPromotedDialog : MonoBehaviour
+public class UnitPromotedDialog : GuiElementSingle<UnitPromotedDialog>, IGuiDialog
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Header("Content")]
+	public ParticleSystem particles;
 
-	1. No dll files were provided to AssetRipper.
+	public UISprite unitIcon;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public UILabel unitPromotedLabel;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	[Header("Buttons")]
+	public UIButton rogerThatButton;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	private LevelBehaviour mUnit;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public void ShowDialog(LevelBehaviour unit)
+	{
+		mUnit = unit;
+		Singleton<GuiManager>.instance.ShowDialog(this, 0f);
+	}
 
-	3. Assembly Reconstruction has not been implemented.
+	public override void InitControls()
+	{
+		UIEventListener uIEventListener = UIEventListener.Get(rogerThatButton.gameObject);
+		uIEventListener.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener.onClick, new UIEventListener.VoidDelegate(RogerClick));
+	}
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	private void RogerClick(GameObject go)
+	{
+		if (base.isFullyShowed)
+		{
+			HideDialog();
+		}
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public override void InitGUIValues()
+	{
+		if (!(mUnit == null))
+		{
+			unitIcon.spriteName = mUnit.upgradeSlots.iconName;
+			unitIcon.MakePixelPerfect();
+			float multiplier = Mathf.Min(350f / unitIcon.transform.localScale.x, 340f / unitIcon.transform.localScale.y);
+			unitIcon.transform.localScale = unitIcon.transform.localScale.MultiplyXY(multiplier);
+			unitPromotedLabel.text = Localization.LocalizeFormat("ID_UNITHASBEENPROMOTEDTOTIER", mUnit.unitName.ToUpper(), Colours.stringWhite, Colours.stringGoldTier, mUnit.upgradeSlots.actualTier);
+		}
+	}
 
-	4. This script is unnecessary.
+	public override void DoAfterShowUp()
+	{
+		base.DoAfterShowUp();
+		particles.Play();
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public override void DoBeforeHide()
+	{
+		base.DoBeforeHide();
+		particles.Stop();
+	}
 
-	5. Script Content Level 0
+	public override void DoAfterHide()
+	{
+		base.DoAfterHide();
+		mUnit = null;
+	}
 
-		AssetRipper was set to not load any script information.
+	public GuiElement GetGuiElement()
+	{
+		return this;
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
-
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public override void OnBack()
+	{
+		RogerClick(rogerThatButton.gameObject);
+	}
 }

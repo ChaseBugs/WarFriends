@@ -1,63 +1,126 @@
+using System.Collections.Generic;
 using UnityEngine;
 
-public class FlameAmmo : MonoBehaviour
+public class FlameAmmo : Ammo
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public const int hitsPerShot = 6;
 
-	1. No dll files were provided to AssetRipper.
+	public const float timeBetweenShots = 0.35f;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	private FlameAmmoSetup mSetup;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	private bool mCheckHit;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	private int mHitCheckCount;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	private float mNextHitCheck;
 
-	3. Assembly Reconstruction has not been implemented.
+	public override void Fire(Vector3 from, Vector3 to)
+	{
+		mCheckHit = true;
+		mHitCheckCount = 0;
+		mNextHitCheck = TimeManager.realTimeWithoutPauses + 0.35f;
+	}
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public override void LoadAmmoSetup(AmmoSetup setup)
+	{
+		base.LoadAmmoSetup(setup);
+		FlameAmmoSetup flameAmmoSetup = setup as FlameAmmoSetup;
+		if (flameAmmoSetup != null)
+		{
+			mSetup = flameAmmoSetup;
+		}
+		else
+		{
+			Debug.LogError("You probably assigned bad type of AmmoSetup to gun");
+		}
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	protected void Update()
+	{
+		if (mCheckHit && TimeManager.realTimeWithoutPauses > mNextHitCheck)
+		{
+			mNextHitCheck += 0.35f;
+			CheckHit();
+			mHitCheckCount++;
+			if (mHitCheckCount >= 6)
+			{
+				mCheckHit = false;
+				DestroyPooled(0.5f);
+			}
+		}
+	}
 
-	4. This script is unnecessary.
-
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
-
-	5. Script Content Level 0
-
-		AssetRipper was set to not load any script information.
-
-	6. Cpp2IL failed to decompile Il2Cpp data
-
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	private void CheckHit()
+	{
+		Vector3 position = weapon.spawnPoint.transform.position;
+		Collider[] array = Physics.OverlapSphere(position, mSetup.radius);
+		List<DestroyableObject> list = new List<DestroyableObject>(5);
+		Collider[] array2 = array;
+		foreach (Collider collider in array2)
+		{
+			if (!TagsAndLayers.IsDestroyableObject(collider.gameObject))
+			{
+				continue;
+			}
+			Vector3 vector = collider.transform.position;
+			BoxCollider boxCollider = collider.GetComponent<Collider>() as BoxCollider;
+			if (boxCollider != null)
+			{
+				vector = collider.transform.TransformPoint(boxCollider.center);
+			}
+			else
+			{
+				SphereCollider sphereCollider = collider.GetComponent<Collider>() as SphereCollider;
+				if (sphereCollider != null)
+				{
+					vector = collider.transform.TransformPoint(sphereCollider.center);
+				}
+			}
+			DestroyableObject component = collider.GetComponent<DestroyableObject>();
+			if (!(component != null))
+			{
+				continue;
+			}
+			IFraction fraction = component.owner;
+			if (fraction == null || fraction == weapon.owner || fraction.fraction == weapon.owner.fraction)
+			{
+				continue;
+			}
+			float num = Vector3.Distance(position, vector);
+			Ray ray = new Ray(position, vector - position);
+			RaycastHit hit = default(RaycastHit);
+			if (num < 0.3f)
+			{
+				continue;
+			}
+			Vector3 forward = (weapon.owner as MonoBehaviour).transform.forward;
+			Vector3 vector2 = vector - position;
+			if (mSetup.flatY)
+			{
+				forward.y = 0f;
+			}
+			float f = Vector3.Angle(forward, vector2);
+			float t = Mathf.Pow(num, 0.25f);
+			float num2 = Mathf.Lerp(mSetup.shotHalfAngleNear, mSetup.shotHalfAngle, t);
+			if (!(Mathf.Abs(f) < num2))
+			{
+				continue;
+			}
+			float num3 = 1f - num / mSetup.radius;
+			mSetup.hitForce = num3 * mSetup.hitForceMax;
+			mSetup.damageAmount = Mathf.Lerp(mSetup.minDamage, mSetup.maxDamage, num3);
+			LoadAmmoSetup(mSetup);
+			DestroyableObjectpart component2 = collider.gameObject.GetComponent<DestroyableObjectpart>();
+			if (component2 != null && component2.ownerDestroyableObject != null)
+			{
+				if (list.Contains(component2.ownerDestroyableObject))
+				{
+					continue;
+				}
+				list.Add(component2.ownerDestroyableObject);
+			}
+			DoDamage(collider.gameObject, hit, num3 * mSetup.hitForceMax * vector2 / num, flameDamage: true, out var _);
+		}
+	}
 }

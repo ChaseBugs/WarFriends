@@ -1,66 +1,114 @@
-using UnityEngine;
+using System;
+using System.Text;
+using Org.BouncyCastle.Utilities;
 
 namespace Org.BouncyCastle.Crypto
 {
-	public class PbeParametersGenerator : MonoBehaviour
+public abstract class PbeParametersGenerator
+{
+	protected byte[] mPassword;
+
+	protected byte[] mSalt;
+
+	protected int mIterationCount;
+
+	public virtual byte[] Password => Arrays.Clone(mPassword);
+
+	public virtual byte[] Salt => Arrays.Clone(mSalt);
+
+	public virtual int IterationCount => mIterationCount;
+
+	public virtual void Init(byte[] password, byte[] salt, int iterationCount)
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
+		if (password == null)
+		{
+			throw new ArgumentNullException("password");
+		}
+		if (salt == null)
+		{
+			throw new ArgumentNullException("salt");
+		}
+		mPassword = Arrays.Clone(password);
+		mSalt = Arrays.Clone(salt);
+		mIterationCount = iterationCount;
 	}
+
+	[Obsolete("Use 'Password' property")]
+	public byte[] GetPassword()
+	{
+		return Password;
+	}
+
+	[Obsolete("Use 'Salt' property")]
+	public byte[] GetSalt()
+	{
+		return Salt;
+	}
+
+	[Obsolete("Use version with 'algorithm' parameter")]
+	public abstract ICipherParameters GenerateDerivedParameters(int keySize);
+
+	public abstract ICipherParameters GenerateDerivedParameters(string algorithm, int keySize);
+
+	[Obsolete("Use version with 'algorithm' parameter")]
+	public abstract ICipherParameters GenerateDerivedParameters(int keySize, int ivSize);
+
+	public abstract ICipherParameters GenerateDerivedParameters(string algorithm, int keySize, int ivSize);
+
+	public abstract ICipherParameters GenerateDerivedMacParameters(int keySize);
+
+	public static byte[] Pkcs5PasswordToBytes(char[] password)
+	{
+		if (password == null)
+		{
+			return new byte[0];
+		}
+		return Strings.ToAsciiByteArray(password);
+	}
+
+	[Obsolete("Use version taking 'char[]' instead")]
+	public static byte[] Pkcs5PasswordToBytes(string password)
+	{
+		if (password == null)
+		{
+			return new byte[0];
+		}
+		return Strings.ToAsciiByteArray(password);
+	}
+
+	public static byte[] Pkcs5PasswordToUtf8Bytes(char[] password)
+	{
+		if (password == null)
+		{
+			return new byte[0];
+		}
+		return Encoding.UTF8.GetBytes(password);
+	}
+
+	[Obsolete("Use version taking 'char[]' instead")]
+	public static byte[] Pkcs5PasswordToUtf8Bytes(string password)
+	{
+		if (password == null)
+		{
+			return new byte[0];
+		}
+		return Encoding.UTF8.GetBytes(password);
+	}
+
+	public static byte[] Pkcs12PasswordToBytes(char[] password)
+	{
+		return Pkcs12PasswordToBytes(password, wrongPkcs12Zero: false);
+	}
+
+	public static byte[] Pkcs12PasswordToBytes(char[] password, bool wrongPkcs12Zero)
+	{
+		if (password == null || password.Length < 1)
+		{
+			return new byte[wrongPkcs12Zero ? 2 : 0];
+		}
+		byte[] array = new byte[(password.Length + 1) * 2];
+		Encoding.BigEndianUnicode.GetBytes(password, 0, password.Length, array, 0);
+		return array;
+	}
+}
 }

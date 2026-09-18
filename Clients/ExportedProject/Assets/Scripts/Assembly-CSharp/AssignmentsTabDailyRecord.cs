@@ -1,63 +1,95 @@
+using System;
 using UnityEngine;
 
-public class AssignmentsTabDailyRecord : MonoBehaviour
+public class AssignmentsTabDailyRecord : Core_BaseScript
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Header("Core")]
+	public int index = 1;
 
-	1. No dll files were provided to AssetRipper.
+	public UILabel title;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public UISprite icon;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public UILabel description;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	[Header("Bottom")]
+	public GameObject progressPart;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public UISprite progressBar;
 
-	3. Assembly Reconstruction has not been implemented.
+	public UILabel progressLabel;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public GameObject claimButton;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public BoxCollider buttonCollider;
 
-	4. This script is unnecessary.
+	public GameObject donePart;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	[Header("-Reward")]
+	public GameObject rewardPart;
 
-	5. Script Content Level 0
+	public UITable rewardTable;
 
-		AssetRipper was set to not load any script information.
+	public UILabel rewardValue;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	private Assignment mAssignment;
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public void InitControls()
+	{
+		UIEventListener uIEventListener = UIEventListener.Get(claimButton);
+		uIEventListener.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener.onClick, (UIEventListener.VoidDelegate)delegate
+		{
+			ClaimClicked();
+		});
+		rewardTable.onReposition = delegate
+		{
+			float val = 0f - rewardTable.padding.x - (rewardValue.transform.parent.transform.localPosition.x - rewardTable.padding.x) / 2f;
+			rewardTable.transform.localPosition = rewardTable.transform.localPosition.ReplaceX(val);
+		};
+		title.text = Localization.LocalizeFormat("ID_DAILYASSIGNMENTX", index);
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	private void ClaimClicked()
+	{
+		buttonCollider.enabled = false;
+		mAssignment.Claim();
+		InvokeAfterRealTime(delegate
+		{
+			claimButton.SetActive(value: false);
+			donePart.SetActive(value: true);
+		}, 0.2f);
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public void Initialize(Assignment assignment)
+	{
+		mAssignment = assignment;
+		bool flag = assignment.currentState != Assignment.State.InProgress;
+		icon.spriteName = assignment.assignmentPicture;
+		icon.MakePixelPerfect();
+		if (icon.transform.localScale.y > 156f)
+		{
+			float multiplier = 156f / icon.transform.localScale.y;
+			icon.transform.localScale = icon.transform.localScale.MultiplyXY(multiplier);
+		}
+		description.text = ((!flag) ? assignment.blueDescription : assignment.goldDescription);
+		progressBar.fillAmount = assignment.GetProgress();
+		progressBar.spriteName = ((!flag) ? assignment.progressBarSpriteForProgress : AssignmentsManager.goldProgressBar);
+		progressLabel.color = ((!flag) ? Color.white : Color.black);
+		if (flag)
+		{
+			progressLabel.text = Localization.Localize("ID_COMPLETED");
+		}
+		else
+		{
+			string status = assignment.status;
+			progressLabel.text = ((!string.IsNullOrEmpty(status)) ? status.Replace("(", string.Empty).Replace(")", string.Empty) : Localization.Localize("ID_INPROGRESS"));
+		}
+		rewardValue.text = MiscTools.FormatAssignmentNumber(assignment.GetReward());
+		rewardTable.repositionNow = true;
+		Assignment.State currentState = assignment.currentState;
+		buttonCollider.enabled = currentState == Assignment.State.Finishing || currentState == Assignment.State.Done;
+		progressPart.SetActive(currentState == Assignment.State.InProgress);
+		claimButton.SetActive(currentState == Assignment.State.Done || currentState == Assignment.State.Finishing);
+		donePart.SetActive(currentState == Assignment.State.Claimed);
+	}
 }

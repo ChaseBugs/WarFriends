@@ -1,63 +1,109 @@
+using ExitGames.Client.Photon;
 using UnityEngine;
 
 public class PhotonStatsGui : MonoBehaviour
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public bool statsWindowOn = true;
 
-	1. No dll files were provided to AssetRipper.
+	public bool statsOn = true;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public bool healthStatsVisible;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public bool trafficStatsOn;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public bool buttonsOn;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public Rect statsRect = new Rect(0f, 100f, 200f, 50f);
 
-	3. Assembly Reconstruction has not been implemented.
+	public int WindowId = 100;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public void Start()
+	{
+		if (statsRect.x <= 0f)
+		{
+			statsRect.x = (float)Screen.width - statsRect.width;
+		}
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public void Update()
+	{
+		if (Input.GetKeyDown(KeyCode.Tab) && Input.GetKey(KeyCode.LeftShift))
+		{
+			statsWindowOn = !statsWindowOn;
+			statsOn = true;
+		}
+	}
 
-	4. This script is unnecessary.
+	public void OnGUI()
+	{
+		if (PhotonNetwork.networkingPeer.TrafficStatsEnabled != statsOn)
+		{
+			PhotonNetwork.networkingPeer.TrafficStatsEnabled = statsOn;
+		}
+		if (statsWindowOn)
+		{
+			statsRect = GUILayout.Window(WindowId, statsRect, TrafficStatsWindow, "Messages (shift+tab)");
+		}
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
-
-	5. Script Content Level 0
-
-		AssetRipper was set to not load any script information.
-
-	6. Cpp2IL failed to decompile Il2Cpp data
-
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public void TrafficStatsWindow(int windowID)
+	{
+		bool flag = false;
+		TrafficStatsGameLevel trafficStatsGameLevel = PhotonNetwork.networkingPeer.TrafficStatsGameLevel;
+		long num = PhotonNetwork.networkingPeer.TrafficStatsElapsedMs / 1000;
+		if (num == 0L)
+		{
+			num = 1L;
+		}
+		GUILayout.BeginHorizontal();
+		buttonsOn = GUILayout.Toggle(buttonsOn, "buttons");
+		healthStatsVisible = GUILayout.Toggle(healthStatsVisible, "health");
+		trafficStatsOn = GUILayout.Toggle(trafficStatsOn, "traffic");
+		GUILayout.EndHorizontal();
+		string text = $"Out {trafficStatsGameLevel.TotalOutgoingMessageCount,4} | In {trafficStatsGameLevel.TotalIncomingMessageCount,4} | Sum {trafficStatsGameLevel.TotalMessageCount,4}";
+		string text2 = $"{num}sec average:";
+		string text3 = $"Out {trafficStatsGameLevel.TotalOutgoingMessageCount / num,4} | In {trafficStatsGameLevel.TotalIncomingMessageCount / num,4} | Sum {trafficStatsGameLevel.TotalMessageCount / num,4}";
+		GUILayout.Label(text);
+		GUILayout.Label(text2);
+		GUILayout.Label(text3);
+		if (buttonsOn)
+		{
+			GUILayout.BeginHorizontal();
+			statsOn = GUILayout.Toggle(statsOn, "stats on");
+			if (GUILayout.Button("Reset"))
+			{
+				PhotonNetwork.networkingPeer.TrafficStatsReset();
+				PhotonNetwork.networkingPeer.TrafficStatsEnabled = true;
+			}
+			flag = GUILayout.Button("To Log");
+			GUILayout.EndHorizontal();
+		}
+		string text4 = string.Empty;
+		string text5 = string.Empty;
+		if (trafficStatsOn)
+		{
+			GUILayout.Box("Traffic Stats");
+			text4 = "Incoming: \n" + PhotonNetwork.networkingPeer.TrafficStatsIncoming.ToString();
+			text5 = "Outgoing: \n" + PhotonNetwork.networkingPeer.TrafficStatsOutgoing.ToString();
+			GUILayout.Label(text4);
+			GUILayout.Label(text5);
+		}
+		string text6 = string.Empty;
+		if (healthStatsVisible)
+		{
+			GUILayout.Box("Health Stats");
+			text6 = string.Format("ping: {6}[+/-{7}]ms resent:{8} \n\nmax ms between\nsend: {0,4} \ndispatch: {1,4} \n\nlongest dispatch for: \nev({3}):{2,3}ms \nop({5}):{4,3}ms", trafficStatsGameLevel.LongestDeltaBetweenSending, trafficStatsGameLevel.LongestDeltaBetweenDispatching, trafficStatsGameLevel.LongestEventCallback, trafficStatsGameLevel.LongestEventCallbackCode, trafficStatsGameLevel.LongestOpResponseCallback, trafficStatsGameLevel.LongestOpResponseCallbackOpCode, PhotonNetwork.networkingPeer.RoundTripTime, PhotonNetwork.networkingPeer.RoundTripTimeVariance, PhotonNetwork.networkingPeer.ResentReliableCommands);
+			GUILayout.Label(text6);
+		}
+		if (flag)
+		{
+			string message = $"{text}\n{text2}\n{text3}\n{text4}\n{text5}\n{text6}";
+			Debug.Log(message);
+		}
+		if (GUI.changed)
+		{
+			statsRect.height = 100f;
+		}
+		GUI.DragWindow();
+	}
 }

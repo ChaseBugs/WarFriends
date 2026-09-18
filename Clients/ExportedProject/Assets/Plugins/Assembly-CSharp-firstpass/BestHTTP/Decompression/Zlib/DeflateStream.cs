@@ -1,66 +1,249 @@
-using UnityEngine;
+using System;
+using System.IO;
 
 namespace BestHTTP.Decompression.Zlib
 {
-	public class DeflateStream : MonoBehaviour
+internal class DeflateStream : Stream
+{
+	internal ZlibBaseStream _baseStream;
+
+	internal Stream _innerStream;
+
+	private bool _disposed;
+
+	public virtual FlushType FlushMode
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
+		get
+		{
+			return _baseStream._flushMode;
+		}
+		set
+		{
+			if (_disposed)
+			{
+				throw new ObjectDisposedException("DeflateStream");
+			}
+			_baseStream._flushMode = value;
+		}
 	}
+
+	public int BufferSize
+	{
+		get
+		{
+			return _baseStream._bufferSize;
+		}
+		set
+		{
+			if (_disposed)
+			{
+				throw new ObjectDisposedException("DeflateStream");
+			}
+			if (_baseStream._workingBuffer != null)
+			{
+				throw new ZlibException("The working buffer is already set.");
+			}
+			if (value < 1024)
+			{
+				throw new ZlibException($"Don't be silly. {value} bytes?? Use a bigger buffer, at least {1024}.");
+			}
+			_baseStream._bufferSize = value;
+		}
+	}
+
+	public CompressionStrategy Strategy
+	{
+		get
+		{
+			return _baseStream.Strategy;
+		}
+		set
+		{
+			if (_disposed)
+			{
+				throw new ObjectDisposedException("DeflateStream");
+			}
+			_baseStream.Strategy = value;
+		}
+	}
+
+	public virtual long TotalIn => _baseStream._z.TotalBytesIn;
+
+	public virtual long TotalOut => _baseStream._z.TotalBytesOut;
+
+	public override bool CanRead
+	{
+		get
+		{
+			if (_disposed)
+			{
+				throw new ObjectDisposedException("DeflateStream");
+			}
+			return _baseStream._stream.CanRead;
+		}
+	}
+
+	public override bool CanSeek => false;
+
+	public override bool CanWrite
+	{
+		get
+		{
+			if (_disposed)
+			{
+				throw new ObjectDisposedException("DeflateStream");
+			}
+			return _baseStream._stream.CanWrite;
+		}
+	}
+
+	public override long Length
+	{
+		get
+		{
+			throw new NotImplementedException();
+		}
+	}
+
+	public override long Position
+	{
+		get
+		{
+			if (_baseStream._streamMode == ZlibBaseStream.StreamMode.Writer)
+			{
+				return _baseStream._z.TotalBytesOut;
+			}
+			if (_baseStream._streamMode == ZlibBaseStream.StreamMode.Reader)
+			{
+				return _baseStream._z.TotalBytesIn;
+			}
+			return 0L;
+		}
+		set
+		{
+			throw new NotImplementedException();
+		}
+	}
+
+	public DeflateStream(Stream stream, CompressionMode mode)
+		: this(stream, mode, CompressionLevel.Default, leaveOpen: false)
+	{
+	}
+
+	public DeflateStream(Stream stream, CompressionMode mode, CompressionLevel level)
+		: this(stream, mode, level, leaveOpen: false)
+	{
+	}
+
+	public DeflateStream(Stream stream, CompressionMode mode, bool leaveOpen)
+		: this(stream, mode, CompressionLevel.Default, leaveOpen)
+	{
+	}
+
+	public DeflateStream(Stream stream, CompressionMode mode, CompressionLevel level, bool leaveOpen)
+	{
+		_innerStream = stream;
+		_baseStream = new ZlibBaseStream(stream, mode, level, ZlibStreamFlavor.DEFLATE, leaveOpen);
+	}
+
+	public DeflateStream(Stream stream, CompressionMode mode, CompressionLevel level, bool leaveOpen, int windowBits)
+	{
+		_innerStream = stream;
+		_baseStream = new ZlibBaseStream(stream, mode, level, ZlibStreamFlavor.DEFLATE, leaveOpen, windowBits);
+	}
+
+	protected override void Dispose(bool disposing)
+	{
+		try
+		{
+			if (!_disposed)
+			{
+				if (disposing && _baseStream != null)
+				{
+					_baseStream.Close();
+				}
+				_disposed = true;
+			}
+		}
+		finally
+		{
+			base.Dispose(disposing);
+		}
+	}
+
+	public override void Flush()
+	{
+		if (_disposed)
+		{
+			throw new ObjectDisposedException("DeflateStream");
+		}
+		_baseStream.Flush();
+	}
+
+	public override int Read(byte[] buffer, int offset, int count)
+	{
+		if (_disposed)
+		{
+			throw new ObjectDisposedException("DeflateStream");
+		}
+		return _baseStream.Read(buffer, offset, count);
+	}
+
+	public override long Seek(long offset, SeekOrigin origin)
+	{
+		throw new NotImplementedException();
+	}
+
+	public override void SetLength(long value)
+	{
+		_baseStream.SetLength(value);
+	}
+
+	public override void Write(byte[] buffer, int offset, int count)
+	{
+		if (_disposed)
+		{
+			throw new ObjectDisposedException("DeflateStream");
+		}
+		_baseStream.Write(buffer, offset, count);
+	}
+
+	public static byte[] CompressString(string s)
+	{
+		using (MemoryStream memoryStream = new MemoryStream())
+		{
+		Stream compressor = new DeflateStream(memoryStream, CompressionMode.Compress, CompressionLevel.BestCompression);
+		ZlibBaseStream.CompressString(s, compressor);
+		return memoryStream.ToArray();
+		}
+}
+
+	public static byte[] CompressBuffer(byte[] b)
+	{
+		using (MemoryStream memoryStream = new MemoryStream())
+		{
+		Stream compressor = new DeflateStream(memoryStream, CompressionMode.Compress, CompressionLevel.BestCompression);
+		ZlibBaseStream.CompressBuffer(b, compressor);
+		return memoryStream.ToArray();
+		}
+}
+
+	public static string UncompressString(byte[] compressed)
+	{
+		using (MemoryStream stream = new MemoryStream(compressed))
+		{
+		Stream decompressor = new DeflateStream(stream, CompressionMode.Decompress);
+		return ZlibBaseStream.UncompressString(compressed, decompressor);
+		}
+}
+
+	public static byte[] UncompressBuffer(byte[] compressed)
+	{
+		using (MemoryStream stream = new MemoryStream(compressed))
+		{
+		Stream decompressor = new DeflateStream(stream, CompressionMode.Decompress);
+		return ZlibBaseStream.UncompressBuffer(compressed, decompressor);
+		}
+}
+}
 }

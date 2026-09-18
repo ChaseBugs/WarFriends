@@ -1,66 +1,119 @@
-using UnityEngine;
+using System;
+using Org.BouncyCastle.Asn1;
+using Org.BouncyCastle.Asn1.CryptoPro;
+using Org.BouncyCastle.Asn1.X9;
+using Org.BouncyCastle.Crypto.Generators;
+using Org.BouncyCastle.Security;
+using Org.BouncyCastle.Utilities;
 
 namespace Org.BouncyCastle.Crypto.Parameters
 {
-	public class ECKeyParameters : MonoBehaviour
+public abstract class ECKeyParameters : AsymmetricKeyParameter
+{
+	private static readonly string[] algorithms = new string[6] { "EC", "ECDSA", "ECDH", "ECDHC", "ECGOST3410", "ECMQV" };
+
+	private readonly string algorithm;
+
+	private readonly ECDomainParameters parameters;
+
+	private readonly DerObjectIdentifier publicKeyParamSet;
+
+	public string AlgorithmName => algorithm;
+
+	public ECDomainParameters Parameters => parameters;
+
+	public DerObjectIdentifier PublicKeyParamSet => publicKeyParamSet;
+
+	protected ECKeyParameters(string algorithm, bool isPrivate, ECDomainParameters parameters)
+		: base(isPrivate)
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
+		if (algorithm == null)
+		{
+			throw new ArgumentNullException("algorithm");
+		}
+		if (parameters == null)
+		{
+			throw new ArgumentNullException("parameters");
+		}
+		this.algorithm = VerifyAlgorithmName(algorithm);
+		this.parameters = parameters;
 	}
+
+	protected ECKeyParameters(string algorithm, bool isPrivate, DerObjectIdentifier publicKeyParamSet)
+		: base(isPrivate)
+	{
+		if (algorithm == null)
+		{
+			throw new ArgumentNullException("algorithm");
+		}
+		if (publicKeyParamSet == null)
+		{
+			throw new ArgumentNullException("publicKeyParamSet");
+		}
+		this.algorithm = VerifyAlgorithmName(algorithm);
+		parameters = LookupParameters(publicKeyParamSet);
+		this.publicKeyParamSet = publicKeyParamSet;
+	}
+
+	public override bool Equals(object obj)
+	{
+		if (obj == this)
+		{
+			return true;
+		}
+		if (!(obj is ECDomainParameters obj2))
+		{
+			return false;
+		}
+		return Equals(obj2);
+	}
+
+	protected bool Equals(ECKeyParameters other)
+	{
+		return parameters.Equals(other.parameters) && Equals((AsymmetricKeyParameter)other);
+	}
+
+	public override int GetHashCode()
+	{
+		return parameters.GetHashCode() ^ base.GetHashCode();
+	}
+
+	internal ECKeyGenerationParameters CreateKeyGenerationParameters(SecureRandom random)
+	{
+		if (publicKeyParamSet != null)
+		{
+			return new ECKeyGenerationParameters(publicKeyParamSet, random);
+		}
+		return new ECKeyGenerationParameters(parameters, random);
+	}
+
+	internal static string VerifyAlgorithmName(string algorithm)
+	{
+		string result = Platform.ToUpperInvariant(algorithm);
+		if (Array.IndexOf(algorithms, algorithm, 0, algorithms.Length) < 0)
+		{
+			throw new ArgumentException("unrecognised algorithm: " + algorithm, "algorithm");
+		}
+		return result;
+	}
+
+	internal static ECDomainParameters LookupParameters(DerObjectIdentifier publicKeyParamSet)
+	{
+		if (publicKeyParamSet == null)
+		{
+			throw new ArgumentNullException("publicKeyParamSet");
+		}
+		ECDomainParameters eCDomainParameters = ECGost3410NamedCurves.GetByOid(publicKeyParamSet);
+		if (eCDomainParameters == null)
+		{
+			X9ECParameters x9ECParameters = ECKeyPairGenerator.FindECCurveByOid(publicKeyParamSet);
+			if (x9ECParameters == null)
+			{
+				throw new ArgumentException("OID is not a valid public key parameter set", "publicKeyParamSet");
+			}
+			eCDomainParameters = new ECDomainParameters(x9ECParameters.Curve, x9ECParameters.G, x9ECParameters.N, x9ECParameters.H, x9ECParameters.GetSeed());
+		}
+		return eCDomainParameters;
+	}
+}
 }

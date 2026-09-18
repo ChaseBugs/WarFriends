@@ -93,6 +93,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f19ea4a15c3ca43dcc180d756f7a82b3, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  ownerId: 0
+  group: 0
+  OwnerShipWasTransfered: 0
+  prefixBackup: -1
+  synchronization: 0
+  onSerializeTransformOption: 3
+  onSerializeRigidBodyOption: 2
+  ownershipTransfer: 0
+  ObservedComponents:
+  - {fileID: 0}
+  viewIdField: 0
+  instantiationId: -1
+  currentMasterID: -1
+  didAwake: 0
+  isRuntimeInstantiated: 0
 --- !u!65 &6519550
 BoxCollider:
   serializedVersion: 2
@@ -116,6 +131,24 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a503568e23092a0b9255b6fcb6b62be2, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMaxHealth:
+    currentCryptoKey: 230887
+    hiddenValue: e785cb42
+    fakeValue: 100
+    inited: 1
+  mDestroyableByBonusBox: 1
+  healthBarPosition: {fileID: 403859}
+  forceHealthBar: 0
+  offset: {x: 0, y: 0, z: 0}
+  displayHealthBar: 1
+  playMainHitParticle: 1
+  isMetal: 0
+  shotCoeficient: 1
+  shotParticleNames: []
+  healthBarStyle: 0
+  mHealthbarColor: {r: 0, g: 1, b: 0, a: 1}
+  healthbar: {fileID: 0}
+  shotHitSound: 14
 --- !u!114 &11443158
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -127,6 +160,44 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 543d69664e3de73bff1e26ef2ec3517e, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  isActivated: 0
+  photonView: {fileID: 11454010}
+  hudObjectIndicator: {fileID: 0}
+  bodyRenderer: {fileID: 2377035}
+  toGroundTime: 0.2
+  fromGroundTime: 0.4
+  fromGroundAnimation:
+    serializedVersion: 2
+    m_Curve:
+    - time: 0
+      value: 1
+      inSlope: -5.805689
+      outSlope: -5.805689
+      tangentMode: 0
+    - time: 0.39999998
+      value: -0.2
+      inSlope: 0.05253923
+      outSlope: 0.05253923
+      tangentMode: 0
+    - time: 0.7
+      value: 0.1
+      inSlope: 0.03243331
+      outSlope: 0.03243331
+      tangentMode: 0
+    - time: 0.89
+      value: -0.05
+      inSlope: -0.012553411
+      outSlope: -0.012553411
+      tangentMode: 0
+    - time: 1
+      value: 0
+      inSlope: 0.8158124
+      outSlope: 0.8158124
+      tangentMode: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+  destroySound: {fileID: 8300000, guid: e04ad4c5e334c7748ba4e9b72653aa20, type: 3}
+  mFraction: 1
 --- !u!114 &11431434
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -138,6 +209,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3cf4d7761af3ce98d7a08bebfe4e8861, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  shootTargets: []
+  targets:
+  - transform: {fileID: 469566}
+    type: 1
+  visible: 1
 --- !u!4 &470521
 Transform:
   m_ObjectHideFlags: 0

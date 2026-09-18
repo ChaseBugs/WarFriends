@@ -1,63 +1,88 @@
-using UnityEngine;
+using ExitGames.Client.Photon;
 
-public class CustomTypes : MonoBehaviour
+public static class CustomTypes
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	private const int upgradesLength = 24;
 
-	1. No dll files were provided to AssetRipper.
+	public static readonly byte[] weaponUpgrades = new byte[10];
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public static readonly byte[] memUpgrades = new byte[24];
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public static void Register()
+	{
+		PhotonPeer.RegisterType(typeof(UpgradeSlots.UnitUpgrades), 90, SerializeUpgrades, DeserializeUpgrades);
+		PhotonPeer.RegisterType(typeof(PlayerInventory.EquippedWeapon), 88, SerializeEqippedWaepon, DeserializeEquippedWeapon);
+	}
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	private static object DeserializeEquippedWeapon(StreamBuffer inStream, short length)
+	{
+		PlayerInventory.EquippedWeapon equippedWeapon = new PlayerInventory.EquippedWeapon();
+		lock (weaponUpgrades)
+		{
+			inStream.Read(weaponUpgrades, 0, 10);
+			int offset = 0;
+			Protocol.Deserialize(out equippedWeapon.weaponId, weaponUpgrades, ref offset);
+			Protocol.Deserialize(out equippedWeapon.weaponUpgrade, weaponUpgrades, ref offset);
+			Protocol.Deserialize(out short value, weaponUpgrades, ref offset);
+			equippedWeapon.enabled = value > 0;
+			return equippedWeapon;
+		}
+	}
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	private static short SerializeEqippedWaepon(StreamBuffer outStream, object customobject)
+	{
+		PlayerInventory.EquippedWeapon equippedWeapon = (PlayerInventory.EquippedWeapon)customobject;
+		lock (weaponUpgrades)
+		{
+			byte[] array = weaponUpgrades;
+			int targetOffset = 0;
+			short value = (short)(equippedWeapon.enabled ? 1 : 0);
+			Protocol.Serialize(equippedWeapon.weaponId, array, ref targetOffset);
+			Protocol.Serialize(equippedWeapon.weaponUpgrade, array, ref targetOffset);
+			Protocol.Serialize(value, array, ref targetOffset);
+			outStream.Write(array, 0, 10);
+		}
+		return 10;
+	}
 
-	3. Assembly Reconstruction has not been implemented.
+	private static short SerializeUpgrades(StreamBuffer outStream, object customobject)
+	{
+		UpgradeSlots.UnitUpgrades unitUpgrades = (UpgradeSlots.UnitUpgrades)customobject;
+		lock (memUpgrades)
+		{
+			byte[] array = memUpgrades;
+			int targetOffset = 0;
+			short value = (short)(unitUpgrades.isSpecial ? 1 : 0);
+			short value2 = (short)(unitUpgrades.isElite ? 1 : 0);
+			Protocol.Serialize(unitUpgrades.slotUpgradeindex, array, ref targetOffset);
+			Protocol.Serialize(unitUpgrades.slotUpgradeIndexSpecial, array, ref targetOffset);
+			Protocol.Serialize(unitUpgrades.scaleHp, array, ref targetOffset);
+			Protocol.Serialize(unitUpgrades.scaleDamage, array, ref targetOffset);
+			Protocol.Serialize(unitUpgrades.slotUpgradeIndexElite, array, ref targetOffset);
+			Protocol.Serialize(value, array, ref targetOffset);
+			Protocol.Serialize(value2, array, ref targetOffset);
+			outStream.Write(array, 0, 24);
+		}
+		return 24;
+	}
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
-
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
-
-	4. This script is unnecessary.
-
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
-
-	5. Script Content Level 0
-
-		AssetRipper was set to not load any script information.
-
-	6. Cpp2IL failed to decompile Il2Cpp data
-
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	private static object DeserializeUpgrades(StreamBuffer inStream, short length)
+	{
+		UpgradeSlots.UnitUpgrades unitUpgrades = new UpgradeSlots.UnitUpgrades(1f);
+		lock (memUpgrades)
+		{
+			inStream.Read(memUpgrades, 0, 24);
+			int offset = 0;
+			Protocol.Deserialize(out unitUpgrades.slotUpgradeindex, memUpgrades, ref offset);
+			Protocol.Deserialize(out unitUpgrades.slotUpgradeIndexSpecial, memUpgrades, ref offset);
+			Protocol.Deserialize(out unitUpgrades.scaleHp, memUpgrades, ref offset);
+			Protocol.Deserialize(out unitUpgrades.scaleDamage, memUpgrades, ref offset);
+			Protocol.Deserialize(out unitUpgrades.slotUpgradeIndexElite, memUpgrades, ref offset);
+			Protocol.Deserialize(out short value, memUpgrades, ref offset);
+			Protocol.Deserialize(out short value2, memUpgrades, ref offset);
+			unitUpgrades.isSpecial = value > 0;
+			unitUpgrades.isElite = value2 > 0;
+		}
+		return unitUpgrades;
+	}
 }

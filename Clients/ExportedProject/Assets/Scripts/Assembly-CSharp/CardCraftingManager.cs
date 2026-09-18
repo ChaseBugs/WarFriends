@@ -1,63 +1,166 @@
+using System;
+using System.Collections.Generic;
+using Beebyte.Obfuscator;
+using Google2u;
+using Newtonsoft.Json;
 using UnityEngine;
 
-public class CardCraftingManager : MonoBehaviour
+[Skip]
+public class CardCraftingManager : DatabaseSerializedObjectGeneric<CardCraftingManager.CraftData>
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Skip]
+	public class CraftData
+	{
+		public List<string> cards = new List<string>();
 
-	1. No dll files were provided to AssetRipper.
+		public int start;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+		public int end;
+	}
 
-	2. Incorrect dll files were provided to AssetRipper.
+	private static CardCraftingManager mInstance;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	[HideInInspector]
+	public bool waitingForServerResponse;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public static CardCraftingManager instance
+	{
+		get
+		{
+			mInstance = mInstance ?? ((CardCraftingManager)UnityEngine.Object.FindObjectsOfType(typeof(CardCraftingManager))[0]);
+			return mInstance;
+		}
+	}
 
-	3. Assembly Reconstruction has not been implemented.
+	public int startCraftingTime => data.start;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public int endCraftingTime
+	{
+		get
+		{
+			return data.end;
+		}
+		set
+		{
+			data.end = value;
+			if (this.EndTimeChanged != null)
+			{
+				this.EndTimeChanged();
+			}
+		}
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public List<Card> craftingCards
+	{
+		get
+		{
+			List<Card> list = new List<Card>();
+			if (data == null || data.cards == null)
+			{
+				return list;
+			}
+			for (int i = 0; i < data.cards.Count; i++)
+			{
+				list.Add(CardManager.instance.GetCardInstance(data.cards[i]));
+			}
+			return list;
+		}
+	}
 
-	4. This script is unnecessary.
+	public bool isCardCrafting => isCrafting && data.end > Singleton<BeanstalkServerManager>.instance.currentTimestamp;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public bool isCardCrafted => !waitingForServerResponse && isCrafting && data.end <= Singleton<BeanstalkServerManager>.instance.currentTimestamp;
 
-	5. Script Content Level 0
+	public bool isCrafting => data != null && data.cards != null && data.cards.Count > 0 && data.start < data.end;
 
-		AssetRipper was set to not load any script information.
+	public float craftingProgress
+	{
+		get
+		{
+			if (data.start == data.end)
+			{
+				return 0f;
+			}
+			return Mathf.Clamp01((float)(Singleton<BeanstalkServerManager>.instance.currentTimestamp - data.start) / (float)(data.end - data.start));
+		}
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public int remainingSeconds => Mathf.Max(0, data.end - Singleton<BeanstalkServerManager>.instance.currentTimestamp);
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public bool isGoldCrafting => craftingCards.Count != 0 && craftingCards[0].rarity == CardManager.CardType.Silver;
 
-	7. An incorrect path was provided to AssetRipper.
+	public bool canAnyWarcardBeCrafted => CardManager.instance.GetWarcardsCount(CardManager.CardType.Bronze) > 2 || CardManager.instance.GetWarcardsCount(CardManager.CardType.Silver) > 2;
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	public event Action<Card> CardWasCrafted;
 
-	*/
+	public event Action EndTimeChanged;
+
+	public event Action NewDataLoaded;
+
+	public void LoadData(string data)
+	{
+		SerializedObject = JsonConvert.DeserializeObject<CraftData>(data);
+		waitingForServerResponse = false;
+		if (this.NewDataLoaded != null)
+		{
+			this.NewDataLoaded();
+		}
+	}
+
+	public void CraftWarcard(List<Card> cardsToCraft)
+	{
+		if (cardsToCraft == null || cardsToCraft.Count != 3)
+		{
+			return;
+		}
+		if (data == null)
+		{
+			data = new CraftData();
+		}
+		data.start = Singleton<BeanstalkServerManager>.instance.currentTimestamp;
+		int num = ((cardsToCraft[0].rarity != CardManager.CardType.Silver) ? ((int)(float)Singleton<GameVariables>.instance.constants.GetRow(Constants.rowIds.CardCraftTimeSilver).FLOATVALUE) : ((int)(float)Singleton<GameVariables>.instance.constants.GetRow(Constants.rowIds.CardCraftTimeGold).FLOATVALUE));
+		data.end = data.start + num * 60;
+		if (data.cards == null)
+		{
+			data.cards = new List<string>();
+		}
+		else
+		{
+			data.cards.Clear();
+		}
+		foreach (Card item in cardsToCraft)
+		{
+			data.cards.Add(item.id);
+			item.RemoveCard();
+		}
+		Singleton<BeanstalkServerManager>.instance.CraftCard(JsonConvert.SerializeObject(data.cards));
+	}
+
+	public void ClaimWarcard(string cardId)
+	{
+		Card obj = CardManager.instance.AddCard(cardId);
+		if (this.CardWasCrafted != null)
+		{
+			this.CardWasCrafted(obj);
+		}
+		Debug.Log("Added warcard from crafting is " + cardId);
+		waitingForServerResponse = false;
+		GuiScreenSingle<CardMenuScreen>.instance.craftCardsContent.ClaimAnimation(cardId);
+		StopCrafting();
+	}
+
+	public void DebugSpeedCrafting()
+	{
+		if (isCrafting)
+		{
+			endCraftingTime = Singleton<BeanstalkServerManager>.instance.currentTimestamp + 60;
+		}
+	}
+
+	private void StopCrafting()
+	{
+		data.cards.Clear();
+		data.start = 0;
+		data.end = 0;
+	}
 }

@@ -1,66 +1,29 @@
-using UnityEngine;
-
 namespace GooglePlayGames
 {
-	public class PluginVersion : MonoBehaviour
-	{
-		/*
-		Dummy class. This could have happened for several reasons:
+public class PluginVersion
+{
+	public const string VersionKeyCPP = "00911";
 
-		1. No dll files were provided to AssetRipper.
+	public const string VersionKeyU5 = "00915";
 
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
+	public const string VersionKey27Patch = "00927a";
 
-		2. Incorrect dll files were provided to AssetRipper.
+	public const string VersionKeyJarResolver = "00928";
 
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
+	public const string VersionKeyNativeCRM = "00930";
 
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public const string VersionKeyJNIStats = "00934";
 
-		3. Assembly Reconstruction has not been implemented.
+	public const string VersionKeyJarResolverDLL = "00935";
 
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
+	public const int VersionInt = 2358;
 
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
+	public const string VersionString = "0.9.36";
 
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
+	public const string VersionKey = "00936";
 
-		5. Script Content Level 0
+	public const int MinGmsCoreVersionCode = 8487000;
 
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
-	}
+	public const string PlayServicesVersionConstraint = "9+";
+}
 }

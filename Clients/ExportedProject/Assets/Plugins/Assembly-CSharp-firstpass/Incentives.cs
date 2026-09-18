@@ -1,63 +1,178 @@
+using System.Runtime.InteropServices;
 using UnityEngine;
 
-public class Incentives : MonoBehaviour
+public class Incentives
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public enum IncentivesCallbackIdentifier
+	{
+		INCENTIVE_ACTIVE_DIALOG_PENDING_DISPLAY,
+		INCENTIVE_CRITERIAMET_DIALOG_PENDING_DISPLAY,
+		INCENTIVE_AWARD_DIALOG_PENDING_DISPLAY,
+		INCENTIVE_START_DIALOG_DISPLAYED,
+		INCENTIVE_ACTIVE_DIALOG_DISPLAYED,
+		INCENTIVE_CRITERIAMET_DIALOG_DISPLAYED,
+		INCENTIVE_AWARD_DIALOG_DISPLAYED,
+		INCENTIVE_START_DIALOG_WILL_DISMISS,
+		INCENTIVE_ACTIVE_DIALOG_WILL_DISMISS,
+		INCENTIVE_CRITERIAMET_DIALOG_WILL_DISMISS,
+		INCENTIVE_AWARD_DIALOG_WILL_DISMISS,
+		INCENTIVE_APPLY_AWARD
+	}
 
-	1. No dll files were provided to AssetRipper.
+	public enum IncentivesInterfaceOrientationMask
+	{
+		IncentivesInterfaceOrientationMaskPortrait = 2,
+		IncentivesInterfaceOrientationMaskLandscapeLeft = 8,
+		IncentivesInterfaceOrientationMaskLandscapeRight = 16,
+		IncentivesInterfaceOrientationMaskPortraitUpsideDown = 4,
+		IncentivesInterfaceOrientationMaskLandscapeAll = 24,
+		IncentivesInterfaceOrientationMaskPortraitAll = 6,
+		IncentivesInterfaceOrientationMaskAll = 30,
+		IncentivesInterfaceOrientationMaskAllButUpsideDown = 26
+	}
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	[DllImport("offers")]
+	private static extern void _registerForIncentivesNotification(IncentivesCallbackIdentifier identifier, string objectName, string methodName);
 
-	2. Incorrect dll files were provided to AssetRipper.
+	[DllImport("offers")]
+	private static extern void _initialiseIncentivesSession(IncentivesInterfaceOrientationMask orientationMask);
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	[DllImport("offers")]
+	private static extern void _closeIncentivesSession();
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	[DllImport("offers")]
+	private static extern bool _areAnyIncentivesAvailable();
 
-	3. Assembly Reconstruction has not been implemented.
+	[DllImport("offers")]
+	private static extern void _incentiveCriteriaMet();
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	[DllImport("offers")]
+	private static extern void _presentIncentiveStartDialog();
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	[DllImport("offers")]
+	private static extern void _presentIncentiveActiveDialog();
 
-	4. This script is unnecessary.
+	[DllImport("offers")]
+	private static extern void _presentIncentiveCriteriaMetDialog();
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	[DllImport("offers")]
+	private static extern void _presentIncentiveAwardDialog();
 
-	5. Script Content Level 0
+	[DllImport("offers")]
+	private static extern void _TEST_presentIncentiveStartDialog();
 
-		AssetRipper was set to not load any script information.
+	[DllImport("offers")]
+	private static extern void _TEST_presentIncentiveActiveDialog();
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	[DllImport("offers")]
+	private static extern void _TEST_presentIncentiveCriteriaMetDialog();
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	[DllImport("offers")]
+	private static extern void _TEST_presentIncentiveAwardDialog();
 
-	7. An incorrect path was provided to AssetRipper.
+	public static void registerForIncentivesNotification(IncentivesCallbackIdentifier notificationId, string objectName, string methodName)
+	{
+		if (Application.platform == RuntimePlatform.IPhonePlayer || Application.platform == RuntimePlatform.Android)
+		{
+			_registerForIncentivesNotification(notificationId, objectName, methodName);
+		}
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	public static void initialiseIncentivesSession(IncentivesInterfaceOrientationMask orientationMask)
+	{
+		if (Application.platform == RuntimePlatform.IPhonePlayer || Application.platform == RuntimePlatform.Android)
+		{
+			_initialiseIncentivesSession(orientationMask);
+		}
+	}
 
-	*/
+	public static void closeIncentivesSession()
+	{
+		if (Application.platform == RuntimePlatform.IPhonePlayer || Application.platform == RuntimePlatform.Android)
+		{
+			_closeIncentivesSession();
+		}
+	}
+
+	public static bool areAnyIncentivesAvailable()
+	{
+		bool result = false;
+		if (Application.platform == RuntimePlatform.IPhonePlayer || Application.platform == RuntimePlatform.Android)
+		{
+			result = _areAnyIncentivesAvailable();
+		}
+		return result;
+	}
+
+	public static void incentiveCriteriaMet()
+	{
+		if (Application.platform == RuntimePlatform.IPhonePlayer || Application.platform == RuntimePlatform.Android)
+		{
+			_incentiveCriteriaMet();
+		}
+	}
+
+	public static void presentIncentiveStartDialog()
+	{
+		if (Application.platform == RuntimePlatform.IPhonePlayer || Application.platform == RuntimePlatform.Android)
+		{
+			_presentIncentiveStartDialog();
+		}
+	}
+
+	public static void presentIncentiveActiveDialog()
+	{
+		if (Application.platform == RuntimePlatform.IPhonePlayer || Application.platform == RuntimePlatform.Android)
+		{
+			_presentIncentiveActiveDialog();
+		}
+	}
+
+	public static void presentIncentiveCriteriaMetDialog()
+	{
+		if (Application.platform == RuntimePlatform.IPhonePlayer || Application.platform == RuntimePlatform.Android)
+		{
+			_presentIncentiveCriteriaMetDialog();
+		}
+	}
+
+	public static void presentIncentiveAwardDialog()
+	{
+		if (Application.platform == RuntimePlatform.IPhonePlayer || Application.platform == RuntimePlatform.Android)
+		{
+			_presentIncentiveAwardDialog();
+		}
+	}
+
+	public static void TEST_presentIncentiveStartDialog()
+	{
+		if (Application.platform == RuntimePlatform.IPhonePlayer || Application.platform == RuntimePlatform.Android)
+		{
+			_TEST_presentIncentiveStartDialog();
+		}
+	}
+
+	public static void TEST_presentIncentiveActiveDialog()
+	{
+		if (Application.platform == RuntimePlatform.IPhonePlayer || Application.platform == RuntimePlatform.Android)
+		{
+			_TEST_presentIncentiveActiveDialog();
+		}
+	}
+
+	public static void TEST_presentIncentiveCriteriaMetDialog()
+	{
+		if (Application.platform == RuntimePlatform.IPhonePlayer || Application.platform == RuntimePlatform.Android)
+		{
+			_TEST_presentIncentiveCriteriaMetDialog();
+		}
+	}
+
+	public static void TEST_presentIncentiveAwardDialog()
+	{
+		if (Application.platform == RuntimePlatform.IPhonePlayer || Application.platform == RuntimePlatform.Android)
+		{
+			_TEST_presentIncentiveAwardDialog();
+		}
+	}
 }

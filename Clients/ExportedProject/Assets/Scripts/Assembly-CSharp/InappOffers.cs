@@ -1,63 +1,253 @@
+using System.Collections.Generic;
 using UnityEngine;
 
-public class InappOffers : MonoBehaviour
+public class InappOffers : Core_BaseScript
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Header("Core")]
+	public SpecialPackRecord specialPackRecordPrefab;
 
-	1. No dll files were provided to AssetRipper.
+	public UIPooledGrid packsGrid;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public UIPanel offersPanel;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public UIDraggablePanel draggablePanel;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	private List<SpecialPackContent> mSpecialPacks = new List<SpecialPackContent>();
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public int numberOfOffers => mNumberOfSpecialPacks + mNumberOfElitePacks;
 
-	3. Assembly Reconstruction has not been implemented.
+	private int mNumberOfSpecialPacks
+	{
+		get
+		{
+			List<SpecialPackContent> specialPackOffer = Singleton<OfferManager>.instance.GetSpecialPackOffer();
+			int num = 0;
+			if (specialPackOffer != null)
+			{
+				for (int i = 0; i < specialPackOffer.Count; i++)
+				{
+					if (specialPackOffer[i].finishAt > Singleton<BeanstalkServerManager>.instance.currentTimestamp && !PlayerAnalytics.instance.IsPackBought(specialPackOffer[i].packId))
+					{
+						num++;
+					}
+				}
+			}
+			return num;
+		}
+	}
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	private int mNumberOfElitePacks
+	{
+		get
+		{
+			int num = (PlayerAnalytics.instance.showMoneyPack ? 1 : 0);
+			for (int i = 1; i < 7; i++)
+			{
+				if (PlayerAnalytics.instance.ShowPack(i.ToString("'elitepack'0")))
+				{
+					num++;
+				}
+			}
+			for (int j = 1; j < 6; j++)
+			{
+				if (PlayerAnalytics.instance.ShowPack(j.ToString("'veteranpack'0")))
+				{
+					num++;
+				}
+			}
+			return num;
+		}
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public void Animate(bool showTab, bool instant)
+	{
+		if (showTab && !base.gameObject.activeSelf)
+		{
+			base.gameObject.SetActive(value: true);
+			InitGUIValues();
+		}
+		if (base.gameObject.activeSelf)
+		{
+			AnimateOtherPanels(instant, showTab);
+			TweenAlpha.Begin(offersPanel.gameObject, (!instant) ? (GuiElementSingle<InappScreen>.instance.dur * 2f) : 0.01f, (!showTab) ? 0f : 1f).onFinished = delegate
+			{
+				if (!showTab)
+				{
+					base.gameObject.SetActive(value: false);
+					DoAfterHide();
+				}
+				else
+				{
+					AlignPanel();
+				}
+			};
+		}
+		else if (!showTab)
+		{
+			InstantHideTab();
+		}
+	}
 
-	4. This script is unnecessary.
+	public void InitControls()
+	{
+		Singleton<BeanstalkServerManager>.instance.DataLoaded += DataLoaded;
+		Singleton<BeanstalkServerManager>.instance.AfterPlayerDataLoaded += HandleAfterPlayerDataLoaded;
+		Singleton<BeanstalkServerManager>.instance.inAppHandler.ProductsLoaded += OnProductsLoaded;
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private void HandleAfterPlayerDataLoaded()
+	{
+		if (GuiElementSingle<InappScreen>.instance.isShowed)
+		{
+			ReinitializeShownRecords();
+		}
+	}
 
-	5. Script Content Level 0
+	private void DataLoaded(DatabaseAction action)
+	{
+		if (GuiElementSingle<InappScreen>.instance.isShowed && action == DatabaseAction.BuyPack)
+		{
+			ReinitializeShownRecords();
+		}
+	}
 
-		AssetRipper was set to not load any script information.
+	private void OnProductsLoaded()
+	{
+		if (GuiElementSingle<InappScreen>.instance.isShowed)
+		{
+			ReinitializeShownRecords();
+		}
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	private void ReinitializeShownRecords()
+	{
+		for (int i = 0; i < packsGrid.containItems; i++)
+		{
+			Transform itemOnIndex = packsGrid.GetItemOnIndex(i);
+			if (!(itemOnIndex != null))
+			{
+				continue;
+			}
+			SpecialPackRecord component = itemOnIndex.GetComponent<SpecialPackRecord>();
+			if (component != null)
+			{
+				if (mSpecialPacks[i].packId == Singleton<GameVariables>.instance.PackId(CardPack.Money))
+				{
+					component.InitializeMoneyPack();
+				}
+				else
+				{
+					component.Initialize(mSpecialPacks[i]);
+				}
+			}
+		}
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public void InitGUIValues()
+	{
+		mSpecialPacks.Clear();
+		if (PlayerAnalytics.instance.showMoneyPack)
+		{
+			mSpecialPacks.Add(Singleton<GameVariables>.instance.moneyPack);
+		}
+		List<SpecialPackContent> specialPackOffer = Singleton<OfferManager>.instance.GetSpecialPackOffer();
+		if (specialPackOffer != null)
+		{
+			mSpecialPacks.AddRange(specialPackOffer);
+		}
+		for (int i = 1; i < 7; i++)
+		{
+			string packId = i.ToString("'elitepack'0");
+			if (PlayerAnalytics.instance.ShowPack(packId))
+			{
+				mSpecialPacks.Add(SpecialPackContent.CreatePackFromId(packId));
+			}
+		}
+		for (int j = 1; j < 6; j++)
+		{
+			string packId2 = j.ToString("'veteranpack'0");
+			if (PlayerAnalytics.instance.ShowPack(packId2))
+			{
+				mSpecialPacks.Add(SpecialPackContent.CreatePackFromId(packId2));
+			}
+		}
+		packsGrid.MakeEmpty();
+		packsGrid.init(mSpecialPacks.Count, SpecialPackInstantiate, SpecialPackFree, draggablePanel);
+		AlignPanel(instant: true);
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	private void AlignPanel(bool instant = false)
+	{
+		draggablePanel.AlignToPos(instant);
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	private Transform SpecialPackInstantiate(int index)
+	{
+		if (index >= 0 && index < mSpecialPacks.Count)
+		{
+			SpecialPackRecord specialPackRecord = Singleton<GuiManager>.instance.objectPool.InstantiateAsChild(specialPackRecordPrefab, packsGrid.gameObject, mSpecialPacks[index].packId) as SpecialPackRecord;
+			if (specialPackRecord != null)
+			{
+				if (mSpecialPacks[index].packId == Singleton<GameVariables>.instance.PackId(CardPack.Money))
+				{
+					specialPackRecord.InitializeMoneyPack();
+				}
+				else
+				{
+					specialPackRecord.Initialize(mSpecialPacks[index]);
+				}
+				if (GuiElementSingle<InappScreen>.instance.isFullyShowed)
+				{
+					specialPackRecord.AnimatePanels(instant: true, show: true);
+				}
+				return specialPackRecord.transform;
+			}
+		}
+		return null;
+	}
 
-	*/
+	private void SpecialPackFree(Transform obj)
+	{
+		if (obj != null)
+		{
+			SpecialPackRecord component = obj.GetComponent<SpecialPackRecord>();
+			if (component != null)
+			{
+				component.DestroyPooled();
+			}
+		}
+	}
+
+	public void DoAfterHide()
+	{
+		packsGrid.MakeEmpty();
+		mSpecialPacks.Clear();
+	}
+
+	public void InstantHideTab()
+	{
+		TweenAlpha component = offersPanel.GetComponent<TweenAlpha>();
+		if (component != null)
+		{
+			component.enabled = false;
+		}
+		base.gameObject.SetActive(value: false);
+		DoAfterHide();
+	}
+
+	private void AnimateOtherPanels(bool instant, bool show)
+	{
+		for (int i = 0; i < packsGrid.containItems; i++)
+		{
+			Transform itemOnIndex = packsGrid.GetItemOnIndex(i);
+			if (itemOnIndex != null)
+			{
+				SpecialPackRecord component = itemOnIndex.GetComponent<SpecialPackRecord>();
+				if (component != null)
+				{
+					component.AnimatePanels(instant, show);
+				}
+			}
+		}
+	}
 }

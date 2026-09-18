@@ -1,63 +1,106 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
-public class NewUnitDisplayerItem : MonoBehaviour
+public class NewUnitDisplayerItem : PoolableObject
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public tk2dSprite bgSpriteBottom;
 
-	1. No dll files were provided to AssetRipper.
+	public tk2dSprite bgSpriteTop;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	private TweenAnimator mAnimator;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public Transform move;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	private Vector3 scale;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public TextMesh textBottom;
 
-	3. Assembly Reconstruction has not been implemented.
+	public TextMesh textTop;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public override void OnInstancied()
+	{
+		base.OnInstancied();
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	protected override void Awake()
+	{
+		base.Awake();
+		mAnimator = base.gameObject.AddComponent<TweenAnimator>();
+		mAnimator.allTweens = new List<TweenAnimator.TweenRecord>();
+		mAnimator.AddTween(from: new Vector3(-12.8f, 0f, 0f), id: 0, tweenType: TweenAnimator.TweenType.Position, tweenTarget: move.gameObject, time: 0.3f, to: new Vector3(-12.8f, 15f, 0f), delay: 0f, playAfterIdFinished: -1, method: UITweener.Method.EaseIn);
+		mAnimator.AddTween(2, TweenAnimator.TweenType.AlphaTk2d, bgSpriteBottom.gameObject, 0.3f, 1f, 0f, -1, 0f);
+		mAnimator.AddTween(3, TweenAnimator.TweenType.AlphaTk2d, textBottom.gameObject, 0.3f, 1f, 0f, -1, 0f);
+		mAnimator.AddTween(22, TweenAnimator.TweenType.AlphaTk2d, bgSpriteTop.gameObject, 0.3f, 1f, 0f, -1, 0f);
+		mAnimator.AddTween(33, TweenAnimator.TweenType.AlphaTk2d, textTop.gameObject, 0.3f, 1f, 0f, -1, 0f);
+		mAnimator.AddTween(4, TweenAnimator.TweenType.Position, move.gameObject, 0.1f, new Vector3(-12.8f, 10f, 0f), 0f, 0, null, UITweener.Method.EaseIn);
+		float delay = 1.3f;
+		int num = 5;
+		TweenAnimator tweenAnimator = mAnimator;
+		int numOfRepetitions = num;
+		tweenAnimator.AddTween(7, TweenAnimator.TweenType.AlphaTk2d, bgSpriteBottom.gameObject, 0.05f, 0f, delay, 4, null, UITweener.Method.EaseInOut, UITweener.Style.PingPong, numOfRepetitions);
+		TweenAnimator tweenAnimator2 = mAnimator;
+		numOfRepetitions = num;
+		tweenAnimator2.AddTween(8, TweenAnimator.TweenType.AlphaTk2d, textBottom.gameObject, 0.05f, 0f, delay, 4, null, UITweener.Method.EaseInOut, UITweener.Style.PingPong, numOfRepetitions);
+		TweenAnimator tweenAnimator3 = mAnimator;
+		numOfRepetitions = num;
+		tweenAnimator3.AddTween(9, TweenAnimator.TweenType.AlphaTk2d, bgSpriteTop.gameObject, 0.05f, 0f, delay, 4, null, UITweener.Method.EaseInOut, UITweener.Style.PingPong, numOfRepetitions);
+		TweenAnimator tweenAnimator4 = mAnimator;
+		numOfRepetitions = num;
+		tweenAnimator4.AddTween(10, TweenAnimator.TweenType.AlphaTk2d, textTop.gameObject, 0.05f, 0f, delay, 4, null, UITweener.Method.EaseInOut, UITweener.Style.PingPong, numOfRepetitions);
+		TweenAnimator tweenAnimator5 = mAnimator;
+		tweenAnimator5.TweenFinished = (Action<int>)Delegate.Combine(tweenAnimator5.TweenFinished, new Action<int>(TweenFinished));
+		mAnimator.GenerateTweens();
+	}
 
-	4. This script is unnecessary.
+	private void TweenFinished(int i)
+	{
+		if (i == 10)
+		{
+			DestroyPooled();
+		}
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public void Play(string unitName, Vector3 worldPosition)
+	{
+		textTop.text = Localization.Localize("ID_NEWUNIT");
+		textBottom.text = unitName.ToUpper();
+		BackgroundResize(textTop, bgSpriteTop);
+		BackgroundResize(textBottom, bgSpriteBottom);
+		SetPosition(worldPosition);
+		mAnimator.PlayTweens();
+	}
 
-	5. Script Content Level 0
+	private void BackgroundResize(TextMesh frontText, tk2dSprite background)
+	{
+		float x = frontText.GetComponent<MeshRenderer>().bounds.size.x;
+		float x2 = background.GetBounds().size.x;
+		background.transform.localScale = background.transform.localScale.ReplaceX((x + 4f) / x2);
+	}
 
-		AssetRipper was set to not load any script information.
+	private void SetPosition(Vector3 worldPosition)
+	{
+		Vector3 point = Singleton<GameCamera>.instance.camera.WorldToNormalizedViewportPoint(worldPosition);
+		base.transform.position = HealthBarManager.instance.guiCamera.NormalizedViewportToWorldPoint(point).ReplaceZ(50f);
+		float x = bgSpriteBottom.GetBounds().size.x;
+		Vector3 worldPosition2 = bgSpriteBottom.transform.position.AddX(x / 2f);
+		worldPosition2 = ClampInScreenX(HealthBarManager.instance.guiCamera, worldPosition2, bgSpriteBottom.GetBounds());
+		base.transform.position = worldPosition2.AddX((0f - x) / 2f + 0.4f + 12.8f);
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
-
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	private Vector3 ClampInScreenX(Camera c, Vector3 worldPosition, Bounds objectSize)
+	{
+		Vector3 result = worldPosition;
+		Vector3 vector = c.ViewportToWorldPoint(new Vector2(0f, 0f));
+		Vector3 vector2 = c.ViewportToWorldPoint(new Vector2(1f, 0f));
+		if (worldPosition.x - objectSize.extents.x < vector.x)
+		{
+			result.x = vector.x + objectSize.extents.x;
+		}
+		if (worldPosition.x + objectSize.extents.x > vector2.x)
+		{
+			result.x = vector2.x - objectSize.extents.x;
+		}
+		return result;
+	}
 }

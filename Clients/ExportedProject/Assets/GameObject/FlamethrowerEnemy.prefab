@@ -232,6 +232,45 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1cb9d4e3bc85c63a43096be5a40016e7, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  isActivated: 0
+  bulletPrefab: {fileID: 11409266, guid: dd896f10c42f54d41b8be56380144521, type: 2}
+  cadence:
+    currentCryptoKey: 230887
+    hiddenValue: e785033f
+    fakeValue: 0.5
+    inited: 1
+  clipSize:
+    currentCryptoKey: 444444
+    hiddenValue: 444424
+    fakeValue: 20
+    inited: 1
+  reloadTime:
+    currentCryptoKey: 230887
+    hiddenValue: e785a340
+    fakeValue: 5
+    inited: 1
+  friendKill: 0
+  infiniteAmmo: 1
+  reloadableWeapon: 0
+  disableSync: 0
+  spawnPoint: {fileID: 451504}
+  startingAmmmoCount:
+    currentCryptoKey: 444444
+    hiddenValue: 444444
+    fakeValue: 0
+    inited: 1
+  useAiming: 0
+  isFake: 0
+  shotType: 0
+  ignoreLayersMask: 0
+  reloadSound: 11
+  shotSound: 39
+  soundVolume: 1
+  weaponType: 12
+  muzzleFlash: {fileID: 11407524}
+  shotOffset: {x: 0, y: 0, z: 0}
+  ammoParticles: {fileID: 19834916}
+  fastBullet: 0
 --- !u!114 &11469566
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -243,6 +282,39 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b1cc2228510fb233bea25e7e31b11a6d, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  damageAmount:
+    currentCryptoKey: 230887
+    hiddenValue: e785a341
+    fakeValue: 20
+    inited: 1
+  hitForce: 4
+  criticalProbability:
+    currentCryptoKey: 230887
+    hiddenValue: e7850300
+    fakeValue: 0
+    inited: 1
+  criticalAmount:
+    currentCryptoKey: 230887
+    hiddenValue: e7850340
+    fakeValue: 2
+    inited: 1
+  damageToPlayerCoeficient:
+    currentCryptoKey: 230887
+    hiddenValue: e785833f
+    fakeValue: 0
+    inited: 1
+  damageToPlayerOvertimeCoeficient:
+    currentCryptoKey: 230887
+    hiddenValue: e785833f
+    fakeValue: 0
+    inited: 1
+  radius: 3
+  shotHalfAngle: 40
+  shotHalfAngleNear: 60
+  minDamage: 8
+  maxDamage: 30
+  hitForceMax: 15
+  flatY: 1
 --- !u!114 &11488124
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -254,6 +326,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bdf38ce86a2f68e1ec5a08d9161659f6, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  NoRigidBodyObject: {fileID: 154010}
+  RigidBodyObject: {fileID: 161526}
+  noRigidBody:
+    meshFilter: {fileID: 0}
+    meshRenderer: {fileID: 0}
+  rigidBody:
+    meshFilter: {fileID: 0}
+    meshRenderer: {fileID: 0}
+  snapPoint: {fileID: 179954}
 --- !u!114 &11424449
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -265,6 +346,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f19ea4a15c3ca43dcc180d756f7a82b3, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  ownerId: 0
+  group: 0
+  OwnerShipWasTransfered: 0
+  prefixBackup: -1
+  synchronization: 0
+  onSerializeTransformOption: 3
+  onSerializeRigidBodyOption: 2
+  ownershipTransfer: 0
+  ObservedComponents:
+  - {fileID: 0}
+  viewIdField: 0
+  instantiationId: -1
+  currentMasterID: -1
+  didAwake: 0
+  isRuntimeInstantiated: 0
 --- !u!114 &11491323
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -276,6 +372,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6bf76f9799dec14c7c2240f1cc725df6, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  weaponRecords:
+  - level: 0
+    shotSound: 39
+    weaponModelPath: WeaponModelsUnits/Flamethrower_lp_t
+    assetBundleName: Flamethrower
+    scale: {x: 1, y: 1, z: 1}
+  weaponRenderer: {fileID: 2344804}
+  weapon: {fileID: 11403859}
 --- !u!82 &8269143
 AudioSource:
   serializedVersion: 4
@@ -428,6 +532,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5e59aac156d8b7c09624901e4cd5735f, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  pivot: {fileID: 0}
+  highPolyPrefabName:
 --- !u!4 &476054
 Transform:
   m_ObjectHideFlags: 0
@@ -569,6 +675,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4090235689019e8dade2fb65364f77e3, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  m_ForceShow: 0
 --- !u!4 &452907
 Transform:
   m_ObjectHideFlags: 0
@@ -1685,6 +1792,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d02fa923ff4150ffec692a76a9c2aece, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  play: 0
 --- !u!4 &484583
 Transform:
   m_ObjectHideFlags: 0

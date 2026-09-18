@@ -1,63 +1,55 @@
+using Google2u;
 using UnityEngine;
 
-public class BenefitsPart : MonoBehaviour
+public class BenefitsPart : Core_BaseScript
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Header("1 Warcards Slot")]
+	public UILabel benefitSlotLabel;
 
-	1. No dll files were provided to AssetRipper.
+	public UISprite slotLockedBackground;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public UISprite slotLockedIcon;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public UILabel slotLockedRankLabel;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	[Header("2 More Lootboxes")]
+	public UILabel lootboxBonus;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	[Header("4 More XP")]
+	public UILabel moreXp1st;
 
-	3. Assembly Reconstruction has not been implemented.
+	public UILabel moreXp2nd;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	[Header("5 Daily Warcards")]
+	public UILabel benefitWarcardsLabel;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public UISprite warcardsLockedBackground;
 
-	4. This script is unnecessary.
+	public UISprite warcardsLockedIcon;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public UILabel warcardsLockedRankLabel;
 
-	5. Script Content Level 0
-
-		AssetRipper was set to not load any script information.
-
-	6. Cpp2IL failed to decompile Il2Cpp data
-
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public void Initialize()
+	{
+		bool isWarcardsLocked = LevelManager.instance.isWarcardsLocked;
+		int num = (int)(float)Singleton<GameVariables>.instance.constants.GetRow(Constants.rowIds.LootboxAfterBattles).FLOATVALUE;
+		benefitSlotLabel.color = ((!isWarcardsLocked) ? Color.white : Colours.grayHundred);
+		benefitWarcardsLabel.color = ((!isWarcardsLocked) ? Color.white : Colours.grayHundred);
+		slotLockedBackground.gameObject.SetActive(isWarcardsLocked);
+		slotLockedIcon.gameObject.SetActive(isWarcardsLocked);
+		slotLockedRankLabel.gameObject.SetActive(isWarcardsLocked);
+		warcardsLockedBackground.gameObject.SetActive(isWarcardsLocked);
+		warcardsLockedIcon.gameObject.SetActive(isWarcardsLocked);
+		warcardsLockedRankLabel.gameObject.SetActive(isWarcardsLocked);
+		if (isWarcardsLocked)
+		{
+			slotLockedRankLabel.text = string.Format("{0} {1}", Localization.Localize("ID_RANK"), LevelManager.instance.warcardsUnlockLevel);
+			warcardsLockedRankLabel.text = string.Format("{0} {1}", Localization.Localize("ID_RANK"), LevelManager.instance.warcardsUnlockLevel);
+		}
+		moreXp1st.text = Localization.Localize("ID_MOREXP");
+		moreXp2nd.text = Localization.Localize("ID_XP");
+		MiscTools.SetUILabelRescale(moreXp1st, 50f, 15f, 137);
+		MiscTools.SetUILabelRescale(moreXp2nd, 84f, 15f, 124);
+		lootboxBonus.text = Localization.LocalizeFormat("ID_VIP_BENEFITS2", MiscTools.FormatNumberToOrdinal(num).ToUpper());
+	}
 }

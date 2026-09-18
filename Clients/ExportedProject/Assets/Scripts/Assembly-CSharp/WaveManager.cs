@@ -1,63 +1,234 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
-public class WaveManager : MonoBehaviour
+[ExecuteInEditMode]
+public class WaveManager : Singleton<WaveManager>
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Serializable]
+	public class WaveDefinition
+	{
+		public string name;
 
-	1. No dll files were provided to AssetRipper.
+		public int maxEnemies = 8;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+		public int enemiesInWave;
 
-	2. Incorrect dll files were provided to AssetRipper.
+		public List<WaveBehaviourDefinition> behaviourDefinitions;
+	}
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	[Serializable]
+	public class BehaviourLevel
+	{
+		[ClassSelection(typeof(LevelBehaviour))]
+		public string behaviorName;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+		[Range(1f, 25f)]
+		public int upgradesSingleLevel;
+	}
 
-	3. Assembly Reconstruction has not been implemented.
+	[Serializable]
+	public class WaveBehaviourDefinition
+	{
+		[HideInInspector]
+		public string name;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+		public int sceneLimit;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+		public int count;
 
-	4. This script is unnecessary.
+		[HideInInspector]
+		internal int generatedCount;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+		[HideInInspector]
+		internal int eventUnitsCount;
 
-	5. Script Content Level 0
+		[HideInInspector]
+		internal int killedCount;
 
-		AssetRipper was set to not load any script information.
+		public BehaviourLevel behaviourLevel;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+		public int spawned => generatedCount - killedCount;
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+		public override string ToString()
+		{
+			string text = behaviourLevel.behaviorName.PadRight(40);
+			text = text + " COUNT: " + ((count > 0) ? count.ToString("D2") : "INF");
+			return text + " LIMIT: " + ((sceneLimit > 0) ? sceneLimit.ToString("D2") : "INF");
+		}
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	public WaveDefinition waveDefinition;
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	private SpawningManager mSpawningManager;
 
-	*/
+	private PhotonView mPhotonView;
+
+	private NetworkObjectPool mPool;
+
+	private bool mGenerationEnabled;
+
+	private float mLastGenTime;
+
+	protected override void Awake()
+	{
+		base.Awake();
+		if (Application.isPlaying)
+		{
+			UpdateDefinition();
+			mPhotonView = GetComponent<PhotonView>();
+			mSpawningManager = GetComponent<SpawningManager>();
+			mPool = ObjectPoolDatabase.networkPool;
+			Singleton<GameController>.instance.GameStarted += InstanceOnGameStarted;
+			Singleton<GameController>.instance.GameEnded += InstanceOnGameEnded;
+		}
+	}
+
+	protected override void Start()
+	{
+		base.Start();
+		if (Application.isPlaying)
+		{
+			AIObject.AIObjectKilled += EnemyOnKilled;
+		}
+	}
+
+	private void OnDisable()
+	{
+		StopAllCoroutines();
+	}
+
+	protected void Update()
+	{
+		if (TimeManager.realTimeWithoutPauses > mLastGenTime + 0.25f)
+		{
+			mLastGenTime = TimeManager.realTimeWithoutPauses;
+			if (mGenerationEnabled)
+			{
+				UpdateGeneration();
+			}
+		}
+	}
+
+	private void InstanceOnGameStarted()
+	{
+		if (!Singleton<GameController>.instance.isCampaign && (!Singleton<GameController>.instance.isCoop || !PhotonNetwork.isMasterClient))
+		{
+			return;
+		}
+		mGenerationEnabled = true;
+		foreach (WaveBehaviourDefinition behaviourDefinition in waveDefinition.behaviourDefinitions)
+		{
+			behaviourDefinition.generatedCount = 0;
+			behaviourDefinition.eventUnitsCount = 0;
+			behaviourDefinition.killedCount = 0;
+		}
+		UpdateDefinition();
+	}
+
+	private void InstanceOnGameEnded(GameController.GameEndReason gameEndReason)
+	{
+		mGenerationEnabled = false;
+	}
+
+	private void EnemyOnKilled(AIObject aiObject, DestroyableObject.DamageInfo damageInfo)
+	{
+		if (!mGenerationEnabled)
+		{
+			return;
+		}
+		if (!(aiObject != null))
+		{
+			return;
+		}
+		foreach (WaveBehaviourDefinition behaviourDefinition in waveDefinition.behaviourDefinitions)
+		{
+			LevelBehaviour levelBehaviour = Singleton<LevelBehaviourManager>.instance.behavioursDic[behaviourDefinition.behaviourLevel.behaviorName];
+			if (levelBehaviour == aiObject.preparedBehaviour)
+			{
+				behaviourDefinition.killedCount++;
+				break;
+			}
+		}
+	}
+
+	private void UpdateGeneration()
+	{
+		if (GetSpawnedUnitCount() >= waveDefinition.maxEnemies)
+		{
+			return;
+		}
+		List<WaveBehaviourDefinition> list = new List<WaveBehaviourDefinition>();
+		foreach (WaveBehaviourDefinition behaviourDefinition in waveDefinition.behaviourDefinitions)
+		{
+			if ((behaviourDefinition.spawned < behaviourDefinition.sceneLimit || behaviourDefinition.sceneLimit <= 0) && (behaviourDefinition.generatedCount < behaviourDefinition.count + behaviourDefinition.eventUnitsCount || behaviourDefinition.count <= 0))
+			{
+				list.Add(behaviourDefinition);
+			}
+		}
+		if (list.Count > 0)
+		{
+			int index = UnityEngine.Random.Range(0, list.Count);
+			WaveBehaviourDefinition waveBehaviourDefinition = list[index];
+			LevelBehaviour behaviour = Singleton<LevelBehaviourManager>.instance.behavioursDic[waveBehaviourDefinition.behaviourLevel.behaviorName];
+			if (SpawnUnit(behaviour, waveBehaviourDefinition.behaviourLevel.upgradesSingleLevel))
+			{
+				waveBehaviourDefinition.generatedCount++;
+			}
+		}
+	}
+
+	private int GetSpawnedUnitCount()
+	{
+		int num = 0;
+		foreach (WaveBehaviourDefinition behaviourDefinition in waveDefinition.behaviourDefinitions)
+		{
+			num += behaviourDefinition.spawned;
+		}
+		return num;
+	}
+
+	private void UpdateDefinition()
+	{
+		int num = 0;
+		foreach (WaveBehaviourDefinition behaviourDefinition in waveDefinition.behaviourDefinitions)
+		{
+			behaviourDefinition.name = behaviourDefinition.behaviourLevel.behaviorName;
+			num += behaviourDefinition.count;
+		}
+		waveDefinition.enemiesInWave = num;
+	}
+
+	public bool SpawnUnit(LevelBehaviour behaviour, int level)
+	{
+		Fractions fractions = Fractions.Enemies;
+		if (!behaviour.CanBeSpawned(fractions, 1))
+		{
+			return false;
+		}
+		AIObject aIObject = Singleton<LevelBehaviourManager>.instance.GenerateNewEnemy(behaviour);
+		if (aIObject != null && aIObject.prefab != null)
+		{
+			int num = mPool.prefabToIndexDic[aIObject.prefab];
+			if (Singleton<GameController>.instance.isCoop)
+			{
+				level = Mathf.Clamp(level * 2, 1, 25);
+			}
+			mPhotonView.RPC("SpawnWaveAIObjectRPC", PhotonTargets.Others, num, aIObject.indexInObjectPool);
+			aIObject.fraction = fractions;
+			aIObject = (AIObject)mPool.ReInstantiate(num, aIObject.indexInObjectPool);
+			aIObject.StartEnemyBehaviour();
+			aIObject.transform.localScale = Vector3.one;
+			return true;
+		}
+		return false;
+	}
+
+	[PunRPC]
+	private void SpawnWaveAIObjectRPC(int indexInPool, int indexOfObject)
+	{
+		AIObject aIObject = mPool.ReInstantiate(indexInPool, indexOfObject, Vector3.one * 999999f, Quaternion.identity) as AIObject;
+		aIObject.transform.localScale = Vector3.one;
+		aIObject.fraction = Fractions.Enemies;
+	}
 }

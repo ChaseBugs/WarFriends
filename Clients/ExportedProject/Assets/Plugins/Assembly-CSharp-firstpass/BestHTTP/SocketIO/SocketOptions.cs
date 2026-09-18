@@ -1,66 +1,105 @@
-using UnityEngine;
+using System;
+using System.Collections.Generic;
+using System.Text;
+using PlatformSupport.Collections.ObjectModel;
+using PlatformSupport.Collections.Specialized;
 
 namespace BestHTTP.SocketIO
 {
-	public class SocketOptions : MonoBehaviour
+public sealed class SocketOptions
+{
+	private float randomizationFactor;
+
+	private ObservableDictionary<string, string> additionalQueryParams;
+
+	private string BuiltQueryParams;
+
+	public bool Reconnection { get; set; }
+
+	public int ReconnectionAttempts { get; set; }
+
+	public TimeSpan ReconnectionDelay { get; set; }
+
+	public TimeSpan ReconnectionDelayMax { get; set; }
+
+	public float RandomizationFactor
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
+		get
+		{
+			return randomizationFactor;
+		}
+		set
+		{
+			randomizationFactor = Math.Min(1f, Math.Max(0f, value));
+		}
 	}
+
+	public TimeSpan Timeout { get; set; }
+
+	public bool AutoConnect { get; set; }
+
+	public ObservableDictionary<string, string> AdditionalQueryParams
+	{
+		get
+		{
+			return additionalQueryParams;
+		}
+		set
+		{
+			if (additionalQueryParams != null)
+			{
+				additionalQueryParams.CollectionChanged -= AdditionalQueryParams_CollectionChanged;
+			}
+			additionalQueryParams = value;
+			BuiltQueryParams = null;
+			if (value != null)
+			{
+				value.CollectionChanged += AdditionalQueryParams_CollectionChanged;
+			}
+		}
+	}
+
+	public bool QueryParamsOnlyForHandshake { get; set; }
+
+	public SocketOptions()
+	{
+		Reconnection = true;
+		ReconnectionAttempts = int.MaxValue;
+		ReconnectionDelay = TimeSpan.FromMilliseconds(1000.0);
+		ReconnectionDelayMax = TimeSpan.FromMilliseconds(5000.0);
+		RandomizationFactor = 0.5f;
+		Timeout = TimeSpan.FromMilliseconds(20000.0);
+		AutoConnect = true;
+		QueryParamsOnlyForHandshake = true;
+	}
+
+	internal string BuildQueryParams()
+	{
+		if (AdditionalQueryParams == null || AdditionalQueryParams.Count == 0)
+		{
+			return string.Empty;
+		}
+		if (!string.IsNullOrEmpty(BuiltQueryParams))
+		{
+			return BuiltQueryParams;
+		}
+		StringBuilder stringBuilder = new StringBuilder(AdditionalQueryParams.Count * 4);
+		foreach (KeyValuePair<string, string> additionalQueryParam in AdditionalQueryParams)
+		{
+			stringBuilder.Append("&");
+			stringBuilder.Append(additionalQueryParam.Key);
+			if (!string.IsNullOrEmpty(additionalQueryParam.Value))
+			{
+				stringBuilder.Append("=");
+				stringBuilder.Append(additionalQueryParam.Value);
+			}
+		}
+		return BuiltQueryParams = stringBuilder.ToString();
+	}
+
+	private void AdditionalQueryParams_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
+	{
+		BuiltQueryParams = null;
+	}
+}
 }

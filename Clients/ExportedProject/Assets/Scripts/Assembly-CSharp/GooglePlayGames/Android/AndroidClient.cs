@@ -1,66 +1,139 @@
+using Logger = GooglePlayGames.OurUtils.Logger;
+using System;
+using Com.Google.Android.Gms.Common.Api;
+using Com.Google.Android.Gms.Games;
+using Com.Google.Android.Gms.Games.Stats;
+using GooglePlayGames.BasicApi;
+using GooglePlayGames.Native.PInvoke;
+using GooglePlayGames.OurUtils;
 using UnityEngine;
 
 namespace GooglePlayGames.Android
 {
-	public class AndroidClient : MonoBehaviour
+internal class AndroidClient : IClientImpl
+{
+	private class StatsResultCallback : ResultCallbackProxy<Stats_LoadPlayerStatsResultObject>
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
+		private Action<int, Com.Google.Android.Gms.Games.Stats.PlayerStats> callback;
 
-		1. No dll files were provided to AssetRipper.
+		public StatsResultCallback(Action<int, Com.Google.Android.Gms.Games.Stats.PlayerStats> callback)
+		{
+			this.callback = callback;
+		}
 
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
+		public override void OnResult(Stats_LoadPlayerStatsResultObject arg_Result_1)
+		{
+			callback(arg_Result_1.getStatus().getStatusCode(), arg_Result_1.getPlayerStats());
+		}
 	}
+
+	internal const string BridgeActivityClass = "com.google.games.bridge.NativeBridgeActivity";
+
+	private const string LaunchBridgeMethod = "launchBridgeIntent";
+
+	private const string LaunchBridgeSignature = "(Landroid/app/Activity;Landroid/content/Intent;)V";
+
+	private TokenClient tokenClient;
+
+	public PlatformConfiguration CreatePlatformConfiguration()
+	{
+		AndroidPlatformConfiguration androidPlatformConfiguration = AndroidPlatformConfiguration.Create();
+		using (AndroidJavaObject androidJavaObject = AndroidTokenClient.GetActivity())
+		{
+		androidPlatformConfiguration.SetActivity(androidJavaObject.GetRawObject());
+		androidPlatformConfiguration.SetOptionalIntentHandlerForUI(delegate(IntPtr intent)
+		{
+			IntPtr intentRef = AndroidJNI.NewGlobalRef(intent);
+			PlayGamesHelperObject.RunOnGameThread(delegate
+			{
+				try
+				{
+					LaunchBridgeIntent(intentRef);
+				}
+				finally
+				{
+					AndroidJNI.DeleteGlobalRef(intentRef);
+				}
+			});
+		});
+		return androidPlatformConfiguration;
+		}
+}
+
+	public TokenClient CreateTokenClient(string playerId, bool reset)
+	{
+		if (tokenClient == null || reset)
+		{
+			tokenClient = new AndroidTokenClient(playerId);
+		}
+		return tokenClient;
+	}
+
+	private static void LaunchBridgeIntent(IntPtr bridgedIntent)
+	{
+		object[] args = new object[2];
+		jvalue[] array = AndroidJNIHelper.CreateJNIArgArray(args);
+		try
+		{
+			using (AndroidJavaClass androidJavaClass = new AndroidJavaClass("com.google.games.bridge.NativeBridgeActivity"))
+			{
+			using (AndroidJavaObject androidJavaObject = AndroidTokenClient.GetActivity())
+			{
+			IntPtr staticMethodID = AndroidJNI.GetStaticMethodID(androidJavaClass.GetRawClass(), "launchBridgeIntent", "(Landroid/app/Activity;Landroid/content/Intent;)V");
+			array[0].l = androidJavaObject.GetRawObject();
+			array[1].l = bridgedIntent;
+			AndroidJNI.CallStaticVoidMethod(androidJavaClass.GetRawClass(), staticMethodID, array);
+								}
+}
+}
+		catch (Exception ex)
+		{
+			Logger.e("Exception launching bridge intent: " + ex.Message);
+			Logger.e(ex.ToString());
+		}
+		finally
+		{
+			AndroidJNIHelper.DeleteJNIArgArray(args, array);
+		}
+	}
+
+	public void GetPlayerStats(IntPtr apiClient, Action<CommonStatusCodes, GooglePlayGames.BasicApi.PlayerStats> callback)
+	{
+		GoogleApiClient arg_GoogleApiClient_ = new GoogleApiClient(apiClient);
+		StatsResultCallback resultCallback;
+		try
+		{
+			resultCallback = new StatsResultCallback(delegate(int result, Com.Google.Android.Gms.Games.Stats.PlayerStats stats)
+			{
+				Debug.Log("Result for getStats: " + result);
+				GooglePlayGames.BasicApi.PlayerStats arg = null;
+				if (stats != null)
+				{
+					arg = new GooglePlayGames.BasicApi.PlayerStats
+					{
+						AvgSessonLength = stats.getAverageSessionLength(),
+						DaysSinceLastPlayed = stats.getDaysSinceLastPlayed(),
+						NumberOfPurchases = stats.getNumberOfPurchases(),
+						NumberOfSessions = stats.getNumberOfSessions(),
+						SessPercentile = stats.getSessionPercentile(),
+						SpendPercentile = stats.getSpendPercentile(),
+						ChurnProbability = stats.getChurnProbability(),
+						SpendProbability = stats.getSpendProbability(),
+						HighSpenderProbability = stats.getHighSpenderProbability(),
+						TotalSpendNext28Days = stats.getTotalSpendNext28Days()
+					};
+				}
+				callback((CommonStatusCodes)result, arg);
+			});
+		}
+		catch (Exception exception)
+		{
+			Debug.LogException(exception);
+			callback(CommonStatusCodes.DeveloperError, null);
+			return;
+		}
+		PendingResult<Stats_LoadPlayerStatsResultObject> pendingResult = Games.Stats.loadPlayerStats(arg_GoogleApiClient_, arg_bool_2: true);
+		pendingResult.setResultCallback(resultCallback);
+	}
+}
 }

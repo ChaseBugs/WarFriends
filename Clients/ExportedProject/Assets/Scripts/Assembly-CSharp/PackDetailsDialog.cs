@@ -1,63 +1,161 @@
+using System;
 using UnityEngine;
 
-public class PackDetailsDialog : MonoBehaviour
+public class PackDetailsDialog : GuiElementSingle<PackDetailsDialog>, IGuiDialog
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Header("Header")]
+	public UIButton close;
 
-	1. No dll files were provided to AssetRipper.
+	public UILabel header;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	[Header("Left")]
+	public UISprite bigCardPack;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	[Header("Right")]
+	public UILabel description;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public UILabel priceLabel;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public UISprite priceSprite;
 
-	3. Assembly Reconstruction has not been implemented.
+	[Header("Sale")]
+	public GameObject salePart;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public UILabel salePercentLabel;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	[Header("Button")]
+	public UIButton purchaseButton;
 
-	4. This script is unnecessary.
+	public UILabel purchaseButtonLabel;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private CardPackRecord mCardPackRecord;
 
-	5. Script Content Level 0
+	private CardPack mCardPack;
 
-		AssetRipper was set to not load any script information.
+	public void ShowDialog(CardPack cardPack, CardPackRecord cardPackRecord)
+	{
+		if (Initialize(cardPack, cardPackRecord))
+		{
+			Singleton<GuiManager>.instance.ShowDialog(this, 0f);
+		}
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public override void InitControls()
+	{
+		UIEventListener uIEventListener = UIEventListener.Get(close.gameObject);
+		uIEventListener.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener.onClick, new UIEventListener.VoidDelegate(CloseDialog));
+		UIEventListener uIEventListener2 = UIEventListener.Get(purchaseButton.gameObject);
+		uIEventListener2.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener2.onClick, new UIEventListener.VoidDelegate(ButtonPurchaseClick));
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	private void CloseDialog(GameObject go)
+	{
+		if (base.isFullyShowed)
+		{
+			HideDialog();
+		}
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	private void ButtonPurchaseClick(GameObject go)
+	{
+		if (base.isFullyShowed)
+		{
+			GuiScreenSingle<CardMenuScreen>.instance.warcardsContent.BuyCardPack(mCardPackRecord);
+			HideDialog();
+		}
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	public override void InitGUIValues()
+	{
+		Singleton<OfferManager>.instance.SalesChanged -= SetSaleAndPrize;
+		Singleton<OfferManager>.instance.SalesChanged += SetSaleAndPrize;
+	}
 
-	*/
+	public override void DoBeforeShowUp()
+	{
+		base.DoBeforeShowUp();
+		GuiScreenSingle<CardMenuScreen>.instance.warcardsContent.draggablePanel.onePanelDisabled = true;
+	}
+
+	public override void DoAfterHide()
+	{
+		base.DoAfterHide();
+		GuiScreenSingle<CardMenuScreen>.instance.warcardsContent.draggablePanel.onePanelDisabled = false;
+		Singleton<OfferManager>.instance.SalesChanged -= SetSaleAndPrize;
+	}
+
+	private bool Initialize(CardPack cardPack, CardPackRecord cardPackRecord)
+	{
+		if (cardPack != CardPack.Bronze && cardPack != CardPack.Silver && cardPack != CardPack.Gold)
+		{
+			Debug.LogError("CardDetails dialog is only for BRONZE, SILVER and GOLD cardpack details.");
+			return false;
+		}
+		mCardPack = cardPack;
+		mCardPackRecord = cardPackRecord;
+		int num = Singleton<GameVariables>.instance.CardPackWarbucks(cardPack);
+		priceSprite.spriteName = ((num <= 0) ? "menu-gold" : "menu-warbucks");
+		priceSprite.MakePixelPerfect();
+		float multiplier = ((num <= 0) ? 0.3f : 0.53f);
+		priceSprite.transform.localScale = priceSprite.transform.localScale.MultiplyXY(multiplier);
+		bigCardPack.spriteName = GameVariables.cardpackLook[cardPack].Value2;
+		string text = string.Empty;
+		int num2 = 0;
+		CardManager.CardType key = CardManager.CardType.Bronze;
+		CardManager.CardType key2 = CardManager.CardType.Gold;
+		if (cardPack == CardPack.Bronze)
+		{
+			text = Localization.Localize("ID_BRONZE");
+			header.text = Localization.Localize("ID_BRONZEPACK");
+			num2 = CardManager.instance.bronzePackBronzeCards;
+			key = CardManager.instance.bronzePackMin;
+			key2 = CardManager.instance.bronzePackMax;
+		}
+		if (cardPack == CardPack.Silver)
+		{
+			text = Localization.Localize("ID_SILVER");
+			header.text = Localization.Localize("ID_SILVERPACK");
+			num2 = CardManager.instance.silverPackSilverCards;
+			key = CardManager.instance.silverPackMin;
+			key2 = CardManager.instance.silverPackMax;
+		}
+		if (cardPack == CardPack.Gold)
+		{
+			text = Localization.Localize("ID_GOLD");
+			header.text = Localization.Localize("ID_GOLDPACK");
+			num2 = CardManager.instance.goldPackGoldCards;
+			key = CardManager.instance.goldPackMin;
+			key2 = CardManager.instance.goldPackMax;
+		}
+		purchaseButtonLabel.text = Localization.LocalizeFormat("ID_PURCHASECARDPACK", text.ToUpper());
+		MiscTools.SetUILabelRescale(purchaseButtonLabel, 50f, 20f);
+		description.text = Localization.LocalizeFormat("ID_CARDPACKDETAILS_DESCRIPTION", text, CardManager.instance.cardsInPack, num2, text.ToLower(), CardManager.instance.cardsInPack - num2, Colours.stringBlue, Colours.stringWhite, Localization.Localize(GameVariables.warcardName[key]), Localization.Localize(GameVariables.warcardName[key2]));
+		SetSaleAndPrize();
+		return true;
+	}
+
+	private void SetSaleAndPrize()
+	{
+		int num = Singleton<OfferManager>.instance.DiscountedCardpack(mCardPack);
+		bool flag = num > 0;
+		int num2 = Singleton<GameVariables>.instance.CardPackWarbucks(mCardPack);
+		int num3 = Singleton<GameVariables>.instance.CardPackGold(mCardPack);
+		int num4 = ((!flag) ? (num2 + num3) : ((num2 + num3) * (100 - num) / 100));
+		priceLabel.text = MiscTools.FormatBigNumber(num4);
+		salePart.SetActive(flag);
+		if (flag)
+		{
+			salePercentLabel.text = Localization.LocalizeFormat("ID_SALEPERCENT", num);
+		}
+	}
+
+	public GuiElement GetGuiElement()
+	{
+		return this;
+	}
+
+	public override void OnBack()
+	{
+		CloseDialog(close.gameObject);
+	}
 }

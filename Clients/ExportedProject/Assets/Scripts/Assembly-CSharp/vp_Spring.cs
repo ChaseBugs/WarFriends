@@ -1,63 +1,259 @@
 using UnityEngine;
 
-public class vp_Spring : MonoBehaviour
+public class vp_Spring
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public enum UpdateMode
+	{
+		Position,
+		PositionAdditive,
+		Rotation,
+		RotationAdditive,
+		Scale,
+		ScaleAdditive
+	}
 
-	1. No dll files were provided to AssetRipper.
+	protected delegate void UpdateDelegate();
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	protected UpdateMode Mode;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	protected bool m_AutoUpdate = true;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	protected UpdateDelegate m_UpdateFunc;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public Vector3 State = Vector3.zero;
 
-	3. Assembly Reconstruction has not been implemented.
+	protected Vector3 m_Velocity = Vector3.zero;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public Vector3 RestState = Vector3.zero;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public Vector3 Stiffness = new Vector3(0.5f, 0.5f, 0.5f);
 
-	4. This script is unnecessary.
+	public Vector3 Damping = new Vector3(0.75f, 0.75f, 0.75f);
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	protected float m_VelocityFadeInCap = 1f;
 
-	5. Script Content Level 0
+	protected float m_VelocityFadeInEndTime;
 
-		AssetRipper was set to not load any script information.
+	protected float m_VelocityFadeInLength;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	protected Vector3[] m_SoftForceFrame = new Vector3[120];
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public float MaxVelocity = 10000f;
 
-	7. An incorrect path was provided to AssetRipper.
+	public float MinVelocity = 1E-07f;
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	public Vector3 MaxState = new Vector3(10000f, 10000f, 10000f);
 
-	*/
+	public Vector3 MinState = new Vector3(-10000f, -10000f, -10000f);
+
+	protected Transform m_Transform;
+
+	public Transform Transform
+	{
+		set
+		{
+			m_Transform = value;
+			RefreshUpdateMode();
+		}
+	}
+
+	public vp_Spring(Transform transform, UpdateMode mode, bool autoUpdate = true)
+	{
+		Mode = mode;
+		Transform = transform;
+		m_AutoUpdate = autoUpdate;
+	}
+
+	public void FixedUpdate()
+	{
+		if (m_VelocityFadeInEndTime > Time.time)
+		{
+			m_VelocityFadeInCap = Mathf.Clamp01(1f - (m_VelocityFadeInEndTime - Time.time) / m_VelocityFadeInLength);
+		}
+		else
+		{
+			m_VelocityFadeInCap = 1f;
+		}
+		if (m_SoftForceFrame[0] != Vector3.zero)
+		{
+			AddForceInternal(m_SoftForceFrame[0]);
+			for (int i = 0; i < 120; i++)
+			{
+				ref Vector3 reference = ref m_SoftForceFrame[i];
+				reference = ((i >= 119) ? Vector3.zero : m_SoftForceFrame[i + 1]);
+				if (m_SoftForceFrame[i] == Vector3.zero)
+				{
+					break;
+				}
+			}
+		}
+		Calculate();
+		m_UpdateFunc();
+	}
+
+	private void Position()
+	{
+		m_Transform.localPosition = State;
+	}
+
+	private void Rotation()
+	{
+		m_Transform.localEulerAngles = State;
+	}
+
+	private void Scale()
+	{
+		m_Transform.localScale = State;
+	}
+
+	private void PositionAdditive()
+	{
+		m_Transform.localPosition += State;
+	}
+
+	private void RotationAdditive()
+	{
+		m_Transform.localEulerAngles += State;
+	}
+
+	private void ScaleAdditive()
+	{
+		m_Transform.localScale += State;
+	}
+
+	private void None()
+	{
+	}
+
+	protected void RefreshUpdateMode()
+	{
+		m_UpdateFunc = None;
+		switch (Mode)
+		{
+		case UpdateMode.Position:
+			State = m_Transform.localPosition;
+			if (m_AutoUpdate)
+			{
+				m_UpdateFunc = Position;
+			}
+			break;
+		case UpdateMode.Rotation:
+			State = m_Transform.localEulerAngles;
+			if (m_AutoUpdate)
+			{
+				m_UpdateFunc = Rotation;
+			}
+			break;
+		case UpdateMode.Scale:
+			State = m_Transform.localScale;
+			if (m_AutoUpdate)
+			{
+				m_UpdateFunc = Scale;
+			}
+			break;
+		case UpdateMode.PositionAdditive:
+			State = m_Transform.localPosition;
+			if (m_AutoUpdate)
+			{
+				m_UpdateFunc = PositionAdditive;
+			}
+			break;
+		case UpdateMode.RotationAdditive:
+			State = m_Transform.localEulerAngles;
+			if (m_AutoUpdate)
+			{
+				m_UpdateFunc = RotationAdditive;
+			}
+			break;
+		case UpdateMode.ScaleAdditive:
+			State = m_Transform.localScale;
+			if (m_AutoUpdate)
+			{
+				m_UpdateFunc = ScaleAdditive;
+			}
+			break;
+		}
+		RestState = State;
+	}
+
+	protected void Calculate()
+	{
+		if (!(State == RestState))
+		{
+			m_Velocity += Vector3.Scale(RestState - State, Stiffness);
+			m_Velocity = Vector3.Scale(m_Velocity, Damping);
+			m_Velocity = Vector3.ClampMagnitude(m_Velocity, MaxVelocity);
+			if (m_Velocity.sqrMagnitude > MinVelocity * MinVelocity)
+			{
+				Move();
+			}
+			else
+			{
+				Reset();
+			}
+		}
+	}
+
+	private void AddForceInternal(Vector3 force)
+	{
+		force *= m_VelocityFadeInCap;
+		m_Velocity += force;
+		m_Velocity = Vector3.ClampMagnitude(m_Velocity, MaxVelocity);
+		Move();
+	}
+
+	public void AddForce(Vector3 force)
+	{
+		AddForceInternal(force);
+	}
+
+	public void AddSoftForce(Vector3 force, float frames)
+	{
+		force /= Time.timeScale;
+		frames = Mathf.Clamp(frames, 1f, 120f);
+		AddForceInternal(force / frames);
+		for (int i = 0; i < Mathf.RoundToInt(frames) - 1; i++)
+		{
+			m_SoftForceFrame[i] += force / frames;
+		}
+	}
+
+	protected void Move()
+	{
+		State += m_Velocity;
+		State.x = Mathf.Clamp(State.x, MinState.x, MaxState.x);
+		State.y = Mathf.Clamp(State.y, MinState.y, MaxState.y);
+		State.z = Mathf.Clamp(State.z, MinState.z, MaxState.z);
+	}
+
+	public void Reset()
+	{
+		m_Velocity = Vector3.zero;
+		State = RestState;
+	}
+
+	public void Stop(bool includeSoftForce = false)
+	{
+		m_Velocity = Vector3.zero;
+		if (includeSoftForce)
+		{
+			StopSoftForce();
+		}
+	}
+
+	public void StopSoftForce()
+	{
+		for (int i = 0; i < 120; i++)
+		{
+			ref Vector3 reference = ref m_SoftForceFrame[i];
+			reference = Vector3.zero;
+		}
+	}
+
+	public void ForceVelocityFadeIn(float seconds)
+	{
+		m_VelocityFadeInLength = seconds;
+		m_VelocityFadeInEndTime = Time.time + seconds;
+		m_VelocityFadeInCap = 0f;
+	}
 }

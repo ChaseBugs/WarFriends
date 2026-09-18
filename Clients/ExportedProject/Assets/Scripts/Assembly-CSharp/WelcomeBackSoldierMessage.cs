@@ -1,63 +1,64 @@
+using Google2u;
 using UnityEngine;
 
-public class WelcomeBackSoldierMessage : MonoBehaviour
+internal class WelcomeBackSoldierMessage : DatabaseMessage
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	private Tuple<WelcomeBackSoldierDialog.WelcomeBackRewardType, int> box1;
 
-	1. No dll files were provided to AssetRipper.
+	private Tuple<WelcomeBackSoldierDialog.WelcomeBackRewardType, int> box2;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	private string mPackId;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public WelcomeBackSoldierMessage(string packId)
+		: base($"WelcomeBackSoldierMessage {packId} {Singleton<BeanstalkServerManager>.instance.currentTimestamp}", Type.WelcomBackSoldierMessage)
+	{
+		mPackId = packId;
+		Debug.Log("ABOUT TO SHOW WELCOME BACK SOLDIER REWARDS, packId = " + packId);
+	}
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public override void Show()
+	{
+		base.Show();
+		Packs packDefinition = Singleton<BeanstalkServerManager>.instance.packDefinition;
+		foreach (PacksRow row in packDefinition.Rows)
+		{
+			if (row.NAME == mPackId)
+			{
+				Debug.Log("Found Pack Id");
+				if (row.VIPSECONDS > 0)
+				{
+					Debug.Log("Pack: Vip " + row.VIPSECONDS);
+					SetBox(WelcomeBackSoldierDialog.WelcomeBackRewardType.VIP, row.VIPSECONDS);
+				}
+				if (row.GOLD > 0)
+				{
+					Debug.Log("Pack: Gold " + row.GOLD);
+					SetBox(WelcomeBackSoldierDialog.WelcomeBackRewardType.Gold, row.GOLD);
+				}
+				if (row.GOLDCARDS > 0)
+				{
+					Debug.Log("Pack: Gold Cards " + row.GOLDCARDS);
+					SetBox(WelcomeBackSoldierDialog.WelcomeBackRewardType.Cards, row.GOLDCARDS);
+				}
+				if (row.WARBUCKS > 0)
+				{
+					Debug.Log("Pack: Warbucks " + row.WARBUCKS);
+					SetBox(WelcomeBackSoldierDialog.WelcomeBackRewardType.Warbucks, row.WARBUCKS);
+				}
+			}
+		}
+		GuiElementSingle<WelcomeBackSoldierDialog>.instance.ShowDialog(box1, box2);
+	}
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-	3. Assembly Reconstruction has not been implemented.
-
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
-
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
-
-	4. This script is unnecessary.
-
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
-
-	5. Script Content Level 0
-
-		AssetRipper was set to not load any script information.
-
-	6. Cpp2IL failed to decompile Il2Cpp data
-
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	private void SetBox(WelcomeBackSoldierDialog.WelcomeBackRewardType type, int parameter)
+	{
+		if (box1 == null)
+		{
+			box1 = new Tuple<WelcomeBackSoldierDialog.WelcomeBackRewardType, int>(type, parameter);
+		}
+		else
+		{
+			box2 = new Tuple<WelcomeBackSoldierDialog.WelcomeBackRewardType, int>(type, parameter);
+		}
+	}
 }

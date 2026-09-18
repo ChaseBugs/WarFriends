@@ -1,63 +1,236 @@
+using System;
 using UnityEngine;
 
-public class GuiManager : MonoBehaviour
+public class GuiManager : Singleton<GuiManager>
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public GuiScreen currentScreen;
 
-	1. No dll files were provided to AssetRipper.
+	public ObjectPool objectPool;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public UISprite overlay;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public ParticleSystem particles;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public UIRoot root;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public Camera guiCamera;
 
-	3. Assembly Reconstruction has not been implemented.
+	public float overlayStrength = 1f;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	private SwitchableGui mToBeShowedUp;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	private bool mCanChangeInput = true;
 
-	4. This script is unnecessary.
+	public SwitchableGui toBeShowedUp => mToBeShowedUp;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	protected override void Awake()
+	{
+		base.Awake();
+	}
 
-	5. Script Content Level 0
+	protected override void Start()
+	{
+		base.Start();
+		SwitchableGui[] componentsInChildren = root.GetComponentsInChildren<SwitchableGui>(includeInactive: true);
+		SwitchableGui[] array = componentsInChildren;
+		foreach (SwitchableGui switchableGui in array)
+		{
+			switchableGui.InitEvents();
+		}
+	}
 
-		AssetRipper was set to not load any script information.
+	public void ShowGui(GuiScreen toBeShowedUp)
+	{
+		if (toBeShowedUp == currentScreen && currentScreen.isShowed)
+		{
+			if (toBeShowedUp.showDialogs)
+			{
+				Debug.Log("Gui Manager: Starting Messages Coroutine for: " + toBeShowedUp.name);
+				Singleton<MessageManager>.instance.StartMessageCoroutine();
+			}
+			return;
+		}
+		TurnOffInput();
+		toBeShowedUp.reverseAnimation = false;
+		if ((bool)currentScreen)
+		{
+			currentScreen.reverseAnimation = false;
+		}
+		if (currentScreen != null && currentScreen.previousScreen == toBeShowedUp)
+		{
+			toBeShowedUp.reverseAnimation = true;
+			currentScreen.reverseAnimation = true;
+		}
+		if (currentScreen != null && currentScreen.previousScreen != toBeShowedUp)
+		{
+			toBeShowedUp.previousScreen = currentScreen;
+		}
+		toBeShowedUp.previousScreenForElementsToHide = currentScreen;
+		if (currentScreen != null && currentScreen.isShowed)
+		{
+			mToBeShowedUp = toBeShowedUp;
+			HideGui(currentScreen);
+			mToBeShowedUp = null;
+		}
+		currentScreen = toBeShowedUp;
+		toBeShowedUp.DoBeforeShowUp();
+		if (toBeShowedUp.readyToShowUp)
+		{
+			toBeShowedUp.AnimateShow();
+		}
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public void ShowDialog(SwitchableGui toBeShowedUp, float delay = 0f)
+	{
+		if (GuiElement.ShowingDialog != null)
+		{
+			GuiElement.ShowingDialog();
+		}
+		if (delay <= 0f)
+		{
+			FadeIn(toBeShowedUp);
+		}
+		else if (delay > 0f)
+		{
+			InvokeAfterRealTime(delegate
+			{
+				FadeIn(toBeShowedUp);
+			}, delay);
+		}
+		else
+		{
+			FadeIn(toBeShowedUp);
+		}
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public void ShowDialogInstant(SwitchableGui toBeShowedUp)
+	{
+		if (GuiElement.ShowingDialog != null)
+		{
+			GuiElement.ShowingDialog();
+		}
+		float fadeInTime = toBeShowedUp.fadeInTime;
+		toBeShowedUp.fadeInTime = 0f;
+		FadeIn(toBeShowedUp);
+		toBeShowedUp.fadeInTime = fadeInTime;
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	public void TurnOffInputCompletly()
+	{
+		if (DebugSettings.debugEnabled)
+		{
+			Debug.Log("Input turned OFF completely: " + Time.time);
+		}
+		mCanChangeInput = true;
+		TurnOffInput();
+		mCanChangeInput = false;
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	public void TurnOnInputCompletly()
+	{
+		if (DebugSettings.debugEnabled)
+		{
+			Debug.Log("Input turned on completely: " + Time.time);
+		}
+		mCanChangeInput = true;
+		TurnOnInput();
+	}
 
-	*/
+	public bool IsInputTurnedOffCompletly()
+	{
+		return !mCanChangeInput;
+	}
+
+	public void TurnOffInput()
+	{
+		if (mCanChangeInput)
+		{
+			UICamera.useMouse = false;
+			UICamera.useTouch = false;
+		}
+	}
+
+	public void TurnOnInput()
+	{
+		if (mCanChangeInput)
+		{
+			if (Application.platform != RuntimePlatform.IPhonePlayer && Application.platform != RuntimePlatform.Android)
+			{
+				UICamera.useMouse = true;
+			}
+			UICamera.useMouse = true;
+			UICamera.useTouch = true;
+		}
+	}
+
+	public void HideGui(SwitchableGui toBeHidden)
+	{
+		toBeHidden.DoBeforeHide();
+		if (toBeHidden.readyToHide)
+		{
+			toBeHidden.AnimateHide();
+		}
+	}
+
+	public void FadeOut(SwitchableGui toBeHidden)
+	{
+		toBeHidden.DoBeforeHide();
+		if (toBeHidden.readyToHide)
+		{
+			toBeHidden.AnimateHide(forceFadeOut: true);
+		}
+	}
+
+	public void FadeIn(SwitchableGui toBeShowUp)
+	{
+		toBeShowUp.DoBeforeShowUp();
+		if (toBeShowUp.readyToShowUp)
+		{
+			toBeShowUp.AnimateShow(forceFadeIn: true);
+		}
+		else
+		{
+			Debug.Log("NOT READY TO SHOW UP");
+		}
+	}
+
+	private void CheckForShowUpInvocation(SwitchableGui toBeShowedUp)
+	{
+	}
+
+	public void HideOverlay()
+	{
+		float alpha = overlay.alpha;
+		float duration = alpha + 0.01f;
+		TweenAlpha tweenAlpha = TweenAlpha.Begin(Singleton<GuiManager>.instance.overlay.gameObject, duration, 0f);
+		tweenAlpha.method = UITweener.Method.EaseInOut;
+		tweenAlpha.onFinished = (UITweener.OnFinished)Delegate.Combine(tweenAlpha.onFinished, (UITweener.OnFinished)delegate
+		{
+			overlay.gameObject.SetActive(value: false);
+		});
+	}
+
+	public void ShowOverlay()
+	{
+		overlay.gameObject.SetActive(value: true);
+		float alpha = overlay.alpha;
+		float duration = 1f - alpha + 0.01f;
+		TweenAlpha.Begin(Singleton<GuiManager>.instance.overlay.gameObject, duration, overlayStrength).method = UITweener.Method.EaseInOut;
+	}
+
+	public void ShowParticles()
+	{
+		Singleton<GuiManager>.instance.particles.Play();
+	}
+
+	public void HideParticles()
+	{
+		Singleton<GuiManager>.instance.particles.Stop();
+	}
+
+	internal void ShowMainScreen()
+	{
+		FadeIn(GuiElementSingle<Background>.instance);
+		ShowGui(GuiScreenSingle<MainScreen>.instance);
+	}
 }

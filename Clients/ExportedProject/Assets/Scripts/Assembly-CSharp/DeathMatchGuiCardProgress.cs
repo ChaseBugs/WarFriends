@@ -1,63 +1,240 @@
+using System.Collections.Generic;
 using UnityEngine;
 
-public class DeathMatchGuiCardProgress : MonoBehaviour
+public class DeathMatchGuiCardProgress : Core_BaseScript
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	private const float mWidth = 172f;
 
-	1. No dll files were provided to AssetRipper.
+	private const float mDividerWidth = 2f;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	[Header("Setting")]
+	public float popAmount = 1.1f;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public float popDelay = 0.2f;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	[Header("Core")]
+	public List<UISprite> bars;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public List<UISprite> newBars;
 
-	3. Assembly Reconstruction has not been implemented.
+	public List<UISprite> dividers;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public List<UISprite> deployIcons;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public UILabel deploy;
 
-	4. This script is unnecessary.
+	public UISprite deployBackground;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	[Header("Tutorial")]
+	public UISprite tutorialOverlay;
 
-	5. Script Content Level 0
+	private int mBarCount;
 
-		AssetRipper was set to not load any script information.
+	private int mLastPowerLeft;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	private float mBarWidth;
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	private float mBarHeight;
 
-	7. An incorrect path was provided to AssetRipper.
+	private float mPopTimer;
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	private bool mIsEmpty;
 
-	*/
+	public void Show(SpawningManagerDeathMatch.ArmyUnitDefinition armyUnitDefinition)
+	{
+		deploy.gameObject.SetActive(value: false);
+		mIsEmpty = armyUnitDefinition == null;
+		mBarCount = ((armyUnitDefinition == null) ? 1 : Mathf.Min(4, armyUnitDefinition.power));
+		if (!mIsEmpty && armyUnitDefinition.power > 4)
+		{
+			Debug.LogWarning($"Unit Power is out of range index {armyUnitDefinition.index} power {armyUnitDefinition.power}");
+		}
+		foreach (UISprite bar in bars)
+		{
+			SetBar(bar, active: false);
+			bar.fillAmount = 1f;
+		}
+		foreach (UISprite newBar in newBars)
+		{
+			newBar.gameObject.SetActive(value: false);
+		}
+		foreach (UISprite divider in dividers)
+		{
+			divider.gameObject.SetActive(value: false);
+		}
+		for (int i = 0; i < deployIcons.Count; i++)
+		{
+			deployIcons[i].gameObject.SetActive(value: false);
+			SetDeploy(i);
+		}
+		mBarWidth = (172f - 2f * (float)(mBarCount - 1 + 2)) / (float)mBarCount;
+		mBarHeight = bars[0].transform.localScale.y;
+		float num = -84f;
+		for (int j = 0; j < mBarCount; j++)
+		{
+			UISprite uISprite = bars[j];
+			SetBar(uISprite, active: true);
+			uISprite.transform.localScale = uISprite.transform.localScale.ReplaceX(mBarWidth);
+			uISprite.transform.localPosition = uISprite.transform.localPosition.ReplaceX(num + mBarWidth * (float)(j + 1) + 2f * (float)j);
+		}
+		for (int k = 0; k < mBarCount; k++)
+		{
+			UISprite uISprite2 = newBars[k];
+			uISprite2.transform.localScale = uISprite2.transform.localScale.ReplaceX(mBarWidth);
+			uISprite2.transform.localPosition = uISprite2.transform.localPosition.ReplaceX(num + mBarWidth * ((float)k + 0.5f) + 2f * (float)k);
+		}
+		for (int l = 0; l < mBarCount - 1; l++)
+		{
+			UISprite uISprite3 = dividers[l];
+			uISprite3.gameObject.SetActive(value: true);
+			uISprite3.transform.localPosition = uISprite3.transform.localPosition.ReplaceX(num + mBarWidth * (float)(l + 1) + 2f * ((float)l + 0.5f));
+		}
+		if (!mIsEmpty)
+		{
+			for (int m = 0; m < mBarCount; m++)
+			{
+				UISprite uISprite4 = deployIcons[m];
+				uISprite4.gameObject.SetActive(value: true);
+				TweenAlpha component = uISprite4.gameObject.GetComponent<TweenAlpha>();
+				if (component != null)
+				{
+					component.enabled = false;
+				}
+				uISprite4.transform.localPosition = uISprite4.transform.localPosition.ReplaceX(num + mBarWidth * ((float)m + 0.5f) + 2f * (float)m);
+			}
+		}
+		mLastPowerLeft = Singleton<SpawningManagerDeathMatch>.instance.powerLeft;
+		mPopTimer = 0f;
+		DoUpdate(forceUpdate: true);
+	}
+
+	public void StartTutorialAnimation(int index)
+	{
+		tutorialOverlay.gameObject.SetActive(value: true);
+		float num = ((index % 2 != 0) ? 0.1f : 0.5f);
+		float toAlpha = ((index % 2 != 0) ? 0.5f : 0.1f);
+		tutorialOverlay.alpha = num;
+		TweenAlpha tweenAlpha = TweenAlpha.Begin(tutorialOverlay.gameObject, 0.8f, num, toAlpha);
+		tweenAlpha.NumOfRepetitions = 0;
+		tweenAlpha.style = UITweener.Style.PingPong;
+		Vector3 fromScale = ((index % 2 != 0) ? new Vector3(150f, 36f, 1f) : new Vector3(180f, 53f, 1f));
+		Vector3 toScale = ((index % 2 != 0) ? new Vector3(180f, 53f, 1f) : new Vector3(150f, 36f, 1f));
+		TweenScale tweenScale = TweenScale.Begin(tutorialOverlay.gameObject, 0.8f, fromScale, toScale);
+		tweenScale.NumOfRepetitions = 0;
+		tweenScale.style = UITweener.Style.PingPong;
+	}
+
+	public void StopTutorialAnimation()
+	{
+		tutorialOverlay.gameObject.SetActive(value: false);
+	}
+
+	public void DoUpdate(bool forceUpdate = false)
+	{
+		mPopTimer -= TimeManager.deltaTimeWithoutPauses;
+		if (mLastPowerLeft == (int)Singleton<SpawningManagerDeathMatch>.instance.powerLeft && !forceUpdate)
+		{
+			return;
+		}
+		if (mLastPowerLeft > (int)Singleton<SpawningManagerDeathMatch>.instance.powerLeft || forceUpdate || mIsEmpty)
+		{
+			mLastPowerLeft = Singleton<SpawningManagerDeathMatch>.instance.powerLeft;
+			for (int i = 0; i < mBarCount; i++)
+			{
+				UISprite bar = bars[i];
+				bool flag = !mIsEmpty && i < mLastPowerLeft;
+				SetBar(bar, !flag);
+				SetDeploy(i);
+			}
+			if (mLastPowerLeft >= mBarCount && !mIsEmpty)
+			{
+				ShowDeploy(animate: false);
+			}
+			else
+			{
+				HideDeploy();
+			}
+		}
+		else if (mPopTimer <= 0f)
+		{
+			ShowNewBar(mLastPowerLeft);
+			mLastPowerLeft++;
+			mPopTimer = popDelay;
+		}
+	}
+
+	private void ShowNewBar(int index)
+	{
+		if (index < 0 || index >= mBarCount)
+		{
+			return;
+		}
+		UISprite bar = bars[index];
+		UISprite newBar = newBars[index];
+		newBar.gameObject.SetActive(value: true);
+		TweenAlpha.Begin(newBar.gameObject, 0.2f, 0f, 1f);
+		TweenScale tweenScale = TweenScale.Begin(newBar.gameObject, 0.2f, Vector3.zero, new Vector3(popAmount * mBarWidth, popAmount * mBarHeight, 1f));
+		tweenScale.method = UITweener.Method.EaseOut;
+		tweenScale.onFinished = delegate
+		{
+			TweenScale tweenScale2 = TweenScale.Begin(newBar.gameObject, 0.2f, new Vector3(popAmount * mBarWidth, popAmount * mBarHeight, 1f), new Vector3(mBarWidth, mBarHeight, 1f));
+			tweenScale2.method = UITweener.Method.EaseIn;
+			tweenScale2.onFinished = delegate
+			{
+				newBar.gameObject.SetActive(value: false);
+				bool flag = index < mLastPowerLeft;
+				SetBar(bar, !flag);
+				SetDeploy(index);
+			};
+			if (index == mBarCount - 1)
+			{
+				ShowDeploy(animate: true);
+			}
+		};
+	}
+
+	private void ShowDeploy(bool animate)
+	{
+		deployBackground.gameObject.SetActive(value: true);
+		TweenAlpha.Begin(deployBackground.gameObject, 0.1f, 1f);
+	}
+
+	private void HideDeploy()
+	{
+		TweenAlpha.Begin(deployBackground.gameObject, 0f, 1f);
+		deployBackground.gameObject.SetActive(value: false);
+		if (!mIsEmpty)
+		{
+			for (int i = 0; i < mBarCount; i++)
+			{
+				UISprite uISprite = deployIcons[i];
+				uISprite.gameObject.SetActive(value: true);
+				SetDeploy(i);
+			}
+		}
+	}
+
+	private void SetBar(UISprite bar, bool active)
+	{
+		bar.alpha = ((!active) ? 0f : 0.7f);
+	}
+
+	private void SetDeploy(int index)
+	{
+		UISprite uISprite = deployIcons[index];
+		bool flag = index < mLastPowerLeft;
+		TweenAlpha component = uISprite.gameObject.GetComponent<TweenAlpha>();
+		if (component != null)
+		{
+			component.enabled = false;
+		}
+		if (flag)
+		{
+			uISprite.color = Color.white;
+		}
+		else
+		{
+			uISprite.color = Colours.blue.ReplaceA(0.6f);
+		}
+	}
 }

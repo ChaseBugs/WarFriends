@@ -1,63 +1,99 @@
+using System.Collections.Generic;
+using ExitGames.Client.Photon;
+using Google2u;
 using UnityEngine;
 
-public class RoomConnection : MonoBehaviour
+public abstract class RoomConnection
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	private readonly List<CloudRegionCode> mAllowedRegions = new List<CloudRegionCode>
+	{
+		CloudRegionCode.eu,
+		CloudRegionCode.us,
+		CloudRegionCode.asia,
+		CloudRegionCode.jp,
+		CloudRegionCode.au,
+		CloudRegionCode.usw,
+		CloudRegionCode.sa,
+		CloudRegionCode.cae,
+		CloudRegionCode.kr,
+		CloudRegionCode.@in
+	};
 
-	1. No dll files were provided to AssetRipper.
+	public virtual bool isRandom => false;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	protected virtual Hashtable roomProperties
+	{
+		get
+		{
+			Hashtable hashtable = new Hashtable();
+			hashtable.Add("C0", LevelManager.instance.currentLevel.displayNumber);
+			hashtable.Add("C1", (int)GameLoginManager.currentPlayer.leagueTier);
+			hashtable.Add("C2", GameLoginManager.currentPlayer.medalsBalance);
+			hashtable.Add("C3", LevelManager.instance.armyPower);
+			hashtable.Add("C4", Singleton<MapManager>.instance.isRandomMap ? 1 : 0);
+			hashtable.Add("battleID", GameLoginManager.currentPlayer.id + Singleton<BeanstalkServerManager>.instance.currentTimestamp);
+			hashtable.Add("C5", StatsManager.instance.data.deathMatchWinLooseStreak * 100f);
+			hashtable.Add("MatchStart", double.PositiveInfinity);
+			return hashtable;
+		}
+	}
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public virtual string lobbyName => "myLobby" + Singleton<CurrentBundleVersion>.instance.matchMakingVersionRanked;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public TypedLobby lobby => new TypedLobby(lobbyName, LobbyType.SqlLobby);
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public virtual RoomOptions roomOptions
+	{
+		get
+		{
+			RoomOptions roomOptions = new RoomOptions();
+			roomOptions.IsVisible = false;
+			roomOptions.IsOpen = true;
+			roomOptions.MaxPlayers = 2;
+			roomOptions.CustomRoomProperties = roomProperties;
+			roomOptions.CustomRoomPropertiesForLobby = new string[5] { "C0", "C1", "C2", "C3", "C5" };
+			roomOptions.PublishUserId = true;
+			return roomOptions;
+		}
+	}
 
-	3. Assembly Reconstruction has not been implemented.
+	public virtual int maxSearchSteps => 0;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public virtual bool shouldCreateRoom => true;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public virtual float maxPing => Singleton<GameVariables>.instance.constants.GetRow(Constants.rowIds.MaxPingToConnectRegion).FLOATVALUE;
 
-	4. This script is unnecessary.
+	public virtual int maxRegionsToConnect
+	{
+		get
+		{
+			MatchMakingConstants matchMakingConstants = Singleton<GameVariables>.instance.matchMakingConstants;
+			return (int)matchMakingConstants.GetRow(MatchMakingConstants.rowIds.MaxMatchMakingRegionsAndroid).FLOATVALUE;
+		}
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public virtual List<CloudRegionCode> allowedRegions => mAllowedRegions;
 
-	5. Script Content Level 0
+	protected string GetSqlRangeFilterPart(int attemt, int number, string paramName, string column, float m = 1f)
+	{
+		int num = 0;
+		int rowIndex = Singleton<GameVariables>.instance.matchmakingDeviations.GetRowIndex(column + LevelManager.instance.currentLevel.displayNumber);
+		if (rowIndex >= 0)
+		{
+			num = (int)Singleton<GameVariables>.instance.matchmakingDeviations.GetValue(rowIndex, "Step" + attemt);
+			num = (int)((float)num * m);
+		}
+		else
+		{
+			Debug.LogError("Row: " + column + LevelManager.instance.currentLevel.displayNumber + "doesnt exist");
+		}
+		int num2 = number - num;
+		int num3 = number + num;
+		return paramName + " >=" + num2 + " AND " + paramName + " <=" + num3;
+	}
 
-		AssetRipper was set to not load any script information.
-
-	6. Cpp2IL failed to decompile Il2Cpp data
-
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public virtual string GetSqlFilter(int attemt)
+	{
+		return string.Empty;
+	}
 }

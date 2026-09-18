@@ -1,63 +1,169 @@
+using System;
 using UnityEngine;
+using UnityEngine.Rendering;
 
-public class Recording : MonoBehaviour
+public class Recording : Singleton<Recording>
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	private static bool mCanRecord;
 
-	1. No dll files were provided to AssetRipper.
+	private static bool mTryToSetRecording;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	private static bool mTryToSetBroadcast;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	private static float startTime;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	private static int totalBattles;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public static float xCoords;
 
-	3. Assembly Reconstruction has not been implemented.
+	public static float yCoords;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	private static bool mIsBroadcasting;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public static bool canBroadcast => SystemInfo.graphicsDeviceType == GraphicsDeviceType.OpenGLES3 && GetSDKLevel() > 20;
 
-	4. This script is unnecessary.
+	public static bool recordingEnabled
+	{
+		get
+		{
+			return DebugSettings.record && canRecord;
+		}
+		set
+		{
+			if (value)
+			{
+				tryToSetRecording = true;
+			}
+			else
+			{
+				DebugSettings.record = false;
+			}
+		}
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public static bool isBroadcasting => mIsBroadcasting;
 
-	5. Script Content Level 0
+	public bool isRecording => false;
 
-		AssetRipper was set to not load any script information.
+	public static bool canRecord => mCanRecord;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public static bool tryToSetRecording
+	{
+		get
+		{
+			return mTryToSetRecording;
+		}
+		set
+		{
+			mTryToSetRecording = value;
+		}
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public static bool tryToSetBroadcast
+	{
+		get
+		{
+			return mTryToSetBroadcast;
+		}
+		set
+		{
+			mTryToSetBroadcast = value;
+		}
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	public event Action Changed;
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	public event Action<bool> BroadcastChanged;
 
-	*/
+	public bool CheckModel(string desiredModel, int minVersion)
+	{
+		string deviceModel = SystemInfo.deviceModel;
+		if (deviceModel.StartsWith(desiredModel))
+		{
+			Debug.Log("Recording: CheckModel" + desiredModel);
+			string text = deviceModel.Replace(desiredModel, string.Empty);
+			string[] array = text.Split(',');
+			if (array.Length > 0)
+			{
+				int result = 0;
+				int.TryParse(array[0], out result);
+				Debug.Log($"Recording: CheckModel version {result}");
+				if (result >= minVersion)
+				{
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	public static int GetSDKLevel()
+	{
+		IntPtr clazz = AndroidJNI.FindClass("android.os.Build$VERSION");
+		IntPtr staticFieldID = AndroidJNI.GetStaticFieldID(clazz, "SDK_INT", "I");
+		return AndroidJNI.GetStaticIntField(clazz, staticFieldID);
+	}
+
+	protected override void Awake()
+	{
+		base.Awake();
+		mCanRecord &= CheckModel("iPad", 4) || CheckModel("iPhone", 6);
+	}
+
+	public static void StartBroadcast()
+	{
+		Debug.Log("Start broadcasting");
+	}
+
+	private static void BroadcastError(string err)
+	{
+		Debug.LogError(err);
+	}
+
+	public static void FinishBroadcast()
+	{
+		Debug.Log("Finish broadcasting");
+		mIsBroadcasting = false;
+		if (Singleton<Recording>.instance.BroadcastChanged != null)
+		{
+			Singleton<Recording>.instance.BroadcastChanged(obj: false);
+		}
+	}
+
+	private void OnApplicationResumed()
+	{
+		if (mIsBroadcasting)
+		{
+			FinishBroadcast();
+		}
+	}
+
+	public void StartRecording()
+	{
+		if (DebugSettings.record)
+		{
+			CancelRecording();
+		}
+	}
+
+	public void StopRecording()
+	{
+		if (!DebugSettings.record)
+		{
+		}
+	}
+
+	public void CancelRecording()
+	{
+		if (!DebugSettings.record)
+		{
+		}
+	}
+
+	public void ShowPreview()
+	{
+		if (!DebugSettings.record)
+		{
+		}
+	}
 }

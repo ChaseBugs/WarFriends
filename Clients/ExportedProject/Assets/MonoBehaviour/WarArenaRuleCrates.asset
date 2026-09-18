@@ -11,3 +11,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7f6bd1bf2f65291dc78f89f7b29197ef, type: 3}
   m_Name: WarArenaRuleCrates
   m_EditorClassIdentifier:
+  data:
+    showRule: 1
+    killStreakRatio: 0.75

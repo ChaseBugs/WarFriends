@@ -1,63 +1,221 @@
+using System.Text;
 using UnityEngine;
 
-public class TimeAndProgressHudGuiElement : MonoBehaviour
+public class TimeAndProgressHudGuiElement : GuiElement
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Header("TOP Mission Progress")]
+	public GameObject progressPart;
 
-	1. No dll files were provided to AssetRipper.
+	public UISprite progressBackground;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public UISprite progressSprite;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public UILabel progressLabel;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	[Header("TOP RIGHT Time Progress")]
+	public GameObject timePart;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public UILabel timeLabel;
 
-	3. Assembly Reconstruction has not been implemented.
+	public UILabel lowTimeLabel;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public UISprite lowTimeBackground;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	[Header("Bootcamp")]
+	public GameObject bootcampPart;
 
-	4. This script is unnecessary.
+	public UILabel bootcampLabel;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private bool mUpdateProgress;
 
-	5. Script Content Level 0
+	private bool mUpdateTime;
 
-		AssetRipper was set to not load any script information.
+	private bool mTimeWarningShown;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	private int mOvertimeAlarmSoundNum = 5;
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	private Vector3 mBootcampPosition;
 
-	7. An incorrect path was provided to AssetRipper.
+	private float mProgressWidth;
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	private StringBuilder mTimeText = new StringBuilder(8);
 
-	*/
+	protected override void Awake()
+	{
+		base.Awake();
+		lowTimeBackground.transform.localScale = lowTimeBackground.transform.localScale.ReplaceX(lowTimeLabel.relativeSize.x * lowTimeLabel.transform.localScale.x + 16f);
+	}
+
+	public override void InitControls()
+	{
+		mProgressWidth = (UIRoot.list[0].activeWidth / 2f - 140f) / GuiScreenSingle<HudScreen>.instance.transform.localScale.x;
+		progressBackground.transform.localScale = progressBackground.transform.localScale.ReplaceX(mProgressWidth);
+		progressSprite.transform.localPosition = progressSprite.transform.localPosition.ReplaceX(0f - (mProgressWidth - 16f));
+		progressSprite.transform.localScale = progressSprite.transform.localScale.ReplaceX(mProgressWidth - 16f);
+		progressSprite.mFillSlopePixels = 364f / (mProgressWidth - 16f);
+		progressSprite.fillAmount = 0f;
+		progressLabel.transform.localPosition = progressLabel.transform.localPosition.ReplaceX(-0.5f * mProgressWidth);
+		mProgressWidth += 20f;
+		mBootcampPosition = bootcampPart.transform.localPosition;
+		Singleton<GameController>.instance.GameStarted += InstanceGameStarted;
+		Singleton<GameController>.instance.GameEnded += InstanceGameEnded;
+		Singleton<MatchManager>.instance.OverTimeStarted += OnOverTimeStart;
+		Hide();
+	}
+
+	public override void InitGUIValues()
+	{
+	}
+
+	private void InstanceGameStarted()
+	{
+		Show();
+		HideTimeWarning();
+		StopOvertime();
+		bootcampPart.SetActive(Singleton<GameController>.instance.isTutorial);
+		if (Singleton<GameController>.instance.isTutorial)
+		{
+			if (Singleton<GameController>.instance.isTutorialStage1)
+			{
+				bootcampLabel.text = Localization.LocalizeFormat("ID_TUTORIAL_PHASE", 1, 3);
+			}
+			else if (Singleton<GameController>.instance.isTutorialStage2)
+			{
+				bootcampLabel.text = Localization.LocalizeFormat("ID_TUTORIAL_PHASE", 2, 3);
+			}
+			else if (Singleton<GameController>.instance.isTutorialStage3)
+			{
+				bootcampLabel.text = Localization.LocalizeFormat("ID_TUTORIAL_PHASE", 3, 3);
+			}
+		}
+		bootcampPart.transform.localPosition = mBootcampPosition;
+		timeLabel.text = string.Empty;
+		mOvertimeAlarmSoundNum = 5;
+	}
+
+	private void InstanceGameEnded(GameController.GameEndReason endReason)
+	{
+		StopOvertime();
+		HideTimeWarning();
+		Hide();
+	}
+
+	private void OnOverTimeStart()
+	{
+		StartOvertime();
+		SoundsManager.Instance.PlaySound(SoundsManager.SoundsEnum.Overtime);
+	}
+
+	private void Show()
+	{
+		bool flag = Singleton<GameController>.instance.isCampaignBot || Singleton<GameController>.instance.isCoopBot;
+		if (Singleton<GameController>.instance.isMission && !flag)
+		{
+			progressPart.SetActive(value: true);
+			mUpdateProgress = true;
+		}
+		timePart.SetActive(value: true);
+		mUpdateTime = true;
+	}
+
+	private void Hide()
+	{
+		progressPart.SetActive(value: false);
+		timePart.SetActive(value: false);
+		mUpdateProgress = false;
+		mUpdateTime = false;
+	}
+
+	private void ShowTimeWarning()
+	{
+		if (!mTimeWarningShown)
+		{
+			mTimeWarningShown = true;
+			TweenAlpha tweenAlpha = TweenAlpha.Begin(lowTimeBackground.gameObject, 0.5f, 0f, 0.8f);
+			tweenAlpha.style = UITweener.Style.PingPong;
+			tweenAlpha.NumOfRepetitions = 0;
+			TweenAlpha tweenAlpha2 = TweenAlpha.Begin(lowTimeLabel.gameObject, 0f, 0f, 1f);
+			tweenAlpha2.style = UITweener.Style.Once;
+			tweenAlpha2.NumOfRepetitions = 1;
+		}
+	}
+
+	private void HideTimeWarning()
+	{
+		mTimeWarningShown = false;
+		TweenAlpha tweenAlpha = TweenAlpha.Begin(lowTimeBackground.gameObject, 0f, 0f, 0f);
+		tweenAlpha.style = UITweener.Style.Once;
+		tweenAlpha.NumOfRepetitions = 1;
+		TweenAlpha tweenAlpha2 = TweenAlpha.Begin(lowTimeLabel.gameObject, 0f, 0f, 0f);
+		tweenAlpha2.style = UITweener.Style.Once;
+		tweenAlpha2.NumOfRepetitions = 1;
+	}
+
+	private void PlayOvertimeAlarmSound()
+	{
+		if (Singleton<GameController>.instance.time <= (float)mOvertimeAlarmSoundNum && Singleton<GameController>.instance.time >= 0f && mOvertimeAlarmSoundNum > 0)
+		{
+			mOvertimeAlarmSoundNum--;
+			SoundsManager.Instance.PlaySound(SoundsManager.SoundsEnum.OvertimeAlarm);
+		}
+	}
+
+	private void StartOvertime()
+	{
+		TweenAlpha tweenAlpha = TweenAlpha.Begin(timeLabel.gameObject, 0.5f, 0f, 1f);
+		tweenAlpha.style = UITweener.Style.PingPong;
+		tweenAlpha.NumOfRepetitions = 0;
+	}
+
+	private void StopOvertime()
+	{
+		TweenAlpha tweenAlpha = TweenAlpha.Begin(timeLabel.gameObject, 0.05f, 0f, 1f);
+		tweenAlpha.style = UITweener.Style.Once;
+		tweenAlpha.NumOfRepetitions = 1;
+	}
+
+	protected override void Update()
+	{
+		if (mUpdateProgress)
+		{
+			progressLabel.text = MissionsManager.instance.missionHudObjective;
+			progressSprite.fillAmount = MissionsManager.instance.missionProgress;
+		}
+		if (!mUpdateTime)
+		{
+			return;
+		}
+		mTimeText.Length = 0;
+		Singleton<GameController>.instance.mainController.GetTimeProgressText(mTimeText);
+		if (Singleton<GameController>.instance.isMission)
+		{
+			if (!(MissionsManager.instance.currentMission is SurviveMission))
+			{
+				if (MissionsManager.instance.time < 10f)
+				{
+					ShowTimeWarning();
+				}
+				else if (mTimeWarningShown)
+				{
+					HideTimeWarning();
+				}
+			}
+		}
+		else if (Singleton<GameController>.instance.isPVP)
+		{
+			if (Singleton<MatchManager>.instance.isOverTime)
+			{
+				HideTimeWarning();
+			}
+			else
+			{
+				PlayOvertimeAlarmSound();
+				if (Singleton<GameController>.instance.time < 10f && Singleton<GameController>.instance.time > 0f)
+				{
+					ShowTimeWarning();
+				}
+			}
+		}
+		timeLabel.text = mTimeText.ToString();
+	}
 }

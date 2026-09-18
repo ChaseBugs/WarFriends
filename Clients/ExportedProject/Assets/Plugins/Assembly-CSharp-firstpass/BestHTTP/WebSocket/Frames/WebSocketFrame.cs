@@ -1,66 +1,139 @@
-using UnityEngine;
+using System;
+using System.IO;
+using BestHTTP.WebSocket.Extensions;
 
 namespace BestHTTP.WebSocket.Frames
 {
-	public class WebSocketFrame : MonoBehaviour
+public sealed class WebSocketFrame
+{
+	public static readonly byte[] NoData = new byte[0];
+
+	public WebSocketFrameTypes Type { get; private set; }
+
+	public bool IsFinal { get; private set; }
+
+	public byte Header { get; private set; }
+
+	public byte[] Data { get; private set; }
+
+	public bool UseExtensions { get; private set; }
+
+	public WebSocketFrame(WebSocket webSocket, WebSocketFrameTypes type, byte[] data)
+		: this(webSocket, type, data, useExtensions: true)
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
 	}
+
+	public WebSocketFrame(WebSocket webSocket, WebSocketFrameTypes type, byte[] data, bool useExtensions)
+		: this(webSocket, type, data, 0uL, (ulong)((data == null) ? 0 : data.Length), isFinal: true, useExtensions)
+	{
+	}
+
+	public WebSocketFrame(WebSocket webSocket, WebSocketFrameTypes type, byte[] data, bool isFinal, bool useExtensions)
+		: this(webSocket, type, data, 0uL, (ulong)((data == null) ? 0 : data.Length), isFinal, useExtensions)
+	{
+	}
+
+	public WebSocketFrame(WebSocket webSocket, WebSocketFrameTypes type, byte[] data, ulong pos, ulong length, bool isFinal, bool useExtensions)
+	{
+		Type = type;
+		IsFinal = isFinal;
+		UseExtensions = useExtensions;
+		if (data != null)
+		{
+			Data = new byte[length];
+			Array.Copy(data, (int)pos, Data, 0, (int)length);
+		}
+		else
+		{
+			data = NoData;
+		}
+		Header = (byte)((uint)(byte)(IsFinal ? 128 : 0) | (uint)Type);
+		if (!UseExtensions || webSocket == null || webSocket.Extensions == null)
+		{
+			return;
+		}
+		for (int i = 0; i < webSocket.Extensions.Length; i++)
+		{
+			IExtension extension = webSocket.Extensions[i];
+			if (extension != null)
+			{
+				Header |= extension.GetFrameHeader(this, Header);
+				Data = extension.Encode(this);
+			}
+		}
+	}
+
+	public byte[] Get()
+	{
+		if (Data == null)
+		{
+			Data = NoData;
+		}
+		using (MemoryStream memoryStream = new MemoryStream(Data.Length + 9))
+		{
+		memoryStream.WriteByte(Header);
+		if (Data.Length < 126)
+		{
+			memoryStream.WriteByte((byte)(0x80 | (byte)Data.Length));
+		}
+		else if (Data.Length < 65535)
+		{
+			memoryStream.WriteByte(254);
+			byte[] bytes = BitConverter.GetBytes((ushort)Data.Length);
+			if (BitConverter.IsLittleEndian)
+			{
+				Array.Reverse(bytes, 0, bytes.Length);
+			}
+			memoryStream.Write(bytes, 0, bytes.Length);
+		}
+		else
+		{
+			memoryStream.WriteByte(byte.MaxValue);
+			byte[] bytes2 = BitConverter.GetBytes((ulong)Data.Length);
+			if (BitConverter.IsLittleEndian)
+			{
+				Array.Reverse(bytes2, 0, bytes2.Length);
+			}
+			memoryStream.Write(bytes2, 0, bytes2.Length);
+		}
+		byte[] bytes3 = BitConverter.GetBytes(GetHashCode());
+		memoryStream.Write(bytes3, 0, bytes3.Length);
+		for (int i = 0; i < Data.Length; i++)
+		{
+			memoryStream.WriteByte((byte)(Data[i] ^ bytes3[i % 4]));
+		}
+		return memoryStream.ToArray();
+		}
+}
+
+	public WebSocketFrame[] Fragment(ushort maxFragmentSize)
+	{
+		if (Data == null)
+		{
+			return null;
+		}
+		if (Type != WebSocketFrameTypes.Binary && Type != WebSocketFrameTypes.Text)
+		{
+			return null;
+		}
+		if (Data.Length <= maxFragmentSize)
+		{
+			return null;
+		}
+		IsFinal = false;
+		Header &= 127;
+		int num = Data.Length / maxFragmentSize + Data.Length % maxFragmentSize - 1;
+		WebSocketFrame[] array = new WebSocketFrame[num];
+		ulong num3;
+		for (ulong num2 = maxFragmentSize; num2 < (ulong)Data.Length; num2 += num3)
+		{
+			num3 = Math.Min(maxFragmentSize, (ulong)Data.Length - num2);
+			array[array.Length - num--] = new WebSocketFrame(null, WebSocketFrameTypes.Continuation, Data, num2, num3, num2 + num3 >= (ulong)Data.Length, useExtensions: false);
+		}
+		byte[] array2 = new byte[maxFragmentSize];
+		Array.Copy(Data, 0, array2, 0, maxFragmentSize);
+		Data = array2;
+		return array;
+	}
+}
 }

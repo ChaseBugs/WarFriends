@@ -1,63 +1,66 @@
+using Newtonsoft.Json.Linq;
 using UnityEngine;
 
-public class WararenaLootboxReward : MonoBehaviour
+public class WararenaLootboxReward
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	private string mUnitId;
 
-	1. No dll files were provided to AssetRipper.
+	private int mUnitEliteParts;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	private int mWarbucks;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	private int mGold;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	private int mTickets;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	private int mScraps;
 
-	3. Assembly Reconstruction has not been implemented.
+	public LevelBehaviour unit => LevelManager.instance.Unit(mUnitId);
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public int eliteParts => mUnitEliteParts;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public int warbucks => mWarbucks;
 
-	4. This script is unnecessary.
+	public int gold => mGold;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public int tickets => mTickets;
 
-	5. Script Content Level 0
+	public int scraps => mScraps;
 
-		AssetRipper was set to not load any script information.
+	public string unitId => mUnitId;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public WararenaLootboxReward(JToken token)
+	{
+		mUnitId = StringParser.ParseString(token["ArmyUnitId"], string.Empty);
+		mUnitEliteParts = StringParser.ParseIntToken(token["ArmyUnitParts"]);
+		mWarbucks = StringParser.ParseIntToken(token["WarBucks"]);
+		mGold = StringParser.ParseIntToken(token["Gold"]);
+		mTickets = StringParser.ParseIntToken(token["Tickets"]);
+		mScraps = StringParser.ParseIntToken(token["Scraps"]);
+		Debug.Log(ToString());
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public void AddToClient()
+	{
+		unit.upgradeSlots.upgradeSlotElite.currentParts += mUnitEliteParts;
+		if (!PlayerAnalytics.instance.data.elitesShown)
+		{
+			Singleton<MessageManager>.instance.AddMessage(new ElitePerkTutorialMessage());
+			ElitesFeatureShownRequest.Send();
+		}
+		Singleton<Wallet>.instance.AddWarBucksReward(mWarbucks);
+		Singleton<Wallet>.instance.AddGoldReward(mGold);
+		Singleton<Wallet>.instance.AddTickets(mTickets);
+		Singleton<Wallet>.instance.AddScraps(mScraps);
+	}
 
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public override string ToString()
+	{
+		string text = "Arena Lootbox:\n";
+		text += $"Unit \"{mUnitId}\" elite parts: {mUnitEliteParts}\n";
+		text += $"Warbucks: {mWarbucks}\n";
+		text += $"Gold:     {mGold}\n";
+		text += $"Tickets:  {mTickets}\n";
+		return text + $"Scraps:   {mScraps}\n";
+	}
 }

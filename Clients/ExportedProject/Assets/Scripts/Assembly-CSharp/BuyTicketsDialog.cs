@@ -1,63 +1,172 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
-public class BuyTicketsDialog : MonoBehaviour
+public class BuyTicketsDialog : GuiElementSingle<BuyTicketsDialog>, IGuiDialog
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Header("Core")]
+	public GameObject dialogCenter;
 
-	1. No dll files were provided to AssetRipper.
+	public UISprite background;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	[Header("Top")]
+	public GameObject closeButton;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	[Header("Midlle")]
+	public UILabel hintText;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public UILabel neededTickets;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public GameObject hintPart;
 
-	3. Assembly Reconstruction has not been implemented.
+	[Header("Bottom")]
+	public GameObject bottomPart;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public GameObject buyTicketsButton;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public UILabel buyTicketsLabel;
 
-	4. This script is unnecessary.
+	public UILabel goldLabel;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public GameObject waitingOverlay;
 
-	5. Script Content Level 0
+	private Action<bool> BoughtTickets;
 
-		AssetRipper was set to not load any script information.
+	private long mRequiredTickets;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	private long mCurrentTickets;
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	private int mGoldCost;
 
-	7. An incorrect path was provided to AssetRipper.
+	private BuyTicketType mBuyType;
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	public void ShowDialog(long requiredTickets, BuyTicketType type, Action<bool> boughtTickets = null)
+	{
+		mRequiredTickets = requiredTickets;
+		mCurrentTickets = Singleton<Wallet>.instance.tickets;
+		mGoldCost = MiscTools.ConvertTicketsIntoGold(mRequiredTickets - mCurrentTickets);
+		BoughtTickets = boughtTickets;
+		mBuyType = type;
+		Singleton<GuiManager>.instance.ShowDialog(GuiElementSingle<BuyTicketsDialog>.instance, 0f);
+	}
 
-	*/
+	public override void InitControls()
+	{
+		UIEventListener uIEventListener = UIEventListener.Get(closeButton);
+		uIEventListener.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener.onClick, new UIEventListener.VoidDelegate(CloseDialog));
+		UIEventListener uIEventListener2 = UIEventListener.Get(buyTicketsButton);
+		uIEventListener2.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener2.onClick, new UIEventListener.VoidDelegate(BuyTicketsClick));
+		EnterArenaRequest.Response = (Action<bool>)Delegate.Combine(EnterArenaRequest.Response, new Action<bool>(OnServerResponse));
+		Singleton<BeanstalkServerManager>.instance.DataLoaded += OnDataLoaded;
+		Singleton<BeanstalkServerManager>.instance.ErrorReceived += OnErrorReceived;
+	}
+
+	private void CloseDialog(GameObject go)
+	{
+		if (base.isFullyShowed)
+		{
+			if (BoughtTickets != null)
+			{
+				BoughtTickets(obj: false);
+			}
+			HideDialog();
+		}
+	}
+
+	private void BuyTicketsClick(GameObject go)
+	{
+		if (!base.isFullyShowed)
+		{
+			return;
+		}
+		if (!Singleton<Wallet>.instance.CanBuyGold(mGoldCost))
+		{
+			GuiElementSingle<NotEnoughDialog>.instance.ShowGold(mGoldCost, Localization.Localize("ID_ARENATICKETSSMALL"));
+			return;
+		}
+		waitingOverlay.SetActive(value: true);
+		if (mBuyType == BuyTicketType.BuyHearth)
+		{
+			Singleton<BeanstalkServerManager>.instance.SendServerRequest(DatabaseAction.BuyArenaHearth, new List<Tuple<string, string>>
+			{
+				new Tuple<string, string>("UsedGolds", mGoldCost.ToString())
+			});
+		}
+		else if (mBuyType == BuyTicketType.EnterArena)
+		{
+			EnterArenaRequest.Send(mGoldCost);
+		}
+	}
+
+	private void OnServerResponse(bool canEnterArena)
+	{
+		waitingOverlay.SetActive(value: false);
+		if (BoughtTickets != null)
+		{
+			BoughtTickets(canEnterArena);
+		}
+		HideDialog();
+	}
+
+	private void OnDataLoaded(DatabaseAction action)
+	{
+		if (base.isFullyShowed && action == DatabaseAction.BuyArenaHearth)
+		{
+			waitingOverlay.SetActive(value: false);
+			HideDialog();
+		}
+	}
+
+	private void OnErrorReceived(DatabaseAction action)
+	{
+		if (base.isFullyShowed && action == DatabaseAction.BuyArenaHearth)
+		{
+			waitingOverlay.SetActive(value: false);
+			HideDialog();
+		}
+	}
+
+	public override void InitGUIValues()
+	{
+		Rescale();
+		waitingOverlay.SetActive(value: false);
+		long num = mRequiredTickets - mCurrentTickets;
+		if (num == 1)
+		{
+			hintText.text = Localization.LocalizeFormat((mBuyType != BuyTicketType.EnterArena) ? "ID_YOUNEED1TICKETFOREXTRAHEART" : "ID_YOUNEED1TICKETTOENTERARENA", Colours.stringGreenArena);
+			buyTicketsLabel.text = Localization.Localize("ID_ONETICKET");
+		}
+		else
+		{
+			hintText.text = Localization.LocalizeFormat((mBuyType != BuyTicketType.EnterArena) ? "ID_YOUNEEDXTICKETSFOREXTRAHEART" : "ID_YOUNEEDXTICKETSTOENTERARENA", Colours.stringGreenArena, num);
+			buyTicketsLabel.text = Localization.LocalizeFormat("ID_XTICKETS", num);
+		}
+		neededTickets.text = $"{Colours.stringGreenArena}{MiscTools.FormatBigNumber(mCurrentTickets)}[-] / {MiscTools.FormatBigNumber(mRequiredTickets)}";
+		goldLabel.text = MiscTools.FormatBigNumber(mGoldCost);
+	}
+
+	private void Rescale()
+	{
+		bool flag = mBuyType == BuyTicketType.BuyHearth;
+		dialogCenter.transform.localPosition = dialogCenter.transform.localPosition.ReplaceY((!flag) ? (-76f) : (-182f));
+		background.transform.localScale = background.transform.localScale.ReplaceY((!flag) ? 980f : 692f);
+		hintPart.SetActive(!flag);
+		bottomPart.transform.localPosition = bottomPart.transform.localPosition.ReplaceY((!flag) ? (-376f) : (-98f));
+	}
+
+	public override void DoAfterHide()
+	{
+		base.DoAfterHide();
+		BoughtTickets = null;
+	}
+
+	public GuiElement GetGuiElement()
+	{
+		return this;
+	}
+
+	public override void OnBack()
+	{
+		CloseDialog(closeButton);
+	}
 }

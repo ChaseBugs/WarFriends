@@ -1,63 +1,117 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
-public class SoldierBehaviourAssaulter : MonoBehaviour
+public class SoldierBehaviourAssaulter : SoldierBehaviourGeneric<SoldierBehaviourDefinititonBasicSoldier>
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	private float mTimer;
 
-	1. No dll files were provided to AssetRipper.
+	public override void ShootJustStarted()
+	{
+		if (mShotTarget != null)
+		{
+			currentWeapon.SetBullletSpeedCoef((mShotTarget == null || !(mShotTarget.shootableEntity.owner is PlayerController)) ? 3f : 1f);
+			targetPosition = Singleton<AimingHelper>.instance.PredictPosition(currentWeapon, targetPosition, mShotTarget.shootableEntity.velocity, 0.3f);
+		}
+		base.ShootJustStarted();
+	}
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public override bool AcceptSpawnPoint(SpawnPoint point)
+	{
+		if (point.spawnPointType == SpawnPoint.SpawnPointType.Parachute && base.mBehaviourDef.canUseParachute && controller.fraction == point.fraction)
+		{
+			return true;
+		}
+		return base.AcceptSpawnPoint(point);
+	}
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public override SpawnPoint PickSpawnPoint(IEnumerable<SpawnPoint> spawns)
+	{
+		List<SpawnPoint> list = new List<SpawnPoint>();
+		foreach (SpawnPoint spawn in spawns)
+		{
+			if (AcceptSpawnPoint(spawn))
+			{
+				list.Add(spawn);
+				if (spawn.spawnPointType == SpawnPoint.SpawnPointType.Parachute)
+				{
+					return spawn;
+				}
+			}
+		}
+		if (list.Count <= 0)
+		{
+			throw new Exception("Enemy could not be spawned");
+		}
+		int index = UnityEngine.Random.Range(0, list.Count);
+		return list[index];
+	}
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	protected override void ApplyWeaponsSetup()
+	{
+		base.ApplyWeaponsSetup();
+		mWeapons[0].bulletPrefab = Singleton<ObjectPoolDatabase>.instance.bulletSlow;
+		BulletSetup bulletSetup = (BulletSetup)mWeapons[0].ammoSetup;
+		bulletSetup.realShotTexture = "shotReal";
+	}
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public override void PickTarget()
+	{
+		if (currentWeapon != null && !TryPickDecoy())
+		{
+			PickRandomOpponent(UnitType.AttackerRusher);
+		}
+	}
 
-	3. Assembly Reconstruction has not been implemented.
+	public override void Restart()
+	{
+		base.Restart();
+		mTimer = TimeManager.realTimeWithoutPauses + 2f + UnityEngine.Random.value;
+	}
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
-
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
-
-	4. This script is unnecessary.
-
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
-
-	5. Script Content Level 0
-
-		AssetRipper was set to not load any script information.
-
-	6. Cpp2IL failed to decompile Il2Cpp data
-
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	protected override void Update()
+	{
+		base.Update();
+		if (!(controller != null) || !(TimeManager.realTimeWithoutPauses > mTimer) || controller.fraction != PlayerController.currentPlayer.fraction || !Singleton<GameController>.instance.gameIsRunning || !controller.isInField || !controller.hasSpecial)
+		{
+			return;
+		}
+		Collider[] array = Physics.OverlapSphere(controller.transform.position, 1.5f, TagsAndLayers.destroyableObjectsMask);
+		List<DestroyableObject> list = new List<DestroyableObject>();
+		Collider[] array2 = array;
+		foreach (Collider collider in array2)
+		{
+			if (!TagsAndLayers.IsDestroyableObject(collider.gameObject))
+			{
+				continue;
+			}
+			DestroyableObject component = collider.gameObject.GetComponent<DestroyableObject>();
+			if (component == null)
+			{
+				continue;
+			}
+			EnemyController enemyController = component.owner as EnemyController;
+			if (enemyController == null || enemyController.fraction != PlayerController.currentPlayer.fraction || enemyController == controller)
+			{
+				continue;
+			}
+			if (component is DestroyableObjectpart)
+			{
+				DestroyableObjectpart destroyableObjectpart = component as DestroyableObjectpart;
+				if (!(destroyableObjectpart != null) || !(destroyableObjectpart.ownerDestroyableObject != null) || !list.Contains(destroyableObjectpart.ownerDestroyableObject))
+				{
+					list.Add(destroyableObjectpart.ownerDestroyableObject);
+				}
+			}
+			else
+			{
+				list.Add(component);
+			}
+		}
+		foreach (DestroyableObject item in list)
+		{
+			item.HealSoldier(controller.destroyableObj.maxHealth * base.soldierBehaviourDefinititon.special, isNetworkCopy: false);
+		}
+		mTimer = TimeManager.realTimeWithoutPauses + 2f;
+	}
 }

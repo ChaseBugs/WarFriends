@@ -1,63 +1,360 @@
+using System;
+using CodeStage.AntiCheat.ObscuredTypes;
+using Google2u;
 using UnityEngine;
 
-public class Weapon : MonoBehaviour
+public abstract class Weapon : PoolableObject, TimeScaleIgnorable, IFraction
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public enum WeaponType : byte
+	{
+		Riffle,
+		Grenade,
+		Bazooka,
+		SwatPistol,
+		Minigun,
+		Pistol,
+		GrenadeLauncher,
+		Shotgun,
+		Tool,
+		QBZ,
+		SniperRiffle,
+		SwatSMG,
+		Flamethrower,
+		QBZ2,
+		DoubleSMG,
+		Machinegun,
+		Colt,
+		Mortar
+	}
 
-	1. No dll files were provided to AssetRipper.
+	public delegate void ShotHit(Weapon weapon, Ammo ammo, Vector3 position, bool isNetwork, DestroyableObject destroyableObject);
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public Ammo bulletPrefab;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public ObscuredFloat cadence = 0.5f;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public ObscuredInt clipSize = 20;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public ObscuredFloat reloadTime = 5f;
 
-	3. Assembly Reconstruction has not been implemented.
+	public bool friendKill = true;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public bool infiniteAmmo;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public bool reloadableWeapon;
 
-	4. This script is unnecessary.
+	public bool disableSync;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public Transform spawnPoint;
 
-	5. Script Content Level 0
+	public ObscuredInt startingAmmmoCount;
 
-		AssetRipper was set to not load any script information.
+	public bool useAiming = true;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public bool isFake;
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public Ammo.ShotType shotType;
 
-	7. An incorrect path was provided to AssetRipper.
+	public int ignoreLayersMask;
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	private ObscuredInt mAmmoLeftInClip;
 
-	*/
+	private ObscuredInt mAmmoLeft;
+
+	private AmmoSetup mAmmoSetup;
+
+	private bool mIsReloading;
+
+	protected float mLastShotTime;
+
+	protected PhotonView mPhotonView;
+
+	private float mReloadStartTime;
+
+	public Sounds3DEnum reloadSound = Sounds3DEnum.RELOAD_ASSAULT;
+
+	public Sounds3DEnum shotSound = Sounds3DEnum.SHOT_ASSAULT_1;
+
+	public float soundVolume = 1f;
+
+	public WeaponType weaponType;
+
+	public PlayerWeapon playerWeapon { get; set; }
+
+	public virtual int ammoLeft
+	{
+		get
+		{
+			return mAmmoLeft;
+		}
+		set
+		{
+			mAmmoLeft = value;
+		}
+	}
+
+	public int ammoLeftInClip
+	{
+		get
+		{
+			return mAmmoLeftInClip;
+		}
+		set
+		{
+			mAmmoLeftInClip = value;
+			mIsReloading = false;
+		}
+	}
+
+	public AmmoSetup ammoSetup => mAmmoSetup ?? (mAmmoSetup = GetComponent<AmmoSetup>());
+
+	public bool isReloading
+	{
+		get
+		{
+			if (reloadableWeapon)
+			{
+				return mIsReloading;
+			}
+			return reloadProgress < 1f && !outOfAmmo;
+		}
+	}
+
+	public virtual bool willShoot
+	{
+		get
+		{
+			if (reloadableWeapon)
+			{
+				return hasAmmoInClip && !mIsReloading;
+			}
+			return hasAmmo || infiniteAmmo;
+		}
+	}
+
+	public virtual bool hasAmmo => ammoLeft > 0 || infiniteAmmo;
+
+	public bool outOfAmmo
+	{
+		get
+		{
+			if (reloadableWeapon)
+			{
+				bool flag = ammoLeft <= 0 && ammoLeftInClip <= 0;
+				if (!flag && !mIsReloading && ammoLeftInClip <= 0)
+				{
+					Reload();
+				}
+				return flag;
+			}
+			return ammoLeft <= 0 && !infiniteAmmo;
+		}
+	}
+
+	public virtual bool hasAmmoInClip => ammoLeftInClip > 0;
+
+	public virtual bool hasLowAmmo => reloadableWeapon && (float)(ammoLeft + ammoLeftInClip) / (float)(int)startingAmmmoCount < Singleton<GameVariables>.instance.bonussesDefinitions.GetRow(BonussesDefinitions.rowIds.LowAmmoRatio).FLOATVALUE;
+
+	public virtual float reloadProgress
+	{
+		get
+		{
+			if (reloadableWeapon)
+			{
+				if (mReloadStartTime == 0f)
+				{
+					return 0f;
+				}
+				float num = Mathf.Clamp01((TimeManager.realTimeWithoutPauses - mReloadStartTime) / (float)reloadTime);
+				if (mIsReloading && num >= 1f)
+				{
+					FinishReload();
+				}
+				return num;
+			}
+			return nextShootProgress;
+		}
+	}
+
+	public virtual float reloadingTimeLeft
+	{
+		get
+		{
+			if (reloadableWeapon)
+			{
+				if (!mIsReloading)
+				{
+					return 0f;
+				}
+				return (1f - reloadProgress) * (float)reloadTime;
+			}
+			return (1f - nextShootProgress) * (float)cadence;
+		}
+	}
+
+	public virtual float nextShootProgress => 1f;
+
+	public float lastShotTime => mLastShotTime;
+
+	public Fractions fraction
+	{
+		get
+		{
+			if (owner == null)
+			{
+				return Fractions.None;
+			}
+			return owner.fraction;
+		}
+		set
+		{
+			Debug.LogError("Should not set fraction to weapon");
+		}
+	}
+
+	public virtual IFraction owner { get; set; }
+
+	public bool ignoreTimeScale { get; set; }
+
+	public static event ShotHit OnShotHit;
+
+	public static event Action<Weapon, Vector3> OnShotFired;
+
+	public override void OnInstancied()
+	{
+		base.OnInstancied();
+		ignoreLayersMask = 0;
+	}
+
+	protected override void Awake()
+	{
+		base.Awake();
+		mPhotonView = GetComponent<PhotonView>();
+	}
+
+	public virtual Ammo Fire(Vector3 to)
+	{
+		if (DebugSettings.stopShooting && owner != PlayerController.currentPlayer)
+		{
+			return null;
+		}
+		Ammo ammo = null;
+		if (willShoot)
+		{
+			ammo = Shoot(to, isNetworkCopy: false);
+			if (ammo != null)
+			{
+				ShotNetworkCopy(to);
+			}
+			if (reloadableWeapon)
+			{
+				ammoLeftInClip--;
+			}
+			else
+			{
+				ammoLeft--;
+			}
+		}
+		if (!hasAmmoInClip && reloadableWeapon && hasAmmo)
+		{
+			Reload();
+		}
+		return ammo;
+	}
+
+	protected virtual void ShotNetworkCopy(Vector3 to)
+	{
+		if (!disableSync && mPhotonView != null && mPhotonView.isMine)
+		{
+			mPhotonView.RPC("FireNetworkRPC", PhotonTargets.Others, to, isFake, (byte)shotType);
+		}
+	}
+
+	[PunRPC]
+	public virtual void FireNetworkRPC(Vector3 to, bool fake, byte type)
+	{
+		isFake = fake;
+		shotType = (Ammo.ShotType)type;
+		Shoot(to, isNetworkCopy: true);
+	}
+
+	protected virtual Ammo Shoot(Vector3 position, bool isNetworkCopy)
+	{
+		if (Weapon.OnShotFired != null)
+		{
+			Weapon.OnShotFired(this, position);
+		}
+		mLastShotTime = TimeManager.realTimeWithoutPauses;
+		Singleton<SoundsManager3D>.instance.PlayOneShot(base.gameObject, shotSound, soundVolume);
+		return null;
+	}
+
+	protected void Update()
+	{
+		if (mIsReloading && reloadProgress >= 1f)
+		{
+			FinishReload();
+		}
+	}
+
+	private void FinishReload()
+	{
+		int num = Math.Min((int)clipSize - ammoLeftInClip, ammoLeft);
+		ammoLeftInClip += num;
+		ammoLeft -= num;
+		mReloadStartTime = 0f;
+		mIsReloading = false;
+	}
+
+	public void Reload()
+	{
+		if ((reloadableWeapon || !mIsReloading) && ammoLeft > 0)
+		{
+			mIsReloading = true;
+			mReloadStartTime = TimeManager.realTimeWithoutPauses;
+			InvokeAfterRealTime(delegate
+			{
+				Singleton<SoundsManager3D>.instance.PlayOneShot(base.gameObject, reloadSound);
+			}, 0.5f);
+		}
+	}
+
+	public virtual float ComputeFlyTimeToTarget(Vector3 position)
+	{
+		return 0f;
+	}
+
+	[PunRPC]
+	public void SetBullletSpeedCoef(float coef)
+	{
+		if (mPhotonView.isMine)
+		{
+			mPhotonView.RPC("SetBullletSpeedCoef", PhotonTargets.Others, coef);
+		}
+		BulletSetup bulletSetup = ammoSetup as BulletSetup;
+		if (bulletSetup != null)
+		{
+			bulletSetup.speedMultiplayer = coef;
+		}
+	}
+
+	public void ReportShotHit(Ammo ammo, Vector3 position, bool isNetworkCopy, DestroyableObject destroyableObject)
+	{
+		bool flag = destroyableObject != null && destroyableObject.fraction != Fractions.None && destroyableObject.fraction != PlayerController.currentPlayer.fraction;
+		if (!isNetworkCopy && owner == PlayerController.currentPlayer && flag)
+		{
+			if (Singleton<GameController>.instance.isPVP)
+			{
+				StatsManager.instance.matchStats.hits++;
+			}
+			else if (Singleton<GameController>.instance.isMission)
+			{
+				StatsManager.instance.matchStats.missionsHits++;
+			}
+		}
+		if (Weapon.OnShotHit != null)
+		{
+			Weapon.OnShotHit(this, ammo, position, isNetworkCopy, destroyableObject);
+		}
+	}
 }

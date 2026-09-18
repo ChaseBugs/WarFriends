@@ -1,66 +1,280 @@
-using UnityEngine;
+using System;
+using System.Collections.Generic;
+using System.Runtime.InteropServices;
+using AOT;
+using GooglePlayGames.Native.Cwrapper;
+using GooglePlayGames.OurUtils;
 
 namespace GooglePlayGames.Native.PInvoke
 {
-	public class TurnBasedManager : MonoBehaviour
+internal class TurnBasedManager
+{
+	internal class MatchInboxUIResponse : BaseReferenceHolder
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
+		internal MatchInboxUIResponse(IntPtr selfPointer)
+			: base(selfPointer)
+		{
+		}
 
-		1. No dll files were provided to AssetRipper.
+		internal CommonErrorStatus.UIStatus UiStatus()
+		{
+			return TurnBasedMultiplayerManager.TurnBasedMultiplayerManager_MatchInboxUIResponse_GetStatus(SelfPtr());
+		}
 
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
+		internal NativeTurnBasedMatch Match()
+		{
+			if (UiStatus() != CommonErrorStatus.UIStatus.VALID)
+			{
+				return null;
+			}
+			return new NativeTurnBasedMatch(TurnBasedMultiplayerManager.TurnBasedMultiplayerManager_MatchInboxUIResponse_GetMatch(SelfPtr()));
+		}
 
-		2. Incorrect dll files were provided to AssetRipper.
+		protected override void CallDispose(HandleRef selfPointer)
+		{
+			TurnBasedMultiplayerManager.TurnBasedMultiplayerManager_MatchInboxUIResponse_Dispose(selfPointer);
+		}
 
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
+		internal static MatchInboxUIResponse FromPointer(IntPtr pointer)
+		{
+			if (pointer.Equals(IntPtr.Zero))
+			{
+				return null;
+			}
+			return new MatchInboxUIResponse(pointer);
+		}
 	}
+
+	internal class TurnBasedMatchResponse : BaseReferenceHolder
+	{
+		internal TurnBasedMatchResponse(IntPtr selfPointer)
+			: base(selfPointer)
+		{
+		}
+
+		internal CommonErrorStatus.MultiplayerStatus ResponseStatus()
+		{
+			return TurnBasedMultiplayerManager.TurnBasedMultiplayerManager_TurnBasedMatchResponse_GetStatus(SelfPtr());
+		}
+
+		internal bool RequestSucceeded()
+		{
+			return ResponseStatus() > (CommonErrorStatus.MultiplayerStatus)0;
+		}
+
+		internal NativeTurnBasedMatch Match()
+		{
+			if (!RequestSucceeded())
+			{
+				return null;
+			}
+			return new NativeTurnBasedMatch(TurnBasedMultiplayerManager.TurnBasedMultiplayerManager_TurnBasedMatchResponse_GetMatch(SelfPtr()));
+		}
+
+		protected override void CallDispose(HandleRef selfPointer)
+		{
+			TurnBasedMultiplayerManager.TurnBasedMultiplayerManager_TurnBasedMatchResponse_Dispose(selfPointer);
+		}
+
+		internal static TurnBasedMatchResponse FromPointer(IntPtr pointer)
+		{
+			if (pointer.Equals(IntPtr.Zero))
+			{
+				return null;
+			}
+			return new TurnBasedMatchResponse(pointer);
+		}
+	}
+
+	internal class TurnBasedMatchesResponse : BaseReferenceHolder
+	{
+		internal TurnBasedMatchesResponse(IntPtr selfPointer)
+			: base(selfPointer)
+		{
+		}
+
+		protected override void CallDispose(HandleRef selfPointer)
+		{
+			TurnBasedMultiplayerManager.TurnBasedMultiplayerManager_TurnBasedMatchesResponse_Dispose(SelfPtr());
+		}
+
+		internal CommonErrorStatus.MultiplayerStatus Status()
+		{
+			return TurnBasedMultiplayerManager.TurnBasedMultiplayerManager_TurnBasedMatchesResponse_GetStatus(SelfPtr());
+		}
+
+		internal IEnumerable<MultiplayerInvitation> Invitations()
+		{
+			return PInvokeUtilities.ToEnumerable(TurnBasedMultiplayerManager.TurnBasedMultiplayerManager_TurnBasedMatchesResponse_GetInvitations_Length(SelfPtr()), (UIntPtr index) => new MultiplayerInvitation(TurnBasedMultiplayerManager.TurnBasedMultiplayerManager_TurnBasedMatchesResponse_GetInvitations_GetElement(SelfPtr(), index)));
+		}
+
+		internal int InvitationCount()
+		{
+			return (int)TurnBasedMultiplayerManager.TurnBasedMultiplayerManager_TurnBasedMatchesResponse_GetInvitations_Length(SelfPtr()).ToUInt32();
+		}
+
+		internal IEnumerable<NativeTurnBasedMatch> MyTurnMatches()
+		{
+			return PInvokeUtilities.ToEnumerable(TurnBasedMultiplayerManager.TurnBasedMultiplayerManager_TurnBasedMatchesResponse_GetMyTurnMatches_Length(SelfPtr()), (UIntPtr index) => new NativeTurnBasedMatch(TurnBasedMultiplayerManager.TurnBasedMultiplayerManager_TurnBasedMatchesResponse_GetMyTurnMatches_GetElement(SelfPtr(), index)));
+		}
+
+		internal int MyTurnMatchesCount()
+		{
+			return (int)TurnBasedMultiplayerManager.TurnBasedMultiplayerManager_TurnBasedMatchesResponse_GetMyTurnMatches_Length(SelfPtr()).ToUInt32();
+		}
+
+		internal IEnumerable<NativeTurnBasedMatch> TheirTurnMatches()
+		{
+			return PInvokeUtilities.ToEnumerable(TurnBasedMultiplayerManager.TurnBasedMultiplayerManager_TurnBasedMatchesResponse_GetTheirTurnMatches_Length(SelfPtr()), (UIntPtr index) => new NativeTurnBasedMatch(TurnBasedMultiplayerManager.TurnBasedMultiplayerManager_TurnBasedMatchesResponse_GetTheirTurnMatches_GetElement(SelfPtr(), index)));
+		}
+
+		internal int TheirTurnMatchesCount()
+		{
+			return (int)TurnBasedMultiplayerManager.TurnBasedMultiplayerManager_TurnBasedMatchesResponse_GetTheirTurnMatches_Length(SelfPtr()).ToUInt32();
+		}
+
+		internal IEnumerable<NativeTurnBasedMatch> CompletedMatches()
+		{
+			return PInvokeUtilities.ToEnumerable(TurnBasedMultiplayerManager.TurnBasedMultiplayerManager_TurnBasedMatchesResponse_GetCompletedMatches_Length(SelfPtr()), (UIntPtr index) => new NativeTurnBasedMatch(TurnBasedMultiplayerManager.TurnBasedMultiplayerManager_TurnBasedMatchesResponse_GetCompletedMatches_GetElement(SelfPtr(), index)));
+		}
+
+		internal int CompletedMatchesCount()
+		{
+			return (int)TurnBasedMultiplayerManager.TurnBasedMultiplayerManager_TurnBasedMatchesResponse_GetCompletedMatches_Length(SelfPtr()).ToUInt32();
+		}
+
+		internal static TurnBasedMatchesResponse FromPointer(IntPtr pointer)
+		{
+			if (PInvokeUtilities.IsNull(pointer))
+			{
+				return null;
+			}
+			return new TurnBasedMatchesResponse(pointer);
+		}
+	}
+
+	internal delegate void TurnBasedMatchCallback(TurnBasedMatchResponse response);
+
+	private readonly GameServices mGameServices;
+
+	internal TurnBasedManager(GameServices services)
+	{
+		mGameServices = services;
+	}
+
+	internal void GetMatch(string matchId, Action<TurnBasedMatchResponse> callback)
+	{
+		TurnBasedMultiplayerManager.TurnBasedMultiplayerManager_FetchMatch(mGameServices.AsHandle(), matchId, InternalTurnBasedMatchCallback, ToCallbackPointer(callback));
+	}
+
+	[MonoPInvokeCallback(typeof(TurnBasedMultiplayerManager.TurnBasedMatchCallback))]
+	internal static void InternalTurnBasedMatchCallback(IntPtr response, IntPtr data)
+	{
+		Callbacks.PerformInternalCallback("TurnBasedManager#InternalTurnBasedMatchCallback", Callbacks.Type.Temporary, response, data);
+	}
+
+	internal void CreateMatch(TurnBasedMatchConfig config, Action<TurnBasedMatchResponse> callback)
+	{
+		TurnBasedMultiplayerManager.TurnBasedMultiplayerManager_CreateTurnBasedMatch(mGameServices.AsHandle(), config.AsPointer(), InternalTurnBasedMatchCallback, ToCallbackPointer(callback));
+	}
+
+	internal void ShowPlayerSelectUI(uint minimumPlayers, uint maxiumPlayers, bool allowAutomatching, Action<PlayerSelectUIResponse> callback)
+	{
+		TurnBasedMultiplayerManager.TurnBasedMultiplayerManager_ShowPlayerSelectUI(mGameServices.AsHandle(), minimumPlayers, maxiumPlayers, allowAutomatching, InternalPlayerSelectUIcallback, Callbacks.ToIntPtr(callback, PlayerSelectUIResponse.FromPointer));
+	}
+
+	[MonoPInvokeCallback(typeof(TurnBasedMultiplayerManager.PlayerSelectUICallback))]
+	internal static void InternalPlayerSelectUIcallback(IntPtr response, IntPtr data)
+	{
+		Callbacks.PerformInternalCallback("TurnBasedManager#PlayerSelectUICallback", Callbacks.Type.Temporary, response, data);
+	}
+
+	internal void GetAllTurnbasedMatches(Action<TurnBasedMatchesResponse> callback)
+	{
+		TurnBasedMultiplayerManager.TurnBasedMultiplayerManager_FetchMatches(mGameServices.AsHandle(), InternalTurnBasedMatchesCallback, Callbacks.ToIntPtr(callback, TurnBasedMatchesResponse.FromPointer));
+	}
+
+	[MonoPInvokeCallback(typeof(TurnBasedMultiplayerManager.TurnBasedMatchesCallback))]
+	internal static void InternalTurnBasedMatchesCallback(IntPtr response, IntPtr data)
+	{
+		Callbacks.PerformInternalCallback("TurnBasedManager#TurnBasedMatchesCallback", Callbacks.Type.Temporary, response, data);
+	}
+
+	internal void AcceptInvitation(MultiplayerInvitation invitation, Action<TurnBasedMatchResponse> callback)
+	{
+		Logger.d("Accepting invitation: " + invitation.AsPointer().ToInt64());
+		TurnBasedMultiplayerManager.TurnBasedMultiplayerManager_AcceptInvitation(mGameServices.AsHandle(), invitation.AsPointer(), InternalTurnBasedMatchCallback, ToCallbackPointer(callback));
+	}
+
+	internal void DeclineInvitation(MultiplayerInvitation invitation)
+	{
+		TurnBasedMultiplayerManager.TurnBasedMultiplayerManager_DeclineInvitation(mGameServices.AsHandle(), invitation.AsPointer());
+	}
+
+	internal void TakeTurn(NativeTurnBasedMatch match, byte[] data, MultiplayerParticipant nextParticipant, Action<TurnBasedMatchResponse> callback)
+	{
+		TurnBasedMultiplayerManager.TurnBasedMultiplayerManager_TakeMyTurn(mGameServices.AsHandle(), match.AsPointer(), data, new UIntPtr((uint)data.Length), match.Results().AsPointer(), nextParticipant.AsPointer(), InternalTurnBasedMatchCallback, ToCallbackPointer(callback));
+	}
+
+	[MonoPInvokeCallback(typeof(TurnBasedMultiplayerManager.MatchInboxUICallback))]
+	internal static void InternalMatchInboxUICallback(IntPtr response, IntPtr data)
+	{
+		Callbacks.PerformInternalCallback("TurnBasedManager#MatchInboxUICallback", Callbacks.Type.Temporary, response, data);
+	}
+
+	internal void ShowInboxUI(Action<MatchInboxUIResponse> callback)
+	{
+		TurnBasedMultiplayerManager.TurnBasedMultiplayerManager_ShowMatchInboxUI(mGameServices.AsHandle(), InternalMatchInboxUICallback, Callbacks.ToIntPtr(callback, MatchInboxUIResponse.FromPointer));
+	}
+
+	[MonoPInvokeCallback(typeof(TurnBasedMultiplayerManager.MultiplayerStatusCallback))]
+	internal static void InternalMultiplayerStatusCallback(CommonErrorStatus.MultiplayerStatus status, IntPtr data)
+	{
+		Logger.d("InternalMultiplayerStatusCallback: " + status);
+		Action<CommonErrorStatus.MultiplayerStatus> action = Callbacks.IntPtrToTempCallback<Action<CommonErrorStatus.MultiplayerStatus>>(data);
+		try
+		{
+			action(status);
+		}
+		catch (Exception ex)
+		{
+			Logger.e("Error encountered executing InternalMultiplayerStatusCallback. Smothering to avoid passing exception into Native: " + ex);
+		}
+	}
+
+	internal void LeaveDuringMyTurn(NativeTurnBasedMatch match, MultiplayerParticipant nextParticipant, Action<CommonErrorStatus.MultiplayerStatus> callback)
+	{
+		TurnBasedMultiplayerManager.TurnBasedMultiplayerManager_LeaveMatchDuringMyTurn(mGameServices.AsHandle(), match.AsPointer(), nextParticipant.AsPointer(), InternalMultiplayerStatusCallback, Callbacks.ToIntPtr(callback));
+	}
+
+	internal void FinishMatchDuringMyTurn(NativeTurnBasedMatch match, byte[] data, ParticipantResults results, Action<TurnBasedMatchResponse> callback)
+	{
+		TurnBasedMultiplayerManager.TurnBasedMultiplayerManager_FinishMatchDuringMyTurn(mGameServices.AsHandle(), match.AsPointer(), data, new UIntPtr((uint)data.Length), results.AsPointer(), InternalTurnBasedMatchCallback, ToCallbackPointer(callback));
+	}
+
+	internal void ConfirmPendingCompletion(NativeTurnBasedMatch match, Action<TurnBasedMatchResponse> callback)
+	{
+		TurnBasedMultiplayerManager.TurnBasedMultiplayerManager_ConfirmPendingCompletion(mGameServices.AsHandle(), match.AsPointer(), InternalTurnBasedMatchCallback, ToCallbackPointer(callback));
+	}
+
+	internal void LeaveMatchDuringTheirTurn(NativeTurnBasedMatch match, Action<CommonErrorStatus.MultiplayerStatus> callback)
+	{
+		TurnBasedMultiplayerManager.TurnBasedMultiplayerManager_LeaveMatchDuringTheirTurn(mGameServices.AsHandle(), match.AsPointer(), InternalMultiplayerStatusCallback, Callbacks.ToIntPtr(callback));
+	}
+
+	internal void CancelMatch(NativeTurnBasedMatch match, Action<CommonErrorStatus.MultiplayerStatus> callback)
+	{
+		TurnBasedMultiplayerManager.TurnBasedMultiplayerManager_CancelMatch(mGameServices.AsHandle(), match.AsPointer(), InternalMultiplayerStatusCallback, Callbacks.ToIntPtr(callback));
+	}
+
+	internal void Rematch(NativeTurnBasedMatch match, Action<TurnBasedMatchResponse> callback)
+	{
+		TurnBasedMultiplayerManager.TurnBasedMultiplayerManager_Rematch(mGameServices.AsHandle(), match.AsPointer(), InternalTurnBasedMatchCallback, ToCallbackPointer(callback));
+	}
+
+	private static IntPtr ToCallbackPointer(Action<TurnBasedMatchResponse> callback)
+	{
+		return Callbacks.ToIntPtr(callback, TurnBasedMatchResponse.FromPointer);
+	}
+}
 }

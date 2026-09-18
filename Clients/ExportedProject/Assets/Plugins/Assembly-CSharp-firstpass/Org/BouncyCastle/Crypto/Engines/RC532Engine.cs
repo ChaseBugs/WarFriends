@@ -1,66 +1,139 @@
-using UnityEngine;
+using System;
+using Org.BouncyCastle.Crypto.Parameters;
 
 namespace Org.BouncyCastle.Crypto.Engines
 {
-	public class RC532Engine : MonoBehaviour
+public class RC532Engine : IBlockCipher
+{
+	private int _noRounds;
+
+	private int[] _S;
+
+	private static readonly int P32 = -1209970333;
+
+	private static readonly int Q32 = -1640531527;
+
+	private bool forEncryption;
+
+	public virtual string AlgorithmName => "RC5-32";
+
+	public virtual bool IsPartialBlockOkay => false;
+
+	public RC532Engine()
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
+		_noRounds = 12;
 	}
+
+	public virtual int GetBlockSize()
+	{
+		return 8;
+	}
+
+	public virtual void Init(bool forEncryption, ICipherParameters parameters)
+	{
+		if (typeof(RC5Parameters).IsInstanceOfType(parameters))
+		{
+			RC5Parameters rC5Parameters = (RC5Parameters)parameters;
+			_noRounds = rC5Parameters.Rounds;
+			SetKey(rC5Parameters.GetKey());
+		}
+		else
+		{
+			if (!typeof(KeyParameter).IsInstanceOfType(parameters))
+			{
+				throw new ArgumentException("invalid parameter passed to RC532 init - " + parameters.GetType().ToString());
+			}
+			KeyParameter keyParameter = (KeyParameter)parameters;
+			SetKey(keyParameter.GetKey());
+		}
+		this.forEncryption = forEncryption;
+	}
+
+	public virtual int ProcessBlock(byte[] input, int inOff, byte[] output, int outOff)
+	{
+		return (!forEncryption) ? DecryptBlock(input, inOff, output, outOff) : EncryptBlock(input, inOff, output, outOff);
+	}
+
+	public virtual void Reset()
+	{
+	}
+
+	private void SetKey(byte[] key)
+	{
+		int[] array = new int[(key.Length + 3) / 4];
+		for (int i = 0; i != key.Length; i++)
+		{
+			array[i / 4] += (key[i] & 0xFF) << 8 * (i % 4);
+		}
+		_S = new int[2 * (_noRounds + 1)];
+		_S[0] = P32;
+		for (int j = 1; j < _S.Length; j++)
+		{
+			_S[j] = _S[j - 1] + Q32;
+		}
+		int num = ((array.Length <= _S.Length) ? (3 * _S.Length) : (3 * array.Length));
+		int num2 = 0;
+		int num3 = 0;
+		int num4 = 0;
+		int num5 = 0;
+		for (int k = 0; k < num; k++)
+		{
+			num2 = (_S[num4] = RotateLeft(_S[num4] + num2 + num3, 3));
+			num3 = (array[num5] = RotateLeft(array[num5] + num2 + num3, num2 + num3));
+			num4 = (num4 + 1) % _S.Length;
+			num5 = (num5 + 1) % array.Length;
+		}
+	}
+
+	private int EncryptBlock(byte[] input, int inOff, byte[] outBytes, int outOff)
+	{
+		int num = BytesToWord(input, inOff) + _S[0];
+		int num2 = BytesToWord(input, inOff + 4) + _S[1];
+		for (int i = 1; i <= _noRounds; i++)
+		{
+			num = RotateLeft(num ^ num2, num2) + _S[2 * i];
+			num2 = RotateLeft(num2 ^ num, num) + _S[2 * i + 1];
+		}
+		WordToBytes(num, outBytes, outOff);
+		WordToBytes(num2, outBytes, outOff + 4);
+		return 8;
+	}
+
+	private int DecryptBlock(byte[] input, int inOff, byte[] outBytes, int outOff)
+	{
+		int num = BytesToWord(input, inOff);
+		int num2 = BytesToWord(input, inOff + 4);
+		for (int num3 = _noRounds; num3 >= 1; num3--)
+		{
+			num2 = RotateRight(num2 - _S[2 * num3 + 1], num) ^ num;
+			num = RotateRight(num - _S[2 * num3], num2) ^ num2;
+		}
+		WordToBytes(num - _S[0], outBytes, outOff);
+		WordToBytes(num2 - _S[1], outBytes, outOff + 4);
+		return 8;
+	}
+
+	private int RotateLeft(int x, int y)
+	{
+		return (x << (y & 0x1F)) | ((int)((uint)(x) >> (32)) - (y & 0x1F));
+	}
+
+	private int RotateRight(int x, int y)
+	{
+		return ((int)((uint)(x) >> ((y & 0x1F)))) | (x << 32 - (y & 0x1F));
+	}
+
+	private int BytesToWord(byte[] src, int srcOff)
+	{
+		return (src[srcOff] & 0xFF) | ((src[srcOff + 1] & 0xFF) << 8) | ((src[srcOff + 2] & 0xFF) << 16) | ((src[srcOff + 3] & 0xFF) << 24);
+	}
+
+	private void WordToBytes(int word, byte[] dst, int dstOff)
+	{
+		dst[dstOff] = (byte)word;
+		dst[dstOff + 1] = (byte)(word >> 8);
+		dst[dstOff + 2] = (byte)(word >> 16);
+		dst[dstOff + 3] = (byte)(word >> 24);
+	}
+}
 }

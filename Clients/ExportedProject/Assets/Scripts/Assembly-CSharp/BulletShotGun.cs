@@ -1,63 +1,145 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
-public class BulletShotGun : MonoBehaviour
+public class BulletShotGun : BulletBase
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public BulletBase bulletPrefab;
 
-	1. No dll files were provided to AssetRipper.
+	private ShotGunBulletSetup mSetup;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	private Dictionary<DestroyableObject, int> hitCounts = new Dictionary<DestroyableObject, int>();
 
-	2. Incorrect dll files were provided to AssetRipper.
+	protected override void OnTryKill()
+	{
+		throw new NotImplementedException();
+	}
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public override void LoadAmmoSetup(AmmoSetup setup)
+	{
+		base.LoadAmmoSetup(setup);
+		ShotGunBulletSetup shotGunBulletSetup = setup as ShotGunBulletSetup;
+		if (shotGunBulletSetup != null)
+		{
+			mSetup = shotGunBulletSetup;
+		}
+		else
+		{
+			Debug.LogError("You probably assigned bad type of AmmoSetup to gun");
+		}
+	}
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	private bool ShotRealAtPos(Vector3 from, Vector3 to, Vector3 targetPos)
+	{
+		Vector3 vector = to - from;
+		if (mSetup.flatY)
+		{
+			vector.y = 0f;
+		}
+		Vector3 to2 = targetPos - from;
+		float f = Vector3.Angle(vector, to2);
+		float num = Vector3.Distance(from, targetPos);
+		float value = 1f - num / mSetup.radius;
+		value = Mathf.Clamp01(value);
+		float f2 = Mathf.Clamp01(num / mSetup.radius);
+		f2 = Mathf.Sqrt(f2);
+		f2 = Mathf.Sqrt(f2);
+		float num2 = Mathf.Lerp(mSetup.shotHalfAngleNear, mSetup.shotHalfAngle, f2);
+		if (Mathf.Abs(f) < num2)
+		{
+			mSetup.hitForce = value * mSetup.hitForceMax;
+			mSetup.damageAmount = Mathf.Clamp(mSetup.minDamage + (mSetup.maxDamage - mSetup.minDamage) * value, 0f, float.MaxValue);
+			BulletSlow bulletSlow = (BulletSlow)Ammo.ammoPool.Instantiate(bulletPrefab, from, Quaternion.identity);
+			if (bulletSlow != null)
+			{
+				bulletSlow.LoadAmmoSetup(mSetup);
+				bulletSlow.ignoreTimeScale = ignoreTimeScale;
+				bulletSlow.type = type;
+				bulletSlow.isFake = false;
+				bulletSlow.weapon = weapon;
+				bulletSlow.fast = true;
+				bulletSlow.Fire(from, targetPos);
+				bulletSlow.isNetworkCopy = isNetworkCopy;
+			}
+			return true;
+		}
+		return false;
+	}
 
-	3. Assembly Reconstruction has not been implemented.
-
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
-
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
-
-	4. This script is unnecessary.
-
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
-
-	5. Script Content Level 0
-
-		AssetRipper was set to not load any script information.
-
-	6. Cpp2IL failed to decompile Il2Cpp data
-
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public override void Fire(Vector3 from, Vector3 to)
+	{
+		hitCounts.Clear();
+		LayerMask bulletMask = Singleton<TagsAndLayers>.instance.GetBulletMask(weapon.fraction, weapon.ignoreLayersMask);
+		Collider[] array = Physics.OverlapSphere(from, mSetup.radius, bulletMask);
+		int num = 0;
+		ShotRealAtPos(from, to, to);
+		if (!mSetup.shotOnlyMainBullet)
+		{
+			Collider[] array2 = array;
+			foreach (Collider collider in array2)
+			{
+				if (TagsAndLayers.IsDestroyableObject(collider.gameObject))
+				{
+					Vector3 vector = collider.transform.position;
+					BoxCollider boxCollider = collider.GetComponent<Collider>() as BoxCollider;
+					if (boxCollider != null)
+					{
+						vector = collider.transform.TransformPoint(boxCollider.center);
+					}
+					else
+					{
+						SphereCollider sphereCollider = collider.GetComponent<Collider>() as SphereCollider;
+						if (sphereCollider != null)
+						{
+							vector = collider.transform.TransformPoint(sphereCollider.center);
+						}
+					}
+					DestroyableObject component = collider.GetComponent<DestroyableObject>();
+					if (component != null)
+					{
+						IFraction fraction = component.owner;
+						if (fraction == null || fraction == weapon.owner || fraction.fraction == weapon.owner.fraction)
+						{
+							continue;
+						}
+						if (!hitCounts.TryGetValue(component.mainDestroyableObject, out var value))
+						{
+							hitCounts[component.mainDestroyableObject] = 0;
+							value = 0;
+						}
+						if (value < 2 && Vector3.Distance(to, vector) > 0.3f && ShotRealAtPos(from, to, vector))
+						{
+							num++;
+							value++;
+							hitCounts[component.mainDestroyableObject] = value;
+						}
+					}
+				}
+				if (num > 6)
+				{
+					break;
+				}
+			}
+		}
+		int num2 = Mathf.Clamp(4 - num, 0, int.MaxValue);
+		for (int j = 0; j < num2; j++)
+		{
+			BulletBase bulletBase = Ammo.ammoPool.Instantiate(bulletPrefab, from, Quaternion.identity) as BulletBase;
+			if (bulletBase != null)
+			{
+				bulletBase.LoadAmmoSetup(mSetup);
+				bulletBase.ignoreTimeScale = ignoreTimeScale;
+				bulletBase.isFake = true;
+				bulletBase.type = type;
+				bulletBase.weapon = weapon;
+				bulletBase.isStatic = true;
+				bulletBase.fast = true;
+				bulletBase.isNetworkCopy = isNetworkCopy;
+				float num3 = Vector3.Distance(from, to);
+				float num4 = Mathf.Clamp01(num3 / 2f) * 0.25f;
+				bulletBase.Fire(from, to + UnityEngine.Random.onUnitSphere * num4);
+			}
+		}
+		DestroyPooled();
+	}
 }

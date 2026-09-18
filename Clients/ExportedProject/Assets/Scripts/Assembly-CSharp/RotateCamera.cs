@@ -1,63 +1,123 @@
 using UnityEngine;
 
-public class RotateCamera : MonoBehaviour
+public class RotateCamera : Core_BaseScript
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public float rotationSpeed = -17f;
 
-	1. No dll files were provided to AssetRipper.
+	public Transform target;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public float distance = 5f;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public float xSpeed = 120f;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public float ySpeed = 120f;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public float yMinLimit = -20f;
 
-	3. Assembly Reconstruction has not been implemented.
+	public float yMaxLimit = 80f;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public float interiaTtime = 2f;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public float damping = 5f;
 
-	4. This script is unnecessary.
+	private float mX;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private float mY;
 
-	5. Script Content Level 0
+	private bool mIsHit;
 
-		AssetRipper was set to not load any script information.
+	private float mXDiff;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	private float mYDiff;
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	private bool mUnderInertia = true;
 
-	7. An incorrect path was provided to AssetRipper.
+	public string colliderName = "rotateColliderName";
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	private void CreateRotation()
+	{
+		mY = ClampAngle(mY, yMinLimit, yMaxLimit);
+		Quaternion rotation = Quaternion.Euler(mY, mX, 0f);
+		if (target != null)
+		{
+			target.rotation = Quaternion.Inverse(rotation);
+		}
+	}
 
-	*/
+	private void UpdateMouseRotation()
+	{
+		mXDiff = Input.GetAxis("Mouse X") * xSpeed * distance * 0.02f;
+		mYDiff = Input.GetAxis("Mouse Y") * ySpeed * 0.02f;
+		mX += mXDiff;
+		mY -= mYDiff;
+		CreateRotation();
+	}
+
+	private void LerpRotation()
+	{
+		mXDiff = Mathf.Lerp(mXDiff, 0f, Time.deltaTime * damping);
+		mYDiff = Mathf.Lerp(mYDiff, 0f, Time.deltaTime * damping);
+		mX += mXDiff;
+		mY -= mYDiff;
+		CreateRotation();
+	}
+
+	private void LateUpdate()
+	{
+		if (mUnderInertia)
+		{
+			LerpRotation();
+		}
+		if (target != null && mIsHit)
+		{
+			UpdateMouseRotation();
+		}
+		if (Input.GetMouseButtonDown(0))
+		{
+			mIsHit = false;
+			Ray ray = UICamera.currentCamera.ScreenPointToRay(Input.mousePosition);
+			int cullingMask = UICamera.currentCamera.cullingMask;
+			RaycastHit[] array = Physics.RaycastAll(ray, float.PositiveInfinity, cullingMask);
+			RaycastHit[] array2 = array;
+			foreach (RaycastHit raycastHit in array2)
+			{
+				if (raycastHit.collider.name == colliderName)
+				{
+					mIsHit = true;
+					mUnderInertia = false;
+				}
+			}
+		}
+		if (mUnderInertia)
+		{
+			mX += Time.deltaTime * rotationSpeed;
+			CreateRotation();
+		}
+		if (Input.GetMouseButtonUp(0))
+		{
+			mIsHit = false;
+			mUnderInertia = true;
+		}
+	}
+
+	public static float ClampAngle(float angle, float min, float max)
+	{
+		if (angle < -360f)
+		{
+			angle += 360f;
+		}
+		if (angle > 360f)
+		{
+			angle -= 360f;
+		}
+		return Mathf.Clamp(angle, min, max);
+	}
+
+	public void Reset()
+	{
+		mY = 0f;
+		mX = 0f;
+		mUnderInertia = true;
+		CreateRotation();
+	}
 }

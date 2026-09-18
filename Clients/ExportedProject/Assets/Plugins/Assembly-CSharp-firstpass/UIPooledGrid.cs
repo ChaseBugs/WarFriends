@@ -1,63 +1,188 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
-public class UIPooledGrid : MonoBehaviour
+public class UIPooledGrid : UIGrid
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public delegate Transform PooledTransform(int index);
 
-	1. No dll files were provided to AssetRipper.
+	public PooledTransform getTransform;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public Action<Transform> makeFree;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public UIPanel parentPanel;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public int containItems;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	private UIDraggablePanel mDragPanel;
 
-	3. Assembly Reconstruction has not been implemented.
+	private List<Transform> items = new List<Transform>();
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public Transform helperMin;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public Transform helperMax;
 
-	4. This script is unnecessary.
+	public Vector2 minHelperOffset = Vector2.zero;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public Vector2 maxHelperOffset = Vector2.zero;
 
-	5. Script Content Level 0
+	public float inLineOffset;
 
-		AssetRipper was set to not load any script information.
+	public float blockAdd;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public int blockAddEach;
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	[Header("Offset of grid in Panel")]
+	public Vector2 offsetGrid = Vector2.zero;
 
-	7. An incorrect path was provided to AssetRipper.
+	public Transform GetItemOnIndex(int index)
+	{
+		if (index < 0 || index >= containItems || index >= items.Count)
+		{
+			return null;
+		}
+		return items[index];
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	public void init(int count, PooledTransform getter, Action<Transform> free, UIDraggablePanel dragPanel)
+	{
+		dragPanel.onMovePerformed = (Action)Delegate.Remove(dragPanel.onMovePerformed, new Action(PositionChanged));
+		dragPanel.onMovePerformed = (Action)Delegate.Combine(dragPanel.onMovePerformed, new Action(PositionChanged));
+		getTransform = getter;
+		makeFree = free;
+		containItems = count;
+		mDragPanel = dragPanel;
+		helperMin.localPosition = new Vector3((helperMin.localScale.x - cellWidth) * 0.5f - minHelperOffset.x, (cellHeight - helperMin.localScale.y) * 0.5f + minHelperOffset.y, 0f);
+		int num = count - 1;
+		int num2 = 0;
+		if (maxPerLine > 0)
+		{
+			num = (count - 1) % maxPerLine;
+			num2 = (count - 1) / maxPerLine;
+		}
+		if (arrangement == Arrangement.Vertical)
+		{
+			int num3 = num;
+			num = num2;
+			num2 = num3;
+		}
+		helperMax.localPosition = new Vector3((cellWidth - helperMax.localScale.x) * 0.5f + cellWidth * (float)num + maxHelperOffset.x, (helperMax.localScale.y - cellHeight) * 0.5f - cellHeight * (float)num2 - maxHelperOffset.y, 0f);
+		while (items.Count < containItems)
+		{
+			items.Add(null);
+		}
+		Reposition();
+	}
 
-	*/
+	public override void Reposition()
+	{
+		if (!mStarted)
+		{
+			repositionNow = true;
+			return;
+		}
+		PositionChanged();
+		if (onReposition != null)
+		{
+			onReposition();
+		}
+	}
+
+	public void MakeEmpty()
+	{
+		if (makeFree != null)
+		{
+			for (int i = 0; i < containItems && i < items.Count; i++)
+			{
+				if (items[i] != null)
+				{
+					makeFree(items[i]);
+				}
+			}
+		}
+		items.Clear();
+		if (mDragPanel != null)
+		{
+			UIDraggablePanel uIDraggablePanel = mDragPanel;
+			uIDraggablePanel.onMovePerformed = (Action)Delegate.Remove(uIDraggablePanel.onMovePerformed, new Action(PositionChanged));
+		}
+		getTransform = null;
+		makeFree = null;
+	}
+
+	public void SetHelpersToTheSamePosition()
+	{
+		helperMax.localPosition = helperMin.localPosition;
+	}
+
+	public Vector3 getPositionForIndex(int index)
+	{
+		int num = index;
+		int num2 = 0;
+		if (maxPerLine > 0)
+		{
+			num = index % maxPerLine;
+			num2 = index / maxPerLine;
+		}
+		float num3 = 0f;
+		if (blockAddEach > 0)
+		{
+			num3 = blockAdd * (float)(index / blockAddEach);
+		}
+		return (arrangement != Arrangement.Horizontal) ? new Vector3(cellWidth * (float)num2 + inLineOffset * (float)num + num3, (0f - cellHeight) * (float)num, 0f) : new Vector3(cellWidth * (float)num, (0f - cellHeight) * (float)num2 + inLineOffset * (float)num + num3, 0f);
+	}
+
+	public void PositionChanged()
+	{
+		if (makeFree == null || getTransform == null)
+		{
+			repositionNow = true;
+			return;
+		}
+		Vector4 clipRange = parentPanel.clipRange;
+		Vector2 vector = new Vector2(clipRange.x - clipRange.z / 2f - base.transform.localPosition.x, clipRange.y - clipRange.w / 2f - base.transform.localPosition.y);
+		Vector2 vector2 = new Vector2(vector.x + clipRange.z, vector.y + clipRange.w);
+		vector += offsetGrid;
+		vector2 += offsetGrid;
+		for (int i = 0; i < containItems && i < items.Count; i++)
+		{
+			if (items[i] != null)
+			{
+				Vector3 positionForIndex = getPositionForIndex(i);
+				if (positionForIndex.x + cellWidth < vector.x || positionForIndex.x - cellWidth > vector2.x || positionForIndex.y + cellHeight < vector.y || positionForIndex.y - cellHeight > vector2.y)
+				{
+					makeFree(items[i]);
+					items[i] = null;
+				}
+			}
+		}
+		for (int j = containItems; j < items.Count; j++)
+		{
+			if (items[j] != null)
+			{
+				makeFree(items[j]);
+				items[j] = null;
+			}
+		}
+		for (int k = 0; k < containItems && k < items.Count; k++)
+		{
+			if (!(items[k] == null))
+			{
+				continue;
+			}
+			Vector3 positionForIndex2 = getPositionForIndex(k);
+			if (positionForIndex2.x + cellWidth > vector.x && positionForIndex2.x - cellWidth < vector2.x && positionForIndex2.y + cellHeight > vector.y && positionForIndex2.y - cellHeight < vector2.y)
+			{
+				Transform transform = getTransform(k);
+				if (transform != null)
+				{
+					Vector3 localScale = transform.localScale;
+					transform.parent = base.transform;
+					transform.localScale = localScale;
+					transform.localPosition = positionForIndex2;
+				}
+				items[k] = transform;
+			}
+		}
+	}
 }

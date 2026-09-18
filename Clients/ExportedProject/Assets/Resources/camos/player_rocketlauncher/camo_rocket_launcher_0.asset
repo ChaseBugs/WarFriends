@@ -2,16 +2,18 @@
 %TAG !u! tag:unity3d.com,2011:
 --- !u!43 &4300000
 Mesh:
-  serializedVersion: 8
   m_ObjectHideFlags: 0
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 0}
-  m_Name: camo_rocket_launcher
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: camo_rocket_launcher_0
+  serializedVersion: 9
   m_SubMeshes:
   - serializedVersion: 2
     firstByte: 0
     indexCount: 7440
     topology: 0
+    baseVertex: 0
     firstVertex: 0
     vertexCount: 1696
     localAABB:
@@ -43,7 +45,7 @@ Mesh:
     e01: 0.99372274
     e02: -0.002547523
     e03: -0.038594723
-    e10: 8.455753E-08
+    e10: 0.00000008455753
     e11: 0.0025635974
     e12: 0.9999967
     e13: -0.013749855
@@ -55,17 +57,17 @@ Mesh:
     e31: 0
     e32: 0
     e33: 1
-  - e00: -3.1024507E-15
-    e01: -2.5837917E-14
+  - e00: -3.1024507e-15
+    e01: -2.5837917e-14
     e02: -1
     e03: 0.1104765
-    e10: 3.2584134E-07
+    e10: 0.00000032584134
     e11: -1
     e12: 0
     e13: 0.022253769
     e20: -1
-    e21: -3.2584134E-07
-    e22: -2.843086E-15
+    e21: -0.00000032584134
+    e22: -2.843086e-15
     e23: -0.0002957596
     e30: 0
     e31: 0
@@ -107,29 +109,29 @@ Mesh:
     e01: 0.021867149
     e02: -0.9997583
     e03: 0.10975029
-    e10: 2.4364732E-05
+    e10: 0.000024364732
     e11: -0.9997608
     e12: -0.021867147
     e13: 0.03442729
     e20: -0.9999975
-    e21: 2.3661334E-05
+    e21: 0.000023661334
     e22: -0.002196004
-    e23: -5.3921525E-05
+    e23: -0.000053921525
     e30: 0
     e31: 0
     e32: 0
     e33: 1
-  - e00: -2.6316543E-17
+  - e00: -2.6316543e-17
     e01: 0
     e02: -1
     e03: 0.26657417
-    e10: 5.6425995E-07
+    e10: 0.00000056425995
     e11: -1
     e12: 0
     e13: 0.028604869
     e20: -1
-    e21: -5.6425995E-07
-    e22: 5.566032E-15
+    e21: -0.00000056425995
+    e22: 5.566032e-15
     e23: -0.00063862815
     e30: 0
     e31: 0
@@ -155,12 +157,12 @@ Mesh:
     e01: 0.11660604
     e02: -0.99317807
     e03: 0.2614199
-    e10: -1.9881256E-05
+    e10: -0.000019881256
     e11: -0.9931782
     e12: -0.11660604
     e13: 0.059493884
     e20: -0.9999999
-    e21: -2.0769228E-05
+    e21: -0.000020769228
     e22: 0.00034739875
     e23: -0.0007306576
     e30: 0
@@ -171,14 +173,14 @@ Mesh:
     e01: 0.021867473
     e02: -0.9997581
     e03: 0.18781795
-    e10: 2.4536988E-05
+    e10: 0.000024536988
     e11: -0.9997608
     e12: -0.021867473
     e13: 0.034427352
     e20: -0.9999975
-    e21: 2.3489829E-05
+    e21: 0.000023489829
     e22: -0.0021960076
-    e23: -5.3915704E-05
+    e23: -0.000053915704
     e30: 0
     e31: 0
     e32: 0
@@ -267,7 +269,7 @@ Mesh:
     e01: 0.9937548
     e02: -0.0027328639
     e03: -0.038661875
-    e10: -2.0606232E-05
+    e10: -0.000020606232
     e11: 0.0027477145
     e12: 0.9999962
     e13: -0.013755145
@@ -327,32 +329,32 @@ Mesh:
     e31: 0
     e32: 0
     e33: 1
-  - e00: 1.5870379E-15
+  - e00: 1.5870379e-15
     e01: 0
     e02: -1
     e03: 0.4151987
-    e10: 3.258414E-07
+    e10: 0.0000003258414
     e11: -1
     e12: 0
     e13: 0.011155306
     e20: -1
-    e21: -3.258414E-07
-    e22: 5.2201315E-15
+    e21: -0.0000003258414
+    e22: 5.2201315e-15
     e23: -0.0005866462
     e30: 0
     e31: 0
     e32: 0
     e33: 1
-  m_BoneNameHashes: 1997330bd12d33182c3c5b5384d18b)767f85b48b13183,0245db6152525c6129569ed4379e2e460c4ebd0/613a48d03c94cef+f77783d(63b88a6+631e8980a597b11)61a70be6854ce8f65a2bf2d7c
+  m_BoneNameHashes: 1997330bd12d33182c3c5b5384d18b9767f85b48b13183c0245db6152525c6129569ed4379e2e460c4ebd0f613a48d03c94cefbf77783d863b88a6b631e8980a597b11961a70be6854ce8f65a2bf2d7c
   m_RootBoneNameHash: 1398488108
   m_MeshCompression: 3
   m_IsReadable: 0
-  m_KeepVertices: 1
-  m_KeepIndices: 1
-  m_IndexBuffer:
-  m_Skin: []
+  m_KeepVertices: 0
+  m_KeepIndices: 0
+  m_IndexFormat: 0
+  m_IndexBuffer: 
   m_VertexData:
-    m_CurrentChannels: 0
+    serializedVersion: 2
     m_VertexCount: 0
     m_Channels:
     - stream: 0
@@ -387,8 +389,32 @@ Mesh:
       offset: 0
       format: 0
       dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
+    - stream: 0
+      offset: 0
+      format: 0
+      dimension: 0
     m_DataSize: 0
-    _typelessdata:
+    _typelessdata: 
   m_CompressedMesh:
     m_Vertices:
       m_NumItems: 5088
@@ -412,7 +438,7 @@ Mesh:
       m_NumItems: 0
       m_Range: 0
       m_Start: 0
-      m_Data:
+      m_Data: 
       m_BitSize: 0
     m_Weights:
       m_NumItems: 2507
@@ -424,13 +450,13 @@ Mesh:
       m_BitSize: 1
     m_TangentSigns:
       m_NumItems: 0
-      m_Data:
+      m_Data: 
       m_BitSize: 0
     m_FloatColors:
       m_NumItems: 0
       m_Range: 0
       m_Start: 0
-      m_Data:
+      m_Data: 
       m_BitSize: 0
     m_BoneIndices:
       m_NumItems: 2507
@@ -445,6 +471,12 @@ Mesh:
     m_Center: {x: -0.00088970363, y: 0.011126284, z: 0.25264105}
     m_Extent: {x: 0.25587827, y: 0.096112326, z: 0.24774614}
   m_MeshUsageFlags: 1
-  m_BakedConvexCollisionMesh:
-  m_BakedTriangleCollisionMesh:
+  m_BakedConvexCollisionMesh: 
+  m_BakedTriangleCollisionMesh: 
+  m_MeshMetrics[0]: 1
+  m_MeshMetrics[1]: 1
   m_MeshOptimized: 1
+  m_StreamData:
+    offset: 0
+    size: 0
+    path: 

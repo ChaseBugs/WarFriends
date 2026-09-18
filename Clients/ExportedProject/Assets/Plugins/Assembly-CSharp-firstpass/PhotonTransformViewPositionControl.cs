@@ -1,63 +1,163 @@
+using System.Collections.Generic;
 using UnityEngine;
 
-public class PhotonTransformViewPositionControl : MonoBehaviour
+public class PhotonTransformViewPositionControl
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	private PhotonTransformViewPositionModel m_Model;
 
-	1. No dll files were provided to AssetRipper.
+	private float m_CurrentSpeed;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	private double m_LastSerializeTime;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	private Vector3 m_SynchronizedSpeed = Vector3.zero;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	private float m_SynchronizedTurnSpeed;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	private Vector3 m_NetworkPosition;
 
-	3. Assembly Reconstruction has not been implemented.
+	private Queue<Vector3> m_OldNetworkPositions = new Queue<Vector3>();
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	private bool m_UpdatedPositionAfterOnSerialize = true;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public PhotonTransformViewPositionControl(PhotonTransformViewPositionModel model)
+	{
+		m_Model = model;
+	}
 
-	4. This script is unnecessary.
+	private Vector3 GetOldestStoredNetworkPosition()
+	{
+		Vector3 result = m_NetworkPosition;
+		if (m_OldNetworkPositions.Count > 0)
+		{
+			result = m_OldNetworkPositions.Peek();
+		}
+		return result;
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public void SetSynchronizedValues(Vector3 speed, float turnSpeed)
+	{
+		m_SynchronizedSpeed = speed;
+		m_SynchronizedTurnSpeed = turnSpeed;
+	}
 
-	5. Script Content Level 0
+	public Vector3 UpdatePosition(Vector3 currentPosition)
+	{
+		Vector3 vector = GetNetworkPosition() + GetExtrapolatedPositionOffset();
+		switch (m_Model.InterpolateOption)
+		{
+		case PhotonTransformViewPositionModel.InterpolateOptions.Disabled:
+			if (!m_UpdatedPositionAfterOnSerialize)
+			{
+				currentPosition = vector;
+				m_UpdatedPositionAfterOnSerialize = true;
+			}
+			break;
+		case PhotonTransformViewPositionModel.InterpolateOptions.FixedSpeed:
+			currentPosition = Vector3.MoveTowards(currentPosition, vector, Time.deltaTime * m_Model.InterpolateMoveTowardsSpeed);
+			break;
+		case PhotonTransformViewPositionModel.InterpolateOptions.EstimatedSpeed:
+			if (m_OldNetworkPositions.Count != 0)
+			{
+				float num = Vector3.Distance(m_NetworkPosition, GetOldestStoredNetworkPosition()) / (float)m_OldNetworkPositions.Count * (float)PhotonNetwork.sendRateOnSerialize;
+				currentPosition = Vector3.MoveTowards(currentPosition, vector, Time.deltaTime * num);
+			}
+			break;
+		case PhotonTransformViewPositionModel.InterpolateOptions.SynchronizeValues:
+			currentPosition = ((m_SynchronizedSpeed.magnitude != 0f) ? Vector3.MoveTowards(currentPosition, vector, Time.deltaTime * m_SynchronizedSpeed.magnitude) : vector);
+			break;
+		case PhotonTransformViewPositionModel.InterpolateOptions.Lerp:
+			currentPosition = Vector3.Lerp(currentPosition, vector, Time.deltaTime * m_Model.InterpolateLerpSpeed);
+			break;
+		}
+		if (m_Model.TeleportEnabled && Vector3.Distance(currentPosition, GetNetworkPosition()) > m_Model.TeleportIfDistanceGreaterThan)
+		{
+			currentPosition = GetNetworkPosition();
+		}
+		return currentPosition;
+	}
 
-		AssetRipper was set to not load any script information.
+	public Vector3 GetNetworkPosition()
+	{
+		return m_NetworkPosition;
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public Vector3 GetExtrapolatedPositionOffset()
+	{
+		float num = (float)(PhotonNetwork.time - m_LastSerializeTime);
+		if (m_Model.ExtrapolateIncludingRoundTripTime)
+		{
+			num += (float)PhotonNetwork.GetPing() / 1000f;
+		}
+		Vector3 result = Vector3.zero;
+		switch (m_Model.ExtrapolateOption)
+		{
+		case PhotonTransformViewPositionModel.ExtrapolateOptions.SynchronizeValues:
+		{
+			Quaternion quaternion = Quaternion.Euler(0f, m_SynchronizedTurnSpeed * num, 0f);
+			result = quaternion * (m_SynchronizedSpeed * num);
+			break;
+		}
+		case PhotonTransformViewPositionModel.ExtrapolateOptions.FixedSpeed:
+		{
+			Vector3 normalized = (m_NetworkPosition - GetOldestStoredNetworkPosition()).normalized;
+			result = normalized * m_Model.ExtrapolateSpeed * num;
+			break;
+		}
+		case PhotonTransformViewPositionModel.ExtrapolateOptions.EstimateSpeedAndTurn:
+		{
+			Vector3 vector = (m_NetworkPosition - GetOldestStoredNetworkPosition()) * PhotonNetwork.sendRateOnSerialize;
+			result = vector * num;
+			break;
+		}
+		}
+		return result;
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public void OnPhotonSerializeView(Vector3 currentPosition, PhotonStream stream, PhotonMessageInfo info)
+	{
+		if (m_Model.SynchronizeEnabled)
+		{
+			if (stream.isWriting)
+			{
+				SerializeData(currentPosition, stream, info);
+			}
+			else
+			{
+				DeserializeData(stream, info);
+			}
+			m_LastSerializeTime = PhotonNetwork.time;
+			m_UpdatedPositionAfterOnSerialize = false;
+		}
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	private void SerializeData(Vector3 currentPosition, PhotonStream stream, PhotonMessageInfo info)
+	{
+		stream.SendNext(currentPosition);
+		m_NetworkPosition = currentPosition;
+		if (m_Model.ExtrapolateOption == PhotonTransformViewPositionModel.ExtrapolateOptions.SynchronizeValues || m_Model.InterpolateOption == PhotonTransformViewPositionModel.InterpolateOptions.SynchronizeValues)
+		{
+			stream.SendNext(m_SynchronizedSpeed);
+			stream.SendNext(m_SynchronizedTurnSpeed);
+		}
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	private void DeserializeData(PhotonStream stream, PhotonMessageInfo info)
+	{
+		Vector3 networkPosition = (Vector3)stream.ReceiveNext();
+		if (m_Model.ExtrapolateOption == PhotonTransformViewPositionModel.ExtrapolateOptions.SynchronizeValues || m_Model.InterpolateOption == PhotonTransformViewPositionModel.InterpolateOptions.SynchronizeValues)
+		{
+			m_SynchronizedSpeed = (Vector3)stream.ReceiveNext();
+			m_SynchronizedTurnSpeed = (float)stream.ReceiveNext();
+		}
+		if (m_OldNetworkPositions.Count == 0)
+		{
+			m_NetworkPosition = networkPosition;
+		}
+		m_OldNetworkPositions.Enqueue(m_NetworkPosition);
+		m_NetworkPosition = networkPosition;
+		while (m_OldNetworkPositions.Count > m_Model.ExtrapolateNumberOfStoredPositions)
+		{
+			m_OldNetworkPositions.Dequeue();
+		}
+	}
 }

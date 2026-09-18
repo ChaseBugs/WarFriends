@@ -1,63 +1,145 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
-public class SoldierBehaviourSciFi : MonoBehaviour
+public class SoldierBehaviourSciFi : SoldierBehaviourGeneric<SoldierBehaviourDefinititonSciFi>
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	private int mCounter;
 
-	1. No dll files were provided to AssetRipper.
+	private Vector3 mLastShotPos;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	private int mDoubleShot;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public override bool AcceptSpawnPoint(SpawnPoint point)
+	{
+		if (point.spawnPointType == SpawnPoint.SpawnPointType.Parachute && base.mBehaviourDef.canUseParachute && controller.fraction == point.fraction)
+		{
+			return true;
+		}
+		return base.AcceptSpawnPoint(point);
+	}
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public override SpawnPoint PickSpawnPoint(IEnumerable<SpawnPoint> spawns)
+	{
+		List<SpawnPoint> list = new List<SpawnPoint>();
+		foreach (SpawnPoint spawn in spawns)
+		{
+			if (AcceptSpawnPoint(spawn))
+			{
+				list.Add(spawn);
+				if (spawn.spawnPointType == SpawnPoint.SpawnPointType.Parachute)
+				{
+					return spawn;
+				}
+			}
+		}
+		if (list.Count <= 0)
+		{
+			throw new Exception("Enemy could not be spawned");
+		}
+		int index = UnityEngine.Random.Range(0, list.Count);
+		return list[index];
+	}
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public override void ShootJustStarted()
+	{
+		base.ShootJustStarted();
+	}
 
-	3. Assembly Reconstruction has not been implemented.
+	private Vector3 GetNextShieldPosition()
+	{
+		PlayerController enemyOf = PlayerController.GetEnemyOf(controller.fraction);
+		MapDefinition.DefendPosition currentPlayerPoint = enemyOf.currentPlayerPoint;
+		List<MapDefinition.DefendPosition> playersPositions = Singleton<MapManager>.instance.currentMapDef.playersPositions;
+		bool flag = UnityEngine.Random.value > 0.5f;
+		int num = currentPlayerPoint.index + (flag ? 1 : (-1));
+		if (num >= 0 && num < playersPositions.Count && playersPositions[num].fraction == enemyOf.fraction)
+		{
+			return playersPositions[num].point.transform.position;
+		}
+		num = currentPlayerPoint.index + ((!flag) ? 1 : (-1));
+		if (num >= 0 && num < playersPositions.Count && playersPositions[num].fraction == enemyOf.fraction)
+		{
+			return playersPositions[num].point.transform.position;
+		}
+		return enemyOf.transform.position;
+	}
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public override void Shooting()
+	{
+		bool? flag = null;
+		if (currentWeapon.willShoot)
+		{
+			mCounter++;
+			flag = UnityEngine.Random.value < base.soldierBehaviourDefinititon.special && controller.hasSpecial && mCounter > mDoubleShot + 1;
+			if (flag.Value)
+			{
+				mFakeAndRealShots[1 << mShotCounter] = true;
+				mFireBatchSize++;
+				mDoubleShot = mCounter;
+			}
+		}
+		base.Shooting();
+		if (controller.hasSpecial && flag.HasValue)
+		{
+			if (flag.Value)
+			{
+				targetPosition = GetNextShieldPosition();
+				mWeapons[0].cadence = 0.1f;
+			}
+			else
+			{
+				targetPosition = mLastShotPos;
+				mWeapons[0].cadence = 1.5f;
+			}
+		}
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public override EnemyPoint GetInitPoint()
+	{
+		return SpawningManager.instance.GetNearestFreePoint(this, Singleton<MapManager>.instance.currentMapDef.floorTransform);
+	}
 
-	4. This script is unnecessary.
+	public override EnemyPoint GetNewEnemyPoint(EnemyPoint currentEnemyPoint)
+	{
+		List<EnemyPoint> freeEnemyPoints = SpawningManager.instance.GetFreeEnemyPoints(currentEnemyPoint, this);
+		List<EnemyPoint> list = new List<EnemyPoint>();
+		foreach (EnemyPoint item in freeEnemyPoints)
+		{
+			if ((double)Vector3.Distance(item.position, controller.transform.position) > 1.8)
+			{
+				list.Add(item);
+			}
+		}
+		if (list.Count > 0)
+		{
+			return list[UnityEngine.Random.Range(0, list.Count)];
+		}
+		return SpawningManager.instance.GetNextFreeEnemyPoint(currentEnemyPoint, this);
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public override void StartEnemyBehaviour()
+	{
+		controller.StartEnemyBehaviour(EnemyController.EnemyAIState.Fly);
+	}
 
-	5. Script Content Level 0
+	protected override void ApplyWeaponsSetup()
+	{
+		base.ApplyWeaponsSetup();
+		GrenadeAmmoSetup grenadeAmmoSetup = (GrenadeAmmoSetup)mWeapons[0].ammoSetup;
+		grenadeAmmoSetup.damageAmount = base.mBehaviourDef.grenadeMinDamage;
+		grenadeAmmoSetup.explodeDamageAmount = base.mBehaviourDef.grenadeExplodeDamage;
+		grenadeAmmoSetup.playerBehindShieldRatio = upgradeSlots.playerBehindShieldDamageRatio;
+		mWeapons[0].cadence = 1.5f;
+		controller.agent.speed = 0.5f;
+	}
 
-		AssetRipper was set to not load any script information.
-
-	6. Cpp2IL failed to decompile Il2Cpp data
-
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public override void PickTarget()
+	{
+		if (!TryPickDecoy())
+		{
+			PickPlayerOpponent(upgradeSlots.shieldHitProbability);
+		}
+		mLastShotPos = targetPosition;
+	}
 }

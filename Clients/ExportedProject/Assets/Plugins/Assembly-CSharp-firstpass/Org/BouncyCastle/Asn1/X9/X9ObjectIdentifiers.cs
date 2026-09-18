@@ -1,66 +1,141 @@
-using UnityEngine;
+using System;
 
 namespace Org.BouncyCastle.Asn1.X9
 {
-	public class X9ObjectIdentifiers : MonoBehaviour
-	{
-		/*
-		Dummy class. This could have happened for several reasons:
+public abstract class X9ObjectIdentifiers
+{
+	internal const string AnsiX962 = "1.2.840.10045";
 
-		1. No dll files were provided to AssetRipper.
+	[Obsolete("Use 'id_ecSigType' instead")]
+	public const string IdECSigType = "1.2.840.10045.4";
 
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
+	[Obsolete("Use 'id_publicKeyType' instead")]
+	public const string IdPublicKeyType = "1.2.840.10045.2";
 
-		2. Incorrect dll files were provided to AssetRipper.
+	public static readonly DerObjectIdentifier ansi_X9_62 = new DerObjectIdentifier("1.2.840.10045");
 
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
+	public static readonly DerObjectIdentifier IdFieldType = ansi_X9_62.Branch("1");
 
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public static readonly DerObjectIdentifier PrimeField = IdFieldType.Branch("1");
 
-		3. Assembly Reconstruction has not been implemented.
+	public static readonly DerObjectIdentifier CharacteristicTwoField = IdFieldType.Branch("2");
 
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
+	public static readonly DerObjectIdentifier GNBasis = CharacteristicTwoField.Branch("3.1");
 
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
+	public static readonly DerObjectIdentifier TPBasis = CharacteristicTwoField.Branch("3.2");
 
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
+	public static readonly DerObjectIdentifier PPBasis = CharacteristicTwoField.Branch("3.3");
 
-		5. Script Content Level 0
+	public static readonly DerObjectIdentifier id_ecSigType = ansi_X9_62.Branch("4");
 
-			AssetRipper was set to not load any script information.
+	public static readonly DerObjectIdentifier ECDsaWithSha1 = id_ecSigType.Branch("1");
 
-		6. Cpp2IL failed to decompile Il2Cpp data
+	public static readonly DerObjectIdentifier id_publicKeyType = ansi_X9_62.Branch("2");
 
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public static readonly DerObjectIdentifier IdECPublicKey = id_publicKeyType.Branch("1");
 
-		7. An incorrect path was provided to AssetRipper.
+	public static readonly DerObjectIdentifier ECDsaWithSha2 = id_ecSigType.Branch("3");
 
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
+	public static readonly DerObjectIdentifier ECDsaWithSha224 = ECDsaWithSha2.Branch("1");
 
-		*/
-	}
+	public static readonly DerObjectIdentifier ECDsaWithSha256 = ECDsaWithSha2.Branch("2");
+
+	public static readonly DerObjectIdentifier ECDsaWithSha384 = ECDsaWithSha2.Branch("3");
+
+	public static readonly DerObjectIdentifier ECDsaWithSha512 = ECDsaWithSha2.Branch("4");
+
+	public static readonly DerObjectIdentifier EllipticCurve = ansi_X9_62.Branch("3");
+
+	public static readonly DerObjectIdentifier CTwoCurve = EllipticCurve.Branch("0");
+
+	public static readonly DerObjectIdentifier C2Pnb163v1 = CTwoCurve.Branch("1");
+
+	public static readonly DerObjectIdentifier C2Pnb163v2 = CTwoCurve.Branch("2");
+
+	public static readonly DerObjectIdentifier C2Pnb163v3 = CTwoCurve.Branch("3");
+
+	public static readonly DerObjectIdentifier C2Pnb176w1 = CTwoCurve.Branch("4");
+
+	public static readonly DerObjectIdentifier C2Tnb191v1 = CTwoCurve.Branch("5");
+
+	public static readonly DerObjectIdentifier C2Tnb191v2 = CTwoCurve.Branch("6");
+
+	public static readonly DerObjectIdentifier C2Tnb191v3 = CTwoCurve.Branch("7");
+
+	public static readonly DerObjectIdentifier C2Onb191v4 = CTwoCurve.Branch("8");
+
+	public static readonly DerObjectIdentifier C2Onb191v5 = CTwoCurve.Branch("9");
+
+	public static readonly DerObjectIdentifier C2Pnb208w1 = CTwoCurve.Branch("10");
+
+	public static readonly DerObjectIdentifier C2Tnb239v1 = CTwoCurve.Branch("11");
+
+	public static readonly DerObjectIdentifier C2Tnb239v2 = CTwoCurve.Branch("12");
+
+	public static readonly DerObjectIdentifier C2Tnb239v3 = CTwoCurve.Branch("13");
+
+	public static readonly DerObjectIdentifier C2Onb239v4 = CTwoCurve.Branch("14");
+
+	public static readonly DerObjectIdentifier C2Onb239v5 = CTwoCurve.Branch("15");
+
+	public static readonly DerObjectIdentifier C2Pnb272w1 = CTwoCurve.Branch("16");
+
+	public static readonly DerObjectIdentifier C2Pnb304w1 = CTwoCurve.Branch("17");
+
+	public static readonly DerObjectIdentifier C2Tnb359v1 = CTwoCurve.Branch("18");
+
+	public static readonly DerObjectIdentifier C2Pnb368w1 = CTwoCurve.Branch("19");
+
+	public static readonly DerObjectIdentifier C2Tnb431r1 = CTwoCurve.Branch("20");
+
+	public static readonly DerObjectIdentifier PrimeCurve = EllipticCurve.Branch("1");
+
+	public static readonly DerObjectIdentifier Prime192v1 = PrimeCurve.Branch("1");
+
+	public static readonly DerObjectIdentifier Prime192v2 = PrimeCurve.Branch("2");
+
+	public static readonly DerObjectIdentifier Prime192v3 = PrimeCurve.Branch("3");
+
+	public static readonly DerObjectIdentifier Prime239v1 = PrimeCurve.Branch("4");
+
+	public static readonly DerObjectIdentifier Prime239v2 = PrimeCurve.Branch("5");
+
+	public static readonly DerObjectIdentifier Prime239v3 = PrimeCurve.Branch("6");
+
+	public static readonly DerObjectIdentifier Prime256v1 = PrimeCurve.Branch("7");
+
+	public static readonly DerObjectIdentifier IdDsa = new DerObjectIdentifier("1.2.840.10040.4.1");
+
+	public static readonly DerObjectIdentifier IdDsaWithSha1 = new DerObjectIdentifier("1.2.840.10040.4.3");
+
+	public static readonly DerObjectIdentifier X9x63Scheme = new DerObjectIdentifier("1.3.133.16.840.63.0");
+
+	public static readonly DerObjectIdentifier DHSinglePassStdDHSha1KdfScheme = X9x63Scheme.Branch("2");
+
+	public static readonly DerObjectIdentifier DHSinglePassCofactorDHSha1KdfScheme = X9x63Scheme.Branch("3");
+
+	public static readonly DerObjectIdentifier MqvSinglePassSha1KdfScheme = X9x63Scheme.Branch("16");
+
+	public static readonly DerObjectIdentifier ansi_x9_42 = new DerObjectIdentifier("1.2.840.10046");
+
+	public static readonly DerObjectIdentifier DHPublicNumber = ansi_x9_42.Branch("2.1");
+
+	public static readonly DerObjectIdentifier X9x42Schemes = ansi_x9_42.Branch("2.3");
+
+	public static readonly DerObjectIdentifier DHStatic = X9x42Schemes.Branch("1");
+
+	public static readonly DerObjectIdentifier DHEphem = X9x42Schemes.Branch("2");
+
+	public static readonly DerObjectIdentifier DHOneFlow = X9x42Schemes.Branch("3");
+
+	public static readonly DerObjectIdentifier DHHybrid1 = X9x42Schemes.Branch("4");
+
+	public static readonly DerObjectIdentifier DHHybrid2 = X9x42Schemes.Branch("5");
+
+	public static readonly DerObjectIdentifier DHHybridOneFlow = X9x42Schemes.Branch("6");
+
+	public static readonly DerObjectIdentifier Mqv2 = X9x42Schemes.Branch("7");
+
+	public static readonly DerObjectIdentifier Mqv1 = X9x42Schemes.Branch("8");
+}
 }

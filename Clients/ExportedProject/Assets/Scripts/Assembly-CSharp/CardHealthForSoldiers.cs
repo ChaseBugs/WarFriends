@@ -1,63 +1,143 @@
+using System.Collections.Generic;
+using Google2u;
 using UnityEngine;
 
-public class CardHealthForSoldiers : MonoBehaviour
+public class CardHealthForSoldiers : Card
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	private const string ingameIcoName = "game-card-ico-supersoldiers";
 
-	1. No dll files were provided to AssetRipper.
+	private NetworkObjectPool mPool;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	private Fractions mFraction;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	private bool mEventLocated;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	private float mRemainingTime;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	private bool mUsed;
 
-	3. Assembly Reconstruction has not been implemented.
+	public float multiplierMaxHealth => Singleton<GameVariables>.instance.cardConstants.GetRow(CardConstants.rowIds.SuperSoldiersCoef).FLOATVALUE;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public float timeInSec => Singleton<GameVariables>.instance.cardConstants.GetRow(CardConstants.rowIds.SuperSoldiersTime).FLOATVALUE;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public override string description => Localization.LocalizeFormat(mDescriptionID, MiscTools.FormatFloatNumberAsPercent(multiplierMaxHealth), MiscTools.PrintableTimeDescription(timeInSec));
 
-	4. This script is unnecessary.
+	protected override string mBonusName => MiscTools.FormatFloatNumberAsPlusPercent(multiplierMaxHealth);
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private void ChangeMaxHealth(Fractions fraction)
+	{
+		if (!mEventLocated)
+		{
+			mRemainingTime = timeInSec;
+			mUsed = true;
+			mFraction = fraction;
+			ChangeMaxHealthForActiveSoldiers(mFraction);
+			AIObject.AfterSpawned += OnAfterSpawned;
+			mEventLocated = true;
+		}
+	}
 
-	5. Script Content Level 0
+	private void ChangeMaxHealthForActiveSoldiers(Fractions fraction)
+	{
+		mPool = ObjectPoolDatabase.networkPool;
+		List<PoolableObject> objectsMadeOfPrefab = mPool.GetObjectsMadeOfPrefab(Singleton<ObjectPoolDatabase>.instance.enemy);
+		foreach (PoolableObject item in objectsMadeOfPrefab)
+		{
+			if (item.isInstantiated)
+			{
+				EnemyController enemyController = (EnemyController)item;
+				if (enemyController != null && enemyController.isInstantiated && enemyController.fraction == fraction && enemyController.destroyableObject.health > 0f && enemyController.canBeFreezed)
+				{
+					float healAmount = enemyController.destroyableObject.maxHealth * multiplierMaxHealth;
+					enemyController.destroyableObject.maxHealth *= multiplierMaxHealth + 1f;
+					enemyController.destroyableObject.Heal(healAmount, isNetworkCopy: false);
+					enemyController.destroyableObject.Sync();
+					enemyController.cardIconIndicator.Show("game-card-ico-supersoldiers", mRemainingTime, timeInSec, animated: true);
+				}
+			}
+		}
+	}
 
-		AssetRipper was set to not load any script information.
+	private void OnAfterSpawned(AIObject aiObject)
+	{
+		if (aiObject.fraction == mFraction)
+		{
+			EnemyController enemyController = aiObject as EnemyController;
+			if (enemyController != null)
+			{
+				enemyController.destroyableObject.maxHealth *= multiplierMaxHealth + 1f;
+				enemyController.destroyableObject.Refill();
+				enemyController.cardIconIndicator.Show("game-card-ico-supersoldiers", mRemainingTime, timeInSec, animated: true);
+			}
+		}
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public override void UseCard(ICardManager cardManager, Fractions fraction)
+	{
+		if (PhotonNetwork.isMasterClient)
+		{
+			ChangeMaxHealth(fraction);
+		}
+		cardManager.CardWasUsed(this, fraction);
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public override void UseCardOnline(ICardManager cardManager, Fractions fraction)
+	{
+		if (base.isOnlineMaster)
+		{
+			ChangeMaxHealth(fraction);
+		}
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	public override void DisconnectEvents()
+	{
+		if (!mEventLocated)
+		{
+			return;
+		}
+		AIObject.AfterSpawned -= OnAfterSpawned;
+		mEventLocated = false;
+		List<PoolableObject> objectsMadeOfPrefab = mPool.GetObjectsMadeOfPrefab(Singleton<ObjectPoolDatabase>.instance.enemy);
+		foreach (PoolableObject item in objectsMadeOfPrefab)
+		{
+			if (!item.isInstantiated)
+			{
+				continue;
+			}
+			EnemyController enemyController = (EnemyController)item;
+			if (enemyController.fraction == mFraction && enemyController.destroyableObject.health != 0f)
+			{
+				enemyController.destroyableObject.maxHealth /= multiplierMaxHealth + 1f;
+				if (enemyController.destroyableObject.health > enemyController.destroyableObject.maxHealth)
+				{
+					enemyController.destroyableObject.Heal(0f, isNetworkCopy: false);
+				}
+				enemyController.destroyableObject.Sync();
+			}
+		}
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	protected void Update()
+	{
+		if (mUsed)
+		{
+			if (mRemainingTime > 0f)
+			{
+				mRemainingTime -= Time.deltaTime;
+				return;
+			}
+			DisconnectEvents();
+			mRemainingTime = 0f;
+			mUsed = false;
+		}
+	}
 
-	*/
+	public override bool IsViableForBotNow(Fractions botFraction, float botHealthRatio, List<GameShootableEntity> botUnits, List<GameShootableEntity> opponentUnits, List<GameShootableEntity> botMechanicalUnits, List<GameShootableEntity> opponentMechanicalUnits)
+	{
+		if (botUnits.Count < 3)
+		{
+			return false;
+		}
+		return base.IsViableForBotNow(botFraction, botHealthRatio, botUnits, opponentUnits, botMechanicalUnits, opponentMechanicalUnits);
+	}
 }

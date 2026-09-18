@@ -1,63 +1,99 @@
+using System;
 using UnityEngine;
 
-public class Mortar : MonoBehaviour
+public class Mortar : PhysicalAmmoWeapon
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public GameObject indicator;
 
-	1. No dll files were provided to AssetRipper.
+	public vp_MuzzleFlash muzzleFlash;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	private float offset = 0.04f;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public override void OnInstancied()
+	{
+		base.OnInstancied();
+		indicator.SetActive(value: false);
+	}
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	protected override Ammo Shoot(Vector3 position, bool isNetworkCopy)
+	{
+		MissileSetup missileSetup = base.ammoSetup as MissileSetup;
+		spawnPoint.transform.position = position + 5f * Vector3.up;
+		Ammo result = base.Shoot(position, isNetworkCopy);
+		if (muzzleFlash != null)
+		{
+			muzzleFlash.Shoot(ignoreTimeScale: false);
+		}
+		StartIndicatorAnimation(missileSetup, position + offset * Vector3.up);
+		return result;
+	}
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	[PunRPC]
+	public override void ShootCopyRPC(int index, Vector3 from, Vector3 to, byte playerID, bool isFakeShot)
+	{
+		PhysicalAmmo physicalAmmo = (PhysicalAmmo)ObjectPoolDatabase.networkPool.ReInstantiate(bulletPrefab, index, from, Quaternion.identity);
+		isFake = isFakeShot;
+		if (physicalAmmo != null)
+		{
+			PhotonNetwork.ChangeOwner(physicalAmmo.photonView, playerID);
+			physicalAmmo.LoadAmmoSetup(base.ammoSetup);
+			physicalAmmo.isNetworkCopy = true;
+			physicalAmmo.weapon = this;
+			physicalAmmo.isFake = isFakeShot;
+			physicalAmmo.Fire(from, to);
+			BaseShoot(to, isNetworkCopy: true);
+			if (muzzleFlash != null)
+			{
+				muzzleFlash.Shoot(ignoreTimeScale: false);
+			}
+			MissileSetup missileSetup = base.ammoSetup as MissileSetup;
+			StartIndicatorAnimation(missileSetup, to + offset * Vector3.up);
+		}
+		else
+		{
+			Debug.LogError("Physical ammo is null !!!");
+		}
+	}
 
-	3. Assembly Reconstruction has not been implemented.
+	private void StartIndicatorAnimation(MissileSetup missileSetup, Vector3 position)
+	{
+		if (fraction == PlayerController.currentPlayer.fraction)
+		{
+			return;
+		}
+		indicator.gameObject.transform.parent = Singleton<MainSceneRoot>.instance.transform;
+		indicator.gameObject.transform.position = position;
+		indicator.transform.rotation = Quaternion.LookRotation(Vector3.up);
+		indicator.SetActive(value: true);
+		TweenRotationSpecial tweenRotationSpecial = TweenRotationSpecial.Begin(indicator, 2f, Vector3.up, 0f, 360f);
+		tweenRotationSpecial.style = UITweener.Style.Loop;
+		tweenRotationSpecial.method = UITweener.Method.Linear;
+		tweenRotationSpecial.baseRotation = new Vector3(90f, 0f, 0f);
+		tweenRotationSpecial.ignoreTimeScale = false;
+		TweenColorTk2d.Begin(indicator, 0f, new Color(1f, 1f, 1f, 0.35f)).ignoreTimeScale = false;
+		TweenScale tweenScale = TweenScale.Begin(indicator, missileSetup.stopTime - 0.3f, Vector3.one * 1.5f, Vector3.one * 0.65f);
+		tweenScale.ignoreTimeScale = false;
+		tweenScale.onFinished = (UITweener.OnFinished)Delegate.Combine(tweenScale.onFinished, (UITweener.OnFinished)delegate
+		{
+			TweenColorTk2d tweenColorTk2d = TweenColorTk2d.Begin(indicator, 0.1f, new Color(1f, 1f, 1f, 0.35f), new Color(1f, 1f, 1f, 0f));
+			tweenColorTk2d.style = UITweener.Style.PingPong;
+			tweenColorTk2d.NumOfRepetitions = 5;
+			tweenColorTk2d.onFinished = (UITweener.OnFinished)Delegate.Combine(tweenColorTk2d.onFinished, (UITweener.OnFinished)delegate
+			{
+				indicator.SetActive(value: false);
+			});
+			tweenColorTk2d.ignoreTimeScale = false;
+		});
+	}
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
-
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
-
-	4. This script is unnecessary.
-
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
-
-	5. Script Content Level 0
-
-		AssetRipper was set to not load any script information.
-
-	6. Cpp2IL failed to decompile Il2Cpp data
-
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public override float ComputeFlyTimeToTarget(Vector3 position)
+	{
+		MissileSetup missileSetup = base.ammoSetup as MissileSetup;
+		if (missileSetup != null)
+		{
+			float num = Vector3.Distance(spawnPoint.transform.position, position);
+			return num / missileSetup.speed + 0.1f;
+		}
+		return 0.1f;
+	}
 }

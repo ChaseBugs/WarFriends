@@ -39,6 +39,3041 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ea9f040b2b6bd4bf069e31e0ace12f73, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  material: {fileID: 2100000, guid: c372aad65c3883549aca1eedac03d68b, type: 2}
+  sprites:
+  - name: menu-upgrade-ico-special-swat
+    outer:
+      serializedVersion: 2
+      x: 102
+      y: 724
+      width: 96
+      height: 96
+    inner:
+      serializedVersion: 2
+      x: 102
+      y: 724
+      width: 96
+      height: 96
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-upgrade-ico-special-warpheal
+    outer:
+      serializedVersion: 2
+      x: 204
+      y: 928
+      width: 96
+      height: 96
+    inner:
+      serializedVersion: 2
+      x: 204
+      y: 928
+      width: 96
+      height: 96
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-upgrade-ico-special-assaulter
+    outer:
+      serializedVersion: 2
+      x: 714
+      y: 928
+      width: 96
+      height: 96
+    inner:
+      serializedVersion: 2
+      x: 714
+      y: 928
+      width: 96
+      height: 96
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-upgrade-ico-special-scifijetpack
+    outer:
+      serializedVersion: 2
+      x: 102
+      y: 520
+      width: 96
+      height: 96
+    inner:
+      serializedVersion: 2
+      x: 102
+      y: 520
+      width: 96
+      height: 96
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-elite-accuracy-ico
+    outer:
+      serializedVersion: 2
+      x: 102
+      y: 112
+      width: 96
+      height: 96
+    inner:
+      serializedVersion: 2
+      x: 102
+      y: 112
+      width: 96
+      height: 96
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-upgrade-ico-special-bodyarmor
+    outer:
+      serializedVersion: 2
+      x: 0
+      y: 928
+      width: 96
+      height: 96
+    inner:
+      serializedVersion: 2
+      x: 0
+      y: 928
+      width: 96
+      height: 96
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-upgrade-ico-special-transporter
+    outer:
+      serializedVersion: 2
+      x: 0
+      y: 622
+      width: 96
+      height: 96
+    inner:
+      serializedVersion: 2
+      x: 0
+      y: 622
+      width: 96
+      height: 96
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-upgrade-ico-special-shotgunner
+    outer:
+      serializedVersion: 2
+      x: 612
+      y: 928
+      width: 96
+      height: 96
+    inner:
+      serializedVersion: 2
+      x: 612
+      y: 928
+      width: 96
+      height: 96
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-upgrade-ico-special-gunslinger
+    outer:
+      serializedVersion: 2
+      x: 102
+      y: 316
+      width: 96
+      height: 96
+    inner:
+      serializedVersion: 2
+      x: 102
+      y: 316
+      width: 96
+      height: 96
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-upgrade-ico-special-engineer
+    outer:
+      serializedVersion: 2
+      x: 102
+      y: 214
+      width: 96
+      height: 96
+    inner:
+      serializedVersion: 2
+      x: 102
+      y: 214
+      width: 96
+      height: 96
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-upgrade-ico-special-commando
+    outer:
+      serializedVersion: 2
+      x: 0
+      y: 316
+      width: 96
+      height: 96
+    inner:
+      serializedVersion: 2
+      x: 0
+      y: 316
+      width: 96
+      height: 96
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-upgrade-ico-special-grenadier
+    outer:
+      serializedVersion: 2
+      x: 0
+      y: 214
+      width: 96
+      height: 96
+    inner:
+      serializedVersion: 2
+      x: 0
+      y: 214
+      width: 96
+      height: 96
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-elite-armor-ico
+    outer:
+      serializedVersion: 2
+      x: 918
+      y: 928
+      width: 96
+      height: 96
+    inner:
+      serializedVersion: 2
+      x: 918
+      y: 928
+      width: 96
+      height: 96
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-upgrade-ico-special-flamethrower
+    outer:
+      serializedVersion: 2
+      x: 0
+      y: 112
+      width: 96
+      height: 96
+    inner:
+      serializedVersion: 2
+      x: 0
+      y: 112
+      width: 96
+      height: 96
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-upgrade-ico-special-lmg
+    outer:
+      serializedVersion: 2
+      x: 408
+      y: 928
+      width: 96
+      height: 96
+    inner:
+      serializedVersion: 2
+      x: 408
+      y: 928
+      width: 96
+      height: 96
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-upgrade-ico-special-tank
+    outer:
+      serializedVersion: 2
+      x: 102
+      y: 928
+      width: 96
+      height: 96
+    inner:
+      serializedVersion: 2
+      x: 102
+      y: 928
+      width: 96
+      height: 96
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-upgrade-ico-special-rocketsoldier
+    outer:
+      serializedVersion: 2
+      x: 306
+      y: 928
+      width: 96
+      height: 96
+    inner:
+      serializedVersion: 2
+      x: 306
+      y: 928
+      width: 96
+      height: 96
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-upgrade-ico-special-mortar
+    outer:
+      serializedVersion: 2
+      x: 0
+      y: 10
+      width: 96
+      height: 96
+    inner:
+      serializedVersion: 2
+      x: 0
+      y: 10
+      width: 96
+      height: 96
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-upgrade-ico-special-humvee
+    outer:
+      serializedVersion: 2
+      x: 0
+      y: 724
+      width: 96
+      height: 96
+    inner:
+      serializedVersion: 2
+      x: 0
+      y: 724
+      width: 96
+      height: 96
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-upgrade-ico-special-deployhelicopter
+    outer:
+      serializedVersion: 2
+      x: 510
+      y: 928
+      width: 96
+      height: 96
+    inner:
+      serializedVersion: 2
+      x: 510
+      y: 928
+      width: 96
+      height: 96
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-upgrade-ico-special-drone
+    outer:
+      serializedVersion: 2
+      x: 102
+      y: 826
+      width: 96
+      height: 96
+    inner:
+      serializedVersion: 2
+      x: 102
+      y: 826
+      width: 96
+      height: 96
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-upgrade-ico-special-attackhelicopter
+    outer:
+      serializedVersion: 2
+      x: 0
+      y: 520
+      width: 96
+      height: 96
+    inner:
+      serializedVersion: 2
+      x: 0
+      y: 520
+      width: 96
+      height: 96
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-upgrade-ico-special-energyshield
+    outer:
+      serializedVersion: 2
+      x: 102
+      y: 418
+      width: 96
+      height: 96
+    inner:
+      serializedVersion: 2
+      x: 102
+      y: 418
+      width: 96
+      height: 96
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-elite-shotspeed-ico
+    outer:
+      serializedVersion: 2
+      x: 0
+      y: 418
+      width: 96
+      height: 96
+    inner:
+      serializedVersion: 2
+      x: 0
+      y: 418
+      width: 96
+      height: 96
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-elite-movementspeed-ico
+    outer:
+      serializedVersion: 2
+      x: 0
+      y: 826
+      width: 96
+      height: 96
+    inner:
+      serializedVersion: 2
+      x: 0
+      y: 826
+      width: 96
+      height: 96
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-upgrade-ico-special-sniper
+    outer:
+      serializedVersion: 2
+      x: 816
+      y: 928
+      width: 96
+      height: 96
+    inner:
+      serializedVersion: 2
+      x: 816
+      y: 928
+      width: 96
+      height: 96
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: country-israel
+    outer:
+      serializedVersion: 2
+      x: 344
+      y: 454
+      width: 64
+      height: 64
+    inner:
+      serializedVersion: 2
+      x: 344
+      y: 454
+      width: 64
+      height: 64
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: country-sweden
+    outer:
+      serializedVersion: 2
+      x: 484
+      y: 469
+      width: 64
+      height: 64
+    inner:
+      serializedVersion: 2
+      x: 484
+      y: 469
+      width: 64
+      height: 64
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: country-austria
+    outer:
+      serializedVersion: 2
+      x: 274
+      y: 314
+      width: 64
+      height: 64
+    inner:
+      serializedVersion: 2
+      x: 274
+      y: 314
+      width: 64
+      height: 64
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: country-turkey
+    outer:
+      serializedVersion: 2
+      x: 554
+      y: 262
+      width: 64
+      height: 64
+    inner:
+      serializedVersion: 2
+      x: 554
+      y: 262
+      width: 64
+      height: 64
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: country-brazil
+    outer:
+      serializedVersion: 2
+      x: 849
+      y: 682
+      width: 64
+      height: 64
+    inner:
+      serializedVersion: 2
+      x: 849
+      y: 682
+      width: 64
+      height: 64
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: country-croatia
+    outer:
+      serializedVersion: 2
+      x: 636
+      y: 542
+      width: 64
+      height: 64
+    inner:
+      serializedVersion: 2
+      x: 636
+      y: 542
+      width: 64
+      height: 64
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: country-slovakia
+    outer:
+      serializedVersion: 2
+      x: 204
+      y: 314
+      width: 64
+      height: 64
+    inner:
+      serializedVersion: 2
+      x: 204
+      y: 314
+      width: 64
+      height: 64
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: country-indonesia
+    outer:
+      serializedVersion: 2
+      x: 776
+      y: 542
+      width: 64
+      height: 64
+    inner:
+      serializedVersion: 2
+      x: 776
+      y: 542
+      width: 64
+      height: 64
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: country-latvia
+    outer:
+      serializedVersion: 2
+      x: 709
+      y: 612
+      width: 64
+      height: 64
+    inner:
+      serializedVersion: 2
+      x: 709
+      y: 612
+      width: 64
+      height: 64
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: country-danmark
+    outer:
+      serializedVersion: 2
+      x: 414
+      y: 384
+      width: 64
+      height: 64
+    inner:
+      serializedVersion: 2
+      x: 414
+      y: 384
+      width: 64
+      height: 64
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: country-czech-republic
+    outer:
+      serializedVersion: 2
+      x: 496
+      y: 609
+      width: 64
+      height: 64
+    inner:
+      serializedVersion: 2
+      x: 496
+      y: 609
+      width: 64
+      height: 64
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: country-hong-kong
+    outer:
+      serializedVersion: 2
+      x: 904
+      y: 472
+      width: 64
+      height: 64
+    inner:
+      serializedVersion: 2
+      x: 904
+      y: 472
+      width: 64
+      height: 64
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: country-chile
+    outer:
+      serializedVersion: 2
+      x: 554
+      y: 332
+      width: 64
+      height: 64
+    inner:
+      serializedVersion: 2
+      x: 554
+      y: 332
+      width: 64
+      height: 64
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: country-ukraine
+    outer:
+      serializedVersion: 2
+      x: 204
+      y: 244
+      width: 64
+      height: 64
+    inner:
+      serializedVersion: 2
+      x: 204
+      y: 244
+      width: 64
+      height: 64
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: country-USA
+    outer:
+      serializedVersion: 2
+      x: 484
+      y: 259
+      width: 64
+      height: 64
+    inner:
+      serializedVersion: 2
+      x: 484
+      y: 259
+      width: 64
+      height: 64
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: country-thailand
+    outer:
+      serializedVersion: 2
+      x: 274
+      y: 244
+      width: 64
+      height: 64
+    inner:
+      serializedVersion: 2
+      x: 274
+      y: 244
+      width: 64
+      height: 64
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: country-taiwan
+    outer:
+      serializedVersion: 2
+      x: 706
+      y: 542
+      width: 64
+      height: 64
+    inner:
+      serializedVersion: 2
+      x: 706
+      y: 542
+      width: 64
+      height: 64
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: country-slovenia
+    outer:
+      serializedVersion: 2
+      x: 849
+      y: 612
+      width: 64
+      height: 64
+    inner:
+      serializedVersion: 2
+      x: 849
+      y: 612
+      width: 64
+      height: 64
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: country-ireland
+    outer:
+      serializedVersion: 2
+      x: 414
+      y: 524
+      width: 64
+      height: 64
+    inner:
+      serializedVersion: 2
+      x: 414
+      y: 524
+      width: 64
+      height: 64
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: country-new-zealand
+    outer:
+      serializedVersion: 2
+      x: 709
+      y: 682
+      width: 64
+      height: 64
+    inner:
+      serializedVersion: 2
+      x: 709
+      y: 682
+      width: 64
+      height: 64
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: country-portugal
+    outer:
+      serializedVersion: 2
+      x: 274
+      y: 524
+      width: 64
+      height: 64
+    inner:
+      serializedVersion: 2
+      x: 274
+      y: 524
+      width: 64
+      height: 64
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: country-italy
+    outer:
+      serializedVersion: 2
+      x: 204
+      y: 594
+      width: 64
+      height: 64
+    inner:
+      serializedVersion: 2
+      x: 204
+      y: 594
+      width: 64
+      height: 64
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: country-belarus
+    outer:
+      serializedVersion: 2
+      x: 274
+      y: 594
+      width: 64
+      height: 64
+    inner:
+      serializedVersion: 2
+      x: 274
+      y: 594
+      width: 64
+      height: 64
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: country-noflag
+    outer:
+      serializedVersion: 2
+      x: 344
+      y: 244
+      width: 64
+      height: 64
+    inner:
+      serializedVersion: 2
+      x: 344
+      y: 244
+      width: 64
+      height: 64
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: country-switzerland
+    outer:
+      serializedVersion: 2
+      x: 344
+      y: 594
+      width: 64
+      height: 64
+    inner:
+      serializedVersion: 2
+      x: 344
+      y: 594
+      width: 64
+      height: 64
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: country-greece
+    outer:
+      serializedVersion: 2
+      x: 414
+      y: 594
+      width: 64
+      height: 64
+    inner:
+      serializedVersion: 2
+      x: 414
+      y: 594
+      width: 64
+      height: 64
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: country-mexico
+    outer:
+      serializedVersion: 2
+      x: 484
+      y: 539
+      width: 64
+      height: 64
+    inner:
+      serializedVersion: 2
+      x: 484
+      y: 539
+      width: 64
+      height: 64
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: country-spain
+    outer:
+      serializedVersion: 2
+      x: 344
+      y: 314
+      width: 64
+      height: 64
+    inner:
+      serializedVersion: 2
+      x: 344
+      y: 314
+      width: 64
+      height: 64
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: country-united-kingdom
+    outer:
+      serializedVersion: 2
+      x: 204
+      y: 454
+      width: 64
+      height: 64
+    inner:
+      serializedVersion: 2
+      x: 204
+      y: 454
+      width: 64
+      height: 64
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: country-india
+    outer:
+      serializedVersion: 2
+      x: 414
+      y: 454
+      width: 64
+      height: 64
+    inner:
+      serializedVersion: 2
+      x: 414
+      y: 454
+      width: 64
+      height: 64
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: country-estonia
+    outer:
+      serializedVersion: 2
+      x: 554
+      y: 472
+      width: 64
+      height: 64
+    inner:
+      serializedVersion: 2
+      x: 554
+      y: 472
+      width: 64
+      height: 64
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: country-germany
+    outer:
+      serializedVersion: 2
+      x: 484
+      y: 399
+      width: 64
+      height: 64
+    inner:
+      serializedVersion: 2
+      x: 484
+      y: 399
+      width: 64
+      height: 64
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: country-vietnam
+    outer:
+      serializedVersion: 2
+      x: 569
+      y: 682
+      width: 64
+      height: 64
+    inner:
+      serializedVersion: 2
+      x: 569
+      y: 682
+      width: 64
+      height: 64
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: country-finland
+    outer:
+      serializedVersion: 2
+      x: 414
+      y: 314
+      width: 64
+      height: 64
+    inner:
+      serializedVersion: 2
+      x: 414
+      y: 314
+      width: 64
+      height: 64
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: country-malaysia
+    outer:
+      serializedVersion: 2
+      x: 204
+      y: 384
+      width: 64
+      height: 64
+    inner:
+      serializedVersion: 2
+      x: 204
+      y: 384
+      width: 64
+      height: 64
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: country-poland
+    outer:
+      serializedVersion: 2
+      x: 764
+      y: 472
+      width: 64
+      height: 64
+    inner:
+      serializedVersion: 2
+      x: 764
+      y: 472
+      width: 64
+      height: 64
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: country-france
+    outer:
+      serializedVersion: 2
+      x: 274
+      y: 454
+      width: 64
+      height: 64
+    inner:
+      serializedVersion: 2
+      x: 274
+      y: 454
+      width: 64
+      height: 64
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: country-netherlands
+    outer:
+      serializedVersion: 2
+      x: 639
+      y: 612
+      width: 64
+      height: 64
+    inner:
+      serializedVersion: 2
+      x: 639
+      y: 612
+      width: 64
+      height: 64
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: country-egypt
+    outer:
+      serializedVersion: 2
+      x: 694
+      y: 472
+      width: 64
+      height: 64
+    inner:
+      serializedVersion: 2
+      x: 694
+      y: 472
+      width: 64
+      height: 64
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: country-canada
+    outer:
+      serializedVersion: 2
+      x: 554
+      y: 402
+      width: 64
+      height: 64
+    inner:
+      serializedVersion: 2
+      x: 554
+      y: 402
+      width: 64
+      height: 64
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: country-hungaria
+    outer:
+      serializedVersion: 2
+      x: 344
+      y: 384
+      width: 64
+      height: 64
+    inner:
+      serializedVersion: 2
+      x: 344
+      y: 384
+      width: 64
+      height: 64
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: country-belgium
+    outer:
+      serializedVersion: 2
+      x: 566
+      y: 542
+      width: 64
+      height: 64
+    inner:
+      serializedVersion: 2
+      x: 566
+      y: 542
+      width: 64
+      height: 64
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: country-saudi-arabia
+    outer:
+      serializedVersion: 2
+      x: 624
+      y: 472
+      width: 64
+      height: 64
+    inner:
+      serializedVersion: 2
+      x: 624
+      y: 472
+      width: 64
+      height: 64
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: country-norway
+    outer:
+      serializedVersion: 2
+      x: 846
+      y: 542
+      width: 64
+      height: 64
+    inner:
+      serializedVersion: 2
+      x: 846
+      y: 542
+      width: 64
+      height: 64
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: country-romania
+    outer:
+      serializedVersion: 2
+      x: 916
+      y: 542
+      width: 64
+      height: 64
+    inner:
+      serializedVersion: 2
+      x: 916
+      y: 542
+      width: 64
+      height: 64
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: country-lithuania
+    outer:
+      serializedVersion: 2
+      x: 204
+      y: 524
+      width: 64
+      height: 64
+    inner:
+      serializedVersion: 2
+      x: 204
+      y: 524
+      width: 64
+      height: 64
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: country-australia
+    outer:
+      serializedVersion: 2
+      x: 344
+      y: 524
+      width: 64
+      height: 64
+    inner:
+      serializedVersion: 2
+      x: 344
+      y: 524
+      width: 64
+      height: 64
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: country-argentinia
+    outer:
+      serializedVersion: 2
+      x: 484
+      y: 329
+      width: 64
+      height: 64
+    inner:
+      serializedVersion: 2
+      x: 484
+      y: 329
+      width: 64
+      height: 64
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: country-south-africa
+    outer:
+      serializedVersion: 2
+      x: 274
+      y: 384
+      width: 64
+      height: 64
+    inner:
+      serializedVersion: 2
+      x: 274
+      y: 384
+      width: 64
+      height: 64
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: country-philippines
+    outer:
+      serializedVersion: 2
+      x: 919
+      y: 682
+      width: 64
+      height: 64
+    inner:
+      serializedVersion: 2
+      x: 919
+      y: 682
+      width: 64
+      height: 64
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: country-russia
+    outer:
+      serializedVersion: 2
+      x: 779
+      y: 682
+      width: 64
+      height: 64
+    inner:
+      serializedVersion: 2
+      x: 779
+      y: 682
+      width: 64
+      height: 64
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: country-england
+    outer:
+      serializedVersion: 2
+      x: 919
+      y: 612
+      width: 64
+      height: 64
+    inner:
+      serializedVersion: 2
+      x: 919
+      y: 612
+      width: 64
+      height: 64
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: country-south-korea
+    outer:
+      serializedVersion: 2
+      x: 834
+      y: 472
+      width: 64
+      height: 64
+    inner:
+      serializedVersion: 2
+      x: 834
+      y: 472
+      width: 64
+      height: 64
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: country-bulgaria
+    outer:
+      serializedVersion: 2
+      x: 779
+      y: 612
+      width: 64
+      height: 64
+    inner:
+      serializedVersion: 2
+      x: 779
+      y: 612
+      width: 64
+      height: 64
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: country-japan
+    outer:
+      serializedVersion: 2
+      x: 569
+      y: 612
+      width: 64
+      height: 64
+    inner:
+      serializedVersion: 2
+      x: 569
+      y: 612
+      width: 64
+      height: 64
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: country-china
+    outer:
+      serializedVersion: 2
+      x: 639
+      y: 682
+      width: 64
+      height: 64
+    inner:
+      serializedVersion: 2
+      x: 639
+      y: 682
+      width: 64
+      height: 64
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-elite-buff3
+    outer:
+      serializedVersion: 2
+      x: 372
+      y: 196
+      width: 31
+      height: 42
+    inner:
+      serializedVersion: 2
+      x: 372
+      y: 196
+      width: 31
+      height: 42
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-elite-debuff3
+    outer:
+      serializedVersion: 2
+      x: 204
+      y: 196
+      width: 31
+      height: 42
+    inner:
+      serializedVersion: 2
+      x: 204
+      y: 196
+      width: 31
+      height: 42
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-elite-debuff2
+    outer:
+      serializedVersion: 2
+      x: 667
+      y: 209
+      width: 31
+      height: 33
+    inner:
+      serializedVersion: 2
+      x: 667
+      y: 209
+      width: 31
+      height: 33
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-elite-buff2
+    outer:
+      serializedVersion: 2
+      x: 624
+      y: 265
+      width: 31
+      height: 33
+    inner:
+      serializedVersion: 2
+      x: 624
+      y: 265
+      width: 31
+      height: 33
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-elite-buff1
+    outer:
+      serializedVersion: 2
+      x: 652
+      y: 8
+      width: 31
+      height: 24
+    inner:
+      serializedVersion: 2
+      x: 652
+      y: 8
+      width: 31
+      height: 24
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-elite-buff
+    outer:
+      serializedVersion: 2
+      x: 465
+      y: 10
+      width: 31
+      height: 24
+    inner:
+      serializedVersion: 2
+      x: 465
+      y: 10
+      width: 31
+      height: 24
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-elite-debuff1
+    outer:
+      serializedVersion: 2
+      x: 428
+      y: 10
+      width: 31
+      height: 24
+    inner:
+      serializedVersion: 2
+      x: 428
+      y: 10
+      width: 31
+      height: 24
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-elite-debuff
+    outer:
+      serializedVersion: 2
+      x: 502
+      y: 10
+      width: 30
+      height: 24
+    inner:
+      serializedVersion: 2
+      x: 502
+      y: 10
+      width: 30
+      height: 24
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-attack-ico
+    outer:
+      serializedVersion: 2
+      x: 414
+      y: 247
+      width: 54
+      height: 61
+    inner:
+      serializedVersion: 2
+      x: 414
+      y: 247
+      width: 54
+      height: 61
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-health-ico
+    outer:
+      serializedVersion: 2
+      x: 554
+      y: 198
+      width: 51
+      height: 58
+    inner:
+      serializedVersion: 2
+      x: 554
+      y: 198
+      width: 51
+      height: 58
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-army-power-ico
+    outer:
+      serializedVersion: 2
+      x: 474
+      y: 208
+      width: 59
+      height: 45
+    inner:
+      serializedVersion: 2
+      x: 474
+      y: 208
+      width: 59
+      height: 45
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-army-reload-ico
+    outer:
+      serializedVersion: 2
+      x: 764
+      y: 136
+      width: 49
+      height: 50
+    inner:
+      serializedVersion: 2
+      x: 764
+      y: 136
+      width: 49
+      height: 50
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-army-ammo-ico
+    outer:
+      serializedVersion: 2
+      x: 764
+      y: 90
+      width: 52
+      height: 40
+    inner:
+      serializedVersion: 2
+      x: 764
+      y: 90
+      width: 52
+      height: 40
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-arena-parts-ico
+    outer:
+      serializedVersion: 2
+      x: 408
+      y: 664
+      width: 82
+      height: 82
+    inner:
+      serializedVersion: 2
+      x: 408
+      y: 664
+      width: 82
+      height: 82
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-arena-rewards-preview
+    outer:
+      serializedVersion: 2
+      x: 428
+      y: 153
+      width: 32
+      height: 32
+    inner:
+      serializedVersion: 2
+      x: 428
+      y: 153
+      width: 32
+      height: 32
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: master1
+    outer:
+      serializedVersion: 2
+      x: 408
+      y: 840
+      width: 96
+      height: 82
+    inner:
+      serializedVersion: 2
+      x: 408
+      y: 840
+      width: 96
+      height: 82
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: elite2
+    outer:
+      serializedVersion: 2
+      x: 816
+      y: 752
+      width: 96
+      height: 82
+    inner:
+      serializedVersion: 2
+      x: 816
+      y: 752
+      width: 96
+      height: 82
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: elite1
+    outer:
+      serializedVersion: 2
+      x: 510
+      y: 840
+      width: 96
+      height: 82
+    inner:
+      serializedVersion: 2
+      x: 510
+      y: 840
+      width: 96
+      height: 82
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: gold3
+    outer:
+      serializedVersion: 2
+      x: 204
+      y: 664
+      width: 96
+      height: 82
+    inner:
+      serializedVersion: 2
+      x: 204
+      y: 664
+      width: 96
+      height: 82
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: master2
+    outer:
+      serializedVersion: 2
+      x: 510
+      y: 752
+      width: 96
+      height: 82
+    inner:
+      serializedVersion: 2
+      x: 510
+      y: 752
+      width: 96
+      height: 82
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: gold2
+    outer:
+      serializedVersion: 2
+      x: 714
+      y: 752
+      width: 96
+      height: 82
+    inner:
+      serializedVersion: 2
+      x: 714
+      y: 752
+      width: 96
+      height: 82
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: master3
+    outer:
+      serializedVersion: 2
+      x: 918
+      y: 752
+      width: 96
+      height: 82
+    inner:
+      serializedVersion: 2
+      x: 918
+      y: 752
+      width: 96
+      height: 82
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: rookie3
+    outer:
+      serializedVersion: 2
+      x: 102
+      y: 24
+      width: 96
+      height: 82
+    inner:
+      serializedVersion: 2
+      x: 102
+      y: 24
+      width: 96
+      height: 82
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: bronze3
+    outer:
+      serializedVersion: 2
+      x: 816
+      y: 840
+      width: 96
+      height: 82
+    inner:
+      serializedVersion: 2
+      x: 816
+      y: 840
+      width: 96
+      height: 82
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: bronze1
+    outer:
+      serializedVersion: 2
+      x: 408
+      y: 752
+      width: 96
+      height: 82
+    inner:
+      serializedVersion: 2
+      x: 408
+      y: 752
+      width: 96
+      height: 82
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: rookie1
+    outer:
+      serializedVersion: 2
+      x: 204
+      y: 840
+      width: 96
+      height: 82
+    inner:
+      serializedVersion: 2
+      x: 204
+      y: 840
+      width: 96
+      height: 82
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: gold1
+    outer:
+      serializedVersion: 2
+      x: 306
+      y: 752
+      width: 96
+      height: 82
+    inner:
+      serializedVersion: 2
+      x: 306
+      y: 752
+      width: 96
+      height: 82
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: silver2
+    outer:
+      serializedVersion: 2
+      x: 306
+      y: 840
+      width: 96
+      height: 82
+    inner:
+      serializedVersion: 2
+      x: 306
+      y: 840
+      width: 96
+      height: 82
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: silver1
+    outer:
+      serializedVersion: 2
+      x: 612
+      y: 840
+      width: 96
+      height: 82
+    inner:
+      serializedVersion: 2
+      x: 612
+      y: 840
+      width: 96
+      height: 82
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: bronze2
+    outer:
+      serializedVersion: 2
+      x: 714
+      y: 840
+      width: 96
+      height: 82
+    inner:
+      serializedVersion: 2
+      x: 714
+      y: 840
+      width: 96
+      height: 82
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: elite3
+    outer:
+      serializedVersion: 2
+      x: 204
+      y: 752
+      width: 96
+      height: 82
+    inner:
+      serializedVersion: 2
+      x: 204
+      y: 752
+      width: 96
+      height: 82
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: champion
+    outer:
+      serializedVersion: 2
+      x: 306
+      y: 664
+      width: 96
+      height: 82
+    inner:
+      serializedVersion: 2
+      x: 306
+      y: 664
+      width: 96
+      height: 82
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: silver3
+    outer:
+      serializedVersion: 2
+      x: 918
+      y: 840
+      width: 96
+      height: 82
+    inner:
+      serializedVersion: 2
+      x: 918
+      y: 840
+      width: 96
+      height: 82
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: rookie2
+    outer:
+      serializedVersion: 2
+      x: 612
+      y: 752
+      width: 96
+      height: 82
+    inner:
+      serializedVersion: 2
+      x: 612
+      y: 752
+      width: 96
+      height: 82
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-medals-ico-small
+    outer:
+      serializedVersion: 2
+      x: 496
+      y: 679
+      width: 67
+      height: 67
+    inner:
+      serializedVersion: 2
+      x: 496
+      y: 679
+      width: 67
+      height: 67
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: 6
+    outer:
+      serializedVersion: 2
+      x: 708
+      y: 192
+      width: 50
+      height: 50
+    inner:
+      serializedVersion: 2
+      x: 708
+      y: 192
+      width: 50
+      height: 50
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: 31
+    outer:
+      serializedVersion: 2
+      x: 723
+      y: 248
+      width: 50
+      height: 50
+    inner:
+      serializedVersion: 2
+      x: 723
+      y: 248
+      width: 50
+      height: 50
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: 37
+    outer:
+      serializedVersion: 2
+      x: 652
+      y: 38
+      width: 50
+      height: 50
+    inner:
+      serializedVersion: 2
+      x: 652
+      y: 38
+      width: 50
+      height: 50
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: 28
+    outer:
+      serializedVersion: 2
+      x: 779
+      y: 248
+      width: 50
+      height: 50
+    inner:
+      serializedVersion: 2
+      x: 779
+      y: 248
+      width: 50
+      height: 50
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: 32
+    outer:
+      serializedVersion: 2
+      x: 624
+      y: 304
+      width: 50
+      height: 50
+    inner:
+      serializedVersion: 2
+      x: 624
+      y: 304
+      width: 50
+      height: 50
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: 27
+    outer:
+      serializedVersion: 2
+      x: 652
+      y: 94
+      width: 50
+      height: 50
+    inner:
+      serializedVersion: 2
+      x: 652
+      y: 94
+      width: 50
+      height: 50
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: 23
+    outer:
+      serializedVersion: 2
+      x: 667
+      y: 248
+      width: 50
+      height: 50
+    inner:
+      serializedVersion: 2
+      x: 667
+      y: 248
+      width: 50
+      height: 50
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: 21
+    outer:
+      serializedVersion: 2
+      x: 372
+      y: 135
+      width: 50
+      height: 50
+    inner:
+      serializedVersion: 2
+      x: 372
+      y: 135
+      width: 50
+      height: 50
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: 29
+    outer:
+      serializedVersion: 2
+      x: 708
+      y: 24
+      width: 50
+      height: 50
+    inner:
+      serializedVersion: 2
+      x: 708
+      y: 24
+      width: 50
+      height: 50
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: 3
+    outer:
+      serializedVersion: 2
+      x: 596
+      y: 142
+      width: 50
+      height: 50
+    inner:
+      serializedVersion: 2
+      x: 596
+      y: 142
+      width: 50
+      height: 50
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: 15
+    outer:
+      serializedVersion: 2
+      x: 484
+      y: 40
+      width: 50
+      height: 50
+    inner:
+      serializedVersion: 2
+      x: 484
+      y: 40
+      width: 50
+      height: 50
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: 48
+    outer:
+      serializedVersion: 2
+      x: 372
+      y: 23
+      width: 50
+      height: 50
+    inner:
+      serializedVersion: 2
+      x: 372
+      y: 23
+      width: 50
+      height: 50
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: 18
+    outer:
+      serializedVersion: 2
+      x: 260
+      y: 188
+      width: 50
+      height: 50
+    inner:
+      serializedVersion: 2
+      x: 260
+      y: 188
+      width: 50
+      height: 50
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: 50
+    outer:
+      serializedVersion: 2
+      x: 624
+      y: 360
+      width: 50
+      height: 50
+    inner:
+      serializedVersion: 2
+      x: 624
+      y: 360
+      width: 50
+      height: 50
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: 45
+    outer:
+      serializedVersion: 2
+      x: 428
+      y: 96
+      width: 50
+      height: 50
+    inner:
+      serializedVersion: 2
+      x: 428
+      y: 96
+      width: 50
+      height: 50
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: 16
+    outer:
+      serializedVersion: 2
+      x: 260
+      y: 20
+      width: 50
+      height: 50
+    inner:
+      serializedVersion: 2
+      x: 260
+      y: 20
+      width: 50
+      height: 50
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: 13
+    outer:
+      serializedVersion: 2
+      x: 204
+      y: 23
+      width: 50
+      height: 50
+    inner:
+      serializedVersion: 2
+      x: 204
+      y: 23
+      width: 50
+      height: 50
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: 1
+    outer:
+      serializedVersion: 2
+      x: 611
+      y: 206
+      width: 50
+      height: 50
+    inner:
+      serializedVersion: 2
+      x: 611
+      y: 206
+      width: 50
+      height: 50
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: 40
+    outer:
+      serializedVersion: 2
+      x: 372
+      y: 79
+      width: 50
+      height: 50
+    inner:
+      serializedVersion: 2
+      x: 372
+      y: 79
+      width: 50
+      height: 50
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: 39
+    outer:
+      serializedVersion: 2
+      x: 792
+      y: 416
+      width: 50
+      height: 50
+    inner:
+      serializedVersion: 2
+      x: 792
+      y: 416
+      width: 50
+      height: 50
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: 20
+    outer:
+      serializedVersion: 2
+      x: 792
+      y: 360
+      width: 50
+      height: 50
+    inner:
+      serializedVersion: 2
+      x: 792
+      y: 360
+      width: 50
+      height: 50
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: 5
+    outer:
+      serializedVersion: 2
+      x: 680
+      y: 416
+      width: 50
+      height: 50
+    inner:
+      serializedVersion: 2
+      x: 680
+      y: 416
+      width: 50
+      height: 50
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: 9
+    outer:
+      serializedVersion: 2
+      x: 484
+      y: 96
+      width: 50
+      height: 50
+    inner:
+      serializedVersion: 2
+      x: 484
+      y: 96
+      width: 50
+      height: 50
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: 38
+    outer:
+      serializedVersion: 2
+      x: 736
+      y: 304
+      width: 50
+      height: 50
+    inner:
+      serializedVersion: 2
+      x: 736
+      y: 304
+      width: 50
+      height: 50
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: 10
+    outer:
+      serializedVersion: 2
+      x: 540
+      y: 86
+      width: 50
+      height: 50
+    inner:
+      serializedVersion: 2
+      x: 540
+      y: 86
+      width: 50
+      height: 50
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: 46
+    outer:
+      serializedVersion: 2
+      x: 470
+      y: 152
+      width: 50
+      height: 50
+    inner:
+      serializedVersion: 2
+      x: 470
+      y: 152
+      width: 50
+      height: 50
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: 14
+    outer:
+      serializedVersion: 2
+      x: 316
+      y: 20
+      width: 50
+      height: 50
+    inner:
+      serializedVersion: 2
+      x: 316
+      y: 20
+      width: 50
+      height: 50
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: 49
+    outer:
+      serializedVersion: 2
+      x: 736
+      y: 416
+      width: 50
+      height: 50
+    inner:
+      serializedVersion: 2
+      x: 736
+      y: 416
+      width: 50
+      height: 50
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: 26
+    outer:
+      serializedVersion: 2
+      x: 540
+      y: 30
+      width: 50
+      height: 50
+    inner:
+      serializedVersion: 2
+      x: 540
+      y: 30
+      width: 50
+      height: 50
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: 4
+    outer:
+      serializedVersion: 2
+      x: 792
+      y: 304
+      width: 50
+      height: 50
+    inner:
+      serializedVersion: 2
+      x: 792
+      y: 304
+      width: 50
+      height: 50
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: 41
+    outer:
+      serializedVersion: 2
+      x: 764
+      y: 192
+      width: 50
+      height: 50
+    inner:
+      serializedVersion: 2
+      x: 764
+      y: 192
+      width: 50
+      height: 50
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: 43
+    outer:
+      serializedVersion: 2
+      x: 204
+      y: 135
+      width: 50
+      height: 50
+    inner:
+      serializedVersion: 2
+      x: 204
+      y: 135
+      width: 50
+      height: 50
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: 19
+    outer:
+      serializedVersion: 2
+      x: 414
+      y: 191
+      width: 50
+      height: 50
+    inner:
+      serializedVersion: 2
+      x: 414
+      y: 191
+      width: 50
+      height: 50
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: 12
+    outer:
+      serializedVersion: 2
+      x: 428
+      y: 40
+      width: 50
+      height: 50
+    inner:
+      serializedVersion: 2
+      x: 428
+      y: 40
+      width: 50
+      height: 50
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: 30
+    outer:
+      serializedVersion: 2
+      x: 596
+      y: 86
+      width: 50
+      height: 50
+    inner:
+      serializedVersion: 2
+      x: 596
+      y: 86
+      width: 50
+      height: 50
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: 11
+    outer:
+      serializedVersion: 2
+      x: 540
+      y: 142
+      width: 50
+      height: 50
+    inner:
+      serializedVersion: 2
+      x: 540
+      y: 142
+      width: 50
+      height: 50
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: 35
+    outer:
+      serializedVersion: 2
+      x: 596
+      y: 30
+      width: 50
+      height: 50
+    inner:
+      serializedVersion: 2
+      x: 596
+      y: 30
+      width: 50
+      height: 50
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: 34
+    outer:
+      serializedVersion: 2
+      x: 736
+      y: 360
+      width: 50
+      height: 50
+    inner:
+      serializedVersion: 2
+      x: 736
+      y: 360
+      width: 50
+      height: 50
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: 25
+    outer:
+      serializedVersion: 2
+      x: 260
+      y: 132
+      width: 50
+      height: 50
+    inner:
+      serializedVersion: 2
+      x: 260
+      y: 132
+      width: 50
+      height: 50
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: 44
+    outer:
+      serializedVersion: 2
+      x: 204
+      y: 79
+      width: 50
+      height: 50
+    inner:
+      serializedVersion: 2
+      x: 204
+      y: 79
+      width: 50
+      height: 50
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: 8
+    outer:
+      serializedVersion: 2
+      x: 624
+      y: 416
+      width: 50
+      height: 50
+    inner:
+      serializedVersion: 2
+      x: 624
+      y: 416
+      width: 50
+      height: 50
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: 2
+    outer:
+      serializedVersion: 2
+      x: 680
+      y: 360
+      width: 50
+      height: 50
+    inner:
+      serializedVersion: 2
+      x: 680
+      y: 360
+      width: 50
+      height: 50
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: 7
+    outer:
+      serializedVersion: 2
+      x: 708
+      y: 136
+      width: 50
+      height: 50
+    inner:
+      serializedVersion: 2
+      x: 708
+      y: 136
+      width: 50
+      height: 50
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: 42
+    outer:
+      serializedVersion: 2
+      x: 316
+      y: 132
+      width: 50
+      height: 50
+    inner:
+      serializedVersion: 2
+      x: 316
+      y: 132
+      width: 50
+      height: 50
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: 22
+    outer:
+      serializedVersion: 2
+      x: 708
+      y: 80
+      width: 50
+      height: 50
+    inner:
+      serializedVersion: 2
+      x: 708
+      y: 80
+      width: 50
+      height: 50
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: 36
+    outer:
+      serializedVersion: 2
+      x: 652
+      y: 150
+      width: 50
+      height: 50
+    inner:
+      serializedVersion: 2
+      x: 652
+      y: 150
+      width: 50
+      height: 50
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: 47
+    outer:
+      serializedVersion: 2
+      x: 680
+      y: 304
+      width: 50
+      height: 50
+    inner:
+      serializedVersion: 2
+      x: 680
+      y: 304
+      width: 50
+      height: 50
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: 24
+    outer:
+      serializedVersion: 2
+      x: 316
+      y: 188
+      width: 50
+      height: 50
+    inner:
+      serializedVersion: 2
+      x: 316
+      y: 188
+      width: 50
+      height: 50
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: 33
+    outer:
+      serializedVersion: 2
+      x: 316
+      y: 76
+      width: 50
+      height: 50
+    inner:
+      serializedVersion: 2
+      x: 316
+      y: 76
+      width: 50
+      height: 50
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: 17
+    outer:
+      serializedVersion: 2
+      x: 260
+      y: 76
+      width: 50
+      height: 50
+    inner:
+      serializedVersion: 2
+      x: 260
+      y: 76
+      width: 50
+      height: 50
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-elite-health-ico
+    outer:
+      serializedVersion: 2
+      x: 102
+      y: 622
+      width: 96
+      height: 96
+    inner:
+      serializedVersion: 2
+      x: 102
+      y: 622
+      width: 96
+      height: 96
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  mCoordinates: 0
+  mPixelSize: 1
+  mReplacement: {fileID: 0}
+  pngPath: GuiAtlasCommonIcons
+  pngHalfPath:
+  replaceTexture: {fileID: 2800000, guid: bac11b71ac5be9e4d86fa576fcebfbf4, type: 3}
+  useBinaryData: 0
+  textureWidth: 1024
+  textureHeight: 1024
 --- !u!1001 &100100000
 Prefab:
   serializedVersion: 2

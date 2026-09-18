@@ -1,66 +1,505 @@
-using UnityEngine;
+using System;
+using System.IO;
+using System.Net;
+using System.Net.Sockets;
+using System.Threading;
 
 namespace BestHTTP.PlatformSupport.TcpClient.General
 {
-	public class TcpClient : MonoBehaviour
+public class TcpClient : IDisposable
+{
+	private enum Properties : uint
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
+		LingerState = 1u,
+		NoDelay = 2u,
+		ReceiveBufferSize = 4u,
+		ReceiveTimeout = 8u,
+		SendBufferSize = 0x10u,
+		SendTimeout = 0x20u
 	}
+
+	private NetworkStream stream;
+
+	private bool active;
+
+	private Socket client;
+
+	private bool disposed;
+
+	private Properties values;
+
+	private int recv_timeout;
+
+	private int send_timeout;
+
+	private int recv_buffer_size;
+
+	private int send_buffer_size;
+
+	private LingerOption linger_state;
+
+	private bool no_delay;
+
+	protected bool Active
+	{
+		get
+		{
+			return active;
+		}
+		set
+		{
+			active = value;
+		}
+	}
+
+	public Socket Client
+	{
+		get
+		{
+			return client;
+		}
+		set
+		{
+			client = value;
+			stream = null;
+		}
+	}
+
+	public int Available => client.Available;
+
+	public bool Connected => client.Connected;
+
+	public bool ExclusiveAddressUse
+	{
+		get
+		{
+			return client.ExclusiveAddressUse;
+		}
+		set
+		{
+			client.ExclusiveAddressUse = value;
+		}
+	}
+
+	public LingerOption LingerState
+	{
+		get
+		{
+			if ((values & Properties.LingerState) != 0)
+			{
+				return linger_state;
+			}
+			return (LingerOption)client.GetSocketOption(SocketOptionLevel.Socket, SocketOptionName.Linger);
+		}
+		set
+		{
+			if (!client.Connected)
+			{
+				linger_state = value;
+				values |= Properties.LingerState;
+			}
+			else
+			{
+				client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.Linger, value);
+			}
+		}
+	}
+
+	public bool NoDelay
+	{
+		get
+		{
+			if ((values & Properties.NoDelay) != 0)
+			{
+				return no_delay;
+			}
+			return (bool)client.GetSocketOption(SocketOptionLevel.Tcp, SocketOptionName.Debug);
+		}
+		set
+		{
+			if (!client.Connected)
+			{
+				no_delay = value;
+				values |= Properties.NoDelay;
+			}
+			else
+			{
+				client.SetSocketOption(SocketOptionLevel.Tcp, SocketOptionName.Debug, value ? 1 : 0);
+			}
+		}
+	}
+
+	public int ReceiveBufferSize
+	{
+		get
+		{
+			if ((values & Properties.ReceiveBufferSize) != 0)
+			{
+				return recv_buffer_size;
+			}
+			return (int)client.GetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReceiveBuffer);
+		}
+		set
+		{
+			if (!client.Connected)
+			{
+				recv_buffer_size = value;
+				values |= Properties.ReceiveBufferSize;
+			}
+			else
+			{
+				client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReceiveBuffer, value);
+			}
+		}
+	}
+
+	public int ReceiveTimeout
+	{
+		get
+		{
+			if ((values & Properties.ReceiveTimeout) != 0)
+			{
+				return recv_timeout;
+			}
+			return (int)client.GetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReceiveTimeout);
+		}
+		set
+		{
+			if (!client.Connected)
+			{
+				recv_timeout = value;
+				values |= Properties.ReceiveTimeout;
+			}
+			else
+			{
+				client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReceiveTimeout, value);
+			}
+		}
+	}
+
+	public int SendBufferSize
+	{
+		get
+		{
+			if ((values & Properties.SendBufferSize) != 0)
+			{
+				return send_buffer_size;
+			}
+			return (int)client.GetSocketOption(SocketOptionLevel.Socket, SocketOptionName.SendBuffer);
+		}
+		set
+		{
+			if (!client.Connected)
+			{
+				send_buffer_size = value;
+				values |= Properties.SendBufferSize;
+			}
+			else
+			{
+				client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.SendBuffer, value);
+			}
+		}
+	}
+
+	public int SendTimeout
+	{
+		get
+		{
+			if ((values & Properties.SendTimeout) != 0)
+			{
+				return send_timeout;
+			}
+			return (int)client.GetSocketOption(SocketOptionLevel.Socket, SocketOptionName.SendTimeout);
+		}
+		set
+		{
+			if (!client.Connected)
+			{
+				send_timeout = value;
+				values |= Properties.SendTimeout;
+			}
+			else
+			{
+				client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.SendTimeout, value);
+			}
+		}
+	}
+
+	public TimeSpan ConnectTimeout { get; set; }
+
+	public TcpClient()
+	{
+		Init(AddressFamily.InterNetwork);
+		client.Bind(new IPEndPoint(IPAddress.Any, 0));
+		ConnectTimeout = TimeSpan.FromSeconds(2.0);
+	}
+
+	public TcpClient(AddressFamily family)
+	{
+		if (family != AddressFamily.InterNetwork && family != AddressFamily.InterNetworkV6)
+		{
+			throw new ArgumentException("Family must be InterNetwork or InterNetworkV6", "family");
+		}
+		Init(family);
+		IPAddress address = IPAddress.Any;
+		if (family == AddressFamily.InterNetworkV6)
+		{
+			address = IPAddress.IPv6Any;
+		}
+		client.Bind(new IPEndPoint(address, 0));
+		ConnectTimeout = TimeSpan.FromSeconds(2.0);
+	}
+
+	public TcpClient(IPEndPoint localEP)
+	{
+		Init(localEP.AddressFamily);
+		client.Bind(localEP);
+		ConnectTimeout = TimeSpan.FromSeconds(2.0);
+	}
+
+	public TcpClient(string hostname, int port)
+	{
+		ConnectTimeout = TimeSpan.FromSeconds(2.0);
+		Connect(hostname, port);
+	}
+
+	void IDisposable.Dispose()
+	{
+		Dispose(disposing: true);
+		GC.SuppressFinalize(this);
+	}
+
+	private void Init(AddressFamily family)
+	{
+		active = false;
+		if (client != null)
+		{
+			client.Close();
+			client = null;
+		}
+		client = new Socket(family, SocketType.Stream, ProtocolType.Tcp);
+	}
+
+	public bool IsConnected()
+	{
+		try
+		{
+			return !Client.Poll(1, SelectMode.SelectRead) || Client.Available != 0;
+		}
+		catch (Exception)
+		{
+			return false;
+		}
+	}
+
+	internal void SetTcpClient(Socket s)
+	{
+		Client = s;
+	}
+
+	public void Close()
+	{
+		((IDisposable)this).Dispose();
+	}
+
+	public void Connect(IPEndPoint remoteEP)
+	{
+		try
+		{
+			ManualResetEvent mre = new ManualResetEvent(initialState: false);
+			IAsyncResult result = client.BeginConnect(remoteEP, delegate
+			{
+				mre.Set();
+			}, null);
+			active = mre.WaitOne(ConnectTimeout);
+			if (active)
+			{
+				client.EndConnect(result);
+				return;
+			}
+			try
+			{
+				client.Close();
+			}
+			catch
+			{
+			}
+			throw new TimeoutException("Connection timed out!");
+		}
+		finally
+		{
+			CheckDisposed();
+		}
+	}
+
+	public void Connect(IPAddress address, int port)
+	{
+		Connect(new IPEndPoint(address, port));
+	}
+
+	private void SetOptions()
+	{
+		Properties properties = values;
+		values = (Properties)0u;
+		if ((properties & Properties.LingerState) != 0)
+		{
+			LingerState = linger_state;
+		}
+		if ((properties & Properties.NoDelay) != 0)
+		{
+			NoDelay = no_delay;
+		}
+		if ((properties & Properties.ReceiveBufferSize) != 0)
+		{
+			ReceiveBufferSize = recv_buffer_size;
+		}
+		if ((properties & Properties.ReceiveTimeout) != 0)
+		{
+			ReceiveTimeout = recv_timeout;
+		}
+		if ((properties & Properties.SendBufferSize) != 0)
+		{
+			SendBufferSize = send_buffer_size;
+		}
+		if ((properties & Properties.SendTimeout) != 0)
+		{
+			SendTimeout = send_timeout;
+		}
+	}
+
+	public void Connect(string hostname, int port)
+	{
+		IPAddress[] hostAddresses = Dns.GetHostAddresses(hostname);
+		Connect(hostAddresses, port);
+	}
+
+	public void Connect(IPAddress[] ipAddresses, int port)
+	{
+		CheckDisposed();
+		if (ipAddresses == null)
+		{
+			throw new ArgumentNullException("ipAddresses");
+		}
+		for (int i = 0; i < ipAddresses.Length; i++)
+		{
+			try
+			{
+				IPAddress iPAddress = ipAddresses[i];
+				if (iPAddress.Equals(IPAddress.Any) || iPAddress.Equals(IPAddress.IPv6Any))
+				{
+					throw new SocketException(10049);
+				}
+				Init(iPAddress.AddressFamily);
+				if (iPAddress.AddressFamily == AddressFamily.InterNetwork)
+				{
+					client.Bind(new IPEndPoint(IPAddress.Any, 0));
+				}
+				else
+				{
+					if (iPAddress.AddressFamily != AddressFamily.InterNetworkV6)
+					{
+						throw new NotSupportedException("This method is only valid for sockets in the InterNetwork and InterNetworkV6 families");
+					}
+					client.Bind(new IPEndPoint(IPAddress.IPv6Any, 0));
+				}
+				Connect(new IPEndPoint(iPAddress, port));
+				if (values != 0)
+				{
+					SetOptions();
+				}
+				client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.KeepAlive, optionValue: true);
+				try
+				{
+					break;
+				}
+				catch
+				{
+					break;
+				}
+			}
+			catch (Exception ex)
+			{
+				Init(AddressFamily.InterNetwork);
+				if (i == ipAddresses.Length - 1)
+				{
+					throw ex;
+				}
+			}
+		}
+	}
+
+	public void EndConnect(IAsyncResult asyncResult)
+	{
+		client.EndConnect(asyncResult);
+	}
+
+	public IAsyncResult BeginConnect(IPAddress address, int port, AsyncCallback requestCallback, object state)
+	{
+		return client.BeginConnect(address, port, requestCallback, state);
+	}
+
+	public IAsyncResult BeginConnect(IPAddress[] addresses, int port, AsyncCallback requestCallback, object state)
+	{
+		return client.BeginConnect(addresses, port, requestCallback, state);
+	}
+
+	public IAsyncResult BeginConnect(string host, int port, AsyncCallback requestCallback, object state)
+	{
+		return client.BeginConnect(host, port, requestCallback, state);
+	}
+
+	protected virtual void Dispose(bool disposing)
+	{
+		if (disposed)
+		{
+			return;
+		}
+		disposed = true;
+		if (disposing)
+		{
+			NetworkStream networkStream = stream;
+			stream = null;
+			if (networkStream != null)
+			{
+				networkStream.Close();
+				active = false;
+				networkStream = null;
+			}
+			else if (client != null)
+			{
+				client.Close();
+				client = null;
+			}
+		}
+	}
+
+	~TcpClient()
+	{
+		Dispose(disposing: false);
+	}
+
+	public Stream GetStream()
+	{
+		try
+		{
+			if (stream == null)
+			{
+				stream = new NetworkStream(client, ownsSocket: true);
+			}
+			return stream;
+		}
+		finally
+		{
+			CheckDisposed();
+		}
+	}
+
+	private void CheckDisposed()
+	{
+		if (disposed)
+		{
+			throw new ObjectDisposedException(GetType().FullName);
+		}
+	}
+}
 }

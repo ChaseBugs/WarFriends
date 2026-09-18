@@ -1,63 +1,211 @@
+using System;
 using UnityEngine;
 
-public class Background : MonoBehaviour
+public class Background : GuiElementSingle<Background>
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public enum Type
+	{
+		Classic,
+		Picture,
+		Overlay
+	}
 
-	1. No dll files were provided to AssetRipper.
+	public Camera backgroundCamera;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public UISprite tiles;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public UISprite blackOverlay;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public UISprite circleGlow;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public UISprite longGlow;
 
-	3. Assembly Reconstruction has not been implemented.
+	public float fadeDuration = 0.4f;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public ParticleSystem particles;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	private Type mPreviousVariant = Type.Picture;
 
-	4. This script is unnecessary.
+	public float tilesAlpha = 1f;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public float blackOverlayAlpha = 0.80078125f;
 
-	5. Script Content Level 0
+	public float circleGlowAlpha = 0.16015625f;
 
-		AssetRipper was set to not load any script information.
+	public float longGlowAlpha = 0.55078125f;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public GameObject parallax;
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public UISprite bgSprite;
 
-	7. An incorrect path was provided to AssetRipper.
+	public override bool isShowed
+	{
+		get
+		{
+			return base.isShowed;
+		}
+		protected set
+		{
+			base.isShowed = value;
+		}
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	public override void InitControls()
+	{
+		bgSprite.gameObject.SetActive(value: false);
+		if (parallax != null)
+		{
+			parallax.SetActive(value: true);
+		}
+		backgroundCamera.clearFlags = CameraClearFlags.Depth;
+	}
 
-	*/
+	public override void InitGUIValues()
+	{
+	}
+
+	public override void DoAfterHide()
+	{
+		base.DoAfterHide();
+		if (parallax != null)
+		{
+			parallax.SetActive(value: false);
+		}
+		backgroundCamera.gameObject.SetActive(value: false);
+	}
+
+	public override void DoBeforeShowUp()
+	{
+		base.DoBeforeShowUp();
+		bgSprite.gameObject.SetActive(value: false);
+		if (parallax != null)
+		{
+			parallax.SetActive(value: true);
+		}
+		backgroundCamera.gameObject.SetActive(value: true);
+	}
+
+	public void ShowVariant(Type newType)
+	{
+		if (mPreviousVariant != newType)
+		{
+			if (newType == Type.Classic)
+			{
+				UITweener uITweener = ShowSprite(tiles, tilesAlpha);
+				uITweener.onFinished = (UITweener.OnFinished)Delegate.Combine(uITweener.onFinished, (UITweener.OnFinished)delegate
+				{
+					if (parallax != null)
+					{
+						parallax.SetActive(value: false);
+					}
+				});
+				particles.gameObject.SetActive(value: true);
+				particles.Play();
+			}
+			else
+			{
+				HideSprite(tiles);
+				if (parallax != null)
+				{
+					parallax.SetActive(value: true);
+				}
+				particles.Stop();
+				particles.gameObject.SetActive(value: false);
+			}
+			if (newType == Type.Picture)
+			{
+				HideSprite(circleGlow);
+				HideSprite(longGlow);
+				HideSprite(blackOverlay);
+			}
+			else
+			{
+				ShowSprite(circleGlow, circleGlowAlpha);
+				ShowSprite(longGlow, longGlowAlpha);
+				ShowSprite(blackOverlay, blackOverlayAlpha);
+			}
+		}
+		else
+		{
+			tiles.gameObject.SetActive(newType == Type.Classic);
+			blackOverlay.gameObject.SetActive(newType == Type.Overlay);
+			circleGlow.gameObject.SetActive(newType != Type.Picture);
+			longGlow.gameObject.SetActive(newType != Type.Picture);
+			if (parallax != null)
+			{
+				parallax.SetActive(newType != Type.Classic);
+			}
+			if (tiles.gameObject.activeSelf)
+			{
+				TweenAlpha.Begin(tiles.gameObject, 0f, tilesAlpha).onFinished = null;
+				tiles.alpha = tilesAlpha;
+			}
+			if (blackOverlay.gameObject.activeSelf)
+			{
+				TweenAlpha.Begin(blackOverlay.gameObject, 0f, blackOverlayAlpha).onFinished = null;
+				blackOverlay.alpha = blackOverlayAlpha;
+			}
+			if (circleGlow.gameObject.activeSelf)
+			{
+				TweenAlpha.Begin(circleGlow.gameObject, 0f, circleGlowAlpha).onFinished = null;
+				circleGlow.alpha = circleGlowAlpha;
+			}
+			if (longGlow.gameObject.activeSelf)
+			{
+				TweenAlpha.Begin(longGlow.gameObject, 0f, longGlowAlpha).onFinished = null;
+				longGlow.alpha = longGlowAlpha;
+			}
+		}
+		mPreviousVariant = newType;
+	}
+
+	private UITweener ShowSprite(UISprite sprite, float alpha)
+	{
+		if (sprite.gameObject.activeSelf)
+		{
+			sprite.alpha = alpha;
+			return TweenAlpha.Begin(sprite.gameObject, 0f, alpha);
+		}
+		sprite.gameObject.SetActive(value: true);
+		sprite.alpha = 0f;
+		TweenAlpha tweenAlpha = TweenAlpha.Begin(sprite.gameObject, fadeDuration, alpha);
+		tweenAlpha.onFinished = null;
+		return tweenAlpha;
+	}
+
+	private void HideSprite(UISprite sprite)
+	{
+		if (sprite.gameObject.activeSelf)
+		{
+			TweenAlpha tweenAlpha = TweenAlpha.Begin(sprite.gameObject, fadeDuration, 0f);
+			tweenAlpha.method = UITweener.Method.Linear;
+			tweenAlpha.onFinished = delegate
+			{
+				sprite.gameObject.SetActive(value: false);
+			};
+		}
+		else
+		{
+			sprite.alpha = 0f;
+		}
+	}
+
+	public void DestroyParallax()
+	{
+		if (parallax != null)
+		{
+			UnityEngine.Object.Destroy(parallax);
+			parallax = null;
+		}
+	}
+
+	public void LoadParallax()
+	{
+		if (parallax == null)
+		{
+			GameObject original = Resources.Load<GameObject>("Parallax/Parallax");
+			parallax = UnityEngine.Object.Instantiate(original);
+			parallax.transform.parent = Singleton<MainSceneRoot>.instance.transform;
+		}
+	}
 }

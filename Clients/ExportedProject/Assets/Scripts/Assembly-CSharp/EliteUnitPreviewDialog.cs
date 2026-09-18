@@ -1,63 +1,145 @@
+using System;
 using UnityEngine;
 
-public class EliteUnitPreviewDialog : MonoBehaviour
+public class EliteUnitPreviewDialog : GuiElementSingle<EliteUnitPreviewDialog>, IGuiDialog
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Header("Top")]
+	public GameObject backButton;
 
-	1. No dll files were provided to AssetRipper.
+	public GameObject closeButton;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public UILabel unitNameLabel;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	[Header("Left")]
+	public UILabel elitePartsHint;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public UILabel arenaTimeLabel;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	[Header("Right")]
+	public UISprite eliteIcon;
 
-	3. Assembly Reconstruction has not been implemented.
+	public UISprite eliteBuffIcon;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public UILabel buffNameLabel;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public UILabel buffDescriptionLabel;
 
-	4. This script is unnecessary.
+	public UISprite eliteUnitIcon;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public UISprite eliteProgress;
 
-	5. Script Content Level 0
+	public UILabel elitePartsProgressLabel;
 
-		AssetRipper was set to not load any script information.
+	private LevelBehaviour mUnit;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	private float mTimer;
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public void ShowDialog(LevelBehaviour unit)
+	{
+		mUnit = unit;
+		if (mUnit.upgradeSlots.upgradeSlotElite.isUnlocked)
+		{
+			Singleton<GuiManager>.instance.ShowDialog(this, 0f);
+		}
+		else if (DebugSettings.debugEnabled)
+		{
+			ConfirmDialog.ShowAlert("HAS NO ELITE PARTS", "This unit cannot be showned, because it has not implemented elite buff.", 0f);
+		}
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	public override void InitControls()
+	{
+		UIEventListener uIEventListener = UIEventListener.Get(backButton);
+		uIEventListener.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener.onClick, new UIEventListener.VoidDelegate(CloseClick));
+		UIEventListener uIEventListener2 = UIEventListener.Get(closeButton);
+		uIEventListener2.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener2.onClick, new UIEventListener.VoidDelegate(CloseClick));
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	private void CloseClick(GameObject go)
+	{
+		if (base.isFullyShowed)
+		{
+			HideDialog();
+		}
+	}
 
-	*/
+	public override void InitGUIValues()
+	{
+		UpgradeSlotElite upgradeSlotElite = mUnit.upgradeSlots.upgradeSlotElite;
+		int currentParts = upgradeSlotElite.currentParts;
+		int upgradePriceParts = upgradeSlotElite.upgradePriceParts;
+		float progress = upgradeSlotElite.progress;
+		int boughtIndex = upgradeSlotElite.boughtIndex;
+		int actualMaxLevel = upgradeSlotElite.actualMaxLevel;
+		bool flag = boughtIndex == actualMaxLevel;
+		unitNameLabel.text = Localization.LocalizeFormat("ID_ELITEUNITNAME", mUnit.unitName.ToUpper());
+		MiscTools.SetUILabelRescale(unitNameLabel, 126f, 20f, 1600);
+		elitePartsHint.text = Localization.LocalizeFormat("ID_COLLECTELITEPARTSFROMARENALOOTBOXES", MiscTools.FormatBigNumber(upgradePriceParts), Colours.stringGreenArena, mUnit.unitElitePartsName, mUnit.unitName);
+		mUnit.SetUpEliteIcon(eliteIcon, eliteBuffIcon);
+		buffNameLabel.text = mUnit.unitBuffName;
+		MiscTools.SetUILabelRescale(buffNameLabel, 57f, 20f, 510);
+		buffDescriptionLabel.text = mUnit.GetBuffDescriptionWithColours(Colours.stringGreenArena);
+		eliteUnitIcon.spriteName = mUnit.upgradeSlots.iconNameElite;
+		eliteUnitIcon.MakePixelPerfect();
+		if (mUnit.isSoldier)
+		{
+			eliteUnitIcon.pivot = UIWidget.Pivot.Bottom;
+			eliteUnitIcon.transform.localPosition = eliteUnitIcon.transform.localPosition.ReplaceY(-56f);
+			float multiplier = 120f / eliteUnitIcon.transform.localScale.y;
+			eliteUnitIcon.transform.localScale = eliteUnitIcon.transform.localScale.MultiplyXY(multiplier);
+		}
+		else
+		{
+			eliteUnitIcon.pivot = UIWidget.Pivot.Center;
+			eliteUnitIcon.transform.localPosition = eliteUnitIcon.transform.localPosition.ReplaceY(0f);
+			float multiplier2 = Mathf.Min(174f / eliteUnitIcon.transform.localScale.x, 110f / eliteUnitIcon.transform.localScale.y);
+			eliteUnitIcon.transform.localScale = eliteUnitIcon.transform.localScale.MultiplyXY(multiplier2);
+		}
+		eliteProgress.fillAmount = progress;
+		elitePartsProgressLabel.text = ((!flag) ? $"{Colours.stringGreenArena}{MiscTools.FormatBigNumber(currentParts)}[-] {Colours.stringGray}/[-] {MiscTools.FormatBigNumber(upgradePriceParts)}" : $"{Colours.stringGreenArena}{MiscTools.FormatBigNumber(currentParts)}[-]");
+		float seconds = fadeInTime * 0.5f;
+		InvokeAfter(delegate
+		{
+			Singleton<LootBoxCameraArena>.instance.DisplayModel(mUnit, isLootboxReward: false);
+		}, seconds);
+	}
+
+	public override void DoBeforeHide()
+	{
+		base.DoBeforeHide();
+		Singleton<LootBoxCameraArena>.instance.Hide();
+	}
+
+	public override void DoBeforeShowUp()
+	{
+		base.DoBeforeShowUp();
+		UIDraggablePanel.panelDisabled = true;
+	}
+
+	public override void DoAfterHide()
+	{
+		base.DoAfterHide();
+		UIDraggablePanel.panelDisabled = false;
+	}
+
+	protected override void Update()
+	{
+		base.Update();
+		mTimer += Time.deltaTime;
+		if (mTimer > 0.333f)
+		{
+			mTimer -= 0.333f;
+			arenaTimeLabel.text = WarArenaGui.CreateArenaEventTimeTextLowerCase();
+		}
+	}
+
+	public GuiElement GetGuiElement()
+	{
+		return this;
+	}
+
+	public override void OnBack()
+	{
+		CloseClick(closeButton);
+	}
 }

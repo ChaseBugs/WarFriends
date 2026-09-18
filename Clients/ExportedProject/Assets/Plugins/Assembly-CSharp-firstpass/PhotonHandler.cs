@@ -1,63 +1,224 @@
+using System;
+using System.Collections;
+using System.Diagnostics;
+using ExitGames.Client.Photon;
 using UnityEngine;
 
-public class PhotonHandler : MonoBehaviour
+internal class PhotonHandler : MonoBehaviour
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	private const string PlayerPrefsKey = "PUNCloudBestRegion";
 
-	1. No dll files were provided to AssetRipper.
+	public static PhotonHandler SP;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public int updateInterval;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public int updateIntervalOnSerialize;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	private int nextSendTickCount;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	private int nextSendTickCountOnSerialize;
 
-	3. Assembly Reconstruction has not been implemented.
+	private static bool sendThreadShouldRun;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	private static Stopwatch timerToStopConnectionInBackground;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	protected internal static bool AppQuits;
 
-	4. This script is unnecessary.
+	protected internal static Type PingImplementation;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	internal static CloudRegionCode BestRegionCodeCurrently = CloudRegionCode.none;
 
-	5. Script Content Level 0
+	internal static CloudRegionCode BestRegionCodeInPreferences
+	{
+		get
+		{
+			string text = PlayerPrefs.GetString("PUNCloudBestRegion", string.Empty);
+			if (!string.IsNullOrEmpty(text))
+			{
+				return Region.Parse(text);
+			}
+			return CloudRegionCode.none;
+		}
+		set
+		{
+			if (value == CloudRegionCode.none)
+			{
+				PlayerPrefs.DeleteKey("PUNCloudBestRegion");
+			}
+			else
+			{
+				PlayerPrefs.SetString("PUNCloudBestRegion", value.ToString());
+			}
+		}
+	}
 
-		AssetRipper was set to not load any script information.
+	protected void Awake()
+	{
+		if (SP != null && SP != this && SP.gameObject != null)
+		{
+			UnityEngine.Object.DestroyImmediate(SP.gameObject);
+		}
+		SP = this;
+		UnityEngine.Object.DontDestroyOnLoad(base.gameObject);
+		updateInterval = 1000 / PhotonNetwork.sendRate;
+		updateIntervalOnSerialize = 1000 / PhotonNetwork.sendRateOnSerialize;
+		StartFallbackSendAckThread();
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	protected void OnLevelWasLoaded(int level)
+	{
+		PhotonNetwork.networkingPeer.SetLevelInPropsIfSynced(SceneManagerHelper.ActiveSceneName);
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	protected void OnApplicationQuit()
+	{
+		AppQuits = true;
+		StopFallbackSendAckThread();
+		PhotonNetwork.Disconnect();
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	protected void OnApplicationPause(bool pause)
+	{
+		if (PhotonNetwork.BackgroundTimeout > 0.1f)
+		{
+			if (timerToStopConnectionInBackground == null)
+			{
+				timerToStopConnectionInBackground = new Stopwatch();
+			}
+			timerToStopConnectionInBackground.Reset();
+			if (pause)
+			{
+				timerToStopConnectionInBackground.Start();
+			}
+			else
+			{
+				timerToStopConnectionInBackground.Stop();
+			}
+		}
+		if (pause)
+		{
+			StopFallbackSendAckThread();
+		}
+		else
+		{
+			StartFallbackSendAckThread();
+		}
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	protected void OnDestroy()
+	{
+		StopFallbackSendAckThread();
+	}
 
-	*/
+	protected void Update()
+	{
+		if (PhotonNetwork.networkingPeer == null)
+		{
+			UnityEngine.Debug.LogError("NetworkPeer broke!");
+		}
+		else
+		{
+			if (PhotonNetwork.connectionStateDetailed == ClientState.PeerCreated || PhotonNetwork.connectionStateDetailed == ClientState.Disconnected || PhotonNetwork.offlineMode || !PhotonNetwork.isMessageQueueRunning)
+			{
+				return;
+			}
+			bool flag = true;
+			while (PhotonNetwork.isMessageQueueRunning && flag)
+			{
+				flag = PhotonNetwork.networkingPeer.DispatchIncomingCommands();
+			}
+			int num = (int)(Time.realtimeSinceStartup * 1000f);
+			if (PhotonNetwork.isMessageQueueRunning && num > nextSendTickCountOnSerialize)
+			{
+				PhotonNetwork.networkingPeer.RunViewUpdate();
+				nextSendTickCountOnSerialize = num + updateIntervalOnSerialize;
+				nextSendTickCount = 0;
+			}
+			num = (int)(Time.realtimeSinceStartup * 1000f);
+			if (num > nextSendTickCount)
+			{
+				bool flag2 = true;
+				while (PhotonNetwork.isMessageQueueRunning && flag2)
+				{
+					flag2 = PhotonNetwork.networkingPeer.SendOutgoingCommands();
+				}
+				nextSendTickCount = num + updateInterval;
+			}
+		}
+	}
+
+	protected void OnJoinedRoom()
+	{
+		PhotonNetwork.networkingPeer.LoadLevelIfSynced();
+	}
+
+	protected void OnCreatedRoom()
+	{
+		PhotonNetwork.networkingPeer.SetLevelInPropsIfSynced(SceneManagerHelper.ActiveSceneName);
+	}
+
+	public static void StartFallbackSendAckThread()
+	{
+		if (!sendThreadShouldRun)
+		{
+			sendThreadShouldRun = true;
+			SupportClass.CallInBackground(FallbackSendAckThread);
+		}
+	}
+
+	public static void StopFallbackSendAckThread()
+	{
+		sendThreadShouldRun = false;
+	}
+
+	public static bool FallbackSendAckThread()
+	{
+		if (sendThreadShouldRun && PhotonNetwork.networkingPeer != null)
+		{
+			PhotonNetwork.networkingPeer.SendAcksOnly();
+		}
+		return sendThreadShouldRun;
+	}
+
+	protected internal static void PingAvailableRegionsAndConnectToBest()
+	{
+		SP.StartCoroutine(SP.PingAvailableRegionsCoroutine(connectToBest: true));
+	}
+
+	internal IEnumerator PingAvailableRegionsCoroutine(bool connectToBest)
+	{
+		BestRegionCodeCurrently = CloudRegionCode.none;
+		while (PhotonNetwork.networkingPeer.AvailableRegions == null)
+		{
+			if (PhotonNetwork.connectionStateDetailed != ClientState.ConnectingToNameServer && PhotonNetwork.connectionStateDetailed != ClientState.ConnectedToNameServer)
+			{
+				UnityEngine.Debug.LogError("Call ConnectToNameServer to ping available regions.");
+				yield break;
+			}
+			UnityEngine.Debug.Log(string.Concat("Waiting for AvailableRegions. State: ", PhotonNetwork.connectionStateDetailed, " Server: ", PhotonNetwork.Server, " PhotonNetwork.networkingPeer.AvailableRegions ", PhotonNetwork.networkingPeer.AvailableRegions != null));
+			yield return new WaitForSeconds(0.25f);
+		}
+		if (PhotonNetwork.networkingPeer.AvailableRegions == null || PhotonNetwork.networkingPeer.AvailableRegions.Count == 0)
+		{
+			UnityEngine.Debug.LogError("No regions available. Are you sure your appid is valid and setup?");
+			yield break;
+		}
+		PhotonPingManager pingManager = new PhotonPingManager();
+		foreach (Region region in PhotonNetwork.networkingPeer.AvailableRegions)
+		{
+			SP.StartCoroutine(pingManager.PingSocket(region));
+		}
+		while (!pingManager.Done)
+		{
+			yield return new WaitForSeconds(0.1f);
+		}
+		Region best = pingManager.BestRegion;
+		BestRegionCodeCurrently = best.Code;
+		BestRegionCodeInPreferences = best.Code;
+		UnityEngine.Debug.Log(string.Concat("Found best region: ", best.Code, " ping: ", best.Ping, ". Calling ConnectToRegionMaster() is: ", connectToBest));
+		if (connectToBest)
+		{
+			PhotonNetwork.networkingPeer.ConnectToRegionMaster(best.Code);
+		}
+	}
 }

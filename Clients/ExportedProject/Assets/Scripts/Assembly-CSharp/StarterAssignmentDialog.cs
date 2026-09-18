@@ -1,63 +1,138 @@
+using System;
+using System.Collections;
 using UnityEngine;
 
-public class StarterAssignmentDialog : MonoBehaviour
+public class StarterAssignmentDialog : GuiElementSingle<StarterAssignmentDialog>, IGuiDialog
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Header("Completition")]
+	public UILabel timeToCompleteLabel;
 
-	1. No dll files were provided to AssetRipper.
+	public StarterAssignmentComplete[] completedAssignments;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	[Header("Current Assignment")]
+	public StarterAssignmentRecord currentAssignmentRecord;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	[Header("Rewards")]
+	public UILabel rewardsTimeToEndLabel;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	[Header("Bottom")]
+	public GameObject okButton;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	private RadicalRoutine mUpdate;
 
-	3. Assembly Reconstruction has not been implemented.
+	public override void InitControls()
+	{
+		UIEventListener uIEventListener = UIEventListener.Get(okButton);
+		uIEventListener.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener.onClick, new UIEventListener.VoidDelegate(OkClick));
+		currentAssignmentRecord.InitControls(1868f);
+		StarterAssignmentsManager.instance.AssignmentClaimed += AnimateLine;
+	}
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	private void OkClick(GameObject go)
+	{
+		if (base.isFullyShowed)
+		{
+			HideDialog();
+		}
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	private void AnimateLine()
+	{
+		StarterAssignment starterAssignment = StarterAssignmentsManager.instance.currentAssignment;
+		if (starterAssignment == null && StarterAssignmentsManager.instance.assignmentsCount > 0)
+		{
+			starterAssignment = StarterAssignmentsManager.instance.assignments[StarterAssignmentsManager.instance.assignmentsCount - 1];
+		}
+		int num = ((starterAssignment != null) ? (starterAssignment.order - 1) : StarterAssignmentsManager.instance.assignmentsCount);
+		completedAssignments[num - 1].AnimateFinish();
+		if (num < StarterAssignmentsManager.instance.assignmentsCount)
+		{
+			completedAssignments[num].AnimateProgress();
+		}
+	}
 
-	4. This script is unnecessary.
+	public override void InitGUIValues()
+	{
+		StarterAssignmentsManager.instance.Evaluate();
+		StarterAssignment currentAssignment = StarterAssignmentsManager.instance.currentAssignment;
+		int num = ((!StarterAssignmentsManager.instance.isAllCompleted) ? (currentAssignment.order - 1) : StarterAssignmentsManager.instance.assignmentsCount);
+		for (int i = 0; i < completedAssignments.Length; i++)
+		{
+			if (i < num)
+			{
+				completedAssignments[i].SetCompleted();
+			}
+			else if (i == num)
+			{
+				completedAssignments[i].SetCurrent();
+			}
+			else
+			{
+				completedAssignments[i].SetDefault();
+			}
+		}
+		currentAssignmentRecord.Initialize(currentAssignment);
+		StartUpdate();
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public override void DoAfterHide()
+	{
+		base.DoAfterHide();
+		StopUpdate();
+	}
 
-	5. Script Content Level 0
+	public void StartUpdate()
+	{
+		StopUpdate();
+		mUpdate = RadicalRoutine.Create(AlternativeUpdate());
+		StartCoroutine(RadicalRoutine.Run(mUpdate.enumerator));
+	}
 
-		AssetRipper was set to not load any script information.
+	private void StopUpdate()
+	{
+		if (mUpdate != null)
+		{
+			mUpdate.Cancel();
+			mUpdate = null;
+		}
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	private IEnumerator AlternativeUpdate()
+	{
+		bool keepUpdating = StarterAssignmentsManager.instance.isActive;
+		while (isShowed && keepUpdating)
+		{
+			yield return new WaitForRealSeconds(0.333f);
+			if (StarterAssignmentsManager.instance.isAllCompleted)
+			{
+				timeToCompleteLabel.text = Colours.stringWhite + Localization.Localize("ID_COMPLETED");
+				rewardsTimeToEndLabel.text = Localization.Localize("ID_YOURREWARDS");
+			}
+			else
+			{
+				int starterAssignmentRemainingTime = Mathf.Max(StarterAssignmentsManager.instance.remainingTime, 0);
+				if (starterAssignmentRemainingTime == 0)
+				{
+					timeToCompleteLabel.text = Localization.Localize("ID_EXPIRED");
+					rewardsTimeToEndLabel.text = Localization.Localize("ID_STARTERASSIGNMENTSEXPIRED");
+				}
+				else
+				{
+					timeToCompleteLabel.text = string.Format("{0} {1}{2}", MiscTools.PrintableTime(starterAssignmentRemainingTime, "ID_READYTIME", string.Empty), Colours.stringWhite, Localization.Localize("ID_TOCOMPLETE"));
+					rewardsTimeToEndLabel.text = Localization.LocalizeFormat("ID_COMPLETEALLTENSTARTERASSIGNMENTS", MiscTools.PrintableTime(starterAssignmentRemainingTime, "ID_READYTIME", string.Empty));
+				}
+			}
+			keepUpdating = StarterAssignmentsManager.instance.isActive;
+		}
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public GuiElement GetGuiElement()
+	{
+		return this;
+	}
 
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public override void OnBack()
+	{
+		OkClick(okButton.gameObject);
+	}
 }

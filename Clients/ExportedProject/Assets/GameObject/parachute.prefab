@@ -93,6 +93,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4255512bd0968cc5623b4b6cb38d679a, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  isActivated: 0
+  parachuteDrag: 5
+  speed: 115
+  flyDirection: {x: -1, y: 0, z: 0}
+  parashuteRenderer: {fileID: 2388124}
+  physicsEventsListenerWeight: {fileID: 11470521}
+  weight: {fileID: 5484216}
+  snapTransform: {fileID: 0}
 --- !u!114 &11419550
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -104,6 +112,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f19ea4a15c3ca43dcc180d756f7a82b3, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  ownerId: 0
+  group: 0
+  OwnerShipWasTransfered: 0
+  prefixBackup: -1
+  synchronization: 3
+  onSerializeTransformOption: 3
+  onSerializeRigidBodyOption: 2
+  ownershipTransfer: 0
+  ObservedComponents:
+  - {fileID: 11454010}
+  viewIdField: 0
+  instantiationId: -1
+  currentMasterID: -1
+  didAwake: 0
+  isRuntimeInstantiated: 0
 --- !u!54 &5484216
 Rigidbody:
   serializedVersion: 2

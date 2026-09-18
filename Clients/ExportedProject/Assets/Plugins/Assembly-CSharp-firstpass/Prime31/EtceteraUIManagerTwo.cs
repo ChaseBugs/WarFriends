@@ -2,65 +2,90 @@ using UnityEngine;
 
 namespace Prime31
 {
-	public class EtceteraUIManagerTwo : MonoBehaviour
+public class EtceteraUIManagerTwo : MonoBehaviourGUI
+{
+	private int _fiveSecondNotificationId;
+
+	private int _tenSecondNotificationId;
+
+	private void OnGUI()
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
+		beginColumn();
+		if (GUILayout.Button("Show Inline Web View"))
+		{
+			EtceteraAndroid.inlineWebViewShow("http://prime31.com/", 160, 430, Screen.width - 160, Screen.height - 100);
+		}
+		if (GUILayout.Button("Close Inline Web View"))
+		{
+			EtceteraAndroid.inlineWebViewClose();
+		}
+		if (GUILayout.Button("Set Url of Inline Web View"))
+		{
+			EtceteraAndroid.inlineWebViewSetUrl("http://google.com");
+		}
+		if (GUILayout.Button("Set Frame of Inline Web View"))
+		{
+			EtceteraAndroid.inlineWebViewSetFrame(80, 50, 300, 400);
+		}
+		if (GUILayout.Button("Get First 25 Contacts"))
+		{
+			EtceteraAndroid.loadContacts(0, 25);
+		}
+		endColumn(hasSecondColumn: true);
+		if (GUILayout.Button("Schedule Notification in 5s"))
+		{
+			AndroidNotificationConfiguration androidNotificationConfiguration = new AndroidNotificationConfiguration(5L, "Notification Title - 5 Seconds", "The subtitle of the notification", "Ticker text gets ticked");
+			androidNotificationConfiguration.extraData = "five-second-note";
+			androidNotificationConfiguration.groupKey = "my-note-group";
+			AndroidNotificationConfiguration androidNotificationConfiguration2 = androidNotificationConfiguration;
+			androidNotificationConfiguration2.sound = false;
+			androidNotificationConfiguration2.vibrate = false;
+			_fiveSecondNotificationId = EtceteraAndroid.scheduleNotification(androidNotificationConfiguration2);
+			Debug.Log("notificationId: " + _fiveSecondNotificationId);
+		}
+		if (GUILayout.Button("Schedule Notification in 10s"))
+		{
+			AndroidNotificationConfiguration androidNotificationConfiguration = new AndroidNotificationConfiguration(10L, "Notification Title - 10 Seconds", "The subtitle of the notification", "Ticker text gets ticked");
+			androidNotificationConfiguration.extraData = "ten-second-note";
+			androidNotificationConfiguration.groupKey = "my-note-group";
+			AndroidNotificationConfiguration config = androidNotificationConfiguration;
+			_tenSecondNotificationId = EtceteraAndroid.scheduleNotification(config);
+			Debug.Log("notificationId: " + _tenSecondNotificationId);
+		}
+		if (GUILayout.Button("Schedule Group Summary Notification in 5s"))
+		{
+			AndroidNotificationConfiguration androidNotificationConfiguration = new AndroidNotificationConfiguration(5L, "Group Summary Title", "Group Summary Subtitle - Stuff Happened", "Ticker text");
+			androidNotificationConfiguration.extraData = "group-summary-note";
+			androidNotificationConfiguration.groupKey = "my-note-group";
+			androidNotificationConfiguration.isGroupSummary = true;
+			AndroidNotificationConfiguration config2 = androidNotificationConfiguration;
+			EtceteraAndroid.scheduleNotification(config2);
+		}
+		if (GUILayout.Button("Cancel 5s Notification"))
+		{
+			EtceteraAndroid.cancelNotification(_fiveSecondNotificationId);
+		}
+		if (GUILayout.Button("Cancel 10s Notification"))
+		{
+			EtceteraAndroid.cancelNotification(_tenSecondNotificationId);
+		}
+		if (GUILayout.Button("Check for Notifications"))
+		{
+			EtceteraAndroid.checkForNotifications();
+		}
+		if (GUILayout.Button("Cancel All Notifications"))
+		{
+			EtceteraAndroid.cancelAllNotifications();
+		}
+		if (GUILayout.Button("Quit App"))
+		{
+			Application.Quit();
+		}
+		endColumn();
+		if (bottomRightButton("Previous Scene"))
+		{
+			MonoBehaviourGUI.loadLevel("EtceteraTestScene");
+		}
 	}
+}
 }

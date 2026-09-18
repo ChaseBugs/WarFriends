@@ -2,62 +2,69 @@ using UnityEngine;
 
 public class PlayerMinigunWeaponMotor : MonoBehaviour
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	private enum State
+	{
+		Stopped,
+		Starting,
+		Looping,
+		Stopping
+	}
 
-	1. No dll files were provided to AssetRipper.
+	public AudioSource audioSource;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public AudioClip startSound;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public AudioClip loopSound;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public AudioClip stopSound;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	private State mState;
 
-	3. Assembly Reconstruction has not been implemented.
+	public void StartMotor()
+	{
+		mState = State.Starting;
+		audioSource.loop = false;
+		audioSource.clip = startSound;
+		audioSource.Play();
+	}
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public void StopMotor()
+	{
+		if (mState == State.Starting || mState == State.Looping)
+		{
+			mState = State.Stopping;
+			audioSource.loop = false;
+			audioSource.clip = stopSound;
+			audioSource.Play();
+		}
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
-
-	4. This script is unnecessary.
-
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
-
-	5. Script Content Level 0
-
-		AssetRipper was set to not load any script information.
-
-	6. Cpp2IL failed to decompile Il2Cpp data
-
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	private void Update()
+	{
+		switch (mState)
+		{
+		case State.Stopped:
+			break;
+		case State.Starting:
+			if (!audioSource.isPlaying)
+			{
+				mState = State.Looping;
+				audioSource.loop = true;
+				audioSource.clip = loopSound;
+				audioSource.Play();
+			}
+			break;
+		case State.Looping:
+			break;
+		case State.Stopping:
+			if (!audioSource.isPlaying)
+			{
+				mState = State.Stopped;
+				audioSource.Stop();
+				audioSource.loop = false;
+				audioSource.clip = null;
+			}
+			break;
+		}
+	}
 }

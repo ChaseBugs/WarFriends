@@ -1,63 +1,86 @@
 using UnityEngine;
 
-public class SelectStatisticsButton : MonoBehaviour
+public class SelectStatisticsButton : Core_BaseScript
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Header("Players vs Squad")]
+	public GameObject playerSquadGO;
 
-	1. No dll files were provided to AssetRipper.
+	public UILabel players;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public UILabel squads;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public UISprite selectBox;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public UITable table;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public BoxCollider boxCollider;
 
-	3. Assembly Reconstruction has not been implemented.
+	[Header("Global vs Local")]
+	public GameObject globalLocalGO;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public UILabel global;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public UILabel local;
 
-	4. This script is unnecessary.
+	public UISprite globalLocalSprite;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public UITable globalLocalTable;
 
-	5. Script Content Level 0
+	public BoxCollider globalLocalCollider;
 
-		AssetRipper was set to not load any script information.
+	private bool mPlayerSquadInitialized;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	private bool mGlobalLocalInitialized;
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	private float mSpaceBetween = 60f;
 
-	7. An incorrect path was provided to AssetRipper.
+	public void Initialize()
+	{
+		mPlayerSquadInitialized = false;
+		mGlobalLocalInitialized = false;
+		table.repositionNow = true;
+		table.onReposition = delegate
+		{
+			float x = squads.transform.parent.transform.localPosition.x;
+			float x2 = table.padding.x;
+			playerSquadGO.transform.localPosition = new Vector3(0f - x, playerSquadGO.transform.localPosition.y, 0f);
+			boxCollider.center = new Vector3((x - x2) / 2f + x2, boxCollider.center.y, boxCollider.center.z);
+			boxCollider.size = new Vector3(x - x2, boxCollider.size.y, boxCollider.size.z);
+			mPlayerSquadInitialized = true;
+			InitializeSpace();
+		};
+		globalLocalTable.repositionNow = true;
+		globalLocalTable.onReposition = delegate
+		{
+			float x = local.transform.parent.transform.localPosition.x;
+			float x2 = globalLocalTable.padding.x;
+			globalLocalCollider.center = new Vector3((x - x2) / 2f + x2, boxCollider.center.y, boxCollider.center.z);
+			globalLocalCollider.size = new Vector3(x - x2, globalLocalCollider.size.y, globalLocalCollider.size.z);
+			mGlobalLocalInitialized = true;
+			InitializeSpace();
+		};
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	private void InitializeSpace()
+	{
+		if (mPlayerSquadInitialized && mGlobalLocalInitialized)
+		{
+			float num = local.transform.parent.transform.localPosition.x + mSpaceBetween + squads.transform.parent.transform.localPosition.x;
+			globalLocalGO.transform.localPosition = new Vector3(0f - num, globalLocalGO.transform.localPosition.y, 0f);
+		}
+	}
 
-	*/
+	public void Select(bool playerSelected)
+	{
+		players.color = ((!playerSelected) ? Colours.grayButton : Colours.blue);
+		squads.color = ((!playerSelected) ? Colours.blue : Colours.grayButton);
+		selectBox.transform.localPosition = new Vector3((!playerSelected) ? 30f : (-30f), 0f, 0f);
+	}
+
+	public void SelectGlobalLocal(bool globalSelected)
+	{
+		global.color = ((!globalSelected) ? Colours.grayButton : Colours.blue);
+		local.color = ((!globalSelected) ? Colours.blue : Colours.grayButton);
+		globalLocalSprite.transform.localPosition = new Vector3((!globalSelected) ? 30f : (-30f), 0f, 0f);
+	}
 }

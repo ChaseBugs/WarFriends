@@ -1,63 +1,100 @@
+using System;
+using System.Collections;
 using UnityEngine;
 
-public class IntroductionDealsElitePack : MonoBehaviour
+public class IntroductionDealsElitePack : IntroductionDealsItem
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Header("Elite Pack")]
+	public string packId;
 
-	1. No dll files were provided to AssetRipper.
+	public Collider buttonCollider;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public UILabel saleLabel;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public UILabel timer;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	private bool mIsAvailable;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	private bool mIsRunning;
 
-	3. Assembly Reconstruction has not been implemented.
+	private RadicalRoutine mTimeWorker;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public override void InitEvents()
+	{
+		base.InitEvents();
+		buttonCollider.enabled = false;
+		UIEventListener uIEventListener = UIEventListener.Get(buttonCollider.gameObject);
+		uIEventListener.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener.onClick, new UIEventListener.VoidDelegate(OnButtonClick));
+		Singleton<BeanstalkServerManager>.instance.DataLoaded += DataLoaded;
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	private void OnButtonClick(GameObject go)
+	{
+		GuiElementSingle<PackContentDialog>.instance.ShowDialog(SpecialPackContent.CreatePackFromId(packId));
+		SetShowTimeEnd(0.5f);
+	}
 
-	4. This script is unnecessary.
+	private void DataLoaded(DatabaseAction action)
+	{
+		if (GuiScreenSingle<MainScreen>.instance.isShowed && action == DatabaseAction.BuyPack)
+		{
+			UpdateAvailable();
+		}
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public override void InitGuiValues()
+	{
+		base.InitGuiValues();
+		float num = Singleton<GameVariables>.instance.SaleOfPack(packId);
+		saleLabel.text = $"-{MiscTools.RoundToInt(num * 100f)}%";
+		UpdateAvailable();
+	}
 
-	5. Script Content Level 0
+	public override bool IsAvailable()
+	{
+		return PlayerAnalytics.instance.ShowPack(packId);
+	}
 
-		AssetRipper was set to not load any script information.
+	public override IEnumerator Show(float time)
+	{
+		buttonCollider.enabled = true;
+		if (!mIsRunning)
+		{
+			mIsRunning = true;
+			mTimeWorker = RadicalRoutine.Create(TimerWorker());
+			StartCoroutine(RadicalRoutine.Run(mTimeWorker.enumerator));
+		}
+		return base.Show(time);
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public override IEnumerator Hide(float time)
+	{
+		buttonCollider.enabled = false;
+		if (mIsRunning)
+		{
+			mIsRunning = false;
+			mTimeWorker.Cancel();
+		}
+		return base.Hide(time);
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	private IEnumerator TimerWorker()
+	{
+		while (true)
+		{
+			int packDeadline = PlayerAnalytics.instance.data.PackDeadline(packId) - Singleton<BeanstalkServerManager>.instance.currentTimestamp;
+			timer.text = string.Format("{0} {1}{2}", Localization.Localize("ID_OFFERACTIVE"), Colours.stringGreenElite, MiscTools.PrintableTime(packDeadline, "-", string.Empty));
+			yield return new WaitForRealSeconds(0.333f);
+		}
+	}
 
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	private void UpdateAvailable()
+	{
+		mIsAvailable = IsAvailable();
+		if (!mIsAvailable)
+		{
+			SetShowTimeEnd(0.5f);
+			buttonCollider.enabled = false;
+		}
+	}
 }

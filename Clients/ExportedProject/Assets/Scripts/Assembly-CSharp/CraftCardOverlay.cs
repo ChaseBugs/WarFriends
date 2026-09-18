@@ -1,63 +1,93 @@
 using UnityEngine;
 
-public class CraftCardOverlay : MonoBehaviour
+public class CraftCardOverlay : Core_BaseScript
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Header("Core")]
+	public UIPanel panel;
 
-	1. No dll files were provided to AssetRipper.
+	public UILabel title;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public GameObject startPosition;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public GameObject endPosition;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public CardRecord cardRecordPrefab;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	[Header("Continue Button")]
+	public GameObject continueButton;
 
-	3. Assembly Reconstruction has not been implemented.
+	public AnimationCurve buttonAnimatinCurve;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	private CardRecord mCraftedWarcard;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public void InitControls()
+	{
+		UIEventListener.Get(continueButton.gameObject).onClick = HidingAnimation;
+	}
 
-	4. This script is unnecessary.
+	private void HidingAnimation(GameObject go)
+	{
+		TweenAlpha.Begin(panel.gameObject, 0.2f, 0f).onFinished = delegate
+		{
+			PrepareOverlay();
+		};
+		if (mCraftedWarcard != null)
+		{
+			TweenAlpha.Begin(mCraftedWarcard.gameObject, 0.2f, 0f).onFinished = null;
+		}
+		UIDraggablePanel.panelDisabled = false;
+		GuiScreenSingle<CardMenuScreen>.instance.craftCardsContent.ClaimingAnimationFinished();
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public void PrepareOverlay()
+	{
+		base.gameObject.SetActive(value: true);
+		TweenAlpha component = GetComponent<TweenAlpha>();
+		if (component != null)
+		{
+			component.enabled = false;
+		}
+		panel.alpha1 = 0f;
+		base.gameObject.SetActive(value: false);
+		if (mCraftedWarcard != null)
+		{
+			mCraftedWarcard.DestroyPooled();
+			mCraftedWarcard = null;
+		}
+	}
 
-	5. Script Content Level 0
-
-		AssetRipper was set to not load any script information.
-
-	6. Cpp2IL failed to decompile Il2Cpp data
-
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public void AnimateWarcard(Card craftedCard)
+	{
+		UIDraggablePanel.panelDisabled = true;
+		base.gameObject.SetActive(value: true);
+		panel.alpha1 = 0f;
+		panel.isFreezed = false;
+		float initDelay = 0.05f;
+		TweenAlpha.Begin(panel.gameObject, 0.2f, 0f, 1f).onFinished = delegate
+		{
+			Debug.Log("Creating warcard " + craftedCard.cardName);
+			mCraftedWarcard = (CardRecord)Singleton<GuiManager>.instance.objectPool.InstantiateAsChild(cardRecordPrefab, endPosition, "Crafted warcard " + craftedCard.cardName);
+			if (mCraftedWarcard != null)
+			{
+				mCraftedWarcard.Initialize(craftedCard);
+				mCraftedWarcard.PrepareBuyAnimation();
+				mCraftedWarcard.boxCollider.enabled = false;
+				mCraftedWarcard.transform.position = startPosition.transform.position;
+				float duration = 0.5f;
+				TweenAlpha.Begin(mCraftedWarcard.backOfCard.gameObject, 0.1f, 0f, 1f).delay = initDelay;
+				TweenScale.Begin(mCraftedWarcard.backOfCard.gameObject, duration, mCraftedWarcard.backOfCard.cachedTransform.localScale.MultiplyXY(2f)).delay = initDelay + 0.05f;
+				TweenPosition tweenPosition2 = TweenPosition.Begin(mCraftedWarcard.gameObject, duration, Vector3.zero);
+				tweenPosition2.delay = initDelay + 0.05f;
+				tweenPosition2.onFinished = delegate
+				{
+					mCraftedWarcard.FlipBuyAnimation(0);
+				};
+			}
+		};
+		float delay = initDelay + 0.2f;
+		continueButton.transform.localPosition = new Vector3(0f, -100f, 0f);
+		TweenPosition tweenPosition = TweenPosition.Begin(continueButton.gameObject, 0.6f, new Vector3(0f, 160f, 0f));
+		tweenPosition.delay = delay;
+		tweenPosition.animationCurve = buttonAnimatinCurve;
+	}
 }

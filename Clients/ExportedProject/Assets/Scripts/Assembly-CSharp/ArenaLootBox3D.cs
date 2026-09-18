@@ -1,63 +1,112 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
-public class ArenaLootBox3D : MonoBehaviour
+public class ArenaLootBox3D : Core_BaseScript
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[SerializeField]
+	private GameObject mSstand;
 
-	1. No dll files were provided to AssetRipper.
+	[SerializeField]
+	private GameObject mBox;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	[SerializeField]
+	private GameObject mShield;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	[SerializeField]
+	private List<Material> mLootBoxMaterials;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	[SerializeField]
+	private ParticleSystem particles;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	[SerializeField]
+	private ParticleSystem mBoxGlow;
 
-	3. Assembly Reconstruction has not been implemented.
+	[SerializeField]
+	private Animation openAnimation;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	private WarArenaConfig.LootBoxType mType;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public void ShowLootBox(WarArenaConfig.LootBoxType type)
+	{
+		OpenLootbox(open: false);
+		SwitchShield(enableShield: false);
+		SkinnedMeshRenderer componentInChildren = mBox.GetComponentInChildren<SkinnedMeshRenderer>();
+		componentInChildren.material = mLootBoxMaterials[(int)type];
+		mType = type;
+	}
 
-	4. This script is unnecessary.
+	public void ShowShield()
+	{
+		SwitchShield(enableShield: true);
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private void SwitchShield(bool enableShield)
+	{
+		mSstand.SetActive(!enableShield);
+		mBox.SetActive(!enableShield);
+		mShield.SetActive(enableShield);
+	}
 
-	5. Script Content Level 0
+	public void Hide()
+	{
+		Transform child = base.transform.GetChild(0);
+		particles.Stop();
+		mBoxGlow.Stop();
+		TweenPosition.Begin(child.gameObject, 0.2f, -600f * Vector3.up).onFinished = delegate
+		{
+			OpenLootbox(open: false);
+		};
+	}
 
-		AssetRipper was set to not load any script information.
+	public void ShowAnimation()
+	{
+		Transform tr = base.transform.GetChild(0);
+		TweenPosition tweenPosition = TweenPosition.Begin(tr.gameObject, 0.4f, -300f * Vector3.up, 20f * Vector3.up);
+		tweenPosition.onFinished = (UITweener.OnFinished)Delegate.Combine(tweenPosition.onFinished, (UITweener.OnFinished)delegate
+		{
+			TweenPosition.Begin(tr.gameObject, 0.1f, Vector3.zero);
+		});
+		TweenRotationSpecial.Begin(mBox.gameObject, 0f, Vector3.up, 0f, 0f);
+		mBox.transform.localRotation = Quaternion.Euler(-90f, 0f, 0f);
+		TweenPosition.Begin(mBox.gameObject, 0f, 2.3f * Vector3.up);
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public void ShowClaimed()
+	{
+		TweenPosition.Begin(mBox.gameObject, 0f, 4.3f * Vector3.up);
+		TweenRotationSpecial tweenRotationSpecial = TweenRotationSpecial.Begin(mBox.gameObject, 0f, Vector3.up, 0f, 0f);
+		tweenRotationSpecial.baseRotation = new Vector3(-90f, 0f, 0f);
+		tweenRotationSpecial.Sample(0f, isFinished: false);
+		particles.Play(withChildren: true);
+		OpenLootbox(open: true);
+		mBoxGlow.Play();
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	private void OpenLootbox(bool open)
+	{
+		AnimationState animationState = openAnimation["open"];
+		animationState.enabled = true;
+		animationState.weight = 1f;
+		animationState.normalizedTime = ((!open) ? 0f : 1f);
+		openAnimation.Sample();
+		animationState.enabled = false;
+	}
 
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public void ShowClaimAnimation()
+	{
+		TweenPosition tweenPosition = TweenPosition.Begin(mBox.gameObject, 0.4f, 4.6f * Vector3.up);
+		tweenPosition.onFinished = (UITweener.OnFinished)Delegate.Combine(tweenPosition.onFinished, (UITweener.OnFinished)delegate
+		{
+			TweenPosition tweenPosition2 = TweenPosition.Begin(mBox.gameObject, 0.1f, 4.3f * Vector3.up);
+			tweenPosition2.onFinished = (UITweener.OnFinished)Delegate.Combine(tweenPosition2.onFinished, (UITweener.OnFinished)delegate
+			{
+				TweenRotationSpecial tweenRotationSpecial = TweenRotationSpecial.Begin(mBox.gameObject, 2f, Vector3.up, 360f, 0f);
+				tweenRotationSpecial.baseRotation = new Vector3(-90f, 0f, 0f);
+				tweenRotationSpecial.method = UITweener.Method.Linear;
+				tweenRotationSpecial.style = UITweener.Style.Loop;
+				particles.Play(withChildren: true);
+			});
+		});
+	}
 }

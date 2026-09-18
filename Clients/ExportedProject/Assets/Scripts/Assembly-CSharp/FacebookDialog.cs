@@ -1,63 +1,96 @@
+using System;
 using UnityEngine;
 
-public class FacebookDialog : MonoBehaviour
+public class FacebookDialog : GuiElementSingle<FacebookDialog>, IGuiDialog
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Header("Texts")]
+	public UILabel titleText;
 
-	1. No dll files were provided to AssetRipper.
+	public UILabel legalText;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	[Header("Buttons")]
+	public UIButton signIn;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public UILabel signInLabel;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public UIButton cancel;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	private Action<bool> mDialogResult;
 
-	3. Assembly Reconstruction has not been implemented.
+	public void ShowLoginDialog(Action<bool> resultHandler)
+	{
+		mDialogResult = resultHandler;
+		titleText.text = Localization.Localize("ID_FACEBOOKCONNECT");
+		legalText.text = Localization.Localize("ID_FACEBOOKLOGINLEGALTEXT");
+		signInLabel.text = Localization.Localize("ID_SIGNIN");
+		Singleton<GuiManager>.instance.ShowDialog(this, 0f);
+	}
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public void ShowLogoutDialog(bool newAccount, Action<bool> resultHandler)
+	{
+		mDialogResult = resultHandler;
+		string text = "ID_FACEBOOKLOGOUTLEGALTEXT";
+		text = "ID_FACEBOOKLOGOUTLEGALTEXTA";
+		titleText.text = Localization.Localize("ID_FACEBOOKLOGOUT");
+		legalText.text = Localization.Localize((!newAccount) ? text : "ID_FACEBOOKLOGOUTLEGALTEXT2");
+		signInLabel.text = Localization.Localize("ID_SIGNOUT");
+		Singleton<GuiManager>.instance.ShowDialog(this, 0f);
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public void ShowGooglePlayLogoutDialog(Action<bool> resultHandler)
+	{
+		mDialogResult = resultHandler;
+		titleText.text = Localization.Localize("ID_GOOGLEPLAYLOGOUT");
+		legalText.text = Localization.Localize("ID_GOOGLEPLAYLOGOUTTEXT");
+		signInLabel.text = Localization.Localize("ID_SIGNOUT");
+		Singleton<GuiManager>.instance.ShowDialog(this, 0f);
+	}
 
-	4. This script is unnecessary.
+	public override void InitControls()
+	{
+		UIEventListener uIEventListener = UIEventListener.Get(signIn.gameObject);
+		uIEventListener.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener.onClick, new UIEventListener.VoidDelegate(SignInClick));
+		UIEventListener uIEventListener2 = UIEventListener.Get(cancel.gameObject);
+		uIEventListener2.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener2.onClick, new UIEventListener.VoidDelegate(CancelClick));
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private void SignInClick(GameObject go)
+	{
+		if (base.isFullyShowed)
+		{
+			HideDialog();
+			if (mDialogResult != null)
+			{
+				mDialogResult(obj: true);
+				mDialogResult = null;
+			}
+		}
+	}
 
-	5. Script Content Level 0
+	private void CancelClick(GameObject go)
+	{
+		if (base.isFullyShowed)
+		{
+			HideDialog();
+			if (mDialogResult != null)
+			{
+				mDialogResult(obj: false);
+				mDialogResult = null;
+			}
+		}
+	}
 
-		AssetRipper was set to not load any script information.
+	public override void InitGUIValues()
+	{
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public GuiElement GetGuiElement()
+	{
+		return this;
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public override void OnBack()
+	{
+		CancelClick(cancel.gameObject);
+	}
 }

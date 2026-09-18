@@ -1,63 +1,146 @@
 using UnityEngine;
 
-public class CameraPathTiltList : MonoBehaviour
+[ExecuteInEditMode]
+public class CameraPathTiltList : CameraPathPointList
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public enum Interpolation
+	{
+		None,
+		Linear,
+		SmoothStep
+	}
 
-	1. No dll files were provided to AssetRipper.
+	public Interpolation interpolation = Interpolation.SmoothStep;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public bool listEnabled = true;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public float autoSensitivity = 1f;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public new CameraPathTilt this[int index] => (CameraPathTilt)base[index];
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	private void OnEnable()
+	{
+		base.hideFlags = HideFlags.HideInInspector;
+	}
 
-	3. Assembly Reconstruction has not been implemented.
+	public override void Init(CameraPath _cameraPath)
+	{
+		if (!initialised)
+		{
+			base.Init(_cameraPath);
+			cameraPath.PathPointAddedEvent += AddTilt;
+			pointTypeName = "Tilt";
+			initialised = true;
+		}
+	}
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public override void CleanUp()
+	{
+		base.CleanUp();
+		cameraPath.PathPointAddedEvent -= AddTilt;
+		initialised = false;
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public void AddTilt(CameraPathControlPoint atPoint)
+	{
+		CameraPathTilt cameraPathTilt = base.gameObject.AddComponent<CameraPathTilt>();
+		cameraPathTilt.tilt = 0f;
+		cameraPathTilt.hideFlags = HideFlags.HideInInspector;
+		AddPoint(cameraPathTilt, atPoint);
+		RecalculatePoints();
+	}
 
-	4. This script is unnecessary.
+	public CameraPathTilt AddTilt(CameraPathControlPoint curvePointA, CameraPathControlPoint curvePointB, float curvePercetage, float tilt)
+	{
+		CameraPathTilt cameraPathTilt = base.gameObject.AddComponent<CameraPathTilt>();
+		cameraPathTilt.tilt = tilt;
+		cameraPathTilt.hideFlags = HideFlags.HideInInspector;
+		AddPoint(cameraPathTilt, curvePointA, curvePointB, curvePercetage);
+		RecalculatePoints();
+		return cameraPathTilt;
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public float GetTilt(float percentage)
+	{
+		if (base.realNumberOfPoints < 2)
+		{
+			if (base.realNumberOfPoints == 1)
+			{
+				return this[0].tilt;
+			}
+			return 0f;
+		}
+		percentage = Mathf.Clamp(percentage, 0f, 1f);
+		switch (interpolation)
+		{
+		case Interpolation.SmoothStep:
+			return SmoothStepInterpolation(percentage);
+		case Interpolation.Linear:
+			return LinearInterpolation(percentage);
+		case Interpolation.None:
+		{
+			CameraPathTilt cameraPathTilt = (CameraPathTilt)GetPoint(GetNextPointIndex(percentage));
+			return cameraPathTilt.tilt;
+		}
+		default:
+			return LinearInterpolation(percentage);
+		}
+	}
 
-	5. Script Content Level 0
+	public void AutoSetTilts()
+	{
+		for (int i = 0; i < base.realNumberOfPoints; i++)
+		{
+			AutoSetTilt(this[i]);
+		}
+	}
 
-		AssetRipper was set to not load any script information.
+	public void AutoSetTilt(CameraPathTilt point)
+	{
+		float percent = point.percent;
+		Vector3 pathPosition = cameraPath.GetPathPosition(percent - 0.1f);
+		Vector3 pathPosition2 = cameraPath.GetPathPosition(percent);
+		Vector3 pathPosition3 = cameraPath.GetPathPosition(percent + 0.1f);
+		Vector3 vector = pathPosition2 - pathPosition;
+		Vector3 vector2 = pathPosition3 - pathPosition2;
+		Quaternion quaternion = Quaternion.LookRotation(-cameraPath.GetPathDirection(point.percent));
+		Vector3 vector3 = quaternion * (vector2 - vector).normalized;
+		float num = Vector2.Angle(Vector2.up, new Vector2(vector3.x, vector3.y));
+		float num2 = Mathf.Min(Mathf.Abs(vector3.x) + Mathf.Abs(vector3.y) / Mathf.Abs(vector3.z), 1f);
+		point.tilt = (0f - num) * autoSensitivity * num2;
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	private float LinearInterpolation(float percentage)
+	{
+		int lastPointIndex = GetLastPointIndex(percentage);
+		CameraPathTilt cameraPathTilt = (CameraPathTilt)GetPoint(lastPointIndex);
+		CameraPathTilt cameraPathTilt2 = (CameraPathTilt)GetPoint(lastPointIndex + 1);
+		float percent = cameraPathTilt.percent;
+		float num = cameraPathTilt2.percent;
+		if (percent > num)
+		{
+			num += 1f;
+		}
+		float num2 = num - percent;
+		float num3 = percentage - percent;
+		float t = num3 / num2;
+		return Mathf.Lerp(cameraPathTilt.tilt, cameraPathTilt2.tilt, t);
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	private float SmoothStepInterpolation(float percentage)
+	{
+		int lastPointIndex = GetLastPointIndex(percentage);
+		CameraPathTilt cameraPathTilt = (CameraPathTilt)GetPoint(lastPointIndex);
+		CameraPathTilt cameraPathTilt2 = (CameraPathTilt)GetPoint(lastPointIndex + 1);
+		float percent = cameraPathTilt.percent;
+		float num = cameraPathTilt2.percent;
+		if (percent > num)
+		{
+			num += 1f;
+		}
+		float num2 = num - percent;
+		float num3 = percentage - percent;
+		float val = num3 / num2;
+		return Mathf.Lerp(cameraPathTilt.tilt, cameraPathTilt2.tilt, CPMath.SmoothStep(val));
+	}
 }

@@ -1,66 +1,198 @@
-using UnityEngine;
+using System;
+using System.Globalization;
+using System.Text;
+using Org.BouncyCastle.Utilities;
 
 namespace Org.BouncyCastle.Asn1
 {
-	public class DerGeneralizedTime : MonoBehaviour
+public class DerGeneralizedTime : Asn1Object
+{
+	private readonly string time;
+
+	public string TimeString => time;
+
+	private bool HasFractionalSeconds => time.IndexOf('.') == 14;
+
+	public DerGeneralizedTime(string time)
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
+		this.time = time;
+		try
+		{
+			ToDateTime();
+		}
+		catch (FormatException ex)
+		{
+			throw new ArgumentException("invalid date string: " + ex.Message);
+		}
 	}
+
+	public DerGeneralizedTime(DateTime time)
+	{
+		this.time = time.ToString("yyyyMMddHHmmss\\Z");
+	}
+
+	internal DerGeneralizedTime(byte[] bytes)
+	{
+		time = Strings.FromAsciiByteArray(bytes);
+	}
+
+	public static DerGeneralizedTime GetInstance(object obj)
+	{
+		if (obj == null || obj is DerGeneralizedTime)
+		{
+			return (DerGeneralizedTime)obj;
+		}
+		throw new ArgumentException("illegal object in GetInstance: " + obj.GetType().Name, "obj");
+	}
+
+	public static DerGeneralizedTime GetInstance(Asn1TaggedObject obj, bool isExplicit)
+	{
+		Asn1Object asn1Object = obj.GetObject();
+		if (isExplicit || asn1Object is DerGeneralizedTime)
+		{
+			return GetInstance(asn1Object);
+		}
+		return new DerGeneralizedTime(((Asn1OctetString)asn1Object).GetOctets());
+	}
+
+	public string GetTime()
+	{
+		if (time[time.Length - 1] == 'Z')
+		{
+			return time.Substring(0, time.Length - 1) + "GMT+00:00";
+		}
+		int num = time.Length - 5;
+		char c = time[num];
+		if (c == '-' || c == '+')
+		{
+			return time.Substring(0, num) + "GMT" + time.Substring(num, 3) + ":" + time.Substring(num + 3);
+		}
+		num = time.Length - 3;
+		c = time[num];
+		if (c == '-' || c == '+')
+		{
+			return time.Substring(0, num) + "GMT" + time.Substring(num) + ":00";
+		}
+		return time + CalculateGmtOffset();
+	}
+
+	private string CalculateGmtOffset()
+	{
+		char c = '+';
+		DateTime dateTime = ToDateTime();
+		TimeSpan timeSpan = TimeZone.CurrentTimeZone.GetUtcOffset(dateTime);
+		if (timeSpan.CompareTo(TimeSpan.Zero) < 0)
+		{
+			c = '-';
+			timeSpan = timeSpan.Duration();
+		}
+		int hours = timeSpan.Hours;
+		int minutes = timeSpan.Minutes;
+		return "GMT" + c + Convert(hours) + ":" + Convert(minutes);
+	}
+
+	private static string Convert(int time)
+	{
+		if (time < 10)
+		{
+			return "0" + time;
+		}
+		return time.ToString();
+	}
+
+	public DateTime ToDateTime()
+	{
+		string text = time;
+		bool makeUniversal = false;
+		string format;
+		if (text.EndsWith("Z"))
+		{
+			if (HasFractionalSeconds)
+			{
+				int count = text.Length - text.IndexOf('.') - 2;
+				format = "yyyyMMddHHmmss." + FString(count) + "\\Z";
+			}
+			else
+			{
+				format = "yyyyMMddHHmmss\\Z";
+			}
+		}
+		else if (time.IndexOf('-') > 0 || time.IndexOf('+') > 0)
+		{
+			text = GetTime();
+			makeUniversal = true;
+			if (HasFractionalSeconds)
+			{
+				int count2 = text.IndexOf("GMT") - 1 - text.IndexOf('.');
+				format = "yyyyMMddHHmmss." + FString(count2) + "'GMT'zzz";
+			}
+			else
+			{
+				format = "yyyyMMddHHmmss'GMT'zzz";
+			}
+		}
+		else if (HasFractionalSeconds)
+		{
+			int count3 = text.Length - 1 - text.IndexOf('.');
+			format = "yyyyMMddHHmmss." + FString(count3);
+		}
+		else
+		{
+			format = "yyyyMMddHHmmss";
+		}
+		return ParseDateString(text, format, makeUniversal);
+	}
+
+	private string FString(int count)
+	{
+		StringBuilder stringBuilder = new StringBuilder();
+		for (int i = 0; i < count; i++)
+		{
+			stringBuilder.Append('f');
+		}
+		return stringBuilder.ToString();
+	}
+
+	private DateTime ParseDateString(string s, string format, bool makeUniversal)
+	{
+		DateTimeStyles dateTimeStyles = DateTimeStyles.None;
+		if (format.EndsWith("Z"))
+		{
+			try
+			{
+				dateTimeStyles = (DateTimeStyles)(int)Enum.Parse(typeof(DateTimeStyles), "AssumeUniversal");
+			}
+			catch (Exception)
+			{
+			}
+			dateTimeStyles |= DateTimeStyles.AdjustToUniversal;
+		}
+		DateTime dateTime = DateTime.ParseExact(s, format, DateTimeFormatInfo.InvariantInfo, dateTimeStyles);
+		return (!makeUniversal) ? dateTime : dateTime.ToUniversalTime();
+	}
+
+	private byte[] GetOctets()
+	{
+		return Strings.ToAsciiByteArray(time);
+	}
+
+	internal override void Encode(DerOutputStream derOut)
+	{
+		derOut.WriteEncoded(24, GetOctets());
+	}
+
+	protected override bool Asn1Equals(Asn1Object asn1Object)
+	{
+		if (!(asn1Object is DerGeneralizedTime derGeneralizedTime))
+		{
+			return false;
+		}
+		return time.Equals(derGeneralizedTime.time);
+	}
+
+	protected override int Asn1GetHashCode()
+	{
+		return time.GetHashCode();
+	}
+}
 }

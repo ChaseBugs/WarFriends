@@ -1,63 +1,149 @@
+using AnimationOrTween;
 using UnityEngine;
 
+[AddComponentMenu("NGUI/Interaction/Checkbox")]
 public class UICheckbox : MonoBehaviour
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public delegate void OnStateChange(bool state, UICheckbox checkBox);
 
-	1. No dll files were provided to AssetRipper.
+	public static UICheckbox current;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public Color onTextColor = Color.white;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public Color offTextColor = Color.white;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public UILabel checkboxLabel;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public UISprite checkSprite;
 
-	3. Assembly Reconstruction has not been implemented.
+	public Animation checkAnimation;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public bool startsChecked = true;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public Transform radioButtonRoot;
 
-	4. This script is unnecessary.
+	public bool optionCanBeNone;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public GameObject eventReceiver;
 
-	5. Script Content Level 0
+	public string functionName = "OnActivate";
 
-		AssetRipper was set to not load any script information.
+	public OnStateChange onStateChange;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	[SerializeField]
+	[HideInInspector]
+	private bool option;
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	private bool mChecked = true;
 
-	7. An incorrect path was provided to AssetRipper.
+	private bool mStarted;
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	private Transform mTrans;
 
-	*/
+	public bool isChecked
+	{
+		get
+		{
+			return mChecked;
+		}
+		set
+		{
+			if (radioButtonRoot == null || value || optionCanBeNone || !mStarted)
+			{
+				Set(value);
+			}
+		}
+	}
+
+	private void Awake()
+	{
+		mTrans = base.transform;
+		if (checkSprite != null)
+		{
+			checkSprite.alpha = ((!startsChecked) ? 0f : 1f);
+		}
+		if (option)
+		{
+			option = false;
+			if (radioButtonRoot == null)
+			{
+				radioButtonRoot = mTrans.parent;
+			}
+		}
+	}
+
+	private void Start()
+	{
+		if (eventReceiver == null)
+		{
+			eventReceiver = base.gameObject;
+		}
+		mChecked = !startsChecked;
+		mStarted = true;
+		Set(startsChecked);
+	}
+
+	private void OnClick()
+	{
+		if (base.enabled)
+		{
+			isChecked = !isChecked;
+		}
+	}
+
+	private void Set(bool state)
+	{
+		if (!mStarted)
+		{
+			mChecked = state;
+			startsChecked = state;
+			if (checkSprite != null)
+			{
+				checkSprite.alpha = ((!state) ? 0f : 1f);
+			}
+		}
+		else
+		{
+			if (mChecked == state)
+			{
+				return;
+			}
+			if (radioButtonRoot != null && state)
+			{
+				UICheckbox[] componentsInChildren = radioButtonRoot.GetComponentsInChildren<UICheckbox>(includeInactive: true);
+				int i = 0;
+				for (int num = componentsInChildren.Length; i < num; i++)
+				{
+					UICheckbox uICheckbox = componentsInChildren[i];
+					if (uICheckbox != this && uICheckbox.radioButtonRoot == radioButtonRoot)
+					{
+						uICheckbox.Set(state: false);
+					}
+				}
+			}
+			mChecked = state;
+			if (checkSprite != null)
+			{
+				TweenAlpha.Begin(checkSprite.gameObject, 0.15f, (!mChecked) ? 0f : 1f);
+			}
+			if (checkboxLabel != null)
+			{
+				TweenColor.Begin(checkboxLabel.gameObject, 0.15f, (!mChecked) ? offTextColor : onTextColor);
+			}
+			current = this;
+			if (onStateChange != null)
+			{
+				onStateChange(mChecked, this);
+			}
+			if (eventReceiver != null && !string.IsNullOrEmpty(functionName))
+			{
+				eventReceiver.SendMessage(functionName, mChecked, SendMessageOptions.DontRequireReceiver);
+			}
+			current = null;
+			if (checkAnimation != null)
+			{
+				ActiveAnimation.Play(checkAnimation, state ? Direction.Forward : Direction.Reverse);
+			}
+		}
+	}
 }

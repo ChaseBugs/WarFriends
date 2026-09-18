@@ -1,63 +1,270 @@
 using UnityEngine;
 
-public class tk2dTiledSprite : MonoBehaviour
+[AddComponentMenu("2D Toolkit/Sprite/tk2dTiledSprite")]
+[RequireComponent(typeof(MeshRenderer))]
+[ExecuteInEditMode]
+[RequireComponent(typeof(MeshFilter))]
+public class tk2dTiledSprite : tk2dBaseSprite
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	private Mesh mesh;
 
-	1. No dll files were provided to AssetRipper.
+	private Vector2[] meshUvs;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	private Vector3[] meshVertices;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	private Color32[] meshColors;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	private int[] meshIndices;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	[SerializeField]
+	private Vector2 _dimensions = new Vector2(50f, 50f);
 
-	3. Assembly Reconstruction has not been implemented.
+	[SerializeField]
+	private Anchor _anchor;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	[SerializeField]
+	protected bool _createBoxCollider;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	private Vector3 boundsCenter = Vector3.zero;
 
-	4. This script is unnecessary.
+	private Vector3 boundsExtents = Vector3.zero;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public Vector2 dimensions
+	{
+		get
+		{
+			return _dimensions;
+		}
+		set
+		{
+			if (value != _dimensions)
+			{
+				_dimensions = value;
+				UpdateVertices();
+				UpdateCollider();
+			}
+		}
+	}
 
-	5. Script Content Level 0
+	public Anchor anchor
+	{
+		get
+		{
+			return _anchor;
+		}
+		set
+		{
+			if (value != _anchor)
+			{
+				_anchor = value;
+				UpdateVertices();
+				UpdateCollider();
+			}
+		}
+	}
 
-		AssetRipper was set to not load any script information.
+	public bool CreateBoxCollider
+	{
+		get
+		{
+			return _createBoxCollider;
+		}
+		set
+		{
+			if (_createBoxCollider != value)
+			{
+				_createBoxCollider = value;
+				UpdateCollider();
+			}
+		}
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	private new void Awake()
+	{
+		base.Awake();
+		mesh = new Mesh();
+		mesh.hideFlags = HideFlags.DontSave;
+		GetComponent<MeshFilter>().mesh = mesh;
+		if ((bool)base.Collection)
+		{
+			if (_spriteId < 0 || _spriteId >= base.Collection.Count)
+			{
+				_spriteId = 0;
+			}
+			Build();
+			if (boxCollider == null)
+			{
+				boxCollider = GetComponent<BoxCollider>();
+			}
+		}
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	protected void OnDestroy()
+	{
+		if ((bool)mesh)
+		{
+			Object.Destroy(mesh);
+		}
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	protected new void SetColors(Color32[] dest)
+	{
+		tk2dSpriteGeomGen.GetTiledSpriteGeomDesc(out var numVertices, out var _, base.CurrentSprite, dimensions);
+		tk2dSpriteGeomGen.SetSpriteColors(dest, 0, numVertices, _color, collectionInst.premultipliedAlpha);
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	public override void Build()
+	{
+		tk2dSpriteDefinition currentSprite = base.CurrentSprite;
+		tk2dSpriteGeomGen.GetTiledSpriteGeomDesc(out var numVertices, out var numIndices, currentSprite, dimensions);
+		if (meshUvs == null || meshUvs.Length != numVertices)
+		{
+			meshUvs = new Vector2[numVertices];
+			meshVertices = new Vector3[numVertices];
+			meshColors = new Color32[numVertices];
+		}
+		if (meshIndices == null || meshIndices.Length != numIndices)
+		{
+			meshIndices = new int[numIndices];
+		}
+		float colliderOffsetZ = ((!(boxCollider != null)) ? 0f : boxCollider.center.z);
+		float colliderExtentZ = ((!(boxCollider != null)) ? 0.5f : (boxCollider.size.z * 0.5f));
+		tk2dSpriteGeomGen.SetTiledSpriteGeom(meshVertices, meshUvs, 0, out boundsCenter, out boundsExtents, currentSprite, _scale, dimensions, anchor, colliderOffsetZ, colliderExtentZ);
+		tk2dSpriteGeomGen.SetTiledSpriteIndices(meshIndices, 0, 0, currentSprite, dimensions);
+		SetColors(meshColors);
+		if (mesh == null)
+		{
+			mesh = new Mesh();
+			mesh.hideFlags = HideFlags.DontSave;
+		}
+		else
+		{
+			mesh.Clear();
+		}
+		mesh.vertices = meshVertices;
+		mesh.colors32 = meshColors;
+		mesh.uv = meshUvs;
+		mesh.triangles = meshIndices;
+		mesh.RecalculateBounds();
+		mesh.bounds = tk2dBaseSprite.AdjustedMeshBounds(mesh.bounds, renderLayer);
+		GetComponent<MeshFilter>().mesh = mesh;
+		UpdateCollider();
+		UpdateMaterial();
+	}
 
-	*/
+	protected override void UpdateGeometry()
+	{
+		UpdateGeometryImpl();
+	}
+
+	protected override void UpdateColors()
+	{
+		UpdateColorsImpl();
+	}
+
+	protected override void UpdateVertices()
+	{
+		UpdateGeometryImpl();
+	}
+
+	protected void UpdateColorsImpl()
+	{
+		if (meshColors == null || meshColors.Length == 0)
+		{
+			Build();
+			return;
+		}
+		SetColors(meshColors);
+		mesh.colors32 = meshColors;
+	}
+
+	protected void UpdateGeometryImpl()
+	{
+		Build();
+	}
+
+	protected override void UpdateCollider()
+	{
+		if (CreateBoxCollider)
+		{
+			if (boxCollider == null)
+			{
+				boxCollider = GetComponent<BoxCollider>();
+				if (boxCollider == null)
+				{
+					boxCollider = base.gameObject.AddComponent<BoxCollider>();
+				}
+			}
+			boxCollider.size = 2f * boundsExtents;
+			boxCollider.center = boundsCenter;
+		}
+		else if (boxCollider != null)
+		{
+			Object.Destroy(boxCollider);
+		}
+	}
+
+	protected override void CreateCollider()
+	{
+		UpdateCollider();
+	}
+
+	protected override void UpdateMaterial()
+	{
+		if (GetComponent<Renderer>().sharedMaterial != collectionInst.spriteDefinitions[base.spriteId].materialInst)
+		{
+			GetComponent<Renderer>().material = collectionInst.spriteDefinitions[base.spriteId].materialInst;
+		}
+	}
+
+	protected override int GetCurrentVertexCount()
+	{
+		return 16;
+	}
+
+	public override void ReshapeBounds(Vector3 dMin, Vector3 dMax)
+	{
+		tk2dSpriteDefinition currentSprite = base.CurrentSprite;
+		Vector3 vector = new Vector3(_dimensions.x * currentSprite.texelSize.x * _scale.x, _dimensions.y * currentSprite.texelSize.y * _scale.y);
+		Vector3 zero = Vector3.zero;
+		switch (_anchor)
+		{
+		case Anchor.LowerLeft:
+			zero.Set(0f, 0f, 0f);
+			break;
+		case Anchor.LowerCenter:
+			zero.Set(0.5f, 0f, 0f);
+			break;
+		case Anchor.LowerRight:
+			zero.Set(1f, 0f, 0f);
+			break;
+		case Anchor.MiddleLeft:
+			zero.Set(0f, 0.5f, 0f);
+			break;
+		case Anchor.MiddleCenter:
+			zero.Set(0.5f, 0.5f, 0f);
+			break;
+		case Anchor.MiddleRight:
+			zero.Set(1f, 0.5f, 0f);
+			break;
+		case Anchor.UpperLeft:
+			zero.Set(0f, 1f, 0f);
+			break;
+		case Anchor.UpperCenter:
+			zero.Set(0.5f, 1f, 0f);
+			break;
+		case Anchor.UpperRight:
+			zero.Set(1f, 1f, 0f);
+			break;
+		}
+		zero = Vector3.Scale(zero, vector) * -1f;
+		Vector3 vector2 = vector + dMax - dMin;
+		vector2.x /= currentSprite.texelSize.x * _scale.x;
+		vector2.y /= currentSprite.texelSize.y * _scale.y;
+		Vector3 vector3 = new Vector3((!Mathf.Approximately(_dimensions.x, 0f)) ? (zero.x * vector2.x / _dimensions.x) : 0f, (!Mathf.Approximately(_dimensions.y, 0f)) ? (zero.y * vector2.y / _dimensions.y) : 0f);
+		Vector3 position = zero + dMin - vector3;
+		position.z = 0f;
+		base.transform.position = base.transform.TransformPoint(position);
+		dimensions = new Vector2(vector2.x, vector2.y);
+	}
 }

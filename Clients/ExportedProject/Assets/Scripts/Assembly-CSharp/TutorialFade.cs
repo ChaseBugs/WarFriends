@@ -1,63 +1,105 @@
+using System;
 using UnityEngine;
 
-public class TutorialFade : MonoBehaviour
+public class TutorialFade : GuiElementSingle<TutorialFade>
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public Transform top;
 
-	1. No dll files were provided to AssetRipper.
+	public Transform left;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public Transform right;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public Transform down;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public UIRoot root;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	private Transform mTransform;
 
-	3. Assembly Reconstruction has not been implemented.
+	private float mOriginalAlpha;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public Vector3 position;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public Vector3 localPosition;
 
-	4. This script is unnecessary.
+	public Vector3 size;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public bool show;
 
-	5. Script Content Level 0
+	public bool hide;
 
-		AssetRipper was set to not load any script information.
+	protected override void Update()
+	{
+		base.Update();
+		if (show)
+		{
+			show = false;
+			SetAndShow(base.transform.position, size, localPosition);
+		}
+		if (hide)
+		{
+			hide = false;
+			Hide();
+		}
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public void SetAndShow(Vector3 globalPos, Vector3 size, Vector3 posLocalDiff)
+	{
+		if (mTransform == null)
+		{
+			mOriginalAlpha = top.GetComponent<UIWidget>().alpha;
+			mTransform = base.transform;
+		}
+		mTransform.position = globalPos;
+		Vector3 vector = mTransform.localPosition;
+		vector.z = 0f;
+		vector.x += posLocalDiff.x;
+		vector.y += posLocalDiff.y;
+		mTransform.localPosition = vector;
+		Vector3 one = Vector3.one;
+		Vector3 zero = Vector3.zero;
+		one.x = size.x;
+		one.y = ((float)root.activeHeight - size.y) * 0.5f - vector.y;
+		zero.y = (one.y + size.y) * 0.5f;
+		top.localPosition = zero;
+		top.localScale = one;
+		one.y = ((float)root.activeHeight - size.y) * 0.5f + vector.y;
+		zero.y = (0f - (one.y + size.y)) * 0.5f;
+		down.localPosition = zero;
+		down.localScale = one;
+		one.y = root.activeHeight;
+		one.x = (root.activeWidth - size.x) * 0.5f + vector.x;
+		zero.x = (0f - (one.x + size.x)) * 0.5f;
+		zero.y = 0f - vector.y;
+		left.localPosition = zero;
+		left.localScale = one;
+		one.x = (root.activeWidth - size.x) * 0.5f - vector.x;
+		zero.x = (one.x + size.x) * 0.5f;
+		right.localPosition = zero;
+		right.localScale = one;
+		TweenAlpha.Begin(top.gameObject, 0.45f, 0f, mOriginalAlpha);
+		TweenAlpha.Begin(down.gameObject, 0.45f, 0f, mOriginalAlpha);
+		TweenAlpha.Begin(left.gameObject, 0.45f, 0f, mOriginalAlpha);
+		TweenAlpha.Begin(right.gameObject, 0.45f, 0f, mOriginalAlpha);
+		base.gameObject.SetActive(value: true);
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public void Hide()
+	{
+		TweenAlpha.Begin(top.gameObject, 0.1f, 0f);
+		TweenAlpha.Begin(down.gameObject, 0.1f, 0f);
+		TweenAlpha.Begin(left.gameObject, 0.1f, 0f);
+		TweenAlpha tweenAlpha = TweenAlpha.Begin(right.gameObject, 0.1f, 0f);
+		tweenAlpha.onFinished = (UITweener.OnFinished)Delegate.Combine(tweenAlpha.onFinished, (UITweener.OnFinished)delegate
+		{
+			base.gameObject.SetActive(value: false);
+		});
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	public override void InitControls()
+	{
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public override void InitGUIValues()
+	{
+	}
 }

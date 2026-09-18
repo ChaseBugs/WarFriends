@@ -1,63 +1,122 @@
+using System.Collections.Generic;
 using UnityEngine;
 
-public class PhotonStreamQueue : MonoBehaviour
+public class PhotonStreamQueue
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	private int m_SampleRate;
 
-	1. No dll files were provided to AssetRipper.
+	private int m_SampleCount;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	private int m_ObjectsPerSample = -1;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	private float m_LastSampleTime = float.NegativeInfinity;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	private int m_LastFrameCount = -1;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	private int m_NextObjectIndex = -1;
 
-	3. Assembly Reconstruction has not been implemented.
+	private List<object> m_Objects = new List<object>();
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	private bool m_IsWriting;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public PhotonStreamQueue(int sampleRate)
+	{
+		m_SampleRate = sampleRate;
+	}
 
-	4. This script is unnecessary.
+	private void BeginWritePackage()
+	{
+		if (Time.realtimeSinceStartup < m_LastSampleTime + 1f / (float)m_SampleRate)
+		{
+			m_IsWriting = false;
+			return;
+		}
+		if (m_SampleCount == 1)
+		{
+			m_ObjectsPerSample = m_Objects.Count;
+		}
+		else if (m_SampleCount > 1 && m_Objects.Count / m_SampleCount != m_ObjectsPerSample)
+		{
+			Debug.LogWarning("The number of objects sent via a PhotonStreamQueue has to be the same each frame");
+			Debug.LogWarning("Objects in List: " + m_Objects.Count + " / Sample Count: " + m_SampleCount + " = " + m_Objects.Count / m_SampleCount + " != " + m_ObjectsPerSample);
+		}
+		m_IsWriting = true;
+		m_SampleCount++;
+		m_LastSampleTime = Time.realtimeSinceStartup;
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public void Reset()
+	{
+		m_SampleCount = 0;
+		m_ObjectsPerSample = -1;
+		m_LastSampleTime = float.NegativeInfinity;
+		m_LastFrameCount = -1;
+		m_Objects.Clear();
+	}
 
-	5. Script Content Level 0
+	public void SendNext(object obj)
+	{
+		if (Time.frameCount != m_LastFrameCount)
+		{
+			BeginWritePackage();
+		}
+		m_LastFrameCount = Time.frameCount;
+		if (m_IsWriting)
+		{
+			m_Objects.Add(obj);
+		}
+	}
 
-		AssetRipper was set to not load any script information.
+	public bool HasQueuedObjects()
+	{
+		return m_NextObjectIndex != -1;
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public object ReceiveNext()
+	{
+		if (m_NextObjectIndex == -1)
+		{
+			return null;
+		}
+		if (m_NextObjectIndex >= m_Objects.Count)
+		{
+			m_NextObjectIndex -= m_ObjectsPerSample;
+		}
+		return m_Objects[m_NextObjectIndex++];
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public void Serialize(PhotonStream stream)
+	{
+		if (m_Objects.Count > 0 && m_ObjectsPerSample < 0)
+		{
+			m_ObjectsPerSample = m_Objects.Count;
+		}
+		stream.SendNext(m_SampleCount);
+		stream.SendNext(m_ObjectsPerSample);
+		for (int i = 0; i < m_Objects.Count; i++)
+		{
+			stream.SendNext(m_Objects[i]);
+		}
+		m_Objects.Clear();
+		m_SampleCount = 0;
+	}
 
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public void Deserialize(PhotonStream stream)
+	{
+		m_Objects.Clear();
+		m_SampleCount = (int)stream.ReceiveNext();
+		m_ObjectsPerSample = (int)stream.ReceiveNext();
+		for (int i = 0; i < m_SampleCount * m_ObjectsPerSample; i++)
+		{
+			m_Objects.Add(stream.ReceiveNext());
+		}
+		if (m_Objects.Count > 0)
+		{
+			m_NextObjectIndex = 0;
+		}
+		else
+		{
+			m_NextObjectIndex = -1;
+		}
+	}
 }

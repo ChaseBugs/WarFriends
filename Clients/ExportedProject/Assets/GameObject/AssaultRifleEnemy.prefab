@@ -181,6 +181,45 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1cb9d4e3bc85c63a43096be5a40016e7, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  isActivated: 0
+  bulletPrefab: {fileID: 11409266, guid: 855689762fa6e774aaee190652b08c6f, type: 2}
+  cadence:
+    currentCryptoKey: 230887
+    hiddenValue: d4b6b03e
+    fakeValue: 0.35
+    inited: 1
+  clipSize:
+    currentCryptoKey: 444444
+    hiddenValue: 444424
+    fakeValue: 20
+    inited: 1
+  reloadTime:
+    currentCryptoKey: 230887
+    hiddenValue: e785a340
+    fakeValue: 5
+    inited: 1
+  friendKill: 0
+  infiniteAmmo: 1
+  reloadableWeapon: 0
+  disableSync: 0
+  spawnPoint: {fileID: 455190}
+  startingAmmmoCount:
+    currentCryptoKey: 444444
+    hiddenValue: 444444
+    fakeValue: 0
+    inited: 1
+  useAiming: 1
+  isFake: 0
+  shotType: 0
+  ignoreLayersMask: 0
+  reloadSound: 11
+  shotSound: 22
+  soundVolume: 1
+  weaponType: 0
+  muzzleFlash: {fileID: 11433324}
+  shotOffset: {x: 0, y: 0, z: 0}
+  ammoParticles: {fileID: 19891323}
+  fastBullet: 0
 --- !u!114 &11496012
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -192,6 +231,48 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4ceecd6f3ff0e22dc65ce39c3a1fce86, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  damageAmount:
+    currentCryptoKey: 230887
+    hiddenValue: e785a341
+    fakeValue: 20
+    inited: 1
+  hitForce: 6
+  criticalProbability:
+    currentCryptoKey: 230887
+    hiddenValue: e7850300
+    fakeValue: 0
+    inited: 1
+  criticalAmount:
+    currentCryptoKey: 230887
+    hiddenValue: e7850340
+    fakeValue: 2
+    inited: 1
+  damageToPlayerCoeficient:
+    currentCryptoKey: 230887
+    hiddenValue: e785833f
+    fakeValue: 1
+    inited: 1
+  damageToPlayerOvertimeCoeficient:
+    currentCryptoKey: 230887
+    hiddenValue: e785833f
+    fakeValue: 1
+    inited: 1
+  speed: 5
+  checkDistance: 0.35
+  trailSize: 0.35
+  trailWidth: 0.06
+  trailFakeWidth: 0.04
+  thinTrailSize: 0.2
+  thinTrailWidth: 0.03
+  thinTrailFakeWidth: 0.03
+  fakeSpeedFactor: 1.5
+  fakeShotTexture: shotFake
+  realShotTexture: shotReal
+  shieldShotTexture: shotShield
+  speedMultiplayer: 1
+  poisonTime: 0
+  poisonRatio: 0
+  useThinTrail: 0
 --- !u!114 &11477035
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -203,6 +284,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bdf38ce86a2f68e1ec5a08d9161659f6, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  NoRigidBodyObject: {fileID: 105782}
+  RigidBodyObject: {fileID: 154010}
+  noRigidBody:
+    meshFilter: {fileID: 0}
+    meshRenderer: {fileID: 0}
+  rigidBody:
+    meshFilter: {fileID: 0}
+    meshRenderer: {fileID: 0}
+  snapPoint: {fileID: 119550}
 --- !u!114 &11403859
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -214,6 +304,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f19ea4a15c3ca43dcc180d756f7a82b3, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  ownerId: 0
+  group: 0
+  OwnerShipWasTransfered: 0
+  prefixBackup: -1
+  synchronization: 0
+  onSerializeTransformOption: 3
+  onSerializeRigidBodyOption: 2
+  ownershipTransfer: 0
+  ObservedComponents:
+  - {fileID: 0}
+  viewIdField: 0
+  instantiationId: -1
+  currentMasterID: -1
+  didAwake: 0
+  isRuntimeInstantiated: 0
 --- !u!114 &11469566
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -225,6 +330,194 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6bf76f9799dec14c7c2240f1cc725df6, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  weaponRecords:
+  - level: 0
+    shotSound: 2
+    weaponModelPath: WeaponModelsUnits/AK47_lp
+    assetBundleName: AssaultRiffle_AK47
+    scale: {x: 1, y: 1, z: 1}
+  - level: 1
+    shotSound: 3
+    weaponModelPath: WeaponModelsUnits/M16_lp
+    assetBundleName: AssaultRiffle_M16
+    scale: {x: 1, y: 1, z: 1}
+  - level: 2
+    shotSound: 3
+    weaponModelPath: WeaponModelsUnits/M16_lp
+    assetBundleName: AssaultRiffle_M16
+    scale: {x: 1, y: 1, z: 1}
+  - level: 3
+    shotSound: 24
+    weaponModelPath: WeaponModelsUnits/MP5_lp
+    assetBundleName: SMG_MP5
+    scale: {x: 1, y: 1, z: 1}
+  - level: 4
+    shotSound: 21
+    weaponModelPath: WeaponModelsUnits/LMG_PKMachinegun_lp
+    assetBundleName: LMG_PKMachinegun
+    scale: {x: 1, y: 1, z: 1}
+  - level: 5
+    shotSound: 6
+    weaponModelPath: WeaponModelsUnits/Berreta_lp
+    assetBundleName: Pistol_Berreta
+    scale: {x: 1, y: 1, z: 1}
+  - level: 6
+    shotSound: 0
+    weaponModelPath: WeaponModelsUnits/Engineer_tool
+    assetBundleName: Engineer_tool
+    scale: {x: 1, y: 1, z: 1}
+  - level: 7
+    shotSound: 38
+    weaponModelPath: WeaponModelsUnits/P90_lp
+    assetBundleName: SMG_P90
+    scale: {x: 1, y: 1, z: 1}
+  - level: 8
+    shotSound: 37
+    weaponModelPath: WeaponModelsUnits/MP7_lp
+    assetBundleName: SMG_MP7
+    scale: {x: 1, y: 1, z: 1}
+  - level: 9
+    shotSound: 4
+    weaponModelPath: WeaponModelsUnits/QBZ_lp_t
+    assetBundleName: AssaultRifle_QZB95
+    scale: {x: 1, y: 1, z: 1}
+  - level: 10
+    shotSound: 30
+    weaponModelPath: WeaponModelsUnits/FAMAS_lp_t
+    assetBundleName: AssaultRifle_FAMAS
+    scale: {x: 1, y: 1, z: 1}
+  - level: 11
+    shotSound: 31
+    weaponModelPath: WeaponModelsUnits/SteyerAUG_lp_t
+    assetBundleName: AssaultRifle_SteyrAUG
+    scale: {x: 1, y: 1, z: 1}
+  - level: 12
+    shotSound: 22
+    weaponModelPath: WeaponModelsUnits/M249_lp_t
+    assetBundleName: LMG_M249
+    scale: {x: 1, y: 1, z: 1}
+  - level: 13
+    shotSound: 23
+    weaponModelPath: WeaponModelsUnits/SA80_lp_t
+    assetBundleName: LMG_SA80
+    scale: {x: 1, y: 1, z: 1}
+  - level: 14
+    shotSound: 25
+    weaponModelPath: WeaponModelsUnits/CPW_lp_t
+    assetBundleName: SMG_CPW
+    scale: {x: 1, y: 1, z: 1}
+  - level: 15
+    shotSound: 26
+    weaponModelPath: WeaponModelsUnits/UMP45_lp_t
+    assetBundleName: SMG_UMP45
+    scale: {x: 1, y: 1, z: 1}
+  - level: 16
+    shotSound: 35
+    weaponModelPath: WeaponModelsUnits/MG4_lp_t
+    assetBundleName: LMG_MG4
+    scale: {x: 1, y: 1, z: 1}
+  - level: 17
+    shotSound: 35
+    weaponModelPath: WeaponModelsUnits/M60_lp_t
+    assetBundleName: LMG_M60
+    scale: {x: 1, y: 1, z: 1}
+  - level: 18
+    shotSound: 4
+    weaponModelPath: WeaponModelsUnits/G36_lp_t
+    assetBundleName: AssaultRifle_G36
+    scale: {x: 1, y: 1, z: 1}
+  - level: 19
+    shotSound: 5
+    weaponModelPath: WeaponModelsUnits/Berreta_lp
+    assetBundleName: Pistol_Berreta
+    scale: {x: 1.5, y: 1.5, z: 1.5}
+  - level: 20
+    shotSound: 5
+    weaponModelPath: WeaponModelsUnits/DesertEagle_lp
+    assetBundleName: Pistol_DesertEagle
+    scale: {x: 1.5, y: 1.5, z: 1.5}
+  - level: 21
+    shotSound: 5
+    weaponModelPath: WeaponModelsUnits/M1911_lp
+    assetBundleName: Pistol_M1911
+    scale: {x: 1.5, y: 1.5, z: 1.5}
+  - level: 22
+    shotSound: 5
+    weaponModelPath: WeaponModelsUnits/Magnum357_lp
+    assetBundleName: Pistol_Magnum357
+    scale: {x: 1.5, y: 1.5, z: 1.5}
+  - level: 23
+    shotSound: 5
+    weaponModelPath: WeaponModelsUnits/Remmington_lp
+    assetBundleName: Pistol_Remmington51
+    scale: {x: 1.5, y: 1.5, z: 1.5}
+  - level: 24
+    shotSound: 24
+    weaponModelPath: WeaponModelsUnits/MP5_lp_camo
+    assetBundleName: SMG_MP5_camo
+    scale: {x: 1, y: 1, z: 1}
+  - level: 25
+    shotSound: 33
+    weaponModelPath: WeaponModelsUnits/gunslinger
+    assetBundleName: Pistol_Gunslinger
+    scale: {x: 1, y: 1, z: 1}
+  - level: 26
+    shotSound: 32
+    weaponModelPath: WeaponModelsUnits/AKS47U_lp_t
+    assetBundleName: AssaultRifle_AKS47U
+    scale: {x: 1, y: 1, z: 1}
+  - level: 27
+    shotSound: 32
+    weaponModelPath: WeaponModelsUnits/G36Elite_lp_t
+    assetBundleName: AssaultRifle_G36Elite
+    scale: {x: 1, y: 1, z: 1}
+  - level: 28
+    shotSound: 36
+    weaponModelPath: WeaponModelsUnits/M60Elite_lp_t
+    assetBundleName: LMG_M60Elite
+    scale: {x: 1, y: 1, z: 1}
+  - level: 29
+    shotSound: 36
+    weaponModelPath: WeaponModelsUnits/M249Elite_lp_t
+    assetBundleName: LMG_M249Elite
+    scale: {x: 1, y: 1, z: 1}
+  - level: 30
+    shotSound: 38
+    weaponModelPath: WeaponModelsUnits/P90Elite_lp
+    assetBundleName: SMG_P90Elite
+    scale: {x: 1, y: 1, z: 1}
+  - level: 31
+    shotSound: 33
+    weaponModelPath: WeaponModelsUnits/Jester_lp
+    assetBundleName: Pistol_Jester
+    scale: {x: 1, y: 1, z: 1}
+  - level: 32
+    shotSound: 38
+    weaponModelPath: WeaponModelsUnits/Vector_lp
+    assetBundleName: SMG_Vector
+    scale: {x: 1, y: 1, z: 1}
+  - level: 33
+    shotSound: 38
+    weaponModelPath: WeaponModelsUnits/FAMASElite_lp_t
+    assetBundleName: AssaultRifle_FAMASElite
+    scale: {x: 1, y: 1, z: 1}
+  - level: 34
+    shotSound: 4
+    weaponModelPath: WeaponModelsUnits/QBZElite_lp_t
+    assetBundleName: AssaultRifle_QBZ95Elite
+    scale: {x: 1, y: 1, z: 1}
+  - level: 35
+    shotSound: 2
+    weaponModelPath: WeaponModelsUnits/AK47Elite_lp
+    assetBundleName: AssaultRiffle_AK47Elite
+    scale: {x: 1, y: 1, z: 1}
+  - level: 36
+    shotSound: 21
+    weaponModelPath: WeaponModelsUnits/LMG_PKMachinegunElite_lp
+    assetBundleName: LMG_PKMachinegunElite
+    scale: {x: 1, y: 1, z: 1}
+  weaponRenderer: {fileID: 2352907}
+  weapon: {fileID: 11470521}
 --- !u!82 &8288124
 AudioSource:
   serializedVersion: 4
@@ -1410,6 +1703,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d02fa923ff4150ffec692a76a9c2aece, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  play: 0
 --- !u!4 &434467
 Transform:
   m_ObjectHideFlags: 0
@@ -1524,6 +1818,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4090235689019e8dade2fb65364f77e3, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  m_ForceShow: 0
 --- !u!4 &492819
 Transform:
   m_ObjectHideFlags: 0
@@ -1645,6 +1940,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5e59aac156d8b7c09624901e4cd5735f, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  pivot: {fileID: 0}
+  highPolyPrefabName:
 --- !u!1001 &100100000
 Prefab:
   serializedVersion: 2

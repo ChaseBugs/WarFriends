@@ -39,6 +39,1763 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ea9f040b2b6bd4bf069e31e0ace12f73, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  material: {fileID: 2100000, guid: 2732d5107dd10754d85ca176289fdf6e, type: 2}
+  sprites:
+  - name: menu-army-tank
+    outer:
+      serializedVersion: 2
+      x: 0
+      y: 1849
+      width: 342
+      height: 199
+    inner:
+      serializedVersion: 2
+      x: 0
+      y: 1849
+      width: 342
+      height: 199
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-army-sniper
+    outer:
+      serializedVersion: 2
+      x: 625
+      y: 1824
+      width: 279
+      height: 224
+    inner:
+      serializedVersion: 2
+      x: 625
+      y: 1824
+      width: 279
+      height: 224
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-army-grenadier
+    outer:
+      serializedVersion: 2
+      x: 910
+      y: 1825
+      width: 280
+      height: 223
+    inner:
+      serializedVersion: 2
+      x: 910
+      y: 1825
+      width: 280
+      height: 223
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-army-assaulthelicopter
+    outer:
+      serializedVersion: 2
+      x: 1196
+      y: 1840
+      width: 298
+      height: 208
+    inner:
+      serializedVersion: 2
+      x: 1196
+      y: 1840
+      width: 298
+      height: 208
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-army-humvee
+    outer:
+      serializedVersion: 2
+      x: 1500
+      y: 1835
+      width: 282
+      height: 213
+    inner:
+      serializedVersion: 2
+      x: 1500
+      y: 1835
+      width: 282
+      height: 213
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-army-commando
+    outer:
+      serializedVersion: 2
+      x: 1196
+      y: 1610
+      width: 265
+      height: 224
+    inner:
+      serializedVersion: 2
+      x: 1196
+      y: 1610
+      width: 265
+      height: 224
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-army-transporthelo
+    outer:
+      serializedVersion: 2
+      x: 625
+      y: 1619
+      width: 298
+      height: 199
+    inner:
+      serializedVersion: 2
+      x: 625
+      y: 1619
+      width: 298
+      height: 199
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-army-buggy
+    outer:
+      serializedVersion: 2
+      x: 285
+      y: 1615
+      width: 298
+      height: 188
+    inner:
+      serializedVersion: 2
+      x: 285
+      y: 1615
+      width: 298
+      height: 188
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-weapon-pkm
+    outer:
+      serializedVersion: 2
+      x: 1025
+      y: 1092
+      width: 241
+      height: 167
+    inner:
+      serializedVersion: 2
+      x: 1025
+      y: 1092
+      width: 241
+      height: 167
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-army-rocket
+    outer:
+      serializedVersion: 2
+      x: 929
+      y: 1600
+      width: 254
+      height: 219
+    inner:
+      serializedVersion: 2
+      x: 929
+      y: 1600
+      width: 254
+      height: 219
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-army-engineer
+    outer:
+      serializedVersion: 2
+      x: 1788
+      y: 1827
+      width: 247
+      height: 221
+    inner:
+      serializedVersion: 2
+      x: 1788
+      y: 1827
+      width: 247
+      height: 221
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-weapon-aug
+    outer:
+      serializedVersion: 2
+      x: 445
+      y: 1038
+      width: 235
+      height: 166
+    inner:
+      serializedVersion: 2
+      x: 445
+      y: 1038
+      width: 235
+      height: 166
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-weapon-sa80
+    outer:
+      serializedVersion: 2
+      x: 179
+      y: 823
+      width: 224
+      height: 168
+    inner:
+      serializedVersion: 2
+      x: 179
+      y: 823
+      width: 224
+      height: 168
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-weapon-uppercut
+    outer:
+      serializedVersion: 2
+      x: 1519
+      y: 1242
+      width: 219
+      height: 170
+    inner:
+      serializedVersion: 2
+      x: 1519
+      y: 1242
+      width: 219
+      height: 170
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-weapon-mp7
+    outer:
+      serializedVersion: 2
+      x: 1272
+      y: 1085
+      width: 221
+      height: 167
+    inner:
+      serializedVersion: 2
+      x: 1272
+      y: 1085
+      width: 221
+      height: 167
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-weapon-striker
+    outer:
+      serializedVersion: 2
+      x: 1744
+      y: 1239
+      width: 206
+      height: 173
+    inner:
+      serializedVersion: 2
+      x: 1744
+      y: 1239
+      width: 206
+      height: 173
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-weapon-qbz95
+    outer:
+      serializedVersion: 2
+      x: 1499
+      y: 1071
+      width: 213
+      height: 165
+    inner:
+      serializedVersion: 2
+      x: 1499
+      y: 1071
+      width: 213
+      height: 165
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-army-paratrooper
+    outer:
+      serializedVersion: 2
+      x: 0
+      y: 1388
+      width: 220
+      height: 219
+    inner:
+      serializedVersion: 2
+      x: 0
+      y: 1388
+      width: 220
+      height: 219
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-army-assault
+    outer:
+      serializedVersion: 2
+      x: 226
+      y: 1177
+      width: 213
+      height: 223
+    inner:
+      serializedVersion: 2
+      x: 226
+      y: 1177
+      width: 213
+      height: 223
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-weapon-m60
+    outer:
+      serializedVersion: 2
+      x: 1718
+      y: 1088
+      width: 234
+      height: 145
+    inner:
+      serializedVersion: 2
+      x: 1718
+      y: 1088
+      width: 234
+      height: 145
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-army-drone
+    outer:
+      serializedVersion: 2
+      x: 1467
+      y: 1667
+      width: 288
+      height: 162
+    inner:
+      serializedVersion: 2
+      x: 1467
+      y: 1667
+      width: 288
+      height: 162
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-army-flamethrower
+    outer:
+      serializedVersion: 2
+      x: 0
+      y: 1159
+      width: 208
+      height: 223
+    inner:
+      serializedVersion: 2
+      x: 0
+      y: 1159
+      width: 208
+      height: 223
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-army-machinegunner
+    outer:
+      serializedVersion: 2
+      x: 1761
+      y: 1603
+      width: 211
+      height: 218
+    inner:
+      serializedVersion: 2
+      x: 1761
+      y: 1603
+      width: 211
+      height: 218
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-weapon-m16
+    outer:
+      serializedVersion: 2
+      x: 1718
+      y: 936
+      width: 227
+      height: 146
+    inner:
+      serializedVersion: 2
+      x: 1718
+      y: 936
+      width: 227
+      height: 146
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-weapon-famas
+    outer:
+      serializedVersion: 2
+      x: 1343
+      y: 926
+      width: 238
+      height: 139
+    inner:
+      serializedVersion: 2
+      x: 1343
+      y: 926
+      width: 238
+      height: 139
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-weapon-ak47
+    outer:
+      serializedVersion: 2
+      x: 1343
+      y: 775
+      width: 227
+      height: 145
+    inner:
+      serializedVersion: 2
+      x: 1343
+      y: 775
+      width: 227
+      height: 145
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-weapon-fatboy
+    outer:
+      serializedVersion: 2
+      x: 1587
+      y: 785
+      width: 228
+      height: 145
+    inner:
+      serializedVersion: 2
+      x: 1587
+      y: 785
+      width: 228
+      height: 145
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-weapon-mp5
+    outer:
+      serializedVersion: 2
+      x: 643
+      y: 649
+      width: 200
+      height: 164
+    inner:
+      serializedVersion: 2
+      x: 643
+      y: 649
+      width: 200
+      height: 164
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-weapon-minigun
+    outer:
+      serializedVersion: 2
+      x: 1088
+      y: 773
+      width: 240
+      height: 135
+    inner:
+      serializedVersion: 2
+      x: 1088
+      y: 773
+      width: 240
+      height: 135
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-army-swat
+    outer:
+      serializedVersion: 2
+      x: 1467
+      y: 1441
+      width: 203
+      height: 220
+    inner:
+      serializedVersion: 2
+      x: 1467
+      y: 1441
+      width: 203
+      height: 220
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-weapon-saiga12
+    outer:
+      serializedVersion: 2
+      x: 0
+      y: 520
+      width: 217
+      height: 148
+    inner:
+      serializedVersion: 2
+      x: 0
+      y: 520
+      width: 217
+      height: 148
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-weapon-saw
+    outer:
+      serializedVersion: 2
+      x: 1584
+      y: 640
+      width: 228
+      height: 139
+    inner:
+      serializedVersion: 2
+      x: 1584
+      y: 640
+      width: 228
+      height: 139
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-weapon-p90
+    outer:
+      serializedVersion: 2
+      x: 223
+      y: 379
+      width: 171
+      height: 179
+    inner:
+      serializedVersion: 2
+      x: 223
+      y: 379
+      width: 171
+      height: 179
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-weapon-benelli
+    outer:
+      serializedVersion: 2
+      x: 1772
+      y: 469
+      width: 228
+      height: 133
+    inner:
+      serializedVersion: 2
+      x: 1772
+      y: 469
+      width: 228
+      height: 133
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-weapon-m90
+    outer:
+      serializedVersion: 2
+      x: 1096
+      y: 508
+      width: 242
+      height: 125
+    inner:
+      serializedVersion: 2
+      x: 1096
+      y: 508
+      width: 242
+      height: 125
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-army-transporter
+    outer:
+      serializedVersion: 2
+      x: 828
+      y: 1453
+      width: 297
+      height: 141
+    inner:
+      serializedVersion: 2
+      x: 828
+      y: 1453
+      width: 297
+      height: 141
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-army-minigunner
+    outer:
+      serializedVersion: 2
+      x: 828
+      y: 1228
+      width: 191
+      height: 219
+    inner:
+      serializedVersion: 2
+      x: 828
+      y: 1228
+      width: 191
+      height: 219
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-weapon-m110
+    outer:
+      serializedVersion: 2
+      x: 1236
+      y: 390
+      width: 238
+      height: 109
+    inner:
+      serializedVersion: 2
+      x: 1236
+      y: 390
+      width: 238
+      height: 109
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-weapon-mg4
+    outer:
+      serializedVersion: 2
+      x: 1344
+      y: 505
+      width: 234
+      height: 128
+    inner:
+      serializedVersion: 2
+      x: 1344
+      y: 505
+      width: 234
+      height: 128
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-weapon-boomstick
+    outer:
+      serializedVersion: 2
+      x: 745
+      y: 487
+      width: 228
+      height: 129
+    inner:
+      serializedVersion: 2
+      x: 745
+      y: 487
+      width: 228
+      height: 129
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-weapon-g36
+    outer:
+      serializedVersion: 2
+      x: 400
+      y: 388
+      width: 233
+      height: 123
+    inner:
+      serializedVersion: 2
+      x: 400
+      y: 388
+      width: 233
+      height: 123
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-army-scifi
+    outer:
+      serializedVersion: 2
+      x: 696
+      y: 1003
+      width: 181
+      height: 219
+    inner:
+      serializedVersion: 2
+      x: 696
+      y: 1003
+      width: 181
+      height: 219
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-army-shotgunner
+    outer:
+      serializedVersion: 2
+      x: 0
+      y: 934
+      width: 173
+      height: 219
+    inner:
+      serializedVersion: 2
+      x: 0
+      y: 934
+      width: 173
+      height: 219
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-weapon-piranha
+    outer:
+      serializedVersion: 2
+      x: 1821
+      y: 759
+      width: 186
+      height: 171
+    inner:
+      serializedVersion: 2
+      x: 1821
+      y: 759
+      width: 186
+      height: 171
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-weapon-spas12
+    outer:
+      serializedVersion: 2
+      x: 1096
+      y: 656
+      width: 227
+      height: 111
+    inner:
+      serializedVersion: 2
+      x: 1096
+      y: 656
+      width: 227
+      height: 111
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-weapon-magnum357
+    outer:
+      serializedVersion: 2
+      x: 400
+      y: 229
+      width: 165
+      height: 153
+    inner:
+      serializedVersion: 2
+      x: 400
+      y: 229
+      width: 165
+      height: 153
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-weapon-deserteagle
+    outer:
+      serializedVersion: 2
+      x: 0
+      y: 347
+      width: 150
+      height: 167
+    inner:
+      serializedVersion: 2
+      x: 0
+      y: 347
+      width: 150
+      height: 167
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-weapon-m1911
+    outer:
+      serializedVersion: 2
+      x: 156
+      y: 220
+      width: 154
+      height: 153
+    inner:
+      serializedVersion: 2
+      x: 156
+      y: 220
+      width: 154
+      height: 153
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-weapon-awmf
+    outer:
+      serializedVersion: 2
+      x: 883
+      y: 289
+      width: 240
+      height: 98
+    inner:
+      serializedVersion: 2
+      x: 883
+      y: 289
+      width: 240
+      height: 98
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-weapon-m24
+    outer:
+      serializedVersion: 2
+      x: 571
+      y: 261
+      width: 233
+      height: 100
+    inner:
+      serializedVersion: 2
+      x: 571
+      y: 261
+      width: 233
+      height: 100
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-weapon-svddragunov
+    outer:
+      serializedVersion: 2
+      x: 1129
+      y: 287
+      width: 240
+      height: 97
+    inner:
+      serializedVersion: 2
+      x: 1129
+      y: 287
+      width: 240
+      height: 97
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-weapon-m320
+    outer:
+      serializedVersion: 2
+      x: 810
+      y: 142
+      width: 164
+      height: 141
+    inner:
+      serializedVersion: 2
+      x: 810
+      y: 142
+      width: 164
+      height: 141
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-weapon-berettam9
+    outer:
+      serializedVersion: 2
+      x: 571
+      y: 107
+      width: 152
+      height: 148
+    inner:
+      serializedVersion: 2
+      x: 571
+      y: 107
+      width: 152
+      height: 148
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-weapon-remingtonm51
+    outer:
+      serializedVersion: 2
+      x: 980
+      y: 127
+      width: 143
+      height: 156
+    inner:
+      serializedVersion: 2
+      x: 980
+      y: 127
+      width: 143
+      height: 156
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-weapon-rpg7
+    outer:
+      serializedVersion: 2
+      x: 316
+      y: 135
+      width: 240
+      height: 88
+    inner:
+      serializedVersion: 2
+      x: 316
+      y: 135
+      width: 240
+      height: 88
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-weapon-frag
+    outer:
+      serializedVersion: 2
+      x: 1912
+      y: 1439
+      width: 116
+      height: 158
+    inner:
+      serializedVersion: 2
+      x: 1912
+      y: 1439
+      width: 116
+      height: 158
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-weapon-smoke
+    outer:
+      serializedVersion: 2
+      x: 1375
+      y: 198
+      width: 112
+      height: 156
+    inner:
+      serializedVersion: 2
+      x: 1375
+      y: 198
+      width: 112
+      height: 156
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-weapon-m34
+    outer:
+      serializedVersion: 2
+      x: 1253
+      y: 123
+      width: 104
+      height: 158
+    inner:
+      serializedVersion: 2
+      x: 1253
+      y: 123
+      width: 104
+      height: 158
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-weapon-flash
+    outer:
+      serializedVersion: 2
+      x: 1732
+      y: 170
+      width: 103
+      height: 156
+    inner:
+      serializedVersion: 2
+      x: 1732
+      y: 170
+      width: 103
+      height: 156
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-weapon-fangsofdoom
+    outer:
+      serializedVersion: 2
+      x: 875
+      y: 758
+      width: 207
+      height: 168
+    inner:
+      serializedVersion: 2
+      x: 875
+      y: 758
+      width: 207
+      height: 168
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-weapon-panther
+    outer:
+      serializedVersion: 2
+      x: 1480
+      y: 360
+      width: 253
+      height: 99
+    inner:
+      serializedVersion: 2
+      x: 1480
+      y: 360
+      width: 253
+      height: 99
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-weapon-molotov
+    outer:
+      serializedVersion: 2
+      x: 144
+      y: 39
+      width: 101
+      height: 175
+    inner:
+      serializedVersion: 2
+      x: 144
+      y: 39
+      width: 101
+      height: 175
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-weapon-mp5-elite
+    outer:
+      serializedVersion: 2
+      x: 440
+      y: 865
+      width: 226
+      height: 167
+    inner:
+      serializedVersion: 2
+      x: 440
+      y: 865
+      width: 226
+      height: 167
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: whiteRectangle
+    outer:
+      serializedVersion: 2
+      x: 1499
+      y: 1242
+      width: 10
+      height: 10
+    inner:
+      serializedVersion: 2
+      x: 1499
+      y: 1242
+      width: 10
+      height: 10
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-army-gunslinger
+    outer:
+      serializedVersion: 2
+      x: 0
+      y: 1613
+      width: 279
+      height: 230
+    inner:
+      serializedVersion: 2
+      x: 0
+      y: 1613
+      width: 279
+      height: 230
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-army-mortar
+    outer:
+      serializedVersion: 2
+      x: 348
+      y: 1809
+      width: 271
+      height: 239
+    inner:
+      serializedVersion: 2
+      x: 348
+      y: 1809
+      width: 271
+      height: 239
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-army-warper
+    outer:
+      serializedVersion: 2
+      x: 589
+      y: 1385
+      width: 233
+      height: 228
+    inner:
+      serializedVersion: 2
+      x: 589
+      y: 1385
+      width: 233
+      height: 228
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-army-crusher
+    outer:
+      serializedVersion: 2
+      x: 285
+      y: 1406
+      width: 252
+      height: 203
+    inner:
+      serializedVersion: 2
+      x: 285
+      y: 1406
+      width: 252
+      height: 203
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-weapon-scorcher
+    outer:
+      serializedVersion: 2
+      x: 1277
+      y: 1258
+      width: 236
+      height: 174
+    inner:
+      serializedVersion: 2
+      x: 1277
+      y: 1258
+      width: 236
+      height: 174
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-weapon-venom
+    outer:
+      serializedVersion: 2
+      x: 1025
+      y: 1265
+      width: 246
+      height: 167
+    inner:
+      serializedVersion: 2
+      x: 1025
+      y: 1265
+      width: 246
+      height: 167
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-weapon-sawn-off
+    outer:
+      serializedVersion: 2
+      x: 1818
+      y: 608
+      width: 218
+      height: 145
+    inner:
+      serializedVersion: 2
+      x: 1818
+      y: 608
+      width: 218
+      height: 145
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-weapon-m90-blackline
+    outer:
+      serializedVersion: 2
+      x: 1334
+      y: 639
+      width: 244
+      height: 130
+    inner:
+      serializedVersion: 2
+      x: 1334
+      y: 639
+      width: 244
+      height: 130
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-weapon-g36-blackline
+    outer:
+      serializedVersion: 2
+      x: 491
+      y: 517
+      width: 248
+      height: 126
+    inner:
+      serializedVersion: 2
+      x: 491
+      y: 517
+      width: 248
+      height: 126
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-weapon-p90-blackline
+    outer:
+      serializedVersion: 2
+      x: 1584
+      y: 465
+      width: 182
+      height: 169
+    inner:
+      serializedVersion: 2
+      x: 1584
+      y: 465
+      width: 182
+      height: 169
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-weapon-blackhand
+    outer:
+      serializedVersion: 2
+      x: 1772
+      y: 332
+      width: 231
+      height: 131
+    inner:
+      serializedVersion: 2
+      x: 1772
+      y: 332
+      width: 231
+      height: 131
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-weapon-jester
+    outer:
+      serializedVersion: 2
+      x: 0
+      y: 172
+      width: 138
+      height: 169
+    inner:
+      serializedVersion: 2
+      x: 0
+      y: 172
+      width: 138
+      height: 169
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-weapon-firestarter
+    outer:
+      serializedVersion: 2
+      x: 1363
+      y: 32
+      width: 94
+      height: 160
+    inner:
+      serializedVersion: 2
+      x: 1363
+      y: 32
+      width: 94
+      height: 160
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-weapon-m60-blackline
+    outer:
+      serializedVersion: 2
+      x: 883
+      y: 932
+      width: 235
+      height: 154
+    inner:
+      serializedVersion: 2
+      x: 883
+      y: 932
+      width: 235
+      height: 154
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-weapon-heartbreaker
+    outer:
+      serializedVersion: 2
+      x: 445
+      y: 1210
+      width: 245
+      height: 169
+    inner:
+      serializedVersion: 2
+      x: 445
+      y: 1210
+      width: 245
+      height: 169
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-weapon-madman
+    outer:
+      serializedVersion: 2
+      x: 1676
+      y: 1418
+      width: 230
+      height: 179
+    inner:
+      serializedVersion: 2
+      x: 1676
+      y: 1418
+      width: 230
+      height: 179
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-weapon-hater
+    outer:
+      serializedVersion: 2
+      x: 214
+      y: 997
+      width: 220
+      height: 174
+    inner:
+      serializedVersion: 2
+      x: 214
+      y: 997
+      width: 220
+      height: 174
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-weapon-striker-blackline
+    outer:
+      serializedVersion: 2
+      x: 672
+      y: 819
+      width: 197
+      height: 178
+    inner:
+      serializedVersion: 2
+      x: 672
+      y: 819
+      width: 197
+      height: 178
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-weapon-fatboy-blackline
+    outer:
+      serializedVersion: 2
+      x: 849
+      y: 622
+      width: 241
+      height: 130
+    inner:
+      serializedVersion: 2
+      x: 849
+      y: 622
+      width: 241
+      height: 130
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-weapon-headhunter
+    outer:
+      serializedVersion: 2
+      x: 979
+      y: 393
+      width: 251
+      height: 109
+    inner:
+      serializedVersion: 2
+      x: 979
+      y: 393
+      width: 251
+      height: 109
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-army-assaulthelicopter-elite
+    outer:
+      serializedVersion: 2
+      x: 729
+      y: 18
+      width: 180
+      height: 118
+    inner:
+      serializedVersion: 2
+      x: 729
+      y: 18
+      width: 180
+      height: 118
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-army-shotgunner-elite
+    outer:
+      serializedVersion: 2
+      x: 696
+      y: 1235
+      width: 119
+      height: 144
+    inner:
+      serializedVersion: 2
+      x: 696
+      y: 1235
+      width: 119
+      height: 144
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-army-grenadier-elite
+    outer:
+      serializedVersion: 2
+      x: 1129
+      y: 138
+      width: 118
+      height: 143
+    inner:
+      serializedVersion: 2
+      x: 1129
+      y: 138
+      width: 118
+      height: 143
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-army-engineer-elite
+    outer:
+      serializedVersion: 2
+      x: 1493
+      y: 211
+      width: 114
+      height: 143
+    inner:
+      serializedVersion: 2
+      x: 1493
+      y: 211
+      width: 114
+      height: 143
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-army-paratrooper-elite
+    outer:
+      serializedVersion: 2
+      x: 1613
+      y: 211
+      width: 113
+      height: 143
+    inner:
+      serializedVersion: 2
+      x: 1613
+      y: 211
+      width: 113
+      height: 143
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-army-sniper-elite
+    outer:
+      serializedVersion: 2
+      x: 1493
+      y: 63
+      width: 109
+      height: 142
+    inner:
+      serializedVersion: 2
+      x: 1493
+      y: 63
+      width: 109
+      height: 142
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-weapon-pkm-elite
+    outer:
+      serializedVersion: 2
+      x: 1189
+      y: 1438
+      width: 264
+      height: 166
+    inner:
+      serializedVersion: 2
+      x: 1189
+      y: 1438
+      width: 264
+      height: 166
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-weapon-qbz95-hex
+    outer:
+      serializedVersion: 2
+      x: 1124
+      y: 914
+      width: 213
+      height: 165
+    inner:
+      serializedVersion: 2
+      x: 1124
+      y: 914
+      width: 213
+      height: 165
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-weapon-saiga12-hex
+    outer:
+      serializedVersion: 2
+      x: 409
+      y: 706
+      width: 228
+      height: 153
+    inner:
+      serializedVersion: 2
+      x: 409
+      y: 706
+      width: 228
+      height: 153
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-weapon-famas-hex
+    outer:
+      serializedVersion: 2
+      x: 0
+      y: 674
+      width: 242
+      height: 143
+    inner:
+      serializedVersion: 2
+      x: 0
+      y: 674
+      width: 242
+      height: 143
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-weapon-ak47-elite
+    outer:
+      serializedVersion: 2
+      x: 248
+      y: 564
+      width: 237
+      height: 136
+    inner:
+      serializedVersion: 2
+      x: 248
+      y: 564
+      width: 237
+      height: 136
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-weapon-m110-hex
+    outer:
+      serializedVersion: 2
+      x: 639
+      y: 367
+      width: 238
+      height: 114
+    inner:
+      serializedVersion: 2
+      x: 639
+      y: 367
+      width: 238
+      height: 114
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: menu-weapon-smoke-hex
+    outer:
+      serializedVersion: 2
+      x: 0
+      y: 10
+      width: 112
+      height: 156
+    inner:
+      serializedVersion: 2
+      x: 0
+      y: 10
+      width: 112
+      height: 156
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  mCoordinates: 0
+  mPixelSize: 1
+  mReplacement: {fileID: 0}
+  pngPath: GuiAtlasArmyWeapon
+  pngHalfPath:
+  replaceTexture: {fileID: 2800000, guid: ff4f533dd751aa5439221d237bf98382, type: 3}
+  useBinaryData: 0
+  textureWidth: 2048
+  textureHeight: 2048
 --- !u!1001 &100100000
 Prefab:
   serializedVersion: 2

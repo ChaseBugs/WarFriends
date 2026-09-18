@@ -1,63 +1,209 @@
+using System;
 using UnityEngine;
 
-public class MiniDrone : MonoBehaviour
+public class MiniDrone : MainGameEntity
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public ParticleSystem fireDamage;
 
-	1. No dll files were provided to AssetRipper.
+	public ParticleSystem sparks;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	private new bool isAlive;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	private DestroyableObject mDestroyableObject;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	private DroneSteering mDroneSteering;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	private bool mExploded;
 
-	3. Assembly Reconstruction has not been implemented.
+	private PhotonView mPhotonView;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	private Transform mTransform;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	private Fractions mFraction;
 
-	4. This script is unnecessary.
+	private int mHealTimer;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private AICarTransporter mTransporterToRepair;
 
-	5. Script Content Level 0
+	public AICarTransporter transporterToRepair
+	{
+		get
+		{
+			return mTransporterToRepair;
+		}
+		set
+		{
+			mTransporterToRepair = value;
+			GameShootableEntity component = GetComponent<GameShootableEntity>();
+			if (component != null)
+			{
+				component.owner = mTransporterToRepair;
+				component.isMain = false;
+			}
+		}
+	}
 
-		AssetRipper was set to not load any script information.
+	public override Fractions fraction
+	{
+		get
+		{
+			return mFraction;
+		}
+		set
+		{
+			mFraction = value;
+			mPhotonView.RPC("SetFractionRPC", PhotonTargets.Others, (byte)value);
+			SetUpHealthBar();
+			mDestroyableObject.ChangeLayer(mFraction, isFlying: false);
+		}
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public override IFraction owner
+	{
+		get
+		{
+			return this;
+		}
+		set
+		{
+		}
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public override int power { get; set; }
 
-	7. An incorrect path was provided to AssetRipper.
+	public WayPointPath wayPointPath { get; private set; }
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	public DestroyableObject destroyableObject => mDestroyableObject;
 
-	*/
+	public float repairRatioPerSec { get; set; }
+
+	public override event Action<IGameMainEntity, DestroyableObject.DamageInfo> Killed;
+
+	[PunRPC]
+	private void SetFractionRPC(byte byteFraction)
+	{
+		mFraction = (Fractions)byteFraction;
+		SetUpHealthBar();
+		mDestroyableObject.ChangeLayer(mFraction, isFlying: false);
+	}
+
+	protected override void Awake()
+	{
+		base.Awake();
+		mDestroyableObject = GetComponent<DestroyableObject>();
+		destroyableObject.isMetal = true;
+		destroyableObject.OnDeath += DestroyableObjectOnOnDeath;
+		destroyableObject.OnDamage += DestroyableObjectOnOnDamage;
+		mTransform = base.transform;
+		mDroneSteering = GetComponent<DroneSteering>();
+		mPhotonView = GetComponent<PhotonView>();
+		mDroneSteering.ArrivedToWayPoint += DroneSteeringOnArrivedToWayPoint;
+	}
+
+	private void DroneSteeringOnArrivedToWayPoint(WayPoint wayPoint)
+	{
+		if (wayPoint.stayTime > 0f)
+		{
+			PlaySparks();
+		}
+	}
+
+	[PunRPC]
+	private void PlaySparks()
+	{
+		if (mPhotonView.isMine)
+		{
+			mPhotonView.RPC("PlaySparks", PhotonTargets.Others);
+		}
+		sparks.Play();
+	}
+
+	private void DestroyableObjectOnOnDamage(DestroyableObject destroyableObject, DestroyableObject.DamageInfo damageInfo)
+	{
+		if ((double)this.destroyableObject.healthRatio < 0.4)
+		{
+			fireDamage.Play();
+		}
+	}
+
+	private void DestroyableObjectOnOnDeath(DestroyableObject destroyableObject, DestroyableObject.DamageInfo damageInfo)
+	{
+		mDroneSteering.Clear();
+		mDroneSteering.FallDown();
+		isAlive = false;
+		if (Killed != null)
+		{
+			Killed(this, damageInfo);
+		}
+	}
+
+	private void OnTriggerEnter(Collider collision)
+	{
+		if (!isAlive && !mExploded)
+		{
+			Vibration.iPhoneVibrate(Vibration.iPhoneVibrateType.VibrateHeavy);
+			mExploded = true;
+			DestroyEntity(0.2f);
+			Explosion.ExplosionInfo explosionInfo = new Explosion.ExplosionInfo();
+			explosionInfo.position = base.transform.position;
+			explosionInfo.explodeDamage = destroyableObject.maxHealth * 0.5f;
+			explosionInfo.damageAmount = destroyableObject.maxHealth * 0.05f;
+			explosionInfo.owner = this;
+			explosionInfo.isNetworkCopy = !mPhotonView.isMine;
+			explosionInfo.deadRadius = 0.7f;
+			explosionInfo.hurtRadius = 1.4f;
+			explosionInfo.type = Explosion.ExplosionType.Small;
+			Explosion.ExplosionInfo i = explosionInfo;
+			Explosion.Explode(i);
+		}
+	}
+
+	public override void OnInstancied()
+	{
+		base.OnInstancied();
+		mDroneSteering.Init();
+		fireDamage.Stop();
+		isAlive = true;
+		StopAllCoroutines();
+		mExploded = false;
+		Singleton<SoundsManager3D>.instance.PlayOneShot(base.gameObject, Sounds3DEnum.PredatorDeployRepairDrone);
+	}
+
+	protected override void Start()
+	{
+		base.Start();
+		fireDamage.Stop();
+	}
+
+	public void SetWayPoint(WayPointPath path)
+	{
+		mDroneSteering.SetWayPoint(path.wayPoints[0], this);
+		mDroneSteering.lookTarget = path.transform;
+		wayPointPath = path;
+	}
+
+	protected override void Update()
+	{
+		base.Update();
+		if (mPhotonView.isMine && (int)Time.time > mHealTimer)
+		{
+			mHealTimer = (int)Time.time;
+			if (transporterToRepair != null)
+			{
+				float num = repairRatioPerSec;
+				transporterToRepair.destroyableObj.Heal(transporterToRepair.destroyableObj.maxHealth * num, isNetworkCopy: false);
+			}
+		}
+	}
+
+	private void SetUpHealthBar()
+	{
+		destroyableObject.healthbarColor = ((PlayerController.currentPlayer.fraction == fraction) ? Color.green : Color.red);
+	}
+
+	public override void DestroyPooled()
+	{
+		base.DestroyPooled();
+		mDroneSteering.Clear();
+	}
 }

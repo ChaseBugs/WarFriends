@@ -1,63 +1,95 @@
 using UnityEngine;
 
-public class WeaponEquipSlotButton : MonoBehaviour
+public class WeaponEquipSlotButton : Core_BaseScript
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Header("Core")]
+	public UISprite background;
 
-	1. No dll files were provided to AssetRipper.
+	public UISprite icon;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public UILabel label;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	[Header("Notification")]
+	public UILabel notificationNumber;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public GameObject notificationGO;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	[Header("Sale")]
+	public GameObject salePart;
 
-	3. Assembly Reconstruction has not been implemented.
+	private string mSelectedBackgroundButton = "menu-weapons-tab-active";
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	private string mNormalBackgroundButton = "menu-weapons-tab";
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	private PlayerInventory.InventorySlot mInventorySlot;
 
-	4. This script is unnecessary.
+	public WeaponCategory WeaponCategoryOfButton()
+	{
+		return mInventorySlot.category;
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public void Highlight(int index)
+	{
+		Highlight(index == mInventorySlot.index);
+	}
 
-	5. Script Content Level 0
+	public void Highlight(WeaponCategory category)
+	{
+		Highlight(category == (category & mInventorySlot.category));
+	}
 
-		AssetRipper was set to not load any script information.
+	private void Highlight(bool show)
+	{
+		icon.color = ((!show) ? Color.white : Colours.blue);
+		label.color = ((!show) ? Color.white : Colours.blue);
+		background.spriteName = ((!show) ? mNormalBackgroundButton : mSelectedBackgroundButton);
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public void Notification()
+	{
+		int numberOfWeaponCategoryNotifications = Singleton<NotificationManager>.instance.GetNumberOfWeaponCategoryNotifications(mInventorySlot.category);
+		notificationGO.SetActive(numberOfWeaponCategoryNotifications > 0);
+		notificationNumber.text = numberOfWeaponCategoryNotifications.ToString();
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public void Sale()
+	{
+		bool flag = Singleton<OfferManager>.instance.DiscountedWeaponCategory(mInventorySlot.category, OfferBuyType.Both) > 0;
+		bool flag2 = Singleton<OfferManager>.instance.DiscountedWeaponCategory(mInventorySlot.category, OfferBuyType.Both) > 0;
+		bool flag3 = false;
+		bool flag4 = false;
+		foreach (WeaponLevelsSetup weaponLevelsSetup in LevelManager.instance.weaponLevelsSetups)
+		{
+			flag3 |= weaponLevelsSetup.weaponCategory == (mInventorySlot.category & weaponLevelsSetup.weaponCategory) && weaponLevelsSetup.weaponState == WeaponLevelsSetup.State.NotBuyed;
+			flag4 |= weaponLevelsSetup.weaponCategory == (mInventorySlot.category & weaponLevelsSetup.weaponCategory) && weaponLevelsSetup.bought && weaponLevelsSetup.canBeUpgraded;
+		}
+		salePart.SetActive((flag && flag3) || (flag2 && flag4));
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	public void Initialize(PlayerInventory.InventorySlot inventorySlot, int count)
+	{
+		mInventorySlot = inventorySlot;
+		label.text = mInventorySlot.name;
+		Notification();
+		Sale();
+		icon.spriteName = mInventorySlot.iconName;
+		icon.MakePixelPerfect();
+		Highlight(show: false);
+		float num = UIRoot.list[0].activeWidth / (float)count - 5f;
+		MiscTools.SetUILabelRescale(label, 35f, 24f, (int)num - 240);
+		background.transform.localScale = background.transform.localScale.ReplaceX(num);
+		notificationGO.transform.localPosition = notificationGO.transform.localPosition.ReplaceX(num - 52f);
+		salePart.transform.localPosition = salePart.transform.localPosition.ReplaceX(num - 65f);
+		BoxCollider component = GetComponent<BoxCollider>();
+		if (component != null)
+		{
+			component.center = component.center.ReplaceX(num / 2f);
+			component.size = component.size.ReplaceX(num + 20f);
+		}
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	private void OnClick()
+	{
+		GuiScreenSingle<WeaponScreen>.instance.WeaponCategoryButtonClick(mInventorySlot.category);
+	}
 }

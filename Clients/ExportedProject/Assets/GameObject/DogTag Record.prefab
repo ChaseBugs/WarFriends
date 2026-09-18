@@ -124,6 +124,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 03ca31095586649175331dab0ea53ce6, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  isActivated: 0
+  background: {fileID: 11470521}
+  foreground: {fileID: 11477035}
+  animationObject: {fileID: 11469566}
 --- !u!114 &11443158
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -135,6 +139,34 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bb70fb1d0e0085b2584da035910762fa, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  showInPanelTool: 1
+  generateNormals: 0
+  depthPass: 0
+  widgetsAreStatic: 0
+  cullWhileDragging: 0
+  worldToLocal:
+    e00: 719.2699
+    e01: 0
+    e02: 0
+    e03: -34837.54
+    e10: 0
+    e11: 719.2699
+    e12: 0
+    e13: -133.23729
+    e20: 0
+    e21: 0
+    e22: 719.2699
+    e23: 22341.525
+    e30: 0
+    e31: 0
+    e32: 0
+    e33: 1
+  mAlpha: 1
+  mDebugInfo: 1
+  mClipping: 0
+  mClipRange: {x: 0, y: 0, z: 0, w: 0}
+  mClipSoftness: {x: 40, y: 40}
+  isFreezed: 0
 --- !u!4 &431434
 Transform:
   m_ObjectHideFlags: 0
@@ -158,6 +190,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 995cff53e4ec203488dc398f0f8f32e5, type: 2}
+  mColor: {r: 0.3758621, g: 0.3758621, b: 0.3758621, a: 1}
+  mPivot: 4
+  mDepth: 19
+  mAtlas: {fileID: 11409266, guid: 9582f38df100b244993ee2e1fa9a9888, type: 2}
+  mSpriteName: menu-dogtag
+  mFillCenter: 1
+  mType: 0
+  mFillDirection: 6
+  mFillAmount: 1
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &496012
 Transform:
   m_ObjectHideFlags: 0
@@ -181,6 +228,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 995cff53e4ec203488dc398f0f8f32e5, type: 2}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 20
+  mAtlas: {fileID: 11409266, guid: 9582f38df100b244993ee2e1fa9a9888, type: 2}
+  mSpriteName: menu-dogtag
+  mFillCenter: 1
+  mType: 3
+  mFillDirection: 3
+  mFillAmount: 0.604
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &403859
 Transform:
   m_ObjectHideFlags: 0
@@ -206,6 +268,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: db5c29fd59aa1c4270f92c6262bbdce8, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  isVIPDogtag: 0
+  panel: {fileID: 11488124}
+  topPart: {fileID: 11491323}
+  bottomPart: {fileID: 11459786}
+  speed: 0.3
+  lostSoundWaitTime: 0.75
 --- !u!114 &11488124
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -217,6 +285,34 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bb70fb1d0e0085b2584da035910762fa, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  showInPanelTool: 1
+  generateNormals: 0
+  depthPass: 0
+  widgetsAreStatic: 0
+  cullWhileDragging: 0
+  worldToLocal:
+    e00: 719.2699
+    e01: 0
+    e02: 0
+    e03: -34837.54
+    e10: 0
+    e11: 719.2699
+    e12: 0
+    e13: -133.23729
+    e20: 0
+    e21: 0
+    e22: 719.2699
+    e23: 22356.525
+    e30: 0
+    e31: 0
+    e32: 0
+    e33: 1
+  mAlpha: 1
+  mDebugInfo: 1
+  mClipping: 0
+  mClipRange: {x: 0, y: 0, z: 0, w: 0}
+  mClipSoftness: {x: 40, y: 40}
+  isFreezed: 0
 --- !u!4 &424449
 Transform:
   m_ObjectHideFlags: 0
@@ -240,6 +336,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 995cff53e4ec203488dc398f0f8f32e5, type: 2}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 100
+  mAtlas: {fileID: 11409266, guid: 9582f38df100b244993ee2e1fa9a9888, type: 2}
+  mSpriteName: menu-dogtag
+  mFillCenter: 1
+  mType: 3
+  mFillDirection: 5
+  mFillAmount: 0.4
+  mFillAmountBack: 1
+  mInvert: 1
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!4 &469143
 Transform:
   m_ObjectHideFlags: 0
@@ -263,6 +374,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 614142b7d5433ee943123d988a26497c, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMat: {fileID: 2100000, guid: 995cff53e4ec203488dc398f0f8f32e5, type: 2}
+  mColor: {r: 1, g: 1, b: 1, a: 1}
+  mPivot: 4
+  mDepth: 101
+  mAtlas: {fileID: 11409266, guid: 9582f38df100b244993ee2e1fa9a9888, type: 2}
+  mSpriteName: menu-dogtag
+  mFillCenter: 1
+  mType: 3
+  mFillDirection: 5
+  mFillAmount: 0.6
+  mFillAmountBack: 1
+  mInvert: 0
+  mTiledScale: 1
+  mUseInnerUVs: 0
+  mFillSlopePixels: 0
 --- !u!1001 &100100000
 Prefab:
   serializedVersion: 2

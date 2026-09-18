@@ -1,63 +1,190 @@
+using System.Collections;
+using System.Text;
+using Google2u;
+using Newtonsoft.Json;
 using UnityEngine;
 
-public class GameControllerPVP : MonoBehaviour
+public abstract class GameControllerPVP : GameControllerOnline
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	protected bool mIsOverTime;
 
-	1. No dll files were provided to AssetRipper.
+	protected bool mMinimizedInLobby;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	private bool isCurrentController => this == Singleton<GameController>.instance.mainController;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	protected virtual string mChoosingCardsText => Localization.Localize("ID_WAITINGFOROPPONENTCARDS");
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	protected override void LoadLevelAndStartGame()
+	{
+		if (Singleton<PhotonConnectionManager>.instance.isMasterClient)
+		{
+			Singleton<BeanstalkServerManager>.instance.GameStartedMaster();
+		}
+		else
+		{
+			Singleton<BeanstalkServerManager>.instance.GameStartedClient();
+		}
+		base.LoadLevelAndStartGame();
+		Singleton<GuiManager>.instance.ShowDialog(GuiElementSingle<DialogCompareUnits>.instance, 0f);
+	}
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public override IEnumerator StartGame()
+	{
+		time = (float)Singleton<GameVariables>.instance.constants.GetRow(Constants.rowIds.DeathMatchTime).FLOATVALUE + 1f;
+		Debug.Log("Set time to: " + time);
+		base.mMainPlayerController.Killed -= OnPlayerControllerKilled;
+		base.mMainPlayerController.Killed += OnPlayerControllerKilled;
+		yield return StartCoroutine(base.StartGame());
+		Singleton<GuiManager>.instance.ShowGui(GuiScreenSingle<GameStartScreen>.instance);
+		yield return StartCoroutine(Singleton<GameCamera>.instance.StartBeginAnimation());
+		mPhotonView.RPC("StartCameraAnimationFinishedRPC", PhotonTargets.Others, PlayerController.currentPlayer.playerNetworkId);
+		StartCameraAnimationFinishedRPC(PlayerController.currentPlayer.playerNetworkId);
+		yield return new WaitForRealSeconds(0.2f);
+		GameControllerOnline.mOtherPlayerInstance.Killed -= OnOtherPlayerKilled;
+		GameControllerOnline.mOtherPlayerInstance.Killed += OnOtherPlayerKilled;
+		mIsOverTime = false;
+	}
 
-	3. Assembly Reconstruction has not been implemented.
+	private void OnOtherPlayerKilled(IGameMainEntity gameMainEntity, DestroyableObject.DamageInfo damageInfo)
+	{
+		GameControllerOnline.mOtherPlayerInstance.Killed -= OnOtherPlayerKilled;
+		if (isCurrentController)
+		{
+			Singleton<GameCamera>.instance.FocusPlayer((PlayerController)gameMainEntity, damageInfo.owner is PlayerController);
+			Singleton<MatchManager>.instance.SetHitBy(damageInfo);
+			base.mMainController.gameEndReason = GameController.GameEndReason.Win;
+			FinishGame();
+		}
+	}
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	private void OnPlayerControllerKilled(IGameMainEntity gameMainEntity, DestroyableObject.DamageInfo damageInfo)
+	{
+		base.mMainPlayerController.Killed -= OnPlayerControllerKilled;
+		if (isCurrentController)
+		{
+			Singleton<MatchManager>.instance.SetHitBy(damageInfo);
+			base.mMainController.gameEndReason = GameController.GameEndReason.Killed;
+			FinishGame();
+		}
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	protected override Fractions GetPlayerFraction(PhotonPlayer player)
+	{
+		Fractions fractions = ((!player.IsMasterClient) ? Fractions.Enemies : Fractions.Allies);
+		Debug.Log($"Getting fraction for {player} with result {fractions}");
+		return fractions;
+	}
 
-	4. This script is unnecessary.
+	public abstract void StartRandomMatchMaking(float connectDelay = 1.5f);
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public abstract void RestartRandomMatchMaking(bool resetRandomConnectTime = true);
 
-	5. Script Content Level 0
+	public override void FinishChoosingCards()
+	{
+		LoadingDialog.SetLook(smallLook: true);
+		base.FinishChoosingCards();
+	}
 
-		AssetRipper was set to not load any script information.
+	protected override void AllPlayersConnected()
+	{
+		if (!mBothPlayersConnected)
+		{
+			base.AllPlayersConnected();
+			MatchManager.matchState = MatchState.BothPlayersConnected;
+			if (mCardsChoosen)
+			{
+				mPhotonView.RPC("FinishChoosingCardsRPC", PhotonTargets.AllBufferedViaServer, JsonConvert.SerializeObject(GetUnitsUpgrades()), PhotonNetwork.player.ID);
+				LoadingDialog.ShowLoading(mChoosingCardsText);
+			}
+		}
+		else
+		{
+			Debug.LogError("All players already connected");
+		}
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	protected override void WaitingForOpponentCancelClicked()
+	{
+		Debug.Log("Loading - cancel clicked, will to try call disconnect");
+		if (mCardsChoosen)
+		{
+			Debug.Log("Cancel - Disconnect, clicked in dialog !!!");
+			PhotonConnectionManager.Disconnect();
+			StopAllCoroutines();
+			Reset();
+			RestartRandomMatchMaking();
+		}
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public override void GetTimeProgressText(StringBuilder text)
+	{
+		text.Append((!DebugSettings.debugEnabled) ? string.Empty : ((!PhotonNetwork.isMasterClient) ? "CLIENT" : "MASTER"));
+		if (Singleton<MatchManager>.instance.isOverTime)
+		{
+			text.Append(Localization.Localize("ID_OVERTIME"));
+		}
+		else if (Singleton<GameController>.instance.time > 0f)
+		{
+			MiscTools.PrintableTimeTwoDigits(ref text, Singleton<GameController>.instance.time);
+		}
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	protected void PlayerDisconnectedInLobby()
+	{
+		mBothPlayersConnected = false;
+		if (mCardsChoosen)
+		{
+			Debug.LogError("Player disconected 0001");
+			WarningDialog.ShowError(Localization.Localize("ID_CONFIRM_OPPONENTCANCELLED"), Localization.Localize("ID_WARNING_OPPONENTDISCONNECTED"), 0f, null, string.Empty);
+			LoadingDialog.Hide();
+		}
+		if (MatchManager.beforeMatch)
+		{
+			Debug.LogError("Player disconected 0002");
+			PhotonConnectionManager.Disconnect();
+			Reset();
+			mRandomConnectTime = Time.realtimeSinceStartup;
+			MatchManager.matchState = MatchState.GameCancelled;
+			InvokeAfter(delegate
+			{
+				RestartRandomMatchMaking();
+			}, 0.5f);
+		}
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	public override void PauseGame(bool focusLost)
+	{
+		if (!gameIsRunning && focusLost && Singleton<GameController>.instance.gameState == GameController.GameState.Menu)
+		{
+			if (base.isInMatch)
+			{
+				if (!mBothPlayersConnected)
+				{
+					PhotonConnectionManager.Disconnect();
+					Reset();
+				}
+				mMinimizedInLobby = true;
+			}
+		}
+		else
+		{
+			base.PauseGame(focusLost);
+		}
+	}
 
-	*/
+	public override void UnPauseGame()
+	{
+		if (!gameIsRunning && Singleton<GameController>.instance.gameState == GameController.GameState.Menu)
+		{
+			if (base.isInMatch && !mBothPlayersConnected)
+			{
+				RestartRandomMatchMaking();
+				mMinimizedInLobby = false;
+			}
+		}
+		else
+		{
+			base.UnPauseGame();
+		}
+	}
 }

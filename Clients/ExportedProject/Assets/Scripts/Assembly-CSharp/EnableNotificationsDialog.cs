@@ -1,63 +1,88 @@
+using System;
+using Google2u;
 using UnityEngine;
 
-public class EnableNotificationsDialog : MonoBehaviour
+public class EnableNotificationsDialog : GuiElementSingle<EnableNotificationsDialog>, IGuiDialog
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Header("Table")]
+	public UITable notificationsTable;
 
-	1. No dll files were provided to AssetRipper.
+	[Header("Buttons")]
+	public UIButton buttonCancel;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public UIButton buttonEnable;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public UILabel enableLabel;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public UITable goldRewardTable;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public UILabel goldRewardNumber;
 
-	3. Assembly Reconstruction has not been implemented.
+	public override void InitControls()
+	{
+		UIEventListener uIEventListener = UIEventListener.Get(buttonCancel.gameObject);
+		uIEventListener.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener.onClick, new UIEventListener.VoidDelegate(OnCancelClicked));
+		UIEventListener uIEventListener2 = UIEventListener.Get(buttonEnable.gameObject);
+		uIEventListener2.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener2.onClick, new UIEventListener.VoidDelegate(OnEnableClicked));
+		goldRewardTable.onReposition = delegate
+		{
+			float val = 0f - goldRewardTable.padding.x - (goldRewardNumber.transform.parent.transform.localPosition.x - goldRewardTable.padding.x) / 2f;
+			goldRewardTable.transform.localPosition = goldRewardTable.transform.localPosition.ReplaceX(val);
+		};
+	}
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public override void InitGUIValues()
+	{
+		notificationsTable.repositionNow = true;
+		bool flag = PlayerAnalytics.instance.WasOneTimeRewardAdded(Constants.rowIds.NotificationAllowReward);
+		int num = (int)(float)Singleton<GameVariables>.instance.constants.GetRow(Constants.rowIds.NotificationAllowReward).FLOATVALUE;
+		bool flag2 = !flag && num > 0;
+		enableLabel.gameObject.SetActive(!flag2);
+		goldRewardTable.gameObject.SetActive(flag2);
+		if (flag2)
+		{
+			goldRewardNumber.text = MiscTools.FormatBigNumber(num);
+			goldRewardTable.repositionNow = true;
+		}
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	private void OnCancelClicked(GameObject go)
+	{
+		if (base.isFullyShowed)
+		{
+			Singleton<EventTrackingManager>.instance.RegisterTutorialDialogEvent("313 MENU ENABLE PUSH", clickedYes: false);
+			HideDialog();
+		}
+	}
 
-	4. This script is unnecessary.
+	private void OnEnableClicked(GameObject go)
+	{
+		if (base.isFullyShowed)
+		{
+			Singleton<EventTrackingManager>.instance.RegisterTutorialDialogEvent("313 MENU ENABLE PUSH", clickedYes: false);
+			Debug.Log("Going to enable notifications");
+			PushNotificationManager.instance.EnablePushNotifications(string.Empty);
+			DialogManager.instance.PushNotificationWasEnabled();
+			HideDialog();
+		}
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public override void DoAfterHide()
+	{
+		base.DoAfterHide();
+		if (GuiElementSingle<SettingsDialog>.instance.isShowed)
+		{
+			GuiElementSingle<SettingsDialog>.instance.InitGUIValues();
+		}
+	}
 
-	5. Script Content Level 0
+	public GuiElement GetGuiElement()
+	{
+		return this;
+	}
 
-		AssetRipper was set to not load any script information.
-
-	6. Cpp2IL failed to decompile Il2Cpp data
-
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public override void OnBack()
+	{
+		OnCancelClicked(buttonCancel.gameObject);
+	}
 }

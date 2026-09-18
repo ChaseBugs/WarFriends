@@ -1,66 +1,237 @@
-using UnityEngine;
+using System;
+using System.Collections;
+using System.IO;
+using Org.BouncyCastle.Utilities;
 
 namespace Org.BouncyCastle.Crypto.Tls
 {
-	public class TlsExtensionsUtilities : MonoBehaviour
+public abstract class TlsExtensionsUtilities
+{
+	public static IDictionary EnsureExtensionsInitialised(IDictionary extensions)
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
+		IDictionary result;
+		if (extensions == null)
+		{
+			IDictionary dictionary = Platform.CreateHashtable();
+			result = dictionary;
+		}
+		else
+		{
+			result = extensions;
+		}
+		return result;
 	}
+
+	public static void AddEncryptThenMacExtension(IDictionary extensions)
+	{
+		extensions[22] = CreateEncryptThenMacExtension();
+	}
+
+	public static void AddExtendedMasterSecretExtension(IDictionary extensions)
+	{
+		extensions[23] = CreateExtendedMasterSecretExtension();
+	}
+
+	public static void AddHeartbeatExtension(IDictionary extensions, HeartbeatExtension heartbeatExtension)
+	{
+		extensions[15] = CreateHeartbeatExtension(heartbeatExtension);
+	}
+
+	public static void AddMaxFragmentLengthExtension(IDictionary extensions, byte maxFragmentLength)
+	{
+		extensions[1] = CreateMaxFragmentLengthExtension(maxFragmentLength);
+	}
+
+	public static void AddServerNameExtension(IDictionary extensions, ServerNameList serverNameList)
+	{
+		extensions[0] = CreateServerNameExtension(serverNameList);
+	}
+
+	public static void AddStatusRequestExtension(IDictionary extensions, CertificateStatusRequest statusRequest)
+	{
+		extensions[5] = CreateStatusRequestExtension(statusRequest);
+	}
+
+	public static void AddTruncatedHMacExtension(IDictionary extensions)
+	{
+		extensions[4] = CreateTruncatedHMacExtension();
+	}
+
+	public static HeartbeatExtension GetHeartbeatExtension(IDictionary extensions)
+	{
+		byte[] extensionData = TlsUtilities.GetExtensionData(extensions, 15);
+		return (extensionData != null) ? ReadHeartbeatExtension(extensionData) : null;
+	}
+
+	public static short GetMaxFragmentLengthExtension(IDictionary extensions)
+	{
+		byte[] extensionData = TlsUtilities.GetExtensionData(extensions, 1);
+		return (short)((extensionData != null) ? ReadMaxFragmentLengthExtension(extensionData) : (-1));
+	}
+
+	public static ServerNameList GetServerNameExtension(IDictionary extensions)
+	{
+		byte[] extensionData = TlsUtilities.GetExtensionData(extensions, 0);
+		return (extensionData != null) ? ReadServerNameExtension(extensionData) : null;
+	}
+
+	public static CertificateStatusRequest GetStatusRequestExtension(IDictionary extensions)
+	{
+		byte[] extensionData = TlsUtilities.GetExtensionData(extensions, 5);
+		return (extensionData != null) ? ReadStatusRequestExtension(extensionData) : null;
+	}
+
+	public static bool HasEncryptThenMacExtension(IDictionary extensions)
+	{
+		byte[] extensionData = TlsUtilities.GetExtensionData(extensions, 22);
+		return extensionData != null && ReadEncryptThenMacExtension(extensionData);
+	}
+
+	public static bool HasExtendedMasterSecretExtension(IDictionary extensions)
+	{
+		byte[] extensionData = TlsUtilities.GetExtensionData(extensions, 23);
+		return extensionData != null && ReadExtendedMasterSecretExtension(extensionData);
+	}
+
+	public static bool HasTruncatedHMacExtension(IDictionary extensions)
+	{
+		byte[] extensionData = TlsUtilities.GetExtensionData(extensions, 4);
+		return extensionData != null && ReadTruncatedHMacExtension(extensionData);
+	}
+
+	public static byte[] CreateEmptyExtensionData()
+	{
+		return TlsUtilities.EmptyBytes;
+	}
+
+	public static byte[] CreateEncryptThenMacExtension()
+	{
+		return CreateEmptyExtensionData();
+	}
+
+	public static byte[] CreateExtendedMasterSecretExtension()
+	{
+		return CreateEmptyExtensionData();
+	}
+
+	public static byte[] CreateHeartbeatExtension(HeartbeatExtension heartbeatExtension)
+	{
+		if (heartbeatExtension == null)
+		{
+			throw new TlsFatalAlert(80);
+		}
+		MemoryStream memoryStream = new MemoryStream();
+		heartbeatExtension.Encode(memoryStream);
+		return memoryStream.ToArray();
+	}
+
+	public static byte[] CreateMaxFragmentLengthExtension(byte maxFragmentLength)
+	{
+		return new byte[1] { maxFragmentLength };
+	}
+
+	public static byte[] CreateServerNameExtension(ServerNameList serverNameList)
+	{
+		if (serverNameList == null)
+		{
+			throw new TlsFatalAlert(80);
+		}
+		MemoryStream memoryStream = new MemoryStream();
+		serverNameList.Encode(memoryStream);
+		return memoryStream.ToArray();
+	}
+
+	public static byte[] CreateStatusRequestExtension(CertificateStatusRequest statusRequest)
+	{
+		if (statusRequest == null)
+		{
+			throw new TlsFatalAlert(80);
+		}
+		MemoryStream memoryStream = new MemoryStream();
+		statusRequest.Encode(memoryStream);
+		return memoryStream.ToArray();
+	}
+
+	public static byte[] CreateTruncatedHMacExtension()
+	{
+		return CreateEmptyExtensionData();
+	}
+
+	private static bool ReadEmptyExtensionData(byte[] extensionData)
+	{
+		if (extensionData == null)
+		{
+			throw new ArgumentNullException("extensionData");
+		}
+		if (extensionData.Length != 0)
+		{
+			throw new TlsFatalAlert(47);
+		}
+		return true;
+	}
+
+	public static bool ReadEncryptThenMacExtension(byte[] extensionData)
+	{
+		return ReadEmptyExtensionData(extensionData);
+	}
+
+	public static bool ReadExtendedMasterSecretExtension(byte[] extensionData)
+	{
+		return ReadEmptyExtensionData(extensionData);
+	}
+
+	public static HeartbeatExtension ReadHeartbeatExtension(byte[] extensionData)
+	{
+		if (extensionData == null)
+		{
+			throw new ArgumentNullException("extensionData");
+		}
+		MemoryStream memoryStream = new MemoryStream(extensionData, writable: false);
+		HeartbeatExtension result = HeartbeatExtension.Parse(memoryStream);
+		TlsProtocol.AssertEmpty(memoryStream);
+		return result;
+	}
+
+	public static short ReadMaxFragmentLengthExtension(byte[] extensionData)
+	{
+		if (extensionData == null)
+		{
+			throw new ArgumentNullException("extensionData");
+		}
+		if (extensionData.Length != 1)
+		{
+			throw new TlsFatalAlert(50);
+		}
+		return extensionData[0];
+	}
+
+	public static ServerNameList ReadServerNameExtension(byte[] extensionData)
+	{
+		if (extensionData == null)
+		{
+			throw new ArgumentNullException("extensionData");
+		}
+		MemoryStream memoryStream = new MemoryStream(extensionData, writable: false);
+		ServerNameList result = ServerNameList.Parse(memoryStream);
+		TlsProtocol.AssertEmpty(memoryStream);
+		return result;
+	}
+
+	public static CertificateStatusRequest ReadStatusRequestExtension(byte[] extensionData)
+	{
+		if (extensionData == null)
+		{
+			throw new ArgumentNullException("extensionData");
+		}
+		MemoryStream memoryStream = new MemoryStream(extensionData, writable: false);
+		CertificateStatusRequest result = CertificateStatusRequest.Parse(memoryStream);
+		TlsProtocol.AssertEmpty(memoryStream);
+		return result;
+	}
+
+	public static bool ReadTruncatedHMacExtension(byte[] extensionData)
+	{
+		return ReadEmptyExtensionData(extensionData);
+	}
+}
 }

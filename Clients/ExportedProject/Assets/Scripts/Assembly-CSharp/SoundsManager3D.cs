@@ -1,63 +1,157 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
-public class SoundsManager3D : MonoBehaviour
+[ExecuteInEditMode]
+public class SoundsManager3D : Singleton<SoundsManager3D>
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Serializable]
+	public class SoundEntry3D : SoundEntry
+	{
+		[SerializeField]
+		public Sounds3DEnum soundEnum;
+	}
 
-	1. No dll files were provided to AssetRipper.
+	public List<SoundEntry3D> SoundEntries;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	private Dictionary<Sounds3DEnum, SoundEntry3D> mAllSounds;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	private AudioSource[] mSources;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	private int mCurrentIndex;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public GameObject audioSourcesParent;
 
-	3. Assembly Reconstruction has not been implemented.
+	protected override void Awake()
+	{
+		base.Awake();
+		if (!Application.isPlaying)
+		{
+			return;
+		}
+		base.Awake();
+		mAllSounds = new Dictionary<Sounds3DEnum, SoundEntry3D>();
+		foreach (SoundEntry3D soundEntry in SoundEntries)
+		{
+			mAllSounds[soundEntry.soundEnum] = soundEntry;
+		}
+		mSources = audioSourcesParent.GetComponentsInChildren<AudioSource>();
+	}
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public void Play(Vector3 position, Sounds3DEnum soundEnum)
+	{
+		if (!(SoundsManager.Instance.soundsVolume < 0.05f))
+		{
+			AudioSource audioSource = mSources[mCurrentIndex];
+			SoundEntry3D soundEntry3D = mAllSounds[soundEnum];
+			audioSource.Stop();
+			audioSource.clip = soundEntry3D.GetClip();
+			audioSource.transform.position = position;
+			audioSource.volume = soundEntry3D.volume * SoundsManager.Instance.soundsVolume;
+			audioSource.spatialBlend = 1f;
+			audioSource.Play();
+			mCurrentIndex++;
+			mCurrentIndex %= mSources.Length;
+		}
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public AudioSource Play(Vector3 position, AudioClip clip, float volume = 1f)
+	{
+		if (SoundsManager.Instance.soundsVolume < 0.05f)
+		{
+			return null;
+		}
+		AudioSource audioSource = mSources[mCurrentIndex];
+		audioSource.Stop();
+		audioSource.transform.position = position;
+		audioSource.volume = 1f;
+		audioSource.spatialBlend = 1f;
+		audioSource.PlayOneShot(clip, volume * SoundsManager.Instance.soundsVolume);
+		mCurrentIndex++;
+		mCurrentIndex %= mSources.Length;
+		return audioSource;
+	}
 
-	4. This script is unnecessary.
+	public void Play(GameObject go, Sounds3DEnum soundEnum)
+	{
+		if (!(SoundsManager.Instance.soundsVolume < 0.05f) && soundEnum != Sounds3DEnum.None)
+		{
+			AudioSource component = go.GetComponent<AudioSource>();
+			if ((bool)component)
+			{
+				SoundEntry3D soundEntry3D = mAllSounds[soundEnum];
+				component.volume = soundEntry3D.volume * SoundsManager.Instance.soundsVolume;
+				component.clip = soundEntry3D.GetClip();
+				component.spatialBlend = 1f;
+				component.Play();
+			}
+		}
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public void Play(AudioSource audioSource, Sounds3DEnum soundEnum, float volume = 1f)
+	{
+		if (!(SoundsManager.Instance.soundsVolume < 0.05f) && soundEnum != Sounds3DEnum.None && (bool)audioSource)
+		{
+			SoundEntry3D soundEntry3D = mAllSounds[soundEnum];
+			audioSource.volume = volume * soundEntry3D.volume * SoundsManager.Instance.soundsVolume;
+			audioSource.clip = soundEntry3D.GetClip();
+			audioSource.spatialBlend = 1f;
+			audioSource.Play();
+		}
+	}
 
-	5. Script Content Level 0
+	public void PlayOneShot(GameObject go, Sounds3DEnum soundEnum, float volume = 1f)
+	{
+		if (!(SoundsManager.Instance.soundsVolume < 0.05f) && soundEnum != Sounds3DEnum.None)
+		{
+			AudioSource component = go.GetComponent<AudioSource>();
+			if ((bool)component)
+			{
+				SoundEntry3D soundEntry3D = mAllSounds[soundEnum];
+				component.volume = volume * soundEntry3D.volume * SoundsManager.Instance.soundsVolume;
+				component.spatialBlend = 1f;
+				component.PlayOneShot(soundEntry3D.GetClip());
+			}
+		}
+	}
 
-		AssetRipper was set to not load any script information.
+	public void LoadNow(Sounds3DEnum soundEnum)
+	{
+		SoundEntry3D soundEntry3D = mAllSounds[soundEnum];
+		soundEntry3D.MarkAsUsed();
+		soundEntry3D.Load();
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public void Play(AudioSource audioSource, AudioClip clip)
+	{
+		if (!(SoundsManager.Instance.soundsVolume < 0.05f) && (bool)audioSource)
+		{
+			audioSource.spatialBlend = 1f;
+			audioSource.PlayOneShot(clip, SoundsManager.Instance.soundsVolume);
+		}
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public void LoadSounds()
+	{
+		foreach (SoundEntry3D soundEntry in SoundEntries)
+		{
+			soundEntry.Load();
+		}
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	public void UnloadSounds()
+	{
+		foreach (SoundEntry3D soundEntry in SoundEntries)
+		{
+			soundEntry.UnLoad();
+		}
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public void UseSound(Sounds3DEnum sound)
+	{
+		if (mAllSounds.TryGetValue(sound, out var value))
+		{
+			value.MarkAsUsed();
+		}
+	}
 }

@@ -1,63 +1,86 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class IntroductionDealsItem : MonoBehaviour
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Serializable]
+	public class WidgetAlpha
+	{
+		public GameObject element;
 
-	1. No dll files were provided to AssetRipper.
+		public float alpha = 1f;
+	}
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	[Header("Core")]
+	public List<WidgetAlpha> widgets;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public float showTime = 3f;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public Color topBackgroundColor;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public float backgroundAlpha = 0.5f;
 
-	3. Assembly Reconstruction has not been implemented.
+	protected float mShowTimeEnd;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public virtual bool hasMoreLooks => false;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public virtual bool isLastLook => true;
 
-	4. This script is unnecessary.
+	public virtual void InitEvents()
+	{
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public virtual void InitControls()
+	{
+	}
 
-	5. Script Content Level 0
+	public virtual void InitGuiValues()
+	{
+	}
 
-		AssetRipper was set to not load any script information.
+	public virtual bool IsAvailable()
+	{
+		return true;
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public virtual IEnumerator Hide(float time)
+	{
+		foreach (WidgetAlpha widget in widgets)
+		{
+			TweenAlpha.Begin(widget.element, time, 0f);
+		}
+		yield return new WaitForSeconds(time);
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public virtual IEnumerator Show(float time)
+	{
+		foreach (WidgetAlpha widget in widgets)
+		{
+			TweenAlpha.Begin(widget.element, time, widget.alpha);
+		}
+		TweenColorSpecial.Begin(GuiScreenSingle<MainScreen>.instance.dealsOnRight.headerBackground.gameObject, time, topBackgroundColor);
+		TweenColorSpecial.Begin(GuiScreenSingle<MainScreen>.instance.dealsOnRight.headerCorner.gameObject, time, topBackgroundColor);
+		TweenAlpha.Begin(GuiScreenSingle<MainScreen>.instance.dealsOnRight.background.gameObject, time, backgroundAlpha);
+		yield return new WaitForSeconds(time);
+		mShowTimeEnd = TimeManager.realTimeWithoutPauses + showTime;
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	public bool IsShowTime()
+	{
+		return TimeManager.realTimeWithoutPauses < mShowTimeEnd;
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	protected void SetShowTimeEnd(float endIn)
+	{
+		mShowTimeEnd = TimeManager.realTimeWithoutPauses + endIn;
+	}
 
-	*/
+	public virtual IEnumerator Change(float time)
+	{
+		mShowTimeEnd = TimeManager.realTimeWithoutPauses + time * 2f;
+		yield return StartCoroutine(Hide(time));
+		yield return StartCoroutine(Show(time));
+	}
 }

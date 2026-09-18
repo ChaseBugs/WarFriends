@@ -1,66 +1,272 @@
-using UnityEngine;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using GooglePlayGames.BasicApi.Nearby;
+using GooglePlayGames.Native.PInvoke;
+using GooglePlayGames.OurUtils;
 
 namespace GooglePlayGames.Native
 {
-	public class NativeNearbyConnectionsClient : MonoBehaviour
+internal class NativeNearbyConnectionsClient : INearbyConnectionClient
+{
+	protected class OnGameThreadMessageListener : IMessageListener
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
+		private readonly IMessageListener mListener;
 
-		1. No dll files were provided to AssetRipper.
+		public OnGameThreadMessageListener(IMessageListener listener)
+		{
+			mListener = Misc.CheckNotNull(listener);
+		}
 
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
+		public void OnMessageReceived(string remoteEndpointId, byte[] data, bool isReliableMessage)
+		{
+			PlayGamesHelperObject.RunOnGameThread(delegate
+			{
+				mListener.OnMessageReceived(remoteEndpointId, data, isReliableMessage);
+			});
+		}
 
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
+		public void OnRemoteEndpointDisconnected(string remoteEndpointId)
+		{
+			PlayGamesHelperObject.RunOnGameThread(delegate
+			{
+				mListener.OnRemoteEndpointDisconnected(remoteEndpointId);
+			});
+		}
 	}
+
+	protected class OnGameThreadDiscoveryListener : IDiscoveryListener
+	{
+		private readonly IDiscoveryListener mListener;
+
+		public OnGameThreadDiscoveryListener(IDiscoveryListener listener)
+		{
+			mListener = Misc.CheckNotNull(listener);
+		}
+
+		public void OnEndpointFound(EndpointDetails discoveredEndpoint)
+		{
+			PlayGamesHelperObject.RunOnGameThread(delegate
+			{
+				mListener.OnEndpointFound(discoveredEndpoint);
+			});
+		}
+
+		public void OnEndpointLost(string lostEndpointId)
+		{
+			PlayGamesHelperObject.RunOnGameThread(delegate
+			{
+				mListener.OnEndpointLost(lostEndpointId);
+			});
+		}
+	}
+
+	private readonly NearbyConnectionsManager mManager;
+
+	internal NativeNearbyConnectionsClient(NearbyConnectionsManager manager)
+	{
+		mManager = Misc.CheckNotNull(manager);
+	}
+
+	public int MaxUnreliableMessagePayloadLength()
+	{
+		return 1168;
+	}
+
+	public int MaxReliableMessagePayloadLength()
+	{
+		return 4096;
+	}
+
+	public void SendReliable(List<string> recipientEndpointIds, byte[] payload)
+	{
+		InternalSend(recipientEndpointIds, payload, isReliable: true);
+	}
+
+	public void SendUnreliable(List<string> recipientEndpointIds, byte[] payload)
+	{
+		InternalSend(recipientEndpointIds, payload, isReliable: false);
+	}
+
+	private void InternalSend(List<string> recipientEndpointIds, byte[] payload, bool isReliable)
+	{
+		if (recipientEndpointIds == null)
+		{
+			throw new ArgumentNullException("recipientEndpointIds");
+		}
+		if (payload == null)
+		{
+			throw new ArgumentNullException("payload");
+		}
+		if (recipientEndpointIds.Contains(null))
+		{
+			throw new InvalidOperationException("Cannot send a message to a null recipient");
+		}
+		if (recipientEndpointIds.Count == 0)
+		{
+			Logger.w("Attempted to send a reliable message with no recipients");
+			return;
+		}
+		if (isReliable)
+		{
+			if (payload.Length > MaxReliableMessagePayloadLength())
+			{
+				throw new InvalidOperationException("cannot send more than " + MaxReliableMessagePayloadLength() + " bytes");
+			}
+		}
+		else if (payload.Length > MaxUnreliableMessagePayloadLength())
+		{
+			throw new InvalidOperationException("cannot send more than " + MaxUnreliableMessagePayloadLength() + " bytes");
+		}
+		foreach (string recipientEndpointId in recipientEndpointIds)
+		{
+			if (isReliable)
+			{
+				mManager.SendReliable(recipientEndpointId, payload);
+			}
+			else
+			{
+				mManager.SendUnreliable(recipientEndpointId, payload);
+			}
+		}
+	}
+
+	public void StartAdvertising(string name, List<string> appIdentifiers, TimeSpan? advertisingDuration, Action<AdvertisingResult> resultCallback, Action<ConnectionRequest> requestCallback)
+	{
+		Misc.CheckNotNull(appIdentifiers, "appIdentifiers");
+		Misc.CheckNotNull(resultCallback, "resultCallback");
+		Misc.CheckNotNull(requestCallback, "connectionRequestCallback");
+		if (advertisingDuration.HasValue && advertisingDuration.Value.Ticks < 0)
+		{
+			throw new InvalidOperationException("advertisingDuration must be positive");
+		}
+		resultCallback = Callbacks.AsOnGameThreadCallback(resultCallback);
+		requestCallback = Callbacks.AsOnGameThreadCallback(requestCallback);
+		mManager.StartAdvertising(name, appIdentifiers.Select(NativeAppIdentifier.FromString).ToList(), ToTimeoutMillis(advertisingDuration), delegate(long localClientId, NativeStartAdvertisingResult result)
+		{
+			resultCallback(result.AsResult());
+		}, delegate(long localClientId, NativeConnectionRequest request)
+		{
+			requestCallback(request.AsRequest());
+		});
+	}
+
+	private static long ToTimeoutMillis(TimeSpan? span)
+	{
+		return (!span.HasValue) ? 0 : PInvokeUtilities.ToMilliseconds(span.Value);
+	}
+
+	public void StopAdvertising()
+	{
+		mManager.StopAdvertising();
+	}
+
+	public void SendConnectionRequest(string name, string remoteEndpointId, byte[] payload, Action<ConnectionResponse> responseCallback, IMessageListener listener)
+	{
+		Misc.CheckNotNull(remoteEndpointId, "remoteEndpointId");
+		Misc.CheckNotNull(payload, "payload");
+		Misc.CheckNotNull(responseCallback, "responseCallback");
+		Misc.CheckNotNull(listener, "listener");
+		responseCallback = Callbacks.AsOnGameThreadCallback(responseCallback);
+		using (NativeMessageListenerHelper listener2 = ToMessageListener(listener))
+		{
+		mManager.SendConnectionRequest(name, remoteEndpointId, payload, delegate(long localClientId, NativeConnectionResponse response)
+		{
+			responseCallback(response.AsResponse(localClientId));
+		}, listener2);
+		}
+}
+
+	private static NativeMessageListenerHelper ToMessageListener(IMessageListener listener)
+	{
+		listener = new OnGameThreadMessageListener(listener);
+		NativeMessageListenerHelper nativeMessageListenerHelper = new NativeMessageListenerHelper();
+		nativeMessageListenerHelper.SetOnMessageReceivedCallback(delegate(long localClientId, string endpointId, byte[] data, bool isReliable)
+		{
+			listener.OnMessageReceived(endpointId, data, isReliable);
+		});
+		nativeMessageListenerHelper.SetOnDisconnectedCallback(delegate(long localClientId, string endpointId)
+		{
+			listener.OnRemoteEndpointDisconnected(endpointId);
+		});
+		return nativeMessageListenerHelper;
+	}
+
+	public void AcceptConnectionRequest(string remoteEndpointId, byte[] payload, IMessageListener listener)
+	{
+		Misc.CheckNotNull(remoteEndpointId, "remoteEndpointId");
+		Misc.CheckNotNull(payload, "payload");
+		Misc.CheckNotNull(listener, "listener");
+		Logger.d("Calling AcceptConncectionRequest");
+		mManager.AcceptConnectionRequest(remoteEndpointId, payload, ToMessageListener(listener));
+		Logger.d("Called!");
+	}
+
+	public void StartDiscovery(string serviceId, TimeSpan? advertisingTimeout, IDiscoveryListener listener)
+	{
+		Misc.CheckNotNull(serviceId, "serviceId");
+		Misc.CheckNotNull(listener, "listener");
+		using (NativeEndpointDiscoveryListenerHelper listener2 = ToDiscoveryListener(listener))
+		{
+		mManager.StartDiscovery(serviceId, ToTimeoutMillis(advertisingTimeout), listener2);
+		}
+}
+
+	private static NativeEndpointDiscoveryListenerHelper ToDiscoveryListener(IDiscoveryListener listener)
+	{
+		listener = new OnGameThreadDiscoveryListener(listener);
+		NativeEndpointDiscoveryListenerHelper nativeEndpointDiscoveryListenerHelper = new NativeEndpointDiscoveryListenerHelper();
+		nativeEndpointDiscoveryListenerHelper.SetOnEndpointFound(delegate(long localClientId, NativeEndpointDetails endpoint)
+		{
+			listener.OnEndpointFound(endpoint.ToDetails());
+		});
+		nativeEndpointDiscoveryListenerHelper.SetOnEndpointLostCallback(delegate(long localClientId, string lostEndpointId)
+		{
+			listener.OnEndpointLost(lostEndpointId);
+		});
+		return nativeEndpointDiscoveryListenerHelper;
+	}
+
+	public void StopDiscovery(string serviceId)
+	{
+		Misc.CheckNotNull(serviceId, "serviceId");
+		mManager.StopDiscovery(serviceId);
+	}
+
+	public void RejectConnectionRequest(string requestingEndpointId)
+	{
+		Misc.CheckNotNull(requestingEndpointId, "requestingEndpointId");
+		mManager.RejectConnectionRequest(requestingEndpointId);
+	}
+
+	public void DisconnectFromEndpoint(string remoteEndpointId)
+	{
+		mManager.DisconnectFromEndpoint(remoteEndpointId);
+	}
+
+	public void StopAllConnections()
+	{
+		mManager.StopAllConnections();
+	}
+
+	public string LocalEndpointId()
+	{
+		return mManager.LocalEndpointId();
+	}
+
+	public string LocalDeviceId()
+	{
+		return mManager.LocalDeviceId();
+	}
+
+	public string GetAppBundleId()
+	{
+		return mManager.AppBundleId;
+	}
+
+	public string GetServiceId()
+	{
+		return NearbyConnectionsManager.ServiceId;
+	}
+}
 }

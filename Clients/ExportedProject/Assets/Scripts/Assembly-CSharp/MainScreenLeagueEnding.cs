@@ -1,63 +1,313 @@
+using System;
+using System.Collections.Generic;
+using Google2u;
 using UnityEngine;
 
-public class MainScreenLeagueEnding : MonoBehaviour
+public class MainScreenLeagueEnding : Core_BaseScript
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	private enum Type
+	{
+		None,
+		League,
+		SquadWar,
+		Locked
+	}
 
-	1. No dll files were provided to AssetRipper.
+	[Header("None")]
+	public GameObject leaguePositionHeaderPart;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	[Header("Player League")]
+	public GameObject playerLeaguePart;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public UILabel playerLeagueTimer;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	[Header("Squad War")]
+	public GameObject squadWarPart;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public UILabel squadWarTimer;
 
-	3. Assembly Reconstruction has not been implemented.
+	public UILabel squadWarPositionAndName;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public UISprite squadWarGoldIcon;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public UILabel squadWarReward;
 
-	4. This script is unnecessary.
+	private bool mSquadWarsTimer;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private int mSquadWarsEnd;
 
-	5. Script Content Level 0
+	private bool mLeagueTimer;
 
-		AssetRipper was set to not load any script information.
+	private int mLeagueEnd;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	private Type currentLook
+	{
+		get
+		{
+			if (!Singleton<BeanstalkServerManager>.instance.isPlayerDataLoaded)
+			{
+				return Type.Locked;
+			}
+			if (LevelManager.instance.isMainScreenPartsLocked)
+			{
+				return Type.Locked;
+			}
+			if (!string.IsNullOrEmpty(GameLoginManager.currentPlayer.squadName) && showSquadWarsReminder)
+			{
+				return Type.SquadWar;
+			}
+			if (!GameLoginManager.currentPlayer.isInBeginnersLeague && GameLoginManager.currentPlayer.isInLeague && showLeagueReminder)
+			{
+				return Type.League;
+			}
+			return Type.None;
+		}
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	private bool showLeagueReminder
+	{
+		get
+		{
+			int currentTimestamp = Singleton<BeanstalkServerManager>.instance.currentTimestamp;
+			int num = (int)(float)Singleton<GameVariables>.instance.constants.GetRow(Constants.rowIds.LeagueReminder).FLOATVALUE * 3600;
+			return mLeagueEnd >= currentTimestamp && mLeagueEnd <= num + currentTimestamp;
+		}
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	private bool showSquadWarsReminder
+	{
+		get
+		{
+			int currentTimestamp = Singleton<BeanstalkServerManager>.instance.currentTimestamp;
+			int num = (int)(float)Singleton<GameVariables>.instance.constants.GetRow(Constants.rowIds.SquadWarsReminder).FLOATVALUE * 3600;
+			return mSquadWarsEnd >= currentTimestamp && mSquadWarsEnd <= num + currentTimestamp;
+		}
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	public void SetSquadWarsEnd(int time)
+	{
+		mSquadWarsEnd = time;
+		if (base.gameObject.activeInHierarchy)
+		{
+			InitGuiValues();
+		}
+	}
 
-	*/
+	public void SetLeagueEnd(int time)
+	{
+		mLeagueEnd = time;
+		if (base.gameObject.activeInHierarchy)
+		{
+			InitGuiValues();
+		}
+	}
+
+	public void InitEvents()
+	{
+		SquadWarManager.instance.SquadWarSquadsUpdated += OnSquadsUpdated;
+	}
+
+	private void OnSquadsUpdated()
+	{
+		if (!GuiScreenSingle<MainScreen>.instance.isShowed || !Singleton<BeanstalkServerManager>.instance.isPlayerDataLoaded)
+		{
+			return;
+		}
+		string squadName = GameLoginManager.currentPlayer.squadName;
+		if (string.IsNullOrEmpty(squadName))
+		{
+			HideSquadWarsEnd();
+			return;
+		}
+		DatabaseSquad squad = Singleton<ServerResultsCache>.instance.GetSquad(squadName, ommitTime: true);
+		List<DatabaseSquad> squadWarSquads = SquadWarManager.instance.GetSquadWarSquads();
+		int num = squadWarSquads.FindIndex((DatabaseSquad s1) => s1.name == squadName);
+		bool flag = squadWarSquads.Count > (int)(float)Singleton<GameVariables>.instance.constants.GetRow(Constants.rowIds.SquadWarsLowerSquadLimit).FLOATVALUE;
+		ShowSquadWarsEnd(!flag, num + 1, squadWarSquads.Count, squad.squadWarDivision, squadName);
+	}
+
+	public void InitControls()
+	{
+	}
+
+	public void InitGuiValues()
+	{
+		if (!GuiScreenSingle<MainScreen>.instance.isShowed)
+		{
+			return;
+		}
+		CounterManager instance = Singleton<CounterManager>.instance;
+		instance.updateCounterBySecond = (Action)Delegate.Remove(instance.updateCounterBySecond, new Action(UpdateEverySecond));
+		mLeagueTimer = false;
+		mSquadWarsTimer = false;
+		Type type = currentLook;
+		if (type == Type.Locked)
+		{
+			if (squadWarPart.activeSelf)
+			{
+				squadWarPart.SetActive(value: false);
+			}
+			if (playerLeaguePart.activeSelf)
+			{
+				playerLeaguePart.SetActive(value: false);
+			}
+			if (leaguePositionHeaderPart.activeSelf)
+			{
+				leaguePositionHeaderPart.SetActive(value: false);
+			}
+		}
+		if (type == Type.None)
+		{
+			if (squadWarPart.activeSelf)
+			{
+				squadWarPart.SetActive(value: false);
+			}
+			if (playerLeaguePart.activeSelf)
+			{
+				playerLeaguePart.SetActive(value: false);
+			}
+			if (!leaguePositionHeaderPart.activeSelf)
+			{
+				leaguePositionHeaderPart.SetActive(value: true);
+			}
+		}
+		if (type == Type.League)
+		{
+			if (squadWarPart.activeSelf)
+			{
+				squadWarPart.SetActive(value: false);
+			}
+			if (!playerLeaguePart.activeSelf)
+			{
+				playerLeaguePart.SetActive(value: true);
+			}
+			if (leaguePositionHeaderPart.activeSelf)
+			{
+				leaguePositionHeaderPart.SetActive(value: false);
+			}
+			ShowLeagueEnd();
+			CounterManager instance2 = Singleton<CounterManager>.instance;
+			instance2.updateCounterBySecond = (Action)Delegate.Combine(instance2.updateCounterBySecond, new Action(UpdateEverySecond));
+		}
+		if (type == Type.SquadWar)
+		{
+			if (!squadWarPart.activeSelf)
+			{
+				squadWarPart.SetActive(value: true);
+			}
+			if (playerLeaguePart.activeSelf)
+			{
+				playerLeaguePart.SetActive(value: false);
+			}
+			if (leaguePositionHeaderPart.activeSelf)
+			{
+				leaguePositionHeaderPart.SetActive(value: false);
+			}
+			DatabaseSquad squad = Singleton<ServerResultsCache>.instance.GetSquad(GameLoginManager.currentPlayer.squadName, ommitTime: true);
+			if (squad != null)
+			{
+				Singleton<BeanstalkServerManager>.instance.GetSquadsFromRound(squad.roundId);
+			}
+			CounterManager instance3 = Singleton<CounterManager>.instance;
+			instance3.updateCounterBySecond = (Action)Delegate.Combine(instance3.updateCounterBySecond, new Action(UpdateEverySecond));
+		}
+	}
+
+	public void DoAfterHide()
+	{
+		CounterManager instance = Singleton<CounterManager>.instance;
+		instance.updateCounterBySecond = (Action)Delegate.Remove(instance.updateCounterBySecond, new Action(UpdateEverySecond));
+	}
+
+	private void UpdateEverySecond()
+	{
+		bool flag = false;
+		if (mSquadWarsTimer)
+		{
+			if (showSquadWarsReminder)
+			{
+				FillSquadWarsEndTime();
+			}
+			else
+			{
+				HideSquadWarsEnd();
+			}
+		}
+		else if (showSquadWarsReminder && !mLeagueTimer)
+		{
+			flag = true;
+		}
+		if (mLeagueTimer)
+		{
+			if (showLeagueReminder)
+			{
+				FillLeagueEndTime();
+			}
+			else
+			{
+				HideLeagueEnd();
+			}
+		}
+		else if (showLeagueReminder && !mSquadWarsTimer)
+		{
+			flag = true;
+		}
+		if (flag)
+		{
+			InitGuiValues();
+		}
+	}
+
+	private void ShowLeagueEnd()
+	{
+		mLeagueTimer = true;
+		playerLeaguePart.SetActive(value: true);
+		FillLeagueEndTime();
+	}
+
+	private void FillLeagueEndTime()
+	{
+		int currentTimestamp = Singleton<BeanstalkServerManager>.instance.currentTimestamp;
+		int num = mLeagueEnd - currentTimestamp;
+		playerLeagueTimer.text = Localization.LocalizeFormat("ID_PLAYERLEAGUEENDSIN", MiscTools.PrintableTime(num, "ID_READYTIME", string.Empty));
+		MiscTools.SetUILabelRescale(playerLeagueTimer, 30f, 20f, 420);
+	}
+
+	private void HideLeagueEnd()
+	{
+		mLeagueTimer = false;
+		playerLeaguePart.SetActive(value: false);
+	}
+
+	private void ShowSquadWarsEnd(bool lowSquads, int position, int count, int division, string squadName)
+	{
+		int currentTimestamp = Singleton<BeanstalkServerManager>.instance.currentTimestamp;
+		if (!mLeagueTimer && currentTimestamp <= mSquadWarsEnd)
+		{
+			mSquadWarsTimer = true;
+			squadWarPart.SetActive(value: true);
+			FillSquadWarsEndTime();
+			squadWarPositionAndName.text = $"{MiscTools.FormatNumberToOrdinalPoint(position)} {squadName}";
+			MiscTools.SetUILabelRescale(squadWarPositionAndName, 27f, 20f);
+			int tier = MiscTools.SquadWarTier(position, count);
+			int num = Singleton<GameVariables>.instance.SquadWarsRewardForSquad(tier, division);
+			squadWarReward.text = MiscTools.FormatBigNumber(num);
+			float num2 = 33f + squadWarReward.relativeSize.x * squadWarReward.transform.localScale.x + 14f;
+			squadWarGoldIcon.transform.localPosition = squadWarGoldIcon.transform.localPosition.ReplaceX(0f - num2);
+		}
+	}
+
+	private void FillSquadWarsEndTime()
+	{
+		int currentTimestamp = Singleton<BeanstalkServerManager>.instance.currentTimestamp;
+		int num = mSquadWarsEnd - currentTimestamp;
+		squadWarTimer.text = Localization.LocalizeFormat("ID_SQUADWAREND", MiscTools.PrintableTime(num, "ID_READYTIME", string.Empty));
+		MiscTools.SetUILabelRescale(squadWarTimer, 27f, 20f, 486);
+	}
+
+	private void HideSquadWarsEnd()
+	{
+		mSquadWarsTimer = false;
+		squadWarPart.SetActive(value: false);
+	}
 }

@@ -1,26 +1,23 @@
 Shader "Projector/Multiply" {
-Properties {
- _ShadowTex ("Cookie", 2D) = "gray" { }
- _FalloffTex ("FallOff", 2D) = "white" { }
-}
-	//DummyShaderTextExporter
-	
-	SubShader{
-		Tags { "RenderType" = "Opaque" }
-		LOD 200
-		CGPROGRAM
-#pragma surface surf Lambert
-#pragma target 3.0
-		sampler2D _MainTex;
-		struct Input
-		{
-			float2 uv_MainTex;
-		};
-		void surf(Input IN, inout SurfaceOutput o)
-		{
-			float4 c = tex2D(_MainTex, IN.uv_MainTex);
-			o.Albedo = c.rgb;
+	Properties {
+		_ShadowTex ("Cookie", 2D) = "gray" {}
+		_FalloffTex ("FallOff", 2D) = "white" {}
+	}
+	Subshader {
+		Tags {"Queue"="Transparent-1"}
+		Pass {
+			ZWrite Off
+			ColorMask RGB
+			Blend DstColor Zero
+			Offset -1, -1
+
+			SetTexture [_ShadowTex] {
+				combine texture, texture alpha
+			}
+			SetTexture [_FalloffTex] {
+				combine previous lerp (previous) constant
+				ConstantColor (1,1,1,1)
+			}
 		}
-		ENDCG
 	}
 }

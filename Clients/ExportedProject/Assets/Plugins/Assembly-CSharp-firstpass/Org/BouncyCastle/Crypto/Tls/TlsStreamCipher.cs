@@ -1,66 +1,125 @@
-using UnityEngine;
+using Org.BouncyCastle.Crypto.Parameters;
+using Org.BouncyCastle.Utilities;
 
 namespace Org.BouncyCastle.Crypto.Tls
 {
-	public class TlsStreamCipher : MonoBehaviour
+public class TlsStreamCipher : TlsCipher
+{
+	protected readonly TlsContext context;
+
+	protected readonly IStreamCipher encryptCipher;
+
+	protected readonly IStreamCipher decryptCipher;
+
+	protected readonly TlsMac writeMac;
+
+	protected readonly TlsMac readMac;
+
+	protected readonly bool usesNonce;
+
+	public TlsStreamCipher(TlsContext context, IStreamCipher clientWriteCipher, IStreamCipher serverWriteCipher, IDigest clientWriteDigest, IDigest serverWriteDigest, int cipherKeySize, bool usesNonce)
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
+		bool isServer = context.IsServer;
+		this.context = context;
+		this.usesNonce = usesNonce;
+		encryptCipher = clientWriteCipher;
+		decryptCipher = serverWriteCipher;
+		int num = 2 * cipherKeySize + clientWriteDigest.GetDigestSize() + serverWriteDigest.GetDigestSize();
+		byte[] key = TlsUtilities.CalculateKeyBlock(context, num);
+		int num2 = 0;
+		TlsMac tlsMac = new TlsMac(context, clientWriteDigest, key, num2, clientWriteDigest.GetDigestSize());
+		num2 += clientWriteDigest.GetDigestSize();
+		TlsMac tlsMac2 = new TlsMac(context, serverWriteDigest, key, num2, serverWriteDigest.GetDigestSize());
+		num2 += serverWriteDigest.GetDigestSize();
+		KeyParameter keyParameter = new KeyParameter(key, num2, cipherKeySize);
+		num2 += cipherKeySize;
+		KeyParameter keyParameter2 = new KeyParameter(key, num2, cipherKeySize);
+		num2 += cipherKeySize;
+		if (num2 != num)
+		{
+			throw new TlsFatalAlert(80);
+		}
+		ICipherParameters parameters;
+		ICipherParameters parameters2;
+		if (isServer)
+		{
+			writeMac = tlsMac2;
+			readMac = tlsMac;
+			encryptCipher = serverWriteCipher;
+			decryptCipher = clientWriteCipher;
+			parameters = keyParameter2;
+			parameters2 = keyParameter;
+		}
+		else
+		{
+			writeMac = tlsMac;
+			readMac = tlsMac2;
+			encryptCipher = clientWriteCipher;
+			decryptCipher = serverWriteCipher;
+			parameters = keyParameter;
+			parameters2 = keyParameter2;
+		}
+		if (usesNonce)
+		{
+			byte[] iv = new byte[8];
+			parameters = new ParametersWithIV(parameters, iv);
+			parameters2 = new ParametersWithIV(parameters2, iv);
+		}
+		encryptCipher.Init(forEncryption: true, parameters);
+		decryptCipher.Init(forEncryption: false, parameters2);
 	}
+
+	public virtual int GetPlaintextLimit(int ciphertextLimit)
+	{
+		return ciphertextLimit - writeMac.Size;
+	}
+
+	public virtual byte[] EncodePlaintext(long seqNo, byte type, byte[] plaintext, int offset, int len)
+	{
+		if (usesNonce)
+		{
+			UpdateIV(encryptCipher, forEncryption: true, seqNo);
+		}
+		byte[] array = new byte[len + writeMac.Size];
+		encryptCipher.ProcessBytes(plaintext, offset, len, array, 0);
+		byte[] array2 = writeMac.CalculateMac(seqNo, type, plaintext, offset, len);
+		encryptCipher.ProcessBytes(array2, 0, array2.Length, array, len);
+		return array;
+	}
+
+	public virtual byte[] DecodeCiphertext(long seqNo, byte type, byte[] ciphertext, int offset, int len)
+	{
+		if (usesNonce)
+		{
+			UpdateIV(decryptCipher, forEncryption: false, seqNo);
+		}
+		int size = readMac.Size;
+		if (len < size)
+		{
+			throw new TlsFatalAlert(50);
+		}
+		int num = len - size;
+		byte[] array = new byte[len];
+		decryptCipher.ProcessBytes(ciphertext, offset, len, array, 0);
+		CheckMac(seqNo, type, array, num, len, array, 0, num);
+		return Arrays.CopyOfRange(array, 0, num);
+	}
+
+	protected virtual void CheckMac(long seqNo, byte type, byte[] recBuf, int recStart, int recEnd, byte[] calcBuf, int calcOff, int calcLen)
+	{
+		byte[] a = Arrays.CopyOfRange(recBuf, recStart, recEnd);
+		byte[] b = readMac.CalculateMac(seqNo, type, calcBuf, calcOff, calcLen);
+		if (!Arrays.ConstantTimeAreEqual(a, b))
+		{
+			throw new TlsFatalAlert(20);
+		}
+	}
+
+	protected virtual void UpdateIV(IStreamCipher cipher, bool forEncryption, long seqNo)
+	{
+		byte[] array = new byte[8];
+		TlsUtilities.WriteUint64(seqNo, array, 0);
+		cipher.Init(forEncryption, new ParametersWithIV(null, array));
+	}
+}
 }

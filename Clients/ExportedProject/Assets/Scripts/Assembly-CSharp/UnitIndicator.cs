@@ -1,63 +1,179 @@
+using System.Collections;
 using UnityEngine;
 
-public class UnitIndicator : MonoBehaviour
+public class UnitIndicator : PoolableObject
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public UISprite background;
 
-	1. No dll files were provided to AssetRipper.
+	public UISprite unitSprite;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public UISprite arrowBorder;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	private RadicalRoutine mIndicating;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	private bool mUpdateRunning;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	private EnemyController mSoldier;
 
-	3. Assembly Reconstruction has not been implemented.
+	private bool mShown;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	private bool mAnimating;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	private float mPositionZ;
 
-	4. This script is unnecessary.
+	public override void OnInstancied()
+	{
+		base.OnInstancied();
+		Singleton<GameController>.instance.GameEnded += OnGameEnded;
+		background.alpha = 0f;
+		unitSprite.alpha = 0f;
+		arrowBorder.alpha = 0f;
+		mShown = false;
+		mAnimating = false;
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private void OnGameEnded(GameController.GameEndReason endReason)
+	{
+		Singleton<GameController>.instance.GameEnded -= OnGameEnded;
+		mShown = false;
+		Destroy();
+	}
 
-	5. Script Content Level 0
+	public override void DestroyPooled()
+	{
+		Singleton<GameController>.instance.GameEnded -= OnGameEnded;
+		StopUpdator();
+		base.DestroyPooled();
+	}
 
-		AssetRipper was set to not load any script information.
+	public void InitAndShow(string unitIconName, EnemyController soldier, float posZ)
+	{
+		unitSprite.spriteName = unitIconName;
+		unitSprite.MakePixelPerfect();
+		float multiplier = Mathf.Min(98f / unitSprite.transform.localScale.x, 98f / unitSprite.transform.localScale.y);
+		unitSprite.transform.localScale = unitSprite.transform.localScale.MultiplyXY(multiplier);
+		mPositionZ = posZ;
+		mSoldier = soldier;
+		mUpdateRunning = false;
+		mShown = false;
+		mAnimating = false;
+		StartUpdator();
+		Show();
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	private void Destroy()
+	{
+		StopUpdator();
+		if (!mShown)
+		{
+			DestroyPooled();
+			return;
+		}
+		Hide();
+		InvokeAfterRealTime(delegate
+		{
+			DestroyPooled();
+		}, 0.3f);
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	private void StartUpdator()
+	{
+		if (!mUpdateRunning)
+		{
+			mIndicating = RadicalRoutine.Create(UpdateStatus());
+			StartCoroutine(RadicalRoutine.Run(mIndicating.enumerator));
+			mUpdateRunning = true;
+		}
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	private void StopUpdator()
+	{
+		if (mUpdateRunning)
+		{
+			mIndicating.Cancel();
+			mUpdateRunning = false;
+		}
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	private IEnumerator UpdateStatus()
+	{
+		while (true)
+		{
+			bool shouldBeShown = isOutSideOfScreen(mSoldier.transform.position);
+			if (shouldBeShown && !mShown)
+			{
+				Show();
+			}
+			if (!shouldBeShown && mShown)
+			{
+				Hide();
+			}
+			if (!mSoldier.isAlive || !mSoldier.isInstantiated)
+			{
+				Destroy();
+			}
+			yield return null;
+		}
+	}
 
-	*/
+	private bool isOutSideOfScreen(Vector3 worldPosition)
+	{
+		Vector3 point = Camera.main.WorldToNormalizedViewportPoint(worldPosition);
+		if (point.x == Mathf.Clamp01(point.x) && point.y == Mathf.Clamp01(point.y))
+		{
+			return false;
+		}
+		point.x = Mathf.Clamp(point.x, 0.025f, 0.975f);
+		point.y = Mathf.Clamp(point.y, 0.22f, 0.78f);
+		point = Singleton<GuiManager>.instance.guiCamera.NormalizedViewportToWorldPoint(point);
+		point.z = 0f;
+		base.transform.position = point;
+		Vector3 localPosition = base.transform.localPosition;
+		localPosition.z = mPositionZ;
+		base.transform.localPosition = localPosition;
+		arrowBorder.transform.localRotation = ((!(point.x < 0.5f)) ? Quaternion.Euler(0f, 180f, 0f) : Quaternion.identity);
+		return true;
+	}
+
+	private void Show()
+	{
+		if (!mShown && !mAnimating)
+		{
+			mAnimating = true;
+			TweenAlpha.Begin(unitSprite.gameObject, 0.2f, 0f, 1f);
+			TweenColor tweenColor = TweenColor.Begin(background.gameObject, 0.2f, Colours.blueTransparent, Colours.blue);
+			tweenColor.NumOfRepetitions = 1;
+			TweenColor tweenColor2 = TweenColor.Begin(arrowBorder.gameObject, 0.2f, Colours.whiteTransparent, Color.white);
+			tweenColor2.NumOfRepetitions = 1;
+			tweenColor2.onFinished = delegate
+			{
+				StartFlashing();
+			};
+		}
+	}
+
+	private void StartFlashing()
+	{
+		mAnimating = false;
+		mShown = true;
+	}
+
+	private void Hide()
+	{
+		if (mShown && !mAnimating)
+		{
+			mAnimating = true;
+			TweenAlpha.Begin(unitSprite.gameObject, 0.2f, 0f);
+			TweenColor tweenColor = TweenColor.Begin(background.gameObject, 0.2f, Colours.blueTransparent);
+			tweenColor.NumOfRepetitions = 1;
+			TweenColor tweenColor2 = TweenColor.Begin(arrowBorder.gameObject, 0.2f, Colours.whiteTransparent);
+			tweenColor2.NumOfRepetitions = 1;
+			tweenColor2.onFinished = delegate
+			{
+				mAnimating = false;
+				mShown = false;
+				Destroy();
+			};
+		}
+	}
 }

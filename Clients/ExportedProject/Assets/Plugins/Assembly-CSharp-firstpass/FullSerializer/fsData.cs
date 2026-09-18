@@ -1,66 +1,254 @@
-using UnityEngine;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace FullSerializer
 {
-	public class fsData : MonoBehaviour
+public sealed class fsData
+{
+	private object _value;
+
+	public static readonly fsData True = new fsData(boolean: true);
+
+	public static readonly fsData False = new fsData(boolean: false);
+
+	public static readonly fsData Null = new fsData();
+
+	public fsDataType Type
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
+		get
+		{
+			if (_value == null)
+			{
+				return fsDataType.Null;
+			}
+			if (_value is double)
+			{
+				return fsDataType.Double;
+			}
+			if (_value is long)
+			{
+				return fsDataType.Int64;
+			}
+			if (_value is bool)
+			{
+				return fsDataType.Boolean;
+			}
+			if (_value is string)
+			{
+				return fsDataType.String;
+			}
+			if (_value is Dictionary<string, fsData>)
+			{
+				return fsDataType.Object;
+			}
+			if (_value is List<fsData>)
+			{
+				return fsDataType.Array;
+			}
+			throw new InvalidOperationException("unknown JSON data type");
+		}
 	}
+
+	public bool IsNull => _value == null;
+
+	public bool IsDouble => _value is double;
+
+	public bool IsInt64 => _value is long;
+
+	public bool IsBool => _value is bool;
+
+	public bool IsString => _value is string;
+
+	public bool IsDictionary => _value is Dictionary<string, fsData>;
+
+	public bool IsList => _value is List<fsData>;
+
+	[DebuggerBrowsable(DebuggerBrowsableState.Never)]
+	public double AsDouble => Cast<double>();
+
+	[DebuggerBrowsable(DebuggerBrowsableState.Never)]
+	public long AsInt64 => Cast<long>();
+
+	[DebuggerBrowsable(DebuggerBrowsableState.Never)]
+	public bool AsBool => Cast<bool>();
+
+	[DebuggerBrowsable(DebuggerBrowsableState.Never)]
+	public string AsString => Cast<string>();
+
+	[DebuggerBrowsable(DebuggerBrowsableState.Never)]
+	public Dictionary<string, fsData> AsDictionary => Cast<Dictionary<string, fsData>>();
+
+	[DebuggerBrowsable(DebuggerBrowsableState.Never)]
+	public List<fsData> AsList => Cast<List<fsData>>();
+
+	public fsData()
+	{
+		_value = null;
+	}
+
+	public fsData(bool boolean)
+	{
+		_value = boolean;
+	}
+
+	public fsData(double f)
+	{
+		_value = f;
+	}
+
+	public fsData(long i)
+	{
+		_value = i;
+	}
+
+	public fsData(string str)
+	{
+		_value = str;
+	}
+
+	public fsData(Dictionary<string, fsData> dict)
+	{
+		_value = dict;
+	}
+
+	public fsData(List<fsData> list)
+	{
+		_value = list;
+	}
+
+	public static fsData CreateDictionary()
+	{
+		return new fsData(new Dictionary<string, fsData>((!fsConfig.IsCaseSensitive) ? StringComparer.CurrentCultureIgnoreCase : StringComparer.CurrentCulture));
+	}
+
+	public static fsData CreateList()
+	{
+		return new fsData(new List<fsData>());
+	}
+
+	public static fsData CreateList(int capacity)
+	{
+		return new fsData(new List<fsData>(capacity));
+	}
+
+	internal void BecomeDictionary()
+	{
+		_value = new Dictionary<string, fsData>();
+	}
+
+	internal fsData Clone()
+	{
+		fsData fsData2 = new fsData();
+		fsData2._value = _value;
+		return fsData2;
+	}
+
+	private T Cast<T>()
+	{
+		if (_value is T)
+		{
+			return (T)_value;
+		}
+		throw new InvalidCastException(string.Concat("Unable to cast <", this, "> (with type = ", _value.GetType(), ") to type ", typeof(T)));
+	}
+
+	public override string ToString()
+	{
+		return fsJsonPrinter.CompressedJson(this);
+	}
+
+	public override bool Equals(object obj)
+	{
+		return Equals(obj as fsData);
+	}
+
+	public bool Equals(fsData other)
+	{
+		if (other == null || Type != other.Type)
+		{
+			return false;
+		}
+		switch (Type)
+		{
+		case fsDataType.Null:
+			return true;
+		case fsDataType.Double:
+			return AsDouble == other.AsDouble || Math.Abs(AsDouble - other.AsDouble) < double.Epsilon;
+		case fsDataType.Int64:
+			return AsInt64 == other.AsInt64;
+		case fsDataType.Boolean:
+			return AsBool == other.AsBool;
+		case fsDataType.String:
+			return AsString == other.AsString;
+		case fsDataType.Array:
+		{
+			List<fsData> asList = AsList;
+			List<fsData> asList2 = other.AsList;
+			if (asList.Count != asList2.Count)
+			{
+				return false;
+			}
+			for (int i = 0; i < asList.Count; i++)
+			{
+				if (!asList[i].Equals(asList2[i]))
+				{
+					return false;
+				}
+			}
+			return true;
+		}
+		case fsDataType.Object:
+		{
+			Dictionary<string, fsData> asDictionary = AsDictionary;
+			Dictionary<string, fsData> asDictionary2 = other.AsDictionary;
+			if (asDictionary.Count != asDictionary2.Count)
+			{
+				return false;
+			}
+			foreach (string key in asDictionary.Keys)
+			{
+				if (!asDictionary2.ContainsKey(key))
+				{
+					return false;
+				}
+				if (!asDictionary[key].Equals(asDictionary2[key]))
+				{
+					return false;
+				}
+			}
+			return true;
+		}
+		default:
+			throw new Exception("Unknown data type");
+		}
+	}
+
+	public override int GetHashCode()
+	{
+		return _value.GetHashCode();
+	}
+
+	public static bool operator ==(fsData a, fsData b)
+	{
+		if (object.ReferenceEquals(a, b))
+		{
+			return true;
+		}
+		if ((object)a == null || (object)b == null)
+		{
+			return false;
+		}
+		if (a.IsDouble && b.IsDouble)
+		{
+			return Math.Abs(a.AsDouble - b.AsDouble) < double.Epsilon;
+		}
+		return a.Equals(b);
+	}
+
+	public static bool operator !=(fsData a, fsData b)
+	{
+		return !(a == b);
+	}
+}
 }

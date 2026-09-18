@@ -1,63 +1,129 @@
+using System;
+using Newtonsoft.Json.Linq;
 using UnityEngine;
 
-public class SquadPromoteMessage : MonoBehaviour
+public class SquadPromoteMessage : DatabaseMessage
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public int newRank;
 
-	1. No dll files were provided to AssetRipper.
+	public DatabasePlayer promotedPlayer;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public DatabasePlayer adminPlayer;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public bool playerClicked;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public override bool actionLeavesLobby => true;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public override bool processNextMessage => true;
 
-	3. Assembly Reconstruction has not been implemented.
+	public SquadPromoteMessage(DatabasePlayer player, DatabasePlayer byPlayer)
+		: base($"SquadPromoteMessage {Singleton<BeanstalkServerManager>.instance.currentTimestamp}", Type.SquadPromotion)
+	{
+		playerClicked = true;
+		promotedPlayer = player;
+		adminPlayer = byPlayer;
+		if (player != null)
+		{
+			newRank = Mathf.Clamp((int)player.squadRank, 0, 2);
+		}
+	}
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public SquadPromoteMessage(JToken dict)
+		: base(dict)
+	{
+		playerClicked = false;
+		promotedPlayer = new DatabasePlayer();
+		if (dict["PlayerName"] != null)
+		{
+			promotedPlayer.accountName = StringParser.ParseString("PlayerName", "S", dict, string.Empty);
+		}
+		if (dict["Level"] != null)
+		{
+			promotedPlayer.level = StringParser.ParseIntToken(dict["Level"]["N"]);
+		}
+		if (dict["SquadId"] != null)
+		{
+			promotedPlayer.squadName = StringParser.ParseString("SquadId", "S", dict, string.Empty);
+		}
+		if (dict["SquadRank"] != null)
+		{
+			promotedPlayer.squadRank = (SquadRank)StringParser.ParseIntToken(dict["SquadRank"]["N"]);
+			newRank = (int)promotedPlayer.squadRank;
+		}
+		if (dict["PromotedPlayerId"] != null)
+		{
+			promotedPlayer.id = StringParser.ParseString("PromotedPlayerId", "S", dict, string.Empty);
+		}
+		adminPlayer = new DatabasePlayer();
+		if (dict["AdminName"] != null)
+		{
+			adminPlayer.accountName = StringParser.ParseString("AdminName", "S", dict, string.Empty);
+		}
+		if (dict["AdminId"] != null)
+		{
+			adminPlayer.id = StringParser.ParseString("AdminId", "S", dict, string.Empty);
+		}
+		if (dict["AdminLevel"] != null)
+		{
+			adminPlayer.level = StringParser.ParseIntToken(dict["AdminLevel"]["N"]);
+		}
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public override void Show()
+	{
+		base.Show();
+		bool flag = adminPlayer.id == GameLoginManager.currentPlayer.id;
+		Debug.Log(string.Format("Player promoted - database informations:\nName:{0} Level:{1} SquadId:{2} SquadRank:{3}", (promotedPlayer.accountName != null) ? promotedPlayer.accountName : "null", promotedPlayer.level, (promotedPlayer.squadName != null) ? promotedPlayer.squadName : "null", promotedPlayer.squadRank));
+		if (promotedPlayer.squadRank == SquadRank.Member)
+		{
+			Debug.LogError("Promoting to MEMBER!!!! should be JOINED MESSAGE");
+		}
+		if (Singleton<Chat>.instance.shouldChat)
+		{
+			GuiElementSingle<ChatGuiElement>.instance.chatContent.AddDatabaseMessageToSquadChat(this, !flag);
+		}
+		else if (!playerClicked && !flag)
+		{
+			GuiElementSingle<ChatGuiElement>.instance.messageContent.AddMessage(this);
+		}
+		if (!playerClicked)
+		{
+			string squadName = GameLoginManager.currentPlayer.squadName;
+			bool flag2 = !string.IsNullOrEmpty(squadName);
+			bool flag3 = messageTime + 60 > Singleton<BeanstalkServerManager>.instance.currentTimestamp;
+			if (flag2 && flag3)
+			{
+				Singleton<BeanstalkServerManager>.instance.GetAllSquadMembers(squadName, forceUpdate: true);
+			}
+			Confirm();
+		}
+	}
 
-	4. This script is unnecessary.
+	internal override Action InitMessageCenterRecord(MessageCenterRecord record)
+	{
+		record.SetAppearance_SquadPromotion(messageType, messageTime, newRank, promotedPlayer);
+		return delegate
+		{
+			GuiScreenSingle<SquadScreen>.instance.ShowSquadMembers();
+		};
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public override void UpdatePlayer(DatabasePlayerInfo player)
+	{
+		if (promotedPlayer.id == player.id)
+		{
+			promotedPlayer.level = player.level;
+		}
+	}
 
-	5. Script Content Level 0
-
-		AssetRipper was set to not load any script information.
-
-	6. Cpp2IL failed to decompile Il2Cpp data
-
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public override void Confirm()
+	{
+		bool flag = !string.IsNullOrEmpty(GameLoginManager.currentPlayer.squadName);
+		bool flag2 = messageTime + 172800 < Singleton<BeanstalkServerManager>.instance.currentTimestamp;
+		if (!flag || flag2)
+		{
+			Debug.LogError(string.Format("Removing squad promote message - message time:{0}, server time:{1}, isInSquad:{2}", MiscTools.PrintableTime(messageTime, "ID_READYTIME", string.Empty), MiscTools.PrintableTime(Singleton<BeanstalkServerManager>.instance.currentTimestamp, "ID_READYTIME", string.Empty), flag));
+			Ignore();
+		}
+	}
 }

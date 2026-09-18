@@ -1,66 +1,109 @@
-using UnityEngine;
+using System;
+using System.Runtime.InteropServices;
+using System.Text;
+using GooglePlayGames.BasicApi;
+using GooglePlayGames.Native.Cwrapper;
 
 namespace GooglePlayGames.Native.PInvoke
 {
-	public class NativeAchievement : MonoBehaviour
+internal class NativeAchievement : BaseReferenceHolder
+{
+	private const ulong MinusOne = ulong.MaxValue;
+
+	internal NativeAchievement(IntPtr selfPointer)
+		: base(selfPointer)
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
 	}
+
+	internal uint CurrentSteps()
+	{
+		return GooglePlayGames.Native.Cwrapper.Achievement.Achievement_CurrentSteps(SelfPtr());
+	}
+
+	internal string Description()
+	{
+		return PInvokeUtilities.OutParamsToString((StringBuilder out_string, UIntPtr out_size) => GooglePlayGames.Native.Cwrapper.Achievement.Achievement_Description(SelfPtr(), out_string, out_size));
+	}
+
+	internal string Id()
+	{
+		return PInvokeUtilities.OutParamsToString((StringBuilder out_string, UIntPtr out_size) => GooglePlayGames.Native.Cwrapper.Achievement.Achievement_Id(SelfPtr(), out_string, out_size));
+	}
+
+	internal string Name()
+	{
+		return PInvokeUtilities.OutParamsToString((StringBuilder out_string, UIntPtr out_size) => GooglePlayGames.Native.Cwrapper.Achievement.Achievement_Name(SelfPtr(), out_string, out_size));
+	}
+
+	internal Types.AchievementState State()
+	{
+		return GooglePlayGames.Native.Cwrapper.Achievement.Achievement_State(SelfPtr());
+	}
+
+	internal uint TotalSteps()
+	{
+		return GooglePlayGames.Native.Cwrapper.Achievement.Achievement_TotalSteps(SelfPtr());
+	}
+
+	internal Types.AchievementType Type()
+	{
+		return GooglePlayGames.Native.Cwrapper.Achievement.Achievement_Type(SelfPtr());
+	}
+
+	internal ulong LastModifiedTime()
+	{
+		if (GooglePlayGames.Native.Cwrapper.Achievement.Achievement_Valid(SelfPtr()))
+		{
+			return GooglePlayGames.Native.Cwrapper.Achievement.Achievement_LastModifiedTime(SelfPtr());
+		}
+		return 0uL;
+	}
+
+	internal ulong getXP()
+	{
+		return GooglePlayGames.Native.Cwrapper.Achievement.Achievement_XP(SelfPtr());
+	}
+
+	internal string getRevealedImageUrl()
+	{
+		return PInvokeUtilities.OutParamsToString((StringBuilder out_string, UIntPtr out_size) => GooglePlayGames.Native.Cwrapper.Achievement.Achievement_RevealedIconUrl(SelfPtr(), out_string, out_size));
+	}
+
+	internal string getUnlockedImageUrl()
+	{
+		return PInvokeUtilities.OutParamsToString((StringBuilder out_string, UIntPtr out_size) => GooglePlayGames.Native.Cwrapper.Achievement.Achievement_UnlockedIconUrl(SelfPtr(), out_string, out_size));
+	}
+
+	protected override void CallDispose(HandleRef selfPointer)
+	{
+		GooglePlayGames.Native.Cwrapper.Achievement.Achievement_Dispose(selfPointer);
+	}
+
+	internal GooglePlayGames.BasicApi.Achievement AsAchievement()
+	{
+		GooglePlayGames.BasicApi.Achievement achievement = new GooglePlayGames.BasicApi.Achievement();
+		achievement.Id = Id();
+		achievement.Name = Name();
+		achievement.Description = Description();
+		DateTime dateTime = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
+		ulong num = LastModifiedTime();
+		if (num == ulong.MaxValue)
+		{
+			num = 0uL;
+		}
+		achievement.LastModifiedTime = dateTime.AddMilliseconds(num);
+		achievement.Points = getXP();
+		achievement.RevealedImageUrl = getRevealedImageUrl();
+		achievement.UnlockedImageUrl = getUnlockedImageUrl();
+		if (Type() == Types.AchievementType.INCREMENTAL)
+		{
+			achievement.IsIncremental = true;
+			achievement.CurrentSteps = (int)CurrentSteps();
+			achievement.TotalSteps = (int)TotalSteps();
+		}
+		achievement.IsRevealed = State() == Types.AchievementState.REVEALED || State() == Types.AchievementState.UNLOCKED;
+		achievement.IsUnlocked = State() == Types.AchievementState.UNLOCKED;
+		return achievement;
+	}
+}
 }

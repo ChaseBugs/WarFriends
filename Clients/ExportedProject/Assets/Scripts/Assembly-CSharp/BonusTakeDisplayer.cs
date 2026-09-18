@@ -1,63 +1,91 @@
 using UnityEngine;
 
-public class BonusTakeDisplayer : MonoBehaviour
+public class BonusTakeDisplayer : PoolableObject
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public TextMesh text;
 
-	1. No dll files were provided to AssetRipper.
+	public tk2dSprite blueBg;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public tk2dSprite whiteBorder;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public tk2dSprite icon;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public tk2dSprite textBg;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	[SerializeField]
+	private TweenAnimator mAnimator;
 
-	3. Assembly Reconstruction has not been implemented.
+	public Color color;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public GameObject top;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public GameObject bottom;
 
-	4. This script is unnecessary.
+	public override void OnInstancied()
+	{
+		base.OnInstancied();
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private void GenerateTweens()
+	{
+		mAnimator.allTweens.Clear();
+		mAnimator.AddTween(from: Vector3.zero, id: 0, tweenType: TweenAnimator.TweenType.Scale, tweenTarget: blueBg.gameObject, time: 0.2f, to: new Vector3(1.3f, 1.3f, 1.3f), delay: 0f, playAfterIdFinished: -1, method: UITweener.Method.EaseIn);
+		mAnimator.AddTween(1, TweenAnimator.TweenType.Scale, blueBg.gameObject, 0.1f, Vector3.one, 0f, 0, null, UITweener.Method.EaseOut);
+		mAnimator.AddTween(from: Vector3.zero, id: 2, tweenType: TweenAnimator.TweenType.Scale, tweenTarget: whiteBorder.gameObject, time: 0.2f, to: new Vector3(1.3f, 1.3f, 1.3f), delay: 0.1f, playAfterIdFinished: -1, method: UITweener.Method.EaseIn);
+		mAnimator.AddTween(3, TweenAnimator.TweenType.Scale, whiteBorder.gameObject, 0.1f, Vector3.one, 0f, 2, null, UITweener.Method.EaseOut);
+		mAnimator.AddTween(from: Vector3.zero, id: 4, tweenType: TweenAnimator.TweenType.Scale, tweenTarget: icon.gameObject, time: 0.2f, to: new Vector3(1.6f, 1.6f, 1.6f), delay: 0.2f, playAfterIdFinished: -1, method: UITweener.Method.EaseIn);
+		mAnimator.AddTween(5, TweenAnimator.TweenType.Scale, icon.gameObject, 0.1f, Vector3.one, 0f, 4, null, UITweener.Method.EaseOut);
+		mAnimator.AddTween(from: new Vector3(0.001f, 1f, 1f), id: 6, tweenType: TweenAnimator.TweenType.Scale, tweenTarget: textBg.gameObject, time: 0.3f, to: Vector3.one, delay: 0.2f);
+		mAnimator.AddTween(7, TweenAnimator.TweenType.AlphaTk2d, text.gameObject, 0.08f, 1f, 0f, 6, 0f, UITweener.Method.EaseInOut, UITweener.Style.PingPong, 5);
+		mAnimator.AddTween(8, TweenAnimator.TweenType.Scale, top, 0.4f, new Vector3(0f, 1f, 1f), 0.2f, 7);
+		mAnimator.AddTween(9, TweenAnimator.TweenType.Scale, bottom, 0.4f, new Vector3(1f, 0f, 1f), 0.2f, 7);
+	}
 
-	5. Script Content Level 0
+	protected override void Awake()
+	{
+		base.Awake();
+		GenerateTweens();
+	}
 
-		AssetRipper was set to not load any script information.
+	public void Play(KillStreakBonus bonus)
+	{
+		text.text = bonus.fullName;
+		text.color = color;
+		blueBg.SetSprite("game-scorestreak-bg" + bonus.bgSuffix);
+		icon.SetSprite(bonus.iconName);
+		if (bonus.bgSuffix == string.Empty)
+		{
+			text.anchor = TextAnchor.MiddleLeft;
+			text.transform.localPosition = default(Vector3);
+			text.transform.localScale = Vector3.one;
+		}
+		else
+		{
+			text.anchor = TextAnchor.MiddleCenter;
+			text.transform.localPosition = new Vector3(32f, 0f, 0f);
+			text.transform.localScale = Vector3.one.ReplaceXY(2.2f, 2.2f);
+		}
+		float x = text.GetComponent<MeshRenderer>().bounds.size.x;
+		float num = 31f;
+		if (x > num)
+		{
+			Debug.Log("BONUS: size: " + x + " name:" + bonus.fullName);
+			float num2 = num / (x / text.transform.localScale.x);
+			text.transform.localScale = new Vector3(num2, num2, 1f);
+		}
+		Play();
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
-
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public void Play()
+	{
+		blueBg.transform.localScale = new Vector3(0.01f, 0.01f, 0.01f);
+		whiteBorder.transform.localScale = new Vector3(0.01f, 0.01f, 0.01f);
+		icon.transform.localScale = new Vector3(0.01f, 0.01f, 0.01f);
+		text.color = Colours.blackTransparent;
+		textBg.transform.localScale = new Vector3(0.001f, 1f, 1f);
+		top.transform.localScale = Vector3.one;
+		bottom.transform.localScale = Vector3.one;
+		mAnimator.PlayTweens();
+		DestroyPooled(2f);
+	}
 }

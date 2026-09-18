@@ -1,63 +1,174 @@
+using System;
 using UnityEngine;
 
-public class GuiElement : MonoBehaviour
+public abstract class GuiElement : SwitchableGui
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public UISprite overlayBackground;
 
-	1. No dll files were provided to AssetRipper.
+	private GuiScreen mGuiScreen;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	private bool mFirstEnable = true;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	protected float mDistance = 10f;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public static Action ShowingDialog;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public static Action<GuiElement> HidingDialog;
 
-	3. Assembly Reconstruction has not been implemented.
+	public GuiScreen guiScreen
+	{
+		get
+		{
+			return mGuiScreen;
+		}
+		set
+		{
+			if ((mGuiScreen != null || mGuiScreen != value) && mGuiScreen != null)
+			{
+				mGuiScreen.AfterHide -= ScreenAfterHide;
+				mGuiScreen.AfterShowUp -= ScreenAfterShowUp;
+				mGuiScreen.BeforeHide -= ScreenBeforeHide;
+				mGuiScreen.BeforeShowUp -= ScreenBeforeShowUp;
+			}
+			mGuiScreen = value;
+			mGuiScreen.AfterHide += ScreenAfterHide;
+			mGuiScreen.AfterShowUp += ScreenAfterShowUp;
+			mGuiScreen.BeforeHide += ScreenBeforeHide;
+			mGuiScreen.BeforeShowUp += ScreenBeforeShowUp;
+			mGuiScreen = value;
+		}
+	}
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	private void OnDestroy()
+	{
+		ShowingDialog = null;
+		HidingDialog = null;
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	protected override void OnEnable()
+	{
+		base.OnEnable();
+		if (mFirstEnable)
+		{
+			try
+			{
+				InitControls();
+			}
+			catch (Exception ex)
+			{
+				Debug.LogError($"OBJECT: {base.gameObject.name}\nERROR: {ex.Message}\nSTACKTRACE: {ex.StackTrace}");
+				if (DebugSettings.debugEnabled)
+				{
+					WarningDialog.ShowError(Localization.Localize("ID_DEBUG_STACKTRACEINCONSOLE"), Localization.Localize("ID_DEBUG_GUIERROR"), 0f, null, string.Empty, useDialogBackground: true);
+				}
+				Crittercism.LogHandledException(ex);
+			}
+			mFirstEnable = false;
+		}
+		try
+		{
+			InitGUIValues();
+		}
+		catch (Exception ex2)
+		{
+			Debug.LogError($"OBJECT: {base.gameObject.name}\nERROR: {ex2.Message}\nSTACKTRACE: {ex2.StackTrace}");
+			if (DebugSettings.debugEnabled)
+			{
+				WarningDialog.ShowError(Localization.Localize("ID_DEBUG_STACKTRACEINCONSOLE"), Localization.Localize("ID_DEBUG_GUIERROR"), 0f, null, string.Empty, useDialogBackground: true);
+			}
+			Crittercism.LogHandledException(ex2);
+		}
+	}
 
-	4. This script is unnecessary.
+	protected virtual void ScreenBeforeShowUp()
+	{
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	protected virtual void ScreenBeforeHide()
+	{
+	}
 
-	5. Script Content Level 0
+	protected virtual void ScreenAfterShowUp()
+	{
+	}
 
-		AssetRipper was set to not load any script information.
+	protected virtual void ScreenAfterHide()
+	{
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public abstract void InitControls();
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public abstract void InitGUIValues();
 
-	7. An incorrect path was provided to AssetRipper.
+	public override void DoBeforeShowUp()
+	{
+		if (overlayBackground != null && (showAnimationType == ScreenAnimationType.DialogSpecial || hideAnimationType == ScreenAnimationType.DialogSpecial))
+		{
+			overlayBackground.gameObject.SetActive(value: false);
+		}
+		base.DoBeforeShowUp();
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	public override void AnimateShow(bool forceFadeIn)
+	{
+		if (showAnimationType == ScreenAnimationType.DialogSpecial)
+		{
+			base.gameObject.SetActive(value: true);
+			float dur = fadeInTime / 15f;
+			SpecialFadeIn(dur);
+			float zzz = base.transform.localPosition.z;
+			DialogOverlayGuiElement.instance.ShowDialogOverlay(fadeInTime);
+			TweenPosition tweenPosition = TweenPosition.Begin(base.gameObject, dur * 6f, new Vector3(0f, -4f * mDistance, zzz), new Vector3(0f, -4f * mDistance, zzz));
+			tweenPosition.onFinished = delegate
+			{
+				TweenPosition tweenPosition2 = TweenPosition.Begin(base.gameObject, dur * 5f, new Vector3(0f, mDistance, zzz));
+				tweenPosition2.method = UITweener.Method.Linear;
+				tweenPosition2.onFinished = delegate
+				{
+					TweenPosition tweenPosition3 = TweenPosition.Begin(base.gameObject, dur * 4f, new Vector3(0f, 0f, zzz));
+					tweenPosition3.method = UITweener.Method.EaseOut;
+				};
+			};
+			InvokeDoAfterShowUp(fadeInTime);
+		}
+		else
+		{
+			base.AnimateShow(forceFadeIn);
+		}
+	}
 
-	*/
+	private void SpecialFadeIn(float dur)
+	{
+		UIPanel[] componentsInChildren = GetComponentsInChildren<UIPanel>(includeInactive: true);
+		UIPanel[] array = componentsInChildren;
+		foreach (UIPanel uIPanel in array)
+		{
+			uIPanel.isFreezed = false;
+			uIPanel.alpha1 = 0.005f;
+			TweenAlpha.Begin(uIPanel.gameObject, dur * 6f, 0.005f, 0.005f).onFinished = delegate(UITweener tween)
+			{
+				TweenAlpha tweenAlpha = TweenAlpha.Begin(tween.gameObject, dur * 3f, 0.005f, 1f);
+				tweenAlpha.method = UITweener.Method.EaseInOut;
+			};
+		}
+	}
+
+	public override void AnimateHide(bool forceFadeOut)
+	{
+		if (showAnimationType == ScreenAnimationType.DialogSpecial)
+		{
+			DialogOverlayGuiElement.instance.HideDialogOverlay(fadeOutTime);
+			SpecialFadeOut();
+			InvokeDoAfterHide(fadeOutTime);
+		}
+		else
+		{
+			base.AnimateHide(forceFadeOut);
+		}
+	}
+
+	private void SpecialFadeOut()
+	{
+		FadeOut();
+	}
 }

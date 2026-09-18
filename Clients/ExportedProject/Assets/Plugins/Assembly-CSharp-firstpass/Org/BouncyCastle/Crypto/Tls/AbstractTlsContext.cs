@@ -1,66 +1,120 @@
-using UnityEngine;
+using System;
+using System.Threading;
+using Org.BouncyCastle.Crypto.Prng;
+using Org.BouncyCastle.Security;
+using Org.BouncyCastle.Utilities;
 
 namespace Org.BouncyCastle.Crypto.Tls
 {
-	public class AbstractTlsContext : MonoBehaviour
+internal abstract class AbstractTlsContext : TlsContext
+{
+	private static long counter = Times.NanoTime();
+
+	private readonly IRandomGenerator mNonceRandom;
+
+	private readonly SecureRandom mSecureRandom;
+
+	private readonly SecurityParameters mSecurityParameters;
+
+	private ProtocolVersion mClientVersion;
+
+	private ProtocolVersion mServerVersion;
+
+	private TlsSession mSession;
+
+	private object mUserObject;
+
+	public virtual IRandomGenerator NonceRandomGenerator => mNonceRandom;
+
+	public virtual SecureRandom SecureRandom => mSecureRandom;
+
+	public virtual SecurityParameters SecurityParameters => mSecurityParameters;
+
+	public abstract bool IsServer { get; }
+
+	public virtual ProtocolVersion ClientVersion => mClientVersion;
+
+	public virtual ProtocolVersion ServerVersion => mServerVersion;
+
+	public virtual TlsSession ResumableSession => mSession;
+
+	public virtual object UserObject
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
+		get
+		{
+			return mUserObject;
+		}
+		set
+		{
+			mUserObject = value;
+		}
 	}
+
+	internal AbstractTlsContext(SecureRandom secureRandom, SecurityParameters securityParameters)
+	{
+		IDigest digest = TlsUtilities.CreateHash(4);
+		byte[] array = new byte[digest.GetDigestSize()];
+		secureRandom.NextBytes(array);
+		mNonceRandom = new DigestRandomGenerator(digest);
+		mNonceRandom.AddSeedMaterial(NextCounterValue());
+		mNonceRandom.AddSeedMaterial(Times.NanoTime());
+		mNonceRandom.AddSeedMaterial(array);
+		mSecureRandom = secureRandom;
+		mSecurityParameters = securityParameters;
+	}
+
+	private static long NextCounterValue()
+	{
+		return Interlocked.Increment(ref counter);
+	}
+
+	internal virtual void SetClientVersion(ProtocolVersion clientVersion)
+	{
+		mClientVersion = clientVersion;
+	}
+
+	internal virtual void SetServerVersion(ProtocolVersion serverVersion)
+	{
+		mServerVersion = serverVersion;
+	}
+
+	internal virtual void SetResumableSession(TlsSession session)
+	{
+		mSession = session;
+	}
+
+	public virtual byte[] ExportKeyingMaterial(string asciiLabel, byte[] context_value, int length)
+	{
+		if (context_value != null && !TlsUtilities.IsValidUint16(context_value.Length))
+		{
+			throw new ArgumentException("must have length less than 2^16 (or be null)", "context_value");
+		}
+		SecurityParameters securityParameters = SecurityParameters;
+		byte[] clientRandom = securityParameters.ClientRandom;
+		byte[] serverRandom = securityParameters.ServerRandom;
+		int num = clientRandom.Length + serverRandom.Length;
+		if (context_value != null)
+		{
+			num += 2 + context_value.Length;
+		}
+		byte[] array = new byte[num];
+		int num2 = 0;
+		Array.Copy(clientRandom, 0, array, num2, clientRandom.Length);
+		num2 += clientRandom.Length;
+		Array.Copy(serverRandom, 0, array, num2, serverRandom.Length);
+		num2 += serverRandom.Length;
+		if (context_value != null)
+		{
+			TlsUtilities.WriteUint16(context_value.Length, array, num2);
+			num2 += 2;
+			Array.Copy(context_value, 0, array, num2, context_value.Length);
+			num2 += context_value.Length;
+		}
+		if (num2 != num)
+		{
+			throw new InvalidOperationException("error in calculation of seed for export");
+		}
+		return TlsUtilities.PRF(this, securityParameters.MasterSecret, asciiLabel, array, length);
+	}
+}
 }

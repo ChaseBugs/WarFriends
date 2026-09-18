@@ -1,63 +1,157 @@
+using System;
 using UnityEngine;
 
-public class UserExistsDialog : MonoBehaviour
+public class UserExistsDialog : GuiElementSingle<UserExistsDialog>, IGuiDialog
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Header("Content")]
+	public UILabel mainText;
 
-	1. No dll files were provided to AssetRipper.
+	[Header("Left Current User")]
+	public UIButton leftButton;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public UISprite currentLevelIcon;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public UILabel currentLevelNumber;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public UILabel currentName;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public UILabel currentMedals;
 
-	3. Assembly Reconstruction has not been implemented.
+	[Header("Right Other User")]
+	public UIButton rightButton;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public UILabel rightButtonLabel;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public UISprite otherLevelIcon;
 
-	4. This script is unnecessary.
+	public UILabel otherLevelNumber;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public UILabel otherName;
 
-	5. Script Content Level 0
+	public UILabel otherMedals;
 
-		AssetRipper was set to not load any script information.
+	public Action<bool> actionResult;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	private AccountType mAccountType;
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	private string mUserName;
 
-	7. An incorrect path was provided to AssetRipper.
+	private int mUserLevel;
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	private int mUserMedals;
 
-	*/
+	private string mCustomText;
+
+	public void ShowDialog(AccountType accountType, Action<bool> result, string userName, int userLevel = 2, int userMedals = 500, string customText = "")
+	{
+		mAccountType = accountType;
+		actionResult = result;
+		mUserName = userName;
+		mUserLevel = userLevel;
+		mUserMedals = userMedals;
+		mCustomText = customText;
+		Singleton<GuiManager>.instance.ShowDialog(this, 0f);
+	}
+
+	public override void InitControls()
+	{
+		UIEventListener uIEventListener = UIEventListener.Get(leftButton.gameObject);
+		uIEventListener.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener.onClick, new UIEventListener.VoidDelegate(CurrentChosenClick));
+		UIEventListener uIEventListener2 = UIEventListener.Get(rightButton.gameObject);
+		uIEventListener2.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener2.onClick, new UIEventListener.VoidDelegate(OtherChosenClick));
+	}
+
+	private void CurrentChosenClick(GameObject go)
+	{
+		if (!base.isFullyShowed)
+		{
+			return;
+		}
+		ConfirmDialog.ShowConfirm(Localization.Localize("ID_CONFIRM_AREYOUSURE"), Localization.LocalizeFormat("ID_CONFIRM_SELECTEDANDDELETEDACCOUNT", currentName.text, currentLevelNumber.text, otherName.text, otherLevelNumber.text), delegate(ConfirmDialog dialog, bool result)
+		{
+			if (result)
+			{
+				if (actionResult != null)
+				{
+					actionResult(obj: true);
+				}
+				HideDialog();
+			}
+		}, 0f);
+	}
+
+	private void OtherChosenClick(GameObject go)
+	{
+		if (!base.isFullyShowed)
+		{
+			return;
+		}
+		ConfirmDialog.ShowConfirm(Localization.Localize("ID_CONFIRM_AREYOUSURE"), Localization.LocalizeFormat("ID_CONFIRM_SELECTEDANDDELETEDACCOUNT", otherName.text, otherLevelNumber.text, currentName.text, currentLevelNumber.text), delegate(ConfirmDialog dialog, bool result)
+		{
+			if (result)
+			{
+				if (actionResult != null)
+				{
+					actionResult(obj: false);
+				}
+				HideDialog();
+			}
+		}, 0f);
+	}
+
+	public override void InitGUIValues()
+	{
+		if (mAccountType == AccountType.GooglePlay)
+		{
+			mainText.text = Localization.Localize("ID_USEREXISTSGOOGLEPLAYTEXT");
+			rightButtonLabel.text = Localization.Localize("ID_GOOGLEPLAYUSER");
+		}
+		else if (mAccountType == AccountType.GameCenter)
+		{
+			mainText.text = Localization.Localize("ID_USEREXISTSGAMECENTERTEXT");
+			rightButtonLabel.text = Localization.Localize("ID_GAMECENTERUSER");
+		}
+		else
+		{
+			mainText.text = ((!string.IsNullOrEmpty(mCustomText)) ? mCustomText : Localization.Localize("ID_USEREXISTSFACEBOOKTEXT"));
+			rightButtonLabel.text = Localization.Localize("ID_FACEBOOKUSER");
+		}
+		FillCurrentUser();
+		FillOtherUser();
+	}
+
+	private void FillOtherUser()
+	{
+		otherName.text = mUserName;
+		MiscTools.SetUILabelRescale(otherName, 30f, 22f);
+		LevelManager.GameLevel levelDefinition = LevelManager.instance.GetLevelDefinition(mUserLevel);
+		otherLevelNumber.text = levelDefinition.displayString;
+		otherLevelIcon.spriteName = levelDefinition.iconName;
+		otherMedals.text = MiscTools.FormatBigNumber(mUserMedals);
+	}
+
+	private void FillCurrentUser()
+	{
+		currentName.text = GameLoginManager.currentPlayer.name;
+		MiscTools.SetUILabelRescale(otherName, 30f, 22f);
+		LevelManager.GameLevel currentLevel = LevelManager.instance.currentLevel;
+		currentLevelNumber.text = currentLevel.displayString;
+		currentLevelIcon.spriteName = currentLevel.iconName;
+		currentMedals.text = MiscTools.FormatBigNumber(GameLoginManager.currentPlayer.skill);
+	}
+
+	public override void DoAfterHide()
+	{
+		base.DoAfterHide();
+		actionResult = null;
+	}
+
+	public GuiElement GetGuiElement()
+	{
+		return this;
+	}
+
+	public override void OnBack()
+	{
+	}
 }

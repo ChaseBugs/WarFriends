@@ -1,63 +1,219 @@
+using System;
 using UnityEngine;
 
-public class GameModesContent : MonoBehaviour
+public class GameModesContent : Core_BaseScript
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Header("1 Button")]
+	public BoxCollider openButtonCollider;
 
-	1. No dll files were provided to AssetRipper.
+	public GameObject openButtonNotification;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public UILabel openButtonNotificationLabel;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	[Header("Opened")]
+	public GameObject gameModeOpenedPart;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public UISprite gameModeOpenedBackground;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	[Header("-Close Button")]
+	public BoxCollider closeButtonCollider;
 
-	3. Assembly Reconstruction has not been implemented.
+	public GameObject closeButtonIconParent;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	[Header("-Challenge Friend Button")]
+	public BoxCollider challengeYourFriendCollider;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	[Header("-Warpath Button")]
+	public WarpathHeroicButton warpathButton;
 
-	4. This script is unnecessary.
+	[Header("-Arena Button")]
+	public BigArenaButton arenaButton;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private bool mAnimating;
 
-	5. Script Content Level 0
+	public bool shownModes => gameModeOpenedPart.activeSelf;
 
-		AssetRipper was set to not load any script information.
+	public bool isAnimating => mAnimating;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public void InitControls()
+	{
+		float val = UIRoot.list[0].activeWidth - 120f + 6f + 18f;
+		gameModeOpenedBackground.transform.localScale = gameModeOpenedBackground.transform.localScale.ReplaceX(val);
+		UIEventListener uIEventListener = UIEventListener.Get(openButtonCollider.gameObject);
+		uIEventListener.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener.onClick, new UIEventListener.VoidDelegate(OpenModeSelection));
+		UIEventListener uIEventListener2 = UIEventListener.Get(closeButtonCollider.gameObject);
+		uIEventListener2.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener2.onClick, new UIEventListener.VoidDelegate(CloseModeSelection));
+		UIEventListener uIEventListener3 = UIEventListener.Get(challengeYourFriendCollider.gameObject);
+		uIEventListener3.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener3.onClick, new UIEventListener.VoidDelegate(ChallengeYourFriendClick));
+		warpathButton.InitControls();
+		arenaButton.InitControls();
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	private void OpenModeSelection(GameObject go)
+	{
+		if (GuiScreenSingle<BattlePreparationScreen>.instance.mapSelection.isOpened)
+		{
+			if (GuiScreenSingle<BattlePreparationScreen>.instance.mapSelection.isAnimating)
+			{
+				return;
+			}
+			GuiScreenSingle<BattlePreparationScreen>.instance.mapSelection.AnimateHide();
+		}
+		mAnimating = true;
+		SetButtonColliders();
+		gameModeOpenedPart.SetActive(value: true);
+		arenaButton.ShowArenaButton();
+		UIPanel[] componentsInChildren = gameModeOpenedPart.GetComponentsInChildren<UIPanel>(includeInactive: true);
+		bool flag = false;
+		for (int i = 0; i < componentsInChildren.Length; i++)
+		{
+			if (!componentsInChildren[i].gameObject.activeInHierarchy)
+			{
+				continue;
+			}
+			componentsInChildren[i].alpha1 = 0f;
+			TweenAlpha tweenAlpha = TweenAlpha.Begin(componentsInChildren[i].gameObject, 0.4f, 1f);
+			if (flag)
+			{
+				tweenAlpha.onFinished = null;
+				continue;
+			}
+			tweenAlpha.onFinished = delegate
+			{
+				mAnimating = false;
+				SetButtonColliders();
+				openButtonNotification.SetActive(value: false);
+			};
+			flag = true;
+		}
+		TweenRotationSpecial component = closeButtonIconParent.GetComponent<TweenRotationSpecial>();
+		if (component != null)
+		{
+			component.enabled = false;
+		}
+		closeButtonIconParent.transform.localRotation = default(Quaternion);
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	public void CloseModeSelection(GameObject go)
+	{
+		mAnimating = true;
+		SetButtonColliders();
+		UIPanel[] componentsInChildren = gameModeOpenedPart.GetComponentsInChildren<UIPanel>(includeInactive: true);
+		bool flag = false;
+		for (int i = 0; i < componentsInChildren.Length; i++)
+		{
+			if (!componentsInChildren[i].gameObject.activeInHierarchy)
+			{
+				continue;
+			}
+			TweenAlpha tweenAlpha = TweenAlpha.Begin(componentsInChildren[i].gameObject, 0.4f, 0f);
+			if (flag)
+			{
+				tweenAlpha.onFinished = null;
+				continue;
+			}
+			tweenAlpha.onFinished = delegate
+			{
+				mAnimating = false;
+				SetButtonColliders();
+				gameModeOpenedPart.SetActive(value: false);
+				InitializeNotification();
+			};
+			flag = true;
+		}
+		TweenRotationSpecial.Begin(closeButtonIconParent, 0.3f, Vector3.forward, 0f, 360f);
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	private void ChallengeYourFriendClick(GameObject go)
+	{
+		SelectFriendsDialog.ShowFightFriendsDialog(FriendInvited, 0f);
+	}
 
-	*/
+	private void FriendInvited(DatabasePlayer player, bool selectedAnybody)
+	{
+		if (selectedAnybody)
+		{
+			Singleton<GameController>.instance.SwitchToDeathMatch();
+			Singleton<GameController>.instance.StartMultiplayerGame(player);
+		}
+	}
+
+	private void SetButtonColliders()
+	{
+		if (mAnimating)
+		{
+			challengeYourFriendCollider.enabled = false;
+			warpathButton.warpathCollider.enabled = false;
+			arenaButton.arenaCollider.enabled = false;
+		}
+		else
+		{
+			challengeYourFriendCollider.enabled = true;
+			warpathButton.warpathCollider.enabled = warpathButton.isColliderEnabled;
+			arenaButton.arenaCollider.enabled = LevelManager.instance.showWarArenaPromoLocked || !LevelManager.instance.isWarArenaLocked;
+		}
+	}
+
+	public void InitGuiValues(bool showGameModes)
+	{
+		if (showGameModes)
+		{
+			InstantShow();
+		}
+		else
+		{
+			InstantHide();
+		}
+		InitializeNotification();
+		warpathButton.InitGuiValues();
+		arenaButton.InitGuiValues();
+	}
+
+	public void DoAfterHide()
+	{
+		arenaButton.DoAfterHide();
+	}
+
+	private void InstantHide()
+	{
+		TweenRotationSpecial component = closeButtonIconParent.GetComponent<TweenRotationSpecial>();
+		if (component != null)
+		{
+			component.enabled = false;
+		}
+		closeButtonIconParent.transform.localRotation = default(Quaternion);
+		UIPanel[] componentsInChildren = gameModeOpenedPart.GetComponentsInChildren<UIPanel>(includeInactive: true);
+		for (int i = 0; i < componentsInChildren.Length; i++)
+		{
+			TweenAlpha component2 = componentsInChildren[i].gameObject.GetComponent<TweenAlpha>();
+			if (component2 != null)
+			{
+				component2.enabled = false;
+			}
+		}
+		gameModeOpenedPart.SetActive(value: false);
+		mAnimating = false;
+		SetButtonColliders();
+	}
+
+	private void InstantShow()
+	{
+		gameModeOpenedPart.SetActive(value: true);
+		mAnimating = false;
+		SetButtonColliders();
+		arenaButton.ShowArenaButton();
+		TweenRotationSpecial component = closeButtonIconParent.GetComponent<TweenRotationSpecial>();
+		if (component != null)
+		{
+			component.enabled = false;
+		}
+		closeButtonIconParent.transform.localRotation = default(Quaternion);
+	}
+
+	private void InitializeNotification()
+	{
+		int num = (warpathButton.showNotification ? 1 : 0);
+		openButtonNotification.SetActive(num > 0);
+		openButtonNotificationLabel.text = MiscTools.FormatBigNumber(num);
+	}
 }

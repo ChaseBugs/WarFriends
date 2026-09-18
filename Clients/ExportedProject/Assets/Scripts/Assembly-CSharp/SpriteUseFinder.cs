@@ -1,63 +1,318 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
 using UnityEngine;
 
-public class SpriteUseFinder : MonoBehaviour
+[ExecuteInEditMode]
+public class SpriteUseFinder : Core_BaseScript
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Header("Settings")]
+	public bool searchScripts;
 
-	1. No dll files were provided to AssetRipper.
+	public bool searchPrefabs;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public bool searchScenes;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public bool searchOnlyMainScene = true;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	[Header("Atlas to search")]
+	public UIAtlas searchAtlas;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	[Header("Additional Finding Sprite")]
+	public bool searchSprite;
 
-	3. Assembly Reconstruction has not been implemented.
+	public string spriteName;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	[Header("Start")]
+	public bool startSearch;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	private string mScriptsPath = string.Empty;
 
-	4. This script is unnecessary.
+	private string mPrefabsPath = string.Empty;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private string mScenesPath = string.Empty;
 
-	5. Script Content Level 0
+	private Dictionary<string, int> mDictionary;
 
-		AssetRipper was set to not load any script information.
+	private List<string> mSpriteUsage;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	private void Search()
+	{
+		mScriptsPath = Path.GetFullPath("./Assets/Scripts");
+		mPrefabsPath = Path.GetFullPath("./Assets/Prefabs");
+		mScenesPath = Path.GetFullPath("./Assets/Scenes");
+		Debug.Log(string.Format("Current Full Path: \"{0}\"\n", Path.GetFullPath(".")) + $"Scripts Full Path: \"{mScriptsPath}\"\n" + $"Prefabs Full Path: \"{mPrefabsPath}\"\n" + $"Scenes Full Path: \"{mScenesPath}\"\n");
+		if (searchAtlas == null)
+		{
+			Debug.LogError("Missing reference to atlas.");
+			return;
+		}
+		Debug.Log($"Selected Atlas \"{searchAtlas.name}\"");
+		CreateDictionary();
+		AddLevels();
+		AddRibbons();
+		if (searchScripts)
+		{
+			SearchScripts();
+		}
+		if (searchPrefabs)
+		{
+			SearchPrefabs();
+		}
+		if (searchScenes)
+		{
+			SearchScenes();
+		}
+		WriteConsoleNotUsedSprites();
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	private void AddLevels()
+	{
+		for (int i = 1; i < 51; i++)
+		{
+			CheckDictionary(i.ToString(), "Levels Special Search");
+		}
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	private void AddRibbons()
+	{
+		foreach (int value in Enum.GetValues(typeof(SkillShot.SkillShotType)))
+		{
+			CheckDictionary($"game-ribbon-{((SkillShot.SkillShotType)value).ToString().ToLower()}", "Ribbons Special Search");
+			CheckDictionary($"game-ribbon-{((SkillShot.SkillShotType)value).ToString().ToLower()}-bg", "Ribbons Special Search");
+		}
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	private void SearchPrefab(string fileName)
+	{
+		string[] array = File.ReadAllLines(fileName);
+		string[] array2 = array;
+		foreach (string text in array2)
+		{
+			if (text.Contains(" iconName:"))
+			{
+				CheckDictionary(text.Substring(text.IndexOf(" iconName:") + 11), fileName);
+			}
+			if (text.Contains(" abilityIcon:"))
+			{
+				CheckDictionary(text.Substring(text.IndexOf(" abilityIcon:") + 14), fileName);
+			}
+			if (text.Contains(" icon:"))
+			{
+				CheckDictionary(text.Substring(text.IndexOf(" icon:") + 7), fileName);
+			}
+			if (text.Contains(" bonusIcon:"))
+			{
+				CheckDictionary(text.Substring(text.IndexOf(" bonusIcon:") + 12), fileName);
+			}
+		}
+	}
 
-	*/
+	private void SearchScripts()
+	{
+		if (!Directory.Exists(mScriptsPath))
+		{
+			Debug.LogError($"Directory \"{mScriptsPath}\" does not exists");
+			return;
+		}
+		string[] files = Directory.GetFiles(mScriptsPath, "*.cs", SearchOption.AllDirectories);
+		Debug.Log($"Scripts to go through: {files.Length}");
+		string[] array = files;
+		foreach (string text in array)
+		{
+			string[] array2 = File.ReadAllLines(text);
+			string[] array3 = array2;
+			foreach (string text2 in array3)
+			{
+				if (text2.Contains("\""))
+				{
+					string[] array4 = text2.Split(new string[1] { "\"" }, StringSplitOptions.RemoveEmptyEntries);
+					for (int k = 0; k < array4.Length; k++)
+					{
+						CheckDictionary(array4[k], text);
+					}
+				}
+			}
+		}
+		Debug.Log("Scripts search finished.");
+	}
+
+	private void SearchPrefabs()
+	{
+		if (!Directory.Exists(mScriptsPath))
+		{
+			Debug.LogError($"Directory \"{mScriptsPath}\" does not exists");
+			return;
+		}
+		if (!Directory.Exists(mPrefabsPath))
+		{
+			Debug.LogError($"Directory \"{mPrefabsPath}\" does not exists");
+			return;
+		}
+		string[] files = Directory.GetFiles(mScriptsPath, "*.prefab", SearchOption.AllDirectories);
+		string[] files2 = Directory.GetFiles(mPrefabsPath, "*.prefab", SearchOption.AllDirectories);
+		Debug.Log($"Prefabs to go through: {files.Length} + {files2.Length}");
+		string[] array = files;
+		foreach (string text in array)
+		{
+			if (text.Contains("SkillShotManager.prefab") || text.Contains("Camosmanager.prefab") || text.Contains("CardManager.prefab") || text.Contains("SpawningManagerMultiplayer.prefab"))
+			{
+				SearchPrefab(text);
+			}
+			string[] array2 = File.ReadAllLines(text);
+			string[] array3 = array2;
+			foreach (string text2 in array3)
+			{
+				if (text2.Contains(" mSpriteName:"))
+				{
+					CheckDictionary(text2.Substring(text2.IndexOf(" mSpriteName:") + 14), text);
+				}
+			}
+		}
+		string[] array4 = files2;
+		foreach (string text3 in array4)
+		{
+			if (text3.Contains("LevelsManager.prefab") || text3.Contains("PlayerPrefab.prefab"))
+			{
+				SearchPrefab(text3);
+			}
+			string[] array5 = File.ReadAllLines(text3);
+			string[] array6 = array5;
+			foreach (string text4 in array6)
+			{
+				if (text4.Contains(" mSpriteName:"))
+				{
+					CheckDictionary(text4.Substring(text4.IndexOf(" mSpriteName:") + 14), text3);
+				}
+			}
+		}
+		Debug.Log("Prefabs search finished.");
+	}
+
+	private void SearchScenes()
+	{
+		if (!Directory.Exists(mScenesPath))
+		{
+			Debug.LogError($"Directory \"{mScenesPath}\" does not exists");
+			return;
+		}
+		string[] files = Directory.GetFiles(mScenesPath, "MainScene*.unity", SearchOption.TopDirectoryOnly);
+		Debug.Log($"Scenes to go through: {files.Length}");
+		string[] array = files;
+		foreach (string text in array)
+		{
+			if (searchOnlyMainScene && !text.Contains("MainScene.unity"))
+			{
+				continue;
+			}
+			string[] array2 = File.ReadAllLines(text);
+			string[] array3 = array2;
+			foreach (string text2 in array3)
+			{
+				if (text2.Contains(" mSpriteName:"))
+				{
+					CheckDictionary(text2.Substring(text2.IndexOf(" mSpriteName:") + 14), text);
+				}
+				if (text2.Contains(" iconName:"))
+				{
+					CheckDictionary(text2.Substring(text2.IndexOf(" iconName:") + 11), text);
+				}
+			}
+		}
+		Debug.Log("Scenes search finished.");
+	}
+
+	private void CreateDictionary()
+	{
+		if (mDictionary == null)
+		{
+			mDictionary = new Dictionary<string, int>();
+		}
+		else
+		{
+			mDictionary.Clear();
+		}
+		if (mSpriteUsage == null)
+		{
+			mSpriteUsage = new List<string>();
+		}
+		else
+		{
+			mSpriteUsage.Clear();
+		}
+		FillDictionary();
+		Debug.Log($"Dictionary filled and contains {mDictionary.Count} ids");
+	}
+
+	private void FillDictionary()
+	{
+		if (searchAtlas == null)
+		{
+			return;
+		}
+		foreach (UIAtlas.Sprite sprite in searchAtlas.spriteList)
+		{
+			mDictionary.Add(sprite.name, 0);
+		}
+	}
+
+	private void CheckDictionary(string id, string fileName)
+	{
+		if (mDictionary.ContainsKey(id))
+		{
+			mDictionary[id] += 1;
+		}
+		if (searchSprite && spriteName == id)
+		{
+			mSpriteUsage.Add(fileName);
+		}
+	}
+
+	private void WriteConsoleNotUsedSprites()
+	{
+		string text = string.Empty;
+		int num = 0;
+		List<string> list = new List<string>();
+		foreach (KeyValuePair<string, int> item in mDictionary)
+		{
+			if (item.Value == 0)
+			{
+				list.Add(item.Key);
+				num++;
+			}
+		}
+		list.Sort((string sprite1, string sprite2) => sprite1.CompareTo(sprite2));
+		foreach (string item2 in list)
+		{
+			text = text + item2 + "\n";
+		}
+		if (num > 0)
+		{
+			Debug.LogWarning($"Not used sprites ({num}/{mDictionary.Count}) in atlas \"{searchAtlas.name}\" :\n{text}");
+		}
+		else
+		{
+			Debug.Log($"All \"sprites\" ({mDictionary.Count}) from atlas \"{searchAtlas.name}\" are used");
+		}
+		if (!searchSprite)
+		{
+			return;
+		}
+		string text2 = $"Sprite \"{spriteName}\" was used in files:";
+		mSpriteUsage.Sort((string sprite1, string sprite2) => sprite1.CompareTo(sprite2));
+		foreach (string item3 in mSpriteUsage)
+		{
+			text2 += $"\n{item3}";
+		}
+		Debug.Log($"{text2}\n----------\n");
+	}
+
+	protected void Update()
+	{
+		if (startSearch)
+		{
+			startSearch = false;
+			Search();
+		}
+	}
 }

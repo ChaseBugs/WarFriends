@@ -11,3 +11,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b0cb6068545c4ad5183ee7d08a39c6dd, type: 3}
   m_Name: WarArenaRuleWeaponsReload
   m_EditorClassIdentifier:
+  data:
+    showRule: 1
+    weapons:
+    - category: -1
+      reloadTimeMultiplier: 0
+    - category: -1
+      reloadTimeMultiplier: 0
+    - category: -1
+      reloadTimeMultiplier: 0
+    - category: -1
+      reloadTimeMultiplier: 0

@@ -41,6 +41,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8946e3037a753067a2e7142e96bfc25e, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  dictionaryTranslationId: ID_BONUS-GRENADE
+  bonusName: "GRENADE\nSHOWER"
+  iconName: game-scorestreak-ico-grenades
+  bgSuffix:
+  numberOfgrenades: 3
+  maxDistance: 3
 --- !u!114 &11405782
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -52,6 +58,44 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3685147820f4414f2b8bc5e3faa3e43d, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  isActivated: 0
+  bulletPrefab: {fileID: 0}
+  cadence:
+    currentCryptoKey: 230887
+    hiddenValue: e785033f
+    fakeValue: 0.5
+    inited: 1
+  clipSize:
+    currentCryptoKey: 444444
+    hiddenValue: 444424
+    fakeValue: 20
+    inited: 1
+  reloadTime:
+    currentCryptoKey: 230887
+    hiddenValue: e785a340
+    fakeValue: 5
+    inited: 1
+  friendKill: 0
+  infiniteAmmo: 1
+  reloadableWeapon: 0
+  disableSync: 0
+  spawnPoint: {fileID: 479954}
+  startingAmmmoCount:
+    currentCryptoKey: 444444
+    hiddenValue: 444444
+    fakeValue: 0
+    inited: 1
+  useAiming: 0
+  isFake: 0
+  shotType: 0
+  ignoreLayersMask: 0
+  reloadSound: 11
+  shotSound: 2
+  soundVolume: 1
+  weaponType: 1
+  shootOffset: {x: 0, y: 0, z: 0}
+  grenadeTpe: 0
+  changeMesh: 0
 --- !u!114 &11461526
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -63,6 +107,45 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8b6a8c287a31eb9b64a161ea30c3b827, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  damageAmount:
+    currentCryptoKey: 230887
+    hiddenValue: e785a341
+    fakeValue: 20
+    inited: 1
+  hitForce: 20
+  criticalProbability:
+    currentCryptoKey: 230887
+    hiddenValue: e7850300
+    fakeValue: 0
+    inited: 1
+  criticalAmount:
+    currentCryptoKey: 230887
+    hiddenValue: e7850340
+    fakeValue: 2
+    inited: 1
+  damageToPlayerCoeficient:
+    currentCryptoKey: 230887
+    hiddenValue: e785833f
+    fakeValue: 0
+    inited: 1
+  damageToPlayerOvertimeCoeficient:
+    currentCryptoKey: 230887
+    hiddenValue: e785833f
+    fakeValue: 0
+    inited: 1
+  playerBehindShieldRatio: 0
+  angle: 45
+  throwDistance: 0
+  explodeAfterTime: 0
+  hurtRadius: 2.2
+  deadRadius: 1.3
+  exposionCoef: {x: 5, y: 8, z: 5}
+  additionalUpForce: 5
+  explodeDamageAmount:
+    currentCryptoKey: 230887
+    hiddenValue: e785ac43
+    fakeValue: 350
+    inited: 1
 --- !u!1001 &100100000
 Prefab:
   serializedVersion: 2

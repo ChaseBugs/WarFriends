@@ -1,63 +1,261 @@
+using System;
+using System.Collections;
 using UnityEngine;
 
-public class WeaponPreviewCamera : MonoBehaviour
+public class WeaponPreviewCamera : Singleton<WeaponPreviewCamera>
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public Transform weaponParent;
 
-	1. No dll files were provided to AssetRipper.
+	public Transform target;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public float distance = 5f;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public float xSpeed = 120f;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public float ySpeed = 120f;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public float yMinLimit = -20f;
 
-	3. Assembly Reconstruction has not been implemented.
+	public float yMaxLimit = 80f;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public float interiaTtime = 2f;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public float damping = 5f;
 
-	4. This script is unnecessary.
+	private float mRotationSpeed = -17f;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private Weapon3DModel mShowedWeaponPrefab;
 
-	5. Script Content Level 0
+	private Weapon3DModel mShowedWeaponInstance;
 
-		AssetRipper was set to not load any script information.
+	private Camera mCamera;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	private float x;
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	private float y;
 
-	7. An incorrect path was provided to AssetRipper.
+	private bool mIsHit;
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	private float xDiff;
 
-	*/
+	private float yDiff;
+
+	private bool mUnderInertia = true;
+
+	public static bool rotationEnabled = true;
+
+	private bool mWeaponLoading;
+
+	public event Action<bool> OnRotate;
+
+	protected override void Start()
+	{
+		if ((bool)GetComponent<Rigidbody>())
+		{
+			GetComponent<Rigidbody>().freezeRotation = true;
+		}
+		if (target != null)
+			distance = Vector3.Distance(base.transform.position, target.position);
+	}
+
+	protected override void Awake()
+	{
+		base.Awake();
+		mCamera = GetComponent<Camera>();
+		mCamera.enabled = false;
+	}
+
+	public void StartFastRotation()
+	{
+		mRotationSpeed = -720f;
+	}
+
+	public void DefaultRotation()
+	{
+		mRotationSpeed = -17f;
+	}
+
+	public Weapon3DModel DisplayeWeapon(string weaponprefab, string assetBundleName, Vector2 weaponDefaultRotation, Vector3 weaponDefaultPosition)
+	{
+		DefaultRotation();
+		if (mShowedWeaponPrefab == null || weaponprefab != mShowedWeaponPrefab.name)
+		{
+			StartCoroutine(LoadModel(weaponprefab, assetBundleName, weaponDefaultRotation, weaponDefaultPosition));
+		}
+		if (mShowedWeaponInstance != null)
+		{
+			mShowedWeaponInstance.gameObject.SetActive(value: true);
+		}
+		mCamera.enabled = true;
+		return null;
+	}
+
+	private IEnumerator LoadModel(string weaponprefab, string assetBundleName, Vector2 weaponDefaultRotation, Vector3 weaponDefaultPosition)
+	{
+		while (mWeaponLoading)
+		{
+			yield return null;
+		}
+		mWeaponLoading = true;
+		if (mShowedWeaponInstance != null)
+		{
+			mShowedWeaponInstance.UnloadWeapon();
+			UnityEngine.Object.Destroy(mShowedWeaponInstance.gameObject);
+		}
+		string bundleName = "weapons/" + assetBundleName;
+		string path = bundleName + "/GUI_" + weaponprefab;
+		GameObject modelxx = Resources.Load<GameObject>(path);
+		mShowedWeaponInstance = UnityEngine.Object.Instantiate(mShowedWeaponPrefab = modelxx.GetComponent<Weapon3DModel>());
+		mShowedWeaponInstance.Load();
+		mShowedWeaponInstance.transform.parent = weaponParent;
+		mShowedWeaponInstance.transform.localScale = new Vector3(1f, 1f, 1f);
+		mShowedWeaponInstance.transform.localPosition = default(Vector3);
+		mShowedWeaponInstance.transform.localRotation = Quaternion.identity;
+		mShowedWeaponInstance.gameObject.layer = weaponParent.gameObject.layer;
+		x = weaponDefaultRotation.x;
+		y = weaponDefaultRotation.y;
+		weaponParent.localPosition = weaponDefaultPosition;
+		CreateRotation();
+		mWeaponLoading = false;
+	}
+
+	public void UpdateRotation(float endX, float endY, float time)
+	{
+		StartCoroutine(RadicalRoutine.Run(AnimateWeapon(endX, endY, time)));
+	}
+
+	private IEnumerator AnimateWeapon(float endX, float endY, float length)
+	{
+		float time = 0f;
+		float startX = GetAngleInRightValues(x);
+		float startY = y;
+		endX = GetAngleInRightValues(endX);
+		while (time < length)
+		{
+			x = Mathf.Lerp(startX, endX, time / length);
+			y = Mathf.Lerp(startY, endY, time / length);
+			time += Time.deltaTime;
+			CreateRotation();
+			yield return null;
+		}
+		x = endX;
+		y = endY;
+		CreateRotation();
+	}
+
+	private float GetAngleInRightValues(float angle)
+	{
+		return angle - Mathf.Floor(angle / 360f) * 360f;
+	}
+
+	public void Hide()
+	{
+		mCamera.enabled = false;
+		if (mShowedWeaponInstance != null)
+		{
+			mShowedWeaponInstance.UnloadWeapon();
+			UnityEngine.Object.Destroy(mShowedWeaponInstance.gameObject);
+		}
+	}
+
+	private void UpdateRotation()
+	{
+		xDiff = Input.GetAxis("Mouse X") * xSpeed * distance * 0.02f;
+		yDiff = Input.GetAxis("Mouse Y") * ySpeed * 0.02f;
+		x += xDiff;
+		y -= yDiff;
+		CreateRotation();
+	}
+
+	private void CreateRotation()
+	{
+		if (target == null)
+			return;
+		y = ClampAngle(y, yMinLimit, yMaxLimit);
+		Quaternion rotation = Quaternion.Euler(y, x, 0f);
+		target.rotation = Quaternion.Inverse(rotation);
+	}
+
+	private void InertiaRotation()
+	{
+		xDiff = Mathf.Lerp(xDiff, 0f, Time.deltaTime * damping);
+		yDiff = Mathf.Lerp(yDiff, 0f, Time.deltaTime * damping);
+		x += xDiff;
+		y -= yDiff;
+		CreateRotation();
+	}
+
+	private void LateUpdate()
+	{
+		if (target == null)
+		{
+			mIsHit = false;
+			return;
+		}
+		if (mUnderInertia)
+		{
+			InertiaRotation();
+		}
+		if ((bool)target && mIsHit)
+		{
+			UpdateRotation();
+		}
+		if (Input.GetMouseButtonDown(0) && rotationEnabled && UICamera.currentCamera != null)
+		{
+			mIsHit = false;
+			Ray ray = UICamera.currentCamera.ScreenPointToRay(Input.mousePosition);
+			int cullingMask = UICamera.currentCamera.cullingMask;
+			RaycastHit[] array = Physics.RaycastAll(ray, float.PositiveInfinity, cullingMask);
+			RaycastHit[] array2 = array;
+			foreach (RaycastHit raycastHit in array2)
+			{
+				if (raycastHit.collider.name == "weaponPreviewCollider")
+				{
+					mIsHit = true;
+					mUnderInertia = false;
+					if (this.OnRotate != null)
+					{
+						this.OnRotate(obj: true);
+					}
+				}
+			}
+		}
+		if (rotationEnabled && mUnderInertia)
+		{
+			x += Time.deltaTime * mRotationSpeed;
+			CreateRotation();
+		}
+		if (Input.GetMouseButtonUp(0))
+		{
+			mIsHit = false;
+			mUnderInertia = true;
+			if (this.OnRotate != null)
+			{
+				this.OnRotate(obj: false);
+			}
+		}
+	}
+
+	public static float ClampAngle(float angle, float min, float max)
+	{
+		if (angle < -360f)
+		{
+			angle += 360f;
+		}
+		if (angle > 360f)
+		{
+			angle -= 360f;
+		}
+		return Mathf.Clamp(angle, min, max);
+	}
+
+	public void Pause()
+	{
+		mCamera.enabled = false;
+	}
+
+	public void Resume()
+	{
+		mCamera.enabled = true;
+	}
 }

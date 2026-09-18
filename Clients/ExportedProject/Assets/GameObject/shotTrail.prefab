@@ -87,6 +87,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f3f6a0cacac0747d2e22af6466a79b14, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  isActivated: 0
+  trail: {fileID: 9609266}
 --- !u!1001 &100100000
 Prefab:
   serializedVersion: 2

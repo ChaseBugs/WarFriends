@@ -1,63 +1,183 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
-public class CardpoolCard : MonoBehaviour
+public class CardpoolCard : Core_BaseScript
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public enum State
+	{
+		NoCard,
+		Empty,
+		Card,
+		DepositBuddy,
+		WaitingBuddy
+	}
 
-	1. No dll files were provided to AssetRipper.
+	[Header("Core")]
+	public List<UIWidget> widgets;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	[Header("Empty")]
+	public GameObject emptyPart;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public UISprite borderEmpty;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	[Header("Card")]
+	public GameObject cardPart;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public UISprite cardBackground;
 
-	3. Assembly Reconstruction has not been implemented.
+	public UITexture cardTexture;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public UISprite cardIcon;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public UISprite cardBonusIcon;
 
-	4. This script is unnecessary.
+	public UILabel cardBonusLabel;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	[Header("Deposit Buddy")]
+	public GameObject depositBuddyPart;
 
-	5. Script Content Level 0
+	[Header("Waiting Buddy")]
+	public GameObject waitingBuddyPart;
 
-		AssetRipper was set to not load any script information.
+	public WinStreakCounter waitingTime;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	private State mState;
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	private Card mCard;
 
-	7. An incorrect path was provided to AssetRipper.
+	private CardpoolRecord mParentRecord;
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	public Card card
+	{
+		get
+		{
+			return mCard;
+		}
+		private set
+		{
+			if (value == null && mCard != null)
+			{
+				mCard.HideInMenu();
+			}
+			mCard = value;
+			if (mCard != null)
+			{
+				mCard.ShowInMenu();
+			}
+		}
+	}
 
-	*/
+	public void Initialize(int position, CardpoolRecord parent)
+	{
+		position++;
+		int num = 11;
+		int num2 = 11;
+		int num3 = 12;
+		int num4 = (num - position) * num2;
+		for (int i = 0; i < widgets.Count; i++)
+		{
+			widgets[i].depth = num3 + num4 + i;
+		}
+		cardBackground.depth = num3 + num4 + 7;
+		cardIcon.depth = num3 + num4 + 8;
+		cardBonusIcon.depth = num3 + num4 + 9;
+		cardBonusLabel.depth = num3 + num4 + 10;
+		mParentRecord = parent;
+		CleanUp();
+	}
+
+	public void InitializeNoCard()
+	{
+		mState = State.NoCard;
+		SetLook();
+		CleanUp();
+	}
+
+	public void InitializeEmpty(bool isBuddy = false)
+	{
+		mState = State.Empty;
+		SetLook();
+		CleanUp();
+		borderEmpty.color = ((!isBuddy) ? Colours.grayBorder : Colours.pink);
+	}
+
+	public void InitializeCard(Card insertCard)
+	{
+		mState = State.Card;
+		SetLook();
+		CleanUp();
+		card = insertCard;
+		card.SetUpSmallCard(cardBackground, cardIcon, cardBonusIcon, cardBonusLabel, cardTexture);
+	}
+
+	public void InitializeDepositBuddy()
+	{
+		mState = State.DepositBuddy;
+		SetLook();
+		CleanUp();
+	}
+
+	public void InitializeWaiting(int timeWhenReady)
+	{
+		mState = State.WaitingBuddy;
+		SetLook();
+		CleanUp();
+		waitingTime.StartCountingTo(timeWhenReady);
+		WinStreakCounter winStreakCounter = waitingTime;
+		winStreakCounter.winStreakTimer = (Action)Delegate.Combine(winStreakCounter.winStreakTimer, new Action(InitializeDepositBuddy));
+	}
+
+	public void CleanUp()
+	{
+		card = null;
+		waitingTime.StopCountingTo();
+		WinStreakCounter winStreakCounter = waitingTime;
+		winStreakCounter.winStreakTimer = (Action)Delegate.Remove(winStreakCounter.winStreakTimer, new Action(InitializeDepositBuddy));
+		StopAnimation();
+	}
+
+	public void Animate(float delay)
+	{
+		float num = 0.583f;
+		float num2 = num * 1.1f;
+		TweenScale tweenScale = TweenScale.Begin(cardPart, 0.25f, new Vector3(num, num, 1f), new Vector3(num2, num2, 1f));
+		tweenScale.NumOfRepetitions = 2;
+		tweenScale.style = UITweener.Style.PingPong;
+		tweenScale.delay = Mathf.Max(0f, GuiElementSingle<CardpoolDialog>.instance.fadeOutTime - 0.1f + delay);
+	}
+
+	private void StopAnimation()
+	{
+		float num = 0.583f;
+		TweenScale component = cardPart.GetComponent<TweenScale>();
+		if (component != null)
+		{
+			component.enabled = false;
+		}
+		cardPart.transform.localScale = new Vector3(num, num, 1f);
+	}
+
+	private void SetLook()
+	{
+		emptyPart.SetActive(mState == State.Empty);
+		cardPart.SetActive(mState == State.Card);
+		depositBuddyPart.SetActive(mState == State.DepositBuddy);
+		waitingBuddyPart.SetActive(mState == State.WaitingBuddy);
+	}
+
+	public void OnClick()
+	{
+		mParentRecord.ClickedOnCard(mState);
+	}
+
+	protected void Update()
+	{
+		if (!cardTexture.gameObject.activeSelf && card != null && card.iconTexture != null)
+		{
+			cardIcon.gameObject.SetActive(value: false);
+			cardTexture.gameObject.SetActive(value: true);
+			cardTexture.mainTexture = card.iconTexture;
+		}
+	}
 }

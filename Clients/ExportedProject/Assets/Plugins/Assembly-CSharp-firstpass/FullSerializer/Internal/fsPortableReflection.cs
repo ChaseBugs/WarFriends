@@ -1,66 +1,240 @@
-using UnityEngine;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
 
 namespace FullSerializer.Internal
 {
-	public class fsPortableReflection : MonoBehaviour
+public static class fsPortableReflection
+{
+	private struct AttributeQuery
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
+		public MemberInfo MemberInfo;
 
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
+		public Type AttributeType;
 	}
+
+	private class AttributeQueryComparator : IEqualityComparer<AttributeQuery>
+	{
+		public bool Equals(AttributeQuery x, AttributeQuery y)
+		{
+			return x.MemberInfo == y.MemberInfo && x.AttributeType == y.AttributeType;
+		}
+
+		public int GetHashCode(AttributeQuery obj)
+		{
+			return obj.MemberInfo.GetHashCode() + 17 * obj.AttributeType.GetHashCode();
+		}
+	}
+
+	public static Type[] EmptyTypes = new Type[0];
+
+	private static IDictionary<AttributeQuery, Attribute> _cachedAttributeQueries = new Dictionary<AttributeQuery, Attribute>(new AttributeQueryComparator());
+
+	private static BindingFlags DeclaredFlags = BindingFlags.DeclaredOnly | BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic;
+
+	public static bool HasAttribute(MemberInfo element, Type attributeType)
+	{
+		return GetAttribute(element, attributeType) != null;
+	}
+
+	public static bool HasAttribute<TAttribute>(MemberInfo element)
+	{
+		return HasAttribute(element, typeof(TAttribute));
+	}
+
+	public static Attribute GetAttribute(MemberInfo element, Type attributeType)
+	{
+		AttributeQuery key = new AttributeQuery
+		{
+			MemberInfo = element,
+			AttributeType = attributeType
+		};
+		if (!_cachedAttributeQueries.TryGetValue(key, out var value))
+		{
+			object[] customAttributes = element.GetCustomAttributes(attributeType, inherit: true);
+			value = (Attribute)customAttributes.FirstOrDefault();
+			_cachedAttributeQueries[key] = value;
+		}
+		return value;
+	}
+
+	public static TAttribute GetAttribute<TAttribute>(MemberInfo element) where TAttribute : Attribute
+	{
+		return (TAttribute)GetAttribute(element, typeof(TAttribute));
+	}
+
+	public static PropertyInfo GetDeclaredProperty(this Type type, string propertyName)
+	{
+		PropertyInfo[] declaredProperties = type.GetDeclaredProperties();
+		for (int i = 0; i < declaredProperties.Length; i++)
+		{
+			if (declaredProperties[i].Name == propertyName)
+			{
+				return declaredProperties[i];
+			}
+		}
+		return null;
+	}
+
+	public static MethodInfo GetDeclaredMethod(this Type type, string methodName)
+	{
+		MethodInfo[] declaredMethods = type.GetDeclaredMethods();
+		for (int i = 0; i < declaredMethods.Length; i++)
+		{
+			if (declaredMethods[i].Name == methodName)
+			{
+				return declaredMethods[i];
+			}
+		}
+		return null;
+	}
+
+	public static ConstructorInfo GetDeclaredConstructor(this Type type, Type[] parameters)
+	{
+		ConstructorInfo[] declaredConstructors = type.GetDeclaredConstructors();
+		foreach (ConstructorInfo constructorInfo in declaredConstructors)
+		{
+			ParameterInfo[] parameters2 = constructorInfo.GetParameters();
+			if (parameters.Length != parameters2.Length)
+			{
+				continue;
+			}
+			for (int j = 0; j < parameters2.Length; j++)
+			{
+				if (parameters2[j].ParameterType != parameters[j])
+				{
+				}
+			}
+			return constructorInfo;
+		}
+		return null;
+	}
+
+	public static ConstructorInfo[] GetDeclaredConstructors(this Type type)
+	{
+		return type.GetConstructors(DeclaredFlags);
+	}
+
+	public static MemberInfo[] GetFlattenedMember(this Type type, string memberName)
+	{
+		List<MemberInfo> list = new List<MemberInfo>();
+		while (type != null)
+		{
+			MemberInfo[] declaredMembers = type.GetDeclaredMembers();
+			for (int i = 0; i < declaredMembers.Length; i++)
+			{
+				if (declaredMembers[i].Name == memberName)
+				{
+					list.Add(declaredMembers[i]);
+				}
+			}
+			type = type.Resolve().BaseType;
+		}
+		return list.ToArray();
+	}
+
+	public static MethodInfo GetFlattenedMethod(this Type type, string methodName)
+	{
+		while (type != null)
+		{
+			MethodInfo[] declaredMethods = type.GetDeclaredMethods();
+			for (int i = 0; i < declaredMethods.Length; i++)
+			{
+				if (declaredMethods[i].Name == methodName)
+				{
+					return declaredMethods[i];
+				}
+			}
+			type = type.Resolve().BaseType;
+		}
+		return null;
+	}
+
+	public static IEnumerable<MethodInfo> GetFlattenedMethods(this Type type, string methodName)
+	{
+		while (type != null)
+		{
+			MethodInfo[] methods = type.GetDeclaredMethods();
+			for (int i = 0; i < methods.Length; i++)
+			{
+				if (methods[i].Name == methodName)
+				{
+					yield return methods[i];
+				}
+			}
+			type = type.Resolve().BaseType;
+		}
+	}
+
+	public static PropertyInfo GetFlattenedProperty(this Type type, string propertyName)
+	{
+		while (type != null)
+		{
+			PropertyInfo[] declaredProperties = type.GetDeclaredProperties();
+			for (int i = 0; i < declaredProperties.Length; i++)
+			{
+				if (declaredProperties[i].Name == propertyName)
+				{
+					return declaredProperties[i];
+				}
+			}
+			type = type.Resolve().BaseType;
+		}
+		return null;
+	}
+
+	public static MemberInfo GetDeclaredMember(this Type type, string memberName)
+	{
+		MemberInfo[] declaredMembers = type.GetDeclaredMembers();
+		for (int i = 0; i < declaredMembers.Length; i++)
+		{
+			if (declaredMembers[i].Name == memberName)
+			{
+				return declaredMembers[i];
+			}
+		}
+		return null;
+	}
+
+	public static MethodInfo[] GetDeclaredMethods(this Type type)
+	{
+		return type.GetMethods(DeclaredFlags);
+	}
+
+	public static PropertyInfo[] GetDeclaredProperties(this Type type)
+	{
+		return type.GetProperties(DeclaredFlags);
+	}
+
+	public static FieldInfo[] GetDeclaredFields(this Type type)
+	{
+		return type.GetFields(DeclaredFlags);
+	}
+
+	public static MemberInfo[] GetDeclaredMembers(this Type type)
+	{
+		return type.GetMembers(DeclaredFlags);
+	}
+
+	public static MemberInfo AsMemberInfo(Type type)
+	{
+		return type;
+	}
+
+	public static bool IsType(MemberInfo member)
+	{
+		return member is Type;
+	}
+
+	public static Type AsType(MemberInfo member)
+	{
+		return (Type)member;
+	}
+
+	public static Type Resolve(this Type type)
+	{
+		return type;
+	}
+}
 }

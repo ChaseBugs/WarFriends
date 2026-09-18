@@ -1,63 +1,110 @@
+using System;
+using CodeStage.AntiCheat.ObscuredTypes;
 using UnityEngine;
 
-public class ServerTime : MonoBehaviour
+public class ServerTime
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	private const int warsInterval = 604800;
 
-	1. No dll files were provided to AssetRipper.
+	private const int playerLeagueInterval = 604800;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	private ObscuredFloat mLastRealtimeSinceStartup;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	private ObscuredInt mServerTimeStamp;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	private int tmp;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public int nextWarsEvaluation { get; private set; }
 
-	3. Assembly Reconstruction has not been implemented.
+	public int nextLeagueEvaluation { get; private set; }
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public int midnight { get; set; }
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public int GetCurrentTimestamp()
+	{
+		return (int)mServerTimeStamp + (int)(Time.realtimeSinceStartup - (float)mLastRealtimeSinceStartup);
+	}
 
-	4. This script is unnecessary.
+	public int GetLastUpdateFromServer()
+	{
+		return (int)(Time.realtimeSinceStartup - (float)mLastRealtimeSinceStartup);
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public double GetCurrentTimestampDouble()
+	{
+		return (double)(int)mServerTimeStamp + (double)(Time.realtimeSinceStartup - (float)mLastRealtimeSinceStartup);
+	}
 
-	5. Script Content Level 0
+	public int GetPlayerDataLoadedTimestamp()
+	{
+		return mServerTimeStamp;
+	}
 
-		AssetRipper was set to not load any script information.
+	internal void Init(int timestamp)
+	{
+		mLastRealtimeSinceStartup = Time.realtimeSinceStartup;
+		mServerTimeStamp = timestamp;
+		tmp = 0;
+		PushNotificationManager.instance.ScheduleLapsedPlayerNotifications();
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	internal int GetLastUpdateFromServerDebug()
+	{
+		int result = 0;
+		if (GetLastUpdateFromServer() - tmp > 2)
+		{
+			result = GetLastUpdateFromServer() - tmp;
+			tmp = GetLastUpdateFromServer();
+		}
+		return result;
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public int GetNextWarsEvaluation()
+	{
+		InitNextWarsEvaluation(nextWarsEvaluation);
+		return nextWarsEvaluation;
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	private int ProcessTimestamp(int timestamp, int interval)
+	{
+		int currentTimestamp = GetCurrentTimestamp();
+		if (timestamp <= currentTimestamp)
+		{
+			Debug.Log("Evaluation is old! " + timestamp + ", current = " + currentTimestamp + ", interval = " + interval);
+			while (timestamp <= currentTimestamp)
+			{
+				timestamp += interval;
+			}
+		}
+		return timestamp;
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	internal void InitNextWarsEvaluation(int timestamp)
+	{
+		nextWarsEvaluation = ProcessTimestamp(timestamp, 604800);
+		PushNotificationManager.instance.ScheduleLocalNextWarsNotification(nextWarsEvaluation - GetCurrentTimestamp());
+	}
 
-	*/
+	internal void InitNextLeagueEvaluation(int timestamp)
+	{
+		int num = (int)(GameLoginManager.currentPlayer.leagueTier - 1);
+		int interval = 604800;
+		if (num < Singleton<GameVariables>.instance.playerLeaderboards.Rows.Count && num >= 0)
+		{
+			interval = Singleton<GameVariables>.instance.playerLeaderboards.Rows[num].DURATION * 3600;
+		}
+		nextLeagueEvaluation = ProcessTimestamp(timestamp, interval);
+		PushNotificationManager.instance.ScheduleLocalNextLeagueNotification(nextLeagueEvaluation - GetCurrentTimestamp());
+	}
+
+	internal int GetNextLeagueEvaluation()
+	{
+		InitNextLeagueEvaluation(nextLeagueEvaluation);
+		return nextLeagueEvaluation;
+	}
+
+	internal static double GetUtcOffset()
+	{
+		return (DateTime.Now - DateTime.UtcNow).TotalHours;
+	}
 }

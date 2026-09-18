@@ -1,63 +1,202 @@
+using System;
+using System.Collections;
+using Beebyte.Obfuscator;
 using UnityEngine;
 
-public class TutorialManagerStage6 : MonoBehaviour
+[Skip]
+public class TutorialManagerStage6 : TutorialManagerBase
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	private const int mTillMatches = 1;
 
-	1. No dll files were provided to AssetRipper.
+	private static TutorialManagerStage6 mInstance;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	private bool mChangingScreen;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	private bool mInMenu;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public static TutorialManagerStage6 instance
+	{
+		get
+		{
+			mInstance = mInstance ?? UnityEngine.Object.FindObjectOfType<TutorialManagerStage6>();
+			return mInstance;
+		}
+	}
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	private bool isAnyElementShown => GuiElementSingle<LoadingDialog>.instance.isShowed || DialogManager.instance.isSomeDialogShowed || GuiElementSingle<ChatGuiElement>.instance.isRightPartDisplayed;
 
-	3. Assembly Reconstruction has not been implemented.
+	protected override void Awake()
+	{
+		base.Awake();
+		mInstance = this;
+		Singleton<BeanstalkServerManager>.instance.AfterPlayerDataLoaded += delegate
+		{
+			Debug.Log("Tutorial Manager 6: Battles played: " + StatsManager.instance.battlesPlayed + " tutorial running: " + Singleton<GameController>.instance.isTutorial);
+			if (!Singleton<GameController>.instance.isTutorial && StatsManager.instance.battlesPlayed < 1)
+			{
+				RunTutorial();
+			}
+		};
+	}
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public void RunTutorial()
+	{
+		if (!base.isTutorialRunning)
+		{
+			StopAllCoroutines();
+			StartCoroutine(RadicalRoutine.Run(GuidePlayerToMatch()));
+			Debug.Log("Tutorial Manager 6: Starting Tutorial - Guide player to match");
+		}
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public override void StartTutorial(bool isContinue)
+	{
+		base.StartTutorial(isContinue);
+		StartCoroutine(Singleton<AtlasPreparer>.instance.LoadTutorialCoroutine());
+	}
 
-	4. This script is unnecessary.
+	private void CleanUpAfterTutorial()
+	{
+		data.started = true;
+		Save();
+		Singleton<AtlasPreparer>.instance.UnloadTutorial();
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public IEnumerator GuidePlayerToMatch()
+	{
+		StartTutorial(isContinue: false);
+		GuiScreen.ChangingScreen = (Action)Delegate.Remove(GuiScreen.ChangingScreen, new Action(OnChangingScreen));
+		GuiScreen.ChangingScreen = (Action)Delegate.Combine(GuiScreen.ChangingScreen, new Action(OnChangingScreen));
+		GuiElement.ShowingDialog = (Action)Delegate.Remove(GuiElement.ShowingDialog, new Action(OnShowingDialog));
+		GuiElement.ShowingDialog = (Action)Delegate.Combine(GuiElement.ShowingDialog, new Action(OnShowingDialog));
+		GuiElement.HidingDialog = (Action<GuiElement>)Delegate.Remove(GuiElement.HidingDialog, new Action<GuiElement>(OnHidingDialog));
+		GuiElement.HidingDialog = (Action<GuiElement>)Delegate.Combine(GuiElement.HidingDialog, new Action<GuiElement>(OnHidingDialog));
+		GuiElementSingle<ChatGuiElement>.instance.ChangingState -= OnChangingState;
+		GuiElementSingle<ChatGuiElement>.instance.ChangingState += OnChangingState;
+		StartAnimations();
+		while (StatsManager.instance.battlesPlayed < 1)
+		{
+			if (Singleton<GameController>.instance.isTutorial)
+			{
+				if (mInMenu)
+				{
+					mInMenu = false;
+					StopAnimations();
+				}
+				yield return new WaitForRealSeconds(1f);
+				continue;
+			}
+			if (Singleton<GameController>.instance.gameState != GameController.GameState.Menu)
+			{
+				if (mInMenu)
+				{
+					mInMenu = false;
+					StopAnimations();
+				}
+				yield return new WaitForRealSeconds(0.5f);
+				continue;
+			}
+			if (!mInMenu)
+			{
+				StartAnimations();
+			}
+			if (mChangingScreen)
+			{
+				mChangingScreen = false;
+				StopAnimations();
+				yield return new WaitForSeconds(Singleton<GuiManager>.instance.currentScreen.fadeInTime);
+				StartAnimations();
+			}
+			else
+			{
+				yield return null;
+			}
+		}
+		if (mInMenu)
+		{
+			mInMenu = false;
+			StopAnimations();
+		}
+		yield return new WaitForRealSeconds(0.5f);
+		GuiScreen.ChangingScreen = (Action)Delegate.Remove(GuiScreen.ChangingScreen, new Action(OnChangingScreen));
+		GuiElement.ShowingDialog = (Action)Delegate.Remove(GuiElement.ShowingDialog, new Action(OnShowingDialog));
+		GuiElement.HidingDialog = (Action<GuiElement>)Delegate.Remove(GuiElement.HidingDialog, new Action<GuiElement>(OnHidingDialog));
+		GuiElementSingle<ChatGuiElement>.instance.ChangingState -= OnChangingState;
+		yield return new WaitForSeconds(2.8f);
+		CleanUpAfterTutorial();
+		FinishTutorial();
+	}
 
-	5. Script Content Level 0
+	private void OnChangingScreen()
+	{
+		mChangingScreen = true;
+	}
 
-		AssetRipper was set to not load any script information.
+	private void OnShowingDialog()
+	{
+		if (mInMenu)
+		{
+			StopAnimations();
+		}
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	private void OnHidingDialog(GuiElement dialog)
+	{
+		if (mInMenu)
+		{
+			StartAnimations(specialCondition: true);
+		}
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	private void OnChangingState()
+	{
+		if (mInMenu && Singleton<GuiManager>.instance.currentScreen != null && Singleton<GuiManager>.instance.currentScreen.isFullyShowed)
+		{
+			if (GuiElementSingle<ChatGuiElement>.instance.isRightPartDisplayed)
+			{
+				StopAnimations();
+			}
+			else
+			{
+				StartAnimations();
+			}
+		}
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	private void StopAnimations()
+	{
+		GuiElementSingle<TutorialOverlayGuiElement>.instance.StopGoToBattle();
+		GuiElementSingle<TutorialOverlayGuiElement>.instance.StopTapAnimation();
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	private void StartAnimations(bool specialCondition = false)
+	{
+		mChangingScreen = false;
+		mInMenu = Singleton<GameController>.instance.gameState == GameController.GameState.Menu;
+		if (specialCondition)
+		{
+			if (GuiElementSingle<LoadingDialog>.instance.isShowed || GuiElementSingle<ChatGuiElement>.instance.isRightPartDisplayed || DialogManager.instance.numberOfShownDialogues > 1)
+			{
+				return;
+			}
+		}
+		else if (isAnyElementShown)
+		{
+			return;
+		}
+		if (Singleton<GuiManager>.instance.currentScreen == GuiScreenSingle<MainScreen>.instance)
+		{
+			GuiElementSingle<TutorialOverlayGuiElement>.instance.StartGoToBattle(GuiScreenSingle<MainScreen>.instance.positionForTutorialText.transform.position);
+			GuiElementSingle<TutorialOverlayGuiElement>.instance.StartTapAnimation(GuiScreenSingle<MainScreen>.instance.positionForTutorialHand.transform.position);
+		}
+		if (Singleton<GuiManager>.instance.currentScreen == GuiScreenSingle<BattlePreparationScreen>.instance)
+		{
+			GuiElementSingle<TutorialOverlayGuiElement>.instance.StartGoToBattle(GuiScreenSingle<BattlePreparationScreen>.instance.playerVsPlayerButton.positionForTutorialText.transform.position);
+			GuiElementSingle<TutorialOverlayGuiElement>.instance.StartTapAnimation(GuiScreenSingle<BattlePreparationScreen>.instance.playerVsPlayerButton.positionForTutorialHand.transform.position);
+		}
+		if (Singleton<GuiManager>.instance.currentScreen == GuiScreenSingle<CardSelectionScreen>.instance)
+		{
+			GuiElementSingle<TutorialOverlayGuiElement>.instance.StartTapAnimation(GuiScreenSingle<CardSelectionScreen>.instance.positionForTutorialHand.transform.position);
+		}
+	}
 }

@@ -1,66 +1,103 @@
-using UnityEngine;
+using Org.BouncyCastle.Math;
+using Org.BouncyCastle.Math.EC.Multiplier;
+using Org.BouncyCastle.Security;
+using Org.BouncyCastle.Utilities;
 
 namespace Org.BouncyCastle.Crypto.Generators
 {
-	public class DHParametersHelper : MonoBehaviour
+internal class DHParametersHelper
+{
+	private static readonly BigInteger Six = BigInteger.ValueOf(6L);
+
+	private static readonly int[][] primeLists = BigInteger.primeLists;
+
+	private static readonly int[] primeProducts = BigInteger.primeProducts;
+
+	private static readonly BigInteger[] BigPrimeProducts = ConstructBigPrimeProducts(primeProducts);
+
+	private static BigInteger[] ConstructBigPrimeProducts(int[] primeProducts)
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
+		BigInteger[] array = new BigInteger[primeProducts.Length];
+		for (int i = 0; i < array.Length; i++)
+		{
+			array[i] = BigInteger.ValueOf(primeProducts[i]);
+		}
+		return array;
 	}
+
+	internal static BigInteger[] GenerateSafePrimes(int size, int certainty, SecureRandom random)
+	{
+		int num = size - 1;
+		int num2 = size >> 2;
+		BigInteger bigInteger;
+		BigInteger bigInteger2;
+		if (size <= 32)
+		{
+			do
+			{
+				bigInteger = new BigInteger(num, 2, random);
+				bigInteger2 = bigInteger.ShiftLeft(1).Add(BigInteger.One);
+			}
+			while (!bigInteger2.IsProbablePrime(certainty) || (certainty > 2 && !bigInteger.IsProbablePrime(certainty - 2)));
+		}
+		else
+		{
+			while (true)
+			{
+				bigInteger = new BigInteger(num, 0, random);
+				while (true)
+				{
+					for (int i = 0; i < primeLists.Length; i++)
+					{
+						int num3 = bigInteger.Remainder(BigPrimeProducts[i]).IntValue;
+						if (i == 0)
+						{
+							int num4 = num3 % 3;
+							if (num4 != 2)
+							{
+								int num5 = 2 * num4 + 2;
+								bigInteger = bigInteger.Add(BigInteger.ValueOf(num5));
+								num3 = (num3 + num5) % primeProducts[i];
+							}
+						}
+						int[] array = primeLists[i];
+						foreach (int num6 in array)
+						{
+							int num7 = num3 % num6;
+							if (num7 == 0 || num7 == num6 >> 1)
+							{
+								goto IL_0103;
+							}
+						}
+					}
+					break;
+					IL_0103:
+					bigInteger = bigInteger.Add(Six);
+				}
+				if (bigInteger.BitLength == num && bigInteger.RabinMillerTest(2, random))
+				{
+					bigInteger2 = bigInteger.ShiftLeft(1).Add(BigInteger.One);
+					if (bigInteger2.RabinMillerTest(certainty, random) && (certainty <= 2 || bigInteger.RabinMillerTest(certainty - 2, random)) && WNafUtilities.GetNafWeight(bigInteger2) >= num2)
+					{
+						break;
+					}
+				}
+			}
+		}
+		return new BigInteger[2] { bigInteger2, bigInteger };
+	}
+
+	internal static BigInteger SelectGenerator(BigInteger p, BigInteger q, SecureRandom random)
+	{
+		BigInteger max = p.Subtract(BigInteger.Two);
+		BigInteger bigInteger2;
+		do
+		{
+			BigInteger bigInteger = BigIntegers.CreateRandomInRange(BigInteger.Two, max, random);
+			bigInteger2 = bigInteger.ModPow(BigInteger.Two, p);
+		}
+		while (bigInteger2.Equals(BigInteger.One));
+		return bigInteger2;
+	}
+}
 }

@@ -110,6 +110,44 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3685147820f4414f2b8bc5e3faa3e43d, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  isActivated: 0
+  bulletPrefab: {fileID: 11454010, guid: 4f83057103004024c8301ce40b0eac94, type: 2}
+  cadence:
+    currentCryptoKey: 230887
+    hiddenValue: e7850340
+    fakeValue: 2
+    inited: 1
+  clipSize:
+    currentCryptoKey: 444444
+    hiddenValue: 444424
+    fakeValue: 20
+    inited: 1
+  reloadTime:
+    currentCryptoKey: 230887
+    hiddenValue: e785a340
+    fakeValue: 5
+    inited: 1
+  friendKill: 0
+  infiniteAmmo: 1
+  reloadableWeapon: 0
+  disableSync: 0
+  spawnPoint: {fileID: 454010}
+  startingAmmmoCount:
+    currentCryptoKey: 444444
+    hiddenValue: 444444
+    fakeValue: 0
+    inited: 1
+  useAiming: 0
+  isFake: 0
+  shotType: 0
+  ignoreLayersMask: 0
+  reloadSound: 11
+  shotSound: 16
+  soundVolume: 1
+  weaponType: 1
+  shootOffset: {x: 0, y: 0, z: 0}
+  grenadeTpe: 0
+  changeMesh: 1
 --- !u!114 &11484216
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -121,6 +159,45 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8b6a8c287a31eb9b64a161ea30c3b827, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  damageAmount:
+    currentCryptoKey: 230887
+    hiddenValue: e785a341
+    fakeValue: 20
+    inited: 1
+  hitForce: 20
+  criticalProbability:
+    currentCryptoKey: 230887
+    hiddenValue: e7850300
+    fakeValue: 0
+    inited: 1
+  criticalAmount:
+    currentCryptoKey: 230887
+    hiddenValue: e7850340
+    fakeValue: 2
+    inited: 1
+  damageToPlayerCoeficient:
+    currentCryptoKey: 230887
+    hiddenValue: e785833f
+    fakeValue: 1
+    inited: 1
+  damageToPlayerOvertimeCoeficient:
+    currentCryptoKey: 230887
+    hiddenValue: e785833f
+    fakeValue: 1
+    inited: 1
+  playerBehindShieldRatio: 0.11
+  angle: 45
+  throwDistance: 0
+  explodeAfterTime: 0
+  hurtRadius: 1.2
+  deadRadius: 0.9
+  exposionCoef: {x: 1.5, y: 3, z: 1.5}
+  additionalUpForce: 12
+  explodeDamageAmount:
+    currentCryptoKey: 230887
+    hiddenValue: e785ac43
+    fakeValue: 350
+    inited: 1
 --- !u!114 &11443158
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -132,6 +209,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bdf38ce86a2f68e1ec5a08d9161659f6, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  NoRigidBodyObject: {fileID: 179954}
+  RigidBodyObject: {fileID: 161526}
+  noRigidBody:
+    meshFilter: {fileID: 0}
+    meshRenderer: {fileID: 0}
+  rigidBody:
+    meshFilter: {fileID: 0}
+    meshRenderer: {fileID: 0}
+  snapPoint: {fileID: 109266}
 --- !u!114 &11431434
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -143,6 +229,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f19ea4a15c3ca43dcc180d756f7a82b3, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  ownerId: 0
+  group: 0
+  OwnerShipWasTransfered: 0
+  prefixBackup: -1
+  synchronization: 0
+  onSerializeTransformOption: 3
+  onSerializeRigidBodyOption: 2
+  ownershipTransfer: 0
+  ObservedComponents:
+  - {fileID: 0}
+  viewIdField: 0
+  instantiationId: -1
+  currentMasterID: -1
+  didAwake: 0
+  isRuntimeInstantiated: 0
 --- !u!82 &8270521
 AudioSource:
   serializedVersion: 4
@@ -224,6 +325,44 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6bf76f9799dec14c7c2240f1cc725df6, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  weaponRecords:
+  - level: 0
+    shotSound: 16
+    weaponModelPath: WeaponModelsUnits/Grenade_FRAG_lp
+    assetBundleName: Grenade_FRAG
+    scale: {x: 1, y: 1, z: 1}
+  - level: 1
+    shotSound: 16
+    weaponModelPath: WeaponModelsUnits/Grenade_FLASH_lp
+    assetBundleName: Grenade_FLASH
+    scale: {x: 1, y: 1, z: 1}
+  - level: 2
+    shotSound: 16
+    weaponModelPath: WeaponModelsUnits/Grenade_M34_lp
+    assetBundleName: Grenade_M34
+    scale: {x: 1, y: 1, z: 1}
+  - level: 3
+    shotSound: 16
+    weaponModelPath: WeaponModelsUnits/Grenade_SMOKE_lp
+    assetBundleName: Grenade_SMOKE
+    scale: {x: 1, y: 1, z: 1}
+  - level: 4
+    shotSound: 16
+    weaponModelPath: WeaponModelsUnits/Grenade_Molotov_lp
+    assetBundleName: Grenade_Molotov
+    scale: {x: 1, y: 1, z: 1}
+  - level: 5
+    shotSound: 16
+    weaponModelPath: WeaponModelsUnits/Grenade_M84_lp
+    assetBundleName: Grenade_M84
+    scale: {x: 1, y: 1, z: 1}
+  - level: 6
+    shotSound: 16
+    weaponModelPath: WeaponModelsUnits/Grenade_SMOKEElite_lp
+    assetBundleName: Grenade_M84
+    scale: {x: 1, y: 1, z: 1}
+  weaponRenderer: {fileID: 2324449}
+  weapon: {fileID: 11419550}
 --- !u!4 &477035
 Transform:
   m_ObjectHideFlags: 0

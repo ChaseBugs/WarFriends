@@ -1,0 +1,1468 @@
+{
+  "files": 365,
+  "components": 22921,
+  "unresolvedGuids": 0,
+  "obbSha256": "078cd1c4ebaeef4a39646274a54d35ce05741bc15a2e13d95ae55340711b5125",
+  "changes": [
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\armyIcon.prefab",
+      "components": 45
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\assaultHelicopter.prefab",
+      "components": 38
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\AssaultRifleEnemy.prefab",
+      "components": 8
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\BazookaEnemy.prefab",
+      "components": 5
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\bloodEffect.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\bloodEffect_0.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\BonusTakeDisplayer.prefab",
+      "components": 14
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\BrGuiAtlasGameCompr.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\BuddyName.prefab",
+      "components": 6
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\Buggy.prefab",
+      "components": 43
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\BulletPoison.prefab",
+      "components": 3
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\BulletShotGun.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\BulletSlow.prefab",
+      "components": 3
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\camoIcon.prefab",
+      "components": 34
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\cardIcon.prefab",
+      "components": 13
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\Cardpool Record.prefab",
+      "components": 198
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\CardRecord.prefab",
+      "components": 37
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\Chat Record.prefab",
+      "components": 32
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\Circle Part Front.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\CnGuiAtlasGameCompr.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\Country Icon Button.prefab",
+      "components": 6
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\Crow.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\CustomDisplayerItem.prefab",
+      "components": 8
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\DailyRewardIco.prefab",
+      "components": 27
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\DamageDisplayer.prefab",
+      "components": 10
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\Decal1.prefab",
+      "components": 2
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\Decoy.prefab",
+      "components": 4
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\DeGuiAtlasGameCompr.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\DogTag Record.prefab",
+      "components": 8
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\dronePrototype.prefab",
+      "components": 24
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\drone_upgrade_03_rotate.prefab",
+      "components": 2
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\electricTrap.prefab",
+      "components": 2
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\electricTrap_0.prefab",
+      "components": 2
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\EliteSwatShield.prefab",
+      "components": 3
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\enemy.prefab",
+      "components": 28
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\EnGuiAtlasGameCompr.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\EsGuiAtlasGameCompr.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\FlameAmmo.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\FlamethrowerEnemy.prefab",
+      "components": 8
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\FlashGrenade.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\FlashGrenade_0.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\FrGuiAtlasGameCompr.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\FriendsGuiRecord.prefab",
+      "components": 25
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\gameCollection.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\GlobalStorage.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\GrenadeAmmoEnemy.prefab",
+      "components": 9
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\GrenadeEnemy.prefab",
+      "components": 5
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\grenadeExplosion.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\grenadeExplosionSmall.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\grenadeExplosionSmall_0.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\grenadeExplosion_0.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\GrenadeLauncherEnemy.prefab",
+      "components": 6
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\groundBoxHit.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\groundBoxHit_0.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\GuiAtlasArmyWeapon.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\GuiAtlasCards.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\GuiAtlasCommon.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\GuiAtlasCommonIcons.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\GuiAtlasEffects.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\GuiAtlasGameCompressed.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\GuiAtlasLoading.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\GuiAtlasMainBig.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\GuiAtlasMap1.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\GuiAtlasMap2.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\GuiAtlasMap3.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\GuiAtlasMenuMain.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\GuiAtlasMenuReference.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\GuiAtlasMission.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\GuiAtlasSplash.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\GuiAtlasTutorial.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\GuiAtlasVisuals.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\GuiHAtlasGame.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\HealthBar.prefab",
+      "components": 10
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\HealthBarVertical.prefab",
+      "components": 5
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\HeavyTurret.prefab",
+      "components": 17
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\Helicopter.prefab",
+      "components": 40
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\Hero Prefab.prefab",
+      "components": 6
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\hitGroundParticle.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\hitGroundParticle_0.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\HitParticleBlue.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\HitParticleBlue_0.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\Humvee.prefab",
+      "components": 38
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\indicator.prefab",
+      "components": 6
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\invetoryItem.prefab",
+      "components": 19
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\ItGuiAtlasGameCompr.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\JpGuiAtlasGameCompr.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\KillStreakBonusAddAmmo.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\KillStreakBonusAddHealth.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\KillStreakBonusBoobyTrap.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\KillStreakBonusBox.prefab",
+      "components": 5
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\KillStreakBonusCard.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\KillStreakBonusGold.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\KillStreakBonusGrenades.prefab",
+      "components": 3
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\KillStreakBonusKevlar.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\KillStreakBonusSlowMotion.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\KillStreakBonusTurret.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\KillStreakBonusWarbucks.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\KrGuiAtlasGameCompr.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\LaserAmmo.prefab",
+      "components": 2
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\Leaderboard Record.prefab",
+      "components": 27
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\MCMessage.prefab",
+      "components": 75
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\Mech.prefab",
+      "components": 28
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\Member Record.prefab",
+      "components": 93
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\MemberSelectRecord.prefab",
+      "components": 16
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\metalExplosion.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\metalExplosion_0.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\MineAmmo.prefab",
+      "components": 3
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\miniDrone.prefab",
+      "components": 8
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\MiniGun.prefab",
+      "components": 8
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\Missile.prefab",
+      "components": 2
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\Mission Enemy Record.prefab",
+      "components": 8
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\Mission LeaderBoard Record.prefab",
+      "components": 11
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\Mission Record.prefab",
+      "components": 30
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\MortarEnemy.prefab",
+      "components": 7
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\nameGuiRecord.prefab",
+      "components": 6
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\NewUnitDisplayerItem.prefab",
+      "components": 5
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\noMoveX.prefab",
+      "components": 3
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\parachute.prefab",
+      "components": 2
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\PistolEnemy.prefab",
+      "components": 7
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\Player League Icon.prefab",
+      "components": 6
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\Player Stat Record.prefab",
+      "components": 14
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\PlayerLeagueRecord.prefab",
+      "components": 40
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\PlayerPrefab.prefab",
+      "components": 398
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\PoisonGrenade.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\PoisonGrenade_0.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\Prime Regular.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\PtGuiAtlasGameCompr.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\RandomCardRecord.prefab",
+      "components": 12
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\RibbonGuiRecord.prefab",
+      "components": 19
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\RuGuiAtlasGameCompr.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\Rule Prefab.prefab",
+      "components": 7
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\shieldDestroy.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\shieldDestroy_0.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\ShootableBox.prefab",
+      "components": 3
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\ShotgunEnemy.prefab",
+      "components": 8
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\shotTrail.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\SkillShotDisplayer.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\SkillShotDisplayerItem.prefab",
+      "components": 10
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\SkillshotGuiRecord.prefab",
+      "components": 15
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\SmokeGrenade.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\SmokeGrenade_0.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\SniperRifleEnemy.prefab",
+      "components": 8
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\sparklesMetal.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\sparklesMetal_0.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\Special Pack.prefab",
+      "components": 401
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\SpriteCollection2D.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\Squad Emblem Record.prefab",
+      "components": 4
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\Squad Emblem Record_0.prefab",
+      "components": 10
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\Squad Event Record.prefab",
+      "components": 19
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\Squad Record.prefab",
+      "components": 29
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\Squad Stats Record.prefab",
+      "components": 13
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\Squad War End Member Record.prefab",
+      "components": 16
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\Squad Wars Member Record.prefab",
+      "components": 14
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\Squad Wars Record.prefab",
+      "components": 27
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\SquadDetailsMemberGridElement.prefab",
+      "components": 28
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\SwatPistolEnemy.prefab",
+      "components": 7
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\SwatShield.prefab",
+      "components": 3
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\Tank.prefab",
+      "components": 36
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\TcGuiAtlasGameCompr.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\tierArmy.prefab",
+      "components": 9
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\Transporter.prefab",
+      "components": 60
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\Turret.prefab",
+      "components": 18
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\TurretRockets.prefab",
+      "components": 29
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\Unit End Screen Record.prefab",
+      "components": 16
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\UnitIndicator.prefab",
+      "components": 5
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\visualCategoryButton.prefab",
+      "components": 11
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\Wararena box.prefab",
+      "components": 38
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\WarArena Reward Record.prefab",
+      "components": 16
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\WarArena Reward Small Record.prefab",
+      "components": 12
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\WeaponEquipSlotButton.prefab",
+      "components": 11
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\GameObject\\weaponGuiRecord.prefab",
+      "components": 25
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\MonoBehaviour\\WarArenaRuleCardsFilter.asset",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\MonoBehaviour\\WarArenaRuleCoolDown.asset",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\MonoBehaviour\\WarArenaRuleCrates.asset",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\MonoBehaviour\\WarArenaRuleFixedSpawning.asset",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\MonoBehaviour\\WarArenaRuleOverTime.asset",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\MonoBehaviour\\WarArenaRulePlayerHp.asset",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\MonoBehaviour\\WarArenaRulePlayerSpeed.asset",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\MonoBehaviour\\WarArenaRuleShields.asset",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\MonoBehaviour\\WarArenaRuleUnitsHP.asset",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\MonoBehaviour\\WarArenaRuleWeapons.asset",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\MonoBehaviour\\WarArenaRuleWeaponsAmmo.asset",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\MonoBehaviour\\WarArenaRuleWeaponsReload.asset",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\PhotonServerSettings.asset",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Scenes\\Aztec_Multiplayer.unity",
+      "components": 485
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Scenes\\Aztec_Single.unity",
+      "components": 180
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Scenes\\City_Multiplayer.unity",
+      "components": 525
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Scenes\\City_Single.unity",
+      "components": 386
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Scenes\\Desert_Multiplayer.unity",
+      "components": 543
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Scenes\\Desert_New.unity",
+      "components": 188
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Scenes\\MainScene.unity",
+      "components": 16152
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Scenes\\Park_Multiplayer.unity",
+      "components": 524
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Scenes\\Park_Single.unity",
+      "components": 380
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Scenes\\Snow_Multiplayer.unity",
+      "components": 537
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Scenes\\Snow_Single.unity",
+      "components": 186
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Scenes\\SplashScene.unity",
+      "components": 33
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\parallax\\Parallax.prefab",
+      "components": 2
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\sounds\\Sounds Manager.prefab",
+      "components": 2
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\assaultriffle_ak47\\AK47_lp.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\assaultriffle_ak47\\GUI_AssaultRifleAK47.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\assaultriffle_ak47elite\\AK47Elite_lp.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\assaultriffle_ak47elite\\GUI_AssaultRifleAK47Elite.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\assaultriffle_m16\\GUI_AssaultRifleM16.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\assaultriffle_m16\\M16_lp.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\assaultriffle_m16\\Player_M16_lp.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\assaultrifle_aks47u\\AKS47U_lp_t.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\assaultrifle_aks47u\\GUI_AssaultRifleAKS47U.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\assaultrifle_famas\\FAMAS_lp_t.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\assaultrifle_famas\\GUI_AssaultRifle_Famas.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\assaultrifle_famaselite\\FAMASElite_lp_t.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\assaultrifle_famaselite\\GUI_AssaultRifle_FamasElite.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\assaultrifle_g36\\G36_lp_t.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\assaultrifle_g36\\GUI_AssaultRifleG36.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\assaultrifle_g36elite\\G36Elite_lp_t.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\assaultrifle_g36elite\\GUI_AssaultRifleG36Elite.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\assaultrifle_qbz95elite\\GUI_AssaultRifleQBZ95Elite.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\assaultrifle_qbz95elite\\QBZElite_lp_t.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\assaultrifle_qzb95\\GUI_AssaultRifleQBZ95.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\assaultrifle_qzb95\\QBZ_lp_t.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\assaultrifle_steyraug\\GUI_AssaultRifleSteyrAUG.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\assaultrifle_steyraug\\SteyerAUG_lp_t.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\engineer_tool\\Engineer_tool.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\flamethrower\\Flamethrower_lp_t.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\grenade_flash\\Grenade_FLASH_lp.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\grenade_flash\\GUI_Grenade_FLASH.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\grenade_frag\\Grenade_FRAG_lp.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\grenade_frag\\GUI_Grenade_FRAG.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\grenade_m34\\Grenade_M34_lp.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\grenade_m34\\GUI_Grenade_M34.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\grenade_m84\\Grenade_M84_lp.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\grenade_m84\\GUI_Grenade_M84.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\grenade_molotov\\Grenade_Molotov_lp.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\grenade_molotov\\GUI_Grenade_Molotov.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\grenade_smoke\\Grenade_SMOKE_lp.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\grenade_smoke\\GUI_Grenade_SMOKE.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\grenade_smokeelite\\Grenade_SMOKEElite_lp.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\grenade_smokeelite\\GUI_Grenade_SMOKEElite.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\lmg_m249\\GUI_LMG_M249.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\lmg_m249\\M249_lp_t.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\lmg_m249\\Player_LMG_M249_lp.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\lmg_m249elite\\GUI_LMG_M249Elite.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\lmg_m249elite\\M249Elite_lp_t.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\lmg_m249elite\\Player_LMG_M249Elite_lp.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\lmg_m60\\GUI_LMG_M60.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\lmg_m60\\M60_lp_t.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\lmg_m60\\Player_LMG_M60_lp.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\lmg_m60elite\\GUI_LMG_M60Elite.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\lmg_m60elite\\M60Elite_lp_t.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\lmg_m60elite\\Player_LMG_M60Elite_lp.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\lmg_mg4\\GUI_LMG_MG4.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\lmg_mg4\\MG4_lp_t.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\lmg_mg4\\Player_LMG_MG34_lp.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\lmg_pkmachinegun\\GUI_LMG_PKMachinegun.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\lmg_pkmachinegun\\LMG_PKMachinegun_lp.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\lmg_pkmachinegun\\Player_LMG_PKMachinegun_lp.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\lmg_pkmachinegunelite\\GUI_LMG_PKMachinegunElite.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\lmg_pkmachinegunelite\\LMG_PKMachinegunElite_lp.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\lmg_pkmachinegunelite\\Player_LMG_PKMachinegunElite_lp.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\lmg_sa80\\GUI_LMG_SA80.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\lmg_sa80\\Player_LMG_SA80_lp.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\lmg_sa80\\SA80_lp_t.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\minigun\\GUI_Minigun_1.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\minigun\\Minigun.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\minigun\\Player_LMG_Minigun_lp.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\mortar\\Mortar_lp.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\pistol_berreta\\Berreta_lp.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\pistol_berreta\\GUI_Pistol_Berreta.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\pistol_berreta\\Player_Berreta_lp.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\pistol_deserteagle\\DesertEagle_lp.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\pistol_deserteagle\\GUI_Pistol_DesertEagle.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\pistol_gunslinger\\gunslinger.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\pistol_jester\\GUI_Pistol_Jester.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\pistol_jester\\Jester_lp.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\pistol_jester\\Player_Jester_lp.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\pistol_m1911\\GUI_Pistol_M1911.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\pistol_m1911\\M1911_lp.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\pistol_m1911\\Player_M1911_lp.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\pistol_magnum357\\GUI_Pistol_Magnum357.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\pistol_magnum357\\Magnum357_lp.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\pistol_magnum357\\Player_Magnum_lp.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\pistol_remmington51\\GUI_Pistol_Remmington51.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\pistol_remmington51\\Player_Remmington_lp.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\pistol_remmington51\\Remmington_lp.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\rocketlauncher_fgmelite\\GUI_RocketLauncher_FGMElite.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\rocketlauncher_fgmelite\\Player_FGMElite_lp.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\rocketlauncher_fgmelite\\RPG_FGMElite_lp.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\rocketlauncher_fgm_sraw\\GUI_RocketLauncher_FGM_SRAW.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\rocketlauncher_fgm_sraw\\Player_FGM_lp.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\rocketlauncher_fgm_sraw\\RPG_FGM_SRAW_lp.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\rocketlauncher_hater\\GUI_RocketLauncher_Hater.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\rocketlauncher_hater\\Hater_lp.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\rocketlauncher_hater\\Player_Hater_lp.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\rocketlauncher_hvm\\GUI_RocketLauncher_HMV.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\rocketlauncher_hvm\\HVM_lp.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\rocketlauncher_hvm\\Player_HVM_lp.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\rocketlauncher_m202\\GUI_RocketLauncher_M202.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\rocketlauncher_m202\\M202_lp.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\rocketlauncher_m202\\Player_M202_lp.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\rocketlauncher_m320\\GUI_RocketLauncher_M320.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\rocketlauncher_m320\\M320.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\rocketlauncher_m320\\Player_M320_lp.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\rocketlauncher_panzerfaust\\GUI_RocketLauncher_Panzerfaust.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\rocketlauncher_panzerfaust\\Panzerfaust_lp.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\rocketlauncher_panzerfaust\\Player_PanzerFaust_lp.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\rocketlauncher_rpg7\\GUI_RocketLauncher_RPG7.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\rocketlauncher_rpg7\\Player_RPG7_lp.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\rocketlauncher_rpg7\\RPG7_lp.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\shotgun_aa12\\AA12_lp_t.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\shotgun_aa12\\GUI_Shotgun_AA12.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\shotgun_benelli\\Benelli_lp_t.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\shotgun_benelli\\GUI_Shotgun_Benelli.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\shotgun_blackhand\\BlackHand_lp_t.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\shotgun_blackhand\\GUI_Shotgun_BlackHand.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\shotgun_saiga12\\GUI_Shotgun_Saiga12.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\shotgun_saiga12\\Saiga_lp_t.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\shotgun_saiga12elite\\GUI_Shotgun_Saiga12Elite.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\shotgun_saiga12elite\\SaigaElite_lp_t.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\shotgun_sawnoff\\GUI_Shotgun_SawnOff.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\shotgun_sawnoff\\SawnOff_lp_t.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\shotgun_spas\\GUI_ShotGun_SPAS.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\shotgun_spas\\Spas_lp_t.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\shotgun_striker\\GUI_Shotgun_Striker.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\shotgun_striker\\Striker_lp_t.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\shotgun_strikerelite\\GUI_Shotgun_StrikerElite.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\shotgun_strikerelite\\StrikerElite_lp_t.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\smg_cpw\\CPW_lp_t.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\smg_cpw\\GUI_SMG_CWP.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\smg_mp5\\GUI_SMG_MP5.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\smg_mp5\\MP5_lp.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\smg_mp5_camo\\GUI_SMG_MP5_camo.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\smg_mp5_camo\\MP5_lp_camo.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\smg_mp7\\GUI_SMG_MP7.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\smg_mp7\\MP7_lp.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\smg_p90\\GUI_SMG_P90.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\smg_p90\\P90_lp.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\smg_p90elite\\GUI_SMG_P90Elite.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\smg_p90elite\\P90Elite_lp.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\smg_ump45\\GUI_SMG_UMP45.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\smg_ump45\\UMP45_lp_t.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\smg_vector\\GUI_SMG_Vector.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\smg_vector\\Vector_lp.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\sniperrifle_awm\\AWMF_lp_t.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\sniperrifle_awm\\GUI_SniperRifle_AWM.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\sniperrifle_awm\\Player_AWM_lp.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\sniperrifle_dragunov\\Dragunov_lp.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\sniperrifle_dragunov\\GUI_SniperRifle_Dragunov.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\sniperrifle_dragunov\\Player_Dragunov_lp.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\sniperrifle_m110\\GUI_SniperRifle_M110.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\sniperrifle_m110\\M110_lp_t.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\sniperrifle_m110\\Player_M110_lp.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\sniperrifle_m110elite\\GUI_SniperRifle_M110Elite.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\sniperrifle_m110elite\\M110Elite_lp_t.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\sniperrifle_m110elite\\Player_M110Elite_lp.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\sniperrifle_m24_sws\\GUI_SniperRifle_M24.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\sniperrifle_m24_sws\\M24_lp.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\sniperrifle_m24_sws\\Player_M24_lp.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\sniperrifle_m90\\GUI_SniperRifle_M90.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\sniperrifle_m90\\M90_lp.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\sniperrifle_m90\\Player_M90_lp.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\sniperrifle_m90elite\\GUI_SniperRifle_M90Elite.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\sniperrifle_m90elite\\M90Elite_lp.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\sniperrifle_m90elite\\Player_M90Elite_lp.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\sniperrifle_msr\\GUI_SniperRifle_MSR.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\sniperrifle_msr\\MSR_lp.prefab",
+      "components": 1
+    },
+    {
+      "path": "Clients\\ExportedProject\\Assets\\Resources\\weapons\\sniperrifle_msr\\Player_MSR_lp.prefab",
+      "components": 1
+    }
+  ]
+}

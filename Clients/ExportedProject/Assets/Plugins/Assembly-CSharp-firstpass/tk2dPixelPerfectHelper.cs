@@ -1,63 +1,77 @@
+using System;
 using UnityEngine;
 
+[AddComponentMenu("2D Toolkit/Deprecated/Extra/tk2dPixelPerfectHelper")]
 public class tk2dPixelPerfectHelper : MonoBehaviour
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	private static tk2dPixelPerfectHelper _inst;
 
-	1. No dll files were provided to AssetRipper.
+	[NonSerialized]
+	public Camera cam;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public int collectionTargetHeight = 640;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public float collectionOrthoSize = 1f;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public float targetResolutionHeight = 640f;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	[NonSerialized]
+	public float scaleD;
 
-	3. Assembly Reconstruction has not been implemented.
+	[NonSerialized]
+	public float scaleK;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public static tk2dPixelPerfectHelper inst
+	{
+		get
+		{
+			if (_inst == null)
+			{
+				_inst = UnityEngine.Object.FindObjectOfType(typeof(tk2dPixelPerfectHelper)) as tk2dPixelPerfectHelper;
+				if (_inst == null)
+				{
+					return null;
+				}
+				inst.Setup();
+			}
+			return _inst;
+		}
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public bool CameraIsOrtho => cam.orthographic;
 
-	4. This script is unnecessary.
+	private void Awake()
+	{
+		Setup();
+		_inst = this;
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public virtual void Setup()
+	{
+		float num = (float)collectionTargetHeight / targetResolutionHeight;
+		if (GetComponent<Camera>() != null)
+		{
+			cam = GetComponent<Camera>();
+		}
+		if (cam == null)
+		{
+			cam = Camera.main;
+		}
+		if (cam.orthographic)
+		{
+			scaleK = num * cam.orthographicSize / collectionOrthoSize;
+			scaleD = 0f;
+		}
+		else
+		{
+			float num2 = num * Mathf.Tan((float)Math.PI / 180f * cam.fieldOfView * 0.5f) / collectionOrthoSize;
+			scaleK = num2 * (0f - cam.transform.position.z);
+			scaleD = num2;
+		}
+	}
 
-	5. Script Content Level 0
-
-		AssetRipper was set to not load any script information.
-
-	6. Cpp2IL failed to decompile Il2Cpp data
-
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public static float CalculateScaleForPerspectiveCamera(float fov, float zdist)
+	{
+		return Mathf.Abs(Mathf.Tan((float)Math.PI / 180f * fov * 0.5f) * zdist);
+	}
 }

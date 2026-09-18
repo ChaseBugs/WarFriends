@@ -1,63 +1,215 @@
+using System;
+using System.Collections.Generic;
+using Google2u;
 using UnityEngine;
 
-public class InappLootboxes : MonoBehaviour
+public class InappLootboxes : Core_BaseScript
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[HideInInspector]
+	public List<InappScreen.InappDefinition> lootboxesDefinitions;
 
-	1. No dll files were provided to AssetRipper.
+	[Header("Core")]
+	public UIPanel lootboxPanel;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public UIDraggablePanel lootboxDraggablePanel;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public UIPanel[] otherPanels;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	[Header("Buttons")]
+	public LootboxButtonRecord[] smallButtons;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public LootboxButtonRecord bigButton;
 
-	3. Assembly Reconstruction has not been implemented.
+	public void Animate(bool showTab, bool instant)
+	{
+		if (showTab && !base.gameObject.activeSelf)
+		{
+			base.gameObject.SetActive(value: true);
+			InitGUIValues();
+		}
+		if (base.gameObject.activeSelf)
+		{
+			AnimateOtherPanels(instant, showTab);
+			TweenAlpha.Begin(lootboxPanel.gameObject, (!instant) ? (GuiElementSingle<InappScreen>.instance.dur * 2f) : 0.01f, (!showTab) ? 0f : 1f).onFinished = delegate
+			{
+				if (!showTab)
+				{
+					base.gameObject.SetActive(value: false);
+					DoAfterHide();
+				}
+				else
+				{
+					AlignPanel();
+				}
+			};
+		}
+		else if (!showTab)
+		{
+			InstantHideTab();
+		}
+	}
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public void InitControls()
+	{
+		for (int i = 0; i < smallButtons.Length; i++)
+		{
+			UIEventListener uIEventListener = UIEventListener.Get(smallButtons[i]);
+			uIEventListener.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener.onClick, new UIEventListener.VoidDelegate(LootboxClick));
+			smallButtons[i].InitControls();
+		}
+		UIEventListener uIEventListener2 = UIEventListener.Get(bigButton);
+		uIEventListener2.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener2.onClick, new UIEventListener.VoidDelegate(LootboxClick));
+		bigButton.InitControls();
+		Singleton<BeanstalkServerManager>.instance.DataLoaded += OnDataLoaded;
+		Singleton<BeanstalkServerManager>.instance.ErrorReceived += OnErrorReceived;
+		Singleton<BeanstalkServerManager>.instance.AfterPlayerDataLoaded += CreateLootboxDefinitions;
+		Singleton<OfferManager>.instance.SalesChanged += OnSalesChanged;
+		CreateLootboxDefinitions();
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	private void LootboxClick(GameObject go)
+	{
+		LootboxButtonRecord component = go.GetComponent<LootboxButtonRecord>();
+		if (component != null)
+		{
+			int gold = component.gold;
+			int discount = component.discount;
+			if (Singleton<Wallet>.instance.CanBuyGold(gold))
+			{
+				SoundsManager.Instance.PlaySound(SoundsManager.SoundsEnum.BuyVIP);
+				Singleton<PurchaseProtection>.instance.BuyingLootboxes(component.id);
+				InitializePurchaseProtection();
+				Singleton<BeanstalkServerManager>.instance.BuyLootboxes(component.id, gold, discount);
+			}
+			else
+			{
+				GuiElementSingle<NotEnoughDialog>.instance.ShowGold(gold, Localization.Localize("ID_LOOTBOXES"));
+			}
+		}
+		else
+		{
+			Debug.LogError("Unkown Lootbox Button " + go.name);
+		}
+	}
 
-	4. This script is unnecessary.
+	private void OnDataLoaded(DatabaseAction action)
+	{
+		if (GuiElementSingle<InappScreen>.instance.isShowed && base.gameObject.activeSelf && action == DatabaseAction.BuyLootboxes)
+		{
+			InitializePurchaseProtection();
+		}
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private void OnErrorReceived(DatabaseAction action)
+	{
+		if (GuiElementSingle<InappScreen>.instance.isShowed && base.gameObject.activeSelf)
+		{
+			InitializePurchaseProtection();
+		}
+	}
 
-	5. Script Content Level 0
+	private void CreateLootboxDefinitions()
+	{
+		Lootboxes lootboxes = Singleton<GameVariables>.instance.lootboxes;
+		if (lootboxesDefinitions == null)
+		{
+			lootboxesDefinitions = new List<InappScreen.InappDefinition>();
+		}
+		else
+		{
+			lootboxesDefinitions.Clear();
+		}
+		for (int i = 0; i < lootboxes.Rows.Count; i++)
+		{
+			LootboxesRow lootboxesRow = lootboxes.Rows[i];
+			lootboxesDefinitions.Add(InappScreen.InappDefinition.CreateLootboxDefinition(lootboxesRow.NAME, lootboxesRow.COUNT, lootboxesRow.GOLD));
+		}
+		float num = float.MaxValue;
+		for (int j = 0; j < lootboxesDefinitions.Count; j++)
+		{
+			float num2 = (float)lootboxesDefinitions[j].amount / lootboxesDefinitions[j].price;
+			if (num2 < num)
+			{
+				num = num2;
+			}
+		}
+		for (int k = 0; k < lootboxesDefinitions.Count; k++)
+		{
+			float num3 = (float)lootboxesDefinitions[k].amount / lootboxesDefinitions[k].price;
+			float num4 = Mathf.Max(0f, num3 - num);
+			lootboxesDefinitions[k].sale = MiscTools.RoundToInt(20f * num4 / num) * 5;
+		}
+	}
 
-		AssetRipper was set to not load any script information.
+	private void OnSalesChanged()
+	{
+		if (GuiElementSingle<InappScreen>.instance.isShowed)
+		{
+			SetSaleAndPrize();
+		}
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public void InitGUIValues()
+	{
+		for (int i = 0; i < smallButtons.Length; i++)
+		{
+			smallButtons[i].Initialize(lootboxesDefinitions[i]);
+		}
+		bigButton.Initialize(lootboxesDefinitions[smallButtons.Length]);
+		SetSaleAndPrize();
+		AlignPanel(instant: true);
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	private void AlignPanel(bool instant = false)
+	{
+		lootboxDraggablePanel.AlignToPos(instant);
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	private void SetSaleAndPrize()
+	{
+		for (int i = 0; i < smallButtons.Length; i++)
+		{
+			smallButtons[i].SetSaleAndPrize();
+		}
+		bigButton.SetSaleAndPrize();
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	private void InitializePurchaseProtection()
+	{
+		for (int i = 0; i < smallButtons.Length; i++)
+		{
+			smallButtons[i].InitializePurchaseProtection();
+		}
+		bigButton.InitializePurchaseProtection();
+	}
 
-	*/
+	public void DoAfterHide()
+	{
+	}
+
+	public void InstantHideTab()
+	{
+		TweenAlpha component = lootboxPanel.GetComponent<TweenAlpha>();
+		if (component != null)
+		{
+			component.enabled = false;
+		}
+		base.gameObject.SetActive(value: false);
+		DoAfterHide();
+	}
+
+	private void AnimateOtherPanels(bool instant, bool show)
+	{
+		if (otherPanels == null)
+		{
+			return;
+		}
+		for (int i = 0; i < otherPanels.Length; i++)
+		{
+			if (!(otherPanels[i] == null) && otherPanels[i].gameObject.activeSelf)
+			{
+				TweenAlpha.Begin(otherPanels[i].gameObject, (!instant) ? (GuiElementSingle<InappScreen>.instance.dur * 2f) : 0.01f, (!show) ? 0f : 1f);
+			}
+		}
+	}
 }

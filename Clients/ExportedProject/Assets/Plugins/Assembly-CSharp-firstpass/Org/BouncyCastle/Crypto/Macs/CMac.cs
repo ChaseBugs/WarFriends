@@ -1,66 +1,171 @@
-using UnityEngine;
+using System;
+using Org.BouncyCastle.Crypto.Modes;
+using Org.BouncyCastle.Crypto.Paddings;
+using Org.BouncyCastle.Crypto.Parameters;
 
 namespace Org.BouncyCastle.Crypto.Macs
 {
-	public class CMac : MonoBehaviour
+public class CMac : IMac
+{
+	private const byte CONSTANT_128 = 135;
+
+	private const byte CONSTANT_64 = 27;
+
+	private byte[] ZEROES;
+
+	private byte[] mac;
+
+	private byte[] buf;
+
+	private int bufOff;
+
+	private IBlockCipher cipher;
+
+	private int macSize;
+
+	private byte[] L;
+
+	private byte[] Lu;
+
+	private byte[] Lu2;
+
+	public string AlgorithmName => cipher.AlgorithmName;
+
+	public CMac(IBlockCipher cipher)
+		: this(cipher, cipher.GetBlockSize() * 8)
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
 	}
+
+	public CMac(IBlockCipher cipher, int macSizeInBits)
+	{
+		if (macSizeInBits % 8 != 0)
+		{
+			throw new ArgumentException("MAC size must be multiple of 8");
+		}
+		if (macSizeInBits > cipher.GetBlockSize() * 8)
+		{
+			throw new ArgumentException("MAC size must be less or equal to " + cipher.GetBlockSize() * 8);
+		}
+		if (cipher.GetBlockSize() != 8 && cipher.GetBlockSize() != 16)
+		{
+			throw new ArgumentException("Block size must be either 64 or 128 bits");
+		}
+		this.cipher = new CbcBlockCipher(cipher);
+		macSize = macSizeInBits / 8;
+		mac = new byte[cipher.GetBlockSize()];
+		buf = new byte[cipher.GetBlockSize()];
+		ZEROES = new byte[cipher.GetBlockSize()];
+		bufOff = 0;
+	}
+
+	private static int ShiftLeft(byte[] block, byte[] output)
+	{
+		int num = block.Length;
+		uint num2 = 0u;
+		while (--num >= 0)
+		{
+			uint num3 = block[num];
+			output[num] = (byte)((num3 << 1) | num2);
+			num2 = (num3 >> 7) & 1;
+		}
+		return (int)num2;
+	}
+
+	private static byte[] DoubleLu(byte[] input)
+	{
+		byte[] array = new byte[input.Length];
+		int num = ShiftLeft(input, array);
+		int num2 = ((input.Length != 16) ? 27 : 135);
+		array[input.Length - 1] ^= (byte)(num2 >> (1 - num << 3));
+		return array;
+	}
+
+	public void Init(ICipherParameters parameters)
+	{
+		if (parameters is KeyParameter)
+		{
+			cipher.Init(forEncryption: true, parameters);
+			L = new byte[ZEROES.Length];
+			cipher.ProcessBlock(ZEROES, 0, L, 0);
+			Lu = DoubleLu(L);
+			Lu2 = DoubleLu(Lu);
+		}
+		else if (parameters != null)
+		{
+			throw new ArgumentException("CMac mode only permits key to be set.", "parameters");
+		}
+		Reset();
+	}
+
+	public int GetMacSize()
+	{
+		return macSize;
+	}
+
+	public void Update(byte input)
+	{
+		if (bufOff == buf.Length)
+		{
+			cipher.ProcessBlock(buf, 0, mac, 0);
+			bufOff = 0;
+		}
+		buf[bufOff++] = input;
+	}
+
+	public void BlockUpdate(byte[] inBytes, int inOff, int len)
+	{
+		if (len < 0)
+		{
+			throw new ArgumentException("Can't have a negative input length!");
+		}
+		int blockSize = cipher.GetBlockSize();
+		int num = blockSize - bufOff;
+		if (len > num)
+		{
+			Array.Copy(inBytes, inOff, buf, bufOff, num);
+			cipher.ProcessBlock(buf, 0, mac, 0);
+			bufOff = 0;
+			len -= num;
+			inOff += num;
+			while (len > blockSize)
+			{
+				cipher.ProcessBlock(inBytes, inOff, mac, 0);
+				len -= blockSize;
+				inOff += blockSize;
+			}
+		}
+		Array.Copy(inBytes, inOff, buf, bufOff, len);
+		bufOff += len;
+	}
+
+	public int DoFinal(byte[] outBytes, int outOff)
+	{
+		int blockSize = cipher.GetBlockSize();
+		byte[] array;
+		if (bufOff == blockSize)
+		{
+			array = Lu;
+		}
+		else
+		{
+			new ISO7816d4Padding().AddPadding(buf, bufOff);
+			array = Lu2;
+		}
+		for (int i = 0; i < mac.Length; i++)
+		{
+			buf[i] ^= array[i];
+		}
+		cipher.ProcessBlock(buf, 0, mac, 0);
+		Array.Copy(mac, 0, outBytes, outOff, macSize);
+		Reset();
+		return macSize;
+	}
+
+	public void Reset()
+	{
+		Array.Clear(buf, 0, buf.Length);
+		bufOff = 0;
+		cipher.Reset();
+	}
+}
 }

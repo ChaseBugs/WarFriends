@@ -1,63 +1,69 @@
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
-public class PoisonGrenadeAmmo : MonoBehaviour
+public class PoisonGrenadeAmmo : GrenadeAmmoContent
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public override void ExplodeImplementation(Vector3 position)
+	{
+		base.ExplodeImplementation(position);
+		DoSmoke();
+	}
 
-	1. No dll files were provided to AssetRipper.
+	public override void ExplodeRPCImplementation(Vector3 position)
+	{
+		base.ExplodeRPCImplementation(position);
+		DoSmoke();
+	}
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	private void DoSmoke()
+	{
+		Singleton<HitParticleSystem>.instance.PlayParticle(base.transform, Vector3.up, "PoisonGrenade");
+		grenade.DestroyPooled(((PoisonGrenadeAmmoSetup)base.mSetup).lastTime);
+		if (grenade.photonView.isMine)
+		{
+			StartCoroutine(CheckForDestroyableObjects());
+		}
+	}
 
-	2. Incorrect dll files were provided to AssetRipper.
-
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
-
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-	3. Assembly Reconstruction has not been implemented.
-
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
-
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
-
-	4. This script is unnecessary.
-
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
-
-	5. Script Content Level 0
-
-		AssetRipper was set to not load any script information.
-
-	6. Cpp2IL failed to decompile Il2Cpp data
-
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	private IEnumerator CheckForDestroyableObjects()
+	{
+		while (true)
+		{
+			PoisonGrenadeAmmoSetup setup = base.mSetup as PoisonGrenadeAmmoSetup;
+			yield return new WaitForSeconds(1f);
+			Collider[] overlapingObjects = Physics.OverlapSphere(base.transform.position, setup.radius, TagsAndLayers.destroyableObjectsMask);
+			List<DestroyableObject> destroyableObjects = new List<DestroyableObject>();
+			Collider[] array = overlapingObjects;
+			foreach (Collider overlapingObject in array)
+			{
+				if (!TagsAndLayers.IsDestroyableObject(overlapingObject.gameObject))
+				{
+					continue;
+				}
+				DestroyableObject destroyableObject = overlapingObject.gameObject.GetComponent<DestroyableObject>();
+				if (destroyableObject == null)
+				{
+					continue;
+				}
+				if (destroyableObject is DestroyableObjectpart)
+				{
+					DestroyableObjectpart d = destroyableObject as DestroyableObjectpart;
+					if (!(d != null) || !(d.ownerDestroyableObject != null) || !destroyableObjects.Contains(d.ownerDestroyableObject))
+					{
+						destroyableObjects.Add(d.ownerDestroyableObject);
+					}
+				}
+				else
+				{
+					destroyableObjects.Add(destroyableObject);
+				}
+			}
+			foreach (DestroyableObject destroyableObject2 in destroyableObjects)
+			{
+				destroyableObject2.Poison(base.mSetup.damageAmount, default(Vector3), base.weapon, base.mOwner, isNetworkCopy: false);
+			}
+			yield return new WaitForSeconds(Random.Range(0.9f, 1.5f));
+		}
+	}
 }

@@ -39,6 +39,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 99770ad52174819b046d03375b32e588, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  dictionaryTranslationId: ID_BONUS-KEVLAR
+  bonusName: "KEVLAR\nGAINED"
+  iconName: game-scorestreak-ico-kevlar
+  bgSuffix:
+  destroyableObject: {fileID: 0}
 --- !u!1001 &100100000
 Prefab:
   serializedVersion: 2

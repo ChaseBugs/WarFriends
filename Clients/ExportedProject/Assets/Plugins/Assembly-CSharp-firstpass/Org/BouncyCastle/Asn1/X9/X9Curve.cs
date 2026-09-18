@@ -1,66 +1,111 @@
-using UnityEngine;
+using System;
+using Org.BouncyCastle.Math;
+using Org.BouncyCastle.Math.EC;
+using Org.BouncyCastle.Utilities;
 
 namespace Org.BouncyCastle.Asn1.X9
 {
-	public class X9Curve : MonoBehaviour
+public class X9Curve : Asn1Encodable
+{
+	private readonly ECCurve curve;
+
+	private readonly byte[] seed;
+
+	private readonly DerObjectIdentifier fieldIdentifier;
+
+	public ECCurve Curve => curve;
+
+	public X9Curve(ECCurve curve)
+		: this(curve, null)
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
 	}
+
+	public X9Curve(ECCurve curve, byte[] seed)
+	{
+		if (curve == null)
+		{
+			throw new ArgumentNullException("curve");
+		}
+		this.curve = curve;
+		this.seed = Arrays.Clone(seed);
+		if (ECAlgorithms.IsFpCurve(curve))
+		{
+			fieldIdentifier = X9ObjectIdentifiers.PrimeField;
+			return;
+		}
+		if (ECAlgorithms.IsF2mCurve(curve))
+		{
+			fieldIdentifier = X9ObjectIdentifiers.CharacteristicTwoField;
+			return;
+		}
+		throw new ArgumentException("This type of ECCurve is not implemented");
+	}
+
+	public X9Curve(X9FieldID fieldID, Asn1Sequence seq)
+	{
+		if (fieldID == null)
+		{
+			throw new ArgumentNullException("fieldID");
+		}
+		if (seq == null)
+		{
+			throw new ArgumentNullException("seq");
+		}
+		fieldIdentifier = fieldID.Identifier;
+		if (fieldIdentifier.Equals(X9ObjectIdentifiers.PrimeField))
+		{
+			BigInteger value = ((DerInteger)fieldID.Parameters).Value;
+			X9FieldElement x9FieldElement = new X9FieldElement(value, (Asn1OctetString)seq[0]);
+			X9FieldElement x9FieldElement2 = new X9FieldElement(value, (Asn1OctetString)seq[1]);
+			curve = new FpCurve(value, x9FieldElement.Value.ToBigInteger(), x9FieldElement2.Value.ToBigInteger());
+		}
+		else if (fieldIdentifier.Equals(X9ObjectIdentifiers.CharacteristicTwoField))
+		{
+			DerSequence derSequence = (DerSequence)fieldID.Parameters;
+			int intValue = ((DerInteger)derSequence[0]).Value.IntValue;
+			DerObjectIdentifier derObjectIdentifier = (DerObjectIdentifier)derSequence[1];
+			int num = 0;
+			int k = 0;
+			int k2 = 0;
+			if (derObjectIdentifier.Equals(X9ObjectIdentifiers.TPBasis))
+			{
+				num = ((DerInteger)derSequence[2]).Value.IntValue;
+			}
+			else
+			{
+				DerSequence derSequence2 = (DerSequence)derSequence[2];
+				num = ((DerInteger)derSequence2[0]).Value.IntValue;
+				k = ((DerInteger)derSequence2[1]).Value.IntValue;
+				k2 = ((DerInteger)derSequence2[2]).Value.IntValue;
+			}
+			X9FieldElement x9FieldElement3 = new X9FieldElement(intValue, num, k, k2, (Asn1OctetString)seq[0]);
+			X9FieldElement x9FieldElement4 = new X9FieldElement(intValue, num, k, k2, (Asn1OctetString)seq[1]);
+			curve = new F2mCurve(intValue, num, k, k2, x9FieldElement3.Value.ToBigInteger(), x9FieldElement4.Value.ToBigInteger());
+		}
+		if (seq.Count == 3)
+		{
+			seed = ((DerBitString)seq[2]).GetBytes();
+		}
+	}
+
+	public byte[] GetSeed()
+	{
+		return Arrays.Clone(seed);
+	}
+
+	public override Asn1Object ToAsn1Object()
+	{
+		Asn1EncodableVector asn1EncodableVector = new Asn1EncodableVector();
+		if (fieldIdentifier.Equals(X9ObjectIdentifiers.PrimeField) || fieldIdentifier.Equals(X9ObjectIdentifiers.CharacteristicTwoField))
+		{
+			asn1EncodableVector.Add(new X9FieldElement(curve.A).ToAsn1Object());
+			asn1EncodableVector.Add(new X9FieldElement(curve.B).ToAsn1Object());
+		}
+		if (seed != null)
+		{
+			asn1EncodableVector.Add(new DerBitString(seed));
+		}
+		return new DerSequence(asn1EncodableVector);
+	}
+}
 }

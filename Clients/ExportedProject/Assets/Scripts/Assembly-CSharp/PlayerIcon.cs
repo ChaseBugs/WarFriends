@@ -1,63 +1,104 @@
 using UnityEngine;
 
-public class PlayerIcon : MonoBehaviour
+[RequireComponent(typeof(UITexture))]
+public class PlayerIcon : Core_BaseScript
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	private UITexture mTexture;
 
-	1. No dll files were provided to AssetRipper.
+	public UILabel nameLabel;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	private Texture mAvatar;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	private UITexture Texture
+	{
+		get
+		{
+			if (mTexture == null)
+			{
+				mTexture = GetComponent<UITexture>();
+			}
+			return mTexture;
+		}
+		set
+		{
+			mTexture = value;
+		}
+	}
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public Texture avatar
+	{
+		set
+		{
+			mAvatar = value;
+			if (value != null)
+			{
+				ChangeIcon();
+			}
+		}
+	}
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public Color color
+	{
+		set
+		{
+			Texture.color = value;
+		}
+	}
 
-	3. Assembly Reconstruction has not been implemented.
+	protected override void Awake()
+	{
+		base.Awake();
+		Texture = GetComponent<UITexture>();
+	}
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	private void OnEnable()
+	{
+		FacebookService.FacebookFriendUpdated += OnFacebookFriendUpdated;
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	protected override void Start()
+	{
+		base.Start();
+		ChangeIcon();
+	}
 
-	4. This script is unnecessary.
+	private void OnFacebookFriendUpdated(FacebookService.Friend facebookFriend)
+	{
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private void ChangeIcon()
+	{
+		if (mAvatar != null)
+		{
+			Texture.mainTexture = mAvatar;
+		}
+		else
+		{
+			Texture.mainTexture = null;
+		}
+	}
 
-	5. Script Content Level 0
+	private void OnDisable()
+	{
+		FacebookService.FacebookFriendUpdated -= OnFacebookFriendUpdated;
+	}
 
-		AssetRipper was set to not load any script information.
+	public void Reset()
+	{
+		Texture.mainTexture = null;
+		if (nameLabel != null)
+		{
+			nameLabel.text = string.Empty;
+		}
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public void UpdateIcon()
+	{
+		ChangeIcon();
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public void SetName(string name)
+	{
+		nameLabel.text = name;
+	}
 }

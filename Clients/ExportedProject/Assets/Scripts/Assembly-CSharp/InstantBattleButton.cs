@@ -1,63 +1,156 @@
+using System;
+using System.Collections.Generic;
+using Google2u;
 using UnityEngine;
 
-public class InstantBattleButton : MonoBehaviour
+public class InstantBattleButton : Core_BaseScript
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Header("Core")]
+	public BoxCollider instantBattleCollider;
 
-	1. No dll files were provided to AssetRipper.
+	public UISprite instantBattleBorder;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	[Header("Locked")]
+	public GameObject lockedPart;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public UILabel lockedLabel;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	[Header("Normal Part")]
+	public GameObject normalPart;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public UISprite normalPartGlow;
 
-	3. Assembly Reconstruction has not been implemented.
+	public UILabel instantBattleLabel;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public UISprite[] instantBattleSprites;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public UILabel countDownLabel;
 
-	4. This script is unnecessary.
+	[Header("-Buy 5 Battles")]
+	public GameObject goldPart;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public UILabel goldBuyLabel;
 
-	5. Script Content Level 0
+	public UITable goldTable;
 
-		AssetRipper was set to not load any script information.
+	public UILabel goldValue;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	private int mNextInstantBattle;
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	private float mUpdateTime;
 
-	7. An incorrect path was provided to AssetRipper.
+	private int mInstantBattleBattles;
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	private int mGoldCost;
 
-	*/
+	public void InitControls()
+	{
+		Singleton<BeanstalkServerManager>.instance.ErrorReceived += OnErrorReceived;
+		UIEventListener uIEventListener = UIEventListener.Get(instantBattleCollider.gameObject);
+		uIEventListener.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener.onClick, new UIEventListener.VoidDelegate(InstantBattleClick));
+	}
+
+	private void OnErrorReceived(DatabaseAction action)
+	{
+		if (action == DatabaseAction.InstantBattle)
+		{
+			mInstantBattleBattles = PlayerAnalytics.instance.data.GetInstantBattlesReady();
+			mGoldCost = PlayerAnalytics.instance.data.GetInstantBattleCost();
+		}
+	}
+
+	private void InstantBattleClick(GameObject go)
+	{
+		int num = ((mInstantBattleBattles == 0) ? mGoldCost : 0);
+		List<Tuple<string, string>> parameters = new List<Tuple<string, string>>();
+		if (num > 0)
+		{
+			Singleton<GuiManager>.instance.ShowDialog(GuiElementSingle<InstantBattleConfirmDialog>.instance, 0f);
+			return;
+		}
+		instantBattleCollider.enabled = false;
+		Singleton<BeanstalkServerManager>.instance.SendServerRequest(DatabaseAction.InstantBattle, parameters);
+		if (mInstantBattleBattles == 0)
+		{
+			mInstantBattleBattles = (int)(float)Singleton<GameVariables>.instance.constants.GetRow(Constants.rowIds.InstantBattleMax).FLOATVALUE;
+		}
+		GuiScreenSingle<InstantBattleResultsScreen>.instance.instantBattles = mInstantBattleBattles;
+		Singleton<GuiManager>.instance.ShowGui(GuiScreenSingle<InstantBattleResultsScreen>.instance);
+	}
+
+	public void InstantBattleButtonReposition()
+	{
+		float activeWidth = UIRoot.list[0].activeWidth;
+		float num = activeWidth / 1920f;
+		float num2 = (activeWidth - (940f + 420f * num + 440f * num + 60f)) / 3f;
+		float num3 = (activeWidth - (940f + 876f * num + 60f)) / 2f;
+		float num4 = ((LevelManager.instance.isWarArenaLocked || (!WarArena.instance.isReminderTime && !WarArena.instance.isOpened)) ? num3 : num2);
+		base.transform.localPosition = base.transform.localPosition.ReplaceX(500f + num4 + 220f);
+	}
+
+	public void InitGuiValues()
+	{
+		bool isInstantBattleLocked = LevelManager.instance.isInstantBattleLocked;
+		instantBattleCollider.enabled = !isInstantBattleLocked;
+		instantBattleBorder.alpha = ((!isInstantBattleLocked) ? 1f : 0.5f);
+		lockedPart.SetActive(isInstantBattleLocked);
+		normalPart.SetActive(!isInstantBattleLocked);
+		if (isInstantBattleLocked)
+		{
+			goldPart.SetActive(value: false);
+			lockedLabel.text = Localization.LocalizeFormat("ID_UNLOCKEDATRANKX", LevelManager.instance.instantBattleUnlockLevel);
+			MiscTools.SetUILabelRescale(lockedLabel, 30f, 20f, 280);
+			return;
+		}
+		mInstantBattleBattles = PlayerAnalytics.instance.data.GetInstantBattlesReady();
+		int num = (int)(float)Singleton<GameVariables>.instance.constants.GetRow(Constants.rowIds.InstantBattleMax).FLOATVALUE;
+		bool flag = mInstantBattleBattles == 0;
+		bool flag2 = mInstantBattleBattles == num;
+		normalPartGlow.gameObject.SetActive(!flag);
+		normalPart.transform.localPosition = normalPart.transform.localPosition.ReplaceY((!flag) ? 0f : 34f);
+		instantBattleLabel.transform.localPosition = instantBattleLabel.transform.localPosition.ReplaceY((!flag) ? 33f : 16f);
+		instantBattleLabel.text = string.Format("{0} {1}({2})[-]", Localization.Localize("ID_INSTANTBATTLE"), Colours.stringBlue, mInstantBattleBattles);
+		MiscTools.SetUILabelRescale(instantBattleLabel, 52f, 20f, 380);
+		for (int i = 0; i < instantBattleSprites.Length; i++)
+		{
+			instantBattleSprites[i].color = ((mInstantBattleBattles <= i) ? Colours.grayTime.ReplaceA(0.33f) : Colours.blue);
+		}
+		mNextInstantBattle = PlayerAnalytics.instance.data.GetTimestampOfNextInstantBattle();
+		mUpdateTime = 0f;
+		countDownLabel.color = ((!flag2) ? Colours.grayTime : Colours.blueDarkMax);
+		if (flag2)
+		{
+			countDownLabel.text = Localization.Localize("ID_MAX");
+		}
+		goldPart.SetActive(flag);
+		if (flag)
+		{
+			mGoldCost = PlayerAnalytics.instance.data.GetInstantBattleCost();
+			goldBuyLabel.text = Localization.LocalizeFormat("ID_5SKIRMISHES", num);
+			MiscTools.SetUILabelRescale(goldBuyLabel, 35f, 20f, 270);
+			goldValue.text = MiscTools.FormatBigNumber(mGoldCost);
+			goldTable.repositionNow = true;
+		}
+	}
+
+	public void Update()
+	{
+		if (mNextInstantBattle <= 0)
+		{
+			return;
+		}
+		mUpdateTime += Time.deltaTime;
+		if (mUpdateTime > 0.333f)
+		{
+			mUpdateTime = 0f;
+			if (mNextInstantBattle > Singleton<BeanstalkServerManager>.instance.currentTimestamp)
+			{
+				countDownLabel.text = MiscTools.PrintableTime(mNextInstantBattle - Singleton<BeanstalkServerManager>.instance.currentTimestamp, "ID_READYTIME", string.Empty);
+			}
+			else
+			{
+				InitGuiValues();
+			}
+		}
+	}
 }

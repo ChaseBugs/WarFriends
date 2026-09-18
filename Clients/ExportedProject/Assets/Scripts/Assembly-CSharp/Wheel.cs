@@ -1,63 +1,122 @@
+using System;
 using UnityEngine;
 
+[RequireComponent(typeof(WheelCollider))]
 public class Wheel : MonoBehaviour
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public Transform wheelModel;
 
-	1. No dll files were provided to AssetRipper.
+	public float loQualDist = 100f;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public bool steerable;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public bool powered;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	[SerializeField]
+	private float particleRate = 3f;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	[SerializeField]
+	private float slideThreshold = 10f;
 
-	3. Assembly Reconstruction has not been implemented.
+	private float spinAngle;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	private float sideSlideFactor;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	private float springCompression;
 
-	4. This script is unnecessary.
+	private Rigidbody rb;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private bool leavingSkidTrail;
 
-	5. Script Content Level 0
+	private RaycastHit hit;
 
-		AssetRipper was set to not load any script information.
+	private Vector3 relativeVelocity;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	private float sideSlideFactorTarget;
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	private float spinoutFactorTarget;
 
-	7. An incorrect path was provided to AssetRipper.
+	private float accelAmount;
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	private float burnoutFactor;
 
-	*/
+	private float burnoutGrip;
+
+	private float spinoutGrip;
+
+	private float sideSlideGrip;
+
+	private float minGrip;
+
+	private float springCompressionGripModifier;
+
+	private float burnoutRpm;
+
+	private float skidFactorTarget;
+
+	private Vector3 originalWheelModelPosition;
+
+	public float Rpm { get; private set; }
+
+	public float MaxRpm { get; private set; }
+
+	public float SkidFactor { get; private set; }
+
+	public bool onGround { get; private set; }
+
+	public Transform Hub { get; set; }
+
+	public WheelCollider wheelCollider { get; private set; }
+
+	public CarController car { get; private set; }
+
+	public float suspensionSpringPos { get; private set; }
+
+	private void Awake()
+	{
+		wheelCollider = GetComponent<Collider>() as WheelCollider;
+	}
+
+	private void Start()
+	{
+		car = base.transform.parent.GetComponent<CarController>();
+		if (wheelModel != null)
+		{
+			originalWheelModelPosition = wheelModel.localPosition;
+			base.transform.position = wheelModel.position;
+		}
+		MaxRpm = car.MaxSpeed / ((float)Math.PI * wheelCollider.radius * 2f) * 60f;
+		rb = wheelCollider.attachedRigidbody;
+	}
+
+	private void FixedUpdate()
+	{
+		relativeVelocity = base.transform.InverseTransformDirection(rb.velocity);
+		accelAmount = wheelCollider.motorTorque / car.MaxTorque;
+		burnoutFactor = 0f;
+		if (powered)
+		{
+			burnoutFactor = (accelAmount - (1f - car.BurnoutTendency)) / (1f - car.BurnoutTendency);
+		}
+		burnoutRpm = car.MaxSpeed * car.BurnoutTendency / ((float)Math.PI * wheelCollider.radius * 2f) * 60f;
+		Rpm = ((!(burnoutRpm > wheelCollider.rpm)) ? wheelCollider.rpm : Mathf.Lerp(wheelCollider.rpm, burnoutRpm, burnoutFactor));
+		spinAngle += Rpm * 6f * Time.deltaTime;
+		if (wheelCollider.GetGroundHit(out var wheelHit))
+		{
+			onGround = true;
+			suspensionSpringPos = wheelHit.point.y - base.transform.position.y + wheelCollider.radius;
+		}
+		else
+		{
+			suspensionSpringPos = 0f - wheelCollider.suspensionDistance;
+			onGround = false;
+			springCompression = 0f;
+			SkidFactor = 0f;
+		}
+		if (wheelModel != null)
+		{
+			wheelModel.localPosition = originalWheelModelPosition + Vector3.up * suspensionSpringPos;
+			wheelModel.localRotation = Quaternion.AngleAxis(wheelCollider.steerAngle, Vector3.up) * Quaternion.Euler(spinAngle, 0f, 0f);
+		}
+	}
 }

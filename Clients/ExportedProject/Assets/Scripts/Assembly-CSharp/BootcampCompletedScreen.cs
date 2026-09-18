@@ -1,63 +1,110 @@
+using System;
+using System.Collections;
+using Google2u;
 using UnityEngine;
 
-public class BootcampCompletedScreen : MonoBehaviour
+public class BootcampCompletedScreen : GuiElementSingle<BootcampCompletedScreen>, IGuiDialog
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Header("Locked Warcards")]
+	public BenefitsPart benefitsPart;
 
-	1. No dll files were provided to AssetRipper.
+	[Header("Reward Text")]
+	public UITable centerTable;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public UILabel goldRewardForFree;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public GameObject centerTableLastItem;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	[Header("Bottom Buttons")]
+	public UIButton closeButton;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public UIButton connectWithFBButton;
 
-	3. Assembly Reconstruction has not been implemented.
+	public override void InitControls()
+	{
+		UIEventListener uIEventListener = UIEventListener.Get(connectWithFBButton.gameObject);
+		uIEventListener.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener.onClick, new UIEventListener.VoidDelegate(OnConnectClicked));
+		UIEventListener uIEventListener2 = UIEventListener.Get(closeButton.gameObject);
+		uIEventListener2.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener2.onClick, new UIEventListener.VoidDelegate(OnCloseClicked));
+		centerTable.onReposition = delegate
+		{
+			float val = 0f - centerTable.padding.x - (centerTableLastItem.transform.localPosition.x - centerTable.padding.x) / 2f;
+			centerTable.transform.localPosition = centerTable.transform.localPosition.ReplaceX(val);
+		};
+	}
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	private void OnCloseClicked(GameObject go)
+	{
+		if (base.isFullyShowed)
+		{
+			Singleton<EventTrackingManager>.instance.RegisterTutorialDialogEvent("312 MENU CONNECT FB", clickedYes: false);
+			HideDialog();
+			GameLoginManager.instance.ShowGcChangeNameDialog();
+			FacebookService.ClearTutorialEvent();
+			if (!GuiScreenSingle<MainScreen>.instance.isShowed)
+			{
+				Singleton<GuiManager>.instance.ShowGui(GuiScreenSingle<MainScreen>.instance);
+			}
+		}
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	private void OnConnectClicked(GameObject go)
+	{
+		if (!base.isFullyShowed)
+		{
+			return;
+		}
+		GuiElementSingle<FacebookDialog>.instance.ShowLoginDialog(delegate(bool result)
+		{
+			if (result)
+			{
+				Singleton<EventTrackingManager>.instance.RegisterTutorialDialogEvent("312 MENU CONNECT FB", clickedYes: true);
+				GameLoginManager.instance.AfterTutorialLoginToFacebook();
+				HideDialog();
+			}
+		});
+	}
 
-	4. This script is unnecessary.
+	public override void InitGUIValues()
+	{
+		benefitsPart.Initialize();
+		bool flag = PlayerAnalytics.instance.WasOneTimeRewardAdded(Constants.rowIds.FacebookLoginReward);
+		centerTable.gameObject.SetActive(!flag);
+		if (!flag)
+		{
+			goldRewardForFree.text = string.Format("{0} {1}", (int)(float)Singleton<GameVariables>.instance.constants.GetRow(Constants.rowIds.FacebookLoginReward).FLOATVALUE, Localization.Localize("ID_GOLDFORFREERIGHTAWAY"));
+			centerTable.repositionNow = true;
+		}
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public override void DoAfterShowUp()
+	{
+		base.DoAfterShowUp();
+		StartCoroutine(WaitForLoadingCompleted());
+	}
 
-	5. Script Content Level 0
+	public override void DoAfterHide()
+	{
+		base.DoAfterHide();
+		GuiElementSingle<ChatGuiElement>.instance.UpdateButtonLook();
+	}
 
-		AssetRipper was set to not load any script information.
+	public GuiElement GetGuiElement()
+	{
+		return this;
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public override void OnBack()
+	{
+		OnCloseClicked(closeButton.gameObject);
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	private IEnumerator WaitForLoadingCompleted()
+	{
+		while (GuiElementSingle<LoadingDialog>.instance.isShowed)
+		{
+			yield return null;
+		}
+		SoundsManager.Instance.PlaySound(SoundsManager.SoundsEnum.BootcampCongratulations);
+	}
 }

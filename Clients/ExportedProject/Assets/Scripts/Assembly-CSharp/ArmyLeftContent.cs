@@ -1,63 +1,144 @@
+using System.Collections.Generic;
 using UnityEngine;
 
-public class ArmyLeftContent : MonoBehaviour
+public class ArmyLeftContent : Core_BaseScript
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Header("Header")]
+	public UITable headerTable;
 
-	1. No dll files were provided to AssetRipper.
+	[Header("-Line 1")]
+	public UITable screenTable;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	[Header("-Line 2")]
+	public UILabel unitName;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	[Header("-Line 3")]
+	public UITable levelTable;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public List<UISprite> armyTierStars;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public UILabel unitLevel;
 
-	3. Assembly Reconstruction has not been implemented.
+	[Header("Statistics And Ability Hint")]
+	public UIGrid progressBarGrid;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public List<ArmyStatProgressBar> progressBarsLeft;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public ArmyLeftHint abilityHint;
 
-	4. This script is unnecessary.
+	public ArmyLeftHint eliteHint;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	[Header("Button")]
+	public ArmyLeftButton leftButton;
 
-	5. Script Content Level 0
+	private LevelBehaviour mUnit;
 
-		AssetRipper was set to not load any script information.
+	public void InitControls()
+	{
+		leftButton.InitControls();
+		abilityHint.InitControls();
+		eliteHint.InitControls();
+		screenTable.onReposition = OnReposited;
+		levelTable.onReposition = OnReposited;
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public void InitGUIValues()
+	{
+		leftButton.InitGUIValues();
+		abilityHint.InitGUIValues();
+		eliteHint.InitGUIValues();
+		RepositionLeft();
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public void DoAfterHide()
+	{
+		leftButton.DoAfterHide();
+		abilityHint.DoAfterHide();
+		eliteHint.DoAfterHide();
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	public void SelectUnit(LevelBehaviour selectedUnit)
+	{
+		mUnit = selectedUnit;
+		UpdateUnitName();
+		levelTable.repositionNow = true;
+		leftButton.SelectUnit(selectedUnit);
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	public void UpdateUnitName()
+	{
+		bool flag = mUnit.upgradeSlots.upgradeSlotElite.isUnlocked && mUnit.upgradeSlots.upgradeSlotElite.isBought;
+		unitName.text = ((!flag) ? mUnit.unitName.ToUpper() : Localization.LocalizeFormat("ID_ELITEUNITNAME", mUnit.unitName.ToUpper()));
+		unitName.color = ((!flag) ? Colours.blue : Colours.greenArena);
+		screenTable.repositionNow = true;
+	}
 
-	*/
+	private void OnReposited()
+	{
+		headerTable.repositionNow = true;
+	}
+
+	public void UpdateLeftContent(bool changedUnit = true)
+	{
+		UpdateUnitName();
+		LeftTopUnitInfo(mUnit.upgradeSlots.actualUnitLevel, mUnit.upgradeSlots.actualMaxUnitLevel, mUnit.upgradeSlots.actualTier);
+		if (changedUnit)
+		{
+			FillHints();
+			RepositionLeft();
+		}
+		leftButton.UpdateLeftContent(changedUnit);
+	}
+
+	private void LeftTopUnitInfo(int level, int maxLevel, int tier)
+	{
+		unitLevel.text = $"{level}{Colours.stringGray} / {maxLevel}";
+		for (int i = 0; i < armyTierStars.Count; i++)
+		{
+			armyTierStars[i].gameObject.SetActive(i < tier);
+		}
+		levelTable.repositionNow = true;
+	}
+
+	public void SetSaleAndPrize()
+	{
+		leftButton.powerDialog.SetSaleAndPrize();
+		leftButton.abilityDialog.SetAbilitySaleAndPrize();
+		leftButton.buffDialog.SetEliteSaleAndPrize();
+	}
+
+	public void UpdateDeliveringTime(float remainingTime, float progress)
+	{
+		leftButton.UpdateDeliveringTime(remainingTime, progress);
+	}
+
+	public void UpdateProgresses()
+	{
+		progressBarsLeft[0].InitializeStat(mUnit, isDamage: true);
+		progressBarsLeft[1].InitializeStat(mUnit, isDamage: false);
+		progressBarsLeft[2].InitializeSpecial(mUnit);
+		if (mUnit.upgradeSlots.upgradeSlotElite.isUnlocked)
+		{
+			progressBarsLeft[3].InitializeElite(mUnit);
+		}
+		FillHints();
+	}
+
+	private void FillHints()
+	{
+		abilityHint.Initialize(mUnit);
+		if (mUnit.upgradeSlots.upgradeSlotElite.isUnlocked)
+		{
+			eliteHint.Initialize(mUnit);
+		}
+	}
+
+	private void RepositionLeft()
+	{
+		bool isUnlocked = mUnit.upgradeSlots.upgradeSlotElite.isUnlocked;
+		progressBarGrid.transform.localPosition = progressBarGrid.transform.localPosition.ReplaceY((!isUnlocked) ? 756f : 856f);
+		progressBarsLeft[3].gameObject.SetActive(isUnlocked);
+		abilityHint.transform.localPosition = abilityHint.transform.localPosition.ReplaceY((!isUnlocked) ? 560f : 660f);
+		eliteHint.gameObject.SetActive(isUnlocked);
+	}
 }

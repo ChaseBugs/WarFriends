@@ -1,63 +1,140 @@
+using System;
+using System.Net;
 using UnityEngine;
 
-public class CrittercismIOS : MonoBehaviour
+public static class CrittercismIOS
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	private const int crUnityId = 0;
 
-	1. No dll files were provided to AssetRipper.
+	private static volatile bool logUnhandledExceptionAsCrash;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public static void Init(string appID)
+	{
+	}
 
-	2. Incorrect dll files were provided to AssetRipper.
+	private static string StackTrace(Exception e)
+	{
+		return string.Empty;
+	}
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public static void LogHandledException(Exception e)
+	{
+	}
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public static bool GetOptOut()
+	{
+		return true;
+	}
 
-	3. Assembly Reconstruction has not been implemented.
+	public static void SetOptOut(bool isOptedOut)
+	{
+	}
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public static void SetUsername(string username)
+	{
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public static void SetValue(string val, string key)
+	{
+	}
 
-	4. This script is unnecessary.
+	public static void LeaveBreadcrumb(string breadcrumb)
+	{
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public static void LogNetworkRequest(string method, string uriString, double latency, int bytesRead, int bytesSent, HttpStatusCode responseCode, WebExceptionStatus exceptionStatus)
+	{
+	}
 
-	5. Script Content Level 0
+	public static bool DidCrashOnLastLoad()
+	{
+		return false;
+	}
 
-		AssetRipper was set to not load any script information.
+	public static void BeginUserflow(string name)
+	{
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	[Obsolete("BeginTransaction is deprecated, please use BeginUserflow instead.")]
+	public static void BeginTransaction(string name)
+	{
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public static void BeginUserflow(string name, int value)
+	{
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	[Obsolete("BeginTransaction is deprecated, please use BeginUserflow instead.")]
+	public static void BeginTransaction(string name, int value)
+	{
+		BeginUserflow(name, value);
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	public static void CancelUserflow(string name)
+	{
+	}
 
-	*/
+	[Obsolete("CancelTransaction is deprecated, please use CancelUserflow instead.")]
+	public static void CancelTransaction(string name)
+	{
+		CancelUserflow(name);
+	}
+
+	public static void EndUserflow(string name)
+	{
+	}
+
+	[Obsolete("EndTransaction is deprecated, please use EndUserflow instead.")]
+	public static void EndTransaction(string name)
+	{
+		EndUserflow(name);
+	}
+
+	public static void FailUserflow(string name)
+	{
+	}
+
+	[Obsolete("FailTransaction is deprecated, please use FailUserflow instead.")]
+	public static void FailTransaction(string name)
+	{
+		FailUserflow(name);
+	}
+
+	public static void SetUserflowValue(string name, int value)
+	{
+	}
+
+	[Obsolete("SetTransactionValue is deprecated, please use SetUserflowValue instead.")]
+	public static void SetTransactionValue(string name, int value)
+	{
+		SetUserflowValue(name, value);
+	}
+
+	public static int GetUserflowValue(string name)
+	{
+		return -1;
+	}
+
+	[Obsolete("GetTransactionValue is deprecated, please use GetUserflowValue instead.")]
+	public static int GetTransactionValue(string name)
+	{
+		return GetUserflowValue(name);
+	}
+
+	private static void OnUnhandledException(object sender, UnhandledExceptionEventArgs args)
+	{
+	}
+
+	public static void SetLogUnhandledExceptionAsCrash(bool value)
+	{
+	}
+
+	public static bool GetLogUnhandledExceptionAsCrash()
+	{
+		return logUnhandledExceptionAsCrash;
+	}
+
+	private static void OnLogMessageReceived(string name, string stack, LogType type)
+	{
+	}
 }

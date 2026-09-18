@@ -1,63 +1,114 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
-public class AQUAS_Parameters : MonoBehaviour
+[Serializable]
+public class AQUAS_Parameters
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Serializable]
+	public class UnderWaterParameters
+	{
+		[Space(5f)]
+		[Header("The following parameters apply for underwater only!")]
+		public float fogDensity = 0.1f;
 
-	1. No dll files were provided to AssetRipper.
+		public Color fogColor;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+		public float bloom = 7f;
+	}
 
-	2. Incorrect dll files were provided to AssetRipper.
+	[Serializable]
+	public class GameObjects
+	{
+		[Space(5f)]
+		[Header("Set the game objects required for underwater mode.")]
+		public GameObject mainCamera;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+		public GameObject waterLens;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+		public GameObject airLens;
 
-	3. Assembly Reconstruction has not been implemented.
+		public GameObject bubble;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+		[Space(5f)]
+		[Header("Set waterplanes array size = number of waterplanes")]
+		public List<GameObject> waterPlanes = new List<GameObject>();
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+		public bool useSquaredPlanes;
+	}
 
-	4. This script is unnecessary.
+	[Serializable]
+	public class WetLens
+	{
+		[Header("Set how long the lens stays wet after diving up.")]
+		public float wetTime = 1f;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+		[Header("Set how long the lens needs to dry.")]
+		[Space(5f)]
+		public float dryingTime = 1.5f;
 
-	5. Script Content Level 0
+		[Space(5f)]
+		public Texture2D[] sprayFrames;
 
-		AssetRipper was set to not load any script information.
+		public Texture2D[] sprayFramesCutout;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+		public float rundownSpeed = 72f;
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	[Serializable]
+	public class CausticSettings
+	{
+		[Header("The following values are 'Afloat'/'Underwater'")]
+		public Vector2 causticIntensity = new Vector2(0.6f, 0.2f);
 
-	7. An incorrect path was provided to AssetRipper.
+		public Vector2 causticTiling = new Vector2(300f, 100f);
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+		public float maxCausticDepth;
+	}
 
-	*/
+	[Serializable]
+	public class Audio
+	{
+		public AudioClip[] sounds;
+
+		[Range(0f, 1f)]
+		public float underwaterVolume;
+
+		[Range(0f, 1f)]
+		public float surfacingVolume;
+
+		[Range(0f, 1f)]
+		public float diveVolume;
+	}
+
+	[Serializable]
+	public class BubbleSpawnCriteria
+	{
+		[Header("Spawn Criteria for big bubbles")]
+		public int minBubbleCount = 20;
+
+		public int maxBubbleCount = 40;
+
+		[Space(5f)]
+		public float maxSpawnDistance = 1f;
+
+		public float averageUpdrift = 3f;
+
+		[Space(5f)]
+		public float baseScale = 0.06f;
+
+		public float avgScaleSummand = 0.15f;
+
+		[Header("Spawn Timer for initial dive")]
+		[Space(5f)]
+		public float minSpawnTimer = 0.005f;
+
+		public float maxSpawnTimer = 0.03f;
+
+		[Header("Spawn Timer for long dive")]
+		[Space(5f)]
+		public float minSpawnTimerL = 0.1f;
+
+		public float maxSpawnTimerL = 0.5f;
+	}
 }

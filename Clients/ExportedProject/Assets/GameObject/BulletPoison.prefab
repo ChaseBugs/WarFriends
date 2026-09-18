@@ -43,6 +43,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4932fb17cad60056259e280810359648, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  isActivated: 0
+  ammoDamageAmount: 35
+  isFake: 0
+  weapon: {fileID: 0}
+  type: 0
+  isNetworkCopy: 0
+  speed: 80
+  distanceToCheck: 0.6
+  trailSize: 1
+  isStatic: 0
+  fast: 0
 --- !u!114 &11405782
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -54,6 +65,36 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e3b2cec1a418fb5742374dba269174f3, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  method: 0
+  style: 0
+  animationCurve:
+    serializedVersion: 2
+    m_Curve:
+    - time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 1
+      tangentMode: 0
+    - time: 1
+      value: 1
+      inSlope: 1
+      outSlope: 0
+      tangentMode: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+  ignoreTimeScale: 1
+  delay: 0
+  duration: 1
+  steeperCurves: 0
+  tweenGroup: 0
+  eventReceiver: {fileID: 0}
+  callWhenFinished:
+  NumOfRepetitions: 0
+  id: 0
+  dontResetCurve: 0
+  from: {x: 0, y: 0, z: 0}
+  to: {x: 0, y: 0, z: 0}
+  useLocal: 0
 --- !u!114 &11461526
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -65,6 +106,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0591f57d308a9a8b855e4aee9b7faf40, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  disapearTime: 1
+  trailLength: 1
 --- !u!33 &3354010
 MeshFilter:
   m_ObjectHideFlags: 0

@@ -1,63 +1,208 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
-public class SquadWarEndDialog : MonoBehaviour
+public class SquadWarEndDialog : GuiElementSingle<SquadWarEndDialog>, IGuiDialog
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Header("Left Part")]
+	public UITable squadInfoTable;
 
-	1. No dll files were provided to AssetRipper.
+	public UITexture squadIcon;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public UILabel squadName;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public UILabel squadPosition;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public UITable squadGoldRewardTabel;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public UILabel squadGoldReward;
 
-	3. Assembly Reconstruction has not been implemented.
+	public UILabel actionLabel;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public UILabel squadDivisionLabel;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public UISprite[] squadDivisionArrows;
 
-	4. This script is unnecessary.
+	[Header("Left Bottom Part")]
+	public UITable rewardTable;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public UILabel yourSquadPoints;
 
-	5. Script Content Level 0
+	public UILabel yourGoldReward;
 
-		AssetRipper was set to not load any script information.
+	[Header("Right List")]
+	public UIDraggablePanel draggablePanel;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public SquadWarEndMemberRecord memberPrefab;
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public UIPooledGrid memberGrid;
 
-	7. An incorrect path was provided to AssetRipper.
+	[Header("Bottom Button")]
+	public UIButton bottomButton;
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	public UILabel buttonLabel;
 
-	*/
+	private string mSquadName;
+
+	private string mSquadIcon;
+
+	private int mSquadPosition;
+
+	private int mGoldReward;
+
+	private int mSquadsCount;
+
+	private int mSquadDivision;
+
+	private int mSquadNewDivision;
+
+	private List<SquadWarsContent.SquadMemberInternal> mSquadMembersData;
+
+	private DatabaseMessage mMessage;
+
+	public void ShowDialog(string squadId, string squadEmblem, int squadPos, int squadsCount, int yourReward, int squadDivision, int squadNewDivision, List<DatabasePlayer> squadMembers, DatabaseMessage message)
+	{
+		squadMembers.Sort(SquadWarManager.instance.SortFunctionPlayers);
+		mSquadName = squadId;
+		mSquadIcon = squadEmblem;
+		mSquadPosition = squadPos;
+		mSquadsCount = squadsCount;
+		mGoldReward = yourReward;
+		mSquadDivision = squadDivision;
+		mSquadNewDivision = squadNewDivision;
+		mSquadMembersData = GuiScreenSingle<LeaguesScreen>.instance.squadWars.CreateSquadMembersList(squadMembers, squadDivision, squadsCount, squadPos);
+		mMessage = message;
+		Singleton<GuiManager>.instance.ShowDialog(this, 0f);
+	}
+
+	public override void InitControls()
+	{
+		UIEventListener uIEventListener = UIEventListener.Get(bottomButton.gameObject);
+		uIEventListener.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener.onClick, new UIEventListener.VoidDelegate(OkButtonClick));
+		squadInfoTable.onReposition = delegate
+		{
+			float num = (squadName.transform.parent.localPosition.x - squadInfoTable.padding.x) / 2f + squadInfoTable.padding.x;
+			squadInfoTable.transform.localPosition = squadInfoTable.transform.localPosition.ReplaceX(0f - num);
+		};
+		squadGoldRewardTabel.onReposition = delegate
+		{
+			float num = (squadGoldReward.transform.parent.localPosition.x - squadGoldRewardTabel.padding.x) / 2f + squadGoldRewardTabel.padding.x;
+			squadGoldRewardTabel.transform.localPosition = squadGoldRewardTabel.transform.localPosition.ReplaceX(0f - num);
+		};
+		rewardTable.onReposition = delegate
+		{
+			float num = (yourGoldReward.transform.parent.localPosition.x - rewardTable.padding.x) / 2f + rewardTable.padding.x;
+			rewardTable.transform.localPosition = rewardTable.transform.localPosition.ReplaceX(0f - num);
+		};
+	}
+
+	private void OkButtonClick(GameObject go)
+	{
+		if (base.isFullyShowed)
+		{
+			HideDialog();
+			if (mMessage != null)
+			{
+				Debug.Log($"SquadWarEndDialog - Claiming gold: {mGoldReward}");
+				Singleton<BeanstalkServerManager>.instance.ClaimReward(mMessage);
+			}
+			else
+			{
+				Debug.LogWarning("SquadWarEndDialog - Database message not set.");
+			}
+		}
+	}
+
+	public override void InitGUIValues()
+	{
+		bool flag = mGoldReward < 1;
+		int num = mSquadNewDivision - mSquadDivision;
+		int num2 = 0;
+		if (mSquadMembersData != null)
+		{
+			int num3 = mSquadMembersData.FindIndex((SquadWarsContent.SquadMemberInternal data) => data.player != null && data.player.id == GameLoginManager.currentPlayer.id);
+			if (num3 > -1)
+			{
+				num2 = mSquadMembersData[num3].player.squadPoints;
+			}
+		}
+		int tier = MiscTools.SquadWarTier(mSquadPosition, mSquadsCount);
+		int num4 = Singleton<GameVariables>.instance.SquadWarsRewardForSquad(tier, mSquadDivision);
+		squadIcon.mainTexture = Resources.Load<Texture>("SquadIcons/" + mSquadIcon);
+		squadIcon.MakePixelPerfect();
+		squadIcon.transform.localScale = squadIcon.transform.localScale.MultiplyXY(0.5f);
+		squadName.text = mSquadName;
+		squadInfoTable.repositionNow = true;
+		squadPosition.text = Localization.LocalizeFormat("ID_SQUADPLACE", MiscTools.FormatNumberToOrdinal(mSquadPosition).ToUpper());
+		squadGoldReward.text = MiscTools.FormatBigNumber(num4);
+		squadGoldRewardTabel.repositionNow = true;
+		actionLabel.text = Localization.Localize((num > 0) ? "ID_PROMOTEDTODIVISION" : ((num >= 0) ? "ID_STAYINGINDIVISION" : "ID_DEMOTEDTODIVISION"));
+		MiscTools.SetUILabelRescale(actionLabel, 37f, 20f, 288);
+		squadDivisionLabel.text = string.Format("{0} {1}", Localization.Localize("ID_DIVISION"), 9 - mSquadNewDivision);
+		for (int num5 = 0; num5 < squadDivisionArrows.Length; num5++)
+		{
+			squadDivisionArrows[num5].gameObject.SetActive(num5 < mSquadNewDivision);
+		}
+		yourSquadPoints.text = MiscTools.FormatBigNumber(num2);
+		yourGoldReward.text = MiscTools.FormatBigNumber(mGoldReward);
+		rewardTable.repositionNow = true;
+		memberGrid.MakeEmpty();
+		memberGrid.init(mSquadMembersData.Count, MemberInstantiate, MemberFree, draggablePanel);
+		draggablePanel.AlignToPos(instant: false);
+		buttonLabel.text = ((!flag) ? Localization.Localize("ID_AWESOME") : Localization.Localize("ID_CONTINUE"));
+	}
+
+	public override void DoBeforeShowUp()
+	{
+		base.DoBeforeShowUp();
+		UIDraggablePanel.panelDisabled = true;
+		GuiElementSingle<ChatGuiElement>.instance.chatContent.draggablePanel.forceDrag = false;
+		GuiElementSingle<ChatGuiElement>.instance.messageContent.draggablePanel.forceDrag = false;
+	}
+
+	public override void DoAfterHide()
+	{
+		base.DoAfterHide();
+		squadIcon.mainTexture = null;
+		UIDraggablePanel.panelDisabled = false;
+		GuiElementSingle<ChatGuiElement>.instance.chatContent.draggablePanel.forceDrag = true;
+		GuiElementSingle<ChatGuiElement>.instance.messageContent.draggablePanel.forceDrag = true;
+	}
+
+	private Transform MemberInstantiate(int index)
+	{
+		if (index >= 0 && index < mSquadMembersData.Count)
+		{
+			SquadWarsContent.SquadMemberInternal squadMemberInternal = mSquadMembersData[index];
+			SquadWarEndMemberRecord squadWarEndMemberRecord = Singleton<GuiManager>.instance.objectPool.InstantiateAsChild(memberPrefab, memberGrid.gameObject, string.Format("{0:3} {1}", index, (!squadMemberInternal.isHeader) ? "Squad Member" : "Header")) as SquadWarEndMemberRecord;
+			if (squadWarEndMemberRecord != null)
+			{
+				squadWarEndMemberRecord.Initialize(squadMemberInternal);
+				return squadWarEndMemberRecord.transform;
+			}
+		}
+		return null;
+	}
+
+	private void MemberFree(Transform obj)
+	{
+		if (obj != null)
+		{
+			SquadWarEndMemberRecord component = obj.GetComponent<SquadWarEndMemberRecord>();
+			if (component != null)
+			{
+				component.DestroyPooled();
+			}
+		}
+	}
+
+	public GuiElement GetGuiElement()
+	{
+		return this;
+	}
+
+	public override void OnBack()
+	{
+		OkButtonClick(bottomButton.gameObject);
+	}
 }

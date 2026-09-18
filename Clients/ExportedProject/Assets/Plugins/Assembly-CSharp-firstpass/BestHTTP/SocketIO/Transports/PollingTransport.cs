@@ -1,66 +1,261 @@
-using UnityEngine;
+using System;
+using System.Collections.Generic;
+using BestHTTP.Logger;
 
 namespace BestHTTP.SocketIO.Transports
 {
-	public class PollingTransport : MonoBehaviour
+internal sealed class PollingTransport : ITransport
+{
+	private HTTPRequest LastRequest;
+
+	private HTTPRequest PollRequest;
+
+	private Packet PacketWithAttachment;
+
+	public TransportStates State { get; private set; }
+
+	public SocketManager Manager { get; private set; }
+
+	public bool IsRequestInProgress => LastRequest != null;
+
+	public PollingTransport(SocketManager manager)
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
+		Manager = manager;
 	}
+
+	public void Open()
+	{
+		HTTPRequest hTTPRequest = new HTTPRequest(new Uri($"{Manager.Uri.ToString()}?EIO={4}&transport=polling&t={Manager.Timestamp.ToString()}-{Manager.RequestCounter++.ToString()}&sid={Manager.Handshake.Sid}{(Manager.Options.QueryParamsOnlyForHandshake ? string.Empty : Manager.Options.BuildQueryParams())}&b64=true"), OnRequestFinished);
+		hTTPRequest.DisableCache = true;
+		hTTPRequest.DisableRetry = true;
+		hTTPRequest.Send();
+		State = TransportStates.Opening;
+	}
+
+	public void Close()
+	{
+		if (State != TransportStates.Closed)
+		{
+			State = TransportStates.Closed;
+		}
+	}
+
+	public void Send(Packet packet)
+	{
+		Send(new List<Packet> { packet });
+	}
+
+	public void Send(List<Packet> packets)
+	{
+		if (State != TransportStates.Open)
+		{
+			throw new Exception("Transport is not in Open state!");
+		}
+		if (IsRequestInProgress)
+		{
+			throw new Exception("Sending packets are still in progress!");
+		}
+		byte[] array = null;
+		try
+		{
+			array = packets[0].EncodeBinary();
+			for (int i = 1; i < packets.Count; i++)
+			{
+				byte[] array2 = packets[i].EncodeBinary();
+				Array.Resize(ref array, array.Length + array2.Length);
+				Array.Copy(array2, 0, array, array.Length - array2.Length, array2.Length);
+			}
+			packets.Clear();
+		}
+		catch (Exception ex)
+		{
+			((IManager)Manager).EmitError(SocketIOErrors.Internal, ex.Message + " " + ex.StackTrace);
+			return;
+		}
+		LastRequest = new HTTPRequest(new Uri($"{Manager.Uri.ToString()}?EIO={4}&transport=polling&t={Manager.Timestamp.ToString()}-{Manager.RequestCounter++.ToString()}&sid={Manager.Handshake.Sid}{(Manager.Options.QueryParamsOnlyForHandshake ? string.Empty : Manager.Options.BuildQueryParams())}&b64=true"), HTTPMethods.Post, OnRequestFinished);
+		LastRequest.DisableCache = true;
+		LastRequest.SetHeader("Content-Type", "application/octet-stream");
+		LastRequest.RawData = array;
+		LastRequest.Send();
+	}
+
+	private void OnRequestFinished(HTTPRequest req, HTTPResponse resp)
+	{
+		LastRequest = null;
+		if (State == TransportStates.Closed)
+		{
+			return;
+		}
+		string text = null;
+		switch (req.State)
+		{
+		case HTTPRequestStates.Finished:
+			if (HTTPManager.Logger.Level <= Loglevels.All)
+			{
+				HTTPManager.Logger.Verbose("PollingTransport", "OnRequestFinished: " + resp.DataAsText);
+			}
+			if (resp.IsSuccess)
+			{
+				ParseResponse(resp);
+				break;
+			}
+			text = $"Polling - Request finished Successfully, but the server sent an error. Status Code: {resp.StatusCode}-{resp.Message} Message: {resp.DataAsText} Uri: {req.CurrentUri}";
+			break;
+		case HTTPRequestStates.Error:
+			text = ((req.Exception == null) ? "No Exception" : (req.Exception.Message + "\n" + req.Exception.StackTrace));
+			break;
+		case HTTPRequestStates.Aborted:
+			text = $"Polling - Request({req.CurrentUri}) Aborted!";
+			break;
+		case HTTPRequestStates.ConnectionTimedOut:
+			text = $"Polling - Connection Timed Out! Uri: {req.CurrentUri}";
+			break;
+		case HTTPRequestStates.TimedOut:
+			text = $"Polling - Processing the request({req.CurrentUri}) Timed Out!";
+			break;
+		}
+		if (!string.IsNullOrEmpty(text))
+		{
+			((IManager)Manager).OnTransportError((ITransport)this, text);
+		}
+	}
+
+	public void Poll()
+	{
+		if (PollRequest == null && State != TransportStates.Paused)
+		{
+			PollRequest = new HTTPRequest(new Uri($"{Manager.Uri.ToString()}?EIO={4}&transport=polling&t={Manager.Timestamp.ToString()}-{Manager.RequestCounter++.ToString()}&sid={Manager.Handshake.Sid}{(Manager.Options.QueryParamsOnlyForHandshake ? string.Empty : Manager.Options.BuildQueryParams())}&b64=true"), HTTPMethods.Get, OnPollRequestFinished);
+			PollRequest.DisableCache = true;
+			PollRequest.DisableRetry = true;
+			PollRequest.Send();
+		}
+	}
+
+	private void OnPollRequestFinished(HTTPRequest req, HTTPResponse resp)
+	{
+		PollRequest = null;
+		if (State == TransportStates.Closed)
+		{
+			return;
+		}
+		string text = null;
+		switch (req.State)
+		{
+		case HTTPRequestStates.Finished:
+			if (HTTPManager.Logger.Level <= Loglevels.All)
+			{
+				HTTPManager.Logger.Verbose("PollingTransport", "OnPollRequestFinished: " + resp.DataAsText);
+			}
+			if (resp.IsSuccess)
+			{
+				ParseResponse(resp);
+				break;
+			}
+			text = $"Polling - Request finished Successfully, but the server sent an error. Status Code: {resp.StatusCode}-{resp.Message} Message: {resp.DataAsText} Uri: {req.CurrentUri}";
+			break;
+		case HTTPRequestStates.Error:
+			text = ((req.Exception == null) ? "No Exception" : (req.Exception.Message + "\n" + req.Exception.StackTrace));
+			break;
+		case HTTPRequestStates.Aborted:
+			text = $"Polling - Request({req.CurrentUri}) Aborted!";
+			break;
+		case HTTPRequestStates.ConnectionTimedOut:
+			text = $"Polling - Connection Timed Out! Uri: {req.CurrentUri}";
+			break;
+		case HTTPRequestStates.TimedOut:
+			text = $"Polling - Processing the request({req.CurrentUri}) Timed Out!";
+			break;
+		}
+		if (!string.IsNullOrEmpty(text))
+		{
+			((IManager)Manager).OnTransportError((ITransport)this, text);
+		}
+	}
+
+	private void OnPacket(Packet packet)
+	{
+		if (packet.AttachmentCount != 0 && !packet.HasAllAttachment)
+		{
+			PacketWithAttachment = packet;
+			return;
+		}
+		TransportEventTypes transportEvent = packet.TransportEvent;
+		if (transportEvent == TransportEventTypes.Message && packet.SocketIOEvent == SocketIOEventTypes.Connect && State == TransportStates.Opening)
+		{
+			State = TransportStates.Open;
+			if (!((IManager)Manager).OnTransportConnected((ITransport)this))
+			{
+				return;
+			}
+		}
+		((IManager)Manager).OnPacket(packet);
+	}
+
+	private void ParseResponse(HTTPResponse resp)
+	{
+		try
+		{
+			if (resp == null || resp.Data == null || resp.Data.Length < 1)
+			{
+				return;
+			}
+			string dataAsText = resp.DataAsText;
+			if (dataAsText == "ok")
+			{
+				return;
+			}
+			int num = dataAsText.IndexOf(':', 0);
+			int num2 = 0;
+			while (num >= 0 && num < dataAsText.Length)
+			{
+				int num3 = int.Parse(dataAsText.Substring(num2, num - num2));
+				string text = dataAsText.Substring(++num, num3);
+				if (text.Length > 2 && text[0] == 'b' && text[1] == '4')
+				{
+					byte[] data = Convert.FromBase64String(text.Substring(2));
+					if (PacketWithAttachment != null)
+					{
+						PacketWithAttachment.AddAttachmentFromServer(data, copyFull: true);
+						if (PacketWithAttachment.HasAllAttachment)
+						{
+							try
+							{
+								OnPacket(PacketWithAttachment);
+							}
+							catch (Exception ex)
+							{
+								HTTPManager.Logger.Exception("PollingTransport", "ParseResponse - OnPacket with attachment", ex);
+								((IManager)Manager).EmitError(SocketIOErrors.Internal, ex.Message + " " + ex.StackTrace);
+							}
+							finally
+							{
+								PacketWithAttachment = null;
+							}
+						}
+					}
+				}
+				else
+				{
+					try
+					{
+						Packet packet = new Packet(text);
+						OnPacket(packet);
+					}
+					catch (Exception ex2)
+					{
+						HTTPManager.Logger.Exception("PollingTransport", "ParseResponse - OnPacket", ex2);
+						((IManager)Manager).EmitError(SocketIOErrors.Internal, ex2.Message + " " + ex2.StackTrace);
+					}
+				}
+				num2 = num + num3;
+				num = dataAsText.IndexOf(':', num2);
+			}
+		}
+		catch (Exception ex3)
+		{
+			((IManager)Manager).EmitError(SocketIOErrors.Internal, ex3.Message + " " + ex3.StackTrace);
+			HTTPManager.Logger.Exception("PollingTransport", "ParseResponse", ex3);
+		}
+	}
+}
 }

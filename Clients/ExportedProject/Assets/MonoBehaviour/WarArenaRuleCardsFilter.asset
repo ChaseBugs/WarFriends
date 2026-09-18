@@ -11,3 +11,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f04896542043459b8a53068288e6e392, type: 3}
   m_Name: WarArenaRuleCardsFilter
   m_EditorClassIdentifier:
+  data:
+    showRule: 1
+    filter: 4

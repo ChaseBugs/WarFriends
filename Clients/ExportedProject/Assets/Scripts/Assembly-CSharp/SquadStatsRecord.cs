@@ -1,63 +1,149 @@
+using System;
 using UnityEngine;
 
-public class SquadStatsRecord : MonoBehaviour
+public class SquadStatsRecord : PoolableObject
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Header("Header Part")]
+	public UILabel headerLabel;
 
-	1. No dll files were provided to AssetRipper.
+	[Header("Statistic Part")]
+	public GameObject statsPart;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public UISprite iconStat;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public UILabel statLabel;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	[Header("Player Part")]
+	public GameObject playerPart;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public PlayerIcon playerIcon;
 
-	3. Assembly Reconstruction has not been implemented.
+	public GameObject playerIconButton;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public UILabel playerLabel;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public GameObject playerButton;
 
-	4. This script is unnecessary.
+	public UILabel playerStatLabel;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private DatabasePlayer mPlayer;
 
-	5. Script Content Level 0
+	public void InitializeSquadStat(SquadStatsContent.SquadStatInternal squadStat)
+	{
+		bool flag = squadStat.type == SquadStatsContent.SquadStatInternal.StatType.PlayerInt || squadStat.type == SquadStatsContent.SquadStatInternal.StatType.PlayerFloat || squadStat.type == SquadStatsContent.SquadStatInternal.StatType.PlayerPercent;
+		statsPart.SetActive(!flag);
+		playerPart.SetActive(flag);
+		headerLabel.text = squadStat.title;
+		MiscTools.SetUILabelRescale(headerLabel, (!flag) ? 37f : 30f, 20f, 500);
+		mPlayer = ((!flag) ? null : squadStat.player);
+		if (flag)
+		{
+			playerLabel.text = mPlayer.name;
+			TweenColor.Begin(playerLabel.gameObject, 0f, Color.white);
+			MiscTools.SetUILabelRescale(playerLabel, 37f, 26f);
+			playerIcon.Reset();
+			Singleton<PlayerTexturePool>.instance.OnPlayerTextureCreated -= OnPlayerTextureCreated;
+			Singleton<PlayerTexturePool>.instance.OnPlayerTextureCreated += OnPlayerTextureCreated;
+			Singleton<PlayerTexturePool>.instance.RequestPlayerTexture(mPlayer);
+			playerStatLabel.color = squadStat.textColor;
+			switch (squadStat.type)
+			{
+			case SquadStatsContent.SquadStatInternal.StatType.PlayerInt:
+				playerStatLabel.text = ((squadStat.number >= 0) ? MiscTools.FormatBigNumber(squadStat.number) : "-");
+				break;
+			case SquadStatsContent.SquadStatInternal.StatType.PlayerFloat:
+				playerStatLabel.text = ((!(squadStat.floatNumber < 0f)) ? MiscTools.FormatFloatNumberRoundOne(squadStat.floatNumber) : "-");
+				break;
+			case SquadStatsContent.SquadStatInternal.StatType.PlayerPercent:
+				playerStatLabel.text = ((squadStat.number >= 0) ? MiscTools.FormatNumberAsPercent(squadStat.number) : "-");
+				break;
+			}
+			UIEventListener uIEventListener = UIEventListener.Get(playerIconButton);
+			uIEventListener.onClick = (UIEventListener.VoidDelegate)Delegate.Remove(uIEventListener.onClick, new UIEventListener.VoidDelegate(ShowPlayerIcon));
+			UIEventListener uIEventListener2 = UIEventListener.Get(playerIconButton);
+			uIEventListener2.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener2.onClick, new UIEventListener.VoidDelegate(ShowPlayerIcon));
+			UIEventListener uIEventListener3 = UIEventListener.Get(playerButton);
+			uIEventListener3.onClick = (UIEventListener.VoidDelegate)Delegate.Remove(uIEventListener3.onClick, new UIEventListener.VoidDelegate(ShowPlayer));
+			UIEventListener uIEventListener4 = UIEventListener.Get(playerButton);
+			uIEventListener4.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener4.onClick, new UIEventListener.VoidDelegate(ShowPlayer));
+		}
+		else
+		{
+			iconStat.alpha = 0f;
+			statLabel.color = squadStat.textColor;
+			switch (squadStat.type)
+			{
+			case SquadStatsContent.SquadStatInternal.StatType.PictureInt:
+			{
+				iconStat.spriteName = squadStat.spriteName;
+				iconStat.color = squadStat.spriteColor;
+				iconStat.MakePixelPerfect();
+				float multiplier = Mathf.Min(90f / iconStat.transform.localScale.x, 90f / iconStat.transform.localScale.y);
+				iconStat.transform.localScale = iconStat.transform.localScale.MultiplyXY(multiplier);
+				statLabel.text = ((squadStat.number >= 0) ? MiscTools.FormatBigNumber(squadStat.number) : "-");
+				break;
+			}
+			case SquadStatsContent.SquadStatInternal.StatType.SimpleInt:
+				statLabel.text = ((squadStat.number >= 0) ? MiscTools.FormatBigNumber(squadStat.number) : "-");
+				break;
+			case SquadStatsContent.SquadStatInternal.StatType.SimpleFloat:
+				statLabel.text = ((!(squadStat.floatNumber < 0f)) ? MiscTools.FormatFloatNumberRoundOne(squadStat.floatNumber) : "-");
+				break;
+			case SquadStatsContent.SquadStatInternal.StatType.PlayerInt:
+			case SquadStatsContent.SquadStatInternal.StatType.PlayerFloat:
+			case SquadStatsContent.SquadStatInternal.StatType.PlayerPercent:
+				break;
+			}
+		}
+	}
 
-		AssetRipper was set to not load any script information.
+	private void ShowPlayer(GameObject go)
+	{
+		if (!string.IsNullOrEmpty(mPlayer.name))
+		{
+			TweenColor tweenColor = TweenColor.Begin(playerLabel.gameObject, GameVariables.durationOfNameButtonColor, Color.white, Colours.blue);
+			tweenColor.NumOfRepetitions = 2;
+			tweenColor.style = UITweener.Style.PingPong;
+			SoundsManager.Instance.PlayButtonClickedSound();
+			GuiElementSingle<PlayerProfileDialog>.instance.ShowDialog(mPlayer.name, mPlayer.id);
+		}
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	private void ShowPlayerIcon(GameObject go)
+	{
+		if (!string.IsNullOrEmpty(mPlayer.name))
+		{
+			SoundsManager.Instance.PlayButtonClickedSound();
+			GuiElementSingle<PlayerProfileDialog>.instance.ShowDialog(mPlayer.name, mPlayer.id);
+		}
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	private void OnPlayerTextureCreated(string playerID, Texture2D playerTexture, bool useBackground)
+	{
+		if (mPlayer != null && mPlayer.id == playerID)
+		{
+			playerIcon.avatar = playerTexture;
+			playerIcon.UpdateIcon();
+		}
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	public override void DestroyPooled()
+	{
+		base.DestroyPooled();
+		UIEventListener uIEventListener = UIEventListener.Get(playerIconButton);
+		uIEventListener.onClick = (UIEventListener.VoidDelegate)Delegate.Remove(uIEventListener.onClick, new UIEventListener.VoidDelegate(ShowPlayerIcon));
+		UIEventListener uIEventListener2 = UIEventListener.Get(playerButton);
+		uIEventListener2.onClick = (UIEventListener.VoidDelegate)Delegate.Remove(uIEventListener2.onClick, new UIEventListener.VoidDelegate(ShowPlayer));
+		FreeTexture();
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public void FreeTexture()
+	{
+		Singleton<PlayerTexturePool>.instance.OnPlayerTextureCreated -= OnPlayerTextureCreated;
+		if (mPlayer != null)
+		{
+			Singleton<PlayerTexturePool>.instance.FreePlayerTexture(mPlayer.id);
+		}
+		mPlayer = null;
+	}
 }

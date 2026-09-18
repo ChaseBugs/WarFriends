@@ -1,63 +1,126 @@
+using System;
 using UnityEngine;
 
-public class CardHealthChangeUnit : MonoBehaviour
+public class CardHealthChangeUnit : Card
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public float multiplierMaxHealth = 0.5f;
 
-	1. No dll files were provided to AssetRipper.
+	public string ingameIconName = "game-card-ico-healingstorm";
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public bool sameFraction;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public bool showIconOnEnemy;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	private Fractions mFraction;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	private bool mStarted;
 
-	3. Assembly Reconstruction has not been implemented.
+	private bool mEventLocated;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	private PlayerController mPlayer;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	private SpawningManagerDeathMatch.ArmyUnitDefinition mUsedDefinition;
 
-	4. This script is unnecessary.
+	public override void UseCard(ICardManager cardManager, Fractions fraction)
+	{
+		if (PhotonNetwork.isMasterClient)
+		{
+			SetCardEffect(fraction);
+		}
+		cardManager.CardWasUsed(this, fraction);
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public override void UseCardOnline(ICardManager cardManager, Fractions fraction)
+	{
+		if (base.isOnlineMaster)
+		{
+			SetCardEffect(fraction);
+		}
+	}
 
-	5. Script Content Level 0
+	private void SetCardEffect(Fractions fraction)
+	{
+		mFraction = fraction;
+		mUsedDefinition = null;
+		if (mStarted)
+		{
+			Debug.LogError("[CardHealthChangeUnit] - used again after spawning start, but before finish!!!");
+			mStarted = false;
+		}
+		if (!mEventLocated)
+		{
+			mEventLocated = true;
+			SpawningManagerDeathMatch instance = Singleton<SpawningManagerDeathMatch>.instance;
+			instance.onStartSpawning = (Action<Fractions, SpawningManagerDeathMatch.ArmyUnitDefinition>)Delegate.Combine(instance.onStartSpawning, new Action<Fractions, SpawningManagerDeathMatch.ArmyUnitDefinition>(SpawningStarted));
+			SpawningManagerDeathMatch instance2 = Singleton<SpawningManagerDeathMatch>.instance;
+			instance2.onFinishSpawning = (Action<Fractions, SpawningManagerDeathMatch.ArmyUnitDefinition>)Delegate.Combine(instance2.onFinishSpawning, new Action<Fractions, SpawningManagerDeathMatch.ArmyUnitDefinition>(SpawningFinished));
+			AIObject.AfterSpawned += OnAfterSpawned;
+		}
+		if (showIconOnEnemy)
+		{
+			mPlayer = PlayerController.GetEnemyOf(fraction);
+		}
+		else
+		{
+			mPlayer = PlayerController.GetPlayerOld(fraction);
+		}
+		mPlayer.cardIconIndicator.Show(ingameIconName, show: true);
+	}
 
-		AssetRipper was set to not load any script information.
+	public override void DisconnectEvents()
+	{
+		if (mEventLocated)
+		{
+			AIObject.AfterSpawned -= OnAfterSpawned;
+			SpawningManagerDeathMatch instance = Singleton<SpawningManagerDeathMatch>.instance;
+			instance.onStartSpawning = (Action<Fractions, SpawningManagerDeathMatch.ArmyUnitDefinition>)Delegate.Remove(instance.onStartSpawning, new Action<Fractions, SpawningManagerDeathMatch.ArmyUnitDefinition>(SpawningStarted));
+			SpawningManagerDeathMatch instance2 = Singleton<SpawningManagerDeathMatch>.instance;
+			instance2.onFinishSpawning = (Action<Fractions, SpawningManagerDeathMatch.ArmyUnitDefinition>)Delegate.Remove(instance2.onFinishSpawning, new Action<Fractions, SpawningManagerDeathMatch.ArmyUnitDefinition>(SpawningFinished));
+			mStarted = false;
+			mEventLocated = false;
+			mPlayer.cardIconIndicator.Show(ingameIconName, show: false);
+		}
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	private void OnAfterSpawned(AIObject aiObject)
+	{
+		if (!mStarted || ((aiObject.fraction == mFraction) ^ sameFraction))
+		{
+			return;
+		}
+		EnemyController enemyController = aiObject as EnemyController;
+		if (enemyController != null)
+		{
+			if ((double)multiplierMaxHealth > 1.0)
+			{
+				enemyController.destroyableObject.maxHealth *= multiplierMaxHealth;
+				enemyController.destroyableObject.Refill();
+			}
+			else
+			{
+				enemyController.destroyableObject.RefillTo(enemyController.destroyableObject.maxHealth * multiplierMaxHealth);
+			}
+		}
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	private void SpawningStarted(Fractions fraction, SpawningManagerDeathMatch.ArmyUnitDefinition def)
+	{
+		if (!((fraction == mFraction) ^ sameFraction))
+		{
+			if (mStarted)
+			{
+				Debug.LogError("[CardHealthChangeUnit] start new spawning before used spawning finish");
+			}
+			mStarted = true;
+			mUsedDefinition = def;
+		}
+	}
 
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	private void SpawningFinished(Fractions fraction, SpawningManagerDeathMatch.ArmyUnitDefinition def)
+	{
+		if (!((fraction == mFraction) ^ sameFraction) && mStarted && def == mUsedDefinition && mUsedDefinition != null)
+		{
+			DisconnectEvents();
+		}
+	}
 }

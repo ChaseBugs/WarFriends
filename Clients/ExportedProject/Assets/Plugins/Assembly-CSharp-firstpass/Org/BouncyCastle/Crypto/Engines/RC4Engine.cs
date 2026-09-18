@@ -1,66 +1,86 @@
-using UnityEngine;
+using System;
+using Org.BouncyCastle.Crypto.Parameters;
 
 namespace Org.BouncyCastle.Crypto.Engines
 {
-	public class RC4Engine : MonoBehaviour
+public class RC4Engine : IStreamCipher
+{
+	private static readonly int STATE_LENGTH = 256;
+
+	private byte[] engineState;
+
+	private int x;
+
+	private int y;
+
+	private byte[] workingKey;
+
+	public virtual string AlgorithmName => "RC4";
+
+	public virtual void Init(bool forEncryption, ICipherParameters parameters)
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
+		if (parameters is KeyParameter)
+		{
+			workingKey = ((KeyParameter)parameters).GetKey();
+			SetKey(workingKey);
+			return;
+		}
+		throw new ArgumentException("invalid parameter passed to RC4 init - " + parameters.GetType().ToString());
 	}
+
+	public virtual byte ReturnByte(byte input)
+	{
+		x = (x + 1) & 0xFF;
+		y = (engineState[x] + y) & 0xFF;
+		byte b = engineState[x];
+		engineState[x] = engineState[y];
+		engineState[y] = b;
+		return (byte)(input ^ engineState[(engineState[x] + engineState[y]) & 0xFF]);
+	}
+
+	public virtual void ProcessBytes(byte[] input, int inOff, int length, byte[] output, int outOff)
+	{
+		Check.DataLength(input, inOff, length, "input buffer too short");
+		Check.OutputLength(output, outOff, length, "output buffer too short");
+		for (int i = 0; i < length; i++)
+		{
+			x = (x + 1) & 0xFF;
+			y = (engineState[x] + y) & 0xFF;
+			byte b = engineState[x];
+			engineState[x] = engineState[y];
+			engineState[y] = b;
+			output[i + outOff] = (byte)(input[i + inOff] ^ engineState[(engineState[x] + engineState[y]) & 0xFF]);
+		}
+	}
+
+	public virtual void Reset()
+	{
+		SetKey(workingKey);
+	}
+
+	private void SetKey(byte[] keyBytes)
+	{
+		workingKey = keyBytes;
+		x = 0;
+		y = 0;
+		if (engineState == null)
+		{
+			engineState = new byte[STATE_LENGTH];
+		}
+		for (int i = 0; i < STATE_LENGTH; i++)
+		{
+			engineState[i] = (byte)i;
+		}
+		int num = 0;
+		int num2 = 0;
+		for (int j = 0; j < STATE_LENGTH; j++)
+		{
+			num2 = ((keyBytes[num] & 0xFF) + engineState[j] + num2) & 0xFF;
+			byte b = engineState[j];
+			engineState[j] = engineState[num2];
+			engineState[num2] = b;
+			num = (num + 1) % keyBytes.Length;
+		}
+	}
+}
 }

@@ -1,63 +1,118 @@
+using System;
+using System.Collections;
 using UnityEngine;
 
 public class Core_BaseScript : MonoBehaviour
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	private LocalStorage mLocalStorage;
 
-	1. No dll files were provided to AssetRipper.
+	protected LocalStorage _localStorage
+	{
+		get
+		{
+			if (mLocalStorage == null)
+			{
+				mLocalStorage = GetLocalStorage();
+				if (mLocalStorage == null && Debug.isDebugBuild)
+				{
+					Debug.LogError($"BaseScript: You forget add the LocalStorage prefab object to '{Application.loadedLevelName}' scene");
+				}
+			}
+			return mLocalStorage;
+		}
+	}
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	protected virtual LocalStorage GetLocalStorage()
+	{
+		return UnityEngine.Object.FindObjectOfType(typeof(LocalStorage)) as LocalStorage;
+	}
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public void InvokeAfter(Action a, float seconds)
+	{
+		StartCoroutine(WaitAndCall(a, seconds));
+	}
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public void InvokeAfterRealTime(Action a, float seconds)
+	{
+		StartCoroutine(RadicalRoutine.Run(WaitAndCallRealTime(a, seconds)));
+	}
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public void InvokeAfterRealTimeWithoutPause(Action a, float seconds)
+	{
+		StartCoroutine(RadicalRoutine.Run(WaitAndCallRealTimeWithoutPause(a, seconds)));
+	}
 
-	3. Assembly Reconstruction has not been implemented.
+	public void InvokeAfterFrame(Action a)
+	{
+		StartCoroutine(WaitAndCallAfterFrame(a));
+	}
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public void InvokeAfterXFrames(Action a, int frames)
+	{
+		StartCoroutine(WaitAndCallAfterXFrames(a, frames));
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	private static IEnumerator WaitAndCallAfterFrame(Action a)
+	{
+		yield return null;
+		a();
+	}
 
-	4. This script is unnecessary.
+	private static IEnumerator WaitAndCallAfterXFrames(Action a, int frames)
+	{
+		for (int i = 0; i < frames; i++)
+		{
+			yield return null;
+		}
+		a();
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private static IEnumerator WaitAndCall(Action a, float seconds)
+	{
+		yield return new WaitForSeconds(seconds);
+		a();
+	}
 
-	5. Script Content Level 0
+	private static IEnumerator WaitAndCallRealTime(Action a, float seconds)
+	{
+		yield return new WaitForRealSeconds(seconds);
+		a();
+	}
 
-		AssetRipper was set to not load any script information.
+	private static IEnumerator WaitAndCallRealTimeWithoutPause(Action a, float seconds)
+	{
+		yield return new WaitForRealSecondsWithoutPause(seconds);
+		a();
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	protected void SetLayerRecursively(GameObject obj, int newLayer)
+	{
+		obj.layer = newLayer;
+		foreach (Transform item in obj.transform)
+		{
+			SetLayerRecursively(item.gameObject, newLayer);
+		}
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	protected virtual void Awake()
+	{
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	protected virtual void Start()
+	{
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	protected T GetComponentImplementing<T>() where T : class
+	{
+		Core_BaseScript[] components = GetComponents<Core_BaseScript>();
+		Core_BaseScript[] array = components;
+		foreach (Core_BaseScript core_BaseScript in array)
+		{
+			if (core_BaseScript is T)
+			{
+				return core_BaseScript as T;
+			}
+		}
+		return (T)null;
+	}
 }

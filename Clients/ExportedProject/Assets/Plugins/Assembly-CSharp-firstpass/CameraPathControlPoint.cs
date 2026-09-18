@@ -1,63 +1,196 @@
 using UnityEngine;
 
+[ExecuteInEditMode]
 public class CameraPathControlPoint : MonoBehaviour
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public string givenName = string.Empty;
 
-	1. No dll files were provided to AssetRipper.
+	public string customName = string.Empty;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public string fullName = string.Empty;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	[SerializeField]
+	private Vector3 _position;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	[SerializeField]
+	private bool _splitControlPoints;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	[SerializeField]
+	private Vector3 _forwardControlPoint;
 
-	3. Assembly Reconstruction has not been implemented.
+	[SerializeField]
+	private Vector3 _backwardControlPoint;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	[SerializeField]
+	private Vector3 _pathDirection = Vector3.forward;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public int index;
 
-	4. This script is unnecessary.
+	public float percentage;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public float normalisedPercentage;
 
-	5. Script Content Level 0
+	public Vector3 localPosition
+	{
+		get
+		{
+			return base.transform.rotation * _position;
+		}
+		set
+		{
+			Vector3 vector = value;
+			vector = Quaternion.Inverse(base.transform.rotation) * vector;
+			_position = vector;
+		}
+	}
 
-		AssetRipper was set to not load any script information.
+	public Vector3 worldPosition
+	{
+		get
+		{
+			return base.transform.rotation * _position + base.transform.position;
+		}
+		set
+		{
+			Vector3 vector = value - base.transform.position;
+			vector = Quaternion.Inverse(base.transform.rotation) * vector;
+			_position = vector;
+		}
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public Vector3 forwardControlPointWorld
+	{
+		get
+		{
+			return forwardControlPoint + base.transform.position;
+		}
+		set
+		{
+			forwardControlPoint = value - base.transform.position;
+		}
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public Vector3 forwardControlPoint
+	{
+		get
+		{
+			return base.transform.rotation * (_forwardControlPoint + _position);
+		}
+		set
+		{
+			Vector3 vector = value;
+			vector = Quaternion.Inverse(base.transform.rotation) * vector;
+			vector += -_position;
+			_forwardControlPoint = vector;
+		}
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	public Vector3 forwardControlPointLocal
+	{
+		get
+		{
+			return base.transform.rotation * _forwardControlPoint;
+		}
+		set
+		{
+			Vector3 vector = value;
+			vector = Quaternion.Inverse(base.transform.rotation) * vector;
+			_forwardControlPoint = vector;
+		}
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	public Vector3 backwardControlPointWorld
+	{
+		get
+		{
+			return backwardControlPoint + base.transform.position;
+		}
+		set
+		{
+			backwardControlPoint = value - base.transform.position;
+		}
+	}
 
-	*/
+	public Vector3 backwardControlPoint
+	{
+		get
+		{
+			Vector3 vector = ((!_splitControlPoints) ? (-_forwardControlPoint) : _backwardControlPoint);
+			return base.transform.rotation * (vector + _position);
+		}
+		set
+		{
+			Vector3 vector = value;
+			vector = Quaternion.Inverse(base.transform.rotation) * vector;
+			vector += -_position;
+			if (_splitControlPoints)
+			{
+				_backwardControlPoint = vector;
+			}
+			else
+			{
+				_forwardControlPoint = -vector;
+			}
+		}
+	}
+
+	public bool splitControlPoints
+	{
+		get
+		{
+			return _splitControlPoints;
+		}
+		set
+		{
+			if (value != _splitControlPoints)
+			{
+				_backwardControlPoint = -_forwardControlPoint;
+			}
+			_splitControlPoints = value;
+		}
+	}
+
+	public Vector3 trackDirection
+	{
+		get
+		{
+			return _pathDirection;
+		}
+		set
+		{
+			if (!(value == Vector3.zero))
+			{
+				_pathDirection = value.normalized;
+			}
+		}
+	}
+
+	public string displayName
+	{
+		get
+		{
+			if (customName != string.Empty)
+			{
+				return customName;
+			}
+			return givenName;
+		}
+	}
+
+	private void OnEnable()
+	{
+		base.hideFlags = HideFlags.HideInInspector;
+	}
+
+	public void CopyData(CameraPathControlPoint to)
+	{
+		to.customName = customName;
+		to.index = index;
+		to.percentage = percentage;
+		to.normalisedPercentage = normalisedPercentage;
+		to.worldPosition = worldPosition;
+		to.splitControlPoints = _splitControlPoints;
+		to.forwardControlPoint = _forwardControlPoint;
+		to.backwardControlPoint = _backwardControlPoint;
+	}
 }

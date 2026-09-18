@@ -1,63 +1,169 @@
+using System.Collections;
+using System.Collections.Generic;
+using Newtonsoft.Json;
 using UnityEngine;
 
-public class MessageManager : MonoBehaviour
+public class MessageManager : Singleton<MessageManager>
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[HideInInspector]
+	public SquadWarsEndedMessage lastRewardMessage;
 
-	1. No dll files were provided to AssetRipper.
+	[HideInInspector]
+	public DepositWarcards lastDepositWarcardsMessage;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	private Dictionary<string, DatabaseMessage> mMessages = new Dictionary<string, DatabaseMessage>();
 
-	2. Incorrect dll files were provided to AssetRipper.
+	private Dictionary<string, DatabaseMessage> mShownMessages = new Dictionary<string, DatabaseMessage>();
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	private float mMessageTimeout = 0.5f;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	private RadicalRoutine mRoutine;
 
-	3. Assembly Reconstruction has not been implemented.
+	public int unignoredMessages
+	{
+		get
+		{
+			int num = 0;
+			foreach (KeyValuePair<string, DatabaseMessage> mShownMessage in mShownMessages)
+			{
+				if (!mShownMessage.Value.wasIgnored)
+				{
+					num++;
+				}
+			}
+			return Mathf.Max(0, num);
+		}
+	}
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public void SentDatabaseMessageWasShown(string messageId, string playerId)
+	{
+		RequestBuffer requestBuffer = RequestBufferManager.instance.GetRequestBuffer();
+		requestBuffer.AddRequest(DatabaseAction.MessageWasShown, JsonConvert.SerializeObject(new Dictionary<string, string>
+		{
+			{ "MessageId", messageId },
+			{ "PlayerId", playerId }
+		}), 0, 0, string.Empty);
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public void SentDatabaseMessageIgnore(string messageId)
+	{
+		RequestBuffer requestBuffer = RequestBufferManager.instance.GetRequestBuffer();
+		requestBuffer.AddRequest(DatabaseAction.IgnoreMessage, messageId, 0, 0, string.Empty);
+	}
 
-	4. This script is unnecessary.
+	public void StartMessageCoroutine()
+	{
+		if (mRoutine != null)
+		{
+			mRoutine.Cancel();
+			mRoutine = null;
+		}
+		Singleton<OfferManager>.instance.CheckOffer();
+		mRoutine = RadicalRoutine.Create(CheckForEventsRoutine());
+		StartCoroutine(mRoutine.enumerator);
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public void StopMessageCoroutine()
+	{
+		if (mRoutine != null)
+		{
+			mRoutine.Cancel();
+			mRoutine = null;
+		}
+	}
 
-	5. Script Content Level 0
+	public void AddMessage(DatabaseMessage message, bool canBeRepeated = false)
+	{
+		if (!mMessages.ContainsKey(message.messageId))
+		{
+			string messageDatabaseKey = GetMessageDatabaseKey(message);
+			if (mShownMessages.ContainsKey(messageDatabaseKey) && mShownMessages[messageDatabaseKey].wasIgnored)
+			{
+				Debug.Log("#VOJTA# Message Manager: Error previously ignored message arrived again from server! Id = " + mShownMessages[messageDatabaseKey].messageId);
+				mShownMessages[messageDatabaseKey].Ignore();
+			}
+			if (canBeRepeated || !mShownMessages.ContainsKey(messageDatabaseKey))
+			{
+				message.OnAdd();
+				mMessages.Add(message.messageId, message);
+			}
+		}
+	}
 
-		AssetRipper was set to not load any script information.
+	public void ClearAllMessages()
+	{
+		StopMessageCoroutine();
+		mMessages.Clear();
+		mShownMessages.Clear();
+		lastRewardMessage = null;
+		lastDepositWarcardsMessage = null;
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public bool IsRateAppInQueue()
+	{
+		bool result = false;
+		foreach (KeyValuePair<string, DatabaseMessage> mMessage in mMessages)
+		{
+			if (mMessage.Value is RateAppMessage && !mMessage.Value.WasShown())
+			{
+				result = true;
+			}
+		}
+		return result;
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	private string GetMessageDatabaseKey(DatabaseMessage message)
+	{
+		return message.messageId + "-" + message.playerId;
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	private IEnumerator CheckForEventsRoutine()
+	{
+		while (true)
+		{
+			bool processNextMessage = false;
+			if (Singleton<GuiManager>.instance.currentScreen.dialogsEnabled && Singleton<GameController>.instance.gameState == GameController.GameState.Menu && !GuiElementSingle<LoadingDialog>.instance.isShowed && !Singleton<GameController>.instance.isTutorial && !TutorialManagerStage4.instance.isTutorialRunning && !TutorialManagerStage5.instance.isTutorialRunning && !Singleton<EventTrackingManager>.instance.isAdVideoPlaying)
+			{
+				if (mMessages != null && mMessages.Count != 0)
+				{
+					processNextMessage = ShowEvent();
+				}
+				if ((mMessages == null || mMessages.Count == 0 || DialogManager.instance.isSomeDialogShowed) && StatsManager.instance.dailyRewardData != null && !GuiScreenSingle<EndScreen>.instance.isShowed)
+				{
+					StatsManager.instance.dailyRewardData.CheckDownloadNext();
+				}
+			}
+			if (!processNextMessage)
+			{
+				yield return new WaitForSeconds(mMessageTimeout);
+			}
+		}
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	private bool ShowEvent()
+	{
+		bool result = false;
+		List<string> list = new List<string>();
+		foreach (KeyValuePair<string, DatabaseMessage> mMessage in mMessages)
+		{
+			DatabaseMessage value = mMessage.Value;
+			if (value.WasShown())
+			{
+				Debug.Log("Message Manager: Removing message, id = " + value.messageId + ", type " + value.messageType);
+				list.Add(value.messageId);
+				mShownMessages[GetMessageDatabaseKey(value)] = value;
+			}
+			else if (value.CanShow())
+			{
+				result = value.processNextMessage;
+				value.Show();
+				break;
+			}
+		}
+		foreach (string item in list)
+		{
+			mMessages.Remove(item);
+		}
+		return result;
+	}
 }

@@ -1,63 +1,173 @@
 using UnityEngine;
 
-public class ArmyPowerAnimation : MonoBehaviour
+public class ArmyPowerAnimation : Core_BaseScript
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Header("Animation Objects")]
+	public UISprite armyPowerIcon;
 
-	1. No dll files were provided to AssetRipper.
+	public UILabel armyPowerChange;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public UILabel armyPowerNewValue;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	[Header("Animation Settings")]
+	public float dur = 0.1f;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public float sizeOfIcon;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public Vector3 bottomPositionOfIcon;
 
-	3. Assembly Reconstruction has not been implemented.
+	public Vector3 upPositionOfIcon;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public Vector3 endPositionOfIcon;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public float sizeOfText;
 
-	4. This script is unnecessary.
+	public Vector3 rightPositionOfChange;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public Vector3 stopPositionOfChange;
 
-	5. Script Content Level 0
+	public Vector3 upPositionOfChange;
 
-		AssetRipper was set to not load any script information.
+	public Vector3 bottomPositionOfValue;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public float apChangeTextStartYDiff;
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	private Vector3 mTextSize;
 
-	7. An incorrect path was provided to AssetRipper.
+	private Vector3 mIconSize;
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	public void SetUpAnimation(float heightOfIcon, float textSize, Vector3 startBottom, Vector3 startLeft, Vector3 middleUp, Vector3 middleRight, Vector3 endBottom, Vector3 endMiddle, Vector3 endUp)
+	{
+		sizeOfIcon = heightOfIcon;
+		sizeOfText = textSize;
+		bottomPositionOfIcon = startBottom;
+		upPositionOfIcon = middleUp;
+		endPositionOfIcon = startLeft;
+		rightPositionOfChange = middleRight;
+		stopPositionOfChange = endMiddle;
+		upPositionOfChange = endUp;
+		bottomPositionOfValue = endBottom;
+	}
 
-	*/
+	public void StartAnimation(int changeNumber, int valueEnd, float speed = 0f)
+	{
+		if (speed >= 0f)
+		{
+			dur = speed;
+		}
+		StopAllAnimations();
+		if (changeNumber == 0)
+		{
+			return;
+		}
+		armyPowerChange.text = MiscTools.FormatMedalsDifference(changeNumber);
+		armyPowerChange.color = ((changeNumber >= 0) ? Color.white : Colours.redMedals);
+		armyPowerNewValue.text = MiscTools.FormatBigNumber(valueEnd);
+		TweenAlpha.Begin(armyPowerIcon.gameObject, dur * 3f, 0f, 1f).onFinished = null;
+		TweenPosition tweenPosition = TweenPosition.Begin(armyPowerIcon.gameObject, dur * 3f, bottomPositionOfIcon, upPositionOfIcon);
+		tweenPosition.method = UITweener.Method.EaseIn;
+		tweenPosition.onFinished = delegate
+		{
+			TweenPosition tweenPosition2 = TweenPosition.Begin(armyPowerIcon.gameObject, dur * 2f, endPositionOfIcon);
+			tweenPosition2.method = UITweener.Method.EaseOut;
+		};
+		TweenAlpha.Begin(armyPowerChange.gameObject, dur * 1f, 0f, 1f).onFinished = delegate
+		{
+			TweenPosition tweenPosition2 = TweenPosition.Begin(armyPowerChange.gameObject, dur * 3f, new Vector3(endPositionOfIcon.x, endPositionOfIcon.y - apChangeTextStartYDiff, rightPositionOfChange.z), rightPositionOfChange);
+			tweenPosition2.method = UITweener.Method.EaseIn;
+			tweenPosition2.onFinished = delegate
+			{
+				TweenPosition tweenPosition3 = TweenPosition.Begin(armyPowerChange.gameObject, dur * 2f, stopPositionOfChange);
+				tweenPosition3.method = UITweener.Method.EaseOut;
+				tweenPosition3.onFinished = delegate
+				{
+					TweenAlpha.Begin(armyPowerIcon.gameObject, dur * 3f, 1f, 1f).onFinished = delegate
+					{
+						DisplayEnd();
+					};
+				};
+			};
+		};
+	}
+
+	private void SpecialAnimation(int valueEnd)
+	{
+		armyPowerNewValue.text = MiscTools.FormatBigNumber(valueEnd);
+		TweenAlpha.Begin(armyPowerIcon.gameObject, dur * 3f, 0f, 1f).onFinished = null;
+		TweenPosition tweenPosition = TweenPosition.Begin(armyPowerIcon.gameObject, dur * 3f, bottomPositionOfIcon, upPositionOfIcon);
+		tweenPosition.method = UITweener.Method.EaseIn;
+		tweenPosition.onFinished = delegate
+		{
+			TweenPosition tweenPosition2 = TweenPosition.Begin(armyPowerIcon.gameObject, dur * 2f, endPositionOfIcon);
+			tweenPosition2.method = UITweener.Method.EaseOut;
+			TweenAlpha.Begin(armyPowerNewValue.gameObject, dur * 2f, 0f, 1f).onFinished = null;
+			TweenPosition tweenPosition3 = TweenPosition.Begin(armyPowerNewValue.gameObject, dur * 2f, bottomPositionOfValue, stopPositionOfChange);
+			tweenPosition3.onFinished = delegate
+			{
+				TweenAlpha.Begin(armyPowerIcon.gameObject, dur * 3f, 1f).onFinished = delegate
+				{
+					TweenAlpha.Begin(armyPowerIcon.gameObject, dur * 3f, 1f, 0f).onFinished = null;
+					TweenAlpha.Begin(armyPowerNewValue.gameObject, dur * 3f, 1f, 0f).onFinished = null;
+					Vector3 toScale = mIconSize * 2f;
+					toScale.z = 1f;
+					Vector3 toScale2 = new Vector3(sizeOfText * 2f, sizeOfText * 2f, 1f);
+					TweenScale.Begin(armyPowerIcon.gameObject, dur * 3f, mIconSize, toScale);
+					TweenScale.Begin(armyPowerNewValue.gameObject, dur * 3f, mTextSize, toScale2);
+				};
+			};
+		};
+	}
+
+	private void DisplayEnd()
+	{
+		TweenAlpha.Begin(armyPowerChange.gameObject, dur * 2f, 1f, 0f).onFinished = null;
+		TweenPosition.Begin(armyPowerChange.gameObject, dur * 2f, stopPositionOfChange, upPositionOfChange).onFinished = null;
+		TweenAlpha.Begin(armyPowerNewValue.gameObject, dur * 2f, 0f, 1f).onFinished = null;
+		TweenPosition tweenPosition = TweenPosition.Begin(armyPowerNewValue.gameObject, dur * 2f, bottomPositionOfValue, stopPositionOfChange);
+		tweenPosition.onFinished = delegate
+		{
+			TweenAlpha.Begin(armyPowerIcon.gameObject, dur * 3f, 1f).onFinished = delegate
+			{
+				TweenAlpha.Begin(armyPowerIcon.gameObject, dur * 3f, 1f, 0f).onFinished = null;
+				TweenAlpha.Begin(armyPowerNewValue.gameObject, dur * 3f, 1f, 0f).onFinished = null;
+				Vector3 toScale = mIconSize * 2f;
+				toScale.z = 1f;
+				Vector3 toScale2 = new Vector3(sizeOfText * 2f, sizeOfText * 2f, 1f);
+				TweenScale.Begin(armyPowerIcon.gameObject, dur * 3f, mIconSize, toScale);
+				TweenScale.Begin(armyPowerNewValue.gameObject, dur * 3f, mTextSize, toScale2);
+			};
+		};
+	}
+
+	public void StopAllAnimations()
+	{
+		InitializeAlphaZero();
+		TweenPosition.Begin(armyPowerIcon.gameObject, 0f, bottomPositionOfIcon).onFinished = null;
+		TweenPosition.Begin(armyPowerChange.gameObject, 0f, endPositionOfIcon).onFinished = null;
+		TweenPosition.Begin(armyPowerNewValue.gameObject, 0f, bottomPositionOfValue).onFinished = null;
+		SetStartSizeArmyPowerIcon();
+		SetStartSizeText();
+	}
+
+	public void InitializeAlphaZero()
+	{
+		TweenAlpha.Begin(armyPowerIcon.gameObject, 0f, 0f).onFinished = null;
+		TweenAlpha.Begin(armyPowerChange.gameObject, 0f, 0f).onFinished = null;
+		TweenAlpha.Begin(armyPowerNewValue.gameObject, 0f, 0f).onFinished = null;
+	}
+
+	private void SetStartSizeArmyPowerIcon()
+	{
+		mIconSize = new Vector3(sizeOfIcon, sizeOfIcon * 61f / 49f, 1f);
+		armyPowerIcon.transform.localScale = mIconSize;
+		TweenScale.Begin(armyPowerIcon.gameObject, 0f, mIconSize);
+	}
+
+	private void SetStartSizeText()
+	{
+		mTextSize = new Vector3(sizeOfText, sizeOfText, 1f);
+		armyPowerChange.transform.localScale = mTextSize;
+		armyPowerNewValue.transform.localScale = mTextSize;
+		TweenScale.Begin(armyPowerNewValue.gameObject, 0f, mTextSize);
+	}
 }

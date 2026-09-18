@@ -1,66 +1,101 @@
-using UnityEngine;
+using System;
+using System.Collections.Generic;
+using System.Text;
 
 namespace BestHTTP.Forms
 {
-	public class HTTPFormBase : MonoBehaviour
+public class HTTPFormBase
+{
+	private const int LongLength = 256;
+
+	public List<HTTPFieldData> Fields { get; set; }
+
+	public bool IsEmpty => Fields == null || Fields.Count == 0;
+
+	public bool IsChanged { get; protected set; }
+
+	public bool HasBinary { get; protected set; }
+
+	public bool HasLongValue { get; protected set; }
+
+	public void AddBinaryData(string fieldName, byte[] content)
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
+		AddBinaryData(fieldName, content, null, null);
 	}
+
+	public void AddBinaryData(string fieldName, byte[] content, string fileName)
+	{
+		AddBinaryData(fieldName, content, fileName, null);
+	}
+
+	public void AddBinaryData(string fieldName, byte[] content, string fileName, string mimeType)
+	{
+		if (Fields == null)
+		{
+			Fields = new List<HTTPFieldData>();
+		}
+		HTTPFieldData hTTPFieldData = new HTTPFieldData();
+		hTTPFieldData.Name = fieldName;
+		if (fileName == null)
+		{
+			hTTPFieldData.FileName = fieldName + ".dat";
+		}
+		else
+		{
+			hTTPFieldData.FileName = fileName;
+		}
+		if (mimeType == null)
+		{
+			hTTPFieldData.MimeType = "application/octet-stream";
+		}
+		else
+		{
+			hTTPFieldData.MimeType = mimeType;
+		}
+		hTTPFieldData.Binary = content;
+		Fields.Add(hTTPFieldData);
+		bool hasBinary = (IsChanged = true);
+		HasBinary = hasBinary;
+	}
+
+	public void AddField(string fieldName, string value)
+	{
+		AddField(fieldName, value, Encoding.UTF8);
+	}
+
+	public void AddField(string fieldName, string value, Encoding e)
+	{
+		if (Fields == null)
+		{
+			Fields = new List<HTTPFieldData>();
+		}
+		HTTPFieldData hTTPFieldData = new HTTPFieldData();
+		hTTPFieldData.Name = fieldName;
+		hTTPFieldData.FileName = null;
+		hTTPFieldData.MimeType = "text/plain; charset=\"" + e.WebName + "\"";
+		hTTPFieldData.Text = value;
+		hTTPFieldData.Encoding = e;
+		Fields.Add(hTTPFieldData);
+		IsChanged = true;
+		HasLongValue |= value.Length > 256;
+	}
+
+	public virtual void CopyFrom(HTTPFormBase fields)
+	{
+		Fields = new List<HTTPFieldData>(fields.Fields);
+		IsChanged = true;
+		HasBinary = fields.HasBinary;
+		HasLongValue = fields.HasLongValue;
+	}
+
+	public virtual void PrepareRequest(HTTPRequest request)
+	{
+		throw new NotImplementedException();
+	}
+
+	public virtual byte[] GetData()
+	{
+		throw new NotImplementedException();
+	}
+}
 }

@@ -1,63 +1,109 @@
+using Google2u;
 using UnityEngine;
 
-public class CardExplosivePistol : MonoBehaviour
+public class CardExplosivePistol : Card
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public int shotCount = 3;
 
-	1. No dll files were provided to AssetRipper.
+	public float deadRadius = 1.5f;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public float hurtRadius = 2.2f;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public Vector3 explosionCoef = new Vector3(5f, 8f, 5f);
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public float additionalUpForce = 5f;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public float playerDamageRatio = 0.2f;
 
-	3. Assembly Reconstruction has not been implemented.
+	private PlayerController mPlayer;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	private PlayerBot mBot;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	private bool mUsed;
 
-	4. This script is unnecessary.
+	private int mRemainingShots;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private int mRemainingExplosions;
 
-	5. Script Content Level 0
+	public override void UseCard(ICardManager cardManager, Fractions fraction)
+	{
+		mPlayer = PlayerController.GetPlayerOld(fraction);
+		mBot = mPlayer.playerBot;
+		cardManager.CardWasUsed(this, fraction);
+		mUsed = true;
+		mBot.explosivePistol = true;
+		Weapon.OnShotHit += WeaponOnShotHit;
+		Weapon.OnShotFired += WeaponOnShotFired;
+		mRemainingShots = shotCount;
+		mRemainingExplosions = shotCount;
+		if (PlayerController.currentPlayer == PlayerController.GetPlayerOld(fraction))
+		{
+			SetPistolIcon(active: true);
+		}
+	}
 
-		AssetRipper was set to not load any script information.
+	private void WeaponOnShotHit(Weapon weapon, Ammo ammo, Vector3 position, bool isNetworkCopy, DestroyableObject hit)
+	{
+		if (!isNetworkCopy && weapon.owner == mPlayer && weapon.weaponType == Weapon.WeaponType.Pistol)
+		{
+			float t = (float)mPlayer.playerProperties.level / (float)LevelManager.instance.maxDisplayLevel;
+			float num = Mathf.Lerp(Singleton<GameVariables>.instance.cardConstants.GetRow(CardConstants.rowIds.ExplosivePistolDamageMin).FLOATVALUE, Singleton<GameVariables>.instance.cardConstants.GetRow(CardConstants.rowIds.ExplosivePistolDamageMax).FLOATVALUE, t);
+			float damageAmount = 0.1f * num;
+			float fLOATVALUE = Singleton<GameVariables>.instance.cardConstants.GetRow(CardConstants.rowIds.ExplosivePistolPlayerBehindShieldConstant).FLOATVALUE;
+			Singleton<ExplosionManager>.instance.MissileExplode(position, num, damageAmount, deadRadius, hurtRadius, explosionCoef, additionalUpForce, mPlayer, weapon, fLOATVALUE, Explosion.ExplosionType.Small);
+			mRemainingExplosions--;
+			if (mRemainingShots <= 0)
+			{
+				DisableEffect();
+			}
+		}
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public void WeaponOnShotFired(Weapon weapon, Vector3 position)
+	{
+		if (weapon.weaponType == Weapon.WeaponType.Pistol && weapon.owner == mPlayer)
+		{
+			mRemainingShots--;
+			if (mRemainingShots < 0)
+			{
+				DisableEffect();
+			}
+		}
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	private void SetPistolIcon(bool active)
+	{
+		foreach (InventoryItem invItem in GuiElementSingle<InventoryGuiElement>.instance.invItems)
+		{
+			PlayerWeapon playerWeapon = invItem.GetPlayerWeapon();
+			if (playerWeapon != null && playerWeapon.weapon.weaponType == Weapon.WeaponType.Pistol)
+			{
+				invItem.explosivePistolIcon.gameObject.SetActive(active);
+			}
+		}
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	public override void DisconnectEvents()
+	{
+		base.DisconnectEvents();
+		if (mUsed && mPlayer.mPhotonView.isMine)
+		{
+			DisableEffect();
+		}
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	private void DisableEffect()
+	{
+		if (mUsed)
+		{
+			mUsed = false;
+			mBot.explosivePistol = false;
+			Weapon.OnShotHit -= WeaponOnShotHit;
+			Weapon.OnShotFired -= WeaponOnShotFired;
+			if (PlayerController.currentPlayer == mPlayer)
+			{
+				SetPistolIcon(active: false);
+			}
+		}
+	}
 }

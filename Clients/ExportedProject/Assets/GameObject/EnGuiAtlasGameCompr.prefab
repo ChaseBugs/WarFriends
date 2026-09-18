@@ -39,6 +39,233 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ea9f040b2b6bd4bf069e31e0ace12f73, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  material: {fileID: 2100000, guid: 28f6a4b6e7332f541a2f3ab91a08e77d, type: 2}
+  sprites:
+  - name: bloodblur
+    outer:
+      serializedVersion: 2
+      x: 0
+      y: 1448
+      width: 800
+      height: 600
+    inner:
+      serializedVersion: 2
+      x: 0
+      y: 1448
+      width: 800
+      height: 600
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-tilegfx-tutorial
+    outer:
+      serializedVersion: 2
+      x: 805
+      y: 1472
+      width: 549
+      height: 576
+    inner:
+      serializedVersion: 2
+      x: 805
+      y: 1472
+      width: 549
+      height: 576
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-label-overtime
+    outer:
+      serializedVersion: 2
+      x: 805
+      y: 1225
+      width: 1206
+      height: 242
+    inner:
+      serializedVersion: 2
+      x: 805
+      y: 1225
+      width: 1206
+      height: 242
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-label-eliminated
+    outer:
+      serializedVersion: 2
+      x: 0
+      y: 1025
+      width: 1072
+      height: 195
+    inner:
+      serializedVersion: 2
+      x: 0
+      y: 1025
+      width: 1072
+      height: 195
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-label-fight
+    outer:
+      serializedVersion: 2
+      x: 1077
+      y: 978
+      width: 747
+      height: 242
+    inner:
+      serializedVersion: 2
+      x: 1077
+      y: 978
+      width: 747
+      height: 242
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: bullettime-overlay
+    outer:
+      serializedVersion: 2
+      x: 1359
+      y: 1648
+      width: 400
+      height: 400
+    inner:
+      serializedVersion: 2
+      x: 1359
+      y: 1648
+      width: 400
+      height: 400
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-label-lose
+    outer:
+      serializedVersion: 2
+      x: 0
+      y: 778
+      width: 637
+      height: 242
+    inner:
+      serializedVersion: 2
+      x: 0
+      y: 778
+      width: 637
+      height: 242
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-label-you-red
+    outer:
+      serializedVersion: 2
+      x: 0
+      y: 531
+      width: 533
+      height: 242
+    inner:
+      serializedVersion: 2
+      x: 0
+      y: 531
+      width: 533
+      height: 242
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-label-you-blue
+    outer:
+      serializedVersion: 2
+      x: 642
+      y: 731
+      width: 533
+      height: 242
+    inner:
+      serializedVersion: 2
+      x: 642
+      y: 731
+      width: 533
+      height: 242
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-label-won
+    outer:
+      serializedVersion: 2
+      x: 1180
+      y: 733
+      width: 488
+      height: 240
+    inner:
+      serializedVersion: 2
+      x: 1180
+      y: 733
+      width: 488
+      height: 240
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: game-label-vs
+    outer:
+      serializedVersion: 2
+      x: 1673
+      y: 733
+      width: 352
+      height: 240
+    inner:
+      serializedVersion: 2
+      x: 1673
+      y: 733
+      width: 352
+      height: 240
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  - name: glow
+    outer:
+      serializedVersion: 2
+      x: 1359
+      y: 1534
+      width: 500
+      height: 109
+    inner:
+      serializedVersion: 2
+      x: 1359
+      y: 1534
+      width: 500
+      height: 109
+    rotated: 0
+    paddingLeft: 0
+    paddingRight: 0
+    paddingTop: 0
+    paddingBottom: 0
+  mCoordinates: 0
+  mPixelSize: 1
+  mReplacement: {fileID: 0}
+  pngPath: EnGuiAtlasGameCompr
+  pngHalfPath:
+  replaceTexture: {fileID: 2800000, guid: 1460bc78af3a4a046bd449950381d622, type: 3}
+  useBinaryData: 0
+  textureWidth: 2048
+  textureHeight: 2048
 --- !u!1001 &100100000
 Prefab:
   serializedVersion: 2

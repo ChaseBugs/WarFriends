@@ -1,66 +1,90 @@
-using UnityEngine;
+using System;
+using System.Runtime.InteropServices;
 
 namespace GooglePlayGames.Native.Cwrapper
 {
-	public class QuestManager : MonoBehaviour
-	{
-		/*
-		Dummy class. This could have happened for several reasons:
+internal static class QuestManager
+{
+	internal delegate void FetchCallback(IntPtr arg0, IntPtr arg1);
 
-		1. No dll files were provided to AssetRipper.
+	internal delegate void FetchListCallback(IntPtr arg0, IntPtr arg1);
 
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
+	internal delegate void AcceptCallback(IntPtr arg0, IntPtr arg1);
 
-		2. Incorrect dll files were provided to AssetRipper.
+	internal delegate void ClaimMilestoneCallback(IntPtr arg0, IntPtr arg1);
 
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
+	internal delegate void QuestUICallback(IntPtr arg0, IntPtr arg1);
 
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	[DllImport("gpg")]
+	internal static extern void QuestManager_FetchList(HandleRef self, Types.DataSource data_source, int fetch_flags, FetchListCallback callback, IntPtr callback_arg);
 
-		3. Assembly Reconstruction has not been implemented.
+	[DllImport("gpg")]
+	internal static extern void QuestManager_Accept(HandleRef self, IntPtr quest, AcceptCallback callback, IntPtr callback_arg);
 
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
+	[DllImport("gpg")]
+	internal static extern void QuestManager_ShowAllUI(HandleRef self, QuestUICallback callback, IntPtr callback_arg);
 
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
+	[DllImport("gpg")]
+	internal static extern void QuestManager_ShowUI(HandleRef self, IntPtr quest, QuestUICallback callback, IntPtr callback_arg);
 
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
+	[DllImport("gpg")]
+	internal static extern void QuestManager_ClaimMilestone(HandleRef self, IntPtr milestone, ClaimMilestoneCallback callback, IntPtr callback_arg);
 
-		5. Script Content Level 0
+	[DllImport("gpg")]
+	internal static extern void QuestManager_Fetch(HandleRef self, Types.DataSource data_source, string quest_id, FetchCallback callback, IntPtr callback_arg);
 
-			AssetRipper was set to not load any script information.
+	[DllImport("gpg")]
+	internal static extern void QuestManager_FetchResponse_Dispose(HandleRef self);
 
-		6. Cpp2IL failed to decompile Il2Cpp data
+	[DllImport("gpg")]
+	internal static extern CommonErrorStatus.ResponseStatus QuestManager_FetchResponse_GetStatus(HandleRef self);
 
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	[DllImport("gpg")]
+	internal static extern IntPtr QuestManager_FetchResponse_GetData(HandleRef self);
 
-		7. An incorrect path was provided to AssetRipper.
+	[DllImport("gpg")]
+	internal static extern void QuestManager_FetchListResponse_Dispose(HandleRef self);
 
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
+	[DllImport("gpg")]
+	internal static extern CommonErrorStatus.ResponseStatus QuestManager_FetchListResponse_GetStatus(HandleRef self);
 
-		*/
-	}
+	[DllImport("gpg")]
+	internal static extern UIntPtr QuestManager_FetchListResponse_GetData_Length(HandleRef self);
+
+	[DllImport("gpg")]
+	internal static extern IntPtr QuestManager_FetchListResponse_GetData_GetElement(HandleRef self, UIntPtr index);
+
+	[DllImport("gpg")]
+	internal static extern void QuestManager_AcceptResponse_Dispose(HandleRef self);
+
+	[DllImport("gpg")]
+	internal static extern CommonErrorStatus.QuestAcceptStatus QuestManager_AcceptResponse_GetStatus(HandleRef self);
+
+	[DllImport("gpg")]
+	internal static extern IntPtr QuestManager_AcceptResponse_GetAcceptedQuest(HandleRef self);
+
+	[DllImport("gpg")]
+	internal static extern void QuestManager_ClaimMilestoneResponse_Dispose(HandleRef self);
+
+	[DllImport("gpg")]
+	internal static extern CommonErrorStatus.QuestClaimMilestoneStatus QuestManager_ClaimMilestoneResponse_GetStatus(HandleRef self);
+
+	[DllImport("gpg")]
+	internal static extern IntPtr QuestManager_ClaimMilestoneResponse_GetClaimedMilestone(HandleRef self);
+
+	[DllImport("gpg")]
+	internal static extern IntPtr QuestManager_ClaimMilestoneResponse_GetQuest(HandleRef self);
+
+	[DllImport("gpg")]
+	internal static extern void QuestManager_QuestUIResponse_Dispose(HandleRef self);
+
+	[DllImport("gpg")]
+	internal static extern CommonErrorStatus.UIStatus QuestManager_QuestUIResponse_GetStatus(HandleRef self);
+
+	[DllImport("gpg")]
+	internal static extern IntPtr QuestManager_QuestUIResponse_GetAcceptedQuest(HandleRef self);
+
+	[DllImport("gpg")]
+	internal static extern IntPtr QuestManager_QuestUIResponse_GetMilestoneToClaim(HandleRef self);
+}
 }

@@ -1,63 +1,154 @@
+using Google2u;
 using UnityEngine;
 
-public class AICar : MonoBehaviour
+[RequireComponent(typeof(CarController))]
+public class AICar : AICarBase<CarBehaviour>, IFraction, IGameMainEntity
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public TurretWeaponBasic turret;
 
-	1. No dll files were provided to AssetRipper.
+	public TurretWeaponBasic cannon;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	private EnemyController soldier;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	protected bool mEnemyKilled;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	private bool mIsFirstEnemy;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	private EnemyPointVehicle enemyPoint;
 
-	3. Assembly Reconstruction has not been implemented.
+	public override void UpgradesLoaded()
+	{
+		base.UpgradesLoaded();
+		mDestroyableObject.maxHealth = base.currentBeh.carBehaviourDefinititon.health;
+		mDestroyableObject.shotCoeficient = Singleton<GameVariables>.instance.constants.GetRow(Constants.rowIds.ArmoredVehicleShotCoeficient).FLOATVALUE;
+		mDestroyableObject.RefillOffline();
+		BulletSetup bulletSetup = (BulletSetup)turret.batchedWeapon.weapon.ammoSetup;
+		bulletSetup.damageAmount = base.currentBeh.carBehaviourDefinititon.damage;
+		bulletSetup.damageToPlayerCoeficient = behaviour.upgradeSlots.playerDamageRatio;
+		bulletSetup.damageToPlayerOvertimeCoeficient = behaviour.upgradeSlots.playerDamageOvertimeRatio;
+		bulletSetup.speed = base.currentBeh.carBehaviourDefinititon.shotSpeed;
+		turret.batchSizeMax = base.currentBeh.carBehaviourDefinititon.fireBatchSizeMax;
+		turret.batchSizeMin = base.currentBeh.carBehaviourDefinititon.fireBatchSizeMin;
+		turret.minShootTime = base.currentBeh.carBehaviourDefinititon.minShootTime;
+		turret.maxShootTime = base.currentBeh.carBehaviourDefinititon.maxShootTime;
+		turret.realShotProbability = base.currentBeh.carBehaviourDefinititon.probabilityOfRealShot;
+		turret.playerShieldProbability = behaviour.upgradeSlots.shieldHitProbability;
+		cannon.gameObject.SetActive(base.hasSpecial);
+		MissileSetup missileSetup = (MissileSetup)cannon.batchedWeapon.weapon.ammoSetup;
+		missileSetup.damageAmount = base.currentBeh.carBehaviourDefinititon.special * 0.1f;
+		missileSetup.explodeDamageAmount = base.currentBeh.carBehaviourDefinititon.special;
+		missileSetup.damageToPlayerCoeficient = behaviour.upgradeSlots.playerDamageRatio;
+		missileSetup.damageToPlayerOvertimeCoeficient = behaviour.upgradeSlots.playerDamageOvertimeRatio;
+		cannon.batchSizeMax = 1;
+		cannon.batchSizeMin = 1;
+		cannon.minShootTime = 5f;
+		cannon.maxShootTime = 15f;
+		cannon.realShotProbability = 1f;
+	}
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public override void UpdatePreview(bool inGame)
+	{
+		base.UpdatePreview(inGame);
+		if (inGame)
+		{
+			ChangeWheels(0.7f, 0.16f);
+		}
+		else
+		{
+			ChangeWheels(0f, 0f);
+		}
+		cannon.gameObject.SetActive(base.hasSpecial);
+		GeneratePreviewEnemy(Singleton<LevelBehaviourManager>.instance.levelBehaviours[0].behaviour, enemyPointVehicle, disableWeapon: true);
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public override void OnInstancied()
+	{
+		base.OnInstancied();
+		turret.ResetAiming();
+		cannon.ResetAiming();
+		if (!isPrewiev)
+		{
+			if (photonView.isMine)
+			{
+				GenerateEnemy(isFirst: true);
+				SetTarget(spawnedFrom.waypointCircuit, ((SpawnPointCar)spawnedFrom).target);
+			}
+			ChangeWheels(0.7f, 0.16f);
+			turret.enabled = true;
+			turret.Reset();
+			cannon.Reset();
+		}
+	}
 
-	4. This script is unnecessary.
+	protected override void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
+	{
+		base.OnPhotonSerializeView(stream, info);
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private void SoldierOnKilled(IGameMainEntity gameMainEntity, DestroyableObject.DamageInfo arg3)
+	{
+		gameMainEntity.Killed -= SoldierOnKilled;
+		if (gameMainEntity == soldier && !mEnemyKilled && base.isInstantiated)
+		{
+			soldier.ClearEnemyPoint();
+			mEnemyKilled = true;
+			EnemyController enemyController = (EnemyController)gameMainEntity;
+			enemyController.enemyPoint = null;
+			if (mIsFirstEnemy && Singleton<GameController>.instance.isMission)
+			{
+				mDriving = true;
+				brakeCondition = BrakeCondition.TargetDirectionDifference;
+				obstacleCollider.gameObject.SetActive(value: false);
+			}
+			turret.enabled = false;
+			turret.Reset();
+			InvokeAfter(delegate
+			{
+				GenerateEnemy(isFirst: false);
+			}, behaviour.upgradeSlots.soldierRespawnRate);
+		}
+	}
 
-	5. Script Content Level 0
+	protected override void OnKilled(DestroyableObject.DamageInfo arg2)
+	{
+		DestroySoldier(enemyPointVehicle, arg2, SoldierOnKilled);
+		base.OnKilled(arg2);
+	}
 
-		AssetRipper was set to not load any script information.
+	private void GenerateEnemy(bool isFirst)
+	{
+		enemyPoint = enemyPoint ?? GetComponentInChildren<EnemyPointVehicle>();
+		soldier = (EnemyController)Singleton<LevelBehaviourManager>.instance.GenerateNewEnemy(Singleton<LevelBehaviourManager>.instance.levelBehaviours[0].behaviour);
+		mIsFirstEnemy = isFirst;
+		enemyPoint.enemyAtPoint = null;
+		if (soldier != null)
+		{
+			soldier.DisableSpawn();
+			int actualLevelForIndex = behaviour.upgradeSlots.GetActualLevelForIndex(unitUpgrades.slotUpgradeindex);
+			soldier.SpawnByCard((float)actualLevelForIndex / (float)behaviour.upgradeSlots.maxLevelOfUnit, behaviour.cardId);
+			SpawningManager.instance.Spawn(soldier, fraction, useEnergy: false, enemyPoint.position, startBehaviour: false);
+			enemyPoint.enemyAtPoint = soldier;
+			soldier.enemyPoint = enemyPoint;
+			soldier.StartEnemyBehaviour(EnemyController.EnemyAIState.Vehicle);
+			soldier.SetMaxHealthAndRefill(behaviour.upgradeSlots.GetSoldierHpInMechanic(unitUpgrades.slotUpgradeindex) * unitUpgrades.scaleHp);
+			soldier.behaviour.botProperties.dangerCoeficient = preparedBehaviour.dangerCoef - 1;
+			VehicleBehaviourDefinititon carBehaviourDefinititon = base.currentBeh.carBehaviourDefinititon;
+			soldier.soldierBehaviour.soldierBehaviourDefinititon.minShootTime = carBehaviourDefinititon.minShootTime;
+			soldier.soldierBehaviour.soldierBehaviourDefinititon.maxShootTime = carBehaviourDefinititon.maxShootTime;
+			soldier.Killed += SoldierOnKilled;
+			mEnemyKilled = false;
+			turret.enabled = true;
+			turret.Reset();
+		}
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
-
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public override void DestroyPooled()
+	{
+		base.DestroyPooled();
+		if (soldier != null)
+		{
+			soldier.Killed -= SoldierOnKilled;
+		}
+		ClearEnemyPoint(enemyPoint, SoldierOnKilled);
+	}
 }

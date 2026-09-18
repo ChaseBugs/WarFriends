@@ -1,63 +1,137 @@
+using ExitGames.Client.Photon;
 using UnityEngine;
 
-public class CustomTypes : MonoBehaviour
+internal static class CustomTypes
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public static readonly byte[] memVector3 = new byte[12];
 
-	1. No dll files were provided to AssetRipper.
+	public static readonly byte[] memVector2 = new byte[8];
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public static readonly byte[] memQuarternion = new byte[16];
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public static readonly byte[] memPlayer = new byte[4];
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	internal static void Register()
+	{
+		PhotonPeer.RegisterType(typeof(Vector2), 87, SerializeVector2, DeserializeVector2);
+		PhotonPeer.RegisterType(typeof(Vector3), 86, SerializeVector3, DeserializeVector3);
+		PhotonPeer.RegisterType(typeof(Quaternion), 81, SerializeQuaternion, DeserializeQuaternion);
+		PhotonPeer.RegisterType(typeof(PhotonPlayer), 80, SerializePhotonPlayer, DeserializePhotonPlayer);
+	}
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	private static short SerializeVector3(StreamBuffer outStream, object customobject)
+	{
+		Vector3 vector = (Vector3)customobject;
+		int targetOffset = 0;
+		lock (memVector3)
+		{
+			byte[] array = memVector3;
+			Protocol.Serialize(vector.x, array, ref targetOffset);
+			Protocol.Serialize(vector.y, array, ref targetOffset);
+			Protocol.Serialize(vector.z, array, ref targetOffset);
+			outStream.Write(array, 0, 12);
+		}
+		return 12;
+	}
 
-	3. Assembly Reconstruction has not been implemented.
+	private static object DeserializeVector3(StreamBuffer inStream, short length)
+	{
+		Vector3 vector = default(Vector3);
+		lock (memVector3)
+		{
+			inStream.Read(memVector3, 0, 12);
+			int offset = 0;
+			Protocol.Deserialize(out vector.x, memVector3, ref offset);
+			Protocol.Deserialize(out vector.y, memVector3, ref offset);
+			Protocol.Deserialize(out vector.z, memVector3, ref offset);
+		}
+		return vector;
+	}
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	private static short SerializeVector2(StreamBuffer outStream, object customobject)
+	{
+		Vector2 vector = (Vector2)customobject;
+		lock (memVector2)
+		{
+			byte[] array = memVector2;
+			int targetOffset = 0;
+			Protocol.Serialize(vector.x, array, ref targetOffset);
+			Protocol.Serialize(vector.y, array, ref targetOffset);
+			outStream.Write(array, 0, 8);
+		}
+		return 8;
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	private static object DeserializeVector2(StreamBuffer inStream, short length)
+	{
+		Vector2 vector = default(Vector2);
+		lock (memVector2)
+		{
+			inStream.Read(memVector2, 0, 8);
+			int offset = 0;
+			Protocol.Deserialize(out vector.x, memVector2, ref offset);
+			Protocol.Deserialize(out vector.y, memVector2, ref offset);
+		}
+		return vector;
+	}
 
-	4. This script is unnecessary.
+	private static short SerializeQuaternion(StreamBuffer outStream, object customobject)
+	{
+		Quaternion quaternion = (Quaternion)customobject;
+		lock (memQuarternion)
+		{
+			byte[] array = memQuarternion;
+			int targetOffset = 0;
+			Protocol.Serialize(quaternion.w, array, ref targetOffset);
+			Protocol.Serialize(quaternion.x, array, ref targetOffset);
+			Protocol.Serialize(quaternion.y, array, ref targetOffset);
+			Protocol.Serialize(quaternion.z, array, ref targetOffset);
+			outStream.Write(array, 0, 16);
+		}
+		return 16;
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private static object DeserializeQuaternion(StreamBuffer inStream, short length)
+	{
+		Quaternion quaternion = default(Quaternion);
+		lock (memQuarternion)
+		{
+			inStream.Read(memQuarternion, 0, 16);
+			int offset = 0;
+			Protocol.Deserialize(out quaternion.w, memQuarternion, ref offset);
+			Protocol.Deserialize(out quaternion.x, memQuarternion, ref offset);
+			Protocol.Deserialize(out quaternion.y, memQuarternion, ref offset);
+			Protocol.Deserialize(out quaternion.z, memQuarternion, ref offset);
+		}
+		return quaternion;
+	}
 
-	5. Script Content Level 0
+	private static short SerializePhotonPlayer(StreamBuffer outStream, object customobject)
+	{
+		int iD = ((PhotonPlayer)customobject).ID;
+		lock (memPlayer)
+		{
+			byte[] array = memPlayer;
+			int targetOffset = 0;
+			Protocol.Serialize(iD, array, ref targetOffset);
+			outStream.Write(array, 0, 4);
+			return 4;
+		}
+	}
 
-		AssetRipper was set to not load any script information.
-
-	6. Cpp2IL failed to decompile Il2Cpp data
-
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	private static object DeserializePhotonPlayer(StreamBuffer inStream, short length)
+	{
+		int value;
+		lock (memPlayer)
+		{
+			inStream.Read(memPlayer, 0, length);
+			int offset = 0;
+			Protocol.Deserialize(out value, memPlayer, ref offset);
+		}
+		if (PhotonNetwork.networkingPeer.mActors.ContainsKey(value))
+		{
+			return PhotonNetwork.networkingPeer.mActors[value];
+		}
+		return null;
+	}
 }

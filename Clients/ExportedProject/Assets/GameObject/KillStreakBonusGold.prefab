@@ -39,6 +39,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3c07230250db3f77a3b97017c4be2893, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  dictionaryTranslationId: ID_BONUS-GOLD
+  bonusName: GOLD
+  iconName: game-scorestreak-ico-gold
+  bgSuffix: -gold
 --- !u!1001 &100100000
 Prefab:
   serializedVersion: 2

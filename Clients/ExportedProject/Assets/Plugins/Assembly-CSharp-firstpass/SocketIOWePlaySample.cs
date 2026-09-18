@@ -1,63 +1,262 @@
+using System;
+using System.Collections.Generic;
+using BestHTTP.Examples;
+using BestHTTP.SocketIO;
 using UnityEngine;
 
-public class SocketIOWePlaySample : MonoBehaviour
+public sealed class SocketIOWePlaySample : MonoBehaviour
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	private enum States
+	{
+		Connecting,
+		WaitForNick,
+		Joined
+	}
 
-	1. No dll files were provided to AssetRipper.
+	private const float ratio = 1.5f;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	private string[] controls = new string[8] { "left", "right", "a", "b", "up", "down", "select", "start" };
 
-	2. Incorrect dll files were provided to AssetRipper.
+	private int MaxMessages = 50;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	private States State;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	private Socket Socket;
 
-	3. Assembly Reconstruction has not been implemented.
+	private string Nick = string.Empty;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	private string messageToSend = string.Empty;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	private int connections;
 
-	4. This script is unnecessary.
+	private List<string> messages = new List<string>();
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private Vector2 scrollPos;
 
-	5. Script Content Level 0
+	private Texture2D FrameTexture;
 
-		AssetRipper was set to not load any script information.
+	private void Start()
+	{
+		SocketOptions socketOptions = new SocketOptions();
+		socketOptions.AutoConnect = false;
+		SocketManager socketManager = new SocketManager(new Uri("http://io.weplay.io/socket.io/"), socketOptions);
+		Socket = socketManager.Socket;
+		Socket.On(SocketIOEventTypes.Connect, OnConnected);
+		Socket.On("joined", OnJoined);
+		Socket.On("connections", OnConnections);
+		Socket.On("join", OnJoin);
+		Socket.On("move", OnMove);
+		Socket.On("message", OnMessage);
+		Socket.On("reload", OnReload);
+		Socket.On("frame", OnFrame, autoDecodePayload: false);
+		Socket.On(SocketIOEventTypes.Error, OnError);
+		socketManager.Open();
+		State = States.Connecting;
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	private void OnDestroy()
+	{
+		Socket.Manager.Close();
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	private void Update()
+	{
+		if (Input.GetKeyDown(KeyCode.Escape))
+		{
+			SampleSelector.SelectedSample.DestroyUnityObject();
+		}
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	private void OnGUI()
+	{
+		switch (State)
+		{
+		case States.Connecting:
+			GUIHelper.DrawArea(GUIHelper.ClientArea, drawHeader: true, delegate
+			{
+				GUILayout.BeginVertical();
+				GUILayout.FlexibleSpace();
+				GUIHelper.DrawCenteredText("Connecting to the server...");
+				GUILayout.FlexibleSpace();
+				GUILayout.EndVertical();
+			});
+			break;
+		case States.WaitForNick:
+			GUIHelper.DrawArea(GUIHelper.ClientArea, drawHeader: true, delegate
+			{
+				DrawLoginScreen();
+			});
+			break;
+		case States.Joined:
+			GUIHelper.DrawArea(GUIHelper.ClientArea, drawHeader: true, delegate
+			{
+				if (FrameTexture != null)
+				{
+					GUILayout.Box(FrameTexture);
+				}
+				DrawControls();
+				DrawChat();
+			});
+			break;
+		}
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	private void DrawLoginScreen()
+	{
+		GUILayout.BeginVertical();
+		GUILayout.FlexibleSpace();
+		GUIHelper.DrawCenteredText("What's your nickname?");
+		Nick = GUILayout.TextField(Nick);
+		if (GUILayout.Button("Join"))
+		{
+			Join();
+		}
+		GUILayout.FlexibleSpace();
+		GUILayout.EndVertical();
+	}
 
-	*/
+	private void DrawControls()
+	{
+		GUILayout.BeginHorizontal();
+		GUILayout.Label("Controls:");
+		for (int i = 0; i < controls.Length; i++)
+		{
+			if (GUILayout.Button(controls[i]))
+			{
+				Socket.Emit("move", controls[i]);
+			}
+		}
+		GUILayout.Label(" Connections: " + connections);
+		GUILayout.EndHorizontal();
+	}
+
+	private void DrawChat(bool withInput = true)
+	{
+		GUILayout.BeginVertical();
+		scrollPos = GUILayout.BeginScrollView(scrollPos, false, false);
+		for (int i = 0; i < messages.Count; i++)
+		{
+			GUILayout.Label(messages[i], GUILayout.MinWidth(Screen.width));
+		}
+		GUILayout.EndScrollView();
+		if (withInput)
+		{
+			GUILayout.Label("Your message: ");
+			GUILayout.BeginHorizontal();
+			messageToSend = GUILayout.TextField(messageToSend);
+			if (GUILayout.Button("Send", GUILayout.MaxWidth(100f)))
+			{
+				SendMessage();
+			}
+			GUILayout.EndHorizontal();
+		}
+		GUILayout.EndVertical();
+	}
+
+	private void AddMessage(string msg)
+	{
+		messages.Insert(0, msg);
+		if (messages.Count > MaxMessages)
+		{
+			messages.RemoveRange(MaxMessages, messages.Count - MaxMessages);
+		}
+	}
+
+	private void SendMessage()
+	{
+		if (!string.IsNullOrEmpty(messageToSend))
+		{
+			Socket.Emit("message", messageToSend);
+			AddMessage($"{Nick}: {messageToSend}");
+			messageToSend = string.Empty;
+		}
+	}
+
+	private void Join()
+	{
+		PlayerPrefs.SetString("Nick", Nick);
+		Socket.Emit("join", Nick);
+	}
+
+	private void Reload()
+	{
+		FrameTexture = null;
+		if (Socket != null)
+		{
+			Socket.Manager.Close();
+			Socket = null;
+			Start();
+		}
+	}
+
+	private void OnConnected(Socket socket, Packet packet, params object[] args)
+	{
+		if (PlayerPrefs.HasKey("Nick"))
+		{
+			Nick = PlayerPrefs.GetString("Nick", "NickName");
+			Join();
+		}
+		else
+		{
+			State = States.WaitForNick;
+		}
+		AddMessage("connected");
+	}
+
+	private void OnJoined(Socket socket, Packet packet, params object[] args)
+	{
+		State = States.Joined;
+	}
+
+	private void OnReload(Socket socket, Packet packet, params object[] args)
+	{
+		Reload();
+	}
+
+	private void OnMessage(Socket socket, Packet packet, params object[] args)
+	{
+		if (args.Length == 1)
+		{
+			AddMessage(args[0] as string);
+		}
+		else
+		{
+			AddMessage($"{args[1]}: {args[0]}");
+		}
+	}
+
+	private void OnMove(Socket socket, Packet packet, params object[] args)
+	{
+		AddMessage($"{args[1]} pressed {args[0]}");
+	}
+
+	private void OnJoin(Socket socket, Packet packet, params object[] args)
+	{
+		string arg = ((args.Length <= 1) ? string.Empty : $"({args[1]})");
+		AddMessage($"{args[0]} joined {arg}");
+	}
+
+	private void OnConnections(Socket socket, Packet packet, params object[] args)
+	{
+		connections = Convert.ToInt32(args[0]);
+	}
+
+	private void OnFrame(Socket socket, Packet packet, params object[] args)
+	{
+		if (State == States.Joined)
+		{
+			if (FrameTexture == null)
+			{
+				FrameTexture = new Texture2D(0, 0, TextureFormat.RGBA32, mipChain: false);
+				FrameTexture.filterMode = FilterMode.Point;
+			}
+			byte[] data = packet.Attachments[0];
+			FrameTexture.LoadImage(data);
+		}
+	}
+
+	private void OnError(Socket socket, Packet packet, params object[] args)
+	{
+		AddMessage($"--ERROR - {args[0].ToString()}");
+	}
 }

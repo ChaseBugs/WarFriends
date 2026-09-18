@@ -1,63 +1,187 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
-public class ArenaOpenedDialog : MonoBehaviour
+public class ArenaOpenedDialog : GuiElementSingle<ArenaOpenedDialog>, IGuiDialog
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Header("Top")]
+	public GameObject backButton;
 
-	1. No dll files were provided to AssetRipper.
+	public UILabel title;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public GameObject closeButton;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	[Header("Left")]
+	public UILabel arenaTimeLabel;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	[Header("Middle")]
+	public UISprite elitePartIcon;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public UILabel elitePartsHint;
 
-	3. Assembly Reconstruction has not been implemented.
+	[Header("Right")]
+	public WararenaRewardRecord wararenaRewardRecordPrefab;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public UIDraggablePanel rewardsDraggablePanel;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public UIPooledGrid rewardGrid;
 
-	4. This script is unnecessary.
+	[Header("Bottom")]
+	public GameObject bottomButton;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public UILabel bottomButtonLabel;
 
-	5. Script Content Level 0
+	private float mTimer;
 
-		AssetRipper was set to not load any script information.
+	private List<WarArenaReward> mRewards;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	private LevelBehaviour mUnit;
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	private bool mArenaHasNotStarted;
 
-	7. An incorrect path was provided to AssetRipper.
+	public void ShowDialog()
+	{
+		Singleton<GuiManager>.instance.ShowDialog(this, 0f);
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	public void ChangeUnit(LevelBehaviour unit)
+	{
+		mUnit = unit;
+		SetUnitHint();
+		if (isShowed)
+		{
+			Singleton<LootBoxCameraArena>.instance.DisplayModel(mUnit, isLootboxReward: false);
+		}
+	}
 
-	*/
+	public override void InitControls()
+	{
+		UIEventListener uIEventListener = UIEventListener.Get(backButton);
+		uIEventListener.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener.onClick, new UIEventListener.VoidDelegate(CloseClick));
+		UIEventListener uIEventListener2 = UIEventListener.Get(closeButton);
+		uIEventListener2.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener2.onClick, new UIEventListener.VoidDelegate(CloseClick));
+		UIEventListener uIEventListener3 = UIEventListener.Get(bottomButton);
+		uIEventListener3.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener3.onClick, new UIEventListener.VoidDelegate(ArenaClick));
+	}
+
+	private void CloseClick(GameObject go)
+	{
+		if (base.isFullyShowed)
+		{
+			HideDialog();
+		}
+	}
+
+	private void ArenaClick(GameObject go)
+	{
+		if (base.isFullyShowed)
+		{
+			if (WarArena.instance.isArenaTicketBought)
+			{
+				GuiScreenSingle<ArenaScreen>.instance.ShowWarArena(ArenaScreen.ArenaScreenMode.MainArena);
+			}
+			else
+			{
+				GuiScreenSingle<ArenaScreen>.instance.ShowWarArena(ArenaScreen.ArenaScreenMode.EnterArena);
+			}
+			HideDialog();
+		}
+	}
+
+	public override void InitGUIValues()
+	{
+		mUnit = WarArena.instance.warArenaConfig.doubleDropUnit;
+		mArenaHasNotStarted = WarArena.instance.warArenaConfig.isBeforeArenaStart;
+		title.text = Localization.Localize((!mArenaHasNotStarted) ? "ID_ARENAISOPEN" : "ID_ARENAWILLOPENSOON");
+		bottomButtonLabel.text = Localization.Localize((!mArenaHasNotStarted) ? "ID_TAKEMETHERE" : "ID_MOREINFO");
+		SetUnitHint();
+		mRewards = WarArena.instance.warArenaConfig.warArenaRewards;
+		rewardGrid.MakeEmpty();
+		rewardGrid.init(mRewards.Count, RewardInstantiate, RewardFree, rewardsDraggablePanel);
+		rewardsDraggablePanel.AlignToPos(instant: true);
+		float seconds = fadeInTime * 0.5f;
+		InvokeAfter(delegate
+		{
+			Singleton<LootBoxCameraArena>.instance.DisplayModel(mUnit, isLootboxReward: false);
+		}, seconds);
+	}
+
+	public override void DoBeforeShowUp()
+	{
+		base.DoBeforeShowUp();
+		UIDraggablePanel.panelDisabled = true;
+	}
+
+	public override void DoBeforeHide()
+	{
+		base.DoBeforeHide();
+		Singleton<LootBoxCameraArena>.instance.Hide();
+	}
+
+	public override void DoAfterHide()
+	{
+		base.DoAfterHide();
+		UIDraggablePanel.panelDisabled = false;
+		rewardGrid.MakeEmpty();
+	}
+
+	private void SetUnitHint()
+	{
+		elitePartsHint.text = ((!mUnit.upgradeSlots.upgradeSlotElite.isUnlocked) ? string.Empty : Localization.LocalizeFormat("ID_COLLECTXELITEPARTSANDUPGRADETOELITE", Colours.stringGreenArena, MiscTools.FormatBigNumber(mUnit.upgradeSlots.upgradeSlotElite.upgradePriceParts), mUnit.unitElitePartsName.ToUpper(), mUnit.unitName.ToUpper()));
+		float val = (0f - elitePartsHint.relativeSize.x * elitePartsHint.transform.localScale.x) / 2f - 50f;
+		elitePartIcon.transform.localPosition = elitePartIcon.transform.localPosition.ReplaceX(val);
+	}
+
+	private Transform RewardInstantiate(int index)
+	{
+		if (index >= 0 && index < mRewards.Count)
+		{
+			WararenaRewardRecord wararenaRewardRecord = Singleton<GuiManager>.instance.objectPool.InstantiateAsChild(wararenaRewardRecordPrefab, rewardGrid.gameObject, $"Reward {index:D2}") as WararenaRewardRecord;
+			if (wararenaRewardRecord != null)
+			{
+				wararenaRewardRecord.Initialize(mRewards[index], WararenaRewardRecord.ClickBehaviour.ChangeUnit);
+				return wararenaRewardRecord.transform;
+			}
+		}
+		return null;
+	}
+
+	private void RewardFree(Transform obj)
+	{
+		if (obj != null)
+		{
+			WararenaRewardRecord component = obj.GetComponent<WararenaRewardRecord>();
+			if (component != null)
+			{
+				component.DestroyPooled();
+			}
+		}
+	}
+
+	protected override void Update()
+	{
+		base.Update();
+		mTimer += Time.deltaTime;
+		if (mTimer > 0.333f)
+		{
+			mTimer -= 0.333f;
+			arenaTimeLabel.text = WarArenaGui.CreateArenaEventTimeTextLowerCase();
+			if (mArenaHasNotStarted && !WarArena.instance.warArenaConfig.isBeforeArenaStart)
+			{
+				mArenaHasNotStarted = false;
+				title.text = Localization.Localize("ID_ARENAISOPEN");
+				bottomButtonLabel.text = Localization.Localize("ID_TAKEMETHERE");
+			}
+		}
+	}
+
+	public GuiElement GetGuiElement()
+	{
+		return this;
+	}
+
+	public override void OnBack()
+	{
+		CloseClick(backButton);
+	}
 }

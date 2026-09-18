@@ -1,0 +1,93 @@
+{
+  "atlases": 30,
+  "sprites": 8047,
+  "checked": 7538,
+  "unassignedOrDynamic": 509,
+  "missing": [
+    {
+      "path": "GameObject\\camoIcon.prefab",
+      "fileID": 11472182,
+      "spriteName": "menu-powerband-criticalhit"
+    },
+    {
+      "path": "GameObject\\invetoryItem.prefab",
+      "fileID": 11407524,
+      "spriteName": "game-card-ico-explosivetiming"
+    },
+    {
+      "path": "GameObject\\invetoryItem.prefab",
+      "fileID": 11434916,
+      "spriteName": "game-card-ico-disarmed"
+    },
+    {
+      "path": "GameObject\\UnitIndicator.prefab",
+      "fileID": 11443158,
+      "spriteName": "game-army-grenadier"
+    },
+    {
+      "path": "Scenes\\MainScene.unity",
+      "fileID": 35502,
+      "spriteName": "game-card-ammobox"
+    },
+    {
+      "path": "Scenes\\MainScene.unity",
+      "fileID": 35667,
+      "spriteName": "game-card-ammobox"
+    },
+    {
+      "path": "Scenes\\MainScene.unity",
+      "fileID": 38141,
+      "spriteName": "game-card-ammobox"
+    },
+    {
+      "path": "Scenes\\MainScene.unity",
+      "fileID": 38745,
+      "spriteName": "game-card-ammobox"
+    },
+    {
+      "path": "Scenes\\MainScene.unity",
+      "fileID": 40310,
+      "spriteName": "game-army-assault"
+    },
+    {
+      "path": "Scenes\\MainScene.unity",
+      "fileID": 41658,
+      "spriteName": 12
+    },
+    {
+      "path": "Scenes\\MainScene.unity",
+      "fileID": 41703,
+      "spriteName": "game-card-ammobox"
+    },
+    {
+      "path": "Scenes\\MainScene.unity",
+      "fileID": 43129,
+      "spriteName": "game-army-assault"
+    },
+    {
+      "path": "Scenes\\MainScene.unity",
+      "fileID": 44511,
+      "spriteName": "game-army-assault"
+    },
+    {
+      "path": "Scenes\\MainScene.unity",
+      "fileID": 45897,
+      "spriteName": "game-card-ico-disarmed"
+    },
+    {
+      "path": "Scenes\\MainScene.unity",
+      "fileID": 46242,
+      "spriteName": "game-card-ico-explosivetiming"
+    },
+    {
+      "path": "Scenes\\MainScene.unity",
+      "fileID": 47876,
+      "spriteName": "menu-powerband-criticalhit"
+    },
+    {
+      "path": "Scenes\\MainScene.unity",
+      "fileID": 49652,
+      "spriteName": "game-card-ammobox"
+    }
+  ]
+}

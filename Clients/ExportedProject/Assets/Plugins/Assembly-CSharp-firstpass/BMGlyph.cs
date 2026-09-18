@@ -1,63 +1,88 @@
-using UnityEngine;
+using System;
+using System.Collections.Generic;
 
-public class BMGlyph : MonoBehaviour
+[Serializable]
+public class BMGlyph
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public int index;
 
-	1. No dll files were provided to AssetRipper.
+	public int x;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public int y;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public int width;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public int height;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public int offsetX;
 
-	3. Assembly Reconstruction has not been implemented.
+	public int offsetY;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public int advance;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public int channel;
 
-	4. This script is unnecessary.
+	public List<int> kerning;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public int GetKerning(int previousChar)
+	{
+		if (kerning != null)
+		{
+			int i = 0;
+			for (int count = kerning.Count; i < count; i += 2)
+			{
+				if (kerning[i] == previousChar)
+				{
+					return kerning[i + 1];
+				}
+			}
+		}
+		return 0;
+	}
 
-	5. Script Content Level 0
+	public void SetKerning(int previousChar, int amount)
+	{
+		if (kerning == null)
+		{
+			kerning = new List<int>();
+		}
+		for (int i = 0; i < kerning.Count; i += 2)
+		{
+			if (kerning[i] == previousChar)
+			{
+				kerning[i + 1] = amount;
+				return;
+			}
+		}
+		kerning.Add(previousChar);
+		kerning.Add(amount);
+	}
 
-		AssetRipper was set to not load any script information.
-
-	6. Cpp2IL failed to decompile Il2Cpp data
-
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public void Trim(int xMin, int yMin, int xMax, int yMax)
+	{
+		int num = x + width;
+		int num2 = y + height;
+		if (x < xMin)
+		{
+			int num3 = xMin - x;
+			x += num3;
+			width -= num3;
+			offsetX += num3;
+		}
+		if (y < yMin)
+		{
+			int num4 = yMin - y;
+			y += num4;
+			height -= num4;
+			offsetY += num4;
+		}
+		if (num > xMax)
+		{
+			width -= num - xMax;
+		}
+		if (num2 > yMax)
+		{
+			height -= num2 - yMax;
+		}
+	}
 }

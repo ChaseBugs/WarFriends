@@ -1,63 +1,203 @@
+using System;
+using System.Collections.Generic;
+using Google2u;
 using UnityEngine;
 
-public class SkillShotManager : MonoBehaviour
+[ExecuteInEditMode]
+public class SkillShotManager : Singleton<SkillShotManager>, IFraction, IGameMainEntity
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Serializable]
+	public class SkillShotItemDefinition
+	{
+		[SerializeField]
+		public string dictionaryId;
 
-	1. No dll files were provided to AssetRipper.
+		[SerializeField]
+		public string menuName;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+		[SerializeField]
+		public SkillShot.SkillShotType skillShotType;
 
-	2. Incorrect dll files were provided to AssetRipper.
+		[SerializeField]
+		public string iconName;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+		public SkillshotsRow row;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+		public int points
+		{
+			get
+			{
+				if (Singleton<GameController>.instance.isMission)
+				{
+					return row.SCORESINGLE;
+				}
+				return row.SCOREMP;
+			}
+		}
+	}
 
-	3. Assembly Reconstruction has not been implemented.
+	public float longShotKillDistance = 4f;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public float timeForCombo = 1f;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public bool regenerate;
 
-	4. This script is unnecessary.
+	private float mLastKillTime;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private int mKillStreak;
 
-	5. Script Content Level 0
+	public List<SkillShotItemDefinition> skillShotItemDefinitions;
 
-		AssetRipper was set to not load any script information.
+	public ObjectPool objectPool;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public Fractions fraction
+	{
+		get
+		{
+			return Fractions.Allies;
+		}
+		set
+		{
+			throw new NotImplementedException();
+		}
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public IFraction owner => this;
 
-	7. An incorrect path was provided to AssetRipper.
+	public int power { get; set; }
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	public bool isAlive { get; set; }
 
-	*/
+	public event Action SkillshotsChanged;
+
+	public event Action<IGameMainEntity, DestroyableObject.DamageInfo> Killed;
+
+	public event Action<IGameMainEntity, Fractions, Fractions> FractionChanged;
+
+	protected override void Awake()
+	{
+		base.Awake();
+		if (!Application.isPlaying)
+		{
+			return;
+		}
+		objectPool = ObjectPool.GetPool("ObjectPool");
+		foreach (SkillShotItemDefinition skillShotItemDefinition in skillShotItemDefinitions)
+		{
+			skillShotItemDefinition.menuName = Localization.Localize(skillShotItemDefinition.dictionaryId);
+			skillShotItemDefinition.iconName = "game-skillshot-" + skillShotItemDefinition.skillShotType.ToString().ToLower();
+		}
+		Singleton<BeanstalkServerManager>.instance.PlayerDataLoaded += OnPlayerDataLoaded;
+	}
+
+	private void OnPlayerDataLoaded()
+	{
+		Skillshots component = GetComponent<Skillshots>();
+		Singleton<RibbonManager>.instance.ribbons = new List<RibbonManager.RibbonItemDefinition>();
+		foreach (SkillShotItemDefinition skillShotItemDefinition in skillShotItemDefinitions)
+		{
+			SkillshotsRow row = component.GetRow(skillShotItemDefinition.skillShotType.ToString());
+			if (row != null)
+			{
+				skillShotItemDefinition.row = row;
+				if (row.RIBBONCOUNT > 0)
+				{
+					Singleton<RibbonManager>.instance.ribbons.Add(new RibbonManager.RibbonItemDefinition
+					{
+						skillShotType = skillShotItemDefinition.skillShotType,
+						name = Localization.Localize(skillShotItemDefinition.dictionaryId),
+						description = Localization.LocalizeFormat(skillShotItemDefinition.dictionaryId + "_DESC", row.RIBBONCOUNT),
+						amountOfSkillshots = row.RIBBONCOUNT,
+						rewardMin = row.RIBBONREWARDMINWB,
+						rewardMax = row.RIBBONREWARDMAXWB
+					});
+				}
+			}
+			else
+			{
+				Debug.LogError("Dont have excel row for skillshot: " + skillShotItemDefinition.skillShotType);
+			}
+		}
+	}
+
+	public void RecieveKill(ref SkillShot skillShot)
+	{
+		if (Time.time < mLastKillTime + timeForCombo)
+		{
+			mKillStreak++;
+		}
+		else
+		{
+			mKillStreak = 1;
+		}
+		mLastKillTime = Time.time;
+		if (mKillStreak == 2)
+		{
+			skillShot.type |= SkillShot.SkillShotType.DoubleKill;
+		}
+		if (mKillStreak == 3)
+		{
+			skillShot.type |= SkillShot.SkillShotType.TrippleKill;
+		}
+		if (mKillStreak > 3)
+		{
+			skillShot.type |= SkillShot.SkillShotType.MultiKill;
+		}
+	}
+
+	public void AddSkillshot(SkillShot skillShot, PlayerController playerController)
+	{
+		foreach (SkillShotItemDefinition skillShotItemDefinition in skillShotItemDefinitions)
+		{
+			if ((skillShot.type & skillShotItemDefinition.skillShotType) == skillShotItemDefinition.skillShotType)
+			{
+				Singleton<ScoreManager>.instance.AddSkillshot(skillShotItemDefinition, playerController);
+			}
+		}
+		if (this.SkillshotsChanged != null)
+		{
+			this.SkillshotsChanged();
+		}
+	}
+
+	public void GetItemDefinitions(SkillShot skillShot, ref List<SkillShotItemDefinition> definitions)
+	{
+		definitions.Clear();
+		foreach (SkillShotItemDefinition skillShotItemDefinition in skillShotItemDefinitions)
+		{
+			if ((skillShot.type & skillShotItemDefinition.skillShotType) == skillShotItemDefinition.skillShotType)
+			{
+				definitions.Add(skillShotItemDefinition);
+			}
+		}
+	}
+
+	public SkillShotItemDefinition GetItemDefinition(SkillShot.SkillShotType skillShot)
+	{
+		foreach (SkillShotItemDefinition skillShotItemDefinition in skillShotItemDefinitions)
+		{
+			if (skillShotItemDefinition.skillShotType == skillShot)
+			{
+				return skillShotItemDefinition;
+			}
+		}
+		return null;
+	}
+
+	public SkillShot.SkillShotType GetSkillshot(string name)
+	{
+		return (SkillShot.SkillShotType)(int)Enum.Parse(typeof(SkillShot.SkillShotType), name);
+	}
+
+	public SkillShotItemDefinition GetSkillshotDefinition(SkillShot.SkillShotType skillshot)
+	{
+		for (int i = 0; i < skillShotItemDefinitions.Count; i++)
+		{
+			if (skillShotItemDefinitions[i].skillShotType == skillshot)
+			{
+				return skillShotItemDefinitions[i];
+			}
+		}
+		return skillShotItemDefinitions[0];
+	}
 }

@@ -1,27 +1,108 @@
 Shader "Particles/~Additive-Multiply" {
 Properties {
- _TintColor ("Tint Color", Color) = (0.5,0.5,0.5,0.5)
- _MainTex ("Particle Texture", 2D) = "white" { }
- _InvFade ("Soft Particles Factor", Range(0.01,3)) = 1
+	_TintColor ("Tint Color", Color) = (0.5,0.5,0.5,0.5)
+	_MainTex ("Particle Texture", 2D) = "white" {}
+	_InvFade ("Soft Particles Factor", Range(0.01,3.0)) = 1.0
 }
-	//DummyShaderTextExporter
-	
-	SubShader{
-		Tags { "RenderType" = "Opaque" }
-		LOD 200
-		CGPROGRAM
-#pragma surface surf Lambert
-#pragma target 3.0
-		sampler2D _MainTex;
-		struct Input
-		{
-			float2 uv_MainTex;
-		};
-		void surf(Input IN, inout SurfaceOutput o)
-		{
-			float4 c = tex2D(_MainTex, IN.uv_MainTex);
-			o.Albedo = c.rgb;
+
+Category {
+	Tags { "Queue"="Transparent" "IgnoreProjector"="True" "RenderType"="Transparent" }
+	ColorMask RGB
+	Cull Off
+	Lighting Off
+	ZWrite Off
+
+	SubShader {
+		Pass {
+			Blend One One
+
+			CGPROGRAM
+			#pragma vertex vert
+			#pragma fragment frag
+			#pragma multi_compile_particles
+
+			#include "UnityCG.cginc"
+
+			sampler2D _MainTex;
+			fixed4 _TintColor;
+
+			struct appdata_t {
+				float4 vertex : POSITION;
+				fixed4 color : COLOR;
+				float2 texcoord : TEXCOORD0;
+			};
+
+			struct v2f {
+				float4 vertex : SV_POSITION;
+				fixed4 color : COLOR;
+				float2 texcoord : TEXCOORD0;
+			};
+
+			float4 _MainTex_ST;
+
+			v2f vert (appdata_t v)
+			{
+				v2f o;
+				o.vertex = UnityObjectToClipPos(v.vertex);
+				o.color = v.color;
+				o.texcoord = TRANSFORM_TEX(v.texcoord,_MainTex);
+				return o;
+			}
+
+			fixed4 frag (v2f i) : SV_Target
+			{
+				fixed4 col = 2.0f * i.color * _TintColor * tex2D(_MainTex, i.texcoord);
+				return col;
+			}
+			ENDCG
 		}
-		ENDCG
+
+		Pass {
+			Blend DstColor Zero
+
+			CGPROGRAM
+			#pragma vertex vert
+			#pragma fragment frag
+			#pragma multi_compile_particles
+
+			#include "UnityCG.cginc"
+
+			sampler2D _MainTex;
+			fixed4 _TintColor;
+
+			struct appdata_t {
+				float4 vertex : POSITION;
+				fixed4 color : COLOR;
+				float2 texcoord : TEXCOORD0;
+			};
+
+			struct v2f {
+				float4 vertex : SV_POSITION;
+				fixed4 color : COLOR;
+				float2 texcoord : TEXCOORD0;
+			};
+
+			float4 _MainTex_ST;
+
+			v2f vert (appdata_t v)
+			{
+				v2f o;
+				o.vertex = UnityObjectToClipPos(v.vertex);
+				o.color = v.color;
+				o.texcoord = TRANSFORM_TEX(v.texcoord,_MainTex);
+				return o;
+			}
+
+			fixed4 frag (v2f i) : SV_Target
+			{
+				fixed4 tex = tex2D(_MainTex, i.texcoord);
+				fixed4 col;
+				col.rgb = lerp(fixed3(1,1,1), tex.rgb * i.color.rgb * _TintColor.rgb * 2.0f, i.color.a * tex.a);
+				col.a = 1.0;
+				return col;
+			}
+			ENDCG
+		}
 	}
+}
 }

@@ -1,63 +1,125 @@
+using System;
+using System.IO;
 using UnityEngine;
 
-public class GooglePlayDownloader : MonoBehaviour
+public class GooglePlayDownloader
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	private const string Environment_MEDIA_MOUNTED = "mounted";
 
-	1. No dll files were provided to AssetRipper.
+	private static AndroidJavaClass detectAndroidJNI;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	private static AndroidJavaClass Environment;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	private static string obb_package;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	private static int obb_version;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	static GooglePlayDownloader()
+	{
+		if (!RunningOnAndroid())
+		{
+			return;
+		}
+		Environment = new AndroidJavaClass("android.os.Environment");
+		using (AndroidJavaClass androidJavaClass = new AndroidJavaClass("com.unity3d.plugin.downloader.UnityDownloaderService"))
+		{
+		androidJavaClass.SetStatic("BASE64_PUBLIC_KEY", "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAhOR82yQJKu6ymLcFyTQEFkgs7PfSVXPSWcLC1JtdbMTNUmNfoM0up/7/8nRGzquPkZKF0KwVzJZJepHRzRXJiZwhGgMvDNAjwilqKAWcVGbIZPbDBZCJWxqQDgs+Ma4Pr7cPV48tDSHFPzcDxGUvfjl+sOdb1GTBZLDr3XvzBwjOwrQ5wbiY7/YdZYiv0I3UfQzmxOL9a1XfzAI1M5TcAS4vE32dPRYTM72+pt+Vr2kPuY8rF9E5RcGBWLQHuyPg9vPBre2hJPAKWJUUKrLJmxwS+mS/yv/ROkpQgKslIRHzJBmuLaLwBJyU4ZR1UAYlnzafHj/CJv96Y+7TUiY/ZwIDAQAB");
+		androidJavaClass.SetStatic("SALT", new byte[20]
+		{
+			1, 43, 244, 255, 54, 98, 156, 244, 43, 2,
+			248, 252, 9, 5, 150, 148, 223, 45, 255, 84
+		});
+		}
+}
 
-	3. Assembly Reconstruction has not been implemented.
+	public static bool RunningOnAndroid()
+	{
+		if (detectAndroidJNI == null)
+		{
+			detectAndroidJNI = new AndroidJavaClass("android.os.Build");
+		}
+		return detectAndroidJNI.GetRawClass() != IntPtr.Zero;
+	}
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public static string GetExpansionFilePath()
+	{
+		populateOBBData();
+		if (Environment.CallStatic<string>("getExternalStorageState", new object[0]) != "mounted")
+		{
+			return null;
+		}
+		using (AndroidJavaObject androidJavaObject = Environment.CallStatic<AndroidJavaObject>("getExternalStorageDirectory", new object[0]))
+		{
+		string arg = androidJavaObject.Call<string>("getPath", new object[0]);
+		return string.Format("{0}/{1}/{2}", arg, "Android/obb", obb_package);
+		}
+}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public static string GetMainOBBPath(string expansionFilePath)
+	{
+		populateOBBData();
+		if (expansionFilePath == null)
+		{
+			return null;
+		}
+		string text = $"{expansionFilePath}/main.{obb_version}.{obb_package}.obb";
+		if (!File.Exists(text))
+		{
+			return null;
+		}
+		return text;
+	}
 
-	4. This script is unnecessary.
+	public static string GetPatchOBBPath(string expansionFilePath)
+	{
+		populateOBBData();
+		if (expansionFilePath == null)
+		{
+			return null;
+		}
+		string text = $"{expansionFilePath}/patch.{obb_version}.{obb_package}.obb";
+		if (!File.Exists(text))
+		{
+			return null;
+		}
+		return text;
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public static void FetchOBB()
+	{
+		using (AndroidJavaClass androidJavaClass = new AndroidJavaClass("com.unity3d.player.UnityPlayer"))
+		{
+		AndroidJavaObject androidJavaObject = androidJavaClass.GetStatic<AndroidJavaObject>("currentActivity");
+		AndroidJavaObject androidJavaObject2 = new AndroidJavaObject("android.content.Intent", androidJavaObject, new AndroidJavaClass("com.unity3d.plugin.downloader.UnityDownloaderActivity"));
+		int num = 65536;
+		androidJavaObject2.Call<AndroidJavaObject>("addFlags", new object[1] { num });
+		androidJavaObject2.Call<AndroidJavaObject>("putExtra", new object[2]
+		{
+			"unityplayer.Activity",
+			androidJavaObject.Call<AndroidJavaObject>("getClass", new object[0]).Call<string>("getName", new object[0])
+		});
+		androidJavaObject.Call("startActivity", androidJavaObject2);
+		if (AndroidJNI.ExceptionOccurred() != IntPtr.Zero)
+		{
+			Debug.LogError("Exception occurred while attempting to start DownloaderActivity - is the AndroidManifest.xml incorrect?");
+			AndroidJNI.ExceptionDescribe();
+			AndroidJNI.ExceptionClear();
+		}
+		}
+}
 
-	5. Script Content Level 0
-
-		AssetRipper was set to not load any script information.
-
-	6. Cpp2IL failed to decompile Il2Cpp data
-
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	private static void populateOBBData()
+	{
+		if (obb_version != 0)
+		{
+			return;
+		}
+		using (AndroidJavaClass androidJavaClass = new AndroidJavaClass("com.unity3d.player.UnityPlayer"))
+		{
+		AndroidJavaObject androidJavaObject = androidJavaClass.GetStatic<AndroidJavaObject>("currentActivity");
+		obb_package = androidJavaObject.Call<string>("getPackageName", new object[0]);
+		AndroidJavaObject androidJavaObject2 = androidJavaObject.Call<AndroidJavaObject>("getPackageManager", new object[0]).Call<AndroidJavaObject>("getPackageInfo", new object[2] { obb_package, 0 });
+		obb_version = androidJavaObject2.Get<int>("versionCode");
+		}
+}
 }

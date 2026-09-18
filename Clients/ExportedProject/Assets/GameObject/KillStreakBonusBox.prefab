@@ -96,6 +96,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 525315d696244b4efceee344548467e9, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  isActivated: 0
+  bonusToActivate: {fileID: 0}
+  killStreakPosition: {fileID: 477035}
+  blueMat: {fileID: 2100000, guid: fe15862448c06c74d853398902d24629, type: 2}
+  redMat: {fileID: 2100000, guid: b4d404cbe6c363c4daf2099f9dbea881, type: 2}
+  boxID: 0
+  destroySound: {fileID: 8300000, guid: e04ad4c5e334c7748ba4e9b72653aa20, type: 3}
+  stolenSound: {fileID: 8300000, guid: 5c84fe9ce9c44b842a8427993fd36286, type: 3}
+  crateFallSound: {fileID: 8300000, guid: 4550de70ee5b63f4da4c46e880fe06ba, type: 3}
 --- !u!114 &11419550
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -107,6 +116,24 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a503568e23092a0b9255b6fcb6b62be2, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mMaxHealth:
+    currentCryptoKey: 230887
+    hiddenValue: e7852341
+    fakeValue: 10
+    inited: 1
+  mDestroyableByBonusBox: 1
+  healthBarPosition: {fileID: 0}
+  forceHealthBar: 0
+  offset: {x: 0, y: 0, z: 0}
+  displayHealthBar: 0
+  playMainHitParticle: 0
+  isMetal: 0
+  shotCoeficient: 1
+  shotParticleNames: []
+  healthBarStyle: 0
+  mHealthbarColor: {r: 0, g: 1, b: 0, a: 1}
+  healthbar: {fileID: 0}
+  shotHitSound: 14
 --- !u!65 &6584216
 BoxCollider:
   serializedVersion: 2
@@ -145,6 +172,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f19ea4a15c3ca43dcc180d756f7a82b3, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  ownerId: 0
+  group: 0
+  OwnerShipWasTransfered: 0
+  prefixBackup: -1
+  synchronization: 0
+  onSerializeTransformOption: 3
+  onSerializeRigidBodyOption: 2
+  ownershipTransfer: 0
+  ObservedComponents:
+  - {fileID: 0}
+  viewIdField: 0
+  instantiationId: -1
+  currentMasterID: -1
+  didAwake: 0
+  isRuntimeInstantiated: 0
 --- !u!114 &11470521
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -156,6 +198,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c9ed8e906eb3730a392c92b659fb7a48, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  skillshotPosition: {fileID: 477035}
+  stolenSound: {fileID: 8300000, guid: 5c84fe9ce9c44b842a8427993fd36286, type: 3}
 --- !u!114 &11496012
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -167,6 +211,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3cf4d7761af3ce98d7a08bebfe4e8861, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  shootTargets: []
+  targets:
+  - transform: {fileID: 409266}
+    type: 1
+  visible: 0
 --- !u!4 &477035
 Transform:
   m_ObjectHideFlags: 0

@@ -1,63 +1,93 @@
 using UnityEngine;
 
+[RequireComponent(typeof(Light))]
 public class EffectLight : MonoBehaviour
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public float duration = -1f;
 
-	1. No dll files were provided to AssetRipper.
+	public bool looping;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public float delay = -1f;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public float lifetime = -1f;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public AnimationCurve intensityOverLifetime = new AnimationCurve(new Keyframe(0f, 1f), new Keyframe(1f, 0f));
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public Gradient colorOverLifetime;
 
-	3. Assembly Reconstruction has not been implemented.
+	private float startTime;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	private float originalIntensity;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	private Color originalColor;
 
-	4. This script is unnecessary.
+	private Light targetLight;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private void Awake()
+	{
+		UpdateSettings();
+	}
 
-	5. Script Content Level 0
+	private void OnEnable()
+	{
+		startTime = Time.time + delay;
+	}
 
-		AssetRipper was set to not load any script information.
+	private void Update()
+	{
+		if (startTime > Time.time || startTime + lifetime < Time.time)
+		{
+			targetLight.enabled = false;
+		}
+		else if (startTime + lifetime > Time.time && duration > 0f)
+		{
+			targetLight.enabled = true;
+			float time = (Time.time - startTime) / lifetime;
+			targetLight.intensity = originalIntensity * intensityOverLifetime.Evaluate(time);
+			targetLight.color = originalColor * colorOverLifetime.Evaluate(time);
+		}
+		if (looping && startTime + duration < Time.time)
+		{
+			startTime = Time.time;
+		}
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
-
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	private void UpdateSettings()
+	{
+		targetLight = GetComponent<Light>();
+		originalIntensity = targetLight.intensity;
+		originalColor = targetLight.color;
+		ParticleSystem particleSystem = null;
+		if ((bool)GetComponent<ParticleSystem>())
+		{
+			particleSystem = GetComponent<ParticleSystem>();
+		}
+		else if ((bool)base.transform.parent.GetComponent<ParticleSystem>())
+		{
+			particleSystem = base.transform.parent.GetComponent<ParticleSystem>();
+		}
+		if (particleSystem != null)
+		{
+			if (duration < 0f)
+			{
+				duration = particleSystem.duration;
+			}
+			if (delay < 0f)
+			{
+				delay = particleSystem.startDelay;
+			}
+			if (lifetime < 0f)
+			{
+				lifetime = particleSystem.startLifetime;
+			}
+			if (delay > 0f)
+			{
+				targetLight.enabled = false;
+			}
+		}
+		else
+		{
+			Debug.LogWarning("Effect light has to be attached to gameobject with a particle system component or to a gameobject whos parent has a particle system component.", base.gameObject);
+		}
+	}
 }

@@ -1,66 +1,174 @@
-using UnityEngine;
+using System;
+using System.Text;
+using Org.BouncyCastle.Utilities;
 
 namespace Org.BouncyCastle.Asn1.X509
 {
-	public class IssuingDistributionPoint : MonoBehaviour
+public class IssuingDistributionPoint : Asn1Encodable
+{
+	private readonly DistributionPointName _distributionPoint;
+
+	private readonly bool _onlyContainsUserCerts;
+
+	private readonly bool _onlyContainsCACerts;
+
+	private readonly ReasonFlags _onlySomeReasons;
+
+	private readonly bool _indirectCRL;
+
+	private readonly bool _onlyContainsAttributeCerts;
+
+	private readonly Asn1Sequence seq;
+
+	public bool OnlyContainsUserCerts => _onlyContainsUserCerts;
+
+	public bool OnlyContainsCACerts => _onlyContainsCACerts;
+
+	public bool IsIndirectCrl => _indirectCRL;
+
+	public bool OnlyContainsAttributeCerts => _onlyContainsAttributeCerts;
+
+	public DistributionPointName DistributionPoint => _distributionPoint;
+
+	public ReasonFlags OnlySomeReasons => _onlySomeReasons;
+
+	public IssuingDistributionPoint(DistributionPointName distributionPoint, bool onlyContainsUserCerts, bool onlyContainsCACerts, ReasonFlags onlySomeReasons, bool indirectCRL, bool onlyContainsAttributeCerts)
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
+		_distributionPoint = distributionPoint;
+		_indirectCRL = indirectCRL;
+		_onlyContainsAttributeCerts = onlyContainsAttributeCerts;
+		_onlyContainsCACerts = onlyContainsCACerts;
+		_onlyContainsUserCerts = onlyContainsUserCerts;
+		_onlySomeReasons = onlySomeReasons;
+		Asn1EncodableVector asn1EncodableVector = new Asn1EncodableVector();
+		if (distributionPoint != null)
+		{
+			asn1EncodableVector.Add(new DerTaggedObject(explicitly: true, 0, distributionPoint));
+		}
+		if (onlyContainsUserCerts)
+		{
+			asn1EncodableVector.Add(new DerTaggedObject(explicitly: false, 1, DerBoolean.True));
+		}
+		if (onlyContainsCACerts)
+		{
+			asn1EncodableVector.Add(new DerTaggedObject(explicitly: false, 2, DerBoolean.True));
+		}
+		if (onlySomeReasons != null)
+		{
+			asn1EncodableVector.Add(new DerTaggedObject(explicitly: false, 3, onlySomeReasons));
+		}
+		if (indirectCRL)
+		{
+			asn1EncodableVector.Add(new DerTaggedObject(explicitly: false, 4, DerBoolean.True));
+		}
+		if (onlyContainsAttributeCerts)
+		{
+			asn1EncodableVector.Add(new DerTaggedObject(explicitly: false, 5, DerBoolean.True));
+		}
+		seq = new DerSequence(asn1EncodableVector);
 	}
+
+	private IssuingDistributionPoint(Asn1Sequence seq)
+	{
+		this.seq = seq;
+		for (int i = 0; i != seq.Count; i++)
+		{
+			Asn1TaggedObject instance = Asn1TaggedObject.GetInstance(seq[i]);
+			switch (instance.TagNo)
+			{
+			case 0:
+				_distributionPoint = DistributionPointName.GetInstance(instance, explicitly: true);
+				break;
+			case 1:
+				_onlyContainsUserCerts = DerBoolean.GetInstance(instance, isExplicit: false).IsTrue;
+				break;
+			case 2:
+				_onlyContainsCACerts = DerBoolean.GetInstance(instance, isExplicit: false).IsTrue;
+				break;
+			case 3:
+				_onlySomeReasons = new ReasonFlags(DerBitString.GetInstance(instance, isExplicit: false));
+				break;
+			case 4:
+				_indirectCRL = DerBoolean.GetInstance(instance, isExplicit: false).IsTrue;
+				break;
+			case 5:
+				_onlyContainsAttributeCerts = DerBoolean.GetInstance(instance, isExplicit: false).IsTrue;
+				break;
+			default:
+				throw new ArgumentException("unknown tag in IssuingDistributionPoint");
+			}
+		}
+	}
+
+	public static IssuingDistributionPoint GetInstance(Asn1TaggedObject obj, bool explicitly)
+	{
+		return GetInstance(Asn1Sequence.GetInstance(obj, explicitly));
+	}
+
+	public static IssuingDistributionPoint GetInstance(object obj)
+	{
+		if (obj == null || obj is IssuingDistributionPoint)
+		{
+			return (IssuingDistributionPoint)obj;
+		}
+		if (obj is Asn1Sequence)
+		{
+			return new IssuingDistributionPoint((Asn1Sequence)obj);
+		}
+		throw new ArgumentException("unknown object in factory: " + obj.GetType().Name, "obj");
+	}
+
+	public override Asn1Object ToAsn1Object()
+	{
+		return seq;
+	}
+
+	public override string ToString()
+	{
+		string newLine = Platform.NewLine;
+		StringBuilder stringBuilder = new StringBuilder();
+		stringBuilder.Append("IssuingDistributionPoint: [");
+		stringBuilder.Append(newLine);
+		if (_distributionPoint != null)
+		{
+			appendObject(stringBuilder, newLine, "distributionPoint", _distributionPoint.ToString());
+		}
+		if (_onlyContainsUserCerts)
+		{
+			appendObject(stringBuilder, newLine, "onlyContainsUserCerts", _onlyContainsUserCerts.ToString());
+		}
+		if (_onlyContainsCACerts)
+		{
+			appendObject(stringBuilder, newLine, "onlyContainsCACerts", _onlyContainsCACerts.ToString());
+		}
+		if (_onlySomeReasons != null)
+		{
+			appendObject(stringBuilder, newLine, "onlySomeReasons", _onlySomeReasons.ToString());
+		}
+		if (_onlyContainsAttributeCerts)
+		{
+			appendObject(stringBuilder, newLine, "onlyContainsAttributeCerts", _onlyContainsAttributeCerts.ToString());
+		}
+		if (_indirectCRL)
+		{
+			appendObject(stringBuilder, newLine, "indirectCRL", _indirectCRL.ToString());
+		}
+		stringBuilder.Append("]");
+		stringBuilder.Append(newLine);
+		return stringBuilder.ToString();
+	}
+
+	private void appendObject(StringBuilder buf, string sep, string name, string val)
+	{
+		string value = "    ";
+		buf.Append(value);
+		buf.Append(name);
+		buf.Append(":");
+		buf.Append(sep);
+		buf.Append(value);
+		buf.Append(value);
+		buf.Append(val);
+		buf.Append(sep);
+	}
+}
 }

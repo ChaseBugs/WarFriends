@@ -1,63 +1,120 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
-public class LevelBehaviourManager : MonoBehaviour
+[ExecuteInEditMode]
+public class LevelBehaviourManager : Singleton<LevelBehaviourManager>
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Serializable]
+	public class BehaviourEntry
+	{
+		[HideInInspector]
+		public string name = "hide";
 
-	1. No dll files were provided to AssetRipper.
+		public LevelBehaviour behaviour;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+		public int maxCount = int.MaxValue;
 
-	2. Incorrect dll files were provided to AssetRipper.
+		[NonSerialized]
+		[HideInInspector]
+		public int count;
+	}
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public List<BehaviourEntry> levelBehaviours;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public Dictionary<string, LevelBehaviour> behavioursDic = new Dictionary<string, LevelBehaviour>();
 
-	3. Assembly Reconstruction has not been implemented.
+	public Dictionary<LevelBehaviour, List<AIObject>> preparedInstancies = new Dictionary<LevelBehaviour, List<AIObject>>();
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	protected override void Awake()
+	{
+		base.Awake();
+		foreach (BehaviourEntry levelBehaviour in levelBehaviours)
+		{
+			behavioursDic[levelBehaviour.behaviour.GetType().Name] = levelBehaviour.behaviour;
+		}
+		foreach (BehaviourEntry levelBehaviour2 in levelBehaviours)
+		{
+			LevelBehaviour behaviour = levelBehaviour2.behaviour;
+			if (!(behaviour.unitName == "ID_UNIT-BUDDY"))
+			{
+				behaviour.unitName = Localization.Localize(behaviour.unitDictionaryId);
+				behaviour.unitDescription = Localization.Localize(behaviour.unitDictionaryId + "-DESCRIPTION");
+				behaviour.unitAbilityName = Localization.Localize(behaviour.unitDictionaryId + "-ABILITY");
+				behaviour.unitBuffName = Localization.Localize(behaviour.unitDictionaryId + "-BUFF");
+				behaviour.unitElitePartsName = Localization.Localize(behaviour.unitDictionaryId + "-ELITEPARTS");
+			}
+		}
+		GameShootableEntity.Init();
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public T GetPreparedBehaviour<T>() where T : LevelBehaviour
+	{
+		T val = (T)null;
+		int index = 0;
+		for (int i = 0; i < levelBehaviours.Count; i++)
+		{
+			BehaviourEntry behaviourEntry = levelBehaviours[i];
+			if (behaviourEntry.behaviour is T)
+			{
+				index = i;
+				if (behaviourEntry.count < behaviourEntry.maxCount)
+				{
+					break;
+				}
+			}
+		}
+		levelBehaviours[index].count++;
+		val = levelBehaviours[index].behaviour as T;
+		if (val == null)
+		{
+			Debug.LogError(string.Concat("Null +", typeof(T), " ", levelBehaviours[index].behaviour.ToString()));
+		}
+		return val;
+	}
 
-	4. This script is unnecessary.
+	protected override void Start()
+	{
+		if (Application.isPlaying)
+		{
+			base.Start();
+			PrepareInstancies();
+		}
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private void PrepareInstancies()
+	{
+		foreach (BehaviourEntry levelBehaviour in levelBehaviours)
+		{
+			preparedInstancies.Add(levelBehaviour.behaviour, new List<AIObject>());
+		}
+		Singleton<ObjectPoolDatabase>.instance.enemy.PrepareInstancies();
+		Singleton<ObjectPoolDatabase>.instance.drone.PrepareInstancies();
+		Singleton<ObjectPoolDatabase>.instance.humvee.PrepareInstancies();
+		Singleton<ObjectPoolDatabase>.instance.helicopter.PrepareInstancies();
+		Singleton<ObjectPoolDatabase>.instance.tank.PrepareInstancies();
+		Singleton<ObjectPoolDatabase>.instance.turret.PrepareInstancies();
+		Singleton<ObjectPoolDatabase>.instance.heavyTurret.PrepareInstancies();
+		Singleton<ObjectPoolDatabase>.instance.buggy.PrepareInstancies();
+		Singleton<ObjectPoolDatabase>.instance.assaultHelicopter.PrepareInstancies();
+		Singleton<ObjectPoolDatabase>.instance.transporter.PrepareInstancies();
+		Singleton<ObjectPoolDatabase>.instance.turretRockets.PrepareInstancies();
+		Singleton<ObjectPoolDatabase>.instance.mech.PrepareInstancies();
+	}
 
-	5. Script Content Level 0
-
-		AssetRipper was set to not load any script information.
-
-	6. Cpp2IL failed to decompile Il2Cpp data
-
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public AIObject GenerateNewEnemy(LevelBehaviour levelBehaviour)
+	{
+		if (levelBehaviour != null)
+		{
+			List<AIObject> list = preparedInstancies[levelBehaviour];
+			foreach (AIObject item in list)
+			{
+				if (!item.gameObject.activeSelf && !item.isInstantiated)
+				{
+					return item;
+				}
+			}
+		}
+		return null;
+	}
 }

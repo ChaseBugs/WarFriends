@@ -1,63 +1,166 @@
+using System;
 using UnityEngine;
 
-public class SettingsGuiContent : MonoBehaviour
+public class SettingsGuiContent : Core_BaseScript
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Header("Core")]
+	public SettingsButton opponentHealthBarsSettings;
 
-	1. No dll files were provided to AssetRipper.
+	public SettingsButton myHealthBarsSetting;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public SettingsButton showScopesSetting;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public SettingsButton playerHealthBarSetting;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public SettingsButton autoDeploySetting;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public SettingsButton vibrationsSetting;
 
-	3. Assembly Reconstruction has not been implemented.
+	private bool mHealthBarsOnOpponent
+	{
+		get
+		{
+			return DebugSettings.healthbarsOnOpponentUnits;
+		}
+		set
+		{
+			if (value != mHealthBarsOnOpponent)
+			{
+				DebugSettings.healthbarsOnOpponentUnits = value;
+			}
+		}
+	}
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	private bool mHealthBarsOnMy
+	{
+		get
+		{
+			return DebugSettings.healthbarsOnMyUnits;
+		}
+		set
+		{
+			if (value != mHealthBarsOnMy)
+			{
+				DebugSettings.healthbarsOnMyUnits = value;
+			}
+		}
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	private bool mShowPrimaryScopes
+	{
+		get
+		{
+			return DebugSettings.showPrimaryScopes;
+		}
+		set
+		{
+			if (value != mShowPrimaryScopes)
+			{
+				DebugSettings.showPrimaryScopes = value;
+			}
+		}
+	}
 
-	4. This script is unnecessary.
+	private bool mPlayerHealthbar
+	{
+		get
+		{
+			return DebugSettings.playerHealthbars;
+		}
+		set
+		{
+			if (value != mPlayerHealthbar)
+			{
+				DebugSettings.playerHealthbars = value;
+			}
+		}
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private bool mAutoDeploy
+	{
+		get
+		{
+			return DebugSettings.autoDeploy;
+		}
+		set
+		{
+			if (value != mAutoDeploy)
+			{
+				DebugSettings.autoDeploy = value;
+				if (value)
+				{
+					Singleton<EventTrackingManager>.instance.RegisterAutodeployOn();
+				}
+				else
+				{
+					Singleton<EventTrackingManager>.instance.RegisterAutodeployOff();
+				}
+			}
+		}
+	}
 
-	5. Script Content Level 0
+	private bool mVibrations
+	{
+		get
+		{
+			return DebugSettings.vibrations;
+		}
+		set
+		{
+			if (value != mVibrations)
+			{
+				DebugSettings.vibrations = value;
+			}
+		}
+	}
 
-		AssetRipper was set to not load any script information.
+	public void InitControls()
+	{
+		UIEventListener uIEventListener = UIEventListener.Get(opponentHealthBarsSettings.gameObject);
+		uIEventListener.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener.onClick, (UIEventListener.VoidDelegate)delegate
+		{
+			mHealthBarsOnOpponent = !mHealthBarsOnOpponent;
+			opponentHealthBarsSettings.ButtonSetTo(mHealthBarsOnOpponent);
+		});
+		UIEventListener uIEventListener2 = UIEventListener.Get(myHealthBarsSetting.gameObject);
+		uIEventListener2.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener2.onClick, (UIEventListener.VoidDelegate)delegate
+		{
+			mHealthBarsOnMy = !mHealthBarsOnMy;
+			myHealthBarsSetting.ButtonSetTo(mHealthBarsOnMy);
+		});
+		UIEventListener uIEventListener3 = UIEventListener.Get(showScopesSetting.gameObject);
+		uIEventListener3.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener3.onClick, (UIEventListener.VoidDelegate)delegate
+		{
+			mShowPrimaryScopes = !mShowPrimaryScopes;
+			showScopesSetting.ButtonSetTo(mShowPrimaryScopes);
+		});
+		UIEventListener uIEventListener4 = UIEventListener.Get(playerHealthBarSetting.gameObject);
+		uIEventListener4.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener4.onClick, (UIEventListener.VoidDelegate)delegate
+		{
+			mPlayerHealthbar = !mPlayerHealthbar;
+			playerHealthBarSetting.ButtonSetTo(mPlayerHealthbar);
+		});
+		UIEventListener uIEventListener5 = UIEventListener.Get(autoDeploySetting.gameObject);
+		uIEventListener5.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener5.onClick, (UIEventListener.VoidDelegate)delegate
+		{
+			mAutoDeploy = !mAutoDeploy;
+			autoDeploySetting.ButtonSetTo(mAutoDeploy);
+		});
+		UIEventListener uIEventListener6 = UIEventListener.Get(vibrationsSetting.gameObject);
+		uIEventListener6.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener6.onClick, (UIEventListener.VoidDelegate)delegate
+		{
+			mVibrations = !mVibrations;
+			vibrationsSetting.ButtonSetTo(mVibrations);
+		});
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
-
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-	7. An incorrect path was provided to AssetRipper.
-
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	public void InitGUIValues()
+	{
+		opponentHealthBarsSettings.ButtonSetTo(mHealthBarsOnOpponent, updateOnlyActiveObject: false);
+		myHealthBarsSetting.ButtonSetTo(mHealthBarsOnMy, updateOnlyActiveObject: false);
+		showScopesSetting.ButtonSetTo(mShowPrimaryScopes, updateOnlyActiveObject: false);
+		playerHealthBarSetting.ButtonSetTo(mPlayerHealthbar, updateOnlyActiveObject: false);
+		autoDeploySetting.ButtonSetTo(mAutoDeploy, updateOnlyActiveObject: false);
+		vibrationsSetting.ButtonSetTo(mVibrations, updateOnlyActiveObject: false);
+	}
 }

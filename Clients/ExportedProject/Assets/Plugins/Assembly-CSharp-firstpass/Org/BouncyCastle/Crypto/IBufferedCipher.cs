@@ -1,66 +1,41 @@
-using UnityEngine;
-
 namespace Org.BouncyCastle.Crypto
 {
-	public class IBufferedCipher : MonoBehaviour
-	{
-		/*
-		Dummy class. This could have happened for several reasons:
+public interface IBufferedCipher
+{
+	string AlgorithmName { get; }
 
-		1. No dll files were provided to AssetRipper.
+	void Init(bool forEncryption, ICipherParameters parameters);
 
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
+	int GetBlockSize();
 
-		2. Incorrect dll files were provided to AssetRipper.
+	int GetOutputSize(int inputLen);
 
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
+	int GetUpdateOutputSize(int inputLen);
 
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	byte[] ProcessByte(byte input);
 
-		3. Assembly Reconstruction has not been implemented.
+	int ProcessByte(byte input, byte[] output, int outOff);
 
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
+	byte[] ProcessBytes(byte[] input);
 
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
+	byte[] ProcessBytes(byte[] input, int inOff, int length);
 
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
+	int ProcessBytes(byte[] input, byte[] output, int outOff);
 
-		5. Script Content Level 0
+	int ProcessBytes(byte[] input, int inOff, int length, byte[] output, int outOff);
 
-			AssetRipper was set to not load any script information.
+	byte[] DoFinal();
 
-		6. Cpp2IL failed to decompile Il2Cpp data
+	byte[] DoFinal(byte[] input);
 
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	byte[] DoFinal(byte[] input, int inOff, int length);
 
-		7. An incorrect path was provided to AssetRipper.
+	int DoFinal(byte[] output, int outOff);
 
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
+	int DoFinal(byte[] input, byte[] output, int outOff);
 
-		*/
-	}
+	int DoFinal(byte[] input, int inOff, int length, byte[] output, int outOff);
+
+	void Reset();
+}
 }

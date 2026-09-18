@@ -1,66 +1,157 @@
+using System.Text;
 using UnityEngine;
 
 namespace CodeStage.AdvancedFPSCounter.Labels
 {
-	public class DrawableLabel : MonoBehaviour
+internal class DrawableLabel
+{
+	public LabelAnchor anchor;
+
+	public GUIText guiText;
+
+	public StringBuilder newText;
+
+	public bool dirty;
+
+	private Vector2 pixelOffset;
+
+	private Font font;
+
+	private int fontSize;
+
+	private float lineSpacing;
+
+	public DrawableLabel(LabelAnchor anchor, Vector2 pixelOffset, Font font, int fontSize, float lineSpacing)
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
+		this.anchor = anchor;
+		this.pixelOffset = pixelOffset;
+		this.font = font;
+		this.fontSize = fontSize;
+		this.lineSpacing = lineSpacing;
+		NormalizeOffset();
+		newText = new StringBuilder(1000);
 	}
+
+	internal void CheckAndUpdate()
+	{
+		if (newText.Length > 0)
+		{
+			if (guiText == null)
+			{
+				GameObject gameObject = new GameObject(anchor.ToString(), typeof(GUIText));
+				guiText = gameObject.GetComponent<GUIText>();
+				if (anchor == LabelAnchor.UpperLeft)
+				{
+					gameObject.transform.position = new Vector3(0f, 1f);
+					guiText.anchor = TextAnchor.UpperLeft;
+					guiText.alignment = TextAlignment.Left;
+				}
+				else if (anchor == LabelAnchor.UpperRight)
+				{
+					gameObject.transform.position = new Vector3(1f, 1f);
+					guiText.anchor = TextAnchor.UpperRight;
+					guiText.alignment = TextAlignment.Right;
+				}
+				else if (anchor == LabelAnchor.LowerLeft)
+				{
+					gameObject.transform.position = new Vector3(0f, 0f);
+					guiText.anchor = TextAnchor.LowerLeft;
+					guiText.alignment = TextAlignment.Left;
+				}
+				else if (anchor == LabelAnchor.LowerRight)
+				{
+					gameObject.transform.position = new Vector3(1f, 0f);
+					guiText.anchor = TextAnchor.LowerRight;
+					guiText.alignment = TextAlignment.Right;
+				}
+				guiText.pixelOffset = pixelOffset;
+				guiText.font = font;
+				guiText.fontSize = fontSize;
+				guiText.lineSpacing = lineSpacing;
+				gameObject.layer = AFPSCounter.Instance.gameObject.layer;
+				gameObject.tag = AFPSCounter.Instance.gameObject.tag;
+				gameObject.transform.parent = AFPSCounter.Instance.transform;
+			}
+			if (dirty)
+			{
+				guiText.text = newText.ToString();
+				dirty = false;
+			}
+			newText.Length = 0;
+		}
+		else if (guiText != null)
+		{
+			Object.DestroyImmediate(guiText.gameObject);
+		}
+	}
+
+	internal void Clear()
+	{
+		newText.Length = 0;
+		if (guiText != null)
+		{
+			Object.Destroy(guiText.gameObject);
+		}
+	}
+
+	internal void Dispose()
+	{
+		Clear();
+		newText = null;
+	}
+
+	internal void ChangeFont(Font labelsFont)
+	{
+		font = labelsFont;
+		if (guiText != null)
+		{
+			guiText.font = font;
+		}
+	}
+
+	internal void ChangeFontSize(int newSize)
+	{
+		fontSize = newSize;
+		if (guiText != null)
+		{
+			guiText.fontSize = fontSize;
+		}
+	}
+
+	internal void ChangeOffset(Vector2 newPixelOffset)
+	{
+		pixelOffset = newPixelOffset;
+		NormalizeOffset();
+		if (guiText != null)
+		{
+			guiText.pixelOffset = pixelOffset;
+		}
+	}
+
+	private void NormalizeOffset()
+	{
+		if (anchor == LabelAnchor.UpperLeft)
+		{
+			pixelOffset.y = 0f - pixelOffset.y;
+		}
+		else if (anchor == LabelAnchor.UpperRight)
+		{
+			pixelOffset.x = 0f - pixelOffset.x;
+			pixelOffset.y = 0f - pixelOffset.y;
+		}
+		else if (anchor == LabelAnchor.LowerRight)
+		{
+			pixelOffset.x = 0f - pixelOffset.x;
+		}
+	}
+
+	internal void ChangeLineSpacing(float lineSpacing)
+	{
+		this.lineSpacing = lineSpacing;
+		if (guiText != null)
+		{
+			guiText.lineSpacing = lineSpacing;
+		}
+	}
+}
 }

@@ -1,63 +1,167 @@
+using System;
+using System.Text.RegularExpressions;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using UnityEngine;
 
-public class ChallengeMessage : MonoBehaviour
+public class ChallengeMessage : DatabaseMessage
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public string opponentId;
 
-	1. No dll files were provided to AssetRipper.
+	public string mapName;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public int misssionNumber;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public MissionsManager.MissionData missionData;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public GameController.GameType gameType;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public bool isCoop;
 
-	3. Assembly Reconstruction has not been implemented.
+	public bool isHeroic;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public bool expired;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public CloudRegionCode region;
 
-	4. This script is unnecessary.
+	public DatabasePlayer otherPlayer;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private bool mProcessInShow;
 
-	5. Script Content Level 0
+	public string clientVersion;
 
-		AssetRipper was set to not load any script information.
+	public string roomName;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public override bool canBeClickedInLobby => false;
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public ChallengeMessage(bool fakeFight, bool isHeroicCoop)
+		: base(string.Empty, Type.Challenge)
+	{
+		mapName = "Desert";
+		gameType = ((!fakeFight) ? GameController.GameType.Coop : GameController.GameType.DeathMatch);
+		misssionNumber = (fakeFight ? 1 : 8);
+		missionData = MissionsManager.instance.data.missionData[7];
+		opponentId = GameLoginManager.currentPlayer.id;
+		region = CloudRegionCode.eu;
+		isCoop = !fakeFight;
+		isHeroic = isHeroicCoop;
+		otherPlayer = GameLoginManager.currentPlayer;
+		roomName = "unset";
+		clientVersion = "0.0.0";
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	public ChallengeMessage(JToken dict)
+		: base(dict)
+	{
+		mapName = dict["MapName"]["S"].ToObject<string>();
+		gameType = (GameController.GameType)dict["GameType"]["N"].ToObject<int>();
+		misssionNumber = ((dict["MissionNumber"] != null) ? dict["MissionNumber"]["S"].ToObject<int>() : 0);
+		missionData = ((dict["MissionData"] != null && !string.IsNullOrEmpty(dict["MissionData"]["S"].ToObject<string>())) ? JsonConvert.DeserializeObject<MissionsManager.MissionData>(dict["MissionData"]["S"].ToObject<string>()) : null);
+		if (dict["MessageId"] != null)
+		{
+			opponentId = Regex.Replace(dict["MessageId"]["S"].ToObject<string>(), "-[0-9]*$", string.Empty);
+		}
+		else
+		{
+			opponentId = dict["OpponentId"]["S"].ToObject<string>();
+		}
+		region = ((dict["Region"] != null) ? dict["Region"]["N"].ToObject<CloudRegionCode>() : CloudRegionCode.eu);
+		isCoop = gameType == GameController.GameType.Coop;
+		isHeroic = dict["IsHeroic"] != null;
+		JToken item = JsonConvert.DeserializeObject<JToken>(dict["OtherPlayer"]["S"].ToString());
+		otherPlayer = DatabasePlayer.CreateFromDatabase(item);
+		if (dict["roomName"] != null && dict["roomName"]["S"] != null)
+		{
+			roomName = StringParser.ParseString(dict["roomName"]["S"], string.Empty);
+		}
+		else
+		{
+			roomName = "unset";
+		}
+		if (dict["clientVersion"] != null && dict["clientVersion"]["S"] != null)
+		{
+			clientVersion = StringParser.ParseString(dict["clientVersion"]["S"], string.Empty);
+		}
+		else
+		{
+			clientVersion = "0.0.0";
+		}
+		Debug.LogFormat("Creating challenge message:\nclient version: {0} and room name: {1}", clientVersion, roomName);
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	public override void OnAdd()
+	{
+		mProcessInShow = PushNotificationManager.instance.wasAwakedFromPushNotificationChallenge || TutorialManagerStage4.instance.isTutorialRunning || TutorialManagerStage5.instance.isTutorialRunning || Singleton<GameController>.instance.gameState != GameController.GameState.Menu || Singleton<GuiManager>.instance.currentScreen is EndScreen;
+		if (mProcessInShow)
+		{
+			return;
+		}
+		if (Singleton<BeanstalkServerManager>.instance.currentTimestamp - messageTime > 120)
+		{
+			Ignore();
+			return;
+		}
+		GuiScreen currentScreen = Singleton<GuiManager>.instance.currentScreen;
+		if (Singleton<GameController>.instance.gameState == GameController.GameState.Menu && currentScreen != null && currentScreen.showDialogs && !DialogManager.instance.isSomeDialogShowed && !GuiElementSingle<LoadingDialog>.instance.isShowed && !Singleton<GameController>.instance.isTutorial && !TutorialManagerStage4.instance.isTutorialRunning && !TutorialManagerStage5.instance.isTutorialRunning && !Singleton<EventTrackingManager>.instance.isAdVideoPlaying)
+		{
+			Debug.Log(string.Format("Show {0} invitation dialog id: {1}", (!isCoop) ? "Battle" : "Coop", messageId));
+			FightDialog.ShowFightDialog(this);
+		}
+		else
+		{
+			GuiElementSingle<ChatGuiElement>.instance.messageContent.AddMessage(this);
+		}
+	}
 
-	*/
+	public override bool CanShow()
+	{
+		if (Singleton<GameController>.instance.gameState == GameController.GameState.Menu)
+		{
+			EndScreen endScreen = Singleton<GuiManager>.instance.currentScreen as EndScreen;
+			return endScreen == null && base.CanShow();
+		}
+		return base.CanShow();
+	}
+
+	public override void Show()
+	{
+		base.Show();
+		if (mProcessInShow)
+		{
+			if (Singleton<BeanstalkServerManager>.instance.currentTimestamp - messageTime > 120)
+			{
+				Ignore();
+			}
+			else
+			{
+				FightDialog.ShowFightDialog(this);
+			}
+		}
+	}
+
+	internal override Action InitMessageCenterRecord(MessageCenterRecord record)
+	{
+		record.SetAppearance_Challenge(messageType, messageTime, otherPlayer, isHitlist: false, isCoop, this);
+		return delegate
+		{
+			if (expired)
+			{
+				Ignore();
+			}
+			else
+			{
+				FightDialog.ShowFightDialog(this);
+				record.counter.StopMessageCenterCounter();
+			}
+		};
+	}
+
+	public override void UpdatePlayer(DatabasePlayerInfo player)
+	{
+		if (opponentId == player.id)
+		{
+			otherPlayer.skill = player.skill;
+			otherPlayer.armyPower = player.armyPower;
+		}
+	}
 }

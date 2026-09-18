@@ -1,63 +1,117 @@
+using System;
+using System.Net;
+using Beebyte.Obfuscator;
 using UnityEngine;
 
+[Skip]
 public class Crittercism : MonoBehaviour
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public string CrittercismiOSAppID = "YOUR IOS APP ID GOES HERE";
 
-	1. No dll files were provided to AssetRipper.
+	public string CrittercismAndroidAppID = "YOUR ANDROID APP ID GOES HERE";
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	private void Awake()
+	{
+		CrittercismAndroid.Init(CrittercismAndroidAppID);
+		UnityEngine.Object.DontDestroyOnLoad(base.gameObject);
+		SetLogUnhandledExceptionAsCrash(value: true);
+	}
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public static void LogHandledException(Exception e)
+	{
+		Debug.LogError(e);
+		Debug.LogError(e.StackTrace);
+		CrittercismAndroid.LogHandledException(e);
+	}
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public static bool GetOptOut()
+	{
+		return CrittercismAndroid.GetOptOut();
+	}
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public static void SetOptOut(bool isOptedOut)
+	{
+		CrittercismAndroid.SetOptOut(isOptedOut);
+	}
 
-	3. Assembly Reconstruction has not been implemented.
+	public static void SetUsername(string username)
+	{
+		CrittercismAndroid.SetUsername(username);
+	}
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public static void SetValue(string key, string value)
+	{
+		CrittercismAndroid.SetMetadata(new string[1] { key }, new string[1] { value });
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public static void SetMetadata(string[] keys, string[] values)
+	{
+		CrittercismAndroid.SetMetadata(keys, values);
+	}
 
-	4. This script is unnecessary.
+	public static void LeaveBreadcrumb(string breadcrumb)
+	{
+		CrittercismAndroid.LeaveBreadcrumb(breadcrumb);
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public static void LogNetworkRequest(string method, string uriString, double latencyInSeconds, int bytesRead, int bytesSent, HttpStatusCode responseCode, WebExceptionStatus exceptionStatus)
+	{
+		CrittercismAndroid.LogNetworkRequest(method, uriString, (long)latencyInSeconds * 1000, bytesRead, bytesSent, responseCode, exceptionStatus);
+	}
 
-	5. Script Content Level 0
+	public static void LogNetworkRequest(string method, string uriString, long latencyInMilliseconds, int bytesRead, int bytesSent, HttpStatusCode responseCode, WebExceptionStatus exceptionStatus)
+	{
+		CrittercismAndroid.LogNetworkRequest(method, uriString, latencyInMilliseconds, bytesRead, bytesSent, responseCode, exceptionStatus);
+	}
 
-		AssetRipper was set to not load any script information.
+	public static bool DidCrashOnLastLoad()
+	{
+		return CrittercismAndroid.DidCrashOnLastLoad();
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public static void BeginUserflow(string name)
+	{
+		CrittercismAndroid.BeginUserflow(name);
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public static void BeginUserflow(string name, int value)
+	{
+		CrittercismAndroid.BeginUserflow(name);
+		CrittercismAndroid.SetUserflowValue(name, value);
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	public static void CancelUserflow(string name)
+	{
+		CrittercismAndroid.CancelUserflow(name);
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	public static void EndUserflow(string name)
+	{
+		CrittercismAndroid.EndUserflow(name);
+	}
 
-	*/
+	public static void FailUserflow(string name)
+	{
+		CrittercismAndroid.FailUserflow(name);
+	}
+
+	public static void SetUserflowValue(string name, int value)
+	{
+		CrittercismAndroid.SetUserflowValue(name, value);
+	}
+
+	public static int GetUserflowValue(string name)
+	{
+		return CrittercismAndroid.GetUserflowValue(name);
+	}
+
+	public static void SetLogUnhandledExceptionAsCrash(bool value)
+	{
+		CrittercismAndroid.SetLogUnhandledExceptionAsCrash(value);
+	}
+
+	public static bool GetLogUnhandledExceptionAsCrash()
+	{
+		return CrittercismAndroid.GetLogUnhandledExceptionAsCrash();
+	}
 }

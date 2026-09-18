@@ -1,66 +1,198 @@
-using UnityEngine;
+using System;
+using System.Collections.Generic;
+using System.Runtime.InteropServices;
+using System.Text;
+using GooglePlayGames.BasicApi.Multiplayer;
+using GooglePlayGames.Native.Cwrapper;
+using GooglePlayGames.OurUtils;
 
 namespace GooglePlayGames.Native.PInvoke
 {
-	public class NativeTurnBasedMatch : MonoBehaviour
+internal class NativeTurnBasedMatch : BaseReferenceHolder
+{
+	internal NativeTurnBasedMatch(IntPtr selfPointer)
+		: base(selfPointer)
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
 	}
+
+	internal uint AvailableAutomatchSlots()
+	{
+		return GooglePlayGames.Native.Cwrapper.TurnBasedMatch.TurnBasedMatch_AutomatchingSlotsAvailable(SelfPtr());
+	}
+
+	internal ulong CreationTime()
+	{
+		return GooglePlayGames.Native.Cwrapper.TurnBasedMatch.TurnBasedMatch_CreationTime(SelfPtr());
+	}
+
+	internal IEnumerable<MultiplayerParticipant> Participants()
+	{
+		return PInvokeUtilities.ToEnumerable(GooglePlayGames.Native.Cwrapper.TurnBasedMatch.TurnBasedMatch_Participants_Length(SelfPtr()), (UIntPtr index) => new MultiplayerParticipant(GooglePlayGames.Native.Cwrapper.TurnBasedMatch.TurnBasedMatch_Participants_GetElement(SelfPtr(), index)));
+	}
+
+	internal uint Version()
+	{
+		return GooglePlayGames.Native.Cwrapper.TurnBasedMatch.TurnBasedMatch_Version(SelfPtr());
+	}
+
+	internal uint Variant()
+	{
+		return GooglePlayGames.Native.Cwrapper.TurnBasedMatch.TurnBasedMatch_Variant(SelfPtr());
+	}
+
+	internal ParticipantResults Results()
+	{
+		return new ParticipantResults(GooglePlayGames.Native.Cwrapper.TurnBasedMatch.TurnBasedMatch_ParticipantResults(SelfPtr()));
+	}
+
+	internal MultiplayerParticipant ParticipantWithId(string participantId)
+	{
+		foreach (MultiplayerParticipant item in Participants())
+		{
+			if (item.Id().Equals(participantId))
+			{
+				return item;
+			}
+			item.Dispose();
+		}
+		return null;
+	}
+
+	internal MultiplayerParticipant PendingParticipant()
+	{
+		MultiplayerParticipant multiplayerParticipant = new MultiplayerParticipant(GooglePlayGames.Native.Cwrapper.TurnBasedMatch.TurnBasedMatch_PendingParticipant(SelfPtr()));
+		if (!multiplayerParticipant.Valid())
+		{
+			multiplayerParticipant.Dispose();
+			return null;
+		}
+		return multiplayerParticipant;
+	}
+
+	internal Types.MatchStatus MatchStatus()
+	{
+		return GooglePlayGames.Native.Cwrapper.TurnBasedMatch.TurnBasedMatch_Status(SelfPtr());
+	}
+
+	internal string Description()
+	{
+		return PInvokeUtilities.OutParamsToString((StringBuilder out_string, UIntPtr size) => GooglePlayGames.Native.Cwrapper.TurnBasedMatch.TurnBasedMatch_Description(SelfPtr(), out_string, size));
+	}
+
+	internal bool HasRematchId()
+	{
+		string text = RematchId();
+		return string.IsNullOrEmpty(text) || !text.Equals("(null)");
+	}
+
+	internal string RematchId()
+	{
+		return PInvokeUtilities.OutParamsToString((StringBuilder out_string, UIntPtr size) => GooglePlayGames.Native.Cwrapper.TurnBasedMatch.TurnBasedMatch_RematchId(SelfPtr(), out_string, size));
+	}
+
+	internal byte[] Data()
+	{
+		if (!GooglePlayGames.Native.Cwrapper.TurnBasedMatch.TurnBasedMatch_HasData(SelfPtr()))
+		{
+			Logger.d("Match has no data.");
+			return null;
+		}
+		return PInvokeUtilities.OutParamsToArray((byte[] bytes, UIntPtr size) => GooglePlayGames.Native.Cwrapper.TurnBasedMatch.TurnBasedMatch_Data(SelfPtr(), bytes, size));
+	}
+
+	internal string Id()
+	{
+		return PInvokeUtilities.OutParamsToString((StringBuilder out_string, UIntPtr size) => GooglePlayGames.Native.Cwrapper.TurnBasedMatch.TurnBasedMatch_Id(SelfPtr(), out_string, size));
+	}
+
+	protected override void CallDispose(HandleRef selfPointer)
+	{
+		GooglePlayGames.Native.Cwrapper.TurnBasedMatch.TurnBasedMatch_Dispose(selfPointer);
+	}
+
+	internal GooglePlayGames.BasicApi.Multiplayer.TurnBasedMatch AsTurnBasedMatch(string selfPlayerId)
+	{
+		List<Participant> list = new List<Participant>();
+		string selfParticipantId = null;
+		string pendingParticipantId = null;
+		using (MultiplayerParticipant multiplayerParticipant = PendingParticipant())
+		{
+			if (multiplayerParticipant != null)
+			{
+				pendingParticipantId = multiplayerParticipant.Id();
+			}
+		}
+		foreach (MultiplayerParticipant item in Participants())
+		{
+			using (item)
+			{
+				using (NativePlayer nativePlayer = item.Player())
+				{
+					if (nativePlayer != null && nativePlayer.Id().Equals(selfPlayerId))
+					{
+						selfParticipantId = item.Id();
+					}
+				}
+				list.Add(item.AsParticipant());
+			}
+		}
+		bool canRematch = MatchStatus() == Types.MatchStatus.COMPLETED && !HasRematchId();
+		return new GooglePlayGames.BasicApi.Multiplayer.TurnBasedMatch(Id(), Data(), canRematch, selfParticipantId, list, AvailableAutomatchSlots(), pendingParticipantId, ToTurnStatus(MatchStatus()), ToMatchStatus(pendingParticipantId, MatchStatus()), Variant(), Version());
+	}
+
+	private static GooglePlayGames.BasicApi.Multiplayer.TurnBasedMatch.MatchTurnStatus ToTurnStatus(Types.MatchStatus status)
+	{
+		switch (status)
+		{
+			case Types.MatchStatus.CANCELED:
+				return GooglePlayGames.BasicApi.Multiplayer.TurnBasedMatch.MatchTurnStatus.Complete;
+			case Types.MatchStatus.COMPLETED:
+				return GooglePlayGames.BasicApi.Multiplayer.TurnBasedMatch.MatchTurnStatus.Complete;
+			case Types.MatchStatus.EXPIRED:
+				return GooglePlayGames.BasicApi.Multiplayer.TurnBasedMatch.MatchTurnStatus.Complete;
+			case Types.MatchStatus.INVITED:
+				return GooglePlayGames.BasicApi.Multiplayer.TurnBasedMatch.MatchTurnStatus.Invited;
+			case Types.MatchStatus.MY_TURN:
+				return GooglePlayGames.BasicApi.Multiplayer.TurnBasedMatch.MatchTurnStatus.MyTurn;
+			case Types.MatchStatus.PENDING_COMPLETION:
+				return GooglePlayGames.BasicApi.Multiplayer.TurnBasedMatch.MatchTurnStatus.Complete;
+			case Types.MatchStatus.THEIR_TURN:
+				return GooglePlayGames.BasicApi.Multiplayer.TurnBasedMatch.MatchTurnStatus.TheirTurn;
+			default:
+				return GooglePlayGames.BasicApi.Multiplayer.TurnBasedMatch.MatchTurnStatus.Unknown;
+		}
+	}
+
+	private static GooglePlayGames.BasicApi.Multiplayer.TurnBasedMatch.MatchStatus ToMatchStatus(string pendingParticipantId, Types.MatchStatus status)
+	{
+		switch (status)
+		{
+			case Types.MatchStatus.CANCELED:
+				return GooglePlayGames.BasicApi.Multiplayer.TurnBasedMatch.MatchStatus.Cancelled;
+			case Types.MatchStatus.COMPLETED:
+				return GooglePlayGames.BasicApi.Multiplayer.TurnBasedMatch.MatchStatus.Complete;
+			case Types.MatchStatus.EXPIRED:
+				return GooglePlayGames.BasicApi.Multiplayer.TurnBasedMatch.MatchStatus.Expired;
+			case Types.MatchStatus.INVITED:
+				return GooglePlayGames.BasicApi.Multiplayer.TurnBasedMatch.MatchStatus.Active;
+			case Types.MatchStatus.MY_TURN:
+				return GooglePlayGames.BasicApi.Multiplayer.TurnBasedMatch.MatchStatus.Active;
+			case Types.MatchStatus.PENDING_COMPLETION:
+				return GooglePlayGames.BasicApi.Multiplayer.TurnBasedMatch.MatchStatus.Complete;
+			case Types.MatchStatus.THEIR_TURN:
+				return (pendingParticipantId == null) ? GooglePlayGames.BasicApi.Multiplayer.TurnBasedMatch.MatchStatus.AutoMatching : GooglePlayGames.BasicApi.Multiplayer.TurnBasedMatch.MatchStatus.Active;
+			default:
+				return GooglePlayGames.BasicApi.Multiplayer.TurnBasedMatch.MatchStatus.Unknown;
+		}
+	}
+
+	internal static NativeTurnBasedMatch FromPointer(IntPtr selfPointer)
+	{
+		if (PInvokeUtilities.IsNull(selfPointer))
+		{
+			return null;
+		}
+		return new NativeTurnBasedMatch(selfPointer);
+	}
+}
 }

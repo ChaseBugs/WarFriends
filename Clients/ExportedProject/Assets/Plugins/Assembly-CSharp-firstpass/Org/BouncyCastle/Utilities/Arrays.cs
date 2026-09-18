@@ -1,66 +1,636 @@
-using UnityEngine;
+using System;
+using System.Text;
+using Org.BouncyCastle.Math;
 
 namespace Org.BouncyCastle.Utilities
 {
-	public class Arrays : MonoBehaviour
+public abstract class Arrays
+{
+	public static bool AreEqual(bool[] a, bool[] b)
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
+		if (a == b)
+		{
+			return true;
+		}
+		if (a == null || b == null)
+		{
+			return false;
+		}
+		return HaveSameContents(a, b);
 	}
+
+	public static bool AreEqual(char[] a, char[] b)
+	{
+		if (a == b)
+		{
+			return true;
+		}
+		if (a == null || b == null)
+		{
+			return false;
+		}
+		return HaveSameContents(a, b);
+	}
+
+	public static bool AreEqual(byte[] a, byte[] b)
+	{
+		if (a == b)
+		{
+			return true;
+		}
+		if (a == null || b == null)
+		{
+			return false;
+		}
+		return HaveSameContents(a, b);
+	}
+
+	[Obsolete("Use 'AreEqual' method instead")]
+	public static bool AreSame(byte[] a, byte[] b)
+	{
+		return AreEqual(a, b);
+	}
+
+	public static bool ConstantTimeAreEqual(byte[] a, byte[] b)
+	{
+		int num = a.Length;
+		if (num != b.Length)
+		{
+			return false;
+		}
+		int num2 = 0;
+		while (num != 0)
+		{
+			num--;
+			num2 |= a[num] ^ b[num];
+		}
+		return num2 == 0;
+	}
+
+	public static bool AreEqual(int[] a, int[] b)
+	{
+		if (a == b)
+		{
+			return true;
+		}
+		if (a == null || b == null)
+		{
+			return false;
+		}
+		return HaveSameContents(a, b);
+	}
+
+	public static bool AreEqual(uint[] a, uint[] b)
+	{
+		if (a == b)
+		{
+			return true;
+		}
+		if (a == null || b == null)
+		{
+			return false;
+		}
+		return HaveSameContents(a, b);
+	}
+
+	private static bool HaveSameContents(bool[] a, bool[] b)
+	{
+		int num = a.Length;
+		if (num != b.Length)
+		{
+			return false;
+		}
+		while (num != 0)
+		{
+			num--;
+			if (a[num] != b[num])
+			{
+				return false;
+			}
+		}
+		return true;
+	}
+
+	private static bool HaveSameContents(char[] a, char[] b)
+	{
+		int num = a.Length;
+		if (num != b.Length)
+		{
+			return false;
+		}
+		while (num != 0)
+		{
+			num--;
+			if (a[num] != b[num])
+			{
+				return false;
+			}
+		}
+		return true;
+	}
+
+	private static bool HaveSameContents(byte[] a, byte[] b)
+	{
+		int num = a.Length;
+		if (num != b.Length)
+		{
+			return false;
+		}
+		while (num != 0)
+		{
+			num--;
+			if (a[num] != b[num])
+			{
+				return false;
+			}
+		}
+		return true;
+	}
+
+	private static bool HaveSameContents(int[] a, int[] b)
+	{
+		int num = a.Length;
+		if (num != b.Length)
+		{
+			return false;
+		}
+		while (num != 0)
+		{
+			num--;
+			if (a[num] != b[num])
+			{
+				return false;
+			}
+		}
+		return true;
+	}
+
+	private static bool HaveSameContents(uint[] a, uint[] b)
+	{
+		int num = a.Length;
+		if (num != b.Length)
+		{
+			return false;
+		}
+		while (num != 0)
+		{
+			num--;
+			if (a[num] != b[num])
+			{
+				return false;
+			}
+		}
+		return true;
+	}
+
+	public static string ToString(object[] a)
+	{
+		StringBuilder stringBuilder = new StringBuilder(91);
+		if (a.Length > 0)
+		{
+			stringBuilder.Append(a[0]);
+			for (int i = 1; i < a.Length; i++)
+			{
+				stringBuilder.Append(", ").Append(a[i]);
+			}
+		}
+		stringBuilder.Append(']');
+		return stringBuilder.ToString();
+	}
+
+	public static int GetHashCode(byte[] data)
+	{
+		if (data == null)
+		{
+			return 0;
+		}
+		int num = data.Length;
+		int num2 = num + 1;
+		while (--num >= 0)
+		{
+			num2 *= 257;
+			num2 ^= data[num];
+		}
+		return num2;
+	}
+
+	public static int GetHashCode(byte[] data, int off, int len)
+	{
+		if (data == null)
+		{
+			return 0;
+		}
+		int num = len;
+		int num2 = num + 1;
+		while (--num >= 0)
+		{
+			num2 *= 257;
+			num2 ^= data[off + num];
+		}
+		return num2;
+	}
+
+	public static int GetHashCode(int[] data)
+	{
+		if (data == null)
+		{
+			return 0;
+		}
+		int num = data.Length;
+		int num2 = num + 1;
+		while (--num >= 0)
+		{
+			num2 *= 257;
+			num2 ^= data[num];
+		}
+		return num2;
+	}
+
+	public static int GetHashCode(int[] data, int off, int len)
+	{
+		if (data == null)
+		{
+			return 0;
+		}
+		int num = len;
+		int num2 = num + 1;
+		while (--num >= 0)
+		{
+			num2 *= 257;
+			num2 ^= data[off + num];
+		}
+		return num2;
+	}
+
+	public static int GetHashCode(uint[] data)
+	{
+		if (data == null)
+		{
+			return 0;
+		}
+		int num = data.Length;
+		int num2 = num + 1;
+		while (--num >= 0)
+		{
+			num2 *= 257;
+			num2 ^= (int)data[num];
+		}
+		return num2;
+	}
+
+	public static int GetHashCode(uint[] data, int off, int len)
+	{
+		if (data == null)
+		{
+			return 0;
+		}
+		int num = len;
+		int num2 = num + 1;
+		while (--num >= 0)
+		{
+			num2 *= 257;
+			num2 ^= (int)data[off + num];
+		}
+		return num2;
+	}
+
+	public static int GetHashCode(ulong[] data)
+	{
+		if (data == null)
+		{
+			return 0;
+		}
+		int num = data.Length;
+		int num2 = num + 1;
+		while (--num >= 0)
+		{
+			ulong num3 = data[num];
+			num2 *= 257;
+			num2 ^= (int)num3;
+			num2 *= 257;
+			num2 ^= (int)(num3 >> 32);
+		}
+		return num2;
+	}
+
+	public static int GetHashCode(ulong[] data, int off, int len)
+	{
+		if (data == null)
+		{
+			return 0;
+		}
+		int num = len;
+		int num2 = num + 1;
+		while (--num >= 0)
+		{
+			ulong num3 = data[off + num];
+			num2 *= 257;
+			num2 ^= (int)num3;
+			num2 *= 257;
+			num2 ^= (int)(num3 >> 32);
+		}
+		return num2;
+	}
+
+	public static byte[] Clone(byte[] data)
+	{
+		return (data != null) ? ((byte[])data.Clone()) : null;
+	}
+
+	public static byte[] Clone(byte[] data, byte[] existing)
+	{
+		if (data == null)
+		{
+			return null;
+		}
+		if (existing == null || existing.Length != data.Length)
+		{
+			return Clone(data);
+		}
+		Array.Copy(data, 0, existing, 0, existing.Length);
+		return existing;
+	}
+
+	public static int[] Clone(int[] data)
+	{
+		return (data != null) ? ((int[])data.Clone()) : null;
+	}
+
+	internal static uint[] Clone(uint[] data)
+	{
+		return (data != null) ? ((uint[])data.Clone()) : null;
+	}
+
+	public static long[] Clone(long[] data)
+	{
+		return (data != null) ? ((long[])data.Clone()) : null;
+	}
+
+	public static ulong[] Clone(ulong[] data)
+	{
+		return (data != null) ? ((ulong[])data.Clone()) : null;
+	}
+
+	public static ulong[] Clone(ulong[] data, ulong[] existing)
+	{
+		if (data == null)
+		{
+			return null;
+		}
+		if (existing == null || existing.Length != data.Length)
+		{
+			return Clone(data);
+		}
+		Array.Copy(data, 0, existing, 0, existing.Length);
+		return existing;
+	}
+
+	public static bool Contains(byte[] a, byte n)
+	{
+		for (int i = 0; i < a.Length; i++)
+		{
+			if (a[i] == n)
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public static bool Contains(short[] a, short n)
+	{
+		for (int i = 0; i < a.Length; i++)
+		{
+			if (a[i] == n)
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public static bool Contains(int[] a, int n)
+	{
+		for (int i = 0; i < a.Length; i++)
+		{
+			if (a[i] == n)
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public static void Fill(byte[] buf, byte b)
+	{
+		int num = buf.Length;
+		while (num > 0)
+		{
+			buf[--num] = b;
+		}
+	}
+
+	public static byte[] CopyOf(byte[] data, int newLength)
+	{
+		byte[] array = new byte[newLength];
+		Array.Copy(data, 0, array, 0, System.Math.Min(newLength, data.Length));
+		return array;
+	}
+
+	public static char[] CopyOf(char[] data, int newLength)
+	{
+		char[] array = new char[newLength];
+		Array.Copy(data, 0, array, 0, System.Math.Min(newLength, data.Length));
+		return array;
+	}
+
+	public static int[] CopyOf(int[] data, int newLength)
+	{
+		int[] array = new int[newLength];
+		Array.Copy(data, 0, array, 0, System.Math.Min(newLength, data.Length));
+		return array;
+	}
+
+	public static long[] CopyOf(long[] data, int newLength)
+	{
+		long[] array = new long[newLength];
+		Array.Copy(data, 0, array, 0, System.Math.Min(newLength, data.Length));
+		return array;
+	}
+
+	public static BigInteger[] CopyOf(BigInteger[] data, int newLength)
+	{
+		BigInteger[] array = new BigInteger[newLength];
+		Array.Copy(data, 0, array, 0, System.Math.Min(newLength, data.Length));
+		return array;
+	}
+
+	public static byte[] CopyOfRange(byte[] data, int from, int to)
+	{
+		int length = GetLength(from, to);
+		byte[] array = new byte[length];
+		Array.Copy(data, from, array, 0, System.Math.Min(length, data.Length - from));
+		return array;
+	}
+
+	public static int[] CopyOfRange(int[] data, int from, int to)
+	{
+		int length = GetLength(from, to);
+		int[] array = new int[length];
+		Array.Copy(data, from, array, 0, System.Math.Min(length, data.Length - from));
+		return array;
+	}
+
+	public static long[] CopyOfRange(long[] data, int from, int to)
+	{
+		int length = GetLength(from, to);
+		long[] array = new long[length];
+		Array.Copy(data, from, array, 0, System.Math.Min(length, data.Length - from));
+		return array;
+	}
+
+	public static BigInteger[] CopyOfRange(BigInteger[] data, int from, int to)
+	{
+		int length = GetLength(from, to);
+		BigInteger[] array = new BigInteger[length];
+		Array.Copy(data, from, array, 0, System.Math.Min(length, data.Length - from));
+		return array;
+	}
+
+	private static int GetLength(int from, int to)
+	{
+		int num = to - from;
+		if (num < 0)
+		{
+			throw new ArgumentException(from + " > " + to);
+		}
+		return num;
+	}
+
+	public static byte[] Append(byte[] a, byte b)
+	{
+		if (a == null)
+		{
+			return new byte[1] { b };
+		}
+		int num = a.Length;
+		byte[] array = new byte[num + 1];
+		Array.Copy(a, 0, array, 0, num);
+		array[num] = b;
+		return array;
+	}
+
+	public static short[] Append(short[] a, short b)
+	{
+		if (a == null)
+		{
+			return new short[1] { b };
+		}
+		int num = a.Length;
+		short[] array = new short[num + 1];
+		Array.Copy(a, 0, array, 0, num);
+		array[num] = b;
+		return array;
+	}
+
+	public static int[] Append(int[] a, int b)
+	{
+		if (a == null)
+		{
+			return new int[1] { b };
+		}
+		int num = a.Length;
+		int[] array = new int[num + 1];
+		Array.Copy(a, 0, array, 0, num);
+		array[num] = b;
+		return array;
+	}
+
+	public static byte[] Concatenate(byte[] a, byte[] b)
+	{
+		if (a == null)
+		{
+			return Clone(b);
+		}
+		if (b == null)
+		{
+			return Clone(a);
+		}
+		byte[] array = new byte[a.Length + b.Length];
+		Array.Copy(a, 0, array, 0, a.Length);
+		Array.Copy(b, 0, array, a.Length, b.Length);
+		return array;
+	}
+
+	public static int[] Concatenate(int[] a, int[] b)
+	{
+		if (a == null)
+		{
+			return Clone(b);
+		}
+		if (b == null)
+		{
+			return Clone(a);
+		}
+		int[] array = new int[a.Length + b.Length];
+		Array.Copy(a, 0, array, 0, a.Length);
+		Array.Copy(b, 0, array, a.Length, b.Length);
+		return array;
+	}
+
+	public static byte[] Prepend(byte[] a, byte b)
+	{
+		if (a == null)
+		{
+			return new byte[1] { b };
+		}
+		int num = a.Length;
+		byte[] array = new byte[num + 1];
+		Array.Copy(a, 0, array, 1, num);
+		array[0] = b;
+		return array;
+	}
+
+	public static short[] Prepend(short[] a, short b)
+	{
+		if (a == null)
+		{
+			return new short[1] { b };
+		}
+		int num = a.Length;
+		short[] array = new short[num + 1];
+		Array.Copy(a, 0, array, 1, num);
+		array[0] = b;
+		return array;
+	}
+
+	public static int[] Prepend(int[] a, int b)
+	{
+		if (a == null)
+		{
+			return new int[1] { b };
+		}
+		int num = a.Length;
+		int[] array = new int[num + 1];
+		Array.Copy(a, 0, array, 1, num);
+		array[0] = b;
+		return array;
+	}
+
+	public static byte[] Reverse(byte[] a)
+	{
+		if (a == null)
+		{
+			return null;
+		}
+		int num = 0;
+		int num2 = a.Length;
+		byte[] array = new byte[num2];
+		while (--num2 >= 0)
+		{
+			array[num2] = a[num++];
+		}
+		return array;
+	}
+}
 }

@@ -1,63 +1,253 @@
+using System;
+using System.Collections;
 using UnityEngine;
 
-public class BattlePreparationWarCardsButton : MonoBehaviour
+public class BattlePreparationWarCardsButton : Core_BaseScript
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Header("Core")]
+	public GameObject cardsButton;
 
-	1. No dll files were provided to AssetRipper.
+	public BoxCollider cardsCollider;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	[Header("-Sale Part")]
+	public GameObject warcardSalePart;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public UILabel warcardSalePercent;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public UISprite warcardSaleBottomBackground;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public UILabel warcardSaleBottom;
 
-	3. Assembly Reconstruction has not been implemented.
+	[Header("-Available Now")]
+	public GameObject freeWarcardPart;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	public UISprite freeWarcardBackground;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	public UILabel freeWarcardLabel;
 
-	4. This script is unnecessary.
+	public UILabel freeWarcardBottomLabel;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	[Header("-Crafting Part")]
+	public GameObject craftingWarcardPart;
 
-	5. Script Content Level 0
+	public UISprite progressWarcard;
 
-		AssetRipper was set to not load any script information.
+	public UILabel progressWarcardLabel;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	[Header("-Notification")]
+	public GameObject notificationWarcardGO;
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	[Header("-Locked")]
+	public UILabel warcardsButtonLabel;
 
-	7. An incorrect path was provided to AssetRipper.
+	public UISprite warcardsLockedGlow;
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	public UISprite warcardsLockedIcon;
 
-	*/
+	public UISprite[] warcardsIcons;
+
+	public UILabel warcardsLockedLabel;
+
+	private RadicalRoutine mUpdatingWarcard;
+
+	private int mLastRemainingTimeWarcard;
+
+	public void InitControls()
+	{
+		UIEventListener uIEventListener = UIEventListener.Get(cardsButton.gameObject);
+		uIEventListener.onClick = (UIEventListener.VoidDelegate)Delegate.Combine(uIEventListener.onClick, (UIEventListener.VoidDelegate)delegate
+		{
+			if (notificationWarcardGO.activeSelf)
+			{
+				GuiScreenSingle<CardMenuScreen>.instance.ShowCraftCards();
+			}
+			else if (freeWarcardPart.activeSelf)
+			{
+				GuiScreenSingle<CardMenuScreen>.instance.ShowMyWarcards();
+			}
+			else
+			{
+				Singleton<GuiManager>.instance.ShowGui(GuiScreenSingle<CardMenuScreen>.instance);
+			}
+		});
+	}
+
+	public void InitGUIValues()
+	{
+		SetWarcardButton();
+		NotificationWarcard(Singleton<NotificationManager>.instance.NotificationWarcards());
+	}
+
+	public void DoAfterHide()
+	{
+		StopWarCardUpdate();
+	}
+
+	public void SaleCardPacks()
+	{
+		bool flag = Singleton<OfferManager>.instance.DiscountedCardpackFlat();
+		bool flag2 = Singleton<OfferManager>.instance.DiscountedCardpackOffer(CardPack.Gold);
+		bool flag3 = Singleton<OfferManager>.instance.DiscountedCardpackOffer(CardPack.Silver);
+		bool flag4 = Singleton<OfferManager>.instance.DiscountedCardpackOffer(CardPack.Bronze);
+		warcardSalePart.SetActive(flag || flag2 || flag3 || flag4);
+		if (flag)
+		{
+			warcardSalePercent.text = Localization.LocalizeFormat("ID_SALEPERCENTLINE", Singleton<OfferManager>.instance.DiscountedCardpack(CardPack.Gold));
+			warcardSaleBottom.text = Localization.Localize("ID_CARDPACKS");
+		}
+		else if (flag2)
+		{
+			warcardSalePercent.text = Localization.LocalizeFormat("ID_SALEPERCENTLINE", Singleton<OfferManager>.instance.DiscountedCardpack(CardPack.Gold));
+			warcardSaleBottom.text = Localization.Localize("ID_GOLDPACK");
+		}
+		else if (flag3)
+		{
+			warcardSalePercent.text = Localization.LocalizeFormat("ID_SALEPERCENTLINE", Singleton<OfferManager>.instance.DiscountedCardpack(CardPack.Silver));
+			warcardSaleBottom.text = Localization.Localize("ID_SILVERPACK");
+		}
+		else if (flag4)
+		{
+			warcardSalePercent.text = Localization.LocalizeFormat("ID_SALEPERCENTLINE", Singleton<OfferManager>.instance.DiscountedCardpack(CardPack.Bronze));
+			warcardSaleBottom.text = Localization.Localize("ID_BRONZEPACK");
+		}
+		warcardSaleBottomBackground.transform.localScale = new Vector3(warcardSaleBottom.relativeSize.x * warcardSaleBottom.transform.localScale.x + 40f, warcardSaleBottomBackground.transform.localScale.y, 1f);
+	}
+
+	public void InitBlank()
+	{
+		freeWarcardPart.SetActive(value: false);
+		craftingWarcardPart.SetActive(value: false);
+		NotificationWarcard(show: false);
+	}
+
+	private void StartWarCardUpdate()
+	{
+		StopWarCardUpdate();
+		mUpdatingWarcard = RadicalRoutine.Create(UpdateWarCardRoutine());
+		StartCoroutine(RadicalRoutine.Run(mUpdatingWarcard.enumerator));
+	}
+
+	private void StopWarCardUpdate()
+	{
+		if (mUpdatingWarcard != null)
+		{
+			mUpdatingWarcard.Cancel();
+			mUpdatingWarcard = null;
+		}
+	}
+
+	private IEnumerator UpdateWarCardRoutine()
+	{
+		while (CardCraftingManager.instance.isCardCrafting)
+		{
+			progressWarcard.fillAmount = CardCraftingManager.instance.craftingProgress;
+			progressWarcard.color = Colours.cyan;
+			SetUpCraftingWarcardLabel(CardCraftingManager.instance.remainingSeconds);
+			yield return new WaitForRealSeconds(0.333f);
+		}
+		progressWarcard.fillAmount = 1f;
+		progressWarcard.color = Colours.blue;
+		progressWarcardLabel.text = Localization.Localize("ID_WARCARDREADY");
+		progressWarcardLabel.alpha = 1f;
+		TweenAlpha.Begin(progressWarcardLabel.gameObject, 0.01f, 1f);
+		NotificationWarcard(Singleton<NotificationManager>.instance.NotificationWarcards());
+	}
+
+	private void SetUpCraftingWarcardLabel(int remainingTime, bool instant = false)
+	{
+		if (mLastRemainingTimeWarcard > remainingTime)
+		{
+			mLastRemainingTimeWarcard = remainingTime;
+			switch (remainingTime % 6)
+			{
+			case 5:
+				progressWarcardLabel.text = MiscTools.PrintableTime(remainingTime, "ID_READYTIME", string.Empty);
+				TweenAlpha.Begin(progressWarcardLabel.gameObject, (!instant) ? 1f : 0.01f, 0f);
+				break;
+			case 4:
+				progressWarcardLabel.text = Localization.Localize("ID_CRAFTING");
+				TweenAlpha.Begin(progressWarcardLabel.gameObject, (!instant) ? 1f : 0.01f, 1f);
+				break;
+			case 3:
+				progressWarcardLabel.text = Localization.Localize("ID_CRAFTING");
+				break;
+			case 2:
+				progressWarcardLabel.text = Localization.Localize("ID_CRAFTING");
+				TweenAlpha.Begin(progressWarcardLabel.gameObject, (!instant) ? 1f : 0.01f, 0f);
+				break;
+			case 1:
+				progressWarcardLabel.text = MiscTools.PrintableTime(remainingTime, "ID_READYTIME", string.Empty);
+				TweenAlpha.Begin(progressWarcardLabel.gameObject, (!instant) ? 1f : 0.01f, 1f);
+				break;
+			case 0:
+				progressWarcardLabel.text = MiscTools.PrintableTime(remainingTime, "ID_READYTIME", string.Empty);
+				break;
+			}
+		}
+	}
+
+	private void NotificationWarcard(bool show)
+	{
+		notificationWarcardGO.SetActive(show);
+	}
+
+	public void SetUpFreeWarcard()
+	{
+		bool isWarcardsLocked = LevelManager.instance.isWarcardsLocked;
+		bool flag = !Singleton<GameController>.instance.isTutorial && !isWarcardsLocked && Singleton<EventTrackingManager>.instance.IsRewardVideoPreloaded(RewardType.RandomCard);
+		freeWarcardPart.SetActive(flag);
+		if (flag)
+		{
+			freeWarcardBackground.transform.localScale = new Vector3(freeWarcardLabel.relativeSize.x * freeWarcardLabel.transform.localScale.x + 20f, freeWarcardBackground.transform.localScale.y, 1f);
+			bool activeSelf = craftingWarcardPart.activeSelf;
+			freeWarcardPart.transform.localPosition = new Vector3(0f, (!activeSelf) ? 0f : (-100f), 0f);
+			freeWarcardBottomLabel.gameObject.SetActive(!activeSelf);
+		}
+	}
+
+	private void SetWarcardButton()
+	{
+		StopWarCardUpdate();
+		int warcardsUnlockLevel = LevelManager.instance.warcardsUnlockLevel;
+		bool isWarcardsLocked = LevelManager.instance.isWarcardsLocked;
+		warcardsButtonLabel.color = ((!isWarcardsLocked) ? Color.white : Colours.grayMax);
+		warcardsLockedGlow.gameObject.SetActive(isWarcardsLocked);
+		warcardsLockedIcon.gameObject.SetActive(isWarcardsLocked);
+		warcardsLockedLabel.gameObject.SetActive(isWarcardsLocked);
+		cardsCollider.enabled = !isWarcardsLocked;
+		for (int i = 0; i < warcardsIcons.Length; i++)
+		{
+			warcardsIcons[i].color = ((!isWarcardsLocked) ? Color.white : Colours.grayLockedCards);
+		}
+		if (isWarcardsLocked)
+		{
+			warcardsLockedLabel.text = string.Format("{0} {1}", Localization.Localize("ID_UNLOCKEDATRANK"), warcardsUnlockLevel);
+			MiscTools.SetUILabelRescale(warcardsLockedLabel, 30f, 20f, GuiScreenSingle<BattlePreparationScreen>.instance.widthOfMiddleButton - 18);
+			craftingWarcardPart.SetActive(value: false);
+		}
+		else if (CardCraftingManager.instance.isCardCrafting)
+		{
+			craftingWarcardPart.SetActive(value: true);
+			mLastRemainingTimeWarcard = int.MaxValue;
+			progressWarcard.fillAmount = CardCraftingManager.instance.craftingProgress;
+			progressWarcard.color = Colours.cyan;
+			SetUpCraftingWarcardLabel(CardCraftingManager.instance.remainingSeconds);
+			StartWarCardUpdate();
+		}
+		else if (CardCraftingManager.instance.isCardCrafted)
+		{
+			craftingWarcardPart.SetActive(value: true);
+			mLastRemainingTimeWarcard = 0;
+			progressWarcard.fillAmount = 1f;
+			progressWarcard.color = Colours.blue;
+			progressWarcardLabel.text = Localization.Localize("ID_WARCARDREADY");
+			progressWarcardLabel.alpha = 1f;
+			TweenAlpha.Begin(progressWarcardLabel.gameObject, 0.01f, 1f);
+		}
+		else
+		{
+			craftingWarcardPart.SetActive(value: false);
+		}
+		SetUpFreeWarcard();
+	}
 }

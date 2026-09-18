@@ -1,63 +1,218 @@
+using System;
+using System.Collections;
+using Google2u;
 using UnityEngine;
 
-public class DogTagManager : MonoBehaviour
+public class DogTagManager : Singleton<DogTagManager>
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	private const int mBaseDogtagRefillPrice = 35;
 
-	1. No dll files were provided to AssetRipper.
+	public Action DogtagServerUpdate;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	[Header("Server setted values")]
+	public int lastUpdate;
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public int seconds;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public int max;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	private int mDogTagWaitingTime = 720;
 
-	3. Assembly Reconstruction has not been implemented.
+	private int mLastDogTagCount = -1;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	private int mUsedDogtagsLocaly;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	private int mTimeOfLastLocalDogUse;
 
-	4. This script is unnecessary.
+	public int dogtagRefillPrice => 35 - 2 * currentDogtags;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public int timeToGetDogtag => mDogTagWaitingTime;
 
-	5. Script Content Level 0
+	private int mServerSeconds => seconds + (Singleton<BeanstalkServerManager>.instance.currentTimestamp - lastUpdate);
 
-		AssetRipper was set to not load any script information.
+	private int mVipSeconds => Singleton<VipManager>.instance.numberOfVIPDogtags * mDogTagWaitingTime;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	private int mMaxSeconds => (!Singleton<VipManager>.instance.IsVipActive()) ? max : (max + mVipSeconds);
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	private int mCurrentSeconds => (!Singleton<VipManager>.instance.IsVipActive()) ? mServerSeconds : (mServerSeconds + mVipSeconds);
 
-	7. An incorrect path was provided to AssetRipper.
+	private int mCurrentSecondsClamp => Mathf.Clamp(mCurrentSeconds, 0, mMaxSeconds);
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	private int mCurrentLocalSeconds => mCurrentSecondsClamp - mUsedDogtagsLocaly * mDogTagWaitingTime;
 
-	*/
+	private int mSecondsSinceLocalDogTagUsed => Singleton<BeanstalkServerManager>.instance.currentTimestamp - mTimeOfLastLocalDogUse;
+
+	public int currentDogtags => mCurrentLocalSeconds / mDogTagWaitingTime;
+
+	public int maximumDogtags => mMaxSeconds / mDogTagWaitingTime;
+
+	public bool isEmpty => mCurrentSeconds < mDogTagWaitingTime;
+
+	public bool isFull => currentDogtags >= maximumDogtags;
+
+	public int remainingTimeForNextDogtag
+	{
+		get
+		{
+			if (mUsedDogtagsLocaly > 0)
+			{
+				return mDogTagWaitingTime - (mCurrentLocalSeconds + mSecondsSinceLocalDogTagUsed) % mDogTagWaitingTime;
+			}
+			return (!isFull) ? (mDogTagWaitingTime - mCurrentLocalSeconds % mDogTagWaitingTime) : 0;
+		}
+	}
+
+	public float progressToNextDogtag
+	{
+		get
+		{
+			if (mUsedDogtagsLocaly > 0)
+			{
+				return (float)((mCurrentLocalSeconds + mSecondsSinceLocalDogTagUsed) % mDogTagWaitingTime) / (float)mDogTagWaitingTime;
+			}
+			return (float)(mCurrentLocalSeconds % mDogTagWaitingTime) / (float)mDogTagWaitingTime;
+		}
+	}
+
+	public event Action<int> DogtagsChanged;
+
+	protected override void Awake()
+	{
+		base.Awake();
+		Singleton<BeanstalkServerManager>.instance.PlayerDataLoaded += OnPlayerDataLoaded;
+	}
+
+	private void OnPlayerDataLoaded()
+	{
+		int num = (int)(float)Singleton<GameVariables>.instance.constants.GetRow(Constants.rowIds.DogTagRefillTime).FLOATVALUE;
+		int num2 = (int)(float)Singleton<GameVariables>.instance.constants.GetRow(Constants.rowIds.DogTagCap).FLOATVALUE;
+		Debug.Log($"DogTag Manager: Configurations loaded: dogtag seconds: {num} dogtag count: {num2}");
+		mDogTagWaitingTime = num;
+		max = num2 * num;
+		InitDogTagCount();
+	}
+
+	internal void InitDogTagCount()
+	{
+		mLastDogTagCount = currentDogtags;
+	}
+
+	internal void UpdateDogtags(int dtSeconds, int dtLastUpdate, int dtMax = 0)
+	{
+		mUsedDogtagsLocaly = 0;
+		lastUpdate = dtLastUpdate;
+		seconds = dtSeconds;
+		if (dtMax != 0)
+		{
+			max = dtMax;
+		}
+		Debug.Log($"DogTag Manager: Update from server\ncurrentDogtags {currentDogtags}\nserver response: seconds {seconds} lastUpdate {lastUpdate}\nserverSeconds {mServerSeconds} currentTime {Singleton<BeanstalkServerManager>.instance.currentTimestamp} maxSeconds {max}");
+		if (DogtagServerUpdate != null)
+		{
+			DogtagServerUpdate();
+		}
+		PushNotificationManager.instance.ScheduleLocalDogtagNotification(max - seconds);
+	}
+
+	protected override void Start()
+	{
+		base.Start();
+		StartCoroutine(UpdateDogTags(0.5f));
+	}
+
+	private void OnApplicationResumed()
+	{
+		if (this.DogtagsChanged != null)
+		{
+			this.DogtagsChanged(currentDogtags);
+		}
+	}
+
+	private IEnumerator UpdateDogTags(float updateTime)
+	{
+		while (GuiElementSingle<LoadingDialog>.instance.isShowed)
+		{
+			yield return null;
+		}
+		while (true)
+		{
+			int dogtagsInteger = currentDogtags;
+			if (this.DogtagsChanged != null)
+			{
+				this.DogtagsChanged(dogtagsInteger);
+			}
+			if (mLastDogTagCount != -1 && mLastDogTagCount != dogtagsInteger)
+			{
+				if (dogtagsInteger > mLastDogTagCount)
+				{
+					bool isInMenu = Singleton<GameController>.instance.gameState == GameController.GameState.Menu;
+					bool canPlaySound = isInMenu && !GameLoginManager.instance.acountDataDownloadingInProgress && !Singleton<BeanstalkServerManager>.instance.loadingPlayerData && !Singleton<SessionManager>.instance.schedulingOrInProgressAnyUpdate;
+					Debug.Log("DogTag Manager: Playing dogtag sound - I am in menu: " + isInMenu + " account data are being downloaded: " + GameLoginManager.instance.acountDataDownloadingInProgress + " loading player data: " + Singleton<BeanstalkServerManager>.instance.loadingPlayerData + " any update scheduled or in progress: " + Singleton<SessionManager>.instance.schedulingOrInProgressAnyUpdate);
+					if (canPlaySound)
+					{
+						SoundsManager.Instance.PlaySound(SoundsManager.SoundsEnum.DogTagGain);
+					}
+				}
+				mLastDogTagCount = dogtagsInteger;
+			}
+			yield return new WaitForSeconds(updateTime);
+		}
+	}
+
+	public bool CanUseDogtags(int amount)
+	{
+		return currentDogtags >= amount;
+	}
+
+	public void UseDogTagLocaly()
+	{
+		Debug.Log("DogTag Manager: Use LOCAL DogTag");
+		GuiElementSingle<HeaderDogtagButton>.instance.AnimateDogtagUse();
+		mUsedDogtagsLocaly++;
+		mTimeOfLastLocalDogUse = Singleton<BeanstalkServerManager>.instance.currentTimestamp;
+		if (this.DogtagsChanged != null)
+		{
+			this.DogtagsChanged(currentDogtags);
+		}
+	}
+
+	public void ResetLocalDogtags()
+	{
+		mUsedDogtagsLocaly = 0;
+		if (this.DogtagsChanged != null)
+		{
+			this.DogtagsChanged(currentDogtags);
+		}
+	}
+
+	public void RefillAllDogtags()
+	{
+		PushNotificationManager.instance.CancelLocalNotification("dogtag");
+		seconds = max;
+		if (this.DogtagsChanged != null)
+		{
+			this.DogtagsChanged(currentDogtags);
+		}
+	}
+
+	public void PayOneDogTag()
+	{
+		Debug.Log($"DogTag Manager: Pay one dogtag {seconds}, used localy:{mUsedDogtagsLocaly}");
+		Singleton<BeanstalkServerManager>.instance.PayOneDogtag();
+		if (mUsedDogtagsLocaly == 0)
+		{
+			GuiElementSingle<HeaderDogtagButton>.instance.AnimateDogtagUse();
+		}
+		int num = mServerSeconds;
+		int num2 = mDogTagWaitingTime;
+		if (num > max)
+		{
+			num2 += num - max;
+		}
+		seconds -= num2;
+		if (this.DogtagsChanged != null)
+		{
+			this.DogtagsChanged(currentDogtags);
+		}
+	}
 }

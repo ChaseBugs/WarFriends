@@ -1,63 +1,284 @@
+using System;
+using System.Collections;
+using Beebyte.Obfuscator;
 using UnityEngine;
 
-public class LevelBehaviour : MonoBehaviour
+[Skip]
+[ExecuteInEditMode]
+public abstract class LevelBehaviour : Core_BaseScript
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	[Skip]
+	public enum UnitType
+	{
+		Defender,
+		AttackerExplosive,
+		AttackerShooter,
+		AttackerRusher
+	}
 
-	1. No dll files were provided to AssetRipper.
+	[Serializable]
+	public class BotProperties
+	{
+		public int dangerCoeficient;
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+		public bool useExplosive;
+	}
 
-	2. Incorrect dll files were provided to AssetRipper.
+	[Header("Bot")]
+	public BotProperties botProperties;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	[Header("Spawning")]
+	public int maxGeneratedCount = 1;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	[Header("Name + Description")]
+	public string unitDictionaryId;
 
-	3. Assembly Reconstruction has not been implemented.
+	[HideInInspector]
+	public string unitName;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	[HideInInspector]
+	public string unitDescription;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	[HideInInspector]
+	public string unitAbilityName;
 
-	4. This script is unnecessary.
+	[HideInInspector]
+	public string unitBuffName;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	[HideInInspector]
+	public string unitElitePartsName;
 
-	5. Script Content Level 0
+	[Header("Type")]
+	public UnitType unitType;
 
-		AssetRipper was set to not load any script information.
+	[Header("Special Icon")]
+	public string abilityIcon;
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	[Header("Elite Icon")]
+	public string eliteIcon;
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	[Header("Army Screen Model Settings")]
+	public Vector3 modelPosition;
 
-	7. An incorrect path was provided to AssetRipper.
+	public Vector2 modelStartRotation;
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	[Header("Card ID reference")]
+	public string cardId;
 
-	*/
+	[Header("Slots")]
+	public UpgradeSlots upgradeSlots;
+
+	[Header("Settings")]
+	public int guiOrder;
+
+	public bool isSoldier = true;
+
+	public bool isAir;
+
+	public float prepareForBattleIconPositionY = 80f;
+
+	[Header("Perks")]
+	public PerkType perkType;
+
+	public PerkAffects perkAffects;
+
+	public int indexInLevelsManager;
+
+	[SerializeField]
+	private string modelPath;
+
+	public GameObject unitModel { get; private set; }
+
+	public string unitTypeName => GameVariables.unitType[unitType].Value1;
+
+	public string unitTypeNameHUD => Localization.Localize(GameVariables.unitType[unitType].Value4);
+
+	public string unitTypeIcon => GameVariables.unitType[unitType].Value2;
+
+	public string unitTypeDescription => GameVariables.unitType[unitType].Value3;
+
+	public int dangerCoef
+	{
+		get
+		{
+			if (upgradeSlots != null && upgradeSlots.armyUpgradesRow != null && upgradeSlots.armyUpgradesRow.DANGERCOEFICIENT > 0)
+			{
+				return upgradeSlots.armyUpgradesRow.DANGERCOEFICIENT;
+			}
+			return botProperties.dangerCoeficient;
+		}
+	}
+
+	public int totalPower
+	{
+		get
+		{
+			if (upgradeSlots != null && upgradeSlots.armyUpgradesRow != null)
+			{
+				return upgradeSlots.totalPower;
+			}
+			return 0;
+		}
+	}
+
+	public float coolDown
+	{
+		get
+		{
+			if (upgradeSlots != null && upgradeSlots.armyUpgradesRow != null)
+			{
+				return upgradeSlots.coolDown;
+			}
+			return 0f;
+		}
+	}
+
+	public BehaviourDefinititon behaviourDefinition { get; set; }
+
+	public LevelBehaviour unitNeededForPromotion
+	{
+		get
+		{
+			int num = upgradeSlots.actualTier + 1;
+			foreach (LevelBehaviour behaviour in LevelManager.instance.behaviours)
+			{
+				if (behaviour.unitType == unitType && behaviour.upgradeSlots.startTier == num)
+				{
+					return behaviour;
+				}
+			}
+			return null;
+		}
+	}
+
+	public abstract BehaviourDefinititon baseBehaviourDefinititon { get; }
+
+	public string GetAbilityDescriptionWithColours(string startingColour)
+	{
+		string text = Colours.stringWhite + upgradeSlots.upgradeSlotSpecial.abilityValue + startingColour;
+		return Localization.LocalizeFormat(unitDictionaryId + "-ABILITYMAXDESC", text, upgradeSlots.upgradeSlotSpecial.abilityMaxValue, upgradeSlots.upgradeSlotSpecial.abilityStartValue);
+	}
+
+	public string GetBuffDescriptionWithColours(string startingColour)
+	{
+		string text = Colours.stringWhite + upgradeSlots.upgradeSlotElite.buffValue + startingColour;
+		return Localization.LocalizeFormat(unitDictionaryId + "-BUFFMAXDESC", text, upgradeSlots.upgradeSlotElite.buffMaxValue, upgradeSlots.upgradeSlotElite.buffStartValue);
+	}
+
+	public virtual bool CanBeSpawned(Fractions f, int numberOfEnemies)
+	{
+		return true;
+	}
+
+	public virtual void Init(AIObject aiObject)
+	{
+	}
+
+	protected virtual void Update()
+	{
+	}
+
+	private void LoadModel()
+	{
+		if (unitModel == null && !string.IsNullOrEmpty(modelPath))
+		{
+			unitModel = Resources.Load<GameObject>(modelPath);
+		}
+	}
+
+	public virtual IEnumerator PrepareVisualsForGameCoroutine(UpgradeSlots.UnitUpgrades unitUpgrades, bool bought, bool mine, bool unloadWeapon = false)
+	{
+		if (bought)
+		{
+			LoadSounds();
+			LoadModel();
+		}
+		if (mine)
+		{
+			yield return StartCoroutine(upgradeSlots.LoadMineVisualsCoroutine(unitUpgrades, bought));
+		}
+		else
+		{
+			yield return StartCoroutine(upgradeSlots.LoadOponentVisualsCoroutine(unitUpgrades, bought));
+		}
+	}
+
+	public virtual IEnumerator PrepareVisualsForCardCoroutine(bool mine, bool opponent)
+	{
+		LoadSounds();
+		if (mine)
+		{
+			yield return StartCoroutine(upgradeSlots.LoadMineVisualsCoroutineCards());
+		}
+		if (opponent)
+		{
+			yield return StartCoroutine(upgradeSlots.LoadOpponentVisualsCoroutineCards());
+		}
+	}
+
+	public void Clear()
+	{
+		unitModel = null;
+	}
+
+	private void LoadSounds()
+	{
+		foreach (Sounds3DEnum unitSound in upgradeSlots.unitSounds)
+		{
+			Singleton<SoundsManager3D>.instance.UseSound(unitSound);
+		}
+	}
+
+	public virtual void Copy(AIObject to)
+	{
+		to.behaviour = to.gameObject.AddComponent(this);
+	}
+
+	public virtual void ReSync()
+	{
+	}
+
+	public virtual void Unload()
+	{
+		if (unitModel != null)
+		{
+			MeshFilter[] componentsInChildren = unitModel.GetComponentsInChildren<MeshFilter>(includeInactive: true);
+			MeshFilter[] array = componentsInChildren;
+			foreach (MeshFilter meshFilter in array)
+			{
+				Resources.UnloadAsset(meshFilter.sharedMesh);
+			}
+		}
+		upgradeSlots.UnloadVisuals();
+		unitModel = null;
+	}
+
+	public Perk MultipleCurrentPerkForUnit(LevelBehaviour behaviour, UnitUpgradeDefinition def, Perk currentPerk, PerkType type)
+	{
+		if (def.isEquipped && def.unitUpgrades.isElite && PerkAffectBehaviour(behaviour) && type == perkType)
+		{
+			return upgradeSlots.PerkImplementation(def, currentPerk);
+		}
+		return currentPerk;
+	}
+
+	private bool PerkAffectBehaviour(Behaviour behaviour)
+	{
+		return PerkUnitCategories.GetUnits(perkAffects).Contains(behaviour.GetType());
+	}
+
+	public void SetUpEliteIcon(UISprite eliteSprite, UISprite buffSprite, float multiplier = 0f)
+	{
+		eliteSprite.spriteName = eliteIcon;
+		buffSprite.spriteName = ((perkType != PerkType.Buff) ? "game-elite-debuff1" : "game-elite-buff1");
+		if (multiplier > 0f)
+		{
+			eliteSprite.MakePixelPerfect();
+			eliteSprite.transform.localScale = eliteSprite.transform.localScale.MultiplyXY(multiplier);
+			buffSprite.MakePixelPerfect();
+			buffSprite.transform.localScale = buffSprite.transform.localScale.MultiplyXY(multiplier);
+			float y = eliteSprite.transform.localPosition.y;
+			buffSprite.transform.localPosition = buffSprite.transform.localPosition.ReplaceY(y - multiplier * 25f);
+		}
+	}
 }

@@ -11,3 +11,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 900a4f08dc8faa3b1629a9144b590c09, type: 3}
   m_Name: WarArenaRulePlayerSpeed
   m_EditorClassIdentifier:
+  data:
+    showRule: 1
+    playerSpeed: 2

@@ -134,6 +134,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 490d2d5d8dcaa21161a6bac6d0eef5a9, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  isActivated: 0
+  snapTransform: {fileID: 0}
+  stroke:
+  - {fileID: 10269566}
+  - {fileID: 10269143}
+  - {fileID: 10269857}
+  - {fileID: 10296729}
+  strokeSize: 0.15
+  text: {fileID: 10270521}
 --- !u!4 &443158
 Transform:
   m_ObjectHideFlags: 0
@@ -204,6 +213,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f700cdbb1ef330b26b332599df454d05, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mTextMesh: {fileID: 10270521}
 --- !u!4 &477035
 Transform:
   m_ObjectHideFlags: 0
@@ -274,6 +284,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f700cdbb1ef330b26b332599df454d05, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mTextMesh: {fileID: 10269566}
 --- !u!4 &424449
 Transform:
   m_ObjectHideFlags: 0
@@ -344,6 +355,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f700cdbb1ef330b26b332599df454d05, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mTextMesh: {fileID: 10269143}
 --- !u!4 &434467
 Transform:
   m_ObjectHideFlags: 0
@@ -414,6 +426,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f700cdbb1ef330b26b332599df454d05, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mTextMesh: {fileID: 10269857}
 --- !u!4 &455190
 Transform:
   m_ObjectHideFlags: 0
@@ -484,6 +497,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f700cdbb1ef330b26b332599df454d05, type: 3}
   m_Name:
   m_EditorClassIdentifier:
+  mTextMesh: {fileID: 10296729}
 --- !u!1001 &100100000
 Prefab:
   serializedVersion: 2

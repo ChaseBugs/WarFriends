@@ -1,66 +1,190 @@
-using UnityEngine;
+using System;
+using System.Text;
 
 namespace Org.BouncyCastle.Math.EC.Abc
 {
-	public class SimpleBigDecimal : MonoBehaviour
+internal class SimpleBigDecimal
+{
+	private readonly BigInteger bigInt;
+
+	private readonly int scale;
+
+	public int IntValue => Floor().IntValue;
+
+	public long LongValue => Floor().LongValue;
+
+	public int Scale => scale;
+
+	public SimpleBigDecimal(BigInteger bigInt, int scale)
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
+		if (scale < 0)
+		{
+			throw new ArgumentException("scale may not be negative");
+		}
+		this.bigInt = bigInt;
+		this.scale = scale;
 	}
+
+	private SimpleBigDecimal(SimpleBigDecimal limBigDec)
+	{
+		bigInt = limBigDec.bigInt;
+		scale = limBigDec.scale;
+	}
+
+	public static SimpleBigDecimal GetInstance(BigInteger val, int scale)
+	{
+		return new SimpleBigDecimal(val.ShiftLeft(scale), scale);
+	}
+
+	private void CheckScale(SimpleBigDecimal b)
+	{
+		if (scale != b.scale)
+		{
+			throw new ArgumentException("Only SimpleBigDecimal of same scale allowed in arithmetic operations");
+		}
+	}
+
+	public SimpleBigDecimal AdjustScale(int newScale)
+	{
+		if (newScale < 0)
+		{
+			throw new ArgumentException("scale may not be negative");
+		}
+		if (newScale == scale)
+		{
+			return this;
+		}
+		return new SimpleBigDecimal(bigInt.ShiftLeft(newScale - scale), newScale);
+	}
+
+	public SimpleBigDecimal Add(SimpleBigDecimal b)
+	{
+		CheckScale(b);
+		return new SimpleBigDecimal(bigInt.Add(b.bigInt), scale);
+	}
+
+	public SimpleBigDecimal Add(BigInteger b)
+	{
+		return new SimpleBigDecimal(bigInt.Add(b.ShiftLeft(scale)), scale);
+	}
+
+	public SimpleBigDecimal Negate()
+	{
+		return new SimpleBigDecimal(bigInt.Negate(), scale);
+	}
+
+	public SimpleBigDecimal Subtract(SimpleBigDecimal b)
+	{
+		return Add(b.Negate());
+	}
+
+	public SimpleBigDecimal Subtract(BigInteger b)
+	{
+		return new SimpleBigDecimal(bigInt.Subtract(b.ShiftLeft(scale)), scale);
+	}
+
+	public SimpleBigDecimal Multiply(SimpleBigDecimal b)
+	{
+		CheckScale(b);
+		return new SimpleBigDecimal(bigInt.Multiply(b.bigInt), scale + scale);
+	}
+
+	public SimpleBigDecimal Multiply(BigInteger b)
+	{
+		return new SimpleBigDecimal(bigInt.Multiply(b), scale);
+	}
+
+	public SimpleBigDecimal Divide(SimpleBigDecimal b)
+	{
+		CheckScale(b);
+		BigInteger bigInteger = bigInt.ShiftLeft(scale);
+		return new SimpleBigDecimal(bigInteger.Divide(b.bigInt), scale);
+	}
+
+	public SimpleBigDecimal Divide(BigInteger b)
+	{
+		return new SimpleBigDecimal(bigInt.Divide(b), scale);
+	}
+
+	public SimpleBigDecimal ShiftLeft(int n)
+	{
+		return new SimpleBigDecimal(bigInt.ShiftLeft(n), scale);
+	}
+
+	public int CompareTo(SimpleBigDecimal val)
+	{
+		CheckScale(val);
+		return bigInt.CompareTo(val.bigInt);
+	}
+
+	public int CompareTo(BigInteger val)
+	{
+		return bigInt.CompareTo(val.ShiftLeft(scale));
+	}
+
+	public BigInteger Floor()
+	{
+		return bigInt.ShiftRight(scale);
+	}
+
+	public BigInteger Round()
+	{
+		SimpleBigDecimal simpleBigDecimal = new SimpleBigDecimal(BigInteger.One, 1);
+		return Add(simpleBigDecimal.AdjustScale(scale)).Floor();
+	}
+
+	public override string ToString()
+	{
+		if (scale == 0)
+		{
+			return bigInt.ToString();
+		}
+		BigInteger bigInteger = Floor();
+		BigInteger bigInteger2 = bigInt.Subtract(bigInteger.ShiftLeft(scale));
+		if (bigInt.SignValue < 0)
+		{
+			bigInteger2 = BigInteger.One.ShiftLeft(scale).Subtract(bigInteger2);
+		}
+		if (bigInteger.SignValue == -1 && !bigInteger2.Equals(BigInteger.Zero))
+		{
+			bigInteger = bigInteger.Add(BigInteger.One);
+		}
+		string value = bigInteger.ToString();
+		char[] array = new char[scale];
+		string text = bigInteger2.ToString(2);
+		int length = text.Length;
+		int num = scale - length;
+		for (int i = 0; i < num; i++)
+		{
+			array[i] = '0';
+		}
+		for (int j = 0; j < length; j++)
+		{
+			array[num + j] = text[j];
+		}
+		string value2 = new string(array);
+		StringBuilder stringBuilder = new StringBuilder(value);
+		stringBuilder.Append(".");
+		stringBuilder.Append(value2);
+		return stringBuilder.ToString();
+	}
+
+	public override bool Equals(object obj)
+	{
+		if (this == obj)
+		{
+			return true;
+		}
+		if (!(obj is SimpleBigDecimal simpleBigDecimal))
+		{
+			return false;
+		}
+		return bigInt.Equals(simpleBigDecimal.bigInt) && scale == simpleBigDecimal.scale;
+	}
+
+	public override int GetHashCode()
+	{
+		return bigInt.GetHashCode() ^ scale;
+	}
+}
 }

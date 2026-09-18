@@ -1,63 +1,114 @@
+using System;
 using UnityEngine;
 
+[AddComponentMenu("NGUI/Interaction/Button Scale")]
 public class UIButtonScale : MonoBehaviour
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public Transform tweenTarget;
 
-	1. No dll files were provided to AssetRipper.
+	public Vector3 hover = new Vector3(1.1f, 1.1f, 1f);
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public Vector3 pressed = new Vector3(1.05f, 1.05f, 1f);
 
-	2. Incorrect dll files were provided to AssetRipper.
+	private static float duration = 0.17f;
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	private Vector3 mScale;
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	private bool mInitDone;
 
-	3. Assembly Reconstruction has not been implemented.
+	private bool mStarted;
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	private bool mHighlighted;
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	private bool mIsPressed;
 
-	4. This script is unnecessary.
+	private bool mSomething;
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	private void Start()
+	{
+		if (!mStarted)
+		{
+			mStarted = true;
+			if (tweenTarget == null)
+			{
+				tweenTarget = base.transform;
+			}
+			mScale = tweenTarget.localScale;
+		}
+	}
 
-	5. Script Content Level 0
+	private void OnEnable()
+	{
+		if (mStarted && mHighlighted)
+		{
+			OnHover(UICamera.IsHighlighted(base.gameObject));
+		}
+	}
 
-		AssetRipper was set to not load any script information.
+	private void OnDisable()
+	{
+		if (tweenTarget != null)
+		{
+			TweenScale component = tweenTarget.GetComponent<TweenScale>();
+			if (component != null)
+			{
+				component.scale = mScale;
+				component.enabled = false;
+			}
+		}
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	private void Init()
+	{
+		mInitDone = true;
+		if (tweenTarget == null)
+		{
+			tweenTarget = base.transform;
+		}
+		mScale = tweenTarget.localScale;
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public virtual void OnPress(bool isPressed)
+	{
+		if (base.enabled)
+		{
+			if (!mStarted)
+			{
+				Start();
+			}
+			mIsPressed = isPressed;
+			if (isPressed)
+			{
+				TweenScale tweenScale = TweenScale.Begin(tweenTarget.gameObject, duration, Vector3.Scale(mScale, pressed));
+				tweenScale.onFinished = (UITweener.OnFinished)Delegate.Combine(tweenScale.onFinished, new UITweener.OnFinished(OnPressedFinished));
+				tweenScale.method = UITweener.Method.EaseInOut;
+				mSomething = true;
+			}
+			else if (!mSomething)
+			{
+				TweenScale.Begin(tweenTarget.gameObject, duration, mScale).method = UITweener.Method.EaseInOut;
+			}
+		}
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	private void OnPressedFinished(UITweener tween)
+	{
+		if (mSomething && !mIsPressed)
+		{
+			TweenScale.Begin(tweenTarget.gameObject, duration, mScale).method = UITweener.Method.EaseInOut;
+		}
+		mSomething = false;
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
-
-	*/
+	private void OnHover(bool isOver)
+	{
+		if (base.enabled)
+		{
+			if (!mStarted)
+			{
+				Start();
+			}
+			mHighlighted = isOver;
+		}
+	}
 }

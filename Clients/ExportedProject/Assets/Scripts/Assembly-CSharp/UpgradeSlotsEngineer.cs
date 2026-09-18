@@ -1,63 +1,154 @@
+using System.Collections;
+using System.Collections.Generic;
+using Google2u;
 using UnityEngine;
 
-public class UpgradeSlotsEngineer : MonoBehaviour
+public class UpgradeSlotsEngineer : UpgradeSlotsBaseSoldier<DBUpgradeSlotsShotgunner>
 {
-	/*
-	Dummy class. This could have happened for several reasons:
+	public UpgradeSlotsTurret upgradeSlotsTurret;
 
-	1. No dll files were provided to AssetRipper.
+	public override float damage
+	{
+		get
+		{
+			int rowIndex = upgradeSlot.boughtIndex;
+			int rowIndex2 = (int)base.excel.GetValue(rowIndex, "Turret");
+			return (float)upgradeSlotsTurret.excel.GetValue(rowIndex2, "damage");
+		}
+	}
 
-		Unity asset bundles and serialized files do not contain script information to decompile.
-			* For Mono games, that information is contained in .NET dll files.
-			* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-			
-		AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-		A unexpected file structure could cause AssetRipper to not find the required files.
+	public override float accuracy
+	{
+		get
+		{
+			int rowIndex = upgradeSlot.boughtIndex;
+			int rowIndex2 = (int)base.excel.GetValue(rowIndex, "Turret");
+			return (float)upgradeSlotsTurret.excel.GetValue(rowIndex2, "realShotProbability");
+		}
+	}
 
-	2. Incorrect dll files were provided to AssetRipper.
+	public override float rateOfFire
+	{
+		get
+		{
+			int rowIndex = upgradeSlot.boughtIndex;
+			int rowIndex2 = (int)base.excel.GetValue(rowIndex, "Turret");
+			float num = (float)upgradeSlotsTurret.excel.GetValue(rowIndex2, "ShotFrequencyMin");
+			float num2 = (float)upgradeSlotsTurret.excel.GetValue(rowIndex2, "ShotFrequencyMax");
+			return 60f / ((num + num2) * 0.5f);
+		}
+	}
 
-		Any of the following could cause this:
-			* Il2CppInterop assemblies
-			* Deobfuscated assemblies
-			* Older assemblies (compared to when the bundle was built)
-			* Newer assemblies (compared to when the bundle was built)
+	public override List<Tuple<string, float>> unitSpecifics
+	{
+		get
+		{
+			List<Tuple<string, float>> list = new List<Tuple<string, float>>();
+			float num = (float)base.excel.GetValue(base.boughtIndex, "special");
+			if (upgradeSlotSpecial.isBought)
+			{
+				int boughtIndexAbsolute = upgradeSlotSpecial.boughtIndexAbsolute;
+				list.Add(new Tuple<string, float>("ID_TURRETBUILDTIME", num + (float)base.excel.GetValue(boughtIndexAbsolute, "special")));
+			}
+			else
+			{
+				list.Add(new Tuple<string, float>("ID_TURRETBUILDTIME", num));
+			}
+			return list;
+		}
+	}
 
-		Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
+	public override bool isSpecificTime => true;
 
-	3. Assembly Reconstruction has not been implemented.
+	public override Perk PerkImplementation(UnitUpgradeDefinition def, Perk currentPerk)
+	{
+		int rowIndex = Mathf.Clamp(def.unitUpgrades.slotUpgradeIndexElite, 0, base.excel.RowsGeneric.Count);
+		float num = (float)base.excel.GetValue(rowIndex, "elite");
+		Perk perk = new Perk();
+		perk.hpCoef = 1f - num;
+		perk.debuffCount = 1;
+		Perk perk2 = perk;
+		return perk2 * currentPerk;
+	}
 
-		Asset bundles contain a small amount of information about the script content.
-		This information can be used to recover the serializable fields of a script.
+	protected override void LoadDefinitionFromXLS(BehaviourDefinititon def, int rowIndex)
+	{
+		SoldierBehaviourDefinititonEngineer soldierBehaviourDefinititonEngineer = (SoldierBehaviourDefinititonEngineer)def;
+		base.LoadDefinitionFromXLS((BehaviourDefinititon)soldierBehaviourDefinititonEngineer, rowIndex);
+		soldierBehaviourDefinititonEngineer.turretUpgradeLevel += (int)base.excel.GetValue(rowIndex, "Turret");
+	}
 
-		See: https://github.com/AssetRipper/AssetRipper/issues/655
+	private int GetTurretUpgrades(int boughtIndices)
+	{
+		return (int)base.excel.GetValue(boughtIndices, "Turret");
+	}
 
-	4. This script is unnecessary.
+	public override IEnumerator LoadMineVisualsCoroutine(UnitUpgrades unitUpgrades, bool bought)
+	{
+		yield return StartCoroutine(base.LoadMineVisualsCoroutine(unitUpgrades, bought));
+		UnitUpgrades turretUnitUpgrades = new UnitUpgrades(1f)
+		{
+			slotUpgradeindex = GetTurretUpgrades(unitUpgrades.slotUpgradeindex)
+		};
+		yield return StartCoroutine(upgradeSlotsTurret.LoadMineVisualsCoroutine(turretUnitUpgrades, bought));
+	}
 
-		If this script has no asset or script references, it can be deleted.
-		Be sure to resolve any compile errors before deleting because they can hide references.
+	public override IEnumerator LoadOponentVisualsCoroutine(UnitUpgrades unitUpgrades, bool bought)
+	{
+		yield return StartCoroutine(base.LoadOponentVisualsCoroutine(unitUpgrades, bought));
+		int turretUpgradeLevel = GetTurretUpgrades(unitUpgrades.slotUpgradeindex);
+		UnitUpgrades turretUnitUpgrades = new UnitUpgrades(1f)
+		{
+			slotUpgradeindex = GetTurretUpgrades(unitUpgrades.slotUpgradeindex)
+		};
+		yield return StartCoroutine(upgradeSlotsTurret.LoadOponentVisualsCoroutine(turretUnitUpgrades, bought));
+	}
 
-	5. Script Content Level 0
+	public override void NullOpponentVisuals()
+	{
+		base.NullOpponentVisuals();
+		upgradeSlotsTurret.NullOpponentVisuals();
+	}
 
-		AssetRipper was set to not load any script information.
+	public override void NullCardVisuals(bool mine, bool opponent)
+	{
+		base.NullCardVisuals(mine, opponent);
+		upgradeSlotsTurret.NullCardVisuals(mine, opponent);
+	}
 
-	6. Cpp2IL failed to decompile Il2Cpp data
+	public override List<Tuple<string, float[]>> GetGuiStatsSpecial(UpgradeSlotSpecial slot)
+	{
+		List<Tuple<string, float[]>> list = new List<Tuple<string, float[]>>();
+		list.Add(StatsFor(slot, "special", "seconds"));
+		float value = StartStatsFor(slot, "special", "seconds").Value2;
+		list[0].Value2[0] += value;
+		list[0].Value2[1] += value;
+		list[0].Value2[2] += value;
+		return list;
+	}
 
-		If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-		This is an upstream problem, and the AssetRipper developer has very little control over it.
-		Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
+	public override List<Tuple<string, float>> GetGuiStatsSpecialStart(UpgradeSlotSpecial slot)
+	{
+		List<Tuple<string, float>> list = new List<Tuple<string, float>>();
+		list.Add(StartStatsFor(slot, "special", "seconds"));
+		return list;
+	}
 
-	7. An incorrect path was provided to AssetRipper.
+	public override string GetAbilityCurrentValue(UpgradeSlotSpecial slot)
+	{
+		float num = slot.guiStatistics[0].Value2[0];
+		return MiscTools.FormatFloatNumberRoundZeroOrOne(num);
+	}
 
-		This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-		AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-		An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-		Generally, AssetRipper expects users to provide the root folder of the game. For example:
-			* Windows: the folder containing the game's .exe file
-			* Mac: the .app file/folder
-			* Linux: the folder containing the game's executable file
-			* Android: the apk file
-			* iOS: the ipa file
-			* Switch: the folder containing exefs and romfs
+	public override string GetAbilityMaxValue(UpgradeSlotSpecial slot)
+	{
+		float num = slot.guiStatistics[0].Value2[1];
+		return MiscTools.FormatFloatNumberRoundZeroOrOne(num);
+	}
 
-	*/
+	public override string GetAbilityStartValue(UpgradeSlotSpecial slot)
+	{
+		float value = slot.guiStatisticsStart[0].Value2;
+		return MiscTools.FormatFloatNumberRoundZeroOrOne(value);
+	}
 }

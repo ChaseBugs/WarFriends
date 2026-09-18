@@ -1,66 +1,79 @@
-using UnityEngine;
-
 namespace Org.BouncyCastle.Crypto.Tls
 {
-	public class NamedCurve : MonoBehaviour
+public abstract class NamedCurve
+{
+	public const int sect163k1 = 1;
+
+	public const int sect163r1 = 2;
+
+	public const int sect163r2 = 3;
+
+	public const int sect193r1 = 4;
+
+	public const int sect193r2 = 5;
+
+	public const int sect233k1 = 6;
+
+	public const int sect233r1 = 7;
+
+	public const int sect239k1 = 8;
+
+	public const int sect283k1 = 9;
+
+	public const int sect283r1 = 10;
+
+	public const int sect409k1 = 11;
+
+	public const int sect409r1 = 12;
+
+	public const int sect571k1 = 13;
+
+	public const int sect571r1 = 14;
+
+	public const int secp160k1 = 15;
+
+	public const int secp160r1 = 16;
+
+	public const int secp160r2 = 17;
+
+	public const int secp192k1 = 18;
+
+	public const int secp192r1 = 19;
+
+	public const int secp224k1 = 20;
+
+	public const int secp224r1 = 21;
+
+	public const int secp256k1 = 22;
+
+	public const int secp256r1 = 23;
+
+	public const int secp384r1 = 24;
+
+	public const int secp521r1 = 25;
+
+	public const int brainpoolP256r1 = 26;
+
+	public const int brainpoolP384r1 = 27;
+
+	public const int brainpoolP512r1 = 28;
+
+	public const int arbitrary_explicit_prime_curves = 65281;
+
+	public const int arbitrary_explicit_char2_curves = 65282;
+
+	public static bool IsValid(int namedCurve)
 	{
-		/*
-		Dummy class. This could have happened for several reasons:
-
-		1. No dll files were provided to AssetRipper.
-
-			Unity asset bundles and serialized files do not contain script information to decompile.
-				* For Mono games, that information is contained in .NET dll files.
-				* For Il2Cpp games, that information is contained in compiled C++ assemblies and the global metadata.
-				
-			AssetRipper usually expects games to conform to a normal file structure for Unity games of that platform.
-			A unexpected file structure could cause AssetRipper to not find the required files.
-
-		2. Incorrect dll files were provided to AssetRipper.
-
-			Any of the following could cause this:
-				* Il2CppInterop assemblies
-				* Deobfuscated assemblies
-				* Older assemblies (compared to when the bundle was built)
-				* Newer assemblies (compared to when the bundle was built)
-
-			Note: Although assembly publicizing is bad, it alone cannot cause empty scripts. See: https://github.com/AssetRipper/AssetRipper/issues/653
-
-		3. Assembly Reconstruction has not been implemented.
-
-			Asset bundles contain a small amount of information about the script content.
-			This information can be used to recover the serializable fields of a script.
-
-			See: https://github.com/AssetRipper/AssetRipper/issues/655
-	
-		4. This script is unnecessary.
-
-			If this script has no asset or script references, it can be deleted.
-			Be sure to resolve any compile errors before deleting because they can hide references.
-
-		5. Script Content Level 0
-
-			AssetRipper was set to not load any script information.
-
-		6. Cpp2IL failed to decompile Il2Cpp data
-
-			If this happened, there will be errors in the AssetRipper.log indicating that it happened.
-			This is an upstream problem, and the AssetRipper developer has very little control over it.
-			Please post a GitHub issue at: https://github.com/SamboyCoding/Cpp2IL/issues
-
-		7. An incorrect path was provided to AssetRipper.
-
-			This is characterized by "Mixed game structure has been found at" in the AssetRipper.log file.
-			AssetRipper expects games to conform to a normal file structure for Unity games of that platform.
-			An unexpected file structure could cause AssetRipper to not find the required files for script decompilation.
-			Generally, AssetRipper expects users to provide the root folder of the game. For example:
-				* Windows: the folder containing the game's .exe file
-				* Mac: the .app file/folder
-				* Linux: the folder containing the game's executable file
-				* Android: the apk file
-				* iOS: the ipa file
-				* Switch: the folder containing exefs and romfs
-
-		*/
+		return (namedCurve >= 1 && namedCurve <= 28) || (namedCurve >= 65281 && namedCurve <= 65282);
 	}
+
+	public static bool RefersToASpecificNamedCurve(int namedCurve)
+	{
+		if (namedCurve == 65281 || namedCurve == 65282)
+		{
+			return false;
+		}
+		return true;
+	}
+}
 }
