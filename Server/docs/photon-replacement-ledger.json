@@ -1,0 +1,13 @@
+{
+  "source": "Clients/ExportedProject",
+  "calls": [
+    {"file":"Assets/Scripts/Assembly-CSharp/GameController.cs","line":644,"call":"PhotonNetwork.Disconnect()","replacement":"SelfHostedRoomLifecycle.Close","status":"open"},
+    {"file":"Assets/Scripts/Assembly-CSharp/PhotonConnectionManager.cs","line":164,"call":"PhotonServerSettings.AppID assignment","replacement":"BackendClient connection grant; no app ID","status":"open"},
+    {"file":"Assets/Scripts/Assembly-CSharp/PhotonConnectionManager.cs","line":167,"call":"PhotonServerSettings.AppID assignment","replacement":"BackendClient connection grant; no app ID","status":"open"},
+    {"file":"Assets/Scripts/Assembly-CSharp/PhotonConnectionManager.cs","line":170,"call":"PhotonServerSettings.AppID assignment","replacement":"BackendClient connection grant; no app ID","status":"open"},
+    {"file":"Assets/Scripts/Assembly-CSharp/PhotonConnectionManager.cs","line":173,"call":"PhotonServerSettings.AppID assignment","replacement":"BackendClient connection grant; no app ID","status":"open"},
+    {"file":"Assets/Scripts/Assembly-CSharp/PhotonConnectionManager.cs","line":180,"call":"PhotonNetwork.Disconnect()","replacement":"SelfHostedRoomLifecycle.Close","status":"open"},
+    {"file":"Assets/Scripts/Assembly-CSharp/PhotonConnectionManager.cs","line":355,"call":"PhotonNetwork.Disconnect()","replacement":"SelfHostedRoomLifecycle.Close","status":"open"},
+    {"file":"Assets/Scripts/Assembly-CSharp/PhotonConnectionManager.cs","line":566,"call":"PhotonNetwork.Disconnect()","replacement":"SelfHostedRoomLifecycle.Close","status":"open"}
+  ]
+}

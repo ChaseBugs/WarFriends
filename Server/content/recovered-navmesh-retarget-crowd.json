@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "unityVersion": "2018.3.0f2",
+  "provenance": "host-seed-2-stall-snapshot-not-original-client-route",
+  "pathManifestSha256": "01b639934246803fb9f2afddd4a4852725bf54c2ad9d87327cea8abc94c2c550",
+  "navMeshSha256": "d4baa1ff07ec051a4c26362d178e564636d530aee4c6b688b3dba205c72ad99b",
+  "inputSha256": "bc8043d4e27d1477cb548d2d00bcd87eeb3fe5a545eeaacd54c7fa80d790f3a0",
+  "resultSha256": "09fa523e43b40f7b0bfc09564610a054d108671e4ed6189a92f89d809a05dcaf",
+  "cases": [
+    "retarget-seed-2",
+    "occupied-rusher-point-a",
+    "occupied-rusher-point-b"
+  ],
+  "sampleCountPerAgent": 112,
+  "movingArrivalSeconds": 3.725594997406006,
+  "minimumPlanarSeparations": [
+    0.3391966155514427,
+    0.3392270280489992
+  ],
+  "movingMinX": 4.082647323608398
+}

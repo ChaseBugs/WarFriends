@@ -1,0 +1,994 @@
+{
+  "unity": "2018.3.0f2",
+  "scenario": "Play hide(0.5s), CrossFadeQueued idle(default)",
+  "frames": [
+    {
+      "frame": 2,
+      "seconds": 0.0,
+      "delta": 0.02,
+      "x": 0.0,
+      "states": [
+        {
+          "name": "hide",
+          "time": 0.0,
+          "weight": 1.0,
+          "enabled": true
+        },
+        {
+          "name": "idle",
+          "time": 0.0,
+          "weight": 0.0,
+          "enabled": false
+        },
+        {
+          "name": "idle - Queued Clone",
+          "time": 0.0,
+          "weight": 0.0,
+          "enabled": false
+        }
+      ]
+    },
+    {
+      "frame": 3,
+      "seconds": 0.0333333351,
+      "delta": 0.0333333351,
+      "x": 0.06666667,
+      "states": [
+        {
+          "name": "idle - Queued Clone",
+          "time": 0.0,
+          "weight": 0.0,
+          "enabled": false
+        },
+        {
+          "name": "idle",
+          "time": 0.0,
+          "weight": 0.0,
+          "enabled": false
+        },
+        {
+          "name": "hide",
+          "time": 0.0333333351,
+          "weight": 1.0,
+          "enabled": true
+        }
+      ]
+    },
+    {
+      "frame": 4,
+      "seconds": 0.06666668,
+      "delta": 0.0333333351,
+      "x": 0.13333334,
+      "states": [
+        {
+          "name": "idle - Queued Clone",
+          "time": 0.0,
+          "weight": 0.0,
+          "enabled": false
+        },
+        {
+          "name": "idle",
+          "time": 0.0,
+          "weight": 0.0,
+          "enabled": false
+        },
+        {
+          "name": "hide",
+          "time": 0.06666667,
+          "weight": 1.0,
+          "enabled": true
+        }
+      ]
+    },
+    {
+      "frame": 5,
+      "seconds": 0.100000009,
+      "delta": 0.0333333351,
+      "x": 0.200000018,
+      "states": [
+        {
+          "name": "idle - Queued Clone",
+          "time": 0.0,
+          "weight": 0.0,
+          "enabled": false
+        },
+        {
+          "name": "idle",
+          "time": 0.0,
+          "weight": 0.0,
+          "enabled": false
+        },
+        {
+          "name": "hide",
+          "time": 0.100000009,
+          "weight": 1.0,
+          "enabled": true
+        }
+      ]
+    },
+    {
+      "frame": 6,
+      "seconds": 0.13333334,
+      "delta": 0.0333333351,
+      "x": 0.266666681,
+      "states": [
+        {
+          "name": "idle - Queued Clone",
+          "time": 0.0,
+          "weight": 0.0,
+          "enabled": false
+        },
+        {
+          "name": "idle",
+          "time": 0.0,
+          "weight": 0.0,
+          "enabled": false
+        },
+        {
+          "name": "hide",
+          "time": 0.13333334,
+          "weight": 1.0,
+          "enabled": true
+        }
+      ]
+    },
+    {
+      "frame": 7,
+      "seconds": 0.166666672,
+      "delta": 0.0333333351,
+      "x": 0.333333343,
+      "states": [
+        {
+          "name": "idle - Queued Clone",
+          "time": 0.0,
+          "weight": 0.0,
+          "enabled": false
+        },
+        {
+          "name": "idle",
+          "time": 0.0,
+          "weight": 0.0,
+          "enabled": false
+        },
+        {
+          "name": "hide",
+          "time": 0.166666672,
+          "weight": 1.0,
+          "enabled": true
+        }
+      ]
+    },
+    {
+      "frame": 8,
+      "seconds": 0.200000018,
+      "delta": 0.0333333351,
+      "x": 0.400000036,
+      "states": [
+        {
+          "name": "idle - Queued Clone",
+          "time": 0.0,
+          "weight": 0.0,
+          "enabled": true
+        },
+        {
+          "name": "idle",
+          "time": 0.0,
+          "weight": 0.0,
+          "enabled": false
+        },
+        {
+          "name": "hide",
+          "time": 0.200000018,
+          "weight": 1.0,
+          "enabled": true
+        }
+      ]
+    },
+    {
+      "frame": 9,
+      "seconds": 0.233333334,
+      "delta": 0.0333333351,
+      "x": 1.525926,
+      "states": [
+        {
+          "name": "idle - Queued Clone",
+          "time": 0.0333333351,
+          "weight": 0.111111112,
+          "enabled": true
+        },
+        {
+          "name": "idle",
+          "time": 0.0,
+          "weight": 0.0,
+          "enabled": false
+        },
+        {
+          "name": "hide",
+          "time": 0.233333349,
+          "weight": 0.8888889,
+          "enabled": true
+        }
+      ]
+    },
+    {
+      "frame": 10,
+      "seconds": 0.266666681,
+      "delta": 0.0333333351,
+      "x": 2.63703728,
+      "states": [
+        {
+          "name": "idle - Queued Clone",
+          "time": 0.06666667,
+          "weight": 0.222222224,
+          "enabled": true
+        },
+        {
+          "name": "idle",
+          "time": 0.0,
+          "weight": 0.0,
+          "enabled": false
+        },
+        {
+          "name": "hide",
+          "time": 0.266666681,
+          "weight": 0.7777778,
+          "enabled": true
+        }
+      ]
+    },
+    {
+      "frame": 11,
+      "seconds": 0.3,
+      "delta": 0.0333333351,
+      "x": 3.73333359,
+      "states": [
+        {
+          "name": "idle - Queued Clone",
+          "time": 0.100000009,
+          "weight": 0.333333343,
+          "enabled": true
+        },
+        {
+          "name": "idle",
+          "time": 0.0,
+          "weight": 0.0,
+          "enabled": false
+        },
+        {
+          "name": "hide",
+          "time": 0.3,
+          "weight": 0.6666667,
+          "enabled": true
+        }
+      ]
+    },
+    {
+      "frame": 12,
+      "seconds": 0.333333343,
+      "delta": 0.0333333351,
+      "x": 4.814815,
+      "states": [
+        {
+          "name": "idle - Queued Clone",
+          "time": 0.13333334,
+          "weight": 0.444444448,
+          "enabled": true
+        },
+        {
+          "name": "idle",
+          "time": 0.0,
+          "weight": 0.0,
+          "enabled": false
+        },
+        {
+          "name": "hide",
+          "time": 0.333333343,
+          "weight": 0.5555556,
+          "enabled": true
+        }
+      ]
+    },
+    {
+      "frame": 13,
+      "seconds": 0.366666675,
+      "delta": 0.0333333351,
+      "x": 5.88148165,
+      "states": [
+        {
+          "name": "idle - Queued Clone",
+          "time": 0.166666672,
+          "weight": 0.5555556,
+          "enabled": true
+        },
+        {
+          "name": "idle",
+          "time": 0.0,
+          "weight": 0.0,
+          "enabled": false
+        },
+        {
+          "name": "hide",
+          "time": 0.366666675,
+          "weight": 0.444444478,
+          "enabled": true
+        }
+      ]
+    },
+    {
+      "frame": 14,
+      "seconds": 0.4,
+      "delta": 0.0333333351,
+      "x": 6.933334,
+      "states": [
+        {
+          "name": "idle - Queued Clone",
+          "time": 0.200000018,
+          "weight": 0.6666667,
+          "enabled": true
+        },
+        {
+          "name": "idle",
+          "time": 0.0,
+          "weight": 0.0,
+          "enabled": false
+        },
+        {
+          "name": "hide",
+          "time": 0.400000036,
+          "weight": 0.333333373,
+          "enabled": true
+        }
+      ]
+    },
+    {
+      "frame": 15,
+      "seconds": 0.433333337,
+      "delta": 0.0333333351,
+      "x": 7.97037029,
+      "states": [
+        {
+          "name": "idle - Queued Clone",
+          "time": 0.233333349,
+          "weight": 0.7777778,
+          "enabled": true
+        },
+        {
+          "name": "idle",
+          "time": 0.0,
+          "weight": 0.0,
+          "enabled": false
+        },
+        {
+          "name": "hide",
+          "time": 0.433333367,
+          "weight": 0.222222269,
+          "enabled": true
+        }
+      ]
+    },
+    {
+      "frame": 16,
+      "seconds": 0.466666669,
+      "delta": 0.0333333351,
+      "x": 8.992593,
+      "states": [
+        {
+          "name": "idle - Queued Clone",
+          "time": 0.266666681,
+          "weight": 0.8888889,
+          "enabled": true
+        },
+        {
+          "name": "idle",
+          "time": 0.0,
+          "weight": 0.0,
+          "enabled": false
+        },
+        {
+          "name": "hide",
+          "time": 0.4666667,
+          "weight": 0.111111157,
+          "enabled": true
+        }
+      ]
+    },
+    {
+      "frame": 17,
+      "seconds": 0.50000006,
+      "delta": 0.0333333351,
+      "x": 9.9991,
+      "states": [
+        {
+          "name": "idle - Queued Clone",
+          "time": 0.3,
+          "weight": 1.0,
+          "enabled": true
+        },
+        {
+          "name": "idle",
+          "time": 0.0,
+          "weight": 0.0,
+          "enabled": false
+        },
+        {
+          "name": "hide",
+          "time": 0.0,
+          "weight": 0.0,
+          "enabled": false
+        }
+      ]
+    },
+    {
+      "frame": 18,
+      "seconds": 0.533333361,
+      "delta": 0.0333333351,
+      "x": 10.0,
+      "states": [
+        {
+          "name": "idle - Queued Clone",
+          "time": 0.333333343,
+          "weight": 1.0,
+          "enabled": true
+        },
+        {
+          "name": "idle",
+          "time": 0.0,
+          "weight": 0.0,
+          "enabled": false
+        },
+        {
+          "name": "hide",
+          "time": 0.0,
+          "weight": 0.0,
+          "enabled": false
+        }
+      ]
+    },
+    {
+      "frame": 19,
+      "seconds": 0.5666667,
+      "delta": 0.0333333351,
+      "x": 10.0,
+      "states": [
+        {
+          "name": "idle - Queued Clone",
+          "time": 0.366666675,
+          "weight": 1.0,
+          "enabled": true
+        },
+        {
+          "name": "idle",
+          "time": 0.0,
+          "weight": 0.0,
+          "enabled": false
+        },
+        {
+          "name": "hide",
+          "time": 0.0,
+          "weight": 0.0,
+          "enabled": false
+        }
+      ]
+    },
+    {
+      "frame": 20,
+      "seconds": 0.6,
+      "delta": 0.0333333351,
+      "x": 10.0,
+      "states": [
+        {
+          "name": "idle - Queued Clone",
+          "time": 0.400000036,
+          "weight": 1.0,
+          "enabled": true
+        },
+        {
+          "name": "idle",
+          "time": 0.0,
+          "weight": 0.0,
+          "enabled": false
+        },
+        {
+          "name": "hide",
+          "time": 0.0,
+          "weight": 0.0,
+          "enabled": false
+        }
+      ]
+    },
+    {
+      "frame": 21,
+      "seconds": 0.6333334,
+      "delta": 0.0333333351,
+      "x": 10.0,
+      "states": [
+        {
+          "name": "idle - Queued Clone",
+          "time": 0.433333367,
+          "weight": 1.0,
+          "enabled": true
+        },
+        {
+          "name": "idle",
+          "time": 0.0,
+          "weight": 0.0,
+          "enabled": false
+        },
+        {
+          "name": "hide",
+          "time": 0.0,
+          "weight": 0.0,
+          "enabled": false
+        }
+      ]
+    },
+    {
+      "frame": 22,
+      "seconds": 0.666666746,
+      "delta": 0.0333333351,
+      "x": 10.0,
+      "states": [
+        {
+          "name": "idle - Queued Clone",
+          "time": 0.4666667,
+          "weight": 1.0,
+          "enabled": true
+        },
+        {
+          "name": "idle",
+          "time": 0.0,
+          "weight": 0.0,
+          "enabled": false
+        },
+        {
+          "name": "hide",
+          "time": 0.0,
+          "weight": 0.0,
+          "enabled": false
+        }
+      ]
+    },
+    {
+      "frame": 23,
+      "seconds": 0.700000048,
+      "delta": 0.0333333351,
+      "x": 10.0,
+      "states": [
+        {
+          "name": "idle - Queued Clone",
+          "time": 0.5,
+          "weight": 1.0,
+          "enabled": true
+        },
+        {
+          "name": "idle",
+          "time": 0.0,
+          "weight": 0.0,
+          "enabled": false
+        },
+        {
+          "name": "hide",
+          "time": 0.0,
+          "weight": 0.0,
+          "enabled": false
+        }
+      ]
+    },
+    {
+      "frame": 24,
+      "seconds": 0.7333334,
+      "delta": 0.0333333351,
+      "x": 10.0,
+      "states": [
+        {
+          "name": "idle - Queued Clone",
+          "time": 0.533333361,
+          "weight": 1.0,
+          "enabled": true
+        },
+        {
+          "name": "idle",
+          "time": 0.0,
+          "weight": 0.0,
+          "enabled": false
+        },
+        {
+          "name": "hide",
+          "time": 0.0,
+          "weight": 0.0,
+          "enabled": false
+        }
+      ]
+    },
+    {
+      "frame": 25,
+      "seconds": 0.7666667,
+      "delta": 0.0333333351,
+      "x": 10.0,
+      "states": [
+        {
+          "name": "idle - Queued Clone",
+          "time": 0.5666667,
+          "weight": 1.0,
+          "enabled": true
+        },
+        {
+          "name": "idle",
+          "time": 0.0,
+          "weight": 0.0,
+          "enabled": false
+        },
+        {
+          "name": "hide",
+          "time": 0.0,
+          "weight": 0.0,
+          "enabled": false
+        }
+      ]
+    },
+    {
+      "frame": 26,
+      "seconds": 0.8000001,
+      "delta": 0.0333333351,
+      "x": 10.0,
+      "states": [
+        {
+          "name": "idle - Queued Clone",
+          "time": 0.6,
+          "weight": 1.0,
+          "enabled": true
+        },
+        {
+          "name": "idle",
+          "time": 0.0,
+          "weight": 0.0,
+          "enabled": false
+        },
+        {
+          "name": "hide",
+          "time": 0.0,
+          "weight": 0.0,
+          "enabled": false
+        }
+      ]
+    },
+    {
+      "frame": 27,
+      "seconds": 0.8333334,
+      "delta": 0.0333333351,
+      "x": 10.0,
+      "states": [
+        {
+          "name": "idle - Queued Clone",
+          "time": 0.6333334,
+          "weight": 1.0,
+          "enabled": true
+        },
+        {
+          "name": "idle",
+          "time": 0.0,
+          "weight": 0.0,
+          "enabled": false
+        },
+        {
+          "name": "hide",
+          "time": 0.0,
+          "weight": 0.0,
+          "enabled": false
+        }
+      ]
+    },
+    {
+      "frame": 28,
+      "seconds": 0.866666734,
+      "delta": 0.0333333351,
+      "x": 10.0,
+      "states": [
+        {
+          "name": "idle - Queued Clone",
+          "time": 0.6666667,
+          "weight": 1.0,
+          "enabled": true
+        },
+        {
+          "name": "idle",
+          "time": 0.0,
+          "weight": 0.0,
+          "enabled": false
+        },
+        {
+          "name": "hide",
+          "time": 0.0,
+          "weight": 0.0,
+          "enabled": false
+        }
+      ]
+    },
+    {
+      "frame": 29,
+      "seconds": 0.9000001,
+      "delta": 0.0333333351,
+      "x": 10.0,
+      "states": [
+        {
+          "name": "idle - Queued Clone",
+          "time": 0.700000048,
+          "weight": 1.0,
+          "enabled": true
+        },
+        {
+          "name": "idle",
+          "time": 0.0,
+          "weight": 0.0,
+          "enabled": false
+        },
+        {
+          "name": "hide",
+          "time": 0.0,
+          "weight": 0.0,
+          "enabled": false
+        }
+      ]
+    },
+    {
+      "frame": 30,
+      "seconds": 0.9333334,
+      "delta": 0.0333333351,
+      "x": 10.0,
+      "states": [
+        {
+          "name": "idle - Queued Clone",
+          "time": 0.733333349,
+          "weight": 1.0,
+          "enabled": true
+        },
+        {
+          "name": "idle",
+          "time": 0.0,
+          "weight": 0.0,
+          "enabled": false
+        },
+        {
+          "name": "hide",
+          "time": 0.0,
+          "weight": 0.0,
+          "enabled": false
+        }
+      ]
+    },
+    {
+      "frame": 31,
+      "seconds": 0.966666758,
+      "delta": 0.0333333351,
+      "x": 10.0,
+      "states": [
+        {
+          "name": "idle - Queued Clone",
+          "time": 0.7666667,
+          "weight": 1.0,
+          "enabled": true
+        },
+        {
+          "name": "idle",
+          "time": 0.0,
+          "weight": 0.0,
+          "enabled": false
+        },
+        {
+          "name": "hide",
+          "time": 0.0,
+          "weight": 0.0,
+          "enabled": false
+        }
+      ]
+    },
+    {
+      "frame": 32,
+      "seconds": 1.00000012,
+      "delta": 0.0333333351,
+      "x": 10.0,
+      "states": [
+        {
+          "name": "idle - Queued Clone",
+          "time": 0.8000001,
+          "weight": 1.0,
+          "enabled": true
+        },
+        {
+          "name": "idle",
+          "time": 0.0,
+          "weight": 0.0,
+          "enabled": false
+        },
+        {
+          "name": "hide",
+          "time": 0.0,
+          "weight": 0.0,
+          "enabled": false
+        }
+      ]
+    },
+    {
+      "frame": 33,
+      "seconds": 1.03333342,
+      "delta": 0.0333333351,
+      "x": 10.0,
+      "states": [
+        {
+          "name": "idle - Queued Clone",
+          "time": 0.8333334,
+          "weight": 1.0,
+          "enabled": true
+        },
+        {
+          "name": "idle",
+          "time": 0.0,
+          "weight": 0.0,
+          "enabled": false
+        },
+        {
+          "name": "hide",
+          "time": 0.0,
+          "weight": 0.0,
+          "enabled": false
+        }
+      ]
+    },
+    {
+      "frame": 34,
+      "seconds": 1.06666672,
+      "delta": 0.0333333351,
+      "x": 10.0,
+      "states": [
+        {
+          "name": "idle - Queued Clone",
+          "time": 0.866666734,
+          "weight": 1.0,
+          "enabled": true
+        },
+        {
+          "name": "idle",
+          "time": 0.0,
+          "weight": 0.0,
+          "enabled": false
+        },
+        {
+          "name": "hide",
+          "time": 0.0,
+          "weight": 0.0,
+          "enabled": false
+        }
+      ]
+    },
+    {
+      "frame": 35,
+      "seconds": 1.1,
+      "delta": 0.0333333351,
+      "x": 10.0,
+      "states": [
+        {
+          "name": "idle - Queued Clone",
+          "time": 0.900000036,
+          "weight": 1.0,
+          "enabled": true
+        },
+        {
+          "name": "idle",
+          "time": 0.0,
+          "weight": 0.0,
+          "enabled": false
+        },
+        {
+          "name": "hide",
+          "time": 0.0,
+          "weight": 0.0,
+          "enabled": false
+        }
+      ]
+    },
+    {
+      "frame": 36,
+      "seconds": 1.13333344,
+      "delta": 0.0333333351,
+      "x": 10.0,
+      "states": [
+        {
+          "name": "idle - Queued Clone",
+          "time": 0.9333334,
+          "weight": 1.0,
+          "enabled": true
+        },
+        {
+          "name": "idle",
+          "time": 0.0,
+          "weight": 0.0,
+          "enabled": false
+        },
+        {
+          "name": "hide",
+          "time": 0.0,
+          "weight": 0.0,
+          "enabled": false
+        }
+      ]
+    },
+    {
+      "frame": 37,
+      "seconds": 1.16666675,
+      "delta": 0.0333333351,
+      "x": 10.0,
+      "states": [
+        {
+          "name": "idle - Queued Clone",
+          "time": 0.9666667,
+          "weight": 1.0,
+          "enabled": true
+        },
+        {
+          "name": "idle",
+          "time": 0.0,
+          "weight": 0.0,
+          "enabled": false
+        },
+        {
+          "name": "hide",
+          "time": 0.0,
+          "weight": 0.0,
+          "enabled": false
+        }
+      ]
+    },
+    {
+      "frame": 38,
+      "seconds": 1.2,
+      "delta": 0.0333333351,
+      "x": 10.0,
+      "states": [
+        {
+          "name": "idle - Queued Clone",
+          "time": 1.0,
+          "weight": 1.0,
+          "enabled": true
+        },
+        {
+          "name": "idle",
+          "time": 0.0,
+          "weight": 0.0,
+          "enabled": false
+        },
+        {
+          "name": "hide",
+          "time": 0.0,
+          "weight": 0.0,
+          "enabled": false
+        }
+      ]
+    },
+    {
+      "frame": 39,
+      "seconds": 1.23333347,
+      "delta": 0.0333333351,
+      "x": 10.0,
+      "states": [
+        {
+          "name": "idle - Queued Clone",
+          "time": 1.03333342,
+          "weight": 1.0,
+          "enabled": true
+        },
+        {
+          "name": "idle",
+          "time": 0.0,
+          "weight": 0.0,
+          "enabled": false
+        },
+        {
+          "name": "hide",
+          "time": 0.0,
+          "weight": 0.0,
+          "enabled": false
+        }
+      ]
+    }
+  ]
+}

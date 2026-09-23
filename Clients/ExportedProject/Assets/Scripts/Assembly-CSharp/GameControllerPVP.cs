@@ -35,9 +35,20 @@ public abstract class GameControllerPVP : GameControllerOnline
 		base.mMainPlayerController.Killed -= OnPlayerControllerKilled;
 		base.mMainPlayerController.Killed += OnPlayerControllerKilled;
 		yield return StartCoroutine(base.StartGame());
+		if (PhotonConnectionManager.IsSelfHostedActive)
+		{
+			SelfHostedBattleClient selfHosted = UnityEngine.Object.FindObjectOfType<SelfHostedBattleClient>();
+			if (selfHosted == null) throw new System.InvalidOperationException("Self-hosted scene adapter is missing.");
+			selfHosted.ActivateDeathMatchScene(base.mMainPlayerController, GameControllerOnline.mOtherPlayerInstance);
+		}
 		Singleton<GuiManager>.instance.ShowGui(GuiScreenSingle<GameStartScreen>.instance);
 		yield return StartCoroutine(Singleton<GameCamera>.instance.StartBeginAnimation());
-		mPhotonView.RPC("StartCameraAnimationFinishedRPC", PhotonTargets.Others, PlayerController.currentPlayer.playerNetworkId);
+		if (PhotonConnectionManager.IsSelfHostedActive)
+		{
+			SelfHostedBattleClient client = UnityEngine.Object.FindObjectOfType<SelfHostedBattleClient>();
+			if (client != null) client.DispatchRpc("StartCameraAnimationFinishedRPC");
+		}
+		else mPhotonView.RPC("StartCameraAnimationFinishedRPC", PhotonTargets.Others, PlayerController.currentPlayer.playerNetworkId);
 		StartCameraAnimationFinishedRPC(PlayerController.currentPlayer.playerNetworkId);
 		yield return new WaitForRealSeconds(0.2f);
 		GameControllerOnline.mOtherPlayerInstance.Killed -= OnOtherPlayerKilled;
@@ -91,7 +102,7 @@ public abstract class GameControllerPVP : GameControllerOnline
 		{
 			base.AllPlayersConnected();
 			MatchManager.matchState = MatchState.BothPlayersConnected;
-			if (mCardsChoosen)
+			if (mCardsChoosen && !PhotonConnectionManager.IsSelfHostedActive)
 			{
 				mPhotonView.RPC("FinishChoosingCardsRPC", PhotonTargets.AllBufferedViaServer, JsonConvert.SerializeObject(GetUnitsUpgrades()), PhotonNetwork.player.ID);
 				LoadingDialog.ShowLoading(mChoosingCardsText);

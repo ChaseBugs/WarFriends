@@ -1,0 +1,17 @@
+{
+  "Version": 1,
+  "SceneRevision": "d46f81ff8c3e12bf17f34a1f53dd601bd799102c9f984818031441dfb7a5de43",
+  "StatsRevision": "28b94d12a9ba78a8a46287cd40bf51d454afa75c036b1368561d22979e47d39a",
+  "BindingsRevision": "9d64fa20c13c6a9688a0097a91aa81298346413e803240488f5c2c53eb7c9a12",
+  "AllWeaponBindingsRevision": "2b8e0b531a6bf46bac199218bc74440938f8d535000565eb197a2384aae7daaa",
+  "PosesRevision": "0447c4405d989a19c86ce04b57ff1a53e5104ad603aad92410c27683e40e75d3",
+  "BarrelBindingsRevision": "583a69f313cf3f34f151c0518a5ef640bff286ad8e4fe7f0b65782b6599b0706",
+  "BarrelOverlapRevision": "98189b087b0c93f6b75570afc91fbfb43c6b361e3edefd9ed35d8373a0e9d561",
+  "ArmyDeploymentRevision": "21420203c4b27c90ad49316964c4bfda7f3a42a3d9aeda597667ac8ee935db5f",
+  "ArmySpawnPointsRevision": "ee8c185c432942c899c30422be6d2c60129d7d854e83ea0067a81aef92b362c3",
+  "ArmyRusherPointsRevision": "85967322f91acad771db57ca151c4e52234763ed91a470a1ec9348eb31681fd0",
+  "PlayerShotTargetsRevision": "8a5649800b29e3c005cd83239b374829b30abfd233ba0b89dde223f653693399",
+  "ArmyNavMeshSourcesRevision": "31dca829c41b6dc7728e36427556c0657c43c72ec05888480a620b801fb7ca3f",
+  "ArmyNavMeshTriangulationRevision": "2afecb684e8af1cd2d6e200fd3bdb37f7ee134d97351b8e570def85fd1e5a20f",
+  "ArmyNavMeshPathsRevision": "01b639934246803fb9f2afddd4a4852725bf54c2ad9d87327cea8abc94c2c550"
+}

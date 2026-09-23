@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "scene": "Assets/Scenes/Park_Multiplayer.unity",
+  "asset": "Assets/NavMeshData/NavMesh_6.asset",
+  "cases": [
+    {
+      "id": "retarget-seed-2",
+      "start": {"x": 4.31, "y": 0.005, "z": -0.19},
+      "end": {"x": 4.3073173, "y": 0.005, "z": 1.6508758},
+      "speed": 0.9,
+      "delayFrames": 0,
+      "stationary": false
+    },
+    {
+      "id": "occupied-rusher-point-a",
+      "start": {"x": 4.32, "y": 0.005, "z": 0.15},
+      "end": {"x": 4.32, "y": 0.005, "z": 0.15},
+      "speed": 0.9,
+      "delayFrames": 0,
+      "stationary": true
+    },
+    {
+      "id": "occupied-rusher-point-b",
+      "start": {"x": 3.88, "y": 0.005, "z": 0.15},
+      "end": {"x": 3.88, "y": 0.005, "z": 0.15},
+      "speed": 0.9,
+      "delayFrames": 0,
+      "stationary": true
+    }
+  ]
+}

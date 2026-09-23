@@ -8,5 +8,6 @@
   <ItemGroup>
     <ProjectReference Include="../../src/War.BattleServer/War.BattleServer.csproj" />
     <ProjectReference Include="../../src/War.Client/War.Client.csproj" />
+    <ProjectReference Include="../../src/War.Backend/War.Backend.csproj" />
   </ItemGroup>
 </Project>

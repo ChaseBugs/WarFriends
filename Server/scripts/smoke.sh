@@ -13,6 +13,7 @@ export ASPNETCORE_URLS=http://127.0.0.1:18080
 export Mongo__Uri=mongodb://127.0.0.1:27028
 export Mongo__Database=warfriends_smoke
 export Battle__SigningKey="$(openssl rand -base64 32)"
+export Battle__ControlKey="$(openssl rand -base64 32)"
 export Battle__Port=30080 Battle__ServerId=local-1 Battle__PublicHost=127.0.0.1 Battle__BindAddress=127.0.0.1
 "${MONGOD:-mongod}" --dbpath "$run_root/mongo" --bind_ip 127.0.0.1 --port 27028 --logpath "$run_root/mongo.log" &
 pids+=("$!")

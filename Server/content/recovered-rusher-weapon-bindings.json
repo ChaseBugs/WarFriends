@@ -1,0 +1,175 @@
+{
+  "version": 1,
+  "sceneSha256": "d46f81ff8c3e12bf17f34a1f53dd601bd799102c9f984818031441dfb7a5de43",
+  "provenance": "serialized EnemyBasicInventory weapon object references; runtime weapon IDs remain unresolved",
+  "families": [
+    {
+      "unitId": "ID_UNIT-SHOTGUNNER",
+      "behaviorType": "SoldierBehaviourShotgunner",
+      "behaviorFileId": 46839,
+      "inventory": [
+        {
+          "fileId": 36093,
+          "weaponFileId": 11470521,
+          "guid": "bc28403733fe96243a0de4ee0a54ca57",
+          "asset": "GameObject/ShotgunEnemy.prefab",
+          "weaponType": 7,
+          "projectile": {
+            "speed": 10.0,
+            "checkDistance": 1.0
+          }
+        },
+        {
+          "fileId": 36093,
+          "weaponFileId": 11470521,
+          "guid": "bc28403733fe96243a0de4ee0a54ca57",
+          "asset": "GameObject/ShotgunEnemy.prefab",
+          "weaponType": 7,
+          "projectile": {
+            "speed": 10.0,
+            "checkDistance": 1.0
+          }
+        }
+      ]
+    },
+    {
+      "unitId": "ID_UNIT-PARATROOPER",
+      "behaviorType": "SoldierBehaviourParachuter",
+      "behaviorFileId": 38324,
+      "inventory": [
+        {
+          "fileId": 39978,
+          "weaponFileId": 11470521,
+          "guid": "d03f97fa25701ab42ab60f1fa86421ce",
+          "asset": "GameObject/AssaultRifleEnemy.prefab",
+          "weaponType": 0,
+          "projectile": {
+            "speed": 5.0,
+            "checkDistance": 0.35
+          }
+        },
+        {
+          "fileId": 39978,
+          "weaponFileId": 11470521,
+          "guid": "d03f97fa25701ab42ab60f1fa86421ce",
+          "asset": "GameObject/AssaultRifleEnemy.prefab",
+          "weaponType": 0,
+          "projectile": {
+            "speed": 5.0,
+            "checkDistance": 0.35
+          }
+        }
+      ]
+    },
+    {
+      "unitId": "ID_UNIT-SWAT",
+      "behaviorType": "SoldierBehaviourSwat",
+      "behaviorFileId": 38536,
+      "inventory": [
+        {
+          "fileId": 48807,
+          "weaponFileId": 11431434,
+          "guid": "42a8edce70a5eb14b8dae6f9bdaec807",
+          "asset": "GameObject/SwatPistolEnemy.prefab",
+          "weaponType": 3,
+          "projectile": {
+            "speed": 5.0,
+            "checkDistance": 0.35
+          }
+        },
+        {
+          "fileId": 48807,
+          "weaponFileId": 11470521,
+          "guid": "d03f97fa25701ab42ab60f1fa86421ce",
+          "asset": "GameObject/AssaultRifleEnemy.prefab",
+          "weaponType": 0,
+          "projectile": {
+            "speed": 5.0,
+            "checkDistance": 0.35
+          }
+        }
+      ]
+    },
+    {
+      "unitId": "ID_UNIT-FLAMETHROWER",
+      "behaviorType": "SoldierBehaviourFlamethrower",
+      "behaviorFileId": 48623,
+      "inventory": [
+        {
+          "fileId": 41583,
+          "weaponFileId": 11403859,
+          "guid": "b86a690a8ab354649bd23556342960a8",
+          "asset": "GameObject/FlamethrowerEnemy.prefab",
+          "weaponType": 12,
+          "projectile": null
+        },
+        {
+          "fileId": 41583,
+          "weaponFileId": 11403859,
+          "guid": "b86a690a8ab354649bd23556342960a8",
+          "asset": "GameObject/FlamethrowerEnemy.prefab",
+          "weaponType": 12,
+          "projectile": null
+        }
+      ]
+    },
+    {
+      "unitId": "ID_UNIT-COMMANDO",
+      "behaviorType": "SoldierBehaviourCommando",
+      "behaviorFileId": 47747,
+      "inventory": [
+        {
+          "fileId": 37440,
+          "weaponFileId": 11470521,
+          "guid": "d03f97fa25701ab42ab60f1fa86421ce",
+          "asset": "GameObject/AssaultRifleEnemy.prefab",
+          "weaponType": 0,
+          "projectile": {
+            "speed": 5.0,
+            "checkDistance": 0.35
+          }
+        },
+        {
+          "fileId": 37440,
+          "weaponFileId": 11470521,
+          "guid": "d03f97fa25701ab42ab60f1fa86421ce",
+          "asset": "GameObject/AssaultRifleEnemy.prefab",
+          "weaponType": 0,
+          "projectile": {
+            "speed": 5.0,
+            "checkDistance": 0.35
+          }
+        },
+        {
+          "fileId": 37440,
+          "weaponFileId": 11470521,
+          "guid": "d03f97fa25701ab42ab60f1fa86421ce",
+          "asset": "GameObject/AssaultRifleEnemy.prefab",
+          "weaponType": 0,
+          "projectile": {
+            "speed": 5.0,
+            "checkDistance": 0.35
+          }
+        }
+      ]
+    },
+    {
+      "unitId": "ID_UNIT-WARPER",
+      "behaviorType": "SoldierBehaviourWarper",
+      "behaviorFileId": 44715,
+      "inventory": [
+        {
+          "fileId": 45891,
+          "weaponFileId": 11470521,
+          "guid": "bc28403733fe96243a0de4ee0a54ca57",
+          "asset": "GameObject/ShotgunEnemy.prefab",
+          "weaponType": 7,
+          "projectile": {
+            "speed": 10.0,
+            "checkDistance": 1.0
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,55 @@
+{
+  "client": "1.4.0",
+  "source": "Assets/Scenes/MainScene.unity",
+  "sha256": "d46f81ff8c3e12bf17f34a1f53dd601bd799102c9f984818031441dfb7a5de43",
+  "playerPath": "MainSceneRootNew/Player",
+  "alliesBulletMask": -71818753,
+  "enemiesBulletMask": -143121921,
+  "layerSource": "Assets/GameObject/GlobalStorage.prefab",
+  "layerSha256": "93004046d938bfc72959d21e9b0e2a05fb8fc7c69217e4e4eefba78c9cc41cc6",
+  "weapon": {
+    "id": "Google2u.LMG_Minigun",
+    "setupType": "MinigunLevelsSetup",
+    "setupPath": "MainSceneRootNew/Managers/Levels Manager/Weapons/LMG_6_Minigun",
+    "playerWeaponType": "PlayerMinigunWeapon",
+    "weaponType": "LightMachinegun",
+    "weaponPath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/LMG_6_Minigun",
+    "muzzlePath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/LMG_6_Minigun/MachinegunMuzzleFlash",
+    "inventoryIndex": 25,
+    "animationFamily": 4,
+    "shotType": 0,
+    "ignoreLayersMask": 0,
+    "reloadable": false,
+    "infiniteAmmo": false,
+    "ammoSetupType": [
+      "BulletSetup"
+    ],
+    "weaponComponents": [
+      "BulletSetup",
+      "LightMachinegun",
+      "PhotonView",
+      "PlayerMinigunWeapon"
+    ],
+    "bulletType": "BulletSlow",
+    "bulletSource": "Assets/GameObject/BulletSlow.prefab",
+    "bulletGuid": "855689762fa6e774aaee190652b08c6f",
+    "bulletSha256": "5379f6aba1560b8eb3d7d386d1349454b97ea133163ade9a313e2bc34d1adfae",
+    "bulletFileId": 11409266,
+    "shotOffset": [
+      0.0,
+      0.12,
+      0.0
+    ],
+    "waitTime": 0.1,
+    "serializedCoolDown": 5.0,
+    "lockTimeAfterBurst": 0.3,
+    "firstShotWaitTime": 0.1,
+    "fast": false,
+    "friendKill": true,
+    "serializedSpeed": 30.0,
+    "speedMultiplier": 1.0,
+    "checkDistance": 0.5,
+    "criticalMultiplier": 2.0,
+    "motorType": "PlayerMinigunWeaponMotor"
+  }
+}

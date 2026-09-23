@@ -25,7 +25,34 @@ namespace War.Protocol.Transport
             try
             {
                 Packet packet = Packet.Parser.ParseFrom(bytes, 0, bytes.Length - MacBytes);
-                return packet.Version == 1 && packet.SessionId != 0 && packet.Sequence != 0 && packet.BodyCase != Packet.BodyOneofCase.None ? packet : null;
+                if (packet.Version != 1 || packet.SessionId == 0 || packet.Sequence == 0 ||
+                    packet.BodyCase == Packet.BodyOneofCase.None) return null;
+                // Protobuf retains unknown fields. Comparing a rebuilt envelope
+                // excludes them before any session or replay state is touched.
+                var clean = new Packet { Version = packet.Version, SessionId = packet.SessionId,
+                    Sequence = packet.Sequence, Ack = packet.Ack, AckBits = packet.AckBits };
+                switch (packet.BodyCase)
+                {
+                    case Packet.BodyOneofCase.Hello: clean.Hello = packet.Hello; break;
+                    case Packet.BodyOneofCase.Welcome: clean.Welcome = packet.Welcome; break;
+                    case Packet.BodyOneofCase.Ping: clean.Ping = packet.Ping; break;
+                    case Packet.BodyOneofCase.Pong: clean.Pong = packet.Pong; break;
+                    case Packet.BodyOneofCase.Disconnect: clean.Disconnect = packet.Disconnect; break;
+                    case Packet.BodyOneofCase.MatchHello: clean.MatchHello = packet.MatchHello; break;
+                    case Packet.BodyOneofCase.MatchCommand: clean.MatchCommand = packet.MatchCommand; break;
+                    case Packet.BodyOneofCase.MatchReply: clean.MatchReply = packet.MatchReply; break;
+                    case Packet.BodyOneofCase.MatchEventPoll: clean.MatchEventPoll = packet.MatchEventPoll; break;
+                    case Packet.BodyOneofCase.MatchEventBatch: clean.MatchEventBatch = packet.MatchEventBatch; break;
+                    case Packet.BodyOneofCase.MatchBarrelPoll: clean.MatchBarrelPoll = packet.MatchBarrelPoll; break;
+                    case Packet.BodyOneofCase.MatchBarrelBatch: clean.MatchBarrelBatch = packet.MatchBarrelBatch; break;
+                    case Packet.BodyOneofCase.MatchArmyPoll: clean.MatchArmyPoll = packet.MatchArmyPoll; break;
+                    case Packet.BodyOneofCase.MatchArmyBatch: clean.MatchArmyBatch = packet.MatchArmyBatch; break;
+                    case Packet.BodyOneofCase.MatchArmyEntityPoll: clean.MatchArmyEntityPoll = packet.MatchArmyEntityPoll; break;
+                    case Packet.BodyOneofCase.MatchArmyEntityBatch: clean.MatchArmyEntityBatch = packet.MatchArmyEntityBatch; break;
+                    default: return null;
+                }
+                return clean.ToByteArray().AsSpan().SequenceEqual(bytes.AsSpan(0, bytes.Length - MacBytes))
+                    ? packet : null;
             }
             catch (InvalidProtocolBufferException) { return null; }
         }

@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -69,6 +70,17 @@ public sealed class LegacyPlayerDocument
     public string VisualType { get; set; } = "";
     public int VisualTimestamp { get; set; }
     public string SquadId { get; set; } = "";
+
+    /// <summary>
+    /// Cards this player has deposited into their squad's shared pool (<c>DepositCards</c>/
+    /// <c>WithdrawCard</c>), keyed by card id. Lives on the <em>player</em> document, not the squad
+    /// — <c>DatabasePlayer.CreateFromDatabase</c> parses <c>Player.DepositedCards</c> off each
+    /// squad member's own player record, so a squad's "pool" is really the union of its members'
+    /// individually-tracked deposits, visible via <c>GetAllSquadMembers</c>. Buddy-card deposits (a
+    /// distinct wire shape keyed by a <c>"start-end"</c> numeric range rather than a card id) are
+    /// out of scope.
+    /// </summary>
+    public Dictionary<string, int> DepositedCards { get; set; } = [];
     public int SquadPoints { get; set; }
     public int SquadRank { get; set; }
     public int Status { get; set; }
@@ -85,6 +97,21 @@ public sealed class LegacyPlayerDocument
     /// rather than charged an invented price — see <c>LegacyEndpoints.ChangePlayerName</c>.
     /// </summary>
     public int RenameCount { get; set; }
+
+    /// <summary>
+    /// Tracks <c>PlayerAnalytics.PlayerAnalyticsData.squadCreationsCount</c>. Feeds
+    /// <c>CreateSquad</c>'s price: <c>(squadCreationsCount + 1) * WarBucksCreateSquadPrice</c>
+    /// (verified <c>Google2u.Constants</c> value 50000) — escalates with every squad the player has
+    /// created, matching <c>PlayerAnalytics.createSquadWarBucksPrice</c> exactly.
+    /// </summary>
+    public int SquadCreationsCount { get; set; }
+
+    /// <summary>
+    /// The server-bound battle identity issued by <c>GameStartedTutorial</c> (119) and echoed back
+    /// by the client's own <c>TutorialEnded</c> (120) request. Null once no tutorial battle is
+    /// outstanding (never started, or already completed) — see <c>LegacyEndpoints.TutorialEnded</c>.
+    /// </summary>
+    public string? PendingTutorialBattleId { get; set; }
 
     /// <summary>
     /// Set once the client reports the tutorial finished. Presence of a <c>TutorialData</c> key in
@@ -178,6 +205,9 @@ public sealed class LegacyPlayerStore
     public Task<LegacyPlayerDocument?> ById(string id, CancellationToken ct) =>
         players.Find(x => x.Id == id).FirstOrDefaultAsync(ct)!;
 
+    public Task<List<LegacyPlayerDocument>> ByIds(IEnumerable<string> ids, CancellationToken ct) =>
+        players.Find(Builders<LegacyPlayerDocument>.Filter.In(x => x.Id, ids)).ToListAsync(ct);
+
     /// <summary>
     /// Verifies a replayed guest password. Runs the KDF even when the account is missing so a
     /// wrong id and a wrong password cost the same.
@@ -202,6 +232,19 @@ public sealed class LegacyPlayerStore
         DateTime now = DateTime.UtcNow;
         var player = await players.Find(x => x.SessionHash == hash && x.SessionExpiresUtc > now).FirstOrDefaultAsync(ct);
         return player != null && player.Id == playerId ? player : null;
+    }
+
+    /// <summary>Bearer authentication for the protobuf battle bridge. The session token is unique,
+    /// hashed at rest, and already identifies exactly one unexpired legacy player.</summary>
+    public async Task<LegacyPlayerDocument?> AuthenticateToken(string? token, CancellationToken ct)
+    {
+        if (token == null || !Regex.IsMatch(token, @"\A[A-F0-9]{64}\z")) return null;
+        string hash = HashToken(token);
+        DateTime now = DateTime.UtcNow;
+        var player = await players.Find(x => x.SessionHash == hash && x.SessionExpiresUtc > now).FirstOrDefaultAsync(ct);
+        if (player != null && (!Guid.TryParseExact(player.Id, "N", out _) || player.Id != player.Id.ToLowerInvariant()))
+            throw new InvalidDataException("Legacy player identity cannot enter the protobuf battle channel.");
+        return player;
     }
 
     /// <summary>Rotates the session token, returning the new plaintext for the response.</summary>
@@ -232,4 +275,25 @@ public sealed class LegacyPlayerStore
 
     public Task Update(string playerId, UpdateDefinition<LegacyPlayerDocument> update, CancellationToken ct) =>
         players.UpdateOneAsync(x => x.Id == playerId, update.Inc(x => x.Revision, 1), cancellationToken: ct);
+
+    /// <summary>
+    /// Atomically applies <paramref name="update"/> only if <paramref name="condition"/> still
+    /// holds on the stored document at the moment of the write, and returns the document as it
+    /// exists after the write — or <c>null</c> if the condition failed.
+    /// </summary>
+    /// <remarks>
+    /// Closes a real race a separate "read balance, check it, then <c>$inc</c>" pattern leaves
+    /// open: two concurrent requests from the same player (a double-tapped buy button, a client
+    /// retry) can both read the same starting balance before either write lands, both pass the
+    /// check against that stale snapshot, and both debit — the second landing on a document that
+    /// no longer actually affords it. A single-document <c>FindOneAndUpdate</c> with the balance
+    /// folded into its filter is atomic on any MongoDB (standalone included, no transaction or
+    /// replica set required) because the match and the write happen as one operation.
+    /// </remarks>
+    public async Task<LegacyPlayerDocument?> TryUpdate(string playerId, Expression<Func<LegacyPlayerDocument, bool>> condition, UpdateDefinition<LegacyPlayerDocument> update, CancellationToken ct) =>
+        await players.FindOneAndUpdateAsync(
+            Builders<LegacyPlayerDocument>.Filter.Where(x => x.Id == playerId) & Builders<LegacyPlayerDocument>.Filter.Where(condition),
+            update.Inc(x => x.Revision, 1),
+            new FindOneAndUpdateOptions<LegacyPlayerDocument> { ReturnDocument = ReturnDocument.After },
+            ct);
 }

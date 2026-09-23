@@ -6,6 +6,7 @@ using ExitGames.Client.Photon;
 using Google2u;
 using Newtonsoft.Json;
 using UnityEngine;
+using War.Protocol;
 
 public abstract class GameControllerOnline : IGameController
 {
@@ -32,6 +33,9 @@ public abstract class GameControllerOnline : IGameController
 	protected int mMapId;
 
 	private float mTImer;
+	private int mSelfHostedLocalStartCover = -1;
+	private int mSelfHostedOtherStartCover = -1;
+	private SelfHostedBattleClient mSelfHostedClient;
 
 	protected bool mMapIdSet;
 
@@ -172,15 +176,16 @@ public abstract class GameControllerOnline : IGameController
 		PhotonNetwork.ResumeMessageQueue();
 		mMatchStart = double.PositiveInfinity;
 		Fractions fr = mMainPlayerController.fraction;
-		int ind = (int)PhotonNetwork.player.customProperties["defendPosition"];
-		MapDefinition.DefendPosition defendPosition = GetMainPlayerPoint(fr, ind, PhotonNetwork.player);
+		bool selfHostedMode = PhotonConnectionManager.IsSelfHostedActive;
+		int ind = selfHostedMode ? mSelfHostedLocalStartCover : (int)PhotonNetwork.player.customProperties["defendPosition"];
+		MapDefinition.DefendPosition defendPosition = GetMainPlayerPoint(fr, ind, selfHostedMode ? null : PhotonNetwork.player);
 		mMainPlayerController.MoveTo(defendPosition.point.transform.position, defendPosition.point.transform.rotation);
 		mMainPlayerController.currentPlayerPoint = defendPosition;
-		SetUpPhotonViews(mMainPlayerController);
+		if (!selfHostedMode) SetUpPhotonViews(mMainPlayerController);
 		Debug.Log("Create player instance at " + defendPosition.point.transform.parent.name + " :" + defendPosition.point.name);
-		int i = (int)mOtherPlayerInstance.playerProperties.photonPlayer.customProperties["defendPosition"];
+		int i = selfHostedMode ? mSelfHostedOtherStartCover : (int)mOtherPlayerInstance.playerProperties.photonPlayer.customProperties["defendPosition"];
 		mOtherPlayerInstance.gameObject.SetActive(value: true);
-		MapDefinition.DefendPosition def = GetMainPlayerPoint(mOtherPlayerInstance.fraction, i, mOtherPlayerInstance.playerProperties.photonPlayer);
+		MapDefinition.DefendPosition def = GetMainPlayerPoint(mOtherPlayerInstance.fraction, i, selfHostedMode ? null : mOtherPlayerInstance.playerProperties.photonPlayer);
 		mOtherPlayerInstance.currentPlayerPoint = def;
 		mOtherPlayerInstance.MoveTo(def.point.transform.position, def.point.transform.rotation);
 		foreach (KeyValuePair<int, PlayerController> player in PlayerController.players)
@@ -188,11 +193,21 @@ public abstract class GameControllerOnline : IGameController
 			player.Value.InitPlayer();
 		}
 		PlayerController.currentPlayer.networkStatus.matchState = PlayerNetworkStatus.MatchState.LoadingFinished;
+		if (PhotonConnectionManager.IsSelfHostedActive)
+		{
+			SelfHostedBattleClient selfHosted = UnityEngine.Object.FindObjectOfType<SelfHostedBattleClient>();
+			if (selfHosted == null || !selfHosted.DispatchRpc("LoadingFinishedRPC"))
+				Debug.LogError("Self-hosted loading readiness could not be submitted.");
+			while (selfHosted != null && selfHosted.IsConnected &&
+				(selfHosted.State == null || selfHosted.State.Phase != War.Protocol.BattlePhase.Running))
+				yield return null;
+			yield break;
+		}
 		mPhotonView.RPC("LoadingFinishedRPC", PhotonTargets.AllBufferedViaServer, PhotonNetwork.player.ID, ++mStateUpdateCounter);
 		float mYieldStartTime = Time.realtimeSinceStartup;
 		InvokeAfter(delegate
 		{
-			if (PhotonNetwork.time < mMatchStart)
+			if (PhotonConnectionManager.GetNetworkTime() < mMatchStart)
 			{
 				mShowWaitingForPlayer = true;
 			}
@@ -213,16 +228,16 @@ public abstract class GameControllerOnline : IGameController
 					Debug.Log($"Player {playerController.Value.playerProperties.name} state: {playerController.Value.networkStatus.matchState}");
 				}
 			}
-			SyncMatchStart(PhotonNetwork.time + 2.0);
+			SyncMatchStart(PhotonConnectionManager.GetNetworkTime() + 2.0);
 		}
 		mYieldStartTime = Time.realtimeSinceStartup;
-		while (PhotonNetwork.time < mMatchStart)
+		while (PhotonConnectionManager.GetNetworkTime() < mMatchStart)
 		{
 			yield return null;
 			if (Time.time > mYieldStartTime + 5f)
 			{
 				mYieldStartTime = Time.realtimeSinceStartup;
-				Debug.LogError($"Waiting too long to start match, Match start: {mMatchStart} photon time: {PhotonNetwork.time}");
+				Debug.LogError($"Waiting too long to start match, Match start: {mMatchStart} photon time: {PhotonConnectionManager.GetNetworkTime()}");
 			}
 		}
 		Singleton<MapManager>.instance.currentMapDef.InitShields();
@@ -271,7 +286,7 @@ public abstract class GameControllerOnline : IGameController
 			if (item.Key as string == "MatchStart" && item.Value is double && (double)item.Value != double.PositiveInfinity)
 			{
 				mMatchStart = (double)item.Value;
-				Debug.Log($"Match start time {mMatchStart} photon time: {PhotonNetwork.time}");
+				Debug.Log($"Match start time {mMatchStart} photon time: {PhotonConnectionManager.GetNetworkTime()}");
 			}
 		}
 	}
@@ -281,12 +296,12 @@ public abstract class GameControllerOnline : IGameController
 		ExitGames.Client.Photon.Hashtable hashtable = new ExitGames.Client.Photon.Hashtable();
 		hashtable.Add("MatchStart", start);
 		ExitGames.Client.Photon.Hashtable propertiesToSet = hashtable;
-		if (PhotonNetwork.room != null)
+		if (!PhotonConnectionManager.IsSelfHostedActive && PhotonNetwork.room != null)
 		{
 			PhotonNetwork.room.SetCustomProperties(propertiesToSet);
 		}
 		mMatchStart = start;
-		Debug.Log($"Sync match start time {mMatchStart} photon time: {PhotonNetwork.time}");
+		Debug.Log($"Sync match start time {mMatchStart} photon time: {PhotonConnectionManager.GetNetworkTime()}");
 	}
 
 	public override void FinishChoosingCards()
@@ -298,6 +313,12 @@ public abstract class GameControllerOnline : IGameController
 		PlayerController.currentPlayer.playerProperties.chosenCards = CardManager.instance.selectedCards;
 		PlayerController.currentPlayer.playerProperties.buddyCards = CardManager.instance.selectedBuddyCards;
 		PlayerController.currentPlayer.playerProperties.upgrades = GetUnitsUpgrades();
+		if (PhotonConnectionManager.IsSelfHostedActive)
+		{
+			SubmitSelfHostedCards();
+			LoadingDialog.ShowLoading(loadingWaitingCards, showCancelButton: true).cancelClicked = WaitingForOpponentCancelClicked;
+			return;
+		}
 		if (mBothPlayersConnected)
 		{
 			Debug.Log("Send FinishChoosingCardsRPC: " + PhotonNetwork.player.ID);
@@ -315,6 +336,27 @@ public abstract class GameControllerOnline : IGameController
 		}
 	}
 
+	private async void SubmitSelfHostedCards()
+	{
+		try
+		{
+			SelfHostedBattleClient client = UnityEngine.Object.FindObjectOfType<SelfHostedBattleClient>();
+			if (client == null || !client.IsConnected) throw new InvalidOperationException("Self-hosted room is not connected.");
+			string selected = CardManager.instance.selectedCards;
+			string[] cards = string.IsNullOrEmpty(selected) ? new string[0] : selected.Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
+			List<string> buddies = new List<string>();
+			foreach (Tuple<string, CardManager.BuddyCardData> buddy in CardManager.instance.selectedBuddyCards) buddies.Add(buddy.Value1);
+			War.Protocol.MatchReply reply = await client.SelectCardsResult(cards, new int[0], new int[0], new int[0], buddies);
+			if (reply.Code != "cards-selected") throw new InvalidOperationException("Battle host rejected card selection: " + reply.Code);
+		}
+		catch (Exception exception)
+		{
+			Debug.LogError("Self-hosted card selection failed: " + exception.GetType().Name);
+			MatchManager.matchState = MatchState.GameCancelled;
+			LoadingDialog.Hide();
+		}
+	}
+
 	protected virtual void WaitingForOpponentCancelClicked()
 	{
 	}
@@ -322,6 +364,11 @@ public abstract class GameControllerOnline : IGameController
 	protected virtual void AllPlayersConnected()
 	{
 		Debug.Log("ALL PLAYERS CONNECTED");
+		if (PhotonConnectionManager.IsSelfHostedActive)
+		{
+			InitializeSelfHostedPlayers();
+			return;
+		}
 		if (!mBothPlayersConnected)
 		{
 			mBothPlayersConnected = true;
@@ -341,7 +388,7 @@ public abstract class GameControllerOnline : IGameController
 				}
 			}
 			PhotonNetwork.ResumeMessageQueue();
-			PhotonNetwork.room.visible = false;
+			if (!PhotonConnectionManager.IsSelfHostedActive) PhotonNetwork.room.visible = false;
 			int num = LevelManager.instance.currentLevel.displayNumber;
 			foreach (KeyValuePair<int, PlayerController> player in PlayerController.players)
 			{
@@ -364,6 +411,69 @@ public abstract class GameControllerOnline : IGameController
 		{
 			Debug.LogError("All players already connected");
 		}
+	}
+
+	private void InitializeSelfHostedPlayers()
+	{
+		if (mBothPlayersConnected) throw new InvalidOperationException("All players already connected.");
+		SelfHostedBattleClient client = UnityEngine.Object.FindObjectOfType<SelfHostedBattleClient>();
+		if (client == null || !client.IsConnected || client.PlayerViews == null || client.PlayerViews.Count != 2)
+			throw new InvalidOperationException("A complete self-hosted player roster is required.");
+		BattlePlayerView local = null;
+		BattlePlayerView other = null;
+		int localNetworkId = 0;
+		int otherNetworkId = 0;
+		for (int i = 0; i < client.PlayerViews.Count; i++)
+		{
+			BattlePlayerView candidate = client.PlayerViews[i];
+			if (candidate.PlayerId == client.LocalPlayerId) { local = candidate; localNetworkId = i + 1; }
+			else { other = candidate; otherNetworkId = i + 1; }
+		}
+		if (local == null || other == null) throw new InvalidOperationException("Self-hosted roster ownership is invalid.");
+		mBothPlayersConnected = true;
+		mIsWaitingToAcceptInvitation = false;
+		mSelfHostedClient = client;
+		mSelfHostedLocalStartCover = local.DefendPosition;
+		mSelfHostedOtherStartCover = other.DefendPosition;
+		PlayerController.currentPlayer = mMainPlayerController;
+		PlayerController.currentPlayer.playerNetworkId = localNetworkId;
+		PlayerController.currentPlayer.fraction = (Fractions)local.Fraction;
+		PlayerController.currentPlayer.playerProperties = PlayerProperties.CreateFromBattleView(local, PlayerController.currentPlayer.fraction);
+		PlayerController.currentPlayer.playerProperties.chosenCards = CardManager.instance.selectedCards;
+		PlayerController.currentPlayer.playerProperties.buddyCards = CardManager.instance.selectedBuddyCards;
+		PlayerController.currentPlayer.networkStatus.Reset();
+		PlayerController.currentPlayer.networkStatus.matchState = PlayerNetworkStatus.MatchState.Connected;
+		PlayerController.players[localNetworkId] = PlayerController.currentPlayer;
+		if (mOtherPlayerInstance == null)
+		{
+			mOtherPlayerInstance = UnityEngine.Object.Instantiate(Singleton<ObjectPoolDatabase>.instance.player);
+			mOtherPlayerInstance.transform.parent = Singleton<MainSceneRoot>.instance.transform;
+		}
+		mOtherPlayerInstance.gameObject.SetActive(false);
+		mOtherPlayerInstance.playerNetworkId = otherNetworkId;
+		mOtherPlayerInstance.fraction = (Fractions)other.Fraction;
+		mOtherPlayerInstance.playerProperties = PlayerProperties.CreateFromBattleView(other, mOtherPlayerInstance.fraction);
+		mOtherPlayerInstance.weaponInventory.SetWeapons(mOtherPlayerInstance.playerProperties.weapons);
+		mOtherPlayerInstance.networkStatus.Reset();
+		mOtherPlayerInstance.networkStatus.matchState = PlayerNetworkStatus.MatchState.Connected;
+		PlayerController.players[otherNetworkId] = mOtherPlayerInstance;
+		Singleton<GameController>.instance.opponent = mOtherPlayerInstance;
+		Singleton<ArmyPreviewCamera>.instance.RenderToTexture(mOtherPlayerInstance, true, PlayerTexturePool.RenderType.Classic);
+		client.CardsSelectedByBoth -= OnSelfHostedCardsSelected;
+		client.CardsSelectedByBoth += OnSelfHostedCardsSelected;
+		int level = Mathf.Max(local.Level, other.Level);
+		MatchManager.matchState = MatchState.BothPlayersConnected;
+		MatchManager.matchStartTime = Time.realtimeSinceStartup + (float)GameVariables.GetMatchStartTime(level);
+		MatchManager.invitationState = InvitationState.Accepted;
+	}
+
+	private void OnSelfHostedCardsSelected()
+	{
+		if (!mBothPlayersConnected || PlayerController.players.Count < 2) return;
+		foreach (KeyValuePair<int, PlayerController> player in PlayerController.players)
+			player.Value.networkStatus.matchState = PlayerNetworkStatus.MatchState.CardsChosen;
+		if (mSelfHostedClient != null) mSelfHostedClient.CardsSelectedByBoth -= OnSelfHostedCardsSelected;
+		LoadLevelAndStartGame();
 	}
 
 	[PunRPC]
@@ -415,7 +525,7 @@ public abstract class GameControllerOnline : IGameController
 	protected virtual void LoadLevelAndStartGame()
 	{
 		Debug.Log("StopMessageQueue");
-		PhotonNetwork.StopMessageQueue();
+		if (!PhotonConnectionManager.IsSelfHostedActive) PhotonNetwork.StopMessageQueue();
 		Singleton<GameController>.instance.StartGame(Singleton<MapManager>.instance.currentMap.name);
 	}
 
@@ -488,6 +598,10 @@ public abstract class GameControllerOnline : IGameController
 
 	protected virtual void Reset()
 	{
+		if (mSelfHostedClient != null) mSelfHostedClient.CardsSelectedByBoth -= OnSelfHostedCardsSelected;
+		mSelfHostedClient = null;
+		mSelfHostedLocalStartCover = -1;
+		mSelfHostedOtherStartCover = -1;
 		mIsWaitingToAcceptInvitation = false;
 		mPausesCount = 0;
 		mBothPlayersConnected = false;
@@ -539,7 +653,7 @@ public abstract class GameControllerOnline : IGameController
 
 	protected virtual void OnPhotonPlayerDisconnected(PhotonPlayer otherPlayer)
 	{
-		if (PhotonNetwork.room.playerCount != 2)
+		if (PhotonConnectionManager.GetPlayerCount() != 2)
 		{
 			PlayerController player = PlayerController.GetPlayer(otherPlayer.ID);
 			if (player != null)
@@ -605,7 +719,7 @@ public abstract class GameControllerOnline : IGameController
 			if (player.networkStatus.matchState == PlayerNetworkStatus.MatchState.GameLoading)
 			{
 				player.networkStatus.matchState = PlayerNetworkStatus.MatchState.LoadingFinished;
-				mMatchStart = PhotonNetwork.time;
+				mMatchStart = PhotonConnectionManager.GetNetworkTime();
 			}
 			if (PlayerController.currentPlayer.networkStatus.matchState == PlayerNetworkStatus.MatchState.GameFinished)
 			{
@@ -638,14 +752,14 @@ public abstract class GameControllerOnline : IGameController
 
 	protected void OnJoinedRoom()
 	{
-		Singleton<GameController>.instance.battleId = (string)PhotonNetwork.room.customProperties["battleID"];
+		Singleton<GameController>.instance.battleId = PhotonConnectionManager.GetBattleId();
 		Debug.Log($"Joined room: {PhotonNetwork.room.name}, name: {PhotonNetwork.player.name},  userId: {PhotonNetwork.player.ID}, allConnected: {mBothPlayersConnected}");
 		PhotonPlayer[] playerList = PhotonNetwork.playerList;
 		foreach (PhotonPlayer photonPlayer in playerList)
 		{
 			Debug.Log($"Player id: {photonPlayer.name}, player userId {photonPlayer.userId}");
 		}
-		if (PhotonNetwork.room != null && !mBothPlayersConnected && PhotonNetwork.room.playerCount == 2)
+		if (PhotonNetwork.room != null && !mBothPlayersConnected && PhotonConnectionManager.GetPlayerCount() == 2)
 		{
 			Debug.Log("Joined room" + PhotonNetwork.room.name + "id: " + PhotonNetwork.player.ID);
 			PlayerController.currentPlayer.networkStatus.matchState = PlayerNetworkStatus.MatchState.Connected;
@@ -660,7 +774,7 @@ public abstract class GameControllerOnline : IGameController
 		player.playerProperties.photonPlayer = photonPlayer;
 		player.networkStatus.connectionState = PlayerNetworkStatus.ConnectionState.Connected;
 		SetUpPhotonViews(player);
-		if (Singleton<PhotonConnectionManager>.instance.isClient && PhotonNetwork.isMasterClient)
+		if (!PhotonConnectionManager.IsSelfHostedActive && Singleton<PhotonConnectionManager>.instance.isClient && PhotonNetwork.isMasterClient)
 		{
 			Debug.Log("Setting master client");
 			PhotonNetwork.SetMasterClient(photonPlayer);
@@ -681,6 +795,12 @@ public abstract class GameControllerOnline : IGameController
 
 	private void ResyncTime()
 	{
+		if (PhotonConnectionManager.IsSelfHostedActive)
+		{
+			SelfHostedBattleClient selfHosted = UnityEngine.Object.FindObjectOfType<SelfHostedBattleClient>();
+			if (selfHosted != null) selfHosted.DispatchRpc("ResyncTimeRPC", time);
+			return;
+		}
 		mPhotonView.RPC("ResyncTimeRPC", PhotonTargets.Others, PhotonNetwork.player.ID, time);
 	}
 
@@ -692,13 +812,22 @@ public abstract class GameControllerOnline : IGameController
 
 	private void ResyncPlayerStates()
 	{
+		if (PhotonConnectionManager.IsSelfHostedActive) return;
 		if (PlayerController.currentPlayer.networkStatus.matchState == PlayerNetworkStatus.MatchState.LoadingFinished)
 		{
 			mPhotonView.RPC("LoadingFinishedRPC", PhotonTargets.AllBufferedViaServer, PhotonNetwork.player.ID, mStateUpdateCounter);
 		}
 		if (PlayerController.currentPlayer.networkStatus.startAnimationFinished)
 		{
-			mPhotonView.RPC("StartCameraAnimationFinishedRPC", PhotonTargets.Others, PlayerController.currentPlayer.playerNetworkId);
+			if (PhotonConnectionManager.IsSelfHostedActive)
+			{
+				SelfHostedBattleClient selfHosted = UnityEngine.Object.FindObjectOfType<SelfHostedBattleClient>();
+				if (selfHosted != null) selfHosted.DispatchRpc("StartCameraAnimationFinishedRPC");
+			}
+			else
+			{
+				mPhotonView.RPC("StartCameraAnimationFinishedRPC", PhotonTargets.Others, PlayerController.currentPlayer.playerNetworkId);
+			}
 		}
 	}
 
@@ -873,7 +1002,7 @@ public abstract class GameControllerOnline : IGameController
 				float value = MatchManager.reconnectLength - (Time.realtimeSinceStartup - MatchManager.reconnectTime);
 				value = Mathf.Clamp(value, 0f, float.PositiveInfinity);
 				GuiElementSingle<ReconnectDialog>.instance.SetWaitTime(value);
-				if (value <= 0f && (PhotonNetwork.room == null || PhotonNetwork.room.playerCount != 2))
+				if (value <= 0f && (!PhotonConnectionManager.isInRoom || PhotonConnectionManager.GetPlayerCount() != 2))
 				{
 					if (MatchManager.reconnectState == ReconnectState.Me)
 					{
@@ -883,7 +1012,7 @@ public abstract class GameControllerOnline : IGameController
 					{
 						mMainController.gameEndReason = GameController.GameEndReason.WinByForfeit;
 						FinishGame();
-						if (PhotonNetwork.room != null)
+						if (!PhotonConnectionManager.IsSelfHostedActive && PhotonNetwork.room != null)
 						{
 							PhotonNetwork.room.open = false;
 						}
@@ -903,7 +1032,7 @@ public abstract class GameControllerOnline : IGameController
 
 	protected void CheckPlayersReconnectStates()
 	{
-		if (PhotonNetwork.room == null || !PhotonNetwork.connected || PhotonNetwork.room.playerCount != 2 || !MatchManager.isReconnect || !gameIsRunning)
+		if (PhotonNetwork.room == null || !PhotonNetwork.connected || PhotonConnectionManager.GetPlayerCount() != 2 || !MatchManager.isReconnect || !gameIsRunning)
 		{
 			return;
 		}
@@ -984,7 +1113,7 @@ public abstract class GameControllerOnline : IGameController
 			if (player.Value.networkStatus.active && player.Value.networkStatus.matchState == PlayerNetworkStatus.MatchState.GameLoading)
 			{
 				player.Value.networkStatus.matchState = PlayerNetworkStatus.MatchState.LoadingFinished;
-				mMatchStart = PhotonNetwork.time;
+				mMatchStart = PhotonConnectionManager.GetNetworkTime();
 			}
 		}
 	}
@@ -1067,7 +1196,8 @@ public abstract class GameControllerOnline : IGameController
 		if (gameIsRunning)
 		{
 			Singleton<MatchManager>.instance.matchTime = (float)Singleton<GameVariables>.instance.constants.GetRow(Constants.rowIds.DeathMatchTime).FLOATVALUE - time;
-			mPhotonView.RPC("FinishGameMultiplayerRPC", PhotonTargets.Others, (byte)GetReasonForClient(Singleton<GameController>.instance.gameEndReason));
+			if (!PhotonConnectionManager.IsSelfHostedActive)
+				mPhotonView.RPC("FinishGameMultiplayerRPC", PhotonTargets.Others, (byte)GetReasonForClient(Singleton<GameController>.instance.gameEndReason));
 			gameIsRunning = false;
 			Reset();
 			MatchManager.matchState = MatchState.GameFinished;
@@ -1208,7 +1338,8 @@ public abstract class GameControllerOnline : IGameController
 				Singleton<GuiManager>.instance.ShowDialog(GuiElementSingle<CantPauseDialog>.instance, 0f);
 			}
 		}
-		PhotonNetwork.SendOutgoingCommands();
+		if (!PhotonConnectionManager.IsSelfHostedActive)
+			PhotonNetwork.SendOutgoingCommands();
 	}
 
 	public override void ResumeGame()

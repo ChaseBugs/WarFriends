@@ -9,6 +9,8 @@ namespace War.BattleServer;
 // Separate domains prevent connectivity-probe tickets/keys authorizing a match.
 public sealed class MatchTokens
 {
+    internal const long MaximumUnixSecond=253402300679;
+    internal const long GrantLifetimeSeconds=120;
     private readonly byte[] key;
     public MatchTokens(string base64Key)
     {
@@ -24,7 +26,7 @@ public sealed class MatchTokens
     }
     public MatchAdmission? Validate(string ticket, MatchEngine match, string serverId, long now)
     {
-        if (ticket.Length is < 10 or > 1024 || now < 0) return null;
+        if (ticket.Length is < 10 or > 1024 || now is <0 or >MaximumUnixSecond) return null;
         try
         {
             var parts = ticket.Split('.');
@@ -35,7 +37,8 @@ public sealed class MatchTokens
             if (c.ServerId != serverId || c.MatchId != match.MatchId || c.ManifestHash != match.ManifestHash ||
                 !match.HasPlayer(c.PlayerId) || c.SessionId == 0 || c.ConnectionGeneration > 1000000 || c.IssuedUnixSeconds < 0 || c.IssuedUnixSeconds > now ||
                 c.ExpiresUnixSeconds <= now || c.ExpiresUnixSeconds <= c.IssuedUnixSeconds ||
-                c.ExpiresUnixSeconds - c.IssuedUnixSeconds > 120) return null;
+                c.ExpiresUnixSeconds > MaximumUnixSecond ||
+                c.ExpiresUnixSeconds - c.IssuedUnixSeconds > GrantLifetimeSeconds) return null;
             return c;
         }
         catch (Exception e) when (e is FormatException or InvalidProtocolBufferException) { return null; }

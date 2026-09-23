@@ -6,6 +6,15 @@ using UnityEngine;
 
 public class DestroyableObject : Core_BaseScript, IFraction
 {
+	public void ApplySelfHostedState(float authoritativeHealth, float authoritativeMaxHealth, bool dead)
+	{
+		if (float.IsNaN(authoritativeHealth) || float.IsInfinity(authoritativeHealth) ||
+			float.IsNaN(authoritativeMaxHealth) || float.IsInfinity(authoritativeMaxHealth) ||
+			authoritativeMaxHealth <= 0f || authoritativeHealth < 0f || authoritativeHealth > authoritativeMaxHealth ||
+			dead != (authoritativeHealth <= 0f))
+			throw new InvalidOperationException("Invalid authoritative health state.");
+		SyncNetwork(authoritativeHealth, authoritativeMaxHealth, dead);
+	}
 	public enum DamageType
 	{
 		Shot,

@@ -1,0 +1,4068 @@
+{
+  "client": "1.4.0",
+  "source": "Assets/Scenes/MainScene.unity",
+  "sha256": "d46f81ff8c3e12bf17f34a1f53dd601bd799102c9f984818031441dfb7a5de43",
+  "additiveSource": "Assets/AnimationClip/shootAdditive.anim",
+  "cases": [
+    {
+      "run": "run",
+      "runSeconds": 0.2,
+      "additiveSeconds": 0.1,
+      "weight": 0.0,
+      "parts": [
+        {
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001",
+          "center": [
+            99.989,
+            0.181173652,
+            99.99488
+          ],
+          "rotation": [
+            -0.698374867,
+            0.7097994,
+            0.0878517,
+            -0.02719447
+          ]
+        },
+        {
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine",
+          "center": [
+            99.95126,
+            0.3873925,
+            99.99361
+          ],
+          "rotation": [
+            -0.74083066,
+            0.6703464,
+            0.0327068269,
+            -0.02713418
+          ]
+        }
+      ],
+      "muzzles": [
+        {
+          "id": "Google2u.AssaultRifle_M16",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_2_M16/MachinegunMuzzleFlash",
+          "position": [
+            99.78131,
+            0.148714349,
+            99.85651
+          ],
+          "rotation": [
+            -0.3457123,
+            0.8903302,
+            -0.06878714,
+            -0.288208723
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_AK47",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_1_AK47/MachinegunMuzzleFlash",
+          "position": [
+            99.8048553,
+            0.139252841,
+            99.88312
+          ],
+          "rotation": [
+            0.9130168,
+            -0.250050157,
+            -0.2424998,
+            0.212297142
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_QBZ95",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_3_QZB95/MachinegunMuzzleFlash",
+          "position": [
+            99.82058,
+            0.162161127,
+            99.9091949
+          ],
+          "rotation": [
+            -0.345712125,
+            0.890330255,
+            -0.0687866956,
+            -0.288209021
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_Famas",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_4_Famas/MachinegunMuzzleFlash",
+          "position": [
+            99.81541,
+            0.170371324,
+            99.90604
+          ],
+          "rotation": [
+            -0.345712125,
+            0.890330255,
+            -0.0687866956,
+            -0.288209021
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_G36",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_6_G36/MachinegunMuzzleFlash",
+          "position": [
+            99.79791,
+            0.162715361,
+            99.87808
+          ],
+          "rotation": [
+            -0.345712125,
+            0.890330255,
+            -0.0687866956,
+            -0.288209021
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_SteyrAUG",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_5_SteyrAUG/MachinegunMuzzleFlash",
+          "position": [
+            99.8050156,
+            0.1812053,
+            99.90197
+          ],
+          "rotation": [
+            -0.345712,
+            0.8903301,
+            -0.0687866956,
+            -0.288208932
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_AKS47U",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_7_AKS47U/MachinegunMuzzleFlash",
+          "position": [
+            99.79472,
+            0.175387546,
+            99.8946152
+          ],
+          "rotation": [
+            -0.345712,
+            0.890330255,
+            -0.06878658,
+            -0.288209021
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_G36Elite",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_8_G36Elite/MachinegunMuzzleFlash",
+          "position": [
+            99.78681,
+            0.176407292,
+            99.86186
+          ],
+          "rotation": [
+            -0.345712,
+            0.890330255,
+            -0.06878658,
+            -0.288209021
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_FamasElite",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_9_FamasElite/MachinegunMuzzleFlash",
+          "position": [
+            99.81541,
+            0.17037043,
+            99.90604
+          ],
+          "rotation": [
+            -0.345712,
+            0.890330255,
+            -0.06878658,
+            -0.288209021
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_QBZ95Elite",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_10_QBZ95Elite/MachinegunMuzzleFlash",
+          "position": [
+            99.8151245,
+            0.205278471,
+            99.93614
+          ],
+          "rotation": [
+            -0.345712,
+            0.890330255,
+            -0.06878658,
+            -0.288209021
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_AK47Elite",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_11_AK47Elite/MachinegunMuzzleFlash",
+          "position": [
+            99.8048553,
+            0.139255956,
+            99.8831253
+          ],
+          "rotation": [
+            0.9130168,
+            -0.250050247,
+            -0.24249956,
+            0.212297052
+          ]
+        }
+      ]
+    },
+    {
+      "run": "run",
+      "runSeconds": 0.2,
+      "additiveSeconds": 0.1,
+      "weight": 0.25,
+      "parts": [
+        {
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001",
+          "center": [
+            99.989,
+            0.181173652,
+            99.99488
+          ],
+          "rotation": [
+            -0.698374867,
+            0.7097994,
+            0.0878517,
+            -0.02719447
+          ]
+        },
+        {
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine",
+          "center": [
+            99.9515457,
+            0.387189656,
+            100.005714
+          ],
+          "rotation": [
+            -0.745918,
+            0.663613558,
+            0.0556060672,
+            -0.0114726424
+          ]
+        }
+      ],
+      "muzzles": [
+        {
+          "id": "Google2u.AssaultRifle_M16",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_2_M16/MachinegunMuzzleFlash",
+          "position": [
+            99.75153,
+            0.17087312,
+            99.88066
+          ],
+          "rotation": [
+            -0.307503045,
+            0.882266641,
+            -0.0075225085,
+            -0.356358618
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_AK47",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_1_AK47/MachinegunMuzzleFlash",
+          "position": [
+            99.77786,
+            0.157776192,
+            99.90275
+          ],
+          "rotation": [
+            0.879436433,
+            -0.275703251,
+            -0.331983984,
+            0.2009141
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_QBZ95",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_3_QZB95/MachinegunMuzzleFlash",
+          "position": [
+            99.79998,
+            0.177672744,
+            99.92655
+          ],
+          "rotation": [
+            -0.307502866,
+            0.882266641,
+            -0.007522151,
+            -0.3563589
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_Famas",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_4_Famas/MachinegunMuzzleFlash",
+          "position": [
+            99.7952957,
+            0.1865146,
+            99.92454
+          ],
+          "rotation": [
+            -0.307502866,
+            0.882266641,
+            -0.007522151,
+            -0.3563589
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_G36",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_6_G36/MachinegunMuzzleFlash",
+          "position": [
+            99.77282,
+            0.182043239,
+            99.89962
+          ],
+          "rotation": [
+            -0.307502866,
+            0.882266641,
+            -0.007522151,
+            -0.3563589
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_SteyrAUG",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_5_SteyrAUG/MachinegunMuzzleFlash",
+          "position": [
+            99.7856445,
+            0.198545709,
+            99.922554
+          ],
+          "rotation": [
+            -0.307502776,
+            0.8822665,
+            -0.007522106,
+            -0.356358767
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_AKS47U",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_7_AKS47U/MachinegunMuzzleFlash",
+          "position": [
+            99.77373,
+            0.194179267,
+            99.9168243
+          ],
+          "rotation": [
+            -0.3075027,
+            0.882266641,
+            -0.007522121,
+            -0.3563588
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_G36Elite",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_8_G36Elite/MachinegunMuzzleFlash",
+          "position": [
+            99.76083,
+            0.1975628,
+            99.8858643
+          ],
+          "rotation": [
+            -0.3075027,
+            0.882266641,
+            -0.007522121,
+            -0.3563588
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_FamasElite",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_9_FamasElite/MachinegunMuzzleFlash",
+          "position": [
+            99.7953,
+            0.186513245,
+            99.92454
+          ],
+          "rotation": [
+            -0.3075027,
+            0.882266641,
+            -0.007522121,
+            -0.3563588
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_QBZ95Elite",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_10_QBZ95Elite/MachinegunMuzzleFlash",
+          "position": [
+            99.80368,
+            0.219796792,
+            99.95531
+          ],
+          "rotation": [
+            -0.3075027,
+            0.882266641,
+            -0.007522121,
+            -0.3563588
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_AK47Elite",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_11_AK47Elite/MachinegunMuzzleFlash",
+          "position": [
+            99.77786,
+            0.157779068,
+            99.90275
+          ],
+          "rotation": [
+            0.8794367,
+            -0.2757033,
+            -0.331983864,
+            0.200914159
+          ]
+        }
+      ]
+    },
+    {
+      "run": "run",
+      "runSeconds": 0.2,
+      "additiveSeconds": 0.1,
+      "weight": 0.5,
+      "parts": [
+        {
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001",
+          "center": [
+            99.989,
+            0.181173652,
+            99.99488
+          ],
+          "rotation": [
+            -0.698374867,
+            0.7097994,
+            0.0878517,
+            -0.02719447
+          ]
+        },
+        {
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine",
+          "center": [
+            99.95262,
+            0.386295319,
+            100.018074
+          ],
+          "rotation": [
+            -0.74935925,
+            0.657444954,
+            0.078685075,
+            0.005985409
+          ]
+        }
+      ],
+      "muzzles": [
+        {
+          "id": "Google2u.AssaultRifle_M16",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_2_M16/MachinegunMuzzleFlash",
+          "position": [
+            99.7269058,
+            0.196271375,
+            99.9127
+          ],
+          "rotation": [
+            -0.2687718,
+            0.861957252,
+            0.05603292,
+            -0.426206768
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_AK47",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_1_AK47/MachinegunMuzzleFlash",
+          "position": [
+            99.75513,
+            0.179568872,
+            99.92934
+          ],
+          "rotation": [
+            0.835479856,
+            -0.2945941,
+            -0.4236342,
+            0.189004213
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_QBZ95",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_3_QZB95/MachinegunMuzzleFlash",
+          "position": [
+            99.7830048,
+            0.1959846,
+            99.94946
+          ],
+          "rotation": [
+            -0.2687715,
+            0.8619573,
+            0.05603332,
+            -0.426207066
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_Famas",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_4_Famas/MachinegunMuzzleFlash",
+          "position": [
+            99.779,
+            0.205332533,
+            99.94859
+          ],
+          "rotation": [
+            -0.2687715,
+            0.8619573,
+            0.05603332,
+            -0.426207066
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_G36",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_6_G36/MachinegunMuzzleFlash",
+          "position": [
+            99.7522,
+            0.204339221,
+            99.92793
+          ],
+          "rotation": [
+            -0.2687715,
+            0.8619573,
+            0.05603332,
+            -0.426207066
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_SteyrAUG",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_5_SteyrAUG/MachinegunMuzzleFlash",
+          "position": [
+            99.77047,
+            0.218335733,
+            99.9487457
+          ],
+          "rotation": [
+            -0.268771529,
+            0.8619573,
+            0.0560333133,
+            -0.426206976
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_AKS47U",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_7_AKS47U/MachinegunMuzzleFlash",
+          "position": [
+            99.7573547,
+            0.215450361,
+            99.94508
+          ],
+          "rotation": [
+            -0.268771321,
+            0.861957252,
+            0.05603344,
+            -0.426207
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_G36Elite",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_8_G36Elite/MachinegunMuzzleFlash",
+          "position": [
+            99.7397156,
+            0.22162737,
+            99.91702
+          ],
+          "rotation": [
+            -0.268771321,
+            0.861957252,
+            0.05603344,
+            -0.426207
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_FamasElite",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_9_FamasElite/MachinegunMuzzleFlash",
+          "position": [
+            99.77901,
+            0.205330729,
+            99.94859
+          ],
+          "rotation": [
+            -0.268771321,
+            0.861957252,
+            0.05603344,
+            -0.426207
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_QBZ95Elite",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_10_QBZ95Elite/MachinegunMuzzleFlash",
+          "position": [
+            99.79604,
+            0.236050278,
+            99.97844
+          ],
+          "rotation": [
+            -0.268771321,
+            0.861957252,
+            0.05603344,
+            -0.426207
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_AK47Elite",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_11_AK47Elite/MachinegunMuzzleFlash",
+          "position": [
+            99.75513,
+            0.17957142,
+            99.92934
+          ],
+          "rotation": [
+            0.835479736,
+            -0.2945943,
+            -0.423634052,
+            0.189004228
+          ]
+        }
+      ]
+    },
+    {
+      "run": "run",
+      "runSeconds": 0.2,
+      "additiveSeconds": 0.1,
+      "weight": 0.75,
+      "parts": [
+        {
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001",
+          "center": [
+            99.989,
+            0.181173652,
+            99.99488
+          ],
+          "rotation": [
+            -0.698374867,
+            0.7097994,
+            0.0878517,
+            -0.02719447
+          ]
+        },
+        {
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine",
+          "center": [
+            99.95448,
+            0.384670973,
+            100.030548
+          ],
+          "rotation": [
+            -0.7510382,
+            0.651888132,
+            0.101746947,
+            0.0251240134
+          ]
+        }
+      ],
+      "muzzles": [
+        {
+          "id": "Google2u.AssaultRifle_M16",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_2_M16/MachinegunMuzzleFlash",
+          "position": [
+            99.7102356,
+            0.222490743,
+            99.95172
+          ],
+          "rotation": [
+            -0.2320512,
+            0.82924217,
+            0.119024843,
+            -0.494311035
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_AK47",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_1_AK47/MachinegunMuzzleFlash",
+          "position": [
+            99.73927,
+            0.2025405,
+            99.962265
+          ],
+          "rotation": [
+            0.782727063,
+            -0.304597378,
+            -0.5130634,
+            0.17699042
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_QBZ95",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_3_QZB95/MachinegunMuzzleFlash",
+          "position": [
+            99.77176,
+            0.2153828,
+            99.9774857
+          ],
+          "rotation": [
+            -0.232051119,
+            0.829242051,
+            0.119025156,
+            -0.494311273
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_Famas",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_4_Famas/MachinegunMuzzleFlash",
+          "position": [
+            99.76858,
+            0.225076988,
+            99.9777
+          ],
+          "rotation": [
+            -0.232051119,
+            0.829242051,
+            0.119025156,
+            -0.494311273
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_G36",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_6_G36/MachinegunMuzzleFlash",
+          "position": [
+            99.73852,
+            0.227511,
+            99.9623
+          ],
+          "rotation": [
+            -0.232051119,
+            0.829242051,
+            0.119025156,
+            -0.494311273
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_SteyrAUG",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_5_SteyrAUG/MachinegunMuzzleFlash",
+          "position": [
+            99.76149,
+            0.238748521,
+            99.97988
+          ],
+          "rotation": [
+            -0.232051015,
+            0.829242051,
+            0.119025208,
+            -0.494311154
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_AKS47U",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_7_AKS47U/MachinegunMuzzleFlash",
+          "position": [
+            99.74771,
+            0.237214342,
+            99.9786
+          ],
+          "rotation": [
+            -0.23205106,
+            0.8292421,
+            0.1190251,
+            -0.4943112
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_G36Elite",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_8_G36Elite/MachinegunMuzzleFlash",
+          "position": [
+            99.72598,
+            0.246370479,
+            99.95451
+          ],
+          "rotation": [
+            -0.23205106,
+            0.8292421,
+            0.1190251,
+            -0.4943112
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_FamasElite",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_9_FamasElite/MachinegunMuzzleFlash",
+          "position": [
+            99.76858,
+            0.225074768,
+            99.9777
+          ],
+          "rotation": [
+            -0.23205106,
+            0.8292421,
+            0.1190251,
+            -0.4943112
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_QBZ95Elite",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_10_QBZ95Elite/MachinegunMuzzleFlash",
+          "position": [
+            99.7935638,
+            0.252581716,
+            100.004967
+          ],
+          "rotation": [
+            -0.23205106,
+            0.8292421,
+            0.1190251,
+            -0.4943112
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_AK47Elite",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_11_AK47Elite/MachinegunMuzzleFlash",
+          "position": [
+            99.73927,
+            0.202542856,
+            99.962265
+          ],
+          "rotation": [
+            0.7827271,
+            -0.304597527,
+            -0.5130632,
+            0.176990449
+          ]
+        }
+      ]
+    },
+    {
+      "run": "run",
+      "runSeconds": 0.2,
+      "additiveSeconds": 0.1,
+      "weight": 1.0,
+      "parts": [
+        {
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001",
+          "center": [
+            99.989,
+            0.181173652,
+            99.99488
+          ],
+          "rotation": [
+            -0.698374867,
+            0.7097994,
+            0.0878517,
+            -0.02719447
+          ]
+        },
+        {
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine",
+          "center": [
+            99.95709,
+            0.382291555,
+            100.042992
+          ],
+          "rotation": [
+            -0.7508618,
+            0.6469812,
+            0.124595284,
+            0.0458045
+          ]
+        }
+      ],
+      "muzzles": [
+        {
+          "id": "Google2u.AssaultRifle_M16",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_2_M16/MachinegunMuzzleFlash",
+          "position": [
+            99.7031555,
+            0.246864244,
+            99.99531
+          ],
+          "rotation": [
+            -0.199464247,
+            0.7859534,
+            0.178818151,
+            -0.5572394
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_AK47",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_1_AK47/MachinegunMuzzleFlash",
+          "position": [
+            99.73188,
+            0.2242917,
+            99.99952
+          ],
+          "rotation": [
+            0.7241281,
+            -0.305071622,
+            -0.596095562,
+            0.165047556
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_QBZ95",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_3_QZB95/MachinegunMuzzleFlash",
+          "position": [
+            99.76752,
+            0.233863756,
+            100.009033
+          ],
+          "rotation": [
+            -0.199463978,
+            0.7859534,
+            0.17881839,
+            -0.5572398
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_Famas",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_4_Famas/MachinegunMuzzleFlash",
+          "position": [
+            99.76523,
+            0.243738756,
+            100.010223
+          ],
+          "rotation": [
+            -0.199463978,
+            0.7859534,
+            0.17881839,
+            -0.5572398
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_G36",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_6_G36/MachinegunMuzzleFlash",
+          "position": [
+            99.73319,
+            0.249210343,
+            100.000717
+          ],
+          "rotation": [
+            -0.199463978,
+            0.7859534,
+            0.17881839,
+            -0.5572398
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_SteyrAUG",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_5_SteyrAUG/MachinegunMuzzleFlash",
+          "position": [
+            99.7597961,
+            0.257752,
+            100.014221
+          ],
+          "rotation": [
+            -0.199463964,
+            0.785953343,
+            0.178818315,
+            -0.5572397
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_AKS47U",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_7_AKS47U/MachinegunMuzzleFlash",
+          "position": [
+            99.74593,
+            0.257303983,
+            100.015427
+          ],
+          "rotation": [
+            -0.199463859,
+            0.785953462,
+            0.1788183,
+            -0.5572396
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_G36Elite",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_8_G36Elite/MachinegunMuzzleFlash",
+          "position": [
+            99.7210541,
+            0.269337326,
+            99.99613
+          ],
+          "rotation": [
+            -0.199463859,
+            0.785953462,
+            0.1788183,
+            -0.5572396
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_FamasElite",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_9_FamasElite/MachinegunMuzzleFlash",
+          "position": [
+            99.76523,
+            0.243736222,
+            100.010223
+          ],
+          "rotation": [
+            -0.199463859,
+            0.785953462,
+            0.1788183,
+            -0.5572396
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_QBZ95Elite",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_10_QBZ95Elite/MachinegunMuzzleFlash",
+          "position": [
+            99.79689,
+            0.26779902,
+            100.033531
+          ],
+          "rotation": [
+            -0.199463859,
+            0.785953462,
+            0.1788183,
+            -0.5572396
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_AK47Elite",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_11_AK47Elite/MachinegunMuzzleFlash",
+          "position": [
+            99.73188,
+            0.2242937,
+            99.99952
+          ],
+          "rotation": [
+            0.7241283,
+            -0.3050718,
+            -0.5960954,
+            0.165047467
+          ]
+        }
+      ]
+    },
+    {
+      "run": "qbz_run",
+      "runSeconds": 0.2,
+      "additiveSeconds": 0.1,
+      "weight": 0.0,
+      "parts": [
+        {
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001",
+          "center": [
+            99.99964,
+            0.181052372,
+            100.000046
+          ],
+          "rotation": [
+            -0.698374867,
+            0.7097994,
+            0.0878517,
+            -0.02719447
+          ]
+        },
+        {
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine",
+          "center": [
+            99.97774,
+            0.388191819,
+            100.0123
+          ],
+          "rotation": [
+            -0.7113831,
+            0.6673311,
+            0.184755832,
+            -0.120286137
+          ]
+        }
+      ],
+      "muzzles": [
+        {
+          "id": "Google2u.AssaultRifle_M16",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_2_M16/MachinegunMuzzleFlash",
+          "position": [
+            99.7075653,
+            0.2187431,
+            100.078781
+          ],
+          "rotation": [
+            -0.1684784,
+            0.6906075,
+            0.185148686,
+            -0.678525269
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_AK47",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_1_AK47/MachinegunMuzzleFlash",
+          "position": [
+            99.7368851,
+            0.196927831,
+            100.074738
+          ],
+          "rotation": [
+            0.623304248,
+            -0.2779607,
+            -0.693085551,
+            0.232083052
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_QBZ95",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_3_QZB95/MachinegunMuzzleFlash",
+          "position": [
+            99.77341,
+            0.207580224,
+            100.07251
+          ],
+          "rotation": [
+            -0.168478042,
+            0.6906075,
+            0.185149133,
+            -0.6785255
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_Famas",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_4_Famas/MachinegunMuzzleFlash",
+          "position": [
+            99.771286,
+            0.217450857,
+            100.074
+          ],
+          "rotation": [
+            -0.168478042,
+            0.6906075,
+            0.185149133,
+            -0.6785255
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_G36",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_6_G36/MachinegunMuzzleFlash",
+          "position": [
+            99.7377243,
+            0.221895561,
+            100.074615
+          ],
+          "rotation": [
+            -0.168478042,
+            0.6906075,
+            0.185149133,
+            -0.6785255
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_SteyrAUG",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_5_SteyrAUG/MachinegunMuzzleFlash",
+          "position": [
+            99.7669,
+            0.23151359,
+            100.078995
+          ],
+          "rotation": [
+            -0.168477952,
+            0.690607548,
+            0.185148925,
+            -0.6785253
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_AKS47U",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_7_AKS47U/MachinegunMuzzleFlash",
+          "position": [
+            99.7541,
+            0.230849847,
+            100.084419
+          ],
+          "rotation": [
+            -0.168477878,
+            0.690607548,
+            0.185149029,
+            -0.678525448
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_G36Elite",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_8_G36Elite/MachinegunMuzzleFlash",
+          "position": [
+            99.72414,
+            0.241571978,
+            100.073288
+          ],
+          "rotation": [
+            -0.168477878,
+            0.690607548,
+            0.185149029,
+            -0.678525448
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_FamasElite",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_9_FamasElite/MachinegunMuzzleFlash",
+          "position": [
+            99.771286,
+            0.217448324,
+            100.074
+          ],
+          "rotation": [
+            -0.168477878,
+            0.690607548,
+            0.185149029,
+            -0.678525448
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_QBZ95Elite",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_10_QBZ95Elite/MachinegunMuzzleFlash",
+          "position": [
+            99.807785,
+            0.243083969,
+            100.085617
+          ],
+          "rotation": [
+            -0.168477878,
+            0.690607548,
+            0.185149029,
+            -0.678525448
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_AK47Elite",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_11_AK47Elite/MachinegunMuzzleFlash",
+          "position": [
+            99.7368851,
+            0.196929857,
+            100.074738
+          ],
+          "rotation": [
+            0.623304248,
+            -0.277960777,
+            -0.693085432,
+            0.2320832
+          ]
+        }
+      ]
+    },
+    {
+      "run": "qbz_run",
+      "runSeconds": 0.2,
+      "additiveSeconds": 0.1,
+      "weight": 0.25,
+      "parts": [
+        {
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001",
+          "center": [
+            99.99964,
+            0.181052372,
+            100.000046
+          ],
+          "rotation": [
+            -0.698374867,
+            0.7097994,
+            0.0878517,
+            -0.02719447
+          ]
+        },
+        {
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine",
+          "center": [
+            99.97861,
+            0.387629837,
+            100.02047
+          ],
+          "rotation": [
+            -0.7191516,
+            0.6651929,
+            0.179928035,
+            -0.08925021
+          ]
+        }
+      ],
+      "muzzles": [
+        {
+          "id": "Google2u.AssaultRifle_M16",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_2_M16/MachinegunMuzzleFlash",
+          "position": [
+            99.70705,
+            0.217929974,
+            100.068611
+          ],
+          "rotation": [
+            -0.182646811,
+            0.7025482,
+            0.180825025,
+            -0.6636031
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_AK47",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_1_AK47/MachinegunMuzzleFlash",
+          "position": [
+            99.73687,
+            0.1966329,
+            100.065559
+          ],
+          "rotation": [
+            0.642019749,
+            -0.2731741,
+            -0.679403543,
+            0.227152884
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_QBZ95",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_3_QZB95/MachinegunMuzzleFlash",
+          "position": [
+            99.77328,
+            0.207882583,
+            100.065063
+          ],
+          "rotation": [
+            -0.182646543,
+            0.702548,
+            0.180825412,
+            -0.6636033
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_Famas",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_4_Famas/MachinegunMuzzleFlash",
+          "position": [
+            99.77093,
+            0.217696741,
+            100.0666
+          ],
+          "rotation": [
+            -0.182646543,
+            0.702548,
+            0.180825412,
+            -0.6636033
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_G36",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_6_G36/MachinegunMuzzleFlash",
+          "position": [
+            99.7373047,
+            0.2216099,
+            100.065811
+          ],
+          "rotation": [
+            -0.182646543,
+            0.702548,
+            0.180825412,
+            -0.6636033
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_SteyrAUG",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_5_SteyrAUG/MachinegunMuzzleFlash",
+          "position": [
+            99.7661057,
+            0.231617332,
+            100.071579
+          ],
+          "rotation": [
+            -0.182646409,
+            0.7025479,
+            0.180825338,
+            -0.6636033
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_AKS47U",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_7_AKS47U/MachinegunMuzzleFlash",
+          "position": [
+            99.75309,
+            0.230677515,
+            100.076431
+          ],
+          "rotation": [
+            -0.182646349,
+            0.7025481,
+            0.180825219,
+            -0.663603365
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_G36Elite",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_8_G36Elite/MachinegunMuzzleFlash",
+          "position": [
+            99.72347,
+            0.241089478,
+            100.064156
+          ],
+          "rotation": [
+            -0.182646349,
+            0.7025481,
+            0.180825219,
+            -0.663603365
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_FamasElite",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_9_FamasElite/MachinegunMuzzleFlash",
+          "position": [
+            99.7709351,
+            0.217694327,
+            100.0666
+          ],
+          "rotation": [
+            -0.182646349,
+            0.7025481,
+            0.180825219,
+            -0.663603365
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_QBZ95Elite",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_10_QBZ95Elite/MachinegunMuzzleFlash",
+          "position": [
+            99.80647,
+            0.24372679,
+            100.080139
+          ],
+          "rotation": [
+            -0.182646349,
+            0.7025481,
+            0.180825219,
+            -0.663603365
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_AK47Elite",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_11_AK47Elite/MachinegunMuzzleFlash",
+          "position": [
+            99.73687,
+            0.196635053,
+            100.065559
+          ],
+          "rotation": [
+            0.64202,
+            -0.273174256,
+            -0.679403543,
+            0.227152988
+          ]
+        }
+      ]
+    },
+    {
+      "run": "qbz_run",
+      "runSeconds": 0.2,
+      "additiveSeconds": 0.1,
+      "weight": 0.5,
+      "parts": [
+        {
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001",
+          "center": [
+            99.99964,
+            0.181052372,
+            100.000046
+          ],
+          "rotation": [
+            -0.698374867,
+            0.7097994,
+            0.0878517,
+            -0.02719447
+          ]
+        },
+        {
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine",
+          "center": [
+            99.97893,
+            0.386743873,
+            100.028252
+          ],
+          "rotation": [
+            -0.7263473,
+            0.6624978,
+            0.173396379,
+            -0.0587396026
+          ]
+        }
+      ],
+      "muzzles": [
+        {
+          "id": "Google2u.AssaultRifle_M16",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_2_M16/MachinegunMuzzleFlash",
+          "position": [
+            99.7085953,
+            0.223898783,
+            100.0559
+          ],
+          "rotation": [
+            -0.188948229,
+            0.7184497,
+            0.179232672,
+            -0.644984245
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_AK47",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_1_AK47/MachinegunMuzzleFlash",
+          "position": [
+            99.7385,
+            0.202571377,
+            100.054192
+          ],
+          "rotation": [
+            0.6594417,
+            -0.276847422,
+            -0.664253235,
+            0.2173947
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_QBZ95",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_3_QZB95/MachinegunMuzzleFlash",
+          "position": [
+            99.7749,
+            0.213760018,
+            100.0556
+          ],
+          "rotation": [
+            -0.188947961,
+            0.7184496,
+            0.17923294,
+            -0.6449845
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_Famas",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_4_Famas/MachinegunMuzzleFlash",
+          "position": [
+            99.7725,
+            0.2235671,
+            100.057091
+          ],
+          "rotation": [
+            -0.188947961,
+            0.7184496,
+            0.17923294,
+            -0.6449845
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_G36",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_6_G36/MachinegunMuzzleFlash",
+          "position": [
+            99.73896,
+            0.227545187,
+            100.054642
+          ],
+          "rotation": [
+            -0.188947961,
+            0.7184496,
+            0.17923294,
+            -0.6449845
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_SteyrAUG",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_5_SteyrAUG/MachinegunMuzzleFlash",
+          "position": [
+            99.7674561,
+            0.2374603,
+            100.061928
+          ],
+          "rotation": [
+            -0.188947976,
+            0.7184496,
+            0.179232955,
+            -0.644984365
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_AKS47U",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_7_AKS47U/MachinegunMuzzleFlash",
+          "position": [
+            99.7542,
+            0.236508831,
+            100.066109
+          ],
+          "rotation": [
+            -0.188947856,
+            0.7184497,
+            0.179233015,
+            -0.644984365
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_G36Elite",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_8_G36Elite/MachinegunMuzzleFlash",
+          "position": [
+            99.72526,
+            0.247060463,
+            100.052444
+          ],
+          "rotation": [
+            -0.188947856,
+            0.7184497,
+            0.179233015,
+            -0.644984365
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_FamasElite",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_9_FamasElite/MachinegunMuzzleFlash",
+          "position": [
+            99.7725,
+            0.223564729,
+            100.057091
+          ],
+          "rotation": [
+            -0.188947856,
+            0.7184497,
+            0.179233015,
+            -0.644984365
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_QBZ95Elite",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_10_QBZ95Elite/MachinegunMuzzleFlash",
+          "position": [
+            99.80736,
+            0.249437049,
+            100.072586
+          ],
+          "rotation": [
+            -0.188947856,
+            0.7184497,
+            0.179233015,
+            -0.644984365
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_AK47Elite",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_11_AK47Elite/MachinegunMuzzleFlash",
+          "position": [
+            99.73851,
+            0.202573553,
+            100.054192
+          ],
+          "rotation": [
+            0.659441948,
+            -0.276847571,
+            -0.664253235,
+            0.217394829
+          ]
+        }
+      ]
+    },
+    {
+      "run": "qbz_run",
+      "runSeconds": 0.2,
+      "additiveSeconds": 0.1,
+      "weight": 0.75,
+      "parts": [
+        {
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001",
+          "center": [
+            99.99964,
+            0.181052372,
+            100.000046
+          ],
+          "rotation": [
+            -0.698374867,
+            0.7097994,
+            0.0878517,
+            -0.02719447
+          ]
+        },
+        {
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine",
+          "center": [
+            99.97875,
+            0.38558954,
+            100.035561
+          ],
+          "rotation": [
+            -0.732891,
+            0.6593419,
+            0.165231586,
+            -0.0289464
+          ]
+        }
+      ],
+      "muzzles": [
+        {
+          "id": "Google2u.AssaultRifle_M16",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_2_M16/MachinegunMuzzleFlash",
+          "position": [
+            99.71248,
+            0.235738739,
+            100.041618
+          ],
+          "rotation": [
+            -0.18647705,
+            0.7374723,
+            0.179800317,
+            -0.6237252
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_AK47",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_1_AK47/MachinegunMuzzleFlash",
+          "position": [
+            99.74202,
+            0.213842943,
+            100.041542
+          ],
+          "rotation": [
+            0.6743326,
+            -0.289281338,
+            -0.648095846,
+            0.203873187
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_QBZ95",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_3_QZB95/MachinegunMuzzleFlash",
+          "position": [
+            99.7784958,
+            0.224338666,
+            100.044907
+          ],
+          "rotation": [
+            -0.1864768,
+            0.7374721,
+            0.17980051,
+            -0.6237255
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_Famas",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_4_Famas/MachinegunMuzzleFlash",
+          "position": [
+            99.77621,
+            0.234192252,
+            100.046257
+          ],
+          "rotation": [
+            -0.1864768,
+            0.7374721,
+            0.17980051,
+            -0.6237255
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_G36",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_6_G36/MachinegunMuzzleFlash",
+          "position": [
+            99.7429352,
+            0.238804087,
+            100.042
+          ],
+          "rotation": [
+            -0.1864768,
+            0.7374721,
+            0.17980051,
+            -0.6237255
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_SteyrAUG",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_5_SteyrAUG/MachinegunMuzzleFlash",
+          "position": [
+            99.77117,
+            0.24818702,
+            100.050804
+          ],
+          "rotation": [
+            -0.186476827,
+            0.7374721,
+            0.17980054,
+            -0.6237255
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_AKS47U",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_7_AKS47U/MachinegunMuzzleFlash",
+          "position": [
+            99.7577057,
+            0.247494951,
+            100.054268
+          ],
+          "rotation": [
+            -0.186476588,
+            0.7374723,
+            0.17980054,
+            -0.6237254
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_G36Elite",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_8_G36Elite/MachinegunMuzzleFlash",
+          "position": [
+            99.729744,
+            0.258573234,
+            100.039047
+          ],
+          "rotation": [
+            -0.186476588,
+            0.7374723,
+            0.17980054,
+            -0.6237254
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_FamasElite",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_9_FamasElite/MachinegunMuzzleFlash",
+          "position": [
+            99.77621,
+            0.234189779,
+            100.046257
+          ],
+          "rotation": [
+            -0.186476588,
+            0.7374723,
+            0.17980054,
+            -0.6237254
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_QBZ95Elite",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_10_QBZ95Elite/MachinegunMuzzleFlash",
+          "position": [
+            99.81067,
+            0.259419441,
+            100.063591
+          ],
+          "rotation": [
+            -0.186476588,
+            0.7374723,
+            0.17980054,
+            -0.6237254
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_AK47Elite",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_11_AK47Elite/MachinegunMuzzleFlash",
+          "position": [
+            99.74203,
+            0.213845029,
+            100.041542
+          ],
+          "rotation": [
+            0.6743328,
+            -0.289281458,
+            -0.6480958,
+            0.203873351
+          ]
+        }
+      ]
+    },
+    {
+      "run": "qbz_run",
+      "runSeconds": 0.2,
+      "additiveSeconds": 0.1,
+      "weight": 1.0,
+      "parts": [
+        {
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001",
+          "center": [
+            99.99964,
+            0.181052372,
+            100.000046
+          ],
+          "rotation": [
+            -0.698374867,
+            0.7097994,
+            0.0878517,
+            -0.02719447
+          ]
+        },
+        {
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine",
+          "center": [
+            99.97813,
+            0.384224832,
+            100.042336
+          ],
+          "rotation": [
+            -0.738714039,
+            0.6558294,
+            0.155529678,
+            -5.221367E-05
+          ]
+        }
+      ],
+      "muzzles": [
+        {
+          "id": "Google2u.AssaultRifle_M16",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_2_M16/MachinegunMuzzleFlash",
+          "position": [
+            99.71875,
+            0.251641482,
+            100.026848
+          ],
+          "rotation": [
+            -0.175201416,
+            0.7582637,
+            0.181805223,
+            -0.6010722
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_AK47",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_1_AK47/MachinegunMuzzleFlash",
+          "position": [
+            99.74746,
+            0.228734061,
+            100.028595
+          ],
+          "rotation": [
+            0.6855446,
+            -0.309782237,
+            -0.6314609,
+            0.187939912
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_QBZ95",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_3_QZB95/MachinegunMuzzleFlash",
+          "position": [
+            99.78405,
+            0.23799412,
+            100.033852
+          ],
+          "rotation": [
+            -0.175201058,
+            0.7582637,
+            0.181805462,
+            -0.60107255
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_Famas",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_4_Famas/MachinegunMuzzleFlash",
+          "position": [
+            99.7820358,
+            0.247935608,
+            100.034981
+          ],
+          "rotation": [
+            -0.175201058,
+            0.7582637,
+            0.181805462,
+            -0.60107255
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_G36",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_6_G36/MachinegunMuzzleFlash",
+          "position": [
+            99.74923,
+            0.253652036,
+            100.02887
+          ],
+          "rotation": [
+            -0.175201058,
+            0.7582637,
+            0.181805462,
+            -0.60107255
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_SteyrAUG",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_5_SteyrAUG/MachinegunMuzzleFlash",
+          "position": [
+            99.77726,
+            0.262146175,
+            100.039116
+          ],
+          "rotation": [
+            -0.175201133,
+            0.758263767,
+            0.181805417,
+            -0.6010725
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_AKS47U",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_7_AKS47U/MachinegunMuzzleFlash",
+          "position": [
+            99.76361,
+            0.261960477,
+            100.041847
+          ],
+          "rotation": [
+            -0.175201,
+            0.7582638,
+            0.181805372,
+            -0.6010723
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_G36Elite",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_8_G36Elite/MachinegunMuzzleFlash",
+          "position": [
+            99.73692,
+            0.273833156,
+            100.025024
+          ],
+          "rotation": [
+            -0.175201,
+            0.7582638,
+            0.181805372,
+            -0.6010723
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_FamasElite",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_9_FamasElite/MachinegunMuzzleFlash",
+          "position": [
+            99.7820358,
+            0.247933045,
+            100.034981
+          ],
+          "rotation": [
+            -0.175201,
+            0.7582638,
+            0.181805372,
+            -0.6010723
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_QBZ95Elite",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_10_QBZ95Elite/MachinegunMuzzleFlash",
+          "position": [
+            99.81637,
+            0.272142231,
+            100.053947
+          ],
+          "rotation": [
+            -0.175201,
+            0.7582638,
+            0.181805372,
+            -0.6010723
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_AK47Elite",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_11_AK47Elite/MachinegunMuzzleFlash",
+          "position": [
+            99.74747,
+            0.228736058,
+            100.028595
+          ],
+          "rotation": [
+            0.6855448,
+            -0.309782416,
+            -0.6314606,
+            0.187939823
+          ]
+        }
+      ]
+    },
+    {
+      "run": "qbz2_run",
+      "runSeconds": 0.2,
+      "additiveSeconds": 0.1,
+      "weight": 0.0,
+      "parts": [
+        {
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001",
+          "center": [
+            99.99964,
+            0.181052148,
+            100.000046
+          ],
+          "rotation": [
+            -0.698374867,
+            0.7097994,
+            0.0878517,
+            -0.02719447
+          ]
+        },
+        {
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine",
+          "center": [
+            99.9785461,
+            0.388161153,
+            100.012886
+          ],
+          "rotation": [
+            -0.7097024,
+            0.6687222,
+            0.1869955,
+            -0.119021
+          ]
+        }
+      ],
+      "muzzles": [
+        {
+          "id": "Google2u.AssaultRifle_M16",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_2_M16/MachinegunMuzzleFlash",
+          "position": [
+            99.7395859,
+            0.159680232,
+            100.031685
+          ],
+          "rotation": [
+            -0.289250463,
+            0.727606535,
+            0.07801011,
+            -0.6171205
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_AK47",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_1_AK47/MachinegunMuzzleFlash",
+          "position": [
+            99.77394,
+            0.146842331,
+            100.034225
+          ],
+          "rotation": [
+            0.729534268,
+            -0.204406649,
+            -0.5860429,
+            0.287318528
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_QBZ95",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_3_QZB95/MachinegunMuzzleFlash",
+          "position": [
+            99.80575,
+            0.167068049,
+            100.039841
+          ],
+          "rotation": [
+            -0.289250225,
+            0.7276064,
+            0.07801046,
+            -0.617120862
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_Famas",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_4_Famas/MachinegunMuzzleFlash",
+          "position": [
+            99.80073,
+            0.175905749,
+            100.040771
+          ],
+          "rotation": [
+            -0.289250225,
+            0.7276064,
+            0.07801046,
+            -0.617120862
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_G36",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_6_G36/MachinegunMuzzleFlash",
+          "position": [
+            99.76789,
+            0.171078935,
+            100.034096
+          ],
+          "rotation": [
+            -0.289250225,
+            0.7276064,
+            0.07801046,
+            -0.617120862
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_SteyrAUG",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_5_SteyrAUG/MachinegunMuzzleFlash",
+          "position": [
+            99.7917,
+            0.187980086,
+            100.044594
+          ],
+          "rotation": [
+            -0.289250284,
+            0.7276064,
+            0.07801039,
+            -0.617120743
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_AKS47U",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_7_AKS47U/MachinegunMuzzleFlash",
+          "position": [
+            99.77873,
+            0.183597043,
+            100.047134
+          ],
+          "rotation": [
+            -0.2892501,
+            0.727606535,
+            0.07801055,
+            -0.617120743
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_G36Elite",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_8_G36Elite/MachinegunMuzzleFlash",
+          "position": [
+            99.75,
+            0.1863931,
+            100.029732
+          ],
+          "rotation": [
+            -0.2892501,
+            0.727606535,
+            0.07801055,
+            -0.617120743
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_FamasElite",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_9_FamasElite/MachinegunMuzzleFlash",
+          "position": [
+            99.8007355,
+            0.175904438,
+            100.040771
+          ],
+          "rotation": [
+            -0.2892501,
+            0.727606535,
+            0.07801055,
+            -0.617120743
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_QBZ95Elite",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_10_QBZ95Elite/MachinegunMuzzleFlash",
+          "position": [
+            99.8255,
+            0.209803641,
+            100.0598
+          ],
+          "rotation": [
+            -0.2892501,
+            0.727606535,
+            0.07801055,
+            -0.617120743
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_AK47Elite",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_11_AK47Elite/MachinegunMuzzleFlash",
+          "position": [
+            99.77395,
+            0.146845192,
+            100.034225
+          ],
+          "rotation": [
+            0.7295344,
+            -0.204406708,
+            -0.5860429,
+            0.287318468
+          ]
+        }
+      ]
+    },
+    {
+      "run": "qbz2_run",
+      "runSeconds": 0.2,
+      "additiveSeconds": 0.1,
+      "weight": 0.25,
+      "parts": [
+        {
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001",
+          "center": [
+            99.99964,
+            0.181052148,
+            100.000046
+          ],
+          "rotation": [
+            -0.698374867,
+            0.7097994,
+            0.0878517,
+            -0.02719447
+          ]
+        },
+        {
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine",
+          "center": [
+            99.97918,
+            0.387588739,
+            100.02095
+          ],
+          "rotation": [
+            -0.7179378,
+            0.666154444,
+            0.181687415,
+            -0.08827937
+          ]
+        }
+      ],
+      "muzzles": [
+        {
+          "id": "Google2u.AssaultRifle_M16",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_2_M16/MachinegunMuzzleFlash",
+          "position": [
+            99.73127,
+            0.17840533,
+            100.03141
+          ],
+          "rotation": [
+            -0.25871706,
+            0.7380587,
+            0.0961144939,
+            -0.6157087
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_AK47",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_1_AK47/MachinegunMuzzleFlash",
+          "position": [
+            99.7646,
+            0.163124025,
+            100.034111
+          ],
+          "rotation": [
+            0.719739854,
+            -0.234431684,
+            -0.594995558,
+            0.27018
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_QBZ95",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_3_QZB95/MachinegunMuzzleFlash",
+          "position": [
+            99.7978,
+            0.1810398,
+            100.039482
+          ],
+          "rotation": [
+            -0.258716643,
+            0.7380586,
+            0.09611478,
+            -0.6157089
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_Famas",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_4_Famas/MachinegunMuzzleFlash",
+          "position": [
+            99.79344,
+            0.19023107,
+            100.040306
+          ],
+          "rotation": [
+            -0.258716643,
+            0.7380586,
+            0.09611478,
+            -0.6157089
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_G36",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_6_G36/MachinegunMuzzleFlash",
+          "position": [
+            99.76033,
+            0.1877349,
+            100.033691
+          ],
+          "rotation": [
+            -0.258716643,
+            0.7380586,
+            0.09611478,
+            -0.6157089
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_SteyrAUG",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_5_SteyrAUG/MachinegunMuzzleFlash",
+          "position": [
+            99.7853241,
+            0.202977583,
+            100.043983
+          ],
+          "rotation": [
+            -0.258716732,
+            0.738058746,
+            0.09611478,
+            -0.615709
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_AKS47U",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_7_AKS47U/MachinegunMuzzleFlash",
+          "position": [
+            99.77207,
+            0.199584559,
+            100.04657
+          ],
+          "rotation": [
+            -0.2587166,
+            0.7380588,
+            0.09611487,
+            -0.615708947
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_G36Elite",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_8_G36Elite/MachinegunMuzzleFlash",
+          "position": [
+            99.74361,
+            0.204260334,
+            100.029129
+          ],
+          "rotation": [
+            -0.2587166,
+            0.7380588,
+            0.09611487,
+            -0.615708947
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_FamasElite",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_9_FamasElite/MachinegunMuzzleFlash",
+          "position": [
+            99.79344,
+            0.190229356,
+            100.040306
+          ],
+          "rotation": [
+            -0.2587166,
+            0.7380588,
+            0.09611487,
+            -0.615708947
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_QBZ95Elite",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_10_QBZ95Elite/MachinegunMuzzleFlash",
+          "position": [
+            99.82063,
+            0.222457752,
+            100.058922
+          ],
+          "rotation": [
+            -0.2587166,
+            0.7380588,
+            0.09611487,
+            -0.615708947
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_AK47Elite",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_11_AK47Elite/MachinegunMuzzleFlash",
+          "position": [
+            99.7646,
+            0.163126692,
+            100.034111
+          ],
+          "rotation": [
+            0.7197401,
+            -0.234431833,
+            -0.594995439,
+            0.270180136
+          ]
+        }
+      ]
+    },
+    {
+      "run": "qbz2_run",
+      "runSeconds": 0.2,
+      "additiveSeconds": 0.1,
+      "weight": 0.5,
+      "parts": [
+        {
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001",
+          "center": [
+            99.99964,
+            0.181052148,
+            100.000046
+          ],
+          "rotation": [
+            -0.698374867,
+            0.7097994,
+            0.0878517,
+            -0.02719447
+          ]
+        },
+        {
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine",
+          "center": [
+            99.97929,
+            0.386704028,
+            100.028595
+          ],
+          "rotation": [
+            -0.725573242,
+            0.6630831,
+            0.174618781,
+            -0.0580776036
+          ]
+        }
+      ],
+      "muzzles": [
+        {
+          "id": "Google2u.AssaultRifle_M16",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_2_M16/MachinegunMuzzleFlash",
+          "position": [
+            99.72446,
+            0.200826481,
+            100.030396
+          ],
+          "rotation": [
+            -0.228345767,
+            0.7466448,
+            0.1204126,
+            -0.6130915
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_AK47",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_1_AK47/MachinegunMuzzleFlash",
+          "position": [
+            99.756485,
+            0.182943225,
+            100.033
+          ],
+          "rotation": [
+            0.7083952,
+            -0.262933344,
+            -0.606504,
+            0.247378618
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_QBZ95",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_3_QZB95/MachinegunMuzzleFlash",
+          "position": [
+            99.79102,
+            0.198166683,
+            100.038208
+          ],
+          "rotation": [
+            -0.228345439,
+            0.7466448,
+            0.120412961,
+            -0.613091767
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_Famas",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_4_Famas/MachinegunMuzzleFlash",
+          "position": [
+            99.7874146,
+            0.2076774,
+            100.039024
+          ],
+          "rotation": [
+            -0.228345439,
+            0.7466448,
+            0.120412961,
+            -0.613091767
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_G36",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_6_G36/MachinegunMuzzleFlash",
+          "position": [
+            99.75418,
+            0.207815319,
+            100.032539
+          ],
+          "rotation": [
+            -0.228345439,
+            0.7466448,
+            0.120412961,
+            -0.613091767
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_SteyrAUG",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_5_SteyrAUG/MachinegunMuzzleFlash",
+          "position": [
+            99.78035,
+            0.221035928,
+            100.042709
+          ],
+          "rotation": [
+            -0.2283454,
+            0.7466448,
+            0.120412916,
+            -0.613091767
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_AKS47U",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_7_AKS47U/MachinegunMuzzleFlash",
+          "position": [
+            99.7668839,
+            0.218713537,
+            100.045357
+          ],
+          "rotation": [
+            -0.228345275,
+            0.746644735,
+            0.120412953,
+            -0.6130917
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_G36Elite",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_8_G36Elite/MachinegunMuzzleFlash",
+          "position": [
+            99.73881,
+            0.225612774,
+            100.028015
+          ],
+          "rotation": [
+            -0.228345275,
+            0.746644735,
+            0.120412953,
+            -0.6130917
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_FamasElite",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_9_FamasElite/MachinegunMuzzleFlash",
+          "position": [
+            99.7874146,
+            0.207675382,
+            100.039024
+          ],
+          "rotation": [
+            -0.228345275,
+            0.746644735,
+            0.120412953,
+            -0.6130917
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_QBZ95Elite",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_10_QBZ95Elite/MachinegunMuzzleFlash",
+          "position": [
+            99.81716,
+            0.237666726,
+            100.057472
+          ],
+          "rotation": [
+            -0.228345275,
+            0.746644735,
+            0.120412953,
+            -0.6130917
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_AK47Elite",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_11_AK47Elite/MachinegunMuzzleFlash",
+          "position": [
+            99.756485,
+            0.1829457,
+            100.033
+          ],
+          "rotation": [
+            0.7083952,
+            -0.262933433,
+            -0.606503665,
+            0.247378826
+          ]
+        }
+      ]
+    },
+    {
+      "run": "qbz2_run",
+      "runSeconds": 0.2,
+      "additiveSeconds": 0.1,
+      "weight": 0.75,
+      "parts": [
+        {
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001",
+          "center": [
+            99.99964,
+            0.181052148,
+            100.000046
+          ],
+          "rotation": [
+            -0.698374867,
+            0.7097994,
+            0.0878517,
+            -0.02719447
+          ]
+        },
+        {
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine",
+          "center": [
+            99.97892,
+            0.385563374,
+            100.035744
+          ],
+          "rotation": [
+            -0.7325232,
+            0.6596062,
+            0.1658656,
+            -0.0286081135
+          ]
+        }
+      ],
+      "muzzles": [
+        {
+          "id": "Google2u.AssaultRifle_M16",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_2_M16/MachinegunMuzzleFlash",
+          "position": [
+            99.72012,
+            0.225713536,
+            100.028809
+          ],
+          "rotation": [
+            -0.2000478,
+            0.7532589,
+            0.149545208,
+            -0.6084562
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_AK47",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_1_AK47/MachinegunMuzzleFlash",
+          "position": [
+            99.75058,
+            0.2052403,
+            100.031075
+          ],
+          "rotation": [
+            0.696603537,
+            -0.288334846,
+            -0.619169235,
+            0.21962963
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_QBZ95",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_3_QZB95/MachinegunMuzzleFlash",
+          "position": [
+            99.78628,
+            0.217529163,
+            100.036232
+          ],
+          "rotation": [
+            -0.200047463,
+            0.7532587,
+            0.149545461,
+            -0.6084564
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_Famas",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_4_Famas/MachinegunMuzzleFlash",
+          "position": [
+            99.78346,
+            0.227295741,
+            100.037155
+          ],
+          "rotation": [
+            -0.200047463,
+            0.7532587,
+            0.149545461,
+            -0.6084564
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_G36",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_6_G36/MachinegunMuzzleFlash",
+          "position": [
+            99.75033,
+            0.2302203,
+            100.030861
+          ],
+          "rotation": [
+            -0.200047463,
+            0.7532587,
+            0.149545461,
+            -0.6084564
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_SteyrAUG",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_5_SteyrAUG/MachinegunMuzzleFlash",
+          "position": [
+            99.77754,
+            0.241152555,
+            100.041
+          ],
+          "rotation": [
+            -0.200047433,
+            0.7532587,
+            0.149545431,
+            -0.6084564
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_AKS47U",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_7_AKS47U/MachinegunMuzzleFlash",
+          "position": [
+            99.76394,
+            0.239917636,
+            100.0437
+          ],
+          "rotation": [
+            -0.200047314,
+            0.753258765,
+            0.149545521,
+            -0.6084563
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_G36Elite",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_8_G36Elite/MachinegunMuzzleFlash",
+          "position": [
+            99.73644,
+            0.249260947,
+            100.026581
+          ],
+          "rotation": [
+            -0.200047314,
+            0.753258765,
+            0.149545521,
+            -0.6084563
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_FamasElite",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_9_FamasElite/MachinegunMuzzleFlash",
+          "position": [
+            99.78347,
+            0.227293432,
+            100.037155
+          ],
+          "rotation": [
+            -0.200047314,
+            0.753258765,
+            0.149545521,
+            -0.6084563
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_QBZ95Elite",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_10_QBZ95Elite/MachinegunMuzzleFlash",
+          "position": [
+            99.81566,
+            0.2545671,
+            100.055717
+          ],
+          "rotation": [
+            -0.200047314,
+            0.753258765,
+            0.149545521,
+            -0.6084563
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_AK47Elite",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_11_AK47Elite/MachinegunMuzzleFlash",
+          "position": [
+            99.75058,
+            0.2052425,
+            100.031075
+          ],
+          "rotation": [
+            0.696603537,
+            -0.288334966,
+            -0.6191691,
+            0.21962972
+          ]
+        }
+      ]
+    },
+    {
+      "run": "qbz2_run",
+      "runSeconds": 0.2,
+      "additiveSeconds": 0.1,
+      "weight": 1.0,
+      "parts": [
+        {
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001",
+          "center": [
+            99.99964,
+            0.181052148,
+            100.000046
+          ],
+          "rotation": [
+            -0.698374867,
+            0.7097994,
+            0.0878517,
+            -0.02719447
+          ]
+        },
+        {
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine",
+          "center": [
+            99.97813,
+            0.384224623,
+            100.042336
+          ],
+          "rotation": [
+            -0.738714039,
+            0.6558294,
+            0.155529678,
+            -5.221367E-05
+          ]
+        }
+      ],
+      "muzzles": [
+        {
+          "id": "Google2u.AssaultRifle_M16",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_2_M16/MachinegunMuzzleFlash",
+          "position": [
+            99.71875,
+            0.251641363,
+            100.026848
+          ],
+          "rotation": [
+            -0.175201416,
+            0.7582637,
+            0.181805223,
+            -0.6010722
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_AK47",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_1_AK47/MachinegunMuzzleFlash",
+          "position": [
+            99.74746,
+            0.228733882,
+            100.028595
+          ],
+          "rotation": [
+            0.6855446,
+            -0.309782237,
+            -0.6314609,
+            0.187939912
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_QBZ95",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_3_QZB95/MachinegunMuzzleFlash",
+          "position": [
+            99.78405,
+            0.237993956,
+            100.033852
+          ],
+          "rotation": [
+            -0.175201058,
+            0.7582637,
+            0.181805462,
+            -0.60107255
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_Famas",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_4_Famas/MachinegunMuzzleFlash",
+          "position": [
+            99.7820358,
+            0.247935459,
+            100.034981
+          ],
+          "rotation": [
+            -0.175201058,
+            0.7582637,
+            0.181805462,
+            -0.60107255
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_G36",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_6_G36/MachinegunMuzzleFlash",
+          "position": [
+            99.74923,
+            0.2536519,
+            100.02887
+          ],
+          "rotation": [
+            -0.175201058,
+            0.7582637,
+            0.181805462,
+            -0.60107255
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_SteyrAUG",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_5_SteyrAUG/MachinegunMuzzleFlash",
+          "position": [
+            99.77726,
+            0.262146,
+            100.039116
+          ],
+          "rotation": [
+            -0.175201133,
+            0.758263767,
+            0.181805417,
+            -0.6010725
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_AKS47U",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_7_AKS47U/MachinegunMuzzleFlash",
+          "position": [
+            99.76361,
+            0.261960328,
+            100.041847
+          ],
+          "rotation": [
+            -0.175201,
+            0.7582638,
+            0.181805372,
+            -0.6010723
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_G36Elite",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_8_G36Elite/MachinegunMuzzleFlash",
+          "position": [
+            99.73692,
+            0.273833036,
+            100.025024
+          ],
+          "rotation": [
+            -0.175201,
+            0.7582638,
+            0.181805372,
+            -0.6010723
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_FamasElite",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_9_FamasElite/MachinegunMuzzleFlash",
+          "position": [
+            99.7820358,
+            0.247932866,
+            100.034981
+          ],
+          "rotation": [
+            -0.175201,
+            0.7582638,
+            0.181805372,
+            -0.6010723
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_QBZ95Elite",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_10_QBZ95Elite/MachinegunMuzzleFlash",
+          "position": [
+            99.81637,
+            0.272142053,
+            100.053947
+          ],
+          "rotation": [
+            -0.175201,
+            0.7582638,
+            0.181805372,
+            -0.6010723
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_AK47Elite",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_11_AK47Elite/MachinegunMuzzleFlash",
+          "position": [
+            99.74747,
+            0.228735879,
+            100.028595
+          ],
+          "rotation": [
+            0.6855448,
+            -0.309782416,
+            -0.6314606,
+            0.187939823
+          ]
+        }
+      ]
+    },
+    {
+      "run": "shotgunner_run",
+      "runSeconds": 0.2,
+      "additiveSeconds": 0.1,
+      "weight": 0.0,
+      "parts": [
+        {
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001",
+          "center": [
+            99.989,
+            0.181173563,
+            99.99488
+          ],
+          "rotation": [
+            -0.698374867,
+            0.7097994,
+            0.0878517,
+            -0.02719447
+          ]
+        },
+        {
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine",
+          "center": [
+            99.93283,
+            0.38445577,
+            99.99434
+          ],
+          "rotation": [
+            -0.7680433,
+            0.6394549,
+            0.02888304,
+            -0.0193083286
+          ]
+        }
+      ],
+      "muzzles": [
+        {
+          "id": "Google2u.AssaultRifle_M16",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_2_M16/MachinegunMuzzleFlash",
+          "position": [
+            99.77707,
+            0.108056925,
+            99.86812
+          ],
+          "rotation": [
+            -0.373645246,
+            0.8671545,
+            -0.07967049,
+            -0.31950748
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_AK47",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_1_AK47/MachinegunMuzzleFlash",
+          "position": [
+            99.80287,
+            0.100996189,
+            99.89335
+          ],
+          "rotation": [
+            0.9094675,
+            -0.215293467,
+            -0.261362731,
+            0.241262227
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_QBZ95",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_3_QZB95/MachinegunMuzzleFlash",
+          "position": [
+            99.818634,
+            0.125680119,
+            99.9177246
+          ],
+          "rotation": [
+            -0.373645246,
+            0.8671545,
+            -0.0796702355,
+            -0.3195076
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_Famas",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_4_Famas/MachinegunMuzzleFlash",
+          "position": [
+            99.81271,
+            0.133427486,
+            99.9147
+          ],
+          "rotation": [
+            -0.373645246,
+            0.8671545,
+            -0.0796702355,
+            -0.3195076
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_G36",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_6_G36/MachinegunMuzzleFlash",
+          "position": [
+            99.79402,
+            0.123779573,
+            99.888176
+          ],
+          "rotation": [
+            -0.373645246,
+            0.8671545,
+            -0.0796702355,
+            -0.3195076
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_SteyrAUG",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_5_SteyrAUG/MachinegunMuzzleFlash",
+          "position": [
+            99.80137,
+            0.14341642,
+            99.91105
+          ],
+          "rotation": [
+            -0.373645067,
+            0.8671544,
+            -0.07967016,
+            -0.319507539
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_AKS47U",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_7_AKS47U/MachinegunMuzzleFlash",
+          "position": [
+            99.7910461,
+            0.136705756,
+            99.90456
+          ],
+          "rotation": [
+            -0.373644978,
+            0.8671545,
+            -0.07967016,
+            -0.319507629
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_G36Elite",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_8_G36Elite/MachinegunMuzzleFlash",
+          "position": [
+            99.78099,
+            0.1362036,
+            99.87238
+          ],
+          "rotation": [
+            -0.373644978,
+            0.8671545,
+            -0.07967016,
+            -0.319507629
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_FamasElite",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_9_FamasElite/MachinegunMuzzleFlash",
+          "position": [
+            99.81272,
+            0.13342692,
+            99.9147
+          ],
+          "rotation": [
+            -0.373644978,
+            0.8671545,
+            -0.07967016,
+            -0.319507629
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_QBZ95Elite",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_10_QBZ95Elite/MachinegunMuzzleFlash",
+          "position": [
+            99.81198,
+            0.169133186,
+            99.94385
+          ],
+          "rotation": [
+            -0.373644978,
+            0.8671545,
+            -0.07967016,
+            -0.319507629
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_AK47Elite",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_11_AK47Elite/MachinegunMuzzleFlash",
+          "position": [
+            99.80287,
+            0.100999378,
+            99.89335
+          ],
+          "rotation": [
+            0.9094676,
+            -0.215293482,
+            -0.261362642,
+            0.241262242
+          ]
+        }
+      ]
+    },
+    {
+      "run": "shotgunner_run",
+      "runSeconds": 0.2,
+      "additiveSeconds": 0.1,
+      "weight": 0.25,
+      "parts": [
+        {
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001",
+          "center": [
+            99.989,
+            0.181173563,
+            99.99488
+          ],
+          "rotation": [
+            -0.698374867,
+            0.7097994,
+            0.0878517,
+            -0.02719447
+          ]
+        },
+        {
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine",
+          "center": [
+            99.93674,
+            0.384892046,
+            100.006096
+          ],
+          "rotation": [
+            -0.767143,
+            0.639295936,
+            0.05252716,
+            -0.005754918
+          ]
+        }
+      ],
+      "muzzles": [
+        {
+          "id": "Google2u.AssaultRifle_M16",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_2_M16/MachinegunMuzzleFlash",
+          "position": [
+            99.74425,
+            0.138193056,
+            99.89217
+          ],
+          "rotation": [
+            -0.32877326,
+            0.8614564,
+            -0.0171927959,
+            -0.3866595
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_AK47",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_1_AK47/MachinegunMuzzleFlash",
+          "position": [
+            99.7726,
+            0.1270938,
+            99.912796
+          ],
+          "rotation": [
+            0.87393,
+            -0.247645751,
+            -0.3506498,
+            0.22795479
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_QBZ95",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_3_QZB95/MachinegunMuzzleFlash",
+          "position": [
+            99.79497,
+            0.148731038,
+            99.93478
+          ],
+          "rotation": [
+            -0.328773141,
+            0.861456454,
+            -0.0171924084,
+            -0.3866598
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_Famas",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_4_Famas/MachinegunMuzzleFlash",
+          "position": [
+            99.78967,
+            0.157248884,
+            99.9328842
+          ],
+          "rotation": [
+            -0.328773141,
+            0.861456454,
+            -0.0171924084,
+            -0.3866598
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_G36",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_6_G36/MachinegunMuzzleFlash",
+          "position": [
+            99.76598,
+            0.150963128,
+            99.90953
+          ],
+          "rotation": [
+            -0.328773141,
+            0.861456454,
+            -0.0171924084,
+            -0.3866598
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_SteyrAUG",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_5_SteyrAUG/MachinegunMuzzleFlash",
+          "position": [
+            99.7792358,
+            0.168672368,
+            99.93129
+          ],
+          "rotation": [
+            -0.328773052,
+            0.8614564,
+            -0.0171923339,
+            -0.386659741
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_AKS47U",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_7_AKS47U/MachinegunMuzzleFlash",
+          "position": [
+            99.76726,
+            0.1635169,
+            99.9264145
+          ],
+          "rotation": [
+            -0.3287729,
+            0.8614565,
+            -0.0171923786,
+            -0.386659771
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_G36Elite",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_8_G36Elite/MachinegunMuzzleFlash",
+          "position": [
+            99.7523,
+            0.1654721,
+            99.89627
+          ],
+          "rotation": [
+            -0.3287729,
+            0.8614565,
+            -0.0171923786,
+            -0.386659771
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_FamasElite",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_9_FamasElite/MachinegunMuzzleFlash",
+          "position": [
+            99.78967,
+            0.157247722,
+            99.9328842
+          ],
+          "rotation": [
+            -0.3287729,
+            0.8614565,
+            -0.0171923786,
+            -0.386659771
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_QBZ95Elite",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_10_QBZ95Elite/MachinegunMuzzleFlash",
+          "position": [
+            99.79802,
+            0.191635042,
+            99.9624252
+          ],
+          "rotation": [
+            -0.3287729,
+            0.8614565,
+            -0.0171923786,
+            -0.386659771
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_AK47Elite",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_11_AK47Elite/MachinegunMuzzleFlash",
+          "position": [
+            99.7726,
+            0.127096757,
+            99.912796
+          ],
+          "rotation": [
+            0.87393,
+            -0.247645855,
+            -0.350649625,
+            0.227954775
+          ]
+        }
+      ]
+    },
+    {
+      "run": "shotgunner_run",
+      "runSeconds": 0.2,
+      "additiveSeconds": 0.1,
+      "weight": 0.5,
+      "parts": [
+        {
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001",
+          "center": [
+            99.989,
+            0.181173563,
+            99.99488
+          ],
+          "rotation": [
+            -0.698374867,
+            0.7097994,
+            0.0878517,
+            -0.02719447
+          ]
+        },
+        {
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine",
+          "center": [
+            99.94146,
+            0.384682059,
+            100.017906
+          ],
+          "rotation": [
+            -0.7647475,
+            0.63974756,
+            0.07615006,
+            0.009259343
+          ]
+        }
+      ],
+      "muzzles": [
+        {
+          "id": "Google2u.AssaultRifle_M16",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_2_M16/MachinegunMuzzleFlash",
+          "position": [
+            99.719574,
+            0.1726105,
+            99.92222
+          ],
+          "rotation": [
+            -0.284455061,
+            0.845077753,
+            0.04725568,
+            -0.450217873
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_AK47",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_1_AK47/MachinegunMuzzleFlash",
+          "position": [
+            99.74932,
+            0.157454476,
+            99.93762
+          ],
+          "rotation": [
+            0.830150843,
+            -0.2731327,
+            -0.4377242,
+            0.211296275
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_QBZ95",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_3_QZB95/MachinegunMuzzleFlash",
+          "position": [
+            99.77736,
+            0.1754115,
+            99.95616
+          ],
+          "rotation": [
+            -0.284454823,
+            0.8450777,
+            0.047256,
+            -0.45021826
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_Famas",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_4_Famas/MachinegunMuzzleFlash",
+          "position": [
+            99.77289,
+            0.184552774,
+            99.9553757
+          ],
+          "rotation": [
+            -0.284454823,
+            0.8450777,
+            0.047256,
+            -0.45021826
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_G36",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_6_G36/MachinegunMuzzleFlash",
+          "position": [
+            99.7451859,
+            0.182042435,
+            99.93608
+          ],
+          "rotation": [
+            -0.284454823,
+            0.8450777,
+            0.047256,
+            -0.45021826
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_SteyrAUG",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_5_SteyrAUG/MachinegunMuzzleFlash",
+          "position": [
+            99.76378,
+            0.197151363,
+            99.9557953
+          ],
+          "rotation": [
+            -0.284454763,
+            0.845077634,
+            0.047256045,
+            -0.450218171
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_AKS47U",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_7_AKS47U/MachinegunMuzzleFlash",
+          "position": [
+            99.75064,
+            0.193615869,
+            99.95283
+          ],
+          "rotation": [
+            -0.284454644,
+            0.845077634,
+            0.0472560674,
+            -0.450218
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_G36Elite",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_8_G36Elite/MachinegunMuzzleFlash",
+          "position": [
+            99.73139,
+            0.198585823,
+            99.9256058
+          ],
+          "rotation": [
+            -0.284454644,
+            0.845077634,
+            0.0472560674,
+            -0.450218
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_FamasElite",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_9_FamasElite/MachinegunMuzzleFlash",
+          "position": [
+            99.7728958,
+            0.1845511,
+            99.9553757
+          ],
+          "rotation": [
+            -0.284454644,
+            0.845077634,
+            0.0472560674,
+            -0.450218
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_QBZ95Elite",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_10_QBZ95Elite/MachinegunMuzzleFlash",
+          "position": [
+            99.78992,
+            0.216432676,
+            99.98398
+          ],
+          "rotation": [
+            -0.284454644,
+            0.845077634,
+            0.0472560674,
+            -0.450218
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_AK47Elite",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_11_AK47Elite/MachinegunMuzzleFlash",
+          "position": [
+            99.74933,
+            0.157457188,
+            99.93763
+          ],
+          "rotation": [
+            0.830150962,
+            -0.273132771,
+            -0.4377241,
+            0.21129632
+          ]
+        }
+      ]
+    },
+    {
+      "run": "shotgunner_run",
+      "runSeconds": 0.2,
+      "additiveSeconds": 0.1,
+      "weight": 0.75,
+      "parts": [
+        {
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001",
+          "center": [
+            99.989,
+            0.181173563,
+            99.99488
+          ],
+          "rotation": [
+            -0.698374867,
+            0.7097994,
+            0.0878517,
+            -0.02719447
+          ]
+        },
+        {
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine",
+          "center": [
+            99.94695,
+            0.3837794,
+            100.029648
+          ],
+          "rotation": [
+            -0.760784268,
+            0.640814066,
+            0.0995357,
+            0.0256380141
+          ]
+        }
+      ],
+      "muzzles": [
+        {
+          "id": "Google2u.AssaultRifle_M16",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_2_M16/MachinegunMuzzleFlash",
+          "position": [
+            99.7049942,
+            0.2085381,
+            99.95685
+          ],
+          "rotation": [
+            -0.242202967,
+            0.81908375,
+            0.111288749,
+            -0.507990658
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_AK47",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_1_AK47/MachinegunMuzzleFlash",
+          "position": [
+            99.73493,
+            0.189613745,
+            99.96673
+          ],
+          "rotation": [
+            0.7800421,
+            -0.291186363,
+            -0.5195094,
+            0.191977769
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_QBZ95",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_3_QZB95/MachinegunMuzzleFlash",
+          "position": [
+            99.76738,
+            0.203608945,
+            99.9809952
+          ],
+          "rotation": [
+            -0.242202759,
+            0.8190836,
+            0.111289062,
+            -0.507990956
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_Famas",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_4_Famas/MachinegunMuzzleFlash",
+          "position": [
+            99.7638855,
+            0.213196337,
+            99.98123
+          ],
+          "rotation": [
+            -0.242202759,
+            0.8190836,
+            0.111289062,
+            -0.507990956
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_G36",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_6_G36/MachinegunMuzzleFlash",
+          "position": [
+            99.73337,
+            0.2145464,
+            99.96664
+          ],
+          "rotation": [
+            -0.242202759,
+            0.8190836,
+            0.111289062,
+            -0.507990956
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_SteyrAUG",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_5_SteyrAUG/MachinegunMuzzleFlash",
+          "position": [
+            99.756424,
+            0.226646841,
+            99.98352
+          ],
+          "rotation": [
+            -0.242202759,
+            0.8190836,
+            0.111289062,
+            -0.507990956
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_AKS47U",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_7_AKS47U/MachinegunMuzzleFlash",
+          "position": [
+            99.74267,
+            0.224658415,
+            99.98262
+          ],
+          "rotation": [
+            -0.24220258,
+            0.8190836,
+            0.111289062,
+            -0.507990837
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_G36Elite",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_8_G36Elite/MachinegunMuzzleFlash",
+          "position": [
+            99.7200241,
+            0.232934192,
+            99.95906
+          ],
+          "rotation": [
+            -0.24220258,
+            0.8190836,
+            0.111289062,
+            -0.507990837
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_FamasElite",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_9_FamasElite/MachinegunMuzzleFlash",
+          "position": [
+            99.76389,
+            0.213194266,
+            99.98123
+          ],
+          "rotation": [
+            -0.24220258,
+            0.8190836,
+            0.111289062,
+            -0.507990837
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_QBZ95Elite",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_10_QBZ95Elite/MachinegunMuzzleFlash",
+          "position": [
+            99.78869,
+            0.241689682,
+            100.007645
+          ],
+          "rotation": [
+            -0.24220258,
+            0.8190836,
+            0.111289062,
+            -0.507990837
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_AK47Elite",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_11_AK47Elite/MachinegunMuzzleFlash",
+          "position": [
+            99.73493,
+            0.1896161,
+            99.96673
+          ],
+          "rotation": [
+            0.780042,
+            -0.291186482,
+            -0.519509137,
+            0.191977829
+          ]
+        }
+      ]
+    },
+    {
+      "run": "shotgunner_run",
+      "runSeconds": 0.2,
+      "additiveSeconds": 0.1,
+      "weight": 1.0,
+      "parts": [
+        {
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001",
+          "center": [
+            99.989,
+            0.181173563,
+            99.99488
+          ],
+          "rotation": [
+            -0.698374867,
+            0.7097994,
+            0.0878517,
+            -0.02719447
+          ]
+        },
+        {
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine",
+          "center": [
+            99.95316,
+            0.3821516,
+            100.041183
+          ],
+          "rotation": [
+            -0.755205035,
+            0.6424909,
+            0.122471392,
+            0.04326451
+          ]
+        }
+      ],
+      "muzzles": [
+        {
+          "id": "Google2u.AssaultRifle_M16",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_2_M16/MachinegunMuzzleFlash",
+          "position": [
+            99.70105,
+            0.243208,
+            99.99395
+          ],
+          "rotation": [
+            -0.2029871,
+            0.7855685,
+            0.172811955,
+            -0.55840385
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_AK47",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_1_AK47/MachinegunMuzzleFlash",
+          "position": [
+            99.73005,
+            0.221030042,
+            99.99834
+          ],
+          "rotation": [
+            0.725996733,
+            -0.302285343,
+            -0.593627453,
+            0.17076093
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_QBZ95",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_3_QZB95/MachinegunMuzzleFlash",
+          "position": [
+            99.76555,
+            0.231112927,
+            100.007835
+          ],
+          "rotation": [
+            -0.202986836,
+            0.7855684,
+            0.172812223,
+            -0.558404148
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_Famas",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_4_Famas/MachinegunMuzzleFlash",
+          "position": [
+            99.76314,
+            0.2409646,
+            100.008965
+          ],
+          "rotation": [
+            -0.202986836,
+            0.7855684,
+            0.172812223,
+            -0.558404148
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_G36",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_6_G36/MachinegunMuzzleFlash",
+          "position": [
+            99.73105,
+            0.245970055,
+            99.99938
+          ],
+          "rotation": [
+            -0.202986836,
+            0.7855684,
+            0.172812223,
+            -0.558404148
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_SteyrAUG",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_5_SteyrAUG/MachinegunMuzzleFlash",
+          "position": [
+            99.75752,
+            0.2549303,
+            100.012871
+          ],
+          "rotation": [
+            -0.202986822,
+            0.7855684,
+            0.172812209,
+            -0.558404148
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_AKS47U",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_7_AKS47U/MachinegunMuzzleFlash",
+          "position": [
+            99.74366,
+            0.254311919,
+            100.014069
+          ],
+          "rotation": [
+            -0.2029868,
+            0.785568535,
+            0.1728121,
+            -0.5584039
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_G36Elite",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_8_G36Elite/MachinegunMuzzleFlash",
+          "position": [
+            99.71866,
+            0.26591292,
+            99.99467
+          ],
+          "rotation": [
+            -0.2029868,
+            0.785568535,
+            0.1728121,
+            -0.5584039
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_FamasElite",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_9_FamasElite/MachinegunMuzzleFlash",
+          "position": [
+            99.76314,
+            0.240962163,
+            100.008965
+          ],
+          "rotation": [
+            -0.2029868,
+            0.785568535,
+            0.1728121,
+            -0.5584039
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_QBZ95Elite",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_10_QBZ95Elite/MachinegunMuzzleFlash",
+          "position": [
+            99.79445,
+            0.2655639,
+            100.032173
+          ],
+          "rotation": [
+            -0.2029868,
+            0.785568535,
+            0.1728121,
+            -0.5584039
+          ]
+        },
+        {
+          "id": "Google2u.AssaultRifle_AK47Elite",
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_11_AK47Elite/MachinegunMuzzleFlash",
+          "position": [
+            99.73006,
+            0.2210321,
+            99.99834
+          ],
+          "rotation": [
+            0.7259969,
+            -0.302285582,
+            -0.5936274,
+            0.170760781
+          ]
+        }
+      ]
+    }
+  ]
+}

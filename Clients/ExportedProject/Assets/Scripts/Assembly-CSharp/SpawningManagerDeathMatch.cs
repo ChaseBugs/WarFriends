@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using CodeStage.AntiCheat.ObscuredTypes;
 using Google2u;
 using UnityEngine;
+using War.Protocol;
 
 [ExecuteInEditMode]
 public class SpawningManagerDeathMatch : Singleton<SpawningManagerDeathMatch>
@@ -133,6 +134,10 @@ public class SpawningManagerDeathMatch : Singleton<SpawningManagerDeathMatch>
 	private float mCoolDownMultiplier = 1f;
 
 	private float mCoolDown;
+	private SelfHostedBattleClient mSelfHosted;
+	private bool mSelfHostedMode;
+	private bool mSelfHostedDeployPending;
+	private bool mSelfHostedForceRefresh;
 
 	private bool mAutoDeployEnabled;
 
@@ -241,6 +246,75 @@ public class SpawningManagerDeathMatch : Singleton<SpawningManagerDeathMatch>
 	private int maxEnergy => (int)(float)Singleton<GameVariables>.instance.constants.GetRow(Constants.rowIds.MaxEnergy).FLOATVALUE;
 
 	public event Action ArmyChanged;
+
+	public void BindSelfHosted(SelfHostedBattleClient client)
+	{
+		if (client == null || !client.IsConnected || mSelfHostedMode)
+		{
+			throw new InvalidOperationException("Bind one connected self-hosted army session.");
+		}
+		mSelfHosted = client;
+		mSelfHostedMode = true;
+		mSelfHosted.ArmyOffersReceived += ApplySelfHostedArmy;
+		mAutoDeployEnabled = false;
+		semiAutoDeployEnabled = false;
+		mGenerateNewUnits = false;
+		mWaitingForClientUnitsSinceTime = null;
+	}
+
+	public void UnbindSelfHosted(SelfHostedBattleClient client)
+	{
+		if (mSelfHosted != client) return;
+		mSelfHosted.ArmyOffersReceived -= ApplySelfHostedArmy;
+		mSelfHosted = null;
+		mSelfHostedDeployPending = false;
+		mSelfHostedForceRefresh = false;
+		mGenerationEnabled = false;
+		currentArmyUnitDefinitions.Clear();
+		if (ArmyChanged != null) ArmyChanged();
+	}
+
+	private void ApplySelfHostedArmy(MatchArmyBatch batch)
+	{
+		if (mSelfHosted == null) return;
+		var next = new List<ArmyUnitDefinition>();
+		if (batch.Code == "army-offers")
+		{
+			if (batch.OptionIndexes.Count != 3)
+				throw new InvalidOperationException("Host army hand must contain three source options.");
+			foreach (int index in batch.OptionIndexes)
+			{
+				ArmyUnitDefinition found = null;
+				foreach (ArmyUnit family in armyDefinitions)
+					foreach (ArmyUnitDefinition option in family.unitsCounts)
+						if (option.index == index) found = option;
+				if (found == null)
+					throw new InvalidOperationException("Host army option is absent from the source scene.");
+				next.Add(found);
+			}
+		}
+		else if (batch.Code != "army-unavailable" && batch.Code != "army-not-running" &&
+		         batch.Code != "army-disabled")
+			throw new InvalidOperationException("Unknown host army response.");
+		bool changed = mSelfHostedForceRefresh || currentArmyUnitDefinitions.Count != next.Count ||
+			(int)powerLeft != batch.Energy;
+		if (!changed)
+			for (int i = 0; i < next.Count; i++)
+				if (currentArmyUnitDefinitions[i] != next[i]) { changed = true; break; }
+		currentArmyUnitDefinitions = next;
+		powerLeft = batch.Energy;
+		mGenerateNewUnits = false;
+		mWaitingForClientUnitsSinceTime = null;
+		mSelfHostedForceRefresh = false;
+		if (mCurrentDefinition != null)
+		{
+			double remaining = Math.Max(0d, ((double)batch.NextDeployTick -
+				(double)mSelfHosted.State.ServerTick) / 30d);
+			mCoolDown = Math.Max(1f, mCoolDown);
+			mNextTime = TimeManager.realTimeWithoutPauses + (float)remaining;
+		}
+		if (changed && ArmyChanged != null) ArmyChanged();
+	}
 
 	public event Action<ArmyUnitDefinition> RandomArmySent;
 
@@ -455,6 +529,7 @@ public class SpawningManagerDeathMatch : Singleton<SpawningManagerDeathMatch>
 		mNextTime = TimeManager.realTimeWithoutPauses;
 		mAutoDeployEnabled = DebugSettings.instance.data.autoDeploy;
 		semiAutoDeployEnabled = !DebugSettings.instance.data.autoDeploy;
+		if (mSelfHostedMode) { mAutoDeployEnabled = false; semiAutoDeployEnabled = false; }
 		mWaitingForClientUnitsSinceTime = null;
 		autoDeployProgress = 0f;
 	}
@@ -471,6 +546,7 @@ public class SpawningManagerDeathMatch : Singleton<SpawningManagerDeathMatch>
 
 	private void AiObjectOnAiObjectKilled(AIObject aiObject, DestroyableObject.DamageInfo damageInfo)
 	{
+		if (mSelfHostedMode) return;
 		if (damageInfo.type == DestroyableObject.DamageType.Suicide)
 		{
 			if (aiObject.fraction == PlayerController.currentPlayer.fraction)
@@ -509,6 +585,7 @@ public class SpawningManagerDeathMatch : Singleton<SpawningManagerDeathMatch>
 
 	private void OnAfterSpawned(AIObject aiObject)
 	{
+		if (mSelfHostedMode) return;
 		if (mGenerationEnabled || isTutorial)
 		{
 			ArmyUnit definition = GetDefinition(aiObject);
@@ -728,6 +805,15 @@ public class SpawningManagerDeathMatch : Singleton<SpawningManagerDeathMatch>
 
 	public void SendUnit(ArmyUnitDefinition definition, Fractions fraction, bool useEnergy = true, bool clicked = false)
 	{
+		if (mSelfHostedMode)
+		{
+			if (mSelfHosted == null || !mSelfHosted.IsConnected || mSelfHostedDeployPending || !useEnergy ||
+				fraction != PlayerController.currentPlayer.fraction || definition == null ||
+				!currentArmyUnitDefinitions.Contains(definition)) return;
+			mSelfHostedDeployPending = true;
+			SendSelfHostedUnit(definition, clicked);
+			return;
+		}
 		autoDeployProgress = 0f;
 		mCurrentDefinition = definition;
 		mCoolDown = (baseCoolDown + definition.coolDown) * mCoolDownMultiplier;
@@ -742,14 +828,42 @@ public class SpawningManagerDeathMatch : Singleton<SpawningManagerDeathMatch>
 		mPhotonView.RPC("SendUnitRPC", PhotonTargets.AllViaServer, definition.index, (byte)PlayerController.currentPlayer.fraction, useEnergy);
 	}
 
+	private async void SendSelfHostedUnit(ArmyUnitDefinition definition, bool clicked)
+	{
+		try
+		{
+			MatchReply reply = await mSelfHosted.DeployArmyResult(definition.index);
+			mSelfHostedForceRefresh = reply.Code != "army-deploying";
+			if (reply.Code == "army-deploying")
+			{
+				autoDeployProgress = 0f;
+				mCurrentDefinition = definition;
+				mCoolDown = (baseCoolDown + definition.coolDown) * mCoolDownMultiplier;
+				if (clicked)
+					StatsManager.instance.matchStats.DeployUnit(
+						definition.armyUnit.behaviour.indexInLevelsManager,
+						definition.numberOfEnemies, true);
+			}
+			await mSelfHosted.RefreshArmy();
+		}
+		catch (Exception error)
+		{
+			mSelfHostedForceRefresh = true;
+			Debug.LogException(error);
+		}
+		finally { mSelfHostedDeployPending = false; }
+	}
+
 	public void SendBotUnit(ArmyUnitDefinition definition, Fractions fraction)
 	{
+		if (mSelfHostedMode) return;
 		StartCoroutine(RadicalRoutine.Run(Spawn(definition, fraction)));
 	}
 
 	[PunRPC]
 	private void SendUnitRPC(int index, byte fraction, bool useEnergy)
 	{
+		if (mSelfHostedMode) return;
 		if (!Singleton<PhotonConnectionManager>.instance.isMasterClient)
 		{
 			return;
@@ -774,6 +888,7 @@ public class SpawningManagerDeathMatch : Singleton<SpawningManagerDeathMatch>
 	private void GetUnitsForClient()
 	{
 		mGenerateNewUnits = false;
+		if (mSelfHostedMode) { mWaitingForClientUnitsSinceTime = null; return; }
 		mWaitingForClientUnitsSinceTime = TimeManager.realTimeWithoutPauses;
 		PhotonCachedRPC.SendOfflineRPC(mPhotonView, "GetRandomUnitsForHost", PhotonTargets.MasterClient, (byte)PlayerController.currentPlayer.fraction, PlayerController.currentPlayer.playerNetworkId);
 	}
@@ -781,6 +896,7 @@ public class SpawningManagerDeathMatch : Singleton<SpawningManagerDeathMatch>
 	[PunRPC]
 	private void GetRandomUnitsForHost(byte fraction, int playerID)
 	{
+		if (mSelfHostedMode) return;
 		List<ArmyUnitDefinition> threeRandomUnits = GetThreeRandomUnits((Fractions)fraction);
 		byte[] array = new byte[3];
 		for (int i = 0; i < threeRandomUnits.Count; i++)
@@ -798,6 +914,7 @@ public class SpawningManagerDeathMatch : Singleton<SpawningManagerDeathMatch>
 	[PunRPC]
 	private void RecieveRandomUnitsForHost(byte[] armies, int id)
 	{
+		if (mSelfHostedMode) return;
 		if (!PlayerController.players.ContainsKey(id) || !PlayerController.players[id].isCurrentPlayer)
 		{
 			return;
@@ -896,6 +1013,16 @@ public class SpawningManagerDeathMatch : Singleton<SpawningManagerDeathMatch>
 		StopAllCoroutines();
 	}
 
+	public new void OnDestroy()
+	{
+		if (mSelfHosted != null)
+		{
+			mSelfHosted.ArmyOffersReceived -= ApplySelfHostedArmy;
+			mSelfHosted = null;
+		}
+		base.OnDestroy();
+	}
+
 	public void Enable()
 	{
 		mGenerationEnabled = true;
@@ -903,12 +1030,14 @@ public class SpawningManagerDeathMatch : Singleton<SpawningManagerDeathMatch>
 
 	public void ReSyncPower()
 	{
+		if (mSelfHostedMode) return;
 		mPhotonView.RPC("ReSyncPowerRPC", PhotonTargets.Others, (int)powerLeft, (int)powerLeftEnemy);
 	}
 
 	[PunRPC]
 	private void ReSyncPowerRPC(int masterPower, int clientPower)
 	{
+		if (mSelfHostedMode) return;
 		powerLeft = clientPower;
 		powerLeftEnemy = masterPower;
 	}

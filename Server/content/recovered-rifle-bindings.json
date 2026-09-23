@@ -1,0 +1,486 @@
+{
+  "client": "1.4.0",
+  "source": "Assets/Scenes/MainScene.unity",
+  "sha256": "d46f81ff8c3e12bf17f34a1f53dd601bd799102c9f984818031441dfb7a5de43",
+  "pose": "serialized-reference-only",
+  "playerPath": "MainSceneRootNew/Player",
+  "alliesBulletMask": -71818753,
+  "enemiesBulletMask": -143121921,
+  "layerSource": "Assets/GameObject/GlobalStorage.prefab",
+  "layerSha256": "93004046d938bfc72959d21e9b0e2a05fb8fc7c69217e4e4eefba78c9cc41cc6",
+  "position": [
+    100.0,
+    0.0,
+    100.0
+  ],
+  "rotation": [
+    0.0,
+    -0.7071068,
+    0.0,
+    0.7071068
+  ],
+  "weapons": [
+    {
+      "id": "Google2u.AssaultRifle_M16",
+      "setupPath": "MainSceneRootNew/Managers/Levels Manager/Weapons/AssaultRifle_0_M16",
+      "inventoryIndex": 1,
+      "playerWeaponType": "PlayerClickWeapon",
+      "weaponType": "AutomaticRifle",
+      "weaponPath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_2_M16",
+      "muzzlePath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_2_M16/MachinegunMuzzleFlash",
+      "muzzlePosition": [
+        99.9722748,
+        0.140624225,
+        100.428139
+      ],
+      "muzzleRotation": [
+        -0.107399121,
+        0.106412828,
+        -0.491215885,
+        -0.857816339
+      ],
+      "shotOffset": [
+        0.0,
+        0.12,
+        0.0
+      ],
+      "fast": false,
+      "friendKill": true,
+      "shotType": 0,
+      "ignoreLayersMask": 0,
+      "animationFamily": 0,
+      "reloadable": true,
+      "infiniteAmmo": false,
+      "definitionSpeed": 30.0,
+      "serializedSpeed": 30.0,
+      "speedMultiplier": 1.0,
+      "checkDistance": 0.5,
+      "criticalMultiplier": 2.0,
+      "bulletType": "BulletSlow",
+      "bulletSource": "Assets/GameObject/BulletSlow.prefab",
+      "bulletGuid": "855689762fa6e774aaee190652b08c6f",
+      "bulletFileId": 11409266,
+      "bulletSha256": "5379f6aba1560b8eb3d7d386d1349454b97ea133163ade9a313e2bc34d1adfae"
+    },
+    {
+      "id": "Google2u.AssaultRifle_AK47",
+      "setupPath": "MainSceneRootNew/Managers/Levels Manager/Weapons/AssaultRifle_1_AK47",
+      "inventoryIndex": 11,
+      "playerWeaponType": "PlayerClickWeapon",
+      "weaponType": "AutomaticRifle",
+      "weaponPath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_1_AK47",
+      "muzzlePath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_1_AK47/MachinegunMuzzleFlash",
+      "muzzlePosition": [
+        99.99546,
+        0.144335672,
+        100.399841
+      ],
+      "muzzleRotation": [
+        0.126273453,
+        -0.0216890275,
+        -0.417167962,
+        0.8997532
+      ],
+      "shotOffset": [
+        0.0,
+        0.12,
+        0.0
+      ],
+      "fast": false,
+      "friendKill": true,
+      "shotType": 0,
+      "ignoreLayersMask": 0,
+      "animationFamily": 0,
+      "reloadable": true,
+      "infiniteAmmo": false,
+      "definitionSpeed": 30.0,
+      "serializedSpeed": 30.0,
+      "speedMultiplier": 1.0,
+      "checkDistance": 0.5,
+      "criticalMultiplier": 2.0,
+      "bulletType": "BulletSlow",
+      "bulletSource": "Assets/GameObject/BulletSlow.prefab",
+      "bulletGuid": "855689762fa6e774aaee190652b08c6f",
+      "bulletFileId": 11409266,
+      "bulletSha256": "5379f6aba1560b8eb3d7d386d1349454b97ea133163ade9a313e2bc34d1adfae"
+    },
+    {
+      "id": "Google2u.AssaultRifle_QBZ95",
+      "setupPath": "MainSceneRootNew/Managers/Levels Manager/Weapons/AssaultRifle_2_QBZ95",
+      "inventoryIndex": 30,
+      "playerWeaponType": "PlayerClickWeapon",
+      "weaponType": "AutomaticRifle",
+      "weaponPath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_3_QZB95",
+      "muzzlePath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_3_QZB95/MachinegunMuzzleFlash",
+      "muzzlePosition": [
+        99.98661,
+        0.152693555,
+        100.363731
+      ],
+      "muzzleRotation": [
+        -0.107398659,
+        0.106412888,
+        -0.491216034,
+        -0.857816637
+      ],
+      "shotOffset": [
+        0.0,
+        0.12,
+        0.0
+      ],
+      "fast": false,
+      "friendKill": true,
+      "shotType": 0,
+      "ignoreLayersMask": 0,
+      "animationFamily": 9,
+      "reloadable": true,
+      "infiniteAmmo": false,
+      "definitionSpeed": 30.0,
+      "serializedSpeed": 30.0,
+      "speedMultiplier": 1.0,
+      "checkDistance": 0.5,
+      "criticalMultiplier": 2.0,
+      "bulletType": "BulletSlow",
+      "bulletSource": "Assets/GameObject/BulletSlow.prefab",
+      "bulletGuid": "855689762fa6e774aaee190652b08c6f",
+      "bulletFileId": 11409266,
+      "bulletSha256": "5379f6aba1560b8eb3d7d386d1349454b97ea133163ade9a313e2bc34d1adfae"
+    },
+    {
+      "id": "Google2u.AssaultRifle_Famas",
+      "setupPath": "MainSceneRootNew/Managers/Levels Manager/Weapons/AssaultRifle_3_Famas",
+      "inventoryIndex": 26,
+      "playerWeaponType": "PlayerClickWeapon",
+      "weaponType": "AutomaticRifle",
+      "weaponPath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_4_Famas",
+      "muzzlePath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_4_Famas/MachinegunMuzzleFlash",
+      "muzzlePosition": [
+        99.97667,
+        0.153808638,
+        100.365753
+      ],
+      "muzzleRotation": [
+        -0.107398659,
+        0.106412888,
+        -0.491216034,
+        -0.857816637
+      ],
+      "shotOffset": [
+        0.0,
+        0.12,
+        0.0
+      ],
+      "fast": false,
+      "friendKill": true,
+      "shotType": 0,
+      "ignoreLayersMask": 0,
+      "animationFamily": 9,
+      "reloadable": true,
+      "infiniteAmmo": false,
+      "definitionSpeed": 30.0,
+      "serializedSpeed": 30.0,
+      "speedMultiplier": 1.0,
+      "checkDistance": 0.5,
+      "criticalMultiplier": 2.0,
+      "bulletType": "BulletSlow",
+      "bulletSource": "Assets/GameObject/BulletSlow.prefab",
+      "bulletGuid": "855689762fa6e774aaee190652b08c6f",
+      "bulletFileId": 11409266,
+      "bulletSha256": "5379f6aba1560b8eb3d7d386d1349454b97ea133163ade9a313e2bc34d1adfae"
+    },
+    {
+      "id": "Google2u.AssaultRifle_G36",
+      "setupPath": "MainSceneRootNew/Managers/Levels Manager/Weapons/AssaultRifle_4_G36",
+      "inventoryIndex": 31,
+      "playerWeaponType": "PlayerClickWeapon",
+      "weaponType": "AutomaticRifle",
+      "weaponPath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_6_G36",
+      "muzzlePath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_6_G36/MachinegunMuzzleFlash",
+      "muzzlePosition": [
+        99.9705658,
+        0.145144016,
+        100.397911
+      ],
+      "muzzleRotation": [
+        -0.107398659,
+        0.106412888,
+        -0.491216034,
+        -0.857816637
+      ],
+      "shotOffset": [
+        0.0,
+        0.12,
+        0.0
+      ],
+      "fast": false,
+      "friendKill": true,
+      "shotType": 0,
+      "ignoreLayersMask": 0,
+      "animationFamily": 15,
+      "reloadable": true,
+      "infiniteAmmo": false,
+      "definitionSpeed": 30.0,
+      "serializedSpeed": 30.0,
+      "speedMultiplier": 1.0,
+      "checkDistance": 0.5,
+      "criticalMultiplier": 2.0,
+      "bulletType": "BulletSlow",
+      "bulletSource": "Assets/GameObject/BulletSlow.prefab",
+      "bulletGuid": "855689762fa6e774aaee190652b08c6f",
+      "bulletFileId": 11409266,
+      "bulletSha256": "5379f6aba1560b8eb3d7d386d1349454b97ea133163ade9a313e2bc34d1adfae"
+    },
+    {
+      "id": "Google2u.AssaultRifle_SteyrAUG",
+      "setupPath": "MainSceneRootNew/Managers/Levels Manager/Weapons/AssaultRifle_5_SteyrAUG",
+      "inventoryIndex": 34,
+      "playerWeaponType": "PlayerClickWeapon",
+      "weaponType": "AutomaticRifle",
+      "weaponPath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_5_SteyrAUG",
+      "muzzlePath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_5_SteyrAUG/MachinegunMuzzleFlash",
+      "muzzlePosition": [
+        99.96248,
+        0.157764629,
+        100.370735
+      ],
+      "muzzleRotation": [
+        -0.1073987,
+        0.106413007,
+        -0.491216,
+        -0.8578165
+      ],
+      "shotOffset": [
+        0.0,
+        0.12,
+        0.0
+      ],
+      "fast": false,
+      "friendKill": true,
+      "shotType": 0,
+      "ignoreLayersMask": 0,
+      "animationFamily": 13,
+      "reloadable": true,
+      "infiniteAmmo": false,
+      "definitionSpeed": 30.0,
+      "serializedSpeed": 30.0,
+      "speedMultiplier": 1.0,
+      "checkDistance": 0.5,
+      "criticalMultiplier": 2.0,
+      "bulletType": "BulletSlow",
+      "bulletSource": "Assets/GameObject/BulletSlow.prefab",
+      "bulletGuid": "855689762fa6e774aaee190652b08c6f",
+      "bulletFileId": 11409266,
+      "bulletSha256": "5379f6aba1560b8eb3d7d386d1349454b97ea133163ade9a313e2bc34d1adfae"
+    },
+    {
+      "id": "Google2u.AssaultRifle_AKS47U",
+      "setupPath": "MainSceneRootNew/Managers/Levels Manager/Weapons/AssaultRifle_6_AKS47U",
+      "inventoryIndex": 44,
+      "playerWeaponType": "PlayerClickWeapon",
+      "weaponType": "AutomaticRifle",
+      "weaponPath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_7_AKS47U",
+      "muzzlePath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_7_AKS47U/MachinegunMuzzleFlash",
+      "muzzlePosition": [
+        99.9625854,
+        0.1593738,
+        100.384567
+      ],
+      "muzzleRotation": [
+        -0.107398555,
+        0.106413037,
+        -0.491216,
+        -0.857816339
+      ],
+      "shotOffset": [
+        0.0,
+        0.12,
+        0.0
+      ],
+      "fast": false,
+      "friendKill": true,
+      "shotType": 0,
+      "ignoreLayersMask": 0,
+      "animationFamily": 15,
+      "reloadable": true,
+      "infiniteAmmo": false,
+      "definitionSpeed": 30.0,
+      "serializedSpeed": 30.0,
+      "speedMultiplier": 1.0,
+      "checkDistance": 0.5,
+      "criticalMultiplier": 2.0,
+      "bulletType": "BulletSlow",
+      "bulletSource": "Assets/GameObject/BulletSlow.prefab",
+      "bulletGuid": "855689762fa6e774aaee190652b08c6f",
+      "bulletFileId": 11409266,
+      "bulletSha256": "5379f6aba1560b8eb3d7d386d1349454b97ea133163ade9a313e2bc34d1adfae"
+    },
+    {
+      "id": "Google2u.AssaultRifle_G36Elite",
+      "setupPath": "MainSceneRootNew/Managers/Levels Manager/Weapons/AssaultRifle_7_G36Elite",
+      "inventoryIndex": 45,
+      "playerWeaponType": "PlayerClickWeapon",
+      "weaponType": "AutomaticRifle",
+      "weaponPath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_8_G36Elite",
+      "muzzlePath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_8_G36Elite/MachinegunMuzzleFlash",
+      "muzzlePosition": [
+        99.95022,
+        0.14062123,
+        100.409706
+      ],
+      "muzzleRotation": [
+        -0.107398555,
+        0.106413037,
+        -0.491216,
+        -0.857816339
+      ],
+      "shotOffset": [
+        0.0,
+        0.12,
+        0.0
+      ],
+      "fast": false,
+      "friendKill": true,
+      "shotType": 0,
+      "ignoreLayersMask": 0,
+      "animationFamily": 15,
+      "reloadable": true,
+      "infiniteAmmo": false,
+      "definitionSpeed": 30.0,
+      "serializedSpeed": 30.0,
+      "speedMultiplier": 1.0,
+      "checkDistance": 0.5,
+      "criticalMultiplier": 2.0,
+      "bulletType": "BulletSlow",
+      "bulletSource": "Assets/GameObject/BulletSlow.prefab",
+      "bulletGuid": "855689762fa6e774aaee190652b08c6f",
+      "bulletFileId": 11409266,
+      "bulletSha256": "5379f6aba1560b8eb3d7d386d1349454b97ea133163ade9a313e2bc34d1adfae"
+    },
+    {
+      "id": "Google2u.AssaultRifle_FamasElite",
+      "setupPath": "MainSceneRootNew/Managers/Levels Manager/Weapons/AssaultRifle_8_FamasElite",
+      "inventoryIndex": 60,
+      "playerWeaponType": "PlayerClickWeapon",
+      "weaponType": "AutomaticRifle",
+      "weaponPath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_9_FamasElite",
+      "muzzlePath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_9_FamasElite/MachinegunMuzzleFlash",
+      "muzzlePosition": [
+        99.97668,
+        0.153808728,
+        100.365753
+      ],
+      "muzzleRotation": [
+        -0.107398555,
+        0.106413037,
+        -0.491216,
+        -0.857816339
+      ],
+      "shotOffset": [
+        0.0,
+        0.12,
+        0.0
+      ],
+      "fast": false,
+      "friendKill": true,
+      "shotType": 0,
+      "ignoreLayersMask": 0,
+      "animationFamily": 9,
+      "reloadable": true,
+      "infiniteAmmo": false,
+      "definitionSpeed": 30.0,
+      "serializedSpeed": 30.0,
+      "speedMultiplier": 1.0,
+      "checkDistance": 0.5,
+      "criticalMultiplier": 2.0,
+      "bulletType": "BulletSlow",
+      "bulletSource": "Assets/GameObject/BulletSlow.prefab",
+      "bulletGuid": "855689762fa6e774aaee190652b08c6f",
+      "bulletFileId": 11409266,
+      "bulletSha256": "5379f6aba1560b8eb3d7d386d1349454b97ea133163ade9a313e2bc34d1adfae"
+    },
+    {
+      "id": "Google2u.AssaultRifle_QBZ95Elite",
+      "setupPath": "MainSceneRootNew/Managers/Levels Manager/Weapons/AssaultRifle_9_QBZ95Elite",
+      "inventoryIndex": 61,
+      "playerWeaponType": "PlayerClickWeapon",
+      "weaponType": "AutomaticRifle",
+      "weaponPath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_10_QBZ95Elite",
+      "muzzlePath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_10_QBZ95Elite/MachinegunMuzzleFlash",
+      "muzzlePosition": [
+        99.95306,
+        0.175873443,
+        100.332886
+      ],
+      "muzzleRotation": [
+        -0.107398555,
+        0.106413037,
+        -0.491216,
+        -0.857816339
+      ],
+      "shotOffset": [
+        0.0,
+        0.12,
+        0.0
+      ],
+      "fast": false,
+      "friendKill": true,
+      "shotType": 0,
+      "ignoreLayersMask": 0,
+      "animationFamily": 9,
+      "reloadable": true,
+      "infiniteAmmo": false,
+      "definitionSpeed": 30.0,
+      "serializedSpeed": 30.0,
+      "speedMultiplier": 1.0,
+      "checkDistance": 0.5,
+      "criticalMultiplier": 2.0,
+      "bulletType": "BulletSlow",
+      "bulletSource": "Assets/GameObject/BulletSlow.prefab",
+      "bulletGuid": "855689762fa6e774aaee190652b08c6f",
+      "bulletFileId": 11409266,
+      "bulletSha256": "5379f6aba1560b8eb3d7d386d1349454b97ea133163ade9a313e2bc34d1adfae"
+    },
+    {
+      "id": "Google2u.AssaultRifle_AK47Elite",
+      "setupPath": "MainSceneRootNew/Managers/Levels Manager/Weapons/AssaultRifle_10_AK47Elite",
+      "inventoryIndex": 65,
+      "playerWeaponType": "PlayerClickWeapon",
+      "weaponType": "AutomaticRifle",
+      "weaponPath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_11_AK47Elite",
+      "muzzlePath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_11_AK47Elite/MachinegunMuzzleFlash",
+      "muzzlePosition": [
+        99.99546,
+        0.144335672,
+        100.399841
+      ],
+      "muzzleRotation": [
+        0.126273572,
+        -0.0216889977,
+        -0.4171679,
+        0.8997534
+      ],
+      "shotOffset": [
+        0.0,
+        0.12,
+        0.0
+      ],
+      "fast": false,
+      "friendKill": true,
+      "shotType": 0,
+      "ignoreLayersMask": 0,
+      "animationFamily": 0,
+      "reloadable": true,
+      "infiniteAmmo": false,
+      "definitionSpeed": 30.0,
+      "serializedSpeed": 30.0,
+      "speedMultiplier": 1.0,
+      "checkDistance": 0.5,
+      "criticalMultiplier": 2.0,
+      "bulletType": "BulletSlow",
+      "bulletSource": "Assets/GameObject/BulletSlow.prefab",
+      "bulletGuid": "855689762fa6e774aaee190652b08c6f",
+      "bulletFileId": 11409266,
+      "bulletSha256": "5379f6aba1560b8eb3d7d386d1349454b97ea133163ade9a313e2bc34d1adfae"
+    }
+  ]
+}

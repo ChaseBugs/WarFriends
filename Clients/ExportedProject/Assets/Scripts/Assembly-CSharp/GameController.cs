@@ -641,6 +641,12 @@ public class GameController : Singleton<GameController>
 	public void TestDisconnect()
 	{
 		Debug.Log("Test disconnect");
+		SelfHostedBattleClient selfHosted = UnityEngine.Object.FindObjectOfType<SelfHostedBattleClient>();
+		if (selfHosted != null && selfHosted.PhotonCompatibility != null && selfHosted.PhotonCompatibility.IsConnected)
+		{
+			selfHosted.PhotonCompatibility.Disconnect();
+			return;
+		}
 		PhotonNetwork.Disconnect();
 		InvokeAfterRealTime(delegate
 		{

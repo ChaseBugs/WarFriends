@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using ExitGames.Client.Photon;
 using Newtonsoft.Json;
 using UnityEngine;
+using War.Protocol;
 
 public class PlayerProperties
 {
@@ -184,6 +185,75 @@ public class PlayerProperties
 		playerProperties.chosenCards = CardManager.instance.selectedCards;
 		playerProperties.buddyCards = CardManager.instance.selectedBuddyCards;
 		return playerProperties;
+	}
+
+	/// <summary>Constructs the recovered scene-facing player state from the authenticated
+	/// Backend projection. Combat authority remains on the BattleServer.</summary>
+	public static PlayerProperties CreateFromBattleView(BattlePlayerView view, Fractions fraction)
+	{
+		if (view == null || view.VisualIds.Count != 4 || view.Weapons.Count == 0)
+			throw new System.InvalidOperationException("The self-hosted player view is incomplete.");
+		PlayerProperties result = new PlayerProperties();
+		result.name = view.DisplayName;
+		result.playerID = view.PlayerId;
+		result.level = view.Level;
+		result.armyPower = view.ArmyPower;
+		result.medals = view.Skill;
+		result.leagueMedals = view.LeagueMedals;
+		result.beginnersLeague = view.BeginnersLeague;
+		result.country = view.Country;
+		result.isVip = view.IsVip;
+		result.isInLeague = !string.IsNullOrEmpty(view.LeagueId);
+		result.league = ParseBattleLeague(view.LeagueId);
+		result.isBot = false;
+		result.warArenaCrown = WarArenaCrown.None;
+		result.goldShields = false;
+		result.playerVisuals = new string[view.VisualIds.Count];
+		view.VisualIds.CopyTo(result.playerVisuals, 0);
+		result.weapons = new PlayerInventory.EquippedWeapon[view.Weapons.Count];
+		for (int i = 0; i < view.Weapons.Count; i++)
+		{
+			BattleWeaponView weapon = view.Weapons[i];
+			result.weapons[i] = new PlayerInventory.EquippedWeapon
+			{
+				weaponId = weapon.WeaponIndex,
+				weaponUpgrade = weapon.UpgradeIndex,
+				enabled = true
+			};
+		}
+		Dictionary<string, BattleUnitView> units = new Dictionary<string, BattleUnitView>(System.StringComparer.Ordinal);
+		foreach (BattleUnitView unit in view.Units) units.Add(unit.SourceId, unit);
+		List<UnitUpgradeDefinition> upgrades = new List<UnitUpgradeDefinition>();
+		foreach (LevelBehaviour behaviour in LevelManager.instance.behaviours)
+		{
+			BattleUnitView unit;
+			bool equipped = units.TryGetValue(behaviour.upgradeSlots.GetSheetName(), out unit);
+			UpgradeSlots.UnitUpgrades values = new UpgradeSlots.UnitUpgrades(1f);
+			if (equipped)
+			{
+				values.slotUpgradeindex = unit.UpgradeIndex;
+				values.slotUpgradeIndexSpecial = unit.SpecialIndex;
+				values.slotUpgradeIndexElite = unit.EliteIndex;
+				values.isSpecial = unit.SpecialIndex >= 0;
+				values.isElite = unit.EliteIndex >= 0;
+			}
+			upgrades.Add(new UnitUpgradeDefinition(equipped, values, false, equipped ? unit.Tier : 0));
+		}
+		result.upgrades = upgrades;
+		result.texture = view.PlayerId == GameLoginManager.instance.playerId ? Singleton<ArmyPreviewCamera>.instance.player1Texture :
+			(fraction == PlayerController.currentPlayer.fraction ? Singleton<ArmyPreviewCamera>.instance.player3Texture : Singleton<ArmyPreviewCamera>.instance.player2Texture);
+		return result;
+	}
+
+	private static League ParseBattleLeague(string value)
+	{
+		if (string.IsNullOrEmpty(value)) return League.NoLeague;
+		int separator = value.IndexOf('-');
+		string tier = separator < 0 ? value : value.Substring(0, separator);
+		int parsed;
+		if (!int.TryParse(tier, out parsed) || parsed < (int)League.NoLeague || parsed > (int)League.Champion)
+			throw new System.InvalidOperationException("The self-hosted league projection is invalid.");
+		return (League)parsed;
 	}
 
 	public static PlayerProperties CreateForLocalPlayerLight()

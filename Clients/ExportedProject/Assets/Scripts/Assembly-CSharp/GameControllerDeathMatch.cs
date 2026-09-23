@@ -51,8 +51,28 @@ public class GameControllerDeathMatch : GameControllerPVP
 			isRandomMatchMaking = true;
 			mRandomConnectTime = Time.realtimeSinceStartup;
 			GuiScreenSingle<CardSelectionScreen>.instance.ShowLobby();
-			Singleton<PhotonConnectionManager>.instance.ConnnectToRandomRoom(PhotonConnectionManager.bestRegionsSorted[0].Value1, connectDelay);
+			BeginSelfHostedRandomMatchmaking(connectDelay);
 			PayDogtag();
+		}
+	}
+
+	private async void BeginSelfHostedRandomMatchmaking(float connectDelay)
+	{
+		try
+		{
+			if (connectDelay > 0f)
+				await System.Threading.Tasks.Task.Delay((int)(connectDelay * 1000f));
+			SelfHostedBattleClient client = SelfHostedBattleClient.GetOrCreate();
+			await client.MatchmakeWithRecoveredSession();
+			Singleton<PhotonConnectionManager>.instance.CompleteSelfHostedJoin();
+			AllPlayersConnected();
+		}
+		catch (Exception exception)
+		{
+			Debug.LogError("Self-hosted matchmaking failed: " + exception.GetType().Name);
+			MatchManager.matchState = MatchState.GameCancelled;
+			Reset();
+			WarningDialog.ShowError(Localization.Localize("ID_WARNING_CANNOTINVITE_TEXT"), Localization.Localize("ID_WARNING_CANNOTINVITE"), 0f, null, string.Empty);
 		}
 	}
 
@@ -131,7 +151,7 @@ public class GameControllerDeathMatch : GameControllerPVP
 		mRandomConnectTime = ((!resetRandomConnectTime) ? num : Time.realtimeSinceStartup);
 		isRandomMatchMaking = true;
 		StartMatch();
-		Singleton<PhotonConnectionManager>.instance.ConnnectToRandomRoom(PhotonConnectionManager.bestRegionsSorted[0].Value1, 0f);
+		BeginSelfHostedRandomMatchmaking(0f);
 	}
 
 	protected override void AllPlayersConnected()
@@ -150,7 +170,7 @@ public class GameControllerDeathMatch : GameControllerPVP
 	{
 		if (Time.realtimeSinceStartup > mRandomConnectTime + mWaitingTime && mRandomConnectTime != 0f && isRandomMatchMaking && !mBothPlayersConnected && !mFakeBatteleWithBot && Singleton<GameController>.instance.gameState == GameController.GameState.Menu)
 		{
-			if (!PhotonNetwork.connected || PhotonNetwork.room == null)
+			if (!PhotonConnectionManager.isInRoom)
 			{
 				Singleton<EventTrackingManager>.instance.MatchMaking(40f);
 			}
@@ -209,7 +229,7 @@ public class GameControllerDeathMatch : GameControllerPVP
 				}
 			}
 		}
-		if (Time.realtimeSinceStartup > MatchManager.matchStartTime && mBothPlayersConnected && !mCardsChoosen && (PhotonNetwork.inRoom || mFakeBatteleWithBot) && !mIsTutorial)
+		if (Time.realtimeSinceStartup > MatchManager.matchStartTime && mBothPlayersConnected && !mCardsChoosen && (PhotonNetwork.inRoom || PhotonConnectionManager.IsSelfHostedActive || mFakeBatteleWithBot) && !mIsTutorial)
 		{
 			FinishChoosingCards();
 		}

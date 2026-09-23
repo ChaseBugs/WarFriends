@@ -32,6 +32,12 @@ Use one Backend deployment initially, with logical domain modules. Split service
 
 ### Current working-tree checkpoint (code presence, not a new validation run)
 
+- **Initialized animation continuation:** source collider initialization and ten rifle-related clips are exported into 159 immutable 30 Hz pose samples. A guarded Client alias repair restores `idle`/`run` from uniquely attached recovered suffix names. Server geometry passes 954 animated Unity ray comparisons; source blending/procedural aim and projectile scheduling remain outstanding. See [pose evidence](Server/docs/PLAYER_POSES.md).
+
+- **Player collision continuation:** MainScene gameplay and preview collision rigs are exported separately. Server primitive intersections, immutable rigid placement, host-only target/part resolution and map occlusion pass source ray fixtures. Runtime initialization/animated stances and source projectile timing remain prerequisites for connecting normal firing to damage. See [collision evidence](Server/docs/PLAYER_COLLISION.md).
+
+- **Player combat continuation:** the server-only health transition now preserves the recovered coefficient order, friendly-fire/immortality rules, damage refunds and lethal outcome. Full snapshots carry health/death plus within-tick revisions. It is tested through internal resolved-hit fixtures; normal Fire commands still await authoritative player hitboxes/projectiles and cannot apply damage. See [damage source mapping](Server/docs/PLAYER_DAMAGE.md).
+
 - **Battle update:** up to 32 startup-provisioned two-player matches support signed admission, ready/countdown, finite ammo/reload, command receipts, reconnect key rotation, cover movement over recovered navigation paths and static map raycasts. A portable SDK and Unity adapter exist; the SDK passed inside Unity Mono. See [Battle Server implementation and tests](Server/docs/BATTLE_SERVER.md). Damage/death, weapon variants, AI/vehicles/cards, normal Unity battle-flow integration, production allocation and settlement remain unfinished; matches cannot award rewards.
 - Existing `/v1` protobuf registration/login/profile/connectivity endpoints, Mongo account store, portable SDK, and authenticated UDP hello/ping/pong/disconnect.
 - Newer working-tree legacy files serve `/check.php`, `/index_09_25_2015.php`, boot/login/player retrieval, an empty inbox, status, and buffered dispatch. Read `Server/src/War.Backend/Legacy/LegacyEndpoints.cs` and `LegacyBuffer.cs` for the actual boundary.

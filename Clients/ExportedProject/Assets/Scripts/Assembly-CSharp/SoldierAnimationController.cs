@@ -195,6 +195,7 @@ public class SoldierAnimationController : Core_BaseScript, TimeScaleIgnorable
 	{
 		base.Awake();
 		mAnimation = GetComponent<Animation>();
+		RestoreRecoveredBaseAliases(mAnimation);
 		mTargetRot = Quaternion.identity;
 		if (rootBone != null)
 		{
@@ -1076,6 +1077,28 @@ public class SoldierAnimationController : Core_BaseScript, TimeScaleIgnorable
 			break;
 		}
 		return text + empty;
+	}
+
+	// AssetRipper disambiguated attached clip names (idle_1/run_0), while the
+	// recovered gameplay still uses idle/run. Never select an unrelated asset or
+	// choose between multiple candidates; preserve existing canonical bindings.
+	public static void RestoreRecoveredBaseAliases(Animation animation)
+	{
+		foreach (string canonical in new[] { "idle", "run" })
+		{
+			if (animation.GetClip(canonical) != null) continue;
+			AnimationClip candidate = null;
+			int count = 0;
+			foreach (AnimationState state in animation)
+			{
+				if (System.Text.RegularExpressions.Regex.IsMatch(state.name, "\\A" + canonical + "_[0-9]+\\z"))
+				{
+					candidate = state.clip;
+					count++;
+				}
+			}
+			if (count == 1) animation.AddClip(candidate, canonical);
+		}
 	}
 
 	private void SamplemAnimation(string mAnimationName, float normalizedTime)

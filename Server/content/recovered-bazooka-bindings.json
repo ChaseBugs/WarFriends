@@ -1,0 +1,510 @@
+{
+  "client": "1.4.0",
+  "source": "Assets/Scenes/MainScene.unity",
+  "sha256": "d46f81ff8c3e12bf17f34a1f53dd601bd799102c9f984818031441dfb7a5de43",
+  "playerPath": "MainSceneRootNew/Player",
+  "alliesBulletMask": -71818753,
+  "enemiesBulletMask": -143121921,
+  "layerSource": "Assets/GameObject/GlobalStorage.prefab",
+  "layerSha256": "93004046d938bfc72959d21e9b0e2a05fb8fc7c69217e4e4eefba78c9cc41cc6",
+  "weaponCount": 7,
+  "weapons": [
+    {
+      "id": "Google2u.Bazooka_FGM",
+      "inventoryIndex": 37,
+      "setupPath": "MainSceneRootNew/Managers/Levels Manager/Weapons/Bazooka_3_FGM",
+      "playerWeaponType": "PlayerHoldWeapon",
+      "weaponType": "Bazooka",
+      "weaponPath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/Bazooka_5_FGM",
+      "muzzlePath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/Bazooka_5_FGM/Spawn",
+      "shootOffset": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "holdTime": 0.7,
+      "firstShotWaitTime": 1.0,
+      "animationFamily": 2,
+      "reloadable": false,
+      "infiniteAmmo": false,
+      "friendKill": true,
+      "shotType": 0,
+      "ignoreLayersMask": 0,
+      "damageToPlayerRatio": 0.0,
+      "damageToPlayerRatioOvertime": 0.0,
+      "baseDeadRadius": 0.8,
+      "baseHurtRadius": 1.4,
+      "baseSpeed": 4.0,
+      "playerBehindShieldRatio": 0.0,
+      "criticalMultiplier": 2.0,
+      "explosionCoef": [
+        1.5,
+        3.0,
+        1.5
+      ],
+      "additionalUpForce": 12.0,
+      "stopTime": 0.0,
+      "missileType": 3,
+      "curvedTrajectory": false,
+      "minMaxRotations": [
+        0.8,
+        1.6
+      ],
+      "baseRotationMagnitude": 0.45,
+      "rotationProfile": [
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        [
+          0.5,
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          1.0,
+          0.0,
+          -1.0,
+          0.0
+        ]
+      ],
+      "fangShotCount": 1,
+      "fangDelaySeconds": 0.0,
+      "fangMuzzlePath": null,
+      "bulletType": "Missile",
+      "bulletSource": "Assets/GameObject/Missile.prefab",
+      "bulletGuid": "60be7eeb14f5a354c99c9ce23dbc5554",
+      "bulletFileId": 11431434,
+      "bulletSha256": "ea6028a7d482ee2c44589d8f0bb129bfb5bbcdb7d9459f4f7367b910482f4655"
+    },
+    {
+      "id": "Google2u.Bazooka_FGMElite",
+      "inventoryIndex": 57,
+      "setupPath": "MainSceneRootNew/Managers/Levels Manager/Weapons/Bazooka_7_FGMElite",
+      "playerWeaponType": "PlayerHoldWeapon",
+      "weaponType": "Bazooka",
+      "weaponPath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/Bazooka_7_FGMElite",
+      "muzzlePath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/Bazooka_7_FGMElite/Spawn",
+      "shootOffset": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "holdTime": 0.7,
+      "firstShotWaitTime": 1.0,
+      "animationFamily": 2,
+      "reloadable": false,
+      "infiniteAmmo": false,
+      "friendKill": true,
+      "shotType": 0,
+      "ignoreLayersMask": 0,
+      "damageToPlayerRatio": 0.0,
+      "damageToPlayerRatioOvertime": 0.0,
+      "baseDeadRadius": 0.8,
+      "baseHurtRadius": 1.4,
+      "baseSpeed": 4.0,
+      "playerBehindShieldRatio": 0.0,
+      "criticalMultiplier": 2.0,
+      "explosionCoef": [
+        1.5,
+        3.0,
+        1.5
+      ],
+      "additionalUpForce": 12.0,
+      "stopTime": 0.0,
+      "missileType": 3,
+      "curvedTrajectory": false,
+      "minMaxRotations": [
+        0.8,
+        1.6
+      ],
+      "baseRotationMagnitude": 0.45,
+      "rotationProfile": [
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        [
+          0.5,
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          1.0,
+          0.0,
+          -1.0,
+          0.0
+        ]
+      ],
+      "fangShotCount": 1,
+      "fangDelaySeconds": 0.0,
+      "fangMuzzlePath": null,
+      "bulletType": "Missile",
+      "bulletSource": "Assets/GameObject/Missile.prefab",
+      "bulletGuid": "60be7eeb14f5a354c99c9ce23dbc5554",
+      "bulletFileId": 11431434,
+      "bulletSha256": "ea6028a7d482ee2c44589d8f0bb129bfb5bbcdb7d9459f4f7367b910482f4655"
+    },
+    {
+      "id": "Google2u.Bazooka_HMV",
+      "inventoryIndex": 38,
+      "setupPath": "MainSceneRootNew/Managers/Levels Manager/Weapons/Bazooka_4_HVM",
+      "playerWeaponType": "PlayerHoldWeapon",
+      "weaponType": "Bazooka",
+      "weaponPath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/Bazooka_3_HVM",
+      "muzzlePath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/Bazooka_3_HVM/Spawn",
+      "shootOffset": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "holdTime": 0.7,
+      "firstShotWaitTime": 1.0,
+      "animationFamily": 2,
+      "reloadable": false,
+      "infiniteAmmo": false,
+      "friendKill": true,
+      "shotType": 0,
+      "ignoreLayersMask": 0,
+      "damageToPlayerRatio": 0.0,
+      "damageToPlayerRatioOvertime": 0.0,
+      "baseDeadRadius": 0.8,
+      "baseHurtRadius": 1.4,
+      "baseSpeed": 4.0,
+      "playerBehindShieldRatio": 0.0,
+      "criticalMultiplier": 2.0,
+      "explosionCoef": [
+        1.5,
+        3.0,
+        1.5
+      ],
+      "additionalUpForce": 12.0,
+      "stopTime": 0.0,
+      "missileType": 3,
+      "curvedTrajectory": false,
+      "minMaxRotations": [
+        0.8,
+        1.6
+      ],
+      "baseRotationMagnitude": 0.45,
+      "rotationProfile": [
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        [
+          0.5,
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          1.0,
+          0.0,
+          -1.0,
+          0.0
+        ]
+      ],
+      "fangShotCount": 1,
+      "fangDelaySeconds": 0.0,
+      "fangMuzzlePath": null,
+      "bulletType": "Missile",
+      "bulletSource": "Assets/GameObject/Missile.prefab",
+      "bulletGuid": "60be7eeb14f5a354c99c9ce23dbc5554",
+      "bulletFileId": 11431434,
+      "bulletSha256": "ea6028a7d482ee2c44589d8f0bb129bfb5bbcdb7d9459f4f7367b910482f4655"
+    },
+    {
+      "id": "Google2u.Bazooka_Hater",
+      "inventoryIndex": 58,
+      "setupPath": "MainSceneRootNew/Managers/Levels Manager/Weapons/Bazooka_8_Hater",
+      "playerWeaponType": "PlayerHoldWeapon",
+      "weaponType": "Bazooka",
+      "weaponPath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/Bazooka_8_Hater",
+      "muzzlePath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/Bazooka_8_Hater/Spawn",
+      "shootOffset": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "holdTime": 0.7,
+      "firstShotWaitTime": 1.0,
+      "animationFamily": 2,
+      "reloadable": false,
+      "infiniteAmmo": false,
+      "friendKill": true,
+      "shotType": 0,
+      "ignoreLayersMask": 0,
+      "damageToPlayerRatio": 0.0,
+      "damageToPlayerRatioOvertime": 0.0,
+      "baseDeadRadius": 0.8,
+      "baseHurtRadius": 1.4,
+      "baseSpeed": 4.0,
+      "playerBehindShieldRatio": 0.0,
+      "criticalMultiplier": 2.0,
+      "explosionCoef": [
+        1.5,
+        3.0,
+        1.5
+      ],
+      "additionalUpForce": 12.0,
+      "stopTime": 0.0,
+      "missileType": 3,
+      "curvedTrajectory": false,
+      "minMaxRotations": [
+        0.8,
+        1.6
+      ],
+      "baseRotationMagnitude": 0.45,
+      "rotationProfile": [
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        [
+          0.5,
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          1.0,
+          0.0,
+          -1.0,
+          0.0
+        ]
+      ],
+      "fangShotCount": 1,
+      "fangDelaySeconds": 0.0,
+      "fangMuzzlePath": null,
+      "bulletType": "Missile",
+      "bulletSource": "Assets/GameObject/Missile.prefab",
+      "bulletGuid": "60be7eeb14f5a354c99c9ce23dbc5554",
+      "bulletFileId": 11431434,
+      "bulletSha256": "ea6028a7d482ee2c44589d8f0bb129bfb5bbcdb7d9459f4f7367b910482f4655"
+    },
+    {
+      "id": "Google2u.Bazooka_M202",
+      "inventoryIndex": 42,
+      "setupPath": "MainSceneRootNew/Managers/Levels Manager/Weapons/Bazooka_6_M202",
+      "playerWeaponType": "PlayerHoldWeapon",
+      "weaponType": "BazookaFangs",
+      "weaponPath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/Bazooka_6_M202",
+      "muzzlePath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/Bazooka_6_M202/Spawn",
+      "shootOffset": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "holdTime": 0.7,
+      "firstShotWaitTime": 1.0,
+      "animationFamily": 2,
+      "reloadable": false,
+      "infiniteAmmo": false,
+      "friendKill": true,
+      "shotType": 0,
+      "ignoreLayersMask": 0,
+      "damageToPlayerRatio": 0.0,
+      "damageToPlayerRatioOvertime": 0.0,
+      "baseDeadRadius": 0.8,
+      "baseHurtRadius": 1.4,
+      "baseSpeed": 4.0,
+      "playerBehindShieldRatio": 0.0,
+      "criticalMultiplier": 2.0,
+      "explosionCoef": [
+        1.5,
+        3.0,
+        1.5
+      ],
+      "additionalUpForce": 12.0,
+      "stopTime": 0.0,
+      "missileType": 1,
+      "curvedTrajectory": true,
+      "minMaxRotations": [
+        0.5,
+        1.0
+      ],
+      "baseRotationMagnitude": 0.2,
+      "rotationProfile": [
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        [
+          0.5,
+          0.50000006,
+          0.0,
+          0.0
+        ],
+        [
+          1.0,
+          0.0,
+          -1.0,
+          0.0
+        ]
+      ],
+      "fangShotCount": 4,
+      "fangDelaySeconds": 0.1,
+      "fangMuzzlePath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/Bazooka_6_M202/Bazooka_Fake/Spawn",
+      "bulletType": "Missile",
+      "bulletSource": "Assets/GameObject/Missile.prefab",
+      "bulletGuid": "60be7eeb14f5a354c99c9ce23dbc5554",
+      "bulletFileId": 11431434,
+      "bulletSha256": "ea6028a7d482ee2c44589d8f0bb129bfb5bbcdb7d9459f4f7367b910482f4655"
+    },
+    {
+      "id": "Google2u.Bazooka_Panzerfaust",
+      "inventoryIndex": 41,
+      "setupPath": "MainSceneRootNew/Managers/Levels Manager/Weapons/Bazooka_5_Panzerfaust",
+      "playerWeaponType": "PlayerHoldWeapon",
+      "weaponType": "Bazooka",
+      "weaponPath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/Bazooka_4_PanzerFaust",
+      "muzzlePath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/Bazooka_4_PanzerFaust/Spawn",
+      "shootOffset": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "holdTime": 0.7,
+      "firstShotWaitTime": 1.0,
+      "animationFamily": 2,
+      "reloadable": false,
+      "infiniteAmmo": false,
+      "friendKill": true,
+      "shotType": 0,
+      "ignoreLayersMask": 0,
+      "damageToPlayerRatio": 0.0,
+      "damageToPlayerRatioOvertime": 0.0,
+      "baseDeadRadius": 0.8,
+      "baseHurtRadius": 1.4,
+      "baseSpeed": 4.0,
+      "playerBehindShieldRatio": 0.0,
+      "criticalMultiplier": 2.0,
+      "explosionCoef": [
+        1.5,
+        3.0,
+        1.5
+      ],
+      "additionalUpForce": 12.0,
+      "stopTime": 0.0,
+      "missileType": 3,
+      "curvedTrajectory": false,
+      "minMaxRotations": [
+        0.8,
+        1.6
+      ],
+      "baseRotationMagnitude": 0.45,
+      "rotationProfile": [
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        [
+          0.5,
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          1.0,
+          0.0,
+          -1.0,
+          0.0
+        ]
+      ],
+      "fangShotCount": 1,
+      "fangDelaySeconds": 0.0,
+      "fangMuzzlePath": null,
+      "bulletType": "Missile",
+      "bulletSource": "Assets/GameObject/Missile.prefab",
+      "bulletGuid": "60be7eeb14f5a354c99c9ce23dbc5554",
+      "bulletFileId": 11431434,
+      "bulletSha256": "ea6028a7d482ee2c44589d8f0bb129bfb5bbcdb7d9459f4f7367b910482f4655"
+    },
+    {
+      "id": "Google2u.Bazooka_RPG7",
+      "inventoryIndex": 3,
+      "setupPath": "MainSceneRootNew/Managers/Levels Manager/Weapons/Bazooka_1_RPG7",
+      "playerWeaponType": "PlayerHoldWeapon",
+      "weaponType": "Bazooka",
+      "weaponPath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/Bazooka_1_RPG7",
+      "muzzlePath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/Bazooka_1_RPG7/Spawn",
+      "shootOffset": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "holdTime": 0.7,
+      "firstShotWaitTime": 1.0,
+      "animationFamily": 2,
+      "reloadable": false,
+      "infiniteAmmo": false,
+      "friendKill": true,
+      "shotType": 0,
+      "ignoreLayersMask": 0,
+      "damageToPlayerRatio": 0.0,
+      "damageToPlayerRatioOvertime": 0.0,
+      "baseDeadRadius": 0.8,
+      "baseHurtRadius": 1.4,
+      "baseSpeed": 4.0,
+      "playerBehindShieldRatio": 0.0,
+      "criticalMultiplier": 2.0,
+      "explosionCoef": [
+        1.5,
+        3.0,
+        1.5
+      ],
+      "additionalUpForce": 12.0,
+      "stopTime": 0.0,
+      "missileType": 3,
+      "curvedTrajectory": false,
+      "minMaxRotations": [
+        0.8,
+        1.6
+      ],
+      "baseRotationMagnitude": 0.45,
+      "rotationProfile": [
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        [
+          0.5,
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          1.0,
+          0.0,
+          -1.0,
+          0.0
+        ]
+      ],
+      "fangShotCount": 1,
+      "fangDelaySeconds": 0.0,
+      "fangMuzzlePath": null,
+      "bulletType": "Missile",
+      "bulletSource": "Assets/GameObject/Missile.prefab",
+      "bulletGuid": "60be7eeb14f5a354c99c9ce23dbc5554",
+      "bulletFileId": 11431434,
+      "bulletSha256": "ea6028a7d482ee2c44589d8f0bb129bfb5bbcdb7d9459f4f7367b910482f4655"
+    }
+  ]
+}

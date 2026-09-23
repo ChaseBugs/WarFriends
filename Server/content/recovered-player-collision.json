@@ -1,0 +1,654 @@
+{
+  "client": "1.4.0",
+  "source": "Assets/Scenes/MainScene.unity",
+  "sha256": "d46f81ff8c3e12bf17f34a1f53dd601bd799102c9f984818031441dfb7a5de43",
+  "pose": "serialized-reference-only",
+  "models": [
+    {
+      "path": "MainSceneRootNew/Player",
+      "role": "gameplay",
+      "position": [
+        100.0,
+        0.0,
+        100.0
+      ],
+      "rotation": [
+        0.0,
+        -0.7071068,
+        0.0,
+        0.7071068
+      ],
+      "parts": [
+        {
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001",
+          "type": "BoxCollider",
+          "weight": 1.0,
+          "enabled": true,
+          "active": true,
+          "trigger": false,
+          "center": [
+            100.010536,
+            0.199174821,
+            99.99959
+          ],
+          "size": [
+            0.200000077,
+            0.07707955,
+            0.146121874
+          ],
+          "rotation": [
+            0.7070611,
+            -0.7071444,
+            -0.002420783,
+            0.0024317205
+          ],
+          "radius": 0.0,
+          "axis": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "halfSegment": 0.0,
+          "rays": [
+            {
+              "origin": [
+                105.010536,
+                0.199174821,
+                99.99959
+              ],
+              "direction": [
+                -1.0,
+                0.0,
+                0.0
+              ],
+              "distance": 10,
+              "hit": true,
+              "hitDistance": 4.96145964
+            },
+            {
+              "origin": [
+                95.01054,
+                0.199174821,
+                99.99959
+              ],
+              "direction": [
+                1.0,
+                0.0,
+                0.0
+              ],
+              "distance": 10,
+              "hit": true,
+              "hitDistance": 4.96145964
+            },
+            {
+              "origin": [
+                100.010536,
+                5.199175,
+                99.99959
+              ],
+              "direction": [
+                0.0,
+                -1.0,
+                0.0
+              ],
+              "distance": 10,
+              "hit": true,
+              "hitDistance": 4.9
+            },
+            {
+              "origin": [
+                100.010536,
+                -4.800825,
+                99.99959
+              ],
+              "direction": [
+                0.0,
+                1.0,
+                0.0
+              ],
+              "distance": 10,
+              "hit": true,
+              "hitDistance": 4.9
+            },
+            {
+              "origin": [
+                100.010536,
+                0.199174821,
+                104.999588
+              ],
+              "direction": [
+                0.0,
+                0.0,
+                -1.0
+              ],
+              "distance": 10,
+              "hit": true,
+              "hitDistance": 4.926937
+            },
+            {
+              "origin": [
+                100.010536,
+                0.199174821,
+                94.99959
+              ],
+              "direction": [
+                0.0,
+                0.0,
+                1.0
+              ],
+              "distance": 10,
+              "hit": true,
+              "hitDistance": 4.926937
+            },
+            {
+              "origin": [
+                102.897285,
+                3.085926,
+                102.886337
+              ],
+              "direction": [
+                -0.577350259,
+                -0.577350259,
+                -0.577350259
+              ],
+              "distance": 10,
+              "hit": true,
+              "hitDistance": 4.93277264
+            },
+            {
+              "origin": [
+                97.12379,
+                3.085926,
+                102.886337
+              ],
+              "direction": [
+                0.577350259,
+                -0.577350259,
+                -0.577350259
+              ],
+              "distance": 10,
+              "hit": true,
+              "hitDistance": 4.93370438
+            }
+          ]
+        },
+        {
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine",
+          "type": "SphereCollider",
+          "weight": 1.0,
+          "enabled": false,
+          "active": true,
+          "trigger": false,
+          "center": [
+            99.99444,
+            0.404251128,
+            99.99974
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "rotation": [
+            0.747152,
+            -0.6646444,
+            -0.002693981,
+            0.00217539072
+          ],
+          "radius": 0.120000072,
+          "axis": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "halfSegment": 0.0,
+          "rays": [
+            {
+              "origin": [
+                104.994438,
+                0.404251128,
+                99.99974
+              ],
+              "direction": [
+                -1.0,
+                0.0,
+                0.0
+              ],
+              "distance": 10,
+              "hit": true,
+              "hitDistance": 4.87999964
+            },
+            {
+              "origin": [
+                94.99444,
+                0.404251128,
+                99.99974
+              ],
+              "direction": [
+                1.0,
+                0.0,
+                0.0
+              ],
+              "distance": 10,
+              "hit": true,
+              "hitDistance": 4.87999964
+            },
+            {
+              "origin": [
+                99.99444,
+                5.404251,
+                99.99974
+              ],
+              "direction": [
+                0.0,
+                -1.0,
+                0.0
+              ],
+              "distance": 10,
+              "hit": true,
+              "hitDistance": 4.87999964
+            },
+            {
+              "origin": [
+                99.99444,
+                -4.595749,
+                99.99974
+              ],
+              "direction": [
+                0.0,
+                1.0,
+                0.0
+              ],
+              "distance": 10,
+              "hit": true,
+              "hitDistance": 4.87999964
+            },
+            {
+              "origin": [
+                99.99444,
+                0.404251128,
+                104.999741
+              ],
+              "direction": [
+                0.0,
+                0.0,
+                -1.0
+              ],
+              "distance": 10,
+              "hit": true,
+              "hitDistance": 4.87999964
+            },
+            {
+              "origin": [
+                99.99444,
+                0.404251128,
+                94.99974
+              ],
+              "direction": [
+                0.0,
+                0.0,
+                1.0
+              ],
+              "distance": 10,
+              "hit": true,
+              "hitDistance": 4.87999964
+            },
+            {
+              "origin": [
+                102.881187,
+                3.29100227,
+                102.88649
+              ],
+              "direction": [
+                -0.577350259,
+                -0.577350259,
+                -0.577350259
+              ],
+              "distance": 10,
+              "hit": true,
+              "hitDistance": 4.87996626
+            },
+            {
+              "origin": [
+                97.10769,
+                3.29100227,
+                102.88649
+              ],
+              "direction": [
+                0.577350259,
+                -0.577350259,
+                -0.577350259
+              ],
+              "distance": 10,
+              "hit": true,
+              "hitDistance": 4.87996626
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "MainSceneRootNew/ArmyUnitRig/player texture camera/Player For Rendering",
+      "role": "preview",
+      "position": [
+        5008.85,
+        -2000.61877,
+        2.71995783
+      ],
+      "rotation": [
+        0.0,
+        1.0,
+        0.0,
+        -1.62920685E-07
+      ],
+      "parts": [
+        {
+          "path": "MainSceneRootNew/ArmyUnitRig/player texture camera/Player For Rendering/character_assault_1/global_move/cartoon_guyHub001",
+          "type": "BoxCollider",
+          "weight": 1.0,
+          "enabled": true,
+          "active": true,
+          "trigger": false,
+          "center": [
+            5008.85059,
+            -2000.41956,
+            2.730492
+          ],
+          "size": [
+            0.2,
+            0.07707952,
+            0.14612177
+          ],
+          "rotation": [
+            -0.5016795,
+            0.501746058,
+            -0.498255819,
+            0.49830696
+          ],
+          "radius": 0.0,
+          "axis": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "halfSegment": 0.0,
+          "rays": [
+            {
+              "origin": [
+                5013.85059,
+                -2000.41956,
+                2.730492
+              ],
+              "direction": [
+                -1.0,
+                0.0,
+                0.0
+              ],
+              "distance": 10,
+              "hit": true,
+              "hitDistance": 4.92693758
+            },
+            {
+              "origin": [
+                5003.85059,
+                -2000.41956,
+                2.730492
+              ],
+              "direction": [
+                1.0,
+                0.0,
+                0.0
+              ],
+              "distance": 10,
+              "hit": true,
+              "hitDistance": 4.92693758
+            },
+            {
+              "origin": [
+                5008.85059,
+                -1995.41956,
+                2.730492
+              ],
+              "direction": [
+                0.0,
+                -1.0,
+                0.0
+              ],
+              "distance": 10,
+              "hit": true,
+              "hitDistance": 4.90000057
+            },
+            {
+              "origin": [
+                5008.85059,
+                -2005.41956,
+                2.730492
+              ],
+              "direction": [
+                0.0,
+                1.0,
+                0.0
+              ],
+              "distance": 10,
+              "hit": true,
+              "hitDistance": 4.90000057
+            },
+            {
+              "origin": [
+                5008.85059,
+                -2000.41956,
+                7.730492
+              ],
+              "direction": [
+                0.0,
+                0.0,
+                -1.0
+              ],
+              "distance": 10,
+              "hit": true,
+              "hitDistance": 4.961459
+            },
+            {
+              "origin": [
+                5008.85059,
+                -2000.41956,
+                -2.269508
+              ],
+              "direction": [
+                0.0,
+                0.0,
+                1.0
+              ],
+              "distance": 10,
+              "hit": true,
+              "hitDistance": 4.961459
+            },
+            {
+              "origin": [
+                5011.7373,
+                -1997.53284,
+                5.61724329
+              ],
+              "direction": [
+                -0.577350259,
+                -0.577350259,
+                -0.577350259
+              ],
+              "distance": 10,
+              "hit": true,
+              "hitDistance": 4.93369246
+            },
+            {
+              "origin": [
+                5005.964,
+                -1997.53284,
+                5.61724329
+              ],
+              "direction": [
+                0.577350259,
+                -0.577350259,
+                -0.577350259
+              ],
+              "distance": 10,
+              "hit": true,
+              "hitDistance": 4.93277645
+            }
+          ]
+        },
+        {
+          "path": "MainSceneRootNew/ArmyUnitRig/player texture camera/Player For Rendering/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine",
+          "type": "SphereCollider",
+          "weight": 1.0,
+          "enabled": false,
+          "active": true,
+          "trigger": false,
+          "center": [
+            5008.85059,
+            -2000.21448,
+            2.71439242
+          ],
+          "size": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "rotation": [
+            -0.530221164,
+            0.471512854,
+            -0.5264112,
+            0.468436241
+          ],
+          "radius": 0.120000027,
+          "axis": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "halfSegment": 0.0,
+          "rays": [
+            {
+              "origin": [
+                5013.85059,
+                -2000.21448,
+                2.71439242
+              ],
+              "direction": [
+                -1.0,
+                0.0,
+                0.0
+              ],
+              "distance": 10,
+              "hit": true,
+              "hitDistance": 4.88
+            },
+            {
+              "origin": [
+                5003.85059,
+                -2000.21448,
+                2.71439242
+              ],
+              "direction": [
+                1.0,
+                0.0,
+                0.0
+              ],
+              "distance": 10,
+              "hit": true,
+              "hitDistance": 4.88
+            },
+            {
+              "origin": [
+                5008.85059,
+                -1995.21448,
+                2.71439242
+              ],
+              "direction": [
+                0.0,
+                -1.0,
+                0.0
+              ],
+              "distance": 10,
+              "hit": true,
+              "hitDistance": 4.88
+            },
+            {
+              "origin": [
+                5008.85059,
+                -2005.21448,
+                2.71439242
+              ],
+              "direction": [
+                0.0,
+                1.0,
+                0.0
+              ],
+              "distance": 10,
+              "hit": true,
+              "hitDistance": 4.88
+            },
+            {
+              "origin": [
+                5008.85059,
+                -2000.21448,
+                7.71439266
+              ],
+              "direction": [
+                0.0,
+                0.0,
+                -1.0
+              ],
+              "distance": 10,
+              "hit": true,
+              "hitDistance": 4.88
+            },
+            {
+              "origin": [
+                5008.85059,
+                -2000.21448,
+                -2.28560758
+              ],
+              "direction": [
+                0.0,
+                0.0,
+                1.0
+              ],
+              "distance": 10,
+              "hit": true,
+              "hitDistance": 4.88
+            },
+            {
+              "origin": [
+                5011.7373,
+                -1997.32776,
+                5.601144
+              ],
+              "direction": [
+                -0.577350259,
+                -0.577350259,
+                -0.577350259
+              ],
+              "distance": 10,
+              "hit": true,
+              "hitDistance": 4.87994671
+            },
+            {
+              "origin": [
+                5005.964,
+                -1997.32776,
+                5.601144
+              ],
+              "direction": [
+                0.577350259,
+                -0.577350259,
+                -0.577350259
+              ],
+              "distance": 10,
+              "hit": true,
+              "hitDistance": 4.87994671
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -2,9 +2,31 @@ using UnityEngine.AI;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using War.Protocol;
 
 public class PlayerController : MainGameEntity, TimeScaleIgnorable, IFraction, IGameMainEntity, ICharacter
 {
+	public void ApplySelfHostedSnapshot(BattlePlayerState state, int selectedWeaponIndex = -1)
+	{
+		if (state == null || playerProperties == null || state.PlayerId != playerProperties.playerID || !state.CombatEnabled ||
+			float.IsNaN(state.Health) || float.IsInfinity(state.Health) || float.IsNaN(state.MaxHealth) || float.IsInfinity(state.MaxHealth) ||
+			state.MaxHealth <= 0f || state.Health < 0f || state.Health > state.MaxHealth || state.ClipAmmo < 0 || state.ReserveAmmo < 0)
+			throw new InvalidOperationException("Invalid authoritative player snapshot.");
+		if (destroyableParts == null) throw new InvalidOperationException("Player damage presentation is missing.");
+		destroyableParts.ApplySelfHostedState(state.Health, state.MaxHealth, state.Dead);
+		isAlive = !state.Dead;
+		WeaponInventory inventory = ResolveSelfHostedInventory();
+		if (inventory != null && selectedWeaponIndex >= 0) inventory.ApplySelfHostedSelection(selectedWeaponIndex);
+		if (inventory != null && inventory.usedWeapons != null && inventory.usedWeapons.Count > inventory.weaponIndex)
+		{
+			PlayerWeapon selected = inventory.usedWeapons[inventory.weaponIndex];
+			if (selected != null && selected.weapon != null)
+			{
+				selected.weapon.ammoLeftInClip = state.ClipAmmo;
+				selected.weapon.ammoLeft = state.ReserveAmmo;
+			}
+		}
+	}
 	public enum PlayerStatex
 	{
 		HidingBehindShield,
@@ -113,7 +135,21 @@ public class PlayerController : MainGameEntity, TimeScaleIgnorable, IFraction, I
 
 	public WeaponInventory weaponInventory { get; private set; }
 
+	public WeaponInventory ResolveSelfHostedInventory()
+	{
+		if (weaponInventory == null)
+			weaponInventory = GetComponentInChildren<WeaponInventory>(true);
+		return weaponInventory;
+	}
+
 	public SoldierAnimationController soldierAnimator { get; private set; }
+
+	public SoldierAnimationController ResolveSelfHostedAnimator()
+	{
+		if (soldierAnimator == null)
+			soldierAnimator = GetComponentInChildren<SoldierAnimationController>(true);
+		return soldierAnimator;
+	}
 
 	public GameShootableEntity gameShootableEntity { get; private set; }
 

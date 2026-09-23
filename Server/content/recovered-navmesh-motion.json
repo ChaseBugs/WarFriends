@@ -1,0 +1,104 @@
+{
+  "version": 2,
+  "unityVersion": "2018.3.0f2",
+  "pathManifestSha256": "01b639934246803fb9f2afddd4a4852725bf54c2ad9d87327cea8abc94c2c550",
+  "infantryPrefabSha256": "64b4db85d1c9a0bd46a690a86102a22f66feeab8d4157a4c87824ac3d5dbeb54",
+  "fixtures": [
+    {
+      "scene": "Assets/Scenes/Aztec_Multiplayer.unity",
+      "caseId": "2675-2698",
+      "navMeshAsset": "Assets/NavMeshData/NavMesh_5.asset",
+      "navMeshSha256": "f71ab5c2270b18dd2951afd9bad01b6e5e6912d116054738783bddf90a536e97",
+      "runtimeSpeed": 1.0,
+      "perkSpeedCoefficient": 1.0,
+      "sampleCount": 320,
+      "durationSeconds": 10.90163803100586,
+      "file": "navmesh-motion/aztec-2675-2698.json",
+      "sha256": "0397ebb7d442805ec5888aef9468d150b0283e15c2f48884a5528d70253311f2"
+    },
+    {
+      "scene": "Assets/Scenes/City_Multiplayer.unity",
+      "caseId": "2950-2826",
+      "navMeshAsset": "Assets/NavMeshData/NavMesh_8.asset",
+      "navMeshSha256": "c49428e53b87031710105511954a48cd75c3a5d8fe0a03b16f38768cd860b220",
+      "runtimeSpeed": 1.0,
+      "perkSpeedCoefficient": 1.0,
+      "sampleCount": 344,
+      "durationSeconds": 11.699470520019531,
+      "file": "navmesh-motion/city-2950-2826.json",
+      "sha256": "1ea15fe971293403e359e5db654e3ab66fdaab8e7a1269f2a4d88aa8197321c5"
+    },
+    {
+      "scene": "Assets/Scenes/City_Multiplayer.unity",
+      "caseId": "3296-3089",
+      "navMeshAsset": "Assets/NavMeshData/NavMesh_8.asset",
+      "navMeshSha256": "c49428e53b87031710105511954a48cd75c3a5d8fe0a03b16f38768cd860b220",
+      "runtimeSpeed": 1.0,
+      "perkSpeedCoefficient": 1.0,
+      "sampleCount": 465,
+      "durationSeconds": 15.47486686706543,
+      "file": "navmesh-motion/city-3296-3089.json",
+      "sha256": "5684ce9e86706527e004bfae241a8b583210aa9b3f728e6da996b54bb0563cdd"
+    },
+    {
+      "scene": "Assets/Scenes/Desert_Multiplayer.unity",
+      "caseId": "2499-2833",
+      "navMeshAsset": "Assets/NavMeshData/NavMesh_2.asset",
+      "navMeshSha256": "8e7359b292c5eea574dea1b3d471259244b759a33b673de1d10a75db387a134c",
+      "runtimeSpeed": 1.0,
+      "perkSpeedCoefficient": 1.0,
+      "sampleCount": 294,
+      "durationSeconds": 10.037467956542969,
+      "file": "navmesh-motion/desert-2499-2833.json",
+      "sha256": "df9e70ce634701ff8a968620a1a50f4404091c4a81353414115856c5868d8c6f"
+    },
+    {
+      "scene": "Assets/Scenes/Park_Multiplayer.unity",
+      "caseId": "3251-3429",
+      "navMeshAsset": "Assets/NavMeshData/NavMesh_6.asset",
+      "navMeshSha256": "d4baa1ff07ec051a4c26362d178e564636d530aee4c6b688b3dba205c72ad99b",
+      "runtimeSpeed": 1.0,
+      "perkSpeedCoefficient": 1.0,
+      "sampleCount": 290,
+      "durationSeconds": 9.824130058288574,
+      "file": "navmesh-motion/park-3251-3429.json",
+      "sha256": "b99d7d229791c99bbd38fc9f8fde092fdcb410fc74a64a56969fa7377c3c1ed7"
+    },
+    {
+      "scene": "Assets/Scenes/Park_Multiplayer.unity",
+      "caseId": "3251-3429",
+      "navMeshAsset": "Assets/NavMeshData/NavMesh_6.asset",
+      "navMeshSha256": "d4baa1ff07ec051a4c26362d178e564636d530aee4c6b688b3dba205c72ad99b",
+      "runtimeSpeed": 0.8,
+      "perkSpeedCoefficient": 1.0,
+      "sampleCount": 358,
+      "durationSeconds": 11.899694442749023,
+      "file": "navmesh-motion/park-08-3251-3429.json",
+      "sha256": "be8edb509407e4f014d17cf2462b925babfd86d63bf07faa7e5898b30db5c150"
+    },
+    {
+      "scene": "Assets/Scenes/Park_Multiplayer.unity",
+      "caseId": "3251-3429",
+      "navMeshAsset": "Assets/NavMeshData/NavMesh_6.asset",
+      "navMeshSha256": "d4baa1ff07ec051a4c26362d178e564636d530aee4c6b688b3dba205c72ad99b",
+      "runtimeSpeed": 0.9,
+      "perkSpeedCoefficient": 1.0,
+      "sampleCount": 320,
+      "durationSeconds": 10.633872985839844,
+      "file": "navmesh-motion/park-09-3251-3429.json",
+      "sha256": "172abd6e9e24d3b017dcd21d11d4fb17958192f0ed76e26dcc6f4159c3f3c75c"
+    },
+    {
+      "scene": "Assets/Scenes/Snow_Multiplayer.unity",
+      "caseId": "2680-2949",
+      "navMeshAsset": "Assets/NavMeshData/NavMesh_4.asset",
+      "navMeshSha256": "876f7f26eea20ec1c72b190e64bd4e5f7e1b5e8a3c67139d4032b5bfba5e0950",
+      "runtimeSpeed": 1.0,
+      "perkSpeedCoefficient": 1.0,
+      "sampleCount": 472,
+      "durationSeconds": 15.953001022338867,
+      "file": "navmesh-motion/snow-2680-2949.json",
+      "sha256": "987fad563cd24fc22511656775ee0e06be3a8d60ffa407ac8dd24fb794c776af"
+    }
+  ]
+}

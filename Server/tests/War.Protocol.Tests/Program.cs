@@ -1,10 +1,20 @@
 using System.Security.Cryptography;
+using Google.Protobuf;
 using War.Infrastructure;
 using War.Protocol;
 using War.Protocol.Transport;
 
 int checks = 0;
+checks += await BattleMatchControlClientTests.Run();
 void Check(bool condition, string name) { if (!condition) throw new Exception(name); checks++; }
+Check(new MatchQueueRequest().CalculateSize()==0,"canonical matchmaking request is empty");
+var queueWire=new MatchQueueReply{Code="paired",MatchId="m"+new string('a',32)};queueWire.PlayerIds.Add(Guid.NewGuid().ToString("N"));queueWire.PlayerIds.Add(Guid.NewGuid().ToString("N"));
+Check(MatchQueueReply.Parser.ParseFrom(queueWire.ToByteArray()).Equals(queueWire),"matchmaking reply protobuf round trip");
+var grenadeWire=new MatchCommand{CommandId=17,GrenadeThrow=new GrenadeThrowCommand{Swipe=true,
+    SwipeStartX=1,SwipeStartY=2,SwipeStartZ=3,SwipeEndX=4,SwipeEndY=5,SwipeEndZ=6,HeldSeconds=.25f}};
+Check(MatchCommand.Parser.ParseFrom(grenadeWire.ToByteArray()).Equals(grenadeWire)&&
+      grenadeWire.IntentCase==MatchCommand.IntentOneofCase.GrenadeThrow,
+    "typed grenade swipe intent protobuf round trip");
 byte[] secret = RandomNumberGenerator.GetBytes(32);
 var tickets = new BattleTickets(Convert.ToBase64String(secret));
 var claims = new TicketClaims { PlayerId = Guid.NewGuid().ToString("N"), ServerId = "test-1", SessionId = 11, IssuedUnixSeconds = 1000, ExpiresUnixSeconds = 1120, Purpose = "connectivity-probe" };
@@ -22,6 +32,15 @@ var packet = new Packet { Version = 1, SessionId = 11, Sequence = 1, Ping = new 
 byte[] encoded = PacketCodec.Encode(packet, key);
 Check(PacketCodec.Authenticate(encoded, key), "packet auth");
 Check(PacketCodec.ReadUntrusted(encoded)?.Ping.ClientTime == 42, "protobuf round trip");
+byte[] canonical=packet.ToByteArray();
+byte[] repeatedVersion=canonical.Concat(new byte[]{8,1}).ToArray();
+byte[] duplicateWire=repeatedVersion.Concat(HMACSHA256.HashData(key,repeatedVersion)).ToArray();
+Check(PacketCodec.Authenticate(duplicateWire,key) && PacketCodec.ReadUntrusted(duplicateWire)==null,
+    "noncanonical duplicate protobuf envelope is rejected despite a valid MAC");
+byte[] unknownEnvelope=canonical.Concat(new byte[]{0x98,0x06,0x01}).ToArray();
+byte[] unknownWire=unknownEnvelope.Concat(HMACSHA256.HashData(key,unknownEnvelope)).ToArray();
+Check(PacketCodec.Authenticate(unknownWire,key) && PacketCodec.ReadUntrusted(unknownWire)==null,
+    "authenticated unknown envelope field cannot reach session or replay state");
 Check(!PacketCodec.Authenticate(encoded, tickets.SessionKey(12)), "session isolation");
 encoded[0] ^= 1;
 Check(!PacketCodec.Authenticate(encoded, key), "payload modification");

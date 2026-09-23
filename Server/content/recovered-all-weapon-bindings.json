@@ -1,0 +1,1923 @@
+{
+  "client": "1.4.0",
+  "source": "Assets/Scenes/MainScene.unity",
+  "sha256": "d46f81ff8c3e12bf17f34a1f53dd601bd799102c9f984818031441dfb7a5de43",
+  "playerPath": "MainSceneRootNew/Player",
+  "weaponCount": 66,
+  "weapons": [
+    {
+      "id": "Google2u.AssaultRifle_AK47",
+      "setupType": "RifleLevelsSetup",
+      "setupPath": "MainSceneRootNew/Managers/Levels Manager/Weapons/AssaultRifle_1_AK47",
+      "playerWeaponType": "PlayerClickWeapon",
+      "weaponType": "AutomaticRifle",
+      "weaponPath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_1_AK47",
+      "muzzlePath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_1_AK47/MachinegunMuzzleFlash",
+      "inventoryIndex": 11,
+      "animationFamily": 0,
+      "shotType": 0,
+      "ignoreLayersMask": 0,
+      "reloadable": true,
+      "infiniteAmmo": false,
+      "ammoSetupType": [
+        "BulletSetup"
+      ],
+      "weaponComponents": [
+        "AutomaticRifle",
+        "BulletSetup",
+        "PhotonView",
+        "PlayerClickWeapon"
+      ],
+      "bulletType": "BulletSlow",
+      "bulletSource": "Assets/GameObject/BulletSlow.prefab",
+      "bulletGuid": "855689762fa6e774aaee190652b08c6f",
+      "bulletSha256": "5379f6aba1560b8eb3d7d386d1349454b97ea133163ade9a313e2bc34d1adfae",
+      "bulletFileId": 11409266
+    },
+    {
+      "id": "Google2u.AssaultRifle_AK47Elite",
+      "setupType": "RifleLevelsSetup",
+      "setupPath": "MainSceneRootNew/Managers/Levels Manager/Weapons/AssaultRifle_10_AK47Elite",
+      "playerWeaponType": "PlayerClickWeapon",
+      "weaponType": "AutomaticRifle",
+      "weaponPath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_11_AK47Elite",
+      "muzzlePath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_11_AK47Elite/MachinegunMuzzleFlash",
+      "inventoryIndex": 65,
+      "animationFamily": 0,
+      "shotType": 0,
+      "ignoreLayersMask": 0,
+      "reloadable": true,
+      "infiniteAmmo": false,
+      "ammoSetupType": [
+        "BulletSetup"
+      ],
+      "weaponComponents": [
+        "AutomaticRifle",
+        "BulletSetup",
+        "PhotonView",
+        "PlayerClickWeapon"
+      ],
+      "bulletType": "BulletSlow",
+      "bulletSource": "Assets/GameObject/BulletSlow.prefab",
+      "bulletGuid": "855689762fa6e774aaee190652b08c6f",
+      "bulletSha256": "5379f6aba1560b8eb3d7d386d1349454b97ea133163ade9a313e2bc34d1adfae",
+      "bulletFileId": 11409266
+    },
+    {
+      "id": "Google2u.AssaultRifle_AKS47U",
+      "setupType": "RifleLevelsSetup",
+      "setupPath": "MainSceneRootNew/Managers/Levels Manager/Weapons/AssaultRifle_6_AKS47U",
+      "playerWeaponType": "PlayerClickWeapon",
+      "weaponType": "AutomaticRifle",
+      "weaponPath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_7_AKS47U",
+      "muzzlePath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_7_AKS47U/MachinegunMuzzleFlash",
+      "inventoryIndex": 44,
+      "animationFamily": 15,
+      "shotType": 0,
+      "ignoreLayersMask": 0,
+      "reloadable": true,
+      "infiniteAmmo": false,
+      "ammoSetupType": [
+        "BulletSetup"
+      ],
+      "weaponComponents": [
+        "AutomaticRifle",
+        "BulletSetup",
+        "PhotonView",
+        "PlayerClickWeapon"
+      ],
+      "bulletType": "BulletSlow",
+      "bulletSource": "Assets/GameObject/BulletSlow.prefab",
+      "bulletGuid": "855689762fa6e774aaee190652b08c6f",
+      "bulletSha256": "5379f6aba1560b8eb3d7d386d1349454b97ea133163ade9a313e2bc34d1adfae",
+      "bulletFileId": 11409266
+    },
+    {
+      "id": "Google2u.AssaultRifle_Famas",
+      "setupType": "RifleLevelsSetup",
+      "setupPath": "MainSceneRootNew/Managers/Levels Manager/Weapons/AssaultRifle_3_Famas",
+      "playerWeaponType": "PlayerClickWeapon",
+      "weaponType": "AutomaticRifle",
+      "weaponPath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_4_Famas",
+      "muzzlePath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_4_Famas/MachinegunMuzzleFlash",
+      "inventoryIndex": 26,
+      "animationFamily": 9,
+      "shotType": 0,
+      "ignoreLayersMask": 0,
+      "reloadable": true,
+      "infiniteAmmo": false,
+      "ammoSetupType": [
+        "BulletSetup"
+      ],
+      "weaponComponents": [
+        "AutomaticRifle",
+        "BulletSetup",
+        "PhotonView",
+        "PlayerClickWeapon"
+      ],
+      "bulletType": "BulletSlow",
+      "bulletSource": "Assets/GameObject/BulletSlow.prefab",
+      "bulletGuid": "855689762fa6e774aaee190652b08c6f",
+      "bulletSha256": "5379f6aba1560b8eb3d7d386d1349454b97ea133163ade9a313e2bc34d1adfae",
+      "bulletFileId": 11409266
+    },
+    {
+      "id": "Google2u.AssaultRifle_FamasElite",
+      "setupType": "RifleLevelsSetup",
+      "setupPath": "MainSceneRootNew/Managers/Levels Manager/Weapons/AssaultRifle_8_FamasElite",
+      "playerWeaponType": "PlayerClickWeapon",
+      "weaponType": "AutomaticRifle",
+      "weaponPath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_9_FamasElite",
+      "muzzlePath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_9_FamasElite/MachinegunMuzzleFlash",
+      "inventoryIndex": 60,
+      "animationFamily": 9,
+      "shotType": 0,
+      "ignoreLayersMask": 0,
+      "reloadable": true,
+      "infiniteAmmo": false,
+      "ammoSetupType": [
+        "BulletSetup"
+      ],
+      "weaponComponents": [
+        "AutomaticRifle",
+        "BulletSetup",
+        "PhotonView",
+        "PlayerClickWeapon"
+      ],
+      "bulletType": "BulletSlow",
+      "bulletSource": "Assets/GameObject/BulletSlow.prefab",
+      "bulletGuid": "855689762fa6e774aaee190652b08c6f",
+      "bulletSha256": "5379f6aba1560b8eb3d7d386d1349454b97ea133163ade9a313e2bc34d1adfae",
+      "bulletFileId": 11409266
+    },
+    {
+      "id": "Google2u.AssaultRifle_G36",
+      "setupType": "RifleLevelsSetup",
+      "setupPath": "MainSceneRootNew/Managers/Levels Manager/Weapons/AssaultRifle_4_G36",
+      "playerWeaponType": "PlayerClickWeapon",
+      "weaponType": "AutomaticRifle",
+      "weaponPath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_6_G36",
+      "muzzlePath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_6_G36/MachinegunMuzzleFlash",
+      "inventoryIndex": 31,
+      "animationFamily": 15,
+      "shotType": 0,
+      "ignoreLayersMask": 0,
+      "reloadable": true,
+      "infiniteAmmo": false,
+      "ammoSetupType": [
+        "BulletSetup"
+      ],
+      "weaponComponents": [
+        "AutomaticRifle",
+        "BulletSetup",
+        "PhotonView",
+        "PlayerClickWeapon"
+      ],
+      "bulletType": "BulletSlow",
+      "bulletSource": "Assets/GameObject/BulletSlow.prefab",
+      "bulletGuid": "855689762fa6e774aaee190652b08c6f",
+      "bulletSha256": "5379f6aba1560b8eb3d7d386d1349454b97ea133163ade9a313e2bc34d1adfae",
+      "bulletFileId": 11409266
+    },
+    {
+      "id": "Google2u.AssaultRifle_G36Elite",
+      "setupType": "RifleLevelsSetup",
+      "setupPath": "MainSceneRootNew/Managers/Levels Manager/Weapons/AssaultRifle_7_G36Elite",
+      "playerWeaponType": "PlayerClickWeapon",
+      "weaponType": "AutomaticRifle",
+      "weaponPath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_8_G36Elite",
+      "muzzlePath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_8_G36Elite/MachinegunMuzzleFlash",
+      "inventoryIndex": 45,
+      "animationFamily": 15,
+      "shotType": 0,
+      "ignoreLayersMask": 0,
+      "reloadable": true,
+      "infiniteAmmo": false,
+      "ammoSetupType": [
+        "BulletSetup"
+      ],
+      "weaponComponents": [
+        "AutomaticRifle",
+        "BulletSetup",
+        "PhotonView",
+        "PlayerClickWeapon"
+      ],
+      "bulletType": "BulletSlow",
+      "bulletSource": "Assets/GameObject/BulletSlow.prefab",
+      "bulletGuid": "855689762fa6e774aaee190652b08c6f",
+      "bulletSha256": "5379f6aba1560b8eb3d7d386d1349454b97ea133163ade9a313e2bc34d1adfae",
+      "bulletFileId": 11409266
+    },
+    {
+      "id": "Google2u.AssaultRifle_M16",
+      "setupType": "RifleLevelsSetup",
+      "setupPath": "MainSceneRootNew/Managers/Levels Manager/Weapons/AssaultRifle_0_M16",
+      "playerWeaponType": "PlayerClickWeapon",
+      "weaponType": "AutomaticRifle",
+      "weaponPath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_2_M16",
+      "muzzlePath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_2_M16/MachinegunMuzzleFlash",
+      "inventoryIndex": 1,
+      "animationFamily": 0,
+      "shotType": 0,
+      "ignoreLayersMask": 0,
+      "reloadable": true,
+      "infiniteAmmo": false,
+      "ammoSetupType": [
+        "BulletSetup"
+      ],
+      "weaponComponents": [
+        "AutomaticRifle",
+        "BulletSetup",
+        "PhotonView",
+        "PlayerClickWeapon"
+      ],
+      "bulletType": "BulletSlow",
+      "bulletSource": "Assets/GameObject/BulletSlow.prefab",
+      "bulletGuid": "855689762fa6e774aaee190652b08c6f",
+      "bulletSha256": "5379f6aba1560b8eb3d7d386d1349454b97ea133163ade9a313e2bc34d1adfae",
+      "bulletFileId": 11409266
+    },
+    {
+      "id": "Google2u.AssaultRifle_QBZ95",
+      "setupType": "RifleLevelsSetup",
+      "setupPath": "MainSceneRootNew/Managers/Levels Manager/Weapons/AssaultRifle_2_QBZ95",
+      "playerWeaponType": "PlayerClickWeapon",
+      "weaponType": "AutomaticRifle",
+      "weaponPath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_3_QZB95",
+      "muzzlePath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_3_QZB95/MachinegunMuzzleFlash",
+      "inventoryIndex": 30,
+      "animationFamily": 9,
+      "shotType": 0,
+      "ignoreLayersMask": 0,
+      "reloadable": true,
+      "infiniteAmmo": false,
+      "ammoSetupType": [
+        "BulletSetup"
+      ],
+      "weaponComponents": [
+        "AutomaticRifle",
+        "BulletSetup",
+        "PhotonView",
+        "PlayerClickWeapon"
+      ],
+      "bulletType": "BulletSlow",
+      "bulletSource": "Assets/GameObject/BulletSlow.prefab",
+      "bulletGuid": "855689762fa6e774aaee190652b08c6f",
+      "bulletSha256": "5379f6aba1560b8eb3d7d386d1349454b97ea133163ade9a313e2bc34d1adfae",
+      "bulletFileId": 11409266
+    },
+    {
+      "id": "Google2u.AssaultRifle_QBZ95Elite",
+      "setupType": "RifleLevelsSetup",
+      "setupPath": "MainSceneRootNew/Managers/Levels Manager/Weapons/AssaultRifle_9_QBZ95Elite",
+      "playerWeaponType": "PlayerClickWeapon",
+      "weaponType": "AutomaticRifle",
+      "weaponPath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_10_QBZ95Elite",
+      "muzzlePath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_10_QBZ95Elite/MachinegunMuzzleFlash",
+      "inventoryIndex": 61,
+      "animationFamily": 9,
+      "shotType": 0,
+      "ignoreLayersMask": 0,
+      "reloadable": true,
+      "infiniteAmmo": false,
+      "ammoSetupType": [
+        "BulletSetup"
+      ],
+      "weaponComponents": [
+        "AutomaticRifle",
+        "BulletSetup",
+        "PhotonView",
+        "PlayerClickWeapon"
+      ],
+      "bulletType": "BulletSlow",
+      "bulletSource": "Assets/GameObject/BulletSlow.prefab",
+      "bulletGuid": "855689762fa6e774aaee190652b08c6f",
+      "bulletSha256": "5379f6aba1560b8eb3d7d386d1349454b97ea133163ade9a313e2bc34d1adfae",
+      "bulletFileId": 11409266
+    },
+    {
+      "id": "Google2u.AssaultRifle_SteyrAUG",
+      "setupType": "RifleLevelsSetup",
+      "setupPath": "MainSceneRootNew/Managers/Levels Manager/Weapons/AssaultRifle_5_SteyrAUG",
+      "playerWeaponType": "PlayerClickWeapon",
+      "weaponType": "AutomaticRifle",
+      "weaponPath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_5_SteyrAUG",
+      "muzzlePath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/AssaultRifle_5_SteyrAUG/MachinegunMuzzleFlash",
+      "inventoryIndex": 34,
+      "animationFamily": 13,
+      "shotType": 0,
+      "ignoreLayersMask": 0,
+      "reloadable": true,
+      "infiniteAmmo": false,
+      "ammoSetupType": [
+        "BulletSetup"
+      ],
+      "weaponComponents": [
+        "AutomaticRifle",
+        "BulletSetup",
+        "PhotonView",
+        "PlayerClickWeapon"
+      ],
+      "bulletType": "BulletSlow",
+      "bulletSource": "Assets/GameObject/BulletSlow.prefab",
+      "bulletGuid": "855689762fa6e774aaee190652b08c6f",
+      "bulletSha256": "5379f6aba1560b8eb3d7d386d1349454b97ea133163ade9a313e2bc34d1adfae",
+      "bulletFileId": 11409266
+    },
+    {
+      "id": "Google2u.Bazooka_FGM",
+      "setupType": "BazookaLevelsSetup",
+      "setupPath": "MainSceneRootNew/Managers/Levels Manager/Weapons/Bazooka_3_FGM",
+      "playerWeaponType": "PlayerHoldWeapon",
+      "weaponType": "Bazooka",
+      "weaponPath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/Bazooka_5_FGM",
+      "muzzlePath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/Bazooka_5_FGM/Spawn",
+      "inventoryIndex": 37,
+      "animationFamily": 2,
+      "shotType": 0,
+      "ignoreLayersMask": 0,
+      "reloadable": false,
+      "infiniteAmmo": false,
+      "ammoSetupType": [
+        "MissileSetup"
+      ],
+      "weaponComponents": [
+        "Bazooka",
+        "MissileSetup",
+        "PhotonView",
+        "PlayerHoldWeapon"
+      ],
+      "bulletType": "Missile",
+      "bulletSource": "Assets/GameObject/Missile.prefab",
+      "bulletGuid": "60be7eeb14f5a354c99c9ce23dbc5554",
+      "bulletSha256": "ea6028a7d482ee2c44589d8f0bb129bfb5bbcdb7d9459f4f7367b910482f4655",
+      "bulletFileId": 11431434
+    },
+    {
+      "id": "Google2u.Bazooka_FGMElite",
+      "setupType": "BazookaLevelsSetup",
+      "setupPath": "MainSceneRootNew/Managers/Levels Manager/Weapons/Bazooka_7_FGMElite",
+      "playerWeaponType": "PlayerHoldWeapon",
+      "weaponType": "Bazooka",
+      "weaponPath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/Bazooka_7_FGMElite",
+      "muzzlePath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/Bazooka_7_FGMElite/Spawn",
+      "inventoryIndex": 57,
+      "animationFamily": 2,
+      "shotType": 0,
+      "ignoreLayersMask": 0,
+      "reloadable": false,
+      "infiniteAmmo": false,
+      "ammoSetupType": [
+        "MissileSetup"
+      ],
+      "weaponComponents": [
+        "Bazooka",
+        "MissileSetup",
+        "PhotonView",
+        "PlayerHoldWeapon"
+      ],
+      "bulletType": "Missile",
+      "bulletSource": "Assets/GameObject/Missile.prefab",
+      "bulletGuid": "60be7eeb14f5a354c99c9ce23dbc5554",
+      "bulletSha256": "ea6028a7d482ee2c44589d8f0bb129bfb5bbcdb7d9459f4f7367b910482f4655",
+      "bulletFileId": 11431434
+    },
+    {
+      "id": "Google2u.Bazooka_HMV",
+      "setupType": "BazookaLevelsSetup",
+      "setupPath": "MainSceneRootNew/Managers/Levels Manager/Weapons/Bazooka_4_HVM",
+      "playerWeaponType": "PlayerHoldWeapon",
+      "weaponType": "Bazooka",
+      "weaponPath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/Bazooka_3_HVM",
+      "muzzlePath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/Bazooka_3_HVM/Spawn",
+      "inventoryIndex": 38,
+      "animationFamily": 2,
+      "shotType": 0,
+      "ignoreLayersMask": 0,
+      "reloadable": false,
+      "infiniteAmmo": false,
+      "ammoSetupType": [
+        "MissileSetup"
+      ],
+      "weaponComponents": [
+        "Bazooka",
+        "MissileSetup",
+        "PhotonView",
+        "PlayerHoldWeapon"
+      ],
+      "bulletType": "Missile",
+      "bulletSource": "Assets/GameObject/Missile.prefab",
+      "bulletGuid": "60be7eeb14f5a354c99c9ce23dbc5554",
+      "bulletSha256": "ea6028a7d482ee2c44589d8f0bb129bfb5bbcdb7d9459f4f7367b910482f4655",
+      "bulletFileId": 11431434
+    },
+    {
+      "id": "Google2u.Bazooka_Hater",
+      "setupType": "BazookaLevelsSetup",
+      "setupPath": "MainSceneRootNew/Managers/Levels Manager/Weapons/Bazooka_8_Hater",
+      "playerWeaponType": "PlayerHoldWeapon",
+      "weaponType": "Bazooka",
+      "weaponPath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/Bazooka_8_Hater",
+      "muzzlePath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/Bazooka_8_Hater/Spawn",
+      "inventoryIndex": 58,
+      "animationFamily": 2,
+      "shotType": 0,
+      "ignoreLayersMask": 0,
+      "reloadable": false,
+      "infiniteAmmo": false,
+      "ammoSetupType": [
+        "MissileSetup"
+      ],
+      "weaponComponents": [
+        "Bazooka",
+        "MissileSetup",
+        "PhotonView",
+        "PlayerHoldWeapon"
+      ],
+      "bulletType": "Missile",
+      "bulletSource": "Assets/GameObject/Missile.prefab",
+      "bulletGuid": "60be7eeb14f5a354c99c9ce23dbc5554",
+      "bulletSha256": "ea6028a7d482ee2c44589d8f0bb129bfb5bbcdb7d9459f4f7367b910482f4655",
+      "bulletFileId": 11431434
+    },
+    {
+      "id": "Google2u.Bazooka_M202",
+      "setupType": "BazookaFangsLevelsSetup",
+      "setupPath": "MainSceneRootNew/Managers/Levels Manager/Weapons/Bazooka_6_M202",
+      "playerWeaponType": "PlayerHoldWeapon",
+      "weaponType": "BazookaFangs",
+      "weaponPath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/Bazooka_6_M202",
+      "muzzlePath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/Bazooka_6_M202/Spawn",
+      "inventoryIndex": 42,
+      "animationFamily": 2,
+      "shotType": 0,
+      "ignoreLayersMask": 0,
+      "reloadable": false,
+      "infiniteAmmo": false,
+      "ammoSetupType": [
+        "MissileSetup"
+      ],
+      "weaponComponents": [
+        "BazookaFangs",
+        "MissileSetup",
+        "PhotonView",
+        "PlayerHoldWeapon"
+      ],
+      "bulletType": "Missile",
+      "bulletSource": "Assets/GameObject/Missile.prefab",
+      "bulletGuid": "60be7eeb14f5a354c99c9ce23dbc5554",
+      "bulletSha256": "ea6028a7d482ee2c44589d8f0bb129bfb5bbcdb7d9459f4f7367b910482f4655",
+      "bulletFileId": 11431434
+    },
+    {
+      "id": "Google2u.Bazooka_Panzerfaust",
+      "setupType": "BazookaLevelsSetup",
+      "setupPath": "MainSceneRootNew/Managers/Levels Manager/Weapons/Bazooka_5_Panzerfaust",
+      "playerWeaponType": "PlayerHoldWeapon",
+      "weaponType": "Bazooka",
+      "weaponPath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/Bazooka_4_PanzerFaust",
+      "muzzlePath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/Bazooka_4_PanzerFaust/Spawn",
+      "inventoryIndex": 41,
+      "animationFamily": 2,
+      "shotType": 0,
+      "ignoreLayersMask": 0,
+      "reloadable": false,
+      "infiniteAmmo": false,
+      "ammoSetupType": [
+        "MissileSetup"
+      ],
+      "weaponComponents": [
+        "Bazooka",
+        "MissileSetup",
+        "PhotonView",
+        "PlayerHoldWeapon"
+      ],
+      "bulletType": "Missile",
+      "bulletSource": "Assets/GameObject/Missile.prefab",
+      "bulletGuid": "60be7eeb14f5a354c99c9ce23dbc5554",
+      "bulletSha256": "ea6028a7d482ee2c44589d8f0bb129bfb5bbcdb7d9459f4f7367b910482f4655",
+      "bulletFileId": 11431434
+    },
+    {
+      "id": "Google2u.Bazooka_RPG7",
+      "setupType": "BazookaLevelsSetup",
+      "setupPath": "MainSceneRootNew/Managers/Levels Manager/Weapons/Bazooka_1_RPG7",
+      "playerWeaponType": "PlayerHoldWeapon",
+      "weaponType": "Bazooka",
+      "weaponPath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/Bazooka_1_RPG7",
+      "muzzlePath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/Bazooka_1_RPG7/Spawn",
+      "inventoryIndex": 3,
+      "animationFamily": 2,
+      "shotType": 0,
+      "ignoreLayersMask": 0,
+      "reloadable": false,
+      "infiniteAmmo": false,
+      "ammoSetupType": [
+        "MissileSetup"
+      ],
+      "weaponComponents": [
+        "Bazooka",
+        "MissileSetup",
+        "PhotonView",
+        "PlayerHoldWeapon"
+      ],
+      "bulletType": "Missile",
+      "bulletSource": "Assets/GameObject/Missile.prefab",
+      "bulletGuid": "60be7eeb14f5a354c99c9ce23dbc5554",
+      "bulletSha256": "ea6028a7d482ee2c44589d8f0bb129bfb5bbcdb7d9459f4f7367b910482f4655",
+      "bulletFileId": 11431434
+    },
+    {
+      "id": "Google2u.GrenadeLauncher_M320",
+      "setupType": "GrenadeLevelsSetup",
+      "setupPath": "MainSceneRootNew/Managers/Levels Manager/Weapons/Bazooka_2_M320",
+      "playerWeaponType": "PlayerClickWeapon",
+      "weaponType": "Grenade",
+      "weaponPath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/Bazooka_2_M320",
+      "muzzlePath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/Bazooka_2_M320/Spawn",
+      "inventoryIndex": 19,
+      "animationFamily": 6,
+      "shotType": 0,
+      "ignoreLayersMask": 0,
+      "reloadable": false,
+      "infiniteAmmo": false,
+      "ammoSetupType": [
+        "GrenadeAmmoSetup"
+      ],
+      "weaponComponents": [
+        "Grenade",
+        "GrenadeAmmoSetup",
+        "PhotonView",
+        "PlayerClickWeapon"
+      ],
+      "bulletType": "GrenadeAmmoBase",
+      "bulletSource": "Assets/GameObject/GrenadeAmmoEnemy.prefab",
+      "bulletGuid": "4f83057103004024c8301ce40b0eac94",
+      "bulletSha256": "226961d32fcfc96d79d632827ca3eb84e0bbc3792d1bfcef96d80954c8862a59",
+      "bulletFileId": 11454010
+    },
+    {
+      "id": "Google2u.Grenade_FLASH",
+      "setupType": "GrenadeLevelsSetup",
+      "setupPath": "MainSceneRootNew/Managers/Levels Manager/Weapons/Grenade_FLASH",
+      "playerWeaponType": "PlayerSwipeWeapon",
+      "weaponType": "Grenade",
+      "weaponPath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/Grenade_2_BadBoy",
+      "muzzlePath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/Grenade_2_BadBoy",
+      "inventoryIndex": 7,
+      "animationFamily": 1,
+      "shotType": 0,
+      "ignoreLayersMask": 0,
+      "reloadable": false,
+      "infiniteAmmo": false,
+      "ammoSetupType": [
+        "GrenadeAmmoSetup"
+      ],
+      "weaponComponents": [
+        "Grenade",
+        "GrenadeAmmoSetup",
+        "PhotonView",
+        "PlayerSwipeWeapon"
+      ],
+      "bulletType": "GrenadeAmmoBase",
+      "bulletSource": "Assets/GameObject/GrenadeAmmoEnemy.prefab",
+      "bulletGuid": "4f83057103004024c8301ce40b0eac94",
+      "bulletSha256": "226961d32fcfc96d79d632827ca3eb84e0bbc3792d1bfcef96d80954c8862a59",
+      "bulletFileId": 11454010
+    },
+    {
+      "id": "Google2u.Grenade_FRAG",
+      "setupType": "GrenadeLevelsSetup",
+      "setupPath": "MainSceneRootNew/Managers/Levels Manager/Weapons/Grenade_FRAG",
+      "playerWeaponType": "PlayerSwipeWeapon",
+      "weaponType": "Grenade",
+      "weaponPath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/Grenade_1_Frag",
+      "muzzlePath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/Grenade_1_Frag",
+      "inventoryIndex": 5,
+      "animationFamily": 1,
+      "shotType": 0,
+      "ignoreLayersMask": 0,
+      "reloadable": false,
+      "infiniteAmmo": false,
+      "ammoSetupType": [
+        "GrenadeAmmoSetup"
+      ],
+      "weaponComponents": [
+        "Grenade",
+        "GrenadeAmmoSetup",
+        "PhotonView",
+        "PlayerSwipeWeapon"
+      ],
+      "bulletType": "GrenadeAmmoBase",
+      "bulletSource": "Assets/GameObject/GrenadeAmmoEnemy.prefab",
+      "bulletGuid": "4f83057103004024c8301ce40b0eac94",
+      "bulletSha256": "226961d32fcfc96d79d632827ca3eb84e0bbc3792d1bfcef96d80954c8862a59",
+      "bulletFileId": 11454010
+    },
+    {
+      "id": "Google2u.Grenade_M84",
+      "setupType": "GrenadeLevelsSetup",
+      "setupPath": "MainSceneRootNew/Managers/Levels Manager/Weapons/Grenade_M84",
+      "playerWeaponType": "PlayerSwipeWeapon",
+      "weaponType": "Grenade",
+      "weaponPath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/Grenade_6_M84",
+      "muzzlePath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/Grenade_6_M84",
+      "inventoryIndex": 53,
+      "animationFamily": 1,
+      "shotType": 0,
+      "ignoreLayersMask": 0,
+      "reloadable": false,
+      "infiniteAmmo": false,
+      "ammoSetupType": [
+        "GrenadeAmmoSetup"
+      ],
+      "weaponComponents": [
+        "Grenade",
+        "GrenadeAmmoSetup",
+        "PhotonView",
+        "PlayerSwipeWeapon"
+      ],
+      "bulletType": "GrenadeAmmoBase",
+      "bulletSource": "Assets/GameObject/GrenadeAmmoEnemy.prefab",
+      "bulletGuid": "4f83057103004024c8301ce40b0eac94",
+      "bulletSha256": "226961d32fcfc96d79d632827ca3eb84e0bbc3792d1bfcef96d80954c8862a59",
+      "bulletFileId": 11454010
+    },
+    {
+      "id": "Google2u.Grenade_Molotov",
+      "setupType": "GrenadeLevelsSetup",
+      "setupPath": "MainSceneRootNew/Managers/Levels Manager/Weapons/Grenade_Molotov",
+      "playerWeaponType": "PlayerSwipeWeapon",
+      "weaponType": "Grenade",
+      "weaponPath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/Grenade_5_Molotov",
+      "muzzlePath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/Grenade_5_Molotov",
+      "inventoryIndex": 40,
+      "animationFamily": 1,
+      "shotType": 0,
+      "ignoreLayersMask": 0,
+      "reloadable": false,
+      "infiniteAmmo": false,
+      "ammoSetupType": [
+        "GrenadeAmmoSetup"
+      ],
+      "weaponComponents": [
+        "Grenade",
+        "GrenadeAmmoSetup",
+        "PhotonView",
+        "PlayerSwipeWeapon"
+      ],
+      "bulletType": "GrenadeAmmoBase",
+      "bulletSource": "Assets/GameObject/GrenadeAmmoEnemy.prefab",
+      "bulletGuid": "4f83057103004024c8301ce40b0eac94",
+      "bulletSha256": "226961d32fcfc96d79d632827ca3eb84e0bbc3792d1bfcef96d80954c8862a59",
+      "bulletFileId": 11454010
+    },
+    {
+      "id": "Google2u.Grenade_POISON",
+      "setupType": "GrenadeLevelsSetup",
+      "setupPath": "MainSceneRootNew/Managers/Levels Manager/Weapons/Grenade_POISON",
+      "playerWeaponType": "PlayerSwipeWeapon",
+      "weaponType": "Grenade",
+      "weaponPath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/Grenade_3_Deformer",
+      "muzzlePath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/Grenade_3_Deformer",
+      "inventoryIndex": 8,
+      "animationFamily": 1,
+      "shotType": 0,
+      "ignoreLayersMask": 0,
+      "reloadable": false,
+      "infiniteAmmo": false,
+      "ammoSetupType": [
+        "GrenadeAmmoSetup"
+      ],
+      "weaponComponents": [
+        "Grenade",
+        "GrenadeAmmoSetup",
+        "PhotonView",
+        "PlayerSwipeWeapon"
+      ],
+      "bulletType": "GrenadeAmmoBase",
+      "bulletSource": "Assets/GameObject/GrenadeAmmoEnemy.prefab",
+      "bulletGuid": "4f83057103004024c8301ce40b0eac94",
+      "bulletSha256": "226961d32fcfc96d79d632827ca3eb84e0bbc3792d1bfcef96d80954c8862a59",
+      "bulletFileId": 11454010
+    },
+    {
+      "id": "Google2u.Grenade_SMOKE",
+      "setupType": "GrenadeLevelsSetup",
+      "setupPath": "MainSceneRootNew/Managers/Levels Manager/Weapons/Grenade_SMOKE",
+      "playerWeaponType": "PlayerSwipeWeapon",
+      "weaponType": "Grenade",
+      "weaponPath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/Grenade_4_Armageddon",
+      "muzzlePath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/Grenade_4_Armageddon",
+      "inventoryIndex": 6,
+      "animationFamily": 1,
+      "shotType": 0,
+      "ignoreLayersMask": 0,
+      "reloadable": false,
+      "infiniteAmmo": false,
+      "ammoSetupType": [
+        "GrenadeAmmoSetup"
+      ],
+      "weaponComponents": [
+        "Grenade",
+        "GrenadeAmmoSetup",
+        "PhotonView",
+        "PlayerSwipeWeapon"
+      ],
+      "bulletType": "GrenadeAmmoBase",
+      "bulletSource": "Assets/GameObject/GrenadeAmmoEnemy.prefab",
+      "bulletGuid": "4f83057103004024c8301ce40b0eac94",
+      "bulletSha256": "226961d32fcfc96d79d632827ca3eb84e0bbc3792d1bfcef96d80954c8862a59",
+      "bulletFileId": 11454010
+    },
+    {
+      "id": "Google2u.Grenade_SMOKEElite",
+      "setupType": "GrenadeLevelsSetup",
+      "setupPath": "MainSceneRootNew/Managers/Levels Manager/Weapons/Grenade_SMOKEElite",
+      "playerWeaponType": "PlayerSwipeWeapon",
+      "weaponType": "Grenade",
+      "weaponPath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/Grenade_7_ArmageddonElite",
+      "muzzlePath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/Grenade_7_ArmageddonElite",
+      "inventoryIndex": 62,
+      "animationFamily": 1,
+      "shotType": 0,
+      "ignoreLayersMask": 0,
+      "reloadable": false,
+      "infiniteAmmo": false,
+      "ammoSetupType": [
+        "GrenadeAmmoSetup"
+      ],
+      "weaponComponents": [
+        "Grenade",
+        "GrenadeAmmoSetup",
+        "PhotonView",
+        "PlayerSwipeWeapon"
+      ],
+      "bulletType": "GrenadeAmmoBase",
+      "bulletSource": "Assets/GameObject/GrenadeAmmoEnemy.prefab",
+      "bulletGuid": "4f83057103004024c8301ce40b0eac94",
+      "bulletSha256": "226961d32fcfc96d79d632827ca3eb84e0bbc3792d1bfcef96d80954c8862a59",
+      "bulletFileId": 11454010
+    },
+    {
+      "id": "Google2u.LMG_M249",
+      "setupType": "RifleLevelsSetup",
+      "setupPath": "MainSceneRootNew/Managers/Levels Manager/Weapons/LMG_2_M249",
+      "playerWeaponType": "PlayerBurstWeapon",
+      "weaponType": "LightMachinegun",
+      "weaponPath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/LMG_2_M249",
+      "muzzlePath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/LMG_2_M249/MachinegunMuzzleFlash",
+      "inventoryIndex": 16,
+      "animationFamily": 15,
+      "shotType": 0,
+      "ignoreLayersMask": 0,
+      "reloadable": true,
+      "infiniteAmmo": false,
+      "ammoSetupType": [
+        "BulletSetup"
+      ],
+      "weaponComponents": [
+        "BulletSetup",
+        "LightMachinegun",
+        "PhotonView",
+        "PlayerBurstWeapon"
+      ],
+      "bulletType": "BulletSlow",
+      "bulletSource": "Assets/GameObject/BulletSlow.prefab",
+      "bulletGuid": "855689762fa6e774aaee190652b08c6f",
+      "bulletSha256": "5379f6aba1560b8eb3d7d386d1349454b97ea133163ade9a313e2bc34d1adfae",
+      "bulletFileId": 11409266
+    },
+    {
+      "id": "Google2u.LMG_M249Elite",
+      "setupType": "RifleLevelsSetup",
+      "setupPath": "MainSceneRootNew/Managers/Levels Manager/Weapons/LMG_8_M249Elite",
+      "playerWeaponType": "PlayerBurstWeapon",
+      "weaponType": "LightMachinegun",
+      "weaponPath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/LMG_8_M249Elite",
+      "muzzlePath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/LMG_8_M249Elite/MachinegunMuzzleFlash",
+      "inventoryIndex": 48,
+      "animationFamily": 15,
+      "shotType": 0,
+      "ignoreLayersMask": 0,
+      "reloadable": true,
+      "infiniteAmmo": false,
+      "ammoSetupType": [
+        "BulletSetup"
+      ],
+      "weaponComponents": [
+        "BulletSetup",
+        "LightMachinegun",
+        "PhotonView",
+        "PlayerBurstWeapon"
+      ],
+      "bulletType": "BulletSlow",
+      "bulletSource": "Assets/GameObject/BulletSlow.prefab",
+      "bulletGuid": "855689762fa6e774aaee190652b08c6f",
+      "bulletSha256": "5379f6aba1560b8eb3d7d386d1349454b97ea133163ade9a313e2bc34d1adfae",
+      "bulletFileId": 11409266
+    },
+    {
+      "id": "Google2u.LMG_M60",
+      "setupType": "RifleLevelsSetup",
+      "setupPath": "MainSceneRootNew/Managers/Levels Manager/Weapons/LMG_5_M60",
+      "playerWeaponType": "PlayerBurstWeapon",
+      "weaponType": "LightMachinegun",
+      "weaponPath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/LMG_5_M60",
+      "muzzlePath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/LMG_5_M60/MachinegunMuzzleFlash",
+      "inventoryIndex": 36,
+      "animationFamily": 15,
+      "shotType": 0,
+      "ignoreLayersMask": 0,
+      "reloadable": true,
+      "infiniteAmmo": false,
+      "ammoSetupType": [
+        "BulletSetup"
+      ],
+      "weaponComponents": [
+        "BulletSetup",
+        "LightMachinegun",
+        "PhotonView",
+        "PlayerBurstWeapon"
+      ],
+      "bulletType": "BulletSlow",
+      "bulletSource": "Assets/GameObject/BulletSlow.prefab",
+      "bulletGuid": "855689762fa6e774aaee190652b08c6f",
+      "bulletSha256": "5379f6aba1560b8eb3d7d386d1349454b97ea133163ade9a313e2bc34d1adfae",
+      "bulletFileId": 11409266
+    },
+    {
+      "id": "Google2u.LMG_M60Elite",
+      "setupType": "RifleLevelsSetup",
+      "setupPath": "MainSceneRootNew/Managers/Levels Manager/Weapons/LMG_7_M60Elite",
+      "playerWeaponType": "PlayerBurstWeapon",
+      "weaponType": "LightMachinegun",
+      "weaponPath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/LMG_7_M60Elite",
+      "muzzlePath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/LMG_7_M60Elite/MachinegunMuzzleFlash",
+      "inventoryIndex": 47,
+      "animationFamily": 15,
+      "shotType": 0,
+      "ignoreLayersMask": 0,
+      "reloadable": true,
+      "infiniteAmmo": false,
+      "ammoSetupType": [
+        "BulletSetup"
+      ],
+      "weaponComponents": [
+        "BulletSetup",
+        "LightMachinegun",
+        "PhotonView",
+        "PlayerBurstWeapon"
+      ],
+      "bulletType": "BulletSlow",
+      "bulletSource": "Assets/GameObject/BulletSlow.prefab",
+      "bulletGuid": "855689762fa6e774aaee190652b08c6f",
+      "bulletSha256": "5379f6aba1560b8eb3d7d386d1349454b97ea133163ade9a313e2bc34d1adfae",
+      "bulletFileId": 11409266
+    },
+    {
+      "id": "Google2u.LMG_MG4",
+      "setupType": "RifleLevelsSetup",
+      "setupPath": "MainSceneRootNew/Managers/Levels Manager/Weapons/LMG_3_MG4",
+      "playerWeaponType": "PlayerBurstWeapon",
+      "weaponType": "LightMachinegun",
+      "weaponPath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/LMG_4_MG4",
+      "muzzlePath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/LMG_4_MG4/MachinegunMuzzleFlash",
+      "inventoryIndex": 23,
+      "animationFamily": 15,
+      "shotType": 0,
+      "ignoreLayersMask": 0,
+      "reloadable": true,
+      "infiniteAmmo": false,
+      "ammoSetupType": [
+        "BulletSetup"
+      ],
+      "weaponComponents": [
+        "BulletSetup",
+        "LightMachinegun",
+        "PhotonView",
+        "PlayerBurstWeapon"
+      ],
+      "bulletType": "BulletSlow",
+      "bulletSource": "Assets/GameObject/BulletSlow.prefab",
+      "bulletGuid": "855689762fa6e774aaee190652b08c6f",
+      "bulletSha256": "5379f6aba1560b8eb3d7d386d1349454b97ea133163ade9a313e2bc34d1adfae",
+      "bulletFileId": 11409266
+    },
+    {
+      "id": "Google2u.LMG_Minigun",
+      "setupType": "MinigunLevelsSetup",
+      "setupPath": "MainSceneRootNew/Managers/Levels Manager/Weapons/LMG_6_Minigun",
+      "playerWeaponType": "PlayerMinigunWeapon",
+      "weaponType": "LightMachinegun",
+      "weaponPath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/LMG_6_Minigun",
+      "muzzlePath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/LMG_6_Minigun/MachinegunMuzzleFlash",
+      "inventoryIndex": 25,
+      "animationFamily": 4,
+      "shotType": 0,
+      "ignoreLayersMask": 0,
+      "reloadable": false,
+      "infiniteAmmo": false,
+      "ammoSetupType": [
+        "BulletSetup"
+      ],
+      "weaponComponents": [
+        "BulletSetup",
+        "LightMachinegun",
+        "PhotonView",
+        "PlayerMinigunWeapon"
+      ],
+      "bulletType": "BulletSlow",
+      "bulletSource": "Assets/GameObject/BulletSlow.prefab",
+      "bulletGuid": "855689762fa6e774aaee190652b08c6f",
+      "bulletSha256": "5379f6aba1560b8eb3d7d386d1349454b97ea133163ade9a313e2bc34d1adfae",
+      "bulletFileId": 11409266
+    },
+    {
+      "id": "Google2u.LMG_PKMachinegun",
+      "setupType": "RifleLevelsSetup",
+      "setupPath": "MainSceneRootNew/Managers/Levels Manager/Weapons/LMG_1_PKMachinegun",
+      "playerWeaponType": "PlayerBurstWeapon",
+      "weaponType": "LightMachinegun",
+      "weaponPath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/LMG_1_PKMachinegun",
+      "muzzlePath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/LMG_1_PKMachinegun/MachinegunMuzzleFlash",
+      "inventoryIndex": 15,
+      "animationFamily": 15,
+      "shotType": 0,
+      "ignoreLayersMask": 0,
+      "reloadable": true,
+      "infiniteAmmo": false,
+      "ammoSetupType": [
+        "BulletSetup"
+      ],
+      "weaponComponents": [
+        "BulletSetup",
+        "LightMachinegun",
+        "PhotonView",
+        "PlayerBurstWeapon"
+      ],
+      "bulletType": "BulletSlow",
+      "bulletSource": "Assets/GameObject/BulletSlow.prefab",
+      "bulletGuid": "855689762fa6e774aaee190652b08c6f",
+      "bulletSha256": "5379f6aba1560b8eb3d7d386d1349454b97ea133163ade9a313e2bc34d1adfae",
+      "bulletFileId": 11409266
+    },
+    {
+      "id": "Google2u.LMG_PKMachinegunElite",
+      "setupType": "RifleLevelsSetup",
+      "setupPath": "MainSceneRootNew/Managers/Levels Manager/Weapons/LMG_9_PKMachinegunElite",
+      "playerWeaponType": "PlayerBurstWeapon",
+      "weaponType": "LightMachinegun",
+      "weaponPath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/LMG_9_PKMachinegunElite",
+      "muzzlePath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/LMG_9_PKMachinegunElite/MachinegunMuzzleFlash",
+      "inventoryIndex": 66,
+      "animationFamily": 15,
+      "shotType": 0,
+      "ignoreLayersMask": 0,
+      "reloadable": true,
+      "infiniteAmmo": false,
+      "ammoSetupType": [
+        "BulletSetup"
+      ],
+      "weaponComponents": [
+        "BulletSetup",
+        "LightMachinegun",
+        "PhotonView",
+        "PlayerBurstWeapon"
+      ],
+      "bulletType": "BulletSlow",
+      "bulletSource": "Assets/GameObject/BulletSlow.prefab",
+      "bulletGuid": "855689762fa6e774aaee190652b08c6f",
+      "bulletSha256": "5379f6aba1560b8eb3d7d386d1349454b97ea133163ade9a313e2bc34d1adfae",
+      "bulletFileId": 11409266
+    },
+    {
+      "id": "Google2u.LMG_SA80",
+      "setupType": "RifleLevelsSetup",
+      "setupPath": "MainSceneRootNew/Managers/Levels Manager/Weapons/LMG_4_SA80",
+      "playerWeaponType": "PlayerBurstWeapon",
+      "weaponType": "LightMachinegun",
+      "weaponPath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/LMG_3_SA80",
+      "muzzlePath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/LMG_3_SA80/MachinegunMuzzleFlash",
+      "inventoryIndex": 24,
+      "animationFamily": 9,
+      "shotType": 0,
+      "ignoreLayersMask": 0,
+      "reloadable": true,
+      "infiniteAmmo": false,
+      "ammoSetupType": [
+        "BulletSetup"
+      ],
+      "weaponComponents": [
+        "BulletSetup",
+        "LightMachinegun",
+        "PhotonView",
+        "PlayerBurstWeapon"
+      ],
+      "bulletType": "BulletSlow",
+      "bulletSource": "Assets/GameObject/BulletSlow.prefab",
+      "bulletGuid": "855689762fa6e774aaee190652b08c6f",
+      "bulletSha256": "5379f6aba1560b8eb3d7d386d1349454b97ea133163ade9a313e2bc34d1adfae",
+      "bulletFileId": 11409266
+    },
+    {
+      "id": "Google2u.Pistol_Berreta",
+      "setupType": "PistolLevelsSetup",
+      "setupPath": "MainSceneRootNew/Managers/Levels Manager/Weapons/Pistol_2_Berreta",
+      "playerWeaponType": "PlayerClickWeapon",
+      "weaponType": "Pistol",
+      "weaponPath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/Pistol_2_Berreta",
+      "muzzlePath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/Pistol_2_Berreta/MachinegunMuzzleFlash",
+      "inventoryIndex": 13,
+      "animationFamily": 5,
+      "shotType": 0,
+      "ignoreLayersMask": 0,
+      "reloadable": true,
+      "infiniteAmmo": false,
+      "ammoSetupType": [
+        "BulletSetup"
+      ],
+      "weaponComponents": [
+        "BulletSetup",
+        "PhotonView",
+        "Pistol",
+        "PlayerClickWeapon"
+      ],
+      "bulletType": "BulletSlow",
+      "bulletSource": "Assets/GameObject/BulletSlow.prefab",
+      "bulletGuid": "855689762fa6e774aaee190652b08c6f",
+      "bulletSha256": "5379f6aba1560b8eb3d7d386d1349454b97ea133163ade9a313e2bc34d1adfae",
+      "bulletFileId": 11409266
+    },
+    {
+      "id": "Google2u.Pistol_DesertEagle",
+      "setupType": "PistolLevelsSetup",
+      "setupPath": "MainSceneRootNew/Managers/Levels Manager/Weapons/Pistol_0_DesertEagle",
+      "playerWeaponType": "PlayerClickWeapon",
+      "weaponType": "Pistol",
+      "weaponPath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/Pistol_5_Desert",
+      "muzzlePath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/Pistol_5_Desert/MachinegunMuzzleFlash",
+      "inventoryIndex": 0,
+      "animationFamily": 5,
+      "shotType": 0,
+      "ignoreLayersMask": 0,
+      "reloadable": true,
+      "infiniteAmmo": false,
+      "ammoSetupType": [
+        "BulletSetup"
+      ],
+      "weaponComponents": [
+        "BulletSetup",
+        "PhotonView",
+        "Pistol",
+        "PlayerClickWeapon"
+      ],
+      "bulletType": "BulletSlow",
+      "bulletSource": "Assets/GameObject/BulletSlow.prefab",
+      "bulletGuid": "855689762fa6e774aaee190652b08c6f",
+      "bulletSha256": "5379f6aba1560b8eb3d7d386d1349454b97ea133163ade9a313e2bc34d1adfae",
+      "bulletFileId": 11409266
+    },
+    {
+      "id": "Google2u.Pistol_Jester",
+      "setupType": "PistolLevelsSetup",
+      "setupPath": "MainSceneRootNew/Managers/Levels Manager/Weapons/Pistol_5_Jester",
+      "playerWeaponType": "PlayerClickWeapon",
+      "weaponType": "Pistol",
+      "weaponPath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/Pistol_6_Jester",
+      "muzzlePath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/Pistol_6_Jester/MachinegunMuzzleFlash",
+      "inventoryIndex": 52,
+      "animationFamily": 5,
+      "shotType": 0,
+      "ignoreLayersMask": 0,
+      "reloadable": true,
+      "infiniteAmmo": false,
+      "ammoSetupType": [
+        "BulletSetup"
+      ],
+      "weaponComponents": [
+        "BulletSetup",
+        "PhotonView",
+        "Pistol",
+        "PlayerClickWeapon"
+      ],
+      "bulletType": "BulletSlow",
+      "bulletSource": "Assets/GameObject/BulletSlow.prefab",
+      "bulletGuid": "855689762fa6e774aaee190652b08c6f",
+      "bulletSha256": "5379f6aba1560b8eb3d7d386d1349454b97ea133163ade9a313e2bc34d1adfae",
+      "bulletFileId": 11409266
+    },
+    {
+      "id": "Google2u.Pistol_M1911",
+      "setupType": "PistolLevelsSetup",
+      "setupPath": "MainSceneRootNew/Managers/Levels Manager/Weapons/Pistol_3_M1911",
+      "playerWeaponType": "PlayerClickWeapon",
+      "weaponType": "Pistol",
+      "weaponPath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/Pistol_3_M1911",
+      "muzzlePath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/Pistol_3_M1911/MachinegunMuzzleFlash",
+      "inventoryIndex": 29,
+      "animationFamily": 5,
+      "shotType": 0,
+      "ignoreLayersMask": 0,
+      "reloadable": true,
+      "infiniteAmmo": false,
+      "ammoSetupType": [
+        "BulletSetup"
+      ],
+      "weaponComponents": [
+        "BulletSetup",
+        "PhotonView",
+        "Pistol",
+        "PlayerClickWeapon"
+      ],
+      "bulletType": "BulletSlow",
+      "bulletSource": "Assets/GameObject/BulletSlow.prefab",
+      "bulletGuid": "855689762fa6e774aaee190652b08c6f",
+      "bulletSha256": "5379f6aba1560b8eb3d7d386d1349454b97ea133163ade9a313e2bc34d1adfae",
+      "bulletFileId": 11409266
+    },
+    {
+      "id": "Google2u.Pistol_Magnum357",
+      "setupType": "PistolLevelsSetup",
+      "setupPath": "MainSceneRootNew/Managers/Levels Manager/Weapons/Pistol_4_Magnum357",
+      "playerWeaponType": "PlayerClickWeapon",
+      "weaponType": "Pistol",
+      "weaponPath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/Pistol_4_Magnum357",
+      "muzzlePath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/Pistol_4_Magnum357/MachinegunMuzzleFlash",
+      "inventoryIndex": 39,
+      "animationFamily": 5,
+      "shotType": 0,
+      "ignoreLayersMask": 0,
+      "reloadable": true,
+      "infiniteAmmo": false,
+      "ammoSetupType": [
+        "BulletSetup"
+      ],
+      "weaponComponents": [
+        "BulletSetup",
+        "PhotonView",
+        "Pistol",
+        "PlayerClickWeapon"
+      ],
+      "bulletType": "BulletSlow",
+      "bulletSource": "Assets/GameObject/BulletSlow.prefab",
+      "bulletGuid": "855689762fa6e774aaee190652b08c6f",
+      "bulletSha256": "5379f6aba1560b8eb3d7d386d1349454b97ea133163ade9a313e2bc34d1adfae",
+      "bulletFileId": 11409266
+    },
+    {
+      "id": "Google2u.Pistol_Remmington51",
+      "setupType": "PistolLevelsSetup",
+      "setupPath": "MainSceneRootNew/Managers/Levels Manager/Weapons/Pistol_1_Remmington",
+      "playerWeaponType": "PlayerClickWeapon",
+      "weaponType": "Pistol",
+      "weaponPath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/Pistol_1_Remmington",
+      "muzzlePath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/Pistol_1_Remmington/MachinegunMuzzleFlash",
+      "inventoryIndex": 12,
+      "animationFamily": 5,
+      "shotType": 0,
+      "ignoreLayersMask": 0,
+      "reloadable": true,
+      "infiniteAmmo": false,
+      "ammoSetupType": [
+        "BulletSetup"
+      ],
+      "weaponComponents": [
+        "BulletSetup",
+        "PhotonView",
+        "Pistol",
+        "PlayerClickWeapon"
+      ],
+      "bulletType": "BulletSlow",
+      "bulletSource": "Assets/GameObject/BulletSlow.prefab",
+      "bulletGuid": "855689762fa6e774aaee190652b08c6f",
+      "bulletSha256": "5379f6aba1560b8eb3d7d386d1349454b97ea133163ade9a313e2bc34d1adfae",
+      "bulletFileId": 11409266
+    },
+    {
+      "id": "Google2u.SMG_CPW",
+      "setupType": "RifleLevelsSetup",
+      "setupPath": "MainSceneRootNew/Managers/Levels Manager/Weapons/SMG_3_CPW",
+      "playerWeaponType": "PlayerBurstWeapon",
+      "weaponType": "LightMachinegun",
+      "weaponPath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/SMG_2_CPW",
+      "muzzlePath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/SMG_2_CPW/MachinegunMuzzleFlash",
+      "inventoryIndex": 18,
+      "animationFamily": 5,
+      "shotType": 0,
+      "ignoreLayersMask": 0,
+      "reloadable": true,
+      "infiniteAmmo": false,
+      "ammoSetupType": [
+        "BulletSetup"
+      ],
+      "weaponComponents": [
+        "BulletSetup",
+        "LightMachinegun",
+        "PhotonView",
+        "PlayerBurstWeapon"
+      ],
+      "bulletType": "BulletSlow",
+      "bulletSource": "Assets/GameObject/BulletSlow.prefab",
+      "bulletGuid": "855689762fa6e774aaee190652b08c6f",
+      "bulletSha256": "5379f6aba1560b8eb3d7d386d1349454b97ea133163ade9a313e2bc34d1adfae",
+      "bulletFileId": 11409266
+    },
+    {
+      "id": "Google2u.SMG_MP5",
+      "setupType": "RifleLevelsSetup",
+      "setupPath": "MainSceneRootNew/Managers/Levels Manager/Weapons/SMG_2_MP5",
+      "playerWeaponType": "PlayerBurstWeapon",
+      "weaponType": "LightMachinegun",
+      "weaponPath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/SMG_1_MP5",
+      "muzzlePath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/SMG_1_MP5/MachinegunMuzzleFlash",
+      "inventoryIndex": 17,
+      "animationFamily": 0,
+      "shotType": 0,
+      "ignoreLayersMask": 0,
+      "reloadable": true,
+      "infiniteAmmo": false,
+      "ammoSetupType": [
+        "BulletSetup"
+      ],
+      "weaponComponents": [
+        "BulletSetup",
+        "LightMachinegun",
+        "PhotonView",
+        "PlayerBurstWeapon"
+      ],
+      "bulletType": "BulletSlow",
+      "bulletSource": "Assets/GameObject/BulletSlow.prefab",
+      "bulletGuid": "855689762fa6e774aaee190652b08c6f",
+      "bulletSha256": "5379f6aba1560b8eb3d7d386d1349454b97ea133163ade9a313e2bc34d1adfae",
+      "bulletFileId": 11409266
+    },
+    {
+      "id": "Google2u.SMG_MP5_elite",
+      "setupType": "RifleLevelsSetup",
+      "setupPath": "MainSceneRootNew/Managers/Levels Manager/Weapons/SMG_6_MP5_camo",
+      "playerWeaponType": "PlayerBurstWeapon",
+      "weaponType": "LightMachinegun",
+      "weaponPath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/SMG_6_MP5_camo",
+      "muzzlePath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/SMG_6_MP5_camo/MachinegunMuzzleFlash",
+      "inventoryIndex": 43,
+      "animationFamily": 0,
+      "shotType": 0,
+      "ignoreLayersMask": 0,
+      "reloadable": true,
+      "infiniteAmmo": false,
+      "ammoSetupType": [
+        "BulletSetup"
+      ],
+      "weaponComponents": [
+        "BulletSetup",
+        "LightMachinegun",
+        "PhotonView",
+        "PlayerBurstWeapon"
+      ],
+      "bulletType": "BulletSlow",
+      "bulletSource": "Assets/GameObject/BulletSlow.prefab",
+      "bulletGuid": "855689762fa6e774aaee190652b08c6f",
+      "bulletSha256": "5379f6aba1560b8eb3d7d386d1349454b97ea133163ade9a313e2bc34d1adfae",
+      "bulletFileId": 11409266
+    },
+    {
+      "id": "Google2u.SMG_MP7",
+      "setupType": "RifleLevelsSetup",
+      "setupPath": "MainSceneRootNew/Managers/Levels Manager/Weapons/SMG_4_MP7",
+      "playerWeaponType": "PlayerBurstWeapon",
+      "weaponType": "LightMachinegun",
+      "weaponPath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/SMG_4_MP7",
+      "muzzlePath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/SMG_4_MP7/MachinegunMuzzleFlash",
+      "inventoryIndex": 28,
+      "animationFamily": 0,
+      "shotType": 0,
+      "ignoreLayersMask": 0,
+      "reloadable": true,
+      "infiniteAmmo": false,
+      "ammoSetupType": [
+        "BulletSetup"
+      ],
+      "weaponComponents": [
+        "BulletSetup",
+        "LightMachinegun",
+        "PhotonView",
+        "PlayerBurstWeapon"
+      ],
+      "bulletType": "BulletSlow",
+      "bulletSource": "Assets/GameObject/BulletSlow.prefab",
+      "bulletGuid": "855689762fa6e774aaee190652b08c6f",
+      "bulletSha256": "5379f6aba1560b8eb3d7d386d1349454b97ea133163ade9a313e2bc34d1adfae",
+      "bulletFileId": 11409266
+    },
+    {
+      "id": "Google2u.SMG_P90",
+      "setupType": "RifleLevelsSetup",
+      "setupPath": "MainSceneRootNew/Managers/Levels Manager/Weapons/SMG_5_P90",
+      "playerWeaponType": "PlayerBurstWeapon",
+      "weaponType": "LightMachinegun",
+      "weaponPath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/SMG_5_P90",
+      "muzzlePath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/SMG_5_P90/MachinegunMuzzleFlash",
+      "inventoryIndex": 35,
+      "animationFamily": 13,
+      "shotType": 0,
+      "ignoreLayersMask": 0,
+      "reloadable": true,
+      "infiniteAmmo": false,
+      "ammoSetupType": [
+        "BulletSetup"
+      ],
+      "weaponComponents": [
+        "BulletSetup",
+        "LightMachinegun",
+        "PhotonView",
+        "PlayerBurstWeapon"
+      ],
+      "bulletType": "BulletSlow",
+      "bulletSource": "Assets/GameObject/BulletSlow.prefab",
+      "bulletGuid": "855689762fa6e774aaee190652b08c6f",
+      "bulletSha256": "5379f6aba1560b8eb3d7d386d1349454b97ea133163ade9a313e2bc34d1adfae",
+      "bulletFileId": 11409266
+    },
+    {
+      "id": "Google2u.SMG_P90Elite",
+      "setupType": "RifleLevelsSetup",
+      "setupPath": "MainSceneRootNew/Managers/Levels Manager/Weapons/SMG_7_P90Elite",
+      "playerWeaponType": "PlayerBurstWeapon",
+      "weaponType": "LightMachinegun",
+      "weaponPath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/SMG_7_P90Elite",
+      "muzzlePath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/SMG_7_P90Elite/MachinegunMuzzleFlash",
+      "inventoryIndex": 49,
+      "animationFamily": 13,
+      "shotType": 0,
+      "ignoreLayersMask": 0,
+      "reloadable": true,
+      "infiniteAmmo": false,
+      "ammoSetupType": [
+        "BulletSetup"
+      ],
+      "weaponComponents": [
+        "BulletSetup",
+        "LightMachinegun",
+        "PhotonView",
+        "PlayerBurstWeapon"
+      ],
+      "bulletType": "BulletSlow",
+      "bulletSource": "Assets/GameObject/BulletSlow.prefab",
+      "bulletGuid": "855689762fa6e774aaee190652b08c6f",
+      "bulletSha256": "5379f6aba1560b8eb3d7d386d1349454b97ea133163ade9a313e2bc34d1adfae",
+      "bulletFileId": 11409266
+    },
+    {
+      "id": "Google2u.SMG_UMP45",
+      "setupType": "RifleLevelsSetup",
+      "setupPath": "MainSceneRootNew/Managers/Levels Manager/Weapons/SMG_1_UMP45",
+      "playerWeaponType": "PlayerBurstWeapon",
+      "weaponType": "LightMachinegun",
+      "weaponPath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/SMG_3_UMP45",
+      "muzzlePath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/SMG_3_UMP45/MachinegunMuzzleFlash",
+      "inventoryIndex": 9,
+      "animationFamily": 0,
+      "shotType": 0,
+      "ignoreLayersMask": 0,
+      "reloadable": true,
+      "infiniteAmmo": false,
+      "ammoSetupType": [
+        "BulletSetup"
+      ],
+      "weaponComponents": [
+        "BulletSetup",
+        "LightMachinegun",
+        "PhotonView",
+        "PlayerBurstWeapon"
+      ],
+      "bulletType": "BulletSlow",
+      "bulletSource": "Assets/GameObject/BulletSlow.prefab",
+      "bulletGuid": "855689762fa6e774aaee190652b08c6f",
+      "bulletSha256": "5379f6aba1560b8eb3d7d386d1349454b97ea133163ade9a313e2bc34d1adfae",
+      "bulletFileId": 11409266
+    },
+    {
+      "id": "Google2u.SMG_Vector",
+      "setupType": "RifleLevelsSetup",
+      "setupPath": "MainSceneRootNew/Managers/Levels Manager/Weapons/SMG_8_Vector",
+      "playerWeaponType": "PlayerBurstWeapon",
+      "weaponType": "LightMachinegun",
+      "weaponPath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/SMG_8_Vector",
+      "muzzlePath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/SMG_8_Vector/MachinegunMuzzleFlash",
+      "inventoryIndex": 56,
+      "animationFamily": 13,
+      "shotType": 0,
+      "ignoreLayersMask": 0,
+      "reloadable": true,
+      "infiniteAmmo": false,
+      "ammoSetupType": [
+        "BulletSetup"
+      ],
+      "weaponComponents": [
+        "BulletSetup",
+        "LightMachinegun",
+        "PhotonView",
+        "PlayerBurstWeapon"
+      ],
+      "bulletType": "BulletSlow",
+      "bulletSource": "Assets/GameObject/BulletSlow.prefab",
+      "bulletGuid": "855689762fa6e774aaee190652b08c6f",
+      "bulletSha256": "5379f6aba1560b8eb3d7d386d1349454b97ea133163ade9a313e2bc34d1adfae",
+      "bulletFileId": 11409266
+    },
+    {
+      "id": "Google2u.Shotgun_AA12",
+      "setupType": "ShotgunLevelsSetup",
+      "setupPath": "MainSceneRootNew/Managers/Levels Manager/Weapons/ShotGun_7_AA12",
+      "playerWeaponType": "PlayerClickWeapon",
+      "weaponType": "AutomaticRifle",
+      "weaponPath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/Shotgun_8_AA12",
+      "muzzlePath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/Shotgun_8_AA12/MachinegunMuzzleFlash",
+      "inventoryIndex": 55,
+      "animationFamily": 13,
+      "shotType": 0,
+      "ignoreLayersMask": 0,
+      "reloadable": true,
+      "infiniteAmmo": false,
+      "ammoSetupType": [
+        "ShotGunBulletSetup"
+      ],
+      "weaponComponents": [
+        "AutomaticRifle",
+        "PhotonView",
+        "PlayerClickWeapon",
+        "ShotGunBulletSetup"
+      ],
+      "bulletType": "BulletShotGun",
+      "bulletSource": "Assets/GameObject/BulletShotGun.prefab",
+      "bulletGuid": "b792a05eb83b12f48b57874de9978e98",
+      "bulletSha256": "61018015fd51f7f4ff6a4e92905ed8b6f949a7d896f3d88696ba26aee0a2aaf2",
+      "bulletFileId": 11409266
+    },
+    {
+      "id": "Google2u.Shotgun_Benelli",
+      "setupType": "ShotgunLevelsSetup",
+      "setupPath": "MainSceneRootNew/Managers/Levels Manager/Weapons/ShotGun_1_Benelli",
+      "playerWeaponType": "PlayerClickWeapon",
+      "weaponType": "AutomaticRifle",
+      "weaponPath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/Shotgun_1_Benelli",
+      "muzzlePath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/Shotgun_1_Benelli/MachinegunMuzzleFlash",
+      "inventoryIndex": 22,
+      "animationFamily": 7,
+      "shotType": 0,
+      "ignoreLayersMask": 0,
+      "reloadable": true,
+      "infiniteAmmo": false,
+      "ammoSetupType": [
+        "ShotGunBulletSetup"
+      ],
+      "weaponComponents": [
+        "AutomaticRifle",
+        "PhotonView",
+        "PlayerClickWeapon",
+        "ShotGunBulletSetup"
+      ],
+      "bulletType": "BulletShotGun",
+      "bulletSource": "Assets/GameObject/BulletShotGun.prefab",
+      "bulletGuid": "b792a05eb83b12f48b57874de9978e98",
+      "bulletSha256": "61018015fd51f7f4ff6a4e92905ed8b6f949a7d896f3d88696ba26aee0a2aaf2",
+      "bulletFileId": 11409266
+    },
+    {
+      "id": "Google2u.Shotgun_Blackhand",
+      "setupType": "ShotgunLevelsSetup",
+      "setupPath": "MainSceneRootNew/Managers/Levels Manager/Weapons/ShotGun_4_BlackHand",
+      "playerWeaponType": "PlayerClickWeapon",
+      "weaponType": "AutomaticRifle",
+      "weaponPath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/Shotgun_5_BlackHand",
+      "muzzlePath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/Shotgun_5_BlackHand/MachinegunMuzzleFlash",
+      "inventoryIndex": 50,
+      "animationFamily": 13,
+      "shotType": 0,
+      "ignoreLayersMask": 0,
+      "reloadable": true,
+      "infiniteAmmo": false,
+      "ammoSetupType": [
+        "ShotGunBulletSetup"
+      ],
+      "weaponComponents": [
+        "AutomaticRifle",
+        "PhotonView",
+        "PlayerClickWeapon",
+        "ShotGunBulletSetup"
+      ],
+      "bulletType": "BulletShotGun",
+      "bulletSource": "Assets/GameObject/BulletShotGun.prefab",
+      "bulletGuid": "b792a05eb83b12f48b57874de9978e98",
+      "bulletSha256": "61018015fd51f7f4ff6a4e92905ed8b6f949a7d896f3d88696ba26aee0a2aaf2",
+      "bulletFileId": 11409266
+    },
+    {
+      "id": "Google2u.Shotgun_SPAS",
+      "setupType": "ShotgunLevelsSetup",
+      "setupPath": "MainSceneRootNew/Managers/Levels Manager/Weapons/ShotGun_0_SPAS",
+      "playerWeaponType": "PlayerClickWeapon",
+      "weaponType": "AutomaticRifle",
+      "weaponPath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/Shotgun_2_SPAS",
+      "muzzlePath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/Shotgun_2_SPAS/MachinegunMuzzleFlash",
+      "inventoryIndex": 4,
+      "animationFamily": 7,
+      "shotType": 0,
+      "ignoreLayersMask": 0,
+      "reloadable": true,
+      "infiniteAmmo": false,
+      "ammoSetupType": [
+        "ShotGunBulletSetup"
+      ],
+      "weaponComponents": [
+        "AutomaticRifle",
+        "PhotonView",
+        "PlayerClickWeapon",
+        "ShotGunBulletSetup"
+      ],
+      "bulletType": "BulletShotGun",
+      "bulletSource": "Assets/GameObject/BulletShotGun.prefab",
+      "bulletGuid": "b792a05eb83b12f48b57874de9978e98",
+      "bulletSha256": "61018015fd51f7f4ff6a4e92905ed8b6f949a7d896f3d88696ba26aee0a2aaf2",
+      "bulletFileId": 11409266
+    },
+    {
+      "id": "Google2u.Shotgun_Saiga",
+      "setupType": "ShotgunLevelsSetup",
+      "setupPath": "MainSceneRootNew/Managers/Levels Manager/Weapons/ShotGun_2_Saiga",
+      "playerWeaponType": "PlayerClickWeapon",
+      "weaponType": "AutomaticRifle",
+      "weaponPath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/Shotgun_3_Saiga",
+      "muzzlePath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/Shotgun_3_Saiga/MachinegunMuzzleFlash",
+      "inventoryIndex": 27,
+      "animationFamily": 0,
+      "shotType": 0,
+      "ignoreLayersMask": 0,
+      "reloadable": true,
+      "infiniteAmmo": false,
+      "ammoSetupType": [
+        "ShotGunBulletSetup"
+      ],
+      "weaponComponents": [
+        "AutomaticRifle",
+        "PhotonView",
+        "PlayerClickWeapon",
+        "ShotGunBulletSetup"
+      ],
+      "bulletType": "BulletShotGun",
+      "bulletSource": "Assets/GameObject/BulletShotGun.prefab",
+      "bulletGuid": "b792a05eb83b12f48b57874de9978e98",
+      "bulletSha256": "61018015fd51f7f4ff6a4e92905ed8b6f949a7d896f3d88696ba26aee0a2aaf2",
+      "bulletFileId": 11409266
+    },
+    {
+      "id": "Google2u.Shotgun_SaigaElite",
+      "setupType": "ShotgunLevelsSetup",
+      "setupPath": "MainSceneRootNew/Managers/Levels Manager/Weapons/ShotGun_8_SaigaElite",
+      "playerWeaponType": "PlayerClickWeapon",
+      "weaponType": "AutomaticRifle",
+      "weaponPath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/Shotgun_9_SaigaElite",
+      "muzzlePath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/Shotgun_9_SaigaElite/MachinegunMuzzleFlash",
+      "inventoryIndex": 63,
+      "animationFamily": 0,
+      "shotType": 0,
+      "ignoreLayersMask": 0,
+      "reloadable": true,
+      "infiniteAmmo": false,
+      "ammoSetupType": [
+        "ShotGunBulletSetup"
+      ],
+      "weaponComponents": [
+        "AutomaticRifle",
+        "PhotonView",
+        "PlayerClickWeapon",
+        "ShotGunBulletSetup"
+      ],
+      "bulletType": "BulletShotGun",
+      "bulletSource": "Assets/GameObject/BulletShotGun.prefab",
+      "bulletGuid": "b792a05eb83b12f48b57874de9978e98",
+      "bulletSha256": "61018015fd51f7f4ff6a4e92905ed8b6f949a7d896f3d88696ba26aee0a2aaf2",
+      "bulletFileId": 11409266
+    },
+    {
+      "id": "Google2u.Shotgun_SawnOff",
+      "setupType": "ShotgunLevelsSetup",
+      "setupPath": "MainSceneRootNew/Managers/Levels Manager/Weapons/ShotGun_5_SawnOff",
+      "playerWeaponType": "PlayerClickWeapon",
+      "weaponType": "AutomaticRifle",
+      "weaponPath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/Shotgun_6_SawnOff",
+      "muzzlePath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/Shotgun_6_SawnOff/MachinegunMuzzleFlash",
+      "inventoryIndex": 51,
+      "animationFamily": 13,
+      "shotType": 0,
+      "ignoreLayersMask": 0,
+      "reloadable": true,
+      "infiniteAmmo": false,
+      "ammoSetupType": [
+        "ShotGunBulletSetup"
+      ],
+      "weaponComponents": [
+        "AutomaticRifle",
+        "PhotonView",
+        "PlayerClickWeapon",
+        "ShotGunBulletSetup"
+      ],
+      "bulletType": "BulletShotGun",
+      "bulletSource": "Assets/GameObject/BulletShotGun.prefab",
+      "bulletGuid": "b792a05eb83b12f48b57874de9978e98",
+      "bulletSha256": "61018015fd51f7f4ff6a4e92905ed8b6f949a7d896f3d88696ba26aee0a2aaf2",
+      "bulletFileId": 11409266
+    },
+    {
+      "id": "Google2u.Shotgun_Striker",
+      "setupType": "ShotgunLevelsSetup",
+      "setupPath": "MainSceneRootNew/Managers/Levels Manager/Weapons/ShotGun_3_Striker",
+      "playerWeaponType": "PlayerClickWeapon",
+      "weaponType": "AutomaticRifle",
+      "weaponPath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/Shotgun_4_Striker",
+      "muzzlePath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/Shotgun_4_Striker/MachinegunMuzzleFlash",
+      "inventoryIndex": 33,
+      "animationFamily": 13,
+      "shotType": 0,
+      "ignoreLayersMask": 0,
+      "reloadable": true,
+      "infiniteAmmo": false,
+      "ammoSetupType": [
+        "ShotGunBulletSetup"
+      ],
+      "weaponComponents": [
+        "AutomaticRifle",
+        "PhotonView",
+        "PlayerClickWeapon",
+        "ShotGunBulletSetup"
+      ],
+      "bulletType": "BulletShotGun",
+      "bulletSource": "Assets/GameObject/BulletShotGun.prefab",
+      "bulletGuid": "b792a05eb83b12f48b57874de9978e98",
+      "bulletSha256": "61018015fd51f7f4ff6a4e92905ed8b6f949a7d896f3d88696ba26aee0a2aaf2",
+      "bulletFileId": 11409266
+    },
+    {
+      "id": "Google2u.Shotgun_StrikerElite",
+      "setupType": "ShotgunLevelsSetup",
+      "setupPath": "MainSceneRootNew/Managers/Levels Manager/Weapons/ShotGun_6_StrikerElite",
+      "playerWeaponType": "PlayerClickWeapon",
+      "weaponType": "AutomaticRifle",
+      "weaponPath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/Shotgun_7_StrikerElite",
+      "muzzlePath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/Shotgun_7_StrikerElite/MachinegunMuzzleFlash",
+      "inventoryIndex": 54,
+      "animationFamily": 13,
+      "shotType": 0,
+      "ignoreLayersMask": 0,
+      "reloadable": true,
+      "infiniteAmmo": false,
+      "ammoSetupType": [
+        "ShotGunBulletSetup"
+      ],
+      "weaponComponents": [
+        "AutomaticRifle",
+        "PhotonView",
+        "PlayerClickWeapon",
+        "ShotGunBulletSetup"
+      ],
+      "bulletType": "BulletShotGun",
+      "bulletSource": "Assets/GameObject/BulletShotGun.prefab",
+      "bulletGuid": "b792a05eb83b12f48b57874de9978e98",
+      "bulletSha256": "61018015fd51f7f4ff6a4e92905ed8b6f949a7d896f3d88696ba26aee0a2aaf2",
+      "bulletFileId": 11409266
+    },
+    {
+      "id": "Google2u.SniperRifle_AWMF",
+      "setupType": "SniperRifleLevelsSetup",
+      "setupPath": "MainSceneRootNew/Managers/Levels Manager/Weapons/SniperRifle_3_AWM",
+      "playerWeaponType": "PlayerZoomOnTouchWeapon",
+      "weaponType": "OneShotRifle",
+      "weaponPath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/Sniper Rifle_3_AWM-F",
+      "muzzlePath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/Sniper Rifle_3_AWM-F/bulletSpawn",
+      "inventoryIndex": 21,
+      "animationFamily": 10,
+      "shotType": 0,
+      "ignoreLayersMask": 0,
+      "reloadable": true,
+      "infiniteAmmo": false,
+      "ammoSetupType": [
+        "BulletSetup"
+      ],
+      "weaponComponents": [
+        "BulletSetup",
+        "OneShotRifle",
+        "PhotonView",
+        "PlayerZoomOnTouchWeapon"
+      ],
+      "bulletType": "BulletSlow",
+      "bulletSource": "Assets/GameObject/BulletSlow.prefab",
+      "bulletGuid": "855689762fa6e774aaee190652b08c6f",
+      "bulletSha256": "5379f6aba1560b8eb3d7d386d1349454b97ea133163ade9a313e2bc34d1adfae",
+      "bulletFileId": 11409266
+    },
+    {
+      "id": "Google2u.SniperRifle_Dragunov",
+      "setupType": "SniperRifleLevelsSetup",
+      "setupPath": "MainSceneRootNew/Managers/Levels Manager/Weapons/SniperRifle_2_Dragunov",
+      "playerWeaponType": "PlayerZoomOnTouchWeapon",
+      "weaponType": "OneShotRifle",
+      "weaponPath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/Sniper Rifle_2_Dragunov",
+      "muzzlePath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/Sniper Rifle_2_Dragunov/bulletSpawn",
+      "inventoryIndex": 14,
+      "animationFamily": 10,
+      "shotType": 0,
+      "ignoreLayersMask": 0,
+      "reloadable": true,
+      "infiniteAmmo": false,
+      "ammoSetupType": [
+        "BulletSetup"
+      ],
+      "weaponComponents": [
+        "BulletSetup",
+        "OneShotRifle",
+        "PhotonView",
+        "PlayerZoomOnTouchWeapon"
+      ],
+      "bulletType": "BulletSlow",
+      "bulletSource": "Assets/GameObject/BulletSlow.prefab",
+      "bulletGuid": "855689762fa6e774aaee190652b08c6f",
+      "bulletSha256": "5379f6aba1560b8eb3d7d386d1349454b97ea133163ade9a313e2bc34d1adfae",
+      "bulletFileId": 11409266
+    },
+    {
+      "id": "Google2u.SniperRifle_M110",
+      "setupType": "SniperRifleLevelsSetup",
+      "setupPath": "MainSceneRootNew/Managers/Levels Manager/Weapons/SniperRifle_1_M110",
+      "playerWeaponType": "PlayerZoomOnTouchWeapon",
+      "weaponType": "OneShotRifle",
+      "weaponPath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/Sniper Rifle_4_M110",
+      "muzzlePath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/Sniper Rifle_4_M110/bulletSpawn",
+      "inventoryIndex": 10,
+      "animationFamily": 10,
+      "shotType": 0,
+      "ignoreLayersMask": 0,
+      "reloadable": true,
+      "infiniteAmmo": false,
+      "ammoSetupType": [
+        "BulletSetup"
+      ],
+      "weaponComponents": [
+        "BulletSetup",
+        "OneShotRifle",
+        "PhotonView",
+        "PlayerZoomOnTouchWeapon"
+      ],
+      "bulletType": "BulletSlow",
+      "bulletSource": "Assets/GameObject/BulletSlow.prefab",
+      "bulletGuid": "855689762fa6e774aaee190652b08c6f",
+      "bulletSha256": "5379f6aba1560b8eb3d7d386d1349454b97ea133163ade9a313e2bc34d1adfae",
+      "bulletFileId": 11409266
+    },
+    {
+      "id": "Google2u.SniperRifle_M110Elite",
+      "setupType": "SniperRifleLevelsSetup",
+      "setupPath": "MainSceneRootNew/Managers/Levels Manager/Weapons/SniperRifle_7_M110Elite",
+      "playerWeaponType": "PlayerZoomOnTouchWeapon",
+      "weaponType": "OneShotRifle",
+      "weaponPath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/Sniper Rifle_8_M110Elite",
+      "muzzlePath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/Sniper Rifle_8_M110Elite/bulletSpawn",
+      "inventoryIndex": 64,
+      "animationFamily": 10,
+      "shotType": 0,
+      "ignoreLayersMask": 0,
+      "reloadable": true,
+      "infiniteAmmo": false,
+      "ammoSetupType": [
+        "BulletSetup"
+      ],
+      "weaponComponents": [
+        "BulletSetup",
+        "OneShotRifle",
+        "PhotonView",
+        "PlayerZoomOnTouchWeapon"
+      ],
+      "bulletType": "BulletSlow",
+      "bulletSource": "Assets/GameObject/BulletSlow.prefab",
+      "bulletGuid": "855689762fa6e774aaee190652b08c6f",
+      "bulletSha256": "5379f6aba1560b8eb3d7d386d1349454b97ea133163ade9a313e2bc34d1adfae",
+      "bulletFileId": 11409266
+    },
+    {
+      "id": "Google2u.SniperRifle_M24",
+      "setupType": "SniperRifleLevelsSetup",
+      "setupPath": "MainSceneRootNew/Managers/Levels Manager/Weapons/SniperRifle_0_M24",
+      "playerWeaponType": "PlayerZoomOnTouchWeapon",
+      "weaponType": "OneShotRifle",
+      "weaponPath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/Sniper Rifle_1_M24",
+      "muzzlePath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/Sniper Rifle_1_M24/bulletSpawn",
+      "inventoryIndex": 2,
+      "animationFamily": 10,
+      "shotType": 0,
+      "ignoreLayersMask": 0,
+      "reloadable": true,
+      "infiniteAmmo": false,
+      "ammoSetupType": [
+        "BulletSetup"
+      ],
+      "weaponComponents": [
+        "BulletSetup",
+        "OneShotRifle",
+        "PhotonView",
+        "PlayerZoomOnTouchWeapon"
+      ],
+      "bulletType": "BulletSlow",
+      "bulletSource": "Assets/GameObject/BulletSlow.prefab",
+      "bulletGuid": "855689762fa6e774aaee190652b08c6f",
+      "bulletSha256": "5379f6aba1560b8eb3d7d386d1349454b97ea133163ade9a313e2bc34d1adfae",
+      "bulletFileId": 11409266
+    },
+    {
+      "id": "Google2u.SniperRifle_M90",
+      "setupType": "SniperRifleLevelsSetup",
+      "setupPath": "MainSceneRootNew/Managers/Levels Manager/Weapons/SniperRifle_4_M90",
+      "playerWeaponType": "PlayerZoomOnTouchWeapon",
+      "weaponType": "OneShotRifle",
+      "weaponPath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/Sniper Rifle_5_M90",
+      "muzzlePath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/Sniper Rifle_5_M90/bulletSpawn",
+      "inventoryIndex": 32,
+      "animationFamily": 10,
+      "shotType": 0,
+      "ignoreLayersMask": 0,
+      "reloadable": true,
+      "infiniteAmmo": false,
+      "ammoSetupType": [
+        "BulletSetup"
+      ],
+      "weaponComponents": [
+        "BulletSetup",
+        "OneShotRifle",
+        "PhotonView",
+        "PlayerZoomOnTouchWeapon"
+      ],
+      "bulletType": "BulletSlow",
+      "bulletSource": "Assets/GameObject/BulletSlow.prefab",
+      "bulletGuid": "855689762fa6e774aaee190652b08c6f",
+      "bulletSha256": "5379f6aba1560b8eb3d7d386d1349454b97ea133163ade9a313e2bc34d1adfae",
+      "bulletFileId": 11409266
+    },
+    {
+      "id": "Google2u.SniperRifle_M90Elite",
+      "setupType": "SniperRifleLevelsSetup",
+      "setupPath": "MainSceneRootNew/Managers/Levels Manager/Weapons/SniperRifle_5_M90Elite",
+      "playerWeaponType": "PlayerZoomOnTouchWeapon",
+      "weaponType": "OneShotRifle",
+      "weaponPath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/Sniper Rifle_6_M90Elite",
+      "muzzlePath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/Sniper Rifle_6_M90Elite/bulletSpawn",
+      "inventoryIndex": 46,
+      "animationFamily": 10,
+      "shotType": 0,
+      "ignoreLayersMask": 0,
+      "reloadable": true,
+      "infiniteAmmo": false,
+      "ammoSetupType": [
+        "BulletSetup"
+      ],
+      "weaponComponents": [
+        "BulletSetup",
+        "OneShotRifle",
+        "PhotonView",
+        "PlayerZoomOnTouchWeapon"
+      ],
+      "bulletType": "BulletSlow",
+      "bulletSource": "Assets/GameObject/BulletSlow.prefab",
+      "bulletGuid": "855689762fa6e774aaee190652b08c6f",
+      "bulletSha256": "5379f6aba1560b8eb3d7d386d1349454b97ea133163ade9a313e2bc34d1adfae",
+      "bulletFileId": 11409266
+    },
+    {
+      "id": "Google2u.SniperRifle_MSR",
+      "setupType": "SniperRifleLevelsSetup",
+      "setupPath": "MainSceneRootNew/Managers/Levels Manager/Weapons/SniperRifle_6_MSR",
+      "playerWeaponType": "PlayerZoomOnTouchWeapon",
+      "weaponType": "OneShotRifle",
+      "weaponPath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/Sniper Rifle_7_MSR",
+      "muzzlePath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/gunSnap/GameObject/Sniper Rifle_7_MSR/bulletSpawn",
+      "inventoryIndex": 59,
+      "animationFamily": 10,
+      "shotType": 0,
+      "ignoreLayersMask": 0,
+      "reloadable": true,
+      "infiniteAmmo": false,
+      "ammoSetupType": [
+        "BulletSetup"
+      ],
+      "weaponComponents": [
+        "BulletSetup",
+        "OneShotRifle",
+        "PhotonView",
+        "PlayerZoomOnTouchWeapon"
+      ],
+      "bulletType": "BulletSlow",
+      "bulletSource": "Assets/GameObject/BulletSlow.prefab",
+      "bulletGuid": "855689762fa6e774aaee190652b08c6f",
+      "bulletSha256": "5379f6aba1560b8eb3d7d386d1349454b97ea133163ade9a313e2bc34d1adfae",
+      "bulletFileId": 11409266
+    }
+  ]
+}

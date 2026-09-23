@@ -8,6 +8,41 @@ using UnityEngine;
 
 public class PhotonConnectionManager : Singleton<PhotonConnectionManager>
 {
+	private static SelfHostedBattleClient GetActiveSelfHostedClient()
+	{
+		SelfHostedBattleClient client = UnityEngine.Object.FindObjectOfType<SelfHostedBattleClient>();
+		return client != null && client.PhotonCompatibility != null && client.PhotonCompatibility.IsConnected ? client : null;
+	}
+
+	public static bool IsSelfHostedActive => GetActiveSelfHostedClient() != null;
+
+	public static double GetNetworkTime()
+	{
+		SelfHostedBattleClient selfHosted = GetActiveSelfHostedClient();
+		if (selfHosted != null && selfHosted.State != null)
+			return selfHosted.State.ServerTick / 30.0;
+		return PhotonNetwork.time;
+	}
+
+	public static int GetPlayerCount()
+	{
+		SelfHostedBattleClient selfHosted = GetActiveSelfHostedClient();
+		if (selfHosted != null && selfHosted.State != null)
+			return selfHosted.State.Players.Count;
+		return PhotonNetwork.room == null ? 0 : PhotonNetwork.room.playerCount;
+	}
+
+	public static string GetBattleId()
+	{
+		SelfHostedBattleClient selfHosted = GetActiveSelfHostedClient();
+		if (selfHosted != null && selfHosted.State != null)
+			return selfHosted.State.MatchId;
+		if (PhotonNetwork.room == null || PhotonNetwork.room.customProperties == null)
+			return string.Empty;
+		object value;
+		return PhotonNetwork.room.customProperties.TryGetValue("battleID", out value) ? value as string ?? string.Empty : string.Empty;
+	}
+
 	private static RoomConnection mCurrentRoomConnection;
 
 	private int mJoinAttemtCounter;
@@ -54,7 +89,15 @@ public class PhotonConnectionManager : Singleton<PhotonConnectionManager>
 		}
 	}
 
-	public static bool isInRoom => PhotonNetwork.connected && PhotonNetwork.inRoom && PhotonNetwork.room != null;
+	public static bool isInRoom
+	{
+		get
+		{
+			SelfHostedBattleClient selfHosted = GetActiveSelfHostedClient();
+			if (selfHosted != null) return true;
+			return PhotonNetwork.connected && PhotonNetwork.inRoom && PhotonNetwork.room != null;
+		}
+	}
 
 	public static InternetConnection connection => (InternetConnection)Application.internetReachability;
 
@@ -158,6 +201,12 @@ public class PhotonConnectionManager : Singleton<PhotonConnectionManager>
 
 	public static void ConnectToPhotonSafe(CloudRegionCode? region = null)
 	{
+		SelfHostedBattleClient selfHosted = GetActiveSelfHostedClient();
+		if (selfHosted != null)
+		{
+			Debug.Log("PhotonConnectionManager: self-hosted room already owns the connection");
+			return;
+		}
 		switch (Singleton<BeanstalkServerManager>.instance.environment)
 		{
 		case DatabaseEnvironment.Production:
@@ -288,6 +337,18 @@ public class PhotonConnectionManager : Singleton<PhotonConnectionManager>
 		Singleton<GameController>.instance.BroadcastMessage("OnJoinedNewRoom", SendMessageOptions.DontRequireReceiver);
 	}
 
+	public void CompleteSelfHostedJoin()
+	{
+		SelfHostedBattleClient selfHosted = GetActiveSelfHostedClient();
+		if (selfHosted == null || selfHosted.State == null || string.IsNullOrEmpty(selfHosted.LocalPlayerId))
+			throw new InvalidOperationException("A connected self-hosted roster is required.");
+		mCurrentRoomConnection = null;
+		mRoomName = selfHosted.State.MatchId;
+		isClient = selfHosted.State.Players.Count == 0 || selfHosted.State.Players[0].PlayerId != selfHosted.LocalPlayerId;
+		MatchManager.matchState = MatchState.WaitingForOpponent;
+		SendOnJoinedNewRoom();
+	}
+
 	private void CreateOrJoinRoom()
 	{
 		if (PhotonNetwork.connectionState == ConnectionState.Connected)
@@ -341,6 +402,12 @@ public class PhotonConnectionManager : Singleton<PhotonConnectionManager>
 	public static void JoinOfflineGame()
 	{
 		Debug.Log("PhotonConnectionManager: JoinOfflineGame");
+		SelfHostedBattleClient selfHosted = GetActiveSelfHostedClient();
+		if (selfHosted != null)
+		{
+			Debug.Log("PhotonConnectionManager: self-hosted session owns offline-compatible room state");
+			return;
+		}
 		Singleton<PhotonConnectionManager>.instance.StopAllCoroutines();
 		Singleton<PhotonConnectionManager>.instance.isClient = false;
 		PhotonNetwork.offlineMode = true;
@@ -351,6 +418,12 @@ public class PhotonConnectionManager : Singleton<PhotonConnectionManager>
 	public static void Disconnect()
 	{
 		Debug.Log("PhotonConnectionManager: Disconnect");
+		SelfHostedBattleClient selfHosted = GetActiveSelfHostedClient();
+		if (selfHosted != null)
+		{
+			selfHosted.PhotonCompatibility.Disconnect();
+			return;
+		}
 		Singleton<PhotonConnectionManager>.instance.StopAllCoroutines();
 		PhotonNetwork.Disconnect();
 	}
@@ -377,6 +450,13 @@ public class PhotonConnectionManager : Singleton<PhotonConnectionManager>
 
 	public void ConnectToRoom(CloudRegionCode best, string roomName, float connectionDelay)
 	{
+		if (GetActiveSelfHostedClient() != null)
+		{
+			mRoomName = roomName;
+			isClient = true;
+			Debug.Log("PhotonConnectionManager: self-hosted room owns the join");
+			return;
+		}
 		isClient = true;
 		mCurrentRoomConnection = new RoomConnectionInvite();
 		mRoomName = roomName;
@@ -388,6 +468,11 @@ public class PhotonConnectionManager : Singleton<PhotonConnectionManager>
 
 	public void ConnnectToRandomRoom(CloudRegionCode best, float connectionDelay)
 	{
+		if (GetActiveSelfHostedClient() != null)
+		{
+			Debug.Log("PhotonConnectionManager: self-hosted room owns random matchmaking");
+			return;
+		}
 		mRoomName = GetNewRoomName();
 		mShouldCreateRoom = false;
 		mJoinAttemtCounter = 1;
@@ -401,6 +486,11 @@ public class PhotonConnectionManager : Singleton<PhotonConnectionManager>
 
 	public void ConnnectToRandomRoomWarArena(float connectionDelay)
 	{
+		if (GetActiveSelfHostedClient() != null)
+		{
+			Debug.Log("PhotonConnectionManager: self-hosted room owns War Arena matchmaking");
+			return;
+		}
 		mRoomName = GetNewRoomName();
 		mShouldCreateRoom = false;
 		mJoinAttemtCounter = 1;
@@ -416,6 +506,11 @@ public class PhotonConnectionManager : Singleton<PhotonConnectionManager>
 	public void ReconnectToRoom()
 	{
 		Debug.Log($"Reconnect to room: {mRoomName}");
+		if (GetActiveSelfHostedClient() != null)
+		{
+			Debug.Log("PhotonConnectionManager: self-hosted room owns reconnect");
+			return;
+		}
 		PhotonNetwork.JoinRoom(mRoomName);
 	}
 

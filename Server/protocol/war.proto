@@ -9,6 +9,9 @@ message PlayerProfile { string player_id = 1; string display_name = 2; string lo
 message AccountSession { string access_token = 1; int64 expires_unix_seconds = 2; PlayerProfile player = 3; }
 message ErrorResponse { string code = 1; string message = 2; }
 message ConnectionRequest { string protocol = 1; }
+message MatchGrantRequest { string match_id = 1; }
+message MatchQueueRequest {}
+message MatchQueueReply { string code = 1; string match_id = 2; repeated string player_ids = 3; }
 message ConnectionGrant {
   string host = 1; uint32 port = 2; string ticket = 3;
   bytes session_key = 4; uint64 session_id = 5; int64 expires_unix_seconds = 6;
@@ -31,6 +34,11 @@ message Packet {
   oneof body {
     ClientHello hello = 10; ServerHello welcome = 11; Ping ping = 12; Pong pong = 13; Disconnect disconnect = 14;
     MatchHello match_hello = 20; MatchCommand match_command = 21; MatchReply match_reply = 22;
+    MatchEventPoll match_event_poll = 23; MatchEventBatch match_event_batch = 24;
+    MatchBarrelPoll match_barrel_poll = 25; MatchBarrelBatch match_barrel_batch = 26;
+    MatchArmyPoll match_army_poll = 27; MatchArmyBatch match_army_batch = 28;
+    MatchArmyEntityPoll match_army_entity_poll = 29;
+    MatchArmyEntityBatch match_army_entity_batch = 30;
   }
 }
 
@@ -48,6 +56,17 @@ message MatchConnectionGrant {
   string host = 1; uint32 port = 2; string ticket = 3; bytes session_key = 4;
   uint64 session_id = 5; string match_id = 6; string player_id = 7;
   string manifest_hash = 8; int64 expires_unix_seconds = 9;
+  // Backend-owned recovered profile/loadout view for both roster members.
+  repeated BattlePlayerView player_views = 10;
+}
+message BattleWeaponView { int32 slot = 1; int32 weapon_index = 2; string source_id = 3; int32 upgrade_index = 4; }
+message BattleUnitView { string source_id = 1; int32 upgrade_index = 2; int32 special_index = 3; int32 elite_index = 4; int32 tier = 5; }
+message BattlePlayerView {
+  string player_id = 1; string display_name = 2; int32 level = 3; int32 army_power = 4;
+  int32 skill = 5; int32 league_medals = 6; int32 beginners_league = 7;
+  string league_id = 8; string country = 9; bool is_vip = 10;
+  repeated string visual_ids = 11; repeated BattleWeaponView weapons = 12; repeated BattleUnitView units = 13;
+  int32 fraction = 14; int32 defend_position = 15;
 }
 enum BattlePhase {
   BATTLE_PHASE_UNSPECIFIED = 0; BATTLE_PHASE_WAITING = 1;
@@ -57,9 +76,35 @@ enum BattlePhase {
 message ReadyCommand { string manifest_hash = 1; }
 message FireCommand { float target_x = 1; float target_y = 2; float target_z = 3; }
 message ReloadCommand {}
+message SwitchWeaponCommand { int32 slot = 1; }
 message ForfeitCommand {}
 message PollMatch {}
 message MoveCoverCommand { int32 direction = 1; }
+message DeployArmyCommand { int32 option_index = 1; }
+message SelectCardsCommand {
+  repeated string card_ids = 1;
+  // The recovered FinishChoosingCardsRPC also carries the selected unit
+  // upgrade lanes and buddy-card payload. These are explicit typed fields;
+  // opaque upgradesJson is never trusted by the host.
+  repeated int32 normal_upgrade_indexes = 2;
+  repeated int32 special_upgrade_indexes = 3;
+  repeated int32 elite_upgrade_indexes = 4;
+  repeated string buddy_card_ids = 5;
+}
+message VehicleAttackCommand { uint64 entity_id = 1; string target_player_id = 2; float target_x = 3; float target_y = 4; float target_z = 5; }
+message MinigunHoldCommand { bool pressed = 1; float target_x = 2; float target_y = 3; float target_z = 4; }
+message SniperAimCommand { bool pressed = 1; bool cancelled = 2; float target_x = 3; float target_y = 4; float target_z = 5; }
+message BazookaHoldCommand { bool pressed = 1; float target_x = 2; float target_y = 3; float target_z = 4; }
+message GrenadeThrowCommand {
+  // False selects the recovered M320 click-target path. True selects the
+  // PlayerSwipeWeapon path; the host derives the target from world-plane
+  // endpoints and held time instead of accepting client throw strength.
+  bool swipe = 1;
+  float target_x = 2; float target_y = 3; float target_z = 4;
+  float swipe_start_x = 5; float swipe_start_y = 6; float swipe_start_z = 7;
+  float swipe_end_x = 8; float swipe_end_y = 9; float swipe_end_z = 10;
+  float held_seconds = 11;
+}
 message MatchCommand {
   // Stop-and-wait per participant. Retry identical command_id with a NEW packet
   // sequence. Poll uses id zero and does not advance the mutation sequence.
@@ -67,7 +112,71 @@ message MatchCommand {
   oneof intent {
     ReadyCommand ready = 10; FireCommand fire = 11; ReloadCommand reload = 12;
     ForfeitCommand forfeit = 13; PollMatch poll = 14; MoveCoverCommand move_cover = 15;
+    DeployArmyCommand deploy_army = 16;
+    VehicleAttackCommand vehicle_attack = 17;
+    SelectCardsCommand select_cards = 18;
+    SwitchWeaponCommand switch_weapon = 19;
+    MinigunHoldCommand minigun_hold = 20;
+    SniperAimCommand sniper_aim = 21;
+    BazookaHoldCommand bazooka_hold = 22;
+    GrenadeThrowCommand grenade_throw = 23;
   }
+}
+// Presentation of the actual sampled collision pose, not a client authority input.
+// Clip IDs are fixed independently of the recovered WeaponType enum.
+enum RiflePoseClip {
+  RIFLE_POSE_CLIP_UNSPECIFIED = 0; RIFLE_POSE_CLIP_IDLE = 1;
+  RIFLE_POSE_CLIP_LOOK_LEFT = 2; RIFLE_POSE_CLIP_FIRE_LEFT = 3;
+  RIFLE_POSE_CLIP_HIDE_LEFT = 4; RIFLE_POSE_CLIP_LOOK_RIGHT = 5;
+  RIFLE_POSE_CLIP_FIRE_RIGHT = 6; RIFLE_POSE_CLIP_HIDE_RIGHT = 7;
+  RIFLE_POSE_CLIP_LOOK_LEFT_QBZ = 8; RIFLE_POSE_CLIP_FIRE_LEFT_QBZ = 9;
+  RIFLE_POSE_CLIP_HIDE_LEFT_QBZ = 10; RIFLE_POSE_CLIP_LOOK_RIGHT_QBZ = 11;
+  RIFLE_POSE_CLIP_FIRE_RIGHT_QBZ = 12; RIFLE_POSE_CLIP_HIDE_RIGHT_QBZ = 13;
+  RIFLE_POSE_CLIP_LOOK_LEFT_QBZ2 = 14; RIFLE_POSE_CLIP_FIRE_LEFT_QBZ2 = 15;
+  RIFLE_POSE_CLIP_HIDE_LEFT_QBZ2 = 16; RIFLE_POSE_CLIP_LOOK_RIGHT_QBZ2 = 17;
+  RIFLE_POSE_CLIP_FIRE_RIGHT_QBZ2 = 18; RIFLE_POSE_CLIP_HIDE_RIGHT_QBZ2 = 19;
+  RIFLE_POSE_CLIP_LOOK_LEFT_SHOTGUN = 20; RIFLE_POSE_CLIP_FIRE_LEFT_SHOTGUN = 21;
+  RIFLE_POSE_CLIP_HIDE_LEFT_SHOTGUN = 22; RIFLE_POSE_CLIP_LOOK_RIGHT_SHOTGUN = 23;
+  RIFLE_POSE_CLIP_FIRE_RIGHT_SHOTGUN = 24; RIFLE_POSE_CLIP_HIDE_RIGHT_SHOTGUN = 25;
+  RIFLE_POSE_CLIP_RUN = 26; RIFLE_POSE_CLIP_QBZ_RUN = 27;
+  RIFLE_POSE_CLIP_QBZ2_RUN = 28; RIFLE_POSE_CLIP_SHOTGUNNER_RUN = 29;
+  RIFLE_POSE_CLIP_SHOOT_ADDITIVE = 30;
+  RIFLE_POSE_CLIP_LOOK_LEFT_PISTOL = 31; RIFLE_POSE_CLIP_FIRE_LEFT_PISTOL = 32;
+  RIFLE_POSE_CLIP_HIDE_LEFT_PISTOL = 33; RIFLE_POSE_CLIP_LOOK_RIGHT_PISTOL = 34;
+  RIFLE_POSE_CLIP_FIRE_RIGHT_PISTOL = 35; RIFLE_POSE_CLIP_HIDE_RIGHT_PISTOL = 36;
+  RIFLE_POSE_CLIP_PISTOL_RUN = 37;
+  RIFLE_POSE_CLIP_LOOK_LEFT_MINIGUN = 38; RIFLE_POSE_CLIP_FIRE_LEFT_MINIGUN = 39;
+  RIFLE_POSE_CLIP_HIDE_LEFT_MINIGUN = 40; RIFLE_POSE_CLIP_LOOK_RIGHT_MINIGUN = 41;
+  RIFLE_POSE_CLIP_FIRE_RIGHT_MINIGUN = 42; RIFLE_POSE_CLIP_HIDE_RIGHT_MINIGUN = 43;
+  RIFLE_POSE_CLIP_MINIGUN_RUN = 44; RIFLE_POSE_CLIP_MINIGUN_IDLE = 45;
+  RIFLE_POSE_CLIP_LOOK_LEFT_SNIPER = 46; RIFLE_POSE_CLIP_FIRE_LEFT_SNIPER = 47;
+  RIFLE_POSE_CLIP_HIDE_LEFT_SNIPER = 48; RIFLE_POSE_CLIP_LOOK_RIGHT_SNIPER = 49;
+  RIFLE_POSE_CLIP_FIRE_RIGHT_SNIPER = 50; RIFLE_POSE_CLIP_HIDE_RIGHT_SNIPER = 51;
+  RIFLE_POSE_CLIP_SNIPER_RUN = 52; RIFLE_POSE_CLIP_SNIPER_IDLE = 53;
+  RIFLE_POSE_CLIP_BAZOOKA_UNCOVER_LEFT = 54; RIFLE_POSE_CLIP_BAZOOKA_SHOOT_LEFT = 55;
+  RIFLE_POSE_CLIP_BAZOOKA_UNCOVER_RIGHT = 56; RIFLE_POSE_CLIP_BAZOOKA_SHOOT_RIGHT = 57;
+  RIFLE_POSE_CLIP_BAZOOKA_RUN = 58; RIFLE_POSE_CLIP_BAZOOKA_IDLE = 59;
+  RIFLE_POSE_CLIP_GRENADE_THROW_LEFT = 60; RIFLE_POSE_CLIP_GRENADE_THROW_RIGHT = 61;
+  RIFLE_POSE_CLIP_GRENADE_RUN = 62; RIFLE_POSE_CLIP_GRENADE_IDLE = 63;
+  RIFLE_POSE_CLIP_GRENADE_LAUNCHER_LOOK_LEFT = 64; RIFLE_POSE_CLIP_GRENADE_LAUNCHER_FIRE_LEFT = 65;
+  RIFLE_POSE_CLIP_GRENADE_LAUNCHER_HIDE_LEFT = 66; RIFLE_POSE_CLIP_GRENADE_LAUNCHER_LOOK_RIGHT = 67;
+  RIFLE_POSE_CLIP_GRENADE_LAUNCHER_FIRE_RIGHT = 68; RIFLE_POSE_CLIP_GRENADE_LAUNCHER_HIDE_RIGHT = 69;
+  RIFLE_POSE_CLIP_GRENADE_LAUNCHER_RUN = 70; RIFLE_POSE_CLIP_GRENADE_LAUNCHER_IDLE = 71;
+}
+message PoseRotation { float x = 1; float y = 2; float z = 3; float w = 4; }
+message RiflePoseLayer {
+  RiflePoseClip clip = 1; double seconds = 2; float weight = 3; bool loop = 4;
+}
+message RifleUpperBodyLayer { float seconds = 1; float weight = 2; }
+message RiflePoseState {
+  uint64 sampled_tick = 1;
+  // One to four layers; source samples are held at 30 Hz before local rig blending.
+  repeated RiflePoseLayer layers = 2;
+  PoseRotation root_rotation = 3; PoseRotation body_local_rotation = 4;
+  // Absent means retain the animation's upper-body rotation.
+  PoseRotation upper_local_rotation = 5;
+  // Optional legacy layer-4 Blend clip, mixed only over upperBody descendants.
+  RifleUpperBodyLayer upper_body_layer = 6;
 }
 message BattlePlayerState {
   string player_id = 1; bool admitted = 2; bool ready = 3;
@@ -76,6 +185,76 @@ message BattlePlayerState {
   uint64 shots_fired = 8; uint64 last_command_id = 9;
   int32 cover_index = 10; float position_x = 11; float position_y = 12; float position_z = 13;
   bool moving = 14; uint64 move_end_tick = 15; string last_geometry_hit = 16;
+  // False means no validated player combat definition was provisioned.
+  bool combat_enabled = 17; float health = 18; float max_health = 19; bool dead = 20;
+  uint64 damage_revision = 21;
+  // Absent in the synthetic weapon prototype. Frozen with terminal match state.
+  RiflePoseState rifle_pose = 22;
+  // Credited only after a host projectile resolves against an opposing player.
+  uint32 confirmed_player_hits = 23; uint32 confirmed_player_kills = 24;
+  bool reconnecting = 25; uint32 reconnect_attempts = 26;
+  // Host wall tick, distinct from paused simulation server_tick.
+  uint64 reconnect_deadline_host_tick = 27;
+  // Host-confirmed entity transitions, not optimistic deployment-click stats.
+  uint32 confirmed_army_spawns = 28; uint32 confirmed_army_losses = 29;
+  // Confirmed opposing player or shield projectile impacts. Other source hit targets await collision authority.
+  uint32 confirmed_enemy_hits = 30;
+  repeated string selected_card_ids = 31;
+  bool cards_selected = 32;
+  repeated int32 normal_upgrade_indexes = 33;
+  repeated int32 special_upgrade_indexes = 34;
+  repeated int32 elite_upgrade_indexes = 35;
+  repeated string selected_buddy_card_ids = 36;
+  int32 active_weapon_slot = 37;
+  reserved 38;
+  bool minigun_held = 39;
+  bool sniper_aiming = 40;
+  bool sniper_scope_visible = 41;
+  bool bazooka_targeting = 42;
+}
+message BattleShieldState {
+  int32 cover_index = 1; int32 owner_fraction = 2;
+  float health = 3; float max_health = 4; bool destroyed = 5;
+  uint64 revision = 6;
+}
+message BattleBarrelState {
+  // Map-scoped collider index; source scene and revision come from the manifest.
+  int32 collider_index = 1; float health = 2; bool destroyed = 3;
+  uint32 revision = 4; int32 game_object_file_id = 5;
+}
+message MatchBarrelPoll {}
+message MatchBarrelBatch {
+  string match_id = 1; string manifest_hash = 2; uint64 state_revision = 3;
+  // Zero count means this match has no signed scene-master barrel authority.
+  uint32 source_count = 4; float max_health = 5;
+  repeated BattleBarrelState changed = 6;
+}
+// Authenticated read of only this participant's host-selected army hand.
+message MatchArmyPoll {}
+message MatchArmyBatch {
+  string match_id = 1; string manifest_hash = 2; uint64 state_revision = 3;
+  // "army-offers", "army-unavailable", "army-not-running", or "army-disabled".
+  string code = 4; repeated int32 option_indexes = 5;
+  int32 energy = 6; uint64 next_deploy_tick = 7;
+  int32 active_count = 8; int32 pending_count = 9;
+}
+message BattleArmyEntityState {
+  uint64 entity_key = 1; string owner_player_id = 2; int32 owner_fraction = 3;
+  int32 local_entity_id = 4; int32 option_index = 5; string unit_id = 6;
+  int32 spawn_component_file_id = 7; int32 reservation_file_id = 8;
+  float x = 9; float y = 10; float z = 11; uint64 spawn_tick = 12;
+  // Both zero only when the allocator has not supplied complete health authority.
+  float max_health = 13; float health = 14;
+  // Position sample time; movement does not consume the paged roster revision.
+  uint64 position_tick = 15;
+}
+// Full active-entity projection, paged to remain below the UDP MTU.
+message MatchArmyEntityPoll { uint64 after_entity_key = 1; uint64 expected_revision = 2; }
+message MatchArmyEntityBatch {
+  string match_id = 1; string manifest_hash = 2; uint64 revision = 3;
+  string code = 4; uint32 active_count = 5; bool has_more = 6;
+  repeated BattleArmyEntityState entities = 7;
+  uint64 server_tick = 8;
 }
 message MatchSnapshot {
   string match_id = 1; string manifest_hash = 2; BattlePhase phase = 3;
@@ -84,7 +263,121 @@ message MatchSnapshot {
   string winner_player_id = 8; string terminal_reason = 9;
   // Prototype result only: cannot be used as a reward/settlement receipt.
   bool reward_eligible = 10;
+  // Orders mutations within the same simulation tick; replay receipts retain it.
+  uint64 state_revision = 11;
+  // Present only when both trusted participant ranks enable shield authority.
+  repeated BattleShieldState shields = 12;
+  // Nonzero only while simulation is paused for a disconnected participant.
+  uint64 pause_host_tick = 13;
+  repeated BattleAirEntityState air_entities = 14;
+  repeated BattleDeployableState deployables = 15;
+  repeated BattleCardEffectState card_effects = 16;
+  repeated BattleObjectiveProgress objective_progress = 17;
+  bool overtime = 18;
+  BattleArenaState arena = 19;
+  BattleCoopState coop = 20;
+  uint32 card_activations = 21; uint32 objective_credits = 22;
+  repeated string ribbon_ids = 23;
+  uint64 performance_duration_ticks = 24;
+  repeated BattleVehicleState vehicles = 25;
+  // Current host-owned projectile transforms for Client-only presentation.
+  // Damage and collision remain entirely authoritative on the Worker.
+  repeated BattleProjectileState projectiles = 26;
+}
+message BattleProjectileState {
+  uint64 projectile_id = 1; string owner_player_id = 2; string kind = 3;
+  float x = 4; float y = 5; float z = 6;
+  float velocity_x = 7; float velocity_y = 8; float velocity_z = 9;
+}
+message BattleAirEntityState {
+  uint64 entity_key = 1; string owner_player_id = 2;
+  float x = 3; float y = 4; float z = 5;
+  float health = 6; float max_health = 7;
+}
+message BattleVehicleState {
+  uint64 entity_id = 1; string unit_id = 2; string owner_player_id = 3; uint32 generation = 4;
+  float x = 5; float y = 6; float z = 7;
+  int32 attack_phase = 8; int32 cooldown_ticks = 9;
+  float health = 10; float max_health = 11;
+  repeated BattleVehiclePartState parts = 12;
+}
+message BattleVehiclePartState {
+  string part_id = 1; float health = 2; float max_health = 3; string passenger_player_id = 4;
+}
+message BattleDeployableState {
+  int32 entity_id = 1; string owner_player_id = 2; string card_id = 3;
+  float x = 4; float y = 5; float z = 6;
+  int32 state = 7; int32 remaining_ticks = 8;
+  int32 charges = 9; int32 cooldown_ticks = 10;
+}
+message BattleCardEffectState {
+  string effect_id = 1; string owner_player_id = 2; string card_id = 3;
+  int32 kind = 4; float x = 5; float y = 6; float z = 7;
+  uint64 started_tick = 8; uint64 expires_tick = 9;
+}
+message BattleObjectiveProgress {
+  string player_id = 1; int32 kind = 2; int32 progress = 3; int32 target = 4; bool complete = 5;
+}
+message BattleArenaState {
+  string event_id = 1; string player_id = 2; int32 lives = 3; int32 wins = 4;
+  bool terminal = 5; uint64 revision = 6;
+}
+message BattleCoopState {
+  int32 wave = 1; int32 total_waves = 2; uint64 deadline_tick = 3;
+  bool started = 4; bool failed = 5; bool completed = 6;
+  repeated string participant_ids = 7;
+  bool heroic = 8; bool enemies_enraged = 9; bool no_respawn = 10;
 }
 message MatchReply {
   uint64 command_id = 1; string code = 2; MatchSnapshot snapshot = 3;
+}
+// Separate from the maximum-width state snapshot. A cursor acknowledges only
+// events this participant has already processed; replay is match-owned.
+message MatchEventPoll { uint64 after_event_id = 1; }
+enum MatchEventKind {
+  MATCH_EVENT_KIND_UNSPECIFIED = 0; MATCH_EVENT_KIND_SHOT = 1;
+  MATCH_EVENT_KIND_IMPACT = 2; MATCH_EVENT_KIND_PLAYER_DEATH = 3;
+  MATCH_EVENT_KIND_TERMINAL = 4;
+  MATCH_EVENT_KIND_SHIELD_DAMAGED = 5;
+  MATCH_EVENT_KIND_SHIELD_DESTROYED = 6;
+  MATCH_EVENT_KIND_SHIELD_REPAIRED = 7;
+  MATCH_EVENT_KIND_BARREL_DAMAGED = 8;
+  MATCH_EVENT_KIND_BARREL_DESTROYED = 9;
+  MATCH_EVENT_KIND_PLAYER_EXPLOSION_DAMAGED = 10;
+  MATCH_EVENT_KIND_ARMY_SPAWNED = 11;
+  MATCH_EVENT_KIND_ARMY_DIED = 12;
+  MATCH_EVENT_KIND_OVERTIME_STARTED = 13;
+  MATCH_EVENT_KIND_AIR_SPAWNED = 14;
+  MATCH_EVENT_KIND_AIR_DESPAWNED = 15;
+  MATCH_EVENT_KIND_DEPLOYABLE_SPAWNED = 16;
+  MATCH_EVENT_KIND_DEPLOYABLE_DESPAWNED = 17;
+  MATCH_EVENT_KIND_CARD_EFFECT_APPLIED = 18;
+  MATCH_EVENT_KIND_CARD_EFFECT_EXPIRED = 19;
+  MATCH_EVENT_KIND_OBJECTIVE_PROGRESS = 20;
+  MATCH_EVENT_KIND_ARENA_SETTLED = 21;
+  MATCH_EVENT_KIND_VEHICLE_SPAWNED = 22;
+  MATCH_EVENT_KIND_VEHICLE_DESTROYED = 23;
+}
+message MatchEvent {
+  uint64 event_id = 1; uint64 tick = 2; MatchEventKind kind = 3;
+  string actor_id = 4; string target_id = 5; uint64 projectile_id = 6;
+  float x = 7; float y = 8; float z = 9; float health = 10; string reason = 11;
+  // Defined only for shield lifecycle events (including cover index zero).
+  int32 shield_cover_index = 12;
+  // Present on barrel lifecycle events; zero is a valid collider index.
+  int32 barrel_collider_index = 13; int32 barrel_game_object_file_id = 14;
+  // -1 for the direct shot, otherwise the barrel whose blast caused this hit.
+  int32 source_barrel_collider_index = 15;
+  uint32 barrel_revision = 16;
+  // Army spawn records identify the host entity and exact source spawn point.
+  int32 army_entity_id = 17; int32 army_option_index = 18;
+  string army_unit_id = 19; int32 army_spawn_component_file_id = 20;
+  int32 army_reservation_file_id = 21;
+  string army_energy_recipient_id = 22;
+}
+message MatchEventBatch {
+  string match_id = 1; string manifest_hash = 2;
+  uint64 latest_event_id = 3; repeated MatchEvent events = 4;
+  // events, invalid-cursor, cursor-expired. Never silently skip history.
+  string code = 5;
 }

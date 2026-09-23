@@ -52,6 +52,13 @@ public class WeaponInventory : Core_BaseScript
 			{
 				return;
 			}
+			SelfHostedBattleClient selfHosted = UnityEngine.Object.FindObjectOfType<SelfHostedBattleClient>();
+			if (selfHosted != null && selfHosted.IsConnected)
+			{
+				for (int i = 0; i < usedWeapons.Count; i++)
+					if (usedWeapons[i] == value) { selfHosted.RequestWeaponSwitch(i); return; }
+				return;
+			}
 			currentWeapon.gameObject.SetActive(value: false);
 			for (int i = 0; i < usedWeapons.Count; i++)
 			{
@@ -76,6 +83,19 @@ public class WeaponInventory : Core_BaseScript
 	}
 
 	public event Action<PlayerWeapon> SelectedWeaponChanged;
+
+	public void ApplySelfHostedSelection(int index)
+	{
+		if (usedWeapons == null || index < 0 || index >= usedWeapons.Count)
+			throw new InvalidOperationException("Invalid authoritative weapon selection.");
+		if (weaponIndex == index) return;
+		currentWeapon.gameObject.SetActive(value: false);
+		currentWeapon.isActiveWeapon = false;
+		weaponIndex = index;
+		currentWeapon.gameObject.SetActive(value: true);
+		currentWeapon.isActiveWeapon = true;
+		if (SelectedWeaponChanged != null) SelectedWeaponChanged(currentWeapon);
+	}
 
 	protected override void Awake()
 	{

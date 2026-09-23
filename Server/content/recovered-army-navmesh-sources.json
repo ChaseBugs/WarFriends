@@ -1,0 +1,46 @@
+{
+  "version": 1,
+  "unityVersion": "2018.3.0f2",
+  "maps": [
+    {
+      "scene": "Assets/Scenes/Aztec_Multiplayer.unity",
+      "sceneSha256": "50b3077f1898189cbf40c2232771175b85eec0f03737901373da377faf95291e",
+      "navMeshGuid": "e72e96ed1e782b445bed551468c6af06",
+      "navMeshAsset": "Assets/NavMeshData/NavMesh_5.asset",
+      "navMeshBytes": 284592,
+      "navMeshSha256": "f71ab5c2270b18dd2951afd9bad01b6e5e6912d116054738783bddf90a536e97"
+    },
+    {
+      "scene": "Assets/Scenes/City_Multiplayer.unity",
+      "sceneSha256": "acaf878b188dbc17fca6795b5db7e9c7797b91dee0fcb6fb02d5e85d7cc11c4f",
+      "navMeshGuid": "f35df82efb048ac489b2e6176fdb2c93",
+      "navMeshAsset": "Assets/NavMeshData/NavMesh_8.asset",
+      "navMeshBytes": 149072,
+      "navMeshSha256": "c49428e53b87031710105511954a48cd75c3a5d8fe0a03b16f38768cd860b220"
+    },
+    {
+      "scene": "Assets/Scenes/Desert_Multiplayer.unity",
+      "sceneSha256": "d2acaeb238fb2dfdcfb0e1bb69a52628798498f7b6992ecf9418a727360368c1",
+      "navMeshGuid": "66b4c5515c164c94a96cc1412b81fc73",
+      "navMeshAsset": "Assets/NavMeshData/NavMesh_2.asset",
+      "navMeshBytes": 137920,
+      "navMeshSha256": "8e7359b292c5eea574dea1b3d471259244b759a33b673de1d10a75db387a134c"
+    },
+    {
+      "scene": "Assets/Scenes/Park_Multiplayer.unity",
+      "sceneSha256": "09b2c084ef5da6707fbebd4261a60baa0f12e24fef31efc4c6d4671b721e70ed",
+      "navMeshGuid": "7e987acde51ffdd4a952b46a8056342b",
+      "navMeshAsset": "Assets/NavMeshData/NavMesh_6.asset",
+      "navMeshBytes": 189348,
+      "navMeshSha256": "d4baa1ff07ec051a4c26362d178e564636d530aee4c6b688b3dba205c72ad99b"
+    },
+    {
+      "scene": "Assets/Scenes/Snow_Multiplayer.unity",
+      "sceneSha256": "67291457da28646c9ce377f3812d1bf0fa5332bfe664f58a4430a823744e6f21",
+      "navMeshGuid": "d160354a618954444bb25e2468e2801c",
+      "navMeshAsset": "Assets/NavMeshData/NavMesh_4.asset",
+      "navMeshBytes": 209292,
+      "navMeshSha256": "876f7f26eea20ec1c72b190e64bd4e5f7e1b5e8a3c67139d4032b5bfba5e0950"
+    }
+  ]
+}

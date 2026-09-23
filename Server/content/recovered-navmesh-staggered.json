@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "unityVersion": "2018.3.0f2",
+  "pathManifestSha256": "01b639934246803fb9f2afddd4a4852725bf54c2ad9d87327cea8abc94c2c550",
+  "navMeshSha256": "d4baa1ff07ec051a4c26362d178e564636d530aee4c6b688b3dba205c72ad99b",
+  "inputSha256": "fc5d401ef719a93b6d3946122147a84ee20902ffdc12b96b217350ad5e1d25a8",
+  "resultSha256": "8309fe3bac6874019d35af4c33ba2110a9b90068d1a4ad417e120741c2db573a",
+  "cases": [
+    "3443-3567",
+    "3443-3177"
+  ],
+  "spawnDelayFrames": 9,
+  "initialPlanarSeparation": 0.18276378759406994,
+  "minimumPostFourFrameSeparation": 0.3848442531347381,
+  "sampleCounts": [
+    450,
+    441
+  ]
+}

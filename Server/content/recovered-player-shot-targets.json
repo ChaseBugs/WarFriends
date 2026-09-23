@@ -1,0 +1,119 @@
+{
+  "version": 1,
+  "source": "Assets/Scenes/MainScene.unity",
+  "sceneSha256": "d46f81ff8c3e12bf17f34a1f53dd601bd799102c9f984818031441dfb7a5de43",
+  "players": [
+    {
+      "role": "gameplay",
+      "componentFileId": 43898,
+      "targets": [
+        {
+          "transformFileId": 17937,
+          "type": 1,
+          "path": "MainSceneRootNew/Player/shotTarget",
+          "referencePosition": [
+            99.95554545763446,
+            0.42348912253490534,
+            99.67618270276888
+          ]
+        },
+        {
+          "transformFileId": 17936,
+          "type": 1,
+          "path": "MainSceneRootNew/Player/shotTarget",
+          "referencePosition": [
+            99.95072551137798,
+            0.42348912253490534,
+            100.28028015491441
+          ]
+        },
+        {
+          "transformFileId": 17935,
+          "type": 2,
+          "path": "MainSceneRootNew/Player/shotTarget",
+          "referencePosition": [
+            100.16736795890607,
+            0.21744982157104367,
+            99.99142930704393
+          ]
+        },
+        {
+          "transformFileId": 17927,
+          "type": 16,
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002",
+          "referencePosition": [
+            100.01190670131453,
+            0.25527235098632617,
+            99.99957318629068
+          ]
+        },
+        {
+          "transformFileId": 17926,
+          "type": 8,
+          "path": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003/shotTargetHead",
+          "referencePosition": [
+            99.91928163258846,
+            0.40390668563961957,
+            100.00085653800541
+          ]
+        }
+      ]
+    },
+    {
+      "role": "rendering",
+      "componentFileId": 46543,
+      "targets": [
+        {
+          "transformFileId": 23469,
+          "type": 1,
+          "path": "MainSceneRootNew/ArmyUnitRig/player texture camera/Player For Rendering/shotTarget",
+          "referencePosition": [
+            5009.174140265514,
+            -2000.1952380399998,
+            2.675503184486938
+          ]
+        },
+        {
+          "transformFileId": 23468,
+          "type": 1,
+          "path": "MainSceneRootNew/ArmyUnitRig/player texture camera/Player For Rendering/shotTarget",
+          "referencePosition": [
+            5008.570042843944,
+            -2000.1952380399998,
+            2.670683435326863
+          ]
+        },
+        {
+          "transformFileId": 23467,
+          "type": 2,
+          "path": "MainSceneRootNew/ArmyUnitRig/player texture camera/Player For Rendering/shotTarget",
+          "referencePosition": [
+            5008.858893747035,
+            -2000.4012773299999,
+            2.8873257772073093
+          ]
+        },
+        {
+          "transformFileId": 23459,
+          "type": 16,
+          "path": "MainSceneRootNew/ArmyUnitRig/player texture camera/Player For Rendering/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002",
+          "referencePosition": [
+            5008.850749817566,
+            -2000.3634548025973,
+            2.7318645305418627
+          ]
+        },
+        {
+          "transformFileId": 23458,
+          "type": 8,
+          "path": "MainSceneRootNew/ArmyUnitRig/player texture camera/Player For Rendering/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003/shotTargetHead",
+          "referencePosition": [
+            5008.849466435739,
+            -2000.2148204758532,
+            2.6392394671627857
+          ]
+        }
+      ]
+    }
+  ]
+}

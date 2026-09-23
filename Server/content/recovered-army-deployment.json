@@ -1,0 +1,797 @@
+{
+  "version": 1,
+  "sceneSha256": "d46f81ff8c3e12bf17f34a1f53dd601bd799102c9f984818031441dfb7a5de43",
+  "runtimeRule": "SpawningManagerDeathMatch.InstanceOnPlayerDataLoaded replaces serialized unitsCounts with ArmyUpgrades.SPAWNS and reindexes all options",
+  "maxEnergy": 8.0,
+  "sendUnitsBaseCooldown": 1.0,
+  "infantryAgent": {
+    "prefabSha256": "64b4db85d1c9a0bd46a690a86102a22f66feeab8d4157a4c87824ac3d5dbeb54",
+    "radius": 0.17,
+    "acceleration": 10.0,
+    "angularSpeed": 600.0,
+    "height": 0.52,
+    "stoppingDistance": 0.0,
+    "autoBraking": true,
+    "autoRepath": true,
+    "obstacleAvoidanceType": 1
+  },
+  "families": [
+    {
+      "behaviorFileId": 35664,
+      "behaviorType": "SoldierBehaviourAssaulter",
+      "upgradeSlotsFileId": 41084,
+      "unitId": "ID_UNIT-ASSAULT",
+      "sheetRow": "Google2u.DBUpgradeSlotsAssaulter",
+      "unitType": 0,
+      "spawnPointMask": 1,
+      "maxGeneratedCount": 0,
+      "baseSpeed": 0.9,
+      "movementSpeed": 0.9,
+      "isSoldier": true,
+      "isAir": false,
+      "options": [
+        {
+          "index": 0,
+          "count": 2,
+          "power": 2,
+          "cooldown": 2.0
+        },
+        {
+          "index": 1,
+          "count": 4,
+          "power": 4,
+          "cooldown": 4.0
+        }
+      ]
+    },
+    {
+      "behaviorFileId": 43871,
+      "behaviorType": "HelicopterBehaviour",
+      "upgradeSlotsFileId": 35538,
+      "unitId": "ID_UNIT-HELICOPTER",
+      "sheetRow": "Google2u.DBUpgradeSlotsHelicopter",
+      "unitType": 0,
+      "spawnPointMask": 0,
+      "maxGeneratedCount": 1,
+      "baseSpeed": 0.8,
+      "vehicleShot": {
+        "shotSpeed": 5.0,
+        "probabilityOfRealShot": 1.0,
+        "fireBatchSizeMin": 0,
+        "fireBatchSizeMax": 0,
+        "minShootTime": 0.0,
+        "maxShootTime": 0.0,
+        "crew": 0.0
+      },
+      "movementSpeed": 3.0,
+      "isSoldier": false,
+      "isAir": true,
+      "options": [
+        {
+          "index": 2,
+          "count": 1,
+          "power": 4,
+          "cooldown": 8.0
+        }
+      ]
+    },
+    {
+      "behaviorFileId": 48630,
+      "behaviorType": "CarBehaviour",
+      "upgradeSlotsFileId": 48353,
+      "unitId": "ID_UNIT-HUMVEE",
+      "sheetRow": "Google2u.DBUpgradeSlotsCar",
+      "unitType": 0,
+      "spawnPointMask": 0,
+      "maxGeneratedCount": 1,
+      "baseSpeed": 0.8,
+      "vehicleShot": {
+        "shotSpeed": 5.0,
+        "probabilityOfRealShot": 1.0,
+        "fireBatchSizeMin": 0,
+        "fireBatchSizeMax": 0,
+        "minShootTime": 0.0,
+        "maxShootTime": 0.0,
+        "crew": 0
+      },
+      "movementSpeed": 1.7,
+      "isSoldier": false,
+      "isAir": false,
+      "options": [
+        {
+          "index": 3,
+          "count": 1,
+          "power": 4,
+          "cooldown": 8.0
+        }
+      ]
+    },
+    {
+      "behaviorFileId": 43123,
+      "behaviorType": "SoldierBehaviourSniper",
+      "upgradeSlotsFileId": 38465,
+      "unitId": "ID_UNIT-SNIPER",
+      "sheetRow": "Google2u.DBUpgradeSlotsSniper",
+      "unitType": 2,
+      "spawnPointMask": 1,
+      "maxGeneratedCount": 4,
+      "baseSpeed": 0.9,
+      "movementSpeed": 0.9,
+      "isSoldier": true,
+      "isAir": false,
+      "options": [
+        {
+          "index": 4,
+          "count": 1,
+          "power": 1,
+          "cooldown": 1.0
+        },
+        {
+          "index": 5,
+          "count": 2,
+          "power": 2,
+          "cooldown": 2.0
+        },
+        {
+          "index": 6,
+          "count": 4,
+          "power": 4,
+          "cooldown": 4.0
+        }
+      ]
+    },
+    {
+      "behaviorFileId": 42012,
+      "behaviorType": "SoldierBehaviourBazooka",
+      "upgradeSlotsFileId": 47815,
+      "unitId": "ID_UNIT-ROCKETSOLDIER",
+      "sheetRow": "Google2u.DBUpgradeSlotsShotgunner",
+      "unitType": 1,
+      "spawnPointMask": 1,
+      "maxGeneratedCount": 2,
+      "baseSpeed": 0.8,
+      "movementSpeed": 1.0,
+      "isSoldier": true,
+      "isAir": false,
+      "options": [
+        {
+          "index": 7,
+          "count": 1,
+          "power": 2,
+          "cooldown": 2.0
+        },
+        {
+          "index": 8,
+          "count": 2,
+          "power": 4,
+          "cooldown": 4.0
+        }
+      ]
+    },
+    {
+      "behaviorFileId": 39312,
+      "behaviorType": "DroneBehaviour",
+      "upgradeSlotsFileId": 40715,
+      "unitId": "ID_UNIT-DRONE",
+      "sheetRow": "Google2u.DBUpgradeSlotsDrone",
+      "unitType": 0,
+      "spawnPointMask": 0,
+      "maxGeneratedCount": 2,
+      "baseSpeed": 0.8,
+      "vehicleShot": {
+        "shotSpeed": 5.0,
+        "probabilityOfRealShot": 0.75,
+        "fireBatchSizeMin": 0,
+        "fireBatchSizeMax": 0,
+        "minShootTime": 0.0,
+        "maxShootTime": 0.0,
+        "crew": 0
+      },
+      "movementSpeed": 0.87,
+      "isSoldier": false,
+      "isAir": true,
+      "options": [
+        {
+          "index": 9,
+          "count": 1,
+          "power": 2,
+          "cooldown": 4.0
+        },
+        {
+          "index": 10,
+          "count": 2,
+          "power": 4,
+          "cooldown": 8.0
+        }
+      ]
+    },
+    {
+      "behaviorFileId": 46839,
+      "behaviorType": "SoldierBehaviourShotgunner",
+      "upgradeSlotsFileId": 47605,
+      "unitId": "ID_UNIT-SHOTGUNNER",
+      "sheetRow": "Google2u.DBUpgradeSlotsShotgunner",
+      "unitType": 3,
+      "spawnPointMask": 1,
+      "maxGeneratedCount": 2,
+      "baseSpeed": 1.0,
+      "baseShot": {
+        "probabilityOfRealShot": 1.0,
+        "fireBatchSizeMin": 1,
+        "fireBatchSizeMax": 4,
+        "minShootTime": 1.0,
+        "maxShootTime": 5.0
+      },
+      "movementSpeed": 1.0,
+      "isSoldier": true,
+      "isAir": false,
+      "options": [
+        {
+          "index": 11,
+          "count": 1,
+          "power": 2,
+          "cooldown": 2.0
+        },
+        {
+          "index": 12,
+          "count": 2,
+          "power": 4,
+          "cooldown": 4.0
+        }
+      ]
+    },
+    {
+      "behaviorFileId": 49788,
+      "behaviorType": "SoldierBehaviourGrennader",
+      "upgradeSlotsFileId": 47098,
+      "unitId": "ID_UNIT-GRENADIER",
+      "sheetRow": "Google2u.DBUpgradeSlotsShotgunner",
+      "unitType": 1,
+      "spawnPointMask": 1,
+      "maxGeneratedCount": 4,
+      "baseSpeed": 0.8,
+      "movementSpeed": 1.0,
+      "isSoldier": true,
+      "isAir": false,
+      "options": [
+        {
+          "index": 13,
+          "count": 1,
+          "power": 2,
+          "cooldown": 2.0
+        },
+        {
+          "index": 14,
+          "count": 2,
+          "power": 4,
+          "cooldown": 4.0
+        }
+      ]
+    },
+    {
+      "behaviorFileId": 38324,
+      "behaviorType": "SoldierBehaviourParachuter",
+      "upgradeSlotsFileId": 37642,
+      "unitId": "ID_UNIT-PARATROOPER",
+      "sheetRow": "Google2u.DBUpgradeSlotsShotgunner",
+      "unitType": 3,
+      "spawnPointMask": 1,
+      "maxGeneratedCount": 2,
+      "baseSpeed": 0.8,
+      "baseShot": {
+        "probabilityOfRealShot": 0.7,
+        "fireBatchSizeMin": 1,
+        "fireBatchSizeMax": 4,
+        "minShootTime": 1.0,
+        "maxShootTime": 4.0
+      },
+      "movementSpeed": 1.0,
+      "isSoldier": true,
+      "isAir": false,
+      "options": [
+        {
+          "index": 15,
+          "count": 1,
+          "power": 2,
+          "cooldown": 2.0
+        },
+        {
+          "index": 16,
+          "count": 2,
+          "power": 4,
+          "cooldown": 4.0
+        }
+      ]
+    },
+    {
+      "behaviorFileId": 38536,
+      "behaviorType": "SoldierBehaviourSwat",
+      "upgradeSlotsFileId": 41234,
+      "unitId": "ID_UNIT-SWAT",
+      "sheetRow": "Google2u.DBUpgradeSlotsShotgunner",
+      "unitType": 3,
+      "spawnPointMask": 1,
+      "maxGeneratedCount": 2,
+      "baseSpeed": 0.9,
+      "baseShot": {
+        "probabilityOfRealShot": 0.5,
+        "fireBatchSizeMin": 1,
+        "fireBatchSizeMax": 4,
+        "minShootTime": 1.0,
+        "maxShootTime": 6.0
+      },
+      "movementSpeed": 1.0,
+      "isSoldier": true,
+      "isAir": false,
+      "options": [
+        {
+          "index": 17,
+          "count": 1,
+          "power": 2,
+          "cooldown": 2.0
+        },
+        {
+          "index": 18,
+          "count": 2,
+          "power": 4,
+          "cooldown": 4.0
+        }
+      ]
+    },
+    {
+      "behaviorFileId": 44495,
+      "behaviorType": "TankBehaviour",
+      "upgradeSlotsFileId": 39547,
+      "unitId": "ID_UNIT-TANK",
+      "sheetRow": "Google2u.DBUpgradeSlotsTank",
+      "unitType": 1,
+      "spawnPointMask": 0,
+      "maxGeneratedCount": 1,
+      "baseSpeed": 0.8,
+      "vehicleShot": {
+        "shotSpeed": 5.0,
+        "probabilityOfRealShot": 1.0,
+        "fireBatchSizeMin": 0,
+        "fireBatchSizeMax": 0,
+        "minShootTime": 0.0,
+        "maxShootTime": 0.0,
+        "crew": 0
+      },
+      "movementSpeed": 1.0,
+      "isSoldier": false,
+      "isAir": false,
+      "options": [
+        {
+          "index": 19,
+          "count": 1,
+          "power": 4,
+          "cooldown": 8.0
+        }
+      ]
+    },
+    {
+      "behaviorFileId": 41873,
+      "behaviorType": "SoldierBehaviourMinigunner",
+      "upgradeSlotsFileId": 45363,
+      "unitId": "ID_UNIT-MINIGUNNER",
+      "sheetRow": "Google2u.DBUpgradeSlotsShotgunner",
+      "unitType": 2,
+      "spawnPointMask": 1,
+      "maxGeneratedCount": 2,
+      "baseSpeed": 0.9,
+      "movementSpeed": 1.0,
+      "isSoldier": true,
+      "isAir": false,
+      "options": [
+        {
+          "index": 20,
+          "count": 1,
+          "power": 2,
+          "cooldown": 2.0
+        },
+        {
+          "index": 21,
+          "count": 2,
+          "power": 4,
+          "cooldown": 4.0
+        }
+      ]
+    },
+    {
+      "behaviorFileId": 48221,
+      "behaviorType": "SoldierBehaviourEngineer",
+      "upgradeSlotsFileId": 45393,
+      "unitId": "ID_UNIT-ENGINEER",
+      "sheetRow": "Google2u.DBUpgradeSlotsShotgunner",
+      "unitType": 0,
+      "spawnPointMask": 1,
+      "maxGeneratedCount": 2,
+      "baseSpeed": 0.9,
+      "movementSpeed": 1.0,
+      "isSoldier": true,
+      "isAir": false,
+      "options": [
+        {
+          "index": 22,
+          "count": 1,
+          "power": 2,
+          "cooldown": 2.0
+        },
+        {
+          "index": 23,
+          "count": 2,
+          "power": 4,
+          "cooldown": 4.0
+        }
+      ]
+    },
+    {
+      "behaviorFileId": 38275,
+      "behaviorType": "SoldierBehaviourMachineGunner",
+      "upgradeSlotsFileId": 38248,
+      "unitId": "ID_UNIT-MACHINEGUNNER",
+      "sheetRow": "Google2u.DBUpgradeSlotsMachineGunner",
+      "unitType": 2,
+      "spawnPointMask": 1,
+      "maxGeneratedCount": 6,
+      "baseSpeed": 0.8,
+      "movementSpeed": 0.8,
+      "isSoldier": true,
+      "isAir": false,
+      "options": [
+        {
+          "index": 24,
+          "count": 1,
+          "power": 1,
+          "cooldown": 1.0
+        },
+        {
+          "index": 25,
+          "count": 2,
+          "power": 2,
+          "cooldown": 2.0
+        },
+        {
+          "index": 26,
+          "count": 3,
+          "power": 3,
+          "cooldown": 3.0
+        }
+      ]
+    },
+    {
+      "behaviorFileId": 37224,
+      "behaviorType": "SoldierBehaviourSciFi",
+      "upgradeSlotsFileId": 40597,
+      "unitId": "ID_UNIT-SCIFI",
+      "sheetRow": "Google2u.DBUpgradeSlotsSciFi",
+      "unitType": 1,
+      "spawnPointMask": 1,
+      "maxGeneratedCount": 2,
+      "baseSpeed": 0.8,
+      "movementSpeed": 0.8,
+      "isSoldier": true,
+      "isAir": false,
+      "options": [
+        {
+          "index": 27,
+          "count": 1,
+          "power": 2,
+          "cooldown": 2.0
+        },
+        {
+          "index": 28,
+          "count": 2,
+          "power": 4,
+          "cooldown": 4.0
+        }
+      ]
+    },
+    {
+      "behaviorFileId": 47666,
+      "behaviorType": "CarBuggyBehaviour",
+      "upgradeSlotsFileId": 42879,
+      "unitId": "ID_UNIT-BUGGY",
+      "sheetRow": "Google2u.DBUpgradeSlotsCarBuggy",
+      "unitType": 1,
+      "spawnPointMask": 0,
+      "maxGeneratedCount": 1,
+      "baseSpeed": 0.8,
+      "vehicleShot": {
+        "shotSpeed": 5.0,
+        "probabilityOfRealShot": 1.0,
+        "fireBatchSizeMin": 0,
+        "fireBatchSizeMax": 0,
+        "minShootTime": 0.0,
+        "maxShootTime": 0.0,
+        "crew": 0
+      },
+      "movementSpeed": 1.7,
+      "isSoldier": false,
+      "isAir": false,
+      "options": [
+        {
+          "index": 29,
+          "count": 1,
+          "power": 4,
+          "cooldown": 8.0
+        }
+      ]
+    },
+    {
+      "behaviorFileId": 39067,
+      "behaviorType": "AssaultHelicopterBehaviour",
+      "upgradeSlotsFileId": 37896,
+      "unitId": "ID_UNIT-ASSAULTHELI",
+      "sheetRow": "Google2u.DBUpgradeSlotsDrone",
+      "unitType": 2,
+      "spawnPointMask": 0,
+      "maxGeneratedCount": 1,
+      "baseSpeed": 0.8,
+      "vehicleShot": {
+        "shotSpeed": 5.0,
+        "probabilityOfRealShot": 1.0,
+        "fireBatchSizeMin": 0,
+        "fireBatchSizeMax": 0,
+        "minShootTime": 0.0,
+        "maxShootTime": 0.0,
+        "crew": 0
+      },
+      "movementSpeed": 0.87,
+      "isSoldier": false,
+      "isAir": true,
+      "options": [
+        {
+          "index": 30,
+          "count": 1,
+          "power": 2,
+          "cooldown": 4.0
+        },
+        {
+          "index": 31,
+          "count": 2,
+          "power": 4,
+          "cooldown": 8.0
+        }
+      ]
+    },
+    {
+      "behaviorFileId": 37382,
+      "behaviorType": "CarTransporterBehaviour",
+      "upgradeSlotsFileId": 46993,
+      "unitId": "ID_UNIT-TRANSPORTER",
+      "sheetRow": "Google2u.DBUpgradeSlotsTransporter",
+      "unitType": 2,
+      "spawnPointMask": 0,
+      "maxGeneratedCount": 1,
+      "baseSpeed": 0.8,
+      "vehicleShot": {
+        "shotSpeed": 5.0,
+        "probabilityOfRealShot": 1.0,
+        "fireBatchSizeMin": 0,
+        "fireBatchSizeMax": 0,
+        "minShootTime": 0.0,
+        "maxShootTime": 0.0,
+        "crew": 0
+      },
+      "movementSpeed": 1.7,
+      "isSoldier": false,
+      "isAir": false,
+      "options": [
+        {
+          "index": 32,
+          "count": 1,
+          "power": 4,
+          "cooldown": 8.0
+        }
+      ]
+    },
+    {
+      "behaviorFileId": 48623,
+      "behaviorType": "SoldierBehaviourFlamethrower",
+      "upgradeSlotsFileId": 48639,
+      "unitId": "ID_UNIT-FLAMETHROWER",
+      "sheetRow": "Google2u.DBUpgradeSlotsFlamethrower",
+      "unitType": 3,
+      "spawnPointMask": 1,
+      "maxGeneratedCount": 2,
+      "baseSpeed": 1.0,
+      "baseShot": {
+        "probabilityOfRealShot": 1.0,
+        "fireBatchSizeMin": 1,
+        "fireBatchSizeMax": 4,
+        "minShootTime": 1.0,
+        "maxShootTime": 5.0
+      },
+      "movementSpeed": 1.0,
+      "isSoldier": true,
+      "isAir": false,
+      "options": [
+        {
+          "index": 33,
+          "count": 1,
+          "power": 2,
+          "cooldown": 2.0
+        },
+        {
+          "index": 34,
+          "count": 2,
+          "power": 4,
+          "cooldown": 4.0
+        }
+      ]
+    },
+    {
+      "behaviorFileId": 47747,
+      "behaviorType": "SoldierBehaviourCommando",
+      "upgradeSlotsFileId": 38345,
+      "unitId": "ID_UNIT-COMMANDO",
+      "sheetRow": "Google2u.DBUpgradeSlotsCommando",
+      "unitType": 3,
+      "spawnPointMask": 1,
+      "maxGeneratedCount": 2,
+      "baseSpeed": 1.0,
+      "baseShot": {
+        "probabilityOfRealShot": 1.0,
+        "fireBatchSizeMin": 1,
+        "fireBatchSizeMax": 4,
+        "minShootTime": 1.0,
+        "maxShootTime": 5.0
+      },
+      "movementSpeed": 1.0,
+      "isSoldier": true,
+      "isAir": false,
+      "options": [
+        {
+          "index": 35,
+          "count": 1,
+          "power": 2,
+          "cooldown": 2.0
+        },
+        {
+          "index": 36,
+          "count": 2,
+          "power": 4,
+          "cooldown": 4.0
+        }
+      ]
+    },
+    {
+      "behaviorFileId": 36243,
+      "behaviorType": "SoldierBehaviourGunslinger",
+      "upgradeSlotsFileId": 39910,
+      "unitId": "ID_UNIT-GUNSLINGER",
+      "sheetRow": "Google2u.DBUpgradeSlotsGrennader",
+      "unitType": 0,
+      "spawnPointMask": 1,
+      "maxGeneratedCount": 2,
+      "baseSpeed": 0.8,
+      "movementSpeed": 0.8,
+      "isSoldier": true,
+      "isAir": false,
+      "options": [
+        {
+          "index": 37,
+          "count": 1,
+          "power": 1,
+          "cooldown": 1.0
+        },
+        {
+          "index": 38,
+          "count": 2,
+          "power": 2,
+          "cooldown": 2.0
+        },
+        {
+          "index": 39,
+          "count": 3,
+          "power": 3,
+          "cooldown": 3.0
+        }
+      ]
+    },
+    {
+      "behaviorFileId": 41188,
+      "behaviorType": "SoldierBehaviourMortar",
+      "upgradeSlotsFileId": 39857,
+      "unitId": "ID_UNIT-MORTAR",
+      "sheetRow": "Google2u.DBUpgradeSlotsGrennader",
+      "unitType": 1,
+      "spawnPointMask": 1,
+      "maxGeneratedCount": 2,
+      "baseSpeed": 0.8,
+      "movementSpeed": 0.8,
+      "isSoldier": true,
+      "isAir": false,
+      "options": [
+        {
+          "index": 40,
+          "count": 1,
+          "power": 1,
+          "cooldown": 1.0
+        },
+        {
+          "index": 41,
+          "count": 2,
+          "power": 2,
+          "cooldown": 2.0
+        },
+        {
+          "index": 42,
+          "count": 3,
+          "power": 3,
+          "cooldown": 3.0
+        }
+      ]
+    },
+    {
+      "behaviorFileId": 44715,
+      "behaviorType": "SoldierBehaviourWarper",
+      "upgradeSlotsFileId": 46145,
+      "unitId": "ID_UNIT-WARPER",
+      "sheetRow": "Google2u.DBUpgradeSlotsGrennader",
+      "unitType": 3,
+      "spawnPointMask": 1,
+      "maxGeneratedCount": 2,
+      "baseSpeed": 0.8,
+      "baseShot": {
+        "probabilityOfRealShot": 0.7,
+        "fireBatchSizeMin": 1,
+        "fireBatchSizeMax": 4,
+        "minShootTime": 1.0,
+        "maxShootTime": 6.0
+      },
+      "movementSpeed": 0.8,
+      "isSoldier": true,
+      "isAir": false,
+      "options": [
+        {
+          "index": 43,
+          "count": 1,
+          "power": 1,
+          "cooldown": 1.0
+        },
+        {
+          "index": 44,
+          "count": 2,
+          "power": 2,
+          "cooldown": 2.0
+        },
+        {
+          "index": 45,
+          "count": 3,
+          "power": 3,
+          "cooldown": 3.0
+        }
+      ]
+    },
+    {
+      "behaviorFileId": 45572,
+      "behaviorType": "MechBehaviour",
+      "upgradeSlotsFileId": 48446,
+      "unitId": "ID_UNIT-MECH",
+      "sheetRow": "Google2u.DBUpgradeSlotsMech",
+      "unitType": 2,
+      "spawnPointMask": 0,
+      "maxGeneratedCount": 2,
+      "baseSpeed": 0.8,
+      "movementSpeed": 0.4,
+      "isSoldier": false,
+      "isAir": false,
+      "options": [
+        {
+          "index": 46,
+          "count": 1,
+          "power": 2,
+          "cooldown": 4.0
+        },
+        {
+          "index": 47,
+          "count": 2,
+          "power": 4,
+          "cooldown": 8.0
+        }
+      ]
+    }
+  ]
+}

@@ -121,6 +121,53 @@ public sealed class SavedPlayerVisualSlot
 }
 
 /// <summary>
+/// Mirrors <c>CardManager.CardManagerData</c>. Only <c>cardData</c> is written by anything this
+/// server implements (<c>BuyCardPack</c>); <c>buddyCardData</c>/<c>nextWithdraw</c>/
+/// <c>nextBuddyDeposit</c>/<c>extraSlot</c> belong to Squad card-pool features (deposit/withdraw,
+/// buddy cards) that remain deprioritized — modeled here anyway, not left opaque, so a future write
+/// from this same round-trip never silently drops them.
+/// </summary>
+public sealed class CardManagerData
+{
+    [JsonPropertyName("cardData")] public Dictionary<string, SavedCardData> CardData { get; set; } = [];
+    [JsonPropertyName("buddyCardData")] public Dictionary<string, SavedBuddyCardData> BuddyCardData { get; set; } = [];
+    [JsonPropertyName("nextWithdraw")] public int NextWithdraw { get; set; }
+    [JsonPropertyName("nextBuddyDeposit")] public int NextBuddyDeposit { get; set; }
+    [JsonPropertyName("extraSlot")] public bool ExtraSlot { get; set; }
+}
+
+/// <summary>Mirrors <c>CardManager.CardData</c> — just a running count, no per-card unlock threshold.</summary>
+public sealed class SavedCardData
+{
+    [JsonPropertyName("amount")] public int Amount { get; set; }
+}
+
+/// <summary>Mirrors <c>CardManager.BuddyCardData</c>. Not written by anything implemented yet.</summary>
+public sealed class SavedBuddyCardData
+{
+    [JsonPropertyName("amount")] public int Amount { get; set; }
+    [JsonPropertyName("buddyName")] public string? BuddyName { get; set; }
+    [JsonPropertyName("equippedVisuals")] public Dictionary<int, SavedPlayerVisualSlot> EquippedVisuals { get; set; } = [];
+    [JsonPropertyName("unityType")] public int UnitType { get; set; }
+    [JsonPropertyName("primaryWeapon")] public int PrimaryWeapon { get; set; }
+    [JsonPropertyName("secondaryWeapon")] public int SecondaryWeapon { get; set; }
+    [JsonPropertyName("armypower")] public int ArmyPower { get; set; }
+    [JsonPropertyName("level")] public int Level { get; set; }
+}
+
+/// <summary>
+/// Mirrors <c>CardCraftingManager.CraftData</c>. <c>cards</c> holds exactly the 3 card ids fed into
+/// <c>CraftCard</c> while a craft is in progress; <c>isCrafting</c> in the client is
+/// <c>cards.Count &gt; 0 &amp;&amp; start &lt; end</c>, reproduced the same way server-side.
+/// </summary>
+public sealed class CraftData
+{
+    [JsonPropertyName("cards")] public List<string> Cards { get; set; } = [];
+    [JsonPropertyName("start")] public int Start { get; set; }
+    [JsonPropertyName("end")] public int End { get; set; }
+}
+
+/// <summary>
 /// Mirrors <c>SettingsManager.Settings</c> — the notification toggles sent by <c>UpdateSettings</c>
 /// (action 165) as a JSON string in the <c>Settings</c> field, and stored under this same simple
 /// name as a <c>DatabaseSerializedObjectGeneric&lt;Settings&gt;</c> blob.

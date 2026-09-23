@@ -56,16 +56,21 @@ public class PlayerZoomOnTouchWeapon : PlayerWeapon
 			mBotWillShoot = false;
 			if (!isActiveWeapon && base.playerController.isCurrentPlayer)
 			{
-				Singleton<SniperScope>.instance.Hide();
+				SniperScope instance = Singleton<SniperScope>.instance;
+				if (instance != null) instance.Hide();
 			}
 			if (isActiveWeapon && base.playerController.isCurrentPlayer)
 			{
-				Singleton<SniperScope>.instance.SetScope(scopeNum);
+				SniperScope instance2 = Singleton<SniperScope>.instance;
+				if (instance2 != null) instance2.SetScope(scopeNum);
 				mIsAiming = false;
 			}
 			if (value)
 			{
-				mCollisionPlane = new Plane(Vector3.up, base.playerController.currentPlayerPoint.point.transform.position);
+				Vector3 position = base.playerController.transform.position;
+				if (base.playerController.currentPlayerPoint != null && base.playerController.currentPlayerPoint.point != null)
+					position = base.playerController.currentPlayerPoint.point.transform.position;
+				mCollisionPlane = new Plane(Vector3.up, position);
 			}
 		}
 	}

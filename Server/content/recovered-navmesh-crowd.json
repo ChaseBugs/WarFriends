@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "unityVersion": "2018.3.0f2",
+  "pathManifestSha256": "01b639934246803fb9f2afddd4a4852725bf54c2ad9d87327cea8abc94c2c550",
+  "navMeshSha256": "d4baa1ff07ec051a4c26362d178e564636d530aee4c6b688b3dba205c72ad99b",
+  "infantryPrefabSha256": "64b4db85d1c9a0bd46a690a86102a22f66feeab8d4157a4c87824ac3d5dbeb54",
+  "inputSha256": "098d091d5e31dd3ff152af9815fd8c7dd7fe85c5ecf48211cab02c509c265b48",
+  "resultSha256": "ef53bdaa67debdf32e2be8ac04ab1d06970fbe1e1a258bc48577f09ed5de5564",
+  "cases": [
+    "3251-3551",
+    "3443-3429"
+  ],
+  "sampleCountPerAgent": 479,
+  "minimumPlanarSeparation": 0.39439982552951264
+}

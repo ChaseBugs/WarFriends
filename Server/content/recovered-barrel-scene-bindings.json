@@ -1,0 +1,296 @@
+{
+  "client": "1.4.0",
+  "maps": [
+    {
+      "source": "Assets/Scenes/Aztec_Multiplayer.unity",
+      "sha256": "50b3077f1898189cbf40c2232771175b85eec0f03737901373da377faf95291e",
+      "barrels": [
+        {
+          "colliderIndex": 103,
+          "gameObjectFileId": 266,
+          "colliderFileId": 1984,
+          "barrelFileId": 2196,
+          "destroyableFileId": 2193,
+          "shotCoefficient": 1.0,
+          "sourcePath": "LevelRootAztec/aztec_map/GameObject/barrelAztec"
+        },
+        {
+          "colliderIndex": 104,
+          "gameObjectFileId": 179,
+          "colliderFileId": 1983,
+          "barrelFileId": 2331,
+          "destroyableFileId": 2194,
+          "shotCoefficient": 1.0,
+          "sourcePath": "LevelRootAztec/aztec_map/GameObject/barrelAztec"
+        },
+        {
+          "colliderIndex": 105,
+          "gameObjectFileId": 70,
+          "colliderFileId": 1982,
+          "barrelFileId": 2685,
+          "destroyableFileId": 2195,
+          "shotCoefficient": 1.0,
+          "sourcePath": "LevelRootAztec/aztec_map/GameObject/barrelAztec"
+        }
+      ]
+    },
+    {
+      "source": "Assets/Scenes/City_Multiplayer.unity",
+      "sha256": "acaf878b188dbc17fca6795b5db7e9c7797b91dee0fcb6fb02d5e85d7cc11c4f",
+      "barrels": [
+        {
+          "colliderIndex": 201,
+          "gameObjectFileId": 60,
+          "colliderFileId": 2507,
+          "barrelFileId": 3234,
+          "destroyableFileId": 2822,
+          "shotCoefficient": 1.0,
+          "sourcePath": "LevelRoot/CityMap/Barrels/barrelDesert 1"
+        },
+        {
+          "colliderIndex": 202,
+          "gameObjectFileId": 262,
+          "colliderFileId": 2508,
+          "barrelFileId": 2948,
+          "destroyableFileId": 2819,
+          "shotCoefficient": 1.0,
+          "sourcePath": "LevelRoot/CityMap/Barrels/barrelDesert"
+        }
+      ]
+    },
+    {
+      "source": "Assets/Scenes/Desert_Multiplayer.unity",
+      "sha256": "d2acaeb238fb2dfdcfb0e1bb69a52628798498f7b6992ecf9418a727360368c1",
+      "barrels": [
+        {
+          "colliderIndex": 25,
+          "gameObjectFileId": 89,
+          "colliderFileId": 2016,
+          "barrelFileId": 2562,
+          "destroyableFileId": 2242,
+          "shotCoefficient": 1.0,
+          "sourcePath": "LevelRoot/desert_map/barrels/barrelDesert"
+        },
+        {
+          "colliderIndex": 26,
+          "gameObjectFileId": 12,
+          "colliderFileId": 2015,
+          "barrelFileId": 2518,
+          "destroyableFileId": 2241,
+          "shotCoefficient": 1.0,
+          "sourcePath": "LevelRoot/desert_map/barrels/barrelDesert"
+        },
+        {
+          "colliderIndex": 27,
+          "gameObjectFileId": 158,
+          "colliderFileId": 2019,
+          "barrelFileId": 2759,
+          "destroyableFileId": 2243,
+          "shotCoefficient": 1.0,
+          "sourcePath": "LevelRoot/desert_map/barrels/barrelDesert"
+        },
+        {
+          "colliderIndex": 28,
+          "gameObjectFileId": 102,
+          "colliderFileId": 2018,
+          "barrelFileId": 2814,
+          "destroyableFileId": 2245,
+          "shotCoefficient": 1.0,
+          "sourcePath": "LevelRoot/desert_map/barrels/barrelDesert"
+        },
+        {
+          "colliderIndex": 29,
+          "gameObjectFileId": 93,
+          "colliderFileId": 2017,
+          "barrelFileId": 2354,
+          "destroyableFileId": 2240,
+          "shotCoefficient": 1.0,
+          "sourcePath": "LevelRoot/desert_map/barrels/barrelDesert"
+        },
+        {
+          "colliderIndex": 30,
+          "gameObjectFileId": 7,
+          "colliderFileId": 2014,
+          "barrelFileId": 2765,
+          "destroyableFileId": 2244,
+          "shotCoefficient": 1.0,
+          "sourcePath": "LevelRoot/desert_map/barrels/barrelDesert"
+        }
+      ]
+    },
+    {
+      "source": "Assets/Scenes/Park_Multiplayer.unity",
+      "sha256": "09b2c084ef5da6707fbebd4261a60baa0f12e24fef31efc4c6d4671b721e70ed",
+      "barrels": [
+        {
+          "colliderIndex": 78,
+          "gameObjectFileId": 170,
+          "colliderFileId": 2734,
+          "barrelFileId": 3557,
+          "destroyableFileId": 3076,
+          "shotCoefficient": 1.0,
+          "sourcePath": "LevelRootPark/park_map/Barriers/barrelsNew/barrelPark"
+        },
+        {
+          "colliderIndex": 79,
+          "gameObjectFileId": 328,
+          "colliderFileId": 2740,
+          "barrelFileId": 3514,
+          "destroyableFileId": 3075,
+          "shotCoefficient": 1.0,
+          "sourcePath": "LevelRootPark/park_map/Barriers/barrelsNew/barrelPark (1)"
+        },
+        {
+          "colliderIndex": 80,
+          "gameObjectFileId": 284,
+          "colliderFileId": 2739,
+          "barrelFileId": 3602,
+          "destroyableFileId": 3078,
+          "shotCoefficient": 1.0,
+          "sourcePath": "LevelRootPark/park_map/Barriers/barrelsNew/barrelPark (2)"
+        },
+        {
+          "colliderIndex": 81,
+          "gameObjectFileId": 249,
+          "colliderFileId": 2737,
+          "barrelFileId": 3398,
+          "destroyableFileId": 3073,
+          "shotCoefficient": 1.0,
+          "sourcePath": "LevelRootPark/park_map/Barriers/barrelsNew/barrelPark (3)"
+        },
+        {
+          "colliderIndex": 82,
+          "gameObjectFileId": 20,
+          "colliderFileId": 2732,
+          "barrelFileId": 3239,
+          "destroyableFileId": 3070,
+          "shotCoefficient": 1.0,
+          "sourcePath": "LevelRootPark/park_map/Barriers/barrelsNew/barrelPark (4)"
+        },
+        {
+          "colliderIndex": 83,
+          "gameObjectFileId": 41,
+          "colliderFileId": 2733,
+          "barrelFileId": 3253,
+          "destroyableFileId": 3071,
+          "shotCoefficient": 1.0,
+          "sourcePath": "LevelRootPark/park_map/Barriers/barrelsNew/barrelPark (5)"
+        },
+        {
+          "colliderIndex": 84,
+          "gameObjectFileId": 178,
+          "colliderFileId": 2735,
+          "barrelFileId": 3471,
+          "destroyableFileId": 3074,
+          "shotCoefficient": 1.0,
+          "sourcePath": "LevelRootPark/park_map/Barriers/barrelsNew/barrelPark (6)"
+        },
+        {
+          "colliderIndex": 85,
+          "gameObjectFileId": 331,
+          "colliderFileId": 2741,
+          "barrelFileId": 3318,
+          "destroyableFileId": 3072,
+          "shotCoefficient": 1.0,
+          "sourcePath": "LevelRootPark/park_map/Barriers/barrelsNew/barrelPark (7)"
+        },
+        {
+          "colliderIndex": 86,
+          "gameObjectFileId": 278,
+          "colliderFileId": 2738,
+          "barrelFileId": 3186,
+          "destroyableFileId": 3069,
+          "shotCoefficient": 1.0,
+          "sourcePath": "LevelRootPark/park_map/Barriers/barrelsNew/barrelPark (8)"
+        },
+        {
+          "colliderIndex": 87,
+          "gameObjectFileId": 243,
+          "colliderFileId": 2736,
+          "barrelFileId": 3580,
+          "destroyableFileId": 3077,
+          "shotCoefficient": 1.0,
+          "sourcePath": "LevelRootPark/park_map/Barriers/barrelsNew/barrelPark (9)"
+        }
+      ]
+    },
+    {
+      "source": "Assets/Scenes/Snow_Multiplayer.unity",
+      "sha256": "67291457da28646c9ce377f3812d1bf0fa5332bfe664f58a4430a823744e6f21",
+      "barrels": [
+        {
+          "colliderIndex": 181,
+          "gameObjectFileId": 39,
+          "colliderFileId": 2233,
+          "barrelFileId": 3046,
+          "destroyableFileId": 2578,
+          "shotCoefficient": 1.0,
+          "sourcePath": "LevelRoot/snow_map/barrelSnow"
+        },
+        {
+          "colliderIndex": 182,
+          "gameObjectFileId": 133,
+          "colliderFileId": 2236,
+          "barrelFileId": 2675,
+          "destroyableFileId": 2573,
+          "shotCoefficient": 1.0,
+          "sourcePath": "LevelRoot/snow_map/barrelSnow"
+        },
+        {
+          "colliderIndex": 183,
+          "gameObjectFileId": 213,
+          "colliderFileId": 2239,
+          "barrelFileId": 2663,
+          "destroyableFileId": 2572,
+          "shotCoefficient": 1.0,
+          "sourcePath": "LevelRoot/snow_map/barrelSnow"
+        },
+        {
+          "colliderIndex": 184,
+          "gameObjectFileId": 167,
+          "colliderFileId": 2237,
+          "barrelFileId": 2974,
+          "destroyableFileId": 2576,
+          "shotCoefficient": 1.0,
+          "sourcePath": "LevelRoot/snow_map/barrelSnow"
+        },
+        {
+          "colliderIndex": 185,
+          "gameObjectFileId": 120,
+          "colliderFileId": 2235,
+          "barrelFileId": 2750,
+          "destroyableFileId": 2574,
+          "shotCoefficient": 1.0,
+          "sourcePath": "LevelRoot/snow_map/barrelSnow"
+        },
+        {
+          "colliderIndex": 186,
+          "gameObjectFileId": 170,
+          "colliderFileId": 2238,
+          "barrelFileId": 3028,
+          "destroyableFileId": 2577,
+          "shotCoefficient": 1.0,
+          "sourcePath": "LevelRoot/snow_map/barrelSnow"
+        },
+        {
+          "colliderIndex": 187,
+          "gameObjectFileId": 97,
+          "colliderFileId": 2234,
+          "barrelFileId": 2775,
+          "destroyableFileId": 2575,
+          "shotCoefficient": 1.0,
+          "sourcePath": "LevelRoot/snow_map/barrelSnow"
+        },
+        {
+          "colliderIndex": 188,
+          "gameObjectFileId": 289,
+          "colliderFileId": 2240,
+          "barrelFileId": 3122,
+          "destroyableFileId": 2579,
+          "shotCoefficient": 1.0,
+          "sourcePath": "LevelRoot/snow_map/barrelSnow"
+        }
+      ]
+    }
+  ]
+}

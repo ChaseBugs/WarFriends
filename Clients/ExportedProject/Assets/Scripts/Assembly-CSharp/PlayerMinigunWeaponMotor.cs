@@ -20,6 +20,8 @@ public class PlayerMinigunWeaponMotor : MonoBehaviour
 
 	private State mState;
 
+	public bool selfHostedMotorRequested => mState == State.Starting || mState == State.Looping;
+
 	public void StartMotor()
 	{
 		mState = State.Starting;

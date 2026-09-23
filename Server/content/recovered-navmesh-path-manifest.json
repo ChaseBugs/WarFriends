@@ -1,0 +1,57 @@
+{
+  "version": 1,
+  "unityVersion": "2018.3.0f2",
+  "casesSha256": "3d95edd498d569fc79b1e69270f1c9a838c3d2178459fa23c9f98151402ba1fe",
+  "maps": [
+    {
+      "scene": "Assets/Scenes/Aztec_Multiplayer.unity",
+      "navMeshSha256": "f71ab5c2270b18dd2951afd9bad01b6e5e6912d116054738783bddf90a536e97",
+      "triangulationSha256": "d37a6841131ed37abde79fd55e273f5a37585c018f9d6fa757916e5fbf94e444",
+      "file": "NavMesh_5.json",
+      "sha256": "44c39f03a8b3c05f5a50ae89260ec1742d4a5db1b1b12ab5df756305a6850ca0",
+      "cases": 96,
+      "complete": 96,
+      "partial": 0
+    },
+    {
+      "scene": "Assets/Scenes/City_Multiplayer.unity",
+      "navMeshSha256": "c49428e53b87031710105511954a48cd75c3a5d8fe0a03b16f38768cd860b220",
+      "triangulationSha256": "1cf493e9d1742d8f0426f9476d8cb45f871a657345a9be7e0b12bc2ae0d005cd",
+      "file": "NavMesh_8.json",
+      "sha256": "25c6dd0badd0856466245c3197be0d7a03118ba421c8d7691d89098e0f203b22",
+      "cases": 64,
+      "complete": 64,
+      "partial": 0
+    },
+    {
+      "scene": "Assets/Scenes/Desert_Multiplayer.unity",
+      "navMeshSha256": "8e7359b292c5eea574dea1b3d471259244b759a33b673de1d10a75db387a134c",
+      "triangulationSha256": "58c85992847c3df26921abb873e72f9f08c0a6dcbe84b1941e2d62fa9b4ad582",
+      "file": "NavMesh_2.json",
+      "sha256": "92cc8e5f01dbfe58f357c65a35f57a85ba3f46cd270bdc4705ebf81b11fed02d",
+      "cases": 96,
+      "complete": 96,
+      "partial": 0
+    },
+    {
+      "scene": "Assets/Scenes/Park_Multiplayer.unity",
+      "navMeshSha256": "d4baa1ff07ec051a4c26362d178e564636d530aee4c6b688b3dba205c72ad99b",
+      "triangulationSha256": "0da9b3e122540506907128604ca1c6b98053bca5c7d28a9c72fb9f92b6f64ccb",
+      "file": "NavMesh_6.json",
+      "sha256": "26f44277122d8c954e050efa9a218b27a4c1fa80e1b3d79bba308da5382d3590",
+      "cases": 80,
+      "complete": 80,
+      "partial": 0
+    },
+    {
+      "scene": "Assets/Scenes/Snow_Multiplayer.unity",
+      "navMeshSha256": "876f7f26eea20ec1c72b190e64bd4e5f7e1b5e8a3c67139d4032b5bfba5e0950",
+      "triangulationSha256": "612bbe7f336bbe5840d823c88db53d99e0cf19c6af0a2586ab4a3f986c12cfd8",
+      "file": "NavMesh_4.json",
+      "sha256": "96694323d1202555adabbb016906e7cbdfe5376a9823db9c0f22cc05aaf1a4e0",
+      "cases": 96,
+      "complete": 80,
+      "partial": 16
+    }
+  ]
+}

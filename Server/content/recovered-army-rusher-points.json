@@ -1,0 +1,2080 @@
+{
+  "version": 1,
+  "maps": [
+    {
+      "source": "Assets/Scenes/Aztec_Multiplayer.unity",
+      "sha256": "50b3077f1898189cbf40c2232771175b85eec0f03737901373da377faf95291e",
+      "mapDefinitionFileId": 2666,
+      "covers": [
+        {
+          "sourceIndex": 0,
+          "playerPointFileId": 2682,
+          "playerPointWorldPosition": [
+            -4.608237041121097,
+            -0.011000072741236572,
+            2.333680182661047
+          ],
+          "rusherPoints": [
+            {
+              "componentFileId": 2438,
+              "index": 0,
+              "transformFileId": 708,
+              "worldPosition": [
+                -4.32242139579842,
+                -0.011000072741236572,
+                3.0742270138981427
+              ]
+            },
+            {
+              "componentFileId": 2461,
+              "index": 1,
+              "transformFileId": 707,
+              "worldPosition": [
+                -4.364370475140472,
+                -0.011000072741236572,
+                1.5747801286477374
+              ]
+            },
+            {
+              "componentFileId": 2469,
+              "index": 2,
+              "transformFileId": 706,
+              "worldPosition": [
+                -3.8826852203768105,
+                -0.011000072741236572,
+                3.0589903761216632
+              ]
+            },
+            {
+              "componentFileId": 2255,
+              "index": 3,
+              "transformFileId": 705,
+              "worldPosition": [
+                -3.914640295732008,
+                -0.011000072741236572,
+                1.5591972036490653
+              ]
+            }
+          ]
+        },
+        {
+          "sourceIndex": 1,
+          "playerPointFileId": 2440,
+          "playerPointWorldPosition": [
+            -4.593497328300168,
+            -0.030000074630503776,
+            0.82426433737442
+          ],
+          "rusherPoints": [
+            {
+              "componentFileId": 2269,
+              "index": 0,
+              "transformFileId": 740,
+              "worldPosition": [
+                -4.307681518535306,
+                -0.030000074630503776,
+                1.564811189375337
+              ]
+            },
+            {
+              "componentFileId": 2655,
+              "index": 1,
+              "transformFileId": 739,
+              "worldPosition": [
+                -4.349630877700068,
+                -0.030000074630503776,
+                0.065364163399521
+              ]
+            },
+            {
+              "componentFileId": 2306,
+              "index": 2,
+              "transformFileId": 738,
+              "worldPosition": [
+                -3.8679453023832626,
+                -0.030000074630503776,
+                1.5495744692459934
+              ]
+            },
+            {
+              "componentFileId": 2447,
+              "index": 3,
+              "transformFileId": 737,
+              "worldPosition": [
+                -3.8999006566354772,
+                -0.030000074630503776,
+                0.04978115417632867
+              ]
+            }
+          ]
+        },
+        {
+          "sourceIndex": 2,
+          "playerPointFileId": 2263,
+          "playerPointWorldPosition": [
+            -4.656126986727635,
+            -0.007000072343496103,
+            -0.6944779005892682
+          ],
+          "rusherPoints": [
+            {
+              "componentFileId": 2211,
+              "index": 0,
+              "transformFileId": 772,
+              "worldPosition": [
+                -4.370311176962773,
+                -0.007000072343496103,
+                0.046068951411648795
+              ]
+            },
+            {
+              "componentFileId": 2238,
+              "index": 1,
+              "transformFileId": 771,
+              "worldPosition": [
+                -4.412260536127535,
+                -0.007000072343496103,
+                -1.4533780745641671
+              ]
+            },
+            {
+              "componentFileId": 2425,
+              "index": 2,
+              "transformFileId": 770,
+              "worldPosition": [
+                -3.93057496081073,
+                -0.007000072343496103,
+                0.03083223128230539
+              ]
+            },
+            {
+              "componentFileId": 2328,
+              "index": 3,
+              "transformFileId": 769,
+              "worldPosition": [
+                -3.9625303150629447,
+                -0.007000072343496103,
+                -1.4689610837873595
+              ]
+            }
+          ]
+        },
+        {
+          "sourceIndex": 3,
+          "playerPointFileId": 2686,
+          "playerPointWorldPosition": [
+            -4.708416354496288,
+            -0.00800007244293123,
+            -2.203572422301673
+          ],
+          "rusherPoints": [
+            {
+              "componentFileId": 2403,
+              "index": 0,
+              "transformFileId": 691,
+              "worldPosition": [
+                -4.422600544731426,
+                -0.00800007244293123,
+                -1.463025570300756
+              ]
+            },
+            {
+              "componentFileId": 2324,
+              "index": 1,
+              "transformFileId": 690,
+              "worldPosition": [
+                -4.464549903896188,
+                -0.00800007244293123,
+                -2.962472596276572
+              ]
+            },
+            {
+              "componentFileId": 2300,
+              "index": 2,
+              "transformFileId": 689,
+              "worldPosition": [
+                -3.982864328579383,
+                -0.00800007244293123,
+                -1.4782622904300995
+              ]
+            },
+            {
+              "componentFileId": 2464,
+              "index": 3,
+              "transformFileId": 688,
+              "worldPosition": [
+                -4.014819682831598,
+                -0.00800007244293123,
+                -2.9780556054997644
+              ]
+            }
+          ]
+        },
+        {
+          "sourceIndex": 4,
+          "playerPointFileId": 2431,
+          "playerPointWorldPosition": [
+            4.556000000000001,
+            -0.012000080000000107,
+            -2.1169996
+          ],
+          "rusherPoints": [
+            {
+              "componentFileId": 2698,
+              "index": 0,
+              "transformFileId": 755,
+              "worldPosition": [
+                4.295999986164756,
+                -0.012000080000000107,
+                -2.8669996399093605
+              ]
+            },
+            {
+              "componentFileId": 2289,
+              "index": 1,
+              "transformFileId": 754,
+              "worldPosition": [
+                4.285999985632631,
+                -0.012000080000000107,
+                -1.3669995600906402
+              ]
+            },
+            {
+              "componentFileId": 2443,
+              "index": 2,
+              "transformFileId": 753,
+              "worldPosition": [
+                3.8559999627512647,
+                -0.012000080000000107,
+                -2.8669996399093605
+              ]
+            },
+            {
+              "componentFileId": 2658,
+              "index": 3,
+              "transformFileId": 752,
+              "worldPosition": [
+                3.835999961687015,
+                -0.012000080000000107,
+                -1.36699956009064
+              ]
+            }
+          ]
+        },
+        {
+          "sourceIndex": 5,
+          "playerPointFileId": 2222,
+          "playerPointWorldPosition": [
+            4.556000000000001,
+            -0.02700008000000012,
+            -0.6019996000000003
+          ],
+          "rusherPoints": [
+            {
+              "componentFileId": 2303,
+              "index": 0,
+              "transformFileId": 789,
+              "worldPosition": [
+                4.295999986164756,
+                -0.02700008000000012,
+                -1.3519996399093603
+              ]
+            },
+            {
+              "componentFileId": 2264,
+              "index": 1,
+              "transformFileId": 788,
+              "worldPosition": [
+                4.285999985632631,
+                -0.02700008000000012,
+                0.14800043990935974
+              ]
+            },
+            {
+              "componentFileId": 2465,
+              "index": 2,
+              "transformFileId": 787,
+              "worldPosition": [
+                3.8559999627512647,
+                -0.02700008000000012,
+                -1.3519996399093603
+              ]
+            },
+            {
+              "componentFileId": 2207,
+              "index": 3,
+              "transformFileId": 786,
+              "worldPosition": [
+                3.835999961687015,
+                -0.02700008000000012,
+                0.14800043990935985
+              ]
+            }
+          ]
+        },
+        {
+          "sourceIndex": 6,
+          "playerPointFileId": 2199,
+          "playerPointWorldPosition": [
+            4.556000000000001,
+            -0.008000080000000104,
+            0.9050003999999997
+          ],
+          "rusherPoints": [
+            {
+              "componentFileId": 2198,
+              "index": 0,
+              "transformFileId": 804,
+              "worldPosition": [
+                4.295999986164756,
+                -0.008000080000000104,
+                0.15500036009063956
+              ]
+            },
+            {
+              "componentFileId": 2667,
+              "index": 1,
+              "transformFileId": 803,
+              "worldPosition": [
+                4.285999985632631,
+                -0.008000080000000104,
+                1.6550004399093599
+              ]
+            },
+            {
+              "componentFileId": 2273,
+              "index": 2,
+              "transformFileId": 802,
+              "worldPosition": [
+                3.8559999627512647,
+                -0.008000080000000104,
+                0.15500036009063956
+              ]
+            },
+            {
+              "componentFileId": 2427,
+              "index": 3,
+              "transformFileId": 801,
+              "worldPosition": [
+                3.835999961687015,
+                -0.008000080000000104,
+                1.6550004399093599
+              ]
+            }
+          ]
+        },
+        {
+          "sourceIndex": 7,
+          "playerPointFileId": 2452,
+          "playerPointWorldPosition": [
+            4.556000000000001,
+            0.014999919999999889,
+            2.4250003999999996
+          ],
+          "rusherPoints": [
+            {
+              "componentFileId": 2470,
+              "index": 0,
+              "transformFileId": 725,
+              "worldPosition": [
+                4.295999986164756,
+                0.014999919999999889,
+                1.6750003600906394
+              ]
+            },
+            {
+              "componentFileId": 2249,
+              "index": 1,
+              "transformFileId": 724,
+              "worldPosition": [
+                4.285999985632631,
+                0.014999919999999889,
+                3.1750004399093594
+              ]
+            },
+            {
+              "componentFileId": 2287,
+              "index": 2,
+              "transformFileId": 723,
+              "worldPosition": [
+                3.8559999627512647,
+                0.014999919999999889,
+                1.6750003600906394
+              ]
+            },
+            {
+              "componentFileId": 2409,
+              "index": 3,
+              "transformFileId": 722,
+              "worldPosition": [
+                3.835999961687015,
+                0.014999919999999889,
+                3.17500043990936
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "source": "Assets/Scenes/City_Multiplayer.unity",
+      "sha256": "acaf878b188dbc17fca6795b5db7e9c7797b91dee0fcb6fb02d5e85d7cc11c4f",
+      "mapDefinitionFileId": 3249,
+      "covers": [
+        {
+          "sourceIndex": 0,
+          "playerPointFileId": 2993,
+          "playerPointWorldPosition": [
+            -4.493892160531515,
+            -0.004999997016946225,
+            2.4722343090868275
+          ],
+          "rusherPoints": [
+            {
+              "componentFileId": 3263,
+              "index": 0,
+              "transformFileId": 972,
+              "worldPosition": [
+                -4.2080765152088375,
+                -0.004999997016946225,
+                3.2127811403239237
+              ]
+            },
+            {
+              "componentFileId": 3307,
+              "index": 1,
+              "transformFileId": 971,
+              "worldPosition": [
+                -4.25002559455089,
+                -0.004999997016946225,
+                1.713334255073518
+              ]
+            },
+            {
+              "componentFileId": 3089,
+              "index": 2,
+              "transformFileId": 970,
+              "worldPosition": [
+                -3.768340339787229,
+                -0.004999997016946225,
+                3.1975445025474443
+              ]
+            },
+            {
+              "componentFileId": 2928,
+              "index": 3,
+              "transformFileId": 969,
+              "worldPosition": [
+                -3.8002954151424264,
+                -0.004999997016946225,
+                1.697751330074846
+              ]
+            }
+          ]
+        },
+        {
+          "sourceIndex": 1,
+          "playerPointFileId": 2982,
+          "playerPointWorldPosition": [
+            -4.546181528300168,
+            0.004000003877969824,
+            0.9631397873744222
+          ],
+          "rusherPoints": [
+            {
+              "componentFileId": 3325,
+              "index": 0,
+              "transformFileId": 1177,
+              "worldPosition": [
+                -4.260365718535306,
+                0.004000003877969824,
+                1.7036866393753392
+              ]
+            },
+            {
+              "componentFileId": 3128,
+              "index": 1,
+              "transformFileId": 1176,
+              "worldPosition": [
+                -4.302315077700068,
+                0.004000003877969824,
+                0.20423961339952323
+              ]
+            },
+            {
+              "componentFileId": 3092,
+              "index": 2,
+              "transformFileId": 1175,
+              "worldPosition": [
+                -3.820629502383263,
+                0.004000003877969824,
+                1.6884499192459956
+              ]
+            },
+            {
+              "componentFileId": 2933,
+              "index": 3,
+              "transformFileId": 1174,
+              "worldPosition": [
+                -3.8525848566354775,
+                0.004000003877969824,
+                0.1886566041763309
+              ]
+            }
+          ]
+        },
+        {
+          "sourceIndex": 2,
+          "playerPointFileId": 3002,
+          "playerPointWorldPosition": [
+            -4.608811186727635,
+            0.003000003778534703,
+            -0.5556024505892659
+          ],
+          "rusherPoints": [
+            {
+              "componentFileId": 2971,
+              "index": 0,
+              "transformFileId": 921,
+              "worldPosition": [
+                -4.322995376962774,
+                0.003000003778534703,
+                0.18494440141165103
+              ]
+            },
+            {
+              "componentFileId": 3090,
+              "index": 1,
+              "transformFileId": 920,
+              "worldPosition": [
+                -4.364944736127535,
+                0.003000003778534703,
+                -1.314502624564165
+              ]
+            },
+            {
+              "componentFileId": 3247,
+              "index": 2,
+              "transformFileId": 919,
+              "worldPosition": [
+                -3.8832591608107303,
+                0.003000003778534703,
+                0.16970768128230762
+              ]
+            },
+            {
+              "componentFileId": 2925,
+              "index": 3,
+              "transformFileId": 918,
+              "worldPosition": [
+                -3.915214515062945,
+                0.003000003778534703,
+                -1.3300856337873572
+              ]
+            }
+          ]
+        },
+        {
+          "sourceIndex": 3,
+          "playerPointFileId": 3132,
+          "playerPointWorldPosition": [
+            -4.661100554496288,
+            3.4802293616409408e-09,
+            -2.064696972301671
+          ],
+          "rusherPoints": [
+            {
+              "componentFileId": 3219,
+              "index": 0,
+              "transformFileId": 957,
+              "worldPosition": [
+                -4.3752847447314265,
+                3.4802293616409408e-09,
+                -1.3241501203007537
+              ]
+            },
+            {
+              "componentFileId": 3096,
+              "index": 1,
+              "transformFileId": 956,
+              "worldPosition": [
+                -4.417234103896188,
+                3.4802293616409408e-09,
+                -2.82359714627657
+              ]
+            },
+            {
+              "componentFileId": 2966,
+              "index": 2,
+              "transformFileId": 955,
+              "worldPosition": [
+                -3.935548528579383,
+                3.4802293616409408e-09,
+                -1.3393868404300973
+              ]
+            },
+            {
+              "componentFileId": 3253,
+              "index": 3,
+              "transformFileId": 954,
+              "worldPosition": [
+                -3.967503882831598,
+                3.4802293616409408e-09,
+                -2.839180155499762
+              ]
+            }
+          ]
+        },
+        {
+          "sourceIndex": 4,
+          "playerPointFileId": 3303,
+          "playerPointWorldPosition": [
+            4.572315800000001,
+            0.004000000000000217,
+            -1.978124149999998
+          ],
+          "rusherPoints": [
+            {
+              "componentFileId": 2826,
+              "index": 0,
+              "transformFileId": 1002,
+              "worldPosition": [
+                4.312315786164756,
+                0.004000000000000217,
+                -2.7281241899093582
+              ]
+            },
+            {
+              "componentFileId": 2969,
+              "index": 1,
+              "transformFileId": 1001,
+              "worldPosition": [
+                4.302315785632631,
+                0.004000000000000217,
+                -1.228124110090638
+              ]
+            },
+            {
+              "componentFileId": 3286,
+              "index": 2,
+              "transformFileId": 1000,
+              "worldPosition": [
+                3.8723157627512648,
+                0.004000000000000217,
+                -2.7281241899093582
+              ]
+            },
+            {
+              "componentFileId": 3142,
+              "index": 3,
+              "transformFileId": 999,
+              "worldPosition": [
+                3.852315761687015,
+                0.004000000000000217,
+                -1.2281241100906377
+              ]
+            }
+          ]
+        },
+        {
+          "sourceIndex": 5,
+          "playerPointFileId": 3333,
+          "playerPointWorldPosition": [
+            4.585315800000001,
+            0.014000000000000217,
+            -0.46612414999999807
+          ],
+          "rusherPoints": [
+            {
+              "componentFileId": 3261,
+              "index": 0,
+              "transformFileId": 987,
+              "worldPosition": [
+                4.325315786164756,
+                0.014000000000000217,
+                -1.2161241899093582
+              ]
+            },
+            {
+              "componentFileId": 3125,
+              "index": 1,
+              "transformFileId": 986,
+              "worldPosition": [
+                4.315315785632631,
+                0.014000000000000217,
+                0.28387588990936197
+              ]
+            },
+            {
+              "componentFileId": 3291,
+              "index": 2,
+              "transformFileId": 985,
+              "worldPosition": [
+                3.8853157627512647,
+                0.014000000000000217,
+                -1.2161241899093582
+              ]
+            },
+            {
+              "componentFileId": 3274,
+              "index": 3,
+              "transformFileId": 984,
+              "worldPosition": [
+                3.865315761687015,
+                0.014000000000000217,
+                0.2838758899093621
+              ]
+            }
+          ]
+        },
+        {
+          "sourceIndex": 6,
+          "playerPointFileId": 2927,
+          "playerPointWorldPosition": [
+            4.603315800000001,
+            0.010100000000000216,
+            1.0438758500000018
+          ],
+          "rusherPoints": [
+            {
+              "componentFileId": 2942,
+              "index": 0,
+              "transformFileId": 1192,
+              "worldPosition": [
+                4.343315786164756,
+                0.010100000000000216,
+                0.2938758100906417
+              ]
+            },
+            {
+              "componentFileId": 2963,
+              "index": 1,
+              "transformFileId": 1191,
+              "worldPosition": [
+                4.333315785632631,
+                0.010100000000000216,
+                1.7938758899093619
+              ]
+            },
+            {
+              "componentFileId": 3094,
+              "index": 2,
+              "transformFileId": 1190,
+              "worldPosition": [
+                3.9033157627512645,
+                0.010100000000000216,
+                0.2938758100906417
+              ]
+            },
+            {
+              "componentFileId": 2999,
+              "index": 3,
+              "transformFileId": 1189,
+              "worldPosition": [
+                3.883315761687015,
+                0.010100000000000216,
+                1.793875889909362
+              ]
+            }
+          ]
+        },
+        {
+          "sourceIndex": 7,
+          "playerPointFileId": 3334,
+          "playerPointWorldPosition": [
+            4.603315800000001,
+            0.004000000000000217,
+            2.563875850000002
+          ],
+          "rusherPoints": [
+            {
+              "componentFileId": 3138,
+              "index": 0,
+              "transformFileId": 937,
+              "worldPosition": [
+                4.343315786164756,
+                0.004000000000000217,
+                1.8138758100906416
+              ]
+            },
+            {
+              "componentFileId": 3241,
+              "index": 1,
+              "transformFileId": 936,
+              "worldPosition": [
+                4.333315785632631,
+                0.004000000000000217,
+                3.3138758899093617
+              ]
+            },
+            {
+              "componentFileId": 3091,
+              "index": 2,
+              "transformFileId": 935,
+              "worldPosition": [
+                3.9033157627512645,
+                0.004000000000000217,
+                1.8138758100906416
+              ]
+            },
+            {
+              "componentFileId": 2985,
+              "index": 3,
+              "transformFileId": 934,
+              "worldPosition": [
+                3.883315761687015,
+                0.004000000000000217,
+                3.313875889909362
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "source": "Assets/Scenes/Desert_Multiplayer.unity",
+      "sha256": "d2acaeb238fb2dfdcfb0e1bb69a52628798498f7b6992ecf9418a727360368c1",
+      "mapDefinitionFileId": 2553,
+      "covers": [
+        {
+          "sourceIndex": 0,
+          "playerPointFileId": 2555,
+          "playerPointWorldPosition": [
+            -28.594892160531515,
+            -2.4930000059661066,
+            -6.257765690913173
+          ],
+          "rusherPoints": [
+            {
+              "componentFileId": 2558,
+              "index": 0,
+              "transformFileId": 861,
+              "worldPosition": [
+                -28.309076515208837,
+                -2.4930000059661066,
+                -5.517218859676077
+              ]
+            },
+            {
+              "componentFileId": 2578,
+              "index": 1,
+              "transformFileId": 860,
+              "worldPosition": [
+                -28.35102559455089,
+                -2.4930000059661066,
+                -7.016665744926483
+              ]
+            },
+            {
+              "componentFileId": 2385,
+              "index": 2,
+              "transformFileId": 859,
+              "worldPosition": [
+                -27.86934033978723,
+                -2.4930000059661066,
+                -5.532455497452556
+              ]
+            },
+            {
+              "componentFileId": 2380,
+              "index": 3,
+              "transformFileId": 858,
+              "worldPosition": [
+                -27.901295415142425,
+                -2.4930000059661066,
+                -7.0322486699251545
+              ]
+            }
+          ]
+        },
+        {
+          "sourceIndex": 1,
+          "playerPointFileId": 2249,
+          "playerPointWorldPosition": [
+            -28.647181528300166,
+            -2.443000000994351,
+            -7.766860212625578
+          ],
+          "rusherPoints": [
+            {
+              "componentFileId": 2370,
+              "index": 0,
+              "transformFileId": 810,
+              "worldPosition": [
+                -28.361365718535303,
+                -2.443000000994351,
+                -7.026313360624661
+              ]
+            },
+            {
+              "componentFileId": 2508,
+              "index": 1,
+              "transformFileId": 809,
+              "worldPosition": [
+                -28.403315077700064,
+                -2.443000000994351,
+                -8.525760386600476
+              ]
+            },
+            {
+              "componentFileId": 2583,
+              "index": 2,
+              "transformFileId": 808,
+              "worldPosition": [
+                -27.92162950238326,
+                -2.443000000994351,
+                -7.041550080754004
+              ]
+            },
+            {
+              "componentFileId": 2868,
+              "index": 3,
+              "transformFileId": 807,
+              "worldPosition": [
+                -27.953584856635477,
+                -2.443000000994351,
+                -8.541343395823668
+              ]
+            }
+          ]
+        },
+        {
+          "sourceIndex": 2,
+          "playerPointFileId": 2790,
+          "playerPointWorldPosition": [
+            -28.709811186727634,
+            -2.433,
+            -9.285602450589266
+          ],
+          "rusherPoints": [
+            {
+              "componentFileId": 2490,
+              "index": 0,
+              "transformFileId": 785,
+              "worldPosition": [
+                -28.423995376962772,
+                -2.433,
+                -8.54505559858835
+              ]
+            },
+            {
+              "componentFileId": 2406,
+              "index": 1,
+              "transformFileId": 784,
+              "worldPosition": [
+                -28.465944736127533,
+                -2.433,
+                -10.044502624564165
+              ]
+            },
+            {
+              "componentFileId": 2781,
+              "index": 2,
+              "transformFileId": 783,
+              "worldPosition": [
+                -27.98425916081073,
+                -2.433,
+                -8.560292318717693
+              ]
+            },
+            {
+              "componentFileId": 2624,
+              "index": 3,
+              "transformFileId": 782,
+              "worldPosition": [
+                -28.016214515062945,
+                -2.433,
+                -10.060085633787358
+              ]
+            }
+          ]
+        },
+        {
+          "sourceIndex": 3,
+          "playerPointFileId": 2665,
+          "playerPointWorldPosition": [
+            -28.76210055449629,
+            -2.3629999930395416,
+            -10.794696972301672
+          ],
+          "rusherPoints": [
+            {
+              "componentFileId": 2358,
+              "index": 0,
+              "transformFileId": 768,
+              "worldPosition": [
+                -28.476284744731426,
+                -2.3629999930395416,
+                -10.054150120300756
+              ]
+            },
+            {
+              "componentFileId": 2651,
+              "index": 1,
+              "transformFileId": 767,
+              "worldPosition": [
+                -28.518234103896187,
+                -2.3629999930395416,
+                -11.553597146276571
+              ]
+            },
+            {
+              "componentFileId": 2760,
+              "index": 2,
+              "transformFileId": 766,
+              "worldPosition": [
+                -28.036548528579385,
+                -2.3629999930395416,
+                -10.069386840430099
+              ]
+            },
+            {
+              "componentFileId": 2569,
+              "index": 3,
+              "transformFileId": 765,
+              "worldPosition": [
+                -28.0685038828316,
+                -2.3629999930395416,
+                -11.569180155499764
+              ]
+            }
+          ]
+        },
+        {
+          "sourceIndex": 4,
+          "playerPointFileId": 2395,
+          "playerPointWorldPosition": [
+            -19.4976842,
+            -2.4059999999999997,
+            -10.708124149999998
+          ],
+          "rusherPoints": [
+            {
+              "componentFileId": 2833,
+              "index": 0,
+              "transformFileId": 844,
+              "worldPosition": [
+                -19.757684213835244,
+                -2.4059999999999997,
+                -11.458124189909357
+              ]
+            },
+            {
+              "componentFileId": 2627,
+              "index": 1,
+              "transformFileId": 843,
+              "worldPosition": [
+                -19.767684214367367,
+                -2.4059999999999997,
+                -9.958124110090639
+              ]
+            },
+            {
+              "componentFileId": 2394,
+              "index": 2,
+              "transformFileId": 842,
+              "worldPosition": [
+                -20.197684237248733,
+                -2.4059999999999997,
+                -11.458124189909357
+              ]
+            },
+            {
+              "componentFileId": 2853,
+              "index": 3,
+              "transformFileId": 841,
+              "worldPosition": [
+                -20.217684238312984,
+                -2.4059999999999997,
+                -9.958124110090639
+              ]
+            }
+          ]
+        },
+        {
+          "sourceIndex": 5,
+          "playerPointFileId": 2758,
+          "playerPointWorldPosition": [
+            -19.4976842,
+            -2.399,
+            -9.19312415
+          ],
+          "rusherPoints": [
+            {
+              "componentFileId": 2773,
+              "index": 0,
+              "transformFileId": 825,
+              "worldPosition": [
+                -19.757684213835244,
+                -2.399,
+                -9.943124189909359
+              ]
+            },
+            {
+              "componentFileId": 2662,
+              "index": 1,
+              "transformFileId": 824,
+              "worldPosition": [
+                -19.767684214367367,
+                -2.399,
+                -8.44312411009064
+              ]
+            },
+            {
+              "componentFileId": 2570,
+              "index": 2,
+              "transformFileId": 823,
+              "worldPosition": [
+                -20.197684237248733,
+                -2.399,
+                -9.943124189909359
+              ]
+            },
+            {
+              "componentFileId": 2487,
+              "index": 3,
+              "transformFileId": 822,
+              "worldPosition": [
+                -20.217684238312984,
+                -2.399,
+                -8.44312411009064
+              ]
+            }
+          ]
+        },
+        {
+          "sourceIndex": 6,
+          "playerPointFileId": 2388,
+          "playerPointWorldPosition": [
+            -19.4976842,
+            -2.405,
+            -7.686124149999999
+          ],
+          "rusherPoints": [
+            {
+              "componentFileId": 2803,
+              "index": 0,
+              "transformFileId": 753,
+              "worldPosition": [
+                -19.757684213835244,
+                -2.405,
+                -8.436124189909359
+              ]
+            },
+            {
+              "componentFileId": 2762,
+              "index": 1,
+              "transformFileId": 752,
+              "worldPosition": [
+                -19.767684214367367,
+                -2.405,
+                -6.936124110090638
+              ]
+            },
+            {
+              "componentFileId": 2655,
+              "index": 2,
+              "transformFileId": 751,
+              "worldPosition": [
+                -20.197684237248733,
+                -2.405,
+                -8.436124189909359
+              ]
+            },
+            {
+              "componentFileId": 2815,
+              "index": 3,
+              "transformFileId": 750,
+              "worldPosition": [
+                -20.217684238312984,
+                -2.405,
+                -6.936124110090638
+              ]
+            }
+          ]
+        },
+        {
+          "sourceIndex": 7,
+          "playerPointFileId": 2844,
+          "playerPointWorldPosition": [
+            -19.4976842,
+            -2.4059999999999997,
+            -6.166124149999998
+          ],
+          "rusherPoints": [
+            {
+              "componentFileId": 2845,
+              "index": 0,
+              "transformFileId": 737,
+              "worldPosition": [
+                -19.757684213835244,
+                -2.4059999999999997,
+                -6.916124189909358
+              ]
+            },
+            {
+              "componentFileId": 2843,
+              "index": 1,
+              "transformFileId": 736,
+              "worldPosition": [
+                -19.767684214367367,
+                -2.4059999999999997,
+                -5.416124110090638
+              ]
+            },
+            {
+              "componentFileId": 2810,
+              "index": 2,
+              "transformFileId": 735,
+              "worldPosition": [
+                -20.197684237248733,
+                -2.4059999999999997,
+                -6.916124189909358
+              ]
+            },
+            {
+              "componentFileId": 2657,
+              "index": 3,
+              "transformFileId": 734,
+              "worldPosition": [
+                -20.217684238312984,
+                -2.4059999999999997,
+                -5.416124110090638
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "source": "Assets/Scenes/Park_Multiplayer.unity",
+      "sha256": "09b2c084ef5da6707fbebd4261a60baa0f12e24fef31efc4c6d4671b721e70ed",
+      "mapDefinitionFileId": 3572,
+      "covers": [
+        {
+          "sourceIndex": 0,
+          "playerPointFileId": 3505,
+          "playerPointWorldPosition": [
+            -4.5198915902439785,
+            -0.04299995298870028,
+            2.3292348881960745
+          ],
+          "rusherPoints": [
+            {
+              "componentFileId": 3245,
+              "index": 0,
+              "transformFileId": 985,
+              "worldPosition": [
+                -4.233605799377793,
+                -0.04270018991647917,
+                3.0696000782762343
+              ]
+            },
+            {
+              "componentFileId": 3248,
+              "index": 1,
+              "transformFileId": 984,
+              "worldPosition": [
+                -4.276507144973196,
+                -0.04381852545167858,
+                1.5701804747930055
+              ]
+            },
+            {
+              "componentFileId": 3564,
+              "index": 2,
+              "transformFileId": 983,
+              "worldPosition": [
+                -3.7938795656037065,
+                -0.04313089959937192,
+                3.054084496649668
+              ]
+            },
+            {
+              "componentFileId": 3403,
+              "index": 3,
+              "transformFileId": 982,
+              "worldPosition": [
+                -3.826787133158789,
+                -0.044259023991000714,
+                1.5543122663112903
+              ]
+            }
+          ]
+        },
+        {
+          "sourceIndex": 1,
+          "playerPointFileId": 3570,
+          "playerPointWorldPosition": [
+            -4.572180128300169,
+            -0.03299997199435111,
+            0.8201397373744209
+          ],
+          "rusherPoints": [
+            {
+              "componentFileId": 3510,
+              "index": 0,
+              "transformFileId": 938,
+              "worldPosition": [
+                -4.286364318535307,
+                -0.03299997199435111,
+                1.5606865893753379
+              ]
+            },
+            {
+              "componentFileId": 3407,
+              "index": 1,
+              "transformFileId": 937,
+              "worldPosition": [
+                -4.328313677700069,
+                -0.03299997199435111,
+                0.06123956339952197
+              ]
+            },
+            {
+              "componentFileId": 3423,
+              "index": 2,
+              "transformFileId": 936,
+              "worldPosition": [
+                -3.846628102383264,
+                -0.03299997199435111,
+                1.5454498692459944
+              ]
+            },
+            {
+              "componentFileId": 3456,
+              "index": 3,
+              "transformFileId": 935,
+              "worldPosition": [
+                -3.8785834566354787,
+                -0.03299997199435111,
+                0.04565655417632963
+              ]
+            }
+          ]
+        },
+        {
+          "sourceIndex": 2,
+          "playerPointFileId": 3526,
+          "playerPointWorldPosition": [
+            -4.6348097867276365,
+            -0.022999970999999952,
+            -0.6986025005892672
+          ],
+          "rusherPoints": [
+            {
+              "componentFileId": 3428,
+              "index": 0,
+              "transformFileId": 955,
+              "worldPosition": [
+                -4.348993976962775,
+                -0.022999970999999952,
+                0.04194435141164976
+              ]
+            },
+            {
+              "componentFileId": 3497,
+              "index": 1,
+              "transformFileId": 954,
+              "worldPosition": [
+                -4.3909433361275365,
+                -0.022999970999999952,
+                -1.4575026745641662
+              ]
+            },
+            {
+              "componentFileId": 3163,
+              "index": 2,
+              "transformFileId": 953,
+              "worldPosition": [
+                -3.9092577608107315,
+                -0.022999970999999952,
+                0.026707631282306354
+              ]
+            },
+            {
+              "componentFileId": 3468,
+              "index": 3,
+              "transformFileId": 952,
+              "worldPosition": [
+                -3.941213115062946,
+                -0.022999970999999952,
+                -1.4730856837873585
+              ]
+            }
+          ]
+        },
+        {
+          "sourceIndex": 3,
+          "playerPointFileId": 3582,
+          "playerPointWorldPosition": [
+            -4.687099154496289,
+            0.04700003596045817,
+            -2.207697022301672
+          ],
+          "rusherPoints": [
+            {
+              "componentFileId": 3143,
+              "index": 0,
+              "transformFileId": 923,
+              "worldPosition": [
+                -4.401283344731428,
+                0.04700003596045817,
+                -1.467150170300755
+              ]
+            },
+            {
+              "componentFileId": 3162,
+              "index": 1,
+              "transformFileId": 922,
+              "worldPosition": [
+                -4.443232703896189,
+                0.04700003596045817,
+                -2.966597196276571
+              ]
+            },
+            {
+              "componentFileId": 3473,
+              "index": 2,
+              "transformFileId": 921,
+              "worldPosition": [
+                -3.9615471285793844,
+                0.04700003596045817,
+                -1.4823868904300985
+              ]
+            },
+            {
+              "componentFileId": 3520,
+              "index": 3,
+              "transformFileId": 920,
+              "worldPosition": [
+                -3.993502482831599,
+                0.04700003596045817,
+                -2.9821802054997635
+              ]
+            }
+          ]
+        },
+        {
+          "sourceIndex": 4,
+          "playerPointFileId": 3315,
+          "playerPointWorldPosition": [
+            4.579317199999999,
+            0.027000028999999964,
+            -2.1211241999999992
+          ],
+          "rusherPoints": [
+            {
+              "componentFileId": 3429,
+              "index": 0,
+              "transformFileId": 1026,
+              "worldPosition": [
+                4.319317186164755,
+                0.027000028999999964,
+                -2.8711242399093595
+              ]
+            },
+            {
+              "componentFileId": 3433,
+              "index": 1,
+              "transformFileId": 1025,
+              "worldPosition": [
+                4.309317185632629,
+                0.027000028999999964,
+                -1.3711241600906392
+              ]
+            },
+            {
+              "componentFileId": 3551,
+              "index": 2,
+              "transformFileId": 1024,
+              "worldPosition": [
+                3.879317162751263,
+                0.027000028999999964,
+                -2.8711242399093595
+              ]
+            },
+            {
+              "componentFileId": 3485,
+              "index": 3,
+              "transformFileId": 1023,
+              "worldPosition": [
+                3.8593171616870134,
+                0.027000028999999964,
+                -1.371124160090639
+              ]
+            }
+          ]
+        },
+        {
+          "sourceIndex": 5,
+          "playerPointFileId": 3415,
+          "playerPointWorldPosition": [
+            4.5773171999999995,
+            0.011000028999999963,
+            -0.6061241999999993
+          ],
+          "rusherPoints": [
+            {
+              "componentFileId": 3177,
+              "index": 0,
+              "transformFileId": 1007,
+              "worldPosition": [
+                4.317317186164755,
+                0.011000028999999963,
+                -1.3561242399093594
+              ]
+            },
+            {
+              "componentFileId": 3567,
+              "index": 1,
+              "transformFileId": 1006,
+              "worldPosition": [
+                4.3073171856326296,
+                0.011000028999999963,
+                0.1438758399093607
+              ]
+            },
+            {
+              "componentFileId": 3524,
+              "index": 2,
+              "transformFileId": 1005,
+              "worldPosition": [
+                3.8773171627512633,
+                0.011000028999999963,
+                -1.3561242399093594
+              ]
+            },
+            {
+              "componentFileId": 3597,
+              "index": 3,
+              "transformFileId": 1004,
+              "worldPosition": [
+                3.8573171616870137,
+                0.011000028999999963,
+                0.14387583990936081
+              ]
+            }
+          ]
+        },
+        {
+          "sourceIndex": 6,
+          "playerPointFileId": 3508,
+          "playerPointWorldPosition": [
+            4.5773171999999995,
+            0.005000028999999962,
+            0.9008758000000007
+          ],
+          "rusherPoints": [
+            {
+              "componentFileId": 3529,
+              "index": 0,
+              "transformFileId": 970,
+              "worldPosition": [
+                4.317317186164755,
+                0.005000028999999962,
+                0.15087576009064052
+              ]
+            },
+            {
+              "componentFileId": 3441,
+              "index": 1,
+              "transformFileId": 969,
+              "worldPosition": [
+                4.3073171856326296,
+                0.005000028999999962,
+                1.6508758399093608
+              ]
+            },
+            {
+              "componentFileId": 3470,
+              "index": 2,
+              "transformFileId": 968,
+              "worldPosition": [
+                3.8773171627512633,
+                0.005000028999999962,
+                0.15087576009064052
+              ]
+            },
+            {
+              "componentFileId": 3554,
+              "index": 3,
+              "transformFileId": 967,
+              "worldPosition": [
+                3.8573171616870137,
+                0.005000028999999962,
+                1.6508758399093608
+              ]
+            }
+          ]
+        },
+        {
+          "sourceIndex": 7,
+          "playerPointFileId": 3209,
+          "playerPointWorldPosition": [
+            4.5773171999999995,
+            0.004000028999999962,
+            2.4208758000000006
+          ],
+          "rusherPoints": [
+            {
+              "componentFileId": 3183,
+              "index": 0,
+              "transformFileId": 1046,
+              "worldPosition": [
+                4.317317186164755,
+                0.004000028999999962,
+                1.6708757600906403
+              ]
+            },
+            {
+              "componentFileId": 3533,
+              "index": 1,
+              "transformFileId": 1045,
+              "worldPosition": [
+                4.3073171856326296,
+                0.004000028999999962,
+                3.1708758399093604
+              ]
+            },
+            {
+              "componentFileId": 3084,
+              "index": 2,
+              "transformFileId": 1044,
+              "worldPosition": [
+                3.8773171627512633,
+                0.004000028999999962,
+                1.6708757600906403
+              ]
+            },
+            {
+              "componentFileId": 3409,
+              "index": 3,
+              "transformFileId": 1043,
+              "worldPosition": [
+                3.8573171616870137,
+                0.004000028999999962,
+                3.170875839909361
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "source": "Assets/Scenes/Snow_Multiplayer.unity",
+      "sha256": "67291457da28646c9ce377f3812d1bf0fa5332bfe664f58a4430a823744e6f21",
+      "mapDefinitionFileId": 2756,
+      "covers": [
+        {
+          "sourceIndex": 0,
+          "playerPointFileId": 3129,
+          "playerPointWorldPosition": [
+            -4.530189571587671,
+            0.09000008725876332,
+            2.2544670781388776
+          ],
+          "rusherPoints": [
+            {
+              "componentFileId": 3115,
+              "index": 0,
+              "transformFileId": 773,
+              "worldPosition": [
+                -4.244373926264995,
+                0.09000008725876332,
+                2.995013909375974
+              ]
+            },
+            {
+              "componentFileId": 2814,
+              "index": 1,
+              "transformFileId": 772,
+              "worldPosition": [
+                -4.286323005607047,
+                0.09000008725876332,
+                1.495567024125568
+              ]
+            },
+            {
+              "componentFileId": 3023,
+              "index": 2,
+              "transformFileId": 771,
+              "worldPosition": [
+                -3.8046377508433853,
+                0.09000008725876332,
+                2.9797772715994943
+              ]
+            },
+            {
+              "componentFileId": 2673,
+              "index": 3,
+              "transformFileId": 770,
+              "worldPosition": [
+                -3.836592826198583,
+                0.09000008725876332,
+                1.479984099126896
+              ]
+            }
+          ]
+        },
+        {
+          "sourceIndex": 1,
+          "playerPointFileId": 3107,
+          "playerPointWorldPosition": [
+            -4.550498128300167,
+            0.07100008536949612,
+            0.744264437374421
+          ],
+          "rusherPoints": [
+            {
+              "componentFileId": 3059,
+              "index": 0,
+              "transformFileId": 823,
+              "worldPosition": [
+                -4.264682318535305,
+                0.07100008536949612,
+                1.484811289375338
+              ]
+            },
+            {
+              "componentFileId": 2610,
+              "index": 1,
+              "transformFileId": 822,
+              "worldPosition": [
+                -4.306631677700067,
+                0.07100008536949612,
+                -0.0146357366004779
+              ]
+            },
+            {
+              "componentFileId": 2809,
+              "index": 2,
+              "transformFileId": 821,
+              "worldPosition": [
+                -3.824946102383262,
+                0.07100008536949612,
+                1.4695745692459945
+              ]
+            },
+            {
+              "componentFileId": 3014,
+              "index": 3,
+              "transformFileId": 820,
+              "worldPosition": [
+                -3.8569014566354767,
+                0.07100008536949612,
+                -0.030218745823670234
+              ]
+            }
+          ]
+        },
+        {
+          "sourceIndex": 2,
+          "playerPointFileId": 3124,
+          "playerPointWorldPosition": [
+            -4.56115896876138,
+            0.09400008765650379,
+            -0.7762784940488497
+          ],
+          "rusherPoints": [
+            {
+              "componentFileId": 2975,
+              "index": 0,
+              "transformFileId": 788,
+              "worldPosition": [
+                -4.2753431589965185,
+                0.09400008765650379,
+                -0.03573164204793278
+              ]
+            },
+            {
+              "componentFileId": 3120,
+              "index": 1,
+              "transformFileId": 787,
+              "worldPosition": [
+                -4.31729251816128,
+                0.09400008765650379,
+                -1.5351786680237487
+              ]
+            },
+            {
+              "componentFileId": 3033,
+              "index": 2,
+              "transformFileId": 786,
+              "worldPosition": [
+                -3.8356069428444752,
+                0.09400008765650379,
+                -0.05096836217727618
+              ]
+            },
+            {
+              "componentFileId": 2817,
+              "index": 3,
+              "transformFileId": 785,
+              "worldPosition": [
+                -3.86756229709669,
+                0.09400008765650379,
+                -1.550761677246941
+              ]
+            }
+          ]
+        },
+        {
+          "sourceIndex": 3,
+          "playerPointFileId": 2612,
+          "playerPointWorldPosition": [
+            -4.568475320982312,
+            0.08700008696045798,
+            -2.2869313081782012
+          ],
+          "rusherPoints": [
+            {
+              "componentFileId": 2973,
+              "index": 0,
+              "transformFileId": 1009,
+              "worldPosition": [
+                -4.28265951121745,
+                0.08700008696045798,
+                -1.5463844561772842
+              ]
+            },
+            {
+              "componentFileId": 2594,
+              "index": 1,
+              "transformFileId": 1008,
+              "worldPosition": [
+                -4.324608870382212,
+                0.08700008696045798,
+                -3.0458314821531003
+              ]
+            },
+            {
+              "componentFileId": 3008,
+              "index": 2,
+              "transformFileId": 1007,
+              "worldPosition": [
+                -3.842923295065407,
+                0.08700008696045798,
+                -1.5616211763066277
+              ]
+            },
+            {
+              "componentFileId": 3053,
+              "index": 3,
+              "transformFileId": 1006,
+              "worldPosition": [
+                -3.8748786493176217,
+                0.08700008696045798,
+                -3.0614144913762926
+              ]
+            }
+          ]
+        },
+        {
+          "sourceIndex": 4,
+          "playerPointFileId": 3061,
+          "playerPointWorldPosition": [
+            4.5829992000000015,
+            0.21000007999999978,
+            -2.196999499999999
+          ],
+          "rusherPoints": [
+            {
+              "componentFileId": 2949,
+              "index": 0,
+              "transformFileId": 860,
+              "worldPosition": [
+                4.322999186164757,
+                0.21000007999999978,
+                -2.9469995399093594
+              ]
+            },
+            {
+              "componentFileId": 2587,
+              "index": 1,
+              "transformFileId": 859,
+              "worldPosition": [
+                4.3129991856326315,
+                0.21000007999999978,
+                -1.446999460090639
+              ]
+            },
+            {
+              "componentFileId": 2882,
+              "index": 2,
+              "transformFileId": 858,
+              "worldPosition": [
+                3.882999162751265,
+                0.21000007999999978,
+                -2.9469995399093594
+              ]
+            },
+            {
+              "componentFileId": 2754,
+              "index": 3,
+              "transformFileId": 857,
+              "worldPosition": [
+                3.8629991616870156,
+                0.21000007999999978,
+                -1.4469994600906388
+              ]
+            }
+          ]
+        },
+        {
+          "sourceIndex": 5,
+          "playerPointFileId": 2621,
+          "playerPointWorldPosition": [
+            4.5989992000000015,
+            0.19500007999999977,
+            -0.6819994999999992
+          ],
+          "rusherPoints": [
+            {
+              "componentFileId": 2886,
+              "index": 0,
+              "transformFileId": 977,
+              "worldPosition": [
+                4.338999186164757,
+                0.19500007999999977,
+                -1.4319995399093592
+              ]
+            },
+            {
+              "componentFileId": 2789,
+              "index": 1,
+              "transformFileId": 976,
+              "worldPosition": [
+                4.3289991856326315,
+                0.19500007999999977,
+                0.06800053990936084
+              ]
+            },
+            {
+              "componentFileId": 2670,
+              "index": 2,
+              "transformFileId": 975,
+              "worldPosition": [
+                3.8989991627512652,
+                0.19500007999999977,
+                -1.4319995399093592
+              ]
+            },
+            {
+              "componentFileId": 3043,
+              "index": 3,
+              "transformFileId": 974,
+              "worldPosition": [
+                3.8789991616870156,
+                0.19500007999999977,
+                0.06800053990936095
+              ]
+            }
+          ]
+        },
+        {
+          "sourceIndex": 6,
+          "playerPointFileId": 3113,
+          "playerPointWorldPosition": [
+            4.5989992000000015,
+            0.2140000799999998,
+            0.8250005000000008
+          ],
+          "rusherPoints": [
+            {
+              "componentFileId": 2952,
+              "index": 0,
+              "transformFileId": 808,
+              "worldPosition": [
+                4.338999186164757,
+                0.2140000799999998,
+                0.07500046009064065
+              ]
+            },
+            {
+              "componentFileId": 2770,
+              "index": 1,
+              "transformFileId": 807,
+              "worldPosition": [
+                4.3289991856326315,
+                0.2140000799999998,
+                1.575000539909361
+              ]
+            },
+            {
+              "componentFileId": 2968,
+              "index": 2,
+              "transformFileId": 806,
+              "worldPosition": [
+                3.8989991627512652,
+                0.2140000799999998,
+                0.07500046009064065
+              ]
+            },
+            {
+              "componentFileId": 2611,
+              "index": 3,
+              "transformFileId": 805,
+              "worldPosition": [
+                3.8789991616870156,
+                0.2140000799999998,
+                1.575000539909361
+              ]
+            }
+          ]
+        },
+        {
+          "sourceIndex": 7,
+          "playerPointFileId": 2991,
+          "playerPointWorldPosition": [
+            4.5989992000000015,
+            0.23700007999999978,
+            2.3450005000000007
+          ],
+          "rusherPoints": [
+            {
+              "componentFileId": 3094,
+              "index": 0,
+              "transformFileId": 906,
+              "worldPosition": [
+                4.338999186164757,
+                0.23700007999999978,
+                1.5950004600906404
+              ]
+            },
+            {
+              "componentFileId": 2956,
+              "index": 1,
+              "transformFileId": 905,
+              "worldPosition": [
+                4.3289991856326315,
+                0.23700007999999978,
+                3.0950005399093605
+              ]
+            },
+            {
+              "componentFileId": 2982,
+              "index": 2,
+              "transformFileId": 904,
+              "worldPosition": [
+                3.8989991627512652,
+                0.23700007999999978,
+                1.5950004600906404
+              ]
+            },
+            {
+              "componentFileId": 3071,
+              "index": 3,
+              "transformFileId": 903,
+              "worldPosition": [
+                3.8789991616870156,
+                0.23700007999999978,
+                3.095000539909361
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

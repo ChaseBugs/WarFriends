@@ -9,8 +9,14 @@ Group=warfriends
 WorkingDirectory=/opt/warfriends/battle
 ExecStart=/usr/bin/dotnet /opt/warfriends/battle/War.BattleServer.dll
 EnvironmentFile=/etc/warfriends/battle.env
+Environment=Battle__ResultOutboxPath=/var/lib/warfriends-battle/outbox
+StateDirectory=warfriends-battle
+StateDirectoryMode=0750
+ReadWritePaths=/var/lib/warfriends-battle
+UMask=0077
 Restart=on-failure
 RestartSec=5
+TimeoutStopSec=30
 NoNewPrivileges=true
 PrivateTmp=true
 ProtectSystem=strict
