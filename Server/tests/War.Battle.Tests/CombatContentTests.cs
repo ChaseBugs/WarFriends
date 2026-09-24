@@ -1912,9 +1912,13 @@ internal static class CombatContentTests
               rusherMatch.RusherMovingTarget(rusherRows.Entities[0].EntityKey)==null &&
               rusherMatch.ArmyBatch(soldierOwner).Code=="army-offers",
               "confirmed Rusher death releases its exact source slot for a new hand");
-        ulong eligibleRusher=rusherRows.Entities[1].EntityKey;
+        var eligibleRusherRow=rusherRows.Entities.Skip(1)
+            .OrderByDescending(entity=>content.ArmyWeapons.WindupTicks(entity.UnitId)).First();
+        ulong eligibleRusher=eligibleRusherRow.EntityKey;
+        int eligibleWindup=content.ArmyWeapons.WindupTicks(eligibleRusherRow.UnitId);
+        Check(eligibleWindup>0,"live Rusher timing fixture retains a non-flamethrower windup");
         float retargetMinimumGap=float.MaxValue;
-        for(int i=0;i<700 && rusherMatch.RusherInitialShotTarget(eligibleRusher)==null &&
+        for(int i=0;i<700 && rusherMatch.RusherLatchedShotTarget(eligibleRusher)==null &&
             !rusherMatch.Terminal;i++)
         {
             if(i%90==0)
@@ -1926,9 +1930,10 @@ internal static class CombatContentTests
                 retargetMinimumGap=Math.Min(retargetMinimumGap,Vector2.Distance(
                     new(moving.X,moving.Z),new(other.X,other.Z)));
         }
-        Check(rusherMatch.RusherInitialShotTarget(eligibleRusher) is
-              {PlayerId:var targetPlayer,TargetFileId:17927} && targetPlayer==helicopterOwner,
-              "match-owned Rusher reaches its strict first-shot gate with a current Moving target");
+        var latchedShotTarget=rusherMatch.RusherLatchedShotTarget(eligibleRusher);
+        Check(latchedShotTarget is {PlayerId:var targetPlayer,TargetFileId:17927} &&
+              targetPlayer==helicopterOwner,
+              "match-owned Rusher latches the current Moving target when its source shot begins");
         int oldRusherPoint=rusherMatch.RusherWalkingTarget(eligibleRusher)!.RusherPointFileId;
         var coverMove=rusherMatch.Command(helicopterOwner,new MatchCommand{CommandId=2,
             MoveCover=new MoveCoverCommand{Direction=1}});
@@ -1937,6 +1942,10 @@ internal static class CombatContentTests
               rusherMatch.RusherSlotOccupant(oldRusherPoint)==eligibleRusher &&
               rusherMatch.RusherWalkingRoute(eligibleRusher) is {PlanarCovered:true},
               "defender cover departure retains the old occupied Rusher state during the source delay");
+        for(int i=1;i<eligibleWindup;i++)rusherMatch.Advance(++rusherTick);
+        Check(rusherMatch.RusherLatchedShotTarget(eligibleRusher)==latchedShotTarget &&
+              rusherMatch.RusherSlotOccupant(oldRusherPoint)==eligibleRusher,
+              "Rusher windup retains its prepared target and pauses source retargeting after cover departure");
         bool retargeted=false;
         for(int i=0;i<450 && !rusherMatch.Terminal;i++)
         {

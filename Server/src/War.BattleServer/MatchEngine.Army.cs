@@ -23,6 +23,7 @@ public sealed partial class MatchEngine
     private readonly Dictionary<ulong,ArmyRusherRetargetClock> rusherRetargetClocks=[];
     private readonly Dictionary<ulong,int> rusherDetours=[];
     private readonly Dictionary<ulong,ArmyRusherAttackState> rusherAttacks=[];
+    private readonly Dictionary<ulong,ArmyRusherTarget> rusherAttackTargets=[];
     private readonly List<ArmyRusherShotIntent> rusherShotIntents=[];
     private readonly Dictionary<ulong,ArmyFlameBurst> armyFlameBursts=[];
     private readonly Dictionary<int,ulong> occupiedRusherSlots=[];
@@ -111,6 +112,8 @@ public sealed partial class MatchEngine
         =>rusherDetours.TryGetValue(entityKey,out int count) ? count : 0;
     internal IReadOnlyList<ArmyRusherShotIntent> RusherShotIntents
         =>rusherShotIntents.AsReadOnly();
+    internal ArmyRusherTarget? RusherLatchedShotTarget(ulong entityKey)
+        =>rusherAttackTargets.TryGetValue(entityKey,out var target)?target:null;
 
     private void InitializeRusherMotionCandidate(ulong entityKey,string unitId)
     {
@@ -176,6 +179,7 @@ public sealed partial class MatchEngine
         {
             rusherAttacks[key]=CreateRusherAttack(family,shot);
         }
+        rusherAttackTargets.Remove(key);
         rusherRetargetClocks[key].Reset();
         return true;
     }
@@ -196,8 +200,10 @@ public sealed partial class MatchEngine
             bool pointActive=!opponent.Dead && opponent.Cover>=0 && opponent.Route==null &&
                 armyRusherPoints!.ForCover(map!,opponent.Cover)
                     .Any(p=>p.ComponentFileId==slot);
+            bool shotPending=rusherAttacks.TryGetValue(key,out var pendingAttack) &&
+                pendingAttack.Phase is ArmyRusherAttackPhase.Windup or ArmyRusherAttackPhase.Firing;
             if(state.Phase==ArmyRusherTravelPhase.Rusher &&
-               rusherRetargetClocks[key].AdvanceTick(pointActive,false) &&
+               rusherRetargetClocks[key].AdvanceTick(pointActive,shotPending) &&
                !opponent.Dead && opponent.Cover>=0 && opponent.Route==null &&
                TryRetargetRusher(key,opponent.Cover))continue;
             // The source-backed queue gate applies to allied Rushers sharing
@@ -262,14 +268,22 @@ public sealed partial class MatchEngine
             var target=RusherInitialShotTarget(key);
             bool eligible=target!=null && motion.InitialShotDelayElapsed;
             if(attack.Phase==ArmyRusherAttackPhase.Ready)
-                attack.TryBegin(eligible,1,armyWeapons?.WindupTicks(army.UnitId)??
-                    throw new InvalidDataException("Rusher attack lacks pinned windup authority."));
-            attack.AdvanceTick();
-            if(attack.ShotDue && target is { } shot)
             {
+                int windup=armyWeapons?.WindupTicks(army.UnitId)??
+                    throw new InvalidDataException("Rusher attack lacks pinned windup authority.");
+                if(attack.TryBegin(eligible,1,windup))
+                    rusherAttackTargets[key]=target!;
+            }
+            attack.AdvanceTick();
+            if(attack.ShotDue)
+            {
+                if(!rusherAttackTargets.TryGetValue(key,out var shot))
+                    throw new InvalidDataException("Rusher pending batch lost its latched target.");
                 rusherShotIntents.Add(new(key,army.OwnerPlayerId,shot.PlayerId,shot.TargetFileId,shot.Position,
                     attack.CurrentShotIsReal,attack.BatchCursor,attack.BatchSize));
                 attack.CommitShot();
+                if(attack.Phase==ArmyRusherAttackPhase.Cooldown)
+                    rusherAttackTargets.Remove(key);
             }
         }
         LaunchRusherShotIntents();
@@ -529,6 +543,7 @@ public sealed partial class MatchEngine
         rusherRetargetClocks.Remove(entityKey);
         rusherDetours.Remove(entityKey);
         rusherAttacks.Remove(entityKey);
+        rusherAttackTargets.Remove(entityKey);
         owner.ConfirmedArmyLosses=checked(owner.ConfirmedArmyLosses+1);
         if(rusherSlotByEntity.Remove(entityKey,out int rusherSlot) &&
            (!occupiedRusherSlots.TryGetValue(rusherSlot,out ulong occupant) ||
