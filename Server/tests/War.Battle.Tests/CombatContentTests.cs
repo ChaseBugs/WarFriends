@@ -721,6 +721,14 @@ internal static class CombatContentTests
               content.Army.BaseStats("ID_UNIT-HELICOPTER",0).Health>1000f &&
               content.Army.BaseStats("ID_UNIT-BUGGY",0).Damage==0f,
               "host normal-upgrade combat stats bind the recovered HP/DAMAGE rows, including zero-damage carriers");
+        Check(content.Army.ComposeShot("ID_UNIT-FLAMETHROWER",0,null,null)==
+              new ArmyBaseShotStats(.8f,1,1,2.3f,3f),
+              "flamethrower attack scheduler binds its recovered normal-upgrade firing row");
+        var flameSpecial=content.Army.ComposeShot("ID_UNIT-FLAMETHROWER",0,51,null);
+        Check(flameSpecial==new ArmyBaseShotStats(.8f,1,1,2.3f,3f),
+              "zeroed source special sentinel composes without changing flamethrower firing authority");
+        try { _=content.Army.ComposeShot("ID_UNIT-FLAMETHROWER",0,0,null); throw new Exception("Normal shot row accepted as special."); }
+        catch(ArgumentOutOfRangeException) { count++; }
         try { _=content.Army.BaseStats("ID_UNIT-ASSAULT",int.MaxValue); throw new Exception("Invalid army stage accepted."); }
         catch(ArgumentOutOfRangeException) { count++; }
         try { _=content.Army.BaseStats("ID_UNIT-ASSAULT",101); throw new Exception("Special row accepted as normal."); }

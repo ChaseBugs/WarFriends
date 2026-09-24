@@ -25,7 +25,7 @@ public sealed class ArmyRusherAttackState
         this.definition=definition ?? throw new ArgumentNullException(nameof(definition));
         if(definition.FireBatchSizeMin<1 || definition.FireBatchSizeMax<definition.FireBatchSizeMin ||
            definition.FireBatchSizeMax>14 || !float.IsFinite(definition.ProbabilityOfRealShot) ||
-           definition.ProbabilityOfRealShot is <0 or >1 || !float.IsFinite(definition.MinShootTime) ||
+           definition.ProbabilityOfRealShot is <0 or >40 || !float.IsFinite(definition.MinShootTime) ||
            !float.IsFinite(definition.MaxShootTime) || definition.MinShootTime<0 ||
            definition.MaxShootTime<definition.MinShootTime || shotIntervalTicks is <0 or >1800)
             throw new InvalidDataException("Invalid Rusher attack definition.");

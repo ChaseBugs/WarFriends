@@ -5,6 +5,8 @@ namespace War.BattleServer;
 
 public sealed record ArmyDeploymentOption(int Index,int Count,int Power,float Cooldown);
 public sealed record ArmyBaseCombatStats(float Health,float Damage);
+public sealed record ArmyUpgradeShotStats(float ProbabilityOfRealShot,int FireBatchSizeMin,
+    int FireBatchSizeMax,float MinShootTime,float MaxShootTime);
 public sealed record ArmyBaseShotStats(float ProbabilityOfRealShot,int FireBatchSizeMin,
     int FireBatchSizeMax,float MinShootTime,float MaxShootTime);
 public sealed record ArmyVehicleShotStats(float ShotSpeed,float ProbabilityOfRealShot,
@@ -32,6 +34,7 @@ public sealed class ArmyDeploymentCatalog
     public IReadOnlyList<ArmyDeploymentFamily> Families { get; }
     private readonly IReadOnlyDictionary<int,ArmyDeploymentOption> options;
     private IReadOnlyDictionary<string,IReadOnlyList<ArmyBaseCombatStats>>? baseStats;
+    private IReadOnlyDictionary<string,IReadOnlyList<ArmyUpgradeShotStats>>? upgradeShots;
     private IReadOnlyDictionary<string,int>? normalLaneEnds;
     private IReadOnlyDictionary<string,int>? eliteLaneStarts;
     private ArmyDeploymentCatalog(string revision,float maxEnergy,float baseCooldown,ArmyAgentConfig infantryAgent,
@@ -73,6 +76,37 @@ public sealed class ArmyDeploymentCatalog
         if(!float.IsFinite(health) || health<=0 || !float.IsFinite(damage) || damage<0)
             throw new InvalidDataException("Composed army stats are outside the recovered combat domain.");
         return new ArmyBaseCombatStats(health,damage);
+    }
+
+    /// <summary>UpgradeSlotsBaseSoldier zeroes these fields, then adds every selected lane row.</summary>
+    public ArmyBaseShotStats ComposeShot(string unitId,int normalIndex,int? specialIndex,int? eliteIndex,
+        float accuracyCoefficient=1f)
+    {
+        _=BaseStats(unitId,normalIndex);
+        if(upgradeShots==null||!upgradeShots.TryGetValue(unitId,out var stages))
+            throw new InvalidDataException("Army shot upgrade authority is unavailable.");
+        int specialStart=normalLaneEnds![unitId];
+        int eliteStart=eliteLaneStarts![unitId];
+        if(specialIndex is { } special&&(special<specialStart||
+            special>=(eliteStart==-1?stages.Count:eliteStart)))
+            throw new ArgumentOutOfRangeException(nameof(specialIndex));
+        if(eliteIndex is { } elite&&(eliteStart==-1||elite<eliteStart||elite>=stages.Count))
+            throw new ArgumentOutOfRangeException(nameof(eliteIndex));
+        if(!float.IsFinite(accuracyCoefficient)||accuracyCoefficient<=0||accuracyCoefficient>10)
+            throw new InvalidDataException("Invalid trusted army accuracy coefficient.");
+        var selected=new List<ArmyUpgradeShotStats>{stages[normalIndex]};
+        if(specialIndex.HasValue)selected.Add(stages[specialIndex.Value]);
+        if(eliteIndex.HasValue)selected.Add(stages[eliteIndex.Value]);
+        float probability=selected.Sum(x=>x.ProbabilityOfRealShot)*accuracyCoefficient;
+        int minimum=selected.Sum(x=>x.FireBatchSizeMin);
+        int maximum=selected.Sum(x=>x.FireBatchSizeMax);
+        float minTime=selected.Sum(x=>x.MinShootTime);
+        float maxTime=selected.Sum(x=>x.MaxShootTime);
+        if(!float.IsFinite(probability)||probability<0||probability>40||minimum<1||
+           maximum<minimum||maximum>64||!float.IsFinite(minTime)||!float.IsFinite(maxTime)||
+           minTime<0||maxTime<minTime||maxTime>180)
+            throw new InvalidDataException("Composed army shot stats are outside the recovered combat domain.");
+        return new(probability,minimum,maximum,minTime,maxTime);
     }
 
     public float EffectiveHealth(string unitId,int normalIndex,int? specialIndex,int? eliteIndex,
@@ -129,6 +163,7 @@ public sealed class ArmyDeploymentCatalog
         var sourceSheets=document.RootElement.GetProperty("sheets").EnumerateArray()
             .ToDictionary(x=>x.GetProperty("type").GetString()!,StringComparer.Ordinal);
         var acceptedStats=new Dictionary<string,IReadOnlyList<ArmyBaseCombatStats>>(StringComparer.Ordinal);
+        var acceptedShots=new Dictionary<string,IReadOnlyList<ArmyUpgradeShotStats>>(StringComparer.Ordinal);
         var acceptedLaneEnds=new Dictionary<string,int>(StringComparer.Ordinal);
         var acceptedEliteStarts=new Dictionary<string,int>(StringComparer.Ordinal);
         foreach(var family in Families)
@@ -164,22 +199,35 @@ public sealed class ArmyDeploymentCatalog
                (eliteLaneStart!=-1 && (eliteLaneStart<=normalLaneEnd || eliteLaneStart>=stageRows.GetArrayLength())))
                 throw new InvalidDataException("Army upgrade lane offsets differ from recovered source.");
             var stages=new ArmyBaseCombatStats[stageRows.GetArrayLength()];
+            var shots=new ArmyUpgradeShotStats[stageRows.GetArrayLength()];
             for(int i=0;i<stages.Length;i++)
             {
                 var stage=stageRows[i];
                 float hp=stage.GetProperty("HP").GetSingle();
                 float damage=stage.GetProperty("DAMAGE").GetSingle();
+                int batchMin=stage.GetProperty("BATCHSIZEMIN").GetInt32();
+                int batchMax=stage.GetProperty("BATCHSIZEMAX").GetInt32();
+                float frequencyMin=stage.GetProperty("SHOTFREQUENCYMIN").GetSingle();
+                float frequencyMax=stage.GetProperty("SHOTFREQUENCYMAX").GetSingle();
+                float probability=stage.GetProperty("REALSHOTPROBABILITY").GetSingle();
                 // Recovered tables contain zeroed upgrade-lane sentinel rows between
                 // normal and elite ranges; never turn one into a live combat entity.
-                if(!float.IsFinite(hp) || hp<0 || !float.IsFinite(damage) || damage<0)
+                if(!float.IsFinite(hp) || hp<0 || !float.IsFinite(damage) || damage<0 ||
+                   batchMin<0||batchMax<batchMin||batchMax>32||
+                   !float.IsFinite(frequencyMin)||!float.IsFinite(frequencyMax)||
+                   frequencyMin<0||frequencyMax<frequencyMin||frequencyMax>60||
+                   !float.IsFinite(probability)||probability<0||probability>10)
                     throw new InvalidDataException("Army normal-upgrade combat stat is invalid.");
                 stages[i]=new ArmyBaseCombatStats(hp,damage);
+                shots[i]=new ArmyUpgradeShotStats(probability,batchMin,batchMax,frequencyMin,frequencyMax);
             }
             acceptedStats.Add(family.UnitId,Array.AsReadOnly(stages));
+            acceptedShots.Add(family.UnitId,Array.AsReadOnly(shots));
             acceptedLaneEnds.Add(family.UnitId,normalLaneEnd);
             acceptedEliteStarts.Add(family.UnitId,eliteLaneStart);
         }
         baseStats=acceptedStats;
+        upgradeShots=acceptedShots;
         normalLaneEnds=acceptedLaneEnds;
         eliteLaneStarts=acceptedEliteStarts;
     }

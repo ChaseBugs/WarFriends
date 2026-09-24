@@ -17,6 +17,7 @@ public sealed partial class MatchEngine
     private readonly Dictionary<ulong,ArmyVitality> armyVitality=[];
     private readonly Dictionary<ulong,float> armyDamage=[];
     private readonly Dictionary<ulong,float> armySpeed=[];
+    private readonly Dictionary<ulong,ArmyBaseShotStats> armyShots=[];
     private readonly Dictionary<ulong,ArmyRusherArrivalState> rusherMotionCandidates=[];
     private readonly Dictionary<ulong,ArmyRusherLateralSteering> rusherSteering=[];
     private readonly Dictionary<ulong,ArmyRusherRetargetClock> rusherRetargetClocks=[];
@@ -70,10 +71,9 @@ public sealed partial class MatchEngine
 
     private void InitializeArmyVitality(ParticipantManifest owner,string unitId,ulong entityKey)
     {
-        if(owner.ArmyHealthFactors==null && owner.ArmyDamageScales==null &&
-           owner.ArmySpeedCoefficients==null)return;
         int index=Array.IndexOf(owner.EquippedArmyUnitIds!,unitId);
         if(index<0)throw new InvalidDataException("Spawned army unit is outside the trusted equipped set.");
+        if(owner.ArmyNormalUpgradeIndexes==null)return;
         int? special=owner.ArmySpecialUpgradeIndexes is { } specials && specials[index]>=0 ? specials[index] : null;
         int? elite=owner.ArmyEliteUpgradeIndexes is { } elites && elites[index]>=0 ? elites[index] : null;
         if(owner.ArmyHealthFactors is { } healthFactors)
@@ -87,6 +87,10 @@ public sealed partial class MatchEngine
                 owner.ArmyNormalUpgradeIndexes![index],special,elite,damageScales[index]));
         if(owner.ArmySpeedCoefficients is { } speedCoefficients)
             armySpeed.Add(entityKey,armyCatalog!.EffectiveSpeed(unitId,speedCoefficients[index]));
+        var family=armyCatalog!.Families.Single(f=>f.UnitId==unitId);
+        if(family.BaseShot!=null)
+            armyShots.Add(entityKey,armyCatalog.ComposeShot(unitId,
+                owner.ArmyNormalUpgradeIndexes[index],special,elite));
     }
 
     internal float? ArmyHealth(ulong entityKey)
@@ -119,7 +123,7 @@ public sealed partial class MatchEngine
         rusherRetargetClocks.Add(entityKey,new ArmyRusherRetargetClock());
         rusherDetours.Add(entityKey,0);
         var family=armyCatalog.Families.Single(f=>f.UnitId==unitId);
-        if(family.BaseShot is { } shot)
+        if((armyShots.TryGetValue(entityKey,out var effective)?effective:family.BaseShot) is { } shot)
             rusherAttacks.Add(entityKey,CreateRusherAttack(family,shot));
     }
 
@@ -163,9 +167,9 @@ public sealed partial class MatchEngine
         rusherSlotByEntity[key]=selected.Point.ComponentFileId;
         rusherMotionCandidates[key]=motion;
         rusherSteering[key]=steering;
-        if(armyCatalog.Families.Single(f=>f.UnitId==army.UnitId).BaseShot is { } shot)
+        var family=armyCatalog.Families.Single(f=>f.UnitId==army.UnitId);
+        if((armyShots.TryGetValue(key,out var effective)?effective:family.BaseShot) is { } shot)
         {
-            var family=armyCatalog.Families.Single(f=>f.UnitId==army.UnitId);
             rusherAttacks[key]=CreateRusherAttack(family,shot);
         }
         rusherRetargetClocks[key].Reset();
@@ -511,6 +515,7 @@ public sealed partial class MatchEngine
         armyVitality.Remove(entityKey);
         armyDamage.Remove(entityKey);
         armySpeed.Remove(entityKey);
+        armyShots.Remove(entityKey);
         rusherMotionCandidates.Remove(entityKey);
         rusherSteering.Remove(entityKey);
         rusherRetargetClocks.Remove(entityKey);
