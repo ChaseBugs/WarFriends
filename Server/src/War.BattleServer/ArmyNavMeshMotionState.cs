@@ -12,7 +12,7 @@ public sealed class ArmyNavMeshMotionState
     internal readonly record struct Checkpoint(float Traveled,float Speed,Vector3 Position);
     private readonly IReadOnlyList<Vector3> points;
     private readonly float[] cumulative;
-    private readonly float maximumSpeed;
+    private float maximumSpeed;
     private readonly float acceleration;
     private float traveled;
     private float speed;
@@ -78,6 +78,13 @@ public sealed class ArmyNavMeshMotionState
         float length=cumulative[segment]-cumulative[segment-1];
         float ratio=length>0 ? (traveled-cumulative[segment-1])/length : 1f;
         Position=Vector3.Lerp(points[segment-1],points[segment],Math.Clamp(ratio,0,1));
+    }
+
+    internal void SetMaximumSpeed(float value)
+    {
+        if(!float.IsFinite(value)||value<=0||value>20)
+            throw new InvalidDataException("Invalid infantry speed override.");
+        maximumSpeed=value;
     }
 
     private static float PlanarDistance(Vector3 a,Vector3 b)

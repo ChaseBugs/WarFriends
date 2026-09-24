@@ -22,6 +22,8 @@ public sealed partial class MatchEngine
     private readonly Dictionary<ulong,float> armySpeed=[];
     private readonly Dictionary<ulong,ArmyBaseShotStats> armyShots=[];
     private readonly Dictionary<ulong,ArmyRusherArrivalState> rusherMotionCandidates=[];
+    private readonly Dictionary<ulong,ArmyWarperRelocationState> warperRelocations=[];
+    private readonly Dictionary<ulong,ulong> warperRestartTicks=[];
     private readonly Dictionary<ulong,ArmyRusherLateralSteering> rusherSteering=[];
     private readonly Dictionary<ulong,ArmyRusherRetargetClock> rusherRetargetClocks=[];
     private readonly Dictionary<ulong,int> rusherDetours=[];
@@ -139,6 +141,10 @@ public sealed partial class MatchEngine
     // steering still need source comparison; motion alone grants no damage.
     internal ArmyRusherArrivalState? RusherMotionCandidate(ulong entityKey)
         =>rusherMotionCandidates.TryGetValue(entityKey,out var state) ? state : null;
+    internal ArmyWarperRelocationState? WarperRelocationCandidate(ulong entityKey)
+        =>warperRelocations.TryGetValue(entityKey,out var state)?state:null;
+    internal ulong? WarperRestartTick(ulong entityKey)
+        =>warperRestartTicks.TryGetValue(entityKey,out var due)?due:null;
     internal ulong? RusherSlotOccupant(int pointFileId)
         =>occupiedRusherSlots.TryGetValue(pointFileId,out var key) ? key : null;
     internal int RusherDetourCount(ulong entityKey)
@@ -151,21 +157,76 @@ public sealed partial class MatchEngine
     private void InitializeRusherMotionCandidate(ulong entityKey,string unitId)
     {
         if(!rusherSlotByEntity.ContainsKey(entityKey))return;
+        float speed=ArmySpeed(entityKey)??armyCatalog!.EffectiveSpeed(unitId,1f);
+        if(unitId=="ID_UNIT-WARPER")
+        {
+            StartWarperRelocation(entityKey,false);
+            return;
+        }
         var route=RusherWalkingRoute(entityKey);
         if(route is not {PlanarCovered:true})return;
-        float speed=ArmySpeed(entityKey)??armyCatalog!.EffectiveSpeed(unitId,1f);
         var state=new ArmyRusherArrivalState(route,armyCatalog!.InfantryAgent,speed);
+        InitializeRusherCombatState(entityKey,unitId,state);
+    }
+
+    private void InitializeRusherCombatState(ulong entityKey,string unitId,ArmyRusherArrivalState state)
+    {
         rusherMotionCandidates.Add(entityKey,state);
         rusherSteering.Add(entityKey,new ArmyRusherLateralSteering(state.Position));
         rusherRetargetClocks.Add(entityKey,new ArmyRusherRetargetClock());
         rusherDetours.Add(entityKey,0);
-        var family=armyCatalog.Families.Single(f=>f.UnitId==unitId);
+        var family=armyCatalog!.Families.Single(f=>f.UnitId==unitId);
         if((armyShots.TryGetValue(entityKey,out var effective)?effective:family.BaseShot) is { } shot)
         {
             var attack=walkingShotgunnerSpecials.TryGetValue(entityKey,out float special)
                 ?CreateWalkingShotgunnerAttack(family,shot,special):CreateRusherAttack(family,shot);
             rusherAttacks.Add(entityKey,attack);
-            rusherShotCounts.Add(entityKey,0);
+            rusherShotCounts.TryAdd(entityKey,0);
+        }
+    }
+
+    private Vector3 RusherSlotPosition(int slot)
+        =>armyRusherPoints!.ForCover(map!,Enumerable.Range(0,map!.Covers.Count).Single(i=>
+            armyRusherPoints.ForCover(map,i).Any(p=>p.ComponentFileId==slot)))
+            .Single(p=>p.ComponentFileId==slot).Position;
+
+    private void StartWarperRelocation(ulong entityKey,bool repeatAfterShot)
+    {
+        if(!activeArmyEntities.TryGetValue(entityKey,out var army)||army.UnitId!="ID_UNIT-WARPER"||
+           !rusherSlotByEntity.TryGetValue(entityKey,out int slot))
+            throw new InvalidDataException("Warper relocation lacks its entity and Rusher slot.");
+        float speed=ArmySpeed(entityKey)??armyCatalog!.EffectiveSpeed(army.UnitId,1f);
+        var policy=armyWeapons!.WarperRelocation;
+        warperRelocations.Add(entityKey,new ArmyWarperRelocationState(new(army.X,army.Y,army.Z),
+            RusherSlotPosition(slot),policy,policy.Fields[map!.Source],map,armyNavMeshConnectivity!,
+            armyCatalog!.InfantryAgent,speed,NextArmyFloat,repeatAfterShot));
+    }
+
+    private void StartDueWarperRestarts()
+    {
+        foreach(var (key,due) in warperRestartTicks.Where(pair=>pair.Value<=tick).OrderBy(pair=>pair.Key).ToArray())
+        {
+            if(!warperRestartTicks.Remove(key))throw new InvalidDataException("Warper restart timer removal failed.");
+            if(!activeArmyEntities.ContainsKey(key))continue;
+            rusherMotionCandidates.Remove(key);rusherSteering.Remove(key);rusherRetargetClocks.Remove(key);
+            rusherDetours.Remove(key);rusherAttacks.Remove(key);rusherAttackTargets.Remove(key);
+            StartWarperRelocation(key,true);
+        }
+    }
+
+    private void AdvanceWarperRelocations()
+    {
+        foreach(var (key,state) in warperRelocations.OrderBy(pair=>pair.Key).ToArray())
+        {
+            if(!activeArmyEntities.TryGetValue(key,out var army)||army.UnitId!="ID_UNIT-WARPER"||
+               !rusherSlotByEntity.TryGetValue(key,out int slot))
+                throw new InvalidDataException("Warper relocation lost its host entity or slot.");
+            state.AdvanceTick();
+            army.X=state.Position.X;army.Y=state.Position.Y;army.Z=state.Position.Z;army.PositionTick=tick;
+            if(state.Phase!=ArmyWarperRelocationPhase.Complete)continue;
+            var target=RusherSlotPosition(slot);
+            if(!warperRelocations.Remove(key))throw new InvalidDataException("Warper relocation removal failed.");
+            InitializeRusherCombatState(key,army.UnitId,new ArmyRusherArrivalState(state.Position,target));
         }
     }
 
@@ -344,7 +405,16 @@ public sealed partial class MatchEngine
                 if(attack.TryBegin(eligible,1,windup))
                     rusherAttackTargets[key]=target!;
             }
+            var priorPhase=attack.Phase;
             attack.AdvanceTick();
+            if(priorPhase==ArmyRusherAttackPhase.Windup&&attack.Phase==ArmyRusherAttackPhase.Firing&&
+               army.UnitId=="ID_UNIT-WARPER")
+            {
+                ulong delay=(ulong)MathF.Ceiling(armyWeapons!.WarperRelocation.RepeatAfterShotSeconds*
+                    MatchManifest.TickRate);
+                if(!warperRestartTicks.TryAdd(key,checked(tick+delay)))
+                    throw new InvalidDataException("Warper already has a post-shot restart timer.");
+            }
             if(attack.ShotDue)
             {
                 if(!rusherAttackTargets.TryGetValue(key,out var shot))
@@ -671,6 +741,8 @@ public sealed partial class MatchEngine
         armySpeed.Remove(entityKey);
         armyShots.Remove(entityKey);
         rusherMotionCandidates.Remove(entityKey);
+        warperRelocations.Remove(entityKey);
+        warperRestartTicks.Remove(entityKey);
         rusherSteering.Remove(entityKey);
         rusherRetargetClocks.Remove(entityKey);
         rusherDetours.Remove(entityKey);

@@ -11,7 +11,7 @@ public enum ArmyRusherTravelPhase { Walking, Settling, Rusher }
 public sealed class ArmyRusherArrivalState
 {
     private const int SettleTicks=MatchManifest.TickRate/2;
-    private readonly ArmyNavMeshMotionState motion;
+    private readonly ArmyNavMeshMotionState? motion;
     private readonly Vector3 target;
     private Vector3 settleStart;
     private int ticksSinceArrival;
@@ -19,12 +19,12 @@ public sealed class ArmyRusherArrivalState
     public ArmyRusherTravelPhase Phase { get; private set; }=ArmyRusherTravelPhase.Walking;
     public Vector3 Position { get; private set; }
     public Vector2 PlanarDirection => Phase==ArmyRusherTravelPhase.Walking ?
-        motion.PlanarDirection : Vector2.Zero;
+        motion!.PlanarDirection : Vector2.Zero;
     public bool InitialShotDelayElapsed => Phase==ArmyRusherTravelPhase.Rusher &&
         ticksSinceArrival>SettleTicks;
     internal int RejectedMotionTicks { get; private set; }
-    internal float MotionProgress => motion.Traveled;
-    internal float MotionLength => motion.Length;
+    internal float MotionProgress => motion?.Traveled??0;
+    internal float MotionLength => motion?.Length??0;
     internal Vector3 Destination => target;
 
     public ArmyRusherArrivalState(ArmyNavMeshCorridor route,ArmyAgentConfig agent,float speed)
@@ -35,11 +35,20 @@ public sealed class ArmyRusherArrivalState
         Position=motion.Position;
     }
 
+    internal ArmyRusherArrivalState(Vector3 position,Vector3 destination)
+    {
+        if(!PlayerHitbox.Finite(position)||!PlayerHitbox.Finite(destination)||
+           Vector3.Distance(position,destination)>.55f)
+            throw new InvalidDataException("Invalid Warper-to-Rusher arrival gate.");
+        Position=position;settleStart=position;target=destination;
+        Phase=ArmyRusherTravelPhase.Settling;
+    }
+
     public void AdvanceTick()
     {
         if(Phase==ArmyRusherTravelPhase.Walking)
         {
-            motion.AdvanceTick();
+            motion!.AdvanceTick();
             Position=motion.Position;
             if(motion.Arrived)
             {
@@ -63,14 +72,14 @@ public sealed class ArmyRusherArrivalState
     {
         ArgumentNullException.ThrowIfNull(allowed);
         var before=Position;
-        var checkpoint=motion.Capture();
+        ArmyNavMeshMotionState.Checkpoint? checkpoint=motion?.Capture();
         var phase=Phase;
         var start=settleStart;
         int ticks=ticksSinceArrival;
         AdvanceTick();
         if(Position==before || allowed(before,Position))return true;
         RejectedMotionTicks++;
-        motion.Restore(checkpoint);
+        if(checkpoint.HasValue)motion!.Restore(checkpoint.Value);
         Position=before;Phase=phase;settleStart=start;ticksSinceArrival=ticks;
         return false;
     }

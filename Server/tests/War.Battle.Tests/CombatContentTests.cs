@@ -787,6 +787,19 @@ internal static class CombatContentTests
         }
         Reject(()=>ArmyWarperDestinationPolicy.Select(warperPolicy,warperPolicy.Fields.Values.First(),false,
             ()=>1f,(point,_)=>point));
+        var warperMap=content.Maps.Single(map=>map.Source.Contains("City_Multiplayer",StringComparison.Ordinal));
+        var warperRoute=content.ArmyNavMeshPaths.ForMap(warperMap).First(row=>row.Complete);
+        var warperRandom=new Queue<float>(new[]{.6f,0f,.5f,.5f});
+        var warperState=new ArmyWarperRelocationState(warperRoute.SampledStart,warperRoute.SampledEnd,
+            warperPolicy,warperPolicy.Fields[warperMap.Source],warperMap,content.ArmyNavMeshConnectivity,
+            content.Army.InfantryAgent,.8f,()=>warperRandom.Count>0?warperRandom.Dequeue():.5f);
+        bool observedTransparent=false;
+        for(int i=0;i<5000&&warperState.Phase!=ArmyWarperRelocationPhase.Complete;i++)
+        {warperState.AdvanceTick();observedTransparent|=warperState.Transparent;}
+        Check(warperState.Phase==ArmyWarperRelocationPhase.Complete&&
+              warperState.CompletedEdgeHops==1&&observedTransparent&&
+              Vector3.Distance(warperState.Position,warperRoute.SampledEnd)<.04f,
+              "Warper executes one deterministic edge hop, pause, speed-20 phase, and final source route");
         Check(content.ArmyWeapons.TryProjectileDamage("ID_UNIT-SHOTGUNNER",100,Vector3.Zero,Vector3.Zero,out float pointDamage)&&pointDamage==100&&
               content.ArmyWeapons.TryProjectileDamage("ID_UNIT-SHOTGUNNER",100,Vector3.Zero,new(1.5f,0,0),out float midDamage)&&midDamage==55&&
               content.ArmyWeapons.TryProjectileDamage("ID_UNIT-SHOTGUNNER",100,Vector3.Zero,new(3,0,0),out float farDamage)&&farDamage==10&&
@@ -1959,6 +1972,57 @@ internal static class CombatContentTests
         }
         Check(walkingShot,
               "special Shotgunner fires after its divided initial clock while authoritative corridor motion continues");
+        var warperManifest=detached with {MatchId="warper-initial-relocation",IdleSeconds=120,Players=detached.Players.Select(p=>p with
+        {
+            EquippedArmyUnitIds=["ID_UNIT-WARPER"],NewArmyUnitIds=null,ArmyNormalUpgradeIndexes=[0],
+            ArmySpecialUpgradeIndexes=[-1],ArmyEliteUpgradeIndexes=[-1],ArmyHealthFactors=[new(1f,1f)],
+            ArmyDamageScales=[1f],ArmySpeedCoefficients=[1f],ArmyAccuracyCoefficients=[1f]
+        }).ToArray()};
+        content.ValidateAllocation(warperManifest);
+        var warperMatch=new MatchEngine(warperManifest,content:content,armyChoice:_=>0);
+        warperMatch.Admit(soldierOwner);warperMatch.Admit(helicopterOwner);
+        warperMatch.Command(soldierOwner,new MatchCommand{CommandId=1,
+            Ready=new ReadyCommand{ManifestHash=warperMatch.ManifestHash}});
+        warperMatch.Command(helicopterOwner,new MatchCommand{CommandId=1,
+            Ready=new ReadyCommand{ManifestHash=warperMatch.ManifestHash}});
+        warperMatch.Advance(60);
+        int warperOption=warperMatch.ArmyBatch(soldierOwner).OptionIndexes
+            .OrderBy(x=>content.Army.Option(x).Count).First();
+        Check(warperMatch.Command(soldierOwner,new MatchCommand{CommandId=2,
+                  DeployArmy=new DeployArmyCommand{OptionIndex=warperOption}}).Code=="army-deploying",
+              "Warper deployment enters server-owned relocation");
+        ulong warperTick=60;BattleArmyEntityState? liveWarper=null;
+        while(liveWarper==null&&warperTick<100)
+        {warperMatch.Advance(++warperTick);liveWarper=warperMatch.ArmyEntityBatch(soldierOwner,0,0).Entities.FirstOrDefault();}
+        var warperStart=new Vector3(liveWarper!.X,liveWarper.Y,liveWarper.Z);
+        Check(warperMatch.WarperRelocationCandidate(liveWarper.EntityKey)!=null&&
+              warperMatch.RusherMotionCandidate(liveWarper.EntityKey)==null,
+              "live Warper begins edge relocation before ordinary Rusher travel");
+        ArmyWarperRelocationState? liveRelocation=warperMatch.WarperRelocationCandidate(liveWarper.EntityKey);
+        bool completedInitialRelocation=false,observedLiveWarp=false;
+        while(warperTick<1500)
+        {
+            warperMatch.Advance(++warperTick);
+            liveRelocation=warperMatch.WarperRelocationCandidate(liveWarper.EntityKey);
+            observedLiveWarp|=liveRelocation?.Transparent==true;
+            if(liveRelocation==null&&warperMatch.RusherMotionCandidate(liveWarper.EntityKey)!=null)
+            {completedInitialRelocation=true;break;}
+        }
+        var relocatedWarper=warperMatch.ArmyEntityBatch(soldierOwner,0,0).Entities.Single();
+        Check(completedInitialRelocation&&observedLiveWarp&&
+              Vector3.Distance(warperStart,new(relocatedWarper.X,relocatedWarper.Y,relocatedWarper.Z))>1,
+              "live Warper completes its edge hop and final route before entering Rusher arrival");
+        bool postShotRestart=false;ulong? scheduledRestart=null,restartedAt=null;
+        while(warperTick<1200)
+        {
+            warperMatch.Advance(++warperTick);
+            scheduledRestart??=warperMatch.WarperRestartTick(liveWarper.EntityKey);
+            if(warperMatch.WarperRelocationCandidate(liveWarper.EntityKey)!=null)
+            {postShotRestart=true;restartedAt=warperTick;break;}
+        }
+        Check(postShotRestart&&scheduledRestart==restartedAt&&
+              warperMatch.RusherMotionCandidate(liveWarper.EntityKey)==null,
+              "live Warper re-enters server-owned relocation one second after Rusher shooting starts");
         var rusherManifest=detached with {MatchId="rusher-slots",Players=detached.Players.Select(p=>p with
         {
             EquippedArmyUnitIds=["ID_UNIT-SHOTGUNNER","ID_UNIT-SWAT","ID_UNIT-FLAMETHROWER"],
