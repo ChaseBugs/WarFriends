@@ -726,8 +726,25 @@ internal static class CombatContentTests
             new Vector3(2,0,3),Vector3.UnitX);
         Check(Vector3.Distance(placedFlameMuzzle,new Vector3(2.0405312f,.16250353f,2.5968728f))<.00002f,
               "army muzzle placement rotates the recovered local chain with authoritative facing");
+        Check(content.ArmyWeapons.WindupTicks("ID_UNIT-FLAMETHROWER")==0&&
+              content.ArmyWeapons.WindupTicks("ID_UNIT-SHOTGUNNER")==9&&
+              content.ArmyWeapons.WindupTicks("ID_UNIT-PARATROOPER")==9&&
+              content.ArmyWeapons.WindupTicks("ID_UNIT-SWAT")==30&&
+              content.ArmyWeapons.Windup("ID_UNIT-SWAT").ClipAsset=="Assets/AnimationClip/shield_unhide.anim",
+              "all source Rusher attacks bind their recovered stand-shoot or shield-unhide windup");
         try { _=content.ArmyWeapons.RestMuzzleOrigin("ID_UNIT-FLAMETHROWER",Vector3.Zero,Vector3.Zero); throw new Exception("Zero army facing accepted."); }
         catch(InvalidDataException) { count++; }
+        string weaponBindingPath=Path.Combine(directory,"recovered-rusher-weapon-bindings.json");
+        string weaponBindingTemp=Path.Combine(directory,"army-weapon-test-"+Guid.NewGuid().ToString("N")+".json");
+        try
+        {
+            var modified=JsonNode.Parse(File.ReadAllText(weaponBindingPath))!;
+            modified["families"]![0]!["attackWindup"]!["seconds"]=0f;
+            File.WriteAllText(weaponBindingTemp,modified.ToJsonString());
+            string altered=Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(weaponBindingTemp)));
+            Reject(()=>ArmyWeaponBindingCatalog.Load(weaponBindingTemp,altered,rusherPin.SceneRevision));
+        }
+        finally {if(File.Exists(weaponBindingTemp))File.Delete(weaponBindingTemp);}
         Check(content.Army.BaseStats("ID_UNIT-ASSAULT",0)==new ArmyBaseCombatStats(140f,29.6f) &&
               content.Army.BaseStats("ID_UNIT-HELICOPTER",0).Health>1000f &&
               content.Army.BaseStats("ID_UNIT-BUGGY",0).Damage==0f,
@@ -1410,7 +1427,13 @@ internal static class CombatContentTests
                   attack.BatchCursor==1 && attack.CommitShot() && attack.CommitShot() &&
                   attack.Phase==ArmyRusherAttackPhase.Cooldown && attack.CooldownTicksRemaining>=30,
                   "Rusher attack preserves windup, ordered real-shot bits, and cooldown after the batch");
+            var rusherCooldown=new ArmyRusherAttackState(new(1f,1,1,.1f,.2f),()=>0,
+                cooldownMinSeconds:2f,cooldownMaxSeconds:4f);
+            Check(rusherCooldown.TryBegin(true,1,0)&&rusherCooldown.AdvanceTick()&&
+                  rusherCooldown.CommitShot()&&rusherCooldown.CooldownTicksRemaining==60,
+                  "Rusher completion overrides generic upgrade timing with the source two-to-four-second cooldown");
             Reject(()=>new ArmyRusherAttackState(new ArmyBaseShotStats(0f,0,15,-1,2)));
+            Reject(()=>new ArmyRusherAttackState(new(1f,1,1,1,1),cooldownMinSeconds:2f));
             var shotIntent=new MatchEngine.ArmyRusherShotIntent(77,
                 "11111111111111111111111111111111","22222222222222222222222222222222",16,new(1,2,3),true,0,2);
             var impact=ArmyRusherImpactResolver.Resolve(shotIntent,

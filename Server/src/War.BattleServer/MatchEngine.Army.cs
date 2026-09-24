@@ -135,7 +135,10 @@ public sealed partial class MatchEngine
         // cannot begin on the following simulation tick.
         int interval=family.BehaviorType=="SoldierBehaviourFlamethrower"
             ? (int)MathF.Ceiling(.5f*MatchManifest.TickRate) : 0;
-        return new ArmyRusherAttackState(shot,shotIntervalTicks:interval);
+        // EndShooting -> ReturnToPreviousStateFromShot replaces the generic
+        // definition cooldown for both Rusher states with Random.Range(2,4).
+        return new ArmyRusherAttackState(shot,shotIntervalTicks:interval,
+            cooldownMinSeconds:2f,cooldownMaxSeconds:4f);
     }
 
     private bool TryRetargetRusher(ulong key,int destinationCover)
@@ -259,7 +262,8 @@ public sealed partial class MatchEngine
             var target=RusherInitialShotTarget(key);
             bool eligible=target!=null && motion.InitialShotDelayElapsed;
             if(attack.Phase==ArmyRusherAttackPhase.Ready)
-                attack.TryBegin(eligible,1,0);
+                attack.TryBegin(eligible,1,armyWeapons?.WindupTicks(army.UnitId)??
+                    throw new InvalidDataException("Rusher attack lacks pinned windup authority."));
             attack.AdvanceTick();
             if(attack.ShotDue && target is { } shot)
             {

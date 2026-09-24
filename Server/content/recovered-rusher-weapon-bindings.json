@@ -1,5 +1,5 @@
 {
-  "version": 2,
+  "version": 3,
   "sceneSha256": "d46f81ff8c3e12bf17f34a1f53dd601bd799102c9f984818031441dfb7a5de43",
   "enemyPrefabSha256": "64b4db85d1c9a0bd46a690a86102a22f66feeab8d4157a4c87824ac3d5dbeb54",
   "gunSnap": {
@@ -22,6 +22,15 @@
       "unitId": "ID_UNIT-SHOTGUNNER",
       "behaviorType": "SoldierBehaviourShotgunner",
       "behaviorFileId": 46839,
+      "attackWindup": {
+        "seconds": 0.3,
+        "rule": "stand-shoot-30-percent",
+        "clip": {
+          "asset": "Assets/AnimationClip/shotgunner_shot_loop.anim",
+          "sha256": "8ec63011daf8701457e00da4963694575244e71db93467a415dd23fb7dad6da2",
+          "length": 1.0
+        }
+      },
       "inventory": [
         {
           "fileId": 36093,
@@ -79,6 +88,15 @@
       "unitId": "ID_UNIT-PARATROOPER",
       "behaviorType": "SoldierBehaviourParachuter",
       "behaviorFileId": 38324,
+      "attackWindup": {
+        "seconds": 0.3,
+        "rule": "stand-shoot-30-percent",
+        "clip": {
+          "asset": "Assets/AnimationClip/rifle_shot_loop.anim",
+          "sha256": "760fe9311ce35c5d57069a1c70547af1f6d29a869c1ad9361126db022a769776",
+          "length": 1.0
+        }
+      },
       "inventory": [
         {
           "fileId": 39978,
@@ -136,6 +154,15 @@
       "unitId": "ID_UNIT-SWAT",
       "behaviorType": "SoldierBehaviourSwat",
       "behaviorFileId": 38536,
+      "attackWindup": {
+        "seconds": 1.0,
+        "rule": "swat-shield-unhide",
+        "clip": {
+          "asset": "Assets/AnimationClip/shield_unhide.anim",
+          "sha256": "4a7f35c992abe3d8701f6bda904e7875e110b598fb7cf18a159c01ce338d7b4a",
+          "length": 1.0
+        }
+      },
       "inventory": [
         {
           "fileId": 48807,
@@ -193,6 +220,11 @@
       "unitId": "ID_UNIT-FLAMETHROWER",
       "behaviorType": "SoldierBehaviourFlamethrower",
       "behaviorFileId": 48623,
+      "attackWindup": {
+        "seconds": 0.0,
+        "rule": "flamethrower-zero",
+        "clip": null
+      },
       "inventory": [
         {
           "fileId": 41583,
@@ -244,6 +276,15 @@
       "unitId": "ID_UNIT-COMMANDO",
       "behaviorType": "SoldierBehaviourCommando",
       "behaviorFileId": 47747,
+      "attackWindup": {
+        "seconds": 0.3,
+        "rule": "stand-shoot-30-percent",
+        "clip": {
+          "asset": "Assets/AnimationClip/rifle_shot_loop.anim",
+          "sha256": "760fe9311ce35c5d57069a1c70547af1f6d29a869c1ad9361126db022a769776",
+          "length": 1.0
+        }
+      },
       "inventory": [
         {
           "fileId": 37440,
@@ -326,6 +367,15 @@
       "unitId": "ID_UNIT-WARPER",
       "behaviorType": "SoldierBehaviourWarper",
       "behaviorFileId": 44715,
+      "attackWindup": {
+        "seconds": 0.3,
+        "rule": "stand-shoot-30-percent",
+        "clip": {
+          "asset": "Assets/AnimationClip/shotgunner_shot_loop.anim",
+          "sha256": "8ec63011daf8701457e00da4963694575244e71db93467a415dd23fb7dad6da2",
+          "length": 1.0
+        }
+      },
       "inventory": [
         {
           "fileId": 45891,

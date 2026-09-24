@@ -6,6 +6,7 @@ SCENE=ROOT/"Clients/ExportedProject/Assets/Scenes/MainScene.unity"
 DEPLOY=ROOT/"Server/content/recovered-army-deployment.json"
 OUT=ROOT/"Server/content/recovered-rusher-weapon-bindings.json"
 ENEMY=ROOT/"Clients/ExportedProject/Assets/GameObject/enemy.prefab"
+CLIPS=ROOT/"Clients/ExportedProject/Assets/AnimationClip"
 
 def yaml(path):
     text=path.read_text(encoding="utf-8-sig",errors="ignore")
@@ -72,6 +73,23 @@ def relative(transform_id,transforms,names,zero_root_position=False):
     return {"path":"/".join(path),"position":[matrix[0][3],matrix[1][3],matrix[2][3]],
             "rotation":rotation_from_matrix(matrix)}
 
+def attack_windup(weapon_type):
+    # EnemyController.PrepareToShoot: Rusher/RusherSpare uses no delay for a
+    # flamethrower, the complete shield-unhide clip for SWAT weapons, and 30%
+    # of SoldierAnimationController.StandShootLength for the ordinary branch.
+    if weapon_type==12: return {"seconds":0.0,"rule":"flamethrower-zero","clip":None}
+    name="shield_unhide" if weapon_type in (3,4) else {
+        7:"shotgunner_shot_loop", 8:"shotgunner_shot_loop",
+        9:"commando_shooting", 10:"colt_shooting_loop",
+    }.get(weapon_type,"rifle_shot_loop")
+    path=CLIPS/(name+".anim"); data=path.read_bytes(); text=data.decode("utf-8-sig")
+    stop=re.search(r"^    m_StopTime: ([0-9.]+)$",text,re.M)
+    if not stop or "  m_Legacy: 1" not in text: raise ValueError(f"invalid legacy attack clip: {path}")
+    length=float(stop.group(1)); factor=1.0 if weapon_type in (3,4) else .3
+    return {"seconds":length*factor,"rule":"swat-shield-unhide" if factor==1 else "stand-shoot-30-percent",
+            "clip":{"asset":path.relative_to(ROOT/"Clients/ExportedProject").as_posix(),
+                    "sha256":hashlib.sha256(data).hexdigest(),"length":length}}
+
 def main():
     raw=SCENE.read_bytes(); text=raw.decode("utf-8-sig")
     blocks={int(m.group(1)):m.group(2) for m in re.finditer(
@@ -109,12 +127,14 @@ def main():
             spawn_id=int(re.search(r"^  spawnPoint: \{fileID: (\d+)\}$",weapon_block,re.M).group(1))
             ref["spawnPoint"]=relative(spawn_id,prefab_transforms,prefab_names,True)
         rows.append({"unitId":family["unitId"],"behaviorType":family["behaviorType"],
-                     "behaviorFileId":family["behaviorFileId"],"inventory":inventories[0]})
+                     "behaviorFileId":family["behaviorFileId"],
+                     "attackWindup":attack_windup(inventories[0][0]["weaponType"]),
+                     "inventory":inventories[0]})
     if len(rows)!=6: raise ValueError("expected six Rusher weapon bindings")
     enemy_text,enemy_blocks,enemy_names,enemy_transforms=yaml(ENEMY)
     soldier_parts=next(block for block in enemy_blocks.values() if "gunSnapPointNotScaled:" in block)
     gun_snap=int(re.search(r"gunSnapPointNotScaled: \{fileID: (\d+)\}",soldier_parts).group(1))
-    artifact={"version":2,"sceneSha256":hashlib.sha256(raw).hexdigest(),
+    artifact={"version":3,"sceneSha256":hashlib.sha256(raw).hexdigest(),
               "enemyPrefabSha256":hashlib.sha256(ENEMY.read_bytes()).hexdigest(),
               "gunSnap":relative(gun_snap,enemy_transforms,enemy_names),
               "provenance":"serialized EnemyBasicInventory weapon references plus enemy rig and weapon spawn-point transform chains; runtime weapon IDs remain unresolved",
@@ -123,5 +143,5 @@ def main():
     if __import__("sys").argv[1:]==["--check"]:
         if OUT.read_bytes()!=encoded: raise ValueError("Rusher weapon artifact is stale")
     else: OUT.write_bytes(encoded)
-    print("six Rusher serialized weapon bindings pinned")
+    print("six Rusher serialized weapon bindings and attack windups pinned")
 if __name__=="__main__": main()
