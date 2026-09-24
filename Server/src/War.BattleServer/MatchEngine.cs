@@ -889,7 +889,11 @@ public sealed partial class MatchEngine
         if(advanced && phase==BattlePhase.Running && (armyProjectiles.Count>0||armyFlameBursts.Count>0))
         {
             if(armyProjectiles.Count>0)AdvanceArmyProjectiles();
-            AdvanceArmyFlameBursts();
+            if(armyFlameBursts.Count>0)
+            {
+                try { AdvanceArmyFlameBursts(); }
+                catch(InvalidDataException){End("invalid-army-flame-authority","",false);return;}
+            }
             if(Terminal)return;
         }
         if (advanced && phase == BattlePhase.Running && airEntities.Count > 0)

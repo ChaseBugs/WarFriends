@@ -24,6 +24,13 @@ if(args is ["--client-matchmaking-only"])
     return;
 }
 
+if(args is ["--flame-only"])
+{
+    int focused=ArmyFlameBurstTests.Run();
+    Console.WriteLine($"PASS: {focused} focused army flamethrower assertions");
+    return;
+}
+
 if(args is ["--unity-rifle-only",var unityExecutable,var unityProject])
 {
     var root=new DirectoryInfo(AppContext.BaseDirectory);
@@ -1443,6 +1450,7 @@ checks += BazookaCatalogTests.Run(Path.Combine(contentRoot.FullName,"content"));
 checks += await BazookaCatalogTests.RunUdp(Path.Combine(contentRoot.FullName,"content"));
 checks += GrenadeCatalogTests.Run(Path.Combine(contentRoot.FullName,"content"));
 checks += await GrenadeCatalogTests.RunUdp(Path.Combine(contentRoot.FullName,"content"));
+checks += ArmyFlameBurstTests.Run();
 checks += CombatContentTests.Run(Path.Combine(contentRoot.FullName,"content"));
 checks += BarrelOverlapReferenceTests.Run(Path.Combine(contentRoot.FullName,"content"));
 checks += BarrelChainTests.Run(Path.Combine(contentRoot.FullName,"content"));

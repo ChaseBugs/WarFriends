@@ -8,25 +8,28 @@ public sealed class ArmyRusherAttackState
     private readonly ArmyBaseShotStats definition;
     private readonly Func<float> random;
     private int windupTicks;
+    private int shotIntervalTicks;
+    private int shotIntervalRemaining;
     private int batchCursor;
     private bool[] realShots=Array.Empty<bool>();
 
     public ArmyRusherAttackPhase Phase { get; private set; }=ArmyRusherAttackPhase.Ready;
     public int BatchSize { get; private set; }
     public int BatchCursor => batchCursor;
-    public bool ShotDue => Phase==ArmyRusherAttackPhase.Firing && batchCursor<BatchSize;
+    public bool ShotDue => Phase==ArmyRusherAttackPhase.Firing && batchCursor<BatchSize && shotIntervalRemaining==0;
     public bool CurrentShotIsReal => ShotDue && realShots[batchCursor];
     public int CooldownTicksRemaining { get; private set; }
 
-    public ArmyRusherAttackState(ArmyBaseShotStats definition,Func<float>? random=null)
+    public ArmyRusherAttackState(ArmyBaseShotStats definition,Func<float>? random=null,int shotIntervalTicks=0)
     {
         this.definition=definition ?? throw new ArgumentNullException(nameof(definition));
         if(definition.FireBatchSizeMin<1 || definition.FireBatchSizeMax<definition.FireBatchSizeMin ||
            definition.FireBatchSizeMax>14 || !float.IsFinite(definition.ProbabilityOfRealShot) ||
            definition.ProbabilityOfRealShot is <0 or >1 || !float.IsFinite(definition.MinShootTime) ||
            !float.IsFinite(definition.MaxShootTime) || definition.MinShootTime<0 ||
-           definition.MaxShootTime<definition.MinShootTime)
+           definition.MaxShootTime<definition.MinShootTime || shotIntervalTicks is <0 or >1800)
             throw new InvalidDataException("Invalid Rusher attack definition.");
+        this.shotIntervalTicks=shotIntervalTicks;
         this.random=random ?? Random.Shared.NextSingle;
     }
 
@@ -35,6 +38,7 @@ public sealed class ArmyRusherAttackState
         if(!eligible || Phase!=ArmyRusherAttackPhase.Ready || strictDelayTicks<1 || windupTicks<0)
             return false;
         this.windupTicks=windupTicks;
+        shotIntervalRemaining=0;
         BatchSize=definition.FireBatchSizeMin +
             (int)MathF.Floor(Math.Clamp(random(),0f,.99999994f)*
                 (definition.FireBatchSizeMax-definition.FireBatchSizeMin));
@@ -58,6 +62,8 @@ public sealed class ArmyRusherAttackState
             if(CooldownTicksRemaining>0)CooldownTicksRemaining--;
             if(CooldownTicksRemaining==0)Phase=ArmyRusherAttackPhase.Ready;
         }
+        else if(Phase==ArmyRusherAttackPhase.Firing && shotIntervalRemaining>0)
+            shotIntervalRemaining--;
         return false;
     }
 
@@ -72,6 +78,7 @@ public sealed class ArmyRusherAttackState
             CooldownTicksRemaining=min + (int)MathF.Floor(Math.Clamp(random(),0f,.99999994f)*Math.Max(1,max-min));
             Phase=ArmyRusherAttackPhase.Cooldown;
         }
+        else shotIntervalRemaining=shotIntervalTicks;
         return true;
     }
 }

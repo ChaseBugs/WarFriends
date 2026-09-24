@@ -120,7 +120,17 @@ public sealed partial class MatchEngine
         rusherDetours.Add(entityKey,0);
         var family=armyCatalog.Families.Single(f=>f.UnitId==unitId);
         if(family.BaseShot is { } shot)
-            rusherAttacks.Add(entityKey,new ArmyRusherAttackState(shot));
+            rusherAttacks.Add(entityKey,CreateRusherAttack(family,shot));
+    }
+
+    private static ArmyRusherAttackState CreateRusherAttack(ArmyDeploymentFamily family,ArmyBaseShotStats shot)
+    {
+        // WeaponFlamethrower.cadence is serialized as 0.5 seconds. A source
+        // FlameAmmo shot owns its six internal pulses, so the next batch shot
+        // cannot begin on the following simulation tick.
+        int interval=family.BehaviorType=="SoldierBehaviourFlamethrower"
+            ? (int)MathF.Ceiling(.5f*MatchManifest.TickRate) : 0;
+        return new ArmyRusherAttackState(shot,shotIntervalTicks:interval);
     }
 
     private bool TryRetargetRusher(ulong key,int destinationCover)
@@ -154,7 +164,10 @@ public sealed partial class MatchEngine
         rusherMotionCandidates[key]=motion;
         rusherSteering[key]=steering;
         if(armyCatalog.Families.Single(f=>f.UnitId==army.UnitId).BaseShot is { } shot)
-            rusherAttacks[key]=new ArmyRusherAttackState(shot);
+        {
+            var family=armyCatalog.Families.Single(f=>f.UnitId==army.UnitId);
+            rusherAttacks[key]=CreateRusherAttack(family,shot);
+        }
         rusherRetargetClocks[key].Reset();
         return true;
     }

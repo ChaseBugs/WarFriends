@@ -13,13 +13,14 @@ internal sealed class ArmyFlameBurst
     internal const float HalfAngle=40f;
     internal const float HalfAngleNear=60f;
     internal const float MinimumDistance=.3f;
+    internal const ulong PulseIntervalTicks=(ulong)(SecondsBetweenHits*MatchManifest.TickRate)+1;
     private readonly ulong startedTick;
     internal ulong ProjectileId { get; }
     internal ulong EntityKey { get; }
     internal string OwnerPlayerId { get; }
     internal int PulseIndex { get; private set; }
     internal bool Finished=>PulseIndex>=HitsPerShot;
-    internal ulong NextPulseTick=>checked(startedTick+(ulong)Math.Floor((PulseIndex+1)*SecondsBetweenHits*MatchManifest.TickRate)+1);
+    internal ulong NextPulseTick=>checked(startedTick+(ulong)(PulseIndex+1)*PulseIntervalTicks);
 
     internal ArmyFlameBurst(ulong projectileId,ulong entityKey,string ownerPlayerId,ulong startedTick)
     {
