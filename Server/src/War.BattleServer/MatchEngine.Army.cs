@@ -23,6 +23,7 @@ public sealed partial class MatchEngine
     private readonly Dictionary<ulong,int> rusherDetours=[];
     private readonly Dictionary<ulong,ArmyRusherAttackState> rusherAttacks=[];
     private readonly List<ArmyRusherShotIntent> rusherShotIntents=[];
+    private readonly Dictionary<ulong,ArmyFlameBurst> armyFlameBursts=[];
     private readonly Dictionary<int,ulong> occupiedRusherSlots=[];
     private readonly Dictionary<ulong,int> rusherSlotByEntity=[];
 
@@ -259,14 +260,25 @@ public sealed partial class MatchEngine
         {
             if(!activeArmyEntities.TryGetValue(intent.EntityKey,out var army) ||
                army.OwnerPlayerId!=intent.PlayerId || !intent.IsReal)continue;
-            float? projectileSpeed=armyCatalog!.Families.Single(f=>f.UnitId==army.UnitId).BehaviorType switch
+            string behavior=armyCatalog!.Families.Single(f=>f.UnitId==army.UnitId).BehaviorType;
+            if(behavior=="SoldierBehaviourFlamethrower")
+            {
+                if(PendingProjectileCount>=MaximumProjectiles||!EventCapacityForShot())continue;
+                if(projectileId==ulong.MaxValue)throw new InvalidDataException("Army flame identity exhausted.");
+                ulong flameId=++projectileId;
+                armyFlameBursts.Add(flameId,new ArmyFlameBurst(flameId,intent.EntityKey,intent.PlayerId,tick));
+                Emit(MatchEventKind.Shot,intent.PlayerId,intent.TargetFileId.ToString(),
+                    flameId,new Vector3(army.X,army.Y,army.Z),0,"army-flame");
+                continue;
+            }
+            float? projectileSpeed=behavior switch
             {
                 "SoldierBehaviourShotgunner" or "SoldierBehaviourWarper"=>10f,
                 "SoldierBehaviourParachuter" or "SoldierBehaviourSwat"=>5f,
-                _=>null // Flamethrower/Commando require their non-bullet source path.
+                _=>null // Commando still requires its non-bullet source path.
             };
             if(!projectileSpeed.HasValue)continue;
-            if(armyProjectiles.Count+projectiles.Count>=MaximumProjectiles ||
+            if(PendingProjectileCount>=MaximumProjectiles ||
                !EventCapacityForShot())continue;
             var origin=new Vector3(army.X,army.Y,army.Z);
             ulong id=checked(++projectileId);
@@ -303,6 +315,36 @@ public sealed partial class MatchEngine
                 ApplyArmyRusherPlayerImpact(proof,damageRoll?.Invoke()??1f);
             }
             catch(InvalidDataException){End("invalid-army-impact-authority","",false);return;}
+            if(Terminal)return;
+        }
+    }
+
+    private void AdvanceArmyFlameBursts()
+    {
+        if(armyFlameBursts.Count==0)return;
+        foreach(var pair in armyFlameBursts.OrderBy(x=>x.Key).ToArray())
+        {
+            var burst=pair.Value;if(!burst.Due(tick))continue;
+            if(!activeArmyEntities.TryGetValue(burst.EntityKey,out var army))
+            {armyFlameBursts.Remove(pair.Key);continue;}
+            var owner=Find(burst.OwnerPlayerId);
+            if(owner==null){armyFlameBursts.Remove(pair.Key);continue;}
+            var victim=players.Single(x=>x!=owner);
+            var origin=new Vector3(army.X,army.Y,army.Z);
+            var target=rifleCombat?.Pose(victim.Definition.PlayerId).Collision;
+            if(target==null)throw new InvalidDataException("Army flame requires current player collision authority.");
+            var hit=ArmyFlameBurst.ResolvePlayer(origin,target.RootPosition-origin,target,
+                ArmyDamage(burst.EntityKey)??throw new InvalidDataException("Army flame lacks trusted damage."));
+            burst.CommitPulse(tick);
+            if(hit!=null&&!victim.Dead)
+            {
+                var result=ApplyResolvedPlayerDamage(owner.Definition.PlayerId,victim.Definition.PlayerId,
+                    new ResolvedPlayerDamage(hit.RawDamage,CombatDamageType.Flame,HasWeapon:true,FriendKill:false),
+                    damageRoll?.Invoke()??1f,true);
+                Emit(MatchEventKind.Impact,burst.EntityKey.ToString(),victim.Definition.PlayerId,
+                    burst.ProjectileId,origin,result?.Health??victim.Health,"army-flame");
+            }
+            if(burst.Finished)armyFlameBursts.Remove(pair.Key);
             if(Terminal)return;
         }
     }

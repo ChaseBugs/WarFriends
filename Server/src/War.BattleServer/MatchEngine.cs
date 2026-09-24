@@ -74,7 +74,7 @@ public sealed partial class MatchEngine
     private ulong armyEntityRevision;
     private ulong projectileId;
     internal const int MaximumProjectiles = 128;
-    internal int PendingProjectileCount => checked(projectiles.Count+armyProjectiles.Count+bazookaProjectiles.Count+scheduledBazookas.Count+grenadeProjectiles.Count);
+    internal int PendingProjectileCount => checked(projectiles.Count+armyProjectiles.Count+armyFlameBursts.Count+bazookaProjectiles.Count+scheduledBazookas.Count+grenadeProjectiles.Count);
     internal IReadOnlyCollection<AirBattleEntity> AirEntities => airEntities.Snapshot();
 
     internal bool TryRegisterAirEntity(AirBattleEntity entity)
@@ -886,9 +886,10 @@ public sealed partial class MatchEngine
             try { AdvanceRusherMotionCandidates(); }
             catch(InvalidDataException){End("invalid-army-authority","",false);return;}
         }
-        if(advanced && phase==BattlePhase.Running && armyProjectiles.Count>0)
+        if(advanced && phase==BattlePhase.Running && (armyProjectiles.Count>0||armyFlameBursts.Count>0))
         {
-            AdvanceArmyProjectiles();
+            if(armyProjectiles.Count>0)AdvanceArmyProjectiles();
+            AdvanceArmyFlameBursts();
             if(Terminal)return;
         }
         if (advanced && phase == BattlePhase.Running && airEntities.Count > 0)
@@ -1642,6 +1643,7 @@ public sealed partial class MatchEngine
             performance.End(tick);
         projectiles.Clear();
         armyProjectiles.Clear();
+        armyFlameBursts.Clear();
         bazookaProjectiles.Clear();
         scheduledBazookas.Clear();
         grenadeProjectiles.Clear();
