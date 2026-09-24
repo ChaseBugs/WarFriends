@@ -14,6 +14,7 @@ public sealed class ArmyRusherAttackState
     private bool[] realShots=Array.Empty<bool>();
     private readonly float cooldownMinSeconds;
     private readonly float cooldownMaxSeconds;
+    private bool initialCooldownScheduled;
 
     public ArmyRusherAttackPhase Phase { get; private set; }=ArmyRusherAttackPhase.Ready;
     public int BatchSize { get; private set; }
@@ -59,6 +60,16 @@ public sealed class ArmyRusherAttackState
         return true;
     }
 
+    /// <summary>SwitchStateToWalking schedules its first shot instead of firing immediately.</summary>
+    public void BeginInitialCooldown()
+    {
+        if(Phase!=ArmyRusherAttackPhase.Ready||initialCooldownScheduled)
+            throw new InvalidDataException("Initial Rusher cooldown can only be scheduled once while ready.");
+        initialCooldownScheduled=true;
+        ScheduleCooldown();
+        Phase=ArmyRusherAttackPhase.Cooldown;
+    }
+
     public bool AdvanceTick()
     {
         if(Phase==ArmyRusherAttackPhase.Windup)
@@ -82,12 +93,17 @@ public sealed class ArmyRusherAttackState
         batchCursor++;
         if(batchCursor==BatchSize)
         {
-            int min=(int)MathF.Ceiling(cooldownMinSeconds*MatchManifest.TickRate);
-            int max=(int)MathF.Ceiling(cooldownMaxSeconds*MatchManifest.TickRate);
-            CooldownTicksRemaining=min + (int)MathF.Floor(Math.Clamp(random(),0f,.99999994f)*Math.Max(1,max-min));
+            ScheduleCooldown();
             Phase=ArmyRusherAttackPhase.Cooldown;
         }
         else shotIntervalRemaining=shotIntervalTicks;
         return true;
+    }
+
+    private void ScheduleCooldown()
+    {
+        int min=(int)MathF.Ceiling(cooldownMinSeconds*MatchManifest.TickRate);
+        int max=(int)MathF.Ceiling(cooldownMaxSeconds*MatchManifest.TickRate);
+        CooldownTicksRemaining=min+(int)MathF.Floor(Math.Clamp(random(),0f,.99999994f)*Math.Max(1,max-min));
     }
 }

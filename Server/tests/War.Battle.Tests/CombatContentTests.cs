@@ -1491,6 +1491,15 @@ internal static class CombatContentTests
             Check(rusherCooldown.TryBegin(true,1,0)&&rusherCooldown.AdvanceTick()&&
                   rusherCooldown.CommitShot()&&rusherCooldown.CooldownTicksRemaining==60,
                   "Rusher completion overrides generic upgrade timing with the source two-to-four-second cooldown");
+            var walkingCooldown=new ArmyRusherAttackState(new(1f,1,1,1f,5f),()=>0,
+                shotIntervalTicks:11,cooldownMinSeconds:5f,cooldownMaxSeconds:25f);
+            walkingCooldown.BeginInitialCooldown();
+            for(int i=0;i<149;i++)walkingCooldown.AdvanceTick();
+            Check(walkingCooldown.Phase==ArmyRusherAttackPhase.Cooldown&&
+                  walkingCooldown.CooldownTicksRemaining==1&&!walkingCooldown.AdvanceTick()&&
+                  walkingCooldown.Phase==ArmyRusherAttackPhase.Ready,
+                  "selected Shotgunner schedules its divided walking interval before the first attack");
+            Reject(()=>walkingCooldown.BeginInitialCooldown());
             Reject(()=>new ArmyRusherAttackState(new ArmyBaseShotStats(0f,0,15,-1,2)));
             Reject(()=>new ArmyRusherAttackState(new(1f,1,1,1,1),cooldownMinSeconds:2f));
             var shotIntent=new MatchEngine.ArmyRusherShotIntent(77,
@@ -1881,6 +1890,45 @@ internal static class CombatContentTests
               paratrooperMatch.ArmyEntityBatch(soldierOwner,0,0).Entities.Single() is
                   {Kevlar:0,MaxKevlar:>0},
               "damage beyond depleted Paratrooper kevlar spills exactly into health and reconnect projection");
+        var walkingShotgunnerManifest=detached with {MatchId="shotgunner-walking-fire",
+            Players=detached.Players.Select((p,i)=>p with
+            {
+                EquippedArmyUnitIds=["ID_UNIT-SHOTGUNNER"],NewArmyUnitIds=null,
+                ArmyNormalUpgradeIndexes=[0],ArmySpecialUpgradeIndexes=[i==0?101:-1],ArmyEliteUpgradeIndexes=[-1],
+                ArmyHealthFactors=[new(1f,1f)],ArmyDamageScales=[1f],ArmySpeedCoefficients=[1f],
+                ArmyAccuracyCoefficients=[2f]
+            }).ToArray()};
+        content.ValidateAllocation(walkingShotgunnerManifest);
+        var walkingShotgunnerMatch=new MatchEngine(walkingShotgunnerManifest,content:content,armyChoice:_=>0);
+        walkingShotgunnerMatch.Admit(soldierOwner);walkingShotgunnerMatch.Admit(helicopterOwner);
+        walkingShotgunnerMatch.Command(soldierOwner,new MatchCommand{CommandId=1,
+            Ready=new ReadyCommand{ManifestHash=walkingShotgunnerMatch.ManifestHash}});
+        walkingShotgunnerMatch.Command(helicopterOwner,new MatchCommand{CommandId=1,
+            Ready=new ReadyCommand{ManifestHash=walkingShotgunnerMatch.ManifestHash}});
+        walkingShotgunnerMatch.Advance(60);
+        int walkingOption=walkingShotgunnerMatch.ArmyBatch(soldierOwner).OptionIndexes
+            .OrderBy(x=>content.Army.Option(x).Count).First();
+        Check(walkingShotgunnerMatch.Command(soldierOwner,new MatchCommand{CommandId=2,
+                  DeployArmy=new DeployArmyCommand{OptionIndex=walkingOption}}).Code=="army-deploying",
+              "selected-special Shotgunner enters its source walking route");
+        ulong walkingTick=60;BattleArmyEntityState? walkingEntity=null;
+        while(walkingEntity==null&&walkingTick<90)
+        {
+            walkingShotgunnerMatch.Advance(++walkingTick);
+            walkingEntity=walkingShotgunnerMatch.ArmyEntityBatch(soldierOwner,0,0).Entities.SingleOrDefault();
+        }
+        bool walkingShot=false;float priorProgress=0;
+        while(!walkingShot&&walkingTick<400)
+        {
+            var before=walkingShotgunnerMatch.RusherMotionCandidate(walkingEntity!.EntityKey);
+            priorProgress=before?.MotionProgress??priorProgress;
+            walkingShotgunnerMatch.Advance(++walkingTick);
+            var after=walkingShotgunnerMatch.RusherMotionCandidate(walkingEntity.EntityKey);
+            walkingShot=walkingShotgunnerMatch.RusherShotIntents.Any(x=>x.EntityKey==walkingEntity.EntityKey&&x.IsReal)&&
+                after is {Phase:ArmyRusherTravelPhase.Walking}&&after.MotionProgress>priorProgress;
+        }
+        Check(walkingShot,
+              "special Shotgunner fires after its divided initial clock while authoritative corridor motion continues");
         var rusherManifest=detached with {MatchId="rusher-slots",Players=detached.Players.Select(p=>p with
         {
             EquippedArmyUnitIds=["ID_UNIT-SHOTGUNNER","ID_UNIT-SWAT","ID_UNIT-FLAMETHROWER"],

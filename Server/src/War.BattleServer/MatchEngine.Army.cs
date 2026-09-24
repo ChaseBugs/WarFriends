@@ -26,6 +26,7 @@ public sealed partial class MatchEngine
     private readonly Dictionary<ulong,ArmyRusherRetargetClock> rusherRetargetClocks=[];
     private readonly Dictionary<ulong,int> rusherDetours=[];
     private readonly Dictionary<ulong,ArmyRusherAttackState> rusherAttacks=[];
+    private readonly Dictionary<ulong,float> walkingShotgunnerSpecials=[];
     private readonly Dictionary<ulong,ArmyRusherTarget> rusherAttackTargets=[];
     private readonly Dictionary<ulong,int> rusherShotCounts=[];
     private readonly List<ArmyRusherShotIntent> rusherShotIntents=[];
@@ -110,6 +111,12 @@ public sealed partial class MatchEngine
                 throw new InvalidDataException("Commando poison ratio is outside its recovered combat domain.");
             if(specialValue>0)armySpecial.Add(entityKey,specialValue);
         }
+        if(family.BehaviorType=="SoldierBehaviourShotgunner"&&special.HasValue)
+        {
+            if(specialValue<=0||specialValue>10)
+                throw new InvalidDataException("Shotgunner walking-fire special is outside its recovered combat domain.");
+            walkingShotgunnerSpecials.Add(entityKey,specialValue);
+        }
         if(owner.ArmySpeedCoefficients is { } speedCoefficients)
             armySpeed.Add(entityKey,armyCatalog!.EffectiveSpeed(unitId,speedCoefficients[index],
                 owner.ArmyNormalUpgradeIndexes[index],special,elite));
@@ -155,9 +162,24 @@ public sealed partial class MatchEngine
         var family=armyCatalog.Families.Single(f=>f.UnitId==unitId);
         if((armyShots.TryGetValue(entityKey,out var effective)?effective:family.BaseShot) is { } shot)
         {
-            rusherAttacks.Add(entityKey,CreateRusherAttack(family,shot));
+            var attack=walkingShotgunnerSpecials.TryGetValue(entityKey,out float special)
+                ?CreateWalkingShotgunnerAttack(family,shot,special):CreateRusherAttack(family,shot);
+            rusherAttacks.Add(entityKey,attack);
             rusherShotCounts.Add(entityKey,0);
         }
+    }
+
+    private ArmyRusherAttackState CreateWalkingShotgunnerAttack(ArmyDeploymentFamily family,
+        ArmyBaseShotStats shot,float special)
+    {
+        if(family.BehaviorType!="SoldierBehaviourShotgunner"||!float.IsFinite(special)||special<=0||special>10)
+            throw new InvalidDataException("Invalid Shotgunner walking-fire authority.");
+        int interval=armyWeapons?.CadenceTicks(family.UnitId)??
+            throw new InvalidDataException("Shotgunner attack lacks pinned cadence authority.");
+        var attack=new ArmyRusherAttackState(shot,NextArmyFloat,shotIntervalTicks:interval,
+            cooldownMinSeconds:shot.MinShootTime/special,cooldownMaxSeconds:shot.MaxShootTime/special);
+        attack.BeginInitialCooldown();
+        return attack;
     }
 
     private ArmyRusherAttackState CreateRusherAttack(ArmyDeploymentFamily family,ArmyBaseShotStats shot)
@@ -166,8 +188,17 @@ public sealed partial class MatchEngine
             throw new InvalidDataException("Rusher attack lacks pinned cadence authority.");
         // EndShooting -> ReturnToPreviousStateFromShot replaces the generic
         // definition cooldown for both Rusher states with Random.Range(2,4).
-        return new ArmyRusherAttackState(shot,shotIntervalTicks:interval,
+        return new ArmyRusherAttackState(shot,NextArmyFloat,shotIntervalTicks:interval,
             cooldownMinSeconds:2f,cooldownMaxSeconds:4f);
+    }
+
+    private float NextArmyFloat()
+    {
+        const int scale=1_000_000;
+        int value=armyChoice(scale);
+        if(value<0||value>=scale)
+            throw new InvalidDataException("Army random source returned an invalid value.");
+        return value/(float)scale;
     }
 
     private bool TryRetargetRusher(ulong key,int destinationCover)
@@ -287,15 +318,28 @@ public sealed partial class MatchEngine
             army.X=position.X;army.Y=position.Y;army.Z=position.Z;
             army.PositionTick=tick;
         }
-        foreach(var (key,attack) in rusherAttacks.OrderBy(pair=>pair.Key))
+        foreach(var (key,attack) in rusherAttacks.OrderBy(pair=>pair.Key).ToArray())
         {
             if(!activeArmyEntities.TryGetValue(key,out var army) || !rusherMotionCandidates.TryGetValue(key,out var motion))
                 continue;
-            var target=RusherInitialShotTarget(key);
-            bool eligible=target!=null && motion.InitialShotDelayElapsed;
+            if(walkingShotgunnerSpecials.ContainsKey(key)&&motion.Phase==ArmyRusherTravelPhase.Rusher&&
+               attack.Phase is not (ArmyRusherAttackPhase.Windup or ArmyRusherAttackPhase.Firing))
+            {
+                var family=armyCatalog!.Families.Single(f=>f.UnitId==army.UnitId);
+                rusherAttacks[key]=CreateRusherAttack(family,armyShots[key]);
+                walkingShotgunnerSpecials.Remove(key);
+                continue;
+            }
+            bool walkingSpecial=walkingShotgunnerSpecials.ContainsKey(key)&&
+                motion.Phase==ArmyRusherTravelPhase.Walking;
+            var target=walkingSpecial&&motion.MotionLength-motion.MotionProgress>1f
+                ?RusherWalkingTarget(key):RusherInitialShotTarget(key);
+            bool eligible=target!=null&&(walkingSpecial||motion.InitialShotDelayElapsed);
             if(attack.Phase==ArmyRusherAttackPhase.Ready)
             {
-                int windup=armyWeapons?.WindupTicks(army.UnitId)??
+                int windup=walkingSpecial?(int)MathF.Ceiling(
+                    armyWeapons!.ShotgunnerWalkingFire.WindupSeconds*MatchManifest.TickRate):
+                    armyWeapons?.WindupTicks(army.UnitId)??
                     throw new InvalidDataException("Rusher attack lacks pinned windup authority.");
                 if(attack.TryBegin(eligible,1,windup))
                     rusherAttackTargets[key]=target!;
@@ -631,6 +675,7 @@ public sealed partial class MatchEngine
         rusherRetargetClocks.Remove(entityKey);
         rusherDetours.Remove(entityKey);
         rusherAttacks.Remove(entityKey);
+        walkingShotgunnerSpecials.Remove(entityKey);
         rusherAttackTargets.Remove(entityKey);
         rusherShotCounts.Remove(entityKey);
         owner.ConfirmedArmyLosses=checked(owner.ConfirmedArmyLosses+1);

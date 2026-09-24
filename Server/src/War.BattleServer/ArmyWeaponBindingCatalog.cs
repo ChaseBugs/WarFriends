@@ -19,6 +19,8 @@ public sealed record ArmyShotgunFalloff(string UnitId,float Radius,float ShotHal
 public sealed record ArmySwatSpecialSpeed(string Rule,string Source,string SourceSha256);
 public sealed record ArmyParatrooperKevlar(string Rule,string BehaviorSource,string BehaviorSha256,
     string KevlarSource,string KevlarSha256);
+public sealed record ArmyShotgunnerWalkingFire(float WindupSeconds,string Rule,string BehaviorSource,
+    string BehaviorSha256,string ControllerSource,string ControllerSha256);
 
 /// <summary>Pinned enemy-rig and serialized Rusher weapon spawn-point chains.</summary>
 public sealed class ArmyWeaponBindingCatalog
@@ -35,15 +37,17 @@ public sealed class ArmyWeaponBindingCatalog
     public ArmyCommandoPoison CommandoPoison { get; }
     public ArmySwatSpecialSpeed SwatSpecialSpeed { get; }
     public ArmyParatrooperKevlar ParatrooperKevlar { get; }
+    public ArmyShotgunnerWalkingFire ShotgunnerWalkingFire { get; }
 
     private ArmyWeaponBindingCatalog(string revision,TransformRow gun,TransformRow leftGun,
         Dictionary<string,ArmyWeaponMuzzle[]> muzzles,Dictionary<string,ArmyWeaponWindup> windups,
         Dictionary<string,ArmyWeaponCadence> cadences,Dictionary<string,ArmyShotgunFalloff> shotgunFalloffs,
         ArmyCommandoPoison commandoPoison,ArmySwatSpecialSpeed swatSpecialSpeed,
-        ArmyParatrooperKevlar paratrooperKevlar)
+        ArmyParatrooperKevlar paratrooperKevlar,ArmyShotgunnerWalkingFire shotgunnerWalkingFire)
     {Revision=revision;GunSnapPath=gun.Path;GunSnapPosition=gun.Position;GunSnapRotation=gun.Rotation;
      LeftGunSnapPath=leftGun.Path;this.muzzles=muzzles;this.windups=windups;this.cadences=cadences;
      CommandoPoison=commandoPoison;SwatSpecialSpeed=swatSpecialSpeed;ParatrooperKevlar=paratrooperKevlar;
+     ShotgunnerWalkingFire=shotgunnerWalkingFire;
      this.shotgunFalloffs=shotgunFalloffs;}
 
     public ArmyWeaponMuzzle Muzzle(string unitId,int index=0)
@@ -108,8 +112,8 @@ public sealed class ArmyWeaponBindingCatalog
             throw new InvalidDataException("Army weapon binding revision mismatch.");
         using var document=JsonDocument.Parse(bytes,new JsonDocumentOptions{MaxDepth=16});
         var root=document.RootElement;
-        Exact(root,"version","sceneSha256","enemyPrefabSha256","gunSnap","leftGunSnap","provenance","commandoPoison","swatSpecialSpeed","paratrooperKevlar","families");
-        if(root.GetProperty("version").GetInt32()!=9||root.GetProperty("sceneSha256").GetString()!=sceneRevision||
+        Exact(root,"version","sceneSha256","enemyPrefabSha256","gunSnap","leftGunSnap","provenance","commandoPoison","swatSpecialSpeed","paratrooperKevlar","shotgunnerWalkingFire","families");
+        if(root.GetProperty("version").GetInt32()!=10||root.GetProperty("sceneSha256").GetString()!=sceneRevision||
            !Hash(root.GetProperty("enemyPrefabSha256").GetString())||
            root.GetProperty("provenance").GetString()!=
              "serialized EnemyBasicInventory weapon references plus enemy rig and weapon spawn-point transform chains; runtime weapon IDs remain unresolved")
@@ -150,6 +154,18 @@ public sealed class ArmyWeaponBindingCatalog
            kevlar.KevlarSource!="Assets/Scripts/Assembly-CSharp/Kevlar.cs"||
            !Hash(kevlar.BehaviorSha256)||!Hash(kevlar.KevlarSha256))
             throw new InvalidDataException("Invalid source Paratrooper kevlar policy.");
+        var walkingRow=root.GetProperty("shotgunnerWalkingFire");
+        Exact(walkingRow,"windupSeconds","rule","behaviorSource","behaviorSha256","controllerSource","controllerSha256");
+        var walking=new ArmyShotgunnerWalkingFire(walkingRow.GetProperty("windupSeconds").GetSingle(),
+            walkingRow.GetProperty("rule").GetString()??"",walkingRow.GetProperty("behaviorSource").GetString()??"",
+            walkingRow.GetProperty("behaviorSha256").GetString()??"",walkingRow.GetProperty("controllerSource").GetString()??"",
+            walkingRow.GetProperty("controllerSha256").GetString()??"");
+        if(walking.WindupSeconds!=.35f||
+           walking.Rule!="selected-special-fires-during-walk-without-stopping-and-divides-walk-interval-by-special"||
+           walking.BehaviorSource!="Assets/Scripts/Assembly-CSharp/SoldierBehaviourShotgunner.cs"||
+           walking.ControllerSource!="Assets/Scripts/Assembly-CSharp/EnemyController.cs"||
+           !Hash(walking.BehaviorSha256)||!Hash(walking.ControllerSha256))
+            throw new InvalidDataException("Invalid source Shotgunner walking-fire policy.");
         var families=root.GetProperty("families");
         if(families.GetArrayLength()!=6)throw new InvalidDataException("Incomplete Rusher weapon family set.");
         var result=new Dictionary<string,ArmyWeaponMuzzle[]>(StringComparer.Ordinal);
@@ -250,7 +266,7 @@ public sealed class ArmyWeaponBindingCatalog
                 throw new InvalidDataException("Unexpected Rusher shotgun falloff.");
         }
         if(shotgunFalloffs.Count!=2)throw new InvalidDataException("Incomplete Rusher shotgun falloff set.");
-        return new(expectedRevision,gun,leftGun,result,windups,cadences,shotgunFalloffs,poison,swatSpecialSpeed,kevlar);
+        return new(expectedRevision,gun,leftGun,result,windups,cadences,shotgunFalloffs,poison,swatSpecialSpeed,kevlar,walking);
     }
 
     private sealed record TransformRow(string Path,Vector3 Position,Quaternion Rotation);

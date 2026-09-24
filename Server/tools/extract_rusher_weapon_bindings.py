@@ -217,7 +217,22 @@ def main():
                        "behaviorSha256":hashlib.sha256(parachuter_source.read_bytes()).hexdigest(),
                        "kevlarSource":kevlar_source.relative_to(ROOT/"Clients/ExportedProject").as_posix(),
                        "kevlarSha256":hashlib.sha256(kevlar_source.read_bytes()).hexdigest()}
-    artifact={"version":9,"sceneSha256":hashlib.sha256(raw).hexdigest(),
+    shotgunner_source=SCRIPTS/"SoldierBehaviourShotgunner.cs"
+    enemy_source=SCRIPTS/"EnemyController.cs"
+    shotgunner_text=shotgunner_source.read_text(encoding="utf-8-sig")
+    enemy_text_source=enemy_source.read_text(encoding="utf-8-sig")
+    if "canShootWhileRunningDontStop = true" not in shotgunner_text or \
+       "walkShotTimeMax /= base.soldierBehaviourDefinititon.special" not in shotgunner_text or \
+       "walkShotTimeMin /= base.soldierBehaviourDefinititon.special" not in shotgunner_text or \
+       "Shoot(0.35f)" not in enemy_text_source:
+        raise ValueError("Shotgunner walking-fire source contract changed")
+    shotgunner_walk={"windupSeconds":0.35,
+                     "rule":"selected-special-fires-during-walk-without-stopping-and-divides-walk-interval-by-special",
+                     "behaviorSource":shotgunner_source.relative_to(ROOT/"Clients/ExportedProject").as_posix(),
+                     "behaviorSha256":hashlib.sha256(shotgunner_source.read_bytes()).hexdigest(),
+                     "controllerSource":enemy_source.relative_to(ROOT/"Clients/ExportedProject").as_posix(),
+                     "controllerSha256":hashlib.sha256(enemy_source.read_bytes()).hexdigest()}
+    artifact={"version":10,"sceneSha256":hashlib.sha256(raw).hexdigest(),
               "enemyPrefabSha256":hashlib.sha256(ENEMY.read_bytes()).hexdigest(),
               "gunSnap":relative(gun_snap,enemy_transforms,enemy_names),
               "leftGunSnap":relative(left_gun_snap,enemy_transforms,enemy_names),
@@ -225,10 +240,11 @@ def main():
               "commandoPoison":commando_poison,
               "swatSpecialSpeed":swat_special,
               "paratrooperKevlar":parachuter_kevlar,
+              "shotgunnerWalkingFire":shotgunner_walk,
               "families":rows}
     encoded=(json.dumps(artifact,indent=2)+"\n").encode()
     if __import__("sys").argv[1:]==["--check"]:
         if OUT.read_bytes()!=encoded: raise ValueError("Rusher weapon artifact is stale")
     else: OUT.write_bytes(encoded)
-    print("six Rusher weapon bindings, timing, falloff, poison, SWAT speed, and Paratrooper kevlar pinned")
+    print("six Rusher bindings, timing, falloff, poison, SWAT speed, Paratrooper kevlar, and Shotgunner walking fire pinned")
 if __name__=="__main__": main()
