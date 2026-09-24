@@ -869,6 +869,12 @@ public sealed partial class MatchEngine
                             X=point.Position.X,Y=point.Position.Y,Z=point.Position.Z,SpawnTick=tick,
                             PositionTick=tick,
                             MaxHealth=ArmyHealth(entityKey)??0,Health=ArmyHealth(entityKey)??0});
+                        var vitality=armyVitality.GetValueOrDefault(entityKey);
+                        if(vitality!=null)
+                        {
+                            activeArmyEntities[entityKey].MaxKevlar=vitality.KevlarMaximum;
+                            activeArmyEntities[entityKey].Kevlar=vitality.Kevlar;
+                        }
                         InitializeRusherMotionCandidate(entityKey,spawned.UnitId);
                         p.ConfirmedArmySpawns=checked(p.ConfirmedArmySpawns+1);
                         armyEntityRevision++;

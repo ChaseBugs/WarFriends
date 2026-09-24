@@ -210,6 +210,11 @@ namespace War.Client
                            entity.MaxHealth<=0 || entity.MaxHealth>10000000 ||
                            float.IsNaN(entity.Health) || float.IsInfinity(entity.Health) ||
                            entity.Health<=0 || entity.Health>entity.MaxHealth) ||
+                       (entity.MaxKevlar==0 ? entity.Kevlar!=0 :
+                           float.IsNaN(entity.MaxKevlar) || float.IsInfinity(entity.MaxKevlar) ||
+                           entity.MaxKevlar<=0 || entity.MaxKevlar>10000000 ||
+                           float.IsNaN(entity.Kevlar) || float.IsInfinity(entity.Kevlar) ||
+                           entity.Kevlar<0 || entity.Kevlar>entity.MaxKevlar) ||
                        entity.SpawnTick>batch.ServerTick ||
                        entity.PositionTick<entity.SpawnTick ||
                        entity.PositionTick>batch.ServerTick)

@@ -763,6 +763,9 @@ internal static class CombatContentTests
               content.Army.EffectiveSpeed("ID_UNIT-SWAT",1f,0,101,null)==1.2f&&
               content.Army.EffectiveSpeed("ID_UNIT-SHOTGUNNER",1f,0,101,null)==1f,
               "only SWAT with a selected special lane multiplies runtime speed by one plus composed SPECIAL");
+        Check(content.ArmyWeapons.ParatrooperKevlar.BehaviorSource.EndsWith("SoldierBehaviourParachuter.cs")&&
+              content.ArmyWeapons.ParatrooperKevlar.KevlarSource.EndsWith("Kevlar.cs"),
+              "Paratrooper special activation and two-pool kevlar absorption are source-hashed");
         Check(content.ArmyWeapons.TryProjectileDamage("ID_UNIT-SHOTGUNNER",100,Vector3.Zero,Vector3.Zero,out float pointDamage)&&pointDamage==100&&
               content.ArmyWeapons.TryProjectileDamage("ID_UNIT-SHOTGUNNER",100,Vector3.Zero,new(1.5f,0,0),out float midDamage)&&midDamage==55&&
               content.ArmyWeapons.TryProjectileDamage("ID_UNIT-SHOTGUNNER",100,Vector3.Zero,new(3,0,0),out float farDamage)&&farDamage==10&&
@@ -1842,6 +1845,42 @@ internal static class CombatContentTests
               deathMatch.Snapshot().Players[1].ConfirmedArmySpawns==1 &&
               deathMatch.Snapshot().Players[1].ConfirmedArmyLosses==1,
               "unscored terminal evidence freezes confirmed army transitions");
+        var paratrooperManifest=detached with {MatchId="paratrooper-kevlar",Players=detached.Players.Select((p,i)=>p with
+        {
+            EquippedArmyUnitIds=["ID_UNIT-PARATROOPER"],NewArmyUnitIds=null,
+            ArmyNormalUpgradeIndexes=[0],ArmySpecialUpgradeIndexes=[i==0?101:-1],ArmyEliteUpgradeIndexes=[-1],
+            ArmyHealthFactors=[new(1f,1f)],ArmyDamageScales=[1f],ArmySpeedCoefficients=[1f],
+            ArmyAccuracyCoefficients=[1f]
+        }).ToArray()};
+        content.ValidateAllocation(paratrooperManifest);
+        var paratrooperMatch=new MatchEngine(paratrooperManifest,content:content,armyChoice:_=>0);
+        paratrooperMatch.Admit(soldierOwner);paratrooperMatch.Admit(helicopterOwner);
+        paratrooperMatch.Command(soldierOwner,new MatchCommand{CommandId=1,
+            Ready=new ReadyCommand{ManifestHash=paratrooperMatch.ManifestHash}});
+        paratrooperMatch.Command(helicopterOwner,new MatchCommand{CommandId=1,
+            Ready=new ReadyCommand{ManifestHash=paratrooperMatch.ManifestHash}});
+        paratrooperMatch.Advance(60);
+        var paratrooperHand=paratrooperMatch.ArmyBatch(soldierOwner);
+        int paratrooperOption=paratrooperHand.OptionIndexes.OrderBy(x=>content.Army.Option(x).Count).First();
+        Check(paratrooperMatch.Command(soldierOwner,new MatchCommand{CommandId=2,
+                  DeployArmy=new DeployArmyCommand{OptionIndex=paratrooperOption}}).Code=="army-deploying",
+              "source-special Paratrooper enters the host deployment lifecycle");
+        for(ulong paratrooperTick=61;paratrooperTick<=70;paratrooperTick++)paratrooperMatch.Advance(paratrooperTick);
+        var paratrooper=paratrooperMatch.ArmyEntityBatch(soldierOwner,0,0).Entities.Single();
+        float paratrooperHealth=paratrooper.MaxHealth,paratrooperKevlar=paratrooper.MaxKevlar;
+        Check(paratrooperKevlar==paratrooperHealth*.2f&&paratrooper.Kevlar==paratrooperKevlar&&
+              paratrooperMatch.ArmyKevlar(paratrooper.EntityKey)==paratrooperKevlar,
+              "selected Paratrooper special projects composed-ratio kevlar from authoritative max health");
+        Check(paratrooperMatch.ApplyArmyHostDamage(paratrooper.EntityKey,paratrooperKevlar/2)&&
+              paratrooperMatch.ArmyHealth(paratrooper.EntityKey)==paratrooperHealth&&
+              paratrooperMatch.ArmyKevlar(paratrooper.EntityKey)==paratrooperKevlar/2,
+              "Paratrooper kevlar absorbs original damage before main vitality");
+        Check(paratrooperMatch.ApplyArmyHostDamage(paratrooper.EntityKey,paratrooperKevlar/2+10)&&
+              paratrooperMatch.ArmyHealth(paratrooper.EntityKey)==paratrooperHealth-10&&
+              paratrooperMatch.ArmyKevlar(paratrooper.EntityKey)==0&&
+              paratrooperMatch.ArmyEntityBatch(soldierOwner,0,0).Entities.Single() is
+                  {Kevlar:0,MaxKevlar:>0},
+              "damage beyond depleted Paratrooper kevlar spills exactly into health and reconnect projection");
         var rusherManifest=detached with {MatchId="rusher-slots",Players=detached.Players.Select(p=>p with
         {
             EquippedArmyUnitIds=["ID_UNIT-SHOTGUNNER","ID_UNIT-SWAT","ID_UNIT-FLAMETHROWER"],

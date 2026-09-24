@@ -17,6 +17,8 @@ public sealed record ArmyShotgunFalloff(string UnitId,float Radius,float ShotHal
     float MinimumDamageRatio,bool FlatY,
     bool ShotOnlyMainBullet,string Rule,string Source,string SourceSha256);
 public sealed record ArmySwatSpecialSpeed(string Rule,string Source,string SourceSha256);
+public sealed record ArmyParatrooperKevlar(string Rule,string BehaviorSource,string BehaviorSha256,
+    string KevlarSource,string KevlarSha256);
 
 /// <summary>Pinned enemy-rig and serialized Rusher weapon spawn-point chains.</summary>
 public sealed class ArmyWeaponBindingCatalog
@@ -32,14 +34,17 @@ public sealed class ArmyWeaponBindingCatalog
     public string LeftGunSnapPath { get; }
     public ArmyCommandoPoison CommandoPoison { get; }
     public ArmySwatSpecialSpeed SwatSpecialSpeed { get; }
+    public ArmyParatrooperKevlar ParatrooperKevlar { get; }
 
     private ArmyWeaponBindingCatalog(string revision,TransformRow gun,TransformRow leftGun,
         Dictionary<string,ArmyWeaponMuzzle[]> muzzles,Dictionary<string,ArmyWeaponWindup> windups,
         Dictionary<string,ArmyWeaponCadence> cadences,Dictionary<string,ArmyShotgunFalloff> shotgunFalloffs,
-        ArmyCommandoPoison commandoPoison,ArmySwatSpecialSpeed swatSpecialSpeed)
+        ArmyCommandoPoison commandoPoison,ArmySwatSpecialSpeed swatSpecialSpeed,
+        ArmyParatrooperKevlar paratrooperKevlar)
     {Revision=revision;GunSnapPath=gun.Path;GunSnapPosition=gun.Position;GunSnapRotation=gun.Rotation;
      LeftGunSnapPath=leftGun.Path;this.muzzles=muzzles;this.windups=windups;this.cadences=cadences;
-     CommandoPoison=commandoPoison;SwatSpecialSpeed=swatSpecialSpeed;this.shotgunFalloffs=shotgunFalloffs;}
+     CommandoPoison=commandoPoison;SwatSpecialSpeed=swatSpecialSpeed;ParatrooperKevlar=paratrooperKevlar;
+     this.shotgunFalloffs=shotgunFalloffs;}
 
     public ArmyWeaponMuzzle Muzzle(string unitId,int index=0)
         =>muzzles.TryGetValue(unitId,out var value)&&index>=0&&index<value.Length
@@ -103,8 +108,8 @@ public sealed class ArmyWeaponBindingCatalog
             throw new InvalidDataException("Army weapon binding revision mismatch.");
         using var document=JsonDocument.Parse(bytes,new JsonDocumentOptions{MaxDepth=16});
         var root=document.RootElement;
-        Exact(root,"version","sceneSha256","enemyPrefabSha256","gunSnap","leftGunSnap","provenance","commandoPoison","swatSpecialSpeed","families");
-        if(root.GetProperty("version").GetInt32()!=8||root.GetProperty("sceneSha256").GetString()!=sceneRevision||
+        Exact(root,"version","sceneSha256","enemyPrefabSha256","gunSnap","leftGunSnap","provenance","commandoPoison","swatSpecialSpeed","paratrooperKevlar","families");
+        if(root.GetProperty("version").GetInt32()!=9||root.GetProperty("sceneSha256").GetString()!=sceneRevision||
            !Hash(root.GetProperty("enemyPrefabSha256").GetString())||
            root.GetProperty("provenance").GetString()!=
              "serialized EnemyBasicInventory weapon references plus enemy rig and weapon spawn-point transform chains; runtime weapon IDs remain unresolved")
@@ -135,6 +140,16 @@ public sealed class ArmyWeaponBindingCatalog
         if(swatSpecialSpeed.Rule!="selected-special-multiplies-runtime-speed-by-one-plus-composed-special"||
            swatSpecialSpeed.Source!="Assets/Scripts/Assembly-CSharp/SoldierBehaviourSwat.cs"||!Hash(swatSpecialSpeed.SourceSha256))
             throw new InvalidDataException("Invalid source SWAT special-speed policy.");
+        var kevlarRow=root.GetProperty("paratrooperKevlar");
+        Exact(kevlarRow,"rule","behaviorSource","behaviorSha256","kevlarSource","kevlarSha256");
+        var kevlar=new ArmyParatrooperKevlar(kevlarRow.GetProperty("rule").GetString()??"",
+            kevlarRow.GetProperty("behaviorSource").GetString()??"",kevlarRow.GetProperty("behaviorSha256").GetString()??"",
+            kevlarRow.GetProperty("kevlarSource").GetString()??"",kevlarRow.GetProperty("kevlarSha256").GetString()??"");
+        if(kevlar.Rule!="selected-special-times-unit-max-health-absorbs-original-damage-before-health"||
+           kevlar.BehaviorSource!="Assets/Scripts/Assembly-CSharp/SoldierBehaviourParachuter.cs"||
+           kevlar.KevlarSource!="Assets/Scripts/Assembly-CSharp/Kevlar.cs"||
+           !Hash(kevlar.BehaviorSha256)||!Hash(kevlar.KevlarSha256))
+            throw new InvalidDataException("Invalid source Paratrooper kevlar policy.");
         var families=root.GetProperty("families");
         if(families.GetArrayLength()!=6)throw new InvalidDataException("Incomplete Rusher weapon family set.");
         var result=new Dictionary<string,ArmyWeaponMuzzle[]>(StringComparer.Ordinal);
@@ -235,7 +250,7 @@ public sealed class ArmyWeaponBindingCatalog
                 throw new InvalidDataException("Unexpected Rusher shotgun falloff.");
         }
         if(shotgunFalloffs.Count!=2)throw new InvalidDataException("Incomplete Rusher shotgun falloff set.");
-        return new(expectedRevision,gun,leftGun,result,windups,cadences,shotgunFalloffs,poison,swatSpecialSpeed);
+        return new(expectedRevision,gun,leftGun,result,windups,cadences,shotgunFalloffs,poison,swatSpecialSpeed,kevlar);
     }
 
     private sealed record TransformRow(string Path,Vector3 Position,Quaternion Rotation);

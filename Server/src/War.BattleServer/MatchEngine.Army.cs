@@ -9,10 +9,12 @@ public sealed partial class MatchEngine
         int RusherPointFileId,Vector3 Position);
     internal sealed record ArmyRusherShotIntent(ulong EntityKey,string OwnerPlayerId,string TargetPlayerId,int TargetFileId,
         Vector3 TargetPosition,bool IsReal,int BatchIndex,int BatchSize);
-    private sealed class ArmyVitality(float maximum)
+    private sealed class ArmyVitality(float maximum,float kevlarMaximum=0)
     {
         public float Maximum { get; }=maximum;
         public float Current=maximum;
+        public float KevlarMaximum { get; }=kevlarMaximum;
+        public float Kevlar=kevlarMaximum;
     }
     private readonly Dictionary<ulong,ArmyVitality> armyVitality=[];
     private readonly Dictionary<ulong,float> armyDamage=[];
@@ -81,16 +83,26 @@ public sealed partial class MatchEngine
         if(owner.ArmyNormalUpgradeIndexes==null)return;
         int? special=owner.ArmySpecialUpgradeIndexes is { } specials && specials[index]>=0 ? specials[index] : null;
         int? elite=owner.ArmyEliteUpgradeIndexes is { } elites && elites[index]>=0 ? elites[index] : null;
+        var family=armyCatalog!.Families.Single(f=>f.UnitId==unitId);
         if(owner.ArmyHealthFactors is { } healthFactors)
         {
             float maximum=armyCatalog!.EffectiveHealth(unitId,owner.ArmyNormalUpgradeIndexes![index],
                 special,elite,healthFactors[index]);
-            armyVitality.Add(entityKey,new ArmyVitality(maximum));
+            float kevlar=0;
+            if(family.BehaviorType=="SoldierBehaviourParachuter"&&special.HasValue)
+            {
+                float ratio=armyCatalog.ComposeSpecial(unitId,owner.ArmyNormalUpgradeIndexes[index],special,elite);
+                if(!float.IsFinite(ratio)||ratio<=0||ratio>10)
+                    throw new InvalidDataException("Paratrooper kevlar ratio is outside its recovered combat domain.");
+                kevlar=maximum*ratio;
+                if(!float.IsFinite(kevlar)||kevlar<=0||kevlar>10_000_000)
+                    throw new InvalidDataException("Paratrooper kevlar is outside host vitality bounds.");
+            }
+            armyVitality.Add(entityKey,new ArmyVitality(maximum,kevlar));
         }
         if(owner.ArmyDamageScales is { } damageScales)
             armyDamage.Add(entityKey,armyCatalog!.EffectiveDamage(unitId,
                 owner.ArmyNormalUpgradeIndexes![index],special,elite,damageScales[index]));
-        var family=armyCatalog!.Families.Single(f=>f.UnitId==unitId);
         float specialValue=armyCatalog.ComposeSpecial(unitId,owner.ArmyNormalUpgradeIndexes![index],special,elite);
         if(family.BehaviorType=="SoldierBehaviourCommando")
         {
@@ -109,6 +121,8 @@ public sealed partial class MatchEngine
 
     internal float? ArmyHealth(ulong entityKey)
         =>armyVitality.TryGetValue(entityKey,out var row) ? row.Current : null;
+    internal float? ArmyKevlar(ulong entityKey)
+        =>armyVitality.TryGetValue(entityKey,out var row) ? row.Kevlar : null;
     internal float? ArmyDamage(ulong entityKey)
         =>armyDamage.TryGetValue(entityKey,out var value) ? value : null;
     internal float? ArmySpeed(ulong entityKey)
@@ -574,11 +588,17 @@ public sealed partial class MatchEngine
             throw new ArgumentOutOfRangeException(nameof(damage));
         if(phase!=BattlePhase.Running || !activeArmyEntities.ContainsKey(entityKey) ||
            !armyVitality.TryGetValue(entityKey,out var vitality))return false;
+        float absorbed=Math.Min(damage,vitality.Kevlar);
+        vitality.Kevlar-=absorbed;
+        damage-=absorbed;
         if(damage>=vitality.Current)return ConfirmArmyDeath(entityKey,false);
         vitality.Current-=damage;
         if(!float.IsFinite(vitality.Current) || vitality.Current<=0 || vitality.Current>vitality.Maximum)
             throw new InvalidDataException("Army damage produced invalid host vitality.");
+        if(!float.IsFinite(vitality.Kevlar)||vitality.Kevlar<0||vitality.Kevlar>vitality.KevlarMaximum)
+            throw new InvalidDataException("Army damage produced invalid host kevlar.");
         activeArmyEntities[entityKey].Health=vitality.Current;
+        activeArmyEntities[entityKey].Kevlar=vitality.Kevlar;
         armyEntityRevision++;
         stateRevision++;
         return true;

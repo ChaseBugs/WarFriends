@@ -247,6 +247,8 @@ message BattleArmyEntityState {
   float max_health = 13; float health = 14;
   // Position sample time; movement does not consume the paged roster revision.
   uint64 position_tick = 15;
+  // Paratrooper special armor; both zero for units without active kevlar.
+  float max_kevlar = 16; float kevlar = 17;
 }
 // Full active-entity projection, paged to remain below the UDP MTU.
 message MatchArmyEntityPoll { uint64 after_entity_key = 1; uint64 expected_revision = 2; }

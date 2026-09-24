@@ -1,5 +1,5 @@
 {
-  "version": 8,
+  "version": 9,
   "sceneSha256": "d46f81ff8c3e12bf17f34a1f53dd601bd799102c9f984818031441dfb7a5de43",
   "enemyPrefabSha256": "64b4db85d1c9a0bd46a690a86102a22f66feeab8d4157a4c87824ac3d5dbeb54",
   "gunSnap": {
@@ -47,6 +47,13 @@
     "rule": "selected-special-multiplies-runtime-speed-by-one-plus-composed-special",
     "source": "Assets/Scripts/Assembly-CSharp/SoldierBehaviourSwat.cs",
     "sha256": "021a0f92c95294ea6e84146552083d4711a04908eb2fdf00891290b7bc801f70"
+  },
+  "paratrooperKevlar": {
+    "rule": "selected-special-times-unit-max-health-absorbs-original-damage-before-health",
+    "behaviorSource": "Assets/Scripts/Assembly-CSharp/SoldierBehaviourParachuter.cs",
+    "behaviorSha256": "e3907f043d22acab4b900292138d80ec20d64280b5b76d7120edb44595e51439",
+    "kevlarSource": "Assets/Scripts/Assembly-CSharp/Kevlar.cs",
+    "kevlarSha256": "5b734b82327aa021066309d2b59419fa3e9f4be28ebd584737612e4e2a358e99"
   },
   "families": [
     {
