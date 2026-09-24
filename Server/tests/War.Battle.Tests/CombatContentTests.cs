@@ -717,6 +717,17 @@ internal static class CombatContentTests
               content.Army.Option(0).Count==2 && content.Army.Option(1).Count==4 &&
               content.Army.MaxEnergy==8 && content.Army.BaseCooldown==1,
               "deathmatch runtime options replace scene preview counts and bind source constants");
+        var flameMuzzle=content.ArmyWeapons.Muzzle("ID_UNIT-FLAMETHROWER");
+        Check(flameMuzzle.Path=="FlamethrowerEnemy/HK416/MachinegunMuzzleFlash"&&
+              Vector3.Distance(flameMuzzle.RestPosition,new Vector3(.4031273f,.16250353f,.0405312f))<.00001f&&
+              content.ArmyWeapons.GunSnapPath.EndsWith("/GunPivot/gunSnapPoint",StringComparison.Ordinal),
+              "pinned enemy rig and flamethrower prefab compose the recovered rest muzzle offset");
+        var placedFlameMuzzle=content.ArmyWeapons.RestMuzzleOrigin("ID_UNIT-FLAMETHROWER",
+            new Vector3(2,0,3),Vector3.UnitX);
+        Check(Vector3.Distance(placedFlameMuzzle,new Vector3(2.0405312f,.16250353f,2.5968728f))<.00002f,
+              "army muzzle placement rotates the recovered local chain with authoritative facing");
+        try { _=content.ArmyWeapons.RestMuzzleOrigin("ID_UNIT-FLAMETHROWER",Vector3.Zero,Vector3.Zero); throw new Exception("Zero army facing accepted."); }
+        catch(InvalidDataException) { count++; }
         Check(content.Army.BaseStats("ID_UNIT-ASSAULT",0)==new ArmyBaseCombatStats(140f,29.6f) &&
               content.Army.BaseStats("ID_UNIT-HELICOPTER",0).Health>1000f &&
               content.Army.BaseStats("ID_UNIT-BUGGY",0).Damage==0f,

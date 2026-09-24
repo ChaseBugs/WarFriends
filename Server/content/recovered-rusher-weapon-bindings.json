@@ -1,7 +1,22 @@
 {
-  "version": 1,
+  "version": 2,
   "sceneSha256": "d46f81ff8c3e12bf17f34a1f53dd601bd799102c9f984818031441dfb7a5de43",
-  "provenance": "serialized EnemyBasicInventory weapon object references; runtime weapon IDs remain unresolved",
+  "enemyPrefabSha256": "64b4db85d1c9a0bd46a690a86102a22f66feeab8d4157a4c87824ac3d5dbeb54",
+  "gunSnap": {
+    "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyRArmCollarbone/cartoon_guyRArm1/cartoon_guyRArm2/cartoon_guyRArmPalm/GunPivot/gunSnapPoint",
+    "position": [
+      0.23802400281613292,
+      0.20228484655615722,
+      -0.01604441570568899
+    ],
+    "rotation": [
+      0.5347744730466595,
+      0.45776796718980417,
+      0.37989012542459133,
+      0.6001234815392363
+    ]
+  },
+  "provenance": "serialized EnemyBasicInventory weapon references plus enemy rig and weapon spawn-point transform chains; runtime weapon IDs remain unresolved",
   "families": [
     {
       "unitId": "ID_UNIT-SHOTGUNNER",
@@ -17,6 +32,20 @@
           "projectile": {
             "speed": 10.0,
             "checkDistance": 1.0
+          },
+          "spawnPoint": {
+            "path": "ShotgunEnemy/HK416/MachinegunMuzzleFlash",
+            "position": [
+              0.0025405236144373806,
+              0.03743575730610509,
+              0.2008165189159953
+            ],
+            "rotation": [
+              -1.1468823202999703e-09,
+              -4.298623434223242e-08,
+              0.02667073166002758,
+              0.9996442727654256
+            ]
           }
         },
         {
@@ -28,6 +57,20 @@
           "projectile": {
             "speed": 10.0,
             "checkDistance": 1.0
+          },
+          "spawnPoint": {
+            "path": "ShotgunEnemy/HK416/MachinegunMuzzleFlash",
+            "position": [
+              0.0025405236144373806,
+              0.03743575730610509,
+              0.2008165189159953
+            ],
+            "rotation": [
+              -1.1468823202999703e-09,
+              -4.298623434223242e-08,
+              0.02667073166002758,
+              0.9996442727654256
+            ]
           }
         }
       ]
@@ -46,6 +89,20 @@
           "projectile": {
             "speed": 5.0,
             "checkDistance": 0.35
+          },
+          "spawnPoint": {
+            "path": "AssaultRifleEnemy/HK416/MachinegunMuzzleFlash",
+            "position": [
+              -1.4861874301316751e-08,
+              0.044999993348439744,
+              0.17000000665155962
+            ],
+            "rotation": [
+              -7.071067418107332e-08,
+              -4.3711384535882286e-08,
+              -1.6292069606646132e-07,
+              0.9999999999999831
+            ]
           }
         },
         {
@@ -57,6 +114,20 @@
           "projectile": {
             "speed": 5.0,
             "checkDistance": 0.35
+          },
+          "spawnPoint": {
+            "path": "AssaultRifleEnemy/HK416/MachinegunMuzzleFlash",
+            "position": [
+              -1.4861874301316751e-08,
+              0.044999993348439744,
+              0.17000000665155962
+            ],
+            "rotation": [
+              -7.071067418107332e-08,
+              -4.3711384535882286e-08,
+              -1.6292069606646132e-07,
+              0.9999999999999831
+            ]
           }
         }
       ]
@@ -75,6 +146,20 @@
           "projectile": {
             "speed": 5.0,
             "checkDistance": 0.35
+          },
+          "spawnPoint": {
+            "path": "SwatPistolEnemy/HK416/MachinegunMuzzleFlash",
+            "position": [
+              -0.0033477374989319296,
+              0.06703727919337908,
+              0.08219577209928976
+            ],
+            "rotation": [
+              1.1847473152039387e-09,
+              4.440545003024178e-08,
+              0.026670731660027074,
+              0.9996442727654256
+            ]
           }
         },
         {
@@ -86,6 +171,20 @@
           "projectile": {
             "speed": 5.0,
             "checkDistance": 0.35
+          },
+          "spawnPoint": {
+            "path": "AssaultRifleEnemy/HK416/MachinegunMuzzleFlash",
+            "position": [
+              -1.4861874301316751e-08,
+              0.044999993348439744,
+              0.17000000665155962
+            ],
+            "rotation": [
+              -7.071067418107332e-08,
+              -4.3711384535882286e-08,
+              -1.6292069606646132e-07,
+              0.9999999999999831
+            ]
           }
         }
       ]
@@ -101,7 +200,21 @@
           "guid": "b86a690a8ab354649bd23556342960a8",
           "asset": "GameObject/FlamethrowerEnemy.prefab",
           "weaponType": 12,
-          "projectile": null
+          "projectile": null,
+          "spawnPoint": {
+            "path": "FlamethrowerEnemy/HK416/MachinegunMuzzleFlash",
+            "position": [
+              0.002540526308502663,
+              0.05599999393377705,
+              0.17000000628832349
+            ],
+            "rotation": [
+              -1.1468823202999703e-09,
+              -4.298623434223242e-08,
+              0.02667073166002758,
+              0.9996442727654256
+            ]
+          }
         },
         {
           "fileId": 41583,
@@ -109,7 +222,21 @@
           "guid": "b86a690a8ab354649bd23556342960a8",
           "asset": "GameObject/FlamethrowerEnemy.prefab",
           "weaponType": 12,
-          "projectile": null
+          "projectile": null,
+          "spawnPoint": {
+            "path": "FlamethrowerEnemy/HK416/MachinegunMuzzleFlash",
+            "position": [
+              0.002540526308502663,
+              0.05599999393377705,
+              0.17000000628832349
+            ],
+            "rotation": [
+              -1.1468823202999703e-09,
+              -4.298623434223242e-08,
+              0.02667073166002758,
+              0.9996442727654256
+            ]
+          }
         }
       ]
     },
@@ -127,6 +254,20 @@
           "projectile": {
             "speed": 5.0,
             "checkDistance": 0.35
+          },
+          "spawnPoint": {
+            "path": "AssaultRifleEnemy/HK416/MachinegunMuzzleFlash",
+            "position": [
+              -1.4861874301316751e-08,
+              0.044999993348439744,
+              0.17000000665155962
+            ],
+            "rotation": [
+              -7.071067418107332e-08,
+              -4.3711384535882286e-08,
+              -1.6292069606646132e-07,
+              0.9999999999999831
+            ]
           }
         },
         {
@@ -138,6 +279,20 @@
           "projectile": {
             "speed": 5.0,
             "checkDistance": 0.35
+          },
+          "spawnPoint": {
+            "path": "AssaultRifleEnemy/HK416/MachinegunMuzzleFlash",
+            "position": [
+              -1.4861874301316751e-08,
+              0.044999993348439744,
+              0.17000000665155962
+            ],
+            "rotation": [
+              -7.071067418107332e-08,
+              -4.3711384535882286e-08,
+              -1.6292069606646132e-07,
+              0.9999999999999831
+            ]
           }
         },
         {
@@ -149,6 +304,20 @@
           "projectile": {
             "speed": 5.0,
             "checkDistance": 0.35
+          },
+          "spawnPoint": {
+            "path": "AssaultRifleEnemy/HK416/MachinegunMuzzleFlash",
+            "position": [
+              -1.4861874301316751e-08,
+              0.044999993348439744,
+              0.17000000665155962
+            ],
+            "rotation": [
+              -7.071067418107332e-08,
+              -4.3711384535882286e-08,
+              -1.6292069606646132e-07,
+              0.9999999999999831
+            ]
           }
         }
       ]
@@ -167,6 +336,20 @@
           "projectile": {
             "speed": 10.0,
             "checkDistance": 1.0
+          },
+          "spawnPoint": {
+            "path": "ShotgunEnemy/HK416/MachinegunMuzzleFlash",
+            "position": [
+              0.0025405236144373806,
+              0.03743575730610509,
+              0.2008165189159953
+            ],
+            "rotation": [
+              -1.1468823202999703e-09,
+              -4.298623434223242e-08,
+              0.02667073166002758,
+              0.9996442727654256
+            ]
           }
         }
       ]

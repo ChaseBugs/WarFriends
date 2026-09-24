@@ -347,10 +347,13 @@ public sealed partial class MatchEngine
             var owner=Find(burst.OwnerPlayerId);
             if(owner==null){armyFlameBursts.Remove(pair.Key);continue;}
             var victim=players.Single(x=>x!=owner);
-            var origin=new Vector3(army.X,army.Y,army.Z);
             var target=rifleCombat?.Pose(victim.Definition.PlayerId).Collision;
             if(target==null)throw new InvalidDataException("Army flame requires current player collision authority.");
-            var hit=ArmyFlameBurst.ResolvePlayer(origin,target.RootPosition-origin,target,
+            var entityPosition=new Vector3(army.X,army.Y,army.Z);
+            var forward=target.RootPosition-entityPosition;
+            var origin=armyWeapons?.RestMuzzleOrigin(army.UnitId,entityPosition,forward)??
+                throw new InvalidDataException("Army flame requires pinned weapon muzzle authority.");
+            var hit=ArmyFlameBurst.ResolvePlayer(origin,forward,target,
                 ArmyDamage(burst.EntityKey)??throw new InvalidDataException("Army flame lacks trusted damage."));
             burst.CommitPulse(tick);
             if(hit!=null&&!victim.Dead)
