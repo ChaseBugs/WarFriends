@@ -1,5 +1,5 @@
 {
-  "version": 7,
+  "version": 8,
   "sceneSha256": "d46f81ff8c3e12bf17f34a1f53dd601bd799102c9f984818031441dfb7a5de43",
   "enemyPrefabSha256": "64b4db85d1c9a0bd46a690a86102a22f66feeab8d4157a4c87824ac3d5dbeb54",
   "gunSnap": {
@@ -42,6 +42,11 @@
     "behaviorSha256": "3ac2807908628060f1452001e2b912c8bf9966d8b853030cc170888e24e82a32",
     "bulletSource": "Assets/Scripts/Assembly-CSharp/BulletPoison.cs",
     "bulletSha256": "8972c5054a6f17a97a8bc5b11d69b36f488cd6375a4a75e5b1211b80391945a7"
+  },
+  "swatSpecialSpeed": {
+    "rule": "selected-special-multiplies-runtime-speed-by-one-plus-composed-special",
+    "source": "Assets/Scripts/Assembly-CSharp/SoldierBehaviourSwat.cs",
+    "sha256": "021a0f92c95294ea6e84146552083d4711a04908eb2fdf00891290b7bc801f70"
   },
   "families": [
     {

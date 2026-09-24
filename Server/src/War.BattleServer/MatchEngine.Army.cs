@@ -99,7 +99,8 @@ public sealed partial class MatchEngine
             if(specialValue>0)armySpecial.Add(entityKey,specialValue);
         }
         if(owner.ArmySpeedCoefficients is { } speedCoefficients)
-            armySpeed.Add(entityKey,armyCatalog!.EffectiveSpeed(unitId,speedCoefficients[index]));
+            armySpeed.Add(entityKey,armyCatalog!.EffectiveSpeed(unitId,speedCoefficients[index],
+                owner.ArmyNormalUpgradeIndexes[index],special,elite));
         if(family.BaseShot!=null)
             armyShots.Add(entityKey,armyCatalog.ComposeShot(unitId,
                 owner.ArmyNormalUpgradeIndexes[index],special,elite,

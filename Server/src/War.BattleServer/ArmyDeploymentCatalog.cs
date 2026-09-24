@@ -168,6 +168,15 @@ public sealed class ArmyDeploymentCatalog
     // UpgradeSlotsGeneric.LoadData replaces the serialized behavior speed with
     // ArmyUpgrades.MOVEMENTSPEED, then ScaleByPerk applies speedCoef.
     public float EffectiveSpeed(string unitId,float perkSpeedCoefficient)
+        =>EffectiveSpeed(unitId,perkSpeedCoefficient,0,null,null,validateUpgrade:false);
+
+    /// <summary>SWAT UpdateVisual multiplies runtime speed by one plus the selected special lane.</summary>
+    public float EffectiveSpeed(string unitId,float perkSpeedCoefficient,int normalIndex,
+        int? specialIndex,int? eliteIndex)
+        =>EffectiveSpeed(unitId,perkSpeedCoefficient,normalIndex,specialIndex,eliteIndex,validateUpgrade:true);
+
+    private float EffectiveSpeed(string unitId,float perkSpeedCoefficient,int normalIndex,
+        int? specialIndex,int? eliteIndex,bool validateUpgrade)
     {
         var family=Families.SingleOrDefault(f=>f.UnitId==unitId) ??
             throw new ArgumentOutOfRangeException(nameof(unitId));
@@ -175,6 +184,16 @@ public sealed class ArmyDeploymentCatalog
            perkSpeedCoefficient>100)
             throw new InvalidDataException("Invalid trusted army perk speed coefficient.");
         float speed=family.MovementSpeed*perkSpeedCoefficient;
+        if(validateUpgrade)
+        {
+            float special=ComposeSpecial(unitId,normalIndex,specialIndex,eliteIndex);
+            if(family.BehaviorType=="SoldierBehaviourSwat"&&specialIndex.HasValue)
+            {
+                if(special<0||special>10)
+                    throw new InvalidDataException("SWAT special speed is outside its recovered combat domain.");
+                speed*=1+special;
+            }
+        }
         if(!float.IsFinite(speed) || speed<=0 || speed>20)
             throw new InvalidDataException("Army effective speed is outside the host movement domain.");
         return speed;

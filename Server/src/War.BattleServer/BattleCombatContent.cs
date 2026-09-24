@@ -219,7 +219,8 @@ public sealed class BattleCombatContent
                         if(p.ArmyDamageScales is { } scales)
                             _=Army.EffectiveDamage(p.EquippedArmyUnitIds[i],p.ArmyNormalUpgradeIndexes[i],special,elite,scales[i]);
                         if(p.ArmySpeedCoefficients is { } speedCoefficients)
-                            _=Army.EffectiveSpeed(p.EquippedArmyUnitIds[i],speedCoefficients[i]);
+                            _=Army.EffectiveSpeed(p.EquippedArmyUnitIds[i],speedCoefficients[i],
+                                p.ArmyNormalUpgradeIndexes![i],special,elite);
                         var family=Army.Families.Single(f=>f.UnitId==p.EquippedArmyUnitIds[i]);
                         if(family.BaseShot!=null)
                             _=Army.ComposeShot(p.EquippedArmyUnitIds[i],p.ArmyNormalUpgradeIndexes[i],special,elite,

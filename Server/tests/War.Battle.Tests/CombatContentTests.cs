@@ -757,6 +757,12 @@ internal static class CombatContentTests
                   {Radius:3f,ShotHalfAngle:10f,ShotHalfAngleNear:75f,MinimumDamageRatio:.1f,FlatY:true,ShotOnlyMainBullet:true}&&
               content.ArmyWeapons.ShotgunFalloff("ID_UNIT-COMMANDO")==null,
               "Shotgunner and Warper bind the recovered one-target radial shotgun setup");
+        Check(content.ArmyWeapons.SwatSpecialSpeed.Source.EndsWith("SoldierBehaviourSwat.cs")&&
+              content.Army.EffectiveSpeed("ID_UNIT-SWAT",1f,0,null,null)==1f&&
+              content.Army.ComposeSpecial("ID_UNIT-SWAT",0,101,null)==.2f&&
+              content.Army.EffectiveSpeed("ID_UNIT-SWAT",1f,0,101,null)==1.2f&&
+              content.Army.EffectiveSpeed("ID_UNIT-SHOTGUNNER",1f,0,101,null)==1f,
+              "only SWAT with a selected special lane multiplies runtime speed by one plus composed SPECIAL");
         Check(content.ArmyWeapons.TryProjectileDamage("ID_UNIT-SHOTGUNNER",100,Vector3.Zero,Vector3.Zero,out float pointDamage)&&pointDamage==100&&
               content.ArmyWeapons.TryProjectileDamage("ID_UNIT-SHOTGUNNER",100,Vector3.Zero,new(1.5f,0,0),out float midDamage)&&midDamage==55&&
               content.ArmyWeapons.TryProjectileDamage("ID_UNIT-SHOTGUNNER",100,Vector3.Zero,new(3,0,0),out float farDamage)&&farDamage==10&&

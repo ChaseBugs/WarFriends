@@ -197,16 +197,24 @@ def main():
                      "behaviorSha256":hashlib.sha256(commando_source.read_bytes()).hexdigest(),
                      "bulletSource":poison_source.relative_to(ROOT/"Clients/ExportedProject").as_posix(),
                      "bulletSha256":hashlib.sha256(poison_source.read_bytes()).hexdigest()}
-    artifact={"version":7,"sceneSha256":hashlib.sha256(raw).hexdigest(),
+    swat_source=SCRIPTS/"SoldierBehaviourSwat.cs";swat_text=swat_source.read_text(encoding="utf-8-sig")
+    if "speed * (1f + base.soldierBehaviourDefinititon.special)" not in swat_text or \
+       "(!controller.hasSpecial) ?" not in swat_text:
+        raise ValueError("SWAT special speed source contract changed")
+    swat_special={"rule":"selected-special-multiplies-runtime-speed-by-one-plus-composed-special",
+                  "source":swat_source.relative_to(ROOT/"Clients/ExportedProject").as_posix(),
+                  "sha256":hashlib.sha256(swat_source.read_bytes()).hexdigest()}
+    artifact={"version":8,"sceneSha256":hashlib.sha256(raw).hexdigest(),
               "enemyPrefabSha256":hashlib.sha256(ENEMY.read_bytes()).hexdigest(),
               "gunSnap":relative(gun_snap,enemy_transforms,enemy_names),
               "leftGunSnap":relative(left_gun_snap,enemy_transforms,enemy_names),
               "provenance":"serialized EnemyBasicInventory weapon references plus enemy rig and weapon spawn-point transform chains; runtime weapon IDs remain unresolved",
               "commandoPoison":commando_poison,
+              "swatSpecialSpeed":swat_special,
               "families":rows}
     encoded=(json.dumps(artifact,indent=2)+"\n").encode()
     if __import__("sys").argv[1:]==["--check"]:
         if OUT.read_bytes()!=encoded: raise ValueError("Rusher weapon artifact is stale")
     else: OUT.write_bytes(encoded)
-    print("six Rusher weapon bindings, attack timing, shotgun falloff, and Commando poison pinned")
+    print("six Rusher weapon bindings, attack timing, shotgun falloff, Commando poison, and SWAT speed pinned")
 if __name__=="__main__": main()

@@ -16,6 +16,7 @@ public sealed record ArmyCommandoPoison(float DurationSeconds,float PulseInterva
 public sealed record ArmyShotgunFalloff(string UnitId,float Radius,float ShotHalfAngle,float ShotHalfAngleNear,
     float MinimumDamageRatio,bool FlatY,
     bool ShotOnlyMainBullet,string Rule,string Source,string SourceSha256);
+public sealed record ArmySwatSpecialSpeed(string Rule,string Source,string SourceSha256);
 
 /// <summary>Pinned enemy-rig and serialized Rusher weapon spawn-point chains.</summary>
 public sealed class ArmyWeaponBindingCatalog
@@ -30,14 +31,15 @@ public sealed class ArmyWeaponBindingCatalog
     public Quaternion GunSnapRotation { get; }
     public string LeftGunSnapPath { get; }
     public ArmyCommandoPoison CommandoPoison { get; }
+    public ArmySwatSpecialSpeed SwatSpecialSpeed { get; }
 
     private ArmyWeaponBindingCatalog(string revision,TransformRow gun,TransformRow leftGun,
         Dictionary<string,ArmyWeaponMuzzle[]> muzzles,Dictionary<string,ArmyWeaponWindup> windups,
         Dictionary<string,ArmyWeaponCadence> cadences,Dictionary<string,ArmyShotgunFalloff> shotgunFalloffs,
-        ArmyCommandoPoison commandoPoison)
+        ArmyCommandoPoison commandoPoison,ArmySwatSpecialSpeed swatSpecialSpeed)
     {Revision=revision;GunSnapPath=gun.Path;GunSnapPosition=gun.Position;GunSnapRotation=gun.Rotation;
      LeftGunSnapPath=leftGun.Path;this.muzzles=muzzles;this.windups=windups;this.cadences=cadences;
-     CommandoPoison=commandoPoison;this.shotgunFalloffs=shotgunFalloffs;}
+     CommandoPoison=commandoPoison;SwatSpecialSpeed=swatSpecialSpeed;this.shotgunFalloffs=shotgunFalloffs;}
 
     public ArmyWeaponMuzzle Muzzle(string unitId,int index=0)
         =>muzzles.TryGetValue(unitId,out var value)&&index>=0&&index<value.Length
@@ -101,8 +103,8 @@ public sealed class ArmyWeaponBindingCatalog
             throw new InvalidDataException("Army weapon binding revision mismatch.");
         using var document=JsonDocument.Parse(bytes,new JsonDocumentOptions{MaxDepth=16});
         var root=document.RootElement;
-        Exact(root,"version","sceneSha256","enemyPrefabSha256","gunSnap","leftGunSnap","provenance","commandoPoison","families");
-        if(root.GetProperty("version").GetInt32()!=7||root.GetProperty("sceneSha256").GetString()!=sceneRevision||
+        Exact(root,"version","sceneSha256","enemyPrefabSha256","gunSnap","leftGunSnap","provenance","commandoPoison","swatSpecialSpeed","families");
+        if(root.GetProperty("version").GetInt32()!=8||root.GetProperty("sceneSha256").GetString()!=sceneRevision||
            !Hash(root.GetProperty("enemyPrefabSha256").GetString())||
            root.GetProperty("provenance").GetString()!=
              "serialized EnemyBasicInventory weapon references plus enemy rig and weapon spawn-point transform chains; runtime weapon IDs remain unresolved")
@@ -126,6 +128,13 @@ public sealed class ArmyWeaponBindingCatalog
            poison.BulletSource!="Assets/Scripts/Assembly-CSharp/BulletPoison.cs"||
            !Hash(poison.BehaviorSha256)||!Hash(poison.BulletSha256))
             throw new InvalidDataException("Invalid source Commando poison policy.");
+        var swatRow=root.GetProperty("swatSpecialSpeed");
+        Exact(swatRow,"rule","source","sha256");
+        var swatSpecialSpeed=new ArmySwatSpecialSpeed(swatRow.GetProperty("rule").GetString()??"",
+            swatRow.GetProperty("source").GetString()??"",swatRow.GetProperty("sha256").GetString()??"");
+        if(swatSpecialSpeed.Rule!="selected-special-multiplies-runtime-speed-by-one-plus-composed-special"||
+           swatSpecialSpeed.Source!="Assets/Scripts/Assembly-CSharp/SoldierBehaviourSwat.cs"||!Hash(swatSpecialSpeed.SourceSha256))
+            throw new InvalidDataException("Invalid source SWAT special-speed policy.");
         var families=root.GetProperty("families");
         if(families.GetArrayLength()!=6)throw new InvalidDataException("Incomplete Rusher weapon family set.");
         var result=new Dictionary<string,ArmyWeaponMuzzle[]>(StringComparer.Ordinal);
@@ -226,7 +235,7 @@ public sealed class ArmyWeaponBindingCatalog
                 throw new InvalidDataException("Unexpected Rusher shotgun falloff.");
         }
         if(shotgunFalloffs.Count!=2)throw new InvalidDataException("Incomplete Rusher shotgun falloff set.");
-        return new(expectedRevision,gun,leftGun,result,windups,cadences,shotgunFalloffs,poison);
+        return new(expectedRevision,gun,leftGun,result,windups,cadences,shotgunFalloffs,poison,swatSpecialSpeed);
     }
 
     private sealed record TransformRow(string Path,Vector3 Position,Quaternion Rotation);
