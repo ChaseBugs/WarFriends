@@ -13,18 +13,21 @@ public sealed partial class MatchEngine
 
     // Each outstanding projectile may still create an impact and a death.
     // Reserve one more entry for the terminal marker before accepting a shot.
-    private bool EventCapacityForShot(int newProjectiles=1) => newProjectiles is >0 and <=8 &&
+    private int PendingPoisonPulseCount=>armyPoisons.Values.Sum(x=>x.Remaining);
+    private bool EventCapacityForShot(int newProjectiles=1,int additionalEvents=0) =>
+        newProjectiles is >0 and <=8 && additionalEvents is >=0 and <=40 &&
         events.Count+players.Sum(p=>p.Army?.PendingCount??0)+
+        PendingPoisonPulseCount+additionalEvents+
         (barrels?.MaximumEventsPerProjectile??2)*PendingProjectileCount+
         (barrels?.MaximumEventsPerProjectile??3)*newProjectiles+
         (shields==null?3:12)<=MaximumRetainedEvents;
 
     private bool EventCapacityForArmy(int count)=>count is >0 and <=8 &&
-        events.Count+players.Sum(p=>p.Army?.PendingCount??0)+count+
+        events.Count+players.Sum(p=>p.Army?.PendingCount??0)+PendingPoisonPulseCount+count+
         (barrels?.MaximumEventsPerProjectile??2)*PendingProjectileCount+12<=MaximumRetainedEvents;
 
     private bool EventCapacityForArmyDeath()=>
-        events.Count+players.Sum(p=>p.Army?.PendingCount??0)+1+
+        events.Count+players.Sum(p=>p.Army?.PendingCount??0)+PendingPoisonPulseCount+1+
         (barrels?.MaximumEventsPerProjectile??2)*PendingProjectileCount+12<=MaximumRetainedEvents;
 
     private void Emit(MatchEventKind kind,string actor,string target,ulong projectile,Vector3 position,float health,string reason)

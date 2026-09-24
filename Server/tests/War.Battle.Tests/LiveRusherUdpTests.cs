@@ -148,14 +148,14 @@ internal static class LiveRusherUdpTests
         int checks=0;
         void Check(bool yes,string name){if(!yes)throw new Exception(name);checks++;}
         string one=new('c',32),two=new('d',32);
-        ParticipantManifest Player(string id,int fraction,int cover)=>new(id,weapon,fraction,cover,1,new(1000),0,0,0)
+        ParticipantManifest Player(string id,int fraction,int cover,int special)=>new(id,weapon,fraction,cover,1,new(100000),0,0,0)
         {EquippedArmyUnitIds=["ID_UNIT-COMMANDO"],ArmyNormalUpgradeIndexes=[0],
-         ArmySpecialUpgradeIndexes=[-1],ArmyEliteUpgradeIndexes=[-1],
+         ArmySpecialUpgradeIndexes=[special],ArmyEliteUpgradeIndexes=[-1],
          ArmyHealthFactors=[new(1f,1f)],ArmyDamageScales=[1f],ArmySpeedCoefficients=[1f],
          ArmyAccuracyCoefficients=[2f]};
         var manifest=new MatchManifest("commando-udp","local-1","Park_Multiplayer",map.SourceHash,
             content.Revision,MatchManifest.RifleCombatMode,10,60,120,
-            [Player(one,1,left.SourceIndex),Player(two,2,right.SourceIndex)]){SceneMasterPlayerId=one};
+            [Player(one,1,left.SourceIndex,71),Player(two,2,right.SourceIndex,-1)]){SceneMasterPlayerId=one};
         string file=Path.Combine(Path.GetTempPath(),"war-commando-udp-"+Guid.NewGuid().ToString("N")+".json");
         File.WriteAllText(file,JsonSerializer.Serialize(manifest));
         using var probe=new UdpClient(new IPEndPoint(IPAddress.Loopback,0));
@@ -198,23 +198,34 @@ internal static class LiveRusherUdpTests
             Check((await a.DeployArmyAsync(option,timeout.Token)).Code=="army-deploying",
                   "live Commando deployment uses its trusted family-only offer");
             ulong cursor=0;var shots=new List<MatchEvent>();bool impact=false,damaged=false;
-            while(shots.Count<3||!impact||!damaged)
+            var poisonByProjectile=new Dictionary<ulong,List<ulong>>();
+            while(shots.Count<3||!impact||!damaged||!poisonByProjectile.Values.Any(x=>x.Count==5))
             {
                 await Task.Delay(100,timeout.Token);
                 var snapshot=await b.PollAsync(timeout.Token);
-                damaged=snapshot.Snapshot.Players.Single(x=>x.PlayerId==two).Health<1000;
+                damaged=snapshot.Snapshot.Players.Single(x=>x.PlayerId==two).Health<100000;
                 var events=await b.PollEventsAsync(cursor,timeout.Token);
                 foreach(var row in events.Events)
                 {
                     cursor=row.EventId;
                     if(row.Kind==MatchEventKind.Shot&&row.Reason=="army"&&row.ActorId==one)shots.Add(row);
                     if(row.Kind==MatchEventKind.Impact&&row.Reason=="army")impact=true;
+                    if(row.Kind==MatchEventKind.Impact&&row.Reason=="army-poison")
+                    {
+                        if(!poisonByProjectile.TryGetValue(row.ProjectileId,out var ticks))
+                            poisonByProjectile.Add(row.ProjectileId,ticks=[]);
+                        ticks.Add(row.Tick);
+                    }
                 }
             }
             float Distance(MatchEvent x,MatchEvent y)=>MathF.Sqrt(
                 MathF.Pow(x.X-y.X,2)+MathF.Pow(x.Y-y.Y,2)+MathF.Pow(x.Z-y.Z,2));
             Check(Distance(shots[0],shots[1])>.1f&&Distance(shots[0],shots[2])<.001f&&impact&&damaged,
                   "live Commando alternates source right/left muzzles and applies speed-five projectile damage");
+            var completePoison=poisonByProjectile.Values.First(x=>x.Count==5);
+            Check(completePoison.Zip(completePoison.Skip(1),(aTick,bTick)=>bTick-aTick)
+                      .All(delta=>delta==MatchManifest.TickRate),
+                  "live special Commando hit stacks its own immediate plus four one-second poison pulses");
         }
         finally{await worker.StopAsync(CancellationToken.None);File.Delete(file);}
         return checks;

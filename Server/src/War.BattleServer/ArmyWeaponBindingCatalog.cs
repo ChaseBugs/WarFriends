@@ -10,6 +10,9 @@ public sealed record ArmyWeaponWindup(string UnitId,float Seconds,string Rule,st
     string? ClipSha256,float? ClipLength);
 public sealed record ArmyWeaponCadence(string UnitId,float Seconds,int StrictTicks,string Rule,
     string Source,string SourceSha256);
+public sealed record ArmyCommandoPoison(float DurationSeconds,float PulseIntervalSeconds,int PulseCount,
+    string Rule,string ConstantsSheet,int ConstantsRow,string BehaviorSource,string BehaviorSha256,
+    string BulletSource,string BulletSha256);
 
 /// <summary>Pinned enemy-rig and serialized Rusher weapon spawn-point chains.</summary>
 public sealed class ArmyWeaponBindingCatalog
@@ -22,12 +25,14 @@ public sealed class ArmyWeaponBindingCatalog
     public Vector3 GunSnapPosition { get; }
     public Quaternion GunSnapRotation { get; }
     public string LeftGunSnapPath { get; }
+    public ArmyCommandoPoison CommandoPoison { get; }
 
     private ArmyWeaponBindingCatalog(string revision,TransformRow gun,TransformRow leftGun,
         Dictionary<string,ArmyWeaponMuzzle[]> muzzles,Dictionary<string,ArmyWeaponWindup> windups,
-        Dictionary<string,ArmyWeaponCadence> cadences)
+        Dictionary<string,ArmyWeaponCadence> cadences,ArmyCommandoPoison commandoPoison)
     {Revision=revision;GunSnapPath=gun.Path;GunSnapPosition=gun.Position;GunSnapRotation=gun.Rotation;
-     LeftGunSnapPath=leftGun.Path;this.muzzles=muzzles;this.windups=windups;this.cadences=cadences;}
+     LeftGunSnapPath=leftGun.Path;this.muzzles=muzzles;this.windups=windups;this.cadences=cadences;
+     CommandoPoison=commandoPoison;}
 
     public ArmyWeaponMuzzle Muzzle(string unitId,int index=0)
         =>muzzles.TryGetValue(unitId,out var value)&&index>=0&&index<value.Length
@@ -60,8 +65,8 @@ public sealed class ArmyWeaponBindingCatalog
             throw new InvalidDataException("Army weapon binding revision mismatch.");
         using var document=JsonDocument.Parse(bytes,new JsonDocumentOptions{MaxDepth=16});
         var root=document.RootElement;
-        Exact(root,"version","sceneSha256","enemyPrefabSha256","gunSnap","leftGunSnap","provenance","families");
-        if(root.GetProperty("version").GetInt32()!=5||root.GetProperty("sceneSha256").GetString()!=sceneRevision||
+        Exact(root,"version","sceneSha256","enemyPrefabSha256","gunSnap","leftGunSnap","provenance","commandoPoison","families");
+        if(root.GetProperty("version").GetInt32()!=6||root.GetProperty("sceneSha256").GetString()!=sceneRevision||
            !Hash(root.GetProperty("enemyPrefabSha256").GetString())||
            root.GetProperty("provenance").GetString()!=
              "serialized EnemyBasicInventory weapon references plus enemy rig and weapon spawn-point transform chains; runtime weapon IDs remain unresolved")
@@ -69,6 +74,22 @@ public sealed class ArmyWeaponBindingCatalog
         var gun=Transform(root.GetProperty("gunSnap"),"enemy/");
         var leftGun=Transform(root.GetProperty("leftGunSnap"),"enemy/");
         if(gun.Path==leftGun.Path)throw new InvalidDataException("Rusher gun snaps are not distinct.");
+        var poisonRow=root.GetProperty("commandoPoison");
+        Exact(poisonRow,"durationSeconds","pulseIntervalSeconds","pulseCount","rule","constantsSheet",
+            "constantsRow","behaviorSource","behaviorSha256","bulletSource","bulletSha256");
+        var poison=new ArmyCommandoPoison(poisonRow.GetProperty("durationSeconds").GetSingle(),
+            poisonRow.GetProperty("pulseIntervalSeconds").GetSingle(),poisonRow.GetProperty("pulseCount").GetInt32(),
+            poisonRow.GetProperty("rule").GetString()??"",poisonRow.GetProperty("constantsSheet").GetString()??"",
+            poisonRow.GetProperty("constantsRow").GetInt32(),poisonRow.GetProperty("behaviorSource").GetString()??"",
+            poisonRow.GetProperty("behaviorSha256").GetString()??"",poisonRow.GetProperty("bulletSource").GetString()??"",
+            poisonRow.GetProperty("bulletSha256").GetString()??"");
+        if(poison.DurationSeconds!=5||poison.PulseIntervalSeconds!=1||poison.PulseCount!=5||
+           poison.Rule!="immediate-then-wait-one-second-while-before-duration"||
+           poison.ConstantsSheet!="Google2u.UnitsContants"||poison.ConstantsRow!=2||
+           poison.BehaviorSource!="Assets/Scripts/Assembly-CSharp/SoldierBehaviourCommando.cs"||
+           poison.BulletSource!="Assets/Scripts/Assembly-CSharp/BulletPoison.cs"||
+           !Hash(poison.BehaviorSha256)||!Hash(poison.BulletSha256))
+            throw new InvalidDataException("Invalid source Commando poison policy.");
         var families=root.GetProperty("families");
         if(families.GetArrayLength()!=6)throw new InvalidDataException("Incomplete Rusher weapon family set.");
         var result=new Dictionary<string,ArmyWeaponMuzzle[]>(StringComparer.Ordinal);
@@ -146,7 +167,7 @@ public sealed class ArmyWeaponBindingCatalog
                 throw new InvalidDataException("Invalid source Rusher attack cadence.");
             cadences.Add(unit,new(unit,cadenceSeconds,cadenceTicks,cadenceRule,cadenceSource,cadenceHash));
         }
-        return new(expectedRevision,gun,leftGun,result,windups,cadences);
+        return new(expectedRevision,gun,leftGun,result,windups,cadences,poison);
     }
 
     private sealed record TransformRow(string Path,Vector3 Position,Quaternion Rotation);

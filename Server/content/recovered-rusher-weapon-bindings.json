@@ -1,5 +1,5 @@
 {
-  "version": 5,
+  "version": 6,
   "sceneSha256": "d46f81ff8c3e12bf17f34a1f53dd601bd799102c9f984818031441dfb7a5de43",
   "enemyPrefabSha256": "64b4db85d1c9a0bd46a690a86102a22f66feeab8d4157a4c87824ac3d5dbeb54",
   "gunSnap": {
@@ -31,6 +31,18 @@
     ]
   },
   "provenance": "serialized EnemyBasicInventory weapon references plus enemy rig and weapon spawn-point transform chains; runtime weapon IDs remain unresolved",
+  "commandoPoison": {
+    "durationSeconds": 5.0,
+    "pulseIntervalSeconds": 1.0,
+    "pulseCount": 5,
+    "rule": "immediate-then-wait-one-second-while-before-duration",
+    "constantsSheet": "Google2u.UnitsContants",
+    "constantsRow": 2,
+    "behaviorSource": "Assets/Scripts/Assembly-CSharp/SoldierBehaviourCommando.cs",
+    "behaviorSha256": "3ac2807908628060f1452001e2b912c8bf9966d8b853030cc170888e24e82a32",
+    "bulletSource": "Assets/Scripts/Assembly-CSharp/BulletPoison.cs",
+    "bulletSha256": "8972c5054a6f17a97a8bc5b11d69b36f488cd6375a4a75e5b1211b80391945a7"
+  },
   "families": [
     {
       "unitId": "ID_UNIT-SHOTGUNNER",

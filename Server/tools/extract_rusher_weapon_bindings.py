@@ -8,6 +8,7 @@ OUT=ROOT/"Server/content/recovered-rusher-weapon-bindings.json"
 ENEMY=ROOT/"Clients/ExportedProject/Assets/GameObject/enemy.prefab"
 CLIPS=ROOT/"Clients/ExportedProject/Assets/AnimationClip"
 SCRIPTS=ROOT/"Clients/ExportedProject/Assets/Scripts/Assembly-CSharp"
+BATTLE_CONTENT=ROOT/"Server/content/recovered-battle-content.json"
 
 def yaml(path):
     text=path.read_text(encoding="utf-8-sig",errors="ignore")
@@ -153,15 +154,36 @@ def main():
     soldier_parts=next(block for block in enemy_blocks.values() if "gunSnapPointNotScaled:" in block)
     gun_snap=int(re.search(r"gunSnapPointNotScaled: \{fileID: (\d+)\}",soldier_parts).group(1))
     left_gun_snap=int(re.search(r"gunSnapPointNotScaledLeft: \{fileID: (\d+)\}",soldier_parts).group(1))
-    artifact={"version":5,"sceneSha256":hashlib.sha256(raw).hexdigest(),
+    content=json.loads(BATTLE_CONTENT.read_text())
+    constants=next(s for s in content["sheets"] if s["type"]=="Google2u.UnitsContants")
+    poison_time=float(constants["rows"][2]["FLOATVALUE"])
+    commando_source=SCRIPTS/"SoldierBehaviourCommando.cs"
+    poison_source=SCRIPTS/"BulletPoison.cs"
+    commando_text=commando_source.read_text(encoding="utf-8-sig")
+    poison_text=poison_source.read_text(encoding="utf-8-sig")
+    if poison_time!=5 or "poisonTime = Singleton<GameVariables>.instance.unitsConstants.GetRow(UnitsContants.rowIds.PoisonShotTime).FLOATVALUE" not in commando_text or \
+       "poisonRatio = base.soldierBehaviourDefinititon.special" not in commando_text or \
+       "mHitDestroyableObject.Poison(ammoDamageAmount / mTime * mDamageRatio" not in poison_text or \
+       "yield return new WaitForSeconds(1f)" not in poison_text:
+        raise ValueError("Commando poison source contract changed")
+    commando_poison={"durationSeconds":poison_time,"pulseIntervalSeconds":1.0,
+                     "pulseCount":int(poison_time),
+                     "rule":"immediate-then-wait-one-second-while-before-duration",
+                     "constantsSheet":"Google2u.UnitsContants","constantsRow":2,
+                     "behaviorSource":commando_source.relative_to(ROOT/"Clients/ExportedProject").as_posix(),
+                     "behaviorSha256":hashlib.sha256(commando_source.read_bytes()).hexdigest(),
+                     "bulletSource":poison_source.relative_to(ROOT/"Clients/ExportedProject").as_posix(),
+                     "bulletSha256":hashlib.sha256(poison_source.read_bytes()).hexdigest()}
+    artifact={"version":6,"sceneSha256":hashlib.sha256(raw).hexdigest(),
               "enemyPrefabSha256":hashlib.sha256(ENEMY.read_bytes()).hexdigest(),
               "gunSnap":relative(gun_snap,enemy_transforms,enemy_names),
               "leftGunSnap":relative(left_gun_snap,enemy_transforms,enemy_names),
               "provenance":"serialized EnemyBasicInventory weapon references plus enemy rig and weapon spawn-point transform chains; runtime weapon IDs remain unresolved",
+              "commandoPoison":commando_poison,
               "families":rows}
     encoded=(json.dumps(artifact,indent=2)+"\n").encode()
     if __import__("sys").argv[1:]==["--check"]:
         if OUT.read_bytes()!=encoded: raise ValueError("Rusher weapon artifact is stale")
     else: OUT.write_bytes(encoded)
-    print("six Rusher serialized weapon bindings and attack windups pinned")
+    print("six Rusher serialized weapon bindings, attack timing, and Commando poison pinned")
 if __name__=="__main__": main()

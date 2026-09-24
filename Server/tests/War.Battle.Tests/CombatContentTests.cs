@@ -746,6 +746,11 @@ internal static class CombatContentTests
               content.ArmyWeapons.CadenceTicks("ID_UNIT-COMMANDO")==7&&
               content.ArmyWeapons.CadenceTicks("ID_UNIT-WARPER")==7,
               "Rusher batches enforce each strict source weapon cadence at 30 Hz");
+        Check(content.ArmyWeapons.CommandoPoison is {DurationSeconds:5f,PulseIntervalSeconds:1f,PulseCount:5,
+                  ConstantsSheet:"Google2u.UnitsContants",ConstantsRow:2}&&
+              content.ArmyWeapons.CommandoPoison.BehaviorSource.EndsWith("SoldierBehaviourCommando.cs")&&
+              content.ArmyWeapons.CommandoPoison.BulletSource.EndsWith("BulletPoison.cs"),
+              "Commando poison duration, interval, arithmetic sources, and constants row are revision-pinned");
         try { _=content.ArmyWeapons.RestMuzzleOrigin("ID_UNIT-FLAMETHROWER",Vector3.Zero,Vector3.Zero); throw new Exception("Zero army facing accepted."); }
         catch(InvalidDataException) { count++; }
         try { _=content.ArmyWeapons.Muzzle("ID_UNIT-COMMANDO",2); throw new Exception("Unknown Commando muzzle accepted."); }
@@ -773,6 +778,21 @@ internal static class CombatContentTests
               "zeroed source special sentinel composes without changing flamethrower firing authority");
         try { _=content.Army.ComposeShot("ID_UNIT-FLAMETHROWER",0,0,null); throw new Exception("Normal shot row accepted as special."); }
         catch(ArgumentOutOfRangeException) { count++; }
+        Check(content.Army.ComposeSpecial("ID_UNIT-COMMANDO",0,null,null)==0f&&
+              content.Army.ComposeSpecial("ID_UNIT-COMMANDO",0,71,null)==.1f,
+              "Commando poison ratio composes from the recovered SPECIAL upgrade lane");
+        try { _=content.Army.ComposeSpecial("ID_UNIT-COMMANDO",0,0,null); throw new Exception("Normal row accepted as poison special."); }
+        catch(ArgumentOutOfRangeException) { count++; }
+        var poisonClock=new ArmyPoisonEffect(1,2,"attacker","victim",2f,Vector3.Zero,100);
+        var stackedPoisonClock=new ArmyPoisonEffect(2,2,"attacker","victim",2f,Vector3.Zero,100);
+        Check(poisonClock.TryTakePulse(100)&&poisonClock.Remaining==4&&
+              stackedPoisonClock.TryTakePulse(100)&&stackedPoisonClock.Remaining==4&&
+              !poisonClock.TryTakePulse(129)&&poisonClock.TryTakePulse(130)&&
+              poisonClock.TryTakePulse(160)&&poisonClock.TryTakePulse(190)&&
+              poisonClock.TryTakePulse(220)&&poisonClock.Remaining==0&&
+              !poisonClock.TryTakePulse(250),
+              "BulletPoison applies at impact then once per second for five independently retained pulses");
+        Reject(()=>new ArmyPoisonEffect(1,2,"attacker","victim",float.NaN,Vector3.Zero,100));
         try { _=content.Army.BaseStats("ID_UNIT-ASSAULT",int.MaxValue); throw new Exception("Invalid army stage accepted."); }
         catch(ArgumentOutOfRangeException) { count++; }
         try { _=content.Army.BaseStats("ID_UNIT-ASSAULT",101); throw new Exception("Special row accepted as normal."); }

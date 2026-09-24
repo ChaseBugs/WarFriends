@@ -16,6 +16,7 @@ public sealed partial class MatchEngine
     }
     private readonly Dictionary<ulong,ArmyVitality> armyVitality=[];
     private readonly Dictionary<ulong,float> armyDamage=[];
+    private readonly Dictionary<ulong,float> armySpecial=[];
     private readonly Dictionary<ulong,float> armySpeed=[];
     private readonly Dictionary<ulong,ArmyBaseShotStats> armyShots=[];
     private readonly Dictionary<ulong,ArmyRusherArrivalState> rusherMotionCandidates=[];
@@ -27,6 +28,7 @@ public sealed partial class MatchEngine
     private readonly Dictionary<ulong,int> rusherShotCounts=[];
     private readonly List<ArmyRusherShotIntent> rusherShotIntents=[];
     private readonly Dictionary<ulong,ArmyFlameBurst> armyFlameBursts=[];
+    private readonly Dictionary<ulong,ArmyPoisonEffect> armyPoisons=[];
     private readonly Dictionary<int,ulong> occupiedRusherSlots=[];
     private readonly Dictionary<ulong,int> rusherSlotByEntity=[];
 
@@ -87,9 +89,16 @@ public sealed partial class MatchEngine
         if(owner.ArmyDamageScales is { } damageScales)
             armyDamage.Add(entityKey,armyCatalog!.EffectiveDamage(unitId,
                 owner.ArmyNormalUpgradeIndexes![index],special,elite,damageScales[index]));
+        var family=armyCatalog!.Families.Single(f=>f.UnitId==unitId);
+        float specialValue=armyCatalog.ComposeSpecial(unitId,owner.ArmyNormalUpgradeIndexes![index],special,elite);
+        if(family.BehaviorType=="SoldierBehaviourCommando")
+        {
+            if(specialValue<0||specialValue>100)
+                throw new InvalidDataException("Commando poison ratio is outside its recovered combat domain.");
+            if(specialValue>0)armySpecial.Add(entityKey,specialValue);
+        }
         if(owner.ArmySpeedCoefficients is { } speedCoefficients)
             armySpeed.Add(entityKey,armyCatalog!.EffectiveSpeed(unitId,speedCoefficients[index]));
-        var family=armyCatalog!.Families.Single(f=>f.UnitId==unitId);
         if(family.BaseShot!=null)
             armyShots.Add(entityKey,armyCatalog.ComposeShot(unitId,
                 owner.ArmyNormalUpgradeIndexes[index],special,elite,
@@ -320,8 +329,10 @@ public sealed partial class MatchEngine
                 _=>null
             };
             if(!projectileSpeed.HasValue)continue;
+            int poisonEvents=behavior=="SoldierBehaviourCommando"&&armySpecial.ContainsKey(intent.EntityKey)
+                ?ArmyPoisonEffect.PulseCount:0;
             if(PendingProjectileCount>=MaximumProjectiles ||
-               !EventCapacityForShot())continue;
+               !EventCapacityForShot(1,poisonEvents))continue;
             var entityPosition=new Vector3(army.X,army.Y,army.Z);
             var origin=armyWeapons?.RestMuzzleOrigin(army.UnitId,entityPosition,
                 intent.TargetPosition-entityPosition,muzzleIndex)??
@@ -357,9 +368,34 @@ public sealed partial class MatchEngine
                     new ArmyRusherShotIntent(impact.EntityKey,owner.Definition.PlayerId,
                         impact.Collision.PlayerId,0,impact.Collision.Position,true,0,1),impact.Collision,
                     ArmyDamage(impact.EntityKey)??0);
-                ApplyArmyRusherPlayerImpact(proof,damageRoll?.Invoke()??1f);
+                var result=ApplyArmyRusherPlayerImpact(proof,damageRoll?.Invoke()??1f);
+                if(result is {Applied:true,Dead:false}&&armySpecial.TryGetValue(impact.EntityKey,out float ratio))
+                {
+                    float pulse=(ArmyDamage(impact.EntityKey)??0)/ArmyPoisonEffect.PulseCount*ratio;
+                    armyPoisons.Add(impact.ProjectileId,new ArmyPoisonEffect(impact.ProjectileId,
+                        impact.EntityKey,owner.Definition.PlayerId,impact.Collision.PlayerId,pulse,
+                        impact.Collision.Position,tick));
+                }
             }
             catch(InvalidDataException){End("invalid-army-impact-authority","",false);return;}
+            if(Terminal)return;
+        }
+    }
+
+    private void AdvanceArmyPoisons()
+    {
+        foreach(var pair in armyPoisons.OrderBy(x=>x.Key).ToArray())
+        {
+            var poison=pair.Value;
+            if(!poison.TryTakePulse(tick))continue;
+            var victim=Find(poison.VictimPlayerId);
+            if(victim==null||victim.Dead){armyPoisons.Remove(pair.Key);continue;}
+            Emit(MatchEventKind.Impact,poison.AttackerPlayerId,poison.VictimPlayerId,
+                poison.ProjectileId,poison.Position,victim.Health,"army-poison");
+            _=ApplyResolvedPlayerDamage(poison.AttackerPlayerId,poison.VictimPlayerId,
+                new ResolvedPlayerDamage(poison.DamagePerPulse,CombatDamageType.Poison),
+                damageRoll?.Invoke()??1f,false);
+            if(poison.Remaining==0||victim.Dead)armyPoisons.Remove(pair.Key);
             if(Terminal)return;
         }
     }
@@ -545,6 +581,7 @@ public sealed partial class MatchEngine
             throw new InvalidDataException("Army death compare-and-remove failed.");
         armyVitality.Remove(entityKey);
         armyDamage.Remove(entityKey);
+        armySpecial.Remove(entityKey);
         armySpeed.Remove(entityKey);
         armyShots.Remove(entityKey);
         rusherMotionCandidates.Remove(entityKey);
