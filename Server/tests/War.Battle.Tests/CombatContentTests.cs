@@ -751,6 +751,20 @@ internal static class CombatContentTests
               content.ArmyWeapons.CommandoPoison.BehaviorSource.EndsWith("SoldierBehaviourCommando.cs")&&
               content.ArmyWeapons.CommandoPoison.BulletSource.EndsWith("BulletPoison.cs"),
               "Commando poison duration, interval, arithmetic sources, and constants row are revision-pinned");
+        Check(content.ArmyWeapons.ShotgunFalloff("ID_UNIT-SHOTGUNNER") is
+                  {Radius:3f,ShotHalfAngle:10f,ShotHalfAngleNear:75f,MinimumDamageRatio:.1f,FlatY:true,ShotOnlyMainBullet:true}&&
+              content.ArmyWeapons.ShotgunFalloff("ID_UNIT-WARPER") is
+                  {Radius:3f,ShotHalfAngle:10f,ShotHalfAngleNear:75f,MinimumDamageRatio:.1f,FlatY:true,ShotOnlyMainBullet:true}&&
+              content.ArmyWeapons.ShotgunFalloff("ID_UNIT-COMMANDO")==null,
+              "Shotgunner and Warper bind the recovered one-target radial shotgun setup");
+        Check(content.ArmyWeapons.TryProjectileDamage("ID_UNIT-SHOTGUNNER",100,Vector3.Zero,Vector3.Zero,out float pointDamage)&&pointDamage==100&&
+              content.ArmyWeapons.TryProjectileDamage("ID_UNIT-SHOTGUNNER",100,Vector3.Zero,new(1.5f,0,0),out float midDamage)&&midDamage==55&&
+              content.ArmyWeapons.TryProjectileDamage("ID_UNIT-SHOTGUNNER",100,Vector3.Zero,new(3,0,0),out float farDamage)&&farDamage==10&&
+              content.ArmyWeapons.TryProjectileDamage("ID_UNIT-WARPER",100,Vector3.Zero,new(30,0,0),out float floorDamage)&&floorDamage==10&&
+              content.ArmyWeapons.TryProjectileDamage("ID_UNIT-COMMANDO",100,Vector3.Zero,new(30,50,0),out float rifleDamage)&&rifleDamage==100&&
+              !content.ArmyWeapons.TryProjectileDamage("ID_UNIT-SHOTGUNNER",100,Vector3.Zero,new(.1f,3,0),out _),
+              "Rusher shotgun launch uses full-distance three-unit falloff, ten-percent floor, and flat-Y cone rejection");
+        Reject(()=>content.ArmyWeapons.TryProjectileDamage("ID_UNIT-SHOTGUNNER",float.NaN,Vector3.Zero,Vector3.One,out _));
         try { _=content.ArmyWeapons.RestMuzzleOrigin("ID_UNIT-FLAMETHROWER",Vector3.Zero,Vector3.Zero); throw new Exception("Zero army facing accepted."); }
         catch(InvalidDataException) { count++; }
         try { _=content.ArmyWeapons.Muzzle("ID_UNIT-COMMANDO",2); throw new Exception("Unknown Commando muzzle accepted."); }

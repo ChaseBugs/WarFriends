@@ -13,6 +13,9 @@ public sealed record ArmyWeaponCadence(string UnitId,float Seconds,int StrictTic
 public sealed record ArmyCommandoPoison(float DurationSeconds,float PulseIntervalSeconds,int PulseCount,
     string Rule,string ConstantsSheet,int ConstantsRow,string BehaviorSource,string BehaviorSha256,
     string BulletSource,string BulletSha256);
+public sealed record ArmyShotgunFalloff(string UnitId,float Radius,float ShotHalfAngle,float ShotHalfAngleNear,
+    float MinimumDamageRatio,bool FlatY,
+    bool ShotOnlyMainBullet,string Rule,string Source,string SourceSha256);
 
 /// <summary>Pinned enemy-rig and serialized Rusher weapon spawn-point chains.</summary>
 public sealed class ArmyWeaponBindingCatalog
@@ -20,6 +23,7 @@ public sealed class ArmyWeaponBindingCatalog
     private readonly IReadOnlyDictionary<string,ArmyWeaponMuzzle[]> muzzles;
     private readonly IReadOnlyDictionary<string,ArmyWeaponWindup> windups;
     private readonly IReadOnlyDictionary<string,ArmyWeaponCadence> cadences;
+    private readonly IReadOnlyDictionary<string,ArmyShotgunFalloff> shotgunFalloffs;
     public string Revision { get; }
     public string GunSnapPath { get; }
     public Vector3 GunSnapPosition { get; }
@@ -29,10 +33,11 @@ public sealed class ArmyWeaponBindingCatalog
 
     private ArmyWeaponBindingCatalog(string revision,TransformRow gun,TransformRow leftGun,
         Dictionary<string,ArmyWeaponMuzzle[]> muzzles,Dictionary<string,ArmyWeaponWindup> windups,
-        Dictionary<string,ArmyWeaponCadence> cadences,ArmyCommandoPoison commandoPoison)
+        Dictionary<string,ArmyWeaponCadence> cadences,Dictionary<string,ArmyShotgunFalloff> shotgunFalloffs,
+        ArmyCommandoPoison commandoPoison)
     {Revision=revision;GunSnapPath=gun.Path;GunSnapPosition=gun.Position;GunSnapRotation=gun.Rotation;
      LeftGunSnapPath=leftGun.Path;this.muzzles=muzzles;this.windups=windups;this.cadences=cadences;
-     CommandoPoison=commandoPoison;}
+     CommandoPoison=commandoPoison;this.shotgunFalloffs=shotgunFalloffs;}
 
     public ArmyWeaponMuzzle Muzzle(string unitId,int index=0)
         =>muzzles.TryGetValue(unitId,out var value)&&index>=0&&index<value.Length
@@ -45,6 +50,37 @@ public sealed class ArmyWeaponBindingCatalog
     public ArmyWeaponCadence Cadence(string unitId)
         =>cadences.TryGetValue(unitId,out var value)?value:throw new ArgumentOutOfRangeException(nameof(unitId));
     public int CadenceTicks(string unitId)=>Cadence(unitId).StrictTicks;
+    public ArmyShotgunFalloff? ShotgunFalloff(string unitId)
+        =>shotgunFalloffs.TryGetValue(unitId,out var value)?value:null;
+    public bool TryProjectileDamage(string unitId,float maximum,Vector3 origin,Vector3 target,out float damage)
+    {
+        damage=0;
+        if(!float.IsFinite(maximum)||maximum<0||maximum>10_000_000||
+           !PlayerHitbox.Finite(origin)||!PlayerHitbox.Finite(target))
+            throw new InvalidDataException("Invalid army projectile damage inputs.");
+        var falloff=ShotgunFalloff(unitId);
+        if(falloff==null){damage=maximum;return true;}
+        var delta=target-origin;
+        float distance=delta.Length();
+        var aim=delta;if(falloff.FlatY)aim.Y=0;
+        float angle=0;
+        if(aim.LengthSquared()>=1e-10f&&delta.LengthSquared()>=1e-10f)
+        {
+            float cosine=Math.Clamp(Vector3.Dot(Vector3.Normalize(aim),Vector3.Normalize(delta)),-1,1);
+            angle=MathF.Acos(cosine)*180/MathF.PI;
+        }
+        float normalized=Math.Clamp(distance/falloff.Radius,0,1);
+        float angleWeight=MathF.Sqrt(MathF.Sqrt(normalized));
+        float halfAngle=falloff.ShotHalfAngleNear+
+            (falloff.ShotHalfAngle-falloff.ShotHalfAngleNear)*angleWeight;
+        if(Math.Abs(angle)>=halfAngle)return false;
+        float weight=1-Math.Clamp(distance/falloff.Radius,0,1);
+        float minimum=maximum*falloff.MinimumDamageRatio;
+        damage=minimum+(maximum-minimum)*weight;
+        if(!float.IsFinite(damage)||damage<minimum||damage>maximum)
+            throw new InvalidDataException("Army shotgun falloff produced invalid damage.");
+        return true;
+    }
 
     public Vector3 RestMuzzleOrigin(string unitId,Vector3 entityPosition,Vector3 planarForward,int index=0)
     {
@@ -66,7 +102,7 @@ public sealed class ArmyWeaponBindingCatalog
         using var document=JsonDocument.Parse(bytes,new JsonDocumentOptions{MaxDepth=16});
         var root=document.RootElement;
         Exact(root,"version","sceneSha256","enemyPrefabSha256","gunSnap","leftGunSnap","provenance","commandoPoison","families");
-        if(root.GetProperty("version").GetInt32()!=6||root.GetProperty("sceneSha256").GetString()!=sceneRevision||
+        if(root.GetProperty("version").GetInt32()!=7||root.GetProperty("sceneSha256").GetString()!=sceneRevision||
            !Hash(root.GetProperty("enemyPrefabSha256").GetString())||
            root.GetProperty("provenance").GetString()!=
              "serialized EnemyBasicInventory weapon references plus enemy rig and weapon spawn-point transform chains; runtime weapon IDs remain unresolved")
@@ -95,9 +131,10 @@ public sealed class ArmyWeaponBindingCatalog
         var result=new Dictionary<string,ArmyWeaponMuzzle[]>(StringComparer.Ordinal);
         var windups=new Dictionary<string,ArmyWeaponWindup>(StringComparer.Ordinal);
         var cadences=new Dictionary<string,ArmyWeaponCadence>(StringComparer.Ordinal);
+        var shotgunFalloffs=new Dictionary<string,ArmyShotgunFalloff>(StringComparer.Ordinal);
         foreach(var family in families.EnumerateArray())
         {
-            Exact(family,"unitId","behaviorType","behaviorFileId","attackWindup","attackCadence","inventory");
+            Exact(family,"unitId","behaviorType","behaviorFileId","attackWindup","attackCadence","shotgunFalloff","inventory");
             string unit=family.GetProperty("unitId").GetString()??"";
             if(!Regex.IsMatch(unit,@"\AID_UNIT-[A-Z0-9-]{1,50}\z")||result.ContainsKey(unit))
                 throw new InvalidDataException("Invalid army weapon unit identity.");
@@ -166,8 +203,30 @@ public sealed class ArmyWeaponBindingCatalog
                !cadenceSource.EndsWith(".cs",StringComparison.Ordinal)||!Hash(cadenceHash))
                 throw new InvalidDataException("Invalid source Rusher attack cadence.");
             cadences.Add(unit,new(unit,cadenceSeconds,cadenceTicks,cadenceRule,cadenceSource,cadenceHash));
+            var falloffRow=family.GetProperty("shotgunFalloff");
+            bool expectsFalloff=family.GetProperty("behaviorType").GetString() is
+                "SoldierBehaviourShotgunner" or "SoldierBehaviourWarper";
+            if(expectsFalloff)
+            {
+                Exact(falloffRow,"radius","shotHalfAngle","shotHalfAngleNear","minimumDamageRatio","flatY","shotOnlyMainBullet","rule","source","sha256");
+                var falloff=new ArmyShotgunFalloff(unit,falloffRow.GetProperty("radius").GetSingle(),
+                    falloffRow.GetProperty("shotHalfAngle").GetSingle(),falloffRow.GetProperty("shotHalfAngleNear").GetSingle(),
+                    falloffRow.GetProperty("minimumDamageRatio").GetSingle(),falloffRow.GetProperty("flatY").GetBoolean(),
+                    falloffRow.GetProperty("shotOnlyMainBullet").GetBoolean(),falloffRow.GetProperty("rule").GetString()??"",
+                    falloffRow.GetProperty("source").GetString()??"",falloffRow.GetProperty("sha256").GetString()??"");
+                if(falloff.Radius!=3||falloff.ShotHalfAngle!=10||falloff.ShotHalfAngleNear!=75||
+                   falloff.MinimumDamageRatio!=.1f||!falloff.FlatY||!falloff.ShotOnlyMainBullet||
+                   falloff.Rule!="min-plus-max-minus-min-times-one-minus-clamped-distance-over-radius"||
+                   falloff.Source!=$"Assets/Scripts/Assembly-CSharp/{family.GetProperty("behaviorType").GetString()}.cs"||
+                   !Hash(falloff.SourceSha256))
+                    throw new InvalidDataException("Invalid source Rusher shotgun falloff.");
+                shotgunFalloffs.Add(unit,falloff);
+            }
+            else if(falloffRow.ValueKind!=JsonValueKind.Null)
+                throw new InvalidDataException("Unexpected Rusher shotgun falloff.");
         }
-        return new(expectedRevision,gun,leftGun,result,windups,cadences,poison);
+        if(shotgunFalloffs.Count!=2)throw new InvalidDataException("Incomplete Rusher shotgun falloff set.");
+        return new(expectedRevision,gun,leftGun,result,windups,cadences,shotgunFalloffs,poison);
     }
 
     private sealed record TransformRow(string Path,Vector3 Position,Quaternion Rotation);

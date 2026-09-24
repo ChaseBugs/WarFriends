@@ -105,6 +105,28 @@ def attack_cadence(behavior_type):
             "source":source.relative_to(ROOT/"Clients/ExportedProject").as_posix(),
             "sha256":hashlib.sha256(data).hexdigest()}
 
+def shotgun_falloff(behavior_type,inventory):
+    if behavior_type not in ("SoldierBehaviourShotgunner","SoldierBehaviourWarper"): return None
+    if len(inventory)!=1: raise ValueError("shotgun Rusher inventory changed")
+    path=ROOT/"Clients/ExportedProject/Assets"/inventory[0]["asset"]
+    text=path.read_text(encoding="utf-8-sig")
+    def scalar(name):
+        match=re.search(rf"^  {name}: ([0-9.]+)$",text,re.M)
+        if not match: raise ValueError(f"missing shotgun {name}: {path}")
+        return float(match.group(1))
+    flat=int(scalar("flatY"));main=int(scalar("shotOnlyMainBullet"))
+    source=SCRIPTS/(behavior_type+".cs");source_text=source.read_text(encoding="utf-8-sig")
+    if "minDamage = (float)base.soldierBehaviourDefinititon.damage * 0.1f" not in source_text or \
+       "maxDamage = base.soldierBehaviourDefinititon.damage" not in source_text:
+        raise ValueError(f"shotgun runtime damage override changed: {source}")
+    return {"radius":scalar("radius"),"shotHalfAngle":scalar("shotHalfAngle"),
+            "shotHalfAngleNear":scalar("shotHalfAngleNear"),
+            "minimumDamageRatio":0.1,"flatY":bool(flat),
+            "shotOnlyMainBullet":bool(main),
+            "rule":"min-plus-max-minus-min-times-one-minus-clamped-distance-over-radius",
+            "source":source.relative_to(ROOT/"Clients/ExportedProject").as_posix(),
+            "sha256":hashlib.sha256(source.read_bytes()).hexdigest()}
+
 def main():
     raw=SCENE.read_bytes(); text=raw.decode("utf-8-sig")
     blocks={int(m.group(1)):m.group(2) for m in re.finditer(
@@ -148,6 +170,7 @@ def main():
                      "behaviorFileId":family["behaviorFileId"],
                      "attackWindup":attack_windup(inventories[0][0]["weaponType"]),
                      "attackCadence":attack_cadence(family["behaviorType"]),
+                     "shotgunFalloff":shotgun_falloff(family["behaviorType"],inventories[0]),
                      "inventory":inventories[0]})
     if len(rows)!=6: raise ValueError("expected six Rusher weapon bindings")
     enemy_text,enemy_blocks,enemy_names,enemy_transforms=yaml(ENEMY)
@@ -174,7 +197,7 @@ def main():
                      "behaviorSha256":hashlib.sha256(commando_source.read_bytes()).hexdigest(),
                      "bulletSource":poison_source.relative_to(ROOT/"Clients/ExportedProject").as_posix(),
                      "bulletSha256":hashlib.sha256(poison_source.read_bytes()).hexdigest()}
-    artifact={"version":6,"sceneSha256":hashlib.sha256(raw).hexdigest(),
+    artifact={"version":7,"sceneSha256":hashlib.sha256(raw).hexdigest(),
               "enemyPrefabSha256":hashlib.sha256(ENEMY.read_bytes()).hexdigest(),
               "gunSnap":relative(gun_snap,enemy_transforms,enemy_names),
               "leftGunSnap":relative(left_gun_snap,enemy_transforms,enemy_names),
@@ -185,5 +208,5 @@ def main():
     if __import__("sys").argv[1:]==["--check"]:
         if OUT.read_bytes()!=encoded: raise ValueError("Rusher weapon artifact is stale")
     else: OUT.write_bytes(encoded)
-    print("six Rusher serialized weapon bindings, attack timing, and Commando poison pinned")
+    print("six Rusher weapon bindings, attack timing, shotgun falloff, and Commando poison pinned")
 if __name__=="__main__": main()

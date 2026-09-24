@@ -29,6 +29,7 @@ public sealed partial class MatchEngine
     private readonly List<ArmyRusherShotIntent> rusherShotIntents=[];
     private readonly Dictionary<ulong,ArmyFlameBurst> armyFlameBursts=[];
     private readonly Dictionary<ulong,ArmyPoisonEffect> armyPoisons=[];
+    private readonly Dictionary<ulong,float> armyProjectileDamage=[];
     private readonly Dictionary<int,ulong> occupiedRusherSlots=[];
     private readonly Dictionary<ulong,int> rusherSlotByEntity=[];
 
@@ -329,19 +330,33 @@ public sealed partial class MatchEngine
                 _=>null
             };
             if(!projectileSpeed.HasValue)continue;
-            int poisonEvents=behavior=="SoldierBehaviourCommando"&&armySpecial.ContainsKey(intent.EntityKey)
-                ?ArmyPoisonEffect.PulseCount:0;
-            if(PendingProjectileCount>=MaximumProjectiles ||
-               !EventCapacityForShot(1,poisonEvents))continue;
             var entityPosition=new Vector3(army.X,army.Y,army.Z);
             var origin=armyWeapons?.RestMuzzleOrigin(army.UnitId,entityPosition,
                 intent.TargetPosition-entityPosition,muzzleIndex)??
                 throw new InvalidDataException("Army projectile lacks pinned muzzle authority.");
-            ulong id=checked(++projectileId);
+            if(!armyWeapons.TryProjectileDamage(army.UnitId,ArmyDamage(intent.EntityKey)??0,
+                origin,intent.TargetPosition,out float launchDamage))
+            {
+                if(EventCapacityForShot())
+                {
+                    if(projectileId==ulong.MaxValue)throw new InvalidDataException("Army projectile identity exhausted.");
+                    ulong missId=++projectileId;
+                    Emit(MatchEventKind.Shot,intent.OwnerPlayerId,intent.TargetPlayerId,
+                        missId,origin,0,"army-shotgun-cone-miss");
+                }
+                continue;
+            }
+            int poisonEvents=behavior=="SoldierBehaviourCommando"&&armySpecial.ContainsKey(intent.EntityKey)
+                ?ArmyPoisonEffect.PulseCount:0;
+            if(PendingProjectileCount>=MaximumProjectiles ||
+               !EventCapacityForShot(1,poisonEvents))continue;
+            if(projectileId==ulong.MaxValue)throw new InvalidDataException("Army projectile identity exhausted.");
+            ulong id=++projectileId;
             var flight=new ArmyProjectileFlight(id,intent.EntityKey,origin,intent.TargetPosition,
                 projectileSpeed.Value,tick,
                 (from,direction,range)=>rifleCombat.TraceForArmy(intent.OwnerPlayerId,from,direction,range));
             armyProjectiles.Add(id,flight);
+            armyProjectileDamage.Add(id,launchDamage);
             Emit(MatchEventKind.Shot,intent.OwnerPlayerId,intent.TargetPlayerId,
                 id,origin,0,"army");
         }
@@ -351,10 +366,16 @@ public sealed partial class MatchEngine
     {
         foreach(var pair in armyProjectiles.ToArray())
         {
+            if(!armyProjectileDamage.TryGetValue(pair.Key,out float projectileDamage))
+                throw new InvalidDataException("Army projectile lost its launch damage authority.");
             ArmyProjectileImpact? impact;
             try { impact=pair.Value.Advance(tick); }
             catch(InvalidDataException){End("invalid-army-projectile-authority","",false);return;}
-            if(pair.Value.Finished)armyProjectiles.Remove(pair.Key);
+            if(pair.Value.Finished)
+            {
+                armyProjectiles.Remove(pair.Key);
+                armyProjectileDamage.Remove(pair.Key);
+            }
             if(impact==null)continue;
             Emit(MatchEventKind.Impact,impact.EntityKey.ToString(),
                 impact.Collision.PlayerId??"",impact.ProjectileId,impact.Collision.Position,0,"army");
@@ -367,11 +388,11 @@ public sealed partial class MatchEngine
                 var proof=ArmyRusherImpactResolver.Resolve(
                     new ArmyRusherShotIntent(impact.EntityKey,owner.Definition.PlayerId,
                         impact.Collision.PlayerId,0,impact.Collision.Position,true,0,1),impact.Collision,
-                    ArmyDamage(impact.EntityKey)??0);
+                    projectileDamage);
                 var result=ApplyArmyRusherPlayerImpact(proof,damageRoll?.Invoke()??1f);
                 if(result is {Applied:true,Dead:false}&&armySpecial.TryGetValue(impact.EntityKey,out float ratio))
                 {
-                    float pulse=(ArmyDamage(impact.EntityKey)??0)/ArmyPoisonEffect.PulseCount*ratio;
+                    float pulse=projectileDamage/ArmyPoisonEffect.PulseCount*ratio;
                     armyPoisons.Add(impact.ProjectileId,new ArmyPoisonEffect(impact.ProjectileId,
                         impact.EntityKey,owner.Definition.PlayerId,impact.Collision.PlayerId,pulse,
                         impact.Collision.Position,tick));

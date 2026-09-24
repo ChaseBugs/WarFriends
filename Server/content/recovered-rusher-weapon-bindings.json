@@ -1,5 +1,5 @@
 {
-  "version": 6,
+  "version": 7,
   "sceneSha256": "d46f81ff8c3e12bf17f34a1f53dd601bd799102c9f984818031441dfb7a5de43",
   "enemyPrefabSha256": "64b4db85d1c9a0bd46a690a86102a22f66feeab8d4157a4c87824ac3d5dbeb54",
   "gunSnap": {
@@ -64,6 +64,17 @@
         "source": "Assets/Scripts/Assembly-CSharp/SoldierBehaviour.cs",
         "sha256": "26568579f6b4e7994b5a2266009de3e5ccb42e41169546056f71ffe5acb7ae39"
       },
+      "shotgunFalloff": {
+        "radius": 3.0,
+        "shotHalfAngle": 10.0,
+        "shotHalfAngleNear": 75.0,
+        "minimumDamageRatio": 0.1,
+        "flatY": true,
+        "shotOnlyMainBullet": true,
+        "rule": "min-plus-max-minus-min-times-one-minus-clamped-distance-over-radius",
+        "source": "Assets/Scripts/Assembly-CSharp/SoldierBehaviourShotgunner.cs",
+        "sha256": "aa40467475417904a3de09351e63ac99b1212db66a6ff437fd3665b24ea5a15f"
+      },
       "inventory": [
         {
           "fileId": 36093,
@@ -114,6 +125,7 @@
         "source": "Assets/Scripts/Assembly-CSharp/SoldierBehaviourParachuter.cs",
         "sha256": "e3907f043d22acab4b900292138d80ec20d64280b5b76d7120edb44595e51439"
       },
+      "shotgunFalloff": null,
       "inventory": [
         {
           "fileId": 39978,
@@ -164,6 +176,7 @@
         "source": "Assets/Scripts/Assembly-CSharp/SoldierBehaviour.cs",
         "sha256": "26568579f6b4e7994b5a2266009de3e5ccb42e41169546056f71ffe5acb7ae39"
       },
+      "shotgunFalloff": null,
       "inventory": [
         {
           "fileId": 48807,
@@ -210,6 +223,7 @@
         "source": "Assets/Scripts/Assembly-CSharp/SoldierBehaviour.cs",
         "sha256": "26568579f6b4e7994b5a2266009de3e5ccb42e41169546056f71ffe5acb7ae39"
       },
+      "shotgunFalloff": null,
       "inventory": [
         {
           "fileId": 41583,
@@ -257,6 +271,7 @@
         "source": "Assets/Scripts/Assembly-CSharp/SoldierBehaviourCommando.cs",
         "sha256": "3ac2807908628060f1452001e2b912c8bf9966d8b853030cc170888e24e82a32"
       },
+      "shotgunFalloff": null,
       "inventory": [
         {
           "fileId": 37440,
@@ -331,6 +346,17 @@
         "seconds": 0.2,
         "strictTicks": 7,
         "rule": "subclass-override",
+        "source": "Assets/Scripts/Assembly-CSharp/SoldierBehaviourWarper.cs",
+        "sha256": "ccc0ef21494a5f1f7f1acf562276927e2d67b6997f12382b41b927415216a9e4"
+      },
+      "shotgunFalloff": {
+        "radius": 3.0,
+        "shotHalfAngle": 10.0,
+        "shotHalfAngleNear": 75.0,
+        "minimumDamageRatio": 0.1,
+        "flatY": true,
+        "shotOnlyMainBullet": true,
+        "rule": "min-plus-max-minus-min-times-one-minus-clamped-distance-over-radius",
         "source": "Assets/Scripts/Assembly-CSharp/SoldierBehaviourWarper.cs",
         "sha256": "ccc0ef21494a5f1f7f1acf562276927e2d67b6997f12382b41b927415216a9e4"
       },
