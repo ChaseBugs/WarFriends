@@ -1,5 +1,5 @@
 {
-  "version": 10,
+  "version": 11,
   "sceneSha256": "d46f81ff8c3e12bf17f34a1f53dd601bd799102c9f984818031441dfb7a5de43",
   "enemyPrefabSha256": "64b4db85d1c9a0bd46a690a86102a22f66feeab8d4157a4c87824ac3d5dbeb54",
   "gunSnap": {
@@ -62,6 +62,105 @@
     "behaviorSha256": "aa40467475417904a3de09351e63ac99b1212db66a6ff437fd3665b24ea5a15f",
     "controllerSource": "Assets/Scripts/Assembly-CSharp/EnemyController.cs",
     "controllerSha256": "175413835772f6c538132930f5c5b3fbe93d147a737a5087d265622acb74aae0"
+  },
+  "warperRelocation": {
+    "initialWarpCountMin": 1,
+    "initialWarpCountMaxExclusive": 3,
+    "repeatWarpCountMin": 0,
+    "repeatWarpCountMaxExclusive": 2,
+    "edgeInsetX": 2.0,
+    "edgeInsetZMin": 1.0,
+    "edgeInsetZMax": 2.7,
+    "edgeShrinkZMin": 2.0,
+    "edgeShrinkZMax": 3.5,
+    "sampleRadius": 5.0,
+    "startSpeed": 0.2,
+    "accelerationSeconds": 0.5,
+    "warpAfterSeconds": 1.5,
+    "warpSpeed": 20.0,
+    "arrivalDistance": 0.5,
+    "arrivalPauseSeconds": 0.5,
+    "repeatAfterShotSeconds": 1.0,
+    "rule": "alternating-field-edge-navmesh-sample-then-rusher",
+    "controllerSource": "Assets/Scripts/Assembly-CSharp/EnemyController.cs",
+    "controllerSha256": "175413835772f6c538132930f5c5b3fbe93d147a737a5087d265622acb74aae0",
+    "maps": [
+      {
+        "source": "Assets/Scenes/Aztec_Multiplayer.unity",
+        "sha256": "50b3077f1898189cbf40c2232771175b85eec0f03737901373da377faf95291e",
+        "colliderFileId": 2105,
+        "minimum": [
+          -4.9046577,
+          -0.19196835999999973,
+          -4.221239000000001
+        ],
+        "maximum": [
+          4.881025300000001,
+          2.66899064,
+          4.498761
+        ]
+      },
+      {
+        "source": "Assets/Scenes/City_Multiplayer.unity",
+        "sha256": "acaf878b188dbc17fca6795b5db7e9c7797b91dee0fcb6fb02d5e85d7cc11c4f",
+        "colliderFileId": 2742,
+        "minimum": [
+          -4.7838662,
+          -0.2394740599999996,
+          -4.274852899999999
+        ],
+        "maximum": [
+          4.9832868,
+          2.62148494,
+          3.9969531000000007
+        ]
+      },
+      {
+        "source": "Assets/Scenes/Desert_Multiplayer.unity",
+        "sha256": "d2acaeb238fb2dfdcfb0e1bb69a52628798498f7b6992ecf9418a727360368c1",
+        "colliderFileId": 2152,
+        "minimum": [
+          -28.884866199999998,
+          -2.6374740599999997,
+          -13.0048529
+        ],
+        "maximum": [
+          -19.117713199999997,
+          0.22348494000000008,
+          -4.7330469
+        ]
+      },
+      {
+        "source": "Assets/Scenes/Park_Multiplayer.unity",
+        "sha256": "09b2c084ef5da6707fbebd4261a60baa0f12e24fef31efc4c6d4671b721e70ed",
+        "colliderFileId": 2932,
+        "minimum": [
+          -4.809864200000002,
+          -0.22747395999999975,
+          -4.4178529000000015
+        ],
+        "maximum": [
+          4.957288799999999,
+          2.63348504,
+          3.8539530999999982
+        ]
+      },
+      {
+        "source": "Assets/Scenes/Snow_Multiplayer.unity",
+        "sha256": "67291457da28646c9ce377f3812d1bf0fa5332bfe664f58a4430a823744e6f21",
+        "colliderFileId": 2466,
+        "minimum": [
+          -4.9046577,
+          -0.7455934599999998,
+          -5.11655207
+        ],
+        "maximum": [
+          4.881025300000001,
+          2.11536554,
+          4.80646193
+        ]
+      }
+    ]
   },
   "families": [
     {

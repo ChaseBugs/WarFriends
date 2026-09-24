@@ -75,6 +75,64 @@ def relative(transform_id,transforms,names,zero_root_position=False):
     return {"path":"/".join(path),"position":[matrix[0][3],matrix[1][3],matrix[2][3]],
             "rotation":rotation_from_matrix(matrix)}
 
+def warper_relocation(content,enemy_source):
+    source_text=enemy_source.read_text(encoding="utf-8-sig")
+    required=("private int mNrOfWarps = 4;","agent.speed = 0.2f;",
+              "mTime < mWalkStartTime + 0.5f","mTime > mWalkStartTime + 1.5f",
+              "agent.speed = 20f;","mNrOfWarps = UnityEngine.Random.Range(1, 3);",
+              "mNrOfWarps = UnityEngine.Random.Range(0, 2);")
+    if any(value not in source_text for value in required):
+        raise ValueError("Warper relocation source contract changed")
+    maps=[]
+    for source_map in content["maps"]:
+        path=ROOT/"Clients/ExportedProject"/source_map["source"]
+        raw=path.read_bytes()
+        if hashlib.sha256(raw).hexdigest()!=source_map["sha256"]:
+            raise ValueError(f"Warper field scene changed: {path}")
+        scene,blocks,names,transforms=yaml(path)
+        definitions=[block for block in blocks.values() if "  fieldArea: {fileID:" in block]
+        if len(definitions)!=1: raise ValueError(f"expected one map field area: {path}")
+        collider_id=int(re.search(r"^  fieldArea: \{fileID: (\d+)\}$",definitions[0],re.M).group(1))
+        collider=blocks[collider_id]
+        if not collider.startswith("BoxCollider:") or "  m_IsTrigger: 1" not in collider:
+            raise ValueError(f"invalid map field collider: {path}")
+        def vector(label):
+            row=re.search(rf"^  {label}: \{{(.*?)\}}$",collider,re.M)
+            if not row: raise ValueError(f"missing {label}: {path}")
+            values={k:float(v) for k,v in re.findall(r"([xyz]): ([^,}}]+)",row.group(1))}
+            return [values[k] for k in "xyz"]
+        game_object=int(re.search(r"^  m_GameObject: \{fileID: (\d+)\}$",collider,re.M).group(1))
+        transform_id=next((fid for fid,row in transforms.items() if row["gameObject"]==game_object),0)
+        if not transform_id: raise ValueError(f"missing field transform: {path}")
+        chain=[];current=transform_id
+        while current:
+            row=transforms[current];chain.append(row);current=row["parent"]
+            if len(chain)>32: raise ValueError("cyclic field transform")
+        matrix=[[1.,0.,0.,0.],[0.,1.,0.,0.],[0.,0.,1.,0.],[0.,0.,0.,1.]]
+        for row in reversed(chain): matrix=matmul(matrix,trs(row["position"],row["rotation"],row["scale"]))
+        center=vector("m_Center");size=vector("m_Size");corners=[]
+        for x in (-.5,.5):
+            for y in (-.5,.5):
+                for z in (-.5,.5):
+                    local=[center[0]+size[0]*x,center[1]+size[1]*y,center[2]+size[2]*z,1.]
+                    corners.append([sum(matrix[r][c]*local[c] for c in range(4)) for r in range(3)])
+        minimum=[min(point[i] for point in corners) for i in range(3)]
+        maximum=[max(point[i] for point in corners) for i in range(3)]
+        if any(not math.isfinite(value) or abs(value)>10000 for value in minimum+maximum):
+            raise ValueError(f"invalid field bounds: {path}")
+        maps.append({"source":source_map["source"],"sha256":source_map["sha256"],
+                     "colliderFileId":collider_id,"minimum":minimum,"maximum":maximum})
+    return {"initialWarpCountMin":1,"initialWarpCountMaxExclusive":3,
+            "repeatWarpCountMin":0,"repeatWarpCountMaxExclusive":2,
+            "edgeInsetX":2.0,"edgeInsetZMin":1.0,"edgeInsetZMax":2.7,
+            "edgeShrinkZMin":2.0,"edgeShrinkZMax":3.5,"sampleRadius":5.0,
+            "startSpeed":0.2,"accelerationSeconds":0.5,"warpAfterSeconds":1.5,
+            "warpSpeed":20.0,"arrivalDistance":0.5,"arrivalPauseSeconds":0.5,
+            "repeatAfterShotSeconds":1.0,
+            "rule":"alternating-field-edge-navmesh-sample-then-rusher",
+            "controllerSource":enemy_source.relative_to(ROOT/"Clients/ExportedProject").as_posix(),
+            "controllerSha256":hashlib.sha256(enemy_source.read_bytes()).hexdigest(),"maps":maps}
+
 def attack_windup(weapon_type):
     # EnemyController.PrepareToShoot: Rusher/RusherSpare uses no delay for a
     # flamethrower, the complete shield-unhide clip for SWAT weapons, and 30%
@@ -232,7 +290,8 @@ def main():
                      "behaviorSha256":hashlib.sha256(shotgunner_source.read_bytes()).hexdigest(),
                      "controllerSource":enemy_source.relative_to(ROOT/"Clients/ExportedProject").as_posix(),
                      "controllerSha256":hashlib.sha256(enemy_source.read_bytes()).hexdigest()}
-    artifact={"version":10,"sceneSha256":hashlib.sha256(raw).hexdigest(),
+    warper=warper_relocation(content,enemy_source)
+    artifact={"version":11,"sceneSha256":hashlib.sha256(raw).hexdigest(),
               "enemyPrefabSha256":hashlib.sha256(ENEMY.read_bytes()).hexdigest(),
               "gunSnap":relative(gun_snap,enemy_transforms,enemy_names),
               "leftGunSnap":relative(left_gun_snap,enemy_transforms,enemy_names),
@@ -241,10 +300,11 @@ def main():
               "swatSpecialSpeed":swat_special,
               "paratrooperKevlar":parachuter_kevlar,
               "shotgunnerWalkingFire":shotgunner_walk,
+              "warperRelocation":warper,
               "families":rows}
     encoded=(json.dumps(artifact,indent=2)+"\n").encode()
     if __import__("sys").argv[1:]==["--check"]:
         if OUT.read_bytes()!=encoded: raise ValueError("Rusher weapon artifact is stale")
     else: OUT.write_bytes(encoded)
-    print("six Rusher bindings, timing, falloff, poison, SWAT speed, Paratrooper kevlar, and Shotgunner walking fire pinned")
+    print("six Rusher bindings plus five-map Warper relocation authority pinned")
 if __name__=="__main__": main()

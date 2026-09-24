@@ -76,6 +76,9 @@ public sealed class BattleCombatContent
         var army=ArmyDeploymentCatalog.Load(Path.Combine(directory,"recovered-army-deployment.json"),manifest.ArmyDeploymentRevision,manifest.SceneRevision);
         army.ValidateSourceSheet(Path.Combine(directory,"recovered-battle-content.json"));
         var armyWeapons=ArmyWeaponBindingCatalog.Load(Path.Combine(directory,"recovered-rusher-weapon-bindings.json"),manifest.ArmyWeaponBindingsRevision,manifest.SceneRevision);
+        if(maps.Any(map=>!armyWeapons.WarperRelocation.Fields.TryGetValue(map.Source,out var field)||
+            field.Sha256!=map.SourceHash))
+            throw new InvalidDataException("Warper field authority does not bind the complete map package.");
         var armySpawnPoints=ArmySpawnPointCatalog.Load(Path.Combine(directory,"recovered-army-spawn-points.json"),manifest.ArmySpawnPointsRevision,maps);
         var armyRusherPoints=ArmyRusherPointCatalog.Load(Path.Combine(directory,"recovered-army-rusher-points.json"),manifest.ArmyRusherPointsRevision,maps);
         var playerShotTargets=PlayerShotTargetCatalog.Load(Path.Combine(directory,"recovered-player-shot-targets.json"),manifest.PlayerShotTargetsRevision,manifest.SceneRevision);

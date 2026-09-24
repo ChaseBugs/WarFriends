@@ -21,6 +21,13 @@ public sealed record ArmyParatrooperKevlar(string Rule,string BehaviorSource,str
     string KevlarSource,string KevlarSha256);
 public sealed record ArmyShotgunnerWalkingFire(float WindupSeconds,string Rule,string BehaviorSource,
     string BehaviorSha256,string ControllerSource,string ControllerSha256);
+public sealed record ArmyWarperField(string Source,string Sha256,int ColliderFileId,Vector3 Minimum,Vector3 Maximum);
+public sealed record ArmyWarperRelocation(int InitialWarpCountMin,int InitialWarpCountMaxExclusive,
+    int RepeatWarpCountMin,int RepeatWarpCountMaxExclusive,float EdgeInsetX,float EdgeInsetZMin,
+    float EdgeInsetZMax,float EdgeShrinkZMin,float EdgeShrinkZMax,float SampleRadius,float StartSpeed,
+    float AccelerationSeconds,float WarpAfterSeconds,float WarpSpeed,float ArrivalDistance,
+    float ArrivalPauseSeconds,float RepeatAfterShotSeconds,string Rule,string ControllerSource,
+    string ControllerSha256,IReadOnlyDictionary<string,ArmyWarperField> Fields);
 
 /// <summary>Pinned enemy-rig and serialized Rusher weapon spawn-point chains.</summary>
 public sealed class ArmyWeaponBindingCatalog
@@ -38,16 +45,19 @@ public sealed class ArmyWeaponBindingCatalog
     public ArmySwatSpecialSpeed SwatSpecialSpeed { get; }
     public ArmyParatrooperKevlar ParatrooperKevlar { get; }
     public ArmyShotgunnerWalkingFire ShotgunnerWalkingFire { get; }
+    public ArmyWarperRelocation WarperRelocation { get; }
 
     private ArmyWeaponBindingCatalog(string revision,TransformRow gun,TransformRow leftGun,
         Dictionary<string,ArmyWeaponMuzzle[]> muzzles,Dictionary<string,ArmyWeaponWindup> windups,
         Dictionary<string,ArmyWeaponCadence> cadences,Dictionary<string,ArmyShotgunFalloff> shotgunFalloffs,
         ArmyCommandoPoison commandoPoison,ArmySwatSpecialSpeed swatSpecialSpeed,
-        ArmyParatrooperKevlar paratrooperKevlar,ArmyShotgunnerWalkingFire shotgunnerWalkingFire)
+        ArmyParatrooperKevlar paratrooperKevlar,ArmyShotgunnerWalkingFire shotgunnerWalkingFire,
+        ArmyWarperRelocation warperRelocation)
     {Revision=revision;GunSnapPath=gun.Path;GunSnapPosition=gun.Position;GunSnapRotation=gun.Rotation;
      LeftGunSnapPath=leftGun.Path;this.muzzles=muzzles;this.windups=windups;this.cadences=cadences;
      CommandoPoison=commandoPoison;SwatSpecialSpeed=swatSpecialSpeed;ParatrooperKevlar=paratrooperKevlar;
      ShotgunnerWalkingFire=shotgunnerWalkingFire;
+     WarperRelocation=warperRelocation;
      this.shotgunFalloffs=shotgunFalloffs;}
 
     public ArmyWeaponMuzzle Muzzle(string unitId,int index=0)
@@ -112,8 +122,8 @@ public sealed class ArmyWeaponBindingCatalog
             throw new InvalidDataException("Army weapon binding revision mismatch.");
         using var document=JsonDocument.Parse(bytes,new JsonDocumentOptions{MaxDepth=16});
         var root=document.RootElement;
-        Exact(root,"version","sceneSha256","enemyPrefabSha256","gunSnap","leftGunSnap","provenance","commandoPoison","swatSpecialSpeed","paratrooperKevlar","shotgunnerWalkingFire","families");
-        if(root.GetProperty("version").GetInt32()!=10||root.GetProperty("sceneSha256").GetString()!=sceneRevision||
+        Exact(root,"version","sceneSha256","enemyPrefabSha256","gunSnap","leftGunSnap","provenance","commandoPoison","swatSpecialSpeed","paratrooperKevlar","shotgunnerWalkingFire","warperRelocation","families");
+        if(root.GetProperty("version").GetInt32()!=11||root.GetProperty("sceneSha256").GetString()!=sceneRevision||
            !Hash(root.GetProperty("enemyPrefabSha256").GetString())||
            root.GetProperty("provenance").GetString()!=
              "serialized EnemyBasicInventory weapon references plus enemy rig and weapon spawn-point transform chains; runtime weapon IDs remain unresolved")
@@ -166,6 +176,45 @@ public sealed class ArmyWeaponBindingCatalog
            walking.ControllerSource!="Assets/Scripts/Assembly-CSharp/EnemyController.cs"||
            !Hash(walking.BehaviorSha256)||!Hash(walking.ControllerSha256))
             throw new InvalidDataException("Invalid source Shotgunner walking-fire policy.");
+        var warperRow=root.GetProperty("warperRelocation");
+        Exact(warperRow,"initialWarpCountMin","initialWarpCountMaxExclusive","repeatWarpCountMin",
+            "repeatWarpCountMaxExclusive","edgeInsetX","edgeInsetZMin","edgeInsetZMax","edgeShrinkZMin",
+            "edgeShrinkZMax","sampleRadius","startSpeed","accelerationSeconds","warpAfterSeconds",
+            "warpSpeed","arrivalDistance","arrivalPauseSeconds","repeatAfterShotSeconds","rule",
+            "controllerSource","controllerSha256","maps");
+        var fields=new Dictionary<string,ArmyWarperField>(StringComparer.Ordinal);
+        foreach(var fieldRow in warperRow.GetProperty("maps").EnumerateArray())
+        {
+            Exact(fieldRow,"source","sha256","colliderFileId","minimum","maximum");
+            string source=fieldRow.GetProperty("source").GetString()??"";
+            string hash=fieldRow.GetProperty("sha256").GetString()??"";
+            int collider=fieldRow.GetProperty("colliderFileId").GetInt32();
+            var minimum=Vector(fieldRow.GetProperty("minimum"));var maximum=Vector(fieldRow.GetProperty("maximum"));
+            if(!Regex.IsMatch(source,@"\AAssets/Scenes/(Aztec|City|Desert|Park|Snow)_Multiplayer\.unity\z")||
+               !Hash(hash)||collider<=0||minimum.X>=maximum.X||minimum.Y>=maximum.Y||minimum.Z>=maximum.Z||
+               !fields.TryAdd(source,new(source,hash,collider,minimum,maximum)))
+                throw new InvalidDataException("Invalid source Warper field bounds.");
+        }
+        var warper=new ArmyWarperRelocation(warperRow.GetProperty("initialWarpCountMin").GetInt32(),
+            warperRow.GetProperty("initialWarpCountMaxExclusive").GetInt32(),warperRow.GetProperty("repeatWarpCountMin").GetInt32(),
+            warperRow.GetProperty("repeatWarpCountMaxExclusive").GetInt32(),warperRow.GetProperty("edgeInsetX").GetSingle(),
+            warperRow.GetProperty("edgeInsetZMin").GetSingle(),warperRow.GetProperty("edgeInsetZMax").GetSingle(),
+            warperRow.GetProperty("edgeShrinkZMin").GetSingle(),warperRow.GetProperty("edgeShrinkZMax").GetSingle(),
+            warperRow.GetProperty("sampleRadius").GetSingle(),warperRow.GetProperty("startSpeed").GetSingle(),
+            warperRow.GetProperty("accelerationSeconds").GetSingle(),warperRow.GetProperty("warpAfterSeconds").GetSingle(),
+            warperRow.GetProperty("warpSpeed").GetSingle(),warperRow.GetProperty("arrivalDistance").GetSingle(),
+            warperRow.GetProperty("arrivalPauseSeconds").GetSingle(),warperRow.GetProperty("repeatAfterShotSeconds").GetSingle(),
+            warperRow.GetProperty("rule").GetString()??"",warperRow.GetProperty("controllerSource").GetString()??"",
+            warperRow.GetProperty("controllerSha256").GetString()??"",fields);
+        if(fields.Count!=5||warper.InitialWarpCountMin!=1||warper.InitialWarpCountMaxExclusive!=3||
+           warper.RepeatWarpCountMin!=0||warper.RepeatWarpCountMaxExclusive!=2||warper.EdgeInsetX!=2||
+           warper.EdgeInsetZMin!=1||warper.EdgeInsetZMax!=2.7f||warper.EdgeShrinkZMin!=2||
+           warper.EdgeShrinkZMax!=3.5f||warper.SampleRadius!=5||warper.StartSpeed!=.2f||
+           warper.AccelerationSeconds!=.5f||warper.WarpAfterSeconds!=1.5f||warper.WarpSpeed!=20||
+           warper.ArrivalDistance!=.5f||warper.ArrivalPauseSeconds!=.5f||warper.RepeatAfterShotSeconds!=1||
+           warper.Rule!="alternating-field-edge-navmesh-sample-then-rusher"||
+           warper.ControllerSource!="Assets/Scripts/Assembly-CSharp/EnemyController.cs"||!Hash(warper.ControllerSha256))
+            throw new InvalidDataException("Invalid source Warper relocation policy.");
         var families=root.GetProperty("families");
         if(families.GetArrayLength()!=6)throw new InvalidDataException("Incomplete Rusher weapon family set.");
         var result=new Dictionary<string,ArmyWeaponMuzzle[]>(StringComparer.Ordinal);
@@ -266,7 +315,7 @@ public sealed class ArmyWeaponBindingCatalog
                 throw new InvalidDataException("Unexpected Rusher shotgun falloff.");
         }
         if(shotgunFalloffs.Count!=2)throw new InvalidDataException("Incomplete Rusher shotgun falloff set.");
-        return new(expectedRevision,gun,leftGun,result,windups,cadences,shotgunFalloffs,poison,swatSpecialSpeed,kevlar,walking);
+        return new(expectedRevision,gun,leftGun,result,windups,cadences,shotgunFalloffs,poison,swatSpecialSpeed,kevlar,walking,warper);
     }
 
     private sealed record TransformRow(string Path,Vector3 Position,Quaternion Rotation);

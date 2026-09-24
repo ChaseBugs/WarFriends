@@ -766,6 +766,27 @@ internal static class CombatContentTests
         Check(content.ArmyWeapons.ParatrooperKevlar.BehaviorSource.EndsWith("SoldierBehaviourParachuter.cs")&&
               content.ArmyWeapons.ParatrooperKevlar.KevlarSource.EndsWith("Kevlar.cs"),
               "Paratrooper special activation and two-pool kevlar absorption are source-hashed");
+        var warperPolicy=content.ArmyWeapons.WarperRelocation;
+        Check(warperPolicy.Fields.Count==5&&warperPolicy.InitialWarpCountMin==1&&
+              warperPolicy.InitialWarpCountMaxExclusive==3&&warperPolicy.RepeatWarpCountMin==0&&
+              warperPolicy.RepeatWarpCountMaxExclusive==2&&warperPolicy.StartSpeed==.2f&&
+              warperPolicy.WarpAfterSeconds==1.5f&&warperPolicy.WarpSpeed==20f&&
+              content.Maps.All(map=>warperPolicy.Fields.TryGetValue(map.Source,out var field)&&
+                  field.Sha256==map.SourceHash&&field.Minimum.X<field.Maximum.X&&
+                  field.Minimum.Y<field.Maximum.Y&&field.Minimum.Z<field.Maximum.Z),
+              "Warper relocation pins all five field colliders, alternating-edge ranges, counts, and speed phases");
+        foreach(var sourceMap in content.Maps)
+        {
+            var field=warperPolicy.Fields[sourceMap.Source];
+            Vector3 left=ArmyWarperDestinationPolicy.Select(warperPolicy,field,true,()=>.5f,
+                (point,radius)=>content.ArmyNavMeshConnectivity.SampleNearest(sourceMap,point,radius));
+            Vector3 right=ArmyWarperDestinationPolicy.Select(warperPolicy,field,false,()=>.5f,
+                (point,radius)=>content.ArmyNavMeshConnectivity.SampleNearest(sourceMap,point,radius));
+            Check(PlayerHitbox.Finite(left)&&PlayerHitbox.Finite(right)&&left.Z<right.Z,
+                "Warper alternating edge candidates sample onto each source NavMesh");
+        }
+        Reject(()=>ArmyWarperDestinationPolicy.Select(warperPolicy,warperPolicy.Fields.Values.First(),false,
+            ()=>1f,(point,_)=>point));
         Check(content.ArmyWeapons.TryProjectileDamage("ID_UNIT-SHOTGUNNER",100,Vector3.Zero,Vector3.Zero,out float pointDamage)&&pointDamage==100&&
               content.ArmyWeapons.TryProjectileDamage("ID_UNIT-SHOTGUNNER",100,Vector3.Zero,new(1.5f,0,0),out float midDamage)&&midDamage==55&&
               content.ArmyWeapons.TryProjectileDamage("ID_UNIT-SHOTGUNNER",100,Vector3.Zero,new(3,0,0),out float farDamage)&&farDamage==10&&
@@ -784,6 +805,15 @@ internal static class CombatContentTests
         {
             var modified=JsonNode.Parse(File.ReadAllText(weaponBindingPath))!;
             modified["families"]![0]!["attackWindup"]!["seconds"]=0f;
+            File.WriteAllText(weaponBindingTemp,modified.ToJsonString());
+            string altered=Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(weaponBindingTemp)));
+            Reject(()=>ArmyWeaponBindingCatalog.Load(weaponBindingTemp,altered,rusherPin.SceneRevision));
+        }
+        finally {if(File.Exists(weaponBindingTemp))File.Delete(weaponBindingTemp);}
+        try
+        {
+            var modified=JsonNode.Parse(File.ReadAllText(weaponBindingPath))!;
+            modified["warperRelocation"]!["maps"]![0]!["maximum"]![0]=-999f;
             File.WriteAllText(weaponBindingTemp,modified.ToJsonString());
             string altered=Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(weaponBindingTemp)));
             Reject(()=>ArmyWeaponBindingCatalog.Load(weaponBindingTemp,altered,rusherPin.SceneRevision));
