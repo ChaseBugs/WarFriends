@@ -24,13 +24,15 @@ internal static class LiveRusherUdpTests
         var manifest=new MatchManifest("rusher-udp","local-1","Park_Multiplayer",map.SourceHash,
             content.Revision,MatchManifest.RifleCombatMode,10,60,120,
             [new(one,weapon,1,left.SourceIndex,1,new(1000),0,0,0)
-                {EquippedArmyUnitIds=["ID_UNIT-SHOTGUNNER","ID_UNIT-SWAT","ID_UNIT-FLAMETHROWER"],
-                 ArmyNormalUpgradeIndexes=[0,0,0],ArmySpecialUpgradeIndexes=[-1,-1,-1],
-                 ArmyEliteUpgradeIndexes=[-1,-1,-1],ArmySpeedCoefficients=[1f,1f,1f]},
+                {EquippedArmyUnitIds=["ID_UNIT-FLAMETHROWER"],
+                 ArmyNormalUpgradeIndexes=[0],ArmySpecialUpgradeIndexes=[-1],
+                 ArmyEliteUpgradeIndexes=[-1],ArmyHealthFactors=[new(1f,1f)],
+                 ArmyDamageScales=[1f],ArmySpeedCoefficients=[1f]},
              new(two,weapon,2,right.SourceIndex,1,new(1000),0,0,0)
-                {EquippedArmyUnitIds=["ID_UNIT-SHOTGUNNER","ID_UNIT-SWAT","ID_UNIT-FLAMETHROWER"],
-                 ArmyNormalUpgradeIndexes=[0,0,0],ArmySpecialUpgradeIndexes=[-1,-1,-1],
-                 ArmyEliteUpgradeIndexes=[-1,-1,-1],ArmySpeedCoefficients=[1f,1f,1f]}])
+                {EquippedArmyUnitIds=["ID_UNIT-FLAMETHROWER"],
+                 ArmyNormalUpgradeIndexes=[0],ArmySpecialUpgradeIndexes=[-1],
+                 ArmyEliteUpgradeIndexes=[-1],ArmyHealthFactors=[new(1f,1f)],
+                 ArmyDamageScales=[1f],ArmySpeedCoefficients=[1f]}])
             {SceneMasterPlayerId=one};
         string file=Path.Combine(Path.GetTempPath(),"war-rusher-udp-"+Guid.NewGuid().ToString("N")+".json");
         File.WriteAllText(file,JsonSerializer.Serialize(manifest));
@@ -97,6 +99,22 @@ internal static class LiveRusherUdpTests
                       (x.X!=y.X || x.Y!=y.Y || x.Z!=y.Z))) &&
                   movedA.Entities.Select(x=>x.EntityKey).SequenceEqual(movedB.Entities.Select(x=>x.EntityKey)),
                   "both UDP peers see advancing Rusher positions without reconnect revision churn");
+            ulong cursor=0;bool flameShot=false,flameImpact=false,damaged=false;
+            while(!damaged)
+            {
+                await Task.Delay(100,timeout.Token);
+                var snapshot=await b.PollAsync(timeout.Token);
+                damaged=snapshot.Snapshot.Players.Single(x=>x.PlayerId==two).Health<1000;
+                var events=await b.PollEventsAsync(cursor,timeout.Token);
+                foreach(var row in events.Events)
+                {
+                    cursor=row.EventId;
+                    if(row.Kind==MatchEventKind.Shot&&row.Reason=="army-flame")flameShot=true;
+                    if(row.Kind==MatchEventKind.Impact&&row.Reason=="army-flame")flameImpact=true;
+                }
+            }
+            Check(flameShot&&flameImpact&&damaged,
+                  "live Flamethrower navigation produces authoritative shot, pulse impact, and player health loss");
             var opposingHand=await b.PollArmyAsync(timeout.Token);
             int opposingOption=opposingHand.OptionIndexes.OrderByDescending(x=>
                 content.Army.Option(x).Count).First();

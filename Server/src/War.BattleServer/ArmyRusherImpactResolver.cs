@@ -17,9 +17,11 @@ internal static class ArmyRusherImpactResolver
     {
         ArgumentNullException.ThrowIfNull(intent);
         ArgumentNullException.ThrowIfNull(collision);
-        if(!Guid.TryParseExact(intent.PlayerId,"N",out _) ||
+        if(!Guid.TryParseExact(intent.OwnerPlayerId,"N",out _) ||
+           !Guid.TryParseExact(intent.TargetPlayerId,"N",out _) ||
+           intent.OwnerPlayerId==intent.TargetPlayerId ||
            string.IsNullOrWhiteSpace(collision.PlayerId) ||
-           collision.PlayerId!=intent.PlayerId ||
+           collision.PlayerId!=intent.TargetPlayerId ||
            !PlayerHitbox.Finite(intent.TargetPosition) ||
            !PlayerHitbox.Finite(collision.Position) ||
            Vector3.Distance(collision.Position,intent.TargetPosition)>2f ||
@@ -29,7 +31,7 @@ internal static class ArmyRusherImpactResolver
            intent.BatchIndex<0 || intent.BatchIndex>=intent.BatchSize ||
            intent.BatchSize<1 || intent.BatchSize>14)
             throw new InvalidDataException("Rusher impact does not match its trusted shot intent.");
-        return new(intent.EntityKey,intent.PlayerId,collision.PlayerId,collision.Position,
+        return new(intent.EntityKey,intent.OwnerPlayerId,collision.PlayerId,collision.Position,
             collision.PartWeight,trustedDamage,intent.IsReal);
     }
 }

@@ -7,7 +7,7 @@ public sealed partial class MatchEngine
 {
     internal sealed record ArmyRusherTarget(ulong EntityKey,string PlayerId,int TargetFileId,
         int RusherPointFileId,Vector3 Position);
-    internal sealed record ArmyRusherShotIntent(ulong EntityKey,string PlayerId,int TargetFileId,
+    internal sealed record ArmyRusherShotIntent(ulong EntityKey,string OwnerPlayerId,string TargetPlayerId,int TargetFileId,
         Vector3 TargetPosition,bool IsReal,int BatchIndex,int BatchSize);
     private sealed class ArmyVitality(float maximum)
     {
@@ -253,7 +253,7 @@ public sealed partial class MatchEngine
         }
         foreach(var (key,attack) in rusherAttacks.OrderBy(pair=>pair.Key))
         {
-            if(!activeArmyEntities.ContainsKey(key) || !rusherMotionCandidates.TryGetValue(key,out var motion))
+            if(!activeArmyEntities.TryGetValue(key,out var army) || !rusherMotionCandidates.TryGetValue(key,out var motion))
                 continue;
             var target=RusherInitialShotTarget(key);
             bool eligible=target!=null && motion.InitialShotDelayElapsed;
@@ -262,7 +262,7 @@ public sealed partial class MatchEngine
             attack.AdvanceTick();
             if(attack.ShotDue && target is { } shot)
             {
-                rusherShotIntents.Add(new(key,shot.PlayerId,shot.TargetFileId,shot.Position,
+                rusherShotIntents.Add(new(key,army.OwnerPlayerId,shot.PlayerId,shot.TargetFileId,shot.Position,
                     attack.CurrentShotIsReal,attack.BatchCursor,attack.BatchSize));
                 attack.CommitShot();
             }
@@ -276,15 +276,15 @@ public sealed partial class MatchEngine
         foreach(var intent in rusherShotIntents)
         {
             if(!activeArmyEntities.TryGetValue(intent.EntityKey,out var army) ||
-               army.OwnerPlayerId!=intent.PlayerId || !intent.IsReal)continue;
+               army.OwnerPlayerId!=intent.OwnerPlayerId || !intent.IsReal)continue;
             string behavior=armyCatalog!.Families.Single(f=>f.UnitId==army.UnitId).BehaviorType;
             if(behavior=="SoldierBehaviourFlamethrower")
             {
                 if(PendingProjectileCount>=MaximumProjectiles||!EventCapacityForShot())continue;
                 if(projectileId==ulong.MaxValue)throw new InvalidDataException("Army flame identity exhausted.");
                 ulong flameId=++projectileId;
-                armyFlameBursts.Add(flameId,new ArmyFlameBurst(flameId,intent.EntityKey,intent.PlayerId,tick));
-                Emit(MatchEventKind.Shot,intent.PlayerId,intent.TargetFileId.ToString(),
+                armyFlameBursts.Add(flameId,new ArmyFlameBurst(flameId,intent.EntityKey,intent.OwnerPlayerId,tick));
+                Emit(MatchEventKind.Shot,intent.OwnerPlayerId,intent.TargetPlayerId,
                     flameId,new Vector3(army.X,army.Y,army.Z),0,"army-flame");
                 continue;
             }
@@ -301,9 +301,9 @@ public sealed partial class MatchEngine
             ulong id=checked(++projectileId);
             var flight=new ArmyProjectileFlight(id,intent.EntityKey,origin,intent.TargetPosition,
                 projectileSpeed.Value,tick,
-                (from,direction,range)=>rifleCombat.TraceForArmy(intent.PlayerId,from,direction,range));
+                (from,direction,range)=>rifleCombat.TraceForArmy(intent.OwnerPlayerId,from,direction,range));
             armyProjectiles.Add(id,flight);
-            Emit(MatchEventKind.Shot,intent.PlayerId,intent.TargetFileId.ToString(),
+            Emit(MatchEventKind.Shot,intent.OwnerPlayerId,intent.TargetPlayerId,
                 id,origin,0,"army");
         }
     }
@@ -327,7 +327,7 @@ public sealed partial class MatchEngine
             {
                 var proof=ArmyRusherImpactResolver.Resolve(
                     new ArmyRusherShotIntent(impact.EntityKey,owner.Definition.PlayerId,
-                        0,impact.Collision.Position,true,0,1),impact.Collision,
+                        impact.Collision.PlayerId,0,impact.Collision.Position,true,0,1),impact.Collision,
                     ArmyDamage(impact.EntityKey)??0);
                 ApplyArmyRusherPlayerImpact(proof,damageRoll?.Invoke()??1f);
             }

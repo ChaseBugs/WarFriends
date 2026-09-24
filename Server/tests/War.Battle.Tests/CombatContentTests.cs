@@ -1412,21 +1412,22 @@ internal static class CombatContentTests
                   "Rusher attack preserves windup, ordered real-shot bits, and cooldown after the batch");
             Reject(()=>new ArmyRusherAttackState(new ArmyBaseShotStats(0f,0,15,-1,2)));
             var shotIntent=new MatchEngine.ArmyRusherShotIntent(77,
-                "11111111111111111111111111111111",16,new(1,2,3),true,0,2);
+                "11111111111111111111111111111111","22222222222222222222222222222222",16,new(1,2,3),true,0,2);
             var impact=ArmyRusherImpactResolver.Resolve(shotIntent,
-                new ShotCollision(1,new(1.1f,2,3),"",shotIntent.PlayerId,.75f),
+                new ShotCollision(1,new(1.1f,2,3),"",shotIntent.TargetPlayerId,.75f),
                 12f);
-            Check(impact.EntityKey==77 && impact.VictimPlayerId==shotIntent.PlayerId &&
+            Check(impact.EntityKey==77 && impact.AttackerPlayerId==shotIntent.OwnerPlayerId &&
+                  impact.VictimPlayerId==shotIntent.TargetPlayerId &&
                   impact.Damage==12f && impact.PartWeight==.75f,
                   "Rusher impact proof binds collision target, trusted damage, and batch identity");
             Reject(()=>ArmyRusherImpactResolver.Resolve(shotIntent,
-                new ShotCollision(1,new(5,2,3),"",shotIntent.PlayerId,.75f),12f));
+                new ShotCollision(1,new(5,2,3),"",shotIntent.TargetPlayerId,.75f),12f));
             var armyFlight=new ArmyProjectileFlight(9,77,new(0,0,0),new(1,0,0),30,10,
                 (from,direction,range)=>new ShotCollision(.2f,from+direction*.2f,"",
-                    shotIntent.PlayerId,.5f));
+                    shotIntent.TargetPlayerId,.5f));
             var armyImpact=armyFlight.Advance(11);
             Check(armyImpact is {ProjectileId:9,EntityKey:77,Tick:11} &&
-                  armyFlight.Finished && armyImpact.Collision.PlayerId==shotIntent.PlayerId,
+                  armyFlight.Finished && armyImpact.Collision.PlayerId==shotIntent.TargetPlayerId,
                   "army projectile flight carries entity ownership and fixed-tick collision impact");
             var unadvancedFlight=new ArmyProjectileFlight(10,77,new(0,0,0),new(2,0,0),30,10,
                 (_,_,_)=>null);

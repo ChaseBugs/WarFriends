@@ -31,6 +31,16 @@ if(args is ["--flame-only"])
     return;
 }
 
+if(args is ["--rusher-only"])
+{
+    var root=new DirectoryInfo(AppContext.BaseDirectory);
+    while(root!=null&&!File.Exists(Path.Combine(root.FullName,"content/combat-content-manifest.json")))root=root.Parent;
+    if(root==null)throw new Exception("Recovered battle content artifact not found.");
+    int focused=await LiveRusherUdpTests.Run(Path.Combine(root.FullName,"content"));
+    Console.WriteLine($"PASS: {focused} focused live Rusher UDP assertions");
+    return;
+}
+
 if(args is ["--unity-rifle-only",var unityExecutable,var unityProject])
 {
     var root=new DirectoryInfo(AppContext.BaseDirectory);
