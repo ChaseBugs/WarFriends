@@ -24,6 +24,7 @@ public sealed partial class MatchEngine
     private readonly Dictionary<ulong,int> rusherDetours=[];
     private readonly Dictionary<ulong,ArmyRusherAttackState> rusherAttacks=[];
     private readonly Dictionary<ulong,ArmyRusherTarget> rusherAttackTargets=[];
+    private readonly Dictionary<ulong,int> rusherShotCounts=[];
     private readonly List<ArmyRusherShotIntent> rusherShotIntents=[];
     private readonly Dictionary<ulong,ArmyFlameBurst> armyFlameBursts=[];
     private readonly Dictionary<int,ulong> occupiedRusherSlots=[];
@@ -128,16 +129,16 @@ public sealed partial class MatchEngine
         rusherDetours.Add(entityKey,0);
         var family=armyCatalog.Families.Single(f=>f.UnitId==unitId);
         if((armyShots.TryGetValue(entityKey,out var effective)?effective:family.BaseShot) is { } shot)
+        {
             rusherAttacks.Add(entityKey,CreateRusherAttack(family,shot));
+            rusherShotCounts.Add(entityKey,0);
+        }
     }
 
-    private static ArmyRusherAttackState CreateRusherAttack(ArmyDeploymentFamily family,ArmyBaseShotStats shot)
+    private ArmyRusherAttackState CreateRusherAttack(ArmyDeploymentFamily family,ArmyBaseShotStats shot)
     {
-        // WeaponFlamethrower.cadence is serialized as 0.5 seconds. A source
-        // FlameAmmo shot owns its six internal pulses, so the next batch shot
-        // cannot begin on the following simulation tick.
-        int interval=family.BehaviorType=="SoldierBehaviourFlamethrower"
-            ? (int)MathF.Ceiling(.5f*MatchManifest.TickRate) : 0;
+        int interval=armyWeapons?.CadenceTicks(family.UnitId)??
+            throw new InvalidDataException("Rusher attack lacks pinned cadence authority.");
         // EndShooting -> ReturnToPreviousStateFromShot replaces the generic
         // definition cooldown for both Rusher states with Random.Range(2,4).
         return new ArmyRusherAttackState(shot,shotIntervalTicks:interval,
@@ -295,8 +296,12 @@ public sealed partial class MatchEngine
         foreach(var intent in rusherShotIntents)
         {
             if(!activeArmyEntities.TryGetValue(intent.EntityKey,out var army) ||
-               army.OwnerPlayerId!=intent.OwnerPlayerId || !intent.IsReal)continue;
+               army.OwnerPlayerId!=intent.OwnerPlayerId ||
+               !rusherShotCounts.TryGetValue(intent.EntityKey,out int shotCount))continue;
+            shotCount=checked(shotCount+1);rusherShotCounts[intent.EntityKey]=shotCount;
             string behavior=armyCatalog!.Families.Single(f=>f.UnitId==army.UnitId).BehaviorType;
+            int muzzleIndex=behavior=="SoldierBehaviourCommando"&&shotCount%2==0?1:0;
+            if(!intent.IsReal)continue;
             if(behavior=="SoldierBehaviourFlamethrower")
             {
                 if(PendingProjectileCount>=MaximumProjectiles||!EventCapacityForShot())continue;
@@ -310,13 +315,17 @@ public sealed partial class MatchEngine
             float? projectileSpeed=behavior switch
             {
                 "SoldierBehaviourShotgunner" or "SoldierBehaviourWarper"=>10f,
-                "SoldierBehaviourParachuter" or "SoldierBehaviourSwat"=>5f,
-                _=>null // Commando still requires its non-bullet source path.
+                "SoldierBehaviourParachuter" or "SoldierBehaviourSwat" or
+                "SoldierBehaviourCommando"=>5f,
+                _=>null
             };
             if(!projectileSpeed.HasValue)continue;
             if(PendingProjectileCount>=MaximumProjectiles ||
                !EventCapacityForShot())continue;
-            var origin=new Vector3(army.X,army.Y,army.Z);
+            var entityPosition=new Vector3(army.X,army.Y,army.Z);
+            var origin=armyWeapons?.RestMuzzleOrigin(army.UnitId,entityPosition,
+                intent.TargetPosition-entityPosition,muzzleIndex)??
+                throw new InvalidDataException("Army projectile lacks pinned muzzle authority.");
             ulong id=checked(++projectileId);
             var flight=new ArmyProjectileFlight(id,intent.EntityKey,origin,intent.TargetPosition,
                 projectileSpeed.Value,tick,
@@ -544,6 +553,7 @@ public sealed partial class MatchEngine
         rusherDetours.Remove(entityKey);
         rusherAttacks.Remove(entityKey);
         rusherAttackTargets.Remove(entityKey);
+        rusherShotCounts.Remove(entityKey);
         owner.ConfirmedArmyLosses=checked(owner.ConfirmedArmyLosses+1);
         if(rusherSlotByEntity.Remove(entityKey,out int rusherSlot) &&
            (!occupiedRusherSlots.TryGetValue(rusherSlot,out ulong occupant) ||

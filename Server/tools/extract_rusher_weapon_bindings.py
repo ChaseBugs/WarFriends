@@ -7,6 +7,7 @@ DEPLOY=ROOT/"Server/content/recovered-army-deployment.json"
 OUT=ROOT/"Server/content/recovered-rusher-weapon-bindings.json"
 ENEMY=ROOT/"Clients/ExportedProject/Assets/GameObject/enemy.prefab"
 CLIPS=ROOT/"Clients/ExportedProject/Assets/AnimationClip"
+SCRIPTS=ROOT/"Clients/ExportedProject/Assets/Scripts/Assembly-CSharp"
 
 def yaml(path):
     text=path.read_text(encoding="utf-8-sig",errors="ignore")
@@ -80,7 +81,7 @@ def attack_windup(weapon_type):
     if weapon_type==12: return {"seconds":0.0,"rule":"flamethrower-zero","clip":None}
     name="shield_unhide" if weapon_type in (3,4) else {
         7:"shotgunner_shot_loop", 8:"shotgunner_shot_loop",
-        9:"commando_shooting", 10:"colt_shooting_loop",
+        14:"commando_shooting", 16:"colt_shooting_loop",
     }.get(weapon_type,"rifle_shot_loop")
     path=CLIPS/(name+".anim"); data=path.read_bytes(); text=data.decode("utf-8-sig")
     stop=re.search(r"^    m_StopTime: ([0-9.]+)$",text,re.M)
@@ -89,6 +90,19 @@ def attack_windup(weapon_type):
     return {"seconds":length*factor,"rule":"swat-shield-unhide" if factor==1 else "stand-shoot-30-percent",
             "clip":{"asset":path.relative_to(ROOT/"Clients/ExportedProject").as_posix(),
                     "sha256":hashlib.sha256(data).hexdigest(),"length":length}}
+
+def attack_cadence(behavior_type):
+    overrides={"SoldierBehaviourCommando":.2,"SoldierBehaviourWarper":.2,
+               "SoldierBehaviourParachuter":.25}
+    seconds=overrides.get(behavior_type,.35)
+    source=SCRIPTS/((behavior_type if behavior_type in overrides else "SoldierBehaviour")+".cs")
+    data=source.read_bytes(); text=data.decode("utf-8-sig")
+    if not re.search(r"\.cadence\s*=\s*"+str(seconds).rstrip('0')+r"f",text):
+        raise ValueError(f"missing source cadence {seconds}: {source}")
+    return {"seconds":seconds,"strictTicks":math.floor(seconds*30)+1,
+            "rule":"subclass-override" if behavior_type in overrides else "base-soldier",
+            "source":source.relative_to(ROOT/"Clients/ExportedProject").as_posix(),
+            "sha256":hashlib.sha256(data).hexdigest()}
 
 def main():
     raw=SCENE.read_bytes(); text=raw.decode("utf-8-sig")
@@ -106,9 +120,12 @@ def main():
         inventories=[]
         for file_id,value in blocks.items():
             if f"m_GameObject: {{fileID: {game_object}}}" not in value or "weapons:" not in value: continue
-            refs=[{"fileId":int(file_id),"weaponFileId":int(fid),"guid":guid}
-                  for fid,guid in re.findall(
-                      r"weapon: \{fileID: (\d+), guid: ([0-9a-f]{32})",value)]
+            normal=re.search(r"^  weapons:\r?\n(.*?)^  shield:",value,re.M|re.S)
+            refs=[] if not normal else [{"fileId":int(file_id),"weaponFileId":int(fid),"guid":guid,
+                "weaponType":int(runtime_type),"leftHand":bool(int(left))}
+                for fid,guid,runtime_type,left in re.findall(
+                    r"- weapon: \{fileID: (\d+), guid: ([0-9a-f]{32}), type: 2\}\r?\n"
+                    r"    type: (\d+)\r?\n    leftHand: ([01])",normal.group(1))]
             if refs: inventories.append(refs)
         if len(inventories)!=1: raise ValueError(f"inventory binding changed: {family['unitId']}")
         for ref in inventories[0]:
@@ -117,8 +134,8 @@ def main():
             ref["asset"]=asset.relative_to(ROOT/"Clients/ExportedProject/Assets").as_posix()
             prefab,prefab_blocks,prefab_names,prefab_transforms=yaml(asset)
             types=re.findall(r"^  weaponType: (\d+)$",prefab,re.M)
-            ref["weaponType"]=int(types[0]) if types else None
-            if ref["weaponType"] is None: raise ValueError(f"weapon type missing: {asset}")
+            ref["prefabWeaponType"]=int(types[0]) if types else None
+            if ref["prefabWeaponType"] is None: raise ValueError(f"prefab weapon type missing: {asset}")
             flight=re.search(r"^  speed: ([0-9.]+)\r?\n  checkDistance: ([0-9.]+)$",prefab,re.M)
             ref["projectile"]=(
                 {"speed":float(flight.group(1)),"checkDistance":float(flight.group(2))}
@@ -129,14 +146,17 @@ def main():
         rows.append({"unitId":family["unitId"],"behaviorType":family["behaviorType"],
                      "behaviorFileId":family["behaviorFileId"],
                      "attackWindup":attack_windup(inventories[0][0]["weaponType"]),
+                     "attackCadence":attack_cadence(family["behaviorType"]),
                      "inventory":inventories[0]})
     if len(rows)!=6: raise ValueError("expected six Rusher weapon bindings")
     enemy_text,enemy_blocks,enemy_names,enemy_transforms=yaml(ENEMY)
     soldier_parts=next(block for block in enemy_blocks.values() if "gunSnapPointNotScaled:" in block)
     gun_snap=int(re.search(r"gunSnapPointNotScaled: \{fileID: (\d+)\}",soldier_parts).group(1))
-    artifact={"version":3,"sceneSha256":hashlib.sha256(raw).hexdigest(),
+    left_gun_snap=int(re.search(r"gunSnapPointNotScaledLeft: \{fileID: (\d+)\}",soldier_parts).group(1))
+    artifact={"version":5,"sceneSha256":hashlib.sha256(raw).hexdigest(),
               "enemyPrefabSha256":hashlib.sha256(ENEMY.read_bytes()).hexdigest(),
               "gunSnap":relative(gun_snap,enemy_transforms,enemy_names),
+              "leftGunSnap":relative(left_gun_snap,enemy_transforms,enemy_names),
               "provenance":"serialized EnemyBasicInventory weapon references plus enemy rig and weapon spawn-point transform chains; runtime weapon IDs remain unresolved",
               "families":rows}
     encoded=(json.dumps(artifact,indent=2)+"\n").encode()

@@ -726,14 +726,30 @@ internal static class CombatContentTests
             new Vector3(2,0,3),Vector3.UnitX);
         Check(Vector3.Distance(placedFlameMuzzle,new Vector3(2.0405312f,.16250353f,2.5968728f))<.00002f,
               "army muzzle placement rotates the recovered local chain with authoritative facing");
+        var commandoRight=content.ArmyWeapons.Muzzle("ID_UNIT-COMMANDO",0);
+        var commandoLeft=content.ArmyWeapons.Muzzle("ID_UNIT-COMMANDO",1);
+        Check(content.ArmyWeapons.MuzzleCount("ID_UNIT-COMMANDO")==2&&
+              content.ArmyWeapons.MuzzleCount("ID_UNIT-SHOTGUNNER")==1&&
+              content.ArmyWeapons.LeftGunSnapPath.EndsWith("/gunLeftPivot/gunLeftSnapPoint",StringComparison.Ordinal)&&
+              commandoRight.Path==commandoLeft.Path&&
+              Vector3.Distance(commandoRight.RestPosition,commandoLeft.RestPosition)>.1f,
+              "runtime scene inventory binds Commando DoubleSMGs to distinct right and left muzzle chains");
         Check(content.ArmyWeapons.WindupTicks("ID_UNIT-FLAMETHROWER")==0&&
               content.ArmyWeapons.WindupTicks("ID_UNIT-SHOTGUNNER")==9&&
               content.ArmyWeapons.WindupTicks("ID_UNIT-PARATROOPER")==9&&
               content.ArmyWeapons.WindupTicks("ID_UNIT-SWAT")==30&&
               content.ArmyWeapons.Windup("ID_UNIT-SWAT").ClipAsset=="Assets/AnimationClip/shield_unhide.anim",
               "all source Rusher attacks bind their recovered stand-shoot or shield-unhide windup");
+        Check(content.ArmyWeapons.CadenceTicks("ID_UNIT-FLAMETHROWER")==11&&
+              content.ArmyWeapons.CadenceTicks("ID_UNIT-SHOTGUNNER")==11&&
+              content.ArmyWeapons.CadenceTicks("ID_UNIT-PARATROOPER")==8&&
+              content.ArmyWeapons.CadenceTicks("ID_UNIT-COMMANDO")==7&&
+              content.ArmyWeapons.CadenceTicks("ID_UNIT-WARPER")==7,
+              "Rusher batches enforce each strict source weapon cadence at 30 Hz");
         try { _=content.ArmyWeapons.RestMuzzleOrigin("ID_UNIT-FLAMETHROWER",Vector3.Zero,Vector3.Zero); throw new Exception("Zero army facing accepted."); }
         catch(InvalidDataException) { count++; }
+        try { _=content.ArmyWeapons.Muzzle("ID_UNIT-COMMANDO",2); throw new Exception("Unknown Commando muzzle accepted."); }
+        catch(ArgumentOutOfRangeException) { count++; }
         string weaponBindingPath=Path.Combine(directory,"recovered-rusher-weapon-bindings.json");
         string weaponBindingTemp=Path.Combine(directory,"army-weapon-test-"+Guid.NewGuid().ToString("N")+".json");
         try

@@ -138,6 +138,85 @@ internal static class LiveRusherUdpTests
                   "live Worker publishes simultaneous opposing Rusher motion to the SDK");
         }
         finally{await worker.StopAsync(CancellationToken.None);File.Delete(file);}
+        checks+=await RunCommando(directory,content,map,left,right,weapon);
+        return checks;
+    }
+
+    private static async Task<int> RunCommando(string directory,BattleCombatContent content,
+        RecoveredBattleMap map,CoverNode left,CoverNode right,WeaponManifest weapon)
+    {
+        int checks=0;
+        void Check(bool yes,string name){if(!yes)throw new Exception(name);checks++;}
+        string one=new('c',32),two=new('d',32);
+        ParticipantManifest Player(string id,int fraction,int cover)=>new(id,weapon,fraction,cover,1,new(1000),0,0,0)
+        {EquippedArmyUnitIds=["ID_UNIT-COMMANDO"],ArmyNormalUpgradeIndexes=[0],
+         ArmySpecialUpgradeIndexes=[-1],ArmyEliteUpgradeIndexes=[-1],
+         ArmyHealthFactors=[new(1f,1f)],ArmyDamageScales=[1f],ArmySpeedCoefficients=[1f],
+         ArmyAccuracyCoefficients=[2f]};
+        var manifest=new MatchManifest("commando-udp","local-1","Park_Multiplayer",map.SourceHash,
+            content.Revision,MatchManifest.RifleCombatMode,10,60,120,
+            [Player(one,1,left.SourceIndex),Player(two,2,right.SourceIndex)]){SceneMasterPlayerId=one};
+        string file=Path.Combine(Path.GetTempPath(),"war-commando-udp-"+Guid.NewGuid().ToString("N")+".json");
+        File.WriteAllText(file,JsonSerializer.Serialize(manifest));
+        using var probe=new UdpClient(new IPEndPoint(IPAddress.Loopback,0));
+        int port=((IPEndPoint)probe.Client.LocalEndPoint!).Port;probe.Close();
+        string key=Convert.ToBase64String(RandomNumberGenerator.GetBytes(32));
+        var tokens=new MatchTokens(key);
+        var config=new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string,string?>
+        {
+            ["Battle:SigningKey"]=key,["Battle:ServerId"]=manifest.ServerId,["Battle:Port"]=port.ToString(),
+            ["Battle:MatchManifestPath"]=file,
+            ["Battle:ResultOutboxPath"]=Path.Combine(Path.GetTempPath(),"war-commando-outbox-"+Guid.NewGuid().ToString("N")),
+            ["Battle:CombatContentManifestPath"]=Path.Combine(directory,"combat-content-manifest.json")
+        }).Build();
+        MatchConnectionGrant Grant(string id,ulong session)
+        {
+            long now=DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            var admission=new MatchAdmission{MatchId=manifest.MatchId,ServerId=manifest.ServerId,
+                PlayerId=id,SessionId=session,ManifestHash=manifest.Digest(),IssuedUnixSeconds=now,
+                ExpiresUnixSeconds=now+120};
+            return new(){Host="127.0.0.1",Port=(uint)port,PlayerId=id,SessionId=session,
+                MatchId=admission.MatchId,ManifestHash=admission.ManifestHash,
+                ExpiresUnixSeconds=admission.ExpiresUnixSeconds,Ticket=tokens.Sign(admission),
+                SessionKey=ByteString.CopyFrom(tokens.SessionKey(admission))};
+        }
+        using var worker=new NetworkWorker(config,NullLogger<NetworkWorker>.Instance);
+        try
+        {
+            await worker.StartAsync(CancellationToken.None);
+            using var timeout=new CancellationTokenSource(TimeSpan.FromSeconds(35));
+            using var a=new MatchConnection(Grant(one,991));using var b=new MatchConnection(Grant(two,992));
+            Check((await a.ConnectAsync(timeout.Token)).Code=="admitted"&&
+                  (await b.ConnectAsync(timeout.Token)).Code=="admitted",
+                  "two UDP peers admitted for Commando authority");
+            await a.ReadyAsync(timeout.Token);await b.ReadyAsync(timeout.Token);
+            MatchReply state;
+            do{await Task.Delay(100,timeout.Token);state=await a.PollAsync(timeout.Token);}
+            while(state.Snapshot.Phase!=BattlePhase.Running);
+            var hand=await a.PollArmyAsync(timeout.Token);
+            int option=hand.OptionIndexes.OrderByDescending(x=>content.Army.Option(x).Count).First();
+            Check((await a.DeployArmyAsync(option,timeout.Token)).Code=="army-deploying",
+                  "live Commando deployment uses its trusted family-only offer");
+            ulong cursor=0;var shots=new List<MatchEvent>();bool impact=false,damaged=false;
+            while(shots.Count<3||!impact||!damaged)
+            {
+                await Task.Delay(100,timeout.Token);
+                var snapshot=await b.PollAsync(timeout.Token);
+                damaged=snapshot.Snapshot.Players.Single(x=>x.PlayerId==two).Health<1000;
+                var events=await b.PollEventsAsync(cursor,timeout.Token);
+                foreach(var row in events.Events)
+                {
+                    cursor=row.EventId;
+                    if(row.Kind==MatchEventKind.Shot&&row.Reason=="army"&&row.ActorId==one)shots.Add(row);
+                    if(row.Kind==MatchEventKind.Impact&&row.Reason=="army")impact=true;
+                }
+            }
+            float Distance(MatchEvent x,MatchEvent y)=>MathF.Sqrt(
+                MathF.Pow(x.X-y.X,2)+MathF.Pow(x.Y-y.Y,2)+MathF.Pow(x.Z-y.Z,2));
+            Check(Distance(shots[0],shots[1])>.1f&&Distance(shots[0],shots[2])<.001f&&impact&&damaged,
+                  "live Commando alternates source right/left muzzles and applies speed-five projectile damage");
+        }
+        finally{await worker.StopAsync(CancellationToken.None);File.Delete(file);}
         return checks;
     }
 }

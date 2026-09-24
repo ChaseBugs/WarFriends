@@ -42,10 +42,10 @@ internal static class ArmyFlameBurstTests
         Check(ArmyFlameBurst.ResolvePlayer(Vector3.Zero,Vector3.UnitZ,edge,60)==null,
             "flame rejects a target beyond the recovered distance-dependent half angle");
 
-        var cadence=new ArmyRusherAttackState(new ArmyBaseShotStats(1,2,2,1,1),()=>0,15);
+        var cadence=new ArmyRusherAttackState(new ArmyBaseShotStats(1,2,2,1,1),()=>0,11);
         Check(cadence.TryBegin(true,1,0)&&cadence.AdvanceTick()&&cadence.ShotDue&&cadence.CommitShot(),
             "flamethrower batch begins with one due source shot");
-        for(int i=1;i<15;i++)
+        for(int i=1;i<11;i++)
         {
             cadence.AdvanceTick();
             Check(!cadence.ShotDue,"flamethrower cadence blocks early batch shots");
@@ -53,7 +53,7 @@ internal static class ArmyFlameBurstTests
         cadence.AdvanceTick();
         Check(cadence.ShotDue&&cadence.CommitShot()&&
               cadence.Phase==ArmyRusherAttackPhase.Cooldown,
-            "flamethrower permits the next batch shot exactly fifteen ticks later");
+            "flamethrower permits the next batch shot exactly eleven strict-cadence ticks later");
 
         Reject(()=>new ArmyFlameBurst(0,2,owner,0),"zero flame identity accepted");
         Reject(()=>ArmyFlameBurst.ResolvePlayer(Vector3.Zero,Vector3.Zero,pose,60),

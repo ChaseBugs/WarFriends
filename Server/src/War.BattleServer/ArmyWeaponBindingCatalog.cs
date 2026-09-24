@@ -8,28 +8,40 @@ namespace War.BattleServer;
 public sealed record ArmyWeaponMuzzle(string UnitId,string Path,Vector3 RestPosition,Quaternion RestRotation);
 public sealed record ArmyWeaponWindup(string UnitId,float Seconds,string Rule,string? ClipAsset,
     string? ClipSha256,float? ClipLength);
+public sealed record ArmyWeaponCadence(string UnitId,float Seconds,int StrictTicks,string Rule,
+    string Source,string SourceSha256);
 
 /// <summary>Pinned enemy-rig and serialized Rusher weapon spawn-point chains.</summary>
 public sealed class ArmyWeaponBindingCatalog
 {
-    private readonly IReadOnlyDictionary<string,ArmyWeaponMuzzle> muzzles;
+    private readonly IReadOnlyDictionary<string,ArmyWeaponMuzzle[]> muzzles;
     private readonly IReadOnlyDictionary<string,ArmyWeaponWindup> windups;
+    private readonly IReadOnlyDictionary<string,ArmyWeaponCadence> cadences;
     public string Revision { get; }
     public string GunSnapPath { get; }
     public Vector3 GunSnapPosition { get; }
     public Quaternion GunSnapRotation { get; }
+    public string LeftGunSnapPath { get; }
 
-    private ArmyWeaponBindingCatalog(string revision,string path,Vector3 position,Quaternion rotation,
-        Dictionary<string,ArmyWeaponMuzzle> muzzles,Dictionary<string,ArmyWeaponWindup> windups)
-    {Revision=revision;GunSnapPath=path;GunSnapPosition=position;GunSnapRotation=rotation;this.muzzles=muzzles;this.windups=windups;}
+    private ArmyWeaponBindingCatalog(string revision,TransformRow gun,TransformRow leftGun,
+        Dictionary<string,ArmyWeaponMuzzle[]> muzzles,Dictionary<string,ArmyWeaponWindup> windups,
+        Dictionary<string,ArmyWeaponCadence> cadences)
+    {Revision=revision;GunSnapPath=gun.Path;GunSnapPosition=gun.Position;GunSnapRotation=gun.Rotation;
+     LeftGunSnapPath=leftGun.Path;this.muzzles=muzzles;this.windups=windups;this.cadences=cadences;}
 
-    public ArmyWeaponMuzzle Muzzle(string unitId)
-        =>muzzles.TryGetValue(unitId,out var value)?value:throw new ArgumentOutOfRangeException(nameof(unitId));
+    public ArmyWeaponMuzzle Muzzle(string unitId,int index=0)
+        =>muzzles.TryGetValue(unitId,out var value)&&index>=0&&index<value.Length
+            ?value[index]:throw new ArgumentOutOfRangeException(nameof(unitId));
+    public int MuzzleCount(string unitId)
+        =>muzzles.TryGetValue(unitId,out var value)?value.Length:throw new ArgumentOutOfRangeException(nameof(unitId));
     public ArmyWeaponWindup Windup(string unitId)
         =>windups.TryGetValue(unitId,out var value)?value:throw new ArgumentOutOfRangeException(nameof(unitId));
     public int WindupTicks(string unitId)=>(int)MathF.Ceiling(Windup(unitId).Seconds*MatchManifest.TickRate);
+    public ArmyWeaponCadence Cadence(string unitId)
+        =>cadences.TryGetValue(unitId,out var value)?value:throw new ArgumentOutOfRangeException(nameof(unitId));
+    public int CadenceTicks(string unitId)=>Cadence(unitId).StrictTicks;
 
-    public Vector3 RestMuzzleOrigin(string unitId,Vector3 entityPosition,Vector3 planarForward)
+    public Vector3 RestMuzzleOrigin(string unitId,Vector3 entityPosition,Vector3 planarForward,int index=0)
     {
         if(!PlayerHitbox.Finite(entityPosition)||!PlayerHitbox.Finite(planarForward))
             throw new InvalidDataException("Invalid army muzzle placement.");
@@ -37,7 +49,7 @@ public sealed class ArmyWeaponBindingCatalog
         if(planarForward.LengthSquared()<1e-10f)throw new InvalidDataException("Army muzzle has no planar facing.");
         planarForward=Vector3.Normalize(planarForward);
         float yaw=MathF.Atan2(planarForward.X,planarForward.Z);
-        return entityPosition+Vector3.Transform(Muzzle(unitId).RestPosition,
+        return entityPosition+Vector3.Transform(Muzzle(unitId,index).RestPosition,
             Quaternion.CreateFromAxisAngle(Vector3.UnitY,yaw));
     }
 
@@ -48,41 +60,46 @@ public sealed class ArmyWeaponBindingCatalog
             throw new InvalidDataException("Army weapon binding revision mismatch.");
         using var document=JsonDocument.Parse(bytes,new JsonDocumentOptions{MaxDepth=16});
         var root=document.RootElement;
-        Exact(root,"version","sceneSha256","enemyPrefabSha256","gunSnap","provenance","families");
-        if(root.GetProperty("version").GetInt32()!=3||root.GetProperty("sceneSha256").GetString()!=sceneRevision||
+        Exact(root,"version","sceneSha256","enemyPrefabSha256","gunSnap","leftGunSnap","provenance","families");
+        if(root.GetProperty("version").GetInt32()!=5||root.GetProperty("sceneSha256").GetString()!=sceneRevision||
            !Hash(root.GetProperty("enemyPrefabSha256").GetString())||
            root.GetProperty("provenance").GetString()!=
              "serialized EnemyBasicInventory weapon references plus enemy rig and weapon spawn-point transform chains; runtime weapon IDs remain unresolved")
             throw new InvalidDataException("Invalid army weapon provenance.");
         var gun=Transform(root.GetProperty("gunSnap"),"enemy/");
+        var leftGun=Transform(root.GetProperty("leftGunSnap"),"enemy/");
+        if(gun.Path==leftGun.Path)throw new InvalidDataException("Rusher gun snaps are not distinct.");
         var families=root.GetProperty("families");
         if(families.GetArrayLength()!=6)throw new InvalidDataException("Incomplete Rusher weapon family set.");
-        var result=new Dictionary<string,ArmyWeaponMuzzle>(StringComparer.Ordinal);
+        var result=new Dictionary<string,ArmyWeaponMuzzle[]>(StringComparer.Ordinal);
         var windups=new Dictionary<string,ArmyWeaponWindup>(StringComparer.Ordinal);
+        var cadences=new Dictionary<string,ArmyWeaponCadence>(StringComparer.Ordinal);
         foreach(var family in families.EnumerateArray())
         {
-            Exact(family,"unitId","behaviorType","behaviorFileId","attackWindup","inventory");
+            Exact(family,"unitId","behaviorType","behaviorFileId","attackWindup","attackCadence","inventory");
             string unit=family.GetProperty("unitId").GetString()??"";
             if(!Regex.IsMatch(unit,@"\AID_UNIT-[A-Z0-9-]{1,50}\z")||result.ContainsKey(unit))
                 throw new InvalidDataException("Invalid army weapon unit identity.");
             var inventory=family.GetProperty("inventory");
-            if(inventory.GetArrayLength() is <1 or >3)throw new InvalidDataException("Invalid Rusher inventory size.");
-            ArmyWeaponMuzzle? first=null;
+            if(inventory.GetArrayLength() is <1 or >2)throw new InvalidDataException("Invalid Rusher inventory size.");
+            var familyMuzzles=new List<ArmyWeaponMuzzle>();
             int firstWeaponType=-1;
             foreach(var weapon in inventory.EnumerateArray())
             {
-                Exact(weapon,"fileId","weaponFileId","guid","asset","weaponType","projectile","spawnPoint");
+                Exact(weapon,"fileId","weaponFileId","guid","asset","weaponType","prefabWeaponType","leftHand","projectile","spawnPoint");
                 int weaponType=weapon.GetProperty("weaponType").GetInt32();
+                int prefabWeaponType=weapon.GetProperty("prefabWeaponType").GetInt32();
                 if(firstWeaponType<0)firstWeaponType=weaponType;
                 if(weapon.GetProperty("fileId").GetInt32()<=0||weapon.GetProperty("weaponFileId").GetInt32()<=0||
                    !Regex.IsMatch(weapon.GetProperty("guid").GetString()??"",@"\A[0-9a-f]{32}\z")||
-                   weaponType is <0 or >32)
+                   weaponType is <0 or >32||prefabWeaponType is <0 or >32)
                     throw new InvalidDataException("Invalid Rusher weapon identity.");
                 var spawn=Transform(weapon.GetProperty("spawnPoint"),"");
-                var combinedPosition=gun.Position+Vector3.Transform(spawn.Position,gun.Rotation);
-                var combinedRotation=Quaternion.Normalize(gun.Rotation*spawn.Rotation);
+                var attachment=weapon.GetProperty("leftHand").GetBoolean()?leftGun:gun;
+                var combinedPosition=attachment.Position+Vector3.Transform(spawn.Position,attachment.Rotation);
+                var combinedRotation=Quaternion.Normalize(attachment.Rotation*spawn.Rotation);
                 var muzzle=new ArmyWeaponMuzzle(unit,spawn.Path,combinedPosition,combinedRotation);
-                first??=muzzle;
+                familyMuzzles.Add(muzzle);
             }
             var windup=family.GetProperty("attackWindup");
             Exact(windup,"seconds","rule","clip");
@@ -105,10 +122,31 @@ public sealed class ArmyWeaponBindingCatalog
                (!flame&&(clipAsset==null||!clipAsset.StartsWith("Assets/AnimationClip/",StringComparison.Ordinal)||
                  !Hash(clipHash)||clipLength is not 1f||seconds!=(swat?1f:.3f))))
                 throw new InvalidDataException("Invalid source Rusher attack windup.");
-            result.Add(unit,first!);
+            if((unit=="ID_UNIT-COMMANDO")!=(familyMuzzles.Count==2) ||
+               unit=="ID_UNIT-COMMANDO"&&(firstWeaponType!=14||
+                 inventory.EnumerateArray().Any(x=>x.GetProperty("weaponType").GetInt32()!=14)||
+                 inventory[0].GetProperty("leftHand").GetBoolean()||
+                 !inventory[1].GetProperty("leftHand").GetBoolean()))
+                throw new InvalidDataException("Invalid source Commando dual inventory.");
+            result.Add(unit,familyMuzzles.ToArray());
             windups.Add(unit,new(unit,seconds,rule,clipAsset,clipHash,clipLength));
+            var cadence=family.GetProperty("attackCadence");
+            Exact(cadence,"seconds","strictTicks","rule","source","sha256");
+            float cadenceSeconds=cadence.GetProperty("seconds").GetSingle();
+            int cadenceTicks=cadence.GetProperty("strictTicks").GetInt32();
+            string cadenceRule=cadence.GetProperty("rule").GetString()??"";
+            string cadenceSource=cadence.GetProperty("source").GetString()??"";
+            string cadenceHash=cadence.GetProperty("sha256").GetString()??"";
+            int expectedTicks=(int)MathF.Floor(cadenceSeconds*MatchManifest.TickRate)+1;
+            if(!float.IsFinite(cadenceSeconds)||cadenceSeconds<=0||cadenceSeconds>2||
+               cadenceTicks!=expectedTicks||cadenceTicks is <1 or >61||
+               cadenceRule is not ("base-soldier" or "subclass-override")||
+               !cadenceSource.StartsWith("Assets/Scripts/Assembly-CSharp/SoldierBehaviour",StringComparison.Ordinal)||
+               !cadenceSource.EndsWith(".cs",StringComparison.Ordinal)||!Hash(cadenceHash))
+                throw new InvalidDataException("Invalid source Rusher attack cadence.");
+            cadences.Add(unit,new(unit,cadenceSeconds,cadenceTicks,cadenceRule,cadenceSource,cadenceHash));
         }
-        return new(expectedRevision,gun.Path,gun.Position,gun.Rotation,result,windups);
+        return new(expectedRevision,gun,leftGun,result,windups,cadences);
     }
 
     private sealed record TransformRow(string Path,Vector3 Position,Quaternion Rotation);

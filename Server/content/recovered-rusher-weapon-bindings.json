@@ -1,5 +1,5 @@
 {
-  "version": 3,
+  "version": 5,
   "sceneSha256": "d46f81ff8c3e12bf17f34a1f53dd601bd799102c9f984818031441dfb7a5de43",
   "enemyPrefabSha256": "64b4db85d1c9a0bd46a690a86102a22f66feeab8d4157a4c87824ac3d5dbeb54",
   "gunSnap": {
@@ -14,6 +14,20 @@
       0.45776796718980417,
       0.37989012542459133,
       0.6001234815392363
+    ]
+  },
+  "leftGunSnap": {
+    "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guyLArmCollarbone/cartoon_guyLArm1/cartoon_guyLArm2/cartoon_guyLArmPalm/gunLeftPivot/gunLeftSnapPoint",
+    "position": [
+      -0.23123112679342978,
+      0.2030000530757708,
+      -0.01811964957714622
+    ],
+    "rotation": [
+      0.5320763772306223,
+      -0.4536529797590022,
+      -0.38354000514699477,
+      0.6033170261906057
     ]
   },
   "provenance": "serialized EnemyBasicInventory weapon references plus enemy rig and weapon spawn-point transform chains; runtime weapon IDs remain unresolved",
@@ -31,38 +45,22 @@
           "length": 1.0
         }
       },
+      "attackCadence": {
+        "seconds": 0.35,
+        "strictTicks": 11,
+        "rule": "base-soldier",
+        "source": "Assets/Scripts/Assembly-CSharp/SoldierBehaviour.cs",
+        "sha256": "26568579f6b4e7994b5a2266009de3e5ccb42e41169546056f71ffe5acb7ae39"
+      },
       "inventory": [
         {
           "fileId": 36093,
           "weaponFileId": 11470521,
           "guid": "bc28403733fe96243a0de4ee0a54ca57",
-          "asset": "GameObject/ShotgunEnemy.prefab",
           "weaponType": 7,
-          "projectile": {
-            "speed": 10.0,
-            "checkDistance": 1.0
-          },
-          "spawnPoint": {
-            "path": "ShotgunEnemy/HK416/MachinegunMuzzleFlash",
-            "position": [
-              0.0025405236144373806,
-              0.03743575730610509,
-              0.2008165189159953
-            ],
-            "rotation": [
-              -1.1468823202999703e-09,
-              -4.298623434223242e-08,
-              0.02667073166002758,
-              0.9996442727654256
-            ]
-          }
-        },
-        {
-          "fileId": 36093,
-          "weaponFileId": 11470521,
-          "guid": "bc28403733fe96243a0de4ee0a54ca57",
+          "leftHand": false,
           "asset": "GameObject/ShotgunEnemy.prefab",
-          "weaponType": 7,
+          "prefabWeaponType": 7,
           "projectile": {
             "speed": 10.0,
             "checkDistance": 1.0
@@ -97,38 +95,22 @@
           "length": 1.0
         }
       },
+      "attackCadence": {
+        "seconds": 0.25,
+        "strictTicks": 8,
+        "rule": "subclass-override",
+        "source": "Assets/Scripts/Assembly-CSharp/SoldierBehaviourParachuter.cs",
+        "sha256": "e3907f043d22acab4b900292138d80ec20d64280b5b76d7120edb44595e51439"
+      },
       "inventory": [
         {
           "fileId": 39978,
           "weaponFileId": 11470521,
           "guid": "d03f97fa25701ab42ab60f1fa86421ce",
-          "asset": "GameObject/AssaultRifleEnemy.prefab",
           "weaponType": 0,
-          "projectile": {
-            "speed": 5.0,
-            "checkDistance": 0.35
-          },
-          "spawnPoint": {
-            "path": "AssaultRifleEnemy/HK416/MachinegunMuzzleFlash",
-            "position": [
-              -1.4861874301316751e-08,
-              0.044999993348439744,
-              0.17000000665155962
-            ],
-            "rotation": [
-              -7.071067418107332e-08,
-              -4.3711384535882286e-08,
-              -1.6292069606646132e-07,
-              0.9999999999999831
-            ]
-          }
-        },
-        {
-          "fileId": 39978,
-          "weaponFileId": 11470521,
-          "guid": "d03f97fa25701ab42ab60f1fa86421ce",
+          "leftHand": false,
           "asset": "GameObject/AssaultRifleEnemy.prefab",
-          "weaponType": 0,
+          "prefabWeaponType": 0,
           "projectile": {
             "speed": 5.0,
             "checkDistance": 0.35
@@ -163,13 +145,22 @@
           "length": 1.0
         }
       },
+      "attackCadence": {
+        "seconds": 0.35,
+        "strictTicks": 11,
+        "rule": "base-soldier",
+        "source": "Assets/Scripts/Assembly-CSharp/SoldierBehaviour.cs",
+        "sha256": "26568579f6b4e7994b5a2266009de3e5ccb42e41169546056f71ffe5acb7ae39"
+      },
       "inventory": [
         {
           "fileId": 48807,
           "weaponFileId": 11431434,
           "guid": "42a8edce70a5eb14b8dae6f9bdaec807",
-          "asset": "GameObject/SwatPistolEnemy.prefab",
           "weaponType": 3,
+          "leftHand": false,
+          "asset": "GameObject/SwatPistolEnemy.prefab",
+          "prefabWeaponType": 3,
           "projectile": {
             "speed": 5.0,
             "checkDistance": 0.35
@@ -188,31 +179,6 @@
               0.9996442727654256
             ]
           }
-        },
-        {
-          "fileId": 48807,
-          "weaponFileId": 11470521,
-          "guid": "d03f97fa25701ab42ab60f1fa86421ce",
-          "asset": "GameObject/AssaultRifleEnemy.prefab",
-          "weaponType": 0,
-          "projectile": {
-            "speed": 5.0,
-            "checkDistance": 0.35
-          },
-          "spawnPoint": {
-            "path": "AssaultRifleEnemy/HK416/MachinegunMuzzleFlash",
-            "position": [
-              -1.4861874301316751e-08,
-              0.044999993348439744,
-              0.17000000665155962
-            ],
-            "rotation": [
-              -7.071067418107332e-08,
-              -4.3711384535882286e-08,
-              -1.6292069606646132e-07,
-              0.9999999999999831
-            ]
-          }
         }
       ]
     },
@@ -225,35 +191,22 @@
         "rule": "flamethrower-zero",
         "clip": null
       },
+      "attackCadence": {
+        "seconds": 0.35,
+        "strictTicks": 11,
+        "rule": "base-soldier",
+        "source": "Assets/Scripts/Assembly-CSharp/SoldierBehaviour.cs",
+        "sha256": "26568579f6b4e7994b5a2266009de3e5ccb42e41169546056f71ffe5acb7ae39"
+      },
       "inventory": [
         {
           "fileId": 41583,
           "weaponFileId": 11403859,
           "guid": "b86a690a8ab354649bd23556342960a8",
-          "asset": "GameObject/FlamethrowerEnemy.prefab",
           "weaponType": 12,
-          "projectile": null,
-          "spawnPoint": {
-            "path": "FlamethrowerEnemy/HK416/MachinegunMuzzleFlash",
-            "position": [
-              0.002540526308502663,
-              0.05599999393377705,
-              0.17000000628832349
-            ],
-            "rotation": [
-              -1.1468823202999703e-09,
-              -4.298623434223242e-08,
-              0.02667073166002758,
-              0.9996442727654256
-            ]
-          }
-        },
-        {
-          "fileId": 41583,
-          "weaponFileId": 11403859,
-          "guid": "b86a690a8ab354649bd23556342960a8",
+          "leftHand": false,
           "asset": "GameObject/FlamethrowerEnemy.prefab",
-          "weaponType": 12,
+          "prefabWeaponType": 12,
           "projectile": null,
           "spawnPoint": {
             "path": "FlamethrowerEnemy/HK416/MachinegunMuzzleFlash",
@@ -280,18 +233,27 @@
         "seconds": 0.3,
         "rule": "stand-shoot-30-percent",
         "clip": {
-          "asset": "Assets/AnimationClip/rifle_shot_loop.anim",
-          "sha256": "760fe9311ce35c5d57069a1c70547af1f6d29a869c1ad9361126db022a769776",
+          "asset": "Assets/AnimationClip/commando_shooting.anim",
+          "sha256": "545a2c0b55e3854b3a4a78d09ea1d15b3264452a6caaa76c2318ddf4d95abf75",
           "length": 1.0
         }
+      },
+      "attackCadence": {
+        "seconds": 0.2,
+        "strictTicks": 7,
+        "rule": "subclass-override",
+        "source": "Assets/Scripts/Assembly-CSharp/SoldierBehaviourCommando.cs",
+        "sha256": "3ac2807908628060f1452001e2b912c8bf9966d8b853030cc170888e24e82a32"
       },
       "inventory": [
         {
           "fileId": 37440,
           "weaponFileId": 11470521,
           "guid": "d03f97fa25701ab42ab60f1fa86421ce",
+          "weaponType": 14,
+          "leftHand": false,
           "asset": "GameObject/AssaultRifleEnemy.prefab",
-          "weaponType": 0,
+          "prefabWeaponType": 0,
           "projectile": {
             "speed": 5.0,
             "checkDistance": 0.35
@@ -315,33 +277,10 @@
           "fileId": 37440,
           "weaponFileId": 11470521,
           "guid": "d03f97fa25701ab42ab60f1fa86421ce",
+          "weaponType": 14,
+          "leftHand": true,
           "asset": "GameObject/AssaultRifleEnemy.prefab",
-          "weaponType": 0,
-          "projectile": {
-            "speed": 5.0,
-            "checkDistance": 0.35
-          },
-          "spawnPoint": {
-            "path": "AssaultRifleEnemy/HK416/MachinegunMuzzleFlash",
-            "position": [
-              -1.4861874301316751e-08,
-              0.044999993348439744,
-              0.17000000665155962
-            ],
-            "rotation": [
-              -7.071067418107332e-08,
-              -4.3711384535882286e-08,
-              -1.6292069606646132e-07,
-              0.9999999999999831
-            ]
-          }
-        },
-        {
-          "fileId": 37440,
-          "weaponFileId": 11470521,
-          "guid": "d03f97fa25701ab42ab60f1fa86421ce",
-          "asset": "GameObject/AssaultRifleEnemy.prefab",
-          "weaponType": 0,
+          "prefabWeaponType": 0,
           "projectile": {
             "speed": 5.0,
             "checkDistance": 0.35
@@ -376,13 +315,22 @@
           "length": 1.0
         }
       },
+      "attackCadence": {
+        "seconds": 0.2,
+        "strictTicks": 7,
+        "rule": "subclass-override",
+        "source": "Assets/Scripts/Assembly-CSharp/SoldierBehaviourWarper.cs",
+        "sha256": "ccc0ef21494a5f1f7f1acf562276927e2d67b6997f12382b41b927415216a9e4"
+      },
       "inventory": [
         {
           "fileId": 45891,
           "weaponFileId": 11470521,
           "guid": "bc28403733fe96243a0de4ee0a54ca57",
-          "asset": "GameObject/ShotgunEnemy.prefab",
           "weaponType": 7,
+          "leftHand": false,
+          "asset": "GameObject/ShotgunEnemy.prefab",
+          "prefabWeaponType": 7,
           "projectile": {
             "speed": 10.0,
             "checkDistance": 1.0
