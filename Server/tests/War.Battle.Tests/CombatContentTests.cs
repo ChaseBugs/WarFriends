@@ -1618,29 +1618,33 @@ internal static class CombatContentTests
         int[] armySpecial=[133];
         float[] armyDamageScales=[1.5f];
         float[] armySpeedCoefficients=[1.25f];
+        float[] armyAccuracyCoefficients=[1.5f];
         var armyManifest=new MatchManifest("army-match","content-host","Park_Multiplayer",park.SourceHash,
             content.Revision,MatchManifest.RifleCombatMode,10,60,10,
             [new(new string('a',32),weapon,1,coverOne.SourceIndex,1,new(1000),0)
                 {EquippedArmyUnitIds=equipped,ArmyNormalUpgradeIndexes=armyStages,
                  ArmySpecialUpgradeIndexes=armySpecial,ArmyEliteUpgradeIndexes=[-1],
                  ArmyHealthFactors=[new ArmyHealthFactors(1.25f,1f)],
-                 ArmyDamageScales=armyDamageScales,ArmySpeedCoefficients=armySpeedCoefficients},
+                 ArmyDamageScales=armyDamageScales,ArmySpeedCoefficients=armySpeedCoefficients,
+                 ArmyAccuracyCoefficients=armyAccuracyCoefficients},
              new(new string('b',32),weapon,2,coverTwo.SourceIndex,1,new(1000),0)
                 {EquippedArmyUnitIds=["ID_UNIT-HELICOPTER"],ArmyNormalUpgradeIndexes=[0],
                  ArmySpecialUpgradeIndexes=[-1],ArmyEliteUpgradeIndexes=[-1],
                  ArmyHealthFactors=[new ArmyHealthFactors(1f,1f)],ArmyDamageScales=[1f],
-                 ArmySpeedCoefficients=[1f]}]);
+                 ArmySpeedCoefficients=[1f],ArmyAccuracyCoefficients=[1f]}]);
         var detached=MatchManifest.Validate(armyManifest);
         equipped[0]="ID_UNIT-UNKNOWN";
         armyStages[0]=101;
         armySpecial[0]=0;
         armyDamageScales[0]=99;
         armySpeedCoefficients[0]=99;
+        armyAccuracyCoefficients[0]=9;
         Check(detached.Players[0].EquippedArmyUnitIds![0]=="ID_UNIT-ASSAULT" &&
               detached.Players[0].ArmyNormalUpgradeIndexes![0]==0 &&
               detached.Players[0].ArmySpecialUpgradeIndexes![0]==133 &&
               detached.Players[0].ArmyDamageScales![0]==1.5f &&
               detached.Players[0].ArmySpeedCoefficients![0]==1.25f &&
+              detached.Players[0].ArmyAccuracyCoefficients![0]==1.5f &&
               new MatchEngine(detached,content:content).HasPlayer(detached.Players[0].PlayerId),
               "trusted equipped army roster and stage are detached and bound to pinned source stats");
         var miniManifest=detached with {MatchId="minigunner-spawn",Players=[detached.Players[0] with
@@ -1648,7 +1652,7 @@ internal static class CombatContentTests
             EquippedArmyUnitIds=["ID_UNIT-MINIGUNNER"],NewArmyUnitIds=null,
             ArmyNormalUpgradeIndexes=[0],ArmySpecialUpgradeIndexes=[-1],
             ArmyEliteUpgradeIndexes=[-1],ArmyHealthFactors=[new(1f,1f)],ArmyDamageScales=[1f],
-            ArmySpeedCoefficients=[1f]
+            ArmySpeedCoefficients=[1f],ArmyAccuracyCoefficients=[1f]
         },detached.Players[1]]};
         var miniMatch=new MatchEngine(miniManifest,content:content);
         string miniOwner=miniManifest.Players[0].PlayerId,miniOpponent=miniManifest.Players[1].PlayerId;
@@ -1681,6 +1685,11 @@ internal static class CombatContentTests
             p with {ArmySpeedCoefficients=[float.NaN]} : p).ToArray() }));
         Reject(()=>content.ValidateAllocation(detached with { Players=detached.Players.Select((p,i)=>i==0 ?
             p with {ArmySpeedCoefficients=[100f]} : p).ToArray() }));
+        Reject(()=>MatchManifest.Validate(detached with { Players=detached.Players.Select((p,i)=>i==0 ?
+            p with {ArmyAccuracyCoefficients=[float.NaN]} : p).ToArray() }));
+        Check(content.Army.ComposeShot("ID_UNIT-ASSAULT",0,133,null,1.5f).ProbabilityOfRealShot==
+              content.Army.ComposeShot("ID_UNIT-ASSAULT",0,133,null).ProbabilityOfRealShot*1.5f,
+              "trusted perk accuracy scales the fully composed source real-shot probability");
         var deathMatch=new MatchEngine(detached,content:content);
         string soldierOwner=detached.Players[0].PlayerId,helicopterOwner=detached.Players[1].PlayerId;
         deathMatch.Admit(soldierOwner);deathMatch.Admit(helicopterOwner);
@@ -1760,7 +1769,7 @@ internal static class CombatContentTests
             NewArmyUnitIds=null,ArmyNormalUpgradeIndexes=[0,0,0],
             ArmySpecialUpgradeIndexes=[-1,-1,-1],ArmyEliteUpgradeIndexes=[-1,-1,-1],
             ArmyHealthFactors=[new(1f,1f),new(1f,1f),new(1f,1f)],ArmyDamageScales=[1f,1f,1f],
-            ArmySpeedCoefficients=[1f,1f,1f]
+            ArmySpeedCoefficients=[1f,1f,1f],ArmyAccuracyCoefficients=[1f,1f,1f]
         }).ToArray()};
         string? seedText=Environment.GetEnvironmentVariable("WAR_BATTLE_RUSHER_SEED");
         int rusherSeed=seedText==null ? 2 :
@@ -1996,7 +2005,7 @@ internal static class CombatContentTests
             NewArmyUnitIds=null,ArmyNormalUpgradeIndexes=[0,0,0],
             ArmySpecialUpgradeIndexes=[-1,-1,-1],ArmyEliteUpgradeIndexes=[-1,-1,-1],
             ArmyHealthFactors=[new(1f,1f),new(1f,1f),new(1f,1f)],ArmyDamageScales=[1f,1f,1f],
-            ArmySpeedCoefficients=[1f,1f,1f]
+            ArmySpeedCoefficients=[1f,1f,1f],ArmyAccuracyCoefficients=[1f,1f,1f]
         },detached.Players[1]]};
         var staleMatch=new MatchEngine(staleManifest,content:content);
         staleMatch.Admit(soldierOwner);staleMatch.Admit(helicopterOwner);

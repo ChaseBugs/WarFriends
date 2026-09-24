@@ -27,12 +27,12 @@ internal static class LiveRusherUdpTests
                 {EquippedArmyUnitIds=["ID_UNIT-FLAMETHROWER"],
                  ArmyNormalUpgradeIndexes=[0],ArmySpecialUpgradeIndexes=[-1],
                  ArmyEliteUpgradeIndexes=[-1],ArmyHealthFactors=[new(1f,1f)],
-                 ArmyDamageScales=[1f],ArmySpeedCoefficients=[1f]},
+                 ArmyDamageScales=[1f],ArmySpeedCoefficients=[1f],ArmyAccuracyCoefficients=[2f]},
              new(two,weapon,2,right.SourceIndex,1,new(1000),0,0,0)
                 {EquippedArmyUnitIds=["ID_UNIT-FLAMETHROWER"],
                  ArmyNormalUpgradeIndexes=[0],ArmySpecialUpgradeIndexes=[-1],
                  ArmyEliteUpgradeIndexes=[-1],ArmyHealthFactors=[new(1f,1f)],
-                 ArmyDamageScales=[1f],ArmySpeedCoefficients=[1f]}])
+                 ArmyDamageScales=[1f],ArmySpeedCoefficients=[1f],ArmyAccuracyCoefficients=[2f]}])
             {SceneMasterPlayerId=one};
         string file=Path.Combine(Path.GetTempPath(),"war-rusher-udp-"+Guid.NewGuid().ToString("N")+".json");
         File.WriteAllText(file,JsonSerializer.Serialize(manifest));

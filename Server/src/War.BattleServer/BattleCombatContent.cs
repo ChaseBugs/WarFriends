@@ -220,6 +220,10 @@ public sealed class BattleCombatContent
                             _=Army.EffectiveDamage(p.EquippedArmyUnitIds[i],p.ArmyNormalUpgradeIndexes[i],special,elite,scales[i]);
                         if(p.ArmySpeedCoefficients is { } speedCoefficients)
                             _=Army.EffectiveSpeed(p.EquippedArmyUnitIds[i],speedCoefficients[i]);
+                        var family=Army.Families.Single(f=>f.UnitId==p.EquippedArmyUnitIds[i]);
+                        if(family.BaseShot!=null)
+                            _=Army.ComposeShot(p.EquippedArmyUnitIds[i],p.ArmyNormalUpgradeIndexes[i],special,elite,
+                                p.ArmyAccuracyCoefficients?[i]??1f);
                     }
                     catch(ArgumentOutOfRangeException ex)
                     { throw new InvalidDataException("Allocated army upgrade stage is outside its recovered lane.",ex); }

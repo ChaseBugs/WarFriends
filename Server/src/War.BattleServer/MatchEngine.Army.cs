@@ -90,7 +90,8 @@ public sealed partial class MatchEngine
         var family=armyCatalog!.Families.Single(f=>f.UnitId==unitId);
         if(family.BaseShot!=null)
             armyShots.Add(entityKey,armyCatalog.ComposeShot(unitId,
-                owner.ArmyNormalUpgradeIndexes[index],special,elite));
+                owner.ArmyNormalUpgradeIndexes[index],special,elite,
+                owner.ArmyAccuracyCoefficients?[index]??1f));
     }
 
     internal float? ArmyHealth(ulong entityKey)
