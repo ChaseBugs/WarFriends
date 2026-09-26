@@ -52,10 +52,14 @@ public sealed partial class MatchEngine
     }
 
     private sealed record HeavyTurretTarget(string Id,Vector3 Position,string Kind,ulong EntityId=0);
+    private readonly Dictionary<ulong,HeavyTurretTarget> heavyTurretBatchTargets=[];
     private void AdvanceHeavyTurrets()
     {
-        foreach(var turret in heavyTurrets.Snapshot())
+        var live=heavyTurrets.Snapshot();
+        foreach(var id in heavyTurretBatchTargets.Keys.Where(id=>!live.Any(x=>x.EntityId==id)).ToArray())heavyTurretBatchTargets.Remove(id);
+        foreach(var turret in live)
         {
+            if(turret.Attack.Phase==HeavyTurretAttackPhase.Cooldown)heavyTurretBatchTargets.Remove(turret.EntityId);
             turret.Attack.AdvanceTick();
             if(turret.Attack.Phase==HeavyTurretAttackPhase.Cooldown&&turret.Attack.CooldownTicksRemaining==0)
             {
@@ -63,9 +67,15 @@ public sealed partial class MatchEngine
                 if(selected!=null)turret.Attack.TryBegin(selected.Id);
             }
             if(!turret.Attack.ShotDue)continue;
-            var target=ResolveHeavyTurretTarget(turret,turret.Attack.TargetId);
-            if(target==null){turret.Attack.CancelTarget();continue;}
-            if(!HeavyTurretCanSee(turret,target)){turret.Attack.CancelTarget();continue;}
+            if(!heavyTurretBatchTargets.TryGetValue(turret.EntityId,out var target))
+            {
+                target=ResolveHeavyTurretTarget(turret,turret.Attack.TargetId);
+                if(target==null||!HeavyTurretCanSee(turret,target)){turret.Attack.CancelTarget();continue;}
+                // BatchedWeapon retains mTargetPosition and its complete mask,
+                // even when the target moves or dies during the batch.
+                heavyTurretBatchTargets.Add(turret.EntityId,target);
+                turret.Attack.PrepareBatchRounds();
+            }
             if(projectileId==ulong.MaxValue||PendingProjectileCount>=MaximumProjectiles||!EventCapacityForShot())continue;
             bool real=turret.Attack.CurrentShotIsReal;
             ulong shotId=++projectileId;
@@ -97,7 +107,7 @@ public sealed partial class MatchEngine
         var pool=rushers.Length>0?rushers:infantry.OrderBy(x=>x.EntityKey).ToArray();
         if(pool.Length>0){var row=pool[Choose(pool.Length)];return new("army:"+row.EntityKey,new(row.X,row.Y,row.Z),"army",row.EntityKey);}
         var opponent=players.SingleOrDefault(x=>x.Definition.Fraction!=turret.OwnerFraction&&x.Health>0&&!x.Reconnecting);
-        return opponent==null?null:new(opponent.Definition.PlayerId,HeavyTurretPlayerTarget(opponent.Definition.PlayerId,turret.Position),"player");
+        return opponent==null?null:new(opponent.Definition.PlayerId,opponent.Position,"player");
     }
     private HeavyTurretTarget? ResolveHeavyTurretTarget(HeavyTurretMatchEntity turret,string id)
     {

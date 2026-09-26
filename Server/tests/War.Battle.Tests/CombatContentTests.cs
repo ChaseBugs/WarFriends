@@ -1469,6 +1469,27 @@ internal static class CombatContentTests
             var heavyTurrets=HeavyTurretSourceCatalog.Load(heavyTurretArtifact,heavyTurretRevision,content.Maps);
             var parkTurretCovers=heavyTurrets.ForMap(content.Maps.Single(x=>Path.GetFileNameWithoutExtension(x.Source)=="Park_Multiplayer"));
             var heavyMid=heavyTurrets.Compose(22);var firstTurretCover=parkTurretCovers[0];
+            var turretRandoms=new Queue<float>([0,0,.1f,.9f,.2f,0]);int turretDraws=0;
+            var turretBatch=new HeavyTurretAttackState(heavyMid with {RealShotProbability=.5f},()=>{turretDraws++;return turretRandoms.Dequeue();});
+            while(turretBatch.CooldownTicksRemaining>0)turretBatch.AdvanceTick();
+            Check(turretBatch.TryBegin("target")&&turretBatch.BatchRemaining==0&&turretDraws==1,
+                "Heavy Turret does not select a batch before its aim completes");
+            for(int i=0;i<30;i++)turretBatch.AdvanceTick();
+            Check(turretBatch.ShotDue&&turretBatch.BatchRemaining==3&&turretDraws==2,
+                "Heavy Turret chooses exclusive-upper-bound batch size after aiming");
+            turretBatch.PrepareBatchRounds();
+            Check(turretDraws==5&&turretBatch.CurrentShotIsReal&&turretBatch.CommitShot(),
+                "Heavy Turret preselects every round before the first shot");
+            for(int i=0;i<6;i++)turretBatch.AdvanceTick();
+            turretBatch.PrepareBatchRounds();
+            Check(!turretBatch.CurrentShotIsReal&&turretDraws==5&&turretBatch.CommitShot(),
+                "Heavy Turret retains its fake second round without another random draw");
+            for(int i=0;i<6;i++)turretBatch.AdvanceTick();
+            Check(turretBatch.CurrentShotIsReal&&turretBatch.CommitShot()&&turretDraws==6&&
+                turretBatch.Phase==HeavyTurretAttackPhase.Cooldown&&turretBatch.TargetId=="",
+                "Heavy Turret retains its real final round and schedules one post-batch cooldown");
+            Reject(()=>new HeavyTurretAttackState(heavyMid,()=>float.NaN));
+            Reject(()=>new HeavyTurretAttackState(heavyMid,()=>1));
             var otherFriendlyCover=parkTurretCovers.First(x=>x.Fraction==firstTurretCover.Fraction&&x.Order!=firstTurretCover.Order);
             var parkTurretMap=content.Maps.Single(x=>Path.GetFileNameWithoutExtension(x.Source)=="Park_Multiplayer");
             Check(heavyTurrets.SelectNearestFree(parkTurretMap,firstTurretCover.Order,firstTurretCover.Fraction,
@@ -2532,6 +2553,11 @@ internal static class CombatContentTests
               "Heavy Turret owns source cooldown, aim, batch cadence and live BulletSlow flight; misses do not imply damage: "+
               string.Join(",",heavyTurretEvents.Select(x=>x.Kind+":"+x.Reason)));
         ulong liveHeavyTurretId=heavyTurretCombatSnapshot.HeavyTurrets.Single().EntityId;
+        var firstTurretBatch=heavyTurretEvents.Where(x=>x.Kind==MatchEventKind.HeavyTurretFired).Take(3).ToArray();
+        Check(firstTurretBatch.Length==3&&firstTurretBatch.All(x=>x.X==firstTurretBatch[0].X&&
+                  x.Y==firstTurretBatch[0].Y&&x.Z==firstTurretBatch[0].Z)&&
+              firstTurretBatch[1].Tick-firstTurretBatch[0].Tick==6&&firstTurretBatch[2].Tick-firstTurretBatch[1].Tick==6,
+              "live Heavy Turret retains the first batch aim point across its source six-tick cadence");
         var turretShieldBefore=heavyTurretMatch.Snapshot().Shields.Single(x=>x.CoverIndex==coverTwo.SourceIndex);
         var turretShieldCollider=park.DynamicColliders.First(x=>x.DynamicOwner==coverTwo.SourcePath+"/riot_shield");
         var turretShieldImpact=new BulletImpact(900001,decoyPlayer,
