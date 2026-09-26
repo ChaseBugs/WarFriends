@@ -1475,6 +1475,9 @@ internal static class CombatContentTests
             Check(turretBatch.TryBegin("target")&&turretBatch.BatchRemaining==0&&turretDraws==1,
                 "Heavy Turret does not select a batch before its aim completes");
             for(int i=0;i<30;i++)turretBatch.AdvanceTick();
+            Check(turretBatch.BatchReady&&!turretBatch.ShotDue&&turretDraws==1,
+                "completed turret aim waits for visibility before consuming batch randomness");
+            turretBatch.SelectBatchSize();
             Check(turretBatch.ShotDue&&turretBatch.BatchRemaining==3&&turretDraws==2,
                 "Heavy Turret chooses exclusive-upper-bound batch size after aiming");
             turretBatch.PrepareBatchRounds();
@@ -1490,6 +1493,13 @@ internal static class CombatContentTests
                 "Heavy Turret retains its real final round and schedules one post-batch cooldown");
             Reject(()=>new HeavyTurretAttackState(heavyMid,()=>float.NaN));
             Reject(()=>new HeavyTurretAttackState(heavyMid,()=>1));
+            int blockedTurretDraws=0;
+            var blockedTurret=new HeavyTurretAttackState(heavyMid,()=>{blockedTurretDraws++;return 0;});
+            while(blockedTurret.CooldownTicksRemaining>0)blockedTurret.AdvanceTick();
+            blockedTurret.TryBegin("blocked");for(int i=0;i<30;i++)blockedTurret.AdvanceTick();
+            blockedTurret.CancelTarget();
+            Check(blockedTurretDraws==2&&blockedTurret.Phase==HeavyTurretAttackPhase.Cooldown&&blockedTurret.BatchRemaining==0,
+                "failed turret sight consumes only the new cooldown draw, without batch or round draws");
             var otherFriendlyCover=parkTurretCovers.First(x=>x.Fraction==firstTurretCover.Fraction&&x.Order!=firstTurretCover.Order);
             var parkTurretMap=content.Maps.Single(x=>Path.GetFileNameWithoutExtension(x.Source)=="Park_Multiplayer");
             Check(heavyTurrets.SelectNearestFree(parkTurretMap,firstTurretCover.Order,firstTurretCover.Fraction,

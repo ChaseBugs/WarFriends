@@ -66,11 +66,14 @@ public sealed partial class MatchEngine
                 var selected=SelectHeavyTurretTarget(turret);
                 if(selected!=null)turret.Attack.TryBegin(selected.Id);
             }
-            if(!turret.Attack.ShotDue)continue;
+            if(!turret.Attack.ShotDue&&!turret.Attack.BatchReady)continue;
             if(!heavyTurretBatchTargets.TryGetValue(turret.EntityId,out var target))
             {
-                target=ResolveHeavyTurretTarget(turret,turret.Attack.TargetId);
+                target=ResolveHeavyTurretTarget(turret,turret.Attack.TargetId,false);
                 if(target==null||!HeavyTurretCanSee(turret,target)){turret.Attack.CancelTarget();continue;}
+                turret.Attack.SelectBatchSize();
+                target=ResolveHeavyTurretTarget(turret,turret.Attack.TargetId,true);
+                if(target==null){turret.Attack.CancelTarget();continue;}
                 // BatchedWeapon retains mTargetPosition and its complete mask,
                 // even when the target moves or dies during the batch.
                 heavyTurretBatchTargets.Add(turret.EntityId,target);
@@ -109,7 +112,7 @@ public sealed partial class MatchEngine
         var opponent=players.SingleOrDefault(x=>x.Definition.Fraction!=turret.OwnerFraction&&x.Health>0&&!x.Reconnecting);
         return opponent==null?null:new(opponent.Definition.PlayerId,opponent.Position,"player");
     }
-    private HeavyTurretTarget? ResolveHeavyTurretTarget(HeavyTurretMatchEntity turret,string id)
+    private HeavyTurretTarget? ResolveHeavyTurretTarget(HeavyTurretMatchEntity turret,string id,bool selectShotTarget)
     {
         if(id.StartsWith("decoy:",StringComparison.Ordinal)&&ulong.TryParse(id.AsSpan(6),out ulong decoyId))
         {var row=decoys.Snapshot().SingleOrDefault(x=>x.EntityId==decoyId&&x.OwnerFraction!=turret.OwnerFraction);return row==null?null:new(id,row.Position,"decoy",decoyId);}
@@ -117,7 +120,7 @@ public sealed partial class MatchEngine
            activeArmyEntities.TryGetValue(armyId,out var army)&&army.OwnerFraction!=turret.OwnerFraction&&infantryAnimations.ContainsKey(armyId))
             return new(id,new(army.X,army.Y,army.Z),"army",armyId);
         var player=Find(id);return player==null||player.Definition.Fraction==turret.OwnerFraction||player.Health<=0||player.Reconnecting?
-            null:new(id,HeavyTurretPlayerTarget(id,turret.Position),"player");
+            null:new(id,selectShotTarget?HeavyTurretPlayerTarget(id,turret.Position):player.Position,"player");
     }
     private Vector3 HeavyTurretPlayerTarget(string playerId,Vector3 origin)
     {

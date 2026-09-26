@@ -13,6 +13,7 @@ internal sealed class HeavyTurretAttackState
     internal int BatchRemaining{get;private set;}
     internal int CooldownTicksRemaining{get;private set;}
     internal bool ShotDue=>Phase==HeavyTurretAttackPhase.Firing&&shotDelayTicks==0&&BatchRemaining>0;
+    internal bool BatchReady=>Phase==HeavyTurretAttackPhase.Firing&&BatchRemaining==0&&rounds.Length==0;
     internal bool CurrentShotIsReal{get;private set;}
 
     internal HeavyTurretAttackState(HeavyTurretStats stats,Func<float> random)
@@ -33,11 +34,7 @@ internal sealed class HeavyTurretAttackState
         if(Phase==HeavyTurretAttackPhase.Cooldown)
         {if(CooldownTicksRemaining>0)CooldownTicksRemaining--;return;}
         if(Phase==HeavyTurretAttackPhase.Aiming)
-        {if(aimTicks>0)aimTicks--;if(aimTicks==0){
-            int span=stats.BatchMaximum-stats.BatchMinimum;
-            BatchRemaining=stats.BatchMinimum+(span==0?0:(int)MathF.Floor(Next()*span));
-            if(BatchRemaining<=0)throw new InvalidDataException("Heavy Turret selected an empty batch.");
-            PrepareShot();}return;}
+        {if(aimTicks>0)aimTicks--;if(aimTicks==0)PrepareShot();return;}
         if(shotDelayTicks>0){shotDelayTicks--;if(shotDelayTicks==0)PrepareShot();}
     }
     internal bool CommitShot()
@@ -52,6 +49,13 @@ internal sealed class HeavyTurretAttackState
     {TargetId="";BatchRemaining=0;ScheduleCooldown();}
     private void PrepareShot()
     {CurrentShotIsReal=rounds.Length>0&&rounds[roundIndex];shotDelayTicks=0;Phase=HeavyTurretAttackPhase.Firing;}
+    internal void SelectBatchSize()
+    {
+        if(!BatchReady)throw new InvalidDataException("Heavy Turret batch cannot start.");
+        int span=stats.BatchMaximum-stats.BatchMinimum;
+        BatchRemaining=stats.BatchMinimum+(span==0?0:(int)MathF.Floor(Next()*span));
+        if(BatchRemaining<=0)throw new InvalidDataException("Heavy Turret selected an empty batch.");
+    }
     internal void PrepareBatchRounds()
     {
         if(!ShotDue)throw new InvalidDataException("Heavy Turret batch is not ready.");
