@@ -28,12 +28,12 @@ public sealed class SelfHostedProjectilePresenter : MonoBehaviour
 		HashSet<ulong> present = new HashSet<ulong>();
 		foreach (BattleProjectileState state in snapshot.Projectiles)
 		{
-			if (state.Kind != "grenade" && state.Kind != "grenade-molotov") continue;
+			if (state.Kind != "grenade" && state.Kind != "grenade-molotov" && state.Kind != "heavy-turret-bullet") continue;
 			present.Add(state.ProjectileId);
 			Visual visual;
 			if (!active.TryGetValue(state.ProjectileId, out visual))
 			{
-				visual = Create(state.OwnerPlayerId, state.ProjectileId);
+				visual = Create(state.OwnerPlayerId, state.ProjectileId, state.Kind);
 				active.Add(state.ProjectileId, visual);
 			}
 			visual.Root.transform.position = new Vector3(state.X, state.Y, state.Z);
@@ -49,19 +49,28 @@ public sealed class SelfHostedProjectilePresenter : MonoBehaviour
 	public void ApplyEvent(MatchEvent item)
 	{
 		if (item == null || item.Kind != MatchEventKind.Impact ||
-			(item.Reason != "grenade" && item.Reason != "grenade-molotov")) return;
+			(item.Reason != "grenade" && item.Reason != "grenade-molotov" && item.Reason != "heavy-turret")) return;
 		Remove(item.ProjectileId);
+		if (item.Reason == "heavy-turret") return;
 		Explosion.PlayEffects(item.Reason == "grenade-molotov" ? Explosion.ExplosionType.Molotov : Explosion.ExplosionType.Medium,
 			new Vector3(item.X, item.Y, item.Z));
 	}
 
-	private Visual Create(string ownerId, ulong projectileId)
+	private Visual Create(string ownerId, ulong projectileId, string kind)
 	{
 		PlayerController owner = local != null && local.playerProperties != null && local.playerProperties.playerID == ownerId ? local : other;
 		WeaponInventory inventory = owner == null ? null : owner.ResolveSelfHostedInventory();
 		Weapon weapon = inventory == null || inventory.currentWeapon == null ? null : inventory.currentWeapon.weapon;
 		GameObject root = new GameObject("SelfHostedProjectile_" + projectileId);
-		if (weapon != null && weapon.bulletPrefab != null) CopyVisual(weapon.bulletPrefab.transform, root.transform, true);
+		GameObject bullet = weapon == null || weapon.bulletPrefab == null ? null : weapon.bulletPrefab.gameObject;
+		if (kind == "heavy-turret-bullet")
+		{
+			HeavyTurret turret = Singleton<ObjectPoolDatabase>.instance == null ? null : Singleton<ObjectPoolDatabase>.instance.heavyTurret;
+			if (turret != null && turret.turretWeapon != null && turret.turretWeapon.batchedWeapon != null &&
+				turret.turretWeapon.batchedWeapon.weapon != null && turret.turretWeapon.batchedWeapon.weapon.bulletPrefab != null)
+				bullet = turret.turretWeapon.batchedWeapon.weapon.bulletPrefab.gameObject;
+		}
+		if (bullet != null) CopyVisual(bullet.transform, root.transform, true);
 		return new Visual(root);
 	}
 

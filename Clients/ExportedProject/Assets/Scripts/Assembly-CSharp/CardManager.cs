@@ -517,7 +517,7 @@ public class CardManager : DatabaseSerializedObjectGeneric<CardManager.CardManag
 			mCardUseInProgress = true;
 			mCooldown = card.cooldown;
 			SelfHostedBattleClient selfHosted = SelfHostedBattleClient.Active;
-			if (selfHosted != null && selfHosted.IsConnected && (card is CardDecoy || card is CardLandmine))
+			if (selfHosted != null && selfHosted.IsConnected && (card is CardDecoy || card is CardLandmine || card is CardHeavyTurret))
 			{
 				UseSelfHostedDeployable(selfHosted, card, PlayerController.currentPlayer.fraction);
 				return;
@@ -543,10 +543,13 @@ public class CardManager : DatabaseSerializedObjectGeneric<CardManager.CardManag
 	{
 		try
 		{
-			var reply = card is CardLandmine ? await client.UseLandMineResult() : await client.UseDecoyResult();
+			var reply = card is CardLandmine ? await client.UseLandMineResult() :
+				(card is CardHeavyTurret ? await client.UseHeavyTurretResult() : await client.UseDecoyResult());
 			bool accepted = card is CardLandmine ?
 				(reply.Code == "land-mine-spawned" || reply.Code == "land-mine-replayed") :
-				(reply.Code == "decoy-spawned" || reply.Code == "decoy-replayed");
+				(card is CardHeavyTurret ?
+					(reply.Code == "heavy-turret-spawned" || reply.Code == "heavy-turret-replayed") :
+					(reply.Code == "decoy-spawned" || reply.Code == "decoy-replayed"));
 			if (!accepted) throw new InvalidOperationException("Battle host rejected deployable activation: " + reply.Code);
 			card.playerId = 0;
 			CardWasUsed(card, fraction);

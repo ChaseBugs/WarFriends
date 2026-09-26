@@ -27,6 +27,7 @@ public sealed class SelfHostedDeathMatchBridge : MonoBehaviour
 	private SelfHostedProjectilePresenter projectilePresenter;
 	private SelfHostedDecoyPresenter decoyPresenter;
 	private SelfHostedLandMinePresenter landMinePresenter;
+	private SelfHostedHeavyTurretPresenter heavyTurretPresenter;
 
 	public void Configure(SelfHostedBattleClient owner, PlayerController localPlayer, PlayerController otherPlayer)
 	{
@@ -51,6 +52,8 @@ public sealed class SelfHostedDeathMatchBridge : MonoBehaviour
 			local.weaponInventory.landMine.bulletPrefab as MineAmmo;
 		landMinePresenter = gameObject.AddComponent<SelfHostedLandMinePresenter>();
 		landMinePresenter.Configure(mineVisual);
+		heavyTurretPresenter = gameObject.AddComponent<SelfHostedHeavyTurretPresenter>();
+		heavyTurretPresenter.Configure(Singleton<ObjectPoolDatabase>.instance == null ? null : Singleton<ObjectPoolDatabase>.instance.heavyTurret);
 		client.StateReceived += Apply;
 		client.CombatEventReceived += ApplyEvent;
 		if (client.State != null) Apply(client.State);
@@ -235,6 +238,7 @@ public sealed class SelfHostedDeathMatchBridge : MonoBehaviour
 		if (projectilePresenter != null) projectilePresenter.Apply(snapshot);
 		if (decoyPresenter != null) decoyPresenter.Apply(snapshot);
 		if (landMinePresenter != null) landMinePresenter.Apply(snapshot);
+		if (heavyTurretPresenter != null) heavyTurretPresenter.Apply(snapshot);
 		if (!terminalPresented && snapshot.Phase == BattlePhase.Ended)
 		{
 			ClientGameEndReason reason = MatchOutcomeProjection.ForPlayer(snapshot, client.LocalPlayerId);
@@ -252,6 +256,7 @@ public sealed class SelfHostedDeathMatchBridge : MonoBehaviour
 		if (projectilePresenter != null) projectilePresenter.ApplyEvent(item);
 		if (decoyPresenter != null) decoyPresenter.ApplyEvent(item);
 		if (landMinePresenter != null) landMinePresenter.ApplyEvent(item);
+		if (heavyTurretPresenter != null) heavyTurretPresenter.ApplyEvent(item);
 	}
 
 	private void ApplyBazookaTarget(bool visible)
