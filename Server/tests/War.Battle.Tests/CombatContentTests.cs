@@ -677,6 +677,15 @@ internal static class CombatContentTests
                   idleTarget.Position)>1f,
               "Rusher moving target follows the sampled animated rig and host root placement");
         var referencePose=content.Poses.SampleBlended("T_pose",0,true,"T_pose",0,true,0);
+        var shieldTarget=content.PlayerShotTargets.Gameplay.Single(t=>t.Type==2);
+        Check(Vector3.Distance(referencePose.BodyTarget(shieldTarget.TransformFileId).Position,
+                  shieldTarget.ReferencePosition)<.0002f&&
+              Vector3.Distance(referencePose.Place(new(3,4,5),Quaternion.Identity)
+                  .BodyTarget(shieldTarget.TransformFileId).Position,shieldTarget.ReferencePosition)>1,
+              "source Shield target preserves its direct-child position and follows host placement");
+        Check(content.PlayerShotTargets.Gameplay.Where(t=>t.Type==16).All(t=>
+                  referencePose.BodyTarget(t.TransformFileId).Position==referencePose.MovingTarget!.Position),
+              "typed Moving shot target agrees with the existing animated moving target");
         Check(content.PlayerShotTargets.Gameplay.Take(2).All(t=>
                   Vector3.Distance(referencePose.BodyTarget(t.TransformFileId).Position,
                       t.ReferencePosition)<0.0002f) &&

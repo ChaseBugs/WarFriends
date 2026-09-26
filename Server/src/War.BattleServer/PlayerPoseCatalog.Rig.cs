@@ -14,6 +14,7 @@ public sealed partial class PlayerPoseCatalog
     private Dictionary<string,(int Node,string Path)> extraMuzzles=new(StringComparer.Ordinal);
     private (int Node,string Path)? movingShotTarget;
     private PlayerShotTarget[] bodyShotTargets=[];
+    private readonly Dictionary<int,(int Node,string Path)> animatedShotTargets=[];
 
     internal void AttachPlayerShotTargets(PlayerShotTargetCatalog catalog)
     {
@@ -23,9 +24,15 @@ public sealed partial class PlayerPoseCatalog
         if(!rigIndex.TryGetValue(target.Path,out int node))
             throw new InvalidDataException("Recovered moving target is absent from player rig.");
         movingShotTarget=(node,target.Path);
-        bodyShotTargets=catalog.Gameplay.Where(t=>t.Type==1).ToArray();
-        if(bodyShotTargets.Length!=2 || bodyShotTargets.Any(t=>t.Path!="MainSceneRootNew/Player/shotTarget"))
+        bodyShotTargets=catalog.Gameplay.Where(t=>t.Type is 1 or 2).ToArray();
+        if(bodyShotTargets.Length!=3 || bodyShotTargets.Any(t=>t.Path!="MainSceneRootNew/Player/shotTarget"))
             throw new InvalidDataException("Recovered Body targets are not direct player children.");
+        foreach(var row in catalog.Gameplay.Where(t=>t.Type==16))
+        {
+            if(!rigIndex.TryGetValue(row.Path,out int targetNode))
+                throw new InvalidDataException("Recovered animated shot target is absent from player rig.");
+            animatedShotTargets.Add(row.TransformFileId,(targetNode,row.Path));
+        }
     }
 
     // The original pose export sampled only rifle muzzles explicitly, but its
@@ -266,6 +273,11 @@ public sealed partial class PlayerPoseCatalog
                 world[0].Position,world[0].Rotation);
         }
         var bodies=new Dictionary<int,RifleMuzzlePose>();
+        foreach(var (id,binding) in animatedShotTargets)
+        {
+            var node=world[binding.Node];
+            bodies.Add(id,new(binding.Path,node.Position,node.Rotation,world[0].Position,world[0].Rotation));
+        }
         foreach(var body in bodyShotTargets)
         {
             // Direct Player children follow the root but not the animated rig.
