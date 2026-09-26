@@ -38,10 +38,13 @@ internal sealed class RifleMatchSimulation
     private readonly Func<int,bool>? indexedColliderEnabled;
     private readonly Func<int,int,int>? runtimeLayer;
     private readonly string mode;
+    private Func<string,IReadOnlyList<DynamicShotTarget>>? dynamicTargets;
     private ulong? lastTick;
     private double now;
     internal PlayerAimPose Pose(string id)=>actors.Single(a=>a.Definition.PlayerId==id).Pose;
     internal RiflePoseState Snapshot(string id)=>actors.Single(a=>a.Definition.PlayerId==id).WirePose.Clone();
+    internal void ConfigureDynamicTargets(Func<string,IReadOnlyList<DynamicShotTarget>> provider)
+    {dynamicTargets=provider??throw new ArgumentNullException(nameof(provider));}
     internal void StartMove(string id)
     {
         var actor=actors.Single(a=>a.Definition.PlayerId==id);
@@ -274,7 +277,7 @@ internal sealed class RifleMatchSimulation
     {
         var a=actors.Single(p=>p.Definition.PlayerId==owner);
         var world=new ShotCollisionWorld(map,actors.Select(p=>new CollisionPlayer(p.Definition.PlayerId,p.Pose.Collision)),
-            dynamicColliderEnabled,indexedColliderEnabled,runtimeLayer);
+            dynamicColliderEnabled,indexedColliderEnabled,runtimeLayer,dynamicTargets);
         var muzzle=a.Pose.Muzzle(a.Weapon.SourceId).Position;
         uint bulletMask=a.WeaponClass==LiveWeaponClass.Smg ? (a.Definition.Fraction==1?content.Smgs!.AlliesBulletMask:content.Smgs!.EnemiesBulletMask) :
             a.WeaponClass==LiveWeaponClass.Pistol ? (a.Definition.Fraction==1?content.Pistols!.AlliesBulletMask:content.Pistols!.EnemiesBulletMask) :
@@ -315,14 +318,14 @@ internal sealed class RifleMatchSimulation
         var actor=actors.Single(a=>a.Definition.PlayerId==owner);
         var world=new ShotCollisionWorld(map,
             actors.Select(p=>new CollisionPlayer(p.Definition.PlayerId,p.Pose.Collision)),
-            dynamicColliderEnabled,indexedColliderEnabled,runtimeLayer);
+            dynamicColliderEnabled,indexedColliderEnabled,runtimeLayer,dynamicTargets);
         return world.Raycast(owner,origin,direction,range,
             content.Bindings.BulletMask(actor.Definition.Fraction));
     }
     internal ShotCollision? TraceForBazooka(string owner,Vector3 origin,Vector3 direction,float range,uint mask)
     {
         var world=new ShotCollisionWorld(map,actors.Select(p=>new CollisionPlayer(p.Definition.PlayerId,p.Pose.Collision)),
-            dynamicColliderEnabled,indexedColliderEnabled,runtimeLayer);
+            dynamicColliderEnabled,indexedColliderEnabled,runtimeLayer,dynamicTargets);
         return world.Raycast(owner,origin,direction,range,mask);
     }
     internal Vector3 BazookaMuzzle(string owner,bool secondary)

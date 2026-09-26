@@ -711,6 +711,7 @@ public sealed partial class MatchEngine
                     shields==null?null:shields.ColliderEnabled,
                     barrels==null?null:barrels.ColliderEnabled,
                     barrels==null?null:barrels.RuntimeLayer);
+                rifleCombat.ConfigureDynamicTargets(GroundVehicleShotTargets);
                 ConfigureVolley(rifleCombat.PrepareVolley,Random.Shared.NextSingle);
                 bazookaCatalog=content.Bazookas;
             }
@@ -1087,6 +1088,18 @@ public sealed partial class MatchEngine
             {
                 try {ApplyBarrelImpact(impact,pair.Value.Damage.Amount);}
                 catch(InvalidDataException){End("invalid-barrel-authority","",false);break;}
+                if(Terminal)break;
+            }
+            if(impact?.Hit.DynamicEntityId is ulong vehicleId)
+            {
+                try
+                {
+                    if(impact.Hit.DynamicPartId is not int partId)
+                        throw new InvalidDataException("Vehicle collision omitted its body part.");
+                    ApplyGroundVehicleProjectileImpact(impact.OwnerId,vehicleId,partId,
+                        pair.Value.Damage.Amount);
+                }
+                catch(InvalidDataException){End("invalid-vehicle-impact-authority","",false);break;}
                 if(Terminal)break;
             }
             if (impact?.Hit.PlayerId != null)

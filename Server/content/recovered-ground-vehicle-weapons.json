@@ -1,5 +1,6 @@
 {
-  "version": 4,
+  "version": 5,
+  "armoredVehicleShotCoefficient": 0.33,
   "vehicles": [
     {
       "unitId": "ID_UNIT-HUMVEE",
@@ -135,6 +136,296 @@
             -3.8033602e-07,
             0.51550984,
             -0.48119625
+          ]
+        }
+      ],
+      "bodyParts": [
+        {
+          "partComponentFileId": 11405360,
+          "transformFileId": 419666,
+          "layer": 8,
+          "weight": 1.0,
+          "colliders": [
+            {
+              "colliderFileId": 13698350,
+              "type": "CapsuleCollider",
+              "center": [
+                0.2956871699996688,
+                0.0812877795979572,
+                -0.4845763797515332
+              ],
+              "rotation": [
+                2.1286556e-14,
+                8.742278e-08,
+                -2.6380897e-07,
+                1.0
+              ],
+              "size": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "radius": 0.18638621,
+              "axis": [
+                0.9999999999999227,
+                -5.276179399999963e-07,
+                -1.7484556000001122e-07
+              ],
+              "halfSegment": 0.0,
+              "trigger": true
+            }
+          ]
+        },
+        {
+          "partComponentFileId": 11411975,
+          "transformFileId": 454267,
+          "layer": 8,
+          "weight": 1.0,
+          "colliders": [
+            {
+              "colliderFileId": 6580871,
+              "type": "BoxCollider",
+              "center": [
+                0.0017158087866039075,
+                0.38274206151780354,
+                0.5118717668249511
+              ],
+              "rotation": [
+                0.07785011,
+                0.0,
+                0.0,
+                0.9969651
+              ],
+              "size": [
+                0.68179727,
+                0.0417159449564288,
+                0.5036705
+              ],
+              "radius": 0.0,
+              "axis": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "halfSegment": 0.0,
+              "trigger": false
+            }
+          ]
+        },
+        {
+          "partComponentFileId": 11413056,
+          "transformFileId": 479834,
+          "layer": 8,
+          "weight": 1.0,
+          "colliders": [
+            {
+              "colliderFileId": 6581434,
+              "type": "BoxCollider",
+              "center": [
+                0.0017131215,
+                0.48371898999999996,
+                0.021523824
+              ],
+              "rotation": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ],
+              "size": [
+                0.68179727,
+                0.21854517,
+                0.58719283
+              ],
+              "radius": 0.0,
+              "axis": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "halfSegment": 0.0,
+              "trigger": false
+            }
+          ]
+        },
+        {
+          "partComponentFileId": 11446705,
+          "transformFileId": 433933,
+          "layer": 8,
+          "weight": 1.0,
+          "colliders": [
+            {
+              "colliderFileId": 13604843,
+              "type": "CapsuleCollider",
+              "center": [
+                -0.30834690000022413,
+                0.0812877655178746,
+                -0.4845757573810858
+              ],
+              "rotation": [
+                -4.3817586e-15,
+                5.9604645e-08,
+                4.371139e-08,
+                1.0
+              ],
+              "size": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "radius": 0.18638621,
+              "axis": [
+                0.9999999999999946,
+                8.742277999999947e-08,
+                -1.1920929000000038e-07
+              ],
+              "halfSegment": 0.0,
+              "trigger": true
+            }
+          ]
+        },
+        {
+          "partComponentFileId": 11450766,
+          "transformFileId": 438461,
+          "layer": 8,
+          "weight": 1.0,
+          "colliders": [
+            {
+              "colliderFileId": 6568999,
+              "type": "BoxCollider",
+              "center": [
+                0.0,
+                0.220664601462249,
+                0.029957771
+              ],
+              "rotation": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ],
+              "size": [
+                0.69,
+                0.316418897877657,
+                1.6203212
+              ],
+              "radius": 0.0,
+              "axis": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "halfSegment": 0.0,
+              "trigger": false
+            }
+          ]
+        },
+        {
+          "partComponentFileId": 11481936,
+          "transformFileId": 400539,
+          "layer": 8,
+          "weight": 1.0,
+          "colliders": [
+            {
+              "colliderFileId": 13601874,
+              "type": "CapsuleCollider",
+              "center": [
+                0.29568678000000004,
+                0.081287763769419,
+                0.5247896150031
+              ],
+              "rotation": [
+                -1.7763568e-15,
+                0.0,
+                0.0,
+                1.0
+              ],
+              "size": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "radius": 0.18638621,
+              "axis": [
+                1.0,
+                0.0,
+                0.0
+              ],
+              "halfSegment": 0.0,
+              "trigger": true
+            }
+          ]
+        },
+        {
+          "partComponentFileId": 11486581,
+          "transformFileId": 406555,
+          "layer": 8,
+          "weight": 1.0,
+          "colliders": [
+            {
+              "colliderFileId": 13696281,
+              "type": "CapsuleCollider",
+              "center": [
+                -0.30834637000022413,
+                0.0812877655178746,
+                0.5247902126189142
+              ],
+              "rotation": [
+                -4.3817586e-15,
+                5.9604645e-08,
+                4.371139e-08,
+                1.0
+              ],
+              "size": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "radius": 0.18638621,
+              "axis": [
+                0.9999999999999946,
+                8.742277999999947e-08,
+                -1.1920929000000038e-07
+              ],
+              "halfSegment": 0.0,
+              "trigger": true
+            }
+          ]
+        },
+        {
+          "partComponentFileId": 11488901,
+          "transformFileId": 452723,
+          "layer": 8,
+          "weight": 1.0,
+          "colliders": [
+            {
+              "colliderFileId": 6554546,
+              "type": "BoxCollider",
+              "center": [
+                -0.0011470286610362366,
+                0.7733878002506112,
+                -0.19353652477700034
+              ],
+              "rotation": [
+                0.7071068,
+                0.0,
+                0.0,
+                -0.7071068
+              ],
+              "size": [
+                0.4262338,
+                0.08083114,
+                0.21783237
+              ],
+              "radius": 0.0,
+              "axis": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "halfSegment": 0.0,
+              "trigger": false
+            }
           ]
         }
       ]
@@ -283,6 +574,468 @@
             -0.20222771,
             0.2379818,
             0.57201993
+          ]
+        }
+      ],
+      "bodyParts": [
+        {
+          "partComponentFileId": 11410782,
+          "transformFileId": 461818,
+          "layer": 0,
+          "weight": 1.0,
+          "colliders": [
+            {
+              "colliderFileId": 13664471,
+              "type": "CapsuleCollider",
+              "center": [
+                -0.5,
+                0.19088571999999998,
+                -0.04
+              ],
+              "rotation": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ],
+              "size": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "radius": 0.19077253,
+              "axis": [
+                0.0,
+                0.0,
+                1.0
+              ],
+              "halfSegment": 0.62922747,
+              "trigger": false
+            },
+            {
+              "colliderFileId": 13688140,
+              "type": "CapsuleCollider",
+              "center": [
+                0.5,
+                0.19088571999999998,
+                -0.04
+              ],
+              "rotation": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ],
+              "size": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "radius": 0.19077253,
+              "axis": [
+                0.0,
+                0.0,
+                1.0
+              ],
+              "halfSegment": 0.62922747,
+              "trigger": false
+            }
+          ]
+        },
+        {
+          "partComponentFileId": 11416363,
+          "transformFileId": 498932,
+          "layer": 0,
+          "weight": 1.0,
+          "colliders": [
+            {
+              "colliderFileId": 6504338,
+              "type": "BoxCollider",
+              "center": [
+                0.0,
+                0.28879648999999996,
+                -0.32006675
+              ],
+              "rotation": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ],
+              "size": [
+                1.0,
+                0.32661164,
+                1.4535316
+              ],
+              "radius": 0.0,
+              "axis": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "halfSegment": 0.0,
+              "trigger": false
+            }
+          ]
+        },
+        {
+          "partComponentFileId": 11419193,
+          "transformFileId": 423964,
+          "layer": 0,
+          "weight": 1.0,
+          "colliders": [
+            {
+              "colliderFileId": 6542852,
+              "type": "BoxCollider",
+              "center": [
+                0.15502866867900222,
+                0.46273554,
+                0.49759293
+              ],
+              "rotation": [
+                0.22760919,
+                0.0,
+                0.0,
+                0.97375256
+              ],
+              "size": [
+                0.45726055,
+                0.18881178,
+                0.42326736
+              ],
+              "radius": 0.0,
+              "axis": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "halfSegment": 0.0,
+              "trigger": false
+            }
+          ]
+        },
+        {
+          "partComponentFileId": 11430250,
+          "transformFileId": 439935,
+          "layer": 0,
+          "weight": 1.0,
+          "colliders": [
+            {
+              "colliderFileId": 6504554,
+              "type": "BoxCollider",
+              "center": [
+                0.0,
+                0.5514060299999999,
+                -0.26709026
+              ],
+              "rotation": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ],
+              "size": [
+                1.0,
+                0.18881178,
+                1.3355953
+              ],
+              "radius": 0.0,
+              "axis": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "halfSegment": 0.0,
+              "trigger": false
+            }
+          ]
+        },
+        {
+          "partComponentFileId": 11432491,
+          "transformFileId": 479075,
+          "layer": 0,
+          "weight": 1.0,
+          "colliders": [
+            {
+              "colliderFileId": 6558777,
+              "type": "BoxCollider",
+              "center": [
+                0.0,
+                0.37100449,
+                -1.0106179081636117
+              ],
+              "rotation": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ],
+              "size": [
+                1.1544324,
+                0.18881178,
+                0.283120065999979
+              ],
+              "radius": 0.0,
+              "axis": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "halfSegment": 0.0,
+              "trigger": false
+            }
+          ]
+        },
+        {
+          "partComponentFileId": 11433370,
+          "transformFileId": 414717,
+          "layer": 0,
+          "weight": 1.0,
+          "colliders": [
+            {
+              "colliderFileId": 6570512,
+              "type": "BoxCollider",
+              "center": [
+                0.0,
+                0.3096167628279573,
+                0.9296476875170647
+              ],
+              "rotation": [
+                0.22688606,
+                0.0,
+                0.0,
+                0.9739213
+              ],
+              "size": [
+                1.1544324,
+                0.18881178,
+                0.32553759774341
+              ],
+              "radius": 0.0,
+              "axis": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "halfSegment": 0.0,
+              "trigger": false
+            }
+          ]
+        },
+        {
+          "partComponentFileId": 11438371,
+          "transformFileId": 406061,
+          "layer": 0,
+          "weight": 1.0,
+          "colliders": [
+            {
+              "colliderFileId": 6563789,
+              "type": "BoxCollider",
+              "center": [
+                0.0,
+                0.14842477499999995,
+                0.614606954
+              ],
+              "rotation": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ],
+              "size": [
+                1.0,
+                0.045868993,
+                0.38892603
+              ],
+              "radius": 0.0,
+              "axis": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "halfSegment": 0.0,
+              "trigger": false
+            }
+          ]
+        },
+        {
+          "partComponentFileId": 11467608,
+          "transformFileId": 494303,
+          "layer": 0,
+          "weight": 1.0,
+          "colliders": [
+            {
+              "colliderFileId": 6585106,
+              "type": "BoxCollider",
+              "center": [
+                0.005417496,
+                0.8420879240000001,
+                0.24366665
+              ],
+              "rotation": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ],
+              "size": [
+                0.2786321,
+                0.28399336,
+                0.3360333
+              ],
+              "radius": 0.0,
+              "axis": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "halfSegment": 0.0,
+              "trigger": false
+            }
+          ]
+        },
+        {
+          "partComponentFileId": 11476772,
+          "transformFileId": 448018,
+          "layer": 0,
+          "weight": 1.0,
+          "colliders": [
+            {
+              "colliderFileId": 6520344,
+              "type": "BoxCollider",
+              "center": [
+                0.26016152,
+                0.8552803440000001,
+                -0.0801208
+              ],
+              "rotation": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ],
+              "size": [
+                0.23959231,
+                0.3103782,
+                0.76593876
+              ],
+              "radius": 0.0,
+              "axis": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "halfSegment": 0.0,
+              "trigger": false
+            }
+          ]
+        },
+        {
+          "partComponentFileId": 11480563,
+          "transformFileId": 434459,
+          "layer": 0,
+          "weight": 1.0,
+          "colliders": [
+            {
+              "colliderFileId": 6519723,
+              "type": "BoxCollider",
+              "center": [
+                0.007873014,
+                1.1299147580000002,
+                -0.040327444899999995
+              ],
+              "rotation": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ],
+              "size": [
+                0.20147237,
+                0.1130114,
+                0.045925528
+              ],
+              "radius": 0.0,
+              "axis": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "halfSegment": 0.0,
+              "trigger": false
+            }
+          ]
+        },
+        {
+          "partComponentFileId": 11491853,
+          "transformFileId": 471338,
+          "layer": 0,
+          "weight": 1.0,
+          "colliders": [
+            {
+              "colliderFileId": 6575149,
+              "type": "BoxCollider",
+              "center": [
+                0.012660861,
+                0.6935873100000001,
+                -0.0801208
+              ],
+              "rotation": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ],
+              "size": [
+                0.66410875,
+                0.032892704,
+                0.76593876
+              ],
+              "radius": 0.0,
+              "axis": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "halfSegment": 0.0,
+              "trigger": false
+            }
+          ]
+        },
+        {
+          "partComponentFileId": 11496482,
+          "transformFileId": 444191,
+          "layer": 0,
+          "weight": 1.0,
+          "colliders": [
+            {
+              "colliderFileId": 6571191,
+              "type": "BoxCollider",
+              "center": [
+                -0.2231954,
+                0.8552803440000001,
+                -0.0801208
+              ],
+              "rotation": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ],
+              "size": [
+                0.19239622,
+                0.3103782,
+                0.76593876
+              ],
+              "radius": 0.0,
+              "axis": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "halfSegment": 0.0,
+              "trigger": false
+            }
           ]
         }
       ]
@@ -518,6 +1271,296 @@
             -0.053
           ]
         }
+      ],
+      "bodyParts": [
+        {
+          "partComponentFileId": 11419193,
+          "transformFileId": 423964,
+          "layer": 8,
+          "weight": 1.0,
+          "colliders": [
+            {
+              "colliderFileId": 6542852,
+              "type": "BoxCollider",
+              "center": [
+                -0.00052648665972104,
+                0.1905206998793325,
+                0.036241472989115994
+              ],
+              "rotation": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ],
+              "size": [
+                0.826781136403936,
+                0.13012260947151,
+                0.7322842517807999
+              ],
+              "radius": 0.0,
+              "axis": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "halfSegment": 0.0,
+              "trigger": false
+            }
+          ]
+        },
+        {
+          "partComponentFileId": 11419666,
+          "transformFileId": 454546,
+          "layer": 8,
+          "weight": 1.0,
+          "colliders": [
+            {
+              "colliderFileId": 13688901,
+              "type": "CapsuleCollider",
+              "center": [
+                0.33542641999966877,
+                0.15611360837795718,
+                -0.5742350797515332
+              ],
+              "rotation": [
+                2.1286556e-14,
+                8.742278e-08,
+                -2.6380897e-07,
+                1.0
+              ],
+              "size": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "radius": 0.17,
+              "axis": [
+                0.9999999999999227,
+                -5.276179399999963e-07,
+                -1.7484556000001122e-07
+              ],
+              "halfSegment": 0.006542599999999982,
+              "trigger": true
+            }
+          ]
+        },
+        {
+          "partComponentFileId": 11432491,
+          "transformFileId": 479075,
+          "layer": 8,
+          "weight": 1.0,
+          "colliders": [
+            {
+              "colliderFileId": 6558777,
+              "type": "BoxCollider",
+              "center": [
+                0.006606890447343607,
+                0.2329611408240666,
+                0.5395847422511838
+              ],
+              "rotation": [
+                0.07785011,
+                0.0,
+                0.0,
+                0.9969651
+              ],
+              "size": [
+                0.45438713425302396,
+                0.13924880477827162,
+                0.63943815713325
+              ],
+              "radius": 0.0,
+              "axis": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "halfSegment": 0.0,
+              "trigger": false
+            }
+          ]
+        },
+        {
+          "partComponentFileId": 11433370,
+          "transformFileId": 414717,
+          "layer": 8,
+          "weight": 1.0,
+          "colliders": [
+            {
+              "colliderFileId": 6570512,
+              "type": "BoxCollider",
+              "center": [
+                0.0044186245552269195,
+                0.57616094745138,
+                -0.08880361635580801
+              ],
+              "rotation": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ],
+              "size": [
+                0.38876622687643997,
+                0.089795159944575,
+                0.387010016514375
+              ],
+              "radius": 0.0,
+              "axis": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "halfSegment": 0.0,
+              "trigger": false
+            }
+          ]
+        },
+        {
+          "partComponentFileId": 11438371,
+          "transformFileId": 406061,
+          "layer": 8,
+          "weight": 1.0,
+          "colliders": [
+            {
+              "colliderFileId": 6563789,
+              "type": "BoxCollider",
+              "center": [
+                -0.007099897270064399,
+                0.3315259832164245,
+                -0.513794134547184
+              ],
+              "rotation": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ],
+              "size": [
+                0.506106602178632,
+                0.384845651202045,
+                0.444474841063425
+              ],
+              "radius": 0.0,
+              "axis": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "halfSegment": 0.0,
+              "trigger": false
+            }
+          ]
+        },
+        {
+          "partComponentFileId": 11454731,
+          "transformFileId": 486581,
+          "layer": 8,
+          "weight": 1.0,
+          "colliders": [
+            {
+              "colliderFileId": 13678679,
+              "type": "CapsuleCollider",
+              "center": [
+                -0.3430714000002242,
+                0.1561136142978746,
+                0.6102295726189142
+              ],
+              "rotation": [
+                -4.3817586e-15,
+                5.9604645e-08,
+                4.371139e-08,
+                1.0
+              ],
+              "size": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "radius": 0.17,
+              "axis": [
+                0.9999999999999946,
+                8.742277999999947e-08,
+                -1.1920929000000038e-07
+              ],
+              "halfSegment": 0.006542599999999982,
+              "trigger": true
+            }
+          ]
+        },
+        {
+          "partComponentFileId": 11481936,
+          "transformFileId": 468464,
+          "layer": 8,
+          "weight": 1.0,
+          "colliders": [
+            {
+              "colliderFileId": 13601874,
+              "type": "CapsuleCollider",
+              "center": [
+                0.33541962999999997,
+                0.15611359254941898,
+                0.6102226150030999
+              ],
+              "rotation": [
+                -1.7763568e-15,
+                0.0,
+                0.0,
+                1.0
+              ],
+              "size": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "radius": 0.17,
+              "axis": [
+                1.0,
+                0.0,
+                0.0
+              ],
+              "halfSegment": 0.006542599999999982,
+              "trigger": true
+            }
+          ]
+        },
+        {
+          "partComponentFileId": 11493469,
+          "transformFileId": 433933,
+          "layer": 8,
+          "weight": 1.0,
+          "colliders": [
+            {
+              "colliderFileId": 13617540,
+              "type": "CapsuleCollider",
+              "center": [
+                -0.3430646200002242,
+                0.1561136142978746,
+                -0.5742350873810858
+              ],
+              "rotation": [
+                -4.3817586e-15,
+                5.9604645e-08,
+                4.371139e-08,
+                1.0
+              ],
+              "size": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "radius": 0.17,
+              "axis": [
+                0.9999999999999946,
+                8.742277999999947e-08,
+                -1.1920929000000038e-07
+              ],
+              "halfSegment": 0.006542599999999982,
+              "trigger": true
+            }
+          ]
+        }
       ]
     },
     {
@@ -596,6 +1639,440 @@
             0.0,
             0.352,
             -0.211
+          ]
+        }
+      ],
+      "bodyParts": [
+        {
+          "partComponentFileId": 11404338,
+          "transformFileId": 410782,
+          "layer": 8,
+          "weight": 1.0,
+          "colliders": [
+            {
+              "colliderFileId": 13698932,
+              "type": "CapsuleCollider",
+              "center": [
+                -0.4020000000002242,
+                0.1559999942978746,
+                0.6099981126189142
+              ],
+              "rotation": [
+                -4.3817586e-15,
+                5.9604645e-08,
+                4.371139e-08,
+                1.0
+              ],
+              "size": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "radius": 0.17,
+              "axis": [
+                0.9999999999999946,
+                8.742277999999947e-08,
+                -1.1920929000000038e-07
+              ],
+              "halfSegment": 0.006542599999999982,
+              "trigger": true
+            }
+          ]
+        },
+        {
+          "partComponentFileId": 11411808,
+          "transformFileId": 467608,
+          "layer": 8,
+          "weight": 1.0,
+          "colliders": [
+            {
+              "colliderFileId": 6508667,
+              "type": "BoxCollider",
+              "center": [
+                0.006606890447343607,
+                0.2329611408240666,
+                0.5395847422511838
+              ],
+              "rotation": [
+                0.07785011,
+                0.0,
+                0.0,
+                0.9969651
+              ],
+              "size": [
+                0.45438713425302396,
+                0.13924880477827162,
+                0.63943815713325
+              ],
+              "radius": 0.0,
+              "axis": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "halfSegment": 0.0,
+              "trigger": false
+            }
+          ]
+        },
+        {
+          "partComponentFileId": 11414717,
+          "transformFileId": 458777,
+          "layer": 8,
+          "weight": 1.0,
+          "colliders": [
+            {
+              "colliderFileId": 13632491,
+              "type": "CapsuleCollider",
+              "center": [
+                0.4,
+                0.155999992549419,
+                -0.2020018849969
+              ],
+              "rotation": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ],
+              "size": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "radius": 0.17,
+              "axis": [
+                1.0,
+                0.0,
+                0.0
+              ],
+              "halfSegment": 0.006542599999999982,
+              "trigger": true
+            }
+          ]
+        },
+        {
+          "partComponentFileId": 11419193,
+          "transformFileId": 423964,
+          "layer": 8,
+          "weight": 1.0,
+          "colliders": [
+            {
+              "colliderFileId": 13642852,
+              "type": "CapsuleCollider",
+              "center": [
+                -0.40199999999999997,
+                0.155999992549419,
+                -0.2020018849969
+              ],
+              "rotation": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ],
+              "size": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "radius": 0.17,
+              "axis": [
+                1.0,
+                0.0,
+                0.0
+              ],
+              "halfSegment": 0.006542599999999982,
+              "trigger": true
+            }
+          ]
+        },
+        {
+          "partComponentFileId": 11420344,
+          "transformFileId": 491853,
+          "layer": 8,
+          "weight": 1.0,
+          "colliders": [
+            {
+              "colliderFileId": 6548018,
+              "type": "BoxCollider",
+              "center": [
+                -0.000526491610991,
+                0.263166402432582,
+                0.06497149341919499
+              ],
+              "rotation": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ],
+              "size": [
+                0.826781136403936,
+                0.3626061571266,
+                1.8452688877488
+              ],
+              "radius": 0.0,
+              "axis": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "halfSegment": 0.0,
+              "trigger": false
+            }
+          ]
+        },
+        {
+          "partComponentFileId": 11471191,
+          "transformFileId": 476772,
+          "layer": 8,
+          "weight": 1.0,
+          "colliders": [
+            {
+              "colliderFileId": 6544191,
+              "type": "BoxCollider",
+              "center": [
+                0.013326405716252798,
+                0.345691520714184,
+                0.06497148072363
+              ],
+              "rotation": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ],
+              "size": [
+                0.559643668610992,
+                0.318002739743145,
+                1.8452688877488
+              ],
+              "radius": 0.0,
+              "axis": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "halfSegment": 0.0,
+              "trigger": false
+            }
+          ]
+        },
+        {
+          "partComponentFileId": 11480656,
+          "transformFileId": 473880,
+          "layer": 8,
+          "weight": 1.0,
+          "colliders": [
+            {
+              "colliderFileId": 6528164,
+              "type": "BoxCollider",
+              "center": [
+                0.0044186245552269195,
+                0.57616094745138,
+                -0.08880361635580801
+              ],
+              "rotation": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ],
+              "size": [
+                0.38876622687643997,
+                0.089795159944575,
+                0.387010016514375
+              ],
+              "radius": 0.0,
+              "axis": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "halfSegment": 0.0,
+              "trigger": false
+            }
+          ]
+        },
+        {
+          "partComponentFileId": 11485106,
+          "transformFileId": 496482,
+          "layer": 8,
+          "weight": 1.0,
+          "colliders": [
+            {
+              "colliderFileId": 6594303,
+              "type": "BoxCollider",
+              "center": [
+                -0.003011499091114,
+                0.47772539671418396,
+                -0.0732004153036575
+              ],
+              "rotation": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ],
+              "size": [
+                0.44164175285988794,
+                0.318002739743145,
+                0.62602011292023
+              ],
+              "radius": 0.0,
+              "axis": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "halfSegment": 0.0,
+              "trigger": false
+            }
+          ]
+        },
+        {
+          "partComponentFileId": 11487586,
+          "transformFileId": 400119,
+          "layer": 8,
+          "weight": 1.0,
+          "colliders": [
+            {
+              "colliderFileId": 13664506,
+              "type": "CapsuleCollider",
+              "center": [
+                0.4,
+                0.155999992549419,
+                0.6099981150031
+              ],
+              "rotation": [
+                -1.7763568e-15,
+                0.0,
+                0.0,
+                1.0
+              ],
+              "size": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "radius": 0.17,
+              "axis": [
+                1.0,
+                0.0,
+                0.0
+              ],
+              "halfSegment": 0.006542599999999982,
+              "trigger": true
+            }
+          ]
+        },
+        {
+          "partComponentFileId": 11490945,
+          "transformFileId": 446705,
+          "layer": 8,
+          "weight": 1.0,
+          "colliders": [
+            {
+              "colliderFileId": 13600539,
+              "type": "CapsuleCollider",
+              "center": [
+                0.3999999999996688,
+                0.1560000083779572,
+                -0.5740018797515332
+              ],
+              "rotation": [
+                2.1286556e-14,
+                8.742278e-08,
+                -2.6380897e-07,
+                1.0
+              ],
+              "size": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "radius": 0.17,
+              "axis": [
+                0.9999999999999227,
+                -5.276179399999963e-07,
+                -1.7484556000001122e-07
+              ],
+              "halfSegment": 0.006542599999999982,
+              "trigger": true
+            }
+          ]
+        },
+        {
+          "partComponentFileId": 11491429,
+          "transformFileId": 481733,
+          "layer": 8,
+          "weight": 1.0,
+          "colliders": [
+            {
+              "colliderFileId": 6530575,
+              "type": "BoxCollider",
+              "center": [
+                -0.007099897270064399,
+                0.3315259832164245,
+                -0.513794134547184
+              ],
+              "rotation": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ],
+              "size": [
+                0.506106602178632,
+                0.384845651202045,
+                0.444474841063425
+              ],
+              "radius": 0.0,
+              "axis": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "halfSegment": 0.0,
+              "trigger": false
+            }
+          ]
+        },
+        {
+          "partComponentFileId": 11496281,
+          "transformFileId": 410883,
+          "layer": 8,
+          "weight": 1.0,
+          "colliders": [
+            {
+              "colliderFileId": 13622647,
+              "type": "CapsuleCollider",
+              "center": [
+                -0.4020000000002242,
+                0.1559999942978746,
+                -0.5740018873810857
+              ],
+              "rotation": [
+                -4.3817586e-15,
+                5.9604645e-08,
+                4.371139e-08,
+                1.0
+              ],
+              "size": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "radius": 0.17,
+              "axis": [
+                0.9999999999999946,
+                8.742277999999947e-08,
+                -1.1920929000000038e-07
+              ],
+              "halfSegment": 0.006542599999999982,
+              "trigger": true
+            }
           ]
         }
       ]

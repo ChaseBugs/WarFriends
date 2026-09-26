@@ -33,7 +33,7 @@ def vector(value):
 def vector2(value):
  d={k:float(v) for k,v in re.findall(r'([xy]): (-?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?)',value)}
  return [d[k] for k in 'xy']
-def world(blocks,tid):
+def world_transform(blocks,tid):
  chain=[]
  while tid:
   kind,b=blocks[tid]
@@ -56,6 +56,10 @@ def world(blocks,tid):
   q=[qd[k] for k in 'xyzw'];sc=vector(direct(b,'m_LocalScale'))
   off=rotate(rot,[a*c for a,c in zip(local,scale)]);pos=[a+b for a,b in zip(pos,off)]
   rot=mul(rot,q);scale=[a*b for a,b in zip(scale,sc)]
+ return pos,rot,scale
+
+def world(blocks,tid):
+ pos,rot,_=world_transform(blocks,tid)
  return pos,rot
 
 def component_position(blocks,cid):
@@ -63,6 +67,47 @@ def component_position(blocks,cid):
  transforms=[i for i,(kind,b) in blocks.items() if kind==4 and ref(b,'m_GameObject')==game_object]
  if len(transforms)!=1: raise ValueError('passenger point has no unique transform')
  return transforms[0],world(blocks,transforms[0])[0]
+
+def vehicle_body_parts(blocks,scripts):
+ rows=[]
+ for part_id in sorted(i for i,n in scripts.items() if n=='DestroyableObjectpart'):
+  part=blocks[part_id][1];game_object=ref(part,'m_GameObject')
+  game=blocks[game_object][1];layer=int(number(game,'m_Layer'))
+  transform_ids=[i for i,(kind,b) in blocks.items() if kind==4 and ref(b,'m_GameObject')==game_object]
+  if len(transform_ids)!=1: raise ValueError('vehicle body part has no unique transform')
+  pos,rotation,scale=world_transform(blocks,transform_ids[0])
+  weight=number(part,'weight')
+  collider_ids=[]
+  components=re.search(r'^  m_Component:\r?\n(.*?)(?=^  m_Layer:)',game,re.M|re.S)
+  if not components: raise ValueError('vehicle body part has no components')
+  for collider_id in map(int,re.findall(r'\{fileID: (\d+)\}',components.group(1))):
+   if collider_id not in blocks or blocks[collider_id][0] not in (65,135,136): continue
+   kind,collider=blocks[collider_id]
+   if direct(collider,'m_Enabled')!='1': continue
+   local_center=vector(direct(collider,'m_Center'))
+   center=[a+b for a,b in zip(pos,rotate(rotation,[a*b for a,b in zip(local_center,scale)]))]
+   row={'colliderFileId':collider_id,'type':{65:'BoxCollider',135:'SphereCollider',136:'CapsuleCollider'}[kind],
+    'center':center,'rotation':rotation,'size':[0.,0.,0.],'radius':0.,'axis':[0.,0.,0.],
+    'halfSegment':0.,'trigger':direct(collider,'m_IsTrigger')=='1'}
+   absolute=[abs(x) for x in scale]
+   if kind==65:
+    row['size']=[a*b for a,b in zip(vector(direct(collider,'m_Size')),absolute)]
+   elif kind==135:
+    row['radius']=number(collider,'m_Radius')*max(absolute)
+   else:
+    direction=int(number(collider,'m_Direction'))
+    if direction not in (0,1,2): raise ValueError('invalid capsule direction')
+    perpendicular=[absolute[i] for i in range(3) if i!=direction]
+    radius=number(collider,'m_Radius')*max(perpendicular)
+    height=number(collider,'m_Height')*absolute[direction]
+    local_axis=[[1.,0.,0.],[0.,1.,0.],[0.,0.,1.]][direction]
+    row['radius']=radius;row['axis']=rotate(rotation,local_axis)
+    row['halfSegment']=max(0.,height*.5-radius)
+   collider_ids.append(row)
+  if not collider_ids: raise ValueError(f'vehicle destroyable part {part_id} has no supported collider')
+  rows.append({'partComponentFileId':part_id,'transformFileId':transform_ids[0],
+   'layer':layer,'weight':weight,'colliders':collider_ids})
+ return rows
 
 def main():
  guid_to_name={}
@@ -146,11 +191,11 @@ def main():
     'transformFileId':transform_id,'position':position})
   out.append({'unitId':unit,'prefab':'Assets/GameObject/'+prefab_name,
    'sha256':hashlib.sha256(raw).hexdigest(),'behaviorType':root_type,'roles':role_rows,
-   'passengers':passengers})
- artifact={'version':4,'vehicles':out};serialized=json.dumps(artifact,indent=2)+'\n'
+   'passengers':passengers,'bodyParts':vehicle_body_parts(blocks,scripts)})
+ artifact={'version':5,'armoredVehicleShotCoefficient':0.33,'vehicles':out};serialized=json.dumps(artifact,indent=2)+'\n'
  if sys.argv[1:]==['--check']:
   if not OUTPUT.exists() or OUTPUT.read_text()!=serialized: raise ValueError('ground vehicle weapon artifact is stale')
  elif not sys.argv[1:]: OUTPUT.write_text(serialized)
  else: raise ValueError('usage: extract_ground_vehicle_weapons.py [--check]')
- print(f'{len(out)} vehicles, {sum(len(v["roles"]) for v in out)} turrets, {sum(len(r["weapons"]) for v in out for r in v["roles"])} weapons')
+ print(f'{len(out)} vehicles, {sum(len(v["roles"]) for v in out)} turrets, {sum(len(r["weapons"]) for v in out for r in v["roles"])} weapons, {sum(len(v["bodyParts"]) for v in out)} body parts')
 if __name__=='__main__':main()

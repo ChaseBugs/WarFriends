@@ -19,16 +19,22 @@ public sealed record GroundVehicleTurret(string Role,int TurretComponentFileId,s
     int SerializedTargetMask,float SecondaryDelay,int FakeShotEvery,IReadOnlyList<GroundVehicleWeapon> Weapons);
 public sealed record GroundVehiclePassengerBinding(string Role,int PointComponentFileId,
     int TransformFileId,Vector3 Position);
+public sealed record GroundVehicleBodyCollider(int ColliderFileId,PlayerHitboxKind Kind,
+    Vector3 Center,Quaternion Rotation,Vector3 Size,float Radius,Vector3 Axis,float HalfSegment,bool Trigger);
+public sealed record GroundVehicleBodyPart(int PartComponentFileId,int TransformFileId,int Layer,float Weight,
+    IReadOnlyList<GroundVehicleBodyCollider> Colliders);
 public sealed record GroundVehicleWeaponRig(string UnitId,string Prefab,string Sha256,string BehaviorType,
-    IReadOnlyList<GroundVehicleTurret> Roles,IReadOnlyList<GroundVehiclePassengerBinding> Passengers);
+    IReadOnlyList<GroundVehicleTurret> Roles,IReadOnlyList<GroundVehiclePassengerBinding> Passengers,
+    IReadOnlyList<GroundVehicleBodyPart> BodyParts);
 
 /// <summary>Immutable turret and muzzle evidence extracted from the four 1.4.0 ground-vehicle prefabs.</summary>
 public sealed class GroundVehicleWeaponCatalog
 {
-    private sealed class Root {public int Version{get;set;} public VehicleDto[] Vehicles{get;set;}=[];}
+    private sealed class Root {public int Version{get;set;}public float ArmoredVehicleShotCoefficient{get;set;}
+        public VehicleDto[] Vehicles{get;set;}=[];}
     private sealed class VehicleDto {public string UnitId{get;set;}="";public string Prefab{get;set;}="";
         public string Sha256{get;set;}="";public string BehaviorType{get;set;}="";public TurretDto[] Roles{get;set;}=[];
-        public PassengerDto[] Passengers{get;set;}=[];}
+        public PassengerDto[] Passengers{get;set;}=[];public BodyPartDto[] BodyParts{get;set;}=[];}
     private sealed class PassengerDto {public string Role{get;set;}="";public int PointComponentFileId{get;set;}
         public int TransformFileId{get;set;}public float[] Position{get;set;}=[];}
     private sealed class TurretDto {public string Role{get;set;}="";public int TurretComponentFileId{get;set;}
@@ -49,6 +55,11 @@ public sealed class GroundVehicleWeaponCatalog
         public CurveDto[] RotationProfile{get;set;}=[];public float BaseRotationMagnitude{get;set;}}
     private sealed class CurveDto {public float Time{get;set;}public float Value{get;set;}
         public float InTangent{get;set;}public float OutTangent{get;set;}}
+    private sealed class BodyPartDto {public int PartComponentFileId{get;set;}public int TransformFileId{get;set;}
+        public int Layer{get;set;}public float Weight{get;set;}public ColliderDto[] Colliders{get;set;}=[];}
+    private sealed class ColliderDto {public int ColliderFileId{get;set;}public string Type{get;set;}="";
+        public float[] Center{get;set;}=[];public float[] Rotation{get;set;}=[];public float[] Size{get;set;}=[];
+        public float Radius{get;set;}public float[] Axis{get;set;}=[];public float HalfSegment{get;set;}public bool Trigger{get;set;}}
     private static readonly (string Unit,string Prefab,string Behavior,int Roles)[] Expected=
     [
         ("ID_UNIT-HUMVEE","Assets/GameObject/Humvee.prefab","AICar",2),
@@ -66,8 +77,9 @@ public sealed class GroundVehicleWeaponCatalog
         };
     private readonly IReadOnlyDictionary<string,GroundVehicleWeaponRig> rigs;
     public string Revision { get; }
+    public float ArmoredVehicleShotCoefficient { get; }
     private GroundVehicleWeaponCatalog(string revision,Dictionary<string,GroundVehicleWeaponRig> rigs)
-    {Revision=revision;this.rigs=rigs;}
+    {Revision=revision;this.rigs=rigs;ArmoredVehicleShotCoefficient=.33f;}
     public GroundVehicleWeaponRig For(string unitId)=>rigs.TryGetValue(unitId,out var rig)?rig:
         throw new ArgumentOutOfRangeException(nameof(unitId));
 
@@ -89,6 +101,26 @@ public sealed class GroundVehicleWeaponCatalog
             Quaternion.CreateFromAxisAngle(Vector3.UnitY,yaw));
     }
 
+    internal IReadOnlyList<DynamicShotTarget> PlaceBody(string unitId,ulong entityId,
+        Vector3 entityPosition,Vector3 planarForward)
+    {
+        if(entityId==0||!PlayerHitbox.Finite(entityPosition)||!PlayerHitbox.Finite(planarForward))
+            throw new InvalidDataException("Invalid ground vehicle body placement.");
+        planarForward.Y=0;
+        if(planarForward.LengthSquared()<1e-10f)throw new InvalidDataException("Ground vehicle body has no planar facing.");
+        float yaw=MathF.Atan2(planarForward.X,planarForward.Z);
+        var facing=Quaternion.CreateFromAxisAngle(Vector3.UnitY,yaw);
+        return For(unitId).BodyParts.SelectMany(part=>part.Colliders.Select(c=>
+        {
+            var center=entityPosition+Vector3.Transform(c.Center,facing);
+            var rotation=Quaternion.Normalize(facing*c.Rotation);
+            var axis=c.Axis==Vector3.Zero?Vector3.Zero:Vector3.Normalize(Vector3.Transform(c.Axis,facing));
+            var hitbox=new PlayerHitbox($"{For(unitId).Prefab}#{part.PartComponentFileId}/{c.ColliderFileId}",
+                c.Kind,part.Weight,center,c.Size,rotation,c.Radius,axis,c.HalfSegment,true,true);
+            return new DynamicShotTarget(entityId,part.PartComponentFileId,part.Layer,hitbox);
+        })).ToArray();
+    }
+
     public static GroundVehicleWeaponCatalog Load(string path,string expectedRevision)
     {
         byte[] bytes=File.ReadAllBytes(path);
@@ -99,7 +131,7 @@ public sealed class GroundVehicleWeaponCatalog
             {PropertyNameCaseInsensitive=true,UnmappedMemberHandling=JsonUnmappedMemberHandling.Disallow})??
             throw new InvalidDataException("Missing ground vehicle weapon artifact.");}
         catch(JsonException e){throw new InvalidDataException("Malformed ground vehicle weapon artifact.",e);}
-        if(root.Version!=4||root.Vehicles.Length!=Expected.Length)
+        if(root.Version!=5||root.ArmoredVehicleShotCoefficient!=.33f||root.Vehicles.Length!=Expected.Length)
             throw new InvalidDataException("Incomplete ground vehicle weapon artifact.");
         var result=new Dictionary<string,GroundVehicleWeaponRig>(StringComparer.Ordinal);
         int turretCount=0,weaponCount=0;
@@ -191,10 +223,39 @@ public sealed class GroundVehicleWeaponCatalog
                 passengers[p]=new(passenger.Role,passenger.PointComponentFileId,
                     passenger.TransformFileId,Vector(passenger.Position));
             }
+            int expectedParts=source.UnitId switch {"ID_UNIT-HUMVEE"=>8,"ID_UNIT-TANK"=>12,
+                "ID_UNIT-BUGGY"=>8,"ID_UNIT-TRANSPORTER"=>12,_=>0};
+            if(source.BodyParts.Length!=expectedParts)throw new InvalidDataException("Ground vehicle body topology changed.");
+            var bodyParts=new GroundVehicleBodyPart[source.BodyParts.Length];var partIds=new HashSet<int>();
+            var colliderIds=new HashSet<int>();int colliderCount=0;
+            for(int b=0;b<bodyParts.Length;b++)
+            {
+                var part=source.BodyParts[b];
+                if(part.PartComponentFileId<=0||part.TransformFileId<=0||!partIds.Add(part.PartComponentFileId)||
+                   part.Layer is <0 or >31||part.Weight!=1||part.Colliders.Length is <1 or >2)
+                    throw new InvalidDataException("Invalid ground vehicle body part.");
+                var colliders=new GroundVehicleBodyCollider[part.Colliders.Length];
+                for(int c=0;c<colliders.Length;c++)
+                {
+                    var collider=part.Colliders[c];
+                    if(collider.ColliderFileId<=0||!colliderIds.Add(collider.ColliderFileId)||
+                       !Enum.TryParse<PlayerHitboxKind>(collider.Type.Replace("Collider",""),out var kind))
+                        throw new InvalidDataException("Invalid ground vehicle body collider.");
+                    var center=Vector(collider.Center);var rotation=Rotation(collider.Rotation);
+                    var size=Vector(collider.Size);var axis=Vector(collider.Axis);
+                    _=new PlayerHitbox("validation",kind,part.Weight,center,size,rotation,
+                        collider.Radius,axis,collider.HalfSegment);
+                    colliders[c]=new(collider.ColliderFileId,kind,center,rotation,size,
+                        collider.Radius,axis,collider.HalfSegment,collider.Trigger);colliderCount++;
+                }
+                bodyParts[b]=new(part.PartComponentFileId,part.TransformFileId,part.Layer,part.Weight,
+                    Array.AsReadOnly(colliders));
+            }
             result.Add(source.UnitId,new(source.UnitId,source.Prefab,source.Sha256,source.BehaviorType,
-                Array.AsReadOnly(roles),Array.AsReadOnly(passengers)));
+                Array.AsReadOnly(roles),Array.AsReadOnly(passengers),Array.AsReadOnly(bodyParts)));
         }
-        if(turretCount!=7||weaponCount!=9)throw new InvalidDataException("Incomplete ground vehicle weapon graph.");
+        if(turretCount!=7||weaponCount!=9||result.Values.Sum(x=>x.BodyParts.Sum(p=>p.Colliders.Count))!=41)
+            throw new InvalidDataException("Incomplete ground vehicle weapon graph.");
         return new(expectedRevision,result);
     }
     private static Vector3 Vector(float[] value)
@@ -204,5 +265,13 @@ public sealed class GroundVehicleWeaponCatalog
         if(!PlayerHitbox.Finite(result)||Math.Abs(result.X)>100||Math.Abs(result.Y)>100||Math.Abs(result.Z)>100)
             throw new InvalidDataException("Invalid vehicle weapon coordinate.");
         return result;
+    }
+    private static Quaternion Rotation(float[] value)
+    {
+        if(value.Length!=4)throw new InvalidDataException("Invalid vehicle body rotation.");
+        var q=new Quaternion(value[0],value[1],value[2],value[3]);
+        if(!float.IsFinite(q.LengthSquared())||Math.Abs(q.LengthSquared()-1)>.0002f)
+            throw new InvalidDataException("Invalid vehicle body rotation.");
+        return Quaternion.Normalize(q);
     }
 }

@@ -5,7 +5,8 @@ using System.Text;
 namespace War.BattleServer;
 
 internal sealed record CollisionPlayer(string PlayerId, PlayerCollisionModel Pose);
-internal sealed record ShotCollision(float Distance, Vector3 Position, string SourcePath, string? PlayerId, float PartWeight, bool Static = false,string? DynamicOwner=null,int? ColliderIndex=null);
+internal sealed record DynamicShotTarget(ulong EntityId,int PartComponentFileId,int Layer,PlayerHitbox Hitbox);
+internal sealed record ShotCollision(float Distance, Vector3 Position, string SourcePath, string? PlayerId, float PartWeight, bool Static = false,string? DynamicOwner=null,int? ColliderIndex=null,ulong? DynamicEntityId=null,int? DynamicPartId=null);
 
 // Input poses come exclusively from host animation/pose authority. This class has
 // no network adapter and no client-submitted target player or damage parameter.
@@ -16,12 +17,13 @@ internal sealed class ShotCollisionWorld
     private readonly Func<string,bool>? dynamicEnabled;
     private readonly Func<int,bool>? colliderEnabled;
     private readonly Func<int,int,int>? runtimeLayer;
+    private readonly Func<string,IReadOnlyList<DynamicShotTarget>>? dynamicTargets;
     internal ShotCollisionWorld(RecoveredBattleMap? map, IEnumerable<CollisionPlayer> players,
         Func<string,bool>? dynamicEnabled=null,Func<int,bool>? colliderEnabled=null,
-        Func<int,int,int>? runtimeLayer=null)
+        Func<int,int,int>? runtimeLayer=null,Func<string,IReadOnlyList<DynamicShotTarget>>? dynamicTargets=null)
     {
         this.map = map;this.dynamicEnabled=dynamicEnabled;this.colliderEnabled=colliderEnabled;
-        this.runtimeLayer=runtimeLayer;
+        this.runtimeLayer=runtimeLayer;this.dynamicTargets=dynamicTargets;
         this.players = players.Take(3).ToArray();
         if (this.players.Length != 2 || this.players.Any(p => p == null || p.Pose == null || p.Pose.Role != "gameplay" ||
             !Guid.TryParseExact(p.PlayerId, "N", out _) || p.PlayerId != p.PlayerId.ToLowerInvariant()) ||
@@ -45,6 +47,17 @@ internal sealed class ShotCollisionWorld
             if (hit != null && (nearest == null || hit.Distance < nearest.Distance))
                 nearest = new(hit.Distance, hit.Position, hit.PartPath, player.PlayerId, hit.Weight);
         }
+        if(dynamicTargets!=null)
+            foreach(var target in dynamicTargets(shooterId))
+            {
+                if(target==null||target.EntityId==0||target.PartComponentFileId<=0||target.Layer is <0 or >31||
+                   target.Hitbox==null)throw new InvalidDataException("Invalid host dynamic shot target.");
+                if((mapLayerMask&(1u<<target.Layer))==0)continue;
+                var distance=target.Hitbox.Raycast(origin,direction,range);
+                if(distance.HasValue&&(nearest==null||distance.Value<nearest.Distance))
+                    nearest=new(distance.Value,origin+direction*distance.Value,target.Hitbox.SourcePath,null,
+                        target.Hitbox.Weight,DynamicEntityId:target.EntityId,DynamicPartId:target.PartComponentFileId);
+            }
         return nearest;
     }
     internal IReadOnlyList<ShotgunCollider> OverlapEnemy(string shooterId,Vector3 origin,float radius)

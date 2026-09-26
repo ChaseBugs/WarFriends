@@ -47,6 +47,50 @@ public sealed partial class MatchEngine
     private readonly Dictionary<ulong,int> rusherSlotByEntity=[];
     private readonly Dictionary<ulong,ArmyVehicleRouteMotion> vehicleRouteMotions=[];
     private readonly Dictionary<ulong,Vector3> groundVehicleFacing=[];
+
+    private IReadOnlyList<DynamicShotTarget> GroundVehicleShotTargets(string shooterId)
+    {
+        if(vehicles==null||groundVehicleWeapons==null||phase!=BattlePhase.Running)return [];
+        var shooter=Find(shooterId)??throw new InvalidDataException("Dynamic collision shooter disappeared.");
+        var result=new List<DynamicShotTarget>();
+        foreach(var vehicle in vehicles.Snapshot())
+        {
+            if(vehicle.OwnerPlayerId==shooterId)continue;
+            var owner=Find(vehicle.OwnerPlayerId)??throw new InvalidDataException("Vehicle collision owner disappeared.");
+            if(owner.Definition.Fraction==shooter.Definition.Fraction)continue;
+            if(!groundVehicleFacing.TryGetValue(vehicle.EntityId,out var facing))
+                throw new InvalidDataException("Vehicle collision facing disappeared.");
+            result.AddRange(groundVehicleWeapons.PlaceBody(vehicle.UnitId,vehicle.EntityId,vehicle.Position,facing));
+        }
+        return result;
+    }
+
+    internal void ApplyGroundVehicleProjectileImpact(string shooterId,ulong vehicleId,int partId,float rawDamage)
+    {
+        if(vehicles==null||groundVehicleWeapons==null||!vehicles.TryGet(vehicleId,out var vehicle)||vehicle==null||
+           !activeArmyEntities.TryGetValue(vehicleId,out var army)||army.UnitId!=vehicle.UnitId||
+           army.OwnerPlayerId!=vehicle.OwnerPlayerId)return;
+        var shooter=Find(shooterId)??throw new InvalidDataException("Vehicle impact shooter disappeared.");
+        var owner=Find(vehicle.OwnerPlayerId)??throw new InvalidDataException("Vehicle impact owner disappeared.");
+        if(shooter.Definition.Fraction==owner.Definition.Fraction)
+            throw new InvalidDataException("Friendly vehicle entered an enemy projectile collision trace.");
+        var part=groundVehicleWeapons.For(vehicle.UnitId).BodyParts.SingleOrDefault(x=>x.PartComponentFileId==partId)
+            ??throw new InvalidDataException("Vehicle impact named an unknown source body part.");
+        float damage=rawDamage*part.Weight*groundVehicleWeapons.ArmoredVehicleShotCoefficient;
+        if(!float.IsFinite(damage)||damage<=0||damage>10_000_000)
+            throw new InvalidDataException("Vehicle projectile damage is outside host bounds.");
+        float before=ArmyHealth(vehicleId)??throw new InvalidDataException("Vehicle impact lacks shared health authority.");
+        if(!ApplyArmyHostDamage(vehicleId,damage))return;
+        shooter.ConfirmedEnemyHits=checked(shooter.ConfirmedEnemyHits+1);
+        if(activeArmyEntities.ContainsKey(vehicleId))
+        {
+            float after=ArmyHealth(vehicleId)??throw new InvalidDataException("Vehicle health disappeared after nonlethal impact.");
+            float healthDamage=before-after;
+            if(healthDamage>0&&(!vehicles.TryDamage(vehicleId,healthDamage,out var applied,out var destroyed)||
+               destroyed||Math.Abs(applied-healthDamage)>.001f))
+                throw new InvalidDataException("Vehicle registry health diverged from shared army vitality.");
+        }
+    }
     private readonly Dictionary<ulong,float> groundVehicleShotSpeed=[];
     private readonly Dictionary<ulong,BuggyCannonAttackState> buggyCannonAttacks=[];
     private readonly Dictionary<ulong,IReadOnlyDictionary<string,VehiclePassengerState>> vehiclePassengers=[];

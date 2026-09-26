@@ -746,10 +746,35 @@ internal static class CombatContentTests
               buggyRig.Passengers.Select(x=>x.Role).SequenceEqual(["driver","co-driver"])&&
               transporterRig.Passengers.Select(x=>x.Role).SequenceEqual(["co-driver"])&&
               new[]{humveeRig,tankRig,buggyRig,transporterRig}.Sum(x=>x.Passengers.Count)==6&&
+              content.GroundVehicleWeapons.ArmoredVehicleShotCoefficient==.33f&&
+              humveeRig.BodyParts.Count==8&&tankRig.BodyParts.Count==12&&
+              buggyRig.BodyParts.Count==8&&transporterRig.BodyParts.Count==12&&
+              new[]{humveeRig,tankRig,buggyRig,transporterRig}.Sum(x=>
+                  x.BodyParts.Sum(p=>p.Colliders.Count))==41&&
+              new[]{humveeRig,tankRig,buggyRig,transporterRig}.SelectMany(x=>x.BodyParts)
+                  .All(p=>p.Weight==1&&
+                      (content.Bindings.BulletMask(1)&(1u<<p.Layer))!=0&&
+                      (content.Bindings.BulletMask(2)&(1u<<p.Layer))!=0)&&
               new[]{humveeRig,tankRig,buggyRig,transporterRig}.SelectMany(r=>r.Roles)
                   .SelectMany(r=>r.Weapons).All(w=>w.ProjectileGuid is
                       "855689762fa6e774aaee190652b08c6f" or "60be7eeb14f5a354c99c9ce23dbc5554"),
               "four vehicle prefabs pin seven turret roles, nine weapon paths, cadence and projectile identity");
+        var placedHumvee=content.GroundVehicleWeapons.PlaceBody("ID_UNIT-HUMVEE",77,
+            Vector3.Zero,Vector3.UnitZ);
+        var bodyTarget=placedHumvee.First(x=>x.Hitbox.Kind==PlayerHitboxKind.Box);
+        var rayOrigin=bodyTarget.Hitbox.Center+Vector3.Transform(Vector3.UnitX,
+            bodyTarget.Hitbox.Rotation)*10;
+        const string bodyShooter="cccccccccccccccccccccccccccccccc";
+        const string bodyOpponent="dddddddddddddddddddddddddddddddd";
+        var bodyWorld=new ShotCollisionWorld(null,
+        [
+            new(bodyShooter,referencePose.Place(new(100,0,100),Quaternion.Identity).Collision),
+            new(bodyOpponent,referencePose.Place(new(110,0,100),Quaternion.Identity).Collision)
+        ],dynamicTargets:_=>placedHumvee);
+        var bodyHit=bodyWorld.Raycast(bodyShooter,rayOrigin,bodyTarget.Hitbox.Center-rayOrigin,20,uint.MaxValue);
+        Check(bodyHit is {DynamicEntityId:77,DynamicPartId:var sourcePart,PlayerId:null}&&
+              sourcePart==bodyTarget.PartComponentFileId&&bodyHit.SourcePath==bodyTarget.Hitbox.SourcePath,
+              "player projectile ray selects the nearest source-pinned vehicle body collider");
         Check(Vector3.Distance(humveeRig.Roles[0].Weapons[0].MuzzlePosition,
                   new Vector3(-.10999999f,.68667924f,.14323565f))<.00001f&&
               Vector3.Distance(content.GroundVehicleWeapons.RestMuzzleOrigin("ID_UNIT-HUMVEE","primary",0,
@@ -807,6 +832,12 @@ internal static class CombatContentTests
             Reject(()=>GroundVehicleWeaponCatalog.Load(vehicleWeaponTemp,damagedHash));
             damaged=JsonNode.Parse(File.ReadAllText(vehicleWeaponPath))!;
             damaged["vehicles"]![2]!["passengers"]![1]!["role"]="driver";
+            File.WriteAllText(vehicleWeaponTemp,damaged.ToJsonString());
+            damagedHash=Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(vehicleWeaponTemp)));
+            Reject(()=>GroundVehicleWeaponCatalog.Load(vehicleWeaponTemp,damagedHash));
+            damaged=JsonNode.Parse(File.ReadAllText(vehicleWeaponPath))!;
+            damaged["vehicles"]![0]!["bodyParts"]![1]!["colliders"]![0]!["colliderFileId"]=
+                damaged["vehicles"]![0]!["bodyParts"]![0]!["colliders"]![0]!["colliderFileId"]!.GetValue<int>();
             File.WriteAllText(vehicleWeaponTemp,damaged.ToJsonString());
             damagedHash=Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(vehicleWeaponTemp)));
             Reject(()=>GroundVehicleWeaponCatalog.Load(vehicleWeaponTemp,damagedHash));
@@ -2638,6 +2669,14 @@ internal static class CombatContentTests
               Math.Abs(carFacing.Y)<.00001f&&Math.Abs(carFacing.Length()-1)<.00001f&&
               staleMatch.Snapshot().Vehicles.Any(v=>v.EntityId==firstCar.EntityKey&&v.UnitId==firstCar.UnitId),
               "deployed Humvee reserves its source car route and publishes fixed-tick motion and facing");
+        float vehicleHealthBefore=firstCar.Health;
+        int humveeBodyPart=content.GroundVehicleWeapons.For(firstCar.UnitId).BodyParts[0].PartComponentFileId;
+        staleMatch.ApplyGroundVehicleProjectileImpact(helicopterOwner,firstCar.EntityKey,humveeBodyPart,100);
+        var damagedCar=staleMatch.ArmyEntityBatch(soldierOwner,0,0).Entities.Single();
+        Check(Math.Abs(damagedCar.Health-(vehicleHealthBefore-33))<.001f&&
+              Math.Abs(staleMatch.Snapshot().Vehicles.Single(v=>v.EntityId==firstCar.EntityKey).Health-
+                  damagedCar.Health)<.001f,
+              "host-selected Humvee body hit applies the recovered 0.33 armor coefficient to shared vehicle health");
         var liveGunner=staleMatch.Snapshot().Vehicles.Single(v=>v.EntityId==firstCar.EntityKey)
             .Parts.Single(p=>p.PartId=="crew:gunner");
         Check(liveGunner.Active&&liveGunner.Health==875.34f&&liveGunner.PointComponentFileId==11462687&&
