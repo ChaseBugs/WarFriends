@@ -1,0 +1,4803 @@
+{
+  "version": 1,
+  "client": "1.4.0",
+  "units": [
+    {
+      "unitId": "ID_UNIT-HELICOPTER",
+      "source": "Assets/GameObject/Helicopter.prefab",
+      "sha256": "e91c07c1552988601ada89c769056354ebd5d94ea88356eeacc5fa3f3fb76408",
+      "rootTransformFileId": 499539,
+      "components": [
+        {
+          "componentFileId": 11475216,
+          "gameObjectFileId": 147589,
+          "scriptGuid": "90787227c246a9a0d8c713d95a56da15",
+          "scriptType": "Helicopter"
+        },
+        {
+          "componentFileId": 11449862,
+          "gameObjectFileId": 147589,
+          "scriptGuid": "f19ea4a15c3ca43dcc180d756f7a82b3",
+          "scriptType": "PhotonView"
+        },
+        {
+          "componentFileId": 11414637,
+          "gameObjectFileId": 147589,
+          "scriptGuid": "d94d9d4266081e75df24b8687850c33d",
+          "scriptType": "DestroyableObjectMultipleParts"
+        },
+        {
+          "componentFileId": 11492373,
+          "gameObjectFileId": 147589,
+          "scriptGuid": "a551e0a4c5224adf6c7c791cacc35f6a",
+          "scriptType": "ArmyUnit3DModel"
+        },
+        {
+          "componentFileId": 11409309,
+          "gameObjectFileId": 147589,
+          "scriptGuid": "3cf4d7761af3ce98d7a08bebfe4e8861",
+          "scriptType": "GameShootableEntity"
+        },
+        {
+          "componentFileId": 11438915,
+          "gameObjectFileId": 147589,
+          "scriptGuid": "0dfd54bd9851b07f2dc75544b2e170c3",
+          "scriptType": "ModelAttachments"
+        },
+        {
+          "componentFileId": 11486885,
+          "gameObjectFileId": 147589,
+          "scriptGuid": "c452d4ec3c54130d0b8b40a7db84146e",
+          "scriptType": "VehicleVisuals"
+        },
+        {
+          "componentFileId": 11486667,
+          "gameObjectFileId": 147589,
+          "scriptGuid": "1ea9bd9ef3acf8cc028548b0326497c0",
+          "scriptType": "UnitModelLoader"
+        },
+        {
+          "componentFileId": 11468293,
+          "gameObjectFileId": 147589,
+          "scriptGuid": "486a9acbd9d8b9c34ac18b91e89b7bef",
+          "scriptType": "SkillShotController"
+        },
+        {
+          "componentFileId": 11438461,
+          "gameObjectFileId": 109266,
+          "scriptGuid": "ded234c69ec0839e2844764f96d07e0d",
+          "scriptType": "EnemyPointHelicopter"
+        },
+        {
+          "componentFileId": 11450766,
+          "gameObjectFileId": 105782,
+          "scriptGuid": "ded234c69ec0839e2844764f96d07e0d",
+          "scriptType": "EnemyPointHelicopter"
+        },
+        {
+          "componentFileId": 11481434,
+          "gameObjectFileId": 161526,
+          "scriptGuid": "ded234c69ec0839e2844764f96d07e0d",
+          "scriptType": "EnemyPointHelicopter"
+        },
+        {
+          "componentFileId": 11454267,
+          "gameObjectFileId": 154010,
+          "scriptGuid": "ded234c69ec0839e2844764f96d07e0d",
+          "scriptType": "EnemyPointHelicopter"
+        },
+        {
+          "componentFileId": 11412170,
+          "gameObjectFileId": 184216,
+          "scriptGuid": "ded234c69ec0839e2844764f96d07e0d",
+          "scriptType": "EnemyPointHelicopter"
+        },
+        {
+          "componentFileId": 11411857,
+          "gameObjectFileId": 143158,
+          "scriptGuid": "ded234c69ec0839e2844764f96d07e0d",
+          "scriptType": "EnemyPointHelicopter"
+        },
+        {
+          "componentFileId": 11499861,
+          "gameObjectFileId": 131434,
+          "scriptGuid": "588f2f712fbccb3dc98b538e56612279",
+          "scriptType": "EnemyPointVehicle"
+        },
+        {
+          "componentFileId": 11439084,
+          "gameObjectFileId": 196012,
+          "scriptGuid": "2b87d014f018a182ff3631ab01ac442e",
+          "weight": 1.0,
+          "ownerDestroyableObject": 0,
+          "scriptType": "DestroyableObjectpart"
+        },
+        {
+          "componentFileId": 11466439,
+          "gameObjectFileId": 177035,
+          "scriptGuid": "2b87d014f018a182ff3631ab01ac442e",
+          "weight": 1.0,
+          "ownerDestroyableObject": 0,
+          "scriptType": "DestroyableObjectpart"
+        },
+        {
+          "componentFileId": 11497582,
+          "gameObjectFileId": 103859,
+          "scriptGuid": "2b87d014f018a182ff3631ab01ac442e",
+          "weight": 1.0,
+          "ownerDestroyableObject": 0,
+          "scriptType": "DestroyableObjectpart"
+        },
+        {
+          "componentFileId": 11403601,
+          "gameObjectFileId": 169566,
+          "scriptGuid": "2b87d014f018a182ff3631ab01ac442e",
+          "weight": 1.0,
+          "ownerDestroyableObject": 0,
+          "scriptType": "DestroyableObjectpart"
+        },
+        {
+          "componentFileId": 11452473,
+          "gameObjectFileId": 188124,
+          "scriptGuid": "2b87d014f018a182ff3631ab01ac442e",
+          "weight": 1.0,
+          "ownerDestroyableObject": 0,
+          "scriptType": "DestroyableObjectpart"
+        },
+        {
+          "componentFileId": 11488901,
+          "gameObjectFileId": 124449,
+          "scriptGuid": "2b87d014f018a182ff3631ab01ac442e",
+          "weight": 1.0,
+          "ownerDestroyableObject": 0,
+          "scriptType": "DestroyableObjectpart"
+        },
+        {
+          "componentFileId": 11487779,
+          "gameObjectFileId": 191323,
+          "scriptGuid": "2b87d014f018a182ff3631ab01ac442e",
+          "weight": 1.0,
+          "ownerDestroyableObject": 0,
+          "scriptType": "DestroyableObjectpart"
+        },
+        {
+          "componentFileId": 11433933,
+          "gameObjectFileId": 169143,
+          "scriptGuid": "2b87d014f018a182ff3631ab01ac442e",
+          "weight": 1.0,
+          "ownerDestroyableObject": 0,
+          "scriptType": "DestroyableObjectpart"
+        },
+        {
+          "componentFileId": 11404843,
+          "gameObjectFileId": 159786,
+          "scriptGuid": "2b87d014f018a182ff3631ab01ac442e",
+          "weight": 1.0,
+          "ownerDestroyableObject": 0,
+          "scriptType": "DestroyableObjectpart"
+        },
+        {
+          "componentFileId": 11490945,
+          "gameObjectFileId": 134467,
+          "scriptGuid": "2b87d014f018a182ff3631ab01ac442e",
+          "weight": 1.0,
+          "ownerDestroyableObject": 0,
+          "scriptType": "DestroyableObjectpart"
+        },
+        {
+          "componentFileId": 11481936,
+          "gameObjectFileId": 172700,
+          "scriptGuid": "2b87d014f018a182ff3631ab01ac442e",
+          "weight": 1.0,
+          "ownerDestroyableObject": 0,
+          "scriptType": "DestroyableObjectpart"
+        },
+        {
+          "componentFileId": 11461818,
+          "gameObjectFileId": 196729,
+          "scriptGuid": "2b87d014f018a182ff3631ab01ac442e",
+          "weight": 1.0,
+          "ownerDestroyableObject": 0,
+          "scriptType": "DestroyableObjectpart"
+        },
+        {
+          "componentFileId": 11498932,
+          "gameObjectFileId": 133324,
+          "scriptGuid": "5936eb71775d995a03be18ec309d5f74",
+          "scriptType": "TweenRotationSpecial"
+        },
+        {
+          "componentFileId": 11416363,
+          "gameObjectFileId": 192819,
+          "scriptGuid": "5936eb71775d995a03be18ec309d5f74",
+          "scriptType": "TweenRotationSpecial"
+        },
+        {
+          "componentFileId": 11432491,
+          "gameObjectFileId": 151504,
+          "scriptGuid": "5936eb71775d995a03be18ec309d5f74",
+          "scriptType": "TweenRotationSpecial"
+        },
+        {
+          "componentFileId": 11471338,
+          "gameObjectFileId": 191709,
+          "scriptGuid": "39306ea4ca6d638a3bce992a41d29575",
+          "scriptType": "QuickRope2"
+        },
+        {
+          "componentFileId": 11476772,
+          "gameObjectFileId": 191709,
+          "scriptGuid": "4e383547315f9e0dc18bbf50e8eb647b",
+          "scriptType": "QuickRope2Mesh"
+        },
+        {
+          "componentFileId": 11452444,
+          "gameObjectFileId": 110128,
+          "scriptGuid": "0ff5f7341956507b1f19adfb98938625",
+          "scriptType": "VehicleEngine"
+        },
+        {
+          "componentFileId": 11498443,
+          "gameObjectFileId": 156797,
+          "scriptGuid": "71b516e3f1c29506c1c10fb8054e06b4",
+          "scriptType": "TurretWeaponBasic"
+        },
+        {
+          "componentFileId": 11446858,
+          "gameObjectFileId": 156797,
+          "scriptGuid": "f19ea4a15c3ca43dcc180d756f7a82b3",
+          "scriptType": "PhotonView"
+        },
+        {
+          "componentFileId": 11483234,
+          "gameObjectFileId": 156797,
+          "scriptGuid": "a7637fba3d3838c87126404c48361b7e",
+          "scriptType": "BatchedWeapon"
+        },
+        {
+          "componentFileId": 11441888,
+          "gameObjectFileId": 156797,
+          "scriptGuid": "0f903c73702fdea77bdc0ea60b3f9740",
+          "scriptType": "Gun"
+        },
+        {
+          "componentFileId": 11496523,
+          "gameObjectFileId": 156797,
+          "scriptGuid": "4ceecd6f3ff0e22dc65ce39c3a1fce86",
+          "scriptType": "BulletSetup"
+        },
+        {
+          "componentFileId": 11418124,
+          "gameObjectFileId": 127988,
+          "scriptGuid": "4090235689019e8dade2fb65364f77e3",
+          "scriptType": "vp_MuzzleFlash"
+        }
+      ],
+      "hierarchy": [
+        {
+          "transformFileId": 499539,
+          "gameObjectFileId": 147589,
+          "parentTransformFileId": 0,
+          "name": "Helicopter",
+          "active": true,
+          "localPosition": [
+            -6.66,
+            0.0,
+            -0.47
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "localRotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        {
+          "transformFileId": 495861,
+          "gameObjectFileId": 179954,
+          "parentTransformFileId": 499539,
+          "name": "EnemyPoints",
+          "active": true,
+          "localPosition": [
+            0.0,
+            -0.0070484877,
+            0.0
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "localRotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        {
+          "transformFileId": 491029,
+          "gameObjectFileId": 109266,
+          "parentTransformFileId": 495861,
+          "name": "EnemyPoint1",
+          "active": true,
+          "localPosition": [
+            0.21307182,
+            -0.11068642,
+            -0.17276669
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "localRotation": [
+            0.0,
+            0.63768893,
+            0.0,
+            0.7702941
+          ]
+        },
+        {
+          "transformFileId": 468999,
+          "gameObjectFileId": 105782,
+          "parentTransformFileId": 495861,
+          "name": "EnemyPoint2",
+          "active": true,
+          "localPosition": [
+            0.22835445,
+            -0.11068642,
+            0.22529984
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "localRotation": [
+            0.0,
+            0.74328536,
+            0.0,
+            0.6689745
+          ]
+        },
+        {
+          "transformFileId": 479834,
+          "gameObjectFileId": 161526,
+          "parentTransformFileId": 495861,
+          "name": "EnemyPoint3",
+          "active": true,
+          "localPosition": [
+            -0.14429092,
+            -0.11068642,
+            0.20239162
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "localRotation": [
+            0.0,
+            -0.73942524,
+            0.0,
+            0.6732387
+          ]
+        },
+        {
+          "transformFileId": 413056,
+          "gameObjectFileId": 154010,
+          "parentTransformFileId": 495861,
+          "name": "EnemyPoint4",
+          "active": true,
+          "localPosition": [
+            -0.14429092,
+            -0.11068642,
+            -0.23198605
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "localRotation": [
+            0.0,
+            -0.68429655,
+            0.0,
+            0.7292038
+          ]
+        },
+        {
+          "transformFileId": 480871,
+          "gameObjectFileId": 119550,
+          "parentTransformFileId": 495861,
+          "name": "ropePos",
+          "active": true,
+          "localPosition": [
+            0.36974144,
+            -0.12340009,
+            0.01884365
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "localRotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        {
+          "transformFileId": 411975,
+          "gameObjectFileId": 184216,
+          "parentTransformFileId": 495861,
+          "name": "EnemyPoint5",
+          "active": true,
+          "localPosition": [
+            8.201599e-05,
+            -0.11635685,
+            0.40838814
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "localRotation": [
+            0.0,
+            -0.013587447,
+            0.0,
+            0.99990773
+          ]
+        },
+        {
+          "transformFileId": 467818,
+          "gameObjectFileId": 143158,
+          "parentTransformFileId": 495861,
+          "name": "EnemyPoint6",
+          "active": true,
+          "localPosition": [
+            0.021944046,
+            -0.11635721,
+            -0.39590836
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "localRotation": [
+            0.0,
+            -0.99998903,
+            0.0,
+            0.004693896
+          ]
+        },
+        {
+          "transformFileId": 417017,
+          "gameObjectFileId": 131434,
+          "parentTransformFileId": 495861,
+          "name": "turretPoint",
+          "active": true,
+          "localPosition": [
+            0.0,
+            -0.12165332,
+            0.0
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "localRotation": [
+            0.0,
+            -0.6778992,
+            0.0,
+            0.7351549
+          ]
+        },
+        {
+          "transformFileId": 435975,
+          "gameObjectFileId": 170521,
+          "parentTransformFileId": 499539,
+          "name": "colliders",
+          "active": true,
+          "localPosition": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "localRotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        {
+          "transformFileId": 458972,
+          "gameObjectFileId": 196012,
+          "parentTransformFileId": 435975,
+          "name": "GameObject",
+          "active": true,
+          "localPosition": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            1.1828226
+          ],
+          "localRotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        {
+          "transformFileId": 432167,
+          "gameObjectFileId": 177035,
+          "parentTransformFileId": 435975,
+          "name": "GameObject",
+          "active": true,
+          "localPosition": [
+            0.0,
+            0.459,
+            0.0
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "localRotation": [
+            -0.08673682,
+            -0.0050784918,
+            0.01152801,
+            0.9961516
+          ]
+        },
+        {
+          "transformFileId": 433379,
+          "gameObjectFileId": 103859,
+          "parentTransformFileId": 435975,
+          "name": "GameObject",
+          "active": true,
+          "localPosition": [
+            0.0,
+            0.34985542,
+            0.0
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "localRotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        {
+          "transformFileId": 436299,
+          "gameObjectFileId": 169566,
+          "parentTransformFileId": 435975,
+          "name": "GameObject",
+          "active": true,
+          "localPosition": [
+            0.0,
+            -0.22035646,
+            0.0
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "localRotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        {
+          "transformFileId": 401372,
+          "gameObjectFileId": 188124,
+          "parentTransformFileId": 435975,
+          "name": "GameObject",
+          "active": true,
+          "localPosition": [
+            0.0,
+            0.34985542,
+            0.0
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "localRotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        {
+          "transformFileId": 452723,
+          "gameObjectFileId": 124449,
+          "parentTransformFileId": 435975,
+          "name": "GameObject",
+          "active": true,
+          "localPosition": [
+            0.0,
+            0.34985542,
+            0.81983185
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "localRotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        {
+          "transformFileId": 419666,
+          "gameObjectFileId": 191323,
+          "parentTransformFileId": 435975,
+          "name": "GameObject",
+          "active": true,
+          "localPosition": [
+            0.0,
+            0.615,
+            0.882
+          ],
+          "localScale": [
+            1.0,
+            1.4148952,
+            1.0
+          ],
+          "localRotation": [
+            -0.48882002,
+            0.0,
+            0.0,
+            0.8723847
+          ]
+        },
+        {
+          "transformFileId": 498350,
+          "gameObjectFileId": 169143,
+          "parentTransformFileId": 435975,
+          "name": "GameObject",
+          "active": true,
+          "localPosition": [
+            0.0,
+            0.403,
+            0.81983185
+          ],
+          "localScale": [
+            1.0,
+            1.144392,
+            1.0
+          ],
+          "localRotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        {
+          "transformFileId": 417540,
+          "gameObjectFileId": 159786,
+          "parentTransformFileId": 435975,
+          "name": "GameObject (1)",
+          "active": true,
+          "localPosition": [
+            0.0,
+            0.113,
+            0.0
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "localRotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        {
+          "transformFileId": 446705,
+          "gameObjectFileId": 134467,
+          "parentTransformFileId": 435975,
+          "name": "GameObject (2)",
+          "active": true,
+          "localPosition": [
+            0.0,
+            0.315,
+            -2.546
+          ],
+          "localScale": [
+            1.0,
+            1.3184996,
+            1.0
+          ],
+          "localRotation": [
+            0.476176,
+            0.0,
+            0.0,
+            0.87935007
+          ]
+        },
+        {
+          "transformFileId": 468464,
+          "gameObjectFileId": 172700,
+          "parentTransformFileId": 435975,
+          "name": "GameObject (3)",
+          "active": true,
+          "localPosition": [
+            0.0,
+            0.276,
+            1.01
+          ],
+          "localScale": [
+            1.0,
+            0.67306066,
+            1.0
+          ],
+          "localRotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        {
+          "transformFileId": 406555,
+          "gameObjectFileId": 169857,
+          "parentTransformFileId": 499539,
+          "name": "healthBarPosition",
+          "active": true,
+          "localPosition": [
+            0.0,
+            0.8122637,
+            0.0
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "localRotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        {
+          "transformFileId": 410883,
+          "gameObjectFileId": 144804,
+          "parentTransformFileId": 499539,
+          "name": "groundImpact",
+          "active": true,
+          "localPosition": [
+            2.0372822e-07,
+            0.6652079,
+            0.0
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "localRotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        {
+          "transformFileId": 422647,
+          "gameObjectFileId": 155190,
+          "parentTransformFileId": 410883,
+          "name": "lineBright",
+          "active": true,
+          "localPosition": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "localRotation": [
+            0.7071068,
+            0.0,
+            0.0,
+            0.7071068
+          ]
+        },
+        {
+          "transformFileId": 478679,
+          "gameObjectFileId": 176054,
+          "parentTransformFileId": 410883,
+          "name": "stayingSmoke",
+          "active": true,
+          "localPosition": [
+            -4.2533418e-07,
+            -0.08703202,
+            0.0
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "localRotation": [
+            0.7071068,
+            0.0,
+            0.0,
+            0.7071068
+          ]
+        },
+        {
+          "transformFileId": 400119,
+          "gameObjectFileId": 196729,
+          "parentTransformFileId": 499539,
+          "name": "deployheli",
+          "active": true,
+          "localPosition": [
+            0.0,
+            -0.3265381,
+            -0.48514557
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "localRotation": [
+            0.0,
+            -0.7071068,
+            0.0,
+            0.7071068
+          ]
+        },
+        {
+          "transformFileId": 464471,
+          "gameObjectFileId": 133324,
+          "parentTransformFileId": 400119,
+          "name": "propeller_front",
+          "active": true,
+          "localPosition": [
+            0.50260353,
+            0.94536924,
+            0.0022430008
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "localRotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        {
+          "transformFileId": 404338,
+          "gameObjectFileId": 192819,
+          "parentTransformFileId": 400119,
+          "name": "propeller_front (1)",
+          "active": true,
+          "localPosition": [
+            0.50260365,
+            0.94536924,
+            0.0022429824
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "localRotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        {
+          "transformFileId": 439935,
+          "gameObjectFileId": 165029,
+          "parentTransformFileId": 404338,
+          "name": "assaultheli_rotor_plane",
+          "active": true,
+          "localPosition": [
+            9.298325e-06,
+            -0.054,
+            -1.839362e-08
+          ],
+          "localScale": [
+            1.6871413,
+            1.6871413,
+            1.6871413
+          ],
+          "localRotation": [
+            0.0,
+            0.38268346,
+            0.0,
+            0.9238795
+          ]
+        },
+        {
+          "transformFileId": 442852,
+          "gameObjectFileId": 192514,
+          "parentTransformFileId": 404338,
+          "name": "assaultheli_rotor_plane (1)",
+          "active": true,
+          "localPosition": [
+            0.0,
+            -0.05400002,
+            -0.0
+          ],
+          "localScale": [
+            1.6871414,
+            1.6871413,
+            1.6871415
+          ],
+          "localRotation": [
+            0.0,
+            0.92387956,
+            0.0,
+            0.3826833
+          ]
+        },
+        {
+          "transformFileId": 438371,
+          "gameObjectFileId": 151504,
+          "parentTransformFileId": 400119,
+          "name": "propeller_tail",
+          "active": true,
+          "localPosition": [
+            -2.142,
+            1.0349,
+            -0.0624
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "localRotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        {
+          "transformFileId": 414717,
+          "gameObjectFileId": 131555,
+          "parentTransformFileId": 438371,
+          "name": "assaultheli_rotor_plane (2)",
+          "active": true,
+          "localPosition": [
+            -0.003,
+            0.004,
+            -0.0
+          ],
+          "localScale": [
+            0.28739345,
+            0.2873935,
+            0.2873935
+          ],
+          "localRotation": [
+            0.68025446,
+            0.1930128,
+            0.19301286,
+            0.68025434
+          ]
+        },
+        {
+          "transformFileId": 422290,
+          "gameObjectFileId": 199646,
+          "parentTransformFileId": 438371,
+          "name": "assaultheli_rotor_plane (3)",
+          "active": true,
+          "localPosition": [
+            -0.0030372143,
+            0.0039999485,
+            -9.313226e-08
+          ],
+          "localScale": [
+            0.2873935,
+            0.28739357,
+            0.2873935
+          ],
+          "localRotation": [
+            0.62903005,
+            -0.32298794,
+            -0.3229881,
+            0.6290299
+          ]
+        },
+        {
+          "transformFileId": 461370,
+          "gameObjectFileId": 107524,
+          "parentTransformFileId": 400119,
+          "name": "glass",
+          "active": true,
+          "localPosition": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "localRotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        {
+          "transformFileId": 492654,
+          "gameObjectFileId": 152907,
+          "parentTransformFileId": 400119,
+          "name": "attachments",
+          "active": true,
+          "localPosition": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "localRotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        {
+          "transformFileId": 446016,
+          "gameObjectFileId": 134916,
+          "parentTransformFileId": 499539,
+          "name": "Mesh_Rope_End",
+          "active": true,
+          "localPosition": [
+            0.35657787,
+            -0.7185707,
+            -0.009
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "localRotation": [
+            -0.49618012,
+            0.503791,
+            0.49618012,
+            0.5037909
+          ]
+        },
+        {
+          "transformFileId": 436455,
+          "gameObjectFileId": 191709,
+          "parentTransformFileId": 499539,
+          "name": "Mesh_Rope_Start",
+          "active": true,
+          "localPosition": [
+            0.37255955,
+            0.331,
+            -0.009
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "localRotation": [
+            -0.4961792,
+            0.5037919,
+            0.4961792,
+            0.50379187
+          ]
+        },
+        {
+          "transformFileId": 444191,
+          "gameObjectFileId": 154360,
+          "parentTransformFileId": 436455,
+          "name": "Jnt_1",
+          "active": true,
+          "localPosition": [
+            1.05282005e-08,
+            -2.6699176e-08,
+            -0.35001907
+          ],
+          "localScale": [
+            0.99999994,
+            1.0,
+            1.0
+          ],
+          "localRotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        {
+          "transformFileId": 496482,
+          "gameObjectFileId": 184583,
+          "parentTransformFileId": 436455,
+          "name": "Jnt_1",
+          "active": true,
+          "localPosition": [
+            1.05282005e-08,
+            -2.6699176e-08,
+            -0.35001907
+          ],
+          "localScale": [
+            0.99999994,
+            1.0,
+            1.0
+          ],
+          "localRotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        {
+          "transformFileId": 485106,
+          "gameObjectFileId": 125385,
+          "parentTransformFileId": 436455,
+          "name": "Jnt_1",
+          "active": true,
+          "localPosition": [
+            1.05282005e-08,
+            -2.6699176e-08,
+            -0.35001907
+          ],
+          "localScale": [
+            0.99999994,
+            1.0,
+            1.0
+          ],
+          "localRotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        {
+          "transformFileId": 408667,
+          "gameObjectFileId": 105055,
+          "parentTransformFileId": 436455,
+          "name": "Jnt_1",
+          "active": true,
+          "localPosition": [
+            1.05282005e-08,
+            -2.6699176e-08,
+            -0.35001907
+          ],
+          "localScale": [
+            0.99999994,
+            1.0,
+            1.0
+          ],
+          "localRotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        {
+          "transformFileId": 481733,
+          "gameObjectFileId": 127192,
+          "parentTransformFileId": 436455,
+          "name": "Jnt_1",
+          "active": true,
+          "localPosition": [
+            1.05282005e-08,
+            -2.6699176e-08,
+            -0.35001907
+          ],
+          "localScale": [
+            0.99999994,
+            1.0,
+            1.0
+          ],
+          "localRotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        {
+          "transformFileId": 491429,
+          "gameObjectFileId": 182909,
+          "parentTransformFileId": 436455,
+          "name": "Jnt_1",
+          "active": true,
+          "localPosition": [
+            1.05282005e-08,
+            -2.6699176e-08,
+            -0.35001907
+          ],
+          "localScale": [
+            0.99999994,
+            1.0,
+            1.0
+          ],
+          "localRotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        {
+          "transformFileId": 428164,
+          "gameObjectFileId": 174717,
+          "parentTransformFileId": 436455,
+          "name": "Jnt_1",
+          "active": true,
+          "localPosition": [
+            1.05282005e-08,
+            -2.6699176e-08,
+            -0.35001907
+          ],
+          "localScale": [
+            0.99999994,
+            1.0,
+            1.0
+          ],
+          "localRotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        {
+          "transformFileId": 497538,
+          "gameObjectFileId": 106298,
+          "parentTransformFileId": 436455,
+          "name": "Jnt_1",
+          "active": true,
+          "localPosition": [
+            1.05282005e-08,
+            -2.6699176e-08,
+            -0.35001907
+          ],
+          "localScale": [
+            0.99999994,
+            1.0,
+            1.0
+          ],
+          "localRotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        {
+          "transformFileId": 434459,
+          "gameObjectFileId": 135660,
+          "parentTransformFileId": 436455,
+          "name": "Jnt_1",
+          "active": true,
+          "localPosition": [
+            1.05282005e-08,
+            -2.6699176e-08,
+            -0.35001907
+          ],
+          "localScale": [
+            0.99999994,
+            1.0,
+            1.0
+          ],
+          "localRotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        {
+          "transformFileId": 480563,
+          "gameObjectFileId": 146060,
+          "parentTransformFileId": 436455,
+          "name": "Jnt_1",
+          "active": true,
+          "localPosition": [
+            1.05282005e-08,
+            -2.6699176e-08,
+            -0.35001907
+          ],
+          "localScale": [
+            0.99999994,
+            1.0,
+            1.0
+          ],
+          "localRotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        {
+          "transformFileId": 477120,
+          "gameObjectFileId": 126462,
+          "parentTransformFileId": 436455,
+          "name": "Jnt_1",
+          "active": true,
+          "localPosition": [
+            1.05282005e-08,
+            -2.6699176e-08,
+            -0.35001907
+          ],
+          "localScale": [
+            0.99999994,
+            1.0,
+            1.0
+          ],
+          "localRotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        {
+          "transformFileId": 418571,
+          "gameObjectFileId": 105464,
+          "parentTransformFileId": 436455,
+          "name": "Jnt_1",
+          "active": true,
+          "localPosition": [
+            6.566552e-10,
+            2.5084404e-08,
+            -0.35001898
+          ],
+          "localScale": [
+            0.99999994,
+            0.99999994,
+            1.0
+          ],
+          "localRotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        {
+          "transformFileId": 414133,
+          "gameObjectFileId": 172182,
+          "parentTransformFileId": 436455,
+          "name": "Jnt_1",
+          "active": true,
+          "localPosition": [
+            2.5468694e-10,
+            2.2017407e-08,
+            -0.35001904
+          ],
+          "localScale": [
+            0.99999994,
+            1.0,
+            1.0
+          ],
+          "localRotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        {
+          "transformFileId": 427792,
+          "gameObjectFileId": 188432,
+          "parentTransformFileId": 436455,
+          "name": "Jnt_1",
+          "active": true,
+          "localPosition": [
+            1.1641532e-09,
+            4.528556e-08,
+            -0.350019
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            0.99999994
+          ],
+          "localRotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        {
+          "transformFileId": 439920,
+          "gameObjectFileId": 163426,
+          "parentTransformFileId": 436455,
+          "name": "Jnt_1",
+          "active": true,
+          "localPosition": [
+            1.1641532e-09,
+            4.528556e-08,
+            -0.350019
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            0.99999994
+          ],
+          "localRotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        {
+          "transformFileId": 447764,
+          "gameObjectFileId": 161517,
+          "parentTransformFileId": 436455,
+          "name": "Jnt_1",
+          "active": true,
+          "localPosition": [
+            1.1641532e-09,
+            4.528556e-08,
+            -0.350019
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            0.99999994
+          ],
+          "localRotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        {
+          "transformFileId": 458136,
+          "gameObjectFileId": 120844,
+          "parentTransformFileId": 436455,
+          "name": "Jnt_1",
+          "active": true,
+          "localPosition": [
+            1.1641532e-09,
+            7.241033e-08,
+            -0.35001904
+          ],
+          "localScale": [
+            1.0,
+            0.99999994,
+            1.0
+          ],
+          "localRotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        {
+          "transformFileId": 456825,
+          "gameObjectFileId": 111718,
+          "parentTransformFileId": 436455,
+          "name": "Jnt_1",
+          "active": true,
+          "localPosition": [
+            3.7252903e-09,
+            9.313226e-10,
+            -0.35003132
+          ],
+          "localScale": [
+            0.99999994,
+            0.99999994,
+            1.0
+          ],
+          "localRotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        {
+          "transformFileId": 400080,
+          "gameObjectFileId": 163256,
+          "parentTransformFileId": 436455,
+          "name": "Jnt_2",
+          "active": true,
+          "localPosition": [
+            5.6810677e-08,
+            6.3329935e-08,
+            -0.70013607
+          ],
+          "localScale": [
+            1.0,
+            0.9999999,
+            0.99999994
+          ],
+          "localRotation": [
+            5.9604645e-08,
+            -6.7055225e-08,
+            -2.4661422e-06,
+            1.0
+          ]
+        },
+        {
+          "transformFileId": 460828,
+          "gameObjectFileId": 100463,
+          "parentTransformFileId": 436455,
+          "name": "Jnt_1",
+          "active": true,
+          "localPosition": [
+            2.5856487e-08,
+            8.381903e-08,
+            -0.35002396
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            0.99999994
+          ],
+          "localRotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        {
+          "transformFileId": 444693,
+          "gameObjectFileId": 160213,
+          "parentTransformFileId": 436455,
+          "name": "Jnt_2",
+          "active": true,
+          "localPosition": [
+            4.7989694e-08,
+            -3.46452e-07,
+            -0.70008165
+          ],
+          "localScale": [
+            0.9999999,
+            0.9999999,
+            0.9999999
+          ],
+          "localRotation": [
+            -7.152557e-07,
+            -2.9802319e-08,
+            -2.9802319e-08,
+            1.0
+          ]
+        },
+        {
+          "transformFileId": 455025,
+          "gameObjectFileId": 162687,
+          "parentTransformFileId": 436455,
+          "name": "Jnt_1",
+          "active": true,
+          "localPosition": [
+            2.5856487e-08,
+            8.381903e-08,
+            -0.35002396
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            0.99999994
+          ],
+          "localRotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        {
+          "transformFileId": 469316,
+          "gameObjectFileId": 182579,
+          "parentTransformFileId": 436455,
+          "name": "Jnt_2",
+          "active": true,
+          "localPosition": [
+            4.7989694e-08,
+            -3.46452e-07,
+            -0.70008165
+          ],
+          "localScale": [
+            0.9999999,
+            0.9999999,
+            0.9999999
+          ],
+          "localRotation": [
+            -7.152557e-07,
+            -2.9802319e-08,
+            -2.9802319e-08,
+            1.0
+          ]
+        },
+        {
+          "transformFileId": 423022,
+          "gameObjectFileId": 191078,
+          "parentTransformFileId": 436455,
+          "name": "Jnt_1",
+          "active": true,
+          "localPosition": [
+            2.5856487e-08,
+            8.381903e-08,
+            -0.35002396
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            0.99999994
+          ],
+          "localRotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        {
+          "transformFileId": 473856,
+          "gameObjectFileId": 139548,
+          "parentTransformFileId": 436455,
+          "name": "Jnt_2",
+          "active": true,
+          "localPosition": [
+            4.7989694e-08,
+            -3.46452e-07,
+            -0.70008165
+          ],
+          "localScale": [
+            0.9999999,
+            0.9999999,
+            0.9999999
+          ],
+          "localRotation": [
+            -7.152557e-07,
+            -2.9802319e-08,
+            -2.9802319e-08,
+            1.0
+          ]
+        },
+        {
+          "transformFileId": 443171,
+          "gameObjectFileId": 168680,
+          "parentTransformFileId": 436455,
+          "name": "Jnt_1",
+          "active": true,
+          "localPosition": [
+            2.5856487e-08,
+            8.381903e-08,
+            -0.35002396
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            0.99999994
+          ],
+          "localRotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        {
+          "transformFileId": 436241,
+          "gameObjectFileId": 185712,
+          "parentTransformFileId": 436455,
+          "name": "Jnt_2",
+          "active": true,
+          "localPosition": [
+            4.7989694e-08,
+            -3.46452e-07,
+            -0.70008165
+          ],
+          "localScale": [
+            0.9999999,
+            0.9999999,
+            0.9999999
+          ],
+          "localRotation": [
+            -7.152557e-07,
+            -2.9802319e-08,
+            -2.9802319e-08,
+            1.0
+          ]
+        },
+        {
+          "transformFileId": 414249,
+          "gameObjectFileId": 110128,
+          "parentTransformFileId": 499539,
+          "name": "CenterAndEngine",
+          "active": true,
+          "localPosition": [
+            0.0,
+            0.0,
+            -0.3907919
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "localRotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        {
+          "transformFileId": 420492,
+          "gameObjectFileId": 148483,
+          "parentTransformFileId": 499539,
+          "name": "GameObject",
+          "active": true,
+          "localPosition": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "localRotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        {
+          "transformFileId": 441818,
+          "gameObjectFileId": 173647,
+          "parentTransformFileId": 499539,
+          "name": "middleForGround",
+          "active": true,
+          "localPosition": [
+            0.0,
+            -0.315,
+            0.377
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "localRotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        {
+          "transformFileId": 439132,
+          "gameObjectFileId": 134586,
+          "parentTransformFileId": 499539,
+          "name": "turret4",
+          "active": true,
+          "localPosition": [
+            -0.373,
+            -0.209,
+            0.0
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "localRotation": [
+            0.0,
+            -0.7071068,
+            0.0,
+            0.7071067
+          ]
+        },
+        {
+          "transformFileId": 496477,
+          "gameObjectFileId": 156797,
+          "parentTransformFileId": 439132,
+          "name": "MachineGun",
+          "active": true,
+          "localPosition": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "localRotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        {
+          "transformFileId": 427680,
+          "gameObjectFileId": 167758,
+          "parentTransformFileId": 496477,
+          "name": "JointHorizontal",
+          "active": true,
+          "localPosition": [
+            -0.024999976,
+            0.212,
+            -0.025624692
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "localRotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        {
+          "transformFileId": 474009,
+          "gameObjectFileId": 109877,
+          "parentTransformFileId": 427680,
+          "name": "JointVertical",
+          "active": true,
+          "localPosition": [
+            0.0,
+            0.0,
+            0.008
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "localRotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        {
+          "transformFileId": 478937,
+          "gameObjectFileId": 153428,
+          "parentTransformFileId": 474009,
+          "name": "daewoo_k3_prototype",
+          "active": true,
+          "localPosition": [
+            0.0,
+            0.013600007,
+            -0.06299998
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "localRotation": [
+            -9.415696e-08,
+            0.7071068,
+            9.415698e-08,
+            0.7071067
+          ]
+        },
+        {
+          "transformFileId": 477091,
+          "gameObjectFileId": 127988,
+          "parentTransformFileId": 474009,
+          "name": "MachinegunMuzzleFlash",
+          "active": true,
+          "localPosition": [
+            -0.0009999033,
+            0.068,
+            0.17699999
+          ],
+          "localScale": [
+            0.545858,
+            0.5458579,
+            0.54585785
+          ],
+          "localRotation": [
+            -5.9604645e-08,
+            -2.9802322e-08,
+            0.7071068,
+            0.7071067
+          ]
+        }
+      ],
+      "shootables": [
+        {
+          "componentFileId": 11409309,
+          "gameObjectFileId": 147589,
+          "scriptGuid": "3cf4d7761af3ce98d7a08bebfe4e8861",
+          "visible": true,
+          "targets": [
+            {
+              "transformFileId": 414249,
+              "type": 0,
+              "restPosition": [
+                0.0,
+                0.0,
+                -0.3907919
+              ]
+            }
+          ]
+        }
+      ],
+      "colliders": [
+        {
+          "colliderFileId": 6580903,
+          "gameObjectFileId": 196012,
+          "transformFileId": 458972,
+          "type": "Box",
+          "enabled": true,
+          "trigger": false,
+          "serializedLayer": 8,
+          "ancestorTransformFileIds": [
+            458972,
+            435975,
+            499539
+          ],
+          "activeAncestors": true,
+          "restCenter": [
+            -0.023223877,
+            0.034481168,
+            -1.6420291083044398
+          ],
+          "restRotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ],
+          "scale": [
+            1.0,
+            1.0,
+            1.1828226
+          ],
+          "localCenter": [
+            -0.023223877,
+            0.034481168,
+            -1.3882294
+          ],
+          "localSize": [
+            0.26505628,
+            0.17321229,
+            1.7552171
+          ]
+        },
+        {
+          "colliderFileId": 6571354,
+          "gameObjectFileId": 177035,
+          "transformFileId": 432167,
+          "type": "Box",
+          "enabled": true,
+          "trigger": false,
+          "serializedLayer": 8,
+          "ancestorTransformFileIds": [
+            432167,
+            435975,
+            499539
+          ],
+          "activeAncestors": true,
+          "restCenter": [
+            -0.007155918161708332,
+            0.25266744686244896,
+            -1.3734208130117787
+          ],
+          "restRotation": [
+            -0.08673682,
+            -0.0050784918,
+            0.01152801,
+            0.9961516
+          ],
+          "scale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "localCenter": [
+            -0.023223877,
+            0.034481168,
+            -1.3882294
+          ],
+          "localSize": [
+            0.26505628,
+            0.17321229,
+            1.7552171
+          ]
+        },
+        {
+          "colliderFileId": 6564753,
+          "gameObjectFileId": 103859,
+          "transformFileId": 433379,
+          "type": "Box",
+          "enabled": true,
+          "trigger": false,
+          "serializedLayer": 8,
+          "ancestorTransformFileIds": [
+            433379,
+            435975,
+            499539
+          ],
+          "activeAncestors": true,
+          "restCenter": [
+            -0.00025558472,
+            0.46614241,
+            0.0
+          ],
+          "restRotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ],
+          "scale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "localCenter": [
+            -0.00025558472,
+            0.11628699,
+            0.0
+          ],
+          "localSize": [
+            0.56995666,
+            0.09670788,
+            1.0
+          ]
+        },
+        {
+          "colliderFileId": 6533468,
+          "gameObjectFileId": 169566,
+          "transformFileId": 436299,
+          "type": "Box",
+          "enabled": true,
+          "trigger": false,
+          "serializedLayer": 8,
+          "ancestorTransformFileIds": [
+            436299,
+            435975,
+            499539
+          ],
+          "activeAncestors": true,
+          "restCenter": [
+            -0.00025558472,
+            -0.127801295,
+            0.0
+          ],
+          "restRotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ],
+          "scale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "localCenter": [
+            -0.00025558472,
+            0.092555165,
+            0.0
+          ],
+          "localSize": [
+            0.56995666,
+            0.04924468,
+            1.0
+          ]
+        },
+        {
+          "colliderFileId": 6593588,
+          "gameObjectFileId": 188124,
+          "transformFileId": 401372,
+          "type": "Box",
+          "enabled": true,
+          "trigger": false,
+          "serializedLayer": 8,
+          "ancestorTransformFileIds": [
+            401372,
+            435975,
+            499539
+          ],
+          "activeAncestors": true,
+          "restCenter": [
+            -0.00025558472,
+            0.18418788999999997,
+            -0.40789413
+          ],
+          "restRotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ],
+          "scale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "localCenter": [
+            -0.00025558472,
+            -0.16566753,
+            -0.40789413
+          ],
+          "localSize": [
+            0.56995666,
+            0.66061807,
+            0.1842128
+          ]
+        },
+        {
+          "colliderFileId": 6554546,
+          "gameObjectFileId": 124449,
+          "transformFileId": 452723,
+          "type": "Box",
+          "enabled": true,
+          "trigger": false,
+          "serializedLayer": 8,
+          "ancestorTransformFileIds": [
+            452723,
+            435975,
+            499539
+          ],
+          "activeAncestors": true,
+          "restCenter": [
+            -0.00025558472,
+            0.18418788999999997,
+            0.42196465000000005
+          ],
+          "restRotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ],
+          "scale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "localCenter": [
+            -0.00025558472,
+            -0.16566753,
+            -0.3978672
+          ],
+          "localSize": [
+            0.56995666,
+            0.66061807,
+            0.2042656
+          ]
+        },
+        {
+          "colliderFileId": 6557662,
+          "gameObjectFileId": 191323,
+          "transformFileId": 419666,
+          "type": "Box",
+          "enabled": true,
+          "trigger": false,
+          "serializedLayer": 8,
+          "ancestorTransformFileIds": [
+            419666,
+            435975,
+            499539
+          ],
+          "activeAncestors": true,
+          "restCenter": [
+            -0.0002555847396153325,
+            0.17548975098381575,
+            0.8877798517523959
+          ],
+          "restRotation": [
+            -0.48882002,
+            0.0,
+            0.0,
+            0.8723847
+          ],
+          "scale": [
+            1.0,
+            1.4148952,
+            1.0
+          ],
+          "localCenter": [
+            -0.00025558472,
+            -0.16566753,
+            -0.37183094
+          ],
+          "localSize": [
+            0.56995666,
+            0.66061807,
+            0.25633812
+          ]
+        },
+        {
+          "colliderFileId": 6505360,
+          "gameObjectFileId": 169143,
+          "transformFileId": 498350,
+          "type": "Box",
+          "enabled": true,
+          "trigger": false,
+          "serializedLayer": 8,
+          "ancestorTransformFileIds": [
+            498350,
+            435975,
+            499539
+          ],
+          "activeAncestors": true,
+          "restCenter": [
+            -0.00025558472,
+            0.0061270745204800026,
+            0.7149238600000001
+          ],
+          "restRotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ],
+          "scale": [
+            1.0,
+            1.144392,
+            1.0
+          ],
+          "localCenter": [
+            -0.00025558472,
+            -0.34679806,
+            -0.10490799
+          ],
+          "localSize": [
+            0.56995666,
+            0.21112037,
+            0.79019105
+          ]
+        },
+        {
+          "colliderFileId": 6593469,
+          "gameObjectFileId": 159786,
+          "transformFileId": 417540,
+          "type": "Box",
+          "enabled": true,
+          "trigger": false,
+          "serializedLayer": 8,
+          "ancestorTransformFileIds": [
+            417540,
+            435975,
+            499539
+          ],
+          "activeAncestors": true,
+          "restCenter": [
+            -0.023223877,
+            0.147481168,
+            -0.95
+          ],
+          "restRotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ],
+          "scale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "localCenter": [
+            -0.023223877,
+            0.034481168,
+            -0.95
+          ],
+          "localSize": [
+            0.26505628,
+            0.29,
+            1.16
+          ]
+        },
+        {
+          "colliderFileId": 6500539,
+          "gameObjectFileId": 134467,
+          "transformFileId": 446705,
+          "type": "Box",
+          "enabled": true,
+          "trigger": false,
+          "serializedLayer": 8,
+          "ancestorTransformFileIds": [
+            446705,
+            435975,
+            499539
+          ],
+          "activeAncestors": true,
+          "restCenter": [
+            -0.023223879986242334,
+            0.4152169126300562,
+            -2.5571128008281283
+          ],
+          "restRotation": [
+            0.476176,
+            0.0,
+            0.0,
+            0.87935007
+          ],
+          "scale": [
+            1.0,
+            1.3184996,
+            1.0
+          ],
+          "localCenter": [
+            -0.023223877,
+            0.034481168,
+            -0.09
+          ],
+          "localSize": [
+            0.26505628,
+            0.29,
+            0.8
+          ]
+        },
+        {
+          "colliderFileId": 6501874,
+          "gameObjectFileId": 172700,
+          "transformFileId": 468464,
+          "type": "Box",
+          "enabled": true,
+          "trigger": false,
+          "serializedLayer": 8,
+          "ancestorTransformFileIds": [
+            468464,
+            435975,
+            499539
+          ],
+          "activeAncestors": true,
+          "restCenter": [
+            -0.00025558472,
+            0.16449570291763022,
+            0.6121328
+          ],
+          "restRotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ],
+          "scale": [
+            1.0,
+            0.67306066,
+            1.0
+          ],
+          "localCenter": [
+            -0.00025558472,
+            -0.16566753,
+            -0.3978672
+          ],
+          "localSize": [
+            0.56995666,
+            0.66061807,
+            0.2042656
+          ]
+        }
+      ]
+    },
+    {
+      "unitId": "ID_UNIT-ASSAULTHELI",
+      "source": "Assets/GameObject/assaultHelicopter.prefab",
+      "sha256": "3e8745b4b43f7c2e60110f34c9f8c2defc8fa65beb1bc8ac0396ccea17d04fe1",
+      "rootTransformFileId": 425385,
+      "components": [
+        {
+          "componentFileId": 11405055,
+          "gameObjectFileId": 147589,
+          "scriptGuid": "ee868e176d2531352bfbfb3310303742",
+          "scriptType": "AssaultHelicopter"
+        },
+        {
+          "componentFileId": 11427192,
+          "gameObjectFileId": 147589,
+          "scriptGuid": "d94d9d4266081e75df24b8687850c33d",
+          "scriptType": "DestroyableObjectMultipleParts"
+        },
+        {
+          "componentFileId": 11482909,
+          "gameObjectFileId": 147589,
+          "scriptGuid": "3cf4d7761af3ce98d7a08bebfe4e8861",
+          "scriptType": "GameShootableEntity"
+        },
+        {
+          "componentFileId": 11406298,
+          "gameObjectFileId": 147589,
+          "scriptGuid": "486a9acbd9d8b9c34ac18b91e89b7bef",
+          "scriptType": "SkillShotController"
+        },
+        {
+          "componentFileId": 11435660,
+          "gameObjectFileId": 147589,
+          "scriptGuid": "f19ea4a15c3ca43dcc180d756f7a82b3",
+          "scriptType": "PhotonView"
+        },
+        {
+          "componentFileId": 11446060,
+          "gameObjectFileId": 147589,
+          "scriptGuid": "aa5336f805f636a26d269afa08d8ccb0",
+          "scriptType": "HudObjectIndicator"
+        },
+        {
+          "componentFileId": 11426462,
+          "gameObjectFileId": 147589,
+          "scriptGuid": "a551e0a4c5224adf6c7c791cacc35f6a",
+          "scriptType": "ArmyUnit3DModel"
+        },
+        {
+          "componentFileId": 11472182,
+          "gameObjectFileId": 147589,
+          "scriptGuid": "0dfd54bd9851b07f2dc75544b2e170c3",
+          "scriptType": "ModelAttachments"
+        },
+        {
+          "componentFileId": 11488432,
+          "gameObjectFileId": 147589,
+          "scriptGuid": "c452d4ec3c54130d0b8b40a7db84146e",
+          "scriptType": "VehicleVisuals"
+        },
+        {
+          "componentFileId": 11463426,
+          "gameObjectFileId": 147589,
+          "scriptGuid": "1ea9bd9ef3acf8cc028548b0326497c0",
+          "scriptType": "UnitModelLoader"
+        },
+        {
+          "componentFileId": 11400463,
+          "gameObjectFileId": 109266,
+          "scriptGuid": "d94d9d4266081e75df24b8687850c33d",
+          "scriptType": "DestroyableObjectMultipleParts"
+        },
+        {
+          "componentFileId": 11460213,
+          "gameObjectFileId": 109266,
+          "scriptGuid": "f19ea4a15c3ca43dcc180d756f7a82b3",
+          "scriptType": "PhotonView"
+        },
+        {
+          "componentFileId": 11485712,
+          "gameObjectFileId": 105782,
+          "scriptGuid": "2b87d014f018a182ff3631ab01ac442e",
+          "weight": 1.0,
+          "ownerDestroyableObject": 11400463,
+          "scriptType": "DestroyableObjectpart"
+        },
+        {
+          "componentFileId": 11410128,
+          "gameObjectFileId": 105782,
+          "scriptGuid": "dc26e21cfb4fb43f6a00cc916598c0a8",
+          "scriptType": "Glass"
+        },
+        {
+          "componentFileId": 11409877,
+          "gameObjectFileId": 161526,
+          "scriptGuid": "2b87d014f018a182ff3631ab01ac442e",
+          "weight": 1.0,
+          "ownerDestroyableObject": 11400463,
+          "scriptType": "DestroyableObjectpart"
+        },
+        {
+          "componentFileId": 11453428,
+          "gameObjectFileId": 161526,
+          "scriptGuid": "dc26e21cfb4fb43f6a00cc916598c0a8",
+          "scriptType": "Glass"
+        },
+        {
+          "componentFileId": 11429211,
+          "gameObjectFileId": 154010,
+          "scriptGuid": "2b87d014f018a182ff3631ab01ac442e",
+          "weight": 1.0,
+          "ownerDestroyableObject": 11400463,
+          "scriptType": "DestroyableObjectpart"
+        },
+        {
+          "componentFileId": 11492373,
+          "gameObjectFileId": 154010,
+          "scriptGuid": "dc26e21cfb4fb43f6a00cc916598c0a8",
+          "scriptType": "Glass"
+        },
+        {
+          "componentFileId": 11486885,
+          "gameObjectFileId": 119550,
+          "scriptGuid": "5936eb71775d995a03be18ec309d5f74",
+          "scriptType": "TweenRotationSpecial"
+        },
+        {
+          "componentFileId": 11411975,
+          "gameObjectFileId": 131434,
+          "scriptGuid": "5936eb71775d995a03be18ec309d5f74",
+          "scriptType": "TweenRotationSpecial"
+        },
+        {
+          "componentFileId": 11439084,
+          "gameObjectFileId": 103859,
+          "scriptGuid": "2b87d014f018a182ff3631ab01ac442e",
+          "weight": 1.0,
+          "ownerDestroyableObject": 0,
+          "scriptType": "DestroyableObjectpart"
+        },
+        {
+          "componentFileId": 11471354,
+          "gameObjectFileId": 169566,
+          "scriptGuid": "2b87d014f018a182ff3631ab01ac442e",
+          "weight": 1.0,
+          "ownerDestroyableObject": 0,
+          "scriptType": "DestroyableObjectpart"
+        },
+        {
+          "componentFileId": 11497582,
+          "gameObjectFileId": 188124,
+          "scriptGuid": "2b87d014f018a182ff3631ab01ac442e",
+          "weight": 1.0,
+          "ownerDestroyableObject": 0,
+          "scriptType": "DestroyableObjectpart"
+        },
+        {
+          "componentFileId": 11403601,
+          "gameObjectFileId": 124449,
+          "scriptGuid": "2b87d014f018a182ff3631ab01ac442e",
+          "weight": 1.0,
+          "ownerDestroyableObject": 0,
+          "scriptType": "DestroyableObjectpart"
+        },
+        {
+          "componentFileId": 11452473,
+          "gameObjectFileId": 191323,
+          "scriptGuid": "2b87d014f018a182ff3631ab01ac442e",
+          "weight": 1.0,
+          "ownerDestroyableObject": 0,
+          "scriptType": "DestroyableObjectpart"
+        },
+        {
+          "componentFileId": 11488901,
+          "gameObjectFileId": 169143,
+          "scriptGuid": "2b87d014f018a182ff3631ab01ac442e",
+          "weight": 1.0,
+          "ownerDestroyableObject": 0,
+          "scriptType": "DestroyableObjectpart"
+        },
+        {
+          "componentFileId": 11457662,
+          "gameObjectFileId": 159786,
+          "scriptGuid": "a7637fba3d3838c87126404c48361b7e",
+          "scriptType": "BatchedWeapon"
+        },
+        {
+          "componentFileId": 11487779,
+          "gameObjectFileId": 159786,
+          "scriptGuid": "1cb9d4e3bc85c63a43096be5a40016e7",
+          "scriptType": "AutomaticRifle"
+        },
+        {
+          "componentFileId": 11498350,
+          "gameObjectFileId": 159786,
+          "scriptGuid": "4ceecd6f3ff0e22dc65ce39c3a1fce86",
+          "scriptType": "BulletSetup"
+        },
+        {
+          "componentFileId": 11405360,
+          "gameObjectFileId": 159786,
+          "scriptGuid": "f19ea4a15c3ca43dcc180d756f7a82b3",
+          "scriptType": "PhotonView"
+        },
+        {
+          "componentFileId": 11446705,
+          "gameObjectFileId": 134467,
+          "scriptGuid": "4090235689019e8dade2fb65364f77e3",
+          "scriptType": "vp_MuzzleFlash"
+        },
+        {
+          "componentFileId": 11490945,
+          "gameObjectFileId": 172700,
+          "scriptGuid": "a7637fba3d3838c87126404c48361b7e",
+          "scriptType": "BatchedWeapon"
+        },
+        {
+          "componentFileId": 11468464,
+          "gameObjectFileId": 172700,
+          "scriptGuid": "1cb9d4e3bc85c63a43096be5a40016e7",
+          "scriptType": "AutomaticRifle"
+        },
+        {
+          "componentFileId": 11401874,
+          "gameObjectFileId": 172700,
+          "scriptGuid": "4ceecd6f3ff0e22dc65ce39c3a1fce86",
+          "scriptType": "BulletSetup"
+        },
+        {
+          "componentFileId": 11481936,
+          "gameObjectFileId": 172700,
+          "scriptGuid": "f19ea4a15c3ca43dcc180d756f7a82b3",
+          "scriptType": "PhotonView"
+        },
+        {
+          "componentFileId": 11486581,
+          "gameObjectFileId": 169857,
+          "scriptGuid": "4090235689019e8dade2fb65364f77e3",
+          "scriptType": "vp_MuzzleFlash"
+        },
+        {
+          "componentFileId": 11438371,
+          "gameObjectFileId": 134916,
+          "scriptGuid": "588f2f712fbccb3dc98b538e56612279",
+          "scriptType": "EnemyPointVehicle"
+        },
+        {
+          "componentFileId": 11414717,
+          "gameObjectFileId": 184583,
+          "scriptGuid": "0ff5f7341956507b1f19adfb98938625",
+          "scriptType": "VehicleEngine"
+        }
+      ],
+      "hierarchy": [
+        {
+          "transformFileId": 425385,
+          "gameObjectFileId": 147589,
+          "parentTransformFileId": 0,
+          "name": "assaultHelicopter",
+          "active": true,
+          "localPosition": [
+            0.0,
+            0.934,
+            0.0
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "localRotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        {
+          "transformFileId": 461517,
+          "gameObjectFileId": 179954,
+          "parentTransformFileId": 425385,
+          "name": "assaultheli",
+          "active": true,
+          "localPosition": [
+            0.002273444,
+            -0.4223091,
+            -0.1368384
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "localRotation": [
+            0.0,
+            -1.0,
+            0.0,
+            -4.371139e-08
+          ]
+        },
+        {
+          "transformFileId": 463256,
+          "gameObjectFileId": 109266,
+          "parentTransformFileId": 461517,
+          "name": "glass",
+          "active": true,
+          "localPosition": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "localRotation": [
+            0.0,
+            1.0,
+            -0.0,
+            -4.371139e-08
+          ]
+        },
+        {
+          "transformFileId": 462687,
+          "gameObjectFileId": 105782,
+          "parentTransformFileId": 463256,
+          "name": "assaultheli_glass_front",
+          "active": true,
+          "localPosition": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "localRotation": [
+            0.0,
+            -1.0,
+            0.0,
+            -4.371139e-08
+          ]
+        },
+        {
+          "transformFileId": 448483,
+          "gameObjectFileId": 161526,
+          "parentTransformFileId": 463256,
+          "name": "assaultheli_glass_left_side",
+          "active": true,
+          "localPosition": [
+            -0.0,
+            0.0,
+            0.0070596933
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "localRotation": [
+            0.0,
+            -1.0,
+            0.0,
+            -4.371139e-08
+          ]
+        },
+        {
+          "transformFileId": 427988,
+          "gameObjectFileId": 154010,
+          "parentTransformFileId": 463256,
+          "name": "assaultheli_glass_right_side",
+          "active": true,
+          "localPosition": [
+            -0.0,
+            0.0,
+            0.0070596933
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "localRotation": [
+            0.0,
+            -1.0,
+            0.0,
+            -4.371139e-08
+          ]
+        },
+        {
+          "transformFileId": 409309,
+          "gameObjectFileId": 119550,
+          "parentTransformFileId": 425385,
+          "name": "assaultheli_rotor",
+          "active": true,
+          "localPosition": [
+            0.002273444,
+            0.38776672,
+            -0.014436245
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "localRotation": [
+            0.0,
+            -1.0,
+            0.0,
+            -4.371139e-08
+          ]
+        },
+        {
+          "transformFileId": 486667,
+          "gameObjectFileId": 184216,
+          "parentTransformFileId": 409309,
+          "name": "assaultheli_rotor_plane (2)",
+          "active": true,
+          "localPosition": [
+            0.0,
+            0.145,
+            0.0
+          ],
+          "localScale": [
+            1.0101483,
+            1.0101488,
+            1.0101488
+          ],
+          "localRotation": [
+            0.0,
+            0.9238796,
+            0.0,
+            0.3826834
+          ]
+        },
+        {
+          "transformFileId": 438461,
+          "gameObjectFileId": 143158,
+          "parentTransformFileId": 409309,
+          "name": "assaultheli_rotor_plane (3)",
+          "active": true,
+          "localPosition": [
+            0.0,
+            0.145,
+            0.0
+          ],
+          "localScale": [
+            1.0101485,
+            1.0101488,
+            1.0101489
+          ],
+          "localRotation": [
+            0.0,
+            0.9238795,
+            -0.0,
+            -0.38268358
+          ]
+        },
+        {
+          "transformFileId": 481434,
+          "gameObjectFileId": 131434,
+          "parentTransformFileId": 425385,
+          "name": "assaultheli_rotor_back",
+          "active": true,
+          "localPosition": [
+            -0.0027058087,
+            0.20722318,
+            -1.6196458
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "localRotation": [
+            -4.3705008e-08,
+            -0.017084863,
+            0.9998541,
+            -7.46803e-10
+          ]
+        },
+        {
+          "transformFileId": 412170,
+          "gameObjectFileId": 170521,
+          "parentTransformFileId": 481434,
+          "name": "assaultheli_rotor_plane (4)",
+          "active": true,
+          "localPosition": [
+            0.057000685,
+            -0.0029999856,
+            3.1272066e-08
+          ],
+          "localScale": [
+            0.17617425,
+            0.17617431,
+            0.17617434
+          ],
+          "localRotation": [
+            -0.48334256,
+            0.48334244,
+            0.51612025,
+            0.5161202
+          ]
+        },
+        {
+          "transformFileId": 499861,
+          "gameObjectFileId": 196012,
+          "parentTransformFileId": 425385,
+          "name": "attachments",
+          "active": true,
+          "localPosition": [
+            0.002273444,
+            -0.43358988,
+            -0.14618069
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "localRotation": [
+            0.0,
+            -1.0,
+            0.0,
+            -4.371139e-08
+          ]
+        },
+        {
+          "transformFileId": 435975,
+          "gameObjectFileId": 177035,
+          "parentTransformFileId": 425385,
+          "name": "colliders",
+          "active": true,
+          "localPosition": [
+            0.002273444,
+            -0.11836672,
+            0.10302049
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "localRotation": [
+            0.0,
+            -1.0,
+            0.0,
+            -4.371139e-08
+          ]
+        },
+        {
+          "transformFileId": 458972,
+          "gameObjectFileId": 103859,
+          "parentTransformFileId": 435975,
+          "name": "c1",
+          "active": true,
+          "localPosition": [
+            0.0,
+            -0.30518246,
+            0.2480151
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "localRotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        {
+          "transformFileId": 432167,
+          "gameObjectFileId": 169566,
+          "parentTransformFileId": 435975,
+          "name": "c1",
+          "active": true,
+          "localPosition": [
+            0.0,
+            -0.305182,
+            0.248015
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "localRotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        {
+          "transformFileId": 433379,
+          "gameObjectFileId": 188124,
+          "parentTransformFileId": 435975,
+          "name": "c1",
+          "active": true,
+          "localPosition": [
+            0.0,
+            -0.305182,
+            0.248015
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "localRotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        {
+          "transformFileId": 436299,
+          "gameObjectFileId": 124449,
+          "parentTransformFileId": 435975,
+          "name": "c1",
+          "active": true,
+          "localPosition": [
+            0.0,
+            -0.305182,
+            0.248015
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "localRotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        {
+          "transformFileId": 401372,
+          "gameObjectFileId": 191323,
+          "parentTransformFileId": 435975,
+          "name": "c1",
+          "active": true,
+          "localPosition": [
+            0.0,
+            -0.305182,
+            0.248015
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "localRotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        {
+          "transformFileId": 452723,
+          "gameObjectFileId": 169143,
+          "parentTransformFileId": 435975,
+          "name": "c1",
+          "active": true,
+          "localPosition": [
+            0.0,
+            -0.30518228,
+            0.2480155
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "localRotation": [
+            0.0,
+            4.371139e-08,
+            0.0,
+            1.0
+          ]
+        },
+        {
+          "transformFileId": 419666,
+          "gameObjectFileId": 159786,
+          "parentTransformFileId": 425385,
+          "name": "MachineGun",
+          "active": true,
+          "localPosition": [
+            0.3287352,
+            -0.24099445,
+            0.04579982
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "localRotation": [
+            0.0,
+            -1.0,
+            0.0,
+            -4.371139e-08
+          ]
+        },
+        {
+          "transformFileId": 417540,
+          "gameObjectFileId": 134467,
+          "parentTransformFileId": 419666,
+          "name": "MachinegunMuzzleFlash",
+          "active": true,
+          "localPosition": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "localScale": [
+            0.6888661,
+            0.6888661,
+            0.68886405
+          ],
+          "localRotation": [
+            -3.3589187e-09,
+            0.99704325,
+            -0.076843105,
+            -4.3582148e-08
+          ]
+        },
+        {
+          "transformFileId": 400539,
+          "gameObjectFileId": 172700,
+          "parentTransformFileId": 425385,
+          "name": "MachineGun",
+          "active": true,
+          "localPosition": [
+            -0.31855813,
+            -0.24099472,
+            0.045799464
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "localRotation": [
+            0.0,
+            -1.0,
+            0.0,
+            -4.371139e-08
+          ]
+        },
+        {
+          "transformFileId": 410883,
+          "gameObjectFileId": 169857,
+          "parentTransformFileId": 400539,
+          "name": "MachinegunMuzzleFlash",
+          "active": true,
+          "localPosition": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "localScale": [
+            0.6888661,
+            0.6888661,
+            0.68886405
+          ],
+          "localRotation": [
+            -3.3589187e-09,
+            0.99704325,
+            -0.076843105,
+            -4.3582148e-08
+          ]
+        },
+        {
+          "transformFileId": 478679,
+          "gameObjectFileId": 144804,
+          "parentTransformFileId": 425385,
+          "name": "fireDamage",
+          "active": true,
+          "localPosition": [
+            0.05152306,
+            0.40550852,
+            -0.18584684
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "localRotation": [
+            3.10904e-08,
+            -0.70292354,
+            -0.71126544,
+            -3.0725765e-08
+          ]
+        },
+        {
+          "transformFileId": 400119,
+          "gameObjectFileId": 155190,
+          "parentTransformFileId": 478679,
+          "name": "innerFire",
+          "active": true,
+          "localPosition": [
+            0.0,
+            -0.0,
+            0.0
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "localRotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        {
+          "transformFileId": 477090,
+          "gameObjectFileId": 176054,
+          "parentTransformFileId": 478679,
+          "name": "smoke",
+          "active": true,
+          "localPosition": [
+            -0.0,
+            0.0,
+            -0.0
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "localRotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        {
+          "transformFileId": 488140,
+          "gameObjectFileId": 196729,
+          "parentTransformFileId": 425385,
+          "name": "HealthBarPosition",
+          "active": true,
+          "localPosition": [
+            0.002,
+            0.712,
+            0.103
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "localRotation": [
+            0.0,
+            -1.0,
+            0.0,
+            -4.371139e-08
+          ]
+        },
+        {
+          "transformFileId": 410782,
+          "gameObjectFileId": 133324,
+          "parentTransformFileId": 425385,
+          "name": "middle",
+          "active": true,
+          "localPosition": [
+            0.002273444,
+            -0.11836672,
+            0.10302049
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "localRotation": [
+            0.0,
+            -1.0,
+            0.0,
+            -4.371139e-08
+          ]
+        },
+        {
+          "transformFileId": 498932,
+          "gameObjectFileId": 192819,
+          "parentTransformFileId": 425385,
+          "name": "Slots",
+          "active": true,
+          "localPosition": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "localRotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        {
+          "transformFileId": 404338,
+          "gameObjectFileId": 165029,
+          "parentTransformFileId": 498932,
+          "name": "Armour",
+          "active": true,
+          "localPosition": [
+            0.31713343,
+            -0.014820814,
+            -0.34662837
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "localRotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        {
+          "transformFileId": 416363,
+          "gameObjectFileId": 192514,
+          "parentTransformFileId": 498932,
+          "name": "Propellers",
+          "active": true,
+          "localPosition": [
+            -0.6717458,
+            0.34632707,
+            0.20691532
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "localRotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        {
+          "transformFileId": 439935,
+          "gameObjectFileId": 151504,
+          "parentTransformFileId": 498932,
+          "name": "Weapon",
+          "active": true,
+          "localPosition": [
+            0.46741813,
+            -0.49872398,
+            -0.1610561
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "localRotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        {
+          "transformFileId": 404554,
+          "gameObjectFileId": 131555,
+          "parentTransformFileId": 498932,
+          "name": "Special",
+          "active": true,
+          "localPosition": [
+            -0.04269126,
+            -0.34793758,
+            0.52343035
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "localRotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        {
+          "transformFileId": 430250,
+          "gameObjectFileId": 199646,
+          "parentTransformFileId": 425385,
+          "name": "colliderFall",
+          "active": true,
+          "localPosition": [
+            0.0022736825,
+            -0.11836672,
+            0.10302085
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "localRotation": [
+            0.0,
+            -1.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "transformFileId": 423964,
+          "gameObjectFileId": 107524,
+          "parentTransformFileId": 430250,
+          "name": "c1",
+          "active": true,
+          "localPosition": [
+            0.0,
+            -0.305182,
+            -0.037115574
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "localRotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        {
+          "transformFileId": 419193,
+          "gameObjectFileId": 152907,
+          "parentTransformFileId": 430250,
+          "name": "c1",
+          "active": true,
+          "localPosition": [
+            -0.0,
+            -0.305182,
+            1.0721018
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "localRotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        {
+          "transformFileId": 463789,
+          "gameObjectFileId": 134916,
+          "parentTransformFileId": 425385,
+          "name": "EnemyPoint",
+          "active": true,
+          "localPosition": [
+            -0.019,
+            -0.232,
+            0.255
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "localRotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        {
+          "transformFileId": 479075,
+          "gameObjectFileId": 191709,
+          "parentTransformFileId": 425385,
+          "name": "target",
+          "active": true,
+          "localPosition": [
+            0.002273,
+            0.16716416,
+            0.25654155
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "localRotation": [
+            0.0,
+            -1.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "transformFileId": 458777,
+          "gameObjectFileId": 154360,
+          "parentTransformFileId": 425385,
+          "name": "middleForGround",
+          "active": true,
+          "localPosition": [
+            0.012,
+            -0.396,
+            -0.096
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "localRotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        {
+          "transformFileId": 432491,
+          "gameObjectFileId": 184583,
+          "parentTransformFileId": 425385,
+          "name": "Engine",
+          "active": true,
+          "localPosition": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "localRotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        }
+      ],
+      "shootables": [
+        {
+          "componentFileId": 11482909,
+          "gameObjectFileId": 147589,
+          "scriptGuid": "3cf4d7761af3ce98d7a08bebfe4e8861",
+          "visible": true,
+          "targets": [
+            {
+              "transformFileId": 479075,
+              "type": 1,
+              "restPosition": [
+                0.002273,
+                0.16716416,
+                0.25654155
+              ]
+            }
+          ]
+        }
+      ],
+      "colliders": [
+        {
+          "colliderFileId": 6468680,
+          "gameObjectFileId": 105782,
+          "transformFileId": 462687,
+          "type": "Mesh",
+          "enabled": true,
+          "trigger": false,
+          "serializedLayer": 0,
+          "ancestorTransformFileIds": [
+            462687,
+            463256,
+            461517,
+            425385
+          ],
+          "activeAncestors": true,
+          "restCenter": [
+            0.002273444,
+            -0.4223091,
+            -0.1368384
+          ],
+          "restRotation": [
+            0.0,
+            -1.000000000000002,
+            0.0,
+            -4.3711390000000085e-08
+          ],
+          "scale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "localCenter": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "convex": true,
+          "meshReference": "{fileID: 4300000, guid: 799a7c85c474ee0449daf0e57600399c, type: 2}",
+          "hasSerializedMesh": true
+        },
+        {
+          "colliderFileId": 6467758,
+          "gameObjectFileId": 161526,
+          "transformFileId": 448483,
+          "type": "Mesh",
+          "enabled": true,
+          "trigger": false,
+          "serializedLayer": 0,
+          "ancestorTransformFileIds": [
+            448483,
+            463256,
+            461517,
+            425385
+          ],
+          "activeAncestors": true,
+          "restCenter": [
+            0.002273444,
+            -0.4223091,
+            -0.12977870669999997
+          ],
+          "restRotation": [
+            0.0,
+            -1.000000000000002,
+            0.0,
+            -4.3711390000000085e-08
+          ],
+          "scale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "localCenter": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "convex": true,
+          "meshReference": "{fileID: 0}",
+          "hasSerializedMesh": false
+        },
+        {
+          "colliderFileId": 6414637,
+          "gameObjectFileId": 154010,
+          "transformFileId": 427988,
+          "type": "Mesh",
+          "enabled": true,
+          "trigger": false,
+          "serializedLayer": 0,
+          "ancestorTransformFileIds": [
+            427988,
+            463256,
+            461517,
+            425385
+          ],
+          "activeAncestors": true,
+          "restCenter": [
+            0.002273444,
+            -0.4223091,
+            -0.12977870669999997
+          ],
+          "restRotation": [
+            0.0,
+            -1.000000000000002,
+            0.0,
+            -4.3711390000000085e-08
+          ],
+          "scale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "localCenter": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "convex": true,
+          "meshReference": "{fileID: 0}",
+          "hasSerializedMesh": false
+        },
+        {
+          "colliderFileId": 6480903,
+          "gameObjectFileId": 103859,
+          "transformFileId": 458972,
+          "type": "Mesh",
+          "enabled": true,
+          "trigger": false,
+          "serializedLayer": 8,
+          "ancestorTransformFileIds": [
+            458972,
+            435975,
+            425385
+          ],
+          "activeAncestors": true,
+          "restCenter": [
+            0.0022734656821695237,
+            -0.4235491800000006,
+            -0.14499460999999952
+          ],
+          "restRotation": [
+            0.0,
+            -1.0,
+            0.0,
+            -4.371139e-08
+          ],
+          "scale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "localCenter": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "convex": true,
+          "meshReference": "{fileID: 4300000, guid: 049f0c1671103364e9d4f48c5287121f, type: 2}",
+          "hasSerializedMesh": true
+        },
+        {
+          "colliderFileId": 6566439,
+          "gameObjectFileId": 169566,
+          "transformFileId": 432167,
+          "type": "Box",
+          "enabled": true,
+          "trigger": false,
+          "serializedLayer": 8,
+          "ancestorTransformFileIds": [
+            432167,
+            435975,
+            425385
+          ],
+          "activeAncestors": true,
+          "restCenter": [
+            0.004384944503930761,
+            0.040548300000000315,
+            0.03434353018459285
+          ],
+          "restRotation": [
+            0.0,
+            -1.0,
+            0.0,
+            -4.371139e-08
+          ],
+          "scale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "localCenter": [
+            -0.0021114945,
+            0.46409702,
+            -0.17933804
+          ],
+          "localSize": [
+            0.50202096,
+            0.542398,
+            0.27047324
+          ]
+        },
+        {
+          "colliderFileId": 6464753,
+          "gameObjectFileId": 188124,
+          "transformFileId": 433379,
+          "type": "Mesh",
+          "enabled": true,
+          "trigger": false,
+          "serializedLayer": 8,
+          "ancestorTransformFileIds": [
+            433379,
+            435975,
+            425385
+          ],
+          "activeAncestors": true,
+          "restCenter": [
+            0.0022734656821607815,
+            -0.4235487200000006,
+            -0.14499450999999952
+          ],
+          "restRotation": [
+            0.0,
+            -1.0,
+            0.0,
+            -4.371139e-08
+          ],
+          "scale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "localCenter": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "convex": true,
+          "meshReference": "{fileID: 4300000, guid: 727cd68b7be7e4a4d9cdb13e000e9a10, type: 2}",
+          "hasSerializedMesh": true
+        },
+        {
+          "colliderFileId": 6433468,
+          "gameObjectFileId": 124449,
+          "transformFileId": 436299,
+          "type": "Mesh",
+          "enabled": true,
+          "trigger": false,
+          "serializedLayer": 8,
+          "ancestorTransformFileIds": [
+            436299,
+            435975,
+            425385
+          ],
+          "activeAncestors": true,
+          "restCenter": [
+            0.0022734656821607815,
+            -0.4235487200000006,
+            -0.14499450999999952
+          ],
+          "restRotation": [
+            0.0,
+            -1.0,
+            0.0,
+            -4.371139e-08
+          ],
+          "scale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "localCenter": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "convex": true,
+          "meshReference": "{fileID: 4300000, guid: fbbdc6fcb5e77104f8d194a86fb4c319, type: 2}",
+          "hasSerializedMesh": true
+        },
+        {
+          "colliderFileId": 6493588,
+          "gameObjectFileId": 191323,
+          "transformFileId": 401372,
+          "type": "Mesh",
+          "enabled": true,
+          "trigger": false,
+          "serializedLayer": 8,
+          "ancestorTransformFileIds": [
+            401372,
+            435975,
+            425385
+          ],
+          "activeAncestors": true,
+          "restCenter": [
+            0.0022734656821607815,
+            -0.4235487200000006,
+            -0.14499450999999952
+          ],
+          "restRotation": [
+            0.0,
+            -1.0,
+            0.0,
+            -4.371139e-08
+          ],
+          "scale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "localCenter": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "convex": true,
+          "meshReference": "{fileID: 4300000, guid: 7d4d9055779d8f3408ef22a5d9cdf4f6, type: 2}",
+          "hasSerializedMesh": true
+        },
+        {
+          "colliderFileId": 6454546,
+          "gameObjectFileId": 169143,
+          "transformFileId": 452723,
+          "type": "Mesh",
+          "enabled": true,
+          "trigger": false,
+          "serializedLayer": 8,
+          "ancestorTransformFileIds": [
+            452723,
+            435975,
+            425385
+          ],
+          "activeAncestors": true,
+          "restCenter": [
+            0.002273465682204493,
+            -0.42354900000000056,
+            -0.14499500999999954
+          ],
+          "restRotation": [
+            0.0,
+            -1.000000000000002,
+            0.0,
+            0.0
+          ],
+          "scale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "localCenter": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "convex": true,
+          "meshReference": "{fileID: 4300000, guid: ad736291141fa8f42b743a98921886a8, type: 2}",
+          "hasSerializedMesh": true
+        },
+        {
+          "colliderFileId": 6542852,
+          "gameObjectFileId": 107524,
+          "transformFileId": 423964,
+          "type": "Box",
+          "enabled": true,
+          "trigger": false,
+          "serializedLayer": 15,
+          "ancestorTransformFileIds": [
+            423964,
+            430250,
+            425385
+          ],
+          "activeAncestors": true,
+          "restCenter": [
+            -0.024345394500000003,
+            0.17897717999999996,
+            0.08236587399999998
+          ],
+          "restRotation": [
+            0.0,
+            -1.0,
+            0.0,
+            0.0
+          ],
+          "scale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "localCenter": [
+            0.026619077,
+            0.6025259,
+            0.05777055
+          ],
+          "localSize": [
+            0.46071887,
+            0.37595952,
+            1.1155413
+          ]
+        },
+        {
+          "colliderFileId": 6506061,
+          "gameObjectFileId": 152907,
+          "transformFileId": 419193,
+          "type": "Box",
+          "enabled": true,
+          "trigger": false,
+          "serializedLayer": 15,
+          "ancestorTransformFileIds": [
+            419193,
+            430250,
+            425385
+          ],
+          "activeAncestors": true,
+          "restCenter": [
+            -0.0275322165,
+            0.26604364,
+            -1.0817618599999999
+          ],
+          "restRotation": [
+            0.0,
+            -1.0,
+            0.0,
+            0.0
+          ],
+          "scale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "localCenter": [
+            0.029805899,
+            0.68959236,
+            0.11268091
+          ],
+          "localSize": [
+            0.19736421,
+            0.20182657,
+            1.2253618
+          ]
+        }
+      ]
+    },
+    {
+      "unitId": "ID_UNIT-DRONE",
+      "source": "Assets/GameObject/dronePrototype.prefab",
+      "sha256": "c2afc19487462e6163ad107267ef1b35c9c86fb34fa80898135b1d25f4a872a3",
+      "rootTransformFileId": 469143,
+      "components": [
+        {
+          "componentFileId": 11459786,
+          "gameObjectFileId": 147589,
+          "scriptGuid": "86bf7443ae747a9d46e3cda93dc15c54",
+          "scriptType": "Drone"
+        },
+        {
+          "componentFileId": 11434467,
+          "gameObjectFileId": 147589,
+          "scriptGuid": "a503568e23092a0b9255b6fcb6b62be2",
+          "scriptType": "DestroyableObject"
+        },
+        {
+          "componentFileId": 11472700,
+          "gameObjectFileId": 147589,
+          "scriptGuid": "3cf4d7761af3ce98d7a08bebfe4e8861",
+          "scriptType": "GameShootableEntity"
+        },
+        {
+          "componentFileId": 11455190,
+          "gameObjectFileId": 147589,
+          "scriptGuid": "486a9acbd9d8b9c34ac18b91e89b7bef",
+          "scriptType": "SkillShotController"
+        },
+        {
+          "componentFileId": 11476054,
+          "gameObjectFileId": 147589,
+          "scriptGuid": "5bfbf978d76daea62a5ea6e2af5801d1",
+          "scriptType": "DamageDisplayController"
+        },
+        {
+          "componentFileId": 11496729,
+          "gameObjectFileId": 147589,
+          "scriptGuid": "f19ea4a15c3ca43dcc180d756f7a82b3",
+          "scriptType": "PhotonView"
+        },
+        {
+          "componentFileId": 11433324,
+          "gameObjectFileId": 147589,
+          "scriptGuid": "1cb9d4e3bc85c63a43096be5a40016e7",
+          "scriptType": "AutomaticRifle"
+        },
+        {
+          "componentFileId": 11492819,
+          "gameObjectFileId": 147589,
+          "scriptGuid": "4ceecd6f3ff0e22dc65ce39c3a1fce86",
+          "scriptType": "BulletSetup"
+        },
+        {
+          "componentFileId": 11465029,
+          "gameObjectFileId": 147589,
+          "scriptGuid": "aa5336f805f636a26d269afa08d8ccb0",
+          "scriptType": "HudObjectIndicator"
+        },
+        {
+          "componentFileId": 11492514,
+          "gameObjectFileId": 147589,
+          "scriptGuid": "a551e0a4c5224adf6c7c791cacc35f6a",
+          "scriptType": "ArmyUnit3DModel"
+        },
+        {
+          "componentFileId": 11431555,
+          "gameObjectFileId": 147589,
+          "scriptGuid": "0dfd54bd9851b07f2dc75544b2e170c3",
+          "scriptType": "ModelAttachments"
+        },
+        {
+          "componentFileId": 11499646,
+          "gameObjectFileId": 147589,
+          "scriptGuid": "c452d4ec3c54130d0b8b40a7db84146e",
+          "scriptType": "VehicleVisuals"
+        },
+        {
+          "componentFileId": 11407524,
+          "gameObjectFileId": 147589,
+          "scriptGuid": "72c70e5b7e4060a143fc0f2572aeff9c",
+          "scriptType": "DroneSteering"
+        },
+        {
+          "componentFileId": 11452907,
+          "gameObjectFileId": 147589,
+          "scriptGuid": "1ea9bd9ef3acf8cc028548b0326497c0",
+          "scriptType": "UnitModelLoader"
+        },
+        {
+          "componentFileId": 11434916,
+          "gameObjectFileId": 147589,
+          "scriptGuid": "a7637fba3d3838c87126404c48361b7e",
+          "scriptType": "BatchedWeapon"
+        },
+        {
+          "componentFileId": 11427192,
+          "gameObjectFileId": 105782,
+          "scriptGuid": "4090235689019e8dade2fb65364f77e3",
+          "scriptType": "vp_MuzzleFlash"
+        },
+        {
+          "componentFileId": 11461517,
+          "gameObjectFileId": 184216,
+          "scriptGuid": "1f61fafee80c4e2bbfb2332402131901",
+          "scriptType": "AimTarget"
+        },
+        {
+          "componentFileId": 11463256,
+          "gameObjectFileId": 184216,
+          "scriptGuid": "0ff5f7341956507b1f19adfb98938625",
+          "scriptType": "VehicleEngine"
+        },
+        {
+          "componentFileId": 11410128,
+          "gameObjectFileId": 170521,
+          "scriptGuid": "5936eb71775d995a03be18ec309d5f74",
+          "scriptType": "TweenRotationSpecial"
+        },
+        {
+          "componentFileId": 11467758,
+          "gameObjectFileId": 177035,
+          "scriptGuid": "5936eb71775d995a03be18ec309d5f74",
+          "scriptType": "TweenRotationSpecial"
+        },
+        {
+          "componentFileId": 11414637,
+          "gameObjectFileId": 169566,
+          "scriptGuid": "5936eb71775d995a03be18ec309d5f74",
+          "scriptType": "TweenRotationSpecial"
+        },
+        {
+          "componentFileId": 11438915,
+          "gameObjectFileId": 188124,
+          "scriptGuid": "5936eb71775d995a03be18ec309d5f74",
+          "scriptType": "TweenRotationSpecial"
+        },
+        {
+          "componentFileId": 11495861,
+          "gameObjectFileId": 124449,
+          "scriptGuid": "5936eb71775d995a03be18ec309d5f74",
+          "scriptType": "TweenRotationSpecial"
+        },
+        {
+          "componentFileId": 11450766,
+          "gameObjectFileId": 191323,
+          "scriptGuid": "5936eb71775d995a03be18ec309d5f74",
+          "scriptType": "TweenRotationSpecial"
+        }
+      ],
+      "hierarchy": [
+        {
+          "transformFileId": 469143,
+          "gameObjectFileId": 147589,
+          "parentTransformFileId": 0,
+          "name": "dronePrototype",
+          "active": true,
+          "localPosition": [
+            -4.858,
+            0.741,
+            0.0
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "localRotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        {
+          "transformFileId": 491709,
+          "gameObjectFileId": 179954,
+          "parentTransformFileId": 469143,
+          "name": "HealthBarPosition",
+          "active": true,
+          "localPosition": [
+            0.0,
+            0.21775818,
+            0.0
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "localRotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        {
+          "transformFileId": 454360,
+          "gameObjectFileId": 109266,
+          "parentTransformFileId": 469143,
+          "name": "DroneGun",
+          "active": true,
+          "localPosition": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "localRotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        {
+          "transformFileId": 484583,
+          "gameObjectFileId": 105782,
+          "parentTransformFileId": 454360,
+          "name": "MachinegunMuzzleFlash",
+          "active": true,
+          "localPosition": [
+            0.016174316,
+            -0.13520324,
+            -0.07588673
+          ],
+          "localScale": [
+            0.6888661,
+            0.6888661,
+            0.68886405
+          ],
+          "localRotation": [
+            -3.3589187e-09,
+            0.99704325,
+            -0.076843105,
+            -4.3582148e-08
+          ]
+        },
+        {
+          "transformFileId": 482909,
+          "gameObjectFileId": 161526,
+          "parentTransformFileId": 469143,
+          "name": "fireDamage",
+          "active": true,
+          "localPosition": [
+            -0.04924965,
+            0.03510368,
+            -0.08345318
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "localRotation": [
+            -0.71126544,
+            0.0,
+            0.0,
+            0.70292354
+          ]
+        },
+        {
+          "transformFileId": 435660,
+          "gameObjectFileId": 154010,
+          "parentTransformFileId": 482909,
+          "name": "innerFire",
+          "active": true,
+          "localPosition": [
+            0.0,
+            -0.0,
+            0.0
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "localRotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        {
+          "transformFileId": 405464,
+          "gameObjectFileId": 119550,
+          "parentTransformFileId": 482909,
+          "name": "smoke",
+          "active": true,
+          "localPosition": [
+            -0.0,
+            0.0,
+            -0.0
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "localRotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        {
+          "transformFileId": 463426,
+          "gameObjectFileId": 184216,
+          "parentTransformFileId": 469143,
+          "name": "AimTargerAndEngine",
+          "active": true,
+          "localPosition": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "localRotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        {
+          "transformFileId": 460213,
+          "gameObjectFileId": 143158,
+          "parentTransformFileId": 469143,
+          "name": "drone",
+          "active": true,
+          "localPosition": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "localRotation": [
+            0.0,
+            -0.7071068,
+            0.0,
+            0.7071067
+          ]
+        },
+        {
+          "transformFileId": 491078,
+          "gameObjectFileId": 131434,
+          "parentTransformFileId": 460213,
+          "name": "drone_rotor",
+          "active": true,
+          "localPosition": [
+            -0.17929919,
+            0.006966491,
+            -0.19597904
+          ],
+          "localScale": [
+            0.99999994,
+            0.99999994,
+            0.99999994
+          ],
+          "localRotation": [
+            -0.6323727,
+            -0.08375019,
+            0.11014358,
+            0.7622068
+          ]
+        },
+        {
+          "transformFileId": 439548,
+          "gameObjectFileId": 170521,
+          "parentTransformFileId": 491078,
+          "name": "drone_rotor",
+          "active": true,
+          "localPosition": [
+            0.0,
+            -0.0,
+            -0.0001
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "localRotation": [
+            -1.1968981e-08,
+            1.4815565e-08,
+            -0.04596165,
+            -0.9989432
+          ]
+        },
+        {
+          "transformFileId": 448483,
+          "gameObjectFileId": 196012,
+          "parentTransformFileId": 460213,
+          "name": "drone_rotor.001",
+          "active": true,
+          "localPosition": [
+            -0.17929961,
+            0.0069665075,
+            0.19572812
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "localRotation": [
+            -0.7654043,
+            -0.053057324,
+            0.08654679,
+            0.6354926
+          ]
+        },
+        {
+          "transformFileId": 473647,
+          "gameObjectFileId": 177035,
+          "parentTransformFileId": 448483,
+          "name": "drone_rotor.001",
+          "active": true,
+          "localPosition": [
+            1.1742817e-05,
+            1.076964e-05,
+            -0.0034002862
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "localRotation": [
+            5.511466e-08,
+            -2.9514634e-08,
+            -0.81875837,
+            -0.5741382
+          ]
+        },
+        {
+          "transformFileId": 409877,
+          "gameObjectFileId": 103859,
+          "parentTransformFileId": 469143,
+          "name": "heavydrone",
+          "active": false,
+          "localPosition": [
+            -0.003,
+            -0.0,
+            -0.012
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "localRotation": [
+            1.5511938e-08,
+            -0.7044599,
+            -1.539646e-08,
+            0.70974374
+          ]
+        },
+        {
+          "transformFileId": 499539,
+          "gameObjectFileId": 169566,
+          "parentTransformFileId": 409877,
+          "name": "heavydrone_rotor_1",
+          "active": true,
+          "localPosition": [
+            -0.17968273,
+            -0.005629781,
+            -0.19518572
+          ],
+          "localScale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "localRotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        {
+          "transformFileId": 429211,
+          "gameObjectFileId": 188124,
+          "parentTransformFileId": 409877,
+          "name": "heavydrone_rotor_2",
+          "active": true,
+          "localPosition": [
+            -0.17968273,
+            -0.005629781,
+            0.19518572
+          ],
+          "localScale": [
+            -1.0,
+            -1.0,
+            -1.0
+          ],
+          "localRotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        {
+          "transformFileId": 486885,
+          "gameObjectFileId": 124449,
+          "parentTransformFileId": 409877,
+          "name": "heavydrone_rotor_3",
+          "active": true,
+          "localPosition": [
+            0.17968273,
+            -0.005629781,
+            0.19518572
+          ],
+          "localScale": [
+            0.99999994,
+            1.0,
+            1.0
+          ],
+          "localRotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        },
+        {
+          "transformFileId": 491029,
+          "gameObjectFileId": 191323,
+          "parentTransformFileId": 409877,
+          "name": "heavydrone_rotor_4",
+          "active": true,
+          "localPosition": [
+            0.17968273,
+            -0.005629781,
+            -0.19518572
+          ],
+          "localScale": [
+            -1.0,
+            -1.0,
+            -1.0
+          ],
+          "localRotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        }
+      ],
+      "shootables": [
+        {
+          "componentFileId": 11472700,
+          "gameObjectFileId": 147589,
+          "scriptGuid": "3cf4d7761af3ce98d7a08bebfe4e8861",
+          "visible": true,
+          "targets": [
+            {
+              "transformFileId": 454360,
+              "type": 1,
+              "restPosition": [
+                0.0,
+                0.0,
+                0.0
+              ]
+            }
+          ]
+        }
+      ],
+      "colliders": [
+        {
+          "colliderFileId": 6544804,
+          "gameObjectFileId": 147589,
+          "transformFileId": 469143,
+          "type": "Box",
+          "enabled": true,
+          "trigger": false,
+          "serializedLayer": 0,
+          "ancestorTransformFileIds": [
+            469143
+          ],
+          "activeAncestors": true,
+          "restCenter": [
+            -0.00030708313,
+            0.04583633,
+            0.023748398
+          ],
+          "restRotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ],
+          "scale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "localCenter": [
+            -0.00030708313,
+            0.04583633,
+            0.023748398
+          ],
+          "localSize": [
+            0.7734146,
+            0.17858717,
+            0.76962006
+          ]
+        },
+        {
+          "colliderFileId": 13511718,
+          "gameObjectFileId": 184216,
+          "transformFileId": 463426,
+          "type": "Sphere",
+          "enabled": true,
+          "trigger": false,
+          "serializedLayer": 8,
+          "ancestorTransformFileIds": [
+            463426,
+            469143
+          ],
+          "activeAncestors": true,
+          "restCenter": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "restRotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ],
+          "scale": [
+            1.0,
+            1.0,
+            1.0
+          ],
+          "localCenter": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "localRadius": 0.43
+        }
+      ]
+    }
+  ],
+  "deploymentSource": {
+    "source": "Server/content/recovered-army-deployment.json",
+    "sha256": "1fb773694970fdb40508009118eb07e91987d04b3a67532dc76eb033c49b06db",
+    "families": [
+      {
+        "unitId": "ID_UNIT-HELICOPTER",
+        "behaviorFileId": 43871,
+        "behaviorType": "HelicopterBehaviour",
+        "unitType": 0
+      },
+      {
+        "unitId": "ID_UNIT-DRONE",
+        "behaviorFileId": 39312,
+        "behaviorType": "DroneBehaviour",
+        "unitType": 0
+      },
+      {
+        "unitId": "ID_UNIT-ASSAULTHELI",
+        "behaviorFileId": 39067,
+        "behaviorType": "AssaultHelicopterBehaviour",
+        "unitType": 2
+      }
+    ]
+  },
+  "meshSources": {
+    "049f0c1671103364e9d4f48c5287121f": {
+      "source": "Assets/Mesh/assaultheli_COL_1.asset",
+      "sha256": "c3cab9ca30f274a279b8ead65e49abab50f4823c0d7e8cd230cd5fa7d17fcbb6"
+    },
+    "727cd68b7be7e4a4d9cdb13e000e9a10": {
+      "source": "Assets/Mesh/assaultheli_COL_2.asset",
+      "sha256": "2b7144977c329e9c6228c6967e301d1d6cd6a2a36d4172c82745e4855a0f76de"
+    },
+    "fbbdc6fcb5e77104f8d194a86fb4c319": {
+      "source": "Assets/Mesh/assaultheli_COL_3.asset",
+      "sha256": "016f3076dcb24f05544c89f60bfaddbed760da860472588fe79b812a411f5c96"
+    },
+    "7d4d9055779d8f3408ef22a5d9cdf4f6": {
+      "source": "Assets/Mesh/assaultheli_COL_4.asset",
+      "sha256": "ec17a19195687cb32a49ca821ff4018ae796b5ad386ec745a69ecb2e6f88f7d5"
+    },
+    "ad736291141fa8f42b743a98921886a8": {
+      "source": "Assets/Mesh/assaultheli_COL_5.asset",
+      "sha256": "d6f781709bef484eac905e765866c7a6ec5277214c66ead962ef88cdc98fcc52"
+    },
+    "799a7c85c474ee0449daf0e57600399c": {
+      "source": "Assets/Mesh/assaultheli_glass_front_COL.asset",
+      "sha256": "cf26855a28b3f22e7940cad329b640515eb2b6e40e678d635d50f3e5a8e2b37e"
+    }
+  }
+}
