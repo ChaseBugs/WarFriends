@@ -2990,6 +2990,29 @@ internal static class CombatContentTests
         Check(repairEvents.Any(x=>x.Kind==MatchEventKind.VehicleRepairDroneDown&&
                   x.ProjectileId==transporterEntity.EntityKey&&x.Reason=="vehicle-repair-drone-down:0"),
               "repair-drone projectile death emits a replayable source-path lifecycle event");
+        ulong repairEventCursor=repairEvents.Count>0?repairEvents[^1].EventId:
+            transporterEvents.Count>0?transporterEvents[^1].EventId:0;
+        for(int i=0;i<300&&!transporterMatch.Terminal&&
+            !transporterMatch.TransporterRepairDrones(transporterEntity.EntityKey)[0].Crashed;i++)
+        {
+            transporterMatch.Advance(++transporterTick);
+            if(transporterTick%90==0)
+            {transporterMatch.ArmyEntityBatch(soldierOwner,0,0);transporterMatch.ArmyEntityBatch(helicopterOwner,0,0);}
+        }
+        var crashedDrone=transporterMatch.TransporterRepairDrones(transporterEntity.EntityKey)[0];
+        var crashEvents=new List<MatchEvent>();
+        while(true)
+        {
+            var page=transporterMatch.EventBatch(helicopterOwner,repairEventCursor);
+            crashEvents.AddRange(page.Events);
+            if(page.Events.Count==0||page.Events[^1].EventId==page.LatestEventId)break;
+            repairEventCursor=page.Events[^1].EventId;
+        }
+        Check(crashedDrone is {Active:false,Falling:false,Crashed:true}&&
+              crashEvents.Any(x=>x.Kind==MatchEventKind.VehicleRepairDroneExploded&&
+                  x.ProjectileId==transporterEntity.EntityKey&&
+                  x.Reason=="vehicle-repair-drone-exploded:0"),
+              "live dead repair drone falls into recovered scene geometry and publishes its terminal crash");
         var destroyedVehicle=parkedVehicles[0];
         Check(staleMatch.ApplyArmyHostDamage(destroyedVehicle.EntityKey,destroyedVehicle.MaxHealth)&&
               staleMatch.VehicleRouteMotion(destroyedVehicle.EntityKey)==null&&

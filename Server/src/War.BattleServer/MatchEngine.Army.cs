@@ -764,7 +764,7 @@ public sealed partial class MatchEngine
     private void AdvanceTransporterRepairDrones()
     {
         if(vehicles==null)throw new InvalidDataException("Transporter repair drones lack vehicle authority.");
-        foreach(var (entityKey,drones) in transporterRepairDrones.OrderBy(x=>x.Key))
+        foreach(var (entityKey,drones) in transporterRepairDrones.OrderBy(x=>x.Key).ToArray())
         {
             if(!activeArmyEntities.TryGetValue(entityKey,out var army)||
                !vehicles.TryGet(entityKey,out var vehicle)||vehicle==null||
@@ -862,6 +862,30 @@ public sealed partial class MatchEngine
                 damageRoll(),attacker!=victim&&attacker.Definition.Fraction!=victim.Definition.Fraction);
             if(Terminal)return;
         }
+        if(vehicles!=null)
+            foreach(var target in vehicles.Snapshot().OrderBy(x=>x.EntityId).ToArray())
+            {
+                if(!activeArmyEntities.ContainsKey(target.EntityId)||
+                   !groundVehicleFacing.TryGetValue(target.EntityId,out var facing))continue;
+                var parts=groundVehicleWeapons.PlaceBody(target.UnitId,target.EntityId,target.Position,facing)
+                    .Where(x=>x.Hitbox.OverlapsSphere(drone.Position,binding.HurtRadius))
+                    .OrderBy(x=>x.Hitbox.DistanceToPoint(drone.Position))
+                    .ThenBy(x=>x.PartComponentFileId).ToArray();
+                if(parts.Length==0)continue;
+                float amount=Damage(Vector3.Distance(parts[0].Hitbox.TransformPosition,drone.Position),out _);
+                float before=ArmyHealth(target.EntityId)??
+                    throw new InvalidDataException("Repair-drone explosion vehicle lacks shared vitality.");
+                if(!ApplyArmyHostDamage(target.EntityId,amount))continue;
+                if(activeArmyEntities.ContainsKey(target.EntityId))
+                {
+                    float after=ArmyHealth(target.EntityId)??
+                        throw new InvalidDataException("Repair-drone explosion lost surviving vehicle vitality.");
+                    float applied=before-after;
+                    if(applied>0&&(!vehicles.TryDamage(target.EntityId,applied,out float registryApplied,out bool destroyed)||
+                       destroyed||Math.Abs(applied-registryApplied)>.001f))
+                        throw new InvalidDataException("Repair-drone explosion diverged from vehicle health.");
+                }
+            }
         if(transporterRepairDrones.TryGetValue(vehicleId,out var siblings))
             foreach(var sibling in siblings.Where(x=>x!=drone&&x.Active).ToArray())
             {
