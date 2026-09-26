@@ -698,6 +698,13 @@ internal static class CombatContentTests
               content.Maps.All(m=>content.ArmySpawnPoints.ForMap(m)
                 .Select(p=>p.Collection).Distinct().Count()==5),
               "all five multiplayer scenes retain their typed source spawn collections");
+        var vehicleRoutes=content.Maps.SelectMany(m=>content.ArmySpawnPoints.ForMap(m))
+            .Where(p=>p.VehicleRoute!=null).ToArray();
+        Check(vehicleRoutes.Length==20&&vehicleRoutes.Sum(p=>p.VehicleRoute!.Positions.Count)==107&&
+              vehicleRoutes.All(p=>p.Collection=="spawnPointsCollectionCars"&&
+                  p.VehicleRoute!.WaypointTransformFileIds[^1]==p.VehicleRoute.TargetTransformFileId&&
+                  !p.VehicleRoute.SmoothRoute&&!p.VehicleRoute.IsLoop),
+              "all 20 source vehicle spawns pin their 107 ordered linear waypoints and final targets");
         string spawnPath=Path.Combine(directory,"recovered-army-spawn-points.json");
         string spawnTemp=Path.Combine(directory,"army-spawn-test-"+Guid.NewGuid().ToString("N")+".json");
         try
@@ -708,6 +715,13 @@ internal static class CombatContentTests
             modified["maps"]![0]!["points"]![0]!["worldPosition"]![0]=999f;
             File.WriteAllText(spawnTemp,modified.ToJsonString());
             string altered=Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(spawnTemp)));
+            Reject(()=>ArmySpawnPointCatalog.Load(spawnTemp,altered,content.Maps));
+            modified=JsonNode.Parse(File.ReadAllText(spawnPath))!;
+            modified["maps"]![0]!["points"]!.AsArray().First(p=>
+                p!["collection"]!.GetValue<string>()=="spawnPointsCollectionCars")!["vehicleRoute"]![
+                    "targetTransformFileId"]=1;
+            File.WriteAllText(spawnTemp,modified.ToJsonString());
+            altered=Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(spawnTemp)));
             Reject(()=>ArmySpawnPointCatalog.Load(spawnTemp,altered,content.Maps));
             Check(pin.ArmySpawnPointsRevision==Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(spawnPath))),
                   "spawn transforms are pinned into the live combat revision");

@@ -6,7 +6,9 @@ namespace War.BattleServer;
 
 public sealed record ArmySpawnPoint(string Collection,int Order,int ComponentFileId,
     int GameObjectFileId,int TransformFileId,string ComponentType,int Fraction,
-    int JoinWaypointFileId,int ReservationFileId,Vector3 Position);
+    int JoinWaypointFileId,int ReservationFileId,Vector3 Position,ArmyVehicleRoute? VehicleRoute);
+public sealed record ArmyVehicleRoute(int CircuitFileId,int TargetTransformFileId,bool SmoothRoute,
+    bool IsLoop,IReadOnlyList<int> WaypointTransformFileIds,IReadOnlyList<Vector3> Positions);
 
 /// <summary>Source-scene spawn positions validated against their transform chains.</summary>
 public sealed class ArmySpawnPointCatalog
@@ -28,7 +30,7 @@ public sealed class ArmySpawnPointCatalog
             throw new InvalidDataException("Army spawn source revision mismatch.");
         using var document=JsonDocument.Parse(bytes,new JsonDocumentOptions{MaxDepth=12});
         var root=document.RootElement;Exact(root,"version","maps");
-        if(root.GetProperty("version").GetInt32()!=1)throw new InvalidDataException("Unknown spawn artifact version.");
+        if(root.GetProperty("version").GetInt32()!=2)throw new InvalidDataException("Unknown spawn artifact version.");
         var entries=root.GetProperty("maps");
         if(entries.GetArrayLength()!=sourceMaps.Count)throw new InvalidDataException("Incomplete army spawn maps.");
         var result=new Dictionary<string,IReadOnlyList<ArmySpawnPoint>>(StringComparer.Ordinal);
@@ -51,7 +53,7 @@ public sealed class ArmySpawnPointCatalog
             {
                 var point=points[i];Exact(point,"collection","order","componentFileId","gameObjectFileId",
                     "transformFileId","componentType","fraction","joinWaypointFileId","reservationFileId",
-                    "worldPosition","transformChain");
+                    "worldPosition","transformChain","vehicleRoute");
                 string category=point.GetProperty("collection").GetString()??"";
                 int selected=Array.IndexOf(Collections,category);
                 if(selected<categoryIndex || selected<0 || selected>=Collections.Length)
@@ -95,13 +97,51 @@ public sealed class ArmySpawnPointCatalog
                 }
                 if(Vector3.Distance(predicted,position)>0.001f)
                     throw new InvalidDataException("Spawn world position differs from source transform chain.");
-                accepted[i]=new(category,ordinal,component,gameObject,transform,type,fraction,join,reservation,position);
+                ArmyVehicleRoute? vehicleRoute=ParseVehicleRoute(point.GetProperty("vehicleRoute"),category);
+                accepted[i]=new(category,ordinal,component,gameObject,transform,type,fraction,join,reservation,
+                    position,vehicleRoute);
             }
             if(order.Values.Any(count=>count==0))throw new InvalidDataException("Missing army spawn collection.");
             total+=accepted.Length;result.Add(map.Source,Array.AsReadOnly(accepted));
         }
         if(total!=101)throw new InvalidDataException("Incomplete recovered spawn-point set.");
+        if(result.Values.SelectMany(x=>x).Count(x=>x.VehicleRoute!=null)!=20 ||
+           result.Values.SelectMany(x=>x).Where(x=>x.VehicleRoute!=null)
+               .Sum(x=>x.VehicleRoute!.Positions.Count)!=107)
+            throw new InvalidDataException("Incomplete recovered vehicle route set.");
         return new(expectedRevision,result);
+    }
+
+    private static ArmyVehicleRoute? ParseVehicleRoute(JsonElement value,string category)
+    {
+        if(category!="spawnPointsCollectionCars")
+        {
+            if(value.ValueKind!=JsonValueKind.Null)
+                throw new InvalidDataException("Non-vehicle spawn has a vehicle route.");
+            return null;
+        }
+        Exact(value,"circuitFileId","targetTransformFileId","smoothRoute","isLoop",
+            "waypointTransformFileIds","worldPositions");
+        int circuit=value.GetProperty("circuitFileId").GetInt32();
+        int target=value.GetProperty("targetTransformFileId").GetInt32();
+        bool smooth=value.GetProperty("smoothRoute").GetBoolean();
+        bool loop=value.GetProperty("isLoop").GetBoolean();
+        var ids=value.GetProperty("waypointTransformFileIds");
+        var positions=value.GetProperty("worldPositions");
+        if(circuit<=0 || target<=0 || smooth || loop || ids.GetArrayLength() is <2 or >64 ||
+           positions.GetArrayLength()!=ids.GetArrayLength())
+            throw new InvalidDataException("Invalid recovered vehicle route shape.");
+        var routeIds=new int[ids.GetArrayLength()];var routePositions=new Vector3[ids.GetArrayLength()];
+        var unique=new HashSet<int>();
+        for(int i=0;i<routeIds.Length;i++)
+        {
+            routeIds[i]=ids[i].GetInt32();routePositions[i]=Vector(positions[i]);
+            if(routeIds[i]<=0 || !unique.Add(routeIds[i]))
+                throw new InvalidDataException("Invalid recovered vehicle waypoint identity.");
+        }
+        if(routeIds[^1]!=target)
+            throw new InvalidDataException("Vehicle target is not the final source waypoint.");
+        return new(circuit,target,smooth,loop,Array.AsReadOnly(routeIds),Array.AsReadOnly(routePositions));
     }
 
     private static Vector3 Vector(JsonElement array)

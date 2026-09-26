@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "maps": [
     {
       "source": "Assets/Scenes/Aztec_Multiplayer.unity",
@@ -117,7 +117,8 @@
                 1.0
               ]
             }
-          ]
+          ],
+          "vehicleRoute": null
         },
         {
           "collection": "spawnPointsCollection",
@@ -230,7 +231,8 @@
                 1.0
               ]
             }
-          ]
+          ],
+          "vehicleRoute": null
         },
         {
           "collection": "spawnPointsCollection",
@@ -343,7 +345,8 @@
                 1.0
               ]
             }
-          ]
+          ],
+          "vehicleRoute": null
         },
         {
           "collection": "spawnPointsCollection",
@@ -456,7 +459,8 @@
                 1.0
               ]
             }
-          ]
+          ],
+          "vehicleRoute": null
         },
         {
           "collection": "spawnPointsCollection",
@@ -569,7 +573,8 @@
                 1.0
               ]
             }
-          ]
+          ],
+          "vehicleRoute": null
         },
         {
           "collection": "spawnPointsCollection",
@@ -682,7 +687,8 @@
                 1.0
               ]
             }
-          ]
+          ],
+          "vehicleRoute": null
         },
         {
           "collection": "spawnPointsCollection",
@@ -795,7 +801,8 @@
                 1.0
               ]
             }
-          ]
+          ],
+          "vehicleRoute": null
         },
         {
           "collection": "spawnPointsCollection",
@@ -908,7 +915,8 @@
                 1.0
               ]
             }
-          ]
+          ],
+          "vehicleRoute": null
         },
         {
           "collection": "spawnPointsCollectionDrones",
@@ -1002,7 +1010,8 @@
                 1.0
               ]
             }
-          ]
+          ],
+          "vehicleRoute": null
         },
         {
           "collection": "spawnPointsCollectionDrones",
@@ -1096,7 +1105,8 @@
                 1.0
               ]
             }
-          ]
+          ],
+          "vehicleRoute": null
         },
         {
           "collection": "spawnPointsCollectionDrones",
@@ -1190,7 +1200,8 @@
                 1.0
               ]
             }
-          ]
+          ],
+          "vehicleRoute": null
         },
         {
           "collection": "spawnPointsCollectionDrones",
@@ -1284,7 +1295,8 @@
                 1.0
               ]
             }
-          ]
+          ],
+          "vehicleRoute": null
         },
         {
           "collection": "spawnPointsCollectionAssaultHelis",
@@ -1378,7 +1390,8 @@
                 1.0
               ]
             }
-          ]
+          ],
+          "vehicleRoute": null
         },
         {
           "collection": "spawnPointsCollectionAssaultHelis",
@@ -1472,7 +1485,8 @@
                 1.0
               ]
             }
-          ]
+          ],
+          "vehicleRoute": null
         },
         {
           "collection": "spawnPointsCollectionCars",
@@ -1566,7 +1580,71 @@
                 1.0
               ]
             }
-          ]
+          ],
+          "vehicleRoute": {
+            "circuitFileId": 2250,
+            "targetTransformFileId": 1088,
+            "smoothRoute": false,
+            "isLoop": false,
+            "waypointTransformFileIds": [
+              1058,
+              1327,
+              1203,
+              870,
+              1014,
+              932,
+              1217,
+              1089,
+              1088
+            ],
+            "worldPositions": [
+              [
+                -10.726058000000002,
+                0.6994732000000004,
+                8.495554999999996
+              ],
+              [
+                -10.986058,
+                0.20947320000000014,
+                6.095554999999997
+              ],
+              [
+                -10.496058000000005,
+                0.31947320000000046,
+                4.115554999999997
+              ],
+              [
+                -9.599058,
+                0.19947320000000035,
+                3.5135549999999967
+              ],
+              [
+                -7.986058,
+                0.19947320000000035,
+                3.4355549999999972
+              ],
+              [
+                -7.386058000000006,
+                0.20947320000000014,
+                3.5455549999999967
+              ],
+              [
+                -6.676055000000002,
+                0.21947320000000037,
+                4.035554999999999
+              ],
+              [
+                -5.986057000000002,
+                0.21947320000000037,
+                4.3755549999999985
+              ],
+              [
+                -3.5150560000000013,
+                0.21947320000000037,
+                4.449554999999997
+              ]
+            ]
+          }
         },
         {
           "collection": "spawnPointsCollectionCars",
@@ -1660,7 +1738,59 @@
                 1.0
               ]
             }
-          ]
+          ],
+          "vehicleRoute": {
+            "circuitFileId": 2690,
+            "targetTransformFileId": 1094,
+            "smoothRoute": false,
+            "isLoop": false,
+            "waypointTransformFileIds": [
+              836,
+              1159,
+              1185,
+              1070,
+              943,
+              1035,
+              1094
+            ],
+            "worldPositions": [
+              [
+                9.362676071467437,
+                0.7500505511088034,
+                8.783539650897355
+              ],
+              [
+                9.781646248926192,
+                0.6300505441957355,
+                7.241790131170548
+              ],
+              [
+                10.38252957131208,
+                0.5900505818913818,
+                5.714380181758791
+              ],
+              [
+                9.322977382960211,
+                0.7000505882283607,
+                3.78838419255311
+              ],
+              [
+                7.6225425776400675,
+                0.36005066864134067,
+                3.624026565257939
+              ],
+              [
+                5.944675544663805,
+                0.22005055057608836,
+                4.070064414114231
+              ],
+              [
+                3.902772991693995,
+                0.22005055057608836,
+                4.135900916602733
+              ]
+            ]
+          }
         },
         {
           "collection": "spawnPointsCollectionCars",
@@ -1754,7 +1884,41 @@
                 1.0
               ]
             }
-          ]
+          ],
+          "vehicleRoute": {
+            "circuitFileId": 2456,
+            "targetTransformFileId": 1190,
+            "smoothRoute": false,
+            "isLoop": false,
+            "waypointTransformFileIds": [
+              879,
+              996,
+              968,
+              1190
+            ],
+            "worldPositions": [
+              [
+                -8.5176425,
+                0.9394731800000001,
+                -7.567286500000003
+              ],
+              [
+                -8.297645,
+                0.34947315100000015,
+                -4.487286600000004
+              ],
+              [
+                -5.997645829999999,
+                0.34947315100000015,
+                -3.8572874600000033
+              ],
+              [
+                -3.923644499999999,
+                0.34947315100000015,
+                -3.5112868000000033
+              ]
+            ]
+          }
         },
         {
           "collection": "spawnPointsCollectionCars",
@@ -1848,7 +2012,47 @@
                 1.0
               ]
             }
-          ]
+          ],
+          "vehicleRoute": {
+            "circuitFileId": 2458,
+            "targetTransformFileId": 1229,
+            "smoothRoute": false,
+            "isLoop": false,
+            "waypointTransformFileIds": [
+              1081,
+              1197,
+              1268,
+              1080,
+              1229
+            ],
+            "worldPositions": [
+              [
+                9.8023554,
+                0.7594732400000002,
+                -6.817286000000001
+              ],
+              [
+                9.402355799999999,
+                0.34947315100000015,
+                -5.617287200000002
+              ],
+              [
+                8.9623552,
+                0.34947315100000015,
+                -3.727286000000001
+              ],
+              [
+                6.372355079999999,
+                0.34947315100000015,
+                -3.6472880000000014
+              ],
+              [
+                3.582355999999999,
+                0.21947327500000013,
+                -3.967287500000001
+              ]
+            ]
+          }
         },
         {
           "collection": "spawnPointsCollectionHelicopters",
@@ -1942,7 +2146,8 @@
                 1.0
               ]
             }
-          ]
+          ],
+          "vehicleRoute": null
         },
         {
           "collection": "spawnPointsCollectionHelicopters",
@@ -2036,7 +2241,8 @@
                 1.0
               ]
             }
-          ]
+          ],
+          "vehicleRoute": null
         }
       ]
     },
@@ -2156,7 +2362,8 @@
                 1.0
               ]
             }
-          ]
+          ],
+          "vehicleRoute": null
         },
         {
           "collection": "spawnPointsCollection",
@@ -2269,7 +2476,8 @@
                 1.0
               ]
             }
-          ]
+          ],
+          "vehicleRoute": null
         },
         {
           "collection": "spawnPointsCollection",
@@ -2382,7 +2590,8 @@
                 1.0
               ]
             }
-          ]
+          ],
+          "vehicleRoute": null
         },
         {
           "collection": "spawnPointsCollection",
@@ -2495,7 +2704,8 @@
                 1.0
               ]
             }
-          ]
+          ],
+          "vehicleRoute": null
         },
         {
           "collection": "spawnPointsCollection",
@@ -2608,7 +2818,8 @@
                 1.0
               ]
             }
-          ]
+          ],
+          "vehicleRoute": null
         },
         {
           "collection": "spawnPointsCollection",
@@ -2721,7 +2932,8 @@
                 1.0
               ]
             }
-          ]
+          ],
+          "vehicleRoute": null
         },
         {
           "collection": "spawnPointsCollectionDrones",
@@ -2815,7 +3027,8 @@
                 1.0
               ]
             }
-          ]
+          ],
+          "vehicleRoute": null
         },
         {
           "collection": "spawnPointsCollectionDrones",
@@ -2909,7 +3122,8 @@
                 1.0
               ]
             }
-          ]
+          ],
+          "vehicleRoute": null
         },
         {
           "collection": "spawnPointsCollectionDrones",
@@ -3003,7 +3217,8 @@
                 1.0
               ]
             }
-          ]
+          ],
+          "vehicleRoute": null
         },
         {
           "collection": "spawnPointsCollectionDrones",
@@ -3097,7 +3312,8 @@
                 1.0
               ]
             }
-          ]
+          ],
+          "vehicleRoute": null
         },
         {
           "collection": "spawnPointsCollectionAssaultHelis",
@@ -3191,7 +3407,8 @@
                 1.0
               ]
             }
-          ]
+          ],
+          "vehicleRoute": null
         },
         {
           "collection": "spawnPointsCollectionAssaultHelis",
@@ -3285,7 +3502,8 @@
                 1.0
               ]
             }
-          ]
+          ],
+          "vehicleRoute": null
         },
         {
           "collection": "spawnPointsCollectionCars",
@@ -3379,7 +3597,53 @@
                 1.0
               ]
             }
-          ]
+          ],
+          "vehicleRoute": {
+            "circuitFileId": 3255,
+            "targetTransformFileId": 1407,
+            "smoothRoute": false,
+            "isLoop": false,
+            "waypointTransformFileIds": [
+              1795,
+              1773,
+              1598,
+              1685,
+              1206,
+              1407
+            ],
+            "worldPositions": [
+              [
+                -10.492175000000003,
+                0.258,
+                -9.324884
+              ],
+              [
+                -10.732174999999998,
+                0.258,
+                -4.794884000000003
+              ],
+              [
+                -9.052174999999998,
+                0.1280000000000001,
+                -2.7448840000000025
+              ],
+              [
+                -5.782175000000002,
+                0.26800000000000024,
+                -3.384884000000003
+              ],
+              [
+                -4.702175,
+                0.26800000000000024,
+                -3.5638840000000016
+              ],
+              [
+                -3.414175,
+                0.26800000000000024,
+                -3.6088840000000033
+              ]
+            ]
+          }
         },
         {
           "collection": "spawnPointsCollectionCars",
@@ -3473,7 +3737,59 @@
                 1.0
               ]
             }
-          ]
+          ],
+          "vehicleRoute": {
+            "circuitFileId": 3320,
+            "targetTransformFileId": 1237,
+            "smoothRoute": false,
+            "isLoop": false,
+            "waypointTransformFileIds": [
+              1509,
+              1590,
+              1282,
+              1390,
+              1805,
+              1222,
+              1237
+            ],
+            "worldPositions": [
+              [
+                11.568311009735867,
+                0.25857736000000003,
+                8.385265248271967
+              ],
+              [
+                11.187773337218411,
+                0.25857736000000003,
+                4.674242116678261
+              ],
+              [
+                10.346670306353477,
+                0.19257735619781263,
+                3.883643707245543
+              ],
+              [
+                9.489290394367004,
+                0.16057735435432785,
+                3.4859003359040095
+              ],
+              [
+                8.249080497578387,
+                0.20157735671629273,
+                3.6531713505783046
+              ],
+              [
+                6.319412402420122,
+                0.13357735279888758,
+                4.321588527970242
+              ],
+              [
+                3.954077045181707,
+                0.26857736057608905,
+                4.11723761108696
+              ]
+            ]
+          }
         },
         {
           "collection": "spawnPointsCollectionCars",
@@ -3567,7 +3883,41 @@
                 1.0
               ]
             }
-          ]
+          ],
+          "vehicleRoute": {
+            "circuitFileId": 3214,
+            "targetTransformFileId": 1214,
+            "smoothRoute": false,
+            "isLoop": false,
+            "waypointTransformFileIds": [
+              1635,
+              1235,
+              1489,
+              1214
+            ],
+            "worldPositions": [
+              [
+                -9.6737617,
+                0.27800000000000036,
+                9.592273
+              ],
+              [
+                -8.8367617,
+                0.39800000000000035,
+                6.411273
+              ],
+              [
+                -5.973761699999999,
+                0.05800000000000033,
+                4.601273000000001
+              ],
+              [
+                -3.0837616999999993,
+                0.39800000000000035,
+                3.752273
+              ]
+            ]
+          }
         },
         {
           "collection": "spawnPointsCollectionCars",
@@ -3661,7 +4011,47 @@
                 1.0
               ]
             }
-          ]
+          ],
+          "vehicleRoute": {
+            "circuitFileId": 3140,
+            "targetTransformFileId": 1491,
+            "smoothRoute": false,
+            "isLoop": false,
+            "waypointTransformFileIds": [
+              1498,
+              1251,
+              1204,
+              1308,
+              1491
+            ],
+            "worldPositions": [
+              [
+                9.896238299999998,
+                0.26800000000000035,
+                -8.427726999999997
+              ],
+              [
+                10.1162383,
+                0.39800000000000035,
+                -6.097726999999998
+              ],
+              [
+                10.206238299999999,
+                0.39800000000000035,
+                -3.621726999999998
+              ],
+              [
+                6.436238299999999,
+                0.39800000000000035,
+                -3.9477269999999978
+              ],
+              [
+                4.176238299999999,
+                0.26800000000000035,
+                -3.8277269999999985
+              ]
+            ]
+          }
         },
         {
           "collection": "spawnPointsCollectionHelicopters",
@@ -3755,7 +4145,8 @@
                 1.0
               ]
             }
-          ]
+          ],
+          "vehicleRoute": null
         },
         {
           "collection": "spawnPointsCollectionHelicopters",
@@ -3849,7 +4240,8 @@
                 1.0
               ]
             }
-          ]
+          ],
+          "vehicleRoute": null
         }
       ]
     },
@@ -3969,7 +4361,8 @@
                 1.0
               ]
             }
-          ]
+          ],
+          "vehicleRoute": null
         },
         {
           "collection": "spawnPointsCollection",
@@ -4082,7 +4475,8 @@
                 1.0
               ]
             }
-          ]
+          ],
+          "vehicleRoute": null
         },
         {
           "collection": "spawnPointsCollection",
@@ -4195,7 +4589,8 @@
                 1.0
               ]
             }
-          ]
+          ],
+          "vehicleRoute": null
         },
         {
           "collection": "spawnPointsCollection",
@@ -4308,7 +4703,8 @@
                 1.0
               ]
             }
-          ]
+          ],
+          "vehicleRoute": null
         },
         {
           "collection": "spawnPointsCollection",
@@ -4421,7 +4817,8 @@
                 1.0
               ]
             }
-          ]
+          ],
+          "vehicleRoute": null
         },
         {
           "collection": "spawnPointsCollection",
@@ -4534,7 +4931,8 @@
                 1.0
               ]
             }
-          ]
+          ],
+          "vehicleRoute": null
         },
         {
           "collection": "spawnPointsCollection",
@@ -4647,7 +5045,8 @@
                 1.0
               ]
             }
-          ]
+          ],
+          "vehicleRoute": null
         },
         {
           "collection": "spawnPointsCollection",
@@ -4760,7 +5159,8 @@
                 1.0
               ]
             }
-          ]
+          ],
+          "vehicleRoute": null
         },
         {
           "collection": "spawnPointsCollectionDrones",
@@ -4854,7 +5254,8 @@
                 1.0
               ]
             }
-          ]
+          ],
+          "vehicleRoute": null
         },
         {
           "collection": "spawnPointsCollectionDrones",
@@ -4948,7 +5349,8 @@
                 1.0
               ]
             }
-          ]
+          ],
+          "vehicleRoute": null
         },
         {
           "collection": "spawnPointsCollectionDrones",
@@ -5042,7 +5444,8 @@
                 1.0
               ]
             }
-          ]
+          ],
+          "vehicleRoute": null
         },
         {
           "collection": "spawnPointsCollectionDrones",
@@ -5136,7 +5539,8 @@
                 1.0
               ]
             }
-          ]
+          ],
+          "vehicleRoute": null
         },
         {
           "collection": "spawnPointsCollectionDrones",
@@ -5230,7 +5634,8 @@
                 1.0
               ]
             }
-          ]
+          ],
+          "vehicleRoute": null
         },
         {
           "collection": "spawnPointsCollectionDrones",
@@ -5324,7 +5729,8 @@
                 1.0
               ]
             }
-          ]
+          ],
+          "vehicleRoute": null
         },
         {
           "collection": "spawnPointsCollectionAssaultHelis",
@@ -5418,7 +5824,8 @@
                 1.0
               ]
             }
-          ]
+          ],
+          "vehicleRoute": null
         },
         {
           "collection": "spawnPointsCollectionAssaultHelis",
@@ -5512,7 +5919,8 @@
                 1.0
               ]
             }
-          ]
+          ],
+          "vehicleRoute": null
         },
         {
           "collection": "spawnPointsCollectionCars",
@@ -5606,7 +6014,47 @@
                 1.0
               ]
             }
-          ]
+          ],
+          "vehicleRoute": {
+            "circuitFileId": 2466,
+            "targetTransformFileId": 1301,
+            "smoothRoute": false,
+            "isLoop": false,
+            "waypointTransformFileIds": [
+              1071,
+              1259,
+              1401,
+              1048,
+              1301
+            ],
+            "worldPositions": [
+              [
+                -30.343173,
+                -2.142,
+                0.22511599999999987
+              ],
+              [
+                -30.963175,
+                -2.142,
+                -0.614884
+              ],
+              [
+                -30.913173,
+                -2.2673855,
+                -2.5448839999999997
+              ],
+              [
+                -30.070175,
+                -2.13,
+                -4.207884
+              ],
+              [
+                -27.653175000000005,
+                -2.13,
+                -4.524884
+              ]
+            ]
+          }
         },
         {
           "collection": "spawnPointsCollectionCars",
@@ -5700,7 +6148,41 @@
                 1.0
               ]
             }
-          ]
+          ],
+          "vehicleRoute": {
+            "circuitFileId": 2735,
+            "targetTransformFileId": 1341,
+            "smoothRoute": false,
+            "isLoop": false,
+            "waypointTransformFileIds": [
+              1330,
+              1028,
+              1404,
+              1341
+            ],
+            "worldPositions": [
+              [
+                -17.51238683870108,
+                -2.1394226400000003,
+                0.6872604038404297
+              ],
+              [
+                -17.139348161204353,
+                -2.1394226400000003,
+                -1.5028771792409792
+              ],
+              [
+                -17.488804398832045,
+                -2.129422649423912,
+                -3.6912595917807156
+              ],
+              [
+                -19.878967934456725,
+                -2.129422649423912,
+                -4.287749079063216
+              ]
+            ]
+          }
         },
         {
           "collection": "spawnPointsCollectionCars",
@@ -5794,7 +6276,41 @@
                 1.0
               ]
             }
-          ]
+          ],
+          "vehicleRoute": {
+            "circuitFileId": 2523,
+            "targetTransformFileId": 1408,
+            "smoothRoute": false,
+            "isLoop": false,
+            "waypointTransformFileIds": [
+              871,
+              1394,
+              1111,
+              1408
+            ],
+            "worldPositions": [
+              [
+                -29.644759869999998,
+                -2.1199999139999997,
+                -16.457726
+              ],
+              [
+                -30.624763199999997,
+                -2.0000000289999997,
+                -14.3677275
+              ],
+              [
+                -30.05476353,
+                -2.0000000289999997,
+                -12.607727
+              ],
+              [
+                -27.7947614,
+                -2.0000000289999997,
+                -12.467727900000002
+              ]
+            ]
+          }
         },
         {
           "collection": "spawnPointsCollectionCars",
@@ -5888,7 +6404,47 @@
                 1.0
               ]
             }
-          ]
+          ],
+          "vehicleRoute": {
+            "circuitFileId": 2516,
+            "targetTransformFileId": 952,
+            "smoothRoute": false,
+            "isLoop": false,
+            "waypointTransformFileIds": [
+              1184,
+              1108,
+              919,
+              1109,
+              952
+            ],
+            "worldPositions": [
+              [
+                -17.573898231110466,
+                -2.128869454837978,
+                -17.171013964110795
+              ],
+              [
+                -17.11962844206863,
+                -2.010847736090204,
+                -16.02335994174964
+              ],
+              [
+                -16.569334511111048,
+                -2.0259882118523262,
+                -14.57579323916179
+              ],
+              [
+                -17.730210951177085,
+                -2.0515424062119383,
+                -12.3215731667194
+              ],
+              [
+                -19.986733146686454,
+                -2.180920091159189,
+                -12.583812669761397
+              ]
+            ]
+          }
         },
         {
           "collection": "spawnPointsCollectionHelicopters",
@@ -5982,7 +6538,8 @@
                 1.0
               ]
             }
-          ]
+          ],
+          "vehicleRoute": null
         },
         {
           "collection": "spawnPointsCollectionHelicopters",
@@ -6076,7 +6633,8 @@
                 1.0
               ]
             }
-          ]
+          ],
+          "vehicleRoute": null
         }
       ]
     },
@@ -6196,7 +6754,8 @@
                 1.0
               ]
             }
-          ]
+          ],
+          "vehicleRoute": null
         },
         {
           "collection": "spawnPointsCollection",
@@ -6309,7 +6868,8 @@
                 1.0
               ]
             }
-          ]
+          ],
+          "vehicleRoute": null
         },
         {
           "collection": "spawnPointsCollection",
@@ -6422,7 +6982,8 @@
                 1.0
               ]
             }
-          ]
+          ],
+          "vehicleRoute": null
         },
         {
           "collection": "spawnPointsCollection",
@@ -6535,7 +7096,8 @@
                 1.0
               ]
             }
-          ]
+          ],
+          "vehicleRoute": null
         },
         {
           "collection": "spawnPointsCollection",
@@ -6648,7 +7210,8 @@
                 1.0
               ]
             }
-          ]
+          ],
+          "vehicleRoute": null
         },
         {
           "collection": "spawnPointsCollection",
@@ -6761,7 +7324,8 @@
                 1.0
               ]
             }
-          ]
+          ],
+          "vehicleRoute": null
         },
         {
           "collection": "spawnPointsCollection",
@@ -6874,7 +7438,8 @@
                 1.0
               ]
             }
-          ]
+          ],
+          "vehicleRoute": null
         },
         {
           "collection": "spawnPointsCollectionDrones",
@@ -6968,7 +7533,8 @@
                 1.0
               ]
             }
-          ]
+          ],
+          "vehicleRoute": null
         },
         {
           "collection": "spawnPointsCollectionDrones",
@@ -7062,7 +7628,8 @@
                 1.0
               ]
             }
-          ]
+          ],
+          "vehicleRoute": null
         },
         {
           "collection": "spawnPointsCollectionDrones",
@@ -7156,7 +7723,8 @@
                 1.0
               ]
             }
-          ]
+          ],
+          "vehicleRoute": null
         },
         {
           "collection": "spawnPointsCollectionDrones",
@@ -7250,7 +7818,8 @@
                 1.0
               ]
             }
-          ]
+          ],
+          "vehicleRoute": null
         },
         {
           "collection": "spawnPointsCollectionDrones",
@@ -7344,7 +7913,8 @@
                 1.0
               ]
             }
-          ]
+          ],
+          "vehicleRoute": null
         },
         {
           "collection": "spawnPointsCollectionDrones",
@@ -7438,7 +8008,8 @@
                 1.0
               ]
             }
-          ]
+          ],
+          "vehicleRoute": null
         },
         {
           "collection": "spawnPointsCollectionAssaultHelis",
@@ -7532,7 +8103,8 @@
                 1.0
               ]
             }
-          ]
+          ],
+          "vehicleRoute": null
         },
         {
           "collection": "spawnPointsCollectionAssaultHelis",
@@ -7626,7 +8198,8 @@
                 1.0
               ]
             }
-          ]
+          ],
+          "vehicleRoute": null
         },
         {
           "collection": "spawnPointsCollectionCars",
@@ -7720,7 +8293,47 @@
                 1.0
               ]
             }
-          ]
+          ],
+          "vehicleRoute": {
+            "circuitFileId": 3461,
+            "targetTransformFileId": 1457,
+            "smoothRoute": false,
+            "isLoop": false,
+            "waypointTransformFileIds": [
+              1187,
+              1313,
+              1110,
+              1712,
+              1457
+            ],
+            "worldPositions": [
+              [
+                -10.358173550000004,
+                0.268000029,
+                6.31111593
+              ],
+              [
+                -10.328173550000002,
+                0.268000029,
+                4.152115930000001
+              ],
+              [
+                -7.948173550000007,
+                0.14261452899999982,
+                2.3921159299999992
+              ],
+              [
+                -4.788171550000005,
+                0.280000029,
+                4.072115929999999
+              ],
+              [
+                -3.4971715500000045,
+                0.280000029,
+                3.949115929999998
+              ]
+            ]
+          }
         },
         {
           "collection": "spawnPointsCollectionCars",
@@ -7814,7 +8427,47 @@
                 1.0
               ]
             }
-          ]
+          ],
+          "vehicleRoute": {
+            "circuitFileId": 3167,
+            "targetTransformFileId": 1750,
+            "smoothRoute": false,
+            "isLoop": false,
+            "waypointTransformFileIds": [
+              1603,
+              1076,
+              1564,
+              1542,
+              1750
+            ],
+            "worldPositions": [
+              [
+                8.94715924638005,
+                0.2705773889999998,
+                5.642804781626335
+              ],
+              [
+                8.702868777926893,
+                0.2705773889999998,
+                3.3242233633257
+              ],
+              [
+                7.055990435040295,
+                0.2705773889999998,
+                3.1291232848752095
+              ],
+              [
+                5.3747443152293215,
+                0.2805773795760882,
+                4.117262908941093
+              ],
+              [
+                4.177171038989734,
+                0.2805773795760882,
+                4.127384250063958
+              ]
+            ]
+          }
         },
         {
           "collection": "spawnPointsCollectionCars",
@@ -7908,7 +8561,41 @@
                 1.0
               ]
             }
-          ]
+          ],
+          "vehicleRoute": {
+            "circuitFileId": 3464,
+            "targetTransformFileId": 1318,
+            "smoothRoute": false,
+            "isLoop": false,
+            "waypointTransformFileIds": [
+              1762,
+              1498,
+              1571,
+              1318
+            ],
+            "worldPositions": [
+              [
+                -6.42275905,
+                0.29000011500000006,
+                -7.87072607
+              ],
+              [
+                -6.54976175,
+                0.4100000000000001,
+                -5.78072757
+              ],
+              [
+                -5.9797620799999995,
+                0.4100000000000001,
+                -3.8607275299999997
+              ],
+              [
+                -3.7197599500000003,
+                0.4100000000000001,
+                -3.8807279699999997
+              ]
+            ]
+          }
         },
         {
           "collection": "spawnPointsCollectionCars",
@@ -8002,7 +8689,47 @@
                 1.0
               ]
             }
-          ]
+          ],
+          "vehicleRoute": {
+            "circuitFileId": 3202,
+            "targetTransformFileId": 1792,
+            "smoothRoute": false,
+            "isLoop": false,
+            "waypointTransformFileIds": [
+              1577,
+              1670,
+              1128,
+              1470,
+              1792
+            ],
+            "worldPositions": [
+              [
+                7.268239049999998,
+                0.2800001240000001,
+                -8.590726535999998
+              ],
+              [
+                7.409239849999999,
+                0.4100000000000001,
+                -7.450727169999998
+              ],
+              [
+                7.540240349999999,
+                0.4100000000000001,
+                -6.010726569999997
+              ],
+              [
+                6.170239749999999,
+                0.4100000000000001,
+                -3.800727069999997
+              ],
+              [
+                4.150239049999998,
+                0.2800001240000001,
+                -3.9707275699999975
+              ]
+            ]
+          }
         },
         {
           "collection": "spawnPointsCollectionHelicopters",
@@ -8096,7 +8823,8 @@
                 1.0
               ]
             }
-          ]
+          ],
+          "vehicleRoute": null
         },
         {
           "collection": "spawnPointsCollectionHelicopters",
@@ -8190,7 +8918,8 @@
                 1.0
               ]
             }
-          ]
+          ],
+          "vehicleRoute": null
         }
       ]
     },
@@ -8310,7 +9039,8 @@
                 1.0
               ]
             }
-          ]
+          ],
+          "vehicleRoute": null
         },
         {
           "collection": "spawnPointsCollection",
@@ -8423,7 +9153,8 @@
                 1.0
               ]
             }
-          ]
+          ],
+          "vehicleRoute": null
         },
         {
           "collection": "spawnPointsCollection",
@@ -8536,7 +9267,8 @@
                 1.0
               ]
             }
-          ]
+          ],
+          "vehicleRoute": null
         },
         {
           "collection": "spawnPointsCollection",
@@ -8649,7 +9381,8 @@
                 1.0
               ]
             }
-          ]
+          ],
+          "vehicleRoute": null
         },
         {
           "collection": "spawnPointsCollection",
@@ -8762,7 +9495,8 @@
                 1.0
               ]
             }
-          ]
+          ],
+          "vehicleRoute": null
         },
         {
           "collection": "spawnPointsCollection",
@@ -8875,7 +9609,8 @@
                 1.0
               ]
             }
-          ]
+          ],
+          "vehicleRoute": null
         },
         {
           "collection": "spawnPointsCollection",
@@ -8988,7 +9723,8 @@
                 1.0
               ]
             }
-          ]
+          ],
+          "vehicleRoute": null
         },
         {
           "collection": "spawnPointsCollection",
@@ -9101,7 +9837,8 @@
                 1.0
               ]
             }
-          ]
+          ],
+          "vehicleRoute": null
         },
         {
           "collection": "spawnPointsCollectionDrones",
@@ -9195,7 +9932,8 @@
                 1.0
               ]
             }
-          ]
+          ],
+          "vehicleRoute": null
         },
         {
           "collection": "spawnPointsCollectionDrones",
@@ -9289,7 +10027,8 @@
                 1.0
               ]
             }
-          ]
+          ],
+          "vehicleRoute": null
         },
         {
           "collection": "spawnPointsCollectionDrones",
@@ -9383,7 +10122,8 @@
                 1.0
               ]
             }
-          ]
+          ],
+          "vehicleRoute": null
         },
         {
           "collection": "spawnPointsCollectionDrones",
@@ -9477,7 +10217,8 @@
                 1.0
               ]
             }
-          ]
+          ],
+          "vehicleRoute": null
         },
         {
           "collection": "spawnPointsCollectionAssaultHelis",
@@ -9571,7 +10312,8 @@
                 1.0
               ]
             }
-          ]
+          ],
+          "vehicleRoute": null
         },
         {
           "collection": "spawnPointsCollectionAssaultHelis",
@@ -9665,7 +10407,8 @@
                 1.0
               ]
             }
-          ]
+          ],
+          "vehicleRoute": null
         },
         {
           "collection": "spawnPointsCollectionCars",
@@ -9759,7 +10502,59 @@
                 1.0
               ]
             }
-          ]
+          ],
+          "vehicleRoute": {
+            "circuitFileId": 2674,
+            "targetTransformFileId": 1072,
+            "smoothRoute": false,
+            "isLoop": false,
+            "waypointTransformFileIds": [
+              1410,
+              1266,
+              1047,
+              1167,
+              1078,
+              1053,
+              1072
+            ],
+            "worldPositions": [
+              [
+                -9.960175000000007,
+                0.3100000999999999,
+                7.565116
+              ],
+              [
+                -9.700175000000002,
+                0.3000001000000001,
+                6.005116000000001
+              ],
+              [
+                -9.030175000000007,
+                0.23000009999999982,
+                4.765115999999999
+              ],
+              [
+                -8.100175000000007,
+                0.3100000999999999,
+                3.885116
+              ],
+              [
+                -6.980176000000004,
+                0.3200001000000001,
+                3.735115999999998
+              ],
+              [
+                -5.890176000000004,
+                0.3200001000000001,
+                4.045116
+              ],
+              [
+                -4.070176000000004,
+                0.3200001000000001,
+                4.0861160000000005
+              ]
+            ]
+          }
         },
         {
           "collection": "spawnPointsCollectionCars",
@@ -9853,7 +10648,59 @@
                 1.0
               ]
             }
-          ]
+          ],
+          "vehicleRoute": {
+            "circuitFileId": 2760,
+            "targetTransformFileId": 1172,
+            "smoothRoute": false,
+            "isLoop": false,
+            "waypointTransformFileIds": [
+              1284,
+              1485,
+              1512,
+              1396,
+              1233,
+              1448,
+              1172
+            ],
+            "worldPositions": [
+              [
+                8.044369942395681,
+                0.8505774511088033,
+                9.643003445341328
+              ],
+              [
+                8.330089633158991,
+                0.7305774841957378,
+                8.534414372918228
+              ],
+              [
+                8.249905389209358,
+                0.9105774945653398,
+                7.256576090544916
+              ],
+              [
+                8.181907022482147,
+                0.8005774882283607,
+                5.887338303001702
+              ],
+              [
+                7.638632521455557,
+                0.5305775026739596,
+                4.628406324331021
+              ],
+              [
+                6.311525531435775,
+                0.32057745057608833,
+                4.195928276895412
+              ],
+              [
+                4.040005450015515,
+                0.32057746057608894,
+                4.066788367776841
+              ]
+            ]
+          }
         },
         {
           "collection": "spawnPointsCollectionCars",
@@ -9947,7 +10794,41 @@
                 1.0
               ]
             }
-          ]
+          ],
+          "vehicleRoute": {
+            "circuitFileId": 2950,
+            "targetTransformFileId": 1426,
+            "smoothRoute": false,
+            "isLoop": false,
+            "waypointTransformFileIds": [
+              1255,
+              1193,
+              1321,
+              1426
+            ],
+            "worldPositions": [
+              [
+                -8.4817598,
+                0.3300001659999999,
+                -7.727723100000003
+              ],
+              [
+                -8.2617586,
+                0.4500000509999999,
+                -4.567725100000003
+              ],
+              [
+                -5.9617631300000005,
+                0.4500000509999999,
+                -3.937725960000003
+              ],
+              [
+                -4.191762700000001,
+                0.4500000509999999,
+                -3.717724740000003
+              ]
+            ]
+          }
         },
         {
           "collection": "spawnPointsCollectionCars",
@@ -10041,7 +10922,47 @@
                 1.0
               ]
             }
-          ]
+          ],
+          "vehicleRoute": {
+            "circuitFileId": 3084,
+            "targetTransformFileId": 1420,
+            "smoothRoute": false,
+            "isLoop": false,
+            "waypointTransformFileIds": [
+              1177,
+              1268,
+              1380,
+              1351,
+              1420
+            ],
+            "worldPositions": [
+              [
+                9.838238099999998,
+                0.8600001399999999,
+                -7.867725700000001
+              ],
+              [
+                9.438238499999997,
+                0.4500000509999999,
+                -6.337725000000001
+              ],
+              [
+                8.528238699999998,
+                0.4500000509999999,
+                -4.517725500000001
+              ],
+              [
+                6.428238239999997,
+                0.4500000509999999,
+                -3.817726500000001
+              ],
+              [
+                4.168237999999997,
+                0.3200001749999999,
+                -4.047726000000001
+              ]
+            ]
+          }
         },
         {
           "collection": "spawnPointsCollectionHelicopters",
@@ -10135,7 +11056,8 @@
                 1.0
               ]
             }
-          ]
+          ],
+          "vehicleRoute": null
         },
         {
           "collection": "spawnPointsCollectionHelicopters",
@@ -10229,7 +11151,8 @@
                 1.0
               ]
             }
-          ]
+          ],
+          "vehicleRoute": null
         }
       ]
     }

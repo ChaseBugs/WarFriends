@@ -47,6 +47,31 @@ def rotate(q, p):
     return result[:3]
 
 
+def transform_chain(blocks, transform_id):
+    chain = []
+    current = transform_id
+    while current:
+        transform = blocks[current][1]
+        chain.append({"fileId": current, "position": vec(field(transform, "m_LocalPosition")),
+                      "rotation": vec(field(transform, "m_LocalRotation")),
+                      "scale": vec(field(transform, "m_LocalScale"))})
+        current = ref(transform, "m_Father")
+        if len(chain) > 32:
+            raise ValueError("cyclic transform")
+    position = [0.0, 0.0, 0.0]
+    rotation = [0.0, 0.0, 0.0, 1.0]
+    scale = [1.0, 1.0, 1.0]
+    for transform in reversed(chain):
+        local = [a*b for a, b in zip(transform["position"], scale)]
+        offset = rotate(rotation, local)
+        position = [a+b for a, b in zip(position, offset)]
+        rotation = mul(rotation, transform["rotation"])
+        scale = [a*b for a, b in zip(scale, transform["scale"])]
+    if not all(math.isfinite(x) and abs(x) < 10000 for x in position):
+        raise ValueError("invalid world position")
+    return chain, position
+
+
 def extract(source_map, script_guid):
     path = ROOT / "Clients/ExportedProject" / source_map["source"]
     data = path.read_bytes()
@@ -100,35 +125,40 @@ def extract(source_map, script_guid):
             game_object_id = ref(point, "m_GameObject")
             game_object = blocks[game_object_id][1]
             transform_id = int(re.search(r"^  - 4: \{fileID: (\d+)\}$", game_object, re.M).group(1))
-            chain = []
-            current = transform_id
-            while current:
-                transform = blocks[current][1]
-                chain.append({"fileId": current, "position": vec(field(transform, "m_LocalPosition")),
-                              "rotation": vec(field(transform, "m_LocalRotation")),
-                              "scale": vec(field(transform, "m_LocalScale"))})
-                current = ref(transform, "m_Father")
-                if len(chain) > 32:
-                    raise ValueError("cyclic spawn transform")
-            position = [0.0, 0.0, 0.0]
-            rotation = [0.0, 0.0, 0.0, 1.0]
-            scale = [1.0, 1.0, 1.0]
-            for transform in reversed(chain):
-                local = [a*b for a, b in zip(transform["position"], scale)]
-                offset = rotate(rotation, local)
-                position = [a+b for a, b in zip(position, offset)]
-                rotation = mul(rotation, transform["rotation"])
-                scale = [a*b for a, b in zip(scale, transform["scale"])]
-            if not all(math.isfinite(x) and abs(x) < 10000 for x in position):
-                raise ValueError("invalid world spawn position")
+            chain, position = transform_chain(blocks, transform_id)
             fraction = int(field(point, "mFraction"))
             if fraction not in (1, 2):
                 raise ValueError("invalid spawn fraction")
+            vehicle_route = None
+            if category == "spawnPointsCollectionCars":
+                circuit_id = ref(point, "waypointCircuit")
+                target_id = ref(point, "target")
+                if circuit_id <= 0 or circuit_id not in blocks or target_id <= 0 or target_id not in blocks:
+                    raise ValueError("missing vehicle circuit or target")
+                circuit = blocks[circuit_id][1]
+                if "guid: abb157dd164c78c5a39f7e62ba27a963" not in circuit:
+                    raise ValueError("wrong vehicle circuit component")
+                items_text = circuit.split("    items:\n", 1)[1].split("  smoothRoute:", 1)[0]
+                waypoint_ids = [int(v) for v in re.findall(r"^    - \{fileID: (\d+)\}$", items_text, re.M)]
+                if len(waypoint_ids) < 2 or target_id != waypoint_ids[-1]:
+                    raise ValueError("invalid vehicle waypoint target")
+                waypoint_positions = []
+                for waypoint_id in waypoint_ids:
+                    if waypoint_id not in blocks or blocks[waypoint_id][0] != 4:
+                        raise ValueError("vehicle waypoint is not a transform")
+                    _, waypoint_position = transform_chain(blocks, waypoint_id)
+                    waypoint_positions.append(waypoint_position)
+                vehicle_route = {"circuitFileId": circuit_id, "targetTransformFileId": target_id,
+                                 "smoothRoute": bool(int(field(circuit, "smoothRoute"))),
+                                 "isLoop": bool(int(field(circuit, "isLoop"))),
+                                 "waypointTransformFileIds": waypoint_ids,
+                                 "worldPositions": waypoint_positions}
             points.append({"collection": category, "order": order, "componentFileId": point_id,
                            "gameObjectFileId": game_object_id, "transformFileId": transform_id,
                            "componentType": unit_type, "fraction": fraction,
                            "joinWaypointFileId": join_waypoint, "reservationFileId": reservation,
-                           "worldPosition": position, "transformChain": chain})
+                           "worldPosition": position, "transformChain": chain,
+                           "vehicleRoute": vehicle_route})
     if len({p["componentFileId"] for p in points}) != len(points):
         raise ValueError("duplicate source spawn component")
     return {"source": source_map["source"], "sha256": digest, "mapDefinitionFileId": map_ids[0],
@@ -143,7 +173,7 @@ def main():
         if guid:
             script_guid[guid.group(1)] = meta.name.removesuffix(".cs.meta")
     maps = [extract(m, script_guid) for m in source["maps"]]
-    artifact = {"version": 1, "maps": maps}
+    artifact = {"version": 2, "maps": maps}
     serialized = json.dumps(artifact, indent=2, ensure_ascii=False) + "\n"
     if sys.argv[1:] == ["--check"]:
         if not OUTPUT.exists() or OUTPUT.read_text(encoding="utf-8") != serialized:
