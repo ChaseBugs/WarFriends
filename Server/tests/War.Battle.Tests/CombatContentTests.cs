@@ -1431,6 +1431,18 @@ internal static class CombatContentTests
             var heavyTurrets=HeavyTurretSourceCatalog.Load(heavyTurretArtifact,heavyTurretRevision,content.Maps);
             var parkTurretCovers=heavyTurrets.ForMap(content.Maps.Single(x=>Path.GetFileNameWithoutExtension(x.Source)=="Park_Multiplayer"));
             var heavyMid=heavyTurrets.Compose(22);var firstTurretCover=parkTurretCovers[0];
+            var otherFriendlyCover=parkTurretCovers.First(x=>x.Fraction==firstTurretCover.Fraction&&x.Order!=firstTurretCover.Order);
+            var parkTurretMap=content.Maps.Single(x=>Path.GetFileNameWithoutExtension(x.Source)=="Park_Multiplayer");
+            Check(heavyTurrets.SelectNearestFree(parkTurretMap,firstTurretCover.Order,firstTurretCover.Fraction,
+                otherFriendlyCover.Slots[0].SourcePosition,_=>false)==otherFriendlyCover.Slots[0],
+                "Heavy Turret searches all friendly covers rather than restricting placement to current cover");
+            var friendlySlots=parkTurretCovers.Where(x=>x.Fraction==firstTurretCover.Fraction).SelectMany(x=>x.Slots).ToArray();
+            var lastFriendlySlot=friendlySlots[^1];
+            Check(heavyTurrets.SelectNearestFree(parkTurretMap,firstTurretCover.Order,firstTurretCover.Fraction,
+                firstTurretCover.Slots[0].SourcePosition,id=>id!=lastFriendlySlot.ComponentFileId)==lastFriendlySlot&&
+                heavyTurrets.SelectNearestFree(parkTurretMap,firstTurretCover.Order,firstTurretCover.Fraction,
+                    firstTurretCover.Slots[0].SourcePosition,_=>true)==null,
+                "Heavy Turret falls back to the last friendly free slot and never an enemy slot");
             var nearestTurret=heavyTurrets.SelectNearestFree(content.Maps.Single(x=>Path.GetFileNameWithoutExtension(x.Source)=="Park_Multiplayer"),
                 firstTurretCover.Order,firstTurretCover.Fraction,firstTurretCover.Slots[1].SourcePosition,id=>id==firstTurretCover.Slots[1].ComponentFileId);
             Check(heavyTurrets.SpawnCount==1&&heavyTurrets.NavMeshSampleRadius==10&&heavyTurrets.NavMeshAreaMask==1&&

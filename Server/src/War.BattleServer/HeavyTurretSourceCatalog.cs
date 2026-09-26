@@ -69,10 +69,14 @@ public sealed class HeavyTurretSourceCatalog
     {
         if(ownerFraction is not (1 or 2)||!PlayerHitbox.Finite(playerPosition)||occupied==null)
             throw new InvalidDataException("Invalid Heavy Turret placement authority.");
-        var cover=ForMap(map).SingleOrDefault(x=>x.Order==coverIndex&&x.Fraction==ownerFraction)??
+        var covers=ForMap(map);
+        if(!covers.Any(x=>x.Order==coverIndex&&x.Fraction==ownerFraction))
             throw new InvalidDataException("Heavy Turret cover binding changed.");
-        return cover.Slots.Where(x=>!occupied(x.ComponentFileId)).OrderBy(x=>Vector3.DistanceSquared(playerPosition,x.SourcePosition))
-            .ThenBy(x=>x.Order).FirstOrDefault();
+        // TurretBase.Spawn traverses every friendly defend position. Stable
+        // ordering preserves its strict-less-than tie break across covers.
+        return covers.Where(x=>x.Fraction==ownerFraction).OrderBy(x=>x.Order)
+            .SelectMany(x=>x.Slots.OrderBy(slot=>slot.Order)).Where(x=>!occupied(x.ComponentFileId))
+            .OrderBy(x=>Vector3.DistanceSquared(playerPosition,x.SourcePosition)).FirstOrDefault();
     }
     public static HeavyTurretSourceCatalog Load(string path,string expectedRevision,IReadOnlyList<RecoveredBattleMap> sourceMaps)
     {
