@@ -2478,7 +2478,8 @@ internal static class CombatContentTests
               mineVictimAfter.ConfirmedPlayerHits==mineVictimBefore.ConfirmedPlayerHits&&
               afterMineTrigger.Players.Single(x=>x.PlayerId==decoyPlayer).ConfirmedPlayerHits==1,
               "authoritative tick consumes a source-box Land Mine and applies host explosion damage once");
-        var heavyTurretManifest=decoyManifest with {MatchId="heavy-turret-match"};
+        var heavyTurretManifest=decoyManifest with {MatchId="heavy-turret-match",SceneMasterPlayerId=decoyPlayer,
+            Players=decoyManifest.Players.Select(p=>p with {ShieldLevel=0}).ToArray()};
         var heavyTurretMatch=new MatchEngine(heavyTurretManifest,content:content,armyChoice:_=>0);
         heavyTurretMatch.ConfigureBattleAllocations([
             new(decoyPlayer,["CardHeavyTurret"],[],[0],[133],[-1]),
@@ -2531,6 +2532,32 @@ internal static class CombatContentTests
               "Heavy Turret owns source cooldown, aim, batch cadence and live BulletSlow flight; misses do not imply damage: "+
               string.Join(",",heavyTurretEvents.Select(x=>x.Kind+":"+x.Reason)));
         ulong liveHeavyTurretId=heavyTurretCombatSnapshot.HeavyTurrets.Single().EntityId;
+        var turretShieldBefore=heavyTurretMatch.Snapshot().Shields.Single(x=>x.CoverIndex==coverTwo.SourceIndex);
+        var turretShieldCollider=park.DynamicColliders.First(x=>x.DynamicOwner==coverTwo.SourcePath+"/riot_shield");
+        var turretShieldImpact=new BulletImpact(900001,decoyPlayer,
+            new ShotCollision(0,turretShieldCollider.TransformPosition,turretShieldCollider.SourcePath,null,1,
+                DynamicOwner:turretShieldCollider.DynamicOwner,ColliderIndex:turretShieldCollider.ColliderIndex),
+            heavyTurretMatch.Snapshot().ServerTick);
+        heavyTurretMatch.ApplyHeavyTurretEnvironmentImpact(turretShieldImpact,10);
+        var turretShieldAfter=heavyTurretMatch.Snapshot().Shields.Single(x=>x.CoverIndex==coverTwo.SourceIndex);
+        Check(Math.Abs(turretShieldAfter.Health-(turretShieldBefore.Health-10*content.Shields.UnitToShieldCoefficient))<.001f&&
+              turretShieldAfter.Revision==turretShieldBefore.Revision+1&&
+              heavyTurretMatch.EventBatch(decoyPlayer,heavyTurretCursor).Events.Any(x=>x.Kind==MatchEventKind.ShieldDamaged&&x.ProjectileId==900001),
+              "Heavy Turret shield impact applies recovered unit coefficient and publishes authoritative mutation");
+        var friendlyTurretShield=heavyTurretMatch.Snapshot().Shields.Single(x=>x.CoverIndex==coverOne.SourceIndex);
+        heavyTurretMatch.ApplyHeavyTurretEnvironmentImpact(turretShieldImpact with {Hit=turretShieldImpact.Hit with {
+            DynamicOwner=coverOne.SourcePath+"/riot_shield"}},10);
+        Check(heavyTurretMatch.Snapshot().Shields.Single(x=>x.CoverIndex==coverOne.SourceIndex).Equals(friendlyTurretShield),
+              "Heavy Turret shot cannot damage its own fraction shield");
+        Reject(()=>heavyTurretMatch.ApplyHeavyTurretEnvironmentImpact(turretShieldImpact,float.NaN));
+        var turretBarrelBefore=heavyTurretMatch.BarrelState.First(x=>!x.Destroyed);
+        var turretBarrelCollider=park.DynamicColliders.Single(x=>x.ColliderIndex==turretBarrelBefore.ColliderIndex);
+        heavyTurretMatch.ApplyHeavyTurretEnvironmentImpact(turretShieldImpact with {ProjectileId=900002,Hit=
+            new ShotCollision(0,turretBarrelCollider.TransformPosition,turretBarrelCollider.SourcePath,null,1,
+                ColliderIndex:turretBarrelCollider.ColliderIndex)},1);
+        var turretBarrelAfter=heavyTurretMatch.BarrelState.Single(x=>x.ColliderIndex==turretBarrelBefore.ColliderIndex);
+        Check(turretBarrelAfter.Health==turretBarrelBefore.Health-1&&turretBarrelAfter.Revision==turretBarrelBefore.Revision+1,
+              "Heavy Turret barrel impact enters the shared source-backed shot damage chain");
         float liveHeavyTurretHealth=heavyTurretCombatSnapshot.HeavyTurrets.Single().Health;
         var liveHeavyTurretColliders=heavyTurretMatch.GroundVehicleShotTargets(decoyOpponent)
             .Where(x=>x.HeavyTurret&&x.EntityId==liveHeavyTurretId).ToArray();

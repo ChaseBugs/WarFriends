@@ -215,6 +215,8 @@ public sealed partial class MatchEngine
             if(impact==null)continue;
             stateRevision++;Emit(MatchEventKind.Impact,impact.OwnerId,impact.Hit.PlayerId??"",impact.ProjectileId,
                 impact.Hit.Position,0,"heavy-turret");
+            ApplyHeavyTurretEnvironmentImpact(impact,pair.Value.Damage);
+            if(Terminal)return;
             if(impact.Hit.PlayerId is {} playerId)
                 ApplyResolvedPlayerDamage(impact.OwnerId,playerId,
                     new ResolvedPlayerDamage(pair.Value.Damage,CombatDamageType.Shot,HasWeapon:true,FriendKill:false,
@@ -233,5 +235,27 @@ public sealed partial class MatchEngine
             else if(impact.Hit is {DynamicPartId:int part,DynamicEntityId:ulong bodyId})
                 ApplyGroundVehicleProjectileImpact(impact.OwnerId,bodyId,part,pair.Value.Damage);
         }
+    }
+    internal void ApplyHeavyTurretEnvironmentImpact(BulletImpact impact,float damage)
+    {
+        if(impact.Tick!=tick||!float.IsFinite(damage)||damage<0||damage>100_000_000)
+            throw new InvalidDataException("Invalid Heavy Turret environment impact authority.");
+        var owner=Find(impact.OwnerId)??throw new InvalidDataException("Heavy Turret impact owner disappeared.");
+        if(impact.Hit.DynamicOwner is {} dynamicOwner&&shields!=null)
+        {
+            bool enemyHit=shields.IsLiveEnemyShield(dynamicOwner,owner.Definition.Fraction);
+            // Shield.DoDamage uses UnitToShieldCoef when the weapon has no
+            // PlayerWeapon, as for the recovered Heavy Turret weapon.
+            var changed=shields.ApplyUnitShot(dynamicOwner,owner.Definition.Fraction,damage,tick);
+            if(enemyHit)owner.ConfirmedEnemyHits=checked(owner.ConfirmedEnemyHits+1);
+            if(changed!=null)
+            {
+                stateRevision++;
+                EmitShield(changed.Destroyed?MatchEventKind.ShieldDestroyed:MatchEventKind.ShieldDamaged,
+                    impact.OwnerId,changed,impact.ProjectileId);
+            }
+        }
+        if(impact.Hit.ColliderIndex is int colliderIndex&&barrels?.Contains(colliderIndex)==true)
+            ApplyBarrelImpact(impact,damage);
     }
 }

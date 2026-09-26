@@ -858,11 +858,6 @@ public sealed partial class MatchEngine
                     TryCommitVehicleAttack(vehicle.OwnerPlayerId, vehicle.EntityId, out _);
             }
         if(advanced&&phase==BattlePhase.Running)AdvanceTransporterShots();
-        if(advanced&&phase==BattlePhase.Running)
-        {
-            try{AdvanceHeavyTurretProjectiles();AdvanceHeavyTurrets();}
-            catch(InvalidDataException){End("invalid-heavy-turret-authority","",false);return;}
-        }
         if (advanced && phase == BattlePhase.Running && vehicleProjectiles.Count > 0)
         {
             foreach (var pair in vehicleProjectiles.ToArray())
@@ -911,6 +906,12 @@ public sealed partial class MatchEngine
                 {stateRevision++;EmitShield(MatchEventKind.ShieldRepaired,"",repaired,0);}
             }
             catch(InvalidDataException){End("invalid-shield-authority","",false);return;}
+        }
+        if(advanced&&phase==BattlePhase.Running)
+        {
+            try{AdvanceHeavyTurretProjectiles();AdvanceHeavyTurrets();}
+            catch(InvalidDataException){End("invalid-heavy-turret-authority","",false);return;}
+            if(Terminal)return;
         }
         if (phase == BattlePhase.Waiting && tick >= admissionDeadline) { End("admission-timeout", "", false); return; }
         if (phase is not (BattlePhase.Running or BattlePhase.Countdown)) return;
