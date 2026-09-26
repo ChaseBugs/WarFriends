@@ -715,6 +715,8 @@ internal static class CombatContentTests
               buggyShot==new ArmyVehicleShotStats(5f,1f,0,0,0,0,0)&&
               transporterShot==new ArmyVehicleShotStats(5f,.9f,4,7,3.5f,4.5f,0)&&
               buggyCannon==new ArmyVehicleCannonStats(622.44f,8f,10f)&&
+              content.Army.PlayerDamagePolicy("ID_UNIT-BUGGY")==
+                  new ArmyPlayerDamagePolicy(.3f,.5f,.5f)&&
               content.Army.ComposeVehicleShot("ID_UNIT-HUMVEE",0,null,null,2f)
                   .ProbabilityOfRealShot==1f,
               "ground vehicle turrets compose primary and Buggy cannon stage-zero source authority");
@@ -730,7 +732,7 @@ internal static class CombatContentTests
               transporterRig.Roles.Single().Weapons.Count==2&&
               transporterRig.Roles.Single().Weapons.All(w=>w.WeaponType=="AutomaticRifle")&&
               buggyRig.Roles.Single(r=>r.Role=="cannon").Weapons.All(w=>w.Missile is
-                  {Speed:6f,HurtRadius:1.2f,DeadRadius:1f,CurvedTrajectory:true,
+                  {Speed:6f,MinimumDamage:20f,HurtRadius:1.2f,DeadRadius:1f,CurvedTrajectory:true,
                    RotationRange:{X:.5f,Y:.5f},RotationProfile.Count:5,
                    BaseRotationMagnitude:.5f})&&
               new[]{humveeRig,tankRig,buggyRig,transporterRig}.SelectMany(r=>r.Roles)
@@ -755,6 +757,23 @@ internal static class CombatContentTests
         }
         Check(buggyFlight.Finished&&buggyTerminal is {Collision:null}&&buggyCurveDeviation>.01f,
               "Buggy missile executes its five-key curved flight on contiguous host ticks");
+        var buggyPose=referencePose.Place(Vector3.Zero,Quaternion.Identity).Collision;
+        var buggyBody=buggyPose.Parts[0];var buggyPolicy=content.Army.PlayerDamagePolicy("ID_UNIT-BUGGY");
+        var buggyInner=BuggyExplosion.ResolvePlayer(buggyBody.Center,buggyPose,buggyPose.RootPosition,
+            new(1000),1000,buggyCannon.Damage*.5f,buggyMissileBinding,buggyPolicy,false,false,false,false,.5f);
+        var buggyShielded=BuggyExplosion.ResolvePlayer(buggyBody.Center,buggyPose,buggyPose.RootPosition,
+            new(1000),1000,buggyCannon.Damage*.5f,buggyMissileBinding,buggyPolicy,true,false,false,false,.5f);
+        Check(buggyInner is {Kind:CombatDamageType.Explosion}&&
+              Math.Abs(buggyInner.RawDamage-311.22f)<.001f&&Math.Abs(buggyInner.Result.Damage-155.61f)<.01f&&
+              buggyShielded!=null&&Math.Abs(buggyShielded.RawDamage-93.366f)<.01f&&
+              Math.Abs(buggyShielded.Result.Damage-46.683f)<.01f,
+              "Buggy cannon explosion applies half-cannon damage and recovered shield/player ratios");
+        var buggyDynamic=new MapDynamicCollider(1,"test","test-owner",0,Vector3.Zero,new(-.1f),new(.1f));
+        var buggyOuter=BuggyExplosion.ResolveDynamic(new(1.25f,0,0),buggyDynamic,
+            buggyCannon.Damage*.5f,buggyMissileBinding);
+        Check(buggyOuter.Kind==CombatDamageType.Shiver&&buggyOuter.RawDamage>=20&&
+              buggyOuter.RawDamage<buggyCannon.Damage*.5f,
+              "Buggy cannon outer overlap uses serialized 20-point quadratic hurt falloff");
         string vehicleWeaponPath=Path.Combine(directory,"recovered-ground-vehicle-weapons.json");
         string vehicleWeaponTemp=Path.Combine(directory,"vehicle-weapon-test-"+Guid.NewGuid().ToString("N")+".json");
         try
@@ -769,6 +788,11 @@ internal static class CombatContentTests
             damaged["vehicles"]![0]!["roles"]![0]!["weapons"]![0]!["cadence"]=0;
             File.WriteAllText(vehicleWeaponTemp,damaged.ToJsonString());
             string damagedHash=Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(vehicleWeaponTemp)));
+            Reject(()=>GroundVehicleWeaponCatalog.Load(vehicleWeaponTemp,damagedHash));
+            damaged=JsonNode.Parse(File.ReadAllText(vehicleWeaponPath))!;
+            damaged["vehicles"]![2]!["roles"]![1]!["weapons"]![0]!["missile"]!["minimumDamage"]=-1;
+            File.WriteAllText(vehicleWeaponTemp,damaged.ToJsonString());
+            damagedHash=Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(vehicleWeaponTemp)));
             Reject(()=>GroundVehicleWeaponCatalog.Load(vehicleWeaponTemp,damagedHash));
         }
         finally {if(File.Exists(vehicleWeaponTemp))File.Delete(vehicleWeaponTemp);}

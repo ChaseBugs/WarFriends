@@ -12,6 +12,8 @@ public sealed record ArmyBaseShotStats(float ProbabilityOfRealShot,int FireBatch
 public sealed record ArmyVehicleShotStats(float ShotSpeed,float ProbabilityOfRealShot,
     int FireBatchSizeMin,int FireBatchSizeMax,float MinShootTime,float MaxShootTime,int Crew);
 public sealed record ArmyVehicleCannonStats(float Damage,float MinShootTime,float MaxShootTime);
+public sealed record ArmyPlayerDamagePolicy(float BehindShieldRatio,float PlayerDamageRatio,
+    float OvertimePlayerDamageRatio);
 public sealed record ArmyAgentConfig(string PrefabSha256,float Radius,float Acceleration,
     float AngularSpeed,float Height,float StoppingDistance,bool AutoBraking,bool AutoRepath,
     int ObstacleAvoidanceType);
@@ -38,6 +40,7 @@ public sealed class ArmyDeploymentCatalog
     private IReadOnlyDictionary<string,IReadOnlyList<ArmyUpgradeShotStats>>? upgradeShots;
     private IReadOnlyDictionary<string,IReadOnlyList<float>>? specialValues;
     private IReadOnlyList<ArmyVehicleCannonStats>? buggyCannonStages;
+    private IReadOnlyDictionary<string,ArmyPlayerDamagePolicy>? playerDamagePolicies;
     private IReadOnlyDictionary<string,int>? normalLaneEnds;
     private IReadOnlyDictionary<string,int>? eliteLaneStarts;
     private ArmyDeploymentCatalog(string revision,float maxEnergy,float baseCooldown,ArmyAgentConfig infantryAgent,
@@ -185,6 +188,11 @@ public sealed class ArmyDeploymentCatalog
         return new(damage,min,max);
     }
 
+    /// <summary>UpgradeSlotsGeneric exposes these family-wide source ratios to every spawned weapon.</summary>
+    public ArmyPlayerDamagePolicy PlayerDamagePolicy(string unitId)
+        =>playerDamagePolicies!=null&&playerDamagePolicies.TryGetValue(unitId,out var value)?value:
+            throw new ArgumentOutOfRangeException(nameof(unitId));
+
     public float EffectiveHealth(string unitId,int normalIndex,int? specialIndex,int? eliteIndex,
         ArmyHealthFactors factors)
     {
@@ -260,6 +268,7 @@ public sealed class ArmyDeploymentCatalog
         var acceptedStats=new Dictionary<string,IReadOnlyList<ArmyBaseCombatStats>>(StringComparer.Ordinal);
         var acceptedShots=new Dictionary<string,IReadOnlyList<ArmyUpgradeShotStats>>(StringComparer.Ordinal);
         var acceptedSpecials=new Dictionary<string,IReadOnlyList<float>>(StringComparer.Ordinal);
+        var acceptedPlayerDamage=new Dictionary<string,ArmyPlayerDamagePolicy>(StringComparer.Ordinal);
         ArmyVehicleCannonStats[]? acceptedBuggyCannons=null;
         var acceptedLaneEnds=new Dictionary<string,int>(StringComparer.Ordinal);
         var acceptedEliteStarts=new Dictionary<string,int>(StringComparer.Ordinal);
@@ -273,9 +282,15 @@ public sealed class ArmyDeploymentCatalog
             int power=row.GetProperty("TOTALPOWER").GetInt32();
             float cooldown=row.GetProperty("COOLDOWN").GetSingle();
             float movementSpeed=row.GetProperty("MOVEMENTSPEED").GetSingle();
+            float behindShield=row.GetProperty("PLAYERBEHINDSHIELDDMGRATIO").GetSingle();
+            float playerDamage=row.GetProperty("PLAYERDAMAGERATIO").GetSingle();
+            float overtimeDamage=row.GetProperty("PLAYERDAMAGEOVERTIMERATIO").GetSingle();
             if(!float.IsFinite(movementSpeed) || movementSpeed<=0 || movementSpeed>20 ||
-               family.MovementSpeed!=movementSpeed)
+               family.MovementSpeed!=movementSpeed||!float.IsFinite(behindShield)||behindShield<0||behindShield>10||
+               !float.IsFinite(playerDamage)||playerDamage<0||playerDamage>10||
+               !float.IsFinite(overtimeDamage)||overtimeDamage<0||overtimeDamage>10)
                 throw new InvalidDataException("Army runtime movement speed differs from recovered sheet.");
+            acceptedPlayerDamage.Add(family.UnitId,new(behindShield,playerDamage,overtimeDamage));
             for(int i=0;i<counts.Length;i++)
             {
                 if(!int.TryParse(counts[i],System.Globalization.NumberStyles.None,
@@ -344,6 +359,7 @@ public sealed class ArmyDeploymentCatalog
         buggyCannonStages=acceptedBuggyCannons is null?null:Array.AsReadOnly(acceptedBuggyCannons);
         upgradeShots=acceptedShots;
         specialValues=acceptedSpecials;
+        playerDamagePolicies=acceptedPlayerDamage;
         normalLaneEnds=acceptedLaneEnds;
         eliteLaneStarts=acceptedEliteStarts;
     }

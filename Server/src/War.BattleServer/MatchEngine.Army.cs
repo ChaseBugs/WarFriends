@@ -296,7 +296,65 @@ public sealed partial class MatchEngine
             {
                 Emit(MatchEventKind.Impact,pair.Value.Owner,impact.Collision?.PlayerId??"",
                     impact.ProjectileId,impact.Position,0,"buggy-cannon");stateRevision++;
+                try {ApplyBuggyExplosion(pair.Value,impact);}
+                catch(InvalidDataException){End("invalid-combat-authority","",false);return;}
+                if(Terminal)return;
             }
+        }
+    }
+
+    private void ApplyBuggyExplosion(BuggyProjectile projectile,BuggyMissileImpact impact)
+    {
+        if(rifleCombat==null||damageRoll==null||armyCatalog==null)
+            throw new InvalidDataException("Missing Buggy explosion authority.");
+        var attacker=Find(projectile.Owner)??throw new InvalidDataException("Buggy owner disappeared.");
+        var policy=armyCatalog.PlayerDamagePolicy("ID_UNIT-BUGGY");
+        bool shieldBetween=false;
+        IReadOnlyList<MapDynamicCollider> overlaps=Array.Empty<MapDynamicCollider>();
+        if(map!=null)
+        {
+            Func<int,bool>? enabled=barrels==null?null:index=>barrels.ColliderEnabled(index);
+            Func<int,int,int>? layer=barrels==null?null:(index,source)=>barrels.RuntimeLayer(index,source);
+            overlaps=map.DynamicSphereOverlaps(impact.Position,projectile.Binding.HurtRadius,
+                uint.MaxValue,enabled,layer);
+            shieldBetween=shields!=null&&overlaps.Any(x=>shields.IsLiveShield(x.DynamicOwner));
+        }
+        foreach(var collider in overlaps)
+        {
+            var hit=BuggyExplosion.ResolveDynamic(impact.Position,collider,projectile.Damage,projectile.Binding);
+            if(shields!=null&&shields.IsLiveShield(collider.DynamicOwner))
+            {
+                var shield=shields.ApplyUnitExplosion(collider.DynamicOwner,attacker.Definition.Fraction,
+                    hit.RawDamage,tick);
+                if(shield!=null)
+                {
+                    stateRevision++;
+                    EmitShield(shield.Destroyed?MatchEventKind.ShieldDestroyed:
+                        MatchEventKind.ShieldDamaged,projectile.Owner,shield,impact.ProjectileId);
+                }
+            }
+            else if(barrels?.Contains(collider.ColliderIndex)==true)
+            {
+                ApplyBarrelDamage(projectile.Owner,impact.ProjectileId,collider.ColliderIndex,hit.RawDamage,
+                    hit.Kind==CombatDamageType.Explosion?BarrelChainCause.Explosion:BarrelChainCause.Shiver);
+                if(Terminal)return;
+            }
+        }
+        foreach(var victim in players.Where(x=>!x.Dead).ToArray())
+        {
+            float roll=damageRoll();
+            var effect=BuggyExplosion.ResolvePlayer(impact.Position,
+                rifleCombat.Pose(victim.Definition.PlayerId).Collision,victim.Position,
+                victim.Definition.Combat!,victim.Health,projectile.Damage,projectile.Binding,policy,
+                shieldBetween,overtime,attacker.Definition.Fraction==victim.Definition.Fraction,
+                attacker==victim,roll);
+            if(effect==null)continue;
+            ApplyResolvedPlayerDamage(projectile.Owner,victim.Definition.PlayerId,
+                new ResolvedPlayerDamage(effect.RawDamage,effect.Kind,HasWeapon:true,FriendKill:true,
+                    PlayerCoefficient:policy.PlayerDamageRatio,
+                    PlayerOvertimeCoefficient:policy.OvertimePlayerDamageRatio,Overtime:overtime),
+                roll,attacker!=victim&&attacker.Definition.Fraction!=victim.Definition.Fraction);
+            if(Terminal)return;
         }
     }
 

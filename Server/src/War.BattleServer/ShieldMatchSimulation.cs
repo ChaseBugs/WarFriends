@@ -74,6 +74,18 @@ internal sealed class ShieldMatchSimulation
         if(row.Lifecycle.Health==before)return null;
         row.Revision++;return row.Snapshot();
     }
+    internal ShieldMutation? ApplyUnitExplosion(string dynamicOwner,int shooterFraction,float damage,ulong tick)
+    {
+        if(tick!=lastTick||shooterFraction is not (1 or 2)||!float.IsFinite(damage)||damage<0)
+            throw new InvalidDataException("Invalid army shield explosion authority.");
+        if(!byOwner.TryGetValue(dynamicOwner,out var row)||row.Lifecycle.Destroyed)return null;
+        float multiplier=policy.ExplosionCoefficient*
+            (row.Cover.Fraction==shooterFraction?policy.FriendDamageCoefficient:1);
+        float before=row.Lifecycle.Health;
+        row.Lifecycle.ApplyUnitExplosion(damage,multiplier,tick);
+        if(row.Lifecycle.Health==before)return null;
+        row.Revision++;return row.Snapshot();
+    }
     internal IReadOnlyList<ShieldMutation> BeginOvertime(ulong tick)
     {
         if(tick!=lastTick)throw new InvalidDataException("Shield overtime requires the current host tick.");

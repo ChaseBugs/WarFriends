@@ -102,7 +102,10 @@ def main():
      curves=[{'time':float(t),'value':float(v),'inTangent':float(i),'outTangent':float(o)}
       for t,v,i,o in re.findall(r'    - time: ([^\r\n]+)\r?\n      value: ([^\r\n]+)\r?\n      inSlope: ([^\r\n]+)\r?\n      outSlope: ([^\r\n]+)',curve_block)]
      if not curves: raise ValueError('missing vehicle missile curve')
+     damage_match=re.search(r'^  damageAmount:\r?\n(?:^    .*\r?\n)*?^    fakeValue: ([^\r\n]+)$',setup,re.M)
+     if not damage_match: raise ValueError('missing vehicle missile minimum damage')
      missile={'setupComponentFileId':setup_ids[0],'speed':number(setup,'speed'),
+      'minimumDamage':float(damage_match.group(1)),
       'hurtRadius':number(setup,'hurtRadius'),'deadRadius':number(setup,'deadRadius'),
       'explosionCoefficient':vector(direct(setup,'exposionCoef')),
       'additionalUpForce':number(setup,'additionalUpForce'),'stopTime':number(setup,'stopTime'),
@@ -126,7 +129,7 @@ def main():
     'fakeShotEvery':fake_every,'weapons':weapons})
   out.append({'unitId':unit,'prefab':'Assets/GameObject/'+prefab_name,
    'sha256':hashlib.sha256(raw).hexdigest(),'behaviorType':root_type,'roles':role_rows})
- artifact={'version':2,'vehicles':out};serialized=json.dumps(artifact,indent=2)+'\n'
+ artifact={'version':3,'vehicles':out};serialized=json.dumps(artifact,indent=2)+'\n'
  if sys.argv[1:]==['--check']:
   if not OUTPUT.exists() or OUTPUT.read_text()!=serialized: raise ValueError('ground vehicle weapon artifact is stale')
  elif not sys.argv[1:]: OUTPUT.write_text(serialized)

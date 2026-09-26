@@ -49,6 +49,12 @@ internal sealed class ShieldLifecycle
         Health-=amount;
         if(Health<=0){Health=0;Destroyed=true;destroyedTick=tick;}
     }
+    internal void ApplyUnitExplosion(float sourceDamage,float multiplier,ulong tick)
+    {
+        if(!float.IsFinite(multiplier)||multiplier<0||multiplier>100)
+            throw new InvalidDataException("Invalid army shield explosion multiplier.");
+        ApplyUnitShot(sourceDamage*multiplier,tick);
+    }
     internal bool BeginOvertime(ulong tick,bool destroy)
     {
         Time(tick);

@@ -9,7 +9,7 @@ namespace War.BattleServer;
 public sealed record GroundVehicleWeapon(int BatchedComponentFileId,int WeaponComponentFileId,
     string WeaponType,float Cadence,int SpawnTransformFileId,Vector3 MuzzlePosition,Vector3 ShotOffset,
     int ProjectileFileId,string ProjectileGuid,bool ForcedFake,GroundVehicleMissileBinding? Missile);
-public sealed record GroundVehicleMissileBinding(int SetupComponentFileId,float Speed,float HurtRadius,
+public sealed record GroundVehicleMissileBinding(int SetupComponentFileId,float Speed,float MinimumDamage,float HurtRadius,
     float DeadRadius,Vector3 ExplosionCoefficient,float AdditionalUpForce,float StopTime,int MissileType,
     bool CurvedTrajectory,Vector2 RotationRange,IReadOnlyList<BazookaCurveKey> RotationProfile,
     float BaseRotationMagnitude);
@@ -37,6 +37,7 @@ public sealed class GroundVehicleWeaponCatalog
         public float[] MuzzlePosition{get;set;}=[];public float[] ShotOffset{get;set;}=[];public int ProjectileFileId{get;set;}
         public string ProjectileGuid{get;set;}="";public bool ForcedFake{get;set;}public MissileDto? Missile{get;set;}}
     private sealed class MissileDto {public int SetupComponentFileId{get;set;}public float Speed{get;set;}
+        public float MinimumDamage{get;set;}
         public float HurtRadius{get;set;}public float DeadRadius{get;set;}public float[] ExplosionCoefficient{get;set;}=[];
         public float AdditionalUpForce{get;set;}public float StopTime{get;set;}public int MissileType{get;set;}
         public bool CurvedTrajectory{get;set;}public float[] RotationRange{get;set;}=[];
@@ -85,7 +86,7 @@ public sealed class GroundVehicleWeaponCatalog
             {PropertyNameCaseInsensitive=true,UnmappedMemberHandling=JsonUnmappedMemberHandling.Disallow})??
             throw new InvalidDataException("Missing ground vehicle weapon artifact.");}
         catch(JsonException e){throw new InvalidDataException("Malformed ground vehicle weapon artifact.",e);}
-        if(root.Version!=2||root.Vehicles.Length!=Expected.Length)
+        if(root.Version!=3||root.Vehicles.Length!=Expected.Length)
             throw new InvalidDataException("Incomplete ground vehicle weapon artifact.");
         var result=new Dictionary<string,GroundVehicleWeaponRig>(StringComparer.Ordinal);
         int turretCount=0,weaponCount=0;
@@ -123,6 +124,7 @@ public sealed class GroundVehicleWeaponCatalog
                     {
                         var m=weapon.Missile??throw new InvalidDataException("Missing vehicle missile setup.");
                         if(m.SetupComponentFileId<=0||!float.IsFinite(m.Speed)||m.Speed<=0||
+                           !float.IsFinite(m.MinimumDamage)||m.MinimumDamage<0||m.MinimumDamage>10_000_000||
                            !float.IsFinite(m.HurtRadius)||!float.IsFinite(m.DeadRadius)||m.DeadRadius<=0||
                            m.HurtRadius<m.DeadRadius||m.MissileType is <0 or >3||m.RotationRange.Length!=2||
                            !float.IsFinite(m.RotationRange[0])||!float.IsFinite(m.RotationRange[1])||
@@ -143,7 +145,7 @@ public sealed class GroundVehicleWeaponCatalog
                         }
                         if(curve[0].Time!=0||curve[^1].Time!=1)
                             throw new InvalidDataException("Incomplete vehicle missile curve.");
-                        missile=new(m.SetupComponentFileId,m.Speed,m.HurtRadius,m.DeadRadius,
+                        missile=new(m.SetupComponentFileId,m.Speed,m.MinimumDamage,m.HurtRadius,m.DeadRadius,
                             Vector(m.ExplosionCoefficient),m.AdditionalUpForce,m.StopTime,m.MissileType,
                             m.CurvedTrajectory,new(m.RotationRange[0],m.RotationRange[1]),
                             Array.AsReadOnly(curve),m.BaseRotationMagnitude);
