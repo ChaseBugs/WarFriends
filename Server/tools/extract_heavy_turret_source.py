@@ -93,7 +93,16 @@ def extract_prefab():
     batched_id=ref(t,"batchedWeapon");batched=source[batched_id][1];weapon_id=ref(batched,"weapon");weapon=source[weapon_id][1]
     if f"guid: {BULLET_GUID}" not in field(weapon,"bulletPrefab"): raise ValueError("HeavyTurret BulletSlow binding changed")
     spawn_id=ref(weapon,"spawnPoint");spawn_p,spawn_q,spawn_s=world_trs(source,spawn_id);shot_offset=vec(field(weapon,"shotOffset"))
-    muzzle=[a+b for a,b in zip(spawn_p,rotate(spawn_q,[a*b for a,b in zip(shot_offset,spawn_s)]))]
+    expected_positions={horizontal:[.001302576,.108870514,-.02562468806],
+                        474717:[-.005997424,.231470514,-.10492468806],
+                        spawn_id:[-.0025973828995995846,.34387050708442457,.18137528650084617]}
+    for ident,expected in expected_positions.items():
+        if any(abs(a-b)>1e-8 for a,b in zip(world(source,ident),expected)):
+            raise ValueError("Heavy Turret joint/muzzle geometry changed")
+    if ref(source[474717][1],"m_Father")!=horizontal or world_trs(source,474717)[1]!=[0.,0.,0.,1.]:
+        raise ValueError("Heavy Turret vertical joint binding changed")
+    # Gun.Shoot adds shotOffset in world space, not TransformPoint space.
+    muzzle=[a+b for a,b in zip(spawn_p,shot_offset)]
     bullet_path=ASSETS/"GameObject/BulletSlow.prefab";bullet_source=blocks(bullet_path.read_text(encoding="utf-8-sig"))
     bullets=[b for _,(k,b) in bullet_source.items() if k==114 and "ammoDamageAmount:" in b and "distanceToCheck:" in b]
     behaviour_path=ASSETS/"Scripts/Assembly-CSharp/BehaviourDefinititon.cs"

@@ -85,11 +85,11 @@ public sealed partial class MatchEngine
             ulong shotId=++projectileId;
             if(real)
             {
-                var origin=turret.Position+heavyTurretSource!.MuzzleOffset;
+                var origin=turret.Position+turret.Aim.MuzzleOffset(heavyTurretSource!);
                 try
                 {
                     var flight=new BulletFlight(shotId,turret.OwnerPlayerId,
-                        new(HeavyTurretBulletSpeed(target.Kind),heavyTurretSource.BulletCheckDistance,false),
+                        new(HeavyTurretBulletSpeed(target.Kind),heavyTurretSource!.BulletCheckDistance,false),
                         origin,target.Position,tick,(from,direction,range)=>TraceHeavyTurretShot(turret.OwnerPlayerId,from,direction,range));
                     heavyTurretProjectiles.Add(shotId,new(flight,turret.Damage));
                 }
@@ -204,7 +204,7 @@ public sealed partial class MatchEngine
     }
     private bool HeavyTurretCanSee(HeavyTurretMatchEntity turret,HeavyTurretTarget target)
     {
-        var origin=turret.Position+heavyTurretSource!.MuzzleOffset;
+        var origin=turret.Position+turret.Aim.SightOffset(heavyTurretSource!);
         var sightPosition=target.Position;
         if(target.Kind=="player")
         {

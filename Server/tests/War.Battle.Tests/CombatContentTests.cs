@@ -1469,6 +1469,20 @@ internal static class CombatContentTests
             var heavyTurrets=HeavyTurretSourceCatalog.Load(heavyTurretArtifact,heavyTurretRevision,content.Maps);
             var parkTurretCovers=heavyTurrets.ForMap(content.Maps.Single(x=>Path.GetFileNameWithoutExtension(x.Source)=="Park_Multiplayer"));
             var heavyMid=heavyTurrets.Compose(22);var firstTurretCover=parkTurretCovers[0];
+            using(var turretOracle=JsonDocument.Parse(File.ReadAllBytes(Path.Combine(directory,"recovered-heavy-turret-aim-samples.json"))))
+            {
+                Check(turretOracle.RootElement.GetProperty("sha256").GetString()==heavyTurrets.PrefabRevision&&
+                    turretOracle.RootElement.GetProperty("samples").GetArrayLength()==6,
+                    "turret joint oracle binds the complete six-sample source prefab export");
+                foreach(var sample in turretOracle.RootElement.GetProperty("samples").EnumerateArray())
+                {
+                    Vector3 Point(string name){var v=sample.GetProperty(name);return new(v[0].GetSingle(),v[1].GetSingle(),v[2].GetSingle());}
+                    var aimedTurret=new HeavyTurretAimState();aimedTurret.Plan(Vector3.Zero,Point("target"));aimedTurret.Complete();
+                    Check(Vector3.Distance(aimedTurret.SightOffset(heavyTurrets),Point("sight"))<.00001f&&
+                        Vector3.Distance(aimedTurret.MuzzleOffset(heavyTurrets),Point("muzzle"))<.00001f,
+                        "host turret sight and world-offset muzzle match independent Unity hierarchy sample");
+                }
+            }
             var turretAim=new HeavyTurretAimState();
             Check(turretAim.Plan(Vector3.Zero,Vector3.UnitZ)==0&&
                   turretAim.Plan(Vector3.Zero,Vector3.UnitX)==8,

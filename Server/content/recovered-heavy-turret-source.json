@@ -54,9 +54,9 @@
       "batchedWeaponComponentFileId": 11444804,
       "weaponComponentFileId": 11455190,
       "muzzlePosition": [
-        -0.05718316699293287,
-        0.34387049507555206,
-        0.1813752822115694
+        -0.0025973828995995846,
+        0.44387050708442455,
+        0.18137528650084617
       ],
       "bulletDefaultSpeed": 5.0,
       "bulletCheckDistance": 0.6,

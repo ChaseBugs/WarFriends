@@ -47,6 +47,11 @@ public sealed class HeavyTurretSourceCatalog
     public string Revision{get;}public int SpawnCount=>1;public float NavMeshSampleRadius=>10;public int NavMeshAreaMask=>1;
     public int MaxDisplayLevel=>44;public string PrefabRevision{get;}public float EffectiveRealShotProbability=>1;
     public Vector3 MuzzleOffset{get;}public float EffectiveBulletSpeed=>25;public float BulletCheckDistance=>.6f;
+    // Exact hierarchy coordinates in the SHA-pinned identity-root prefab.
+    public Vector3 HorizontalPivot=>new(.001302576f,.108870514f,-.02562468806f);
+    public Vector3 VerticalPivot=>new(-.005997424f,.231470514f,-.10492468806f);
+    public Vector3 SpawnOffset=>new(-.0025973829f,.343870507f,.1813752865f);
+    public Vector3 WorldShotOffset=>new(0,.1f,0);
     public float PlayerDamageRatio=>.5f;public float PlayerOvertimeDamageRatio=>.5f;
     public float PlayerBehindShieldDamageRatio=>0;public float ShieldHitProbability=>0;
     public IReadOnlyList<HeavyTurretCollider> Colliders{get;}
