@@ -15,7 +15,7 @@ public sealed record MapSphereCandidate(MapDynamicCollider Collider,float Bounds
 public sealed class RecoveredBattleMap
 {
     private sealed record Shape(int SourceIndex, string Path, string? DynamicOwner, int Layer, Vector3 TransformPosition,
-        Vector3 Min, Vector3 Max, Vector3[] Triangles, Vector4[]? Hull);
+        Vector3 Min, Vector3 Max, Vector3[] Vertices,Vector3[] Triangles, Vector4[]? Hull);
     private readonly Shape[] shapes;
     private readonly Dictionary<(int, int), Vector3[]> paths;
     private readonly CoverNode[] covers;
@@ -63,6 +63,95 @@ public sealed class RecoveredBattleMap
             if(overlap)result.Add(candidate.Collider);
         }
         return Array.AsReadOnly(result.ToArray());
+    }
+    /// <summary>Unity-style trigger overlap for a host-owned oriented box. This is used by
+    /// the recovered MiniDrone root trigger after its Rigidbody is released.</summary>
+    internal bool BoxOverlaps(Vector3 center,Vector3 size,Quaternion rotation,
+        uint layerMask=uint.MaxValue,Func<string,bool>? dynamicEnabled=null,
+        Func<int,bool>? colliderEnabled=null,Func<int,int,int>? runtimeLayer=null)
+    {
+        if(!Finite(center)||!Finite(size)||size.X<=0||size.Y<=0||size.Z<=0||
+           size.X>100||size.Y>100||size.Z>100||!float.IsFinite(rotation.LengthSquared())||
+           Math.Abs(rotation.LengthSquared()-1)>.0001f)
+            throw new ArgumentOutOfRangeException(nameof(size));
+        rotation=Quaternion.Normalize(rotation);var inverse=Quaternion.Conjugate(rotation);var half=size*.5f;
+        Vector3 extent=Vector3.Abs(Vector3.Transform(Vector3.UnitX,rotation))*half.X+
+            Vector3.Abs(Vector3.Transform(Vector3.UnitY,rotation))*half.Y+
+            Vector3.Abs(Vector3.Transform(Vector3.UnitZ,rotation))*half.Z;
+        foreach(var shape in shapes)
+        {
+            int layer=runtimeLayer?.Invoke(shape.SourceIndex,shape.Layer)??shape.Layer;
+            if(layer is <0 or >31)throw new InvalidDataException("Invalid dynamic runtime layer.");
+            if((layerMask&(1u<<layer))==0||shape.DynamicOwner!=null&&dynamicEnabled!=null&&!dynamicEnabled(shape.DynamicOwner)||
+               colliderEnabled!=null&&!colliderEnabled(shape.SourceIndex)||
+               !BoundsOverlap(center-extent,center+extent,shape.Min,shape.Max))continue;
+            if(shape.Hull!=null)
+            {
+                if(ConvexBoxOverlap(shape.Vertices,shape.Hull,center,half,rotation))return true;
+                continue;
+            }
+            for(int i=0;i<shape.Triangles.Length;i+=3)
+                if(TriangleBoxOverlap(Vector3.Transform(shape.Triangles[i]-center,inverse),
+                    Vector3.Transform(shape.Triangles[i+1]-center,inverse),
+                    Vector3.Transform(shape.Triangles[i+2]-center,inverse),half))return true;
+        }
+        return false;
+    }
+    private static bool ConvexBoxOverlap(Vector3[] vertices,Vector4[] planes,Vector3 center,
+        Vector3 half,Quaternion rotation)
+    {
+        Vector3[] boxAxes=[Vector3.Transform(Vector3.UnitX,rotation),
+            Vector3.Transform(Vector3.UnitY,rotation),Vector3.Transform(Vector3.UnitZ,rotation)];
+        bool Separated(Vector3 axis)
+        {
+            if(axis.LengthSquared()<1e-12f)return false;
+            float min=float.PositiveInfinity,max=float.NegativeInfinity;
+            foreach(var vertex in vertices){float p=Vector3.Dot(vertex,axis);min=Math.Min(min,p);max=Math.Max(max,p);}
+            float boxCenter=Vector3.Dot(center,axis);
+            float radius=half.X*Math.Abs(Vector3.Dot(boxAxes[0],axis))+
+                         half.Y*Math.Abs(Vector3.Dot(boxAxes[1],axis))+
+                         half.Z*Math.Abs(Vector3.Dot(boxAxes[2],axis));
+            return min>boxCenter+radius||max<boxCenter-radius;
+        }
+        foreach(var plane in planes)
+            if(Separated(new(plane.X,plane.Y,plane.Z)))return false;
+        foreach(var axis in boxAxes)if(Separated(axis))return false;
+        for(int a=0;a<vertices.Length-1;a++)
+        for(int b=a+1;b<vertices.Length;b++)
+        {
+            int shared=0;
+            foreach(var plane in planes)
+            {
+                var normal=new Vector3(plane.X,plane.Y,plane.Z);
+                if(Math.Abs(Vector3.Dot(normal,vertices[a])+plane.W)<.0001f&&
+                   Math.Abs(Vector3.Dot(normal,vertices[b])+plane.W)<.0001f)shared++;
+            }
+            if(shared<2)continue; // only a true convex-hull edge contributes SAT axes
+            Vector3 edge=vertices[b]-vertices[a];
+            foreach(var boxAxis in boxAxes)if(Separated(Vector3.Cross(edge,boxAxis)))return false;
+        }
+        return true;
+    }
+    private static bool BoundsOverlap(Vector3 aMin,Vector3 aMax,Vector3 bMin,Vector3 bMax)
+        =>aMin.X<=bMax.X&&aMax.X>=bMin.X&&aMin.Y<=bMax.Y&&aMax.Y>=bMin.Y&&aMin.Z<=bMax.Z&&aMax.Z>=bMin.Z;
+    private static bool TriangleBoxOverlap(Vector3 a,Vector3 b,Vector3 c,Vector3 half)
+    {
+        Vector3 ab=b-a,bc=c-b,ca=a-c;
+        Span<Vector3> axes=stackalloc Vector3[13]
+        {
+            Vector3.UnitX,Vector3.UnitY,Vector3.UnitZ,Vector3.Cross(ab,bc),
+            Vector3.Cross(ab,Vector3.UnitX),Vector3.Cross(ab,Vector3.UnitY),Vector3.Cross(ab,Vector3.UnitZ),
+            Vector3.Cross(bc,Vector3.UnitX),Vector3.Cross(bc,Vector3.UnitY),Vector3.Cross(bc,Vector3.UnitZ),
+            Vector3.Cross(ca,Vector3.UnitX),Vector3.Cross(ca,Vector3.UnitY),Vector3.Cross(ca,Vector3.UnitZ)
+        };
+        foreach(var axis in axes)
+        {
+            if(axis.LengthSquared()<1e-12f)continue;
+            float pa=Vector3.Dot(a,axis),pb=Vector3.Dot(b,axis),pc=Vector3.Dot(c,axis);
+            float radius=half.X*Math.Abs(axis.X)+half.Y*Math.Abs(axis.Y)+half.Z*Math.Abs(axis.Z);
+            if(Math.Min(pa,Math.Min(pb,pc))>radius||Math.Max(pa,Math.Max(pb,pc))<-radius)return false;
+        }
+        return true;
     }
     private static float PointTriangleDistanceSquared(Vector3 p,Vector3 a,Vector3 b,Vector3 c)
     {
@@ -177,7 +266,8 @@ public sealed class RecoveredBattleMap
                 Vector3 min = vertices.Aggregate(Vector3.Min), max = vertices.Aggregate(Vector3.Max);
                 Vector4[]? hull = collider.GetProperty("meshConvex").GetBoolean() ? HullPlanes(vertices) : null;
                 collision.Add(new Shape(colliderIndex,collider.GetProperty("path").GetString()!, collider.GetProperty("dynamicOwner").GetString(), layer,
-                    Vector3.Transform(Vector3.Zero,matrix),min,max,hull == null ? indices.Select(i => vertices[i]).ToArray() : [], hull));
+                    Vector3.Transform(Vector3.Zero,matrix),min,max,vertices,
+                    hull == null ? indices.Select(i => vertices[i]).ToArray() : [], hull));
             }
             foreach(var cover in nodes)
             {

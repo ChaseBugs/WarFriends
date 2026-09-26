@@ -309,6 +309,7 @@ message BattleRepairDroneState {
   float rotation_x = 5; float rotation_y = 6; float rotation_z = 7; float rotation_w = 8;
   float health = 9; float max_health = 10; bool active = 11; uint64 respawn_tick = 12;
   int32 waypoint_index = 13; bool forward = 14;
+  bool falling = 15; bool crashed = 16;
 }
 message BattleVehiclePartState {
   string part_id = 1; float health = 2; float max_health = 3; string passenger_player_id = 4;
@@ -375,6 +376,7 @@ enum MatchEventKind {
   MATCH_EVENT_KIND_VEHICLE_PASSENGER_RESPAWNED = 27;
   MATCH_EVENT_KIND_VEHICLE_REPAIR_DRONE_DOWN = 28;
   MATCH_EVENT_KIND_VEHICLE_REPAIR_DRONE_RESPAWNED = 29;
+  MATCH_EVENT_KIND_VEHICLE_REPAIR_DRONE_EXPLODED = 30;
 }
 message MatchEvent {
   uint64 event_id = 1; uint64 tick = 2; MatchEventKind kind = 3;

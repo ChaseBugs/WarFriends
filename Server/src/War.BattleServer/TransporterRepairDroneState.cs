@@ -3,7 +3,9 @@ using System.Numerics;
 namespace War.BattleServer;
 
 internal sealed record TransporterRepairDroneSnapshot(int PathIndex,Vector3 Position,float Health,
-    float MaximumHealth,bool Active,ulong RespawnTick,int WaypointIndex,bool Forward,Quaternion Rotation);
+    float MaximumHealth,bool Active,ulong RespawnTick,int WaypointIndex,bool Forward,Quaternion Rotation,
+    bool Falling,bool Crashed);
+internal sealed record TransporterRepairDroneAdvance(float HealRatio,bool Crashed);
 
 /// <summary>Fixed-tick authority for the recovered Transporter MiniDrone/DroneSteering pair.</summary>
 internal sealed class TransporterRepairDroneState
@@ -12,6 +14,8 @@ internal sealed class TransporterRepairDroneState
     private readonly RepairDronePrefabBinding binding;
     private readonly float healRatio;
     private Vector3 velocity;
+    private Vector3 fallVelocity;
+    private float physicsRemainder;
     private int waypoint;
     private bool forward;
     private int stayTicks;
@@ -23,6 +27,8 @@ internal sealed class TransporterRepairDroneState
     internal float MaximumHealth {get;}
     internal float Health {get;private set;}
     internal bool Active {get;private set;}=true;
+    internal bool Falling {get;private set;}
+    internal bool Crashed {get;private set;}
     internal ulong RespawnTick {get;private set;}
 
     internal TransporterRepairDroneState(int pathIndex,RepairDronePath path,
@@ -39,18 +45,41 @@ internal sealed class TransporterRepairDroneState
         nextHealTick=checked(spawnTick+(ulong)SecondsToTicks(binding.HealIntervalSeconds));
     }
 
-    internal float Advance(Vector3 vehiclePosition,Vector3 vehicleFacing,ulong tick,Func<float> random)
+    internal TransporterRepairDroneAdvance Advance(Vector3 vehiclePosition,Vector3 vehicleFacing,ulong tick,
+        Func<float> random,Func<Vector3,Vector3,Quaternion,bool>? contact=null)
     {
         ArgumentNullException.ThrowIfNull(random);
         if(!Active)
         {
-            if(tick<RespawnTick)return 0;
+            bool crashed=false;
+            if(Falling)
+            {
+                physicsRemainder+=1f/MatchManifest.TickRate;
+                const float fixedStep=.02f;
+                while(physicsRemainder+1e-7f>=fixedStep&&Falling)
+                {
+                    physicsRemainder-=fixedStep;
+                    // Recovered Rigidbody: mass 1, drag 1, gravity -9.81. DroneSteering
+                    // adds up*8 + its final per-frame steering velocity / dt * 2.
+                    Vector3 force=Vector3.UnitY*8f+velocity/fixedStep*2f;
+                    fallVelocity+=(force+new Vector3(0,-9.81f,0))*fixedStep;
+                    fallVelocity/=1f+fixedStep;
+                    Position+=fallVelocity*fixedStep;
+                    if(!PlayerHitbox.Finite(Position)||!PlayerHitbox.Finite(fallVelocity))
+                        throw new InvalidDataException("Repair-drone fall left the finite domain.");
+                    Vector3 center=Position+Vector3.Transform(binding.ColliderCenter,Rotation);
+                    if(contact?.Invoke(center,binding.ColliderSize,Rotation)==true)
+                    {Falling=false;Crashed=true;fallVelocity=Vector3.Zero;crashed=true;}
+                }
+            }
+            if(tick<RespawnTick)return new(0,crashed);
             Active=true;Health=MaximumHealth;RespawnTick=0;waypoint=0;forward=binding.InitialForward;
-            velocity=Vector3.Zero;stayTicks=0;cornerDelayTicks=0;
+            Falling=false;Crashed=false;velocity=Vector3.Zero;fallVelocity=Vector3.Zero;physicsRemainder=0;
+            stayTicks=0;cornerDelayTicks=0;
             Position=WorldPoint(0,vehiclePosition,vehicleFacing);
             Rotation=VehicleYaw(vehicleFacing)*path.Rotation;
             nextHealTick=checked(tick+(ulong)SecondsToTicks(binding.HealIntervalSeconds));
-            return 0;
+            return new(0,crashed);
         }
         Vector3 target=WorldPoint(waypoint,vehiclePosition,vehicleFacing);
         if(Vector3.Distance(Position,target)<path.Radius)
@@ -94,7 +123,7 @@ internal sealed class TransporterRepairDroneState
         }
         if(!PlayerHitbox.Finite(Position)||!PlayerHitbox.Finite(velocity))
             throw new InvalidDataException("Repair-drone steering left the finite domain.");
-        return TakeHeal(tick);
+        return new(TakeHeal(tick),false);
     }
 
     internal bool ApplyDamage(float damage,ulong tick,Func<float> random)
@@ -107,7 +136,7 @@ internal sealed class TransporterRepairDroneState
         if(Health>0)return true;
         float roll=random();
         if(!float.IsFinite(roll)||roll<0||roll>=1)throw new InvalidDataException("Invalid repair-drone respawn roll.");
-        Active=false;velocity=Vector3.Zero;
+        Active=false;Falling=true;Crashed=false;fallVelocity=Vector3.Zero;physicsRemainder=0;
         float seconds=binding.RespawnMinimumSeconds+
             (binding.RespawnMaximumSeconds-binding.RespawnMinimumSeconds)*roll;
         RespawnTick=checked(tick+(ulong)SecondsToTicks(seconds));
@@ -115,7 +144,7 @@ internal sealed class TransporterRepairDroneState
     }
 
     internal TransporterRepairDroneSnapshot Snapshot()=>new(PathIndex,Position,Health,MaximumHealth,
-        Active,RespawnTick,waypoint,forward,Rotation);
+        Active,RespawnTick,waypoint,forward,Rotation,Falling,Crashed);
 
     private float TakeHeal(ulong tick)
     {

@@ -783,11 +783,22 @@ internal static class CombatContentTests
             content.GroundVehicleWeapons.RepairDronePrefab,transporterRepair,Vector3.Zero,Vector3.UnitZ,0);
         Check(repairState.ApplyDamage(repairState.MaximumHealth,10,()=>0)&&!repairState.Active&&
               repairState.RespawnTick==1060&&
-              repairState.Advance(Vector3.Zero,Vector3.UnitZ,1059,()=>.5f)==0&&!repairState.Active&&
-              repairState.Advance(Vector3.Zero,Vector3.UnitZ,1060,()=>.5f)==0&&repairState.Active&&
+              repairState.Advance(Vector3.Zero,Vector3.UnitZ,1059,()=>.5f).HealRatio==0&&!repairState.Active&&
+              repairState.Advance(Vector3.Zero,Vector3.UnitZ,1060,()=>.5f).HealRatio==0&&repairState.Active&&
               repairState.Snapshot() is {WaypointIndex:0,RespawnTick:0} repairedDrone&&
               Math.Abs(repairedDrone.Health-repairedDrone.MaximumHealth)<.001f,
               "repair-drone death preserves its path and respawns at full health after the exact source window");
+        var fallingRepairState=new TransporterRepairDroneState(0,transporterRig.RepairDronePaths[0],
+            content.GroundVehicleWeapons.RepairDronePrefab,transporterRepair,Vector3.Zero,Vector3.UnitZ,0);
+        fallingRepairState.ApplyDamage(fallingRepairState.MaximumHealth,10,()=>0);
+        Vector3 fallingStart=fallingRepairState.Position;
+        var crash=fallingRepairState.Advance(Vector3.Zero,Vector3.UnitZ,11,()=>.5f,
+            (center,size,rotation)=>size==content.GroundVehicleWeapons.RepairDronePrefab.ColliderSize&&
+                Math.Abs(rotation.LengthSquared()-1)<.0001f);
+        Check(crash.Crashed&&!fallingRepairState.Active&&!fallingRepairState.Falling&&
+              fallingRepairState.Crashed&&fallingRepairState.Position!=fallingStart&&
+              fallingRepairState.Snapshot() is {Falling:false,Crashed:true},
+              "dead repair drone releases its recovered Rigidbody and explodes only on authoritative trigger contact");
         var repairTarget=content.GroundVehicleWeapons.PlaceRepairDrone(78,0,23,repairState.Snapshot());
         var repairRayOrigin=repairTarget.Hitbox.Center+Vector3.UnitX;
         var repairWorld=new ShotCollisionWorld(null,
@@ -1755,12 +1766,15 @@ internal static class CombatContentTests
                 Reason="vehicle-passenger-respawn:driver"});
             Reject(()=>new War.Client.MatchEventConsumer().Consume(invalidPassengerPage));
             var repairDroneConsumer=new War.Client.MatchEventConsumer();
-            var repairDronePage=new MatchEventBatch{Code="events",LatestEventId=1};
+            var repairDronePage=new MatchEventBatch{Code="events",LatestEventId=2};
             repairDronePage.Events.Add(new MatchEvent{EventId=1,Tick=5,
                 Kind=MatchEventKind.VehicleRepairDroneDown,ActorId=warperOwner,ProjectileId=8,
                 Reason="vehicle-repair-drone-down:1"});
-            Check(repairDroneConsumer.Consume(repairDronePage)==1,
-                  "Client event consumer accepts bounded repair-drone lifecycle metadata");
+            repairDronePage.Events.Add(new MatchEvent{EventId=2,Tick=6,
+                Kind=MatchEventKind.VehicleRepairDroneExploded,ActorId=warperOwner,ProjectileId=8,
+                Reason="vehicle-repair-drone-exploded:1"});
+            Check(repairDroneConsumer.Consume(repairDronePage)==2,
+                  "Client event consumer accepts bounded repair-drone down and crash metadata");
             var invalidRepairDronePage=new MatchEventBatch{Code="events",LatestEventId=1};
             invalidRepairDronePage.Events.Add(new MatchEvent{EventId=1,Tick=5,
                 Kind=MatchEventKind.VehicleRepairDroneRespawned,ActorId=warperOwner,ProjectileId=8,

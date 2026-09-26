@@ -34,6 +34,7 @@ internal sealed class ShieldMatchSimulation
     }
     internal bool ColliderEnabled(string dynamicOwner)=>!byOwner.TryGetValue(dynamicOwner,out var row) || row.Lifecycle.ColliderEnabled;
     internal bool IsLiveShield(string dynamicOwner)=>byOwner.TryGetValue(dynamicOwner,out var row) && !row.Lifecycle.Destroyed;
+    internal bool Contains(string dynamicOwner)=>byOwner.ContainsKey(dynamicOwner);
     internal bool IsLiveEnemyShield(string dynamicOwner,int shooterFraction)
     {
         if(shooterFraction is not (1 or 2))throw new InvalidDataException("Invalid shield shooter fraction.");

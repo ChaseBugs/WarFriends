@@ -772,7 +772,21 @@ public sealed partial class MatchEngine
                 throw new InvalidDataException("Transporter repair drone lost its vehicle.");
             foreach(var drone in drones)
             {
-                bool active=drone.Active;float ratio=drone.Advance(vehicle.Position,facing,tick,NextArmyFloat);
+                bool active=drone.Active;
+                var advance=drone.Advance(vehicle.Position,facing,tick,NextArmyFloat,(center,size,rotation)=>
+                    map?.BoxOverlaps(center,size,rotation,uint.MaxValue,
+                        owner=>shields?.Contains(owner)!=true||shields.IsLiveShield(owner),
+                        barrels==null?null:index=>barrels.ColliderEnabled(index),
+                        barrels==null?null:(index,source)=>barrels.RuntimeLayer(index,source))==true);
+                float ratio=advance.HealRatio;
+                if(advance.Crashed)
+                {
+                    ApplyTransporterRepairDroneExplosion(army.OwnerPlayerId,entityKey,drone);
+                    stateRevision++;
+                    Emit(MatchEventKind.VehicleRepairDroneExploded,army.OwnerPlayerId,"",entityKey,
+                        drone.Position,0,"vehicle-repair-drone-exploded:"+drone.PathIndex);
+                    if(Terminal)return;
+                }
                 if(active!=drone.Active)
                 {
                     stateRevision++;
@@ -793,6 +807,72 @@ public sealed partial class MatchEngine
                 }
             }
         }
+    }
+
+    private void ApplyTransporterRepairDroneExplosion(string ownerId,ulong vehicleId,
+        TransporterRepairDroneState drone)
+    {
+        if(rifleCombat==null||damageRoll==null||groundVehicleWeapons==null)
+            throw new InvalidDataException("Missing repair-drone explosion authority.");
+        var attacker=Find(ownerId)??throw new InvalidDataException("Repair-drone owner disappeared.");
+        var binding=groundVehicleWeapons.RepairDronePrefab;
+        float full=drone.MaximumHealth*binding.ExplosionDamageRatio;
+        float minimum=drone.MaximumHealth*binding.SplashDamageRatio;
+        float Damage(float distance,out CombatDamageType kind)
+        {
+            if(distance<binding.DeadRadius){kind=CombatDamageType.Explosion;return full;}
+            kind=CombatDamageType.Shiver;
+            float fraction=Math.Clamp(1-(distance-binding.DeadRadius)/
+                (binding.HurtRadius-binding.DeadRadius),0,1);
+            return minimum+(full-minimum)*fraction*fraction;
+        }
+        IReadOnlyList<MapDynamicCollider> overlaps=Array.Empty<MapDynamicCollider>();
+        if(map!=null)
+        {
+            Func<int,bool>? enabled=barrels==null?null:index=>barrels.ColliderEnabled(index);
+            Func<int,int,int>? layer=barrels==null?null:(index,source)=>barrels.RuntimeLayer(index,source);
+            overlaps=map.DynamicSphereOverlaps(drone.Position,binding.HurtRadius,uint.MaxValue,enabled,layer);
+        }
+        foreach(var collider in overlaps)
+        {
+            float amount=Damage(Vector3.Distance(collider.TransformPosition,drone.Position),out var kind);
+            if(shields!=null&&shields.IsLiveShield(collider.DynamicOwner))
+            {
+                var shield=shields.ApplyUnitExplosion(collider.DynamicOwner,attacker.Definition.Fraction,amount,tick);
+                if(shield!=null){stateRevision++;EmitShield(shield.Destroyed?MatchEventKind.ShieldDestroyed:
+                    MatchEventKind.ShieldDamaged,ownerId,shield,vehicleId);}
+            }
+            else if(barrels?.Contains(collider.ColliderIndex)==true)
+            {
+                ApplyBarrelDamage(ownerId,vehicleId,collider.ColliderIndex,amount,
+                    kind==CombatDamageType.Explosion?BarrelChainCause.Explosion:BarrelChainCause.Shiver);
+                if(Terminal)return;
+            }
+        }
+        foreach(var victim in players.Where(x=>!x.Dead).ToArray())
+        {
+            var parts=rifleCombat.Pose(victim.Definition.PlayerId).Collision.Parts
+                .Where(p=>p.OverlapsSphere(drone.Position,binding.HurtRadius))
+                .OrderBy(p=>p.DistanceToPoint(drone.Position)).ThenBy(p=>p.SourcePath,StringComparer.Ordinal).ToArray();
+            if(parts.Length==0)continue;
+            float amount=Damage(Vector3.Distance(parts[0].TransformPosition,drone.Position),out var kind);
+            _=ApplyResolvedPlayerDamage(ownerId,victim.Definition.PlayerId,
+                new ResolvedPlayerDamage(amount,kind,HasWeapon:false,FriendKill:true,
+                    ExplosiveCoefficient:1,ExplosiveOvertimeCoefficient:1,Overtime:overtime),
+                damageRoll(),attacker!=victim&&attacker.Definition.Fraction!=victim.Definition.Fraction);
+            if(Terminal)return;
+        }
+        if(transporterRepairDrones.TryGetValue(vehicleId,out var siblings))
+            foreach(var sibling in siblings.Where(x=>x!=drone&&x.Active).ToArray())
+            {
+                var hitbox=groundVehicleWeapons.PlaceRepairDrone(vehicleId,sibling.PathIndex,23,sibling.Snapshot()).Hitbox;
+                if(!hitbox.OverlapsSphere(drone.Position,binding.HurtRadius))continue;
+                float amount=Damage(Vector3.Distance(sibling.Position,drone.Position),out _);
+                bool wasActive=sibling.Active;
+                if(sibling.ApplyDamage(amount,tick,NextArmyFloat)&&wasActive&&!sibling.Active)
+                    Emit(MatchEventKind.VehicleRepairDroneDown,ownerId,"",vehicleId,sibling.Position,0,
+                        "vehicle-repair-drone-down:"+sibling.PathIndex);
+            }
     }
 
     private void InitializeRusherMotionCandidate(ulong entityKey,string unitId)

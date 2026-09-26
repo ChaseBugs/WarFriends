@@ -1868,7 +1868,8 @@ public sealed partial class MatchEngine
                         RotationX=drone.Rotation.X,RotationY=drone.Rotation.Y,
                         RotationZ=drone.Rotation.Z,RotationW=drone.Rotation.W,
                         Health=drone.Health,MaxHealth=drone.MaximumHealth,Active=drone.Active,
-                        RespawnTick=drone.RespawnTick,WaypointIndex=drone.WaypointIndex,Forward=drone.Forward
+                        RespawnTick=drone.RespawnTick,WaypointIndex=drone.WaypointIndex,Forward=drone.Forward,
+                        Falling=drone.Falling,Crashed=drone.Crashed
                     }));
                 return row;
             }));

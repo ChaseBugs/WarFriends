@@ -48,11 +48,14 @@ namespace War.Client
                     !item.Reason.StartsWith("vehicle-passenger-",StringComparison.Ordinal)))
                     throw new InvalidDataException("Invalid vehicle passenger lifecycle event.");
                 if((item.Kind==MatchEventKind.VehicleRepairDroneDown||
-                    item.Kind==MatchEventKind.VehicleRepairDroneRespawned)&&
+                    item.Kind==MatchEventKind.VehicleRepairDroneRespawned||
+                    item.Kind==MatchEventKind.VehicleRepairDroneExploded)&&
                    (!Guid.TryParseExact(item.ActorId,"N",out _)||item.ProjectileId==0||item.TargetId!=""||
                     (item.Kind==MatchEventKind.VehicleRepairDroneDown?
                         item.Reason!="vehicle-repair-drone-down:0"&&item.Reason!="vehicle-repair-drone-down:1":
-                        item.Reason!="vehicle-repair-drone-respawn:0"&&item.Reason!="vehicle-repair-drone-respawn:1")))
+                     item.Kind==MatchEventKind.VehicleRepairDroneRespawned?
+                        item.Reason!="vehicle-repair-drone-respawn:0"&&item.Reason!="vehicle-repair-drone-respawn:1":
+                        item.Reason!="vehicle-repair-drone-exploded:0"&&item.Reason!="vehicle-repair-drone-exploded:1")))
                     throw new InvalidDataException("Invalid vehicle repair-drone lifecycle event.");
                 if ((item.Kind == MatchEventKind.WarperWarpStarted || item.Kind == MatchEventKind.WarperWarpEnded) &&
                     (!Guid.TryParseExact(item.ActorId, "N", out _) || item.TargetId != "" || item.ProjectileId != 0 ||

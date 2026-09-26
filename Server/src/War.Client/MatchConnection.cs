@@ -388,11 +388,14 @@ namespace War.Client
                         !row.Reason.StartsWith("vehicle-passenger-",StringComparison.Ordinal)))
                         throw new InvalidOperationException("Battle host returned invalid vehicle passenger metadata.");
                     if((row.Kind==MatchEventKind.VehicleRepairDroneDown||
-                        row.Kind==MatchEventKind.VehicleRepairDroneRespawned)&&
+                        row.Kind==MatchEventKind.VehicleRepairDroneRespawned||
+                        row.Kind==MatchEventKind.VehicleRepairDroneExploded)&&
                        (!Guid.TryParseExact(row.ActorId,"N",out _)||row.ProjectileId==0||row.TargetId!=""||
                         (row.Kind==MatchEventKind.VehicleRepairDroneDown?
                             row.Reason!="vehicle-repair-drone-down:0"&&row.Reason!="vehicle-repair-drone-down:1":
-                            row.Reason!="vehicle-repair-drone-respawn:0"&&row.Reason!="vehicle-repair-drone-respawn:1")))
+                         row.Kind==MatchEventKind.VehicleRepairDroneRespawned?
+                            row.Reason!="vehicle-repair-drone-respawn:0"&&row.Reason!="vehicle-repair-drone-respawn:1":
+                            row.Reason!="vehicle-repair-drone-exploded:0"&&row.Reason!="vehicle-repair-drone-exploded:1")))
                         throw new InvalidOperationException("Battle host returned invalid repair-drone metadata.");
                 }
                 return batch.Clone();
@@ -512,7 +515,8 @@ namespace War.Client
                            drone.MaxHealth>10_000_000||float.IsNaN(drone.Health)||float.IsInfinity(drone.Health)||
                            drone.Health<0||drone.Health>drone.MaxHealth||drone.WaypointIndex<0||drone.WaypointIndex>6||
                            drone.RespawnTick>10_000_000||drone.Active!=(drone.Health>0)||
-                           drone.Active&&drone.RespawnTick!=0||!drone.Active&&drone.RespawnTick==0)
+                           drone.Active&&(drone.RespawnTick!=0||drone.Falling||drone.Crashed)||
+                           !drone.Active&&(drone.RespawnTick==0||drone.Falling==drone.Crashed))
                             throw new InvalidOperationException("Battle host returned an invalid repair-drone row.");
                         priorDrone=drone.PathIndex;
                     }

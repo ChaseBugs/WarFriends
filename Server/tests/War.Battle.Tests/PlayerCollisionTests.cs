@@ -62,6 +62,10 @@ internal static class PlayerCollisionTests
         var groundOrigin = map.Covers[0].Position + Vector3.UnitY*5;
         var ground = map.Raycast(groundOrigin, -Vector3.UnitY, 100) ?? throw new Exception("No source ground hit.");
         Check(map.Raycast(groundOrigin, -Vector3.UnitY, ground.Distance)?.SourcePath == ground.SourcePath, "map includes exact range boundary");
+        Check(map.BoxOverlaps(ground.Position,new(.22f,.27f,.29f),
+                  Quaternion.CreateFromAxisAngle(Vector3.UnitY,.37f))&&
+              !map.BoxOverlaps(groundOrigin,new(.22f,.27f,.29f),Quaternion.Identity),
+              "oriented repair-drone trigger overlaps recovered triangle/convex geometry without an AABB false positive");
         var behind = gameplay.Place(ground.Position-Vector3.UnitY*3, Quaternion.Identity);
         var blocked = new ShotCollisionWorld(map, [new(a, gameplay), new(b, behind)]).Raycast(a, groundOrigin, -Vector3.UnitY, 100);
         Check(blocked != null && blocked.PlayerId == null && blocked.SourcePath == ground.SourcePath, "map occludes player behind geometry");
