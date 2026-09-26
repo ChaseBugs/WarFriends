@@ -20,6 +20,7 @@ public sealed class ArmyRusherArrivalState
     public Vector3 Position { get; private set; }
     public Vector2 PlanarDirection => Phase==ArmyRusherTravelPhase.Walking ?
         motion!.PlanarDirection : Vector2.Zero;
+    internal float PlanarSpeed => Phase==ArmyRusherTravelPhase.Walking ? motion!.Speed : 0;
     public bool InitialShotDelayElapsed => Phase==ArmyRusherTravelPhase.Rusher &&
         ticksSinceArrival>SettleTicks;
     internal int RejectedMotionTicks { get; private set; }

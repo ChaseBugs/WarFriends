@@ -118,6 +118,21 @@ public sealed partial class MatchEngine
         return facing.LengthSquared()>1e-10f?facing:null;
     }
 
+    private Vector3 InfantryVelocity(ulong entityKey)
+    {
+        Vector2 direction;float speed;
+        if(warperRelocations.TryGetValue(entityKey,out var warp))
+        {direction=warp.PlanarDirection;speed=warp.PlanarSpeed;}
+        else if(minigunnerMovements.TryGetValue(entityKey,out var minigunner))
+        {direction=minigunner.PlanarDirection;speed=minigunner.PlanarSpeed;}
+        else if(rusherMotionCandidates.TryGetValue(entityKey,out var rusher))
+        {direction=rusher.PlanarDirection;speed=rusher.PlanarSpeed;}
+        else return Vector3.Zero;
+        if(!float.IsFinite(speed)||speed<0||speed>20||!float.IsFinite(direction.X)||!float.IsFinite(direction.Y))
+            throw new InvalidDataException("Infantry velocity lost host authority.");
+        return new(direction.X*speed,0,direction.Y*speed);
+    }
+
     internal ArmyInfantryPoseSnapshot? InfantryPose(ulong entityKey)
     {
         if(enemyPoses==null||!infantryAnimations.TryGetValue(entityKey,out var animation)||
@@ -191,7 +206,28 @@ public sealed partial class MatchEngine
                     if(drone.Active)result.Add(groundVehicleWeapons.PlaceRepairDrone(vehicle.EntityId,
                         drone.PathIndex,passengerLayer,drone.Snapshot()));
         }
+        foreach(var (entityId,army) in activeArmyEntities.OrderBy(x=>x.Key))
+        {
+            if(army.OwnerPlayerId==shooterId||army.OwnerFraction==shooter.Definition.Fraction||
+               !infantryAnimations.ContainsKey(entityId))continue;
+            int layer=army.OwnerFraction==1?23:army.OwnerFraction==2?22:
+                throw new InvalidDataException("Army infantry has unsupported faction.");
+            var pose=InfantryPose(entityId)??throw new InvalidDataException("Army infantry lost its collision pose.");
+            result.AddRange(pose.Parts.Select(hitbox=>new DynamicShotTarget(entityId,0,layer,hitbox,
+                ArmyInfantry:true)));
+        }
         return result;
+    }
+
+    internal void ApplyArmyProjectileImpact(string shooterId,ulong entityId,float rawDamage,float partWeight)
+    {
+        if(!activeArmyEntities.TryGetValue(entityId,out var army)||!infantryAnimations.ContainsKey(entityId))return;
+        var shooter=Find(shooterId)??throw new InvalidDataException("Infantry impact shooter disappeared.");
+        if(shooter.Definition.Fraction==army.OwnerFraction||!float.IsFinite(rawDamage)||rawDamage<=0||
+           rawDamage>10_000_000||partWeight is not (1f or 1.5f))
+            throw new InvalidDataException("Invalid army infantry projectile impact.");
+        if(ApplyArmyHostDamage(entityId,rawDamage*partWeight))
+            shooter.ConfirmedEnemyHits=checked(shooter.ConfirmedEnemyHits+1);
     }
 
     internal void ApplyGroundVehiclePassengerProjectileImpact(string shooterId,ulong vehicleId,
@@ -402,6 +438,10 @@ public sealed partial class MatchEngine
         =>tankCannonDamage.TryGetValue(entityKey,out var value)?value:null;
     internal Vector3? GroundVehicleFacing(ulong entityKey)
         =>groundVehicleFacing.TryGetValue(entityKey,out var facing)?facing:null;
+    internal ulong? GroundVehicleArmyTarget(ulong entityKey)
+        =>vehicleShotTargets.TryGetValue(entityKey,out var target)?target.ArmyEntityId:null;
+    internal float? GroundVehicleSelectedShotSpeed(ulong entityKey)
+        =>groundVehicleShotSpeed.TryGetValue(entityKey,out var speed)?speed:null;
     internal IReadOnlyList<VehiclePassengerSnapshot> VehiclePassengers(ulong entityKey)
         =>vehiclePassengers.TryGetValue(entityKey,out var rows)?
             rows.Values.OrderBy(x=>x.Binding.PointComponentFileId).Select(x=>x.Snapshot()).ToArray():[];
@@ -486,8 +526,43 @@ public sealed partial class MatchEngine
         if(!opponent.Admitted||opponent.Dead)return false;
         var pose=rifleCombat.Pose(opponent.Definition.PlayerId);
         var turret=groundVehicleWeapons.For(army.UnitId).Roles.Single(r=>r.Role=="primary");
-        bool matchingUnit=activeArmyEntities.Values.Any(candidate=>candidate.OwnerFraction!=army.OwnerFraction&&
-            armyCatalog!.Families.Single(f=>f.UnitId==candidate.UnitId).UnitType==turret.PrimaryTarget);
+        var matchingUnits=activeArmyEntities.Where(candidate=>candidate.Value.OwnerFraction!=army.OwnerFraction&&
+            infantryAnimations.ContainsKey(candidate.Key)&&
+            armyCatalog!.Families.Single(f=>f.UnitId==candidate.Value.UnitId).UnitType==turret.PrimaryTarget)
+            .OrderBy(candidate=>candidate.Key).ToArray();
+        bool matchingUnit=matchingUnits.Length>0;
+        if(army.UnitId=="ID_UNIT-HUMVEE"&&matchingUnit)
+        {
+            var visibleUnits=new List<(ulong EntityId,Vector3 Target,GroundVehicleAim Aim)>();
+            foreach(var candidate in matchingUnits)
+            {
+                var candidatePose=InfantryPose(candidate.Key)??
+                    throw new InvalidDataException("Humvee target lost its animated pose.");
+                // enemy.prefab serializes Head as the first AllIn shot target.
+                var part=candidatePose.Parts.Single(x=>x.Weight==1.5f);
+                GroundVehicleAim candidateAim;
+                try {candidateAim=GroundVehicleAimPolicy.Resolve(vehicle.Position,facing,part.Center,
+                    turret.MaxShotRotation,turret.AimTime);}
+                catch(InvalidDataException){continue;}
+                var candidateMuzzle=groundVehicleWeapons.RestMuzzleOrigin(army.UnitId,"primary",0,
+                    vehicle.Position,candidateAim.Direction);
+                var candidateDelta=part.Center-candidateMuzzle;float candidateRange=candidateDelta.Length();
+                if(!float.IsFinite(candidateRange)||candidateRange<.001f)continue;
+                var hit=rifleCombat.TraceForArmy(army.OwnerPlayerId,candidateMuzzle,
+                    candidateDelta/candidateRange,candidateRange+.05f);
+                if(!turret.NeedToSeePrimaryTarget||hit is {DynamicArmyInfantry:true,DynamicEntityId:var hitId}&&
+                   hitId==candidate.Key)visibleUnits.Add((candidate.Key,part.Center,candidateAim));
+            }
+            if(visibleUnits.Count==0)return false;
+            int selectedIndex=armyChoice(visibleUnits.Count);
+            if(selectedIndex<0||selectedIndex>=visibleUnits.Count)
+                throw new InvalidDataException("Army random selector returned an invalid Humvee target.");
+            var selected=visibleUnits[selectedIndex];
+            vehicleShotTargets[entityKey]=new(army.OwnerPlayerId,opponent.Definition.PlayerId,
+                selected.Target,selected.EntityId);
+            groundVehicleShotSpeed[entityKey]=attack.ShotSpeed;
+            return vehicles.TryBeginAttack(entityKey,true,selected.Aim.AimTicks);
+        }
         if(army.UnitId!="ID_UNIT-TRANSPORTER"&&
            !GroundVehicleAimPolicy.CanFallbackToPlayer(turret,false,matchingUnit))return false;
         Vector3 target;
@@ -508,7 +583,7 @@ public sealed partial class MatchEngine
         var visible=rifleCombat.TraceForArmy(army.OwnerPlayerId,muzzle,delta/range,range+.05f);
         if(visible?.PlayerId!=opponent.Definition.PlayerId&&visible?.DynamicOwner!=opponent.Definition.PlayerId)
             return false;
-        vehicleShotTargets[entityKey]=(army.OwnerPlayerId,opponent.Definition.PlayerId,target);
+        vehicleShotTargets[entityKey]=new(army.OwnerPlayerId,opponent.Definition.PlayerId,target);
         groundVehicleShotSpeed[entityKey]=army.UnitId=="ID_UNIT-TRANSPORTER"?attack.ShotSpeed:
             GroundVehicleAimPolicy.PlayerProjectileSpeed(turret,attack.ShotSpeed);
         return vehicles.TryBeginAttack(entityKey,true,aim.AimTicks);

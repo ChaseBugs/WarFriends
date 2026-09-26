@@ -11,6 +11,7 @@ public sealed class ArmyMinigunnerMovementState
     public Vector3 Destination { get; }
     public bool Arrived=>motion.Arrived;
     public Vector2 PlanarDirection=>motion.PlanarDirection;
+    internal float PlanarSpeed=>motion.Speed;
 
     internal ArmyMinigunnerMovementState(int pointFileId,ArmyNavMeshCorridor route,
         ArmyAgentConfig agent,float speed)

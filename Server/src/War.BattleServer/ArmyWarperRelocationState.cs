@@ -26,6 +26,8 @@ public sealed class ArmyWarperRelocationState
     public Vector3 Position => motion.Position;
     public Vector2 PlanarDirection => Phase is ArmyWarperRelocationPhase.Edge or ArmyWarperRelocationPhase.Final
         ? motion.PlanarDirection : Vector2.Zero;
+    internal float PlanarSpeed => Phase is ArmyWarperRelocationPhase.Edge or ArmyWarperRelocationPhase.Final
+        ? motion.Speed : 0;
     public bool Transparent => (Phase is ArmyWarperRelocationPhase.Edge or ArmyWarperRelocationPhase.Final) &&
         legTicks>(int)MathF.Floor(policy.WarpAfterSeconds*MatchManifest.TickRate);
     public int CompletedEdgeHops { get; private set; }

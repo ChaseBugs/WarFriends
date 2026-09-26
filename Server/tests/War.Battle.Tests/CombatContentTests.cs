@@ -2500,6 +2500,27 @@ internal static class CombatContentTests
         Check(infantryBlastHits==1&&Math.Abs(walkingShotgunnerMatch.ArmyHealth(walkingLive.EntityKey)!.Value-
                   (walkingHealthBefore-sourceDroneHealth*content.GroundVehicleWeapons.RepairDronePrefab.ExplosionDamageRatio))<.001f,
               "repair-drone blast selects the live animated Shotgunner body and applies source full-radius damage");
+        var infantryTargets=walkingShotgunnerMatch.GroundVehicleShotTargets(helicopterOwner)
+            .Where(x=>x.EntityId==walkingLive.EntityKey&&x.ArmyInfantry).ToArray();
+        var infantryHead=infantryTargets.Single(x=>x.Hitbox.Weight==1.5f);
+        var infantryRayOrigin=infantryHead.Hitbox.Center+Vector3.UnitY;
+        var infantryWorld=new ShotCollisionWorld(null,
+        [
+            new(helicopterOwner,referencePose.Place(new(100,0,100),Quaternion.Identity).Collision),
+            new(soldierOwner,referencePose.Place(new(110,0,100),Quaternion.Identity).Collision)
+        ],dynamicTargets:_=>infantryTargets);
+        var infantryHit=infantryWorld.Raycast(helicopterOwner,infantryRayOrigin,
+            infantryHead.Hitbox.Center-infantryRayOrigin,2,content.Bindings.BulletMask(2));
+        float projectileHealthBefore=walkingShotgunnerMatch.ArmyHealth(walkingLive.EntityKey)!.Value;
+        walkingShotgunnerMatch.ApplyArmyProjectileImpact(helicopterOwner,walkingLive.EntityKey,10,
+            infantryHit!.PartWeight);
+        Check(infantryTargets.Length==3&&infantryTargets.All(x=>x.PartComponentFileId==0&&
+                  x.PassengerRole==null&&x.RepairDronePathIndex==null&&x.Layer==23)&&
+              infantryHit is {DynamicArmyInfantry:true,DynamicEntityId:var infantryEntity,PartWeight:1.5f}&&
+              infantryEntity==walkingLive.EntityKey&&
+              Math.Abs(walkingShotgunnerMatch.ArmyHealth(walkingLive.EntityKey)!.Value-
+                  (projectileHealthBefore-15))<.001f,
+              "animated infantry enters the shared opposing projectile world and applies its trusted head multiplier");
         var warperManifest=detached with {MatchId="warper-initial-relocation",IdleSeconds=120,Players=detached.Players.Select(p=>p with
         {
             EquippedArmyUnitIds=["ID_UNIT-WARPER"],NewArmyUnitIds=null,ArmyNormalUpgradeIndexes=[0],
@@ -2923,6 +2944,49 @@ internal static class CombatContentTests
             return spawn.VehicleRoute!=null&&staleMatch.VehicleRouteMotion(entity.EntityKey)==null&&
                    Vector3.Distance(new(entity.X,entity.Y,entity.Z),spawn.VehicleRoute.Positions[^1])<.0001f;
         }),"live Humvee and Tank traverse their reserved source waypoint lists and park at final targets");
+        var humveeRusherManifest=detached with {MatchId="humvee-rusher-priority",IdleSeconds=120,
+            Players=[detached.Players[0] with
+            {
+                EquippedArmyUnitIds=["ID_UNIT-HUMVEE"],NewArmyUnitIds=null,ArmyNormalUpgradeIndexes=[0],
+                ArmySpecialUpgradeIndexes=[-1],ArmyEliteUpgradeIndexes=[-1],ArmyHealthFactors=[new(1f,1f)],
+                ArmyDamageScales=[1f],ArmySpeedCoefficients=[1f],ArmyAccuracyCoefficients=[2f]
+            },detached.Players[1] with
+            {
+                EquippedArmyUnitIds=["ID_UNIT-SHOTGUNNER"],NewArmyUnitIds=null,ArmyNormalUpgradeIndexes=[0],
+                ArmySpecialUpgradeIndexes=[-1],ArmyEliteUpgradeIndexes=[-1],ArmyHealthFactors=[new(1f,1f)],
+                ArmyDamageScales=[1f],ArmySpeedCoefficients=[1f],ArmyAccuracyCoefficients=[1f]
+            }]};
+        content.ValidateAllocation(humveeRusherManifest);
+        var humveeRusherMatch=new MatchEngine(humveeRusherManifest,content:content,armyChoice:_=>0);
+        humveeRusherMatch.Admit(soldierOwner);humveeRusherMatch.Admit(helicopterOwner);
+        humveeRusherMatch.Command(soldierOwner,new MatchCommand{CommandId=1,
+            Ready=new ReadyCommand{ManifestHash=humveeRusherMatch.ManifestHash}});
+        humveeRusherMatch.Command(helicopterOwner,new MatchCommand{CommandId=1,
+            Ready=new ReadyCommand{ManifestHash=humveeRusherMatch.ManifestHash}});
+        humveeRusherMatch.Advance(60);
+        int humveeOption=humveeRusherMatch.ArmyBatch(soldierOwner).OptionIndexes.First();
+        int opposingRusherOption=humveeRusherMatch.ArmyBatch(helicopterOwner).OptionIndexes
+            .OrderBy(x=>content.Army.Option(x).Count).First();
+        Check(humveeRusherMatch.Command(soldierOwner,new MatchCommand{CommandId=2,
+                  DeployArmy=new DeployArmyCommand{OptionIndex=humveeOption}}).Code=="army-deploying"&&
+              humveeRusherMatch.Command(helicopterOwner,new MatchCommand{CommandId=2,
+                  DeployArmy=new DeployArmyCommand{OptionIndex=opposingRusherOption}}).Code=="army-deploying",
+              "Humvee and opposing AttackerRusher enter one authoritative match");
+        ulong priorityTick=60,humveeId=0,rusherId=0;
+        while(priorityTick<1800&&!humveeRusherMatch.Terminal&&
+              (humveeId==0||rusherId==0||humveeRusherMatch.GroundVehicleArmyTarget(humveeId)!=rusherId))
+        {
+            humveeRusherMatch.Advance(++priorityTick);
+            if(priorityTick%90==0)
+            {humveeRusherMatch.ArmyEntityBatch(soldierOwner,0,0);humveeRusherMatch.ArmyEntityBatch(helicopterOwner,0,0);}
+            humveeId=humveeRusherMatch.ArmyEntityBatch(soldierOwner,0,0).Entities
+                .SingleOrDefault(x=>x.UnitId=="ID_UNIT-HUMVEE")?.EntityKey??0;
+            rusherId=humveeRusherMatch.ArmyEntityBatch(helicopterOwner,0,0).Entities
+                .FirstOrDefault(x=>x.UnitId=="ID_UNIT-SHOTGUNNER")?.EntityKey??0;
+        }
+        Check(humveeId!=0&&rusherId!=0&&humveeRusherMatch.GroundVehicleArmyTarget(humveeId)==rusherId&&
+              humveeRusherMatch.GroundVehicleSelectedShotSpeed(humveeId)==5,
+              "live Humvee selects the opposing AttackerRusher before player fallback and keeps full projectile speed");
         var transporterManifest=detached with {MatchId="transporter-split-fire",Players=[detached.Players[0] with
         {
             EquippedArmyUnitIds=["ID_UNIT-TRANSPORTER"],NewArmyUnitIds=null,

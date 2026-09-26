@@ -44,7 +44,8 @@ public sealed partial class MatchEngine
     private sealed record TankProjectile(TankMissileFlight Flight,string Owner,string Target,
         float Damage,GroundVehicleMissileBinding Binding);
     private readonly Dictionary<ulong,TankProjectile> tankProjectiles=[];
-    private readonly Dictionary<ulong, (string Owner, string Target, Vector3 Position)> vehicleShotTargets = [];
+    private sealed record VehicleShotTarget(string Owner,string Target,Vector3 Position,ulong? ArmyEntityId=null);
+    private readonly Dictionary<ulong, VehicleShotTarget> vehicleShotTargets = [];
     private Func<ulong, float>? vehicleDamage;
     private Func<ulong, string, Vector3, ulong, IReadOnlyList<PreparedProjectile>>? prepareVolley;
     private Func<float>? damageRoll;
@@ -488,9 +489,22 @@ public sealed partial class MatchEngine
             var id = checked(++projectileId);
             Vector3 origin=source.Position;
             Func<Vector3,Vector3,float,ShotCollision?> trace;
+            float shotSpeed=groundVehicleShotSpeed.TryGetValue(entityId,out float selectedSpeed)
+                ?selectedSpeed:attack.ShotSpeed;
             if(activeArmyEntities.TryGetValue(entityId,out var army)&&groundVehicleWeapons!=null&&
                groundVehicleFacing.TryGetValue(entityId,out var facing)&&rifleCombat!=null)
             {
+                if(target.ArmyEntityId is ulong infantryId&&activeArmyEntities.ContainsKey(infantryId))
+                {
+                    var pose=InfantryPose(infantryId)??
+                        throw new InvalidDataException("Vehicle infantry target lost its animated pose.");
+                    var raw=pose.Parts.OrderBy(x=>Vector3.DistanceSquared(source.Position,x.Center)).First().Center;
+                    var preliminary=groundVehicleWeapons.RestMuzzleOrigin(army.UnitId,"primary",0,
+                        source.Position,raw-source.Position);
+                    float flyTime=Vector3.Distance(preliminary,raw)/shotSpeed+.1f;
+                    target=target with {Position=raw+InfantryVelocity(infantryId)*flyTime};
+                    vehicleShotTargets[entityId]=target;
+                }
                 origin=groundVehicleWeapons.RestMuzzleOrigin(army.UnitId,"primary",0,source.Position,
                     target.Position-source.Position);
                 trace=(from,direction,distance)=>rifleCombat.TraceForArmy(target.Owner,from,direction,distance);
@@ -501,8 +515,6 @@ public sealed partial class MatchEngine
                 return length<=distance+.001f
                     ?new ShotCollision(length,target.Position,"vehicle-target",target.Target,1):null;
             };
-            float shotSpeed=groundVehicleShotSpeed.TryGetValue(entityId,out float selectedSpeed)
-                ?selectedSpeed:attack.ShotSpeed;
             vehicleProjectiles.Add(id,new VehicleProjectileFlight(id,entityId,origin,
                 target.Position,shotSpeed,tick,trace));
             Emit(MatchEventKind.Shot,target.Owner,target.Target,id,origin,0,"vehicle");
@@ -842,7 +854,9 @@ public sealed partial class MatchEngine
                 if (impact != null)
                 {
                     stateRevision++;
-                    var owner = vehicleShotTargets.TryGetValue(impact.VehicleId, out var target) ? target.Owner : "";
+                    if(!vehicleShotTargets.TryGetValue(impact.VehicleId,out var target))
+                    {End("invalid-vehicle-impact-authority","",false);break;}
+                    var owner=target.Owner;
                     Emit(MatchEventKind.Impact, owner,
                         impact.Collision.PlayerId ?? "", impact.ProjectileId, impact.Collision.Position, 0, "vehicle");
                     float? trustedVehicleDamage=ArmyDamage(impact.VehicleId)??vehicleDamage?.Invoke(impact.VehicleId);
@@ -851,6 +865,10 @@ public sealed partial class MatchEngine
                         ApplyResolvedPlayerDamage(owner, target.Target,
                             new ResolvedPlayerDamage(trustedVehicleDamage.Value, CombatDamageType.Shot, HasWeapon: false),
                             damageRoll?.Invoke()??1f, false);
+                    else if(impact.Collision is {DynamicArmyInfantry:true,DynamicEntityId:ulong infantryId}&&
+                            trustedVehicleDamage is >0&&float.IsFinite(trustedVehicleDamage.Value))
+                        ApplyArmyProjectileImpact(owner,infantryId,trustedVehicleDamage.Value,
+                            impact.Collision.PartWeight);
                 }
             }
             if (Terminal) return;
@@ -1145,6 +1163,9 @@ public sealed partial class MatchEngine
                     else if(impact.Hit.DynamicRepairDronePathIndex is int dronePath)
                         ApplyTransporterRepairDroneProjectileImpact(impact.OwnerId,vehicleId,dronePath,
                             pair.Value.Damage.Amount,impact.Hit.PartWeight);
+                    else if(impact.Hit.DynamicArmyInfantry)
+                        ApplyArmyProjectileImpact(impact.OwnerId,vehicleId,pair.Value.Damage.Amount,
+                            impact.Hit.PartWeight);
                     else if(impact.Hit.DynamicPartId is int partId)
                         ApplyGroundVehicleProjectileImpact(impact.OwnerId,vehicleId,partId,pair.Value.Damage.Amount);
                     else throw new InvalidDataException("Vehicle collision omitted its source target.");
@@ -1460,7 +1481,7 @@ public sealed partial class MatchEngine
                 !TryValidateVehicleTarget(p.Definition.PlayerId, command.TargetPlayerId, vehicle.Position,
                     new Vector3(command.TargetX, command.TargetY, command.TargetZ), 1000, out _))
                 return "invalid-vehicle-target";
-            vehicleShotTargets[command.EntityId] = (p.Definition.PlayerId, command.TargetPlayerId,
+            vehicleShotTargets[command.EntityId] = new(p.Definition.PlayerId, command.TargetPlayerId,
                 new Vector3(command.TargetX, command.TargetY, command.TargetZ));
             return TryBeginVehicleAttack(p.Definition.PlayerId, command.EntityId, true, 0)
                 ? "vehicle-attack-accepted" : "vehicle-attack-unavailable";
