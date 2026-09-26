@@ -7,6 +7,24 @@ internal readonly record struct GroundVehicleAim(Vector3 Direction,float AngleDe
 /// <summary>Recovered TurretWeaponBasic horizontal angle gate and tween duration.</summary>
 internal static class GroundVehicleAimPolicy
 {
+    internal static bool CanFallbackToPlayer(GroundVehicleTurret turret,bool decoyPresent,
+        bool matchingUnitPresent)
+    {
+        ArgumentNullException.ThrowIfNull(turret);
+        if(decoyPresent)return false;
+        if(turret.UseUnitTarget&&matchingUnitPresent)return false;
+        return !turret.PrimaryTargetOnly&&
+            (turret.UseUnitTarget||turret.SerializedTargetMask==2);
+    }
+
+    internal static float PlayerProjectileSpeed(GroundVehicleTurret turret,float sourceSpeed)
+    {
+        ArgumentNullException.ThrowIfNull(turret);
+        if(!float.IsFinite(sourceSpeed)||sourceSpeed<=0)
+            throw new InvalidDataException("Invalid vehicle projectile speed.");
+        return turret.UseUnitTarget?sourceSpeed*.5f:sourceSpeed;
+    }
+
     internal static GroundVehicleAim Resolve(Vector3 origin,Vector3 facing,Vector3 target,
         float maxShotRotation,float aimTime)
     {

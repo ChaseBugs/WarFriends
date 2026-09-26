@@ -473,8 +473,10 @@ public sealed partial class MatchEngine
                 return length<=distance+.001f
                     ?new ShotCollision(length,target.Position,"vehicle-target",target.Target,1):null;
             };
+            float shotSpeed=groundVehicleShotSpeed.TryGetValue(entityId,out float selectedSpeed)
+                ?selectedSpeed:attack.ShotSpeed;
             vehicleProjectiles.Add(id,new VehicleProjectileFlight(id,entityId,origin,
-                target.Position,attack.ShotSpeed,tick,trace));
+                target.Position,shotSpeed,tick,trace));
             Emit(MatchEventKind.Shot,target.Owner,target.Target,id,origin,0,"vehicle");
             stateRevision++;
         }

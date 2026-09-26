@@ -47,6 +47,7 @@ public sealed partial class MatchEngine
     private readonly Dictionary<ulong,int> rusherSlotByEntity=[];
     private readonly Dictionary<ulong,ArmyVehicleRouteMotion> vehicleRouteMotions=[];
     private readonly Dictionary<ulong,Vector3> groundVehicleFacing=[];
+    private readonly Dictionary<ulong,float> groundVehicleShotSpeed=[];
 
     private string? ArmyAvailabilityError(Player player,ArmyDeploymentFamily family,
         ArmyDeploymentOption option)
@@ -182,13 +183,13 @@ public sealed partial class MatchEngine
     internal Vector3? GroundVehicleFacing(ulong entityKey)
         =>groundVehicleFacing.TryGetValue(entityKey,out var facing)?facing:null;
 
-    // Tank's recovered primary mask is Player. Other vehicle families retain
-    // unit/decoy or multi-weapon selection and stay closed until those target
-    // families can be represented without changing the Client's priority.
+    // Tank targets Player directly. Humvee first asks for AttackerRusher and
+    // only reaches the source all-opponents fallback when none is alive.
     private bool TryBeginAutomaticGroundVehicleAttack(ulong entityKey)
     {
         if(phase!=BattlePhase.Running||vehicles==null||rifleCombat==null||playerShotTargets==null||groundVehicleWeapons==null||
-           !activeArmyEntities.TryGetValue(entityKey,out var army)||army.UnitId!="ID_UNIT-TANK"||
+           !activeArmyEntities.TryGetValue(entityKey,out var army)||
+           army.UnitId is not ("ID_UNIT-TANK" or "ID_UNIT-HUMVEE")||
            !vehicles.TryGet(entityKey,out var vehicle)||vehicle==null||
            !vehicles.TryGetAttack(entityKey,out var attack)||attack?.Phase!=ArmyAirAttackPhase.Ready||
            !groundVehicleFacing.TryGetValue(entityKey,out var facing))return false;
@@ -196,6 +197,11 @@ public sealed partial class MatchEngine
         var opponent=players.Single(p=>p!=owner);
         if(!opponent.Admitted||opponent.Dead)return false;
         var pose=rifleCombat.Pose(opponent.Definition.PlayerId);
+        var turret=groundVehicleWeapons.For(army.UnitId).Roles.Single(r=>r.Role=="primary");
+        bool matchingUnit=activeArmyEntities.Values.Any(candidate=>
+            candidate.OwnerFraction!=army.OwnerFraction&&
+            armyCatalog!.Families.Single(f=>f.UnitId==candidate.UnitId).UnitType==turret.PrimaryTarget);
+        if(!GroundVehicleAimPolicy.CanFallbackToPlayer(turret,false,matchingUnit))return false;
         Vector3 target;
         if(opponent.Route!=null&&pose.MovingTarget!=null)target=pose.MovingTarget.Position;
         else
@@ -204,7 +210,6 @@ public sealed partial class MatchEngine
                 row=>pose.BodyTarget(row.TransformFileId).Position);
             target=pose.BodyTarget(body.TransformFileId).Position;
         }
-        var turret=groundVehicleWeapons.For(army.UnitId).Roles.Single(r=>r.Role=="primary");
         GroundVehicleAim aim;
         try {aim=GroundVehicleAimPolicy.Resolve(vehicle.Position,facing,target,
             turret.MaxShotRotation,turret.AimTime);}
@@ -216,6 +221,7 @@ public sealed partial class MatchEngine
         if(visible?.PlayerId!=opponent.Definition.PlayerId&&visible?.DynamicOwner!=opponent.Definition.PlayerId)
             return false;
         vehicleShotTargets[entityKey]=(army.OwnerPlayerId,opponent.Definition.PlayerId,target);
+        groundVehicleShotSpeed[entityKey]=GroundVehicleAimPolicy.PlayerProjectileSpeed(turret,attack.ShotSpeed);
         return vehicles.TryBeginAttack(entityKey,true,aim.AimTicks);
     }
 
@@ -1065,6 +1071,7 @@ public sealed partial class MatchEngine
         minigunnerPointChangeTicks.Remove(entityKey);
         vehicleRouteMotions.Remove(entityKey);
         groundVehicleFacing.Remove(entityKey);
+        groundVehicleShotSpeed.Remove(entityKey);
         if(vehicles?.TryGet(entityKey,out var vehicle)==true&&vehicle!=null&&
            !vehicles.TryDestroy(entityKey,vehicle.Generation))
             throw new InvalidDataException("Ground vehicle death cleanup failed.");

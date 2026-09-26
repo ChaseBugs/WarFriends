@@ -1256,6 +1256,15 @@ internal static class CombatContentTests
                   Vector3.Distance(vehicleAim.Direction,Vector3.Normalize(new Vector3(1,0,1)))<.00001f,
                   "vehicle aim applies recovered angle gate and proportional minimum-bounded tween duration");
             Reject(()=>GroundVehicleAimPolicy.Resolve(Vector3.Zero,Vector3.UnitZ,Vector3.UnitX,70,4));
+            var humveePrimary=content.GroundVehicleWeapons.For("ID_UNIT-HUMVEE").Roles[0];
+            var tankPrimary=content.GroundVehicleWeapons.For("ID_UNIT-TANK").Roles[0];
+            Check(GroundVehicleAimPolicy.CanFallbackToPlayer(humveePrimary,false,false)&&
+                  !GroundVehicleAimPolicy.CanFallbackToPlayer(humveePrimary,false,true)&&
+                  !GroundVehicleAimPolicy.CanFallbackToPlayer(humveePrimary,true,false)&&
+                  GroundVehicleAimPolicy.CanFallbackToPlayer(tankPrimary,false,true)&&
+                  GroundVehicleAimPolicy.PlayerProjectileSpeed(humveePrimary,5)==2.5f&&
+                  GroundVehicleAimPolicy.PlayerProjectileSpeed(tankPrimary,5)==5,
+                  "vehicle player fallback preserves decoy/AttackerRusher priority and Humvee speed scaling");
             var vehicleRolls=new Queue<float>([.999f,.1f,.2f,.3f,.5f]);
             var vehicleBatch=new VehicleAttackState(new ArmyVehicleShotStats(5,1,2,4,1,1,0),.1f,
                 ()=>vehicleRolls.Dequeue());
