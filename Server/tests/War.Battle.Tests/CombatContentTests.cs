@@ -1481,6 +1481,18 @@ internal static class CombatContentTests
                     Check(Vector3.Distance(aimedTurret.SightOffset(heavyTurrets),Point("sight"))<.00001f&&
                         Vector3.Distance(aimedTurret.MuzzleOffset(heavyTurrets),Point("muzzle"))<.00001f,
                         "host turret sight and world-offset muzzle match independent Unity hierarchy sample");
+                    var boxes=sample.GetProperty("colliders").EnumerateArray().ToArray();
+                    Check(boxes.Length==3,"Unity turret oracle retains all three source boxes");
+                    foreach(var sourceShape in heavyTurrets.Colliders)
+                    {
+                        Vector3 BoxPoint(JsonElement box,string name){var v=box.GetProperty(name);return new(v[0].GetSingle(),v[1].GetSingle(),v[2].GetSingle());}
+                        var expectedBox=boxes.Single(b=>Vector3.Distance(BoxPoint(b,"size"),sourceShape.Size)<.00001f);
+                        var q=expectedBox.GetProperty("rotation");var expectedRotation=new Quaternion(q[0].GetSingle(),q[1].GetSingle(),q[2].GetSingle(),q[3].GetSingle());
+                        var aimedShape=aimedTurret.Collider(heavyTurrets,sourceShape);
+                        Check(Vector3.Distance(aimedShape.Center,BoxPoint(expectedBox,"center"))<.00001f&&
+                            1-Math.Abs(Quaternion.Dot(aimedShape.Rotation,expectedRotation))<.00001f,
+                            "aimed turret box center and rotation match independent Unity hierarchy sample");
+                    }
                 }
             }
             var turretAim=new HeavyTurretAimState();

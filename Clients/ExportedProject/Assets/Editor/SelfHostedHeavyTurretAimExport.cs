@@ -29,7 +29,9 @@ public static class SelfHostedHeavyTurretAimExport
                 q.eulerAngles=new Vector3(0,q.eulerAngles.y,0);
                 turret.jontHorizontal.rotation=turret.jontHorizontal.parent.rotation*q;
                 turret.jointVertical.rotation=Quaternion.LookRotation(target,Vector3.up);
-                return new {target=V(target),sight=V(spawn.position),muzzle=V(spawn.position+offset)};
+                return new {target=V(target),sight=V(spawn.position),muzzle=V(spawn.position+offset),
+                    colliders=instance.GetComponentsInChildren<BoxCollider>(true).Select(c=>new {
+                        center=V(c.transform.TransformPoint(c.center)),rotation=Q(c.transform.rotation),size=V(Vector3.Scale(c.size,c.transform.lossyScale))}).ToArray()};
             }).ToArray();
             string hash;using(var sha=SHA256.Create())hash=BitConverter.ToString(sha.ComputeHash(File.ReadAllBytes(source))).Replace("-","").ToLowerInvariant();
             File.WriteAllText(output,JsonConvert.SerializeObject(new {client="1.4.0",source=source,sha256=hash,samples=samples},Formatting.Indented));
@@ -38,4 +40,5 @@ public static class SelfHostedHeavyTurretAimExport
         finally {UnityEngine.Object.DestroyImmediate(instance);}
     }
     private static float[] V(Vector3 v)=>new[] {v.x,v.y,v.z};
+    private static float[] Q(Quaternion q)=>new[] {q.x,q.y,q.z,q.w};
 }

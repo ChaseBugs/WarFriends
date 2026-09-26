@@ -29,6 +29,18 @@ internal sealed class HeavyTurretAimState
     internal void Complete(){yaw=pendingYaw;vertical=pendingVertical;}
     internal Vector3 MuzzleOffset(HeavyTurretSourceCatalog source)=>SightOffset(source)+source.WorldShotOffset;
     internal Vector3 SightOffset(HeavyTurretSourceCatalog source)=>Offset(source,source.SpawnOffset);
+    internal HeavyTurretCollider Collider(HeavyTurretSourceCatalog source,HeavyTurretCollider shape)
+    {
+        var horizontal=Quaternion.CreateFromAxisAngle(Vector3.UnitY,yaw);
+        return shape.ComponentFileId switch
+        {
+            6525385=>shape with {Center=source.HorizontalPivot+Vector3.Transform(shape.Center-source.HorizontalPivot,horizontal),
+                Rotation=Quaternion.Normalize(horizontal*shape.Rotation)},
+            6572182=>shape with {Center=Offset(source,shape.Center),Rotation=Quaternion.Normalize(vertical*shape.Rotation)},
+            6582579=>shape,
+            _=>throw new InvalidDataException("Unknown Heavy Turret collider joint binding.")
+        };
+    }
     private Vector3 Offset(HeavyTurretSourceCatalog source,Vector3 point)
     {
         var horizontal=Quaternion.CreateFromAxisAngle(Vector3.UnitY,yaw);

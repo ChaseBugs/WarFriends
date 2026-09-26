@@ -179,8 +179,9 @@ public sealed partial class MatchEngine
         {
             if(row.OwnerFraction==shooter.Definition.Fraction)continue;
             int layer=row.OwnerFraction==1?23:22;
-            foreach(var collider in heavyTurretSource.Colliders)
+            foreach(var sourceCollider in heavyTurretSource.Colliders)
             {
+                var collider=row.Aim.Collider(heavyTurretSource,sourceCollider);
                 var hitbox=new PlayerHitbox(heavyTurretSource.PrefabRevision+"#"+collider.ComponentFileId,
                     PlayerHitboxKind.Box,1,row.Position+collider.Center,collider.Size,collider.Rotation,0,
                     Vector3.Zero,0,transformPosition:row.Position);
