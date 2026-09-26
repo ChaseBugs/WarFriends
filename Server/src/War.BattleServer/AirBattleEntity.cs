@@ -11,9 +11,10 @@ public sealed class AirBattleEntity
     public ArmyAirMotionState Motion { get; }
     public ArmyAirAttackState Attack { get; }
     public AirEntityHealthState Health { get; }
+    public DroneSpecialState? DroneSpecial { get; }
 
     public AirBattleEntity(ulong entityKey, string attackerPlayerId,
-        ArmyAirMotionState motion, ArmyAirAttackState attack, AirEntityHealthState? health = null)
+        ArmyAirMotionState motion, ArmyAirAttackState attack, AirEntityHealthState? health = null,DroneSpecialState? droneSpecial=null)
     {
         if (entityKey == 0 || !Guid.TryParseExact(attackerPlayerId, "N", out _))
             throw new InvalidDataException("Invalid air entity identity.");
@@ -21,6 +22,7 @@ public sealed class AirBattleEntity
         Motion = motion ?? throw new ArgumentNullException(nameof(motion));
         Attack = attack ?? throw new ArgumentNullException(nameof(attack));
         Health = health ?? new AirEntityHealthState(1);
+        DroneSpecial=droneSpecial;
     }
 
     public void AdvanceTick() { Motion.AdvanceTick(); Attack.AdvanceTick(); }

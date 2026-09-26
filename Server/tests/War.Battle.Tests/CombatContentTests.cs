@@ -17,6 +17,7 @@ internal static class CombatContentTests
         Vector3 Vec(JsonElement value)=>new(value.GetProperty("x").GetSingle(),
             value.GetProperty("y").GetSingle(),value.GetProperty("z").GetSingle());
         var content=BattleCombatContent.Load(Path.Combine(directory,"combat-content-manifest.json"));
+        count+=DroneSpecialTests.Run(content.Army);
         var navArtifact=Path.Combine(directory,"recovered-army-navmesh-sources.json");
         var navPin=JsonSerializer.Deserialize<CombatContentManifest>(
             File.ReadAllText(Path.Combine(directory,"combat-content-manifest.json")))!;
@@ -2616,6 +2617,30 @@ internal static class CombatContentTests
               "authoritative tick consumes a source-box Land Mine and applies host explosion damage once");
         var heavyTurretManifest=decoyManifest with {MatchId="heavy-turret-match",SceneMasterPlayerId=decoyPlayer,
             Players=decoyManifest.Players.Select(p=>p with {ShieldLevel=0}).ToArray()};
+        var droneClockMatch=new MatchEngine(heavyTurretManifest with {MatchId="drone-special-clock"},content:content);
+        droneClockMatch.Admit(decoyPlayer);droneClockMatch.Admit(decoyOpponent);
+        droneClockMatch.Command(decoyPlayer,new(){CommandId=1,Ready=new(){ManifestHash=droneClockMatch.ManifestHash}});
+        droneClockMatch.Command(decoyOpponent,new(){CommandId=1,Ready=new(){ManifestHash=droneClockMatch.ManifestHash}});
+        droneClockMatch.Advance(60);
+        var hostDroneCycle=new DroneSpecialState(2,true,2.5f,()=>0);
+        var hostDrone=new AirBattleEntity(96,decoyPlayer,new(Vector3.Zero,Vector3.Zero,1),
+            new(new(5,1,1,1,0,0,0),()=>0),new(40),hostDroneCycle);
+        Check(droneClockMatch.TryRegisterAirEntity(hostDrone),"host registration binds Drone special to current simulation spawn time");
+        var staleDrone=new AirBattleEntity(97,decoyPlayer,new(Vector3.Zero,Vector3.Zero,1),
+            new(new(5,1,1,1,0,0,0),()=>0),new(40),new DroneSpecialState(0,true,2.5f,()=>0));
+        Check(!droneClockMatch.TryRegisterAirEntity(staleDrone),"host rejects a mismatched Drone special spawn clock before publishing entity");
+        for(ulong t=61;t<=210;t++)droneClockMatch.Advance(t);
+        Check(!hostDroneCycle.IsImmortal,"host strict activation boundary remains vulnerable at exact scheduled tick");
+        droneClockMatch.Advance(211);
+        Check(hostDroneCycle.IsImmortal&&!droneClockMatch.TryDamageAirEntity(decoyOpponent,96,100)&&
+              droneClockMatch.Snapshot().AirEntities.Single().Health==40,
+              "host tick activates special before confirmed damage; immune lethal hit preserves authoritative health");
+        for(ulong t=212;t<=285;t++)droneClockMatch.Advance(t);
+        Check(hostDroneCycle.IsImmortal,"host retains immunity at exact scheduled duration boundary");
+        droneClockMatch.Advance(286);
+        Check(!hostDroneCycle.IsImmortal&&droneClockMatch.TryDamageAirEntity(decoyOpponent,96,100)&&
+              droneClockMatch.Snapshot().AirEntities.Count==0,
+              "host expiry restores damage and existing lethal removal lifecycle");
         var heavyTurretMatch=new MatchEngine(heavyTurretManifest,content:content,armyChoice:_=>0);
         heavyTurretMatch.ConfigureBattleAllocations([
             new(decoyPlayer,["CardHeavyTurret"],[],[0],[133],[-1]),

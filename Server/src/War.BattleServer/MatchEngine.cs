@@ -107,6 +107,8 @@ public sealed partial class MatchEngine
             return false;
         if (!HasPlayer(entity.AttackerPlayerId) || !Find(entity.AttackerPlayerId)!.Admitted)
             return false;
+        if(entity.DroneSpecial!=null&&entity.DroneSpecial.SpawnTime!=(float)((double)tick/MatchManifest.TickRate))
+            return false;
         if (!airEntities.TrySpawn(entity)) return false;
         stateRevision++;
         Emit(MatchEventKind.AirSpawned, entity.AttackerPlayerId, "", entity.EntityKey,
@@ -826,6 +828,17 @@ public sealed partial class MatchEngine
         bool advanced=simulationTick!=tick;
         if (advanced) stateRevision++;
         tick = simulationTick;
+        if(advanced)
+        {
+            try
+            {
+                float airTime=(float)((double)tick/MatchManifest.TickRate);
+                foreach(var air in airEntities.Snapshot())
+                    if(air.DroneSpecial?.Observe(airTime,phase==BattlePhase.Running,!air.Health.IsDead)==true)
+                        stateRevision++;
+            }
+            catch(InvalidDataException){End("invalid-drone-special-authority","",false);return;}
+        }
         if(advanced&&phase==BattlePhase.Running)
             foreach(var turret in heavyTurrets.Snapshot())turret.Aim.AdvanceTick();
         if(advanced&&phase==BattlePhase.Running)

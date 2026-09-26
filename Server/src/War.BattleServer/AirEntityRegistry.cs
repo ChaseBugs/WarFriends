@@ -38,7 +38,7 @@ public sealed class AirEntityRegistry
     {
         applied = 0;
         if (!entities.TryGetValue(entityKey, out var entity) || entity.Health.IsDead) return false;
-        applied = entity.Health.ApplyDamage(trustedDamage);
+        applied = entity.Health.ApplyDamage(trustedDamage,entity.DroneSpecial?.IsImmortal==true);
         if (entity.Health.IsDead) entities.Remove(entityKey);
         return applied > 0;
     }

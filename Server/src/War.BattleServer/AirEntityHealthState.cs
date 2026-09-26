@@ -15,11 +15,11 @@ public sealed class AirEntityHealthState
         Maximum = maximum; Current = maximum;
     }
 
-    public float ApplyDamage(float damage)
+    public float ApplyDamage(float damage,bool immortal=false)
     {
         if (!float.IsFinite(damage) || damage <= 0 || damage > 10_000_000)
             throw new InvalidDataException("Invalid air-unit damage.");
-        if (IsDead) return 0;
+        if (IsDead||immortal) return 0;
         var applied = MathF.Min(Current, damage);
         Current -= applied;
         return applied;
