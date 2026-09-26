@@ -149,10 +149,10 @@ public sealed partial class MatchEngine
         try { WarCardEffectRequestValidator.Validate(request); }
         catch (InvalidDataException) { return false; }
         var reserved = cardReservations != null;
-        if (reserved && !cardReservations!.TryReserve(effectId, request.CardId)) return false;
+        if (reserved && !cardReservations!.TryReserve(effectId,ownerPlayerId,request.CardId)) return false;
         if (!cardEffects.TryApply(effectId, ownerPlayerId, request, tick))
         {
-            if (reserved) cardReservations!.TryRelease(effectId);
+            if (reserved) cardReservations!.TryRelease(effectId,ownerPlayerId);
             return false;
         }
         if (Guid.TryParseExact(effectId, "N", out _)) performance.RecordCard(effectId);
@@ -162,7 +162,7 @@ public sealed partial class MatchEngine
         return true;
     }
 
-    internal void ConfigureCardInventory(IEnumerable<(string CardId, int Count)> inventory)
+    internal void ConfigureCardInventory(IEnumerable<(string OwnerPlayerId,string CardId,int Count)> inventory)
     {
         if (cardReservations != null || phase != BattlePhase.Waiting) throw new InvalidOperationException("Card inventory authority must be bound once.");
         cardReservations = new WarCardReservationState(inventory);
@@ -1317,6 +1317,7 @@ public sealed partial class MatchEngine
         }
         ConfigureCardSelection(values.SelectMany(x => x.CardIds).Distinct(StringComparer.Ordinal));
         ConfigureBuddySelection(values.Select(x => (x.PlayerId, (IEnumerable<string>)x.BuddyCardIds)));
+        ConfigureCardInventory(values.SelectMany(x=>x.CardIds.Select(card=>(x.PlayerId,card,1))));
     }
     private string Apply(Player p, MatchCommand c)
     {

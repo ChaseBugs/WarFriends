@@ -2,28 +2,34 @@ namespace War.BattleServer;
 
 public sealed class WarCardReservationState
 {
-    private readonly Dictionary<string,int> counts=new(StringComparer.Ordinal);
-    private readonly Dictionary<string,string> reservations=new(StringComparer.Ordinal);
-    public WarCardReservationState(IEnumerable<(string CardId,int Count)> inventory)
+    private sealed record Reservation(string OwnerPlayerId,string CardId);
+    private readonly Dictionary<(string OwnerPlayerId,string CardId),int> counts=[];
+    private readonly Dictionary<(string OwnerPlayerId,string RequestId),Reservation> reservations=[];
+    public WarCardReservationState(IEnumerable<(string OwnerPlayerId,string CardId,int Count)> inventory)
     {
-        foreach(var (id,count) in inventory??throw new ArgumentNullException(nameof(inventory)))
+        foreach(var (owner,id,count) in inventory??throw new ArgumentNullException(nameof(inventory)))
         {
-            if(string.IsNullOrWhiteSpace(id)||count<0||!counts.TryAdd(id,count))
+            if(!Guid.TryParseExact(owner,"N",out _)||owner!=owner.ToLowerInvariant()||
+               string.IsNullOrWhiteSpace(id)||id.Length>128||id.Any(char.IsControl)||count<0||
+               !counts.TryAdd((owner,id),count))
                 throw new InvalidDataException("Invalid authoritative card inventory.");
         }
     }
-    public bool TryReserve(string requestId,string cardId)
+    public bool TryReserve(string requestId,string ownerPlayerId,string cardId)
     {
-        if(!Guid.TryParseExact(requestId,"N",out _)||string.IsNullOrWhiteSpace(cardId)||
-           reservations.ContainsKey(requestId))return false;
-        if(!counts.TryGetValue(cardId,out int available)||available<1)return false;
-        counts[cardId]=available-1;reservations.Add(requestId,cardId);return true;
+        var request=(ownerPlayerId,requestId);var inventory=(ownerPlayerId,cardId);
+        if(!Guid.TryParseExact(requestId,"N",out _)||!Guid.TryParseExact(ownerPlayerId,"N",out _)||
+           ownerPlayerId!=ownerPlayerId.ToLowerInvariant()||string.IsNullOrWhiteSpace(cardId)||
+           reservations.ContainsKey(request))return false;
+        if(!counts.TryGetValue(inventory,out int available)||available<1)return false;
+        counts[inventory]=available-1;reservations.Add(request,new(ownerPlayerId,cardId));return true;
     }
-    public bool IsReserved(string requestId)=>reservations.ContainsKey(requestId);
-    public bool TryRelease(string requestId)
+    public bool IsReserved(string requestId,string ownerPlayerId)=>reservations.ContainsKey((ownerPlayerId,requestId));
+    public bool TryRelease(string requestId,string ownerPlayerId)
     {
-        if (!reservations.Remove(requestId, out var cardId)) return false;
-        counts[cardId] = checked(counts[cardId] + 1); return true;
+        if (!reservations.Remove((ownerPlayerId,requestId), out var row)) return false;
+        var key=(row.OwnerPlayerId,row.CardId);
+        counts[key] = checked(counts[key] + 1); return true;
     }
-    public int Remaining(string cardId)=>counts.GetValueOrDefault(cardId);
+    public int Remaining(string ownerPlayerId,string cardId)=>counts.GetValueOrDefault((ownerPlayerId,cardId));
 }

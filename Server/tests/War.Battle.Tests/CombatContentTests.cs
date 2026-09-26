@@ -1635,15 +1635,18 @@ internal static class CombatContentTests
                   "deployable trigger binds host entity, opposing player, radius, and trusted damage");
             Reject(()=>DeployableImpactResolver.Resolve(7,
                 "33333333333333333333333333333333",Vector3.Zero,new(2,0,0),1f,18f));
-            var cards=new WarCardReservationState(new[]{("HeavyTurret",1),("LandMine",2)});
-            Check(cards.TryReserve("44444444444444444444444444444444","LandMine")&&
-                  cards.IsReserved("44444444444444444444444444444444")&&cards.Remaining("LandMine")==1&&
-                  !cards.TryReserve("44444444444444444444444444444444","LandMine"),
+            string cardOwner="33333333333333333333333333333333",otherCardOwner="55555555555555555555555555555555";
+            var cards=new WarCardReservationState(new[]{(cardOwner,"HeavyTurret",1),(cardOwner,"LandMine",2),
+                (otherCardOwner,"LandMine",1)});
+            Check(cards.TryReserve("44444444444444444444444444444444",cardOwner,"LandMine")&&
+                  cards.IsReserved("44444444444444444444444444444444",cardOwner)&&cards.Remaining(cardOwner,"LandMine")==1&&
+                  cards.Remaining(otherCardOwner,"LandMine")==1&&
+                  !cards.TryReserve("44444444444444444444444444444444",cardOwner,"LandMine"),
                   "War Card activation consumes one server-owned card exactly once by request ID");
-            Check(cards.TryRelease("44444444444444444444444444444444") && cards.Remaining("LandMine")==2 &&
-                  !cards.TryRelease("44444444444444444444444444444444"),
+            Check(cards.TryRelease("44444444444444444444444444444444",cardOwner) && cards.Remaining(cardOwner,"LandMine")==2 &&
+                  !cards.TryRelease("44444444444444444444444444444444",cardOwner),
                   "failed War Card effects can release their reservation exactly once");
-            Reject(()=>new WarCardReservationState(new[]{("HeavyTurret",1),("HeavyTurret",1)}));
+            Reject(()=>new WarCardReservationState(new[]{(cardOwner,"HeavyTurret",1),(cardOwner,"HeavyTurret",1)}));
             Check(WarCardEffectCatalog.TryGet("CardAirstrike",out var airstrike)&&
                   airstrike.Kind==WarCardEffectKind.Damage&&airstrike.RequiresTarget&&
                   WarCardEffectCatalog.TryGet("CardHeavyTurret",out var turret)&&
@@ -2264,7 +2267,6 @@ internal static class CombatContentTests
         decoyMatch.ConfigureBattleAllocations([
             new(decoyPlayer,["CardDecoy"],[],[0],[133],[-1]),
             new(decoyOpponent,["CardDecoy"],[],[0],[-1],[-1])]);
-        decoyMatch.ConfigureCardInventory([("CardDecoy",1)]);
         decoyMatch.Admit(decoyPlayer);decoyMatch.Admit(decoyOpponent);
         MatchCommand SelectDecoy(ulong id)=>new(){CommandId=id,SelectCards=new SelectCardsCommand
         {CardIds={"CardDecoy"},NormalUpgradeIndexes={0},SpecialUpgradeIndexes={133},EliteUpgradeIndexes={-1}}};
@@ -2292,6 +2294,10 @@ internal static class CombatContentTests
                   UseDecoy=new(){RequestId=new string('e',32)}}).Code=="decoy-unavailable"&&
               decoyMatch.Snapshot().Decoys.Count==3,
               "Decoy request replay creates no duplicate and exhausted inventory cannot create partial state");
+        Check(decoyMatch.Command(decoyOpponent,new(){CommandId=3,
+                  UseDecoy=new(){RequestId=new string('f',32)}}).Code=="decoy-spawned"&&
+              decoyMatch.Snapshot().Decoys.Count==6&&decoyMatch.Snapshot().CardActivations==2,
+              "trusted allocation provisions one isolated Decoy reservation for each selected player");
         var detached=MatchManifest.Validate(armyManifest);
         equipped[0]="ID_UNIT-UNKNOWN";
         armyStages[0]=101;

@@ -16,14 +16,14 @@ public sealed partial class MatchEngine
         if(!performance.CanRecordCard(requestId))return "decoy-receipt-unavailable";
         if(events.Count>MaximumRetainedEvents-decoySource.SpawnCount)return "event-backpressure";
         if(stateRevision>ulong.MaxValue-(ulong)decoySource.SpawnCount)return "decoy-receipt-unavailable";
-        if(!cardReservations.TryReserve(requestId,"CardDecoy"))return "decoy-unavailable";
+        if(!cardReservations.TryReserve(requestId,owner.Definition.PlayerId,"CardDecoy"))return "decoy-unavailable";
         try
         {
             var slots=decoySource.Select(map.Source,owner.Definition.Fraction,
                 decoys.OccupiedObstacleIds,armyChoice);
             if(slots.Count!=decoySource.SpawnCount)
             {
-                cardReservations.TryRelease(requestId);return "decoy-slots-unavailable";
+                cardReservations.TryRelease(requestId,owner.Definition.PlayerId);return "decoy-slots-unavailable";
             }
             Vector3 target=OpposingDecoyLookTarget(owner.Definition.Fraction);
             var placements=new List<(DecoyObstacleSlot Slot,Vector3 Position,Vector3 Facing)>();
@@ -32,12 +32,12 @@ public sealed partial class MatchEngine
                 var position=armyNavMeshConnectivity.SampleNearest(map,slot.InitialMidpoint,10f);
                 if(!position.HasValue)
                 {
-                    cardReservations.TryRelease(requestId);return "decoy-placement-unavailable";
+                    cardReservations.TryRelease(requestId,owner.Definition.PlayerId);return "decoy-placement-unavailable";
                 }
                 var facing=target-position.Value;facing.Y=0;
                 if(facing.LengthSquared()<.000001f)
                 {
-                    cardReservations.TryRelease(requestId);return "decoy-placement-unavailable";
+                    cardReservations.TryRelease(requestId,owner.Definition.PlayerId);return "decoy-placement-unavailable";
                 }
                 placements.Add((slot,position.Value,Vector3.Normalize(facing)));
             }
@@ -46,7 +46,7 @@ public sealed partial class MatchEngine
             if(!decoys.TrySpawn(requestId,owner.Definition.PlayerId,owner.Definition.Fraction,
                 health,placements,out var spawned))
             {
-                cardReservations.TryRelease(requestId);return "decoy-placement-unavailable";
+                cardReservations.TryRelease(requestId,owner.Definition.PlayerId);return "decoy-placement-unavailable";
             }
             performance.RecordCard(requestId);
             foreach(var row in spawned)
@@ -61,7 +61,7 @@ public sealed partial class MatchEngine
         {
             decoys.TryRollbackSpawn(requestId,owner.Definition.PlayerId);
             performance.TryRollbackCard(requestId);
-            cardReservations.TryRelease(requestId);return "invalid-decoy-authority";
+            cardReservations.TryRelease(requestId,owner.Definition.PlayerId);return "invalid-decoy-authority";
         }
     }
 

@@ -536,23 +536,24 @@ public sealed partial class MatchEngine
                 throw new InvalidDataException("Army random selector returned an invalid Decoy target.");
             var selected=opposingDecoys[selectedIndex];
             float yaw=MathF.Atan2(selected.Facing.X,selected.Facing.Z);
-            var target=selected.Position+Vector3.Transform(decoySource!.Prefab.TargetLocalPosition,
+            var decoyTarget=selected.Position+Vector3.Transform(decoySource!.Prefab.TargetLocalPosition,
                 Quaternion.CreateFromAxisAngle(Vector3.UnitY,yaw));
-            GroundVehicleAim aim;
-            try{aim=GroundVehicleAimPolicy.Resolve(vehicle.Position,facing,target,
+            GroundVehicleAim decoyAim;
+            try{decoyAim=GroundVehicleAimPolicy.Resolve(vehicle.Position,facing,decoyTarget,
                 turret.MaxShotRotation,turret.AimTime);}
             catch(InvalidDataException){return false;}
-            var muzzle=groundVehicleWeapons.RestMuzzleOrigin(army.UnitId,"primary",0,
-                vehicle.Position,aim.Direction);
-            var delta=target-muzzle;float range=delta.Length();
-            if(!float.IsFinite(range)||range<.001f)return false;
-            var visible=rifleCombat.TraceForArmy(army.OwnerPlayerId,muzzle,delta/range,range+.05f);
-            if(visible is not {DynamicDecoy:true,DynamicEntityId:var hitId}||hitId!=selected.EntityId)
+            var decoyMuzzle=groundVehicleWeapons.RestMuzzleOrigin(army.UnitId,"primary",0,
+                vehicle.Position,decoyAim.Direction);
+            var decoyDelta=decoyTarget-decoyMuzzle;float decoyRange=decoyDelta.Length();
+            if(!float.IsFinite(decoyRange)||decoyRange<.001f)return false;
+            var visibleDecoy=rifleCombat.TraceForArmy(army.OwnerPlayerId,decoyMuzzle,
+                decoyDelta/decoyRange,decoyRange+.05f);
+            if(visibleDecoy is not {DynamicDecoy:true,DynamicEntityId:var hitId}||hitId!=selected.EntityId)
                 return false;
-            vehicleShotTargets[entityKey]=new(army.OwnerPlayerId,selected.OwnerPlayerId,target,
+            vehicleShotTargets[entityKey]=new(army.OwnerPlayerId,selected.OwnerPlayerId,decoyTarget,
                 DecoyEntityId:selected.EntityId);
             groundVehicleShotSpeed[entityKey]=attack.ShotSpeed;
-            return vehicles.TryBeginAttack(entityKey,true,aim.AimTicks);
+            return vehicles.TryBeginAttack(entityKey,true,decoyAim.AimTicks);
         }
         var matchingUnits=activeArmyEntities.Where(candidate=>candidate.Value.OwnerFraction!=army.OwnerFraction&&
             infantryAnimations.ContainsKey(candidate.Key)&&
