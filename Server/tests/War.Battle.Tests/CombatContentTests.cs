@@ -1426,6 +1426,30 @@ internal static class CombatContentTests
                     Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(landMineTemp))),content.Maps));
             }
             finally {if(File.Exists(landMineTemp))File.Delete(landMineTemp);}
+            string heavyTurretArtifact=Path.Combine(directory,"recovered-heavy-turret-source.json");
+            string heavyTurretRevision=Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(heavyTurretArtifact)));
+            var heavyTurrets=HeavyTurretSourceCatalog.Load(heavyTurretArtifact,heavyTurretRevision,content.Maps);
+            var parkTurretCovers=heavyTurrets.ForMap(content.Maps.Single(x=>Path.GetFileNameWithoutExtension(x.Source)=="Park_Multiplayer"));
+            var heavyMid=heavyTurrets.Compose(22);var firstTurretCover=parkTurretCovers[0];
+            var nearestTurret=heavyTurrets.SelectNearestFree(content.Maps.Single(x=>Path.GetFileNameWithoutExtension(x.Source)=="Park_Multiplayer"),
+                firstTurretCover.Order,firstTurretCover.Fraction,firstTurretCover.Slots[1].SourcePosition,id=>id==firstTurretCover.Slots[1].ComponentFileId);
+            Check(heavyTurrets.SpawnCount==1&&heavyTurrets.NavMeshSampleRadius==10&&heavyTurrets.NavMeshAreaMask==1&&
+                  heavyTurrets.MaxDisplayLevel==44&&parkTurretCovers.Count==8&&parkTurretCovers.Sum(x=>x.Slots.Count)==16&&
+                  Math.Abs(heavyMid.Health-858.6711f)<.001f&&Math.Abs(heavyMid.Damage-55.07f)<.001f&&
+                  heavyMid.BatchMinimum==3&&heavyMid.BatchMaximum==6&&Math.Abs(heavyMid.ShootMinimum-2.5f)<.001f&&
+                  Math.Abs(heavyMid.ShootMaximum-5)<.001f&&Math.Abs(heavyMid.RealShotProbability-.775f)<.001f&&
+                  nearestTurret==firstTurretCover.Slots[0],
+                  "Heavy Turret source pins 80 slots, prefab graph and source card-level interpolation");
+            string heavyTurretTemp=Path.Combine(Path.GetTempPath(),"war-heavy-turret-"+Guid.NewGuid().ToString("N")+".json");
+            try
+            {
+                var changed=JsonNode.Parse(File.ReadAllText(heavyTurretArtifact))!;
+                changed["prefab"]!["turret"]!["maxShotRotation"]=359;
+                File.WriteAllText(heavyTurretTemp,changed.ToJsonString());
+                Reject(()=>HeavyTurretSourceCatalog.Load(heavyTurretTemp,
+                    Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(heavyTurretTemp))),content.Maps));
+            }
+            finally {if(File.Exists(heavyTurretTemp))File.Delete(heavyTurretTemp);}
             var mines=DeployableCardPolicy.SelectLandmineTargets("LandMine",0,
                 new[]{new DeployablePlacement(1,new(1,0,0)),new DeployablePlacement(2,new(2,0,0)),
                       new DeployablePlacement(3,new(3,0,0)),new DeployablePlacement(4,new(4,0,0))},n=>0);

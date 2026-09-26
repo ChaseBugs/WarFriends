@@ -1,0 +1,1297 @@
+{
+  "version": 1,
+  "client": "1.4.0",
+  "spawnCount": 1,
+  "navMeshSampleRadius": 10.0,
+  "navMeshAreaMask": 1,
+  "maxDisplayLevel": 44,
+  "stats": [
+    {
+      "TIER": -1,
+      "HP": 98.0,
+      "DAMAGE": 11.66,
+      "BATCHSIZEMIN": 3,
+      "BATCHSIZEMAX": 6,
+      "SHOTFREQUENCYMIN": 3.0,
+      "SHOTFREQUENCYMAX": 6.0,
+      "REALSHOTPROBABILITY": 0.75
+    },
+    {
+      "TIER": -1,
+      "HP": 1619.34216,
+      "DAMAGE": 98.48,
+      "BATCHSIZEMIN": 4,
+      "BATCHSIZEMAX": 7,
+      "SHOTFREQUENCYMIN": 2.0,
+      "SHOTFREQUENCYMAX": 4.0,
+      "REALSHOTPROBABILITY": 0.8
+    }
+  ],
+  "prefab": {
+    "source": "Assets/GameObject/HeavyTurret.prefab",
+    "sha256": "237be8eb3d033154e081ac4a83930cd1a6e3d709e6fa6c4bae1dd6be12a2785f",
+    "rootTransformFileId": 424449,
+    "heavyTurretComponentFileId": 11491323,
+    "turretWeaponComponentFileId": 11459786,
+    "turret": {
+      "aimTime": 1.0,
+      "batchSizeMin": 1,
+      "batchSizeMax": 5,
+      "minShootTime": 1.0,
+      "maxShootTime": 5.0,
+      "maxShotRotation": 360.0,
+      "predictPosition": true,
+      "primaryTarget": 3,
+      "useUnitTarget": true,
+      "batchedWeaponComponentFileId": 11444804
+    },
+    "meshComponentFileIds": [
+      3327192,
+      3335660,
+      3361517,
+      3339548
+    ],
+    "colliderComponentFileIds": [
+      6525385,
+      6572182,
+      6582579
+    ]
+  },
+  "maps": [
+    {
+      "source": "Assets/Scenes/Aztec_Multiplayer.unity",
+      "sha256": "50b3077f1898189cbf40c2232771175b85eec0f03737901373da377faf95291e",
+      "mapDefinitionFileId": 2666,
+      "covers": [
+        {
+          "order": 0,
+          "pointComponentFileId": 2682,
+          "fraction": 1,
+          "main": false,
+          "slots": [
+            {
+              "order": 0,
+              "componentFileId": 2233,
+              "gameObjectFileId": 45,
+              "transformFileId": 704,
+              "sourcePosition": [
+                -3.8017909777288623,
+                -0.011000072741236572,
+                2.505857284622725
+              ]
+            },
+            {
+              "order": 1,
+              "componentFileId": 2215,
+              "gameObjectFileId": 44,
+              "transformFileId": 703,
+              "sourcePosition": [
+                -3.8156424666165707,
+                -0.011000072741236572,
+                2.1060971251485348
+              ]
+            }
+          ]
+        },
+        {
+          "order": 1,
+          "pointComponentFileId": 2440,
+          "fraction": 1,
+          "main": true,
+          "slots": [
+            {
+              "order": 0,
+              "componentFileId": 2665,
+              "gameObjectFileId": 132,
+              "transformFileId": 736,
+              "sourcePosition": [
+                -3.7870511534194775,
+                -0.030000074630503776,
+                0.9964413081174517
+              ]
+            },
+            {
+              "order": 1,
+              "componentFileId": 2230,
+              "gameObjectFileId": 131,
+              "transformFileId": 735,
+              "sourcePosition": [
+                -3.800902717173426,
+                -0.030000074630503776,
+                0.5966811116155937
+              ]
+            }
+          ]
+        },
+        {
+          "order": 2,
+          "pointComponentFileId": 2263,
+          "fraction": 1,
+          "main": true,
+          "slots": [
+            {
+              "order": 0,
+              "componentFileId": 2235,
+              "gameObjectFileId": 235,
+              "transformFileId": 768,
+              "sourcePosition": [
+                -3.849680811846945,
+                -0.007000072343496103,
+                -0.5223009298462364
+              ]
+            },
+            {
+              "order": 1,
+              "componentFileId": 2308,
+              "gameObjectFileId": 234,
+              "transformFileId": 767,
+              "sourcePosition": [
+                -3.8635323756008937,
+                -0.007000072343496103,
+                -0.9220611263480945
+              ]
+            }
+          ]
+        },
+        {
+          "order": 3,
+          "pointComponentFileId": 2686,
+          "fraction": 1,
+          "main": false,
+          "slots": [
+            {
+              "order": 0,
+              "componentFileId": 2450,
+              "gameObjectFileId": 22,
+              "transformFileId": 687,
+              "sourcePosition": [
+                -3.901970179615598,
+                -0.00800007244293123,
+                -2.0313954515586414
+              ]
+            },
+            {
+              "order": 1,
+              "componentFileId": 2262,
+              "gameObjectFileId": 21,
+              "transformFileId": 686,
+              "sourcePosition": [
+                -3.9158217433695466,
+                -0.00800007244293123,
+                -2.4311556480604994
+              ]
+            }
+          ]
+        },
+        {
+          "order": 4,
+          "pointComponentFileId": 2431,
+          "fraction": 2,
+          "main": false,
+          "slots": [
+            {
+              "order": 0,
+              "componentFileId": 2439,
+              "gameObjectFileId": 152,
+              "transformFileId": 751,
+              "sourcePosition": [
+                3.7559999574300167,
+                -0.012000080000000107,
+                -2.316999610642496
+              ]
+            },
+            {
+              "order": 1,
+              "componentFileId": 2485,
+              "gameObjectFileId": 151,
+              "transformFileId": 750,
+              "sourcePosition": [
+                3.7559999574300167,
+                -0.012000080000000107,
+                -1.9169995893575043
+              ]
+            }
+          ]
+        },
+        {
+          "order": 5,
+          "pointComponentFileId": 2222,
+          "fraction": 2,
+          "main": true,
+          "slots": [
+            {
+              "order": 0,
+              "componentFileId": 2587,
+              "gameObjectFileId": 278,
+              "transformFileId": 785,
+              "sourcePosition": [
+                3.7559999574300167,
+                -0.02700008000000012,
+                -0.8019996106424964
+              ]
+            },
+            {
+              "order": 1,
+              "componentFileId": 2326,
+              "gameObjectFileId": 277,
+              "transformFileId": 784,
+              "sourcePosition": [
+                3.7559999574300167,
+                -0.02700008000000012,
+                -0.40199958935750424
+              ]
+            }
+          ]
+        },
+        {
+          "order": 6,
+          "pointComponentFileId": 2199,
+          "fraction": 2,
+          "main": true,
+          "slots": [
+            {
+              "order": 0,
+              "componentFileId": 2240,
+              "gameObjectFileId": 302,
+              "transformFileId": 800,
+              "sourcePosition": [
+                3.7559999574300167,
+                -0.008000080000000104,
+                0.7050003893575036
+              ]
+            },
+            {
+              "order": 1,
+              "componentFileId": 2491,
+              "gameObjectFileId": 301,
+              "transformFileId": 799,
+              "sourcePosition": [
+                3.7559999574300167,
+                -0.008000080000000104,
+                1.1050004106424958
+              ]
+            }
+          ]
+        },
+        {
+          "order": 7,
+          "pointComponentFileId": 2452,
+          "fraction": 2,
+          "main": false,
+          "slots": [
+            {
+              "order": 0,
+              "componentFileId": 2448,
+              "gameObjectFileId": 106,
+              "transformFileId": 721,
+              "sourcePosition": [
+                3.7559999574300167,
+                0.014999919999999889,
+                2.2250003893575037
+              ]
+            },
+            {
+              "order": 1,
+              "componentFileId": 2416,
+              "gameObjectFileId": 105,
+              "transformFileId": 720,
+              "sourcePosition": [
+                3.7559999574300167,
+                0.014999919999999889,
+                2.6250004106424956
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "source": "Assets/Scenes/City_Multiplayer.unity",
+      "sha256": "acaf878b188dbc17fca6795b5db7e9c7797b91dee0fcb6fb02d5e85d7cc11c4f",
+      "mapDefinitionFileId": 3249,
+      "covers": [
+        {
+          "order": 0,
+          "pointComponentFileId": 2993,
+          "fraction": 1,
+          "main": false,
+          "slots": [
+            {
+              "order": 0,
+              "componentFileId": 2941,
+              "gameObjectFileId": 95,
+              "transformFileId": 968,
+              "sourcePosition": [
+                -3.6874460971392806,
+                -0.004999997016946225,
+                2.6444114110485053
+              ]
+            },
+            {
+              "order": 1,
+              "componentFileId": 3222,
+              "gameObjectFileId": 94,
+              "transformFileId": 967,
+              "sourcePosition": [
+                -3.701297586026989,
+                -0.004999997016946225,
+                2.2446512515743153
+              ]
+            }
+          ]
+        },
+        {
+          "order": 1,
+          "pointComponentFileId": 2982,
+          "fraction": 1,
+          "main": true,
+          "slots": [
+            {
+              "order": 0,
+              "componentFileId": 3343,
+              "gameObjectFileId": 359,
+              "transformFileId": 1173,
+              "sourcePosition": [
+                -3.7397353534194777,
+                0.004000003877969824,
+                1.135316758117454
+              ]
+            },
+            {
+              "order": 1,
+              "componentFileId": 3227,
+              "gameObjectFileId": 358,
+              "transformFileId": 1172,
+              "sourcePosition": [
+                -3.7535869171734264,
+                0.004000003877969824,
+                0.7355565616155959
+              ]
+            }
+          ]
+        },
+        {
+          "order": 2,
+          "pointComponentFileId": 3002,
+          "fraction": 1,
+          "main": true,
+          "slots": [
+            {
+              "order": 0,
+              "componentFileId": 3318,
+              "gameObjectFileId": 23,
+              "transformFileId": 917,
+              "sourcePosition": [
+                -3.802365011846945,
+                0.003000003778534703,
+                -0.3834254798462342
+              ]
+            },
+            {
+              "order": 1,
+              "componentFileId": 2962,
+              "gameObjectFileId": 22,
+              "transformFileId": 916,
+              "sourcePosition": [
+                -3.816216575600894,
+                0.003000003778534703,
+                -0.7831856763480922
+              ]
+            }
+          ]
+        },
+        {
+          "order": 3,
+          "pointComponentFileId": 3132,
+          "fraction": 1,
+          "main": false,
+          "slots": [
+            {
+              "order": 0,
+              "componentFileId": 2940,
+              "gameObjectFileId": 77,
+              "transformFileId": 953,
+              "sourcePosition": [
+                -3.854654379615598,
+                3.4802293616409408e-09,
+                -1.8925200015586392
+              ]
+            },
+            {
+              "order": 1,
+              "componentFileId": 2979,
+              "gameObjectFileId": 76,
+              "transformFileId": 952,
+              "sourcePosition": [
+                -3.868505943369547,
+                3.4802293616409408e-09,
+                -2.292280198060497
+              ]
+            }
+          ]
+        },
+        {
+          "order": 4,
+          "pointComponentFileId": 3303,
+          "fraction": 2,
+          "main": false,
+          "slots": [
+            {
+              "order": 0,
+              "componentFileId": 3022,
+              "gameObjectFileId": 133,
+              "transformFileId": 998,
+              "sourcePosition": [
+                3.772315757430017,
+                0.004000000000000217,
+                -2.178124160642494
+              ]
+            },
+            {
+              "order": 1,
+              "componentFileId": 3350,
+              "gameObjectFileId": 132,
+              "transformFileId": 997,
+              "sourcePosition": [
+                3.772315757430017,
+                0.004000000000000217,
+                -1.778124139357502
+              ]
+            }
+          ]
+        },
+        {
+          "order": 5,
+          "pointComponentFileId": 3333,
+          "fraction": 2,
+          "main": true,
+          "slots": [
+            {
+              "order": 0,
+              "componentFileId": 3262,
+              "gameObjectFileId": 112,
+              "transformFileId": 983,
+              "sourcePosition": [
+                3.7853157574300167,
+                0.014000000000000217,
+                -0.6661241606424941
+              ]
+            },
+            {
+              "order": 1,
+              "componentFileId": 3310,
+              "gameObjectFileId": 111,
+              "transformFileId": 982,
+              "sourcePosition": [
+                3.7853157574300167,
+                0.014000000000000217,
+                -0.266124139357502
+              ]
+            }
+          ]
+        },
+        {
+          "order": 6,
+          "pointComponentFileId": 2927,
+          "fraction": 2,
+          "main": true,
+          "slots": [
+            {
+              "order": 0,
+              "componentFileId": 2929,
+              "gameObjectFileId": 384,
+              "transformFileId": 1188,
+              "sourcePosition": [
+                3.8033157574300165,
+                0.010100000000000216,
+                0.8438758393575058
+              ]
+            },
+            {
+              "order": 1,
+              "componentFileId": 2824,
+              "gameObjectFileId": 383,
+              "transformFileId": 1187,
+              "sourcePosition": [
+                3.8033157574300165,
+                0.010100000000000216,
+                1.2438758606424978
+              ]
+            }
+          ]
+        },
+        {
+          "order": 7,
+          "pointComponentFileId": 3334,
+          "fraction": 2,
+          "main": false,
+          "slots": [
+            {
+              "order": 0,
+              "componentFileId": 2997,
+              "gameObjectFileId": 46,
+              "transformFileId": 933,
+              "sourcePosition": [
+                3.8033157574300165,
+                0.004000000000000217,
+                2.363875839357506
+              ]
+            },
+            {
+              "order": 1,
+              "componentFileId": 3327,
+              "gameObjectFileId": 45,
+              "transformFileId": 932,
+              "sourcePosition": [
+                3.8033157574300165,
+                0.004000000000000217,
+                2.763875860642498
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "source": "Assets/Scenes/Desert_Multiplayer.unity",
+      "sha256": "d2acaeb238fb2dfdcfb0e1bb69a52628798498f7b6992ecf9418a727360368c1",
+      "mapDefinitionFileId": 2553,
+      "covers": [
+        {
+          "order": 0,
+          "pointComponentFileId": 2555,
+          "fraction": 1,
+          "main": false,
+          "slots": [
+            {
+              "order": 0,
+              "componentFileId": 2740,
+              "gameObjectFileId": 192,
+              "transformFileId": 857,
+              "sourcePosition": [
+                -27.788446097139282,
+                -2.4930000059661066,
+                -6.085588588951495
+              ]
+            },
+            {
+              "order": 1,
+              "componentFileId": 2496,
+              "gameObjectFileId": 191,
+              "transformFileId": 856,
+              "sourcePosition": [
+                -27.802297586026988,
+                -2.4930000059661066,
+                -6.485348748425685
+              ]
+            }
+          ]
+        },
+        {
+          "order": 1,
+          "pointComponentFileId": 2249,
+          "fraction": 1,
+          "main": true,
+          "slots": [
+            {
+              "order": 0,
+              "componentFileId": 2375,
+              "gameObjectFileId": 128,
+              "transformFileId": 806,
+              "sourcePosition": [
+                -27.840735353419475,
+                -2.443000000994351,
+                -7.594683241882546
+              ]
+            },
+            {
+              "order": 1,
+              "componentFileId": 2374,
+              "gameObjectFileId": 127,
+              "transformFileId": 805,
+              "sourcePosition": [
+                -27.854586917173425,
+                -2.443000000994351,
+                -7.994443438384404
+              ]
+            }
+          ]
+        },
+        {
+          "order": 2,
+          "pointComponentFileId": 2790,
+          "fraction": 1,
+          "main": true,
+          "slots": [
+            {
+              "order": 0,
+              "componentFileId": 2368,
+              "gameObjectFileId": 81,
+              "transformFileId": 781,
+              "sourcePosition": [
+                -27.903365011846944,
+                -2.433,
+                -9.113425479846235
+              ]
+            },
+            {
+              "order": 1,
+              "componentFileId": 2628,
+              "gameObjectFileId": 80,
+              "transformFileId": 780,
+              "sourcePosition": [
+                -27.917216575600893,
+                -2.433,
+                -9.513185676348092
+              ]
+            }
+          ]
+        },
+        {
+          "order": 3,
+          "pointComponentFileId": 2665,
+          "fraction": 1,
+          "main": false,
+          "slots": [
+            {
+              "order": 0,
+              "componentFileId": 2626,
+              "gameObjectFileId": 65,
+              "transformFileId": 764,
+              "sourcePosition": [
+                -27.9556543796156,
+                -2.3629999930395416,
+                -10.622520001558641
+              ]
+            },
+            {
+              "order": 1,
+              "componentFileId": 2856,
+              "gameObjectFileId": 64,
+              "transformFileId": 763,
+              "sourcePosition": [
+                -27.969505943369548,
+                -2.3629999930395416,
+                -11.022280198060498
+              ]
+            }
+          ]
+        },
+        {
+          "order": 4,
+          "pointComponentFileId": 2395,
+          "fraction": 2,
+          "main": false,
+          "slots": [
+            {
+              "order": 0,
+              "componentFileId": 2403,
+              "gameObjectFileId": 171,
+              "transformFileId": 840,
+              "sourcePosition": [
+                -20.297684242569982,
+                -2.4059999999999997,
+                -10.908124160642494
+              ]
+            },
+            {
+              "order": 1,
+              "componentFileId": 2860,
+              "gameObjectFileId": 170,
+              "transformFileId": 839,
+              "sourcePosition": [
+                -20.297684242569982,
+                -2.4059999999999997,
+                -10.508124139357502
+              ]
+            }
+          ]
+        },
+        {
+          "order": 5,
+          "pointComponentFileId": 2758,
+          "fraction": 2,
+          "main": true,
+          "slots": [
+            {
+              "order": 0,
+              "componentFileId": 2625,
+              "gameObjectFileId": 146,
+              "transformFileId": 821,
+              "sourcePosition": [
+                -20.297684242569982,
+                -2.399,
+                -9.393124160642495
+              ]
+            },
+            {
+              "order": 1,
+              "componentFileId": 2497,
+              "gameObjectFileId": 145,
+              "transformFileId": 820,
+              "sourcePosition": [
+                -20.297684242569982,
+                -2.399,
+                -8.993124139357503
+              ]
+            }
+          ]
+        },
+        {
+          "order": 6,
+          "pointComponentFileId": 2388,
+          "fraction": 2,
+          "main": true,
+          "slots": [
+            {
+              "order": 0,
+              "componentFileId": 2827,
+              "gameObjectFileId": 40,
+              "transformFileId": 749,
+              "sourcePosition": [
+                -20.297684242569982,
+                -2.405,
+                -7.8861241606424946
+              ]
+            },
+            {
+              "order": 1,
+              "componentFileId": 2483,
+              "gameObjectFileId": 39,
+              "transformFileId": 748,
+              "sourcePosition": [
+                -20.297684242569982,
+                -2.405,
+                -7.486124139357503
+              ]
+            }
+          ]
+        },
+        {
+          "order": 7,
+          "pointComponentFileId": 2844,
+          "fraction": 2,
+          "main": false,
+          "slots": [
+            {
+              "order": 0,
+              "componentFileId": 2645,
+              "gameObjectFileId": 24,
+              "transformFileId": 733,
+              "sourcePosition": [
+                -20.297684242569982,
+                -2.4059999999999997,
+                -6.366124160642494
+              ]
+            },
+            {
+              "order": 1,
+              "componentFileId": 2873,
+              "gameObjectFileId": 23,
+              "transformFileId": 732,
+              "sourcePosition": [
+                -20.297684242569982,
+                -2.4059999999999997,
+                -5.966124139357502
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "source": "Assets/Scenes/Park_Multiplayer.unity",
+      "sha256": "09b2c084ef5da6707fbebd4261a60baa0f12e24fef31efc4c6d4671b721e70ed",
+      "mapDefinitionFileId": 3572,
+      "covers": [
+        {
+          "order": 0,
+          "pointComponentFileId": 3505,
+          "fraction": 1,
+          "main": false,
+          "slots": [
+            {
+              "order": 0,
+              "componentFileId": 3604,
+              "gameObjectFileId": 156,
+              "transformFileId": 981,
+              "sourcePosition": [
+                -3.7133366638669365,
+                -0.04363525527921474,
+                2.50090033666788
+              ]
+            },
+            {
+              "order": 1,
+              "componentFileId": 3194,
+              "gameObjectFileId": 155,
+              "transformFileId": 980,
+              "sourcePosition": [
+                -3.727442030169796,
+                -0.04393086772688675,
+                2.1011491429003923
+              ]
+            }
+          ]
+        },
+        {
+          "order": 1,
+          "pointComponentFileId": 3570,
+          "fraction": 1,
+          "main": true,
+          "slots": [
+            {
+              "order": 0,
+              "componentFileId": 3417,
+              "gameObjectFileId": 70,
+              "transformFileId": 934,
+              "sourcePosition": [
+                -3.765733953419479,
+                -0.03299997199435111,
+                0.9923167081174527
+              ]
+            },
+            {
+              "order": 1,
+              "componentFileId": 3240,
+              "gameObjectFileId": 69,
+              "transformFileId": 933,
+              "sourcePosition": [
+                -3.7795855171734276,
+                -0.03299997199435111,
+                0.5925565116155946
+              ]
+            }
+          ]
+        },
+        {
+          "order": 2,
+          "pointComponentFileId": 3526,
+          "fraction": 1,
+          "main": true,
+          "slots": [
+            {
+              "order": 0,
+              "componentFileId": 3436,
+              "gameObjectFileId": 114,
+              "transformFileId": 951,
+              "sourcePosition": [
+                -3.8283636118469464,
+                -0.022999970999999952,
+                -0.5264255298462355
+              ]
+            },
+            {
+              "order": 1,
+              "componentFileId": 3206,
+              "gameObjectFileId": 113,
+              "transformFileId": 950,
+              "sourcePosition": [
+                -3.842215175600895,
+                -0.022999970999999952,
+                -0.9261857263480935
+              ]
+            }
+          ]
+        },
+        {
+          "order": 3,
+          "pointComponentFileId": 3582,
+          "fraction": 1,
+          "main": false,
+          "slots": [
+            {
+              "order": 0,
+              "componentFileId": 3081,
+              "gameObjectFileId": 53,
+              "transformFileId": 919,
+              "sourcePosition": [
+                -3.8806529796155993,
+                0.04700003596045817,
+                -2.0355200515586405
+              ]
+            },
+            {
+              "order": 1,
+              "componentFileId": 3418,
+              "gameObjectFileId": 52,
+              "transformFileId": 918,
+              "sourcePosition": [
+                -3.894504543369548,
+                0.04700003596045817,
+                -2.4352802480604985
+              ]
+            }
+          ]
+        },
+        {
+          "order": 4,
+          "pointComponentFileId": 3315,
+          "fraction": 2,
+          "main": false,
+          "slots": [
+            {
+              "order": 0,
+              "componentFileId": 3440,
+              "gameObjectFileId": 267,
+              "transformFileId": 1022,
+              "sourcePosition": [
+                3.779317157430015,
+                0.027000028999999964,
+                -2.321124210642495
+              ]
+            },
+            {
+              "order": 1,
+              "componentFileId": 3608,
+              "gameObjectFileId": 266,
+              "transformFileId": 1021,
+              "sourcePosition": [
+                3.779317157430015,
+                0.027000028999999964,
+                -1.9211241893575033
+              ]
+            }
+          ]
+        },
+        {
+          "order": 5,
+          "pointComponentFileId": 3415,
+          "fraction": 2,
+          "main": true,
+          "slots": [
+            {
+              "order": 0,
+              "componentFileId": 3523,
+              "gameObjectFileId": 219,
+              "transformFileId": 1003,
+              "sourcePosition": [
+                3.7773171574300153,
+                0.011000028999999963,
+                -0.8061242106424954
+              ]
+            },
+            {
+              "order": 1,
+              "componentFileId": 3519,
+              "gameObjectFileId": 218,
+              "transformFileId": 1002,
+              "sourcePosition": [
+                3.7773171574300153,
+                0.011000028999999963,
+                -0.4061241893575033
+              ]
+            }
+          ]
+        },
+        {
+          "order": 6,
+          "pointComponentFileId": 3508,
+          "fraction": 2,
+          "main": true,
+          "slots": [
+            {
+              "order": 0,
+              "componentFileId": 3180,
+              "gameObjectFileId": 138,
+              "transformFileId": 966,
+              "sourcePosition": [
+                3.7773171574300153,
+                0.005000028999999962,
+                0.7008757893575046
+              ]
+            },
+            {
+              "order": 1,
+              "componentFileId": 3549,
+              "gameObjectFileId": 137,
+              "transformFileId": 965,
+              "sourcePosition": [
+                3.7773171574300153,
+                0.005000028999999962,
+                1.1008758106424967
+              ]
+            }
+          ]
+        },
+        {
+          "order": 7,
+          "pointComponentFileId": 3209,
+          "fraction": 2,
+          "main": false,
+          "slots": [
+            {
+              "order": 0,
+              "componentFileId": 3145,
+              "gameObjectFileId": 303,
+              "transformFileId": 1042,
+              "sourcePosition": [
+                3.7773171574300153,
+                0.004000028999999962,
+                2.2208757893575046
+              ]
+            },
+            {
+              "order": 1,
+              "componentFileId": 3168,
+              "gameObjectFileId": 302,
+              "transformFileId": 1041,
+              "sourcePosition": [
+                3.7773171574300153,
+                0.004000028999999962,
+                2.6208758106424965
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "source": "Assets/Scenes/Snow_Multiplayer.unity",
+      "sha256": "67291457da28646c9ce377f3812d1bf0fa5332bfe664f58a4430a823744e6f21",
+      "mapDefinitionFileId": 2756,
+      "covers": [
+        {
+          "order": 0,
+          "pointComponentFileId": 3129,
+          "fraction": 1,
+          "main": false,
+          "slots": [
+            {
+              "order": 0,
+              "componentFileId": 2598,
+              "gameObjectFileId": 12,
+              "transformFileId": 769,
+              "sourcePosition": [
+                -3.723743508195437,
+                0.09000008725876332,
+                2.4266441801005554
+              ]
+            },
+            {
+              "order": 1,
+              "componentFileId": 2633,
+              "gameObjectFileId": 11,
+              "transformFileId": 768,
+              "sourcePosition": [
+                -3.7375949970831455,
+                0.09000008725876332,
+                2.0268840206263654
+              ]
+            }
+          ]
+        },
+        {
+          "order": 1,
+          "pointComponentFileId": 3107,
+          "fraction": 1,
+          "main": true,
+          "slots": [
+            {
+              "order": 0,
+              "componentFileId": 2755,
+              "gameObjectFileId": 66,
+              "transformFileId": 819,
+              "sourcePosition": [
+                -3.744051953419477,
+                0.07100008536949612,
+                0.9164414081174528
+              ]
+            },
+            {
+              "order": 1,
+              "componentFileId": 3000,
+              "gameObjectFileId": 65,
+              "transformFileId": 818,
+              "sourcePosition": [
+                -3.7579035171734256,
+                0.07100008536949612,
+                0.5166812116155948
+              ]
+            }
+          ]
+        },
+        {
+          "order": 2,
+          "pointComponentFileId": 3124,
+          "fraction": 1,
+          "main": true,
+          "slots": [
+            {
+              "order": 0,
+              "componentFileId": 3012,
+              "gameObjectFileId": 28,
+              "transformFileId": 784,
+              "sourcePosition": [
+                -3.75471279388069,
+                0.09400008765650379,
+                -0.604101523305818
+              ]
+            },
+            {
+              "order": 1,
+              "componentFileId": 3083,
+              "gameObjectFileId": 27,
+              "transformFileId": 783,
+              "sourcePosition": [
+                -3.768564357634639,
+                0.09400008765650379,
+                -1.003861719807676
+              ]
+            }
+          ]
+        },
+        {
+          "order": 3,
+          "pointComponentFileId": 2612,
+          "fraction": 1,
+          "main": false,
+          "slots": [
+            {
+              "order": 0,
+              "componentFileId": 3003,
+              "gameObjectFileId": 273,
+              "transformFileId": 1005,
+              "sourcePosition": [
+                -3.762029146101622,
+                0.08700008696045798,
+                -2.1147543374351696
+              ]
+            },
+            {
+              "order": 1,
+              "componentFileId": 2999,
+              "gameObjectFileId": 272,
+              "transformFileId": 1004,
+              "sourcePosition": [
+                -3.7758807098555707,
+                0.08700008696045798,
+                -2.5145145339370276
+              ]
+            }
+          ]
+        },
+        {
+          "order": 4,
+          "pointComponentFileId": 3061,
+          "fraction": 2,
+          "main": false,
+          "slots": [
+            {
+              "order": 0,
+              "componentFileId": 3049,
+              "gameObjectFileId": 109,
+              "transformFileId": 856,
+              "sourcePosition": [
+                3.7829991574300172,
+                0.21000007999999978,
+                -2.396999510642495
+              ]
+            },
+            {
+              "order": 1,
+              "componentFileId": 2806,
+              "gameObjectFileId": 108,
+              "transformFileId": 855,
+              "sourcePosition": [
+                3.7829991574300172,
+                0.21000007999999978,
+                -1.9969994893575032
+              ]
+            }
+          ]
+        },
+        {
+          "order": 5,
+          "pointComponentFileId": 2621,
+          "fraction": 2,
+          "main": true,
+          "slots": [
+            {
+              "order": 0,
+              "componentFileId": 2664,
+              "gameObjectFileId": 241,
+              "transformFileId": 973,
+              "sourcePosition": [
+                3.7989991574300173,
+                0.19500007999999977,
+                -0.8819995106424953
+              ]
+            },
+            {
+              "order": 1,
+              "componentFileId": 2791,
+              "gameObjectFileId": 240,
+              "transformFileId": 972,
+              "sourcePosition": [
+                3.7989991574300173,
+                0.19500007999999977,
+                -0.48199948935750314
+              ]
+            }
+          ]
+        },
+        {
+          "order": 6,
+          "pointComponentFileId": 3113,
+          "fraction": 2,
+          "main": true,
+          "slots": [
+            {
+              "order": 0,
+              "componentFileId": 3065,
+              "gameObjectFileId": 50,
+              "transformFileId": 804,
+              "sourcePosition": [
+                3.7989991574300173,
+                0.2140000799999998,
+                0.6250004893575047
+              ]
+            },
+            {
+              "order": 1,
+              "componentFileId": 3073,
+              "gameObjectFileId": 49,
+              "transformFileId": 803,
+              "sourcePosition": [
+                3.7989991574300173,
+                0.2140000799999998,
+                1.0250005106424969
+              ]
+            }
+          ]
+        },
+        {
+          "order": 7,
+          "pointComponentFileId": 2991,
+          "fraction": 2,
+          "main": false,
+          "slots": [
+            {
+              "order": 0,
+              "componentFileId": 3076,
+              "gameObjectFileId": 159,
+              "transformFileId": 902,
+              "sourcePosition": [
+                3.7989991574300173,
+                0.23700007999999978,
+                2.1450004893575048
+              ]
+            },
+            {
+              "order": 1,
+              "componentFileId": 2687,
+              "gameObjectFileId": 158,
+              "transformFileId": 901,
+              "sourcePosition": [
+                3.7989991574300173,
+                0.23700007999999978,
+                2.5450005106424967
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
