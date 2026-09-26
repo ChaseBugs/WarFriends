@@ -2477,18 +2477,29 @@ internal static class CombatContentTests
             walkingShotgunnerMatch.Advance(++walkingTick);
             walkingEntity=walkingShotgunnerMatch.ArmyEntityBatch(soldierOwner,0,0).Entities.SingleOrDefault();
         }
-        bool walkingShot=false;float priorProgress=0;
+        bool walkingShot=false,observedWalkingPose=false;float priorProgress=0;
         while(!walkingShot&&walkingTick<400)
         {
             var before=walkingShotgunnerMatch.RusherMotionCandidate(walkingEntity!.EntityKey);
             priorProgress=before?.MotionProgress??priorProgress;
             walkingShotgunnerMatch.Advance(++walkingTick);
             var after=walkingShotgunnerMatch.RusherMotionCandidate(walkingEntity.EntityKey);
+            var shotgunnerPose=walkingShotgunnerMatch.InfantryPose(walkingEntity.EntityKey);
+            observedWalkingPose|=shotgunnerPose is {Clip:"shotgunner_run",Parts.Count:3}&&
+                shotgunnerPose.Parts.All(x=>x.SourcePath.StartsWith("army/",StringComparison.Ordinal));
             walkingShot=walkingShotgunnerMatch.RusherShotIntents.Any(x=>x.EntityKey==walkingEntity.EntityKey&&x.IsReal)&&
                 after is {Phase:ArmyRusherTravelPhase.Walking}&&after.MotionProgress>priorProgress;
         }
-        Check(walkingShot,
-              "special Shotgunner fires after its divided initial clock while authoritative corridor motion continues");
+        Check(walkingShot&&observedWalkingPose,
+              "special Shotgunner fires while its source walking clip supplies three moving explosion colliders");
+        var walkingLive=walkingShotgunnerMatch.ArmyEntityBatch(soldierOwner,0,0).Entities.Single();
+        float walkingHealthBefore=walkingShotgunnerMatch.ArmyHealth(walkingLive.EntityKey)!.Value;
+        float sourceDroneHealth=content.Army.ComposeTransporterRepairDrone(0,71,null,new(1,1)).MaximumHealth;
+        int infantryBlastHits=walkingShotgunnerMatch.ApplyTransporterRepairDroneInfantryExplosion(
+            new(walkingLive.X,walkingLive.Y,walkingLive.Z),sourceDroneHealth);
+        Check(infantryBlastHits==1&&Math.Abs(walkingShotgunnerMatch.ArmyHealth(walkingLive.EntityKey)!.Value-
+                  (walkingHealthBefore-sourceDroneHealth*content.GroundVehicleWeapons.RepairDronePrefab.ExplosionDamageRatio))<.001f,
+              "repair-drone blast selects the live animated Shotgunner body and applies source full-radius damage");
         var warperManifest=detached with {MatchId="warper-initial-relocation",IdleSeconds=120,Players=detached.Players.Select(p=>p with
         {
             EquippedArmyUnitIds=["ID_UNIT-WARPER"],NewArmyUnitIds=null,ArmyNormalUpgradeIndexes=[0],
@@ -2516,19 +2527,22 @@ internal static class CombatContentTests
               warperMatch.RusherMotionCandidate(liveWarper.EntityKey)==null,
               "live Warper begins edge relocation before ordinary Rusher travel");
         ArmyWarperRelocationState? liveRelocation=warperMatch.WarperRelocationCandidate(liveWarper.EntityKey);
-        bool completedInitialRelocation=false,observedLiveWarp=false;
+        bool completedInitialRelocation=false,observedLiveWarp=false,observedWarpPose=false,observedWarpIdlePose=false;
         while(warperTick<1500)
         {
             warperMatch.Advance(++warperTick);
             liveRelocation=warperMatch.WarperRelocationCandidate(liveWarper.EntityKey);
             observedLiveWarp|=liveRelocation?.Transparent==true;
+            var warperPose=warperMatch.InfantryPose(liveWarper.EntityKey);
+            observedWarpPose|=liveRelocation?.Transparent==true&&warperPose?.Clip=="warp_movement";
+            observedWarpIdlePose|=liveRelocation?.Phase==ArmyWarperRelocationPhase.Pause&&warperPose?.Clip=="warp_idle";
             if(liveRelocation==null&&warperMatch.RusherMotionCandidate(liveWarper.EntityKey)!=null)
             {completedInitialRelocation=true;break;}
         }
         var relocatedWarper=warperMatch.ArmyEntityBatch(soldierOwner,0,0).Entities.Single();
-        Check(completedInitialRelocation&&observedLiveWarp&&
+        Check(completedInitialRelocation&&observedLiveWarp&&observedWarpPose&&observedWarpIdlePose&&
               Vector3.Distance(warperStart,new(relocatedWarper.X,relocatedWarper.Y,relocatedWarper.Z))>1,
-              "live Warper completes its edge hop and final route before entering Rusher arrival");
+              "live Warper binds warp movement and idle poses while completing relocation before Rusher arrival");
         var warperEvents=new List<MatchEvent>();ulong warperEventCursor=0,warperLatest;
         do
         {

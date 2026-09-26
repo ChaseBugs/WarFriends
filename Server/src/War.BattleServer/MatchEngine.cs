@@ -61,6 +61,7 @@ public sealed partial class MatchEngine
     private readonly ArmyDeploymentCatalog? armyCatalog;
     private readonly ArmyWeaponBindingCatalog? armyWeapons;
     private readonly GroundVehicleWeaponCatalog? groundVehicleWeapons;
+    private readonly EnemyPoseCatalog? enemyPoses;
     private readonly Dictionary<ulong,BattleArmyEntityState> activeArmyEntities=[];
     // Air entities use the same single-writer tick as the rest of the match.  The
     // registry is deliberately kept separate from infantry state until the
@@ -683,6 +684,7 @@ public sealed partial class MatchEngine
             armyCatalog=content.Army;
             armyWeapons=content.ArmyWeapons;
             groundVehicleWeapons=content.GroundVehicleWeapons;
+            enemyPoses=content.EnemyPoses;
             armySelector=new ArmySpawnPointSelector(content.ArmySpawnPoints);
             armyRusherPoints=content.ArmyRusherPoints;
             armyMinigunnerPoints=content.ArmyMinigunnerPoints;
@@ -952,6 +954,7 @@ public sealed partial class MatchEngine
                             activeArmyEntities[entityKey].MaxKevlar=vitality.KevlarMaximum;
                             activeArmyEntities[entityKey].Kevlar=vitality.Kevlar;
                         }
+                        InitializeInfantryAnimation(entityKey);
                         InitializeRusherMotionCandidate(entityKey,spawned.UnitId);
                         InitializeStationaryArmyCombat(entityKey,spawned.UnitId);
                         InitializeGroundVehicle(entityKey,family,point);
@@ -986,6 +989,11 @@ public sealed partial class MatchEngine
         {
             try {AdvanceGroundVehicleRoutes();}
             catch(InvalidDataException){End("invalid-vehicle-route-authority","",false);return;}
+        }
+        if(advanced&&phase==BattlePhase.Running&&infantryAnimations.Count>0)
+        {
+            try {UpdateInfantryAnimations();}
+            catch(InvalidDataException){End("invalid-infantry-animation-authority","",false);return;}
         }
         if(advanced&&phase==BattlePhase.Running&&transporterRepairDrones.Count>0)
         {

@@ -5,6 +5,8 @@ namespace War.BattleServer;
 
 public sealed partial class MatchEngine
 {
+    internal sealed record ArmyInfantryPoseSnapshot(string Clip,ulong StartTick,Vector3 Facing,
+        IReadOnlyList<PlayerHitbox> Parts);
     internal sealed record ArmyRusherTarget(ulong EntityKey,string PlayerId,int TargetFileId,
         int RusherPointFileId,Vector3 Position);
     internal sealed record ArmyRusherShotIntent(ulong EntityKey,string OwnerPlayerId,string TargetPlayerId,int TargetFileId,
@@ -15,6 +17,17 @@ public sealed partial class MatchEngine
         public float Current=maximum;
         public float KevlarMaximum { get; }=kevlarMaximum;
         public float Kevlar=kevlarMaximum;
+    }
+    private sealed class ArmyInfantryAnimation(string clip,ulong startTick,Vector3 facing)
+    {
+        internal string Clip=clip;
+        internal ulong StartTick=startTick;
+        internal Vector3 Facing=facing;
+        internal void Update(string clip,Vector3? facing,ulong tick)
+        {
+            if(Clip!=clip){Clip=clip;StartTick=tick;}
+            if(facing is { } value&&value.LengthSquared()>1e-10f)Facing=Vector3.Normalize(value);
+        }
     }
     private readonly Dictionary<ulong,ArmyVitality> armyVitality=[];
     private readonly Dictionary<ulong,float> armyDamage=[];
@@ -47,6 +60,104 @@ public sealed partial class MatchEngine
     private readonly Dictionary<ulong,int> rusherSlotByEntity=[];
     private readonly Dictionary<ulong,ArmyVehicleRouteMotion> vehicleRouteMotions=[];
     private readonly Dictionary<ulong,Vector3> groundVehicleFacing=[];
+    private readonly Dictionary<ulong,ArmyInfantryAnimation> infantryAnimations=[];
+
+    private void InitializeInfantryAnimation(ulong entityKey)
+    {
+        if(enemyPoses==null||armyCatalog==null||!activeArmyEntities.TryGetValue(entityKey,out var army))return;
+        var family=armyCatalog.Families.Single(x=>x.UnitId==army.UnitId);
+        if(!family.IsSoldier)return;
+        var opponent=players.Single(x=>x.Definition.PlayerId!=army.OwnerPlayerId);
+        var facing=opponent.Position-new Vector3(army.X,army.Y,army.Z);facing.Y=0;
+        if(facing.LengthSquared()<1e-10f)facing=Vector3.UnitZ;
+        infantryAnimations.Add(entityKey,new(ArmyInfantryPosePolicy.For(army.UnitId).Idle,tick,Vector3.Normalize(facing)));
+    }
+
+    private void UpdateInfantryAnimations()
+    {
+        foreach(var (key,animation) in infantryAnimations.OrderBy(x=>x.Key).ToArray())
+        {
+            if(!activeArmyEntities.TryGetValue(key,out var army))
+                throw new InvalidDataException("Infantry animation lost its host entity.");
+            var clips=ArmyInfantryPosePolicy.For(army.UnitId);string clip=clips.Idle;Vector3? facing=null;
+            if(warperRelocations.TryGetValue(key,out var warp))
+            {
+                clip=warp.Phase==ArmyWarperRelocationPhase.Pause?"warp_idle":
+                    warp.Transparent?"warp_movement":clips.Walk;
+                facing=Planar(warp.PlanarDirection);
+            }
+            else if(minigunnerMovements.TryGetValue(key,out var minigunner))
+            {clip=clips.Walk;facing=Planar(minigunner.PlanarDirection);}
+            else if(rusherMotionCandidates.TryGetValue(key,out var motion))
+            {
+                bool shooting=rusherAttacks.TryGetValue(key,out var attack)&&
+                    attack.Phase is ArmyRusherAttackPhase.Windup or ArmyRusherAttackPhase.Firing;
+                // Shotgunner's recovered walking special layers shootAdditive over its walk clip;
+                // retain the source base locomotion until blend sampling is available.
+                clip=motion.Phase==ArmyRusherTravelPhase.Walking?clips.Walk:shooting?clips.Fire:clips.Idle;
+                facing=motion.Phase==ArmyRusherTravelPhase.Walking?Planar(motion.PlanarDirection):
+                    AttackFacing(key,army,rusherAttackTargets);
+            }
+            else if(minigunnerAttacks.TryGetValue(key,out var attack))
+            {
+                clip=attack.Phase is ArmyRusherAttackPhase.Windup or ArmyRusherAttackPhase.Firing?clips.Fire:clips.Idle;
+                facing=AttackFacing(key,army,minigunnerAttackTargets);
+            }
+            animation.Update(clip,facing,tick);
+        }
+    }
+
+    private static Vector3? Planar(Vector2 direction)=>direction.LengthSquared()>1e-10f?
+        new Vector3(direction.X,0,direction.Y):null;
+
+    private static Vector3? AttackFacing(ulong key,BattleArmyEntityState army,
+        IReadOnlyDictionary<ulong,ArmyRusherTarget> targets)
+    {
+        if(!targets.TryGetValue(key,out var target))return null;
+        var facing=target.Position-new Vector3(army.X,army.Y,army.Z);facing.Y=0;
+        return facing.LengthSquared()>1e-10f?facing:null;
+    }
+
+    internal ArmyInfantryPoseSnapshot? InfantryPose(ulong entityKey)
+    {
+        if(enemyPoses==null||!infantryAnimations.TryGetValue(entityKey,out var animation)||
+           !activeArmyEntities.TryGetValue(entityKey,out var army))return null;
+        if(animation.StartTick>tick)throw new InvalidDataException("Infantry animation starts after match time.");
+        float yaw=MathF.Atan2(animation.Facing.X,animation.Facing.Z);
+        var parts=enemyPoses.Place(animation.Clip,new(army.X,army.Y,army.Z),
+            Quaternion.CreateFromAxisAngle(Vector3.UnitY,yaw),
+            (tick-animation.StartTick)/(float)MatchManifest.TickRate,"army/");
+        return new(animation.Clip,animation.StartTick,animation.Facing,parts);
+    }
+
+    internal int ApplyTransporterRepairDroneInfantryExplosion(Vector3 center,float maximumHealth)
+    {
+        if(phase!=BattlePhase.Running||groundVehicleWeapons==null||enemyPoses==null||
+           !PlayerHitbox.Finite(center)||!float.IsFinite(maximumHealth)||maximumHealth<=0||maximumHealth>10_000_000)
+            throw new InvalidDataException("Invalid repair-drone infantry explosion authority.");
+        var binding=groundVehicleWeapons.RepairDronePrefab;
+        float full=maximumHealth*binding.ExplosionDamageRatio;
+        float minimum=maximumHealth*binding.SplashDamageRatio;
+        int hits=0;
+        foreach(ulong targetId in infantryAnimations.Keys.Order().ToArray())
+        {
+            if(!activeArmyEntities.TryGetValue(targetId,out var target))
+                throw new InvalidDataException("Repair-drone explosion infantry disappeared.");
+            var pose=InfantryPose(targetId)??throw new InvalidDataException("Repair-drone explosion lost infantry pose.");
+            if(!pose.Parts.Any(x=>x.OverlapsSphere(center,binding.HurtRadius)))continue;
+            float distance=Vector3.Distance(new(target.X,target.Y,target.Z),center);
+            float amount;
+            if(distance<binding.DeadRadius)amount=full;
+            else
+            {
+                float fraction=Math.Clamp(1-(distance-binding.DeadRadius)/
+                    (binding.HurtRadius-binding.DeadRadius),0,1);
+                amount=minimum+(full-minimum)*fraction*fraction;
+            }
+            if(ApplyArmyHostDamage(targetId,amount))hits++;
+        }
+        return hits;
+    }
 
     internal IReadOnlyList<DynamicShotTarget> GroundVehicleShotTargets(string shooterId)
     {
@@ -886,6 +997,7 @@ public sealed partial class MatchEngine
                         throw new InvalidDataException("Repair-drone explosion diverged from vehicle health.");
                 }
             }
+        ApplyTransporterRepairDroneInfantryExplosion(drone.Position,drone.MaximumHealth);
         if(transporterRepairDrones.TryGetValue(vehicleId,out var siblings))
             foreach(var sibling in siblings.Where(x=>x!=drone&&x.Active).ToArray())
             {
@@ -1683,6 +1795,7 @@ public sealed partial class MatchEngine
         armySpeed.Remove(entityKey);
         armyShots.Remove(entityKey);
         armyVehicleShots.Remove(entityKey);
+        infantryAnimations.Remove(entityKey);
         rusherMotionCandidates.Remove(entityKey);
         warperRelocations.Remove(entityKey);
         warperRestartTicks.Remove(entityKey);

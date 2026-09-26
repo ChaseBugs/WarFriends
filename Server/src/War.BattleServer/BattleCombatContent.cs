@@ -86,6 +86,7 @@ public sealed class BattleCombatContent
             throw new InvalidDataException("Enemy collision rig does not bind the deployed infantry prefab.");
         if(enemyPoses.SourceSha256!=army.InfantryAgent.PrefabSha256)
             throw new InvalidDataException("Enemy animation poses do not bind the deployed infantry prefab.");
+        ArmyInfantryPosePolicy.Validate(army,enemyPoses);
         if(maps.Any(map=>!armyWeapons.WarperRelocation.Fields.TryGetValue(map.Source,out var field)||
             field.Sha256!=map.SourceHash))
             throw new InvalidDataException("Warper field authority does not bind the complete map package.");
