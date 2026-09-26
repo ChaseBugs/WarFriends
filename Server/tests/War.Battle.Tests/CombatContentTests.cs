@@ -712,6 +712,7 @@ internal static class CombatContentTests
         var buggyCannon=content.Army.ComposeBuggyCannon(0,null,null);
         var tankCannon=content.Army.ComposeVehicleCannon("ID_UNIT-TANK",0,null,null,1,1);
         var specialTankCannon=content.Army.ComposeVehicleCannon("ID_UNIT-TANK",0,51,null,2,.7f);
+        var transporterRepair=content.Army.ComposeTransporterRepairDrone(0,71,null,new(1,1));
         Check(humveeShot==new ArmyVehicleShotStats(5f,.85f,4,5,1.5f,1.8f,0)&&
               tankShot==new ArmyVehicleShotStats(5f,.8f,2,5,2f,5f,0)&&
               buggyShot==new ArmyVehicleShotStats(5f,1f,0,0,0,0,0)&&
@@ -730,8 +731,14 @@ internal static class CombatContentTests
               content.Army.VehiclePassengerRespawnTicks("ID_UNIT-HUMVEE")==375&&
               content.Army.VehiclePassengerRespawnTicks("ID_UNIT-TANK")==525&&
               content.Army.ComposeVehicleShot("ID_UNIT-HUMVEE",0,null,null,2f)
-                  .ProbabilityOfRealShot==1f,
+                  .ProbabilityOfRealShot==1f&&
+              Math.Abs(transporterRepair.HealRatioPerSecond-.08f)<.00001f&&
+              Math.Abs(transporterRepair.MaximumHealth-70.3755f)<.001f,
               "ground vehicle turrets compose primary, Buggy cannon, and Tank cannon stage-zero source authority");
+        bool rejectedNormalRepairLane=false;
+        try{_=content.Army.ComposeTransporterRepairDrone(0,0,null,new(1,1));}
+        catch(ArgumentOutOfRangeException){rejectedNormalRepairLane=true;}
+        Check(rejectedNormalRepairLane,"Transporter repair drones require a selected special lane");
         Reject(()=>content.Army.ComposeVehicleShot("ID_UNIT-ASSAULT",0,null,null));
         var humveeRig=content.GroundVehicleWeapons.For("ID_UNIT-HUMVEE");
         var tankRig=content.GroundVehicleWeapons.For("ID_UNIT-TANK");
@@ -752,6 +759,12 @@ internal static class CombatContentTests
               tankRig.Passengers.Select(x=>x.Role).SequenceEqual(["turret","cannon"])&&
               buggyRig.Passengers.Select(x=>x.Role).SequenceEqual(["driver","co-driver"])&&
               transporterRig.Passengers.Select(x=>x.Role).SequenceEqual(["co-driver"])&&
+              transporterRig.RepairDronePaths.Count==2&&
+              transporterRig.RepairDronePaths.All(x=>x.Radius==.1f&&x.Waypoints.Count==7&&
+                  x.Waypoints.Where(p=>p.StayTime>0).Select(p=>p.Index).SequenceEqual([1,3,5]))&&
+              content.GroundVehicleWeapons.RepairDronePrefab is
+                  {Speed:.4f,Mass:30f,BreakDistance:.4f,BreakSpeed:.5f,Loop:true,
+                   HealIntervalSeconds:1f,RespawnMinimumSeconds:35f,RespawnMaximumSeconds:45f}&&
               new[]{humveeRig,tankRig,buggyRig,transporterRig}.Sum(x=>x.Passengers.Count)==6&&
               content.GroundVehicleWeapons.ArmoredVehicleShotCoefficient==.33f&&
               humveeRig.BodyParts.Count==8&&tankRig.BodyParts.Count==12&&
@@ -766,6 +779,15 @@ internal static class CombatContentTests
                   .SelectMany(r=>r.Weapons).All(w=>w.ProjectileGuid is
                       "855689762fa6e774aaee190652b08c6f" or "60be7eeb14f5a354c99c9ce23dbc5554"),
               "four vehicle prefabs pin seven turret roles, nine weapon paths, cadence and projectile identity");
+        var repairState=new TransporterRepairDroneState(0,transporterRig.RepairDronePaths[0],
+            content.GroundVehicleWeapons.RepairDronePrefab,transporterRepair,Vector3.Zero,Vector3.UnitZ,0);
+        Check(repairState.ApplyDamage(repairState.MaximumHealth,10,()=>0)&&!repairState.Active&&
+              repairState.RespawnTick==1060&&
+              repairState.Advance(Vector3.Zero,Vector3.UnitZ,1059,()=>.5f)==0&&!repairState.Active&&
+              repairState.Advance(Vector3.Zero,Vector3.UnitZ,1060,()=>.5f)==0&&repairState.Active&&
+              repairState.Snapshot() is {WaypointIndex:0,RespawnTick:0} repairedDrone&&
+              Math.Abs(repairedDrone.Health-repairedDrone.MaximumHealth)<.001f,
+              "repair-drone death preserves its path and respawns at full health after the exact source window");
         var placedHumvee=content.GroundVehicleWeapons.PlaceBody("ID_UNIT-HUMVEE",77,
             Vector3.Zero,Vector3.UnitZ);
         var bodyTarget=placedHumvee.First(x=>x.Hitbox.Kind==PlayerHitboxKind.Box);
@@ -880,6 +902,16 @@ internal static class CombatContentTests
             Reject(()=>GroundVehicleWeaponCatalog.Load(vehicleWeaponTemp,damagedHash));
             damaged=JsonNode.Parse(File.ReadAllText(vehicleWeaponPath))!;
             damaged["vehicles"]![2]!["roles"]![1]!["weapons"]![0]!["missile"]!["minimumDamage"]=-1;
+            File.WriteAllText(vehicleWeaponTemp,damaged.ToJsonString());
+            damagedHash=Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(vehicleWeaponTemp)));
+            Reject(()=>GroundVehicleWeaponCatalog.Load(vehicleWeaponTemp,damagedHash));
+            damaged=JsonNode.Parse(File.ReadAllText(vehicleWeaponPath))!;
+            damaged["repairDronePrefab"]!["speed"]=.8f;
+            File.WriteAllText(vehicleWeaponTemp,damaged.ToJsonString());
+            damagedHash=Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(vehicleWeaponTemp)));
+            Reject(()=>GroundVehicleWeaponCatalog.Load(vehicleWeaponTemp,damagedHash));
+            damaged=JsonNode.Parse(File.ReadAllText(vehicleWeaponPath))!;
+            damaged["vehicles"]![3]!["repairDronePaths"]![0]!["waypoints"]![2]!["index"]=1;
             File.WriteAllText(vehicleWeaponTemp,damaged.ToJsonString());
             damagedHash=Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(vehicleWeaponTemp)));
             Reject(()=>GroundVehicleWeaponCatalog.Load(vehicleWeaponTemp,damagedHash));
@@ -2820,7 +2852,7 @@ internal static class CombatContentTests
         var transporterManifest=detached with {MatchId="transporter-split-fire",Players=[detached.Players[0] with
         {
             EquippedArmyUnitIds=["ID_UNIT-TRANSPORTER"],NewArmyUnitIds=null,
-            ArmyNormalUpgradeIndexes=[0],ArmySpecialUpgradeIndexes=[-1],ArmyEliteUpgradeIndexes=[-1],
+            ArmyNormalUpgradeIndexes=[0],ArmySpecialUpgradeIndexes=[71],ArmyEliteUpgradeIndexes=[-1],
             ArmyHealthFactors=[new(1f,1f)],ArmyDamageScales=[1f],ArmySpeedCoefficients=[1f],
             ArmyAccuracyCoefficients=[1f]
         },detached.Players[1]]};
@@ -2843,6 +2875,11 @@ internal static class CombatContentTests
             {transporterMatch.ArmyEntityBatch(soldierOwner,0,0);transporterMatch.ArmyEntityBatch(helicopterOwner,0,0);}
         }
         var transporterEntity=transporterMatch.ArmyEntityBatch(soldierOwner,0,0).Entities.Single();
+        var initialDrones=transporterMatch.TransporterRepairDrones(transporterEntity.EntityKey);
+        Check(initialDrones.Count==2&&initialDrones.All(x=>x is
+              {Active:true,RespawnTick:0}&&x.MaximumHealth>70&&
+              Math.Abs(x.Health-x.MaximumHealth)<.001f),
+              "live special-lane Transporter creates one authoritative repair drone on each recovered path");
         ulong transporterTick=transporterSpawnTick;
         while(transporterMatch.GroundVehicleAttack(transporterEntity.EntityKey)?.Phase!=ArmyAirAttackPhase.Ready&&
               transporterTick<transporterSpawnTick+200)
@@ -2879,6 +2916,23 @@ internal static class CombatContentTests
         Check(splitShots.Length is >=4 and <=6&&splitShots.Select(e=>MathF.Round(e.X,3)).Distinct().Count()>=2&&
               splitShots.Select(e=>e.Tick).Distinct().Count()>=3,
               "live Transporter publishes its split batch from both recovered muzzles over independent cadences");
+        float transporterMaximum=transporterEntity.MaxHealth;
+        transporterMatch.ApplyGroundVehicleProjectileImpact(helicopterOwner,transporterEntity.EntityKey,
+            transporterRig.BodyParts[0].PartComponentFileId,100/.33f);
+        Check(transporterMatch.ArmyHealth(transporterEntity.EntityKey)<transporterMaximum,
+              "host damage opens trusted Transporter repair capacity");
+        float damagedTransporter=transporterMatch.ArmyHealth(transporterEntity.EntityKey)!.Value;
+        for(int i=0;i<31&&!transporterMatch.Terminal;i++)transporterMatch.Advance(++transporterTick);
+        float repairedTransporter=transporterMatch.ArmyHealth(transporterEntity.EntityKey)!.Value;
+        Check(repairedTransporter>damagedTransporter&&repairedTransporter<=transporterMaximum,
+              $"two live repair drones heal synchronized Transporter vitality at one-second source boundaries ({damagedTransporter}->{repairedTransporter}, max {transporterMaximum}, terminal {transporterMatch.Terminal})");
+        var droneBeforeDeath=transporterMatch.TransporterRepairDrones(transporterEntity.EntityKey)[0];
+        Check(transporterMatch.ApplyTransporterRepairDroneHostDamage(transporterEntity.EntityKey,0,
+                  droneBeforeDeath.MaximumHealth)&&
+              transporterMatch.TransporterRepairDrones(transporterEntity.EntityKey)[0] is
+                  {Active:false,Health:0,RespawnTick:var repairRespawn}&&
+              repairRespawn>=transporterTick+1050&&repairRespawn<=transporterTick+1350,
+              "repair-drone death schedules the recovered 35-45 second host respawn window");
         var destroyedVehicle=parkedVehicles[0];
         Check(staleMatch.ApplyArmyHostDamage(destroyedVehicle.EntityKey,destroyedVehicle.MaxHealth)&&
               staleMatch.VehicleRouteMotion(destroyedVehicle.EntityKey)==null&&

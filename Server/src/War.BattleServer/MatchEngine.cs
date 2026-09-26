@@ -987,6 +987,11 @@ public sealed partial class MatchEngine
             try {AdvanceGroundVehicleRoutes();}
             catch(InvalidDataException){End("invalid-vehicle-route-authority","",false);return;}
         }
+        if(advanced&&phase==BattlePhase.Running&&transporterRepairDrones.Count>0)
+        {
+            try {AdvanceTransporterRepairDrones();}
+            catch(InvalidDataException){End("invalid-repair-drone-authority","",false);return;}
+        }
         if(advanced && phase==BattlePhase.Running && (armyProjectiles.Count>0||armyFlameBursts.Count>0||armyPoisons.Count>0))
         {
             if(armyProjectiles.Count>0)AdvanceArmyProjectiles();

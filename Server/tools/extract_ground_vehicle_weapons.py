@@ -70,6 +70,44 @@ def component_transform(blocks,cid):
  position,rotation=world(blocks,transforms[0])
  return transforms[0],position,rotation
 
+def repair_drone_paths(blocks,scripts,root):
+ tail=root.split('  pathsForMiniDrones:\n',1)[1]
+ path_ids=[int(x) for x in re.findall(r'^  - \{fileID: (\d+)\}$',tail,re.M)]
+ if len(path_ids)!=2: raise ValueError('Transporter repair-drone path count changed')
+ rows=[]
+ for path_id in path_ids:
+  path=blocks[path_id][1]
+  if scripts.get(path_id)!='WayPointPath': raise ValueError('repair-drone path type changed')
+  waypoint_ids=[int(x) for x in re.findall(r'^  - \{fileID: (\d+)\}$',path.split('  wayPoints:\n',1)[1].split('  loadWayPoints:',1)[0],re.M)]
+  waypoints=[]
+  for expected_index,waypoint_id in enumerate(waypoint_ids):
+   waypoint=blocks[waypoint_id][1]
+   if scripts.get(waypoint_id)!='WayPoint' or ref(waypoint,'path')!=path_id or int(number(waypoint,'index'))!=expected_index:
+    raise ValueError('repair-drone waypoint binding changed')
+   transform_id,position,_=component_transform(blocks,waypoint_id)
+   waypoints.append({'componentFileId':waypoint_id,'transformFileId':transform_id,
+    'index':expected_index,'position':position,'stayTime':number(waypoint,'stayTime')})
+  if len(waypoints)!=7: raise ValueError('repair-drone waypoint count changed')
+  rows.append({'componentFileId':path_id,'radius':number(path,'Radius'),'waypoints':waypoints})
+ return rows
+
+def repair_drone_prefab(guid_to_name):
+ path=ASSETS/'GameObject'/'miniDrone.prefab';raw=path.read_bytes();text=raw.decode('utf-8-sig')
+ blocks={int(m.group(2)):(int(m.group(1)),m.group(3)) for m in re.finditer(r'^--- !u!(\d+) &(\d+)\r?\n(.*?)(?=^--- !u!|\Z)',text,re.M|re.S)}
+ scripts={i:guid_to_name.get(re.search(r'guid: ([0-9a-f]{32})',b).group(1),'') for i,(k,b) in blocks.items() if k==114 and 'guid:' in b}
+ steering_ids=[i for i,n in scripts.items() if n=='DroneSteering']
+ mini_ids=[i for i,n in scripts.items() if n=='MiniDrone']
+ if len(steering_ids)!=1 or len(mini_ids)!=1: raise ValueError('miniDrone behavior topology changed')
+ steering=blocks[steering_ids[0]][1]
+ return {'prefab':'Assets/GameObject/miniDrone.prefab','sha256':hashlib.sha256(raw).hexdigest(),
+  'componentFileId':mini_ids[0],'steeringComponentFileId':steering_ids[0],
+  'breakDistance':number(steering,'breakDistance'),'breakSpeed':number(steering,'breakSpeed'),
+  'initialForward':direct(steering,'dir')=='1','loop':direct(steering,'loop')=='1',
+  'mass':number(steering,'mass'),'multiplier':number(steering,'multiplier'),
+  'speed':number(steering,'speed'),'cornerDelayTime':number(steering,'cornerDelayTime'),
+  'healIntervalSeconds':1.,'respawnMinimumSeconds':35.,'respawnMaximumSeconds':45.,
+  'deadRadius':.7,'hurtRadius':1.4,'explosionDamageRatio':.5,'splashDamageRatio':.05}
+
 def vehicle_body_parts(blocks,scripts):
  rows=[]
  for part_id in sorted(i for i,n in scripts.items() if n=='DestroyableObjectpart'):
@@ -191,12 +229,14 @@ def main():
    transform_id,position,rotation=component_transform(blocks,point_id)
    passengers.append({'role':role,'pointComponentFileId':point_id,
     'transformFileId':transform_id,'position':position,'rotation':rotation})
+  drones=repair_drone_paths(blocks,scripts,root) if unit=='ID_UNIT-TRANSPORTER' else []
   out.append({'unitId':unit,'prefab':'Assets/GameObject/'+prefab_name,
    'sha256':hashlib.sha256(raw).hexdigest(),'behaviorType':root_type,'roles':role_rows,
-   'passengers':passengers,'bodyParts':vehicle_body_parts(blocks,scripts)})
+   'passengers':passengers,'bodyParts':vehicle_body_parts(blocks,scripts),'repairDronePaths':drones})
  if not PASSENGER_POSES.exists(): raise ValueError('missing Unity passenger pose artifact')
- artifact={'version':6,'armoredVehicleShotCoefficient':0.33,
-  'passengerPoseRevision':hashlib.sha256(PASSENGER_POSES.read_bytes()).hexdigest(),'vehicles':out}
+ artifact={'version':7,'armoredVehicleShotCoefficient':0.33,
+  'passengerPoseRevision':hashlib.sha256(PASSENGER_POSES.read_bytes()).hexdigest(),
+  'repairDronePrefab':repair_drone_prefab(guid_to_name),'vehicles':out}
  serialized=json.dumps(artifact,indent=2)+'\n'
  if sys.argv[1:]==['--check']:
   if not OUTPUT.exists() or OUTPUT.read_text()!=serialized: raise ValueError('ground vehicle weapon artifact is stale')

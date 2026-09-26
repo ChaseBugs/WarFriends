@@ -126,6 +126,7 @@ public sealed partial class MatchEngine
     private readonly Dictionary<ulong,VehicleAttackState> tankCannonAttacks=[];
     private readonly Dictionary<ulong,float> tankCannonDamage=[];
     private readonly Dictionary<ulong,IReadOnlyDictionary<string,VehiclePassengerState>> vehiclePassengers=[];
+    private readonly Dictionary<ulong,IReadOnlyList<TransporterRepairDroneState>> transporterRepairDrones=[];
     private readonly Dictionary<ulong,(string Owner,string Target,Vector3 Position)> buggyCannonTargets=[];
     private readonly Dictionary<ulong,(string Owner,string Target)> tankCannonTargets=[];
     private ulong buggyCurveCounter;
@@ -270,6 +271,17 @@ public sealed partial class MatchEngine
     internal IReadOnlyList<VehiclePassengerSnapshot> VehiclePassengers(ulong entityKey)
         =>vehiclePassengers.TryGetValue(entityKey,out var rows)?
             rows.Values.OrderBy(x=>x.Binding.PointComponentFileId).Select(x=>x.Snapshot()).ToArray():[];
+    internal IReadOnlyList<TransporterRepairDroneSnapshot> TransporterRepairDrones(ulong entityKey)
+        =>transporterRepairDrones.TryGetValue(entityKey,out var rows)?rows.Select(x=>x.Snapshot()).ToArray():[];
+    internal bool ApplyTransporterRepairDroneHostDamage(ulong entityKey,int pathIndex,float damage)
+    {
+        if(phase!=BattlePhase.Running||!transporterRepairDrones.TryGetValue(entityKey,out var rows)||
+           pathIndex<0||pathIndex>=rows.Count)return false;
+        bool before=rows[pathIndex].Active;
+        if(!rows[pathIndex].ApplyDamage(damage,tick,NextArmyFloat))return false;
+        if(before&&!rows[pathIndex].Active)stateRevision++;
+        return true;
+    }
     internal bool ApplyVehiclePassengerHostDamage(ulong entityKey,string role,float damage)
     {
         if(phase!=BattlePhase.Running||!vehiclePassengers.TryGetValue(entityKey,out var rows)||
@@ -691,6 +703,15 @@ public sealed partial class MatchEngine
         int respawnTicks=armyCatalog.VehiclePassengerRespawnTicks(army.UnitId);
         vehiclePassengers.Add(entityKey,rig.Passengers.ToDictionary(x=>x.Role,
             x=>new VehiclePassengerState(x,passengerHealth,respawnTicks,tick),StringComparer.Ordinal));
+        if(army.UnitId=="ID_UNIT-TRANSPORTER"&&special.HasValue)
+        {
+            var repairFactors=owner.Definition.ArmyHealthFactors?[slot]??
+                throw new InvalidDataException("Transporter repair drones lack trusted health factors.");
+            var stats=armyCatalog.ComposeTransporterRepairDrone(normal,special.Value,elite,repairFactors);
+            transporterRepairDrones.Add(entityKey,rig.RepairDronePaths.Select((path,index)=>
+                new TransporterRepairDroneState(index,path,groundVehicleWeapons!.RepairDronePrefab,stats,
+                    entity.Position,groundVehicleFacing[entityKey],tick)).ToArray());
+        }
     }
 
     private void AdvanceGroundVehicleRoutes()
@@ -715,6 +736,35 @@ public sealed partial class MatchEngine
                 armyEntityRevision++;stateRevision++;
             }
             if(motion.Arrived)vehicleRouteMotions.Remove(key);
+        }
+    }
+
+    private void AdvanceTransporterRepairDrones()
+    {
+        if(vehicles==null)throw new InvalidDataException("Transporter repair drones lack vehicle authority.");
+        foreach(var (entityKey,drones) in transporterRepairDrones.OrderBy(x=>x.Key))
+        {
+            if(!activeArmyEntities.TryGetValue(entityKey,out var army)||
+               !vehicles.TryGet(entityKey,out var vehicle)||vehicle==null||
+               !groundVehicleFacing.TryGetValue(entityKey,out var facing))
+                throw new InvalidDataException("Transporter repair drone lost its vehicle.");
+            foreach(var drone in drones)
+            {
+                bool active=drone.Active;float ratio=drone.Advance(vehicle.Position,facing,tick,NextArmyFloat);
+                if(active!=drone.Active)stateRevision++;
+                if(ratio<=0)continue;
+                if(!armyVitality.TryGetValue(entityKey,out var vitality))
+                    throw new InvalidDataException("Transporter repair target lacks vitality.");
+                float amount=vitality.Maximum*ratio;
+                float before=vitality.Current;vitality.Current=Math.Min(vitality.Maximum,vitality.Current+amount);
+                float applied=vitality.Current-before;
+                if(!vehicles.TryHeal(entityKey,amount,out float registryApplied)||Math.Abs(applied-registryApplied)>.001f)
+                    throw new InvalidDataException("Transporter repair diverged from vehicle health.");
+                if(applied>0)
+                {
+                    army.Health=vitality.Current;armyEntityRevision++;stateRevision++;
+                }
+            }
         }
     }
 
@@ -1523,6 +1573,7 @@ public sealed partial class MatchEngine
         tankCannonTargets.Remove(entityKey);
         tankCannonDamage.Remove(entityKey);
         vehiclePassengers.Remove(entityKey);
+        transporterRepairDrones.Remove(entityKey);
         foreach(var id in buggyProjectiles.Where(x=>x.Value.Flight.VehicleId==entityKey)
             .Select(x=>x.Key).ToArray())buggyProjectiles.Remove(id);
         foreach(var id in tankProjectiles.Where(x=>x.Value.Flight.VehicleId==entityKey)

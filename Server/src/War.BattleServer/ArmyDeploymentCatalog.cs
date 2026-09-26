@@ -12,6 +12,7 @@ public sealed record ArmyBaseShotStats(float ProbabilityOfRealShot,int FireBatch
 public sealed record ArmyVehicleShotStats(float ShotSpeed,float ProbabilityOfRealShot,
     int FireBatchSizeMin,int FireBatchSizeMax,float MinShootTime,float MaxShootTime,int Crew);
 public sealed record ArmyVehicleCannonStats(float Damage,float MinShootTime,float MaxShootTime);
+public sealed record TransporterRepairDroneStats(float HealRatioPerSecond,float MaximumHealth);
 public sealed record ArmyPlayerDamagePolicy(float BehindShieldRatio,float PlayerDamageRatio,
     float OvertimePlayerDamageRatio);
 public sealed record ArmyAgentConfig(string PrefabSha256,float Radius,float Acceleration,
@@ -39,6 +40,7 @@ public sealed class ArmyDeploymentCatalog
     private IReadOnlyDictionary<string,IReadOnlyList<ArmyBaseCombatStats>>? baseStats;
     private IReadOnlyDictionary<string,IReadOnlyList<ArmyUpgradeShotStats>>? upgradeShots;
     private IReadOnlyDictionary<string,IReadOnlyList<float>>? specialValues;
+    private IReadOnlyList<float>? transporterRepairBotHealth;
     private IReadOnlyDictionary<string,IReadOnlyList<float>>? vehiclePassengerHealth;
     private IReadOnlyDictionary<string,float>? vehiclePassengerRespawnSeconds;
     private IReadOnlyDictionary<string,IReadOnlyList<ArmyVehicleCannonStats>>? vehicleCannonStages;
@@ -226,6 +228,29 @@ public sealed class ArmyDeploymentCatalog
         return checked((int)MathF.Ceiling(seconds*MatchManifest.TickRate));
     }
 
+    /// <summary>AICarTransporter creates its two drones only with a selected special lane.</summary>
+    public TransporterRepairDroneStats ComposeTransporterRepairDrone(int normalIndex,int specialIndex,
+        int? eliteIndex,ArmyHealthFactors factors)
+    {
+        ArgumentNullException.ThrowIfNull(factors);
+        _=BaseStats("ID_UNIT-TRANSPORTER",normalIndex);
+        if(transporterRepairBotHealth==null||!float.IsFinite(factors.PerkCoefficient)||
+           factors.PerkCoefficient<=0||factors.PerkCoefficient>100||!float.IsFinite(factors.UpgradeScale)||
+           factors.UpgradeScale<=0||factors.UpgradeScale>100)
+            throw new InvalidDataException("Transporter repair-drone authority is unavailable.");
+        ValidateOptionalLanes("ID_UNIT-TRANSPORTER",transporterRepairBotHealth.Count,specialIndex,eliteIndex);
+        float ratio=transporterRepairBotHealth[normalIndex]+transporterRepairBotHealth[specialIndex];
+        if(eliteIndex.HasValue)ratio+=transporterRepairBotHealth[eliteIndex.Value];
+        // CarTransporterBehaviourDefinititon.ScaleDamageAndHP scales repairBotHP as well as base health.
+        ratio*=factors.UpgradeScale;
+        float heal=ComposeSpecial("ID_UNIT-TRANSPORTER",normalIndex,specialIndex,eliteIndex);
+        float maximum=EffectiveHealth("ID_UNIT-TRANSPORTER",normalIndex,specialIndex,eliteIndex,factors)*ratio;
+        if(!float.IsFinite(heal)||heal<=0||heal>10||!float.IsFinite(ratio)||ratio<=0||ratio>10||
+           !float.IsFinite(maximum)||maximum<=0||maximum>10_000_000)
+            throw new InvalidDataException("Transporter repair-drone stats are outside the recovered domain.");
+        return new(heal,maximum);
+    }
+
     public float EffectiveHealth(string unitId,int normalIndex,int? specialIndex,int? eliteIndex,
         ArmyHealthFactors factors)
     {
@@ -301,6 +326,7 @@ public sealed class ArmyDeploymentCatalog
         var acceptedStats=new Dictionary<string,IReadOnlyList<ArmyBaseCombatStats>>(StringComparer.Ordinal);
         var acceptedShots=new Dictionary<string,IReadOnlyList<ArmyUpgradeShotStats>>(StringComparer.Ordinal);
         var acceptedSpecials=new Dictionary<string,IReadOnlyList<float>>(StringComparer.Ordinal);
+        IReadOnlyList<float>? acceptedRepairBotHealth=null;
         var acceptedPassengerHealth=new Dictionary<string,IReadOnlyList<float>>(StringComparer.Ordinal);
         var acceptedPassengerRespawn=new Dictionary<string,float>(StringComparer.Ordinal);
         var acceptedPlayerDamage=new Dictionary<string,ArmyPlayerDamagePolicy>(StringComparer.Ordinal);
@@ -358,6 +384,7 @@ public sealed class ArmyDeploymentCatalog
             var shots=new ArmyUpgradeShotStats[stageRows.GetArrayLength()];
             var specials=new float[stageRows.GetArrayLength()];
             var passengerHealth=vehiclePassenger?new float[stageRows.GetArrayLength()]:null;
+            var repairBotHealth=family.UnitId=="ID_UNIT-TRANSPORTER"?new float[stageRows.GetArrayLength()]:null;
             var cannons=family.UnitId is "ID_UNIT-BUGGY" or "ID_UNIT-TANK"?
                 new ArmyVehicleCannonStats[stageRows.GetArrayLength()]:null;
             for(int i=0;i<stages.Length;i++)
@@ -372,6 +399,7 @@ public sealed class ArmyDeploymentCatalog
                 float probability=stage.GetProperty("REALSHOTPROBABILITY").GetSingle();
                 float specialValue=stage.GetProperty("SPECIAL").GetSingle();
                 float soldierHp=passengerHealth==null?0:stage.GetProperty("SOLDIERHP").GetSingle();
+                float repairBotHp=repairBotHealth==null?0:stage.GetProperty("REPAIRBOTHP").GetSingle();
                 // Recovered tables contain zeroed upgrade-lane sentinel rows between
                 // normal and elite ranges; never turn one into a live combat entity.
                 if(!float.IsFinite(hp) || hp<0 || !float.IsFinite(damage) || damage<0 ||
@@ -383,10 +411,13 @@ public sealed class ArmyDeploymentCatalog
                     throw new InvalidDataException("Army normal-upgrade combat stat is invalid.");
                 if(passengerHealth!=null&&(!float.IsFinite(soldierHp)||soldierHp<0||soldierHp>10_000_000))
                     throw new InvalidDataException("Vehicle passenger health row is invalid.");
+                if(repairBotHealth!=null&&(!float.IsFinite(repairBotHp)||repairBotHp<0||repairBotHp>10))
+                    throw new InvalidDataException("Transporter repair-drone health row is invalid.");
                 stages[i]=new ArmyBaseCombatStats(hp,damage);
                 shots[i]=new ArmyUpgradeShotStats(probability,batchMin,batchMax,frequencyMin,frequencyMax);
                 specials[i]=specialValue;
                 if(passengerHealth!=null)passengerHealth[i]=soldierHp;
+                if(repairBotHealth!=null)repairBotHealth[i]=repairBotHp;
                 if(cannons!=null)
                 {
                     float cannonDamage=stage.GetProperty("CANNONDAMAGE").GetSingle();
@@ -403,6 +434,7 @@ public sealed class ArmyDeploymentCatalog
             acceptedSpecials.Add(family.UnitId,Array.AsReadOnly(specials));
             if(passengerHealth!=null)
                 acceptedPassengerHealth.Add(family.UnitId,Array.AsReadOnly(passengerHealth));
+            if(repairBotHealth!=null)acceptedRepairBotHealth=Array.AsReadOnly(repairBotHealth);
             acceptedLaneEnds.Add(family.UnitId,normalLaneEnd);
             acceptedEliteStarts.Add(family.UnitId,eliteLaneStart);
             if(cannons!=null)acceptedVehicleCannons.Add(family.UnitId,Array.AsReadOnly(cannons));
@@ -411,6 +443,8 @@ public sealed class ArmyDeploymentCatalog
         vehicleCannonStages=acceptedVehicleCannons;
         upgradeShots=acceptedShots;
         specialValues=acceptedSpecials;
+        transporterRepairBotHealth=acceptedRepairBotHealth??
+            throw new InvalidDataException("Transporter repair-drone health authority is absent.");
         playerDamagePolicies=acceptedPlayerDamage;
         vehiclePassengerHealth=acceptedPassengerHealth;
         vehiclePassengerRespawnSeconds=acceptedPassengerRespawn;

@@ -76,6 +76,12 @@ public sealed class VehicleEntityRegistry
         if (!health.TryGetValue(entityId, out var state)) return false;
         applied = state.ApplyDamage(amount); destroyed = state.Destroyed; return true;
     }
+    public bool TryHeal(ulong entityId,float amount,out float applied)
+    {
+        applied=0;
+        if(!health.TryGetValue(entityId,out var state))return false;
+        applied=state.ApplyHeal(amount);return true;
+    }
     public bool TryGetHealth(ulong entityId, out VehicleHealthState? state) => health.TryGetValue(entityId, out state);
     public bool TryDestroy(ulong entityId, uint generation)
     {

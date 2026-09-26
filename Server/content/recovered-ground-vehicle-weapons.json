@@ -1,7 +1,28 @@
 {
-  "version": 6,
+  "version": 7,
   "armoredVehicleShotCoefficient": 0.33,
   "passengerPoseRevision": "37bc1d8c256a21767a01d1d1016caa93c785b719bbc6c0d73eed58f70926a343",
+  "repairDronePrefab": {
+    "prefab": "Assets/GameObject/miniDrone.prefab",
+    "sha256": "fe6800eca81fe69478fe54884b53631fa96d36114d4a60b962b4946089f9bb26",
+    "componentFileId": 11431434,
+    "steeringComponentFileId": 11469143,
+    "breakDistance": 0.4,
+    "breakSpeed": 0.5,
+    "initialForward": true,
+    "loop": true,
+    "mass": 30.0,
+    "multiplier": 150000.0,
+    "speed": 0.4,
+    "cornerDelayTime": 0.3,
+    "healIntervalSeconds": 1.0,
+    "respawnMinimumSeconds": 35.0,
+    "respawnMaximumSeconds": 45.0,
+    "deadRadius": 0.7,
+    "hurtRadius": 1.4,
+    "explosionDamageRatio": 0.5,
+    "splashDamageRatio": 0.05
+  },
   "vehicles": [
     {
       "unitId": "ID_UNIT-HUMVEE",
@@ -435,7 +456,8 @@
             }
           ]
         }
-      ]
+      ],
+      "repairDronePaths": []
     },
     {
       "unitId": "ID_UNIT-TANK",
@@ -1057,7 +1079,8 @@
             }
           ]
         }
-      ]
+      ],
+      "repairDronePaths": []
     },
     {
       "unitId": "ID_UNIT-BUGGY",
@@ -1592,7 +1615,8 @@
             }
           ]
         }
-      ]
+      ],
+      "repairDronePaths": []
     },
     {
       "unitId": "ID_UNIT-TRANSPORTER",
@@ -2109,6 +2133,174 @@
               ],
               "halfSegment": 0.006542599999999982,
               "trigger": true
+            }
+          ]
+        }
+      ],
+      "repairDronePaths": [
+        {
+          "componentFileId": 11441888,
+          "radius": 0.1,
+          "waypoints": [
+            {
+              "componentFileId": 11458688,
+              "transformFileId": 496523,
+              "index": 0,
+              "position": [
+                -0.549,
+                0.909,
+                -0.10300000000000001
+              ],
+              "stayTime": 0.0
+            },
+            {
+              "componentFileId": 11474009,
+              "transformFileId": 427680,
+              "index": 1,
+              "position": [
+                -0.412,
+                0.64,
+                -0.479
+              ],
+              "stayTime": 3.0
+            },
+            {
+              "componentFileId": 11466526,
+              "transformFileId": 478937,
+              "index": 2,
+              "position": [
+                -0.558,
+                0.872,
+                -0.993
+              ],
+              "stayTime": 0.0
+            },
+            {
+              "componentFileId": 11477091,
+              "transformFileId": 418947,
+              "index": 3,
+              "position": [
+                -0.006,
+                0.646,
+                -0.745
+              ],
+              "stayTime": 3.0
+            },
+            {
+              "componentFileId": 11485757,
+              "transformFileId": 443874,
+              "index": 4,
+              "position": [
+                0.572,
+                0.865,
+                -0.987
+              ],
+              "stayTime": 0.0
+            },
+            {
+              "componentFileId": 11452113,
+              "transformFileId": 418124,
+              "index": 5,
+              "position": [
+                0.413,
+                0.597,
+                -0.534
+              ],
+              "stayTime": 3.0
+            },
+            {
+              "componentFileId": 11426041,
+              "transformFileId": 468212,
+              "index": 6,
+              "position": [
+                0.589,
+                0.913,
+                -0.14200000000000002
+              ],
+              "stayTime": 0.0
+            }
+          ]
+        },
+        {
+          "componentFileId": 11404670,
+          "radius": 0.1,
+          "waypoints": [
+            {
+              "componentFileId": 11430477,
+              "transformFileId": 497595,
+              "index": 0,
+              "position": [
+                0.53899993936381,
+                0.8890000000000126,
+                0.22200017725770424
+              ],
+              "stayTime": 0.0
+            },
+            {
+              "componentFileId": 11404706,
+              "transformFileId": 411872,
+              "index": 1,
+              "position": [
+                0.4019998168474622,
+                0.6200000000000054,
+                0.5980001326174279
+              ],
+              "stayTime": 3.0
+            },
+            {
+              "componentFileId": 11478400,
+              "transformFileId": 466579,
+              "index": 2,
+              "position": [
+                0.5479996493649993,
+                0.8520000000000116,
+                1.1120001801902528
+              ],
+              "stayTime": 0.0
+            },
+            {
+              "componentFileId": 11425007,
+              "transformFileId": 465956,
+              "index": 3,
+              "position": [
+                -0.004000269826328747,
+                0.6260000000000057,
+                0.8640000003258287
+              ],
+              "stayTime": 3.0
+            },
+            {
+              "componentFileId": 11470349,
+              "transformFileId": 437123,
+              "index": 4,
+              "position": [
+                -0.5820003486799226,
+                0.8450000000000114,
+                1.1059998119895162
+              ],
+              "stayTime": 0.0
+            },
+            {
+              "componentFileId": 11427022,
+              "transformFileId": 454462,
+              "index": 5,
+              "position": [
+                -0.42300020107379066,
+                0.5770000000000043,
+                0.6529998637983045
+              ],
+              "stayTime": 3.0
+            },
+            {
+              "componentFileId": 11481466,
+              "transformFileId": 459425,
+              "index": 6,
+              "position": [
+                -0.599000073343973,
+                0.8930000000000127,
+                0.2609998064502355
+              ],
+              "stayTime": 0.0
             }
           ]
         }

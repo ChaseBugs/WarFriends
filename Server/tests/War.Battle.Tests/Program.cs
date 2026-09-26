@@ -41,6 +41,16 @@ if(args is ["--rusher-only"])
     return;
 }
 
+if(args is ["--combat-only"])
+{
+    var root=new DirectoryInfo(AppContext.BaseDirectory);
+    while(root!=null&&!File.Exists(Path.Combine(root.FullName,"content/combat-content-manifest.json")))root=root.Parent;
+    if(root==null)throw new Exception("Recovered battle content artifact not found.");
+    int focused=CombatContentTests.Run(Path.Combine(root.FullName,"content"));
+    Console.WriteLine($"PASS: {focused} focused combat-content assertions");
+    return;
+}
+
 if(args is ["--unity-rifle-only",var unityExecutable,var unityProject])
 {
     var root=new DirectoryInfo(AppContext.BaseDirectory);
