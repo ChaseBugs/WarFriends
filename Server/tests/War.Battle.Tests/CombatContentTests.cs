@@ -731,6 +731,11 @@ internal static class CombatContentTests
                   .SelectMany(r=>r.Weapons).All(w=>w.ProjectileGuid is
                       "855689762fa6e774aaee190652b08c6f" or "60be7eeb14f5a354c99c9ce23dbc5554"),
               "four vehicle prefabs pin seven turret roles, nine weapon paths, cadence and projectile identity");
+        Check(Vector3.Distance(humveeRig.Roles[0].Weapons[0].MuzzlePosition,
+                  new Vector3(-.10999999f,.68667924f,.14323565f))<.00001f&&
+              Vector3.Distance(content.GroundVehicleWeapons.RestMuzzleOrigin("ID_UNIT-HUMVEE","primary",0,
+                  new Vector3(2,0,3),Vector3.UnitX),new Vector3(2.1432357f,.68667924f,3.11f))<.00002f,
+              "vehicle muzzles are prefab-root-relative and rotate with authoritative host facing");
         string vehicleWeaponPath=Path.Combine(directory,"recovered-ground-vehicle-weapons.json");
         string vehicleWeaponTemp=Path.Combine(directory,"vehicle-weapon-test-"+Guid.NewGuid().ToString("N")+".json");
         try
@@ -1245,6 +1250,19 @@ internal static class CombatContentTests
             Check(VehicleMotionPolicy.ValidateStep(Vector3.Zero,new(.02f,0,0),1.7f).X>.019f,
                   "vehicle motion respects recovered source speed at fixed tick");
             Reject(()=>VehicleMotionPolicy.ValidateStep(Vector3.Zero,new(2,0,0),1.0f));
+            var vehicleRolls=new Queue<float>([.999f,.1f,.2f,.3f,.5f]);
+            var vehicleBatch=new VehicleAttackState(new ArmyVehicleShotStats(5,1,2,4,1,1,0),.1f,
+                ()=>vehicleRolls.Dequeue());
+            Check(vehicleBatch.TryBegin(true,0)&&vehicleBatch.BatchRemaining==3&&
+                  vehicleBatch.AdvanceTick()&&vehicleBatch.ShotDue&&vehicleBatch.CurrentShotIsReal,
+                  "vehicle batch uses recovered exclusive integer upper bound and exposes its first shot");
+            Check(vehicleBatch.CommitShot()&&vehicleBatch.BatchRemaining==2&&
+                  !vehicleBatch.AdvanceTick()&&!vehicleBatch.AdvanceTick()&&
+                  vehicleBatch.AdvanceTick()&&vehicleBatch.CommitShot()&&
+                  !vehicleBatch.AdvanceTick()&&!vehicleBatch.AdvanceTick()&&
+                  vehicleBatch.AdvanceTick()&&vehicleBatch.CommitShot()&&
+                  vehicleBatch.CooldownTicksRemaining==30,
+                  "vehicle attack preserves per-round weapon cadence and post-batch turret cooldown");
             var statsLedger=new BattleStatisticsLedger();
             Check(statsLedger.RecordHit("66666666666666666666666666666666")&&
                   !statsLedger.RecordHit("66666666666666666666666666666666")&&

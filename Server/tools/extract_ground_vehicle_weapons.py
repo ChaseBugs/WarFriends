@@ -34,7 +34,17 @@ def world(blocks,tid):
   chain.append((vector(direct(b,'m_LocalPosition')),vector(direct(b,'m_LocalRotation').replace('w:','z:')) if False else None,b))
   tid=ref(b,'m_Father')
  pos=[0.,0.,0.];rot=[0.,0.,0.,1.];scale=[1.,1.,1.]
- for local,_,b in reversed(chain):
+ # Object.Instantiate(prefab, position, rotation) replaces the serialized root
+ # pose.  Weapon coordinates therefore have to be relative to that root, not
+ # prefab-stage world coordinates.  Retain every child transform while
+ # deliberately dropping the top-level Transform's local pose.
+ relative_chain=list(reversed(chain))
+ if not relative_chain or ref(relative_chain[0][2],'m_Father')!=0:
+  raise ValueError('muzzle chain has no prefab root')
+ root=relative_chain[0][2]
+ if vector(direct(root,'m_LocalScale'))!=[1.,1.,1.] or direct(root,'m_LocalRotation')!='{x: 0, y: 0, z: 0, w: 1}':
+  raise ValueError('unsupported prefab root scale or rotation')
+ for local,_,b in relative_chain[1:]:
   qd={k:float(v) for k,v in re.findall(r'([xyzw]): (-?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?)',direct(b,'m_LocalRotation'))}
   q=[qd[k] for k in 'xyzw'];sc=vector(direct(b,'m_LocalScale'))
   off=rotate(rot,[a*c for a,c in zip(local,scale)]);pos=[a+b for a,b in zip(pos,off)]

@@ -46,6 +46,24 @@ public sealed class GroundVehicleWeaponCatalog
     public GroundVehicleWeaponRig For(string unitId)=>rigs.TryGetValue(unitId,out var rig)?rig:
         throw new ArgumentOutOfRangeException(nameof(unitId));
 
+    public Vector3 RestMuzzleOrigin(string unitId,string role,int weaponIndex,
+        Vector3 entityPosition,Vector3 planarForward)
+    {
+        if(!PlayerHitbox.Finite(entityPosition)||!PlayerHitbox.Finite(planarForward))
+            throw new InvalidDataException("Invalid ground vehicle muzzle placement.");
+        var turret=For(unitId).Roles.SingleOrDefault(r=>r.Role==role)??
+            throw new ArgumentOutOfRangeException(nameof(role));
+        if(weaponIndex<0||weaponIndex>=turret.Weapons.Count)
+            throw new ArgumentOutOfRangeException(nameof(weaponIndex));
+        planarForward.Y=0;
+        if(planarForward.LengthSquared()<1e-10f)
+            throw new InvalidDataException("Ground vehicle muzzle has no planar facing.");
+        planarForward=Vector3.Normalize(planarForward);
+        float yaw=MathF.Atan2(planarForward.X,planarForward.Z);
+        return entityPosition+Vector3.Transform(turret.Weapons[weaponIndex].MuzzlePosition,
+            Quaternion.CreateFromAxisAngle(Vector3.UnitY,yaw));
+    }
+
     public static GroundVehicleWeaponCatalog Load(string path,string expectedRevision)
     {
         byte[] bytes=File.ReadAllBytes(path);
