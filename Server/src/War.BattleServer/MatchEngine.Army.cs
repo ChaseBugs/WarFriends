@@ -221,8 +221,22 @@ public sealed partial class MatchEngine
             if(!activeArmyEntities.TryGetValue(key,out var army)||army.UnitId!="ID_UNIT-WARPER"||
                !rusherSlotByEntity.TryGetValue(key,out int slot))
                 throw new InvalidDataException("Warper relocation lost its host entity or slot.");
-            state.AdvanceTick();
+            ArmyWarperPresentationTransition presentation=state.AdvanceTick();
             army.X=state.Position.X;army.Y=state.Position.Y;army.Z=state.Position.Z;army.PositionTick=tick;
+            if(presentation!=ArmyWarperPresentationTransition.None)
+            {
+                if(events.Count>=MaximumRetainedEvents-1)
+                {End("army-event-backpressure","",false);return;}
+                Emit(presentation==ArmyWarperPresentationTransition.WarpStarted
+                        ?MatchEventKind.WarperWarpStarted:MatchEventKind.WarperWarpEnded,
+                    army.OwnerPlayerId,"",0,state.Position,army.Health,"warper");
+                var eventRow=events[^1];
+                eventRow.ArmyEntityId=army.LocalEntityId;
+                eventRow.ArmyOptionIndex=army.OptionIndex;
+                eventRow.ArmyUnitId=army.UnitId;
+                eventRow.ArmySpawnComponentFileId=army.SpawnComponentFileId;
+                eventRow.ArmyReservationFileId=army.ReservationFileId;
+            }
             if(state.Phase!=ArmyWarperRelocationPhase.Complete)continue;
             var target=RusherSlotPosition(slot);
             if(!warperRelocations.Remove(key))throw new InvalidDataException("Warper relocation removal failed.");

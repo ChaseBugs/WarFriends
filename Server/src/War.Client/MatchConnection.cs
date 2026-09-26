@@ -346,14 +346,19 @@ namespace War.Client
                 foreach(var row in batch.Events)
                     if(row.EventId!=checked(++expected) || row.EventId>batch.LatestEventId ||
                        row.Kind==MatchEventKind.Unspecified ||
-                       (row.Kind==MatchEventKind.ArmySpawned || row.Kind==MatchEventKind.ArmyDied) &&
+                       (row.Kind==MatchEventKind.ArmySpawned || row.Kind==MatchEventKind.ArmyDied ||
+                        row.Kind==MatchEventKind.WarperWarpStarted || row.Kind==MatchEventKind.WarperWarpEnded) &&
                        (row.ArmyEntityId<=0 || row.ArmyOptionIndex<0 || row.ArmyOptionIndex>=48 ||
                         row.ArmySpawnComponentFileId<=0 || row.ArmyReservationFileId<0 ||
                         (row.Kind==MatchEventKind.ArmySpawned ?
                             !Guid.TryParseExact(row.ActorId,"N",out _) || row.ArmyEnergyRecipientId!="" :
+                         row.Kind==MatchEventKind.ArmyDied ?
                             !Guid.TryParseExact(row.TargetId,"N",out _) ||
                             !Guid.TryParseExact(row.ArmyEnergyRecipientId,"N",out _) ||
-                            row.Reason!="suicide" && row.Reason!="combat") ||
+                            row.Reason!="suicide" && row.Reason!="combat" :
+                            !Guid.TryParseExact(row.ActorId,"N",out _) || row.TargetId!="" ||
+                            row.ArmyEnergyRecipientId!="" || row.ArmyUnitId!="ID_UNIT-WARPER" ||
+                            row.Reason!="warper") ||
                         !System.Text.RegularExpressions.Regex.IsMatch(row.ArmyUnitId,@"\AID_UNIT-[A-Z0-9-]{1,50}\z") ||
                         !FiniteCoordinate(row.X) || !FiniteCoordinate(row.Y) || !FiniteCoordinate(row.Z)))
                         throw new InvalidOperationException("Battle host returned unordered events.");

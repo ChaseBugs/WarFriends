@@ -793,13 +793,18 @@ internal static class CombatContentTests
         var warperState=new ArmyWarperRelocationState(warperRoute.SampledStart,warperRoute.SampledEnd,
             warperPolicy,warperPolicy.Fields[warperMap.Source],warperMap,content.ArmyNavMeshConnectivity,
             content.Army.InfantryAgent,.8f,()=>warperRandom.Count>0?warperRandom.Dequeue():.5f);
-        bool observedTransparent=false;
+        bool observedTransparent=false,observedWarpStarted=false,observedWarpEnded=false;
         for(int i=0;i<5000&&warperState.Phase!=ArmyWarperRelocationPhase.Complete;i++)
-        {warperState.AdvanceTick();observedTransparent|=warperState.Transparent;}
+        {
+            var transition=warperState.AdvanceTick();
+            observedTransparent|=warperState.Transparent;
+            observedWarpStarted|=transition==ArmyWarperPresentationTransition.WarpStarted;
+            observedWarpEnded|=transition==ArmyWarperPresentationTransition.WarpEnded;
+        }
         Check(warperState.Phase==ArmyWarperRelocationPhase.Complete&&
-              warperState.CompletedEdgeHops==1&&observedTransparent&&
+              warperState.CompletedEdgeHops==1&&observedTransparent&&observedWarpStarted&&observedWarpEnded&&
               Vector3.Distance(warperState.Position,warperRoute.SampledEnd)<.04f,
-              "Warper executes one deterministic edge hop, pause, speed-20 phase, and final source route");
+              "Warper executes one deterministic edge hop, phase transitions, pause, speed-20 phase, and final source route");
         Check(content.ArmyWeapons.TryProjectileDamage("ID_UNIT-SHOTGUNNER",100,Vector3.Zero,Vector3.Zero,out float pointDamage)&&pointDamage==100&&
               content.ArmyWeapons.TryProjectileDamage("ID_UNIT-SHOTGUNNER",100,Vector3.Zero,new(1.5f,0,0),out float midDamage)&&midDamage==55&&
               content.ArmyWeapons.TryProjectileDamage("ID_UNIT-SHOTGUNNER",100,Vector3.Zero,new(3,0,0),out float farDamage)&&farDamage==10&&
@@ -1378,6 +1383,19 @@ internal static class CombatContentTests
             Check(consumer.Consume(page)==2&&consumer.LastEventId==2&&received==2,
                   "Client event consumer dispatches contiguous authoritative pages");
             Reject(()=>consumer.Consume(new MatchEventBatch{Code="events",LatestEventId=3,Events={new MatchEvent{EventId=4,Tick=3,Kind=MatchEventKind.Shot}}}));
+            string warperOwner=Guid.NewGuid().ToString("N");
+            var warperConsumer=new War.Client.MatchEventConsumer();
+            var warperPage=new MatchEventBatch{Code="events",LatestEventId=1};
+            warperPage.Events.Add(new MatchEvent{EventId=1,Tick=3,Kind=MatchEventKind.WarperWarpStarted,
+                ActorId=warperOwner,ArmyEntityId=1,ArmyOptionIndex=20,ArmyUnitId="ID_UNIT-WARPER",
+                ArmySpawnComponentFileId=100,ArmyReservationFileId=0,Reason="warper"});
+            Check(warperConsumer.Consume(warperPage)==1,
+                  "Client event consumer accepts complete Warper presentation authority");
+            var invalidWarperPage=new MatchEventBatch{Code="events",LatestEventId=1};
+            invalidWarperPage.Events.Add(new MatchEvent{EventId=1,Tick=3,Kind=MatchEventKind.WarperWarpEnded,
+                ActorId=warperOwner,ArmyEntityId=1,ArmyOptionIndex=20,ArmyUnitId="ID_UNIT-SHOTGUNNER",
+                ArmySpawnComponentFileId=100,ArmyReservationFileId=0,Reason="warper"});
+            Reject(()=>new War.Client.MatchEventConsumer().Consume(invalidWarperPage));
             var interpolation=new SnapshotInterpolationBuffer(3);interpolation.Add(10,Vector3.Zero);interpolation.Add(20,new(10,0,0));
             Check(interpolation.Sample(15)==new Vector3(5,0,0)&&interpolation.Sample(5)==Vector3.Zero&&
                   interpolation.Sample(30)==new Vector3(10,0,0),
@@ -2012,6 +2030,23 @@ internal static class CombatContentTests
         Check(completedInitialRelocation&&observedLiveWarp&&
               Vector3.Distance(warperStart,new(relocatedWarper.X,relocatedWarper.Y,relocatedWarper.Z))>1,
               "live Warper completes its edge hop and final route before entering Rusher arrival");
+        var warperEvents=new List<MatchEvent>();ulong warperEventCursor=0,warperLatest;
+        do
+        {
+            var eventPage=warperMatch.EventBatch(soldierOwner,warperEventCursor);
+            Check(eventPage.Code=="events","live Warper event cursor remains valid");
+            warperLatest=eventPage.LatestEventId;warperEvents.AddRange(eventPage.Events);
+            if(eventPage.Events.Count>0)warperEventCursor=eventPage.Events[^1].EventId;
+        } while(warperEventCursor<warperLatest);
+        var presentationEvents=warperEvents.Where(x=>x.Kind==MatchEventKind.WarperWarpStarted||
+            x.Kind==MatchEventKind.WarperWarpEnded).ToArray();
+        Check(presentationEvents.Length>=2&&presentationEvents[0].Kind==MatchEventKind.WarperWarpStarted&&
+              presentationEvents[^1].Kind==MatchEventKind.WarperWarpEnded&&
+              presentationEvents.All(x=>x.ActorId==soldierOwner&&x.ArmyEntityId==liveWarper.LocalEntityId&&
+                  x.ArmyOptionIndex==liveWarper.OptionIndex&&x.ArmyUnitId=="ID_UNIT-WARPER"&&
+                  x.ArmySpawnComponentFileId==liveWarper.SpawnComponentFileId&&
+                  x.ArmyReservationFileId==liveWarper.ReservationFileId&&x.Reason=="warper"),
+              "live Warper publishes ordered source-bound transparent and normal-material events");
         bool postShotRestart=false;ulong? scheduledRestart=null,restartedAt=null;
         while(warperTick<1200)
         {

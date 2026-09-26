@@ -3,6 +3,7 @@ using System.Numerics;
 namespace War.BattleServer;
 
 public enum ArmyWarperRelocationPhase { Edge, Pause, Final, Complete }
+public enum ArmyWarperPresentationTransition { None, WarpStarted, WarpEnded }
 
 /// <summary>Server-owned initial Warper edge-hop sequence from EnemyController.WarpUpdate.</summary>
 public sealed class ArmyWarperRelocationState
@@ -54,19 +55,21 @@ public sealed class ArmyWarperRelocationState
         if(repeatAfterShot)legTicks=(int)MathF.Ceiling(1.3f*MatchManifest.TickRate);
     }
 
-    public void AdvanceTick()
+    public ArmyWarperPresentationTransition AdvanceTick()
     {
-        if(Phase==ArmyWarperRelocationPhase.Complete)return;
+        if(Phase==ArmyWarperRelocationPhase.Complete)return ArmyWarperPresentationTransition.None;
         if(Phase==ArmyWarperRelocationPhase.Pause)
         {
-            if(++pauseTicks<(int)MathF.Ceiling(policy.ArrivalPauseSeconds*MatchManifest.TickRate))return;
+            if(++pauseTicks<(int)MathF.Ceiling(policy.ArrivalPauseSeconds*MatchManifest.TickRate))
+                return ArmyWarperPresentationTransition.None;
             pauseTicks=0;
             if(edgeHopsRemaining>0)
             {motion=CreateEdge(Position);edgeHopsRemaining--;Phase=ArmyWarperRelocationPhase.Edge;}
             else
             {motion=CreateMotion(Position,finalDestination);Phase=ArmyWarperRelocationPhase.Final;}
-            return;
+            return ArmyWarperPresentationTransition.None;
         }
+        bool wasTransparent=Transparent;
         legTicks++;
         float seconds=legTicks/(float)MatchManifest.TickRate;
         float desired=seconds<policy.AccelerationSeconds
@@ -74,10 +77,16 @@ public sealed class ArmyWarperRelocationState
             : effectiveSpeed;
         if(seconds>policy.WarpAfterSeconds&&desired<2)desired=policy.WarpSpeed;
         motion.SetMaximumSpeed(desired);motion.AdvanceTick();
-        if(!motion.Arrived)return;
+        if(!motion.Arrived)
+            return !wasTransparent&&Transparent
+                ?ArmyWarperPresentationTransition.WarpStarted
+                :ArmyWarperPresentationTransition.None;
         legTicks=0;
         if(Phase==ArmyWarperRelocationPhase.Final)Phase=ArmyWarperRelocationPhase.Complete;
         else {CompletedEdgeHops++;Phase=ArmyWarperRelocationPhase.Pause;}
+        return wasTransparent
+            ?ArmyWarperPresentationTransition.WarpEnded
+            :ArmyWarperPresentationTransition.None;
     }
 
     private ArmyNavMeshMotionState CreateEdge(Vector3 start)

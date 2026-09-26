@@ -42,6 +42,12 @@ namespace War.Client
                     (!Guid.TryParseExact(item.ActorId, "N", out _) || !uint.TryParse(item.Reason, out var generation) || generation == 0 ||
                      item.ProjectileId == 0 || string.IsNullOrWhiteSpace(item.TargetId)))
                     throw new InvalidDataException("Invalid vehicle lifecycle event.");
+                if ((item.Kind == MatchEventKind.WarperWarpStarted || item.Kind == MatchEventKind.WarperWarpEnded) &&
+                    (!Guid.TryParseExact(item.ActorId, "N", out _) || item.TargetId != "" || item.ProjectileId != 0 ||
+                     item.ArmyEntityId <= 0 || item.ArmyOptionIndex < 0 || item.ArmyOptionIndex >= 48 ||
+                     item.ArmyUnitId != "ID_UNIT-WARPER" || item.ArmySpawnComponentFileId <= 0 ||
+                     item.ArmyReservationFileId < 0 || item.ArmyEnergyRecipientId != "" || item.Reason != "warper"))
+                    throw new InvalidDataException("Invalid Warper presentation event.");
             }
             if (batch.Events.Count > 0 && batch.Events[batch.Events.Count - 1].EventId > batch.LatestEventId)
                 throw new InvalidDataException("Event page exceeds its latest cursor.");
