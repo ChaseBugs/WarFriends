@@ -1094,10 +1094,12 @@ public sealed partial class MatchEngine
             {
                 try
                 {
-                    if(impact.Hit.DynamicPartId is not int partId)
-                        throw new InvalidDataException("Vehicle collision omitted its body part.");
-                    ApplyGroundVehicleProjectileImpact(impact.OwnerId,vehicleId,partId,
-                        pair.Value.Damage.Amount);
+                    if(impact.Hit.DynamicPassengerRole is { } role)
+                        ApplyGroundVehiclePassengerProjectileImpact(impact.OwnerId,vehicleId,role,
+                            pair.Value.Damage.Amount,impact.Hit.PartWeight);
+                    else if(impact.Hit.DynamicPartId is int partId)
+                        ApplyGroundVehicleProjectileImpact(impact.OwnerId,vehicleId,partId,pair.Value.Damage.Amount);
+                    else throw new InvalidDataException("Vehicle collision omitted its source target.");
                 }
                 catch(InvalidDataException){End("invalid-vehicle-impact-authority","",false);break;}
                 if(Terminal)break;

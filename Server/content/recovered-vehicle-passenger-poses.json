@@ -1,0 +1,3036 @@
+{
+  "version": 1,
+  "client": "1.4.0",
+  "source": "Assets/GameObject/enemy.prefab",
+  "sha256": "64b4db85d1c9a0bd46a690a86102a22f66feeab8d4157a4c87824ac3d5dbeb54",
+  "sampleRate": 30,
+  "clips": [
+    {
+      "name": "idle",
+      "sourceName": "idle_1",
+      "source": "Assets/AnimationClip/idle_1.anim",
+      "guid": "879d0cc21df0fe24e953d2ce4185c761",
+      "fileId": 7400000,
+      "sha256": "fc75d82afa2e12a7119e53ddad5db550273f71e513f487cd17b5bca1d8518b04",
+      "length": 1.0,
+      "wrap": "Loop",
+      "frames": [
+        {
+          "seconds": 0.0,
+          "parts": [
+            {
+              "role": "body-box",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+              "type": "BoxCollider",
+              "weight": 1.0,
+              "trigger": true,
+              "center": [
+                -0.003262986,
+                0.1738519,
+                -0.004904015
+              ],
+              "rotation": [
+                -0.481569678,
+                0.464060515,
+                0.545776248,
+                -0.5048433
+              ],
+              "size": [
+                0.183923468,
+                0.167806834,
+                0.216061786
+              ],
+              "radius": 0.0
+            },
+            {
+              "role": "body-sphere",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+              "type": "SphereCollider",
+              "weight": 1.0,
+              "trigger": true,
+              "center": [
+                -0.0075671454,
+                0.0884352848,
+                -0.003251938
+              ],
+              "rotation": [
+                -0.481569678,
+                0.464060515,
+                0.545776248,
+                -0.5048433
+              ],
+              "size": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "radius": 0.100000016
+            },
+            {
+              "role": "head",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+              "type": "SphereCollider",
+              "weight": 1.5,
+              "trigger": true,
+              "center": [
+                -0.00473477645,
+                0.4076463,
+                0.0282088537
+              ],
+              "rotation": [
+                -0.5116345,
+                0.4716499,
+                0.5396985,
+                -0.4738168
+              ],
+              "size": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "radius": 0.1300002
+            }
+          ]
+        },
+        {
+          "seconds": 0.0333333351,
+          "parts": [
+            {
+              "role": "body-box",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+              "type": "BoxCollider",
+              "weight": 1.0,
+              "trigger": true,
+              "center": [
+                -0.003263053,
+                0.1739009,
+                -0.004904596
+              ],
+              "rotation": [
+                -0.481569678,
+                0.464060515,
+                0.545776248,
+                -0.5048433
+              ],
+              "size": [
+                0.183923468,
+                0.167806834,
+                0.216061786
+              ],
+              "radius": 0.0
+            },
+            {
+              "role": "body-sphere",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+              "type": "SphereCollider",
+              "weight": 1.0,
+              "trigger": true,
+              "center": [
+                -0.00756721245,
+                0.08848428,
+                -0.003252519
+              ],
+              "rotation": [
+                -0.481569678,
+                0.464060515,
+                0.545776248,
+                -0.5048433
+              ],
+              "size": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "radius": 0.100000016
+            },
+            {
+              "role": "head",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+              "type": "SphereCollider",
+              "weight": 1.5,
+              "trigger": true,
+              "center": [
+                -0.00473916857,
+                0.407698274,
+                0.0281833131
+              ],
+              "rotation": [
+                -0.51167,
+                0.471605331,
+                0.5397303,
+                -0.473786652
+              ],
+              "size": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "radius": 0.130000219
+            }
+          ]
+        },
+        {
+          "seconds": 0.06666667,
+          "parts": [
+            {
+              "role": "body-box",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+              "type": "BoxCollider",
+              "weight": 1.0,
+              "trigger": true,
+              "center": [
+                -0.00326314475,
+                0.173968285,
+                -0.004905401
+              ],
+              "rotation": [
+                -0.481569678,
+                0.464060515,
+                0.545776248,
+                -0.5048433
+              ],
+              "size": [
+                0.183923468,
+                0.167806834,
+                0.216061786
+              ],
+              "radius": 0.0
+            },
+            {
+              "role": "body-sphere",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+              "type": "SphereCollider",
+              "weight": 1.0,
+              "trigger": true,
+              "center": [
+                -0.007567304,
+                0.0885516554,
+                -0.00325333863
+              ],
+              "rotation": [
+                -0.481569678,
+                0.464060515,
+                0.545776248,
+                -0.5048433
+              ],
+              "size": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "radius": 0.100000016
+            },
+            {
+              "role": "head",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+              "type": "SphereCollider",
+              "weight": 1.5,
+              "trigger": true,
+              "center": [
+                -0.00474865455,
+                0.407770753,
+                0.0281396229
+              ],
+              "rotation": [
+                -0.5117232,
+                0.471540779,
+                0.5397699,
+                -0.4737482
+              ],
+              "size": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "radius": 0.130000174
+            }
+          ]
+        },
+        {
+          "seconds": 0.1,
+          "parts": [
+            {
+              "role": "body-box",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+              "type": "BoxCollider",
+              "weight": 1.0,
+              "trigger": true,
+              "center": [
+                -0.00326325628,
+                0.17405057,
+                -0.004906399
+              ],
+              "rotation": [
+                -0.481569678,
+                0.464060515,
+                0.545776248,
+                -0.5048433
+              ],
+              "size": [
+                0.183923468,
+                0.167806834,
+                0.216061786
+              ],
+              "radius": 0.0
+            },
+            {
+              "role": "body-sphere",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+              "type": "SphereCollider",
+              "weight": 1.0,
+              "trigger": true,
+              "center": [
+                -0.00756741548,
+                0.0886339545,
+                -0.00325432955
+              ],
+              "rotation": [
+                -0.481569678,
+                0.464060515,
+                0.545776248,
+                -0.5048433
+              ],
+              "size": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "radius": 0.100000016
+            },
+            {
+              "role": "head",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+              "type": "SphereCollider",
+              "weight": 1.5,
+              "trigger": true,
+              "center": [
+                -0.00476255827,
+                0.40786,
+                0.0280808825
+              ],
+              "rotation": [
+                -0.511791646,
+                0.47145918,
+                0.539815843,
+                -0.4737031
+              ],
+              "size": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "radius": 0.130000174
+            }
+          ]
+        },
+        {
+          "seconds": 0.13333334,
+          "parts": [
+            {
+              "role": "body-box",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+              "type": "BoxCollider",
+              "weight": 1.0,
+              "trigger": true,
+              "center": [
+                -0.00326338317,
+                0.174144343,
+                -0.00490753166
+              ],
+              "rotation": [
+                -0.481569678,
+                0.464060515,
+                0.545776248,
+                -0.5048433
+              ],
+              "size": [
+                0.183923468,
+                0.167806834,
+                0.216061786
+              ],
+              "radius": 0.0
+            },
+            {
+              "role": "body-sphere",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+              "type": "SphereCollider",
+              "weight": 1.0,
+              "trigger": true,
+              "center": [
+                -0.00756754261,
+                0.08872771,
+                -0.003255462
+              ],
+              "rotation": [
+                -0.481569678,
+                0.464060515,
+                0.545776248,
+                -0.5048433
+              ],
+              "size": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "radius": 0.100000016
+            },
+            {
+              "role": "head",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+              "type": "SphereCollider",
+              "weight": 1.5,
+              "trigger": true,
+              "center": [
+                -0.00478031952,
+                0.407962084,
+                0.02801028
+              ],
+              "rotation": [
+                -0.5118728,
+                0.471363336,
+                0.539867,
+                -0.473652571
+              ],
+              "size": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "radius": 0.1300002
+            }
+          ]
+        },
+        {
+          "seconds": 0.166666672,
+          "parts": [
+            {
+              "role": "body-box",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+              "type": "BoxCollider",
+              "weight": 1.0,
+              "trigger": true,
+              "center": [
+                -0.00326352078,
+                0.174246073,
+                -0.00490875356
+              ],
+              "rotation": [
+                -0.481569678,
+                0.464060515,
+                0.545776248,
+                -0.5048433
+              ],
+              "size": [
+                0.183923468,
+                0.167806834,
+                0.216061786
+              ],
+              "radius": 0.0
+            },
+            {
+              "role": "body-sphere",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+              "type": "SphereCollider",
+              "weight": 1.0,
+              "trigger": true,
+              "center": [
+                -0.00756768,
+                0.0888294652,
+                -0.00325669139
+              ],
+              "rotation": [
+                -0.481569678,
+                0.464060515,
+                0.545776248,
+                -0.5048433
+              ],
+              "size": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "radius": 0.100000016
+            },
+            {
+              "role": "head",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+              "type": "SphereCollider",
+              "weight": 1.5,
+              "trigger": true,
+              "center": [
+                -0.004801227,
+                0.408072978,
+                0.0279308576
+              ],
+              "rotation": [
+                -0.511964,
+                0.471256226,
+                0.5399217,
+                -0.473597974
+              ],
+              "size": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "radius": 0.130000174
+            }
+          ]
+        },
+        {
+          "seconds": 0.2,
+          "parts": [
+            {
+              "role": "body-box",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+              "type": "BoxCollider",
+              "weight": 1.0,
+              "trigger": true,
+              "center": [
+                -0.00326366443,
+                0.174352378,
+                -0.004910035
+              ],
+              "rotation": [
+                -0.481569678,
+                0.464060515,
+                0.545776248,
+                -0.5048433
+              ],
+              "size": [
+                0.183923468,
+                0.167806834,
+                0.216061786
+              ],
+              "radius": 0.0
+            },
+            {
+              "role": "body-sphere",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+              "type": "SphereCollider",
+              "weight": 1.0,
+              "trigger": true,
+              "center": [
+                -0.007567824,
+                0.08893575,
+                -0.00325796544
+              ],
+              "rotation": [
+                -0.481569678,
+                0.464060515,
+                0.545776248,
+                -0.5048433
+              ],
+              "size": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "radius": 0.100000016
+            },
+            {
+              "role": "head",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+              "type": "SphereCollider",
+              "weight": 1.5,
+              "trigger": true,
+              "center": [
+                -0.004824664,
+                0.408189058,
+                0.0278457422
+              ],
+              "rotation": [
+                -0.512062967,
+                0.471140772,
+                0.5399791,
+                -0.473540783
+              ],
+              "size": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "radius": 0.130000234
+            }
+          ]
+        },
+        {
+          "seconds": 0.233333334,
+          "parts": [
+            {
+              "role": "body-box",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+              "type": "BoxCollider",
+              "weight": 1.0,
+              "trigger": true,
+              "center": [
+                -0.00326380949,
+                0.174459711,
+                -0.00491133146
+              ],
+              "rotation": [
+                -0.481569678,
+                0.464060515,
+                0.545776248,
+                -0.5048433
+              ],
+              "size": [
+                0.183923468,
+                0.167806834,
+                0.216061786
+              ],
+              "radius": 0.0
+            },
+            {
+              "role": "body-sphere",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+              "type": "SphereCollider",
+              "weight": 1.0,
+              "trigger": true,
+              "center": [
+                -0.00756796869,
+                0.0890430957,
+                -0.00325926184
+              ],
+              "rotation": [
+                -0.481569678,
+                0.464060515,
+                0.545776248,
+                -0.5048433
+              ],
+              "size": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "radius": 0.100000016
+            },
+            {
+              "role": "head",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+              "type": "SphereCollider",
+              "weight": 1.5,
+              "trigger": true,
+              "center": [
+                -0.00484998245,
+                0.4083063,
+                0.0277580041
+              ],
+              "rotation": [
+                -0.512166739,
+                0.4710196,
+                0.540037334,
+                -0.473482281
+              ],
+              "size": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "radius": 0.130000144
+            }
+          ]
+        },
+        {
+          "seconds": 0.266666681,
+          "parts": [
+            {
+              "role": "body-box",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+              "type": "BoxCollider",
+              "weight": 1.0,
+              "trigger": true,
+              "center": [
+                -0.00326395174,
+                0.174564674,
+                -0.004912598
+              ],
+              "rotation": [
+                -0.481569678,
+                0.464060515,
+                0.545776248,
+                -0.5048433
+              ],
+              "size": [
+                0.183923468,
+                0.167806834,
+                0.216061786
+              ],
+              "radius": 0.0
+            },
+            {
+              "role": "body-sphere",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+              "type": "SphereCollider",
+              "weight": 1.0,
+              "trigger": true,
+              "center": [
+                -0.007568111,
+                0.0891480446,
+                -0.00326052844
+              ],
+              "rotation": [
+                -0.481569678,
+                0.464060515,
+                0.545776248,
+                -0.5048433
+              ],
+              "size": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "radius": 0.100000016
+            },
+            {
+              "role": "head",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+              "type": "SphereCollider",
+              "weight": 1.5,
+              "trigger": true,
+              "center": [
+                -0.004876536,
+                0.40842092,
+                0.0276708324
+              ],
+              "rotation": [
+                -0.512273,
+                0.470895946,
+                0.540095448,
+                -0.473423928
+              ],
+              "size": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "radius": 0.130000144
+            }
+          ]
+        },
+        {
+          "seconds": 0.3,
+          "parts": [
+            {
+              "role": "body-box",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+              "type": "BoxCollider",
+              "weight": 1.0,
+              "trigger": true,
+              "center": [
+                -0.00326408562,
+                0.174663752,
+                -0.00491379
+              ],
+              "rotation": [
+                -0.481569678,
+                0.464060515,
+                0.545776248,
+                -0.5048433
+              ],
+              "size": [
+                0.183923468,
+                0.167806834,
+                0.216061786
+              ],
+              "radius": 0.0
+            },
+            {
+              "role": "body-sphere",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+              "type": "SphereCollider",
+              "weight": 1.0,
+              "trigger": true,
+              "center": [
+                -0.007568245,
+                0.08924713,
+                -0.00326172053
+              ],
+              "rotation": [
+                -0.481569678,
+                0.464060515,
+                0.545776248,
+                -0.5048433
+              ],
+              "size": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "radius": 0.100000016
+            },
+            {
+              "role": "head",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+              "type": "SphereCollider",
+              "weight": 1.5,
+              "trigger": true,
+              "center": [
+                -0.00490370626,
+                0.408529043,
+                0.0275872666
+              ],
+              "rotation": [
+                -0.5123794,
+                0.470772654,
+                0.5401522,
+                -0.473367274
+              ],
+              "size": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "radius": 0.130000219
+            }
+          ]
+        },
+        {
+          "seconds": 0.333333343,
+          "parts": [
+            {
+              "role": "body-box",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+              "type": "BoxCollider",
+              "weight": 1.0,
+              "trigger": true,
+              "center": [
+                -0.00326420669,
+                0.174753517,
+                -0.004914878
+              ],
+              "rotation": [
+                -0.481569678,
+                0.464060515,
+                0.545776248,
+                -0.5048433
+              ],
+              "size": [
+                0.183923468,
+                0.167806834,
+                0.216061786
+              ],
+              "radius": 0.0
+            },
+            {
+              "role": "body-sphere",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+              "type": "SphereCollider",
+              "weight": 1.0,
+              "trigger": true,
+              "center": [
+                -0.007568366,
+                0.08933689,
+                -0.00326280086
+              ],
+              "rotation": [
+                -0.481569678,
+                0.464060515,
+                0.545776248,
+                -0.5048433
+              ],
+              "size": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "radius": 0.100000016
+            },
+            {
+              "role": "head",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+              "type": "SphereCollider",
+              "weight": 1.5,
+              "trigger": true,
+              "center": [
+                -0.00493081752,
+                0.408627033,
+                0.0275104959
+              ],
+              "rotation": [
+                -0.512483,
+                0.4706523,
+                0.540205657,
+                -0.473313272
+              ],
+              "size": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "radius": 0.130000159
+            }
+          ]
+        },
+        {
+          "seconds": 0.366666675,
+          "parts": [
+            {
+              "role": "body-box",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+              "type": "BoxCollider",
+              "weight": 1.0,
+              "trigger": true,
+              "center": [
+                -0.003264311,
+                0.174830481,
+                -0.004915802
+              ],
+              "rotation": [
+                -0.481569678,
+                0.464060515,
+                0.545776248,
+                -0.5048433
+              ],
+              "size": [
+                0.183923468,
+                0.167806834,
+                0.216061786
+              ],
+              "radius": 0.0
+            },
+            {
+              "role": "body-sphere",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+              "type": "SphereCollider",
+              "weight": 1.0,
+              "trigger": true,
+              "center": [
+                -0.00756847,
+                0.08941387,
+                -0.00326372474
+              ],
+              "rotation": [
+                -0.481569678,
+                0.464060515,
+                0.545776248,
+                -0.5048433
+              ],
+              "size": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "radius": 0.100000016
+            },
+            {
+              "role": "head",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+              "type": "SphereCollider",
+              "weight": 1.5,
+              "trigger": true,
+              "center": [
+                -0.00495722331,
+                0.408710957,
+                0.02744356
+              ],
+              "rotation": [
+                -0.5125815,
+                0.470538259,
+                0.5402551,
+                -0.473263621
+              ],
+              "size": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "radius": 0.130000159
+            }
+          ]
+        },
+        {
+          "seconds": 0.4,
+          "parts": [
+            {
+              "role": "body-box",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+              "type": "BoxCollider",
+              "weight": 1.0,
+              "trigger": true,
+              "center": [
+                -0.00326439366,
+                0.174891189,
+                -0.004916532
+              ],
+              "rotation": [
+                -0.481569678,
+                0.464060515,
+                0.545776248,
+                -0.5048433
+              ],
+              "size": [
+                0.183923468,
+                0.167806834,
+                0.216061786
+              ],
+              "radius": 0.0
+            },
+            {
+              "role": "body-sphere",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+              "type": "SphereCollider",
+              "weight": 1.0,
+              "trigger": true,
+              "center": [
+                -0.00756855262,
+                0.0894745737,
+                -0.003264455
+              ],
+              "rotation": [
+                -0.481569678,
+                0.464060515,
+                0.545776248,
+                -0.5048433
+              ],
+              "size": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "radius": 0.100000016
+            },
+            {
+              "role": "head",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+              "type": "SphereCollider",
+              "weight": 1.5,
+              "trigger": true,
+              "center": [
+                -0.00498233968,
+                0.408777177,
+                0.0273896176
+              ],
+              "rotation": [
+                -0.5126724,
+                0.470433176,
+                0.540299,
+                -0.473219663
+              ],
+              "size": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "radius": 0.1300002
+            }
+          ]
+        },
+        {
+          "seconds": 0.433333337,
+          "parts": [
+            {
+              "role": "body-box",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+              "type": "BoxCollider",
+              "weight": 1.0,
+              "trigger": true,
+              "center": [
+                -0.0032644493,
+                0.174932182,
+                -0.0049170237
+              ],
+              "rotation": [
+                -0.481569678,
+                0.464060515,
+                0.545776248,
+                -0.5048433
+              ],
+              "size": [
+                0.183923468,
+                0.167806834,
+                0.216061786
+              ],
+              "radius": 0.0
+            },
+            {
+              "role": "body-sphere",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+              "type": "SphereCollider",
+              "weight": 1.0,
+              "trigger": true,
+              "center": [
+                -0.0075686085,
+                0.08951557,
+                -0.003264954
+              ],
+              "rotation": [
+                -0.481569678,
+                0.464060515,
+                0.545776248,
+                -0.5048433
+              ],
+              "size": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "radius": 0.100000016
+            },
+            {
+              "role": "head",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+              "type": "SphereCollider",
+              "weight": 1.5,
+              "trigger": true,
+              "center": [
+                -0.00500546,
+                0.408821881,
+                0.0273518283
+              ],
+              "rotation": [
+                -0.512753069,
+                0.470339864,
+                0.5403359,
+                -0.473182678
+              ],
+              "size": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "radius": 0.130000159
+            }
+          ]
+        },
+        {
+          "seconds": 0.466666669,
+          "parts": [
+            {
+              "role": "body-box",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+              "type": "BoxCollider",
+              "weight": 1.0,
+              "trigger": true,
+              "center": [
+                -0.003264474,
+                0.174949989,
+                -0.00491723232
+              ],
+              "rotation": [
+                -0.481569678,
+                0.464060515,
+                0.545776248,
+                -0.5048433
+              ],
+              "size": [
+                0.183923468,
+                0.167806834,
+                0.216061786
+              ],
+              "radius": 0.0
+            },
+            {
+              "role": "body-sphere",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+              "type": "SphereCollider",
+              "weight": 1.0,
+              "trigger": true,
+              "center": [
+                -0.007568633,
+                0.08953336,
+                -0.00326517015
+              ],
+              "rotation": [
+                -0.481569678,
+                0.464060515,
+                0.545776248,
+                -0.5048433
+              ],
+              "size": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "radius": 0.100000016
+            },
+            {
+              "role": "head",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+              "type": "SphereCollider",
+              "weight": 1.5,
+              "trigger": true,
+              "center": [
+                -0.005025974,
+                0.408841252,
+                0.0273332316
+              ],
+              "rotation": [
+                -0.5128211,
+                0.470261544,
+                0.540364563,
+                -0.473154128
+              ],
+              "size": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "radius": 0.130000174
+            }
+          ]
+        },
+        {
+          "seconds": 0.5,
+          "parts": [
+            {
+              "role": "body-box",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+              "type": "BoxCollider",
+              "weight": 1.0,
+              "trigger": true,
+              "center": [
+                -0.00326446234,
+                0.174941137,
+                -0.004917128
+              ],
+              "rotation": [
+                -0.481569678,
+                0.464060515,
+                0.545776248,
+                -0.5048433
+              ],
+              "size": [
+                0.183923468,
+                0.167806834,
+                0.216061786
+              ],
+              "radius": 0.0
+            },
+            {
+              "role": "body-sphere",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+              "type": "SphereCollider",
+              "weight": 1.0,
+              "trigger": true,
+              "center": [
+                -0.00756862154,
+                0.08952452,
+                -0.00326505839
+              ],
+              "rotation": [
+                -0.481569678,
+                0.464060515,
+                0.545776248,
+                -0.5048433
+              ],
+              "size": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "radius": 0.100000016
+            },
+            {
+              "role": "head",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+              "type": "SphereCollider",
+              "weight": 1.5,
+              "trigger": true,
+              "center": [
+                -0.00504323,
+                0.408831537,
+                0.0273370463
+              ],
+              "rotation": [
+                -0.512873948,
+                0.470200956,
+                0.5403837,
+                -0.473135471
+              ],
+              "size": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "radius": 0.1300002
+            }
+          ]
+        },
+        {
+          "seconds": 0.533333361,
+          "parts": [
+            {
+              "role": "body-box",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+              "type": "BoxCollider",
+              "weight": 1.0,
+              "trigger": true,
+              "center": [
+                -0.003264411,
+                0.174902186,
+                -0.004916666
+              ],
+              "rotation": [
+                -0.481569678,
+                0.464060515,
+                0.545776248,
+                -0.5048433
+              ],
+              "size": [
+                0.183923468,
+                0.167806834,
+                0.216061786
+              ],
+              "radius": 0.0
+            },
+            {
+              "role": "body-sphere",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+              "type": "SphereCollider",
+              "weight": 1.0,
+              "trigger": true,
+              "center": [
+                -0.00756857032,
+                0.08948556,
+                -0.003264589
+              ],
+              "rotation": [
+                -0.481569678,
+                0.464060515,
+                0.545776248,
+                -0.5048433
+              ],
+              "size": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "radius": 0.100000016
+            },
+            {
+              "role": "head",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+              "type": "SphereCollider",
+              "weight": 1.5,
+              "trigger": true,
+              "center": [
+                -0.005056592,
+                0.408788949,
+                0.0273662824
+              ],
+              "rotation": [
+                -0.512909,
+                0.470161,
+                0.5403918,
+                -0.473127842
+              ],
+              "size": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "radius": 0.1300002
+            }
+          ]
+        },
+        {
+          "seconds": 0.566666663,
+          "parts": [
+            {
+              "role": "body-box",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+              "type": "BoxCollider",
+              "weight": 1.0,
+              "trigger": true,
+              "center": [
+                -0.003264314,
+                0.174829647,
+                -0.004915787
+              ],
+              "rotation": [
+                -0.481569678,
+                0.464060515,
+                0.545776248,
+                -0.5048433
+              ],
+              "size": [
+                0.183923468,
+                0.167806834,
+                0.216061786
+              ],
+              "radius": 0.0
+            },
+            {
+              "role": "body-sphere",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+              "type": "SphereCollider",
+              "weight": 1.0,
+              "trigger": true,
+              "center": [
+                -0.00756847346,
+                0.08941303,
+                -0.00326371728
+              ],
+              "rotation": [
+                -0.481569678,
+                0.464060515,
+                0.545776248,
+                -0.5048433
+              ],
+              "size": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "radius": 0.100000016
+            },
+            {
+              "role": "head",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+              "type": "SphereCollider",
+              "weight": 1.5,
+              "trigger": true,
+              "center": [
+                -0.005065409,
+                0.408709824,
+                0.0274241585
+              ],
+              "rotation": [
+                -0.5129238,
+                0.470144659,
+                0.54038763,
+                -0.473132759
+              ],
+              "size": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "radius": 0.130000174
+            }
+          ]
+        },
+        {
+          "seconds": 0.6,
+          "parts": [
+            {
+              "role": "body-box",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+              "type": "BoxCollider",
+              "weight": 1.0,
+              "trigger": true,
+              "center": [
+                -0.00326416735,
+                0.174720064,
+                -0.0049144756
+              ],
+              "rotation": [
+                -0.481569678,
+                0.464060515,
+                0.545776248,
+                -0.5048433
+              ],
+              "size": [
+                0.183923468,
+                0.167806834,
+                0.216061786
+              ],
+              "radius": 0.0
+            },
+            {
+              "role": "body-sphere",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+              "type": "SphereCollider",
+              "weight": 1.0,
+              "trigger": true,
+              "center": [
+                -0.007568327,
+                0.08930345,
+                -0.00326239853
+              ],
+              "rotation": [
+                -0.481569678,
+                0.464060515,
+                0.545776248,
+                -0.5048433
+              ],
+              "size": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "radius": 0.100000016
+            },
+            {
+              "role": "head",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+              "type": "SphereCollider",
+              "weight": 1.5,
+              "trigger": true,
+              "center": [
+                -0.0050690677,
+                0.408590138,
+                0.0275136847
+              ],
+              "rotation": [
+                -0.51291573,
+                0.4701548,
+                0.5403698,
+                -0.4731515
+              ],
+              "size": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "radius": 0.130000144
+            }
+          ]
+        },
+        {
+          "seconds": 0.6333333,
+          "parts": [
+            {
+              "role": "body-box",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+              "type": "BoxCollider",
+              "weight": 1.0,
+              "trigger": true,
+              "center": [
+                -0.00326399,
+                0.1745914,
+                -0.004912926
+              ],
+              "rotation": [
+                -0.481569678,
+                0.464060515,
+                0.545776248,
+                -0.5048433
+              ],
+              "size": [
+                0.183923468,
+                0.167806834,
+                0.216061786
+              ],
+              "radius": 0.0
+            },
+            {
+              "role": "body-sphere",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+              "type": "SphereCollider",
+              "weight": 1.0,
+              "trigger": true,
+              "center": [
+                -0.00756814936,
+                0.08917478,
+                -0.00326084881
+              ],
+              "rotation": [
+                -0.481569678,
+                0.464060515,
+                0.545776248,
+                -0.5048433
+              ],
+              "size": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "radius": 0.100000016
+            },
+            {
+              "role": "head",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+              "type": "SphereCollider",
+              "weight": 1.5,
+              "trigger": true,
+              "center": [
+                -0.005066897,
+                0.4084476,
+                0.0276375432
+              ],
+              "rotation": [
+                -0.5128824,
+                0.470194459,
+                0.5403371,
+                -0.473185718
+              ],
+              "size": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "radius": 0.130000159
+            }
+          ]
+        },
+        {
+          "seconds": 0.6666667,
+          "parts": [
+            {
+              "role": "body-box",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+              "type": "BoxCollider",
+              "weight": 1.0,
+              "trigger": true,
+              "center": [
+                -0.00326381717,
+                0.174465463,
+                -0.004911406
+              ],
+              "rotation": [
+                -0.481569678,
+                0.464060515,
+                0.545776248,
+                -0.5048433
+              ],
+              "size": [
+                0.183923468,
+                0.167806834,
+                0.216061786
+              ],
+              "radius": 0.0
+            },
+            {
+              "role": "body-sphere",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+              "type": "SphereCollider",
+              "weight": 1.0,
+              "trigger": true,
+              "center": [
+                -0.0075679766,
+                0.08904884,
+                -0.003259329
+              ],
+              "rotation": [
+                -0.481569678,
+                0.464060515,
+                0.545776248,
+                -0.5048433
+              ],
+              "size": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "radius": 0.100000016
+            },
+            {
+              "role": "head",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+              "type": "SphereCollider",
+              "weight": 1.5,
+              "trigger": true,
+              "center": [
+                -0.005053805,
+                0.408307582,
+                0.0277641136
+              ],
+              "rotation": [
+                -0.512812257,
+                0.470277131,
+                0.5402881,
+                -0.4732358
+              ],
+              "size": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "radius": 0.1300002
+            }
+          ]
+        },
+        {
+          "seconds": 0.7,
+          "parts": [
+            {
+              "role": "body-box",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+              "type": "BoxCollider",
+              "weight": 1.0,
+              "trigger": true,
+              "center": [
+                -0.00326365232,
+                0.17434451,
+                -0.00490994565
+              ],
+              "rotation": [
+                -0.481569678,
+                0.464060515,
+                0.545776248,
+                -0.5048433
+              ],
+              "size": [
+                0.183923468,
+                0.167806834,
+                0.216061786
+              ],
+              "radius": 0.0
+            },
+            {
+              "role": "body-sphere",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+              "type": "SphereCollider",
+              "weight": 1.0,
+              "trigger": true,
+              "center": [
+                -0.00756781176,
+                0.0889278948,
+                -0.003257876
+              ],
+              "rotation": [
+                -0.481569678,
+                0.464060515,
+                0.545776248,
+                -0.5048433
+              ],
+              "size": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "radius": 0.100000016
+            },
+            {
+              "role": "head",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+              "type": "SphereCollider",
+              "weight": 1.5,
+              "trigger": true,
+              "center": [
+                -0.00502867531,
+                0.408174783,
+                0.0278717
+              ],
+              "rotation": [
+                -0.512705,
+                0.470402628,
+                0.5402251,
+                -0.4732988
+              ],
+              "size": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "radius": 0.130000144
+            }
+          ]
+        },
+        {
+          "seconds": 0.733333349,
+          "parts": [
+            {
+              "role": "body-box",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+              "type": "BoxCollider",
+              "weight": 1.0,
+              "trigger": true,
+              "center": [
+                -0.003263497,
+                0.174230784,
+                -0.00490857475
+              ],
+              "rotation": [
+                -0.481569678,
+                0.464060515,
+                0.545776248,
+                -0.5048433
+              ],
+              "size": [
+                0.183923468,
+                0.167806834,
+                0.216061786
+              ],
+              "radius": 0.0
+            },
+            {
+              "role": "body-sphere",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+              "type": "SphereCollider",
+              "weight": 1.0,
+              "trigger": true,
+              "center": [
+                -0.007567656,
+                0.0888141841,
+                -0.00325650512
+              ],
+              "rotation": [
+                -0.481569678,
+                0.464060515,
+                0.545776248,
+                -0.5048433
+              ],
+              "size": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "radius": 0.100000016
+            },
+            {
+              "role": "head",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+              "type": "SphereCollider",
+              "weight": 1.5,
+              "trigger": true,
+              "center": [
+                -0.004994344,
+                0.4080514,
+                0.027961703
+              ],
+              "rotation": [
+                -0.51257056,
+                0.470560282,
+                0.540152431,
+                -0.473371029
+              ],
+              "size": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "radius": 0.1300002
+            }
+          ]
+        },
+        {
+          "seconds": 0.766666651,
+          "parts": [
+            {
+              "role": "body-box",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+              "type": "BoxCollider",
+              "weight": 1.0,
+              "trigger": true,
+              "center": [
+                -0.003263356,
+                0.17412658,
+                -0.004907323
+              ],
+              "rotation": [
+                -0.481569678,
+                0.464060515,
+                0.545776248,
+                -0.5048433
+              ],
+              "size": [
+                0.183923468,
+                0.167806834,
+                0.216061786
+              ],
+              "radius": 0.0
+            },
+            {
+              "role": "body-sphere",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+              "type": "SphereCollider",
+              "weight": 1.0,
+              "trigger": true,
+              "center": [
+                -0.007567515,
+                0.0887099653,
+                -0.003255246
+              ],
+              "rotation": [
+                -0.481569678,
+                0.464060515,
+                0.545776248,
+                -0.5048433
+              ],
+              "size": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "radius": 0.100000016
+            },
+            {
+              "role": "head",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+              "type": "SphereCollider",
+              "weight": 1.5,
+              "trigger": true,
+              "center": [
+                -0.0049537397,
+                0.407939255,
+                0.028035434
+              ],
+              "rotation": [
+                -0.512417853,
+                0.47073853,
+                0.540073752,
+                -0.473448455
+              ],
+              "size": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "radius": 0.130000129
+            }
+          ]
+        },
+        {
+          "seconds": 0.8,
+          "parts": [
+            {
+              "role": "body-box",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+              "type": "BoxCollider",
+              "weight": 1.0,
+              "trigger": true,
+              "center": [
+                -0.00326323044,
+                0.174034089,
+                -0.00490620546
+              ],
+              "rotation": [
+                -0.481569678,
+                0.464060515,
+                0.545776248,
+                -0.5048433
+              ],
+              "size": [
+                0.183923468,
+                0.167806834,
+                0.216061786
+              ],
+              "radius": 0.0
+            },
+            {
+              "role": "body-sphere",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+              "type": "SphereCollider",
+              "weight": 1.0,
+              "trigger": true,
+              "center": [
+                -0.00756739,
+                0.0886174738,
+                -0.00325413584
+              ],
+              "rotation": [
+                -0.481569678,
+                0.464060515,
+                0.545776248,
+                -0.5048433
+              ],
+              "size": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "radius": 0.100000016
+            },
+            {
+              "role": "head",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+              "type": "SphereCollider",
+              "weight": 1.5,
+              "trigger": true,
+              "center": [
+                -0.00490967743,
+                0.407840461,
+                0.0280942041
+              ],
+              "rotation": [
+                -0.5122565,
+                0.47092694,
+                0.5399935,
+                -0.473527431
+              ],
+              "size": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "radius": 0.130000159
+            }
+          ]
+        },
+        {
+          "seconds": 0.8333333,
+          "parts": [
+            {
+              "role": "body-box",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+              "type": "BoxCollider",
+              "weight": 1.0,
+              "trigger": true,
+              "center": [
+                -0.00326312473,
+                0.173955619,
+                -0.00490526669
+              ],
+              "rotation": [
+                -0.481569678,
+                0.464060515,
+                0.545776248,
+                -0.5048433
+              ],
+              "size": [
+                0.183923468,
+                0.167806834,
+                0.216061786
+              ],
+              "radius": 0.0
+            },
+            {
+              "role": "body-sphere",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+              "type": "SphereCollider",
+              "weight": 1.0,
+              "trigger": true,
+              "center": [
+                -0.007567284,
+                0.08853899,
+                -0.00325318961
+              ],
+              "rotation": [
+                -0.481569678,
+                0.464060515,
+                0.545776248,
+                -0.5048433
+              ],
+              "size": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "radius": 0.100000016
+            },
+            {
+              "role": "head",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+              "type": "SphereCollider",
+              "weight": 1.5,
+              "trigger": true,
+              "center": [
+                -0.00486508664,
+                0.4077572,
+                0.0281393845
+              ],
+              "rotation": [
+                -0.512095869,
+                0.4711141,
+                0.5399155,
+                -0.473604053
+              ],
+              "size": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "radius": 0.130000174
+            }
+          ]
+        },
+        {
+          "seconds": 0.8666667,
+          "parts": [
+            {
+              "role": "body-box",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+              "type": "BoxCollider",
+              "weight": 1.0,
+              "trigger": true,
+              "center": [
+                -0.003263041,
+                0.173893362,
+                -0.00490450673
+              ],
+              "rotation": [
+                -0.481569678,
+                0.464060515,
+                0.545776248,
+                -0.5048433
+              ],
+              "size": [
+                0.183923468,
+                0.167806834,
+                0.216061786
+              ],
+              "radius": 0.0
+            },
+            {
+              "role": "body-sphere",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+              "type": "SphereCollider",
+              "weight": 1.0,
+              "trigger": true,
+              "center": [
+                -0.00756720034,
+                0.0884767547,
+                -0.003252437
+              ],
+              "rotation": [
+                -0.481569678,
+                0.464060515,
+                0.545776248,
+                -0.5048433
+              ],
+              "size": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "radius": 0.100000016
+            },
+            {
+              "role": "head",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+              "type": "SphereCollider",
+              "weight": 1.5,
+              "trigger": true,
+              "center": [
+                -0.004822847,
+                0.407691419,
+                0.0281723458
+              ],
+              "rotation": [
+                -0.5119454,
+                0.471289247,
+                0.539843559,
+                -0.473674417
+              ],
+              "size": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "radius": 0.1300002
+            }
+          ]
+        },
+        {
+          "seconds": 0.9,
+          "parts": [
+            {
+              "role": "body-box",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+              "type": "BoxCollider",
+              "weight": 1.0,
+              "trigger": true,
+              "center": [
+                -0.00326298247,
+                0.173849612,
+                -0.004903985
+              ],
+              "rotation": [
+                -0.481569678,
+                0.464060515,
+                0.545776248,
+                -0.5048433
+              ],
+              "size": [
+                0.183923468,
+                0.167806834,
+                0.216061786
+              ],
+              "radius": 0.0
+            },
+            {
+              "role": "body-sphere",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+              "type": "SphereCollider",
+              "weight": 1.0,
+              "trigger": true,
+              "center": [
+                -0.00756714167,
+                0.0884330049,
+                -0.00325191556
+              ],
+              "rotation": [
+                -0.481569678,
+                0.464060515,
+                0.545776248,
+                -0.5048433
+              ],
+              "size": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "radius": 0.100000016
+            },
+            {
+              "role": "head",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+              "type": "SphereCollider",
+              "weight": 1.5,
+              "trigger": true,
+              "center": [
+                -0.004785801,
+                0.407645345,
+                0.02819443
+              ],
+              "rotation": [
+                -0.5118147,
+                0.471441358,
+                0.539782,
+                -0.473734856
+              ],
+              "size": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "radius": 0.130000234
+            }
+          ]
+        },
+        {
+          "seconds": 0.933333337,
+          "parts": [
+            {
+              "role": "body-box",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+              "type": "BoxCollider",
+              "weight": 1.0,
+              "trigger": true,
+              "center": [
+                -0.0032629515,
+                0.173826635,
+                -0.004903702
+              ],
+              "rotation": [
+                -0.481569678,
+                0.464060515,
+                0.545776248,
+                -0.5048433
+              ],
+              "size": [
+                0.183923468,
+                0.167806834,
+                0.216061786
+              ],
+              "radius": 0.0
+            },
+            {
+              "role": "body-sphere",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+              "type": "SphereCollider",
+              "weight": 1.0,
+              "trigger": true,
+              "center": [
+                -0.007567111,
+                0.08841001,
+                -0.00325163244
+              ],
+              "rotation": [
+                -0.481569678,
+                0.464060515,
+                0.545776248,
+                -0.5048433
+              ],
+              "size": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "radius": 0.100000016
+            },
+            {
+              "role": "head",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+              "type": "SphereCollider",
+              "weight": 1.5,
+              "trigger": true,
+              "center": [
+                -0.004756859,
+                0.407621056,
+                0.0282069761
+              ],
+              "rotation": [
+                -0.5117129,
+                0.4715595,
+                0.5397346,
+                -0.473781168
+              ],
+              "size": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "radius": 0.1300002
+            }
+          ]
+        },
+        {
+          "seconds": 0.966666639,
+          "parts": [
+            {
+              "role": "body-box",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+              "type": "BoxCollider",
+              "weight": 1.0,
+              "trigger": true,
+              "center": [
+                -0.0032629515,
+                0.173826635,
+                -0.004903702
+              ],
+              "rotation": [
+                -0.481569678,
+                0.464060515,
+                0.545776248,
+                -0.5048433
+              ],
+              "size": [
+                0.183923468,
+                0.167806834,
+                0.216061786
+              ],
+              "radius": 0.0
+            },
+            {
+              "role": "body-sphere",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+              "type": "SphereCollider",
+              "weight": 1.0,
+              "trigger": true,
+              "center": [
+                -0.007567111,
+                0.08841002,
+                -0.00325163244
+              ],
+              "rotation": [
+                -0.481569678,
+                0.464060515,
+                0.545776248,
+                -0.5048433
+              ],
+              "size": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "radius": 0.100000016
+            },
+            {
+              "role": "head",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+              "type": "SphereCollider",
+              "weight": 1.5,
+              "trigger": true,
+              "center": [
+                -0.00473890128,
+                0.4076206,
+                0.0282113571
+              ],
+              "rotation": [
+                -0.5116496,
+                0.4716325,
+                0.5397053,
+                -0.4738097
+              ],
+              "size": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "radius": 0.130000159
+            }
+          ]
+        },
+        {
+          "seconds": 1.0,
+          "parts": [
+            {
+              "role": "body-box",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+              "type": "BoxCollider",
+              "weight": 1.0,
+              "trigger": true,
+              "center": [
+                -0.003262986,
+                0.1738519,
+                -0.004904015
+              ],
+              "rotation": [
+                -0.481569678,
+                0.464060515,
+                0.545776248,
+                -0.5048433
+              ],
+              "size": [
+                0.183923468,
+                0.167806834,
+                0.216061786
+              ],
+              "radius": 0.0
+            },
+            {
+              "role": "body-sphere",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+              "type": "SphereCollider",
+              "weight": 1.0,
+              "trigger": true,
+              "center": [
+                -0.0075671454,
+                0.0884352848,
+                -0.003251938
+              ],
+              "rotation": [
+                -0.481569678,
+                0.464060515,
+                0.545776248,
+                -0.5048433
+              ],
+              "size": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "radius": 0.100000016
+            },
+            {
+              "role": "head",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+              "type": "SphereCollider",
+              "weight": 1.5,
+              "trigger": true,
+              "center": [
+                -0.00473477645,
+                0.4076463,
+                0.0282088537
+              ],
+              "rotation": [
+                -0.5116345,
+                0.4716499,
+                0.5396985,
+                -0.4738168
+              ],
+              "size": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "radius": 0.1300002
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "buggy_idle",
+      "sourceName": "buggy_idle",
+      "source": "Assets/AnimationClip/buggy_idle.anim",
+      "guid": "cbb79b3a7761a8f4b9510c18098567ae",
+      "fileId": 7400000,
+      "sha256": "8cb15c87938dfdcce643fbb052443b4864c5f4a672bd064e9c1b3098a9a41193",
+      "length": 0.200004578,
+      "wrap": "ClampForever",
+      "frames": [
+        {
+          "seconds": 0.0,
+          "parts": [
+            {
+              "role": "body-box",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+              "type": "BoxCollider",
+              "weight": 1.0,
+              "trigger": true,
+              "center": [
+                -0.00330838235,
+                0.173583791,
+                0.00268291146
+              ],
+              "rotation": [
+                -0.5038665,
+                0.4394797,
+                0.5654929,
+                -0.482901454
+              ],
+              "size": [
+                0.183923453,
+                0.1678068,
+                0.216061816
+              ],
+              "radius": 0.0
+            },
+            {
+              "role": "body-sphere",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+              "type": "SphereCollider",
+              "weight": 1.0,
+              "trigger": true,
+              "center": [
+                -0.007567037,
+                0.08835523,
+                -0.00325096934
+              ],
+              "rotation": [
+                -0.5038665,
+                0.4394797,
+                0.5654929,
+                -0.482901454
+              ],
+              "size": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "radius": 0.100000016
+            },
+            {
+              "role": "head",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+              "type": "SphereCollider",
+              "weight": 1.5,
+              "trigger": true,
+              "center": [
+                0.006375435,
+                0.408788741,
+                0.007659735
+              ],
+              "rotation": [
+                -0.512015,
+                0.4727856,
+                0.54852587,
+                -0.461989
+              ],
+              "size": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "radius": 0.13000223
+            }
+          ]
+        },
+        {
+          "seconds": 0.0333333351,
+          "parts": [
+            {
+              "role": "body-box",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+              "type": "BoxCollider",
+              "weight": 1.0,
+              "trigger": true,
+              "center": [
+                -0.003311727,
+                0.173583969,
+                0.00268295617
+              ],
+              "rotation": [
+                -0.503865957,
+                0.439459741,
+                0.5654926,
+                -0.4829208
+              ],
+              "size": [
+                0.1839235,
+                0.167806864,
+                0.21606186
+              ],
+              "radius": 0.0
+            },
+            {
+              "role": "body-sphere",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+              "type": "SphereCollider",
+              "weight": 1.0,
+              "trigger": true,
+              "center": [
+                -0.00756703736,
+                0.08835522,
+                -0.00325096934
+              ],
+              "rotation": [
+                -0.503865957,
+                0.439459741,
+                0.5654926,
+                -0.4829208
+              ],
+              "size": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "radius": 0.100000039
+            },
+            {
+              "role": "head",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+              "type": "SphereCollider",
+              "weight": 1.5,
+              "trigger": true,
+              "center": [
+                0.006076551,
+                0.408770025,
+                0.007705303
+              ],
+              "rotation": [
+                -0.5124661,
+                0.4725909,
+                0.5483327,
+                -0.461917669
+              ],
+              "size": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "radius": 0.1300056
+            }
+          ]
+        },
+        {
+          "seconds": 0.06666667,
+          "parts": [
+            {
+              "role": "body-box",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+              "type": "BoxCollider",
+              "weight": 1.0,
+              "trigger": true,
+              "center": [
+                -0.00330815464,
+                0.173583761,
+                0.00268291146
+              ],
+              "rotation": [
+                -0.503866553,
+                0.43948108,
+                0.565493,
+                -0.482900143
+              ],
+              "size": [
+                0.183923483,
+                0.1678068,
+                0.216061831
+              ],
+              "radius": 0.0
+            },
+            {
+              "role": "body-sphere",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+              "type": "SphereCollider",
+              "weight": 1.0,
+              "trigger": true,
+              "center": [
+                -0.007567037,
+                0.08835522,
+                -0.00325096934
+              ],
+              "rotation": [
+                -0.503866553,
+                0.43948108,
+                0.565493,
+                -0.482900143
+              ],
+              "size": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "radius": 0.100000024
+            },
+            {
+              "role": "head",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+              "type": "SphereCollider",
+              "weight": 1.5,
+              "trigger": true,
+              "center": [
+                0.00641321531,
+                0.408656955,
+                0.00767007656
+              ],
+              "rotation": [
+                -0.511983931,
+                0.4727991,
+                0.5485394,
+                -0.461993933
+              ],
+              "size": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "radius": 0.130013332
+            }
+          ]
+        },
+        {
+          "seconds": 0.1,
+          "parts": [
+            {
+              "role": "body-box",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+              "type": "BoxCollider",
+              "weight": 1.0,
+              "trigger": true,
+              "center": [
+                -0.003304917,
+                0.173583612,
+                0.00268286676
+              ],
+              "rotation": [
+                -0.5038671,
+                0.439500451,
+                0.5654934,
+                -0.482881546
+              ],
+              "size": [
+                0.183923483,
+                0.167806834,
+                0.216061831
+              ],
+              "radius": 0.0
+            },
+            {
+              "role": "body-sphere",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+              "type": "SphereCollider",
+              "weight": 1.0,
+              "trigger": true,
+              "center": [
+                -0.007567036,
+                0.08835523,
+                -0.00325096934
+              ],
+              "rotation": [
+                -0.5038671,
+                0.439500451,
+                0.5654934,
+                -0.482881546
+              ],
+              "size": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "radius": 0.100000024
+            },
+            {
+              "role": "head",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+              "type": "SphereCollider",
+              "weight": 1.5,
+              "trigger": true,
+              "center": [
+                0.006714519,
+                0.4085676,
+                0.00763690658
+              ],
+              "rotation": [
+                -0.5115497,
+                0.472985446,
+                0.5487264,
+                -0.4620619
+              ],
+              "size": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "radius": 0.130020782
+            }
+          ]
+        },
+        {
+          "seconds": 0.13333334,
+          "parts": [
+            {
+              "role": "body-box",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+              "type": "BoxCollider",
+              "weight": 1.0,
+              "trigger": true,
+              "center": [
+                -0.00330871833,
+                0.173571944,
+                0.00285072834
+              ],
+              "rotation": [
+                -0.5043393,
+                0.438918322,
+                0.565927565,
+                -0.4824091
+              ],
+              "size": [
+                0.183923468,
+                0.167806789,
+                0.216061816
+              ],
+              "radius": 0.0
+            },
+            {
+              "role": "body-sphere",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+              "type": "SphereCollider",
+              "weight": 1.0,
+              "trigger": true,
+              "center": [
+                -0.00756703643,
+                0.0883552358,
+                -0.00325096934
+              ],
+              "rotation": [
+                -0.5043393,
+                0.438918322,
+                0.565927565,
+                -0.4824091
+              ],
+              "size": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "radius": 0.100000016
+            },
+            {
+              "role": "head",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+              "type": "SphereCollider",
+              "weight": 1.5,
+              "trigger": true,
+              "center": [
+                0.00611678325,
+                0.408639073,
+                0.008091511
+              ],
+              "rotation": [
+                -0.512613058,
+                0.4722092,
+                0.5484001,
+                -0.462064862
+              ],
+              "size": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "radius": 0.130018175
+            }
+          ]
+        },
+        {
+          "seconds": 0.166666672,
+          "parts": [
+            {
+              "role": "body-box",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+              "type": "BoxCollider",
+              "weight": 1.0,
+              "trigger": true,
+              "center": [
+                -0.003320757,
+                0.173781365,
+                -0.00211693253
+              ],
+              "rotation": [
+                -0.490097761,
+                0.4551265,
+                0.552917242,
+                -0.496937245
+              ],
+              "size": [
+                0.183923468,
+                0.167806819,
+                0.216061831
+              ],
+              "radius": 0.0
+            },
+            {
+              "role": "body-sphere",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+              "type": "SphereCollider",
+              "weight": 1.0,
+              "trigger": true,
+              "center": [
+                -0.00756704155,
+                0.08835344,
+                -0.003253623
+              ],
+              "rotation": [
+                -0.490097761,
+                0.4551265,
+                0.552917242,
+                -0.496937245
+              ],
+              "size": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "radius": 0.100000024
+            },
+            {
+              "role": "head",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+              "type": "SphereCollider",
+              "weight": 1.5,
+              "trigger": true,
+              "center": [
+                0.0116413264,
+                0.40783897,
+                -0.00379981
+              ],
+              "rotation": [
+                -0.499946862,
+                0.4866363,
+                0.550285935,
+                -0.45871976
+              ],
+              "size": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "radius": 0.130004823
+            }
+          ]
+        },
+        {
+          "seconds": 0.2,
+          "parts": [
+            {
+              "role": "body-box",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+              "type": "BoxCollider",
+              "weight": 1.0,
+              "trigger": true,
+              "center": [
+                -0.00315707037,
+                0.263385743,
+                0.108197987
+              ],
+              "rotation": [
+                -0.396634638,
+                0.5427173,
+                0.4667604,
+                -0.574694455
+              ],
+              "size": [
+                0.183923483,
+                0.167806879,
+                0.216061831
+              ],
+              "radius": 0.0
+            },
+            {
+              "role": "body-sphere",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+              "type": "SphereCollider",
+              "weight": 1.0,
+              "trigger": true,
+              "center": [
+                -0.00730987824,
+                0.182637453,
+                0.136121452
+              ],
+              "rotation": [
+                -0.396634638,
+                0.5427173,
+                0.4667604,
+                -0.574694455
+              ],
+              "size": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "radius": 0.100000039
+            },
+            {
+              "role": "head",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+              "type": "SphereCollider",
+              "weight": 1.5,
+              "trigger": true,
+              "center": [
+                -0.00132188213,
+                0.486840457,
+                0.07610077
+              ],
+              "rotation": [
+                -0.4852555,
+                0.5051796,
+                0.5192397,
+                -0.489603072
+              ],
+              "size": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "radius": 0.130051076
+            }
+          ]
+        },
+        {
+          "seconds": 0.200004578,
+          "parts": [
+            {
+              "role": "body-box",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+              "type": "BoxCollider",
+              "weight": 1.0,
+              "trigger": true,
+              "center": [
+                -0.00315707061,
+                0.263385773,
+                0.108198017
+              ],
+              "rotation": [
+                -0.396634638,
+                0.5427173,
+                0.4667604,
+                -0.574694455
+              ],
+              "size": [
+                0.183923483,
+                0.167806879,
+                0.216061831
+              ],
+              "radius": 0.0
+            },
+            {
+              "role": "body-sphere",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+              "type": "SphereCollider",
+              "weight": 1.0,
+              "trigger": true,
+              "center": [
+                -0.00730987824,
+                0.182637453,
+                0.136121482
+              ],
+              "rotation": [
+                -0.396634638,
+                0.5427173,
+                0.4667604,
+                -0.574694455
+              ],
+              "size": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "radius": 0.100000039
+            },
+            {
+              "role": "head",
+              "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+              "type": "SphereCollider",
+              "weight": 1.5,
+              "trigger": true,
+              "center": [
+                -0.00132188317,
+                0.486840457,
+                0.07610078
+              ],
+              "rotation": [
+                -0.4852555,
+                0.5051796,
+                0.5192397,
+                -0.489603072
+              ],
+              "size": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "radius": 0.130051076
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

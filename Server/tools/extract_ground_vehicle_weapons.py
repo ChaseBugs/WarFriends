@@ -4,6 +4,7 @@ from pathlib import Path
 ROOT=Path(__file__).resolve().parents[2]
 ASSETS=ROOT/'Clients/ExportedProject/Assets'
 OUTPUT=ROOT/'Server/content/recovered-ground-vehicle-weapons.json'
+PASSENGER_POSES=ROOT/'Server/content/recovered-vehicle-passenger-poses.json'
 VEHICLES=[
  ('ID_UNIT-HUMVEE','Humvee.prefab','AICar',(('primary','turret'),('cannon','cannon')),
   (('gunner','enemyPointVehicle'),)),
@@ -62,11 +63,12 @@ def world(blocks,tid):
  pos,rot,_=world_transform(blocks,tid)
  return pos,rot
 
-def component_position(blocks,cid):
+def component_transform(blocks,cid):
  component=blocks[cid][1];game_object=ref(component,'m_GameObject')
  transforms=[i for i,(kind,b) in blocks.items() if kind==4 and ref(b,'m_GameObject')==game_object]
  if len(transforms)!=1: raise ValueError('passenger point has no unique transform')
- return transforms[0],world(blocks,transforms[0])[0]
+ position,rotation=world(blocks,transforms[0])
+ return transforms[0],position,rotation
 
 def vehicle_body_parts(blocks,scripts):
  rows=[]
@@ -186,13 +188,16 @@ def main():
   for role,field_name in passenger_fields:
    point_id=ref(root,field_name)
    if point_id<=0 or scripts.get(point_id)!='EnemyPointVehicle': raise ValueError('missing vehicle passenger point')
-   transform_id,position=component_position(blocks,point_id)
+   transform_id,position,rotation=component_transform(blocks,point_id)
    passengers.append({'role':role,'pointComponentFileId':point_id,
-    'transformFileId':transform_id,'position':position})
+    'transformFileId':transform_id,'position':position,'rotation':rotation})
   out.append({'unitId':unit,'prefab':'Assets/GameObject/'+prefab_name,
    'sha256':hashlib.sha256(raw).hexdigest(),'behaviorType':root_type,'roles':role_rows,
    'passengers':passengers,'bodyParts':vehicle_body_parts(blocks,scripts)})
- artifact={'version':5,'armoredVehicleShotCoefficient':0.33,'vehicles':out};serialized=json.dumps(artifact,indent=2)+'\n'
+ if not PASSENGER_POSES.exists(): raise ValueError('missing Unity passenger pose artifact')
+ artifact={'version':6,'armoredVehicleShotCoefficient':0.33,
+  'passengerPoseRevision':hashlib.sha256(PASSENGER_POSES.read_bytes()).hexdigest(),'vehicles':out}
+ serialized=json.dumps(artifact,indent=2)+'\n'
  if sys.argv[1:]==['--check']:
   if not OUTPUT.exists() or OUTPUT.read_text()!=serialized: raise ValueError('ground vehicle weapon artifact is stale')
  elif not sys.argv[1:]: OUTPUT.write_text(serialized)

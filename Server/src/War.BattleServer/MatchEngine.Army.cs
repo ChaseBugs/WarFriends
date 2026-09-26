@@ -48,7 +48,7 @@ public sealed partial class MatchEngine
     private readonly Dictionary<ulong,ArmyVehicleRouteMotion> vehicleRouteMotions=[];
     private readonly Dictionary<ulong,Vector3> groundVehicleFacing=[];
 
-    private IReadOnlyList<DynamicShotTarget> GroundVehicleShotTargets(string shooterId)
+    internal IReadOnlyList<DynamicShotTarget> GroundVehicleShotTargets(string shooterId)
     {
         if(vehicles==null||groundVehicleWeapons==null||phase!=BattlePhase.Running)return [];
         var shooter=Find(shooterId)??throw new InvalidDataException("Dynamic collision shooter disappeared.");
@@ -61,8 +61,37 @@ public sealed partial class MatchEngine
             if(!groundVehicleFacing.TryGetValue(vehicle.EntityId,out var facing))
                 throw new InvalidDataException("Vehicle collision facing disappeared.");
             result.AddRange(groundVehicleWeapons.PlaceBody(vehicle.UnitId,vehicle.EntityId,vehicle.Position,facing));
+            if(!vehiclePassengers.TryGetValue(vehicle.EntityId,out var passengers))
+                throw new InvalidDataException("Vehicle collision passengers disappeared.");
+            int passengerLayer=owner.Definition.Fraction==1?23:owner.Definition.Fraction==2?22:
+                throw new InvalidDataException("Vehicle passenger has unsupported faction.");
+            foreach(var passenger in passengers.Values.OrderBy(x=>x.Binding.PointComponentFileId))
+            {
+                if(!passenger.Active)continue;
+                if(passenger.AnimationStartTick>tick)
+                    throw new InvalidDataException("Vehicle passenger animation starts after the match tick.");
+                ulong animationTick=tick-passenger.AnimationStartTick;
+                foreach(var hitbox in groundVehicleWeapons.PassengerPoses.Place(vehicle.UnitId,passenger.Binding,
+                    vehicle.Position,facing,animationTick))
+                    result.Add(new(vehicle.EntityId,0,passengerLayer,hitbox,passenger.Binding.Role));
+            }
         }
         return result;
+    }
+
+    internal void ApplyGroundVehiclePassengerProjectileImpact(string shooterId,ulong vehicleId,
+        string role,float rawDamage,float partWeight)
+    {
+        if(vehicles==null||!vehicles.TryGet(vehicleId,out var vehicle)||vehicle==null||
+           !activeArmyEntities.TryGetValue(vehicleId,out var army)||army.OwnerPlayerId!=vehicle.OwnerPlayerId||
+           !vehiclePassengers.TryGetValue(vehicleId,out var passengers)||!passengers.ContainsKey(role))return;
+        var shooter=Find(shooterId)??throw new InvalidDataException("Passenger impact shooter disappeared.");
+        var owner=Find(vehicle.OwnerPlayerId)??throw new InvalidDataException("Passenger impact owner disappeared.");
+        if(shooter.Definition.Fraction==owner.Definition.Fraction||!float.IsFinite(rawDamage)||rawDamage<=0||
+           rawDamage>10_000_000||partWeight is not (1f or 1.5f))
+            throw new InvalidDataException("Invalid vehicle passenger projectile impact.");
+        if(ApplyVehiclePassengerHostDamage(vehicleId,role,rawDamage*partWeight))
+            shooter.ConfirmedEnemyHits=checked(shooter.ConfirmedEnemyHits+1);
     }
 
     internal void ApplyGroundVehicleProjectileImpact(string shooterId,ulong vehicleId,int partId,float rawDamage)

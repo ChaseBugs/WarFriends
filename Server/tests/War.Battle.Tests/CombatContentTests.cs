@@ -775,6 +775,18 @@ internal static class CombatContentTests
         Check(bodyHit is {DynamicEntityId:77,DynamicPartId:var sourcePart,PlayerId:null}&&
               sourcePart==bodyTarget.PartComponentFileId&&bodyHit.SourcePath==bodyTarget.Hitbox.SourcePath,
               "player projectile ray selects the nearest source-pinned vehicle body collider");
+        var idlePassenger=content.GroundVehicleWeapons.PassengerPoses.Place("ID_UNIT-HUMVEE",
+            humveeRig.Passengers[0],Vector3.Zero,Vector3.UnitZ,0);
+        var breathingPassenger=content.GroundVehicleWeapons.PassengerPoses.Place("ID_UNIT-HUMVEE",
+            humveeRig.Passengers[0],Vector3.Zero,Vector3.UnitZ,15);
+        var buggyPassengerStart=content.GroundVehicleWeapons.PassengerPoses.Place("ID_UNIT-BUGGY",
+            buggyRig.Passengers[0],Vector3.Zero,Vector3.UnitZ,0);
+        var buggyPassengerEnd=content.GroundVehicleWeapons.PassengerPoses.Place("ID_UNIT-BUGGY",
+            buggyRig.Passengers[0],Vector3.Zero,Vector3.UnitZ,20);
+        Check(idlePassenger.Count==3&&idlePassenger.Select(p=>p.Weight).SequenceEqual([1f,1f,1.5f])&&
+              Vector3.Distance(idlePassenger[0].Center,breathingPassenger[0].Center)>.00001f&&
+              Vector3.Distance(buggyPassengerStart[0].Center,buggyPassengerEnd[0].Center)>.05f,
+              "Unity-sampled passenger catalog preserves looping idle and clamped Buggy sitting hit geometry");
         Check(Vector3.Distance(humveeRig.Roles[0].Weapons[0].MuzzlePosition,
                   new Vector3(-.10999999f,.68667924f,.14323565f))<.00001f&&
               Vector3.Distance(content.GroundVehicleWeapons.RestMuzzleOrigin("ID_UNIT-HUMVEE","primary",0,
@@ -811,7 +823,9 @@ internal static class CombatContentTests
               buggyOuter.RawDamage<buggyCannon.Damage*.5f,
               "Buggy cannon outer overlap uses serialized 20-point quadratic hurt falloff");
         string vehicleWeaponPath=Path.Combine(directory,"recovered-ground-vehicle-weapons.json");
+        string passengerPosePath=Path.Combine(directory,"recovered-vehicle-passenger-poses.json");
         string vehicleWeaponTemp=Path.Combine(directory,"vehicle-weapon-test-"+Guid.NewGuid().ToString("N")+".json");
+        string passengerPoseTemp=Path.Combine(directory,"vehicle-passenger-pose-test-"+Guid.NewGuid().ToString("N")+".json");
         try
         {
             var package=JsonSerializer.Deserialize<CombatContentManifest>(File.ReadAllText(
@@ -841,8 +855,17 @@ internal static class CombatContentTests
             File.WriteAllText(vehicleWeaponTemp,damaged.ToJsonString());
             damagedHash=Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(vehicleWeaponTemp)));
             Reject(()=>GroundVehicleWeaponCatalog.Load(vehicleWeaponTemp,damagedHash));
+            var damagedPose=JsonNode.Parse(File.ReadAllText(passengerPosePath))!;
+            damagedPose["clips"]![0]!["frames"]![0]!["parts"]![2]!["weight"]=1;
+            File.WriteAllText(passengerPoseTemp,damagedPose.ToJsonString());
+            string damagedPoseHash=Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(passengerPoseTemp)));
+            Reject(()=>VehiclePassengerPoseCatalog.Load(passengerPoseTemp,damagedPoseHash));
         }
-        finally {if(File.Exists(vehicleWeaponTemp))File.Delete(vehicleWeaponTemp);}
+        finally
+        {
+            if(File.Exists(vehicleWeaponTemp))File.Delete(vehicleWeaponTemp);
+            if(File.Exists(passengerPoseTemp))File.Delete(passengerPoseTemp);
+        }
         var routeProbe=vehicleRoutes[0];
         var routeMotion=new ArmyVehicleRouteMotion(routeProbe.Position,routeProbe.VehicleRoute!,1.7f);
         routeMotion.AdvanceTick();
@@ -2669,6 +2692,24 @@ internal static class CombatContentTests
               Math.Abs(carFacing.Y)<.00001f&&Math.Abs(carFacing.Length()-1)<.00001f&&
               staleMatch.Snapshot().Vehicles.Any(v=>v.EntityId==firstCar.EntityKey&&v.UnitId==firstCar.UnitId),
               "deployed Humvee reserves its source car route and publishes fixed-tick motion and facing");
+        var liveVehicleTargets=staleMatch.GroundVehicleShotTargets(helicopterOwner);
+        var livePassengerTargets=liveVehicleTargets.Where(x=>x.EntityId==firstCar.EntityKey&&
+            x.PassengerRole=="gunner").ToArray();
+        var liveHeadTarget=livePassengerTargets.Single(x=>x.Hitbox.Weight==1.5f);
+        var passengerRayOrigin=liveHeadTarget.Hitbox.Center+Vector3.UnitY;
+        var passengerOnlyWorld=new ShotCollisionWorld(null,
+        [
+            new(helicopterOwner,referencePose.Place(new(100,0,100),Quaternion.Identity).Collision),
+            new(soldierOwner,referencePose.Place(new(110,0,100),Quaternion.Identity).Collision)
+        ],dynamicTargets:_=>livePassengerTargets);
+        var passengerHit=passengerOnlyWorld.Raycast(helicopterOwner,passengerRayOrigin,
+            liveHeadTarget.Hitbox.Center-passengerRayOrigin,2,content.Bindings.BulletMask(2));
+        Check(livePassengerTargets.Length==3&&livePassengerTargets.All(x=>x.Layer==23)&&
+              passengerHit is {DynamicEntityId:var passengerVehicle,DynamicPassengerRole:"gunner",PartWeight:1.5f}&&
+              passengerVehicle==firstCar.EntityKey,
+              "opposing projectile mask selects the live Humvee gunner's sampled head collider");
+        staleMatch.ApplyGroundVehiclePassengerProjectileImpact(helicopterOwner,firstCar.EntityKey,
+            "gunner",100,passengerHit!.PartWeight);
         float vehicleHealthBefore=firstCar.Health;
         int humveeBodyPart=content.GroundVehicleWeapons.For(firstCar.UnitId).BodyParts[0].PartComponentFileId;
         staleMatch.ApplyGroundVehicleProjectileImpact(helicopterOwner,firstCar.EntityKey,humveeBodyPart,100);
@@ -2679,11 +2720,14 @@ internal static class CombatContentTests
               "host-selected Humvee body hit applies the recovered 0.33 armor coefficient to shared vehicle health");
         var liveGunner=staleMatch.Snapshot().Vehicles.Single(v=>v.EntityId==firstCar.EntityKey)
             .Parts.Single(p=>p.PartId=="crew:gunner");
-        Check(liveGunner.Active&&liveGunner.Health==875.34f&&liveGunner.PointComponentFileId==11462687&&
+        Check(liveGunner.Active&&Math.Abs(liveGunner.Health-(liveGunner.MaxHealth-150))<.001f&&
+              liveGunner.PointComponentFileId==11462687&&
               staleMatch.ApplyVehiclePassengerHostDamage(firstCar.EntityKey,"gunner",liveGunner.MaxHealth)&&
               staleMatch.Snapshot().Vehicles.Single(v=>v.EntityId==firstCar.EntityKey).Parts
                   .Single(p=>p.PartId=="crew:gunner") is {Active:false,Health:0} downGunner&&
-              downGunner.RespawnTick==nextCarTick+375,
+              downGunner.RespawnTick==nextCarTick+375&&
+              staleMatch.GroundVehicleShotTargets(helicopterOwner)
+                  .All(x=>x.EntityId!=firstCar.EntityKey||x.PassengerRole!="gunner"),
               "live Humvee gunner death publishes source seat identity and exact respawn deadline");
         Check(staleMatch.Command(soldierOwner,new MatchCommand{CommandId=3,
                   DeployArmy=new DeployArmyCommand{OptionIndex=19}}).Code=="army-deploying" &&
@@ -2704,7 +2748,9 @@ internal static class CombatContentTests
         }
         var parkedVehicles=staleMatch.ArmyEntityBatch(soldierOwner,0,0).Entities;
         Check(staleMatch.Snapshot().Vehicles.Single(v=>v.EntityId==firstCar.EntityKey).Parts
-                  .Single(p=>p.PartId=="crew:gunner") is {Active:true,RespawnTick:0,Health:875.34f},
+                  .Single(p=>p.PartId=="crew:gunner") is {Active:true,RespawnTick:0,Health:875.34f}&&
+              staleMatch.GroundVehicleShotTargets(helicopterOwner)
+                  .Count(x=>x.EntityId==firstCar.EntityKey&&x.PassengerRole=="gunner")==3,
               "live Humvee gunner respawns at full source-row health during host simulation");
         Check(parkedVehicles.Count==2&&parkedVehicles.All(entity=>
         {

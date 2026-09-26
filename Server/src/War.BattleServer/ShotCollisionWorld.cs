@@ -5,8 +5,9 @@ using System.Text;
 namespace War.BattleServer;
 
 internal sealed record CollisionPlayer(string PlayerId, PlayerCollisionModel Pose);
-internal sealed record DynamicShotTarget(ulong EntityId,int PartComponentFileId,int Layer,PlayerHitbox Hitbox);
-internal sealed record ShotCollision(float Distance, Vector3 Position, string SourcePath, string? PlayerId, float PartWeight, bool Static = false,string? DynamicOwner=null,int? ColliderIndex=null,ulong? DynamicEntityId=null,int? DynamicPartId=null);
+internal sealed record DynamicShotTarget(ulong EntityId,int PartComponentFileId,int Layer,PlayerHitbox Hitbox,
+    string? PassengerRole=null);
+internal sealed record ShotCollision(float Distance, Vector3 Position, string SourcePath, string? PlayerId, float PartWeight, bool Static = false,string? DynamicOwner=null,int? ColliderIndex=null,ulong? DynamicEntityId=null,int? DynamicPartId=null,string? DynamicPassengerRole=null);
 
 // Input poses come exclusively from host animation/pose authority. This class has
 // no network adapter and no client-submitted target player or damage parameter.
@@ -50,13 +51,18 @@ internal sealed class ShotCollisionWorld
         if(dynamicTargets!=null)
             foreach(var target in dynamicTargets(shooterId))
             {
-                if(target==null||target.EntityId==0||target.PartComponentFileId<=0||target.Layer is <0 or >31||
-                   target.Hitbox==null)throw new InvalidDataException("Invalid host dynamic shot target.");
+                if(target==null||target.EntityId==0||target.Layer is <0 or >31||target.Hitbox==null||
+                   (target.PassengerRole==null&&target.PartComponentFileId<=0)||
+                   (target.PassengerRole!=null&&(target.PartComponentFileId!=0||target.PassengerRole.Length is <1 or >32||
+                       target.PassengerRole.Any(char.IsControl))))
+                    throw new InvalidDataException("Invalid host dynamic shot target.");
                 if((mapLayerMask&(1u<<target.Layer))==0)continue;
                 var distance=target.Hitbox.Raycast(origin,direction,range);
                 if(distance.HasValue&&(nearest==null||distance.Value<nearest.Distance))
                     nearest=new(distance.Value,origin+direction*distance.Value,target.Hitbox.SourcePath,null,
-                        target.Hitbox.Weight,DynamicEntityId:target.EntityId,DynamicPartId:target.PartComponentFileId);
+                        target.Hitbox.Weight,DynamicEntityId:target.EntityId,
+                        DynamicPartId:target.PartComponentFileId>0?target.PartComponentFileId:null,
+                        DynamicPassengerRole:target.PassengerRole);
             }
         return nearest;
     }

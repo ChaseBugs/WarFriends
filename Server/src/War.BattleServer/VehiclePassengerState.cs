@@ -10,6 +10,7 @@ internal sealed class VehiclePassengerState
     internal GroundVehiclePassengerBinding Binding {get;}
     internal float Health {get;private set;}
     internal ulong RespawnTick {get;private set;}
+    internal ulong AnimationStartTick {get;private set;}
     internal bool Active=>Health>0;
 
     internal VehiclePassengerState(GroundVehiclePassengerBinding binding,float maximum,
@@ -19,6 +20,7 @@ internal sealed class VehiclePassengerState
            respawnTicks is <1 or >10_000_000||tick>10_000_000)
             throw new InvalidDataException("Invalid vehicle passenger authority.");
         Binding=binding;this.maximum=maximum;this.respawnTicks=respawnTicks;Health=maximum;
+        AnimationStartTick=tick;
     }
 
     internal bool ApplyDamage(float amount,ulong tick)
@@ -35,7 +37,7 @@ internal sealed class VehiclePassengerState
     {
         if(tick>10_000_000)throw new InvalidDataException("Invalid vehicle passenger tick.");
         if(Active||RespawnTick==0||tick<RespawnTick)return false;
-        Health=maximum;RespawnTick=0;return true;
+        Health=maximum;RespawnTick=0;AnimationStartTick=tick;return true;
     }
 
     internal VehiclePassengerSnapshot Snapshot()=>new(Binding.Role,Health,maximum,RespawnTick,Active,Binding);

@@ -18,7 +18,7 @@ public sealed record GroundVehicleTurret(string Role,int TurretComponentFileId,s
     bool NeedToSeePrimaryTarget,bool NeedToSeeSecondaryTarget,bool PredictPosition,int PrimaryTarget,
     int SerializedTargetMask,float SecondaryDelay,int FakeShotEvery,IReadOnlyList<GroundVehicleWeapon> Weapons);
 public sealed record GroundVehiclePassengerBinding(string Role,int PointComponentFileId,
-    int TransformFileId,Vector3 Position);
+    int TransformFileId,Vector3 Position,Quaternion Rotation);
 public sealed record GroundVehicleBodyCollider(int ColliderFileId,PlayerHitboxKind Kind,
     Vector3 Center,Quaternion Rotation,Vector3 Size,float Radius,Vector3 Axis,float HalfSegment,bool Trigger);
 public sealed record GroundVehicleBodyPart(int PartComponentFileId,int TransformFileId,int Layer,float Weight,
@@ -31,12 +31,13 @@ public sealed record GroundVehicleWeaponRig(string UnitId,string Prefab,string S
 public sealed class GroundVehicleWeaponCatalog
 {
     private sealed class Root {public int Version{get;set;}public float ArmoredVehicleShotCoefficient{get;set;}
+        public string PassengerPoseRevision{get;set;}="";
         public VehicleDto[] Vehicles{get;set;}=[];}
     private sealed class VehicleDto {public string UnitId{get;set;}="";public string Prefab{get;set;}="";
         public string Sha256{get;set;}="";public string BehaviorType{get;set;}="";public TurretDto[] Roles{get;set;}=[];
         public PassengerDto[] Passengers{get;set;}=[];public BodyPartDto[] BodyParts{get;set;}=[];}
     private sealed class PassengerDto {public string Role{get;set;}="";public int PointComponentFileId{get;set;}
-        public int TransformFileId{get;set;}public float[] Position{get;set;}=[];}
+        public int TransformFileId{get;set;}public float[] Position{get;set;}=[];public float[] Rotation{get;set;}=[];}
     private sealed class TurretDto {public string Role{get;set;}="";public int TurretComponentFileId{get;set;}
         public string TurretType{get;set;}="";public float AimTime{get;set;}public float MaxShotRotation{get;set;}
         public bool UseUnitTarget{get;set;}public bool PrimaryTargetOnly{get;set;}
@@ -78,8 +79,10 @@ public sealed class GroundVehicleWeaponCatalog
     private readonly IReadOnlyDictionary<string,GroundVehicleWeaponRig> rigs;
     public string Revision { get; }
     public float ArmoredVehicleShotCoefficient { get; }
-    private GroundVehicleWeaponCatalog(string revision,Dictionary<string,GroundVehicleWeaponRig> rigs)
-    {Revision=revision;this.rigs=rigs;ArmoredVehicleShotCoefficient=.33f;}
+    internal VehiclePassengerPoseCatalog PassengerPoses {get;}
+    private GroundVehicleWeaponCatalog(string revision,Dictionary<string,GroundVehicleWeaponRig> rigs,
+        VehiclePassengerPoseCatalog passengerPoses)
+    {Revision=revision;this.rigs=rigs;ArmoredVehicleShotCoefficient=.33f;PassengerPoses=passengerPoses;}
     public GroundVehicleWeaponRig For(string unitId)=>rigs.TryGetValue(unitId,out var rig)?rig:
         throw new ArgumentOutOfRangeException(nameof(unitId));
 
@@ -131,7 +134,8 @@ public sealed class GroundVehicleWeaponCatalog
             {PropertyNameCaseInsensitive=true,UnmappedMemberHandling=JsonUnmappedMemberHandling.Disallow})??
             throw new InvalidDataException("Missing ground vehicle weapon artifact.");}
         catch(JsonException e){throw new InvalidDataException("Malformed ground vehicle weapon artifact.",e);}
-        if(root.Version!=5||root.ArmoredVehicleShotCoefficient!=.33f||root.Vehicles.Length!=Expected.Length)
+        if(root.Version!=6||root.ArmoredVehicleShotCoefficient!=.33f||
+           !Regex.IsMatch(root.PassengerPoseRevision,@"\A[0-9a-f]{64}\z")||root.Vehicles.Length!=Expected.Length)
             throw new InvalidDataException("Incomplete ground vehicle weapon artifact.");
         var result=new Dictionary<string,GroundVehicleWeaponRig>(StringComparer.Ordinal);
         int turretCount=0,weaponCount=0;
@@ -221,7 +225,7 @@ public sealed class GroundVehicleWeaponCatalog
                    !transformIds.Add(passenger.TransformFileId))
                     throw new InvalidDataException("Invalid ground vehicle passenger identity.");
                 passengers[p]=new(passenger.Role,passenger.PointComponentFileId,
-                    passenger.TransformFileId,Vector(passenger.Position));
+                    passenger.TransformFileId,Vector(passenger.Position),Rotation(passenger.Rotation));
             }
             int expectedParts=source.UnitId switch {"ID_UNIT-HUMVEE"=>8,"ID_UNIT-TANK"=>12,
                 "ID_UNIT-BUGGY"=>8,"ID_UNIT-TRANSPORTER"=>12,_=>0};
@@ -256,7 +260,9 @@ public sealed class GroundVehicleWeaponCatalog
         }
         if(turretCount!=7||weaponCount!=9||result.Values.Sum(x=>x.BodyParts.Sum(p=>p.Colliders.Count))!=41)
             throw new InvalidDataException("Incomplete ground vehicle weapon graph.");
-        return new(expectedRevision,result);
+        var passengerPoses=VehiclePassengerPoseCatalog.Load(Path.Combine(Path.GetDirectoryName(path)!,
+            "recovered-vehicle-passenger-poses.json"),root.PassengerPoseRevision);
+        return new(expectedRevision,result,passengerPoses);
     }
     private static Vector3 Vector(float[] value)
     {
