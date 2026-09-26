@@ -194,6 +194,7 @@ public sealed partial class MatchEngine
             throw new InvalidDataException("Ground vehicle lacks its pinned primary turret.");
         if(!vehicles.TrySpawn(entity) || !armyVehicleShots.TryGetValue(entityKey,out var vehicleShot) ||
            !vehicles.TryBindAttack(entityKey,vehicleShot,primary.Weapons[0].Cadence) ||
+           !vehicles.BeginInitialAttackCooldown(entityKey) ||
            armyVitality.TryGetValue(entityKey,out var vitality)&&
                !vehicles.TryBindHealth(entityKey,vitality.Maximum))
             throw new InvalidDataException("Ground vehicle registry initialization failed.");

@@ -38,6 +38,12 @@ public sealed class VehicleAttackState
         if(batchRemaining<=0)return false;
         windupTicks=aimTicks;Phase=ArmyAirAttackPhase.Windup;return true;
     }
+    public bool BeginInitialCooldown()
+    {
+        if(Phase!=ArmyAirAttackPhase.Ready)return false;
+        ScheduleBatchCooldown();
+        return true;
+    }
     public bool AdvanceTick()
     {
         if(Phase==ArmyAirAttackPhase.Windup)
@@ -63,13 +69,17 @@ public sealed class VehicleAttackState
         }
         else
         {
-            int min=(int)MathF.Ceiling(definition.MinShootTime*MatchManifest.TickRate);
-            int max=(int)MathF.Ceiling(definition.MaxShootTime*MatchManifest.TickRate);
-            CooldownTicksRemaining=min+(max==min?0:(int)MathF.Floor(
-                Math.Clamp(random(),0,.99999994f)*(max-min)));
-            cadenceDelay=false;Phase=CooldownTicksRemaining==0?ArmyAirAttackPhase.Ready:ArmyAirAttackPhase.Cooldown;
+            ScheduleBatchCooldown();
         }
         return true;
+    }
+    private void ScheduleBatchCooldown()
+    {
+        int min=(int)MathF.Ceiling(definition.MinShootTime*MatchManifest.TickRate);
+        int max=(int)MathF.Ceiling(definition.MaxShootTime*MatchManifest.TickRate);
+        CooldownTicksRemaining=min+(max==min?0:(int)MathF.Floor(
+            Math.Clamp(random(),0,.99999994f)*(max-min)));
+        cadenceDelay=false;Phase=CooldownTicksRemaining==0?ArmyAirAttackPhase.Ready:ArmyAirAttackPhase.Cooldown;
     }
     private void PrepareShot()
     {CurrentShotIsReal=random()<definition.ProbabilityOfRealShot;Phase=ArmyAirAttackPhase.Firing;}

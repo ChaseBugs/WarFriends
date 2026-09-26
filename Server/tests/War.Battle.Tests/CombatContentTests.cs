@@ -1269,6 +1269,14 @@ internal static class CombatContentTests
                   vehicleBatch.AdvanceTick()&&vehicleBatch.CommitShot()&&
                   vehicleBatch.CooldownTicksRemaining==30,
                   "vehicle attack preserves per-round weapon cadence and post-batch turret cooldown");
+            var initialVehicleRolls=new Queue<float>([.5f]);
+            var initialVehicleAttack=new VehicleAttackState(
+                new ArmyVehicleShotStats(5,1,2,4,1,2,0),.1f,()=>initialVehicleRolls.Dequeue());
+            Check(initialVehicleAttack.BeginInitialCooldown()&&
+                  initialVehicleAttack.Phase==ArmyAirAttackPhase.Cooldown&&
+                  initialVehicleAttack.CooldownTicksRemaining==45&&
+                  !initialVehicleAttack.BeginInitialCooldown(),
+                  "vehicle spawn reproduces TurretWeaponBasic.Reset random initial cooldown");
             var statsLedger=new BattleStatisticsLedger();
             Check(statsLedger.RecordHit("66666666666666666666666666666666")&&
                   !statsLedger.RecordHit("66666666666666666666666666666666")&&
@@ -2525,7 +2533,8 @@ internal static class CombatContentTests
             p.ComponentFileId==firstCar.SpawnComponentFileId);
         Check(firstCar.UnitId=="ID_UNIT-HUMVEE"&&firstCarSpawn.VehicleRoute!=null&&
               Vector3.Distance(new(firstCar.X,firstCar.Y,firstCar.Z),firstCarSpawn.Position)>1f&&
-              staleMatch.GroundVehicleAttack(firstCar.EntityKey) is {ShotSpeed:5f,Phase:ArmyAirAttackPhase.Ready}&&
+              staleMatch.GroundVehicleAttack(firstCar.EntityKey) is {ShotSpeed:5f} carAttack&&
+              carAttack.Phase is ArmyAirAttackPhase.Ready or ArmyAirAttackPhase.Cooldown&&
               staleMatch.GroundVehicleFacing(firstCar.EntityKey) is { } carFacing&&
               Math.Abs(carFacing.Y)<.00001f&&Math.Abs(carFacing.Length()-1)<.00001f&&
               staleMatch.Snapshot().Vehicles.Any(v=>v.EntityId==firstCar.EntityKey&&v.UnitId==firstCar.UnitId),

@@ -93,6 +93,8 @@ public sealed class VehicleEntityRegistry
     public bool TryBeginAttack(ulong entityId, bool eligible, int windupTicks) =>
         attacks.TryGetValue(entityId, out var attack) && attack.TryBegin(eligible, windupTicks);
     public bool AdvanceAttack(ulong entityId) => attacks.TryGetValue(entityId, out var attack) && attack.AdvanceTick();
+    public bool BeginInitialAttackCooldown(ulong entityId) =>
+        attacks.TryGetValue(entityId,out var attack)&&attack.BeginInitialCooldown();
     public bool TryCommitAttack(ulong entityId) => attacks.TryGetValue(entityId, out var attack) && attack.CommitShot();
     public bool TryGetAttack(ulong entityId, out VehicleAttackState? attack) => attacks.TryGetValue(entityId, out attack);
     public int RemoveOwner(string ownerPlayerId)
