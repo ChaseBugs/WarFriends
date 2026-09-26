@@ -1325,6 +1325,33 @@ internal static class CombatContentTests
                   durableAir.Health.Current==25&&healthRegistry.TryApplyDamage(93,30,out _)&&
                   !healthRegistry.TryGet(93,out _),"air damage is server-owned and lethal damage removes the entity");
             Reject(()=>new AirEntityHealthState(float.NaN));
+            string decoyArtifact=Path.Combine(directory,"recovered-decoy-source.json");
+            string decoyRevision=Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(decoyArtifact)));
+            var decoys=DecoySourceCatalog.Load(decoyArtifact,decoyRevision,content.Maps);
+            var parkDecoys=decoys.ForMap(content.Maps.Single(x=>Path.GetFileNameWithoutExtension(x.Source)=="Park_Multiplayer"));
+            var selectedDecoys=decoys.Select(content.Maps.Single(x=>Path.GetFileNameWithoutExtension(x.Source)=="Park_Multiplayer").Source,
+                1,new HashSet<int>{parkDecoys.First(x=>x.Fraction==1).ComponentFileId},_=>0);
+            Check(decoys.SpawnCount==3&&decoys.MinimumHealth==62.5f&&decoys.MaximumHealth==1090f&&
+                  decoys.Prefab.TargetLocalPosition==new Vector3(0,.431f,0)&&
+                  decoys.Prefab.ColliderSize==new Vector3(.2825435f,.5701809f,.1112857f)&&
+                  parkDecoys.Count==13&&selectedDecoys.Count==3&&
+                  selectedDecoys.All(x=>x.Fraction==1)&&selectedDecoys.Select(x=>x.ComponentFileId).Distinct().Count()==3&&
+                  Math.Abs(decoys.Health(22,44)-576.25f)<.001f,
+                  "Decoy source pins 89 obstacle slots, three distinct placements, prefab geometry and level-scaled health");
+            Check(decoys.Select(content.Maps[0].Source,1,
+                      decoys.ForMap(content.Maps[0]).Where(x=>x.Fraction==1).Skip(2)
+                          .Select(x=>x.ComponentFileId).ToHashSet(),_=>0).Count==0,
+                  "Decoy activation stays closed when fewer than three same-faction obstacle slots are free");
+            string decoyTemp=Path.Combine(Path.GetTempPath(),"war-decoy-"+Guid.NewGuid().ToString("N")+".json");
+            try
+            {
+                var changed=JsonNode.Parse(File.ReadAllText(decoyArtifact))!;
+                changed["maps"]![0]!["slots"]![0]!["initialMidpoint"]![0]=999;
+                File.WriteAllText(decoyTemp,changed.ToJsonString());
+                Reject(()=>DecoySourceCatalog.Load(decoyTemp,
+                    Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(decoyTemp))),content.Maps));
+            }
+            finally {if(File.Exists(decoyTemp))File.Delete(decoyTemp);}
             var mines=DeployableCardPolicy.SelectLandmineTargets("LandMine",0,
                 new[]{new DeployablePlacement(1,new(1,0,0)),new DeployablePlacement(2,new(2,0,0)),
                       new DeployablePlacement(3,new(3,0,0)),new DeployablePlacement(4,new(4,0,0))},n=>0);
