@@ -1,0 +1,343 @@
+{
+  "version": 1,
+  "vehicles": [
+    {
+      "unitId": "ID_UNIT-HUMVEE",
+      "prefab": "Assets/GameObject/Humvee.prefab",
+      "sha256": "08ddafdbc3eb54cb73d7deee531e581baf82406048c37e3e82b6bed77dae32d1",
+      "behaviorType": "AICar",
+      "roles": [
+        {
+          "role": "primary",
+          "turretComponentFileId": 11458972,
+          "turretType": "TurretWeaponBasic",
+          "aimTime": 4.0,
+          "maxShotRotation": 70.0,
+          "useUnitTarget": true,
+          "primaryTargetOnly": false,
+          "needToSeePrimaryTarget": true,
+          "needToSeeSecondaryTarget": true,
+          "predictPosition": true,
+          "primaryTarget": 3,
+          "serializedTargetMask": 2,
+          "secondaryDelay": 0.0,
+          "fakeShotEvery": 0,
+          "weapons": [
+            {
+              "batchedComponentFileId": 11439084,
+              "weaponComponentFileId": 11471354,
+              "weaponType": "Gun",
+              "cadence": 0.3,
+              "spawnTransformFileId": 497582,
+              "muzzlePosition": [
+                -0.10999999117911165,
+                0.6866792570778647,
+                4.488235647355946
+              ],
+              "shotOffset": [
+                0.0,
+                0.1,
+                0.0
+              ],
+              "projectileFileId": 11409266,
+              "projectileGuid": "855689762fa6e774aaee190652b08c6f",
+              "forcedFake": false
+            }
+          ]
+        },
+        {
+          "role": "cannon",
+          "turretComponentFileId": 11410782,
+          "turretType": "TurretWeaponBasic",
+          "aimTime": 0.2,
+          "maxShotRotation": 50.0,
+          "useUnitTarget": false,
+          "primaryTargetOnly": true,
+          "needToSeePrimaryTarget": false,
+          "needToSeeSecondaryTarget": false,
+          "predictPosition": true,
+          "primaryTarget": 0,
+          "serializedTargetMask": 4,
+          "secondaryDelay": 0.0,
+          "fakeShotEvery": 0,
+          "weapons": [
+            {
+              "batchedComponentFileId": 11498932,
+              "weaponComponentFileId": 11477090,
+              "weaponType": "Bazooka",
+              "cadence": 3.0,
+              "spawnTransformFileId": 419193,
+              "muzzlePosition": [
+                0.006043825430343419,
+                0.6910000289807103,
+                3.633997363994235
+              ],
+              "shotOffset": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "projectileFileId": 11431434,
+              "projectileGuid": "60be7eeb14f5a354c99c9ce23dbc5554",
+              "forcedFake": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "unitId": "ID_UNIT-TANK",
+      "prefab": "Assets/GameObject/Tank.prefab",
+      "sha256": "ae05f64d1349ed20c873111abeaa9a55e63c80b9f21fd2c21d1c5c8d37cceea7",
+      "behaviorType": "Tank",
+      "roles": [
+        {
+          "role": "primary",
+          "turretComponentFileId": 11430575,
+          "turretType": "TurretWeaponBasic",
+          "aimTime": 4.0,
+          "maxShotRotation": 60.0,
+          "useUnitTarget": false,
+          "primaryTargetOnly": false,
+          "needToSeePrimaryTarget": false,
+          "needToSeeSecondaryTarget": false,
+          "predictPosition": true,
+          "primaryTarget": 3,
+          "serializedTargetMask": 2,
+          "secondaryDelay": 0.0,
+          "fakeShotEvery": 0,
+          "weapons": [
+            {
+              "batchedComponentFileId": 11491429,
+              "weaponComponentFileId": 11473880,
+              "weaponType": "Gun",
+              "cadence": 0.1,
+              "spawnTransformFileId": 477120,
+              "muzzlePosition": [
+                -0.10000000980465529,
+                1.1101606319883548,
+                4.854986708742005
+              ],
+              "shotOffset": [
+                0.0,
+                0.1,
+                0.0
+              ],
+              "projectileFileId": 11409266,
+              "projectileGuid": "855689762fa6e774aaee190652b08c6f",
+              "forcedFake": false
+            }
+          ]
+        },
+        {
+          "role": "cannon",
+          "turretComponentFileId": 11492654,
+          "turretType": "TurretWeaponBasic",
+          "aimTime": 20.0,
+          "maxShotRotation": 360.0,
+          "useUnitTarget": false,
+          "primaryTargetOnly": false,
+          "needToSeePrimaryTarget": false,
+          "needToSeeSecondaryTarget": false,
+          "predictPosition": false,
+          "primaryTarget": 0,
+          "serializedTargetMask": 2,
+          "secondaryDelay": 0.0,
+          "fakeShotEvery": 0,
+          "weapons": [
+            {
+              "batchedComponentFileId": 11446016,
+              "weaponComponentFileId": 11474264,
+              "weaponType": "Bazooka",
+              "cadence": 2.0,
+              "spawnTransformFileId": 428410,
+              "muzzlePosition": [
+                -0.00014315918,
+                0.8880971700000001,
+                5.698363
+              ],
+              "shotOffset": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "projectileFileId": 11431434,
+              "projectileGuid": "60be7eeb14f5a354c99c9ce23dbc5554",
+              "forcedFake": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "unitId": "ID_UNIT-BUGGY",
+      "prefab": "Assets/GameObject/Buggy.prefab",
+      "sha256": "2b7ea8b2a6bcd3266e8fac994cf927cbe28c1c330993c4e4ffc313a937f54ab7",
+      "behaviorType": "AICarBuggy",
+      "roles": [
+        {
+          "role": "primary",
+          "turretComponentFileId": 11439084,
+          "turretType": "TurretWeaponBasic",
+          "aimTime": 1.0,
+          "maxShotRotation": 60.0,
+          "useUnitTarget": true,
+          "primaryTargetOnly": false,
+          "needToSeePrimaryTarget": false,
+          "needToSeeSecondaryTarget": false,
+          "predictPosition": true,
+          "primaryTarget": 3,
+          "serializedTargetMask": 2,
+          "secondaryDelay": 0.0,
+          "fakeShotEvery": 0,
+          "weapons": [
+            {
+              "batchedComponentFileId": 11471354,
+              "weaponComponentFileId": 11433379,
+              "weaponType": "Gun",
+              "cadence": 0.5,
+              "spawnTransformFileId": 436299,
+              "muzzlePosition": [
+                -0.11085463313911165,
+                0.6947233858578648,
+                0.2626879653559463
+              ],
+              "shotOffset": [
+                0.0,
+                0.1,
+                0.0
+              ],
+              "projectileFileId": 11409266,
+              "projectileGuid": "855689762fa6e774aaee190652b08c6f",
+              "forcedFake": false
+            }
+          ]
+        },
+        {
+          "role": "cannon",
+          "turretComponentFileId": 11461370,
+          "turretType": "TurretWeaponMultipleWeapons",
+          "aimTime": 1.0,
+          "maxShotRotation": 360.0,
+          "useUnitTarget": false,
+          "primaryTargetOnly": false,
+          "needToSeePrimaryTarget": false,
+          "needToSeeSecondaryTarget": false,
+          "predictPosition": false,
+          "primaryTarget": 0,
+          "serializedTargetMask": 2,
+          "secondaryDelay": 0.25,
+          "fakeShotEvery": 0,
+          "weapons": [
+            {
+              "batchedComponentFileId": 11474264,
+              "weaponComponentFileId": 11422290,
+              "weaponType": "Bazooka",
+              "cadence": 2.0,
+              "spawnTransformFileId": 450066,
+              "muzzlePosition": [
+                -4.552411355555e-05,
+                0.74261963,
+                -0.29772336
+              ],
+              "shotOffset": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "projectileFileId": 11431434,
+              "projectileGuid": "60be7eeb14f5a354c99c9ce23dbc5554",
+              "forcedFake": false
+            },
+            {
+              "batchedComponentFileId": 11491429,
+              "weaponComponentFileId": 11408667,
+              "weaponType": "Bazooka",
+              "cadence": 2.0,
+              "spawnTransformFileId": 450066,
+              "muzzlePosition": [
+                -4.552411355555e-05,
+                0.74261963,
+                -0.29772336
+              ],
+              "shotOffset": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "projectileFileId": 11431434,
+              "projectileGuid": "60be7eeb14f5a354c99c9ce23dbc5554",
+              "forcedFake": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "unitId": "ID_UNIT-TRANSPORTER",
+      "prefab": "Assets/GameObject/Transporter.prefab",
+      "sha256": "1ef32cc2ff49fd59531c4f907065d5817ed63a0a4f725b317c4c3818b3b6cec4",
+      "behaviorType": "AICarTransporter",
+      "roles": [
+        {
+          "role": "primary",
+          "turretComponentFileId": 11420819,
+          "turretType": "TransporterTurret",
+          "aimTime": 10.0,
+          "maxShotRotation": 180.0,
+          "useUnitTarget": true,
+          "primaryTargetOnly": false,
+          "needToSeePrimaryTarget": false,
+          "needToSeeSecondaryTarget": false,
+          "predictPosition": true,
+          "primaryTarget": 0,
+          "serializedTargetMask": 2,
+          "secondaryDelay": 0.0,
+          "fakeShotEvery": 0,
+          "weapons": [
+            {
+              "batchedComponentFileId": 11477120,
+              "weaponComponentFileId": 11434459,
+              "weaponType": "AutomaticRifle",
+              "cadence": 0.3,
+              "spawnTransformFileId": 427792,
+              "muzzlePosition": [
+                -3.8369999953309657,
+                0.26102080055019433,
+                0.11599912281489136
+              ],
+              "shotOffset": [
+                0.0,
+                0.1,
+                0.0
+              ],
+              "projectileFileId": 11409266,
+              "projectileGuid": "855689762fa6e774aaee190652b08c6f",
+              "forcedFake": false
+            },
+            {
+              "batchedComponentFileId": 11425934,
+              "weaponComponentFileId": 11419936,
+              "weaponType": "AutomaticRifle",
+              "cadence": 0.5,
+              "spawnTransformFileId": 443171,
+              "muzzlePosition": [
+                -4.103000005330966,
+                0.2610207705501943,
+                0.11599912281489136
+              ],
+              "shotOffset": [
+                0.0,
+                0.1,
+                0.0
+              ],
+              "projectileFileId": 11409266,
+              "projectileGuid": "855689762fa6e774aaee190652b08c6f",
+              "forcedFake": false
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

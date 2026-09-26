@@ -717,6 +717,37 @@ internal static class CombatContentTests
                   .ProbabilityOfRealShot==1f,
               "ground vehicle primary turrets compose stage-zero batch, cooldown, speed, and bounded accuracy");
         Reject(()=>content.Army.ComposeVehicleShot("ID_UNIT-ASSAULT",0,null,null));
+        var humveeRig=content.GroundVehicleWeapons.For("ID_UNIT-HUMVEE");
+        var tankRig=content.GroundVehicleWeapons.For("ID_UNIT-TANK");
+        var buggyRig=content.GroundVehicleWeapons.For("ID_UNIT-BUGGY");
+        var transporterRig=content.GroundVehicleWeapons.For("ID_UNIT-TRANSPORTER");
+        Check(humveeRig.Roles.Single(r=>r.Role=="primary").Weapons.Single().Cadence==.3f&&
+              tankRig.Roles.Single(r=>r.Role=="primary").Weapons.Single().Cadence==.1f&&
+              buggyRig.Roles.Single(r=>r.Role=="cannon").Weapons.Count==2&&
+              buggyRig.Roles.Single(r=>r.Role=="cannon").SecondaryDelay==.25f&&
+              transporterRig.Roles.Single().Weapons.Count==2&&
+              transporterRig.Roles.Single().Weapons.All(w=>w.WeaponType=="AutomaticRifle")&&
+              new[]{humveeRig,tankRig,buggyRig,transporterRig}.SelectMany(r=>r.Roles)
+                  .SelectMany(r=>r.Weapons).All(w=>w.ProjectileGuid is
+                      "855689762fa6e774aaee190652b08c6f" or "60be7eeb14f5a354c99c9ce23dbc5554"),
+              "four vehicle prefabs pin seven turret roles, nine weapon paths, cadence and projectile identity");
+        string vehicleWeaponPath=Path.Combine(directory,"recovered-ground-vehicle-weapons.json");
+        string vehicleWeaponTemp=Path.Combine(directory,"vehicle-weapon-test-"+Guid.NewGuid().ToString("N")+".json");
+        try
+        {
+            var package=JsonSerializer.Deserialize<CombatContentManifest>(File.ReadAllText(
+                Path.Combine(directory,"combat-content-manifest.json")))!;
+            Check(package.GroundVehicleWeaponsRevision==Convert.ToHexStringLower(
+                      SHA256.HashData(File.ReadAllBytes(vehicleWeaponPath))),
+                  "ground vehicle weapon bytes bind the composite combat revision");
+            Reject(()=>GroundVehicleWeaponCatalog.Load(vehicleWeaponPath,new string('0',64)));
+            var damaged=JsonNode.Parse(File.ReadAllText(vehicleWeaponPath))!;
+            damaged["vehicles"]![0]!["roles"]![0]!["weapons"]![0]!["cadence"]=0;
+            File.WriteAllText(vehicleWeaponTemp,damaged.ToJsonString());
+            string damagedHash=Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(vehicleWeaponTemp)));
+            Reject(()=>GroundVehicleWeaponCatalog.Load(vehicleWeaponTemp,damagedHash));
+        }
+        finally {if(File.Exists(vehicleWeaponTemp))File.Delete(vehicleWeaponTemp);}
         var routeProbe=vehicleRoutes[0];
         var routeMotion=new ArmyVehicleRouteMotion(routeProbe.Position,routeProbe.VehicleRoute!,1.7f);
         routeMotion.AdvanceTick();
