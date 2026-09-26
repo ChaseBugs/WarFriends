@@ -26,7 +26,9 @@ public sealed class HeavyTurretSourceCatalog
     private sealed class Turret {public float AimTime{get;set;}public int BatchSizeMin{get;set;}public int BatchSizeMax{get;set;}
         public float MinShootTime{get;set;}public float MaxShootTime{get;set;}public float MaxShotRotation{get;set;}
         public bool PredictPosition{get;set;}public int PrimaryTarget{get;set;}public bool UseUnitTarget{get;set;}
-        public float RealShotProbability{get;set;}public int BatchedWeaponComponentFileId{get;set;}}
+        public float RealShotProbability{get;set;}public int BatchedWeaponComponentFileId{get;set;}public int WeaponComponentFileId{get;set;}
+        public float[] MuzzlePosition{get;set;}=[];public float EffectiveBulletSpeed{get;set;}public float BulletCheckDistance{get;set;}
+        public string BulletSource{get;set;}="";public string BulletSha256{get;set;}="";}
     private sealed class Prefab {public string Source{get;set;}="";public string Sha256{get;set;}="";public int RootTransformFileId{get;set;}
         public int HeavyTurretComponentFileId{get;set;}public int TurretWeaponComponentFileId{get;set;}public Turret Turret{get;set;}=new();
         public int[] MeshComponentFileIds{get;set;}=[];public Collider[] Colliders{get;set;}=[];}
@@ -42,10 +44,11 @@ public sealed class HeavyTurretSourceCatalog
     private readonly HeavyTurretStats minimum,maximum;
     public string Revision{get;}public int SpawnCount=>1;public float NavMeshSampleRadius=>10;public int NavMeshAreaMask=>1;
     public int MaxDisplayLevel=>44;public string PrefabRevision{get;}public float EffectiveRealShotProbability=>1;
+    public Vector3 MuzzleOffset{get;}public float EffectiveBulletSpeed=>5;public float BulletCheckDistance=>.6f;
     public IReadOnlyList<HeavyTurretCollider> Colliders{get;}
     private HeavyTurretSourceCatalog(string revision,string prefabRevision,HeavyTurretStats min,HeavyTurretStats max,
-        Dictionary<string,IReadOnlyList<HeavyTurretCover>> maps,IReadOnlyList<HeavyTurretCollider> colliders)
-    {Revision=revision;PrefabRevision=prefabRevision;minimum=min;maximum=max;this.maps=maps;Colliders=colliders;}
+        Dictionary<string,IReadOnlyList<HeavyTurretCover>> maps,IReadOnlyList<HeavyTurretCollider> colliders,Vector3 muzzleOffset)
+    {Revision=revision;PrefabRevision=prefabRevision;minimum=min;maximum=max;this.maps=maps;Colliders=colliders;MuzzleOffset=muzzleOffset;}
     public IReadOnlyList<HeavyTurretCover> ForMap(RecoveredBattleMap map)=>maps.TryGetValue(map.Source,out var rows)?rows:
         throw new InvalidDataException("Unknown Heavy Turret source map.");
     public HeavyTurretStats Compose(int zeroBasedPlayerLevel)
@@ -92,6 +95,8 @@ public sealed class HeavyTurretSourceCatalog
            p.RootTransformFileId!=424449||p.HeavyTurretComponentFileId!=11491323||p.TurretWeaponComponentFileId!=11459786||
            t.AimTime!=1||t.BatchSizeMin!=1||t.BatchSizeMax!=5||t.MinShootTime!=1||t.MaxShootTime!=5||t.MaxShotRotation!=360||
            !t.PredictPosition||t.PrimaryTarget!=3||!t.UseUnitTarget||t.RealShotProbability!=1||t.BatchedWeaponComponentFileId!=11444804||
+           t.WeaponComponentFileId!=11455190||t.EffectiveBulletSpeed!=5||t.BulletCheckDistance!=.6f||
+           t.BulletSource!="Assets/GameObject/BulletSlow.prefab"||t.BulletSha256!="5379f6aba1560b8eb3d7d386d1349454b97ea133163ade9a313e2bc34d1adfae"||
            !p.MeshComponentFileIds.SequenceEqual([3327192,3335660,3361517,3339548])||
            p.Colliders.Length!=3||!p.Colliders.Select(x=>x.ComponentFileId).SequenceEqual([6525385,6572182,6582579]))
             throw new InvalidDataException("Heavy Turret prefab graph changed.");
@@ -125,7 +130,7 @@ public sealed class HeavyTurretSourceCatalog
             result.Add(map.Source,Array.AsReadOnly(covers));
         }
         if(total!=80)throw new InvalidDataException("Incomplete Heavy Turret slots.");
-        return new(expectedRevision,p.Sha256,min,max,result,Array.AsReadOnly(colliders));
+        return new(expectedRevision,p.Sha256,min,max,result,Array.AsReadOnly(colliders),Vector(t.MuzzlePosition));
     }
     private static bool Positive(float x)=>float.IsFinite(x)&&x>0&&x<=10_000_000;
     private static float Lerp(float a,float b,float t)=>a+(b-a)*t;

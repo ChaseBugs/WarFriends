@@ -11,6 +11,7 @@ MAP_GUID="f8e8488fbe21f6c02c9eef456d27a3b9"
 POSITION_GUID="61d832db3eebf585fb0a1ffe7e76ee26"
 HEAVY_GUID="21c7cfdd6453e9d44c8010b3fd8c8f15"
 TURRET_GUID="71b516e3f1c29506c1c10fb8054e06b4"
+BULLET_GUID="855689762fa6e774aaee190652b08c6f"
 
 def blocks(text):
     return {int(m.group(2)):(int(m.group(1)),m.group(3)) for m in re.finditer(
@@ -82,6 +83,16 @@ def extract_prefab():
     if len(heavy)!=1 or len(turret)!=1 or len(roots)!=1 or not meshes or not colliders: raise ValueError("HeavyTurret graph changed")
     heavy_id,h=heavy[0];turret_id,t=turret[0]
     if ref(h,"turretWeapon")!=turret_id: raise ValueError("HeavyTurret weapon binding changed")
+    batched_id=ref(t,"batchedWeapon");batched=source[batched_id][1];weapon_id=ref(batched,"weapon");weapon=source[weapon_id][1]
+    if f"guid: {BULLET_GUID}" not in field(weapon,"bulletPrefab"): raise ValueError("HeavyTurret BulletSlow binding changed")
+    spawn_id=ref(weapon,"spawnPoint");spawn_p,spawn_q,spawn_s=world_trs(source,spawn_id);shot_offset=vec(field(weapon,"shotOffset"))
+    muzzle=[a+b for a,b in zip(spawn_p,rotate(spawn_q,[a*b for a,b in zip(shot_offset,spawn_s)]))]
+    bullet_path=ASSETS/"GameObject/BulletSlow.prefab";bullet_source=blocks(bullet_path.read_text(encoding="utf-8-sig"))
+    bullets=[b for _,(k,b) in bullet_source.items() if k==114 and "ammoDamageAmount:" in b and "distanceToCheck:" in b]
+    behaviour_path=ASSETS/"Scripts/Assembly-CSharp/BehaviourDefinititon.cs"
+    if len(bullets)!=1 or "public float shotSpeed = 5f;" not in behaviour_path.read_text(encoding="utf-8-sig"):
+        raise ValueError("HeavyTurret effective BulletSlow authority changed")
+    bullet=bullets[0]
     collider_rows=[]
     for component_id,c in colliders:
         go=ref(c,"m_GameObject");transform=game_object_transform(source,go);p,q,s=world_trs(source,transform)
@@ -97,7 +108,9 @@ def extract_prefab():
                       "maxShootTime":float(field(t,"maxShootTime")),"maxShotRotation":float(field(t,"maxShotRotation")),
                       "predictPosition":bool(int(field(t,"predictPosition"))),"primaryTarget":int(field(t,"primaryTarget")),
                       "useUnitTarget":bool(int(field(t,"useUnitTarget")),),"realShotProbability":float(field(t,"realShotProbability")),
-                      "batchedWeaponComponentFileId":ref(t,"batchedWeapon")},
+                      "batchedWeaponComponentFileId":batched_id,"weaponComponentFileId":weapon_id,
+                      "muzzlePosition":muzzle,"effectiveBulletSpeed":5.0,"bulletCheckDistance":float(field(bullet,"distanceToCheck")),
+                      "bulletSource":"Assets/GameObject/BulletSlow.prefab","bulletSha256":digest(bullet_path)},
             "meshComponentFileIds":[i for i,_ in meshes],"colliders":collider_rows}
 
 def main():

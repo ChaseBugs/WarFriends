@@ -44,7 +44,17 @@
       "primaryTarget": 3,
       "useUnitTarget": true,
       "realShotProbability": 1.0,
-      "batchedWeaponComponentFileId": 11444804
+      "batchedWeaponComponentFileId": 11444804,
+      "weaponComponentFileId": 11455190,
+      "muzzlePosition": [
+        -0.05718316699293287,
+        0.34387049507555206,
+        0.1813752822115694
+      ],
+      "effectiveBulletSpeed": 5.0,
+      "bulletCheckDistance": 0.6,
+      "bulletSource": "Assets/GameObject/BulletSlow.prefab",
+      "bulletSha256": "5379f6aba1560b8eb3d7d386d1349454b97ea133163ade9a313e2bc34d1adfae"
     },
     "meshComponentFileIds": [
       3327192,

@@ -98,7 +98,7 @@ public sealed partial class MatchEngine
     internal const int MaximumProjectiles = 128;
     internal int PendingProjectileCount => checked(projectiles.Count+armyProjectiles.Count+armyFlameBursts.Count+
         vehicleProjectiles.Count+scheduledTransporterShots.Count+buggyProjectiles.Count+tankProjectiles.Count+
-        scheduledBazookas.Count+grenadeProjectiles.Count);
+        scheduledBazookas.Count+grenadeProjectiles.Count+heavyTurretProjectiles.Count);
     internal IReadOnlyCollection<AirBattleEntity> AirEntities => airEntities.Snapshot();
 
     internal bool TryRegisterAirEntity(AirBattleEntity entity)
@@ -860,7 +860,7 @@ public sealed partial class MatchEngine
         if(advanced&&phase==BattlePhase.Running)AdvanceTransporterShots();
         if(advanced&&phase==BattlePhase.Running)
         {
-            try{AdvanceHeavyTurrets();}
+            try{AdvanceHeavyTurretProjectiles();AdvanceHeavyTurrets();}
             catch(InvalidDataException){End("invalid-heavy-turret-authority","",false);return;}
         }
         if (advanced && phase == BattlePhase.Running && vehicleProjectiles.Count > 0)
@@ -1933,6 +1933,11 @@ public sealed partial class MatchEngine
             Kind=x.Value.Binding.Effect==RecoveredGrenadeEffect.Molotov?"grenade-molotov":"grenade",
             X=x.Value.Flight.Position.X,Y=x.Value.Flight.Position.Y,Z=x.Value.Flight.Position.Z,
             VelocityX=x.Value.Flight.Velocity.X,VelocityY=x.Value.Flight.Velocity.Y,VelocityZ=x.Value.Flight.Velocity.Z
+        }));
+        snapshot.Projectiles.AddRange(heavyTurretProjectiles.OrderBy(x=>x.Key).Select(x=>new BattleProjectileState
+        {
+            ProjectileId=x.Key,OwnerPlayerId=x.Value.Flight.OwnerId,Kind="heavy-turret-bullet",
+            X=x.Value.Flight.Position.X,Y=x.Value.Flight.Position.Y,Z=x.Value.Flight.Position.Z
         }));
         snapshot.Decoys.AddRange(decoys.Snapshot().Select(x=>new BattleDecoyState
         {

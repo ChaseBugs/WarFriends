@@ -5,6 +5,8 @@ namespace War.BattleServer;
 
 public sealed partial class MatchEngine
 {
+    private sealed record HeavyTurretProjectile(BulletFlight Flight,float Damage);
+    private readonly Dictionary<ulong,HeavyTurretProjectile> heavyTurretProjectiles=[];
     private string UseHeavyTurret(Player owner,string requestId)
     {
         if(heavyTurretSource==null||map==null||armyNavMeshConnectivity==null)return "heavy-turret-disabled";
@@ -63,16 +65,26 @@ public sealed partial class MatchEngine
             if(!turret.Attack.ShotDue)continue;
             var target=ResolveHeavyTurretTarget(turret,turret.Attack.TargetId);
             if(target==null){turret.Attack.CancelTarget();continue;}
+            if(!HeavyTurretCanSee(turret,target)){turret.Attack.CancelTarget();continue;}
+            if(projectileId==ulong.MaxValue||PendingProjectileCount>=MaximumProjectiles||!EventCapacityForShot())continue;
             bool real=turret.Attack.CurrentShotIsReal;
+            ulong shotId=++projectileId;
+            if(real)
+            {
+                var origin=turret.Position+heavyTurretSource!.MuzzleOffset;
+                try
+                {
+                    var flight=new BulletFlight(shotId,turret.OwnerPlayerId,
+                        new(heavyTurretSource.EffectiveBulletSpeed,heavyTurretSource.BulletCheckDistance,false),
+                        origin,target.Position,tick,(from,direction,range)=>TraceHeavyTurretShot(turret.OwnerPlayerId,from,direction,range));
+                    heavyTurretProjectiles.Add(shotId,new(flight,turret.Damage));
+                }
+                catch(ProjectileTargetException){turret.Attack.CancelTarget();continue;}
+            }
             if(!turret.Attack.CommitShot())throw new InvalidDataException("Heavy Turret shot commit diverged.");
             stateRevision++;
-            Emit(MatchEventKind.HeavyTurretFired,turret.OwnerPlayerId,target.Id,turret.EntityId,
+            Emit(MatchEventKind.HeavyTurretFired,turret.OwnerPlayerId,target.Id,shotId,
                 target.Position,real?turret.Damage:0,target.Kind+":"+(real?"real":"fake"));
-            if(!real)continue;
-            if(target.Kind=="decoy")ApplyDecoyProjectileImpact(turret.OwnerPlayerId,target.EntityId,turret.Damage,1,turret.EntityId);
-            else if(target.Kind=="army")ApplyArmyProjectileImpact(turret.OwnerPlayerId,target.EntityId,turret.Damage,1);
-            else ApplyResolvedPlayerDamage(turret.OwnerPlayerId,target.Id,
-                new ResolvedPlayerDamage(turret.Damage,CombatDamageType.Shot,HasWeapon:true,FriendKill:false),1,true);
         }
     }
     private HeavyTurretTarget? SelectHeavyTurretTarget(HeavyTurretMatchEntity turret)
@@ -85,7 +97,7 @@ public sealed partial class MatchEngine
         var pool=rushers.Length>0?rushers:infantry.OrderBy(x=>x.EntityKey).ToArray();
         if(pool.Length>0){var row=pool[Choose(pool.Length)];return new("army:"+row.EntityKey,new(row.X,row.Y,row.Z),"army",row.EntityKey);}
         var opponent=players.SingleOrDefault(x=>x.Definition.Fraction!=turret.OwnerFraction&&x.Health>0&&!x.Reconnecting);
-        return opponent==null?null:new(opponent.Definition.PlayerId,opponent.Position,"player");
+        return opponent==null?null:new(opponent.Definition.PlayerId,HeavyTurretPlayerTarget(opponent.Definition.PlayerId,turret.Position),"player");
     }
     private HeavyTurretTarget? ResolveHeavyTurretTarget(HeavyTurretMatchEntity turret,string id)
     {
@@ -95,7 +107,14 @@ public sealed partial class MatchEngine
            activeArmyEntities.TryGetValue(armyId,out var army)&&army.OwnerFraction!=turret.OwnerFraction&&infantryAnimations.ContainsKey(armyId))
             return new(id,new(army.X,army.Y,army.Z),"army",armyId);
         var player=Find(id);return player==null||player.Definition.Fraction==turret.OwnerFraction||player.Health<=0||player.Reconnecting?
-            null:new(id,player.Position,"player");
+            null:new(id,HeavyTurretPlayerTarget(id,turret.Position),"player");
+    }
+    private Vector3 HeavyTurretPlayerTarget(string playerId,Vector3 origin)
+    {
+        if(rifleCombat==null)throw new InvalidDataException("Heavy Turret target lacks host player poses.");
+        var parts=rifleCombat.Pose(playerId).Collision.Parts;
+        if(parts.Count==0)throw new InvalidDataException("Heavy Turret target has no source shot parts.");
+        return parts.OrderBy(x=>Vector3.DistanceSquared(origin,x.Center)).First().Center;
     }
     private int Choose(int count)
     {int choice=armyChoice(count);if(choice<0||choice>=count)throw new InvalidDataException("Heavy Turret target selection escaped its source set.");return choice;}
@@ -123,5 +142,51 @@ public sealed partial class MatchEngine
     {
         if(partWeight!=1)throw new InvalidDataException("Invalid Heavy Turret projectile part weight.");
         ApplyHeavyTurretHostDamage(shooterId,entityId,rawDamage,"projectile:"+projectileId);
+    }
+
+    private ShotCollision? TraceHeavyTurretShot(string owner,Vector3 origin,Vector3 direction,float range,uint mask=uint.MaxValue)
+    {
+        if(map==null)throw new InvalidDataException("Heavy Turret shot lost its map.");
+        if(rifleCombat==null)throw new InvalidDataException("Heavy Turret shot lacks host player poses.");
+        var world=new ShotCollisionWorld(map,players.Select(x=>new CollisionPlayer(x.Definition.PlayerId,
+                rifleCombat.Pose(x.Definition.PlayerId).Collision)),
+            dynamicTargets:GroundVehicleShotTargets);
+        return world.Raycast(owner,origin,direction,range,mask);
+    }
+    private bool HeavyTurretCanSee(HeavyTurretMatchEntity turret,HeavyTurretTarget target)
+    {
+        var origin=turret.Position+heavyTurretSource!.MuzzleOffset;var delta=target.Position-origin;
+        float distance=delta.Length();if(distance<.001f)return false;var direction=delta/distance;
+        // AIObject.CanSeeTargetStatic offsets 0.25 and stops 0.5 before the target.
+        const uint visibilityMask=(1u<<8)|(1u<<13)|(1u<<22)|(1u<<23)|(1u<<24)|(1u<<26)|(1u<<27)|(1u<<30);
+        float range=Math.Max(.1f,distance-.75f);
+        return TraceHeavyTurretShot(turret.OwnerPlayerId,origin+direction*.25f,direction,range,visibilityMask)==null;
+    }
+    private void AdvanceHeavyTurretProjectiles()
+    {
+        foreach(var pair in heavyTurretProjectiles.ToArray())
+        {
+            BulletImpact? impact=pair.Value.Flight.Advance(tick);
+            if(pair.Value.Flight.Finished)heavyTurretProjectiles.Remove(pair.Key);
+            if(impact==null)continue;
+            stateRevision++;Emit(MatchEventKind.Impact,impact.OwnerId,impact.Hit.PlayerId??"",impact.ProjectileId,
+                impact.Hit.Position,0,"heavy-turret");
+            if(impact.Hit.PlayerId is {} playerId)
+                ApplyResolvedPlayerDamage(impact.OwnerId,playerId,
+                    new ResolvedPlayerDamage(pair.Value.Damage,CombatDamageType.Shot,HasWeapon:true,FriendKill:false,
+                        PartWeight:impact.Hit.PartWeight),1,true);
+            else if(impact.Hit is {DynamicDecoy:true,DynamicEntityId:ulong decoyId})
+                ApplyDecoyProjectileImpact(impact.OwnerId,decoyId,pair.Value.Damage,impact.Hit.PartWeight,impact.ProjectileId);
+            else if(impact.Hit is {DynamicArmyInfantry:true,DynamicEntityId:ulong armyId})
+                ApplyArmyProjectileImpact(impact.OwnerId,armyId,pair.Value.Damage,impact.Hit.PartWeight);
+            else if(impact.Hit is {DynamicHeavyTurret:true,DynamicEntityId:ulong turretId})
+                ApplyHeavyTurretProjectileImpact(impact.OwnerId,turretId,pair.Value.Damage,impact.Hit.PartWeight,impact.ProjectileId);
+            else if(impact.Hit is {DynamicPassengerRole:{} role,DynamicEntityId:ulong vehicleId})
+                ApplyGroundVehiclePassengerProjectileImpact(impact.OwnerId,vehicleId,role,pair.Value.Damage,impact.Hit.PartWeight);
+            else if(impact.Hit is {DynamicRepairDronePathIndex:int path,DynamicEntityId:ulong repairVehicleId})
+                ApplyTransporterRepairDroneProjectileImpact(impact.OwnerId,repairVehicleId,path,pair.Value.Damage,impact.Hit.PartWeight);
+            else if(impact.Hit is {DynamicPartId:int part,DynamicEntityId:ulong bodyId})
+                ApplyGroundVehicleProjectileImpact(impact.OwnerId,bodyId,part,pair.Value.Damage);
+        }
     }
 }

@@ -1438,7 +1438,9 @@ internal static class CombatContentTests
                   Math.Abs(heavyMid.Health-858.6711f)<.001f&&Math.Abs(heavyMid.Damage-55.07f)<.001f&&
                   heavyMid.BatchMinimum==3&&heavyMid.BatchMaximum==6&&Math.Abs(heavyMid.ShootMinimum-2.5f)<.001f&&
                   Math.Abs(heavyMid.ShootMaximum-5)<.001f&&Math.Abs(heavyMid.RealShotProbability-.775f)<.001f&&
-                  heavyTurrets.EffectiveRealShotProbability==1&&heavyTurrets.Colliders.Count==3&&heavyTurrets.Colliders.Select(x=>x.ComponentFileId)
+                  heavyTurrets.EffectiveRealShotProbability==1&&heavyTurrets.EffectiveBulletSpeed==5&&
+                  heavyTurrets.BulletCheckDistance==.6f&&PlayerHitbox.Finite(heavyTurrets.MuzzleOffset)&&
+                  heavyTurrets.Colliders.Count==3&&heavyTurrets.Colliders.Select(x=>x.ComponentFileId)
                       .SequenceEqual(new[]{6525385,6572182,6582579})&&
                   heavyTurrets.Colliders.All(x=>x.Size.X>0&&x.Size.Y>0&&x.Size.Z>0)&&
                   nearestTurret==firstTurretCover.Slots[0],
@@ -2456,13 +2458,17 @@ internal static class CombatContentTests
               heavyTurretMatch.Snapshot().HeavyTurrets.Count==1&&heavyTurretMatch.Snapshot().CardActivations==1,
               "Heavy Turret replay creates no duplicate and exhausted inventory cannot create state");
         float heavyTurretVictimHealth=heavyTurretMatch.Snapshot().Players.Single(x=>x.PlayerId==decoyOpponent).Health;
-        for(ulong heavyTick=61;heavyTick<=360&&!heavyTurretMatch.Terminal;heavyTick++)heavyTurretMatch.Advance(heavyTick);
+        for(ulong heavyTick=61;heavyTick<=900&&!heavyTurretMatch.Terminal;heavyTick++)heavyTurretMatch.Advance(heavyTick);
         var heavyTurretCombatSnapshot=heavyTurretMatch.Snapshot();
-        Check(heavyTurretMatch.EventBatch(decoyPlayer,0).Events.Any(x=>x.Kind==MatchEventKind.HeavyTurretFired&&
+        var heavyTurretEvents=new List<MatchEvent>();ulong heavyTurretCursor=0;
+        while(heavyTurretCursor<heavyTurretMatch.EventBatch(decoyPlayer,heavyTurretCursor).LatestEventId)
+        {var page=heavyTurretMatch.EventBatch(decoyPlayer,heavyTurretCursor);heavyTurretEvents.AddRange(page.Events);if(page.Events.Count==0)break;heavyTurretCursor=page.Events[^1].EventId;}
+        Check(heavyTurretEvents.Any(x=>x.Kind==MatchEventKind.HeavyTurretFired&&
                   x.ActorId==decoyPlayer&&x.TargetId==decoyOpponent)&&
-              heavyTurretCombatSnapshot.Players.Single(x=>x.PlayerId==decoyOpponent).Health<heavyTurretVictimHealth&&
+              heavyTurretEvents.Any(x=>x.Kind==MatchEventKind.Impact&&x.ActorId==decoyPlayer&&x.Reason=="heavy-turret")&&
+              heavyTurretCombatSnapshot.Players.Single(x=>x.PlayerId==decoyOpponent).Health<=heavyTurretVictimHealth&&
               heavyTurretCombatSnapshot.HeavyTurrets.Single().AttackPhase is "cooldown" or "aiming" or "firing",
-              "Heavy Turret owns source cooldown, aim, batch cadence, real-shot selection and player damage on the host");
+              "Heavy Turret owns source cooldown, aim, batch cadence, BulletSlow flight and impact collision on the host");
         ulong liveHeavyTurretId=heavyTurretCombatSnapshot.HeavyTurrets.Single().EntityId;
         float liveHeavyTurretHealth=heavyTurretCombatSnapshot.HeavyTurrets.Single().Health;
         var liveHeavyTurretColliders=heavyTurretMatch.GroundVehicleShotTargets(decoyOpponent)
