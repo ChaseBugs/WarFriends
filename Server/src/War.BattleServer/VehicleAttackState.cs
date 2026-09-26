@@ -73,6 +73,11 @@ public sealed class VehicleAttackState
         }
         return true;
     }
+    internal bool CommitWholeBatch(out int batch)
+    {
+        batch=0;if(!ShotDue||batchRemaining<=0)return false;
+        batch=batchRemaining;batchRemaining=0;ScheduleBatchCooldown();return true;
+    }
     internal void DisableAndReset()
     {windupTicks=0;batchRemaining=0;CurrentShotIsReal=false;ScheduleBatchCooldown();}
     private void ScheduleBatchCooldown()

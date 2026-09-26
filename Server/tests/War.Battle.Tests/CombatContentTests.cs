@@ -743,6 +743,7 @@ internal static class CombatContentTests
               buggyRig.Roles.Single(r=>r.Role=="cannon").SecondaryDelay==.25f&&
               transporterRig.Roles.Single().Weapons.Count==2&&
               transporterRig.Roles.Single().Weapons.All(w=>w.WeaponType=="AutomaticRifle")&&
+              transporterRig.Roles.Single().Weapons.Select(w=>w.Cadence).SequenceEqual([.3f,.5f])&&
               buggyRig.Roles.Single(r=>r.Role=="cannon").Weapons.All(w=>w.Missile is
                   {Speed:6f,MinimumDamage:20f,HurtRadius:1.2f,DeadRadius:1f,CurvedTrajectory:true,
                    RotationRange:{X:.5f,Y:.5f},RotationProfile.Count:5,
@@ -1429,6 +1430,22 @@ internal static class CombatContentTests
                   vehicleBatch.AdvanceTick()&&vehicleBatch.CommitShot()&&
                   vehicleBatch.CooldownTicksRemaining==30,
                   "vehicle attack preserves per-round weapon cadence and post-batch turret cooldown");
+            var transporterRolls=new Queue<float>([.9f,.1f,.8f,.2f,.7f]);
+            var transporterVolley=TransporterVolleyPlanner.Plan(6,.3f,.5f,.5f,true,
+                ()=>transporterRolls.Dequeue());
+            Check(transporterVolley.Select(x=>(x.WeaponIndex,x.TickOffset)).SequenceEqual(
+                      [(0,0),(0,9),(0,18),(1,8),(1,23),(1,38)])&&
+                  transporterVolley.Select(x=>x.Real).SequenceEqual([true,false,true,false,true,false]),
+                  "Transporter divides six rounds floor-half across two source cadences and delays the right gun");
+            var transporterStateRolls=new Queue<float>([.999f,.2f,.5f]);
+            var transporterState=new VehicleAttackState(
+                new ArmyVehicleShotStats(5,.9f,4,7,3.5f,4.5f,0),.3f,
+                ()=>transporterStateRolls.Dequeue());
+            Check(transporterState.TryBegin(true,0)&&transporterState.BatchRemaining==6&&
+                  transporterState.AdvanceTick()&&transporterState.CurrentShotIsReal&&
+                  transporterState.CommitWholeBatch(out int transporterBatch)&&transporterBatch==6&&
+                  transporterState.BatchRemaining==0&&transporterState.CooldownTicksRemaining==120,
+                  "Transporter commits one split batch before its source post-volley cooldown");
             var initialVehicleRolls=new Queue<float>([.5f]);
             var initialVehicleAttack=new VehicleAttackState(
                 new ArmyVehicleShotStats(5,1,2,4,1,2,0),.1f,()=>initialVehicleRolls.Dequeue());
@@ -2800,6 +2817,68 @@ internal static class CombatContentTests
             return spawn.VehicleRoute!=null&&staleMatch.VehicleRouteMotion(entity.EntityKey)==null&&
                    Vector3.Distance(new(entity.X,entity.Y,entity.Z),spawn.VehicleRoute.Positions[^1])<.0001f;
         }),"live Humvee and Tank traverse their reserved source waypoint lists and park at final targets");
+        var transporterManifest=detached with {MatchId="transporter-split-fire",Players=[detached.Players[0] with
+        {
+            EquippedArmyUnitIds=["ID_UNIT-TRANSPORTER"],NewArmyUnitIds=null,
+            ArmyNormalUpgradeIndexes=[0],ArmySpecialUpgradeIndexes=[-1],ArmyEliteUpgradeIndexes=[-1],
+            ArmyHealthFactors=[new(1f,1f)],ArmyDamageScales=[1f],ArmySpeedCoefficients=[1f],
+            ArmyAccuracyCoefficients=[1f]
+        },detached.Players[1]]};
+        var transporterMatch=new MatchEngine(transporterManifest,content:content);
+        transporterMatch.Admit(soldierOwner);transporterMatch.Admit(helicopterOwner);
+        transporterMatch.Command(soldierOwner,new MatchCommand{CommandId=1,
+            Ready=new ReadyCommand{ManifestHash=transporterMatch.ManifestHash}});
+        transporterMatch.Command(helicopterOwner,new MatchCommand{CommandId=1,
+            Ready=new ReadyCommand{ManifestHash=transporterMatch.ManifestHash}});
+        transporterMatch.Advance(60);
+        Check(transporterMatch.ArmyBatch(soldierOwner).OptionIndexes.Contains(32)&&
+              transporterMatch.Command(soldierOwner,new MatchCommand{CommandId=2,
+                  DeployArmy=new DeployArmyCommand{OptionIndex=32}}).Code=="army-deploying",
+              "recovered Transporter option enters the live vehicle route");
+        ulong transporterSpawnTick=transporterMatch.ArmyBatch(soldierOwner).NextDeployTick;
+        for(ulong t=61;t<=transporterSpawnTick;t++)
+        {
+            transporterMatch.Advance(t);
+            if(t%90==0)
+            {transporterMatch.ArmyEntityBatch(soldierOwner,0,0);transporterMatch.ArmyEntityBatch(helicopterOwner,0,0);}
+        }
+        var transporterEntity=transporterMatch.ArmyEntityBatch(soldierOwner,0,0).Entities.Single();
+        ulong transporterTick=transporterSpawnTick;
+        while(transporterMatch.GroundVehicleAttack(transporterEntity.EntityKey)?.Phase!=ArmyAirAttackPhase.Ready&&
+              transporterTick<transporterSpawnTick+200)
+        {
+            transporterMatch.Advance(++transporterTick);
+            if(transporterTick%90==0)
+            {transporterMatch.ArmyEntityBatch(soldierOwner,0,0);transporterMatch.ArmyEntityBatch(helicopterOwner,0,0);}
+        }
+        if(transporterMatch.GroundVehicleAttack(transporterEntity.EntityKey)?.Phase==ArmyAirAttackPhase.Ready)
+        {
+            var transporterTargetPlayer=transporterMatch.Snapshot().Players.Single(x=>x.PlayerId==helicopterOwner);
+            string transporterAttackResult=transporterMatch.Command(soldierOwner,new MatchCommand{CommandId=3,
+                VehicleAttack=new VehicleAttackCommand{EntityId=transporterEntity.EntityKey,
+                    TargetPlayerId=helicopterOwner,TargetX=transporterTargetPlayer.PositionX,
+                    TargetY=transporterTargetPlayer.PositionY,TargetZ=transporterTargetPlayer.PositionZ}}).Code;
+            Check(transporterAttackResult=="vehicle-attack-accepted",
+                "live Transporter accepts a host-validated opposing player target");
+        }
+        for(int i=0;i<100&&!transporterMatch.Terminal;i++)
+        {
+            transporterMatch.Advance(++transporterTick);
+            if(transporterTick%90==0)
+            {transporterMatch.ArmyEntityBatch(soldierOwner,0,0);transporterMatch.ArmyEntityBatch(helicopterOwner,0,0);}
+        }
+        var transporterEvents=new List<MatchEvent>();ulong transporterCursor=0;
+        while(true)
+        {
+            var page=transporterMatch.EventBatch(helicopterOwner,transporterCursor);
+            transporterEvents.AddRange(page.Events);
+            if(page.Events.Count==0||page.Events[^1].EventId==page.LatestEventId)break;
+            transporterCursor=page.Events[^1].EventId;
+        }
+        var splitShots=transporterEvents.Where(e=>e.Reason is "transporter" or "transporter-fake").ToArray();
+        Check(splitShots.Length is >=4 and <=6&&splitShots.Select(e=>MathF.Round(e.X,3)).Distinct().Count()>=2&&
+              splitShots.Select(e=>e.Tick).Distinct().Count()>=3,
+              "live Transporter publishes its split batch from both recovered muzzles over independent cadences");
         var destroyedVehicle=parkedVehicles[0];
         Check(staleMatch.ApplyArmyHostDamage(destroyedVehicle.EntityKey,destroyedVehicle.MaxHealth)&&
               staleMatch.VehicleRouteMotion(destroyedVehicle.EntityKey)==null&&

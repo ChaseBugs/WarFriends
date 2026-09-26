@@ -35,6 +35,9 @@ public sealed partial class MatchEngine
     private readonly GrenadeMatchSimulation? grenadeCombat;
     private readonly Dictionary<ulong, ArmyProjectileFlight> armyProjectiles = [];
     private readonly Dictionary<ulong, VehicleProjectileFlight> vehicleProjectiles = [];
+    private sealed record ScheduledTransporterShot(ulong VehicleId,string Owner,string Target,
+        Vector3 TargetPosition,int WeaponIndex,ulong LaunchTick,bool Real);
+    private readonly List<ScheduledTransporterShot> scheduledTransporterShots=[];
     private sealed record BuggyProjectile(BuggyMissileFlight Flight,string Owner,string Target,
         float Damage,GroundVehicleMissileBinding Binding);
     private readonly Dictionary<ulong,BuggyProjectile> buggyProjectiles=[];
@@ -84,7 +87,7 @@ public sealed partial class MatchEngine
     private ulong projectileId;
     internal const int MaximumProjectiles = 128;
     internal int PendingProjectileCount => checked(projectiles.Count+armyProjectiles.Count+armyFlameBursts.Count+
-        vehicleProjectiles.Count+buggyProjectiles.Count+tankProjectiles.Count+bazookaProjectiles.Count+
+        vehicleProjectiles.Count+scheduledTransporterShots.Count+buggyProjectiles.Count+tankProjectiles.Count+
         scheduledBazookas.Count+grenadeProjectiles.Count);
     internal IReadOnlyCollection<AirBattleEntity> AirEntities => airEntities.Snapshot();
 
@@ -393,6 +396,8 @@ public sealed partial class MatchEngine
             .Select(x=>x.Key).ToArray())buggyProjectiles.Remove(projectile);
         foreach(var projectile in tankProjectiles.Where(x=>x.Value.Flight.VehicleId==entityId)
             .Select(x=>x.Key).ToArray())tankProjectiles.Remove(projectile);
+        scheduledTransporterShots.RemoveAll(x=>x.VehicleId==entityId);
+        transporterShotStats.Remove(entityId);
         buggyCannonTargets.Remove(entityId);buggyCannonAttacks.Remove(entityId);
         tankCannonTargets.Remove(entityId);tankCannonAttacks.Remove(entityId);tankCannonDamage.Remove(entityId);
         stateRevision++;
@@ -467,6 +472,13 @@ public sealed partial class MatchEngine
             !vehicles.TryGetAttack(entityId, out var attack) || attack == null || !attack.ShotDue)
             return false;
         realShot = attack.CurrentShotIsReal;
+        bool transporter=activeArmyEntities.TryGetValue(entityId,out var attackingArmy)&&
+            attackingArmy.UnitId=="ID_UNIT-TRANSPORTER";
+        if(transporter)
+        {
+            if(!attack.CommitWholeBatch(out int batch)||!ScheduleTransporterBatch(entityId,batch,realShot))return false;
+            return true;
+        }
         var committed = vehicles.TryCommitAttack(entityId);
         if (committed && realShot && vehicleShotTargets.TryGetValue(entityId, out var target) &&
             vehicles.TryGet(entityId, out var source) && source != null&&
@@ -643,10 +655,12 @@ public sealed partial class MatchEngine
     public string ManifestHash { get; }
     public bool Terminal => phase is BattlePhase.Ended or BattlePhase.Aborted;
     private readonly Func<int,int> armyChoice;
+    private readonly Func<float> combatRandom;
     public MatchEngine(MatchManifest definition, RecoveredBattleMap? map = null,
-        BattleCombatContent? content=null,Func<int,int>? armyChoice=null)
+        BattleCombatContent? content=null,Func<int,int>? armyChoice=null,Func<float>? combatRandom=null)
     {
         this.armyChoice=armyChoice??Random.Shared.Next;
+        this.combatRandom=combatRandom??Random.Shared.NextSingle;
         manifest = MatchManifest.Validate(definition);
         if (content!=null) content.ValidateAllocation(manifest);
         else if (manifest.Players.Any(p=>p.WeaponUpgrade.HasValue)) throw new InvalidDataException("Source-bound upgrades require a verified combat package.");
@@ -710,7 +724,7 @@ public sealed partial class MatchEngine
                 grenadeCatalog=content.Grenades??throw new InvalidDataException("Grenade mode requires its pinned package.");
                 grenadeCombat=new GrenadeMatchSimulation(manifest,map,grenadeCatalog,
                     shields==null?null:shields.ColliderEnabled,barrels==null?null:barrels.ColliderEnabled,
-                    barrels==null?null:barrels.RuntimeLayer);damageRoll=Random.Shared.NextSingle;
+                barrels==null?null:barrels.RuntimeLayer);damageRoll=this.combatRandom;
             }
             else
             {
@@ -719,7 +733,7 @@ public sealed partial class MatchEngine
                     barrels==null?null:barrels.ColliderEnabled,
                     barrels==null?null:barrels.RuntimeLayer);
                 rifleCombat.ConfigureDynamicTargets(GroundVehicleShotTargets);
-                ConfigureVolley(rifleCombat.PrepareVolley,Random.Shared.NextSingle);
+                ConfigureVolley(rifleCombat.PrepareVolley,this.combatRandom);
                 bazookaCatalog=content.Bazookas;
             }
         }
@@ -814,6 +828,7 @@ public sealed partial class MatchEngine
                     attack != null && attack.ShotDue)
                     TryCommitVehicleAttack(vehicle.OwnerPlayerId, vehicle.EntityId, out _);
             }
+        if(advanced&&phase==BattlePhase.Running)AdvanceTransporterShots();
         if (advanced && phase == BattlePhase.Running && vehicleProjectiles.Count > 0)
         {
             foreach (var pair in vehicleProjectiles.ToArray())
@@ -1156,6 +1171,8 @@ public sealed partial class MatchEngine
                     .Select(x=>x.Key).ToArray())buggyProjectiles.Remove(projectile);
                 foreach(var projectile in tankProjectiles.Where(x=>x.Value.Flight.VehicleId==vehicle.EntityId)
                     .Select(x=>x.Key).ToArray())tankProjectiles.Remove(projectile);
+                scheduledTransporterShots.RemoveAll(x=>x.VehicleId==vehicle.EntityId);
+                transporterShotStats.Remove(vehicle.EntityId);
                 buggyCannonTargets.Remove(vehicle.EntityId);buggyCannonAttacks.Remove(vehicle.EntityId);
                 tankCannonTargets.Remove(vehicle.EntityId);tankCannonAttacks.Remove(vehicle.EntityId);
                 tankCannonDamage.Remove(vehicle.EntityId);
@@ -1548,7 +1565,7 @@ public sealed partial class MatchEngine
         uint mask=owner.Definition.Fraction==1?bazookaCatalog.AlliesBulletMask:bazookaCatalog.EnemiesBulletMask;
         int curveSign=(++bazookaCurveCounter&1)==0?-1:1;
         var flight=new BazookaMissileFlight(++projectileId,launch.Owner,binding,origin,launch.Target,tick,
-            launch.Fake,Random.Shared.NextSingle(),Random.Shared.NextSingle(),curveSign,
+            launch.Fake,combatRandom(),combatRandom(),curveSign,
             (from,direction,range)=>rifleCombat.TraceForBazooka(launch.Owner,from,direction,range,mask));
         bazookaProjectiles.Add(projectileId,new(flight,stage,binding,launch.WeaponSourceId,launch.HalfDamage));
         Emit(MatchEventKind.Shot,launch.Owner,"",projectileId,origin,0,launch.Fake?"bazooka-fake":"bazooka");

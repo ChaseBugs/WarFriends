@@ -121,6 +121,7 @@ public sealed partial class MatchEngine
         }
     }
     private readonly Dictionary<ulong,float> groundVehicleShotSpeed=[];
+    private readonly Dictionary<ulong,ArmyVehicleShotStats> transporterShotStats=[];
     private readonly Dictionary<ulong,BuggyCannonAttackState> buggyCannonAttacks=[];
     private readonly Dictionary<ulong,VehicleAttackState> tankCannonAttacks=[];
     private readonly Dictionary<ulong,float> tankCannonDamage=[];
@@ -286,6 +287,8 @@ public sealed partial class MatchEngine
                buggyCannonAttacks.TryGetValue(entityKey,out var cannon))cannon.DisableAndReset();
             if(unit=="ID_UNIT-TANK"&&role=="cannon"&&
                tankCannonAttacks.TryGetValue(entityKey,out var tankCannon))tankCannon.DisableAndReset();
+            if(unit=="ID_UNIT-TRANSPORTER"&&role=="co-driver")
+                scheduledTransporterShots.RemoveAll(x=>x.VehicleId==entityKey);
             Emit(MatchEventKind.VehiclePassengerDown,activeArmyEntities[entityKey].OwnerPlayerId,"",entityKey,
                 PassengerWorldPosition(entityKey,passenger.Binding),0,"vehicle-passenger-down:"+role);
         }
@@ -326,9 +329,10 @@ public sealed partial class MatchEngine
     {
         if(phase!=BattlePhase.Running||vehicles==null||rifleCombat==null||playerShotTargets==null||groundVehicleWeapons==null||
            !activeArmyEntities.TryGetValue(entityKey,out var army)||
-           army.UnitId is not ("ID_UNIT-TANK" or "ID_UNIT-HUMVEE")||
+           army.UnitId is not ("ID_UNIT-TANK" or "ID_UNIT-HUMVEE" or "ID_UNIT-TRANSPORTER")||
            !(army.UnitId=="ID_UNIT-TANK"?PassengerActive(entityKey,"turret"):
-               PassengerActive(entityKey,"gunner"))||
+             army.UnitId=="ID_UNIT-HUMVEE"?PassengerActive(entityKey,"gunner"):
+               PassengerActive(entityKey,"co-driver"))||
            !vehicles.TryGet(entityKey,out var vehicle)||vehicle==null||
            !vehicles.TryGetAttack(entityKey,out var attack)||attack?.Phase!=ArmyAirAttackPhase.Ready||
            !groundVehicleFacing.TryGetValue(entityKey,out var facing))return false;
@@ -337,10 +341,10 @@ public sealed partial class MatchEngine
         if(!opponent.Admitted||opponent.Dead)return false;
         var pose=rifleCombat.Pose(opponent.Definition.PlayerId);
         var turret=groundVehicleWeapons.For(army.UnitId).Roles.Single(r=>r.Role=="primary");
-        bool matchingUnit=activeArmyEntities.Values.Any(candidate=>
-            candidate.OwnerFraction!=army.OwnerFraction&&
+        bool matchingUnit=activeArmyEntities.Values.Any(candidate=>candidate.OwnerFraction!=army.OwnerFraction&&
             armyCatalog!.Families.Single(f=>f.UnitId==candidate.UnitId).UnitType==turret.PrimaryTarget);
-        if(!GroundVehicleAimPolicy.CanFallbackToPlayer(turret,false,matchingUnit))return false;
+        if(army.UnitId!="ID_UNIT-TRANSPORTER"&&
+           !GroundVehicleAimPolicy.CanFallbackToPlayer(turret,false,matchingUnit))return false;
         Vector3 target;
         if(opponent.Route!=null&&pose.MovingTarget!=null)target=pose.MovingTarget.Position;
         else
@@ -360,8 +364,56 @@ public sealed partial class MatchEngine
         if(visible?.PlayerId!=opponent.Definition.PlayerId&&visible?.DynamicOwner!=opponent.Definition.PlayerId)
             return false;
         vehicleShotTargets[entityKey]=(army.OwnerPlayerId,opponent.Definition.PlayerId,target);
-        groundVehicleShotSpeed[entityKey]=GroundVehicleAimPolicy.PlayerProjectileSpeed(turret,attack.ShotSpeed);
+        groundVehicleShotSpeed[entityKey]=army.UnitId=="ID_UNIT-TRANSPORTER"?attack.ShotSpeed:
+            GroundVehicleAimPolicy.PlayerProjectileSpeed(turret,attack.ShotSpeed);
         return vehicles.TryBeginAttack(entityKey,true,aim.AimTicks);
+    }
+
+    private bool ScheduleTransporterBatch(ulong entityKey,int batch,bool firstReal)
+    {
+        if(batch is <1 or >64||!activeArmyEntities.TryGetValue(entityKey,out var army)||
+           army.UnitId!="ID_UNIT-TRANSPORTER"||!vehicleShotTargets.TryGetValue(entityKey,out var target)||
+           !transporterShotStats.TryGetValue(entityKey,out var stats)||groundVehicleWeapons==null)
+            throw new InvalidDataException("Transporter batch lost source authority.");
+        var weapons=groundVehicleWeapons.For(army.UnitId).Roles.Single(r=>r.Role=="primary").Weapons;
+        if(weapons.Count!=2)throw new InvalidDataException("Transporter batch lacks two source weapons.");
+        if(PendingProjectileCount>MaximumProjectiles-batch)return true;
+        foreach(var shot in TransporterVolleyPlanner.Plan(batch,weapons[0].Cadence,weapons[1].Cadence,
+            stats.ProbabilityOfRealShot,firstReal,NextArmyFloat))
+            scheduledTransporterShots.Add(new(entityKey,target.Owner,target.Target,target.Position,shot.WeaponIndex,
+                checked(tick+(ulong)shot.TickOffset),shot.Real));
+        return true;
+    }
+
+    private void AdvanceTransporterShots()
+    {
+        if(scheduledTransporterShots.Count==0)return;
+        foreach(var shot in scheduledTransporterShots.Where(x=>x.LaunchTick<=tick)
+            .OrderBy(x=>x.LaunchTick).ThenBy(x=>x.WeaponIndex).ToArray())
+        {
+            scheduledTransporterShots.Remove(shot);
+            if(!activeArmyEntities.TryGetValue(shot.VehicleId,out var army)||vehicles==null||
+               !vehicles.TryGet(shot.VehicleId,out var vehicle)||vehicle==null||groundVehicleWeapons==null||
+               rifleCombat==null||!groundVehicleFacing.TryGetValue(shot.VehicleId,out _))continue;
+            var weapon=groundVehicleWeapons.For(army.UnitId).Roles.Single(r=>r.Role=="primary").Weapons[shot.WeaponIndex];
+            Vector3 origin=groundVehicleWeapons.RestMuzzleOrigin(army.UnitId,"primary",shot.WeaponIndex,
+                vehicle.Position,shot.TargetPosition-vehicle.Position);
+            if(projectileId==ulong.MaxValue)throw new InvalidDataException("Transporter projectile identity exhausted.");
+            ulong id=++projectileId;
+            if(EventCapacityForShot())
+            {
+                Emit(MatchEventKind.Shot,shot.Owner,shot.Target,id,origin,0,
+                    shot.Real?"transporter":"transporter-fake");stateRevision++;
+                if(shot.Real&&PendingProjectileCount<MaximumProjectiles)
+                {
+                    float speed=groundVehicleShotSpeed.TryGetValue(shot.VehicleId,out float selected)?selected:
+                        transporterShotStats[shot.VehicleId].ShotSpeed;
+                    vehicleProjectiles.Add(id,new VehicleProjectileFlight(id,shot.VehicleId,origin,
+                        shot.TargetPosition,speed,tick,(from,direction,range)=>
+                            rifleCombat.TraceForArmy(shot.Owner,from,direction,range)));
+                }
+            }
+        }
     }
 
     private Vector3 CurrentPlayerBodyPosition(string playerId,Vector3 origin)
@@ -594,6 +646,7 @@ public sealed partial class MatchEngine
            armyVitality.TryGetValue(entityKey,out var vitality)&&
                !vehicles.TryBindHealth(entityKey,vitality.Maximum))
             throw new InvalidDataException("Ground vehicle registry initialization failed.");
+        if(army.UnitId=="ID_UNIT-TRANSPORTER")transporterShotStats.Add(entityKey,vehicleShot);
         vehicleRouteMotions.Add(entityKey,new ArmyVehicleRouteMotion(entity.Position,point.VehicleRoute,speed));
         var first=point.VehicleRoute.Positions.FirstOrDefault(p=>
             new Vector2(p.X-entity.Position.X,p.Z-entity.Position.Z).LengthSquared()>1e-8f);
@@ -1463,6 +1516,7 @@ public sealed partial class MatchEngine
         vehicleRouteMotions.Remove(entityKey);
         groundVehicleFacing.Remove(entityKey);
         groundVehicleShotSpeed.Remove(entityKey);
+        transporterShotStats.Remove(entityKey);
         buggyCannonAttacks.Remove(entityKey);
         buggyCannonTargets.Remove(entityKey);
         tankCannonAttacks.Remove(entityKey);
@@ -1473,6 +1527,7 @@ public sealed partial class MatchEngine
             .Select(x=>x.Key).ToArray())buggyProjectiles.Remove(id);
         foreach(var id in tankProjectiles.Where(x=>x.Value.Flight.VehicleId==entityKey)
             .Select(x=>x.Key).ToArray())tankProjectiles.Remove(id);
+        scheduledTransporterShots.RemoveAll(x=>x.VehicleId==entityKey);
         if(vehicles?.TryGet(entityKey,out var vehicle)==true&&vehicle!=null&&
            !vehicles.TryDestroy(entityKey,vehicle.Generation))
             throw new InvalidDataException("Ground vehicle death cleanup failed.");
