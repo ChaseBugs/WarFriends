@@ -150,6 +150,8 @@ public sealed class MatchEndpoint
                             SwipeStartX=command.GrenadeThrow.SwipeStartX,SwipeStartY=command.GrenadeThrow.SwipeStartY,SwipeStartZ=command.GrenadeThrow.SwipeStartZ,
                             SwipeEndX=command.GrenadeThrow.SwipeEndX,SwipeEndY=command.GrenadeThrow.SwipeEndY,SwipeEndZ=command.GrenadeThrow.SwipeEndZ,
                             HeldSeconds=command.GrenadeThrow.HeldSeconds};break;
+                    case MatchCommand.IntentOneofCase.UseDecoy:
+                        clean.UseDecoy=new UseDecoyCommand {RequestId=command.UseDecoy.RequestId};break;
                     case MatchCommand.IntentOneofCase.DeployArmy:
                         clean.DeployArmy=new DeployArmyCommand {OptionIndex=command.DeployArmy.OptionIndex};break;
                     case MatchCommand.IntentOneofCase.VehicleAttack:

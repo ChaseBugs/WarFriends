@@ -27,6 +27,12 @@ public sealed class BattlePerformanceLedger
         EndTick = tick;
     }
     public bool RecordCard(string eventId) => Record(cards, eventId);
+    public bool CanRecordCard(string eventId)
+    {
+        if(!Guid.TryParseExact(eventId,"N",out _))return false;
+        return !cards.Contains(eventId)&&cards.Count+objectives.Count<capacity;
+    }
+    internal bool TryRollbackCard(string eventId)=>cards.Remove(eventId);
     public bool RecordObjective(string eventId) => Record(objectives, eventId);
     public ulong DurationTicks => EndTick == 0 ? 0 : EndTick - StartTick;
 

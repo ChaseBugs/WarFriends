@@ -15,6 +15,15 @@ var grenadeWire=new MatchCommand{CommandId=17,GrenadeThrow=new GrenadeThrowComma
 Check(MatchCommand.Parser.ParseFrom(grenadeWire.ToByteArray()).Equals(grenadeWire)&&
       grenadeWire.IntentCase==MatchCommand.IntentOneofCase.GrenadeThrow,
     "typed grenade swipe intent protobuf round trip");
+var decoyRequest=Guid.NewGuid().ToString("N");
+var decoyWire=new MatchCommand{CommandId=18,UseDecoy=new UseDecoyCommand{RequestId=decoyRequest}};
+var decoySnapshot=new MatchSnapshot();decoySnapshot.Decoys.Add(new BattleDecoyState
+{EntityId=1,RequestId=decoyRequest,OwnerPlayerId=Guid.NewGuid().ToString("N"),OwnerFraction=1,
+ ObstacleComponentFileId=123,X=1,Y=2,Z=3,FacingZ=1,Health=100,MaxHealth=100});
+Check(MatchCommand.Parser.ParseFrom(decoyWire.ToByteArray()).Equals(decoyWire)&&
+      decoyWire.IntentCase==MatchCommand.IntentOneofCase.UseDecoy&&
+      MatchSnapshot.Parser.ParseFrom(decoySnapshot.ToByteArray()).Equals(decoySnapshot),
+    "typed Decoy activation and authoritative state protobuf round trip");
 byte[] secret = RandomNumberGenerator.GetBytes(32);
 var tickets = new BattleTickets(Convert.ToBase64String(secret));
 var claims = new TicketClaims { PlayerId = Guid.NewGuid().ToString("N"), ServerId = "test-1", SessionId = 11, IssuedUnixSeconds = 1000, ExpiresUnixSeconds = 1120, Purpose = "connectivity-probe" };

@@ -54,6 +54,8 @@ namespace War.Client
         public Task<MatchReply> BazookaHoldAsync(bool pressed,float x,float y,float z,CancellationToken ct) => Run(new MatchCommand {BazookaHold=new BazookaHoldCommand {Pressed=pressed,TargetX=x,TargetY=y,TargetZ=z}},false,false,ct);
         public Task<MatchReply> GrenadeLauncherThrowAsync(float x,float y,float z,CancellationToken ct) => Run(new MatchCommand {GrenadeThrow=new GrenadeThrowCommand {TargetX=x,TargetY=y,TargetZ=z}},false,false,ct);
         public Task<MatchReply> GrenadeSwipeThrowAsync(float startX,float startY,float startZ,float endX,float endY,float endZ,float heldSeconds,CancellationToken ct) => Run(new MatchCommand {GrenadeThrow=new GrenadeThrowCommand {Swipe=true,SwipeStartX=startX,SwipeStartY=startY,SwipeStartZ=startZ,SwipeEndX=endX,SwipeEndY=endY,SwipeEndZ=endZ,HeldSeconds=heldSeconds}},false,false,ct);
+        public Task<MatchReply> UseDecoyAsync(string requestId,CancellationToken ct) =>
+            Run(new MatchCommand {UseDecoy=new UseDecoyCommand {RequestId=requestId}},false,false,ct);
         public Task<MatchReply> ReloadAsync(CancellationToken ct) => Run(new MatchCommand { Reload = new ReloadCommand() }, false, false, ct);
         public Task<MatchReply> SwitchWeaponAsync(int slot,CancellationToken ct) => Run(new MatchCommand { SwitchWeapon = new SwitchWeaponCommand { Slot=slot } }, false, false, ct);
         public Task<MatchReply> ForfeitAsync(CancellationToken ct) => Run(new MatchCommand { Forfeit = new ForfeitCommand() }, false, false, ct);
@@ -397,6 +399,10 @@ namespace War.Client
                             row.Reason!="vehicle-repair-drone-respawn:0"&&row.Reason!="vehicle-repair-drone-respawn:1":
                             row.Reason!="vehicle-repair-drone-exploded:0"&&row.Reason!="vehicle-repair-drone-exploded:1")))
                         throw new InvalidOperationException("Battle host returned invalid repair-drone metadata.");
+                    if((row.Kind==MatchEventKind.DecoySpawned||row.Kind==MatchEventKind.DecoyDestroyed)&&
+                       (row.ProjectileId==0||!Guid.TryParseExact(row.ActorId,"N",out _)||
+                        !FiniteCoordinate(row.X)||!FiniteCoordinate(row.Y)||!FiniteCoordinate(row.Z)))
+                        throw new InvalidOperationException("Battle host returned invalid Decoy lifecycle metadata.");
                 }
                 return batch.Clone();
             }
@@ -523,6 +529,24 @@ namespace War.Client
                     if(vehicle.RepairDrones.Count==1)
                         throw new InvalidOperationException("Battle host returned an incomplete repair-drone pair.");
                     priorVehicle = vehicle.EntityId;
+                }
+                ulong priorDecoy=0;var decoySlots=new System.Collections.Generic.HashSet<int>();
+                foreach(var decoy in snapshot.Decoys)
+                {
+                    float facingLength=decoy.FacingX*decoy.FacingX+decoy.FacingY*decoy.FacingY+decoy.FacingZ*decoy.FacingZ;
+                    if(decoy.EntityId==0||decoy.EntityId<=priorDecoy||
+                       !Guid.TryParseExact(decoy.RequestId,"N",out _)||
+                       !Guid.TryParseExact(decoy.OwnerPlayerId,"N",out _)||
+                       (decoy.OwnerFraction!=1&&decoy.OwnerFraction!=2)||decoy.ObstacleComponentFileId<=0||
+                       !decoySlots.Add(decoy.ObstacleComponentFileId)||
+                       !FiniteCoordinate(decoy.X)||!FiniteCoordinate(decoy.Y)||!FiniteCoordinate(decoy.Z)||
+                       !FiniteCoordinate(decoy.FacingX)||!FiniteCoordinate(decoy.FacingY)||!FiniteCoordinate(decoy.FacingZ)||
+                       Math.Abs(facingLength-1)>.0002f||Math.Abs(decoy.FacingY)>.0002f||
+                       float.IsNaN(decoy.MaxHealth)||float.IsInfinity(decoy.MaxHealth)||decoy.MaxHealth<=0||
+                       decoy.MaxHealth>10_000_000||float.IsNaN(decoy.Health)||float.IsInfinity(decoy.Health)||
+                       decoy.Health<=0||decoy.Health>decoy.MaxHealth)
+                        throw new InvalidOperationException("Battle host returned an invalid Decoy snapshot row.");
+                    priorDecoy=decoy.EntityId;
                 }
                 ulong priorDeployable = 0;
                 foreach (var deployable in snapshot.Deployables)

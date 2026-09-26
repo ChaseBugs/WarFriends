@@ -176,9 +176,10 @@ public sealed partial class MatchEngine
 
     internal IReadOnlyList<DynamicShotTarget> GroundVehicleShotTargets(string shooterId)
     {
-        if(vehicles==null||groundVehicleWeapons==null||phase!=BattlePhase.Running)return [];
+        if(phase!=BattlePhase.Running)return [];
         var shooter=Find(shooterId)??throw new InvalidDataException("Dynamic collision shooter disappeared.");
-        var result=new List<DynamicShotTarget>();
+        var result=new List<DynamicShotTarget>(DecoyShotTargets(shooter));
+        if(vehicles!=null&&groundVehicleWeapons!=null)
         foreach(var vehicle in vehicles.Snapshot())
         {
             if(vehicle.OwnerPlayerId==shooterId)continue;
@@ -508,8 +509,8 @@ public sealed partial class MatchEngine
         };
     }
 
-    // Tank targets Player directly. Humvee first asks for AttackerRusher and
-    // only reaches the source all-opponents fallback when none is alive.
+    // Tank targets Player directly. Humvee asks for Decoy, then
+    // AttackerRusher, and reaches the all-opponents fallback only when neither exists.
     private bool TryBeginAutomaticGroundVehicleAttack(ulong entityKey)
     {
         if(phase!=BattlePhase.Running||vehicles==null||rifleCombat==null||playerShotTargets==null||groundVehicleWeapons==null||
@@ -526,6 +527,33 @@ public sealed partial class MatchEngine
         if(!opponent.Admitted||opponent.Dead)return false;
         var pose=rifleCombat.Pose(opponent.Definition.PlayerId);
         var turret=groundVehicleWeapons.For(army.UnitId).Roles.Single(r=>r.Role=="primary");
+        var opposingDecoys=decoys.Snapshot().Where(x=>x.OwnerFraction!=army.OwnerFraction)
+            .OrderBy(x=>x.EntityId).ToArray();
+        if(army.UnitId=="ID_UNIT-HUMVEE"&&opposingDecoys.Length>0)
+        {
+            int selectedIndex=armyChoice(opposingDecoys.Length);
+            if(selectedIndex<0||selectedIndex>=opposingDecoys.Length)
+                throw new InvalidDataException("Army random selector returned an invalid Decoy target.");
+            var selected=opposingDecoys[selectedIndex];
+            float yaw=MathF.Atan2(selected.Facing.X,selected.Facing.Z);
+            var target=selected.Position+Vector3.Transform(decoySource!.Prefab.TargetLocalPosition,
+                Quaternion.CreateFromAxisAngle(Vector3.UnitY,yaw));
+            GroundVehicleAim aim;
+            try{aim=GroundVehicleAimPolicy.Resolve(vehicle.Position,facing,target,
+                turret.MaxShotRotation,turret.AimTime);}
+            catch(InvalidDataException){return false;}
+            var muzzle=groundVehicleWeapons.RestMuzzleOrigin(army.UnitId,"primary",0,
+                vehicle.Position,aim.Direction);
+            var delta=target-muzzle;float range=delta.Length();
+            if(!float.IsFinite(range)||range<.001f)return false;
+            var visible=rifleCombat.TraceForArmy(army.OwnerPlayerId,muzzle,delta/range,range+.05f);
+            if(visible is not {DynamicDecoy:true,DynamicEntityId:var hitId}||hitId!=selected.EntityId)
+                return false;
+            vehicleShotTargets[entityKey]=new(army.OwnerPlayerId,selected.OwnerPlayerId,target,
+                DecoyEntityId:selected.EntityId);
+            groundVehicleShotSpeed[entityKey]=attack.ShotSpeed;
+            return vehicles.TryBeginAttack(entityKey,true,aim.AimTicks);
+        }
         var matchingUnits=activeArmyEntities.Where(candidate=>candidate.Value.OwnerFraction!=army.OwnerFraction&&
             infantryAnimations.ContainsKey(candidate.Key)&&
             armyCatalog!.Families.Single(f=>f.UnitId==candidate.Value.UnitId).UnitType==turret.PrimaryTarget)

@@ -10,6 +10,7 @@ public static class WarCardEffectCatalog
         new Dictionary<string,WarCardEffectDefinition>(StringComparer.Ordinal)
         {
             ["CardHeavyTurret"]=new("CardHeavyTurret",WarCardEffectKind.SpawnDeployable,false,true),
+            ["CardDecoy"]=new("CardDecoy",WarCardEffectKind.SpawnDeployable,false,true),
             ["CardLandmine"]=new("CardLandmine",WarCardEffectKind.SpawnDeployable,true,true),
             ["CardMineYourStep"]=new("CardMineYourStep",WarCardEffectKind.SpawnDeployable,true,true),
             ["CardSpawnUnit"]=new("CardSpawnUnit",WarCardEffectKind.SpawnUnit,false,true),

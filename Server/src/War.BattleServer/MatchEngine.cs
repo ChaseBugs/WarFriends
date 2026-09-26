@@ -44,7 +44,8 @@ public sealed partial class MatchEngine
     private sealed record TankProjectile(TankMissileFlight Flight,string Owner,string Target,
         float Damage,GroundVehicleMissileBinding Binding);
     private readonly Dictionary<ulong,TankProjectile> tankProjectiles=[];
-    private sealed record VehicleShotTarget(string Owner,string Target,Vector3 Position,ulong? ArmyEntityId=null);
+    private sealed record VehicleShotTarget(string Owner,string Target,Vector3 Position,
+        ulong? ArmyEntityId=null,ulong? DecoyEntityId=null);
     private readonly Dictionary<ulong, VehicleShotTarget> vehicleShotTargets = [];
     private Func<ulong, float>? vehicleDamage;
     private Func<ulong, string, Vector3, ulong, IReadOnlyList<PreparedProjectile>>? prepareVolley;
@@ -63,6 +64,9 @@ public sealed partial class MatchEngine
     private readonly ArmyWeaponBindingCatalog? armyWeapons;
     private readonly GroundVehicleWeaponCatalog? groundVehicleWeapons;
     private readonly EnemyPoseCatalog? enemyPoses;
+    private readonly DecoySourceCatalog? decoySource;
+    private readonly int decoyMaxDisplayLevel;
+    private readonly DecoyMatchRegistry decoys=new();
     private readonly Dictionary<ulong,BattleArmyEntityState> activeArmyEntities=[];
     // Air entities use the same single-writer tick as the rest of the match.  The
     // registry is deliberately kept separate from infantry state until the
@@ -690,6 +694,12 @@ public sealed partial class MatchEngine
             map=content?.Maps.SingleOrDefault(m=>System.IO.Path.GetFileNameWithoutExtension(m.Source)==manifest.MapId)
                 ?? throw new InvalidDataException("Rifle combat requires its map in the pinned package.");
         this.map = map;
+        if(content!=null)
+        {
+            decoySource=content.Decoys;
+            decoyMaxDisplayLevel=content.BarrelPolicy.MaxDisplayLevel;
+            armyNavMeshConnectivity=content.ArmyNavMeshConnectivity;
+        }
         if(players[0].Army!=null)
         {
             if(map==null || content==null)throw new InvalidDataException("Army authority needs the pinned scene.");
@@ -700,7 +710,6 @@ public sealed partial class MatchEngine
             armySelector=new ArmySpawnPointSelector(content.ArmySpawnPoints);
             armyRusherPoints=content.ArmyRusherPoints;
             armyMinigunnerPoints=content.ArmyMinigunnerPoints;
-            armyNavMeshConnectivity=content.ArmyNavMeshConnectivity;
             playerShotTargets=content.PlayerShotTargets;
             armyReservations=new ArmySpawnReservationLedger(content.ArmySpawnPoints,map);
             var vehicleCaps=content.Army.Families.Where(f=>!f.IsAir&&!f.IsSoldier&&f.VehicleShot!=null)
@@ -869,6 +878,10 @@ public sealed partial class MatchEngine
                             trustedVehicleDamage is >0&&float.IsFinite(trustedVehicleDamage.Value))
                         ApplyArmyProjectileImpact(owner,infantryId,trustedVehicleDamage.Value,
                             impact.Collision.PartWeight);
+                    else if(impact.Collision is {DynamicDecoy:true,DynamicEntityId:ulong decoyId}&&
+                            trustedVehicleDamage is >0&&float.IsFinite(trustedVehicleDamage.Value))
+                        ApplyDecoyProjectileImpact(owner,decoyId,trustedVehicleDamage.Value,
+                            impact.Collision.PartWeight,impact.ProjectileId);
                 }
             }
             if (Terminal) return;
@@ -1157,7 +1170,10 @@ public sealed partial class MatchEngine
             {
                 try
                 {
-                    if(impact.Hit.DynamicPassengerRole is { } role)
+                    if(impact.Hit.DynamicDecoy)
+                        ApplyDecoyProjectileImpact(impact.OwnerId,vehicleId,pair.Value.Damage.Amount,
+                            impact.Hit.PartWeight,impact.ProjectileId);
+                    else if(impact.Hit.DynamicPassengerRole is { } role)
                         ApplyGroundVehiclePassengerProjectileImpact(impact.OwnerId,vehicleId,role,
                             pair.Value.Damage.Amount,impact.Hit.PartWeight);
                     else if(impact.Hit.DynamicRepairDronePathIndex is int dronePath)
@@ -1168,9 +1184,9 @@ public sealed partial class MatchEngine
                             impact.Hit.PartWeight);
                     else if(impact.Hit.DynamicPartId is int partId)
                         ApplyGroundVehicleProjectileImpact(impact.OwnerId,vehicleId,partId,pair.Value.Damage.Amount);
-                    else throw new InvalidDataException("Vehicle collision omitted its source target.");
+                    else throw new InvalidDataException("Dynamic collision omitted its source target.");
                 }
-                catch(InvalidDataException){End("invalid-vehicle-impact-authority","",false);break;}
+                catch(InvalidDataException){End("invalid-dynamic-impact-authority","",false);break;}
                 if(Terminal)break;
             }
             if (impact?.Hit.PlayerId != null)
@@ -1188,6 +1204,12 @@ public sealed partial class MatchEngine
 
     private void RemoveOwnedDeployables(string ownerPlayerId)
     {
+        foreach(var decoy in decoys.RemoveOwner(ownerPlayerId))
+        {
+            stateRevision++;
+            Emit(MatchEventKind.DecoyDestroyed,ownerPlayerId,"",decoy.EntityId,
+                decoy.Position,0,"owner-disconnected");
+        }
         if (cardEffects.RemoveOwner(ownerPlayerId) > 0) stateRevision++;
         foreach (var air in airEntities.Snapshot().Where(x => x.AttackerPlayerId == ownerPlayerId))
         {
@@ -1346,7 +1368,8 @@ public sealed partial class MatchEngine
                     ? Array.Empty<string>()
                     : buddySelections.Submit(p.Definition.PlayerId, c.SelectCards.BuddyCardIds);
                 var selected = cardSelections.Submit(p.Definition.PlayerId,
-                    c.CommandId.ToString(CultureInfo.InvariantCulture), c.SelectCards.CardIds, cardCatalog);
+                    p.Definition.PlayerId+":"+c.CommandId.ToString(CultureInfo.InvariantCulture),
+                    c.SelectCards.CardIds, cardCatalog);
                 p.SelectedCards = selected;
                 p.CardsSelected = true;
                 p.NormalUpgradeIndexes = normal;
@@ -1364,6 +1387,8 @@ public sealed partial class MatchEngine
             return "forfeited";
         }
         if (phase != BattlePhase.Running) return "not-running";
+        if(c.IntentCase==MatchCommand.IntentOneofCase.UseDecoy)
+            return UseDecoy(p,c.UseDecoy.RequestId);
         if(c.IntentCase==MatchCommand.IntentOneofCase.SwitchWeapon)
         {
             int slot=c.SwitchWeapon.Slot;
@@ -1867,6 +1892,14 @@ public sealed partial class MatchEngine
             Kind=x.Value.Binding.Effect==RecoveredGrenadeEffect.Molotov?"grenade-molotov":"grenade",
             X=x.Value.Flight.Position.X,Y=x.Value.Flight.Position.Y,Z=x.Value.Flight.Position.Z,
             VelocityX=x.Value.Flight.Velocity.X,VelocityY=x.Value.Flight.Velocity.Y,VelocityZ=x.Value.Flight.Velocity.Z
+        }));
+        snapshot.Decoys.AddRange(decoys.Snapshot().Select(x=>new BattleDecoyState
+        {
+            EntityId=x.EntityId,RequestId=x.RequestId,OwnerPlayerId=x.OwnerPlayerId,
+            OwnerFraction=x.OwnerFraction,ObstacleComponentFileId=x.ObstacleComponentFileId,
+            X=x.Position.X,Y=x.Position.Y,Z=x.Position.Z,
+            FacingX=x.Facing.X,FacingY=x.Facing.Y,FacingZ=x.Facing.Z,
+            Health=x.Health,MaxHealth=x.MaximumHealth
         }));
         if (vehicles != null)
             snapshot.Vehicles.AddRange(vehicles.Snapshot().Select(v =>

@@ -105,6 +105,7 @@ message GrenadeThrowCommand {
   float swipe_end_x = 8; float swipe_end_y = 9; float swipe_end_z = 10;
   float held_seconds = 11;
 }
+message UseDecoyCommand { string request_id = 1; }
 message MatchCommand {
   // Stop-and-wait per participant. Retry identical command_id with a NEW packet
   // sequence. Poll uses id zero and does not advance the mutation sequence.
@@ -120,6 +121,7 @@ message MatchCommand {
     SniperAimCommand sniper_aim = 21;
     BazookaHoldCommand bazooka_hold = 22;
     GrenadeThrowCommand grenade_throw = 23;
+    UseDecoyCommand use_decoy = 24;
   }
 }
 // Presentation of the actual sampled collision pose, not a client authority input.
@@ -285,6 +287,14 @@ message MatchSnapshot {
   // Current host-owned projectile transforms for Client-only presentation.
   // Damage and collision remain entirely authoritative on the Worker.
   repeated BattleProjectileState projectiles = 26;
+  repeated BattleDecoyState decoys = 27;
+}
+message BattleDecoyState {
+  uint64 entity_id = 1; string request_id = 2; string owner_player_id = 3;
+  int32 owner_fraction = 4; int32 obstacle_component_file_id = 5;
+  float x = 6; float y = 7; float z = 8;
+  float facing_x = 9; float facing_y = 10; float facing_z = 11;
+  float health = 12; float max_health = 13;
 }
 message BattleProjectileState {
   uint64 projectile_id = 1; string owner_player_id = 2; string kind = 3;
@@ -377,6 +387,8 @@ enum MatchEventKind {
   MATCH_EVENT_KIND_VEHICLE_REPAIR_DRONE_DOWN = 28;
   MATCH_EVENT_KIND_VEHICLE_REPAIR_DRONE_RESPAWNED = 29;
   MATCH_EVENT_KIND_VEHICLE_REPAIR_DRONE_EXPLODED = 30;
+  MATCH_EVENT_KIND_DECOY_SPAWNED = 31;
+  MATCH_EVENT_KIND_DECOY_DESTROYED = 32;
 }
 message MatchEvent {
   uint64 event_id = 1; uint64 tick = 2; MatchEventKind kind = 3;

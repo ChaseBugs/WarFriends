@@ -1342,6 +1342,25 @@ internal static class CombatContentTests
                       decoys.ForMap(content.Maps[0]).Where(x=>x.Fraction==1).Skip(2)
                           .Select(x=>x.ComponentFileId).ToHashSet(),_=>0).Count==0,
                   "Decoy activation stays closed when fewer than three same-faction obstacle slots are free");
+            var decoyRegistry=new DecoyMatchRegistry(3);
+            string decoyRequest=new string('d',32),decoyOwner=new string('1',32);
+            var decoyPlacements=selectedDecoys.Select((slot,index)=>(slot,
+                new Vector3(index,0,index),Vector3.UnitZ)).ToArray();
+            Check(decoyRegistry.TrySpawn(decoyRequest,decoyOwner,1,576.25f,decoyPlacements,out var spawnedDecoys)&&
+                  spawnedDecoys.Count==3&&decoyRegistry.Snapshot().Count==3&&
+                  decoyRegistry.OccupiedObstacleIds.SetEquals(selectedDecoys.Select(x=>x.ComponentFileId))&&
+                  decoyRegistry.TryReplay(decoyRequest,decoyOwner,out var replayedDecoys)&&replayedDecoys.Count==3,
+                  "Decoy registry atomically owns three source obstacle slots and replays one activation receipt");
+            Check(decoyRegistry.TryDamage(spawnedDecoys[0].EntityId,100,out _,out bool firstDestroyed)&&!firstDestroyed&&
+                  decoyRegistry.TryDamage(spawnedDecoys[0].EntityId,1000,out _,out bool finalDestroyed)&&finalDestroyed&&
+                  !decoyRegistry.OccupiedObstacleIds.Contains(spawnedDecoys[0].ObstacleComponentFileId),
+                  "Decoy damage is host-owned and lethal damage releases its exact source obstacle slot");
+            Check(!decoyRegistry.TrySpawn(new string('e',32),decoyOwner,1,576.25f,decoyPlacements,out _)&&
+                  decoyRegistry.Snapshot().Count==2,
+                  "Decoy capacity or occupied-slot failure cannot partially create a three-entity activation");
+            Check(decoyRegistry.RemoveOwner(decoyOwner).Count==2&&decoyRegistry.Snapshot().Count==0&&
+                  decoyRegistry.OccupiedObstacleIds.Count==0,
+                  "Decoy owner cleanup releases every surviving obstacle reservation");
             string decoyTemp=Path.Combine(Path.GetTempPath(),"war-decoy-"+Guid.NewGuid().ToString("N")+".json");
             try
             {
@@ -1628,7 +1647,9 @@ internal static class CombatContentTests
             Check(WarCardEffectCatalog.TryGet("CardAirstrike",out var airstrike)&&
                   airstrike.Kind==WarCardEffectKind.Damage&&airstrike.RequiresTarget&&
                   WarCardEffectCatalog.TryGet("CardHeavyTurret",out var turret)&&
-                  turret.Kind==WarCardEffectKind.SpawnDeployable&&WarCardEffectCatalog.All.Count>=16&&
+                  turret.Kind==WarCardEffectKind.SpawnDeployable&&
+                  WarCardEffectCatalog.TryGet("CardDecoy",out var decoyCard)&&
+                  decoyCard.Kind==WarCardEffectKind.SpawnDeployable&&WarCardEffectCatalog.All.Count>=17&&
                   !WarCardEffectCatalog.TryGet("CardUnknown",out _),
                   "only explicitly recovered War Card classes enter the authoritative effect registry");
             Check(WarCardEffectRequestValidator.Validate(new WarCardEffectRequest("CardAirstrike",new(1,0,1),2,1)).RequiresTarget,
@@ -2233,6 +2254,44 @@ internal static class CombatContentTests
                  ArmySpecialUpgradeIndexes=[-1],ArmyEliteUpgradeIndexes=[-1],
                  ArmyHealthFactors=[new ArmyHealthFactors(1f,1f)],ArmyDamageScales=[1f],
                  ArmySpeedCoefficients=[1f],ArmyAccuracyCoefficients=[1f]}]);
+        string decoyPlayer=armyManifest.Players[0].PlayerId,decoyOpponent=armyManifest.Players[1].PlayerId;
+        var decoyManifest=armyManifest with
+        {
+            MatchId="decoy-match",SceneMasterPlayerId=decoyPlayer,
+            Players=[armyManifest.Players[0] with {PlayerLevel=22},armyManifest.Players[1] with {PlayerLevel=22}]
+        };
+        var decoyMatch=new MatchEngine(decoyManifest,content:content,armyChoice:_=>0);
+        decoyMatch.ConfigureBattleAllocations([
+            new(decoyPlayer,["CardDecoy"],[],[0],[133],[-1]),
+            new(decoyOpponent,["CardDecoy"],[],[0],[-1],[-1])]);
+        decoyMatch.ConfigureCardInventory([("CardDecoy",1)]);
+        decoyMatch.Admit(decoyPlayer);decoyMatch.Admit(decoyOpponent);
+        MatchCommand SelectDecoy(ulong id)=>new(){CommandId=id,SelectCards=new SelectCardsCommand
+        {CardIds={"CardDecoy"},NormalUpgradeIndexes={0},SpecialUpgradeIndexes={133},EliteUpgradeIndexes={-1}}};
+        Check(decoyMatch.Command(decoyPlayer,SelectDecoy(1)).Code=="cards-selected",
+            "Decoy owner selects the recovered card before battle start");
+        var opponentSelection=SelectDecoy(1);opponentSelection.SelectCards.SpecialUpgradeIndexes.Clear();
+        opponentSelection.SelectCards.SpecialUpgradeIndexes.Add(-1);
+        Check(decoyMatch.Command(decoyOpponent,opponentSelection).Code=="cards-selected",
+            "Decoy opponent selection preserves its trusted upgrade lanes");
+        decoyMatch.Command(decoyPlayer,new(){CommandId=2,Ready=new(){ManifestHash=decoyMatch.ManifestHash}});
+        decoyMatch.Command(decoyOpponent,new(){CommandId=2,Ready=new(){ManifestHash=decoyMatch.ManifestHash}});
+        decoyMatch.Advance(60);
+        string liveDecoyRequest=new string('c',32);
+        var decoyReply=decoyMatch.Command(decoyPlayer,new(){CommandId=3,
+            UseDecoy=new(){RequestId=liveDecoyRequest}});
+        float expectedDecoyHealth=content.Decoys.Health(22,content.BarrelPolicy.MaxDisplayLevel);
+        Check(decoyReply.Code=="decoy-spawned"&&decoyReply.Snapshot.Decoys.Count==3&&
+              decoyReply.Snapshot.Decoys.All(x=>x.OwnerPlayerId==decoyPlayer&&x.OwnerFraction==1&&
+                  x.RequestId==liveDecoyRequest&&Math.Abs(x.Health-expectedDecoyHealth)<.001f&&x.Health==x.MaxHealth)&&
+              decoyReply.Snapshot.Decoys.Select(x=>x.ObstacleComponentFileId).Distinct().Count()==3,
+              "live authenticated Decoy activation atomically projects three level-scaled source placements");
+        Check(decoyMatch.Command(decoyPlayer,new(){CommandId=4,
+                  UseDecoy=new(){RequestId=liveDecoyRequest}}).Code=="decoy-replayed"&&
+              decoyMatch.Command(decoyPlayer,new(){CommandId=5,
+                  UseDecoy=new(){RequestId=new string('e',32)}}).Code=="decoy-unavailable"&&
+              decoyMatch.Snapshot().Decoys.Count==3,
+              "Decoy request replay creates no duplicate and exhausted inventory cannot create partial state");
         var detached=MatchManifest.Validate(armyManifest);
         equipped[0]="ID_UNIT-UNKNOWN";
         armyStages[0]=101;
