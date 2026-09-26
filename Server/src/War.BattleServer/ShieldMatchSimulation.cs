@@ -52,6 +52,17 @@ internal sealed class ShieldMatchSimulation
         row.Revision++;
         return row.Snapshot();
     }
+    internal ShieldMutation? ApplyUnitShot(string dynamicOwner,int shooterFraction,float damage,ulong tick)
+    {
+        if(tick!=lastTick || shooterFraction is not (1 or 2))
+            throw new InvalidDataException("Invalid army shield impact authority.");
+        if(!byOwner.TryGetValue(dynamicOwner,out var row) ||
+           row.Cover.Fraction==shooterFraction || row.Lifecycle.Destroyed)return null;
+        float before=row.Lifecycle.Health;
+        row.Lifecycle.ApplyUnitShot(damage,tick);
+        if(row.Lifecycle.Health==before)return null;
+        row.Revision++;return row.Snapshot();
+    }
     internal ShieldMutation? ApplyExplosion(string dynamicOwner,int shooterFraction,string weaponId,float damage,ulong tick)
     {
         if(tick!=lastTick||shooterFraction is not (1 or 2)||!float.IsFinite(damage)||damage<0)

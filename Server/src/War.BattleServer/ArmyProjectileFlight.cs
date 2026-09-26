@@ -25,7 +25,11 @@ internal sealed class ArmyProjectileFlight
            !float.IsFinite(speed) || speed is <.01f or >10000 ||
            tick>10_000_000 || trace==null)
             throw new InvalidDataException("Invalid army projectile launch.");
-        this.id=id;this.entityKey=entityKey;this.position=origin;this.target=target;
+        this.id=id;this.entityKey=entityKey;
+        // BulletSlow.Fire starts its collision ray 0.1 units in front of the
+        // visual muzzle. This keeps a muzzle beside scenery from immediately
+        // hitting the surface behind the projectile's rendered start point.
+        this.position=origin+Vector3.Normalize(target-origin)*.1f;this.target=target;
         this.speed=speed;this.tick=tick;this.trace=trace;
     }
 

@@ -876,6 +876,7 @@ public sealed partial class MatchEngine
                             activeArmyEntities[entityKey].Kevlar=vitality.Kevlar;
                         }
                         InitializeRusherMotionCandidate(entityKey,spawned.UnitId);
+                        InitializeStationaryArmyCombat(entityKey,spawned.UnitId);
                         p.ConfirmedArmySpawns=checked(p.ConfirmedArmySpawns+1);
                         armyEntityRevision++;
                         Emit(MatchEventKind.ArmySpawned,p.Definition.PlayerId,"",0,point.Position,0,"");
@@ -894,6 +895,11 @@ public sealed partial class MatchEngine
             try { if(warperRestartTicks.Count>0)StartDueWarperRestarts();
                   if(warperRelocations.Count>0)AdvanceWarperRelocations();
                   if(rusherMotionCandidates.Count>0)AdvanceRusherMotionCandidates(); }
+            catch(InvalidDataException){End("invalid-army-authority","",false);return;}
+        }
+        if(advanced && phase==BattlePhase.Running && minigunnerAttacks.Count>0)
+        {
+            try { AdvanceMinigunnerAttacks(); }
             catch(InvalidDataException){End("invalid-army-authority","",false);return;}
         }
         if(advanced && phase==BattlePhase.Running && (armyProjectiles.Count>0||armyFlameBursts.Count>0||armyPoisons.Count>0))

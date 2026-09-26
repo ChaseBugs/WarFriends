@@ -37,6 +37,18 @@ internal sealed class ShieldLifecycle
             Health=0;Destroyed=true;destroyedTick=tick;
         }
     }
+    internal void ApplyUnitShot(float sourceDamage,ulong tick)
+    {
+        Time(tick);
+        if(!float.IsFinite(sourceDamage) || sourceDamage<0 || sourceDamage>100000000)
+            throw new InvalidDataException("Invalid host unit shield damage.");
+        float amount=sourceDamage*policy.UnitToShieldCoefficient;
+        if(!float.IsFinite(amount) || amount>100000000)
+            throw new InvalidDataException("Unit shield damage overflow.");
+        if(Destroyed || amount==0)return;
+        Health-=amount;
+        if(Health<=0){Health=0;Destroyed=true;destroyedTick=tick;}
+    }
     internal bool BeginOvertime(ulong tick,bool destroy)
     {
         Time(tick);

@@ -30,6 +30,11 @@ internal static class ShieldLifecycleTests
         Reject(()=>shield.ApplyShot("unknown",1,192));
         Reject(()=>shield.ApplyShot("Google2u.Shotgun_SPAS",float.NaN,192));
         Reject(()=>shield.Advance(194));
+        var unitShield=new ShieldLifecycle(policy,0,20);
+        unitShield.ApplyUnitShot(25,20);
+        Check(unitShield.Health==485,
+            "source UnitToShieldCoef applies three-times army projectile damage");
+        Reject(()=>unitShield.ApplyUnitShot(float.NaN,20));
         var disabled=new ShieldLifecycle(policy,43,0){AutoRepair=false};
         disabled.ApplyShot("Google2u.Shotgun_SPAS",10000,0);
         for(ulong tick=1;tick<=181;tick++)disabled.Advance(tick);

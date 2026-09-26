@@ -61,12 +61,16 @@ public sealed class ArmyRusherAttackState
     }
 
     /// <summary>SwitchStateToWalking schedules its first shot instead of firing immediately.</summary>
-    public void BeginInitialCooldown()
+    public void BeginInitialCooldown(float? minimumSeconds=null,float? maximumSeconds=null)
     {
         if(Phase!=ArmyRusherAttackPhase.Ready||initialCooldownScheduled)
             throw new InvalidDataException("Initial Rusher cooldown can only be scheduled once while ready.");
+        if(minimumSeconds.HasValue!=maximumSeconds.HasValue ||
+           minimumSeconds is { } minimum && (!float.IsFinite(minimum)||minimum<0||minimum>180) ||
+           maximumSeconds is { } maximum && (!float.IsFinite(maximum)||maximum<minimumSeconds||maximum>180))
+            throw new InvalidDataException("Invalid initial attack cooldown override.");
         initialCooldownScheduled=true;
-        ScheduleCooldown();
+        ScheduleCooldown(minimumSeconds??cooldownMinSeconds,maximumSeconds??cooldownMaxSeconds);
         Phase=ArmyRusherAttackPhase.Cooldown;
     }
 
@@ -93,17 +97,17 @@ public sealed class ArmyRusherAttackState
         batchCursor++;
         if(batchCursor==BatchSize)
         {
-            ScheduleCooldown();
+            ScheduleCooldown(cooldownMinSeconds,cooldownMaxSeconds);
             Phase=ArmyRusherAttackPhase.Cooldown;
         }
         else shotIntervalRemaining=shotIntervalTicks;
         return true;
     }
 
-    private void ScheduleCooldown()
+    private void ScheduleCooldown(float minimumSeconds,float maximumSeconds)
     {
-        int min=(int)MathF.Ceiling(cooldownMinSeconds*MatchManifest.TickRate);
-        int max=(int)MathF.Ceiling(cooldownMaxSeconds*MatchManifest.TickRate);
+        int min=(int)MathF.Ceiling(minimumSeconds*MatchManifest.TickRate);
+        int max=(int)MathF.Ceiling(maximumSeconds*MatchManifest.TickRate);
         CooldownTicksRemaining=min+(int)MathF.Floor(Math.Clamp(random(),0f,.99999994f)*Math.Max(1,max-min));
     }
 }

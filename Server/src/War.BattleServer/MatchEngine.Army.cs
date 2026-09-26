@@ -28,8 +28,10 @@ public sealed partial class MatchEngine
     private readonly Dictionary<ulong,ArmyRusherRetargetClock> rusherRetargetClocks=[];
     private readonly Dictionary<ulong,int> rusherDetours=[];
     private readonly Dictionary<ulong,ArmyRusherAttackState> rusherAttacks=[];
+    private readonly Dictionary<ulong,ArmyRusherAttackState> minigunnerAttacks=[];
     private readonly Dictionary<ulong,float> walkingShotgunnerSpecials=[];
     private readonly Dictionary<ulong,ArmyRusherTarget> rusherAttackTargets=[];
+    private readonly Dictionary<ulong,ArmyRusherTarget> minigunnerAttackTargets=[];
     private readonly Dictionary<ulong,int> rusherShotCounts=[];
     private readonly List<ArmyRusherShotIntent> rusherShotIntents=[];
     private readonly Dictionary<ulong,ArmyFlameBurst> armyFlameBursts=[];
@@ -167,6 +169,22 @@ public sealed partial class MatchEngine
         if(route is not {PlanarCovered:true})return;
         var state=new ArmyRusherArrivalState(route,armyCatalog!.InfantryAgent,speed);
         InitializeRusherCombatState(entityKey,unitId,state);
+    }
+
+    private void InitializeStationaryArmyCombat(ulong entityKey,string unitId)
+    {
+        var family=armyCatalog!.Families.Single(f=>f.UnitId==unitId);
+        if(family.BehaviorType!="SoldierBehaviourMinigunner")return;
+        if(!armyShots.TryGetValue(entityKey,out var shot))
+            throw new InvalidDataException("Minigunner lacks composed shot authority.");
+        int interval=armyWeapons?.CadenceTicks(unitId)??
+            throw new InvalidDataException("Minigunner lacks pinned cadence authority.");
+        var attack=new ArmyRusherAttackState(shot,NextArmyFloat,interval);
+        // SwitchStateToMinigunner schedules Random.Range(2f,4.5f). Later
+        // EndShooting calls the serialized base-shot two-to-five-second timer.
+        attack.BeginInitialCooldown(2f,4.5f);
+        minigunnerAttacks.Add(entityKey,attack);
+        rusherShotCounts.TryAdd(entityKey,0);
     }
 
     private void InitializeRusherCombatState(ulong entityKey,string unitId,ArmyRusherArrivalState state)
@@ -443,6 +461,36 @@ public sealed partial class MatchEngine
         LaunchRusherShotIntents();
     }
 
+    private void AdvanceMinigunnerAttacks()
+    {
+        rusherShotIntents.Clear();
+        foreach(var (key,attack) in minigunnerAttacks.OrderBy(pair=>pair.Key).ToArray())
+        {
+            if(!activeArmyEntities.TryGetValue(key,out var army) ||
+               armyCatalog!.Families.Single(f=>f.UnitId==army.UnitId).BehaviorType!=
+                   "SoldierBehaviourMinigunner")
+                throw new InvalidDataException("Minigunner attack lost its host entity.");
+            var target=MinigunnerBodyTarget(key);
+            if(attack.Phase==ArmyRusherAttackPhase.Ready)
+            {
+                int windup=armyWeapons?.WindupTicks(army.UnitId)??
+                    throw new InvalidDataException("Minigunner lacks pinned windup authority.");
+                if(attack.TryBegin(target!=null,1,windup))
+                    minigunnerAttackTargets[key]=target!;
+            }
+            attack.AdvanceTick();
+            if(!attack.ShotDue)continue;
+            if(!minigunnerAttackTargets.TryGetValue(key,out var shot))
+                throw new InvalidDataException("Minigunner pending batch lost its latched target.");
+            rusherShotIntents.Add(new(key,army.OwnerPlayerId,shot.PlayerId,shot.TargetFileId,
+                shot.Position,attack.CurrentShotIsReal,attack.BatchCursor,attack.BatchSize));
+            attack.CommitShot();
+            if(attack.Phase==ArmyRusherAttackPhase.Cooldown)
+                minigunnerAttackTargets.Remove(key);
+        }
+        LaunchRusherShotIntents();
+    }
+
     private void LaunchRusherShotIntents()
     {
         if(rifleCombat==null || rusherShotIntents.Count==0)return;
@@ -469,7 +517,7 @@ public sealed partial class MatchEngine
             {
                 "SoldierBehaviourShotgunner" or "SoldierBehaviourWarper"=>10f,
                 "SoldierBehaviourParachuter" or "SoldierBehaviourSwat" or
-                "SoldierBehaviourCommando"=>5f,
+                "SoldierBehaviourCommando" or "SoldierBehaviourMinigunner"=>5f,
                 _=>null
             };
             if(!projectileSpeed.HasValue)continue;
@@ -522,6 +570,23 @@ public sealed partial class MatchEngine
             if(impact==null)continue;
             Emit(MatchEventKind.Impact,impact.EntityKey.ToString(),
                 impact.Collision.PlayerId??"",impact.ProjectileId,impact.Collision.Position,0,"army");
+            if(impact.Collision.DynamicOwner!=null && shields!=null &&
+               activeArmyEntities.TryGetValue(impact.EntityKey,out var shieldArmy))
+            {
+                try
+                {
+                    var shield=shields.ApplyUnitShot(impact.Collision.DynamicOwner,
+                        shieldArmy.OwnerFraction,projectileDamage,tick);
+                    if(shield!=null)
+                    {
+                        stateRevision++;
+                        EmitShield(shield.Destroyed?MatchEventKind.ShieldDestroyed:
+                            MatchEventKind.ShieldDamaged,shieldArmy.OwnerPlayerId,shield,
+                            impact.ProjectileId);
+                    }
+                }
+                catch(InvalidDataException){End("invalid-shield-authority","",false);return;}
+            }
             if(impact.Collision.PlayerId==null)continue;
             if(!activeArmyEntities.TryGetValue(impact.EntityKey,out var army))continue;
             var owner=Find(army.OwnerPlayerId);
@@ -637,6 +702,23 @@ public sealed partial class MatchEngine
         var source=playerShotTargets.Nearest(1,origin,t=>pose.BodyTarget(t.TransformFileId).Position);
         return new(entityKey,opponent.Definition.PlayerId,source.TransformFileId,slot,
             pose.BodyTarget(source.TransformFileId).Position);
+    }
+
+    private ArmyRusherTarget? MinigunnerBodyTarget(ulong entityKey)
+    {
+        if(phase!=BattlePhase.Running || rifleCombat==null || playerShotTargets==null ||
+           !activeArmyEntities.TryGetValue(entityKey,out var army))return null;
+        var owner=Find(army.OwnerPlayerId) ?? throw new InvalidDataException("Minigunner owner disappeared.");
+        var opponent=players.Single(p=>p!=owner);
+        if(opponent.Dead)return null;
+        if(map==null || opponent.Cover<0 || opponent.Cover>=map.Covers.Count)return null;
+        // A Minigunner deployed from the army card calls PickPlayerOpponent(1f).
+        // GameShootableEntityPlayer replaces the serialized type-2 child with
+        // the current cover shield's shotPosition, so this branch is certain
+        // while that cover has a shield object.
+        var source=playerShotTargets.Gameplay.Single(t=>t.Type==2);
+        return new(entityKey,opponent.Definition.PlayerId,source.TransformFileId,0,
+            map.Covers[opponent.Cover].ShotPosition);
     }
 
     // Target projection only. The source enters EnemyAIState.Rusher after its
@@ -761,8 +843,10 @@ public sealed partial class MatchEngine
         rusherRetargetClocks.Remove(entityKey);
         rusherDetours.Remove(entityKey);
         rusherAttacks.Remove(entityKey);
+        minigunnerAttacks.Remove(entityKey);
         walkingShotgunnerSpecials.Remove(entityKey);
         rusherAttackTargets.Remove(entityKey);
+        minigunnerAttackTargets.Remove(entityKey);
         rusherShotCounts.Remove(entityKey);
         owner.ConfirmedArmyLosses=checked(owner.ConfirmedArmyLosses+1);
         if(rusherSlotByEntity.Remove(entityKey,out int rusherSlot) &&

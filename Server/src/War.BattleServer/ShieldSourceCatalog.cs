@@ -18,8 +18,9 @@ internal sealed class ShieldSourceCatalog
     internal bool DestroyInOvertime {get;}
     internal float ExplosionCoefficient {get;}
     internal float FriendDamageCoefficient {get;}
-    private ShieldSourceCatalog(float[] ranks,Dictionary<string,float> ratios,float repair,float respawn,bool enabled,bool destroyInOvertime,float explosion,float friend)
-    {rankHealth=ranks;weaponRatios=ratios;RepairSeconds=repair;RespawnRatePerSecond=respawn;RepairEnabled=enabled;DestroyInOvertime=destroyInOvertime;ExplosionCoefficient=explosion;FriendDamageCoefficient=friend;}
+    internal float UnitToShieldCoefficient {get;}
+    private ShieldSourceCatalog(float[] ranks,Dictionary<string,float> ratios,float repair,float respawn,bool enabled,bool destroyInOvertime,float explosion,float friend,float unit)
+    {rankHealth=ranks;weaponRatios=ratios;RepairSeconds=repair;RespawnRatePerSecond=respawn;RepairEnabled=enabled;DestroyInOvertime=destroyInOvertime;ExplosionCoefficient=explosion;FriendDamageCoefficient=friend;UnitToShieldCoefficient=unit;}
     internal float Health(int zeroBasedLevel)=>zeroBasedLevel>=0&&zeroBasedLevel<rankHealth.Length ? rankHealth[zeroBasedLevel] :
         throw new InvalidDataException("Unknown shield level.");
     internal float DamageToShield(string weaponId)=>weaponRatios.TryGetValue(weaponId,out float ratio) ? ratio :
@@ -65,11 +66,12 @@ internal sealed class ShieldSourceCatalog
                     throw new InvalidDataException("Duplicate shield constant.");
             }
             float repair=constants["ShieldRepairTime"],respawn=constants["ShieldRespawnRatePerSec"],enabled=constants["RepairShields"],destroyInOvertime=constants["DestroyShieldsInOverTime"];
-            float explosion=constants["ShieldExplosionCoef"],friend=constants["FriendDamageCoeficient"];
+            float explosion=constants["ShieldExplosionCoef"],friend=constants["FriendDamageCoeficient"],
+                unit=constants["UnitToShieldCoef"];
             if(repair is <=0 or >3600 || respawn is <0 or >100 || enabled is not (0 or 1) || destroyInOvertime is not (0 or 1) ||
-               explosion is <0 or >100 || friend is <0 or >1)
+               explosion is <0 or >100 || friend is <0 or >1 || unit is <0 or >100 || unit!=3f)
                 throw new InvalidDataException("Invalid shield repair policy.");
-            return new(health,ratios,repair,respawn,enabled==1,destroyInOvertime==1,explosion,friend);
+            return new(health,ratios,repair,respawn,enabled==1,destroyInOvertime==1,explosion,friend,unit);
         }
         catch(Exception e) when(e is JsonException or KeyNotFoundException or InvalidOperationException or FormatException or OverflowException or ArgumentException)
         {throw new InvalidDataException("Malformed shield source policy.",e);}

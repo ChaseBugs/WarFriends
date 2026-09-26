@@ -1814,8 +1814,8 @@ internal static class CombatContentTests
             EquippedArmyUnitIds=["ID_UNIT-MINIGUNNER"],NewArmyUnitIds=null,
             ArmyNormalUpgradeIndexes=[0],ArmySpecialUpgradeIndexes=[-1],
             ArmyEliteUpgradeIndexes=[-1],ArmyHealthFactors=[new(1f,1f)],ArmyDamageScales=[1f],
-            ArmySpeedCoefficients=[1f],ArmyAccuracyCoefficients=[1f]
-        },detached.Players[1]]};
+            ArmySpeedCoefficients=[1f],ArmyAccuracyCoefficients=[1f],ShieldLevel=0
+        },detached.Players[1] with {ShieldLevel=0}]};
         var miniMatch=new MatchEngine(miniManifest,content:content);
         string miniOwner=miniManifest.Players[0].PlayerId,miniOpponent=miniManifest.Players[1].PlayerId;
         miniMatch.Admit(miniOwner);miniMatch.Admit(miniOpponent);
@@ -1833,6 +1833,22 @@ internal static class CombatContentTests
         Check(miniEntity.UnitId=="ID_UNIT-MINIGUNNER" &&
               miniEntity.SpawnComponentFileId==normal[^1].ComponentFileId,
               "first live Minigunner uses the Unity 2018 even-sort source endpoint");
+        for(ulong t=62;t<500&&!miniMatch.Terminal;t++)
+        {
+            if(t%90==0){miniMatch.ArmyBatch(miniOwner);miniMatch.ArmyBatch(miniOpponent);}
+            miniMatch.Advance(t);
+        }
+        var miniEvents=new List<MatchEvent>();ulong miniCursor=0;
+        while(true)
+        {
+            var page=miniMatch.EventBatch(miniOwner,miniCursor);miniEvents.AddRange(page.Events);
+            if(page.Events.Count==0||page.Events[^1].EventId==page.LatestEventId)break;
+            miniCursor=page.Events[^1].EventId;
+        }
+        Check(miniEvents.Any(e=>e.Kind==MatchEventKind.Shot&&e.ActorId==miniOwner&&
+                  e.TargetId==miniOpponent&&e.Reason=="army") &&
+              miniEvents.Any(e=>e.Kind==MatchEventKind.Impact&&e.Reason=="army"),
+              "live Minigunner completes initial delay, shield-unhide windup, and source BulletSlow flight");
         Reject(()=>MatchManifest.Validate(detached with { Players=[detached.Players[0] with
             {NewArmyUnitIds=["ID_UNIT-SNIPER"]},detached.Players[1]] }));
         Reject(()=>content.ValidateAllocation(detached with { Players=detached.Players.Select((p,i)=>i==0 ?
