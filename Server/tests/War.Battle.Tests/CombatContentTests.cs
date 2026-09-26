@@ -781,6 +781,13 @@ internal static class CombatContentTests
               "four vehicle prefabs pin seven turret roles, nine weapon paths, cadence and projectile identity");
         var repairState=new TransporterRepairDroneState(0,transporterRig.RepairDronePaths[0],
             content.GroundVehicleWeapons.RepairDronePrefab,transporterRepair,Vector3.Zero,Vector3.UnitZ,0);
+        var bankingRepairState=new TransporterRepairDroneState(1,transporterRig.RepairDronePaths[1],
+            content.GroundVehicleWeapons.RepairDronePrefab,transporterRepair,Vector3.Zero,Vector3.UnitZ,0);
+        for(ulong bankTick=1;bankTick<=90;bankTick++)
+            bankingRepairState.Advance(Vector3.Zero,Vector3.UnitZ,bankTick,()=>.5f);
+        Check(Math.Abs(bankingRepairState.Rotation.LengthSquared()-1)<.0002f&&
+              Math.Abs(bankingRepairState.Rotation.X)+Math.Abs(bankingRepairState.Rotation.Z)>.00001f,
+              "repair-drone steering publishes recovered horizontal bank as well as vertical path look");
         Check(repairState.ApplyDamage(repairState.MaximumHealth,10,()=>0)&&!repairState.Active&&
               repairState.RespawnTick==1060&&
               repairState.Advance(Vector3.Zero,Vector3.UnitZ,1059,()=>.5f).HealRatio==0&&!repairState.Active&&

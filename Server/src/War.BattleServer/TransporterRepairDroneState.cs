@@ -16,6 +16,9 @@ internal sealed class TransporterRepairDroneState
     private Vector3 velocity;
     private Vector3 fallVelocity;
     private float physicsRemainder;
+    private Quaternion vertical=Quaternion.Identity;
+    private Quaternion horizontal=Quaternion.Identity;
+    private float steeringAngle;
     private int waypoint;
     private bool forward;
     private int stayTicks;
@@ -75,6 +78,7 @@ internal sealed class TransporterRepairDroneState
             if(tick<RespawnTick)return new(0,crashed);
             Active=true;Health=MaximumHealth;RespawnTick=0;waypoint=0;forward=binding.InitialForward;
             Falling=false;Crashed=false;velocity=Vector3.Zero;fallVelocity=Vector3.Zero;physicsRemainder=0;
+            vertical=Quaternion.Identity;horizontal=Quaternion.Identity;steeringAngle=0;
             stayTicks=0;cornerDelayTicks=0;
             Position=WorldPoint(0,vehiclePosition,vehicleFacing);
             Rotation=VehicleYaw(vehicleFacing)*path.Rotation;
@@ -107,20 +111,35 @@ internal sealed class TransporterRepairDroneState
             if(distance>1e-8f)
             {
                 Vector3 desired=delta/distance;
-                float dt=1f/MatchManifest.TickRate;
+                float steeringDt=1f/MatchManifest.TickRate;
                 desired*=distance<binding.BreakDistance?
-                    binding.BreakSpeed*dt*(distance/binding.BreakDistance):binding.Speed*dt;
+                    binding.BreakSpeed*steeringDt*(distance/binding.BreakDistance):binding.Speed*steeringDt;
                 steering=(desired-velocity)/binding.Mass;
             }
         }
         velocity+=steering;Position+=velocity;
+        float dt=1f/MatchManifest.TickRate;
+        Vector3 axis=Vector3.Cross(Vector3.UnitY,velocity);
+        float signed=MathF.Atan2(Vector3.Dot(Vector3.UnitY,Vector3.Cross(steering,velocity)),
+            Vector3.Dot(steering,velocity))*180f/MathF.PI;
+        steeringAngle+=(signed-steeringAngle)*dt*5f;
+        float bankSpeed=steering.Length()/dt;
+        if(!((steeringAngle>0&&steeringAngle<90)||(steeringAngle< -270&&steeringAngle> -360)))
+            bankSpeed=-bankSpeed;
+        if(axis.LengthSquared()>1e-12f)
+        {
+            var bank=Quaternion.CreateFromAxisAngle(Vector3.Normalize(axis),
+                bankSpeed*binding.Multiplier/60f*MathF.PI/180f);
+            horizontal=Quaternion.Normalize(Quaternion.Slerp(horizontal,bank,dt));
+        }
         Vector3 outward=Position-WorldPathOrigin(vehiclePosition,vehicleFacing);outward.Y=0;
         if(outward.LengthSquared()>1e-10f)
         {
             float yaw=MathF.Atan2(outward.X,outward.Z);
-            Rotation=Quaternion.Normalize(Quaternion.Slerp(Rotation,
-                Quaternion.CreateFromAxisAngle(Vector3.UnitY,yaw),5f/MatchManifest.TickRate));
+            vertical=Quaternion.Normalize(Quaternion.Slerp(vertical,
+                Quaternion.CreateFromAxisAngle(Vector3.UnitY,yaw),dt*5f));
         }
+        Rotation=Quaternion.Normalize(vertical*horizontal);
         if(!PlayerHitbox.Finite(Position)||!PlayerHitbox.Finite(velocity))
             throw new InvalidDataException("Repair-drone steering left the finite domain.");
         return new(TakeHeal(tick),false);

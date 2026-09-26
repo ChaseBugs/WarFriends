@@ -27,8 +27,10 @@ internal sealed class VehiclePassengerPoseCatalog
         public float Radius{get;set;}}
     private readonly IReadOnlyDictionary<string,VehiclePassengerPoseClip> clips;
     internal string Revision {get;}
-    private VehiclePassengerPoseCatalog(string revision,Dictionary<string,VehiclePassengerPoseClip> clips)
-    {Revision=revision;this.clips=clips;}
+    internal string SourceSha256 {get;}
+    private VehiclePassengerPoseCatalog(string revision,string sourceSha256,
+        Dictionary<string,VehiclePassengerPoseClip> clips)
+    {Revision=revision;SourceSha256=sourceSha256;this.clips=clips;}
 
     internal IReadOnlyList<PlayerHitbox> Place(string unitId,GroundVehiclePassengerBinding binding,
         Vector3 vehiclePosition,Vector3 planarForward,ulong animationTick)
@@ -41,11 +43,18 @@ internal sealed class VehiclePassengerPoseCatalog
         var vehicleRotation=Quaternion.CreateFromAxisAngle(Vector3.UnitY,yaw);
         var rootRotation=Quaternion.Normalize(vehicleRotation*binding.Rotation);
         var rootPosition=vehiclePosition+Vector3.Transform(binding.Position,vehicleRotation);
-        var clip=clips[unitId=="ID_UNIT-BUGGY"?"buggy_idle":"idle"];
+        return PlaceClip(unitId=="ID_UNIT-BUGGY"?"buggy_idle":"idle",rootPosition,rootRotation,animationTick,
+            binding.Role+"/");
+    }
+
+    private IReadOnlyList<PlayerHitbox> PlaceClip(string clipName,Vector3 rootPosition,
+        Quaternion rootRotation,ulong animationTick,string prefix)
+    {
+        var clip=clips[clipName];
         int period=clip.Frames.Count-1;
         int index=clip.Loop?(int)(animationTick%(ulong)period):Math.Min((int)animationTick,period);
         return clip.Frames[index].Parts.Select(p=>new PlayerHitbox(
-            $"{binding.Role}/{p.SourcePath}",p.Kind,p.Weight,
+            prefix+p.SourcePath,p.Kind,p.Weight,
             rootPosition+Vector3.Transform(p.Center,rootRotation),p.Size,
             Quaternion.Normalize(rootRotation*p.Rotation),p.Radius,Vector3.Zero,0,true,true)).ToArray();
     }
@@ -98,7 +107,7 @@ internal sealed class VehiclePassengerPoseCatalog
             }
             result.Add(source.Name,new(source.Name,source.Length,source.Wrap=="Loop",Array.AsReadOnly(frames)));
         }
-        return new(expectedRevision,result);
+        return new(expectedRevision,root.Sha256,result);
     }
     private static Vector3 Vector(float[] value)
     {
