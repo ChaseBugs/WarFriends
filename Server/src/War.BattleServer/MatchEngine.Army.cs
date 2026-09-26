@@ -48,6 +48,7 @@ public sealed partial class MatchEngine
     private readonly Dictionary<ulong,ArmyVehicleRouteMotion> vehicleRouteMotions=[];
     private readonly Dictionary<ulong,Vector3> groundVehicleFacing=[];
     private readonly Dictionary<ulong,float> groundVehicleShotSpeed=[];
+    private readonly Dictionary<ulong,BuggyCannonAttackState> buggyCannonAttacks=[];
 
     private string? ArmyAvailabilityError(Player player,ArmyDeploymentFamily family,
         ArmyDeploymentOption option)
@@ -248,6 +249,22 @@ public sealed partial class MatchEngine
         if(facing.LengthSquared()<1e-8f)
             throw new InvalidDataException("Ground vehicle route has no initial facing.");
         groundVehicleFacing.Add(entityKey,Vector3.Normalize(facing));
+        if(army.UnitId=="ID_UNIT-BUGGY")
+        {
+            var cannon=groundVehicleWeapons.For(army.UnitId).Roles.Single(r=>r.Role=="cannon");
+            var owner=Find(army.OwnerPlayerId)??throw new InvalidDataException("Buggy owner disappeared.");
+            int slot=Array.IndexOf(owner.Definition.EquippedArmyUnitIds!,army.UnitId);
+            if(slot<0||owner.Definition.ArmyNormalUpgradeIndexes==null)
+                throw new InvalidDataException("Buggy cannon lacks trusted upgrades.");
+            int specialValue=owner.Definition.ArmySpecialUpgradeIndexes?[slot]??-1;
+            int eliteValue=owner.Definition.ArmyEliteUpgradeIndexes?[slot]??-1;
+            int? special=specialValue>=0?specialValue:null;
+            int? elite=eliteValue>=0?eliteValue:null;
+            var state=new BuggyCannonAttackState(armyCatalog!.ComposeBuggyCannon(
+                owner.Definition.ArmyNormalUpgradeIndexes[slot],special,elite),cannon.SecondaryDelay);
+            if(!state.BeginInitialCooldown())throw new InvalidDataException("Buggy cannon cooldown failed.");
+            buggyCannonAttacks.Add(entityKey,state);
+        }
     }
 
     private void AdvanceGroundVehicleRoutes()
@@ -1072,6 +1089,7 @@ public sealed partial class MatchEngine
         vehicleRouteMotions.Remove(entityKey);
         groundVehicleFacing.Remove(entityKey);
         groundVehicleShotSpeed.Remove(entityKey);
+        buggyCannonAttacks.Remove(entityKey);
         if(vehicles?.TryGet(entityKey,out var vehicle)==true&&vehicle!=null&&
            !vehicles.TryDestroy(entityKey,vehicle.Generation))
             throw new InvalidDataException("Ground vehicle death cleanup failed.");

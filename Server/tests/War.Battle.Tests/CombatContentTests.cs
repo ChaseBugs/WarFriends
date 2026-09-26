@@ -1288,6 +1288,19 @@ internal static class CombatContentTests
                   initialVehicleAttack.CooldownTicksRemaining==45&&
                   !initialVehicleAttack.BeginInitialCooldown(),
                   "vehicle spawn reproduces TurretWeaponBasic.Reset random initial cooldown");
+            var cannonRolls=new Queue<float>([.5f,.25f]);
+            var cannonState=new BuggyCannonAttackState(new ArmyVehicleCannonStats(600,8,10),.25f,
+                ()=>cannonRolls.Dequeue());
+            Check(cannonState.BeginInitialCooldown()&&cannonState.CooldownTicksRemaining==270,
+                  "Buggy cannon starts on its recovered random cooldown");
+            for(int i=0;i<270;i++)cannonState.AdvanceTick();
+            Check(cannonState.TryBegin(0)&&cannonState.AdvanceTick()&&cannonState.PrimaryDue&&
+                  cannonState.DamagePerMissile==300&&cannonState.CommitPrimary()&&
+                  cannonState.CooldownTicksRemaining==255,
+                  "Buggy primary missile owns half damage and independently starts turret cooldown");
+            for(int i=0;i<7;i++)Check(!cannonState.AdvanceTick(),"Buggy secondary delay remains pending");
+            Check(cannonState.AdvanceTick()&&cannonState.SecondaryDue&&cannonState.CommitSecondary(),
+                  "Buggy secondary missile launches after the recovered eight-tick delay");
             var statsLedger=new BattleStatisticsLedger();
             Check(statsLedger.RecordHit("66666666666666666666666666666666")&&
                   !statsLedger.RecordHit("66666666666666666666666666666666")&&
