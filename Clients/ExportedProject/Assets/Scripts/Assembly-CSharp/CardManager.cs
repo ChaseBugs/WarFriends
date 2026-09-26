@@ -517,9 +517,9 @@ public class CardManager : DatabaseSerializedObjectGeneric<CardManager.CardManag
 			mCardUseInProgress = true;
 			mCooldown = card.cooldown;
 			SelfHostedBattleClient selfHosted = SelfHostedBattleClient.Active;
-			if (selfHosted != null && selfHosted.IsConnected && card is CardDecoy)
+			if (selfHosted != null && selfHosted.IsConnected && (card is CardDecoy || card is CardLandmine))
 			{
-				UseSelfHostedDecoy(selfHosted, card, PlayerController.currentPlayer.fraction);
+				UseSelfHostedDeployable(selfHosted, card, PlayerController.currentPlayer.fraction);
 				return;
 			}
 			card.playerId = PhotonNetwork.player.ID;
@@ -539,13 +539,15 @@ public class CardManager : DatabaseSerializedObjectGeneric<CardManager.CardManag
 		}
 	}
 
-	private async void UseSelfHostedDecoy(SelfHostedBattleClient client, Card card, Fractions fraction)
+	private async void UseSelfHostedDeployable(SelfHostedBattleClient client, Card card, Fractions fraction)
 	{
 		try
 		{
-			var reply = await client.UseDecoyResult();
-			if (reply.Code != "decoy-spawned" && reply.Code != "decoy-replayed")
-				throw new InvalidOperationException("Battle host rejected Decoy activation: " + reply.Code);
+			var reply = card is CardLandmine ? await client.UseLandMineResult() : await client.UseDecoyResult();
+			bool accepted = card is CardLandmine ?
+				(reply.Code == "land-mine-spawned" || reply.Code == "land-mine-replayed") :
+				(reply.Code == "decoy-spawned" || reply.Code == "decoy-replayed");
+			if (!accepted) throw new InvalidOperationException("Battle host rejected deployable activation: " + reply.Code);
 			card.playerId = 0;
 			CardWasUsed(card, fraction);
 			card.RemoveCard();
@@ -559,7 +561,7 @@ public class CardManager : DatabaseSerializedObjectGeneric<CardManager.CardManag
 		catch (Exception exception)
 		{
 			mCardUseInProgress = false;
-			Debug.LogError("Self-hosted Decoy activation failed: " + exception.Message);
+			Debug.LogError("Self-hosted deployable activation failed: " + exception.Message);
 		}
 	}
 
