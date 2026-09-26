@@ -41,7 +41,7 @@ public sealed class ArmyDeploymentCatalog
     private IReadOnlyDictionary<string,IReadOnlyList<float>>? specialValues;
     private IReadOnlyDictionary<string,IReadOnlyList<float>>? vehiclePassengerHealth;
     private IReadOnlyDictionary<string,float>? vehiclePassengerRespawnSeconds;
-    private IReadOnlyList<ArmyVehicleCannonStats>? buggyCannonStages;
+    private IReadOnlyDictionary<string,IReadOnlyList<ArmyVehicleCannonStats>>? vehicleCannonStages;
     private IReadOnlyDictionary<string,ArmyPlayerDamagePolicy>? playerDamagePolicies;
     private IReadOnlyDictionary<string,int>? normalLaneEnds;
     private IReadOnlyDictionary<string,int>? eliteLaneStarts;
@@ -175,18 +175,27 @@ public sealed class ArmyDeploymentCatalog
 
     /// <summary>Buggy LoadDefinitionFromXLS adds cannon damage and timing from every selected lane.</summary>
     public ArmyVehicleCannonStats ComposeBuggyCannon(int normalIndex,int? specialIndex,int? eliteIndex)
+        =>ComposeVehicleCannon("ID_UNIT-BUGGY",normalIndex,specialIndex,eliteIndex,1,1);
+
+    /// <summary>Vehicle LoadDefinitionFromXLS composes its cannon lane independently of primary fire.</summary>
+    public ArmyVehicleCannonStats ComposeVehicleCannon(string unitId,int normalIndex,int? specialIndex,
+        int? eliteIndex,float damageScale,float cooldownScale)
     {
-        _=BaseStats("ID_UNIT-BUGGY",normalIndex);
-        if(buggyCannonStages==null)throw new InvalidDataException("Buggy cannon authority is unavailable.");
-        ValidateOptionalLanes("ID_UNIT-BUGGY",buggyCannonStages.Count,specialIndex,eliteIndex);
-        var selected=new List<ArmyVehicleCannonStats>{buggyCannonStages[normalIndex]};
-        if(specialIndex.HasValue)selected.Add(buggyCannonStages[specialIndex.Value]);
-        if(eliteIndex.HasValue)selected.Add(buggyCannonStages[eliteIndex.Value]);
-        float damage=selected.Sum(x=>x.Damage);
-        float min=selected.Sum(x=>x.MinShootTime),max=selected.Sum(x=>x.MaxShootTime);
+        _=BaseStats(unitId,normalIndex);
+        if(unitId is not ("ID_UNIT-BUGGY" or "ID_UNIT-TANK")||vehicleCannonStages==null||
+           !vehicleCannonStages.TryGetValue(unitId,out var stages)||!float.IsFinite(damageScale)||
+           damageScale<=0||damageScale>100||!float.IsFinite(cooldownScale)||cooldownScale<=0||cooldownScale>1)
+            throw new InvalidDataException("Vehicle cannon authority is unavailable.");
+        ValidateOptionalLanes(unitId,stages.Count,specialIndex,eliteIndex);
+        var selected=new List<ArmyVehicleCannonStats>{stages[normalIndex]};
+        if(specialIndex.HasValue)selected.Add(stages[specialIndex.Value]);
+        if(eliteIndex.HasValue)selected.Add(stages[eliteIndex.Value]);
+        float damage=selected.Sum(x=>x.Damage)*damageScale;
+        float min=selected.Sum(x=>x.MinShootTime)*cooldownScale;
+        float max=selected.Sum(x=>x.MaxShootTime)*cooldownScale;
         if(!float.IsFinite(damage)||damage<=0||damage>10_000_000||!float.IsFinite(min)||
            !float.IsFinite(max)||min<0||max<min||max>180)
-            throw new InvalidDataException("Composed Buggy cannon stats are outside the recovered combat domain.");
+            throw new InvalidDataException("Composed vehicle cannon stats are outside the recovered combat domain.");
         return new(damage,min,max);
     }
 
@@ -295,7 +304,7 @@ public sealed class ArmyDeploymentCatalog
         var acceptedPassengerHealth=new Dictionary<string,IReadOnlyList<float>>(StringComparer.Ordinal);
         var acceptedPassengerRespawn=new Dictionary<string,float>(StringComparer.Ordinal);
         var acceptedPlayerDamage=new Dictionary<string,ArmyPlayerDamagePolicy>(StringComparer.Ordinal);
-        ArmyVehicleCannonStats[]? acceptedBuggyCannons=null;
+        var acceptedVehicleCannons=new Dictionary<string,IReadOnlyList<ArmyVehicleCannonStats>>(StringComparer.Ordinal);
         var acceptedLaneEnds=new Dictionary<string,int>(StringComparer.Ordinal);
         var acceptedEliteStarts=new Dictionary<string,int>(StringComparer.Ordinal);
         foreach(var family in Families)
@@ -349,7 +358,8 @@ public sealed class ArmyDeploymentCatalog
             var shots=new ArmyUpgradeShotStats[stageRows.GetArrayLength()];
             var specials=new float[stageRows.GetArrayLength()];
             var passengerHealth=vehiclePassenger?new float[stageRows.GetArrayLength()]:null;
-            var cannons=family.UnitId=="ID_UNIT-BUGGY"?new ArmyVehicleCannonStats[stageRows.GetArrayLength()]:null;
+            var cannons=family.UnitId is "ID_UNIT-BUGGY" or "ID_UNIT-TANK"?
+                new ArmyVehicleCannonStats[stageRows.GetArrayLength()]:null;
             for(int i=0;i<stages.Length;i++)
             {
                 var stage=stageRows[i];
@@ -384,7 +394,7 @@ public sealed class ArmyDeploymentCatalog
                     float cannonMax=stage.GetProperty("SHOTFREQUENCYMAXCANNON").GetSingle();
                     if(!float.IsFinite(cannonDamage)||cannonDamage<0||!float.IsFinite(cannonMin)||
                        !float.IsFinite(cannonMax)||cannonMin<0||cannonMax<cannonMin||cannonMax>60)
-                        throw new InvalidDataException("Buggy cannon upgrade stage is invalid.");
+                        throw new InvalidDataException("Vehicle cannon upgrade stage is invalid.");
                     cannons[i]=new(cannonDamage,cannonMin,cannonMax);
                 }
             }
@@ -395,10 +405,10 @@ public sealed class ArmyDeploymentCatalog
                 acceptedPassengerHealth.Add(family.UnitId,Array.AsReadOnly(passengerHealth));
             acceptedLaneEnds.Add(family.UnitId,normalLaneEnd);
             acceptedEliteStarts.Add(family.UnitId,eliteLaneStart);
-            if(cannons!=null)acceptedBuggyCannons=cannons;
+            if(cannons!=null)acceptedVehicleCannons.Add(family.UnitId,Array.AsReadOnly(cannons));
         }
         baseStats=acceptedStats;
-        buggyCannonStages=acceptedBuggyCannons is null?null:Array.AsReadOnly(acceptedBuggyCannons);
+        vehicleCannonStages=acceptedVehicleCannons;
         upgradeShots=acceptedShots;
         specialValues=acceptedSpecials;
         playerDamagePolicies=acceptedPlayerDamage;

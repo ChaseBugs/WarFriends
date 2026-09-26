@@ -122,8 +122,11 @@ public sealed partial class MatchEngine
     }
     private readonly Dictionary<ulong,float> groundVehicleShotSpeed=[];
     private readonly Dictionary<ulong,BuggyCannonAttackState> buggyCannonAttacks=[];
+    private readonly Dictionary<ulong,VehicleAttackState> tankCannonAttacks=[];
+    private readonly Dictionary<ulong,float> tankCannonDamage=[];
     private readonly Dictionary<ulong,IReadOnlyDictionary<string,VehiclePassengerState>> vehiclePassengers=[];
     private readonly Dictionary<ulong,(string Owner,string Target,Vector3 Position)> buggyCannonTargets=[];
+    private readonly Dictionary<ulong,(string Owner,string Target)> tankCannonTargets=[];
     private ulong buggyCurveCounter;
 
     private string? ArmyAvailabilityError(Player player,ArmyDeploymentFamily family,
@@ -257,6 +260,10 @@ public sealed partial class MatchEngine
         =>vehicleRouteMotions.TryGetValue(entityKey,out var state)?state:null;
     internal VehicleAttackState? GroundVehicleAttack(ulong entityKey)
         =>vehicles?.TryGetAttack(entityKey,out var state)==true?state:null;
+    internal VehicleAttackState? TankCannonAttack(ulong entityKey)
+        =>tankCannonAttacks.TryGetValue(entityKey,out var state)?state:null;
+    internal float? TankCannonDamage(ulong entityKey)
+        =>tankCannonDamage.TryGetValue(entityKey,out var value)?value:null;
     internal Vector3? GroundVehicleFacing(ulong entityKey)
         =>groundVehicleFacing.TryGetValue(entityKey,out var facing)?facing:null;
     internal IReadOnlyList<VehiclePassengerSnapshot> VehiclePassengers(ulong entityKey)
@@ -271,12 +278,14 @@ public sealed partial class MatchEngine
         stateRevision++;
         if(wasActive&&!passenger.Active)
         {
-            vehicleShotTargets.Remove(entityKey);buggyCannonTargets.Remove(entityKey);
+            vehicleShotTargets.Remove(entityKey);buggyCannonTargets.Remove(entityKey);tankCannonTargets.Remove(entityKey);
             var unit=activeArmyEntities[entityKey].UnitId;
             if(role is "gunner" or "turret" or "co-driver")
                 _=vehicles?.ResetAttack(entityKey);
             if(unit=="ID_UNIT-BUGGY"&&role=="co-driver"&&
                buggyCannonAttacks.TryGetValue(entityKey,out var cannon))cannon.DisableAndReset();
+            if(unit=="ID_UNIT-TANK"&&role=="cannon"&&
+               tankCannonAttacks.TryGetValue(entityKey,out var tankCannon))tankCannon.DisableAndReset();
             Emit(MatchEventKind.VehiclePassengerDown,activeArmyEntities[entityKey].OwnerPlayerId,"",entityKey,
                 PassengerWorldPosition(entityKey,passenger.Binding),0,"vehicle-passenger-down:"+role);
         }
@@ -355,6 +364,84 @@ public sealed partial class MatchEngine
         return vehicles.TryBeginAttack(entityKey,true,aim.AimTicks);
     }
 
+    private Vector3 CurrentPlayerBodyPosition(string playerId,Vector3 origin)
+    {
+        if(rifleCombat==null||playerShotTargets==null)
+            throw new InvalidDataException("Vehicle target pose authority disappeared.");
+        var player=Find(playerId)??throw new InvalidDataException("Vehicle target player disappeared.");
+        var pose=rifleCombat.Pose(playerId);
+        if(player.Route!=null&&pose.MovingTarget!=null)return pose.MovingTarget.Position;
+        var body=playerShotTargets.Nearest(1,origin,row=>pose.BodyTarget(row.TransformFileId).Position);
+        return pose.BodyTarget(body.TransformFileId).Position;
+    }
+
+    private void AdvanceTankCannon(ulong entityKey)
+    {
+        if(!tankCannonAttacks.TryGetValue(entityKey,out var attack)||vehicles==null||rifleCombat==null||
+           playerShotTargets==null||groundVehicleWeapons==null||!activeArmyEntities.TryGetValue(entityKey,out var army)||
+           !vehicles.TryGet(entityKey,out var vehicle)||vehicle==null||
+           !groundVehicleFacing.TryGetValue(entityKey,out var facing))return;
+        if(!PassengerActive(entityKey,"cannon"))return;
+        var turret=groundVehicleWeapons.For(army.UnitId).Roles.Single(r=>r.Role=="cannon");
+        if(attack.Phase==ArmyAirAttackPhase.Ready)
+        {
+            var owner=Find(army.OwnerPlayerId)??throw new InvalidDataException("Tank owner disappeared.");
+            var opponent=players.Single(p=>p!=owner);if(!opponent.Admitted||opponent.Dead)return;
+            Vector3 target=CurrentPlayerBodyPosition(opponent.Definition.PlayerId,vehicle.Position);
+            GroundVehicleAim aim;try {aim=GroundVehicleAimPolicy.Resolve(vehicle.Position,facing,target,
+                turret.MaxShotRotation,turret.AimTime);}catch(InvalidDataException){return;}
+            var muzzle=groundVehicleWeapons.RestMuzzleOrigin(army.UnitId,"cannon",0,vehicle.Position,aim.Direction);
+            var delta=target-muzzle;float range=delta.Length();if(!float.IsFinite(range)||range<.001f)return;
+            var visible=rifleCombat.TraceForArmy(army.OwnerPlayerId,muzzle,delta/range,range+.05f);
+            if(visible?.PlayerId!=opponent.Definition.PlayerId&&visible?.DynamicOwner!=opponent.Definition.PlayerId)return;
+            tankCannonTargets[entityKey]=(army.OwnerPlayerId,opponent.Definition.PlayerId);
+            attack.TryBegin(true,aim.AimTicks);
+        }
+        attack.AdvanceTick();
+        if(attack.ShotDue){LaunchTankMissile(entityKey,attack);attack.CommitShot();}
+    }
+
+    private void LaunchTankMissile(ulong entityKey,VehicleAttackState attack)
+    {
+        if(PendingProjectileCount>=MaximumProjectiles||!EventCapacityForShot()||vehicles==null||rifleCombat==null||
+           groundVehicleWeapons==null||!vehicles.TryGet(entityKey,out var vehicle)||vehicle==null||
+           !activeArmyEntities.TryGetValue(entityKey,out var army)||!tankCannonTargets.TryGetValue(entityKey,out var target)||
+           !tankCannonDamage.TryGetValue(entityKey,out float damage))return;
+        var weapon=groundVehicleWeapons.For(army.UnitId).Roles.Single(r=>r.Role=="cannon").Weapons.Single();
+        var binding=weapon.Missile??throw new InvalidDataException("Tank cannon lacks missile binding.");
+        Vector3 CurrentTarget()=>CurrentPlayerBodyPosition(target.Target,vehicle.Position);
+        Vector3 position=CurrentTarget();
+        var origin=groundVehicleWeapons.RestMuzzleOrigin(army.UnitId,"cannon",0,vehicle.Position,
+            position-vehicle.Position);
+        if(projectileId==ulong.MaxValue)throw new InvalidDataException("Tank projectile identity exhausted.");
+        ulong id=++projectileId;
+        var flight=new TankMissileFlight(id,entityKey,binding,origin,CurrentTarget,tick,
+            (from,direction,range)=>rifleCombat.TraceForArmy(target.Owner,from,direction,range));
+        tankProjectiles.Add(id,new(flight,target.Owner,target.Target,damage,binding));
+        Emit(MatchEventKind.Shot,target.Owner,target.Target,id,origin,0,"tank-cannon");stateRevision++;
+    }
+
+    private void AdvanceTankProjectiles()
+    {
+        foreach(var pair in tankProjectiles.ToArray())
+        {
+            TankMissileImpact? impact;
+            try {impact=pair.Value.Flight.Advance(tick);}
+            catch(Exception e) when(e is InvalidDataException or InvalidOperationException)
+            {End("invalid-tank-projectile-authority","",false);return;}
+            if(pair.Value.Flight.Finished)tankProjectiles.Remove(pair.Key);
+            if(impact!=null)
+            {
+                Emit(MatchEventKind.Impact,pair.Value.Owner,impact.Collision?.PlayerId??"",
+                    impact.ProjectileId,impact.Position,0,"tank-cannon");stateRevision++;
+                try {ApplyGroundVehicleMissileExplosion(pair.Value.Owner,"ID_UNIT-TANK",pair.Value.Damage,
+                    pair.Value.Binding,impact.Position,impact.ProjectileId);}
+                catch(InvalidDataException){End("invalid-combat-authority","",false);return;}
+                if(Terminal)return;
+            }
+        }
+    }
+
     private void AdvanceBuggyCannon(ulong entityKey)
     {
         if(!buggyCannonAttacks.TryGetValue(entityKey,out var attack)||vehicles==null||rifleCombat==null||
@@ -363,7 +450,7 @@ public sealed partial class MatchEngine
            !vehicles.TryGet(entityKey,out var vehicle)||vehicle==null||
            !groundVehicleFacing.TryGetValue(entityKey,out var facing))return;
         var turret=groundVehicleWeapons.For(army.UnitId).Roles.Single(r=>r.Role=="cannon");
-        if(!PassengerActive(entityKey,"co-driver")){attack.AdvanceTick();return;}
+        if(!PassengerActive(entityKey,"co-driver"))return;
         if(attack.Phase==ArmyAirAttackPhase.Ready)
         {
             var owner=Find(army.OwnerPlayerId)??throw new InvalidDataException("Buggy owner disappeared.");
@@ -432,24 +519,29 @@ public sealed partial class MatchEngine
     }
 
     private void ApplyBuggyExplosion(BuggyProjectile projectile,BuggyMissileImpact impact)
+        =>ApplyGroundVehicleMissileExplosion(projectile.Owner,"ID_UNIT-BUGGY",projectile.Damage,
+            projectile.Binding,impact.Position,impact.ProjectileId);
+
+    private void ApplyGroundVehicleMissileExplosion(string owner,string unitId,float damage,
+        GroundVehicleMissileBinding binding,Vector3 position,ulong projectileId)
     {
         if(rifleCombat==null||damageRoll==null||armyCatalog==null)
-            throw new InvalidDataException("Missing Buggy explosion authority.");
-        var attacker=Find(projectile.Owner)??throw new InvalidDataException("Buggy owner disappeared.");
-        var policy=armyCatalog.PlayerDamagePolicy("ID_UNIT-BUGGY");
+            throw new InvalidDataException("Missing vehicle explosion authority.");
+        var attacker=Find(owner)??throw new InvalidDataException("Vehicle owner disappeared.");
+        var policy=armyCatalog.PlayerDamagePolicy(unitId);
         bool shieldBetween=false;
         IReadOnlyList<MapDynamicCollider> overlaps=Array.Empty<MapDynamicCollider>();
         if(map!=null)
         {
             Func<int,bool>? enabled=barrels==null?null:index=>barrels.ColliderEnabled(index);
             Func<int,int,int>? layer=barrels==null?null:(index,source)=>barrels.RuntimeLayer(index,source);
-            overlaps=map.DynamicSphereOverlaps(impact.Position,projectile.Binding.HurtRadius,
+            overlaps=map.DynamicSphereOverlaps(position,binding.HurtRadius,
                 uint.MaxValue,enabled,layer);
             shieldBetween=shields!=null&&overlaps.Any(x=>shields.IsLiveShield(x.DynamicOwner));
         }
         foreach(var collider in overlaps)
         {
-            var hit=BuggyExplosion.ResolveDynamic(impact.Position,collider,projectile.Damage,projectile.Binding);
+            var hit=BuggyExplosion.ResolveDynamic(position,collider,damage,binding);
             if(shields!=null&&shields.IsLiveShield(collider.DynamicOwner))
             {
                 var shield=shields.ApplyUnitExplosion(collider.DynamicOwner,attacker.Definition.Fraction,
@@ -458,12 +550,12 @@ public sealed partial class MatchEngine
                 {
                     stateRevision++;
                     EmitShield(shield.Destroyed?MatchEventKind.ShieldDestroyed:
-                        MatchEventKind.ShieldDamaged,projectile.Owner,shield,impact.ProjectileId);
+                        MatchEventKind.ShieldDamaged,owner,shield,projectileId);
                 }
             }
             else if(barrels?.Contains(collider.ColliderIndex)==true)
             {
-                ApplyBarrelDamage(projectile.Owner,impact.ProjectileId,collider.ColliderIndex,hit.RawDamage,
+                ApplyBarrelDamage(owner,projectileId,collider.ColliderIndex,hit.RawDamage,
                     hit.Kind==CombatDamageType.Explosion?BarrelChainCause.Explosion:BarrelChainCause.Shiver);
                 if(Terminal)return;
             }
@@ -471,13 +563,13 @@ public sealed partial class MatchEngine
         foreach(var victim in players.Where(x=>!x.Dead).ToArray())
         {
             float roll=damageRoll();
-            var effect=BuggyExplosion.ResolvePlayer(impact.Position,
+            var effect=BuggyExplosion.ResolvePlayer(position,
                 rifleCombat.Pose(victim.Definition.PlayerId).Collision,victim.Position,
-                victim.Definition.Combat!,victim.Health,projectile.Damage,projectile.Binding,policy,
+                victim.Definition.Combat!,victim.Health,damage,binding,policy,
                 shieldBetween,overtime,attacker.Definition.Fraction==victim.Definition.Fraction,
                 attacker==victim,roll);
             if(effect==null)continue;
-            ApplyResolvedPlayerDamage(projectile.Owner,victim.Definition.PlayerId,
+            ApplyResolvedPlayerDamage(owner,victim.Definition.PlayerId,
                 new ResolvedPlayerDamage(effect.RawDamage,effect.Kind,HasWeapon:true,FriendKill:true,
                     PlayerCoefficient:policy.PlayerDamageRatio,
                     PlayerOvertimeCoefficient:policy.OvertimePlayerDamageRatio,Overtime:overtime),
@@ -513,17 +605,30 @@ public sealed partial class MatchEngine
         int slot=Array.IndexOf(owner.Definition.EquippedArmyUnitIds!,army.UnitId);
         if(slot<0||owner.Definition.ArmyNormalUpgradeIndexes==null)
             throw new InvalidDataException("Vehicle passenger lacks trusted upgrades.");
+        int specialValue=owner.Definition.ArmySpecialUpgradeIndexes?[slot]??-1;
+        int eliteValue=owner.Definition.ArmyEliteUpgradeIndexes?[slot]??-1;
+        int? special=specialValue>=0?specialValue:null;
+        int? elite=eliteValue>=0?eliteValue:null;
         if(army.UnitId=="ID_UNIT-BUGGY")
         {
             var cannon=groundVehicleWeapons.For(army.UnitId).Roles.Single(r=>r.Role=="cannon");
-            int specialValue=owner.Definition.ArmySpecialUpgradeIndexes?[slot]??-1;
-            int eliteValue=owner.Definition.ArmyEliteUpgradeIndexes?[slot]??-1;
-            int? special=specialValue>=0?specialValue:null;
-            int? elite=eliteValue>=0?eliteValue:null;
             var state=new BuggyCannonAttackState(armyCatalog!.ComposeBuggyCannon(
                 owner.Definition.ArmyNormalUpgradeIndexes[slot],special,elite),cannon.SecondaryDelay);
             if(!state.BeginInitialCooldown())throw new InvalidDataException("Buggy cannon cooldown failed.");
             buggyCannonAttacks.Add(entityKey,state);
+        }
+        else if(army.UnitId=="ID_UNIT-TANK")
+        {
+            var cannon=groundVehicleWeapons.For(army.UnitId).Roles.Single(r=>r.Role=="cannon");
+            var binding=cannon.Weapons.Single().Missile??
+                throw new InvalidDataException("Tank cannon lacks its source missile.");
+            float damageScale=owner.Definition.ArmyDamageScales?[slot]??1f;
+            var stats=armyCatalog!.ComposeVehicleCannon(army.UnitId,
+                owner.Definition.ArmyNormalUpgradeIndexes[slot],special,elite,damageScale,special.HasValue?.7f:1f);
+            var state=new VehicleAttackState(new(binding.Speed,1,1,1,stats.MinShootTime,stats.MaxShootTime,0),
+                cannon.Weapons.Single().Cadence,NextArmyFloat);
+            if(!state.BeginInitialCooldown())throw new InvalidDataException("Tank cannon cooldown failed.");
+            tankCannonAttacks.Add(entityKey,state);tankCannonDamage.Add(entityKey,stats.Damage);
         }
         var rig=groundVehicleWeapons.For(army.UnitId);
         int normal=owner.Definition.ArmyNormalUpgradeIndexes?[slot]??
@@ -1360,9 +1465,14 @@ public sealed partial class MatchEngine
         groundVehicleShotSpeed.Remove(entityKey);
         buggyCannonAttacks.Remove(entityKey);
         buggyCannonTargets.Remove(entityKey);
+        tankCannonAttacks.Remove(entityKey);
+        tankCannonTargets.Remove(entityKey);
+        tankCannonDamage.Remove(entityKey);
         vehiclePassengers.Remove(entityKey);
         foreach(var id in buggyProjectiles.Where(x=>x.Value.Flight.VehicleId==entityKey)
             .Select(x=>x.Key).ToArray())buggyProjectiles.Remove(id);
+        foreach(var id in tankProjectiles.Where(x=>x.Value.Flight.VehicleId==entityKey)
+            .Select(x=>x.Key).ToArray())tankProjectiles.Remove(id);
         if(vehicles?.TryGet(entityKey,out var vehicle)==true&&vehicle!=null&&
            !vehicles.TryDestroy(entityKey,vehicle.Generation))
             throw new InvalidDataException("Ground vehicle death cleanup failed.");

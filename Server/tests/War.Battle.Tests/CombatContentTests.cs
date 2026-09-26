@@ -710,11 +710,17 @@ internal static class CombatContentTests
         var buggyShot=content.Army.ComposeVehicleShot("ID_UNIT-BUGGY",0,null,null);
         var transporterShot=content.Army.ComposeVehicleShot("ID_UNIT-TRANSPORTER",0,null,null);
         var buggyCannon=content.Army.ComposeBuggyCannon(0,null,null);
+        var tankCannon=content.Army.ComposeVehicleCannon("ID_UNIT-TANK",0,null,null,1,1);
+        var specialTankCannon=content.Army.ComposeVehicleCannon("ID_UNIT-TANK",0,51,null,2,.7f);
         Check(humveeShot==new ArmyVehicleShotStats(5f,.85f,4,5,1.5f,1.8f,0)&&
               tankShot==new ArmyVehicleShotStats(5f,.8f,2,5,2f,5f,0)&&
               buggyShot==new ArmyVehicleShotStats(5f,1f,0,0,0,0,0)&&
               transporterShot==new ArmyVehicleShotStats(5f,.9f,4,7,3.5f,4.5f,0)&&
               buggyCannon==new ArmyVehicleCannonStats(622.44f,8f,10f)&&
+              tankCannon==new ArmyVehicleCannonStats(1808.03f,8f,14f)&&
+              Math.Abs(specialTankCannon.Damage-3616.06f)<.001f&&
+              Math.Abs(specialTankCannon.MinShootTime-5.6f)<.001f&&
+              Math.Abs(specialTankCannon.MaxShootTime-9.8f)<.001f&&
               content.Army.PlayerDamagePolicy("ID_UNIT-BUGGY")==
                   new ArmyPlayerDamagePolicy(.3f,.5f,.5f)&&
               content.Army.VehiclePassengerMaximumHealth("ID_UNIT-HUMVEE",0,1f)==875.34f&&
@@ -725,7 +731,7 @@ internal static class CombatContentTests
               content.Army.VehiclePassengerRespawnTicks("ID_UNIT-TANK")==525&&
               content.Army.ComposeVehicleShot("ID_UNIT-HUMVEE",0,null,null,2f)
                   .ProbabilityOfRealShot==1f,
-              "ground vehicle turrets compose primary and Buggy cannon stage-zero source authority");
+              "ground vehicle turrets compose primary, Buggy cannon, and Tank cannon stage-zero source authority");
         Reject(()=>content.Army.ComposeVehicleShot("ID_UNIT-ASSAULT",0,null,null));
         var humveeRig=content.GroundVehicleWeapons.For("ID_UNIT-HUMVEE");
         var tankRig=content.GroundVehicleWeapons.For("ID_UNIT-TANK");
@@ -805,8 +811,40 @@ internal static class CombatContentTests
         }
         Check(buggyFlight.Finished&&buggyTerminal is {Collision:null}&&buggyCurveDeviation>.01f,
               "Buggy missile executes its five-key curved flight on contiguous host ticks");
+        var tankMissileBinding=tankRig.Roles.Single(r=>r.Role=="cannon").Weapons.Single().Missile!;
+        Vector3 tankTarget=new(0,0,8);int tankTraceCount=0;
+        var tankFlight=new TankMissileFlight(81,82,tankMissileBinding,Vector3.Zero,()=>tankTarget,0,
+            (origin,direction,range)=>
+            {
+                tankTraceCount++;
+                return origin.Z<7&&origin.Z+direction.Z*range>=7?
+                    new ShotCollision(7-origin.Z,new(0,0,7),"tank-target","target",1):null;
+            });
+        TankMissileImpact? tankImpact=null;
+        for(ulong flightTick=1;flightTick<=200&&!tankFlight.Finished;flightTick++)
+        {
+            if(flightTick==4)tankTarget=new(0,0,9);
+            tankImpact=tankFlight.Advance(flightTick)??tankImpact;
+        }
+        Check(tankImpact is {Collision.PlayerId:"target",Position.Z:7}&&tankTraceCount>0&&
+              tankMissileBinding is {Speed:8f,MinimumDamage:20f,HurtRadius:1.2f,DeadRadius:1f,
+                  CurvedTrajectory:false,RotationRange:{X:.8f,Y:1.6f},RotationProfile.Count:3,
+                  BaseRotationMagnitude:.45f},
+              "Tank cannon follows the live target with its source straight missile and collision delay");
         var buggyPose=referencePose.Place(Vector3.Zero,Quaternion.Identity).Collision;
-        var buggyBody=buggyPose.Parts[0];var buggyPolicy=content.Army.PlayerDamagePolicy("ID_UNIT-BUGGY");
+        var buggyBody=buggyPose.Parts[0];
+        var tankPolicy=content.Army.PlayerDamagePolicy("ID_UNIT-TANK");
+        var tankInner=BuggyExplosion.ResolvePlayer(buggyBody.Center,buggyPose,buggyPose.RootPosition,
+            new(5000),5000,tankCannon.Damage,tankMissileBinding,tankPolicy,false,false,false,false,.5f);
+        var tankShielded=BuggyExplosion.ResolvePlayer(buggyBody.Center,buggyPose,buggyPose.RootPosition,
+            new(5000),5000,tankCannon.Damage,tankMissileBinding,tankPolicy,true,false,false,false,.5f);
+        Check(tankPolicy==new ArmyPlayerDamagePolicy(.35f,.3f,.2f)&&
+              tankInner is {Kind:CombatDamageType.Explosion}&&
+              Math.Abs(tankInner.RawDamage-1808.03f)<.001f&&Math.Abs(tankInner.Result.Damage-542.409f)<.01f&&
+              tankShielded!=null&&Math.Abs(tankShielded.RawDamage-632.8105f)<.01f&&
+              Math.Abs(tankShielded.Result.Damage-189.84315f)<.01f,
+              "Tank missile explosion applies source cannon damage and shield/player ratios");
+        var buggyPolicy=content.Army.PlayerDamagePolicy("ID_UNIT-BUGGY");
         var buggyInner=BuggyExplosion.ResolvePlayer(buggyBody.Center,buggyPose,buggyPose.RootPosition,
             new(1000),1000,buggyCannon.Damage*.5f,buggyMissileBinding,buggyPolicy,false,false,false,false,.5f);
         var buggyShielded=BuggyExplosion.ResolvePlayer(buggyBody.Center,buggyPose,buggyPose.RootPosition,
@@ -2747,11 +2785,15 @@ internal static class CombatContentTests
             {staleMatch.ArmyEntityBatch(soldierOwner,0,0);staleMatch.ArmyEntityBatch(helicopterOwner,0,0);}
         }
         var parkedVehicles=staleMatch.ArmyEntityBatch(soldierOwner,0,0).Entities;
+        var liveTank=parkedVehicles.Single(x=>x.UnitId=="ID_UNIT-TANK");
         Check(staleMatch.Snapshot().Vehicles.Single(v=>v.EntityId==firstCar.EntityKey).Parts
                   .Single(p=>p.PartId=="crew:gunner") is {Active:true,RespawnTick:0,Health:875.34f}&&
               staleMatch.GroundVehicleShotTargets(helicopterOwner)
                   .Count(x=>x.EntityId==firstCar.EntityKey&&x.PassengerRole=="gunner")==3,
               "live Humvee gunner respawns at full source-row health during host simulation");
+        Check(staleMatch.TankCannonAttack(liveTank.EntityKey)!=null&&
+              staleMatch.TankCannonDamage(liveTank.EntityKey)==1808.03f,
+              "live Tank owns its independently composed cannon authority");
         Check(parkedVehicles.Count==2&&parkedVehicles.All(entity=>
         {
             var spawn=content.ArmySpawnPoints.ForMap(park).Single(p=>p.ComponentFileId==entity.SpawnComponentFileId);
