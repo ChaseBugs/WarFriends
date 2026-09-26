@@ -64,11 +64,12 @@ public sealed partial class MatchEngine
             if(turret.Attack.Phase==HeavyTurretAttackPhase.Cooldown&&turret.Attack.CooldownTicksRemaining==0)
             {
                 var selected=SelectHeavyTurretTarget(turret);
-                if(selected!=null)turret.Attack.TryBegin(selected.Id);
+                if(selected!=null)turret.Attack.TryBegin(selected.Id,turret.Aim.Plan(turret.Position,selected.Position));
             }
             if(!turret.Attack.ShotDue&&!turret.Attack.BatchReady)continue;
             if(!heavyTurretBatchTargets.TryGetValue(turret.EntityId,out var target))
             {
+                turret.Aim.Complete();
                 target=ResolveHeavyTurretTarget(turret,turret.Attack.TargetId,false);
                 if(target==null||!HeavyTurretCanSee(turret,target)){turret.Attack.CancelTarget();continue;}
                 turret.Attack.SelectBatchSize();

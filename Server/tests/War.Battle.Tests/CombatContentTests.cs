@@ -1469,6 +1469,22 @@ internal static class CombatContentTests
             var heavyTurrets=HeavyTurretSourceCatalog.Load(heavyTurretArtifact,heavyTurretRevision,content.Maps);
             var parkTurretCovers=heavyTurrets.ForMap(content.Maps.Single(x=>Path.GetFileNameWithoutExtension(x.Source)=="Park_Multiplayer"));
             var heavyMid=heavyTurrets.Compose(22);var firstTurretCover=parkTurretCovers[0];
+            var turretAim=new HeavyTurretAimState();
+            Check(turretAim.Plan(Vector3.Zero,Vector3.UnitZ)==0&&
+                  turretAim.Plan(Vector3.Zero,Vector3.UnitX)==8,
+                "Heavy Turret aligned aim is immediate and quarter turn uses source angular duration");
+            turretAim.Complete();
+            Check(turretAim.Plan(Vector3.Zero,Vector3.UnitX)==0&&
+                  turretAim.Plan(Vector3.Zero,-Vector3.UnitX)==15,
+                "Heavy Turret retains completed horizontal aim and half turn uses half a second");
+            turretAim.Complete();
+            Check(turretAim.Plan(Vector3.Zero,new(-1,1,0))==3,
+                "Heavy Turret vertical pitch requires the source horizontal minimum callback delay");
+            var smallTurretAim=new HeavyTurretAimState();
+            Check(smallTurretAim.Plan(Vector3.Zero,Vector3.Transform(Vector3.UnitZ,
+                  Quaternion.CreateFromAxisAngle(Vector3.UnitY,3*MathF.PI/180)))==3,
+                "Heavy Turret unaligned small turns retain the tenth-second minimum");
+            Reject(()=>turretAim.Plan(Vector3.Zero,Vector3.Zero));
             var turretRandoms=new Queue<float>([0,0,.1f,.9f,.2f,0]);int turretDraws=0;
             var turretBatch=new HeavyTurretAttackState(heavyMid with {RealShotProbability=.5f},()=>{turretDraws++;return turretRandoms.Dequeue();});
             while(turretBatch.CooldownTicksRemaining>0)turretBatch.AdvanceTick();

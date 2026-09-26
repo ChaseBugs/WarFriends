@@ -82,6 +82,13 @@ def extract_prefab():
     colliders=[(i,b) for i,(k,b) in source.items() if k in (65,136)]
     if len(heavy)!=1 or len(turret)!=1 or len(roots)!=1 or not meshes or not colliders: raise ValueError("HeavyTurret graph changed")
     heavy_id,h=heavy[0];turret_id,t=turret[0]
+    # Aim timing relies on these identity bindings; reject changed geometry
+    # rather than applying the identity-root policy to another prefab.
+    horizontal=ref(t,"jontHorizontal")
+    for transform in (roots[0],game_object_transform(source,ref(t,"m_GameObject")),horizontal,ref(source[horizontal][1],"m_Father")):
+        if world_trs(source,transform)[1]!=[0.,0.,0.,1.]: raise ValueError("Heavy Turret aim rotation changed")
+    if ref(t,"jointVertical")!=474717 or horizontal!=491709 or vec(field(t,"aimOffset"))!=[0.,0.,0.]:
+        raise ValueError("Heavy Turret aim binding changed")
     if ref(h,"turretWeapon")!=turret_id: raise ValueError("HeavyTurret weapon binding changed")
     batched_id=ref(t,"batchedWeapon");batched=source[batched_id][1];weapon_id=ref(batched,"weapon");weapon=source[weapon_id][1]
     if f"guid: {BULLET_GUID}" not in field(weapon,"bulletPrefab"): raise ValueError("HeavyTurret BulletSlow binding changed")

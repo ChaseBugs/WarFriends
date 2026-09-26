@@ -9,6 +9,7 @@ internal sealed class HeavyTurretMatchEntity
     internal float Health{get;set;}internal float MaximumHealth{get;}internal float Damage{get;}
     internal int BatchMinimum{get;}internal int BatchMaximum{get;}internal float ShootMinimum{get;}
     internal float ShootMaximum{get;}internal float RealShotProbability{get;}internal HeavyTurretAttackState Attack{get;}
+    internal HeavyTurretAimState Aim{get;}=new();
     internal HeavyTurretMatchEntity(ulong entityId,string requestId,string ownerPlayerId,int ownerFraction,
         int slotComponentFileId,Vector3 position,HeavyTurretStats stats,float effectiveRealShotProbability,Func<float> random)
     {EntityId=entityId;RequestId=requestId;OwnerPlayerId=ownerPlayerId;OwnerFraction=ownerFraction;

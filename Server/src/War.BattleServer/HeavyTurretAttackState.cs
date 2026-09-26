@@ -22,12 +22,13 @@ internal sealed class HeavyTurretAttackState
         cadenceTicks=(int)MathF.Ceiling(.2f*MatchManifest.TickRate);
         ScheduleCooldown();
     }
-    internal bool TryBegin(string targetId)
+    internal bool TryBegin(string targetId,int durationTicks=30)
     {
+        if(durationTicks is <0 or >30)throw new InvalidDataException("Invalid Heavy Turret aim duration.");
         if(Phase!=HeavyTurretAttackPhase.Cooldown||CooldownTicksRemaining>0||
            string.IsNullOrEmpty(targetId)||targetId.Length>64||targetId.Any(char.IsControl))return false;
-        TargetId=targetId;aimTicks=(int)MathF.Ceiling(1f*MatchManifest.TickRate);
-        Phase=HeavyTurretAttackPhase.Aiming;return true;
+        TargetId=targetId;aimTicks=durationTicks;
+        Phase=HeavyTurretAttackPhase.Aiming;if(aimTicks==0)PrepareShot();return true;
     }
     internal void AdvanceTick()
     {
