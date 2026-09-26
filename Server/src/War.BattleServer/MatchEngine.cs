@@ -77,7 +77,8 @@ public sealed partial class MatchEngine
     private ulong armyEntityRevision;
     private ulong projectileId;
     internal const int MaximumProjectiles = 128;
-    internal int PendingProjectileCount => checked(projectiles.Count+armyProjectiles.Count+armyFlameBursts.Count+bazookaProjectiles.Count+scheduledBazookas.Count+grenadeProjectiles.Count);
+    internal int PendingProjectileCount => checked(projectiles.Count+armyProjectiles.Count+armyFlameBursts.Count+
+        vehicleProjectiles.Count+bazookaProjectiles.Count+scheduledBazookas.Count+grenadeProjectiles.Count);
     internal IReadOnlyCollection<AirBattleEntity> AirEntities => airEntities.Snapshot();
 
     internal bool TryRegisterAirEntity(AirBattleEntity entity)
@@ -453,18 +454,28 @@ public sealed partial class MatchEngine
         realShot = attack.CurrentShotIsReal;
         var committed = vehicles.TryCommitAttack(entityId);
         if (committed && realShot && vehicleShotTargets.TryGetValue(entityId, out var target) &&
-            vehicles.TryGet(entityId, out var source) && source != null)
+            vehicles.TryGet(entityId, out var source) && source != null&&
+            PendingProjectileCount<MaximumProjectiles&&EventCapacityForShot())
         {
             var id = checked(++projectileId);
-            vehicleProjectiles.Add(id, new VehicleProjectileFlight(id, entityId, source.Position,
-                target.Position, attack.ShotSpeed, tick, (origin, direction, distance) =>
+            Vector3 origin=source.Position;
+            Func<Vector3,Vector3,float,ShotCollision?> trace;
+            if(activeArmyEntities.TryGetValue(entityId,out var army)&&groundVehicleWeapons!=null&&
+               groundVehicleFacing.TryGetValue(entityId,out var facing)&&rifleCombat!=null)
             {
-                var delta = target.Position - origin;
-                var length = delta.Length();
-                return length <= distance + .001f
-                    ? new ShotCollision(length, target.Position, "vehicle-target", target.Target, 1)
-                    : null;
-            }));
+                origin=groundVehicleWeapons.RestMuzzleOrigin(army.UnitId,"primary",0,source.Position,
+                    target.Position-source.Position);
+                trace=(from,direction,distance)=>rifleCombat.TraceForArmy(target.Owner,from,direction,distance);
+            }
+            else trace=(from,direction,distance)=>
+            {
+                var delta=target.Position-from;var length=delta.Length();
+                return length<=distance+.001f
+                    ?new ShotCollision(length,target.Position,"vehicle-target",target.Target,1):null;
+            };
+            vehicleProjectiles.Add(id,new VehicleProjectileFlight(id,entityId,origin,
+                target.Position,attack.ShotSpeed,tick,trace));
+            Emit(MatchEventKind.Shot,target.Owner,target.Target,id,origin,0,"vehicle");
             stateRevision++;
         }
         return committed;
@@ -757,6 +768,7 @@ public sealed partial class MatchEngine
         if (advanced && vehicles != null)
             foreach (var vehicle in vehicles.Snapshot())
             {
+                TryBeginAutomaticGroundVehicleAttack(vehicle.EntityId);
                 if (vehicles.AdvanceAttack(vehicle.EntityId) && vehicles.TryGetAttack(vehicle.EntityId, out var attack) &&
                     attack != null && attack.ShotDue)
                     TryCommitVehicleAttack(vehicle.OwnerPlayerId, vehicle.EntityId, out _);
@@ -775,10 +787,12 @@ public sealed partial class MatchEngine
                     var owner = vehicleShotTargets.TryGetValue(impact.VehicleId, out var target) ? target.Owner : "";
                     Emit(MatchEventKind.Impact, owner,
                         impact.Collision.PlayerId ?? "", impact.ProjectileId, impact.Collision.Position, 0, "vehicle");
-                    if (vehicleDamage != null && target.Target == impact.Collision.PlayerId &&
-                        float.IsFinite(vehicleDamage(impact.VehicleId)) && vehicleDamage(impact.VehicleId) > 0)
+                    float? trustedVehicleDamage=ArmyDamage(impact.VehicleId)??vehicleDamage?.Invoke(impact.VehicleId);
+                    if (target.Target == impact.Collision.PlayerId &&
+                        trustedVehicleDamage is >0 && float.IsFinite(trustedVehicleDamage.Value))
                         ApplyResolvedPlayerDamage(owner, target.Target,
-                            new ResolvedPlayerDamage(vehicleDamage(impact.VehicleId), CombatDamageType.Shot, HasWeapon: false), 1, false);
+                            new ResolvedPlayerDamage(trustedVehicleDamage.Value, CombatDamageType.Shot, HasWeapon: false),
+                            damageRoll?.Invoke()??1f, false);
                 }
             }
             if (Terminal) return;

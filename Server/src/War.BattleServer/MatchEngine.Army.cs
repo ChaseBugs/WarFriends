@@ -182,6 +182,43 @@ public sealed partial class MatchEngine
     internal Vector3? GroundVehicleFacing(ulong entityKey)
         =>groundVehicleFacing.TryGetValue(entityKey,out var facing)?facing:null;
 
+    // Tank's recovered primary mask is Player. Other vehicle families retain
+    // unit/decoy or multi-weapon selection and stay closed until those target
+    // families can be represented without changing the Client's priority.
+    private bool TryBeginAutomaticGroundVehicleAttack(ulong entityKey)
+    {
+        if(phase!=BattlePhase.Running||vehicles==null||rifleCombat==null||playerShotTargets==null||groundVehicleWeapons==null||
+           !activeArmyEntities.TryGetValue(entityKey,out var army)||army.UnitId!="ID_UNIT-TANK"||
+           !vehicles.TryGet(entityKey,out var vehicle)||vehicle==null||
+           !vehicles.TryGetAttack(entityKey,out var attack)||attack?.Phase!=ArmyAirAttackPhase.Ready||
+           !groundVehicleFacing.TryGetValue(entityKey,out var facing))return false;
+        var owner=Find(army.OwnerPlayerId)??throw new InvalidDataException("Vehicle owner disappeared.");
+        var opponent=players.Single(p=>p!=owner);
+        if(!opponent.Admitted||opponent.Dead)return false;
+        var pose=rifleCombat.Pose(opponent.Definition.PlayerId);
+        Vector3 target;
+        if(opponent.Route!=null&&pose.MovingTarget!=null)target=pose.MovingTarget.Position;
+        else
+        {
+            var body=playerShotTargets.Nearest(1,vehicle.Position,
+                row=>pose.BodyTarget(row.TransformFileId).Position);
+            target=pose.BodyTarget(body.TransformFileId).Position;
+        }
+        var turret=groundVehicleWeapons.For(army.UnitId).Roles.Single(r=>r.Role=="primary");
+        GroundVehicleAim aim;
+        try {aim=GroundVehicleAimPolicy.Resolve(vehicle.Position,facing,target,
+            turret.MaxShotRotation,turret.AimTime);}
+        catch(InvalidDataException){return false;}
+        var muzzle=groundVehicleWeapons.RestMuzzleOrigin(army.UnitId,"primary",0,vehicle.Position,aim.Direction);
+        var delta=target-muzzle;float range=delta.Length();
+        if(!float.IsFinite(range)||range<.001f)return false;
+        var visible=rifleCombat.TraceForArmy(army.OwnerPlayerId,muzzle,delta/range,range+.05f);
+        if(visible?.PlayerId!=opponent.Definition.PlayerId&&visible?.DynamicOwner!=opponent.Definition.PlayerId)
+            return false;
+        vehicleShotTargets[entityKey]=(army.OwnerPlayerId,opponent.Definition.PlayerId,target);
+        return vehicles.TryBeginAttack(entityKey,true,aim.AimTicks);
+    }
+
     private void InitializeGroundVehicle(ulong entityKey,ArmyDeploymentFamily family,
         ArmySpawnPoint point)
     {
