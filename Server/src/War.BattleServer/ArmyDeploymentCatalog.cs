@@ -328,10 +328,12 @@ public sealed class ArmyDeploymentCatalog
         {
             var entry=entries[i];
             bool rusher=RusherTypes.Contains(entry.GetProperty("behaviorType").GetString()??"");
+            bool infantryShooter=rusher ||
+                (entry.GetProperty("behaviorType").GetString()??"")=="SoldierBehaviourMinigunner";
             bool vehicle=!entry.GetProperty("isSoldier").GetBoolean() &&
                 (entry.GetProperty("behaviorType").GetString()??"")!="MechBehaviour";
             if(rusher)rusherCount++;
-            if(rusher)Exact(entry,"behaviorFileId","behaviorType","upgradeSlotsFileId","unitId","sheetRow","unitType",
+            if(infantryShooter)Exact(entry,"behaviorFileId","behaviorType","upgradeSlotsFileId","unitId","sheetRow","unitType",
                 "spawnPointMask","maxGeneratedCount","baseSpeed","baseShot","movementSpeed","isSoldier","isAir","options");
             else if(vehicle)Exact(entry,"behaviorFileId","behaviorType","upgradeSlotsFileId","unitId","sheetRow","unitType",
                 "spawnPointMask","maxGeneratedCount","baseSpeed","movementSpeed","vehicleShot","isSoldier","isAir","options");
@@ -350,7 +352,7 @@ public sealed class ArmyDeploymentCatalog
             bool soldier=entry.GetProperty("isSoldier").GetBoolean();
             ArmyBaseShotStats? baseShot=null;
             ArmyVehicleShotStats? vehicleShot=null;
-            if(rusher)
+            if(infantryShooter)
             {
                 var shot=entry.GetProperty("baseShot");
                 Exact(shot,"probabilityOfRealShot","fireBatchSizeMin","fireBatchSizeMax",
@@ -367,7 +369,7 @@ public sealed class ArmyDeploymentCatalog
                    !float.IsFinite(baseShot.MinShootTime) || !float.IsFinite(baseShot.MaxShootTime) ||
                    baseShot.MinShootTime<0 || baseShot.MaxShootTime>60 ||
                    baseShot.MinShootTime>baseShot.MaxShootTime)
-                    throw new InvalidDataException("Invalid recovered Rusher base shot definition.");
+                    throw new InvalidDataException("Invalid recovered infantry base shot definition.");
             }
             if(vehicle)
             {

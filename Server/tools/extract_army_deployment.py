@@ -18,6 +18,7 @@ RUSHER_TYPES = {
     "SoldierBehaviourParachuter", "SoldierBehaviourShotgunner",
     "SoldierBehaviourSwat", "SoldierBehaviourWarper",
 }
+INFANTRY_SHOOTER_TYPES = RUSHER_TYPES | {"SoldierBehaviourMinigunner"}
 
 
 def field(block, name):
@@ -78,9 +79,10 @@ def main():
         if not 0 < speed <= 20:
             raise ValueError(f"invalid base movement speed for {behavior_type}")
         shot_fields = None
-        if behavior_type in RUSHER_TYPES:
-            if not re.search(r"class " + behavior_type + r"\s*:\s*SoldierBehaviourRusher<",
-                             script_text := meta[behavior_guid].read_text(encoding="utf-8-sig")):
+        if behavior_type in INFANTRY_SHOOTER_TYPES:
+            script_text = meta[behavior_guid].read_text(encoding="utf-8-sig")
+            if behavior_type in RUSHER_TYPES and not re.search(
+                    r"class " + behavior_type + r"\s*:\s*SoldierBehaviourRusher<", script_text):
                 raise ValueError(f"Rusher inheritance changed for {behavior_type}")
             shot_fields = {}
             for name in ("probabilityOfRealShot", "fireBatchSizeMin", "fireBatchSizeMax",

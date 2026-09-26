@@ -746,6 +746,16 @@ internal static class CombatContentTests
               content.ArmyWeapons.CadenceTicks("ID_UNIT-COMMANDO")==7&&
               content.ArmyWeapons.CadenceTicks("ID_UNIT-WARPER")==7,
               "Rusher batches enforce each strict source weapon cadence at 30 Hz");
+        var minigunnerFamily=content.Army.Families.Single(x=>x.UnitId=="ID_UNIT-MINIGUNNER");
+        Check(minigunnerFamily.SheetRow=="Google2u.DBUpgradeSlotsShotgunner"&&
+              minigunnerFamily.BaseShot is {ProbabilityOfRealShot:1f,FireBatchSizeMin:1,
+                  FireBatchSizeMax:4,MinShootTime:2f,MaxShootTime:5f}&&
+              content.ArmyWeapons.MuzzleCount("ID_UNIT-MINIGUNNER")==1&&
+              content.ArmyWeapons.Muzzle("ID_UNIT-MINIGUNNER").Path==
+                  "MiniGun/HK416/MachinegunMuzzleFlash"&&
+              content.ArmyWeapons.WindupTicks("ID_UNIT-MINIGUNNER")==30&&
+              content.ArmyWeapons.CadenceTicks("ID_UNIT-MINIGUNNER")==6,
+              "Minigunner pins the original generic-sheet mismatch, base batch, shield windup, muzzle, and strict cadence");
         Check(content.ArmyWeapons.CommandoPoison is {DurationSeconds:5f,PulseIntervalSeconds:1f,PulseCount:5,
                   ConstantsSheet:"Google2u.UnitsContants",ConstantsRow:2}&&
               content.ArmyWeapons.CommandoPoison.BehaviorSource.EndsWith("SoldierBehaviourCommando.cs")&&
@@ -962,13 +972,13 @@ internal static class CombatContentTests
                   ArmySpawnPointSelector.Collection("MechBehaviour")=="spawnPointsCollection" &&
                   content.Army.Families.Count(f=>!f.IsSoldier && f.BehaviorType!="MechBehaviour")==7,
                   "vehicle families bind their recovered map spawn collections without using infantry routes");
-            Check(content.Army.Families.Count(f=>f.BaseShot!=null)==6 &&
+            Check(content.Army.Families.Count(f=>f.BaseShot!=null)==7 &&
                   content.Army.Families.Single(f=>f.BehaviorType=="SoldierBehaviourSwat").BaseShot==
                       new ArmyBaseShotStats(.5f,1,4,1f,6f) &&
                   content.Army.Families.Single(f=>f.BehaviorType=="SoldierBehaviourShotgunner").BaseShot==
                       new ArmyBaseShotStats(1f,1,4,1f,5f) &&
                   content.Army.Families.Single(f=>f.BehaviorType=="HelicopterBehaviour").BaseShot==null,
-                  "six source-inherited Rusher families bind their serialized base shot definitions");
+                  "six source-inherited Rusher families and Minigunner bind their serialized base shot definitions");
             Check(content.Army.Families.Count(f=>f.VehicleShot!=null)==7 &&
                   content.Army.Families.Single(f=>f.UnitId=="ID_UNIT-HELICOPTER").VehicleShot==
                       new ArmyVehicleShotStats(5f,1f,0,0,0f,0f,0) &&

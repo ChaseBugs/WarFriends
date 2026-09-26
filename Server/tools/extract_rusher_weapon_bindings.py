@@ -152,7 +152,7 @@ def attack_windup(weapon_type):
 
 def attack_cadence(behavior_type):
     overrides={"SoldierBehaviourCommando":.2,"SoldierBehaviourWarper":.2,
-               "SoldierBehaviourParachuter":.25}
+               "SoldierBehaviourParachuter":.25,"SoldierBehaviourMinigunner":.17}
     seconds=overrides.get(behavior_type,.35)
     source=SCRIPTS/((behavior_type if behavior_type in overrides else "SoldierBehaviour")+".cs")
     data=source.read_bytes(); text=data.decode("utf-8-sig")
@@ -230,7 +230,7 @@ def main():
                      "attackCadence":attack_cadence(family["behaviorType"]),
                      "shotgunFalloff":shotgun_falloff(family["behaviorType"],inventories[0]),
                      "inventory":inventories[0]})
-    if len(rows)!=6: raise ValueError("expected six Rusher weapon bindings")
+    if len(rows)!=7: raise ValueError("expected six Rusher plus one Minigunner weapon bindings")
     enemy_text,enemy_blocks,enemy_names,enemy_transforms=yaml(ENEMY)
     soldier_parts=next(block for block in enemy_blocks.values() if "gunSnapPointNotScaled:" in block)
     gun_snap=int(re.search(r"gunSnapPointNotScaled: \{fileID: (\d+)\}",soldier_parts).group(1))
@@ -291,7 +291,7 @@ def main():
                      "controllerSource":enemy_source.relative_to(ROOT/"Clients/ExportedProject").as_posix(),
                      "controllerSha256":hashlib.sha256(enemy_source.read_bytes()).hexdigest()}
     warper=warper_relocation(content,enemy_source)
-    artifact={"version":11,"sceneSha256":hashlib.sha256(raw).hexdigest(),
+    artifact={"version":12,"sceneSha256":hashlib.sha256(raw).hexdigest(),
               "enemyPrefabSha256":hashlib.sha256(ENEMY.read_bytes()).hexdigest(),
               "gunSnap":relative(gun_snap,enemy_transforms,enemy_names),
               "leftGunSnap":relative(left_gun_snap,enemy_transforms,enemy_names),
@@ -306,5 +306,5 @@ def main():
     if __import__("sys").argv[1:]==["--check"]:
         if OUT.read_bytes()!=encoded: raise ValueError("Rusher weapon artifact is stale")
     else: OUT.write_bytes(encoded)
-    print("six Rusher bindings plus five-map Warper relocation authority pinned")
+    print("six Rusher plus one Minigunner binding and five-map Warper relocation authority pinned")
 if __name__=="__main__": main()

@@ -123,7 +123,7 @@ public sealed class ArmyWeaponBindingCatalog
         using var document=JsonDocument.Parse(bytes,new JsonDocumentOptions{MaxDepth=16});
         var root=document.RootElement;
         Exact(root,"version","sceneSha256","enemyPrefabSha256","gunSnap","leftGunSnap","provenance","commandoPoison","swatSpecialSpeed","paratrooperKevlar","shotgunnerWalkingFire","warperRelocation","families");
-        if(root.GetProperty("version").GetInt32()!=11||root.GetProperty("sceneSha256").GetString()!=sceneRevision||
+        if(root.GetProperty("version").GetInt32()!=12||root.GetProperty("sceneSha256").GetString()!=sceneRevision||
            !Hash(root.GetProperty("enemyPrefabSha256").GetString())||
            root.GetProperty("provenance").GetString()!=
              "serialized EnemyBasicInventory weapon references plus enemy rig and weapon spawn-point transform chains; runtime weapon IDs remain unresolved")
@@ -216,7 +216,7 @@ public sealed class ArmyWeaponBindingCatalog
            warper.ControllerSource!="Assets/Scripts/Assembly-CSharp/EnemyController.cs"||!Hash(warper.ControllerSha256))
             throw new InvalidDataException("Invalid source Warper relocation policy.");
         var families=root.GetProperty("families");
-        if(families.GetArrayLength()!=6)throw new InvalidDataException("Incomplete Rusher weapon family set.");
+        if(families.GetArrayLength()!=7)throw new InvalidDataException("Incomplete Rusher/Minigunner weapon family set.");
         var result=new Dictionary<string,ArmyWeaponMuzzle[]>(StringComparer.Ordinal);
         var windups=new Dictionary<string,ArmyWeaponWindup>(StringComparer.Ordinal);
         var cadences=new Dictionary<string,ArmyWeaponCadence>(StringComparer.Ordinal);

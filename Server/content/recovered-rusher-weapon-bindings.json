@@ -1,5 +1,5 @@
 {
-  "version": 11,
+  "version": 12,
   "sceneSha256": "d46f81ff8c3e12bf17f34a1f53dd601bd799102c9f984818031441dfb7a5de43",
   "enemyPrefabSha256": "64b4db85d1c9a0bd46a690a86102a22f66feeab8d4157a4c87824ac3d5dbeb54",
   "gunSnap": {
@@ -321,6 +321,57 @@
               4.440545003024178e-08,
               0.026670731660027074,
               0.9996442727654256
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "unitId": "ID_UNIT-MINIGUNNER",
+      "behaviorType": "SoldierBehaviourMinigunner",
+      "behaviorFileId": 41873,
+      "attackWindup": {
+        "seconds": 1.0,
+        "rule": "swat-shield-unhide",
+        "clip": {
+          "asset": "Assets/AnimationClip/shield_unhide.anim",
+          "sha256": "4a7f35c992abe3d8701f6bda904e7875e110b598fb7cf18a159c01ce338d7b4a",
+          "length": 1.0
+        }
+      },
+      "attackCadence": {
+        "seconds": 0.17,
+        "strictTicks": 6,
+        "rule": "subclass-override",
+        "source": "Assets/Scripts/Assembly-CSharp/SoldierBehaviourMinigunner.cs",
+        "sha256": "b64c8dc85c5cbf32c32b8142983523994185f190eaf242ea54c3ba33b67bda25"
+      },
+      "shotgunFalloff": null,
+      "inventory": [
+        {
+          "fileId": 47276,
+          "weaponFileId": 11470521,
+          "guid": "7d5498e0ff589b6479c59bfe2d1ce5eb",
+          "weaponType": 4,
+          "leftHand": false,
+          "asset": "GameObject/MiniGun.prefab",
+          "prefabWeaponType": 0,
+          "projectile": {
+            "speed": 5.0,
+            "checkDistance": 0.35
+          },
+          "spawnPoint": {
+            "path": "MiniGun/HK416/MachinegunMuzzleFlash",
+            "position": [
+              0.0025404750174797502,
+              0.037435752011884114,
+              0.2008165017103907
+            ],
+            "rotation": [
+              6.630892980952512e-08,
+              -1.6592494274163698e-07,
+              0.02667073166003905,
+              0.9996442727654093
             ]
           }
         }
