@@ -705,6 +705,12 @@ internal static class CombatContentTests
                   p.VehicleRoute!.WaypointTransformFileIds[^1]==p.VehicleRoute.TargetTransformFileId&&
                   !p.VehicleRoute.SmoothRoute&&!p.VehicleRoute.IsLoop),
               "all 20 source vehicle spawns pin their 107 ordered linear waypoints and final targets");
+        var routeProbe=vehicleRoutes[0];
+        var routeMotion=new ArmyVehicleRouteMotion(routeProbe.Position,routeProbe.VehicleRoute!,1.7f);
+        routeMotion.AdvanceTick();
+        Check(!routeMotion.Arrived&&routeMotion.CircuitFileId==routeProbe.VehicleRoute!.CircuitFileId&&
+              Vector3.Distance(routeProbe.Position,routeMotion.Position)<=1.7f/MatchManifest.TickRate+.00001f,
+              "ground vehicle route motion advances one fixed tick within recovered source speed");
         string spawnPath=Path.Combine(directory,"recovered-army-spawn-points.json");
         string spawnTemp=Path.Combine(directory,"army-spawn-test-"+Guid.NewGuid().ToString("N")+".json");
         try
@@ -2447,6 +2453,13 @@ internal static class CombatContentTests
             if(t%90==0)
             {staleMatch.ArmyEntityBatch(soldierOwner,0,0);staleMatch.ArmyEntityBatch(helicopterOwner,0,0);}
         }
+        var firstCar=staleMatch.ArmyEntityBatch(soldierOwner,0,0).Entities.Single();
+        var firstCarSpawn=content.ArmySpawnPoints.ForMap(park).Single(p=>
+            p.ComponentFileId==firstCar.SpawnComponentFileId);
+        Check(firstCar.UnitId=="ID_UNIT-HUMVEE"&&firstCarSpawn.VehicleRoute!=null&&
+              Vector3.Distance(new(firstCar.X,firstCar.Y,firstCar.Z),firstCarSpawn.Position)>1f&&
+              staleMatch.Snapshot().Vehicles.Any(v=>v.EntityId==firstCar.EntityKey&&v.UnitId==firstCar.UnitId),
+              "deployed Humvee reserves its source car route and publishes fixed-tick vehicle motion");
         Check(staleMatch.Command(soldierOwner,new MatchCommand{CommandId=3,
                   DeployArmy=new DeployArmyCommand{OptionIndex=19}}).Code=="army-deploying" &&
               staleMatch.ArmyBatch(soldierOwner).Code=="army-unavailable" &&
@@ -2458,6 +2471,25 @@ internal static class CombatContentTests
               staleMatch.Command(soldierOwner,new MatchCommand{CommandId=4,
                   DeployArmy=new DeployArmyCommand{OptionIndex=29}}).Code=="army-not-offered",
               "spawn retains the unavailable offer state and replays the prior rejection");
+        for(ulong t=nextCarTick+2;t<1500&&!staleMatch.Terminal;t++)
+        {
+            staleMatch.Advance(t);
+            if(t%90==0)
+            {staleMatch.ArmyEntityBatch(soldierOwner,0,0);staleMatch.ArmyEntityBatch(helicopterOwner,0,0);}
+        }
+        var parkedVehicles=staleMatch.ArmyEntityBatch(soldierOwner,0,0).Entities;
+        Check(parkedVehicles.Count==2&&parkedVehicles.All(entity=>
+        {
+            var spawn=content.ArmySpawnPoints.ForMap(park).Single(p=>p.ComponentFileId==entity.SpawnComponentFileId);
+            return spawn.VehicleRoute!=null&&staleMatch.VehicleRouteMotion(entity.EntityKey)==null&&
+                   Vector3.Distance(new(entity.X,entity.Y,entity.Z),spawn.VehicleRoute.Positions[^1])<.0001f;
+        }),"live Humvee and Tank traverse their reserved source waypoint lists and park at final targets");
+        var destroyedVehicle=parkedVehicles[0];
+        Check(staleMatch.ApplyArmyHostDamage(destroyedVehicle.EntityKey,destroyedVehicle.MaxHealth)&&
+              staleMatch.VehicleRouteMotion(destroyedVehicle.EntityKey)==null&&
+              staleMatch.Snapshot().Vehicles.All(v=>v.EntityId!=destroyedVehicle.EntityKey)&&
+              staleMatch.ArmyEntityBatch(soldierOwner,0,0).Entities.Count==1,
+              "confirmed ground-vehicle death removes route, vehicle registry, and army entity authority");
         Reject(()=>new MatchEngine(detached with { Players=[detached.Players[0] with
             {EquippedArmyUnitIds=["ID_UNIT-UNKNOWN"]},detached.Players[1]] },content:content));
         Reject(()=>MatchManifest.Validate(detached with { Players=[detached.Players[0] with

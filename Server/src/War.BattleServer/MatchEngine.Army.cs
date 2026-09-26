@@ -44,6 +44,7 @@ public sealed partial class MatchEngine
     private readonly Dictionary<ulong,float> armyProjectileDamage=[];
     private readonly Dictionary<int,ulong> occupiedRusherSlots=[];
     private readonly Dictionary<ulong,int> rusherSlotByEntity=[];
+    private readonly Dictionary<ulong,ArmyVehicleRouteMotion> vehicleRouteMotions=[];
 
     private string? ArmyAvailabilityError(Player player,ArmyDeploymentFamily family,
         ArmyDeploymentOption option)
@@ -168,6 +169,43 @@ public sealed partial class MatchEngine
         =>minigunnerPointByEntity.TryGetValue(entityKey,out int point)?point:null;
     internal ulong? MinigunnerPointOccupant(int pointFileId)
         =>occupiedMinigunnerPoints.TryGetValue(pointFileId,out ulong key)?key:null;
+    internal ArmyVehicleRouteMotion? VehicleRouteMotion(ulong entityKey)
+        =>vehicleRouteMotions.TryGetValue(entityKey,out var state)?state:null;
+
+    private void InitializeGroundVehicle(ulong entityKey,ArmyDeploymentFamily family,
+        ArmySpawnPoint point)
+    {
+        if(family.IsAir||family.IsSoldier||point.VehicleRoute==null||vehicles==null||
+           !activeArmyEntities.TryGetValue(entityKey,out var army))return;
+        float speed=ArmySpeed(entityKey)??armyCatalog!.EffectiveSpeed(army.UnitId,1f);
+        var entity=new VehicleEntity(entityKey,army.UnitId,army.OwnerPlayerId,1)
+            {Position=new(army.X,army.Y,army.Z)};
+        if(!vehicles.TrySpawn(entity) || family.VehicleShot==null ||
+           !vehicles.TryBindAttack(entityKey,family.VehicleShot) ||
+           armyVitality.TryGetValue(entityKey,out var vitality)&&
+               !vehicles.TryBindHealth(entityKey,vitality.Maximum))
+            throw new InvalidDataException("Ground vehicle registry initialization failed.");
+        vehicleRouteMotions.Add(entityKey,new ArmyVehicleRouteMotion(entity.Position,point.VehicleRoute,speed));
+    }
+
+    private void AdvanceGroundVehicleRoutes()
+    {
+        if(vehicles==null)throw new InvalidDataException("Ground vehicle route lacks its registry.");
+        foreach(var (key,motion) in vehicleRouteMotions.OrderBy(x=>x.Key).ToArray())
+        {
+            if(!activeArmyEntities.TryGetValue(key,out var army)||
+               !vehicles.TryGet(key,out var vehicle)||vehicle==null||vehicle.OwnerPlayerId!=army.OwnerPlayerId)
+                throw new InvalidDataException("Ground vehicle route lost its host entity.");
+            Vector3 before=motion.Position;motion.AdvanceTick();
+            float speed=ArmySpeed(key)??armyCatalog!.EffectiveSpeed(army.UnitId,1f);
+            if(!vehicles.TryMove(key,motion.Position,speed))
+                throw new InvalidDataException("Ground vehicle route move failed.");
+            army.X=motion.Position.X;army.Y=motion.Position.Y;army.Z=motion.Position.Z;
+            army.PositionTick=tick;
+            if(before!=motion.Position){armyEntityRevision++;stateRevision++;}
+            if(motion.Arrived)vehicleRouteMotions.Remove(key);
+        }
+    }
 
     private void InitializeRusherMotionCandidate(ulong entityKey,string unitId)
     {
@@ -963,6 +1001,10 @@ public sealed partial class MatchEngine
         minigunnerMovements.Remove(entityKey);
         minigunnerSteering.Remove(entityKey);
         minigunnerPointChangeTicks.Remove(entityKey);
+        vehicleRouteMotions.Remove(entityKey);
+        if(vehicles?.TryGet(entityKey,out var vehicle)==true&&vehicle!=null&&
+           !vehicles.TryDestroy(entityKey,vehicle.Generation))
+            throw new InvalidDataException("Ground vehicle death cleanup failed.");
         walkingShotgunnerSpecials.Remove(entityKey);
         rusherAttackTargets.Remove(entityKey);
         minigunnerAttackTargets.Remove(entityKey);

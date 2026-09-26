@@ -645,6 +645,9 @@ public sealed partial class MatchEngine
             armyNavMeshConnectivity=content.ArmyNavMeshConnectivity;
             playerShotTargets=content.PlayerShotTargets;
             armyReservations=new ArmySpawnReservationLedger(content.ArmySpawnPoints,map);
+            var vehicleCaps=content.Army.Families.Where(f=>!f.IsAir&&!f.IsSoldier&&f.VehicleShot!=null)
+                .ToDictionary(f=>f.UnitId,f=>f.MaxGeneratedCount,StringComparer.Ordinal);
+            if(vehicleCaps.Count>0)vehicles=new VehicleEntityRegistry(vehicleCaps);
         }
         if (map != null)
         {
@@ -879,6 +882,7 @@ public sealed partial class MatchEngine
                         }
                         InitializeRusherMotionCandidate(entityKey,spawned.UnitId);
                         InitializeStationaryArmyCombat(entityKey,spawned.UnitId);
+                        InitializeGroundVehicle(entityKey,family,point);
                         p.ConfirmedArmySpawns=checked(p.ConfirmedArmySpawns+1);
                         armyEntityRevision++;
                         Emit(MatchEventKind.ArmySpawned,p.Definition.PlayerId,"",0,point.Position,0,"");
@@ -905,6 +909,11 @@ public sealed partial class MatchEngine
             try { if(minigunnerAttacks.Count>0)AdvanceMinigunnerAttacks();
                   if(minigunnerMovements.Count>0)AdvanceMinigunnerMovements(); }
             catch(InvalidDataException){End("invalid-army-authority","",false);return;}
+        }
+        if(advanced&&phase==BattlePhase.Running&&vehicleRouteMotions.Count>0)
+        {
+            try {AdvanceGroundVehicleRoutes();}
+            catch(InvalidDataException){End("invalid-vehicle-route-authority","",false);return;}
         }
         if(advanced && phase==BattlePhase.Running && (armyProjectiles.Count>0||armyFlameBursts.Count>0||armyPoisons.Count>0))
         {
