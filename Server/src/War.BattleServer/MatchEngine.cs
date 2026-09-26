@@ -65,8 +65,10 @@ public sealed partial class MatchEngine
     private readonly GroundVehicleWeaponCatalog? groundVehicleWeapons;
     private readonly EnemyPoseCatalog? enemyPoses;
     private readonly DecoySourceCatalog? decoySource;
+    private readonly LandMineSourceCatalog? landMineSource;
     private readonly int decoyMaxDisplayLevel;
     private readonly DecoyMatchRegistry decoys=new();
+    private readonly LandMineMatchRegistry landMines=new();
     private readonly Dictionary<ulong,BattleArmyEntityState> activeArmyEntities=[];
     // Air entities use the same single-writer tick as the rest of the match.  The
     // registry is deliberately kept separate from infantry state until the
@@ -697,6 +699,7 @@ public sealed partial class MatchEngine
         if(content!=null)
         {
             decoySource=content.Decoys;
+            landMineSource=content.LandMines;
             decoyMaxDisplayLevel=content.BarrelPolicy.MaxDisplayLevel;
             armyNavMeshConnectivity=content.ArmyNavMeshConnectivity;
         }
@@ -1210,6 +1213,12 @@ public sealed partial class MatchEngine
             Emit(MatchEventKind.DecoyDestroyed,ownerPlayerId,"",decoy.EntityId,
                 decoy.Position,0,"owner-disconnected");
         }
+        foreach(var mine in landMines.RemoveOwner(ownerPlayerId))
+        {
+            stateRevision++;
+            Emit(MatchEventKind.LandMineTriggered,ownerPlayerId,"",mine.EntityId,
+                mine.Position,0,"owner-disconnected");
+        }
         if (cardEffects.RemoveOwner(ownerPlayerId) > 0) stateRevision++;
         foreach (var air in airEntities.Snapshot().Where(x => x.AttackerPlayerId == ownerPlayerId))
         {
@@ -1390,6 +1399,8 @@ public sealed partial class MatchEngine
         if (phase != BattlePhase.Running) return "not-running";
         if(c.IntentCase==MatchCommand.IntentOneofCase.UseDecoy)
             return UseDecoy(p,c.UseDecoy.RequestId);
+        if(c.IntentCase==MatchCommand.IntentOneofCase.UseLandMine)
+            return UseLandMine(p,c.UseLandMine.RequestId);
         if(c.IntentCase==MatchCommand.IntentOneofCase.SwitchWeapon)
         {
             int slot=c.SwitchWeapon.Slot;
@@ -1901,6 +1912,12 @@ public sealed partial class MatchEngine
             X=x.Position.X,Y=x.Position.Y,Z=x.Position.Z,
             FacingX=x.Facing.X,FacingY=x.Facing.Y,FacingZ=x.Facing.Z,
             Health=x.Health,MaxHealth=x.MaximumHealth
+        }));
+        snapshot.LandMines.AddRange(landMines.Snapshot().Select(x=>new BattleLandMineState
+        {
+            EntityId=x.EntityId,RequestId=x.RequestId,OwnerPlayerId=x.OwnerPlayerId,
+            OwnerFraction=x.OwnerFraction,HidingComponentFileId=x.HidingComponentFileId,
+            X=x.Position.X,Y=x.Position.Y,Z=x.Position.Z,Damage=x.Damage
         }));
         if (vehicles != null)
             snapshot.Vehicles.AddRange(vehicles.Snapshot().Select(v =>

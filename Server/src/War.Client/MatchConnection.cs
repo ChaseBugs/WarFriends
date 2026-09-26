@@ -56,6 +56,8 @@ namespace War.Client
         public Task<MatchReply> GrenadeSwipeThrowAsync(float startX,float startY,float startZ,float endX,float endY,float endZ,float heldSeconds,CancellationToken ct) => Run(new MatchCommand {GrenadeThrow=new GrenadeThrowCommand {Swipe=true,SwipeStartX=startX,SwipeStartY=startY,SwipeStartZ=startZ,SwipeEndX=endX,SwipeEndY=endY,SwipeEndZ=endZ,HeldSeconds=heldSeconds}},false,false,ct);
         public Task<MatchReply> UseDecoyAsync(string requestId,CancellationToken ct) =>
             Run(new MatchCommand {UseDecoy=new UseDecoyCommand {RequestId=requestId}},false,false,ct);
+        public Task<MatchReply> UseLandMineAsync(string requestId,CancellationToken ct) =>
+            Run(new MatchCommand {UseLandMine=new UseLandMineCommand {RequestId=requestId}},false,false,ct);
         public Task<MatchReply> ReloadAsync(CancellationToken ct) => Run(new MatchCommand { Reload = new ReloadCommand() }, false, false, ct);
         public Task<MatchReply> SwitchWeaponAsync(int slot,CancellationToken ct) => Run(new MatchCommand { SwitchWeapon = new SwitchWeaponCommand { Slot=slot } }, false, false, ct);
         public Task<MatchReply> ForfeitAsync(CancellationToken ct) => Run(new MatchCommand { Forfeit = new ForfeitCommand() }, false, false, ct);
@@ -403,6 +405,10 @@ namespace War.Client
                        (row.ProjectileId==0||!Guid.TryParseExact(row.ActorId,"N",out _)||
                         !FiniteCoordinate(row.X)||!FiniteCoordinate(row.Y)||!FiniteCoordinate(row.Z)))
                         throw new InvalidOperationException("Battle host returned invalid Decoy lifecycle metadata.");
+                    if((row.Kind==MatchEventKind.LandMineSpawned||row.Kind==MatchEventKind.LandMineTriggered)&&
+                       (row.ProjectileId==0||!Guid.TryParseExact(row.ActorId,"N",out _)||
+                        !FiniteCoordinate(row.X)||!FiniteCoordinate(row.Y)||!FiniteCoordinate(row.Z)))
+                        throw new InvalidOperationException("Battle host returned invalid Land Mine lifecycle metadata.");
                 }
                 return batch.Clone();
             }
@@ -547,6 +553,18 @@ namespace War.Client
                        decoy.Health<=0||decoy.Health>decoy.MaxHealth)
                         throw new InvalidOperationException("Battle host returned an invalid Decoy snapshot row.");
                     priorDecoy=decoy.EntityId;
+                }
+                ulong priorLandMine=0;var landMineSlots=new System.Collections.Generic.HashSet<int>();
+                foreach(var mine in snapshot.LandMines)
+                {
+                    if(mine.EntityId==0||mine.EntityId<=priorLandMine||
+                       !Guid.TryParseExact(mine.RequestId,"N",out _)||!Guid.TryParseExact(mine.OwnerPlayerId,"N",out _)||
+                       (mine.OwnerFraction!=1&&mine.OwnerFraction!=2)||mine.HidingComponentFileId<=0||
+                       !landMineSlots.Add(mine.HidingComponentFileId)||
+                       !FiniteCoordinate(mine.X)||!FiniteCoordinate(mine.Y)||!FiniteCoordinate(mine.Z)||
+                       float.IsNaN(mine.Damage)||float.IsInfinity(mine.Damage)||mine.Damage<=0||mine.Damage>10_000_000)
+                        throw new InvalidOperationException("Battle host returned an invalid Land Mine snapshot row.");
+                    priorLandMine=mine.EntityId;
                 }
                 ulong priorDeployable = 0;
                 foreach (var deployable in snapshot.Deployables)

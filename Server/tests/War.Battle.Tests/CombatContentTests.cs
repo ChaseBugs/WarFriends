@@ -1385,6 +1385,17 @@ internal static class CombatContentTests
                   selectedLandMines.Select(x=>x.ComponentFileId).Distinct().Count()==3&&
                   Math.Abs(landMines.Damage(22,44)-57.625f)<.001f,
                   "Land Mine source pins 89 opposing hiding slots, three distinct placements, prefab geometry and level-scaled damage");
+            var landMineRegistry=new LandMineMatchRegistry(3);
+            string landMineRequest=new string('7',32),landMineOwner=new string('2',32);
+            var landMinePlacements=selectedLandMines.Select((slot,index)=>(slot,new Vector3(index,0,index))).ToArray();
+            Check(landMineRegistry.TrySpawn(landMineRequest,landMineOwner,1,57.625f,landMinePlacements,out var spawnedLandMines)&&
+                  spawnedLandMines.Count==3&&landMineRegistry.Snapshot().Count==3&&
+                  landMineRegistry.TryReplay(landMineRequest,landMineOwner,out var replayedLandMines)&&replayedLandMines.Count==3&&
+                  !landMineRegistry.TrySpawn(new string('8',32),landMineOwner,1,57.625f,landMinePlacements,out _),
+                  "Land Mine registry atomically owns three opposing placements and retry receipts");
+            Check(landMineRegistry.TryRemove(spawnedLandMines[0].EntityId,out var removedLandMine)&&removedLandMine!=null&&
+                  landMineRegistry.RemoveOwner(landMineOwner).Count==2&&landMineRegistry.Snapshot().Count==0,
+                  "Land Mine trigger and owner cleanup remove exact server entities");
             string landMineTemp=Path.Combine(Path.GetTempPath(),"war-landmine-"+Guid.NewGuid().ToString("N")+".json");
             try
             {
@@ -2322,6 +2333,37 @@ internal static class CombatContentTests
                   UseDecoy=new(){RequestId=new string('f',32)}}).Code=="decoy-spawned"&&
               decoyMatch.Snapshot().Decoys.Count==6&&decoyMatch.Snapshot().CardActivations==2,
               "trusted allocation provisions one isolated Decoy reservation for each selected player");
+        var landMineManifest=decoyManifest with {MatchId="land-mine-match"};
+        var landMineMatch=new MatchEngine(landMineManifest,content:content,armyChoice:_=>0);
+        landMineMatch.ConfigureBattleAllocations([
+            new(decoyPlayer,["CardLandmine"],[],[0],[133],[-1]),
+            new(decoyOpponent,[],[],[0],[-1],[-1])]);
+        landMineMatch.Admit(decoyPlayer);landMineMatch.Admit(decoyOpponent);
+        Check(landMineMatch.Command(decoyPlayer,new(){CommandId=1,SelectCards=new SelectCardsCommand
+              {CardIds={"CardLandmine"},NormalUpgradeIndexes={0},SpecialUpgradeIndexes={133},EliteUpgradeIndexes={-1}}}).Code=="cards-selected"&&
+              landMineMatch.Command(decoyOpponent,new(){CommandId=1,SelectCards=new SelectCardsCommand
+              {NormalUpgradeIndexes={0},SpecialUpgradeIndexes={-1},EliteUpgradeIndexes={-1}}}).Code=="cards-selected",
+              "Land Mine selection binds the trusted card before battle start");
+        landMineMatch.Command(decoyPlayer,new(){CommandId=2,Ready=new(){ManifestHash=landMineMatch.ManifestHash}});
+        landMineMatch.Command(decoyOpponent,new(){CommandId=2,Ready=new(){ManifestHash=landMineMatch.ManifestHash}});
+        landMineMatch.Advance(60);
+        string liveLandMineRequest=new string('6',32);
+        var landMineReply=landMineMatch.Command(decoyPlayer,new(){CommandId=3,
+            UseLandMine=new(){RequestId=liveLandMineRequest}});
+        float expectedLandMineDamage=content.LandMines.Damage(22,content.BarrelPolicy.MaxDisplayLevel);
+        Check(landMineReply.Code=="land-mine-spawned"&&landMineReply.Snapshot.LandMines.Count==3&&
+              landMineReply.Snapshot.LandMines.All(x=>x.OwnerPlayerId==decoyPlayer&&x.OwnerFraction==1&&
+                  x.RequestId==liveLandMineRequest&&Math.Abs(x.Damage-expectedLandMineDamage)<.001f)&&
+              landMineReply.Snapshot.LandMines.Select(x=>x.HidingComponentFileId).Distinct().Count()==3&&
+              landMineReply.Snapshot.LandMines.All(x=>content.LandMines.ForMap(park)
+                  .Single(s=>s.ComponentFileId==x.HidingComponentFileId).Fraction==2),
+              "live authenticated Land Mine activation atomically projects three level-scaled opposing placements");
+        Check(landMineMatch.Command(decoyPlayer,new(){CommandId=4,
+                  UseLandMine=new(){RequestId=liveLandMineRequest}}).Code=="land-mine-replayed"&&
+              landMineMatch.Command(decoyPlayer,new(){CommandId=5,
+                  UseLandMine=new(){RequestId=new string('5',32)}}).Code=="land-mine-unavailable"&&
+              landMineMatch.Snapshot().LandMines.Count==3&&landMineMatch.Snapshot().CardActivations==1,
+              "Land Mine request replay creates no duplicate and exhausted inventory cannot create partial state");
         var detached=MatchManifest.Validate(armyManifest);
         equipped[0]="ID_UNIT-UNKNOWN";
         armyStages[0]=101;

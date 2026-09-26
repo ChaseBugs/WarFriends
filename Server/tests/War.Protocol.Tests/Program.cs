@@ -24,6 +24,15 @@ Check(MatchCommand.Parser.ParseFrom(decoyWire.ToByteArray()).Equals(decoyWire)&&
       decoyWire.IntentCase==MatchCommand.IntentOneofCase.UseDecoy&&
       MatchSnapshot.Parser.ParseFrom(decoySnapshot.ToByteArray()).Equals(decoySnapshot),
     "typed Decoy activation and authoritative state protobuf round trip");
+var mineRequest=Guid.NewGuid().ToString("N");
+var mineWire=new MatchCommand{CommandId=19,UseLandMine=new UseLandMineCommand{RequestId=mineRequest}};
+var mineSnapshot=new MatchSnapshot();mineSnapshot.LandMines.Add(new BattleLandMineState
+{EntityId=1,RequestId=mineRequest,OwnerPlayerId=Guid.NewGuid().ToString("N"),OwnerFraction=1,
+ HidingComponentFileId=456,X=1,Y=2,Z=3,Damage=57.625f});
+Check(MatchCommand.Parser.ParseFrom(mineWire.ToByteArray()).Equals(mineWire)&&
+      mineWire.IntentCase==MatchCommand.IntentOneofCase.UseLandMine&&
+      MatchSnapshot.Parser.ParseFrom(mineSnapshot.ToByteArray()).Equals(mineSnapshot),
+    "typed Land Mine activation and authoritative state protobuf round trip");
 byte[] secret = RandomNumberGenerator.GetBytes(32);
 var tickets = new BattleTickets(Convert.ToBase64String(secret));
 var claims = new TicketClaims { PlayerId = Guid.NewGuid().ToString("N"), ServerId = "test-1", SessionId = 11, IssuedUnixSeconds = 1000, ExpiresUnixSeconds = 1120, Purpose = "connectivity-probe" };
