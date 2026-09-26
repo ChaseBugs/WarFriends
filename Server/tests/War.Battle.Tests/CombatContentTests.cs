@@ -742,6 +742,19 @@ internal static class CombatContentTests
               Vector3.Distance(content.GroundVehicleWeapons.RestMuzzleOrigin("ID_UNIT-HUMVEE","primary",0,
                   new Vector3(2,0,3),Vector3.UnitX),new Vector3(2.1432357f,.68667924f,3.11f))<.00002f,
               "vehicle muzzles are prefab-root-relative and rotate with authoritative host facing");
+        var buggyMissileBinding=buggyRig.Roles.Single(r=>r.Role=="cannon").Weapons[0].Missile!;
+        var buggyFlight=new BuggyMissileFlight(71,72,buggyMissileBinding,5,Vector3.Zero,
+            new Vector3(0,0,10),0,.5f,.5f,1,(_,_,_)=>null);
+        float buggyCurveDeviation=0;BuggyMissileImpact? buggyTerminal=null;
+        for(ulong flightTick=1;flightTick<=100&&!buggyFlight.Finished;flightTick++)
+        {
+            buggyTerminal=buggyFlight.Advance(flightTick)??buggyTerminal;
+            buggyCurveDeviation=Math.Max(buggyCurveDeviation,
+                MathF.Sqrt(buggyFlight.Position.X*buggyFlight.Position.X+
+                           buggyFlight.Position.Y*buggyFlight.Position.Y));
+        }
+        Check(buggyFlight.Finished&&buggyTerminal is {Collision:null}&&buggyCurveDeviation>.01f,
+              "Buggy missile executes its five-key curved flight on contiguous host ticks");
         string vehicleWeaponPath=Path.Combine(directory,"recovered-ground-vehicle-weapons.json");
         string vehicleWeaponTemp=Path.Combine(directory,"vehicle-weapon-test-"+Guid.NewGuid().ToString("N")+".json");
         try
