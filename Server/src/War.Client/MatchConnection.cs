@@ -580,6 +580,11 @@ namespace War.Client
                 ulong priorHeavyTurret=0;var heavyTurretSlots=new System.Collections.Generic.HashSet<int>();
                 foreach(var turret in snapshot.HeavyTurrets)
                 {
+                    foreach(var rotation in new[]{turret.HorizontalRotation,turret.VerticalRotation})
+                        if(rotation==null||!FiniteCoordinate(rotation.X)||!FiniteCoordinate(rotation.Y)||
+                           !FiniteCoordinate(rotation.Z)||!FiniteCoordinate(rotation.W)||
+                           Math.Abs(rotation.X*rotation.X+rotation.Y*rotation.Y+rotation.Z*rotation.Z+rotation.W*rotation.W-1)>.0002f)
+                            throw new InvalidOperationException("Battle host returned an invalid Heavy Turret joint rotation.");
                     if(turret.EntityId==0||turret.EntityId<=priorHeavyTurret||!Guid.TryParseExact(turret.RequestId,"N",out _)||
                        !Guid.TryParseExact(turret.OwnerPlayerId,"N",out _)||(turret.OwnerFraction!=1&&turret.OwnerFraction!=2)||
                        turret.SlotComponentFileId<=0||!heavyTurretSlots.Add(turret.SlotComponentFileId)||

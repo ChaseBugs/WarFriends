@@ -2634,6 +2634,12 @@ internal static class CombatContentTests
               "Heavy Turret owns source cooldown, aim, batch cadence and live BulletSlow flight; misses do not imply damage: "+
               string.Join(",",heavyTurretEvents.Select(x=>x.Kind+":"+x.Reason)));
         ulong liveHeavyTurretId=heavyTurretCombatSnapshot.HeavyTurrets.Single().EntityId;
+        var turretPose=heavyTurretCombatSnapshot.HeavyTurrets.Single();
+        Check(turretPose.HorizontalRotation!=null&&turretPose.VerticalRotation!=null&&
+              Math.Abs(turretPose.HorizontalRotation.Y*turretPose.HorizontalRotation.Y+turretPose.HorizontalRotation.W*turretPose.HorizontalRotation.W-1)<.0002f&&
+              Math.Abs(turretPose.VerticalRotation.X*turretPose.VerticalRotation.X+turretPose.VerticalRotation.Y*turretPose.VerticalRotation.Y+
+                  turretPose.VerticalRotation.Z*turretPose.VerticalRotation.Z+turretPose.VerticalRotation.W*turretPose.VerticalRotation.W-1)<.0002f,
+              "live Heavy Turret snapshot carries sampled unit joint rotations for Client presentation");
         var firstTurretBatch=heavyTurretEvents.Where(x=>x.Kind==MatchEventKind.HeavyTurretFired).Take(3).ToArray();
         Check(firstTurretBatch.Length==3&&firstTurretBatch.All(x=>x.X==firstTurretBatch[0].X&&
                   x.Y==firstTurretBatch[0].Y&&x.Z==firstTurretBatch[0].Z)&&

@@ -1964,7 +1964,9 @@ public sealed partial class MatchEngine
             BatchMaximum=x.BatchMaximum,ShootMinimum=x.ShootMinimum,ShootMaximum=x.ShootMaximum,
             RealShotProbability=x.RealShotProbability,AttackPhase=x.Attack.Phase.ToString().ToLowerInvariant(),
             TargetId=x.Attack.TargetId,BatchRemaining=x.Attack.BatchRemaining,
-            CooldownTicksRemaining=x.Attack.CooldownTicksRemaining
+            CooldownTicksRemaining=x.Attack.CooldownTicksRemaining,
+            HorizontalRotation=new BattleJointRotation {X=x.Aim.HorizontalRotation.X,Y=x.Aim.HorizontalRotation.Y,Z=x.Aim.HorizontalRotation.Z,W=x.Aim.HorizontalRotation.W},
+            VerticalRotation=new BattleJointRotation {X=x.Aim.VerticalRotation.X,Y=x.Aim.VerticalRotation.Y,Z=x.Aim.VerticalRotation.Z,W=x.Aim.VerticalRotation.W}
         }));
         if (vehicles != null)
             snapshot.Vehicles.AddRange(vehicles.Snapshot().Select(v =>

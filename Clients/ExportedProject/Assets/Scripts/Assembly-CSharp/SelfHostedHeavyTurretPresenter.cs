@@ -6,7 +6,7 @@ using War.Protocol;
 // Visual children copy recovered meshes/materials without Photon or gameplay scripts.
 public sealed class SelfHostedHeavyTurretPresenter : MonoBehaviour
 {
-	private sealed class Visual { public GameObject Root; public float Health; }
+	private sealed class Visual { public GameObject Root; public Transform Horizontal; public Transform Vertical; public float Health; }
 	private readonly Dictionary<ulong, Visual> active = new Dictionary<ulong, Visual>();
 	private HeavyTurret source;
 
@@ -24,6 +24,8 @@ public sealed class SelfHostedHeavyTurretPresenter : MonoBehaviour
 				visual = Create(state); active.Add(state.EntityId, visual);
 			}
 			visual.Root.transform.position = new Vector3(state.X, state.Y, state.Z);
+			visual.Horizontal.rotation = Rotation(state.HorizontalRotation);
+			visual.Vertical.rotation = Rotation(state.VerticalRotation);
 			visual.Health = state.Health;
 		}
 		List<ulong> stale = new List<ulong>();
@@ -42,12 +44,21 @@ public sealed class SelfHostedHeavyTurretPresenter : MonoBehaviour
 	{
 		if (source == null) throw new System.InvalidOperationException("The recovered Heavy Turret visual is unavailable.");
 		GameObject root = new GameObject("SelfHostedHeavyTurret_" + state.EntityId);
-		CopyVisual(source.transform, root.transform, true);
-		return new Visual { Root = root, Health = state.Health };
+		var transforms = new Dictionary<Transform, Transform>();
+		CopyVisual(source.transform, root.transform, true, transforms);
+		var weapon = source.GetComponent<TurretWeaponBasic>();
+		return new Visual { Root = root, Health = state.Health,
+			Horizontal = transforms[weapon.jontHorizontal], Vertical = transforms[weapon.jointVertical] };
+	}
+	private static Quaternion Rotation(BattleJointRotation value)
+	{
+		if (value == null) throw new System.InvalidOperationException("Heavy Turret joint rotation is absent.");
+		return new Quaternion(value.X, value.Y, value.Z, value.W);
 	}
 
-	private static void CopyVisual(Transform from, Transform to, bool root)
+	private static void CopyVisual(Transform from, Transform to, bool root, Dictionary<Transform, Transform> transforms)
 	{
+		transforms.Add(from, to);
 		if (!root) { to.localPosition = from.localPosition; to.localRotation = from.localRotation; to.localScale = from.localScale; }
 		MeshFilter sourceFilter = from.GetComponent<MeshFilter>(); MeshRenderer sourceRenderer = from.GetComponent<MeshRenderer>();
 		if (sourceFilter != null && sourceRenderer != null)
@@ -60,7 +71,7 @@ public sealed class SelfHostedHeavyTurretPresenter : MonoBehaviour
 		for (int i = 0; i < from.childCount; i++)
 		{
 			Transform childSource = from.GetChild(i); GameObject child = new GameObject(childSource.name);
-			child.transform.SetParent(to, false); CopyVisual(childSource, child.transform, false);
+			child.transform.SetParent(to, false); CopyVisual(childSource, child.transform, false, transforms);
 		}
 	}
 

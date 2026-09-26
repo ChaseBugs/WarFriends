@@ -12,6 +12,8 @@ internal sealed class HeavyTurretAimState
     private Quaternion horizontalFrom=Quaternion.Identity,verticalFrom=Quaternion.Identity;
     private float elapsed,horizontalDuration,verticalDuration;
     private bool turning;
+    internal Quaternion HorizontalRotation=>Quaternion.CreateFromAxisAngle(Vector3.UnitY,yaw);
+    internal Quaternion VerticalRotation=>vertical;
     internal int Plan(Vector3 origin,Vector3 target)
     {
         var direction=target-origin;

@@ -316,7 +316,10 @@ message BattleHeavyTurretState {
   float shoot_minimum = 14; float shoot_maximum = 15; float real_shot_probability = 16;
   string attack_phase = 17; string target_id = 18;
   int32 batch_remaining = 19; int32 cooldown_ticks_remaining = 20;
+  BattleJointRotation horizontal_rotation = 21;
+  BattleJointRotation vertical_rotation = 22;
 }
+message BattleJointRotation { float x = 1; float y = 2; float z = 3; float w = 4; }
 message BattleProjectileState {
   uint64 projectile_id = 1; string owner_player_id = 2; string kind = 3;
   float x = 4; float y = 5; float z = 6;

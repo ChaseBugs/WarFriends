@@ -22,7 +22,8 @@ public static class SelfHostedHeavyTurretRenderAudit
 			{
 				EntityId=81,RequestId="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",OwnerPlayerId="11111111111111111111111111111111",
 				OwnerFraction=1,SlotComponentFileId=3417,X=2,Y=3,Z=4,Health=90,MaxHealth=100,Damage=25,
-				BatchMinimum=3,BatchMaximum=6,ShootMinimum=2,ShootMaximum=4,RealShotProbability=1,AttackPhase="cooldown"
+				BatchMinimum=3,BatchMaximum=6,ShootMinimum=2,ShootMaximum=4,RealShotProbability=1,AttackPhase="cooldown",
+				HorizontalRotation=new BattleJointRotation{W=1},VerticalRotation=new BattleJointRotation{W=1}
 			});
 			presenter.Apply(snapshot); GameObject visual=GameObject.Find("SelfHostedHeavyTurret_81");
 			Require(visual!=null&&visual.transform.position==new Vector3(2,3,4),"authoritative position");
@@ -30,6 +31,25 @@ public static class SelfHostedHeavyTurretRenderAudit
 			Require(actual.Length==expected.Length&&actual.Select(x=>x.sharedMesh).SequenceEqual(expected.Select(x=>x.sharedMesh)),"recovered mesh identities");
 			Require(visual.GetComponentsInChildren<MonoBehaviour>(true).Length==0&&visual.GetComponentsInChildren<Collider>(true).Length==0&&
 				visual.GetComponentsInChildren<Rigidbody>(true).Length==0,"script-free visual");
+			var weapon=source.GetComponent<TurretWeaponBasic>();
+			var horizontal=visual.GetComponentsInChildren<Transform>(true).Single(x=>x.name==weapon.jontHorizontal.name);
+			var vertical=visual.GetComponentsInChildren<Transform>(true).Single(x=>x.name==weapon.jointVertical.name);
+			var h=Quaternion.Euler(0,65,0);var v=Quaternion.Euler(-20,65,0);
+			snapshot.HeavyTurrets[0].HorizontalRotation=new BattleJointRotation{X=h.x,Y=h.y,Z=h.z,W=h.w};
+			snapshot.HeavyTurrets[0].VerticalRotation=new BattleJointRotation{X=v.x,Y=v.y,Z=v.z,W=v.w};
+			presenter.Apply(snapshot);
+			Require(Quaternion.Angle(horizontal.rotation,h)<.001f&&Quaternion.Angle(vertical.rotation,v)<.001f,"authoritative world joint rotations");
+			GameObject reference=UnityEngine.Object.Instantiate(prefab);
+			try
+			{
+				reference.transform.position=visual.transform.position;
+				var referenceWeapon=reference.GetComponent<TurretWeaponBasic>();
+				referenceWeapon.jontHorizontal.rotation=h;referenceWeapon.jointVertical.rotation=v;
+				var referenceSpawn=referenceWeapon.batchedWeapon.weapon.spawnPoint;
+				var visualSpawn=visual.GetComponentsInChildren<Transform>(true).Single(x=>x.name==referenceSpawn.name);
+				Require(Vector3.Distance(visualSpawn.position,referenceSpawn.position)<.0002f,"recovered aimed muzzle hierarchy");
+			}
+			finally{UnityEngine.Object.DestroyImmediate(reference);}
 			snapshot.HeavyTurrets[0].Health=40;presenter.Apply(snapshot);
 			Require(GameObject.Find("SelfHostedHeavyTurret_81")!=null,"damage snapshot retention");
 			presenter.ApplyEvent(new MatchEvent{Kind=MatchEventKind.HeavyTurretDestroyed,ProjectileId=81,X=2,Y=3,Z=4});
