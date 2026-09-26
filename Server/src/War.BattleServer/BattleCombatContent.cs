@@ -8,7 +8,7 @@ namespace War.BattleServer;
 
 // Trusted deployment input; never accepted from a game packet. Fixed neighboring
 // filenames keep the package portable between Windows and Linux.
-public sealed record CombatContentManifest(int Version,string SceneRevision,string StatsRevision,string BindingsRevision,string AllWeaponBindingsRevision,string PosesRevision,string BarrelBindingsRevision,string BarrelOverlapRevision,string ArmyDeploymentRevision,string ArmyWeaponBindingsRevision,string GroundVehicleWeaponsRevision,string ArmySpawnPointsRevision,string ArmyRusherPointsRevision,string ArmyMinigunnerPointsRevision,string PlayerShotTargetsRevision,string ArmyNavMeshSourcesRevision,string ArmyNavMeshTriangulationRevision,string ArmyNavMeshPathsRevision);
+public sealed record CombatContentManifest(int Version,string SceneRevision,string StatsRevision,string BindingsRevision,string AllWeaponBindingsRevision,string PosesRevision,string BarrelBindingsRevision,string BarrelOverlapRevision,string ArmyDeploymentRevision,string ArmyWeaponBindingsRevision,string GroundVehicleWeaponsRevision,string EnemyPosesRevision,string ArmySpawnPointsRevision,string ArmyRusherPointsRevision,string ArmyMinigunnerPointsRevision,string PlayerShotTargetsRevision,string ArmyNavMeshSourcesRevision,string ArmyNavMeshTriangulationRevision,string ArmyNavMeshPathsRevision);
 
 public sealed class BattleCombatContent
 {
@@ -40,6 +40,7 @@ public sealed class BattleCombatContent
     public ArmyDeploymentCatalog Army { get; }
     public ArmyWeaponBindingCatalog ArmyWeapons { get; }
     public GroundVehicleWeaponCatalog GroundVehicleWeapons { get; }
+    internal EnemyPoseCatalog EnemyPoses { get; }
     public ArmySpawnPointCatalog ArmySpawnPoints { get; }
     public ArmyRusherPointCatalog ArmyRusherPoints { get; }
     public ArmyMinigunnerPointCatalog ArmyMinigunnerPoints { get; }
@@ -52,16 +53,16 @@ public sealed class BattleCombatContent
     internal ExplosionSourceCatalog Explosions { get; }
     internal BarrelOverlapOrderCatalog BarrelOverlap { get; }
     private BattleCombatContent(RifleStatCatalog stats,RifleBindingCatalog bindings,WeaponBindingGraphCatalog allWeaponBindings,PlayerPoseCatalog poses,string revision,
-        IReadOnlyList<RecoveredBattleMap> maps,ShotgunCatalog? shotguns,string? shotgunRevision,SmgCatalog? smgs,string? smgRevision,PistolCatalog? pistols,string? pistolRevision,LmgCatalog? lmgs,string? lmgRevision,MinigunCatalog? minigun,string? minigunRevision,SniperCatalog? snipers,string? sniperRevision,BazookaCatalog? bazookas,string? bazookaRevision,GrenadeCatalog? grenades,string? grenadeRevision,string? mixedRevision,ShieldSourceCatalog shields,BarrelSceneCatalog barrels,BarrelSourcePolicy barrelPolicy,ExplosionSourceCatalog explosions,BarrelOverlapOrderCatalog barrelOverlap,ArmyDeploymentCatalog army,ArmyWeaponBindingCatalog armyWeapons,GroundVehicleWeaponCatalog groundVehicleWeapons,ArmySpawnPointCatalog armySpawnPoints,ArmyRusherPointCatalog armyRusherPoints,ArmyMinigunnerPointCatalog armyMinigunnerPoints,PlayerShotTargetCatalog playerShotTargets,ArmyNavMeshSourceCatalog armyNavMeshes,ArmyNavMeshTriangulationCatalog armyNavMeshGeometry,ArmyNavMeshPathFixtureCatalog armyNavMeshPaths,ArmyNavMeshConnectivity armyNavMeshConnectivity)
-    { Stats=stats;Bindings=bindings;AllWeaponBindings=allWeaponBindings;Poses=poses;Revision=revision;Maps=Array.AsReadOnly(maps.ToArray());Shotguns=shotguns;ShotgunRevision=shotgunRevision;Smgs=smgs;SmgRevision=smgRevision;Pistols=pistols;PistolRevision=pistolRevision;Lmgs=lmgs;LmgRevision=lmgRevision;Minigun=minigun;MinigunRevision=minigunRevision;Snipers=snipers;SniperRevision=sniperRevision;Bazookas=bazookas;BazookaRevision=bazookaRevision;Grenades=grenades;GrenadeRevision=grenadeRevision;MixedRevision=mixedRevision;Shields=shields;Barrels=barrels;BarrelPolicy=barrelPolicy;Explosions=explosions;BarrelOverlap=barrelOverlap;Army=army;ArmyWeapons=armyWeapons;GroundVehicleWeapons=groundVehicleWeapons;ArmySpawnPoints=armySpawnPoints;ArmyRusherPoints=armyRusherPoints;ArmyMinigunnerPoints=armyMinigunnerPoints;PlayerShotTargets=playerShotTargets;ArmyNavMeshes=armyNavMeshes;ArmyNavMeshGeometry=armyNavMeshGeometry;ArmyNavMeshPaths=armyNavMeshPaths;ArmyNavMeshConnectivity=armyNavMeshConnectivity; }
+        IReadOnlyList<RecoveredBattleMap> maps,ShotgunCatalog? shotguns,string? shotgunRevision,SmgCatalog? smgs,string? smgRevision,PistolCatalog? pistols,string? pistolRevision,LmgCatalog? lmgs,string? lmgRevision,MinigunCatalog? minigun,string? minigunRevision,SniperCatalog? snipers,string? sniperRevision,BazookaCatalog? bazookas,string? bazookaRevision,GrenadeCatalog? grenades,string? grenadeRevision,string? mixedRevision,ShieldSourceCatalog shields,BarrelSceneCatalog barrels,BarrelSourcePolicy barrelPolicy,ExplosionSourceCatalog explosions,BarrelOverlapOrderCatalog barrelOverlap,ArmyDeploymentCatalog army,ArmyWeaponBindingCatalog armyWeapons,GroundVehicleWeaponCatalog groundVehicleWeapons,EnemyPoseCatalog enemyPoses,ArmySpawnPointCatalog armySpawnPoints,ArmyRusherPointCatalog armyRusherPoints,ArmyMinigunnerPointCatalog armyMinigunnerPoints,PlayerShotTargetCatalog playerShotTargets,ArmyNavMeshSourceCatalog armyNavMeshes,ArmyNavMeshTriangulationCatalog armyNavMeshGeometry,ArmyNavMeshPathFixtureCatalog armyNavMeshPaths,ArmyNavMeshConnectivity armyNavMeshConnectivity)
+    { Stats=stats;Bindings=bindings;AllWeaponBindings=allWeaponBindings;Poses=poses;Revision=revision;Maps=Array.AsReadOnly(maps.ToArray());Shotguns=shotguns;ShotgunRevision=shotgunRevision;Smgs=smgs;SmgRevision=smgRevision;Pistols=pistols;PistolRevision=pistolRevision;Lmgs=lmgs;LmgRevision=lmgRevision;Minigun=minigun;MinigunRevision=minigunRevision;Snipers=snipers;SniperRevision=sniperRevision;Bazookas=bazookas;BazookaRevision=bazookaRevision;Grenades=grenades;GrenadeRevision=grenadeRevision;MixedRevision=mixedRevision;Shields=shields;Barrels=barrels;BarrelPolicy=barrelPolicy;Explosions=explosions;BarrelOverlap=barrelOverlap;Army=army;ArmyWeapons=armyWeapons;GroundVehicleWeapons=groundVehicleWeapons;EnemyPoses=enemyPoses;ArmySpawnPoints=armySpawnPoints;ArmyRusherPoints=armyRusherPoints;ArmyMinigunnerPoints=armyMinigunnerPoints;PlayerShotTargets=playerShotTargets;ArmyNavMeshes=armyNavMeshes;ArmyNavMeshGeometry=armyNavMeshGeometry;ArmyNavMeshPaths=armyNavMeshPaths;ArmyNavMeshConnectivity=armyNavMeshConnectivity; }
     public static BattleCombatContent Load(string manifestPath,string? shotgunManifestPath=null,string? smgManifestPath=null,string? pistolManifestPath=null,string? lmgManifestPath=null,string? minigunManifestPath=null,string? sniperManifestPath=null,string? bazookaManifestPath=null,string? grenadeManifestPath=null)
     {
         using var stream=File.OpenRead(manifestPath);
         if (stream.Length is < 2 or > 4096) throw new InvalidDataException("Invalid combat content manifest size.");
         var manifest=JsonSerializer.Deserialize<CombatContentManifest>(stream,new JsonSerializerOptions { UnmappedMemberHandling=JsonUnmappedMemberHandling.Disallow })
             ?? throw new InvalidDataException("Missing combat content manifest.");
-        var hashes=new[] {manifest.SceneRevision,manifest.StatsRevision,manifest.BindingsRevision,manifest.AllWeaponBindingsRevision,manifest.PosesRevision,manifest.BarrelBindingsRevision,manifest.BarrelOverlapRevision,manifest.ArmyDeploymentRevision,manifest.ArmyWeaponBindingsRevision,manifest.GroundVehicleWeaponsRevision,manifest.ArmySpawnPointsRevision,manifest.ArmyRusherPointsRevision,manifest.ArmyMinigunnerPointsRevision,manifest.PlayerShotTargetsRevision,manifest.ArmyNavMeshSourcesRevision,manifest.ArmyNavMeshTriangulationRevision,manifest.ArmyNavMeshPathsRevision};
-        if (manifest.Version!=2 || hashes.Any(h=>h==null || !Regex.IsMatch(h,@"\A[0-9a-f]{64}\z")))
+        var hashes=new[] {manifest.SceneRevision,manifest.StatsRevision,manifest.BindingsRevision,manifest.AllWeaponBindingsRevision,manifest.PosesRevision,manifest.BarrelBindingsRevision,manifest.BarrelOverlapRevision,manifest.ArmyDeploymentRevision,manifest.ArmyWeaponBindingsRevision,manifest.GroundVehicleWeaponsRevision,manifest.EnemyPosesRevision,manifest.ArmySpawnPointsRevision,manifest.ArmyRusherPointsRevision,manifest.ArmyMinigunnerPointsRevision,manifest.PlayerShotTargetsRevision,manifest.ArmyNavMeshSourcesRevision,manifest.ArmyNavMeshTriangulationRevision,manifest.ArmyNavMeshPathsRevision};
+        if (manifest.Version!=3 || hashes.Any(h=>h==null || !Regex.IsMatch(h,@"\A[0-9a-f]{64}\z")))
             throw new InvalidDataException("Invalid combat package revisions.");
         string directory=Path.GetDirectoryName(Path.GetFullPath(manifestPath))!;
         var stats=RifleStatCatalog.Load(Path.Combine(directory,"recovered-battle-content.json"),manifest.StatsRevision,manifest.SceneRevision);
@@ -80,8 +81,11 @@ public sealed class BattleCombatContent
         var armyWeapons=ArmyWeaponBindingCatalog.Load(Path.Combine(directory,"recovered-rusher-weapon-bindings.json"),manifest.ArmyWeaponBindingsRevision,manifest.SceneRevision);
         var groundVehicleWeapons=GroundVehicleWeaponCatalog.Load(Path.Combine(directory,
             "recovered-ground-vehicle-weapons.json"),manifest.GroundVehicleWeaponsRevision);
+        var enemyPoses=EnemyPoseCatalog.Load(Path.Combine(directory,"recovered-enemy-poses.json"),manifest.EnemyPosesRevision);
         if(groundVehicleWeapons.PassengerPoses.SourceSha256!=army.InfantryAgent.PrefabSha256)
             throw new InvalidDataException("Enemy collision rig does not bind the deployed infantry prefab.");
+        if(enemyPoses.SourceSha256!=army.InfantryAgent.PrefabSha256)
+            throw new InvalidDataException("Enemy animation poses do not bind the deployed infantry prefab.");
         if(maps.Any(map=>!armyWeapons.WarperRelocation.Fields.TryGetValue(map.Source,out var field)||
             field.Sha256!=map.SourceHash))
             throw new InvalidDataException("Warper field authority does not bind the complete map package.");
@@ -95,7 +99,7 @@ public sealed class BattleCombatContent
         var armyNavMeshPaths=ArmyNavMeshPathFixtureCatalog.Load(Path.Combine(directory,"recovered-navmesh-path-manifest.json"),manifest.ArmyNavMeshPathsRevision,
             maps,armyNavMeshes,armyNavMeshGeometry,armySpawnPoints,armyRusherPoints);
         var armyNavMeshConnectivity=ArmyNavMeshConnectivity.Build(maps,armyNavMeshGeometry,armyNavMeshPaths);
-        string revision=Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes("WarFriends/combat-content/v2\n"+string.Join("\n",hashes))));
+        string revision=Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes("WarFriends/combat-content/v3\n"+string.Join("\n",hashes))));
         ShotgunCatalog? shotguns=null;string? shotgunRevision=null;
         if(shotgunManifestPath!=null)
         {
@@ -159,7 +163,7 @@ public sealed class BattleCombatContent
         }
         string? mixedRevision=shotguns!=null&&smgs!=null&&pistols!=null&&lmgs!=null&&minigun!=null&&snipers!=null ? Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(
             "WarFriends/mixed-combat/v5\n"+revision+"\n"+shotguns.PackageRevision+"\n"+smgs.PackageRevision+"\n"+pistols.PackageRevision+"\n"+lmgs.PackageRevision+"\n"+minigun.PackageRevision+"\n"+snipers.PackageRevision))) : null;
-        return new(stats,bindings,allWeaponBindings,poses,revision,maps,shotguns,shotgunRevision,smgs,smgRevision,pistols,pistolRevision,lmgs,lmgRevision,minigun,minigunRevision,snipers,sniperRevision,bazookas,bazookaRevision,grenades,grenadeRevision,mixedRevision,shields,barrels,barrelPolicy,explosions,barrelOverlap,army,armyWeapons,groundVehicleWeapons,armySpawnPoints,armyRusherPoints,armyMinigunnerPoints,playerShotTargets,armyNavMeshes,armyNavMeshGeometry,armyNavMeshPaths,armyNavMeshConnectivity);
+        return new(stats,bindings,allWeaponBindings,poses,revision,maps,shotguns,shotgunRevision,smgs,smgRevision,pistols,pistolRevision,lmgs,lmgRevision,minigun,minigunRevision,snipers,sniperRevision,bazookas,bazookaRevision,grenades,grenadeRevision,mixedRevision,shields,barrels,barrelPolicy,explosions,barrelOverlap,army,armyWeapons,groundVehicleWeapons,enemyPoses,armySpawnPoints,armyRusherPoints,armyMinigunnerPoints,playerShotTargets,armyNavMeshes,armyNavMeshGeometry,armyNavMeshPaths,armyNavMeshConnectivity);
     }
     public void ValidateAllocation(MatchManifest manifest)
     {

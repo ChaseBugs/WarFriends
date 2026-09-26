@@ -20,7 +20,7 @@ public sealed class BattleRifleManifestCatalog
     ];
     private sealed record ContentManifest(int Version,string SceneRevision,string StatsRevision,string BindingsRevision,string AllWeaponBindingsRevision,
         string PosesRevision,string BarrelBindingsRevision,string BarrelOverlapRevision,string ArmyDeploymentRevision,
-        string ArmyWeaponBindingsRevision,string GroundVehicleWeaponsRevision,string ArmySpawnPointsRevision,string ArmyRusherPointsRevision,string ArmyMinigunnerPointsRevision,string PlayerShotTargetsRevision,
+        string ArmyWeaponBindingsRevision,string GroundVehicleWeaponsRevision,string EnemyPosesRevision,string ArmySpawnPointsRevision,string ArmyRusherPointsRevision,string ArmyMinigunnerPointsRevision,string PlayerShotTargetsRevision,
         string ArmyNavMeshSourcesRevision,string ArmyNavMeshTriangulationRevision,string ArmyNavMeshPathsRevision);
     private sealed record Stage(string SourceId,int UpgradeIndex,int ClipSize,int ReserveAmmo,double CadenceSeconds,double ReloadSeconds);
     private readonly IReadOnlyDictionary<string,Stage[]> stages;
@@ -41,9 +41,10 @@ public sealed class BattleRifleManifestCatalog
             manifest.BarrelBindingsRevision,manifest.BarrelOverlapRevision,manifest.ArmyDeploymentRevision,
             manifest.ArmyWeaponBindingsRevision,
             manifest.GroundVehicleWeaponsRevision,
+            manifest.EnemyPosesRevision,
             manifest.ArmySpawnPointsRevision,manifest.ArmyRusherPointsRevision,manifest.ArmyMinigunnerPointsRevision,manifest.PlayerShotTargetsRevision,
             manifest.ArmyNavMeshSourcesRevision,manifest.ArmyNavMeshTriangulationRevision,manifest.ArmyNavMeshPathsRevision];
-        if(manifest.Version!=2 || hashes.Any(x=>x==null || !Regex.IsMatch(x,@"\A[0-9a-f]{64}\z")))
+        if(manifest.Version!=3 || hashes.Any(x=>x==null || !Regex.IsMatch(x,@"\A[0-9a-f]{64}\z")))
             throw new InvalidDataException("Invalid combat content revisions.");
         string contentPath=Path.Combine(Path.GetDirectoryName(Path.GetFullPath(manifestPath))!,"recovered-battle-content.json");
         byte[] content=ReadBounded(contentPath,2,16_000_000,"rifle content");
@@ -80,7 +81,7 @@ public sealed class BattleRifleManifestCatalog
                 result.Add(id,lane);
             }
             string packageRevision=Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(
-                "WarFriends/combat-content/v2\n"+string.Join("\n",hashes))));
+                "WarFriends/combat-content/v3\n"+string.Join("\n",hashes))));
             return new(result,packageRevision);
         }
         catch(Exception e) when(e is JsonException or KeyNotFoundException or InvalidOperationException or FormatException or OverflowException or ArgumentException)

@@ -916,8 +916,10 @@ internal static class CombatContentTests
               "Buggy cannon outer overlap uses serialized 20-point quadratic hurt falloff");
         string vehicleWeaponPath=Path.Combine(directory,"recovered-ground-vehicle-weapons.json");
         string passengerPosePath=Path.Combine(directory,"recovered-vehicle-passenger-poses.json");
+        string enemyPosePath=Path.Combine(directory,"recovered-enemy-poses.json");
         string vehicleWeaponTemp=Path.Combine(directory,"vehicle-weapon-test-"+Guid.NewGuid().ToString("N")+".json");
         string passengerPoseTemp=Path.Combine(directory,"vehicle-passenger-pose-test-"+Guid.NewGuid().ToString("N")+".json");
+        string enemyPoseTemp=Path.Combine(directory,"enemy-pose-test-"+Guid.NewGuid().ToString("N")+".json");
         try
         {
             var package=JsonSerializer.Deserialize<CombatContentManifest>(File.ReadAllText(
@@ -925,6 +927,17 @@ internal static class CombatContentTests
             Check(package.GroundVehicleWeaponsRevision==Convert.ToHexStringLower(
                       SHA256.HashData(File.ReadAllBytes(vehicleWeaponPath))),
                   "ground vehicle weapon bytes bind the composite combat revision");
+            Check(package.EnemyPosesRevision==content.EnemyPoses.Revision&&
+                  package.EnemyPosesRevision==Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(enemyPosePath)))&&
+                  content.EnemyPoses.SourceSha256==content.Army.InfantryAgent.PrefabSha256&&
+                  content.EnemyPoses.Names.Count==133&&content.EnemyPoses.Clip("run_0").Frames.Count==21&&
+                  content.EnemyPoses.Place("run_0",Vector3.Zero,Quaternion.Identity,0).Count==3,
+                  "all 133 enemy clips bind source-pinned animated infantry hit geometry");
+            Reject(()=>EnemyPoseCatalog.Load(enemyPosePath,new string('0',64)));
+            string damagedEnemyPose=File.ReadAllText(enemyPosePath).Replace("\"name\": \"SMG_idle\"","\"name\": \"XMG_idle\"",StringComparison.Ordinal);
+            File.WriteAllText(enemyPoseTemp,damagedEnemyPose);
+            string damagedEnemyPoseHash=Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(enemyPoseTemp)));
+            Reject(()=>EnemyPoseCatalog.Load(enemyPoseTemp,damagedEnemyPoseHash));
             Reject(()=>GroundVehicleWeaponCatalog.Load(vehicleWeaponPath,new string('0',64)));
             var damaged=JsonNode.Parse(File.ReadAllText(vehicleWeaponPath))!;
             damaged["vehicles"]![0]!["roles"]![0]!["weapons"]![0]!["cadence"]=0;
@@ -967,6 +980,7 @@ internal static class CombatContentTests
         {
             if(File.Exists(vehicleWeaponTemp))File.Delete(vehicleWeaponTemp);
             if(File.Exists(passengerPoseTemp))File.Delete(passengerPoseTemp);
+            if(File.Exists(enemyPoseTemp))File.Delete(enemyPoseTemp);
         }
         var routeProbe=vehicleRoutes[0];
         var routeMotion=new ArmyVehicleRouteMotion(routeProbe.Position,routeProbe.VehicleRoute!,1.7f);

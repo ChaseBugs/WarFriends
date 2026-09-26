@@ -1,5 +1,5 @@
 {
-  "Version": 2,
+  "Version": 3,
   "SceneRevision": "d46f81ff8c3e12bf17f34a1f53dd601bd799102c9f984818031441dfb7a5de43",
   "StatsRevision": "28b94d12a9ba78a8a46287cd40bf51d454afa75c036b1368561d22979e47d39a",
   "BindingsRevision": "9d64fa20c13c6a9688a0097a91aa81298346413e803240488f5c2c53eb7c9a12",
@@ -10,6 +10,7 @@
   "ArmyDeploymentRevision": "1fb773694970fdb40508009118eb07e91987d04b3a67532dc76eb033c49b06db",
   "ArmyWeaponBindingsRevision": "62667cd52d0a76c48c7aa47ceefa7e27efa15caf268d7f8c1adf09bfca214aad",
   "GroundVehicleWeaponsRevision": "1d016bbc61d49c26c00e1f3abd7b5cf435a678ea6141dc04ea1e7adf62216a3e",
+  "EnemyPosesRevision": "09d434da66351cfeb23219177904448704fa3108646302b66e6e55edff82fcee",
   "ArmySpawnPointsRevision": "7a5f1112ca33ca2664ccded7e6ffc1a94f81f5ac4a51c6cdce534fec301dd7f4",
   "ArmyRusherPointsRevision": "85967322f91acad771db57ca151c4e52234763ed91a470a1ec9348eb31681fd0",
   "ArmyMinigunnerPointsRevision": "2348b3ffdf02fff3154e1a12f34165225e4764a3f43083c4d93c1e3b47fbb6a1",
