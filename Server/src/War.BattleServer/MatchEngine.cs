@@ -1082,6 +1082,12 @@ public sealed partial class MatchEngine
             try{foreach(var launch in grenadeCombat.Advance(tick))StartGrenadeProjectile(launch);}
             catch(InvalidDataException){End("invalid-projectile-authority","",false);return;}
         }
+        if(advanced&&phase==BattlePhase.Running&&landMines.Snapshot().Count>0)
+        {
+            try{AdvanceLandMines();}
+            catch(InvalidDataException){End("invalid-land-mine-authority","",false);return;}
+            if(Terminal)return;
+        }
         if(advanced && phase==BattlePhase.Running && scheduledBazookas.Count>0)
         {
             try

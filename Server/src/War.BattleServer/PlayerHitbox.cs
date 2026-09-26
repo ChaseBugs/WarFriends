@@ -59,6 +59,56 @@ public sealed record PlayerHitbox
         float axial=Math.Clamp(Vector3.Dot(offset,Axis),-HalfSegment,HalfSegment);
         return Vector3.DistanceSquared(offset,Axis*axial)<=(radius+Radius)*(radius+Radius);
     }
+    // Unity's mine trigger is an oriented BoxCollider. This keeps the trigger
+    // decision against the complete current collider volume instead of using a
+    // broad center-distance approximation.
+    internal bool OverlapsBox(Vector3 center,Vector3 size,Quaternion rotation)
+    {
+        if(!Finite(center)||!Finite(size)||size.X<=0||size.Y<=0||size.Z<=0||
+           size.X>100||size.Y>100||size.Z>100||!float.IsFinite(rotation.LengthSquared())||
+           Math.Abs(rotation.LengthSquared()-1)>.0001f)
+            throw new InvalidDataException("Invalid host overlap box.");
+        if(!Enabled||!Active)return false;
+        rotation=Quaternion.Normalize(rotation);var inverse=Quaternion.Conjugate(rotation);var half=size*.5f;
+        if(Kind==PlayerHitboxKind.Sphere)
+        {
+            var local=Vector3.Transform(Center-center,inverse);
+            return Vector3.DistanceSquared(local,Vector3.Clamp(local,-half,half))<=Radius*Radius;
+        }
+        if(Kind==PlayerHitboxKind.Capsule)
+        {
+            var a=Vector3.Transform(Center-Axis*HalfSegment-center,inverse);
+            var b=Vector3.Transform(Center+Axis*HalfSegment-center,inverse);
+            return SegmentBoxDistanceSquared(a,b,half)<=Radius*Radius;
+        }
+        Vector3[] aAxis=[Vector3.Transform(Vector3.UnitX,Rotation),Vector3.Transform(Vector3.UnitY,Rotation),Vector3.Transform(Vector3.UnitZ,Rotation)];
+        Vector3[] bAxis=[Vector3.Transform(Vector3.UnitX,rotation),Vector3.Transform(Vector3.UnitY,rotation),Vector3.Transform(Vector3.UnitZ,rotation)];
+        float[] aHalf=[Size.X*.5f,Size.Y*.5f,Size.Z*.5f];float[] bHalf=[half.X,half.Y,half.Z];
+        var delta=center-Center;const float epsilon=1e-6f;
+        float[,] r=new float[3,3],abs=new float[3,3];
+        for(int i=0;i<3;i++)for(int j=0;j<3;j++){r[i,j]=Vector3.Dot(aAxis[i],bAxis[j]);abs[i,j]=Math.Abs(r[i,j])+epsilon;}
+        float[] t=[Vector3.Dot(delta,aAxis[0]),Vector3.Dot(delta,aAxis[1]),Vector3.Dot(delta,aAxis[2])];
+        for(int i=0;i<3;i++)if(Math.Abs(t[i])>aHalf[i]+bHalf[0]*abs[i,0]+bHalf[1]*abs[i,1]+bHalf[2]*abs[i,2])return false;
+        for(int j=0;j<3;j++)if(Math.Abs(t[0]*r[0,j]+t[1]*r[1,j]+t[2]*r[2,j])>bHalf[j]+aHalf[0]*abs[0,j]+aHalf[1]*abs[1,j]+aHalf[2]*abs[2,j])return false;
+        for(int i=0;i<3;i++)for(int j=0;j<3;j++)
+        {
+            int i1=(i+1)%3,i2=(i+2)%3,j1=(j+1)%3,j2=(j+2)%3;
+            if(Math.Abs(t[i2]*r[i1,j]-t[i1]*r[i2,j])>
+               aHalf[i1]*abs[i2,j]+aHalf[i2]*abs[i1,j]+bHalf[j1]*abs[i,j2]+bHalf[j2]*abs[i,j1])return false;
+        }
+        return true;
+    }
+    private static float SegmentBoxDistanceSquared(Vector3 a,Vector3 b,Vector3 half)
+    {
+        static float At(Vector3 p,Vector3 h)
+        {var d=p-Vector3.Clamp(p,-h,h);return d.LengthSquared();}
+        var direction=b-a;float left=0,right=1;
+        // Squared distance from a segment to a convex box is convex. The fixed
+        // iteration count is deterministic and comfortably below source-float precision.
+        for(int i=0;i<40;i++)
+        {float m1=(2*left+right)/3,m2=(left+2*right)/3;if(At(a+direction*m1,half)<=At(a+direction*m2,half))right=m2;else left=m1;}
+        return Math.Min(Math.Min(At(a,half),At(b,half)),At(a+direction*((left+right)*.5f),half));
+    }
     internal float DistanceToPoint(Vector3 point)
     {
         if(!Finite(point))throw new InvalidDataException("Invalid hitbox distance point.");

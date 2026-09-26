@@ -1385,6 +1385,26 @@ internal static class CombatContentTests
                   selectedLandMines.Select(x=>x.ComponentFileId).Distinct().Count()==3&&
                   Math.Abs(landMines.Damage(22,44)-57.625f)<.001f,
                   "Land Mine source pins 89 opposing hiding slots, three distinct placements, prefab geometry and level-scaled damage");
+            const string minePosePath="MineTriggerPlayer";
+            PlayerCollisionModel MinePose(Vector3 root)=>PlayerCollisionModel.InitializedFrame("mine-pose",minePosePath,root,Quaternion.Identity,
+            [
+                new(minePosePath+"/Body",PlayerHitboxKind.Box,1,root,new(1,.8f,.6f),Quaternion.Identity,0,Vector3.Zero,0),
+                new(minePosePath+"/Head",PlayerHitboxKind.Sphere,1.5f,root+new Vector3(0,1,0),Vector3.Zero,Quaternion.Identity,.25f,Vector3.Zero,0)
+            ]);
+            var centeredMine=-landMines.Prefab.TriggerCenter;
+            var mineExplosion=LandMineExplosion.Resolve(centeredMine,57.625f,landMines,MinePose(Vector3.Zero),Vector3.Zero);
+            var rotatedBody=new PlayerHitbox("rotated-body",PlayerHitboxKind.Box,1,Vector3.Zero,new(.4f,.4f,2),
+                Quaternion.CreateFromAxisAngle(Vector3.UnitY,MathF.PI/4),0,Vector3.Zero,0);
+            var capsuleBody=new PlayerHitbox("capsule-body",PlayerHitboxKind.Capsule,1,Vector3.Zero,Vector3.Zero,
+                Quaternion.Identity,.2f,Vector3.UnitY,.5f);
+            bool mineNear=LandMineExplosion.Triggered(centeredMine,landMines.Prefab,MinePose(Vector3.Zero));
+            bool mineFar=LandMineExplosion.Triggered(centeredMine,landMines.Prefab,MinePose(new Vector3(2,0,0)));
+            bool rotatedOverlap=rotatedBody.OverlapsBox(new(.5f,0,0),new(.3f,.3f,.3f),Quaternion.Identity);
+            bool capsuleOverlap=capsuleBody.OverlapsBox(new(0,.55f,0),new(.2f,.2f,.2f),Quaternion.Identity);
+            bool capsuleFar=capsuleBody.OverlapsBox(new(1,.6f,0),new(.2f,.2f,.2f),Quaternion.Identity);
+            Check(mineNear&&!mineFar&&mineExplosion is {Kind:CombatDamageType.Explosion,RawDamage:57.625f}&&
+                  rotatedOverlap&&capsuleOverlap&&!capsuleFar,
+                  "Land Mine trigger uses source box volume against current box, sphere and capsule poses");
             var landMineRegistry=new LandMineMatchRegistry(3);
             string landMineRequest=new string('7',32),landMineOwner=new string('2',32);
             var landMinePlacements=selectedLandMines.Select((slot,index)=>(slot,new Vector3(index,0,index))).ToArray();
@@ -2364,6 +2384,19 @@ internal static class CombatContentTests
                   UseLandMine=new(){RequestId=new string('5',32)}}).Code=="land-mine-unavailable"&&
               landMineMatch.Snapshot().LandMines.Count==3&&landMineMatch.Snapshot().CardActivations==1,
               "Land Mine request replay creates no duplicate and exhausted inventory cannot create partial state");
+        var beforeMineTrigger=landMineMatch.Snapshot();
+        var mineVictimBefore=beforeMineTrigger.Players.Single(x=>x.PlayerId==decoyOpponent);
+        var triggerPosition=new Vector3(mineVictimBefore.PositionX,mineVictimBefore.PositionY,mineVictimBefore.PositionZ);
+        Check(landMineMatch.TryRegisterLandMine(new string('4',32),decoyPlayer,triggerPosition,25),
+            "host-only Land Mine simulation seed accepts a bounded authoritative position");
+        landMineMatch.Advance(61);
+        var afterMineTrigger=landMineMatch.Snapshot();
+        var mineVictimAfter=afterMineTrigger.Players.Single(x=>x.PlayerId==decoyOpponent);
+        Check(afterMineTrigger.LandMines.Count==3&&mineVictimAfter.Health<mineVictimBefore.Health&&
+              mineVictimAfter.DamageRevision==mineVictimBefore.DamageRevision+1&&
+              mineVictimAfter.ConfirmedPlayerHits==mineVictimBefore.ConfirmedPlayerHits&&
+              afterMineTrigger.Players.Single(x=>x.PlayerId==decoyPlayer).ConfirmedPlayerHits==1,
+              "authoritative tick consumes a source-box Land Mine and applies host explosion damage once");
         var detached=MatchManifest.Validate(armyManifest);
         equipped[0]="ID_UNIT-UNKNOWN";
         armyStages[0]=101;
