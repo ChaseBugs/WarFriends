@@ -11,7 +11,8 @@ public sealed record GroundVehicleWeapon(int BatchedComponentFileId,int WeaponCo
     int ProjectileFileId,string ProjectileGuid,bool ForcedFake,GroundVehicleMissileBinding? Missile);
 public sealed record GroundVehicleMissileBinding(int SetupComponentFileId,float Speed,float HurtRadius,
     float DeadRadius,Vector3 ExplosionCoefficient,float AdditionalUpForce,float StopTime,int MissileType,
-    bool CurvedTrajectory,Vector2 RotationRange,float BaseRotationMagnitude);
+    bool CurvedTrajectory,Vector2 RotationRange,IReadOnlyList<BazookaCurveKey> RotationProfile,
+    float BaseRotationMagnitude);
 public sealed record GroundVehicleTurret(string Role,int TurretComponentFileId,string TurretType,
     float AimTime,float MaxShotRotation,bool UseUnitTarget,bool PrimaryTargetOnly,
     bool NeedToSeePrimaryTarget,bool NeedToSeeSecondaryTarget,bool PredictPosition,int PrimaryTarget,
@@ -38,7 +39,10 @@ public sealed class GroundVehicleWeaponCatalog
     private sealed class MissileDto {public int SetupComponentFileId{get;set;}public float Speed{get;set;}
         public float HurtRadius{get;set;}public float DeadRadius{get;set;}public float[] ExplosionCoefficient{get;set;}=[];
         public float AdditionalUpForce{get;set;}public float StopTime{get;set;}public int MissileType{get;set;}
-        public bool CurvedTrajectory{get;set;}public float[] RotationRange{get;set;}=[];public float BaseRotationMagnitude{get;set;}}
+        public bool CurvedTrajectory{get;set;}public float[] RotationRange{get;set;}=[];
+        public CurveDto[] RotationProfile{get;set;}=[];public float BaseRotationMagnitude{get;set;}}
+    private sealed class CurveDto {public float Time{get;set;}public float Value{get;set;}
+        public float InTangent{get;set;}public float OutTangent{get;set;}}
     private static readonly (string Unit,string Prefab,string Behavior,int Roles)[] Expected=
     [
         ("ID_UNIT-HUMVEE","Assets/GameObject/Humvee.prefab","AICar",2),
@@ -125,11 +129,24 @@ public sealed class GroundVehicleWeaponCatalog
                            m.RotationRange[0]<0||m.RotationRange[1]<m.RotationRange[0]||
                            !float.IsFinite(m.BaseRotationMagnitude)||m.BaseRotationMagnitude<0||
                            !float.IsFinite(m.AdditionalUpForce)||!float.IsFinite(m.StopTime)||m.StopTime<0||
-                           m.ExplosionCoefficient.Length!=3)
+                           m.ExplosionCoefficient.Length!=3||m.RotationProfile.Length is not (3 or 5))
                             throw new InvalidDataException("Invalid vehicle missile setup.");
+                        var curve=new BazookaCurveKey[m.RotationProfile.Length];
+                        for(int k=0;k<curve.Length;k++)
+                        {
+                            var key=m.RotationProfile[k];
+                            if(!float.IsFinite(key.Time)||!float.IsFinite(key.Value)||
+                               !float.IsFinite(key.InTangent)||!float.IsFinite(key.OutTangent)||
+                               key.Time<0||key.Time>1||(k>0&&key.Time<=curve[k-1].Time))
+                                throw new InvalidDataException("Invalid vehicle missile curve.");
+                            curve[k]=new(key.Time,key.Value,key.InTangent,key.OutTangent);
+                        }
+                        if(curve[0].Time!=0||curve[^1].Time!=1)
+                            throw new InvalidDataException("Incomplete vehicle missile curve.");
                         missile=new(m.SetupComponentFileId,m.Speed,m.HurtRadius,m.DeadRadius,
                             Vector(m.ExplosionCoefficient),m.AdditionalUpForce,m.StopTime,m.MissileType,
-                            m.CurvedTrajectory,new(m.RotationRange[0],m.RotationRange[1]),m.BaseRotationMagnitude);
+                            m.CurvedTrajectory,new(m.RotationRange[0],m.RotationRange[1]),
+                            Array.AsReadOnly(curve),m.BaseRotationMagnitude);
                     }
                     else if(weapon.Missile!=null)throw new InvalidDataException("Gun has missile setup.");
                     weapons[w]=new(weapon.BatchedComponentFileId,weapon.WeaponComponentFileId,weapon.WeaponType,

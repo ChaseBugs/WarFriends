@@ -98,6 +98,10 @@ def main():
      setup_ids=[i for i,(kind,candidate) in blocks.items() if kind==114 and ref(candidate,'m_GameObject')==game_object and scripts.get(i)=='MissileSetup']
      if len(setup_ids)!=1: raise ValueError('missing vehicle missile setup')
      setup=blocks[setup_ids[0]][1]
+     curve_block=setup.split('  rotationProfile:\n',1)[1].split('  baseRotationMagnitude:',1)[0]
+     curves=[{'time':float(t),'value':float(v),'inTangent':float(i),'outTangent':float(o)}
+      for t,v,i,o in re.findall(r'    - time: ([^\r\n]+)\r?\n      value: ([^\r\n]+)\r?\n      inSlope: ([^\r\n]+)\r?\n      outSlope: ([^\r\n]+)',curve_block)]
+     if not curves: raise ValueError('missing vehicle missile curve')
      missile={'setupComponentFileId':setup_ids[0],'speed':number(setup,'speed'),
       'hurtRadius':number(setup,'hurtRadius'),'deadRadius':number(setup,'deadRadius'),
       'explosionCoefficient':vector(direct(setup,'exposionCoef')),
@@ -105,6 +109,7 @@ def main():
       'missileType':int(number(setup,'missileType')),
       'curvedTrajectory':direct(setup,'curvedTrajectory')=='1',
       'rotationRange':vector2(direct(setup,'minMaxRotations')),
+      'rotationProfile':curves,
       'baseRotationMagnitude':number(setup,'baseRotationMagnitude')}
     weapons.append({'batchedComponentFileId':batch_id,'weaponComponentFileId':weapon_id,
       'weaponType':weapon_type,'cadence':cadence,'spawnTransformFileId':spawn,

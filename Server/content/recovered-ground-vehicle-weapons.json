@@ -99,6 +99,26 @@
                   0.8,
                   1.6
                 ],
+                "rotationProfile": [
+                  {
+                    "time": 0.0,
+                    "value": 0.0,
+                    "inTangent": 0.0,
+                    "outTangent": 1.0
+                  },
+                  {
+                    "time": 0.5,
+                    "value": 1.0,
+                    "inTangent": 0.0,
+                    "outTangent": 0.0
+                  },
+                  {
+                    "time": 1.0,
+                    "value": 0.0,
+                    "inTangent": -1.0,
+                    "outTangent": 0.0
+                  }
+                ],
                 "baseRotationMagnitude": 0.45
               }
             }
@@ -203,6 +223,26 @@
                 "rotationRange": [
                   0.8,
                   1.6
+                ],
+                "rotationProfile": [
+                  {
+                    "time": 0.0,
+                    "value": 0.0,
+                    "inTangent": 0.0,
+                    "outTangent": 1.0
+                  },
+                  {
+                    "time": 0.5,
+                    "value": 1.0,
+                    "inTangent": 0.0,
+                    "outTangent": 0.0
+                  },
+                  {
+                    "time": 1.0,
+                    "value": 0.0,
+                    "inTangent": -1.0,
+                    "outTangent": 0.0
+                  }
                 ],
                 "baseRotationMagnitude": 0.45
               }
@@ -309,6 +349,38 @@
                   0.5,
                   0.5
                 ],
+                "rotationProfile": [
+                  {
+                    "time": 0.0,
+                    "value": 0.0017667842,
+                    "inTangent": 0.0,
+                    "outTangent": 1.0
+                  },
+                  {
+                    "time": 0.15012358,
+                    "value": 0.6543587,
+                    "inTangent": 1.9570847,
+                    "outTangent": 1.9570847
+                  },
+                  {
+                    "time": 0.5,
+                    "value": 1.0017668,
+                    "inTangent": 0.0,
+                    "outTangent": 0.0
+                  },
+                  {
+                    "time": 0.8750703,
+                    "value": 0.58834827,
+                    "inTangent": -2.7734041,
+                    "outTangent": -2.7734041
+                  },
+                  {
+                    "time": 1.0,
+                    "value": 0.0017667842,
+                    "inTangent": -1.0,
+                    "outTangent": 0.0
+                  }
+                ],
                 "baseRotationMagnitude": 0.5
               }
             },
@@ -348,6 +420,38 @@
                 "rotationRange": [
                   0.5,
                   0.5
+                ],
+                "rotationProfile": [
+                  {
+                    "time": 0.0,
+                    "value": 0.0017667842,
+                    "inTangent": 0.0,
+                    "outTangent": 1.0
+                  },
+                  {
+                    "time": 0.15012358,
+                    "value": 0.6543587,
+                    "inTangent": 1.9570847,
+                    "outTangent": 1.9570847
+                  },
+                  {
+                    "time": 0.5,
+                    "value": 1.0017668,
+                    "inTangent": 0.0,
+                    "outTangent": 0.0
+                  },
+                  {
+                    "time": 0.8750703,
+                    "value": 0.58834827,
+                    "inTangent": -2.7734041,
+                    "outTangent": -2.7734041
+                  },
+                  {
+                    "time": 1.0,
+                    "value": 0.0017667842,
+                    "inTangent": -1.0,
+                    "outTangent": 0.0
+                  }
                 ],
                 "baseRotationMagnitude": 0.5
               }

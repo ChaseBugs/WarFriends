@@ -731,7 +731,8 @@ internal static class CombatContentTests
               transporterRig.Roles.Single().Weapons.All(w=>w.WeaponType=="AutomaticRifle")&&
               buggyRig.Roles.Single(r=>r.Role=="cannon").Weapons.All(w=>w.Missile is
                   {Speed:6f,HurtRadius:1.2f,DeadRadius:1f,CurvedTrajectory:true,
-                   RotationRange:{X:.5f,Y:.5f},BaseRotationMagnitude:.5f})&&
+                   RotationRange:{X:.5f,Y:.5f},RotationProfile.Count:5,
+                   BaseRotationMagnitude:.5f})&&
               new[]{humveeRig,tankRig,buggyRig,transporterRig}.SelectMany(r=>r.Roles)
                   .SelectMany(r=>r.Weapons).All(w=>w.ProjectileGuid is
                       "855689762fa6e774aaee190652b08c6f" or "60be7eeb14f5a354c99c9ce23dbc5554"),
