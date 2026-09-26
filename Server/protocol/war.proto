@@ -107,6 +107,7 @@ message GrenadeThrowCommand {
 }
 message UseDecoyCommand { string request_id = 1; }
 message UseLandMineCommand { string request_id = 1; }
+message UseHeavyTurretCommand { string request_id = 1; }
 message MatchCommand {
   // Stop-and-wait per participant. Retry identical command_id with a NEW packet
   // sequence. Poll uses id zero and does not advance the mutation sequence.
@@ -124,6 +125,7 @@ message MatchCommand {
     GrenadeThrowCommand grenade_throw = 23;
     UseDecoyCommand use_decoy = 24;
     UseLandMineCommand use_land_mine = 25;
+    UseHeavyTurretCommand use_heavy_turret = 26;
   }
 }
 // Presentation of the actual sampled collision pose, not a client authority input.
@@ -291,6 +293,7 @@ message MatchSnapshot {
   repeated BattleProjectileState projectiles = 26;
   repeated BattleDecoyState decoys = 27;
   repeated BattleLandMineState land_mines = 28;
+  repeated BattleHeavyTurretState heavy_turrets = 29;
 }
 message BattleDecoyState {
   uint64 entity_id = 1; string request_id = 2; string owner_player_id = 3;
@@ -303,6 +306,14 @@ message BattleLandMineState {
   uint64 entity_id = 1; string request_id = 2; string owner_player_id = 3;
   int32 owner_fraction = 4; int32 hiding_component_file_id = 5;
   float x = 6; float y = 7; float z = 8; float damage = 9;
+}
+message BattleHeavyTurretState {
+  uint64 entity_id = 1; string request_id = 2; string owner_player_id = 3;
+  int32 owner_fraction = 4; int32 slot_component_file_id = 5;
+  float x = 6; float y = 7; float z = 8;
+  float health = 9; float max_health = 10; float damage = 11;
+  int32 batch_minimum = 12; int32 batch_maximum = 13;
+  float shoot_minimum = 14; float shoot_maximum = 15; float real_shot_probability = 16;
 }
 message BattleProjectileState {
   uint64 projectile_id = 1; string owner_player_id = 2; string kind = 3;
@@ -399,6 +410,8 @@ enum MatchEventKind {
   MATCH_EVENT_KIND_DECOY_DESTROYED = 32;
   MATCH_EVENT_KIND_LAND_MINE_SPAWNED = 33;
   MATCH_EVENT_KIND_LAND_MINE_TRIGGERED = 34;
+  MATCH_EVENT_KIND_HEAVY_TURRET_SPAWNED = 35;
+  MATCH_EVENT_KIND_HEAVY_TURRET_DESTROYED = 36;
 }
 message MatchEvent {
   uint64 event_id = 1; uint64 tick = 2; MatchEventKind kind = 3;

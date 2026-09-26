@@ -58,6 +58,8 @@ namespace War.Client
             Run(new MatchCommand {UseDecoy=new UseDecoyCommand {RequestId=requestId}},false,false,ct);
         public Task<MatchReply> UseLandMineAsync(string requestId,CancellationToken ct) =>
             Run(new MatchCommand {UseLandMine=new UseLandMineCommand {RequestId=requestId}},false,false,ct);
+        public Task<MatchReply> UseHeavyTurretAsync(string requestId,CancellationToken ct) =>
+            Run(new MatchCommand {UseHeavyTurret=new UseHeavyTurretCommand {RequestId=requestId}},false,false,ct);
         public Task<MatchReply> ReloadAsync(CancellationToken ct) => Run(new MatchCommand { Reload = new ReloadCommand() }, false, false, ct);
         public Task<MatchReply> SwitchWeaponAsync(int slot,CancellationToken ct) => Run(new MatchCommand { SwitchWeapon = new SwitchWeaponCommand { Slot=slot } }, false, false, ct);
         public Task<MatchReply> ForfeitAsync(CancellationToken ct) => Run(new MatchCommand { Forfeit = new ForfeitCommand() }, false, false, ct);
@@ -231,6 +233,7 @@ namespace War.Client
         }
 
         private static bool FiniteCoordinate(float x)=>!float.IsNaN(x) && !float.IsInfinity(x) && Math.Abs(x)<=10000;
+        private static bool Positive(float x)=>!float.IsNaN(x)&&!float.IsInfinity(x)&&x>0&&x<=10_000_000;
 
         private MatchArmyBatch ExchangeArmy(CancellationToken ct)
         {
@@ -409,6 +412,10 @@ namespace War.Client
                        (row.ProjectileId==0||!Guid.TryParseExact(row.ActorId,"N",out _)||
                         !FiniteCoordinate(row.X)||!FiniteCoordinate(row.Y)||!FiniteCoordinate(row.Z)))
                         throw new InvalidOperationException("Battle host returned invalid Land Mine lifecycle metadata.");
+                    if((row.Kind==MatchEventKind.HeavyTurretSpawned||row.Kind==MatchEventKind.HeavyTurretDestroyed)&&
+                       (row.ProjectileId==0||!Guid.TryParseExact(row.ActorId,"N",out _)||
+                        !FiniteCoordinate(row.X)||!FiniteCoordinate(row.Y)||!FiniteCoordinate(row.Z)))
+                        throw new InvalidOperationException("Battle host returned invalid Heavy Turret lifecycle metadata.");
                 }
                 return batch.Clone();
             }
@@ -565,6 +572,21 @@ namespace War.Client
                        float.IsNaN(mine.Damage)||float.IsInfinity(mine.Damage)||mine.Damage<=0||mine.Damage>10_000_000)
                         throw new InvalidOperationException("Battle host returned an invalid Land Mine snapshot row.");
                     priorLandMine=mine.EntityId;
+                }
+                ulong priorHeavyTurret=0;var heavyTurretSlots=new System.Collections.Generic.HashSet<int>();
+                foreach(var turret in snapshot.HeavyTurrets)
+                {
+                    if(turret.EntityId==0||turret.EntityId<=priorHeavyTurret||!Guid.TryParseExact(turret.RequestId,"N",out _)||
+                       !Guid.TryParseExact(turret.OwnerPlayerId,"N",out _)||(turret.OwnerFraction!=1&&turret.OwnerFraction!=2)||
+                       turret.SlotComponentFileId<=0||!heavyTurretSlots.Add(turret.SlotComponentFileId)||
+                       !FiniteCoordinate(turret.X)||!FiniteCoordinate(turret.Y)||!FiniteCoordinate(turret.Z)||
+                       !Positive(turret.Health)||!Positive(turret.MaxHealth)||turret.Health>turret.MaxHealth||!Positive(turret.Damage)||
+                       turret.BatchMinimum<1||turret.BatchMaximum<=turret.BatchMinimum||turret.BatchMaximum>32||
+                       !Positive(turret.ShootMinimum)||!Positive(turret.ShootMaximum)||turret.ShootMaximum<turret.ShootMinimum||
+                       float.IsNaN(turret.RealShotProbability)||float.IsInfinity(turret.RealShotProbability)||
+                       turret.RealShotProbability<0||turret.RealShotProbability>1)
+                        throw new InvalidOperationException("Battle host returned an invalid Heavy Turret snapshot row.");
+                    priorHeavyTurret=turret.EntityId;
                 }
                 ulong priorDeployable = 0;
                 foreach (var deployable in snapshot.Deployables)

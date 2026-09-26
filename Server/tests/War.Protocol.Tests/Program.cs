@@ -33,6 +33,16 @@ Check(MatchCommand.Parser.ParseFrom(mineWire.ToByteArray()).Equals(mineWire)&&
       mineWire.IntentCase==MatchCommand.IntentOneofCase.UseLandMine&&
       MatchSnapshot.Parser.ParseFrom(mineSnapshot.ToByteArray()).Equals(mineSnapshot),
     "typed Land Mine activation and authoritative state protobuf round trip");
+var turretRequest=Guid.NewGuid().ToString("N");
+var turretWire=new MatchCommand{CommandId=20,UseHeavyTurret=new UseHeavyTurretCommand{RequestId=turretRequest}};
+var turretSnapshot=new MatchSnapshot();turretSnapshot.HeavyTurrets.Add(new BattleHeavyTurretState
+{EntityId=1,RequestId=turretRequest,OwnerPlayerId=Guid.NewGuid().ToString("N"),OwnerFraction=1,
+ SlotComponentFileId=789,X=1,Y=2,Z=3,Health=100,MaxHealth=100,Damage=20,BatchMinimum=3,BatchMaximum=6,
+ ShootMinimum=2,ShootMaximum=4,RealShotProbability=.75f});
+Check(MatchCommand.Parser.ParseFrom(turretWire.ToByteArray()).Equals(turretWire)&&
+      turretWire.IntentCase==MatchCommand.IntentOneofCase.UseHeavyTurret&&
+      MatchSnapshot.Parser.ParseFrom(turretSnapshot.ToByteArray()).Equals(turretSnapshot),
+    "typed Heavy Turret activation and authoritative state protobuf round trip");
 byte[] secret = RandomNumberGenerator.GetBytes(32);
 var tickets = new BattleTickets(Convert.ToBase64String(secret));
 var claims = new TicketClaims { PlayerId = Guid.NewGuid().ToString("N"), ServerId = "test-1", SessionId = 11, IssuedUnixSeconds = 1000, ExpiresUnixSeconds = 1120, Purpose = "connectivity-probe" };

@@ -154,6 +154,8 @@ public sealed class MatchEndpoint
                         clean.UseDecoy=new UseDecoyCommand {RequestId=command.UseDecoy.RequestId};break;
                     case MatchCommand.IntentOneofCase.UseLandMine:
                         clean.UseLandMine=new UseLandMineCommand {RequestId=command.UseLandMine.RequestId};break;
+                    case MatchCommand.IntentOneofCase.UseHeavyTurret:
+                        clean.UseHeavyTurret=new UseHeavyTurretCommand {RequestId=command.UseHeavyTurret.RequestId};break;
                     case MatchCommand.IntentOneofCase.DeployArmy:
                         clean.DeployArmy=new DeployArmyCommand {OptionIndex=command.DeployArmy.OptionIndex};break;
                     case MatchCommand.IntentOneofCase.VehicleAttack:

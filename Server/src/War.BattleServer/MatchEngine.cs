@@ -66,9 +66,11 @@ public sealed partial class MatchEngine
     private readonly EnemyPoseCatalog? enemyPoses;
     private readonly DecoySourceCatalog? decoySource;
     private readonly LandMineSourceCatalog? landMineSource;
+    private readonly HeavyTurretSourceCatalog? heavyTurretSource;
     private readonly int decoyMaxDisplayLevel;
     private readonly DecoyMatchRegistry decoys=new();
     private readonly LandMineMatchRegistry landMines=new();
+    private readonly HeavyTurretMatchRegistry heavyTurrets=new();
     private readonly Dictionary<ulong,BattleArmyEntityState> activeArmyEntities=[];
     // Air entities use the same single-writer tick as the rest of the match.  The
     // registry is deliberately kept separate from infantry state until the
@@ -700,6 +702,7 @@ public sealed partial class MatchEngine
         {
             decoySource=content.Decoys;
             landMineSource=content.LandMines;
+            heavyTurretSource=content.HeavyTurrets;
             decoyMaxDisplayLevel=content.BarrelPolicy.MaxDisplayLevel;
             armyNavMeshConnectivity=content.ArmyNavMeshConnectivity;
         }
@@ -1225,6 +1228,12 @@ public sealed partial class MatchEngine
             Emit(MatchEventKind.LandMineTriggered,ownerPlayerId,"",mine.EntityId,
                 mine.Position,0,"owner-disconnected");
         }
+        foreach(var turret in heavyTurrets.RemoveOwner(ownerPlayerId))
+        {
+            stateRevision++;
+            Emit(MatchEventKind.HeavyTurretDestroyed,ownerPlayerId,"",turret.EntityId,
+                turret.Position,0,"owner-disconnected");
+        }
         if (cardEffects.RemoveOwner(ownerPlayerId) > 0) stateRevision++;
         foreach (var air in airEntities.Snapshot().Where(x => x.AttackerPlayerId == ownerPlayerId))
         {
@@ -1407,6 +1416,8 @@ public sealed partial class MatchEngine
             return UseDecoy(p,c.UseDecoy.RequestId);
         if(c.IntentCase==MatchCommand.IntentOneofCase.UseLandMine)
             return UseLandMine(p,c.UseLandMine.RequestId);
+        if(c.IntentCase==MatchCommand.IntentOneofCase.UseHeavyTurret)
+            return UseHeavyTurret(p,c.UseHeavyTurret.RequestId);
         if(c.IntentCase==MatchCommand.IntentOneofCase.SwitchWeapon)
         {
             int slot=c.SwitchWeapon.Slot;
@@ -1924,6 +1935,14 @@ public sealed partial class MatchEngine
             EntityId=x.EntityId,RequestId=x.RequestId,OwnerPlayerId=x.OwnerPlayerId,
             OwnerFraction=x.OwnerFraction,HidingComponentFileId=x.HidingComponentFileId,
             X=x.Position.X,Y=x.Position.Y,Z=x.Position.Z,Damage=x.Damage
+        }));
+        snapshot.HeavyTurrets.AddRange(heavyTurrets.Snapshot().Select(x=>new BattleHeavyTurretState
+        {
+            EntityId=x.EntityId,RequestId=x.RequestId,OwnerPlayerId=x.OwnerPlayerId,OwnerFraction=x.OwnerFraction,
+            SlotComponentFileId=x.SlotComponentFileId,X=x.Position.X,Y=x.Position.Y,Z=x.Position.Z,
+            Health=x.Health,MaxHealth=x.MaximumHealth,Damage=x.Damage,BatchMinimum=x.BatchMinimum,
+            BatchMaximum=x.BatchMaximum,ShootMinimum=x.ShootMinimum,ShootMaximum=x.ShootMaximum,
+            RealShotProbability=x.RealShotProbability
         }));
         if (vehicles != null)
             snapshot.Vehicles.AddRange(vehicles.Snapshot().Select(v =>

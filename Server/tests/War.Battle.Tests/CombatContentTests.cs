@@ -2421,6 +2421,37 @@ internal static class CombatContentTests
               mineVictimAfter.ConfirmedPlayerHits==mineVictimBefore.ConfirmedPlayerHits&&
               afterMineTrigger.Players.Single(x=>x.PlayerId==decoyPlayer).ConfirmedPlayerHits==1,
               "authoritative tick consumes a source-box Land Mine and applies host explosion damage once");
+        var heavyTurretManifest=decoyManifest with {MatchId="heavy-turret-match"};
+        var heavyTurretMatch=new MatchEngine(heavyTurretManifest,content:content,armyChoice:_=>0);
+        heavyTurretMatch.ConfigureBattleAllocations([
+            new(decoyPlayer,["CardHeavyTurret"],[],[0],[133],[-1]),
+            new(decoyOpponent,[],[],[0],[-1],[-1])]);
+        heavyTurretMatch.Admit(decoyPlayer);heavyTurretMatch.Admit(decoyOpponent);
+        Check(heavyTurretMatch.Command(decoyPlayer,new(){CommandId=1,SelectCards=new SelectCardsCommand
+              {CardIds={"CardHeavyTurret"},NormalUpgradeIndexes={0},SpecialUpgradeIndexes={133},EliteUpgradeIndexes={-1}}}).Code=="cards-selected"&&
+              heavyTurretMatch.Command(decoyOpponent,new(){CommandId=1,SelectCards=new SelectCardsCommand
+              {NormalUpgradeIndexes={0},SpecialUpgradeIndexes={-1},EliteUpgradeIndexes={-1}}}).Code=="cards-selected",
+              "Heavy Turret selection binds the trusted card before battle start");
+        heavyTurretMatch.Command(decoyPlayer,new(){CommandId=2,Ready=new(){ManifestHash=heavyTurretMatch.ManifestHash}});
+        heavyTurretMatch.Command(decoyOpponent,new(){CommandId=2,Ready=new(){ManifestHash=heavyTurretMatch.ManifestHash}});
+        heavyTurretMatch.Advance(60);string liveHeavyTurretRequest=new string('3',32);
+        var heavyTurretReply=heavyTurretMatch.Command(decoyPlayer,new(){CommandId=3,
+            UseHeavyTurret=new(){RequestId=liveHeavyTurretRequest}});
+        var expectedHeavyTurret=content.HeavyTurrets.Compose(22);
+        Check(heavyTurretReply.Code=="heavy-turret-spawned"&&heavyTurretReply.Snapshot.HeavyTurrets.Count==1&&
+              heavyTurretReply.Snapshot.HeavyTurrets[0] is var liveTurret&&liveTurret.OwnerPlayerId==decoyPlayer&&
+              liveTurret.OwnerFraction==1&&liveTurret.RequestId==liveHeavyTurretRequest&&
+              Math.Abs(liveTurret.Health-expectedHeavyTurret.Health)<.001f&&liveTurret.Health==liveTurret.MaxHealth&&
+              Math.Abs(liveTurret.Damage-expectedHeavyTurret.Damage)<.001f&&liveTurret.BatchMinimum==expectedHeavyTurret.BatchMinimum&&
+              liveTurret.BatchMaximum==expectedHeavyTurret.BatchMaximum&&
+              content.HeavyTurrets.ForMap(park)[coverOne.SourceIndex].Slots.Any(x=>x.ComponentFileId==liveTurret.SlotComponentFileId),
+              "live authenticated Heavy Turret activation projects one current-cover source placement and composed stats");
+        Check(heavyTurretMatch.Command(decoyPlayer,new(){CommandId=4,
+                  UseHeavyTurret=new(){RequestId=liveHeavyTurretRequest}}).Code=="heavy-turret-replayed"&&
+              heavyTurretMatch.Command(decoyPlayer,new(){CommandId=5,
+                  UseHeavyTurret=new(){RequestId=new string('2',32)}}).Code=="heavy-turret-unavailable"&&
+              heavyTurretMatch.Snapshot().HeavyTurrets.Count==1&&heavyTurretMatch.Snapshot().CardActivations==1,
+              "Heavy Turret replay creates no duplicate and exhausted inventory cannot create state");
         var detached=MatchManifest.Validate(armyManifest);
         equipped[0]="ID_UNIT-UNKNOWN";
         armyStages[0]=101;
