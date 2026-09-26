@@ -25,6 +25,7 @@ public sealed class SelfHostedDeathMatchBridge : MonoBehaviour
 	private bool otherMinigunMotor;
 	private float grenadeSwipeStartedAt;
 	private SelfHostedProjectilePresenter projectilePresenter;
+	private SelfHostedDecoyPresenter decoyPresenter;
 
 	public void Configure(SelfHostedBattleClient owner, PlayerController localPlayer, PlayerController otherPlayer)
 	{
@@ -43,6 +44,8 @@ public sealed class SelfHostedDeathMatchBridge : MonoBehaviour
 		client.BindRifleView(other.playerProperties.playerID, other.transform, otherAnimator);
 		projectilePresenter = gameObject.AddComponent<SelfHostedProjectilePresenter>();
 		projectilePresenter.Configure(local, other);
+		decoyPresenter = gameObject.AddComponent<SelfHostedDecoyPresenter>();
+		decoyPresenter.Configure(client.LocalPlayerId);
 		client.StateReceived += Apply;
 		client.CombatEventReceived += ApplyEvent;
 		if (client.State != null) Apply(client.State);
@@ -225,6 +228,7 @@ public sealed class SelfHostedDeathMatchBridge : MonoBehaviour
 			}
 		}
 		if (projectilePresenter != null) projectilePresenter.Apply(snapshot);
+		if (decoyPresenter != null) decoyPresenter.Apply(snapshot);
 		if (!terminalPresented && snapshot.Phase == BattlePhase.Ended)
 		{
 			ClientGameEndReason reason = MatchOutcomeProjection.ForPlayer(snapshot, client.LocalPlayerId);
@@ -240,6 +244,7 @@ public sealed class SelfHostedDeathMatchBridge : MonoBehaviour
 	private void ApplyEvent(MatchEvent item)
 	{
 		if (projectilePresenter != null) projectilePresenter.ApplyEvent(item);
+		if (decoyPresenter != null) decoyPresenter.ApplyEvent(item);
 	}
 
 	private void ApplyBazookaTarget(bool visible)

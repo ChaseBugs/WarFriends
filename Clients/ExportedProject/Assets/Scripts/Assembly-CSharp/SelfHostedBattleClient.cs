@@ -252,6 +252,14 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
     public Task RetryPending() { return Execute(c => c.RetryPendingAsync(lifetime.Token)); }
     public Task Refresh() { return Execute(c => c.PollAsync(lifetime.Token)); }
     public Task DeployArmy(int optionIndex) { return Execute(c => c.DeployArmyAsync(optionIndex, lifetime.Token)); }
+    public async Task<MatchReply> UseDecoyResult()
+    {
+        if (!IsConnected || connection == null)
+            throw new InvalidOperationException("Connect to a self-hosted match first.");
+        MatchReply reply = await connection.UseDecoyAsync(Guid.NewGuid().ToString("N"), lifetime.Token);
+        Apply(reply);
+        return reply.Clone();
+    }
     public Task SelectCards(IEnumerable<string> cards, IEnumerable<int> normal, IEnumerable<int> special,
         IEnumerable<int> elite, IEnumerable<string> buddies)
     {

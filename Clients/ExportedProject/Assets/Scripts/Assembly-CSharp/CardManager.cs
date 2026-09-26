@@ -459,7 +459,8 @@ public class CardManager : DatabaseSerializedObjectGeneric<CardManager.CardManag
 		{
 			this.CardUsed(card, fraction, fraction == PlayerController.currentPlayer.fraction);
 		}
-		mPhotonView.RPC("CardWasUsedOnline", PhotonTargets.Others, card.id, (byte)fraction, card.playerId);
+		if (SelfHostedBattleClient.Active == null || !SelfHostedBattleClient.Active.IsConnected)
+			mPhotonView.RPC("CardWasUsedOnline", PhotonTargets.Others, card.id, (byte)fraction, card.playerId);
 	}
 
 	public void LoadData(JToken cardData)
@@ -515,6 +516,12 @@ public class CardManager : DatabaseSerializedObjectGeneric<CardManager.CardManag
 		{
 			mCardUseInProgress = true;
 			mCooldown = card.cooldown;
+			SelfHostedBattleClient selfHosted = SelfHostedBattleClient.Active;
+			if (selfHosted != null && selfHosted.IsConnected && card is CardDecoy)
+			{
+				UseSelfHostedDecoy(selfHosted, card, PlayerController.currentPlayer.fraction);
+				return;
+			}
 			card.playerId = PhotonNetwork.player.ID;
 			mPhotonView.RPC("PlayCardRPC", PhotonTargets.Others, card.id, (byte)PlayerController.currentPlayer.fraction, PhotonNetwork.player.ID);
 			card.UseCard(this, PlayerController.currentPlayer.fraction);
@@ -529,6 +536,30 @@ public class CardManager : DatabaseSerializedObjectGeneric<CardManager.CardManag
 			cardUsedByMe.Add(card);
 			cardsForGame.Remove(card);
 			SoundsManager.Instance.PlaySound(SoundsManager.SoundsEnum.CardPlayed);
+		}
+	}
+
+	private async void UseSelfHostedDecoy(SelfHostedBattleClient client, Card card, Fractions fraction)
+	{
+		try
+		{
+			var reply = await client.UseDecoyResult();
+			if (reply.Code != "decoy-spawned" && reply.Code != "decoy-replayed")
+				throw new InvalidOperationException("Battle host rejected Decoy activation: " + reply.Code);
+			card.playerId = 0;
+			CardWasUsed(card, fraction);
+			card.RemoveCard();
+			StatsManager.instance.matchStats.PlayCard(card);
+			BattleRewardsManager.instance.AddWarcardInMatch(card.id);
+			mUsedCards.Add(card);
+			cardUsedByMe.Add(card);
+			cardsForGame.Remove(card);
+			SoundsManager.Instance.PlaySound(SoundsManager.SoundsEnum.CardPlayed);
+		}
+		catch (Exception exception)
+		{
+			mCardUseInProgress = false;
+			Debug.LogError("Self-hosted Decoy activation failed: " + exception.Message);
 		}
 	}
 
