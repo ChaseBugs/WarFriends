@@ -75,7 +75,7 @@ public sealed partial class MatchEngine
                 try
                 {
                     var flight=new BulletFlight(shotId,turret.OwnerPlayerId,
-                        new(heavyTurretSource.EffectiveBulletSpeed,heavyTurretSource.BulletCheckDistance,false),
+                        new(HeavyTurretBulletSpeed(target.Kind),heavyTurretSource.BulletCheckDistance,false),
                         origin,target.Position,tick,(from,direction,range)=>TraceHeavyTurretShot(turret.OwnerPlayerId,from,direction,range));
                     heavyTurretProjectiles.Add(shotId,new(flight,turret.Damage));
                 }
@@ -117,7 +117,7 @@ public sealed partial class MatchEngine
         if(player.Route!=null&&pose.MovingTarget!=null)
         {
             Vector3 target=pose.MovingTarget.Position;Vector3 velocity=HeavyTurretPlayerVelocity(player);
-            float seconds=Vector3.Distance(origin,target)/heavyTurretSource!.EffectiveBulletSpeed;
+            float seconds=Vector3.Distance(origin,target)/HeavyTurretBulletSpeed("player");
             var predicted=target+velocity*seconds;
             if(!PlayerHitbox.Finite(predicted))throw new InvalidDataException("Heavy Turret prediction escaped scene bounds.");
             return predicted;
@@ -126,11 +126,18 @@ public sealed partial class MatchEngine
         if(parts.Count==0)throw new InvalidDataException("Heavy Turret target has no source shot parts.");
         return parts.OrderBy(x=>Vector3.DistanceSquared(origin,x.Center)).First().Center;
     }
-    private static Vector3 HeavyTurretPlayerVelocity(Player player)
+    private float HeavyTurretBulletSpeed(string targetKind)=>heavyTurretSource!.EffectiveBulletSpeed*(targetKind=="player"?.5f:1f);
+    private Vector3 HeavyTurretPlayerVelocity(Player player)
     {
         if(player.Route==null)return Vector3.Zero;
-        foreach(var waypoint in player.Route)
-        {var delta=waypoint-player.Position;if(delta.LengthSquared()>.000001f)return Vector3.Normalize(delta)*player.Definition.MovementSpeed;}
+        if(tick<=player.MoveStart||tick>=player.MoveEnd)return Vector3.Zero;
+        float traveled=(float)(tick-player.MoveStart)/MatchManifest.TickRate*player.Definition.MovementSpeed;
+        for(int i=1;i<player.Route.Length;i++)
+        {
+            var delta=player.Route[i]-player.Route[i-1];float length=delta.Length();
+            if(length>0&&traveled<=length)return delta/length*player.Definition.MovementSpeed;
+            traveled-=length;
+        }
         return Vector3.Zero;
     }
     private int Choose(int count)
@@ -165,10 +172,7 @@ public sealed partial class MatchEngine
     {
         if(map==null)throw new InvalidDataException("Heavy Turret shot lost its map.");
         if(rifleCombat==null)throw new InvalidDataException("Heavy Turret shot lacks host player poses.");
-        var world=new ShotCollisionWorld(map,players.Select(x=>new CollisionPlayer(x.Definition.PlayerId,
-                rifleCombat.Pose(x.Definition.PlayerId).Collision)),
-            dynamicTargets:GroundVehicleShotTargets);
-        return world.Raycast(owner,origin,direction,range,mask);
+        return rifleCombat.TraceForBazooka(owner,origin,direction,range,mask);
     }
     private bool HeavyTurretCanSee(HeavyTurretMatchEntity turret,HeavyTurretTarget target)
     {
