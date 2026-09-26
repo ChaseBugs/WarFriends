@@ -27,6 +27,13 @@
       "REALSHOTPROBABILITY": 0.8
     }
   ],
+  "armyPolicy": {
+    "bulletSpeed": 25.0,
+    "playerDamageRatio": 0.5,
+    "playerOvertimeDamageRatio": 0.5,
+    "playerBehindShieldDamageRatio": 0.0,
+    "shieldHitProbability": 0.0
+  },
   "prefab": {
     "source": "Assets/GameObject/HeavyTurret.prefab",
     "sha256": "237be8eb3d033154e081ac4a83930cd1a6e3d709e6fa6c4bae1dd6be12a2785f",
@@ -51,7 +58,7 @@
         0.34387049507555206,
         0.1813752822115694
       ],
-      "effectiveBulletSpeed": 5.0,
+      "bulletDefaultSpeed": 5.0,
       "bulletCheckDistance": 0.6,
       "bulletSource": "Assets/GameObject/BulletSlow.prefab",
       "bulletSha256": "5379f6aba1560b8eb3d7d386d1349454b97ea133163ade9a313e2bc34d1adfae"

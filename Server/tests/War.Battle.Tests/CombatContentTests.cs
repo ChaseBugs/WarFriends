@@ -1438,8 +1438,10 @@ internal static class CombatContentTests
                   Math.Abs(heavyMid.Health-858.6711f)<.001f&&Math.Abs(heavyMid.Damage-55.07f)<.001f&&
                   heavyMid.BatchMinimum==3&&heavyMid.BatchMaximum==6&&Math.Abs(heavyMid.ShootMinimum-2.5f)<.001f&&
                   Math.Abs(heavyMid.ShootMaximum-5)<.001f&&Math.Abs(heavyMid.RealShotProbability-.775f)<.001f&&
-                  heavyTurrets.EffectiveRealShotProbability==1&&heavyTurrets.EffectiveBulletSpeed==5&&
-                  heavyTurrets.BulletCheckDistance==.6f&&PlayerHitbox.Finite(heavyTurrets.MuzzleOffset)&&
+                  heavyTurrets.EffectiveRealShotProbability==1&&heavyTurrets.EffectiveBulletSpeed==25&&
+                  heavyTurrets.BulletCheckDistance==.6f&&heavyTurrets.PlayerDamageRatio==.5f&&
+                  heavyTurrets.PlayerOvertimeDamageRatio==.5f&&heavyTurrets.ShieldHitProbability==0&&
+                  PlayerHitbox.Finite(heavyTurrets.MuzzleOffset)&&
                   heavyTurrets.Colliders.Count==3&&heavyTurrets.Colliders.Select(x=>x.ComponentFileId)
                       .SequenceEqual(new[]{6525385,6572182,6582579})&&
                   heavyTurrets.Colliders.All(x=>x.Size.X>0&&x.Size.Y>0&&x.Size.Z>0)&&

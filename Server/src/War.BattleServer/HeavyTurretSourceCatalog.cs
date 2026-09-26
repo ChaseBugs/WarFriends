@@ -18,7 +18,9 @@ public sealed class HeavyTurretSourceCatalog
 {
     private sealed class Root {public int Version{get;set;}public string Client{get;set;}="";public int SpawnCount{get;set;}
         public float NavMeshSampleRadius{get;set;}public int NavMeshAreaMask{get;set;}public int MaxDisplayLevel{get;set;}
-        public Stat[] Stats{get;set;}=[];public Prefab Prefab{get;set;}=new();public Map[] Maps{get;set;}=[];}
+        public Stat[] Stats{get;set;}=[];public ArmyPolicy ArmyPolicy{get;set;}=new();public Prefab Prefab{get;set;}=new();public Map[] Maps{get;set;}=[];}
+    private sealed class ArmyPolicy {public float BulletSpeed{get;set;}public float PlayerDamageRatio{get;set;}
+        public float PlayerOvertimeDamageRatio{get;set;}public float PlayerBehindShieldDamageRatio{get;set;}public float ShieldHitProbability{get;set;}}
     private sealed class Stat {[JsonPropertyName("TIER")]public int Tier{get;set;}[JsonPropertyName("HP")]public float Health{get;set;}
         [JsonPropertyName("DAMAGE")]public float Damage{get;set;}[JsonPropertyName("BATCHSIZEMIN")]public int BatchMinimum{get;set;}
         [JsonPropertyName("BATCHSIZEMAX")]public int BatchMaximum{get;set;}[JsonPropertyName("SHOTFREQUENCYMIN")]public float ShootMinimum{get;set;}
@@ -27,7 +29,7 @@ public sealed class HeavyTurretSourceCatalog
         public float MinShootTime{get;set;}public float MaxShootTime{get;set;}public float MaxShotRotation{get;set;}
         public bool PredictPosition{get;set;}public int PrimaryTarget{get;set;}public bool UseUnitTarget{get;set;}
         public float RealShotProbability{get;set;}public int BatchedWeaponComponentFileId{get;set;}public int WeaponComponentFileId{get;set;}
-        public float[] MuzzlePosition{get;set;}=[];public float EffectiveBulletSpeed{get;set;}public float BulletCheckDistance{get;set;}
+        public float[] MuzzlePosition{get;set;}=[];public float BulletDefaultSpeed{get;set;}public float BulletCheckDistance{get;set;}
         public string BulletSource{get;set;}="";public string BulletSha256{get;set;}="";}
     private sealed class Prefab {public string Source{get;set;}="";public string Sha256{get;set;}="";public int RootTransformFileId{get;set;}
         public int HeavyTurretComponentFileId{get;set;}public int TurretWeaponComponentFileId{get;set;}public Turret Turret{get;set;}=new();
@@ -44,7 +46,9 @@ public sealed class HeavyTurretSourceCatalog
     private readonly HeavyTurretStats minimum,maximum;
     public string Revision{get;}public int SpawnCount=>1;public float NavMeshSampleRadius=>10;public int NavMeshAreaMask=>1;
     public int MaxDisplayLevel=>44;public string PrefabRevision{get;}public float EffectiveRealShotProbability=>1;
-    public Vector3 MuzzleOffset{get;}public float EffectiveBulletSpeed=>5;public float BulletCheckDistance=>.6f;
+    public Vector3 MuzzleOffset{get;}public float EffectiveBulletSpeed=>25;public float BulletCheckDistance=>.6f;
+    public float PlayerDamageRatio=>.5f;public float PlayerOvertimeDamageRatio=>.5f;
+    public float PlayerBehindShieldDamageRatio=>0;public float ShieldHitProbability=>0;
     public IReadOnlyList<HeavyTurretCollider> Colliders{get;}
     private HeavyTurretSourceCatalog(string revision,string prefabRevision,HeavyTurretStats min,HeavyTurretStats max,
         Dictionary<string,IReadOnlyList<HeavyTurretCover>> maps,IReadOnlyList<HeavyTurretCollider> colliders,Vector3 muzzleOffset)
@@ -91,11 +95,15 @@ public sealed class HeavyTurretSourceCatalog
         if(min!=new HeavyTurretStats(98,11.66f,3,6,3,6,.75f)||max!=new HeavyTurretStats(1619.34216f,98.48f,4,7,2,4,.8f))
             throw new InvalidDataException("Heavy Turret card endpoints changed.");
         var p=root.Prefab;var t=p.Turret;
+        var policy=root.ArmyPolicy;
+        if(policy.BulletSpeed!=25||policy.PlayerDamageRatio!=.5f||policy.PlayerOvertimeDamageRatio!=.5f||
+           policy.PlayerBehindShieldDamageRatio!=0||policy.ShieldHitProbability!=0)
+            throw new InvalidDataException("Heavy Turret army policy changed.");
         if(p.Source!="Assets/GameObject/HeavyTurret.prefab"||p.Sha256!="237be8eb3d033154e081ac4a83930cd1a6e3d709e6fa6c4bae1dd6be12a2785f"||
            p.RootTransformFileId!=424449||p.HeavyTurretComponentFileId!=11491323||p.TurretWeaponComponentFileId!=11459786||
            t.AimTime!=1||t.BatchSizeMin!=1||t.BatchSizeMax!=5||t.MinShootTime!=1||t.MaxShootTime!=5||t.MaxShotRotation!=360||
            !t.PredictPosition||t.PrimaryTarget!=3||!t.UseUnitTarget||t.RealShotProbability!=1||t.BatchedWeaponComponentFileId!=11444804||
-           t.WeaponComponentFileId!=11455190||t.EffectiveBulletSpeed!=5||t.BulletCheckDistance!=.6f||
+           t.WeaponComponentFileId!=11455190||t.BulletDefaultSpeed!=5||t.BulletCheckDistance!=.6f||
            t.BulletSource!="Assets/GameObject/BulletSlow.prefab"||t.BulletSha256!="5379f6aba1560b8eb3d7d386d1349454b97ea133163ade9a313e2bc34d1adfae"||
            !p.MeshComponentFileIds.SequenceEqual([3327192,3335660,3361517,3339548])||
            p.Colliders.Length!=3||!p.Colliders.Select(x=>x.ComponentFileId).SequenceEqual([6525385,6572182,6582579]))

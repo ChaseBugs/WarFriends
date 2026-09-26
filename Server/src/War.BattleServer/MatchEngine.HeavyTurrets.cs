@@ -112,9 +112,26 @@ public sealed partial class MatchEngine
     private Vector3 HeavyTurretPlayerTarget(string playerId,Vector3 origin)
     {
         if(rifleCombat==null)throw new InvalidDataException("Heavy Turret target lacks host player poses.");
-        var parts=rifleCombat.Pose(playerId).Collision.Parts;
+        var player=Find(playerId)??throw new InvalidDataException("Heavy Turret target player disappeared.");
+        var pose=rifleCombat.Pose(playerId);
+        if(player.Route!=null&&pose.MovingTarget!=null)
+        {
+            Vector3 target=pose.MovingTarget.Position;Vector3 velocity=HeavyTurretPlayerVelocity(player);
+            float seconds=Vector3.Distance(origin,target)/heavyTurretSource!.EffectiveBulletSpeed;
+            var predicted=target+velocity*seconds;
+            if(!PlayerHitbox.Finite(predicted))throw new InvalidDataException("Heavy Turret prediction escaped scene bounds.");
+            return predicted;
+        }
+        var parts=pose.Collision.Parts;
         if(parts.Count==0)throw new InvalidDataException("Heavy Turret target has no source shot parts.");
         return parts.OrderBy(x=>Vector3.DistanceSquared(origin,x.Center)).First().Center;
+    }
+    private static Vector3 HeavyTurretPlayerVelocity(Player player)
+    {
+        if(player.Route==null)return Vector3.Zero;
+        foreach(var waypoint in player.Route)
+        {var delta=waypoint-player.Position;if(delta.LengthSquared()>.000001f)return Vector3.Normalize(delta)*player.Definition.MovementSpeed;}
+        return Vector3.Zero;
     }
     private int Choose(int count)
     {int choice=armyChoice(count);if(choice<0||choice>=count)throw new InvalidDataException("Heavy Turret target selection escaped its source set.");return choice;}
@@ -174,7 +191,8 @@ public sealed partial class MatchEngine
             if(impact.Hit.PlayerId is {} playerId)
                 ApplyResolvedPlayerDamage(impact.OwnerId,playerId,
                     new ResolvedPlayerDamage(pair.Value.Damage,CombatDamageType.Shot,HasWeapon:true,FriendKill:false,
-                        PartWeight:impact.Hit.PartWeight),1,true);
+                        PartWeight:impact.Hit.PartWeight,PlayerCoefficient:heavyTurretSource!.PlayerDamageRatio,
+                        PlayerOvertimeCoefficient:heavyTurretSource.PlayerOvertimeDamageRatio,Overtime:overtime),1,true);
             else if(impact.Hit is {DynamicDecoy:true,DynamicEntityId:ulong decoyId})
                 ApplyDecoyProjectileImpact(impact.OwnerId,decoyId,pair.Value.Damage,impact.Hit.PartWeight,impact.ProjectileId);
             else if(impact.Hit is {DynamicArmyInfantry:true,DynamicEntityId:ulong armyId})

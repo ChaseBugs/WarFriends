@@ -109,7 +109,7 @@ def extract_prefab():
                       "predictPosition":bool(int(field(t,"predictPosition"))),"primaryTarget":int(field(t,"primaryTarget")),
                       "useUnitTarget":bool(int(field(t,"useUnitTarget")),),"realShotProbability":float(field(t,"realShotProbability")),
                       "batchedWeaponComponentFileId":batched_id,"weaponComponentFileId":weapon_id,
-                      "muzzlePosition":muzzle,"effectiveBulletSpeed":5.0,"bulletCheckDistance":float(field(bullet,"distanceToCheck")),
+                      "muzzlePosition":muzzle,"bulletDefaultSpeed":5.0,"bulletCheckDistance":float(field(bullet,"distanceToCheck")),
                       "bulletSource":"Assets/GameObject/BulletSlow.prefab","bulletSha256":digest(bullet_path)},
             "meshComponentFileIds":[i for i,_ in meshes],"colliders":collider_rows}
 
@@ -117,8 +117,16 @@ def main():
     content=json.loads(CONTENT.read_text(encoding="utf-8"))
     rows=next(s["rows"] for s in content["sheets"] if s["type"]=="Google2u.DBUpgradeSlotsHeavyTurret")
     if len(rows)!=2: raise ValueError("HeavyTurret stat endpoints changed")
+    army_rows=next(s["rows"] for s in content["sheets"] if s["type"]=="Google2u.ArmyUpgrades")
+    army=next((x for x in army_rows if x["NAME"]=="Google2u.DBUpgradeSlotsHeavyTurret"),None)
+    if army is None: raise ValueError("HeavyTurret army policy missing")
     artifact={"version":2,"client":"1.4.0","spawnCount":1,"navMeshSampleRadius":10.0,"navMeshAreaMask":1,
-              "maxDisplayLevel":44,"stats":rows,"prefab":extract_prefab(),"maps":[extract_map(x) for x in content["maps"]]}
+              "maxDisplayLevel":44,"stats":rows,
+              "armyPolicy":{"bulletSpeed":army["BULLETSPEED"],"playerDamageRatio":army["PLAYERDAMAGERATIO"],
+                             "playerOvertimeDamageRatio":army["PLAYERDAMAGEOVERTIMERATIO"],
+                             "playerBehindShieldDamageRatio":army["PLAYERBEHINDSHIELDDMGRATIO"],
+                             "shieldHitProbability":army["HITSHIELDPROB"]},
+              "prefab":extract_prefab(),"maps":[extract_map(x) for x in content["maps"]]}
     serialized=json.dumps(artifact,indent=2,ensure_ascii=False)+"\n"
     if sys.argv[1:]==["--check"]:
         if not OUTPUT.exists() or OUTPUT.read_text(encoding="utf-8")!=serialized: raise ValueError("Heavy Turret artifact is stale")
