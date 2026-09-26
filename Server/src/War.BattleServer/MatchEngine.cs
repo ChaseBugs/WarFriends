@@ -858,6 +858,11 @@ public sealed partial class MatchEngine
                     TryCommitVehicleAttack(vehicle.OwnerPlayerId, vehicle.EntityId, out _);
             }
         if(advanced&&phase==BattlePhase.Running)AdvanceTransporterShots();
+        if(advanced&&phase==BattlePhase.Running)
+        {
+            try{AdvanceHeavyTurrets();}
+            catch(InvalidDataException){End("invalid-heavy-turret-authority","",false);return;}
+        }
         if (advanced && phase == BattlePhase.Running && vehicleProjectiles.Count > 0)
         {
             foreach (var pair in vehicleProjectiles.ToArray())
@@ -887,6 +892,10 @@ public sealed partial class MatchEngine
                     else if(impact.Collision is {DynamicDecoy:true,DynamicEntityId:ulong decoyId}&&
                             trustedVehicleDamage is >0&&float.IsFinite(trustedVehicleDamage.Value))
                         ApplyDecoyProjectileImpact(owner,decoyId,trustedVehicleDamage.Value,
+                            impact.Collision.PartWeight,impact.ProjectileId);
+                    else if(impact.Collision is {DynamicHeavyTurret:true,DynamicEntityId:ulong turretId}&&
+                            trustedVehicleDamage is >0&&float.IsFinite(trustedVehicleDamage.Value))
+                        ApplyHeavyTurretProjectileImpact(owner,turretId,trustedVehicleDamage.Value,
                             impact.Collision.PartWeight,impact.ProjectileId);
                 }
             }
@@ -1184,6 +1193,9 @@ public sealed partial class MatchEngine
                 {
                     if(impact.Hit.DynamicDecoy)
                         ApplyDecoyProjectileImpact(impact.OwnerId,vehicleId,pair.Value.Damage.Amount,
+                            impact.Hit.PartWeight,impact.ProjectileId);
+                    else if(impact.Hit.DynamicHeavyTurret)
+                        ApplyHeavyTurretProjectileImpact(impact.OwnerId,vehicleId,pair.Value.Damage.Amount,
                             impact.Hit.PartWeight,impact.ProjectileId);
                     else if(impact.Hit.DynamicPassengerRole is { } role)
                         ApplyGroundVehiclePassengerProjectileImpact(impact.OwnerId,vehicleId,role,
@@ -1942,7 +1954,9 @@ public sealed partial class MatchEngine
             SlotComponentFileId=x.SlotComponentFileId,X=x.Position.X,Y=x.Position.Y,Z=x.Position.Z,
             Health=x.Health,MaxHealth=x.MaximumHealth,Damage=x.Damage,BatchMinimum=x.BatchMinimum,
             BatchMaximum=x.BatchMaximum,ShootMinimum=x.ShootMinimum,ShootMaximum=x.ShootMaximum,
-            RealShotProbability=x.RealShotProbability
+            RealShotProbability=x.RealShotProbability,AttackPhase=x.Attack.Phase.ToString().ToLowerInvariant(),
+            TargetId=x.Attack.TargetId,BatchRemaining=x.Attack.BatchRemaining,
+            CooldownTicksRemaining=x.Attack.CooldownTicksRemaining
         }));
         if (vehicles != null)
             snapshot.Vehicles.AddRange(vehicles.Snapshot().Select(v =>

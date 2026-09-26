@@ -416,6 +416,10 @@ namespace War.Client
                        (row.ProjectileId==0||!Guid.TryParseExact(row.ActorId,"N",out _)||
                         !FiniteCoordinate(row.X)||!FiniteCoordinate(row.Y)||!FiniteCoordinate(row.Z)))
                         throw new InvalidOperationException("Battle host returned invalid Heavy Turret lifecycle metadata.");
+                    if((row.Kind==MatchEventKind.HeavyTurretDamaged||row.Kind==MatchEventKind.HeavyTurretFired)&&
+                       (row.ProjectileId==0||!Guid.TryParseExact(row.ActorId,"N",out _)||row.TargetId.Length<1||row.TargetId.Length>64||
+                        row.TargetId.Any(char.IsControl)||!FiniteCoordinate(row.X)||!FiniteCoordinate(row.Y)||!FiniteCoordinate(row.Z)))
+                        throw new InvalidOperationException("Battle host returned invalid Heavy Turret combat metadata.");
                 }
                 return batch.Clone();
             }
@@ -584,7 +588,10 @@ namespace War.Client
                        turret.BatchMinimum<1||turret.BatchMaximum<=turret.BatchMinimum||turret.BatchMaximum>32||
                        !Positive(turret.ShootMinimum)||!Positive(turret.ShootMaximum)||turret.ShootMaximum<turret.ShootMinimum||
                        float.IsNaN(turret.RealShotProbability)||float.IsInfinity(turret.RealShotProbability)||
-                       turret.RealShotProbability<0||turret.RealShotProbability>1)
+                       turret.RealShotProbability<0||turret.RealShotProbability>1||
+                       (turret.AttackPhase!="cooldown"&&turret.AttackPhase!="aiming"&&turret.AttackPhase!="firing")||
+                       turret.TargetId.Length>64||turret.TargetId.Any(char.IsControl)||turret.BatchRemaining<0||
+                       turret.BatchRemaining>turret.BatchMaximum||turret.CooldownTicksRemaining<0)
                         throw new InvalidOperationException("Battle host returned an invalid Heavy Turret snapshot row.");
                     priorHeavyTurret=turret.EntityId;
                 }

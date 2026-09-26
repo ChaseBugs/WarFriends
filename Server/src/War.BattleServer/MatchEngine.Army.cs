@@ -179,6 +179,7 @@ public sealed partial class MatchEngine
         if(phase!=BattlePhase.Running)return [];
         var shooter=Find(shooterId)??throw new InvalidDataException("Dynamic collision shooter disappeared.");
         var result=new List<DynamicShotTarget>(DecoyShotTargets(shooter));
+        result.AddRange(HeavyTurretShotTargets(shooter));
         if(vehicles!=null&&groundVehicleWeapons!=null)
         foreach(var vehicle in vehicles.Snapshot())
         {

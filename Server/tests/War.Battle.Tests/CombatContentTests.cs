@@ -1438,6 +1438,9 @@ internal static class CombatContentTests
                   Math.Abs(heavyMid.Health-858.6711f)<.001f&&Math.Abs(heavyMid.Damage-55.07f)<.001f&&
                   heavyMid.BatchMinimum==3&&heavyMid.BatchMaximum==6&&Math.Abs(heavyMid.ShootMinimum-2.5f)<.001f&&
                   Math.Abs(heavyMid.ShootMaximum-5)<.001f&&Math.Abs(heavyMid.RealShotProbability-.775f)<.001f&&
+                  heavyTurrets.EffectiveRealShotProbability==1&&heavyTurrets.Colliders.Count==3&&heavyTurrets.Colliders.Select(x=>x.ComponentFileId)
+                      .SequenceEqual(new[]{6525385,6572182,6582579})&&
+                  heavyTurrets.Colliders.All(x=>x.Size.X>0&&x.Size.Y>0&&x.Size.Z>0)&&
                   nearestTurret==firstTurretCover.Slots[0],
                   "Heavy Turret source pins 80 slots, prefab graph and source card-level interpolation");
             string heavyTurretTemp=Path.Combine(Path.GetTempPath(),"war-heavy-turret-"+Guid.NewGuid().ToString("N")+".json");
@@ -2443,7 +2446,7 @@ internal static class CombatContentTests
               liveTurret.OwnerFraction==1&&liveTurret.RequestId==liveHeavyTurretRequest&&
               Math.Abs(liveTurret.Health-expectedHeavyTurret.Health)<.001f&&liveTurret.Health==liveTurret.MaxHealth&&
               Math.Abs(liveTurret.Damage-expectedHeavyTurret.Damage)<.001f&&liveTurret.BatchMinimum==expectedHeavyTurret.BatchMinimum&&
-              liveTurret.BatchMaximum==expectedHeavyTurret.BatchMaximum&&
+              liveTurret.BatchMaximum==expectedHeavyTurret.BatchMaximum&&liveTurret.RealShotProbability==1&&
               content.HeavyTurrets.ForMap(park)[coverOne.SourceIndex].Slots.Any(x=>x.ComponentFileId==liveTurret.SlotComponentFileId),
               "live authenticated Heavy Turret activation projects one current-cover source placement and composed stats");
         Check(heavyTurretMatch.Command(decoyPlayer,new(){CommandId=4,
@@ -2452,6 +2455,31 @@ internal static class CombatContentTests
                   UseHeavyTurret=new(){RequestId=new string('2',32)}}).Code=="heavy-turret-unavailable"&&
               heavyTurretMatch.Snapshot().HeavyTurrets.Count==1&&heavyTurretMatch.Snapshot().CardActivations==1,
               "Heavy Turret replay creates no duplicate and exhausted inventory cannot create state");
+        float heavyTurretVictimHealth=heavyTurretMatch.Snapshot().Players.Single(x=>x.PlayerId==decoyOpponent).Health;
+        for(ulong heavyTick=61;heavyTick<=360&&!heavyTurretMatch.Terminal;heavyTick++)heavyTurretMatch.Advance(heavyTick);
+        var heavyTurretCombatSnapshot=heavyTurretMatch.Snapshot();
+        Check(heavyTurretMatch.EventBatch(decoyPlayer,0).Events.Any(x=>x.Kind==MatchEventKind.HeavyTurretFired&&
+                  x.ActorId==decoyPlayer&&x.TargetId==decoyOpponent)&&
+              heavyTurretCombatSnapshot.Players.Single(x=>x.PlayerId==decoyOpponent).Health<heavyTurretVictimHealth&&
+              heavyTurretCombatSnapshot.HeavyTurrets.Single().AttackPhase is "cooldown" or "aiming" or "firing",
+              "Heavy Turret owns source cooldown, aim, batch cadence, real-shot selection and player damage on the host");
+        ulong liveHeavyTurretId=heavyTurretCombatSnapshot.HeavyTurrets.Single().EntityId;
+        float liveHeavyTurretHealth=heavyTurretCombatSnapshot.HeavyTurrets.Single().Health;
+        var liveHeavyTurretColliders=heavyTurretMatch.GroundVehicleShotTargets(decoyOpponent)
+            .Where(x=>x.HeavyTurret&&x.EntityId==liveHeavyTurretId).ToArray();
+        Check(liveHeavyTurretColliders.Length==3&&liveHeavyTurretColliders.Select(x=>x.PartComponentFileId)
+                  .SequenceEqual(new[]{6525385,6572182,6582579}),
+              "opposing bullets see all three recovered Heavy Turret box colliders as host dynamic targets");
+        ulong heavyTurretEventCursor=heavyTurretMatch.EventBatch(decoyPlayer,0).LatestEventId;
+        Check(heavyTurretMatch.ApplyHeavyTurretHostDamage(decoyOpponent,liveHeavyTurretId,1,"focused-test")&&
+              Math.Abs(heavyTurretMatch.HeavyTurretHealth(liveHeavyTurretId)!.Value-(liveHeavyTurretHealth-1))<.001f&&
+              heavyTurretMatch.EventBatch(decoyPlayer,heavyTurretEventCursor).Events.Any(x=>x.Kind==MatchEventKind.HeavyTurretDamaged&&x.ProjectileId==liveHeavyTurretId),
+              "trusted opposing damage mutates Heavy Turret health and publishes authoritative damage state");
+        heavyTurretEventCursor=heavyTurretMatch.EventBatch(decoyPlayer,0).LatestEventId;
+        Check(heavyTurretMatch.ApplyHeavyTurretHostDamage(decoyOpponent,liveHeavyTurretId,10_000_000,"focused-lethal")&&
+              heavyTurretMatch.HeavyTurretHealth(liveHeavyTurretId)==null&&
+              heavyTurretMatch.EventBatch(decoyPlayer,heavyTurretEventCursor).Events.Any(x=>x.Kind==MatchEventKind.HeavyTurretDestroyed&&x.ProjectileId==liveHeavyTurretId),
+              "lethal trusted damage destroys Heavy Turret state and releases its source slot");
         var detached=MatchManifest.Validate(armyManifest);
         equipped[0]="ID_UNIT-UNKNOWN";
         armyStages[0]=101;

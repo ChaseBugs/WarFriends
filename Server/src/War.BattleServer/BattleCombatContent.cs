@@ -65,7 +65,7 @@ public sealed class BattleCombatContent
         var manifest=JsonSerializer.Deserialize<CombatContentManifest>(stream,new JsonSerializerOptions { UnmappedMemberHandling=JsonUnmappedMemberHandling.Disallow })
             ?? throw new InvalidDataException("Missing combat content manifest.");
         var hashes=new[] {manifest.SceneRevision,manifest.StatsRevision,manifest.BindingsRevision,manifest.AllWeaponBindingsRevision,manifest.PosesRevision,manifest.BarrelBindingsRevision,manifest.BarrelOverlapRevision,manifest.ArmyDeploymentRevision,manifest.ArmyWeaponBindingsRevision,manifest.GroundVehicleWeaponsRevision,manifest.EnemyPosesRevision,manifest.DecoyRevision,manifest.LandMineRevision,manifest.HeavyTurretRevision,manifest.ArmySpawnPointsRevision,manifest.ArmyRusherPointsRevision,manifest.ArmyMinigunnerPointsRevision,manifest.PlayerShotTargetsRevision,manifest.ArmyNavMeshSourcesRevision,manifest.ArmyNavMeshTriangulationRevision,manifest.ArmyNavMeshPathsRevision};
-        if (manifest.Version!=6 || hashes.Any(h=>h==null || !Regex.IsMatch(h,@"\A[0-9a-f]{64}\z")))
+        if (manifest.Version!=7 || hashes.Any(h=>h==null || !Regex.IsMatch(h,@"\A[0-9a-f]{64}\z")))
             throw new InvalidDataException("Invalid combat package revisions.");
         string directory=Path.GetDirectoryName(Path.GetFullPath(manifestPath))!;
         var stats=RifleStatCatalog.Load(Path.Combine(directory,"recovered-battle-content.json"),manifest.StatsRevision,manifest.SceneRevision);

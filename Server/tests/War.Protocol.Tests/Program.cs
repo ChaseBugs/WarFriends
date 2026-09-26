@@ -38,7 +38,8 @@ var turretWire=new MatchCommand{CommandId=20,UseHeavyTurret=new UseHeavyTurretCo
 var turretSnapshot=new MatchSnapshot();turretSnapshot.HeavyTurrets.Add(new BattleHeavyTurretState
 {EntityId=1,RequestId=turretRequest,OwnerPlayerId=Guid.NewGuid().ToString("N"),OwnerFraction=1,
  SlotComponentFileId=789,X=1,Y=2,Z=3,Health=100,MaxHealth=100,Damage=20,BatchMinimum=3,BatchMaximum=6,
- ShootMinimum=2,ShootMaximum=4,RealShotProbability=.75f});
+ ShootMinimum=2,ShootMaximum=4,RealShotProbability=.75f,AttackPhase="aiming",TargetId=Guid.NewGuid().ToString("N"),
+ BatchRemaining=4,CooldownTicksRemaining=0});
 Check(MatchCommand.Parser.ParseFrom(turretWire.ToByteArray()).Equals(turretWire)&&
       turretWire.IntentCase==MatchCommand.IntentOneofCase.UseHeavyTurret&&
       MatchSnapshot.Parser.ParseFrom(turretSnapshot.ToByteArray()).Equals(turretSnapshot),

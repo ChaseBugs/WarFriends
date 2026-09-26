@@ -314,6 +314,8 @@ message BattleHeavyTurretState {
   float health = 9; float max_health = 10; float damage = 11;
   int32 batch_minimum = 12; int32 batch_maximum = 13;
   float shoot_minimum = 14; float shoot_maximum = 15; float real_shot_probability = 16;
+  string attack_phase = 17; string target_id = 18;
+  int32 batch_remaining = 19; int32 cooldown_ticks_remaining = 20;
 }
 message BattleProjectileState {
   uint64 projectile_id = 1; string owner_player_id = 2; string kind = 3;
@@ -412,6 +414,8 @@ enum MatchEventKind {
   MATCH_EVENT_KIND_LAND_MINE_TRIGGERED = 34;
   MATCH_EVENT_KIND_HEAVY_TURRET_SPAWNED = 35;
   MATCH_EVENT_KIND_HEAVY_TURRET_DESTROYED = 36;
+  MATCH_EVENT_KIND_HEAVY_TURRET_DAMAGED = 37;
+  MATCH_EVENT_KIND_HEAVY_TURRET_FIRED = 38;
 }
 message MatchEvent {
   uint64 event_id = 1; uint64 tick = 2; MatchEventKind kind = 3;

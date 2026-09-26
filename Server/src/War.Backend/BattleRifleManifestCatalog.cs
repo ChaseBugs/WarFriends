@@ -47,7 +47,7 @@ public sealed class BattleRifleManifestCatalog
             manifest.HeavyTurretRevision,
             manifest.ArmySpawnPointsRevision,manifest.ArmyRusherPointsRevision,manifest.ArmyMinigunnerPointsRevision,manifest.PlayerShotTargetsRevision,
             manifest.ArmyNavMeshSourcesRevision,manifest.ArmyNavMeshTriangulationRevision,manifest.ArmyNavMeshPathsRevision];
-        if(manifest.Version!=6 || hashes.Any(x=>x==null || !Regex.IsMatch(x,@"\A[0-9a-f]{64}\z")))
+        if(manifest.Version!=7 || hashes.Any(x=>x==null || !Regex.IsMatch(x,@"\A[0-9a-f]{64}\z")))
             throw new InvalidDataException("Invalid combat content revisions.");
         string contentPath=Path.Combine(Path.GetDirectoryName(Path.GetFullPath(manifestPath))!,"recovered-battle-content.json");
         byte[] content=ReadBounded(contentPath,2,16_000_000,"rifle content");

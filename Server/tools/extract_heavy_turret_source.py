@@ -25,7 +25,7 @@ def mul(a,b):
     x,y,z,w=a;X,Y,Z,W=b
     return [w*X+x*W+y*Z-z*Y,w*Y-x*Z+y*W+z*X,w*Z+x*Y-y*X+z*W,w*W-x*X-y*Y-z*Z]
 def rotate(q,p): return mul(mul(q,[*p,0]),[-q[0],-q[1],-q[2],q[3]])[:3]
-def world(source,transform_id):
+def world_trs(source,transform_id):
     chain=[]
     while transform_id:
         b=source[transform_id][1];chain.append((vec(field(b,"m_LocalPosition")),vec(field(b,"m_LocalRotation")),vec(field(b,"m_LocalScale"))))
@@ -35,7 +35,8 @@ def world(source,transform_id):
     for lp,lq,ls in reversed(chain):
         p=[a+b for a,b in zip(p,rotate(q,[a*b for a,b in zip(lp,s)]))];q=mul(q,lq);s=[a*b for a,b in zip(s,ls)]
     if not all(math.isfinite(x) and abs(x)<10000 for x in p): raise ValueError("invalid position")
-    return p
+    return p,q,s
+def world(source,transform_id): return world_trs(source,transform_id)[0]
 def digest(path): return hashlib.sha256(path.read_bytes()).hexdigest()
 def game_object_transform(source,go):
     m=re.search(r"^  - 4: \{fileID: (\d+)\}$",source[go][1],re.M)
@@ -81,20 +82,29 @@ def extract_prefab():
     if len(heavy)!=1 or len(turret)!=1 or len(roots)!=1 or not meshes or not colliders: raise ValueError("HeavyTurret graph changed")
     heavy_id,h=heavy[0];turret_id,t=turret[0]
     if ref(h,"turretWeapon")!=turret_id: raise ValueError("HeavyTurret weapon binding changed")
+    collider_rows=[]
+    for component_id,c in colliders:
+        go=ref(c,"m_GameObject");transform=game_object_transform(source,go);p,q,s=world_trs(source,transform)
+        center=vec(field(c,"m_Center"));size=vec(field(c,"m_Size"))
+        center=[a+b for a,b in zip(p,rotate(q,[a*b for a,b in zip(center,s)]))]
+        size=[abs(a*b) for a,b in zip(size,s)]
+        collider_rows.append({"componentFileId":component_id,"transformFileId":transform,
+                              "center":center,"size":size,"rotation":q})
     return {"source":"Assets/GameObject/HeavyTurret.prefab","sha256":digest(path),"rootTransformFileId":roots[0],
             "heavyTurretComponentFileId":heavy_id,"turretWeaponComponentFileId":turret_id,
             "turret":{"aimTime":float(field(t,"aimTime")),"batchSizeMin":int(field(t,"batchSizeMin")),
                       "batchSizeMax":int(field(t,"batchSizeMax")),"minShootTime":float(field(t,"minShootTime")),
                       "maxShootTime":float(field(t,"maxShootTime")),"maxShotRotation":float(field(t,"maxShotRotation")),
                       "predictPosition":bool(int(field(t,"predictPosition"))),"primaryTarget":int(field(t,"primaryTarget")),
-                      "useUnitTarget":bool(int(field(t,"useUnitTarget")),),"batchedWeaponComponentFileId":ref(t,"batchedWeapon")},
-            "meshComponentFileIds":[i for i,_ in meshes],"colliderComponentFileIds":[i for i,_ in colliders]}
+                      "useUnitTarget":bool(int(field(t,"useUnitTarget")),),"realShotProbability":float(field(t,"realShotProbability")),
+                      "batchedWeaponComponentFileId":ref(t,"batchedWeapon")},
+            "meshComponentFileIds":[i for i,_ in meshes],"colliders":collider_rows}
 
 def main():
     content=json.loads(CONTENT.read_text(encoding="utf-8"))
     rows=next(s["rows"] for s in content["sheets"] if s["type"]=="Google2u.DBUpgradeSlotsHeavyTurret")
     if len(rows)!=2: raise ValueError("HeavyTurret stat endpoints changed")
-    artifact={"version":1,"client":"1.4.0","spawnCount":1,"navMeshSampleRadius":10.0,"navMeshAreaMask":1,
+    artifact={"version":2,"client":"1.4.0","spawnCount":1,"navMeshSampleRadius":10.0,"navMeshAreaMask":1,
               "maxDisplayLevel":44,"stats":rows,"prefab":extract_prefab(),"maps":[extract_map(x) for x in content["maps"]]}
     serialized=json.dumps(artifact,indent=2,ensure_ascii=False)+"\n"
     if sys.argv[1:]==["--check"]:

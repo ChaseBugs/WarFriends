@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "client": "1.4.0",
   "spawnCount": 1,
   "navMeshSampleRadius": 10.0,
@@ -43,6 +43,7 @@
       "predictPosition": true,
       "primaryTarget": 3,
       "useUnitTarget": true,
+      "realShotProbability": 1.0,
       "batchedWeaponComponentFileId": 11444804
     },
     "meshComponentFileIds": [
@@ -51,10 +52,67 @@
       3361517,
       3339548
     ],
-    "colliderComponentFileIds": [
-      6525385,
-      6572182,
-      6582579
+    "colliders": [
+      {
+        "componentFileId": 6525385,
+        "transformFileId": 454360,
+        "center": [
+          0.0012283458497697047,
+          0.20139761983828783,
+          -0.07493755054179303
+        ],
+        "size": [
+          0.18,
+          0.13891292,
+          0.12
+        ],
+        "rotation": [
+          0.0,
+          0.7071068,
+          0.0,
+          0.7071067
+        ]
+      },
+      {
+        "componentFileId": 6572182,
+        "transformFileId": 405464,
+        "center": [
+          -0.011597407396407437,
+          0.3347764878865978,
+          0.0025431275482242534
+        ],
+        "size": [
+          0.5,
+          0.16,
+          0.16
+        ],
+        "rotation": [
+          0.0,
+          0.7071068,
+          0.0,
+          0.7071067
+        ]
+      },
+      {
+        "componentFileId": 6582579,
+        "transformFileId": 460213,
+        "center": [
+          0.005039886896994465,
+          0.05500633647108596,
+          0.05239246930966912
+        ],
+        "size": [
+          0.36185023,
+          0.08178854,
+          0.10621801
+        ],
+        "rotation": [
+          0.0,
+          0.7071068,
+          0.0,
+          0.7071067
+        ]
+      }
     ]
   },
   "maps": [
