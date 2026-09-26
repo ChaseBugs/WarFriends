@@ -1833,7 +1833,7 @@ internal static class CombatContentTests
             ArmyEliteUpgradeIndexes=[-1],ArmyHealthFactors=[new(1f,1f)],ArmyDamageScales=[1f],
             ArmySpeedCoefficients=[1f],ArmyAccuracyCoefficients=[1f],ShieldLevel=0
         },detached.Players[1] with {ShieldLevel=0}]};
-        var miniMatch=new MatchEngine(miniManifest,content:content);
+        var miniMatch=new MatchEngine(miniManifest,armyChoice:_=>0,content:content);
         string miniOwner=miniManifest.Players[0].PlayerId,miniOpponent=miniManifest.Players[1].PlayerId;
         miniMatch.Admit(miniOwner);miniMatch.Admit(miniOpponent);
         miniMatch.Command(miniOwner,new MatchCommand{CommandId=1,
@@ -1847,13 +1847,25 @@ internal static class CombatContentTests
               "Minigunner is offered and accepted in a source-bound live match");
         miniMatch.Advance(61);
         var miniEntity=miniMatch.ArmyEntityBatch(miniOwner,0,0).Entities.Single();
+        var initialMiniMovement=miniMatch.MinigunnerMovementCandidate(miniEntity.EntityKey);
+        int initialMiniPoint=miniMatch.MinigunnerPoint(miniEntity.EntityKey)??0;
         Check(miniEntity.UnitId=="ID_UNIT-MINIGUNNER" &&
-              miniEntity.SpawnComponentFileId==normal[^1].ComponentFileId,
-              "first live Minigunner uses the Unity 2018 even-sort source endpoint");
+              miniEntity.SpawnComponentFileId==normal[^1].ComponentFileId&&
+              initialMiniMovement!=null&&initialMiniPoint==initialMiniMovement.PointFileId&&
+              miniMatch.MinigunnerPointOccupant(initialMiniPoint)==miniEntity.EntityKey&&
+              Vector3.Distance(new(miniEntity.X,miniEntity.Y,miniEntity.Z),initialMiniMovement.Destination)>.04f,
+              "live Minigunner reserves its nearest free source point and starts walking from the spawn endpoint");
+        bool miniArrived=false,miniTransferred=false;int secondMiniPoint=0;
+        ulong miniArrivalTick=0,miniTransferTick=0;
         for(ulong t=62;t<500&&!miniMatch.Terminal;t++)
         {
             if(t%90==0){miniMatch.ArmyBatch(miniOwner);miniMatch.ArmyBatch(miniOpponent);}
             miniMatch.Advance(t);
+            if(!miniArrived&&miniMatch.MinigunnerMovementCandidate(miniEntity.EntityKey)==null)
+            {miniArrived=true;miniArrivalTick=t;}
+            int current=miniMatch.MinigunnerPoint(miniEntity.EntityKey)??0;
+            if(current!=0&&current!=initialMiniPoint)
+            {miniTransferred=true;secondMiniPoint=current;if(miniTransferTick==0)miniTransferTick=t;}
         }
         var miniEvents=new List<MatchEvent>();ulong miniCursor=0;
         while(true)
@@ -1862,10 +1874,19 @@ internal static class CombatContentTests
             if(page.Events.Count==0||page.Events[^1].EventId==page.LatestEventId)break;
             miniCursor=page.Events[^1].EventId;
         }
-        Check(miniEvents.Any(e=>e.Kind==MatchEventKind.Shot&&e.ActorId==miniOwner&&
-                  e.TargetId==miniOpponent&&e.Reason=="army") &&
-              miniEvents.Any(e=>e.Kind==MatchEventKind.Impact&&e.Reason=="army"),
-              "live Minigunner completes initial delay, shield-unhide windup, and source BulletSlow flight");
+        var firstMiniShot=miniEvents.FirstOrDefault(e=>e.Kind==MatchEventKind.Shot&&
+            e.ActorId==miniOwner&&e.TargetId==miniOpponent&&e.Reason=="army");
+        Check(firstMiniShot!=null&&firstMiniShot.Tick>=miniArrivalTick+91&&
+              miniEvents.Any(e=>e.Kind==MatchEventKind.Impact&&e.Reason=="army")&&
+              miniArrived&&miniTransferred&&miniTransferTick>miniArrivalTick+180&&secondMiniPoint!=0&&
+              miniMatch.MinigunnerPointOccupant(initialMiniPoint)==null&&
+              miniMatch.MinigunnerPointOccupant(secondMiniPoint)==miniEntity.EntityKey,
+              "live Minigunner reaches its initial point, attacks, and transfers its reservation after the source point-change clock");
+        Check(miniMatch.ApplyArmyHostDamage(miniEntity.EntityKey,miniEntity.MaxHealth)&&
+              miniMatch.MinigunnerPoint(miniEntity.EntityKey)==null&&
+              miniMatch.MinigunnerMovementCandidate(miniEntity.EntityKey)==null&&
+              miniMatch.MinigunnerPointOccupant(secondMiniPoint)==null,
+              "confirmed Minigunner death releases point, movement, attack, and target authority");
         Reject(()=>MatchManifest.Validate(detached with { Players=[detached.Players[0] with
             {NewArmyUnitIds=["ID_UNIT-SNIPER"]},detached.Players[1]] }));
         Reject(()=>content.ValidateAllocation(detached with { Players=detached.Players.Select((p,i)=>i==0 ?

@@ -29,6 +29,10 @@ public sealed partial class MatchEngine
     private readonly Dictionary<ulong,int> rusherDetours=[];
     private readonly Dictionary<ulong,ArmyRusherAttackState> rusherAttacks=[];
     private readonly Dictionary<ulong,ArmyRusherAttackState> minigunnerAttacks=[];
+    private readonly Dictionary<ulong,ArmyMinigunnerMovementState> minigunnerMovements=[];
+    private readonly Dictionary<ulong,ulong> minigunnerPointChangeTicks=[];
+    private readonly Dictionary<int,ulong> occupiedMinigunnerPoints=[];
+    private readonly Dictionary<ulong,int> minigunnerPointByEntity=[];
     private readonly Dictionary<ulong,float> walkingShotgunnerSpecials=[];
     private readonly Dictionary<ulong,ArmyRusherTarget> rusherAttackTargets=[];
     private readonly Dictionary<ulong,ArmyRusherTarget> minigunnerAttackTargets=[];
@@ -155,6 +159,12 @@ public sealed partial class MatchEngine
         =>rusherShotIntents.AsReadOnly();
     internal ArmyRusherTarget? RusherLatchedShotTarget(ulong entityKey)
         =>rusherAttackTargets.TryGetValue(entityKey,out var target)?target:null;
+    internal ArmyMinigunnerMovementState? MinigunnerMovementCandidate(ulong entityKey)
+        =>minigunnerMovements.TryGetValue(entityKey,out var state)?state:null;
+    internal int? MinigunnerPoint(ulong entityKey)
+        =>minigunnerPointByEntity.TryGetValue(entityKey,out int point)?point:null;
+    internal ulong? MinigunnerPointOccupant(int pointFileId)
+        =>occupiedMinigunnerPoints.TryGetValue(pointFileId,out ulong key)?key:null;
 
     private void InitializeRusherMotionCandidate(ulong entityKey,string unitId)
     {
@@ -175,16 +185,79 @@ public sealed partial class MatchEngine
     {
         var family=armyCatalog!.Families.Single(f=>f.UnitId==unitId);
         if(family.BehaviorType!="SoldierBehaviourMinigunner")return;
+        if(!activeArmyEntities.TryGetValue(entityKey,out var army)||map==null||
+           armyMinigunnerPoints==null||armyNavMeshConnectivity==null)
+            throw new InvalidDataException("Minigunner spawn lacks point-navigation authority.");
+        var point=armyMinigunnerPoints.NearestFree(map,army.OwnerFraction,
+            new(army.X,army.Y,army.Z),null,occupiedMinigunnerPoints.ContainsKey)??
+            throw new InvalidDataException("Minigunner spawn has no free source point.");
+        StartMinigunnerMovement(entityKey,point,null);
+    }
+
+    private void StartMinigunnerAttack(ulong entityKey)
+    {
+        if(!activeArmyEntities.TryGetValue(entityKey,out var army))
+            throw new InvalidDataException("Minigunner attack lacks its host entity.");
         if(!armyShots.TryGetValue(entityKey,out var shot))
             throw new InvalidDataException("Minigunner lacks composed shot authority.");
-        int interval=armyWeapons?.CadenceTicks(unitId)??
+        int interval=armyWeapons?.CadenceTicks(army.UnitId)??
             throw new InvalidDataException("Minigunner lacks pinned cadence authority.");
         var attack=new ArmyRusherAttackState(shot,NextArmyFloat,interval);
         // SwitchStateToMinigunner schedules Random.Range(2f,4.5f). Later
         // EndShooting calls the serialized base-shot two-to-five-second timer.
         attack.BeginInitialCooldown(2f,4.5f);
         minigunnerAttacks.Add(entityKey,attack);
+        minigunnerPointChangeTicks.Add(entityKey,checked(tick+MinigunnerPointDelayTicks()));
         rusherShotCounts.TryAdd(entityKey,0);
+    }
+
+    private ulong MinigunnerPointDelayTicks()
+        =>(ulong)MathF.Ceiling((6f+NextArmyFloat()*4f)*MatchManifest.TickRate);
+
+    private void StartMinigunnerMovement(ulong entityKey,ArmyMinigunnerPoint point,int? oldPoint)
+    {
+        if(!activeArmyEntities.TryGetValue(entityKey,out var army)||map==null||
+           armyNavMeshConnectivity==null||point.Fraction!=army.OwnerFraction)
+            throw new InvalidDataException("Minigunner movement lacks its entity, map or faction proof.");
+        var start=new Vector3(army.X,army.Y,army.Z);
+        var route=armyNavMeshConnectivity.PlanCorridor(map,start,point.Position);
+        if(route is not {PlanarCovered:true})
+            throw new InvalidDataException("Minigunner point has no covered host corridor.");
+        float speed=ArmySpeed(entityKey)??armyCatalog!.EffectiveSpeed(army.UnitId,1f);
+        var movement=new ArmyMinigunnerMovementState(point.ComponentFileId,route,
+            armyCatalog!.InfantryAgent,speed);
+        if(!occupiedMinigunnerPoints.TryAdd(point.ComponentFileId,entityKey))
+            throw new InvalidDataException("Minigunner destination was occupied during transfer.");
+        if(oldPoint.HasValue)
+        {
+            if(!occupiedMinigunnerPoints.TryGetValue(oldPoint.Value,out ulong owner)||owner!=entityKey||
+               !occupiedMinigunnerPoints.Remove(oldPoint.Value))
+            {
+                occupiedMinigunnerPoints.Remove(point.ComponentFileId);
+                throw new InvalidDataException("Minigunner lost its prior point reservation.");
+            }
+        }
+        minigunnerPointByEntity[entityKey]=point.ComponentFileId;
+        minigunnerMovements.Add(entityKey,movement);
+    }
+
+    private void AdvanceMinigunnerMovements()
+    {
+        foreach(var (key,movement) in minigunnerMovements.OrderBy(x=>x.Key).ToArray())
+        {
+            if(!activeArmyEntities.TryGetValue(key,out var army)||
+               !minigunnerPointByEntity.TryGetValue(key,out int point)||point!=movement.PointFileId||
+               !occupiedMinigunnerPoints.TryGetValue(point,out ulong owner)||owner!=key)
+                throw new InvalidDataException("Minigunner movement lost its reservation proof.");
+            movement.AdvanceTick();
+            army.X=movement.Position.X;army.Y=movement.Position.Y;army.Z=movement.Position.Z;
+            army.PositionTick=tick;
+            if(!movement.Arrived)continue;
+            army.X=movement.Destination.X;army.Z=movement.Destination.Z;
+            if(!minigunnerMovements.Remove(key))
+                throw new InvalidDataException("Minigunner arrival removal failed.");
+            StartMinigunnerAttack(key);
+        }
     }
 
     private void InitializeRusherCombatState(ulong entityKey,string unitId,ArmyRusherArrivalState state)
@@ -470,6 +543,25 @@ public sealed partial class MatchEngine
                armyCatalog!.Families.Single(f=>f.UnitId==army.UnitId).BehaviorType!=
                    "SoldierBehaviourMinigunner")
                 throw new InvalidDataException("Minigunner attack lost its host entity.");
+            if(!minigunnerPointChangeTicks.TryGetValue(key,out ulong changeTick)||
+               !minigunnerPointByEntity.TryGetValue(key,out int currentPoint))
+                throw new InvalidDataException("Minigunner attack lost its point clock.");
+            if(attack.Phase==ArmyRusherAttackPhase.Cooldown&&tick>changeTick)
+            {
+                var next=armyMinigunnerPoints!.RandomFree(map!,army.OwnerFraction,currentPoint,
+                    occupiedMinigunnerPoints.ContainsKey,armyChoice);
+                if(next==null)
+                {
+                    minigunnerPointChangeTicks[key]=checked(changeTick+2u*MatchManifest.TickRate);
+                }
+                else
+                {
+                    minigunnerAttacks.Remove(key);minigunnerPointChangeTicks.Remove(key);
+                    minigunnerAttackTargets.Remove(key);
+                    StartMinigunnerMovement(key,next,currentPoint);
+                    continue;
+                }
+            }
             var target=MinigunnerBodyTarget(key);
             if(attack.Phase==ArmyRusherAttackPhase.Ready)
             {
@@ -844,9 +936,15 @@ public sealed partial class MatchEngine
         rusherDetours.Remove(entityKey);
         rusherAttacks.Remove(entityKey);
         minigunnerAttacks.Remove(entityKey);
+        minigunnerMovements.Remove(entityKey);
+        minigunnerPointChangeTicks.Remove(entityKey);
         walkingShotgunnerSpecials.Remove(entityKey);
         rusherAttackTargets.Remove(entityKey);
         minigunnerAttackTargets.Remove(entityKey);
+        if(minigunnerPointByEntity.Remove(entityKey,out int minigunnerPoint) &&
+           (!occupiedMinigunnerPoints.TryGetValue(minigunnerPoint,out ulong minigunnerOwner)||
+            minigunnerOwner!=entityKey||!occupiedMinigunnerPoints.Remove(minigunnerPoint)))
+            throw new InvalidDataException("Minigunner point release lost its host entity proof.");
         rusherShotCounts.Remove(entityKey);
         owner.ConfirmedArmyLosses=checked(owner.ConfirmedArmyLosses+1);
         if(rusherSlotByEntity.Remove(entityKey,out int rusherSlot) &&

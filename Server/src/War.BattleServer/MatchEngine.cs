@@ -45,6 +45,7 @@ public sealed partial class MatchEngine
     private readonly ExplosionSourceCatalog? explosionPolicy;
     private readonly ArmySpawnPointSelector? armySelector;
     private readonly ArmyRusherPointCatalog? armyRusherPoints;
+    private readonly ArmyMinigunnerPointCatalog? armyMinigunnerPoints;
     private readonly ArmyNavMeshConnectivity? armyNavMeshConnectivity;
     private readonly PlayerShotTargetCatalog? playerShotTargets;
     private readonly ArmySpawnReservationLedger? armyReservations;
@@ -640,6 +641,7 @@ public sealed partial class MatchEngine
             armyWeapons=content.ArmyWeapons;
             armySelector=new ArmySpawnPointSelector(content.ArmySpawnPoints);
             armyRusherPoints=content.ArmyRusherPoints;
+            armyMinigunnerPoints=content.ArmyMinigunnerPoints;
             armyNavMeshConnectivity=content.ArmyNavMeshConnectivity;
             playerShotTargets=content.PlayerShotTargets;
             armyReservations=new ArmySpawnReservationLedger(content.ArmySpawnPoints,map);
@@ -897,9 +899,11 @@ public sealed partial class MatchEngine
                   if(rusherMotionCandidates.Count>0)AdvanceRusherMotionCandidates(); }
             catch(InvalidDataException){End("invalid-army-authority","",false);return;}
         }
-        if(advanced && phase==BattlePhase.Running && minigunnerAttacks.Count>0)
+        if(advanced && phase==BattlePhase.Running &&
+           (minigunnerMovements.Count>0||minigunnerAttacks.Count>0))
         {
-            try { AdvanceMinigunnerAttacks(); }
+            try { if(minigunnerAttacks.Count>0)AdvanceMinigunnerAttacks();
+                  if(minigunnerMovements.Count>0)AdvanceMinigunnerMovements(); }
             catch(InvalidDataException){End("invalid-army-authority","",false);return;}
         }
         if(advanced && phase==BattlePhase.Running && (armyProjectiles.Count>0||armyFlameBursts.Count>0||armyPoisons.Count>0))
