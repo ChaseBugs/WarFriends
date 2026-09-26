@@ -88,7 +88,9 @@ def repair_drone_paths(blocks,scripts,root):
    waypoints.append({'componentFileId':waypoint_id,'transformFileId':transform_id,
     'index':expected_index,'position':position,'stayTime':number(waypoint,'stayTime')})
   if len(waypoints)!=7: raise ValueError('repair-drone waypoint count changed')
-  rows.append({'componentFileId':path_id,'radius':number(path,'Radius'),'waypoints':waypoints})
+  path_transform_id,path_position,path_rotation=component_transform(blocks,path_id)
+  rows.append({'componentFileId':path_id,'transformFileId':path_transform_id,
+   'position':path_position,'rotation':path_rotation,'radius':number(path,'Radius'),'waypoints':waypoints})
  return rows
 
 def repair_drone_prefab(guid_to_name):
@@ -99,6 +101,10 @@ def repair_drone_prefab(guid_to_name):
  mini_ids=[i for i,n in scripts.items() if n=='MiniDrone']
  if len(steering_ids)!=1 or len(mini_ids)!=1: raise ValueError('miniDrone behavior topology changed')
  steering=blocks[steering_ids[0]][1]
+ root_game=ref(blocks[mini_ids[0]][1],'m_GameObject')
+ box_ids=[i for i,(kind,b) in blocks.items() if kind==65 and ref(b,'m_GameObject')==root_game and direct(b,'m_Enabled')=='1']
+ if len(box_ids)!=1: raise ValueError('miniDrone root collider changed')
+ box=blocks[box_ids[0]][1]
  return {'prefab':'Assets/GameObject/miniDrone.prefab','sha256':hashlib.sha256(raw).hexdigest(),
   'componentFileId':mini_ids[0],'steeringComponentFileId':steering_ids[0],
   'breakDistance':number(steering,'breakDistance'),'breakSpeed':number(steering,'breakSpeed'),
@@ -106,7 +112,9 @@ def repair_drone_prefab(guid_to_name):
   'mass':number(steering,'mass'),'multiplier':number(steering,'multiplier'),
   'speed':number(steering,'speed'),'cornerDelayTime':number(steering,'cornerDelayTime'),
   'healIntervalSeconds':1.,'respawnMinimumSeconds':35.,'respawnMaximumSeconds':45.,
-  'deadRadius':.7,'hurtRadius':1.4,'explosionDamageRatio':.5,'splashDamageRatio':.05}
+  'deadRadius':.7,'hurtRadius':1.4,'explosionDamageRatio':.5,'splashDamageRatio':.05,
+  'colliderFileId':box_ids[0],'colliderCenter':vector(direct(box,'m_Center')),
+  'colliderSize':vector(direct(box,'m_Size')),'colliderTrigger':direct(box,'m_IsTrigger')=='1'}
 
 def vehicle_body_parts(blocks,scripts):
  rows=[]

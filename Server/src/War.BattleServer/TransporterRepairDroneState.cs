@@ -3,7 +3,7 @@ using System.Numerics;
 namespace War.BattleServer;
 
 internal sealed record TransporterRepairDroneSnapshot(int PathIndex,Vector3 Position,float Health,
-    float MaximumHealth,bool Active,ulong RespawnTick,int WaypointIndex,bool Forward);
+    float MaximumHealth,bool Active,ulong RespawnTick,int WaypointIndex,bool Forward,Quaternion Rotation);
 
 /// <summary>Fixed-tick authority for the recovered Transporter MiniDrone/DroneSteering pair.</summary>
 internal sealed class TransporterRepairDroneState
@@ -19,6 +19,7 @@ internal sealed class TransporterRepairDroneState
     private ulong nextHealTick;
     internal int PathIndex {get;}
     internal Vector3 Position {get;private set;}
+    internal Quaternion Rotation {get;private set;}
     internal float MaximumHealth {get;}
     internal float Health {get;private set;}
     internal bool Active {get;private set;}=true;
@@ -34,6 +35,7 @@ internal sealed class TransporterRepairDroneState
         PathIndex=pathIndex;this.path=path;this.binding=binding;healRatio=stats.HealRatioPerSecond;
         MaximumHealth=stats.MaximumHealth;Health=MaximumHealth;forward=binding.InitialForward;
         Position=WorldPoint(0,vehiclePosition,vehicleFacing);
+        Rotation=VehicleYaw(vehicleFacing)*path.Rotation;
         nextHealTick=checked(spawnTick+(ulong)SecondsToTicks(binding.HealIntervalSeconds));
     }
 
@@ -46,6 +48,7 @@ internal sealed class TransporterRepairDroneState
             Active=true;Health=MaximumHealth;RespawnTick=0;waypoint=0;forward=binding.InitialForward;
             velocity=Vector3.Zero;stayTicks=0;cornerDelayTicks=0;
             Position=WorldPoint(0,vehiclePosition,vehicleFacing);
+            Rotation=VehicleYaw(vehicleFacing)*path.Rotation;
             nextHealTick=checked(tick+(ulong)SecondsToTicks(binding.HealIntervalSeconds));
             return 0;
         }
@@ -82,6 +85,13 @@ internal sealed class TransporterRepairDroneState
             }
         }
         velocity+=steering;Position+=velocity;
+        Vector3 outward=Position-WorldPathOrigin(vehiclePosition,vehicleFacing);outward.Y=0;
+        if(outward.LengthSquared()>1e-10f)
+        {
+            float yaw=MathF.Atan2(outward.X,outward.Z);
+            Rotation=Quaternion.Normalize(Quaternion.Slerp(Rotation,
+                Quaternion.CreateFromAxisAngle(Vector3.UnitY,yaw),5f/MatchManifest.TickRate));
+        }
         if(!PlayerHitbox.Finite(Position)||!PlayerHitbox.Finite(velocity))
             throw new InvalidDataException("Repair-drone steering left the finite domain.");
         return TakeHeal(tick);
@@ -105,7 +115,7 @@ internal sealed class TransporterRepairDroneState
     }
 
     internal TransporterRepairDroneSnapshot Snapshot()=>new(PathIndex,Position,Health,MaximumHealth,
-        Active,RespawnTick,waypoint,forward);
+        Active,RespawnTick,waypoint,forward,Rotation);
 
     private float TakeHeal(ulong tick)
     {
@@ -120,9 +130,18 @@ internal sealed class TransporterRepairDroneState
             throw new InvalidDataException("Invalid repair-drone vehicle pose.");
         vehicleFacing.Y=0;
         if(vehicleFacing.LengthSquared()<1e-10f)throw new InvalidDataException("Repair drone has no vehicle facing.");
-        float yaw=MathF.Atan2(vehicleFacing.X,vehicleFacing.Z);
-        return vehiclePosition+Vector3.Transform(path.Waypoints[index].Position,
-            Quaternion.CreateFromAxisAngle(Vector3.UnitY,yaw));
+        return vehiclePosition+Vector3.Transform(path.Waypoints[index].Position,VehicleYaw(vehicleFacing));
+    }
+
+    private Vector3 WorldPathOrigin(Vector3 vehiclePosition,Vector3 vehicleFacing)
+        =>vehiclePosition+Vector3.Transform(path.Position,VehicleYaw(vehicleFacing));
+
+    private static Quaternion VehicleYaw(Vector3 facing)
+    {
+        facing.Y=0;
+        if(!PlayerHitbox.Finite(facing)||facing.LengthSquared()<1e-10f)
+            throw new InvalidDataException("Repair drone has no vehicle facing.");
+        return Quaternion.CreateFromAxisAngle(Vector3.UnitY,MathF.Atan2(facing.X,facing.Z));
     }
 
     private static int SecondsToTicks(float seconds)

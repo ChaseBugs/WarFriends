@@ -75,6 +75,10 @@ public sealed partial class MatchEngine
                     vehicle.Position,facing,animationTick))
                     result.Add(new(vehicle.EntityId,0,passengerLayer,hitbox,passenger.Binding.Role));
             }
+            if(transporterRepairDrones.TryGetValue(vehicle.EntityId,out var drones))
+                foreach(var drone in drones.OrderBy(x=>x.PathIndex))
+                    if(drone.Active)result.Add(groundVehicleWeapons.PlaceRepairDrone(vehicle.EntityId,
+                        drone.PathIndex,passengerLayer,drone.Snapshot()));
         }
         return result;
     }
@@ -119,6 +123,25 @@ public sealed partial class MatchEngine
                destroyed||Math.Abs(applied-healthDamage)>.001f))
                 throw new InvalidDataException("Vehicle registry health diverged from shared army vitality.");
         }
+    }
+
+    internal void ApplyTransporterRepairDroneProjectileImpact(string shooterId,ulong vehicleId,
+        int pathIndex,float rawDamage,float partWeight)
+    {
+        if(vehicles==null||!vehicles.TryGet(vehicleId,out var vehicle)||vehicle==null||
+           vehicle.UnitId!="ID_UNIT-TRANSPORTER"||
+           !transporterRepairDrones.TryGetValue(vehicleId,out var drones)||pathIndex<0||pathIndex>=drones.Count)return;
+        var shooter=Find(shooterId)??throw new InvalidDataException("Repair-drone impact shooter disappeared.");
+        var owner=Find(vehicle.OwnerPlayerId)??throw new InvalidDataException("Repair-drone owner disappeared.");
+        if(shooter.Definition.Fraction==owner.Definition.Fraction||!float.IsFinite(rawDamage)||rawDamage<=0||
+           rawDamage>10_000_000||partWeight!=1)
+            throw new InvalidDataException("Invalid repair-drone projectile impact.");
+        bool wasActive=drones[pathIndex].Active;
+        if(!ApplyTransporterRepairDroneHostDamage(vehicleId,pathIndex,rawDamage*partWeight))return;
+        shooter.ConfirmedEnemyHits=checked(shooter.ConfirmedEnemyHits+1);
+        if(wasActive&&!drones[pathIndex].Active)
+            Emit(MatchEventKind.VehicleRepairDroneDown,vehicle.OwnerPlayerId,"",vehicleId,
+                drones[pathIndex].Position,0,"vehicle-repair-drone-down:"+pathIndex);
     }
     private readonly Dictionary<ulong,float> groundVehicleShotSpeed=[];
     private readonly Dictionary<ulong,ArmyVehicleShotStats> transporterShotStats=[];
@@ -277,9 +300,8 @@ public sealed partial class MatchEngine
     {
         if(phase!=BattlePhase.Running||!transporterRepairDrones.TryGetValue(entityKey,out var rows)||
            pathIndex<0||pathIndex>=rows.Count)return false;
-        bool before=rows[pathIndex].Active;
         if(!rows[pathIndex].ApplyDamage(damage,tick,NextArmyFloat))return false;
-        if(before&&!rows[pathIndex].Active)stateRevision++;
+        stateRevision++;
         return true;
     }
     internal bool ApplyVehiclePassengerHostDamage(ulong entityKey,string role,float damage)
@@ -751,7 +773,12 @@ public sealed partial class MatchEngine
             foreach(var drone in drones)
             {
                 bool active=drone.Active;float ratio=drone.Advance(vehicle.Position,facing,tick,NextArmyFloat);
-                if(active!=drone.Active)stateRevision++;
+                if(active!=drone.Active)
+                {
+                    stateRevision++;
+                    if(drone.Active)Emit(MatchEventKind.VehicleRepairDroneRespawned,army.OwnerPlayerId,"",
+                        entityKey,drone.Position,drone.Health,"vehicle-repair-drone-respawn:"+drone.PathIndex);
+                }
                 if(ratio<=0)continue;
                 if(!armyVitality.TryGetValue(entityKey,out var vitality))
                     throw new InvalidDataException("Transporter repair target lacks vitality.");

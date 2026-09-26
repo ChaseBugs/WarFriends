@@ -788,6 +788,19 @@ internal static class CombatContentTests
               repairState.Snapshot() is {WaypointIndex:0,RespawnTick:0} repairedDrone&&
               Math.Abs(repairedDrone.Health-repairedDrone.MaximumHealth)<.001f,
               "repair-drone death preserves its path and respawns at full health after the exact source window");
+        var repairTarget=content.GroundVehicleWeapons.PlaceRepairDrone(78,0,23,repairState.Snapshot());
+        var repairRayOrigin=repairTarget.Hitbox.Center+Vector3.UnitX;
+        var repairWorld=new ShotCollisionWorld(null,
+        [
+            new("cccccccccccccccccccccccccccccccc",referencePose.Place(new(100,0,100),Quaternion.Identity).Collision),
+            new("dddddddddddddddddddddddddddddddd",referencePose.Place(new(110,0,100),Quaternion.Identity).Collision)
+        ],dynamicTargets:_=>[repairTarget]);
+        var repairHit=repairWorld.Raycast("cccccccccccccccccccccccccccccccc",repairRayOrigin,
+            repairTarget.Hitbox.Center-repairRayOrigin,2,uint.MaxValue);
+        Check(repairHit is {DynamicEntityId:78,DynamicRepairDronePathIndex:0,DynamicPartId:null,
+                  DynamicPassengerRole:null,PartWeight:1}&&
+              repairHit.SourcePath.Contains("miniDrone.prefab",StringComparison.Ordinal),
+              "player projectile ray selects the source-pinned repair-drone root BoxCollider");
         var placedHumvee=content.GroundVehicleWeapons.PlaceBody("ID_UNIT-HUMVEE",77,
             Vector3.Zero,Vector3.UnitZ);
         var bodyTarget=placedHumvee.First(x=>x.Hitbox.Kind==PlayerHitboxKind.Box);
@@ -1741,6 +1754,18 @@ internal static class CombatContentTests
                 Kind=MatchEventKind.VehiclePassengerRespawned,ActorId=warperOwner,ProjectileId=0,
                 Reason="vehicle-passenger-respawn:driver"});
             Reject(()=>new War.Client.MatchEventConsumer().Consume(invalidPassengerPage));
+            var repairDroneConsumer=new War.Client.MatchEventConsumer();
+            var repairDronePage=new MatchEventBatch{Code="events",LatestEventId=1};
+            repairDronePage.Events.Add(new MatchEvent{EventId=1,Tick=5,
+                Kind=MatchEventKind.VehicleRepairDroneDown,ActorId=warperOwner,ProjectileId=8,
+                Reason="vehicle-repair-drone-down:1"});
+            Check(repairDroneConsumer.Consume(repairDronePage)==1,
+                  "Client event consumer accepts bounded repair-drone lifecycle metadata");
+            var invalidRepairDronePage=new MatchEventBatch{Code="events",LatestEventId=1};
+            invalidRepairDronePage.Events.Add(new MatchEvent{EventId=1,Tick=5,
+                Kind=MatchEventKind.VehicleRepairDroneRespawned,ActorId=warperOwner,ProjectileId=8,
+                Reason="vehicle-repair-drone-respawn:2"});
+            Reject(()=>new War.Client.MatchEventConsumer().Consume(invalidRepairDronePage));
             var interpolation=new SnapshotInterpolationBuffer(3);interpolation.Add(10,Vector3.Zero);interpolation.Add(20,new(10,0,0));
             Check(interpolation.Sample(15)==new Vector3(5,0,0)&&interpolation.Sample(5)==Vector3.Zero&&
                   interpolation.Sample(30)==new Vector3(10,0,0),
@@ -2880,6 +2905,11 @@ internal static class CombatContentTests
               {Active:true,RespawnTick:0}&&x.MaximumHealth>70&&
               Math.Abs(x.Health-x.MaximumHealth)<.001f),
               "live special-lane Transporter creates one authoritative repair drone on each recovered path");
+        var initialDroneProjection=transporterMatch.Snapshot().Vehicles.Single().RepairDrones;
+        Check(initialDroneProjection.Count==2&&initialDroneProjection.Select(x=>x.PathIndex).SequenceEqual([0,1])&&
+              initialDroneProjection.All(x=>x.Active&&x.Health==x.MaxHealth&&x.RespawnTick==0&&
+                  x.WaypointIndex is >=0 and <=6),
+              "protobuf vehicle snapshot publishes both ordered authoritative repair drones");
         ulong transporterTick=transporterSpawnTick;
         while(transporterMatch.GroundVehicleAttack(transporterEntity.EntityKey)?.Phase!=ArmyAirAttackPhase.Ready&&
               transporterTick<transporterSpawnTick+200)
@@ -2927,12 +2957,25 @@ internal static class CombatContentTests
         Check(repairedTransporter>damagedTransporter&&repairedTransporter<=transporterMaximum,
               $"two live repair drones heal synchronized Transporter vitality at one-second source boundaries ({damagedTransporter}->{repairedTransporter}, max {transporterMaximum}, terminal {transporterMatch.Terminal})");
         var droneBeforeDeath=transporterMatch.TransporterRepairDrones(transporterEntity.EntityKey)[0];
-        Check(transporterMatch.ApplyTransporterRepairDroneHostDamage(transporterEntity.EntityKey,0,
-                  droneBeforeDeath.MaximumHealth)&&
+        bool repairDroneWasTargetable=transporterMatch.GroundVehicleShotTargets(helicopterOwner).Any(x=>
+            x.EntityId==transporterEntity.EntityKey&&x.RepairDronePathIndex==0);
+        transporterMatch.ApplyTransporterRepairDroneProjectileImpact(helicopterOwner,
+            transporterEntity.EntityKey,0,droneBeforeDeath.MaximumHealth,1);
+        Check(repairDroneWasTargetable&&
               transporterMatch.TransporterRepairDrones(transporterEntity.EntityKey)[0] is
                   {Active:false,Health:0,RespawnTick:var repairRespawn}&&
-              repairRespawn>=transporterTick+1050&&repairRespawn<=transporterTick+1350,
-              "repair-drone death schedules the recovered 35-45 second host respawn window");
+              repairRespawn>=transporterTick+1050&&repairRespawn<=transporterTick+1350&&
+              !transporterMatch.GroundVehicleShotTargets(helicopterOwner).Any(x=>
+                  x.EntityId==transporterEntity.EntityKey&&x.RepairDronePathIndex==0)&&
+              transporterMatch.Snapshot().Vehicles.Single().RepairDrones[0] is
+                  {Active:false,Health:0,RespawnTick:var projectedRepairRespawn}&&
+              projectedRepairRespawn==repairRespawn,
+              "projectile-selected repair-drone death removes collision and projects its 35-45 second respawn");
+        var repairEvents=transporterMatch.EventBatch(helicopterOwner,
+            transporterEvents.Count==0?0:transporterEvents[^1].EventId).Events;
+        Check(repairEvents.Any(x=>x.Kind==MatchEventKind.VehicleRepairDroneDown&&
+                  x.ProjectileId==transporterEntity.EntityKey&&x.Reason=="vehicle-repair-drone-down:0"),
+              "repair-drone projectile death emits a replayable source-path lifecycle event");
         var destroyedVehicle=parkedVehicles[0];
         Check(staleMatch.ApplyArmyHostDamage(destroyedVehicle.EntityKey,destroyedVehicle.MaxHealth)&&
               staleMatch.VehicleRouteMotion(destroyedVehicle.EntityKey)==null&&

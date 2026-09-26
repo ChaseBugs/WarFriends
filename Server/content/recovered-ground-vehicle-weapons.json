@@ -21,7 +21,19 @@
     "deadRadius": 0.7,
     "hurtRadius": 1.4,
     "explosionDamageRatio": 0.5,
-    "splashDamageRatio": 0.05
+    "splashDamageRatio": 0.05,
+    "colliderFileId": 6503859,
+    "colliderCenter": [
+      -0.00030708313,
+      -0.01,
+      -0.01
+    ],
+    "colliderSize": [
+      0.22,
+      0.27,
+      0.29
+    ],
+    "colliderTrigger": true
   },
   "vehicles": [
     {
@@ -2140,6 +2152,18 @@
       "repairDronePaths": [
         {
           "componentFileId": 11441888,
+          "transformFileId": 483234,
+          "position": [
+            -0.005,
+            0.434,
+            -0.268
+          ],
+          "rotation": [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ],
           "radius": 0.1,
           "waypoints": [
             {
@@ -2223,6 +2247,18 @@
         },
         {
           "componentFileId": 11404670,
+          "transformFileId": 430067,
+          "position": [
+            -0.0050001144,
+            0.414,
+            0.387
+          ],
+          "rotation": [
+            0.0,
+            -1.0,
+            0.0,
+            -1.6292068e-07
+          ],
           "radius": 0.1,
           "waypoints": [
             {

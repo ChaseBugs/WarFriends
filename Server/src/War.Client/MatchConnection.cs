@@ -387,6 +387,13 @@ namespace War.Client
                        (!Guid.TryParseExact(row.ActorId,"N",out _)||row.ProjectileId==0||row.TargetId!=""||
                         !row.Reason.StartsWith("vehicle-passenger-",StringComparison.Ordinal)))
                         throw new InvalidOperationException("Battle host returned invalid vehicle passenger metadata.");
+                    if((row.Kind==MatchEventKind.VehicleRepairDroneDown||
+                        row.Kind==MatchEventKind.VehicleRepairDroneRespawned)&&
+                       (!Guid.TryParseExact(row.ActorId,"N",out _)||row.ProjectileId==0||row.TargetId!=""||
+                        (row.Kind==MatchEventKind.VehicleRepairDroneDown?
+                            row.Reason!="vehicle-repair-drone-down:0"&&row.Reason!="vehicle-repair-drone-down:1":
+                            row.Reason!="vehicle-repair-drone-respawn:0"&&row.Reason!="vehicle-repair-drone-respawn:1")))
+                        throw new InvalidOperationException("Battle host returned invalid repair-drone metadata.");
                 }
                 return batch.Clone();
             }
@@ -491,6 +498,26 @@ namespace War.Client
                                  part.Active!=(part.Health>0)||part.Active&&part.RespawnTick!=0||
                                  !part.Active&&part.RespawnTick==0)))
                             throw new InvalidOperationException("Battle host returned an invalid vehicle part row.");
+                    int priorDrone=-1;
+                    foreach(var drone in vehicle.RepairDrones)
+                    {
+                        float rotationLength=drone.RotationX*drone.RotationX+drone.RotationY*drone.RotationY+
+                            drone.RotationZ*drone.RotationZ+drone.RotationW*drone.RotationW;
+                        if(vehicle.UnitId!="ID_UNIT-TRANSPORTER"||drone.PathIndex<0||drone.PathIndex>1||
+                           drone.PathIndex<=priorDrone||!FiniteCoordinate(drone.X)||!FiniteCoordinate(drone.Y)||
+                           !FiniteCoordinate(drone.Z)||!FiniteCoordinate(drone.RotationX)||
+                           !FiniteCoordinate(drone.RotationY)||!FiniteCoordinate(drone.RotationZ)||
+                           !FiniteCoordinate(drone.RotationW)||Math.Abs(rotationLength-1)>.0002f||
+                           float.IsNaN(drone.MaxHealth)||float.IsInfinity(drone.MaxHealth)||drone.MaxHealth<=0||
+                           drone.MaxHealth>10_000_000||float.IsNaN(drone.Health)||float.IsInfinity(drone.Health)||
+                           drone.Health<0||drone.Health>drone.MaxHealth||drone.WaypointIndex<0||drone.WaypointIndex>6||
+                           drone.RespawnTick>10_000_000||drone.Active!=(drone.Health>0)||
+                           drone.Active&&drone.RespawnTick!=0||!drone.Active&&drone.RespawnTick==0)
+                            throw new InvalidOperationException("Battle host returned an invalid repair-drone row.");
+                        priorDrone=drone.PathIndex;
+                    }
+                    if(vehicle.RepairDrones.Count==1)
+                        throw new InvalidOperationException("Battle host returned an incomplete repair-drone pair.");
                     priorVehicle = vehicle.EntityId;
                 }
                 ulong priorDeployable = 0;

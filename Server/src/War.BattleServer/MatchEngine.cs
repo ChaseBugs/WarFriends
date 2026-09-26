@@ -1134,6 +1134,9 @@ public sealed partial class MatchEngine
                     if(impact.Hit.DynamicPassengerRole is { } role)
                         ApplyGroundVehiclePassengerProjectileImpact(impact.OwnerId,vehicleId,role,
                             pair.Value.Damage.Amount,impact.Hit.PartWeight);
+                    else if(impact.Hit.DynamicRepairDronePathIndex is int dronePath)
+                        ApplyTransporterRepairDroneProjectileImpact(impact.OwnerId,vehicleId,dronePath,
+                            pair.Value.Damage.Amount,impact.Hit.PartWeight);
                     else if(impact.Hit.DynamicPartId is int partId)
                         ApplyGroundVehicleProjectileImpact(impact.OwnerId,vehicleId,partId,pair.Value.Damage.Amount);
                     else throw new InvalidDataException("Vehicle collision omitted its source target.");
@@ -1858,6 +1861,15 @@ public sealed partial class MatchEngine
                     Active=passenger.Active,PointComponentFileId=passenger.Binding.PointComponentFileId,
                     TransformFileId=passenger.Binding.TransformFileId
                 }));
+                row.RepairDrones.AddRange(TransporterRepairDrones(v.EntityId).Select(drone=>
+                    new BattleRepairDroneState
+                    {
+                        PathIndex=drone.PathIndex,X=drone.Position.X,Y=drone.Position.Y,Z=drone.Position.Z,
+                        RotationX=drone.Rotation.X,RotationY=drone.Rotation.Y,
+                        RotationZ=drone.Rotation.Z,RotationW=drone.Rotation.W,
+                        Health=drone.Health,MaxHealth=drone.MaximumHealth,Active=drone.Active,
+                        RespawnTick=drone.RespawnTick,WaypointIndex=drone.WaypointIndex,Forward=drone.Forward
+                    }));
                 return row;
             }));
         if(players.Any(p=>p.Reconnecting))snapshot.PauseHostTick=hostTick;
