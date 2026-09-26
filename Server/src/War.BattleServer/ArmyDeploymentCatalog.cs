@@ -136,6 +136,36 @@ public sealed class ArmyDeploymentCatalog
         return new(probability,minimum,maximum,minTime,maxTime);
     }
 
+    /// <summary>Vehicle UpgradesLoaded replaces serialized turret timing with selected upgrade rows.</summary>
+    public ArmyVehicleShotStats ComposeVehicleShot(string unitId,int normalIndex,int? specialIndex,
+        int? eliteIndex,float accuracyCoefficient=1f)
+    {
+        var family=Families.SingleOrDefault(f=>f.UnitId==unitId)??
+            throw new ArgumentOutOfRangeException(nameof(unitId));
+        if(family.VehicleShot==null||family.IsAir||family.IsSoldier)
+            throw new InvalidDataException("Army family has no ground-vehicle shot contract.");
+        _=BaseStats(unitId,normalIndex);
+        if(upgradeShots==null||!upgradeShots.TryGetValue(unitId,out var stages))
+            throw new InvalidDataException("Vehicle shot upgrade authority is unavailable.");
+        ValidateOptionalLanes(unitId,stages.Count,specialIndex,eliteIndex);
+        if(!float.IsFinite(accuracyCoefficient)||accuracyCoefficient<=0||accuracyCoefficient>10)
+            throw new InvalidDataException("Invalid trusted vehicle accuracy coefficient.");
+        var selected=new List<ArmyUpgradeShotStats>{stages[normalIndex]};
+        if(specialIndex.HasValue)selected.Add(stages[specialIndex.Value]);
+        if(eliteIndex.HasValue)selected.Add(stages[eliteIndex.Value]);
+        float probability=Math.Min(1f,selected.Sum(x=>x.ProbabilityOfRealShot)*accuracyCoefficient);
+        int minimum=selected.Sum(x=>x.FireBatchSizeMin);
+        int maximum=selected.Sum(x=>x.FireBatchSizeMax);
+        float minTime=selected.Sum(x=>x.MinShootTime);
+        float maxTime=selected.Sum(x=>x.MaxShootTime);
+        if(!float.IsFinite(probability)||probability<0||minimum<0||maximum<minimum||maximum>64||
+           !float.IsFinite(minTime)||!float.IsFinite(maxTime)||minTime<0||maxTime<minTime||maxTime>180||
+           (maximum==0&&(minimum!=0||minTime!=0||maxTime!=0)))
+            throw new InvalidDataException("Composed vehicle shot stats are outside the recovered combat domain.");
+        return new(family.VehicleShot.ShotSpeed,probability,minimum,maximum,minTime,maxTime,
+            family.VehicleShot.Crew);
+    }
+
     public float EffectiveHealth(string unitId,int normalIndex,int? specialIndex,int? eliteIndex,
         ArmyHealthFactors factors)
     {

@@ -705,6 +705,18 @@ internal static class CombatContentTests
                   p.VehicleRoute!.WaypointTransformFileIds[^1]==p.VehicleRoute.TargetTransformFileId&&
                   !p.VehicleRoute.SmoothRoute&&!p.VehicleRoute.IsLoop),
               "all 20 source vehicle spawns pin their 107 ordered linear waypoints and final targets");
+        var humveeShot=content.Army.ComposeVehicleShot("ID_UNIT-HUMVEE",0,null,null);
+        var tankShot=content.Army.ComposeVehicleShot("ID_UNIT-TANK",0,null,null);
+        var buggyShot=content.Army.ComposeVehicleShot("ID_UNIT-BUGGY",0,null,null);
+        var transporterShot=content.Army.ComposeVehicleShot("ID_UNIT-TRANSPORTER",0,null,null);
+        Check(humveeShot==new ArmyVehicleShotStats(5f,.85f,4,5,1.5f,1.8f,0)&&
+              tankShot==new ArmyVehicleShotStats(5f,.8f,2,5,2f,5f,0)&&
+              buggyShot==new ArmyVehicleShotStats(5f,1f,0,0,0,0,0)&&
+              transporterShot==new ArmyVehicleShotStats(5f,.9f,4,7,3.5f,4.5f,0)&&
+              content.Army.ComposeVehicleShot("ID_UNIT-HUMVEE",0,null,null,2f)
+                  .ProbabilityOfRealShot==1f,
+              "ground vehicle primary turrets compose stage-zero batch, cooldown, speed, and bounded accuracy");
+        Reject(()=>content.Army.ComposeVehicleShot("ID_UNIT-ASSAULT",0,null,null));
         var routeProbe=vehicleRoutes[0];
         var routeMotion=new ArmyVehicleRouteMotion(routeProbe.Position,routeProbe.VehicleRoute!,1.7f);
         routeMotion.AdvanceTick();
@@ -2458,6 +2470,7 @@ internal static class CombatContentTests
             p.ComponentFileId==firstCar.SpawnComponentFileId);
         Check(firstCar.UnitId=="ID_UNIT-HUMVEE"&&firstCarSpawn.VehicleRoute!=null&&
               Vector3.Distance(new(firstCar.X,firstCar.Y,firstCar.Z),firstCarSpawn.Position)>1f&&
+              staleMatch.GroundVehicleAttack(firstCar.EntityKey) is {ShotSpeed:5f,Phase:ArmyAirAttackPhase.Ready}&&
               staleMatch.Snapshot().Vehicles.Any(v=>v.EntityId==firstCar.EntityKey&&v.UnitId==firstCar.UnitId),
               "deployed Humvee reserves its source car route and publishes fixed-tick vehicle motion");
         Check(staleMatch.Command(soldierOwner,new MatchCommand{CommandId=3,

@@ -21,6 +21,7 @@ public sealed partial class MatchEngine
     private readonly Dictionary<ulong,float> armySpecial=[];
     private readonly Dictionary<ulong,float> armySpeed=[];
     private readonly Dictionary<ulong,ArmyBaseShotStats> armyShots=[];
+    private readonly Dictionary<ulong,ArmyVehicleShotStats> armyVehicleShots=[];
     private readonly Dictionary<ulong,ArmyRusherArrivalState> rusherMotionCandidates=[];
     private readonly Dictionary<ulong,ArmyWarperRelocationState> warperRelocations=[];
     private readonly Dictionary<ulong,ulong> warperRestartTicks=[];
@@ -134,6 +135,10 @@ public sealed partial class MatchEngine
             armyShots.Add(entityKey,armyCatalog.ComposeShot(unitId,
                 owner.ArmyNormalUpgradeIndexes[index],special,elite,
                 owner.ArmyAccuracyCoefficients?[index]??1f));
+        if(family.VehicleShot!=null&&!family.IsAir&&!family.IsSoldier)
+            armyVehicleShots.Add(entityKey,armyCatalog.ComposeVehicleShot(unitId,
+                owner.ArmyNormalUpgradeIndexes[index],special,elite,
+                owner.ArmyAccuracyCoefficients?[index]??1f));
     }
 
     internal float? ArmyHealth(ulong entityKey)
@@ -171,6 +176,8 @@ public sealed partial class MatchEngine
         =>occupiedMinigunnerPoints.TryGetValue(pointFileId,out ulong key)?key:null;
     internal ArmyVehicleRouteMotion? VehicleRouteMotion(ulong entityKey)
         =>vehicleRouteMotions.TryGetValue(entityKey,out var state)?state:null;
+    internal VehicleAttackState? GroundVehicleAttack(ulong entityKey)
+        =>vehicles?.TryGetAttack(entityKey,out var state)==true?state:null;
 
     private void InitializeGroundVehicle(ulong entityKey,ArmyDeploymentFamily family,
         ArmySpawnPoint point)
@@ -180,8 +187,8 @@ public sealed partial class MatchEngine
         float speed=ArmySpeed(entityKey)??armyCatalog!.EffectiveSpeed(army.UnitId,1f);
         var entity=new VehicleEntity(entityKey,army.UnitId,army.OwnerPlayerId,1)
             {Position=new(army.X,army.Y,army.Z)};
-        if(!vehicles.TrySpawn(entity) || family.VehicleShot==null ||
-           !vehicles.TryBindAttack(entityKey,family.VehicleShot) ||
+        if(!vehicles.TrySpawn(entity) || !armyVehicleShots.TryGetValue(entityKey,out var vehicleShot) ||
+           !vehicles.TryBindAttack(entityKey,vehicleShot) ||
            armyVitality.TryGetValue(entityKey,out var vitality)&&
                !vehicles.TryBindHealth(entityKey,vitality.Maximum))
             throw new InvalidDataException("Ground vehicle registry initialization failed.");
@@ -990,6 +997,7 @@ public sealed partial class MatchEngine
         armySpecial.Remove(entityKey);
         armySpeed.Remove(entityKey);
         armyShots.Remove(entityKey);
+        armyVehicleShots.Remove(entityKey);
         rusherMotionCandidates.Remove(entityKey);
         warperRelocations.Remove(entityKey);
         warperRestartTicks.Remove(entityKey);
