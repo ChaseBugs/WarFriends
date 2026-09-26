@@ -827,6 +827,8 @@ public sealed partial class MatchEngine
         if (advanced) stateRevision++;
         tick = simulationTick;
         if(advanced&&phase==BattlePhase.Running)
+            foreach(var turret in heavyTurrets.Snapshot())turret.Aim.AdvanceTick();
+        if(advanced&&phase==BattlePhase.Running)
             foreach(var (vehicleId,rows) in vehiclePassengers.OrderBy(x=>x.Key))
                 foreach(var passenger in rows.Values.OrderBy(x=>x.Binding.PointComponentFileId))
                     if(passenger.Advance(tick))

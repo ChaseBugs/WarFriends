@@ -1496,6 +1496,35 @@ internal static class CombatContentTests
                 }
             }
             var turretAim=new HeavyTurretAimState();
+            using(var tweenOracle=JsonDocument.Parse(File.ReadAllBytes(Path.Combine(directory,"recovered-heavy-turret-aim-samples.json"))))
+            foreach(var sample in tweenOracle.RootElement.GetProperty("tweenSamples").EnumerateArray())
+            {
+                var t=sample.GetProperty("target");var turningTurret=new HeavyTurretAimState();
+                turningTurret.Plan(Vector3.Zero,new(t[0].GetSingle(),t[1].GetSingle(),t[2].GetSingle()));
+                int previousStep=0;
+                foreach(var frame in sample.GetProperty("frames").EnumerateArray())
+                {
+                    int step=frame.GetProperty("step").GetInt32();while(previousStep<step){turningTurret.AdvanceTick();previousStep++;}
+                    Vector3 FramePoint(JsonElement row,string name){var v=row.GetProperty(name);return new(v[0].GetSingle(),v[1].GetSingle(),v[2].GetSingle());}
+                    // Native Unity tween/Euler interpolation and Numerics
+                    // differ slightly; use the existing pose reconstruction
+                    // tolerance (0.2 mm), while endpoints retain 0.01 mm.
+                    Check(Vector3.Distance(turningTurret.SightOffset(heavyTurrets),FramePoint(frame,"sight"))<.0002f&&
+                        Vector3.Distance(turningTurret.MuzzleOffset(heavyTurrets),FramePoint(frame,"muzzle"))<.0002f,
+                        "tick-sampled turret origins match actual Unity TweenRotation.Sample: "+t+" step "+step+
+                        " host "+turningTurret.SightOffset(heavyTurrets)+" Unity "+FramePoint(frame,"sight"));
+                    var boxes=frame.GetProperty("colliders").EnumerateArray().ToArray();
+                    foreach(var shape in heavyTurrets.Colliders)
+                    {
+                        var box=boxes.Single(b=>Vector3.Distance(FramePoint(b,"size"),shape.Size)<.00001f);
+                        var q=box.GetProperty("rotation");var expected=new Quaternion(q[0].GetSingle(),q[1].GetSingle(),q[2].GetSingle(),q[3].GetSingle());
+                        var actual=turningTurret.Collider(heavyTurrets,shape);
+                        Check(Vector3.Distance(actual.Center,FramePoint(box,"center"))<.0002f&&
+                            1-Math.Abs(Quaternion.Dot(actual.Rotation,expected))<.00001f,
+                            "tick-sampled turret hitboxes match actual Unity TweenRotation.Sample");
+                    }
+                }
+            }
             Check(turretAim.Plan(Vector3.Zero,Vector3.UnitZ)==0&&
                   turretAim.Plan(Vector3.Zero,Vector3.UnitX)==8,
                 "Heavy Turret aligned aim is immediate and quarter turn uses source angular duration");
