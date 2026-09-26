@@ -1607,6 +1607,19 @@ internal static class CombatContentTests
                 File.WriteAllText(heavyTurretTemp,changed.ToJsonString());
                 Reject(()=>HeavyTurretSourceCatalog.Load(heavyTurretTemp,
                     Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(heavyTurretTemp))),content.Maps));
+                foreach(var field in new[]{"secondaryTargets","primTarget","primaryTargetOnly","needToSeePrimaryTarget","needToSeeSecondaryTarget","keepAimed"})
+                {
+                    var missing=JsonNode.Parse(File.ReadAllText(heavyTurretArtifact))!;
+                    missing["prefab"]!["turret"]!.AsObject().Remove(field);
+                    File.WriteAllText(heavyTurretTemp,missing.ToJsonString());
+                    Reject(()=>HeavyTurretSourceCatalog.Load(heavyTurretTemp,
+                        Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(heavyTurretTemp))),content.Maps));
+                }
+                var reordered=JsonNode.Parse(File.ReadAllText(heavyTurretArtifact))!;
+                reordered["prefab"]!["turret"]!["secondaryTargets"]=new JsonArray(2,0,1);
+                File.WriteAllText(heavyTurretTemp,reordered.ToJsonString());
+                Reject(()=>HeavyTurretSourceCatalog.Load(heavyTurretTemp,
+                    Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(heavyTurretTemp))),content.Maps));
             }
             finally {if(File.Exists(heavyTurretTemp))File.Delete(heavyTurretTemp);}
             var mines=DeployableCardPolicy.SelectLandmineTargets("LandMine",0,

@@ -1,5 +1,5 @@
 {
-  "version": 2,
+  "version": 3,
   "client": "1.4.0",
   "spawnCount": 1,
   "navMeshSampleRadius": 10.0,
@@ -49,6 +49,16 @@
       "maxShotRotation": 360.0,
       "predictPosition": true,
       "primaryTarget": 3,
+      "secondaryTargets": [
+        0,
+        2,
+        1
+      ],
+      "primaryTargetOnly": false,
+      "needToSeePrimaryTarget": false,
+      "needToSeeSecondaryTarget": false,
+      "keepAimed": false,
+      "primTarget": 2,
       "useUnitTarget": true,
       "realShotProbability": 1.0,
       "batchedWeaponComponentFileId": 11444804,

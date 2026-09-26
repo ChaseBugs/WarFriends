@@ -28,6 +28,9 @@ public sealed class HeavyTurretSourceCatalog
     private sealed class Turret {public float AimTime{get;set;}public int BatchSizeMin{get;set;}public int BatchSizeMax{get;set;}
         public float MinShootTime{get;set;}public float MaxShootTime{get;set;}public float MaxShotRotation{get;set;}
         public bool PredictPosition{get;set;}public int PrimaryTarget{get;set;}public bool UseUnitTarget{get;set;}
+        public int[] SecondaryTargets{get;set;}=[];public int? PrimTarget{get;set;}
+        public bool? PrimaryTargetOnly{get;set;}public bool? NeedToSeePrimaryTarget{get;set;}
+        public bool? NeedToSeeSecondaryTarget{get;set;}public bool? KeepAimed{get;set;}
         public float RealShotProbability{get;set;}public int BatchedWeaponComponentFileId{get;set;}public int WeaponComponentFileId{get;set;}
         public float[] MuzzlePosition{get;set;}=[];public float BulletDefaultSpeed{get;set;}public float BulletCheckDistance{get;set;}
         public string BulletSource{get;set;}="";public string BulletSha256{get;set;}="";}
@@ -55,6 +58,7 @@ public sealed class HeavyTurretSourceCatalog
     public float PlayerDamageRatio=>.5f;public float PlayerOvertimeDamageRatio=>.5f;
     public float PlayerBehindShieldDamageRatio=>0;public float ShieldHitProbability=>0;
     public IReadOnlyList<HeavyTurretCollider> Colliders{get;}
+    public IReadOnlyList<int> SecondaryTargetGroups{get;}=Array.AsReadOnly(new[]{0,2,1});
     private HeavyTurretSourceCatalog(string revision,string prefabRevision,HeavyTurretStats min,HeavyTurretStats max,
         Dictionary<string,IReadOnlyList<HeavyTurretCover>> maps,IReadOnlyList<HeavyTurretCollider> colliders,Vector3 muzzleOffset)
     {Revision=revision;PrefabRevision=prefabRevision;minimum=min;maximum=max;this.maps=maps;Colliders=colliders;MuzzleOffset=muzzleOffset;}
@@ -90,7 +94,7 @@ public sealed class HeavyTurretSourceCatalog
             throw new InvalidDataException("Heavy Turret source revision mismatch.");
         var root=JsonSerializer.Deserialize<Root>(bytes,new JsonSerializerOptions{PropertyNameCaseInsensitive=true,UnmappedMemberHandling=JsonUnmappedMemberHandling.Disallow})??
             throw new InvalidDataException("Missing Heavy Turret package.");
-        if(root.Version!=2||root.Client!="1.4.0"||root.SpawnCount!=1||root.NavMeshSampleRadius!=10||
+        if(root.Version!=3||root.Client!="1.4.0"||root.SpawnCount!=1||root.NavMeshSampleRadius!=10||
            root.NavMeshAreaMask!=1||root.MaxDisplayLevel!=44||root.Stats.Length!=2||root.Maps.Length!=5||sourceMaps.Count!=5)
             throw new InvalidDataException("Unknown Heavy Turret package.");
         HeavyTurretStats ParseStat(Stat x)
@@ -112,6 +116,8 @@ public sealed class HeavyTurretSourceCatalog
            p.RootTransformFileId!=424449||p.HeavyTurretComponentFileId!=11491323||p.TurretWeaponComponentFileId!=11459786||
            t.AimTime!=1||t.BatchSizeMin!=1||t.BatchSizeMax!=5||t.MinShootTime!=1||t.MaxShootTime!=5||t.MaxShotRotation!=360||
            !t.PredictPosition||t.PrimaryTarget!=3||!t.UseUnitTarget||t.RealShotProbability!=1||t.BatchedWeaponComponentFileId!=11444804||
+           t.SecondaryTargets==null||!t.SecondaryTargets.SequenceEqual([0,2,1])||t.PrimTarget!=2||t.PrimaryTargetOnly!=false||
+           t.NeedToSeePrimaryTarget!=false||t.NeedToSeeSecondaryTarget!=false||t.KeepAimed!=false||
            t.WeaponComponentFileId!=11455190||t.BulletDefaultSpeed!=5||t.BulletCheckDistance!=.6f||
            t.BulletSource!="Assets/GameObject/BulletSlow.prefab"||t.BulletSha256!="5379f6aba1560b8eb3d7d386d1349454b97ea133163ade9a313e2bc34d1adfae"||
            !p.MeshComponentFileIds.SequenceEqual([3327192,3335660,3361517,3339548])||

@@ -123,6 +123,11 @@ def extract_prefab():
                       "batchSizeMax":int(field(t,"batchSizeMax")),"minShootTime":float(field(t,"minShootTime")),
                       "maxShootTime":float(field(t,"maxShootTime")),"maxShotRotation":float(field(t,"maxShotRotation")),
                       "predictPosition":bool(int(field(t,"predictPosition"))),"primaryTarget":int(field(t,"primaryTarget")),
+                      "secondaryTargets":[int.from_bytes(bytes.fromhex(field(t,"secondaryTargets"))[i:i+4],"little") for i in range(0,len(bytes.fromhex(field(t,"secondaryTargets"))),4)],
+                      "primaryTargetOnly":bool(int(field(t,"primaryTargetOnly"))),
+                      "needToSeePrimaryTarget":bool(int(field(t,"needToSeePrimaryTarget"))),
+                      "needToSeeSecondaryTarget":bool(int(field(t,"needToSeeSecondaryTarget"))),
+                      "keepAimed":bool(int(field(t,"keepAimed"))),"primTarget":int(field(t,"primTarget")),
                       "useUnitTarget":bool(int(field(t,"useUnitTarget")),),"realShotProbability":float(field(t,"realShotProbability")),
                       "batchedWeaponComponentFileId":batched_id,"weaponComponentFileId":weapon_id,
                       "muzzlePosition":muzzle,"bulletDefaultSpeed":5.0,"bulletCheckDistance":float(field(bullet,"distanceToCheck")),
@@ -136,7 +141,7 @@ def main():
     army_rows=next(s["rows"] for s in content["sheets"] if s["type"]=="Google2u.ArmyUpgrades")
     army=next((x for x in army_rows if x["NAME"]=="Google2u.DBUpgradeSlotsHeavyTurret"),None)
     if army is None: raise ValueError("HeavyTurret army policy missing")
-    artifact={"version":2,"client":"1.4.0","spawnCount":1,"navMeshSampleRadius":10.0,"navMeshAreaMask":1,
+    artifact={"version":3,"client":"1.4.0","spawnCount":1,"navMeshSampleRadius":10.0,"navMeshAreaMask":1,
               "maxDisplayLevel":44,"stats":rows,
               "armyPolicy":{"bulletSpeed":army["BULLETSPEED"],"playerDamageRatio":army["PLAYERDAMAGERATIO"],
                              "playerOvertimeDamageRatio":army["PLAYERDAMAGEOVERTIMERATIO"],

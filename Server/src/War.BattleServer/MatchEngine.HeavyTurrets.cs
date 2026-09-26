@@ -108,7 +108,9 @@ public sealed partial class MatchEngine
         var infantry=activeArmyEntities.Values.Where(x=>x.OwnerFraction!=turret.OwnerFraction&&infantryAnimations.ContainsKey(x.EntityKey)).ToArray();
         var rushers=infantry.Where(x=>ArmyRusherPointCatalog.IsRusher(
             armyCatalog!.Families.Single(f=>f.UnitId==x.UnitId).BehaviorType)).OrderBy(x=>x.EntityKey).ToArray();
-        var pool=rushers.Length>0?rushers:infantry.OrderBy(x=>x.EntityKey).ToArray();
+        var pool=rushers.Length>0?rushers:heavyTurretSource!.SecondaryTargetGroups.SelectMany(group=>
+            infantry.Where(x=>armyCatalog!.Families.Single(f=>f.UnitId==x.UnitId).UnitType==group).OrderBy(x=>x.EntityKey)).ToArray();
+        if(pool.Length==0)pool=infantry.OrderBy(x=>x.EntityKey).ToArray();
         if(pool.Length>0){var row=pool[Choose(pool.Length)];return new("army:"+row.EntityKey,new(row.X,row.Y,row.Z),"army",row.EntityKey);}
         var opponent=players.SingleOrDefault(x=>x.Definition.Fraction!=turret.OwnerFraction&&x.Health>0&&!x.Reconnecting);
         return opponent==null?null:new(opponent.Definition.PlayerId,opponent.Position,"player");
