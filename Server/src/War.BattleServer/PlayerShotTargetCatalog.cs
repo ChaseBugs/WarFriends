@@ -4,7 +4,8 @@ using System.Text.Json;
 
 namespace War.BattleServer;
 
-public sealed record PlayerShotTarget(int TransformFileId,int Type,string Path,Vector3 ReferencePosition);
+public sealed record PlayerShotTarget(int TransformFileId,int Type,string Path,Vector3 ReferencePosition,
+    string ParentPath,Vector3 LocalPosition,Quaternion LocalRotation);
 
 /// <summary>Serialized gameplay target identities; reference positions are not animated hit authority.</summary>
 public sealed class PlayerShotTargetCatalog
@@ -46,7 +47,7 @@ public sealed class PlayerShotTargetCatalog
         using var doc=JsonDocument.Parse(bytes,new JsonDocumentOptions{MaxDepth=8});
         var root=doc.RootElement;
         Exact(root,"version","source","sceneSha256","players");
-        if(root.GetProperty("version").GetInt32()!=1 ||
+        if(root.GetProperty("version").GetInt32()!=2 ||
            root.GetProperty("source").GetString()!="Assets/Scenes/MainScene.unity" ||
            root.GetProperty("sceneSha256").GetString()!=sceneRevision)
             throw new InvalidDataException("Player shot targets do not bind the active scene.");
@@ -67,7 +68,7 @@ public sealed class PlayerShotTargetCatalog
             int[] expectedTypes=[1,1,2,16,8];
             for(int j=0;j<5;j++)
             {
-                var target=targets[j];Exact(target,"transformFileId","type","path","referencePosition");
+                var target=targets[j];Exact(target,"transformFileId","type","path","referencePosition","parentPath","localPosition","localRotation");
                 int id=target.GetProperty("transformFileId").GetInt32();
                 int type=target.GetProperty("type").GetInt32();
                 string pathName=target.GetProperty("path").GetString()??"";
@@ -81,7 +82,16 @@ public sealed class PlayerShotTargetCatalog
                 var point=new Vector3(position[0].GetSingle(),position[1].GetSingle(),position[2].GetSingle());
                 if(!Finite(point) || Math.Max(Math.Abs(point.X),Math.Max(Math.Abs(point.Y),Math.Abs(point.Z)))>10000)
                     throw new InvalidDataException("Invalid target reference position.");
-                rows[j]=new(id,type,pathName,point);
+                string parentPath=target.GetProperty("parentPath").GetString()??"";
+                var local=target.GetProperty("localPosition");var rotation=target.GetProperty("localRotation");
+                if(parentPath!=pathName[..pathName.LastIndexOf('/')]||local.GetArrayLength()!=3||rotation.GetArrayLength()!=4)
+                    throw new InvalidDataException("Invalid shot target parent transform.");
+                var localPoint=new Vector3(local[0].GetSingle(),local[1].GetSingle(),local[2].GetSingle());
+                var localRotation=new Quaternion(rotation[0].GetSingle(),rotation[1].GetSingle(),rotation[2].GetSingle(),rotation[3].GetSingle());
+                if(!Finite(localPoint)||localPoint.Length()>100||!float.IsFinite(localRotation.LengthSquared())||
+                   Math.Abs(localRotation.LengthSquared()-1)>.0001f)
+                    throw new InvalidDataException("Invalid shot target local transform.");
+                rows[j]=new(id,type,pathName,point,parentPath,localPoint,localRotation);
             }
             if(i==0)gameplay=rows;
         }

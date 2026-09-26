@@ -122,9 +122,23 @@ public sealed partial class MatchEngine
             if(!PlayerHitbox.Finite(predicted))throw new InvalidDataException("Heavy Turret prediction escaped scene bounds.");
             return predicted;
         }
-        var parts=pose.Collision.Parts;
-        if(parts.Count==0)throw new InvalidDataException("Heavy Turret target has no source shot parts.");
-        return parts.OrderBy(x=>Vector3.DistanceSquared(origin,x.Center)).First().Center;
+        if(playerShotTargets==null||map==null)throw new InvalidDataException("Heavy Turret lacks source shot targets.");
+        // The recovered player state stays HidingBehindShield while firing;
+        // aimForward is the negative current defend-point forward.
+        var forward=-Vector3.Transform(Vector3.UnitZ,map.Covers[player.Cover].Rotation);
+        var towardTurret=origin-player.Position;
+        int mask=HeavyTurretStationaryTargetMask(forward,towardTurret,heavyTurretSource!.ShieldHitProbability,NextArmyFloat);
+        var selected=playerShotTargets.Nearest(mask,origin,row=>pose.BodyTarget(row.TransformFileId).Position);
+        return pose.BodyTarget(selected.TransformFileId).Position;
+    }
+    internal static int HeavyTurretStationaryTargetMask(Vector3 forward,Vector3 towardTurret,float shieldProbability,Func<float> random)
+    {
+        if(!PlayerHitbox.Finite(forward)||!PlayerHitbox.Finite(towardTurret)||forward.LengthSquared()==0||
+           towardTurret.LengthSquared()==0||!float.IsFinite(shieldProbability)||shieldProbability is <0 or >1)
+            throw new InvalidDataException("Invalid Heavy Turret target selection authority.");
+        if(Vector3.Dot(Vector3.Normalize(forward),Vector3.Normalize(towardTurret))<MathF.Cos(50*MathF.PI/180))return 2;
+        float value=random();if(!float.IsFinite(value)||value is <0 or >=1)throw new InvalidDataException("Invalid Heavy Turret target random value.");
+        return value>=shieldProbability?9:2;
     }
     private float HeavyTurretBulletSpeed(string targetKind)=>heavyTurretSource!.EffectiveBulletSpeed*(targetKind=="player"?.5f:1f);
     private Vector3 HeavyTurretPlayerVelocity(Player player)
@@ -176,7 +190,16 @@ public sealed partial class MatchEngine
     }
     private bool HeavyTurretCanSee(HeavyTurretMatchEntity turret,HeavyTurretTarget target)
     {
-        var origin=turret.Position+heavyTurretSource!.MuzzleOffset;var delta=target.Position-origin;
+        var origin=turret.Position+heavyTurretSource!.MuzzleOffset;
+        var sightPosition=target.Position;
+        if(target.Kind=="player")
+        {
+            // TurretSeesEnemy checks GetShotTargets(AllIn)[0], independently
+            // of Fire's eventual Shield/WholeBody/Moving target choice.
+            var first=playerShotTargets!.Gameplay.First(x=>(x.Type&0xFFFFFB)==x.Type);
+            sightPosition=rifleCombat!.Pose(target.Id).BodyTarget(first.TransformFileId).Position;
+        }
+        var delta=sightPosition-origin;
         float distance=delta.Length();if(distance<.001f)return false;var direction=delta/distance;
         // AIObject.CanSeeTargetStatic offsets 0.25 and stops 0.5 before the target.
         const uint visibilityMask=(1u<<8)|(1u<<13)|(1u<<22)|(1u<<23)|(1u<<24)|(1u<<26)|(1u<<27)|(1u<<30);

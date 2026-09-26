@@ -677,6 +677,35 @@ internal static class CombatContentTests
                   idleTarget.Position)>1f,
               "Rusher moving target follows the sampled animated rig and host root placement");
         var referencePose=content.Poses.SampleBlended("T_pose",0,true,"T_pose",0,true,0);
+        var headTarget=content.PlayerShotTargets.Gameplay.Single(t=>t.Type==8);
+        Check(Vector3.Distance(content.Poses.SampleBlended("run",.25,true,"run",.25,true,0)
+                .BodyTarget(headTarget.TransformFileId).Position,referencePose.BodyTarget(headTarget.TransformFileId).Position)>.001f,
+            "Head shot target follows the recovered animated hierarchy");
+        using(var headOracle=JsonDocument.Parse(File.ReadAllBytes(Path.Combine(directory,"recovered-player-poses.json"))))
+        foreach(var clip in headOracle.RootElement.GetProperty("clips").EnumerateArray())
+        foreach(var frame in clip.GetProperty("frames").EnumerateArray())
+        {
+            string clipName=clip.GetProperty("name").GetString()!;double seconds=frame.GetProperty("seconds").GetDouble();
+            var expected=frame.GetProperty("headTarget");
+            // Unity exports float seconds; sample just inside that frame so
+            // a rounded-down 17/30 does not select host frame 16.
+            var actual=content.Poses.SampleBlended(clipName,seconds+.000001,false,clipName,seconds+.000001,false,0).BodyTarget(headTarget.TransformFileId).Position;
+            Check(Vector3.Distance(actual,new(expected[0].GetSingle(),expected[1].GetSingle(),expected[2].GetSingle()))<.0002f,
+                "posed Head target matches independent Unity world sample: "+clipName+"/"+seconds);
+        }
+        Check(MatchEngine.HeavyTurretStationaryTargetMask(Vector3.UnitZ,Vector3.UnitZ,0,()=>0)==9&&
+            MatchEngine.HeavyTurretStationaryTargetMask(Vector3.UnitZ,Vector3.UnitZ,.5f,()=>.25f)==2&&
+            MatchEngine.HeavyTurretStationaryTargetMask(Vector3.UnitZ,Vector3.UnitZ,.5f,()=>.5f)==9&&
+            MatchEngine.HeavyTurretStationaryTargetMask(Vector3.UnitZ,-Vector3.UnitZ,0,()=>throw new Exception("side branch drew random"))==2,
+            "Heavy Turret whole-body and Shield branches preserve facing, strict probability and random short-circuit rules");
+        Check(MatchEngine.HeavyTurretStationaryTargetMask(Vector3.UnitZ,
+                  Vector3.Transform(Vector3.UnitZ,Quaternion.CreateFromAxisAngle(Vector3.UnitY,49*MathF.PI/180)),0,()=>0)==9&&
+              MatchEngine.HeavyTurretStationaryTargetMask(Vector3.UnitZ,
+                  Vector3.Transform(Vector3.UnitZ,Quaternion.CreateFromAxisAngle(Vector3.UnitY,51*MathF.PI/180)),0,()=>0)==2,
+              "Heavy Turret facing gate separates inside and outside the recovered 50-degree cone");
+        Reject(()=>MatchEngine.HeavyTurretStationaryTargetMask(Vector3.Zero,Vector3.UnitZ,0,()=>0));
+        Reject(()=>MatchEngine.HeavyTurretStationaryTargetMask(Vector3.UnitZ,Vector3.UnitZ,float.NaN,()=>0));
+        Reject(()=>MatchEngine.HeavyTurretStationaryTargetMask(Vector3.UnitZ,Vector3.UnitZ,0,()=>float.NaN));
         var shieldTarget=content.PlayerShotTargets.Gameplay.Single(t=>t.Type==2);
         Check(Vector3.Distance(referencePose.BodyTarget(shieldTarget.TransformFileId).Position,
                   shieldTarget.ReferencePosition)<.0002f&&
@@ -2481,17 +2510,26 @@ internal static class CombatContentTests
               heavyTurretMatch.Snapshot().HeavyTurrets.Count==1&&heavyTurretMatch.Snapshot().CardActivations==1,
               "Heavy Turret replay creates no duplicate and exhausted inventory cannot create state");
         float heavyTurretVictimHealth=heavyTurretMatch.Snapshot().Players.Single(x=>x.PlayerId==decoyOpponent).Health;
-        for(ulong heavyTick=61;heavyTick<=900&&!heavyTurretMatch.Terminal;heavyTick++)heavyTurretMatch.Advance(heavyTick);
+        var turretVictimMove=heavyTurretMatch.Command(decoyOpponent,new(){CommandId=3,MoveCover=new(){Direction=1}});
+        Check(turretVictimMove.Code=="moving","Heavy Turret target enters a source-bound walking route");
+        bool observedTurretFlight=false;
+        for(ulong heavyTick=61;heavyTick<=900&&!heavyTurretMatch.Terminal;heavyTick++)
+        {
+            heavyTurretMatch.Advance(heavyTick);
+            observedTurretFlight|=heavyTurretMatch.Snapshot().Projectiles.Any(x=>x.Kind=="heavy-turret-bullet");
+            heavyTurretMatch.EventBatch(decoyPlayer,0);heavyTurretMatch.EventBatch(decoyOpponent,0);
+        }
         var heavyTurretCombatSnapshot=heavyTurretMatch.Snapshot();
         var heavyTurretEvents=new List<MatchEvent>();ulong heavyTurretCursor=0;
         while(heavyTurretCursor<heavyTurretMatch.EventBatch(decoyPlayer,heavyTurretCursor).LatestEventId)
         {var page=heavyTurretMatch.EventBatch(decoyPlayer,heavyTurretCursor);heavyTurretEvents.AddRange(page.Events);if(page.Events.Count==0)break;heavyTurretCursor=page.Events[^1].EventId;}
         Check(heavyTurretEvents.Any(x=>x.Kind==MatchEventKind.HeavyTurretFired&&
                   x.ActorId==decoyPlayer&&x.TargetId==decoyOpponent)&&
-              heavyTurretEvents.Any(x=>x.Kind==MatchEventKind.Impact&&x.ActorId==decoyPlayer&&x.Reason=="heavy-turret")&&
+              observedTurretFlight&&
               heavyTurretCombatSnapshot.Players.Single(x=>x.PlayerId==decoyOpponent).Health<=heavyTurretVictimHealth&&
               heavyTurretCombatSnapshot.HeavyTurrets.Single().AttackPhase is "cooldown" or "aiming" or "firing",
-              "Heavy Turret owns source cooldown, aim, batch cadence, BulletSlow flight and impact collision on the host");
+              "Heavy Turret owns source cooldown, aim, batch cadence and live BulletSlow flight; misses do not imply damage: "+
+              string.Join(",",heavyTurretEvents.Select(x=>x.Kind+":"+x.Reason)));
         ulong liveHeavyTurretId=heavyTurretCombatSnapshot.HeavyTurrets.Single().EntityId;
         float liveHeavyTurretHealth=heavyTurretCombatSnapshot.HeavyTurrets.Single().Health;
         var liveHeavyTurretColliders=heavyTurretMatch.GroundVehicleShotTargets(decoyOpponent)

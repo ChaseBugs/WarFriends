@@ -21,3 +21,5 @@ Validation: both Unity exports completed successfully. Battle suite passed 18,13
 Runtime integration checkpoint: regenerated Unity blend export passed; Battle suite passed 18,282 assertions including runtime collider/muzzle parity and corrupt hierarchy rejection. This connects the pose catalog, not the live Worker gameplay flow.
 
 Latest validation: 12-case Unity export passed, solution build zero warnings/errors, Battle suite 20,473 assertions. Earlier counts remain historical checkpoints.
+
+The current player-pose package extends the hierarchy to 144 nodes by including the recovered Head target and its missing ancestor. The separate historical blend comparison artifact remains 142 nodes; its results do not prove the new Head branch. Independent Unity Head world positions are exported with every animation frame and compared with the host pose in combat-content tests.

@@ -18,7 +18,7 @@ public sealed partial class PlayerPoseCatalog
 
     internal void AttachPlayerShotTargets(PlayerShotTargetCatalog catalog)
     {
-        if(catalog==null || movingShotTarget!=null || bodyShotTargets.Length!=0 || rigIndex.Count!=142)
+        if(catalog==null || movingShotTarget!=null || bodyShotTargets.Length!=0 || rigIndex.Count!=144)
             throw new InvalidDataException("Invalid moving-target pose binding.");
         var target=catalog.Gameplay.Single(t=>t.Type==16);
         if(!rigIndex.TryGetValue(target.Path,out int node))
@@ -27,7 +27,7 @@ public sealed partial class PlayerPoseCatalog
         bodyShotTargets=catalog.Gameplay.Where(t=>t.Type is 1 or 2).ToArray();
         if(bodyShotTargets.Length!=3 || bodyShotTargets.Any(t=>t.Path!="MainSceneRootNew/Player/shotTarget"))
             throw new InvalidDataException("Recovered Body targets are not direct player children.");
-        foreach(var row in catalog.Gameplay.Where(t=>t.Type==16))
+        foreach(var row in catalog.Gameplay.Where(t=>t.Type is 8 or 16))
         {
             if(!rigIndex.TryGetValue(row.Path,out int targetNode))
                 throw new InvalidDataException("Recovered animated shot target is absent from player rig.");
@@ -39,7 +39,7 @@ public sealed partial class PlayerPoseCatalog
     // complete validated rig contains all nine shotgun muzzle transforms.
     internal void AttachShotgunMuzzles(ShotgunCatalog catalog)
     {
-        if(catalog==null || catalog.SceneRevision!=SourceHash || rigIndex.Count!=142)
+        if(catalog==null || catalog.SceneRevision!=SourceHash || rigIndex.Count!=144)
             throw new InvalidDataException("Invalid shotgun pose binding.");
         var nodes=new Dictionary<string,(int Node,string Path)>(StringComparer.Ordinal);
         foreach(var binding in catalog.Bindings)
@@ -55,7 +55,7 @@ public sealed partial class PlayerPoseCatalog
 
     internal void AttachSmgMuzzles(SmgCatalog catalog)
     {
-        if(catalog==null || catalog.SceneRevision!=SourceHash || rigIndex.Count!=142)
+        if(catalog==null || catalog.SceneRevision!=SourceHash || rigIndex.Count!=144)
             throw new InvalidDataException("Invalid SMG pose binding.");
         var nodes=new Dictionary<string,(int Node,string Path)>(StringComparer.Ordinal);
         foreach(var binding in catalog.Bindings)
@@ -71,7 +71,7 @@ public sealed partial class PlayerPoseCatalog
 
     internal void AttachPistolMuzzles(PistolCatalog catalog)
     {
-        if(catalog==null || catalog.SceneRevision!=SourceHash || rigIndex.Count!=142)
+        if(catalog==null || catalog.SceneRevision!=SourceHash || rigIndex.Count!=144)
             throw new InvalidDataException("Invalid pistol pose binding.");
         var nodes=new Dictionary<string,(int Node,string Path)>(StringComparer.Ordinal);
         foreach(var binding in catalog.Bindings)
@@ -85,7 +85,7 @@ public sealed partial class PlayerPoseCatalog
 
     internal void AttachLmgMuzzles(LmgCatalog catalog)
     {
-        if(catalog==null||catalog.SceneRevision!=SourceHash||rigIndex.Count!=142)throw new InvalidDataException("Invalid LMG pose binding.");
+        if(catalog==null||catalog.SceneRevision!=SourceHash||rigIndex.Count!=144)throw new InvalidDataException("Invalid LMG pose binding.");
         var nodes=new Dictionary<string,(int Node,string Path)>(StringComparer.Ordinal);
         foreach(var binding in catalog.Bindings)
         {
@@ -98,7 +98,7 @@ public sealed partial class PlayerPoseCatalog
 
     internal void AttachMinigunMuzzle(MinigunCatalog catalog)
     {
-        if(catalog==null||catalog.SceneRevision!=SourceHash||rigIndex.Count!=142||
+        if(catalog==null||catalog.SceneRevision!=SourceHash||rigIndex.Count!=144||
            !rigIndex.TryGetValue(catalog.Binding.MuzzlePath,out int node)||
            !extraMuzzles.TryAdd(MinigunCatalog.SourceId,(node,catalog.Binding.MuzzlePath)))
             throw new InvalidDataException("Minigun muzzle missing from recovered rig.");
@@ -106,7 +106,7 @@ public sealed partial class PlayerPoseCatalog
 
     internal void AttachSniperMuzzles(SniperCatalog catalog)
     {
-        if(catalog==null||catalog.SceneRevision!=SourceHash||rigIndex.Count!=142)throw new InvalidDataException("Invalid sniper pose binding.");
+        if(catalog==null||catalog.SceneRevision!=SourceHash||rigIndex.Count!=144)throw new InvalidDataException("Invalid sniper pose binding.");
         var nodes=new Dictionary<string,(int Node,string Path)>(StringComparer.Ordinal);
         foreach(var binding in catalog.Bindings)
             if(!rigIndex.TryGetValue(binding.MuzzlePath,out int node)||!nodes.TryAdd(binding.SourceId,(node,binding.MuzzlePath)))
@@ -117,7 +117,7 @@ public sealed partial class PlayerPoseCatalog
 
     internal void AttachBazookaMuzzles(BazookaCatalog catalog)
     {
-        if(catalog==null||catalog.SceneRevision!=SourceHash||rigIndex.Count!=142)throw new InvalidDataException("Invalid bazooka pose binding.");
+        if(catalog==null||catalog.SceneRevision!=SourceHash||rigIndex.Count!=144)throw new InvalidDataException("Invalid bazooka pose binding.");
         var nodes=new Dictionary<string,(int Node,string Path)>(StringComparer.Ordinal);
         foreach(var binding in catalog.Bindings)
         {
@@ -133,7 +133,7 @@ public sealed partial class PlayerPoseCatalog
 
     internal void AttachGrenadeMuzzles(GrenadeCatalog catalog)
     {
-        if(catalog==null||catalog.SceneRevision!=SourceHash||rigIndex.Count!=142)throw new InvalidDataException("Invalid grenade pose binding.");
+        if(catalog==null||catalog.SceneRevision!=SourceHash||rigIndex.Count!=144)throw new InvalidDataException("Invalid grenade pose binding.");
         var nodes=new Dictionary<string,(int Node,string Path)>(StringComparer.Ordinal);
         foreach(var binding in catalog.Bindings)
         {
@@ -187,7 +187,7 @@ public sealed partial class PlayerPoseCatalog
     private void LoadRig(JsonElement root)
     {
         var nodes=root.GetProperty("rigNodes").EnumerateArray().ToArray();
-        if (nodes.Length!=142) throw new InvalidDataException("Incomplete recovered rig hierarchy.");
+        if (nodes.Length!=144) throw new InvalidDataException("Incomplete recovered rig hierarchy.");
         rigParents=new int[nodes.Length];
         string rootPath=root.GetProperty("playerPath").GetString()!;
         string[] paths=new string[nodes.Length];

@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "source": "Assets/Scenes/MainScene.unity",
   "sceneSha256": "d46f81ff8c3e12bf17f34a1f53dd601bd799102c9f984818031441dfb7a5de43",
   "players": [
@@ -15,6 +15,18 @@
             99.95554545763446,
             0.42348912253490534,
             99.67618270276888
+          ],
+          "parentPath": "MainSceneRootNew/Player",
+          "localPosition": [
+            -0.32381728,
+            0.4234891,
+            0.04445454
+          ],
+          "localRotation": [
+            0.0,
+            -0.7071068,
+            0.0,
+            -0.7071068
           ]
         },
         {
@@ -25,6 +37,18 @@
             99.95072551137798,
             0.42348912253490534,
             100.28028015491441
+          ],
+          "parentPath": "MainSceneRootNew/Player",
+          "localPosition": [
+            0.28028014,
+            0.4234891,
+            0.049274486
+          ],
+          "localRotation": [
+            0.0,
+            -0.7071068,
+            0.0,
+            -0.7071068
           ]
         },
         {
@@ -35,6 +59,18 @@
             100.16736795890607,
             0.21744982157104367,
             99.99142930704393
+          ],
+          "parentPath": "MainSceneRootNew/Player",
+          "localPosition": [
+            -0.0085706925,
+            0.21744981,
+            -0.16736795
+          ],
+          "localRotation": [
+            0.0,
+            -0.7071068,
+            0.0,
+            -0.7071068
           ]
         },
         {
@@ -45,6 +81,18 @@
             100.01190670131453,
             0.25527235098632617,
             99.99957318629068
+          ],
+          "parentPath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2",
+          "localPosition": [
+            -0.07806769,
+            2.0489097e-09,
+            3.2014214e-11
+          ],
+          "localRotation": [
+            -6.081868e-06,
+            -0.0011073155,
+            0.010933655,
+            0.9999396
           ]
         },
         {
@@ -55,6 +103,18 @@
             99.91928163258846,
             0.40390668563961957,
             100.00085653800541
+          ],
+          "parentPath": "MainSceneRootNew/Player/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "localPosition": [
+            0.0,
+            0.0752,
+            -0.0006
+          ],
+          "localRotation": [
+            -0.7070586,
+            0.7071421,
+            -0.0030330983,
+            -0.0030103824
           ]
         }
       ]
@@ -71,6 +131,18 @@
             5009.174140265514,
             -2000.1952380399998,
             2.675503184486938
+          ],
+          "parentPath": "MainSceneRootNew/ArmyUnitRig/player texture camera/Player For Rendering",
+          "localPosition": [
+            -0.32381728,
+            0.4234891,
+            0.04445454
+          ],
+          "localRotation": [
+            0.0,
+            -0.7071068,
+            0.0,
+            -0.7071068
           ]
         },
         {
@@ -81,6 +153,18 @@
             5008.570042843944,
             -2000.1952380399998,
             2.670683435326863
+          ],
+          "parentPath": "MainSceneRootNew/ArmyUnitRig/player texture camera/Player For Rendering",
+          "localPosition": [
+            0.28028014,
+            0.4234891,
+            0.049274486
+          ],
+          "localRotation": [
+            0.0,
+            -0.7071068,
+            0.0,
+            -0.7071068
           ]
         },
         {
@@ -91,6 +175,18 @@
             5008.858893747035,
             -2000.4012773299999,
             2.8873257772073093
+          ],
+          "parentPath": "MainSceneRootNew/ArmyUnitRig/player texture camera/Player For Rendering",
+          "localPosition": [
+            -0.0085706925,
+            0.21744981,
+            -0.16736795
+          ],
+          "localRotation": [
+            0.0,
+            -0.7071068,
+            0.0,
+            -0.7071068
           ]
         },
         {
@@ -101,6 +197,18 @@
             5008.850749817566,
             -2000.3634548025973,
             2.7318645305418627
+          ],
+          "parentPath": "MainSceneRootNew/ArmyUnitRig/player texture camera/Player For Rendering/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2",
+          "localPosition": [
+            -0.07806769,
+            2.0489097e-09,
+            3.2014214e-11
+          ],
+          "localRotation": [
+            -6.081868e-06,
+            -0.0011073155,
+            0.010933655,
+            0.9999396
           ]
         },
         {
@@ -111,6 +219,18 @@
             5008.849466435739,
             -2000.2148204758532,
             2.6392394671627857
+          ],
+          "parentPath": "MainSceneRootNew/ArmyUnitRig/player texture camera/Player For Rendering/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "localPosition": [
+            0.0,
+            0.0752,
+            -0.0006
+          ],
+          "localRotation": [
+            -0.7070586,
+            0.7071421,
+            -0.0030330983,
+            -0.0030103824
           ]
         }
       ]

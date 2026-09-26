@@ -69,7 +69,11 @@ public static class SelfHostedRigBlendExport
         var required=new HashSet<Transform>();
         var animator=player.GetComponentInChildren<SoldierAnimationController>(true);
         var targets=player.GetComponentsInChildren<Weapon>(true).Where(w=>w.spawnPoint!=null).Select(w=>w.spawnPoint)
-            .Concat(player.GetComponentsInChildren<DestroyableObjectpart>(true).Select(p=>p.transform)).Concat(new[] { animator.upperBody });
+            .Concat(player.GetComponentsInChildren<DestroyableObjectpart>(true).Select(p=>p.transform))
+            .Concat(player.GetComponent<GameShootableEntityPlayer>().targets
+                .Where(t=>t.type==GameShootableEntity.ShotTargetType.Head||t.type==GameShootableEntity.ShotTargetType.Moving)
+                .Select(t=>t.transform))
+            .Concat(new[] { animator.upperBody });
         foreach (var target in targets)
             for (var t=target;t!=null;t=t.parent) { required.Add(t); if (t==player.transform) break; }
         var nodes=required.OrderBy(t=>Depth(t)).ThenBy(t=>PathOf(t),StringComparer.Ordinal).ToArray();

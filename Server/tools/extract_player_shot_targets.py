@@ -65,14 +65,19 @@ def extract():
         for match in re.finditer(r"transform: \{fileID: (\d+)\}\r?\n    type: (\d+)", target_block.group(1)):
             transform_id, target_type = map(int, match.groups())
             path, position = path_and_position(transform_id)
+            transform = blocks[transform_id][1]
+            parent_path, _ = path_and_position(ref(transform, "m_Father"))
             targets.append({"transformFileId": transform_id, "type": target_type,
-                            "path": path, "referencePosition": position})
+                            "path": path, "referencePosition": position,
+                            "parentPath": parent_path,
+                            "localPosition": vec(field(transform, "m_LocalPosition")),
+                            "localRotation": vec(field(transform, "m_LocalRotation"))})
         if [target["type"] for target in targets] != [1, 1, 2, 16, 8]:
             raise ValueError("source player target types/order changed")
         rows.append({"role": "gameplay" if name == "Player" else "rendering",
                      "componentFileId": ident, "targets": targets})
     rows.sort(key=lambda row: 0 if row["role"] == "gameplay" else 1)
-    return {"version": 1, "source": "Assets/Scenes/MainScene.unity",
+    return {"version": 2, "source": "Assets/Scenes/MainScene.unity",
             "sceneSha256": hashlib.sha256(data).hexdigest(), "players": rows}
 
 

@@ -131,6 +131,7 @@ public static class SelfHostedPlayerPoseExport
                     animator.transform.localRotation=bodyLocal;
                     animator.upperBody.localRotation=upperLocal;
                     frames.Add(new { seconds = seconds, parts = shapes, muzzles = muzzleSamples, aimBones = boneSamples,
+                        headTarget = V(player.GetComponent<GameShootableEntityPlayer>().targets.Single(t=>t.type==GameShootableEntity.ShotTargetType.Head).transform.position),
                         rigLocals = rigNodes.Select((t,n)=>SelfHostedRigBlendExport.Local(t,n==0)).ToArray(),
                         aimedMuzzles = aimedMuzzles, aimedParts = aimedParts });
                 }
