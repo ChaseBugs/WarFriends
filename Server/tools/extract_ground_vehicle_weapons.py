@@ -26,6 +26,9 @@ def rotate(q,p): return mul(mul(q,[*p,0]),[-q[0],-q[1],-q[2],q[3]])[:3]
 def vector(value):
  d={k:float(v) for k,v in re.findall(r'([xyz]): (-?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?)',value)}
  return [d[k] for k in 'xyz']
+def vector2(value):
+ d={k:float(v) for k,v in re.findall(r'([xy]): (-?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?)',value)}
+ return [d[k] for k in 'xy']
 def world(blocks,tid):
  chain=[]
  while tid:
@@ -89,10 +92,25 @@ def main():
     offset=rotate(rotation,shot_offset);muzzle=[a+b for a,b in zip(pos,offset)]
     projectile=re.search(r'^  bulletPrefab: \{fileID: (\d+), guid: ([0-9a-f]{32}), type: 2\}$',weapon,re.M)
     if not projectile: raise ValueError('missing vehicle projectile')
+    missile=None
+    if weapon_type=='Bazooka':
+     game_object=ref(weapon,'m_GameObject')
+     setup_ids=[i for i,(kind,candidate) in blocks.items() if kind==114 and ref(candidate,'m_GameObject')==game_object and scripts.get(i)=='MissileSetup']
+     if len(setup_ids)!=1: raise ValueError('missing vehicle missile setup')
+     setup=blocks[setup_ids[0]][1]
+     missile={'setupComponentFileId':setup_ids[0],'speed':number(setup,'speed'),
+      'hurtRadius':number(setup,'hurtRadius'),'deadRadius':number(setup,'deadRadius'),
+      'explosionCoefficient':vector(direct(setup,'exposionCoef')),
+      'additionalUpForce':number(setup,'additionalUpForce'),'stopTime':number(setup,'stopTime'),
+      'missileType':int(number(setup,'missileType')),
+      'curvedTrajectory':direct(setup,'curvedTrajectory')=='1',
+      'rotationRange':vector2(direct(setup,'minMaxRotations')),
+      'baseRotationMagnitude':number(setup,'baseRotationMagnitude')}
     weapons.append({'batchedComponentFileId':batch_id,'weaponComponentFileId':weapon_id,
       'weaponType':weapon_type,'cadence':cadence,'spawnTransformFileId':spawn,
       'muzzlePosition':muzzle,'shotOffset':shot_offset,'projectileFileId':int(projectile.group(1)),
-      'projectileGuid':projectile.group(2),'forcedFake':fake_every>0 and index>0 and index%fake_every==0})
+      'projectileGuid':projectile.group(2),'forcedFake':fake_every>0 and index>0 and index%fake_every==0,
+      'missile':missile})
    role_rows.append({'role':role,'turretComponentFileId':turret_id,'turretType':turret_type,
     'aimTime':number(turret,'aimTime'),'maxShotRotation':number(turret,'maxShotRotation'),
     'useUnitTarget':direct(turret,'useUnitTarget')=='1','primaryTargetOnly':direct(turret,'primaryTargetOnly')=='1',
@@ -103,7 +121,7 @@ def main():
     'fakeShotEvery':fake_every,'weapons':weapons})
   out.append({'unitId':unit,'prefab':'Assets/GameObject/'+prefab_name,
    'sha256':hashlib.sha256(raw).hexdigest(),'behaviorType':root_type,'roles':role_rows})
- artifact={'version':1,'vehicles':out};serialized=json.dumps(artifact,indent=2)+'\n'
+ artifact={'version':2,'vehicles':out};serialized=json.dumps(artifact,indent=2)+'\n'
  if sys.argv[1:]==['--check']:
   if not OUTPUT.exists() or OUTPUT.read_text()!=serialized: raise ValueError('ground vehicle weapon artifact is stale')
  elif not sys.argv[1:]: OUTPUT.write_text(serialized)

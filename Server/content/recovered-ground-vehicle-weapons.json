@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "vehicles": [
     {
       "unitId": "ID_UNIT-HUMVEE",
@@ -41,7 +41,8 @@
               ],
               "projectileFileId": 11409266,
               "projectileGuid": "855689762fa6e774aaee190652b08c6f",
-              "forcedFake": false
+              "forcedFake": false,
+              "missile": null
             }
           ]
         },
@@ -79,7 +80,27 @@
               ],
               "projectileFileId": 11431434,
               "projectileGuid": "60be7eeb14f5a354c99c9ce23dbc5554",
-              "forcedFake": false
+              "forcedFake": false,
+              "missile": {
+                "setupComponentFileId": 11464471,
+                "speed": 12.0,
+                "hurtRadius": 2.0,
+                "deadRadius": 1.0,
+                "explosionCoefficient": [
+                  1.5,
+                  3.0,
+                  1.5
+                ],
+                "additionalUpForce": 5.0,
+                "stopTime": 0.0,
+                "missileType": 0,
+                "curvedTrajectory": false,
+                "rotationRange": [
+                  0.8,
+                  1.6
+                ],
+                "baseRotationMagnitude": 0.45
+              }
             }
           ]
         }
@@ -125,7 +146,8 @@
               ],
               "projectileFileId": 11409266,
               "projectileGuid": "855689762fa6e774aaee190652b08c6f",
-              "forcedFake": false
+              "forcedFake": false,
+              "missile": null
             }
           ]
         },
@@ -163,7 +185,27 @@
               ],
               "projectileFileId": 11431434,
               "projectileGuid": "60be7eeb14f5a354c99c9ce23dbc5554",
-              "forcedFake": false
+              "forcedFake": false,
+              "missile": {
+                "setupComponentFileId": 11450066,
+                "speed": 8.0,
+                "hurtRadius": 1.2,
+                "deadRadius": 1.0,
+                "explosionCoefficient": [
+                  1.5,
+                  3.0,
+                  1.5
+                ],
+                "additionalUpForce": 5.0,
+                "stopTime": 0.0,
+                "missileType": 2,
+                "curvedTrajectory": false,
+                "rotationRange": [
+                  0.8,
+                  1.6
+                ],
+                "baseRotationMagnitude": 0.45
+              }
             }
           ]
         }
@@ -209,7 +251,8 @@
               ],
               "projectileFileId": 11409266,
               "projectileGuid": "855689762fa6e774aaee190652b08c6f",
-              "forcedFake": false
+              "forcedFake": false,
+              "missile": null
             }
           ]
         },
@@ -247,7 +290,27 @@
               ],
               "projectileFileId": 11431434,
               "projectileGuid": "60be7eeb14f5a354c99c9ce23dbc5554",
-              "forcedFake": false
+              "forcedFake": false,
+              "missile": {
+                "setupComponentFileId": 11401929,
+                "speed": 6.0,
+                "hurtRadius": 1.2,
+                "deadRadius": 1.0,
+                "explosionCoefficient": [
+                  1.5,
+                  3.0,
+                  1.5
+                ],
+                "additionalUpForce": 5.0,
+                "stopTime": 0.0,
+                "missileType": 0,
+                "curvedTrajectory": true,
+                "rotationRange": [
+                  0.5,
+                  0.5
+                ],
+                "baseRotationMagnitude": 0.5
+              }
             },
             {
               "batchedComponentFileId": 11491429,
@@ -267,7 +330,27 @@
               ],
               "projectileFileId": 11431434,
               "projectileGuid": "60be7eeb14f5a354c99c9ce23dbc5554",
-              "forcedFake": false
+              "forcedFake": false,
+              "missile": {
+                "setupComponentFileId": 11481733,
+                "speed": 6.0,
+                "hurtRadius": 1.2,
+                "deadRadius": 1.0,
+                "explosionCoefficient": [
+                  1.5,
+                  3.0,
+                  1.5
+                ],
+                "additionalUpForce": 5.0,
+                "stopTime": 0.0,
+                "missileType": 0,
+                "curvedTrajectory": true,
+                "rotationRange": [
+                  0.5,
+                  0.5
+                ],
+                "baseRotationMagnitude": 0.5
+              }
             }
           ]
         }
@@ -313,7 +396,8 @@
               ],
               "projectileFileId": 11409266,
               "projectileGuid": "855689762fa6e774aaee190652b08c6f",
-              "forcedFake": false
+              "forcedFake": false,
+              "missile": null
             },
             {
               "batchedComponentFileId": 11425934,
@@ -333,7 +417,8 @@
               ],
               "projectileFileId": 11409266,
               "projectileGuid": "855689762fa6e774aaee190652b08c6f",
-              "forcedFake": false
+              "forcedFake": false,
+              "missile": null
             }
           ]
         }

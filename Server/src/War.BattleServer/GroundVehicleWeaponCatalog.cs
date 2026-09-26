@@ -8,7 +8,10 @@ namespace War.BattleServer;
 
 public sealed record GroundVehicleWeapon(int BatchedComponentFileId,int WeaponComponentFileId,
     string WeaponType,float Cadence,int SpawnTransformFileId,Vector3 MuzzlePosition,Vector3 ShotOffset,
-    int ProjectileFileId,string ProjectileGuid,bool ForcedFake);
+    int ProjectileFileId,string ProjectileGuid,bool ForcedFake,GroundVehicleMissileBinding? Missile);
+public sealed record GroundVehicleMissileBinding(int SetupComponentFileId,float Speed,float HurtRadius,
+    float DeadRadius,Vector3 ExplosionCoefficient,float AdditionalUpForce,float StopTime,int MissileType,
+    bool CurvedTrajectory,Vector2 RotationRange,float BaseRotationMagnitude);
 public sealed record GroundVehicleTurret(string Role,int TurretComponentFileId,string TurretType,
     float AimTime,float MaxShotRotation,bool UseUnitTarget,bool PrimaryTargetOnly,
     bool NeedToSeePrimaryTarget,bool NeedToSeeSecondaryTarget,bool PredictPosition,int PrimaryTarget,
@@ -31,7 +34,11 @@ public sealed class GroundVehicleWeaponCatalog
     private sealed class WeaponDto {public int BatchedComponentFileId{get;set;}public int WeaponComponentFileId{get;set;}
         public string WeaponType{get;set;}="";public float Cadence{get;set;}public int SpawnTransformFileId{get;set;}
         public float[] MuzzlePosition{get;set;}=[];public float[] ShotOffset{get;set;}=[];public int ProjectileFileId{get;set;}
-        public string ProjectileGuid{get;set;}="";public bool ForcedFake{get;set;}}
+        public string ProjectileGuid{get;set;}="";public bool ForcedFake{get;set;}public MissileDto? Missile{get;set;}}
+    private sealed class MissileDto {public int SetupComponentFileId{get;set;}public float Speed{get;set;}
+        public float HurtRadius{get;set;}public float DeadRadius{get;set;}public float[] ExplosionCoefficient{get;set;}=[];
+        public float AdditionalUpForce{get;set;}public float StopTime{get;set;}public int MissileType{get;set;}
+        public bool CurvedTrajectory{get;set;}public float[] RotationRange{get;set;}=[];public float BaseRotationMagnitude{get;set;}}
     private static readonly (string Unit,string Prefab,string Behavior,int Roles)[] Expected=
     [
         ("ID_UNIT-HUMVEE","Assets/GameObject/Humvee.prefab","AICar",2),
@@ -74,7 +81,7 @@ public sealed class GroundVehicleWeaponCatalog
             {PropertyNameCaseInsensitive=true,UnmappedMemberHandling=JsonUnmappedMemberHandling.Disallow})??
             throw new InvalidDataException("Missing ground vehicle weapon artifact.");}
         catch(JsonException e){throw new InvalidDataException("Malformed ground vehicle weapon artifact.",e);}
-        if(root.Version!=1||root.Vehicles.Length!=Expected.Length)
+        if(root.Version!=2||root.Vehicles.Length!=Expected.Length)
             throw new InvalidDataException("Incomplete ground vehicle weapon artifact.");
         var result=new Dictionary<string,GroundVehicleWeaponRig>(StringComparer.Ordinal);
         int turretCount=0,weaponCount=0;
@@ -107,9 +114,27 @@ public sealed class GroundVehicleWeaponCatalog
                        weapon.SpawnTransformFileId<=0||weapon.ProjectileFileId<=0||
                        !Regex.IsMatch(weapon.ProjectileGuid,@"\A[0-9a-f]{32}\z"))
                         throw new InvalidDataException("Invalid ground vehicle weapon contract.");
+                    GroundVehicleMissileBinding? missile=null;
+                    if(weapon.WeaponType=="Bazooka")
+                    {
+                        var m=weapon.Missile??throw new InvalidDataException("Missing vehicle missile setup.");
+                        if(m.SetupComponentFileId<=0||!float.IsFinite(m.Speed)||m.Speed<=0||
+                           !float.IsFinite(m.HurtRadius)||!float.IsFinite(m.DeadRadius)||m.DeadRadius<=0||
+                           m.HurtRadius<m.DeadRadius||m.MissileType is <0 or >3||m.RotationRange.Length!=2||
+                           !float.IsFinite(m.RotationRange[0])||!float.IsFinite(m.RotationRange[1])||
+                           m.RotationRange[0]<0||m.RotationRange[1]<m.RotationRange[0]||
+                           !float.IsFinite(m.BaseRotationMagnitude)||m.BaseRotationMagnitude<0||
+                           !float.IsFinite(m.AdditionalUpForce)||!float.IsFinite(m.StopTime)||m.StopTime<0||
+                           m.ExplosionCoefficient.Length!=3)
+                            throw new InvalidDataException("Invalid vehicle missile setup.");
+                        missile=new(m.SetupComponentFileId,m.Speed,m.HurtRadius,m.DeadRadius,
+                            Vector(m.ExplosionCoefficient),m.AdditionalUpForce,m.StopTime,m.MissileType,
+                            m.CurvedTrajectory,new(m.RotationRange[0],m.RotationRange[1]),m.BaseRotationMagnitude);
+                    }
+                    else if(weapon.Missile!=null)throw new InvalidDataException("Gun has missile setup.");
                     weapons[w]=new(weapon.BatchedComponentFileId,weapon.WeaponComponentFileId,weapon.WeaponType,
                         weapon.Cadence,weapon.SpawnTransformFileId,Vector(weapon.MuzzlePosition),Vector(weapon.ShotOffset),
-                        weapon.ProjectileFileId,weapon.ProjectileGuid,weapon.ForcedFake);
+                        weapon.ProjectileFileId,weapon.ProjectileGuid,weapon.ForcedFake,missile);
                 }
                 roles[r]=new(turret.Role,turret.TurretComponentFileId,turret.TurretType,turret.AimTime,
                     turret.MaxShotRotation,turret.UseUnitTarget,turret.PrimaryTargetOnly,turret.NeedToSeePrimaryTarget,
