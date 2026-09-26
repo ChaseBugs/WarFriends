@@ -11,6 +11,7 @@ public sealed record ArmyBaseShotStats(float ProbabilityOfRealShot,int FireBatch
     int FireBatchSizeMax,float MinShootTime,float MaxShootTime);
 public sealed record ArmyVehicleShotStats(float ShotSpeed,float ProbabilityOfRealShot,
     int FireBatchSizeMin,int FireBatchSizeMax,float MinShootTime,float MaxShootTime,int Crew);
+public sealed record ArmyVehicleCannonStats(float Damage,float MinShootTime,float MaxShootTime);
 public sealed record ArmyAgentConfig(string PrefabSha256,float Radius,float Acceleration,
     float AngularSpeed,float Height,float StoppingDistance,bool AutoBraking,bool AutoRepath,
     int ObstacleAvoidanceType);
@@ -36,6 +37,7 @@ public sealed class ArmyDeploymentCatalog
     private IReadOnlyDictionary<string,IReadOnlyList<ArmyBaseCombatStats>>? baseStats;
     private IReadOnlyDictionary<string,IReadOnlyList<ArmyUpgradeShotStats>>? upgradeShots;
     private IReadOnlyDictionary<string,IReadOnlyList<float>>? specialValues;
+    private IReadOnlyList<ArmyVehicleCannonStats>? buggyCannonStages;
     private IReadOnlyDictionary<string,int>? normalLaneEnds;
     private IReadOnlyDictionary<string,int>? eliteLaneStarts;
     private ArmyDeploymentCatalog(string revision,float maxEnergy,float baseCooldown,ArmyAgentConfig infantryAgent,
@@ -166,6 +168,23 @@ public sealed class ArmyDeploymentCatalog
             family.VehicleShot.Crew);
     }
 
+    /// <summary>Buggy LoadDefinitionFromXLS adds cannon damage and timing from every selected lane.</summary>
+    public ArmyVehicleCannonStats ComposeBuggyCannon(int normalIndex,int? specialIndex,int? eliteIndex)
+    {
+        _=BaseStats("ID_UNIT-BUGGY",normalIndex);
+        if(buggyCannonStages==null)throw new InvalidDataException("Buggy cannon authority is unavailable.");
+        ValidateOptionalLanes("ID_UNIT-BUGGY",buggyCannonStages.Count,specialIndex,eliteIndex);
+        var selected=new List<ArmyVehicleCannonStats>{buggyCannonStages[normalIndex]};
+        if(specialIndex.HasValue)selected.Add(buggyCannonStages[specialIndex.Value]);
+        if(eliteIndex.HasValue)selected.Add(buggyCannonStages[eliteIndex.Value]);
+        float damage=selected.Sum(x=>x.Damage);
+        float min=selected.Sum(x=>x.MinShootTime),max=selected.Sum(x=>x.MaxShootTime);
+        if(!float.IsFinite(damage)||damage<=0||damage>10_000_000||!float.IsFinite(min)||
+           !float.IsFinite(max)||min<0||max<min||max>180)
+            throw new InvalidDataException("Composed Buggy cannon stats are outside the recovered combat domain.");
+        return new(damage,min,max);
+    }
+
     public float EffectiveHealth(string unitId,int normalIndex,int? specialIndex,int? eliteIndex,
         ArmyHealthFactors factors)
     {
@@ -241,6 +260,7 @@ public sealed class ArmyDeploymentCatalog
         var acceptedStats=new Dictionary<string,IReadOnlyList<ArmyBaseCombatStats>>(StringComparer.Ordinal);
         var acceptedShots=new Dictionary<string,IReadOnlyList<ArmyUpgradeShotStats>>(StringComparer.Ordinal);
         var acceptedSpecials=new Dictionary<string,IReadOnlyList<float>>(StringComparer.Ordinal);
+        ArmyVehicleCannonStats[]? acceptedBuggyCannons=null;
         var acceptedLaneEnds=new Dictionary<string,int>(StringComparer.Ordinal);
         var acceptedEliteStarts=new Dictionary<string,int>(StringComparer.Ordinal);
         foreach(var family in Families)
@@ -278,6 +298,7 @@ public sealed class ArmyDeploymentCatalog
             var stages=new ArmyBaseCombatStats[stageRows.GetArrayLength()];
             var shots=new ArmyUpgradeShotStats[stageRows.GetArrayLength()];
             var specials=new float[stageRows.GetArrayLength()];
+            var cannons=family.UnitId=="ID_UNIT-BUGGY"?new ArmyVehicleCannonStats[stageRows.GetArrayLength()]:null;
             for(int i=0;i<stages.Length;i++)
             {
                 var stage=stageRows[i];
@@ -301,14 +322,26 @@ public sealed class ArmyDeploymentCatalog
                 stages[i]=new ArmyBaseCombatStats(hp,damage);
                 shots[i]=new ArmyUpgradeShotStats(probability,batchMin,batchMax,frequencyMin,frequencyMax);
                 specials[i]=specialValue;
+                if(cannons!=null)
+                {
+                    float cannonDamage=stage.GetProperty("CANNONDAMAGE").GetSingle();
+                    float cannonMin=stage.GetProperty("SHOTFREQUENCYMINCANNON").GetSingle();
+                    float cannonMax=stage.GetProperty("SHOTFREQUENCYMAXCANNON").GetSingle();
+                    if(!float.IsFinite(cannonDamage)||cannonDamage<0||!float.IsFinite(cannonMin)||
+                       !float.IsFinite(cannonMax)||cannonMin<0||cannonMax<cannonMin||cannonMax>60)
+                        throw new InvalidDataException("Buggy cannon upgrade stage is invalid.");
+                    cannons[i]=new(cannonDamage,cannonMin,cannonMax);
+                }
             }
             acceptedStats.Add(family.UnitId,Array.AsReadOnly(stages));
             acceptedShots.Add(family.UnitId,Array.AsReadOnly(shots));
             acceptedSpecials.Add(family.UnitId,Array.AsReadOnly(specials));
             acceptedLaneEnds.Add(family.UnitId,normalLaneEnd);
             acceptedEliteStarts.Add(family.UnitId,eliteLaneStart);
+            if(cannons!=null)acceptedBuggyCannons=cannons;
         }
         baseStats=acceptedStats;
+        buggyCannonStages=acceptedBuggyCannons is null?null:Array.AsReadOnly(acceptedBuggyCannons);
         upgradeShots=acceptedShots;
         specialValues=acceptedSpecials;
         normalLaneEnds=acceptedLaneEnds;

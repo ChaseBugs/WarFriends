@@ -709,13 +709,15 @@ internal static class CombatContentTests
         var tankShot=content.Army.ComposeVehicleShot("ID_UNIT-TANK",0,null,null);
         var buggyShot=content.Army.ComposeVehicleShot("ID_UNIT-BUGGY",0,null,null);
         var transporterShot=content.Army.ComposeVehicleShot("ID_UNIT-TRANSPORTER",0,null,null);
+        var buggyCannon=content.Army.ComposeBuggyCannon(0,null,null);
         Check(humveeShot==new ArmyVehicleShotStats(5f,.85f,4,5,1.5f,1.8f,0)&&
               tankShot==new ArmyVehicleShotStats(5f,.8f,2,5,2f,5f,0)&&
               buggyShot==new ArmyVehicleShotStats(5f,1f,0,0,0,0,0)&&
               transporterShot==new ArmyVehicleShotStats(5f,.9f,4,7,3.5f,4.5f,0)&&
+              buggyCannon==new ArmyVehicleCannonStats(622.44f,8f,10f)&&
               content.Army.ComposeVehicleShot("ID_UNIT-HUMVEE",0,null,null,2f)
                   .ProbabilityOfRealShot==1f,
-              "ground vehicle primary turrets compose stage-zero batch, cooldown, speed, and bounded accuracy");
+              "ground vehicle turrets compose primary and Buggy cannon stage-zero source authority");
         Reject(()=>content.Army.ComposeVehicleShot("ID_UNIT-ASSAULT",0,null,null));
         var humveeRig=content.GroundVehicleWeapons.For("ID_UNIT-HUMVEE");
         var tankRig=content.GroundVehicleWeapons.For("ID_UNIT-TANK");
