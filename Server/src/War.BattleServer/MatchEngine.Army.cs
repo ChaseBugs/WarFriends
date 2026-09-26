@@ -441,6 +441,8 @@ public sealed partial class MatchEngine
         =>groundVehicleFacing.TryGetValue(entityKey,out var facing)?facing:null;
     internal ulong? GroundVehicleArmyTarget(ulong entityKey)
         =>vehicleShotTargets.TryGetValue(entityKey,out var target)?target.ArmyEntityId:null;
+    internal ulong? GroundVehicleDecoyTarget(ulong entityKey)
+        =>vehicleShotTargets.TryGetValue(entityKey,out var target)?target.DecoyEntityId:null;
     internal float? GroundVehicleSelectedShotSpeed(ulong entityKey)
         =>groundVehicleShotSpeed.TryGetValue(entityKey,out var speed)?speed:null;
     internal IReadOnlyList<VehiclePassengerSnapshot> VehiclePassengers(ulong entityKey)

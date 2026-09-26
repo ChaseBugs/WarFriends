@@ -5,6 +5,9 @@ namespace War.BattleServer;
 
 public sealed partial class MatchEngine
 {
+    internal float? DecoyHealth(ulong entityId)=>decoys.Snapshot().SingleOrDefault(x=>x.EntityId==entityId)?.Health;
+    internal bool DecoyObstacleOccupied(int componentFileId)=>decoys.OccupiedObstacleIds.Contains(componentFileId);
+
     private string UseDecoy(Player owner,string requestId)
     {
         if(decoySource==null||map==null||armyNavMeshConnectivity==null)return "decoy-disabled";

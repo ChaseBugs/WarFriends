@@ -3079,6 +3079,70 @@ internal static class CombatContentTests
         Check(humveeId!=0&&rusherId!=0&&humveeRusherMatch.GroundVehicleArmyTarget(humveeId)==rusherId&&
               humveeRusherMatch.GroundVehicleSelectedShotSpeed(humveeId)==5,
               "live Humvee selects the opposing AttackerRusher before player fallback and keeps full projectile speed");
+        var humveeDecoyManifest=humveeRusherManifest with
+        {
+            MatchId="humvee-decoy-priority",SceneMasterPlayerId=soldierOwner,
+            Players=[humveeRusherManifest.Players[0] with {PlayerLevel=22},
+                humveeRusherManifest.Players[1] with {PlayerLevel=22}]
+        };
+        int decoyChoice=0;
+        var humveeDecoyMatch=new MatchEngine(humveeDecoyManifest,content:content,
+            armyChoice:n=>n<=0?0:decoyChoice++%n,combatRandom:()=>0);
+        humveeDecoyMatch.ConfigureBattleAllocations([
+            new(soldierOwner,[],[],[0],[-1],[-1]),
+            new(helicopterOwner,["CardDecoy"],[],[0],[-1],[-1])]);
+        humveeDecoyMatch.Admit(soldierOwner);humveeDecoyMatch.Admit(helicopterOwner);
+        var emptyHumveeCards=new MatchCommand{CommandId=1,SelectCards=new SelectCardsCommand
+            {NormalUpgradeIndexes={0},SpecialUpgradeIndexes={-1},EliteUpgradeIndexes={-1}}};
+        var opposingDecoyCards=new MatchCommand{CommandId=1,SelectCards=new SelectCardsCommand
+            {CardIds={"CardDecoy"},NormalUpgradeIndexes={0},SpecialUpgradeIndexes={-1},EliteUpgradeIndexes={-1}}};
+        Check(humveeDecoyMatch.Command(soldierOwner,emptyHumveeCards).Code=="cards-selected"&&
+              humveeDecoyMatch.Command(helicopterOwner,opposingDecoyCards).Code=="cards-selected",
+              "Humvee-versus-Decoy match binds both trusted selections without cross-player receipt collision");
+        humveeDecoyMatch.Command(soldierOwner,new(){CommandId=2,Ready=new(){ManifestHash=humveeDecoyMatch.ManifestHash}});
+        humveeDecoyMatch.Command(helicopterOwner,new(){CommandId=2,Ready=new(){ManifestHash=humveeDecoyMatch.ManifestHash}});
+        humveeDecoyMatch.Advance(60);
+        var liveDecoyReply=humveeDecoyMatch.Command(helicopterOwner,new(){CommandId=3,
+            UseDecoy=new(){RequestId=new string('9',32)}});
+        Check(liveDecoyReply.Code=="decoy-spawned","opposing Decoys enter the Humvee priority match");
+        int liveHumveeOption=humveeDecoyMatch.ArmyBatch(soldierOwner).OptionIndexes.First();
+        Check(humveeDecoyMatch.Command(soldierOwner,new(){CommandId=3,
+                  DeployArmy=new(){OptionIndex=liveHumveeOption}}).Code=="army-deploying",
+              "Humvee enters the opposing Decoy match");
+        ulong decoyPriorityTick=60,decoyHumveeId=0,selectedDecoyId=0;int selectedDecoyObstacle=0;
+        while(decoyPriorityTick<1800&&!humveeDecoyMatch.Terminal&&selectedDecoyId==0)
+        {
+            humveeDecoyMatch.Advance(++decoyPriorityTick);
+            if(decoyPriorityTick%90==0)
+            {humveeDecoyMatch.ArmyEntityBatch(soldierOwner,0,0);humveeDecoyMatch.ArmyEntityBatch(helicopterOwner,0,0);}
+            decoyHumveeId=humveeDecoyMatch.ArmyEntityBatch(soldierOwner,0,0).Entities
+                .SingleOrDefault(x=>x.UnitId=="ID_UNIT-HUMVEE")?.EntityKey??0;
+            selectedDecoyId=decoyHumveeId==0?0:humveeDecoyMatch.GroundVehicleDecoyTarget(decoyHumveeId)??0;
+        }
+        var selectedDecoy=humveeDecoyMatch.Snapshot().Decoys.SingleOrDefault(x=>x.EntityId==selectedDecoyId);
+        selectedDecoyObstacle=selectedDecoy?.ObstacleComponentFileId??0;
+        Check(decoyHumveeId!=0&&selectedDecoyId!=0&&selectedDecoy!=null&&
+              humveeDecoyMatch.GroundVehicleArmyTarget(decoyHumveeId)==null&&
+              humveeDecoyMatch.GroundVehicleSelectedShotSpeed(decoyHumveeId)==5,
+              "live Humvee selects an opposing Decoy before Rusher/player fallback and keeps full projectile speed");
+        bool decoyDestroyed=false;
+        while(decoyPriorityTick<1860&&!humveeDecoyMatch.Terminal)
+        {
+            humveeDecoyMatch.Advance(++decoyPriorityTick);
+            if(humveeDecoyMatch.DecoyHealth(selectedDecoyId)==null){decoyDestroyed=true;break;}
+        }
+        var humveeDecoyEvents=new List<MatchEvent>();ulong humveeDecoyCursor=0,humveeDecoyLatest;
+        do
+        {
+            var page=humveeDecoyMatch.EventBatch(soldierOwner,humveeDecoyCursor);
+            humveeDecoyLatest=page.LatestEventId;humveeDecoyEvents.AddRange(page.Events);
+            if(page.Events.Count>0)humveeDecoyCursor=page.Events[^1].EventId;
+        }while(humveeDecoyCursor<humveeDecoyLatest);
+        Check(decoyDestroyed&&!humveeDecoyMatch.DecoyObstacleOccupied(selectedDecoyObstacle)&&
+              humveeDecoyMatch.Snapshot().Decoys.All(x=>x.EntityId!=selectedDecoyId)&&
+              humveeDecoyEvents.Any(x=>
+                  x.Kind==MatchEventKind.DecoyDestroyed&&x.ProjectileId==selectedDecoyId),
+              "live Humvee projectile destroys its typed Decoy target and releases the exact obstacle slot");
         var transporterManifest=detached with {MatchId="transporter-split-fire",Players=[detached.Players[0] with
         {
             EquippedArmyUnitIds=["ID_UNIT-TRANSPORTER"],NewArmyUnitIds=null,
