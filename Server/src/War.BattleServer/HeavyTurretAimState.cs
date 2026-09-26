@@ -52,6 +52,7 @@ internal sealed class HeavyTurretAimState
     }
     internal Vector3 MuzzleOffset(HeavyTurretSourceCatalog source)=>SightOffset(source)+source.WorldShotOffset;
     internal Vector3 SightOffset(HeavyTurretSourceCatalog source)=>Offset(source,source.SpawnOffset);
+    internal Vector3 BodyTargetOffset(HeavyTurretSourceCatalog source)=>Offset(source,source.BodyTargetOffset);
     internal HeavyTurretCollider Collider(HeavyTurretSourceCatalog source,HeavyTurretCollider shape)
     {
         var horizontal=Quaternion.CreateFromAxisAngle(Vector3.UnitY,yaw);

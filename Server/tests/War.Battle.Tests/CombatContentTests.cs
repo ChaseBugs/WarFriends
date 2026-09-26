@@ -1490,6 +1490,8 @@ internal static class CombatContentTests
                         Vector3.Distance(aimedTurret.MuzzleOffset(heavyTurrets),Point("muzzle"))<.00001f,
                         "host turret sight and world-offset muzzle match independent Unity hierarchy sample");
                     var boxes=sample.GetProperty("colliders").EnumerateArray().ToArray();
+                    Check(Vector3.Distance(aimedTurret.BodyTargetOffset(heavyTurrets),Point("body"))<.00001f,
+                        "host turret Body target matches independent completed Unity joint pose");
                     Check(boxes.Length==3,"Unity turret oracle retains all three source boxes");
                     foreach(var sourceShape in heavyTurrets.Colliders)
                     {
@@ -1522,6 +1524,8 @@ internal static class CombatContentTests
                         "tick-sampled turret origins match actual Unity TweenRotation.Sample: "+t+" step "+step+
                         " host "+turningTurret.SightOffset(heavyTurrets)+" Unity "+FramePoint(frame,"sight"));
                     var boxes=frame.GetProperty("colliders").EnumerateArray().ToArray();
+                    Check(Vector3.Distance(turningTurret.BodyTargetOffset(heavyTurrets),FramePoint(frame,"body"))<.0002f,
+                        "host turret Body target matches independent Unity tween tick");
                     foreach(var shape in heavyTurrets.Colliders)
                     {
                         var box=boxes.Single(b=>Vector3.Distance(FramePoint(b,"size"),shape.Size)<.00001f);
@@ -1615,6 +1619,15 @@ internal static class CombatContentTests
                 File.WriteAllText(heavyTurretTemp,changed.ToJsonString());
                 Reject(()=>HeavyTurretSourceCatalog.Load(heavyTurretTemp,
                     Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(heavyTurretTemp))),content.Maps));
+                foreach(bool changeGroup in new[]{true,false})
+                {
+                    var damagedTarget=JsonNode.Parse(File.ReadAllText(heavyTurretArtifact))!;
+                    if(changeGroup)damagedTarget["behavior"]!["unitType"]=1;
+                    else damagedTarget["prefab"]!["shotTarget"]!["position"]![1]=0;
+                    File.WriteAllText(heavyTurretTemp,damagedTarget.ToJsonString());
+                    Reject(()=>HeavyTurretSourceCatalog.Load(heavyTurretTemp,
+                        Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(heavyTurretTemp))),content.Maps));
+                }
                 foreach(var field in new[]{"secondaryTargets","primTarget","primaryTargetOnly","needToSeePrimaryTarget","needToSeeSecondaryTarget","keepAimed"})
                 {
                     var missing=JsonNode.Parse(File.ReadAllText(heavyTurretArtifact))!;
@@ -2708,6 +2721,31 @@ internal static class CombatContentTests
               heavyTurretMatch.HeavyTurretHealth(liveHeavyTurretId)==null&&
               heavyTurretMatch.EventBatch(decoyPlayer,heavyTurretEventCursor).Events.Any(x=>x.Kind==MatchEventKind.HeavyTurretDestroyed&&x.ProjectileId==liveHeavyTurretId),
               "lethal trusted damage destroys Heavy Turret state and releases its source slot");
+        var turretDuel=new MatchEngine(heavyTurretManifest with {MatchId="turret-duel"},content:content,armyChoice:_=>0);
+        turretDuel.ConfigureBattleAllocations([
+            new(decoyPlayer,["CardHeavyTurret"],[],[0],[133],[-1]),
+            new(decoyOpponent,["CardHeavyTurret"],[],[0],[-1],[-1])]);
+        turretDuel.Admit(decoyPlayer);turretDuel.Admit(decoyOpponent);
+        foreach(var id in new[]{decoyPlayer,decoyOpponent})
+        {
+            turretDuel.Command(id,new(){CommandId=1,SelectCards=new(){CardIds={"CardHeavyTurret"},NormalUpgradeIndexes={0},
+                SpecialUpgradeIndexes={id==decoyPlayer?133:-1},EliteUpgradeIndexes={-1}}});
+            turretDuel.Command(id,new(){CommandId=2,Ready=new(){ManifestHash=turretDuel.ManifestHash}});
+        }
+        turretDuel.Advance(60);
+        Check(turretDuel.Command(decoyPlayer,new(){CommandId=3,UseHeavyTurret=new(){RequestId=new string('c',32)}}).Code=="heavy-turret-spawned"&&
+              turretDuel.Command(decoyOpponent,new(){CommandId=3,UseHeavyTurret=new(){RequestId=new string('d',32)}}).Code=="heavy-turret-spawned",
+              "opposing trusted turret cards spawn independently");
+        var duelIds=turretDuel.Snapshot().HeavyTurrets.ToDictionary(x=>x.OwnerPlayerId,x=>x.EntityId);
+        var duelAcquisition=new HashSet<string>();
+        for(ulong t=61;t<=360&&!turretDuel.Terminal;t++)
+        {
+            turretDuel.Advance(t);turretDuel.EventBatch(decoyPlayer,0);turretDuel.EventBatch(decoyOpponent,0);
+            foreach(var row in turretDuel.Snapshot().HeavyTurrets)
+                if(row.TargetId=="turret:"+duelIds[row.OwnerPlayerId==decoyPlayer?decoyOpponent:decoyPlayer])
+                    duelAcquisition.Add(row.OwnerPlayerId);
+        }
+        Check(duelAcquisition.Count==2,"each live turret acquires the opposing source Defender before player fallback");
         var detached=MatchManifest.Validate(armyManifest);
         equipped[0]="ID_UNIT-UNKNOWN";
         armyStages[0]=101;

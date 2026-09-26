@@ -82,6 +82,12 @@ def extract_prefab():
     colliders=[(i,b) for i,(k,b) in source.items() if k in (65,136)]
     if len(heavy)!=1 or len(turret)!=1 or len(roots)!=1 or not meshes or not colliders: raise ValueError("HeavyTurret graph changed")
     heavy_id,h=heavy[0];turret_id,t=turret[0]
+    shootable=[(i,b) for i,(k,b) in source.items() if k==114 and 'guid: 3cf4d7761af3ce98d7a08bebfe4e8861' in b]
+    if len(shootable)!=1: raise ValueError('Heavy Turret shootable graph changed')
+    shootable_id,shootable_block=shootable[0]
+    if '  shootTargets:\n  - {fileID: 400463}\n  targets: []\n  visible: 1' not in shootable_block:
+        raise ValueError('Heavy Turret legacy Body target changed')
+    if ref(source[400463][1],'m_Father')!=474717: raise ValueError('Heavy Turret Body target joint changed')
     # Aim timing relies on these identity bindings; reject changed geometry
     # rather than applying the identity-root policy to another prefab.
     horizontal=ref(t,"jontHorizontal")
@@ -119,6 +125,7 @@ def extract_prefab():
                               "center":center,"size":size,"rotation":q})
     return {"source":"Assets/GameObject/HeavyTurret.prefab","sha256":digest(path),"rootTransformFileId":roots[0],
             "heavyTurretComponentFileId":heavy_id,"turretWeaponComponentFileId":turret_id,
+            "shotTarget":{"componentFileId":shootable_id,"transformFileId":400463,"type":1,"position":world_trs(source,400463)[0]},
             "turret":{"aimTime":float(field(t,"aimTime")),"batchSizeMin":int(field(t,"batchSizeMin")),
                       "batchSizeMax":int(field(t,"batchSizeMax")),"minShootTime":float(field(t,"minShootTime")),
                       "maxShootTime":float(field(t,"maxShootTime")),"maxShotRotation":float(field(t,"maxShotRotation")),
@@ -141,7 +148,11 @@ def main():
     army_rows=next(s["rows"] for s in content["sheets"] if s["type"]=="Google2u.ArmyUpgrades")
     army=next((x for x in army_rows if x["NAME"]=="Google2u.DBUpgradeSlotsHeavyTurret"),None)
     if army is None: raise ValueError("HeavyTurret army policy missing")
-    artifact={"version":3,"client":"1.4.0","spawnCount":1,"navMeshSampleRadius":10.0,"navMeshAreaMask":1,
+    main_path=ASSETS/'Scenes/MainScene.unity';main_blocks=blocks(main_path.read_text(encoding='utf-8-sig'))
+    behaviors=[(i,b) for i,(k,b) in main_blocks.items() if k==114 and 'guid: fd71049152d87b95a9002e247514a2c9' in b]
+    if len(behaviors)!=1 or int(field(behaviors[0][1],'unitType'))!=0: raise ValueError('Heavy Turret source target group changed')
+    artifact={"version":4,"client":"1.4.0","spawnCount":1,"navMeshSampleRadius":10.0,"navMeshAreaMask":1,
+              "behavior":{"source":"Assets/Scenes/MainScene.unity","sha256":digest(main_path),"componentFileId":behaviors[0][0],"unitType":0},
               "maxDisplayLevel":44,"stats":rows,
               "armyPolicy":{"bulletSpeed":army["BULLETSPEED"],"playerDamageRatio":army["PLAYERDAMAGERATIO"],
                              "playerOvertimeDamageRatio":army["PLAYERDAMAGEOVERTIMERATIO"],

@@ -18,7 +18,10 @@ public sealed class HeavyTurretSourceCatalog
 {
     private sealed class Root {public int Version{get;set;}public string Client{get;set;}="";public int SpawnCount{get;set;}
         public float NavMeshSampleRadius{get;set;}public int NavMeshAreaMask{get;set;}public int MaxDisplayLevel{get;set;}
-        public Stat[] Stats{get;set;}=[];public ArmyPolicy ArmyPolicy{get;set;}=new();public Prefab Prefab{get;set;}=new();public Map[] Maps{get;set;}=[];}
+        public Stat[] Stats{get;set;}=[];public ArmyPolicy ArmyPolicy{get;set;}=new();public Prefab Prefab{get;set;}=new();public Map[] Maps{get;set;}=[];
+        public Behavior Behavior{get;set;}=new();}
+    private sealed class Behavior {public string Source{get;set;}="";public string Sha256{get;set;}="";public int ComponentFileId{get;set;}public int UnitType{get;set;}=-1;}
+    private sealed class ShotTarget {public int ComponentFileId{get;set;}public int TransformFileId{get;set;}public int Type{get;set;}public float[] Position{get;set;}=[];}
     private sealed class ArmyPolicy {public float BulletSpeed{get;set;}public float PlayerDamageRatio{get;set;}
         public float PlayerOvertimeDamageRatio{get;set;}public float PlayerBehindShieldDamageRatio{get;set;}public float ShieldHitProbability{get;set;}}
     private sealed class Stat {[JsonPropertyName("TIER")]public int Tier{get;set;}[JsonPropertyName("HP")]public float Health{get;set;}
@@ -36,6 +39,7 @@ public sealed class HeavyTurretSourceCatalog
         public string BulletSource{get;set;}="";public string BulletSha256{get;set;}="";}
     private sealed class Prefab {public string Source{get;set;}="";public string Sha256{get;set;}="";public int RootTransformFileId{get;set;}
         public int HeavyTurretComponentFileId{get;set;}public int TurretWeaponComponentFileId{get;set;}public Turret Turret{get;set;}=new();
+        public ShotTarget ShotTarget{get;set;}=new();
         public int[] MeshComponentFileIds{get;set;}=[];public Collider[] Colliders{get;set;}=[];}
     private sealed class Collider {public int ComponentFileId{get;set;}public int TransformFileId{get;set;}
         public float[] Center{get;set;}=[];public float[] Size{get;set;}=[];public float[] Rotation{get;set;}=[];}
@@ -55,6 +59,7 @@ public sealed class HeavyTurretSourceCatalog
     public Vector3 VerticalPivot=>new(-.005997424f,.231470514f,-.10492468806f);
     public Vector3 SpawnOffset=>new(-.0025973829f,.343870507f,.1813752865f);
     public Vector3 WorldShotOffset=>new(0,.1f,0);
+    public Vector3 BodyTargetOffset=>new(-.000035941f,.332999954f,-.02168786806f);
     public float PlayerDamageRatio=>.5f;public float PlayerOvertimeDamageRatio=>.5f;
     public float PlayerBehindShieldDamageRatio=>0;public float ShieldHitProbability=>0;
     public IReadOnlyList<HeavyTurretCollider> Colliders{get;}
@@ -94,7 +99,7 @@ public sealed class HeavyTurretSourceCatalog
             throw new InvalidDataException("Heavy Turret source revision mismatch.");
         var root=JsonSerializer.Deserialize<Root>(bytes,new JsonSerializerOptions{PropertyNameCaseInsensitive=true,UnmappedMemberHandling=JsonUnmappedMemberHandling.Disallow})??
             throw new InvalidDataException("Missing Heavy Turret package.");
-        if(root.Version!=3||root.Client!="1.4.0"||root.SpawnCount!=1||root.NavMeshSampleRadius!=10||
+        if(root.Version!=4||root.Client!="1.4.0"||root.SpawnCount!=1||root.NavMeshSampleRadius!=10||
            root.NavMeshAreaMask!=1||root.MaxDisplayLevel!=44||root.Stats.Length!=2||root.Maps.Length!=5||sourceMaps.Count!=5)
             throw new InvalidDataException("Unknown Heavy Turret package.");
         HeavyTurretStats ParseStat(Stat x)
@@ -108,6 +113,11 @@ public sealed class HeavyTurretSourceCatalog
         if(min!=new HeavyTurretStats(98,11.66f,3,6,3,6,.75f)||max!=new HeavyTurretStats(1619.34216f,98.48f,4,7,2,4,.8f))
             throw new InvalidDataException("Heavy Turret card endpoints changed.");
         var p=root.Prefab;var t=p.Turret;
+        if(root.Behavior.Source!="Assets/Scenes/MainScene.unity"||root.Behavior.Sha256!="d46f81ff8c3e12bf17f34a1f53dd601bd799102c9f984818031441dfb7a5de43"||
+           root.Behavior.ComponentFileId!=39731||root.Behavior.UnitType!=0||p.ShotTarget.ComponentFileId!=11434467||
+           p.ShotTarget.TransformFileId!=400463||p.ShotTarget.Type!=1||
+           Vector(p.ShotTarget.Position)!=new Vector3(-.000035941f,.332999954f,-.02168786806f))
+            throw new InvalidDataException("Heavy Turret target group or Body point changed.");
         var policy=root.ArmyPolicy;
         if(policy.BulletSpeed!=25||policy.PlayerDamageRatio!=.5f||policy.PlayerOvertimeDamageRatio!=.5f||
            policy.PlayerBehindShieldDamageRatio!=0||policy.ShieldHitProbability!=0)

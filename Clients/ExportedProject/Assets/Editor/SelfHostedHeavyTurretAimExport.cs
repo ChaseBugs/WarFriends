@@ -19,6 +19,7 @@ public static class SelfHostedHeavyTurretAimExport
             instance.transform.position=Vector3.zero;instance.transform.rotation=Quaternion.identity;
             var turret=instance.GetComponent<TurretWeaponBasic>();
             var spawn=turret.batchedWeapon.weapon.spawnPoint;
+            var body=instance.GetComponent<GameShootableEntity>().shootTargets[0];
             var offset=((Gun)turret.batchedWeapon.weapon).shotOffset;
             var samples=new[] {new Vector3(0,0,10),new Vector3(10,0,0),new Vector3(-10,0,0),
                 new Vector3(0,0,-10),new Vector3(4,3,8),new Vector3(-4,-3,8)}.Select(target=>
@@ -29,7 +30,7 @@ public static class SelfHostedHeavyTurretAimExport
                 q.eulerAngles=new Vector3(0,q.eulerAngles.y,0);
                 turret.jontHorizontal.rotation=turret.jontHorizontal.parent.rotation*q;
                 turret.jointVertical.rotation=Quaternion.LookRotation(target,Vector3.up);
-                return new {target=V(target),sight=V(spawn.position),muzzle=V(spawn.position+offset),
+                return new {target=V(target),sight=V(spawn.position),muzzle=V(spawn.position+offset),body=V(body.position),
                     colliders=instance.GetComponentsInChildren<BoxCollider>(true).Select(c=>new {
                         center=V(c.transform.TransformPoint(c.center)),rotation=Q(c.transform.rotation),size=V(Vector3.Scale(c.size,c.transform.lossyScale))}).ToArray()};
             }).ToArray();
@@ -47,7 +48,7 @@ public static class SelfHostedHeavyTurretAimExport
                 {
                     h.Sample(step/30f/horizontalDuration,false);
                     v.Sample(verticalDuration==0?1:step/30f/verticalDuration,false);
-                    return new {step=step,sight=V(spawn.position),muzzle=V(spawn.position+offset),
+                    return new {step=step,sight=V(spawn.position),muzzle=V(spawn.position+offset),body=V(body.position),
                         colliders=instance.GetComponentsInChildren<BoxCollider>(true).Select(c=>new {
                             center=V(c.transform.TransformPoint(c.center)),rotation=Q(c.transform.rotation),size=V(Vector3.Scale(c.size,c.transform.lossyScale))}).ToArray()};
                 }).ToArray();
