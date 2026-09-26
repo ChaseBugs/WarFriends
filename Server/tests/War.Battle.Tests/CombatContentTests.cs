@@ -717,6 +717,12 @@ internal static class CombatContentTests
               buggyCannon==new ArmyVehicleCannonStats(622.44f,8f,10f)&&
               content.Army.PlayerDamagePolicy("ID_UNIT-BUGGY")==
                   new ArmyPlayerDamagePolicy(.3f,.5f,.5f)&&
+              content.Army.VehiclePassengerMaximumHealth("ID_UNIT-HUMVEE",0,1f)==875.34f&&
+              content.Army.VehiclePassengerMaximumHealth("ID_UNIT-TANK",0,1f)==1225.73f&&
+              content.Army.VehiclePassengerMaximumHealth("ID_UNIT-BUGGY",0,1f)==426f&&
+              content.Army.VehiclePassengerMaximumHealth("ID_UNIT-TRANSPORTER",0,1f)==774.13f&&
+              content.Army.VehiclePassengerRespawnTicks("ID_UNIT-HUMVEE")==375&&
+              content.Army.VehiclePassengerRespawnTicks("ID_UNIT-TANK")==525&&
               content.Army.ComposeVehicleShot("ID_UNIT-HUMVEE",0,null,null,2f)
                   .ProbabilityOfRealShot==1f,
               "ground vehicle turrets compose primary and Buggy cannon stage-zero source authority");
@@ -735,6 +741,11 @@ internal static class CombatContentTests
                   {Speed:6f,MinimumDamage:20f,HurtRadius:1.2f,DeadRadius:1f,CurvedTrajectory:true,
                    RotationRange:{X:.5f,Y:.5f},RotationProfile.Count:5,
                    BaseRotationMagnitude:.5f})&&
+              humveeRig.Passengers.Select(x=>x.Role).SequenceEqual(["gunner"])&&
+              tankRig.Passengers.Select(x=>x.Role).SequenceEqual(["turret","cannon"])&&
+              buggyRig.Passengers.Select(x=>x.Role).SequenceEqual(["driver","co-driver"])&&
+              transporterRig.Passengers.Select(x=>x.Role).SequenceEqual(["co-driver"])&&
+              new[]{humveeRig,tankRig,buggyRig,transporterRig}.Sum(x=>x.Passengers.Count)==6&&
               new[]{humveeRig,tankRig,buggyRig,transporterRig}.SelectMany(r=>r.Roles)
                   .SelectMany(r=>r.Weapons).All(w=>w.ProjectileGuid is
                       "855689762fa6e774aaee190652b08c6f" or "60be7eeb14f5a354c99c9ce23dbc5554"),
@@ -791,6 +802,11 @@ internal static class CombatContentTests
             Reject(()=>GroundVehicleWeaponCatalog.Load(vehicleWeaponTemp,damagedHash));
             damaged=JsonNode.Parse(File.ReadAllText(vehicleWeaponPath))!;
             damaged["vehicles"]![2]!["roles"]![1]!["weapons"]![0]!["missile"]!["minimumDamage"]=-1;
+            File.WriteAllText(vehicleWeaponTemp,damaged.ToJsonString());
+            damagedHash=Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(vehicleWeaponTemp)));
+            Reject(()=>GroundVehicleWeaponCatalog.Load(vehicleWeaponTemp,damagedHash));
+            damaged=JsonNode.Parse(File.ReadAllText(vehicleWeaponPath))!;
+            damaged["vehicles"]![2]!["passengers"]![1]!["role"]="driver";
             File.WriteAllText(vehicleWeaponTemp,damaged.ToJsonString());
             damagedHash=Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(vehicleWeaponTemp)));
             Reject(()=>GroundVehicleWeaponCatalog.Load(vehicleWeaponTemp,damagedHash));
@@ -1342,6 +1358,12 @@ internal static class CombatContentTests
             for(int i=0;i<7;i++)Check(!cannonState.AdvanceTick(),"Buggy secondary delay remains pending");
             Check(cannonState.AdvanceTick()&&cannonState.SecondaryDue&&cannonState.CommitSecondary(),
                   "Buggy secondary missile launches after the recovered eight-tick delay");
+            var passengerBinding=buggyRig.Passengers.Single(x=>x.Role=="driver");
+            var passengerState=new VehiclePassengerState(passengerBinding,426,525,10);
+            Check(passengerState.Active&&passengerState.ApplyDamage(500,10)&&!passengerState.Active&&
+                  passengerState.RespawnTick==535&&!passengerState.Advance(534)&&
+                  passengerState.Advance(535)&&passengerState.Active&&passengerState.Health==426,
+                  "vehicle passenger death disables its seat until the exact source respawn tick");
             var statsLedger=new BattleStatisticsLedger();
             Check(statsLedger.RecordHit("66666666666666666666666666666666")&&
                   !statsLedger.RecordHit("66666666666666666666666666666666")&&
@@ -1566,6 +1588,18 @@ internal static class CombatContentTests
                 ActorId=warperOwner,ArmyEntityId=1,ArmyOptionIndex=20,ArmyUnitId="ID_UNIT-SHOTGUNNER",
                 ArmySpawnComponentFileId=100,ArmyReservationFileId=0,Reason="warper"});
             Reject(()=>new War.Client.MatchEventConsumer().Consume(invalidWarperPage));
+            var passengerConsumer=new War.Client.MatchEventConsumer();
+            var passengerPage=new MatchEventBatch{Code="events",LatestEventId=1};
+            passengerPage.Events.Add(new MatchEvent{EventId=1,Tick=4,
+                Kind=MatchEventKind.VehiclePassengerDown,ActorId=warperOwner,ProjectileId=7,
+                Reason="vehicle-passenger-down:driver"});
+            Check(passengerConsumer.Consume(passengerPage)==1,
+                  "Client event consumer accepts source-bound vehicle passenger lifecycle metadata");
+            var invalidPassengerPage=new MatchEventBatch{Code="events",LatestEventId=1};
+            invalidPassengerPage.Events.Add(new MatchEvent{EventId=1,Tick=4,
+                Kind=MatchEventKind.VehiclePassengerRespawned,ActorId=warperOwner,ProjectileId=0,
+                Reason="vehicle-passenger-respawn:driver"});
+            Reject(()=>new War.Client.MatchEventConsumer().Consume(invalidPassengerPage));
             var interpolation=new SnapshotInterpolationBuffer(3);interpolation.Add(10,Vector3.Zero);interpolation.Add(20,new(10,0,0));
             Check(interpolation.Sample(15)==new Vector3(5,0,0)&&interpolation.Sample(5)==Vector3.Zero&&
                   interpolation.Sample(30)==new Vector3(10,0,0),
@@ -2604,6 +2638,14 @@ internal static class CombatContentTests
               Math.Abs(carFacing.Y)<.00001f&&Math.Abs(carFacing.Length()-1)<.00001f&&
               staleMatch.Snapshot().Vehicles.Any(v=>v.EntityId==firstCar.EntityKey&&v.UnitId==firstCar.UnitId),
               "deployed Humvee reserves its source car route and publishes fixed-tick motion and facing");
+        var liveGunner=staleMatch.Snapshot().Vehicles.Single(v=>v.EntityId==firstCar.EntityKey)
+            .Parts.Single(p=>p.PartId=="crew:gunner");
+        Check(liveGunner.Active&&liveGunner.Health==875.34f&&liveGunner.PointComponentFileId==11462687&&
+              staleMatch.ApplyVehiclePassengerHostDamage(firstCar.EntityKey,"gunner",liveGunner.MaxHealth)&&
+              staleMatch.Snapshot().Vehicles.Single(v=>v.EntityId==firstCar.EntityKey).Parts
+                  .Single(p=>p.PartId=="crew:gunner") is {Active:false,Health:0} downGunner&&
+              downGunner.RespawnTick==nextCarTick+375,
+              "live Humvee gunner death publishes source seat identity and exact respawn deadline");
         Check(staleMatch.Command(soldierOwner,new MatchCommand{CommandId=3,
                   DeployArmy=new DeployArmyCommand{OptionIndex=19}}).Code=="army-deploying" &&
               staleMatch.ArmyBatch(soldierOwner).Code=="army-unavailable" &&
@@ -2622,6 +2664,9 @@ internal static class CombatContentTests
             {staleMatch.ArmyEntityBatch(soldierOwner,0,0);staleMatch.ArmyEntityBatch(helicopterOwner,0,0);}
         }
         var parkedVehicles=staleMatch.ArmyEntityBatch(soldierOwner,0,0).Entities;
+        Check(staleMatch.Snapshot().Vehicles.Single(v=>v.EntityId==firstCar.EntityKey).Parts
+                  .Single(p=>p.PartId=="crew:gunner") is {Active:true,RespawnTick:0,Health:875.34f},
+              "live Humvee gunner respawns at full source-row health during host simulation");
         Check(parkedVehicles.Count==2&&parkedVehicles.All(entity=>
         {
             var spawn=content.ArmySpawnPoints.ForMap(park).Single(p=>p.ComponentFileId==entity.SpawnComponentFileId);

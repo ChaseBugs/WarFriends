@@ -5,10 +5,14 @@ ROOT=Path(__file__).resolve().parents[2]
 ASSETS=ROOT/'Clients/ExportedProject/Assets'
 OUTPUT=ROOT/'Server/content/recovered-ground-vehicle-weapons.json'
 VEHICLES=[
- ('ID_UNIT-HUMVEE','Humvee.prefab','AICar',(('primary','turret'),('cannon','cannon'))),
- ('ID_UNIT-TANK','Tank.prefab','Tank',(('primary','turret'),('cannon','cannon'))),
- ('ID_UNIT-BUGGY','Buggy.prefab','AICarBuggy',(('primary','turret'),('cannon','cannon'))),
- ('ID_UNIT-TRANSPORTER','Transporter.prefab','AICarTransporter',(('primary','turret'),)),
+ ('ID_UNIT-HUMVEE','Humvee.prefab','AICar',(('primary','turret'),('cannon','cannon')),
+  (('gunner','enemyPointVehicle'),)),
+ ('ID_UNIT-TANK','Tank.prefab','Tank',(('primary','turret'),('cannon','cannon')),
+  (('turret','enemyPointTurret'),('cannon','enemyPointCannon'))),
+ ('ID_UNIT-BUGGY','Buggy.prefab','AICarBuggy',(('primary','turret'),('cannon','cannon')),
+  (('driver','driverPoint'),('co-driver','coDriverPoint'))),
+ ('ID_UNIT-TRANSPORTER','Transporter.prefab','AICarTransporter',(('primary','turret'),),
+  (('co-driver','coDriverPoint'),)),
 ]
 
 def direct(block,name):
@@ -54,13 +58,19 @@ def world(blocks,tid):
   rot=mul(rot,q);scale=[a*b for a,b in zip(scale,sc)]
  return pos,rot
 
+def component_position(blocks,cid):
+ component=blocks[cid][1];game_object=ref(component,'m_GameObject')
+ transforms=[i for i,(kind,b) in blocks.items() if kind==4 and ref(b,'m_GameObject')==game_object]
+ if len(transforms)!=1: raise ValueError('passenger point has no unique transform')
+ return transforms[0],world(blocks,transforms[0])[0]
+
 def main():
  guid_to_name={}
  for meta in (ASSETS/'Scripts').rglob('*.cs.meta'):
   m=re.search(r'^guid: ([0-9a-f]{32})$',meta.read_text(encoding='utf-8-sig'),re.M)
   if m: guid_to_name[m.group(1)]=meta.name[:-8]
  out=[]
- for unit,prefab_name,root_type,roles in VEHICLES:
+ for unit,prefab_name,root_type,roles,passenger_fields in VEHICLES:
   path=ASSETS/'GameObject'/prefab_name;raw=path.read_bytes();text=raw.decode('utf-8-sig')
   blocks={int(m.group(2)):(int(m.group(1)),m.group(3)) for m in re.finditer(r'^--- !u!(\d+) &(\d+)\r?\n(.*?)(?=^--- !u!|\Z)',text,re.M|re.S)}
   scripts={i:guid_to_name.get(re.search(r'guid: ([0-9a-f]{32})',b).group(1),'') for i,(k,b) in blocks.items() if k==114 and 'guid:' in b}
@@ -127,9 +137,17 @@ def main():
     'predictPosition':direct(turret,'predictPosition')=='1','primaryTarget':int(number(turret,'primaryTarget')),
     'serializedTargetMask':int(number(turret,'primTarget')),'secondaryDelay':delay,
     'fakeShotEvery':fake_every,'weapons':weapons})
+  passengers=[]
+  for role,field_name in passenger_fields:
+   point_id=ref(root,field_name)
+   if point_id<=0 or scripts.get(point_id)!='EnemyPointVehicle': raise ValueError('missing vehicle passenger point')
+   transform_id,position=component_position(blocks,point_id)
+   passengers.append({'role':role,'pointComponentFileId':point_id,
+    'transformFileId':transform_id,'position':position})
   out.append({'unitId':unit,'prefab':'Assets/GameObject/'+prefab_name,
-   'sha256':hashlib.sha256(raw).hexdigest(),'behaviorType':root_type,'roles':role_rows})
- artifact={'version':3,'vehicles':out};serialized=json.dumps(artifact,indent=2)+'\n'
+   'sha256':hashlib.sha256(raw).hexdigest(),'behaviorType':root_type,'roles':role_rows,
+   'passengers':passengers})
+ artifact={'version':4,'vehicles':out};serialized=json.dumps(artifact,indent=2)+'\n'
  if sys.argv[1:]==['--check']:
   if not OUTPUT.exists() or OUTPUT.read_text()!=serialized: raise ValueError('ground vehicle weapon artifact is stale')
  elif not sys.argv[1:]: OUTPUT.write_text(serialized)

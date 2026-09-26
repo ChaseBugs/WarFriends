@@ -437,14 +437,15 @@ public sealed partial class MatchEngine
         if (vehicles == null || Find(ownerPlayerId)?.Admitted != true ||
             !vehicles.TryGet(entityId, out var vehicle) || vehicle?.OwnerPlayerId != ownerPlayerId)
             return false;
-        return vehicles.TryBeginAttack(entityId, eligible, windupTicks);
+        return vehicles.TryBeginAttack(entityId, eligible&&PrimaryVehicleCrewActive(entityId), windupTicks);
     }
 
     internal bool TryAdvanceVehicleAttack(string ownerPlayerId, ulong entityId, out bool shotDue)
     {
         shotDue = false;
         if (vehicles == null || Find(ownerPlayerId)?.Admitted != true ||
-            !vehicles.TryGet(entityId, out var vehicle) || vehicle?.OwnerPlayerId != ownerPlayerId)
+            !vehicles.TryGet(entityId, out var vehicle) || vehicle?.OwnerPlayerId != ownerPlayerId||
+            !PrimaryVehicleCrewActive(entityId))
             return false;
         shotDue = vehicles.AdvanceAttack(entityId);
         return true;
@@ -455,6 +456,7 @@ public sealed partial class MatchEngine
         realShot = false;
         if (vehicles == null || Find(ownerPlayerId)?.Admitted != true ||
             !vehicles.TryGet(entityId, out var vehicle) || vehicle?.OwnerPlayerId != ownerPlayerId ||
+            !PrimaryVehicleCrewActive(entityId)||
             !vehicles.TryGetAttack(entityId, out var attack) || attack == null || !attack.ShotDue)
             return false;
         realShot = attack.CurrentShotIsReal;
@@ -773,6 +775,17 @@ public sealed partial class MatchEngine
         bool advanced=simulationTick!=tick;
         if (advanced) stateRevision++;
         tick = simulationTick;
+        if(advanced&&phase==BattlePhase.Running)
+            foreach(var (vehicleId,rows) in vehiclePassengers.OrderBy(x=>x.Key))
+                foreach(var passenger in rows.Values.OrderBy(x=>x.Binding.PointComponentFileId))
+                    if(passenger.Advance(tick))
+                    {
+                        stateRevision++;
+                        Emit(MatchEventKind.VehiclePassengerRespawned,
+                            activeArmyEntities[vehicleId].OwnerPlayerId,"",vehicleId,
+                            PassengerWorldPosition(vehicleId,passenger.Binding),passenger.Health,
+                            "vehicle-passenger-respawn:"+passenger.Binding.Role);
+                    }
         if(advanced&&phase==BattlePhase.Running)AdvanceBuggyProjectiles();
         if (advanced && vehicles != null)
             foreach (var vehicle in vehicles.Snapshot())
@@ -1779,6 +1792,14 @@ public sealed partial class MatchEngine
                 row.Parts.AddRange(vehicles.Parts(v.EntityId).Select(part => new BattleVehiclePartState
                 { PartId = part.PartId, Health = part.Health, MaxHealth = part.MaxHealth,
                   PassengerPlayerId = part.PassengerPlayerId ?? "" }));
+                row.Parts.AddRange(VehiclePassengers(v.EntityId).Select(passenger=>new BattleVehiclePartState
+                {
+                    PartId="crew:"+passenger.Role,Health=passenger.Health,MaxHealth=passenger.Maximum,
+                    LocalX=passenger.Binding.Position.X,LocalY=passenger.Binding.Position.Y,
+                    LocalZ=passenger.Binding.Position.Z,RespawnTick=passenger.RespawnTick,
+                    Active=passenger.Active,PointComponentFileId=passenger.Binding.PointComponentFileId,
+                    TransformFileId=passenger.Binding.TransformFileId
+                }));
                 return row;
             }));
         if(players.Any(p=>p.Reconnecting))snapshot.PauseHostTick=hostTick;

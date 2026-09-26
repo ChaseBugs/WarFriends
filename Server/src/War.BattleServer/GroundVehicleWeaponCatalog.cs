@@ -17,15 +17,20 @@ public sealed record GroundVehicleTurret(string Role,int TurretComponentFileId,s
     float AimTime,float MaxShotRotation,bool UseUnitTarget,bool PrimaryTargetOnly,
     bool NeedToSeePrimaryTarget,bool NeedToSeeSecondaryTarget,bool PredictPosition,int PrimaryTarget,
     int SerializedTargetMask,float SecondaryDelay,int FakeShotEvery,IReadOnlyList<GroundVehicleWeapon> Weapons);
+public sealed record GroundVehiclePassengerBinding(string Role,int PointComponentFileId,
+    int TransformFileId,Vector3 Position);
 public sealed record GroundVehicleWeaponRig(string UnitId,string Prefab,string Sha256,string BehaviorType,
-    IReadOnlyList<GroundVehicleTurret> Roles);
+    IReadOnlyList<GroundVehicleTurret> Roles,IReadOnlyList<GroundVehiclePassengerBinding> Passengers);
 
 /// <summary>Immutable turret and muzzle evidence extracted from the four 1.4.0 ground-vehicle prefabs.</summary>
 public sealed class GroundVehicleWeaponCatalog
 {
     private sealed class Root {public int Version{get;set;} public VehicleDto[] Vehicles{get;set;}=[];}
     private sealed class VehicleDto {public string UnitId{get;set;}="";public string Prefab{get;set;}="";
-        public string Sha256{get;set;}="";public string BehaviorType{get;set;}="";public TurretDto[] Roles{get;set;}=[];}
+        public string Sha256{get;set;}="";public string BehaviorType{get;set;}="";public TurretDto[] Roles{get;set;}=[];
+        public PassengerDto[] Passengers{get;set;}=[];}
+    private sealed class PassengerDto {public string Role{get;set;}="";public int PointComponentFileId{get;set;}
+        public int TransformFileId{get;set;}public float[] Position{get;set;}=[];}
     private sealed class TurretDto {public string Role{get;set;}="";public int TurretComponentFileId{get;set;}
         public string TurretType{get;set;}="";public float AimTime{get;set;}public float MaxShotRotation{get;set;}
         public bool UseUnitTarget{get;set;}public bool PrimaryTargetOnly{get;set;}
@@ -51,6 +56,14 @@ public sealed class GroundVehicleWeaponCatalog
         ("ID_UNIT-BUGGY","Assets/GameObject/Buggy.prefab","AICarBuggy",2),
         ("ID_UNIT-TRANSPORTER","Assets/GameObject/Transporter.prefab","AICarTransporter",1)
     ];
+    private static readonly IReadOnlyDictionary<string,string[]> ExpectedPassengers=
+        new Dictionary<string,string[]>(StringComparer.Ordinal)
+        {
+            ["ID_UNIT-HUMVEE"]=["gunner"],
+            ["ID_UNIT-TANK"]=["turret","cannon"],
+            ["ID_UNIT-BUGGY"]=["driver","co-driver"],
+            ["ID_UNIT-TRANSPORTER"]=["co-driver"]
+        };
     private readonly IReadOnlyDictionary<string,GroundVehicleWeaponRig> rigs;
     public string Revision { get; }
     private GroundVehicleWeaponCatalog(string revision,Dictionary<string,GroundVehicleWeaponRig> rigs)
@@ -86,7 +99,7 @@ public sealed class GroundVehicleWeaponCatalog
             {PropertyNameCaseInsensitive=true,UnmappedMemberHandling=JsonUnmappedMemberHandling.Disallow})??
             throw new InvalidDataException("Missing ground vehicle weapon artifact.");}
         catch(JsonException e){throw new InvalidDataException("Malformed ground vehicle weapon artifact.",e);}
-        if(root.Version!=3||root.Vehicles.Length!=Expected.Length)
+        if(root.Version!=4||root.Vehicles.Length!=Expected.Length)
             throw new InvalidDataException("Incomplete ground vehicle weapon artifact.");
         var result=new Dictionary<string,GroundVehicleWeaponRig>(StringComparer.Ordinal);
         int turretCount=0,weaponCount=0;
@@ -163,8 +176,23 @@ public sealed class GroundVehicleWeaponCatalog
             }
             if(roles[0].Role!="primary"||roles.Length==2&&roles[1].Role!="cannon")
                 throw new InvalidDataException("Ground vehicle turret order changed.");
+            var expectedPassengers=ExpectedPassengers[source.UnitId];
+            if(source.Passengers.Length!=expectedPassengers.Length)
+                throw new InvalidDataException("Ground vehicle passenger topology changed.");
+            var passengers=new GroundVehiclePassengerBinding[source.Passengers.Length];
+            var componentIds=new HashSet<int>();var transformIds=new HashSet<int>();
+            for(int p=0;p<passengers.Length;p++)
+            {
+                var passenger=source.Passengers[p];
+                if(passenger.Role!=expectedPassengers[p]||passenger.PointComponentFileId<=0||
+                   passenger.TransformFileId<=0||!componentIds.Add(passenger.PointComponentFileId)||
+                   !transformIds.Add(passenger.TransformFileId))
+                    throw new InvalidDataException("Invalid ground vehicle passenger identity.");
+                passengers[p]=new(passenger.Role,passenger.PointComponentFileId,
+                    passenger.TransformFileId,Vector(passenger.Position));
+            }
             result.Add(source.UnitId,new(source.UnitId,source.Prefab,source.Sha256,source.BehaviorType,
-                Array.AsReadOnly(roles)));
+                Array.AsReadOnly(roles),Array.AsReadOnly(passengers)));
         }
         if(turretCount!=7||weaponCount!=9)throw new InvalidDataException("Incomplete ground vehicle weapon graph.");
         return new(expectedRevision,result);

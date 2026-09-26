@@ -53,6 +53,8 @@ internal sealed class BuggyCannonAttackState
     }
     internal bool CommitSecondary()
     {if(!SecondaryDue)return false;SecondaryDue=false;return true;}
+    internal void DisableAndReset()
+    {aimTicks=0;secondaryTicks=-1;PrimaryDue=false;SecondaryDue=false;ScheduleCooldown();}
     private void ScheduleCooldown()
     {
         int min=(int)MathF.Ceiling(stats.MinShootTime*MatchManifest.TickRate);

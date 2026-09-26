@@ -42,6 +42,11 @@ namespace War.Client
                     (!Guid.TryParseExact(item.ActorId, "N", out _) || !uint.TryParse(item.Reason, out var generation) || generation == 0 ||
                      item.ProjectileId == 0 || string.IsNullOrWhiteSpace(item.TargetId)))
                     throw new InvalidDataException("Invalid vehicle lifecycle event.");
+                if((item.Kind==MatchEventKind.VehiclePassengerDown||
+                    item.Kind==MatchEventKind.VehiclePassengerRespawned)&&
+                   (!Guid.TryParseExact(item.ActorId,"N",out _)||item.ProjectileId==0||item.TargetId!=""||
+                    !item.Reason.StartsWith("vehicle-passenger-",StringComparison.Ordinal)))
+                    throw new InvalidDataException("Invalid vehicle passenger lifecycle event.");
                 if ((item.Kind == MatchEventKind.WarperWarpStarted || item.Kind == MatchEventKind.WarperWarpEnded) &&
                     (!Guid.TryParseExact(item.ActorId, "N", out _) || item.TargetId != "" || item.ProjectileId != 0 ||
                      item.ArmyEntityId <= 0 || item.ArmyOptionIndex < 0 || item.ArmyOptionIndex >= 48 ||

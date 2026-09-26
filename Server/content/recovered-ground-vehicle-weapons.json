@@ -1,5 +1,5 @@
 {
-  "version": 3,
+  "version": 4,
   "vehicles": [
     {
       "unitId": "ID_UNIT-HUMVEE",
@@ -123,6 +123,18 @@
                 "baseRotationMagnitude": 0.45
               }
             }
+          ]
+        }
+      ],
+      "passengers": [
+        {
+          "role": "gunner",
+          "pointComponentFileId": 11462687,
+          "transformFileId": 460213,
+          "position": [
+            -3.8033602e-07,
+            0.51550984,
+            -0.48119625
           ]
         }
       ]
@@ -249,6 +261,28 @@
                 "baseRotationMagnitude": 0.45
               }
             }
+          ]
+        }
+      ],
+      "passengers": [
+        {
+          "role": "turret",
+          "pointComponentFileId": 11411808,
+          "transformFileId": 408667,
+          "position": [
+            0.0,
+            0.76328969,
+            -0.20623966999999999
+          ]
+        },
+        {
+          "role": "cannon",
+          "pointComponentFileId": 11444252,
+          "transformFileId": 465525,
+          "position": [
+            -0.20222771,
+            0.2379818,
+            0.57201993
           ]
         }
       ]
@@ -462,6 +496,28 @@
             }
           ]
         }
+      ],
+      "passengers": [
+        {
+          "role": "driver",
+          "pointComponentFileId": 11453428,
+          "transformFileId": 409877,
+          "position": [
+            -0.133,
+            -0.044,
+            -0.052
+          ]
+        },
+        {
+          "role": "co-driver",
+          "pointComponentFileId": 11404554,
+          "transformFileId": 439935,
+          "position": [
+            0.13546649,
+            -0.044,
+            -0.053
+          ]
+        }
       ]
     },
     {
@@ -528,6 +584,18 @@
               "forcedFake": false,
               "missile": null
             }
+          ]
+        }
+      ],
+      "passengers": [
+        {
+          "role": "co-driver",
+          "pointComponentFileId": 11471338,
+          "transformFileId": 436455,
+          "position": [
+            0.0,
+            0.352,
+            -0.211
           ]
         }
       ]

@@ -39,6 +39,8 @@ public sealed class ArmyDeploymentCatalog
     private IReadOnlyDictionary<string,IReadOnlyList<ArmyBaseCombatStats>>? baseStats;
     private IReadOnlyDictionary<string,IReadOnlyList<ArmyUpgradeShotStats>>? upgradeShots;
     private IReadOnlyDictionary<string,IReadOnlyList<float>>? specialValues;
+    private IReadOnlyDictionary<string,IReadOnlyList<float>>? vehiclePassengerHealth;
+    private IReadOnlyDictionary<string,float>? vehiclePassengerRespawnSeconds;
     private IReadOnlyList<ArmyVehicleCannonStats>? buggyCannonStages;
     private IReadOnlyDictionary<string,ArmyPlayerDamagePolicy>? playerDamagePolicies;
     private IReadOnlyDictionary<string,int>? normalLaneEnds;
@@ -193,6 +195,28 @@ public sealed class ArmyDeploymentCatalog
         =>playerDamagePolicies!=null&&playerDamagePolicies.TryGetValue(unitId,out var value)?value:
             throw new ArgumentOutOfRangeException(nameof(unitId));
 
+    /// <summary>Vehicle.GenerateEnemy replaces the attached soldier's HP from the selected normal row.</summary>
+    public float VehiclePassengerMaximumHealth(string unitId,int normalIndex,float upgradeScale)
+    {
+        _=BaseStats(unitId,normalIndex);
+        if(vehiclePassengerHealth==null||!vehiclePassengerHealth.TryGetValue(unitId,out var stages)||
+           normalIndex>=stages.Count||!float.IsFinite(upgradeScale)||upgradeScale<=0||upgradeScale>100)
+            throw new InvalidDataException("Vehicle passenger health authority is unavailable.");
+        float result=stages[normalIndex]*upgradeScale;
+        if(!float.IsFinite(result)||result<=0||result>10_000_000)
+            throw new InvalidDataException("Vehicle passenger health is outside the recovered domain.");
+        return result;
+    }
+
+    public int VehiclePassengerRespawnTicks(string unitId)
+    {
+        if(vehiclePassengerRespawnSeconds==null||
+           !vehiclePassengerRespawnSeconds.TryGetValue(unitId,out float seconds)||
+           !float.IsFinite(seconds)||seconds<=0||seconds>3600)
+            throw new InvalidDataException("Vehicle passenger respawn authority is unavailable.");
+        return checked((int)MathF.Ceiling(seconds*MatchManifest.TickRate));
+    }
+
     public float EffectiveHealth(string unitId,int normalIndex,int? specialIndex,int? eliteIndex,
         ArmyHealthFactors factors)
     {
@@ -268,6 +292,8 @@ public sealed class ArmyDeploymentCatalog
         var acceptedStats=new Dictionary<string,IReadOnlyList<ArmyBaseCombatStats>>(StringComparer.Ordinal);
         var acceptedShots=new Dictionary<string,IReadOnlyList<ArmyUpgradeShotStats>>(StringComparer.Ordinal);
         var acceptedSpecials=new Dictionary<string,IReadOnlyList<float>>(StringComparer.Ordinal);
+        var acceptedPassengerHealth=new Dictionary<string,IReadOnlyList<float>>(StringComparer.Ordinal);
+        var acceptedPassengerRespawn=new Dictionary<string,float>(StringComparer.Ordinal);
         var acceptedPlayerDamage=new Dictionary<string,ArmyPlayerDamagePolicy>(StringComparer.Ordinal);
         ArmyVehicleCannonStats[]? acceptedBuggyCannons=null;
         var acceptedLaneEnds=new Dictionary<string,int>(StringComparer.Ordinal);
@@ -285,12 +311,21 @@ public sealed class ArmyDeploymentCatalog
             float behindShield=row.GetProperty("PLAYERBEHINDSHIELDDMGRATIO").GetSingle();
             float playerDamage=row.GetProperty("PLAYERDAMAGERATIO").GetSingle();
             float overtimeDamage=row.GetProperty("PLAYERDAMAGEOVERTIMERATIO").GetSingle();
+            float passengerRespawn=row.GetProperty("UNITINMECHANICALRESPAWN").GetSingle();
             if(!float.IsFinite(movementSpeed) || movementSpeed<=0 || movementSpeed>20 ||
                family.MovementSpeed!=movementSpeed||!float.IsFinite(behindShield)||behindShield<0||behindShield>10||
                !float.IsFinite(playerDamage)||playerDamage<0||playerDamage>10||
                !float.IsFinite(overtimeDamage)||overtimeDamage<0||overtimeDamage>10)
                 throw new InvalidDataException("Army runtime movement speed differs from recovered sheet.");
             acceptedPlayerDamage.Add(family.UnitId,new(behindShield,playerDamage,overtimeDamage));
+            bool vehiclePassenger=family.UnitId is "ID_UNIT-HUMVEE" or "ID_UNIT-TANK" or
+                "ID_UNIT-BUGGY" or "ID_UNIT-TRANSPORTER";
+            if(vehiclePassenger)
+            {
+                if(!float.IsFinite(passengerRespawn)||passengerRespawn<=0||passengerRespawn>3600)
+                    throw new InvalidDataException("Vehicle passenger respawn differs from recovered sheet.");
+                acceptedPassengerRespawn.Add(family.UnitId,passengerRespawn);
+            }
             for(int i=0;i<counts.Length;i++)
             {
                 if(!int.TryParse(counts[i],System.Globalization.NumberStyles.None,
@@ -313,6 +348,7 @@ public sealed class ArmyDeploymentCatalog
             var stages=new ArmyBaseCombatStats[stageRows.GetArrayLength()];
             var shots=new ArmyUpgradeShotStats[stageRows.GetArrayLength()];
             var specials=new float[stageRows.GetArrayLength()];
+            var passengerHealth=vehiclePassenger?new float[stageRows.GetArrayLength()]:null;
             var cannons=family.UnitId=="ID_UNIT-BUGGY"?new ArmyVehicleCannonStats[stageRows.GetArrayLength()]:null;
             for(int i=0;i<stages.Length;i++)
             {
@@ -325,6 +361,7 @@ public sealed class ArmyDeploymentCatalog
                 float frequencyMax=stage.GetProperty("SHOTFREQUENCYMAX").GetSingle();
                 float probability=stage.GetProperty("REALSHOTPROBABILITY").GetSingle();
                 float specialValue=stage.GetProperty("SPECIAL").GetSingle();
+                float soldierHp=passengerHealth==null?0:stage.GetProperty("SOLDIERHP").GetSingle();
                 // Recovered tables contain zeroed upgrade-lane sentinel rows between
                 // normal and elite ranges; never turn one into a live combat entity.
                 if(!float.IsFinite(hp) || hp<0 || !float.IsFinite(damage) || damage<0 ||
@@ -334,9 +371,12 @@ public sealed class ArmyDeploymentCatalog
                    !float.IsFinite(probability)||probability<0||probability>10||
                    !float.IsFinite(specialValue)||Math.Abs(specialValue)>1_000_000)
                     throw new InvalidDataException("Army normal-upgrade combat stat is invalid.");
+                if(passengerHealth!=null&&(!float.IsFinite(soldierHp)||soldierHp<0||soldierHp>10_000_000))
+                    throw new InvalidDataException("Vehicle passenger health row is invalid.");
                 stages[i]=new ArmyBaseCombatStats(hp,damage);
                 shots[i]=new ArmyUpgradeShotStats(probability,batchMin,batchMax,frequencyMin,frequencyMax);
                 specials[i]=specialValue;
+                if(passengerHealth!=null)passengerHealth[i]=soldierHp;
                 if(cannons!=null)
                 {
                     float cannonDamage=stage.GetProperty("CANNONDAMAGE").GetSingle();
@@ -351,6 +391,8 @@ public sealed class ArmyDeploymentCatalog
             acceptedStats.Add(family.UnitId,Array.AsReadOnly(stages));
             acceptedShots.Add(family.UnitId,Array.AsReadOnly(shots));
             acceptedSpecials.Add(family.UnitId,Array.AsReadOnly(specials));
+            if(passengerHealth!=null)
+                acceptedPassengerHealth.Add(family.UnitId,Array.AsReadOnly(passengerHealth));
             acceptedLaneEnds.Add(family.UnitId,normalLaneEnd);
             acceptedEliteStarts.Add(family.UnitId,eliteLaneStart);
             if(cannons!=null)acceptedBuggyCannons=cannons;
@@ -360,6 +402,8 @@ public sealed class ArmyDeploymentCatalog
         upgradeShots=acceptedShots;
         specialValues=acceptedSpecials;
         playerDamagePolicies=acceptedPlayerDamage;
+        vehiclePassengerHealth=acceptedPassengerHealth;
+        vehiclePassengerRespawnSeconds=acceptedPassengerRespawn;
         normalLaneEnds=acceptedLaneEnds;
         eliteLaneStarts=acceptedEliteStarts;
     }

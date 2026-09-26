@@ -305,6 +305,9 @@ message BattleVehicleState {
 }
 message BattleVehiclePartState {
   string part_id = 1; float health = 2; float max_health = 3; string passenger_player_id = 4;
+  float local_x = 5; float local_y = 6; float local_z = 7;
+  uint64 respawn_tick = 8; bool active = 9;
+  int32 point_component_file_id = 10; int32 transform_file_id = 11;
 }
 message BattleDeployableState {
   int32 entity_id = 1; string owner_player_id = 2; string card_id = 3;
@@ -361,6 +364,8 @@ enum MatchEventKind {
   MATCH_EVENT_KIND_VEHICLE_DESTROYED = 23;
   MATCH_EVENT_KIND_WARPER_WARP_STARTED = 24;
   MATCH_EVENT_KIND_WARPER_WARP_ENDED = 25;
+  MATCH_EVENT_KIND_VEHICLE_PASSENGER_DOWN = 26;
+  MATCH_EVENT_KIND_VEHICLE_PASSENGER_RESPAWNED = 27;
 }
 message MatchEvent {
   uint64 event_id = 1; uint64 tick = 2; MatchEventKind kind = 3;

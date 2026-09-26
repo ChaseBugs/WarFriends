@@ -382,6 +382,11 @@ namespace War.Client
                        (!Guid.TryParseExact(row.ActorId,"N",out _) || !uint.TryParse(row.Reason,out var generation) || generation==0 ||
                         row.ProjectileId==0 || string.IsNullOrWhiteSpace(row.TargetId)))
                         throw new InvalidOperationException("Battle host returned invalid vehicle lifecycle metadata.");
+                    if((row.Kind==MatchEventKind.VehiclePassengerDown||
+                        row.Kind==MatchEventKind.VehiclePassengerRespawned)&&
+                       (!Guid.TryParseExact(row.ActorId,"N",out _)||row.ProjectileId==0||row.TargetId!=""||
+                        !row.Reason.StartsWith("vehicle-passenger-",StringComparison.Ordinal)))
+                        throw new InvalidOperationException("Battle host returned invalid vehicle passenger metadata.");
                 }
                 return batch.Clone();
             }
@@ -479,7 +484,12 @@ namespace War.Client
                             float.IsNaN(part.MaxHealth) || float.IsInfinity(part.MaxHealth) || part.MaxHealth <= 0 ||
                             part.MaxHealth > 10_000_000 || float.IsNaN(part.Health) || float.IsInfinity(part.Health) ||
                             part.Health < 0 || part.Health > part.MaxHealth ||
-                            (!string.IsNullOrEmpty(part.PassengerPlayerId) && !Guid.TryParseExact(part.PassengerPlayerId, "N", out _)))
+                            (!string.IsNullOrEmpty(part.PassengerPlayerId) && !Guid.TryParseExact(part.PassengerPlayerId, "N", out _)) ||
+                            (part.PartId.StartsWith("crew:",StringComparison.Ordinal) &&
+                                (!FiniteCoordinate(part.LocalX)||!FiniteCoordinate(part.LocalY)||!FiniteCoordinate(part.LocalZ)||
+                                 part.PointComponentFileId<=0||part.TransformFileId<=0||part.RespawnTick>10_000_000||
+                                 part.Active!=(part.Health>0)||part.Active&&part.RespawnTick!=0||
+                                 !part.Active&&part.RespawnTick==0)))
                             throw new InvalidOperationException("Battle host returned an invalid vehicle part row.");
                     priorVehicle = vehicle.EntityId;
                 }

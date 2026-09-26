@@ -73,6 +73,8 @@ public sealed class VehicleAttackState
         }
         return true;
     }
+    internal void DisableAndReset()
+    {windupTicks=0;batchRemaining=0;CurrentShotIsReal=false;ScheduleBatchCooldown();}
     private void ScheduleBatchCooldown()
     {
         int min=(int)MathF.Ceiling(definition.MinShootTime*MatchManifest.TickRate);

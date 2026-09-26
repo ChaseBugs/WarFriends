@@ -49,6 +49,7 @@ public sealed partial class MatchEngine
     private readonly Dictionary<ulong,Vector3> groundVehicleFacing=[];
     private readonly Dictionary<ulong,float> groundVehicleShotSpeed=[];
     private readonly Dictionary<ulong,BuggyCannonAttackState> buggyCannonAttacks=[];
+    private readonly Dictionary<ulong,IReadOnlyDictionary<string,VehiclePassengerState>> vehiclePassengers=[];
     private readonly Dictionary<ulong,(string Owner,string Target,Vector3 Position)> buggyCannonTargets=[];
     private ulong buggyCurveCounter;
 
@@ -185,6 +186,57 @@ public sealed partial class MatchEngine
         =>vehicles?.TryGetAttack(entityKey,out var state)==true?state:null;
     internal Vector3? GroundVehicleFacing(ulong entityKey)
         =>groundVehicleFacing.TryGetValue(entityKey,out var facing)?facing:null;
+    internal IReadOnlyList<VehiclePassengerSnapshot> VehiclePassengers(ulong entityKey)
+        =>vehiclePassengers.TryGetValue(entityKey,out var rows)?
+            rows.Values.OrderBy(x=>x.Binding.PointComponentFileId).Select(x=>x.Snapshot()).ToArray():[];
+    internal bool ApplyVehiclePassengerHostDamage(ulong entityKey,string role,float damage)
+    {
+        if(phase!=BattlePhase.Running||!vehiclePassengers.TryGetValue(entityKey,out var rows)||
+           !rows.TryGetValue(role,out var passenger))return false;
+        bool wasActive=passenger.Active;
+        if(!passenger.ApplyDamage(damage,tick))return false;
+        stateRevision++;
+        if(wasActive&&!passenger.Active)
+        {
+            vehicleShotTargets.Remove(entityKey);buggyCannonTargets.Remove(entityKey);
+            var unit=activeArmyEntities[entityKey].UnitId;
+            if(role is "gunner" or "turret" or "co-driver")
+                _=vehicles?.ResetAttack(entityKey);
+            if(unit=="ID_UNIT-BUGGY"&&role=="co-driver"&&
+               buggyCannonAttacks.TryGetValue(entityKey,out var cannon))cannon.DisableAndReset();
+            Emit(MatchEventKind.VehiclePassengerDown,activeArmyEntities[entityKey].OwnerPlayerId,"",entityKey,
+                PassengerWorldPosition(entityKey,passenger.Binding),0,"vehicle-passenger-down:"+role);
+        }
+        return true;
+    }
+
+    private bool PassengerActive(ulong entityKey,string role)
+        =>vehiclePassengers.TryGetValue(entityKey,out var rows)&&rows.TryGetValue(role,out var row)&&row.Active;
+
+    private Vector3 PassengerWorldPosition(ulong entityKey,GroundVehiclePassengerBinding binding)
+    {
+        if(vehicles==null||!vehicles.TryGet(entityKey,out var vehicle)||vehicle==null||
+           !groundVehicleFacing.TryGetValue(entityKey,out var facing))
+            throw new InvalidDataException("Vehicle passenger lost its host transform.");
+        facing.Y=0;if(facing.LengthSquared()<1e-10f)throw new InvalidDataException("Vehicle passenger has no facing.");
+        float yaw=MathF.Atan2(facing.X,facing.Z);
+        return vehicle.Position+Vector3.Transform(binding.Position,
+            Quaternion.CreateFromAxisAngle(Vector3.UnitY,yaw));
+    }
+
+    private bool PrimaryVehicleCrewActive(ulong entityKey)
+    {
+        if(!activeArmyEntities.TryGetValue(entityKey,out var army)||!vehiclePassengers.ContainsKey(entityKey))
+            return true;
+        return army.UnitId switch
+        {
+            "ID_UNIT-HUMVEE"=>PassengerActive(entityKey,"gunner"),
+            "ID_UNIT-TANK"=>PassengerActive(entityKey,"turret"),
+            "ID_UNIT-BUGGY"=>PassengerActive(entityKey,"co-driver"),
+            "ID_UNIT-TRANSPORTER"=>PassengerActive(entityKey,"co-driver"),
+            _=>false
+        };
+    }
 
     // Tank targets Player directly. Humvee first asks for AttackerRusher and
     // only reaches the source all-opponents fallback when none is alive.
@@ -193,6 +245,8 @@ public sealed partial class MatchEngine
         if(phase!=BattlePhase.Running||vehicles==null||rifleCombat==null||playerShotTargets==null||groundVehicleWeapons==null||
            !activeArmyEntities.TryGetValue(entityKey,out var army)||
            army.UnitId is not ("ID_UNIT-TANK" or "ID_UNIT-HUMVEE")||
+           !(army.UnitId=="ID_UNIT-TANK"?PassengerActive(entityKey,"turret"):
+               PassengerActive(entityKey,"gunner"))||
            !vehicles.TryGet(entityKey,out var vehicle)||vehicle==null||
            !vehicles.TryGetAttack(entityKey,out var attack)||attack?.Phase!=ArmyAirAttackPhase.Ready||
            !groundVehicleFacing.TryGetValue(entityKey,out var facing))return false;
@@ -236,6 +290,7 @@ public sealed partial class MatchEngine
            !vehicles.TryGet(entityKey,out var vehicle)||vehicle==null||
            !groundVehicleFacing.TryGetValue(entityKey,out var facing))return;
         var turret=groundVehicleWeapons.For(army.UnitId).Roles.Single(r=>r.Role=="cannon");
+        if(!PassengerActive(entityKey,"co-driver")){attack.AdvanceTick();return;}
         if(attack.Phase==ArmyAirAttackPhase.Ready)
         {
             var owner=Find(army.OwnerPlayerId)??throw new InvalidDataException("Buggy owner disappeared.");
@@ -381,13 +436,13 @@ public sealed partial class MatchEngine
         if(facing.LengthSquared()<1e-8f)
             throw new InvalidDataException("Ground vehicle route has no initial facing.");
         groundVehicleFacing.Add(entityKey,Vector3.Normalize(facing));
+        var owner=Find(army.OwnerPlayerId)??throw new InvalidDataException("Vehicle owner disappeared.");
+        int slot=Array.IndexOf(owner.Definition.EquippedArmyUnitIds!,army.UnitId);
+        if(slot<0||owner.Definition.ArmyNormalUpgradeIndexes==null)
+            throw new InvalidDataException("Vehicle passenger lacks trusted upgrades.");
         if(army.UnitId=="ID_UNIT-BUGGY")
         {
             var cannon=groundVehicleWeapons.For(army.UnitId).Roles.Single(r=>r.Role=="cannon");
-            var owner=Find(army.OwnerPlayerId)??throw new InvalidDataException("Buggy owner disappeared.");
-            int slot=Array.IndexOf(owner.Definition.EquippedArmyUnitIds!,army.UnitId);
-            if(slot<0||owner.Definition.ArmyNormalUpgradeIndexes==null)
-                throw new InvalidDataException("Buggy cannon lacks trusted upgrades.");
             int specialValue=owner.Definition.ArmySpecialUpgradeIndexes?[slot]??-1;
             int eliteValue=owner.Definition.ArmyEliteUpgradeIndexes?[slot]??-1;
             int? special=specialValue>=0?specialValue:null;
@@ -397,6 +452,14 @@ public sealed partial class MatchEngine
             if(!state.BeginInitialCooldown())throw new InvalidDataException("Buggy cannon cooldown failed.");
             buggyCannonAttacks.Add(entityKey,state);
         }
+        var rig=groundVehicleWeapons.For(army.UnitId);
+        int normal=owner.Definition.ArmyNormalUpgradeIndexes?[slot]??
+            throw new InvalidDataException("Vehicle passenger lacks trusted upgrade authority.");
+        float scale=owner.Definition.ArmyHealthFactors is { } factors?factors[slot].UpgradeScale:1f;
+        float passengerHealth=armyCatalog!.VehiclePassengerMaximumHealth(army.UnitId,normal,scale);
+        int respawnTicks=armyCatalog.VehiclePassengerRespawnTicks(army.UnitId);
+        vehiclePassengers.Add(entityKey,rig.Passengers.ToDictionary(x=>x.Role,
+            x=>new VehiclePassengerState(x,passengerHealth,respawnTicks,tick),StringComparer.Ordinal));
     }
 
     private void AdvanceGroundVehicleRoutes()
@@ -407,6 +470,7 @@ public sealed partial class MatchEngine
             if(!activeArmyEntities.TryGetValue(key,out var army)||
                !vehicles.TryGet(key,out var vehicle)||vehicle==null||vehicle.OwnerPlayerId!=army.OwnerPlayerId)
                 throw new InvalidDataException("Ground vehicle route lost its host entity.");
+            if(army.UnitId=="ID_UNIT-BUGGY"&&!PassengerActive(key,"driver"))continue;
             Vector3 before=motion.Position;motion.AdvanceTick();
             float speed=ArmySpeed(key)??armyCatalog!.EffectiveSpeed(army.UnitId,1f);
             if(!vehicles.TryMove(key,motion.Position,speed))
@@ -1223,6 +1287,7 @@ public sealed partial class MatchEngine
         groundVehicleShotSpeed.Remove(entityKey);
         buggyCannonAttacks.Remove(entityKey);
         buggyCannonTargets.Remove(entityKey);
+        vehiclePassengers.Remove(entityKey);
         foreach(var id in buggyProjectiles.Where(x=>x.Value.Flight.VehicleId==entityKey)
             .Select(x=>x.Key).ToArray())buggyProjectiles.Remove(id);
         if(vehicles?.TryGet(entityKey,out var vehicle)==true&&vehicle!=null&&
