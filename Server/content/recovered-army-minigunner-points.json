@@ -1,0 +1,529 @@
+{
+  "version": 1,
+  "maps": [
+    {
+      "source": "Assets/Scenes/Aztec_Multiplayer.unity",
+      "sha256": "50b3077f1898189cbf40c2232771175b85eec0f03737901373da377faf95291e",
+      "mapDefinitionFileId": 2666,
+      "enemyPointsCollectionFileId": 2334,
+      "points": [
+        {
+          "order": 10,
+          "componentFileId": 2302,
+          "transformFileId": 990,
+          "fraction": 2,
+          "worldPosition": [
+            0.8667999999999996,
+            0.10625000000000007,
+            2.497769999999999
+          ]
+        },
+        {
+          "order": 11,
+          "componentFileId": 2468,
+          "transformFileId": 1171,
+          "fraction": 2,
+          "worldPosition": [
+            0.9387999999999996,
+            0.04087790000000002,
+            -2.477230000000001
+          ]
+        },
+        {
+          "order": 12,
+          "componentFileId": 2400,
+          "transformFileId": 1059,
+          "fraction": 2,
+          "worldPosition": [
+            0.8957999999999995,
+            0.09186695,
+            -3.312216500000001
+          ]
+        },
+        {
+          "order": 13,
+          "componentFileId": 2210,
+          "transformFileId": 829,
+          "fraction": 2,
+          "worldPosition": [
+            0.9357999999999995,
+            -0.026366,
+            1.7467699999999988
+          ]
+        },
+        {
+          "order": 43,
+          "componentFileId": 2449,
+          "transformFileId": 1138,
+          "fraction": 1,
+          "worldPosition": [
+            -0.6582000000000008,
+            0.006877899999999992,
+            1.890769999999999
+          ]
+        },
+        {
+          "order": 44,
+          "componentFileId": 2218,
+          "transformFileId": 842,
+          "fraction": 1,
+          "worldPosition": [
+            -0.8521999999999998,
+            -0.1014967,
+            -3.615959000000001
+          ]
+        },
+        {
+          "order": 45,
+          "componentFileId": 2257,
+          "transformFileId": 909,
+          "fraction": 1,
+          "worldPosition": [
+            -0.6791999999999998,
+            -0.01812209999999992,
+            1.3997699999999988
+          ]
+        },
+        {
+          "order": 46,
+          "componentFileId": 2396,
+          "transformFileId": 1053,
+          "fraction": 1,
+          "worldPosition": [
+            -0.8902000000000001,
+            -0.12137509999999996,
+            -2.5259864000000007
+          ]
+        }
+      ]
+    },
+    {
+      "source": "Assets/Scenes/City_Multiplayer.unity",
+      "sha256": "acaf878b188dbc17fca6795b5db7e9c7797b91dee0fcb6fb02d5e85d7cc11c4f",
+      "mapDefinitionFileId": 3249,
+      "enemyPointsCollectionFileId": 3292,
+      "points": [
+        {
+          "order": 15,
+          "componentFileId": 2968,
+          "transformFileId": 1288,
+          "fraction": 2,
+          "worldPosition": [
+            0.8379169999999991,
+            0.1138779000000002,
+            3.466209
+          ]
+        },
+        {
+          "order": 16,
+          "componentFileId": 3126,
+          "transformFileId": 1487,
+          "fraction": 2,
+          "worldPosition": [
+            1.2959169999999984,
+            0.10287790000000019,
+            -2.219791
+          ]
+        },
+        {
+          "order": 17,
+          "componentFileId": 3280,
+          "transformFileId": 1664,
+          "fraction": 2,
+          "worldPosition": [
+            1.403916999999999,
+            0.1208779000000002,
+            -1.5687909999999998
+          ]
+        },
+        {
+          "order": 18,
+          "componentFileId": 2986,
+          "transformFileId": 1323,
+          "fraction": 2,
+          "worldPosition": [
+            1.1419169999999985,
+            0.10587790000000019,
+            2.744209
+          ]
+        },
+        {
+          "order": 47,
+          "componentFileId": 3242,
+          "transformFileId": 1589,
+          "fraction": 1,
+          "worldPosition": [
+            -0.8670830000000009,
+            0.15087790000000023,
+            3.128209
+          ]
+        },
+        {
+          "order": 48,
+          "componentFileId": 3095,
+          "transformFileId": 1428,
+          "fraction": 1,
+          "worldPosition": [
+            -0.8930830000000007,
+            0.14287790000000022,
+            -2.191791
+          ]
+        },
+        {
+          "order": 49,
+          "componentFileId": 3323,
+          "transformFileId": 1736,
+          "fraction": 1,
+          "worldPosition": [
+            -0.947083000000001,
+            0.1218779000000002,
+            2.3802090000000002
+          ]
+        },
+        {
+          "order": 50,
+          "componentFileId": 3024,
+          "transformFileId": 1398,
+          "fraction": 1,
+          "worldPosition": [
+            -0.7970830000000007,
+            0.08587790000000017,
+            -1.430791
+          ]
+        }
+      ]
+    },
+    {
+      "source": "Assets/Scenes/Desert_Multiplayer.unity",
+      "sha256": "d2acaeb238fb2dfdcfb0e1bb69a52628798498f7b6992ecf9418a727360368c1",
+      "mapDefinitionFileId": 2553,
+      "enemyPointsCollectionFileId": 2661,
+      "points": [
+        {
+          "order": 16,
+          "componentFileId": 2397,
+          "transformFileId": 957,
+          "fraction": 2,
+          "worldPosition": [
+            -23.007083,
+            -2.54673597,
+            -5.4115965
+          ]
+        },
+        {
+          "order": 17,
+          "componentFileId": 2775,
+          "transformFileId": 1289,
+          "fraction": 2,
+          "worldPosition": [
+            -23.275083000000002,
+            -2.54149696,
+            -11.2333
+          ]
+        },
+        {
+          "order": 18,
+          "componentFileId": 2580,
+          "transformFileId": 1118,
+          "fraction": 2,
+          "worldPosition": [
+            -23.237083,
+            -2.34813305,
+            -12.3232725
+          ]
+        },
+        {
+          "order": 19,
+          "componentFileId": 2544,
+          "transformFileId": 1076,
+          "fraction": 2,
+          "worldPosition": [
+            -23.007083,
+            -2.54673597,
+            -6.089835000000001
+          ]
+        },
+        {
+          "order": 51,
+          "componentFileId": 2521,
+          "transformFileId": 1036,
+          "fraction": 1,
+          "worldPosition": [
+            -24.827083000000002,
+            -2.54673597,
+            -5.7420823
+          ]
+        },
+        {
+          "order": 52,
+          "componentFileId": 2802,
+          "transformFileId": 1325,
+          "fraction": 1,
+          "worldPosition": [
+            -24.935083,
+            -2.5414966999999997,
+            -11.97552
+          ]
+        },
+        {
+          "order": 53,
+          "componentFileId": 2667,
+          "transformFileId": 1221,
+          "fraction": 1,
+          "worldPosition": [
+            -24.827083000000002,
+            -2.54673597,
+            -6.574085500000001
+          ]
+        },
+        {
+          "order": 54,
+          "componentFileId": 2402,
+          "transformFileId": 963,
+          "fraction": 1,
+          "worldPosition": [
+            -24.799083,
+            -2.5613751,
+            -10.847791
+          ]
+        }
+      ]
+    },
+    {
+      "source": "Assets/Scenes/Park_Multiplayer.unity",
+      "sha256": "09b2c084ef5da6707fbebd4261a60baa0f12e24fef31efc4c6d4671b721e70ed",
+      "mapDefinitionFileId": 3572,
+      "enemyPointsCollectionFileId": 3153,
+      "points": [
+        {
+          "order": 12,
+          "componentFileId": 3488,
+          "transformFileId": 1530,
+          "fraction": 2,
+          "worldPosition": [
+            0.6859184499999982,
+            0.08987792899999991,
+            2.834208929999999
+          ]
+        },
+        {
+          "order": 13,
+          "componentFileId": 3566,
+          "transformFileId": 1699,
+          "fraction": 2,
+          "worldPosition": [
+            0.7189184499999985,
+            0.063877929,
+            -2.229791070000001
+          ]
+        },
+        {
+          "order": 14,
+          "componentFileId": 3534,
+          "transformFileId": 1611,
+          "fraction": 2,
+          "worldPosition": [
+            0.44291844999999874,
+            0.06186697899999993,
+            -3.040791070000001
+          ]
+        },
+        {
+          "order": 15,
+          "componentFileId": 3389,
+          "transformFileId": 1322,
+          "fraction": 2,
+          "worldPosition": [
+            0.953918449999998,
+            0.14287792899999996,
+            1.6522089299999991
+          ]
+        },
+        {
+          "order": 42,
+          "componentFileId": 3082,
+          "transformFileId": 1074,
+          "fraction": 1,
+          "worldPosition": [
+            -0.8770815500000015,
+            0.07287792900000001,
+            2.485208929999999
+          ]
+        },
+        {
+          "order": 43,
+          "componentFileId": 3476,
+          "transformFileId": 1514,
+          "fraction": 1,
+          "worldPosition": [
+            -0.7680815500000016,
+            0.11687792899999994,
+            -3.089791070000001
+          ]
+        },
+        {
+          "order": 44,
+          "componentFileId": 3614,
+          "transformFileId": 1794,
+          "fraction": 1,
+          "worldPosition": [
+            -0.8490815500000011,
+            0.10287792899999992,
+            1.6962089299999987
+          ]
+        },
+        {
+          "order": 45,
+          "componentFileId": 3197,
+          "transformFileId": 1197,
+          "fraction": 1,
+          "worldPosition": [
+            -0.7460815500000013,
+            0.063877929,
+            -2.298547470000001
+          ]
+        }
+      ]
+    },
+    {
+      "source": "Assets/Scenes/Snow_Multiplayer.unity",
+      "sha256": "67291457da28646c9ce377f3812d1bf0fa5332bfe664f58a4430a823744e6f21",
+      "mapDefinitionFileId": 2756,
+      "enemyPointsCollectionFileId": 2793,
+      "points": [
+        {
+          "order": 13,
+          "componentFileId": 2948,
+          "transformFileId": 1263,
+          "fraction": 2,
+          "worldPosition": [
+            1.0278,
+            0.07040479999999993,
+            2.951769999999999
+          ]
+        },
+        {
+          "order": 14,
+          "componentFileId": 2797,
+          "transformFileId": 1214,
+          "fraction": 2,
+          "worldPosition": [
+            1.0317999999999996,
+            0.07840479999999994,
+            -2.717230000000001
+          ]
+        },
+        {
+          "order": 15,
+          "componentFileId": 2600,
+          "transformFileId": 1048,
+          "fraction": 2,
+          "worldPosition": [
+            1.1667999999999994,
+            0.2704048,
+            -3.579230000000001
+          ]
+        },
+        {
+          "order": 16,
+          "componentFileId": 2958,
+          "transformFileId": 1275,
+          "fraction": 2,
+          "worldPosition": [
+            1.1578,
+            0.07040479999999993,
+            2.271769999999999
+          ]
+        },
+        {
+          "order": 28,
+          "componentFileId": 2585,
+          "transformFileId": 1026,
+          "fraction": 2,
+          "worldPosition": [
+            1.1667999999999994,
+            0.27040489999999995,
+            -3.579230000000001
+          ]
+        },
+        {
+          "order": 29,
+          "componentFileId": 3018,
+          "transformFileId": 1355,
+          "fraction": 2,
+          "worldPosition": [
+            1.0317999999999996,
+            0.07840473999999997,
+            -2.717230000000001
+          ]
+        },
+        {
+          "order": 30,
+          "componentFileId": 2883,
+          "transformFileId": 1256,
+          "fraction": 2,
+          "worldPosition": [
+            1.0277997,
+            0.07040484000000002,
+            2.951769999999999
+          ]
+        },
+        {
+          "order": 31,
+          "componentFileId": 2782,
+          "transformFileId": 1178,
+          "fraction": 2,
+          "worldPosition": [
+            1.1578,
+            0.07040484000000002,
+            2.271769799999999
+          ]
+        },
+        {
+          "order": 49,
+          "componentFileId": 2767,
+          "transformFileId": 1161,
+          "fraction": 1,
+          "worldPosition": [
+            -1.3241999999999994,
+            0.07040479999999993,
+            2.621769999999999
+          ]
+        },
+        {
+          "order": 50,
+          "componentFileId": 2989,
+          "transformFileId": 1309,
+          "fraction": 1,
+          "worldPosition": [
+            -1.0541999999999998,
+            0.08040479999999994,
+            -3.118230000000001
+          ]
+        },
+        {
+          "order": 51,
+          "componentFileId": 2589,
+          "transformFileId": 1032,
+          "fraction": 1,
+          "worldPosition": [
+            -1.3352000000000004,
+            0.07040479999999993,
+            0.746769999999999
+          ]
+        },
+        {
+          "order": 52,
+          "componentFileId": 3006,
+          "transformFileId": 1333,
+          "fraction": 1,
+          "worldPosition": [
+            -1.0432000000000006,
+            0.05840479999999992,
+            -2.029230000000001
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1747,6 +1747,23 @@ internal static class CombatContentTests
               miniSelector.Select(park,minigunner,2,allyPosition,_=>0,_=>true)==enemyNormal[^1] &&
               miniSelector.Select(park,minigunner,1,opponentPosition,_=>0,_=>true)==normal[0],
               "Unity 2018 Minigunner comparator alternates source-order endpoints across factions");
+        var miniPoints=content.ArmyMinigunnerPoints.ForFaction(park,1);
+        var nearestMini=content.ArmyMinigunnerPoints.NearestFree(park,1,normal[0].Position,null,_=>false);
+        Check(content.Maps.Sum(m=>new[]{1,2}.Sum(f=>content.ArmyMinigunnerPoints.ForFaction(m,f).Count))==44&&
+              content.Maps.Where(m=>!m.Source.EndsWith("Snow_Multiplayer.unity",StringComparison.Ordinal))
+                  .All(m=>content.ArmyMinigunnerPoints.ForFaction(m,1).Count==4&&
+                          content.ArmyMinigunnerPoints.ForFaction(m,2).Count==4)&&
+              content.ArmyMinigunnerPoints.ForFaction(content.Maps.Single(m=>
+                  m.Source.EndsWith("Snow_Multiplayer.unity",StringComparison.Ordinal)),2).Count==8&&
+              nearestMini!=null&&miniPoints.Contains(nearestMini),
+              "all 44 source EnemyPointMinigunner identities and nearest-free initial selection are pinned");
+        var randomMini=content.ArmyMinigunnerPoints.RandomFree(park,1,nearestMini!.ComponentFileId,
+            id=>id==miniPoints[1].ComponentFileId,count=>count-1);
+        Check(randomMini!=null&&randomMini.ComponentFileId!=nearestMini.ComponentFileId&&
+              randomMini.ComponentFileId!=miniPoints[1].ComponentFileId&&
+              content.ArmyMinigunnerPoints.RandomFree(park,1,nearestMini.ComponentFileId,
+                  id=>id!=nearestMini.ComponentFileId,_=>0)==null,
+              "later Minigunner selection preserves source list order, excludes current/occupied points, and closes when full");
         Check(selector.Select(park,helicopterFamily,1,opponentPosition,_=>0,_=>false)==null &&
               selector.Select(park,helicopterFamily,1,opponentPosition,_=>0,_=>true)?.Collection==
                 "spawnPointsCollectionHelicopters",
