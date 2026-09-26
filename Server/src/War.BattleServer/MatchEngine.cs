@@ -833,6 +833,9 @@ public sealed partial class MatchEngine
             try
             {
                 float airTime=(float)((double)tick/MatchManifest.TickRate);
+                foreach(var (key,special) in armyDroneSpecials.OrderBy(x=>x.Key))
+                    if(special.Observe(airTime,phase==BattlePhase.Running,
+                        activeArmyEntities.ContainsKey(key))){armyEntityRevision++;stateRevision++;}
                 foreach(var air in airEntities.Snapshot())
                     if(air.DroneSpecial?.Observe(airTime,phase==BattlePhase.Running,!air.Health.IsDead)==true)
                         stateRevision++;

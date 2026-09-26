@@ -30,6 +30,7 @@ public sealed partial class MatchEngine
         }
     }
     private readonly Dictionary<ulong,ArmyVitality> armyVitality=[];
+    private readonly Dictionary<ulong,DroneSpecialState> armyDroneSpecials=[];
     private readonly Dictionary<ulong,float> armyDamage=[];
     private readonly Dictionary<ulong,float> armySpecial=[];
     private readonly Dictionary<ulong,float> armySpeed=[];
@@ -372,6 +373,9 @@ public sealed partial class MatchEngine
             armyDamage.Add(entityKey,armyCatalog!.EffectiveDamage(unitId,
                 owner.ArmyNormalUpgradeIndexes![index],special,elite,damageScales[index]));
         float specialValue=armyCatalog.ComposeSpecial(unitId,owner.ArmyNormalUpgradeIndexes![index],special,elite);
+        if(family.BehaviorType=="DroneBehaviour")
+            armyDroneSpecials.Add(entityKey,new DroneSpecialState(
+                (float)((double)tick/MatchManifest.TickRate),special.HasValue,specialValue,NextArmyFloat));
         if(family.BehaviorType=="SoldierBehaviourCommando")
         {
             if(specialValue<0||specialValue>100)
@@ -399,6 +403,8 @@ public sealed partial class MatchEngine
 
     internal float? ArmyHealth(ulong entityKey)
         =>armyVitality.TryGetValue(entityKey,out var row) ? row.Current : null;
+    internal bool ArmyDroneImmortal(ulong entityKey)
+        =>armyDroneSpecials.TryGetValue(entityKey,out var row)&&row.IsImmortal;
     internal float? ArmyKevlar(ulong entityKey)
         =>armyVitality.TryGetValue(entityKey,out var row) ? row.Kevlar : null;
     internal float? ArmyDamage(ulong entityKey)
@@ -1864,6 +1870,7 @@ public sealed partial class MatchEngine
             throw new ArgumentOutOfRangeException(nameof(damage));
         if(phase!=BattlePhase.Running || !activeArmyEntities.ContainsKey(entityKey) ||
            !armyVitality.TryGetValue(entityKey,out var vitality))return false;
+        if(ArmyDroneImmortal(entityKey))return false;
         float absorbed=Math.Min(damage,vitality.Kevlar);
         vitality.Kevlar-=absorbed;
         damage-=absorbed;
@@ -1898,6 +1905,7 @@ public sealed partial class MatchEngine
            !armyReservations!.Release(entityKey) || !activeArmyEntities.Remove(entityKey))
             throw new InvalidDataException("Army death compare-and-remove failed.");
         armyVitality.Remove(entityKey);
+        armyDroneSpecials.Remove(entityKey);
         armyDamage.Remove(entityKey);
         armySpecial.Remove(entityKey);
         armySpeed.Remove(entityKey);

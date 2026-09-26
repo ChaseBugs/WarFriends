@@ -2617,6 +2617,33 @@ internal static class CombatContentTests
               "authoritative tick consumes a source-box Land Mine and applies host explosion damage once");
         var heavyTurretManifest=decoyManifest with {MatchId="heavy-turret-match",SceneMasterPlayerId=decoyPlayer,
             Players=decoyManifest.Players.Select(p=>p with {ShieldLevel=0}).ToArray()};
+        var deployedDroneManifest=armyManifest with {MatchId="deployed-drone-special",Players=[
+            armyManifest.Players[0] with {EquippedArmyUnitIds=["ID_UNIT-DRONE"],
+                ArmyNormalUpgradeIndexes=[0],ArmySpecialUpgradeIndexes=[96],ArmyEliteUpgradeIndexes=[-1]},
+            armyManifest.Players[1]]};
+        var deployedDroneMatch=new MatchEngine(deployedDroneManifest,content:content,armyChoice:_=>0);
+        deployedDroneMatch.Admit(decoyPlayer);deployedDroneMatch.Admit(decoyOpponent);
+        deployedDroneMatch.Command(decoyPlayer,new(){CommandId=1,Ready=new(){ManifestHash=deployedDroneMatch.ManifestHash}});
+        deployedDroneMatch.Command(decoyOpponent,new(){CommandId=1,Ready=new(){ManifestHash=deployedDroneMatch.ManifestHash}});
+        deployedDroneMatch.Advance(60);
+        deployedDroneMatch.ArmyBatch(decoyPlayer);
+        Check(deployedDroneMatch.Command(decoyPlayer,new(){CommandId=2,
+            DeployArmy=new(){OptionIndex=9}}).Code=="army-deploying","normal army path accepts trusted Drone deployment");
+        deployedDroneMatch.Advance(61);
+        var deployedDrone=deployedDroneMatch.ArmyEntityBatch(decoyPlayer,0,0).Entities.Single();
+        float droneHealth=deployedDroneMatch.ArmyHealth(deployedDrone.EntityKey)!.Value;
+        for(ulong t=62;t<=211;t++)deployedDroneMatch.Advance(t);
+        Check(!deployedDroneMatch.ArmyDroneImmortal(deployedDrone.EntityKey),"deployed Drone retains strict initial five-second deadline");
+        deployedDroneMatch.Advance(212);
+        Check(deployedDroneMatch.ArmyDroneImmortal(deployedDrone.EntityKey)&&
+            !deployedDroneMatch.ApplyArmyHostDamage(deployedDrone.EntityKey,droneHealth)&&
+            deployedDroneMatch.ArmyHealth(deployedDrone.EntityKey)==droneHealth,
+            "trusted special stage protects normal deployed Drone health against host damage");
+        for(ulong t=213;t<=256;t++)deployedDroneMatch.Advance(t);
+        Check(!deployedDroneMatch.ArmyDroneImmortal(deployedDrone.EntityKey)&&
+            deployedDroneMatch.ApplyArmyHostDamage(deployedDrone.EntityKey,droneHealth)&&
+            deployedDroneMatch.ArmyHealth(deployedDrone.EntityKey)==null,
+            "source duration expiry permits deployed Drone death and releases special state");
         var droneClockMatch=new MatchEngine(heavyTurretManifest with {MatchId="drone-special-clock"},content:content);
         droneClockMatch.Admit(decoyPlayer);droneClockMatch.Admit(decoyOpponent);
         droneClockMatch.Command(decoyPlayer,new(){CommandId=1,Ready=new(){ManifestHash=droneClockMatch.ManifestHash}});
