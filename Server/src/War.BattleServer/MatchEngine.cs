@@ -35,6 +35,9 @@ public sealed partial class MatchEngine
     private readonly GrenadeMatchSimulation? grenadeCombat;
     private readonly Dictionary<ulong, ArmyProjectileFlight> armyProjectiles = [];
     private readonly Dictionary<ulong, VehicleProjectileFlight> vehicleProjectiles = [];
+    private sealed record BuggyProjectile(BuggyMissileFlight Flight,string Owner,string Target,
+        float Damage,GroundVehicleMissileBinding Binding);
+    private readonly Dictionary<ulong,BuggyProjectile> buggyProjectiles=[];
     private readonly Dictionary<ulong, (string Owner, string Target, Vector3 Position)> vehicleShotTargets = [];
     private Func<ulong, float>? vehicleDamage;
     private Func<ulong, string, Vector3, ulong, IReadOnlyList<PreparedProjectile>>? prepareVolley;
@@ -78,7 +81,7 @@ public sealed partial class MatchEngine
     private ulong projectileId;
     internal const int MaximumProjectiles = 128;
     internal int PendingProjectileCount => checked(projectiles.Count+armyProjectiles.Count+armyFlameBursts.Count+
-        vehicleProjectiles.Count+bazookaProjectiles.Count+scheduledBazookas.Count+grenadeProjectiles.Count);
+        vehicleProjectiles.Count+buggyProjectiles.Count+bazookaProjectiles.Count+scheduledBazookas.Count+grenadeProjectiles.Count);
     internal IReadOnlyCollection<AirBattleEntity> AirEntities => airEntities.Snapshot();
 
     internal bool TryRegisterAirEntity(AirBattleEntity entity)
@@ -382,6 +385,9 @@ public sealed partial class MatchEngine
         vehicleShotTargets.Remove(entityId);
         foreach (var projectile in vehicleProjectiles.Where(x => x.Value.VehicleId == entityId).Select(x => x.Key).ToArray())
             vehicleProjectiles.Remove(projectile);
+        foreach(var projectile in buggyProjectiles.Where(x=>x.Value.Flight.VehicleId==entityId)
+            .Select(x=>x.Key).ToArray())buggyProjectiles.Remove(projectile);
+        buggyCannonTargets.Remove(entityId);buggyCannonAttacks.Remove(entityId);
         stateRevision++;
         Emit(MatchEventKind.VehicleDestroyed, ownerPlayerId, entity.UnitId, entityId,
             Vector3.Zero, 0, generation.ToString());
@@ -767,10 +773,12 @@ public sealed partial class MatchEngine
         bool advanced=simulationTick!=tick;
         if (advanced) stateRevision++;
         tick = simulationTick;
+        if(advanced&&phase==BattlePhase.Running)AdvanceBuggyProjectiles();
         if (advanced && vehicles != null)
             foreach (var vehicle in vehicles.Snapshot())
             {
                 TryBeginAutomaticGroundVehicleAttack(vehicle.EntityId);
+                AdvanceBuggyCannon(vehicle.EntityId);
                 if (vehicles.AdvanceAttack(vehicle.EntityId) && vehicles.TryGetAttack(vehicle.EntityId, out var attack) &&
                     attack != null && attack.ShotDue)
                     TryCommitVehicleAttack(vehicle.OwnerPlayerId, vehicle.EntityId, out _);
@@ -1099,6 +1107,9 @@ public sealed partial class MatchEngine
                 vehicleShotTargets.Remove(vehicle.EntityId);
                 foreach (var projectile in vehicleProjectiles.Where(x => x.Value.VehicleId == vehicle.EntityId).Select(x => x.Key).ToArray())
                     vehicleProjectiles.Remove(projectile);
+                foreach(var projectile in buggyProjectiles.Where(x=>x.Value.Flight.VehicleId==vehicle.EntityId)
+                    .Select(x=>x.Key).ToArray())buggyProjectiles.Remove(projectile);
+                buggyCannonTargets.Remove(vehicle.EntityId);buggyCannonAttacks.Remove(vehicle.EntityId);
                 stateRevision++;
                 Emit(MatchEventKind.VehicleDestroyed, ownerPlayerId, vehicle.UnitId,
                     vehicle.EntityId, Vector3.Zero, 0, vehicle.Generation.ToString());

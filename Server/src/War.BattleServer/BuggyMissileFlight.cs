@@ -13,7 +13,7 @@ internal sealed class BuggyMissileFlight
     private readonly Vector3 start,end,direction;private Vector3 last,lastUp;
     private readonly float duration,middleRotation,rotations,rotationMagnitude;
     private ulong tick;private float progress;private bool collisionEnabled;
-    internal Vector3 Position{get;private set;}internal bool Finished{get;private set;}
+    internal ulong VehicleId=>vehicleId;internal Vector3 Position{get;private set;}internal bool Finished{get;private set;}
 
     internal BuggyMissileFlight(ulong id,ulong vehicleId,GroundVehicleMissileBinding binding,
         float runtimeSpeed,Vector3 from,Vector3 to,ulong tick,float middleRoll,float rotationRoll,
