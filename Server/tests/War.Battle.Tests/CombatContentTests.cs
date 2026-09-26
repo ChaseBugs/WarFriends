@@ -1371,6 +1371,30 @@ internal static class CombatContentTests
                     Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(decoyTemp))),content.Maps));
             }
             finally {if(File.Exists(decoyTemp))File.Delete(decoyTemp);}
+            string landMineArtifact=Path.Combine(directory,"recovered-landmine-source.json");
+            string landMineRevision=Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(landMineArtifact)));
+            var landMines=LandMineSourceCatalog.Load(landMineArtifact,landMineRevision,content.Maps);
+            var parkLandMines=landMines.ForMap(content.Maps.Single(x=>Path.GetFileNameWithoutExtension(x.Source)=="Park_Multiplayer"));
+            var selectedLandMines=landMines.Select(content.Maps.Single(x=>Path.GetFileNameWithoutExtension(x.Source)=="Park_Multiplayer").Source,1,_=>0);
+            Check(landMines.SpawnLimit==3&&landMines.NavMeshSampleRadius==10&&landMines.NavMeshAreaMask==1&&
+                  landMines.MinimumDamage==62.5f&&landMines.MaximumDamage==1090&&landMines.CardScale==.1f&&
+                  landMines.PlayerRadiusCoefficient==.9f&&landMines.TriggerRadius==5&&landMines.HurtRadius==1.8f&&
+                  landMines.DeadRadius==1.1f&&landMines.ExplosionCoefficient==new Vector3(5,8,5)&&
+                  landMines.Prefab.TriggerSize==new Vector3(.23787257f,.09612553f,.23773421f)&&
+                  parkLandMines.Count==13&&selectedLandMines.Count==3&&selectedLandMines.All(x=>x.Fraction==2)&&
+                  selectedLandMines.Select(x=>x.ComponentFileId).Distinct().Count()==3&&
+                  Math.Abs(landMines.Damage(22,44)-57.625f)<.001f,
+                  "Land Mine source pins 89 opposing hiding slots, three distinct placements, prefab geometry and level-scaled damage");
+            string landMineTemp=Path.Combine(Path.GetTempPath(),"war-landmine-"+Guid.NewGuid().ToString("N")+".json");
+            try
+            {
+                var changed=JsonNode.Parse(File.ReadAllText(landMineArtifact))!;
+                changed["maps"]![0]!["slots"]![0]!["sourcePosition"]![0]=99999;
+                File.WriteAllText(landMineTemp,changed.ToJsonString());
+                Reject(()=>LandMineSourceCatalog.Load(landMineTemp,
+                    Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(landMineTemp))),content.Maps));
+            }
+            finally {if(File.Exists(landMineTemp))File.Delete(landMineTemp);}
             var mines=DeployableCardPolicy.SelectLandmineTargets("LandMine",0,
                 new[]{new DeployablePlacement(1,new(1,0,0)),new DeployablePlacement(2,new(2,0,0)),
                       new DeployablePlacement(3,new(3,0,0)),new DeployablePlacement(4,new(4,0,0))},n=>0);
