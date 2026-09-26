@@ -46,6 +46,7 @@ public sealed partial class MatchEngine
     private readonly Dictionary<int,ulong> occupiedRusherSlots=[];
     private readonly Dictionary<ulong,int> rusherSlotByEntity=[];
     private readonly Dictionary<ulong,ArmyVehicleRouteMotion> vehicleRouteMotions=[];
+    private readonly Dictionary<ulong,Vector3> groundVehicleFacing=[];
 
     private string? ArmyAvailabilityError(Player player,ArmyDeploymentFamily family,
         ArmyDeploymentOption option)
@@ -178,6 +179,8 @@ public sealed partial class MatchEngine
         =>vehicleRouteMotions.TryGetValue(entityKey,out var state)?state:null;
     internal VehicleAttackState? GroundVehicleAttack(ulong entityKey)
         =>vehicles?.TryGetAttack(entityKey,out var state)==true?state:null;
+    internal Vector3? GroundVehicleFacing(ulong entityKey)
+        =>groundVehicleFacing.TryGetValue(entityKey,out var facing)?facing:null;
 
     private void InitializeGroundVehicle(ulong entityKey,ArmyDeploymentFamily family,
         ArmySpawnPoint point)
@@ -195,6 +198,12 @@ public sealed partial class MatchEngine
                !vehicles.TryBindHealth(entityKey,vitality.Maximum))
             throw new InvalidDataException("Ground vehicle registry initialization failed.");
         vehicleRouteMotions.Add(entityKey,new ArmyVehicleRouteMotion(entity.Position,point.VehicleRoute,speed));
+        var first=point.VehicleRoute.Positions.FirstOrDefault(p=>
+            new Vector2(p.X-entity.Position.X,p.Z-entity.Position.Z).LengthSquared()>1e-8f);
+        var facing=new Vector3(first.X-entity.Position.X,0,first.Z-entity.Position.Z);
+        if(facing.LengthSquared()<1e-8f)
+            throw new InvalidDataException("Ground vehicle route has no initial facing.");
+        groundVehicleFacing.Add(entityKey,Vector3.Normalize(facing));
     }
 
     private void AdvanceGroundVehicleRoutes()
@@ -211,7 +220,12 @@ public sealed partial class MatchEngine
                 throw new InvalidDataException("Ground vehicle route move failed.");
             army.X=motion.Position.X;army.Y=motion.Position.Y;army.Z=motion.Position.Z;
             army.PositionTick=tick;
-            if(before!=motion.Position){armyEntityRevision++;stateRevision++;}
+            if(before!=motion.Position)
+            {
+                var delta=motion.Position-before;delta.Y=0;
+                if(delta.LengthSquared()>1e-10f)groundVehicleFacing[key]=Vector3.Normalize(delta);
+                armyEntityRevision++;stateRevision++;
+            }
             if(motion.Arrived)vehicleRouteMotions.Remove(key);
         }
     }
@@ -1012,6 +1026,7 @@ public sealed partial class MatchEngine
         minigunnerSteering.Remove(entityKey);
         minigunnerPointChangeTicks.Remove(entityKey);
         vehicleRouteMotions.Remove(entityKey);
+        groundVehicleFacing.Remove(entityKey);
         if(vehicles?.TryGet(entityKey,out var vehicle)==true&&vehicle!=null&&
            !vehicles.TryDestroy(entityKey,vehicle.Generation))
             throw new InvalidDataException("Ground vehicle death cleanup failed.");

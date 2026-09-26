@@ -1250,6 +1250,12 @@ internal static class CombatContentTests
             Check(VehicleMotionPolicy.ValidateStep(Vector3.Zero,new(.02f,0,0),1.7f).X>.019f,
                   "vehicle motion respects recovered source speed at fixed tick");
             Reject(()=>VehicleMotionPolicy.ValidateStep(Vector3.Zero,new(2,0,0),1.0f));
+            var vehicleAim=GroundVehicleAimPolicy.Resolve(Vector3.Zero,Vector3.UnitZ,
+                new Vector3(1,0,1),70,4);
+            Check(Math.Abs(vehicleAim.AngleDegrees-45)<.001f&&vehicleAim.AimTicks==15&&
+                  Vector3.Distance(vehicleAim.Direction,Vector3.Normalize(new Vector3(1,0,1)))<.00001f,
+                  "vehicle aim applies recovered angle gate and proportional minimum-bounded tween duration");
+            Reject(()=>GroundVehicleAimPolicy.Resolve(Vector3.Zero,Vector3.UnitZ,Vector3.UnitX,70,4));
             var vehicleRolls=new Queue<float>([.999f,.1f,.2f,.3f,.5f]);
             var vehicleBatch=new VehicleAttackState(new ArmyVehicleShotStats(5,1,2,4,1,1,0),.1f,
                 ()=>vehicleRolls.Dequeue());
@@ -2520,8 +2526,10 @@ internal static class CombatContentTests
         Check(firstCar.UnitId=="ID_UNIT-HUMVEE"&&firstCarSpawn.VehicleRoute!=null&&
               Vector3.Distance(new(firstCar.X,firstCar.Y,firstCar.Z),firstCarSpawn.Position)>1f&&
               staleMatch.GroundVehicleAttack(firstCar.EntityKey) is {ShotSpeed:5f,Phase:ArmyAirAttackPhase.Ready}&&
+              staleMatch.GroundVehicleFacing(firstCar.EntityKey) is { } carFacing&&
+              Math.Abs(carFacing.Y)<.00001f&&Math.Abs(carFacing.Length()-1)<.00001f&&
               staleMatch.Snapshot().Vehicles.Any(v=>v.EntityId==firstCar.EntityKey&&v.UnitId==firstCar.UnitId),
-              "deployed Humvee reserves its source car route and publishes fixed-tick vehicle motion");
+              "deployed Humvee reserves its source car route and publishes fixed-tick motion and facing");
         Check(staleMatch.Command(soldierOwner,new MatchCommand{CommandId=3,
                   DeployArmy=new DeployArmyCommand{OptionIndex=19}}).Code=="army-deploying" &&
               staleMatch.ArmyBatch(soldierOwner).Code=="army-unavailable" &&
