@@ -30,6 +30,7 @@ public sealed partial class MatchEngine
     private readonly Dictionary<ulong,ArmyRusherAttackState> rusherAttacks=[];
     private readonly Dictionary<ulong,ArmyRusherAttackState> minigunnerAttacks=[];
     private readonly Dictionary<ulong,ArmyMinigunnerMovementState> minigunnerMovements=[];
+    private readonly Dictionary<ulong,ArmyRusherLateralSteering> minigunnerSteering=[];
     private readonly Dictionary<ulong,ulong> minigunnerPointChangeTicks=[];
     private readonly Dictionary<int,ulong> occupiedMinigunnerPoints=[];
     private readonly Dictionary<ulong,int> minigunnerPointByEntity=[];
@@ -161,6 +162,8 @@ public sealed partial class MatchEngine
         =>rusherAttackTargets.TryGetValue(entityKey,out var target)?target:null;
     internal ArmyMinigunnerMovementState? MinigunnerMovementCandidate(ulong entityKey)
         =>minigunnerMovements.TryGetValue(entityKey,out var state)?state:null;
+    internal Vector2? MinigunnerSteeringOffset(ulong entityKey)
+        =>minigunnerSteering.TryGetValue(entityKey,out var state)?state.Offset:null;
     internal int? MinigunnerPoint(ulong entityKey)
         =>minigunnerPointByEntity.TryGetValue(entityKey,out int point)?point:null;
     internal ulong? MinigunnerPointOccupant(int pointFileId)
@@ -239,22 +242,43 @@ public sealed partial class MatchEngine
         }
         minigunnerPointByEntity[entityKey]=point.ComponentFileId;
         minigunnerMovements.Add(entityKey,movement);
+        minigunnerSteering.Add(entityKey,new ArmyRusherLateralSteering(start));
     }
 
     private void AdvanceMinigunnerMovements()
     {
+        var priorPositions=activeArmyEntities.Where(pair=>
+                armyCatalog!.Families.Single(f=>f.UnitId==pair.Value.UnitId).BehaviorType==
+                    "SoldierBehaviourMinigunner")
+            .ToDictionary(pair=>pair.Key,pair=>new Vector3(pair.Value.X,pair.Value.Y,pair.Value.Z));
         foreach(var (key,movement) in minigunnerMovements.OrderBy(x=>x.Key).ToArray())
         {
             if(!activeArmyEntities.TryGetValue(key,out var army)||
                !minigunnerPointByEntity.TryGetValue(key,out int point)||point!=movement.PointFileId||
                !occupiedMinigunnerPoints.TryGetValue(point,out ulong owner)||owner!=key)
                 throw new InvalidDataException("Minigunner movement lost its reservation proof.");
+            if(!minigunnerSteering.ContainsKey(key))
+                throw new InvalidDataException("Minigunner movement lost its steering proof.");
             movement.AdvanceTick();
-            army.X=movement.Position.X;army.Y=movement.Position.Y;army.Z=movement.Position.Z;
+        }
+        foreach(var (key,movement) in minigunnerMovements.OrderBy(x=>x.Key).ToArray())
+        {
+            var army=activeArmyEntities[key];
+            var peers=priorPositions.Where(pair=>pair.Key!=key&&
+                    activeArmyEntities[pair.Key].OwnerPlayerId==army.OwnerPlayerId)
+                .Select(pair=>(pair.Value,minigunnerMovements.TryGetValue(pair.Key,out var peer)
+                    ?peer.PlanarDirection:Vector2.Zero)).ToArray();
+            var steering=minigunnerSteering[key];
+            steering.Advance(movement.Position,movement.PlanarDirection,peers,(before,next)=>
+                before==next || Vector3.Distance(before,next)<=.07f&&
+                armyNavMeshConnectivity!.Classify(map!,before,next)==ArmyNavMeshConnection.Connected);
+            army.X=steering.Position.X;army.Y=steering.Position.Y;army.Z=steering.Position.Z;
             army.PositionTick=tick;
-            if(!movement.Arrived)continue;
+            if(!movement.Arrived || steering.Offset!=Vector2.Zero ||
+               Vector2.Distance(new(army.X,army.Z),new(movement.Destination.X,movement.Destination.Z))>=.04f)
+                continue;
             army.X=movement.Destination.X;army.Z=movement.Destination.Z;
-            if(!minigunnerMovements.Remove(key))
+            if(!minigunnerMovements.Remove(key)||!minigunnerSteering.Remove(key))
                 throw new InvalidDataException("Minigunner arrival removal failed.");
             StartMinigunnerAttack(key);
         }
@@ -937,6 +961,7 @@ public sealed partial class MatchEngine
         rusherAttacks.Remove(entityKey);
         minigunnerAttacks.Remove(entityKey);
         minigunnerMovements.Remove(entityKey);
+        minigunnerSteering.Remove(entityKey);
         minigunnerPointChangeTicks.Remove(entityKey);
         walkingShotgunnerSpecials.Remove(entityKey);
         rusherAttackTargets.Remove(entityKey);

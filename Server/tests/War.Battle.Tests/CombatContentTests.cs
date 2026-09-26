@@ -1887,6 +1887,46 @@ internal static class CombatContentTests
               miniMatch.MinigunnerMovementCandidate(miniEntity.EntityKey)==null&&
               miniMatch.MinigunnerPointOccupant(secondMiniPoint)==null,
               "confirmed Minigunner death releases point, movement, attack, and target authority");
+        var miniPairManifest=miniManifest with {MatchId="minigunner-pair"};
+        var miniPair=new MatchEngine(miniPairManifest,armyChoice:n=>n-1,content:content);
+        miniPair.Admit(miniOwner);miniPair.Admit(miniOpponent);
+        miniPair.Command(miniOwner,new MatchCommand{CommandId=1,
+            Ready=new ReadyCommand{ManifestHash=miniPair.ManifestHash}});
+        miniPair.Command(miniOpponent,new MatchCommand{CommandId=1,
+            Ready=new ReadyCommand{ManifestHash=miniPair.ManifestHash}});
+        miniPair.Advance(60);
+        Check(miniPair.ArmyBatch(miniOwner).OptionIndexes.Contains(21)&&
+              miniPair.Command(miniOwner,new MatchCommand{CommandId=2,
+                  DeployArmy=new DeployArmyCommand{OptionIndex=21}}).Code=="army-deploying",
+              "two-unit Minigunner source option enters the live spawn schedule");
+        float miniPairMinimum=float.MaxValue,miniPairMatureMinimum=float.MaxValue,
+            miniPairSpawnDistance=float.NaN,miniPairMaxSteering=0f;
+        var miniPairArrived=new HashSet<ulong>();
+        for(ulong t=61;t<700&&!miniPair.Terminal;t++)
+        {
+            if(t%90==0){miniPair.ArmyBatch(miniOwner);miniPair.ArmyBatch(miniOpponent);}
+            miniPair.Advance(t);
+            var pair=miniPair.ArmyEntityBatch(miniOwner,0,0).Entities;
+            if(pair.Count==2)
+            {
+                var a=pair[0];var b=pair[1];
+                float separation=Vector2.Distance(new(a.X,a.Z),new(b.X,b.Z));
+                if(float.IsNaN(miniPairSpawnDistance))miniPairSpawnDistance=separation;
+                miniPairMinimum=Math.Min(miniPairMinimum,separation);
+                if(t>=100)miniPairMatureMinimum=Math.Min(miniPairMatureMinimum,separation);
+                foreach(var entity in pair)
+                {
+                    var offset=miniPair.MinigunnerSteeringOffset(entity.EntityKey);
+                    if(offset.HasValue)miniPairMaxSteering=Math.Max(miniPairMaxSteering,offset.Value.Length());
+                    else miniPairArrived.Add(entity.EntityKey);
+                }
+            }
+        }
+        var miniPairFinal=miniPair.ArmyEntityBatch(miniOwner,0,0).Entities;
+        Console.WriteLine($"Park two-Minigunner separation spawn {miniPairSpawnDistance:F3}, minimum {miniPairMinimum:F3}, mature {miniPairMatureMinimum:F3}, steering {miniPairMaxSteering:F3}, arrived {miniPairArrived.Count}");
+        Check(miniPairMinimum>=.339f&&miniPairMatureMinimum>=.339f&&
+              miniPairMaxSteering>0f&&miniPairArrived.Count==2,
+              "prior-frame Minigunner lateral steering preserves source-radius separation and both agents arrive");
         Reject(()=>MatchManifest.Validate(detached with { Players=[detached.Players[0] with
             {NewArmyUnitIds=["ID_UNIT-SNIPER"]},detached.Players[1]] }));
         Reject(()=>content.ValidateAllocation(detached with { Players=detached.Players.Select((p,i)=>i==0 ?
