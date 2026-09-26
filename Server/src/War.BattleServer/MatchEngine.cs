@@ -1034,6 +1034,7 @@ public sealed partial class MatchEngine
                   if(minigunnerMovements.Count>0)AdvanceMinigunnerMovements(); }
             catch(InvalidDataException){End("invalid-army-authority","",false);return;}
         }
+        if(advanced&&phase==BattlePhase.Running)groundVehicleVelocities.Clear();
         if(advanced&&phase==BattlePhase.Running&&vehicleRouteMotions.Count>0)
         {
             try {AdvanceGroundVehicleRoutes();}

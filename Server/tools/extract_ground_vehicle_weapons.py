@@ -157,6 +157,17 @@ def vehicle_body_parts(blocks,scripts):
    'layer':layer,'weight':weight,'colliders':collider_ids})
  return rows
 
+def vehicle_shot_targets(blocks):
+ rows=[]
+ for cid,(kind,b) in blocks.items():
+  if kind!=114 or 'guid: 3cf4d7761af3ce98d7a08bebfe4e8861,' not in b: continue
+  if direct(b,'visible')!='1' or direct(b,'shootTargets')!='[]': raise ValueError('unsupported vehicle target visibility or legacy targets')
+  for tid,mask in re.findall(r'^  - transform: \{fileID: (\d+)\}\r?\n    type: (\d+)$',b,re.M):
+   tid=int(tid);position,rotation=world(blocks,tid)
+   rows.append({'componentFileId':cid,'transformFileId':tid,'type':int(mask),'position':position})
+ if len(rows)!=1 or rows[0]['type']!=1: raise ValueError('vehicle must have one source Body target')
+ return rows
+
 def main():
  guid_to_name={}
  for meta in (ASSETS/'Scripts').rglob('*.cs.meta'):
@@ -240,9 +251,10 @@ def main():
   drones=repair_drone_paths(blocks,scripts,root) if unit=='ID_UNIT-TRANSPORTER' else []
   out.append({'unitId':unit,'prefab':'Assets/GameObject/'+prefab_name,
    'sha256':hashlib.sha256(raw).hexdigest(),'behaviorType':root_type,'roles':role_rows,
-   'passengers':passengers,'bodyParts':vehicle_body_parts(blocks,scripts),'repairDronePaths':drones})
+   'passengers':passengers,'bodyParts':vehicle_body_parts(blocks,scripts),'repairDronePaths':drones,
+   'shotTargets':vehicle_shot_targets(blocks)})
  if not PASSENGER_POSES.exists(): raise ValueError('missing Unity passenger pose artifact')
- artifact={'version':7,'armoredVehicleShotCoefficient':0.33,
+ artifact={'version':8,'armoredVehicleShotCoefficient':0.33,
   'passengerPoseRevision':hashlib.sha256(PASSENGER_POSES.read_bytes()).hexdigest(),
   'repairDronePrefab':repair_drone_prefab(guid_to_name),'vehicles':out}
  serialized=json.dumps(artifact,indent=2)+'\n'

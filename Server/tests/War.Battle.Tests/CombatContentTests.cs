@@ -977,6 +977,14 @@ internal static class CombatContentTests
             string damagedEnemyPoseHash=Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(enemyPoseTemp)));
             Reject(()=>EnemyPoseCatalog.Load(enemyPoseTemp,damagedEnemyPoseHash));
             Reject(()=>GroundVehicleWeaponCatalog.Load(vehicleWeaponPath,new string('0',64)));
+            foreach(var unit in new[]{"ID_UNIT-HUMVEE","ID_UNIT-TANK","ID_UNIT-BUGGY","ID_UNIT-TRANSPORTER"})
+                Check(content.GroundVehicleWeapons.For(unit).ShotTarget==new Vector3(0,unit=="ID_UNIT-TANK"?.289806f:.51933026f,0),
+                    "source vehicle Body aim target: "+unit);
+            var changedTarget=JsonNode.Parse(File.ReadAllText(vehicleWeaponPath))!;
+            changedTarget["vehicles"]![0]!["shotTargets"]![0]!["position"]![1]=0;
+            File.WriteAllText(vehicleWeaponTemp,changedTarget.ToJsonString());
+            Reject(()=>GroundVehicleWeaponCatalog.Load(vehicleWeaponTemp,
+                Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(vehicleWeaponTemp)))));
             var damaged=JsonNode.Parse(File.ReadAllText(vehicleWeaponPath))!;
             damaged["vehicles"]![0]!["roles"]![0]!["weapons"]![0]!["cadence"]=0;
             File.WriteAllText(vehicleWeaponTemp,damaged.ToJsonString());
@@ -3545,6 +3553,30 @@ internal static class CombatContentTests
               humveeDecoyEvents.Any(x=>
                   x.Kind==MatchEventKind.DecoyDestroyed&&x.ProjectileId==selectedDecoyId),
               "live Humvee projectile destroys its typed Decoy target and releases the exact obstacle slot");
+        var turretVehicleManifest=humveeDecoyManifest with {MatchId="turret-ground-vehicle-priority"};
+        var turretVehicleMatch=new MatchEngine(turretVehicleManifest,content:content,armyChoice:_=>0,combatRandom:()=>0);
+        turretVehicleMatch.ConfigureBattleAllocations([
+            new(soldierOwner,[],[],[0],[-1],[-1]),new(helicopterOwner,["CardHeavyTurret"],[],[0],[-1],[-1])]);
+        turretVehicleMatch.Admit(soldierOwner);turretVehicleMatch.Admit(helicopterOwner);
+        turretVehicleMatch.Command(soldierOwner,new(){CommandId=1,SelectCards=new(){NormalUpgradeIndexes={0},SpecialUpgradeIndexes={-1},EliteUpgradeIndexes={-1}}});
+        turretVehicleMatch.Command(helicopterOwner,new(){CommandId=1,SelectCards=new(){CardIds={"CardHeavyTurret"},NormalUpgradeIndexes={0},SpecialUpgradeIndexes={-1},EliteUpgradeIndexes={-1}}});
+        turretVehicleMatch.Command(soldierOwner,new(){CommandId=2,Ready=new(){ManifestHash=turretVehicleMatch.ManifestHash}});
+        turretVehicleMatch.Command(helicopterOwner,new(){CommandId=2,Ready=new(){ManifestHash=turretVehicleMatch.ManifestHash}});
+        turretVehicleMatch.Advance(60);
+        Check(turretVehicleMatch.Command(helicopterOwner,new(){CommandId=3,UseHeavyTurret=new(){RequestId=new string('b',32)}}).Code=="heavy-turret-spawned"&&
+              turretVehicleMatch.Command(soldierOwner,new(){CommandId=3,DeployArmy=new(){OptionIndex=turretVehicleMatch.ArmyBatch(soldierOwner).OptionIndexes.First()}}).Code=="army-deploying",
+              "live opposing turret and ground vehicle activate from trusted allocations");
+        bool turretAcquiredVehicle=false,turretFiredAtVehicle=false;ulong turretVehicleCursor=0;
+        for(ulong t=61;t<=900&&!turretVehicleMatch.Terminal;t++)
+        {
+            turretVehicleMatch.Advance(t);
+            var batch=turretVehicleMatch.EventBatch(helicopterOwner,turretVehicleCursor);
+            turretVehicleMatch.EventBatch(soldierOwner,0);
+            if(batch.Events.Count>0)turretVehicleCursor=batch.Events[^1].EventId;
+            turretFiredAtVehicle|=batch.Events.Any(x=>x.Kind==MatchEventKind.HeavyTurretFired&&x.Reason=="vehicle:real");
+            turretAcquiredVehicle|=turretVehicleMatch.Snapshot().HeavyTurrets.Any(x=>x.TargetId.StartsWith("army:",StringComparison.Ordinal));
+        }
+        Check(turretAcquiredVehicle&&turretFiredAtVehicle,"Heavy Turret acquires and launches at source Body target of live opposing Humvee");
         var transporterManifest=detached with {MatchId="transporter-split-fire",Players=[detached.Players[0] with
         {
             EquippedArmyUnitIds=["ID_UNIT-TRANSPORTER"],NewArmyUnitIds=null,

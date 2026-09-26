@@ -53,6 +53,7 @@ public sealed partial class MatchEngine
 
     private sealed record HeavyTurretTarget(string Id,Vector3 Position,string Kind,ulong EntityId=0);
     private readonly Dictionary<ulong,HeavyTurretTarget> heavyTurretBatchTargets=[];
+    private readonly Dictionary<ulong,Vector3> groundVehicleVelocities=[];
     private void AdvanceHeavyTurrets()
     {
         var live=heavyTurrets.Snapshot();
@@ -105,13 +106,15 @@ public sealed partial class MatchEngine
     {
         var decoyRows=decoys.Snapshot().Where(x=>x.OwnerFraction!=turret.OwnerFraction).OrderBy(x=>x.EntityId).ToArray();
         if(decoyRows.Length>0){var row=decoyRows[Choose(decoyRows.Length)];return new("decoy:"+row.EntityId,row.Position,"decoy",row.EntityId);}
-        var infantry=activeArmyEntities.Values.Where(x=>x.OwnerFraction!=turret.OwnerFraction&&infantryAnimations.ContainsKey(x.EntityKey)).ToArray();
-        var rushers=infantry.Where(x=>ArmyRusherPointCatalog.IsRusher(
+        var candidates=activeArmyEntities.Values.Where(x=>x.OwnerFraction!=turret.OwnerFraction&&
+            (infantryAnimations.ContainsKey(x.EntityKey)||(vehicles?.TryGet(x.EntityKey,out _)==true))).ToArray();
+        var rushers=candidates.Where(x=>ArmyRusherPointCatalog.IsRusher(
             armyCatalog!.Families.Single(f=>f.UnitId==x.UnitId).BehaviorType)).OrderBy(x=>x.EntityKey).ToArray();
         var pool=rushers.Length>0?rushers:heavyTurretSource!.SecondaryTargetGroups.SelectMany(group=>
-            infantry.Where(x=>armyCatalog!.Families.Single(f=>f.UnitId==x.UnitId).UnitType==group).OrderBy(x=>x.EntityKey)).ToArray();
-        if(pool.Length==0)pool=infantry.OrderBy(x=>x.EntityKey).ToArray();
-        if(pool.Length>0){var row=pool[Choose(pool.Length)];return new("army:"+row.EntityKey,new(row.X,row.Y,row.Z),"army",row.EntityKey);}
+            candidates.Where(x=>armyCatalog!.Families.Single(f=>f.UnitId==x.UnitId).UnitType==group).OrderBy(x=>x.EntityKey)).ToArray();
+        if(pool.Length==0)pool=candidates.OrderBy(x=>x.EntityKey).ToArray();
+        if(pool.Length>0){var row=pool[Choose(pool.Length)];return new("army:"+row.EntityKey,new(row.X,row.Y,row.Z),
+            infantryAnimations.ContainsKey(row.EntityKey)?"army":"vehicle",row.EntityKey);}
         var opponent=players.SingleOrDefault(x=>x.Definition.Fraction!=turret.OwnerFraction&&x.Health>0&&!x.Reconnecting);
         return opponent==null?null:new(opponent.Definition.PlayerId,opponent.Position,"player");
     }
@@ -120,12 +123,27 @@ public sealed partial class MatchEngine
         if(id.StartsWith("decoy:",StringComparison.Ordinal)&&ulong.TryParse(id.AsSpan(6),out ulong decoyId))
         {var row=decoys.Snapshot().SingleOrDefault(x=>x.EntityId==decoyId&&x.OwnerFraction!=turret.OwnerFraction);return row==null?null:new(id,row.Position,"decoy",decoyId);}
         if(id.StartsWith("army:",StringComparison.Ordinal)&&ulong.TryParse(id.AsSpan(5),out ulong armyId)&&
-           activeArmyEntities.TryGetValue(armyId,out var army)&&army.OwnerFraction!=turret.OwnerFraction&&infantryAnimations.ContainsKey(armyId))
-            return new(id,new(army.X,army.Y,army.Z),"army",armyId);
+           activeArmyEntities.TryGetValue(armyId,out var army)&&army.OwnerFraction!=turret.OwnerFraction)
+        {
+            if(infantryAnimations.ContainsKey(armyId))return new(id,new(army.X,army.Y,army.Z),"army",armyId);
+            if(vehicles?.TryGet(armyId,out var vehicle)==true&&vehicle!=null)
+            {
+                var position=vehicle.Position;
+                if(selectShotTarget)
+                {
+                    position+=groundVehicleWeapons!.For(vehicle.UnitId).ShotTarget;
+                    var origin=turret.Position+turret.Aim.SightOffset(heavyTurretSource!);
+                    position+=groundVehicleVelocities.GetValueOrDefault(armyId)*(Vector3.Distance(origin,position)/HeavyTurretBulletSpeed("vehicle")+.1f);
+                }
+                return new(id,position,"vehicle",armyId);
+            }
+            return null;
+        }
         var player=Find(id);return player==null||player.Definition.Fraction==turret.OwnerFraction||player.Health<=0||player.Reconnecting?
-            null:new(id,selectShotTarget?HeavyTurretPlayerTarget(id,turret.Position):player.Position,"player");
+            null:new(id,selectShotTarget?HeavyTurretPlayerTarget(id,turret.Position,
+                turret.Position+turret.Aim.SightOffset(heavyTurretSource!)):player.Position,"player");
     }
-    private Vector3 HeavyTurretPlayerTarget(string playerId,Vector3 origin)
+    private Vector3 HeavyTurretPlayerTarget(string playerId,Vector3 origin,Vector3 spawnPosition)
     {
         if(rifleCombat==null)throw new InvalidDataException("Heavy Turret target lacks host player poses.");
         var player=Find(playerId)??throw new InvalidDataException("Heavy Turret target player disappeared.");
@@ -133,7 +151,7 @@ public sealed partial class MatchEngine
         if(player.Route!=null&&pose.MovingTarget!=null)
         {
             Vector3 target=pose.MovingTarget.Position;Vector3 velocity=HeavyTurretPlayerVelocity(player);
-            float seconds=Vector3.Distance(origin,target)/HeavyTurretBulletSpeed("player");
+            float seconds=Vector3.Distance(spawnPosition,target)/HeavyTurretBulletSpeed("player")+.1f;
             var predicted=target+velocity*seconds;
             if(!PlayerHitbox.Finite(predicted))throw new InvalidDataException("Heavy Turret prediction escaped scene bounds.");
             return predicted;
@@ -209,6 +227,8 @@ public sealed partial class MatchEngine
     {
         var origin=turret.Position+turret.Aim.SightOffset(heavyTurretSource!);
         var sightPosition=target.Position;
+        if(target.Kind=="vehicle"&&activeArmyEntities.TryGetValue(target.EntityId,out var vehicleArmy))
+            sightPosition+=groundVehicleWeapons!.For(vehicleArmy.UnitId).ShotTarget;
         if(target.Kind=="player")
         {
             // TurretSeesEnemy checks GetShotTargets(AllIn)[0], independently

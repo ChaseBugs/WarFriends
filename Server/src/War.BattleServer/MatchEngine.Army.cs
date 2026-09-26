@@ -964,6 +964,7 @@ public sealed partial class MatchEngine
                 throw new InvalidDataException("Ground vehicle route lost its host entity.");
             if(army.UnitId=="ID_UNIT-BUGGY"&&!PassengerActive(key,"driver"))continue;
             Vector3 before=motion.Position;motion.AdvanceTick();
+            groundVehicleVelocities[key]=(motion.Position-before)*MatchManifest.TickRate;
             float speed=ArmySpeed(key)??armyCatalog!.EffectiveSpeed(army.UnitId,1f);
             if(!vehicles.TryMove(key,motion.Position,speed))
                 throw new InvalidDataException("Ground vehicle route move failed.");
@@ -1916,6 +1917,7 @@ public sealed partial class MatchEngine
         minigunnerPointChangeTicks.Remove(entityKey);
         vehicleRouteMotions.Remove(entityKey);
         groundVehicleFacing.Remove(entityKey);
+        groundVehicleVelocities.Remove(entityKey);
         groundVehicleShotSpeed.Remove(entityKey);
         transporterShotStats.Remove(entityKey);
         buggyCannonAttacks.Remove(entityKey);

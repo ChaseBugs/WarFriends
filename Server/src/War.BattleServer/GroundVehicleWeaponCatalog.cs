@@ -35,7 +35,8 @@ public sealed record RepairDronePrefabBinding(string Prefab,string Sha256,int Co
     Vector3 ColliderSize,bool ColliderTrigger);
 public sealed record GroundVehicleWeaponRig(string UnitId,string Prefab,string Sha256,string BehaviorType,
     IReadOnlyList<GroundVehicleTurret> Roles,IReadOnlyList<GroundVehiclePassengerBinding> Passengers,
-    IReadOnlyList<GroundVehicleBodyPart> BodyParts,IReadOnlyList<RepairDronePath> RepairDronePaths);
+    IReadOnlyList<GroundVehicleBodyPart> BodyParts,IReadOnlyList<RepairDronePath> RepairDronePaths,
+    Vector3 ShotTarget);
 
 /// <summary>Immutable turret and muzzle evidence extracted from the four 1.4.0 ground-vehicle prefabs.</summary>
 public sealed class GroundVehicleWeaponCatalog
@@ -47,7 +48,10 @@ public sealed class GroundVehicleWeaponCatalog
     private sealed class VehicleDto {public string UnitId{get;set;}="";public string Prefab{get;set;}="";
         public string Sha256{get;set;}="";public string BehaviorType{get;set;}="";public TurretDto[] Roles{get;set;}=[];
         public PassengerDto[] Passengers{get;set;}=[];public BodyPartDto[] BodyParts{get;set;}=[];
+        public ShotTargetDto[] ShotTargets{get;set;}=[];
         public RepairDronePathDto[] RepairDronePaths{get;set;}=[];}
+    private sealed class ShotTargetDto {public int ComponentFileId{get;set;}public int TransformFileId{get;set;}
+        public int Type{get;set;}public float[] Position{get;set;}=[];}
     private sealed class RepairDronePrefabDto {public string Prefab{get;set;}="";public string Sha256{get;set;}="";
         public int ComponentFileId{get;set;}public int SteeringComponentFileId{get;set;}
         public float BreakDistance{get;set;}public float BreakSpeed{get;set;}public bool InitialForward{get;set;}
@@ -177,7 +181,7 @@ public sealed class GroundVehicleWeaponCatalog
             {PropertyNameCaseInsensitive=true,UnmappedMemberHandling=JsonUnmappedMemberHandling.Disallow})??
             throw new InvalidDataException("Missing ground vehicle weapon artifact.");}
         catch(JsonException e){throw new InvalidDataException("Malformed ground vehicle weapon artifact.",e);}
-        if(root.Version!=7||root.ArmoredVehicleShotCoefficient!=.33f||
+        if(root.Version!=8||root.ArmoredVehicleShotCoefficient!=.33f||
            !Regex.IsMatch(root.PassengerPoseRevision,@"\A[0-9a-f]{64}\z")||root.Vehicles.Length!=Expected.Length)
             throw new InvalidDataException("Incomplete ground vehicle weapon artifact.");
         var drone=root.RepairDronePrefab;
@@ -343,9 +347,17 @@ public sealed class GroundVehicleWeaponCatalog
                     Vector(dronePath.Position),Rotation(dronePath.Rotation),dronePath.Radius,
                     Array.AsReadOnly(waypoints));
             }
+            var targetIdentity=source.UnitId switch {
+                "ID_UNIT-HUMVEE"=>(11488432,400119,.51933026f),"ID_UNIT-TANK"=>(11464506,473387,.289806f),
+                "ID_UNIT-BUGGY"=>(11410128,464471,.51933026f),"ID_UNIT-TRANSPORTER"=>(11438461,474264,.51933026f),
+                _=>throw new InvalidDataException("Unknown vehicle shot target.")};
+            if(source.ShotTargets==null||source.ShotTargets.Length!=1||source.ShotTargets[0].ComponentFileId!=targetIdentity.Item1||
+               source.ShotTargets[0].TransformFileId!=targetIdentity.Item2||source.ShotTargets[0].Type!=1||
+               Vector(source.ShotTargets[0].Position)!=new Vector3(0,targetIdentity.Item3,0))
+                throw new InvalidDataException("Ground vehicle Body shot target changed.");
             result.Add(source.UnitId,new(source.UnitId,source.Prefab,source.Sha256,source.BehaviorType,
                 Array.AsReadOnly(roles),Array.AsReadOnly(passengers),Array.AsReadOnly(bodyParts),
-                Array.AsReadOnly(repairPaths)));
+                Array.AsReadOnly(repairPaths),Vector(source.ShotTargets[0].Position)));
         }
         if(turretCount!=7||weaponCount!=9||result.Values.Sum(x=>x.BodyParts.Sum(p=>p.Colliders.Count))!=41)
             throw new InvalidDataException("Incomplete ground vehicle weapon graph.");

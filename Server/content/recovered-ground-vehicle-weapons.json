@@ -1,5 +1,5 @@
 {
-  "version": 7,
+  "version": 8,
   "armoredVehicleShotCoefficient": 0.33,
   "passengerPoseRevision": "37bc1d8c256a21767a01d1d1016caa93c785b719bbc6c0d73eed58f70926a343",
   "repairDronePrefab": {
@@ -469,7 +469,19 @@
           ]
         }
       ],
-      "repairDronePaths": []
+      "repairDronePaths": [],
+      "shotTargets": [
+        {
+          "componentFileId": 11488432,
+          "transformFileId": 400119,
+          "type": 1,
+          "position": [
+            0.0,
+            0.51933026,
+            0.0
+          ]
+        }
+      ]
     },
     {
       "unitId": "ID_UNIT-TANK",
@@ -1092,7 +1104,19 @@
           ]
         }
       ],
-      "repairDronePaths": []
+      "repairDronePaths": [],
+      "shotTargets": [
+        {
+          "componentFileId": 11464506,
+          "transformFileId": 473387,
+          "type": 1,
+          "position": [
+            0.0,
+            0.289806,
+            0.0
+          ]
+        }
+      ]
     },
     {
       "unitId": "ID_UNIT-BUGGY",
@@ -1628,7 +1652,19 @@
           ]
         }
       ],
-      "repairDronePaths": []
+      "repairDronePaths": [],
+      "shotTargets": [
+        {
+          "componentFileId": 11410128,
+          "transformFileId": 464471,
+          "type": 1,
+          "position": [
+            0.0,
+            0.51933026,
+            0.0
+          ]
+        }
+      ]
     },
     {
       "unitId": "ID_UNIT-TRANSPORTER",
@@ -2338,6 +2374,18 @@
               ],
               "stayTime": 0.0
             }
+          ]
+        }
+      ],
+      "shotTargets": [
+        {
+          "componentFileId": 11438461,
+          "transformFileId": 474264,
+          "type": 1,
+          "position": [
+            0.0,
+            0.51933026,
+            0.0
           ]
         }
       ]
