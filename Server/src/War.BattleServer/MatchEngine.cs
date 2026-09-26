@@ -51,6 +51,7 @@ public sealed partial class MatchEngine
     private readonly ArmySpawnReservationLedger? armyReservations;
     private readonly ArmyDeploymentCatalog? armyCatalog;
     private readonly ArmyWeaponBindingCatalog? armyWeapons;
+    private readonly GroundVehicleWeaponCatalog? groundVehicleWeapons;
     private readonly Dictionary<ulong,BattleArmyEntityState> activeArmyEntities=[];
     // Air entities use the same single-writer tick as the rest of the match.  The
     // registry is deliberately kept separate from infantry state until the
@@ -639,6 +640,7 @@ public sealed partial class MatchEngine
             if(map==null || content==null)throw new InvalidDataException("Army authority needs the pinned scene.");
             armyCatalog=content.Army;
             armyWeapons=content.ArmyWeapons;
+            groundVehicleWeapons=content.GroundVehicleWeapons;
             armySelector=new ArmySpawnPointSelector(content.ArmySpawnPoints);
             armyRusherPoints=content.ArmyRusherPoints;
             armyMinigunnerPoints=content.ArmyMinigunnerPoints;

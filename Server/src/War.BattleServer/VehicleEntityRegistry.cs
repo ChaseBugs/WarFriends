@@ -83,10 +83,11 @@ public sealed class VehicleEntityRegistry
         if (removed) { attacks.Remove(entityId); health.Remove(entityId); parts.Remove(entityId); }
         return removed;
     }
-    public bool TryBindAttack(ulong entityId, ArmyVehicleShotStats definition, Func<float>? random = null)
+    public bool TryBindAttack(ulong entityId, ArmyVehicleShotStats definition,
+        float cadenceSeconds=1f/MatchManifest.TickRate,Func<float>? random = null)
     {
         if (!entities.ContainsKey(entityId) || attacks.ContainsKey(entityId)) return false;
-        attacks.Add(entityId, new VehicleAttackState(definition, random));
+        attacks.Add(entityId, new VehicleAttackState(definition,cadenceSeconds,random));
         return true;
     }
     public bool TryBeginAttack(ulong entityId, bool eligible, int windupTicks) =>

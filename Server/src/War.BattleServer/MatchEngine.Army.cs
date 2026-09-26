@@ -187,8 +187,10 @@ public sealed partial class MatchEngine
         float speed=ArmySpeed(entityKey)??armyCatalog!.EffectiveSpeed(army.UnitId,1f);
         var entity=new VehicleEntity(entityKey,army.UnitId,army.OwnerPlayerId,1)
             {Position=new(army.X,army.Y,army.Z)};
+        var primary=groundVehicleWeapons?.For(army.UnitId).Roles.Single(r=>r.Role=="primary")??
+            throw new InvalidDataException("Ground vehicle lacks its pinned primary turret.");
         if(!vehicles.TrySpawn(entity) || !armyVehicleShots.TryGetValue(entityKey,out var vehicleShot) ||
-           !vehicles.TryBindAttack(entityKey,vehicleShot) ||
+           !vehicles.TryBindAttack(entityKey,vehicleShot,primary.Weapons[0].Cadence) ||
            armyVitality.TryGetValue(entityKey,out var vitality)&&
                !vehicles.TryBindHealth(entityKey,vitality.Maximum))
             throw new InvalidDataException("Ground vehicle registry initialization failed.");
