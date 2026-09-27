@@ -203,6 +203,14 @@ public sealed partial class MatchEngine
         var shooter=Find(shooterId)??throw new InvalidDataException("Dynamic collision shooter disappeared.");
         var result=new List<DynamicShotTarget>(DecoyShotTargets(shooter));
         result.AddRange(HeavyTurretShotTargets(shooter));
+        foreach(var row in activeArmyEntities.Values.Where(r=>r.UnitId=="ID_UNIT-DRONE"&&r.OwnerFraction!=shooter.Definition.Fraction))
+        {
+            var q=row.DroneRotation??throw new InvalidDataException("Drone collision lost its host rotation.");
+            foreach(var collider in (droneColliders??throw new InvalidDataException("Drone collider catalog missing."))
+                .Place(new(row.X,row.Y,row.Z),new(q.X,q.Y,q.Z,q.W)))
+                result.Add(new(row.EntityKey,collider.ComponentFileId,
+                    collider.RootOwned?(row.OwnerFraction==1?27:26):collider.SerializedLayer,collider.Hitbox));
+        }
         if(vehicles!=null&&groundVehicleWeapons!=null)
         foreach(var vehicle in vehicles.Snapshot())
         {
@@ -270,6 +278,19 @@ public sealed partial class MatchEngine
             shooter.ConfirmedEnemyHits=checked(shooter.ConfirmedEnemyHits+1);
     }
 
+    internal void ApplyArmyBodyProjectileImpact(string shooterId,ulong entityId,int partId,float rawDamage)
+    {
+        if(!activeArmyEntities.TryGetValue(entityId,out var row)||row.UnitId!="ID_UNIT-DRONE")
+        {ApplyGroundVehicleProjectileImpact(shooterId,entityId,partId,rawDamage);return;}
+        var shooter=Find(shooterId)??throw new InvalidDataException("Drone impact shooter disappeared.");
+        if(row.OwnerFraction==shooter.Definition.Fraction||!float.IsFinite(rawDamage)||rawDamage<=0||rawDamage>10_000_000||
+            partId is not (6544804 or 13511718))throw new InvalidDataException("Invalid Drone projectile impact.");
+        // Ammo.DoDamage calls GetComponent on the exact hit GameObject, never its parent.
+        // Child sphere has no DestroyableObject; root shotCoeficient is source value 1.
+        if(partId==13511718)return;
+        if(ApplyArmyHostDamage(entityId,rawDamage))
+            shooter.ConfirmedEnemyHits=checked(shooter.ConfirmedEnemyHits+1);
+    }
     internal void ApplyGroundVehicleProjectileImpact(string shooterId,ulong vehicleId,int partId,float rawDamage)
     {
         if(vehicles==null||groundVehicleWeapons==null||!vehicles.TryGet(vehicleId,out var vehicle)||vehicle==null||

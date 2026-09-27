@@ -2657,6 +2657,14 @@ internal static class CombatContentTests
         deployedDroneMatch.Advance(61);
         var deployedDrone=deployedDroneMatch.ArmyEntityBatch(decoyPlayer,0,0).Entities.Single();
         float droneHealth=deployedDroneMatch.ArmyHealth(deployedDrone.EntityKey)!.Value;
+        var droneCollisionTargets=deployedDroneMatch.GroundVehicleShotTargets(decoyOpponent).Where(r=>r.EntityId==deployedDrone.EntityKey).ToArray();
+        Check(droneCollisionTargets.Length==2&&droneCollisionTargets.Any(r=>r.PartComponentFileId==6544804&&r.Layer==27)&&droneCollisionTargets.Any(r=>r.PartComponentFileId==13511718&&r.Layer==8),"normal Drone projectile targets retain root flying and child layers");
+        deployedDroneMatch.ApplyArmyBodyProjectileImpact(decoyOpponent,deployedDrone.EntityKey,13511718,10);
+        Check(deployedDroneMatch.ArmyHealth(deployedDrone.EntityKey)==droneHealth,"child sphere impact cannot promote parent health damage");
+        deployedDroneMatch.ApplyArmyBodyProjectileImpact(decoyOpponent,deployedDrone.EntityKey,6544804,10);
+        Check(deployedDroneMatch.ArmyHealth(deployedDrone.EntityKey)==droneHealth-10,"Drone root projectile impact uses source coefficient one");
+        droneHealth-=10;
+
         var droneSightPosition=new Vector3(deployedDrone.X,deployedDrone.Y,deployedDrone.Z);
         Check(!deployedDroneMatch.DroneCanSee(droneSightPosition-Vector3.UnitX-Vector3.UnitY*.5f,droneSightPosition+Vector3.UnitX),"live deployed Drone collider blocks source sight ray");
         for(ulong t=62;t<=211;t++)deployedDroneMatch.Advance(t);

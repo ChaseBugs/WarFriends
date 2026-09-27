@@ -288,7 +288,7 @@ public sealed partial class MatchEngine
             else if(impact.Hit is {DynamicRepairDronePathIndex:int path,DynamicEntityId:ulong repairVehicleId})
                 ApplyTransporterRepairDroneProjectileImpact(impact.OwnerId,repairVehicleId,path,pair.Value.Damage,impact.Hit.PartWeight);
             else if(impact.Hit is {DynamicPartId:int part,DynamicEntityId:ulong bodyId})
-                ApplyGroundVehicleProjectileImpact(impact.OwnerId,bodyId,part,pair.Value.Damage);
+                ApplyArmyBodyProjectileImpact(impact.OwnerId,bodyId,part,pair.Value.Damage);
         }
     }
     internal void ApplyHeavyTurretEnvironmentImpact(BulletImpact impact,float damage)

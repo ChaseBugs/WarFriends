@@ -1244,7 +1244,7 @@ public sealed partial class MatchEngine
                         ApplyArmyProjectileImpact(impact.OwnerId,vehicleId,pair.Value.Damage.Amount,
                             impact.Hit.PartWeight);
                     else if(impact.Hit.DynamicPartId is int partId)
-                        ApplyGroundVehicleProjectileImpact(impact.OwnerId,vehicleId,partId,pair.Value.Damage.Amount);
+                        ApplyArmyBodyProjectileImpact(impact.OwnerId,vehicleId,partId,pair.Value.Damage.Amount);
                     else throw new InvalidDataException("Dynamic collision omitted its source target.");
                 }
                 catch(InvalidDataException){End("invalid-dynamic-impact-authority","",false);break;}
