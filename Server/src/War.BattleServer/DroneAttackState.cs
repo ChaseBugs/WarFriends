@@ -50,7 +50,7 @@ public sealed class DroneAttackState
                     stats.FireBatchSizeMax:stats.FireBatchSizeMax-1))throw new InvalidDataException("Drone batch size escaped source range.");
                 var predicted=DroneShotTargetPolicy.Predict(weaponCatalog.Muzzle(position,rotation),selected.Position,
                     details.IsPlayer?Vector3.Zero:details.Velocity,projectile.Speed(stats.ShotSpeed,details.IsPlayer,false),1);
-                Weapon.Replace(predicted,size,stats.ProbabilityOfRealShot);
+                Weapon.Replace(predicted,size,stats.ProbabilityOfRealShot,selected.Type==2);
             }
         }
         // No target does not cancel an existing BatchedWeapon batch in the source.

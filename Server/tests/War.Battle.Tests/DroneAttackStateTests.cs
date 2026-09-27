@@ -33,6 +33,20 @@ internal static class DroneAttackStateTests
         Check(player.PlayerTarget&&playerDraws.Count==0&&
             player.Weapon.Advance(2.1f,Vector3.Zero,Quaternion.Identity)!.Batch.Target==playerTarget.Position+Vector3.UnitY,
             "player preparation consumes shield draw first and forces zero prediction velocity");
+        var shieldDraws=new Queue<float>([0,.1f,.9f,.5f,0,0]);
+        var shield=new DroneAttackState(0,content.Army.ComposeDroneShot(0,null,null),content.DroneWeapon,
+            content.DroneProjectile,()=>shieldDraws.Dequeue(),(minimum,maximum)=>minimum);
+        shield.Prepare(2.1f,true,1,Vector3.Zero,Quaternion.Identity,[playerTarget],_=>true,
+            r=>new([new(1,2,r.Position),new(2,1,r.Position+Vector3.UnitY)],true,r.Position,-Vector3.UnitZ,true,Vector3.Zero,0));
+        var shieldShot=shield.Weapon.Advance(2.1f,Vector3.Zero,Quaternion.Identity)!;
+        Check(shieldShot.IsShield&&!shieldShot.Batch.IsFake,"exact Shield target preserves real ammunition type");
+        var fakeShield=shield.Weapon.Advance(2.3f,Vector3.Zero,Quaternion.Identity)!;
+        Check(fakeShield.IsShield&&fakeShield.Batch.IsFake&&shieldDraws.Count==0,
+            "fake presentation flag does not erase stored Shield ammunition type");
+        shieldDraws.Enqueue(0);
+        shield.Weapon.Replace(Vector3.UnitZ,1,1);
+        Check(!shield.Weapon.Advance(2.5f,Vector3.Zero,Quaternion.Identity)!.IsShield,
+            "replacement body batch clears prior Shield ammunition type");
         return count;
     }
 }
