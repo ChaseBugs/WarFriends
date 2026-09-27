@@ -50,6 +50,18 @@ internal static class DroneDeathContactTests
             var callbacks=row.GetProperty("collisionCallbacks");
             if(callbacks.GetArrayLength()==0)throw new Exception("Missing Drone collision callback oracle.");
             var first=callbacks[0];int frame=first.GetProperty("frame").GetInt32();
+            var freePosition=Vec(row.GetProperty("frames")[0].GetProperty("position"));
+            var freeVelocity=Vector3.Zero;
+            for(int freeFrame=0;freeFrame<frame;freeFrame++)
+            {
+                var observed=row.GetProperty("frames")[freeFrame];
+                if(Vector3.Distance(freePosition,Vec(observed.GetProperty("position")))>.0001f||
+                   Vector3.Distance(freeVelocity,Vec(observed.GetProperty("velocity")))>.00001f)
+                    throw new Exception("Drone pre-contact free fall differs in "+map.Source+
+                        " fraction "+row.GetProperty("fraction")+" frame "+freeFrame);
+                count++;
+                (freePosition,freeVelocity)=DroneFreeFall.Step(freePosition,freeVelocity);
+            }
             var root=Vec(first.GetProperty("rootPosition"));
             if(frame<1||frame>150||Vector3.Distance(root,Vec(row.GetProperty("frames")[frame].GetProperty("position")))>.0001f)
                 throw new Exception("Drone callback root does not match physics publication.");
