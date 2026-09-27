@@ -48,7 +48,8 @@ public sealed partial class MatchEngine
     {
         foreach(var (key,path) in armyDronePaths.OrderBy(x=>x.Key))
         {
-            path.Advance((float)((double)tick/MatchManifest.TickRate),1f/MatchManifest.TickRate);
+            path.Advance((float)((double)tick/MatchManifest.TickRate),1f/MatchManifest.TickRate,
+                lookTarget:DroneLookTarget(key));
             var row=activeArmyEntities[key];row.X=path.Position.X;row.Y=path.Position.Y;row.Z=path.Position.Z;
             row.PositionTick=tick;
             var q=path.Rotation;

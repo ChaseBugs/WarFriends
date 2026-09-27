@@ -2755,6 +2755,9 @@ internal static class CombatContentTests
             "live host observation resolves source registry and advances attack deadline");
         Check(observedDroneIntent is {Speed:>0,Damage:>0,CheckDistance:1},
             "live Drone intent uses trusted composed projectile authority");
+        Check(deployedDroneMatch.DroneLookTarget(deployedDrone.EntityKey)==
+            deployedDroneMatch.DroneTargetSnapshot().Single(r=>r.Id=="player:"+decoyOpponent).Position,
+            "host Drone steering tracks selected player root instead of predicted shot point");
         var dronePlayerPolicy=content.Army.PlayerDamagePolicy("ID_UNIT-DRONE");
         Check(observedDroneIntent!.PlayerDamageCoefficient==dronePlayerPolicy.PlayerDamageRatio&&
             observedDroneIntent.PlayerOvertimeDamageCoefficient==dronePlayerPolicy.OvertimePlayerDamageRatio,
@@ -2779,7 +2782,7 @@ internal static class CombatContentTests
         deployedDroneMatch.Advance(257);
         Check(deployedDroneMatch.ArmyEntityBatch(decoyPlayer,0,0).Entities.Count==0,
             "deployed Drone death releases route traversal before subsequent motion tick");
-        var droneShotManifest=deployedDroneManifest with {MatchId="player-projectile-drone",DurationSeconds=120,
+        var droneShotManifest=deployedDroneManifest with {MatchId="player-projectile-drone",DurationSeconds=180,
             Players=[deployedDroneManifest.Players[0] with {ArmySpecialUpgradeIndexes=[-1]},deployedDroneManifest.Players[1]]};
         var droneShotMatch=new MatchEngine(droneShotManifest,content:content,armyChoice:_=>0);
         droneShotMatch.Admit(decoyPlayer);droneShotMatch.Admit(decoyOpponent);
@@ -2790,7 +2793,8 @@ internal static class CombatContentTests
         droneShotMatch.Advance(61);var shotDrone=droneShotMatch.ArmyEntityBatch(decoyPlayer,0,0).Entities.Single();
         float initialShotHealth=shotDrone.Health;bool playerShotDamagedDrone=false;ulong droneFireCommand=2;
         bool droneProjectileLaunched=false,droneProjectileDrained=false;
-        for(ulong shotTick=62;shotTick<3300&&!droneShotMatch.Terminal;shotTick++)
+        ulong droneEventCursor=0;bool droneProjectileImpactSeen=false;
+        for(ulong shotTick=62;shotTick<5000&&!droneShotMatch.Terminal;shotTick++)
         {
             if(shotTick%12==0)
             {
@@ -2799,9 +2803,25 @@ internal static class CombatContentTests
                 var q=currentDrone.DroneRotation;
                 var corner=Vector3.Transform(new Vector3(.34f,.05f,.34f),new Quaternion(q.X,q.Y,q.Z,q.W));
                 var aim=new Vector3(currentDrone.X,currentDrone.Y,currentDrone.Z)+corner;
+                var targetVelocity=droneShotMatch.ResolveDroneShotTarget(droneShotMatch.DroneTargetSnapshot()
+                    .Single(r=>r.Id=="army:"+shotDrone.EntityKey)).Velocity;
+                var shooterPose=droneShotMatch.Snapshot().Players.Single(p=>p.PlayerId==decoyOpponent);
+                aim+=targetVelocity*(Vector3.Distance(new(shooterPose.PositionX,shooterPose.PositionY,shooterPose.PositionZ),aim)/
+                    content.Bindings.Get(droneShotManifest.Players[1].Weapon.SourceId).Speed+.1f);
                 droneShotMatch.Command(decoyOpponent,new(){CommandId=droneFireCommand++,Fire=new(){TargetX=aim.X,TargetY=aim.Y,TargetZ=aim.Z}});
             }
             droneShotMatch.Advance(shotTick);
+            if(shotTick%30==0)
+            {
+                while(true)
+                {
+                    var batch=droneShotMatch.EventBatch(decoyPlayer,droneEventCursor);
+                    if(batch.Events.Count==0)break;
+                    droneProjectileImpactSeen|=batch.Events.Any(e=>e.Kind==MatchEventKind.Impact&&e.Reason=="drone");
+                    droneEventCursor=batch.Events.Last().EventId;
+                }
+                droneShotMatch.EventBatch(decoyOpponent,droneEventCursor);
+            }
             if(!droneProjectileLaunched&&shotTick>122&&shotTick<600&&droneShotMatch.ArmyHealth(shotDrone.EntityKey)!=null)
                 droneProjectileLaunched=droneShotMatch.LaunchObservedDroneProjectile(shotDrone.EntityKey)!=null;
             if(droneProjectileLaunched&&droneShotMatch.PendingDroneProjectiles==0)droneProjectileDrained=true;
@@ -2812,7 +2832,6 @@ internal static class CombatContentTests
             "normal player Fire command advances projectile collision into deployed Drone root damage");
         Check(droneProjectileLaunched&&droneProjectileDrained,
             "deployed Drone host observation launches source flight and retires it through tick traversal");
-        ulong droneEventCursor=0;bool droneProjectileImpactSeen=false;
         while(droneEventCursor<droneShotMatch.EventBatch(decoyPlayer,droneEventCursor).LatestEventId)
         {
             var droneEvents=droneShotMatch.EventBatch(decoyPlayer,droneEventCursor);

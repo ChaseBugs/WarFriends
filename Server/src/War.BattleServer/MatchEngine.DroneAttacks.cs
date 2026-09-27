@@ -12,6 +12,11 @@ public sealed partial class MatchEngine
     internal sealed record DroneHostImpact(ulong ArmyId,DroneProjectileIntent Intent,BulletImpact Impact);
     private readonly Dictionary<ulong,DroneHostProjectile> droneProjectiles=[];
     internal int PendingDroneProjectiles=>droneProjectiles.Count;
+    internal Vector3? DroneLookTarget(ulong key)
+    {
+        string? id=droneAttacks.GetValueOrDefault(key)?.TargetId;
+        return id==null?null:DroneTargetSnapshot().FirstOrDefault(row=>row.Id==id)?.Position;
+    }
     internal ulong? LaunchObservedDroneProjectile(ulong key)
     {
         var intent=ObserveDroneAttack(key);
