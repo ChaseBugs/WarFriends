@@ -1,0 +1,591 @@
+{
+  "version": 1,
+  "unityVersion": "2018.3.0f2",
+  "scenario": "fresh-body-at-persistent-frame42",
+  "source": "Assets/Scenes/Snow_Multiplayer.unity",
+  "sourceSha256": "67291457da28646c9ce377f3812d1bf0fa5332bfe664f58a4430a823744e6f21",
+  "prefabSource": "Assets/GameObject/dronePrototype.prefab",
+  "prefabSha256": "c2afc19487462e6163ad107267ef1b35c9c86fb34fa80898135b1d25f4a872a3",
+  "fixedTimestep": 0.02,
+  "before": {
+    "frame": 42,
+    "position": [
+      1.82234657,
+      0.495608032,
+      -2.61560345
+    ],
+    "velocity": [
+      -0.291119069,
+      0.0609415174,
+      0.4034956
+    ],
+    "rotation": [
+      0.4250028,
+      0.3335629,
+      0.2586378,
+      0.800759
+    ],
+    "angularVelocity": [
+      0.6932681,
+      -0.200860843,
+      0.677778065
+    ],
+    "sphereMapOverlap": false,
+    "sphereCenter": [
+      1.82234657,
+      0.495608032,
+      -2.61560345
+    ],
+    "sphereRadius": 0.4300001,
+    "sphereMask": "6cd421cd",
+    "boxMapOverlap": true,
+    "boxCenter": [
+      1.83406639,
+      0.5064725,
+      -2.56651521
+    ],
+    "boxSize": [
+      0.773414731,
+      0.178587183,
+      0.76962024
+    ],
+    "boxMask": "69cc21cd"
+  },
+  "originalAfter": {
+    "frame": 45,
+    "position": [
+      1.80333257,
+      0.5016368,
+      -2.6019578
+    ],
+    "velocity": [
+      -0.332987875,
+      0.03251171,
+      0.164808
+    ],
+    "rotation": [
+      0.424724221,
+      0.3352669,
+      0.2831252,
+      0.7918622
+    ],
+    "angularVelocity": [
+      0.366077453,
+      -0.205394119,
+      0.7635679
+    ],
+    "sphereMapOverlap": false,
+    "sphereCenter": [
+      1.80333257,
+      0.5016368,
+      -2.6019578
+    ],
+    "sphereRadius": 0.430000067,
+    "sphereMask": "6cd421cd",
+    "boxMapOverlap": true,
+    "boxCenter": [
+      1.81396616,
+      0.511896849,
+      -2.55249357
+    ],
+    "boxSize": [
+      0.7734146,
+      0.178587168,
+      0.7696202
+    ],
+    "boxMask": "69cc21cd"
+  },
+  "freshAfter": {
+    "position": [
+      1.80327845,
+      0.5020932,
+      -2.602285
+    ],
+    "velocity": [
+      -0.3325626,
+      0.0291100517,
+      0.166757733
+    ],
+    "angularVelocity": [
+      0.3648702,
+      -0.2066233,
+      0.7615343
+    ],
+    "rotation": [
+      0.425061017,
+      0.3352352,
+      0.283265233,
+      0.7916447
+    ]
+  },
+  "restartFrames": [
+    {
+      "frame": 42,
+      "position": [
+        1.82234657,
+        0.495608032,
+        -2.61560345
+      ],
+      "velocity": [
+        -0.291119069,
+        0.0609415174,
+        0.4034956
+      ],
+      "angularVelocity": [
+        0.6932681,
+        -0.200860843,
+        0.677778065
+      ],
+      "rotation": [
+        0.4250029,
+        0.333563,
+        0.258637875,
+        0.800759
+      ]
+    },
+    {
+      "frame": 43,
+      "position": [
+        1.81624055,
+        0.498646557,
+        -2.60968542
+      ],
+      "velocity": [
+        -0.307752758,
+        0.0968364,
+        0.295262039
+      ],
+      "angularVelocity": [
+        0.607913852,
+        -0.194017336,
+        0.7140342
+      ],
+      "rotation": [
+        0.425258964,
+        0.333986133,
+        0.266802043,
+        0.7977623
+      ]
+    },
+    {
+      "frame": 44,
+      "position": [
+        1.80984807,
+        0.500831664,
+        -2.60556078
+      ],
+      "velocity": [
+        -0.321915865,
+        0.08312454,
+        0.21882239
+      ],
+      "angularVelocity": [
+        0.492418,
+        -0.197706491,
+        0.7397144
+      ],
+      "rotation": [
+        0.4261656,
+        0.334281385,
+        0.275223255,
+        0.7942866
+      ]
+    },
+    {
+      "frame": 45,
+      "position": [
+        1.80327845,
+        0.5020932,
+        -2.602285
+      ],
+      "velocity": [
+        -0.3325626,
+        0.0291100517,
+        0.166757733
+      ],
+      "angularVelocity": [
+        0.3648702,
+        -0.2066233,
+        0.7615343
+      ],
+      "rotation": [
+        0.425061017,
+        0.3352352,
+        0.283265233,
+        0.7916447
+      ]
+    }
+  ],
+  "collisionCallbacks": [
+    {
+      "frame": 43,
+      "callbackKind": "enter",
+      "other": "LevelRoot/snow_map/metal",
+      "layer": 13,
+      "impulse": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "relativeVelocity": [
+        0.291119069,
+        -0.0609415174,
+        -0.4034956
+      ],
+      "rootPosition": [
+        1.81624055,
+        0.498646557,
+        -2.60968542
+      ],
+      "rootRotation": [
+        0.425258964,
+        0.333986133,
+        0.266802043,
+        0.7977623
+      ],
+      "contacts": [
+        {
+          "position": [
+            1.89816272,
+            0.248974413,
+            -2.959586
+          ],
+          "normal": [
+            -0.176316679,
+            0.573566437,
+            0.7999588
+          ],
+          "separation": 0.0159254372,
+          "bodyColliderType": "SphereCollider",
+          "bodyCollider": "dronePrototype/AimTargerAndEngine",
+          "bodyMaterial": {
+            "staticFriction": 0.6,
+            "dynamicFriction": 0.6,
+            "restitution": 0.0,
+            "frictionCombine": 0,
+            "restitutionCombine": 0
+          },
+          "otherMaterial": {
+            "staticFriction": 0.6,
+            "dynamicFriction": 0.6,
+            "restitution": 0.0,
+            "frictionCombine": 0,
+            "restitutionCombine": 0
+          },
+          "otherBody": {
+            "present": false,
+            "isKinematic": true,
+            "velocity": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "angularVelocity": [
+              0.0,
+              0.0,
+              0.0
+            ]
+          },
+          "otherColliderIndex": 63,
+          "otherColliderType": "MeshCollider"
+        }
+      ]
+    },
+    {
+      "frame": 43,
+      "callbackKind": "enter",
+      "other": "LevelRoot/snow_map/terrain_snow1",
+      "layer": 13,
+      "impulse": [
+        -0.00728918239,
+        0.2332535,
+        -0.008639027
+      ],
+      "relativeVelocity": [
+        0.291119069,
+        -0.0609415174,
+        -0.4034956
+      ],
+      "rootPosition": [
+        1.81624055,
+        0.498646557,
+        -2.60968542
+      ],
+      "rootRotation": [
+        0.425258964,
+        0.333986133,
+        0.266802043,
+        0.7977623
+      ],
+      "contacts": [
+        {
+          "position": [
+            1.88679957,
+            0.001983136,
+            -2.3611908
+          ],
+          "normal": [
+            -0.0312134214,
+            0.998828,
+            -0.0369936675
+          ],
+          "separation": -0.00595384836,
+          "bodyColliderType": "BoxCollider",
+          "bodyCollider": "dronePrototype",
+          "bodyMaterial": {
+            "staticFriction": 0.6,
+            "dynamicFriction": 0.6,
+            "restitution": 0.0,
+            "frictionCombine": 0,
+            "restitutionCombine": 0
+          },
+          "otherMaterial": {
+            "staticFriction": 0.6,
+            "dynamicFriction": 0.6,
+            "restitution": 0.0,
+            "frictionCombine": 0,
+            "restitutionCombine": 0
+          },
+          "otherBody": {
+            "present": false,
+            "isKinematic": true,
+            "velocity": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "angularVelocity": [
+              0.0,
+              0.0,
+              0.0
+            ]
+          },
+          "otherColliderIndex": 118,
+          "otherColliderType": "MeshCollider"
+        }
+      ]
+    },
+    {
+      "frame": 44,
+      "callbackKind": "stay",
+      "other": "LevelRoot/snow_map/metal",
+      "layer": 13,
+      "impulse": [
+        -0.0323598944,
+        0.105268255,
+        0.146818683
+      ],
+      "relativeVelocity": [
+        0.307752758,
+        -0.0968364,
+        -0.295262039
+      ],
+      "rootPosition": [
+        1.80984807,
+        0.500831664,
+        -2.60556078
+      ],
+      "rootRotation": [
+        0.4261656,
+        0.334281385,
+        0.275223255,
+        0.7942866
+      ],
+      "contacts": [
+        {
+          "position": [
+            1.8920567,
+            0.252012938,
+            -2.95366788
+          ],
+          "normal": [
+            -0.176316679,
+            0.573566437,
+            0.7999588
+          ],
+          "separation": 0.0234789848,
+          "bodyColliderType": "SphereCollider",
+          "bodyCollider": "dronePrototype/AimTargerAndEngine",
+          "bodyMaterial": {
+            "staticFriction": 0.6,
+            "dynamicFriction": 0.6,
+            "restitution": 0.0,
+            "frictionCombine": 0,
+            "restitutionCombine": 0
+          },
+          "otherMaterial": {
+            "staticFriction": 0.6,
+            "dynamicFriction": 0.6,
+            "restitution": 0.0,
+            "frictionCombine": 0,
+            "restitutionCombine": 0
+          },
+          "otherBody": {
+            "present": false,
+            "isKinematic": true,
+            "velocity": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "angularVelocity": [
+              0.0,
+              0.0,
+              0.0
+            ]
+          },
+          "otherColliderIndex": 63,
+          "otherColliderType": "MeshCollider"
+        }
+      ]
+    },
+    {
+      "frame": 44,
+      "callbackKind": "stay",
+      "other": "LevelRoot/snow_map/terrain_snow1",
+      "layer": 13,
+      "impulse": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "relativeVelocity": [
+        0.307752758,
+        -0.0968364,
+        -0.295262039
+      ],
+      "rootPosition": [
+        1.80984807,
+        0.500831664,
+        -2.60556078
+      ],
+      "rootRotation": [
+        0.4261656,
+        0.334281385,
+        0.275223255,
+        0.7942866
+      ],
+      "contacts": [
+        {
+          "position": [
+            1.88711584,
+            0.00207397342,
+            -2.35901451
+          ],
+          "normal": [
+            -0.0312134083,
+            0.998827934,
+            -0.0369935557
+          ],
+          "separation": -0.004068002,
+          "bodyColliderType": "BoxCollider",
+          "bodyCollider": "dronePrototype",
+          "bodyMaterial": {
+            "staticFriction": 0.6,
+            "dynamicFriction": 0.6,
+            "restitution": 0.0,
+            "frictionCombine": 0,
+            "restitutionCombine": 0
+          },
+          "otherMaterial": {
+            "staticFriction": 0.6,
+            "dynamicFriction": 0.6,
+            "restitution": 0.0,
+            "frictionCombine": 0,
+            "restitutionCombine": 0
+          },
+          "otherBody": {
+            "present": false,
+            "isKinematic": true,
+            "velocity": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "angularVelocity": [
+              0.0,
+              0.0,
+              0.0
+            ]
+          },
+          "otherColliderIndex": 118,
+          "otherColliderType": "MeshCollider"
+        }
+      ]
+    },
+    {
+      "frame": 45,
+      "callbackKind": "stay",
+      "other": "LevelRoot/snow_map/terrain_snow1",
+      "layer": 13,
+      "impulse": [
+        -0.00443411246,
+        0.141890943,
+        -0.005255221
+      ],
+      "relativeVelocity": [
+        0.321915865,
+        -0.08312454,
+        -0.21882239
+      ],
+      "rootPosition": [
+        1.80327845,
+        0.5020932,
+        -2.602285
+      ],
+      "rootRotation": [
+        0.425061017,
+        0.3352352,
+        0.283265233,
+        0.7916447
+      ],
+      "contacts": [
+        {
+          "position": [
+            1.88727379,
+            0.00205990672,
+            -2.35951948
+          ],
+          "normal": [
+            -0.0312135145,
+            0.998827934,
+            -0.03699363
+          ],
+          "separation": -0.00321117043,
+          "bodyColliderType": "BoxCollider",
+          "bodyCollider": "dronePrototype",
+          "bodyMaterial": {
+            "staticFriction": 0.6,
+            "dynamicFriction": 0.6,
+            "restitution": 0.0,
+            "frictionCombine": 0,
+            "restitutionCombine": 0
+          },
+          "otherMaterial": {
+            "staticFriction": 0.6,
+            "dynamicFriction": 0.6,
+            "restitution": 0.0,
+            "frictionCombine": 0,
+            "restitutionCombine": 0
+          },
+          "otherBody": {
+            "present": false,
+            "isKinematic": true,
+            "velocity": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "angularVelocity": [
+              0.0,
+              0.0,
+              0.0
+            ]
+          },
+          "otherColliderIndex": 118,
+          "otherColliderType": "MeshCollider"
+        }
+      ]
+    }
+  ]
+}

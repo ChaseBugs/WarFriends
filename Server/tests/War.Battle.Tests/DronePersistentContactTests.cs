@@ -6,6 +6,7 @@ internal static class DronePersistentContactTests
 {
     internal static int Run(string directory,DroneColliderCatalog geometry)
     {
+        DroneContactHistoryRestartTests.Run(directory,geometry);
         // A rejected batch must not replace friction history from the preceding
         // successful step; a successful empty pair must deliberately clear it.
         var history=new DroneContactSolver(geometry);

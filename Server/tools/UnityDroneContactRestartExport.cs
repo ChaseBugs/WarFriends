@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Collections.Generic;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using UnityEditor;
@@ -18,7 +19,10 @@ public static class UnityDroneContactRestartExport
         var oracle=JObject.Parse(File.ReadAllText(input));
         var row=oracle["rows"].Single(r=>(string)r["source"]=="Assets/Scenes/Snow_Multiplayer.unity"&&
             (int)r["fraction"]==2&&(float)r["initialRotation"][0]>.1f);
-        var before=row["frames"][44];
+        string startText=Environment.GetEnvironmentVariable("WAR_DRONE_RESTART_START");
+        int start=string.IsNullOrEmpty(startText)?44:int.Parse(startText);
+        if(start<0||start>44)throw new InvalidOperationException("Restart frame must precede frame45.");
+        var before=row["frames"][start];
         var previous=EditorSceneManager.GetSceneManagerSetup();bool automatic=Physics.autoSimulation;
         GameObject drone=null;
         try
@@ -30,17 +34,23 @@ public static class UnityDroneContactRestartExport
             drone.transform.position=Vec(before["position"]);
             var q=before["rotation"];drone.transform.rotation=new Quaternion((float)q[0],(float)q[1],(float)q[2],(float)q[3]);
             var body=drone.AddComponent<Rigidbody>();EditorUtility.CopySerialized(prefab.GetComponent<Rigidbody>(),body);
-            var observer=drone.AddComponent<DroneCollisionObserver>();observer.CaptureStay=true;observer.Frame=45;
+            var observer=drone.AddComponent<DroneCollisionObserver>();observer.CaptureStay=true;
             observer.SourceColliders=scene.GetRootGameObjects().Where(g=>g!=drone)
                 .SelectMany(g=>g.GetComponentsInChildren<Collider>(true)).ToArray();
             body.isKinematic=false;body.velocity=Vec(before["velocity"]);body.angularVelocity=Vec(before["angularVelocity"]);
-            Physics.SyncTransforms();Physics.Simulate(Time.fixedDeltaTime);
+            Physics.SyncTransforms();var restartFrames=new List<object>();
+            for(int frame=start;frame<=45;frame++)
+            {
+                restartFrames.Add(new{frame,position=Array(body.position),velocity=Array(body.velocity),
+                    angularVelocity=Array(body.angularVelocity),rotation=new[]{body.rotation.x,body.rotation.y,body.rotation.z,body.rotation.w}});
+                if(frame<45){observer.Frame=frame+1;Physics.Simulate(Time.fixedDeltaTime);}
+            }
             File.WriteAllText(output,JsonConvert.SerializeObject(new{version=1,unityVersion=Application.unityVersion,
-                scenario="fresh-body-at-persistent-frame44",source=row["source"],sourceSha256=row["sourceSha256"],
+                scenario="fresh-body-at-persistent-frame"+start,source=row["source"],sourceSha256=row["sourceSha256"],
                 prefabSource=oracle["prefabSource"],prefabSha256=oracle["prefabSha256"],fixedTimestep=Time.fixedDeltaTime,
                 before,originalAfter=row["frames"][45],freshAfter=new{position=Array(body.position),velocity=Array(body.velocity),
                     angularVelocity=Array(body.angularVelocity),rotation=new[]{body.rotation.x,body.rotation.y,body.rotation.z,body.rotation.w}},
-                collisionCallbacks=observer.Rows},Formatting.Indented)+"\n");
+                restartFrames,collisionCallbacks=observer.Rows},Formatting.Indented)+"\n");
             Debug.Log("WAR_DRONE_RESTART_EXPORT_PASS");
         }
         finally
