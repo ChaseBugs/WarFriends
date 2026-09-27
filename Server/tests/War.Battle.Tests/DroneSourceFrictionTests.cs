@@ -15,10 +15,21 @@ internal static class DroneSourceFrictionTests
         Quaternion Quat(JsonElement q)=>new(q[0].GetSingle(),q[1].GetSingle(),q[2].GetSingle(),q[3].GetSingle());
         int samples=0;float maximumVelocity=0,maximumAngular=0,maximumPosition=0;
         float observedMassAngular=0,observedImpulseAngular=0,solverAngularContribution=0;string worst="";
+        float multiVelocity=0,multiAngular=0,multiRoot=0;int multiSamples=0;
         foreach(var row in document.RootElement.GetProperty("rows").EnumerateArray())
         {
             var callbacks=row.GetProperty("collisionCallbacks");int frame=callbacks[0].GetProperty("frame").GetInt32();
             var first=callbacks.EnumerateArray().Where(c=>c.GetProperty("frame").GetInt32()==frame).ToArray();
+            var before=row.GetProperty("frames")[frame-1];var after=row.GetProperty("frames")[frame];
+            var pairs=first.SelectMany(call=>call.GetProperty("contacts").EnumerateArray()).GroupBy(c=>
+                (c.GetProperty("bodyCollider").GetString(),c.GetProperty("otherColliderIndex").GetInt32()))
+                .Select(group=>group.Select(c=>new MaterialContact(new DroneNormalPoint(Vec(c.GetProperty("position")),
+                    Vec(c.GetProperty("normal")),c.GetProperty("separation").GetSingle()),new ContactMaterial(.6f,.6f,0))).ToArray()).ToArray();
+            var multi=new DroneContactSolver(geometry).Solve(Vec(before.GetProperty("position")),Quat(before.GetProperty("rotation")),
+                Vec(before.GetProperty("velocity")),Vec(before.GetProperty("angularVelocity")),pairs,.999f,.025f,.04f);
+            multiVelocity=Math.Max(multiVelocity,Vector3.Distance(multi.Velocity,Vec(after.GetProperty("velocity"))));
+            multiAngular=Math.Max(multiAngular,Vector3.Distance(multi.AngularVelocity,Vec(after.GetProperty("angularVelocity"))));
+            multiRoot=Math.Max(multiRoot,Vector3.Distance(multi.Pose.Root,Vec(after.GetProperty("position"))));multiSamples++;
             if(first.Length!=1||first[0].GetProperty("contacts").GetArrayLength()!=1)continue;
             var c=first[0].GetProperty("contacts")[0];var previous=row.GetProperty("frames")[frame-1];
             foreach(var name in new[]{"bodyMaterial","otherMaterial"})
@@ -74,6 +85,8 @@ internal static class DroneSourceFrictionTests
         Console.WriteLine("Drone friction inertia control: measured-mass angular residual="+observedMassAngular+", worst analytic case="+worst);
         Console.WriteLine("Drone angular conservation control: observed-impulse/contact residual="+observedImpulseAngular+
             ", solver-versus-observed impulse angular contribution="+solverAngularContribution);
+        Console.WriteLine("Drone multi-patch initial-contact diagnostic: samples="+multiSamples+", velocity="+multiVelocity+
+            ", angular="+multiAngular+", root="+multiRoot+" (thresholds and callback pair order experimental).");
         return samples*2; // Material evidence and bounded linear/root response; angular remains diagnostic.
     }
 }
