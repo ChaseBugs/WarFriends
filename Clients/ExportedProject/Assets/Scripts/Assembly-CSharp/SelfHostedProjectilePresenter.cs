@@ -28,7 +28,8 @@ public sealed class SelfHostedProjectilePresenter : MonoBehaviour
 		HashSet<ulong> present = new HashSet<ulong>();
 		foreach (BattleProjectileState state in snapshot.Projectiles)
 		{
-			if (state.Kind != "grenade" && state.Kind != "grenade-molotov" && state.Kind != "heavy-turret-bullet") continue;
+			if (state.Kind != "grenade" && state.Kind != "grenade-molotov" && state.Kind != "heavy-turret-bullet" &&
+                state.Kind != "drone-bullet" && state.Kind != "drone-fake-bullet") continue;
 			present.Add(state.ProjectileId);
 			Visual visual;
 			if (!active.TryGetValue(state.ProjectileId, out visual))
@@ -49,9 +50,9 @@ public sealed class SelfHostedProjectilePresenter : MonoBehaviour
 	public void ApplyEvent(MatchEvent item)
 	{
 		if (item == null || item.Kind != MatchEventKind.Impact ||
-			(item.Reason != "grenade" && item.Reason != "grenade-molotov" && item.Reason != "heavy-turret")) return;
+			(item.Reason != "grenade" && item.Reason != "grenade-molotov" && item.Reason != "heavy-turret" && item.Reason != "drone")) return;
 		Remove(item.ProjectileId);
-		if (item.Reason == "heavy-turret") return;
+		if (item.Reason == "heavy-turret" || item.Reason == "drone") return;
 		Explosion.PlayEffects(item.Reason == "grenade-molotov" ? Explosion.ExplosionType.Molotov : Explosion.ExplosionType.Medium,
 			new Vector3(item.X, item.Y, item.Z));
 	}
@@ -70,6 +71,12 @@ public sealed class SelfHostedProjectilePresenter : MonoBehaviour
 				turret.turretWeapon.batchedWeapon.weapon != null && turret.turretWeapon.batchedWeapon.weapon.bulletPrefab != null)
 				bullet = turret.turretWeapon.batchedWeapon.weapon.bulletPrefab.gameObject;
 		}
+        if (kind == "drone-bullet" || kind == "drone-fake-bullet")
+        {
+            Drone drone = Singleton<ObjectPoolDatabase>.instance == null ? null : Singleton<ObjectPoolDatabase>.instance.drone;
+            bullet = drone != null && drone.weapon != null && drone.weapon.weapon != null &&
+                drone.weapon.weapon.bulletPrefab != null ? drone.weapon.weapon.bulletPrefab.gameObject : null;
+        }
 		if (bullet != null) CopyVisual(bullet.transform, root.transform, true);
 		return new Visual(root);
 	}

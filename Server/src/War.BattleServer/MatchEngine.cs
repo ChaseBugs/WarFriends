@@ -1990,6 +1990,16 @@ public sealed partial class MatchEngine
             ProjectileId=x.Key,OwnerPlayerId=x.Value.Flight.OwnerId,Kind="heavy-turret-bullet",
             X=x.Value.Flight.Position.X,Y=x.Value.Flight.Position.Y,Z=x.Value.Flight.Position.Z
         }));
+        snapshot.Projectiles.AddRange(droneProjectiles.OrderBy(x=>x.Key).Select(x=>
+        {
+            var flight=x.Value;var position=flight.Real?.Position??flight.Fake!.Position;
+            var direction=Vector3.Normalize(flight.Intent.Shot.Batch.Target-flight.Intent.Shot.Muzzle);
+            var velocity=direction*flight.Intent.Speed;
+            return new BattleProjectileState {ProjectileId=x.Key,OwnerPlayerId=flight.Owner,
+                Kind=flight.Intent.Shot.Batch.IsFake?"drone-fake-bullet":"drone-bullet",
+                X=position.X,Y=position.Y,Z=position.Z,
+                VelocityX=velocity.X,VelocityY=velocity.Y,VelocityZ=velocity.Z};
+        }));
         snapshot.Decoys.AddRange(decoys.Snapshot().Select(x=>new BattleDecoyState
         {
             EntityId=x.EntityId,RequestId=x.RequestId,OwnerPlayerId=x.OwnerPlayerId,

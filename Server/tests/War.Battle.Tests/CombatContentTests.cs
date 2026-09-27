@@ -2826,7 +2826,12 @@ internal static class CombatContentTests
                 droneShotMatch.EventBatch(decoyOpponent,droneEventCursor);
             }
             if(!droneProjectileLaunched&&shotTick>122&&shotTick<600&&droneShotMatch.ArmyHealth(shotDrone.EntityKey)!=null)
+            {
                 droneProjectileLaunched=droneShotMatch.LaunchObservedDroneProjectile(shotDrone.EntityKey)!=null;
+                if(droneProjectileLaunched)
+                    Check(droneShotMatch.Snapshot().Projectiles.Any(p=>p.Kind=="drone-bullet"&&p.OwnerPlayerId==decoyPlayer),
+                        "live Drone flight projects dedicated host-owned bullet snapshot");
+            }
             if(droneProjectileLaunched&&droneShotMatch.PendingDroneProjectiles==0)droneProjectileDrained=true;
             if(droneShotMatch.ArmyHealth(shotDrone.EntityKey) is not float health||health<initialShotHealth)
             {playerShotDamagedDrone=true;if(droneShotMatch.ArmyHealth(shotDrone.EntityKey)==null)break;}
