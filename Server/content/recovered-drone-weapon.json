@@ -1,0 +1,43 @@
+{
+  "version": 1,
+  "unitId": "ID_UNIT-DRONE",
+  "source": "Assets/GameObject/dronePrototype.prefab",
+  "sha256": "c2afc19487462e6163ad107267ef1b35c9c86fb34fa80898135b1d25f4a872a3",
+  "droneComponentFileId": 11459786,
+  "batchedComponentFileId": 11434916,
+  "weaponComponentFileId": 11433324,
+  "weaponType": "AutomaticRifle",
+  "cadence": 0.17,
+  "fakeShotDispersion": 1.0,
+  "spawnTransformFileId": 484583,
+  "restSpawnPosition": [
+    0.016174316,
+    -0.13520324,
+    -0.07588673
+  ],
+  "restSpawnRotation": [
+    -3.3589187e-09,
+    0.99704325,
+    -0.076843105,
+    -4.3582148e-08
+  ],
+  "restSpawnScale": [
+    0.6888661,
+    0.6888661,
+    0.68886405
+  ],
+  "shotOffset": [
+    0.0,
+    0.0,
+    0.0
+  ],
+  "infiniteAmmo": true,
+  "reloadableWeapon": false,
+  "friendKill": true,
+  "fastBullet": false,
+  "ignoreLayersMask": 0,
+  "projectileFileId": 11409266,
+  "projectileGuid": "855689762fa6e774aaee190652b08c6f",
+  "projectileSource": "Assets/GameObject/BulletSlow.prefab",
+  "projectileSha256": "5379f6aba1560b8eb3d7d386d1349454b97ea133163ade9a313e2bc34d1adfae"
+}
