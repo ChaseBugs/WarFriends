@@ -1,0 +1,38 @@
+using System.Numerics;
+using War.BattleServer;
+internal static class DroneAttackStateTests
+{
+    internal static int Run(BattleCombatContent content)
+    {
+        int count=0;void Check(bool ok,string name){if(!ok)throw new Exception(name);count++;}
+        var draws=new Queue<float>([.2f,.9f,.5f,.5f,0,0]);int ranges=0,resolved=0;
+        var state=new DroneAttackState(0,content.Army.ComposeDroneShot(0,null,null),content.DroneWeapon,
+            content.DroneProjectile,()=>draws.Dequeue(),(minimum,maximum)=>{ranges++;return minimum;});
+        var target=new DroneTargetCandidate("decoy:1",2,true,true,true,null,new(0,0,9));
+        DroneTargetDetails Resolve(DroneTargetCandidate row)
+        {resolved++;return new([new(1,1,row.Position)],false,row.Position,Vector3.Zero,false,Vector3.UnitX,0);}
+        Check(!state.Prepare(2,true,1,Vector3.Zero,Quaternion.Identity,[target],_=>true,Resolve)&&resolved==0&&draws.Count==6,
+            "exact Drone spawn deadline consumes no target or random work");
+        Check(state.Prepare(2.1f,true,1,Vector3.Zero,Quaternion.Identity,[target],_=>true,Resolve)&&
+            state.TargetId==target.Id&&ranges==1&&draws.Count==3&&state.Deadline==5,
+            "source batch masks precede interval draw and deadline advances from prior value");
+        var expected=DroneShotTargetPolicy.Predict(content.DroneWeapon.Muzzle(Vector3.Zero,Quaternion.Identity),target.Position,Vector3.UnitX,9,1);
+        var shot=state.Weapon.Advance(2.1f,Vector3.Zero,Quaternion.Identity)!;
+        Check(!shot.Batch.IsFake&&shot.Batch.Target==expected,"prepared nonplayer batch binds source velocity prediction");
+        Check(state.Prepare(5.1f,true,1,Vector3.Zero,Quaternion.Identity,[],_=>true,Resolve)&&
+            state.TargetId==null&&state.Weapon.Shooting&&draws.Count==2,
+            "no-target attempt still advances deadline without canceling previous batch");
+        Check(state.Weapon.Advance(5.1f,Vector3.Zero,Quaternion.Identity)!.Batch.IsFake&&draws.Count==0,
+            "retained fake round consumes dispersion samples after later interval draw");
+        var playerDraws=new Queue<float>([.8f,.1f,.2f,.5f]);
+        var player=new DroneAttackState(0,content.Army.ComposeDroneShot(0,null,null),content.DroneWeapon,
+            content.DroneProjectile,()=>playerDraws.Dequeue(),(minimum,maximum)=>minimum);
+        var playerTarget=target with {Id="player:1",IsDecoy=false};
+        player.Prepare(2.1f,true,1,Vector3.Zero,Quaternion.Identity,[playerTarget],_=>true,
+            r=>new([new(1,2,r.Position),new(2,1,r.Position+Vector3.UnitY)],true,r.Position,-Vector3.UnitZ,true,Vector3.One,0));
+        Check(player.PlayerTarget&&playerDraws.Count==0&&
+            player.Weapon.Advance(2.1f,Vector3.Zero,Quaternion.Identity)!.Batch.Target==playerTarget.Position+Vector3.UnitY,
+            "player preparation consumes shield draw first and forces zero prediction velocity");
+        return count;
+    }
+}
