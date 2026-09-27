@@ -1,0 +1,187 @@
+{
+  "version": 1,
+  "unityVersion": "2018.3.0f2",
+  "settingsEvidence": [
+    {
+      "source": "ProjectSettings/DynamicsManager.asset",
+      "sha256": "1ae493e3b647de941d7b95f2064f5951343d33beff6f0fa4599cce831f509710"
+    },
+    {
+      "source": "ProjectSettings/TimeManager.asset",
+      "sha256": "8abafddd93a7425fa5a644310799fd963e866f81d3658a728e3d6f4913b4ef71"
+    },
+    {
+      "source": "ProjectSettings/TagManager.asset",
+      "sha256": "efe475bc9f6661ed5decf3500184d6677e41f4917f5a6ddab1ee7143f2e0618b"
+    }
+  ],
+  "fixedTimestep": 0.02,
+  "gravity": [
+    0.0,
+    -9.81,
+    0.0
+  ],
+  "queriesHitTriggers": true,
+  "layers": [
+    {
+      "index": 0,
+      "name": "Default",
+      "collisionMask": "6cd8e1cd"
+    },
+    {
+      "index": 1,
+      "name": "TransparentFX",
+      "collisionMask": "000000c8"
+    },
+    {
+      "index": 2,
+      "name": "Ignore Raycast",
+      "collisionMask": "6dd861cd"
+    },
+    {
+      "index": 3,
+      "name": "",
+      "collisionMask": "ffffffff"
+    },
+    {
+      "index": 4,
+      "name": "Water",
+      "collisionMask": "000000c8"
+    },
+    {
+      "index": 5,
+      "name": "UI",
+      "collisionMask": "000000c8"
+    },
+    {
+      "index": 6,
+      "name": "",
+      "collisionMask": "ffffffff"
+    },
+    {
+      "index": 7,
+      "name": "",
+      "collisionMask": "ffffffff"
+    },
+    {
+      "index": 8,
+      "name": "DestroyableEntities",
+      "collisionMask": "6cd421cd"
+    },
+    {
+      "index": 9,
+      "name": "HealthBar",
+      "collisionMask": "000000c8"
+    },
+    {
+      "index": 10,
+      "name": "AimTarget",
+      "collisionMask": "000000c8"
+    },
+    {
+      "index": 11,
+      "name": "Gui",
+      "collisionMask": "000000c8"
+    },
+    {
+      "index": 12,
+      "name": "NavigationHelperColliders",
+      "collisionMask": "000010c8"
+    },
+    {
+      "index": 13,
+      "name": "Static",
+      "collisionMask": "6dd8e1cd"
+    },
+    {
+      "index": 14,
+      "name": "BulletsIgnore",
+      "collisionMask": "611860cd"
+    },
+    {
+      "index": 15,
+      "name": "CollideOnlyEnviroment",
+      "collisionMask": "000020c9"
+    },
+    {
+      "index": 16,
+      "name": "DontCollide",
+      "collisionMask": "000000c8"
+    },
+    {
+      "index": 17,
+      "name": "WeaponPreview",
+      "collisionMask": "000000c8"
+    },
+    {
+      "index": 18,
+      "name": "enemyTriggers",
+      "collisionMask": "0dc401c8"
+    },
+    {
+      "index": 19,
+      "name": "DestroyableEntitiesSecondLayer",
+      "collisionMask": "6c1860cd"
+    },
+    {
+      "index": 20,
+      "name": "Vegetation",
+      "collisionMask": "000861cd"
+    },
+    {
+      "index": 21,
+      "name": "Herd",
+      "collisionMask": "000000c8"
+    },
+    {
+      "index": 22,
+      "name": "DestroyableEntitiesAllies",
+      "collisionMask": "6cc421cd"
+    },
+    {
+      "index": 23,
+      "name": "DestroyableEntitiesEnemies",
+      "collisionMask": "6cc421cd"
+    },
+    {
+      "index": 24,
+      "name": "DestroyableEntitiesShield",
+      "collisionMask": "6d0460cc"
+    },
+    {
+      "index": 25,
+      "name": "Parallax",
+      "collisionMask": "000000c8"
+    },
+    {
+      "index": 26,
+      "name": "DestroyableEntitiesAlliesMech",
+      "collisionMask": "69cc21cd"
+    },
+    {
+      "index": 27,
+      "name": "DestroyableEntitiesEnemiesMech",
+      "collisionMask": "65cc21cd"
+    },
+    {
+      "index": 28,
+      "name": "Emptyyy",
+      "collisionMask": "000000c8"
+    },
+    {
+      "index": 29,
+      "name": "Background",
+      "collisionMask": "6dc861cd"
+    },
+    {
+      "index": 30,
+      "name": "T4MObj",
+      "collisionMask": "6dc861cd"
+    },
+    {
+      "index": 31,
+      "name": "LootboxRig",
+      "collisionMask": "000000c8"
+    }
+  ]
+}
