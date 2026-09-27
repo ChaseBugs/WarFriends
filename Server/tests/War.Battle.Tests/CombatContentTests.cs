@@ -21,6 +21,7 @@ internal static class CombatContentTests
         Check(content.DroneProjectile.Revision==Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(Path.Combine(directory,"recovered-drone-projectile-setup.json")))),"combat package requires verified Drone projectile setup revision");
         count+=DroneSpecialTests.Run(content.Army);
         count+=DroneSteeringTests.Run();
+        count+=DroneFreeFallTests.Run(directory);
         count+=DroneWaypointTests.Run();
         count+=DroneOrientationTests.Run(directory);
         count+=DroneTargetTests.Run();
