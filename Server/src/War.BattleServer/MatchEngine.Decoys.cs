@@ -6,6 +6,14 @@ namespace War.BattleServer;
 public sealed partial class MatchEngine
 {
     private readonly DroneTargetRegistry droneTargets=new();
+    private readonly HashSet<string> dronePlayerTargets=new(StringComparer.Ordinal);
+    private static string DronePlayerId(string id)=>"player:"+id;
+    private void UpdateDronePlayerTarget(Player player)
+    {
+        if(!dronePlayerTargets.Contains(player.Definition.PlayerId))return;
+        droneTargets.Update(new(DronePlayerId(player.Definition.PlayerId),player.Definition.Fraction,
+            !player.Dead,true,false,null,player.Position));
+    }
     internal IReadOnlyList<DroneTargetCandidate> DroneTargetSnapshot()=>droneTargets.Snapshot();
     private static string DroneDecoyId(ulong id)=>"decoy:"+id.ToString(System.Globalization.CultureInfo.InvariantCulture);
     internal float? DecoyHealth(ulong entityId)=>decoys.Snapshot().SingleOrDefault(x=>x.EntityId==entityId)?.Health;

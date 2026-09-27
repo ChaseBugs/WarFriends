@@ -59,6 +59,7 @@ public sealed partial class MatchEngine
                 var victim=Find(hit.PlayerId)!;
                 victim.Health=hit.Damage.Health;
                 victim.Dead=hit.Damage.Dead;
+                UpdateDronePlayerTarget(victim);
                 victim.DamageRevision++;
                 stateRevision++;
                 Vector3 center=scene[hit.SourceBarrelIndex].TransformPosition;

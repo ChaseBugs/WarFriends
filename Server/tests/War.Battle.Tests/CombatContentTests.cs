@@ -2553,6 +2553,9 @@ internal static class CombatContentTests
             new(decoyPlayer,["CardDecoy"],[],[0],[133],[-1]),
             new(decoyOpponent,["CardDecoy"],[],[0],[-1],[-1])]);
         decoyMatch.Admit(decoyPlayer);decoyMatch.Admit(decoyOpponent);
+        Check(decoyMatch.DroneTargetSnapshot().Select(r=>r.Id).SequenceEqual(new[]{"player:"+decoyPlayer,"player:"+decoyOpponent}),"admitted players register in recovered owner bucket order");
+        decoyMatch.Admit(decoyPlayer);
+        Check(decoyMatch.DroneTargetSnapshot().Count==2,"repeat admission does not duplicate shootable target");
         MatchCommand SelectDecoy(ulong id)=>new(){CommandId=id,SelectCards=new SelectCardsCommand
         {CardIds={"CardDecoy"},NormalUpgradeIndexes={0},SpecialUpgradeIndexes={133},EliteUpgradeIndexes={-1}}};
         Check(decoyMatch.Command(decoyPlayer,SelectDecoy(1)).Code=="cards-selected",
@@ -2568,7 +2571,7 @@ internal static class CombatContentTests
         var decoyReply=decoyMatch.Command(decoyPlayer,new(){CommandId=3,
             UseDecoy=new(){RequestId=liveDecoyRequest}});
         float expectedDecoyHealth=content.Decoys.Health(22,content.BarrelPolicy.MaxDisplayLevel);
-        Check(decoyMatch.DroneTargetSnapshot().Count==3&&decoyMatch.DroneTargetSnapshot().All(r=>r.IsDecoy&&r.Fraction==1&&r.Alive&&r.Visible),"live Decoy spawn registers Drone target lifecycle");
+        Check(decoyMatch.DroneTargetSnapshot().Count(r=>r.IsDecoy)==3&&decoyMatch.DroneTargetSnapshot().Where(r=>r.IsDecoy).All(r=>r.Fraction==1&&r.Alive&&r.Visible),"live Decoy spawn registers Drone target lifecycle");
         Check(decoyReply.Code=="decoy-spawned"&&decoyReply.Snapshot.Decoys.Count==3&&
               decoyReply.Snapshot.Decoys.All(x=>x.OwnerPlayerId==decoyPlayer&&x.OwnerFraction==1&&
                   x.RequestId==liveDecoyRequest&&Math.Abs(x.Health-expectedDecoyHealth)<.001f&&x.Health==x.MaxHealth)&&

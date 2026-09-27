@@ -777,6 +777,9 @@ public sealed partial class MatchEngine
     {
         var p = Find(id);
         if (p == null || Terminal || phase != BattlePhase.Waiting || tick >= admissionDeadline) return false;
+        if(map!=null&&dronePlayerTargets.Add(id))
+            droneTargets.Enable("PlayerController",new(DronePlayerId(id),p.Definition.Fraction,
+                !p.Dead,true,false,null,p.Position));
         p.Admitted = true;
         p.LastSeen = hostTick;
         stateRevision++;
@@ -1261,6 +1264,7 @@ public sealed partial class MatchEngine
 
     private void RemoveOwnedDeployables(string ownerPlayerId)
     {
+        if(dronePlayerTargets.Remove(ownerPlayerId))droneTargets.Disable(DronePlayerId(ownerPlayerId));
         foreach(var decoy in decoys.RemoveOwner(ownerPlayerId))
         {
             droneTargets.Disable(DroneDecoyId(decoy.EntityId));
@@ -1841,6 +1845,7 @@ public sealed partial class MatchEngine
         }
         victim.Health = result.Health;
         victim.Dead = result.Dead;
+        UpdateDronePlayerTarget(victim);
         victim.DamageRevision++;
         stateRevision++;
         if (result.Dead)
@@ -1855,6 +1860,8 @@ public sealed partial class MatchEngine
     private static bool Coordinate(float n) => float.IsFinite(n) && Math.Abs(n) <= 10000;
     private void AdvanceMovement(Player p)
     {
+        try
+        {
         if (p.Route == null) return;
         if (tick <= p.MoveStart) return;
         if (tick >= p.MoveEnd)
@@ -1872,6 +1879,8 @@ public sealed partial class MatchEngine
             traveled -= segment;
         }
         p.Position = p.Route[^1];
+        }
+        finally { UpdateDronePlayerTarget(p); }
     }
     private static ulong Ticks(double seconds) => checked((ulong)Math.Ceiling(seconds * MatchManifest.TickRate));
     private void Reload(Player p)

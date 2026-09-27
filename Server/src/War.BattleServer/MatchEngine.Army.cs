@@ -1872,7 +1872,7 @@ public sealed partial class MatchEngine
             attacker.ConfirmedEnemyHits=checked(attacker.ConfirmedEnemyHits+1);
             if(result.Dead)attacker.ConfirmedPlayerKills=checked(attacker.ConfirmedPlayerKills+1);
         }
-        victim.Health=result.Health;victim.Dead=result.Dead;victim.DamageRevision++;
+        victim.Health=result.Health;victim.Dead=result.Dead;UpdateDronePlayerTarget(victim);victim.DamageRevision++;
         stateRevision++;
         if(result.Dead)
         {
