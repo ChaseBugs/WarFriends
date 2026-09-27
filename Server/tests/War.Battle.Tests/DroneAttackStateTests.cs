@@ -31,6 +31,18 @@ internal static class DroneAttackStateTests
             "float clock exhaustion cannot publish a destruction deadline");}
         Check(exhaustedDeath.ObserveCollision(3,Vector3.Zero)!=null,
             "rejected exhausted clock cannot poison later valid contact time");
+        var blast=new DroneDeathExplosion(Vector3.Zero,200,20,.7f,1.4f);
+        Check(DroneDeathBlast.Resolve(blast,.699f,new Vector3(9,0,0)) is
+            {Kind:CombatDamageType.Explosion,RawDamage:200},
+            "Drone lethal radius uses closest bounds rather than owner root");
+        Check(DroneDeathBlast.Resolve(blast,.7f,new Vector3(1.05f,0,0)) is
+            {Kind:CombatDamageType.Shiver} mid&&Math.Abs(mid.RawDamage-65)<.001f,
+            "exact dead radius selects quadratic owner-root splash");
+        Check(DroneDeathBlast.Resolve(blast,1.4f,new Vector3(9,0,0)) is
+            {Kind:CombatDamageType.Shiver,RawDamage:20},
+            "inclusive hurt radius preserves minimum splash damage");
+        Check(DroneDeathBlast.Resolve(blast,1.4001f,Vector3.Zero)==null,
+            "outside closest-bounds hurt radius receives no blast");
         Check(content.Army.ComposeDroneShot(0,null,null).ShieldHitProbability==0,
             "Drone shield probability comes from recovered ArmyUpgrades row");
         try
