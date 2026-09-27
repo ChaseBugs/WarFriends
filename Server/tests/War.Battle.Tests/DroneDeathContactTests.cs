@@ -17,6 +17,13 @@ internal static class DroneDeathContactTests
                 bool actual=map.SphereOverlaps(Vec(sample.GetProperty("sphereCenter")),
                     sample.GetProperty("sphereRadius").GetSingle(),
                     Convert.ToUInt32(sample.GetProperty("sphereMask").GetString(),16));
+                var surfaces=map.SphereSurfaceContacts(Vec(sample.GetProperty("sphereCenter")),
+                    sample.GetProperty("sphereRadius").GetSingle(),0,
+                    Convert.ToUInt32(sample.GetProperty("sphereMask").GetString(),16));
+                if((surfaces.Count>0)!=actual||surfaces.Any(c=>!float.IsFinite(c.Separation)||
+                    c.Separation>.000001f||Math.Abs(c.Normal.Length()-1)>.0001f))
+                    throw new Exception("Sphere surface contacts disagree with map overlap authority.");
+                count++;
                 if(actual!=sample.GetProperty("sphereMapOverlap").GetBoolean())
                 {
                     // Resting contacts can lie within binary32 geometry/cooking

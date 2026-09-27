@@ -6,9 +6,8 @@ internal sealed record MapSphereSurfaceContact(int ColliderIndex,string SourcePa
 
 public sealed partial class RecoveredBattleMap
 {
-    // Triangle surfaces only: convex cooked meshes require their hull manifold.
     // One nearest surface per collider; not a complete PhysX contact manifold.
-    internal IReadOnlyList<MapSphereSurfaceContact> TriangleSphereContacts(Vector3 center,float radius,
+    internal IReadOnlyList<MapSphereSurfaceContact> SphereSurfaceContacts(Vector3 center,float radius,
         float margin,uint layerMask)
     {
         if(!Finite(center)||!float.IsFinite(radius)||radius<=0||radius>100||
@@ -17,23 +16,42 @@ public sealed partial class RecoveredBattleMap
         var extent=new Vector3(radius+margin);var result=new List<MapSphereSurfaceContact>();
         foreach(var shape in shapes)
         {
-            if(shape.Hull!=null||(layerMask&(1u<<shape.Layer))==0||
+            if((layerMask&(1u<<shape.Layer))==0||
                 !BoundsOverlap(center-extent,center+extent,shape.Min,shape.Max))continue;
             float best=float.PositiveInfinity;Vector3 point=default,faceNormal=default;
-            for(int i=0;i<shape.Triangles.Length;i+=3)
+            var triangles=shape.Hull==null?shape.Triangles:HullSurfaceTriangles(shape.Vertices,shape.Hull);
+            for(int i=0;i<triangles.Length;i+=3)
             {
-                var a=shape.Triangles[i];var b=shape.Triangles[i+1];var c=shape.Triangles[i+2];
+                var a=triangles[i];var b=triangles[i+1];var c=triangles[i+2];
                 var candidate=ClosestTrianglePoint(center,a,b,c);float distance=Vector3.DistanceSquared(center,candidate);
                 if(distance>=best)continue;
                 best=distance;point=candidate;faceNormal=Vector3.Cross(b-a,c-a);
             }
             float length=MathF.Sqrt(best);
-            if(length>radius+margin)continue;
+            bool inside=shape.Hull!=null&&shape.Hull.All(p=>Vector3.Dot(new Vector3(p.X,p.Y,p.Z),center)+p.W<=0);
+            if(!inside&&length>radius+margin)continue;
             var normal=length>1e-8f?(center-point)/length:Vector3.Normalize(faceNormal);
+            if(inside)normal=-normal;
             if(!Finite(normal))throw new InvalidDataException("Degenerate map contact surface.");
-            result.Add(new(shape.SourceIndex,shape.Path,shape.Layer,point,normal,length-radius));
+            result.Add(new(shape.SourceIndex,shape.Path,shape.Layer,point,normal,(inside?-length:length)-radius));
         }
         return result.AsReadOnly();
+    }
+    private static Vector3[] HullSurfaceTriangles(Vector3[] vertices,Vector4[] planes)
+    {
+        var triangles=new List<Vector3>();
+        foreach(var plane in planes)
+        {
+            var normal=new Vector3(plane.X,plane.Y,plane.Z);
+            var face=vertices.Where(v=>Math.Abs(Vector3.Dot(normal,v)+plane.W)<.0001f).Distinct().ToArray();
+            if(face.Length<3)throw new InvalidDataException("Convex contact face lacks source vertices.");
+            var center=face.Aggregate(Vector3.Zero,(sum,v)=>sum+v)/face.Length;
+            var axis=Vector3.Normalize(Vector3.Cross(normal,Math.Abs(normal.Y)<.9f?Vector3.UnitY:Vector3.UnitX));
+            var other=Vector3.Cross(normal,axis);
+            face=face.OrderBy(v=>Math.Atan2(Vector3.Dot(v-center,other),Vector3.Dot(v-center,axis))).ToArray();
+            for(int i=1;i<face.Length-1;i++){triangles.Add(face[0]);triangles.Add(face[i]);triangles.Add(face[i+1]);}
+        }
+        return triangles.ToArray();
     }
     private static Vector3 ClosestTrianglePoint(Vector3 p,Vector3 a,Vector3 b,Vector3 c)
     {
