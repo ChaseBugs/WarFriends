@@ -29,6 +29,7 @@ public static class UnityDroneContactExport
                 if(Hash(source)!=(string)map["sha256"])throw new InvalidOperationException("Scene revision changed.");
                 EditorSceneManager.OpenScene(source);
                 foreach(int fraction in new[]{1,2})
+                foreach(var initialRotation in new[]{Quaternion.identity,Quaternion.Euler(10,45,10),Quaternion.Euler(-15,135,5)})
                 {
                     var route=map["routes"].First(r=>(string)r["collection"]=="spawnPointsCollectionDrones"&&
                         (int)r["fraction"]==fraction);
@@ -38,7 +39,7 @@ public static class UnityDroneContactExport
                     {
                         drone.layer=fraction==1?27:26;
                         drone.transform.position=new Vector3((float)xyz[0],(float)xyz[1],(float)xyz[2]);
-                        drone.transform.rotation=Quaternion.identity;
+                        drone.transform.rotation=initialRotation;
                         var body=drone.AddComponent<Rigidbody>();EditorUtility.CopySerialized(prefab.GetComponent<Rigidbody>(),body);
                         var observer=drone.AddComponent<DroneCollisionObserver>();
                         body.isKinematic=false;body.velocity=Vector3.zero;body.angularVelocity=Vector3.zero;
@@ -70,6 +71,7 @@ public static class UnityDroneContactExport
                             if(frame<150){observer.Frame=frame+1;Physics.Simulate(Time.fixedDeltaTime);}
                         }
                         rows.Add(new{source,sourceSha256=Hash(source),fraction,
+                            initialRotation=new[]{initialRotation.x,initialRotation.y,initialRotation.z,initialRotation.w},
                             waypointFileId=(long)waypoint["componentFileId"],frames,collisionCallbacks=observer.Rows});
                     }
                     finally{UnityEngine.Object.DestroyImmediate(drone);}

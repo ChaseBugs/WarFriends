@@ -53,6 +53,9 @@ internal static class DroneDeathContactTests
             var freePosition=Vec(row.GetProperty("frames")[0].GetProperty("position"));
             var freeVelocity=Vector3.Zero;
             var initial=row.GetProperty("frames")[0];
+            var initialQuat=initial.GetProperty("rotation");
+            var initialRotation=new Quaternion(initialQuat[0].GetSingle(),initialQuat[1].GetSingle(),
+                initialQuat[2].GetSingle(),initialQuat[3].GetSingle());
             var boxOffset=Vec(initial.GetProperty("boxCenter"))-freePosition;
             var sphereOffset=Vec(initial.GetProperty("sphereCenter"))-freePosition;
             uint rootMask=Convert.ToUInt32(initial.GetProperty("boxMask").GetString(),16);
@@ -70,14 +73,14 @@ internal static class DroneDeathContactTests
                         " fraction "+row.GetProperty("fraction")+" frame "+freeFrame);
                 count++;
                 if(stagedCandidate<0&&DroneMapContactCandidate.Query(map,content.DroneColliders,
-                    freePosition,Quaternion.Identity,rootMask,childMask,.02f))stagedCandidate=freeFrame+1;
+                    freePosition,initialRotation,rootMask,childMask,.02f))stagedCandidate=freeFrame+1;
                 (freePosition,freeVelocity)=DroneFreeFall.Step(freePosition,freeVelocity);
-                if(exactCandidate<0&&(map.BoxOverlaps(freePosition+boxOffset,rootSize,Quaternion.Identity,rootMask)||
+                if(exactCandidate<0&&(map.BoxOverlaps(freePosition+boxOffset,rootSize,initialRotation,rootMask)||
                     map.SphereOverlaps(freePosition+sphereOffset,childRadius,childMask)))exactCandidate=freeFrame+1;
                 // Two default 0.01 contact offsets. Box expansion is a conservative
                 // axis margin, not the rounded PhysX contact-distance manifold.
                 if(marginCandidate<0&&(map.BoxOverlaps(freePosition+boxOffset,rootSize+new Vector3(.04f),
-                    Quaternion.Identity,rootMask)||map.SphereOverlaps(freePosition+sphereOffset,childRadius+.02f,childMask)))
+                    initialRotation,rootMask)||map.SphereOverlaps(freePosition+sphereOffset,childRadius+.02f,childMask)))
                     marginCandidate=freeFrame+1;
             }
             Console.WriteLine("Drone first-contact diagnostic: "+map.Source+" fraction "+row.GetProperty("fraction")+
