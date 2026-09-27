@@ -27,6 +27,19 @@ internal static class DronePersistentContactTests
         _=Step(history,new[]{Array.Empty<MaterialContact>()});
         if(Step(history,new[]{historyPair})!=Step(new DroneContactSolver(geometry),new[]{historyPair}))
             throw new Exception("Absent contact pair retained stale friction authority.");
+        var withoutStrong=history.Solve(Vector3.UnitX*.01f,Quaternion.Identity,new Vector3(.1f,-.2f,0),Vector3.Zero,
+            new[]{historyPair},.999f,.025f,.04f,true,new[]{true});
+        var freshWithoutStrong=new DroneContactSolver(geometry).Solve(Vector3.UnitX*.01f,Quaternion.Identity,
+            new Vector3(.1f,-.2f,0),Vector3.Zero,new[]{historyPair},.999f,.025f,.04f,true);
+        if(withoutStrong!=freshWithoutStrong)
+            throw new Exception("Disabled strong friction reused previous anchors.");
+        try
+        {
+            _=history.Solve(Vector3.Zero,Quaternion.Identity,Vector3.Zero,Vector3.Zero,
+                new[]{historyPair},.999f,.025f,.04f,true,Array.Empty<bool>());
+            throw new Exception("Unbound strong-friction flags accepted.");
+        }
+        catch(InvalidDataException){}
         using var document=JsonDocument.Parse(File.ReadAllBytes(Path.Combine(directory,"recovered-drone-persistent-contact.json")));
         var root=document.RootElement;
         if(root.GetProperty("callbackPolicy").GetString()!="enter-and-stay"||root.GetProperty("rows").GetArrayLength()!=30||
@@ -201,7 +214,7 @@ internal static class DronePersistentContactTests
             ", worse="+shorterWorse+", equivalent="+shorterEquivalent+" (policy unverified).");
         if(shorterImproved+shorterWorse+shorterEquivalent!=steps)
             throw new Exception("Correlation control did not cover every persistent-contact step.");
-        return 4;
+        return 6;
     }
     private static IEnumerable<int[]> Permutations(int[] values)
     {
