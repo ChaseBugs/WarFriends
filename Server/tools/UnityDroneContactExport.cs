@@ -43,11 +43,21 @@ public static class UnityDroneContactExport
                         var observer=drone.AddComponent<DroneCollisionObserver>();
                         body.isKinematic=false;body.velocity=Vector3.zero;body.angularVelocity=Vector3.zero;
                         Physics.SyncTransforms();var frames=new List<object>();
+                        var sphere=drone.GetComponentsInChildren<SphereCollider>().Single();
+                        int sphereMask=0;
+                        for(int layer=0;layer<32;layer++)
+                            if(!Physics.GetIgnoreLayerCollision(sphere.gameObject.layer,layer))sphereMask|=1<<layer;
                         for(int frame=0;frame<=150;frame++)
                         {
+                            var center=sphere.transform.TransformPoint(sphere.center);
+                            var scale=sphere.transform.lossyScale;
+                            float radius=sphere.radius*Mathf.Max(Mathf.Abs(scale.x),Mathf.Abs(scale.y),Mathf.Abs(scale.z));
+                            bool sphereMapOverlap=Physics.OverlapSphere(center,radius,sphereMask,QueryTriggerInteraction.Ignore)
+                                .Any(c=>!c.transform.IsChildOf(drone.transform));
                             frames.Add(new{frame,position=Vec(body.position),velocity=Vec(body.velocity),
                                 rotation=new[]{body.rotation.x,body.rotation.y,body.rotation.z,body.rotation.w},
-                                angularVelocity=Vec(body.angularVelocity)});
+                                angularVelocity=Vec(body.angularVelocity),sphereMapOverlap,
+                                sphereCenter=Vec(center),sphereRadius=radius,sphereMask=((uint)sphereMask).ToString("x8")});
                             if(frame<150){observer.Frame=frame+1;Physics.Simulate(Time.fixedDeltaTime);}
                         }
                         rows.Add(new{source,sourceSha256=Hash(source),fraction,

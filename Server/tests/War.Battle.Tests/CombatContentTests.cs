@@ -23,7 +23,7 @@ internal static class CombatContentTests
         count+=DroneSteeringTests.Run();
         count+=DroneFreeFallTests.Run(directory);
         count+=DroneGroundProbeTests.Run(directory,content);
-        count+=DroneDeathContactTests.Run(directory);
+        count+=DroneDeathContactTests.Run(directory,content);
         count+=DroneWaypointTests.Run();
         count+=DroneOrientationTests.Run(directory);
         count+=DroneTargetTests.Run();
