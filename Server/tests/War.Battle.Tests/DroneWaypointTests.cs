@@ -31,6 +31,20 @@ internal static class DroneWaypointTests
         var invalid=State(0,true,true,float.NaN);
         try{invalid.Advance(1,1f/30);throw new Exception("invalid direction accepted");}
         catch(InvalidDataException){Check(invalid.TargetIndex==0&&invalid.Position==Vector3.Zero,"invalid random sample publishes no traversal mutation");}
+        var looking=State(0,true,true);var withoutTarget=State(0,true,true);
+        looking.Advance(1,1f/30,lookTarget:-Vector3.UnitX);
+        withoutTarget.Advance(1,1f/30);
+        Check(looking.Position==withoutTarget.Position&&looking.Velocity==withoutTarget.Velocity&&
+            Quaternion.Dot(looking.Rotation,withoutTarget.Rotation)<.9999f,
+            "look target changes heading without changing source waypoint motion");
+        var expected=new DroneOrientationState();
+        expected.Advance(looking.Position,looking.Velocity,looking.Velocity,1f/30,-Vector3.UnitX);
+        Check(Math.Abs(Quaternion.Dot(expected.Rotation,looking.Rotation))>.999999f,
+            "waypoint orientation observes post-movement root and selected target");
+        var invalidLook=State(0,true,true);
+        try{invalidLook.Advance(1,1f/30,lookTarget:new(float.NaN,0,0));throw new Exception("invalid look accepted");}
+        catch(InvalidDataException){Check(invalidLook.Position==Vector3.Zero&&invalidLook.TargetIndex==0,
+            "invalid target rejected before path mutation");}
         return count;
     }
 }

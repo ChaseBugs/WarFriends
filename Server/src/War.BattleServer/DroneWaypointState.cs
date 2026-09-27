@@ -35,9 +35,10 @@ public sealed class DroneWaypointState
         TargetIndex=joinIndex;Position=position;Forward=forward;
     }
     // Returns the source arrival callback's waypoint index, if raised this frame.
-    public int? Advance(float time,float deltaTime,bool enabled=true)
+    public int? Advance(float time,float deltaTime,bool enabled=true,Vector3? lookTarget=null)
     {
-        if(!float.IsFinite(time)||time<lastTime||time<0||!float.IsFinite(deltaTime)||deltaTime<=0||deltaTime>.2f)
+        if(!float.IsFinite(time)||time<lastTime||time<0||!float.IsFinite(deltaTime)||deltaTime<=0||deltaTime>.2f||
+           (lookTarget.HasValue&&!Finite(lookTarget.Value)))
             throw new InvalidDataException("Invalid Drone traversal clock.");
         if(!enabled||!UsingWaypoints){lastTime=time;return null;}
         int index=TargetIndex;bool forward=Forward,usingPoints=true;
@@ -67,8 +68,8 @@ public sealed class DroneWaypointState
         }
         var motion=usingPoints?DroneSteeringStep.Advance(Position,Velocity,points[index].Position,
             time,deltaTime,nextReached,.5f,speed,80,.6f,.5f):new DroneSteeringStep.Result(Position,Velocity,Vector3.Zero);
-        // Target acquisition is not integrated yet; source null look target retains heading.
-        if(usingPoints)orientation.Advance(motion.Position,motion.Velocity,motion.Steering,deltaTime,null);
+        // DroneSteering observes the selected root after movement, not the predicted shot point.
+        if(usingPoints)orientation.Advance(motion.Position,motion.Velocity,motion.Steering,deltaTime,lookTarget);
         TargetIndex=index;Forward=forward;UsingWaypoints=usingPoints;
         stay=nextStay;reached=nextReached;lastTime=time;Position=motion.Position;Velocity=motion.Velocity;
         return arrival;
