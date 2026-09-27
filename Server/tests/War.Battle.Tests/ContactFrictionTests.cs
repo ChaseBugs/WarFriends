@@ -7,6 +7,14 @@ internal static class ContactFrictionTests
     {
         int count=0;
         void Check(bool value){if(!value)throw new Exception("Friction constraint boundary failed.");count++;}
+        DroneNormalPoint Point(float x,float separation=0)=>new(new Vector3(x,0,0),Vector3.UnitY,separation);
+        Check(ContactFrictionAnchors.Select(Array.Empty<DroneNormalPoint>(),.1f,.04f).Length==0);
+        Check(ContactFrictionAnchors.Select(new[]{Point(0,.04f)},.1f,.04f).Length==0);
+        Check(ContactFrictionAnchors.Select(new[]{Point(0),Point(.1f)},.1f,.04f).Length==1);
+        Check(ContactFrictionAnchors.Select(new[]{Point(0),Point(1),Point(2)},.1f,.04f)
+            .SequenceEqual(new[]{Vector3.Zero,new Vector3(2,0,0)}));
+        Check(ContactFrictionAnchors.Select(new[]{Point(0),Point(1),Point(-2)},.1f,.04f)
+            .SequenceEqual(new[]{new Vector3(-2,0,0),Vector3.UnitX}));
         Check(ContactNormalConstraint.Solve(0,-4,.5f,0,10)==new ContactNormalStep(2,2));
         Check(ContactNormalConstraint.Solve(2,8,.5f,0,10)==new ContactNormalStep(0,-2));
         Check(ContactNormalConstraint.Solve(2,0,1,3,4)==new ContactNormalStep(4,2));
