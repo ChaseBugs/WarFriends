@@ -36,6 +36,16 @@ internal static class DroneImpulseTests
                     Vec(row.GetProperty("point")),tangent)-.8f/observedResponse)>.00001f)
                     throw new Exception("Drone directional effective mass differs from Unity impulse response.");
                 count++;
+                var anchor=Vec(row.GetProperty("point"));
+                var prepared=DroneFrictionAnchor.Prepare(response,Vec(row.GetProperty("root")),rotation,
+                    observedLinear,observedAngular,anchor,anchor-tangent*.002f,tangent,Vector3.Zero,.02f);
+                float sourcePointSpeed=Vector3.Dot(tangent,observedLinear+Vector3.Cross(observedAngular,lever));
+                // The oracle body is at y=100; world-anchor subtraction loses
+                // several float ulps before division by the timestep.
+                if(Math.Abs(prepared.Bias-.1f)>.0005f||Math.Abs(prepared.TargetVelocity+sourcePointSpeed)>.00001f||
+                   Math.Abs(prepared.VelocityMultiplier-.8f/observedResponse)>.00001f)
+                    throw new Exception("Drone friction anchor preparation differs from observed point response.");
+                count++;
             }
             var (velocity,angular)=DroneRigidMotion.AdvanceVelocities(result.Velocity,result.AngularVelocity);
             if(Vector3.Distance(velocity,Vec(row.GetProperty("velocity")))>.00001f||
