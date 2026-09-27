@@ -209,6 +209,7 @@ namespace War.Client
                        entity.OwnerPlayerId!=entity.OwnerPlayerId.ToLowerInvariant() ||
                        entity.OptionIndex<0 || entity.OptionIndex>=48 ||
                        (entity.DroneTransparent&&entity.UnitId!="ID_UNIT-DRONE") ||
+                       (entity.UnitId=="ID_UNIT-DRONE"?!ValidDroneRotation(entity.DroneRotation):entity.DroneRotation!=null) ||
                        !System.Text.RegularExpressions.Regex.IsMatch(entity.UnitId,@"\AID_UNIT-[A-Z0-9-]{1,50}\z") ||
                        entity.SpawnComponentFileId<=0 || entity.ReservationFileId<0 ||
                        !FiniteCoordinate(entity.X) || !FiniteCoordinate(entity.Y) || !FiniteCoordinate(entity.Z) ||
@@ -234,6 +235,11 @@ namespace War.Client
         }
 
         private static bool FiniteCoordinate(float x)=>!float.IsNaN(x) && !float.IsInfinity(x) && Math.Abs(x)<=10000;
+        private static bool ValidDroneRotation(BattleJointRotation q)
+        {
+            if(q==null||!FiniteCoordinate(q.X)||!FiniteCoordinate(q.Y)||!FiniteCoordinate(q.Z)||!FiniteCoordinate(q.W))return false;
+            return Math.Abs(q.X*q.X+q.Y*q.Y+q.Z*q.Z+q.W*q.W-1)<.001f;
+        }
         private static bool Positive(float x)=>!float.IsNaN(x)&&!float.IsInfinity(x)&&x>0&&x<=10_000_000;
 
         private MatchArmyBatch ExchangeArmy(CancellationToken ct)

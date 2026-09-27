@@ -11,6 +11,8 @@ public sealed class DroneWaypointState
     private readonly bool loop;
     private readonly Func<float> random;
     private float stay,reached,lastTime;
+    private readonly DroneOrientationState orientation=new();
+    public Quaternion Rotation=>orientation.Rotation;
     public int TargetIndex { get; private set; }
     public bool Forward { get; private set; }
     public bool UsingWaypoints { get; private set; }=true;
@@ -65,6 +67,8 @@ public sealed class DroneWaypointState
         }
         var motion=usingPoints?DroneSteeringStep.Advance(Position,Velocity,points[index].Position,
             time,deltaTime,nextReached,.5f,speed,80,.6f,.5f):new DroneSteeringStep.Result(Position,Velocity,Vector3.Zero);
+        // Target acquisition is not integrated yet; source null look target retains heading.
+        if(usingPoints)orientation.Advance(motion.Position,motion.Velocity,motion.Steering,deltaTime,null);
         TargetIndex=index;Forward=forward;UsingWaypoints=usingPoints;
         stay=nextStay;reached=nextReached;lastTime=time;Position=motion.Position;Velocity=motion.Velocity;
         return arrival;

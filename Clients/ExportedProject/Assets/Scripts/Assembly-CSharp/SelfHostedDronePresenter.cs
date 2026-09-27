@@ -21,6 +21,8 @@ public sealed class SelfHostedDronePresenter : MonoBehaviour
             if(!active.TryGetValue(row.EntityKey,out visual))
             {visual=Create(row.EntityKey);active.Add(row.EntityKey,visual);}
             visual.Root.transform.position=new Vector3(row.X,row.Y,row.Z);
+            if(row.DroneRotation==null)throw new InvalidOperationException("Authoritative Drone rotation is absent.");
+            visual.Root.transform.rotation=new Quaternion(row.DroneRotation.X,row.DroneRotation.Y,row.DroneRotation.Z,row.DroneRotation.W);
             Material material=row.DroneTransparent?source.transparentMaterial:source.visuals.mainRenderer.sharedMaterial;
             foreach(var renderer in visual.MaterialTargets)renderer.sharedMaterial=material;
         }

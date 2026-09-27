@@ -49,6 +49,8 @@ public sealed partial class MatchEngine
             path.Advance((float)((double)tick/MatchManifest.TickRate),1f/MatchManifest.TickRate);
             var row=activeArmyEntities[key];row.X=path.Position.X;row.Y=path.Position.Y;row.Z=path.Position.Z;
             row.PositionTick=tick;
+            var q=path.Rotation;
+            row.DroneRotation=new BattleJointRotation{X=q.X,Y=q.Y,Z=q.Z,W=q.W};
         }
     }
     private readonly Dictionary<ulong,float> armyDamage=[];

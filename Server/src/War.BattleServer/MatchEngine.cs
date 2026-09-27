@@ -1018,6 +1018,7 @@ public sealed partial class MatchEngine
                             ReservationFileId=point.ReservationFileId,
                             X=point.Position.X,Y=point.Position.Y,Z=point.Position.Z,SpawnTick=tick,
                             PositionTick=tick,
+                            DroneRotation=spawned.UnitId=="ID_UNIT-DRONE"?new BattleJointRotation{W=1}:null,
                             MaxHealth=ArmyHealth(entityKey)??0,Health=ArmyHealth(entityKey)??0});
                         var vitality=armyVitality.GetValueOrDefault(entityKey);
                         if(vitality!=null)

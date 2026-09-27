@@ -257,6 +257,7 @@ message BattleArmyEntityState {
   float max_kevlar = 16; float kevlar = 17;
   // Drone renderer phase from the host special clock. Does not imply untargetability.
   bool drone_transparent = 18;
+  BattleJointRotation drone_rotation = 19;
 }
 // Full active-entity projection, paged to remain below the UDP MTU.
 message MatchArmyEntityPoll { uint64 after_entity_key = 1; uint64 expected_revision = 2; }

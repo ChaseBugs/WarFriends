@@ -2638,6 +2638,10 @@ internal static class CombatContentTests
         float droneHealth=deployedDroneMatch.ArmyHealth(deployedDrone.EntityKey)!.Value;
         for(ulong t=62;t<=211;t++)deployedDroneMatch.Advance(t);
         var movedDrone=deployedDroneMatch.ArmyEntityBatch(decoyPlayer,0,0).Entities.Single();
+        var droneRotation=movedDrone.DroneRotation;
+        Check(droneRotation!=null&&Math.Abs(droneRotation.X*droneRotation.X+droneRotation.Y*droneRotation.Y+
+            droneRotation.Z*droneRotation.Z+droneRotation.W*droneRotation.W-1)<.001f,
+            "deployed Drone publishes normalized source bank orientation");
         Check(Vector3.Distance(new(deployedDrone.X,deployedDrone.Y,deployedDrone.Z),
             new(movedDrone.X,movedDrone.Y,movedDrone.Z))>.1f&&movedDrone.PositionTick==211,
             "normal deployed Drone advances through its trusted source route and publishes sample tick");
@@ -2648,6 +2652,8 @@ internal static class CombatContentTests
             Google.Protobuf.MessageExtensions.ToByteArray(transparentDroneBatch));
         Check(transparentWire.Entities.Single().DroneTransparent,
             "protobuf army roster preserves authoritative Drone transparency");
+        Check(transparentWire.Entities.Single().DroneRotation.Equals(transparentDroneBatch.Entities.Single().DroneRotation),
+            "protobuf army roster preserves authoritative Drone rotation");
         Check(deployedDroneMatch.ArmyDroneImmortal(deployedDrone.EntityKey)&&
             deployedDroneMatch.ArmyEntityBatch(decoyPlayer,0,0).Entities.Single().DroneTransparent&&
             !deployedDroneMatch.ApplyArmyHostDamage(deployedDrone.EntityKey,droneHealth)&&

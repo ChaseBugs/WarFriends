@@ -16,10 +16,13 @@ public static class SelfHostedDroneRenderAudit
             var source=prefab.GetComponent<Drone>();
             owner=new GameObject("DroneRenderAudit");
             var presenter=owner.AddComponent<SelfHostedDronePresenter>();presenter.Configure(source);
-            var row=new BattleArmyEntityState{EntityKey=4294967297,UnitId="ID_UNIT-DRONE",X=2,Y=3,Z=4};
+            var expectedRotation=Quaternion.Euler(12,35,-7);
+            var row=new BattleArmyEntityState{EntityKey=4294967297,UnitId="ID_UNIT-DRONE",X=2,Y=3,Z=4,
+                DroneRotation=new BattleJointRotation{X=expectedRotation.x,Y=expectedRotation.y,Z=expectedRotation.z,W=expectedRotation.w}};
             var rows=new List<BattleArmyEntityState>{row};presenter.Apply(rows);
             var visual=GameObject.Find("SelfHostedDrone_4294967297");
             Require(visual!=null&&visual.transform.position==new Vector3(2,3,4),"position");
+            Require(Quaternion.Angle(visual.transform.rotation,expectedRotation)<.001f,"authoritative bank/heading rotation");
             Require(visual.GetComponentsInChildren<MonoBehaviour>(true).Length==0&&
                 visual.GetComponentsInChildren<Collider>(true).Length==0,"no gameplay components");
             Require(visual.GetComponentsInChildren<MeshFilter>(true).Select(x=>x.sharedMesh).SequenceEqual(
