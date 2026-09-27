@@ -20,6 +20,11 @@ public static class UnityDroneContactExport
         var prefab=AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
         var previous=EditorSceneManager.GetSceneManagerSetup();bool automatic=Physics.autoSimulation;
         var rows=new List<object>();
+        bool zeroFriction=Environment.GetEnvironmentVariable("WAR_DRONE_ZERO_FRICTION")=="1";
+        var temporaryMaterials=new List<PhysicMaterial>();
+        Action<Collider> disableFriction=c=>{
+            var material=UnityEngine.Object.Instantiate(c.material);
+            material.staticFriction=0;material.dynamicFriction=0;c.sharedMaterial=material;temporaryMaterials.Add(material);};
         try
         {
             Physics.autoSimulation=false;
@@ -30,13 +35,16 @@ public static class UnityDroneContactExport
                 var scene=EditorSceneManager.OpenScene(source);
                 var sourceColliders=scene.GetRootGameObjects()
                     .SelectMany(g=>g.GetComponentsInChildren<Collider>(true)).ToArray();
+                if(zeroFriction)foreach(var collider in sourceColliders)disableFriction(collider);
                 foreach(int fraction in new[]{1,2})
-                foreach(var initialRotation in new[]{Quaternion.identity,Quaternion.Euler(10,45,10),Quaternion.Euler(-15,135,5)})
+                foreach(var initialRotation in zeroFriction?new[]{Quaternion.identity}:
+                    new[]{Quaternion.identity,Quaternion.Euler(10,45,10),Quaternion.Euler(-15,135,5)})
                 {
                     var route=map["routes"].First(r=>(string)r["collection"]=="spawnPointsCollectionDrones"&&
                         (int)r["fraction"]==fraction);
                     var waypoint=route["waypoints"].First();var xyz=waypoint["worldPosition"];
                     var drone=CopyGeometry(prefab.transform,null);
+                    if(zeroFriction)foreach(var collider in drone.GetComponentsInChildren<Collider>())disableFriction(collider);
                     try
                     {
                         drone.layer=fraction==1?27:26;
@@ -94,12 +102,14 @@ public static class UnityDroneContactExport
             }
             File.WriteAllText(output,JsonConvert.SerializeObject(new{version=1,unityVersion=Application.unityVersion,
                 prefabSource=prefabPath,prefabSha256=Hash(prefabPath),scenario="isolated-source-collider-fall-in-map",
+                materialPolicy=zeroFriction?"zero-friction-control":"source-materials",
                 fixedTimestep=Time.fixedDeltaTime,rows},Formatting.Indented)+"\n");
             Debug.Log("WAR_DRONE_CONTACT_EXPORT_PASS");
         }
         finally
         {
             Physics.autoSimulation=automatic;
+            foreach(var material in temporaryMaterials)UnityEngine.Object.DestroyImmediate(material);
             if(previous.Any(s=>s.isLoaded)&&previous.Any(s=>s.isActive))EditorSceneManager.RestoreSceneManagerSetup(previous);
             else EditorSceneManager.NewScene(NewSceneSetup.EmptyScene,NewSceneMode.Single);
         }
