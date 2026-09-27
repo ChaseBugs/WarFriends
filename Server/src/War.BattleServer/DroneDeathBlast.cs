@@ -7,6 +7,17 @@ internal readonly record struct DroneDeathBlastHit(CombatDamageType Kind,float R
 // destroyable owner's transform. The caller must select source-valid overlaps.
 internal static class DroneDeathBlast
 {
+    internal static ResolvedPlayerDamage PlayerDamageInput(DroneDeathBlastHit hit,
+        ExplosionSourceCatalog policy,bool overtime)
+    {
+        ArgumentNullException.ThrowIfNull(policy);
+        if(hit.Kind is not (CombatDamageType.Explosion or CombatDamageType.Shiver)||
+           !float.IsFinite(hit.RawDamage)||hit.RawDamage<0||hit.RawDamage>5000000)
+            throw new InvalidDataException("Invalid Drone death player blast.");
+        return new(hit.RawDamage,hit.Kind,HasWeapon:false,FriendKill:true,
+            FriendlyCoefficient:policy.Friendly,ExplosiveCoefficient:policy.PlayerNormal,
+            ExplosiveOvertimeCoefficient:policy.PlayerOvertime,Overtime:overtime);
+    }
     internal static DroneDeathBlastHit? Resolve(DroneDeathExplosion explosion,
         float closestBoundsDistance,Vector3 destroyableRoot)
     {

@@ -43,6 +43,17 @@ internal static class DroneAttackStateTests
             "inclusive hurt radius preserves minimum splash damage");
         Check(DroneDeathBlast.Resolve(blast,1.4001f,Vector3.Zero)==null,
             "outside closest-bounds hurt radius receives no blast");
+        var normalBlast=DroneDeathBlast.PlayerDamageInput(new(CombatDamageType.Explosion,200),content.Explosions,false);
+        var overtimeBlast=DroneDeathBlast.PlayerDamageInput(new(CombatDamageType.Shiver,200),content.Explosions,true);
+        var blastVictim=new PlayerCombatManifest(1000);
+        Check(!normalBlast.HasWeapon&&PlayerDamage.Resolve(blastVictim,1000,normalBlast,false,false,1).Damage==176,
+            "Drone weaponless explosion uses recovered global normal coefficient");
+        Check(Math.Abs(PlayerDamage.Resolve(blastVictim,1000,overtimeBlast,false,false,1).Damage-120)<.001f,
+            "Drone weaponless splash uses recovered global overtime coefficient");
+        Check(PlayerDamage.Resolve(blastVictim,1000,normalBlast,true,false,1).Damage==88,
+            "Drone death blast retains global friendly damage coefficient");
+        Check(PlayerDamage.Resolve(blastVictim,1000,normalBlast,true,true,1).Damage==0,
+            "Drone owner's self-damage callback still refunds the death blast");
         Check(content.Army.ComposeDroneShot(0,null,null).ShieldHitProbability==0,
             "Drone shield probability comes from recovered ArmyUpgrades row");
         try
