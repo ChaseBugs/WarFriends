@@ -52,6 +52,14 @@ internal static class DroneDeathContactTests
             var first=callbacks[0];int frame=first.GetProperty("frame").GetInt32();
             var freePosition=Vec(row.GetProperty("frames")[0].GetProperty("position"));
             var freeVelocity=Vector3.Zero;
+            var initial=row.GetProperty("frames")[0];
+            var boxOffset=Vec(initial.GetProperty("boxCenter"))-freePosition;
+            var sphereOffset=Vec(initial.GetProperty("sphereCenter"))-freePosition;
+            uint rootMask=Convert.ToUInt32(initial.GetProperty("boxMask").GetString(),16);
+            uint childMask=Convert.ToUInt32(initial.GetProperty("sphereMask").GetString(),16);
+            var rootSize=Vec(initial.GetProperty("boxSize"));
+            float childRadius=initial.GetProperty("sphereRadius").GetSingle();
+            int exactCandidate=-1,marginCandidate=-1;
             for(int freeFrame=0;freeFrame<frame;freeFrame++)
             {
                 var observed=row.GetProperty("frames")[freeFrame];
@@ -61,7 +69,16 @@ internal static class DroneDeathContactTests
                         " fraction "+row.GetProperty("fraction")+" frame "+freeFrame);
                 count++;
                 (freePosition,freeVelocity)=DroneFreeFall.Step(freePosition,freeVelocity);
+                if(exactCandidate<0&&(map.BoxOverlaps(freePosition+boxOffset,rootSize,Quaternion.Identity,rootMask)||
+                    map.SphereOverlaps(freePosition+sphereOffset,childRadius,childMask)))exactCandidate=freeFrame+1;
+                // Two default 0.01 contact offsets. Box expansion is a conservative
+                // axis margin, not the rounded PhysX contact-distance manifold.
+                if(marginCandidate<0&&(map.BoxOverlaps(freePosition+boxOffset,rootSize+new Vector3(.04f),
+                    Quaternion.Identity,rootMask)||map.SphereOverlaps(freePosition+sphereOffset,childRadius+.02f,childMask)))
+                    marginCandidate=freeFrame+1;
             }
+            Console.WriteLine("Drone first-contact diagnostic: "+map.Source+" fraction "+row.GetProperty("fraction")+
+                " callback="+frame+" exact="+exactCandidate+" conservative-margin="+marginCandidate);
             var root=Vec(first.GetProperty("rootPosition"));
             if(frame<1||frame>150||Vector3.Distance(root,Vec(row.GetProperty("frames")[frame].GetProperty("position")))>.0001f)
                 throw new Exception("Drone callback root does not match physics publication.");
