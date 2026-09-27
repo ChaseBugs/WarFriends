@@ -6714,6 +6714,16 @@
           "frame": 24,
           "other": "LevelRootAztec/aztec_map/GameObject/ground",
           "layer": 30,
+          "impulse": [
+            0.102296926,
+            3.17120624,
+            -0.224263862
+          ],
+          "relativeVelocity": [
+            0.0,
+            3.57299471,
+            0.0
+          ],
           "rootPosition": [
             -1.68847644,
             0.450504363,
@@ -6749,6 +6759,16 @@
           "frame": 24,
           "other": "LevelRootAztec/aztec_map/GameObject/sandbag",
           "layer": 13,
+          "impulse": [
+            0.326096177,
+            0.253016055,
+            0.05201
+          ],
+          "relativeVelocity": [
+            0.0,
+            3.57299471,
+            0.0
+          ],
           "rootPosition": [
             -1.68847644,
             0.450504363,
@@ -6784,6 +6804,16 @@
           "frame": 73,
           "other": "LevelRootAztec/aztec_map/GameObject/ground",
           "layer": 30,
+          "impulse": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "relativeVelocity": [
+            -0.388637066,
+            0.0431656241,
+            0.335061342
+          ],
           "rootPosition": [
             -1.33233893,
             0.4153265,
@@ -6819,6 +6849,16 @@
           "frame": 120,
           "other": "LevelRootAztec/aztec_map/GameObject/ground",
           "layer": 30,
+          "impulse": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "relativeVelocity": [
+            -0.299533576,
+            0.0247233063,
+            0.100983292
+          ],
           "rootPosition": [
             -1.12193441,
             0.411333054,
@@ -13560,6 +13600,16 @@
           "frame": 24,
           "other": "LevelRootAztec/aztec_map/GameObject/sandbag",
           "layer": 13,
+          "impulse": [
+            1.18516886,
+            0.9195653,
+            0.189025909
+          ],
+          "relativeVelocity": [
+            0.0,
+            3.57299471,
+            0.0
+          ],
           "rootPosition": [
             -1.66272247,
             0.440169752,
@@ -13595,6 +13645,16 @@
           "frame": 24,
           "other": "LevelRootAztec/aztec_map/GameObject/ground",
           "layer": 30,
+          "impulse": [
+            0.07639945,
+            2.36838412,
+            -0.167489246
+          ],
+          "relativeVelocity": [
+            0.0,
+            3.57299471,
+            0.0
+          ],
           "rootPosition": [
             -1.66272247,
             0.440169752,
@@ -13630,6 +13690,16 @@
           "frame": 40,
           "other": "LevelRootAztec/aztec_map/GameObject/ground",
           "layer": 30,
+          "impulse": [
+            0.00260536163,
+            0.08076626,
+            -0.00571169471
+          ],
+          "relativeVelocity": [
+            -0.9308624,
+            0.0523941666,
+            0.0387997925
+          ],
           "rootPosition": [
             -1.35490882,
             0.432482928,
@@ -13665,6 +13735,16 @@
           "frame": 53,
           "other": "LevelRootAztec/aztec_map/GameObject/ground",
           "layer": 30,
+          "impulse": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "relativeVelocity": [
+            0.2693504,
+            0.17617178,
+            0.0167725272
+          ],
           "rootPosition": [
             -1.32768047,
             0.4445614,
@@ -13700,6 +13780,16 @@
           "frame": 145,
           "other": "LevelRootAztec/aztec_map/GameObject/bariera01",
           "layer": 13,
+          "impulse": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "relativeVelocity": [
+            -0.248602673,
+            0.0472942442,
+            0.446857
+          ],
           "rootPosition": [
             -1.370562,
             0.3987947,
@@ -13735,6 +13825,16 @@
           "frame": 146,
           "other": "LevelRootAztec/aztec_map/GameObject/bariera01",
           "layer": 13,
+          "impulse": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "relativeVelocity": [
+            -0.252583444,
+            0.047996,
+            0.4506495
+          ],
           "rootPosition": [
             -1.366046,
             0.400326043,
@@ -20476,6 +20576,16 @@
           "frame": 24,
           "other": "LevelRootAztec/aztec_map/GameObject/ground",
           "layer": 30,
+          "impulse": [
+            0.102389283,
+            3.17406917,
+            -0.224466324
+          ],
+          "relativeVelocity": [
+            0.0,
+            3.57299471,
+            0.0
+          ],
           "rootPosition": [
             -1.68822944,
             0.450413465,
@@ -20511,6 +20621,16 @@
           "frame": 24,
           "other": "LevelRootAztec/aztec_map/GameObject/sandbag",
           "layer": 13,
+          "impulse": [
+            0.320129037,
+            0.248386443,
+            0.0510583557
+          ],
+          "relativeVelocity": [
+            0.0,
+            3.57299471,
+            0.0
+          ],
           "rootPosition": [
             -1.68822944,
             0.450413465,
@@ -20546,6 +20666,16 @@
           "frame": 73,
           "other": "LevelRootAztec/aztec_map/GameObject/ground",
           "layer": 30,
+          "impulse": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "relativeVelocity": [
+            -0.414690554,
+            0.0609782338,
+            0.4416046
+          ],
           "rootPosition": [
             -1.309075,
             0.409104,
@@ -20581,6 +20711,16 @@
           "frame": 82,
           "other": "LevelRootAztec/aztec_map/GameObject/bariera01",
           "layer": 13,
+          "impulse": [
+            6.32792352E-09,
+            0.09761843,
+            -0.008622011
+          ],
+          "relativeVelocity": [
+            -0.04063817,
+            0.130322665,
+            0.5507759
+          ],
           "rootPosition": [
             -1.273878,
             0.4027985,
@@ -27373,6 +27513,16 @@
           "frame": 19,
           "other": "LevelRootAztec/aztec_map/GameObject/wall01",
           "layer": 13,
+          "impulse": [
+            -0.874947369,
+            1.87229669,
+            1.54801933E-06
+          ],
+          "relativeVelocity": [
+            0.0,
+            2.930908,
+            0.0
+          ],
           "rootPosition": [
             1.33911824,
             0.547102034,
@@ -27408,6 +27558,16 @@
           "frame": 30,
           "other": "LevelRootAztec/aztec_map/GameObject/ground",
           "layer": 30,
+          "impulse": [
+            -0.0204000734,
+            1.02728987,
+            0.07868683
+          ],
+          "relativeVelocity": [
+            0.9281574,
+            1.499801,
+            -0.0275341626
+          ],
           "rootPosition": [
             1.13759685,
             0.351636916,
@@ -27443,6 +27603,16 @@
           "frame": 34,
           "other": "LevelRootAztec/aztec_map/GameObject/demon/demon",
           "layer": 13,
+          "impulse": [
+            0.8198017,
+            -7.912585E-09,
+            0.1810186
+          ],
+          "relativeVelocity": [
+            1.06090772,
+            0.0589574575,
+            -0.164669245
+          ],
           "rootPosition": [
             1.07065821,
             0.3507551,
@@ -27495,6 +27665,16 @@
           "frame": 51,
           "other": "LevelRootAztec/aztec_map/GameObject/ground",
           "layer": 30,
+          "impulse": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "relativeVelocity": [
+            0.133766145,
+            0.04040876,
+            -0.3897403
+          ],
           "rootPosition": [
             1.03665483,
             0.336842358,
@@ -27530,6 +27710,16 @@
           "frame": 123,
           "other": "LevelRootAztec/aztec_map/GameObject/ground",
           "layer": 30,
+          "impulse": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "relativeVelocity": [
+            0.07593887,
+            0.0572756678,
+            -0.556179047
+          ],
           "rootPosition": [
             1.12331557,
             0.300598681,
@@ -27565,6 +27755,16 @@
           "frame": 141,
           "other": "LevelRootAztec/aztec_map/GameObject/ground",
           "layer": 30,
+          "impulse": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "relativeVelocity": [
+            0.408183783,
+            0.04066883,
+            -0.262067139
+          ],
           "rootPosition": [
             0.9938806,
             0.290637672,
@@ -34306,6 +34506,16 @@
           "frame": 19,
           "other": "LevelRootAztec/aztec_map/GameObject/wall01",
           "layer": 13,
+          "impulse": [
+            -0.8769634,
+            1.87661088,
+            1.55158625E-06
+          ],
+          "relativeVelocity": [
+            0.0,
+            2.930908,
+            0.0
+          ],
           "rootPosition": [
             1.33931613,
             0.5470538,
@@ -34341,6 +34551,16 @@
           "frame": 30,
           "other": "LevelRootAztec/aztec_map/GameObject/ground",
           "layer": 30,
+          "impulse": [
+            -0.0172174051,
+            0.867019653,
+            0.06641069
+          ],
+          "relativeVelocity": [
+            0.9256088,
+            1.45938551,
+            -0.023469409
+          ],
           "rootPosition": [
             1.13988316,
             0.35244593,
@@ -34376,6 +34596,16 @@
           "frame": 34,
           "other": "LevelRootAztec/aztec_map/GameObject/demon/demon",
           "layer": 13,
+          "impulse": [
+            0.6787983,
+            -6.48111032E-09,
+            0.148270309
+          ],
+          "relativeVelocity": [
+            1.04592073,
+            0.05141668,
+            -0.170822725
+          ],
           "rootPosition": [
             1.07145572,
             0.350861579,
@@ -34428,6 +34658,16 @@
           "frame": 35,
           "other": "LevelRootAztec/aztec_map/GameObject/ground",
           "layer": 30,
+          "impulse": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "relativeVelocity": [
+            0.322673738,
+            -0.0839894,
+            -0.207952052
+          ],
           "rootPosition": [
             1.06944013,
             0.350978643,
@@ -34463,6 +34703,16 @@
           "frame": 71,
           "other": "LevelRootAztec/aztec_map/GameObject/ground",
           "layer": 30,
+          "impulse": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "relativeVelocity": [
+            0.154579267,
+            0.0599223524,
+            -0.537809432
+          ],
           "rootPosition": [
             0.990942,
             0.3212724,
@@ -41204,6 +41454,16 @@
           "frame": 19,
           "other": "LevelRootAztec/aztec_map/GameObject/wall01",
           "layer": 13,
+          "impulse": [
+            -0.877055049,
+            1.87680411,
+            1.55174587E-06
+          ],
+          "relativeVelocity": [
+            0.0,
+            2.930908,
+            0.0
+          ],
           "rootPosition": [
             1.33932829,
             0.5470874,
@@ -41239,6 +41499,16 @@
           "frame": 30,
           "other": "LevelRootAztec/aztec_map/GameObject/ground",
           "layer": 30,
+          "impulse": [
+            -0.0172313079,
+            0.8677198,
+            0.06646432
+          ],
+          "relativeVelocity": [
+            0.9293195,
+            1.46061814,
+            0.0136312647
+          ],
           "rootPosition": [
             1.14017594,
             0.353077769,
@@ -41274,6 +41544,16 @@
           "frame": 32,
           "other": "LevelRootAztec/aztec_map/GameObject/ground",
           "layer": 30,
+          "impulse": [
+            -0.00164866447,
+            0.0830218047,
+            0.006359183
+          ],
+          "relativeVelocity": [
+            1.07580292,
+            0.181778073,
+            -0.0764295161
+          ],
           "rootPosition": [
             1.098925,
             0.349591,
@@ -41309,6 +41589,16 @@
           "frame": 34,
           "other": "LevelRootAztec/aztec_map/GameObject/demon/demon",
           "layer": 13,
+          "impulse": [
+            0.3428438,
+            -2.81137E-09,
+            0.06431653
+          ],
+          "relativeVelocity": [
+            0.7957646,
+            -0.211478084,
+            -0.122897379
+          ],
           "rootPosition": [
             1.07483864,
             0.3610077,
@@ -41344,6 +41634,16 @@
           "frame": 52,
           "other": "LevelRootAztec/aztec_map/GameObject/wall01",
           "layer": 13,
+          "impulse": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "relativeVelocity": [
+            -0.211109415,
+            0.0162117183,
+            -0.301092446
+          ],
           "rootPosition": [
             1.13578594,
             0.342329,
@@ -41379,6 +41679,16 @@
           "frame": 82,
           "other": "LevelRootAztec/aztec_map/GameObject/ground",
           "layer": 30,
+          "impulse": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "relativeVelocity": [
+            -0.02971795,
+            0.0419689566,
+            -0.474575877
+          ],
           "rootPosition": [
             1.19585419,
             0.32567808,
@@ -41414,6 +41724,16 @@
           "frame": 136,
           "other": "LevelRootAztec/aztec_map/GameObject/ground",
           "layer": 30,
+          "impulse": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "relativeVelocity": [
+            0.258885473,
+            0.0404558927,
+            -0.3207455
+          ],
           "rootPosition": [
             0.981698,
             0.311709732,
@@ -48155,6 +48475,16 @@
           "frame": 19,
           "other": "LevelRoot/CityMap/Barriers/barrier 1 mat/roadblock",
           "layer": 13,
+          "impulse": [
+            -0.334565431,
+            0.252666354,
+            0.334685415
+          ],
+          "relativeVelocity": [
+            0.0,
+            2.930908,
+            0.0
+          ],
           "rootPosition": [
             -1.59967017,
             0.443921953,
@@ -48190,6 +48520,16 @@
           "frame": 19,
           "other": "LevelRoot/CityMap/ground11",
           "layer": 30,
+          "impulse": [
+            1.64045322E-09,
+            2.518286,
+            0.0275222436
+          ],
+          "relativeVelocity": [
+            0.0,
+            2.930908,
+            0.0
+          ],
           "rootPosition": [
             -1.59967017,
             0.443921953,
@@ -48225,6 +48565,16 @@
           "frame": 55,
           "other": "LevelRoot/CityMap/ground11",
           "layer": 30,
+          "impulse": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "relativeVelocity": [
+            0.2155191,
+            0.0141009837,
+            -0.342473656
+          ],
           "rootPosition": [
             -1.78351414,
             0.441554576,
@@ -48260,6 +48610,16 @@
           "frame": 92,
           "other": "LevelRoot/CityMap/Barriers/barrier 1 mat/tires",
           "layer": 13,
+          "impulse": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "relativeVelocity": [
+            -0.08282511,
+            0.00373487175,
+            -0.116557218
+          ],
           "rootPosition": [
             -1.71160662,
             0.4409401,
@@ -48295,6 +48655,16 @@
           "frame": 106,
           "other": "LevelRoot/CityMap/ground11",
           "layer": 30,
+          "impulse": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "relativeVelocity": [
+            0.06435789,
+            0.002147451,
+            -0.0447469242
+          ],
           "rootPosition": [
             -1.71380293,
             0.440723062,
@@ -55036,6 +55406,16 @@
           "frame": 19,
           "other": "LevelRoot/CityMap/Barriers/barrier 1 mat/roadblock",
           "layer": 13,
+          "impulse": [
+            -0.336162239,
+            0.253872544,
+            0.33628276
+          ],
+          "relativeVelocity": [
+            0.0,
+            2.930908,
+            0.0
+          ],
           "rootPosition": [
             -1.59938836,
             0.443922251,
@@ -55071,6 +55451,16 @@
           "frame": 19,
           "other": "LevelRoot/CityMap/ground11",
           "layer": 30,
+          "impulse": [
+            1.6404279E-09,
+            2.51824713,
+            0.0275218189
+          ],
+          "relativeVelocity": [
+            0.0,
+            2.930908,
+            0.0
+          ],
           "rootPosition": [
             -1.59938836,
             0.443922251,
@@ -55106,6 +55496,16 @@
           "frame": 51,
           "other": "LevelRoot/CityMap/ground11",
           "layer": 30,
+          "impulse": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "relativeVelocity": [
+            0.177343309,
+            0.0123574734,
+            -0.3535187
+          ],
           "rootPosition": [
             -1.74520075,
             0.441779554,
@@ -55158,6 +55558,16 @@
           "frame": 132,
           "other": "LevelRoot/CityMap/ground11",
           "layer": 30,
+          "impulse": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "relativeVelocity": [
+            0.109530866,
+            0.0103436261,
+            -0.255566478
+          ],
           "rootPosition": [
             -2.03854871,
             0.438691735,
@@ -61899,6 +62309,16 @@
           "frame": 19,
           "other": "LevelRoot/CityMap/Barriers/barrier 1 mat/roadblock",
           "layer": 13,
+          "impulse": [
+            -0.3488,
+            0.263416559,
+            0.3489251
+          ],
+          "relativeVelocity": [
+            0.0,
+            2.930908,
+            0.0
+          ],
           "rootPosition": [
             -1.599479,
             0.4440009,
@@ -61934,6 +62354,16 @@
           "frame": 19,
           "other": "LevelRoot/CityMap/ground11",
           "layer": 30,
+          "impulse": [
+            1.63265745E-09,
+            2.50631857,
+            0.0273914523
+          ],
+          "relativeVelocity": [
+            0.0,
+            2.930908,
+            0.0
+          ],
           "rootPosition": [
             -1.599479,
             0.4440009,
@@ -61969,6 +62399,16 @@
           "frame": 89,
           "other": "LevelRoot/CityMap/ground11",
           "layer": 30,
+          "impulse": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "relativeVelocity": [
+            0.154198587,
+            0.0100471824,
+            -0.265757948
+          ],
           "rootPosition": [
             -1.888105,
             0.440048367,
@@ -68710,6 +69150,16 @@
           "frame": 21,
           "other": "LevelRoot/CityMap/ground11",
           "layer": 30,
+          "impulse": [
+            -2.1766795E-09,
+            3.32319665,
+            -0.0365186259
+          ],
+          "relativeVelocity": [
+            0.0,
+            3.1955502,
+            0.0
+          ],
           "rootPosition": [
             1.8942579,
             0.43708235,
@@ -75451,6 +75901,16 @@
           "frame": 21,
           "other": "LevelRoot/CityMap/ground11",
           "layer": 30,
+          "impulse": [
+            -2.17638818E-09,
+            3.32275176,
+            -0.03651374
+          ],
+          "relativeVelocity": [
+            0.0,
+            3.1955502,
+            0.0
+          ],
           "rootPosition": [
             1.894624,
             0.437065482,
@@ -82192,6 +82652,16 @@
           "frame": 21,
           "other": "LevelRoot/CityMap/ground11",
           "layer": 30,
+          "impulse": [
+            -2.17676277E-09,
+            3.32332373,
+            -0.0365200229
+          ],
+          "relativeVelocity": [
+            0.0,
+            3.1955502,
+            0.0
+          ],
           "rootPosition": [
             1.89450371,
             0.437098384,
@@ -82227,6 +82697,16 @@
           "frame": 144,
           "other": "LevelRoot/CityMap/Barriers/barrier 1 mat/trashbag",
           "layer": 13,
+          "impulse": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "relativeVelocity": [
+            -0.0771168545,
+            0.0191015452,
+            0.3319202
+          ],
           "rootPosition": [
             2.00737381,
             0.426659882,
@@ -88968,6 +89448,16 @@
           "frame": 22,
           "other": "LevelRoot/desert_map/terrain_desert1",
           "layer": 30,
+          "impulse": [
+            -0.00438830024,
+            3.44804215,
+            -0.0739502
+          ],
+          "relativeVelocity": [
+            0.0,
+            3.32391524,
+            0.0
+          ],
           "rootPosition": [
             -25.682579,
             -2.14768815,
@@ -95709,6 +96199,16 @@
           "frame": 22,
           "other": "LevelRoot/desert_map/terrain_desert1",
           "layer": 30,
+          "impulse": [
+            -0.00438778,
+            3.4476335,
+            -0.07394144
+          ],
+          "relativeVelocity": [
+            0.0,
+            3.32391524,
+            0.0
+          ],
           "rootPosition": [
             -25.6822052,
             -2.147705,
@@ -102450,6 +102950,16 @@
           "frame": 22,
           "other": "LevelRoot/desert_map/terrain_desert1",
           "layer": 30,
+          "impulse": [
+            -0.00438812049,
+            3.44790077,
+            -0.07394717
+          ],
+          "relativeVelocity": [
+            0.0,
+            3.32391524,
+            0.0
+          ],
           "rootPosition": [
             -25.6823273,
             -2.14767051,
@@ -102485,6 +102995,16 @@
           "frame": 138,
           "other": "LevelRoot/desert_map/terrain_desert1",
           "layer": 30,
+          "impulse": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "relativeVelocity": [
+            -0.00194692938,
+            0.008816138,
+            0.350730538
+          ],
           "rootPosition": [
             -25.6219368,
             -2.15937042,
@@ -109226,6 +109746,16 @@
           "frame": 23,
           "other": "LevelRoot/desert_map/terrain_desert1",
           "layer": 30,
+          "impulse": [
+            -0.483656853,
+            3.50539947,
+            -0.0753948539
+          ],
+          "relativeVelocity": [
+            0.0,
+            3.449713,
+            0.0
+          ],
           "rootPosition": [
             -22.2141037,
             -2.10254955,
@@ -109261,6 +109791,16 @@
           "frame": 53,
           "other": "LevelRoot/desert_map/props/barier",
           "layer": 13,
+          "impulse": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "relativeVelocity": [
+            0.6941218,
+            0.105970249,
+            0.040337082
+          ],
           "rootPosition": [
             -22.53036,
             -2.14651442,
@@ -109296,6 +109836,16 @@
           "frame": 77,
           "other": "LevelRoot/desert_map/terrain_desert1",
           "layer": 30,
+          "impulse": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "relativeVelocity": [
+            0.2695752,
+            0.0448788255,
+            0.2331145
+          ],
           "rootPosition": [
             -22.59144,
             -2.15673327,
@@ -116037,6 +116587,16 @@
           "frame": 23,
           "other": "LevelRoot/desert_map/terrain_desert1",
           "layer": 30,
+          "impulse": [
+            -0.483900249,
+            3.50716352,
+            -0.0754328
+          ],
+          "relativeVelocity": [
+            0.0,
+            3.449713,
+            0.0
+          ],
           "rootPosition": [
             -22.213747,
             -2.10257363,
@@ -116072,6 +116632,16 @@
           "frame": 52,
           "other": "LevelRoot/desert_map/props/barier",
           "layer": 13,
+          "impulse": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "relativeVelocity": [
+            0.638097048,
+            0.09009892,
+            0.0278257448
+          ],
           "rootPosition": [
             -22.4957333,
             -2.14161086,
@@ -116107,6 +116677,16 @@
           "frame": 74,
           "other": "LevelRoot/desert_map/props/barier",
           "layer": 13,
+          "impulse": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "relativeVelocity": [
+            0.2271654,
+            0.03480631,
+            0.189560249
+          ],
           "rootPosition": [
             -22.55174,
             -2.15103722,
@@ -116142,6 +116722,16 @@
           "frame": 85,
           "other": "LevelRoot/desert_map/props/fence",
           "layer": 13,
+          "impulse": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "relativeVelocity": [
+            0.219951361,
+            0.0296099186,
+            0.251758367
+          ],
           "rootPosition": [
             -22.6025047,
             -2.158512,
@@ -122883,6 +123473,16 @@
           "frame": 23,
           "other": "LevelRoot/desert_map/terrain_desert1",
           "layer": 30,
+          "impulse": [
+            -0.4838675,
+            3.5069263,
+            -0.0754276961
+          ],
+          "relativeVelocity": [
+            0.0,
+            3.449713,
+            0.0
+          ],
           "rootPosition": [
             -22.21383,
             -2.10253668,
@@ -122918,6 +123518,16 @@
           "frame": 56,
           "other": "LevelRoot/desert_map/props/barier",
           "layer": 13,
+          "impulse": [
+            0.0609309673,
+            0.050139118,
+            -0.0285536218
+          ],
+          "relativeVelocity": [
+            0.694692254,
+            0.107301608,
+            0.126918063
+          ],
           "rootPosition": [
             -22.55401,
             -2.149636,
@@ -122953,6 +123563,16 @@
           "frame": 56,
           "other": "LevelRoot/desert_map/props/barier",
           "layer": 13,
+          "impulse": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "relativeVelocity": [
+            0.694692254,
+            0.107301608,
+            0.126918063
+          ],
           "rootPosition": [
             -22.55401,
             -2.149636,
@@ -122988,6 +123608,16 @@
           "frame": 57,
           "other": "LevelRoot/desert_map/terrain_desert1",
           "layer": 30,
+          "impulse": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "relativeVelocity": [
+            0.6408691,
+            0.0801142156,
+            0.124544643
+          ],
           "rootPosition": [
             -22.5617828,
             -2.146485,
@@ -123023,6 +123653,16 @@
           "frame": 65,
           "other": "LevelRoot/desert_map/props/fence",
           "layer": 13,
+          "impulse": [
+            0.05307497,
+            0.07354224,
+            0.0613019727
+          ],
+          "relativeVelocity": [
+            0.07606018,
+            0.03699529,
+            0.4179457
+          ],
           "rootPosition": [
             -22.5775776,
             -2.15388727,
@@ -123075,6 +123715,16 @@
           "frame": 80,
           "other": "LevelRoot/desert_map/props/barier",
           "layer": 13,
+          "impulse": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "relativeVelocity": [
+            0.06605187,
+            -0.005048454,
+            0.0170195848
+          ],
           "rootPosition": [
             -22.5783539,
             -2.154281,
@@ -129816,6 +130466,16 @@
           "frame": 20,
           "other": "LevelRootPark/park_map/ground",
           "layer": 13,
+          "impulse": [
+            0.0,
+            3.195385,
+            1.39674711E-07
+          ],
+          "relativeVelocity": [
+            0.0,
+            3.06456566,
+            0.0
+          ],
           "rootPosition": [
             -1.60750937,
             0.421390176,
@@ -129851,6 +130511,16 @@
           "frame": 114,
           "other": "LevelRootPark/park_map/Set Pieces/Lamps/Left/lamp (1)",
           "layer": 13,
+          "impulse": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "relativeVelocity": [
+            0.00170157477,
+            0.00277610123,
+            -0.131642967
+          ],
           "rootPosition": [
             -1.6095221,
             0.429582357,
@@ -129920,6 +130590,16 @@
           "frame": 118,
           "other": "LevelRootPark/park_map/Set Pieces/Lamps/Left/lamp (1)",
           "layer": 13,
+          "impulse": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "relativeVelocity": [
+            0.00175274664,
+            0.00297008455,
+            -0.135594845
+          ],
           "rootPosition": [
             -1.60965908,
             0.429582357,
@@ -136661,6 +137341,16 @@
           "frame": 20,
           "other": "LevelRootPark/park_map/ground",
           "layer": 13,
+          "impulse": [
+            0.0,
+            3.19523859,
+            1.39668316E-07
+          ],
+          "relativeVelocity": [
+            0.0,
+            3.06456566,
+            0.0
+          ],
           "rootPosition": [
             -1.60701585,
             0.421367347,
@@ -136696,6 +137386,16 @@
           "frame": 96,
           "other": "LevelRootPark/park_map/Set Pieces/Trashbins/trashbin (1)",
           "layer": 13,
+          "impulse": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "relativeVelocity": [
+            -0.0755941,
+            0.00365576148,
+            -0.129482254
+          ],
           "rootPosition": [
             -1.53104389,
             0.4295807,
@@ -143437,6 +144137,16 @@
           "frame": 20,
           "other": "LevelRootPark/park_map/ground",
           "layer": 13,
+          "impulse": [
+            0.0,
+            3.19551,
+            1.39680168E-07
+          ],
+          "relativeVelocity": [
+            0.0,
+            3.06456566,
+            0.0
+          ],
           "rootPosition": [
             -1.60717833,
             0.4214106,
@@ -150178,6 +150888,16 @@
           "frame": 21,
           "other": "LevelRootPark/park_map/ground",
           "layer": 13,
+          "impulse": [
+            0.0,
+            2.74754643,
+            1.20099074E-07
+          ],
+          "relativeVelocity": [
+            0.0,
+            3.1955502,
+            0.0
+          ],
           "rootPosition": [
             1.86826086,
             0.4324516,
@@ -150213,6 +150933,16 @@
           "frame": 33,
           "other": "LevelRootPark/park_map/Barriers/bench",
           "layer": 13,
+          "impulse": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "relativeVelocity": [
+            0.0005978365,
+            0.0006252229,
+            -0.04626291
+          ],
           "rootPosition": [
             1.86813724,
             0.429585874,
@@ -156954,6 +157684,16 @@
           "frame": 21,
           "other": "LevelRootPark/park_map/ground",
           "layer": 13,
+          "impulse": [
+            0.0,
+            2.74708843,
+            1.20079051E-07
+          ],
+          "relativeVelocity": [
+            0.0,
+            3.1955502,
+            0.0
+          ],
           "rootPosition": [
             1.8685416,
             0.432438552,
@@ -156989,6 +157729,16 @@
           "frame": 32,
           "other": "LevelRootPark/park_map/Barriers/bench",
           "layer": 13,
+          "impulse": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "relativeVelocity": [
+            -0.030746242,
+            0.00112009048,
+            -0.05294586
+          ],
           "rootPosition": [
             1.87445116,
             0.429584235,
@@ -163730,6 +164480,16 @@
           "frame": 21,
           "other": "LevelRootPark/park_map/ground",
           "layer": 13,
+          "impulse": [
+            0.0,
+            2.74795675,
+            1.20117008E-07
+          ],
+          "relativeVelocity": [
+            0.0,
+            3.1955502,
+            0.0
+          ],
           "rootPosition": [
             1.86844921,
             0.4324632,
@@ -163765,6 +164525,16 @@
           "frame": 43,
           "other": "LevelRootPark/park_map/Barriers/bench",
           "layer": 13,
+          "impulse": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "relativeVelocity": [
+            -0.0266717151,
+            0.00020763278,
+            0.0118500749
+          ],
           "rootPosition": [
             1.87764025,
             0.429587424,
@@ -170506,6 +171276,16 @@
           "frame": 1,
           "other": "LevelRoot/snow_map/lamp",
           "layer": 13,
+          "impulse": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "relativeVelocity": [
+            0.0,
+            0.0,
+            0.0
+          ],
           "rootPosition": [
             -1.60240018,
             1.07575619,
@@ -170626,6 +171406,16 @@
           "frame": 1,
           "other": "LevelRoot/snow_map/lamp",
           "layer": 13,
+          "impulse": [
+            -0.0005443074,
+            -1.84857518E-09,
+            0.00189584738
+          ],
+          "relativeVelocity": [
+            0.0,
+            0.0,
+            0.0
+          ],
           "rootPosition": [
             -1.60240018,
             1.07575619,
@@ -170661,6 +171451,16 @@
           "frame": 19,
           "other": "LevelRoot/snow_map/roadblock",
           "layer": 13,
+          "impulse": [
+            -1.23700833,
+            1.66904056,
+            0.420310855
+          ],
+          "relativeVelocity": [
+            0.00133183389,
+            2.92822671,
+            -0.00427047675
+          ],
           "rootPosition": [
             -1.63391674,
             0.489241123,
@@ -170696,6 +171496,16 @@
           "frame": 19,
           "other": "LevelRoot/snow_map/roadblock",
           "layer": 13,
+          "impulse": [
+            -0.243509278,
+            0.324619561,
+            -0.0372671075
+          ],
+          "relativeVelocity": [
+            0.00133183389,
+            2.92822671,
+            -0.00427047675
+          ],
           "rootPosition": [
             -1.63391674,
             0.489241123,
@@ -170731,6 +171541,16 @@
           "frame": 25,
           "other": "LevelRoot/snow_map/terrain_snow1",
           "layer": 13,
+          "impulse": [
+            0.07143007,
+            1.14288127,
+            -0.0423289239
+          ],
+          "relativeVelocity": [
+            0.998504758,
+            1.50048864,
+            -0.273104131
+          ],
           "rootPosition": [
             -1.75566864,
             0.3643582,
@@ -170766,6 +171586,16 @@
           "frame": 35,
           "other": "LevelRoot/snow_map/terrain_snow1",
           "layer": 13,
+          "impulse": [
+            0.000456864276,
+            0.007309834,
+            -0.000270735531
+          ],
+          "relativeVelocity": [
+            0.8467435,
+            -0.04184775,
+            -0.211361319
+          ],
           "rootPosition": [
             -1.93599236,
             0.3747321,
@@ -170801,6 +171631,16 @@
           "frame": 55,
           "other": "LevelRoot/snow_map/terrain_snow1",
           "layer": 13,
+          "impulse": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "relativeVelocity": [
+            0.3908343,
+            -0.0105210692,
+            0.2680394
+          ],
           "rootPosition": [
             -2.13999462,
             0.383924484,
@@ -177542,6 +178382,16 @@
           "frame": 1,
           "other": "LevelRoot/snow_map/lamp",
           "layer": 13,
+          "impulse": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "relativeVelocity": [
+            0.0,
+            0.0,
+            0.0
+          ],
           "rootPosition": [
             -1.62058258,
             1.06627572,
@@ -177577,6 +178427,16 @@
           "frame": 1,
           "other": "LevelRoot/snow_map/lamp",
           "layer": 13,
+          "impulse": [
+            0.7999663,
+            -0.795434654,
+            3.17156339
+          ],
+          "relativeVelocity": [
+            0.0,
+            0.0,
+            0.0
+          ],
           "rootPosition": [
             -1.62058258,
             1.06627572,
@@ -177799,6 +178659,16 @@
           "frame": 7,
           "other": "LevelRoot/snow_map/lamp",
           "layer": 13,
+          "impulse": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "relativeVelocity": [
+            -0.16316615,
+            1.07642663,
+            -0.7392432
+          ],
           "rootPosition": [
             -1.59559965,
             0.9689981,
@@ -177851,6 +178721,16 @@
           "frame": 18,
           "other": "LevelRoot/snow_map/roadblock",
           "layer": 13,
+          "impulse": [
+            -1.13161314,
+            2.153757,
+            -8.337148E-08
+          ],
+          "relativeVelocity": [
+            -0.130652279,
+            2.77765727,
+            -0.591935337
+          ],
           "rootPosition": [
             -1.57905352,
             0.5343977,
@@ -177886,6 +178766,16 @@
           "frame": 27,
           "other": "LevelRoot/snow_map/terrain_snow1",
           "layer": 13,
+          "impulse": [
+            0.0847899,
+            1.35663891,
+            -0.050245855
+          ],
+          "relativeVelocity": [
+            1.0047996,
+            1.65731752,
+            -0.237871662
+          ],
           "rootPosition": [
             -1.76348054,
             0.3689398,
@@ -177938,6 +178828,16 @@
           "frame": 27,
           "other": "LevelRoot/snow_map/terrain_snow1",
           "layer": 13,
+          "impulse": [
+            0.03108325,
+            0.497332066,
+            -0.0184197
+          ],
+          "relativeVelocity": [
+            1.0047996,
+            1.65731752,
+            -0.237871662
+          ],
           "rootPosition": [
             -1.76348054,
             0.3689398,
@@ -184696,6 +185596,16 @@
           "frame": 1,
           "other": "LevelRoot/snow_map/lamp",
           "layer": 13,
+          "impulse": [
+            1.11830878,
+            -0.9094155,
+            4.140495
+          ],
+          "relativeVelocity": [
+            0.0,
+            0.0,
+            0.0
+          ],
           "rootPosition": [
             -1.62642527,
             1.05832946,
@@ -184918,6 +185828,16 @@
           "frame": 1,
           "other": "LevelRoot/snow_map/lamp",
           "layer": 13,
+          "impulse": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "relativeVelocity": [
+            0.0,
+            0.0,
+            0.0
+          ],
           "rootPosition": [
             -1.62642527,
             1.05832946,
@@ -184953,6 +185873,16 @@
           "frame": 18,
           "other": "LevelRoot/snow_map/roadblock",
           "layer": 13,
+          "impulse": [
+            -1.43711734,
+            2.11148024,
+            0.0
+          ],
+          "relativeVelocity": [
+            -0.090905726,
+            2.884295,
+            -0.917823255
+          ],
           "rootPosition": [
             -1.62080824,
             0.498930782,
@@ -184988,6 +185918,16 @@
           "frame": 24,
           "other": "LevelRoot/snow_map/terrain_snow1",
           "layer": 13,
+          "impulse": [
+            0.0991849452,
+            1.58695936,
+            -0.058776252
+          ],
+          "relativeVelocity": [
+            1.10914493,
+            1.563635,
+            -0.326191753
+          ],
           "rootPosition": [
             -1.75732362,
             0.376659036,
@@ -185023,6 +185963,16 @@
           "frame": 31,
           "other": "LevelRoot/snow_map/terrain_snow1",
           "layer": 13,
+          "impulse": [
+            0.00196002237,
+            0.0313603766,
+            -0.00116149476
+          ],
+          "relativeVelocity": [
+            1.019967,
+            -0.05593747,
+            -0.314592659
+          ],
           "rootPosition": [
             -1.90317249,
             0.387079775,
@@ -185058,6 +186008,16 @@
           "frame": 44,
           "other": "LevelRoot/snow_map/terrain_snow1",
           "layer": 13,
+          "impulse": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "relativeVelocity": [
+            0.0992686152,
+            0.257887661,
+            0.453747
+          ],
           "rootPosition": [
             -1.99629366,
             0.4006342,
@@ -185093,6 +186053,16 @@
           "frame": 55,
           "other": "LevelRoot/snow_map/terrain_snow1",
           "layer": 13,
+          "impulse": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "relativeVelocity": [
+            -0.03785443,
+            0.0299708545,
+            0.5572624
+          ],
           "rootPosition": [
             -1.99189675,
             0.3856611,
@@ -185128,6 +186098,16 @@
           "frame": 111,
           "other": "LevelRoot/snow_map/terrain_snow1",
           "layer": 13,
+          "impulse": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "relativeVelocity": [
+            -0.0127340741,
+            0.0125000924,
+            0.245648682
+          ],
           "rootPosition": [
             -2.14227653,
             0.3877659,
@@ -191869,6 +192849,16 @@
           "frame": 18,
           "other": "LevelRoot/snow_map/metal",
           "layer": 13,
+          "impulse": [
+            -0.104039341,
+            2.866519,
+            0.4080168
+          ],
+          "relativeVelocity": [
+            0.0,
+            2.79452252,
+            0.0
+          ],
           "rootPosition": [
             1.88139856,
             0.663909554,
@@ -191904,6 +192894,16 @@
           "frame": 42,
           "other": "LevelRoot/snow_map/armybox_2",
           "layer": 13,
+          "impulse": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "relativeVelocity": [
+            0.213830963,
+            1.2026118,
+            -0.8513878
+          ],
           "rootPosition": [
             1.8081286,
             0.4567822,
@@ -191973,6 +192973,16 @@
           "frame": 44,
           "other": "LevelRoot/snow_map/terrain_snow1",
           "layer": 13,
+          "impulse": [
+            -0.0419834629,
+            1.34347045,
+            -0.0497581623
+          ],
+          "relativeVelocity": [
+            0.205717191,
+            1.53244615,
+            -0.819121361
+          ],
           "rootPosition": [
             1.79979444,
             0.4249477,
@@ -192008,6 +193018,16 @@
           "frame": 44,
           "other": "LevelRoot/snow_map/terrain_snow1",
           "layer": 13,
+          "impulse": [
+            -0.00381964841,
+            0.12222866,
+            -0.004526981
+          ],
+          "relativeVelocity": [
+            0.205717191,
+            1.53244615,
+            -0.819121361
+          ],
           "rootPosition": [
             1.79979444,
             0.4249477,
@@ -192043,6 +193063,16 @@
           "frame": 54,
           "other": "LevelRoot/snow_map/armybox_2",
           "layer": 13,
+          "impulse": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "relativeVelocity": [
+            -0.275974423,
+            -0.0125383735,
+            -0.5951713
+          ],
           "rootPosition": [
             1.839421,
             0.427963644,
@@ -192095,6 +193125,16 @@
           "frame": 58,
           "other": "LevelRoot/snow_map/terrain_snow1",
           "layer": 13,
+          "impulse": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "relativeVelocity": [
+            -0.241777137,
+            -0.013446331,
+            -0.5558087
+          ],
           "rootPosition": [
             1.85922813,
             0.430252641,
@@ -192130,6 +193170,16 @@
           "frame": 65,
           "other": "LevelRoot/snow_map/armybox_2",
           "layer": 13,
+          "impulse": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "relativeVelocity": [
+            0.11973314,
+            0.07765724,
+            -0.4506771
+          ],
           "rootPosition": [
             1.8634131,
             0.4333743,
@@ -192165,6 +193215,16 @@
           "frame": 77,
           "other": "LevelRoot/snow_map/armybox_2",
           "layer": 13,
+          "impulse": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "relativeVelocity": [
+            0.154992089,
+            -0.04023069,
+            -0.328443944
+          ],
           "rootPosition": [
             1.818687,
             0.436548918,
@@ -198906,6 +199966,16 @@
           "frame": 18,
           "other": "LevelRoot/snow_map/metal",
           "layer": 13,
+          "impulse": [
+            -0.104017824,
+            2.86593223,
+            0.4079333
+          ],
+          "relativeVelocity": [
+            0.0,
+            2.79452252,
+            0.0
+          ],
           "rootPosition": [
             1.881701,
             0.663893461,
@@ -198941,6 +200011,16 @@
           "frame": 41,
           "other": "LevelRoot/snow_map/terrain_snow1",
           "layer": 13,
+          "impulse": [
+            -0.02945198,
+            0.942463338,
+            -0.0349060744
+          ],
+          "relativeVelocity": [
+            0.163192347,
+            1.07728052,
+            -0.8677311
+          ],
           "rootPosition": [
             1.82794356,
             0.49658373,
@@ -198976,6 +200056,16 @@
           "frame": 56,
           "other": "LevelRoot/snow_map/metal",
           "layer": 13,
+          "impulse": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "relativeVelocity": [
+            0.51876986,
+            0.397184551,
+            0.366856664
+          ],
           "rootPosition": [
             1.7089572,
             0.453133345,
@@ -199011,6 +200101,16 @@
           "frame": 57,
           "other": "LevelRoot/snow_map/armybox_2",
           "layer": 13,
+          "impulse": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "relativeVelocity": [
+            0.54249835,
+            0.452502966,
+            0.416144162
+          ],
           "rootPosition": [
             1.7005583,
             0.445179462,
@@ -199046,6 +200146,16 @@
           "frame": 57,
           "other": "LevelRoot/snow_map/armybox_2",
           "layer": 13,
+          "impulse": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "relativeVelocity": [
+            0.54249835,
+            0.452502966,
+            0.416144162
+          ],
           "rootPosition": [
             1.7005583,
             0.445179462,
@@ -205787,6 +206897,16 @@
           "frame": 18,
           "other": "LevelRoot/snow_map/metal",
           "layer": 13,
+          "impulse": [
+            -0.104191341,
+            2.87070751,
+            0.408612937
+          ],
+          "relativeVelocity": [
+            0.0,
+            2.79452252,
+            0.0
+          ],
           "rootPosition": [
             1.88160658,
             0.6639075,
@@ -205822,6 +206942,16 @@
           "frame": 44,
           "other": "LevelRoot/snow_map/terrain_snow1",
           "layer": 13,
+          "impulse": [
+            -0.04526472,
+            1.44847071,
+            -0.05364709
+          ],
+          "relativeVelocity": [
+            0.198552787,
+            1.27139246,
+            -0.8491317
+          ],
           "rootPosition": [
             1.806287,
             0.465734959,
@@ -205857,6 +206987,16 @@
           "frame": 52,
           "other": "LevelRoot/snow_map/armybox_2",
           "layer": 13,
+          "impulse": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "relativeVelocity": [
+            0.6491371,
+            0.228481635,
+            -0.12325038
+          ],
           "rootPosition": [
             1.715372,
             0.4559355,
@@ -205892,6 +207032,16 @@
           "frame": 52,
           "other": "LevelRoot/snow_map/armybox_2",
           "layer": 13,
+          "impulse": [
+            0.03027731,
+            0.07065634,
+            -0.008462846
+          ],
+          "relativeVelocity": [
+            0.6491371,
+            0.228481635,
+            -0.12325038
+          ],
           "rootPosition": [
             1.715372,
             0.4559355,
@@ -205927,6 +207077,16 @@
           "frame": 63,
           "other": "LevelRoot/snow_map/terrain_snow1",
           "layer": 13,
+          "impulse": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "relativeVelocity": [
+            -0.009654222,
+            0.146643,
+            0.3536115
+          ],
           "rootPosition": [
             1.71631348,
             0.434586734,
@@ -205962,6 +207122,16 @@
           "frame": 66,
           "other": "LevelRoot/snow_map/metal",
           "layer": 13,
+          "impulse": [
+            -0.156775355,
+            0.1750249,
+            0.3367858
+          ],
+          "relativeVelocity": [
+            -0.0199741442,
+            0.236888349,
+            0.469133079
+          ],
           "rootPosition": [
             1.716098,
             0.4255185,

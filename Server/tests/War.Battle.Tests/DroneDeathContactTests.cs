@@ -11,6 +11,7 @@ internal static class DroneDeathContactTests
         float maximumPointError=0,maximumNormalError=0,maximumSeparationError=0;
         float firstPointError=0,firstNormalError=0,firstSeparationError=0;int firstSphereContacts=0;
         float firstBodyPointError=0;
+        float maximumImpulseResidual=0;
         string worstPointCase="",worstSeparationCase="";
         Vector3 Vec(JsonElement value)=>new(value[0].GetSingle(),value[1].GetSingle(),value[2].GetSingle());
         foreach(var row in document.RootElement.GetProperty("rows").EnumerateArray())
@@ -122,6 +123,12 @@ internal static class DroneDeathContactTests
                 }
             }
             var first=callbacks[0];int frame=first.GetProperty("frame").GetInt32();
+            var priorVelocity=Vec(row.GetProperty("frames")[frame-1].GetProperty("velocity"));
+            var impulseSum=callbacks.EnumerateArray().Where(c=>c.GetProperty("frame").GetInt32()==frame)
+                .Aggregate(Vector3.Zero,(sum,c)=>sum+Vec(c.GetProperty("impulse")));
+            var freeStep=DroneRigidMotion.AdvanceVelocities(priorVelocity,Vector3.Zero);
+            maximumImpulseResidual=Math.Max(maximumImpulseResidual,Vector3.Distance(freeStep.Velocity+impulseSum,
+                Vec(row.GetProperty("frames")[frame].GetProperty("velocity"))));
             var freePosition=Vec(row.GetProperty("frames")[0].GetProperty("position"));
             var freeVelocity=Vector3.Zero;
             var initial=row.GetProperty("frames")[0];
@@ -187,6 +194,8 @@ internal static class DroneDeathContactTests
             " separation error="+firstSeparationError+" body point error="+firstBodyPointError);
         Console.WriteLine("Drone worst contact point: "+worstPointCase);
         Console.WriteLine("Drone worst contact separation: "+worstSeparationCase);
+        Console.WriteLine("Drone reported collision impulse diagnostic: maximum velocity residual="+
+            maximumImpulseResidual+" (reported impulses alone do not verify complete contact response).");
         return count;
     }
 }

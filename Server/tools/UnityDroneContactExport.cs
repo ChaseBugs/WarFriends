@@ -130,6 +130,8 @@ public sealed class DroneCollisionObserver:MonoBehaviour
     {
         var body=GetComponent<Rigidbody>();var position=body.position;var rotation=body.rotation;
         Rows.Add(new{frame=Frame,other=Path(collision.collider.transform),layer=collision.collider.gameObject.layer,
+            impulse=new[]{collision.impulse.x,collision.impulse.y,collision.impulse.z},
+            relativeVelocity=new[]{collision.relativeVelocity.x,collision.relativeVelocity.y,collision.relativeVelocity.z},
             rootPosition=new[]{position.x,position.y,position.z},
             rootRotation=new[]{rotation.x,rotation.y,rotation.z,rotation.w},
             contacts=collision.contacts.Select(c=>new{position=new[]{c.point.x,c.point.y,c.point.z},
