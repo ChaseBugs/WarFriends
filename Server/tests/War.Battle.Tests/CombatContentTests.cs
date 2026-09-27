@@ -2703,6 +2703,39 @@ internal static class CombatContentTests
         deployedDroneMatch.Advance(257);
         Check(deployedDroneMatch.ArmyEntityBatch(decoyPlayer,0,0).Entities.Count==0,
             "deployed Drone death releases route traversal before subsequent motion tick");
+        var droneShotManifest=deployedDroneManifest with {MatchId="player-projectile-drone",DurationSeconds=120,
+            Players=[deployedDroneManifest.Players[0] with {ArmySpecialUpgradeIndexes=[-1]},deployedDroneManifest.Players[1]]};
+        var droneShotMatch=new MatchEngine(droneShotManifest,content:content,armyChoice:_=>0);
+        droneShotMatch.Admit(decoyPlayer);droneShotMatch.Admit(decoyOpponent);
+        droneShotMatch.Command(decoyPlayer,new(){CommandId=1,Ready=new(){ManifestHash=droneShotMatch.ManifestHash}});
+        droneShotMatch.Command(decoyOpponent,new(){CommandId=1,Ready=new(){ManifestHash=droneShotMatch.ManifestHash}});
+        droneShotMatch.Advance(60);var droneShotOption=droneShotMatch.ArmyBatch(decoyPlayer).OptionIndexes.First();
+        droneShotMatch.Command(decoyPlayer,new(){CommandId=2,DeployArmy=new(){OptionIndex=droneShotOption}});
+        droneShotMatch.Advance(61);var shotDrone=droneShotMatch.ArmyEntityBatch(decoyPlayer,0,0).Entities.Single();
+        float initialShotHealth=shotDrone.Health;bool playerShotDamagedDrone=false;ulong droneFireCommand=2;
+        for(ulong shotTick=62;shotTick<3300&&!droneShotMatch.Terminal;shotTick++)
+        {
+            if(shotTick%12==0)
+            {
+                var currentDrone=droneShotMatch.ArmyEntityBatch(decoyPlayer,0,0).Entities.SingleOrDefault();
+                if(currentDrone==null){playerShotDamagedDrone=true;break;}
+                var q=currentDrone.DroneRotation;
+                var corner=Vector3.Transform(new Vector3(.34f,.05f,.34f),new Quaternion(q.X,q.Y,q.Z,q.W));
+                var aim=new Vector3(currentDrone.X,currentDrone.Y,currentDrone.Z)+corner;
+                droneShotMatch.Command(decoyOpponent,new(){CommandId=droneFireCommand++,Fire=new(){TargetX=aim.X,TargetY=aim.Y,TargetZ=aim.Z}});
+            }
+            droneShotMatch.Advance(shotTick);
+            if(droneShotMatch.ArmyHealth(shotDrone.EntityKey) is not float health||health<initialShotHealth)
+            {playerShotDamagedDrone=true;if(droneShotMatch.ArmyHealth(shotDrone.EntityKey)==null)break;}
+        }
+        Check(playerShotDamagedDrone&&droneShotMatch.Snapshot().Players.Single(p=>p.PlayerId==decoyOpponent).ConfirmedEnemyHits>0,
+            "normal player Fire command advances projectile collision into deployed Drone root damage");
+        Console.WriteLine($"Drone shot trace initial {initialShotHealth}, remaining {droneShotMatch.ArmyHealth(shotDrone.EntityKey)}, hits {droneShotMatch.Snapshot().Players.Single(p=>p.PlayerId==decoyOpponent).ConfirmedEnemyHits}, terminal {droneShotMatch.Terminal}, phase {droneShotMatch.Snapshot().Phase}");
+        Check(droneShotMatch.ArmyHealth(shotDrone.EntityKey)==null&&
+            droneShotMatch.DroneTargetSnapshot().All(r=>r.Id!="army:"+shotDrone.EntityKey)&&
+            droneShotMatch.GroundVehicleShotTargets(decoyOpponent).All(r=>r.EntityId!=shotDrone.EntityKey)&&
+            droneShotMatch.Snapshot().Players.Single(p=>p.PlayerId==decoyPlayer).ConfirmedArmyLosses==1,
+            "lethal player projectile removes Drone vitality, sight/shot targets and credits one army loss");
         var droneClockMatch=new MatchEngine(heavyTurretManifest with {MatchId="drone-special-clock"},content:content);
         droneClockMatch.Admit(decoyPlayer);droneClockMatch.Admit(decoyOpponent);
         droneClockMatch.Command(decoyPlayer,new(){CommandId=1,Ready=new(){ManifestHash=droneClockMatch.ManifestHash}});
