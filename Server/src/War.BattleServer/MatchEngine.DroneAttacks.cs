@@ -7,7 +7,7 @@ public sealed partial class MatchEngine
     private readonly Dictionary<ulong,DroneAttackState> droneAttacks=[];
     private readonly DroneWeaponCatalog? droneWeapon;
     private readonly DroneProjectileCatalog? droneProjectile;
-    private sealed record DroneHostProjectile(ulong ArmyId,DroneProjectileIntent Intent,
+    private sealed record DroneHostProjectile(ulong ArmyId,string Owner,DroneProjectileIntent Intent,
         BulletFlight? Real,DroneFakeProjectileFlight? Fake);
     internal sealed record DroneHostImpact(ulong ArmyId,DroneProjectileIntent Intent,BulletImpact Impact);
     private readonly Dictionary<ulong,DroneHostProjectile> droneProjectiles=[];
@@ -21,8 +21,8 @@ public sealed partial class MatchEngine
         try
         {
             var flight=intent.Shot.Batch.IsFake
-                ?new DroneHostProjectile(key,intent,null,new DroneFakeProjectileFlight(intent,tick))
-                :new DroneHostProjectile(key,intent,new BulletFlight(id,army.OwnerPlayerId,
+                ?new DroneHostProjectile(key,army.OwnerPlayerId,intent,null,new DroneFakeProjectileFlight(intent,tick))
+                :new DroneHostProjectile(key,army.OwnerPlayerId,intent,new BulletFlight(id,army.OwnerPlayerId,
                     new(intent.Speed,intent.CheckDistance,false),intent.Shot.Muzzle,intent.Shot.Batch.Target,tick,
                     (origin,direction,range)=>TraceHeavyTurretShot(army.OwnerPlayerId,origin,direction,range)),null);
             droneProjectiles.Add(id,flight);projectileId=id;return id;
@@ -43,10 +43,42 @@ public sealed partial class MatchEngine
                 var flight=projectile.Real??throw new InvalidDataException("Drone projectile lacks flight authority.");
                 var impact=flight.Advance(tick);
                 if(flight.Finished)droneProjectiles.Remove(id);
-                if(impact!=null)impacts.Add(new(projectile.ArmyId,projectile.Intent,impact));
+                if(impact!=null)
+                {
+                    impacts.Add(new(projectile.ArmyId,projectile.Intent,impact));
+                    ApplyDroneProjectileImpact(projectile.Intent,impact);
+                    if(Terminal)break;
+                }
             }
         }
         return impacts.AsReadOnly();
+    }
+    private void ApplyDroneProjectileImpact(DroneProjectileIntent intent,BulletImpact impact)
+    {
+        if(intent.Shot.Batch.IsFake)throw new InvalidDataException("Fake Drone round cannot authorize damage.");
+        stateRevision++;
+        Emit(MatchEventKind.Impact,impact.OwnerId,impact.Hit.PlayerId??"",impact.ProjectileId,impact.Hit.Position,0,"drone");
+        // Both weapons use Ammo without PlayerWeapon: same unit shield and barrel policy.
+        ApplyHeavyTurretEnvironmentImpact(impact,intent.Damage);
+        if(Terminal)return;
+        var hit=impact.Hit;
+        if(hit.PlayerId is { } player)
+            ApplyResolvedPlayerDamage(impact.OwnerId,player,new(intent.Damage,CombatDamageType.Shot,
+                PartWeight:hit.PartWeight,FriendKill:true,PlayerCoefficient:intent.PlayerDamageCoefficient,
+                PlayerOvertimeCoefficient:intent.PlayerOvertimeDamageCoefficient,Overtime:overtime),
+                damageRoll?.Invoke()??1,true);
+        else if(hit is {DynamicDecoy:true,DynamicEntityId:ulong decoy})
+            ApplyDecoyProjectileImpact(impact.OwnerId,decoy,intent.Damage,hit.PartWeight,impact.ProjectileId);
+        else if(hit is {DynamicArmyInfantry:true,DynamicEntityId:ulong infantry})
+            ApplyArmyProjectileImpact(impact.OwnerId,infantry,intent.Damage,hit.PartWeight);
+        else if(hit is {DynamicHeavyTurret:true,DynamicEntityId:ulong turret})
+            ApplyHeavyTurretProjectileImpact(impact.OwnerId,turret,intent.Damage,hit.PartWeight,impact.ProjectileId);
+        else if(hit is {DynamicPassengerRole:{} role,DynamicEntityId:ulong vehicle})
+            ApplyGroundVehiclePassengerProjectileImpact(impact.OwnerId,vehicle,role,intent.Damage,hit.PartWeight);
+        else if(hit is {DynamicRepairDronePathIndex:int path,DynamicEntityId:ulong repairVehicle})
+            ApplyTransporterRepairDroneProjectileImpact(impact.OwnerId,repairVehicle,path,intent.Damage,hit.PartWeight);
+        else if(hit is {DynamicPartId:int part,DynamicEntityId:ulong body})
+            ApplyArmyBodyProjectileImpact(impact.OwnerId,body,part,intent.Damage);
     }
     internal float? DroneAttackDeadline(ulong key)=>droneAttacks.GetValueOrDefault(key)?.Deadline;
     internal DroneProjectileIntent? ObserveDroneAttack(ulong key)

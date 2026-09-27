@@ -1267,6 +1267,8 @@ public sealed partial class MatchEngine
 
     private void RemoveOwnedDeployables(string ownerPlayerId)
     {
+        foreach(var id in droneProjectiles.Where(x=>x.Value.Owner==ownerPlayerId).Select(x=>x.Key).ToArray())
+            droneProjectiles.Remove(id);
         if(dronePlayerTargets.Remove(ownerPlayerId))droneTargets.Disable(DronePlayerId(ownerPlayerId));
         foreach(var decoy in decoys.RemoveOwner(ownerPlayerId))
         {
