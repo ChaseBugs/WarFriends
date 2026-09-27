@@ -40,10 +40,13 @@ internal static class DronePersistentContactTests
         int stationaryBodies=0,kinematicContacts=0,contactFreeSteps=0,totalFrames=0;
         var pairCoverage=new SortedDictionary<int,(int Steps,float Velocity,float Angular,float Root)>();
         string singlePairWorstVelocity="";
+        float shorterVelocity=0,shorterAngular=0,shorterRoot=0;
+        int shorterImproved=0,shorterWorse=0,shorterEquivalent=0;
         foreach(var row in root.GetProperty("rows").EnumerateArray())
         {
             var frames=row.GetProperty("frames");
             var cachedSolver=new DroneContactSolver(geometry);
+            var shorterSolver=new DroneContactSolver(geometry);
             var pairIds=new Dictionary<(string?,int),int>();
             var callbacks=row.GetProperty("collisionCallbacks").EnumerateArray().ToLookup(c=>c.GetProperty("frame").GetInt32());
             for(int frame=1;frame<frames.GetArrayLength();frame++)
@@ -59,6 +62,9 @@ internal static class DronePersistentContactTests
                     _=cachedSolver.Solve(Vec(before.GetProperty("position")),Quat(before.GetProperty("rotation")),
                         Vec(before.GetProperty("velocity")),Vec(before.GetProperty("angularVelocity")),
                         Enumerable.Range(0,pairIds.Count).Select(_=>Array.Empty<MaterialContact>()).ToArray(),.999f,.025f,.04f,true);
+                    _=shorterSolver.Solve(Vec(before.GetProperty("position")),Quat(before.GetProperty("rotation")),
+                        Vec(before.GetProperty("velocity")),Vec(before.GetProperty("angularVelocity")),
+                        Enumerable.Range(0,pairIds.Count).Select(_=>Array.Empty<MaterialContact>()).ToArray(),.999f,.0025f,.04f,true);
                     continue;
                 }
                 stays+=group.Count(c=>c.GetProperty("callbackKind").GetString()=="stay");
@@ -112,6 +118,11 @@ internal static class DronePersistentContactTests
                         Vec(c.GetProperty("normal")),c.GetProperty("separation").GetSingle()),new ContactMaterial(.6f,.6f,0))).ToArray();
                 var cached=cachedSolver.Solve(Vec(before.GetProperty("position")),Quat(before.GetProperty("rotation")),
                     Vec(before.GetProperty("velocity")),Vec(before.GetProperty("angularVelocity")),stable,.999f,.025f,.04f,true);
+                var shorter=shorterSolver.Solve(Vec(before.GetProperty("position")),Quat(before.GetProperty("rotation")),
+                    Vec(before.GetProperty("velocity")),Vec(before.GetProperty("angularVelocity")),stable,.999f,.0025f,.04f,true);
+                shorterVelocity=Math.Max(shorterVelocity,Vector3.Distance(shorter.Velocity,Vec(after.GetProperty("velocity"))));
+                shorterAngular=Math.Max(shorterAngular,Vector3.Distance(shorter.AngularVelocity,Vec(after.GetProperty("angularVelocity"))));
+                shorterRoot=Math.Max(shorterRoot,Vector3.Distance(shorter.Pose.Root,Vec(after.GetProperty("position"))));
                 if(frame>=42&&frame<=45&&row.GetProperty("source").GetString()=="Assets/Scenes/Snow_Multiplayer.unity"&&
                    row.GetProperty("fraction").GetInt32()==2&&row.GetProperty("initialRotation")[0].GetSingle()>.1f)
                     foreach(var patch in cachedSolver.FrictionHistory())
@@ -124,6 +135,10 @@ internal static class DronePersistentContactTests
                 float ve=Vector3.Distance(cached.Velocity,Vec(after.GetProperty("velocity")));
                 float ae=Vector3.Distance(cached.AngularVelocity,Vec(after.GetProperty("angularVelocity")));
                 float pe=Vector3.Distance(cached.Pose.Root,Vec(after.GetProperty("position")));
+                float shorterError=Vector3.Distance(shorter.Velocity,Vec(after.GetProperty("velocity")));
+                if(shorterError<ve-.00002f)shorterImproved++;
+                else if(shorterError>ve+.00002f)shorterWorse++;
+                else shorterEquivalent++;
                 if(frame==45&&keyed.Length==1&&keyed[0].Count()==1&&
                    row.GetProperty("source").GetString()=="Assets/Scenes/Snow_Multiplayer.unity"&&
                    row.GetProperty("fraction").GetInt32()==2&&row.GetProperty("initialRotation")[0].GetSingle()>.1f)
@@ -181,6 +196,11 @@ internal static class DronePersistentContactTests
             Console.WriteLine("Drone cached pair-count diagnostic: pairs="+entry.Key+", steps="+entry.Value.Steps+
                 ", velocity="+entry.Value.Velocity+", angular="+entry.Value.Angular+", root="+entry.Value.Root);
         Console.WriteLine("Drone single-pair worst velocity: "+singlePairWorstVelocity);
+        Console.WriteLine("Drone full-dataset .0025 correlation diagnostic: velocity="+shorterVelocity+
+            ", angular="+shorterAngular+", root="+shorterRoot+", improved="+shorterImproved+
+            ", worse="+shorterWorse+", equivalent="+shorterEquivalent+" (policy unverified).");
+        if(shorterImproved+shorterWorse+shorterEquivalent!=steps)
+            throw new Exception("Correlation control did not cover every persistent-contact step.");
         return 4;
     }
     private static IEnumerable<int[]> Permutations(int[] values)
