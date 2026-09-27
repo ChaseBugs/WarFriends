@@ -774,10 +774,10 @@ internal static class CombatContentTests
         var tankCannon=content.Army.ComposeVehicleCannon("ID_UNIT-TANK",0,null,null,1,1);
         var specialTankCannon=content.Army.ComposeVehicleCannon("ID_UNIT-TANK",0,51,null,2,.7f);
         var transporterRepair=content.Army.ComposeTransporterRepairDrone(0,71,null,new(1,1));
-        Check(humveeShot==new ArmyVehicleShotStats(5f,.85f,4,5,1.5f,1.8f,0)&&
-              tankShot==new ArmyVehicleShotStats(5f,.8f,2,5,2f,5f,0)&&
-              buggyShot==new ArmyVehicleShotStats(5f,1f,0,0,0,0,0)&&
-              transporterShot==new ArmyVehicleShotStats(5f,.9f,4,7,3.5f,4.5f,0)&&
+        Check(humveeShot==new ArmyVehicleShotStats(14f,.85f,4,5,1.5f,1.8f,0)&&
+              tankShot==new ArmyVehicleShotStats(16f,.8f,2,5,2f,5f,0)&&
+              buggyShot==new ArmyVehicleShotStats(6f,1f,0,0,0,0,0)&&
+              transporterShot==new ArmyVehicleShotStats(11f,.9f,4,7,3.5f,4.5f,0)&&
               buggyCannon==new ArmyVehicleCannonStats(622.44f,8f,10f)&&
               tankCannon==new ArmyVehicleCannonStats(1808.03f,8f,14f)&&
               Math.Abs(specialTankCannon.Damage-3616.06f)<.001f&&
@@ -792,7 +792,7 @@ internal static class CombatContentTests
               content.Army.VehiclePassengerRespawnTicks("ID_UNIT-HUMVEE")==375&&
               content.Army.VehiclePassengerRespawnTicks("ID_UNIT-TANK")==525&&
               content.Army.ComposeVehicleShot("ID_UNIT-HUMVEE",0,null,null,2f)
-                  .ProbabilityOfRealShot==1f&&
+                  .ProbabilityOfRealShot==.85f&&
               Math.Abs(transporterRepair.HealRatioPerSecond-.08f)<.00001f&&
               Math.Abs(transporterRepair.MaximumHealth-70.3755f)<.001f,
               "ground vehicle turrets compose primary, Buggy cannon, and Tank cannon stage-zero source authority");
@@ -801,6 +801,10 @@ internal static class CombatContentTests
         catch(ArgumentOutOfRangeException){rejectedNormalRepairLane=true;}
         Check(rejectedNormalRepairLane,"Transporter repair drones require a selected special lane");
         Reject(()=>content.Army.ComposeVehicleShot("ID_UNIT-ASSAULT",0,null,null));
+        Check(content.Army.ComposeVehicleShot("ID_UNIT-HUMVEE",0,null,null,2,2).ShotSpeed==28&&
+            content.Army.ComposeVehicleShot("ID_UNIT-HUMVEE",0,null,null,2,2).ProbabilityOfRealShot==.85f,
+            "vehicle shot-speed perk changes runtime speed without soldier accuracy scaling");
+        Reject(()=>content.Army.ComposeVehicleShot("ID_UNIT-TANK",0,null,null,1,float.NaN));
         var humveeRig=content.GroundVehicleWeapons.For("ID_UNIT-HUMVEE");
         var tankRig=content.GroundVehicleWeapons.For("ID_UNIT-TANK");
         var buggyRig=content.GroundVehicleWeapons.For("ID_UNIT-BUGGY");
@@ -3562,7 +3566,7 @@ internal static class CombatContentTests
             p.ComponentFileId==firstCar.SpawnComponentFileId);
         Check(firstCar.UnitId=="ID_UNIT-HUMVEE"&&firstCarSpawn.VehicleRoute!=null&&
               Vector3.Distance(new(firstCar.X,firstCar.Y,firstCar.Z),firstCarSpawn.Position)>1f&&
-              staleMatch.GroundVehicleAttack(firstCar.EntityKey) is {ShotSpeed:5f} carAttack&&
+              staleMatch.GroundVehicleAttack(firstCar.EntityKey) is {ShotSpeed:14f} carAttack&&
               carAttack.Phase is ArmyAirAttackPhase.Ready or ArmyAirAttackPhase.Cooldown&&
               staleMatch.GroundVehicleFacing(firstCar.EntityKey) is { } carFacing&&
               Math.Abs(carFacing.Y)<.00001f&&Math.Abs(carFacing.Length()-1)<.00001f&&
@@ -3679,7 +3683,7 @@ internal static class CombatContentTests
                 .FirstOrDefault(x=>x.UnitId=="ID_UNIT-SHOTGUNNER")?.EntityKey??0;
         }
         Check(humveeId!=0&&rusherId!=0&&humveeRusherMatch.GroundVehicleArmyTarget(humveeId)==rusherId&&
-              humveeRusherMatch.GroundVehicleSelectedShotSpeed(humveeId)==5,
+              humveeRusherMatch.GroundVehicleSelectedShotSpeed(humveeId)==14,
               "live Humvee selects the opposing AttackerRusher before player fallback and keeps full projectile speed");
         var humveeDecoyManifest=humveeRusherManifest with
         {
@@ -3725,7 +3729,7 @@ internal static class CombatContentTests
         selectedDecoyObstacle=selectedDecoy?.ObstacleComponentFileId??0;
         Check(decoyHumveeId!=0&&selectedDecoyId!=0&&selectedDecoy!=null&&
               humveeDecoyMatch.GroundVehicleArmyTarget(decoyHumveeId)==null&&
-              humveeDecoyMatch.GroundVehicleSelectedShotSpeed(decoyHumveeId)==5,
+              humveeDecoyMatch.GroundVehicleSelectedShotSpeed(decoyHumveeId)==14,
               "live Humvee selects an opposing Decoy before Rusher/player fallback and keeps full projectile speed");
         bool decoyDestroyed=false;
         while(decoyPriorityTick<1860&&!humveeDecoyMatch.Terminal)

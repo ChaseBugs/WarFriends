@@ -19,7 +19,7 @@ public sealed class VehicleAttackState
         Func<float>? random=null)
     {
         if(!float.IsFinite(definition.ShotSpeed)||definition.ShotSpeed<=0||
-           !float.IsFinite(definition.ProbabilityOfRealShot)||definition.ProbabilityOfRealShot is <0 or >1||
+           !float.IsFinite(definition.ProbabilityOfRealShot)||definition.ProbabilityOfRealShot is <0 or >3||
            definition.FireBatchSizeMin<0||definition.FireBatchSizeMax<definition.FireBatchSizeMin||
            definition.FireBatchSizeMax>64||!float.IsFinite(definition.MinShootTime)||
            !float.IsFinite(definition.MaxShootTime)||definition.MinShootTime<0||
