@@ -11,6 +11,13 @@ internal static class DroneWeaponCatalogTests
         var path=Path.Combine(directory,"recovered-drone-weapon.json");
         var revision=Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(path)));
         var catalog=DroneWeaponCatalog.Load(path,revision);
+        var setupPath=Path.Combine(directory,"recovered-drone-projectile-setup.json");
+        var setup=DroneProjectileCatalog.Load(setupPath,Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(setupPath))));
+        Check(setup.Speed(18,true,false)==9&&setup.Speed(18,false,false)==18&&
+            setup.Speed(18,true,true)==27&&setup.Speed(18,false,true)==27,
+            "Drone fake speed ignores player-target half-speed multiplier");
+        Check(setup.CheckDistance==1&&setup.CriticalProbability==0&&setup.CriticalMultiplier==2,"verified Drone projectile collision and critical setup");
+
         var colliders=DroneColliderCatalog.Load(Path.Combine(directory,"recovered-air-unit-geometry.json"));
         var rest=colliders.Place(Vector3.Zero,Quaternion.Identity);
         Check(rest.Count==2&&rest[0].RootOwned&&!rest[1].RootOwned&&rest[1].SerializedLayer==8,
@@ -54,6 +61,16 @@ internal static class DroneWeaponCatalogTests
         var temporary=Path.GetTempFileName();
         try
         {
+            foreach(var mutation in new Action<JsonObject>[] {
+                r=>r["speed"]=5,r=>r["checkDistance"]=2,r=>r["criticalProbability"]=.1,r=>r["fakeSpeedFactor"]=2,
+                r=>r["componentFileId"]=1,r=>r["unexpected"]=true })
+            {
+                var changedSetup=JsonNode.Parse(File.ReadAllText(setupPath))!.AsObject();mutation(changedSetup);
+                File.WriteAllText(temporary,changedSetup.ToJsonString());
+                try{DroneProjectileCatalog.Load(temporary,Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(temporary))));}
+                catch(InvalidDataException){count++;continue;}
+                throw new Exception("Damaged Drone projectile setup accepted.");
+            }
             foreach(var mutation in new Action<JsonObject>[] {
                 r=>r["cadence"]=.18,r=>r["projectileGuid"]=new string('0',32),r=>r["infiniteAmmo"]=false,
                 r=>r["restSpawnPosition"]![0]=.1,r=>r["shotOffset"]![0]=.1,r=>r["restSpawnRotation"]![3]=1,

@@ -12,6 +12,11 @@ for field in source:
   assert abs(sum(a*b for a,b in zip(source[field],unity[field])))>.9999,field
  elif field=='cadence':assert abs(source[field]-unity[field])<1e-6,field
  else:assert source[field]==unity[field],field
+setup=json.loads((content/'recovered-drone-projectile-setup.json').read_text())
+for field,value in setup.items():
+ if field in ('version','source','sha256'):continue
+ assert value==unity['projectileSetup'][field],field
+assert setup['sha256']==source['sha256'],'projectile setup prefab digest'
 for prefix in ('','projectile'):
  path=source['source' if not prefix else 'projectileSource']
  digest=source['sha256' if not prefix else 'projectileSha256']

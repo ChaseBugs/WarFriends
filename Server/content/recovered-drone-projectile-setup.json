@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "source": "Assets/GameObject/dronePrototype.prefab",
+  "sha256": "c2afc19487462e6163ad107267ef1b35c9c86fb34fa80898135b1d25f4a872a3",
+  "componentFileId": 11492819,
+  "speed": 9.0,
+  "checkDistance": 1.0,
+  "fakeSpeedFactor": 1.5,
+  "speedMultiplayer": 1.0,
+  "criticalProbability": 0.0,
+  "criticalAmount": 2.0,
+  "serializedDamage": 20.0,
+  "poisonTime": 0.0,
+  "poisonRatio": 0.0
+}

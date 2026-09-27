@@ -16,7 +16,7 @@ public static class SelfHostedDroneWeaponExport
             if(string.IsNullOrEmpty(output))throw new InvalidOperationException("Set WAR_DRONE_WEAPON_OUTPUT.");
             string sourcePath="Assets/GameObject/dronePrototype.prefab";
             var prefab=AssetDatabase.LoadAssetAtPath<GameObject>(sourcePath);var drone=prefab.GetComponent<Drone>();
-            var batch=drone.weapon;var gun=(Gun)batch.weapon;
+            var batch=drone.weapon;var gun=(Gun)batch.weapon;var setup=(BulletSetup)gun.ammoSetup;
             var local=prefab.transform.InverseTransformPoint(gun.spawnPoint.position);
             var localRotation=Quaternion.Inverse(prefab.transform.rotation)*gun.spawnPoint.rotation;
             var probes=new[]{Quaternion.identity,Quaternion.Euler(12,35,-7),Quaternion.Euler(-35,150,70),Quaternion.Euler(80,-100,-45)}.Select(q=>
@@ -40,7 +40,9 @@ public static class SelfHostedDroneWeaponExport
                 restSpawnPosition=V(local),restSpawnRotation=Q(localRotation),restSpawnScale=V(gun.spawnPoint.lossyScale),
                 shotOffset=V(gun.shotOffset),infiniteAmmo=gun.infiniteAmmo,reloadableWeapon=gun.reloadableWeapon,
                 friendKill=gun.friendKill,fastBullet=gun.fastBullet,ignoreLayersMask=gun.ignoreLayersMask,
-                projectileFileId=projectile,projectileGuid=guid,projectileSource=projectilePath,projectileSha256=Digest(projectilePath),probes=probes};
+                projectileFileId=projectile,projectileGuid=guid,projectileSource=projectilePath,projectileSha256=Digest(projectilePath),projectileSetup=new{componentFileId=Id(setup),speed=setup.speed,checkDistance=setup.checkDistance,
+                fakeSpeedFactor=setup.fakeSpeedFactor,speedMultiplayer=setup.speedMultiplayer,criticalProbability=(float)setup.criticalProbability,
+                criticalAmount=(float)setup.criticalAmount,serializedDamage=(float)setup.damageAmount,poisonTime=setup.poisonTime,poisonRatio=setup.poisonRatio},probes=probes};
             File.WriteAllText(output,JsonConvert.SerializeObject(result,Formatting.Indented)+"\n");
             Debug.Log("DRONE_WEAPON_EXPORT_PASSED probes="+probes.Length);EditorApplication.Exit(0);
         }

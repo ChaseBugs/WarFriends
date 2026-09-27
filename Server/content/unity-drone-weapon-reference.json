@@ -39,6 +39,18 @@
   "projectileGuid": "855689762fa6e774aaee190652b08c6f",
   "projectileSource": "Assets/GameObject/BulletSlow.prefab",
   "projectileSha256": "5379f6aba1560b8eb3d7d386d1349454b97ea133163ade9a313e2bc34d1adfae",
+  "projectileSetup": {
+    "componentFileId": 11492819,
+    "speed": 9.0,
+    "checkDistance": 1.0,
+    "fakeSpeedFactor": 1.5,
+    "speedMultiplayer": 1.0,
+    "criticalProbability": 0.0,
+    "criticalAmount": 2.0,
+    "serializedDamage": 20.0,
+    "poisonTime": 0.0,
+    "poisonRatio": 0.0
+  },
   "probes": [
     {
       "position": [
