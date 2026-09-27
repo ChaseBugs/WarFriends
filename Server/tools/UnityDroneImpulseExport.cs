@@ -17,6 +17,7 @@ public static class UnityDroneImpulseExport
         {
             Physics.autoSimulation=false;
             foreach(var rotation in new[]{Quaternion.identity,Quaternion.Euler(10,45,10),Quaternion.Euler(-15,135,5)})
+            foreach(float impulseScale in new[]{1f,100f})
             {
                 var drone=UnityDroneContactExport.CopyGeometry(prefab.transform,null);
                 try
@@ -25,7 +26,7 @@ public static class UnityDroneImpulseExport
                     var body=drone.AddComponent<Rigidbody>();EditorUtility.CopySerialized(prefab.GetComponent<Rigidbody>(),body);
                     body.isKinematic=false;body.velocity=Vector3.zero;body.angularVelocity=Vector3.zero;
                     Physics.SyncTransforms();var root=body.position;
-                    var point=root+new Vector3(.3f,.1f,.2f);var impulse=new Vector3(.1f,.2f,-.15f);
+                    var point=root+new Vector3(.3f,.1f,.2f);var impulse=new Vector3(.1f,.2f,-.15f)*impulseScale;
                     body.AddForceAtPosition(impulse,point,ForceMode.Impulse);Physics.Simulate(Time.fixedDeltaTime);
                     rows.Add(new{root=Vec(root),rotation=new[]{rotation.x,rotation.y,rotation.z,rotation.w},
                         point=Vec(point),impulse=Vec(impulse),velocity=Vec(body.velocity),angularVelocity=Vec(body.angularVelocity),

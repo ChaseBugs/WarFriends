@@ -4,6 +4,18 @@ namespace War.BattleServer;
 internal sealed record DroneRigidPose(Vector3 Root,Quaternion Rotation);
 internal static class DroneRigidMotion
 {
+    internal static (Vector3 Velocity,Vector3 AngularVelocity) AdvanceVelocities(Vector3 velocity,Vector3 angularVelocity)
+    {
+        if(!PlayerHitbox.Finite(velocity)||!PlayerHitbox.Finite(angularVelocity))
+            throw new InvalidDataException("Invalid Drone velocity authority.");
+        velocity=(velocity+new Vector3(0,-9.81f,0)*.02f)*.98f;
+        angularVelocity*=.999f;
+        float speed=angularVelocity.Length();
+        if(speed>7)angularVelocity*=7/speed;
+        if(!PlayerHitbox.Finite(velocity)||!PlayerHitbox.Finite(angularVelocity))
+            throw new InvalidDataException("Drone velocity arithmetic overflow.");
+        return(velocity,angularVelocity);
+    }
     // Post-force velocities, world angular velocity. Integrate around source COM.
     internal static DroneRigidPose Integrate(DroneBodyMass mass,Vector3 root,Quaternion rotation,
         Vector3 velocity,Vector3 angularVelocity)

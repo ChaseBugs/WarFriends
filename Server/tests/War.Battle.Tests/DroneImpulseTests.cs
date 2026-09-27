@@ -15,8 +15,7 @@ internal static class DroneImpulseTests
             var rotation=new Quaternion(q[0].GetSingle(),q[1].GetSingle(),q[2].GetSingle(),q[3].GetSingle());
             var result=response.Apply(Vec(row.GetProperty("root")),rotation,Vector3.Zero,Vector3.Zero,
                 Vec(row.GetProperty("impulse")),Vec(row.GetProperty("point")));
-            var velocity=(result.Velocity+new Vector3(0,-9.81f,0)*.02f)*.98f;
-            var angular=result.AngularVelocity*.999f;
+            var (velocity,angular)=DroneRigidMotion.AdvanceVelocities(result.Velocity,result.AngularVelocity);
             if(Vector3.Distance(velocity,Vec(row.GetProperty("velocity")))>.00001f||
                Vector3.Distance(angular,Vec(row.GetProperty("angularVelocity")))>.00001f)
                 throw new Exception("Drone off-center impulse differs from independent Unity simulation.");
