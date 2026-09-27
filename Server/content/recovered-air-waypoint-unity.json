@@ -1,0 +1,3120 @@
+{
+  "maps": [
+    {
+      "source": "Assets/Scenes/Aztec_Multiplayer.unity",
+      "routes": [
+        {
+          "spawnComponentFileId": 2678,
+          "pathComponentFileId": 2325,
+          "joinWaypointFileId": 2313,
+          "joinIndex": 0,
+          "radius": 0.2,
+          "waypoints": [
+            {
+              "componentFileId": 2313,
+              "transformFileId": 1009,
+              "index": 0,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -1.70396423,
+                1.3573513,
+                3.33864784
+              ]
+            },
+            {
+              "componentFileId": 2462,
+              "transformFileId": 1162,
+              "index": 1,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -3.40296555,
+                2.03235149,
+                3.344648
+              ]
+            },
+            {
+              "componentFileId": 2241,
+              "transformFileId": 887,
+              "index": 2,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -3.40296555,
+                2.12135124,
+                2.03364754
+              ]
+            },
+            {
+              "componentFileId": 2487,
+              "transformFileId": 1211,
+              "index": 3,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -3.21396637,
+                1.8573513,
+                0.6366477
+              ]
+            },
+            {
+              "componentFileId": 2236,
+              "transformFileId": 882,
+              "index": 4,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -1.44396591,
+                1.34735131,
+                0.646647453
+              ]
+            }
+          ]
+        },
+        {
+          "spawnComponentFileId": 2221,
+          "pathComponentFileId": 2201,
+          "joinWaypointFileId": 2311,
+          "joinIndex": 1,
+          "radius": 0.2,
+          "waypoints": [
+            {
+              "componentFileId": 2484,
+              "transformFileId": 1208,
+              "index": 0,
+              "stayTime": 0.0,
+              "worldPosition": [
+                1.3509922,
+                1.15735137,
+                -3.80182362
+              ]
+            },
+            {
+              "componentFileId": 2311,
+              "transformFileId": 1003,
+              "index": 1,
+              "stayTime": 0.0,
+              "worldPosition": [
+                3.04961967,
+                1.82735145,
+                -3.87297153
+              ]
+            },
+            {
+              "componentFileId": 2430,
+              "transformFileId": 1110,
+              "index": 2,
+              "stayTime": 0.0,
+              "worldPosition": [
+                3.0928688,
+                1.83882248,
+                -3.07652569
+              ]
+            },
+            {
+              "componentFileId": 2697,
+              "transformFileId": 1351,
+              "index": 3,
+              "stayTime": 0.0,
+              "worldPosition": [
+                3.10292435,
+                1.65735137,
+                -0.7731714
+              ]
+            },
+            {
+              "componentFileId": 2293,
+              "transformFileId": 958,
+              "index": 4,
+              "stayTime": 0.0,
+              "worldPosition": [
+                1.20355225,
+                1.15121758,
+                -0.7141619
+              ]
+            }
+          ]
+        },
+        {
+          "spawnComponentFileId": 2441,
+          "pathComponentFileId": 2225,
+          "joinWaypointFileId": 2429,
+          "joinIndex": 3,
+          "radius": 0.2,
+          "waypoints": [
+            {
+              "componentFileId": 2237,
+              "transformFileId": 883,
+              "index": 0,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -1.3528862,
+                1.06409633,
+                -0.176790237
+              ]
+            },
+            {
+              "componentFileId": 2256,
+              "transformFileId": 908,
+              "index": 1,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -3.229353,
+                1.73358428,
+                -0.169551849
+              ]
+            },
+            {
+              "componentFileId": 2299,
+              "transformFileId": 977,
+              "index": 2,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -3.41745567,
+                1.73358452,
+                -2.46558952
+              ]
+            },
+            {
+              "componentFileId": 2429,
+              "transformFileId": 1109,
+              "index": 3,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -2.45092773,
+                1.72991455,
+                -2.56507874
+              ]
+            },
+            {
+              "componentFileId": 2258,
+              "transformFileId": 911,
+              "index": 4,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -1.27092743,
+                1.22991455,
+                -2.56507874
+              ]
+            }
+          ]
+        },
+        {
+          "spawnComponentFileId": 2492,
+          "pathComponentFileId": 2310,
+          "joinWaypointFileId": 2442,
+          "joinIndex": 3,
+          "radius": 0.2,
+          "waypoints": [
+            {
+              "componentFileId": 2327,
+              "transformFileId": 1028,
+              "index": 0,
+              "stayTime": 0.0,
+              "worldPosition": [
+                1.79206085,
+                0.9316437,
+                -0.479928017
+              ]
+            },
+            {
+              "componentFileId": 2478,
+              "transformFileId": 1196,
+              "index": 1,
+              "stayTime": 0.0,
+              "worldPosition": [
+                3.04374313,
+                1.76557839,
+                -0.5248556
+              ]
+            },
+            {
+              "componentFileId": 2197,
+              "transformFileId": 809,
+              "index": 2,
+              "stayTime": 0.0,
+              "worldPosition": [
+                3.63196754,
+                1.60035133,
+                1.75400543
+              ]
+            },
+            {
+              "componentFileId": 2442,
+              "transformFileId": 1129,
+              "index": 3,
+              "stayTime": 0.0,
+              "worldPosition": [
+                3.42865,
+                1.60113156,
+                3.0804863
+              ]
+            },
+            {
+              "componentFileId": 2232,
+              "transformFileId": 873,
+              "index": 4,
+              "stayTime": 0.0,
+              "worldPosition": [
+                1.64081192,
+                1.1022706,
+                3.12809467
+              ]
+            }
+          ]
+        },
+        {
+          "spawnComponentFileId": 2417,
+          "pathComponentFileId": 2588,
+          "joinWaypointFileId": 2695,
+          "joinIndex": 0,
+          "radius": 0.2,
+          "waypoints": [
+            {
+              "componentFileId": 2695,
+              "transformFileId": 1347,
+              "index": 0,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -4.467243,
+                1.75828826,
+                3.80845928
+              ]
+            },
+            {
+              "componentFileId": 2246,
+              "transformFileId": 888,
+              "index": 1,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -4.42001724,
+                1.78506839,
+                1.51989174
+              ]
+            },
+            {
+              "componentFileId": 2213,
+              "transformFileId": 832,
+              "index": 2,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -4.42001724,
+                1.68442261,
+                0.215262413
+              ]
+            },
+            {
+              "componentFileId": 2301,
+              "transformFileId": 983,
+              "index": 3,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -4.52096558,
+                1.74235117,
+                -1.82735252
+              ]
+            },
+            {
+              "componentFileId": 2266,
+              "transformFileId": 925,
+              "index": 4,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -4.540966,
+                1.73035121,
+                -3.29735279
+              ]
+            }
+          ]
+        },
+        {
+          "spawnComponentFileId": 2251,
+          "pathComponentFileId": 2421,
+          "joinWaypointFileId": 2329,
+          "joinIndex": 0,
+          "radius": 0.2,
+          "waypoints": [
+            {
+              "componentFileId": 2329,
+              "transformFileId": 1031,
+              "index": 0,
+              "stayTime": 0.0,
+              "worldPosition": [
+                4.30865669,
+                1.65869212,
+                -3.47448444
+              ]
+            },
+            {
+              "componentFileId": 2668,
+              "transformFileId": 1292,
+              "index": 1,
+              "stayTime": 0.0,
+              "worldPosition": [
+                4.410433,
+                1.66735125,
+                -1.71690178
+              ]
+            },
+            {
+              "componentFileId": 2267,
+              "transformFileId": 926,
+              "index": 2,
+              "stayTime": 0.0,
+              "worldPosition": [
+                4.450157,
+                1.74194145,
+                -0.5763998
+              ]
+            },
+            {
+              "componentFileId": 2203,
+              "transformFileId": 819,
+              "index": 3,
+              "stayTime": 0.0,
+              "worldPosition": [
+                4.333851,
+                1.73124766,
+                1.73880577
+              ]
+            },
+            {
+              "componentFileId": 2318,
+              "transformFileId": 1013,
+              "index": 4,
+              "stayTime": 0.0,
+              "worldPosition": [
+                4.24161148,
+                1.652771,
+                3.35575771
+              ]
+            }
+          ]
+        },
+        {
+          "spawnComponentFileId": 2281,
+          "pathComponentFileId": 2584,
+          "joinWaypointFileId": 2446,
+          "joinIndex": 0,
+          "radius": 3.5,
+          "waypoints": [
+            {
+              "componentFileId": 2446,
+              "transformFileId": 1137,
+              "index": 0,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -3.80612183,
+                3.506191,
+                16.516758
+              ]
+            },
+            {
+              "componentFileId": 2489,
+              "transformFileId": 1214,
+              "index": 1,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -1.74651146,
+                1.98841476,
+                0.15829277
+              ]
+            },
+            {
+              "componentFileId": 2270,
+              "transformFileId": 929,
+              "index": 2,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -2.56036568,
+                4.256575,
+                -3.67678928
+              ]
+            },
+            {
+              "componentFileId": 2471,
+              "transformFileId": 1181,
+              "index": 3,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -3.91451073,
+                5.13828,
+                -7.08791447
+              ]
+            },
+            {
+              "componentFileId": 2223,
+              "transformFileId": 852,
+              "index": 4,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -5.6432,
+                6.07623672,
+                -11.4629717
+              ]
+            },
+            {
+              "componentFileId": 2435,
+              "transformFileId": 1115,
+              "index": 5,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -4.923048,
+                6.076237,
+                -15.8464518
+              ]
+            },
+            {
+              "componentFileId": 2488,
+              "transformFileId": 1213,
+              "index": 6,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -4.54465675,
+                6.233361,
+                -23.5884552
+              ]
+            }
+          ]
+        },
+        {
+          "spawnComponentFileId": 2224,
+          "pathComponentFileId": 2227,
+          "joinWaypointFileId": 2212,
+          "joinIndex": 0,
+          "radius": 3.5,
+          "waypoints": [
+            {
+              "componentFileId": 2212,
+              "transformFileId": 831,
+              "index": 0,
+              "stayTime": 0.0,
+              "worldPosition": [
+                7.08954239,
+                4.76194859,
+                -11.2146463
+              ]
+            },
+            {
+              "componentFileId": 2253,
+              "transformFileId": 901,
+              "index": 1,
+              "stayTime": 0.0,
+              "worldPosition": [
+                5.31845665,
+                3.506191,
+                -8.270719
+              ]
+            },
+            {
+              "componentFileId": 2586,
+              "transformFileId": 1247,
+              "index": 2,
+              "stayTime": 0.0,
+              "worldPosition": [
+                1.92853737,
+                1.98841476,
+                0.126730919
+              ]
+            },
+            {
+              "componentFileId": 2423,
+              "transformFileId": 1095,
+              "index": 3,
+              "stayTime": 0.0,
+              "worldPosition": [
+                8.647249,
+                4.861287,
+                10.8566551
+              ]
+            },
+            {
+              "componentFileId": 2677,
+              "transformFileId": 1304,
+              "index": 4,
+              "stayTime": 0.0,
+              "worldPosition": [
+                4.9192543,
+                5.133502,
+                14.6728439
+              ]
+            },
+            {
+              "componentFileId": 2217,
+              "transformFileId": 841,
+              "index": 5,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -0.6007252,
+                6.07623672,
+                19.0648117
+              ]
+            },
+            {
+              "componentFileId": 2679,
+              "transformFileId": 1307,
+              "index": 6,
+              "stayTime": 0.0,
+              "worldPosition": [
+                0.916406631,
+                6.076237,
+                25.3752556
+              ]
+            },
+            {
+              "componentFileId": 2694,
+              "transformFileId": 1346,
+              "index": 7,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -0.382364273,
+                6.233361,
+                32.5315933
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "source": "Assets/Scenes/City_Multiplayer.unity",
+      "routes": [
+        {
+          "spawnComponentFileId": 3102,
+          "pathComponentFileId": 3087,
+          "joinWaypointFileId": 3119,
+          "joinIndex": 0,
+          "radius": 0.2,
+          "waypoints": [
+            {
+              "componentFileId": 3119,
+              "transformFileId": 1483,
+              "index": 0,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -1.582243,
+                1.03147674,
+                3.39707661
+              ]
+            },
+            {
+              "componentFileId": 2973,
+              "transformFileId": 1298,
+              "index": 1,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -2.97224426,
+                1.6914767,
+                3.43707657
+              ]
+            },
+            {
+              "componentFileId": 3326,
+              "transformFileId": 1744,
+              "index": 2,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -3.06224442,
+                1.78147686,
+                2.12707663
+              ]
+            },
+            {
+              "componentFileId": 3314,
+              "transformFileId": 1718,
+              "index": 3,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -3.09524345,
+                1.86147678,
+                0.824076653
+              ]
+            },
+            {
+              "componentFileId": 2953,
+              "transformFileId": 1270,
+              "index": 4,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -1.32224464,
+                1.0154767,
+                0.8130765
+              ]
+            }
+          ]
+        },
+        {
+          "spawnComponentFileId": 2991,
+          "pathComponentFileId": 2983,
+          "joinWaypointFileId": 3309,
+          "joinIndex": 1,
+          "radius": 0.2,
+          "waypoints": [
+            {
+              "componentFileId": 3257,
+              "transformFileId": 1609,
+              "index": 0,
+              "stayTime": 0.0,
+              "worldPosition": [
+                1.89426422,
+                1.14586437,
+                -3.233698
+              ]
+            },
+            {
+              "componentFileId": 3309,
+              "transformFileId": 1710,
+              "index": 1,
+              "stayTime": 0.0,
+              "worldPosition": [
+                3.47378159,
+                1.81101012,
+                -3.29124832
+              ]
+            },
+            {
+              "componentFileId": 3281,
+              "transformFileId": 1667,
+              "index": 2,
+              "stayTime": 0.0,
+              "worldPosition": [
+                3.46352577,
+                1.82101011,
+                -1.97034073
+              ]
+            },
+            {
+              "componentFileId": 3317,
+              "transformFileId": 1730,
+              "index": 3,
+              "stayTime": 0.0,
+              "worldPosition": [
+                3.336937,
+                1.64101017,
+                -0.525877
+              ]
+            },
+            {
+              "componentFileId": 3304,
+              "transformFileId": 1705,
+              "index": 4,
+              "stayTime": 0.0,
+              "worldPosition": [
+                1.71526146,
+                1.11101007,
+                -0.557090759
+              ]
+            }
+          ]
+        },
+        {
+          "spawnComponentFileId": 3236,
+          "pathComponentFileId": 3228,
+          "joinWaypointFileId": 3107,
+          "joinIndex": 3,
+          "radius": 0.2,
+          "waypoints": [
+            {
+              "componentFileId": 3116,
+              "transformFileId": 1478,
+              "index": 0,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -1.30704308,
+                1.10844135,
+                -0.07551861
+              ]
+            },
+            {
+              "componentFileId": 3329,
+              "transformFileId": 1752,
+              "index": 1,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -2.94704247,
+                1.77844131,
+                -0.0495185852
+              ]
+            },
+            {
+              "componentFileId": 3220,
+              "transformFileId": 1551,
+              "index": 2,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -3.03704262,
+                1.77844131,
+                -2.32551861
+              ]
+            },
+            {
+              "componentFileId": 3107,
+              "transformFileId": 1465,
+              "index": 3,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -2.83704185,
+                1.77844131,
+                -3.41551876
+              ]
+            },
+            {
+              "componentFileId": 3023,
+              "transformFileId": 1395,
+              "index": 4,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -1.22704315,
+                1.27844131,
+                -3.335518
+              ]
+            }
+          ]
+        },
+        {
+          "spawnComponentFileId": 3330,
+          "pathComponentFileId": 3290,
+          "joinWaypointFileId": 3254,
+          "joinIndex": 3,
+          "radius": 0.2,
+          "waypoints": [
+            {
+              "componentFileId": 3110,
+              "transformFileId": 1467,
+              "index": 0,
+              "stayTime": 0.0,
+              "worldPosition": [
+                1.86381721,
+                0.979877949,
+                0.5905037
+              ]
+            },
+            {
+              "componentFileId": 3354,
+              "transformFileId": 1809,
+              "index": 1,
+              "stayTime": 0.0,
+              "worldPosition": [
+                3.109743,
+                1.587878,
+                0.3699112
+              ]
+            },
+            {
+              "componentFileId": 2992,
+              "transformFileId": 1347,
+              "index": 2,
+              "stayTime": 0.0,
+              "worldPosition": [
+                3.176077,
+                1.648878,
+                1.90861225
+              ]
+            },
+            {
+              "componentFileId": 3254,
+              "transformFileId": 1603,
+              "index": 3,
+              "stayTime": 0.0,
+              "worldPosition": [
+                3.25578117,
+                1.648878,
+                3.22681141
+              ]
+            },
+            {
+              "componentFileId": 3221,
+              "transformFileId": 1552,
+              "index": 4,
+              "stayTime": 0.0,
+              "worldPosition": [
+                1.68469429,
+                1.15079725,
+                3.26765537
+              ]
+            }
+          ]
+        },
+        {
+          "spawnComponentFileId": 3233,
+          "pathComponentFileId": 2932,
+          "joinWaypointFileId": 3211,
+          "joinIndex": 4,
+          "radius": 0.2,
+          "waypoints": [
+            {
+              "componentFileId": 3324,
+              "transformFileId": 1742,
+              "index": 0,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -4.03708458,
+                1.808878,
+                2.61220837
+              ]
+            },
+            {
+              "componentFileId": 3332,
+              "transformFileId": 1754,
+              "index": 1,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -4.20708275,
+                1.82887793,
+                1.66220856
+              ]
+            },
+            {
+              "componentFileId": 2988,
+              "transformFileId": 1326,
+              "index": 2,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -4.376135,
+                1.73294938,
+                0.3548231
+              ]
+            },
+            {
+              "componentFileId": 2823,
+              "transformFileId": 1196,
+              "index": 3,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -4.477083,
+                1.79087794,
+                -1.68779182
+              ]
+            },
+            {
+              "componentFileId": 3211,
+              "transformFileId": 1534,
+              "index": 4,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -4.49708366,
+                1.778878,
+                -3.15779114
+              ]
+            }
+          ]
+        },
+        {
+          "spawnComponentFileId": 3009,
+          "pathComponentFileId": 3319,
+          "joinWaypointFileId": 3019,
+          "joinIndex": 0,
+          "radius": 0.2,
+          "waypoints": [
+            {
+              "componentFileId": 3019,
+              "transformFileId": 1392,
+              "index": 0,
+              "stayTime": 0.0,
+              "worldPosition": [
+                4.356539,
+                1.76721883,
+                -3.33592415
+              ]
+            },
+            {
+              "componentFileId": 3282,
+              "transformFileId": 1671,
+              "index": 1,
+              "stayTime": 0.0,
+              "worldPosition": [
+                4.458315,
+                1.775878,
+                -1.57834148
+              ]
+            },
+            {
+              "componentFileId": 3297,
+              "transformFileId": 1700,
+              "index": 2,
+              "stayTime": 0.0,
+              "worldPosition": [
+                4.49803925,
+                1.85046816,
+                -0.437838554
+              ]
+            },
+            {
+              "componentFileId": 2861,
+              "transformFileId": 1213,
+              "index": 3,
+              "stayTime": 0.0,
+              "worldPosition": [
+                4.381735,
+                1.83977437,
+                1.87736607
+              ]
+            },
+            {
+              "componentFileId": 3235,
+              "transformFileId": 1577,
+              "index": 4,
+              "stayTime": 0.0,
+              "worldPosition": [
+                4.28949547,
+                1.7612977,
+                3.494318
+              ]
+            }
+          ]
+        },
+        {
+          "spawnComponentFileId": 3111,
+          "pathComponentFileId": 3097,
+          "joinWaypointFileId": 3267,
+          "joinIndex": 0,
+          "radius": 3.5,
+          "waypoints": [
+            {
+              "componentFileId": 3267,
+              "transformFileId": 1640,
+              "index": 0,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -6.469,
+                6.43799973,
+                15.92
+              ]
+            },
+            {
+              "componentFileId": 3302,
+              "transformFileId": 1703,
+              "index": 1,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -2.059,
+                2.038135,
+                0.4449997
+              ]
+            },
+            {
+              "componentFileId": 3205,
+              "transformFileId": 1524,
+              "index": 2,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -2.25900078,
+                4.30629539,
+                -3.53887558
+              ]
+            },
+            {
+              "componentFileId": 3353,
+              "transformFileId": 1807,
+              "index": 3,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -3.87375641,
+                5.183222,
+                -7.27547264
+              ]
+            },
+            {
+              "componentFileId": 2945,
+              "transformFileId": 1253,
+              "index": 4,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -5.59768867,
+                6.12595749,
+                -11.3250561
+              ]
+            },
+            {
+              "componentFileId": 2977,
+              "transformFileId": 1307,
+              "index": 5,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -4.877537,
+                6.12595749,
+                -15.7085361
+              ]
+            },
+            {
+              "componentFileId": 3347,
+              "transformFileId": 1793,
+              "index": 6,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -4.49914551,
+                6.283081,
+                -23.4505424
+              ]
+            }
+          ]
+        },
+        {
+          "spawnComponentFileId": 3237,
+          "pathComponentFileId": 3134,
+          "joinWaypointFileId": 3104,
+          "joinIndex": 0,
+          "radius": 3.5,
+          "waypoints": [
+            {
+              "componentFileId": 3104,
+              "transformFileId": 1450,
+              "index": 0,
+              "stayTime": 0.0,
+              "worldPosition": [
+                7.13342476,
+                4.81047535,
+                -11.0750847
+              ]
+            },
+            {
+              "componentFileId": 2981,
+              "transformFileId": 1317,
+              "index": 1,
+              "stayTime": 0.0,
+              "worldPosition": [
+                3.96142,
+                3.55471778,
+                -7.989708
+              ]
+            },
+            {
+              "componentFileId": 3345,
+              "transformFileId": 1786,
+              "index": 2,
+              "stayTime": 0.0,
+              "worldPosition": [
+                2.20141983,
+                1.97799993,
+                0.167291641
+              ]
+            },
+            {
+              "componentFileId": 2974,
+              "transformFileId": 1300,
+              "index": 3,
+              "stayTime": 0.0,
+              "worldPosition": [
+                3.5114212,
+                4.909814,
+                10.7902908
+              ]
+            },
+            {
+              "componentFileId": 2946,
+              "transformFileId": 1256,
+              "index": 4,
+              "stayTime": 0.0,
+              "worldPosition": [
+                4.96313667,
+                5.182029,
+                14.8124046
+              ]
+            },
+            {
+              "componentFileId": 2924,
+              "transformFileId": 1226,
+              "index": 5,
+              "stayTime": 0.0,
+              "worldPosition": [
+                5.05142,
+                6.12476349,
+                18.6602936
+              ]
+            },
+            {
+              "componentFileId": 3264,
+              "transformFileId": 1625,
+              "index": 6,
+              "stayTime": 0.0,
+              "worldPosition": [
+                0.960289,
+                6.124764,
+                25.5148163
+              ]
+            },
+            {
+              "componentFileId": 3143,
+              "transformFileId": 1515,
+              "index": 7,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -0.3384819,
+                6.28188753,
+                32.671154
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "source": "Assets/Scenes/Desert_Multiplayer.unity",
+      "routes": [
+        {
+          "spawnComponentFileId": 2390,
+          "pathComponentFileId": 2738,
+          "joinWaypointFileId": 2640,
+          "joinIndex": 0,
+          "radius": 0.2,
+          "waypoints": [
+            {
+              "componentFileId": 2640,
+              "transformFileId": 1181,
+              "index": 0,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -25.6825027,
+                -1.371294,
+                -4.52291536
+              ]
+            },
+            {
+              "componentFileId": 2799,
+              "transformFileId": 1322,
+              "index": 1,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -27.3822975,
+                -0.7018062,
+                -4.51567841
+              ]
+            },
+            {
+              "componentFileId": 2768,
+              "transformFileId": 1277,
+              "index": 2,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -27.3822975,
+                -0.612424731,
+                -5.82030773
+              ]
+            },
+            {
+              "componentFileId": 2589,
+              "transformFileId": 1126,
+              "index": 3,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -27.1963768,
+                -0.880682051,
+                -8.130964
+              ]
+            },
+            {
+              "componentFileId": 2391,
+              "transformFileId": 949,
+              "index": 4,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -25.4227486,
+                -1.382282,
+                -8.124748
+              ]
+            }
+          ]
+        },
+        {
+          "spawnComponentFileId": 2509,
+          "pathComponentFileId": 2563,
+          "joinWaypointFileId": 2575,
+          "joinIndex": 1,
+          "radius": 0.2,
+          "waypoints": [
+            {
+              "componentFileId": 2602,
+              "transformFileId": 1138,
+              "index": 0,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -22.2067356,
+                -1.25213563,
+                -11.9636974
+              ]
+            },
+            {
+              "componentFileId": 2575,
+              "transformFileId": 1112,
+              "index": 1,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -20.5079269,
+                -0.5826477,
+                -12.0220814
+              ]
+            },
+            {
+              "componentFileId": 2597,
+              "transformFileId": 1136,
+              "index": 2,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -20.468668,
+                -0.5755187,
+                -10.7180424
+              ]
+            },
+            {
+              "componentFileId": 2376,
+              "transformFileId": 928,
+              "index": 3,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -20.45861,
+                -0.756989837,
+                -8.414687
+              ]
+            },
+            {
+              "componentFileId": 2835,
+              "transformFileId": 1375,
+              "index": 4,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -22.3579845,
+                -1.26312363,
+                -8.355678
+              ]
+            }
+          ]
+        },
+        {
+          "spawnComponentFileId": 2731,
+          "pathComponentFileId": 2825,
+          "joinWaypointFileId": 2355,
+          "joinIndex": 3,
+          "radius": 0.2,
+          "waypoints": [
+            {
+              "componentFileId": 2473,
+              "transformFileId": 980,
+              "index": 0,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -25.4100037,
+                -1.28537691,
+                -8.767229
+              ]
+            },
+            {
+              "componentFileId": 2381,
+              "transformFileId": 934,
+              "index": 1,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -27.2864685,
+                -0.615888953,
+                -8.759991
+              ]
+            },
+            {
+              "componentFileId": 2532,
+              "transformFileId": 1055,
+              "index": 2,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -27.4745712,
+                -0.6158887,
+                -11.0560284
+              ]
+            },
+            {
+              "componentFileId": 2355,
+              "transformFileId": 898,
+              "index": 3,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -27.1154442,
+                -0.615888953,
+                -12.3752785
+              ]
+            },
+            {
+              "componentFileId": 2839,
+              "transformFileId": 1380,
+              "index": 4,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -25.3269844,
+                -1.11475,
+                -12.3690643
+              ]
+            }
+          ]
+        },
+        {
+          "spawnComponentFileId": 2643,
+          "pathComponentFileId": 2365,
+          "joinWaypointFileId": 2830,
+          "joinIndex": 3,
+          "radius": 0.2,
+          "waypoints": [
+            {
+              "componentFileId": 2647,
+              "transformFileId": 1191,
+              "index": 0,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -22.2650566,
+                -1.41782963,
+                -9.070368
+              ]
+            },
+            {
+              "componentFileId": 2729,
+              "transformFileId": 1226,
+              "index": 1,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -21.0133743,
+                -0.583894849,
+                -9.115294
+              ]
+            },
+            {
+              "componentFileId": 2631,
+              "transformFileId": 1171,
+              "index": 2,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -20.425148,
+                -0.749122,
+                -6.83643341
+              ]
+            },
+            {
+              "componentFileId": 2830,
+              "transformFileId": 1369,
+              "index": 3,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -20.6284676,
+                -0.7483417,
+                -5.50995255
+              ]
+            },
+            {
+              "componentFileId": 2593,
+              "transformFileId": 1131,
+              "index": 4,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -22.4163055,
+                -1.24720275,
+                -5.462344
+              ]
+            }
+          ]
+        },
+        {
+          "spawnComponentFileId": 2610,
+          "pathComponentFileId": 2247,
+          "joinWaypointFileId": 2767,
+          "joinIndex": 3,
+          "radius": 0.2,
+          "waypoints": [
+            {
+              "componentFileId": 2836,
+              "transformFileId": 1376,
+              "index": 0,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -26.2760429,
+                -0.6245587,
+                -5.760518
+              ]
+            },
+            {
+              "componentFileId": 2669,
+              "transformFileId": 1223,
+              "index": 1,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -25.5070419,
+                -0.615558743,
+                -7.246518
+              ]
+            },
+            {
+              "componentFileId": 2650,
+              "transformFileId": 1196,
+              "index": 2,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -25.6010437,
+                -0.6585587,
+                -9.378518
+              ]
+            },
+            {
+              "componentFileId": 2767,
+              "transformFileId": 1275,
+              "index": 3,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -26.0410423,
+                -0.9665587,
+                -10.6445179
+              ]
+            },
+            {
+              "componentFileId": 2806,
+              "transformFileId": 1333,
+              "index": 4,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -26.5060425,
+                -0.750558734,
+                -11.7105179
+              ]
+            }
+          ]
+        },
+        {
+          "spawnComponentFileId": 2248,
+          "pathComponentFileId": 2763,
+          "joinWaypointFileId": 2770,
+          "joinIndex": 3,
+          "radius": 0.2,
+          "waypoints": [
+            {
+              "componentFileId": 2618,
+              "transformFileId": 1160,
+              "index": 0,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -21.2731571,
+                -1.093122,
+                -10.9777908
+              ]
+            },
+            {
+              "componentFileId": 2596,
+              "transformFileId": 1135,
+              "index": 1,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -22.8451767,
+                -0.584121943,
+                -9.06061649
+              ]
+            },
+            {
+              "componentFileId": 2506,
+              "transformFileId": 1023,
+              "index": 2,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -22.6369667,
+                -0.749122,
+                -7.993398
+              ]
+            },
+            {
+              "componentFileId": 2770,
+              "transformFileId": 1281,
+              "index": 3,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -22.1994419,
+                -0.893121958,
+                -6.753002
+              ]
+            },
+            {
+              "componentFileId": 2837,
+              "transformFileId": 1378,
+              "index": 4,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -21.630909,
+                -1.211122,
+                -6.01277542
+              ]
+            }
+          ]
+        },
+        {
+          "spawnComponentFileId": 2577,
+          "pathComponentFileId": 2664,
+          "joinWaypointFileId": 2611,
+          "joinIndex": 0,
+          "radius": 0.2,
+          "waypoints": [
+            {
+              "componentFileId": 2611,
+              "transformFileId": 1151,
+              "index": 0,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -28.52436,
+                -0.591185,
+                -4.78197956
+              ]
+            },
+            {
+              "componentFileId": 2778,
+              "transformFileId": 1293,
+              "index": 1,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -28.4771347,
+                -0.564404845,
+                -7.070547
+              ]
+            },
+            {
+              "componentFileId": 2502,
+              "transformFileId": 1012,
+              "index": 2,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -28.4771347,
+                -0.6650506,
+                -8.375176
+              ]
+            },
+            {
+              "componentFileId": 2550,
+              "transformFileId": 1083,
+              "index": 3,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -28.578083,
+                -0.607122064,
+                -10.4177914
+              ]
+            },
+            {
+              "componentFileId": 2877,
+              "transformFileId": 1429,
+              "index": 4,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -28.5980835,
+                -0.619122,
+                -11.8877907
+              ]
+            }
+          ]
+        },
+        {
+          "spawnComponentFileId": 2795,
+          "pathComponentFileId": 2866,
+          "joinWaypointFileId": 2526,
+          "joinIndex": 0,
+          "radius": 0.2,
+          "waypoints": [
+            {
+              "componentFileId": 2526,
+              "transformFileId": 1043,
+              "index": 0,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -19.7444611,
+                -0.6307812,
+                -12.0659237
+              ]
+            },
+            {
+              "componentFileId": 2363,
+              "transformFileId": 912,
+              "index": 1,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -19.6426849,
+                -0.622122049,
+                -10.308341
+              ]
+            },
+            {
+              "componentFileId": 2366,
+              "transformFileId": 915,
+              "index": 2,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -19.60296,
+                -0.547531843,
+                -9.167838
+              ]
+            },
+            {
+              "componentFileId": 2507,
+              "transformFileId": 1024,
+              "index": 3,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -19.719265,
+                -0.558225632,
+                -6.85263348
+              ]
+            },
+            {
+              "componentFileId": 2730,
+              "transformFileId": 1229,
+              "index": 4,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -19.8115044,
+                -0.6367023,
+                -5.23568153
+              ]
+            }
+          ]
+        },
+        {
+          "spawnComponentFileId": 2511,
+          "pathComponentFileId": 2787,
+          "joinWaypointFileId": 2582,
+          "joinIndex": 0,
+          "radius": 3.5,
+          "waypoints": [
+            {
+              "componentFileId": 2582,
+              "transformFileId": 1120,
+              "index": 0,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -27.86324,
+                1.15671778,
+                7.926318
+              ]
+            },
+            {
+              "componentFileId": 2492,
+              "transformFileId": 1000,
+              "index": 1,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -25.8716278,
+                -0.361058474,
+                -8.432146
+              ]
+            },
+            {
+              "componentFileId": 2559,
+              "transformFileId": 1097,
+              "index": 2,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -26.6174831,
+                1.907102,
+                -12.2672281
+              ]
+            },
+            {
+              "componentFileId": 2608,
+              "transformFileId": 1147,
+              "index": 3,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -27.9763851,
+                2.78402853,
+                -16.0038261
+              ]
+            },
+            {
+              "componentFileId": 2842,
+              "transformFileId": 1382,
+              "index": 4,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -29.7003174,
+                3.72676373,
+                -20.05341
+              ]
+            },
+            {
+              "componentFileId": 2816,
+              "transformFileId": 1347,
+              "index": 5,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -28.9801655,
+                3.726764,
+                -24.43689
+              ]
+            },
+            {
+              "componentFileId": 2668,
+              "transformFileId": 1222,
+              "index": 6,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -28.6017742,
+                3.88388753,
+                -32.178894
+              ]
+            }
+          ]
+        },
+        {
+          "spawnComponentFileId": 2659,
+          "pathComponentFileId": 2377,
+          "joinWaypointFileId": 2520,
+          "joinIndex": 0,
+          "radius": 3.5,
+          "waypoints": [
+            {
+              "componentFileId": 2520,
+              "transformFileId": 1034,
+              "index": 0,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -16.9675751,
+                2.412475,
+                -19.8050842
+              ]
+            },
+            {
+              "componentFileId": 2484,
+              "transformFileId": 989,
+              "index": 1,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -18.73866,
+                1.15671778,
+                -16.8611565
+              ]
+            },
+            {
+              "componentFileId": 2529,
+              "transformFileId": 1051,
+              "index": 2,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -22.5095787,
+                -0.3699999,
+                -8.699708
+              ]
+            },
+            {
+              "componentFileId": 2623,
+              "transformFileId": 1166,
+              "index": 3,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -15.4098682,
+                2.51181364,
+                2.26621628
+              ]
+            },
+            {
+              "componentFileId": 2863,
+              "transformFileId": 1406,
+              "index": 4,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -19.1378632,
+                2.78402853,
+                6.082405
+              ]
+            },
+            {
+              "componentFileId": 2364,
+              "transformFileId": 913,
+              "index": 5,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -24.6578426,
+                3.72676373,
+                10.4743729
+              ]
+            },
+            {
+              "componentFileId": 2565,
+              "transformFileId": 1104,
+              "index": 6,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -23.14071,
+                3.726764,
+                16.7848167
+              ]
+            },
+            {
+              "componentFileId": 2251,
+              "transformFileId": 868,
+              "index": 7,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -24.4394817,
+                3.88388753,
+                23.9411545
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "source": "Assets/Scenes/Park_Multiplayer.unity",
+      "routes": [
+        {
+          "spawnComponentFileId": 3146,
+          "pathComponentFileId": 3242,
+          "joinWaypointFileId": 3147,
+          "joinIndex": 0,
+          "radius": 0.2,
+          "waypoints": [
+            {
+              "componentFileId": 3147,
+              "transformFileId": 1093,
+              "index": 0,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -1.607502,
+                1.03870606,
+                4.06408453
+              ]
+            },
+            {
+              "componentFileId": 3164,
+              "transformFileId": 1122,
+              "index": 1,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -3.30729675,
+                1.7081939,
+                4.07132149
+              ]
+            },
+            {
+              "componentFileId": 3316,
+              "transformFileId": 1279,
+              "index": 2,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -3.30729675,
+                1.79757535,
+                2.76669216
+              ]
+            },
+            {
+              "componentFileId": 3439,
+              "transformFileId": 1435,
+              "index": 3,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -3.121376,
+                1.52931809,
+                0.4560356
+              ]
+            },
+            {
+              "componentFileId": 3532,
+              "transformFileId": 1607,
+              "index": 4,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -1.3477478,
+                1.02771807,
+                0.462251663
+              ]
+            }
+          ]
+        },
+        {
+          "spawnComponentFileId": 3182,
+          "pathComponentFileId": 3503,
+          "joinWaypointFileId": 3210,
+          "joinIndex": 1,
+          "radius": 0.2,
+          "waypoints": [
+            {
+              "componentFileId": 3466,
+              "transformFileId": 1494,
+              "index": 0,
+              "stayTime": 0.0,
+              "worldPosition": [
+                1.86826515,
+                1.15786445,
+                -3.37669754
+              ]
+            },
+            {
+              "componentFileId": 3210,
+              "transformFileId": 1223,
+              "index": 1,
+              "stayTime": 0.0,
+              "worldPosition": [
+                3.56707382,
+                1.8273524,
+                -3.43508148
+              ]
+            },
+            {
+              "componentFileId": 3555,
+              "transformFileId": 1669,
+              "index": 2,
+              "stayTime": 0.0,
+              "worldPosition": [
+                3.60633278,
+                1.83448136,
+                -2.13104248
+              ]
+            },
+            {
+              "componentFileId": 3411,
+              "transformFileId": 1369,
+              "index": 3,
+              "stayTime": 0.0,
+              "worldPosition": [
+                3.61639023,
+                1.65301025,
+                0.172312737
+              ]
+            },
+            {
+              "componentFileId": 3181,
+              "transformFileId": 1177,
+              "index": 4,
+              "stayTime": 0.0,
+              "worldPosition": [
+                1.71701622,
+                1.14687645,
+                0.231322289
+              ]
+            }
+          ]
+        },
+        {
+          "spawnComponentFileId": 3179,
+          "pathComponentFileId": 3450,
+          "joinWaypointFileId": 3317,
+          "joinIndex": 3,
+          "radius": 0.2,
+          "waypoints": [
+            {
+              "componentFileId": 3392,
+              "transformFileId": 1327,
+              "index": 0,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -1.3350029,
+                1.12462318,
+                -0.180229187
+              ]
+            },
+            {
+              "componentFileId": 3207,
+              "transformFileId": 1220,
+              "index": 1,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -3.21146774,
+                1.79411113,
+                -0.1729908
+              ]
+            },
+            {
+              "componentFileId": 3593,
+              "transformFileId": 1734,
+              "index": 2,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -3.39957047,
+                1.79411137,
+                -2.46902847
+              ]
+            },
+            {
+              "componentFileId": 3317,
+              "transformFileId": 1282,
+              "index": 3,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -3.04044342,
+                1.79411113,
+                -3.78827858
+              ]
+            },
+            {
+              "componentFileId": 3530,
+              "transformFileId": 1604,
+              "index": 4,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -1.25198364,
+                1.29525,
+                -3.78206444
+              ]
+            }
+          ]
+        },
+        {
+          "spawnComponentFileId": 3583,
+          "pathComponentFileId": 3558,
+          "joinWaypointFileId": 3178,
+          "joinIndex": 3,
+          "radius": 0.2,
+          "waypoints": [
+            {
+              "componentFileId": 3457,
+              "transformFileId": 1464,
+              "index": 0,
+              "stayTime": 0.0,
+              "worldPosition": [
+                1.80994415,
+                0.992170453,
+                -0.48336792
+              ]
+            },
+            {
+              "componentFileId": 3444,
+              "transformFileId": 1444,
+              "index": 1,
+              "stayTime": 0.0,
+              "worldPosition": [
+                3.06162643,
+                1.82610524,
+                -0.528294563
+              ]
+            },
+            {
+              "componentFileId": 3173,
+              "transformFileId": 1148,
+              "index": 2,
+              "stayTime": 0.0,
+              "worldPosition": [
+                3.64985275,
+                1.66087806,
+                1.75056648
+              ]
+            },
+            {
+              "componentFileId": 3178,
+              "transformFileId": 1165,
+              "index": 3,
+              "stayTime": 0.0,
+              "worldPosition": [
+                3.4465332,
+                1.66165841,
+                3.07704735
+              ]
+            },
+            {
+              "componentFileId": 3437,
+              "transformFileId": 1431,
+              "index": 4,
+              "stayTime": 0.0,
+              "worldPosition": [
+                1.65869522,
+                1.16279733,
+                3.12465572
+              ]
+            }
+          ]
+        },
+        {
+          "spawnComponentFileId": 3246,
+          "pathComponentFileId": 3539,
+          "joinWaypointFileId": 3244,
+          "joinIndex": 3,
+          "radius": 0.2,
+          "waypoints": [
+            {
+              "componentFileId": 3599,
+              "transformFileId": 1754,
+              "index": 0,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -2.20104218,
+                1.7854414,
+                2.82648182
+              ]
+            },
+            {
+              "componentFileId": 3538,
+              "transformFileId": 1623,
+              "index": 1,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -1.43204117,
+                1.79444134,
+                1.34048176
+              ]
+            },
+            {
+              "componentFileId": 3382,
+              "transformFileId": 1311,
+              "index": 2,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -1.52604294,
+                1.75144136,
+                -0.7915182
+              ]
+            },
+            {
+              "componentFileId": 3244,
+              "transformFileId": 1237,
+              "index": 3,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -1.96604156,
+                1.44344139,
+                -2.057518
+              ]
+            },
+            {
+              "componentFileId": 3241,
+              "transformFileId": 1230,
+              "index": 4,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -2.43104172,
+                1.65944135,
+                -3.123518
+              ]
+            }
+          ]
+        },
+        {
+          "spawnComponentFileId": 3517,
+          "pathComponentFileId": 3161,
+          "joinWaypointFileId": 3576,
+          "joinIndex": 3,
+          "radius": 0.2,
+          "waypoints": [
+            {
+              "componentFileId": 3414,
+              "transformFileId": 1380,
+              "index": 0,
+              "stayTime": 0.0,
+              "worldPosition": [
+                2.80184364,
+                1.31687808,
+                -2.390791
+              ]
+            },
+            {
+              "componentFileId": 3176,
+              "transformFileId": 1162,
+              "index": 1,
+              "stayTime": 0.0,
+              "worldPosition": [
+                1.22982407,
+                1.82587814,
+                -0.4736166
+              ]
+            },
+            {
+              "componentFileId": 3592,
+              "transformFileId": 1733,
+              "index": 2,
+              "stayTime": 0.0,
+              "worldPosition": [
+                1.438034,
+                1.66087806,
+                0.5936017
+              ]
+            },
+            {
+              "componentFileId": 3576,
+              "transformFileId": 1711,
+              "index": 3,
+              "stayTime": 0.0,
+              "worldPosition": [
+                1.87555885,
+                1.51687813,
+                1.83399773
+              ]
+            },
+            {
+              "componentFileId": 3543,
+              "transformFileId": 1647,
+              "index": 4,
+              "stayTime": 0.0,
+              "worldPosition": [
+                2.4440918,
+                1.198878,
+                2.57422447
+              ]
+            }
+          ]
+        },
+        {
+          "spawnComponentFileId": 3596,
+          "pathComponentFileId": 3196,
+          "joinWaypointFileId": 3155,
+          "joinIndex": 0,
+          "radius": 0.2,
+          "waypoints": [
+            {
+              "componentFileId": 3155,
+              "transformFileId": 1106,
+              "index": 0,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -4.44936,
+                1.81881511,
+                3.80502033
+              ]
+            },
+            {
+              "componentFileId": 3198,
+              "transformFileId": 1198,
+              "index": 1,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -4.402134,
+                1.84559524,
+                1.51645279
+              ]
+            },
+            {
+              "componentFileId": 3474,
+              "transformFileId": 1511,
+              "index": 2,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -4.402134,
+                1.74494946,
+                0.211823463
+              ]
+            },
+            {
+              "componentFileId": 3152,
+              "transformFileId": 1103,
+              "index": 3,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -4.50308228,
+                1.802878,
+                -1.83079147
+              ]
+            },
+            {
+              "componentFileId": 3391,
+              "transformFileId": 1325,
+              "index": 4,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -4.52308273,
+                1.790878,
+                -3.30079079
+              ]
+            }
+          ]
+        },
+        {
+          "spawnComponentFileId": 3427,
+          "pathComponentFileId": 3148,
+          "joinWaypointFileId": 3387,
+          "joinIndex": 0,
+          "radius": 0.2,
+          "waypoints": [
+            {
+              "componentFileId": 3387,
+              "transformFileId": 1319,
+              "index": 0,
+              "stayTime": 0.0,
+              "worldPosition": [
+                4.3305397,
+                1.77921891,
+                -3.4789238
+              ]
+            },
+            {
+              "componentFileId": 3478,
+              "transformFileId": 1518,
+              "index": 1,
+              "stayTime": 0.0,
+              "worldPosition": [
+                4.432316,
+                1.787878,
+                -1.72134113
+              ]
+            },
+            {
+              "componentFileId": 3402,
+              "transformFileId": 1357,
+              "index": 2,
+              "stayTime": 0.0,
+              "worldPosition": [
+                4.47204,
+                1.86246824,
+                -0.5808382
+              ]
+            },
+            {
+              "componentFileId": 3380,
+              "transformFileId": 1304,
+              "index": 3,
+              "stayTime": 0.0,
+              "worldPosition": [
+                4.355736,
+                1.85177445,
+                1.73436642
+              ]
+            },
+            {
+              "componentFileId": 3493,
+              "transformFileId": 1539,
+              "index": 4,
+              "stayTime": 0.0,
+              "worldPosition": [
+                4.2634964,
+                1.77329779,
+                3.35131836
+              ]
+            }
+          ]
+        },
+        {
+          "spawnComponentFileId": 3479,
+          "pathComponentFileId": 3422,
+          "joinWaypointFileId": 3568,
+          "joinIndex": 0,
+          "radius": 3.5,
+          "waypoints": [
+            {
+              "componentFileId": 3568,
+              "transformFileId": 1700,
+              "index": 0,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -3.78823853,
+                3.56671786,
+                16.5133171
+              ]
+            },
+            {
+              "componentFileId": 3185,
+              "transformFileId": 1182,
+              "index": 1,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -1.796627,
+                2.04894161,
+                0.154853821
+              ]
+            },
+            {
+              "componentFileId": 3400,
+              "transformFileId": 1354,
+              "index": 2,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -2.54248238,
+                4.317102,
+                -3.68022823
+              ]
+            },
+            {
+              "componentFileId": 3486,
+              "transformFileId": 1524,
+              "index": 3,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -3.90138435,
+                5.194029,
+                -7.41682625
+              ]
+            },
+            {
+              "componentFileId": 3383,
+              "transformFileId": 1312,
+              "index": 4,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -5.62531662,
+                6.13676357,
+                -11.4664087
+              ]
+            },
+            {
+              "componentFileId": 3563,
+              "transformFileId": 1692,
+              "index": 5,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -4.90516472,
+                6.136764,
+                -15.8498888
+              ]
+            },
+            {
+              "componentFileId": 3490,
+              "transformFileId": 1534,
+              "index": 6,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -4.52677345,
+                6.29388762,
+                -23.5918922
+              ]
+            }
+          ]
+        },
+        {
+          "spawnComponentFileId": 3313,
+          "pathComponentFileId": 3453,
+          "joinWaypointFileId": 3562,
+          "joinIndex": 0,
+          "radius": 3.5,
+          "waypoints": [
+            {
+              "componentFileId": 3562,
+              "transformFileId": 1691,
+              "index": 0,
+              "stayTime": 0.0,
+              "worldPosition": [
+                7.10742569,
+                4.82247543,
+                -11.2180834
+              ]
+            },
+            {
+              "componentFileId": 3560,
+              "transformFileId": 1681,
+              "index": 1,
+              "stayTime": 0.0,
+              "worldPosition": [
+                5.33634,
+                3.56671786,
+                -8.274156
+              ]
+            },
+            {
+              "componentFileId": 3184,
+              "transformFileId": 1180,
+              "index": 2,
+              "stayTime": 0.0,
+              "worldPosition": [
+                1.565422,
+                2.0400002,
+                -0.112708092
+              ]
+            },
+            {
+              "componentFileId": 3250,
+              "transformFileId": 1254,
+              "index": 3,
+              "stayTime": 0.0,
+              "worldPosition": [
+                8.66513252,
+                4.921814,
+                10.8532162
+              ]
+            },
+            {
+              "componentFileId": 3454,
+              "transformFileId": 1462,
+              "index": 4,
+              "stayTime": 0.0,
+              "worldPosition": [
+                4.9371376,
+                5.194029,
+                14.669405
+              ]
+            },
+            {
+              "componentFileId": 3393,
+              "transformFileId": 1328,
+              "index": 5,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -0.5828419,
+                6.13676357,
+                19.0613728
+              ]
+            },
+            {
+              "componentFileId": 3584,
+              "transformFileId": 1717,
+              "index": 6,
+              "stayTime": 0.0,
+              "worldPosition": [
+                0.934289932,
+                6.136764,
+                25.3718185
+              ]
+            },
+            {
+              "componentFileId": 3465,
+              "transformFileId": 1492,
+              "index": 7,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -0.364480972,
+                6.29388762,
+                32.5281563
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "source": "Assets/Scenes/Snow_Multiplayer.unity",
+      "routes": [
+        {
+          "spawnComponentFileId": 3096,
+          "pathComponentFileId": 3086,
+          "joinWaypointFileId": 3074,
+          "joinIndex": 0,
+          "radius": 0.2,
+          "waypoints": [
+            {
+              "componentFileId": 3074,
+              "transformFileId": 1434,
+              "index": 0,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -1.58924484,
+                1.07847679,
+                4.03207731
+              ]
+            },
+            {
+              "componentFileId": 2997,
+              "transformFileId": 1322,
+              "index": 1,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -3.2892952,
+                1.74819386,
+                3.99432182
+              ]
+            },
+            {
+              "componentFileId": 3081,
+              "transformFileId": 1440,
+              "index": 2,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -3.2892437,
+                1.83747685,
+                2.45407724
+              ]
+            },
+            {
+              "componentFileId": 3047,
+              "transformFileId": 1398,
+              "index": 3,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -3.10337448,
+                1.569318,
+                0.37903595
+              ]
+            },
+            {
+              "componentFileId": 2799,
+              "transformFileId": 1219,
+              "index": 4,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -1.32974625,
+                1.067718,
+                0.385252
+              ]
+            }
+          ]
+        },
+        {
+          "spawnComponentFileId": 2970,
+          "pathComponentFileId": 3039,
+          "joinWaypointFileId": 2588,
+          "joinIndex": 1,
+          "radius": 0.2,
+          "waypoints": [
+            {
+              "componentFileId": 3029,
+              "transformFileId": 1371,
+              "index": 0,
+              "stayTime": 0.0,
+              "worldPosition": [
+                1.88305664,
+                1.19301021,
+                -2.91334629
+              ]
+            },
+            {
+              "componentFileId": 2588,
+              "transformFileId": 1031,
+              "index": 1,
+              "stayTime": 0.0,
+              "worldPosition": [
+                3.58507347,
+                1.86735237,
+                -3.51208019
+              ]
+            },
+            {
+              "componentFileId": 2749,
+              "transformFileId": 1125,
+              "index": 2,
+              "stayTime": 0.0,
+              "worldPosition": [
+                3.62433243,
+                1.87448132,
+                -2.20804119
+              ]
+            },
+            {
+              "componentFileId": 3027,
+              "transformFileId": 1370,
+              "index": 3,
+              "stayTime": 0.0,
+              "worldPosition": [
+                3.634388,
+                1.69301021,
+                0.09531307
+              ]
+            },
+            {
+              "componentFileId": 2816,
+              "transformFileId": 1241,
+              "index": 4,
+              "stayTime": 0.0,
+              "worldPosition": [
+                1.73501587,
+                1.18687654,
+                0.154323578
+              ]
+            }
+          ]
+        },
+        {
+          "spawnComponentFileId": 2963,
+          "pathComponentFileId": 2779,
+          "joinWaypointFileId": 2995,
+          "joinIndex": 3,
+          "radius": 0.2,
+          "waypoints": [
+            {
+              "componentFileId": 2803,
+              "transformFileId": 1224,
+              "index": 0,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -1.31700325,
+                1.16462314,
+                -0.257228851
+              ]
+            },
+            {
+              "componentFileId": 2604,
+              "transformFileId": 1054,
+              "index": 1,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -3.19347,
+                1.83411109,
+                -0.249990463
+              ]
+            },
+            {
+              "componentFileId": 2778,
+              "transformFileId": 1174,
+              "index": 2,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -3.38157272,
+                1.83411133,
+                -2.54602814
+              ]
+            },
+            {
+              "componentFileId": 2995,
+              "transformFileId": 1320,
+              "index": 3,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -3.02244568,
+                1.83411109,
+                -3.86527824
+              ]
+            },
+            {
+              "componentFileId": 2774,
+              "transformFileId": 1169,
+              "index": 4,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -1.23504257,
+                1.33044136,
+                -3.35551739
+              ]
+            }
+          ]
+        },
+        {
+          "spawnComponentFileId": 2978,
+          "pathComponentFileId": 2976,
+          "joinWaypointFileId": 2801,
+          "joinIndex": 3,
+          "radius": 0.2,
+          "waypoints": [
+            {
+              "componentFileId": 3093,
+              "transformFileId": 1462,
+              "index": 0,
+              "stayTime": 0.0,
+              "worldPosition": [
+                1.8279438,
+                1.03217053,
+                -0.560366631
+              ]
+            },
+            {
+              "componentFileId": 2592,
+              "transformFileId": 1038,
+              "index": 1,
+              "stayTime": 0.0,
+              "worldPosition": [
+                3.079626,
+                1.8661052,
+                -0.6052942
+              ]
+            },
+            {
+              "componentFileId": 2788,
+              "transformFileId": 1196,
+              "index": 2,
+              "stayTime": 0.0,
+              "worldPosition": [
+                3.66785049,
+                1.70087814,
+                1.67356682
+              ]
+            },
+            {
+              "componentFileId": 2801,
+              "transformFileId": 1222,
+              "index": 3,
+              "stayTime": 0.0,
+              "worldPosition": [
+                3.46453285,
+                1.70165837,
+                3.00004768
+              ]
+            },
+            {
+              "componentFileId": 2768,
+              "transformFileId": 1162,
+              "index": 4,
+              "stayTime": 0.0,
+              "worldPosition": [
+                1.67669487,
+                1.20279741,
+                3.047656
+              ]
+            }
+          ]
+        },
+        {
+          "spawnComponentFileId": 2634,
+          "pathComponentFileId": 3022,
+          "joinWaypointFileId": 3013,
+          "joinIndex": 0,
+          "radius": 0.2,
+          "waypoints": [
+            {
+              "componentFileId": 3013,
+              "transformFileId": 1347,
+              "index": 0,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -4.431362,
+                1.85881507,
+                3.72802067
+              ]
+            },
+            {
+              "componentFileId": 3109,
+              "transformFileId": 1496,
+              "index": 1,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -4.384136,
+                1.8855952,
+                1.43945313
+              ]
+            },
+            {
+              "componentFileId": 3082,
+              "transformFileId": 1441,
+              "index": 2,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -4.384136,
+                1.78494942,
+                0.1348238
+              ]
+            },
+            {
+              "componentFileId": 3030,
+              "transformFileId": 1372,
+              "index": 3,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -4.48508263,
+                1.842878,
+                -1.90779114
+              ]
+            },
+            {
+              "componentFileId": 2772,
+              "transformFileId": 1165,
+              "index": 4,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -4.505083,
+                1.830878,
+                -3.3777914
+              ]
+            }
+          ]
+        },
+        {
+          "spawnComponentFileId": 3090,
+          "pathComponentFileId": 2686,
+          "joinWaypointFileId": 2757,
+          "joinIndex": 0,
+          "radius": 0.2,
+          "waypoints": [
+            {
+              "componentFileId": 2757,
+              "transformFileId": 1135,
+              "index": 0,
+              "stayTime": 0.0,
+              "worldPosition": [
+                4.34854126,
+                1.89821887,
+                -3.55592346
+              ]
+            },
+            {
+              "componentFileId": 2993,
+              "transformFileId": 1315,
+              "index": 1,
+              "stayTime": 0.0,
+              "worldPosition": [
+                4.45031548,
+                1.906878,
+                -1.7983408
+              ]
+            },
+            {
+              "componentFileId": 3060,
+              "transformFileId": 1415,
+              "index": 2,
+              "stayTime": 0.0,
+              "worldPosition": [
+                4.49004,
+                1.9814682,
+                -0.657837868
+              ]
+            },
+            {
+              "componentFileId": 2764,
+              "transformFileId": 1153,
+              "index": 3,
+              "stayTime": 0.0,
+              "worldPosition": [
+                4.37373543,
+                1.97077441,
+                1.65736675
+              ]
+            },
+            {
+              "componentFileId": 3111,
+              "transformFileId": 1498,
+              "index": 4,
+              "stayTime": 0.0,
+              "worldPosition": [
+                4.281496,
+                1.89229774,
+                3.2743187
+              ]
+            }
+          ]
+        },
+        {
+          "spawnComponentFileId": 2629,
+          "pathComponentFileId": 2879,
+          "joinWaypointFileId": 2748,
+          "joinIndex": 0,
+          "radius": 3.5,
+          "waypoints": [
+            {
+              "componentFileId": 2748,
+              "transformFileId": 1122,
+              "index": 0,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -3.77023888,
+                3.60671782,
+                16.4363174
+              ]
+            },
+            {
+              "componentFileId": 3072,
+              "transformFileId": 1433,
+              "index": 1,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -1.65862846,
+                2.07880664,
+                0.07785416
+              ]
+            },
+            {
+              "componentFileId": 2980,
+              "transformFileId": 1304,
+              "index": 2,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -2.52448273,
+                4.357102,
+                -3.757228
+              ]
+            },
+            {
+              "componentFileId": 2671,
+              "transformFileId": 1106,
+              "index": 3,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -3.8833847,
+                5.234029,
+                -7.493826
+              ]
+            },
+            {
+              "componentFileId": 2765,
+              "transformFileId": 1157,
+              "index": 4,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -5.607317,
+                6.17676353,
+                -11.5434084
+              ]
+            },
+            {
+              "componentFileId": 3101,
+              "transformFileId": 1481,
+              "index": 5,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -4.887165,
+                6.176764,
+                -15.9268885
+              ]
+            },
+            {
+              "componentFileId": 2818,
+              "transformFileId": 1245,
+              "index": 6,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -4.508774,
+                6.33388758,
+                -23.6688919
+              ]
+            }
+          ]
+        },
+        {
+          "spawnComponentFileId": 2964,
+          "pathComponentFileId": 2813,
+          "joinWaypointFileId": 3069,
+          "joinIndex": 0,
+          "radius": 3.5,
+          "waypoints": [
+            {
+              "componentFileId": 3069,
+              "transformFileId": 1428,
+              "index": 0,
+              "stayTime": 0.0,
+              "worldPosition": [
+                7.12542534,
+                4.8624754,
+                -11.295083
+              ]
+            },
+            {
+              "componentFileId": 2606,
+              "transformFileId": 1057,
+              "index": 1,
+              "stayTime": 0.0,
+              "worldPosition": [
+                5.3543396,
+                3.60671782,
+                -8.351155
+              ]
+            },
+            {
+              "componentFileId": 2815,
+              "transformFileId": 1238,
+              "index": 2,
+              "stayTime": 0.0,
+              "worldPosition": [
+                1.93342018,
+                2.08894157,
+                -0.109707832
+              ]
+            },
+            {
+              "componentFileId": 3016,
+              "transformFileId": 1352,
+              "index": 3,
+              "stayTime": 0.0,
+              "worldPosition": [
+                8.683132,
+                4.961814,
+                10.7762165
+              ]
+            },
+            {
+              "componentFileId": 3092,
+              "transformFileId": 1460,
+              "index": 4,
+              "stayTime": 0.0,
+              "worldPosition": [
+                4.95513725,
+                5.234029,
+                14.5924053
+              ]
+            },
+            {
+              "componentFileId": 2990,
+              "transformFileId": 1312,
+              "index": 5,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -0.5648422,
+                6.17676353,
+                18.9843731
+              ]
+            },
+            {
+              "componentFileId": 3021,
+              "transformFileId": 1362,
+              "index": 6,
+              "stayTime": 0.0,
+              "worldPosition": [
+                0.9522896,
+                6.176764,
+                25.2948189
+              ]
+            },
+            {
+              "componentFileId": 2586,
+              "transformFileId": 1027,
+              "index": 7,
+              "stayTime": 0.0,
+              "worldPosition": [
+                -0.346481323,
+                6.33388758,
+                32.4511566
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
