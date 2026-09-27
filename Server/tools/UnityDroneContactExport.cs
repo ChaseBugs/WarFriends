@@ -147,9 +147,17 @@ public sealed class DroneCollisionObserver:MonoBehaviour
             contacts=collision.contacts.Select(c=>new{position=new[]{c.point.x,c.point.y,c.point.z},
                 normal=new[]{c.normal.x,c.normal.y,c.normal.z},separation=c.separation,
                 bodyColliderType=c.thisCollider.GetType().Name,bodyCollider=Path(c.thisCollider.transform),
+                bodyMaterial=Material(c.thisCollider),otherMaterial=Material(c.otherCollider),
                 otherColliderIndex=Array.IndexOf(SourceColliders,c.otherCollider),
                 otherColliderType=c.otherCollider.GetType().Name}).ToArray()});
     }
     private static string Path(Transform value)
     {string path=value.name;while(value.parent!=null){value=value.parent;path=value.name+"/"+path;}return path;}
+    private static object Material(Collider collider)
+    {
+        var material=collider.material;
+        return new{staticFriction=material.staticFriction,dynamicFriction=material.dynamicFriction,
+            restitution=material.bounciness,frictionCombine=(int)material.frictionCombine,
+            restitutionCombine=(int)material.bounceCombine};
+    }
 }

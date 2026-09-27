@@ -7,6 +7,10 @@ internal static class DroneSourceFrictionTests
     internal static int Run(string directory,DroneColliderCatalog geometry)
     {
         using var document=JsonDocument.Parse(File.ReadAllBytes(Path.Combine(directory,"recovered-drone-map-fall.json")));
+        if(document.RootElement.GetProperty("unityVersion").GetString()!="2018.3.0f2"||
+           document.RootElement.GetProperty("materialPolicy").GetString()!="source-materials"||
+           document.RootElement.GetProperty("rows").GetArrayLength()!=30)
+            throw new Exception("Source-material contact oracle identity changed.");
         Vector3 Vec(JsonElement v)=>new(v[0].GetSingle(),v[1].GetSingle(),v[2].GetSingle());
         Quaternion Quat(JsonElement q)=>new(q[0].GetSingle(),q[1].GetSingle(),q[2].GetSingle(),q[3].GetSingle());
         int samples=0;float maximumVelocity=0,maximumAngular=0,maximumPosition=0;
@@ -16,6 +20,16 @@ internal static class DroneSourceFrictionTests
             var first=callbacks.EnumerateArray().Where(c=>c.GetProperty("frame").GetInt32()==frame).ToArray();
             if(first.Length!=1||first[0].GetProperty("contacts").GetArrayLength()!=1)continue;
             var c=first[0].GetProperty("contacts")[0];var previous=row.GetProperty("frames")[frame-1];
+            foreach(var name in new[]{"bodyMaterial","otherMaterial"})
+            {
+                var material=c.GetProperty(name);
+                if(material.GetProperty("staticFriction").GetSingle()!=.6f||
+                   material.GetProperty("dynamicFriction").GetSingle()!=.6f||
+                   material.GetProperty("restitution").GetSingle()!=0||
+                   material.GetProperty("frictionCombine").GetInt32()!=0||
+                   material.GetProperty("restitutionCombine").GetInt32()!=0)
+                    throw new Exception("Single-contact default-material evidence changed.");
+            }
             var observed=row.GetProperty("frames")[frame];
             var result=new DroneSingleContactSolver(geometry).Solve(Vec(previous.GetProperty("position")),
                 Quat(previous.GetProperty("rotation")),Vec(previous.GetProperty("velocity")),
@@ -28,7 +42,8 @@ internal static class DroneSourceFrictionTests
             samples++;
         }
         Console.WriteLine("Drone source-friction single-contact diagnostic: samples="+samples+", velocity="+maximumVelocity+
-            ", angular="+maximumAngular+", root="+maximumPosition+" (default material assumed; not admission proof).");
-        return 0;
+            ", angular="+maximumAngular+", root="+maximumPosition+" (recorded contacts and materials; not live admission proof).");
+        if(samples!=21)throw new Exception("Single-contact material coverage changed.");
+        return samples;
     }
 }
