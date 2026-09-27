@@ -16,6 +16,52 @@
         0.0,
         1.0
       ],
+      "bodyDynamics": {
+        "mass": 1.0,
+        "centerOfMass": [
+          -7.4301E-05,
+          0.0110904342,
+          0.005746098
+        ],
+        "inertiaTensor": [
+          0.0691394359,
+          0.08017581,
+          0.0691508055
+        ],
+        "inertiaTensorRotation": [
+          -0.009032032,
+          0.06144972,
+          -0.0006721601,
+          0.9980691
+        ],
+        "solverIterations": 1,
+        "solverVelocityIterations": 1,
+        "maxAngularVelocity": 7.0,
+        "maxDepenetrationVelocity": 1E+32,
+        "sleepThreshold": 0.005,
+        "colliders": [
+          {
+            "type": "BoxCollider",
+            "layer": 27,
+            "contactOffset": 0.01,
+            "staticFriction": 0.6,
+            "dynamicFriction": 0.6,
+            "bounciness": 0.0,
+            "frictionCombine": 0,
+            "bounceCombine": 0
+          },
+          {
+            "type": "SphereCollider",
+            "layer": 8,
+            "contactOffset": 0.01,
+            "staticFriction": 0.6,
+            "dynamicFriction": 0.6,
+            "bounciness": 0.0,
+            "frictionCombine": 0,
+            "bounceCombine": 0
+          }
+        ]
+      },
       "waypointFileId": 2313,
       "frames": [
         {
@@ -6816,6 +6862,52 @@
         0.04698885,
         0.9197686
       ],
+      "bodyDynamics": {
+        "mass": 1.0,
+        "centerOfMass": [
+          -7.43587E-05,
+          0.011090463,
+          0.00574612757
+        ],
+        "inertiaTensor": [
+          0.06913946,
+          0.08017581,
+          0.0691508055
+        ],
+        "inertiaTensorRotation": [
+          -0.00903197,
+          0.0615343973,
+          -0.000673016533,
+          0.998063862
+        ],
+        "solverIterations": 1,
+        "solverVelocityIterations": 1,
+        "maxAngularVelocity": 7.0,
+        "maxDepenetrationVelocity": 1E+32,
+        "sleepThreshold": 0.005,
+        "colliders": [
+          {
+            "type": "BoxCollider",
+            "layer": 27,
+            "contactOffset": 0.01,
+            "staticFriction": 0.6,
+            "dynamicFriction": 0.6,
+            "bounciness": 0.0,
+            "frictionCombine": 0,
+            "bounceCombine": 0
+          },
+          {
+            "type": "SphereCollider",
+            "layer": 8,
+            "contactOffset": 0.01,
+            "staticFriction": 0.6,
+            "dynamicFriction": 0.6,
+            "bounciness": 0.0,
+            "frictionCombine": 0,
+            "bounceCombine": 0
+          }
+        ]
+      },
       "waypointFileId": 2313,
       "frames": [
         {
@@ -13686,6 +13778,52 @@
         0.137025312,
         0.373788327
       ],
+      "bodyDynamics": {
+        "mass": 1.0,
+        "centerOfMass": [
+          -7.432983E-05,
+          0.0110906409,
+          0.00574609637
+        ],
+        "inertiaTensor": [
+          0.06913947,
+          0.08017584,
+          0.0691508353
+        ],
+        "inertiaTensorRotation": [
+          -0.009032016,
+          0.06147141,
+          -0.000672401,
+          0.998067737
+        ],
+        "solverIterations": 1,
+        "solverVelocityIterations": 1,
+        "maxAngularVelocity": 7.0,
+        "maxDepenetrationVelocity": 1E+32,
+        "sleepThreshold": 0.005,
+        "colliders": [
+          {
+            "type": "BoxCollider",
+            "layer": 27,
+            "contactOffset": 0.01,
+            "staticFriction": 0.6,
+            "dynamicFriction": 0.6,
+            "bounciness": 0.0,
+            "frictionCombine": 0,
+            "bounceCombine": 0
+          },
+          {
+            "type": "SphereCollider",
+            "layer": 8,
+            "contactOffset": 0.01,
+            "staticFriction": 0.6,
+            "dynamicFriction": 0.6,
+            "bounciness": 0.0,
+            "frictionCombine": 0,
+            "bounceCombine": 0
+          }
+        ]
+      },
       "waypointFileId": 2313,
       "frames": [
         {
@@ -20537,6 +20675,52 @@
         0.0,
         1.0
       ],
+      "bodyDynamics": {
+        "mass": 1.0,
+        "centerOfMass": [
+          -7.4301E-05,
+          0.0110904342,
+          0.005746098
+        ],
+        "inertiaTensor": [
+          0.0691394359,
+          0.08017581,
+          0.0691508055
+        ],
+        "inertiaTensorRotation": [
+          -0.009032032,
+          0.06144972,
+          -0.0006721601,
+          0.9980691
+        ],
+        "solverIterations": 1,
+        "solverVelocityIterations": 1,
+        "maxAngularVelocity": 7.0,
+        "maxDepenetrationVelocity": 1E+32,
+        "sleepThreshold": 0.005,
+        "colliders": [
+          {
+            "type": "BoxCollider",
+            "layer": 26,
+            "contactOffset": 0.01,
+            "staticFriction": 0.6,
+            "dynamicFriction": 0.6,
+            "bounciness": 0.0,
+            "frictionCombine": 0,
+            "bounceCombine": 0
+          },
+          {
+            "type": "SphereCollider",
+            "layer": 8,
+            "contactOffset": 0.01,
+            "staticFriction": 0.6,
+            "dynamicFriction": 0.6,
+            "bounciness": 0.0,
+            "frictionCombine": 0,
+            "bounceCombine": 0
+          }
+        ]
+      },
       "waypointFileId": 2484,
       "frames": [
         {
@@ -27424,6 +27608,52 @@
         0.04698885,
         0.9197686
       ],
+      "bodyDynamics": {
+        "mass": 1.0,
+        "centerOfMass": [
+          -7.4301E-05,
+          0.0110904044,
+          0.005746098
+        ],
+        "inertiaTensor": [
+          0.06913944,
+          0.08017581,
+          0.0691508055
+        ],
+        "inertiaTensorRotation": [
+          -0.009031978,
+          0.0615303777,
+          -0.0006728902,
+          0.99806416
+        ],
+        "solverIterations": 1,
+        "solverVelocityIterations": 1,
+        "maxAngularVelocity": 7.0,
+        "maxDepenetrationVelocity": 1E+32,
+        "sleepThreshold": 0.005,
+        "colliders": [
+          {
+            "type": "BoxCollider",
+            "layer": 26,
+            "contactOffset": 0.01,
+            "staticFriction": 0.6,
+            "dynamicFriction": 0.6,
+            "bounciness": 0.0,
+            "frictionCombine": 0,
+            "bounceCombine": 0
+          },
+          {
+            "type": "SphereCollider",
+            "layer": 8,
+            "contactOffset": 0.01,
+            "staticFriction": 0.6,
+            "dynamicFriction": 0.6,
+            "bounciness": 0.0,
+            "frictionCombine": 0,
+            "bounceCombine": 0
+          }
+        ]
+      },
       "waypointFileId": 2484,
       "frames": [
         {
@@ -34276,6 +34506,52 @@
         0.137025312,
         0.373788327
       ],
+      "bodyDynamics": {
+        "mass": 1.0,
+        "centerOfMass": [
+          -7.418177E-05,
+          0.0110904155,
+          0.0057459157
+        ],
+        "inertiaTensor": [
+          0.06913948,
+          0.08017584,
+          0.0691508353
+        ],
+        "inertiaTensorRotation": [
+          -0.009032006,
+          0.0614891,
+          -0.000672516529,
+          0.998066664
+        ],
+        "solverIterations": 1,
+        "solverVelocityIterations": 1,
+        "maxAngularVelocity": 7.0,
+        "maxDepenetrationVelocity": 1E+32,
+        "sleepThreshold": 0.005,
+        "colliders": [
+          {
+            "type": "BoxCollider",
+            "layer": 26,
+            "contactOffset": 0.01,
+            "staticFriction": 0.6,
+            "dynamicFriction": 0.6,
+            "bounciness": 0.0,
+            "frictionCombine": 0,
+            "bounceCombine": 0
+          },
+          {
+            "type": "SphereCollider",
+            "layer": 8,
+            "contactOffset": 0.01,
+            "staticFriction": 0.6,
+            "dynamicFriction": 0.6,
+            "bounciness": 0.0,
+            "frictionCombine": 0,
+            "bounceCombine": 0
+          }
+        ]
+      },
       "waypointFileId": 2484,
       "frames": [
         {
@@ -41181,6 +41457,52 @@
         0.0,
         1.0
       ],
+      "bodyDynamics": {
+        "mass": 1.0,
+        "centerOfMass": [
+          -7.4301E-05,
+          0.0110904342,
+          0.005746098
+        ],
+        "inertiaTensor": [
+          0.0691394359,
+          0.08017581,
+          0.0691508055
+        ],
+        "inertiaTensorRotation": [
+          -0.009032032,
+          0.06144972,
+          -0.0006721601,
+          0.9980691
+        ],
+        "solverIterations": 1,
+        "solverVelocityIterations": 1,
+        "maxAngularVelocity": 7.0,
+        "maxDepenetrationVelocity": 1E+32,
+        "sleepThreshold": 0.005,
+        "colliders": [
+          {
+            "type": "BoxCollider",
+            "layer": 27,
+            "contactOffset": 0.01,
+            "staticFriction": 0.6,
+            "dynamicFriction": 0.6,
+            "bounciness": 0.0,
+            "frictionCombine": 0,
+            "bounceCombine": 0
+          },
+          {
+            "type": "SphereCollider",
+            "layer": 8,
+            "contactOffset": 0.01,
+            "staticFriction": 0.6,
+            "dynamicFriction": 0.6,
+            "bounciness": 0.0,
+            "frictionCombine": 0,
+            "bounceCombine": 0
+          }
+        ]
+      },
       "waypointFileId": 3119,
       "frames": [
         {
@@ -48016,6 +48338,52 @@
         0.04698885,
         0.9197686
       ],
+      "bodyDynamics": {
+        "mass": 1.0,
+        "centerOfMass": [
+          -7.412027E-05,
+          0.0110903168,
+          0.005746098
+        ],
+        "inertiaTensor": [
+          0.0691394359,
+          0.08017581,
+          0.0691508055
+        ],
+        "inertiaTensorRotation": [
+          -0.00903197,
+          0.0615360029,
+          -0.000673030736,
+          0.998063743
+        ],
+        "solverIterations": 1,
+        "solverVelocityIterations": 1,
+        "maxAngularVelocity": 7.0,
+        "maxDepenetrationVelocity": 1E+32,
+        "sleepThreshold": 0.005,
+        "colliders": [
+          {
+            "type": "BoxCollider",
+            "layer": 27,
+            "contactOffset": 0.01,
+            "staticFriction": 0.6,
+            "dynamicFriction": 0.6,
+            "bounciness": 0.0,
+            "frictionCombine": 0,
+            "bounceCombine": 0
+          },
+          {
+            "type": "SphereCollider",
+            "layer": 8,
+            "contactOffset": 0.01,
+            "staticFriction": 0.6,
+            "dynamicFriction": 0.6,
+            "bounciness": 0.0,
+            "frictionCombine": 0,
+            "bounceCombine": 0
+          }
+        ]
+      },
       "waypointFileId": 3119,
       "frames": [
         {
@@ -54833,6 +55201,52 @@
         0.137025312,
         0.373788327
       ],
+      "bodyDynamics": {
+        "mass": 1.0,
+        "centerOfMass": [
+          -7.430098E-05,
+          0.0110904025,
+          0.00574603863
+        ],
+        "inertiaTensor": [
+          0.0691394657,
+          0.08017584,
+          0.0691508353
+        ],
+        "inertiaTensorRotation": [
+          -0.009032006,
+          0.06148765,
+          -0.000672503,
+          0.9980667
+        ],
+        "solverIterations": 1,
+        "solverVelocityIterations": 1,
+        "maxAngularVelocity": 7.0,
+        "maxDepenetrationVelocity": 1E+32,
+        "sleepThreshold": 0.005,
+        "colliders": [
+          {
+            "type": "BoxCollider",
+            "layer": 27,
+            "contactOffset": 0.01,
+            "staticFriction": 0.6,
+            "dynamicFriction": 0.6,
+            "bounciness": 0.0,
+            "frictionCombine": 0,
+            "bounceCombine": 0
+          },
+          {
+            "type": "SphereCollider",
+            "layer": 8,
+            "contactOffset": 0.01,
+            "staticFriction": 0.6,
+            "dynamicFriction": 0.6,
+            "bounciness": 0.0,
+            "frictionCombine": 0,
+            "bounceCombine": 0
+          }
+        ]
+      },
       "waypointFileId": 3119,
       "frames": [
         {
@@ -61598,6 +62012,52 @@
         0.0,
         1.0
       ],
+      "bodyDynamics": {
+        "mass": 1.0,
+        "centerOfMass": [
+          -7.4301E-05,
+          0.0110904342,
+          0.005746098
+        ],
+        "inertiaTensor": [
+          0.0691394359,
+          0.08017581,
+          0.0691508055
+        ],
+        "inertiaTensorRotation": [
+          -0.009032032,
+          0.06144972,
+          -0.0006721601,
+          0.9980691
+        ],
+        "solverIterations": 1,
+        "solverVelocityIterations": 1,
+        "maxAngularVelocity": 7.0,
+        "maxDepenetrationVelocity": 1E+32,
+        "sleepThreshold": 0.005,
+        "colliders": [
+          {
+            "type": "BoxCollider",
+            "layer": 26,
+            "contactOffset": 0.01,
+            "staticFriction": 0.6,
+            "dynamicFriction": 0.6,
+            "bounciness": 0.0,
+            "frictionCombine": 0,
+            "bounceCombine": 0
+          },
+          {
+            "type": "SphereCollider",
+            "layer": 8,
+            "contactOffset": 0.01,
+            "staticFriction": 0.6,
+            "dynamicFriction": 0.6,
+            "bounciness": 0.0,
+            "frictionCombine": 0,
+            "bounceCombine": 0
+          }
+        ]
+      },
       "waypointFileId": 3257,
       "frames": [
         {
@@ -68293,6 +68753,52 @@
         0.04698885,
         0.9197686
       ],
+      "bodyDynamics": {
+        "mass": 1.0,
+        "centerOfMass": [
+          -7.4301E-05,
+          0.01109042,
+          0.00574607
+        ],
+        "inertiaTensor": [
+          0.06913944,
+          0.08017581,
+          0.0691508055
+        ],
+        "inertiaTensorRotation": [
+          -0.00903200451,
+          0.0614901148,
+          -0.0006725257,
+          0.998066664
+        ],
+        "solverIterations": 1,
+        "solverVelocityIterations": 1,
+        "maxAngularVelocity": 7.0,
+        "maxDepenetrationVelocity": 1E+32,
+        "sleepThreshold": 0.005,
+        "colliders": [
+          {
+            "type": "BoxCollider",
+            "layer": 26,
+            "contactOffset": 0.01,
+            "staticFriction": 0.6,
+            "dynamicFriction": 0.6,
+            "bounciness": 0.0,
+            "frictionCombine": 0,
+            "bounceCombine": 0
+          },
+          {
+            "type": "SphereCollider",
+            "layer": 8,
+            "contactOffset": 0.01,
+            "staticFriction": 0.6,
+            "dynamicFriction": 0.6,
+            "bounciness": 0.0,
+            "frictionCombine": 0,
+            "bounceCombine": 0
+          }
+        ]
+      },
       "waypointFileId": 3257,
       "frames": [
         {
@@ -74988,6 +75494,52 @@
         0.137025312,
         0.373788327
       ],
+      "bodyDynamics": {
+        "mass": 1.0,
+        "centerOfMass": [
+          -7.421061E-05,
+          0.0110904323,
+          0.005746154
+        ],
+        "inertiaTensor": [
+          0.06913947,
+          0.08017584,
+          0.06915082
+        ],
+        "inertiaTensorRotation": [
+          -0.009031962,
+          0.0615515858,
+          -0.0006731267,
+          0.9980628
+        ],
+        "solverIterations": 1,
+        "solverVelocityIterations": 1,
+        "maxAngularVelocity": 7.0,
+        "maxDepenetrationVelocity": 1E+32,
+        "sleepThreshold": 0.005,
+        "colliders": [
+          {
+            "type": "BoxCollider",
+            "layer": 26,
+            "contactOffset": 0.01,
+            "staticFriction": 0.6,
+            "dynamicFriction": 0.6,
+            "bounciness": 0.0,
+            "frictionCombine": 0,
+            "bounceCombine": 0
+          },
+          {
+            "type": "SphereCollider",
+            "layer": 8,
+            "contactOffset": 0.01,
+            "staticFriction": 0.6,
+            "dynamicFriction": 0.6,
+            "bounciness": 0.0,
+            "frictionCombine": 0,
+            "bounceCombine": 0
+          }
+        ]
+      },
       "waypointFileId": 3257,
       "frames": [
         {
@@ -81718,6 +82270,52 @@
         0.0,
         1.0
       ],
+      "bodyDynamics": {
+        "mass": 1.0,
+        "centerOfMass": [
+          -7.4301E-05,
+          0.0110904342,
+          0.005746098
+        ],
+        "inertiaTensor": [
+          0.0691394359,
+          0.08017581,
+          0.0691508055
+        ],
+        "inertiaTensorRotation": [
+          -0.009032032,
+          0.06144972,
+          -0.0006721601,
+          0.9980691
+        ],
+        "solverIterations": 1,
+        "solverVelocityIterations": 1,
+        "maxAngularVelocity": 7.0,
+        "maxDepenetrationVelocity": 1E+32,
+        "sleepThreshold": 0.005,
+        "colliders": [
+          {
+            "type": "BoxCollider",
+            "layer": 27,
+            "contactOffset": 0.01,
+            "staticFriction": 0.6,
+            "dynamicFriction": 0.6,
+            "bounciness": 0.0,
+            "frictionCombine": 0,
+            "bounceCombine": 0
+          },
+          {
+            "type": "SphereCollider",
+            "layer": 8,
+            "contactOffset": 0.01,
+            "staticFriction": 0.6,
+            "dynamicFriction": 0.6,
+            "bounciness": 0.0,
+            "frictionCombine": 0,
+            "bounceCombine": 0
+          }
+        ]
+      },
       "waypointFileId": 2640,
       "frames": [
         {
@@ -88413,6 +89011,52 @@
         0.04698885,
         0.9197686
       ],
+      "bodyDynamics": {
+        "mass": 1.0,
+        "centerOfMass": [
+          -7.4301E-05,
+          0.011090463,
+          0.005746098
+        ],
+        "inertiaTensor": [
+          0.06913944,
+          0.08017581,
+          0.0691508055
+        ],
+        "inertiaTensorRotation": [
+          -0.009031978,
+          0.0615303777,
+          -0.000672890339,
+          0.99806416
+        ],
+        "solverIterations": 1,
+        "solverVelocityIterations": 1,
+        "maxAngularVelocity": 7.0,
+        "maxDepenetrationVelocity": 1E+32,
+        "sleepThreshold": 0.005,
+        "colliders": [
+          {
+            "type": "BoxCollider",
+            "layer": 27,
+            "contactOffset": 0.01,
+            "staticFriction": 0.6,
+            "dynamicFriction": 0.6,
+            "bounciness": 0.0,
+            "frictionCombine": 0,
+            "bounceCombine": 0
+          },
+          {
+            "type": "SphereCollider",
+            "layer": 8,
+            "contactOffset": 0.01,
+            "staticFriction": 0.6,
+            "dynamicFriction": 0.6,
+            "bounciness": 0.0,
+            "frictionCombine": 0,
+            "bounceCombine": 0
+          }
+        ]
+      },
       "waypointFileId": 2640,
       "frames": [
         {
@@ -95108,6 +95752,52 @@
         0.137025312,
         0.373788327
       ],
+      "bodyDynamics": {
+        "mass": 1.0,
+        "centerOfMass": [
+          -7.383949E-05,
+          0.0110904928,
+          0.00574560463
+        ],
+        "inertiaTensor": [
+          0.06913949,
+          0.08017584,
+          0.06915082
+        ],
+        "inertiaTensorRotation": [
+          -0.009032906,
+          0.0612046,
+          -0.0006691823,
+          0.9980841
+        ],
+        "solverIterations": 1,
+        "solverVelocityIterations": 1,
+        "maxAngularVelocity": 7.0,
+        "maxDepenetrationVelocity": 1E+32,
+        "sleepThreshold": 0.005,
+        "colliders": [
+          {
+            "type": "BoxCollider",
+            "layer": 27,
+            "contactOffset": 0.01,
+            "staticFriction": 0.6,
+            "dynamicFriction": 0.6,
+            "bounciness": 0.0,
+            "frictionCombine": 0,
+            "bounceCombine": 0
+          },
+          {
+            "type": "SphereCollider",
+            "layer": 8,
+            "contactOffset": 0.01,
+            "staticFriction": 0.6,
+            "dynamicFriction": 0.6,
+            "bounciness": 0.0,
+            "frictionCombine": 0,
+            "bounceCombine": 0
+          }
+        ]
+      },
       "waypointFileId": 2640,
       "frames": [
         {
@@ -101838,6 +102528,52 @@
         0.0,
         1.0
       ],
+      "bodyDynamics": {
+        "mass": 1.0,
+        "centerOfMass": [
+          -7.4301E-05,
+          0.0110904342,
+          0.005746098
+        ],
+        "inertiaTensor": [
+          0.0691394359,
+          0.08017581,
+          0.0691508055
+        ],
+        "inertiaTensorRotation": [
+          -0.009032032,
+          0.06144972,
+          -0.0006721601,
+          0.9980691
+        ],
+        "solverIterations": 1,
+        "solverVelocityIterations": 1,
+        "maxAngularVelocity": 7.0,
+        "maxDepenetrationVelocity": 1E+32,
+        "sleepThreshold": 0.005,
+        "colliders": [
+          {
+            "type": "BoxCollider",
+            "layer": 26,
+            "contactOffset": 0.01,
+            "staticFriction": 0.6,
+            "dynamicFriction": 0.6,
+            "bounciness": 0.0,
+            "frictionCombine": 0,
+            "bounceCombine": 0
+          },
+          {
+            "type": "SphereCollider",
+            "layer": 8,
+            "contactOffset": 0.01,
+            "staticFriction": 0.6,
+            "dynamicFriction": 0.6,
+            "bounciness": 0.0,
+            "frictionCombine": 0,
+            "bounceCombine": 0
+          }
+        ]
+      },
       "waypointFileId": 2602,
       "frames": [
         {
@@ -108603,6 +109339,52 @@
         0.04698885,
         0.9197686
       ],
+      "bodyDynamics": {
+        "mass": 1.0,
+        "centerOfMass": [
+          -7.52546839E-05,
+          0.0110899871,
+          0.00574563676
+        ],
+        "inertiaTensor": [
+          0.0691394359,
+          0.08017578,
+          0.06915081
+        ],
+        "inertiaTensorRotation": [
+          -0.0090314215,
+          0.06136443,
+          -0.0006714299,
+          0.9980744
+        ],
+        "solverIterations": 1,
+        "solverVelocityIterations": 1,
+        "maxAngularVelocity": 7.0,
+        "maxDepenetrationVelocity": 1E+32,
+        "sleepThreshold": 0.005,
+        "colliders": [
+          {
+            "type": "BoxCollider",
+            "layer": 26,
+            "contactOffset": 0.01,
+            "staticFriction": 0.6,
+            "dynamicFriction": 0.6,
+            "bounciness": 0.0,
+            "frictionCombine": 0,
+            "bounceCombine": 0
+          },
+          {
+            "type": "SphereCollider",
+            "layer": 8,
+            "contactOffset": 0.01,
+            "staticFriction": 0.6,
+            "dynamicFriction": 0.6,
+            "bounciness": 0.0,
+            "frictionCombine": 0,
+            "bounceCombine": 0
+          }
+        ]
+      },
       "waypointFileId": 2602,
       "frames": [
         {
@@ -115403,6 +116185,52 @@
         0.137025312,
         0.373788327
       ],
+      "bodyDynamics": {
+        "mass": 1.0,
+        "centerOfMass": [
+          -7.476248E-05,
+          0.0110903131,
+          0.00574632734
+        ],
+        "inertiaTensor": [
+          0.06913949,
+          0.08017584,
+          0.06915083
+        ],
+        "inertiaTensorRotation": [
+          -0.009031979,
+          0.0619773567,
+          -0.000677631644,
+          0.998036444
+        ],
+        "solverIterations": 1,
+        "solverVelocityIterations": 1,
+        "maxAngularVelocity": 7.0,
+        "maxDepenetrationVelocity": 1E+32,
+        "sleepThreshold": 0.005,
+        "colliders": [
+          {
+            "type": "BoxCollider",
+            "layer": 26,
+            "contactOffset": 0.01,
+            "staticFriction": 0.6,
+            "dynamicFriction": 0.6,
+            "bounciness": 0.0,
+            "frictionCombine": 0,
+            "bounceCombine": 0
+          },
+          {
+            "type": "SphereCollider",
+            "layer": 8,
+            "contactOffset": 0.01,
+            "staticFriction": 0.6,
+            "dynamicFriction": 0.6,
+            "bounciness": 0.0,
+            "frictionCombine": 0,
+            "bounceCombine": 0
+          }
+        ]
+      },
       "waypointFileId": 2602,
       "frames": [
         {
@@ -122290,6 +123118,52 @@
         0.0,
         1.0
       ],
+      "bodyDynamics": {
+        "mass": 1.0,
+        "centerOfMass": [
+          -7.4301E-05,
+          0.0110904342,
+          0.005746098
+        ],
+        "inertiaTensor": [
+          0.0691394359,
+          0.08017581,
+          0.0691508055
+        ],
+        "inertiaTensorRotation": [
+          -0.009032032,
+          0.06144972,
+          -0.0006721601,
+          0.9980691
+        ],
+        "solverIterations": 1,
+        "solverVelocityIterations": 1,
+        "maxAngularVelocity": 7.0,
+        "maxDepenetrationVelocity": 1E+32,
+        "sleepThreshold": 0.005,
+        "colliders": [
+          {
+            "type": "BoxCollider",
+            "layer": 27,
+            "contactOffset": 0.01,
+            "staticFriction": 0.6,
+            "dynamicFriction": 0.6,
+            "bounciness": 0.0,
+            "frictionCombine": 0,
+            "bounceCombine": 0
+          },
+          {
+            "type": "SphereCollider",
+            "layer": 8,
+            "contactOffset": 0.01,
+            "staticFriction": 0.6,
+            "dynamicFriction": 0.6,
+            "bounciness": 0.0,
+            "frictionCombine": 0,
+            "bounceCombine": 0
+          }
+        ]
+      },
       "waypointFileId": 3147,
       "frames": [
         {
@@ -129089,6 +129963,52 @@
         0.04698885,
         0.9197686
       ],
+      "bodyDynamics": {
+        "mass": 1.0,
+        "centerOfMass": [
+          -7.42433258E-05,
+          0.011090463,
+          0.00574604
+        ],
+        "inertiaTensor": [
+          0.06913944,
+          0.08017581,
+          0.0691508055
+        ],
+        "inertiaTensorRotation": [
+          -0.009032098,
+          0.0613624938,
+          -0.0006712812,
+          0.998074532
+        ],
+        "solverIterations": 1,
+        "solverVelocityIterations": 1,
+        "maxAngularVelocity": 7.0,
+        "maxDepenetrationVelocity": 1E+32,
+        "sleepThreshold": 0.005,
+        "colliders": [
+          {
+            "type": "BoxCollider",
+            "layer": 27,
+            "contactOffset": 0.01,
+            "staticFriction": 0.6,
+            "dynamicFriction": 0.6,
+            "bounciness": 0.0,
+            "frictionCombine": 0,
+            "bounceCombine": 0
+          },
+          {
+            "type": "SphereCollider",
+            "layer": 8,
+            "contactOffset": 0.01,
+            "staticFriction": 0.6,
+            "dynamicFriction": 0.6,
+            "bounciness": 0.0,
+            "frictionCombine": 0,
+            "bounceCombine": 0
+          }
+        ]
+      },
       "waypointFileId": 3147,
       "frames": [
         {
@@ -135819,6 +136739,52 @@
         0.137025312,
         0.373788327
       ],
+      "bodyDynamics": {
+        "mass": 1.0,
+        "centerOfMass": [
+          -7.44202E-05,
+          0.0110904025,
+          0.0057459157
+        ],
+        "inertiaTensor": [
+          0.06913947,
+          0.08017584,
+          0.06915083
+        ],
+        "inertiaTensorRotation": [
+          -0.009032006,
+          0.0614891,
+          -0.0006725161,
+          0.998066664
+        ],
+        "solverIterations": 1,
+        "solverVelocityIterations": 1,
+        "maxAngularVelocity": 7.0,
+        "maxDepenetrationVelocity": 1E+32,
+        "sleepThreshold": 0.005,
+        "colliders": [
+          {
+            "type": "BoxCollider",
+            "layer": 27,
+            "contactOffset": 0.01,
+            "staticFriction": 0.6,
+            "dynamicFriction": 0.6,
+            "bounciness": 0.0,
+            "frictionCombine": 0,
+            "bounceCombine": 0
+          },
+          {
+            "type": "SphereCollider",
+            "layer": 8,
+            "contactOffset": 0.01,
+            "staticFriction": 0.6,
+            "dynamicFriction": 0.6,
+            "bounciness": 0.0,
+            "frictionCombine": 0,
+            "bounceCombine": 0
+          }
+        ]
+      },
       "waypointFileId": 3147,
       "frames": [
         {
@@ -142514,6 +143480,52 @@
         0.0,
         1.0
       ],
+      "bodyDynamics": {
+        "mass": 1.0,
+        "centerOfMass": [
+          -7.4301E-05,
+          0.0110904342,
+          0.005746098
+        ],
+        "inertiaTensor": [
+          0.0691394359,
+          0.08017581,
+          0.0691508055
+        ],
+        "inertiaTensorRotation": [
+          -0.009032032,
+          0.06144972,
+          -0.0006721601,
+          0.9980691
+        ],
+        "solverIterations": 1,
+        "solverVelocityIterations": 1,
+        "maxAngularVelocity": 7.0,
+        "maxDepenetrationVelocity": 1E+32,
+        "sleepThreshold": 0.005,
+        "colliders": [
+          {
+            "type": "BoxCollider",
+            "layer": 26,
+            "contactOffset": 0.01,
+            "staticFriction": 0.6,
+            "dynamicFriction": 0.6,
+            "bounciness": 0.0,
+            "frictionCombine": 0,
+            "bounceCombine": 0
+          },
+          {
+            "type": "SphereCollider",
+            "layer": 8,
+            "contactOffset": 0.01,
+            "staticFriction": 0.6,
+            "dynamicFriction": 0.6,
+            "bounciness": 0.0,
+            "frictionCombine": 0,
+            "bounceCombine": 0
+          }
+        ]
+      },
       "waypointFileId": 3466,
       "frames": [
         {
@@ -149244,6 +150256,52 @@
         0.04698885,
         0.9197686
       ],
+      "bodyDynamics": {
+        "mass": 1.0,
+        "centerOfMass": [
+          -7.412027E-05,
+          0.011090463,
+          0.005746098
+        ],
+        "inertiaTensor": [
+          0.06913944,
+          0.08017581,
+          0.06915081
+        ],
+        "inertiaTensorRotation": [
+          -0.009031969,
+          0.0615353622,
+          -0.0006730253,
+          0.9980638
+        ],
+        "solverIterations": 1,
+        "solverVelocityIterations": 1,
+        "maxAngularVelocity": 7.0,
+        "maxDepenetrationVelocity": 1E+32,
+        "sleepThreshold": 0.005,
+        "colliders": [
+          {
+            "type": "BoxCollider",
+            "layer": 26,
+            "contactOffset": 0.01,
+            "staticFriction": 0.6,
+            "dynamicFriction": 0.6,
+            "bounciness": 0.0,
+            "frictionCombine": 0,
+            "bounceCombine": 0
+          },
+          {
+            "type": "SphereCollider",
+            "layer": 8,
+            "contactOffset": 0.01,
+            "staticFriction": 0.6,
+            "dynamicFriction": 0.6,
+            "bounciness": 0.0,
+            "frictionCombine": 0,
+            "bounceCombine": 0
+          }
+        ]
+      },
       "waypointFileId": 3466,
       "frames": [
         {
@@ -155974,6 +157032,52 @@
         0.137025312,
         0.373788327
       ],
+      "bodyDynamics": {
+        "mass": 1.0,
+        "centerOfMass": [
+          -7.430098E-05,
+          0.0110904453,
+          0.00574609637
+        ],
+        "inertiaTensor": [
+          0.06913947,
+          0.08017584,
+          0.0691508353
+        ],
+        "inertiaTensorRotation": [
+          -0.009032006,
+          0.0614881329,
+          -0.0006725079,
+          0.9980667
+        ],
+        "solverIterations": 1,
+        "solverVelocityIterations": 1,
+        "maxAngularVelocity": 7.0,
+        "maxDepenetrationVelocity": 1E+32,
+        "sleepThreshold": 0.005,
+        "colliders": [
+          {
+            "type": "BoxCollider",
+            "layer": 26,
+            "contactOffset": 0.01,
+            "staticFriction": 0.6,
+            "dynamicFriction": 0.6,
+            "bounciness": 0.0,
+            "frictionCombine": 0,
+            "bounceCombine": 0
+          },
+          {
+            "type": "SphereCollider",
+            "layer": 8,
+            "contactOffset": 0.01,
+            "staticFriction": 0.6,
+            "dynamicFriction": 0.6,
+            "bounciness": 0.0,
+            "frictionCombine": 0,
+            "bounceCombine": 0
+          }
+        ]
+      },
       "waypointFileId": 3466,
       "frames": [
         {
@@ -162704,6 +163808,52 @@
         0.0,
         1.0
       ],
+      "bodyDynamics": {
+        "mass": 1.0,
+        "centerOfMass": [
+          -7.4301E-05,
+          0.0110904342,
+          0.005746098
+        ],
+        "inertiaTensor": [
+          0.0691394359,
+          0.08017581,
+          0.0691508055
+        ],
+        "inertiaTensorRotation": [
+          -0.009032032,
+          0.06144972,
+          -0.0006721601,
+          0.9980691
+        ],
+        "solverIterations": 1,
+        "solverVelocityIterations": 1,
+        "maxAngularVelocity": 7.0,
+        "maxDepenetrationVelocity": 1E+32,
+        "sleepThreshold": 0.005,
+        "colliders": [
+          {
+            "type": "BoxCollider",
+            "layer": 27,
+            "contactOffset": 0.01,
+            "staticFriction": 0.6,
+            "dynamicFriction": 0.6,
+            "bounciness": 0.0,
+            "frictionCombine": 0,
+            "bounceCombine": 0
+          },
+          {
+            "type": "SphereCollider",
+            "layer": 8,
+            "contactOffset": 0.01,
+            "staticFriction": 0.6,
+            "dynamicFriction": 0.6,
+            "bounciness": 0.0,
+            "frictionCombine": 0,
+            "bounceCombine": 0
+          }
+        ]
+      },
       "waypointFileId": 3074,
       "frames": [
         {
@@ -169694,6 +170844,52 @@
         0.04698885,
         0.9197686
       ],
+      "bodyDynamics": {
+        "mass": 1.0,
+        "centerOfMass": [
+          -7.42433258E-05,
+          0.0110906437,
+          0.00574624632
+        ],
+        "inertiaTensor": [
+          0.06913944,
+          0.08017581,
+          0.0691508
+        ],
+        "inertiaTensorRotation": [
+          -0.009032015,
+          0.0614837334,
+          -0.0006723779,
+          0.998067
+        ],
+        "solverIterations": 1,
+        "solverVelocityIterations": 1,
+        "maxAngularVelocity": 7.0,
+        "maxDepenetrationVelocity": 1E+32,
+        "sleepThreshold": 0.005,
+        "colliders": [
+          {
+            "type": "BoxCollider",
+            "layer": 27,
+            "contactOffset": 0.01,
+            "staticFriction": 0.6,
+            "dynamicFriction": 0.6,
+            "bounciness": 0.0,
+            "frictionCombine": 0,
+            "bounceCombine": 0
+          },
+          {
+            "type": "SphereCollider",
+            "layer": 8,
+            "contactOffset": 0.01,
+            "staticFriction": 0.6,
+            "dynamicFriction": 0.6,
+            "bounciness": 0.0,
+            "frictionCombine": 0,
+            "bounceCombine": 0
+          }
+        ]
+      },
       "waypointFileId": 3074,
       "frames": [
         {
@@ -176802,6 +177998,52 @@
         0.137025312,
         0.373788327
       ],
+      "bodyDynamics": {
+        "mass": 1.0,
+        "centerOfMass": [
+          -7.42433E-05,
+          0.01109046,
+          0.00574609637
+        ],
+        "inertiaTensor": [
+          0.06913947,
+          0.08017584,
+          0.06915084
+        ],
+        "inertiaTensorRotation": [
+          -0.009032098,
+          0.06136198,
+          -0.0006712772,
+          0.998074532
+        ],
+        "solverIterations": 1,
+        "solverVelocityIterations": 1,
+        "maxAngularVelocity": 7.0,
+        "maxDepenetrationVelocity": 1E+32,
+        "sleepThreshold": 0.005,
+        "colliders": [
+          {
+            "type": "BoxCollider",
+            "layer": 27,
+            "contactOffset": 0.01,
+            "staticFriction": 0.6,
+            "dynamicFriction": 0.6,
+            "bounciness": 0.0,
+            "frictionCombine": 0,
+            "bounceCombine": 0
+          },
+          {
+            "type": "SphereCollider",
+            "layer": 8,
+            "contactOffset": 0.01,
+            "staticFriction": 0.6,
+            "dynamicFriction": 0.6,
+            "bounciness": 0.0,
+            "frictionCombine": 0,
+            "bounceCombine": 0
+          }
+        ]
+      },
       "waypointFileId": 3074,
       "frames": [
         {
@@ -183929,6 +185171,52 @@
         0.0,
         1.0
       ],
+      "bodyDynamics": {
+        "mass": 1.0,
+        "centerOfMass": [
+          -7.4301E-05,
+          0.0110904342,
+          0.005746098
+        ],
+        "inertiaTensor": [
+          0.0691394359,
+          0.08017581,
+          0.0691508055
+        ],
+        "inertiaTensorRotation": [
+          -0.009032032,
+          0.06144972,
+          -0.0006721601,
+          0.9980691
+        ],
+        "solverIterations": 1,
+        "solverVelocityIterations": 1,
+        "maxAngularVelocity": 7.0,
+        "maxDepenetrationVelocity": 1E+32,
+        "sleepThreshold": 0.005,
+        "colliders": [
+          {
+            "type": "BoxCollider",
+            "layer": 26,
+            "contactOffset": 0.01,
+            "staticFriction": 0.6,
+            "dynamicFriction": 0.6,
+            "bounciness": 0.0,
+            "frictionCombine": 0,
+            "bounceCombine": 0
+          },
+          {
+            "type": "SphereCollider",
+            "layer": 8,
+            "contactOffset": 0.01,
+            "staticFriction": 0.6,
+            "dynamicFriction": 0.6,
+            "bounciness": 0.0,
+            "frictionCombine": 0,
+            "bounceCombine": 0
+          }
+        ]
+      },
       "waypointFileId": 3029,
       "frames": [
         {
@@ -190920,6 +192208,52 @@
         0.04698885,
         0.9197686
       ],
+      "bodyDynamics": {
+        "mass": 1.0,
+        "centerOfMass": [
+          -7.43587E-05,
+          0.0110905087,
+          0.00574612757
+        ],
+        "inertiaTensor": [
+          0.06913946,
+          0.08017581,
+          0.0691508055
+        ],
+        "inertiaTensorRotation": [
+          -0.00903197,
+          0.0615343973,
+          -0.0006730164,
+          0.998063862
+        ],
+        "solverIterations": 1,
+        "solverVelocityIterations": 1,
+        "maxAngularVelocity": 7.0,
+        "maxDepenetrationVelocity": 1E+32,
+        "sleepThreshold": 0.005,
+        "colliders": [
+          {
+            "type": "BoxCollider",
+            "layer": 26,
+            "contactOffset": 0.01,
+            "staticFriction": 0.6,
+            "dynamicFriction": 0.6,
+            "bounciness": 0.0,
+            "frictionCombine": 0,
+            "bounceCombine": 0
+          },
+          {
+            "type": "SphereCollider",
+            "layer": 8,
+            "contactOffset": 0.01,
+            "staticFriction": 0.6,
+            "dynamicFriction": 0.6,
+            "bounciness": 0.0,
+            "frictionCombine": 0,
+            "bounceCombine": 0
+          }
+        ]
+      },
       "waypointFileId": 3029,
       "frames": [
         {
@@ -197755,6 +199089,52 @@
         0.137025312,
         0.373788327
       ],
+      "bodyDynamics": {
+        "mass": 1.0,
+        "centerOfMass": [
+          -7.430098E-05,
+          0.0110904463,
+          0.00574609637
+        ],
+        "inertiaTensor": [
+          0.06913947,
+          0.08017584,
+          0.0691508353
+        ],
+        "inertiaTensorRotation": [
+          -0.009032006,
+          0.0614881329,
+          -0.00067250774,
+          0.9980667
+        ],
+        "solverIterations": 1,
+        "solverVelocityIterations": 1,
+        "maxAngularVelocity": 7.0,
+        "maxDepenetrationVelocity": 1E+32,
+        "sleepThreshold": 0.005,
+        "colliders": [
+          {
+            "type": "BoxCollider",
+            "layer": 26,
+            "contactOffset": 0.01,
+            "staticFriction": 0.6,
+            "dynamicFriction": 0.6,
+            "bounciness": 0.0,
+            "frictionCombine": 0,
+            "bounceCombine": 0
+          },
+          {
+            "type": "SphereCollider",
+            "layer": 8,
+            "contactOffset": 0.01,
+            "staticFriction": 0.6,
+            "dynamicFriction": 0.6,
+            "bounciness": 0.0,
+            "frictionCombine": 0,
+            "bounceCombine": 0
+          }
+        ]
+      },
       "waypointFileId": 3029,
       "frames": [
         {

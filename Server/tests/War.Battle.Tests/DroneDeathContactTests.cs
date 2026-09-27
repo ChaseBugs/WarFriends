@@ -15,6 +15,20 @@ internal static class DroneDeathContactTests
         Vector3 Vec(JsonElement value)=>new(value[0].GetSingle(),value[1].GetSingle(),value[2].GetSingle());
         foreach(var row in document.RootElement.GetProperty("rows").EnumerateArray())
         {
+            var dynamics=row.GetProperty("bodyDynamics");var mass=DroneMassProperties.Compute(content.DroneColliders);
+            var tensor=Vec(dynamics.GetProperty("inertiaTensor"));var inertiaRotation=dynamics.GetProperty("inertiaTensorRotation");
+            var rotationMatrix=Matrix4x4.CreateFromQuaternion(new Quaternion(inertiaRotation[0].GetSingle(),
+                inertiaRotation[1].GetSingle(),inertiaRotation[2].GetSingle(),inertiaRotation[3].GetSingle()));
+            var expectedInertia=Matrix4x4.Transpose(rotationMatrix)*Matrix4x4.CreateScale(tensor)*rotationMatrix;
+            if(Vector3.Distance(mass.CenterOfMass,Vec(dynamics.GetProperty("centerOfMass")))>.00001f||
+               Math.Abs(mass.Inertia.M11-expectedInertia.M11)>.00001f||
+               Math.Abs(mass.Inertia.M22-expectedInertia.M22)>.00001f||
+               Math.Abs(mass.Inertia.M33-expectedInertia.M33)>.00001f||
+               Math.Abs(mass.Inertia.M12-expectedInertia.M12)>.00001f||
+               Math.Abs(mass.Inertia.M13-expectedInertia.M13)>.00001f||
+               Math.Abs(mass.Inertia.M23-expectedInertia.M23)>.00001f)
+                throw new Exception("Source compound mass properties differ from Unity Rigidbody.");
+            count++;
             var map=content.Maps.Single(m=>m.Source==row.GetProperty("source").GetString());
             foreach(var sample in row.GetProperty("frames").EnumerateArray())
             {

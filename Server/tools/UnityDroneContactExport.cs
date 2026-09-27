@@ -75,6 +75,18 @@ public static class UnityDroneContactExport
                         }
                         rows.Add(new{source,sourceSha256=Hash(source),fraction,
                             initialRotation=new[]{initialRotation.x,initialRotation.y,initialRotation.z,initialRotation.w},
+                            bodyDynamics=new{mass=body.mass,centerOfMass=Vec(body.centerOfMass),
+                                inertiaTensor=Vec(body.inertiaTensor),
+                                inertiaTensorRotation=new[]{body.inertiaTensorRotation.x,body.inertiaTensorRotation.y,
+                                    body.inertiaTensorRotation.z,body.inertiaTensorRotation.w},
+                                solverIterations=body.solverIterations,solverVelocityIterations=body.solverVelocityIterations,
+                                maxAngularVelocity=body.maxAngularVelocity,maxDepenetrationVelocity=body.maxDepenetrationVelocity,
+                                sleepThreshold=body.sleepThreshold,
+                                colliders=drone.GetComponentsInChildren<Collider>().Select(c=>new{
+                                    type=c.GetType().Name,layer=c.gameObject.layer,contactOffset=c.contactOffset,
+                                    staticFriction=c.material.staticFriction,dynamicFriction=c.material.dynamicFriction,
+                                    bounciness=c.material.bounciness,frictionCombine=(int)c.material.frictionCombine,
+                                    bounceCombine=(int)c.material.bounceCombine}).ToArray()},
                             waypointFileId=(long)waypoint["componentFileId"],frames,collisionCallbacks=observer.Rows});
                     }
                     finally{UnityEngine.Object.DestroyImmediate(drone);}
