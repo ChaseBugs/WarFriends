@@ -36,7 +36,7 @@ public sealed record RepairDronePrefabBinding(string Prefab,string Sha256,int Co
 public sealed record GroundVehicleWeaponRig(string UnitId,string Prefab,string Sha256,string BehaviorType,
     IReadOnlyList<GroundVehicleTurret> Roles,IReadOnlyList<GroundVehiclePassengerBinding> Passengers,
     IReadOnlyList<GroundVehicleBodyPart> BodyParts,IReadOnlyList<RepairDronePath> RepairDronePaths,
-    Vector3 ShotTarget);
+    Vector3 ShotTarget,int ShotTargetTransformFileId);
 
 /// <summary>Immutable turret and muzzle evidence extracted from the four 1.4.0 ground-vehicle prefabs.</summary>
 public sealed class GroundVehicleWeaponCatalog
@@ -357,7 +357,7 @@ public sealed class GroundVehicleWeaponCatalog
                 throw new InvalidDataException("Ground vehicle Body shot target changed.");
             result.Add(source.UnitId,new(source.UnitId,source.Prefab,source.Sha256,source.BehaviorType,
                 Array.AsReadOnly(roles),Array.AsReadOnly(passengers),Array.AsReadOnly(bodyParts),
-                Array.AsReadOnly(repairPaths),Vector(source.ShotTargets[0].Position)));
+                Array.AsReadOnly(repairPaths),Vector(source.ShotTargets[0].Position),source.ShotTargets[0].TransformFileId));
         }
         if(turretCount!=7||weaponCount!=9||result.Values.Sum(x=>x.BodyParts.Sum(p=>p.Colliders.Count))!=41)
             throw new InvalidDataException("Incomplete ground vehicle weapon graph.");

@@ -2693,6 +2693,13 @@ internal static class CombatContentTests
             DeployArmy=new(){OptionIndex=9}}).Code=="army-deploying","normal army path accepts trusted Drone deployment");
         deployedDroneMatch.Advance(61);
         var deployedDrone=deployedDroneMatch.ArmyEntityBatch(decoyPlayer,0,0).Entities.Single();
+        var droneAimDetails=deployedDroneMatch.ResolveDroneShotTarget(deployedDroneMatch.DroneTargetSnapshot().Single(r=>r.Id=="army:"+deployedDrone.EntityKey));
+        Check(droneAimDetails.Targets.Single() is {TransformFileId:454360,Type:1}&&
+            droneAimDetails.Targets.Single().Position==new Vector3(deployedDrone.X,deployedDrone.Y,deployedDrone.Z),
+            "live Drone target resolution uses verified root target transform");
+        var playerAimDetails=deployedDroneMatch.ResolveDroneShotTarget(deployedDroneMatch.DroneTargetSnapshot().Single(r=>r.Id=="player:"+decoyOpponent));
+        Check(playerAimDetails.IsPlayer&&playerAimDetails.Targets.Count==content.PlayerShotTargets.Gameplay.Count&&
+            playerAimDetails.Velocity==Vector3.Zero,"Drone player resolution binds current source poses and zero prediction velocity");
         float droneHealth=deployedDroneMatch.ArmyHealth(deployedDrone.EntityKey)!.Value;
         Check(deployedDroneMatch.DroneShotDefinition(deployedDrone.EntityKey) is {ShotSpeed:18,ProbabilityOfRealShot:.7f},"normal Drone deployment binds trusted shot-speed perk into composed firing authority");
         var droneCollisionTargets=deployedDroneMatch.GroundVehicleShotTargets(decoyOpponent).Where(r=>r.EntityId==deployedDrone.EntityKey).ToArray();
