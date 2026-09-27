@@ -44,6 +44,9 @@ public static class UnityDroneContactExport
                         body.isKinematic=false;body.velocity=Vector3.zero;body.angularVelocity=Vector3.zero;
                         Physics.SyncTransforms();var frames=new List<object>();
                         var sphere=drone.GetComponentsInChildren<SphereCollider>().Single();
+                        var box=drone.GetComponent<BoxCollider>();int boxMask=0;
+                        for(int layer=0;layer<32;layer++)
+                            if(!Physics.GetIgnoreLayerCollision(drone.layer,layer))boxMask|=1<<layer;
                         int sphereMask=0;
                         for(int layer=0;layer<32;layer++)
                             if(!Physics.GetIgnoreLayerCollision(sphere.gameObject.layer,layer))sphereMask|=1<<layer;
@@ -54,10 +57,16 @@ public static class UnityDroneContactExport
                             float radius=sphere.radius*Mathf.Max(Mathf.Abs(scale.x),Mathf.Abs(scale.y),Mathf.Abs(scale.z));
                             bool sphereMapOverlap=Physics.OverlapSphere(center,radius,sphereMask,QueryTriggerInteraction.Ignore)
                                 .Any(c=>!c.transform.IsChildOf(drone.transform));
+                            var boxCenter=box.transform.TransformPoint(box.center);
+                            var boxSize=Vector3.Scale(box.size,box.transform.lossyScale);
+                            bool boxMapOverlap=Physics.OverlapBox(boxCenter,boxSize*.5f,box.transform.rotation,
+                                boxMask,QueryTriggerInteraction.Ignore).Any(c=>!c.transform.IsChildOf(drone.transform));
                             frames.Add(new{frame,position=Vec(body.position),velocity=Vec(body.velocity),
                                 rotation=new[]{body.rotation.x,body.rotation.y,body.rotation.z,body.rotation.w},
                                 angularVelocity=Vec(body.angularVelocity),sphereMapOverlap,
-                                sphereCenter=Vec(center),sphereRadius=radius,sphereMask=((uint)sphereMask).ToString("x8")});
+                                sphereCenter=Vec(center),sphereRadius=radius,sphereMask=((uint)sphereMask).ToString("x8"),
+                                boxMapOverlap,boxCenter=Vec(boxCenter),boxSize=Vec(boxSize),
+                                boxMask=((uint)boxMask).ToString("x8")});
                             if(frame<150){observer.Frame=frame+1;Physics.Simulate(Time.fixedDeltaTime);}
                         }
                         rows.Add(new{source,sourceSha256=Hash(source),fraction,

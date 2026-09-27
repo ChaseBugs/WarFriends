@@ -7,7 +7,7 @@ internal static class DroneDeathContactTests
     internal static int Run(string directory,BattleCombatContent content)
     {
         using var document=JsonDocument.Parse(File.ReadAllBytes(Path.Combine(directory,"recovered-drone-map-fall.json")));
-        int count=0,boundaries=0;
+        int count=0,boundaries=0,boxBoundaries=0;
         Vector3 Vec(JsonElement value)=>new(value[0].GetSingle(),value[1].GetSingle(),value[2].GetSingle());
         foreach(var row in document.RootElement.GetProperty("rows").EnumerateArray())
         {
@@ -29,6 +29,21 @@ internal static class DroneDeathContactTests
                         throw new Exception("Drone sphere overlap differs beyond 0.00001 boundary: "+map.Source+
                             " fraction "+row.GetProperty("fraction")+" frame "+sample.GetProperty("frame"));
                     boundaries++;
+                }
+                count++;
+                var rotationSample=sample.GetProperty("rotation");
+                var rotation=new Quaternion(rotationSample[0].GetSingle(),rotationSample[1].GetSingle(),
+                    rotationSample[2].GetSingle(),rotationSample[3].GetSingle());
+                var boxCenter=Vec(sample.GetProperty("boxCenter"));var boxSize=Vec(sample.GetProperty("boxSize"));
+                uint boxMask=Convert.ToUInt32(sample.GetProperty("boxMask").GetString(),16);
+                if(map.BoxOverlaps(boxCenter,boxSize,rotation,boxMask)!=sample.GetProperty("boxMapOverlap").GetBoolean())
+                {
+                    var margin=new Vector3(.00002f);
+                    if(!map.BoxOverlaps(boxCenter,boxSize+margin,rotation,boxMask)||
+                        map.BoxOverlaps(boxCenter,boxSize-margin,rotation,boxMask))
+                        throw new Exception("Drone box overlap differs beyond 0.00001 boundary: "+map.Source+
+                            " fraction "+row.GetProperty("fraction")+" frame "+sample.GetProperty("frame"));
+                    boxBoundaries++;
                 }
                 count++;
             }
@@ -53,6 +68,7 @@ internal static class DroneDeathContactTests
             }
         }
         Console.WriteLine("Drone sphere overlap oracle: "+boundaries+" boundary differences within 0.00001 world units.");
+        Console.WriteLine("Drone box overlap oracle: "+boxBoundaries+" boundary differences within 0.00001 world units.");
         return count;
     }
 }
