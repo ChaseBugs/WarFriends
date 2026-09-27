@@ -21,7 +21,7 @@ public sealed class BattleRifleManifestCatalog
     private sealed record ContentManifest(int Version,string SceneRevision,string StatsRevision,string BindingsRevision,string AllWeaponBindingsRevision,
         string PosesRevision,string BarrelBindingsRevision,string BarrelOverlapRevision,string ArmyDeploymentRevision,
         string ArmyWeaponBindingsRevision,string GroundVehicleWeaponsRevision,string EnemyPosesRevision,string DecoyRevision,string LandMineRevision,string HeavyTurretRevision,string ArmySpawnPointsRevision,string ArmyRusherPointsRevision,string ArmyMinigunnerPointsRevision,string PlayerShotTargetsRevision,
-        string ArmyNavMeshSourcesRevision,string ArmyNavMeshTriangulationRevision,string ArmyNavMeshPathsRevision,string AirWaypointRoutesRevision,string DroneWeaponRevision,string AirGeometryRevision,string DroneProjectileRevision);
+        string ArmyNavMeshSourcesRevision,string ArmyNavMeshTriangulationRevision,string ArmyNavMeshPathsRevision,string AirWaypointRoutesRevision,string DroneWeaponRevision,string AirGeometryRevision,string DroneProjectileRevision,string EnemyShotTargetsRevision);
     private sealed record Stage(string SourceId,int UpgradeIndex,int ClipSize,int ReserveAmmo,double CadenceSeconds,double ReloadSeconds);
     private readonly IReadOnlyDictionary<string,Stage[]> stages;
     public string PackageRevision { get; }
@@ -46,8 +46,8 @@ public sealed class BattleRifleManifestCatalog
             manifest.LandMineRevision,
             manifest.HeavyTurretRevision,
             manifest.ArmySpawnPointsRevision,manifest.ArmyRusherPointsRevision,manifest.ArmyMinigunnerPointsRevision,manifest.PlayerShotTargetsRevision,
-            manifest.ArmyNavMeshSourcesRevision,manifest.ArmyNavMeshTriangulationRevision,manifest.ArmyNavMeshPathsRevision,manifest.AirWaypointRoutesRevision,manifest.DroneWeaponRevision,manifest.AirGeometryRevision,manifest.DroneProjectileRevision];
-        if(manifest.Version!=11 || hashes.Any(x=>x==null || !Regex.IsMatch(x,@"\A[0-9a-f]{64}\z")))
+            manifest.ArmyNavMeshSourcesRevision,manifest.ArmyNavMeshTriangulationRevision,manifest.ArmyNavMeshPathsRevision,manifest.AirWaypointRoutesRevision,manifest.DroneWeaponRevision,manifest.AirGeometryRevision,manifest.DroneProjectileRevision,manifest.EnemyShotTargetsRevision];
+        if(manifest.Version!=12 || hashes.Any(x=>x==null || !Regex.IsMatch(x,@"\A[0-9a-f]{64}\z")))
             throw new InvalidDataException("Invalid combat content revisions.");
         string contentPath=Path.Combine(Path.GetDirectoryName(Path.GetFullPath(manifestPath))!,"recovered-battle-content.json");
         byte[] content=ReadBounded(contentPath,2,16_000_000,"rifle content");

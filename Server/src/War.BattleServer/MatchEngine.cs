@@ -65,6 +65,7 @@ public sealed partial class MatchEngine
     private readonly ArmyWeaponBindingCatalog? armyWeapons;
     private readonly GroundVehicleWeaponCatalog? groundVehicleWeapons;
     private readonly EnemyPoseCatalog? enemyPoses;
+    private readonly EnemyShotTargetCatalog? enemyShotTargets;
     private readonly DecoySourceCatalog? decoySource;
     private readonly LandMineSourceCatalog? landMineSource;
     private readonly HeavyTurretSourceCatalog? heavyTurretSource;
@@ -715,7 +716,7 @@ public sealed partial class MatchEngine
             armyCatalog=content.Army;
             armyWeapons=content.ArmyWeapons;
             groundVehicleWeapons=content.GroundVehicleWeapons;
-            enemyPoses=content.EnemyPoses;
+            enemyPoses=content.EnemyPoses;enemyShotTargets=content.EnemyShotTargets;
             armySelector=new ArmySpawnPointSelector(content.ArmySpawnPoints);
             airWaypoints=content.AirWaypoints;droneColliders=content.DroneColliders;
             armyRusherPoints=content.ArmyRusherPoints;

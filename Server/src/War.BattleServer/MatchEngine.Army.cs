@@ -158,6 +158,15 @@ public sealed partial class MatchEngine
         return new(direction.X*speed,0,direction.Y*speed);
     }
 
+    internal IReadOnlyList<DroneShotTarget>? InfantryShotTargets(ulong entityKey)
+    {
+        if(enemyShotTargets==null||!infantryAnimations.TryGetValue(entityKey,out var animation)||
+           !activeArmyEntities.TryGetValue(entityKey,out var army))return null;
+        if(animation.StartTick>tick)throw new InvalidDataException("Infantry aim animation starts after match time.");
+        float yaw=MathF.Atan2(animation.Facing.X,animation.Facing.Z);
+        return enemyShotTargets.Place(animation.Clip,new(army.X,army.Y,army.Z),
+            Quaternion.CreateFromAxisAngle(Vector3.UnitY,yaw),(tick-animation.StartTick)/(float)MatchManifest.TickRate);
+    }
     internal ArmyInfantryPoseSnapshot? InfantryPose(ulong entityKey)
     {
         if(enemyPoses==null||!infantryAnimations.TryGetValue(entityKey,out var animation)||
