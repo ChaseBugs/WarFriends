@@ -5,12 +5,21 @@ internal static class DroneAttackStateTests
     internal static int Run(BattleCombatContent content)
     {
         int count=0;void Check(bool ok,string name){if(!ok)throw new Exception(name);count++;}
+        Check(content.Army.ComposeDroneShot(0,null,null).ShieldHitProbability==0,
+            "Drone shield probability comes from recovered ArmyUpgrades row");
+        try
+        {
+            _=new DroneAttackState(0,content.Army.ComposeDroneShot(0,null,null) with {ShieldHitProbability=float.NaN},
+                content.DroneWeapon,content.DroneProjectile,()=>0,(a,b)=>a);
+            throw new Exception("invalid shield probability accepted");
+        }
+        catch(InvalidDataException){Check(true,"invalid composed shield authority rejected at attack boundary");}
         var draws=new Queue<float>([.2f,.9f,.5f,.5f,0,0]);int ranges=0,resolved=0;
         var state=new DroneAttackState(0,content.Army.ComposeDroneShot(0,null,null),content.DroneWeapon,
             content.DroneProjectile,()=>draws.Dequeue(),(minimum,maximum)=>{ranges++;return minimum;});
         var target=new DroneTargetCandidate("decoy:1",2,true,true,true,null,new(0,0,9));
         DroneTargetDetails Resolve(DroneTargetCandidate row)
-        {resolved++;return new([new(1,1,row.Position)],false,row.Position,Vector3.Zero,false,Vector3.UnitX,0);}
+        {resolved++;return new([new(1,1,row.Position)],false,row.Position,Vector3.Zero,false,Vector3.UnitX);}
         Check(!state.Prepare(2,true,1,Vector3.Zero,Quaternion.Identity,[target],_=>true,Resolve)&&resolved==0&&draws.Count==6,
             "exact Drone spawn deadline consumes no target or random work");
         Check(state.Prepare(2.1f,true,1,Vector3.Zero,Quaternion.Identity,[target],_=>true,Resolve)&&
@@ -29,7 +38,7 @@ internal static class DroneAttackStateTests
             content.DroneProjectile,()=>playerDraws.Dequeue(),(minimum,maximum)=>minimum);
         var playerTarget=target with {Id="player:1",IsDecoy=false};
         player.Prepare(2.1f,true,1,Vector3.Zero,Quaternion.Identity,[playerTarget],_=>true,
-            r=>new([new(1,2,r.Position),new(2,1,r.Position+Vector3.UnitY)],true,r.Position,-Vector3.UnitZ,true,Vector3.One,0));
+            r=>new([new(1,2,r.Position),new(2,1,r.Position+Vector3.UnitY)],true,r.Position,-Vector3.UnitZ,true,Vector3.One));
         Check(player.PlayerTarget&&playerDraws.Count==0&&
             player.Weapon.Advance(2.1f,Vector3.Zero,Quaternion.Identity)!.Batch.Target==playerTarget.Position+Vector3.UnitY,
             "player preparation consumes shield draw first and forces zero prediction velocity");
@@ -37,7 +46,7 @@ internal static class DroneAttackStateTests
         var shield=new DroneAttackState(0,content.Army.ComposeDroneShot(0,null,null),content.DroneWeapon,
             content.DroneProjectile,()=>shieldDraws.Dequeue(),(minimum,maximum)=>minimum);
         shield.Prepare(2.1f,true,1,Vector3.Zero,Quaternion.Identity,[playerTarget],_=>true,
-            r=>new([new(1,2,r.Position),new(2,1,r.Position+Vector3.UnitY)],true,r.Position,-Vector3.UnitZ,true,Vector3.Zero,0));
+            r=>new([new(1,2,r.Position),new(2,1,r.Position+Vector3.UnitY)],true,r.Position,-Vector3.UnitZ,true,Vector3.Zero));
         var shieldShot=shield.Weapon.Advance(2.1f,Vector3.Zero,Quaternion.Identity)!;
         Check(shieldShot.IsShield&&!shieldShot.Batch.IsFake,"exact Shield target preserves real ammunition type");
         var fakeShield=shield.Weapon.Advance(2.3f,Vector3.Zero,Quaternion.Identity)!;
@@ -50,3 +59,4 @@ internal static class DroneAttackStateTests
         return count;
     }
 }
+

@@ -2,7 +2,7 @@ using System.Numerics;
 namespace War.BattleServer;
 
 public sealed record DroneTargetDetails(IReadOnlyList<DroneShotTarget> Targets,bool IsPlayer,
-    Vector3 Root,Vector3 AimForward,bool Hiding,Vector3 Velocity,float ShieldProbability);
+    Vector3 Root,Vector3 AimForward,bool Hiding,Vector3 Velocity);
 
 // Drone.Update target/batch preparation, separated from BatchedWeapon.Update so
 // the host can explicitly preserve script observation order.
@@ -22,7 +22,8 @@ public sealed class DroneAttackState
         DroneProjectileCatalog projectile,Func<float> random,Func<int,int,int> integerRange)
     {
         if(stats is null||stats.FireBatchSizeMin<0||stats.FireBatchSizeMax<stats.FireBatchSizeMin||stats.FireBatchSizeMax>32||
-           !float.IsFinite(stats.ProbabilityOfRealShot)||stats.ProbabilityOfRealShot<0||stats.ProbabilityOfRealShot>3)
+           !float.IsFinite(stats.ProbabilityOfRealShot)||stats.ProbabilityOfRealShot<0||stats.ProbabilityOfRealShot>3||
+           !float.IsFinite(stats.ShieldHitProbability)||stats.ShieldHitProbability< -1||stats.ShieldHitProbability>1)
             throw new InvalidDataException("Invalid Drone attack definition.");
         this.stats=stats;weaponCatalog=weapon??throw new ArgumentNullException(nameof(weapon));
         this.projectile=projectile??throw new ArgumentNullException(nameof(projectile));
@@ -42,7 +43,7 @@ public sealed class DroneAttackState
         {
             var details=resolve(target);PlayerTarget=details.IsPlayer;
             var selected=DroneShotTargetPolicy.Select(position,details.Targets,details.IsPlayer,details.Root,
-                details.AimForward,details.Hiding,details.ShieldProbability,random);
+                details.AimForward,details.Hiding,stats.ShieldHitProbability,random);
             if(selected!=null)
             {
                 int size=integerRange(stats.FireBatchSizeMin,stats.FireBatchSizeMax);
