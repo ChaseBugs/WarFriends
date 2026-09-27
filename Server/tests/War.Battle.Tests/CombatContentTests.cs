@@ -2568,6 +2568,7 @@ internal static class CombatContentTests
         var decoyReply=decoyMatch.Command(decoyPlayer,new(){CommandId=3,
             UseDecoy=new(){RequestId=liveDecoyRequest}});
         float expectedDecoyHealth=content.Decoys.Health(22,content.BarrelPolicy.MaxDisplayLevel);
+        Check(decoyMatch.DroneTargetSnapshot().Count==3&&decoyMatch.DroneTargetSnapshot().All(r=>r.IsDecoy&&r.Fraction==1&&r.Alive&&r.Visible),"live Decoy spawn registers Drone target lifecycle");
         Check(decoyReply.Code=="decoy-spawned"&&decoyReply.Snapshot.Decoys.Count==3&&
               decoyReply.Snapshot.Decoys.All(x=>x.OwnerPlayerId==decoyPlayer&&x.OwnerFraction==1&&
                   x.RequestId==liveDecoyRequest&&Math.Abs(x.Health-expectedDecoyHealth)<.001f&&x.Health==x.MaxHealth)&&
@@ -3676,6 +3677,7 @@ internal static class CombatContentTests
               humveeDecoyEvents.Any(x=>
                   x.Kind==MatchEventKind.DecoyDestroyed&&x.ProjectileId==selectedDecoyId),
               "live Humvee projectile destroys its typed Decoy target and releases the exact obstacle slot");
+        Check(humveeDecoyMatch.DroneTargetSnapshot().All(r=>r.Id!="decoy:"+selectedDecoyId),"confirmed Decoy death removes Drone target authority");
         var turretVehicleManifest=humveeDecoyManifest with {MatchId="turret-ground-vehicle-priority"};
         var turretVehicleMatch=new MatchEngine(turretVehicleManifest,content:content,armyChoice:_=>0,combatRandom:()=>0);
         turretVehicleMatch.ConfigureBattleAllocations([

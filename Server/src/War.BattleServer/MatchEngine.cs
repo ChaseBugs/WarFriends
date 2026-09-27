@@ -1263,6 +1263,7 @@ public sealed partial class MatchEngine
     {
         foreach(var decoy in decoys.RemoveOwner(ownerPlayerId))
         {
+            droneTargets.Disable(DroneDecoyId(decoy.EntityId));
             stateRevision++;
             Emit(MatchEventKind.DecoyDestroyed,ownerPlayerId,"",decoy.EntityId,
                 decoy.Position,0,"owner-disconnected");

@@ -5,6 +5,9 @@ namespace War.BattleServer;
 
 public sealed partial class MatchEngine
 {
+    private readonly DroneTargetRegistry droneTargets=new();
+    internal IReadOnlyList<DroneTargetCandidate> DroneTargetSnapshot()=>droneTargets.Snapshot();
+    private static string DroneDecoyId(ulong id)=>"decoy:"+id.ToString(System.Globalization.CultureInfo.InvariantCulture);
     internal float? DecoyHealth(ulong entityId)=>decoys.Snapshot().SingleOrDefault(x=>x.EntityId==entityId)?.Health;
     internal bool DecoyObstacleOccupied(int componentFileId)=>decoys.OccupiedObstacleIds.Contains(componentFileId);
 
@@ -20,6 +23,7 @@ public sealed partial class MatchEngine
         if(events.Count>MaximumRetainedEvents-decoySource.SpawnCount)return "event-backpressure";
         if(stateRevision>ulong.MaxValue-(ulong)decoySource.SpawnCount)return "decoy-receipt-unavailable";
         if(!cardReservations.TryReserve(requestId,owner.Definition.PlayerId,"CardDecoy"))return "decoy-unavailable";
+        var registeredTargets=new List<string>();
         try
         {
             var slots=decoySource.Select(map.Source,owner.Definition.Fraction,
@@ -54,6 +58,9 @@ public sealed partial class MatchEngine
             performance.RecordCard(requestId);
             foreach(var row in spawned)
             {
+                var targetId=DroneDecoyId(row.EntityId);
+                droneTargets.Enable("Decoy",new(targetId,row.OwnerFraction,true,true,true,null,row.Position));
+                registeredTargets.Add(targetId);
                 stateRevision++;
                 Emit(MatchEventKind.DecoySpawned,row.OwnerPlayerId,"CardDecoy",row.EntityId,
                     row.Position,row.Health,row.ObstacleComponentFileId.ToString());
@@ -62,6 +69,7 @@ public sealed partial class MatchEngine
         }
         catch(Exception e) when(e is InvalidDataException or ArgumentOutOfRangeException or OverflowException)
         {
+            foreach(var id in registeredTargets)droneTargets.Disable(id);
             decoys.TryRollbackSpawn(requestId,owner.Definition.PlayerId);
             performance.TryRollbackCard(requestId);
             cardReservations.TryRelease(requestId,owner.Definition.PlayerId);return "invalid-decoy-authority";
@@ -109,7 +117,10 @@ public sealed partial class MatchEngine
         if(!decoys.TryDamage(entityId,rawDamage,out var before,out bool destroyed)||before==null)return;
         shooter.ConfirmedEnemyHits=checked(shooter.ConfirmedEnemyHits+1);stateRevision++;
         if(destroyed)
+        {
+            droneTargets.Disable(DroneDecoyId(entityId));
             Emit(MatchEventKind.DecoyDestroyed,shooterId,before.OwnerPlayerId,entityId,
                 before.Position,0,"projectile:"+projectileId);
+        }
     }
 }
