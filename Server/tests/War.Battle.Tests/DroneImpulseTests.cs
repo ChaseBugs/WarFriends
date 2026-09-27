@@ -32,6 +32,14 @@ internal static class DroneImpulseTests
                 var observedAngular=Vec(row.GetProperty("angularVelocity"))/.999f;
                 var tangent=Vector3.Normalize(impulse);
                 float observedResponse=Vector3.Dot(tangent,observedLinear+Vector3.Cross(observedAngular,lever))/impulse.Length();
+                var normalContact=DroneNormalContact.Prepare(response,Vec(row.GetProperty("root")),rotation,
+                    observedLinear,observedAngular,Vec(row.GetProperty("point")),tangent,-.01f,0,1e32f,.02f);
+                float speed=Vector3.Dot(tangent,observedLinear+Vector3.Cross(observedAngular,lever));
+                if(Math.Abs(normalContact.VelocityMultiplier-1/observedResponse)>.00001f||
+                   Math.Abs(normalContact.BiasedError-(-speed+.4f)/observedResponse)>.00001f||
+                   Math.Abs(normalContact.UnbiasedError+speed/observedResponse)>.00001f)
+                    throw new Exception("Drone normal preparation differs from observed directional response.");
+                count++;
                 if(Math.Abs(response.FrictionVelocityMultiplier(Vec(row.GetProperty("root")),rotation,
                     Vec(row.GetProperty("point")),tangent)-.8f/observedResponse)>.00001f)
                     throw new Exception("Drone directional effective mass differs from Unity impulse response.");

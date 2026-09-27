@@ -37,12 +37,15 @@ internal sealed class DroneImpulseResponse
         return result;
     }
     internal float FrictionVelocityMultiplier(Vector3 root,Quaternion rotation,Vector3 worldPoint,Vector3 tangent)
+        => .8f*ContactVelocityMultiplier(root,rotation,worldPoint,tangent);
+
+    internal float ContactVelocityMultiplier(Vector3 root,Quaternion rotation,Vector3 worldPoint,Vector3 tangent)
     {
         if(!PlayerHitbox.Finite(tangent)||Math.Abs(tangent.LengthSquared()-1)>.0001f)
             throw new InvalidDataException("Invalid unit friction tangent.");
         var delta=Apply(root,rotation,Vector3.Zero,Vector3.Zero,tangent,worldPoint);
         float response=Vector3.Dot(tangent,PointVelocity(root,rotation,delta.Velocity,delta.AngularVelocity,worldPoint));
         if(!float.IsFinite(response)||response<=0)throw new InvalidDataException("Invalid friction effective mass.");
-        return .8f/response; // PhysX 3.4 scalar friction preparation relaxation.
+        return 1f/response;
     }
 }
