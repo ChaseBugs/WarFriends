@@ -21,6 +21,7 @@ public static class UnityDroneContactExport
         var previous=EditorSceneManager.GetSceneManagerSetup();bool automatic=Physics.autoSimulation;
         var rows=new List<object>();
         bool zeroFriction=Environment.GetEnvironmentVariable("WAR_DRONE_ZERO_FRICTION")=="1";
+        bool captureStay=Environment.GetEnvironmentVariable("WAR_DRONE_CONTACT_STAY")=="1";
         var temporaryMaterials=new List<PhysicMaterial>();
         Action<Collider> disableFriction=c=>{
             var material=UnityEngine.Object.Instantiate(c.material);
@@ -53,6 +54,7 @@ public static class UnityDroneContactExport
                         var body=drone.AddComponent<Rigidbody>();EditorUtility.CopySerialized(prefab.GetComponent<Rigidbody>(),body);
                         var observer=drone.AddComponent<DroneCollisionObserver>();
                         observer.SourceColliders=sourceColliders;
+                        observer.CaptureStay=captureStay;
                         body.isKinematic=false;body.velocity=Vector3.zero;body.angularVelocity=Vector3.zero;
                         Physics.SyncTransforms();var frames=new List<object>();
                         var sphere=drone.GetComponentsInChildren<SphereCollider>().Single();
@@ -103,6 +105,7 @@ public static class UnityDroneContactExport
             File.WriteAllText(output,JsonConvert.SerializeObject(new{version=1,unityVersion=Application.unityVersion,
                 prefabSource=prefabPath,prefabSha256=Hash(prefabPath),scenario="isolated-source-collider-fall-in-map",
                 materialPolicy=zeroFriction?"zero-friction-control":"source-materials",
+                callbackPolicy=captureStay?"enter-and-stay":"enter-only",
                 fixedTimestep=Time.fixedDeltaTime,rows},Formatting.Indented)+"\n");
             Debug.Log("WAR_DRONE_CONTACT_EXPORT_PASS");
         }
@@ -134,12 +137,17 @@ public static class UnityDroneContactExport
 public sealed class DroneCollisionObserver:MonoBehaviour
 {
     public int Frame;
+    public bool CaptureStay;
     public readonly List<object> Rows=new List<object>();
     public Collider[] SourceColliders;
     private void OnCollisionEnter(Collision collision)
+    {Record(collision,"enter");}
+    private void OnCollisionStay(Collision collision)
+    {if(CaptureStay)Record(collision,"stay");}
+    private void Record(Collision collision,string callbackKind)
     {
         var body=GetComponent<Rigidbody>();var position=body.position;var rotation=body.rotation;
-        Rows.Add(new{frame=Frame,other=Path(collision.collider.transform),layer=collision.collider.gameObject.layer,
+        Rows.Add(new{frame=Frame,callbackKind,other=Path(collision.collider.transform),layer=collision.collider.gameObject.layer,
             impulse=new[]{collision.impulse.x,collision.impulse.y,collision.impulse.z},
             relativeVelocity=new[]{collision.relativeVelocity.x,collision.relativeVelocity.y,collision.relativeVelocity.z},
             rootPosition=new[]{position.x,position.y,position.z},
