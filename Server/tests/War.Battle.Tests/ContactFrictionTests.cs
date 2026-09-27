@@ -7,6 +7,17 @@ internal static class ContactFrictionTests
     {
         int count=0;
         void Check(bool value){if(!value)throw new Exception("Friction constraint boundary failed.");count++;}
+        Check(ContactNormalConstraint.Solve(0,-4,.5f,0,10)==new ContactNormalStep(2,2));
+        Check(ContactNormalConstraint.Solve(2,8,.5f,0,10)==new ContactNormalStep(0,-2));
+        Check(ContactNormalConstraint.Solve(2,0,1,3,4)==new ContactNormalStep(4,2));
+        Check(ContactNormalConstraint.Solve(2,0,1,0,4)==new ContactNormalStep(2,0));
+        Check(ContactNormalConstraint.Solve(0,-4,1,0,0)==new ContactNormalStep(0,0));
+        foreach(float invalid in new[]{float.NaN,float.PositiveInfinity,-1f})
+        {
+            try{ContactNormalConstraint.Solve(invalid,0,1,0,10);
+                throw new Exception("Invalid previous contact impulse accepted.");}
+            catch(InvalidDataException){count++;}
+        }
         Check(ContactFrictionBasis.Prepare(Vector3.UnitY,Vector3.Zero)==new FrictionTangents(Vector3.UnitZ,Vector3.UnitX));
         Check(ContactFrictionBasis.Prepare(Vector3.UnitX,Vector3.Zero)==new FrictionTangents(Vector3.UnitY,Vector3.UnitZ));
         Check(ContactFrictionBasis.Prepare(Vector3.UnitY,Vector3.UnitX)==new FrictionTangents(Vector3.UnitX,-Vector3.UnitZ));
