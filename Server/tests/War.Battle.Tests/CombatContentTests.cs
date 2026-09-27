@@ -2657,6 +2657,8 @@ internal static class CombatContentTests
         deployedDroneMatch.Advance(61);
         var deployedDrone=deployedDroneMatch.ArmyEntityBatch(decoyPlayer,0,0).Entities.Single();
         float droneHealth=deployedDroneMatch.ArmyHealth(deployedDrone.EntityKey)!.Value;
+        var droneSightPosition=new Vector3(deployedDrone.X,deployedDrone.Y,deployedDrone.Z);
+        Check(!deployedDroneMatch.DroneCanSee(droneSightPosition-Vector3.UnitX-Vector3.UnitY*.5f,droneSightPosition+Vector3.UnitX),"live deployed Drone collider blocks source sight ray");
         for(ulong t=62;t<=211;t++)deployedDroneMatch.Advance(t);
         var movedDrone=deployedDroneMatch.ArmyEntityBatch(decoyPlayer,0,0).Entities.Single();
         var droneTarget=deployedDroneMatch.DroneTargetSnapshot().Single(r=>r.Id=="army:"+movedDrone.EntityKey);

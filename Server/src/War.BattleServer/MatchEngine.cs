@@ -717,7 +717,7 @@ public sealed partial class MatchEngine
             groundVehicleWeapons=content.GroundVehicleWeapons;
             enemyPoses=content.EnemyPoses;
             armySelector=new ArmySpawnPointSelector(content.ArmySpawnPoints);
-            airWaypoints=content.AirWaypoints;
+            airWaypoints=content.AirWaypoints;droneColliders=content.DroneColliders;
             armyRusherPoints=content.ArmyRusherPoints;
             armyMinigunnerPoints=content.ArmyMinigunnerPoints;
             playerShotTargets=content.PlayerShotTargets;

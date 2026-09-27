@@ -1,5 +1,5 @@
 {
-  "Version": 9,
+  "Version": 10,
   "SceneRevision": "d46f81ff8c3e12bf17f34a1f53dd601bd799102c9f984818031441dfb7a5de43",
   "StatsRevision": "28b94d12a9ba78a8a46287cd40bf51d454afa75c036b1368561d22979e47d39a",
   "BindingsRevision": "9d64fa20c13c6a9688a0097a91aa81298346413e803240488f5c2c53eb7c9a12",
@@ -22,5 +22,6 @@
   "ArmyNavMeshTriangulationRevision": "2afecb684e8af1cd2d6e200fd3bdb37f7ee134d97351b8e570def85fd1e5a20f",
   "ArmyNavMeshPathsRevision": "01b639934246803fb9f2afddd4a4852725bf54c2ad9d87327cea8abc94c2c550",
   "AirWaypointRoutesRevision": "028efb15f89b3becabf043207858a41383eaabab8fb9653d5a76fcf42b6a55d8",
-  "DroneWeaponRevision": "e5fcfca438e133a33d5766e8606a8dab40f566e495decd8267031084c94c7ef3"
+  "DroneWeaponRevision": "e5fcfca438e133a33d5766e8606a8dab40f566e495decd8267031084c94c7ef3",
+  "AirGeometryRevision": "c88fd3e31e56261e094799fafb306be1bf2838b0d513753221afa2adaeaba319"
 }

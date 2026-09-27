@@ -42,9 +42,23 @@ public sealed partial class MatchEngine
         }
         return droneTargets.Snapshot();
     }
+    private readonly DroneColliderCatalog? droneColliders;
     internal bool DroneCanSee(Vector3 position,Vector3 target)
-        =>(rifleCombat??throw new InvalidDataException("Drone visibility requires host collision poses."))
-            .DroneCanSee(position,target);
+    {
+        if(!(rifleCombat??throw new InvalidDataException("Drone visibility requires host collision poses."))
+            .DroneCanSee(position,target))return false;
+        var ray=DroneTargetPolicy.Sight(position,target);
+        if(ray.Direction==Vector3.Zero)return true;
+        foreach(var row in activeArmyEntities.Values.Where(r=>r.UnitId=="ID_UNIT-DRONE"))
+        {
+            var q=row.DroneRotation??throw new InvalidDataException("Drone collider lost its host rotation.");
+            foreach(var collider in (droneColliders??throw new InvalidDataException("Drone collider catalog missing."))
+                .Place(new(row.X,row.Y,row.Z),new(q.X,q.Y,q.Z,q.W)))
+                // Root runtime layers 26/27 and child layer 8 all belong to the sight mask.
+                if(collider.Hitbox.Raycast(ray.Origin,ray.Direction,ray.Range).HasValue)return false;
+        }
+        return true;
+    }
     internal DroneTargetCandidate? SelectDroneTarget(int fraction,Vector3 position)
         =>DroneTargetPolicy.Select(fraction,DroneTargetSnapshot(),row=>DroneCanSee(position,row.Position));
     private static string DroneDecoyId(ulong id)=>"decoy:"+id.ToString(System.Globalization.CultureInfo.InvariantCulture);
