@@ -9,6 +9,13 @@ internal static class ContactFrictionTests
         void Check(bool value){if(!value)throw new Exception("Friction constraint boundary failed.");count++;}
         DroneNormalPoint Point(float x,float separation=0)=>new(new Vector3(x,0,0),Vector3.UnitY,separation);
         var material=new ContactMaterial(.6f,.4f,0);
+        var cache=new ContactFrictionCache(Vector3.Zero,Quaternion.Identity,Vector3.UnitY,new[]{Vector3.Zero,Vector3.UnitX},false);
+        Check(cache.CanReuse(Vector3.Zero,Quaternion.Identity,.999f,.025f));
+        Check(cache.CanReuse(Vector3.UnitX*.1f,Quaternion.Identity,.999f,.025f));
+        Check(!cache.CanReuse(Vector3.UnitY*.025f,Quaternion.Identity,.999f,.025f));
+        Check(!cache.CanReuse(Vector3.Zero,Quaternion.CreateFromAxisAngle(Vector3.UnitX,.1f),.999f,.025f));
+        Check(!new ContactFrictionCache(Vector3.Zero,Quaternion.Identity,Vector3.UnitY,new[]{Vector3.Zero},true)
+            .CanReuse(Vector3.Zero,Quaternion.Identity,.999f,.025f));
         var correlated=ContactFrictionPatches.Correlate(new[]{new MaterialContact(Point(0),material),
             new MaterialContact(Point(1) with{Normal=Vector3.UnitX},material),new MaterialContact(Point(2),material)},.99f);
         Check(correlated.Length==2&&correlated[0].Contacts.Select(c=>c.Point.X).SequenceEqual(new[]{2f,0f}));
