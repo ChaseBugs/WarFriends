@@ -208,6 +208,7 @@ namespace War.Client
                        !Guid.TryParseExact(entity.OwnerPlayerId,"N",out _) ||
                        entity.OwnerPlayerId!=entity.OwnerPlayerId.ToLowerInvariant() ||
                        entity.OptionIndex<0 || entity.OptionIndex>=48 ||
+                       (entity.DroneTransparent&&entity.UnitId!="ID_UNIT-DRONE") ||
                        !System.Text.RegularExpressions.Regex.IsMatch(entity.UnitId,@"\AID_UNIT-[A-Z0-9-]{1,50}\z") ||
                        entity.SpawnComponentFileId<=0 || entity.ReservationFileId<0 ||
                        !FiniteCoordinate(entity.X) || !FiniteCoordinate(entity.Y) || !FiniteCoordinate(entity.Z) ||

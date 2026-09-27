@@ -2635,11 +2635,19 @@ internal static class CombatContentTests
         for(ulong t=62;t<=211;t++)deployedDroneMatch.Advance(t);
         Check(!deployedDroneMatch.ArmyDroneImmortal(deployedDrone.EntityKey),"deployed Drone retains strict initial five-second deadline");
         deployedDroneMatch.Advance(212);
+        var transparentDroneBatch=deployedDroneMatch.ArmyEntityBatch(decoyPlayer,0,0);
+        var transparentWire=MatchArmyEntityBatch.Parser.ParseFrom(
+            Google.Protobuf.MessageExtensions.ToByteArray(transparentDroneBatch));
+        Check(transparentWire.Entities.Single().DroneTransparent,
+            "protobuf army roster preserves authoritative Drone transparency");
         Check(deployedDroneMatch.ArmyDroneImmortal(deployedDrone.EntityKey)&&
+            deployedDroneMatch.ArmyEntityBatch(decoyPlayer,0,0).Entities.Single().DroneTransparent&&
             !deployedDroneMatch.ApplyArmyHostDamage(deployedDrone.EntityKey,droneHealth)&&
             deployedDroneMatch.ArmyHealth(deployedDrone.EntityKey)==droneHealth,
             "trusted special stage protects normal deployed Drone health against host damage");
         for(ulong t=213;t<=256;t++)deployedDroneMatch.Advance(t);
+        Check(!deployedDroneMatch.ArmyEntityBatch(decoyPlayer,0,0).Entities.Single().DroneTransparent,
+            "Drone expiry clears authoritative renderer phase before death");
         Check(!deployedDroneMatch.ArmyDroneImmortal(deployedDrone.EntityKey)&&
             deployedDroneMatch.ApplyArmyHostDamage(deployedDrone.EntityKey,droneHealth)&&
             deployedDroneMatch.ArmyHealth(deployedDrone.EntityKey)==null,
