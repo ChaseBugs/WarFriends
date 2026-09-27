@@ -2587,6 +2587,15 @@ internal static class CombatContentTests
                   UseDecoy=new(){RequestId=new string('f',32)}}).Code=="decoy-spawned"&&
               decoyMatch.Snapshot().Decoys.Count==6&&decoyMatch.Snapshot().CardActivations==2,
               "trusted allocation provisions one isolated Decoy reservation for each selected player");
+        foreach(var sightDecoy in decoyMatch.Snapshot().Decoys)
+        {
+            var sightRotation=Quaternion.CreateFromAxisAngle(Vector3.UnitY,MathF.Atan2(sightDecoy.FacingX,sightDecoy.FacingZ));
+            var sightCenter=new Vector3(sightDecoy.X,sightDecoy.Y,sightDecoy.Z)+Vector3.Transform(content.Decoys.Prefab.ColliderCenter,sightRotation);
+            Check(!decoyMatch.DroneCanSee(sightCenter-Vector3.UnitX*2-Vector3.UnitY*.5f,sightCenter+Vector3.UnitX*2),
+                "Drone visibility includes real destroyable Decoy blockers on either fraction");
+        }
+        Check(decoyMatch.DroneCanSee(new(0,100,0),new(0,100.5f,0)),"Drone zero normalized sight ray retains Unity no-hit behavior");
+        Check(decoyMatch.DroneCanSee(new(0,100,0),new(0,100.5f,10)),"clear elevated Drone sight excludes player body hitboxes");
         var landMineManifest=decoyManifest with {MatchId="land-mine-match"};
         var landMineMatch=new MatchEngine(landMineManifest,content:content,armyChoice:_=>0);
         landMineMatch.ConfigureBattleAllocations([

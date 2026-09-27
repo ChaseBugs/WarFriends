@@ -42,6 +42,11 @@ public sealed partial class MatchEngine
         }
         return droneTargets.Snapshot();
     }
+    internal bool DroneCanSee(Vector3 position,Vector3 target)
+        =>(rifleCombat??throw new InvalidDataException("Drone visibility requires host collision poses."))
+            .DroneCanSee(position,target);
+    internal DroneTargetCandidate? SelectDroneTarget(int fraction,Vector3 position)
+        =>DroneTargetPolicy.Select(fraction,DroneTargetSnapshot(),row=>DroneCanSee(position,row.Position));
     private static string DroneDecoyId(ulong id)=>"decoy:"+id.ToString(System.Globalization.CultureInfo.InvariantCulture);
     internal float? DecoyHealth(ulong entityId)=>decoys.Snapshot().SingleOrDefault(x=>x.EntityId==entityId)?.Health;
     internal bool DecoyObstacleOccupied(int componentFileId)=>decoys.OccupiedObstacleIds.Contains(componentFileId);

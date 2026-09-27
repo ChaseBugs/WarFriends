@@ -328,6 +328,27 @@ internal sealed class RifleMatchSimulation
             dynamicColliderEnabled,indexedColliderEnabled,runtimeLayer,dynamicTargets);
         return world.Raycast(owner,origin,direction,range,mask);
     }
+    internal bool DroneCanSee(Vector3 position,Vector3 target)
+    {
+        var ray=DroneTargetPolicy.Sight(position,target);
+        // Unity Physics.Raycast with a zero normalized direction reports no hit.
+        if(ray.Direction==Vector3.Zero)return true;
+        const uint mask=(1u<<8)|(1u<<13)|(1u<<22)|(1u<<23)|(1u<<24)|(1u<<26)|(1u<<27)|(1u<<30);
+        if(map.Raycast(ray.Origin,ray.Direction,ray.Range,mask,dynamicColliderEnabled,
+            indexedColliderEnabled,runtimeLayer)!=null)return false;
+        // Visibility is not restricted to enemy colliders: allied destroyables block too.
+        // Player body layers are absent from this mask, so do not trace player poses.
+        if(dynamicTargets!=null)
+            foreach(var actor in actors)
+                foreach(var collider in dynamicTargets(actor.Definition.PlayerId))
+                {
+                    if(collider.Layer is <0 or >31||collider.Hitbox==null)
+                        throw new InvalidDataException("Invalid Drone visibility collider.");
+                    if((mask&(1u<<collider.Layer))!=0&&
+                        collider.Hitbox.Raycast(ray.Origin,ray.Direction,ray.Range).HasValue)return false;
+                }
+        return true;
+    }
     internal Vector3 BazookaMuzzle(string owner,bool secondary)
     {
         var a=actors.Single(x=>x.Definition.PlayerId==owner);
