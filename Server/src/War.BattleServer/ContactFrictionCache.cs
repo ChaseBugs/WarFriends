@@ -16,13 +16,15 @@ internal sealed class ContactFrictionCache
     {
         ValidatePose(root,rotation);
         var fresh=ContactFrictionAnchors.Select(contacts,correlationDistance,offsetThreshold);
+        ContactFrictionCache Rebuild()=>new(BodyNormal,MapNormal,Array.AsReadOnly(fresh.Select(a=>
+            new CachedFrictionAnchor(Vector3.Transform(a-root,Quaternion.Conjugate(rotation)),a)).ToArray()),false);
         if(contacts.Count==0)return this;
         if(Anchors.Count==2)
         {
             var minimum=contacts.Select(c=>c.Point).Aggregate(Vector3.Min);
             var maximum=contacts.Select(c=>c.Point).Aggregate(Vector3.Max);
             if(Vector3.DistanceSquared(Anchors[0].BodyLocal,Anchors[1].BodyLocal)*4>=(maximum-minimum).LengthSquared())return this;
-            return new(root,rotation,Vector3.Transform(BodyNormal,rotation),fresh,false);
+            return Rebuild();
         }
         if(Anchors.Count==1)
         {
@@ -32,7 +34,7 @@ internal sealed class ContactFrictionCache
             var added=new CachedFrictionAnchor(Vector3.Transform(grown[1]-root,Quaternion.Conjugate(rotation)),grown[1]);
             return new(BodyNormal,MapNormal,Array.AsReadOnly(new[]{Anchors[0],added}),false);
         }
-        return new(root,rotation,Vector3.Transform(BodyNormal,rotation),fresh,false);
+        return Rebuild();
     }
     internal ContactFrictionCache(Vector3 root,Quaternion rotation,Vector3 normal,IReadOnlyList<Vector3> worldAnchors,bool broken)
     {
