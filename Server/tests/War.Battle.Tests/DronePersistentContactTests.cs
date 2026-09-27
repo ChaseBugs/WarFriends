@@ -16,6 +16,7 @@ internal static class DronePersistentContactTests
         float maximumVelocity=0,maximumAngular=0,maximumRoot=0;int steps=0,stays=0;
         float cachedVelocity=0,cachedAngular=0,cachedRoot=0;
         string worstVelocity="",worstAngular="",worstRoot="";int materials=0;
+        int stationaryBodies=0,kinematicContacts=0;
         foreach(var row in root.GetProperty("rows").EnumerateArray())
         {
             var frames=row.GetProperty("frames");
@@ -25,7 +26,16 @@ internal static class DronePersistentContactTests
             {
                 stays+=group.Count(c=>c.GetProperty("callbackKind").GetString()=="stay");
                 int frame=group.Key;var before=frames[frame-1];var after=frames[frame];
-                foreach(var contact in group.SelectMany(c=>c.GetProperty("contacts").EnumerateArray()))
+                var recordedContacts=group.SelectMany(c=>c.GetProperty("contacts").EnumerateArray()).ToArray();
+                foreach(var contact in recordedContacts)
+                {
+                    var body=contact.GetProperty("otherBody");
+                    if((body.GetProperty("present").GetBoolean()&&!body.GetProperty("isKinematic").GetBoolean())||
+                       Vec(body.GetProperty("velocity"))!=Vector3.Zero||Vec(body.GetProperty("angularVelocity"))!=Vector3.Zero)
+                        throw new Exception("Persistent counterpart violates stationary-map solver boundary.");
+                    stationaryBodies++;if(body.GetProperty("present").GetBoolean())kinematicContacts++;
+                }
+                foreach(var contact in recordedContacts)
                 foreach(var name in new[]{"bodyMaterial","otherMaterial"})
                 {
                     var material=contact.GetProperty(name);
@@ -84,6 +94,7 @@ internal static class DronePersistentContactTests
             " (experimental pair order and correlation policy).");
         Console.WriteLine("Drone persistent worst cases: velocity="+worstVelocity+"; angular="+worstAngular+"; root="+worstRoot+
             "; validated collider materials="+materials);
+        Console.WriteLine("Drone stationary counterparts: contacts="+stationaryBodies+", kinematic="+kinematicContacts);
         return 1;
     }
     private static IEnumerable<int[]> Permutations(int[] values)

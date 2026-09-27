@@ -156,6 +156,7 @@ public sealed class DroneCollisionObserver:MonoBehaviour
                 normal=new[]{c.normal.x,c.normal.y,c.normal.z},separation=c.separation,
                 bodyColliderType=c.thisCollider.GetType().Name,bodyCollider=Path(c.thisCollider.transform),
                 bodyMaterial=Material(c.thisCollider),otherMaterial=Material(c.otherCollider),
+                otherBody=OtherBody(c.otherCollider),
                 otherColliderIndex=Array.IndexOf(SourceColliders,c.otherCollider),
                 otherColliderType=c.otherCollider.GetType().Name}).ToArray()});
     }
@@ -167,5 +168,12 @@ public sealed class DroneCollisionObserver:MonoBehaviour
         return new{staticFriction=material.staticFriction,dynamicFriction=material.dynamicFriction,
             restitution=material.bounciness,frictionCombine=(int)material.frictionCombine,
             restitutionCombine=(int)material.bounceCombine};
+    }
+    private static object OtherBody(Collider collider)
+    {
+        var body=collider.attachedRigidbody;
+        if(body==null)return new{present=false,isKinematic=true,velocity=new[]{0f,0f,0f},angularVelocity=new[]{0f,0f,0f}};
+        return new{present=true,isKinematic=body.isKinematic,velocity=new[]{body.velocity.x,body.velocity.y,body.velocity.z},
+            angularVelocity=new[]{body.angularVelocity.x,body.angularVelocity.y,body.angularVelocity.z}};
     }
 }
