@@ -131,6 +131,16 @@ internal static class DronePersistentContactTests
                     var normalDirection=contact.Geometry.Normal;
                     if(Math.Abs(Vector3.Dot(measuredChange-observedImpulse,normalDirection))>.00002f)
                         throw new Exception("Isolated persistent contact normal impulse does not conserve measured linear response.");
+                    using var restarted=JsonDocument.Parse(File.ReadAllBytes(Path.Combine(directory,"recovered-drone-contact-restart.json")));
+                    var restart=restarted.RootElement;
+                    var freshContact=restart.GetProperty("collisionCallbacks")[0].GetProperty("contacts")[0];
+                    var freshResult=new DroneSingleContactSolver(geometry).Solve(Vec(before.GetProperty("position")),
+                        Quat(before.GetProperty("rotation")),Vec(before.GetProperty("velocity")),Vec(before.GetProperty("angularVelocity")),
+                        new MaterialContact(new DroneNormalPoint(Vec(freshContact.GetProperty("position")),
+                            Vec(freshContact.GetProperty("normal")),freshContact.GetProperty("separation").GetSingle()),new ContactMaterial(.6f,.6f,0)));
+                    float freshError=Vector3.Distance(freshResult.Velocity,Vec(restart.GetProperty("freshAfter").GetProperty("velocity")));
+                    Console.WriteLine("Snow frame45 restarted Unity body velocity residual="+freshError);
+                    if(freshError>.00002f)throw new Exception("Fresh persistent-pose contact does not match restarted Unity body.");
                     Console.WriteLine("Snow frame45 one-contact control: cached velocity residual="+ve+
                         ", fresh="+Vector3.Distance(result.Velocity,Vec(after.GetProperty("velocity")))+
                         ", standalone="+Vector3.Distance(single.Velocity,Vec(after.GetProperty("velocity")))+

@@ -1,0 +1,197 @@
+{
+  "version": 1,
+  "unityVersion": "2018.3.0f2",
+  "scenario": "fresh-body-at-persistent-frame44",
+  "source": "Assets/Scenes/Snow_Multiplayer.unity",
+  "sourceSha256": "67291457da28646c9ce377f3812d1bf0fa5332bfe664f58a4430a823744e6f21",
+  "prefabSource": "Assets/GameObject/dronePrototype.prefab",
+  "prefabSha256": "c2afc19487462e6163ad107267ef1b35c9c86fb34fa80898135b1d25f4a872a3",
+  "fixedTimestep": 0.02,
+  "before": {
+    "frame": 44,
+    "position": [
+      1.80990422,
+      0.5008137,
+      -2.60517478
+    ],
+    "velocity": [
+      -0.3199377,
+      0.0655593947,
+      0.22848618
+    ],
+    "rotation": [
+      0.4249901,
+      0.334619731,
+      0.2749392,
+      0.794872046
+    ],
+    "angularVelocity": [
+      0.484978259,
+      -0.200057462,
+      0.7366429
+    ],
+    "sphereMapOverlap": false,
+    "sphereCenter": [
+      1.80990422,
+      0.5008137,
+      -2.60517478
+    ],
+    "sphereRadius": 0.430000067,
+    "sphereMask": "6cd421cd",
+    "boxMapOverlap": true,
+    "boxCenter": [
+      1.82089782,
+      0.5112659,
+      -2.55582952
+    ],
+    "boxSize": [
+      0.7734146,
+      0.178587183,
+      0.7696202
+    ],
+    "boxMask": "69cc21cd"
+  },
+  "originalAfter": {
+    "frame": 45,
+    "position": [
+      1.80333257,
+      0.5016368,
+      -2.6019578
+    ],
+    "velocity": [
+      -0.332987875,
+      0.03251171,
+      0.164808
+    ],
+    "rotation": [
+      0.424724221,
+      0.3352669,
+      0.2831252,
+      0.7918622
+    ],
+    "angularVelocity": [
+      0.366077453,
+      -0.205394119,
+      0.7635679
+    ],
+    "sphereMapOverlap": false,
+    "sphereCenter": [
+      1.80333257,
+      0.5016368,
+      -2.6019578
+    ],
+    "sphereRadius": 0.430000067,
+    "sphereMask": "6cd421cd",
+    "boxMapOverlap": true,
+    "boxCenter": [
+      1.81396616,
+      0.511896849,
+      -2.55249357
+    ],
+    "boxSize": [
+      0.7734146,
+      0.178587168,
+      0.7696202
+    ],
+    "boxMask": "69cc21cd"
+  },
+  "freshAfter": {
+    "position": [
+      1.80338335,
+      0.5016263,
+      -2.601725
+    ],
+    "velocity": [
+      -0.331493437,
+      0.0217788368,
+      0.1705618
+    ],
+    "angularVelocity": [
+      0.3620326,
+      -0.2064046,
+      0.762562931
+    ],
+    "rotation": [
+      0.424001038,
+      0.335510224,
+      0.2829896,
+      0.792195141
+    ]
+  },
+  "collisionCallbacks": [
+    {
+      "frame": 45,
+      "callbackKind": "enter",
+      "other": "LevelRoot/snow_map/terrain_snow1",
+      "layer": 13,
+      "impulse": [
+        -0.0047496045,
+        0.151986867,
+        -0.00562912552
+      ],
+      "relativeVelocity": [
+        0.3199377,
+        -0.0655593947,
+        -0.22848618
+      ],
+      "rootPosition": [
+        1.80338335,
+        0.5016263,
+        -2.601725
+      ],
+      "rootRotation": [
+        0.424001038,
+        0.335510224,
+        0.2829896,
+        0.792195141
+      ],
+      "contacts": [
+        {
+          "position": [
+            1.88743448,
+            0.00213196874,
+            -2.357713
+          ],
+          "normal": [
+            -0.03121347,
+            0.998827934,
+            -0.03699351
+          ],
+          "separation": -0.002600342,
+          "bodyColliderType": "BoxCollider",
+          "bodyCollider": "dronePrototype",
+          "bodyMaterial": {
+            "staticFriction": 0.6,
+            "dynamicFriction": 0.6,
+            "restitution": 0.0,
+            "frictionCombine": 0,
+            "restitutionCombine": 0
+          },
+          "otherMaterial": {
+            "staticFriction": 0.6,
+            "dynamicFriction": 0.6,
+            "restitution": 0.0,
+            "frictionCombine": 0,
+            "restitutionCombine": 0
+          },
+          "otherBody": {
+            "present": false,
+            "isKinematic": true,
+            "velocity": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "angularVelocity": [
+              0.0,
+              0.0,
+              0.0
+            ]
+          },
+          "otherColliderIndex": 118,
+          "otherColliderType": "MeshCollider"
+        }
+      ]
+    }
+  ]
+}
