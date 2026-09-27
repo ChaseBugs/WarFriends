@@ -20,6 +20,15 @@ internal static class DroneSourceFrictionTests
         {
             var callbacks=row.GetProperty("collisionCallbacks");int frame=callbacks[0].GetProperty("frame").GetInt32();
             var first=callbacks.EnumerateArray().Where(c=>c.GetProperty("frame").GetInt32()==frame).ToArray();
+            foreach(var point in first.SelectMany(call=>call.GetProperty("contacts").EnumerateArray()))
+            foreach(var name in new[]{"bodyMaterial","otherMaterial"})
+            {
+                var material=point.GetProperty(name);
+                if(material.GetProperty("staticFriction").GetSingle()!=.6f||material.GetProperty("dynamicFriction").GetSingle()!=.6f||
+                   material.GetProperty("restitution").GetSingle()!=0||material.GetProperty("frictionCombine").GetInt32()!=0||
+                   material.GetProperty("restitutionCombine").GetInt32()!=0)
+                    throw new Exception("Multi-patch material evidence changed.");
+            }
             var before=row.GetProperty("frames")[frame-1];var after=row.GetProperty("frames")[frame];
             var pairs=first.SelectMany(call=>call.GetProperty("contacts").EnumerateArray()).GroupBy(c=>
                 (c.GetProperty("bodyCollider").GetString(),c.GetProperty("otherColliderIndex").GetInt32()))
@@ -27,7 +36,11 @@ internal static class DroneSourceFrictionTests
                     Vec(c.GetProperty("normal")),c.GetProperty("separation").GetSingle()),new ContactMaterial(.6f,.6f,0))).ToArray()).ToArray();
             var multi=new DroneContactSolver(geometry).Solve(Vec(before.GetProperty("position")),Quat(before.GetProperty("rotation")),
                 Vec(before.GetProperty("velocity")),Vec(before.GetProperty("angularVelocity")),pairs,.999f,.025f,.04f);
-            multiVelocity=Math.Max(multiVelocity,Vector3.Distance(multi.Velocity,Vec(after.GetProperty("velocity"))));
+            float multiVelocityError=Vector3.Distance(multi.Velocity,Vec(after.GetProperty("velocity")));
+            float multiRootError=Vector3.Distance(multi.Pose.Root,Vec(after.GetProperty("position")));
+            if(multiVelocityError>.00002f||multiRootError>.00002f)
+                throw new Exception("Recorded multi-patch linear/root response differs from Unity.");
+            multiVelocity=Math.Max(multiVelocity,multiVelocityError);
             multiAngular=Math.Max(multiAngular,Vector3.Distance(multi.AngularVelocity,Vec(after.GetProperty("angularVelocity"))));
             multiRoot=Math.Max(multiRoot,Vector3.Distance(multi.Pose.Root,Vec(after.GetProperty("position"))));multiSamples++;
             if(first.Length!=1||first[0].GetProperty("contacts").GetArrayLength()!=1)continue;
@@ -87,6 +100,7 @@ internal static class DroneSourceFrictionTests
             ", solver-versus-observed impulse angular contribution="+solverAngularContribution);
         Console.WriteLine("Drone multi-patch initial-contact diagnostic: samples="+multiSamples+", velocity="+multiVelocity+
             ", angular="+multiAngular+", root="+multiRoot+" (thresholds and callback pair order experimental).");
-        return samples*2; // Material evidence and bounded linear/root response; angular remains diagnostic.
+        if(multiSamples!=30)throw new Exception("Multi-patch first-contact coverage changed.");
+        return samples*2+multiSamples; // Material evidence and bounded linear/root response; angular remains diagnostic.
     }
 }
