@@ -2755,6 +2755,18 @@ internal static class CombatContentTests
             "live host observation resolves source registry and advances attack deadline");
         Check(observedDroneIntent is {Speed:>0,Damage:>0,CheckDistance:1},
             "live Drone intent uses trusted composed projectile authority");
+        var dronePlayerPolicy=content.Army.PlayerDamagePolicy("ID_UNIT-DRONE");
+        Check(observedDroneIntent!.PlayerDamageCoefficient==dronePlayerPolicy.PlayerDamageRatio&&
+            observedDroneIntent.PlayerOvertimeDamageCoefficient==dronePlayerPolicy.OvertimePlayerDamageRatio,
+            "Drone projectile retains source player and overtime damage coefficients");
+        var droneDamageInput=new ResolvedPlayerDamage(observedDroneIntent.Damage,CombatDamageType.Shot,
+            PlayerCoefficient:observedDroneIntent.PlayerDamageCoefficient,
+            PlayerOvertimeCoefficient:observedDroneIntent.PlayerOvertimeDamageCoefficient);
+        var normalDroneDamage=PlayerDamage.Resolve(new(100000),100000,droneDamageInput,false,false,1);
+        var overtimeDroneDamage=PlayerDamage.Resolve(new(100000),100000,droneDamageInput with {Overtime=true},false,false,1);
+        Check(Math.Abs(normalDroneDamage.Damage-observedDroneIntent.Damage*dronePlayerPolicy.PlayerDamageRatio)<.0001f&&
+            Math.Abs(overtimeDroneDamage.Damage-observedDroneIntent.Damage*dronePlayerPolicy.OvertimePlayerDamageRatio)<.0001f,
+            "Drone prepared player damage honors source overtime coefficient selection");
         Check(!deployedDroneMatch.ArmyEntityBatch(decoyPlayer,0,0).Entities.Single().DroneTransparent,
             "Drone expiry clears authoritative renderer phase before death");
         Check(!deployedDroneMatch.ArmyDroneImmortal(deployedDrone.EntityKey)&&

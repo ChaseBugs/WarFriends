@@ -3,7 +3,8 @@ namespace War.BattleServer;
 
 public sealed record DroneTargetDetails(IReadOnlyList<DroneShotTarget> Targets,bool IsPlayer,
     Vector3 Root,Vector3 AimForward,bool Hiding,Vector3 Velocity);
-public sealed record DroneProjectileIntent(DroneWeaponShot Shot,float Speed,float Damage,float CheckDistance,bool Critical);
+public sealed record DroneProjectileIntent(DroneWeaponShot Shot,float Speed,float Damage,float CheckDistance,bool Critical,
+    float PlayerDamageCoefficient=1,float PlayerOvertimeDamageCoefficient=1);
 
 // Drone.Update target/batch preparation, separated from BatchedWeapon.Update so
 // the host can explicitly preserve script observation order.

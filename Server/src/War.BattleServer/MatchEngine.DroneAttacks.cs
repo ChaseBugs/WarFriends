@@ -19,7 +19,12 @@ public sealed partial class MatchEngine
         attack.Prepare(time,true,row.OwnerFraction,position,rotation,DroneTargetSnapshot(),
             target=>DroneCanSee(position,target.Position),ResolveDroneShotTarget);
         bool capacity=projectileId<ulong.MaxValue&&PendingProjectileCount<MaximumProjectiles&&EventCapacityForShot();
-        return attack.AdvanceProjectile(time,position,rotation,damage,capacity);
+        var intent=attack.AdvanceProjectile(time,position,rotation,damage,capacity);
+        if(intent==null)return null;
+        var policy=(armyCatalog??throw new InvalidDataException("Drone damage policy source absent."))
+            .PlayerDamagePolicy(row.UnitId);
+        return intent with {PlayerDamageCoefficient=policy.PlayerDamageRatio,
+            PlayerOvertimeDamageCoefficient=policy.OvertimePlayerDamageRatio};
     }
     private int DroneBatchRange(int minimum,int maximum)
     {
