@@ -55,6 +55,7 @@ public sealed partial class MatchEngine
     private readonly BarrelMatchSimulation? barrels;
     private readonly ExplosionSourceCatalog? explosionPolicy;
     private readonly ArmySpawnPointSelector? armySelector;
+    private readonly AirWaypointCatalog? airWaypoints;
     private readonly ArmyRusherPointCatalog? armyRusherPoints;
     private readonly ArmyMinigunnerPointCatalog? armyMinigunnerPoints;
     private readonly ArmyNavMeshConnectivity? armyNavMeshConnectivity;
@@ -716,6 +717,7 @@ public sealed partial class MatchEngine
             groundVehicleWeapons=content.GroundVehicleWeapons;
             enemyPoses=content.EnemyPoses;
             armySelector=new ArmySpawnPointSelector(content.ArmySpawnPoints);
+            airWaypoints=content.AirWaypoints;
             armyRusherPoints=content.ArmyRusherPoints;
             armyMinigunnerPoints=content.ArmyMinigunnerPoints;
             playerShotTargets=content.PlayerShotTargets;
@@ -1027,6 +1029,7 @@ public sealed partial class MatchEngine
                         InitializeRusherMotionCandidate(entityKey,spawned.UnitId);
                         InitializeStationaryArmyCombat(entityKey,spawned.UnitId);
                         InitializeGroundVehicle(entityKey,family,point);
+                        InitializeDronePath(entityKey,family,point);
                         p.ConfirmedArmySpawns=checked(p.ConfirmedArmySpawns+1);
                         armyEntityRevision++;
                         Emit(MatchEventKind.ArmySpawned,p.Definition.PlayerId,"",0,point.Position,0,"");
@@ -1055,6 +1058,11 @@ public sealed partial class MatchEngine
             catch(InvalidDataException){End("invalid-army-authority","",false);return;}
         }
         if(advanced&&phase==BattlePhase.Running)groundVehicleVelocities.Clear();
+        if(advanced&&phase==BattlePhase.Running&&armyDronePaths.Count>0)
+        {
+            try{AdvanceDronePaths();}
+            catch(InvalidDataException){End("invalid-drone-route-authority","",false);return;}
+        }
         if(advanced&&phase==BattlePhase.Running&&vehicleRouteMotions.Count>0)
         {
             try {AdvanceGroundVehicleRoutes();}

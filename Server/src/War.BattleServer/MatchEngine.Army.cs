@@ -31,6 +31,26 @@ public sealed partial class MatchEngine
     }
     private readonly Dictionary<ulong,ArmyVitality> armyVitality=[];
     private readonly Dictionary<ulong,DroneSpecialState> armyDroneSpecials=[];
+    private readonly Dictionary<ulong,DroneWaypointState> armyDronePaths=[];
+
+    private void InitializeDronePath(ulong key,ArmyDeploymentFamily family,ArmySpawnPoint spawn)
+    {
+        if(family.BehaviorType!="DroneBehaviour")return;
+        // Legacy diagnostic manifests without trusted speed do not establish flight authority.
+        if(!armySpeed.TryGetValue(key,out float speed))return;
+        var route=airWaypoints!.ForSpawn(map!,spawn.ComponentFileId);
+        armyDronePaths.Add(key,new DroneWaypointState(route.Waypoints,route.JoinIndex,
+            spawn.Position,route.Radius,speed,true,true,NextArmyFloat));
+    }
+    private void AdvanceDronePaths()
+    {
+        foreach(var (key,path) in armyDronePaths.OrderBy(x=>x.Key))
+        {
+            path.Advance((float)((double)tick/MatchManifest.TickRate),1f/MatchManifest.TickRate);
+            var row=activeArmyEntities[key];row.X=path.Position.X;row.Y=path.Position.Y;row.Z=path.Position.Z;
+            row.PositionTick=tick;
+        }
+    }
     private readonly Dictionary<ulong,float> armyDamage=[];
     private readonly Dictionary<ulong,float> armySpecial=[];
     private readonly Dictionary<ulong,float> armySpeed=[];
@@ -1906,6 +1926,7 @@ public sealed partial class MatchEngine
             throw new InvalidDataException("Army death compare-and-remove failed.");
         armyVitality.Remove(entityKey);
         armyDroneSpecials.Remove(entityKey);
+        armyDronePaths.Remove(entityKey);
         armyDamage.Remove(entityKey);
         armySpecial.Remove(entityKey);
         armySpeed.Remove(entityKey);

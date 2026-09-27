@@ -2636,6 +2636,10 @@ internal static class CombatContentTests
         var deployedDrone=deployedDroneMatch.ArmyEntityBatch(decoyPlayer,0,0).Entities.Single();
         float droneHealth=deployedDroneMatch.ArmyHealth(deployedDrone.EntityKey)!.Value;
         for(ulong t=62;t<=211;t++)deployedDroneMatch.Advance(t);
+        var movedDrone=deployedDroneMatch.ArmyEntityBatch(decoyPlayer,0,0).Entities.Single();
+        Check(Vector3.Distance(new(deployedDrone.X,deployedDrone.Y,deployedDrone.Z),
+            new(movedDrone.X,movedDrone.Y,movedDrone.Z))>.1f&&movedDrone.PositionTick==211,
+            "normal deployed Drone advances through its trusted source route and publishes sample tick");
         Check(!deployedDroneMatch.ArmyDroneImmortal(deployedDrone.EntityKey),"deployed Drone retains strict initial five-second deadline");
         deployedDroneMatch.Advance(212);
         var transparentDroneBatch=deployedDroneMatch.ArmyEntityBatch(decoyPlayer,0,0);
@@ -2655,6 +2659,9 @@ internal static class CombatContentTests
             deployedDroneMatch.ApplyArmyHostDamage(deployedDrone.EntityKey,droneHealth)&&
             deployedDroneMatch.ArmyHealth(deployedDrone.EntityKey)==null,
             "source duration expiry permits deployed Drone death and releases special state");
+        deployedDroneMatch.Advance(257);
+        Check(deployedDroneMatch.ArmyEntityBatch(decoyPlayer,0,0).Entities.Count==0,
+            "deployed Drone death releases route traversal before subsequent motion tick");
         var droneClockMatch=new MatchEngine(heavyTurretManifest with {MatchId="drone-special-clock"},content:content);
         droneClockMatch.Admit(decoyPlayer);droneClockMatch.Admit(decoyOpponent);
         droneClockMatch.Command(decoyPlayer,new(){CommandId=1,Ready=new(){ManifestHash=droneClockMatch.ManifestHash}});
