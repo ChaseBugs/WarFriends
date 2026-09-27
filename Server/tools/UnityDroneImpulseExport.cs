@@ -28,9 +28,19 @@ public static class UnityDroneImpulseExport
                     Physics.SyncTransforms();var root=body.position;
                     var point=root+new Vector3(.3f,.1f,.2f);var impulse=new Vector3(.1f,.2f,-.15f)*impulseScale;
                     body.AddForceAtPosition(impulse,point,ForceMode.Impulse);Physics.Simulate(Time.fixedDeltaTime);
+                    var firstVelocity=Vec(body.velocity);var firstAngular=Vec(body.angularVelocity);var firstRoot=Vec(body.position);
+                    var firstRotation=new[]{body.rotation.x,body.rotation.y,body.rotation.z,body.rotation.w};
+                    var frames=new List<object>();
+                    for(int frame=1;frame<=50;frame++)
+                    {
+                        frames.Add(new{frame,root=Vec(body.position),velocity=Vec(body.velocity),angularVelocity=Vec(body.angularVelocity),
+                            rotation=new[]{body.rotation.x,body.rotation.y,body.rotation.z,body.rotation.w}});
+                        if(frame<50)Physics.Simulate(Time.fixedDeltaTime);
+                    }
+                    // Retain the original first-step observations separately.
                     rows.Add(new{root=Vec(root),rotation=new[]{rotation.x,rotation.y,rotation.z,rotation.w},
-                        point=Vec(point),impulse=Vec(impulse),velocity=Vec(body.velocity),angularVelocity=Vec(body.angularVelocity),
-                        finalRoot=Vec(body.position),finalRotation=new[]{body.rotation.x,body.rotation.y,body.rotation.z,body.rotation.w}});
+                        point=Vec(point),impulse=Vec(impulse),velocity=firstVelocity,angularVelocity=firstAngular,
+                        finalRoot=firstRoot,finalRotation=firstRotation,frames});
                 }
                 finally{UnityEngine.Object.DestroyImmediate(drone);}
             }
