@@ -7,7 +7,7 @@ internal static class DronePersistentContactTests
     internal static int Run(string directory,DroneColliderCatalog geometry)
     {
         // A rejected batch must not replace friction history from the preceding
-        // successful step; a successful empty historyPair must deliberately clear it.
+        // successful step; a successful empty pair must deliberately clear it.
         var history=new DroneContactSolver(geometry);
         var control=new DroneContactSolver(geometry);
         var historyPair=new[]{new MaterialContact(new DroneNormalPoint(Vector3.Zero,Vector3.UnitY,-.001f),
@@ -25,7 +25,7 @@ internal static class DronePersistentContactTests
             throw new Exception("Rejected contact batch changed retained friction authority.");
         _=Step(history,new[]{Array.Empty<MaterialContact>()});
         if(Step(history,new[]{historyPair})!=Step(new DroneContactSolver(geometry),new[]{historyPair}))
-            throw new Exception("Absent contact historyPair retained stale friction authority.");
+            throw new Exception("Absent contact pair retained stale friction authority.");
         using var document=JsonDocument.Parse(File.ReadAllBytes(Path.Combine(directory,"recovered-drone-persistent-contact.json")));
         var root=document.RootElement;
         if(root.GetProperty("callbackPolicy").GetString()!="enter-and-stay"||root.GetProperty("rows").GetArrayLength()!=30||
@@ -37,6 +37,8 @@ internal static class DronePersistentContactTests
         float cachedVelocity=0,cachedAngular=0,cachedRoot=0;
         string worstVelocity="",worstAngular="",worstRoot="";int materials=0;
         int stationaryBodies=0,kinematicContacts=0,contactFreeSteps=0,totalFrames=0;
+        var pairCoverage=new SortedDictionary<int,(int Steps,float Velocity,float Angular,float Root)>();
+        string singlePairWorstVelocity="";
         foreach(var row in root.GetProperty("rows").EnumerateArray())
         {
             var frames=row.GetProperty("frames");
@@ -115,6 +117,10 @@ internal static class DronePersistentContactTests
                 float ve=Vector3.Distance(cached.Velocity,Vec(after.GetProperty("velocity")));
                 float ae=Vector3.Distance(cached.AngularVelocity,Vec(after.GetProperty("angularVelocity")));
                 float pe=Vector3.Distance(cached.Pose.Root,Vec(after.GetProperty("position")));
+                var previousCoverage=pairCoverage.GetValueOrDefault(keyed.Length);
+                if(keyed.Length==1&&ve>previousCoverage.Velocity)singlePairWorstVelocity=identity;
+                pairCoverage[keyed.Length]=(previousCoverage.Steps+1,Math.Max(previousCoverage.Velocity,ve),
+                    Math.Max(previousCoverage.Angular,ae),Math.Max(previousCoverage.Root,pe));
                 if(ve>cachedVelocity){cachedVelocity=ve;worstVelocity=identity;}
                 if(ae>cachedAngular){cachedAngular=ae;worstAngular=identity;}
                 if(pe>cachedRoot){cachedRoot=pe;worstRoot=identity;}
@@ -130,6 +136,12 @@ internal static class DronePersistentContactTests
             "; validated collider materials="+materials);
         Console.WriteLine("Drone stationary counterparts: contacts="+stationaryBodies+", kinematic="+kinematicContacts);
         Console.WriteLine("Drone contact-history coverage: total="+totalFrames+", contact-free="+contactFreeSteps);
+        if(!pairCoverage.ContainsKey(1)||!pairCoverage.Keys.Any(p=>p>1)||pairCoverage.Values.Sum(v=>v.Steps)!=steps)
+            throw new Exception("Persistent contact pair-count coverage is incomplete.");
+        foreach(var entry in pairCoverage)
+            Console.WriteLine("Drone cached pair-count diagnostic: pairs="+entry.Key+", steps="+entry.Value.Steps+
+                ", velocity="+entry.Value.Velocity+", angular="+entry.Value.Angular+", root="+entry.Value.Root);
+        Console.WriteLine("Drone single-pair worst velocity: "+singlePairWorstVelocity);
         return 4;
     }
     private static IEnumerable<int[]> Permutations(int[] values)
