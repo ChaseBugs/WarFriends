@@ -12,8 +12,11 @@ internal static class AirWaypointCatalogTests
             foreach(var spawn in content.ArmySpawnPoints.ForMap(map).Where(p=>p.Collection=="spawnPointsCollectionDrones"))
             {
                 var route=catalog.ForSpawn(map,spawn.ComponentFileId);
+                var packaged=content.AirWaypoints.ForSpawn(map,spawn.ComponentFileId);
                 if(route.Waypoints.Count!=5||route.Radius!=.2f||route.Waypoints[route.JoinIndex].ComponentFileId!=spawn.JoinWaypointFileId)
                     throw new Exception("Drone catalog lost source route binding.");
+                if(packaged.JoinIndex!=route.JoinIndex||!packaged.Waypoints.SequenceEqual(route.Waypoints))
+                    throw new Exception("Combat package omitted validated air routes.");
                 count++;
             }
         string temporary=Path.GetTempFileName();
