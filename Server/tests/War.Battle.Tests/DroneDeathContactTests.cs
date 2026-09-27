@@ -7,7 +7,9 @@ internal static class DroneDeathContactTests
     internal static int Run(string directory,BattleCombatContent content)
     {
         using var document=JsonDocument.Parse(File.ReadAllBytes(Path.Combine(directory,"recovered-drone-map-fall.json")));
-        int count=0,boundaries=0,boxBoundaries=0;
+        int count=0,boundaries=0,boxBoundaries=0,sphereContacts=0,missingSurfaces=0;
+        float maximumPointError=0,maximumNormalError=0,maximumSeparationError=0;
+        float firstPointError=0,firstNormalError=0,firstSeparationError=0;int firstSphereContacts=0;
         Vector3 Vec(JsonElement value)=>new(value[0].GetSingle(),value[1].GetSingle(),value[2].GetSingle());
         foreach(var row in document.RootElement.GetProperty("rows").EnumerateArray())
         {
@@ -56,6 +58,37 @@ internal static class DroneDeathContactTests
             }
             var callbacks=row.GetProperty("collisionCallbacks");
             if(callbacks.GetArrayLength()==0)throw new Exception("Missing Drone collision callback oracle.");
+            foreach(var callback in callbacks.EnumerateArray())
+            {
+                int callbackFrame=callback.GetProperty("frame").GetInt32();
+                var prior=row.GetProperty("frames")[callbackFrame-1];
+                var surfaces=map.SphereSurfaceContacts(Vec(prior.GetProperty("sphereCenter")),
+                    prior.GetProperty("sphereRadius").GetSingle(),.1f,
+                    Convert.ToUInt32(prior.GetProperty("sphereMask").GetString(),16));
+                foreach(var observedContact in callback.GetProperty("contacts").EnumerateArray()
+                    .Where(c=>c.GetProperty("bodyColliderType").GetString()=="SphereCollider"))
+                {
+                    sphereContacts++;
+                    var surface=surfaces.FirstOrDefault(c=>c.SourcePath==callback.GetProperty("other").GetString());
+                    if(surface==null){missingSurfaces++;continue;}
+                    maximumPointError=Math.Max(maximumPointError,Vector3.Distance(surface.SurfacePoint,
+                        Vec(observedContact.GetProperty("position"))));
+                    maximumNormalError=Math.Max(maximumNormalError,Vector3.Distance(surface.Normal,
+                        Vec(observedContact.GetProperty("normal"))));
+                    maximumSeparationError=Math.Max(maximumSeparationError,Math.Abs(surface.Separation-
+                        observedContact.GetProperty("separation").GetSingle()));
+                    if(callbackFrame==callbacks[0].GetProperty("frame").GetInt32())
+                    {
+                        firstSphereContacts++;
+                        firstPointError=Math.Max(firstPointError,Vector3.Distance(surface.SurfacePoint,
+                            Vec(observedContact.GetProperty("position"))));
+                        firstNormalError=Math.Max(firstNormalError,Vector3.Distance(surface.Normal,
+                            Vec(observedContact.GetProperty("normal"))));
+                        firstSeparationError=Math.Max(firstSeparationError,Math.Abs(surface.Separation-
+                            observedContact.GetProperty("separation").GetSingle()));
+                    }
+                }
+            }
             var first=callbacks[0];int frame=first.GetProperty("frame").GetInt32();
             var freePosition=Vec(row.GetProperty("frames")[0].GetProperty("position"));
             var freeVelocity=Vector3.Zero;
@@ -114,6 +147,12 @@ internal static class DroneDeathContactTests
         }
         Console.WriteLine("Drone sphere overlap oracle: "+boundaries+" boundary differences within 0.00001 world units.");
         Console.WriteLine("Drone box overlap oracle: "+boxBoundaries+" boundary differences within 0.00001 world units.");
+        Console.WriteLine("Drone sphere manifold diagnostic: contacts="+sphereContacts+" missing="+missingSurfaces+
+            " maximum point error="+maximumPointError+" normal error="+maximumNormalError+
+            " separation error="+maximumSeparationError+" (diagnostic only, not solver verification).");
+        Console.WriteLine("Drone first sphere contact diagnostic: contacts="+firstSphereContacts+
+            " maximum point error="+firstPointError+" normal error="+firstNormalError+
+            " separation error="+firstSeparationError+" (diagnostic only).");
         return count;
     }
 }
