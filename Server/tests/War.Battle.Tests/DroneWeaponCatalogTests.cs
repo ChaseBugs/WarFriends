@@ -21,6 +21,23 @@ internal static class DroneWeaponCatalogTests
         Check(Vector3.Distance(rotated[0].Hitbox.Center,new Vector3(2.023748398f,3.04583633f,4.00030708313f))<1e-6f&&
             rotated[1].Hitbox.Center==new Vector3(2,3,4),"Drone root rotation places offset box and centered sphere");
 
+        using(var geometryDoc=JsonDocument.Parse(File.ReadAllText(Path.Combine(directory,"unity-drone-collider-reference.json"))))
+        {
+            Check(geometryDoc.RootElement.GetProperty("sha256").GetString()=="c2afc19487462e6163ad107267ef1b35c9c86fb34fa80898135b1d25f4a872a3","Unity collider probes bind recovered Drone prefab");
+            var probes=geometryDoc.RootElement.GetProperty("probes");
+            Check(probes.GetArrayLength()==72,"complete independent Drone collider ray probes");
+            Vector3 V(JsonElement v)=>new(v[0].GetSingle(),v[1].GetSingle(),v[2].GetSingle());
+            foreach(var probe in probes.EnumerateArray())
+            {
+                var q=probe.GetProperty("rotation");
+                var placed=colliders.Place(V(probe.GetProperty("position")),new(q[0].GetSingle(),q[1].GetSingle(),q[2].GetSingle(),q[3].GetSingle()));
+                var box=placed.Single(c=>c.ComponentFileId==probe.GetProperty("colliderFileId").GetInt32());
+                var distance=box.Hitbox.Raycast(V(probe.GetProperty("origin")),V(probe.GetProperty("direction")),probe.GetProperty("range").GetSingle());
+                Check(distance.HasValue==probe.GetProperty("hit").GetBoolean()&&
+                    (!distance.HasValue||Math.Abs(distance.Value-probe.GetProperty("distance").GetSingle())<.0002f),
+                    "rotated Drone host collider ray matches independent Unity Collider.Raycast");
+            }
+        }
         Check(!catalog.Ready(.17f,0)&&catalog.Ready(.2f,0),"strict Drone weapon cadence at thirty Hz");
         Check(!catalog.Ready(1.17f,1)&&catalog.Ready(1.2f,1),"source cadence binds previous shot clock");
         using(var doc=JsonDocument.Parse(File.ReadAllText(Path.Combine(directory,"unity-drone-weapon-reference.json"))))
