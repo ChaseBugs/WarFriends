@@ -13,9 +13,11 @@ internal sealed class DroneContactSolver
     // Immutable diagnostic snapshot; no caller can replace solver-owned history.
     internal IReadOnlyList<(int Pair,ContactMaterial Material,ContactFrictionCache Cache)> FrictionHistory()=>
         Array.AsReadOnly(caches.OrderBy(p=>p.Key).SelectMany(p=>p.Value.Select(c=>(p.Key,c.Material,c.Cache))).ToArray());
+    // Optional reuse distance separates two effects in oracle experiments only.
+    // The PhysX reference supplies one correlation distance to reuse and growth.
     internal DroneNormalResult Solve(Vector3 root,Quaternion rotation,Vector3 velocity,Vector3 angularVelocity,
         IReadOnlyList<MaterialContact[]> shapePairs,float normalTolerance,float correlationDistance,float offsetThreshold,bool reuseCaches=false,
-        IReadOnlyList<bool>? disableStrongFriction=null)
+        IReadOnlyList<bool>? disableStrongFriction=null,float? reuseCorrelationDistance=null)
     {
         ArgumentNullException.ThrowIfNull(shapePairs);
         if(!float.IsFinite(normalTolerance)||normalTolerance<0||normalTolerance>1||
@@ -27,10 +29,13 @@ internal sealed class DroneContactSolver
         if(disableStrongFriction!=null&&disableStrongFriction.Count!=shapePairs.Count)
             throw new InvalidDataException("Strong-friction flags must bind every shape pair.");
         var disabled=disableStrongFriction?.ToArray();
+        float reuseDistance=reuseCorrelationDistance??correlationDistance;
+        if(!float.IsFinite(reuseDistance)||reuseDistance<0||reuseDistance>1)
+            throw new InvalidDataException("Invalid diagnostic friction reuse distance.");
         var initial=DroneRigidMotion.AdvanceVelocities(velocity,angularVelocity);
         _=response.PointVelocity(root,rotation,initial.Velocity,initial.AngularVelocity,root);
         FrictionPatchSeed[] Seeds(int index)=>reuseCaches&&disabled?[index]!=true&&caches.TryGetValue(index,out var previous)?
-            previous.Where(c=>c.Cache.CanReuse(root,rotation,normalTolerance,correlationDistance))
+            previous.Where(c=>c.Cache.CanReuse(root,rotation,normalTolerance,reuseDistance))
                 .Select(c=>new FrictionPatchSeed(Vector3.Transform(c.Cache.BodyNormal,rotation),c.Material)).ToArray():
             Array.Empty<FrictionPatchSeed>();
         var patches=shapePairs.SelectMany((p,index)=>ContactFrictionPatches.Correlate(p,normalTolerance,Seeds(index))
@@ -49,7 +54,7 @@ internal sealed class DroneContactSolver
             var anchors=ContactFrictionAnchors.Select(points,correlationDistance,offsetThreshold);
             ContactFrictionCache? cached=null;
             if(reuseCaches&&disabled?[entry.Pair]!=true&&caches.TryGetValue(entry.Pair,out var candidates))
-                cached=candidates.Where(c=>c.Material==patch.Material&&c.Cache.CanReuse(root,rotation,normalTolerance,correlationDistance)&&
+                cached=candidates.Where(c=>c.Material==patch.Material&&c.Cache.CanReuse(root,rotation,normalTolerance,reuseDistance)&&
                     Vector3.Dot(Vector3.Transform(c.Cache.BodyNormal,rotation),patch.Normal)>=normalTolerance)
                     .Select(c=>c.Cache).FirstOrDefault();
             if(cached!=null)cached=cached.Grow(root,rotation,points,correlationDistance,offsetThreshold);

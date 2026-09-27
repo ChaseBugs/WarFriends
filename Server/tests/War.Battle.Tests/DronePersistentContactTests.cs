@@ -22,6 +22,13 @@ internal static class DronePersistentContactTests
             throw new Exception("Unsupported late contact accepted.");
         }
         catch(InvalidDataException){}
+        try
+        {
+            _=history.Solve(Vector3.Zero,Quaternion.Identity,Vector3.Zero,Vector3.Zero,
+                new[]{historyPair},.999f,.025f,.04f,true,reuseCorrelationDistance:float.NaN);
+            throw new Exception("Invalid friction reuse distance accepted.");
+        }
+        catch(InvalidDataException){}
         if(Step(history,new[]{historyPair})!=Step(control,new[]{historyPair}))
             throw new Exception("Rejected contact batch changed retained friction authority.");
         _=Step(history,new[]{Array.Empty<MaterialContact>()});
@@ -55,11 +62,14 @@ internal static class DronePersistentContactTests
         string singlePairWorstVelocity="";
         float shorterVelocity=0,shorterAngular=0,shorterRoot=0;
         int shorterImproved=0,shorterWorse=0,shorterEquivalent=0;
+        float reuseOnlyVelocity=0,reuseOnlyAngular=0,reuseOnlyRoot=0;
+        int reuseOnlyImproved=0,reuseOnlyWorse=0,reuseOnlyEquivalent=0;
         foreach(var row in root.GetProperty("rows").EnumerateArray())
         {
             var frames=row.GetProperty("frames");
             var cachedSolver=new DroneContactSolver(geometry);
             var shorterSolver=new DroneContactSolver(geometry);
+            var reuseOnlySolver=new DroneContactSolver(geometry);
             var pairIds=new Dictionary<(string?,int),int>();
             var callbacks=row.GetProperty("collisionCallbacks").EnumerateArray().ToLookup(c=>c.GetProperty("frame").GetInt32());
             for(int frame=1;frame<frames.GetArrayLength();frame++)
@@ -78,6 +88,10 @@ internal static class DronePersistentContactTests
                     _=shorterSolver.Solve(Vec(before.GetProperty("position")),Quat(before.GetProperty("rotation")),
                         Vec(before.GetProperty("velocity")),Vec(before.GetProperty("angularVelocity")),
                         Enumerable.Range(0,pairIds.Count).Select(_=>Array.Empty<MaterialContact>()).ToArray(),.999f,.0025f,.04f,true);
+                    _=reuseOnlySolver.Solve(Vec(before.GetProperty("position")),Quat(before.GetProperty("rotation")),
+                        Vec(before.GetProperty("velocity")),Vec(before.GetProperty("angularVelocity")),
+                        Enumerable.Range(0,pairIds.Count).Select(_=>Array.Empty<MaterialContact>()).ToArray(),.999f,.025f,.04f,true,
+                        reuseCorrelationDistance:.0025f);
                     continue;
                 }
                 stays+=group.Count(c=>c.GetProperty("callbackKind").GetString()=="stay");
@@ -133,6 +147,12 @@ internal static class DronePersistentContactTests
                     Vec(before.GetProperty("velocity")),Vec(before.GetProperty("angularVelocity")),stable,.999f,.025f,.04f,true);
                 var shorter=shorterSolver.Solve(Vec(before.GetProperty("position")),Quat(before.GetProperty("rotation")),
                     Vec(before.GetProperty("velocity")),Vec(before.GetProperty("angularVelocity")),stable,.999f,.0025f,.04f,true);
+                var reuseOnly=reuseOnlySolver.Solve(Vec(before.GetProperty("position")),Quat(before.GetProperty("rotation")),
+                    Vec(before.GetProperty("velocity")),Vec(before.GetProperty("angularVelocity")),stable,.999f,.025f,.04f,true,
+                    reuseCorrelationDistance:.0025f);
+                reuseOnlyVelocity=Math.Max(reuseOnlyVelocity,Vector3.Distance(reuseOnly.Velocity,Vec(after.GetProperty("velocity"))));
+                reuseOnlyAngular=Math.Max(reuseOnlyAngular,Vector3.Distance(reuseOnly.AngularVelocity,Vec(after.GetProperty("angularVelocity"))));
+                reuseOnlyRoot=Math.Max(reuseOnlyRoot,Vector3.Distance(reuseOnly.Pose.Root,Vec(after.GetProperty("position"))));
                 shorterVelocity=Math.Max(shorterVelocity,Vector3.Distance(shorter.Velocity,Vec(after.GetProperty("velocity"))));
                 shorterAngular=Math.Max(shorterAngular,Vector3.Distance(shorter.AngularVelocity,Vec(after.GetProperty("angularVelocity"))));
                 shorterRoot=Math.Max(shorterRoot,Vector3.Distance(shorter.Pose.Root,Vec(after.GetProperty("position"))));
@@ -152,6 +172,10 @@ internal static class DronePersistentContactTests
                 if(shorterError<ve-.00002f)shorterImproved++;
                 else if(shorterError>ve+.00002f)shorterWorse++;
                 else shorterEquivalent++;
+                float reuseOnlyError=Vector3.Distance(reuseOnly.Velocity,Vec(after.GetProperty("velocity")));
+                if(reuseOnlyError<ve-.00002f)reuseOnlyImproved++;
+                else if(reuseOnlyError>ve+.00002f)reuseOnlyWorse++;
+                else reuseOnlyEquivalent++;
                 if(frame==45&&keyed.Length==1&&keyed[0].Count()==1&&
                    row.GetProperty("source").GetString()=="Assets/Scenes/Snow_Multiplayer.unity"&&
                    row.GetProperty("fraction").GetInt32()==2&&row.GetProperty("initialRotation")[0].GetSingle()>.1f)
@@ -212,9 +236,12 @@ internal static class DronePersistentContactTests
         Console.WriteLine("Drone full-dataset .0025 correlation diagnostic: velocity="+shorterVelocity+
             ", angular="+shorterAngular+", root="+shorterRoot+", improved="+shorterImproved+
             ", worse="+shorterWorse+", equivalent="+shorterEquivalent+" (policy unverified).");
+        Console.WriteLine("Drone reuse-only .0025 distance diagnostic: velocity="+reuseOnlyVelocity+
+            ", angular="+reuseOnlyAngular+", root="+reuseOnlyRoot+", improved="+reuseOnlyImproved+
+            ", worse="+reuseOnlyWorse+", equivalent="+reuseOnlyEquivalent+" (distinct distances not source policy).");
         if(shorterImproved+shorterWorse+shorterEquivalent!=steps)
             throw new Exception("Correlation control did not cover every persistent-contact step.");
-        return 6;
+        return 7;
     }
     private static IEnumerable<int[]> Permutations(int[] values)
     {
