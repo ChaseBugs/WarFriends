@@ -71,6 +71,19 @@ internal static class DroneFrictionControlTests
                 throw new Exception("Prepared two-phase normal response differs from independent Unity reported impulse.");
             count++;
             var observed=row.GetProperty("frames")[frame];
+            var solved=new DroneNormalSolver(geometry).Solve(position,orientation,before,
+                Vec(previousFrame.GetProperty("angularVelocity")),callbacks.EnumerateArray()
+                    .Where(c=>c.GetProperty("frame").GetInt32()==frame)
+                    .SelectMany(c=>c.GetProperty("contacts").EnumerateArray())
+                    .Select(c=>new DroneNormalPoint(Vec(c.GetProperty("position")),Vec(c.GetProperty("normal")),
+                        c.GetProperty("separation").GetSingle())).ToArray());
+            if(Vector3.Distance(solved.Impulse,impulses)>.00002f||
+               Vector3.Distance(solved.Velocity,Vec(observed.GetProperty("velocity")))>.00002f||
+               Vector3.Distance(solved.AngularVelocity,Vec(observed.GetProperty("angularVelocity")))>.00002f||
+               Vector3.Distance(solved.Pose.Root,Vec(observed.GetProperty("position")))>.00002f||
+               Math.Abs(Quaternion.Dot(solved.Pose.Rotation,pose.Rotation))<.999999f)
+                throw new Exception("Reusable Drone normal solver differs from independent Unity control.");
+            count++;
             float angularResidual=Vector3.Distance(initial.AngularVelocity+deltaAngular,Vec(observed.GetProperty("angularVelocity")));
             float poseResidual=Vector3.Distance(pose.Root,Vec(observed.GetProperty("position")));
             var observedQ=observed.GetProperty("rotation");
