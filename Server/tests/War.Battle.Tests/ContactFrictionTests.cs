@@ -11,6 +11,11 @@ internal static class ContactFrictionTests
         var material=new ContactMaterial(.6f,.4f,0);
         var cache=new ContactFrictionCache(Vector3.Zero,Quaternion.Identity,Vector3.UnitY,new[]{Vector3.Zero,Vector3.UnitX},false);
         Check(cache.CanReuse(Vector3.Zero,Quaternion.Identity,.999f,.025f));
+        Check(ReferenceEquals(cache.Grow(Vector3.Zero,Quaternion.Identity,new[]{Point(0),Point(1)},.025f,.04f),cache));
+        Check(cache.Grow(Vector3.Zero,Quaternion.Identity,new[]{Point(0),Point(3)},.025f,.04f).Anchors[1].MapWorld==new Vector3(3,0,0));
+        var one=new ContactFrictionCache(Vector3.Zero,Quaternion.Identity,Vector3.UnitY,new[]{Vector3.Zero},false);
+        var grown=one.Grow(Vector3.UnitX*.1f,Quaternion.Identity,new[]{Point(1)},.025f,.04f);
+        Check(grown.Anchors.Count==2&&grown.Anchors[0]==one.Anchors[0]&&grown.Anchors[1].MapWorld==Vector3.UnitX);
         Check(cache.CanReuse(Vector3.UnitX*.1f,Quaternion.Identity,.999f,.025f));
         Check(!cache.CanReuse(Vector3.UnitY*.025f,Quaternion.Identity,.999f,.025f));
         Check(!cache.CanReuse(Vector3.Zero,Quaternion.CreateFromAxisAngle(Vector3.UnitX,.1f),.999f,.025f));

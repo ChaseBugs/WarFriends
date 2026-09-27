@@ -50,8 +50,8 @@ internal static class DronePersistentContactTests
         if(stays==0||steps<30)throw new Exception("Persistent-contact oracle lacks continuing steps.");
         Console.WriteLine("Drone memoryless persistent-contact diagnostic: steps="+steps+", stays="+stays+", velocity="+maximumVelocity+
             ", angular="+maximumAngular+", root="+maximumRoot+" (cached anchors absent; no response assertion).");
-        Console.WriteLine("Drone two-anchor cache diagnostic: velocity="+cachedVelocity+", angular="+cachedAngular+", root="+cachedRoot+
-            " (one-anchor growth/span rebuilding absent; experimental pair order).");
+        Console.WriteLine("Drone growing-anchor cache diagnostic: velocity="+cachedVelocity+", angular="+cachedAngular+", root="+cachedRoot+
+            " (experimental pair order and correlation policy).");
         return 1;
     }
 }

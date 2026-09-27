@@ -5,7 +5,8 @@ namespace War.BattleServer;
 // Persistent anchors and patch correlation remain separate requirements.
 internal static class ContactFrictionAnchors
 {
-    internal static Vector3[] Select(IReadOnlyList<DroneNormalPoint> contacts,float correlationDistance,float offsetThreshold)
+    internal static Vector3[] Select(IReadOnlyList<DroneNormalPoint> contacts,float correlationDistance,float offsetThreshold,
+        Vector3? initialAnchor=null)
     {
         ArgumentNullException.ThrowIfNull(contacts);
         if(contacts.Count>64||!float.IsFinite(correlationDistance)||correlationDistance<0||correlationDistance>1||
@@ -16,6 +17,11 @@ internal static class ContactFrictionAnchors
             if(!PlayerHitbox.Finite(c.Point)||!float.IsFinite(c.Separation)||Math.Abs(c.Separation)>100)
                 throw new InvalidDataException("Invalid friction contact point.");
         var selected=new List<Vector3>(2);float distance=0;
+        if(initialAnchor is Vector3 initial)
+        {
+            if(!PlayerHitbox.Finite(initial))throw new InvalidDataException("Invalid retained friction anchor.");
+            selected.Add(initial);
+        }
         foreach(var c in points)
         {
             if(c.Separation>=offsetThreshold)continue;

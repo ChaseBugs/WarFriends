@@ -40,9 +40,7 @@ internal sealed class DroneContactSolver
                 cached=candidates.Where(c=>c.Material==patch.Material&&c.Cache.CanReuse(root,rotation,normalTolerance,correlationDistance)&&
                     Vector3.Dot(Vector3.Transform(c.Cache.BodyNormal,rotation),patch.Normal)>=normalTolerance)
                     .Select(c=>c.Cache).FirstOrDefault();
-            // Initial reuse experiment retains two-anchor patches. One-anchor
-            // growth and span-based rebuilding still need source binding.
-            if(cached?.Anchors.Count!=2)cached=null;
+            if(cached!=null)cached=cached.Grow(root,rotation,points,correlationDistance,offsetThreshold);
             cached??=new ContactFrictionCache(root,rotation,patch.Normal,anchors,false);
             anchors=cached.Anchors.Select(a=>root+Vector3.Transform(a.BodyLocal,rotation)).ToArray();
             var basis=ContactFrictionBasis.Prepare(patch.Normal,initial.Velocity);
