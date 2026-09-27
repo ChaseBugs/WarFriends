@@ -1,0 +1,217 @@
+{
+  "version": 1,
+  "source": "Assets/GameObject/enemy.prefab",
+  "sha256": "64b4db85d1c9a0bd46a690a86102a22f66feeab8d4157a4c87824ac3d5dbeb54",
+  "componentFileId": 11482579,
+  "targets": [
+    {
+      "transformFileId": 454546,
+      "type": 8,
+      "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003/AimTargetHead",
+      "hierarchy": [
+        {
+          "transformFileId": 472182,
+          "gameObjectFileId": 147589,
+          "name": "enemy"
+        },
+        {
+          "transformFileId": 427988,
+          "gameObjectFileId": 109266,
+          "name": "character_assault_1"
+        },
+        {
+          "transformFileId": 492373,
+          "gameObjectFileId": 161526,
+          "name": "global_move"
+        },
+        {
+          "transformFileId": 409309,
+          "gameObjectFileId": 154010,
+          "name": "cartoon_guyHub001"
+        },
+        {
+          "transformFileId": 413056,
+          "gameObjectFileId": 103859,
+          "name": "cartoon_guySpineCATRigSpine1"
+        },
+        {
+          "transformFileId": 454267,
+          "gameObjectFileId": 169566,
+          "name": "cartoon_guySpine2"
+        },
+        {
+          "transformFileId": 480871,
+          "gameObjectFileId": 188124,
+          "name": "cartoon_guyHub002"
+        },
+        {
+          "transformFileId": 436299,
+          "gameObjectFileId": 192514,
+          "name": "cartoon_guySpine"
+        },
+        {
+          "transformFileId": 433468,
+          "gameObjectFileId": 151504,
+          "name": "cartoon_guyHub003"
+        },
+        {
+          "transformFileId": 454546,
+          "gameObjectFileId": 131555,
+          "name": "AimTargetHead"
+        }
+      ],
+      "restPosition": [
+        -0.002083449802451848,
+        0.4800490196457553,
+        0.02049407738914179
+      ],
+      "restRotation": [
+        -1.4014629539094159e-06,
+        0.9974019840523758,
+        8.628897292278781e-06,
+        0.07203849028863973
+      ],
+      "restScale": [
+        0.9999999999999701,
+        1.000000039999974,
+        0.99999994
+      ]
+    },
+    {
+      "transformFileId": 436299,
+      "type": 1,
+      "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine",
+      "hierarchy": [
+        {
+          "transformFileId": 472182,
+          "gameObjectFileId": 147589,
+          "name": "enemy"
+        },
+        {
+          "transformFileId": 427988,
+          "gameObjectFileId": 109266,
+          "name": "character_assault_1"
+        },
+        {
+          "transformFileId": 492373,
+          "gameObjectFileId": 161526,
+          "name": "global_move"
+        },
+        {
+          "transformFileId": 409309,
+          "gameObjectFileId": 154010,
+          "name": "cartoon_guyHub001"
+        },
+        {
+          "transformFileId": 413056,
+          "gameObjectFileId": 103859,
+          "name": "cartoon_guySpineCATRigSpine1"
+        },
+        {
+          "transformFileId": 454267,
+          "gameObjectFileId": 169566,
+          "name": "cartoon_guySpine2"
+        },
+        {
+          "transformFileId": 480871,
+          "gameObjectFileId": 188124,
+          "name": "cartoon_guyHub002"
+        },
+        {
+          "transformFileId": 436299,
+          "gameObjectFileId": 192514,
+          "name": "cartoon_guySpine"
+        }
+      ],
+      "restPosition": [
+        -0.00042681368661746813,
+        0.25927233740265204,
+        -0.011906700680936525
+      ],
+      "restRotation": [
+        0.5264112599658306,
+        -0.46843633894510533,
+        -0.5302211344171645,
+        0.4715127559431881
+      ],
+      "restScale": [
+        0.9999998999999801,
+        1.000000039999974,
+        0.99999994
+      ]
+    },
+    {
+      "transformFileId": 496281,
+      "type": 4,
+      "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003/targetOut",
+      "hierarchy": [
+        {
+          "transformFileId": 472182,
+          "gameObjectFileId": 147589,
+          "name": "enemy"
+        },
+        {
+          "transformFileId": 427988,
+          "gameObjectFileId": 109266,
+          "name": "character_assault_1"
+        },
+        {
+          "transformFileId": 492373,
+          "gameObjectFileId": 161526,
+          "name": "global_move"
+        },
+        {
+          "transformFileId": 409309,
+          "gameObjectFileId": 154010,
+          "name": "cartoon_guyHub001"
+        },
+        {
+          "transformFileId": 413056,
+          "gameObjectFileId": 103859,
+          "name": "cartoon_guySpineCATRigSpine1"
+        },
+        {
+          "transformFileId": 454267,
+          "gameObjectFileId": 169566,
+          "name": "cartoon_guySpine2"
+        },
+        {
+          "transformFileId": 480871,
+          "gameObjectFileId": 188124,
+          "name": "cartoon_guyHub002"
+        },
+        {
+          "transformFileId": 436299,
+          "gameObjectFileId": 192514,
+          "name": "cartoon_guySpine"
+        },
+        {
+          "transformFileId": 433468,
+          "gameObjectFileId": 151504,
+          "name": "cartoon_guyHub003"
+        },
+        {
+          "transformFileId": 496281,
+          "gameObjectFileId": 184583,
+          "name": "targetOut"
+        }
+      ],
+      "restPosition": [
+        -0.000263320330370727,
+        0.5738990912721024,
+        0.005507487851480471
+      ],
+      "restRotation": [
+        -2.8394628925898502e-08,
+        0.7071069292069078,
+        -3.314063149080504e-08,
+        0.707106883432504
+      ],
+      "restScale": [
+        0.9999999999999701,
+        1.000000039999974,
+        0.99999994
+      ]
+    }
+  ]
+}
