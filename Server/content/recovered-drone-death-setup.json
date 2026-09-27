@@ -1,0 +1,39 @@
+{
+  "version": 1,
+  "source": "Assets/GameObject/dronePrototype.prefab",
+  "sha256": "c2afc19487462e6163ad107267ef1b35c9c86fb34fa80898135b1d25f4a872a3",
+  "componentFileId": 5469857,
+  "mass": 1.0,
+  "drag": 1.0,
+  "angularDrag": 0.05,
+  "useGravity": true,
+  "initialKinematic": true,
+  "interpolation": 0,
+  "constraints": 0,
+  "collisionDetection": 0,
+  "deathCodeSource": "Assets/Scripts/Assembly-CSharp/Drone.cs",
+  "deathCodeSha256": "f54301128d870563a0020ebe0d7389964ea86e0a3b0f5f81e80465762212ddd8",
+  "explosion": {
+    "explosionDamageHealthRatio": 0.5,
+    "splashDamageHealthRatio": 0.05,
+    "deadRadius": 0.7,
+    "hurtRadius": 1.4,
+    "destructionDelay": 0.2
+  },
+  "settingsEvidence": [
+    {
+      "source": "ProjectSettings/TimeManager.asset",
+      "sha256": "8abafddd93a7425fa5a644310799fd963e866f81d3658a728e3d6f4913b4ef71"
+    },
+    {
+      "source": "ProjectSettings/DynamicsManager.asset",
+      "sha256": "1ae493e3b647de941d7b95f2064f5951343d33beff6f0fa4599cce831f509710"
+    }
+  ],
+  "observedFixedTimestep": 0.02,
+  "observedGravity": [
+    0.0,
+    -9.81,
+    0.0
+  ]
+}

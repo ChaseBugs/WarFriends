@@ -5,6 +5,14 @@ internal static class DroneAttackStateTests
     internal static int Run(BattleCombatContent content)
     {
         int count=0;void Check(bool ok,string name){if(!ok)throw new Exception(name);count++;}
+        var death=new DroneDeathState(2,400);
+        Check(death.DestructionDeadline==null,"Drone death alone does not authorize an explosion");
+        var deathExplosion=death.ObserveCollision(3,Vector3.One)!;
+        Check(deathExplosion is {Damage:200,SplashDamage:20,DeadRadius:.7f,HurtRadius:1.4f}&&
+            deathExplosion.Position==Vector3.One&&death.DestructionDeadline==3.2f,
+            "first physical collision binds max-health explosion and destruction delay");
+        Check(death.ObserveCollision(3.1f,Vector3.Zero)==null&&death.DestructionDeadline==3.2f,
+            "later contacts cannot repeat Drone explosion authority");
         Check(content.Army.ComposeDroneShot(0,null,null).ShieldHitProbability==0,
             "Drone shield probability comes from recovered ArmyUpgrades row");
         try
