@@ -6,6 +6,26 @@ internal static class DronePersistentContactTests
 {
     internal static int Run(string directory,DroneColliderCatalog geometry)
     {
+        // A rejected batch must not replace friction history from the preceding
+        // successful step; a successful empty historyPair must deliberately clear it.
+        var history=new DroneContactSolver(geometry);
+        var control=new DroneContactSolver(geometry);
+        var historyPair=new[]{new MaterialContact(new DroneNormalPoint(Vector3.Zero,Vector3.UnitY,-.001f),
+            new ContactMaterial(.6f,.6f,0))};
+        DroneNormalResult Step(DroneContactSolver solver,MaterialContact[][] pairs)=>solver.Solve(
+            Vector3.Zero,Quaternion.Identity,new Vector3(.1f,-.2f,0),Vector3.Zero,pairs,.999f,.025f,.04f,true);
+        _=Step(history,new[]{historyPair});_=Step(control,new[]{historyPair});
+        try
+        {
+            _=Step(history,new[]{historyPair,new[]{historyPair[0] with{Material=new ContactMaterial(.6f,.6f,.1f)}}});
+            throw new Exception("Unsupported late contact accepted.");
+        }
+        catch(InvalidDataException){}
+        if(Step(history,new[]{historyPair})!=Step(control,new[]{historyPair}))
+            throw new Exception("Rejected contact batch changed retained friction authority.");
+        _=Step(history,new[]{Array.Empty<MaterialContact>()});
+        if(Step(history,new[]{historyPair})!=Step(new DroneContactSolver(geometry),new[]{historyPair}))
+            throw new Exception("Absent contact historyPair retained stale friction authority.");
         using var document=JsonDocument.Parse(File.ReadAllBytes(Path.Combine(directory,"recovered-drone-persistent-contact.json")));
         var root=document.RootElement;
         if(root.GetProperty("callbackPolicy").GetString()!="enter-and-stay"||root.GetProperty("rows").GetArrayLength()!=30||
@@ -95,7 +115,7 @@ internal static class DronePersistentContactTests
         Console.WriteLine("Drone persistent worst cases: velocity="+worstVelocity+"; angular="+worstAngular+"; root="+worstRoot+
             "; validated collider materials="+materials);
         Console.WriteLine("Drone stationary counterparts: contacts="+stationaryBodies+", kinematic="+kinematicContacts);
-        return 1;
+        return 4;
     }
     private static IEnumerable<int[]> Permutations(int[] values)
     {
