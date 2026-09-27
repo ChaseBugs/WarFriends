@@ -14,7 +14,8 @@ internal static class DroneFrictionControlTests
            root.GetProperty("rows").GetArrayLength()!=10)
             throw new Exception("Wrong independent friction control dataset.");
         Vector3 Vec(JsonElement value)=>new(value[0].GetSingle(),value[1].GetSingle(),value[2].GetSingle());
-        float maximum=0,maximumPreparedResidual=0,maximumTwoPhaseResidual=0;int count=0;
+        float maximum=0,maximumPreparedResidual=0,maximumTwoPhaseResidual=0;
+        float maximumAngularResidual=0,maximumPoseResidual=0,maximumRotationResidual=0;int count=0;
         var response=new DroneImpulseResponse(geometry);
         foreach(var row in root.GetProperty("rows").EnumerateArray())
         {
@@ -52,6 +53,8 @@ internal static class DroneFrictionControlTests
                 preparedContacts.Add((point,normal,prepared,step.Impulse));
             }
             float firstPassResidual=Vector3.Distance(computedImpulse,impulses);
+            var pose=DroneRigidMotion.Integrate(DroneMassProperties.Compute(geometry),position,orientation,
+                initial.Velocity+deltaVelocity,initial.AngularVelocity+deltaAngular);
             maximumPreparedResidual=Math.Max(maximumPreparedResidual,firstPassResidual);
             foreach(var contact in preparedContacts)
             {
@@ -67,6 +70,21 @@ internal static class DroneFrictionControlTests
             if(twoPhaseResidual>.00002f)
                 throw new Exception("Prepared two-phase normal response differs from independent Unity reported impulse.");
             count++;
+            var observed=row.GetProperty("frames")[frame];
+            float angularResidual=Vector3.Distance(initial.AngularVelocity+deltaAngular,Vec(observed.GetProperty("angularVelocity")));
+            float poseResidual=Vector3.Distance(pose.Root,Vec(observed.GetProperty("position")));
+            var observedQ=observed.GetProperty("rotation");
+            var observedRotation=new Quaternion(observedQ[0].GetSingle(),observedQ[1].GetSingle(),observedQ[2].GetSingle(),observedQ[3].GetSingle());
+            float rotationResidual=Math.Min((new Vector4(pose.Rotation.X,pose.Rotation.Y,pose.Rotation.Z,pose.Rotation.W)-
+                new Vector4(observedRotation.X,observedRotation.Y,observedRotation.Z,observedRotation.W)).Length(),
+                (new Vector4(pose.Rotation.X,pose.Rotation.Y,pose.Rotation.Z,pose.Rotation.W)+
+                new Vector4(observedRotation.X,observedRotation.Y,observedRotation.Z,observedRotation.W)).Length());
+            maximumAngularResidual=Math.Max(maximumAngularResidual,angularResidual);
+            maximumPoseResidual=Math.Max(maximumPoseResidual,poseResidual);
+            maximumRotationResidual=Math.Max(maximumRotationResidual,rotationResidual);
+            if(angularResidual>.00002f||poseResidual>.00002f||rotationResidual>.00001f)
+                throw new Exception("Zero-friction first-contact body motion differs from independent Unity response.");
+            count++;
             Console.WriteLine("Drone normal phases: "+row.GetProperty("source").GetString()+" fraction "+
                 row.GetProperty("fraction")+", contacts "+preparedContacts.Count+", first="+firstPassResidual+
                 ", velocity-pass="+twoPhaseResidual);
@@ -79,6 +97,8 @@ internal static class DroneFrictionControlTests
         Console.WriteLine("Drone prepared normal first-pass diagnostic: maximum reported-impulse residual="+maximumPreparedResidual+
             " (recorded contacts; solver ordering/phases not verified).");
         Console.WriteLine("Drone prepared normal two-phase diagnostic: maximum reported-impulse residual="+maximumTwoPhaseResidual);
+        Console.WriteLine("Drone zero-friction body response: angular="+maximumAngularResidual+", root="+maximumPoseResidual+
+            ", quaternion="+maximumRotationResidual+" (recorded contact response diagnostic).");
         return count;
     }
 }
