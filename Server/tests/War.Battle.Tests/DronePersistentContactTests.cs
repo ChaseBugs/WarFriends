@@ -36,16 +36,29 @@ internal static class DronePersistentContactTests
         float maximumVelocity=0,maximumAngular=0,maximumRoot=0;int steps=0,stays=0;
         float cachedVelocity=0,cachedAngular=0,cachedRoot=0;
         string worstVelocity="",worstAngular="",worstRoot="";int materials=0;
-        int stationaryBodies=0,kinematicContacts=0;
+        int stationaryBodies=0,kinematicContacts=0,contactFreeSteps=0,totalFrames=0;
         foreach(var row in root.GetProperty("rows").EnumerateArray())
         {
             var frames=row.GetProperty("frames");
             var cachedSolver=new DroneContactSolver(geometry);
             var pairIds=new Dictionary<(string?,int),int>();
-            foreach(var group in row.GetProperty("collisionCallbacks").EnumerateArray().GroupBy(c=>c.GetProperty("frame").GetInt32()))
+            var callbacks=row.GetProperty("collisionCallbacks").EnumerateArray().ToLookup(c=>c.GetProperty("frame").GetInt32());
+            for(int frame=1;frame<frames.GetArrayLength();frame++)
             {
+                totalFrames++;
+                var group=callbacks[frame];
+                var before=frames[frame-1];var after=frames[frame];
+                if(!group.Any())
+                {
+                    contactFreeSteps++;
+                    // Contact-free simulation steps clear the shape-pair cache,
+                    // even though Unity emits no collision callback for them.
+                    _=cachedSolver.Solve(Vec(before.GetProperty("position")),Quat(before.GetProperty("rotation")),
+                        Vec(before.GetProperty("velocity")),Vec(before.GetProperty("angularVelocity")),
+                        Enumerable.Range(0,pairIds.Count).Select(_=>Array.Empty<MaterialContact>()).ToArray(),.999f,.025f,.04f,true);
+                    continue;
+                }
                 stays+=group.Count(c=>c.GetProperty("callbackKind").GetString()=="stay");
-                int frame=group.Key;var before=frames[frame-1];var after=frames[frame];
                 var recordedContacts=group.SelectMany(c=>c.GetProperty("contacts").EnumerateArray()).ToArray();
                 foreach(var contact in recordedContacts)
                 {
@@ -107,7 +120,8 @@ internal static class DronePersistentContactTests
                 if(pe>cachedRoot){cachedRoot=pe;worstRoot=identity;}
             }
         }
-        if(stays==0||steps<30)throw new Exception("Persistent-contact oracle lacks continuing steps.");
+        if(stays==0||steps<30||contactFreeSteps==0||totalFrames!=4500||steps+contactFreeSteps!=totalFrames)
+            throw new Exception("Persistent-contact oracle lacks complete fixed-step coverage.");
         Console.WriteLine("Drone memoryless persistent-contact diagnostic: steps="+steps+", stays="+stays+", velocity="+maximumVelocity+
             ", angular="+maximumAngular+", root="+maximumRoot+" (cached anchors absent; no response assertion).");
         Console.WriteLine("Drone growing-anchor cache diagnostic: velocity="+cachedVelocity+", angular="+cachedAngular+", root="+cachedRoot+
@@ -115,6 +129,7 @@ internal static class DronePersistentContactTests
         Console.WriteLine("Drone persistent worst cases: velocity="+worstVelocity+"; angular="+worstAngular+"; root="+worstRoot+
             "; validated collider materials="+materials);
         Console.WriteLine("Drone stationary counterparts: contacts="+stationaryBodies+", kinematic="+kinematicContacts);
+        Console.WriteLine("Drone contact-history coverage: total="+totalFrames+", contact-free="+contactFreeSteps);
         return 4;
     }
     private static IEnumerable<int[]> Permutations(int[] values)
