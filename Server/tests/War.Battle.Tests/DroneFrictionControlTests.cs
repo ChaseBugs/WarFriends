@@ -4,7 +4,7 @@ using War.BattleServer;
 
 internal static class DroneFrictionControlTests
 {
-    internal static int Run(string directory)
+    internal static int Run(string directory,DroneColliderCatalog geometry)
     {
         using var document=JsonDocument.Parse(File.ReadAllBytes(Path.Combine(directory,"recovered-drone-zero-friction-control.json")));
         var root=document.RootElement;
@@ -14,7 +14,8 @@ internal static class DroneFrictionControlTests
            root.GetProperty("rows").GetArrayLength()!=10)
             throw new Exception("Wrong independent friction control dataset.");
         Vector3 Vec(JsonElement value)=>new(value[0].GetSingle(),value[1].GetSingle(),value[2].GetSingle());
-        float maximum=0;int count=0;
+        float maximum=0,maximumPreparedResidual=0;int count=0;
+        var response=new DroneImpulseResponse(geometry);
         foreach(var row in root.GetProperty("rows").EnumerateArray())
         {
             foreach(var collider in row.GetProperty("bodyDynamics").GetProperty("colliders").EnumerateArray())
@@ -31,12 +32,32 @@ internal static class DroneFrictionControlTests
             var impulses=callbacks.EnumerateArray().Where(c=>c.GetProperty("frame").GetInt32()==frame)
                 .Aggregate(Vector3.Zero,(sum,c)=>sum+Vec(c.GetProperty("impulse")));
             var predicted=DroneRigidMotion.AdvanceVelocities(before,Vector3.Zero).Velocity+impulses;
+            var previousFrame=row.GetProperty("frames")[frame-1];
+            var q=previousFrame.GetProperty("rotation");
+            var orientation=new Quaternion(q[0].GetSingle(),q[1].GetSingle(),q[2].GetSingle(),q[3].GetSingle());
+            var position=Vec(previousFrame.GetProperty("position"));
+            var initial=DroneRigidMotion.AdvanceVelocities(before,Vec(previousFrame.GetProperty("angularVelocity")));
+            var deltaVelocity=Vector3.Zero;var deltaAngular=Vector3.Zero;var computedImpulse=Vector3.Zero;
+            foreach(var callback in callbacks.EnumerateArray().Where(c=>c.GetProperty("frame").GetInt32()==frame))
+            foreach(var contact in callback.GetProperty("contacts").EnumerateArray())
+            {
+                var point=Vec(contact.GetProperty("position"));var normal=Vec(contact.GetProperty("normal"));
+                var prepared=DroneNormalContact.Prepare(response,position,orientation,initial.Velocity,initial.AngularVelocity,
+                    point,normal,contact.GetProperty("separation").GetSingle(),0,1e32f,.02f);
+                float relative=Vector3.Dot(normal,response.PointVelocity(position,orientation,deltaVelocity,deltaAngular,point));
+                var step=ContactNormalConstraint.Solve(0,relative,prepared.VelocityMultiplier,prepared.BiasedError,float.MaxValue);
+                var changed=response.Apply(position,orientation,deltaVelocity,deltaAngular,normal*step.Delta,point);
+                deltaVelocity=changed.Velocity;deltaAngular=changed.AngularVelocity;computedImpulse+=normal*step.Delta;
+            }
+            maximumPreparedResidual=Math.Max(maximumPreparedResidual,Vector3.Distance(computedImpulse,impulses));
             float residual=Vector3.Distance(predicted,Vec(row.GetProperty("frames")[frame].GetProperty("velocity")));
             if(residual>.00002f)throw new Exception("Zero-friction first-contact impulse fails measured momentum comparison.");
             maximum=Math.Max(maximum,residual);
             count++;
         }
         Console.WriteLine("Drone zero-friction impulse diagnostic: maximum velocity residual="+maximum+" (control only).");
+        Console.WriteLine("Drone prepared normal first-pass diagnostic: maximum reported-impulse residual="+maximumPreparedResidual+
+            " (recorded contacts; solver ordering/phases not verified).");
         return count;
     }
 }
