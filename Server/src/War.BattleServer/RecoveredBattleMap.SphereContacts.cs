@@ -50,13 +50,31 @@ public sealed partial class RecoveredBattleMap
             var normal=new Vector3(plane.X,plane.Y,plane.Z);
             var face=vertices.Where(v=>Math.Abs(Vector3.Dot(normal,v)+plane.W)<.0001f).Distinct().ToArray();
             if(face.Length<3)throw new InvalidDataException("Convex contact face lacks source vertices.");
-            var center=face.Aggregate(Vector3.Zero,(sum,v)=>sum+v)/face.Length;
-            var axis=Vector3.Normalize(Vector3.Cross(normal,Math.Abs(normal.Y)<.9f?Vector3.UnitY:Vector3.UnitX));
-            var other=Vector3.Cross(normal,axis);
-            face=face.OrderBy(v=>Math.Atan2(Vector3.Dot(v-center,other),Vector3.Dot(v-center,axis))).ToArray();
+            face=ConvexFaceBoundary(face,normal);
             for(int i=1;i<face.Length-1;i++){triangles.Add(face[0]);triangles.Add(face[i]);triangles.Add(face[i+1]);}
         }
         return triangles.ToArray();
+    }
+    internal static Vector3[] ConvexFaceBoundary(Vector3[] vertices,Vector3 normal)
+    {
+        if(vertices.Length is <3 or >64||vertices.Any(v=>!Finite(v))||
+           !Finite(normal)||Math.Abs(normal.Length()-1)>.0001f)
+            throw new InvalidDataException("Invalid convex face authority.");
+        var axis=Vector3.Normalize(Vector3.Cross(normal,Math.Abs(normal.Y)<.9f?Vector3.UnitY:Vector3.UnitX));
+        var other=Vector3.Cross(normal,axis);
+        var points=vertices.Distinct().Select(v=>(Vertex:v,X:Vector3.Dot(v,axis),Y:Vector3.Dot(v,other)))
+            .OrderBy(p=>p.X).ThenBy(p=>p.Y).ToArray();
+        float Cross(int a,int b,int c)=>(points[b].X-points[a].X)*(points[c].Y-points[a].Y)-
+            (points[b].Y-points[a].Y)*(points[c].X-points[a].X);
+        var boundary=new List<int>();
+        for(int i=0;i<points.Length;i++)
+        {while(boundary.Count>=2&&Cross(boundary[^2],boundary[^1],i)<=0)boundary.RemoveAt(boundary.Count-1);boundary.Add(i);}
+        int lower=boundary.Count;
+        for(int i=points.Length-2;i>=0;i--)
+        {while(boundary.Count>lower&&Cross(boundary[^2],boundary[^1],i)<=0)boundary.RemoveAt(boundary.Count-1);boundary.Add(i);}
+        boundary.RemoveAt(boundary.Count-1);
+        if(boundary.Count<3)throw new InvalidDataException("Convex contact face is degenerate.");
+        return boundary.Select(i=>points[i].Vertex).ToArray();
     }
     private static Vector3 ClosestTrianglePoint(Vector3 p,Vector3 a,Vector3 b,Vector3 c)
     {

@@ -9,6 +9,12 @@ internal static class DroneGroundProbeTests
         using var document=JsonDocument.Parse(File.ReadAllBytes(Path.Combine(directory,"recovered-drone-ground-probes.json")));
         using var physics=JsonDocument.Parse(File.ReadAllBytes(Path.Combine(directory,"recovered-unity-physics-settings.json")));
         int checks=0;
+        var boundary=RecoveredBattleMap.ConvexFaceBoundary([
+            new(-1,0,-1),new(1,0,-1),new(1,0,1),new(-1,0,1),Vector3.Zero,
+            new(0,0,-1),new(1,0,0),new(-1,0,-1)],Vector3.UnitY);
+        if(boundary.Length!=4||boundary.Any(v=>Math.Abs(v.X)!=1||Math.Abs(v.Z)!=1))
+            throw new Exception("Interior/edge vertices changed convex contact face boundary.");
+        checks++;
         foreach(var row in document.RootElement.GetProperty("maps").EnumerateArray())
         {
             var map=content.Maps.Single(m=>m.Source==row.GetProperty("source").GetString());
