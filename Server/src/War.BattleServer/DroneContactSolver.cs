@@ -10,6 +10,9 @@ internal sealed class DroneContactSolver
     private Dictionary<int,List<(ContactMaterial Material,ContactFrictionCache Cache)>> caches=new();
     internal DroneContactSolver(DroneColliderCatalog geometry)
     {mass=DroneMassProperties.Compute(geometry);response=new(mass);}
+    // Immutable diagnostic snapshot; no caller can replace solver-owned history.
+    internal IReadOnlyList<(int Pair,ContactMaterial Material,ContactFrictionCache Cache)> FrictionHistory()=>
+        Array.AsReadOnly(caches.OrderBy(p=>p.Key).SelectMany(p=>p.Value.Select(c=>(p.Key,c.Material,c.Cache))).ToArray());
     internal DroneNormalResult Solve(Vector3 root,Quaternion rotation,Vector3 velocity,Vector3 angularVelocity,
         IReadOnlyList<MaterialContact[]> shapePairs,float normalTolerance,float correlationDistance,float offsetThreshold,bool reuseCaches=false)
     {

@@ -111,6 +111,12 @@ internal static class DronePersistentContactTests
                         Vec(c.GetProperty("normal")),c.GetProperty("separation").GetSingle()),new ContactMaterial(.6f,.6f,0))).ToArray();
                 var cached=cachedSolver.Solve(Vec(before.GetProperty("position")),Quat(before.GetProperty("rotation")),
                     Vec(before.GetProperty("velocity")),Vec(before.GetProperty("angularVelocity")),stable,.999f,.025f,.04f,true);
+                if(frame>=42&&frame<=45&&row.GetProperty("source").GetString()=="Assets/Scenes/Snow_Multiplayer.unity"&&
+                   row.GetProperty("fraction").GetInt32()==2&&row.GetProperty("initialRotation")[0].GetSingle()>.1f)
+                    foreach(var patch in cachedSolver.FrictionHistory())
+                        Console.WriteLine("Snow friction history frame="+frame+", pair="+patch.Pair+", broken="+patch.Cache.Broken+
+                            ", anchors="+patch.Cache.Anchors.Count+", bodyNormal="+patch.Cache.BodyNormal+", mapNormal="+patch.Cache.MapNormal+
+                            ", coordinates="+string.Join(";",patch.Cache.Anchors.Select(a=>a.BodyLocal+" -> "+a.MapWorld)));
                 string identity=row.GetProperty("source").GetString()+"/fraction"+row.GetProperty("fraction")+
                     "/rotation"+Quat(row.GetProperty("initialRotation"))+"/frame"+frame+"/pairs"+keyed.Length+
                     "/contacts"+keyed.Sum(p=>p.Count());
