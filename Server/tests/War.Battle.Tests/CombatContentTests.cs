@@ -18,6 +18,7 @@ internal static class CombatContentTests
             value.GetProperty("y").GetSingle(),value.GetProperty("z").GetSingle());
         var content=BattleCombatContent.Load(Path.Combine(directory,"combat-content-manifest.json"));
         Check(content.DroneWeapon.Revision==Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(Path.Combine(directory,"recovered-drone-weapon.json")))),"combat package binds verified Drone weapon authority");
+        Check(content.DroneProjectile.Revision==Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(Path.Combine(directory,"recovered-drone-projectile-setup.json")))),"combat package requires verified Drone projectile setup revision");
         count+=DroneSpecialTests.Run(content.Army);
         count+=DroneSteeringTests.Run();
         count+=DroneWaypointTests.Run();
