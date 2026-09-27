@@ -14,7 +14,7 @@ public sealed class DroneBatchState
     public DroneBatchState(Func<float> random){this.random=random??throw new ArgumentNullException(nameof(random));}
     public void Replace(Vector3 target,int batchSize,float realProbability)
     {
-        if(!Finite(target)||batchSize is <0 or >32||!float.IsFinite(realProbability)||realProbability<0||realProbability>1)
+        if(!Finite(target)||batchSize is <0 or >32||!float.IsFinite(realProbability)||realProbability<0||realProbability>3)
             throw new InvalidDataException("Invalid Drone batch authority.");
         uint next=0;
         for(int i=0;i<batchSize;i++)if(Next()<realProbability)next|=1u<<i;

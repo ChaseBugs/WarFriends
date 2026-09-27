@@ -47,6 +47,7 @@ public sealed class ArmyDeploymentCatalog
     private IReadOnlyDictionary<string,ArmyPlayerDamagePolicy>? playerDamagePolicies;
     private IReadOnlyDictionary<string,int>? normalLaneEnds;
     private IReadOnlyDictionary<string,int>? eliteLaneStarts;
+    private float? droneBulletSpeed;
     private ArmyDeploymentCatalog(string revision,float maxEnergy,float baseCooldown,ArmyAgentConfig infantryAgent,
         IReadOnlyList<ArmyDeploymentFamily> families,Dictionary<int,ArmyDeploymentOption> options)
     {Revision=revision;MaxEnergy=maxEnergy;BaseCooldown=baseCooldown;InfantryAgent=infantryAgent;Families=families;this.options=options;}
@@ -145,6 +146,30 @@ public sealed class ArmyDeploymentCatalog
         return new(probability,minimum,maximum,minTime,maxTime);
     }
 
+    public ArmyVehicleShotStats ComposeDroneShot(int normalIndex,int? specialIndex,int? eliteIndex,
+        float shotSpeedCoefficient=1)
+    {
+        const string unitId="ID_UNIT-DRONE";
+        _=BaseStats(unitId,normalIndex);
+        if(droneBulletSpeed is not float speed||upgradeShots==null||!upgradeShots.TryGetValue(unitId,out var stages))
+            throw new InvalidDataException("Drone runtime shot authority unavailable.");
+        ValidateOptionalLanes(unitId,stages.Count,specialIndex,eliteIndex);
+        if(!float.IsFinite(shotSpeedCoefficient)||shotSpeedCoefficient<=0||shotSpeedCoefficient>10)
+            throw new InvalidDataException("Invalid Drone shot-speed perk.");
+        var selected=new List<ArmyUpgradeShotStats>{stages[normalIndex]};
+        if(specialIndex.HasValue)selected.Add(stages[specialIndex.Value]);
+        if(eliteIndex.HasValue)selected.Add(stages[eliteIndex.Value]);
+        // VehicleBehaviourDefinititon inherits ScaleByPerk: shotSpeed changes, accuracy does not.
+        float probability=selected.Sum(x=>x.ProbabilityOfRealShot);
+        int minimum=selected.Sum(x=>x.FireBatchSizeMin),maximum=selected.Sum(x=>x.FireBatchSizeMax);
+        float minTime=selected.Sum(x=>x.MinShootTime),maxTime=selected.Sum(x=>x.MaxShootTime);
+        float effectiveSpeed=speed*shotSpeedCoefficient;
+        if(!float.IsFinite(probability)||probability<0||probability>3||minimum<0||maximum<minimum||maximum>32||
+           !float.IsFinite(minTime)||!float.IsFinite(maxTime)||minTime<0||maxTime<minTime||maxTime>60||
+           !float.IsFinite(effectiveSpeed)||effectiveSpeed<=0||effectiveSpeed>1000)
+            throw new InvalidDataException("Invalid composed Drone shot contract.");
+        return new(effectiveSpeed,probability,minimum,maximum,minTime,maxTime,0);
+    }
     /// <summary>Vehicle UpgradesLoaded replaces serialized turret timing with selected upgrade rows.</summary>
     public ArmyVehicleShotStats ComposeVehicleShot(string unitId,int normalIndex,int? specialIndex,
         int? eliteIndex,float accuracyCoefficient=1f)
@@ -333,6 +358,7 @@ public sealed class ArmyDeploymentCatalog
         var acceptedVehicleCannons=new Dictionary<string,IReadOnlyList<ArmyVehicleCannonStats>>(StringComparer.Ordinal);
         var acceptedLaneEnds=new Dictionary<string,int>(StringComparer.Ordinal);
         var acceptedEliteStarts=new Dictionary<string,int>(StringComparer.Ordinal);
+        float? acceptedDroneBulletSpeed=null;
         foreach(var family in Families)
         {
             if(!rows.TryGetValue(family.SheetRow,out var row))
@@ -343,6 +369,13 @@ public sealed class ArmyDeploymentCatalog
             int power=row.GetProperty("TOTALPOWER").GetInt32();
             float cooldown=row.GetProperty("COOLDOWN").GetSingle();
             float movementSpeed=row.GetProperty("MOVEMENTSPEED").GetSingle();
+            if(family.UnitId=="ID_UNIT-DRONE")
+            {
+                float bulletSpeed=row.GetProperty("BULLETSPEED").GetSingle();
+                if(!float.IsFinite(bulletSpeed)||bulletSpeed<=0||bulletSpeed>1000)
+                    throw new InvalidDataException("Invalid Drone ArmyUpgrades bullet speed.");
+                acceptedDroneBulletSpeed=bulletSpeed;
+            }
             float behindShield=row.GetProperty("PLAYERBEHINDSHIELDDMGRATIO").GetSingle();
             float playerDamage=row.GetProperty("PLAYERDAMAGERATIO").GetSingle();
             float overtimeDamage=row.GetProperty("PLAYERDAMAGEOVERTIMERATIO").GetSingle();
@@ -450,6 +483,7 @@ public sealed class ArmyDeploymentCatalog
         vehiclePassengerRespawnSeconds=acceptedPassengerRespawn;
         normalLaneEnds=acceptedLaneEnds;
         eliteLaneStarts=acceptedEliteStarts;
+        droneBulletSpeed=acceptedDroneBulletSpeed??throw new InvalidDataException("Drone bullet speed authority absent.");
     }
 
     public static ArmyDeploymentCatalog Load(string path,string expectedRevision,string expectedSceneRevision)

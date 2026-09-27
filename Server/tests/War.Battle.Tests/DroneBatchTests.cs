@@ -26,6 +26,8 @@ internal static class DroneBatchTests
             "source zero batch still emits one fake shot before completion");
         replace.Replace(Vector3.Zero,1,1);replace.Reset();
         Check(replace.Advance(Vector3.Zero,true)==null,"source Reset cancels pending batch");
+        var elite=new DroneBatchState(()=>1);elite.Replace(Vector3.UnitZ,1,1.4f);
+        Check(!elite.Advance(Vector3.Zero,true)!.IsFake,"additive elite probability above one includes random upper endpoint");
         return count;
     }
 }

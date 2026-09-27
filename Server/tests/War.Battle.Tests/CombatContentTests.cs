@@ -756,6 +756,16 @@ internal static class CombatContentTests
                   p.VehicleRoute!.WaypointTransformFileIds[^1]==p.VehicleRoute.TargetTransformFileId&&
                   !p.VehicleRoute.SmoothRoute&&!p.VehicleRoute.IsLoop),
               "all 20 source vehicle spawns pin their 107 ordered linear waypoints and final targets");
+        var droneComposedShot=content.Army.ComposeDroneShot(0,null,null);
+        Check(droneComposedShot is {ShotSpeed:9,ProbabilityOfRealShot:.7f,FireBatchSizeMin:2,FireBatchSizeMax:3,MinShootTime:2.5f,MaxShootTime:3.5f},
+            "Drone LoadData binds ArmyUpgrades speed and additive normal batch/timing rows");
+        Check(content.Army.ComposeDroneShot(0,96,null,2).ShotSpeed==18&&content.Army.ComposeDroneShot(0,96,null,2).ProbabilityOfRealShot==.7f,
+            "Drone special lane and shot-speed perk retain vehicle probability without soldier accuracy scaling");
+        Reject(()=>content.Army.ComposeDroneShot(0,null,null,float.NaN));
+        try{content.Army.ComposeDroneShot(0,0,null);throw new Exception("invalid Drone special lane accepted");}
+        catch(ArgumentOutOfRangeException){count++;}
+        try{content.Army.ComposeDroneShot(0,null,117);throw new Exception("closed Drone elite lane accepted");}
+        catch(ArgumentOutOfRangeException){count++;}
         var humveeShot=content.Army.ComposeVehicleShot("ID_UNIT-HUMVEE",0,null,null);
         var tankShot=content.Army.ComposeVehicleShot("ID_UNIT-TANK",0,null,null);
         var buggyShot=content.Army.ComposeVehicleShot("ID_UNIT-BUGGY",0,null,null);
