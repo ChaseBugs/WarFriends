@@ -14,7 +14,34 @@ public sealed partial class MatchEngine
         droneTargets.Update(new(DronePlayerId(player.Definition.PlayerId),player.Definition.Fraction,
             !player.Dead,true,false,null,player.Position));
     }
-    internal IReadOnlyList<DroneTargetCandidate> DroneTargetSnapshot()=>droneTargets.Snapshot();
+    private readonly Dictionary<ulong,int> droneArmyTargets=[];
+    private static string DroneArmyId(ulong id)=>"army:"+id.ToString(System.Globalization.CultureInfo.InvariantCulture);
+    private void RegisterDroneArmyTarget(ulong key,ArmyDeploymentFamily family)
+    {
+        string? ownerType=family.IsSoldier?"EnemyController":family.BehaviorType switch
+        {
+            "DroneBehaviour"=>"Drone","TankBehaviour"=>"Tank",
+            "HelicopterBehaviour"=>"Helicopter","AssaultHelicopterBehaviour"=>"AssaultHelicopter",
+            "CarBehaviour"=>"AICar","CarBuggyBehaviour"=>"AICarBuggy",
+            "CarTransporterBehaviour"=>"AICarTransporter",_=>null
+        };
+        // Mech owner/prefab identity is not established by the recovered implementation.
+        if(ownerType is null)return;
+        var row=activeArmyEntities[key];
+        droneTargets.Enable(ownerType,new(DroneArmyId(key),row.OwnerFraction,true,true,false,
+            family.UnitType,new(row.X,row.Y,row.Z)));
+        droneArmyTargets.Add(key,family.UnitType);
+    }
+    internal IReadOnlyList<DroneTargetCandidate> DroneTargetSnapshot()
+    {
+        foreach(var (key,unitType) in droneArmyTargets)
+        {
+            var row=activeArmyEntities[key];
+            droneTargets.Update(new(DroneArmyId(key),row.OwnerFraction,true,true,false,
+                unitType,new(row.X,row.Y,row.Z)));
+        }
+        return droneTargets.Snapshot();
+    }
     private static string DroneDecoyId(ulong id)=>"decoy:"+id.ToString(System.Globalization.CultureInfo.InvariantCulture);
     internal float? DecoyHealth(ulong entityId)=>decoys.Snapshot().SingleOrDefault(x=>x.EntityId==entityId)?.Health;
     internal bool DecoyObstacleOccupied(int componentFileId)=>decoys.OccupiedObstacleIds.Contains(componentFileId);

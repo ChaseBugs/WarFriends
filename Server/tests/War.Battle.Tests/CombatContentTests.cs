@@ -2650,6 +2650,8 @@ internal static class CombatContentTests
         float droneHealth=deployedDroneMatch.ArmyHealth(deployedDrone.EntityKey)!.Value;
         for(ulong t=62;t<=211;t++)deployedDroneMatch.Advance(t);
         var movedDrone=deployedDroneMatch.ArmyEntityBatch(decoyPlayer,0,0).Entities.Single();
+        var droneTarget=deployedDroneMatch.DroneTargetSnapshot().Single(r=>r.Id=="army:"+movedDrone.EntityKey);
+        Check(droneTarget.Position==new Vector3(movedDrone.X,movedDrone.Y,movedDrone.Z)&&droneTarget.Fraction==1&&droneTarget.UnitType==content.Army.Families.Single(f=>f.UnitId=="ID_UNIT-DRONE").UnitType,"live army target snapshot follows authoritative Drone flight position");
         var droneRotation=movedDrone.DroneRotation;
         Check(droneRotation!=null&&Math.Abs(droneRotation.X*droneRotation.X+droneRotation.Y*droneRotation.Y+
             droneRotation.Z*droneRotation.Z+droneRotation.W*droneRotation.W-1)<.001f,
@@ -2678,6 +2680,7 @@ internal static class CombatContentTests
             deployedDroneMatch.ApplyArmyHostDamage(deployedDrone.EntityKey,droneHealth)&&
             deployedDroneMatch.ArmyHealth(deployedDrone.EntityKey)==null,
             "source duration expiry permits deployed Drone death and releases special state");
+        Check(deployedDroneMatch.DroneTargetSnapshot().All(r=>r.Id!="army:"+deployedDrone.EntityKey),"confirmed Drone death removes army target registry row");
         deployedDroneMatch.Advance(257);
         Check(deployedDroneMatch.ArmyEntityBatch(decoyPlayer,0,0).Entities.Count==0,
             "deployed Drone death releases route traversal before subsequent motion tick");

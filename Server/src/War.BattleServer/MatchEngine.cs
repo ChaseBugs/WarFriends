@@ -1034,6 +1034,7 @@ public sealed partial class MatchEngine
                         InitializeStationaryArmyCombat(entityKey,spawned.UnitId);
                         InitializeGroundVehicle(entityKey,family,point);
                         InitializeDronePath(entityKey,family,point);
+                        RegisterDroneArmyTarget(entityKey,family);
                         p.ConfirmedArmySpawns=checked(p.ConfirmedArmySpawns+1);
                         armyEntityRevision++;
                         Emit(MatchEventKind.ArmySpawned,p.Definition.PlayerId,"",0,point.Position,0,"");

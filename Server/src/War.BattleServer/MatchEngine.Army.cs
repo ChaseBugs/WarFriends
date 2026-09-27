@@ -1927,6 +1927,7 @@ public sealed partial class MatchEngine
            !armyReservations!.Release(entityKey) || !activeArmyEntities.Remove(entityKey))
             throw new InvalidDataException("Army death compare-and-remove failed.");
         armyVitality.Remove(entityKey);
+        if(droneArmyTargets.Remove(entityKey))droneTargets.Disable(DroneArmyId(entityKey));
         armyDroneSpecials.Remove(entityKey);
         armyDronePaths.Remove(entityKey);
         armyDamage.Remove(entityKey);
