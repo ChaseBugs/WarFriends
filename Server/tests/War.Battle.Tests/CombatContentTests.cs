@@ -2556,6 +2556,14 @@ internal static class CombatContentTests
                  ArmySpecialUpgradeIndexes=[-1],ArmyEliteUpgradeIndexes=[-1],
                  ArmyHealthFactors=[new ArmyHealthFactors(1f,1f)],ArmyDamageScales=[1f],
                  ArmySpeedCoefficients=[1f],ArmyAccuracyCoefficients=[1f]}]);
+        var trustedShotCoefficients=new float[]{2};
+        var shotPerkManifest=armyManifest with {Players=[armyManifest.Players[0] with {ArmyShotSpeedCoefficients=trustedShotCoefficients},
+            armyManifest.Players[1] with {ArmyShotSpeedCoefficients=[1]}]};
+        var detachedShotPerk=MatchManifest.Validate(shotPerkManifest);trustedShotCoefficients[0]=3;
+        Check(detachedShotPerk.Players[0].ArmyShotSpeedCoefficients![0]==2,"shot-speed manifest detaches caller arrays");
+        Reject(()=>MatchManifest.Validate(armyManifest with {Players=[armyManifest.Players[0] with {ArmyShotSpeedCoefficients=[1]},armyManifest.Players[1]]}));
+        Reject(()=>MatchManifest.Validate(shotPerkManifest with {Players=[shotPerkManifest.Players[0] with {ArmyShotSpeedCoefficients=[float.NaN]},shotPerkManifest.Players[1]]}));
+        Reject(()=>MatchManifest.Validate(shotPerkManifest with {Players=[shotPerkManifest.Players[0] with {ArmyShotSpeedCoefficients=[]},shotPerkManifest.Players[1]]}));
         string decoyPlayer=armyManifest.Players[0].PlayerId,decoyOpponent=armyManifest.Players[1].PlayerId;
         var decoyManifest=armyManifest with
         {
@@ -2658,8 +2666,8 @@ internal static class CombatContentTests
             Players=decoyManifest.Players.Select(p=>p with {ShieldLevel=0}).ToArray()};
         var deployedDroneManifest=armyManifest with {MatchId="deployed-drone-special",Players=[
             armyManifest.Players[0] with {EquippedArmyUnitIds=["ID_UNIT-DRONE"],
-                ArmyNormalUpgradeIndexes=[0],ArmySpecialUpgradeIndexes=[96],ArmyEliteUpgradeIndexes=[-1]},
-            armyManifest.Players[1]]};
+                ArmyNormalUpgradeIndexes=[0],ArmySpecialUpgradeIndexes=[96],ArmyEliteUpgradeIndexes=[-1],ArmyShotSpeedCoefficients=[2]},
+            armyManifest.Players[1] with {ArmyShotSpeedCoefficients=[1]}]};
         var deployedDroneMatch=new MatchEngine(deployedDroneManifest,content:content,armyChoice:_=>0);
         deployedDroneMatch.Admit(decoyPlayer);deployedDroneMatch.Admit(decoyOpponent);
         deployedDroneMatch.Command(decoyPlayer,new(){CommandId=1,Ready=new(){ManifestHash=deployedDroneMatch.ManifestHash}});
@@ -2671,6 +2679,7 @@ internal static class CombatContentTests
         deployedDroneMatch.Advance(61);
         var deployedDrone=deployedDroneMatch.ArmyEntityBatch(decoyPlayer,0,0).Entities.Single();
         float droneHealth=deployedDroneMatch.ArmyHealth(deployedDrone.EntityKey)!.Value;
+        Check(deployedDroneMatch.DroneShotDefinition(deployedDrone.EntityKey) is {ShotSpeed:18,ProbabilityOfRealShot:.7f},"normal Drone deployment binds trusted shot-speed perk into composed firing authority");
         var droneCollisionTargets=deployedDroneMatch.GroundVehicleShotTargets(decoyOpponent).Where(r=>r.EntityId==deployedDrone.EntityKey).ToArray();
         Check(droneCollisionTargets.Length==2&&droneCollisionTargets.Any(r=>r.PartComponentFileId==6544804&&r.Layer==27)&&droneCollisionTargets.Any(r=>r.PartComponentFileId==13511718&&r.Layer==8),"normal Drone projectile targets retain root flying and child layers");
         deployedDroneMatch.ApplyArmyBodyProjectileImpact(decoyOpponent,deployedDrone.EntityKey,13511718,10);
@@ -2714,6 +2723,7 @@ internal static class CombatContentTests
             deployedDroneMatch.ArmyHealth(deployedDrone.EntityKey)==null,
             "source duration expiry permits deployed Drone death and releases special state");
         Check(deployedDroneMatch.DroneTargetSnapshot().All(r=>r.Id!="army:"+deployedDrone.EntityKey),"confirmed Drone death removes army target registry row");
+        Check(deployedDroneMatch.DroneShotDefinition(deployedDrone.EntityKey)==null,"Drone death removes composed firing authority");
         deployedDroneMatch.Advance(257);
         Check(deployedDroneMatch.ArmyEntityBatch(decoyPlayer,0,0).Entities.Count==0,
             "deployed Drone death releases route traversal before subsequent motion tick");

@@ -39,6 +39,9 @@ public sealed record ParticipantManifest(string PlayerId, WeaponManifest Weapon,
     // Trusted perk.accuracyCoef applied after source upgrade rows compose.
     [JsonIgnore(Condition=JsonIgnoreCondition.WhenWritingNull)]
     public float[]? ArmyAccuracyCoefficients { get; init; }
+    // Trusted BehaviourDefinititon.ScaleByPerk shotSpeedCoef, never packet authority.
+    [JsonIgnore(Condition=JsonIgnoreCondition.WhenWritingNull)]
+    public float[]? ArmyShotSpeedCoefficients { get; init; }
     // Source-ordered durable equipped slots. Weapon remains the first active
     // slot for compatibility with older signed manifests.
     [JsonIgnore(Condition=JsonIgnoreCondition.WhenWritingNull)]
@@ -146,6 +149,10 @@ public sealed record MatchManifest(string MatchId, string ServerId, string MapId
                (p.ArmyNormalUpgradeIndexes==null || accuracyCoefficients.Length!=p.ArmyNormalUpgradeIndexes.Length ||
                 accuracyCoefficients.Any(x=>!float.IsFinite(x) || x<=0 || x>10)))
                 throw new InvalidDataException("Army perk accuracy coefficients must align with trusted upgrade stages.");
+            if(p.ArmyShotSpeedCoefficients is { } shotSpeedCoefficients &&
+               (p.ArmyNormalUpgradeIndexes==null||shotSpeedCoefficients.Length!=p.ArmyNormalUpgradeIndexes.Length||
+                shotSpeedCoefficients.Any(x=>!float.IsFinite(x)||x<=0||x>10)))
+                throw new InvalidDataException("Army shot-speed coefficients must align with trusted upgrade stages.");
             if (p.Combat != null)
             {
                 PlayerDamage.Validate(p.Combat);
@@ -199,6 +206,8 @@ public sealed record MatchManifest(string MatchId, string ServerId, string MapId
             throw new InvalidDataException("Army perk speed coefficients require both live participants.");
         if(m.Players.Any(p=>p.ArmyAccuracyCoefficients!=null) && m.Players.Any(p=>p.ArmyAccuracyCoefficients==null))
             throw new InvalidDataException("Army perk accuracy coefficients require both live participants.");
+        if(m.Players.Any(p=>p.ArmyShotSpeedCoefficients!=null)&&m.Players.Any(p=>p.ArmyShotSpeedCoefficients==null))
+            throw new InvalidDataException("Army shot-speed coefficients require both live participants.");
         if(m.SceneMasterPlayerId!=null || m.Players.Any(p=>p.PlayerLevel.HasValue))
         {
             if(m.Mode==PrototypeMode || m.SceneMasterPlayerId==null ||
@@ -241,6 +250,7 @@ public sealed record MatchManifest(string MatchId, string ServerId, string MapId
              ArmyDamageScales=p.ArmyDamageScales?.ToArray(),
              ArmySpeedCoefficients=p.ArmySpeedCoefficients?.ToArray(),
              ArmyAccuracyCoefficients=p.ArmyAccuracyCoefficients?.ToArray(),
+             ArmyShotSpeedCoefficients=p.ArmyShotSpeedCoefficients?.ToArray(),
              WeaponSlots=p.WeaponSlots?.Select(x=>x with {}).ToArray()}).ToArray(),
              Presentations=m.Presentations?.Select(BattlePlayerPresentation.Validate).ToArray() };
     }

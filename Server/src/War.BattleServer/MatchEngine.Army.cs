@@ -32,6 +32,8 @@ public sealed partial class MatchEngine
     private readonly Dictionary<ulong,ArmyVitality> armyVitality=[];
     private readonly Dictionary<ulong,DroneSpecialState> armyDroneSpecials=[];
     private readonly Dictionary<ulong,DroneWaypointState> armyDronePaths=[];
+    private readonly Dictionary<ulong,ArmyVehicleShotStats> armyDroneShots=[];
+    internal ArmyVehicleShotStats? DroneShotDefinition(ulong key)=>armyDroneShots.GetValueOrDefault(key);
 
     private void InitializeDronePath(ulong key,ArmyDeploymentFamily family,ArmySpawnPoint spawn)
     {
@@ -438,10 +440,13 @@ public sealed partial class MatchEngine
             armyShots.Add(entityKey,armyCatalog.ComposeShot(unitId,
                 owner.ArmyNormalUpgradeIndexes[index],special,elite,
                 owner.ArmyAccuracyCoefficients?[index]??1f));
+        if(family.BehaviorType=="DroneBehaviour")
+            armyDroneShots.Add(entityKey,armyCatalog!.ComposeDroneShot(owner.ArmyNormalUpgradeIndexes[index],special,elite,
+                owner.ArmyShotSpeedCoefficients?[index]??1));
         if(family.VehicleShot!=null&&!family.IsAir&&!family.IsSoldier)
             armyVehicleShots.Add(entityKey,armyCatalog.ComposeVehicleShot(unitId,
                 owner.ArmyNormalUpgradeIndexes[index],special,elite,
-                owner.ArmyAccuracyCoefficients?[index]??1f));
+                owner.ArmyAccuracyCoefficients?[index]??1f,owner.ArmyShotSpeedCoefficients?[index]??1f));
     }
 
     internal float? ArmyHealth(ulong entityKey)
@@ -1951,6 +1956,7 @@ public sealed partial class MatchEngine
         if(droneArmyTargets.Remove(entityKey))droneTargets.Disable(DroneArmyId(entityKey));
         armyDroneSpecials.Remove(entityKey);
         armyDronePaths.Remove(entityKey);
+        armyDroneShots.Remove(entityKey);
         armyDamage.Remove(entityKey);
         armySpecial.Remove(entityKey);
         armySpeed.Remove(entityKey);
