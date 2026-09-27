@@ -22,7 +22,7 @@ public sealed class DroneOrientationState
         if(!float.IsFinite(nextAngle)||!float.IsFinite(bankDegrees)||!float.IsFinite(axis.LengthSquared()))
             throw new InvalidDataException("Drone orientation overflow.");
         Quaternion bank=axis.Length()>1e-5f?Quaternion.CreateFromAxisAngle(Vector3.Normalize(axis),bankDegrees*MathF.PI/180):Quaternion.Identity;
-        Quaternion nextHorizontal=Quaternion.Slerp(horizontal,bank,Math.Clamp(deltaTime,0,1));
+        Quaternion nextHorizontal=Slerp(horizontal,bank,Math.Clamp(deltaTime,0,1));
         Quaternion nextVertical=vertical;
         if(lookTarget.HasValue)
         {
@@ -30,11 +30,19 @@ public sealed class DroneOrientationState
             // Unity LookRotation on zero forward logs and returns identity.
             Quaternion heading=forward.Length()>1e-5f?Quaternion.CreateFromAxisAngle(Vector3.UnitY,
                 MathF.Atan2(forward.X,forward.Z)):Quaternion.Identity;
-            nextVertical=Quaternion.Slerp(vertical,heading,Math.Clamp(deltaTime*5,0,1));
+            nextVertical=Slerp(vertical,heading,Math.Clamp(deltaTime*5,0,1));
         }
         if(!float.IsFinite((nextVertical*nextHorizontal).LengthSquared()))
             throw new InvalidDataException("Invalid Drone orientation result.");
         angle=nextAngle;horizontal=nextHorizontal;vertical=nextVertical;
     }
     private static bool Finite(Vector3 v)=>float.IsFinite(v.X)&&float.IsFinite(v.Y)&&float.IsFinite(v.Z);
+    private static Quaternion Slerp(Quaternion from,Quaternion to,float amount)
+    {
+        // Unity 2018 oracle traces cross this near-angle branch. System.Numerics
+        // keeps spherical interpolation longer and accumulated heading differs.
+        float dot=Quaternion.Dot(from,to);
+        if(dot<0){to=-to;dot=-dot;}
+        return dot>=.95f?Quaternion.Normalize(from*(1-amount)+to*amount):Quaternion.Slerp(from,to,amount);
+    }
 }
