@@ -1,0 +1,208 @@
+{
+  "version": 1,
+  "source": "Assets/GameObject/dronePrototype.prefab",
+  "sha256": "c2afc19487462e6163ad107267ef1b35c9c86fb34fa80898135b1d25f4a872a3",
+  "unityVersion": "2018.3.0f2",
+  "scenario": "kinematic-transform-motion-to-dynamic",
+  "fixedTimestep": 0.02,
+  "frames": [
+    {
+      "frame": 0,
+      "position": [
+        1.00000012,
+        100.0,
+        0.50000006
+      ],
+      "velocity": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "angularVelocity": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "frame": 1,
+      "position": [
+        1.00000012,
+        99.9961548,
+        0.50000006
+      ],
+      "velocity": [
+        0.0,
+        -0.192276,
+        0.0
+      ],
+      "angularVelocity": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "frame": 2,
+      "position": [
+        1.00000012,
+        99.98854,
+        0.50000006
+      ],
+      "velocity": [
+        0.0,
+        -0.3807065,
+        0.0
+      ],
+      "angularVelocity": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "frame": 3,
+      "position": [
+        1.00000012,
+        99.9772339,
+        0.50000006
+      ],
+      "velocity": [
+        0.0,
+        -0.565368354,
+        0.0
+      ],
+      "angularVelocity": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "frame": 4,
+      "position": [
+        1.00000012,
+        99.96231,
+        0.50000006
+      ],
+      "velocity": [
+        0.0,
+        -0.746337,
+        0.0
+      ],
+      "angularVelocity": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "frame": 5,
+      "position": [
+        1.00000012,
+        99.94384,
+        0.50000006
+      ],
+      "velocity": [
+        0.0,
+        -0.923686266,
+        0.0
+      ],
+      "angularVelocity": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "frame": 6,
+      "position": [
+        1.00000012,
+        99.92189,
+        0.50000006
+      ],
+      "velocity": [
+        0.0,
+        -1.09748852,
+        0.0
+      ],
+      "angularVelocity": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "frame": 7,
+      "position": [
+        1.00000012,
+        99.89653,
+        0.50000006
+      ],
+      "velocity": [
+        0.0,
+        -1.26781476,
+        0.0
+      ],
+      "angularVelocity": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "frame": 8,
+      "position": [
+        1.00000012,
+        99.867836,
+        0.50000006
+      ],
+      "velocity": [
+        0.0,
+        -1.43473446,
+        0.0
+      ],
+      "angularVelocity": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "frame": 9,
+      "position": [
+        1.00000012,
+        99.83587,
+        0.50000006
+      ],
+      "velocity": [
+        0.0,
+        -1.59831583,
+        0.0
+      ],
+      "angularVelocity": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "frame": 10,
+      "position": [
+        1.00000012,
+        99.8007,
+        0.50000006
+      ],
+      "velocity": [
+        0.0,
+        -1.75862551,
+        0.0
+      ],
+      "angularVelocity": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    }
+  ]
+}

@@ -23,6 +23,26 @@ internal static class DroneFreeFallTests
                 throw new Exception("Drone free-fall differs from Unity frame "+count);
             count++;if(count<101)(position,velocity)=DroneFreeFall.Step(position,velocity);
         }
+        using var transition=JsonDocument.Parse(File.ReadAllBytes(Path.Combine(directory,
+            "recovered-drone-kinematic-transition.json")));
+        var transitionRoot=transition.RootElement;
+        if(transitionRoot.GetProperty("scenario").GetString()!="kinematic-transform-motion-to-dynamic"||
+           transitionRoot.GetProperty("unityVersion").GetString()!="2018.3.0f2"||
+           transitionRoot.GetProperty("frames").GetArrayLength()!=11)
+            throw new Exception("Drone transition oracle identity changed.");
+        int index=0;
+        foreach(var frame in transitionRoot.GetProperty("frames").EnumerateArray())
+        {
+            var reference=root.GetProperty("frames")[index];
+            var actualPosition=Vec(frame.GetProperty("position"));
+            if(frame.GetProperty("frame").GetInt32()!=index||
+               Vec(frame.GetProperty("velocity"))!=Vec(reference.GetProperty("velocity"))||
+               Vec(frame.GetProperty("angularVelocity"))!=Vector3.Zero||
+               Math.Abs(actualPosition.Y-Vec(reference.GetProperty("position")).Y)>.0001f||
+               Math.Abs(actualPosition.X-1)>.00001f||Math.Abs(actualPosition.Z-.5f)>.00001f)
+                throw new Exception("Drone transform motion carried unintended fall momentum at frame "+index);
+            index++;count++;
+        }
         return count;
     }
 }

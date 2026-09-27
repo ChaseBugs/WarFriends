@@ -41,6 +41,31 @@ public static class UnityDroneFallExport
                 unityVersion=Application.unityVersion,scenario="isolated-zero-velocity-free-fall",
                 fixedTimestep=step,gravity=new[]{Physics.gravity.x,Physics.gravity.y,Physics.gravity.z},
                 mass=body.mass,drag=body.drag,angularDrag=body.angularDrag,frames},Formatting.Indented)+"\n");
+            string transitionOutput=Environment.GetEnvironmentVariable("WAR_DRONE_TRANSITION_OUTPUT");
+            if(!string.IsNullOrEmpty(transitionOutput))
+            {
+                // DroneSteering writes Transform.position/rotation, not MovePosition.
+                body.isKinematic=true;body.transform.position=new Vector3(0,100,0);
+                body.transform.rotation=Quaternion.identity;
+                var transitionFrames=new List<object>();
+                for(int frame=0;frame<10;frame++)
+                {
+                    body.transform.position+=new Vector3(.1f,0,.05f);
+                    body.transform.rotation=Quaternion.Euler(0,frame*3,0);
+                    Physics.SyncTransforms();Physics.Simulate(step);
+                }
+                body.isKinematic=false; // No velocity assignment at source death.
+                for(int frame=0;frame<=10;frame++)
+                {
+                    transitionFrames.Add(new{frame,position=new[]{body.position.x,body.position.y,body.position.z},
+                        velocity=new[]{body.velocity.x,body.velocity.y,body.velocity.z},
+                        angularVelocity=new[]{body.angularVelocity.x,body.angularVelocity.y,body.angularVelocity.z}});
+                    if(frame<10)Physics.Simulate(step);
+                }
+                File.WriteAllText(transitionOutput,JsonConvert.SerializeObject(new{version=1,source,sha256=digest,
+                    unityVersion=Application.unityVersion,scenario="kinematic-transform-motion-to-dynamic",
+                    fixedTimestep=step,frames=transitionFrames},Formatting.Indented)+"\n");
+            }
             Debug.Log("WAR_DRONE_FALL_EXPORT_PASS");
         }
         finally{Physics.autoSimulation=previous;UnityEngine.Object.DestroyImmediate(bodyObject);}
