@@ -719,6 +719,7 @@ public sealed partial class MatchEngine
             enemyPoses=content.EnemyPoses;enemyShotTargets=content.EnemyShotTargets;
             armySelector=new ArmySpawnPointSelector(content.ArmySpawnPoints);
             airWaypoints=content.AirWaypoints;droneColliders=content.DroneColliders;
+            droneWeapon=content.DroneWeapon;droneProjectile=content.DroneProjectile;
             armyRusherPoints=content.ArmyRusherPoints;
             armyMinigunnerPoints=content.ArmyMinigunnerPoints;
             playerShotTargets=content.PlayerShotTargets;

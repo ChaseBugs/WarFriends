@@ -450,8 +450,13 @@ public sealed partial class MatchEngine
                 owner.ArmyNormalUpgradeIndexes[index],special,elite,
                 owner.ArmyAccuracyCoefficients?[index]??1f));
         if(family.BehaviorType=="DroneBehaviour")
+        {
             armyDroneShots.Add(entityKey,armyCatalog!.ComposeDroneShot(owner.ArmyNormalUpgradeIndexes[index],special,elite,
                 owner.ArmyShotSpeedCoefficients?[index]??1));
+            droneAttacks.Add(entityKey,new DroneAttackState((float)((double)tick/MatchManifest.TickRate),
+                armyDroneShots[entityKey],droneWeapon??throw new InvalidDataException("Drone weapon source absent."),
+                droneProjectile??throw new InvalidDataException("Drone projectile source absent."),NextArmyFloat,DroneBatchRange));
+        }
         if(family.VehicleShot!=null&&!family.IsAir&&!family.IsSoldier)
             armyVehicleShots.Add(entityKey,armyCatalog.ComposeVehicleShot(unitId,
                 owner.ArmyNormalUpgradeIndexes[index],special,elite,
@@ -1966,6 +1971,7 @@ public sealed partial class MatchEngine
         armyDroneSpecials.Remove(entityKey);
         armyDronePaths.Remove(entityKey);
         armyDroneShots.Remove(entityKey);
+        droneAttacks.Remove(entityKey);
         armyDamage.Remove(entityKey);
         armySpecial.Remove(entityKey);
         armySpeed.Remove(entityKey);

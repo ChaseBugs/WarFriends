@@ -3,6 +3,17 @@ namespace War.BattleServer;
 
 public sealed partial class MatchEngine
 {
+    private readonly Dictionary<ulong,DroneAttackState> droneAttacks=[];
+    private readonly DroneWeaponCatalog? droneWeapon;
+    private readonly DroneProjectileCatalog? droneProjectile;
+    internal float? DroneAttackDeadline(ulong key)=>droneAttacks.GetValueOrDefault(key)?.Deadline;
+    private int DroneBatchRange(int minimum,int maximum)
+    {
+        if(minimum==maximum)return minimum;
+        int choice=armyChoice(maximum-minimum);
+        if(choice<0||choice>=maximum-minimum)throw new InvalidDataException("Invalid Drone batch integer sample.");
+        return minimum+choice;
+    }
     internal DroneTargetDetails ResolveDroneShotTarget(DroneTargetCandidate target)
     {
         if(target.Id.StartsWith("player:",StringComparison.Ordinal))

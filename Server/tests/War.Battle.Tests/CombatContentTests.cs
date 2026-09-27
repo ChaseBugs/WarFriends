@@ -2701,6 +2701,8 @@ internal static class CombatContentTests
             DeployArmy=new(){OptionIndex=9}}).Code=="army-deploying","normal army path accepts trusted Drone deployment");
         deployedDroneMatch.Advance(61);
         var deployedDrone=deployedDroneMatch.ArmyEntityBatch(decoyPlayer,0,0).Entities.Single();
+        Check(deployedDroneMatch.DroneAttackDeadline(deployedDrone.EntityKey)==61f/MatchManifest.TickRate+2,
+            "normal Drone attack clock binds actual deployment time plus source two seconds");
         var droneAimDetails=deployedDroneMatch.ResolveDroneShotTarget(deployedDroneMatch.DroneTargetSnapshot().Single(r=>r.Id=="army:"+deployedDrone.EntityKey));
         Check(droneAimDetails.Targets.Single() is {TransformFileId:454360,Type:1}&&
             droneAimDetails.Targets.Single().Position==new Vector3(deployedDrone.X,deployedDrone.Y,deployedDrone.Z),
@@ -2754,6 +2756,7 @@ internal static class CombatContentTests
             "source duration expiry permits deployed Drone death and releases special state");
         Check(deployedDroneMatch.DroneTargetSnapshot().All(r=>r.Id!="army:"+deployedDrone.EntityKey),"confirmed Drone death removes army target registry row");
         Check(deployedDroneMatch.DroneShotDefinition(deployedDrone.EntityKey)==null,"Drone death removes composed firing authority");
+        Check(deployedDroneMatch.DroneAttackDeadline(deployedDrone.EntityKey)==null,"Drone death removes prepared attack lifecycle");
         deployedDroneMatch.Advance(257);
         Check(deployedDroneMatch.ArmyEntityBatch(decoyPlayer,0,0).Entities.Count==0,
             "deployed Drone death releases route traversal before subsequent motion tick");
