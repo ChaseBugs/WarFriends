@@ -13,6 +13,7 @@ public static class UnityEnemyPoseExport
     public static void Run()
     {
         string output=Environment.GetEnvironmentVariable("WAR_ENEMY_POSE_OUTPUT");
+        string targetOutput=Environment.GetEnvironmentVariable("WAR_ENEMY_TARGET_OUTPUT");
         if(string.IsNullOrEmpty(output))throw new InvalidOperationException("Set WAR_ENEMY_POSE_OUTPUT.");
         var prefab=AssetDatabase.LoadAssetAtPath<GameObject>(Source);
         if(prefab==null)throw new InvalidOperationException("Missing recovered enemy prefab.");
@@ -37,6 +38,11 @@ public static class UnityEnemyPoseExport
             var definitions=new[]{new Part("body-box",bodyBox,1f),new Part("body-sphere",bodySphere,1f),
                 new Part("head",headSphere,1.5f)};
             var clips=new List<object>();
+            var targetClips=new List<object>();
+            var shootable=enemy.GetComponentsInChildren<GameShootableEntity>(true).Single();
+            if(shootable.targets.Count!=3||shootable.targets.Any(x=>x.transform==null)||
+                !shootable.targets.Select(x=>(int)x.type).SequenceEqual(new[]{8,1,4}))
+                throw new InvalidOperationException("Enemy shot-target inventory differs from source.");
             foreach(var state in states)
             {
                 if(state.clip==null||state.length<=0||state.length>60)throw new InvalidOperationException("Invalid enemy clip "+state.name);
@@ -44,19 +50,31 @@ public static class UnityEnemyPoseExport
                 if(!AssetDatabase.TryGetGUIDAndLocalFileIdentifier(state.clip,out guid,out fileId))
                     throw new InvalidOperationException("Missing clip identity "+state.name);
                 int last=Mathf.CeilToInt(state.length*30);var frames=new List<object>(last+1);
+                var targetFrames=new List<object>(last+1);
                 for(int i=0;i<=last;i++)
                 {
                     Sample(animation,"T_pose",1f);
                     float seconds=Mathf.Min(i/30f,state.length);
                     Sample(animation,state.name,seconds/state.length);Physics.SyncTransforms();
                     frames.Add(new{seconds=seconds,parts=definitions.Select(x=>Shape(enemy.transform,x)).ToArray()});
+                    targetFrames.Add(new{seconds=seconds,targets=shootable.targets.Select(x=>new{
+                        path=PathOf(x.transform),type=(int)x.type,
+                        position=V(enemy.transform.InverseTransformPoint(x.transform.position))}).ToArray()});
                 }
                 clips.Add(new{name=state.name,source=path,guid=guid,fileId=fileId,sha256=Hash(path),
                     length=state.length,wrap=state.wrapMode.ToString(),frames=frames});
+                targetClips.Add(new{name=state.name,source=path,guid=guid,fileId=fileId,sha256=Hash(path),
+                    length=state.length,wrap=state.wrapMode.ToString(),frames=targetFrames});
             }
             File.WriteAllText(output,JsonConvert.SerializeObject(new{version=2,client="1.4.0",source=Source,
                 sha256=Hash(Source),sampleRate=30,clips=clips},Formatting.Indented));
             Debug.Log("ENEMY_POSE_EXPORT_PASSED clips="+clips.Count);
+            if(!string.IsNullOrEmpty(targetOutput))
+            {
+                File.WriteAllText(targetOutput,JsonConvert.SerializeObject(new{version=1,client="1.4.0",source=Source,
+                    sha256=Hash(Source),sampleRate=30,clips=targetClips},Formatting.Indented));
+                Debug.Log("ENEMY_TARGET_EXPORT_PASSED clips="+targetClips.Count);
+            }
         }
         finally { UnityEngine.Object.DestroyImmediate(enemy); }
     }
