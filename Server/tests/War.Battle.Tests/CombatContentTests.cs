@@ -18,6 +18,7 @@ internal static class CombatContentTests
             value.GetProperty("y").GetSingle(),value.GetProperty("z").GetSingle());
         var content=BattleCombatContent.Load(Path.Combine(directory,"combat-content-manifest.json"));
         count+=DroneSpecialTests.Run(content.Army);
+        count+=DroneSteeringTests.Run();
         var navArtifact=Path.Combine(directory,"recovered-army-navmesh-sources.json");
         var navPin=JsonSerializer.Deserialize<CombatContentManifest>(
             File.ReadAllText(Path.Combine(directory,"combat-content-manifest.json")))!;
