@@ -28,7 +28,8 @@ public static class UnityDroneImpulseExport
                     var point=root+new Vector3(.3f,.1f,.2f);var impulse=new Vector3(.1f,.2f,-.15f);
                     body.AddForceAtPosition(impulse,point,ForceMode.Impulse);Physics.Simulate(Time.fixedDeltaTime);
                     rows.Add(new{root=Vec(root),rotation=new[]{rotation.x,rotation.y,rotation.z,rotation.w},
-                        point=Vec(point),impulse=Vec(impulse),velocity=Vec(body.velocity),angularVelocity=Vec(body.angularVelocity)});
+                        point=Vec(point),impulse=Vec(impulse),velocity=Vec(body.velocity),angularVelocity=Vec(body.angularVelocity),
+                        finalRoot=Vec(body.position),finalRotation=new[]{body.rotation.x,body.rotation.y,body.rotation.z,body.rotation.w}});
                 }
                 finally{UnityEngine.Object.DestroyImmediate(drone);}
             }

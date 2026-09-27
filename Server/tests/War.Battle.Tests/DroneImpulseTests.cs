@@ -21,6 +21,15 @@ internal static class DroneImpulseTests
                Vector3.Distance(angular,Vec(row.GetProperty("angularVelocity")))>.00001f)
                 throw new Exception("Drone off-center impulse differs from independent Unity simulation.");
             count++;
+            var pose=DroneRigidMotion.Integrate(DroneMassProperties.Compute(geometry),Vec(row.GetProperty("root")),
+                rotation,velocity,angular);
+            var final=row.GetProperty("finalRotation");
+            var expectedRotation=new Quaternion(final[0].GetSingle(),final[1].GetSingle(),final[2].GetSingle(),final[3].GetSingle());
+            if(Quaternion.Dot(pose.Rotation,expectedRotation)<0)expectedRotation=Quaternion.Negate(expectedRotation);
+            if(Vector3.Distance(pose.Root,Vec(row.GetProperty("finalRoot")))>.00002f||
+               Quaternion.Subtract(pose.Rotation,expectedRotation).Length()>.00001f)
+                throw new Exception("Drone center-of-mass rigid integration differs from Unity.");
+            count++;
         }
         return count;
     }
