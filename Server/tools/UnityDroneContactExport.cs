@@ -40,6 +40,7 @@ public static class UnityDroneContactExport
                         drone.transform.position=new Vector3((float)xyz[0],(float)xyz[1],(float)xyz[2]);
                         drone.transform.rotation=Quaternion.identity;
                         var body=drone.AddComponent<Rigidbody>();EditorUtility.CopySerialized(prefab.GetComponent<Rigidbody>(),body);
+                        var observer=drone.AddComponent<DroneCollisionObserver>();
                         body.isKinematic=false;body.velocity=Vector3.zero;body.angularVelocity=Vector3.zero;
                         Physics.SyncTransforms();var frames=new List<object>();
                         for(int frame=0;frame<=150;frame++)
@@ -47,10 +48,10 @@ public static class UnityDroneContactExport
                             frames.Add(new{frame,position=Vec(body.position),velocity=Vec(body.velocity),
                                 rotation=new[]{body.rotation.x,body.rotation.y,body.rotation.z,body.rotation.w},
                                 angularVelocity=Vec(body.angularVelocity)});
-                            if(frame<150)Physics.Simulate(Time.fixedDeltaTime);
+                            if(frame<150){observer.Frame=frame+1;Physics.Simulate(Time.fixedDeltaTime);}
                         }
                         rows.Add(new{source,sourceSha256=Hash(source),fraction,
-                            waypointFileId=(long)waypoint["componentFileId"],frames});
+                            waypointFileId=(long)waypoint["componentFileId"],frames,collisionCallbacks=observer.Rows});
                     }
                     finally{UnityEngine.Object.DestroyImmediate(drone);}
                 }
@@ -81,4 +82,17 @@ public static class UnityDroneContactExport
     private static float[] Vec(Vector3 value){return new[]{value.x,value.y,value.z};}
     private static string Hash(string path)
     {using(var sha=SHA256.Create())return BitConverter.ToString(sha.ComputeHash(File.ReadAllBytes(path))).Replace("-","").ToLowerInvariant();}
+}
+
+[ExecuteInEditMode]
+public sealed class DroneCollisionObserver:MonoBehaviour
+{
+    public int Frame;
+    public readonly List<object> Rows=new List<object>();
+    private void OnCollisionEnter(Collision collision)
+    {
+        Rows.Add(new{frame=Frame,other=collision.collider.name,layer=collision.collider.gameObject.layer,
+            contacts=collision.contacts.Select(c=>new{position=new[]{c.point.x,c.point.y,c.point.z},
+                normal=new[]{c.normal.x,c.normal.y,c.normal.z},separation=c.separation}).ToArray()});
+    }
 }
