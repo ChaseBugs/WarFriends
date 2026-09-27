@@ -6691,7 +6691,9 @@
                 0.996992767,
                 -0.07050612
               ],
-              "separation": -0.00559261441
+              "separation": -0.00559261441,
+              "bodyColliderType": "SphereCollider",
+              "bodyCollider": "dronePrototype/AimTargerAndEngine"
             }
           ]
         },
@@ -6722,7 +6724,9 @@
                 0.6082031,
                 0.125022277
               ],
-              "separation": -0.0256766677
+              "separation": -0.0256766677,
+              "bodyColliderType": "SphereCollider",
+              "bodyCollider": "dronePrototype/AimTargerAndEngine"
             }
           ]
         },
@@ -6753,7 +6757,9 @@
                 0.996992767,
                 -0.0705060661
               ],
-              "separation": 0.01575303
+              "separation": 0.01575303,
+              "bodyColliderType": "BoxCollider",
+              "bodyCollider": "dronePrototype"
             }
           ]
         },
@@ -6784,7 +6790,9 @@
                 0.996992767,
                 -0.07050609
               ],
-              "separation": 0.0197997689
+              "separation": 0.0197997689,
+              "bodyColliderType": "BoxCollider",
+              "bodyCollider": "dronePrototype"
             }
           ]
         }
@@ -13475,7 +13483,9 @@
                 0.6082031,
                 0.125022277
               ],
-              "separation": -0.0256766677
+              "separation": -0.0256766677,
+              "bodyColliderType": "SphereCollider",
+              "bodyCollider": "dronePrototype/AimTargerAndEngine"
             }
           ]
         },
@@ -13506,7 +13516,9 @@
                 0.996992767,
                 -0.07050612
               ],
-              "separation": -0.00559261441
+              "separation": -0.00559261441,
+              "bodyColliderType": "SphereCollider",
+              "bodyCollider": "dronePrototype/AimTargerAndEngine"
             }
           ]
         },
@@ -13537,7 +13549,9 @@
                 0.9969928,
                 -0.0705061555
               ],
-              "separation": 0.0171544254
+              "separation": 0.0171544254,
+              "bodyColliderType": "BoxCollider",
+              "bodyCollider": "dronePrototype"
             }
           ]
         },
@@ -13568,7 +13582,9 @@
                 0.996992767,
                 -0.07050612
               ],
-              "separation": 0.0191676319
+              "separation": 0.0191676319,
+              "bodyColliderType": "SphereCollider",
+              "bodyCollider": "dronePrototype/AimTargerAndEngine"
             }
           ]
         },
@@ -13599,7 +13615,9 @@
                 0.6037095,
                 0.67725414
               ],
-              "separation": 0.0161671937
+              "separation": 0.0161671937,
+              "bodyColliderType": "SphereCollider",
+              "bodyCollider": "dronePrototype/AimTargerAndEngine"
             }
           ]
         },
@@ -13630,7 +13648,9 @@
                 0.873541832,
                 0.1695778
               ],
-              "separation": 0.0198505521
+              "separation": 0.0198505521,
+              "bodyColliderType": "BoxCollider",
+              "bodyCollider": "dronePrototype"
             }
           ]
         }
@@ -20321,7 +20341,9 @@
                 0.996992767,
                 -0.07050612
               ],
-              "separation": -0.005592525
+              "separation": -0.005592525,
+              "bodyColliderType": "SphereCollider",
+              "bodyCollider": "dronePrototype/AimTargerAndEngine"
             }
           ]
         },
@@ -20352,7 +20374,9 @@
                 0.60820353,
                 0.125022411
               ],
-              "separation": -0.0256767273
+              "separation": -0.0256767273,
+              "bodyColliderType": "SphereCollider",
+              "bodyCollider": "dronePrototype/AimTargerAndEngine"
             }
           ]
         },
@@ -20383,7 +20407,9 @@
                 0.9969928,
                 -0.0705061
               ],
-              "separation": 0.0199433565
+              "separation": 0.0199433565,
+              "bodyColliderType": "BoxCollider",
+              "bodyCollider": "dronePrototype"
             }
           ]
         },
@@ -20414,7 +20440,9 @@
                 0.9961221,
                 -0.0879811
               ],
-              "separation": 0.009983765
+              "separation": 0.009983765,
+              "bodyColliderType": "BoxCollider",
+              "bodyCollider": "dronePrototype"
             },
             {
               "position": [
@@ -20427,7 +20455,9 @@
                 0.9961221,
                 -0.0879811
               ],
-              "separation": 0.01678875
+              "separation": 0.01678875,
+              "bodyColliderType": "BoxCollider",
+              "bodyCollider": "dronePrototype"
             },
             {
               "position": [
@@ -20440,7 +20470,9 @@
                 0.9961221,
                 -0.0879811
               ],
-              "separation": 0.0187651217
+              "separation": 0.0187651217,
+              "bodyColliderType": "BoxCollider",
+              "bodyCollider": "dronePrototype"
             },
             {
               "position": [
@@ -20453,7 +20485,9 @@
                 0.861526966,
                 0.4148218
               ],
-              "separation": 0.017374754
+              "separation": 0.017374754,
+              "bodyColliderType": "BoxCollider",
+              "bodyCollider": "dronePrototype"
             }
           ]
         }
@@ -27144,7 +27178,9 @@
                 0.905958831,
                 7.49048866E-07
               ],
-              "separation": 0.0179273486
+              "separation": 0.0179273486,
+              "bodyColliderType": "SphereCollider",
+              "bodyCollider": "dronePrototype/AimTargerAndEngine"
             }
           ]
         },
@@ -27175,7 +27211,9 @@
                 0.996884,
                 0.07635785
               ],
-              "separation": 0.0147041976
+              "separation": 0.0147041976,
+              "bodyColliderType": "SphereCollider",
+              "bodyCollider": "dronePrototype/AimTargerAndEngine"
             }
           ]
         },
@@ -27206,7 +27244,9 @@
                 -9.424805E-09,
                 0.2156141
               ],
-              "separation": 0.00324928761
+              "separation": 0.00324928761,
+              "bodyColliderType": "SphereCollider",
+              "bodyCollider": "dronePrototype/AimTargerAndEngine"
             },
             {
               "position": [
@@ -27219,7 +27259,9 @@
                 0.158443063,
                 0.212890476
               ],
-              "separation": 0.008792043
+              "separation": 0.008792043,
+              "bodyColliderType": "SphereCollider",
+              "bodyCollider": "dronePrototype/AimTargerAndEngine"
             }
           ]
         },
@@ -27250,7 +27292,9 @@
                 0.9968839,
                 0.0763578638
               ],
-              "separation": 0.0187287033
+              "separation": 0.0187287033,
+              "bodyColliderType": "BoxCollider",
+              "bodyCollider": "dronePrototype"
             }
           ]
         },
@@ -27281,7 +27325,9 @@
                 0.996884,
                 0.0763578
               ],
-              "separation": 0.0156894326
+              "separation": 0.0156894326,
+              "bodyColliderType": "BoxCollider",
+              "bodyCollider": "dronePrototype"
             }
           ]
         },
@@ -27312,7 +27358,9 @@
                 0.996884,
                 0.076357834
               ],
-              "separation": 0.0176379085
+              "separation": 0.0176379085,
+              "bodyColliderType": "BoxCollider",
+              "bodyCollider": "dronePrototype"
             }
           ]
         }
@@ -34003,7 +34051,9 @@
                 0.905958831,
                 7.49048866E-07
               ],
-              "separation": 0.0179273486
+              "separation": 0.0179273486,
+              "bodyColliderType": "SphereCollider",
+              "bodyCollider": "dronePrototype/AimTargerAndEngine"
             }
           ]
         },
@@ -34034,7 +34084,9 @@
                 0.996884,
                 0.07635785
               ],
-              "separation": 0.01800716
+              "separation": 0.01800716,
+              "bodyColliderType": "SphereCollider",
+              "bodyCollider": "dronePrototype/AimTargerAndEngine"
             }
           ]
         },
@@ -34065,7 +34117,9 @@
                 -9.327983E-09,
                 0.213399068
               ],
-              "separation": 0.00644803047
+              "separation": 0.00644803047,
+              "bodyColliderType": "SphereCollider",
+              "bodyCollider": "dronePrototype/AimTargerAndEngine"
             },
             {
               "position": [
@@ -34078,7 +34132,9 @@
                 0.157529712,
                 0.210734621
               ],
-              "separation": 0.0119663179
+              "separation": 0.0119663179,
+              "bodyColliderType": "SphereCollider",
+              "bodyCollider": "dronePrototype/AimTargerAndEngine"
             }
           ]
         },
@@ -34109,7 +34165,9 @@
                 0.996884,
                 0.07635793
               ],
-              "separation": 0.01862055
+              "separation": 0.01862055,
+              "bodyColliderType": "BoxCollider",
+              "bodyCollider": "dronePrototype"
             }
           ]
         },
@@ -34140,7 +34198,9 @@
                 0.9968839,
                 0.07635786
               ],
-              "separation": 0.0152777433
+              "separation": 0.0152777433,
+              "bodyColliderType": "BoxCollider",
+              "bodyCollider": "dronePrototype"
             }
           ]
         }
@@ -40831,7 +40891,9 @@
                 0.9059586,
                 7.49048638E-07
               ],
-              "separation": 0.01792723
+              "separation": 0.01792723,
+              "bodyColliderType": "SphereCollider",
+              "bodyCollider": "dronePrototype/AimTargerAndEngine"
             }
           ]
         },
@@ -40862,7 +40924,9 @@
                 0.996884,
                 0.07635785
               ],
-              "separation": 0.0179851353
+              "separation": 0.0179851353,
+              "bodyColliderType": "SphereCollider",
+              "bodyCollider": "dronePrototype/AimTargerAndEngine"
             }
           ]
         },
@@ -40893,7 +40957,9 @@
                 0.996884,
                 0.07635787
               ],
-              "separation": 0.0181455016
+              "separation": 0.0181455016,
+              "bodyColliderType": "BoxCollider",
+              "bodyCollider": "dronePrototype"
             }
           ]
         },
@@ -40924,7 +40990,9 @@
                 -8.059556E-09,
                 0.184380814
               ],
-              "separation": 0.00764495134
+              "separation": 0.00764495134,
+              "bodyColliderType": "SphereCollider",
+              "bodyCollider": "dronePrototype/AimTargerAndEngine"
             }
           ]
         },
@@ -40955,7 +41023,9 @@
                 0.399906576,
                 0.116934091
               ],
-              "separation": 0.01970473
+              "separation": 0.01970473,
+              "bodyColliderType": "SphereCollider",
+              "bodyCollider": "dronePrototype/AimTargerAndEngine"
             }
           ]
         },
@@ -40986,7 +41056,9 @@
                 0.996884,
                 0.07635786
               ],
-              "separation": 0.0178764462
+              "separation": 0.0178764462,
+              "bodyColliderType": "BoxCollider",
+              "bodyCollider": "dronePrototype"
             }
           ]
         },
@@ -41017,7 +41089,9 @@
                 0.996884,
                 0.07635783
               ],
-              "separation": 0.0170754269
+              "separation": 0.0170754269,
+              "bodyColliderType": "BoxCollider",
+              "bodyCollider": "dronePrototype"
             }
           ]
         }
@@ -47708,7 +47782,9 @@
                 0.47098884,
                 0.6238785
               ],
-              "separation": -0.00585111976
+              "separation": -0.00585111976,
+              "bodyColliderType": "SphereCollider",
+              "bodyCollider": "dronePrototype/AimTargerAndEngine"
             }
           ]
         },
@@ -47739,7 +47815,9 @@
                 0.999940336,
                 0.0109283067
               ],
-              "separation": -0.00168684125
+              "separation": -0.00168684125,
+              "bodyColliderType": "SphereCollider",
+              "bodyCollider": "dronePrototype/AimTargerAndEngine"
             }
           ]
         },
@@ -47770,7 +47848,9 @@
                 0.9999403,
                 0.0109283859
               ],
-              "separation": 0.01341629
+              "separation": 0.01341629,
+              "bodyColliderType": "BoxCollider",
+              "bodyCollider": "dronePrototype"
             }
           ]
         },
@@ -47801,7 +47881,9 @@
                 1.49011612E-07,
                 -0.256332964
               ],
-              "separation": 0.018059263
+              "separation": 0.018059263,
+              "bodyColliderType": "BoxCollider",
+              "bodyCollider": "dronePrototype"
             }
           ]
         },
@@ -47832,7 +47914,9 @@
                 0.9999403,
                 0.0109282387
               ],
-              "separation": 0.0179274082
+              "separation": 0.0179274082,
+              "bodyColliderType": "BoxCollider",
+              "bodyCollider": "dronePrototype"
             }
           ]
         }
@@ -54523,7 +54607,9 @@
                 0.470989257,
                 0.6238783
               ],
-              "separation": -0.00585129857
+              "separation": -0.00585129857,
+              "bodyColliderType": "SphereCollider",
+              "bodyCollider": "dronePrototype/AimTargerAndEngine"
             }
           ]
         },
@@ -54554,7 +54640,9 @@
                 0.999940336,
                 0.0109283067
               ],
-              "separation": -0.00168681145
+              "separation": -0.00168681145,
+              "bodyColliderType": "SphereCollider",
+              "bodyCollider": "dronePrototype/AimTargerAndEngine"
             }
           ]
         },
@@ -54585,7 +54673,9 @@
                 0.9997593,
                 0.02194032
               ],
-              "separation": 0.0185549259
+              "separation": 0.0185549259,
+              "bodyColliderType": "BoxCollider",
+              "bodyCollider": "dronePrototype"
             },
             {
               "position": [
@@ -54598,7 +54688,9 @@
                 0.9997593,
                 0.02194032
               ],
-              "separation": 0.0187872648
+              "separation": 0.0187872648,
+              "bodyColliderType": "BoxCollider",
+              "bodyCollider": "dronePrototype"
             }
           ]
         },
@@ -54629,7 +54721,9 @@
                 0.999457061,
                 0.0329490639
               ],
-              "separation": 0.0195353031
+              "separation": 0.0195353031,
+              "bodyColliderType": "BoxCollider",
+              "bodyCollider": "dronePrototype"
             }
           ]
         }
@@ -61320,7 +61414,9 @@
                 0.470989048,
                 0.6238784
               ],
-              "separation": -0.00585117936
+              "separation": -0.00585117936,
+              "bodyColliderType": "SphereCollider",
+              "bodyCollider": "dronePrototype/AimTargerAndEngine"
             }
           ]
         },
@@ -61351,7 +61447,9 @@
                 0.999940336,
                 0.0109283067
               ],
-              "separation": -0.001686871
+              "separation": -0.001686871,
+              "bodyColliderType": "SphereCollider",
+              "bodyCollider": "dronePrototype/AimTargerAndEngine"
             }
           ]
         },
@@ -61382,7 +61480,9 @@
                 0.999940336,
                 0.010928303
               ],
-              "separation": 0.01957488
+              "separation": 0.01957488,
+              "bodyColliderType": "BoxCollider",
+              "bodyCollider": "dronePrototype"
             }
           ]
         }
@@ -68073,7 +68173,9 @@
                 0.9999397,
                 -0.0109883426
               ],
-              "separation": -0.006407678
+              "separation": -0.006407678,
+              "bodyColliderType": "SphereCollider",
+              "bodyCollider": "dronePrototype/AimTargerAndEngine"
             }
           ]
         }
@@ -74764,7 +74866,9 @@
                 0.9999397,
                 -0.0109883426
               ],
-              "separation": -0.006407678
+              "separation": -0.006407678,
+              "bodyColliderType": "SphereCollider",
+              "bodyCollider": "dronePrototype/AimTargerAndEngine"
             }
           ]
         }
@@ -81455,7 +81559,9 @@
                 0.9999397,
                 -0.0109883426
               ],
-              "separation": -0.00640764832
+              "separation": -0.00640764832,
+              "bodyColliderType": "SphereCollider",
+              "bodyCollider": "dronePrototype/AimTargerAndEngine"
             }
           ]
         },
@@ -81486,7 +81592,9 @@
                 0.143467575,
                 0.667116344
               ],
-              "separation": 0.0135087967
+              "separation": 0.0135087967,
+              "bodyColliderType": "SphereCollider",
+              "bodyCollider": "dronePrototype/AimTargerAndEngine"
             }
           ]
         }
@@ -88177,7 +88285,9 @@
                 0.99976933,
                 -0.021442065
               ],
-              "separation": -0.005015582
+              "separation": -0.005015582,
+              "bodyColliderType": "SphereCollider",
+              "bodyCollider": "dronePrototype/AimTargerAndEngine"
             }
           ]
         }
@@ -94868,7 +94978,9 @@
                 0.99976933,
                 -0.021442065
               ],
-              "separation": -0.005015373
+              "separation": -0.005015373,
+              "bodyColliderType": "SphereCollider",
+              "bodyCollider": "dronePrototype/AimTargerAndEngine"
             }
           ]
         }
@@ -101559,7 +101671,9 @@
                 0.99976933,
                 -0.021442065
               ],
-              "separation": -0.00501567125
+              "separation": -0.00501567125,
+              "bodyColliderType": "SphereCollider",
+              "bodyCollider": "dronePrototype/AimTargerAndEngine"
             }
           ]
         },
@@ -101590,7 +101704,9 @@
                 0.9999377,
                 -0.00705894548
               ],
-              "separation": 0.01555559
+              "separation": 0.01555559,
+              "bodyColliderType": "BoxCollider",
+              "bodyCollider": "dronePrototype"
             }
           ]
         }
@@ -108281,7 +108397,9 @@
                 0.990390539,
                 -0.0213015247
               ],
-              "separation": -2.80737877E-05
+              "separation": -2.80737877E-05,
+              "bodyColliderType": "SphereCollider",
+              "bodyCollider": "dronePrototype/AimTargerAndEngine"
             }
           ]
         },
@@ -108312,7 +108430,9 @@
                 0.5958989,
                 -0.237809524
               ],
-              "separation": 0.0197625458
+              "separation": 0.0197625458,
+              "bodyColliderType": "SphereCollider",
+              "bodyCollider": "dronePrototype/AimTargerAndEngine"
             }
           ]
         },
@@ -108343,7 +108463,9 @@
                 0.997148454,
                 0.0418509841
               ],
-              "separation": 0.0195230842
+              "separation": 0.0195230842,
+              "bodyColliderType": "BoxCollider",
+              "bodyCollider": "dronePrototype"
             }
           ]
         }
@@ -115034,7 +115156,9 @@
                 0.990390539,
                 -0.0213015247
               ],
-              "separation": -2.85506248E-05
+              "separation": -2.85506248E-05,
+              "bodyColliderType": "SphereCollider",
+              "bodyCollider": "dronePrototype/AimTargerAndEngine"
             }
           ]
         },
@@ -115065,7 +115189,9 @@
                 0.558525,
                 -0.6704417
               ],
-              "separation": 0.0180757046
+              "separation": 0.0180757046,
+              "bodyColliderType": "BoxCollider",
+              "bodyCollider": "dronePrototype"
             }
           ]
         },
@@ -115096,7 +115222,9 @@
                 0.58785,
                 -0.396880448
               ],
-              "separation": 0.0162026584
+              "separation": 0.0162026584,
+              "bodyColliderType": "SphereCollider",
+              "bodyCollider": "dronePrototype/AimTargerAndEngine"
             }
           ]
         },
@@ -115127,7 +115255,9 @@
                 0.647743642,
                 0.5418908
               ],
-              "separation": 0.0151588619
+              "separation": 0.0151588619,
+              "bodyColliderType": "BoxCollider",
+              "bodyCollider": "dronePrototype"
             }
           ]
         }
@@ -121818,7 +121948,9 @@
                 0.990390539,
                 -0.0213015247
               ],
-              "separation": -2.81631947E-05
+              "separation": -2.81631947E-05,
+              "bodyColliderType": "SphereCollider",
+              "bodyCollider": "dronePrototype/AimTargerAndEngine"
             }
           ]
         },
@@ -121849,7 +121981,9 @@
                 0.597494841,
                 -0.340266079
               ],
-              "separation": 0.0113469958
+              "separation": 0.0113469958,
+              "bodyColliderType": "SphereCollider",
+              "bodyCollider": "dronePrototype/AimTargerAndEngine"
             }
           ]
         },
@@ -121880,7 +122014,9 @@
                 -0.0178288724,
                 -0.999320567
               ],
-              "separation": 0.0119916266
+              "separation": 0.0119916266,
+              "bodyColliderType": "BoxCollider",
+              "bodyCollider": "dronePrototype"
             }
           ]
         },
@@ -121911,7 +122047,9 @@
                 0.9971486,
                 0.0418506265
               ],
-              "separation": 0.0138970315
+              "separation": 0.0138970315,
+              "bodyColliderType": "BoxCollider",
+              "bodyCollider": "dronePrototype"
             }
           ]
         },
@@ -121942,7 +122080,9 @@
                 0.6718121,
                 0.559996665
               ],
-              "separation": 0.009484768
+              "separation": 0.009484768,
+              "bodyColliderType": "BoxCollider",
+              "bodyCollider": "dronePrototype"
             },
             {
               "position": [
@@ -121955,7 +122095,9 @@
                 0.6718121,
                 0.559996665
               ],
-              "separation": 0.009104937
+              "separation": 0.009104937,
+              "bodyColliderType": "BoxCollider",
+              "bodyCollider": "dronePrototype"
             }
           ]
         },
@@ -121986,7 +122128,9 @@
                 -0.0178288724,
                 -0.999320567
               ],
-              "separation": 0.0158213433
+              "separation": 0.0158213433,
+              "bodyColliderType": "BoxCollider",
+              "bodyCollider": "dronePrototype"
             }
           ]
         }
@@ -128677,7 +128821,9 @@
                 1.0,
                 4.371139E-08
               ],
-              "separation": -0.0408513844
+              "separation": -0.0408513844,
+              "bodyColliderType": "SphereCollider",
+              "bodyCollider": "dronePrototype/AimTargerAndEngine"
             }
           ]
         },
@@ -128708,7 +128854,9 @@
                 0.352815,
                 -0.9356928
               ],
-              "separation": 0.016872257
+              "separation": 0.016872257,
+              "bodyColliderType": "BoxCollider",
+              "bodyCollider": "dronePrototype"
             },
             {
               "position": [
@@ -128721,7 +128869,9 @@
                 0.352815,
                 -0.9356928
               ],
-              "separation": 0.0167313218
+              "separation": 0.0167313218,
+              "bodyColliderType": "BoxCollider",
+              "bodyCollider": "dronePrototype"
             },
             {
               "position": [
@@ -128734,7 +128884,9 @@
                 0.352815,
                 -0.9356928
               ],
-              "separation": 0.0157996714
+              "separation": 0.0157996714,
+              "bodyColliderType": "BoxCollider",
+              "bodyCollider": "dronePrototype"
             }
           ]
         },
@@ -128765,7 +128917,9 @@
                 -8.900171E-08,
                 -0.969361663
               ],
-              "separation": 0.0188928246
+              "separation": 0.0188928246,
+              "bodyColliderType": "SphereCollider",
+              "bodyCollider": "dronePrototype/AimTargerAndEngine"
             }
           ]
         }
@@ -135456,7 +135610,9 @@
                 1.0,
                 4.371139E-08
               ],
-              "separation": -0.0408512652
+              "separation": -0.0408512652,
+              "bodyColliderType": "SphereCollider",
+              "bodyCollider": "dronePrototype/AimTargerAndEngine"
             }
           ]
         },
@@ -135487,7 +135643,9 @@
                 0.489548266,
                 -0.590854943
               ],
-              "separation": 0.0185834169
+              "separation": 0.0185834169,
+              "bodyColliderType": "BoxCollider",
+              "bodyCollider": "dronePrototype"
             }
           ]
         }
@@ -142178,7 +142336,9 @@
                 1.0,
                 4.371139E-08
               ],
-              "separation": -0.040851444
+              "separation": -0.040851444,
+              "bodyColliderType": "SphereCollider",
+              "bodyCollider": "dronePrototype/AimTargerAndEngine"
             }
           ]
         }
@@ -148869,7 +149029,9 @@
                 1.0,
                 4.371139E-08
               ],
-              "separation": 0.0143957734
+              "separation": 0.0143957734,
+              "bodyColliderType": "SphereCollider",
+              "bodyCollider": "dronePrototype/AimTargerAndEngine"
             }
           ]
         },
@@ -148900,7 +149062,9 @@
                 0.736315548,
                 -0.5444981
               ],
-              "separation": 0.0147708654
+              "separation": 0.0147708654,
+              "bodyColliderType": "SphereCollider",
+              "bodyCollider": "dronePrototype/AimTargerAndEngine"
             }
           ]
         }
@@ -155591,7 +155755,9 @@
                 1.0,
                 4.371139E-08
               ],
-              "separation": 0.0143957734
+              "separation": 0.0143957734,
+              "bodyColliderType": "SphereCollider",
+              "bodyCollider": "dronePrototype/AimTargerAndEngine"
             }
           ]
         },
@@ -155622,7 +155788,9 @@
                 0.740578532,
                 -0.5463776
               ],
-              "separation": 0.0122084916
+              "separation": 0.0122084916,
+              "bodyColliderType": "SphereCollider",
+              "bodyCollider": "dronePrototype/AimTargerAndEngine"
             }
           ]
         }
@@ -162313,7 +162481,9 @@
                 1.0,
                 4.371139E-08
               ],
-              "separation": 0.0143955946
+              "separation": 0.0143955946,
+              "bodyColliderType": "SphereCollider",
+              "bodyCollider": "dronePrototype/AimTargerAndEngine"
             }
           ]
         },
@@ -162344,7 +162514,9 @@
                 0.730209351,
                 -0.5688768
               ],
-              "separation": 0.0184921026
+              "separation": 0.0184921026,
+              "bodyColliderType": "SphereCollider",
+              "bodyCollider": "dronePrototype/AimTargerAndEngine"
             }
           ]
         }
@@ -169035,7 +169207,9 @@
                 -3.192819E-07,
                 1.0
               ],
-              "separation": -0.005539149
+              "separation": -0.005539149,
+              "bodyColliderType": "BoxCollider",
+              "bodyCollider": "dronePrototype"
             },
             {
               "position": [
@@ -169048,7 +169222,9 @@
                 -3.192819E-07,
                 1.0
               ],
-              "separation": 0.00290450454
+              "separation": 0.00290450454,
+              "bodyColliderType": "BoxCollider",
+              "bodyCollider": "dronePrototype"
             },
             {
               "position": [
@@ -169061,7 +169237,9 @@
                 -3.192819E-07,
                 1.0
               ],
-              "separation": 0.00406909
+              "separation": 0.00406909,
+              "bodyColliderType": "BoxCollider",
+              "bodyCollider": "dronePrototype"
             },
             {
               "position": [
@@ -169074,7 +169252,9 @@
                 -3.192819E-07,
                 1.0
               ],
-              "separation": 0.0118105412
+              "separation": 0.0118105412,
+              "bodyColliderType": "BoxCollider",
+              "bodyCollider": "dronePrototype"
             },
             {
               "position": [
@@ -169087,7 +169267,9 @@
                 -3.192819E-07,
                 1.0
               ],
-              "separation": -0.005539149
+              "separation": -0.005539149,
+              "bodyColliderType": "BoxCollider",
+              "bodyCollider": "dronePrototype"
             },
             {
               "position": [
@@ -169100,7 +169282,9 @@
                 -3.192819E-07,
                 1.0
               ],
-              "separation": -0.005539149
+              "separation": -0.005539149,
+              "bodyColliderType": "BoxCollider",
+              "bodyCollider": "dronePrototype"
             }
           ]
         },
@@ -169131,7 +169315,9 @@
                 -9.372037E-07,
                 0.9611701
               ],
-              "separation": -0.06011519
+              "separation": -0.06011519,
+              "bodyColliderType": "SphereCollider",
+              "bodyCollider": "dronePrototype/AimTargerAndEngine"
             }
           ]
         },
@@ -169162,7 +169348,9 @@
                 0.787445664,
                 0.198300719
               ],
-              "separation": -0.009160608
+              "separation": -0.009160608,
+              "bodyColliderType": "SphereCollider",
+              "bodyCollider": "dronePrototype/AimTargerAndEngine"
             }
           ]
         },
@@ -169193,7 +169381,9 @@
                 0.7965951,
                 -0.0914510339
               ],
-              "separation": -0.0139942765
+              "separation": -0.0139942765,
+              "bodyColliderType": "SphereCollider",
+              "bodyCollider": "dronePrototype/AimTargerAndEngine"
             }
           ]
         },
@@ -169224,7 +169414,9 @@
                 0.9973714,
                 -0.03693967
               ],
-              "separation": 0.0141637027
+              "separation": 0.0141637027,
+              "bodyColliderType": "SphereCollider",
+              "bodyCollider": "dronePrototype/AimTargerAndEngine"
             }
           ]
         },
@@ -169255,7 +169447,9 @@
                 0.997371435,
                 -0.03693981
               ],
-              "separation": 0.0115112886
+              "separation": 0.0115112886,
+              "bodyColliderType": "BoxCollider",
+              "bodyCollider": "dronePrototype"
             }
           ]
         },
@@ -169286,7 +169480,9 @@
                 0.9980526,
                 -8.19563652E-08
               ],
-              "separation": 0.016515553
+              "separation": 0.016515553,
+              "bodyColliderType": "BoxCollider",
+              "bodyCollider": "dronePrototype"
             }
           ]
         }
@@ -175977,7 +176173,9 @@
                 -9.372037E-07,
                 0.9611701
               ],
-              "separation": -0.06011519
+              "separation": -0.06011519,
+              "bodyColliderType": "SphereCollider",
+              "bodyCollider": "dronePrototype/AimTargerAndEngine"
             }
           ]
         },
@@ -176008,7 +176206,9 @@
                 -0.173648089,
                 0.6963647
               ],
-              "separation": -0.183604017
+              "separation": -0.183604017,
+              "bodyColliderType": "BoxCollider",
+              "bodyCollider": "dronePrototype"
             },
             {
               "position": [
@@ -176021,7 +176221,9 @@
                 -0.173648089,
                 0.6963647
               ],
-              "separation": -0.152098536
+              "separation": -0.152098536,
+              "bodyColliderType": "BoxCollider",
+              "bodyCollider": "dronePrototype"
             },
             {
               "position": [
@@ -176034,7 +176236,9 @@
                 -0.173648089,
                 0.6963647
               ],
-              "separation": -0.186864182
+              "separation": -0.186864182,
+              "bodyColliderType": "BoxCollider",
+              "bodyCollider": "dronePrototype"
             },
             {
               "position": [
@@ -176047,7 +176251,9 @@
                 -0.173648089,
                 0.6963647
               ],
-              "separation": -0.154888749
+              "separation": -0.154888749,
+              "bodyColliderType": "BoxCollider",
+              "bodyCollider": "dronePrototype"
             },
             {
               "position": [
@@ -176060,7 +176266,9 @@
                 -0.173648089,
                 0.6963647
               ],
-              "separation": -0.148088038
+              "separation": -0.148088038,
+              "bodyColliderType": "BoxCollider",
+              "bodyCollider": "dronePrototype"
             },
             {
               "position": [
@@ -176073,7 +176281,9 @@
                 -0.173648089,
                 0.6963647
               ],
-              "separation": -0.180063456
+              "separation": -0.180063456,
+              "bodyColliderType": "BoxCollider",
+              "bodyCollider": "dronePrototype"
             },
             {
               "position": [
@@ -176086,7 +176296,9 @@
                 -0.171009928,
                 0.675042
               ],
-              "separation": -0.0277852118
+              "separation": -0.0277852118,
+              "bodyColliderType": "BoxCollider",
+              "bodyCollider": "dronePrototype"
             },
             {
               "position": [
@@ -176099,7 +176311,9 @@
                 -0.171009928,
                 0.675042
               ],
-              "separation": -0.0551224351
+              "separation": -0.0551224351,
+              "bodyColliderType": "BoxCollider",
+              "bodyCollider": "dronePrototype"
             },
             {
               "position": [
@@ -176112,7 +176326,9 @@
                 -0.171009928,
                 0.675042
               ],
-              "separation": -0.0592747927
+              "separation": -0.0592747927,
+              "bodyColliderType": "BoxCollider",
+              "bodyCollider": "dronePrototype"
             },
             {
               "position": [
@@ -176125,7 +176341,9 @@
                 -0.171009928,
                 0.675042
               ],
-              "separation": -0.0236328244
+              "separation": -0.0236328244,
+              "bodyColliderType": "BoxCollider",
+              "bodyCollider": "dronePrototype"
             },
             {
               "position": [
@@ -176138,7 +176356,9 @@
                 -0.171009928,
                 0.675042
               ],
-              "separation": -0.06550342
+              "separation": -0.06550342,
+              "bodyColliderType": "BoxCollider",
+              "bodyCollider": "dronePrototype"
             },
             {
               "position": [
@@ -176151,7 +176371,9 @@
                 -0.171009928,
                 0.675042
               ],
-              "separation": -0.06226045
+              "separation": -0.06226045,
+              "bodyColliderType": "BoxCollider",
+              "bodyCollider": "dronePrototype"
             }
           ]
         },
@@ -176182,7 +176404,9 @@
                 -0.3792373,
                 0.560828745
               ],
-              "separation": 0.01904878
+              "separation": 0.01904878,
+              "bodyColliderType": "BoxCollider",
+              "bodyCollider": "dronePrototype"
             },
             {
               "position": [
@@ -176195,7 +176419,9 @@
                 -0.3792373,
                 0.560828745
               ],
-              "separation": 0.0173228085
+              "separation": 0.0173228085,
+              "bodyColliderType": "BoxCollider",
+              "bodyCollider": "dronePrototype"
             }
           ]
         },
@@ -176226,7 +176452,9 @@
                 0.8852472,
                 -3.426773E-08
               ],
-              "separation": 0.00484526157
+              "separation": 0.00484526157,
+              "bodyColliderType": "SphereCollider",
+              "bodyCollider": "dronePrototype/AimTargerAndEngine"
             }
           ]
         },
@@ -176257,7 +176485,9 @@
                 0.997371435,
                 -0.0369396619
               ],
-              "separation": -0.025259085
+              "separation": -0.025259085,
+              "bodyColliderType": "BoxCollider",
+              "bodyCollider": "dronePrototype"
             },
             {
               "position": [
@@ -176270,7 +176500,9 @@
                 0.997371435,
                 -0.0369396619
               ],
-              "separation": -0.018927522
+              "separation": -0.018927522,
+              "bodyColliderType": "BoxCollider",
+              "bodyCollider": "dronePrototype"
             }
           ]
         },
@@ -176301,7 +176533,9 @@
                 0.9973714,
                 -0.03693967
               ],
-              "separation": -0.0117840767
+              "separation": -0.0117840767,
+              "bodyColliderType": "SphereCollider",
+              "bodyCollider": "dronePrototype/AimTargerAndEngine"
             },
             {
               "position": [
@@ -176314,7 +176548,9 @@
                 0.9986487,
                 -0.036986798
               ],
-              "separation": -0.009730756
+              "separation": -0.009730756,
+              "bodyColliderType": "SphereCollider",
+              "bodyCollider": "dronePrototype/AimTargerAndEngine"
             }
           ]
         }
@@ -183005,7 +183241,9 @@
                 -0.08418596,
                 0.688465536
               ],
-              "separation": -0.21764797
+              "separation": -0.21764797,
+              "bodyColliderType": "BoxCollider",
+              "bodyCollider": "dronePrototype"
             },
             {
               "position": [
@@ -183018,7 +183256,9 @@
                 -0.08418596,
                 0.688465536
               ],
-              "separation": -0.202452421
+              "separation": -0.202452421,
+              "bodyColliderType": "BoxCollider",
+              "bodyCollider": "dronePrototype"
             },
             {
               "position": [
@@ -183031,7 +183271,9 @@
                 -0.08418596,
                 0.688465536
               ],
-              "separation": -0.220564246
+              "separation": -0.220564246,
+              "bodyColliderType": "BoxCollider",
+              "bodyCollider": "dronePrototype"
             },
             {
               "position": [
@@ -183044,7 +183286,9 @@
                 -0.08418596,
                 0.688465536
               ],
-              "separation": -0.204939991
+              "separation": -0.204939991,
+              "bodyColliderType": "BoxCollider",
+              "bodyCollider": "dronePrototype"
             },
             {
               "position": [
@@ -183057,7 +183301,9 @@
                 -0.08418596,
                 0.688465536
               ],
-              "separation": -0.198782653
+              "separation": -0.198782653,
+              "bodyColliderType": "BoxCollider",
+              "bodyCollider": "dronePrototype"
             },
             {
               "position": [
@@ -183070,7 +183316,9 @@
                 -0.08418596,
                 0.688465536
               ],
-              "separation": -0.2144069
+              "separation": -0.2144069,
+              "bodyColliderType": "BoxCollider",
+              "bodyCollider": "dronePrototype"
             },
             {
               "position": [
@@ -183083,7 +183331,9 @@
                 -0.258819044,
                 0.683012545
               ],
-              "separation": -0.0262472928
+              "separation": -0.0262472928,
+              "bodyColliderType": "BoxCollider",
+              "bodyCollider": "dronePrototype"
             },
             {
               "position": [
@@ -183096,7 +183346,9 @@
                 -0.258819044,
                 0.683012545
               ],
-              "separation": -0.081063956
+              "separation": -0.081063956,
+              "bodyColliderType": "BoxCollider",
+              "bodyCollider": "dronePrototype"
             },
             {
               "position": [
@@ -183109,7 +183361,9 @@
                 -0.258819044,
                 0.683012545
               ],
-              "separation": -0.07428226
+              "separation": -0.07428226,
+              "bodyColliderType": "BoxCollider",
+              "bodyCollider": "dronePrototype"
             },
             {
               "position": [
@@ -183122,7 +183376,9 @@
                 -0.258819044,
                 0.683012545
               ],
-              "separation": -0.0226848125
+              "separation": -0.0226848125,
+              "bodyColliderType": "BoxCollider",
+              "bodyCollider": "dronePrototype"
             },
             {
               "position": [
@@ -183135,7 +183391,9 @@
                 -0.258819044,
                 0.683012545
               ],
-              "separation": -0.07750106
+              "separation": -0.07750106,
+              "bodyColliderType": "BoxCollider",
+              "bodyCollider": "dronePrototype"
             },
             {
               "position": [
@@ -183148,7 +183406,9 @@
                 -0.258819044,
                 0.683012545
               ],
-              "separation": -0.0761508942
+              "separation": -0.0761508942,
+              "bodyColliderType": "BoxCollider",
+              "bodyCollider": "dronePrototype"
             }
           ]
         },
@@ -183179,7 +183439,9 @@
                 -9.372037E-07,
                 0.9611701
               ],
-              "separation": -0.0601152778
+              "separation": -0.0601152778,
+              "bodyColliderType": "SphereCollider",
+              "bodyCollider": "dronePrototype/AimTargerAndEngine"
             }
           ]
         },
@@ -183210,7 +183472,9 @@
                 0.8266878,
                 0.0
               ],
-              "separation": -0.0222626626
+              "separation": -0.0222626626,
+              "bodyColliderType": "SphereCollider",
+              "bodyCollider": "dronePrototype/AimTargerAndEngine"
             }
           ]
         },
@@ -183241,7 +183505,9 @@
                 0.9973714,
                 -0.03693967
               ],
-              "separation": 0.00476869941
+              "separation": 0.00476869941,
+              "bodyColliderType": "SphereCollider",
+              "bodyCollider": "dronePrototype/AimTargerAndEngine"
             }
           ]
         },
@@ -183272,7 +183538,9 @@
                 0.9973714,
                 -0.03693966
               ],
-              "separation": 0.0198507179
+              "separation": 0.0198507179,
+              "bodyColliderType": "BoxCollider",
+              "bodyCollider": "dronePrototype"
             }
           ]
         },
@@ -183303,7 +183571,9 @@
                 0.9973714,
                 -0.03693967
               ],
-              "separation": 0.01609087
+              "separation": 0.01609087,
+              "bodyColliderType": "SphereCollider",
+              "bodyCollider": "dronePrototype/AimTargerAndEngine"
             }
           ]
         },
@@ -183334,7 +183604,9 @@
                 0.997371435,
                 -0.03693971
               ],
-              "separation": 0.0184943378
+              "separation": 0.0184943378,
+              "bodyColliderType": "BoxCollider",
+              "bodyCollider": "dronePrototype"
             }
           ]
         },
@@ -183365,7 +183637,9 @@
                 0.997371435,
                 -0.0369396843
               ],
-              "separation": 0.0189301968
+              "separation": 0.0189301968,
+              "bodyColliderType": "BoxCollider",
+              "bodyCollider": "dronePrototype"
             }
           ]
         }
@@ -190056,7 +190330,9 @@
                 0.989382744,
                 0.140827522
               ],
-              "separation": -0.00243321061
+              "separation": -0.00243321061,
+              "bodyColliderType": "SphereCollider",
+              "bodyCollider": "dronePrototype/AimTargerAndEngine"
             }
           ]
         },
@@ -190087,7 +190363,9 @@
                 0.0248503126,
                 -0.258640379
               ],
-              "separation": 0.0161208939
+              "separation": 0.0161208939,
+              "bodyColliderType": "BoxCollider",
+              "bodyCollider": "dronePrototype"
             },
             {
               "position": [
@@ -190100,7 +190378,9 @@
                 0.0248503126,
                 -0.258640379
               ],
-              "separation": 0.017565161
+              "separation": 0.017565161,
+              "bodyColliderType": "BoxCollider",
+              "bodyCollider": "dronePrototype"
             },
             {
               "position": [
@@ -190113,7 +190393,9 @@
                 0.175352156,
                 0.0725473
               ],
-              "separation": 0.019251287
+              "separation": 0.019251287,
+              "bodyColliderType": "BoxCollider",
+              "bodyCollider": "dronePrototype"
             }
           ]
         },
@@ -190144,7 +190426,9 @@
                 0.998827934,
                 -0.0369936228
               ],
-              "separation": 0.00566241145
+              "separation": 0.00566241145,
+              "bodyColliderType": "SphereCollider",
+              "bodyCollider": "dronePrototype/AimTargerAndEngine"
             }
           ]
         },
@@ -190175,7 +190459,9 @@
                 0.998827934,
                 -0.0369935744
               ],
-              "separation": 0.0178648233
+              "separation": 0.0178648233,
+              "bodyColliderType": "BoxCollider",
+              "bodyCollider": "dronePrototype"
             }
           ]
         },
@@ -190206,7 +190492,9 @@
                 0.08539338,
                 0.137493446
               ],
-              "separation": 0.0132814348
+              "separation": 0.0132814348,
+              "bodyColliderType": "BoxCollider",
+              "bodyCollider": "dronePrototype"
             },
             {
               "position": [
@@ -190219,7 +190507,9 @@
                 0.08539338,
                 0.137493446
               ],
-              "separation": 0.0132147372
+              "separation": 0.0132147372,
+              "bodyColliderType": "BoxCollider",
+              "bodyCollider": "dronePrototype"
             }
           ]
         },
@@ -190250,7 +190540,9 @@
                 0.998828,
                 -0.0369935781
               ],
-              "separation": 0.0155691653
+              "separation": 0.0155691653,
+              "bodyColliderType": "BoxCollider",
+              "bodyCollider": "dronePrototype"
             }
           ]
         },
@@ -190281,7 +190573,9 @@
                 -0.0254696384,
                 0.137838066
               ],
-              "separation": 0.0198403
+              "separation": 0.0198403,
+              "bodyColliderType": "BoxCollider",
+              "bodyCollider": "dronePrototype"
             }
           ]
         },
@@ -190312,7 +190606,9 @@
                 0.462955147,
                 0.0351701155
               ],
-              "separation": 0.01759234
+              "separation": 0.01759234,
+              "bodyColliderType": "SphereCollider",
+              "bodyCollider": "dronePrototype/AimTargerAndEngine"
             }
           ]
         }
@@ -197003,7 +197299,9 @@
                 0.989382744,
                 0.140827537
               ],
-              "separation": -0.00243294239
+              "separation": -0.00243294239,
+              "bodyColliderType": "SphereCollider",
+              "bodyCollider": "dronePrototype/AimTargerAndEngine"
             }
           ]
         },
@@ -197034,7 +197332,9 @@
                 0.998827934,
                 -0.0369936526
               ],
-              "separation": 0.0111967176
+              "separation": 0.0111967176,
+              "bodyColliderType": "BoxCollider",
+              "bodyCollider": "dronePrototype"
             }
           ]
         },
@@ -197065,7 +197365,9 @@
                 0.49641946,
                 0.7880642
               ],
-              "separation": 0.0176329017
+              "separation": 0.0176329017,
+              "bodyColliderType": "SphereCollider",
+              "bodyCollider": "dronePrototype/AimTargerAndEngine"
             }
           ]
         },
@@ -197096,7 +197398,9 @@
                 0.5500847,
                 -0.285883
               ],
-              "separation": 0.0158348978
+              "separation": 0.0158348978,
+              "bodyColliderType": "SphereCollider",
+              "bodyCollider": "dronePrototype/AimTargerAndEngine"
             }
           ]
         },
@@ -197127,7 +197431,9 @@
                 0.996426761,
                 -0.07159052
               ],
-              "separation": 0.01291487
+              "separation": 0.01291487,
+              "bodyColliderType": "BoxCollider",
+              "bodyCollider": "dronePrototype"
             }
           ]
         }
@@ -203818,7 +204124,9 @@
                 0.989382744,
                 0.1408275
               ],
-              "separation": -0.002433151
+              "separation": -0.002433151,
+              "bodyColliderType": "SphereCollider",
+              "bodyCollider": "dronePrototype/AimTargerAndEngine"
             }
           ]
         },
@@ -203849,7 +204157,9 @@
                 0.998827934,
                 -0.0369936451
               ],
-              "separation": -0.008025929
+              "separation": -0.008025929,
+              "bodyColliderType": "BoxCollider",
+              "bodyCollider": "dronePrototype"
             }
           ]
         },
@@ -203880,7 +204190,9 @@
                 0.5532456,
                 -0.256892323
               ],
-              "separation": 0.0177097917
+              "separation": 0.0177097917,
+              "bodyColliderType": "SphereCollider",
+              "bodyCollider": "dronePrototype/AimTargerAndEngine"
             }
           ]
         },
@@ -203911,7 +204223,9 @@
                 0.9136436,
                 -0.109431453
               ],
-              "separation": 0.0198425949
+              "separation": 0.0198425949,
+              "bodyColliderType": "BoxCollider",
+              "bodyCollider": "dronePrototype"
             }
           ]
         },
@@ -203942,7 +204256,9 @@
                 0.998827934,
                 -0.0369936228
               ],
-              "separation": 0.01989165
+              "separation": 0.01989165,
+              "bodyColliderType": "SphereCollider",
+              "bodyCollider": "dronePrototype/AimTargerAndEngine"
             }
           ]
         },
@@ -203973,7 +204289,9 @@
                 0.4262099,
                 0.820120156
               ],
-              "separation": 0.0036586225
+              "separation": 0.0036586225,
+              "bodyColliderType": "SphereCollider",
+              "bodyCollider": "dronePrototype/AimTargerAndEngine"
             }
           ]
         }

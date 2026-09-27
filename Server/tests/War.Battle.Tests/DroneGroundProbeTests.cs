@@ -46,6 +46,12 @@ internal static class DroneGroundProbeTests
                            Math.Abs(contact.Normal.Length()-1)>.0001f||contact.Separation>0||contact.Separation<-.01f)
                             throw new Exception("Ground sphere contact point/normal disagrees with source ray surface.");
                         checks++;
+                        if(map.SphereSurfaceContacts(surfacePosition+Vector3.UnitY*.005f,.01f,0,mask,
+                            colliderEnabled:_=>false).Count!=0)
+                            throw new Exception("Disabled colliders leaked into sphere contact authority.");
+                        if(map.SphereSurfaceContacts(surfacePosition+Vector3.UnitY*.005f,.01f,0,0).Count!=0)
+                            throw new Exception("Empty runtime mask leaked sphere contacts.");
+                        checks+=2;
                     }
                 }
             }

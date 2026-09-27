@@ -117,7 +117,8 @@ public sealed class DroneCollisionObserver:MonoBehaviour
             rootPosition=new[]{position.x,position.y,position.z},
             rootRotation=new[]{rotation.x,rotation.y,rotation.z,rotation.w},
             contacts=collision.contacts.Select(c=>new{position=new[]{c.point.x,c.point.y,c.point.z},
-                normal=new[]{c.normal.x,c.normal.y,c.normal.z},separation=c.separation}).ToArray()});
+                normal=new[]{c.normal.x,c.normal.y,c.normal.z},separation=c.separation,
+                bodyColliderType=c.thisCollider.GetType().Name,bodyCollider=Path(c.thisCollider.transform)}).ToArray()});
     }
     private static string Path(Transform value)
     {string path=value.name;while(value.parent!=null){value=value.parent;path=value.name+"/"+path;}return path;}

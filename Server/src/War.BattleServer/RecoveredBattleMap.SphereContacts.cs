@@ -8,7 +8,8 @@ public sealed partial class RecoveredBattleMap
 {
     // One nearest surface per collider; not a complete PhysX contact manifold.
     internal IReadOnlyList<MapSphereSurfaceContact> SphereSurfaceContacts(Vector3 center,float radius,
-        float margin,uint layerMask)
+        float margin,uint layerMask,Func<string,bool>? dynamicEnabled=null,
+        Func<int,bool>? colliderEnabled=null,Func<int,int,int>? runtimeLayer=null)
     {
         if(!Finite(center)||!float.IsFinite(radius)||radius<=0||radius>100||
            !float.IsFinite(margin)||margin<0||margin>.1f)
@@ -16,7 +17,11 @@ public sealed partial class RecoveredBattleMap
         var extent=new Vector3(radius+margin);var result=new List<MapSphereSurfaceContact>();
         foreach(var shape in shapes)
         {
-            if((layerMask&(1u<<shape.Layer))==0||
+            int layer=runtimeLayer?.Invoke(shape.SourceIndex,shape.Layer)??shape.Layer;
+            if(layer is <0 or >31)throw new InvalidDataException("Invalid runtime contact layer.");
+            if((layerMask&(1u<<layer))==0||
+                shape.DynamicOwner!=null&&dynamicEnabled!=null&&!dynamicEnabled(shape.DynamicOwner)||
+                colliderEnabled!=null&&!colliderEnabled(shape.SourceIndex)||
                 !BoundsOverlap(center-extent,center+extent,shape.Min,shape.Max))continue;
             float best=float.PositiveInfinity;Vector3 point=default,faceNormal=default;
             var triangles=shape.Hull==null?shape.Triangles:HullSurfaceTriangles(shape.Vertices,shape.Hull);
@@ -33,7 +38,7 @@ public sealed partial class RecoveredBattleMap
             var normal=length>1e-8f?(center-point)/length:Vector3.Normalize(faceNormal);
             if(inside)normal=-normal;
             if(!Finite(normal))throw new InvalidDataException("Degenerate map contact surface.");
-            result.Add(new(shape.SourceIndex,shape.Path,shape.Layer,point,normal,(inside?-length:length)-radius));
+            result.Add(new(shape.SourceIndex,shape.Path,layer,point,normal,(inside?-length:length)-radius));
         }
         return result.AsReadOnly();
     }
