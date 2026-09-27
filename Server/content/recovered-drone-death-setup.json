@@ -35,5 +35,14 @@
     0.0,
     -9.81,
     0.0
-  ]
+  ],
+  "steeringCodeSource": "Assets/Scripts/Assembly-CSharp/DroneSteering.cs",
+  "steeringCodeSha256": "5cd5ada9a71f402025337214b63543deebb4e966e492aa44b488bdea1878c2c0",
+  "fallTransition": {
+    "kinematic": false,
+    "steeringEnabled": false,
+    "explicitVelocityAssignment": false
+  },
+  "observedLayerCollisionMatrix": "cde1d86cc8000000cd61d86dffffff/fc8000000c8000000ffffff/fffffff/fcd21d46cc8000000c8000000c8000000c8100000cde1d86dcd601861c9200000c8000000c8000000c801c40dcd60186ccd610800c8000000cd21c46ccd21c46ccc60046dc8000000cd21cc69cd21cc65c8000000cd61c86dcd61c86dc8000000",
+  "layerCollisionMatrixCanonicalHex": false
 }

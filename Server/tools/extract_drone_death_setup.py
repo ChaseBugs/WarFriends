@@ -27,6 +27,13 @@ def extract():
   settings.append({'source':'ProjectSettings/'+name,'sha256':hashlib.sha256(b).hexdigest()})
  time=(ASSETS.parent/'ProjectSettings/TimeManager.asset').read_text()
  physics=(ASSETS.parent/'ProjectSettings/DynamicsManager.asset').read_text()
+ steering_path=ASSETS/'Scripts/Assembly-CSharp/DroneSteering.cs';steering_bytes=steering_path.read_bytes()
+ steering=steering_bytes.decode('utf-8-sig')
+ fall=re.search(r'public void FallDown\(\)\s*\{([^}]+)\}',steering)
+ if not fall or re.sub(r'\s+','',fall[1])!='mRigidBody.isKinematic=false;enabled=false;':
+  raise ValueError('Drone fall transition changed; re-audit velocity and force authority')
+ matrix=direct(physics,'m_LayerCollisionMatrix')
+ matrix_valid=bool(re.fullmatch(r'[0-9a-fA-F]{256}',matrix))
  return {'version':1,'source':'Assets/GameObject/dronePrototype.prefab','sha256':hashlib.sha256(data).hexdigest(),
   'componentFileId':cid,'mass':number(body,'m_Mass'),'drag':number(body,'m_Drag'),
   'angularDrag':number(body,'m_AngularDrag'),'useGravity':direct(body,'m_UseGravity')=='1',
@@ -34,7 +41,11 @@ def extract():
   'constraints':int(direct(body,'m_Constraints')),'collisionDetection':int(direct(body,'m_CollisionDetection')),
   'deathCodeSource':'Assets/Scripts/Assembly-CSharp/Drone.cs','deathCodeSha256':hashlib.sha256(code).hexdigest(),
   'explosion':constants,'settingsEvidence':settings,'observedFixedTimestep':number(time,'Fixed Timestep'),
-  'observedGravity':vector(direct(physics,'m_Gravity'))}
+  'observedGravity':vector(direct(physics,'m_Gravity')),
+  'steeringCodeSource':'Assets/Scripts/Assembly-CSharp/DroneSteering.cs',
+  'steeringCodeSha256':hashlib.sha256(steering_bytes).hexdigest(),
+  'fallTransition':{'kinematic':False,'steeringEnabled':False,'explicitVelocityAssignment':False},
+  'observedLayerCollisionMatrix':matrix,'layerCollisionMatrixCanonicalHex':matrix_valid}
 
 def main():
  text=json.dumps(extract(),indent=2)+'\n'
