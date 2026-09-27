@@ -91,8 +91,13 @@ public sealed class DroneCollisionObserver:MonoBehaviour
     public readonly List<object> Rows=new List<object>();
     private void OnCollisionEnter(Collision collision)
     {
-        Rows.Add(new{frame=Frame,other=collision.collider.name,layer=collision.collider.gameObject.layer,
+        var body=GetComponent<Rigidbody>();var position=body.position;var rotation=body.rotation;
+        Rows.Add(new{frame=Frame,other=Path(collision.collider.transform),layer=collision.collider.gameObject.layer,
+            rootPosition=new[]{position.x,position.y,position.z},
+            rootRotation=new[]{rotation.x,rotation.y,rotation.z,rotation.w},
             contacts=collision.contacts.Select(c=>new{position=new[]{c.point.x,c.point.y,c.point.z},
                 normal=new[]{c.normal.x,c.normal.y,c.normal.z},separation=c.separation}).ToArray()});
     }
+    private static string Path(Transform value)
+    {string path=value.name;while(value.parent!=null){value=value.parent;path=value.name+"/"+path;}return path;}
 }

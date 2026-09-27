@@ -3640,8 +3640,19 @@
       "collisionCallbacks": [
         {
           "frame": 24,
-          "other": "ground",
+          "other": "LevelRootAztec/aztec_map/GameObject/ground",
           "layer": 30,
+          "rootPosition": [
+            -1.68847644,
+            0.450504363,
+            3.33791852
+          ],
+          "rootRotation": [
+            -0.003493701,
+            0.00112369878,
+            0.00103220879,
+            0.9999928
+          ],
           "contacts": [
             {
               "position": [
@@ -3660,8 +3671,19 @@
         },
         {
           "frame": 24,
-          "other": "sandbag",
+          "other": "LevelRootAztec/aztec_map/GameObject/sandbag",
           "layer": 13,
+          "rootPosition": [
+            -1.68847644,
+            0.450504363,
+            3.33791852
+          ],
+          "rootRotation": [
+            -0.003493701,
+            0.00112369878,
+            0.00103220879,
+            0.9999928
+          ],
           "contacts": [
             {
               "position": [
@@ -3680,8 +3702,19 @@
         },
         {
           "frame": 73,
-          "other": "ground",
+          "other": "LevelRootAztec/aztec_map/GameObject/ground",
           "layer": 30,
+          "rootPosition": [
+            -1.33233893,
+            0.4153265,
+            3.12907386
+          ],
+          "rootRotation": [
+            -0.2344725,
+            0.04670998,
+            -0.405517071,
+            0.8822681
+          ],
           "contacts": [
             {
               "position": [
@@ -3700,8 +3733,19 @@
         },
         {
           "frame": 120,
-          "other": "ground",
+          "other": "LevelRootAztec/aztec_map/GameObject/ground",
           "layer": 30,
+          "rootPosition": [
+            -1.12193441,
+            0.411333054,
+            3.16854477
+          ],
+          "rootRotation": [
+            -0.167265326,
+            0.104105793,
+            -0.607234538,
+            0.769708157
+          ],
           "contacts": [
             {
               "position": [
@@ -7354,8 +7398,19 @@
       "collisionCallbacks": [
         {
           "frame": 19,
-          "other": "wall01",
+          "other": "LevelRootAztec/aztec_map/GameObject/wall01",
           "layer": 13,
+          "rootPosition": [
+            1.33911824,
+            0.547102034,
+            -3.80151772
+          ],
+          "rootRotation": [
+            0.0007205334,
+            0.000116452647,
+            0.0168108381,
+            0.999858558
+          ],
           "contacts": [
             {
               "position": [
@@ -7374,8 +7429,19 @@
         },
         {
           "frame": 30,
-          "other": "ground",
+          "other": "LevelRootAztec/aztec_map/GameObject/ground",
           "layer": 30,
+          "rootPosition": [
+            1.13759685,
+            0.351636916,
+            -3.79429817
+          ],
+          "rootRotation": [
+            0.0113081727,
+            0.0008421671,
+            0.330066979,
+            0.9438895
+          ],
           "contacts": [
             {
               "position": [
@@ -7394,8 +7460,19 @@
         },
         {
           "frame": 34,
-          "other": "demon",
+          "other": "LevelRootAztec/aztec_map/GameObject/demon/demon",
           "layer": 13,
+          "rootPosition": [
+            1.07065821,
+            0.3507551,
+            -3.780253
+          ],
+          "rootRotation": [
+            0.0260229651,
+            -0.006062898,
+            0.4093185,
+            0.9120003
+          ],
           "contacts": [
             {
               "position": [
@@ -7427,8 +7504,19 @@
         },
         {
           "frame": 51,
-          "other": "ground",
+          "other": "LevelRootAztec/aztec_map/GameObject/ground",
           "layer": 30,
+          "rootPosition": [
+            1.03665483,
+            0.336842358,
+            -3.66483831
+          ],
+          "rootRotation": [
+            0.1084805,
+            -0.1574839,
+            0.433351129,
+            0.8807029
+          ],
           "contacts": [
             {
               "position": [
@@ -7447,8 +7535,19 @@
         },
         {
           "frame": 123,
-          "other": "ground",
+          "other": "LevelRootAztec/aztec_map/GameObject/ground",
           "layer": 30,
+          "rootPosition": [
+            1.12331557,
+            0.300598681,
+            -3.16934276
+          ],
+          "rootRotation": [
+            0.5788076,
+            -0.321268678,
+            0.190388411,
+            0.724927962
+          ],
           "contacts": [
             {
               "position": [
@@ -7467,8 +7566,19 @@
         },
         {
           "frame": 141,
-          "other": "ground",
+          "other": "LevelRootAztec/aztec_map/GameObject/ground",
           "layer": 30,
+          "rootPosition": [
+            0.9938806,
+            0.290637672,
+            -3.07284951
+          ],
+          "rootRotation": [
+            0.6961449,
+            -0.253733248,
+            0.263388127,
+            0.617760837
+          ],
           "contacts": [
             {
               "position": [
@@ -11121,8 +11231,19 @@
       "collisionCallbacks": [
         {
           "frame": 19,
-          "other": "roadblock",
+          "other": "LevelRoot/CityMap/Barriers/barrier 1 mat/roadblock",
           "layer": 13,
+          "rootPosition": [
+            -1.59967017,
+            0.443921953,
+            3.41539526
+          ],
+          "rootRotation": [
+            0.02271996,
+            0.000264598668,
+            0.02141999,
+            0.999512434
+          ],
           "contacts": [
             {
               "position": [
@@ -11141,8 +11262,19 @@
         },
         {
           "frame": 19,
-          "other": "ground11",
+          "other": "LevelRoot/CityMap/ground11",
           "layer": 30,
+          "rootPosition": [
+            -1.59967017,
+            0.443921953,
+            3.41539526
+          ],
+          "rootRotation": [
+            0.02271996,
+            0.000264598668,
+            0.02141999,
+            0.999512434
+          ],
           "contacts": [
             {
               "position": [
@@ -11161,8 +11293,19 @@
         },
         {
           "frame": 55,
-          "other": "ground11",
+          "other": "LevelRoot/CityMap/ground11",
           "layer": 30,
+          "rootPosition": [
+            -1.78351414,
+            0.441554576,
+            3.6646452
+          ],
+          "rootRotation": [
+            0.306057334,
+            0.00335003482,
+            0.229713455,
+            0.9238775
+          ],
           "contacts": [
             {
               "position": [
@@ -11181,8 +11324,19 @@
         },
         {
           "frame": 92,
-          "other": "tires",
+          "other": "LevelRoot/CityMap/Barriers/barrier 1 mat/tires",
           "layer": 13,
+          "rootPosition": [
+            -1.71160662,
+            0.4409401,
+            3.72083664
+          ],
+          "rootRotation": [
+            0.364619941,
+            -0.0374001078,
+            0.150806233,
+            0.918102
+          ],
           "contacts": [
             {
               "position": [
@@ -11201,8 +11355,19 @@
         },
         {
           "frame": 106,
-          "other": "ground11",
+          "other": "LevelRoot/CityMap/ground11",
           "layer": 30,
+          "rootPosition": [
+            -1.71380293,
+            0.440723062,
+            3.74111414
+          ],
+          "rootRotation": [
+            0.387345672,
+            -0.03511507,
+            0.1501467,
+            0.9089479
+          ],
           "contacts": [
             {
               "position": [
@@ -14855,8 +15020,19 @@
       "collisionCallbacks": [
         {
           "frame": 21,
-          "other": "ground11",
+          "other": "LevelRoot/CityMap/ground11",
           "layer": 30,
+          "rootPosition": [
+            1.8942579,
+            0.43708235,
+            -3.23378587
+          ],
+          "rootRotation": [
+            0.000756288646,
+            8.83733264E-08,
+            1.61415664E-05,
+            0.9999997
+          ],
           "contacts": [
             {
               "position": [
@@ -18509,8 +18685,19 @@
       "collisionCallbacks": [
         {
           "frame": 22,
-          "other": "terrain_desert1",
+          "other": "LevelRoot/desert_map/terrain_desert1",
           "layer": 30,
+          "rootPosition": [
+            -25.682579,
+            -2.14768815,
+            -4.52359247
+          ],
+          "rootRotation": [
+            0.000303230656,
+            1.03686762E-06,
+            7.311575E-05,
+            1.0
+          ],
           "contacts": [
             {
               "position": [
@@ -22163,8 +22350,19 @@
       "collisionCallbacks": [
         {
           "frame": 23,
-          "other": "terrain_desert1",
+          "other": "LevelRoot/desert_map/terrain_desert1",
           "layer": 30,
+          "rootPosition": [
+            -22.2141037,
+            -2.10254955,
+            -11.9643278
+          ],
+          "rootRotation": [
+            0.0002355756,
+            8.48967E-05,
+            0.00623414945,
+            0.9999805
+          ],
           "contacts": [
             {
               "position": [
@@ -22183,8 +22381,19 @@
         },
         {
           "frame": 53,
-          "other": "barier",
+          "other": "LevelRoot/desert_map/props/barier",
           "layer": 13,
+          "rootPosition": [
+            -22.53036,
+            -2.14651442,
+            -11.9826593
+          ],
+          "rootRotation": [
+            -0.0208617914,
+            -6.331688E-05,
+            0.3699615,
+            0.9288129
+          ],
           "contacts": [
             {
               "position": [
@@ -22203,8 +22412,19 @@
         },
         {
           "frame": 77,
-          "other": "terrain_desert1",
+          "other": "LevelRoot/desert_map/terrain_desert1",
           "layer": 30,
+          "rootPosition": [
+            -22.59144,
+            -2.15673327,
+            -12.0911884
+          ],
+          "rootRotation": [
+            -0.141906217,
+            0.07881579,
+            0.431691557,
+            0.8872954
+          ],
           "contacts": [
             {
               "position": [
@@ -25857,8 +26077,19 @@
       "collisionCallbacks": [
         {
           "frame": 20,
-          "other": "ground",
+          "other": "LevelRootPark/park_map/ground",
           "layer": 13,
+          "rootPosition": [
+            -1.60750937,
+            0.421390176,
+            4.06479025
+          ],
+          "rootRotation": [
+            0.001643819,
+            -1.88583726E-09,
+            2.12314189E-05,
+            0.9999986
+          ],
           "contacts": [
             {
               "position": [
@@ -25877,8 +26108,19 @@
         },
         {
           "frame": 114,
-          "other": "lamp (1)",
+          "other": "LevelRootPark/park_map/Set Pieces/Lamps/Left/lamp (1)",
           "layer": 13,
+          "rootPosition": [
+            -1.6095221,
+            0.429582357,
+            4.22051954
+          ],
+          "rootRotation": [
+            0.182292908,
+            2.04112439E-07,
+            0.00235614134,
+            0.9832416
+          ],
           "contacts": [
             {
               "position": [
@@ -25923,8 +26165,19 @@
         },
         {
           "frame": 118,
-          "other": "lamp (1)",
+          "other": "LevelRootPark/park_map/Set Pieces/Lamps/Left/lamp (1)",
           "layer": 13,
+          "rootPosition": [
+            -1.60965908,
+            0.429582357,
+            4.23111534
+          ],
+          "rootRotation": [
+            0.194478735,
+            2.29774741E-07,
+            0.00251362566,
+            0.980903566
+          ],
           "contacts": [
             {
               "position": [
@@ -29577,8 +29830,19 @@
       "collisionCallbacks": [
         {
           "frame": 21,
-          "other": "ground",
+          "other": "LevelRootPark/park_map/ground",
           "layer": 13,
+          "rootPosition": [
+            1.86826086,
+            0.4324516,
+            -3.3762958
+          ],
+          "rootRotation": [
+            0.0009353864,
+            -2.68346412E-09,
+            1.20809418E-05,
+            0.9999996
+          ],
           "contacts": [
             {
               "position": [
@@ -29597,8 +29861,19 @@
         },
         {
           "frame": 33,
-          "other": "bench",
+          "other": "LevelRootPark/park_map/Barriers/bench",
           "layer": 13,
+          "rootPosition": [
+            1.86813724,
+            0.429585874,
+            -3.366739
+          ],
+          "rootRotation": [
+            0.0116280094,
+            -7.820518E-09,
+            0.000150354463,
+            0.999932349
+          ],
           "contacts": [
             {
               "position": [
@@ -33251,8 +33526,19 @@
       "collisionCallbacks": [
         {
           "frame": 1,
-          "other": "lamp",
+          "other": "LevelRoot/snow_map/lamp",
           "layer": 13,
+          "rootPosition": [
+            -1.60240018,
+            1.07575619,
+            4.078294
+          ],
+          "rootRotation": [
+            0.00255720713,
+            -3.7163165E-05,
+            0.000250698824,
+            0.9999968
+          ],
           "contacts": [
             {
               "position": [
@@ -33336,8 +33622,19 @@
         },
         {
           "frame": 1,
-          "other": "lamp",
+          "other": "LevelRoot/snow_map/lamp",
           "layer": 13,
+          "rootPosition": [
+            -1.60240018,
+            1.07575619,
+            4.078294
+          ],
+          "rootRotation": [
+            0.00255720713,
+            -3.7163165E-05,
+            0.000250698824,
+            0.9999968
+          ],
           "contacts": [
             {
               "position": [
@@ -33356,8 +33653,19 @@
         },
         {
           "frame": 19,
-          "other": "roadblock",
+          "other": "LevelRoot/snow_map/roadblock",
           "layer": 13,
+          "rootPosition": [
+            -1.63391674,
+            0.489241123,
+            4.098936
+          ],
+          "rootRotation": [
+            0.0252705477,
+            0.00237080827,
+            0.032165397,
+            0.9991603
+          ],
           "contacts": [
             {
               "position": [
@@ -33376,8 +33684,19 @@
         },
         {
           "frame": 19,
-          "other": "roadblock",
+          "other": "LevelRoot/snow_map/roadblock",
           "layer": 13,
+          "rootPosition": [
+            -1.63391674,
+            0.489241123,
+            4.098936
+          ],
+          "rootRotation": [
+            0.0252705477,
+            0.00237080827,
+            0.032165397,
+            0.9991603
+          ],
           "contacts": [
             {
               "position": [
@@ -33396,8 +33715,19 @@
         },
         {
           "frame": 25,
-          "other": "terrain_snow1",
+          "other": "LevelRoot/snow_map/terrain_snow1",
           "layer": 13,
+          "rootPosition": [
+            -1.75566864,
+            0.3643582,
+            4.13166857
+          ],
+          "rootRotation": [
+            0.07289402,
+            0.007637032,
+            0.219039291,
+            0.972959459
+          ],
           "contacts": [
             {
               "position": [
@@ -33416,8 +33746,19 @@
         },
         {
           "frame": 35,
-          "other": "terrain_snow1",
+          "other": "LevelRoot/snow_map/terrain_snow1",
           "layer": 13,
+          "rootPosition": [
+            -1.93599236,
+            0.3747321,
+            4.17718172
+          ],
+          "rootRotation": [
+            0.122317806,
+            0.013808568,
+            0.41819495,
+            0.899978161
+          ],
           "contacts": [
             {
               "position": [
@@ -33436,8 +33777,19 @@
         },
         {
           "frame": 55,
-          "other": "terrain_snow1",
+          "other": "LevelRoot/snow_map/terrain_snow1",
           "layer": 13,
+          "rootPosition": [
+            -2.13999462,
+            0.383924484,
+            4.08559561
+          ],
+          "rootRotation": [
+            0.02894773,
+            0.104619473,
+            0.612244546,
+            0.783181548
+          ],
           "contacts": [
             {
               "position": [
@@ -37090,8 +37442,19 @@
       "collisionCallbacks": [
         {
           "frame": 18,
-          "other": "metal",
+          "other": "LevelRoot/snow_map/metal",
           "layer": 13,
+          "rootPosition": [
+            1.88139856,
+            0.663909554,
+            -2.90642738
+          ],
+          "rootRotation": [
+            0.006250882,
+            1.82322965E-05,
+            0.001347298,
+            0.9999796
+          ],
           "contacts": [
             {
               "position": [
@@ -37110,8 +37473,19 @@
         },
         {
           "frame": 42,
-          "other": "armybox_2",
+          "other": "LevelRoot/snow_map/armybox_2",
           "layer": 13,
+          "rootPosition": [
+            1.8081286,
+            0.4567822,
+            -2.611155
+          ],
+          "rootRotation": [
+            0.41268307,
+            0.000431806839,
+            0.10246601,
+            0.905093133
+          ],
           "contacts": [
             {
               "position": [
@@ -37156,8 +37530,19 @@
         },
         {
           "frame": 44,
-          "other": "terrain_snow1",
+          "other": "LevelRoot/snow_map/terrain_snow1",
           "layer": 13,
+          "rootPosition": [
+            1.80490768,
+            0.423002332,
+            -2.57950068
+          ],
+          "rootRotation": [
+            0.4567503,
+            0.0018690374,
+            0.10481301,
+            0.8833968
+          ],
           "contacts": [
             {
               "position": [
@@ -37176,8 +37561,19 @@
         },
         {
           "frame": 44,
-          "other": "terrain_snow1",
+          "other": "LevelRoot/snow_map/terrain_snow1",
           "layer": 13,
+          "rootPosition": [
+            1.80490768,
+            0.423002332,
+            -2.57950068
+          ],
+          "rootRotation": [
+            0.4567503,
+            0.0018690374,
+            0.10481301,
+            0.8833968
+          ],
           "contacts": [
             {
               "position": [
@@ -37196,8 +37592,19 @@
         },
         {
           "frame": 51,
-          "other": "armybox_2",
+          "other": "LevelRoot/snow_map/armybox_2",
           "layer": 13,
+          "rootPosition": [
+            1.829342,
+            0.4260724,
+            -2.485598
+          ],
+          "rootRotation": [
+            0.552007854,
+            -0.0153482528,
+            0.07599038,
+            0.8302274
+          ],
           "contacts": [
             {
               "position": [
