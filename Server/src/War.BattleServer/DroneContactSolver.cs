@@ -22,7 +22,11 @@ internal sealed class DroneContactSolver
             throw new InvalidDataException("Excessive Drone contact batch.");
         var initial=DroneRigidMotion.AdvanceVelocities(velocity,angularVelocity);
         _=response.PointVelocity(root,rotation,initial.Velocity,initial.AngularVelocity,root);
-        var patches=shapePairs.SelectMany((p,index)=>ContactFrictionPatches.Correlate(p,normalTolerance)
+        FrictionPatchSeed[] Seeds(int index)=>reuseCaches&&caches.TryGetValue(index,out var previous)?
+            previous.Where(c=>c.Cache.CanReuse(root,rotation,normalTolerance,correlationDistance))
+                .Select(c=>new FrictionPatchSeed(Vector3.Transform(c.Cache.BodyNormal,rotation),c.Material)).ToArray():
+            Array.Empty<FrictionPatchSeed>();
+        var patches=shapePairs.SelectMany((p,index)=>ContactFrictionPatches.Correlate(p,normalTolerance,Seeds(index))
             .Select(patch=>(Pair:index,Patch:patch))).ToArray();
         var normalStates=new List<(Vector3 Normal,ContactMaterial Material,DroneNormalPoint[] Points,
             PreparedNormalContact[] Prepared,float[] Applied,Vector3[] Anchors,PreparedFrictionAxis[] Axes,float[] Friction,
@@ -32,8 +36,9 @@ internal sealed class DroneContactSolver
             var patch=entry.Patch;
             if(patch.Material.Restitution!=0)throw new InvalidDataException("Unsupported restitution.");
             var points=patch.Contacts.ToArray();
+            var solverNormal=points[0].Normal; // Prep uses the head contact group's normal.
             var prepared=points.Select(c=>DroneNormalContact.Prepare(response,root,rotation,initial.Velocity,
-                initial.AngularVelocity,c.Point,patch.Normal,c.Separation,0,1e32f,.02f)).ToArray();
+                initial.AngularVelocity,c.Point,solverNormal,c.Separation,0,1e32f,.02f)).ToArray();
             var anchors=ContactFrictionAnchors.Select(points,correlationDistance,offsetThreshold);
             ContactFrictionCache? cached=null;
             if(reuseCaches&&caches.TryGetValue(entry.Pair,out var candidates))
@@ -43,10 +48,10 @@ internal sealed class DroneContactSolver
             if(cached!=null)cached=cached.Grow(root,rotation,points,correlationDistance,offsetThreshold);
             cached??=new ContactFrictionCache(root,rotation,patch.Normal,anchors,false);
             anchors=cached.Anchors.Select(a=>root+Vector3.Transform(a.BodyLocal,rotation)).ToArray();
-            var basis=ContactFrictionBasis.Prepare(patch.Normal,initial.Velocity);
+            var basis=ContactFrictionBasis.Prepare(solverNormal,initial.Velocity);
             var axes=anchors.SelectMany((a,index)=>new[]{basis.First,basis.Second}.Select(t=>DroneFrictionAnchor.Prepare(
                 response,root,rotation,initial.Velocity,initial.AngularVelocity,a,cached.Anchors[index].MapWorld,t,Vector3.Zero,.02f))).ToArray();
-            normalStates.Add((patch.Normal,patch.Material,points,prepared,new float[points.Length],anchors,axes,new float[axes.Length],
+            normalStates.Add((solverNormal,patch.Material,points,prepared,new float[points.Length],anchors,axes,new float[axes.Length],
                 entry.Pair,cached,new bool[1]));
         }
         var deltaVelocity=Vector3.Zero;var deltaAngular=Vector3.Zero;var impulse=Vector3.Zero;

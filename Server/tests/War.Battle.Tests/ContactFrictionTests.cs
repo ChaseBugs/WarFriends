@@ -9,6 +9,10 @@ internal static class ContactFrictionTests
         void Check(bool value){if(!value)throw new Exception("Friction constraint boundary failed.");count++;}
         DroneNormalPoint Point(float x,float separation=0)=>new(new Vector3(x,0,0),Vector3.UnitY,separation);
         var material=new ContactMaterial(.6f,.4f,0);
+        var seeded=ContactFrictionPatches.Correlate(new[]{new MaterialContact(Point(0),material),
+            new MaterialContact(Point(1) with{Normal=Vector3.UnitX},material)},.999f,
+            new[]{new FrictionPatchSeed(Vector3.UnitX,material),new FrictionPatchSeed(Vector3.UnitY,material)});
+        Check(seeded.Length==2&&seeded[0].Normal==Vector3.UnitX&&seeded[1].Normal==Vector3.UnitY);
         var cache=new ContactFrictionCache(Vector3.Zero,Quaternion.Identity,Vector3.UnitY,new[]{Vector3.Zero,Vector3.UnitX},false);
         Check(cache.CanReuse(Vector3.Zero,Quaternion.Identity,.999f,.025f));
         Check(ReferenceEquals(cache.Grow(Vector3.Zero,Quaternion.Identity,new[]{Point(0),Point(1)},.025f,.04f),cache));
