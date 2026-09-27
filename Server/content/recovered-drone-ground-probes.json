@@ -1,0 +1,3395 @@
+{
+  "version": 1,
+  "unityVersion": "2018.3.0f2",
+  "scenario": "drone-waypoint-downward-ray-probes",
+  "maps": [
+    {
+      "source": "Assets/Scenes/Aztec_Multiplayer.unity",
+      "sourceSha256": "50b3077f1898189cbf40c2232771175b85eec0f03737901373da377faf95291e",
+      "points": [
+        {
+          "waypointFileId": 2313,
+          "origin": [
+            -1.703966,
+            1.35735118,
+            3.338648
+          ],
+          "hits": [
+            {
+              "path": "LevelRootAztec/aztec_map/GameObject/ground",
+              "layer": 30,
+              "type": "MeshCollider",
+              "distance": 1.3465004,
+              "position": [
+                -1.70396733,
+                0.0108506642,
+                3.33864784
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            },
+            {
+              "path": "LevelRootAztec/boxFloorCollider",
+              "layer": 13,
+              "type": "BoxCollider",
+              "distance": 1.70504761,
+              "position": [
+                -1.703966,
+                -0.3476963,
+                3.338648
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 2462,
+          "origin": [
+            -3.402966,
+            2.03235126,
+            3.344648
+          ],
+          "hits": [
+            {
+              "path": "LevelRootAztec/aztec_map/GameObject/ground",
+              "layer": 30,
+              "type": "MeshCollider",
+              "distance": 2.03440046,
+              "position": [
+                -3.40296817,
+                -0.00204918277,
+                3.34464812
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            },
+            {
+              "path": "LevelRootAztec/boxFloorCollider",
+              "layer": 13,
+              "type": "BoxCollider",
+              "distance": 2.3800478,
+              "position": [
+                -3.402966,
+                -0.3476963,
+                3.344648
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 2241,
+          "origin": [
+            -3.402966,
+            2.12135124,
+            2.033648
+          ],
+          "hits": [
+            {
+              "path": "LevelRootAztec/aztec_map/GameObject/ground",
+              "layer": 30,
+              "type": "MeshCollider",
+              "distance": 2.147982,
+              "position": [
+                -3.40296769,
+                -0.0266309455,
+                2.03364754
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            },
+            {
+              "path": "LevelRootAztec/boxFloorCollider",
+              "layer": 13,
+              "type": "BoxCollider",
+              "distance": 2.46904755,
+              "position": [
+                -3.402966,
+                -0.3476963,
+                2.033648
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 2487,
+          "origin": [
+            -3.213966,
+            1.85735118,
+            0.636648
+          ],
+          "hits": [
+            {
+              "path": "LevelRootAztec/aztec_map/GameObject/ground",
+              "layer": 30,
+              "type": "MeshCollider",
+              "distance": 1.916623,
+              "position": [
+                -3.21396661,
+                -0.059271913,
+                0.6366474
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            },
+            {
+              "path": "LevelRootAztec/boxFloorCollider",
+              "layer": 13,
+              "type": "BoxCollider",
+              "distance": 2.20504761,
+              "position": [
+                -3.213966,
+                -0.3476963,
+                0.636648
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 2236,
+          "origin": [
+            -1.443966,
+            1.34735119,
+            0.646648
+          ],
+          "hits": [
+            {
+              "path": "LevelRootAztec/aztec_map/GameObject/ground",
+              "layer": 30,
+              "type": "MeshCollider",
+              "distance": 1.5227319,
+              "position": [
+                -1.44396591,
+                -0.175380468,
+                0.6466475
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            },
+            {
+              "path": "LevelRootAztec/boxFloorCollider",
+              "layer": 13,
+              "type": "BoxCollider",
+              "distance": 1.69504738,
+              "position": [
+                -1.443966,
+                -0.3476963,
+                0.646648
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 2484,
+          "origin": [
+            1.35099125,
+            1.15735114,
+            -3.80182242
+          ],
+          "hits": [
+            {
+              "path": "LevelRootAztec/aztec_map/GameObject/ground",
+              "layer": 30,
+              "type": "MeshCollider",
+              "distance": 1.235124,
+              "position": [
+                1.35099244,
+                -0.07777273,
+                -3.80182314
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            },
+            {
+              "path": "LevelRootAztec/boxFloorCollider",
+              "layer": 13,
+              "type": "BoxCollider",
+              "distance": 1.5050478,
+              "position": [
+                1.35099125,
+                -0.3476963,
+                -3.80182242
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 2311,
+          "origin": [
+            3.04961967,
+            1.82735121,
+            -3.87297058
+          ],
+          "hits": [
+            {
+              "path": "LevelRootAztec/aztec_map/GameObject/ground",
+              "layer": 30,
+              "type": "MeshCollider",
+              "distance": 1.86590469,
+              "position": [
+                3.049622,
+                -0.038553413,
+                -3.87297082
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            },
+            {
+              "path": "LevelRootAztec/boxFloorCollider",
+              "layer": 13,
+              "type": "BoxCollider",
+              "distance": 2.17504787,
+              "position": [
+                3.04961967,
+                -0.3476963,
+                -3.87297058
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 2430,
+          "origin": [
+            3.092868,
+            1.83882236,
+            -3.076525
+          ],
+          "hits": [
+            {
+              "path": "LevelRootAztec/aztec_map/GameObject/ground",
+              "layer": 30,
+              "type": "MeshCollider",
+              "distance": 1.92326391,
+              "position": [
+                3.09286976,
+                -0.08444162,
+                -3.07652473
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            },
+            {
+              "path": "LevelRootAztec/boxFloorCollider",
+              "layer": 13,
+              "type": "BoxCollider",
+              "distance": 2.18651867,
+              "position": [
+                3.09286785,
+                -0.3476963,
+                -3.076525
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 2697,
+          "origin": [
+            3.10292459,
+            1.65735126,
+            -0.77317065
+          ],
+          "hits": [
+            {
+              "path": "LevelRootAztec/aztec_map/GameObject/bariera06",
+              "layer": 0,
+              "type": "MeshCollider",
+              "distance": 1.56088114,
+              "position": [
+                3.10292459,
+                0.09647018,
+                -0.773169935
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            },
+            {
+              "path": "LevelRootAztec/aztec_map/GameObject/ground",
+              "layer": 30,
+              "type": "MeshCollider",
+              "distance": 1.76177049,
+              "position": [
+                3.10292554,
+                -0.104419395,
+                -0.7731699
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            },
+            {
+              "path": "LevelRootAztec/boxFloorCollider",
+              "layer": 13,
+              "type": "BoxCollider",
+              "distance": 2.0050478,
+              "position": [
+                3.10292435,
+                -0.3476963,
+                -0.77317065
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 2293,
+          "origin": [
+            1.20355129,
+            1.15121746,
+            -0.7141606
+          ],
+          "hits": [
+            {
+              "path": "LevelRootAztec/aztec_map/GameObject/ground",
+              "layer": 30,
+              "type": "MeshCollider",
+              "distance": 1.45181358,
+              "position": [
+                1.20355177,
+                -0.300596148,
+                -0.7141604
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            },
+            {
+              "path": "LevelRootAztec/boxFloorCollider",
+              "layer": 13,
+              "type": "BoxCollider",
+              "distance": 1.49891376,
+              "position": [
+                1.20355129,
+                -0.3476963,
+                -0.7141606
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 2237,
+          "origin": [
+            -1.3528862,
+            1.06409633,
+            -0.1767899
+          ],
+          "hits": [
+            {
+              "path": "LevelRootAztec/aztec_map/GameObject/ground",
+              "layer": 30,
+              "type": "MeshCollider",
+              "distance": 1.26011181,
+              "position": [
+                -1.352886,
+                -0.196015358,
+                -0.176790431
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            },
+            {
+              "path": "LevelRootAztec/boxFloorCollider",
+              "layer": 13,
+              "type": "BoxCollider",
+              "distance": 1.41179276,
+              "position": [
+                -1.3528862,
+                -0.3476963,
+                -0.1767899
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 2256,
+          "origin": [
+            -3.229353,
+            1.73358428,
+            -0.1695515
+          ],
+          "hits": [
+            {
+              "path": "LevelRootAztec/aztec_map/GameObject/ground",
+              "layer": 30,
+              "type": "MeshCollider",
+              "distance": 1.79611421,
+              "position": [
+                -3.22935343,
+                -0.06252997,
+                -0.16955255
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            },
+            {
+              "path": "LevelRootAztec/boxFloorCollider",
+              "layer": 13,
+              "type": "BoxCollider",
+              "distance": 2.08128071,
+              "position": [
+                -3.229353,
+                -0.3476963,
+                -0.1695515
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 2299,
+          "origin": [
+            -3.41745567,
+            1.73358452,
+            -2.465589
+          ],
+          "hits": [
+            {
+              "path": "LevelRootAztec/aztec_map/GameObject/ground",
+              "layer": 30,
+              "type": "MeshCollider",
+              "distance": 1.795065,
+              "position": [
+                -3.41745567,
+                -0.0614805371,
+                -2.46559048
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            },
+            {
+              "path": "LevelRootAztec/boxFloorCollider",
+              "layer": 13,
+              "type": "BoxCollider",
+              "distance": 2.08128071,
+              "position": [
+                -3.41745567,
+                -0.3476963,
+                -2.465589
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 2429,
+          "origin": [
+            -2.450927,
+            1.72991455,
+            -2.5650785
+          ],
+          "hits": [
+            {
+              "path": "LevelRootAztec/aztec_map/GameObject/ground",
+              "layer": 30,
+              "type": "MeshCollider",
+              "distance": 1.8611213,
+              "position": [
+                -2.45092678,
+                -0.131206676,
+                -2.56507945
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            },
+            {
+              "path": "LevelRootAztec/boxFloorCollider",
+              "layer": 13,
+              "type": "BoxCollider",
+              "distance": 2.077611,
+              "position": [
+                -2.450927,
+                -0.3476963,
+                -2.5650785
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 2258,
+          "origin": [
+            -1.270927,
+            1.22991455,
+            -2.5650785
+          ],
+          "hits": [
+            {
+              "path": "LevelRootAztec/aztec_map/GameObject/ground",
+              "layer": 30,
+              "type": "MeshCollider",
+              "distance": 1.41452575,
+              "position": [
+                -1.27092612,
+                -0.184611216,
+                -2.56507945
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            },
+            {
+              "path": "LevelRootAztec/boxFloorCollider",
+              "layer": 13,
+              "type": "BoxCollider",
+              "distance": 1.577611,
+              "position": [
+                -1.270927,
+                -0.3476963,
+                -2.5650785
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 2327,
+          "origin": [
+            1.79206038,
+            0.9316436,
+            -0.479927659
+          ],
+          "hits": [
+            {
+              "path": "LevelRootAztec/aztec_map/GameObject/ground",
+              "layer": 30,
+              "type": "MeshCollider",
+              "distance": 1.17594981,
+              "position": [
+                1.79206133,
+                -0.244306177,
+                -0.479927182
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            },
+            {
+              "path": "LevelRootAztec/boxFloorCollider",
+              "layer": 13,
+              "type": "BoxCollider",
+              "distance": 1.27933979,
+              "position": [
+                1.79206038,
+                -0.3476963,
+                -0.479927659
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 2478,
+          "origin": [
+            3.04374266,
+            1.76557839,
+            -0.5248551
+          ],
+          "hits": [
+            {
+              "path": "LevelRootAztec/aztec_map/GameObject/bariera06",
+              "layer": 0,
+              "type": "MeshCollider",
+              "distance": 1.67385328,
+              "position": [
+                3.043743,
+                0.09172523,
+                -0.524854243
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            },
+            {
+              "path": "LevelRootAztec/aztec_map/GameObject/ground",
+              "layer": 30,
+              "type": "MeshCollider",
+              "distance": 1.87845945,
+              "position": [
+                3.04374361,
+                -0.112881266,
+                -0.5248542
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            },
+            {
+              "path": "LevelRootAztec/boxFloorCollider",
+              "layer": 13,
+              "type": "BoxCollider",
+              "distance": 2.11327457,
+              "position": [
+                3.04374266,
+                -0.3476963,
+                -0.5248551
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 2197,
+          "origin": [
+            3.63196754,
+            1.60035121,
+            1.754006
+          ],
+          "hits": [
+            {
+              "path": "LevelRootAztec/aztec_map/GameObject/ground",
+              "layer": 30,
+              "type": "MeshCollider",
+              "distance": 1.58012879,
+              "position": [
+                3.63196754,
+                0.0202223379,
+                1.75400734
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            },
+            {
+              "path": "LevelRootAztec/boxFloorCollider",
+              "layer": 13,
+              "type": "BoxCollider",
+              "distance": 1.94804764,
+              "position": [
+                3.63196754,
+                -0.3476963,
+                1.754006
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 2442,
+          "origin": [
+            3.42864966,
+            1.60113156,
+            3.08048654
+          ],
+          "hits": [
+            {
+              "path": "LevelRootAztec/aztec_map/GameObject/ground",
+              "layer": 30,
+              "type": "MeshCollider",
+              "distance": 1.56912673,
+              "position": [
+                3.42864943,
+                0.03200495,
+                3.08048773
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            },
+            {
+              "path": "LevelRootAztec/boxFloorCollider",
+              "layer": 13,
+              "type": "BoxCollider",
+              "distance": 1.94882774,
+              "position": [
+                3.42865,
+                -0.3476963,
+                3.08048654
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 2232,
+          "origin": [
+            1.6408112,
+            1.10227048,
+            3.128095
+          ],
+          "hits": [
+            {
+              "path": "LevelRootAztec/aztec_map/GameObject/ground",
+              "layer": 30,
+              "type": "MeshCollider",
+              "distance": 1.16582024,
+              "position": [
+                1.64081073,
+                -0.0635498241,
+                3.12809563
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            },
+            {
+              "path": "LevelRootAztec/boxFloorCollider",
+              "layer": 13,
+              "type": "BoxCollider",
+              "distance": 1.44996643,
+              "position": [
+                1.6408112,
+                -0.3476963,
+                3.128095
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "source": "Assets/Scenes/City_Multiplayer.unity",
+      "sourceSha256": "acaf878b188dbc17fca6795b5db7e9c7797b91dee0fcb6fb02d5e85d7cc11c4f",
+      "points": [
+        {
+          "waypointFileId": 3119,
+          "origin": [
+            -1.582244,
+            1.03147686,
+            3.39707732
+          ],
+          "hits": [
+            {
+              "path": "LevelRoot/CityMap/ground11",
+              "layer": 30,
+              "type": "MeshCollider",
+              "distance": 1.01701725,
+              "position": [
+                -1.58224547,
+                0.0144597711,
+                3.3970778
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 2973,
+          "origin": [
+            -2.972244,
+            1.69147682,
+            3.43707728
+          ],
+          "hits": [
+            {
+              "path": "LevelRoot/CityMap/ground11",
+              "layer": 30,
+              "type": "MeshCollider",
+              "distance": 1.67745423,
+              "position": [
+                -2.97224712,
+                0.0140226176,
+                3.43707728
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 3326,
+          "origin": [
+            -3.062244,
+            1.78147686,
+            2.12707734
+          ],
+          "hits": [
+            {
+              "path": "LevelRoot/CityMap/ground11",
+              "layer": 30,
+              "type": "MeshCollider",
+              "distance": 1.75313735,
+              "position": [
+                -3.06224585,
+                0.02833956,
+                2.12707686
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 3314,
+          "origin": [
+            -3.095244,
+            1.86147678,
+            0.8240774
+          ],
+          "hits": [
+            {
+              "path": "LevelRoot/CityMap/ground11",
+              "layer": 30,
+              "type": "MeshCollider",
+              "distance": 1.81889677,
+              "position": [
+                -3.09524536,
+                0.04258,
+                0.824076653
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 2953,
+          "origin": [
+            -1.322244,
+            1.01547682,
+            0.8130774
+          ],
+          "hits": [
+            {
+              "path": "LevelRoot/CityMap/ground11",
+              "layer": 30,
+              "type": "MeshCollider",
+              "distance": 0.9727766,
+              "position": [
+                -1.32224619,
+                0.04270021,
+                0.8130772
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 3257,
+          "origin": [
+            1.89426458,
+            1.14586437,
+            -3.23369765
+          ],
+          "hits": [
+            {
+              "path": "LevelRoot/CityMap/ground11",
+              "layer": 30,
+              "type": "MeshCollider",
+              "distance": 1.13749838,
+              "position": [
+                1.89426684,
+                0.008365831,
+                -3.23369813
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 3309,
+          "origin": [
+            3.473782,
+            1.81101012,
+            -3.29124761
+          ],
+          "hits": [
+            {
+              "path": "LevelRoot/CityMap/ground11",
+              "layer": 30,
+              "type": "MeshCollider",
+              "distance": 1.80363929,
+              "position": [
+                3.47378325,
+                0.007370904,
+                -3.29124713
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 3281,
+          "origin": [
+            3.46352673,
+            1.82101011,
+            -1.97034061
+          ],
+          "hits": [
+            {
+              "path": "LevelRoot/CityMap/ground11",
+              "layer": 30,
+              "type": "MeshCollider",
+              "distance": 1.79876113,
+              "position": [
+                3.46352839,
+                0.0222488809,
+                -1.97034025
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 3317,
+          "origin": [
+            3.336937,
+            1.64101017,
+            -0.525877
+          ],
+          "hits": [
+            {
+              "path": "LevelRoot/CityMap/ground11",
+              "layer": 30,
+              "type": "MeshCollider",
+              "distance": 1.60288811,
+              "position": [
+                3.33693838,
+                0.03812211,
+                -0.5258763
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 3304,
+          "origin": [
+            1.715263,
+            1.11101007,
+            -0.557090938
+          ],
+          "hits": [
+            {
+              "path": "LevelRoot/CityMap/ground11",
+              "layer": 30,
+              "type": "MeshCollider",
+              "distance": 1.073231,
+              "position": [
+                1.71526361,
+                0.0377790928,
+                -0.5570905
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 3116,
+          "origin": [
+            -1.307043,
+            1.10844135,
+            -0.0755177
+          ],
+          "hits": [
+            {
+              "path": "LevelRoot/CityMap/ground11",
+              "layer": 30,
+              "type": "MeshCollider",
+              "distance": 1.0653702,
+              "position": [
+                -1.30704367,
+                0.04307109,
+                -0.07551812
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 3329,
+          "origin": [
+            -2.947043,
+            1.77844131,
+            -0.0495177
+          ],
+          "hits": [
+            {
+              "path": "LevelRoot/CityMap/ground11",
+              "layer": 30,
+              "type": "MeshCollider",
+              "distance": 1.73508453,
+              "position": [
+                -2.947043,
+                0.0433568,
+                -0.0495186672
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 3220,
+          "origin": [
+            -3.037043,
+            1.77844131,
+            -2.32551765
+          ],
+          "hits": [
+            {
+              "path": "LevelRoot/CityMap/ground11",
+              "layer": 30,
+              "type": "MeshCollider",
+              "distance": 1.76009548,
+              "position": [
+                -3.03704214,
+                0.01834581,
+                -2.325519
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 3107,
+          "origin": [
+            -2.837043,
+            1.77844131,
+            -3.41551781
+          ],
+          "hits": [
+            {
+              "path": "LevelRoot/CityMap/ground11",
+              "layer": 30,
+              "type": "MeshCollider",
+              "distance": 1.77516723,
+              "position": [
+                -2.83704424,
+                0.00327401981,
+                -3.41551924
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 3023,
+          "origin": [
+            -1.227043,
+            1.27844131,
+            -3.33551764
+          ],
+          "hits": [
+            {
+              "path": "LevelRoot/CityMap/ground11",
+              "layer": 30,
+              "type": "MeshCollider",
+              "distance": 1.27252984,
+              "position": [
+                -1.22704244,
+                0.00591140473,
+                -3.33551884
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 3110,
+          "origin": [
+            1.86381793,
+            0.979877949,
+            0.59050566
+          ],
+          "hits": [
+            {
+              "path": "LevelRoot/CityMap/ground11",
+              "layer": 30,
+              "type": "MeshCollider",
+              "distance": 0.934745252,
+              "position": [
+                1.86381793,
+                0.045132678,
+                0.5905064
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 3354,
+          "origin": [
+            3.109744,
+            1.587878,
+            0.3699127
+          ],
+          "hits": [
+            {
+              "path": "LevelRoot/CityMap/ground11",
+              "layer": 30,
+              "type": "MeshCollider",
+              "distance": 1.54033446,
+              "position": [
+                3.1097436,
+                0.0475435257,
+                0.369913727
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 2992,
+          "origin": [
+            3.17607737,
+            1.648878,
+            1.90861344
+          ],
+          "hits": [
+            {
+              "path": "LevelRoot/CityMap/ground11",
+              "layer": 30,
+              "type": "MeshCollider",
+              "distance": 1.61815083,
+              "position": [
+                3.17607641,
+                0.0307271183,
+                1.908615
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            },
+            {
+              "path": "LevelRoot/CityMap/Barriers/barrier 1 mat/roadblock",
+              "layer": 13,
+              "type": "MeshCollider",
+              "distance": 1.73103,
+              "position": [
+                3.17607737,
+                -0.08215219,
+                1.90861344
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 3254,
+          "origin": [
+            3.25578141,
+            1.648878,
+            3.22681212
+          ],
+          "hits": [
+            {
+              "path": "LevelRoot/CityMap/ground11",
+              "layer": 30,
+              "type": "MeshCollider",
+              "distance": 1.63255751,
+              "position": [
+                3.2557807,
+                0.0163205769,
+                3.22681379
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 3221,
+          "origin": [
+            1.68469465,
+            1.15079725,
+            3.267656
+          ],
+          "hits": [
+            {
+              "path": "LevelRoot/CityMap/ground11",
+              "layer": 30,
+              "type": "MeshCollider",
+              "distance": 1.134923,
+              "position": [
+                1.68469429,
+                0.0158741977,
+                3.26765752
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "source": "Assets/Scenes/Desert_Multiplayer.unity",
+      "sourceSha256": "d2acaeb238fb2dfdcfb0e1bb69a52628798498f7b6992ecf9418a727360368c1",
+      "points": [
+        {
+          "waypointFileId": 2640,
+          "origin": [
+            -25.6825,
+            -1.371294,
+            -4.52291536
+          ],
+          "hits": [
+            {
+              "path": "LevelRoot/desert_map/terrain_desert1",
+              "layer": 30,
+              "type": "MeshCollider",
+              "distance": 1.205442,
+              "position": [
+                -25.6824989,
+                -2.5767355,
+                -4.52292061
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 2799,
+          "origin": [
+            -27.3822956,
+            -0.701806068,
+            -4.51567841
+          ],
+          "hits": [
+            {
+              "path": "LevelRoot/desert_map/terrain_desert1",
+              "layer": 30,
+              "type": "MeshCollider",
+              "distance": 1.87232852,
+              "position": [
+                -27.3822937,
+                -2.574134,
+                -4.5156846
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 2768,
+          "origin": [
+            -27.3822956,
+            -0.6124246,
+            -5.82030773
+          ],
+          "hits": [
+            {
+              "path": "LevelRoot/desert_map/terrain_desert1",
+              "layer": 30,
+              "type": "MeshCollider",
+              "distance": 1.90548909,
+              "position": [
+                -27.3822937,
+                -2.51791286,
+                -5.820314
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 2589,
+          "origin": [
+            -27.1963749,
+            -0.880682,
+            -8.130964
+          ],
+          "hits": [
+            {
+              "path": "LevelRoot/desert_map/terrain_desert1",
+              "layer": 30,
+              "type": "MeshCollider",
+              "distance": 1.62878656,
+              "position": [
+                -27.196373,
+                -2.509468,
+                -8.13097
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 2391,
+          "origin": [
+            -25.4227467,
+            -1.382282,
+            -8.124748
+          ],
+          "hits": [
+            {
+              "path": "LevelRoot/desert_map/terrain_desert1",
+              "layer": 30,
+              "type": "MeshCollider",
+              "distance": 1.22725737,
+              "position": [
+                -25.4227428,
+                -2.60953879,
+                -8.124754
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 2602,
+          "origin": [
+            -22.2067356,
+            -1.25213563,
+            -11.9636974
+          ],
+          "hits": [
+            {
+              "path": "LevelRoot/desert_map/terrain_desert1",
+              "layer": 30,
+              "type": "MeshCollider",
+              "distance": 1.28349745,
+              "position": [
+                -22.20673,
+                -2.53563261,
+                -11.9637051
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 2575,
+          "origin": [
+            -20.5079269,
+            -0.5826476,
+            -12.0220814
+          ],
+          "hits": [
+            {
+              "path": "LevelRoot/desert_map/terrain_desert1",
+              "layer": 30,
+              "type": "MeshCollider",
+              "distance": 1.84710777,
+              "position": [
+                -20.5079212,
+                -2.42975473,
+                -12.0220871
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 2597,
+          "origin": [
+            -20.468668,
+            -0.575518668,
+            -10.7180424
+          ],
+          "hits": [
+            {
+              "path": "LevelRoot/desert_map/terrain_desert1",
+              "layer": 30,
+              "type": "MeshCollider",
+              "distance": 1.85028863,
+              "position": [
+                -20.4686642,
+                -2.42580652,
+                -10.718049
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 2376,
+          "origin": [
+            -20.45861,
+            -0.756989837,
+            -8.414688
+          ],
+          "hits": [
+            {
+              "path": "LevelRoot/desert_map/terrain_desert1",
+              "layer": 30,
+              "type": "MeshCollider",
+              "distance": 1.672866,
+              "position": [
+                -20.4586067,
+                -2.42985535,
+                -8.414694
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 2835,
+          "origin": [
+            -22.3579845,
+            -1.26312363,
+            -8.355678
+          ],
+          "hits": [
+            {
+              "path": "LevelRoot/desert_map/terrain_desert1",
+              "layer": 30,
+              "type": "MeshCollider",
+              "distance": 1.28930235,
+              "position": [
+                -22.3579826,
+                -2.55242538,
+                -8.355683
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 2473,
+          "origin": [
+            -25.4100018,
+            -1.28537691,
+            -8.767229
+          ],
+          "hits": [
+            {
+              "path": "LevelRoot/desert_map/terrain_desert1",
+              "layer": 30,
+              "type": "MeshCollider",
+              "distance": 1.332873,
+              "position": [
+                -25.409996,
+                -2.61824942,
+                -8.767235
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 2381,
+          "origin": [
+            -27.2864685,
+            -0.615888953,
+            -8.759991
+          ],
+          "hits": [
+            {
+              "path": "LevelRoot/desert_map/terrain_desert1",
+              "layer": 30,
+              "type": "MeshCollider",
+              "distance": 1.926773,
+              "position": [
+                -27.2864647,
+                -2.542662,
+                -8.759997
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 2532,
+          "origin": [
+            -27.4745712,
+            -0.6158887,
+            -11.0560284
+          ],
+          "hits": [
+            {
+              "path": "LevelRoot/desert_map/terrain_desert1",
+              "layer": 30,
+              "type": "MeshCollider",
+              "distance": 1.86651111,
+              "position": [
+                -27.4745674,
+                -2.48239923,
+                -11.056036
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 2355,
+          "origin": [
+            -27.1154442,
+            -0.615888953,
+            -12.3752785
+          ],
+          "hits": [
+            {
+              "path": "LevelRoot/desert_map/terrain_desert1",
+              "layer": 30,
+              "type": "MeshCollider",
+              "distance": 1.87551832,
+              "position": [
+                -27.11544,
+                -2.49140644,
+                -12.3752861
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 2839,
+          "origin": [
+            -25.3269844,
+            -1.11475,
+            -12.3690643
+          ],
+          "hits": [
+            {
+              "path": "LevelRoot/desert_map/terrain_desert1",
+              "layer": 30,
+              "type": "MeshCollider",
+              "distance": 1.489348,
+              "position": [
+                -25.32698,
+                -2.6040976,
+                -12.369071
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 2647,
+          "origin": [
+            -22.2650566,
+            -1.41782963,
+            -9.070367
+          ],
+          "hits": [
+            {
+              "path": "LevelRoot/desert_map/terrain_desert1",
+              "layer": 30,
+              "type": "MeshCollider",
+              "distance": 1.13439631,
+              "position": [
+                -22.2650528,
+                -2.55222535,
+                -9.070373
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 2729,
+          "origin": [
+            -21.0133743,
+            -0.583894849,
+            -9.1152935
+          ],
+          "hits": [
+            {
+              "path": "LevelRoot/desert_map/terrain_desert1",
+              "layer": 30,
+              "type": "MeshCollider",
+              "distance": 1.86104894,
+              "position": [
+                -21.01337,
+                -2.44494319,
+                -9.115299
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 2631,
+          "origin": [
+            -20.42515,
+            -0.749122,
+            -6.836433
+          ],
+          "hits": [
+            {
+              "path": "LevelRoot/desert_map/terrain_desert1",
+              "layer": 30,
+              "type": "MeshCollider",
+              "distance": 1.65869153,
+              "position": [
+                -20.425148,
+                -2.407813,
+                -6.836437
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 2830,
+          "origin": [
+            -20.6284676,
+            -0.7483417,
+            -5.509952
+          ],
+          "hits": [
+            {
+              "path": "LevelRoot/desert_map/terrain_desert1",
+              "layer": 30,
+              "type": "MeshCollider",
+              "distance": 1.6479038,
+              "position": [
+                -20.6284637,
+                -2.39624476,
+                -5.50995636
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 2593,
+          "origin": [
+            -22.4163055,
+            -1.24720275,
+            -5.46234369
+          ],
+          "hits": [
+            {
+              "path": "LevelRoot/desert_map/terrain_desert1",
+              "layer": 30,
+              "type": "MeshCollider",
+              "distance": 1.25919509,
+              "position": [
+                -22.4163036,
+                -2.50639725,
+                -5.46234846
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 2836,
+          "origin": [
+            -26.2760429,
+            -0.6245587,
+            -5.7605176
+          ],
+          "hits": [
+            {
+              "path": "LevelRoot/desert_map/terrain_desert1",
+              "layer": 30,
+              "type": "MeshCollider",
+              "distance": 1.9424237,
+              "position": [
+                -26.276041,
+                -2.56698179,
+                -5.76052332
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 2669,
+          "origin": [
+            -25.5070438,
+            -0.6155587,
+            -7.24651766
+          ],
+          "hits": [
+            {
+              "path": "LevelRoot/desert_map/terrain_desert1",
+              "layer": 30,
+              "type": "MeshCollider",
+              "distance": 1.98490691,
+              "position": [
+                -25.5070419,
+                -2.60046482,
+                -7.24652338
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 2650,
+          "origin": [
+            -25.6010437,
+            -0.6585587,
+            -9.378518
+          ],
+          "hits": [
+            {
+              "path": "LevelRoot/desert_map/terrain_desert1",
+              "layer": 30,
+              "type": "MeshCollider",
+              "distance": 1.95512259,
+              "position": [
+                -25.60104,
+                -2.61368084,
+                -9.378525
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 2767,
+          "origin": [
+            -26.0410423,
+            -0.9665587,
+            -10.6445179
+          ],
+          "hits": [
+            {
+              "path": "LevelRoot/desert_map/terrain_desert1",
+              "layer": 30,
+              "type": "MeshCollider",
+              "distance": 1.62608838,
+              "position": [
+                -26.0410385,
+                -2.5926466,
+                -10.6445246
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 2806,
+          "origin": [
+            -26.5060425,
+            -0.7505587,
+            -11.7105179
+          ],
+          "hits": [
+            {
+              "path": "LevelRoot/desert_map/props/barier",
+              "layer": 13,
+              "type": "MeshCollider",
+              "distance": 1.60391009,
+              "position": [
+                -26.5060387,
+                -2.354469,
+                -11.7105169
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            },
+            {
+              "path": "LevelRoot/desert_map/terrain_desert1",
+              "layer": 30,
+              "type": "MeshCollider",
+              "distance": 1.80140412,
+              "position": [
+                -26.5060387,
+                -2.55196214,
+                -11.7105255
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 2618,
+          "origin": [
+            -21.2731571,
+            -1.093122,
+            -10.97779
+          ],
+          "hits": [
+            {
+              "path": "LevelRoot/desert_map/terrain_desert1",
+              "layer": 30,
+              "type": "MeshCollider",
+              "distance": 1.38621163,
+              "position": [
+                -21.2731514,
+                -2.479333,
+                -10.9777966
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 2596,
+          "origin": [
+            -22.8451767,
+            -0.584122,
+            -9.060616
+          ],
+          "hits": [
+            {
+              "path": "LevelRoot/desert_map/terrain_desert1",
+              "layer": 30,
+              "type": "MeshCollider",
+              "distance": 2.00434685,
+              "position": [
+                -22.8451729,
+                -2.58846855,
+                -9.060621
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 2506,
+          "origin": [
+            -22.6369667,
+            -0.749122,
+            -7.99339771
+          ],
+          "hits": [
+            {
+              "path": "LevelRoot/desert_map/terrain_desert1",
+              "layer": 30,
+              "type": "MeshCollider",
+              "distance": 1.81866789,
+              "position": [
+                -22.6369667,
+                -2.56778932,
+                -7.99340343
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 2770,
+          "origin": [
+            -22.1994419,
+            -0.893122,
+            -6.753002
+          ],
+          "hits": [
+            {
+              "path": "LevelRoot/desert_map/terrain_desert1",
+              "layer": 30,
+              "type": "MeshCollider",
+              "distance": 1.61112893,
+              "position": [
+                -22.19944,
+                -2.50425029,
+                -6.753007
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 2837,
+          "origin": [
+            -21.630909,
+            -1.211122,
+            -6.01277542
+          ],
+          "hits": [
+            {
+              "path": "LevelRoot/desert_map/terrain_desert1",
+              "layer": 30,
+              "type": "MeshCollider",
+              "distance": 1.22043812,
+              "position": [
+                -21.630909,
+                -2.43155932,
+                -6.01277971
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "source": "Assets/Scenes/Park_Multiplayer.unity",
+      "sourceSha256": "09b2c084ef5da6707fbebd4261a60baa0f12e24fef31efc4c6d4671b721e70ed",
+      "points": [
+        {
+          "waypointFileId": 3147,
+          "origin": [
+            -1.60750031,
+            1.038706,
+            4.06408453
+          ],
+          "hits": [
+            {
+              "path": "LevelRootPark/park_map/ground",
+              "layer": 13,
+              "type": "MeshCollider",
+              "distance": 1.03911841,
+              "position": [
+                -1.60750055,
+                -0.00041247,
+                4.064085
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 3164,
+          "origin": [
+            -3.307295,
+            1.7081939,
+            4.071322
+          ],
+          "hits": [
+            {
+              "path": "LevelRootPark/park_map/ground",
+              "layer": 13,
+              "type": "MeshCollider",
+              "distance": 1.70860636,
+              "position": [
+                -3.307294,
+                -0.000412470254,
+                4.07132149
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 3316,
+          "origin": [
+            -3.307295,
+            1.79757535,
+            2.7666924
+          ],
+          "hits": [
+            {
+              "path": "LevelRootPark/park_map/ground",
+              "layer": 13,
+              "type": "MeshCollider",
+              "distance": 1.79798782,
+              "position": [
+                -3.30729485,
+                -0.000412413239,
+                2.76669264
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 3439,
+          "origin": [
+            -3.12137437,
+            1.529318,
+            0.456035823
+          ],
+          "hits": [
+            {
+              "path": "LevelRootPark/park_map/ground",
+              "layer": 13,
+              "type": "MeshCollider",
+              "distance": 1.52973032,
+              "position": [
+                -3.12137461,
+                -0.000412312249,
+                0.456035674
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 3532,
+          "origin": [
+            -1.34774613,
+            1.027718,
+            0.462251931
+          ],
+          "hits": [
+            {
+              "path": "LevelRootPark/park_map/ground",
+              "layer": 13,
+              "type": "MeshCollider",
+              "distance": 1.02813029,
+              "position": [
+                -1.3477459,
+                -0.00041231254,
+                0.4622522
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 3466,
+          "origin": [
+            1.868266,
+            1.15786445,
+            -3.37669754
+          ],
+          "hits": [
+            {
+              "path": "LevelRootPark/park_map/ground",
+              "layer": 13,
+              "type": "MeshCollider",
+              "distance": 1.15827668,
+              "position": [
+                1.86826515,
+                -0.0004121447,
+                -3.376697
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 3210,
+          "origin": [
+            3.567075,
+            1.8273524,
+            -3.43508148
+          ],
+          "hits": [
+            {
+              "path": "LevelRootPark/park_map/ground",
+              "layer": 13,
+              "type": "MeshCollider",
+              "distance": 1.82776451,
+              "position": [
+                3.567076,
+                -0.0004121422,
+                -3.43508148
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 3555,
+          "origin": [
+            3.60633373,
+            1.83448136,
+            -2.13104224
+          ],
+          "hits": [
+            {
+              "path": "LevelRootPark/park_map/ground",
+              "layer": 13,
+              "type": "MeshCollider",
+              "distance": 1.83489358,
+              "position": [
+                3.60633254,
+                -0.000412199122,
+                -2.13104224
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 3411,
+          "origin": [
+            3.61639023,
+            1.65301025,
+            0.17231214
+          ],
+          "hits": [
+            {
+              "path": "LevelRootPark/park_map/ground",
+              "layer": 13,
+              "type": "MeshCollider",
+              "distance": 1.65342259,
+              "position": [
+                3.61639023,
+                -0.000412299851,
+                0.172312737
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 3181,
+          "origin": [
+            1.71701694,
+            1.14687645,
+            0.231322154
+          ],
+          "hits": [
+            {
+              "path": "LevelRootPark/park_map/ground",
+              "layer": 13,
+              "type": "MeshCollider",
+              "distance": 1.1472888,
+              "position": [
+                1.71701765,
+                -0.0004123024,
+                0.231322527
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 3392,
+          "origin": [
+            -1.33500075,
+            1.12462318,
+            -0.180229068
+          ],
+          "hits": [
+            {
+              "path": "LevelRootPark/park_map/ground",
+              "layer": 13,
+              "type": "MeshCollider",
+              "distance": 1.12503552,
+              "position": [
+                -1.33500123,
+                -0.000412284426,
+                -0.180228829
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 3207,
+          "origin": [
+            -3.2114675,
+            1.79411113,
+            -0.172990665
+          ],
+          "hits": [
+            {
+              "path": "LevelRootPark/park_map/ground",
+              "layer": 13,
+              "type": "MeshCollider",
+              "distance": 1.7945236,
+              "position": [
+                -3.211467,
+                -0.000412284717,
+                -0.1729914
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 3593,
+          "origin": [
+            -3.39957023,
+            1.79411137,
+            -2.46902823
+          ],
+          "hits": [
+            {
+              "path": "LevelRootPark/park_map/ground",
+              "layer": 13,
+              "type": "MeshCollider",
+              "distance": 1.7945236,
+              "position": [
+                -3.399571,
+                -0.000412184367,
+                -2.46902823
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 3317,
+          "origin": [
+            -3.04044318,
+            1.79411113,
+            -3.78827858
+          ],
+          "hits": [
+            {
+              "path": "LevelRootPark/park_map/ground",
+              "layer": 13,
+              "type": "MeshCollider",
+              "distance": 1.79452348,
+              "position": [
+                -3.04044318,
+                -0.0004121267,
+                -3.78827858
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 3530,
+          "origin": [
+            -1.2519834,
+            1.29525,
+            -3.7820642
+          ],
+          "hits": [
+            {
+              "path": "LevelRootPark/park_map/ground",
+              "layer": 13,
+              "type": "MeshCollider",
+              "distance": 1.29566228,
+              "position": [
+                -1.25198388,
+                -0.000412127,
+                -3.782064
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 3457,
+          "origin": [
+            1.80994534,
+            0.992170334,
+            -0.48336646
+          ],
+          "hits": [
+            {
+              "path": "LevelRootPark/park_map/ground",
+              "layer": 13,
+              "type": "MeshCollider",
+              "distance": 0.9925826,
+              "position": [
+                1.80994511,
+                -0.000412271183,
+                -0.483366728
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 3444,
+          "origin": [
+            3.06162763,
+            1.82610524,
+            -0.528293848
+          ],
+          "hits": [
+            {
+              "path": "LevelRootPark/park_map/ground",
+              "layer": 13,
+              "type": "MeshCollider",
+              "distance": 1.82651758,
+              "position": [
+                3.06162882,
+                -0.000412269233,
+                -0.5282943
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 3173,
+          "origin": [
+            3.64985251,
+            1.66087806,
+            1.7505672
+          ],
+          "hits": [
+            {
+              "path": "LevelRootPark/park_map/ground",
+              "layer": 13,
+              "type": "MeshCollider",
+              "distance": 1.66129041,
+              "position": [
+                3.649853,
+                -0.000412368827,
+                1.75056744
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 3178,
+          "origin": [
+            3.44653463,
+            1.66165841,
+            3.07704782
+          ],
+          "hits": [
+            {
+              "path": "LevelRootPark/park_map/ground",
+              "layer": 13,
+              "type": "MeshCollider",
+              "distance": 1.66207075,
+              "position": [
+                3.44653535,
+                -0.0004124268,
+                3.07704759
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 3437,
+          "origin": [
+            1.65869617,
+            1.16279721,
+            3.1246562
+          ],
+          "hits": [
+            {
+              "path": "LevelRootPark/park_map/ground",
+              "layer": 13,
+              "type": "MeshCollider",
+              "distance": 1.16320968,
+              "position": [
+                1.65869665,
+                -0.0004124289,
+                3.124656
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 3599,
+          "origin": [
+            -2.20104146,
+            1.78544128,
+            2.8264823
+          ],
+          "hits": [
+            {
+              "path": "LevelRootPark/park_map/ground",
+              "layer": 13,
+              "type": "MeshCollider",
+              "distance": 1.78585386,
+              "position": [
+                -2.20104074,
+                -0.0004124159,
+                2.82648253
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 3538,
+          "origin": [
+            -1.43204153,
+            1.79444134,
+            1.34048223
+          ],
+          "hits": [
+            {
+              "path": "LevelRootPark/park_map/Barriers/car_01 (1)",
+              "layer": 13,
+              "type": "MeshCollider",
+              "distance": 1.69787025,
+              "position": [
+                -1.43204153,
+                0.09657109,
+                1.34048235
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            },
+            {
+              "path": "LevelRootPark/park_map/ground",
+              "layer": 13,
+              "type": "MeshCollider",
+              "distance": 1.79485369,
+              "position": [
+                -1.43203974,
+                -0.00041235087,
+                1.340482
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 3382,
+          "origin": [
+            -1.52604151,
+            1.75144136,
+            -0.7915178
+          ],
+          "hits": [
+            {
+              "path": "LevelRootPark/park_map/ground",
+              "layer": 13,
+              "type": "MeshCollider",
+              "distance": 1.7518537,
+              "position": [
+                -1.52604115,
+                -0.0004122577,
+                -0.7915177
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 3244,
+          "origin": [
+            -1.96604156,
+            1.44344127,
+            -2.05751777
+          ],
+          "hits": [
+            {
+              "path": "LevelRootPark/park_map/ground",
+              "layer": 13,
+              "type": "MeshCollider",
+              "distance": 1.4438535,
+              "position": [
+                -1.96604133,
+                -0.000412202382,
+                -2.057518
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 3241,
+          "origin": [
+            -2.43104148,
+            1.65944135,
+            -3.12351775
+          ],
+          "hits": [
+            {
+              "path": "LevelRootPark/park_map/ground",
+              "layer": 13,
+              "type": "MeshCollider",
+              "distance": 1.65985358,
+              "position": [
+                -2.431042,
+                -0.0004121558,
+                -3.123517
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 3414,
+          "origin": [
+            2.8018446,
+            1.316878,
+            -2.39079
+          ],
+          "hits": [
+            {
+              "path": "LevelRootPark/park_map/ground",
+              "layer": 13,
+              "type": "MeshCollider",
+              "distance": 1.31729019,
+              "position": [
+                2.80184317,
+                -0.0004121878,
+                -2.390789
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 3176,
+          "origin": [
+            1.22982514,
+            1.825878,
+            -0.473615557
+          ],
+          "hits": [
+            {
+              "path": "LevelRootPark/park_map/ground",
+              "layer": 13,
+              "type": "MeshCollider",
+              "distance": 1.82629049,
+              "position": [
+                1.229825,
+                -0.00041227162,
+                -0.47361517
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 3592,
+          "origin": [
+            1.43803465,
+            1.66087806,
+            0.59360224
+          ],
+          "hits": [
+            {
+              "path": "LevelRootPark/park_map/ground",
+              "layer": 13,
+              "type": "MeshCollider",
+              "distance": 1.66129041,
+              "position": [
+                1.43803453,
+                -0.000412318273,
+                0.5936022
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 3576,
+          "origin": [
+            1.87555945,
+            1.516878,
+            1.83399785
+          ],
+          "hits": [
+            {
+              "path": "LevelRootPark/park_map/ground",
+              "layer": 13,
+              "type": "MeshCollider",
+              "distance": 1.51729047,
+              "position": [
+                1.87555885,
+                -0.0004123725,
+                1.833998
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 3543,
+          "origin": [
+            2.44409227,
+            1.198878,
+            2.57422447
+          ],
+          "hits": [
+            {
+              "path": "LevelRootPark/park_map/ground",
+              "layer": 13,
+              "type": "MeshCollider",
+              "distance": 1.19929051,
+              "position": [
+                2.444092,
+                -0.000412404857,
+                2.57422447
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "source": "Assets/Scenes/Snow_Multiplayer.unity",
+      "sourceSha256": "67291457da28646c9ce377f3812d1bf0fa5332bfe664f58a4430a823744e6f21",
+      "points": [
+        {
+          "waypointFileId": 3074,
+          "origin": [
+            -1.589244,
+            1.07847691,
+            4.03207731
+          ],
+          "hits": [
+            {
+              "path": "LevelRoot/snow_map/terrain_snow1",
+              "layer": 13,
+              "type": "MeshCollider",
+              "distance": 1.15250278,
+              "position": [
+                -1.58924389,
+                -0.07402584,
+                4.03207731
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            },
+            {
+              "path": "LevelRoot/boxFloorCollider",
+              "layer": 13,
+              "type": "BoxCollider",
+              "distance": 1.23664761,
+              "position": [
+                -1.589244,
+                -0.1581707,
+                4.03207731
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 2997,
+          "origin": [
+            -3.28929639,
+            1.748194,
+            3.99432182
+          ],
+          "hits": [
+            {
+              "path": "LevelRoot/snow_map/terrain_snow1",
+              "layer": 13,
+              "type": "MeshCollider",
+              "distance": 1.724762,
+              "position": [
+                -3.28929639,
+                0.0234321356,
+                3.99432182
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            },
+            {
+              "path": "LevelRoot/boxFloorCollider",
+              "layer": 13,
+              "type": "BoxCollider",
+              "distance": 1.90636444,
+              "position": [
+                -3.28929639,
+                -0.1581707,
+                3.99432182
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 3081,
+          "origin": [
+            -3.289244,
+            1.83747685,
+            2.45407748
+          ],
+          "hits": [
+            {
+              "path": "LevelRoot/snow_map/terrain_snow1",
+              "layer": 13,
+              "type": "MeshCollider",
+              "distance": 1.80587518,
+              "position": [
+                -3.289244,
+                0.031601727,
+                2.45407748
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            },
+            {
+              "path": "LevelRoot/boxFloorCollider",
+              "layer": 13,
+              "type": "BoxCollider",
+              "distance": 1.99564743,
+              "position": [
+                -3.289244,
+                -0.1581707,
+                2.45407748
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 3047,
+          "origin": [
+            -3.103376,
+            1.569318,
+            0.3790359
+          ],
+          "hits": [
+            {
+              "path": "LevelRoot/snow_map/terrain_snow1",
+              "layer": 13,
+              "type": "MeshCollider",
+              "distance": 1.54408,
+              "position": [
+                -3.103376,
+                0.0252380222,
+                0.37903595
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            },
+            {
+              "path": "LevelRoot/boxFloorCollider",
+              "layer": 13,
+              "type": "BoxCollider",
+              "distance": 1.72748852,
+              "position": [
+                -3.103376,
+                -0.1581707,
+                0.3790359
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 2799,
+          "origin": [
+            -1.32974756,
+            1.067718,
+            0.385252
+          ],
+          "hits": [
+            {
+              "path": "LevelRoot/snow_map/terrain_snow1",
+              "layer": 13,
+              "type": "MeshCollider",
+              "distance": 1.141744,
+              "position": [
+                -1.32974756,
+                -0.07402584,
+                0.385252029
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            },
+            {
+              "path": "LevelRoot/boxFloorCollider",
+              "layer": 13,
+              "type": "BoxCollider",
+              "distance": 1.22588921,
+              "position": [
+                -1.32974756,
+                -0.1581707,
+                0.385252
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 3029,
+          "origin": [
+            1.88305712,
+            1.19301033,
+            -2.913347
+          ],
+          "hits": [
+            {
+              "path": "LevelRoot/snow_map/terrain_snow1",
+              "layer": 13,
+              "type": "MeshCollider",
+              "distance": 1.21571338,
+              "position": [
+                1.88305712,
+                -0.02270317,
+                -2.913347
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            },
+            {
+              "path": "LevelRoot/boxFloorCollider",
+              "layer": 13,
+              "type": "BoxCollider",
+              "distance": 1.351181,
+              "position": [
+                1.88305712,
+                -0.1581707,
+                -2.913347
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 2588,
+          "origin": [
+            3.58507323,
+            1.86735249,
+            -3.51208
+          ],
+          "hits": [
+            {
+              "path": "LevelRoot/snow_map/terrain_snow1",
+              "layer": 13,
+              "type": "MeshCollider",
+              "distance": 1.81409073,
+              "position": [
+                3.58507323,
+                0.0532616973,
+                -3.51207972
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            },
+            {
+              "path": "LevelRoot/boxFloorCollider",
+              "layer": 13,
+              "type": "BoxCollider",
+              "distance": 2.02552319,
+              "position": [
+                3.58507347,
+                -0.1581707,
+                -3.51208
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 2749,
+          "origin": [
+            3.62433219,
+            1.87448144,
+            -2.20804048
+          ],
+          "hits": [
+            {
+              "path": "LevelRoot/snow_map/terrain_snow1",
+              "layer": 13,
+              "type": "MeshCollider",
+              "distance": 1.76972032,
+              "position": [
+                3.62433243,
+                0.1047609,
+                -2.20804048
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            },
+            {
+              "path": "LevelRoot/boxFloorCollider",
+              "layer": 13,
+              "type": "BoxCollider",
+              "distance": 2.032652,
+              "position": [
+                3.62433243,
+                -0.1581707,
+                -2.20804048
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 3027,
+          "origin": [
+            3.63438845,
+            1.69301033,
+            0.09531375
+          ],
+          "hits": [
+            {
+              "path": "LevelRoot/snow_map/terrain_snow1",
+              "layer": 13,
+              "type": "MeshCollider",
+              "distance": 1.530216,
+              "position": [
+                3.63438869,
+                0.162794292,
+                0.09531375
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            },
+            {
+              "path": "LevelRoot/boxFloorCollider",
+              "layer": 13,
+              "type": "BoxCollider",
+              "distance": 1.851181,
+              "position": [
+                3.63438845,
+                -0.1581707,
+                0.09531376
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 2816,
+          "origin": [
+            1.73501527,
+            1.18687654,
+            0.154323772
+          ],
+          "hits": [
+            {
+              "path": "LevelRoot/snow_map/terrain_snow1",
+              "layer": 13,
+              "type": "MeshCollider",
+              "distance": 1.142793,
+              "position": [
+                1.73501515,
+                0.04408346,
+                0.154323772
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            },
+            {
+              "path": "LevelRoot/boxFloorCollider",
+              "layer": 13,
+              "type": "BoxCollider",
+              "distance": 1.345047,
+              "position": [
+                1.73501539,
+                -0.1581707,
+                0.154323757
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 2803,
+          "origin": [
+            -1.31700325,
+            1.16462314,
+            -0.2572289
+          ],
+          "hits": [
+            {
+              "path": "LevelRoot/snow_map/terrain_snow1",
+              "layer": 13,
+              "type": "MeshCollider",
+              "distance": 1.2288717,
+              "position": [
+                -1.31700337,
+                -0.0642485,
+                -0.2572289
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            },
+            {
+              "path": "LevelRoot/boxFloorCollider",
+              "layer": 13,
+              "type": "BoxCollider",
+              "distance": 1.322794,
+              "position": [
+                -1.31700325,
+                -0.1581707,
+                -0.2572289
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 2604,
+          "origin": [
+            -3.19347,
+            1.83411121,
+            -0.2499905
+          ],
+          "hits": [
+            {
+              "path": "LevelRoot/snow_map/terrain_snow1",
+              "layer": 13,
+              "type": "MeshCollider",
+              "distance": 1.81666827,
+              "position": [
+                -3.19347,
+                0.0174430162,
+                -0.249990523
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            },
+            {
+              "path": "LevelRoot/boxFloorCollider",
+              "layer": 13,
+              "type": "BoxCollider",
+              "distance": 1.99228191,
+              "position": [
+                -3.19347,
+                -0.1581707,
+                -0.2499905
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 2778,
+          "origin": [
+            -3.38157272,
+            1.83411145,
+            -2.54602814
+          ],
+          "hits": [
+            {
+              "path": "LevelRoot/snow_map/terrain_snow1",
+              "layer": 13,
+              "type": "MeshCollider",
+              "distance": 1.84638619,
+              "position": [
+                -3.38157272,
+                -0.0122745633,
+                -2.546028
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            },
+            {
+              "path": "LevelRoot/boxFloorCollider",
+              "layer": 13,
+              "type": "BoxCollider",
+              "distance": 1.99228191,
+              "position": [
+                -3.38157272,
+                -0.1581707,
+                -2.54602814
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 2995,
+          "origin": [
+            -3.02244568,
+            1.83411121,
+            -3.86527824
+          ],
+          "hits": [
+            {
+              "path": "LevelRoot/snow_map/terrain_snow1",
+              "layer": 13,
+              "type": "MeshCollider",
+              "distance": 1.78386188,
+              "position": [
+                -3.02244568,
+                0.0502495468,
+                -3.86527824
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            },
+            {
+              "path": "LevelRoot/boxFloorCollider",
+              "layer": 13,
+              "type": "BoxCollider",
+              "distance": 1.99228191,
+              "position": [
+                -3.02244568,
+                -0.1581707,
+                -3.86527824
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 2774,
+          "origin": [
+            -1.235044,
+            1.33044136,
+            -3.35551763
+          ],
+          "hits": [
+            {
+              "path": "LevelRoot/snow_map/barrelSnow",
+              "layer": 0,
+              "type": "MeshCollider",
+              "distance": 1.20041788,
+              "position": [
+                -1.23504364,
+                0.130022675,
+                -3.35551739
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            },
+            {
+              "path": "LevelRoot/snow_map/terrain_snow1",
+              "layer": 13,
+              "type": "MeshCollider",
+              "distance": 1.36438513,
+              "position": [
+                -1.235044,
+                -0.03394392,
+                -3.35551739
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            },
+            {
+              "path": "LevelRoot/boxFloorCollider",
+              "layer": 13,
+              "type": "BoxCollider",
+              "distance": 1.48861217,
+              "position": [
+                -1.235044,
+                -0.1581707,
+                -3.35551763
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 3093,
+          "origin": [
+            1.82794344,
+            1.03217053,
+            -0.560366631
+          ],
+          "hits": [
+            {
+              "path": "LevelRoot/snow_map/terrain_snow1",
+              "layer": 13,
+              "type": "MeshCollider",
+              "distance": 0.982279,
+              "position": [
+                1.82794344,
+                0.0498914719,
+                -0.5603667
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            },
+            {
+              "path": "LevelRoot/boxFloorCollider",
+              "layer": 13,
+              "type": "BoxCollider",
+              "distance": 1.190341,
+              "position": [
+                1.82794333,
+                -0.1581707,
+                -0.560366631
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 2592,
+          "origin": [
+            3.07962584,
+            1.86610532,
+            -0.605294049
+          ],
+          "hits": [
+            {
+              "path": "LevelRoot/snow_map/terrain_snow1",
+              "layer": 13,
+              "type": "MeshCollider",
+              "distance": 1.76019216,
+              "position": [
+                3.079626,
+                0.105913386,
+                -0.6052941
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            },
+            {
+              "path": "LevelRoot/boxFloorCollider",
+              "layer": 13,
+              "type": "BoxCollider",
+              "distance": 2.02427578,
+              "position": [
+                3.079626,
+                -0.1581707,
+                -0.605294049
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 2788,
+          "origin": [
+            3.66785049,
+            1.70087814,
+            1.67356694
+          ],
+          "hits": [
+            {
+              "path": "LevelRoot/snow_map/terrain_snow1",
+              "layer": 13,
+              "type": "MeshCollider",
+              "distance": 1.53599238,
+              "position": [
+                3.66785073,
+                0.164885655,
+                1.673567
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            },
+            {
+              "path": "LevelRoot/boxFloorCollider",
+              "layer": 13,
+              "type": "BoxCollider",
+              "distance": 1.85904884,
+              "position": [
+                3.66785049,
+                -0.1581707,
+                1.67356694
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 2801,
+          "origin": [
+            3.46453285,
+            1.70165849,
+            3.00004745
+          ],
+          "hits": [
+            {
+              "path": "LevelRoot/snow_map/terrain_snow1",
+              "layer": 13,
+              "type": "MeshCollider",
+              "distance": 1.54948032,
+              "position": [
+                3.46453285,
+                0.152178317,
+                3.00004745
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            },
+            {
+              "path": "LevelRoot/boxFloorCollider",
+              "layer": 13,
+              "type": "BoxCollider",
+              "distance": 1.859829,
+              "position": [
+                3.46453285,
+                -0.1581707,
+                3.00004745
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        },
+        {
+          "waypointFileId": 2768,
+          "origin": [
+            1.67669415,
+            1.20279741,
+            3.04765582
+          ],
+          "hits": [
+            {
+              "path": "LevelRoot/snow_map/terrain_snow1",
+              "layer": 13,
+              "type": "MeshCollider",
+              "distance": 1.14904082,
+              "position": [
+                1.67669415,
+                0.0537566543,
+                3.04765582
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            },
+            {
+              "path": "LevelRoot/boxFloorCollider",
+              "layer": 13,
+              "type": "BoxCollider",
+              "distance": 1.36096764,
+              "position": [
+                1.67669415,
+                -0.1581707,
+                3.04765582
+              ],
+              "alliesCollide": true,
+              "enemiesCollide": true
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
