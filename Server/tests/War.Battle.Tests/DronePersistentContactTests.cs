@@ -117,6 +117,28 @@ internal static class DronePersistentContactTests
                 float ve=Vector3.Distance(cached.Velocity,Vec(after.GetProperty("velocity")));
                 float ae=Vector3.Distance(cached.AngularVelocity,Vec(after.GetProperty("angularVelocity")));
                 float pe=Vector3.Distance(cached.Pose.Root,Vec(after.GetProperty("position")));
+                if(frame==45&&keyed.Length==1&&keyed[0].Count()==1&&
+                   row.GetProperty("source").GetString()=="Assets/Scenes/Snow_Multiplayer.unity"&&
+                   row.GetProperty("fraction").GetInt32()==2&&row.GetProperty("initialRotation")[0].GetSingle()>.1f)
+                {
+                    var contact=pairs.Single().Single();
+                    var single=new DroneSingleContactSolver(geometry).Solve(Vec(before.GetProperty("position")),
+                        Quat(before.GetProperty("rotation")),Vec(before.GetProperty("velocity")),
+                        Vec(before.GetProperty("angularVelocity")),contact);
+                    var initial=DroneRigidMotion.AdvanceVelocities(Vec(before.GetProperty("velocity")),Vec(before.GetProperty("angularVelocity")));
+                    var observedImpulse=group.Select(c=>Vec(c.GetProperty("impulse"))).Aggregate(Vector3.Zero,(a,b)=>a+b);
+                    var measuredChange=Vec(after.GetProperty("velocity"))-initial.Velocity;
+                    var normalDirection=contact.Geometry.Normal;
+                    if(Math.Abs(Vector3.Dot(measuredChange-observedImpulse,normalDirection))>.00002f)
+                        throw new Exception("Isolated persistent contact normal impulse does not conserve measured linear response.");
+                    Console.WriteLine("Snow frame45 one-contact control: cached velocity residual="+ve+
+                        ", fresh="+Vector3.Distance(result.Velocity,Vec(after.GetProperty("velocity")))+
+                        ", standalone="+Vector3.Distance(single.Velocity,Vec(after.GetProperty("velocity")))+
+                        ", reported normal impulse residual="+Math.Abs(Vector3.Dot(measuredChange-observedImpulse,normalDirection))+
+                        ", measured tangential change="+(measuredChange-normalDirection*Vector3.Dot(measuredChange,normalDirection))+
+                        ", observed="+observedImpulse+", cached="+cached.Impulse+", fresh="+result.Impulse+
+                        ", separation="+contact.Geometry.Separation+", normal="+contact.Geometry.Normal);
+                }
                 var previousCoverage=pairCoverage.GetValueOrDefault(keyed.Length);
                 if(keyed.Length==1&&ve>previousCoverage.Velocity)singlePairWorstVelocity=identity;
                 pairCoverage[keyed.Length]=(previousCoverage.Steps+1,Math.Max(previousCoverage.Velocity,ve),
