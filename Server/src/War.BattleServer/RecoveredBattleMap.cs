@@ -12,7 +12,7 @@ public sealed record MapSphereCandidate(MapDynamicCollider Collider,float Bounds
 /// <summary>Read-only collision/navigation data exported from the actual Unity maps.
 /// Geometry query only: damage, shield regeneration and target ownership remain
 /// separate simulation rules. Do not treat the map's serialized base HP as player HP.</summary>
-public sealed class RecoveredBattleMap
+public sealed partial class RecoveredBattleMap
 {
     private sealed record Shape(int SourceIndex, string Path, string? DynamicOwner, int Layer, Vector3 TransformPosition,
         Vector3 Min, Vector3 Max, Vector3[] Vertices,Vector3[] Triangles, Vector4[]? Hull);

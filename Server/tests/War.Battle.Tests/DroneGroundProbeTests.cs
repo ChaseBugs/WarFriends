@@ -38,6 +38,15 @@ internal static class DroneGroundProbeTests
                     if(map.SphereOverlaps(new Vector3(origin.X,100,origin.Z),.01f,mask))
                         throw new Exception("Drone high-air sphere unexpectedly overlaps map geometry.");
                     checks+=2;
+                    if(expected.GetProperty("layer").GetInt32()==30)
+                    {
+                        var contacts=map.TriangleSphereContacts(surfacePosition+Vector3.UnitY*.005f,.01f,0,mask);
+                        var contact=contacts.FirstOrDefault(c=>c.SourcePath==expected.GetProperty("path").GetString());
+                        if(contact==null||Vector3.Distance(contact.SurfacePoint,surfacePosition)>.006f||
+                           Math.Abs(contact.Normal.Length()-1)>.0001f||contact.Separation>0||contact.Separation<-.01f)
+                            throw new Exception("Ground sphere contact point/normal disagrees with source ray surface.");
+                        checks++;
+                    }
                 }
             }
         }
