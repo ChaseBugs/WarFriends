@@ -14,7 +14,7 @@ internal static class DroneSourceFrictionTests
         Vector3 Vec(JsonElement v)=>new(v[0].GetSingle(),v[1].GetSingle(),v[2].GetSingle());
         Quaternion Quat(JsonElement q)=>new(q[0].GetSingle(),q[1].GetSingle(),q[2].GetSingle(),q[3].GetSingle());
         int samples=0;float maximumVelocity=0,maximumAngular=0,maximumPosition=0;
-        float observedMassAngular=0;string worst="";
+        float observedMassAngular=0,observedImpulseAngular=0,solverAngularContribution=0;string worst="";
         foreach(var row in document.RootElement.GetProperty("rows").EnumerateArray())
         {
             var callbacks=row.GetProperty("collisionCallbacks");int frame=callbacks[0].GetProperty("frame").GetInt32();
@@ -37,7 +37,11 @@ internal static class DroneSourceFrictionTests
                 Vec(previous.GetProperty("angularVelocity")),new MaterialContact(new DroneNormalPoint(
                     Vec(c.GetProperty("position")),Vec(c.GetProperty("normal")),c.GetProperty("separation").GetSingle()),
                     new ContactMaterial(.6f,.6f,0)));
-            maximumVelocity=Math.Max(maximumVelocity,Vector3.Distance(result.Velocity,Vec(observed.GetProperty("velocity"))));
+            float velocityError=Vector3.Distance(result.Velocity,Vec(observed.GetProperty("velocity")));
+            float positionError=Vector3.Distance(result.Pose.Root,Vec(observed.GetProperty("position")));
+            if(velocityError>.00002f||positionError>.00002f)
+                throw new Exception("Single-contact source-friction linear/position response differs from Unity.");
+            maximumVelocity=Math.Max(maximumVelocity,velocityError);
             float angularError=Vector3.Distance(result.AngularVelocity,Vec(observed.GetProperty("angularVelocity")));
             if(angularError>maximumAngular){maximumAngular=angularError;worst=row.GetProperty("source").GetString()+
                 "/"+row.GetProperty("fraction")+"/"+frame;}
@@ -52,13 +56,24 @@ internal static class DroneSourceFrictionTests
                     new ContactMaterial(.6f,.6f,0)));
             observedMassAngular=Math.Max(observedMassAngular,Vector3.Distance(massControl.AngularVelocity,
                 Vec(observed.GetProperty("angularVelocity"))));
-            maximumPosition=Math.Max(maximumPosition,Vector3.Distance(result.Pose.Root,Vec(observed.GetProperty("position"))));
+            var initial=DroneRigidMotion.AdvanceVelocities(Vec(previous.GetProperty("velocity")),
+                Vec(previous.GetProperty("angularVelocity")));
+            var reconstructed=new DroneImpulseResponse(observedMass).Apply(Vec(previous.GetProperty("position")),
+                Quat(previous.GetProperty("rotation")),initial.Velocity,initial.AngularVelocity,
+                Vec(observed.GetProperty("velocity"))-initial.Velocity,Vec(c.GetProperty("position")));
+            observedImpulseAngular=Math.Max(observedImpulseAngular,Vector3.Distance(reconstructed.AngularVelocity,
+                Vec(observed.GetProperty("angularVelocity"))));
+            solverAngularContribution=Math.Max(solverAngularContribution,Vector3.Distance(reconstructed.AngularVelocity,
+                massControl.AngularVelocity));
+            maximumPosition=Math.Max(maximumPosition,positionError);
             samples++;
         }
         Console.WriteLine("Drone source-friction single-contact diagnostic: samples="+samples+", velocity="+maximumVelocity+
             ", angular="+maximumAngular+", root="+maximumPosition+" (recorded contacts and materials; not live admission proof).");
         if(samples!=21)throw new Exception("Single-contact material coverage changed.");
         Console.WriteLine("Drone friction inertia control: measured-mass angular residual="+observedMassAngular+", worst analytic case="+worst);
-        return samples;
+        Console.WriteLine("Drone angular conservation control: observed-impulse/contact residual="+observedImpulseAngular+
+            ", solver-versus-observed impulse angular contribution="+solverAngularContribution);
+        return samples*2; // Material evidence and bounded linear/root response; angular remains diagnostic.
     }
 }
