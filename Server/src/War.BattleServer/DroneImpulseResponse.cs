@@ -6,8 +6,19 @@ internal sealed class DroneImpulseResponse
     private readonly DroneBodyMass mass;
     private readonly Matrix4x4 inverseInertia;
     internal DroneImpulseResponse(DroneColliderCatalog geometry)
+        :this(DroneMassProperties.Compute(geometry)){}
+    internal DroneImpulseResponse(DroneBodyMass bodyMass)
     {
-        mass=DroneMassProperties.Compute(geometry);
+        ArgumentNullException.ThrowIfNull(bodyMass);
+        var t=bodyMass.Inertia;
+        float[] entries={t.M11,t.M12,t.M13,t.M14,t.M21,t.M22,t.M23,t.M24,
+            t.M31,t.M32,t.M33,t.M34,t.M41,t.M42,t.M43,t.M44};
+        if(!PlayerHitbox.Finite(bodyMass.CenterOfMass)||entries.Any(v=>!float.IsFinite(v))||
+           t.M14!=0||t.M24!=0||t.M34!=0||t.M41!=0||t.M42!=0||t.M43!=0||t.M44!=1||
+           Math.Abs(t.M12-t.M21)>.000001f||Math.Abs(t.M13-t.M31)>.000001f||Math.Abs(t.M23-t.M32)>.000001f||
+           t.M11<=0||t.M11*t.M22-t.M12*t.M21<=0||t.GetDeterminant()<=0)
+            throw new InvalidDataException("Invalid Drone body mass authority.");
+        mass=bodyMass;
         if(!Matrix4x4.Invert(mass.Inertia,out inverseInertia))
             throw new InvalidDataException("Singular Drone inertia authority.");
     }

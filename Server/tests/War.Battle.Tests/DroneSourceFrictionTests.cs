@@ -14,6 +14,7 @@ internal static class DroneSourceFrictionTests
         Vector3 Vec(JsonElement v)=>new(v[0].GetSingle(),v[1].GetSingle(),v[2].GetSingle());
         Quaternion Quat(JsonElement q)=>new(q[0].GetSingle(),q[1].GetSingle(),q[2].GetSingle(),q[3].GetSingle());
         int samples=0;float maximumVelocity=0,maximumAngular=0,maximumPosition=0;
+        float observedMassAngular=0;string worst="";
         foreach(var row in document.RootElement.GetProperty("rows").EnumerateArray())
         {
             var callbacks=row.GetProperty("collisionCallbacks");int frame=callbacks[0].GetProperty("frame").GetInt32();
@@ -37,13 +38,27 @@ internal static class DroneSourceFrictionTests
                     Vec(c.GetProperty("position")),Vec(c.GetProperty("normal")),c.GetProperty("separation").GetSingle()),
                     new ContactMaterial(.6f,.6f,0)));
             maximumVelocity=Math.Max(maximumVelocity,Vector3.Distance(result.Velocity,Vec(observed.GetProperty("velocity"))));
-            maximumAngular=Math.Max(maximumAngular,Vector3.Distance(result.AngularVelocity,Vec(observed.GetProperty("angularVelocity"))));
+            float angularError=Vector3.Distance(result.AngularVelocity,Vec(observed.GetProperty("angularVelocity")));
+            if(angularError>maximumAngular){maximumAngular=angularError;worst=row.GetProperty("source").GetString()+
+                "/"+row.GetProperty("fraction")+"/"+frame;}
+            var dynamics=row.GetProperty("bodyDynamics");
+            var axes=Matrix4x4.CreateFromQuaternion(Quat(dynamics.GetProperty("inertiaTensorRotation")));
+            var observedMass=new DroneBodyMass(Vec(dynamics.GetProperty("centerOfMass")),
+                Matrix4x4.Transpose(axes)*Matrix4x4.CreateScale(Vec(dynamics.GetProperty("inertiaTensor")))*axes);
+            var massControl=new DroneSingleContactSolver(observedMass).Solve(Vec(previous.GetProperty("position")),
+                Quat(previous.GetProperty("rotation")),Vec(previous.GetProperty("velocity")),
+                Vec(previous.GetProperty("angularVelocity")),new MaterialContact(new DroneNormalPoint(
+                    Vec(c.GetProperty("position")),Vec(c.GetProperty("normal")),c.GetProperty("separation").GetSingle()),
+                    new ContactMaterial(.6f,.6f,0)));
+            observedMassAngular=Math.Max(observedMassAngular,Vector3.Distance(massControl.AngularVelocity,
+                Vec(observed.GetProperty("angularVelocity"))));
             maximumPosition=Math.Max(maximumPosition,Vector3.Distance(result.Pose.Root,Vec(observed.GetProperty("position"))));
             samples++;
         }
         Console.WriteLine("Drone source-friction single-contact diagnostic: samples="+samples+", velocity="+maximumVelocity+
             ", angular="+maximumAngular+", root="+maximumPosition+" (recorded contacts and materials; not live admission proof).");
         if(samples!=21)throw new Exception("Single-contact material coverage changed.");
+        Console.WriteLine("Drone friction inertia control: measured-mass angular residual="+observedMassAngular+", worst analytic case="+worst);
         return samples;
     }
 }

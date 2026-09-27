@@ -8,7 +8,9 @@ internal sealed class DroneSingleContactSolver
     private readonly DroneBodyMass mass;
     private readonly DroneImpulseResponse response;
     internal DroneSingleContactSolver(DroneColliderCatalog geometry)
-    {mass=DroneMassProperties.Compute(geometry);response=new(geometry);}
+        :this(DroneMassProperties.Compute(geometry)){}
+    internal DroneSingleContactSolver(DroneBodyMass bodyMass)
+    {mass=bodyMass;response=new(bodyMass);}
 
     internal DroneNormalResult Solve(Vector3 root,Quaternion rotation,Vector3 velocity,Vector3 angularVelocity,
         MaterialContact contact)
