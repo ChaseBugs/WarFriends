@@ -26,4 +26,23 @@ internal sealed class DroneImpulseResponse
             throw new InvalidDataException("Drone impulse arithmetic overflow.");
         return(velocity,angularVelocity);
     }
+    internal Vector3 PointVelocity(Vector3 root,Quaternion rotation,Vector3 velocity,
+        Vector3 angularVelocity,Vector3 worldPoint)
+    {
+        // Reuse the impulse boundary's validation without changing state.
+        _=Apply(root,rotation,velocity,angularVelocity,Vector3.Zero,worldPoint);
+        var center=root+Vector3.Transform(mass.CenterOfMass,rotation);
+        var result=velocity+Vector3.Cross(angularVelocity,worldPoint-center);
+        if(!PlayerHitbox.Finite(result))throw new InvalidDataException("Drone point velocity overflow.");
+        return result;
+    }
+    internal float FrictionVelocityMultiplier(Vector3 root,Quaternion rotation,Vector3 worldPoint,Vector3 tangent)
+    {
+        if(!PlayerHitbox.Finite(tangent)||Math.Abs(tangent.LengthSquared()-1)>.0001f)
+            throw new InvalidDataException("Invalid unit friction tangent.");
+        var delta=Apply(root,rotation,Vector3.Zero,Vector3.Zero,tangent,worldPoint);
+        float response=Vector3.Dot(tangent,PointVelocity(root,rotation,delta.Velocity,delta.AngularVelocity,worldPoint));
+        if(!float.IsFinite(response)||response<=0)throw new InvalidDataException("Invalid friction effective mass.");
+        return .8f/response; // PhysX 3.4 scalar friction preparation relaxation.
+    }
 }

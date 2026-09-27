@@ -22,6 +22,21 @@ internal static class DroneImpulseTests
             var rotation=new Quaternion(q[0].GetSingle(),q[1].GetSingle(),q[2].GetSingle(),q[3].GetSingle());
             var result=response.Apply(Vec(row.GetProperty("root")),rotation,Vector3.Zero,Vector3.Zero,
                 Vec(row.GetProperty("impulse")),Vec(row.GetProperty("point")));
+            var impulse=Vec(row.GetProperty("impulse"));
+            if(impulse.Length()<1)
+            {
+                var sourceMass=DroneMassProperties.Compute(geometry);
+                var lever=Vec(row.GetProperty("point"))-(Vec(row.GetProperty("root"))+
+                    Vector3.Transform(sourceMass.CenterOfMass,rotation));
+                var observedLinear=Vec(row.GetProperty("velocity"))/.98f-new Vector3(0,-9.81f,0)*.02f;
+                var observedAngular=Vec(row.GetProperty("angularVelocity"))/.999f;
+                var tangent=Vector3.Normalize(impulse);
+                float observedResponse=Vector3.Dot(tangent,observedLinear+Vector3.Cross(observedAngular,lever))/impulse.Length();
+                if(Math.Abs(response.FrictionVelocityMultiplier(Vec(row.GetProperty("root")),rotation,
+                    Vec(row.GetProperty("point")),tangent)-.8f/observedResponse)>.00001f)
+                    throw new Exception("Drone directional effective mass differs from Unity impulse response.");
+                count++;
+            }
             var (velocity,angular)=DroneRigidMotion.AdvanceVelocities(result.Velocity,result.AngularVelocity);
             if(Vector3.Distance(velocity,Vec(row.GetProperty("velocity")))>.00001f||
                Vector3.Distance(angular,Vec(row.GetProperty("angularVelocity")))>.00001f)
