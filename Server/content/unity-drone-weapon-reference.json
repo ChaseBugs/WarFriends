@@ -1,0 +1,116 @@
+{
+  "version": 1,
+  "source": "Assets/GameObject/dronePrototype.prefab",
+  "sha256": "c2afc19487462e6163ad107267ef1b35c9c86fb34fa80898135b1d25f4a872a3",
+  "droneComponentFileId": 11459786,
+  "batchedComponentFileId": 11434916,
+  "weaponComponentFileId": 11433324,
+  "weaponType": "AutomaticRifle",
+  "cadence": 0.17,
+  "fakeShotDispersion": 1.0,
+  "spawnTransformFileId": 484583,
+  "restSpawnPosition": [
+    0.0161743164,
+    -0.135203242,
+    -0.07588673
+  ],
+  "restSpawnRotation": [
+    -3.3589187E-09,
+    0.997043252,
+    -0.0768431053,
+    -4.35821477E-08
+  ],
+  "restSpawnScale": [
+    0.688866436,
+    0.6888661,
+    0.68886435
+  ],
+  "shotOffset": [
+    0.0,
+    0.0,
+    0.0
+  ],
+  "infiniteAmmo": true,
+  "reloadableWeapon": false,
+  "friendKill": true,
+  "fastBullet": false,
+  "ignoreLayersMask": 0,
+  "projectileFileId": 11409266,
+  "projectileGuid": "855689762fa6e774aaee190652b08c6f",
+  "projectileSource": "Assets/GameObject/BulletSlow.prefab",
+  "projectileSha256": "5379f6aba1560b8eb3d7d386d1349454b97ea133163ade9a313e2bc34d1adfae",
+  "probes": [
+    {
+      "position": [
+        2.0,
+        3.0,
+        4.0
+      ],
+      "rotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "muzzle": [
+        2.01617432,
+        2.86479664,
+        3.92411327
+      ]
+    },
+    {
+      "position": [
+        2.0,
+        3.0,
+        4.0
+      ],
+      "rotation": [
+        0.08124754,
+        0.304586649,
+        -0.08927777,
+        0.9448044
+      ],
+      "muzzle": [
+        1.94083917,
+        2.88258672,
+        3.91624784
+      ]
+    },
+    {
+      "position": [
+        2.0,
+        3.0,
+        4.0
+      ],
+      "rotation": [
+        0.4646367,
+        0.799259663,
+        0.379512161,
+        0.03559889
+      ],
+      "muzzle": [
+        1.86300254,
+        2.93104386,
+        3.97212362
+      ]
+    },
+    {
+      "position": [
+        2.0,
+        3.0,
+        4.0
+      ],
+      "rotation": [
+        0.6062926,
+        -0.384039164,
+        0.266487,
+        0.6433567
+      ],
+      "muzzle": [
+        2.131405,
+        3.05614662,
+        3.93770576
+      ]
+    }
+  ]
+}
