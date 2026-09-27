@@ -1973,6 +1973,7 @@ public sealed partial class MatchEngine
         armyDronePaths.Remove(entityKey);
         armyDroneShots.Remove(entityKey);
         droneAttacks.Remove(entityKey);
+        droneLastIntents.Remove(entityKey);
         armyDamage.Remove(entityKey);
         armySpecial.Remove(entityKey);
         armySpeed.Remove(entityKey);

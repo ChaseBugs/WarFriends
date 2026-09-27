@@ -1070,7 +1070,7 @@ public sealed partial class MatchEngine
         if(advanced&&phase==BattlePhase.Running)groundVehicleVelocities.Clear();
         if(advanced&&phase==BattlePhase.Running&&armyDronePaths.Count>0)
         {
-            try{AdvanceDronePaths();}
+            try{AdvanceDronePaths();AdvanceDroneAttacks();}
             catch(InvalidDataException){End("invalid-drone-route-authority","",false);return;}
         }
         if(advanced&&phase==BattlePhase.Running&&vehicleRouteMotions.Count>0)

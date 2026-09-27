@@ -5,6 +5,13 @@ namespace War.BattleServer;
 public sealed partial class MatchEngine
 {
     private readonly Dictionary<ulong,DroneAttackState> droneAttacks=[];
+    private readonly Dictionary<ulong,DroneProjectileIntent> droneLastIntents=[];
+    internal DroneProjectileIntent? LastDroneIntent(ulong key)=>droneLastIntents.GetValueOrDefault(key);
+    private void AdvanceDroneAttacks()
+    {
+        foreach(ulong key in armyDronePaths.Keys.Order().ToArray())
+            if(droneAttacks.ContainsKey(key)&&armyDamage.ContainsKey(key))LaunchObservedDroneProjectile(key);
+    }
     private readonly DroneWeaponCatalog? droneWeapon;
     private readonly DroneProjectileCatalog? droneProjectile;
     private sealed record DroneHostProjectile(ulong ArmyId,string Owner,DroneProjectileIntent Intent,
@@ -107,8 +114,9 @@ public sealed partial class MatchEngine
         if(intent==null)return null;
         var policy=(armyCatalog??throw new InvalidDataException("Drone damage policy source absent."))
             .PlayerDamagePolicy(row.UnitId);
-        return intent with {PlayerDamageCoefficient=policy.PlayerDamageRatio,
+        var accepted=intent with {PlayerDamageCoefficient=policy.PlayerDamageRatio,
             PlayerOvertimeDamageCoefficient=policy.OvertimePlayerDamageRatio};
+        droneLastIntents[key]=accepted;return accepted;
     }
     private int DroneBatchRange(int minimum,int maximum)
     {

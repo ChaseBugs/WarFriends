@@ -2750,7 +2750,7 @@ internal static class CombatContentTests
             deployedDroneMatch.ArmyHealth(deployedDrone.EntityKey)==droneHealth,
             "trusted special stage protects normal deployed Drone health against host damage");
         for(ulong t=213;t<=256;t++)deployedDroneMatch.Advance(t);
-        var observedDroneIntent=deployedDroneMatch.ObserveDroneAttack(deployedDrone.EntityKey);
+        var observedDroneIntent=deployedDroneMatch.LastDroneIntent(deployedDrone.EntityKey);
         Check(deployedDroneMatch.DroneAttackDeadline(deployedDrone.EntityKey)>61f/MatchManifest.TickRate+2,
             "live host observation resolves source registry and advances attack deadline");
         Check(observedDroneIntent is {Speed:>0,Damage:>0,CheckDistance:1},
@@ -2825,9 +2825,9 @@ internal static class CombatContentTests
                 }
                 droneShotMatch.EventBatch(decoyOpponent,droneEventCursor);
             }
-            if(!droneProjectileLaunched&&shotTick>122&&shotTick<600&&droneShotMatch.ArmyHealth(shotDrone.EntityKey)!=null)
+            if(!droneProjectileLaunched&&droneShotMatch.PendingDroneProjectiles>0)
             {
-                droneProjectileLaunched=droneShotMatch.LaunchObservedDroneProjectile(shotDrone.EntityKey)!=null;
+                droneProjectileLaunched=true;
                 if(droneProjectileLaunched)
                     Check(droneShotMatch.Snapshot().Projectiles.Any(p=>p.Kind=="drone-bullet"&&p.OwnerPlayerId==decoyPlayer),
                         "live Drone flight projects dedicated host-owned bullet snapshot");
