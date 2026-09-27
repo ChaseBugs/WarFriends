@@ -11,6 +11,9 @@ public sealed class SelfHostedProjectilePresenter : MonoBehaviour
 	{
 		public readonly GameObject Root;
         public LineTrailRenderer Trail;
+        public bool DroneEvent;
+        public Vector3 End;
+        public float Speed;
 		public Visual(GameObject root) { Root = root; }
 	}
 
@@ -49,7 +52,7 @@ public sealed class SelfHostedProjectilePresenter : MonoBehaviour
 		}
 		List<ulong> stale = new List<ulong>();
 		foreach (KeyValuePair<ulong, Visual> pair in active)
-			if (!present.Contains(pair.Key)) stale.Add(pair.Key);
+			if (!present.Contains(pair.Key) && !pair.Value.DroneEvent) stale.Add(pair.Key);
 		foreach (ulong id in stale) Remove(id);
 	}
 
@@ -68,15 +71,46 @@ public sealed class SelfHostedProjectilePresenter : MonoBehaviour
                     visual.Root.transform.rotation = Quaternion.LookRotation(direction) * Quaternion.AngleAxis(-90f, Vector3.up);
             }
             ConfigureDroneTrail(visual, item.DroneShot.Fake, item.DroneShot.Shield, item.DroneShot.Speed);
+            Vector3 muzzle = new Vector3(item.DroneShot.MuzzleX, item.DroneShot.MuzzleY, item.DroneShot.MuzzleZ);
+            Vector3 delta = new Vector3(item.X, item.Y, item.Z) - muzzle;
+            if (delta.magnitude > 50f) delta = delta.normalized * 50f;
+            visual.DroneEvent = true;
+            visual.End = muzzle + delta * 2f;
+            visual.Speed = item.DroneShot.Speed;
             return;
         }
 		if (item == null || item.Kind != MatchEventKind.Impact ||
 			(item.Reason != "grenade" && item.Reason != "grenade-molotov" && item.Reason != "heavy-turret" && item.Reason != "drone")) return;
+        if (item.Reason == "drone")
+        {
+            Visual droneVisual;
+            if (active.TryGetValue(item.ProjectileId, out droneVisual) && droneVisual.DroneEvent)
+            {
+                // Firing and impact can arrive in one reliable batch. Finish the
+                // cosmetic path at the host impact instead of erasing it unseen.
+                droneVisual.End = new Vector3(item.X, item.Y, item.Z);
+                return;
+            }
+        }
 		Remove(item.ProjectileId);
 		if (item.Reason == "heavy-turret" || item.Reason == "drone") return;
 		Explosion.PlayEffects(item.Reason == "grenade-molotov" ? Explosion.ExplosionType.Molotov : Explosion.ExplosionType.Medium,
 			new Vector3(item.X, item.Y, item.Z));
 	}
+    private void Update()
+    {
+        var finished = new List<ulong>();
+        foreach (var pair in active)
+        {
+            Visual visual = pair.Value;
+            if (!visual.DroneEvent) continue;
+            // Cosmetic fallback between host snapshots; no local hit testing.
+            visual.Root.transform.position = Vector3.MoveTowards(visual.Root.transform.position,
+                visual.End, visual.Speed * Time.deltaTime);
+            if (visual.Root.transform.position == visual.End) finished.Add(pair.Key);
+        }
+        foreach (ulong id in finished) Remove(id);
+    }
     private static void ConfigureDroneTrail(Visual visual, bool fake, bool shield, float speed)
     {
         Drone drone = Singleton<ObjectPoolDatabase>.instance == null ? null : Singleton<ObjectPoolDatabase>.instance.drone;
