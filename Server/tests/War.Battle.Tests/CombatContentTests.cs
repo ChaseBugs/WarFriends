@@ -24,6 +24,7 @@ internal static class CombatContentTests
         count+=DroneTargetTests.Run();
         count+=DroneAttackClockTests.Run();
         count+=DroneBatchTests.Run();
+        count+=DroneShotTargetTests.Run();
         count+=AirWaypointCatalogTests.Run(directory,content);
         var navArtifact=Path.Combine(directory,"recovered-army-navmesh-sources.json");
         var navPin=JsonSerializer.Deserialize<CombatContentManifest>(
