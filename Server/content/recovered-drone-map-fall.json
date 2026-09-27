@@ -6693,7 +6693,9 @@
               ],
               "separation": -0.00559261441,
               "bodyColliderType": "SphereCollider",
-              "bodyCollider": "dronePrototype/AimTargerAndEngine"
+              "bodyCollider": "dronePrototype/AimTargerAndEngine",
+              "otherColliderIndex": 77,
+              "otherColliderType": "MeshCollider"
             }
           ]
         },
@@ -6726,7 +6728,9 @@
               ],
               "separation": -0.0256766677,
               "bodyColliderType": "SphereCollider",
-              "bodyCollider": "dronePrototype/AimTargerAndEngine"
+              "bodyCollider": "dronePrototype/AimTargerAndEngine",
+              "otherColliderIndex": 96,
+              "otherColliderType": "MeshCollider"
             }
           ]
         },
@@ -6759,7 +6763,9 @@
               ],
               "separation": 0.01575303,
               "bodyColliderType": "BoxCollider",
-              "bodyCollider": "dronePrototype"
+              "bodyCollider": "dronePrototype",
+              "otherColliderIndex": 77,
+              "otherColliderType": "MeshCollider"
             }
           ]
         },
@@ -6792,7 +6798,9 @@
               ],
               "separation": 0.0197997689,
               "bodyColliderType": "BoxCollider",
-              "bodyCollider": "dronePrototype"
+              "bodyCollider": "dronePrototype",
+              "otherColliderIndex": 77,
+              "otherColliderType": "MeshCollider"
             }
           ]
         }
@@ -13485,7 +13493,9 @@
               ],
               "separation": -0.0256766677,
               "bodyColliderType": "SphereCollider",
-              "bodyCollider": "dronePrototype/AimTargerAndEngine"
+              "bodyCollider": "dronePrototype/AimTargerAndEngine",
+              "otherColliderIndex": 96,
+              "otherColliderType": "MeshCollider"
             }
           ]
         },
@@ -13518,7 +13528,9 @@
               ],
               "separation": -0.00559261441,
               "bodyColliderType": "SphereCollider",
-              "bodyCollider": "dronePrototype/AimTargerAndEngine"
+              "bodyCollider": "dronePrototype/AimTargerAndEngine",
+              "otherColliderIndex": 77,
+              "otherColliderType": "MeshCollider"
             }
           ]
         },
@@ -13551,7 +13563,9 @@
               ],
               "separation": 0.0171544254,
               "bodyColliderType": "BoxCollider",
-              "bodyCollider": "dronePrototype"
+              "bodyCollider": "dronePrototype",
+              "otherColliderIndex": 77,
+              "otherColliderType": "MeshCollider"
             }
           ]
         },
@@ -13584,7 +13598,9 @@
               ],
               "separation": 0.0191676319,
               "bodyColliderType": "SphereCollider",
-              "bodyCollider": "dronePrototype/AimTargerAndEngine"
+              "bodyCollider": "dronePrototype/AimTargerAndEngine",
+              "otherColliderIndex": 77,
+              "otherColliderType": "MeshCollider"
             }
           ]
         },
@@ -13617,7 +13633,9 @@
               ],
               "separation": 0.0161671937,
               "bodyColliderType": "SphereCollider",
-              "bodyCollider": "dronePrototype/AimTargerAndEngine"
+              "bodyCollider": "dronePrototype/AimTargerAndEngine",
+              "otherColliderIndex": 95,
+              "otherColliderType": "MeshCollider"
             }
           ]
         },
@@ -13650,7 +13668,9 @@
               ],
               "separation": 0.0198505521,
               "bodyColliderType": "BoxCollider",
-              "bodyCollider": "dronePrototype"
+              "bodyCollider": "dronePrototype",
+              "otherColliderIndex": 95,
+              "otherColliderType": "MeshCollider"
             }
           ]
         }
@@ -20343,7 +20363,9 @@
               ],
               "separation": -0.005592525,
               "bodyColliderType": "SphereCollider",
-              "bodyCollider": "dronePrototype/AimTargerAndEngine"
+              "bodyCollider": "dronePrototype/AimTargerAndEngine",
+              "otherColliderIndex": 77,
+              "otherColliderType": "MeshCollider"
             }
           ]
         },
@@ -20376,7 +20398,9 @@
               ],
               "separation": -0.0256767273,
               "bodyColliderType": "SphereCollider",
-              "bodyCollider": "dronePrototype/AimTargerAndEngine"
+              "bodyCollider": "dronePrototype/AimTargerAndEngine",
+              "otherColliderIndex": 96,
+              "otherColliderType": "MeshCollider"
             }
           ]
         },
@@ -20409,7 +20433,9 @@
               ],
               "separation": 0.0199433565,
               "bodyColliderType": "BoxCollider",
-              "bodyCollider": "dronePrototype"
+              "bodyCollider": "dronePrototype",
+              "otherColliderIndex": 77,
+              "otherColliderType": "MeshCollider"
             }
           ]
         },
@@ -20442,7 +20468,9 @@
               ],
               "separation": 0.009983765,
               "bodyColliderType": "BoxCollider",
-              "bodyCollider": "dronePrototype"
+              "bodyCollider": "dronePrototype",
+              "otherColliderIndex": 95,
+              "otherColliderType": "MeshCollider"
             },
             {
               "position": [
@@ -20457,7 +20485,9 @@
               ],
               "separation": 0.01678875,
               "bodyColliderType": "BoxCollider",
-              "bodyCollider": "dronePrototype"
+              "bodyCollider": "dronePrototype",
+              "otherColliderIndex": 95,
+              "otherColliderType": "MeshCollider"
             },
             {
               "position": [
@@ -20472,7 +20502,9 @@
               ],
               "separation": 0.0187651217,
               "bodyColliderType": "BoxCollider",
-              "bodyCollider": "dronePrototype"
+              "bodyCollider": "dronePrototype",
+              "otherColliderIndex": 95,
+              "otherColliderType": "MeshCollider"
             },
             {
               "position": [
@@ -20487,7 +20519,9 @@
               ],
               "separation": 0.017374754,
               "bodyColliderType": "BoxCollider",
-              "bodyCollider": "dronePrototype"
+              "bodyCollider": "dronePrototype",
+              "otherColliderIndex": 95,
+              "otherColliderType": "MeshCollider"
             }
           ]
         }
@@ -27180,7 +27214,9 @@
               ],
               "separation": 0.0179273486,
               "bodyColliderType": "SphereCollider",
-              "bodyCollider": "dronePrototype/AimTargerAndEngine"
+              "bodyCollider": "dronePrototype/AimTargerAndEngine",
+              "otherColliderIndex": 62,
+              "otherColliderType": "MeshCollider"
             }
           ]
         },
@@ -27213,7 +27249,9 @@
               ],
               "separation": 0.0147041976,
               "bodyColliderType": "SphereCollider",
-              "bodyCollider": "dronePrototype/AimTargerAndEngine"
+              "bodyCollider": "dronePrototype/AimTargerAndEngine",
+              "otherColliderIndex": 77,
+              "otherColliderType": "MeshCollider"
             }
           ]
         },
@@ -27246,7 +27284,9 @@
               ],
               "separation": 0.00324928761,
               "bodyColliderType": "SphereCollider",
-              "bodyCollider": "dronePrototype/AimTargerAndEngine"
+              "bodyCollider": "dronePrototype/AimTargerAndEngine",
+              "otherColliderIndex": 78,
+              "otherColliderType": "MeshCollider"
             },
             {
               "position": [
@@ -27261,7 +27301,9 @@
               ],
               "separation": 0.008792043,
               "bodyColliderType": "SphereCollider",
-              "bodyCollider": "dronePrototype/AimTargerAndEngine"
+              "bodyCollider": "dronePrototype/AimTargerAndEngine",
+              "otherColliderIndex": 78,
+              "otherColliderType": "MeshCollider"
             }
           ]
         },
@@ -27294,7 +27336,9 @@
               ],
               "separation": 0.0187287033,
               "bodyColliderType": "BoxCollider",
-              "bodyCollider": "dronePrototype"
+              "bodyCollider": "dronePrototype",
+              "otherColliderIndex": 77,
+              "otherColliderType": "MeshCollider"
             }
           ]
         },
@@ -27327,7 +27371,9 @@
               ],
               "separation": 0.0156894326,
               "bodyColliderType": "BoxCollider",
-              "bodyCollider": "dronePrototype"
+              "bodyCollider": "dronePrototype",
+              "otherColliderIndex": 77,
+              "otherColliderType": "MeshCollider"
             }
           ]
         },
@@ -27360,7 +27406,9 @@
               ],
               "separation": 0.0176379085,
               "bodyColliderType": "BoxCollider",
-              "bodyCollider": "dronePrototype"
+              "bodyCollider": "dronePrototype",
+              "otherColliderIndex": 77,
+              "otherColliderType": "MeshCollider"
             }
           ]
         }
@@ -34053,7 +34101,9 @@
               ],
               "separation": 0.0179273486,
               "bodyColliderType": "SphereCollider",
-              "bodyCollider": "dronePrototype/AimTargerAndEngine"
+              "bodyCollider": "dronePrototype/AimTargerAndEngine",
+              "otherColliderIndex": 62,
+              "otherColliderType": "MeshCollider"
             }
           ]
         },
@@ -34086,7 +34136,9 @@
               ],
               "separation": 0.01800716,
               "bodyColliderType": "SphereCollider",
-              "bodyCollider": "dronePrototype/AimTargerAndEngine"
+              "bodyCollider": "dronePrototype/AimTargerAndEngine",
+              "otherColliderIndex": 77,
+              "otherColliderType": "MeshCollider"
             }
           ]
         },
@@ -34119,7 +34171,9 @@
               ],
               "separation": 0.00644803047,
               "bodyColliderType": "SphereCollider",
-              "bodyCollider": "dronePrototype/AimTargerAndEngine"
+              "bodyCollider": "dronePrototype/AimTargerAndEngine",
+              "otherColliderIndex": 78,
+              "otherColliderType": "MeshCollider"
             },
             {
               "position": [
@@ -34134,7 +34188,9 @@
               ],
               "separation": 0.0119663179,
               "bodyColliderType": "SphereCollider",
-              "bodyCollider": "dronePrototype/AimTargerAndEngine"
+              "bodyCollider": "dronePrototype/AimTargerAndEngine",
+              "otherColliderIndex": 78,
+              "otherColliderType": "MeshCollider"
             }
           ]
         },
@@ -34167,7 +34223,9 @@
               ],
               "separation": 0.01862055,
               "bodyColliderType": "BoxCollider",
-              "bodyCollider": "dronePrototype"
+              "bodyCollider": "dronePrototype",
+              "otherColliderIndex": 77,
+              "otherColliderType": "MeshCollider"
             }
           ]
         },
@@ -34200,7 +34258,9 @@
               ],
               "separation": 0.0152777433,
               "bodyColliderType": "BoxCollider",
-              "bodyCollider": "dronePrototype"
+              "bodyCollider": "dronePrototype",
+              "otherColliderIndex": 77,
+              "otherColliderType": "MeshCollider"
             }
           ]
         }
@@ -40893,7 +40953,9 @@
               ],
               "separation": 0.01792723,
               "bodyColliderType": "SphereCollider",
-              "bodyCollider": "dronePrototype/AimTargerAndEngine"
+              "bodyCollider": "dronePrototype/AimTargerAndEngine",
+              "otherColliderIndex": 62,
+              "otherColliderType": "MeshCollider"
             }
           ]
         },
@@ -40926,7 +40988,9 @@
               ],
               "separation": 0.0179851353,
               "bodyColliderType": "SphereCollider",
-              "bodyCollider": "dronePrototype/AimTargerAndEngine"
+              "bodyCollider": "dronePrototype/AimTargerAndEngine",
+              "otherColliderIndex": 77,
+              "otherColliderType": "MeshCollider"
             }
           ]
         },
@@ -40959,7 +41023,9 @@
               ],
               "separation": 0.0181455016,
               "bodyColliderType": "BoxCollider",
-              "bodyCollider": "dronePrototype"
+              "bodyCollider": "dronePrototype",
+              "otherColliderIndex": 77,
+              "otherColliderType": "MeshCollider"
             }
           ]
         },
@@ -40992,7 +41058,9 @@
               ],
               "separation": 0.00764495134,
               "bodyColliderType": "SphereCollider",
-              "bodyCollider": "dronePrototype/AimTargerAndEngine"
+              "bodyCollider": "dronePrototype/AimTargerAndEngine",
+              "otherColliderIndex": 78,
+              "otherColliderType": "MeshCollider"
             }
           ]
         },
@@ -41025,7 +41093,9 @@
               ],
               "separation": 0.01970473,
               "bodyColliderType": "SphereCollider",
-              "bodyCollider": "dronePrototype/AimTargerAndEngine"
+              "bodyCollider": "dronePrototype/AimTargerAndEngine",
+              "otherColliderIndex": 62,
+              "otherColliderType": "MeshCollider"
             }
           ]
         },
@@ -41058,7 +41128,9 @@
               ],
               "separation": 0.0178764462,
               "bodyColliderType": "BoxCollider",
-              "bodyCollider": "dronePrototype"
+              "bodyCollider": "dronePrototype",
+              "otherColliderIndex": 77,
+              "otherColliderType": "MeshCollider"
             }
           ]
         },
@@ -41091,7 +41163,9 @@
               ],
               "separation": 0.0170754269,
               "bodyColliderType": "BoxCollider",
-              "bodyCollider": "dronePrototype"
+              "bodyCollider": "dronePrototype",
+              "otherColliderIndex": 77,
+              "otherColliderType": "MeshCollider"
             }
           ]
         }
@@ -47784,7 +47858,9 @@
               ],
               "separation": -0.00585111976,
               "bodyColliderType": "SphereCollider",
-              "bodyCollider": "dronePrototype/AimTargerAndEngine"
+              "bodyCollider": "dronePrototype/AimTargerAndEngine",
+              "otherColliderIndex": 69,
+              "otherColliderType": "MeshCollider"
             }
           ]
         },
@@ -47817,7 +47893,9 @@
               ],
               "separation": -0.00168684125,
               "bodyColliderType": "SphereCollider",
-              "bodyCollider": "dronePrototype/AimTargerAndEngine"
+              "bodyCollider": "dronePrototype/AimTargerAndEngine",
+              "otherColliderIndex": 165,
+              "otherColliderType": "MeshCollider"
             }
           ]
         },
@@ -47850,7 +47928,9 @@
               ],
               "separation": 0.01341629,
               "bodyColliderType": "BoxCollider",
-              "bodyCollider": "dronePrototype"
+              "bodyCollider": "dronePrototype",
+              "otherColliderIndex": 165,
+              "otherColliderType": "MeshCollider"
             }
           ]
         },
@@ -47883,7 +47963,9 @@
               ],
               "separation": 0.018059263,
               "bodyColliderType": "BoxCollider",
-              "bodyCollider": "dronePrototype"
+              "bodyCollider": "dronePrototype",
+              "otherColliderIndex": 108,
+              "otherColliderType": "MeshCollider"
             }
           ]
         },
@@ -47916,7 +47998,9 @@
               ],
               "separation": 0.0179274082,
               "bodyColliderType": "BoxCollider",
-              "bodyCollider": "dronePrototype"
+              "bodyCollider": "dronePrototype",
+              "otherColliderIndex": 165,
+              "otherColliderType": "MeshCollider"
             }
           ]
         }
@@ -54609,7 +54693,9 @@
               ],
               "separation": -0.00585129857,
               "bodyColliderType": "SphereCollider",
-              "bodyCollider": "dronePrototype/AimTargerAndEngine"
+              "bodyCollider": "dronePrototype/AimTargerAndEngine",
+              "otherColliderIndex": 69,
+              "otherColliderType": "MeshCollider"
             }
           ]
         },
@@ -54642,7 +54728,9 @@
               ],
               "separation": -0.00168681145,
               "bodyColliderType": "SphereCollider",
-              "bodyCollider": "dronePrototype/AimTargerAndEngine"
+              "bodyCollider": "dronePrototype/AimTargerAndEngine",
+              "otherColliderIndex": 165,
+              "otherColliderType": "MeshCollider"
             }
           ]
         },
@@ -54675,7 +54763,9 @@
               ],
               "separation": 0.0185549259,
               "bodyColliderType": "BoxCollider",
-              "bodyCollider": "dronePrototype"
+              "bodyCollider": "dronePrototype",
+              "otherColliderIndex": 165,
+              "otherColliderType": "MeshCollider"
             },
             {
               "position": [
@@ -54690,7 +54780,9 @@
               ],
               "separation": 0.0187872648,
               "bodyColliderType": "BoxCollider",
-              "bodyCollider": "dronePrototype"
+              "bodyCollider": "dronePrototype",
+              "otherColliderIndex": 165,
+              "otherColliderType": "MeshCollider"
             }
           ]
         },
@@ -54723,7 +54815,9 @@
               ],
               "separation": 0.0195353031,
               "bodyColliderType": "BoxCollider",
-              "bodyCollider": "dronePrototype"
+              "bodyCollider": "dronePrototype",
+              "otherColliderIndex": 165,
+              "otherColliderType": "MeshCollider"
             }
           ]
         }
@@ -61416,7 +61510,9 @@
               ],
               "separation": -0.00585117936,
               "bodyColliderType": "SphereCollider",
-              "bodyCollider": "dronePrototype/AimTargerAndEngine"
+              "bodyCollider": "dronePrototype/AimTargerAndEngine",
+              "otherColliderIndex": 69,
+              "otherColliderType": "MeshCollider"
             }
           ]
         },
@@ -61449,7 +61545,9 @@
               ],
               "separation": -0.001686871,
               "bodyColliderType": "SphereCollider",
-              "bodyCollider": "dronePrototype/AimTargerAndEngine"
+              "bodyCollider": "dronePrototype/AimTargerAndEngine",
+              "otherColliderIndex": 165,
+              "otherColliderType": "MeshCollider"
             }
           ]
         },
@@ -61482,7 +61580,9 @@
               ],
               "separation": 0.01957488,
               "bodyColliderType": "BoxCollider",
-              "bodyCollider": "dronePrototype"
+              "bodyCollider": "dronePrototype",
+              "otherColliderIndex": 165,
+              "otherColliderType": "MeshCollider"
             }
           ]
         }
@@ -68175,7 +68275,9 @@
               ],
               "separation": -0.006407678,
               "bodyColliderType": "SphereCollider",
-              "bodyCollider": "dronePrototype/AimTargerAndEngine"
+              "bodyCollider": "dronePrototype/AimTargerAndEngine",
+              "otherColliderIndex": 165,
+              "otherColliderType": "MeshCollider"
             }
           ]
         }
@@ -74868,7 +74970,9 @@
               ],
               "separation": -0.006407678,
               "bodyColliderType": "SphereCollider",
-              "bodyCollider": "dronePrototype/AimTargerAndEngine"
+              "bodyCollider": "dronePrototype/AimTargerAndEngine",
+              "otherColliderIndex": 165,
+              "otherColliderType": "MeshCollider"
             }
           ]
         }
@@ -81561,7 +81665,9 @@
               ],
               "separation": -0.00640764832,
               "bodyColliderType": "SphereCollider",
-              "bodyCollider": "dronePrototype/AimTargerAndEngine"
+              "bodyCollider": "dronePrototype/AimTargerAndEngine",
+              "otherColliderIndex": 165,
+              "otherColliderType": "MeshCollider"
             }
           ]
         },
@@ -81594,7 +81700,9 @@
               ],
               "separation": 0.0135087967,
               "bodyColliderType": "SphereCollider",
-              "bodyCollider": "dronePrototype/AimTargerAndEngine"
+              "bodyCollider": "dronePrototype/AimTargerAndEngine",
+              "otherColliderIndex": 121,
+              "otherColliderType": "MeshCollider"
             }
           ]
         }
@@ -88287,7 +88395,9 @@
               ],
               "separation": -0.005015582,
               "bodyColliderType": "SphereCollider",
-              "bodyCollider": "dronePrototype/AimTargerAndEngine"
+              "bodyCollider": "dronePrototype/AimTargerAndEngine",
+              "otherColliderIndex": 24,
+              "otherColliderType": "MeshCollider"
             }
           ]
         }
@@ -94980,7 +95090,9 @@
               ],
               "separation": -0.005015373,
               "bodyColliderType": "SphereCollider",
-              "bodyCollider": "dronePrototype/AimTargerAndEngine"
+              "bodyCollider": "dronePrototype/AimTargerAndEngine",
+              "otherColliderIndex": 24,
+              "otherColliderType": "MeshCollider"
             }
           ]
         }
@@ -101673,7 +101785,9 @@
               ],
               "separation": -0.00501567125,
               "bodyColliderType": "SphereCollider",
-              "bodyCollider": "dronePrototype/AimTargerAndEngine"
+              "bodyCollider": "dronePrototype/AimTargerAndEngine",
+              "otherColliderIndex": 24,
+              "otherColliderType": "MeshCollider"
             }
           ]
         },
@@ -101706,7 +101820,9 @@
               ],
               "separation": 0.01555559,
               "bodyColliderType": "BoxCollider",
-              "bodyCollider": "dronePrototype"
+              "bodyCollider": "dronePrototype",
+              "otherColliderIndex": 24,
+              "otherColliderType": "MeshCollider"
             }
           ]
         }
@@ -108399,7 +108515,9 @@
               ],
               "separation": -2.80737877E-05,
               "bodyColliderType": "SphereCollider",
-              "bodyCollider": "dronePrototype/AimTargerAndEngine"
+              "bodyCollider": "dronePrototype/AimTargerAndEngine",
+              "otherColliderIndex": 24,
+              "otherColliderType": "MeshCollider"
             }
           ]
         },
@@ -108432,7 +108550,9 @@
               ],
               "separation": 0.0197625458,
               "bodyColliderType": "SphereCollider",
-              "bodyCollider": "dronePrototype/AimTargerAndEngine"
+              "bodyCollider": "dronePrototype/AimTargerAndEngine",
+              "otherColliderIndex": 107,
+              "otherColliderType": "MeshCollider"
             }
           ]
         },
@@ -108465,7 +108585,9 @@
               ],
               "separation": 0.0195230842,
               "bodyColliderType": "BoxCollider",
-              "bodyCollider": "dronePrototype"
+              "bodyCollider": "dronePrototype",
+              "otherColliderIndex": 24,
+              "otherColliderType": "MeshCollider"
             }
           ]
         }
@@ -115158,7 +115280,9 @@
               ],
               "separation": -2.85506248E-05,
               "bodyColliderType": "SphereCollider",
-              "bodyCollider": "dronePrototype/AimTargerAndEngine"
+              "bodyCollider": "dronePrototype/AimTargerAndEngine",
+              "otherColliderIndex": 24,
+              "otherColliderType": "MeshCollider"
             }
           ]
         },
@@ -115191,7 +115315,9 @@
               ],
               "separation": 0.0180757046,
               "bodyColliderType": "BoxCollider",
-              "bodyCollider": "dronePrototype"
+              "bodyCollider": "dronePrototype",
+              "otherColliderIndex": 107,
+              "otherColliderType": "MeshCollider"
             }
           ]
         },
@@ -115224,7 +115350,9 @@
               ],
               "separation": 0.0162026584,
               "bodyColliderType": "SphereCollider",
-              "bodyCollider": "dronePrototype/AimTargerAndEngine"
+              "bodyCollider": "dronePrototype/AimTargerAndEngine",
+              "otherColliderIndex": 107,
+              "otherColliderType": "MeshCollider"
             }
           ]
         },
@@ -115257,7 +115385,9 @@
               ],
               "separation": 0.0151588619,
               "bodyColliderType": "BoxCollider",
-              "bodyCollider": "dronePrototype"
+              "bodyCollider": "dronePrototype",
+              "otherColliderIndex": 85,
+              "otherColliderType": "MeshCollider"
             }
           ]
         }
@@ -121950,7 +122080,9 @@
               ],
               "separation": -2.81631947E-05,
               "bodyColliderType": "SphereCollider",
-              "bodyCollider": "dronePrototype/AimTargerAndEngine"
+              "bodyCollider": "dronePrototype/AimTargerAndEngine",
+              "otherColliderIndex": 24,
+              "otherColliderType": "MeshCollider"
             }
           ]
         },
@@ -121983,7 +122115,9 @@
               ],
               "separation": 0.0113469958,
               "bodyColliderType": "SphereCollider",
-              "bodyCollider": "dronePrototype/AimTargerAndEngine"
+              "bodyCollider": "dronePrototype/AimTargerAndEngine",
+              "otherColliderIndex": 107,
+              "otherColliderType": "MeshCollider"
             }
           ]
         },
@@ -122016,7 +122150,9 @@
               ],
               "separation": 0.0119916266,
               "bodyColliderType": "BoxCollider",
-              "bodyCollider": "dronePrototype"
+              "bodyCollider": "dronePrototype",
+              "otherColliderIndex": 107,
+              "otherColliderType": "MeshCollider"
             }
           ]
         },
@@ -122049,7 +122185,9 @@
               ],
               "separation": 0.0138970315,
               "bodyColliderType": "BoxCollider",
-              "bodyCollider": "dronePrototype"
+              "bodyCollider": "dronePrototype",
+              "otherColliderIndex": 24,
+              "otherColliderType": "MeshCollider"
             }
           ]
         },
@@ -122082,7 +122220,9 @@
               ],
               "separation": 0.009484768,
               "bodyColliderType": "BoxCollider",
-              "bodyCollider": "dronePrototype"
+              "bodyCollider": "dronePrototype",
+              "otherColliderIndex": 85,
+              "otherColliderType": "MeshCollider"
             },
             {
               "position": [
@@ -122097,7 +122237,9 @@
               ],
               "separation": 0.009104937,
               "bodyColliderType": "BoxCollider",
-              "bodyCollider": "dronePrototype"
+              "bodyCollider": "dronePrototype",
+              "otherColliderIndex": 85,
+              "otherColliderType": "MeshCollider"
             }
           ]
         },
@@ -122130,7 +122272,9 @@
               ],
               "separation": 0.0158213433,
               "bodyColliderType": "BoxCollider",
-              "bodyCollider": "dronePrototype"
+              "bodyCollider": "dronePrototype",
+              "otherColliderIndex": 107,
+              "otherColliderType": "MeshCollider"
             }
           ]
         }
@@ -128823,7 +128967,9 @@
               ],
               "separation": -0.0408513844,
               "bodyColliderType": "SphereCollider",
-              "bodyCollider": "dronePrototype/AimTargerAndEngine"
+              "bodyCollider": "dronePrototype/AimTargerAndEngine",
+              "otherColliderIndex": 170,
+              "otherColliderType": "MeshCollider"
             }
           ]
         },
@@ -128856,7 +129002,9 @@
               ],
               "separation": 0.016872257,
               "bodyColliderType": "BoxCollider",
-              "bodyCollider": "dronePrototype"
+              "bodyCollider": "dronePrototype",
+              "otherColliderIndex": 137,
+              "otherColliderType": "MeshCollider"
             },
             {
               "position": [
@@ -128871,7 +129019,9 @@
               ],
               "separation": 0.0167313218,
               "bodyColliderType": "BoxCollider",
-              "bodyCollider": "dronePrototype"
+              "bodyCollider": "dronePrototype",
+              "otherColliderIndex": 137,
+              "otherColliderType": "MeshCollider"
             },
             {
               "position": [
@@ -128886,7 +129036,9 @@
               ],
               "separation": 0.0157996714,
               "bodyColliderType": "BoxCollider",
-              "bodyCollider": "dronePrototype"
+              "bodyCollider": "dronePrototype",
+              "otherColliderIndex": 137,
+              "otherColliderType": "MeshCollider"
             }
           ]
         },
@@ -128919,7 +129071,9 @@
               ],
               "separation": 0.0188928246,
               "bodyColliderType": "SphereCollider",
-              "bodyCollider": "dronePrototype/AimTargerAndEngine"
+              "bodyCollider": "dronePrototype/AimTargerAndEngine",
+              "otherColliderIndex": 137,
+              "otherColliderType": "MeshCollider"
             }
           ]
         }
@@ -135612,7 +135766,9 @@
               ],
               "separation": -0.0408512652,
               "bodyColliderType": "SphereCollider",
-              "bodyCollider": "dronePrototype/AimTargerAndEngine"
+              "bodyCollider": "dronePrototype/AimTargerAndEngine",
+              "otherColliderIndex": 170,
+              "otherColliderType": "MeshCollider"
             }
           ]
         },
@@ -135645,7 +135801,9 @@
               ],
               "separation": 0.0185834169,
               "bodyColliderType": "BoxCollider",
-              "bodyCollider": "dronePrototype"
+              "bodyCollider": "dronePrototype",
+              "otherColliderIndex": 100,
+              "otherColliderType": "MeshCollider"
             }
           ]
         }
@@ -142338,7 +142496,9 @@
               ],
               "separation": -0.040851444,
               "bodyColliderType": "SphereCollider",
-              "bodyCollider": "dronePrototype/AimTargerAndEngine"
+              "bodyCollider": "dronePrototype/AimTargerAndEngine",
+              "otherColliderIndex": 170,
+              "otherColliderType": "MeshCollider"
             }
           ]
         }
@@ -149031,7 +149191,9 @@
               ],
               "separation": 0.0143957734,
               "bodyColliderType": "SphereCollider",
-              "bodyCollider": "dronePrototype/AimTargerAndEngine"
+              "bodyCollider": "dronePrototype/AimTargerAndEngine",
+              "otherColliderIndex": 170,
+              "otherColliderType": "MeshCollider"
             }
           ]
         },
@@ -149064,7 +149226,9 @@
               ],
               "separation": 0.0147708654,
               "bodyColliderType": "SphereCollider",
-              "bodyCollider": "dronePrototype/AimTargerAndEngine"
+              "bodyCollider": "dronePrototype/AimTargerAndEngine",
+              "otherColliderIndex": 70,
+              "otherColliderType": "MeshCollider"
             }
           ]
         }
@@ -155757,7 +155921,9 @@
               ],
               "separation": 0.0143957734,
               "bodyColliderType": "SphereCollider",
-              "bodyCollider": "dronePrototype/AimTargerAndEngine"
+              "bodyCollider": "dronePrototype/AimTargerAndEngine",
+              "otherColliderIndex": 170,
+              "otherColliderType": "MeshCollider"
             }
           ]
         },
@@ -155790,7 +155956,9 @@
               ],
               "separation": 0.0122084916,
               "bodyColliderType": "SphereCollider",
-              "bodyCollider": "dronePrototype/AimTargerAndEngine"
+              "bodyCollider": "dronePrototype/AimTargerAndEngine",
+              "otherColliderIndex": 70,
+              "otherColliderType": "MeshCollider"
             }
           ]
         }
@@ -162483,7 +162651,9 @@
               ],
               "separation": 0.0143955946,
               "bodyColliderType": "SphereCollider",
-              "bodyCollider": "dronePrototype/AimTargerAndEngine"
+              "bodyCollider": "dronePrototype/AimTargerAndEngine",
+              "otherColliderIndex": 170,
+              "otherColliderType": "MeshCollider"
             }
           ]
         },
@@ -162516,7 +162686,9 @@
               ],
               "separation": 0.0184921026,
               "bodyColliderType": "SphereCollider",
-              "bodyCollider": "dronePrototype/AimTargerAndEngine"
+              "bodyCollider": "dronePrototype/AimTargerAndEngine",
+              "otherColliderIndex": 70,
+              "otherColliderType": "MeshCollider"
             }
           ]
         }
@@ -169209,7 +169381,9 @@
               ],
               "separation": -0.005539149,
               "bodyColliderType": "BoxCollider",
-              "bodyCollider": "dronePrototype"
+              "bodyCollider": "dronePrototype",
+              "otherColliderIndex": 45,
+              "otherColliderType": "MeshCollider"
             },
             {
               "position": [
@@ -169224,7 +169398,9 @@
               ],
               "separation": 0.00290450454,
               "bodyColliderType": "BoxCollider",
-              "bodyCollider": "dronePrototype"
+              "bodyCollider": "dronePrototype",
+              "otherColliderIndex": 45,
+              "otherColliderType": "MeshCollider"
             },
             {
               "position": [
@@ -169239,7 +169415,9 @@
               ],
               "separation": 0.00406909,
               "bodyColliderType": "BoxCollider",
-              "bodyCollider": "dronePrototype"
+              "bodyCollider": "dronePrototype",
+              "otherColliderIndex": 45,
+              "otherColliderType": "MeshCollider"
             },
             {
               "position": [
@@ -169254,7 +169432,9 @@
               ],
               "separation": 0.0118105412,
               "bodyColliderType": "BoxCollider",
-              "bodyCollider": "dronePrototype"
+              "bodyCollider": "dronePrototype",
+              "otherColliderIndex": 45,
+              "otherColliderType": "MeshCollider"
             },
             {
               "position": [
@@ -169269,7 +169449,9 @@
               ],
               "separation": -0.005539149,
               "bodyColliderType": "BoxCollider",
-              "bodyCollider": "dronePrototype"
+              "bodyCollider": "dronePrototype",
+              "otherColliderIndex": 45,
+              "otherColliderType": "MeshCollider"
             },
             {
               "position": [
@@ -169284,7 +169466,9 @@
               ],
               "separation": -0.005539149,
               "bodyColliderType": "BoxCollider",
-              "bodyCollider": "dronePrototype"
+              "bodyCollider": "dronePrototype",
+              "otherColliderIndex": 45,
+              "otherColliderType": "MeshCollider"
             }
           ]
         },
@@ -169317,7 +169501,9 @@
               ],
               "separation": -0.06011519,
               "bodyColliderType": "SphereCollider",
-              "bodyCollider": "dronePrototype/AimTargerAndEngine"
+              "bodyCollider": "dronePrototype/AimTargerAndEngine",
+              "otherColliderIndex": 45,
+              "otherColliderType": "MeshCollider"
             }
           ]
         },
@@ -169350,7 +169536,9 @@
               ],
               "separation": -0.009160608,
               "bodyColliderType": "SphereCollider",
-              "bodyCollider": "dronePrototype/AimTargerAndEngine"
+              "bodyCollider": "dronePrototype/AimTargerAndEngine",
+              "otherColliderIndex": 102,
+              "otherColliderType": "MeshCollider"
             }
           ]
         },
@@ -169383,7 +169571,9 @@
               ],
               "separation": -0.0139942765,
               "bodyColliderType": "SphereCollider",
-              "bodyCollider": "dronePrototype/AimTargerAndEngine"
+              "bodyCollider": "dronePrototype/AimTargerAndEngine",
+              "otherColliderIndex": 99,
+              "otherColliderType": "MeshCollider"
             }
           ]
         },
@@ -169416,7 +169606,9 @@
               ],
               "separation": 0.0141637027,
               "bodyColliderType": "SphereCollider",
-              "bodyCollider": "dronePrototype/AimTargerAndEngine"
+              "bodyCollider": "dronePrototype/AimTargerAndEngine",
+              "otherColliderIndex": 118,
+              "otherColliderType": "MeshCollider"
             }
           ]
         },
@@ -169449,7 +169641,9 @@
               ],
               "separation": 0.0115112886,
               "bodyColliderType": "BoxCollider",
-              "bodyCollider": "dronePrototype"
+              "bodyCollider": "dronePrototype",
+              "otherColliderIndex": 118,
+              "otherColliderType": "MeshCollider"
             }
           ]
         },
@@ -169482,7 +169676,9 @@
               ],
               "separation": 0.016515553,
               "bodyColliderType": "BoxCollider",
-              "bodyCollider": "dronePrototype"
+              "bodyCollider": "dronePrototype",
+              "otherColliderIndex": 118,
+              "otherColliderType": "MeshCollider"
             }
           ]
         }
@@ -176175,7 +176371,9 @@
               ],
               "separation": -0.06011519,
               "bodyColliderType": "SphereCollider",
-              "bodyCollider": "dronePrototype/AimTargerAndEngine"
+              "bodyCollider": "dronePrototype/AimTargerAndEngine",
+              "otherColliderIndex": 45,
+              "otherColliderType": "MeshCollider"
             }
           ]
         },
@@ -176208,7 +176406,9 @@
               ],
               "separation": -0.183604017,
               "bodyColliderType": "BoxCollider",
-              "bodyCollider": "dronePrototype"
+              "bodyCollider": "dronePrototype",
+              "otherColliderIndex": 45,
+              "otherColliderType": "MeshCollider"
             },
             {
               "position": [
@@ -176223,7 +176423,9 @@
               ],
               "separation": -0.152098536,
               "bodyColliderType": "BoxCollider",
-              "bodyCollider": "dronePrototype"
+              "bodyCollider": "dronePrototype",
+              "otherColliderIndex": 45,
+              "otherColliderType": "MeshCollider"
             },
             {
               "position": [
@@ -176238,7 +176440,9 @@
               ],
               "separation": -0.186864182,
               "bodyColliderType": "BoxCollider",
-              "bodyCollider": "dronePrototype"
+              "bodyCollider": "dronePrototype",
+              "otherColliderIndex": 45,
+              "otherColliderType": "MeshCollider"
             },
             {
               "position": [
@@ -176253,7 +176457,9 @@
               ],
               "separation": -0.154888749,
               "bodyColliderType": "BoxCollider",
-              "bodyCollider": "dronePrototype"
+              "bodyCollider": "dronePrototype",
+              "otherColliderIndex": 45,
+              "otherColliderType": "MeshCollider"
             },
             {
               "position": [
@@ -176268,7 +176474,9 @@
               ],
               "separation": -0.148088038,
               "bodyColliderType": "BoxCollider",
-              "bodyCollider": "dronePrototype"
+              "bodyCollider": "dronePrototype",
+              "otherColliderIndex": 45,
+              "otherColliderType": "MeshCollider"
             },
             {
               "position": [
@@ -176283,7 +176491,9 @@
               ],
               "separation": -0.180063456,
               "bodyColliderType": "BoxCollider",
-              "bodyCollider": "dronePrototype"
+              "bodyCollider": "dronePrototype",
+              "otherColliderIndex": 45,
+              "otherColliderType": "MeshCollider"
             },
             {
               "position": [
@@ -176298,7 +176508,9 @@
               ],
               "separation": -0.0277852118,
               "bodyColliderType": "BoxCollider",
-              "bodyCollider": "dronePrototype"
+              "bodyCollider": "dronePrototype",
+              "otherColliderIndex": 45,
+              "otherColliderType": "MeshCollider"
             },
             {
               "position": [
@@ -176313,7 +176525,9 @@
               ],
               "separation": -0.0551224351,
               "bodyColliderType": "BoxCollider",
-              "bodyCollider": "dronePrototype"
+              "bodyCollider": "dronePrototype",
+              "otherColliderIndex": 45,
+              "otherColliderType": "MeshCollider"
             },
             {
               "position": [
@@ -176328,7 +176542,9 @@
               ],
               "separation": -0.0592747927,
               "bodyColliderType": "BoxCollider",
-              "bodyCollider": "dronePrototype"
+              "bodyCollider": "dronePrototype",
+              "otherColliderIndex": 45,
+              "otherColliderType": "MeshCollider"
             },
             {
               "position": [
@@ -176343,7 +176559,9 @@
               ],
               "separation": -0.0236328244,
               "bodyColliderType": "BoxCollider",
-              "bodyCollider": "dronePrototype"
+              "bodyCollider": "dronePrototype",
+              "otherColliderIndex": 45,
+              "otherColliderType": "MeshCollider"
             },
             {
               "position": [
@@ -176358,7 +176576,9 @@
               ],
               "separation": -0.06550342,
               "bodyColliderType": "BoxCollider",
-              "bodyCollider": "dronePrototype"
+              "bodyCollider": "dronePrototype",
+              "otherColliderIndex": 45,
+              "otherColliderType": "MeshCollider"
             },
             {
               "position": [
@@ -176373,7 +176593,9 @@
               ],
               "separation": -0.06226045,
               "bodyColliderType": "BoxCollider",
-              "bodyCollider": "dronePrototype"
+              "bodyCollider": "dronePrototype",
+              "otherColliderIndex": 45,
+              "otherColliderType": "MeshCollider"
             }
           ]
         },
@@ -176406,7 +176628,9 @@
               ],
               "separation": 0.01904878,
               "bodyColliderType": "BoxCollider",
-              "bodyCollider": "dronePrototype"
+              "bodyCollider": "dronePrototype",
+              "otherColliderIndex": 45,
+              "otherColliderType": "MeshCollider"
             },
             {
               "position": [
@@ -176421,7 +176645,9 @@
               ],
               "separation": 0.0173228085,
               "bodyColliderType": "BoxCollider",
-              "bodyCollider": "dronePrototype"
+              "bodyCollider": "dronePrototype",
+              "otherColliderIndex": 45,
+              "otherColliderType": "MeshCollider"
             }
           ]
         },
@@ -176454,7 +176680,9 @@
               ],
               "separation": 0.00484526157,
               "bodyColliderType": "SphereCollider",
-              "bodyCollider": "dronePrototype/AimTargerAndEngine"
+              "bodyCollider": "dronePrototype/AimTargerAndEngine",
+              "otherColliderIndex": 99,
+              "otherColliderType": "MeshCollider"
             }
           ]
         },
@@ -176487,7 +176715,9 @@
               ],
               "separation": -0.025259085,
               "bodyColliderType": "BoxCollider",
-              "bodyCollider": "dronePrototype"
+              "bodyCollider": "dronePrototype",
+              "otherColliderIndex": 118,
+              "otherColliderType": "MeshCollider"
             },
             {
               "position": [
@@ -176502,7 +176732,9 @@
               ],
               "separation": -0.018927522,
               "bodyColliderType": "BoxCollider",
-              "bodyCollider": "dronePrototype"
+              "bodyCollider": "dronePrototype",
+              "otherColliderIndex": 118,
+              "otherColliderType": "MeshCollider"
             }
           ]
         },
@@ -176535,7 +176767,9 @@
               ],
               "separation": -0.0117840767,
               "bodyColliderType": "SphereCollider",
-              "bodyCollider": "dronePrototype/AimTargerAndEngine"
+              "bodyCollider": "dronePrototype/AimTargerAndEngine",
+              "otherColliderIndex": 118,
+              "otherColliderType": "MeshCollider"
             },
             {
               "position": [
@@ -176550,7 +176784,9 @@
               ],
               "separation": -0.009730756,
               "bodyColliderType": "SphereCollider",
-              "bodyCollider": "dronePrototype/AimTargerAndEngine"
+              "bodyCollider": "dronePrototype/AimTargerAndEngine",
+              "otherColliderIndex": 118,
+              "otherColliderType": "MeshCollider"
             }
           ]
         }
@@ -183243,7 +183479,9 @@
               ],
               "separation": -0.21764797,
               "bodyColliderType": "BoxCollider",
-              "bodyCollider": "dronePrototype"
+              "bodyCollider": "dronePrototype",
+              "otherColliderIndex": 45,
+              "otherColliderType": "MeshCollider"
             },
             {
               "position": [
@@ -183258,7 +183496,9 @@
               ],
               "separation": -0.202452421,
               "bodyColliderType": "BoxCollider",
-              "bodyCollider": "dronePrototype"
+              "bodyCollider": "dronePrototype",
+              "otherColliderIndex": 45,
+              "otherColliderType": "MeshCollider"
             },
             {
               "position": [
@@ -183273,7 +183513,9 @@
               ],
               "separation": -0.220564246,
               "bodyColliderType": "BoxCollider",
-              "bodyCollider": "dronePrototype"
+              "bodyCollider": "dronePrototype",
+              "otherColliderIndex": 45,
+              "otherColliderType": "MeshCollider"
             },
             {
               "position": [
@@ -183288,7 +183530,9 @@
               ],
               "separation": -0.204939991,
               "bodyColliderType": "BoxCollider",
-              "bodyCollider": "dronePrototype"
+              "bodyCollider": "dronePrototype",
+              "otherColliderIndex": 45,
+              "otherColliderType": "MeshCollider"
             },
             {
               "position": [
@@ -183303,7 +183547,9 @@
               ],
               "separation": -0.198782653,
               "bodyColliderType": "BoxCollider",
-              "bodyCollider": "dronePrototype"
+              "bodyCollider": "dronePrototype",
+              "otherColliderIndex": 45,
+              "otherColliderType": "MeshCollider"
             },
             {
               "position": [
@@ -183318,7 +183564,9 @@
               ],
               "separation": -0.2144069,
               "bodyColliderType": "BoxCollider",
-              "bodyCollider": "dronePrototype"
+              "bodyCollider": "dronePrototype",
+              "otherColliderIndex": 45,
+              "otherColliderType": "MeshCollider"
             },
             {
               "position": [
@@ -183333,7 +183581,9 @@
               ],
               "separation": -0.0262472928,
               "bodyColliderType": "BoxCollider",
-              "bodyCollider": "dronePrototype"
+              "bodyCollider": "dronePrototype",
+              "otherColliderIndex": 45,
+              "otherColliderType": "MeshCollider"
             },
             {
               "position": [
@@ -183348,7 +183598,9 @@
               ],
               "separation": -0.081063956,
               "bodyColliderType": "BoxCollider",
-              "bodyCollider": "dronePrototype"
+              "bodyCollider": "dronePrototype",
+              "otherColliderIndex": 45,
+              "otherColliderType": "MeshCollider"
             },
             {
               "position": [
@@ -183363,7 +183615,9 @@
               ],
               "separation": -0.07428226,
               "bodyColliderType": "BoxCollider",
-              "bodyCollider": "dronePrototype"
+              "bodyCollider": "dronePrototype",
+              "otherColliderIndex": 45,
+              "otherColliderType": "MeshCollider"
             },
             {
               "position": [
@@ -183378,7 +183632,9 @@
               ],
               "separation": -0.0226848125,
               "bodyColliderType": "BoxCollider",
-              "bodyCollider": "dronePrototype"
+              "bodyCollider": "dronePrototype",
+              "otherColliderIndex": 45,
+              "otherColliderType": "MeshCollider"
             },
             {
               "position": [
@@ -183393,7 +183649,9 @@
               ],
               "separation": -0.07750106,
               "bodyColliderType": "BoxCollider",
-              "bodyCollider": "dronePrototype"
+              "bodyCollider": "dronePrototype",
+              "otherColliderIndex": 45,
+              "otherColliderType": "MeshCollider"
             },
             {
               "position": [
@@ -183408,7 +183666,9 @@
               ],
               "separation": -0.0761508942,
               "bodyColliderType": "BoxCollider",
-              "bodyCollider": "dronePrototype"
+              "bodyCollider": "dronePrototype",
+              "otherColliderIndex": 45,
+              "otherColliderType": "MeshCollider"
             }
           ]
         },
@@ -183441,7 +183701,9 @@
               ],
               "separation": -0.0601152778,
               "bodyColliderType": "SphereCollider",
-              "bodyCollider": "dronePrototype/AimTargerAndEngine"
+              "bodyCollider": "dronePrototype/AimTargerAndEngine",
+              "otherColliderIndex": 45,
+              "otherColliderType": "MeshCollider"
             }
           ]
         },
@@ -183474,7 +183736,9 @@
               ],
               "separation": -0.0222626626,
               "bodyColliderType": "SphereCollider",
-              "bodyCollider": "dronePrototype/AimTargerAndEngine"
+              "bodyCollider": "dronePrototype/AimTargerAndEngine",
+              "otherColliderIndex": 99,
+              "otherColliderType": "MeshCollider"
             }
           ]
         },
@@ -183507,7 +183771,9 @@
               ],
               "separation": 0.00476869941,
               "bodyColliderType": "SphereCollider",
-              "bodyCollider": "dronePrototype/AimTargerAndEngine"
+              "bodyCollider": "dronePrototype/AimTargerAndEngine",
+              "otherColliderIndex": 118,
+              "otherColliderType": "MeshCollider"
             }
           ]
         },
@@ -183540,7 +183806,9 @@
               ],
               "separation": 0.0198507179,
               "bodyColliderType": "BoxCollider",
-              "bodyCollider": "dronePrototype"
+              "bodyCollider": "dronePrototype",
+              "otherColliderIndex": 118,
+              "otherColliderType": "MeshCollider"
             }
           ]
         },
@@ -183573,7 +183841,9 @@
               ],
               "separation": 0.01609087,
               "bodyColliderType": "SphereCollider",
-              "bodyCollider": "dronePrototype/AimTargerAndEngine"
+              "bodyCollider": "dronePrototype/AimTargerAndEngine",
+              "otherColliderIndex": 118,
+              "otherColliderType": "MeshCollider"
             }
           ]
         },
@@ -183606,7 +183876,9 @@
               ],
               "separation": 0.0184943378,
               "bodyColliderType": "BoxCollider",
-              "bodyCollider": "dronePrototype"
+              "bodyCollider": "dronePrototype",
+              "otherColliderIndex": 118,
+              "otherColliderType": "MeshCollider"
             }
           ]
         },
@@ -183639,7 +183911,9 @@
               ],
               "separation": 0.0189301968,
               "bodyColliderType": "BoxCollider",
-              "bodyCollider": "dronePrototype"
+              "bodyCollider": "dronePrototype",
+              "otherColliderIndex": 118,
+              "otherColliderType": "MeshCollider"
             }
           ]
         }
@@ -190332,7 +190606,9 @@
               ],
               "separation": -0.00243321061,
               "bodyColliderType": "SphereCollider",
-              "bodyCollider": "dronePrototype/AimTargerAndEngine"
+              "bodyCollider": "dronePrototype/AimTargerAndEngine",
+              "otherColliderIndex": 63,
+              "otherColliderType": "MeshCollider"
             }
           ]
         },
@@ -190365,7 +190641,9 @@
               ],
               "separation": 0.0161208939,
               "bodyColliderType": "BoxCollider",
-              "bodyCollider": "dronePrototype"
+              "bodyCollider": "dronePrototype",
+              "otherColliderIndex": 83,
+              "otherColliderType": "MeshCollider"
             },
             {
               "position": [
@@ -190380,7 +190658,9 @@
               ],
               "separation": 0.017565161,
               "bodyColliderType": "BoxCollider",
-              "bodyCollider": "dronePrototype"
+              "bodyCollider": "dronePrototype",
+              "otherColliderIndex": 83,
+              "otherColliderType": "MeshCollider"
             },
             {
               "position": [
@@ -190395,7 +190675,9 @@
               ],
               "separation": 0.019251287,
               "bodyColliderType": "BoxCollider",
-              "bodyCollider": "dronePrototype"
+              "bodyCollider": "dronePrototype",
+              "otherColliderIndex": 83,
+              "otherColliderType": "MeshCollider"
             }
           ]
         },
@@ -190428,7 +190710,9 @@
               ],
               "separation": 0.00566241145,
               "bodyColliderType": "SphereCollider",
-              "bodyCollider": "dronePrototype/AimTargerAndEngine"
+              "bodyCollider": "dronePrototype/AimTargerAndEngine",
+              "otherColliderIndex": 118,
+              "otherColliderType": "MeshCollider"
             }
           ]
         },
@@ -190461,7 +190745,9 @@
               ],
               "separation": 0.0178648233,
               "bodyColliderType": "BoxCollider",
-              "bodyCollider": "dronePrototype"
+              "bodyCollider": "dronePrototype",
+              "otherColliderIndex": 118,
+              "otherColliderType": "MeshCollider"
             }
           ]
         },
@@ -190494,7 +190780,9 @@
               ],
               "separation": 0.0132814348,
               "bodyColliderType": "BoxCollider",
-              "bodyCollider": "dronePrototype"
+              "bodyCollider": "dronePrototype",
+              "otherColliderIndex": 83,
+              "otherColliderType": "MeshCollider"
             },
             {
               "position": [
@@ -190509,7 +190797,9 @@
               ],
               "separation": 0.0132147372,
               "bodyColliderType": "BoxCollider",
-              "bodyCollider": "dronePrototype"
+              "bodyCollider": "dronePrototype",
+              "otherColliderIndex": 83,
+              "otherColliderType": "MeshCollider"
             }
           ]
         },
@@ -190542,7 +190832,9 @@
               ],
               "separation": 0.0155691653,
               "bodyColliderType": "BoxCollider",
-              "bodyCollider": "dronePrototype"
+              "bodyCollider": "dronePrototype",
+              "otherColliderIndex": 118,
+              "otherColliderType": "MeshCollider"
             }
           ]
         },
@@ -190575,7 +190867,9 @@
               ],
               "separation": 0.0198403,
               "bodyColliderType": "BoxCollider",
-              "bodyCollider": "dronePrototype"
+              "bodyCollider": "dronePrototype",
+              "otherColliderIndex": 83,
+              "otherColliderType": "MeshCollider"
             }
           ]
         },
@@ -190608,7 +190902,9 @@
               ],
               "separation": 0.01759234,
               "bodyColliderType": "SphereCollider",
-              "bodyCollider": "dronePrototype/AimTargerAndEngine"
+              "bodyCollider": "dronePrototype/AimTargerAndEngine",
+              "otherColliderIndex": 83,
+              "otherColliderType": "MeshCollider"
             }
           ]
         }
@@ -197301,7 +197597,9 @@
               ],
               "separation": -0.00243294239,
               "bodyColliderType": "SphereCollider",
-              "bodyCollider": "dronePrototype/AimTargerAndEngine"
+              "bodyCollider": "dronePrototype/AimTargerAndEngine",
+              "otherColliderIndex": 63,
+              "otherColliderType": "MeshCollider"
             }
           ]
         },
@@ -197334,7 +197632,9 @@
               ],
               "separation": 0.0111967176,
               "bodyColliderType": "BoxCollider",
-              "bodyCollider": "dronePrototype"
+              "bodyCollider": "dronePrototype",
+              "otherColliderIndex": 118,
+              "otherColliderType": "MeshCollider"
             }
           ]
         },
@@ -197367,7 +197667,9 @@
               ],
               "separation": 0.0176329017,
               "bodyColliderType": "SphereCollider",
-              "bodyCollider": "dronePrototype/AimTargerAndEngine"
+              "bodyCollider": "dronePrototype/AimTargerAndEngine",
+              "otherColliderIndex": 63,
+              "otherColliderType": "MeshCollider"
             }
           ]
         },
@@ -197400,7 +197702,9 @@
               ],
               "separation": 0.0158348978,
               "bodyColliderType": "SphereCollider",
-              "bodyCollider": "dronePrototype/AimTargerAndEngine"
+              "bodyCollider": "dronePrototype/AimTargerAndEngine",
+              "otherColliderIndex": 83,
+              "otherColliderType": "MeshCollider"
             }
           ]
         },
@@ -197433,7 +197737,9 @@
               ],
               "separation": 0.01291487,
               "bodyColliderType": "BoxCollider",
-              "bodyCollider": "dronePrototype"
+              "bodyCollider": "dronePrototype",
+              "otherColliderIndex": 83,
+              "otherColliderType": "MeshCollider"
             }
           ]
         }
@@ -204126,7 +204432,9 @@
               ],
               "separation": -0.002433151,
               "bodyColliderType": "SphereCollider",
-              "bodyCollider": "dronePrototype/AimTargerAndEngine"
+              "bodyCollider": "dronePrototype/AimTargerAndEngine",
+              "otherColliderIndex": 63,
+              "otherColliderType": "MeshCollider"
             }
           ]
         },
@@ -204159,7 +204467,9 @@
               ],
               "separation": -0.008025929,
               "bodyColliderType": "BoxCollider",
-              "bodyCollider": "dronePrototype"
+              "bodyCollider": "dronePrototype",
+              "otherColliderIndex": 118,
+              "otherColliderType": "MeshCollider"
             }
           ]
         },
@@ -204192,7 +204502,9 @@
               ],
               "separation": 0.0177097917,
               "bodyColliderType": "SphereCollider",
-              "bodyCollider": "dronePrototype/AimTargerAndEngine"
+              "bodyCollider": "dronePrototype/AimTargerAndEngine",
+              "otherColliderIndex": 83,
+              "otherColliderType": "MeshCollider"
             }
           ]
         },
@@ -204225,7 +204537,9 @@
               ],
               "separation": 0.0198425949,
               "bodyColliderType": "BoxCollider",
-              "bodyCollider": "dronePrototype"
+              "bodyCollider": "dronePrototype",
+              "otherColliderIndex": 83,
+              "otherColliderType": "MeshCollider"
             }
           ]
         },
@@ -204258,7 +204572,9 @@
               ],
               "separation": 0.01989165,
               "bodyColliderType": "SphereCollider",
-              "bodyCollider": "dronePrototype/AimTargerAndEngine"
+              "bodyCollider": "dronePrototype/AimTargerAndEngine",
+              "otherColliderIndex": 118,
+              "otherColliderType": "MeshCollider"
             }
           ]
         },
@@ -204291,7 +204607,9 @@
               ],
               "separation": 0.0036586225,
               "bodyColliderType": "SphereCollider",
-              "bodyCollider": "dronePrototype/AimTargerAndEngine"
+              "bodyCollider": "dronePrototype/AimTargerAndEngine",
+              "otherColliderIndex": 63,
+              "otherColliderType": "MeshCollider"
             }
           ]
         }

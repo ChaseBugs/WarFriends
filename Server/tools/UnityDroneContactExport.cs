@@ -27,7 +27,9 @@ public static class UnityDroneContactExport
             {
                 string source=(string)map["source"];
                 if(Hash(source)!=(string)map["sha256"])throw new InvalidOperationException("Scene revision changed.");
-                EditorSceneManager.OpenScene(source);
+                var scene=EditorSceneManager.OpenScene(source);
+                var sourceColliders=scene.GetRootGameObjects()
+                    .SelectMany(g=>g.GetComponentsInChildren<Collider>(true)).ToArray();
                 foreach(int fraction in new[]{1,2})
                 foreach(var initialRotation in new[]{Quaternion.identity,Quaternion.Euler(10,45,10),Quaternion.Euler(-15,135,5)})
                 {
@@ -42,6 +44,7 @@ public static class UnityDroneContactExport
                         drone.transform.rotation=initialRotation;
                         var body=drone.AddComponent<Rigidbody>();EditorUtility.CopySerialized(prefab.GetComponent<Rigidbody>(),body);
                         var observer=drone.AddComponent<DroneCollisionObserver>();
+                        observer.SourceColliders=sourceColliders;
                         body.isKinematic=false;body.velocity=Vector3.zero;body.angularVelocity=Vector3.zero;
                         Physics.SyncTransforms();var frames=new List<object>();
                         var sphere=drone.GetComponentsInChildren<SphereCollider>().Single();
@@ -110,6 +113,7 @@ public sealed class DroneCollisionObserver:MonoBehaviour
 {
     public int Frame;
     public readonly List<object> Rows=new List<object>();
+    public Collider[] SourceColliders;
     private void OnCollisionEnter(Collision collision)
     {
         var body=GetComponent<Rigidbody>();var position=body.position;var rotation=body.rotation;
@@ -118,7 +122,9 @@ public sealed class DroneCollisionObserver:MonoBehaviour
             rootRotation=new[]{rotation.x,rotation.y,rotation.z,rotation.w},
             contacts=collision.contacts.Select(c=>new{position=new[]{c.point.x,c.point.y,c.point.z},
                 normal=new[]{c.normal.x,c.normal.y,c.normal.z},separation=c.separation,
-                bodyColliderType=c.thisCollider.GetType().Name,bodyCollider=Path(c.thisCollider.transform)}).ToArray()});
+                bodyColliderType=c.thisCollider.GetType().Name,bodyCollider=Path(c.thisCollider.transform),
+                otherColliderIndex=Array.IndexOf(SourceColliders,c.otherCollider),
+                otherColliderType=c.otherCollider.GetType().Name}).ToArray()});
     }
     private static string Path(Transform value)
     {string path=value.name;while(value.parent!=null){value=value.parent;path=value.name+"/"+path;}return path;}

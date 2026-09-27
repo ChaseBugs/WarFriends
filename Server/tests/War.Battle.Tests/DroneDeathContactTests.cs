@@ -10,6 +10,8 @@ internal static class DroneDeathContactTests
         int count=0,boundaries=0,boxBoundaries=0,sphereContacts=0,missingSurfaces=0;
         float maximumPointError=0,maximumNormalError=0,maximumSeparationError=0;
         float firstPointError=0,firstNormalError=0,firstSeparationError=0;int firstSphereContacts=0;
+        float firstBodyPointError=0;
+        string worstPointCase="",worstSeparationCase="";
         Vector3 Vec(JsonElement value)=>new(value[0].GetSingle(),value[1].GetSingle(),value[2].GetSingle());
         foreach(var row in document.RootElement.GetProperty("rows").EnumerateArray())
         {
@@ -69,8 +71,16 @@ internal static class DroneDeathContactTests
                     .Where(c=>c.GetProperty("bodyColliderType").GetString()=="SphereCollider"))
                 {
                     sphereContacts++;
-                    var surface=surfaces.FirstOrDefault(c=>c.SourcePath==callback.GetProperty("other").GetString());
+                    var surface=surfaces.FirstOrDefault(c=>c.ColliderIndex==observedContact.GetProperty("otherColliderIndex").GetInt32());
                     if(surface==null){missingSurfaces++;continue;}
+                    float pointError=Vector3.Distance(surface.SurfacePoint,Vec(observedContact.GetProperty("position")));
+                    float separationError=Math.Abs(surface.Separation-observedContact.GetProperty("separation").GetSingle());
+                    if(pointError>maximumPointError)worstPointCase=map.Source+" fraction "+row.GetProperty("fraction")+
+                        " frame "+callbackFrame+" collider "+surface.SourcePath+" host="+surface.SurfacePoint+
+                        " Unity="+Vec(observedContact.GetProperty("position"));
+                    if(separationError>maximumSeparationError)worstSeparationCase=map.Source+" fraction "+row.GetProperty("fraction")+
+                        " frame "+callbackFrame+" collider "+surface.SourcePath+" host="+surface.Separation+
+                        " Unity="+observedContact.GetProperty("separation").GetSingle();
                     maximumPointError=Math.Max(maximumPointError,Vector3.Distance(surface.SurfacePoint,
                         Vec(observedContact.GetProperty("position"))));
                     maximumNormalError=Math.Max(maximumNormalError,Vector3.Distance(surface.Normal,
@@ -86,6 +96,14 @@ internal static class DroneDeathContactTests
                             Vec(observedContact.GetProperty("normal"))));
                         firstSeparationError=Math.Max(firstSeparationError,Math.Abs(surface.Separation-
                             observedContact.GetProperty("separation").GetSingle()));
+                        float bodyPointError=Vector3.Distance(surface.SurfacePoint+surface.Normal*surface.Separation,
+                            Vec(observedContact.GetProperty("position")));
+                        firstBodyPointError=Math.Max(firstBodyPointError,bodyPointError);
+                        if(Vector3.Distance(surface.Normal,Vec(observedContact.GetProperty("normal")))>.00001f||
+                           Math.Abs(surface.Separation-observedContact.GetProperty("separation").GetSingle())>.00001f||
+                           bodyPointError>.00001f)
+                            throw new Exception("First sphere manifold exceeds independently observed geometry tolerance.");
+                        count++;
                     }
                 }
             }
@@ -152,7 +170,9 @@ internal static class DroneDeathContactTests
             " separation error="+maximumSeparationError+" (diagnostic only, not solver verification).");
         Console.WriteLine("Drone first sphere contact diagnostic: contacts="+firstSphereContacts+
             " maximum point error="+firstPointError+" normal error="+firstNormalError+
-            " separation error="+firstSeparationError+" (diagnostic only).");
+            " separation error="+firstSeparationError+" body point error="+firstBodyPointError);
+        Console.WriteLine("Drone worst contact point: "+worstPointCase);
+        Console.WriteLine("Drone worst contact separation: "+worstSeparationCase);
         return count;
     }
 }
