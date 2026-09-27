@@ -60,6 +60,7 @@ internal static class DroneDeathContactTests
             var rootSize=Vec(initial.GetProperty("boxSize"));
             float childRadius=initial.GetProperty("sphereRadius").GetSingle();
             int exactCandidate=-1,marginCandidate=-1;
+            int stagedCandidate=-1;
             for(int freeFrame=0;freeFrame<frame;freeFrame++)
             {
                 var observed=row.GetProperty("frames")[freeFrame];
@@ -68,6 +69,8 @@ internal static class DroneDeathContactTests
                     throw new Exception("Drone pre-contact free fall differs in "+map.Source+
                         " fraction "+row.GetProperty("fraction")+" frame "+freeFrame);
                 count++;
+                if(stagedCandidate<0&&DroneMapContactCandidate.Query(map,content.DroneColliders,
+                    freePosition,Quaternion.Identity,rootMask,childMask,.02f))stagedCandidate=freeFrame+1;
                 (freePosition,freeVelocity)=DroneFreeFall.Step(freePosition,freeVelocity);
                 if(exactCandidate<0&&(map.BoxOverlaps(freePosition+boxOffset,rootSize,Quaternion.Identity,rootMask)||
                     map.SphereOverlaps(freePosition+sphereOffset,childRadius,childMask)))exactCandidate=freeFrame+1;
@@ -79,6 +82,9 @@ internal static class DroneDeathContactTests
             }
             Console.WriteLine("Drone first-contact diagnostic: "+map.Source+" fraction "+row.GetProperty("fraction")+
                 " callback="+frame+" exact="+exactCandidate+" conservative-margin="+marginCandidate);
+            if(stagedCandidate!=frame)
+                throw new Exception("Start-of-step Drone candidate disagrees with sampled first callback in "+map.Source);
+            count++;
             var root=Vec(first.GetProperty("rootPosition"));
             if(frame<1||frame>150||Vector3.Distance(root,Vec(row.GetProperty("frames")[frame].GetProperty("position")))>.0001f)
                 throw new Exception("Drone callback root does not match physics publication.");
