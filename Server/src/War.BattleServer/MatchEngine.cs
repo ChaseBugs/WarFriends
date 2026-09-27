@@ -938,6 +938,9 @@ public sealed partial class MatchEngine
         }
         if(advanced&&phase==BattlePhase.Running)
         {
+            try{if(droneProjectiles.Count>0)AdvanceDroneProjectileFlights();}
+            catch(InvalidDataException){End("invalid-drone-projectile-authority","",false);return;}
+            if(Terminal)return;
             try{AdvanceHeavyTurretProjectiles();AdvanceHeavyTurrets();}
             catch(InvalidDataException){End("invalid-heavy-turret-authority","",false);return;}
             if(Terminal)return;
