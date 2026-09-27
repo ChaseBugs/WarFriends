@@ -100,7 +100,7 @@ public sealed partial class MatchEngine
     internal const int MaximumProjectiles = 128;
     internal int PendingProjectileCount => checked(projectiles.Count+armyProjectiles.Count+armyFlameBursts.Count+
         vehicleProjectiles.Count+scheduledTransporterShots.Count+buggyProjectiles.Count+tankProjectiles.Count+
-        scheduledBazookas.Count+grenadeProjectiles.Count+heavyTurretProjectiles.Count);
+        scheduledBazookas.Count+grenadeProjectiles.Count+heavyTurretProjectiles.Count+droneProjectiles.Count);
     internal IReadOnlyCollection<AirBattleEntity> AirEntities => airEntities.Snapshot();
 
     internal bool TryRegisterAirEntity(AirBattleEntity entity)

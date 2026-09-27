@@ -7,6 +7,47 @@ public sealed partial class MatchEngine
     private readonly Dictionary<ulong,DroneAttackState> droneAttacks=[];
     private readonly DroneWeaponCatalog? droneWeapon;
     private readonly DroneProjectileCatalog? droneProjectile;
+    private sealed record DroneHostProjectile(ulong ArmyId,DroneProjectileIntent Intent,
+        BulletFlight? Real,DroneFakeProjectileFlight? Fake);
+    internal sealed record DroneHostImpact(ulong ArmyId,DroneProjectileIntent Intent,BulletImpact Impact);
+    private readonly Dictionary<ulong,DroneHostProjectile> droneProjectiles=[];
+    internal int PendingDroneProjectiles=>droneProjectiles.Count;
+    internal ulong? LaunchObservedDroneProjectile(ulong key)
+    {
+        var intent=ObserveDroneAttack(key);
+        if(intent==null)return null;
+        var army=activeArmyEntities[key];
+        ulong id=checked(projectileId+1);
+        try
+        {
+            var flight=intent.Shot.Batch.IsFake
+                ?new DroneHostProjectile(key,intent,null,new DroneFakeProjectileFlight(intent,tick))
+                :new DroneHostProjectile(key,intent,new BulletFlight(id,army.OwnerPlayerId,
+                    new(intent.Speed,intent.CheckDistance,false),intent.Shot.Muzzle,intent.Shot.Batch.Target,tick,
+                    (origin,direction,range)=>TraceHeavyTurretShot(army.OwnerPlayerId,origin,direction,range)),null);
+            droneProjectiles.Add(id,flight);projectileId=id;return id;
+        }
+        catch(ProjectileTargetException){return null;}
+    }
+    internal IReadOnlyList<DroneHostImpact> AdvanceDroneProjectileFlights()
+    {
+        var impacts=new List<DroneHostImpact>();
+        foreach(var (id,projectile) in droneProjectiles.OrderBy(x=>x.Key).ToArray())
+        {
+            if(projectile.Fake is { } fake)
+            {
+                fake.Advance(tick);if(fake.Finished)droneProjectiles.Remove(id);
+            }
+            else
+            {
+                var flight=projectile.Real??throw new InvalidDataException("Drone projectile lacks flight authority.");
+                var impact=flight.Advance(tick);
+                if(flight.Finished)droneProjectiles.Remove(id);
+                if(impact!=null)impacts.Add(new(projectile.ArmyId,projectile.Intent,impact));
+            }
+        }
+        return impacts.AsReadOnly();
+    }
     internal float? DroneAttackDeadline(ulong key)=>droneAttacks.GetValueOrDefault(key)?.Deadline;
     internal DroneProjectileIntent? ObserveDroneAttack(ulong key)
     {
