@@ -28,6 +28,19 @@ internal static class CombatContentTests
         count+=DroneAttackClockTests.Run();
         count+=DroneBatchTests.Run();
         count+=DroneAttackStateTests.Run(content);
+        var aimReferencePath=Path.Combine(directory,"recovered-enemy-poses.json");
+        var enemyPoses=EnemyPoseCatalog.Load(aimReferencePath,Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(aimReferencePath))));
+        var enemyAim=EnemyShotTargetCatalog.Load(Path.Combine(directory,"recovered-enemy-target-poses.json"),enemyPoses);
+        foreach(string clipName in enemyPoses.Names)
+        {
+            var targets=enemyAim.Place(clipName,Vector3.Zero,Quaternion.Identity,0);
+            Check(targets.Count==3&&targets[0].TransformFileId==454546&&targets[1].Type==1&&targets[2].Type==4,
+                "animated infantry aim preserves source target order");
+            var rotated=enemyAim.Place(clipName,Vector3.One,Quaternion.CreateFromAxisAngle(Vector3.UnitY,1),0);
+            Check(Vector3.Distance(rotated[0].Position,Vector3.One+Vector3.Transform(targets[0].Position,
+                Quaternion.CreateFromAxisAngle(Vector3.UnitY,1)))<.00001f,"animated aim places target in army root pose");
+        }
+        Reject(()=>enemyAim.Place("T_pose",Vector3.Zero,Quaternion.Identity,float.NaN));
         count+=DroneWeaponStateTests.Run(content.DroneWeapon);
         count+=DroneShotTargetTests.Run();
         count+=DroneWeaponCatalogTests.Run(directory);
