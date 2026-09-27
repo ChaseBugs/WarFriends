@@ -56,6 +56,22 @@ internal static class DroneAttackStateTests
         shield.Weapon.Replace(Vector3.UnitZ,1,1);
         Check(!shield.Weapon.Advance(2.5f,Vector3.Zero,Quaternion.Identity)!.IsShield,
             "replacement body batch clears prior Shield ammunition type");
+        var projectileDraws=new Queue<float>([0,.2f,.3f,.4f,.5f]);
+        var emitted=new DroneAttackState(0,content.Army.ComposeDroneShot(0,null,null),content.DroneWeapon,
+            content.DroneProjectile,()=>projectileDraws.Dequeue(),(a,b)=>a);
+        emitted.Weapon.Replace(Vector3.UnitZ,1,1);
+        var intent=emitted.AdvanceProjectile(1,Vector3.Zero,Quaternion.Identity,42.96f)!;
+        Check(intent.Speed==9&&intent.Damage==42.96f&&!intent.Critical&&projectileDraws.Count==3,
+            "real Drone projectile consumes zero-probability critical draw and composed damage");
+        emitted.Weapon.Replace(Vector3.UnitZ,0,0);
+        var fakeIntent=emitted.AdvanceProjectile(1.2f,Vector3.Zero,Quaternion.Identity,42.96f)!;
+        Check(fakeIntent.Shot.Batch.IsFake&&fakeIntent.Speed==13.5f&&projectileDraws.Count==0,
+            "fake Drone projectile consumes dispersion then critical sample and source fake speed");
+        emitted.Weapon.Replace(Vector3.UnitZ,0,0);
+        projectileDraws.Enqueue(0);projectileDraws.Enqueue(0);
+        Check(emitted.AdvanceProjectile(1.4f,Vector3.Zero,Quaternion.Identity,42.96f,false)==null&&
+            emitted.Weapon.LastShotTime==1.4f&&projectileDraws.Count==0,
+            "unavailable ammo advances weapon clock without consuming setup critical draw");
         return count;
     }
 }

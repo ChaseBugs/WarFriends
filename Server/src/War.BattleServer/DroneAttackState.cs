@@ -3,6 +3,7 @@ namespace War.BattleServer;
 
 public sealed record DroneTargetDetails(IReadOnlyList<DroneShotTarget> Targets,bool IsPlayer,
     Vector3 Root,Vector3 AimForward,bool Hiding,Vector3 Velocity);
+public sealed record DroneProjectileIntent(DroneWeaponShot Shot,float Speed,float Damage,float CheckDistance,bool Critical);
 
 // Drone.Update target/batch preparation, separated from BatchedWeapon.Update so
 // the host can explicitly preserve script observation order.
@@ -18,6 +19,22 @@ public sealed class DroneAttackState
     public string? TargetId { get; private set; }
     public bool PlayerTarget { get; private set; }
     public float Deadline=>clock.Deadline;
+    public DroneProjectileIntent? AdvanceProjectile(float time,Vector3 position,Quaternion rotation,float damage,bool ammoAvailable=true)
+    {
+        if(!float.IsFinite(damage)||damage<=0||damage>10000000)
+            throw new InvalidDataException("Invalid Drone projectile damage authority.");
+        var shot=Weapon.Advance(time,position,rotation);
+        // Gun updates its shot clock even when the pool cannot instantiate ammo.
+        if(shot==null||!ammoAvailable)return null;
+        float sample=random();
+        if(!float.IsFinite(sample)||sample<0||sample>1)
+            throw new InvalidDataException("Invalid Drone critical sample.");
+        // LoadAmmoSetup consumes this draw for fake rounds too, even at probability zero.
+        bool critical=sample<projectile.CriticalProbability;
+        float amount=damage*(critical?projectile.CriticalMultiplier:1);
+        return new(shot,projectile.Speed(stats.ShotSpeed,PlayerTarget,shot.Batch.IsFake),amount,
+            projectile.CheckDistance,critical);
+    }
     public DroneAttackState(float spawnTime,ArmyVehicleShotStats stats,DroneWeaponCatalog weapon,
         DroneProjectileCatalog projectile,Func<float> random,Func<int,int,int> integerRange)
     {
