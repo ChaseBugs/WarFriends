@@ -8,6 +8,9 @@ internal sealed class ContactFrictionCache
     internal Vector3 MapNormal {get;}
     internal IReadOnlyList<CachedFrictionAnchor> Anchors {get;}
     internal bool Broken {get;}
+    private ContactFrictionCache(Vector3 bodyNormal,Vector3 mapNormal,IReadOnlyList<CachedFrictionAnchor> anchors,bool broken)
+    {BodyNormal=bodyNormal;MapNormal=mapNormal;Anchors=anchors;Broken=broken;}
+    internal ContactFrictionCache WithBroken(bool broken)=>new(BodyNormal,MapNormal,Anchors,broken);
     internal ContactFrictionCache(Vector3 root,Quaternion rotation,Vector3 normal,IReadOnlyList<Vector3> worldAnchors,bool broken)
     {
         ValidatePose(root,rotation);
