@@ -31,6 +31,13 @@ internal static class DroneGroundProbeTests
                         throw new Exception("Drone ground probe differs: "+map.Source+" waypoint "+
                             point.GetProperty("waypointFileId")+" actual "+actual+" expected "+expected);
                     checks++;
+                    var surface=expected.GetProperty("position");
+                    var surfacePosition=new Vector3(surface[0].GetSingle(),surface[1].GetSingle(),surface[2].GetSingle());
+                    if(!map.SphereOverlaps(surfacePosition+Vector3.UnitY*.005f,.01f,mask))
+                        throw new Exception("Source ray intersection lacks static sphere surface overlap.");
+                    if(map.SphereOverlaps(new Vector3(origin.X,100,origin.Z),.01f,mask))
+                        throw new Exception("Drone high-air sphere unexpectedly overlaps map geometry.");
+                    checks+=2;
                 }
             }
         }

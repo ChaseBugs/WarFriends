@@ -97,6 +97,30 @@ public sealed class RecoveredBattleMap
         }
         return false;
     }
+    // Includes static surfaces; unlike DynamicSphereOverlaps this is suitable
+    // for geometry queries by source Rigidbody child spheres. Not a contact solver.
+    internal bool SphereOverlaps(Vector3 center,float radius,uint layerMask=uint.MaxValue,
+        Func<string,bool>? dynamicEnabled=null,Func<int,bool>? colliderEnabled=null,
+        Func<int,int,int>? runtimeLayer=null)
+    {
+        if(!Finite(center)||!float.IsFinite(radius)||radius<=0||radius>100)
+            throw new ArgumentOutOfRangeException(nameof(radius));
+        var extent=new Vector3(radius);
+        foreach(var shape in shapes)
+        {
+            int layer=runtimeLayer?.Invoke(shape.SourceIndex,shape.Layer)??shape.Layer;
+            if(layer is <0 or >31)throw new InvalidDataException("Invalid runtime collider layer.");
+            if((layerMask&(1u<<layer))==0||
+               shape.DynamicOwner!=null&&dynamicEnabled!=null&&!dynamicEnabled(shape.DynamicOwner)||
+               colliderEnabled!=null&&!colliderEnabled(shape.SourceIndex)||
+               !BoundsOverlap(center-extent,center+extent,shape.Min,shape.Max))continue;
+            if(shape.Hull!=null&&shape.Hull.All(p=>Vector3.Dot(new Vector3(p.X,p.Y,p.Z),center)+p.W<=0))return true;
+            for(int i=0;i<shape.Triangles.Length;i+=3)
+                if(PointTriangleDistanceSquared(center,shape.Triangles[i],shape.Triangles[i+1],shape.Triangles[i+2])<=radius*radius)
+                    return true;
+        }
+        return false;
+    }
     private static bool ConvexBoxOverlap(Vector3[] vertices,Vector4[] planes,Vector3 center,
         Vector3 half,Quaternion rotation)
     {
