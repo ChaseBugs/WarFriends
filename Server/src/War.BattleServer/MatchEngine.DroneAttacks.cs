@@ -30,7 +30,13 @@ public sealed partial class MatchEngine
                 :new DroneHostProjectile(key,army.OwnerPlayerId,intent,new BulletFlight(id,army.OwnerPlayerId,
                     new(intent.Speed,intent.CheckDistance,false),intent.Shot.Muzzle,intent.Shot.Batch.Target,tick,
                     (origin,direction,range)=>TraceHeavyTurretShot(army.OwnerPlayerId,origin,direction,range)),null);
-            droneProjectiles.Add(id,flight);projectileId=id;return id;
+            droneProjectiles.Add(id,flight);projectileId=id;
+            Emit(MatchEventKind.DroneFired,army.OwnerPlayerId,droneAttacks[key].TargetId??"",id,
+                intent.Shot.Batch.Target,0,"drone");
+            events[^1].DroneShot=new DroneShotPresentation {ArmyEntityKey=key,
+                MuzzleX=intent.Shot.Muzzle.X,MuzzleY=intent.Shot.Muzzle.Y,MuzzleZ=intent.Shot.Muzzle.Z,
+                Speed=intent.Speed,Fake=intent.Shot.Batch.IsFake,Shield=intent.Shot.IsShield};
+            return id;
         }
         catch(ProjectileTargetException){return null;}
     }

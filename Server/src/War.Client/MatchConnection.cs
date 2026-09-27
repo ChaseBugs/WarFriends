@@ -423,6 +423,18 @@ namespace War.Client
                        (row.ProjectileId==0||!Guid.TryParseExact(row.ActorId,"N",out _)||
                         !FiniteCoordinate(row.X)||!FiniteCoordinate(row.Y)||!FiniteCoordinate(row.Z)))
                         throw new InvalidOperationException("Battle host returned invalid Heavy Turret lifecycle metadata.");
+                    if(row.Kind==MatchEventKind.DroneFired)
+                    {
+                        var shot=row.DroneShot;
+                        if(shot==null||shot.ArmyEntityKey==0||row.ProjectileId==0||
+                           !Guid.TryParseExact(row.ActorId,"N",out _)||row.Reason!="drone"||
+                           !FiniteCoordinate(row.X)||!FiniteCoordinate(row.Y)||!FiniteCoordinate(row.Z)||
+                           !FiniteCoordinate(shot.MuzzleX)||!FiniteCoordinate(shot.MuzzleY)||!FiniteCoordinate(shot.MuzzleZ)||
+                           float.IsNaN(shot.Speed)||float.IsInfinity(shot.Speed)||shot.Speed<=0||shot.Speed>1500)
+                            throw new InvalidOperationException("Battle host returned invalid Drone firing metadata.");
+                    }
+                    else if(row.DroneShot!=null)
+                        throw new InvalidOperationException("Drone firing metadata accompanied a different event kind.");
                     if((row.Kind==MatchEventKind.HeavyTurretDamaged||row.Kind==MatchEventKind.HeavyTurretFired)&&
                        (row.ProjectileId==0||!Guid.TryParseExact(row.ActorId,"N",out _)||row.TargetId.Length<1||row.TargetId.Length>64||
                         row.TargetId.Any(char.IsControl)||!FiniteCoordinate(row.X)||!FiniteCoordinate(row.Y)||!FiniteCoordinate(row.Z)))
