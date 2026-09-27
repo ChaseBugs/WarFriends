@@ -15,6 +15,7 @@ internal static class DronePersistentContactTests
         Quaternion Quat(JsonElement q)=>new(q[0].GetSingle(),q[1].GetSingle(),q[2].GetSingle(),q[3].GetSingle());
         float maximumVelocity=0,maximumAngular=0,maximumRoot=0;int steps=0,stays=0;
         float cachedVelocity=0,cachedAngular=0,cachedRoot=0;
+        string worstVelocity="",worstAngular="",worstRoot="";int materials=0;
         foreach(var row in root.GetProperty("rows").EnumerateArray())
         {
             var frames=row.GetProperty("frames");
@@ -24,12 +25,35 @@ internal static class DronePersistentContactTests
             {
                 stays+=group.Count(c=>c.GetProperty("callbackKind").GetString()=="stay");
                 int frame=group.Key;var before=frames[frame-1];var after=frames[frame];
+                foreach(var contact in group.SelectMany(c=>c.GetProperty("contacts").EnumerateArray()))
+                foreach(var name in new[]{"bodyMaterial","otherMaterial"})
+                {
+                    var material=contact.GetProperty(name);
+                    if(material.GetProperty("staticFriction").GetSingle()!=.6f||material.GetProperty("dynamicFriction").GetSingle()!=.6f||
+                       material.GetProperty("restitution").GetSingle()!=0||material.GetProperty("frictionCombine").GetInt32()!=0||
+                       material.GetProperty("restitutionCombine").GetInt32()!=0)
+                        throw new Exception("Persistent-contact material differs from solver assumptions.");
+                    materials++;
+                }
                 var pairs=group.SelectMany(c=>c.GetProperty("contacts").EnumerateArray()).GroupBy(c=>
                     (c.GetProperty("bodyCollider").GetString(),c.GetProperty("otherColliderIndex").GetInt32()))
                     .Select(p=>p.Select(c=>new MaterialContact(new DroneNormalPoint(Vec(c.GetProperty("position")),
                         Vec(c.GetProperty("normal")),c.GetProperty("separation").GetSingle()),new ContactMaterial(.6f,.6f,0))).ToArray()).ToArray();
                 var result=new DroneContactSolver(geometry).Solve(Vec(before.GetProperty("position")),Quat(before.GetProperty("rotation")),
                     Vec(before.GetProperty("velocity")),Vec(before.GetProperty("angularVelocity")),pairs,.999f,.025f,.04f);
+                if(frame==66&&pairs.Length==4&&row.GetProperty("source").GetString()=="Assets/Scenes/Snow_Multiplayer.unity"&&
+                   row.GetProperty("fraction").GetInt32()==2&&row.GetProperty("initialRotation")[0].GetSingle()>.1f)
+                {
+                    float minimum=float.MaxValue,maximum=0;int orders=0;
+                    foreach(var order in Permutations(Enumerable.Range(0,pairs.Length).ToArray()))
+                    {
+                        var alternative=new DroneContactSolver(geometry).Solve(Vec(before.GetProperty("position")),Quat(before.GetProperty("rotation")),
+                            Vec(before.GetProperty("velocity")),Vec(before.GetProperty("angularVelocity")),order.Select(i=>pairs[i]).ToArray(),.999f,.025f,.04f);
+                        float error=Vector3.Distance(alternative.Velocity,Vec(after.GetProperty("velocity")));
+                        minimum=Math.Min(minimum,error);maximum=Math.Max(maximum,error);orders++;
+                    }
+                    Console.WriteLine("Snow frame66 memoryless pair-order control: orders="+orders+", minimum velocity residual="+minimum+", maximum="+maximum);
+                }
                 maximumVelocity=Math.Max(maximumVelocity,Vector3.Distance(result.Velocity,Vec(after.GetProperty("velocity"))));
                 maximumAngular=Math.Max(maximumAngular,Vector3.Distance(result.AngularVelocity,Vec(after.GetProperty("angularVelocity"))));
                 maximumRoot=Math.Max(maximumRoot,Vector3.Distance(result.Pose.Root,Vec(after.GetProperty("position"))));steps++;
@@ -42,9 +66,15 @@ internal static class DronePersistentContactTests
                         Vec(c.GetProperty("normal")),c.GetProperty("separation").GetSingle()),new ContactMaterial(.6f,.6f,0))).ToArray();
                 var cached=cachedSolver.Solve(Vec(before.GetProperty("position")),Quat(before.GetProperty("rotation")),
                     Vec(before.GetProperty("velocity")),Vec(before.GetProperty("angularVelocity")),stable,.999f,.025f,.04f,true);
-                cachedVelocity=Math.Max(cachedVelocity,Vector3.Distance(cached.Velocity,Vec(after.GetProperty("velocity"))));
-                cachedAngular=Math.Max(cachedAngular,Vector3.Distance(cached.AngularVelocity,Vec(after.GetProperty("angularVelocity"))));
-                cachedRoot=Math.Max(cachedRoot,Vector3.Distance(cached.Pose.Root,Vec(after.GetProperty("position"))));
+                string identity=row.GetProperty("source").GetString()+"/fraction"+row.GetProperty("fraction")+
+                    "/rotation"+Quat(row.GetProperty("initialRotation"))+"/frame"+frame+"/pairs"+keyed.Length+
+                    "/contacts"+keyed.Sum(p=>p.Count());
+                float ve=Vector3.Distance(cached.Velocity,Vec(after.GetProperty("velocity")));
+                float ae=Vector3.Distance(cached.AngularVelocity,Vec(after.GetProperty("angularVelocity")));
+                float pe=Vector3.Distance(cached.Pose.Root,Vec(after.GetProperty("position")));
+                if(ve>cachedVelocity){cachedVelocity=ve;worstVelocity=identity;}
+                if(ae>cachedAngular){cachedAngular=ae;worstAngular=identity;}
+                if(pe>cachedRoot){cachedRoot=pe;worstRoot=identity;}
             }
         }
         if(stays==0||steps<30)throw new Exception("Persistent-contact oracle lacks continuing steps.");
@@ -52,6 +82,15 @@ internal static class DronePersistentContactTests
             ", angular="+maximumAngular+", root="+maximumRoot+" (cached anchors absent; no response assertion).");
         Console.WriteLine("Drone growing-anchor cache diagnostic: velocity="+cachedVelocity+", angular="+cachedAngular+", root="+cachedRoot+
             " (experimental pair order and correlation policy).");
+        Console.WriteLine("Drone persistent worst cases: velocity="+worstVelocity+"; angular="+worstAngular+"; root="+worstRoot+
+            "; validated collider materials="+materials);
         return 1;
+    }
+    private static IEnumerable<int[]> Permutations(int[] values)
+    {
+        if(values.Length==0){yield return Array.Empty<int>();yield break;}
+        foreach(int value in values)
+        foreach(var tail in Permutations(values.Where(v=>v!=value).ToArray()))
+            yield return new[]{value}.Concat(tail).ToArray();
     }
 }
