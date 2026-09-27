@@ -2701,6 +2701,8 @@ internal static class CombatContentTests
             DeployArmy=new(){OptionIndex=9}}).Code=="army-deploying","normal army path accepts trusted Drone deployment");
         deployedDroneMatch.Advance(61);
         var deployedDrone=deployedDroneMatch.ArmyEntityBatch(decoyPlayer,0,0).Entities.Single();
+        Check(deployedDroneMatch.ObserveDroneAttack(deployedDrone.EntityKey)==null,
+            "live Drone attack observation before spawn deadline emits no intent");
         Check(deployedDroneMatch.DroneAttackDeadline(deployedDrone.EntityKey)==61f/MatchManifest.TickRate+2,
             "normal Drone attack clock binds actual deployment time plus source two seconds");
         var droneAimDetails=deployedDroneMatch.ResolveDroneShotTarget(deployedDroneMatch.DroneTargetSnapshot().Single(r=>r.Id=="army:"+deployedDrone.EntityKey));
@@ -2748,6 +2750,11 @@ internal static class CombatContentTests
             deployedDroneMatch.ArmyHealth(deployedDrone.EntityKey)==droneHealth,
             "trusted special stage protects normal deployed Drone health against host damage");
         for(ulong t=213;t<=256;t++)deployedDroneMatch.Advance(t);
+        var observedDroneIntent=deployedDroneMatch.ObserveDroneAttack(deployedDrone.EntityKey);
+        Check(deployedDroneMatch.DroneAttackDeadline(deployedDrone.EntityKey)>61f/MatchManifest.TickRate+2,
+            "live host observation resolves source registry and advances attack deadline");
+        Check(observedDroneIntent is {Speed:>0,Damage:>0,CheckDistance:1},
+            "live Drone intent uses trusted composed projectile authority");
         Check(!deployedDroneMatch.ArmyEntityBatch(decoyPlayer,0,0).Entities.Single().DroneTransparent,
             "Drone expiry clears authoritative renderer phase before death");
         Check(!deployedDroneMatch.ArmyDroneImmortal(deployedDrone.EntityKey)&&

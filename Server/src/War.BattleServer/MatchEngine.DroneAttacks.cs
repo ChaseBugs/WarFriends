@@ -1,4 +1,5 @@
 using System.Numerics;
+using War.Protocol;
 namespace War.BattleServer;
 
 public sealed partial class MatchEngine
@@ -7,6 +8,19 @@ public sealed partial class MatchEngine
     private readonly DroneWeaponCatalog? droneWeapon;
     private readonly DroneProjectileCatalog? droneProjectile;
     internal float? DroneAttackDeadline(ulong key)=>droneAttacks.GetValueOrDefault(key)?.Deadline;
+    internal DroneProjectileIntent? ObserveDroneAttack(ulong key)
+    {
+        if(phase!=BattlePhase.Running||!activeArmyEntities.TryGetValue(key,out var row)||
+           !droneAttacks.TryGetValue(key,out var attack)||!armyDamage.TryGetValue(key,out float damage))
+            throw new InvalidDataException("Drone attack observation lacks live match authority.");
+        if(row.DroneRotation is not { } q)throw new InvalidDataException("Drone attack lacks current orientation.");
+        var position=new Vector3(row.X,row.Y,row.Z);var rotation=new Quaternion(q.X,q.Y,q.Z,q.W);
+        float time=(float)((double)tick/MatchManifest.TickRate);
+        attack.Prepare(time,true,row.OwnerFraction,position,rotation,DroneTargetSnapshot(),
+            target=>DroneCanSee(position,target.Position),ResolveDroneShotTarget);
+        bool capacity=projectileId<ulong.MaxValue&&PendingProjectileCount<MaximumProjectiles&&EventCapacityForShot();
+        return attack.AdvanceProjectile(time,position,rotation,damage,capacity);
+    }
     private int DroneBatchRange(int minimum,int maximum)
     {
         if(minimum==maximum)return minimum;
