@@ -28,6 +28,14 @@ internal static class CombatContentTests
         count+=DroneAttackClockTests.Run();
         count+=DroneBatchTests.Run();
         count+=DroneAttackStateTests.Run(content);
+        var airAim=AirShotTargetCatalog.Load(Path.Combine(directory,"recovered-air-unit-geometry.json"));
+        Check(airAim.PlaceRest("ID_UNIT-HELICOPTER",Vector3.Zero,Quaternion.Identity).Single() is
+            {TransformFileId:414249,Type:0},"Helicopter source aim preserves None type included by source mask");
+        Check(airAim.PlaceRest("ID_UNIT-ASSAULTHELI",Vector3.Zero,Quaternion.Identity).Single() is
+            {TransformFileId:479075,Type:1},"Assault Helicopter aim preserves body target identity");
+        Check(airAim.PlaceRest("ID_UNIT-DRONE",Vector3.One,Quaternion.Identity).Single().Position==Vector3.One,
+            "Drone root aim transforms under source rest binding");
+        Reject(()=>airAim.PlaceRest("ID_UNIT-HELICOPTER",Vector3.Zero,default));
         var aimReferencePath=Path.Combine(directory,"recovered-enemy-poses.json");
         var enemyPoses=EnemyPoseCatalog.Load(aimReferencePath,Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(aimReferencePath))));
         var enemyAim=EnemyShotTargetCatalog.Load(Path.Combine(directory,"recovered-enemy-target-poses.json"),enemyPoses);
