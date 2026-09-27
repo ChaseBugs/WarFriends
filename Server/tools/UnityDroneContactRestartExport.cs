@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Collections.Generic;
+using System.Security.Cryptography;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using UnityEditor;
@@ -19,6 +20,11 @@ public static class UnityDroneContactRestartExport
         var oracle=JObject.Parse(File.ReadAllText(input));
         var row=oracle["rows"].Single(r=>(string)r["source"]=="Assets/Scenes/Snow_Multiplayer.unity"&&
             (int)r["fraction"]==2&&(float)r["initialRotation"][0]>.1f);
+        if(Hash((string)row["source"])!=(string)row["sourceSha256"]||
+           Hash((string)oracle["prefabSource"])!=(string)oracle["prefabSha256"])
+            throw new InvalidOperationException("Restart oracle scene or prefab revision changed.");
+        if((float)oracle["fixedTimestep"]!=Time.fixedDeltaTime||(string)oracle["unityVersion"]!=Application.unityVersion)
+            throw new InvalidOperationException("Restart oracle runtime identity changed.");
         string startText=Environment.GetEnvironmentVariable("WAR_DRONE_RESTART_START");
         int start=string.IsNullOrEmpty(startText)?44:int.Parse(startText);
         if(start<0||start>44)throw new InvalidOperationException("Restart frame must precede frame45.");
@@ -63,4 +69,6 @@ public static class UnityDroneContactRestartExport
     }
     static Vector3 Vec(JToken v){return new Vector3((float)v[0],(float)v[1],(float)v[2]);}
     static float[] Array(Vector3 v){return new[]{v.x,v.y,v.z};}
+    static string Hash(string path)
+    {using(var sha=SHA256.Create())return BitConverter.ToString(sha.ComputeHash(File.ReadAllBytes(path))).Replace("-","").ToLowerInvariant();}
 }
