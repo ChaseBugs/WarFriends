@@ -67,6 +67,14 @@ internal static class DroneAttackStateTests
         var fakeIntent=emitted.AdvanceProjectile(1.2f,Vector3.Zero,Quaternion.Identity,42.96f)!;
         Check(fakeIntent.Shot.Batch.IsFake&&fakeIntent.Speed==13.5f&&projectileDraws.Count==0,
             "fake Drone projectile consumes dispersion then critical sample and source fake speed");
+        var fakeFlight=new DroneFakeProjectileFlight(fakeIntent,0);
+        fakeFlight.Advance(1);
+        Check(!fakeFlight.Finished&&Vector3.Distance(fakeFlight.Position,fakeIntent.Shot.Muzzle)>.4f,
+            "fake projectile follows presentation speed without collision query");
+        fakeFlight.Advance(300);
+        Check(fakeFlight.Finished&&Vector3.Distance(fakeFlight.Position,
+            fakeIntent.Shot.Muzzle+2*(fakeIntent.Shot.Batch.Target-fakeIntent.Shot.Muzzle))<.00001f,
+            "fake presentation ends at twice target displacement");
         emitted.Weapon.Replace(Vector3.UnitZ,0,0);
         projectileDraws.Enqueue(0);projectileDraws.Enqueue(0);
         Check(emitted.AdvanceProjectile(1.4f,Vector3.Zero,Quaternion.Identity,42.96f,false)==null&&
