@@ -1,0 +1,29 @@
+using System.Numerics;
+namespace War.BattleServer;
+
+internal sealed class DroneImpulseResponse
+{
+    private readonly DroneBodyMass mass;
+    private readonly Matrix4x4 inverseInertia;
+    internal DroneImpulseResponse(DroneColliderCatalog geometry)
+    {
+        mass=DroneMassProperties.Compute(geometry);
+        if(!Matrix4x4.Invert(mass.Inertia,out inverseInertia))
+            throw new InvalidDataException("Singular Drone inertia authority.");
+    }
+    internal (Vector3 Velocity,Vector3 AngularVelocity) Apply(Vector3 root,Quaternion rotation,
+        Vector3 velocity,Vector3 angularVelocity,Vector3 impulse,Vector3 worldPoint)
+    {
+        if(!PlayerHitbox.Finite(root)||!PlayerHitbox.Finite(velocity)||!PlayerHitbox.Finite(angularVelocity)||
+           !PlayerHitbox.Finite(impulse)||!PlayerHitbox.Finite(worldPoint)||
+           !float.IsFinite(rotation.LengthSquared())||Math.Abs(rotation.LengthSquared()-1)>.0001f)
+            throw new InvalidDataException("Invalid Drone impulse authority.");
+        var center=root+Vector3.Transform(mass.CenterOfMass,rotation);
+        var torque=Vector3.Transform(Vector3.Cross(worldPoint-center,impulse),Quaternion.Conjugate(rotation));
+        var angularChange=Vector3.Transform(Vector3.TransformNormal(torque,inverseInertia),rotation);
+        velocity+=impulse;angularVelocity+=angularChange; // Recovered mass is one.
+        if(!PlayerHitbox.Finite(velocity)||!PlayerHitbox.Finite(angularVelocity))
+            throw new InvalidDataException("Drone impulse arithmetic overflow.");
+        return(velocity,angularVelocity);
+    }
+}

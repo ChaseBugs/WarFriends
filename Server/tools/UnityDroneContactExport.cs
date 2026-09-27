@@ -104,7 +104,7 @@ public static class UnityDroneContactExport
             else EditorSceneManager.NewScene(NewSceneSetup.EmptyScene,NewSceneMode.Single);
         }
     }
-    private static GameObject CopyGeometry(Transform source,Transform parent)
+    internal static GameObject CopyGeometry(Transform source,Transform parent)
     {
         var result=new GameObject(source.name);result.layer=source.gameObject.layer;
         result.transform.SetParent(parent,false);result.transform.localPosition=source.localPosition;
