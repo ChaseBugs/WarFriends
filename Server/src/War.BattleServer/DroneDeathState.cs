@@ -21,12 +21,11 @@ internal sealed class DroneDeathState
     {
         if(!float.IsFinite(time)||time<observed||!PlayerHitbox.Finite(position))
             throw new InvalidDataException("Invalid Drone death collision authority.");
-        observed=time;
-        if(DestructionDeadline.HasValue)return null;
+        if(DestructionDeadline.HasValue){observed=time;return null;}
         float deadline=time+.2f;
         if(!float.IsFinite(deadline)||deadline<=time)
             throw new InvalidDataException("Drone death destruction clock overflow.");
-        DestructionDeadline=deadline;
+        observed=time;DestructionDeadline=deadline;
         return new(position,maximumHealth*.5f,maximumHealth*.05f,.7f,1.4f);
     }
 }

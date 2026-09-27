@@ -13,6 +13,24 @@ internal static class DroneAttackStateTests
             "first physical collision binds max-health explosion and destruction delay");
         Check(death.ObserveCollision(3.1f,Vector3.Zero)==null&&death.DestructionDeadline==3.2f,
             "later contacts cannot repeat Drone explosion authority");
+        foreach(var badContact in new[]{(1f,Vector3.Zero),(float.NaN,Vector3.Zero),
+            (float.PositiveInfinity,Vector3.Zero),(2f,new Vector3(float.NaN,0,0))})
+        {
+            var guardedDeath=new DroneDeathState(2,400);
+            try{guardedDeath.ObserveCollision(badContact.Item1,badContact.Item2);
+                throw new Exception("invalid Drone death contact accepted");}
+            catch(InvalidDataException){Check(guardedDeath.DestructionDeadline==null,
+                "malformed or pre-death collision cannot consume explosion authority");}
+            Check(guardedDeath.ObserveCollision(3,Vector3.Zero)!=null,
+                "rejected collision leaves the first valid contact available");
+        }
+        var exhaustedDeath=new DroneDeathState(0,400);
+        try{exhaustedDeath.ObserveCollision(float.MaxValue,Vector3.Zero);
+            throw new Exception("unrepresentable Drone destruction delay accepted");}
+        catch(InvalidDataException){Check(exhaustedDeath.DestructionDeadline==null,
+            "float clock exhaustion cannot publish a destruction deadline");}
+        Check(exhaustedDeath.ObserveCollision(3,Vector3.Zero)!=null,
+            "rejected exhausted clock cannot poison later valid contact time");
         Check(content.Army.ComposeDroneShot(0,null,null).ShieldHitProbability==0,
             "Drone shield probability comes from recovered ArmyUpgrades row");
         try
