@@ -3,12 +3,14 @@ using UnityEngine;
 using War.Protocol;
 
 // Presentation only. The Worker owns trajectory, collision and damage; these
-// objects contain copied recovered meshes and no gameplay or Photon scripts.
+// objects contain copied recovered meshes and visual trail scripts, with no
+// gameplay, collision, damage or Photon scripts.
 public sealed class SelfHostedProjectilePresenter : MonoBehaviour
 {
 	private sealed class Visual
 	{
 		public readonly GameObject Root;
+        public LineTrailRenderer Trail;
 		public Visual(GameObject root) { Root = root; }
 	}
 
@@ -39,7 +41,11 @@ public sealed class SelfHostedProjectilePresenter : MonoBehaviour
 			}
 			visual.Root.transform.position = new Vector3(state.X, state.Y, state.Z);
 			Vector3 velocity = new Vector3(state.VelocityX, state.VelocityY, state.VelocityZ);
-			if (velocity.sqrMagnitude > 0.000001f) visual.Root.transform.rotation = Quaternion.LookRotation(velocity.normalized);
+			if (velocity.sqrMagnitude > 0.000001f && visual.Trail == null)
+                visual.Root.transform.rotation = state.Kind.StartsWith("drone-") ?
+                    Quaternion.LookRotation(-velocity.normalized) * Quaternion.AngleAxis(-90f, Vector3.up) : Quaternion.LookRotation(velocity.normalized);
+            if (state.Kind.StartsWith("drone-") && visual.Trail == null)
+                ConfigureDroneTrail(visual, state.Kind == "drone-fake-bullet", false, velocity.magnitude);
 		}
 		List<ulong> stale = new List<ulong>();
 		foreach (KeyValuePair<ulong, Visual> pair in active)
@@ -49,6 +55,21 @@ public sealed class SelfHostedProjectilePresenter : MonoBehaviour
 
 	public void ApplyEvent(MatchEvent item)
 	{
+        if (item != null && item.Kind == MatchEventKind.DroneFired && item.DroneShot != null)
+        {
+            Visual visual;
+            if (!active.TryGetValue(item.ProjectileId, out visual))
+            {
+                visual = Create(item.ActorId, item.ProjectileId, item.DroneShot.Fake ? "drone-fake-bullet" : "drone-bullet");
+                active.Add(item.ProjectileId, visual);
+                visual.Root.transform.position = new Vector3(item.DroneShot.MuzzleX, item.DroneShot.MuzzleY, item.DroneShot.MuzzleZ);
+                Vector3 direction = visual.Root.transform.position - new Vector3(item.X, item.Y, item.Z);
+                if (direction.sqrMagnitude > 0.000001f)
+                    visual.Root.transform.rotation = Quaternion.LookRotation(direction) * Quaternion.AngleAxis(-90f, Vector3.up);
+            }
+            ConfigureDroneTrail(visual, item.DroneShot.Fake, item.DroneShot.Shield, item.DroneShot.Speed);
+            return;
+        }
 		if (item == null || item.Kind != MatchEventKind.Impact ||
 			(item.Reason != "grenade" && item.Reason != "grenade-molotov" && item.Reason != "heavy-turret" && item.Reason != "drone")) return;
 		Remove(item.ProjectileId);
@@ -56,6 +77,19 @@ public sealed class SelfHostedProjectilePresenter : MonoBehaviour
 		Explosion.PlayEffects(item.Reason == "grenade-molotov" ? Explosion.ExplosionType.Molotov : Explosion.ExplosionType.Medium,
 			new Vector3(item.X, item.Y, item.Z));
 	}
+    private static void ConfigureDroneTrail(Visual visual, bool fake, bool shield, float speed)
+    {
+        Drone drone = Singleton<ObjectPoolDatabase>.instance == null ? null : Singleton<ObjectPoolDatabase>.instance.drone;
+        BulletSetup setup = drone == null || drone.weapon == null || drone.weapon.weapon == null ? null : drone.weapon.weapon.ammoSetup as BulletSetup;
+        if (setup == null || speed <= 0 || Camera.main == null || visual.Root.GetComponent<MeshFilter>() == null)
+            throw new System.InvalidOperationException("Drone trail lacks recovered setup, camera or mesh.");
+        if (visual.Trail == null) { visual.Trail = visual.Root.AddComponent<LineTrailRenderer>(); visual.Trail.Reset(); }
+        visual.Trail.SetWidth(fake ? setup.GetTrailFakeWidth() : setup.GetTrailWidth());
+        visual.Trail.trailLength = setup.GetTrailSize() * (fake ? 1f : 2f);
+        visual.Trail.disapearTime = setup.GetTrailSize() / speed;
+        string sprite = fake ? setup.fakeShotTexture : shield ? setup.shieldShotTexture : setup.realShotTexture;
+        if (!string.IsNullOrEmpty(sprite)) visual.Trail.SetSprite(sprite);
+    }
 
 	private Visual Create(string ownerId, ulong projectileId, string kind)
 	{
