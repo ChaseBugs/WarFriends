@@ -14,7 +14,7 @@ internal static class DroneFrictionControlTests
            root.GetProperty("rows").GetArrayLength()!=10)
             throw new Exception("Wrong independent friction control dataset.");
         Vector3 Vec(JsonElement value)=>new(value[0].GetSingle(),value[1].GetSingle(),value[2].GetSingle());
-        float maximum=0,maximumPreparedResidual=0;int count=0;
+        float maximum=0,maximumPreparedResidual=0,maximumTwoPhaseResidual=0;int count=0;
         var response=new DroneImpulseResponse(geometry);
         foreach(var row in root.GetProperty("rows").EnumerateArray())
         {
@@ -38,6 +38,7 @@ internal static class DroneFrictionControlTests
             var position=Vec(previousFrame.GetProperty("position"));
             var initial=DroneRigidMotion.AdvanceVelocities(before,Vec(previousFrame.GetProperty("angularVelocity")));
             var deltaVelocity=Vector3.Zero;var deltaAngular=Vector3.Zero;var computedImpulse=Vector3.Zero;
+            var preparedContacts=new List<(Vector3 Point,Vector3 Normal,PreparedNormalContact Prepared,float Impulse)>();
             foreach(var callback in callbacks.EnumerateArray().Where(c=>c.GetProperty("frame").GetInt32()==frame))
             foreach(var contact in callback.GetProperty("contacts").EnumerateArray())
             {
@@ -48,8 +49,27 @@ internal static class DroneFrictionControlTests
                 var step=ContactNormalConstraint.Solve(0,relative,prepared.VelocityMultiplier,prepared.BiasedError,float.MaxValue);
                 var changed=response.Apply(position,orientation,deltaVelocity,deltaAngular,normal*step.Delta,point);
                 deltaVelocity=changed.Velocity;deltaAngular=changed.AngularVelocity;computedImpulse+=normal*step.Delta;
+                preparedContacts.Add((point,normal,prepared,step.Impulse));
             }
-            maximumPreparedResidual=Math.Max(maximumPreparedResidual,Vector3.Distance(computedImpulse,impulses));
+            float firstPassResidual=Vector3.Distance(computedImpulse,impulses);
+            maximumPreparedResidual=Math.Max(maximumPreparedResidual,firstPassResidual);
+            foreach(var contact in preparedContacts)
+            {
+                float relative=Vector3.Dot(contact.Normal,response.PointVelocity(position,orientation,
+                    deltaVelocity,deltaAngular,contact.Point));
+                var step=ContactNormalConstraint.Solve(contact.Impulse,relative,contact.Prepared.VelocityMultiplier,
+                    contact.Prepared.UnbiasedError,float.MaxValue);
+                var changed=response.Apply(position,orientation,deltaVelocity,deltaAngular,contact.Normal*step.Delta,contact.Point);
+                deltaVelocity=changed.Velocity;deltaAngular=changed.AngularVelocity;computedImpulse+=contact.Normal*step.Delta;
+            }
+            float twoPhaseResidual=Vector3.Distance(computedImpulse,impulses);
+            maximumTwoPhaseResidual=Math.Max(maximumTwoPhaseResidual,twoPhaseResidual);
+            if(twoPhaseResidual>.00002f)
+                throw new Exception("Prepared two-phase normal response differs from independent Unity reported impulse.");
+            count++;
+            Console.WriteLine("Drone normal phases: "+row.GetProperty("source").GetString()+" fraction "+
+                row.GetProperty("fraction")+", contacts "+preparedContacts.Count+", first="+firstPassResidual+
+                ", velocity-pass="+twoPhaseResidual);
             float residual=Vector3.Distance(predicted,Vec(row.GetProperty("frames")[frame].GetProperty("velocity")));
             if(residual>.00002f)throw new Exception("Zero-friction first-contact impulse fails measured momentum comparison.");
             maximum=Math.Max(maximum,residual);
@@ -58,6 +78,7 @@ internal static class DroneFrictionControlTests
         Console.WriteLine("Drone zero-friction impulse diagnostic: maximum velocity residual="+maximum+" (control only).");
         Console.WriteLine("Drone prepared normal first-pass diagnostic: maximum reported-impulse residual="+maximumPreparedResidual+
             " (recorded contacts; solver ordering/phases not verified).");
+        Console.WriteLine("Drone prepared normal two-phase diagnostic: maximum reported-impulse residual="+maximumTwoPhaseResidual);
         return count;
     }
 }
