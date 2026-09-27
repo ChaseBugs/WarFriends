@@ -11,6 +11,16 @@ internal static class DroneWeaponCatalogTests
         var path=Path.Combine(directory,"recovered-drone-weapon.json");
         var revision=Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(path)));
         var catalog=DroneWeaponCatalog.Load(path,revision);
+        var colliders=DroneColliderCatalog.Load(Path.Combine(directory,"recovered-air-unit-geometry.json"));
+        var rest=colliders.Place(Vector3.Zero,Quaternion.Identity);
+        Check(rest.Count==2&&rest[0].RootOwned&&!rest[1].RootOwned&&rest[1].SerializedLayer==8,
+            "Drone root box and child static sphere retain separate layer ownership");
+        Check(rest[1].Hitbox.Radius==.43f&&rest[0].Hitbox.Size==new Vector3(.7734146f,.17858717f,.76962006f),
+            "verified Drone collider dimensions");
+        var rotated=colliders.Place(new(2,3,4),Quaternion.CreateFromAxisAngle(Vector3.UnitY,MathF.PI/2));
+        Check(Vector3.Distance(rotated[0].Hitbox.Center,new Vector3(2.023748398f,3.04583633f,4.00030708313f))<1e-6f&&
+            rotated[1].Hitbox.Center==new Vector3(2,3,4),"Drone root rotation places offset box and centered sphere");
+
         Check(!catalog.Ready(.17f,0)&&catalog.Ready(.2f,0),"strict Drone weapon cadence at thirty Hz");
         Check(!catalog.Ready(1.17f,1)&&catalog.Ready(1.2f,1),"source cadence binds previous shot clock");
         using(var doc=JsonDocument.Parse(File.ReadAllText(Path.Combine(directory,"unity-drone-weapon-reference.json"))))
