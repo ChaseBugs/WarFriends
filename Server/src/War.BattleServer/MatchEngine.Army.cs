@@ -32,6 +32,8 @@ public sealed partial class MatchEngine
     private readonly Dictionary<ulong,ArmyVitality> armyVitality=[];
     private readonly Dictionary<ulong,DroneSpecialState> armyDroneSpecials=[];
     private readonly Dictionary<ulong,DroneWaypointState> armyDronePaths=[];
+    private readonly Dictionary<ulong,HelicopterWaypointState> armyHelicopterPaths=[];
+    internal bool HasHelicopterPath(ulong key)=>armyHelicopterPaths.ContainsKey(key);
     private readonly Dictionary<ulong,ArmyVehicleShotStats> armyDroneShots=[];
     internal ArmyVehicleShotStats? DroneShotDefinition(ulong key)=>armyDroneShots.GetValueOrDefault(key);
 
@@ -167,6 +169,26 @@ public sealed partial class MatchEngine
         float yaw=MathF.Atan2(animation.Facing.X,animation.Facing.Z);
         return enemyShotTargets.Place(animation.Clip,new(army.X,army.Y,army.Z),
             Quaternion.CreateFromAxisAngle(Vector3.UnitY,yaw),(tick-animation.StartTick)/(float)MatchManifest.TickRate);
+    }
+    private void InitializeHelicopterPath(ulong key,ArmyDeploymentFamily family,ArmySpawnPoint spawn)
+    {
+        if(family.BehaviorType!="HelicopterBehaviour")return;
+        // A legacy diagnostic manifest without trusted upgrade speed cannot move.
+        if(!armySpeed.TryGetValue(key,out float speed))return;
+        var route=airWaypoints!.ForSpawn(map!,spawn.ComponentFileId);
+        armyHelicopterPaths.Add(key,new HelicopterWaypointState(route,spawn.Position,speed));
+    }
+    private void AdvanceHelicopterPaths()
+    {
+        float time=(float)((double)tick/MatchManifest.TickRate);
+        foreach(var (key,path) in armyHelicopterPaths.OrderBy(x=>x.Key))
+        {
+            _=path.Advance(time); // Crew drop/rope require their own source authority.
+            if(!activeArmyEntities.TryGetValue(key,out var row)||row.UnitId!="ID_UNIT-HELICOPTER")
+                throw new InvalidDataException("Helicopter path lost its host entity.");
+            row.X=path.Position.X;row.Y=path.Position.Y;row.Z=path.Position.Z;
+            row.PositionTick=tick;
+        }
     }
     internal ArmyInfantryPoseSnapshot? InfantryPose(ulong entityKey)
     {
@@ -1974,6 +1996,7 @@ public sealed partial class MatchEngine
         if(droneArmyTargets.Remove(entityKey))droneTargets.Disable(DroneArmyId(entityKey));
         armyDroneSpecials.Remove(entityKey);
         armyDronePaths.Remove(entityKey);
+        armyHelicopterPaths.Remove(entityKey);
         armyDroneShots.Remove(entityKey);
         droneAttacks.Remove(entityKey);
         droneLastIntents.Remove(entityKey);

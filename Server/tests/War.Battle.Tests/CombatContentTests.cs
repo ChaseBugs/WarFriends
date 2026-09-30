@@ -3227,6 +3227,15 @@ internal static class CombatContentTests
         var beforeDeath=deathMatch.ArmyEntityBatch(soldierOwner,0,0);
         var soldierEntity=beforeDeath.Entities.First(x=>x.OwnerPlayerId==soldierOwner);
         var helicopterEntity=beforeDeath.Entities.Single(x=>x.OwnerPlayerId==helicopterOwner);
+        var helicopterSpawn=deathMatch.EventBatch(soldierOwner,0).Events.Single(e=>
+            e.Kind==MatchEventKind.ArmySpawned&&e.ActorId==helicopterOwner);
+        Check(helicopterEntity.UnitId=="ID_UNIT-HELICOPTER"&&
+              deathMatch.HasHelicopterPath(helicopterEntity.EntityKey)&&
+              helicopterEntity.SpawnComponentFileId==helicopterSpawn.ArmySpawnComponentFileId&&
+              helicopterEntity.PositionTick==70&&
+              Vector3.Distance(new Vector3(helicopterEntity.X,helicopterEntity.Y,helicopterEntity.Z),
+                  new Vector3(helicopterSpawn.X,helicopterSpawn.Y,helicopterSpawn.Z))>0,
+              "normal Helicopter deployment publishes host-owned source-route motion after spawn");
         Check(deathMatch.Snapshot().Players[0].ConfirmedArmySpawns==2 &&
               deathMatch.Snapshot().Players[1].ConfirmedArmySpawns==1 &&
               deathMatch.Command(soldierOwner,new MatchCommand{CommandId=2,
@@ -3264,6 +3273,7 @@ internal static class CombatContentTests
               deathMatch.Snapshot().Players[1].ConfirmedArmyLosses==0,
               "replayed fatal damage cannot credit another unit loss");
         Check(deathMatch.ConfirmArmyDeath(helicopterEntity.EntityKey,true) &&
+              !deathMatch.HasHelicopterPath(helicopterEntity.EntityKey) &&
               deathMatch.ArmyBatch(helicopterOwner).Energy==9 &&
               deathMatch.ArmyBatch(helicopterOwner).OptionIndexes.Count==3 &&
               deathMatch.ArmyBatch(helicopterOwner).OptionIndexes.All(x=>x==2) &&
