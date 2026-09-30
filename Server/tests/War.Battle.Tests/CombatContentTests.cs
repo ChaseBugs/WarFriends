@@ -3239,6 +3239,7 @@ internal static class CombatContentTests
               helicopterEntity.SpawnComponentFileId==helicopterSpawn.ArmySpawnComponentFileId&&
               helicopterEntity.PositionTick==70&&
               helicopterEntity.HelicopterStopTick==0&&
+              deathMatch.HelicopterCrewDueSlots(helicopterEntity.EntityKey,70).Count==0&&
               deathMatch.HelicopterCrewDefinition(helicopterEntity.EntityKey)==
                   new ArmyHelicopterCrewStats(2,621f)&&
               Vector3.Distance(new Vector3(helicopterEntity.X,helicopterEntity.Y,helicopterEntity.Z),
@@ -3283,6 +3284,7 @@ internal static class CombatContentTests
         Check(deathMatch.ConfirmArmyDeath(helicopterEntity.EntityKey,true) &&
               !deathMatch.HasHelicopterPath(helicopterEntity.EntityKey) &&
               deathMatch.HelicopterCrewDefinition(helicopterEntity.EntityKey)==null&&
+              deathMatch.HelicopterCrewDueSlots(helicopterEntity.EntityKey,ulong.MaxValue).Count==0&&
               deathMatch.ArmyBatch(helicopterOwner).Energy==9 &&
               deathMatch.ArmyBatch(helicopterOwner).OptionIndexes.Count==3 &&
               deathMatch.ArmyBatch(helicopterOwner).OptionIndexes.All(x=>x==2) &&

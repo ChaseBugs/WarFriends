@@ -43,6 +43,16 @@ internal static class HelicopterWaypointTests
             throw new Exception("Join point accepted as Helicopter stop.");
         }
         catch(InvalidDataException){count++;}
+        var crew=new HelicopterCrewSchedule(90,3);
+        Check(crew.DueTick(0)==240&&crew.DueTick(1)==300&&crew.DueTick(2)==360&&
+              crew.DueSlots(239).Count==0&&crew.DueSlots(240).SequenceEqual(new[]{0})&&
+              crew.DueSlots(359).SequenceEqual(new[]{0,1})&&
+              crew.DueSlots(360).SequenceEqual(new[]{0,1,2}),
+            "Helicopter source crew drop waits five seconds then two per ordered slot");
+        try{_=new HelicopterCrewSchedule(ulong.MaxValue,6);throw new Exception("Overflowing crew timeline accepted.");}
+        catch(InvalidDataException){count++;}
+        try{_=new HelicopterCrewSchedule(1,7);throw new Exception("Crew beyond prefab points accepted.");}
+        catch(InvalidDataException){count++;}
         using(var oracle=JsonDocument.Parse(File.ReadAllText(Path.Combine(directory,"recovered-helicopter-steer.json"))))
         {
             var data=oracle.RootElement;

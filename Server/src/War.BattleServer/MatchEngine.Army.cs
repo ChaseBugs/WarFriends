@@ -34,8 +34,11 @@ public sealed partial class MatchEngine
     private readonly Dictionary<ulong,DroneWaypointState> armyDronePaths=[];
     private readonly Dictionary<ulong,HelicopterWaypointState> armyHelicopterPaths=[];
     private readonly Dictionary<ulong,ArmyHelicopterCrewStats> armyHelicopterCrew=[];
+    private readonly Dictionary<ulong,HelicopterCrewSchedule> armyHelicopterSchedules=[];
     internal bool HasHelicopterPath(ulong key)=>armyHelicopterPaths.ContainsKey(key);
     internal ArmyHelicopterCrewStats? HelicopterCrewDefinition(ulong key)=>armyHelicopterCrew.GetValueOrDefault(key);
+    internal IReadOnlyList<int> HelicopterCrewDueSlots(ulong key,ulong atTick)
+        =>armyHelicopterSchedules.TryGetValue(key,out var schedule)?schedule.DueSlots(atTick):Array.Empty<int>();
     private readonly Dictionary<ulong,ArmyVehicleShotStats> armyDroneShots=[];
     internal ArmyVehicleShotStats? DroneShotDefinition(ulong key)=>armyDroneShots.GetValueOrDefault(key);
 
@@ -188,7 +191,13 @@ public sealed partial class MatchEngine
             bool arrived=path.Advance(time); // Crew drop/rope require their own source authority.
             if(!activeArmyEntities.TryGetValue(key,out var row)||row.UnitId!="ID_UNIT-HELICOPTER")
                 throw new InvalidDataException("Helicopter path lost its host entity.");
-            if(arrived)row.HelicopterStopTick=tick;
+            if(arrived)
+            {
+                if(row.HelicopterStopTick!=0||!armyHelicopterCrew.TryGetValue(key,out var crew)||
+                   !armyHelicopterSchedules.TryAdd(key,new HelicopterCrewSchedule(tick,crew.Seats)))
+                    throw new InvalidDataException("Helicopter stop lost source crew authority.");
+                row.HelicopterStopTick=tick;
+            }
             row.X=path.Position.X;row.Y=path.Position.Y;row.Z=path.Position.Z;
             row.PositionTick=tick;
         }
@@ -2004,6 +2013,7 @@ public sealed partial class MatchEngine
         armyDronePaths.Remove(entityKey);
         armyHelicopterPaths.Remove(entityKey);
         armyHelicopterCrew.Remove(entityKey);
+        armyHelicopterSchedules.Remove(entityKey);
         armyDroneShots.Remove(entityKey);
         droneAttacks.Remove(entityKey);
         droneLastIntents.Remove(entityKey);
