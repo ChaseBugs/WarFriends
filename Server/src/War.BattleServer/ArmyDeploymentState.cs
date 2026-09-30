@@ -162,30 +162,52 @@ public sealed class ArmyDeploymentState
         if(!equipped.Contains(family.UnitId))return "army-not-equipped";
         if(tick<NextDeployTick)return "army-cooldown";
         if(!HasCapacity(family,option.Count))return "army-capacity";
-        int pendingPower=pending.Sum(p=>p.Option.Power/p.Option.Count);
+        int pendingPower=checked(pending.Sum(p=>p.Option.Power/p.Option.Count));
         if(option.Power>Energy-pendingPower)return "army-energy";
         ulong cooldown=Ticks((catalog.BaseCooldown+option.Cooldown)*cooldownMultiplier);
+        var due=Enumerable.Range(0,option.Count)
+            .Select(i=>checked(tick+(ulong)(i*9))).ToArray();
+        ulong nextDeploy=checked(tick+cooldown);
+        int nextReserved=checked(reserved.GetValueOrDefault(family.UnitId)+option.Count);
         // The first unit is due now; subsequent units follow at 0.3-second intervals.
-        for(int i=0;i<option.Count;i++)
-            pending.Enqueue((checked(tick+(ulong)(i*9)),family,option));
-        reserved[family.UnitId]=reserved.GetValueOrDefault(family.UnitId)+option.Count;
-        NextDeployTick=checked(tick+cooldown);
+        foreach(ulong dueTick in due)pending.Enqueue((dueTick,family,option));
+        reserved[family.UnitId]=nextReserved;
+        NextDeployTick=nextDeploy;
         InvalidateOffers();
         return "army-deploying";
     }
 
     public IReadOnlyList<ArmySpawn> Advance(ulong tick)
     {
+        var due=pending.TakeWhile(p=>p.Tick<=tick).ToArray();
+        int remainingEnergy=Energy;int previewId=nextEntityId;
+        var previewReserved=new Dictionary<string,int>(reserved,StringComparer.Ordinal);
+        var previewAlive=new Dictionary<string,int>(alive,StringComparer.Ordinal);
+        foreach(var scheduled in due)
+        {
+            if(scheduled.Option.Count<=0||scheduled.Option.Power<=0||
+               scheduled.Option.Power%scheduled.Option.Count!=0||
+               !equipped.Contains(scheduled.Family.UnitId))
+                throw new InvalidDataException("Invalid pending army spawn authority.");
+            int unitPower=scheduled.Option.Power/scheduled.Option.Count;
+            if(unitPower>remainingEnergy)throw new InvalidDataException("Reserved army energy was lost.");
+            remainingEnergy-=unitPower;
+            int count=previewReserved.GetValueOrDefault(scheduled.Family.UnitId);
+            if(count<=0)throw new InvalidDataException("Reserved army spawn count was lost.");
+            previewReserved[scheduled.Family.UnitId]=count-1;
+            previewAlive[scheduled.Family.UnitId]=checked(previewAlive.GetValueOrDefault(scheduled.Family.UnitId)+1);
+            if(previewId==int.MaxValue)throw new InvalidDataException("Army entity ID exhausted.");
+            if(entities.ContainsKey(++previewId))throw new InvalidDataException("Army entity ID already exists.");
+        }
         var spawned=new List<ArmySpawn>();
-        while(pending.Count>0 && pending.Peek().Tick<=tick)
+        foreach(var expected in due)
         {
             var scheduled=pending.Dequeue();
+            if(scheduled!=expected)throw new InvalidDataException("Army spawn queue changed during host tick.");
             int unitPower=scheduled.Option.Power/scheduled.Option.Count;
-            if(unitPower>Energy)throw new InvalidDataException("Reserved army energy was lost.");
             Energy-=unitPower;
             reserved[scheduled.Family.UnitId]--;
             alive[scheduled.Family.UnitId]=alive.GetValueOrDefault(scheduled.Family.UnitId)+1;
-            if(nextEntityId==int.MaxValue)throw new InvalidDataException("Army entity ID exhausted.");
             var entity=new ArmySpawn(++nextEntityId,scheduled.Option.Index,scheduled.Family.UnitId,unitPower,scheduled.Tick,scheduled.Family.IsAir);
             entities.Add(entity.EntityId,entity);spawned.Add(entity);
         }

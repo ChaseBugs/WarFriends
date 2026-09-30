@@ -1297,6 +1297,34 @@ internal static class CombatContentTests
               deployment.Advance(108).Count==0 && deployment.Advance(109).Count==1 && deployment.Energy==6,
               "host accepts only offered equipped runtime option and schedules 0.3-second energy debits");
         deployment.SetOffers([0,1,0]);
+        var overflowDeployment=new ArmyDeploymentState(content.Army,["ID_UNIT-ASSAULT"]);
+        overflowDeployment.SetOffers([0,1,0]);
+        try
+        {
+            _=overflowDeployment.TryDeploy(1,ulong.MaxValue);
+            throw new Exception("Overflowing army schedule was accepted.");
+        }
+        catch(OverflowException){}
+        Check(overflowDeployment.PendingCount==0&&overflowDeployment.NextDeployTick==0&&
+              overflowDeployment.OfferedOptions.SequenceEqual([0,1,0]),
+              "overflowing deployment does not enqueue a partial four-unit batch or consume its hand");
+        var starvingDeployment=new ArmyDeploymentState(content.Army,["ID_UNIT-ASSAULT"]);
+        starvingDeployment.SetOffers([1,1,1]);
+        Check(starvingDeployment.TryDeploy(1,0)=="army-deploying"&&starvingDeployment.PendingCount==4,
+              "four-unit authority can be scheduled before one host tick");
+        typeof(ArmyDeploymentState).GetProperty(nameof(ArmyDeploymentState.Energy))!.SetValue(starvingDeployment,2);
+        try
+        {
+            _=starvingDeployment.Advance(100);
+            throw new Exception("Lost reserved energy was accepted.");
+        }
+        catch(InvalidDataException){}
+        Check(starvingDeployment.PendingCount==4&&starvingDeployment.ActiveCount==0&&starvingDeployment.Energy==2,
+              "late shortage rejects the entire due spawn batch before queue or energy mutation");
+        typeof(ArmyDeploymentState).GetProperty(nameof(ArmyDeploymentState.Energy))!.SetValue(starvingDeployment,8);
+        Check(starvingDeployment.Advance(100).Count==4&&starvingDeployment.PendingCount==0&&
+              starvingDeployment.ActiveCount==4&&starvingDeployment.Energy==4,
+              "repaired reserved energy can still commit the complete ordered spawn batch once");
         Check(deployment.TryDeploy(1,101)=="army-cooldown" &&
               deployment.TryDeploy(1,200)=="army-deploying" &&
               deployment.Advance(200).Count==1 && deployment.Energy==5 &&
