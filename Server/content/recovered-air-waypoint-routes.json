@@ -13,6 +13,8 @@
           "pathComponentFileId": 2325,
           "joinWaypointFileId": 2313,
           "joinIndex": 0,
+          "stopWaypointFileId": 0,
+          "stopIndex": -1,
           "radius": 0.2,
           "waypoints": [
             {
@@ -659,6 +661,8 @@
           "pathComponentFileId": 2201,
           "joinWaypointFileId": 2311,
           "joinIndex": 1,
+          "stopWaypointFileId": 0,
+          "stopIndex": -1,
           "radius": 0.2,
           "waypoints": [
             {
@@ -1305,6 +1309,8 @@
           "pathComponentFileId": 2225,
           "joinWaypointFileId": 2429,
           "joinIndex": 3,
+          "stopWaypointFileId": 0,
+          "stopIndex": -1,
           "radius": 0.2,
           "waypoints": [
             {
@@ -1856,6 +1862,8 @@
           "pathComponentFileId": 2310,
           "joinWaypointFileId": 2442,
           "joinIndex": 3,
+          "stopWaypointFileId": 0,
+          "stopIndex": -1,
           "radius": 0.2,
           "waypoints": [
             {
@@ -2407,6 +2415,8 @@
           "pathComponentFileId": 2588,
           "joinWaypointFileId": 2695,
           "joinIndex": 0,
+          "stopWaypointFileId": 0,
+          "stopIndex": -1,
           "radius": 0.2,
           "waypoints": [
             {
@@ -2958,6 +2968,8 @@
           "pathComponentFileId": 2421,
           "joinWaypointFileId": 2329,
           "joinIndex": 0,
+          "stopWaypointFileId": 0,
+          "stopIndex": -1,
           "radius": 0.2,
           "waypoints": [
             {
@@ -3509,6 +3521,8 @@
           "pathComponentFileId": 2584,
           "joinWaypointFileId": 2446,
           "joinIndex": 0,
+          "stopWaypointFileId": 2489,
+          "stopIndex": 1,
           "radius": 3.5,
           "waypoints": [
             {
@@ -4276,6 +4290,8 @@
           "pathComponentFileId": 2227,
           "joinWaypointFileId": 2212,
           "joinIndex": 0,
+          "stopWaypointFileId": 2586,
+          "stopIndex": 2,
           "radius": 3.5,
           "waypoints": [
             {
@@ -5309,6 +5325,8 @@
           "pathComponentFileId": 3087,
           "joinWaypointFileId": 3119,
           "joinIndex": 0,
+          "stopWaypointFileId": 0,
+          "stopIndex": -1,
           "radius": 0.2,
           "waypoints": [
             {
@@ -5955,6 +5973,8 @@
           "pathComponentFileId": 2983,
           "joinWaypointFileId": 3309,
           "joinIndex": 1,
+          "stopWaypointFileId": 0,
+          "stopIndex": -1,
           "radius": 0.2,
           "waypoints": [
             {
@@ -6601,6 +6621,8 @@
           "pathComponentFileId": 3228,
           "joinWaypointFileId": 3107,
           "joinIndex": 3,
+          "stopWaypointFileId": 0,
+          "stopIndex": -1,
           "radius": 0.2,
           "waypoints": [
             {
@@ -7247,6 +7269,8 @@
           "pathComponentFileId": 3290,
           "joinWaypointFileId": 3254,
           "joinIndex": 3,
+          "stopWaypointFileId": 0,
+          "stopIndex": -1,
           "radius": 0.2,
           "waypoints": [
             {
@@ -7893,6 +7917,8 @@
           "pathComponentFileId": 2932,
           "joinWaypointFileId": 3211,
           "joinIndex": 4,
+          "stopWaypointFileId": 0,
+          "stopIndex": -1,
           "radius": 0.2,
           "waypoints": [
             {
@@ -8444,6 +8470,8 @@
           "pathComponentFileId": 3319,
           "joinWaypointFileId": 3019,
           "joinIndex": 0,
+          "stopWaypointFileId": 0,
+          "stopIndex": -1,
           "radius": 0.2,
           "waypoints": [
             {
@@ -8995,6 +9023,8 @@
           "pathComponentFileId": 3097,
           "joinWaypointFileId": 3267,
           "joinIndex": 0,
+          "stopWaypointFileId": 3302,
+          "stopIndex": 1,
           "radius": 3.5,
           "waypoints": [
             {
@@ -9762,6 +9792,8 @@
           "pathComponentFileId": 3134,
           "joinWaypointFileId": 3104,
           "joinIndex": 0,
+          "stopWaypointFileId": 3345,
+          "stopIndex": 2,
           "radius": 3.5,
           "waypoints": [
             {
@@ -10795,6 +10827,8 @@
           "pathComponentFileId": 2738,
           "joinWaypointFileId": 2640,
           "joinIndex": 0,
+          "stopWaypointFileId": 0,
+          "stopIndex": -1,
           "radius": 0.2,
           "waypoints": [
             {
@@ -11441,6 +11475,8 @@
           "pathComponentFileId": 2563,
           "joinWaypointFileId": 2575,
           "joinIndex": 1,
+          "stopWaypointFileId": 0,
+          "stopIndex": -1,
           "radius": 0.2,
           "waypoints": [
             {
@@ -12087,6 +12123,8 @@
           "pathComponentFileId": 2825,
           "joinWaypointFileId": 2355,
           "joinIndex": 3,
+          "stopWaypointFileId": 0,
+          "stopIndex": -1,
           "radius": 0.2,
           "waypoints": [
             {
@@ -12733,6 +12771,8 @@
           "pathComponentFileId": 2365,
           "joinWaypointFileId": 2830,
           "joinIndex": 3,
+          "stopWaypointFileId": 0,
+          "stopIndex": -1,
           "radius": 0.2,
           "waypoints": [
             {
@@ -13379,6 +13419,8 @@
           "pathComponentFileId": 2247,
           "joinWaypointFileId": 2767,
           "joinIndex": 3,
+          "stopWaypointFileId": 0,
+          "stopIndex": -1,
           "radius": 0.2,
           "waypoints": [
             {
@@ -14025,6 +14067,8 @@
           "pathComponentFileId": 2763,
           "joinWaypointFileId": 2770,
           "joinIndex": 3,
+          "stopWaypointFileId": 0,
+          "stopIndex": -1,
           "radius": 0.2,
           "waypoints": [
             {
@@ -14671,6 +14715,8 @@
           "pathComponentFileId": 2664,
           "joinWaypointFileId": 2611,
           "joinIndex": 0,
+          "stopWaypointFileId": 0,
+          "stopIndex": -1,
           "radius": 0.2,
           "waypoints": [
             {
@@ -15222,6 +15268,8 @@
           "pathComponentFileId": 2866,
           "joinWaypointFileId": 2526,
           "joinIndex": 0,
+          "stopWaypointFileId": 0,
+          "stopIndex": -1,
           "radius": 0.2,
           "waypoints": [
             {
@@ -15773,6 +15821,8 @@
           "pathComponentFileId": 2787,
           "joinWaypointFileId": 2582,
           "joinIndex": 0,
+          "stopWaypointFileId": 2492,
+          "stopIndex": 1,
           "radius": 3.5,
           "waypoints": [
             {
@@ -16540,6 +16590,8 @@
           "pathComponentFileId": 2377,
           "joinWaypointFileId": 2520,
           "joinIndex": 0,
+          "stopWaypointFileId": 2529,
+          "stopIndex": 2,
           "radius": 3.5,
           "waypoints": [
             {
@@ -17573,6 +17625,8 @@
           "pathComponentFileId": 3242,
           "joinWaypointFileId": 3147,
           "joinIndex": 0,
+          "stopWaypointFileId": 0,
+          "stopIndex": -1,
           "radius": 0.2,
           "waypoints": [
             {
@@ -18219,6 +18273,8 @@
           "pathComponentFileId": 3503,
           "joinWaypointFileId": 3210,
           "joinIndex": 1,
+          "stopWaypointFileId": 0,
+          "stopIndex": -1,
           "radius": 0.2,
           "waypoints": [
             {
@@ -18865,6 +18921,8 @@
           "pathComponentFileId": 3450,
           "joinWaypointFileId": 3317,
           "joinIndex": 3,
+          "stopWaypointFileId": 0,
+          "stopIndex": -1,
           "radius": 0.2,
           "waypoints": [
             {
@@ -19511,6 +19569,8 @@
           "pathComponentFileId": 3558,
           "joinWaypointFileId": 3178,
           "joinIndex": 3,
+          "stopWaypointFileId": 0,
+          "stopIndex": -1,
           "radius": 0.2,
           "waypoints": [
             {
@@ -20157,6 +20217,8 @@
           "pathComponentFileId": 3539,
           "joinWaypointFileId": 3244,
           "joinIndex": 3,
+          "stopWaypointFileId": 0,
+          "stopIndex": -1,
           "radius": 0.2,
           "waypoints": [
             {
@@ -20803,6 +20865,8 @@
           "pathComponentFileId": 3161,
           "joinWaypointFileId": 3576,
           "joinIndex": 3,
+          "stopWaypointFileId": 0,
+          "stopIndex": -1,
           "radius": 0.2,
           "waypoints": [
             {
@@ -21449,6 +21513,8 @@
           "pathComponentFileId": 3196,
           "joinWaypointFileId": 3155,
           "joinIndex": 0,
+          "stopWaypointFileId": 0,
+          "stopIndex": -1,
           "radius": 0.2,
           "waypoints": [
             {
@@ -22000,6 +22066,8 @@
           "pathComponentFileId": 3148,
           "joinWaypointFileId": 3387,
           "joinIndex": 0,
+          "stopWaypointFileId": 0,
+          "stopIndex": -1,
           "radius": 0.2,
           "waypoints": [
             {
@@ -22551,6 +22619,8 @@
           "pathComponentFileId": 3422,
           "joinWaypointFileId": 3568,
           "joinIndex": 0,
+          "stopWaypointFileId": 3185,
+          "stopIndex": 1,
           "radius": 3.5,
           "waypoints": [
             {
@@ -23318,6 +23388,8 @@
           "pathComponentFileId": 3453,
           "joinWaypointFileId": 3562,
           "joinIndex": 0,
+          "stopWaypointFileId": 3184,
+          "stopIndex": 2,
           "radius": 3.5,
           "waypoints": [
             {
@@ -24351,6 +24423,8 @@
           "pathComponentFileId": 3086,
           "joinWaypointFileId": 3074,
           "joinIndex": 0,
+          "stopWaypointFileId": 0,
+          "stopIndex": -1,
           "radius": 0.2,
           "waypoints": [
             {
@@ -24997,6 +25071,8 @@
           "pathComponentFileId": 3039,
           "joinWaypointFileId": 2588,
           "joinIndex": 1,
+          "stopWaypointFileId": 0,
+          "stopIndex": -1,
           "radius": 0.2,
           "waypoints": [
             {
@@ -25643,6 +25719,8 @@
           "pathComponentFileId": 2779,
           "joinWaypointFileId": 2995,
           "joinIndex": 3,
+          "stopWaypointFileId": 0,
+          "stopIndex": -1,
           "radius": 0.2,
           "waypoints": [
             {
@@ -26194,6 +26272,8 @@
           "pathComponentFileId": 2976,
           "joinWaypointFileId": 2801,
           "joinIndex": 3,
+          "stopWaypointFileId": 0,
+          "stopIndex": -1,
           "radius": 0.2,
           "waypoints": [
             {
@@ -26745,6 +26825,8 @@
           "pathComponentFileId": 3022,
           "joinWaypointFileId": 3013,
           "joinIndex": 0,
+          "stopWaypointFileId": 0,
+          "stopIndex": -1,
           "radius": 0.2,
           "waypoints": [
             {
@@ -27296,6 +27378,8 @@
           "pathComponentFileId": 2686,
           "joinWaypointFileId": 2757,
           "joinIndex": 0,
+          "stopWaypointFileId": 0,
+          "stopIndex": -1,
           "radius": 0.2,
           "waypoints": [
             {
@@ -27847,6 +27931,8 @@
           "pathComponentFileId": 2879,
           "joinWaypointFileId": 2748,
           "joinIndex": 0,
+          "stopWaypointFileId": 3072,
+          "stopIndex": 1,
           "radius": 3.5,
           "waypoints": [
             {
@@ -28614,6 +28700,8 @@
           "pathComponentFileId": 2813,
           "joinWaypointFileId": 3069,
           "joinIndex": 0,
+          "stopWaypointFileId": 2815,
+          "stopIndex": 2,
           "radius": 3.5,
           "waypoints": [
             {

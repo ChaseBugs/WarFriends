@@ -4,7 +4,7 @@ using System.Text.Json;
 namespace War.BattleServer;
 
 public sealed record AirWaypointRoute(int SpawnComponentFileId,int PathComponentFileId,
-    int JoinIndex,float Radius,IReadOnlyList<DroneWaypoint> Waypoints);
+    int JoinIndex,int StopIndex,float Radius,IReadOnlyList<DroneWaypoint> Waypoints);
 
 public sealed class AirWaypointCatalog
 {
@@ -40,7 +40,7 @@ public sealed class AirWaypointCatalog
             for(int r=0;r<source.Length;r++)
             {
                 var row=routes[r];var spawn=source[r];Exact(row,"spawnComponentFileId","collection","fraction",
-                    "pathComponentFileId","joinWaypointFileId","joinIndex","radius","waypoints");
+                    "pathComponentFileId","joinWaypointFileId","joinIndex","stopWaypointFileId","stopIndex","radius","waypoints");
                 int pathId=row.GetProperty("pathComponentFileId").GetInt32();
                 if(row.GetProperty("spawnComponentFileId").GetInt32()!=spawn.ComponentFileId||
                    row.GetProperty("collection").GetString()!=spawn.Collection||row.GetProperty("fraction").GetInt32()!=spawn.Fraction||
@@ -48,8 +48,11 @@ public sealed class AirWaypointCatalog
                    row.GetProperty("joinWaypointFileId").GetInt32()!=spawn.JoinWaypointFileId)
                     throw new InvalidDataException("Air waypoint spawn/path identity mismatch.");
                 float radius=row.GetProperty("radius").GetSingle();var points=row.GetProperty("waypoints");
-                int join=row.GetProperty("joinIndex").GetInt32();
-                if(!float.IsFinite(radius)||radius<=0||radius>100||points.GetArrayLength() is <1 or >100||join<0||join>=points.GetArrayLength())
+                int join=row.GetProperty("joinIndex").GetInt32(),stop=row.GetProperty("stopIndex").GetInt32();
+                int stopId=row.GetProperty("stopWaypointFileId").GetInt32();
+                bool helicopter=spawn.Collection=="spawnPointsCollectionHelicopters";
+                if(!float.IsFinite(radius)||radius<=0||radius>100||points.GetArrayLength() is <1 or >100||join<0||join>=points.GetArrayLength()||
+                   (helicopter?(stop<0||stop>=points.GetArrayLength()||stop==join||stopId<=0):(stop!=-1||stopId!=0)))
                     throw new InvalidDataException("Invalid air path bounds.");
                 var definitions=new DroneWaypoint[points.GetArrayLength()];var ids=new HashSet<int>();var tids=new HashSet<int>();
                 for(int p=0;p<definitions.Length;p++)
@@ -58,12 +61,13 @@ public sealed class AirWaypointCatalog
                     int id=point.GetProperty("componentFileId").GetInt32(),tid=point.GetProperty("transformFileId").GetInt32();
                     float stay=point.GetProperty("stayTime").GetSingle();Vector3 position=Vector(point.GetProperty("worldPosition"));
                     if(id<=0||tid<=0||!ids.Add(id)||!tids.Add(tid)||point.GetProperty("index").GetInt32()!=p||
-                        !float.IsFinite(stay)||stay<0||stay>3600||(p==join&&id!=spawn.JoinWaypointFileId))
+                       !float.IsFinite(stay)||stay<0||stay>3600||(p==join&&id!=spawn.JoinWaypointFileId)||
+                       (p==stop&&id!=stopId))
                         throw new InvalidDataException("Invalid air waypoint definition.");
                     ValidateChain(point.GetProperty("transformChain"),tid,position);
                     definitions[p]=new(id,position,stay);
                 }
-                accepted.Add(spawn.ComponentFileId,new(spawn.ComponentFileId,pathId,join,radius,Array.AsReadOnly(definitions)));
+                accepted.Add(spawn.ComponentFileId,new(spawn.ComponentFileId,pathId,join,stop,radius,Array.AsReadOnly(definitions)));
             }
             result.Add(map.Source,new System.Collections.ObjectModel.ReadOnlyDictionary<int,AirWaypointRoute>(accepted));
         }

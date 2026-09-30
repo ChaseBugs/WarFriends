@@ -30,9 +30,15 @@ def extract():
     if not math.isfinite(stay) or stay<0:raise ValueError('invalid waypoint stay')
     tid=transforms[ref(point,'m_GameObject')];chain,position=transform_chain(blocks,tid)
     points.append({'componentFileId':wid,'transformFileId':tid,'index':index,'stayTime':stay,'worldPosition':position,'transformChain':chain})
+   stop_id=0
+   if spawn['collection']=='spawnPointsCollectionHelicopters':
+    stop_id=ref(blocks[spawn['componentFileId']][1],'wayPointToStop')
+    if stop_id not in ids or stop_id==spawn['joinWaypointFileId']:
+     raise ValueError('Helicopter stop waypoint must be a distinct point on its reserved path')
    routes.append({'spawnComponentFileId':spawn['componentFileId'],'collection':spawn['collection'],
     'fraction':spawn['fraction'],'pathComponentFileId':pathid,'joinWaypointFileId':spawn['joinWaypointFileId'],
-    'joinIndex':ids.index(spawn['joinWaypointFileId']),'radius':radius,'waypoints':points})
+    'joinIndex':ids.index(spawn['joinWaypointFileId']),'stopWaypointFileId':stop_id,
+    'stopIndex':ids.index(stop_id) if stop_id else -1,'radius':radius,'waypoints':points})
   maps.append({'source':entry['source'],'sha256':entry['sha256'],'routes':routes})
  return {'version':1,'spawnSourceSha256':hashlib.sha256(raw).hexdigest(),'maps':maps}
 

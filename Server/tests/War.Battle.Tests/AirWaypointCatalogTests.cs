@@ -19,6 +19,17 @@ internal static class AirWaypointCatalogTests
                     throw new Exception("Combat package omitted validated air routes.");
                 count++;
             }
+        foreach(var map in content.Maps)
+            foreach(var spawn in content.ArmySpawnPoints.ForMap(map).Where(p=>p.Collection=="spawnPointsCollectionHelicopters"))
+            {
+                var route=catalog.ForSpawn(map,spawn.ComponentFileId);
+                var packaged=content.AirWaypoints.ForSpawn(map,spawn.ComponentFileId);
+                if(route.StopIndex<=route.JoinIndex||route.StopIndex>=route.Waypoints.Count||
+                   route.Waypoints[route.StopIndex].ComponentFileId==spawn.JoinWaypointFileId||
+                   packaged.StopIndex!=route.StopIndex)
+                    throw new Exception("Helicopter stop target lost its source route binding.");
+                count++;
+            }
         string temporary=Path.GetTempFileName();
         try
         {
@@ -26,6 +37,7 @@ internal static class AirWaypointCatalogTests
                 root=>root["spawnSourceSha256"]=new string('0',64),
                 root=>root["maps"]![0]!["routes"]!.AsArray().RemoveAt(0),
                 root=>root["maps"]![0]!["routes"]![0]!["joinIndex"]=99,
+                root=>root["maps"]![0]!["routes"]![0]!["stopIndex"]=0,
                 root=>root["maps"]![0]!["routes"]![0]!["radius"]=0,
                 root=>root["maps"]![0]!["routes"]![0]!["waypoints"]![0]!["stayTime"]=-1,
                 root=>root["maps"]![0]!["routes"]![0]!["waypoints"]![0]!["worldPosition"]![0]=99,
