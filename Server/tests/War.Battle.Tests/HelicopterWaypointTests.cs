@@ -1,12 +1,15 @@
 using System.Numerics;
+using System.Text.Json;
+using System.Security.Cryptography;
 using War.BattleServer;
 
 internal static class HelicopterWaypointTests
 {
-    internal static int Run(BattleCombatContent content)
+    internal static int Run(string directory,BattleCombatContent content)
     {
         int count=0;
-        void Check(bool condition){if(!condition)throw new Exception("Helicopter source movement boundary failed.");count++;}
+        void Check(bool condition,string name="Helicopter source movement boundary failed")
+        {if(!condition)throw new Exception(name);count++;}
         foreach(var map in content.Maps)
         foreach(var spawn in content.ArmySpawnPoints.ForMap(map).Where(p=>p.Collection=="spawnPointsCollectionHelicopters"))
         {
@@ -40,6 +43,37 @@ internal static class HelicopterWaypointTests
             throw new Exception("Join point accepted as Helicopter stop.");
         }
         catch(InvalidDataException){count++;}
+        using(var oracle=JsonDocument.Parse(File.ReadAllText(Path.Combine(directory,"recovered-helicopter-steer.json"))))
+        {
+            var data=oracle.RootElement;
+            Check(data.GetProperty("version").GetInt32()==1&&
+                  data.GetProperty("unityVersion").GetString()=="2018.3.0f2"&&
+                  data.GetProperty("source").GetString()=="Assets/GameObject/Helicopter.prefab"&&
+                  data.GetProperty("prefabSha256").GetString()==
+                  Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(Path.GetFullPath(
+                      Path.Combine(directory,"..","..","Clients","ExportedProject","Assets","GameObject","Helicopter.prefab"))))),
+                "Helicopter steer oracle binds recovered prefab and Unity runtime");
+            Check(data.GetProperty("breakDistance").GetSingle()==6f&&
+                  data.GetProperty("breakSpeed").GetSingle()==2f&&
+                  data.GetProperty("mass").GetSingle()==150f&&
+                  data.GetProperty("speed").GetSingle()==3f,
+                "Helicopter steer oracle binds source motion constants");
+            var rows=data.GetProperty("rows").EnumerateArray().ToArray();
+            Check(rows.Length==3&&rows.Select(r=>r.GetProperty("x").GetSingle()).SequenceEqual(new[]{0f,5f,8f}),
+                "Helicopter steer oracle covers straight and braking ranges");
+            foreach(var row in rows)
+            {
+                float x=row.GetProperty("x").GetSingle(),dt=row.GetProperty("delta").GetSingle();
+                var seek=new HelicopterWaypointState(routeControl with{Waypoints=[
+                    new DroneWaypoint(1,new Vector3(x,0,0),0),points[1]]},new Vector3(x,0,0),3f);
+                _=seek.Advance(0);
+                _=seek.Advance(dt);
+                var expected=row.GetProperty("steer").EnumerateArray().Select(c=>c.GetSingle()).ToArray();
+                Check(dt>0&&dt<=1f&&seek.Breaking==row.GetProperty("braking").GetBoolean()&&
+                      Vector3.Distance(seek.Velocity,new Vector3(expected[0],expected[1],expected[2]))<.0000001f,
+                    "Helicopter host steering matches recovered Unity method");
+            }
+        }
         return count;
     }
 }

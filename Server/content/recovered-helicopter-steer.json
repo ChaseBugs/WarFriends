@@ -1,0 +1,42 @@
+{
+  "version": 1,
+  "unityVersion": "2018.3.0f2",
+  "source": "Assets/GameObject/Helicopter.prefab",
+  "prefabSha256": "e91c07c1552988601ada89c769056354ebd5d94ea88356eeacc5fa3f3fb76408",
+  "breakDistance": 6.0,
+  "breakSpeed": 2.0,
+  "mass": 150.0,
+  "speed": 3.0,
+  "rows": [
+    {
+      "x": 0.0,
+      "delta": 0.05,
+      "steer": [
+        0.001,
+        0.0,
+        0.0
+      ],
+      "braking": false
+    },
+    {
+      "x": 5.0,
+      "delta": 0.05,
+      "steer": [
+        0.00277777785,
+        0.0,
+        0.0
+      ],
+      "braking": true
+    },
+    {
+      "x": 8.0,
+      "delta": 0.05,
+      "steer": [
+        0.00111111114,
+        0.0,
+        0.0
+      ],
+      "braking": true
+    }
+  ]
+}
