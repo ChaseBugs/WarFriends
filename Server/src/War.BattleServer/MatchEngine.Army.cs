@@ -1935,9 +1935,10 @@ public sealed partial class MatchEngine
            !armyVitality.TryGetValue(entityKey,out var vitality))return false;
         if(ArmyDroneImmortal(entityKey))return false;
         float absorbed=Math.Min(damage,vitality.Kevlar);
-        vitality.Kevlar-=absorbed;
+        float remainingKevlar=vitality.Kevlar-absorbed;
         damage-=absorbed;
         if(damage>=vitality.Current)return ConfirmArmyDeath(entityKey,false);
+        vitality.Kevlar=remainingKevlar;
         vitality.Current-=damage;
         if(!float.IsFinite(vitality.Current) || vitality.Current<=0 || vitality.Current>vitality.Maximum)
             throw new InvalidDataException("Army damage produced invalid host vitality.");
@@ -1962,6 +1963,8 @@ public sealed partial class MatchEngine
            row.EntityKey!=(((ulong)owner.Definition.Fraction<<32)|(uint)row.LocalEntityId) ||
            armyReservations?.Owns(entityKey,row.ReservationFileId)!=true)
             throw new InvalidDataException("Army death lacks a complete host entity and route proof.");
+        _=checked(owner.ConfirmedArmyLosses+1);
+        _=recipient.Army!.PreviewKillEnergy(spawned.Power);
         if(!EventCapacityForArmyDeath())
         {End("army-event-backpressure","",false);return false;}
         if(owner.Army!.RemoveEntity(row.LocalEntityId)==null ||

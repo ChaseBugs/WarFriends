@@ -1304,6 +1304,15 @@ internal static class CombatContentTests
               "cooldown and later four-unit batch are owned by host ticks");
         var combatDeath=deployment.RemoveEntity(1);
         var opposingEnergy=new ArmyDeploymentState(content.Army,["ID_UNIT-ASSAULT"]);
+        Check(opposingEnergy.PreviewKillEnergy(combatDeath!.Power)==9&&opposingEnergy.Energy==8,
+              "kill energy can be checked before the host removes a victim");
+        try
+        {
+            _=opposingEnergy.PreviewKillEnergy(1001);
+            throw new Exception("Invalid kill power passed death preflight.");
+        }
+        catch(InvalidDataException){}
+        Check(opposingEnergy.Energy==8,"rejected kill power leaves recipient energy unchanged");
         opposingEnergy.CreditKillEnergy(combatDeath!.Power);
         Check(combatDeath.Power==1 && deployment.Energy==2 &&
               deployment.RemoveEntity(1)==null && deployment.ActiveCount==5 &&

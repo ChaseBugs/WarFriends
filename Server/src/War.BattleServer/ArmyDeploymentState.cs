@@ -202,9 +202,15 @@ public sealed class ArmyDeploymentState
     public ArmySpawn? Entity(int entityId)=>entities.GetValueOrDefault(entityId);
 
     public void CreditKillEnergy(int power)
+        =>Energy=PreviewKillEnergy(power);
+
+    // Validate the complete reward arithmetic before a host death removes its
+    // entity and reservation. The death path is single-writer.
+    internal int PreviewKillEnergy(int power)
     {
         if(power is <1 or >1000)throw new InvalidDataException("Invalid confirmed unit kill power.");
-        Energy=Math.Min(checked((int)catalog.MaxEnergy*2),checked(Energy+power));
+        if(Energy<0)throw new InvalidDataException("Invalid army energy before kill credit.");
+        return Math.Min(checked((int)catalog.MaxEnergy*2),checked(Energy+power));
     }
 
     private bool HasCapacity(ArmyDeploymentFamily family,int count)
