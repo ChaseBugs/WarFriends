@@ -210,6 +210,8 @@ namespace War.Client
                        entity.OptionIndex<0 || entity.OptionIndex>=48 ||
                        (entity.DroneTransparent&&entity.UnitId!="ID_UNIT-DRONE") ||
                        (entity.UnitId=="ID_UNIT-DRONE"?!ValidDroneRotation(entity.DroneRotation):entity.DroneRotation!=null) ||
+                       (entity.HelicopterStopTick!=0 && (entity.UnitId!="ID_UNIT-HELICOPTER" ||
+                           entity.HelicopterStopTick<entity.SpawnTick || entity.HelicopterStopTick>entity.PositionTick)) ||
                        !System.Text.RegularExpressions.Regex.IsMatch(entity.UnitId,@"\AID_UNIT-[A-Z0-9-]{1,50}\z") ||
                        entity.SpawnComponentFileId<=0 || entity.ReservationFileId<0 ||
                        !FiniteCoordinate(entity.X) || !FiniteCoordinate(entity.Y) || !FiniteCoordinate(entity.Z) ||

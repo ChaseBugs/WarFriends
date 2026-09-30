@@ -3233,6 +3233,7 @@ internal static class CombatContentTests
               deathMatch.HasHelicopterPath(helicopterEntity.EntityKey)&&
               helicopterEntity.SpawnComponentFileId==helicopterSpawn.ArmySpawnComponentFileId&&
               helicopterEntity.PositionTick==70&&
+              helicopterEntity.HelicopterStopTick==0&&
               Vector3.Distance(new Vector3(helicopterEntity.X,helicopterEntity.Y,helicopterEntity.Z),
                   new Vector3(helicopterSpawn.X,helicopterSpawn.Y,helicopterSpawn.Z))>0,
               "normal Helicopter deployment publishes host-owned source-route motion after spawn");

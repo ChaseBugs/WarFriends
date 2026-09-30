@@ -258,6 +258,8 @@ message BattleArmyEntityState {
   // Drone renderer phase from the host special clock. Does not imply untargetability.
   bool drone_transparent = 18;
   BattleJointRotation drone_rotation = 19;
+  // Nonzero once the source Helicopter reaches its stop point; triggers rope/crew timeline.
+  uint64 helicopter_stop_tick = 20;
 }
 // Full active-entity projection, paged to remain below the UDP MTU.
 message MatchArmyEntityPoll { uint64 after_entity_key = 1; uint64 expected_revision = 2; }

@@ -183,9 +183,10 @@ public sealed partial class MatchEngine
         float time=(float)((double)tick/MatchManifest.TickRate);
         foreach(var (key,path) in armyHelicopterPaths.OrderBy(x=>x.Key))
         {
-            _=path.Advance(time); // Crew drop/rope require their own source authority.
+            bool arrived=path.Advance(time); // Crew drop/rope require their own source authority.
             if(!activeArmyEntities.TryGetValue(key,out var row)||row.UnitId!="ID_UNIT-HELICOPTER")
                 throw new InvalidDataException("Helicopter path lost its host entity.");
+            if(arrived)row.HelicopterStopTick=tick;
             row.X=path.Position.X;row.Y=path.Position.Y;row.Z=path.Position.Z;
             row.PositionTick=tick;
         }
