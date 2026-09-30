@@ -33,7 +33,9 @@ public sealed partial class MatchEngine
     private readonly Dictionary<ulong,DroneSpecialState> armyDroneSpecials=[];
     private readonly Dictionary<ulong,DroneWaypointState> armyDronePaths=[];
     private readonly Dictionary<ulong,HelicopterWaypointState> armyHelicopterPaths=[];
+    private readonly Dictionary<ulong,ArmyHelicopterCrewStats> armyHelicopterCrew=[];
     internal bool HasHelicopterPath(ulong key)=>armyHelicopterPaths.ContainsKey(key);
+    internal ArmyHelicopterCrewStats? HelicopterCrewDefinition(ulong key)=>armyHelicopterCrew.GetValueOrDefault(key);
     private readonly Dictionary<ulong,ArmyVehicleShotStats> armyDroneShots=[];
     internal ArmyVehicleShotStats? DroneShotDefinition(ulong key)=>armyDroneShots.GetValueOrDefault(key);
 
@@ -431,6 +433,9 @@ public sealed partial class MatchEngine
         int? special=owner.ArmySpecialUpgradeIndexes is { } specials && specials[index]>=0 ? specials[index] : null;
         int? elite=owner.ArmyEliteUpgradeIndexes is { } elites && elites[index]>=0 ? elites[index] : null;
         var family=armyCatalog!.Families.Single(f=>f.UnitId==unitId);
+        if(family.BehaviorType=="HelicopterBehaviour")
+            armyHelicopterCrew.Add(entityKey,armyCatalog.ComposeHelicopterCrew(
+                owner.ArmyNormalUpgradeIndexes[index],special,elite));
         if(owner.ArmyHealthFactors is { } healthFactors)
         {
             float maximum=armyCatalog!.EffectiveHealth(unitId,owner.ArmyNormalUpgradeIndexes![index],
@@ -1998,6 +2003,7 @@ public sealed partial class MatchEngine
         armyDroneSpecials.Remove(entityKey);
         armyDronePaths.Remove(entityKey);
         armyHelicopterPaths.Remove(entityKey);
+        armyHelicopterCrew.Remove(entityKey);
         armyDroneShots.Remove(entityKey);
         droneAttacks.Remove(entityKey);
         droneLastIntents.Remove(entityKey);

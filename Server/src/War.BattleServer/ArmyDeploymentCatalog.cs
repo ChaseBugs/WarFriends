@@ -12,6 +12,7 @@ public sealed record ArmyBaseShotStats(float ProbabilityOfRealShot,int FireBatch
 public sealed record ArmyVehicleShotStats(float ShotSpeed,float ProbabilityOfRealShot,
     int FireBatchSizeMin,int FireBatchSizeMax,float MinShootTime,float MaxShootTime,int Crew,float ShieldHitProbability=0);
 public sealed record ArmyVehicleCannonStats(float Damage,float MinShootTime,float MaxShootTime);
+public sealed record ArmyHelicopterCrewStats(int Seats,float SoldierHealth);
 public sealed record TransporterRepairDroneStats(float HealRatioPerSecond,float MaximumHealth);
 public sealed record ArmyPlayerDamagePolicy(float BehindShieldRatio,float PlayerDamageRatio,
     float OvertimePlayerDamageRatio);
@@ -42,6 +43,8 @@ public sealed class ArmyDeploymentCatalog
     private IReadOnlyDictionary<string,IReadOnlyList<float>>? specialValues;
     private IReadOnlyList<float>? transporterRepairBotHealth;
     private IReadOnlyDictionary<string,IReadOnlyList<float>>? vehiclePassengerHealth;
+    private IReadOnlyList<int>? helicopterSeats;
+    private IReadOnlyList<float>? helicopterSoldierHealth;
     private IReadOnlyDictionary<string,float>? vehiclePassengerRespawnSeconds;
     private IReadOnlyDictionary<string,IReadOnlyList<ArmyVehicleCannonStats>>? vehicleCannonStages;
     private IReadOnlyDictionary<string,ArmyPlayerDamagePolicy>? playerDamagePolicies;
@@ -67,6 +70,23 @@ public sealed class ArmyDeploymentCatalog
         var value=stages[normalUpgradeIndex];
         if(value.Health<=0)throw new InvalidDataException("Army upgrade stage is an unplayable source sentinel.");
         return value;
+    }
+
+    /// <summary>UpgradeSlotsHelicopter adds Seats across selected lanes; GetSoldierHpInMechanic reads only the normal row.</summary>
+    public ArmyHelicopterCrewStats ComposeHelicopterCrew(int normalIndex,int? specialIndex,int? eliteIndex)
+    {
+        const string unitId="ID_UNIT-HELICOPTER";
+        _=BaseStats(unitId,normalIndex);
+        if(helicopterSeats==null||helicopterSoldierHealth==null)
+            throw new InvalidDataException("Helicopter crew upgrade authority is unavailable.");
+        ValidateOptionalLanes(unitId,helicopterSeats.Count,specialIndex,eliteIndex);
+        int seats=helicopterSeats[normalIndex];
+        if(specialIndex.HasValue)seats=checked(seats+helicopterSeats[specialIndex.Value]);
+        if(eliteIndex.HasValue)seats=checked(seats+helicopterSeats[eliteIndex.Value]);
+        float health=helicopterSoldierHealth[normalIndex];
+        if(seats is <0 or >6||!float.IsFinite(health)||health<=0)
+            throw new InvalidDataException("Helicopter crew exceeds source points or lacks normal-row health.");
+        return new(seats,health);
     }
 
     /// <summary>Source LoadData adds each bought lane's row before perk and mode scaling.</summary>
@@ -434,6 +454,8 @@ public sealed class ArmyDeploymentCatalog
             var shots=new ArmyUpgradeShotStats[stageRows.GetArrayLength()];
             var specials=new float[stageRows.GetArrayLength()];
             var passengerHealth=vehiclePassenger?new float[stageRows.GetArrayLength()]:null;
+            var crewSeats=family.UnitId=="ID_UNIT-HELICOPTER"?new int[stageRows.GetArrayLength()]:null;
+            var crewHealth=crewSeats==null?null:new float[stageRows.GetArrayLength()];
             var repairBotHealth=family.UnitId=="ID_UNIT-TRANSPORTER"?new float[stageRows.GetArrayLength()]:null;
             var cannons=family.UnitId is "ID_UNIT-BUGGY" or "ID_UNIT-TANK"?
                 new ArmyVehicleCannonStats[stageRows.GetArrayLength()]:null;
@@ -449,6 +471,8 @@ public sealed class ArmyDeploymentCatalog
                 float probability=stage.GetProperty("REALSHOTPROBABILITY").GetSingle();
                 float specialValue=stage.GetProperty("SPECIAL").GetSingle();
                 float soldierHp=passengerHealth==null?0:stage.GetProperty("SOLDIERHP").GetSingle();
+                int helicopterSeatCount=crewSeats==null?0:stage.GetProperty("SEATS").GetInt32();
+                float helicopterHp=crewHealth==null?0:stage.GetProperty("SOLDIERHP").GetSingle();
                 float repairBotHp=repairBotHealth==null?0:stage.GetProperty("REPAIRBOTHP").GetSingle();
                 // Recovered tables contain zeroed upgrade-lane sentinel rows between
                 // normal and elite ranges; never turn one into a live combat entity.
@@ -461,12 +485,17 @@ public sealed class ArmyDeploymentCatalog
                     throw new InvalidDataException("Army normal-upgrade combat stat is invalid.");
                 if(passengerHealth!=null&&(!float.IsFinite(soldierHp)||soldierHp<0||soldierHp>10_000_000))
                     throw new InvalidDataException("Vehicle passenger health row is invalid.");
+                if(crewSeats!=null&&(helicopterSeatCount is <0 or >6||!float.IsFinite(helicopterHp)||
+                   helicopterHp<0||helicopterHp>10_000_000||
+                   (i<normalLaneEnd&&(helicopterSeatCount<1||helicopterHp<=0))))
+                    throw new InvalidDataException("Helicopter crew row is outside its source point/health domain.");
                 if(repairBotHealth!=null&&(!float.IsFinite(repairBotHp)||repairBotHp<0||repairBotHp>10))
                     throw new InvalidDataException("Transporter repair-drone health row is invalid.");
                 stages[i]=new ArmyBaseCombatStats(hp,damage);
                 shots[i]=new ArmyUpgradeShotStats(probability,batchMin,batchMax,frequencyMin,frequencyMax);
                 specials[i]=specialValue;
                 if(passengerHealth!=null)passengerHealth[i]=soldierHp;
+                if(crewSeats!=null){crewSeats[i]=helicopterSeatCount;crewHealth![i]=helicopterHp;}
                 if(repairBotHealth!=null)repairBotHealth[i]=repairBotHp;
                 if(cannons!=null)
                 {
@@ -484,6 +513,8 @@ public sealed class ArmyDeploymentCatalog
             acceptedSpecials.Add(family.UnitId,Array.AsReadOnly(specials));
             if(passengerHealth!=null)
                 acceptedPassengerHealth.Add(family.UnitId,Array.AsReadOnly(passengerHealth));
+            if(crewSeats!=null)
+            {helicopterSeats=Array.AsReadOnly(crewSeats);helicopterSoldierHealth=Array.AsReadOnly(crewHealth!);}
             if(repairBotHealth!=null)acceptedRepairBotHealth=Array.AsReadOnly(repairBotHealth);
             acceptedLaneEnds.Add(family.UnitId,normalLaneEnd);
             acceptedEliteStarts.Add(family.UnitId,eliteLaneStart);

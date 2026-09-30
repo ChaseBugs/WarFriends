@@ -798,6 +798,11 @@ internal static class CombatContentTests
         catch(ArgumentOutOfRangeException){count++;}
         try{content.Army.ComposeDroneShot(0,null,117);throw new Exception("closed Drone elite lane accepted");}
         catch(ArgumentOutOfRangeException){count++;}
+        Check(content.Army.ComposeHelicopterCrew(0,null,null)==new ArmyHelicopterCrewStats(2,621f)&&
+              content.Army.ComposeHelicopterCrew(70,82,null)==new ArmyHelicopterCrewStats(6,1531f),
+              "Helicopter seats add selected normal/special lanes while crew health reads only normal row");
+        try{content.Army.ComposeHelicopterCrew(0,0,null);throw new Exception("invalid Helicopter special lane accepted");}
+        catch(ArgumentOutOfRangeException){count++;}
         var humveeShot=content.Army.ComposeVehicleShot("ID_UNIT-HUMVEE",0,null,null);
         var tankShot=content.Army.ComposeVehicleShot("ID_UNIT-TANK",0,null,null);
         var buggyShot=content.Army.ComposeVehicleShot("ID_UNIT-BUGGY",0,null,null);
@@ -3234,6 +3239,8 @@ internal static class CombatContentTests
               helicopterEntity.SpawnComponentFileId==helicopterSpawn.ArmySpawnComponentFileId&&
               helicopterEntity.PositionTick==70&&
               helicopterEntity.HelicopterStopTick==0&&
+              deathMatch.HelicopterCrewDefinition(helicopterEntity.EntityKey)==
+                  new ArmyHelicopterCrewStats(2,621f)&&
               Vector3.Distance(new Vector3(helicopterEntity.X,helicopterEntity.Y,helicopterEntity.Z),
                   new Vector3(helicopterSpawn.X,helicopterSpawn.Y,helicopterSpawn.Z))>0,
               "normal Helicopter deployment publishes host-owned source-route motion after spawn");
@@ -3275,6 +3282,7 @@ internal static class CombatContentTests
               "replayed fatal damage cannot credit another unit loss");
         Check(deathMatch.ConfirmArmyDeath(helicopterEntity.EntityKey,true) &&
               !deathMatch.HasHelicopterPath(helicopterEntity.EntityKey) &&
+              deathMatch.HelicopterCrewDefinition(helicopterEntity.EntityKey)==null&&
               deathMatch.ArmyBatch(helicopterOwner).Energy==9 &&
               deathMatch.ArmyBatch(helicopterOwner).OptionIndexes.Count==3 &&
               deathMatch.ArmyBatch(helicopterOwner).OptionIndexes.All(x=>x==2) &&
