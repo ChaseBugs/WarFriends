@@ -59,7 +59,6 @@ public sealed class ArmyDeploymentState
                 .Select(o=>(Family:f,Option:o))).ToList();
         var candidates=eligible.Select(x=>x.Option.Index).ToList();
         var first=firstHand;
-        firstHand=false;
         if(candidates.Count==0)
         {
             offered.Clear();hand=[];
@@ -107,6 +106,7 @@ public sealed class ArmyDeploymentState
             }
         }
         SetOffers(selected);
+        firstHand=false;
         return selected.AsReadOnly();
     }
 

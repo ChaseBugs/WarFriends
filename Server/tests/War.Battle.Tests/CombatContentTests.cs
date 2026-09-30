@@ -1357,6 +1357,23 @@ internal static class CombatContentTests
         var firstNew=new ArmyDeploymentState(content.Army,
             ["ID_UNIT-ASSAULT","ID_UNIT-SNIPER","ID_UNIT-ROCKETSOLDIER","ID_UNIT-SHOTGUNNER"],
             ["ID_UNIT-SNIPER"]);
+        var rejectedFirst=new ArmyDeploymentState(content.Army,
+            ["ID_UNIT-ASSAULT","ID_UNIT-SNIPER","ID_UNIT-ROCKETSOLDIER","ID_UNIT-SHOTGUNNER"],
+            ["ID_UNIT-SNIPER"]);
+        try
+        {
+            _=rejectedFirst.GenerateOffers(count=>count);
+            throw new Exception("Invalid army random choice accepted.");
+        }
+        catch(InvalidDataException){}
+        Check(rejectedFirst.OfferedOptions.Count==0&&rejectedFirst.GenerateOffers(_=>0).SequenceEqual([6,7,11]),
+              "rejected host choice leaves the first-new priority available for a successful hand");
+        var delayedNew=new ArmyDeploymentState(content.Army,
+            ["ID_UNIT-ASSAULT","ID_UNIT-SNIPER","ID_UNIT-ROCKETSOLDIER","ID_UNIT-SHOTGUNNER"],
+            ["ID_UNIT-SNIPER"]);
+        Check(delayedNew.GenerateOffers(_=>0,(_,_)=>false).Count==0&&
+              delayedNew.GenerateOffers(_=>0).SequenceEqual([6,7,11]),
+              "a temporarily unavailable scene route does not consume first-new priority");
         Check(firstNew.GenerateOffers(_=>0).SequenceEqual([6,7,11]) &&
               firstNew.GenerateOffers(_=>0).SequenceEqual([4,7,11]),
               "first source hand promotes the last eligible option of a new behavior only once");
