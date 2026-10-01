@@ -260,6 +260,8 @@ message BattleArmyEntityState {
   BattleJointRotation drone_rotation = 19;
   // Nonzero once the source Helicopter reaches its stop point; triggers rope/crew timeline.
   uint64 helicopter_stop_tick = 20;
+  // Source seat count and ordered rope-descent start prefix; no kill/AI authority.
+  uint32 helicopter_crew_count = 21; uint32 helicopter_crew_drop_mask = 22;
 }
 // Full active-entity projection, paged to remain below the UDP MTU.
 message MatchArmyEntityPoll { uint64 after_entity_key = 1; uint64 expected_revision = 2; }

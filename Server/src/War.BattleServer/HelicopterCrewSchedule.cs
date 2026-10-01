@@ -23,4 +23,10 @@ internal sealed class HelicopterCrewSchedule
         if(tick<stopTick)return Array.Empty<int>();
         return Enumerable.Range(0,seats).Where(i=>DueTick(i)<=tick).ToArray();
     }
+    internal uint DueMask(ulong tick)
+    {
+        uint mask=0;
+        for(int slot=0;slot<seats&&DueTick(slot)<=tick;slot++)mask|=1u<<slot;
+        return mask;
+    }
 }

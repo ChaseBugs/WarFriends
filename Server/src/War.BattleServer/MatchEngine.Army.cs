@@ -200,6 +200,12 @@ public sealed partial class MatchEngine
             }
             row.X=path.Position.X;row.Y=path.Position.Y;row.Z=path.Position.Z;
             row.PositionTick=tick;
+            if(armyHelicopterSchedules.TryGetValue(key,out var schedule))
+            {
+                uint mask=schedule.DueMask(tick);
+                if(mask!=row.HelicopterCrewDropMask)
+                {row.HelicopterCrewDropMask=mask;armyEntityRevision++;stateRevision++;}
+            }
         }
     }
     internal ArmyInfantryPoseSnapshot? InfantryPose(ulong entityKey)

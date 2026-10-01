@@ -3246,12 +3246,21 @@ internal static class CombatContentTests
               helicopterEntity.SpawnComponentFileId==helicopterSpawn.ArmySpawnComponentFileId&&
               helicopterEntity.PositionTick==70&&
               helicopterEntity.HelicopterStopTick==0&&
+              helicopterEntity.HelicopterCrewCount==2&&helicopterEntity.HelicopterCrewDropMask==0&&
               deathMatch.HelicopterCrewDueSlots(helicopterEntity.EntityKey,70).Count==0&&
               deathMatch.HelicopterCrewDefinition(helicopterEntity.EntityKey)==
                   new ArmyHelicopterCrewStats(2,621f)&&
               Vector3.Distance(new Vector3(helicopterEntity.X,helicopterEntity.Y,helicopterEntity.Z),
                   new Vector3(helicopterSpawn.X,helicopterSpawn.Y,helicopterSpawn.Z))>0,
               "normal Helicopter deployment publishes host-owned source-route motion after spawn");
+        Check(War.Client.MatchConnection.ValidHelicopterCrew(helicopterEntity),
+              "SDK accepts host Helicopter crew before its stop callback");
+        var forgedCrew=helicopterEntity.Clone();forgedCrew.HelicopterCrewCount=7;
+        Check(!War.Client.MatchConnection.ValidHelicopterCrew(forgedCrew),
+              "SDK rejects crew beyond six source slots");
+        forgedCrew=helicopterEntity.Clone();forgedCrew.HelicopterCrewDropMask=1;
+        Check(!War.Client.MatchConnection.ValidHelicopterCrew(forgedCrew),
+              "SDK rejects a rope descent before source stop");
         Check(deathMatch.Snapshot().Players[0].ConfirmedArmySpawns==2 &&
               deathMatch.Snapshot().Players[1].ConfirmedArmySpawns==1 &&
               deathMatch.Command(soldierOwner,new MatchCommand{CommandId=2,
@@ -3302,6 +3311,48 @@ internal static class CombatContentTests
         Check(deathMatch.Snapshot().Players[1].ConfirmedArmyLosses==1,
               "trusted self-destruction credits the owning player exactly one loss");
         deathMatch.AbortForHostShutdown();
+        var crewManifest=detached with {MatchId="helicopter-crew-phase",DurationSeconds=180,IdleSeconds=120};
+        var crewMatch=new MatchEngine(crewManifest,content:content);
+        crewMatch.Admit(soldierOwner);crewMatch.Admit(helicopterOwner);
+        foreach(string owner in new[]{soldierOwner,helicopterOwner})
+            crewMatch.Command(owner,new MatchCommand{CommandId=1,
+                Ready=new ReadyCommand{ManifestHash=crewMatch.ManifestHash}});
+        crewMatch.Advance(60);
+        crewMatch.ArmyBatch(helicopterOwner);
+        Check(crewMatch.Command(helicopterOwner,new MatchCommand{CommandId=2,
+                  DeployArmy=new DeployArmyCommand{OptionIndex=2}}).Code=="army-deploying",
+              "normal Helicopter crew phase uses a trusted deployment");
+        ulong sourceStop=0,sourceHelicopter=0;
+        for(ulong t=61;t<=1800&&!crewMatch.Terminal;t++)
+        {
+            crewMatch.Advance(t);
+            var row=crewMatch.ArmyEntityBatch(helicopterOwner,0,0).Entities
+                .FirstOrDefault(x=>x.OwnerPlayerId==helicopterOwner);
+            if(row is {HelicopterStopTick:>0})
+            {sourceStop=row.HelicopterStopTick;sourceHelicopter=row.EntityKey;break;}
+        }
+        Check(sourceStop>0&&sourceHelicopter>0&&
+              crewMatch.ArmyEntityBatch(helicopterOwner,0,0).Entities
+                  .Single(x=>x.EntityKey==sourceHelicopter).HelicopterCrewDropMask==0,
+              "live Helicopter stop publishes a source-backed timeline before crew descent");
+        ulong crewTick=sourceStop;
+        uint MaskAt(ulong target)
+        {
+            for(ulong t=crewTick+1;t<=target&&!crewMatch.Terminal;t++)crewMatch.Advance(t);
+            crewTick=target;
+            return crewMatch.ArmyEntityBatch(helicopterOwner,0,0).Entities
+                .Single(x=>x.EntityKey==sourceHelicopter).HelicopterCrewDropMask;
+        }
+        Check(MaskAt(sourceStop+149)==0&&MaskAt(sourceStop+150)==1&&
+              MaskAt(sourceStop+210)==3&&!crewMatch.Terminal,
+              "live roster advances the two ordered Helicopter crew descent phases exactly once");
+        var droppedCrew=crewMatch.ArmyEntityBatch(helicopterOwner,0,0).Entities
+            .Single(x=>x.EntityKey==sourceHelicopter);
+        Check(War.Client.MatchConnection.ValidHelicopterCrew(droppedCrew),
+              "SDK accepts the live host's completed ordered crew descent prefix");
+        forgedCrew=droppedCrew.Clone();forgedCrew.HelicopterCrewDropMask=2;
+        Check(!War.Client.MatchConnection.ValidHelicopterCrew(forgedCrew),
+              "SDK rejects a forged second-slot drop without the first slot");
         Check(deathMatch.Snapshot() is {Phase:BattlePhase.Aborted,RewardEligible:false} &&
               deathMatch.Snapshot().Players[0].ConfirmedArmySpawns==2 &&
               deathMatch.Snapshot().Players[0].ConfirmedArmyLosses==1 &&

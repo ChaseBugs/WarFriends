@@ -16,6 +16,16 @@ internal static class HelicopterWaypointTests
             var route=content.AirWaypoints.ForSpawn(map,spawn.ComponentFileId);
             var state=new HelicopterWaypointState(route,spawn.Position,3f);
             Check(state.TargetIndex==route.JoinIndex&&state.Position==spawn.Position&&!state.StopReached);
+            ulong stopTick=0;
+            for(ulong tick=1;tick<=1800;tick++)
+                if(state.Advance(tick/30f)){stopTick=tick;break;}
+            Check(stopTick>0&&state.StopReached,
+                "source Helicopter route reaches its crew deployment threshold");
+            var sourceSchedule=new HelicopterCrewSchedule(stopTick,2);
+            Check(sourceSchedule.DueMask(stopTick+149)==0&&
+                  sourceSchedule.DueMask(stopTick+150)==1&&
+                  sourceSchedule.DueMask(stopTick+210)==3,
+                "source Helicopter route stop anchors ordered crew phase mask");
         }
         var points=new[]{new DroneWaypoint(1,Vector3.Zero,0),new DroneWaypoint(2,new Vector3(10,0,0),0)};
         var routeControl=new AirWaypointRoute(1,2,0,1,.2f,points);
@@ -49,6 +59,8 @@ internal static class HelicopterWaypointTests
               crew.DueSlots(359).SequenceEqual(new[]{0,1})&&
               crew.DueSlots(360).SequenceEqual(new[]{0,1,2}),
             "Helicopter source crew drop waits five seconds then two per ordered slot");
+        Check(crew.DueMask(239)==0&&crew.DueMask(240)==1&&crew.DueMask(359)==3&&crew.DueMask(360)==7,
+            "Helicopter crew descent phase remains a contiguous source slot prefix");
         try{_=new HelicopterCrewSchedule(ulong.MaxValue,6);throw new Exception("Overflowing crew timeline accepted.");}
         catch(InvalidDataException){count++;}
         try{_=new HelicopterCrewSchedule(1,7);throw new Exception("Crew beyond prefab points accepted.");}

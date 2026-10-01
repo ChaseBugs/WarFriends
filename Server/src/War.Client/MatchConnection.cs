@@ -210,8 +210,9 @@ namespace War.Client
                        entity.OptionIndex<0 || entity.OptionIndex>=48 ||
                        (entity.DroneTransparent&&entity.UnitId!="ID_UNIT-DRONE") ||
                        (entity.UnitId=="ID_UNIT-DRONE"?!ValidDroneRotation(entity.DroneRotation):entity.DroneRotation!=null) ||
-                       (entity.HelicopterStopTick!=0 && (entity.UnitId!="ID_UNIT-HELICOPTER" ||
-                           entity.HelicopterStopTick<entity.SpawnTick || entity.HelicopterStopTick>entity.PositionTick)) ||
+                       (entity.UnitId=="ID_UNIT-HELICOPTER"?!ValidHelicopterCrew(entity):
+                           entity.HelicopterStopTick!=0||entity.HelicopterCrewCount!=0||
+                           entity.HelicopterCrewDropMask!=0) ||
                        !System.Text.RegularExpressions.Regex.IsMatch(entity.UnitId,@"\AID_UNIT-[A-Z0-9-]{1,50}\z") ||
                        entity.SpawnComponentFileId<=0 || entity.ReservationFileId<0 ||
                        !FiniteCoordinate(entity.X) || !FiniteCoordinate(entity.Y) || !FiniteCoordinate(entity.Z) ||
@@ -237,6 +238,20 @@ namespace War.Client
         }
 
         private static bool FiniteCoordinate(float x)=>!float.IsNaN(x) && !float.IsInfinity(x) && Math.Abs(x)<=10000;
+        internal static bool ValidHelicopterCrew(BattleArmyEntityState entity)
+        {
+            if(entity.HelicopterCrewCount>6)return false;
+            if(entity.HelicopterStopTick==0)return entity.HelicopterCrewDropMask==0;
+            if(entity.HelicopterCrewCount==0||entity.HelicopterStopTick<entity.SpawnTick||
+               entity.HelicopterStopTick>entity.PositionTick||
+               entity.HelicopterStopTick>ulong.MaxValue-(150UL+60UL*(entity.HelicopterCrewCount-1)))
+                return false;
+            uint expected=0;
+            for(int slot=0;slot<entity.HelicopterCrewCount;slot++)
+                if(entity.PositionTick>=entity.HelicopterStopTick+150UL+60UL*(uint)slot)
+                    expected|=1u<<slot;
+            return entity.HelicopterCrewDropMask==expected;
+        }
         private static bool ValidDroneRotation(BattleJointRotation q)
         {
             if(q==null||!FiniteCoordinate(q.X)||!FiniteCoordinate(q.Y)||!FiniteCoordinate(q.Z)||!FiniteCoordinate(q.W))return false;
