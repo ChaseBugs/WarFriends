@@ -8,16 +8,26 @@ public sealed record HelicopterCrewPoint(int Index,int ComponentFileId,int Trans
     int RopeTransformFileId,Vector3 RestPosition,Quaternion RestRotation,Vector3 RopeRestPosition);
 public sealed record HelicopterCrewPose(int Slot,int PointComponentFileId,Vector3 Position,
     Quaternion Rotation,Vector3 RopePosition);
+public sealed record HelicopterTurretRestPose(int PointComponentFileId,Vector3 GunnerPosition,
+    Quaternion GunnerRotation,Vector3 MuzzleRestPosition,Quaternion MuzzleRestRotation);
 
 public sealed class HelicopterCrewPointCatalog
 {
-    public const string VerifiedRevision="f500a5be419ee7e6a688f9a9b8486998a5f7aee4f3819179241213a24e3d8bd4";
+    public const string VerifiedRevision="f11cf698199fb653c4321484f656b00ace538c51e5c01edb814c48d4769fe526";
     private static readonly int[] SourceOrder=[11438461,11450766,11481434,11454267,11412170,11411857];
     public IReadOnlyList<HelicopterCrewPoint> Slots { get; }
     public int TurretPointComponentFileId { get; }
-    public static readonly Vector3 RootRestPosition=new(-6.66f,0,-.47f);
-    private HelicopterCrewPointCatalog(HelicopterCrewPoint[] slots,int turret)
-    {Slots=Array.AsReadOnly(slots);TurretPointComponentFileId=turret;}
+    public Vector3 TurretPointRestPosition { get; }
+    public Quaternion TurretPointRestRotation { get; }
+    public Vector3 TurretMuzzleRestPosition { get; }
+    public Quaternion TurretMuzzleRestRotation { get; }
+    private HelicopterCrewPointCatalog(HelicopterCrewPoint[] slots,int turret,Vector3 turretPosition,
+        Quaternion turretRotation,Vector3 muzzlePosition,Quaternion muzzleRotation)
+    {
+        Slots=Array.AsReadOnly(slots);TurretPointComponentFileId=turret;
+        TurretPointRestPosition=turretPosition;TurretPointRestRotation=turretRotation;
+        TurretMuzzleRestPosition=muzzlePosition;TurretMuzzleRestRotation=muzzleRotation;
+    }
 
     public static HelicopterCrewPointCatalog Load(string path,string revision)
     {
@@ -31,11 +41,28 @@ public sealed class HelicopterCrewPointCatalog
            root.GetProperty("source").GetString()!="Assets/GameObject/Helicopter.prefab"||
            root.GetProperty("sha256").GetString()!="e91c07c1552988601ada89c769056354ebd5d94ea88356eeacc5fa3f3fb76408"||
            root.GetProperty("helicopterComponentFileId").GetInt32()!=11475216||
-           root.GetProperty("turretPointComponentFileId").GetInt32()!=11499861)
+           root.GetProperty("turretPointComponentFileId").GetInt32()!=11499861||
+           root.GetProperty("turretPointTransformFileId").GetInt32()!=417017||
+           root.GetProperty("turretWeaponComponentFileId").GetInt32()!=11498443||
+           root.GetProperty("turretBatchedWeaponComponentFileId").GetInt32()!=11483234||
+           root.GetProperty("turretGunComponentFileId").GetInt32()!=11441888||
+           root.GetProperty("turretMuzzleTransformFileId").GetInt32()!=477091)
             throw new InvalidDataException("Helicopter crew artifact lost prefab identity.");
         var rows=root.GetProperty("slots");
         if(rows.GetArrayLength()!=6)throw new InvalidDataException("Helicopter prefab crew slots are incomplete.");
         static Vector3 Vector(JsonElement value)=>new(value[0].GetSingle(),value[1].GetSingle(),value[2].GetSingle());
+        static Quaternion Rotation(JsonElement value)=>new(value[0].GetSingle(),value[1].GetSingle(),
+            value[2].GetSingle(),value[3].GetSingle());
+        var turretPosition=Vector(root.GetProperty("turretPointRestPosition"));
+        var turretRotation=Rotation(root.GetProperty("turretPointRestRotation"));
+        var muzzlePosition=Vector(root.GetProperty("turretMuzzleRestPosition"));
+        var muzzleRotation=Rotation(root.GetProperty("turretMuzzleRestRotation"));
+        if(!PlayerHitbox.Finite(turretPosition)||!PlayerHitbox.Finite(muzzlePosition)||
+           !float.IsFinite(turretRotation.LengthSquared())||
+           Math.Abs(turretRotation.LengthSquared()-1)>.0002f||
+           !float.IsFinite(muzzleRotation.LengthSquared())||
+           Math.Abs(muzzleRotation.LengthSquared()-1)>.0002f)
+            throw new InvalidDataException("Helicopter turret rest geometry is malformed.");
         var slots=new HelicopterCrewPoint[6];
         for(int i=0;i<slots.Length;i++)
         {
@@ -52,7 +79,21 @@ public sealed class HelicopterCrewPointCatalog
                !float.IsFinite(q.LengthSquared())||Math.Abs(q.LengthSquared()-1)>.0002f)
                 throw new InvalidDataException("Helicopter crew source slot is malformed.");
         }
-        return new(slots,11499861);
+        return new(slots,11499861,turretPosition,turretRotation,muzzlePosition,muzzleRotation);
+    }
+    public HelicopterTurretRestPose PlaceTurret(Vector3 rootPosition,Quaternion rootRotation)
+    {
+        if(!PlayerHitbox.Finite(rootPosition)||!float.IsFinite(rootRotation.LengthSquared())||
+           Math.Abs(rootRotation.LengthSquared()-1)>.001f)
+            throw new InvalidDataException("Invalid Helicopter turret root placement.");
+        var point=rootPosition+Vector3.Transform(TurretPointRestPosition,rootRotation);
+        var muzzle=rootPosition+Vector3.Transform(TurretMuzzleRestPosition,rootRotation);
+        var pointRotation=Quaternion.Normalize(rootRotation*TurretPointRestRotation);
+        var muzzleRotation=Quaternion.Normalize(rootRotation*TurretMuzzleRestRotation);
+        if(!PlayerHitbox.Finite(point)||!PlayerHitbox.Finite(muzzle)||
+           !float.IsFinite(pointRotation.LengthSquared())||!float.IsFinite(muzzleRotation.LengthSquared()))
+            throw new InvalidDataException("Helicopter turret placement overflow.");
+        return new(TurretPointComponentFileId,point,pointRotation,muzzle,muzzleRotation);
     }
     public IReadOnlyList<HelicopterCrewPose> PlaceAttached(Vector3 rootPosition,Quaternion rootRotation,int seats)
     {
@@ -63,8 +104,8 @@ public sealed class HelicopterCrewPointCatalog
         for(int i=0;i<seats;i++)
         {
             var slot=Slots[i];
-            Vector3 position=rootPosition+Vector3.Transform(slot.RestPosition-RootRestPosition,rootRotation);
-            Vector3 rope=rootPosition+Vector3.Transform(slot.RopeRestPosition-RootRestPosition,rootRotation);
+            Vector3 position=rootPosition+Vector3.Transform(slot.RestPosition,rootRotation);
+            Vector3 rope=rootPosition+Vector3.Transform(slot.RopeRestPosition,rootRotation);
             Quaternion rotation=Quaternion.Normalize(rootRotation*slot.RestRotation);
             if(!PlayerHitbox.Finite(position)||!PlayerHitbox.Finite(rope)||
                !float.IsFinite(rotation.LengthSquared()))

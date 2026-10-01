@@ -38,13 +38,26 @@ internal static class CombatContentTests
         Check(gunnerState.Snapshot() is {Health:621f,SpawnTick:436,RespawnTick:0,TurretEnabled:true},
               "Helicopter gunner respawns with full source health at its deadline");
         var sourceCrewPoses=content.HelicopterCrewPoints.PlaceAttached(
-            HelicopterCrewPointCatalog.RootRestPosition,Quaternion.Identity,2);
+            Vector3.Zero,Quaternion.Identity,2);
         Check(sourceCrewPoses.Count==2&&
               sourceCrewPoses.All(p=>Vector3.Distance(p.Position,
                   content.HelicopterCrewPoints.Slots[p.Slot].RestPosition)<.000001f&&
                   Vector3.Distance(p.RopePosition,
                   content.HelicopterCrewPoints.Slots[p.Slot].RopeRestPosition)<.000001f),
               "identity root placement reproduces both ordered prefab crew and rope rest points");
+        var turretRest=content.HelicopterCrewPoints.PlaceTurret(
+            Vector3.Zero,Quaternion.Identity);
+        Check(turretRest.PointComponentFileId==11499861&&
+              Vector3.Distance(turretRest.GunnerPosition,
+                  content.HelicopterCrewPoints.TurretPointRestPosition)<.000001f&&
+              Vector3.Distance(turretRest.MuzzleRestPosition,
+                  content.HelicopterCrewPoints.TurretMuzzleRestPosition)<.000001f,
+              "source turret point and gun muzzle preserve their prefab rest geometry");
+        Reject(()=>content.HelicopterCrewPoints.PlaceTurret(Vector3.Zero,default));
+        var translatedCrew=content.HelicopterCrewPoints.PlaceAttached(new(10,5,20),Quaternion.Identity,2);
+        Check(Vector3.Distance(translatedCrew[0].Position,
+                  new Vector3(10.21307182f,4.8822651f,19.82723331f))<.00001f,
+              "source child offsets are applied once without the prefab-stage root translation");
         Reject(()=>content.HelicopterCrewPoints.PlaceAttached(Vector3.Zero,default,2));
         Reject(()=>HelicopterCrewPointCatalog.Load(Path.Combine(directory,"recovered-helicopter-crew-points.json"),new string('0',64)));
         Check(content.DroneWeapon.Revision==Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(Path.Combine(directory,"recovered-drone-weapon.json")))),"combat package binds verified Drone weapon authority");
@@ -3289,6 +3302,8 @@ internal static class CombatContentTests
               deathMatch.HelicopterShotDefinition(helicopterEntity.EntityKey)==helicopterShot&&
               deathMatch.HelicopterGunner(helicopterEntity.EntityKey) is
                   {PointComponentFileId:11499861,MaximumHealth:621f,Health:621f,TurretEnabled:true}&&
+              deathMatch.HelicopterTurretPose(helicopterEntity.EntityKey) is
+                  {PointComponentFileId:11499861}&&
               deathMatch.HelicopterCrewMembers(helicopterEntity.EntityKey).Select(x=>x.PointComponentFileId)
                   .SequenceEqual(new[]{11438461,11450766})&&
               deathMatch.HelicopterCrewMembers(helicopterEntity.EntityKey)
@@ -3346,6 +3361,7 @@ internal static class CombatContentTests
               deathMatch.HelicopterCrewDefinition(helicopterEntity.EntityKey)==null&&
               deathMatch.HelicopterShotDefinition(helicopterEntity.EntityKey)==null&&
               deathMatch.HelicopterGunner(helicopterEntity.EntityKey)==null&&
+              deathMatch.HelicopterTurretPose(helicopterEntity.EntityKey)==null&&
               deathMatch.HelicopterCrewMembers(helicopterEntity.EntityKey).Count==0&&
               deathMatch.HelicopterCrewDescents(helicopterEntity.EntityKey).Count==0&&
               deathMatch.HelicopterAttachedCrewPoses(helicopterEntity.EntityKey).Count==0&&

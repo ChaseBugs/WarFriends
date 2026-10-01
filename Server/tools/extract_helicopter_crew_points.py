@@ -43,9 +43,25 @@ def extract():
     turret = ref(helicopter, 'enemyPointVehicle')
     if turret not in blocks or blocks[turret][0] != 114:
         raise ValueError('Helicopter turret point is unresolved')
+    turret_transform = transforms[ref(blocks[turret][1], 'm_GameObject')]
+    turret_weapon = ref(helicopter, 'turret')
+    batched_weapon = ref(blocks[turret_weapon][1], 'batchedWeapon')
+    weapon = ref(blocks[batched_weapon][1], 'weapon')
+    muzzle_transform = ref(blocks[weapon][1], 'spawnPoint')
+    if blocks[turret_weapon][0] != 114 or blocks[batched_weapon][0] != 114 or \
+       blocks[weapon][0] != 114 or blocks[muzzle_transform][0] != 4:
+        raise ValueError('Helicopter turret weapon chain is unresolved')
+    turret_position, turret_rotation, _ = world_transform(blocks, turret_transform)
+    muzzle_position, muzzle_rotation, _ = world_transform(blocks, muzzle_transform)
     return {'version': 1, 'client': '1.4.0', 'source': 'Assets/GameObject/Helicopter.prefab',
             'sha256': hashlib.sha256(raw).hexdigest(), 'helicopterComponentFileId': 11475216,
-            'slots': slots, 'turretPointComponentFileId': turret}
+            'slots': slots, 'turretPointComponentFileId': turret,
+            'turretPointTransformFileId': turret_transform, 'turretPointRestPosition': turret_position,
+            'turretPointRestRotation': turret_rotation,
+            'turretWeaponComponentFileId': turret_weapon,
+            'turretBatchedWeaponComponentFileId': batched_weapon,
+            'turretGunComponentFileId': weapon, 'turretMuzzleTransformFileId': muzzle_transform,
+            'turretMuzzleRestPosition': muzzle_position, 'turretMuzzleRestRotation': muzzle_rotation}
 
 
 def main():

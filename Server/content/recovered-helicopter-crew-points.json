@@ -138,5 +138,32 @@
       ]
     }
   ],
-  "turretPointComponentFileId": 11499861
+  "turretPointComponentFileId": 11499861,
+  "turretPointTransformFileId": 417017,
+  "turretPointRestPosition": [
+    0.0,
+    -0.1287018077,
+    0.0
+  ],
+  "turretPointRestRotation": [
+    0.0,
+    -0.6778992,
+    0.0,
+    0.7351549
+  ],
+  "turretWeaponComponentFileId": 11498443,
+  "turretBatchedWeaponComponentFileId": 11483234,
+  "turretGunComponentFileId": 11441888,
+  "turretMuzzleTransformFileId": 477091,
+  "turretMuzzleRestPosition": [
+    -0.5323752802647455,
+    0.07099997530151644,
+    -0.025999899545649557
+  ],
+  "turretMuzzleRestRotation": [
+    -0.5000000687530839,
+    -0.4999999769689816,
+    0.4999999137487102,
+    0.4999998641114654
+  ]
 }

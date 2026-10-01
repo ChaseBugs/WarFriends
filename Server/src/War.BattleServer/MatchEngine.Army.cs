@@ -64,6 +64,14 @@ public sealed partial class MatchEngine
     internal ArmyVehicleShotStats? HelicopterShotDefinition(ulong key)=>armyHelicopterShots.GetValueOrDefault(key);
     internal HelicopterGunnerSnapshot? HelicopterGunner(ulong key)
         =>armyHelicopterGunners.TryGetValue(key,out var gunner)?gunner.Snapshot():null;
+    internal HelicopterTurretRestPose? HelicopterTurretPose(ulong key)
+    {
+        if(!armyHelicopterGunners.ContainsKey(key)||
+           !activeArmyEntities.TryGetValue(key,out var row)||row.HelicopterRotation==null||
+           helicopterCrewPoints==null)return null;
+        var q=row.HelicopterRotation;
+        return helicopterCrewPoints.PlaceTurret(new(row.X,row.Y,row.Z),new(q.X,q.Y,q.Z,q.W));
+    }
     internal bool DamageHelicopterGunner(ulong key,float amount)
     {
         if(phase!=BattlePhase.Running||!activeArmyEntities.TryGetValue(key,out var row)||
