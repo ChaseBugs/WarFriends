@@ -54,6 +54,17 @@ internal static class CombatContentTests
                   content.HelicopterCrewPoints.TurretMuzzleRestPosition)<.000001f,
               "source turret point and gun muzzle preserve their prefab rest geometry");
         Reject(()=>content.HelicopterCrewPoints.PlaceTurret(Vector3.Zero,default));
+        var coneOrigin=new Vector3(-.373f,-.209f,0);
+        Check(HelicopterTurretTargetCone.Contains(Vector3.Zero,Quaternion.Identity,
+                  coneOrigin+new Vector3(-10,5,0))&&
+              !HelicopterTurretTargetCone.Contains(Vector3.Zero,Quaternion.Identity,
+                  coneOrigin+new Vector3(10,5,0))&&
+              HelicopterTurretTargetCone.Contains(Vector3.Zero,
+                  Quaternion.CreateFromAxisAngle(Vector3.UnitZ,MathF.PI/2),
+                  Vector3.Transform(coneOrigin,Quaternion.CreateFromAxisAngle(Vector3.UnitZ,MathF.PI/2))-
+                  Vector3.UnitY*10),
+              "source Helicopter turret cone retains full 3D direction under root bank");
+        Reject(()=>HelicopterTurretTargetCone.Contains(Vector3.Zero,default,Vector3.UnitX));
         var translatedCrew=content.HelicopterCrewPoints.PlaceAttached(new(10,5,20),Quaternion.Identity,2);
         Check(Vector3.Distance(translatedCrew[0].Position,
                   new Vector3(10.21307182f,4.8822651f,19.82723331f))<.00001f,
@@ -3400,8 +3411,20 @@ internal static class CombatContentTests
               crewMatch.ArmyEntityBatch(helicopterOwner,0,0).Entities
                   .Single(x=>x.EntityKey==sourceHelicopter).HelicopterCrewDropMask==0,
               "live Helicopter stop publishes a source-backed timeline before crew descent");
+        var heliAtStop=crewMatch.ArmyEntityBatch(helicopterOwner,0,0).Entities
+            .Single(x=>x.EntityKey==sourceHelicopter);
+        var heliQ=new Quaternion(heliAtStop.HelicopterRotation.X,heliAtStop.HelicopterRotation.Y,
+            heliAtStop.HelicopterRotation.Z,heliAtStop.HelicopterRotation.W);
+        var heliAimOrigin=new Vector3(heliAtStop.X,heliAtStop.Y,heliAtStop.Z)+
+            Vector3.Transform(coneOrigin,heliQ);
+        var heliForward=Vector3.Transform(Vector3.Transform(Vector3.UnitZ,
+            new Quaternion(0,-.7071068f,0,.7071067f)),heliQ);
+        Check(crewMatch.HelicopterTargetInTurretCone(sourceHelicopter,heliAimOrigin+heliForward*10)&&
+              !crewMatch.HelicopterTargetInTurretCone(sourceHelicopter,heliAimOrigin-heliForward*10),
+              "live Helicopter target cone follows the authoritative flight rotation");
         Check(crewMatch.DamageHelicopterGunner(sourceHelicopter,621f)&&
               crewMatch.HelicopterGunner(sourceHelicopter) is {Health:0,TurretEnabled:false}&&
+              !crewMatch.HelicopterTargetInTurretCone(sourceHelicopter,Vector3.Zero)&&
               !crewMatch.DamageHelicopterGunner(sourceHelicopter,1f),
               "host-owned gunner health disables the live Helicopter turret after lethal damage");
         ulong crewTick=sourceStop;

@@ -72,6 +72,15 @@ public sealed partial class MatchEngine
         var q=row.HelicopterRotation;
         return helicopterCrewPoints.PlaceTurret(new(row.X,row.Y,row.Z),new(q.X,q.Y,q.Z,q.W));
     }
+    internal bool HelicopterTargetInTurretCone(ulong key,Vector3 target)
+    {
+        if(phase!=BattlePhase.Running||!armyHelicopterGunners.TryGetValue(key,out var gunner)||
+           !gunner.Snapshot().TurretEnabled||!activeArmyEntities.TryGetValue(key,out var row)||
+           row.UnitId!="ID_UNIT-HELICOPTER"||row.HelicopterRotation==null)return false;
+        var q=row.HelicopterRotation;
+        return HelicopterTurretTargetCone.Contains(new(row.X,row.Y,row.Z),
+            new(q.X,q.Y,q.Z,q.W),target);
+    }
     internal bool DamageHelicopterGunner(ulong key,float amount)
     {
         if(phase!=BattlePhase.Running||!activeArmyEntities.TryGetValue(key,out var row)||
