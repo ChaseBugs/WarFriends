@@ -448,7 +448,7 @@ public sealed class ArmyDeploymentCatalog
                 throw new InvalidDataException("Army runtime movement speed differs from recovered sheet.");
             acceptedPlayerDamage.Add(family.UnitId,new(behindShield,playerDamage,overtimeDamage));
             bool vehiclePassenger=family.UnitId is "ID_UNIT-HUMVEE" or "ID_UNIT-TANK" or
-                "ID_UNIT-BUGGY" or "ID_UNIT-TRANSPORTER";
+                "ID_UNIT-BUGGY" or "ID_UNIT-TRANSPORTER" or "ID_UNIT-HELICOPTER";
             if(vehiclePassenger)
             {
                 if(!float.IsFinite(passengerRespawn)||passengerRespawn<=0||passengerRespawn>3600)

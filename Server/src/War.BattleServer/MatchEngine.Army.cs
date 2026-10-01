@@ -59,8 +59,17 @@ public sealed partial class MatchEngine
         =>armyHelicopterSchedules.TryGetValue(key,out var schedule)?schedule.DueSlots(atTick):Array.Empty<int>();
     private readonly Dictionary<ulong,ArmyVehicleShotStats> armyDroneShots=[];
     private readonly Dictionary<ulong,ArmyVehicleShotStats> armyHelicopterShots=[];
+    private readonly Dictionary<ulong,HelicopterGunnerState> armyHelicopterGunners=[];
     internal ArmyVehicleShotStats? DroneShotDefinition(ulong key)=>armyDroneShots.GetValueOrDefault(key);
     internal ArmyVehicleShotStats? HelicopterShotDefinition(ulong key)=>armyHelicopterShots.GetValueOrDefault(key);
+    internal HelicopterGunnerSnapshot? HelicopterGunner(ulong key)
+        =>armyHelicopterGunners.TryGetValue(key,out var gunner)?gunner.Snapshot():null;
+    internal bool DamageHelicopterGunner(ulong key,float amount)
+    {
+        if(phase!=BattlePhase.Running||!activeArmyEntities.TryGetValue(key,out var row)||
+           row.UnitId!="ID_UNIT-HELICOPTER"||!armyHelicopterGunners.TryGetValue(key,out var gunner))return false;
+        return gunner.Damage(amount,tick);
+    }
 
     private void InitializeDronePath(ulong key,ArmyDeploymentFamily family,ArmySpawnPoint spawn)
     {
@@ -209,6 +218,9 @@ public sealed partial class MatchEngine
         float time=(float)((double)tick/MatchManifest.TickRate);
         foreach(var (key,path) in armyHelicopterPaths.OrderBy(x=>x.Key))
         {
+            if(!armyHelicopterGunners.TryGetValue(key,out var gunner))
+                throw new InvalidDataException("Helicopter path lost its turret gunner state.");
+            gunner.Advance(tick);
             bool arrived=path.Advance(time); // Crew drop/rope require their own source authority.
             if(!activeArmyEntities.TryGetValue(key,out var row)||row.UnitId!="ID_UNIT-HELICOPTER")
                 throw new InvalidDataException("Helicopter path lost its host entity.");
@@ -539,9 +551,15 @@ public sealed partial class MatchEngine
                 droneProjectile??throw new InvalidDataException("Drone projectile source absent."),NextArmyFloat,DroneBatchRange));
         }
         if(family.BehaviorType=="HelicopterBehaviour")
+        {
             armyHelicopterShots.Add(entityKey,armyCatalog!.ComposeHelicopterShot(
                 owner.ArmyNormalUpgradeIndexes[index],special,elite,
                 owner.ArmyShotSpeedCoefficients?[index]??1f));
+            var crew=armyHelicopterCrew[entityKey];
+            armyHelicopterGunners.Add(entityKey,new HelicopterGunnerState(
+                helicopterCrewPoints!.TurretPointComponentFileId,crew.SoldierHealth,
+                armyCatalog.VehiclePassengerRespawnTicks(unitId),tick));
+        }
         if(family.VehicleShot!=null&&!family.IsAir&&!family.IsSoldier)
             armyVehicleShots.Add(entityKey,armyCatalog.ComposeVehicleShot(unitId,
                 owner.ArmyNormalUpgradeIndexes[index],special,elite,
@@ -2065,6 +2083,7 @@ public sealed partial class MatchEngine
         armyHelicopterSchedules.Remove(entityKey);
         armyDroneShots.Remove(entityKey);
         armyHelicopterShots.Remove(entityKey);
+        armyHelicopterGunners.Remove(entityKey);
         droneAttacks.Remove(entityKey);
         droneLastIntents.Remove(entityKey);
         armyDamage.Remove(entityKey);

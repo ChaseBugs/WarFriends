@@ -23,6 +23,20 @@ internal static class CombatContentTests
               content.HelicopterCrewPoints.Slots.All(x=>x.RopeTransformFileId==480871)&&
               content.HelicopterCrewPoints.TurretPointComponentFileId==11499861,
             "combat package binds ordered source Helicopter crew and turret attachment identities");
+        Check(content.Army.VehiclePassengerRespawnTicks("ID_UNIT-HELICOPTER")==375,
+            "Helicopter gunner respawn delay is the recovered 12.5 second mechanical-unit row");
+        var gunnerState=new HelicopterGunnerState(11499861,621f,375,60);
+        Check(gunnerState.Snapshot() is {Health:621f,SpawnTick:60,RespawnTick:0,TurretEnabled:true}&&
+              gunnerState.Damage(621f,61)&&
+              gunnerState.Snapshot() is {Health:0,RespawnTick:436,TurretEnabled:false}&&
+              !gunnerState.Damage(1f,62),
+              "source gunner death disables its turret and schedules one respawn");
+        gunnerState.Advance(435);
+        Check(!gunnerState.Snapshot().TurretEnabled,
+              "Helicopter turret remains disabled before the source respawn deadline");
+        gunnerState.Advance(436);
+        Check(gunnerState.Snapshot() is {Health:621f,SpawnTick:436,RespawnTick:0,TurretEnabled:true},
+              "Helicopter gunner respawns with full source health at its deadline");
         var sourceCrewPoses=content.HelicopterCrewPoints.PlaceAttached(
             HelicopterCrewPointCatalog.RootRestPosition,Quaternion.Identity,2);
         Check(sourceCrewPoses.Count==2&&
@@ -3273,6 +3287,8 @@ internal static class CombatContentTests
               deathMatch.HelicopterCrewDefinition(helicopterEntity.EntityKey)==
                   new ArmyHelicopterCrewStats(2,621f)&&
               deathMatch.HelicopterShotDefinition(helicopterEntity.EntityKey)==helicopterShot&&
+              deathMatch.HelicopterGunner(helicopterEntity.EntityKey) is
+                  {PointComponentFileId:11499861,MaximumHealth:621f,Health:621f,TurretEnabled:true}&&
               deathMatch.HelicopterCrewMembers(helicopterEntity.EntityKey).Select(x=>x.PointComponentFileId)
                   .SequenceEqual(new[]{11438461,11450766})&&
               deathMatch.HelicopterCrewMembers(helicopterEntity.EntityKey)
@@ -3329,6 +3345,7 @@ internal static class CombatContentTests
               !deathMatch.HasHelicopterPath(helicopterEntity.EntityKey) &&
               deathMatch.HelicopterCrewDefinition(helicopterEntity.EntityKey)==null&&
               deathMatch.HelicopterShotDefinition(helicopterEntity.EntityKey)==null&&
+              deathMatch.HelicopterGunner(helicopterEntity.EntityKey)==null&&
               deathMatch.HelicopterCrewMembers(helicopterEntity.EntityKey).Count==0&&
               deathMatch.HelicopterCrewDescents(helicopterEntity.EntityKey).Count==0&&
               deathMatch.HelicopterAttachedCrewPoses(helicopterEntity.EntityKey).Count==0&&
@@ -3367,6 +3384,10 @@ internal static class CombatContentTests
               crewMatch.ArmyEntityBatch(helicopterOwner,0,0).Entities
                   .Single(x=>x.EntityKey==sourceHelicopter).HelicopterCrewDropMask==0,
               "live Helicopter stop publishes a source-backed timeline before crew descent");
+        Check(crewMatch.DamageHelicopterGunner(sourceHelicopter,621f)&&
+              crewMatch.HelicopterGunner(sourceHelicopter) is {Health:0,TurretEnabled:false}&&
+              !crewMatch.DamageHelicopterGunner(sourceHelicopter,1f),
+              "host-owned gunner health disables the live Helicopter turret after lethal damage");
         ulong crewTick=sourceStop;
         uint MaskAt(ulong target)
         {
@@ -3395,6 +3416,10 @@ internal static class CombatContentTests
         Check(crewMatch.HelicopterCrewDescents(sourceHelicopter)[1].Progress==1f&&
               crewMatch.HelicopterCrewDescents(sourceHelicopter)[1].AnimationComplete,
               "rope animation completion clamps at one without asserting NavMesh landing");
+        MaskAt(sourceStop+375);
+        Check(crewMatch.HelicopterGunner(sourceHelicopter) is
+                  {Health:621f,TurretEnabled:true,RespawnTick:0},
+              "live Helicopter gunner recovers at the source respawn deadline");
         Check(crewMatch.HelicopterAttachedCrewPoses(sourceHelicopter).Count==0,
               "crew leaves source attachment poses once both rope descents begin");
         Check(War.Client.MatchConnection.ValidHelicopterCrew(droppedCrew),
