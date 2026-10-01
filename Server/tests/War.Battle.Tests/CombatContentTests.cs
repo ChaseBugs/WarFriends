@@ -3324,6 +3324,7 @@ internal static class CombatContentTests
               !deathMatch.HasHelicopterPath(helicopterEntity.EntityKey) &&
               deathMatch.HelicopterCrewDefinition(helicopterEntity.EntityKey)==null&&
               deathMatch.HelicopterCrewMembers(helicopterEntity.EntityKey).Count==0&&
+              deathMatch.HelicopterCrewDescents(helicopterEntity.EntityKey).Count==0&&
               deathMatch.HelicopterAttachedCrewPoses(helicopterEntity.EntityKey).Count==0&&
               deathMatch.HelicopterCrewDueSlots(helicopterEntity.EntityKey,ulong.MaxValue).Count==0&&
               deathMatch.ArmyBatch(helicopterOwner).Energy==9 &&
@@ -3376,6 +3377,18 @@ internal static class CombatContentTests
         Check(crewMatch.HelicopterCrewMembers(sourceHelicopter).Select(x=>x.DropStartTick)
                   .SequenceEqual(new[]{sourceStop+150,sourceStop+210}),
               "live Helicopter attached crew records retain their two source descent start ticks");
+        Check(crewMatch.HelicopterCrewDescents(sourceHelicopter) is var descents&&
+              descents.Count==2&&descents[0].Progress==1f&&descents[0].AnimationComplete&&
+              descents[1].Progress==0f&&!descents[1].AnimationComplete,
+              "crew descent animation progress follows ordered source starts on the host clock");
+        MaskAt(sourceStop+225);
+        Check(Math.Abs(crewMatch.HelicopterCrewDescents(sourceHelicopter)[1].Progress-.5f)<.000001f&&
+              !crewMatch.HelicopterCrewDescents(sourceHelicopter)[1].AnimationComplete,
+              "second crew rope animation reaches half progress after fifteen host ticks");
+        MaskAt(sourceStop+240);
+        Check(crewMatch.HelicopterCrewDescents(sourceHelicopter)[1].Progress==1f&&
+              crewMatch.HelicopterCrewDescents(sourceHelicopter)[1].AnimationComplete,
+              "rope animation completion clamps at one without asserting NavMesh landing");
         Check(crewMatch.HelicopterAttachedCrewPoses(sourceHelicopter).Count==0,
               "crew leaves source attachment poses once both rope descents begin");
         Check(War.Client.MatchConnection.ValidHelicopterCrew(droppedCrew),

@@ -41,6 +41,9 @@ public sealed partial class MatchEngine
     internal ArmyHelicopterCrewStats? HelicopterCrewDefinition(ulong key)=>armyHelicopterCrew.GetValueOrDefault(key);
     internal IReadOnlyList<HelicopterCrewMemberSnapshot> HelicopterCrewMembers(ulong key)
         =>armyHelicopterCrewMembers.TryGetValue(key,out var crew)?crew.Snapshot():Array.Empty<HelicopterCrewMemberSnapshot>();
+    internal IReadOnlyList<HelicopterCrewDescentSnapshot> HelicopterCrewDescents(ulong key)
+        =>armyHelicopterCrewMembers.TryGetValue(key,out var crew)?crew.DescentSnapshot(tick):
+            Array.Empty<HelicopterCrewDescentSnapshot>();
     internal IReadOnlyList<HelicopterCrewPose> HelicopterAttachedCrewPoses(ulong key)
     {
         if(!armyHelicopterCrewMembers.TryGetValue(key,out var crew)||

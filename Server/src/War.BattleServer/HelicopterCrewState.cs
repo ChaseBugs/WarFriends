@@ -2,6 +2,8 @@ namespace War.BattleServer;
 
 internal sealed record HelicopterCrewMemberSnapshot(int Slot,int PointComponentFileId,
     float Health,float Maximum,ulong SpawnTick,ulong DropStartTick);
+internal sealed record HelicopterCrewDescentSnapshot(int Slot,ulong StartTick,float Progress,
+    bool AnimationComplete);
 
 // Source crew begins attached to the Helicopter. No collision, death or
 // landing authority is inferred before runtime world poses are implemented.
@@ -22,6 +24,21 @@ internal sealed class HelicopterCrewState
     }
     internal IReadOnlyList<HelicopterCrewMemberSnapshot> Snapshot()
         =>Array.AsReadOnly(members.ToArray());
+    internal IReadOnlyList<HelicopterCrewDescentSnapshot> DescentSnapshot(ulong tick)
+    {
+        var result=new List<HelicopterCrewDescentSnapshot>(members.Length);
+        foreach(var member in members)
+        {
+            if(member.DropStartTick==0||tick<member.DropStartTick)continue;
+            ulong elapsed=tick-member.DropStartTick;
+            // EnemyController.HelicopterUpdate accumulates deltaTime and clamps at one.
+            // The host's fixed 30 Hz clock describes animation only, not NavMesh landing.
+            float progress=elapsed>=MatchManifest.TickRate?1f:
+                (float)elapsed/MatchManifest.TickRate;
+            result.Add(new(member.Slot,member.DropStartTick,progress,progress>=1f));
+        }
+        return result.AsReadOnly();
+    }
     internal void Advance(HelicopterCrewSchedule schedule,ulong tick)
     {
         ArgumentNullException.ThrowIfNull(schedule);
