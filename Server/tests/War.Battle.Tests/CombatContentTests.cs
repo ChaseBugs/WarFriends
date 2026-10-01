@@ -23,6 +23,15 @@ internal static class CombatContentTests
               content.HelicopterCrewPoints.Slots.All(x=>x.RopeTransformFileId==480871)&&
               content.HelicopterCrewPoints.TurretPointComponentFileId==11499861,
             "combat package binds ordered source Helicopter crew and turret attachment identities");
+        var sourceCrewPoses=content.HelicopterCrewPoints.PlaceAttached(
+            HelicopterCrewPointCatalog.RootRestPosition,Quaternion.Identity,2);
+        Check(sourceCrewPoses.Count==2&&
+              sourceCrewPoses.All(p=>Vector3.Distance(p.Position,
+                  content.HelicopterCrewPoints.Slots[p.Slot].RestPosition)<.000001f&&
+                  Vector3.Distance(p.RopePosition,
+                  content.HelicopterCrewPoints.Slots[p.Slot].RopeRestPosition)<.000001f),
+              "identity root placement reproduces both ordered prefab crew and rope rest points");
+        Reject(()=>content.HelicopterCrewPoints.PlaceAttached(Vector3.Zero,default,2));
         Reject(()=>HelicopterCrewPointCatalog.Load(Path.Combine(directory,"recovered-helicopter-crew-points.json"),new string('0',64)));
         Check(content.DroneWeapon.Revision==Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(Path.Combine(directory,"recovered-drone-weapon.json")))),"combat package binds verified Drone weapon authority");
         Check(content.DroneProjectile.Revision==Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(Path.Combine(directory,"recovered-drone-projectile-setup.json")))),"combat package requires verified Drone projectile setup revision");
@@ -3251,6 +3260,11 @@ internal static class CombatContentTests
               helicopterEntity.PositionTick==70&&
               helicopterEntity.HelicopterStopTick==0&&
               helicopterEntity.HelicopterCrewCount==2&&helicopterEntity.HelicopterCrewDropMask==0&&
+              helicopterEntity.HelicopterRotation is { } helicopterRotation&&
+              Math.Abs(helicopterRotation.X*helicopterRotation.X+
+                  helicopterRotation.Y*helicopterRotation.Y+
+                  helicopterRotation.Z*helicopterRotation.Z+
+                  helicopterRotation.W*helicopterRotation.W-1)<.001f&&
               deathMatch.HelicopterCrewDueSlots(helicopterEntity.EntityKey,70).Count==0&&
               deathMatch.HelicopterCrewDefinition(helicopterEntity.EntityKey)==
                   new ArmyHelicopterCrewStats(2,621f)&&
@@ -3258,6 +3272,7 @@ internal static class CombatContentTests
                   .SequenceEqual(new[]{11438461,11450766})&&
               deathMatch.HelicopterCrewMembers(helicopterEntity.EntityKey)
                   .All(x=>x.Health==621f&&x.Maximum==621f&&x.DropStartTick==0)&&
+              deathMatch.HelicopterAttachedCrewPoses(helicopterEntity.EntityKey).Count==2&&
               Vector3.Distance(new Vector3(helicopterEntity.X,helicopterEntity.Y,helicopterEntity.Z),
                   new Vector3(helicopterSpawn.X,helicopterSpawn.Y,helicopterSpawn.Z))>0,
               "normal Helicopter deployment publishes host-owned source-route motion after spawn");
@@ -3309,6 +3324,7 @@ internal static class CombatContentTests
               !deathMatch.HasHelicopterPath(helicopterEntity.EntityKey) &&
               deathMatch.HelicopterCrewDefinition(helicopterEntity.EntityKey)==null&&
               deathMatch.HelicopterCrewMembers(helicopterEntity.EntityKey).Count==0&&
+              deathMatch.HelicopterAttachedCrewPoses(helicopterEntity.EntityKey).Count==0&&
               deathMatch.HelicopterCrewDueSlots(helicopterEntity.EntityKey,ulong.MaxValue).Count==0&&
               deathMatch.ArmyBatch(helicopterOwner).Energy==9 &&
               deathMatch.ArmyBatch(helicopterOwner).OptionIndexes.Count==3 &&
@@ -3360,6 +3376,8 @@ internal static class CombatContentTests
         Check(crewMatch.HelicopterCrewMembers(sourceHelicopter).Select(x=>x.DropStartTick)
                   .SequenceEqual(new[]{sourceStop+150,sourceStop+210}),
               "live Helicopter attached crew records retain their two source descent start ticks");
+        Check(crewMatch.HelicopterAttachedCrewPoses(sourceHelicopter).Count==0,
+              "crew leaves source attachment poses once both rope descents begin");
         Check(War.Client.MatchConnection.ValidHelicopterCrew(droppedCrew),
               "SDK accepts the live host's completed ordered crew descent prefix");
         forgedCrew=droppedCrew.Clone();forgedCrew.HelicopterCrewDropMask=2;

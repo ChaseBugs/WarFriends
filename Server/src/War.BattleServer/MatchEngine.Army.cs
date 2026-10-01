@@ -33,6 +33,7 @@ public sealed partial class MatchEngine
     private readonly Dictionary<ulong,DroneSpecialState> armyDroneSpecials=[];
     private readonly Dictionary<ulong,DroneWaypointState> armyDronePaths=[];
     private readonly Dictionary<ulong,HelicopterWaypointState> armyHelicopterPaths=[];
+    private readonly Dictionary<ulong,HelicopterOrientationState> armyHelicopterOrientations=[];
     private readonly Dictionary<ulong,ArmyHelicopterCrewStats> armyHelicopterCrew=[];
     private readonly Dictionary<ulong,HelicopterCrewState> armyHelicopterCrewMembers=[];
     private readonly Dictionary<ulong,HelicopterCrewSchedule> armyHelicopterSchedules=[];
@@ -40,6 +41,17 @@ public sealed partial class MatchEngine
     internal ArmyHelicopterCrewStats? HelicopterCrewDefinition(ulong key)=>armyHelicopterCrew.GetValueOrDefault(key);
     internal IReadOnlyList<HelicopterCrewMemberSnapshot> HelicopterCrewMembers(ulong key)
         =>armyHelicopterCrewMembers.TryGetValue(key,out var crew)?crew.Snapshot():Array.Empty<HelicopterCrewMemberSnapshot>();
+    internal IReadOnlyList<HelicopterCrewPose> HelicopterAttachedCrewPoses(ulong key)
+    {
+        if(!armyHelicopterCrewMembers.TryGetValue(key,out var crew)||
+           !activeArmyEntities.TryGetValue(key,out var row)||row.HelicopterRotation==null||
+           helicopterCrewPoints==null)return Array.Empty<HelicopterCrewPose>();
+        var q=row.HelicopterRotation;
+        var members=crew.Snapshot();
+        var poses=helicopterCrewPoints.PlaceAttached(new(row.X,row.Y,row.Z),
+            new(q.X,q.Y,q.Z,q.W),members.Count);
+        return Array.AsReadOnly(poses.Where(p=>members[p.Slot].DropStartTick==0).ToArray());
+    }
     internal IReadOnlyList<int> HelicopterCrewDueSlots(ulong key,ulong atTick)
         =>armyHelicopterSchedules.TryGetValue(key,out var schedule)?schedule.DueSlots(atTick):Array.Empty<int>();
     private readonly Dictionary<ulong,ArmyVehicleShotStats> armyDroneShots=[];
@@ -185,6 +197,7 @@ public sealed partial class MatchEngine
         if(!armySpeed.TryGetValue(key,out float speed))return;
         var route=airWaypoints!.ForSpawn(map!,spawn.ComponentFileId);
         armyHelicopterPaths.Add(key,new HelicopterWaypointState(route,spawn.Position,speed));
+        armyHelicopterOrientations.Add(key,new HelicopterOrientationState());
     }
     private void AdvanceHelicopterPaths()
     {
@@ -203,6 +216,12 @@ public sealed partial class MatchEngine
             }
             row.X=path.Position.X;row.Y=path.Position.Y;row.Z=path.Position.Z;
             row.PositionTick=tick;
+            if(!armyHelicopterOrientations.TryGetValue(key,out var orientation))
+                throw new InvalidDataException("Helicopter path lost orientation state.");
+            orientation.Advance(path.Position,path.Velocity,path.Steering,path.TargetPosition,
+                path.Breaking,1f/MatchManifest.TickRate);
+            var q=orientation.Rotation;
+            row.HelicopterRotation=new BattleJointRotation{X=q.X,Y=q.Y,Z=q.Z,W=q.W};
             if(armyHelicopterSchedules.TryGetValue(key,out var schedule))
             {
                 if(!armyHelicopterCrewMembers.TryGetValue(key,out var crew))
@@ -2031,6 +2050,7 @@ public sealed partial class MatchEngine
         armyDroneSpecials.Remove(entityKey);
         armyDronePaths.Remove(entityKey);
         armyHelicopterPaths.Remove(entityKey);
+        armyHelicopterOrientations.Remove(entityKey);
         armyHelicopterCrew.Remove(entityKey);
         armyHelicopterCrewMembers.Remove(entityKey);
         armyHelicopterSchedules.Remove(entityKey);

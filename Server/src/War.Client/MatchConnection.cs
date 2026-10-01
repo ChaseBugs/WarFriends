@@ -209,7 +209,9 @@ namespace War.Client
                        entity.OwnerPlayerId!=entity.OwnerPlayerId.ToLowerInvariant() ||
                        entity.OptionIndex<0 || entity.OptionIndex>=48 ||
                        (entity.DroneTransparent&&entity.UnitId!="ID_UNIT-DRONE") ||
-                       (entity.UnitId=="ID_UNIT-DRONE"?!ValidDroneRotation(entity.DroneRotation):entity.DroneRotation!=null) ||
+                       (entity.UnitId=="ID_UNIT-DRONE"?!ValidUnitRotation(entity.DroneRotation):entity.DroneRotation!=null) ||
+                       (entity.UnitId=="ID_UNIT-HELICOPTER"?!ValidUnitRotation(entity.HelicopterRotation):
+                           entity.HelicopterRotation!=null) ||
                        (entity.UnitId=="ID_UNIT-HELICOPTER"?!ValidHelicopterCrew(entity):
                            entity.HelicopterStopTick!=0||entity.HelicopterCrewCount!=0||
                            entity.HelicopterCrewDropMask!=0) ||
@@ -252,7 +254,7 @@ namespace War.Client
                     expected|=1u<<slot;
             return entity.HelicopterCrewDropMask==expected;
         }
-        private static bool ValidDroneRotation(BattleJointRotation q)
+        private static bool ValidUnitRotation(BattleJointRotation q)
         {
             if(q==null||!FiniteCoordinate(q.X)||!FiniteCoordinate(q.Y)||!FiniteCoordinate(q.Z)||!FiniteCoordinate(q.W))return false;
             return Math.Abs(q.X*q.X+q.Y*q.Y+q.Z*q.Z+q.W*q.W-1)<.001f;

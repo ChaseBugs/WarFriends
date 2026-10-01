@@ -13,6 +13,8 @@ internal sealed class HelicopterWaypointState
     internal int TargetIndex {get;private set;}
     internal Vector3 Position {get;private set;}
     internal Vector3 Velocity {get;private set;}
+    internal Vector3 Steering {get;private set;}
+    internal Vector3 TargetPosition=>points[TargetIndex].Position;
     internal bool Breaking {get;private set;}
     internal bool StopReached {get;private set;}
     internal HelicopterWaypointState(AirWaypointRoute route,Vector3 position,float speed,bool loop=false)
@@ -65,7 +67,7 @@ internal sealed class HelicopterWaypointState
         if(!PlayerHitbox.Finite(nextVelocity)||!PlayerHitbox.Finite(nextPosition)||!float.IsFinite(nextResidual))
             throw new InvalidDataException("Helicopter motion overflow.");
         bool arrived=braking&&distance<1f&&!StopReached;
-        Position=nextPosition;Velocity=nextVelocity;TargetIndex=nextIndex;
+        Position=nextPosition;Velocity=nextVelocity;Steering=steering;TargetIndex=nextIndex;
         Breaking=braking;StopReached|=arrived;
         residual=nextResidual;lastRealtime=realtime;timeStarted=true;
         return arrived;

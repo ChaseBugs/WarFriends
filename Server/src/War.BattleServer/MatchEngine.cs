@@ -1029,6 +1029,7 @@ public sealed partial class MatchEngine
                             X=point.Position.X,Y=point.Position.Y,Z=point.Position.Z,SpawnTick=tick,
                             PositionTick=tick,
                             HelicopterCrewCount=(uint)(armyHelicopterCrew.GetValueOrDefault(entityKey)?.Seats??0),
+                            HelicopterRotation=spawned.UnitId=="ID_UNIT-HELICOPTER"?new BattleJointRotation{W=1}:null,
                             DroneRotation=spawned.UnitId=="ID_UNIT-DRONE"?new BattleJointRotation{W=1}:null,
                             MaxHealth=ArmyHealth(entityKey)??0,Health=ArmyHealth(entityKey)??0});
                         var vitality=armyVitality.GetValueOrDefault(entityKey);

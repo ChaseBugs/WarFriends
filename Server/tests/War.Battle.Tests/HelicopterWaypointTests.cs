@@ -96,6 +96,37 @@ internal static class HelicopterWaypointTests
                     "Helicopter host steering matches recovered Unity method");
             }
         }
+        using(var oracle=JsonDocument.Parse(File.ReadAllText(Path.Combine(directory,"recovered-helicopter-orientation.json"))))
+        {
+            var data=oracle.RootElement;
+            Check(data.GetProperty("version").GetInt32()==1&&
+                  data.GetProperty("unityVersion").GetString()=="2018.3.0f2"&&
+                  data.GetProperty("prefabSha256").GetString()==
+                  "e91c07c1552988601ada89c769056354ebd5d94ea88356eeacc5fa3f3fb76408"&&
+                  data.GetProperty("multiplier").GetSingle()==50f,
+                "Helicopter rotation oracle binds recovered prefab and Unity math");
+            var frames=data.GetProperty("rows").EnumerateArray().ToArray();
+            Check(frames.Length==5&&frames.Select(x=>x.GetProperty("id").GetInt32())
+                .SequenceEqual(new[]{0,1,2,3,4}),"Helicopter rotation oracle covers ordered flight and braking frames");
+            static Vector3 V(JsonElement e)=>new(e[0].GetSingle(),e[1].GetSingle(),e[2].GetSingle());
+            var orientation=new HelicopterOrientationState();
+            foreach(var frame in frames)
+            {
+                orientation.Advance(V(frame.GetProperty("position")),V(frame.GetProperty("velocity")),
+                    V(frame.GetProperty("steering")),V(frame.GetProperty("target")),
+                    frame.GetProperty("breaking").GetBoolean(),data.GetProperty("frameDelta").GetSingle());
+                var q=frame.GetProperty("rotation");
+                var expected=Quaternion.Normalize(new Quaternion(q[0].GetSingle(),q[1].GetSingle(),
+                    q[2].GetSingle(),q[3].GetSingle()));
+                Check(1-Math.Abs(Quaternion.Dot(expected,orientation.Rotation))<.00001f,
+                    "Helicopter host orientation matches Unity source expressions");
+            }
+            var retained=orientation.Rotation;
+            try{orientation.Advance(Vector3.Zero,Vector3.UnitX,Vector3.UnitX,
+                Vector3.UnitX,false,float.NaN);throw new Exception("Malformed Helicopter frame accepted.");}
+            catch(InvalidDataException){count++;}
+            Check(orientation.Rotation==retained,"invalid Helicopter orientation input leaves prior pose intact");
+        }
         return count;
     }
 }

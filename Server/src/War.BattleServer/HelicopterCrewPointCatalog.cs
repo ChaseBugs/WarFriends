@@ -6,6 +6,8 @@ namespace War.BattleServer;
 
 public sealed record HelicopterCrewPoint(int Index,int ComponentFileId,int TransformFileId,
     int RopeTransformFileId,Vector3 RestPosition,Quaternion RestRotation,Vector3 RopeRestPosition);
+public sealed record HelicopterCrewPose(int Slot,int PointComponentFileId,Vector3 Position,
+    Quaternion Rotation,Vector3 RopePosition);
 
 public sealed class HelicopterCrewPointCatalog
 {
@@ -13,6 +15,7 @@ public sealed class HelicopterCrewPointCatalog
     private static readonly int[] SourceOrder=[11438461,11450766,11481434,11454267,11412170,11411857];
     public IReadOnlyList<HelicopterCrewPoint> Slots { get; }
     public int TurretPointComponentFileId { get; }
+    public static readonly Vector3 RootRestPosition=new(-6.66f,0,-.47f);
     private HelicopterCrewPointCatalog(HelicopterCrewPoint[] slots,int turret)
     {Slots=Array.AsReadOnly(slots);TurretPointComponentFileId=turret;}
 
@@ -50,5 +53,24 @@ public sealed class HelicopterCrewPointCatalog
                 throw new InvalidDataException("Helicopter crew source slot is malformed.");
         }
         return new(slots,11499861);
+    }
+    public IReadOnlyList<HelicopterCrewPose> PlaceAttached(Vector3 rootPosition,Quaternion rootRotation,int seats)
+    {
+        if(!PlayerHitbox.Finite(rootPosition)||seats is <0 or >6||
+           !float.IsFinite(rootRotation.LengthSquared())||Math.Abs(rootRotation.LengthSquared()-1)>.001f)
+            throw new InvalidDataException("Invalid Helicopter root placement.");
+        var result=new HelicopterCrewPose[seats];
+        for(int i=0;i<seats;i++)
+        {
+            var slot=Slots[i];
+            Vector3 position=rootPosition+Vector3.Transform(slot.RestPosition-RootRestPosition,rootRotation);
+            Vector3 rope=rootPosition+Vector3.Transform(slot.RopeRestPosition-RootRestPosition,rootRotation);
+            Quaternion rotation=Quaternion.Normalize(rootRotation*slot.RestRotation);
+            if(!PlayerHitbox.Finite(position)||!PlayerHitbox.Finite(rope)||
+               !float.IsFinite(rotation.LengthSquared()))
+                throw new InvalidDataException("Helicopter attached crew pose overflow.");
+            result[i]=new(i,slot.ComponentFileId,position,rotation,rope);
+        }
+        return Array.AsReadOnly(result);
     }
 }
