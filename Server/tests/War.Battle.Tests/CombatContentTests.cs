@@ -50,9 +50,27 @@ internal static class CombatContentTests
         Check(turretRest.PointComponentFileId==11499861&&
               Vector3.Distance(turretRest.GunnerPosition,
                   content.HelicopterCrewPoints.TurretPointRestPosition)<.000001f&&
+              Vector3.Distance(turretRest.SightRestPosition,
+                  new Vector3(-.3553753f,.003f,-.025f))<.000001f&&
               Vector3.Distance(turretRest.MuzzleRestPosition,
                   content.HelicopterCrewPoints.TurretMuzzleRestPosition)<.000001f,
-              "source turret point and gun muzzle preserve their prefab rest geometry");
+              "source turret point, sight eye and gun muzzle preserve prefab rest geometry");
+        var selectionRay=HelicopterTurretSightRay.ForSelection(turretRest.SightRestPosition,
+            turretRest.SightRestPosition+Vector3.UnitZ*10);
+        var aimedRay=HelicopterTurretSightRay.ForAimedShot(turretRest.SightRestPosition,
+            turretRest.SightRestPosition+Vector3.UnitZ*10);
+        Check(Math.Abs(selectionRay.Range-9.45f)<.00001f&&
+              Math.Abs(aimedRay.Range-9.25f)<.00001f&&
+              Vector3.Distance(selectionRay.Origin,
+                  turretRest.SightRestPosition+Vector3.UnitZ*.05f)<.000001f&&
+              Vector3.Distance(aimedRay.Origin,
+                  turretRest.SightRestPosition+Vector3.UnitZ*.25f)<.000001f&&
+              selectionRay.LayerMask==aimedRay.LayerMask&&
+              selectionRay.LayerMask==((1u<<8)|(1u<<13)|(1u<<22)|(1u<<23)|
+                  (1u<<24)|(1u<<26)|(1u<<27)|(1u<<30)),
+              "Helicopter sight rays retain source selection and post-aim offsets and layer mask");
+        Reject(()=>HelicopterTurretSightRay.ForSelection(Vector3.Zero,
+            new Vector3(float.NaN,0,0)));
         Reject(()=>content.HelicopterCrewPoints.PlaceTurret(Vector3.Zero,default));
         var coneOrigin=new Vector3(-.373f,-.209f,0);
         Check(HelicopterTurretTargetCone.Contains(Vector3.Zero,Quaternion.Identity,
@@ -3344,6 +3362,13 @@ internal static class CombatContentTests
               Vector3.Distance(new Vector3(helicopterEntity.X,helicopterEntity.Y,helicopterEntity.Z),
                   new Vector3(helicopterSpawn.X,helicopterSpawn.Y,helicopterSpawn.Z))>0,
               "normal Helicopter deployment publishes host-owned source-route motion after spawn");
+        var liveTurretPose=deathMatch.HelicopterTurretPose(helicopterEntity.EntityKey)!;
+        var liveSelectionSight=deathMatch.HelicopterRestSightRay(helicopterEntity.EntityKey,
+            liveTurretPose.SightRestPosition+Vector3.UnitZ*10,false);
+        Check(liveSelectionSight is { } liveRay&&Math.Abs(liveRay.Range-9.45f)<.00001f&&
+              Vector3.Distance(liveRay.Origin,
+                  liveTurretPose.SightRestPosition+Vector3.UnitZ*.05f)<.000001f,
+              "live Helicopter root places the source rest sight ray before target selection");
         Check(War.Client.MatchConnection.ValidHelicopterCrew(helicopterEntity),
               "SDK accepts host Helicopter crew before its stop callback");
         var forgedCrew=helicopterEntity.Clone();forgedCrew.HelicopterCrewCount=7;
@@ -3394,6 +3419,7 @@ internal static class CombatContentTests
               deathMatch.HelicopterShotDefinition(helicopterEntity.EntityKey)==null&&
               deathMatch.HelicopterGunner(helicopterEntity.EntityKey)==null&&
               deathMatch.HelicopterTurretPose(helicopterEntity.EntityKey)==null&&
+              deathMatch.HelicopterRestSightRay(helicopterEntity.EntityKey,Vector3.Zero,false)==null&&
               deathMatch.HelicopterCrewMembers(helicopterEntity.EntityKey).Count==0&&
               deathMatch.HelicopterCrewDescents(helicopterEntity.EntityKey).Count==0&&
               deathMatch.HelicopterAttachedCrewPoses(helicopterEntity.EntityKey).Count==0&&

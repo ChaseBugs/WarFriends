@@ -155,6 +155,18 @@
   "turretBatchedWeaponComponentFileId": 11483234,
   "turretGunComponentFileId": 11441888,
   "turretMuzzleTransformFileId": 477091,
+  "turretSightTransformFileId": 474009,
+  "turretSightRestPosition": [
+    -0.355375306019124,
+    0.002999981299719595,
+    -0.02499997130227238
+  ],
+  "turretSightRestRotation": [
+    0.0,
+    -0.7071068,
+    0.0,
+    0.7071067
+  ],
   "turretMuzzleRestPosition": [
     -0.5323752802647455,
     0.07099997530151644,
