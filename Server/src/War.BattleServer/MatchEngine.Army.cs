@@ -34,9 +34,12 @@ public sealed partial class MatchEngine
     private readonly Dictionary<ulong,DroneWaypointState> armyDronePaths=[];
     private readonly Dictionary<ulong,HelicopterWaypointState> armyHelicopterPaths=[];
     private readonly Dictionary<ulong,ArmyHelicopterCrewStats> armyHelicopterCrew=[];
+    private readonly Dictionary<ulong,HelicopterCrewState> armyHelicopterCrewMembers=[];
     private readonly Dictionary<ulong,HelicopterCrewSchedule> armyHelicopterSchedules=[];
     internal bool HasHelicopterPath(ulong key)=>armyHelicopterPaths.ContainsKey(key);
     internal ArmyHelicopterCrewStats? HelicopterCrewDefinition(ulong key)=>armyHelicopterCrew.GetValueOrDefault(key);
+    internal IReadOnlyList<HelicopterCrewMemberSnapshot> HelicopterCrewMembers(ulong key)
+        =>armyHelicopterCrewMembers.TryGetValue(key,out var crew)?crew.Snapshot():Array.Empty<HelicopterCrewMemberSnapshot>();
     internal IReadOnlyList<int> HelicopterCrewDueSlots(ulong key,ulong atTick)
         =>armyHelicopterSchedules.TryGetValue(key,out var schedule)?schedule.DueSlots(atTick):Array.Empty<int>();
     private readonly Dictionary<ulong,ArmyVehicleShotStats> armyDroneShots=[];
@@ -202,6 +205,9 @@ public sealed partial class MatchEngine
             row.PositionTick=tick;
             if(armyHelicopterSchedules.TryGetValue(key,out var schedule))
             {
+                if(!armyHelicopterCrewMembers.TryGetValue(key,out var crew))
+                    throw new InvalidDataException("Helicopter descent lost attached crew state.");
+                crew.Advance(schedule,tick);
                 uint mask=schedule.DueMask(tick);
                 if(mask!=row.HelicopterCrewDropMask)
                 {row.HelicopterCrewDropMask=mask;armyEntityRevision++;stateRevision++;}
@@ -449,8 +455,15 @@ public sealed partial class MatchEngine
         int? elite=owner.ArmyEliteUpgradeIndexes is { } elites && elites[index]>=0 ? elites[index] : null;
         var family=armyCatalog!.Families.Single(f=>f.UnitId==unitId);
         if(family.BehaviorType=="HelicopterBehaviour")
-            armyHelicopterCrew.Add(entityKey,armyCatalog.ComposeHelicopterCrew(
-                owner.ArmyNormalUpgradeIndexes[index],special,elite));
+        {
+            var crew=owner.ArmyHealthFactors is { } crewFactors?
+                armyCatalog.EffectiveHelicopterCrew(owner.ArmyNormalUpgradeIndexes[index],special,elite,
+                    crewFactors[index]):
+                armyCatalog.ComposeHelicopterCrew(owner.ArmyNormalUpgradeIndexes[index],special,elite);
+            armyHelicopterCrew.Add(entityKey,crew);
+            armyHelicopterCrewMembers.Add(entityKey,new HelicopterCrewState(crew,
+                helicopterCrewPoints??throw new InvalidDataException("Helicopter crew points absent."),tick));
+        }
         if(owner.ArmyHealthFactors is { } healthFactors)
         {
             float maximum=armyCatalog!.EffectiveHealth(unitId,owner.ArmyNormalUpgradeIndexes![index],
@@ -2019,6 +2032,7 @@ public sealed partial class MatchEngine
         armyDronePaths.Remove(entityKey);
         armyHelicopterPaths.Remove(entityKey);
         armyHelicopterCrew.Remove(entityKey);
+        armyHelicopterCrewMembers.Remove(entityKey);
         armyHelicopterSchedules.Remove(entityKey);
         armyDroneShots.Remove(entityKey);
         droneAttacks.Remove(entityKey);

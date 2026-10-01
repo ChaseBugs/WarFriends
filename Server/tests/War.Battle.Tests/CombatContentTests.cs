@@ -808,6 +808,10 @@ internal static class CombatContentTests
         Check(content.Army.ComposeHelicopterCrew(0,null,null)==new ArmyHelicopterCrewStats(2,621f)&&
               content.Army.ComposeHelicopterCrew(70,82,null)==new ArmyHelicopterCrewStats(6,1531f),
               "Helicopter seats add selected normal/special lanes while crew health reads only normal row");
+        Check(content.Army.EffectiveHelicopterCrew(0,null,null,new(2f,1.25f))==
+                  new ArmyHelicopterCrewStats(2,776.25f),
+              "Helicopter soldier health uses upgrade scale without vehicle health perk coefficient");
+        Reject(()=>content.Army.EffectiveHelicopterCrew(0,null,null,new(1f,float.NaN)));
         try{content.Army.ComposeHelicopterCrew(0,0,null);throw new Exception("invalid Helicopter special lane accepted");}
         catch(ArgumentOutOfRangeException){count++;}
         var humveeShot=content.Army.ComposeVehicleShot("ID_UNIT-HUMVEE",0,null,null);
@@ -3250,6 +3254,10 @@ internal static class CombatContentTests
               deathMatch.HelicopterCrewDueSlots(helicopterEntity.EntityKey,70).Count==0&&
               deathMatch.HelicopterCrewDefinition(helicopterEntity.EntityKey)==
                   new ArmyHelicopterCrewStats(2,621f)&&
+              deathMatch.HelicopterCrewMembers(helicopterEntity.EntityKey).Select(x=>x.PointComponentFileId)
+                  .SequenceEqual(new[]{11438461,11450766})&&
+              deathMatch.HelicopterCrewMembers(helicopterEntity.EntityKey)
+                  .All(x=>x.Health==621f&&x.Maximum==621f&&x.DropStartTick==0)&&
               Vector3.Distance(new Vector3(helicopterEntity.X,helicopterEntity.Y,helicopterEntity.Z),
                   new Vector3(helicopterSpawn.X,helicopterSpawn.Y,helicopterSpawn.Z))>0,
               "normal Helicopter deployment publishes host-owned source-route motion after spawn");
@@ -3300,6 +3308,7 @@ internal static class CombatContentTests
         Check(deathMatch.ConfirmArmyDeath(helicopterEntity.EntityKey,true) &&
               !deathMatch.HasHelicopterPath(helicopterEntity.EntityKey) &&
               deathMatch.HelicopterCrewDefinition(helicopterEntity.EntityKey)==null&&
+              deathMatch.HelicopterCrewMembers(helicopterEntity.EntityKey).Count==0&&
               deathMatch.HelicopterCrewDueSlots(helicopterEntity.EntityKey,ulong.MaxValue).Count==0&&
               deathMatch.ArmyBatch(helicopterOwner).Energy==9 &&
               deathMatch.ArmyBatch(helicopterOwner).OptionIndexes.Count==3 &&
@@ -3348,6 +3357,9 @@ internal static class CombatContentTests
               "live roster advances the two ordered Helicopter crew descent phases exactly once");
         var droppedCrew=crewMatch.ArmyEntityBatch(helicopterOwner,0,0).Entities
             .Single(x=>x.EntityKey==sourceHelicopter);
+        Check(crewMatch.HelicopterCrewMembers(sourceHelicopter).Select(x=>x.DropStartTick)
+                  .SequenceEqual(new[]{sourceStop+150,sourceStop+210}),
+              "live Helicopter attached crew records retain their two source descent start ticks");
         Check(War.Client.MatchConnection.ValidHelicopterCrew(droppedCrew),
               "SDK accepts the live host's completed ordered crew descent prefix");
         forgedCrew=droppedCrew.Clone();forgedCrew.HelicopterCrewDropMask=2;

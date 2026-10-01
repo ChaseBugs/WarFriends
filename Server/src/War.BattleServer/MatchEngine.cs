@@ -56,6 +56,7 @@ public sealed partial class MatchEngine
     private readonly ExplosionSourceCatalog? explosionPolicy;
     private readonly ArmySpawnPointSelector? armySelector;
     private readonly AirWaypointCatalog? airWaypoints;
+    private readonly HelicopterCrewPointCatalog? helicopterCrewPoints;
     private readonly ArmyRusherPointCatalog? armyRusherPoints;
     private readonly ArmyMinigunnerPointCatalog? armyMinigunnerPoints;
     private readonly ArmyNavMeshConnectivity? armyNavMeshConnectivity;
@@ -718,7 +719,8 @@ public sealed partial class MatchEngine
             groundVehicleWeapons=content.GroundVehicleWeapons;
             enemyPoses=content.EnemyPoses;enemyShotTargets=content.EnemyShotTargets;
             armySelector=new ArmySpawnPointSelector(content.ArmySpawnPoints);
-            airWaypoints=content.AirWaypoints;droneColliders=content.DroneColliders;
+            airWaypoints=content.AirWaypoints;helicopterCrewPoints=content.HelicopterCrewPoints;
+            droneColliders=content.DroneColliders;
             droneWeapon=content.DroneWeapon;droneProjectile=content.DroneProjectile;
             armyRusherPoints=content.ArmyRusherPoints;
             armyMinigunnerPoints=content.ArmyMinigunnerPoints;

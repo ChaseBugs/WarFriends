@@ -88,6 +88,18 @@ public sealed class ArmyDeploymentCatalog
             throw new InvalidDataException("Helicopter crew exceeds source points or lacks normal-row health.");
         return new(seats,health);
     }
+    public ArmyHelicopterCrewStats EffectiveHelicopterCrew(int normalIndex,int? specialIndex,
+        int? eliteIndex,ArmyHealthFactors factors)
+    {
+        ArgumentNullException.ThrowIfNull(factors);
+        if(!float.IsFinite(factors.UpgradeScale)||factors.UpgradeScale<=0||factors.UpgradeScale>100)
+            throw new InvalidDataException("Invalid trusted Helicopter crew health scale.");
+        var raw=ComposeHelicopterCrew(normalIndex,specialIndex,eliteIndex);
+        float health=raw.SoldierHealth*factors.UpgradeScale;
+        if(!float.IsFinite(health)||health<=0||health>10_000_000)
+            throw new InvalidDataException("Helicopter crew health is outside source combat bounds.");
+        return raw with{SoldierHealth=health};
+    }
 
     /// <summary>Source LoadData adds each bought lane's row before perk and mode scaling.</summary>
     public ArmyBaseCombatStats ComposeStats(string unitId,int normalIndex,int? specialIndex,int? eliteIndex)
