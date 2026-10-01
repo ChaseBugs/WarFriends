@@ -42,7 +42,7 @@ internal sealed class HelicopterOrientationState
             throw new InvalidDataException("Helicopter orientation lost unit rotation.");
         horizontal=nextHorizontal;vertical=nextVertical;angle=nextAngle;
     }
-    private static Quaternion LookRotation(Vector3 forward)
+    internal static Quaternion LookRotation(Vector3 forward)
     {
         var z=Vector3.Normalize(forward);
         var x=Vector3.Cross(Vector3.UnitY,z);

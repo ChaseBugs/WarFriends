@@ -79,6 +79,15 @@ public sealed partial class MatchEngine
         return afterAim?HelicopterTurretSightRay.ForAimedShot(pose.SightRestPosition,target):
             HelicopterTurretSightRay.ForSelection(pose.SightRestPosition,target);
     }
+    internal HelicopterTurretAimPose? HelicopterTurretAimFromRest(ulong key,Vector3 target)
+    {
+        if(phase!=BattlePhase.Running||!armyHelicopterGunners.TryGetValue(key,out var gunner)||
+           !gunner.Snapshot().TurretEnabled||!activeArmyEntities.TryGetValue(key,out var row)||
+           row.UnitId!="ID_UNIT-HELICOPTER"||row.HelicopterRotation==null)return null;
+        var q=row.HelicopterRotation;
+        return HelicopterTurretAim.FromRest(new(row.X,row.Y,row.Z),
+            new(q.X,q.Y,q.Z,q.W),target);
+    }
     internal bool HelicopterTargetInTurretCone(ulong key,Vector3 target)
     {
         if(phase!=BattlePhase.Running||!armyHelicopterGunners.TryGetValue(key,out var gunner)||

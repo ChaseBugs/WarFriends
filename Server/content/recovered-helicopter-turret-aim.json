@@ -1,0 +1,229 @@
+{
+  "version": 1,
+  "client": "1.4.0",
+  "unityVersion": "2018.3.0f2",
+  "source": "Assets/GameObject/Helicopter.prefab",
+  "prefabSha256": "e91c07c1552988601ada89c769056354ebd5d94ea88356eeacc5fa3f3fb76408",
+  "rows": [
+    {
+      "id": 0,
+      "rootPosition": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rootRotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "target": [
+        -10.0,
+        0.0,
+        0.0
+      ],
+      "immediate": true,
+      "clipped": false,
+      "aimSeconds": 0.0,
+      "horizontalLocalRotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "verticalWorldRotation": [
+        0.0,
+        -0.7071068,
+        0.0,
+        0.7071067
+      ],
+      "sightPosition": [
+        -0.3553753,
+        0.00299999118,
+        -0.0249999743
+      ],
+      "muzzlePosition": [
+        -0.5323753,
+        0.0709999949,
+        -0.0259998888
+      ]
+    },
+    {
+      "id": 1,
+      "rootPosition": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rootRotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "target": [
+        -8.0,
+        2.0,
+        4.0
+      ],
+      "immediate": false,
+      "clipped": false,
+      "aimSeconds": 0.1,
+      "horizontalLocalRotation": [
+        0.0,
+        0.231655031,
+        0.0,
+        0.972798049
+      ],
+      "verticalWorldRotation": [
+        -0.107143752,
+        -0.5133956,
+        -0.0647929,
+        0.8489684
+      ],
+      "sightPosition": [
+        -0.354516685,
+        0.00299999118,
+        -0.0213943161
+      ],
+      "muzzlePosition": [
+        -0.4918548,
+        0.1128438,
+        0.0495039672
+      ]
+    },
+    {
+      "id": 2,
+      "rootPosition": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rootRotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "target": [
+        2.0,
+        0.0,
+        0.0
+      ],
+      "immediate": false,
+      "clipped": true,
+      "aimSeconds": 0.1,
+      "horizontalLocalRotation": [
+        0.0,
+        -7.450581E-07,
+        0.0,
+        1.0
+      ],
+      "verticalWorldRotation": [
+        -0.0310487952,
+        0.7064247,
+        0.0310487952,
+        0.706424832
+      ],
+      "sightPosition": [
+        -0.3553753,
+        0.00299999118,
+        -0.0249999817
+      ],
+      "muzzlePosition": [
+        -0.185023785,
+        0.0862668,
+        -0.0240000635
+      ]
+    },
+    {
+      "id": 3,
+      "rootPosition": [
+        3.0,
+        1.0,
+        -2.0
+      ],
+      "rootRotation": [
+        0.0226656366,
+        0.172162592,
+        0.128543213,
+        0.9763826
+      ],
+      "target": [
+        -7.0,
+        3.0,
+        4.0
+      ],
+      "immediate": false,
+      "clipped": false,
+      "aimSeconds": 0.1,
+      "horizontalLocalRotation": [
+        -1.31708955E-09,
+        0.115461826,
+        -9.219622E-09,
+        0.993311942
+      ],
+      "verticalWorldRotation": [
+        -0.08682998,
+        -0.4880264,
+        -0.04886884,
+        0.8671232
+      ],
+      "sightPosition": [
+        2.66897631,
+        0.9109751,
+        -1.90416884
+      ],
+      "muzzlePosition": [
+        2.53168035,
+        1.01272106,
+        -1.822001
+      ]
+    },
+    {
+      "id": 4,
+      "rootPosition": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "rootRotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "target": [
+        -5.0,
+        0.0,
+        9.0
+      ],
+      "immediate": false,
+      "clipped": false,
+      "aimSeconds": 0.174380273,
+      "horizontalLocalRotation": [
+        0.0,
+        0.520837545,
+        0.0,
+        0.8536558
+      ],
+      "verticalWorldRotation": [
+        -0.0100350343,
+        -0.235199153,
+        -0.00242849,
+        0.971892357
+      ],
+      "sightPosition": [
+        -0.351034969,
+        0.00299999118,
+        -0.0178861171
+      ],
+      "muzzlePosition": [
+        -0.432193816,
+        0.07464026,
+        0.137789518
+      ]
+    }
+  ]
+}

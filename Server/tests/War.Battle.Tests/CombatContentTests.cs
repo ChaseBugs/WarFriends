@@ -83,6 +83,42 @@ internal static class CombatContentTests
                   Vector3.UnitY*10),
               "source Helicopter turret cone retains full 3D direction under root bank");
         Reject(()=>HelicopterTurretTargetCone.Contains(Vector3.Zero,default,Vector3.UnitX));
+        using(var aimReference=JsonDocument.Parse(File.ReadAllBytes(
+            Path.Combine(directory,"recovered-helicopter-turret-aim.json"))))
+        {
+            var oracle=aimReference.RootElement;
+            Check(oracle.GetProperty("version").GetInt32()==1&&
+                  oracle.GetProperty("client").GetString()=="1.4.0"&&
+                  oracle.GetProperty("source").GetString()=="Assets/GameObject/Helicopter.prefab"&&
+                  oracle.GetProperty("prefabSha256").GetString()==
+                    "e91c07c1552988601ada89c769056354ebd5d94ea88356eeacc5fa3f3fb76408"&&
+                  oracle.GetProperty("rows").GetArrayLength()==5,
+                  "Unity turret-aim oracle retains source prefab identity and all five cases");
+            static Vector3 ArrayVector(JsonElement a)=>new(a[0].GetSingle(),a[1].GetSingle(),a[2].GetSingle());
+            static Quaternion ArrayRotation(JsonElement a)=>new(a[0].GetSingle(),a[1].GetSingle(),
+                a[2].GetSingle(),a[3].GetSingle());
+            foreach(var row in oracle.GetProperty("rows").EnumerateArray())
+            {
+                var aimPose=HelicopterTurretAim.FromRest(ArrayVector(row.GetProperty("rootPosition")),
+                    ArrayRotation(row.GetProperty("rootRotation")),ArrayVector(row.GetProperty("target")));
+                float horizontalDot=Math.Abs(Quaternion.Dot(aimPose.HorizontalLocalRotation,
+                    ArrayRotation(row.GetProperty("horizontalLocalRotation"))));
+                float verticalDot=Math.Abs(Quaternion.Dot(aimPose.VerticalWorldRotation,
+                    ArrayRotation(row.GetProperty("verticalWorldRotation"))));
+                Check(aimPose.Immediate==row.GetProperty("immediate").GetBoolean()&&
+                      aimPose.Clipped==row.GetProperty("clipped").GetBoolean()&&
+                      Math.Abs(aimPose.AimSeconds-row.GetProperty("aimSeconds").GetSingle())<.0001f&&
+                      horizontalDot>.99999f&&verticalDot>.99999f&&
+                      Vector3.Distance(aimPose.SightPosition,
+                          ArrayVector(row.GetProperty("sightPosition")))<.0001f&&
+                      Vector3.Distance(aimPose.MuzzlePosition,
+                          ArrayVector(row.GetProperty("muzzlePosition")))<.0001f,
+                      $"Helicopter turret aim final transform matches Unity oracle row {row.GetProperty("id").GetInt32()}");
+            }
+        }
+        Reject(()=>HelicopterTurretAim.FromRest(Vector3.Zero,default,-Vector3.UnitX));
+        Reject(()=>HelicopterTurretAim.FromRest(Vector3.Zero,Quaternion.Identity,
+            new Vector3(-.373f,-.209f,0)));
         var turretCandidates=new DroneTargetCandidate[]
         {
             new("defender",2,true,true,false,0,Vector3.UnitX),
@@ -3369,6 +3405,18 @@ internal static class CombatContentTests
               Vector3.Distance(liveRay.Origin,
                   liveTurretPose.SightRestPosition+Vector3.UnitZ*.05f)<.000001f,
               "live Helicopter root places the source rest sight ray before target selection");
+        var liveRoot=new Vector3(helicopterEntity.X,helicopterEntity.Y,helicopterEntity.Z);
+        var liveRootRotation=new Quaternion(helicopterEntity.HelicopterRotation!.X,
+            helicopterEntity.HelicopterRotation.Y,helicopterEntity.HelicopterRotation.Z,
+            helicopterEntity.HelicopterRotation.W);
+        var liveAimTarget=liveRoot+Vector3.Transform(new Vector3(-8,2,4),liveRootRotation);
+        var liveAim=deathMatch.HelicopterTurretAimFromRest(helicopterEntity.EntityKey,liveAimTarget);
+        var expectedAim=HelicopterTurretAim.FromRest(liveRoot,liveRootRotation,liveAimTarget);
+        Check(liveAim is {Immediate:false,Clipped:false}&&
+              Vector3.Distance(liveAim.SightPosition,expectedAim.SightPosition)<.000001f&&
+              Vector3.Distance(liveAim.MuzzlePosition,expectedAim.MuzzlePosition)<.000001f&&
+              Vector3.Distance(liveAim.SightPosition,liveTurretPose.SightRestPosition)>.001f,
+              "live Helicopter root resolves a turned source sight and muzzle from its current flight pose");
         Check(War.Client.MatchConnection.ValidHelicopterCrew(helicopterEntity),
               "SDK accepts host Helicopter crew before its stop callback");
         var forgedCrew=helicopterEntity.Clone();forgedCrew.HelicopterCrewCount=7;
@@ -3472,6 +3520,8 @@ internal static class CombatContentTests
         Check(crewMatch.DamageHelicopterGunner(sourceHelicopter,621f)&&
               crewMatch.HelicopterGunner(sourceHelicopter) is {Health:0,TurretEnabled:false}&&
               !crewMatch.HelicopterTargetInTurretCone(sourceHelicopter,Vector3.Zero)&&
+              crewMatch.HelicopterTurretAimFromRest(sourceHelicopter,
+                  heliAimOrigin+heliForward*10)==null&&
               !crewMatch.DamageHelicopterGunner(sourceHelicopter,1f),
               "host-owned gunner health disables the live Helicopter turret after lethal damage");
         ulong crewTick=sourceStop;
