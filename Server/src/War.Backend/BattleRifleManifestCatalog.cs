@@ -53,6 +53,11 @@ public sealed class BattleRifleManifestCatalog
         byte[] content=ReadBounded(contentPath,2,16_000_000,"rifle content");
         if(Convert.ToHexStringLower(SHA256.HashData(content))!=manifest.StatsRevision)
             throw new InvalidDataException("Rifle content revision mismatch.");
+        string crewPath=Path.Combine(Path.GetDirectoryName(Path.GetFullPath(manifestPath))!,
+            "recovered-helicopter-crew-points.json");
+        byte[] crew=ReadBounded(crewPath,100,10_000,"Helicopter crew source");
+        if(Convert.ToHexStringLower(SHA256.HashData(crew))!=manifest.HelicopterCrewPointsRevision)
+            throw new InvalidDataException("Helicopter crew source revision mismatch.");
         try
         {
             using var document=JsonDocument.Parse(content);

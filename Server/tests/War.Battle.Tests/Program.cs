@@ -1435,6 +1435,23 @@ if (contentRoot == null) throw new Exception("Recovered battle content artifact 
 string contentFile = Path.Combine(contentRoot.FullName, "content/recovered-battle-content.json");
 string combatManifestFile=Path.Combine(contentRoot.FullName,"content/combat-content-manifest.json");
 var allocatorRifles=BattleRifleManifestCatalog.Load(combatManifestFile);
+string crewAudit=Path.Combine(Path.GetTempPath(),"war-allocator-crew-"+Guid.NewGuid().ToString("N"));
+Directory.CreateDirectory(crewAudit);
+try
+{
+    File.Copy(combatManifestFile,Path.Combine(crewAudit,"combat-content-manifest.json"));
+    File.Copy(contentFile,Path.Combine(crewAudit,"recovered-battle-content.json"));
+    var crewBytes=File.ReadAllBytes(Path.Combine(contentRoot.FullName,"content/recovered-helicopter-crew-points.json"));
+    crewBytes[0]^=1;
+    File.WriteAllBytes(Path.Combine(crewAudit,"recovered-helicopter-crew-points.json"),crewBytes);
+    Reject(()=>BattleRifleManifestCatalog.Load(Path.Combine(crewAudit,"combat-content-manifest.json")),
+        "allocator rejects a modified Helicopter crew artifact before publishing package revision");
+}
+finally
+{
+    foreach(string file in Directory.GetFiles(crewAudit))File.Delete(file);
+    Directory.Delete(crewAudit);
+}
 var workerRifles=BattleCombatContent.Load(combatManifestFile);
 var allocatorTemplate=(JsonObject)JsonNode.Parse(await File.ReadAllTextAsync(Path.Combine(contentRoot.FullName,"content/local-rifle-match-template.json")))!;
 allocatorRifles.ValidateTemplate(allocatorTemplate);
