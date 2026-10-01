@@ -65,6 +65,27 @@ internal static class CombatContentTests
                   Vector3.UnitY*10),
               "source Helicopter turret cone retains full 3D direction under root bank");
         Reject(()=>HelicopterTurretTargetCone.Contains(Vector3.Zero,default,Vector3.UnitX));
+        var turretCandidates=new DroneTargetCandidate[]
+        {
+            new("defender",2,true,true,false,0,Vector3.UnitX),
+            new("shooter",2,true,true,false,2,Vector3.UnitY),
+            new("rusher",2,true,true,false,3,Vector3.UnitZ),
+            new("decoy",2,true,true,true,null,-Vector3.UnitX),
+            new("player",2,true,true,false,null,-Vector3.UnitZ)
+        };
+        DroneTargetCandidate? SelectTurret(Func<DroneTargetCandidate,bool> eligible,
+            Func<int,int>? choose=null)=>HelicopterTurretTargetPolicy.Select(1,turretCandidates,
+                eligible,choose??(_=>0));
+        Check(SelectTurret(_=>false)?.Id=="decoy"&&
+              HelicopterTurretTargetPolicy.Select(1,turretCandidates[..3],
+                  _=>true,_=>0)?.Id=="rusher"&&
+              HelicopterTurretTargetPolicy.Select(1,turretCandidates[..2],
+                  _=>true,n=>n-1)?.Id=="shooter"&&
+              HelicopterTurretTargetPolicy.Select(1,[turretCandidates[4]],
+                  _=>true,_=>0)?.Id=="player",
+              "Helicopter turret retains source decoy, primary, secondary, fallback and random-list order");
+        Reject(()=>HelicopterTurretTargetPolicy.Select(1,turretCandidates[..3],
+            _=>true,n=>n));
         var translatedCrew=content.HelicopterCrewPoints.PlaceAttached(new(10,5,20),Quaternion.Identity,2);
         Check(Vector3.Distance(translatedCrew[0].Position,
                   new Vector3(10.21307182f,4.8822651f,19.82723331f))<.00001f,
