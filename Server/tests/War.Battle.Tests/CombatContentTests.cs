@@ -17,6 +17,13 @@ internal static class CombatContentTests
         Vector3 Vec(JsonElement value)=>new(value.GetProperty("x").GetSingle(),
             value.GetProperty("y").GetSingle(),value.GetProperty("z").GetSingle());
         var content=BattleCombatContent.Load(Path.Combine(directory,"combat-content-manifest.json"));
+        Check(content.HelicopterCrewPoints.Slots.Count==6&&
+              content.HelicopterCrewPoints.Slots.Select(x=>x.ComponentFileId).SequenceEqual(
+                  new[]{11438461,11450766,11481434,11454267,11412170,11411857})&&
+              content.HelicopterCrewPoints.Slots.All(x=>x.RopeTransformFileId==480871)&&
+              content.HelicopterCrewPoints.TurretPointComponentFileId==11499861,
+            "combat package binds ordered source Helicopter crew and turret attachment identities");
+        Reject(()=>HelicopterCrewPointCatalog.Load(Path.Combine(directory,"recovered-helicopter-crew-points.json"),new string('0',64)));
         Check(content.DroneWeapon.Revision==Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(Path.Combine(directory,"recovered-drone-weapon.json")))),"combat package binds verified Drone weapon authority");
         Check(content.DroneProjectile.Revision==Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(Path.Combine(directory,"recovered-drone-projectile-setup.json")))),"combat package requires verified Drone projectile setup revision");
         count+=DroneSpecialTests.Run(content.Army);

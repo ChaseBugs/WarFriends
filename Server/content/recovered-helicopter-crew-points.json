@@ -1,0 +1,142 @@
+{
+  "version": 1,
+  "client": "1.4.0",
+  "source": "Assets/GameObject/Helicopter.prefab",
+  "sha256": "e91c07c1552988601ada89c769056354ebd5d94ea88356eeacc5fa3f3fb76408",
+  "helicopterComponentFileId": 11475216,
+  "slots": [
+    {
+      "index": 0,
+      "componentFileId": 11438461,
+      "transformFileId": 491029,
+      "ropeTransformFileId": 480871,
+      "restPosition": [
+        0.21307182,
+        -0.11773490769999999,
+        -0.17276669
+      ],
+      "restRotation": [
+        0.0,
+        0.63768893,
+        0.0,
+        0.7702941
+      ],
+      "ropeRestPosition": [
+        0.36974144,
+        -0.1304485777,
+        0.01884365
+      ]
+    },
+    {
+      "index": 1,
+      "componentFileId": 11450766,
+      "transformFileId": 468999,
+      "ropeTransformFileId": 480871,
+      "restPosition": [
+        0.22835445,
+        -0.11773490769999999,
+        0.22529984
+      ],
+      "restRotation": [
+        0.0,
+        0.74328536,
+        0.0,
+        0.6689745
+      ],
+      "ropeRestPosition": [
+        0.36974144,
+        -0.1304485777,
+        0.01884365
+      ]
+    },
+    {
+      "index": 2,
+      "componentFileId": 11481434,
+      "transformFileId": 479834,
+      "ropeTransformFileId": 480871,
+      "restPosition": [
+        -0.14429092,
+        -0.11773490769999999,
+        0.20239162
+      ],
+      "restRotation": [
+        0.0,
+        -0.73942524,
+        0.0,
+        0.6732387
+      ],
+      "ropeRestPosition": [
+        0.36974144,
+        -0.1304485777,
+        0.01884365
+      ]
+    },
+    {
+      "index": 3,
+      "componentFileId": 11454267,
+      "transformFileId": 413056,
+      "ropeTransformFileId": 480871,
+      "restPosition": [
+        -0.14429092,
+        -0.11773490769999999,
+        -0.23198605
+      ],
+      "restRotation": [
+        0.0,
+        -0.68429655,
+        0.0,
+        0.7292038
+      ],
+      "ropeRestPosition": [
+        0.36974144,
+        -0.1304485777,
+        0.01884365
+      ]
+    },
+    {
+      "index": 4,
+      "componentFileId": 11412170,
+      "transformFileId": 411975,
+      "ropeTransformFileId": 480871,
+      "restPosition": [
+        8.201599e-05,
+        -0.12340533769999999,
+        0.40838814
+      ],
+      "restRotation": [
+        0.0,
+        -0.013587447,
+        0.0,
+        0.99990773
+      ],
+      "ropeRestPosition": [
+        0.36974144,
+        -0.1304485777,
+        0.01884365
+      ]
+    },
+    {
+      "index": 5,
+      "componentFileId": 11411857,
+      "transformFileId": 467818,
+      "ropeTransformFileId": 480871,
+      "restPosition": [
+        0.021944046,
+        -0.1234056977,
+        -0.39590836
+      ],
+      "restRotation": [
+        0.0,
+        -0.99998903,
+        0.0,
+        0.004693896
+      ],
+      "ropeRestPosition": [
+        0.36974144,
+        -0.1304485777,
+        0.01884365
+      ]
+    }
+  ],
+  "turretPointComponentFileId": 11499861
+}
