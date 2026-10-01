@@ -58,7 +58,9 @@ public sealed partial class MatchEngine
     internal IReadOnlyList<int> HelicopterCrewDueSlots(ulong key,ulong atTick)
         =>armyHelicopterSchedules.TryGetValue(key,out var schedule)?schedule.DueSlots(atTick):Array.Empty<int>();
     private readonly Dictionary<ulong,ArmyVehicleShotStats> armyDroneShots=[];
+    private readonly Dictionary<ulong,ArmyVehicleShotStats> armyHelicopterShots=[];
     internal ArmyVehicleShotStats? DroneShotDefinition(ulong key)=>armyDroneShots.GetValueOrDefault(key);
+    internal ArmyVehicleShotStats? HelicopterShotDefinition(ulong key)=>armyHelicopterShots.GetValueOrDefault(key);
 
     private void InitializeDronePath(ulong key,ArmyDeploymentFamily family,ArmySpawnPoint spawn)
     {
@@ -536,6 +538,10 @@ public sealed partial class MatchEngine
                 armyDroneShots[entityKey],droneWeapon??throw new InvalidDataException("Drone weapon source absent."),
                 droneProjectile??throw new InvalidDataException("Drone projectile source absent."),NextArmyFloat,DroneBatchRange));
         }
+        if(family.BehaviorType=="HelicopterBehaviour")
+            armyHelicopterShots.Add(entityKey,armyCatalog!.ComposeHelicopterShot(
+                owner.ArmyNormalUpgradeIndexes[index],special,elite,
+                owner.ArmyShotSpeedCoefficients?[index]??1f));
         if(family.VehicleShot!=null&&!family.IsAir&&!family.IsSoldier)
             armyVehicleShots.Add(entityKey,armyCatalog.ComposeVehicleShot(unitId,
                 owner.ArmyNormalUpgradeIndexes[index],special,elite,
@@ -2058,6 +2064,7 @@ public sealed partial class MatchEngine
         armyHelicopterCrewMembers.Remove(entityKey);
         armyHelicopterSchedules.Remove(entityKey);
         armyDroneShots.Remove(entityKey);
+        armyHelicopterShots.Remove(entityKey);
         droneAttacks.Remove(entityKey);
         droneLastIntents.Remove(entityKey);
         armyDamage.Remove(entityKey);

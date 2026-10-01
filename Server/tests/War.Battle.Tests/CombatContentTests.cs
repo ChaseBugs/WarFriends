@@ -824,6 +824,10 @@ internal static class CombatContentTests
         try{content.Army.ComposeHelicopterCrew(0,0,null);throw new Exception("invalid Helicopter special lane accepted");}
         catch(ArgumentOutOfRangeException){count++;}
         var humveeShot=content.Army.ComposeVehicleShot("ID_UNIT-HUMVEE",0,null,null);
+        var helicopterShot=content.Army.ComposeHelicopterShot(0,null,null);
+        Check(helicopterShot==new ArmyVehicleShotStats(12f,.75f,4,5,2f,4f,0),
+              "Helicopter turret binds selected source shot stages apart from attached crew count");
+        Reject(()=>content.Army.ComposeHelicopterShot(0,null,null,float.NaN));
         var tankShot=content.Army.ComposeVehicleShot("ID_UNIT-TANK",0,null,null);
         var buggyShot=content.Army.ComposeVehicleShot("ID_UNIT-BUGGY",0,null,null);
         var transporterShot=content.Army.ComposeVehicleShot("ID_UNIT-TRANSPORTER",0,null,null);
@@ -3268,6 +3272,7 @@ internal static class CombatContentTests
               deathMatch.HelicopterCrewDueSlots(helicopterEntity.EntityKey,70).Count==0&&
               deathMatch.HelicopterCrewDefinition(helicopterEntity.EntityKey)==
                   new ArmyHelicopterCrewStats(2,621f)&&
+              deathMatch.HelicopterShotDefinition(helicopterEntity.EntityKey)==helicopterShot&&
               deathMatch.HelicopterCrewMembers(helicopterEntity.EntityKey).Select(x=>x.PointComponentFileId)
                   .SequenceEqual(new[]{11438461,11450766})&&
               deathMatch.HelicopterCrewMembers(helicopterEntity.EntityKey)
@@ -3323,6 +3328,7 @@ internal static class CombatContentTests
         Check(deathMatch.ConfirmArmyDeath(helicopterEntity.EntityKey,true) &&
               !deathMatch.HasHelicopterPath(helicopterEntity.EntityKey) &&
               deathMatch.HelicopterCrewDefinition(helicopterEntity.EntityKey)==null&&
+              deathMatch.HelicopterShotDefinition(helicopterEntity.EntityKey)==null&&
               deathMatch.HelicopterCrewMembers(helicopterEntity.EntityKey).Count==0&&
               deathMatch.HelicopterCrewDescents(helicopterEntity.EntityKey).Count==0&&
               deathMatch.HelicopterAttachedCrewPoses(helicopterEntity.EntityKey).Count==0&&

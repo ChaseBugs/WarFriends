@@ -207,10 +207,22 @@ public sealed class ArmyDeploymentCatalog
     /// <summary>Vehicle UpgradesLoaded replaces serialized turret timing with selected upgrade rows.</summary>
     public ArmyVehicleShotStats ComposeVehicleShot(string unitId,int normalIndex,int? specialIndex,
         int? eliteIndex,float accuracyCoefficient=1f,float shotSpeedCoefficient=1f)
+        =>ComposeVehicleShotCore(unitId,normalIndex,specialIndex,eliteIndex,
+            accuracyCoefficient,shotSpeedCoefficient,false);
+
+    /// <summary>Helicopter.UpgradesLoaded copies the same VehicleBehaviourDefinititon shot fields to its turret.</summary>
+    public ArmyVehicleShotStats ComposeHelicopterShot(int normalIndex,int? specialIndex,
+        int? eliteIndex,float shotSpeedCoefficient=1f)
+        =>ComposeVehicleShotCore("ID_UNIT-HELICOPTER",normalIndex,specialIndex,eliteIndex,
+            1f,shotSpeedCoefficient,true);
+
+    private ArmyVehicleShotStats ComposeVehicleShotCore(string unitId,int normalIndex,int? specialIndex,
+        int? eliteIndex,float accuracyCoefficient,float shotSpeedCoefficient,bool helicopter)
     {
         var family=Families.SingleOrDefault(f=>f.UnitId==unitId)??
             throw new ArgumentOutOfRangeException(nameof(unitId));
-        if(family.VehicleShot==null||family.IsAir||family.IsSoldier)
+        if(family.VehicleShot==null||family.IsSoldier||
+           (helicopter?family.BehaviorType!="HelicopterBehaviour":family.IsAir))
             throw new InvalidDataException("Army family has no ground-vehicle shot contract.");
         _=BaseStats(unitId,normalIndex);
         if(upgradeShots==null||!upgradeShots.TryGetValue(unitId,out var stages))
