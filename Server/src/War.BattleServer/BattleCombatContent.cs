@@ -52,6 +52,7 @@ public sealed class BattleCombatContent
     internal HelicopterBodyColliderCatalog HelicopterBodyColliders { get; }
     internal AirShotTargetCatalog AirShotTargets { get; }
     public HelicopterCrewPointCatalog HelicopterCrewPoints { get; }
+    internal HelicopterGunnerExplosionCatalog HelicopterGunnerExplosions { get; private init; }=null!;
     public DroneProjectileCatalog DroneProjectile { get; }
     public ArmyRusherPointCatalog ArmyRusherPoints { get; }
     public ArmyMinigunnerPointCatalog ArmyMinigunnerPoints { get; }
@@ -115,6 +116,8 @@ public sealed class BattleCombatContent
             "recovered-air-unit-geometry.json"));
         var helicopterCrewPoints=HelicopterCrewPointCatalog.Load(Path.Combine(directory,
             "recovered-helicopter-crew-points.json"),manifest.HelicopterCrewPointsRevision);
+        var helicopterGunnerExplosions=HelicopterGunnerExplosionCatalog.Load(Path.Combine(directory,
+            "recovered-helicopter-gunner-explosion.json"),groundVehicleWeapons.PassengerPoses);
         var droneProjectile=DroneProjectileCatalog.Load(Path.Combine(directory,"recovered-drone-projectile-setup.json"),manifest.DroneProjectileRevision);
         var droneWeapon=DroneWeaponCatalog.Load(Path.Combine(directory,"recovered-drone-weapon.json"),manifest.DroneWeaponRevision);
         var airWaypoints=AirWaypointCatalog.Load(Path.Combine(directory,"recovered-air-waypoint-routes.json"),manifest.AirWaypointRoutesRevision,armySpawnPoints,maps);
@@ -191,7 +194,8 @@ public sealed class BattleCombatContent
         }
         string? mixedRevision=shotguns!=null&&smgs!=null&&pistols!=null&&lmgs!=null&&minigun!=null&&snipers!=null ? Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(
             "WarFriends/mixed-combat/v5\n"+revision+"\n"+shotguns.PackageRevision+"\n"+smgs.PackageRevision+"\n"+pistols.PackageRevision+"\n"+lmgs.PackageRevision+"\n"+minigun.PackageRevision+"\n"+snipers.PackageRevision))) : null;
-        return new(stats,bindings,allWeaponBindings,poses,revision,maps,shotguns,shotgunRevision,smgs,smgRevision,pistols,pistolRevision,lmgs,lmgRevision,minigun,minigunRevision,snipers,sniperRevision,bazookas,bazookaRevision,grenades,grenadeRevision,mixedRevision,shields,barrels,barrelPolicy,explosions,barrelOverlap,army,armyWeapons,groundVehicleWeapons,enemyPoses,decoys,landMines,heavyTurrets,armySpawnPoints,armyRusherPoints,armyMinigunnerPoints,playerShotTargets,armyNavMeshes,armyNavMeshGeometry,armyNavMeshPaths,armyNavMeshConnectivity,airWaypoints,droneWeapon,droneColliders,helicopterBodyColliders,airShotTargets,helicopterCrewPoints,droneProjectile,enemyShotTargets);
+        return new BattleCombatContent(stats,bindings,allWeaponBindings,poses,revision,maps,shotguns,shotgunRevision,smgs,smgRevision,pistols,pistolRevision,lmgs,lmgRevision,minigun,minigunRevision,snipers,sniperRevision,bazookas,bazookaRevision,grenades,grenadeRevision,mixedRevision,shields,barrels,barrelPolicy,explosions,barrelOverlap,army,armyWeapons,groundVehicleWeapons,enemyPoses,decoys,landMines,heavyTurrets,armySpawnPoints,armyRusherPoints,armyMinigunnerPoints,playerShotTargets,armyNavMeshes,armyNavMeshGeometry,armyNavMeshPaths,armyNavMeshConnectivity,airWaypoints,droneWeapon,droneColliders,helicopterBodyColliders,airShotTargets,helicopterCrewPoints,droneProjectile,enemyShotTargets)
+        {HelicopterGunnerExplosions=helicopterGunnerExplosions};
     }
     public void ValidateAllocation(MatchManifest manifest)
     {

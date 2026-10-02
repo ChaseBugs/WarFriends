@@ -57,6 +57,7 @@ public sealed partial class MatchEngine
     private readonly ArmySpawnPointSelector? armySelector;
     private readonly AirWaypointCatalog? airWaypoints;
     private readonly HelicopterCrewPointCatalog? helicopterCrewPoints;
+    private readonly HelicopterGunnerExplosionCatalog? helicopterGunnerExplosions;
     private readonly ArmyRusherPointCatalog? armyRusherPoints;
     private readonly ArmyMinigunnerPointCatalog? armyMinigunnerPoints;
     private readonly ArmyNavMeshConnectivity? armyNavMeshConnectivity;
@@ -721,6 +722,7 @@ public sealed partial class MatchEngine
             enemyPoses=content.EnemyPoses;enemyShotTargets=content.EnemyShotTargets;
             armySelector=new ArmySpawnPointSelector(content.ArmySpawnPoints);
             airWaypoints=content.AirWaypoints;helicopterCrewPoints=content.HelicopterCrewPoints;
+            helicopterGunnerExplosions=content.HelicopterGunnerExplosions;
             droneColliders=content.DroneColliders;
             helicopterBodyColliders=content.HelicopterBodyColliders;
             airShotTargets=content.AirShotTargets;
@@ -753,11 +755,11 @@ public sealed partial class MatchEngine
             if (map==null || content==null) throw new InvalidDataException("Live combat needs source map and combat package.");
             if(manifest.Players.All(p=>p.ShieldLevel.HasValue))
                 shields=new ShieldMatchSimulation(map,content.Shields,manifest);
+            explosionPolicy=content.Explosions;
             if(manifest.SceneMasterPlayerId!=null)
             {
                 barrels=new BarrelMatchSimulation(map,content.Barrels,content.BarrelPolicy,
                     content.BarrelOverlap,manifest);
-                explosionPolicy=content.Explosions;
             }
             if(manifest.Mode==MatchManifest.GrenadeCombatMode)
             {
@@ -1802,6 +1804,9 @@ public sealed partial class MatchEngine
                 roll,attacker!=victim&&attacker.Definition.Fraction!=victim.Definition.Fraction);
             if(Terminal)return;
         }
+        if(!Terminal)ApplyHelicopterGunnerExplosion(impact.OwnerId,impact.Position,
+            projectile.Binding.DeadRadius,projectile.Binding.HurtRadius,
+            projectile.Stage.MinimumDamage,projectile.Stage.ExplosionDamage,projectile.HalfDamage);
     }
     private void StartGrenadeProjectile(ScheduledGrenadeLaunch launch)
     {
@@ -1860,6 +1865,9 @@ public sealed partial class MatchEngine
                 roll,attacker!=victim&&attacker.Definition.Fraction!=victim.Definition.Fraction);
             if(Terminal)return;
         }
+        if(!Terminal)ApplyHelicopterGunnerExplosion(impact.OwnerId,impact.Position,
+            projectile.Stage.DeadRadius,projectile.Stage.HurtRadius,
+            projectile.Stage.MinimumDamage,projectile.Stage.ExplosionDamage,false);
     }
     // Only the host's projectile/hitbox simulation may call this. It is
     // deliberately absent from MatchCommand and cannot be used as an RPC relay.

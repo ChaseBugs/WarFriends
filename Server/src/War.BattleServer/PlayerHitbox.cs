@@ -122,6 +122,29 @@ public sealed record PlayerHitbox
         float axial=Math.Clamp(Vector3.Dot(offset,Axis),-HalfSegment,HalfSegment);
         return Math.Max(0,Vector3.Distance(offset,Axis*axial)-Radius);
     }
+    // Unity's Collider.ClosestPointOnBounds uses the world-axis bounds, which
+    // can select a different part than closest distance to its actual shape.
+    internal float BoundsDistanceToPoint(Vector3 point)
+    {
+        if(!Finite(point))throw new InvalidDataException("Invalid hitbox bounds point.");
+        Vector3 half;
+        if(Kind==PlayerHitboxKind.Box)
+        {
+            var x=Vector3.Transform(Vector3.UnitX,Rotation);
+            var y=Vector3.Transform(Vector3.UnitY,Rotation);
+            var z=Vector3.Transform(Vector3.UnitZ,Rotation);
+            half=new(Math.Abs(x.X)*Size.X*.5f+Math.Abs(y.X)*Size.Y*.5f+Math.Abs(z.X)*Size.Z*.5f,
+                Math.Abs(x.Y)*Size.X*.5f+Math.Abs(y.Y)*Size.Y*.5f+Math.Abs(z.Y)*Size.Z*.5f,
+                Math.Abs(x.Z)*Size.X*.5f+Math.Abs(y.Z)*Size.Y*.5f+Math.Abs(z.Z)*Size.Z*.5f);
+        }
+        else
+        {
+            half=new Vector3(Radius);
+            if(Kind==PlayerHitboxKind.Capsule)
+                half+=new Vector3(Math.Abs(Axis.X),Math.Abs(Axis.Y),Math.Abs(Axis.Z))*HalfSegment;
+        }
+        return Vector3.Distance(point,Vector3.Clamp(point,Center-half,Center+half));
+    }
     public float? Raycast(Vector3 origin, Vector3 direction, float maxDistance)
     {
         if (!Finite(origin) || !Finite(direction) || direction.LengthSquared() < 1e-12f || !float.IsFinite(maxDistance) || maxDistance is <= 0 or > 10000)

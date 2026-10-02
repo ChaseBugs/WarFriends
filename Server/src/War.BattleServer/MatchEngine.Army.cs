@@ -160,6 +160,51 @@ public sealed partial class MatchEngine
         return true;
     }
 
+    internal void ApplyHelicopterGunnerExplosion(string shooterId,Vector3 origin,float deadRadius,
+        float hurtRadius,float minimumDamage,float explosionDamage,bool halfDamage)
+    {
+        if(phase!=BattlePhase.Running||!PlayerHitbox.Finite(origin)||!float.IsFinite(deadRadius)||
+           !float.IsFinite(hurtRadius)||deadRadius<0||hurtRadius<=deadRadius||hurtRadius>100||
+           !float.IsFinite(minimumDamage)||!float.IsFinite(explosionDamage)||minimumDamage<0||
+           explosionDamage<minimumDamage||explosionDamage>10_000_000)
+            throw new InvalidDataException("Invalid trusted gunner explosion.");
+        if(groundVehicleWeapons==null||helicopterCrewPoints==null||helicopterGunnerExplosions==null||
+           explosionPolicy==null)throw new InvalidDataException("Missing gunner explosion source.");
+        var shooter=Find(shooterId)??throw new InvalidDataException("Unknown explosion shooter.");
+        foreach(var row in activeArmyEntities.Values.Where(r=>r.UnitId=="ID_UNIT-HELICOPTER")
+            .OrderBy(r=>r.EntityKey))
+        {
+            if(!armyHelicopterGunners.TryGetValue(row.EntityKey,out var gunner))continue;
+            var state=gunner.Snapshot();
+            if(!state.TurretEnabled)continue;
+            if(state.SpawnTick>tick||row.HelicopterRotation==null)
+                throw new InvalidDataException("Helicopter gunner lost explosion pose authority.");
+            var q=row.HelicopterRotation;
+            var seat=helicopterCrewPoints.PlaceTurret(new(row.X,row.Y,row.Z),new(q.X,q.Y,q.Z,q.W));
+            ulong animationTick=tick-state.SpawnTick;
+            var parts=groundVehicleWeapons.PassengerPoses.PlaceHelicopterGunner(seat,animationTick);
+            var transforms=helicopterGunnerExplosions.PlaceTransformPositions(seat,animationTick);
+            if(parts.Count!=3||transforms.Length!=3)
+                throw new InvalidDataException("Incomplete gunner explosion parts.");
+            var selected=parts.Select((part,index)=>(part,index,distance:part.BoundsDistanceToPoint(origin)))
+                .Where(x=>x.part.OverlapsSphere(origin,hurtRadius))
+                .OrderBy(x=>x.distance).ThenBy(x=>x.index).FirstOrDefault();
+            if(selected.part==null)continue;
+            float raw;
+            if(selected.distance<deadRadius)raw=explosionDamage;
+            else
+            {
+                float fraction=Math.Clamp(1-(Vector3.Distance(transforms[selected.index],origin)-deadRadius)/
+                    (hurtRadius-deadRadius),0,1);
+                raw=minimumDamage+(explosionDamage-minimumDamage)*fraction*fraction;
+            }
+            float friendly=shooter.Definition.Fraction==row.OwnerFraction?explosionPolicy.Friendly:1;
+            float amount=raw*selected.part.Weight*friendly*(halfDamage?.5f:1);
+            if(DamageHelicopterGunner(row.EntityKey,amount)&&friendly==1)
+                shooter.ConfirmedEnemyHits=checked(shooter.ConfirmedEnemyHits+1);
+        }
+    }
+
     private void InitializeDronePath(ulong key,ArmyDeploymentFamily family,ArmySpawnPoint spawn)
     {
         if(family.BehaviorType!="DroneBehaviour")return;
