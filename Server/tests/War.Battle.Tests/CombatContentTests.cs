@@ -3665,6 +3665,58 @@ internal static class CombatContentTests
               helicopterShotMatch.Snapshot().Players.Single(p=>p.PlayerId==soldierOwner)
                   .ConfirmedEnemyHits>0,
               "normal player Fire traverses live Helicopter body collision into host-owned health");
+        var droneHelicopterManifest=detached with
+        {
+            MatchId="drone-projectile-helicopter",DurationSeconds=180,IdleSeconds=120,
+            Players=[detached.Players[0] with {EquippedArmyUnitIds=["ID_UNIT-DRONE"],
+                ArmyNormalUpgradeIndexes=[0],ArmySpecialUpgradeIndexes=[96],
+                ArmyEliteUpgradeIndexes=[-1],ArmyShotSpeedCoefficients=[2]},
+                detached.Players[1] with {ArmyShotSpeedCoefficients=[1]}]
+        };
+        var droneHelicopterMatch=new MatchEngine(droneHelicopterManifest,content:content,armyChoice:_=>0);
+        droneHelicopterMatch.Admit(soldierOwner);droneHelicopterMatch.Admit(helicopterOwner);
+        foreach(var owner in new[]{soldierOwner,helicopterOwner})
+            droneHelicopterMatch.Command(owner,new(){CommandId=1,
+                Ready=new(){ManifestHash=droneHelicopterMatch.ManifestHash}});
+        droneHelicopterMatch.Advance(60);
+        droneHelicopterMatch.ArmyBatch(soldierOwner);droneHelicopterMatch.ArmyBatch(helicopterOwner);
+        Check(droneHelicopterMatch.Command(soldierOwner,new(){CommandId=2,
+                  DeployArmy=new(){OptionIndex=9}}).Code=="army-deploying"&&
+              droneHelicopterMatch.Command(helicopterOwner,new(){CommandId=2,
+                  DeployArmy=new(){OptionIndex=2}}).Code=="army-deploying",
+              "opposing Drone and Helicopter use normal host deployment commands");
+        droneHelicopterMatch.Advance(61);
+        var droneVsHelicopter=droneHelicopterMatch.ArmyEntityBatch(soldierOwner,0,0).Entities
+            .Single(x=>x.UnitId=="ID_UNIT-DRONE");
+        var helicopterVsDrone=droneHelicopterMatch.ArmyEntityBatch(soldierOwner,0,0).Entities
+            .Single(x=>x.UnitId=="ID_UNIT-HELICOPTER");
+        float helicopterVsDroneHealth=helicopterVsDrone.Health;
+        bool droneDamagedHelicopter=false;
+        for(ulong airTick=62;airTick<5000&&!droneHelicopterMatch.Terminal;airTick++)
+        {
+            droneHelicopterMatch.Advance(airTick);
+            if(droneHelicopterMatch.ArmyHealth(helicopterVsDrone.EntityKey) is float health&&
+               health<helicopterVsDroneHealth)
+            {droneDamagedHelicopter=true;break;}
+        }
+        bool droneSelectedHelicopter=false,droneImpactSeen=false;
+        ulong airEventCursor=0;
+        while(true)
+        {
+            var batch=droneHelicopterMatch.EventBatch(soldierOwner,airEventCursor);
+            if(batch.Events.Count==0)break;
+            droneSelectedHelicopter|=batch.Events.Any(e=>e.Kind==MatchEventKind.DroneFired&&
+                e.TargetId=="army:"+helicopterVsDrone.EntityKey&&e.DroneShot is {Fake:false});
+            droneImpactSeen|=batch.Events.Any(e=>e.Kind==MatchEventKind.Impact&&
+                e.Reason=="drone"&&e.ActorId==soldierOwner);
+            airEventCursor=batch.Events.Last().EventId;
+        }
+        Check(droneDamagedHelicopter&&
+              droneSelectedHelicopter&&droneImpactSeen&&
+              droneHelicopterMatch.LastDroneIntent(droneVsHelicopter.EntityKey)!=null&&
+              droneHelicopterMatch.Snapshot().Players.Single(x=>x.PlayerId==soldierOwner)
+                  .ConfirmedEnemyHits>0,
+              "autonomous Drone projectile damages an opposing deployed Helicopter");
         var crewManifest=detached with {MatchId="helicopter-crew-phase",DurationSeconds=180,IdleSeconds=120};
         var crewMatch=new MatchEngine(crewManifest,content:content);
         crewMatch.Admit(soldierOwner);crewMatch.Admit(helicopterOwner);
