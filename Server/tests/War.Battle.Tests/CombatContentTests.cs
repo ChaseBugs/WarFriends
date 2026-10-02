@@ -3508,12 +3508,24 @@ internal static class CombatContentTests
               "Drone target resolution binds Helicopter's source shootable to its live flight pose");
         var liveHelicopterBoxes=deathMatch.GroundVehicleShotTargets(soldierOwner)
             .Where(x=>x.EntityId==helicopterEntity.EntityKey).ToArray();
-        Check(liveHelicopterBoxes.Length==11&&liveHelicopterBoxes.All(x=>x.Layer==8)&&
-              liveHelicopterBoxes.Select(x=>x.PartComponentFileId)
+        var liveHelicopterBodyBoxes=liveHelicopterBoxes.Where(x=>!x.HelicopterGunner).ToArray();
+        var liveGunnerBoxes=liveHelicopterBoxes.Where(x=>x.HelicopterGunner).ToArray();
+        Check(liveHelicopterBodyBoxes.Length==11&&liveHelicopterBodyBoxes.All(x=>x.Layer==8)&&
+              liveHelicopterBodyBoxes.Select(x=>x.PartComponentFileId)
                   .SequenceEqual(heliBoxes.Select(x=>x.ColliderFileId))&&
+              liveGunnerBoxes.Length==3&&liveGunnerBoxes.All(x=>x.Layer==22&&
+                  x.PartComponentFileId==0&&x.Hitbox.SourcePath.StartsWith("helicopter-gunner/"))&&
               !deathMatch.GroundVehicleShotTargets(helicopterOwner)
                   .Any(x=>x.EntityId==helicopterEntity.EntityKey),
               "normal deployed Helicopter contributes its source boxes only to opposing projectile traces");
+        var gunnerDirections=new[]{Vector3.UnitX,-Vector3.UnitX,Vector3.UnitY,-Vector3.UnitY,
+            Vector3.UnitZ,-Vector3.UnitZ};
+        var gunnerRay=liveGunnerBoxes.SelectMany(box=>gunnerDirections.Select(direction=>
+            deathMatch.TraceHeavyTurretShot(soldierOwner,box.Hitbox.Center+direction*2f,
+                -direction,4f))).FirstOrDefault(x=>x is {DynamicHelicopterGunner:true});
+        Check(gunnerRay is {DynamicEntityId:ulong gunnerEntity,PartWeight:1f or 1.5f}&&
+              gunnerEntity==helicopterEntity.EntityKey,
+              "opposing source ray reaches the live Helicopter gunner beyond its body boxes");
         var helicopterBoxAxis=Vector3.Transform(Vector3.UnitX,
             new Quaternion(helicopterEntity.HelicopterRotation!.X,
                 helicopterEntity.HelicopterRotation.Y,helicopterEntity.HelicopterRotation.Z,
@@ -3926,8 +3938,34 @@ internal static class CombatContentTests
               !crewMatch.HelicopterTargetVisibleInCone(sourceHelicopter,
                   heliAimOrigin-heliForward*10),
               "live Helicopter target cone follows the authoritative flight rotation");
-        Check(crewMatch.DamageHelicopterGunner(sourceHelicopter,621f)&&
+        var crewGunnerBoxes=crewMatch.GroundVehicleShotTargets(soldierOwner)
+            .Where(x=>x.EntityId==sourceHelicopter&&x.HelicopterGunner).ToArray();
+        var crewGunnerHit=crewGunnerBoxes.SelectMany(box=>gunnerDirections.Select(direction=>
+            crewMatch.TraceHeavyTurretShot(soldierOwner,box.Hitbox.Center+direction*2f,
+                -direction,4f))).FirstOrDefault(x=>x is {DynamicHelicopterGunner:true});
+        Check(crewGunnerBoxes.Length==3&&crewGunnerHit is
+                  {DynamicEntityId:var gunnerHitEntity,PartWeight:1f or 1.5f}&&
+              gunnerHitEntity==sourceHelicopter,
+              "source idle gunner remains an exposed opposing collision target at the Helicopter stop");
+        uint gunnerHitsBefore=crewMatch.Snapshot().Players.Single(x=>x.PlayerId==soldierOwner)
+            .ConfirmedEnemyHits;
+        ulong gunnerRevisionBefore=crewMatch.Snapshot().StateRevision;
+        Reject(()=>crewMatch.ApplyHelicopterGunnerProjectileImpact(helicopterOwner,
+            sourceHelicopter,10f,1f));
+        Reject(()=>crewMatch.ApplyHelicopterGunnerProjectileImpact(soldierOwner,
+            sourceHelicopter,10f,2f));
+        Check(crewMatch.HelicopterGunner(sourceHelicopter) is {Health:621f,TurretEnabled:true}&&
+              crewMatch.Snapshot().Players.Single(x=>x.PlayerId==soldierOwner)
+                  .ConfirmedEnemyHits==gunnerHitsBefore,
+              "friendly and non-source-weight gunner hits cannot change combat authority");
+        crewMatch.ApplyHelicopterGunnerProjectileImpact(soldierOwner,sourceHelicopter,621f,
+            crewGunnerHit!.PartWeight);
+        Check(crewMatch.Snapshot().Players.Single(x=>x.PlayerId==soldierOwner)
+                  .ConfirmedEnemyHits==gunnerHitsBefore+1&&
+              crewMatch.Snapshot().StateRevision>gunnerRevisionBefore&&
               crewMatch.HelicopterGunner(sourceHelicopter) is {Health:0,TurretEnabled:false}&&
+              !crewMatch.GroundVehicleShotTargets(soldierOwner)
+                  .Any(x=>x.EntityId==sourceHelicopter&&x.HelicopterGunner)&&
               crewMatch.HelicopterSelectedTarget(sourceHelicopter)==null&&
               !crewMatch.HelicopterTargetInTurretCone(sourceHelicopter,Vector3.Zero)&&
               crewMatch.HelicopterTurretAimFromRest(sourceHelicopter,
@@ -3935,7 +3973,7 @@ internal static class CombatContentTests
               crewMatch.BeginHelicopterTurretAim(sourceHelicopter,
                   heliAimOrigin+heliForward*10)==null&&
               !crewMatch.DamageHelicopterGunner(sourceHelicopter,1f),
-              "host-owned gunner health disables the live Helicopter turret after lethal damage");
+              "trusted projectile hit kills the gunner, credits the attacker and disables its live turret");
         ulong crewTick=sourceStop;
         uint MaskAt(ulong target)
         {
@@ -3964,9 +4002,13 @@ internal static class CombatContentTests
         Check(crewMatch.HelicopterCrewDescents(sourceHelicopter)[1].Progress==1f&&
               crewMatch.HelicopterCrewDescents(sourceHelicopter)[1].AnimationComplete,
               "rope animation completion clamps at one without asserting NavMesh landing");
+        ulong deadGunnerRevision=crewMatch.Snapshot().StateRevision;
         MaskAt(sourceStop+375);
         Check(crewMatch.HelicopterGunner(sourceHelicopter) is
-                  {Health:621f,TurretEnabled:true,RespawnTick:0},
+                  {Health:621f,TurretEnabled:true,RespawnTick:0}&&
+              crewMatch.Snapshot().StateRevision>deadGunnerRevision&&
+              crewMatch.GroundVehicleShotTargets(soldierOwner)
+                  .Count(x=>x.EntityId==sourceHelicopter&&x.HelicopterGunner)==3,
               "live Helicopter gunner recovers at the source respawn deadline");
         Check(crewMatch.HelicopterAttachedCrewPoses(sourceHelicopter).Count==0,
               "crew leaves source attachment poses once both rope descents begin");

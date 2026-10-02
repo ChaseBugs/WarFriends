@@ -151,6 +151,7 @@ public sealed partial class MatchEngine
         if(phase!=BattlePhase.Running||!activeArmyEntities.TryGetValue(key,out var row)||
            row.UnitId!="ID_UNIT-HELICOPTER"||!armyHelicopterGunners.TryGetValue(key,out var gunner))return false;
         if(!gunner.Damage(amount,tick))return false;
+        stateRevision++;
         if(!gunner.Snapshot().TurretEnabled&&armyHelicopterAcquisitions.TryGetValue(key,out var acquisition))
         {
             acquisition.Disable();
@@ -308,7 +309,7 @@ public sealed partial class MatchEngine
         {
             if(!armyHelicopterGunners.TryGetValue(key,out var gunner))
                 throw new InvalidDataException("Helicopter path lost its turret gunner state.");
-            gunner.Advance(tick);
+            if(gunner.Advance(tick))stateRevision++;
             bool arrived=path.Advance(time); // Crew drop/rope require their own source authority.
             if(!activeArmyEntities.TryGetValue(key,out var row)||row.UnitId!="ID_UNIT-HELICOPTER")
                 throw new InvalidDataException("Helicopter path lost its host entity.");
@@ -423,10 +424,27 @@ public sealed partial class MatchEngine
         {
             var q=row.HelicopterRotation??throw new InvalidDataException(
                 "Helicopter collision lost its host rotation.");
+            var root=new Vector3(row.X,row.Y,row.Z);
+            var rotation=new Quaternion(q.X,q.Y,q.Z,q.W);
             foreach(var collider in (helicopterBodyColliders??throw new InvalidDataException(
-                "Helicopter collider catalog missing.")).Place(new(row.X,row.Y,row.Z),
-                    new(q.X,q.Y,q.Z,q.W)))
+                "Helicopter collider catalog missing.")).Place(root,rotation))
                 result.Add(new(row.EntityKey,collider.ColliderFileId,collider.Layer,collider.Hitbox));
+            if(armyHelicopterGunners.TryGetValue(row.EntityKey,out var gunner))
+            {
+                var state=gunner.Snapshot();
+                if(state.TurretEnabled)
+                {
+                    if(state.SpawnTick>tick)throw new InvalidDataException("Helicopter gunner spawn is in the future.");
+                    int layer=row.OwnerFraction==1?23:row.OwnerFraction==2?22:
+                        throw new InvalidDataException("Helicopter gunner has unsupported faction.");
+                    var seat=(helicopterCrewPoints??throw new InvalidDataException(
+                        "Helicopter gunner seat source missing.")).PlaceTurret(root,rotation);
+                    foreach(var hitbox in (groundVehicleWeapons??throw new InvalidDataException(
+                        "Helicopter gunner pose source missing.")).PassengerPoses
+                        .PlaceHelicopterGunner(seat,tick-state.SpawnTick))
+                        result.Add(new(row.EntityKey,0,layer,hitbox,HelicopterGunner:true));
+                }
+            }
         }
         if(vehicles!=null&&groundVehicleWeapons!=null)
         foreach(var vehicle in vehicles.Snapshot())
@@ -478,6 +496,22 @@ public sealed partial class MatchEngine
            rawDamage>10_000_000||partWeight is not (1f or 1.5f))
             throw new InvalidDataException("Invalid army infantry projectile impact.");
         if(ApplyArmyHostDamage(entityId,rawDamage*partWeight))
+            shooter.ConfirmedEnemyHits=checked(shooter.ConfirmedEnemyHits+1);
+    }
+
+    internal void ApplyHelicopterGunnerProjectileImpact(string shooterId,ulong entityId,
+        float rawDamage,float partWeight)
+    {
+        if(!activeArmyEntities.TryGetValue(entityId,out var helicopter)||
+           helicopter.UnitId!="ID_UNIT-HELICOPTER"||
+           !armyHelicopterGunners.TryGetValue(entityId,out var gunner)||
+           !gunner.Snapshot().TurretEnabled)return;
+        var shooter=Find(shooterId)??throw new InvalidDataException("Helicopter gunner impact shooter disappeared.");
+        if(shooter.Definition.Fraction==helicopter.OwnerFraction||
+           !float.IsFinite(rawDamage)||rawDamage<=0||rawDamage>10_000_000||
+           partWeight is not (1f or 1.5f))
+            throw new InvalidDataException("Invalid Helicopter gunner projectile impact.");
+        if(DamageHelicopterGunner(entityId,rawDamage*partWeight))
             shooter.ConfirmedEnemyHits=checked(shooter.ConfirmedEnemyHits+1);
     }
 

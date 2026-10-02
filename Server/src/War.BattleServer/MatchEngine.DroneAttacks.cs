@@ -93,6 +93,8 @@ public sealed partial class MatchEngine
             ApplyHeavyTurretProjectileImpact(impact.OwnerId,turret,intent.Damage,hit.PartWeight,impact.ProjectileId);
         else if(hit is {DynamicPassengerRole:{} role,DynamicEntityId:ulong vehicle})
             ApplyGroundVehiclePassengerProjectileImpact(impact.OwnerId,vehicle,role,intent.Damage,hit.PartWeight);
+        else if(hit is {DynamicHelicopterGunner:true,DynamicEntityId:ulong gunner})
+            ApplyHelicopterGunnerProjectileImpact(impact.OwnerId,gunner,intent.Damage,hit.PartWeight);
         else if(hit is {DynamicRepairDronePathIndex:int path,DynamicEntityId:ulong repairVehicle})
             ApplyTransporterRepairDroneProjectileImpact(impact.OwnerId,repairVehicle,path,intent.Damage,hit.PartWeight);
         else if(hit is {DynamicPartId:int part,DynamicEntityId:ulong body})

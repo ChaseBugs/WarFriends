@@ -147,6 +147,8 @@ public sealed partial class MatchEngine
                     hit.PartWeight,impact.ProjectileId);
             else if(hit is {DynamicArmyInfantry:true,DynamicEntityId:ulong infantry})
                 ApplyArmyProjectileImpact(impact.OwnerId,infantry,projectile.Damage,hit.PartWeight);
+            else if(hit is {DynamicHelicopterGunner:true,DynamicEntityId:ulong gunner})
+                ApplyHelicopterGunnerProjectileImpact(impact.OwnerId,gunner,projectile.Damage,hit.PartWeight);
             else if(hit is {DynamicHeavyTurret:true,DynamicEntityId:ulong turret})
                 ApplyHeavyTurretProjectileImpact(impact.OwnerId,turret,projectile.Damage,
                     hit.PartWeight,impact.ProjectileId);

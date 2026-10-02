@@ -1265,6 +1265,9 @@ public sealed partial class MatchEngine
                     else if(impact.Hit.DynamicArmyInfantry)
                         ApplyArmyProjectileImpact(impact.OwnerId,vehicleId,pair.Value.Damage.Amount,
                             impact.Hit.PartWeight);
+                    else if(impact.Hit.DynamicHelicopterGunner)
+                        ApplyHelicopterGunnerProjectileImpact(impact.OwnerId,vehicleId,
+                            pair.Value.Damage.Amount,impact.Hit.PartWeight);
                     else if(impact.Hit.DynamicPartId is int partId)
                         ApplyArmyBodyProjectileImpact(impact.OwnerId,vehicleId,partId,pair.Value.Damage.Amount);
                     else throw new InvalidDataException("Dynamic collision omitted its source target.");

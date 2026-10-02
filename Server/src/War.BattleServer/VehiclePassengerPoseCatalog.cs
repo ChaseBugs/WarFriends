@@ -47,6 +47,18 @@ internal sealed class VehiclePassengerPoseCatalog
             binding.Role+"/");
     }
 
+    internal IReadOnlyList<PlayerHitbox> PlaceHelicopterGunner(HelicopterTurretRestPose seat,
+        ulong animationTick)
+    {
+        if(seat.PointComponentFileId!=11499861||animationTick>10_000_000||
+           !PlayerHitbox.Finite(seat.GunnerPosition)||
+           !float.IsFinite(seat.GunnerRotation.LengthSquared())||
+           Math.Abs(seat.GunnerRotation.LengthSquared()-1)>.001f)
+            throw new InvalidDataException("Invalid source Helicopter gunner pose.");
+        return PlaceClip("idle",seat.GunnerPosition,seat.GunnerRotation,animationTick,
+            "helicopter-gunner/");
+    }
+
     private IReadOnlyList<PlayerHitbox> PlaceClip(string clipName,Vector3 rootPosition,
         Quaternion rootRotation,ulong animationTick,string prefix)
     {

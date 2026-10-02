@@ -6,8 +6,8 @@ namespace War.BattleServer;
 
 internal sealed record CollisionPlayer(string PlayerId, PlayerCollisionModel Pose);
 internal sealed record DynamicShotTarget(ulong EntityId,int PartComponentFileId,int Layer,PlayerHitbox Hitbox,
-    string? PassengerRole=null,int? RepairDronePathIndex=null,bool ArmyInfantry=false,bool Decoy=false,bool HeavyTurret=false);
-internal sealed record ShotCollision(float Distance, Vector3 Position, string SourcePath, string? PlayerId, float PartWeight, bool Static = false,string? DynamicOwner=null,int? ColliderIndex=null,ulong? DynamicEntityId=null,int? DynamicPartId=null,string? DynamicPassengerRole=null,int? DynamicRepairDronePathIndex=null,bool DynamicArmyInfantry=false,bool DynamicDecoy=false,bool DynamicHeavyTurret=false);
+    string? PassengerRole=null,int? RepairDronePathIndex=null,bool ArmyInfantry=false,bool Decoy=false,bool HeavyTurret=false,bool HelicopterGunner=false);
+internal sealed record ShotCollision(float Distance, Vector3 Position, string SourcePath, string? PlayerId, float PartWeight, bool Static = false,string? DynamicOwner=null,int? ColliderIndex=null,ulong? DynamicEntityId=null,int? DynamicPartId=null,string? DynamicPassengerRole=null,int? DynamicRepairDronePathIndex=null,bool DynamicArmyInfantry=false,bool DynamicDecoy=false,bool DynamicHeavyTurret=false,bool DynamicHelicopterGunner=false);
 
 // Input poses come exclusively from host animation/pose authority. This class has
 // no network adapter and no client-submitted target player or damage parameter.
@@ -53,7 +53,9 @@ internal sealed class ShotCollisionWorld
             {
                 if(target==null||target.EntityId==0||target.Layer is <0 or >31||target.Hitbox==null||
                    target.RepairDronePathIndex is <0 or >1||
-                   (target.PassengerRole==null&&target.RepairDronePathIndex==null&&!target.ArmyInfantry&&!target.Decoy&&!target.HeavyTurret&&target.PartComponentFileId<=0)||
+                   (target.PassengerRole==null&&target.RepairDronePathIndex==null&&!target.ArmyInfantry&&!target.Decoy&&!target.HeavyTurret&&!target.HelicopterGunner&&target.PartComponentFileId<=0)||
+                   (target.HelicopterGunner&&(target.PartComponentFileId!=0||target.PassengerRole!=null||
+                       target.RepairDronePathIndex!=null||target.ArmyInfantry||target.Decoy||target.HeavyTurret))||
                    (target.PassengerRole!=null&&(target.PartComponentFileId!=0||target.RepairDronePathIndex!=null||
                        target.ArmyInfantry||target.Decoy||target.HeavyTurret||target.PassengerRole.Length is <1 or >32||target.PassengerRole.Any(char.IsControl)))||
                    (target.RepairDronePathIndex!=null&&(target.PartComponentFileId!=0||target.PassengerRole!=null||target.ArmyInfantry||target.Decoy||target.HeavyTurret))||
@@ -69,7 +71,8 @@ internal sealed class ShotCollisionWorld
                         DynamicPartId:target.PartComponentFileId>0?target.PartComponentFileId:null,
                         DynamicPassengerRole:target.PassengerRole,
                         DynamicRepairDronePathIndex:target.RepairDronePathIndex,
-                        DynamicArmyInfantry:target.ArmyInfantry,DynamicDecoy:target.Decoy,DynamicHeavyTurret:target.HeavyTurret);
+                        DynamicArmyInfantry:target.ArmyInfantry,DynamicDecoy:target.Decoy,
+                        DynamicHeavyTurret:target.HeavyTurret,DynamicHelicopterGunner:target.HelicopterGunner);
             }
         return nearest;
     }

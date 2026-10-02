@@ -42,11 +42,12 @@ internal sealed class HelicopterGunnerState
         health=nextHealth;
         return true;
     }
-    internal void Advance(ulong tick)
+    internal bool Advance(ulong tick)
     {
-        if(respawnTick==0||tick<respawnTick)return;
+        if(respawnTick==0||tick<respawnTick)return false;
         health=maximum;
         spawnTick=respawnTick;
         respawnTick=0;
+        return true;
     }
 }

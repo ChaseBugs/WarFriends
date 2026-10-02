@@ -281,6 +281,8 @@ public sealed partial class MatchEngine
                 ApplyDecoyProjectileImpact(impact.OwnerId,decoyId,pair.Value.Damage,impact.Hit.PartWeight,impact.ProjectileId);
             else if(impact.Hit is {DynamicArmyInfantry:true,DynamicEntityId:ulong armyId})
                 ApplyArmyProjectileImpact(impact.OwnerId,armyId,pair.Value.Damage,impact.Hit.PartWeight);
+            else if(impact.Hit is {DynamicHelicopterGunner:true,DynamicEntityId:ulong gunnerId})
+                ApplyHelicopterGunnerProjectileImpact(impact.OwnerId,gunnerId,pair.Value.Damage,impact.Hit.PartWeight);
             else if(impact.Hit is {DynamicHeavyTurret:true,DynamicEntityId:ulong turretId})
                 ApplyHeavyTurretProjectileImpact(impact.OwnerId,turretId,pair.Value.Damage,impact.Hit.PartWeight,impact.ProjectileId);
             else if(impact.Hit is {DynamicPassengerRole:{} role,DynamicEntityId:ulong vehicleId})
