@@ -159,6 +159,12 @@ internal static class GrenadeCatalogTests
             combat.GrenadeRevision!,MatchManifest.GrenadeCombatMode,10,60,120,
             [new(one,weapon,1,covers[0].SourceIndex,1,new(1000),0),new(two,weapon,2,covers[1].SourceIndex,1,new(1000),0)]);
         var simulation=new GrenadeMatchSimulation(allocation,map,catalog);
+        var dynamicBody=new PlayerHitbox("source/dynamic-body",PlayerHitboxKind.Sphere,1,
+            new(0,50,2),Vector3.Zero,Quaternion.Identity,.2f,Vector3.Zero,0);
+        simulation.ConfigureDynamicTargets(_=>[new DynamicShotTarget(900,1,23,dynamicBody)]);
+        Check(simulation.Trace(one,new(0,50,0),Vector3.UnitZ,4,uint.MaxValue) is
+              {DynamicEntityId:900,DynamicPartId:1},
+            "grenade flight traces host-owned moving unit geometry");
         var start=covers[0].Position;var command=new GrenadeThrowCommand{Swipe=true,SwipeStartX=start.X,SwipeStartY=start.Y,SwipeStartZ=start.Z,
             SwipeEndX=start.X+1,SwipeEndY=start.Y,SwipeEndZ=start.Z,HeldSeconds=.2f};
         var scheduled=simulation.Begin(one,command,60);

@@ -22,6 +22,9 @@ internal sealed class GrenadeMatchSimulation
     private readonly Actor[] actors;private readonly GrenadeCatalog catalog;private readonly RecoveredBattleMap map;
     private readonly Func<string,bool>? dynamicColliderEnabled;private readonly Func<int,bool>? indexedColliderEnabled;
     private readonly Func<int,int,int>? runtimeLayer;private ulong? lastTick;
+    private Func<string,IReadOnlyList<DynamicShotTarget>>? dynamicTargets;
+    internal void ConfigureDynamicTargets(Func<string,IReadOnlyList<DynamicShotTarget>> provider)
+        =>dynamicTargets=provider??throw new ArgumentNullException(nameof(provider));
     internal GrenadeMatchSimulation(MatchManifest manifest,RecoveredBattleMap map,GrenadeCatalog catalog,
         Func<string,bool>? dynamicColliderEnabled=null,Func<int,bool>? indexedColliderEnabled=null,Func<int,int,int>? runtimeLayer=null)
     {
@@ -88,7 +91,7 @@ internal sealed class GrenadeMatchSimulation
         var actor=ActorOf(launch.Owner);return launch.Right&&actor.Binding.Swipe?actor.Pose.Left.Position:actor.Pose.Right[launch.WeaponSourceId].Position;
     }
     internal ShotCollision? Trace(string owner,Vector3 origin,Vector3 direction,float range,uint mask)
-    {var world=new ShotCollisionWorld(map,actors.Select(x=>new CollisionPlayer(x.Definition.PlayerId,x.Pose.Collision)),dynamicColliderEnabled,indexedColliderEnabled,runtimeLayer);return world.Raycast(owner,origin,direction,range,mask);}
+    {var world=new ShotCollisionWorld(map,actors.Select(x=>new CollisionPlayer(x.Definition.PlayerId,x.Pose.Collision)),dynamicColliderEnabled,indexedColliderEnabled,runtimeLayer,dynamicTargets);return world.Raycast(owner,origin,direction,range,mask);}
     private Actor ActorOf(string id)=>actors.Single(x=>x.Definition.PlayerId==id);
     private static bool Loops(string clip)=>clip is "grenade_idle" or "grenade_run" or "grenadelauncher_idle" or "run_grenadelauncher";
     private static bool Zero(float value)=>BitConverter.SingleToInt32Bits(value)==0;

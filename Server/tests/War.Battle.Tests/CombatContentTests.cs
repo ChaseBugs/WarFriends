@@ -2084,6 +2084,12 @@ internal static class CombatContentTests
             Reject(()=>BattleLoadoutPolicy.ValidateCardIds(new[]{"CardUnknown"},cardCatalog));
             Reject(()=>WarCardEffectRequestValidator.Validate(new WarCardEffectRequest("CardAirstrike",new(1,0,1),1,0)));
             BattleTerminalPolicy.Validate("death","11111111111111111111111111111111",true,false);
+            foreach(var reason in new[]{"invalid-army-flame-authority","invalid-buggy-projectile-authority",
+                "invalid-drone-route-authority","invalid-helicopter-route-authority",
+                "invalid-land-mine-authority","invalid-tank-projectile-authority",
+                "invalid-vehicle-route-authority"})
+                BattleTerminalPolicy.Validate(reason,"",false,false);
+            count++;
             Reject(()=>BattleTerminalPolicy.Validate("death","11111111111111111111111111111111",true,true));
             Reject(()=>BattleTerminalPolicy.Validate("player-killed","11111111111111111111111111111111",true,true));
             Reject(()=>BattleTerminalPolicy.Validate("unknown","11111111111111111111111111111111",false,false));

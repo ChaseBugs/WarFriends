@@ -767,6 +767,7 @@ public sealed partial class MatchEngine
                 grenadeCombat=new GrenadeMatchSimulation(manifest,map,grenadeCatalog,
                     shields==null?null:shields.ColliderEnabled,barrels==null?null:barrels.ColliderEnabled,
                 barrels==null?null:barrels.RuntimeLayer);damageRoll=this.combatRandom;
+                grenadeCombat.ConfigureDynamicTargets(GroundVehicleShotTargets);
             }
             else
             {
