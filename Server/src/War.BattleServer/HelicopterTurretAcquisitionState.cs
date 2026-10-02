@@ -1,7 +1,7 @@
 namespace War.BattleServer;
 
 // TurretWeaponBasic.Reset/Update schedules target acquisition before Aim.
-// ShootEnd and batch firing remain separate combat transitions.
+// ShootEnd resets acquisition after a firing batch completes.
 internal sealed class HelicopterTurretAcquisitionState
 {
     private readonly ArmyVehicleShotStats stats;
@@ -10,6 +10,7 @@ internal sealed class HelicopterTurretAcquisitionState
     internal bool Disabled=>disabled;
     internal ulong NextPickTick { get; private set; }
     internal string? TargetId { get; private set; }
+    internal bool AwaitingAim { get; private set; }
 
     internal HelicopterTurretAcquisitionState(ulong spawnTick,ArmyVehicleShotStats stats,
         Func<float> random)
@@ -24,12 +25,12 @@ internal sealed class HelicopterTurretAcquisitionState
 
     internal void Disable()
     {
-        disabled=true;TargetId=null;
+        disabled=true;TargetId=null;AwaitingAim=false;
     }
 
     internal void Reset(ulong tick)
     {
-        disabled=false;TargetId=null;Schedule(tick);
+        disabled=false;TargetId=null;AwaitingAim=false;Schedule(tick);
     }
 
     internal bool Due(ulong tick)=>!disabled&&tick>NextPickTick;
@@ -40,9 +41,18 @@ internal sealed class HelicopterTurretAcquisitionState
            targetId is {Length:>100}||targetId?.Any(char.IsControl)==true)
             throw new InvalidDataException("Invalid Helicopter turret acquisition.");
         TargetId=targetId;
+        AwaitingAim=targetId!=null;
         if(targetId==null)Schedule(tick);
         else NextPickTick=checked(tick+(ulong)MathF.Ceiling(
             stats.MaxShootTime*2f*MatchManifest.TickRate));
+    }
+
+    internal void ResolveAim(ulong tick,bool visible)
+    {
+        if(disabled||!AwaitingAim||TargetId==null)
+            throw new InvalidDataException("Helicopter turret aim callback lacks a selected target.");
+        AwaitingAim=false;
+        if(!visible)Reset(tick);
     }
 
     private void Schedule(ulong tick)

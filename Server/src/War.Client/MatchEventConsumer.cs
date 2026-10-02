@@ -33,6 +33,20 @@ namespace War.Client
                 if (item.Kind == MatchEventKind.ObjectiveProgress &&
                     (!Guid.TryParseExact(item.ActorId, "N", out _) || item.ProjectileId == 0 || string.IsNullOrWhiteSpace(item.Reason)))
                     throw new InvalidDataException("Invalid objective progress event.");
+                if(item.Kind==MatchEventKind.HelicopterFired)
+                {
+                    var shot=item.HelicopterShot;
+                    if(shot==null||shot.ArmyEntityKey==0||item.ProjectileId==0||
+                       !Guid.TryParseExact(item.ActorId,"N",out _)||item.Reason!="helicopter"||
+                       float.IsNaN(shot.MuzzleX)||float.IsInfinity(shot.MuzzleX)||
+                       float.IsNaN(shot.MuzzleY)||float.IsInfinity(shot.MuzzleY)||
+                       float.IsNaN(shot.MuzzleZ)||float.IsInfinity(shot.MuzzleZ)||
+                       float.IsNaN(shot.Speed)||float.IsInfinity(shot.Speed)||
+                       shot.Speed<=0||shot.Speed>1500)
+                        throw new InvalidDataException("Invalid Helicopter firing event.");
+                }
+                else if(item.HelicopterShot!=null)
+                    throw new InvalidDataException("Unexpected Helicopter firing metadata.");
                 if (item.Kind == MatchEventKind.ArenaSettled &&
                     (!Guid.TryParseExact(item.ActorId, "N", out _) ||
                      !item.Reason.EndsWith(":won", StringComparison.Ordinal) &&

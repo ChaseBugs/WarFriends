@@ -429,8 +429,14 @@ enum MatchEventKind {
   MATCH_EVENT_KIND_HEAVY_TURRET_DAMAGED = 37;
   MATCH_EVENT_KIND_HEAVY_TURRET_FIRED = 38;
   MATCH_EVENT_KIND_DRONE_FIRED = 39;
+  MATCH_EVENT_KIND_HELICOPTER_FIRED = 40;
 }
 message DroneShotPresentation {
+  uint64 army_entity_key = 1;
+  float muzzle_x = 2; float muzzle_y = 3; float muzzle_z = 4;
+  float speed = 5; bool fake = 6; bool shield = 7;
+}
+message HelicopterShotPresentation {
   uint64 army_entity_key = 1;
   float muzzle_x = 2; float muzzle_y = 3; float muzzle_z = 4;
   float speed = 5; bool fake = 6; bool shield = 7;
@@ -453,6 +459,7 @@ message MatchEvent {
   string army_energy_recipient_id = 22;
   // Drone firing destination uses x/y/z; this payload supplies launch identity.
   DroneShotPresentation drone_shot = 23;
+  HelicopterShotPresentation helicopter_shot = 24;
 }
 message MatchEventBatch {
   string match_id = 1; string manifest_hash = 2;

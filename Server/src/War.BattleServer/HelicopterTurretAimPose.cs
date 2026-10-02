@@ -19,6 +19,17 @@ internal static class HelicopterTurretAim
     private static readonly Vector3 MuzzleOffset=new(-.0009999033f,.068f,.17699999f);
     private const float DegreesToRadians=MathF.PI/180f;
 
+    internal static Vector3 ParentPosition(Vector3 rootPosition,Quaternion rootRotation)
+    {
+        if(!PlayerHitbox.Finite(rootPosition)||!float.IsFinite(rootRotation.LengthSquared())||
+           Math.Abs(rootRotation.LengthSquared()-1)>.001f)
+            throw new InvalidDataException("Invalid Helicopter turret parent pose.");
+        var position=rootPosition+Vector3.Transform(ParentOffset,rootRotation);
+        if(!PlayerHitbox.Finite(position))
+            throw new InvalidDataException("Helicopter turret parent pose overflow.");
+        return position;
+    }
+
     internal static HelicopterTurretAimPose FromRest(Vector3 rootPosition,Quaternion rootRotation,
         Vector3 target)
         =>FromCurrent(rootPosition,rootRotation,target,Quaternion.Identity,

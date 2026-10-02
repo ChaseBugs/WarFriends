@@ -152,7 +152,10 @@ public sealed partial class MatchEngine
            row.UnitId!="ID_UNIT-HELICOPTER"||!armyHelicopterGunners.TryGetValue(key,out var gunner))return false;
         if(!gunner.Damage(amount,tick))return false;
         if(!gunner.Snapshot().TurretEnabled&&armyHelicopterAcquisitions.TryGetValue(key,out var acquisition))
+        {
             acquisition.Disable();
+            if(armyHelicopterWeapons.TryGetValue(key,out var weapon))weapon.Reset();
+        }
         return true;
     }
 
@@ -341,6 +344,7 @@ public sealed partial class MatchEngine
                     if(selected!=null&&BeginHelicopterTurretAim(key,selected.Position)==null)
                         throw new InvalidDataException("Helicopter selected a target without live aim authority.");
                 }
+                AdvanceHelicopterTurret(key,time);
             }
             if(armyHelicopterSchedules.TryGetValue(key,out var schedule))
             {
@@ -694,6 +698,7 @@ public sealed partial class MatchEngine
             armyHelicopterTurrets.Add(entityKey,new HelicopterTurretTweenState());
             armyHelicopterAcquisitions.Add(entityKey,new HelicopterTurretAcquisitionState(tick,
                 armyHelicopterShots[entityKey],NextArmyFloat));
+            armyHelicopterWeapons.Add(entityKey,new HelicopterTurretWeaponState(NextArmyFloat));
         }
         if(family.VehicleShot!=null&&!family.IsAir&&!family.IsSoldier)
             armyVehicleShots.Add(entityKey,armyCatalog.ComposeVehicleShot(unitId,
@@ -2221,6 +2226,7 @@ public sealed partial class MatchEngine
         armyHelicopterGunners.Remove(entityKey);
         armyHelicopterTurrets.Remove(entityKey);
         armyHelicopterAcquisitions.Remove(entityKey);
+        armyHelicopterWeapons.Remove(entityKey);
         droneAttacks.Remove(entityKey);
         droneLastIntents.Remove(entityKey);
         armyDamage.Remove(entityKey);

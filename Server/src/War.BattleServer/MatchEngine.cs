@@ -101,7 +101,8 @@ public sealed partial class MatchEngine
     internal const int MaximumProjectiles = 128;
     internal int PendingProjectileCount => checked(projectiles.Count+armyProjectiles.Count+armyFlameBursts.Count+
         vehicleProjectiles.Count+scheduledTransporterShots.Count+buggyProjectiles.Count+tankProjectiles.Count+
-        scheduledBazookas.Count+grenadeProjectiles.Count+heavyTurretProjectiles.Count+droneProjectiles.Count);
+        scheduledBazookas.Count+grenadeProjectiles.Count+heavyTurretProjectiles.Count+
+        droneProjectiles.Count+helicopterProjectiles.Count);
     internal IReadOnlyCollection<AirBattleEntity> AirEntities => airEntities.Snapshot();
 
     internal bool TryRegisterAirEntity(AirBattleEntity entity)
@@ -946,6 +947,9 @@ public sealed partial class MatchEngine
             try{if(droneProjectiles.Count>0)AdvanceDroneProjectileFlights();}
             catch(InvalidDataException){End("invalid-drone-projectile-authority","",false);return;}
             if(Terminal)return;
+            try{if(helicopterProjectiles.Count>0)AdvanceHelicopterProjectiles();}
+            catch(InvalidDataException){End("invalid-helicopter-projectile-authority","",false);return;}
+            if(Terminal)return;
             try{AdvanceHeavyTurretProjectiles();AdvanceHeavyTurrets();}
             catch(InvalidDataException){End("invalid-heavy-turret-authority","",false);return;}
             if(Terminal)return;
@@ -1285,6 +1289,8 @@ public sealed partial class MatchEngine
     {
         foreach(var id in droneProjectiles.Where(x=>x.Value.Owner==ownerPlayerId).Select(x=>x.Key).ToArray())
             droneProjectiles.Remove(id);
+        foreach(var id in helicopterProjectiles.Where(x=>x.Value.Flight.OwnerId==ownerPlayerId)
+                    .Select(x=>x.Key).ToArray())helicopterProjectiles.Remove(id);
         if(dronePlayerTargets.Remove(ownerPlayerId))droneTargets.Disable(DronePlayerId(ownerPlayerId));
         foreach(var decoy in decoys.RemoveOwner(ownerPlayerId))
         {
@@ -2003,6 +2009,12 @@ public sealed partial class MatchEngine
             ProjectileId=x.Key,OwnerPlayerId=x.Value.Flight.OwnerId,Kind="heavy-turret-bullet",
             X=x.Value.Flight.Position.X,Y=x.Value.Flight.Position.Y,Z=x.Value.Flight.Position.Z
         }));
+        snapshot.Projectiles.AddRange(helicopterProjectiles.OrderBy(x=>x.Key).Select(x=>
+            new BattleProjectileState
+            {
+                ProjectileId=x.Key,OwnerPlayerId=x.Value.Flight.OwnerId,Kind="helicopter-bullet",
+                X=x.Value.Flight.Position.X,Y=x.Value.Flight.Position.Y,Z=x.Value.Flight.Position.Z
+            }));
         snapshot.Projectiles.AddRange(droneProjectiles.OrderBy(x=>x.Key).Select(x=>
         {
             var flight=x.Value;var position=flight.Real?.Position??flight.Fake!.Position;

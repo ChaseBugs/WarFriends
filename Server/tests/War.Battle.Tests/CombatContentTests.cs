@@ -203,6 +203,14 @@ internal static class CombatContentTests
               "Helicopter turret retains source decoy, primary, secondary, fallback and random-list order");
         Reject(()=>HelicopterTurretTargetPolicy.Select(1,turretCandidates[..3],
             _=>true,n=>n));
+        var helicopterShotTargets=new DroneTargetDetails([
+            new(1,1,new(0,1,1)),new(2,2,new(0,.2f,1)),
+            new(3,16,new(0,1.4f,1))],true,Vector3.Zero,Vector3.UnitZ,true,Vector3.Zero);
+        Check(HelicopterTurretShotTargetPolicy.Select(Vector3.UnitZ*2,
+                  helicopterShotTargets,0,()=>0)?.Type==1&&
+              HelicopterTurretShotTargetPolicy.Select(Vector3.UnitZ*2,
+                  helicopterShotTargets with {Hiding=false},0,()=>0)?.Type==16,
+              "Helicopter source target rule selects whole body behind shield and moving pose while walking");
         var turretAcquisition=new HelicopterTurretAcquisitionState(61,
             new ArmyVehicleShotStats(12,.75f,4,5,1,5,2),()=>0);
         Check(turretAcquisition.NextPickTick==91&&!turretAcquisition.Due(91)&&
@@ -3695,6 +3703,59 @@ internal static class CombatContentTests
         Check(automaticHelicopterAim&&
               helicopterShotMatch.HelicopterTurretCurrentAimPose(shotHelicopter.EntityKey)!=null,
               "normal Helicopter ticks acquire the visible opponent and advance live turret joints");
+        var autonomousHelicopterManifest=detached with {MatchId="autonomous-helicopter-fire",
+            DurationSeconds=180,IdleSeconds=120};
+        var autonomousHelicopterMatch=new MatchEngine(autonomousHelicopterManifest,
+            content:content,armyChoice:_=>0);
+        autonomousHelicopterMatch.Admit(soldierOwner);autonomousHelicopterMatch.Admit(helicopterOwner);
+        foreach(var owner in new[]{soldierOwner,helicopterOwner})
+            autonomousHelicopterMatch.Command(owner,new(){CommandId=1,
+                Ready=new(){ManifestHash=autonomousHelicopterMatch.ManifestHash}});
+        autonomousHelicopterMatch.Advance(60);
+        autonomousHelicopterMatch.ArmyBatch(helicopterOwner);
+        autonomousHelicopterMatch.Command(helicopterOwner,new(){CommandId=2,
+            DeployArmy=new(){OptionIndex=2}});
+        autonomousHelicopterMatch.Advance(61);
+        var autonomousHelicopter=autonomousHelicopterMatch.ArmyEntityBatch(soldierOwner,0,0)
+            .Entities.Single(x=>x.UnitId=="ID_UNIT-HELICOPTER");
+        bool observedHelicopterFlight=false;
+        for(ulong airFireTick=62;airFireTick<1200&&!autonomousHelicopterMatch.Terminal;airFireTick++)
+        {
+            autonomousHelicopterMatch.Advance(airFireTick);
+            observedHelicopterFlight|=autonomousHelicopterMatch.Snapshot().Projectiles
+                .Any(x=>x.Kind=="helicopter-bullet"&&x.OwnerPlayerId==helicopterOwner);
+        }
+        ulong helicopterEventCursor=0;int helicopterRealFired=0,helicopterImpacts=0;
+        MatchEvent? firstHelicopterFired=null;
+        var helicopterFireTicks=new List<ulong>();
+        var helicopterConsumer=new War.Client.MatchEventConsumer();
+        while(true)
+        {
+            var batch=autonomousHelicopterMatch.EventBatch(helicopterOwner,helicopterEventCursor);
+            if(batch.Events.Count==0)break;
+            helicopterConsumer.Consume(batch);
+            helicopterRealFired+=batch.Events.Count(e=>e.Kind==MatchEventKind.HelicopterFired&&
+                e.HelicopterShot is {Fake:false}&&
+                e.HelicopterShot.ArmyEntityKey==autonomousHelicopter.EntityKey);
+            firstHelicopterFired??=batch.Events.FirstOrDefault(e=>
+                e.Kind==MatchEventKind.HelicopterFired);
+            helicopterFireTicks.AddRange(batch.Events.Where(e=>
+                e.Kind==MatchEventKind.HelicopterFired).Select(e=>e.Tick));
+            helicopterImpacts+=batch.Events.Count(e=>e.Kind==MatchEventKind.Impact&&
+                e.Reason=="helicopter");
+            helicopterEventCursor=batch.Events.Last().EventId;
+        }
+        Check(helicopterRealFired>=4&&helicopterImpacts>0&&observedHelicopterFlight&&
+              firstHelicopterFired is {HelicopterShot:{Speed:12,Fake:false}}&&
+              helicopterFireTicks.Count>=4&&
+              helicopterFireTicks.Take(4).Skip(1)
+                  .Select((shot,i)=>shot-helicopterFireTicks[i]).All(delta=>delta is >=6 and <=8)&&
+              helicopterConsumer.LastEventId==helicopterEventCursor,
+              "normal Helicopter batches publish source-speed rounds, fly, collide and replay through SDK events");
+        var forgedHelicopterEvent=firstHelicopterFired!.Clone();
+        forgedHelicopterEvent.EventId=1;forgedHelicopterEvent.HelicopterShot=null;
+        Reject(()=>new War.Client.MatchEventConsumer().Consume(new MatchEventBatch
+        {Code="events",LatestEventId=1,Events={forgedHelicopterEvent}}));
         var droneHelicopterManifest=detached with
         {
             MatchId="drone-projectile-helicopter",DurationSeconds=180,IdleSeconds=120,
