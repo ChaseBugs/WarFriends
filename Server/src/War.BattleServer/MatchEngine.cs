@@ -770,6 +770,7 @@ public sealed partial class MatchEngine
                     barrels==null?null:barrels.ColliderEnabled,
                     barrels==null?null:barrels.RuntimeLayer);
                 rifleCombat.ConfigureDynamicTargets(GroundVehicleShotTargets);
+                rifleCombat.ConfigureVisibilityTargets(HelicopterVisibilityTargets);
                 ConfigureVolley(rifleCombat.PrepareVolley,this.combatRandom);
                 bazookaCatalog=content.Bazookas;
             }

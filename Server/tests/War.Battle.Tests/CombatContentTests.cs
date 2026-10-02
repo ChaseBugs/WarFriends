@@ -2870,9 +2870,20 @@ internal static class CombatContentTests
             var sightCenter=new Vector3(sightDecoy.X,sightDecoy.Y,sightDecoy.Z)+Vector3.Transform(content.Decoys.Prefab.ColliderCenter,sightRotation);
             Check(!decoyMatch.DroneCanSee(sightCenter-Vector3.UnitX*2-Vector3.UnitY*.5f,sightCenter+Vector3.UnitX*2),
                 "Drone visibility includes real destroyable Decoy blockers on either fraction");
+            var helicopterSelection=HelicopterTurretSightRay.ForSelection(
+                sightCenter-Vector3.UnitX*2,sightCenter+Vector3.UnitX*2);
+            Check(!decoyMatch.HelicopterVisibilityRay(helicopterSelection),
+                "Helicopter source sight mask includes friendly and opposing Decoy collider blockers");
         }
         Check(decoyMatch.DroneCanSee(new(0,100,0),new(0,100.5f,0)),"Drone zero normalized sight ray retains Unity no-hit behavior");
         Check(decoyMatch.DroneCanSee(new(0,100,0),new(0,100.5f,10)),"clear elevated Drone sight excludes player body hitboxes");
+        Check(decoyMatch.HelicopterVisibilityRay(HelicopterTurretSightRay.ForSelection(
+                  new(0,100,0),new(0,100,10)))&&
+              decoyMatch.HelicopterVisibilityRay(HelicopterTurretSightRay.ForSelection(
+                  new(0,100,0),new(0,100,0))),
+              "Helicopter static/dynamic sight query preserves clear and zero-direction rays");
+        Reject(()=>decoyMatch.HelicopterVisibilityRay(new HelicopterSightRay(
+            Vector3.Zero,Vector3.UnitX,10,uint.MaxValue)));
         var landMineManifest=decoyManifest with {MatchId="land-mine-match"};
         var landMineMatch=new MatchEngine(landMineManifest,content:content,armyChoice:_=>0);
         landMineMatch.ConfigureBattleAllocations([
@@ -3563,7 +3574,9 @@ internal static class CombatContentTests
         var heliForward=Vector3.Transform(Vector3.Transform(Vector3.UnitZ,
             new Quaternion(0,-.7071068f,0,.7071067f)),heliQ);
         Check(crewMatch.HelicopterTargetInTurretCone(sourceHelicopter,heliAimOrigin+heliForward*10)&&
-              !crewMatch.HelicopterTargetInTurretCone(sourceHelicopter,heliAimOrigin-heliForward*10),
+              !crewMatch.HelicopterTargetInTurretCone(sourceHelicopter,heliAimOrigin-heliForward*10)&&
+              !crewMatch.HelicopterTargetVisibleInCone(sourceHelicopter,
+                  heliAimOrigin-heliForward*10),
               "live Helicopter target cone follows the authoritative flight rotation");
         Check(crewMatch.DamageHelicopterGunner(sourceHelicopter,621f)&&
               crewMatch.HelicopterGunner(sourceHelicopter) is {Health:0,TurretEnabled:false}&&

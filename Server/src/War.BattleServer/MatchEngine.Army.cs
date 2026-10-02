@@ -111,6 +111,15 @@ public sealed partial class MatchEngine
         return afterAim?HelicopterTurretSightRay.ForAimedShot(pose.SightPosition,target):
             HelicopterTurretSightRay.ForSelection(pose.SightPosition,target);
     }
+    internal bool HelicopterVisibilityRay(HelicopterSightRay ray)
+        =>(rifleCombat??throw new InvalidDataException("Helicopter visibility needs host collision poses."))
+            .HelicopterCanSee(ray);
+    internal bool HelicopterTargetVisibleInCone(ulong key,Vector3 shotTarget)
+    {
+        if(!HelicopterTargetInTurretCone(key,shotTarget))return false;
+        var ray=HelicopterCurrentSightRay(key,shotTarget,false);
+        return ray!=null&&HelicopterVisibilityRay(ray.Value);
+    }
     internal bool HelicopterTargetInTurretCone(ulong key,Vector3 target)
     {
         if(phase!=BattlePhase.Running||!armyHelicopterGunners.TryGetValue(key,out var gunner)||
@@ -351,12 +360,18 @@ public sealed partial class MatchEngine
     }
 
     internal IReadOnlyList<DynamicShotTarget> GroundVehicleShotTargets(string shooterId)
+        =>GroundVehicleShotTargets(shooterId,false);
+    private IReadOnlyList<DynamicShotTarget> HelicopterVisibilityTargets()
+        =>GroundVehicleShotTargets(players[0].Definition.PlayerId,true);
+    private IReadOnlyList<DynamicShotTarget> GroundVehicleShotTargets(string shooterId,
+        bool includeFriendly)
     {
         if(phase!=BattlePhase.Running)return [];
         var shooter=Find(shooterId)??throw new InvalidDataException("Dynamic collision shooter disappeared.");
-        var result=new List<DynamicShotTarget>(DecoyShotTargets(shooter));
-        result.AddRange(HeavyTurretShotTargets(shooter));
-        foreach(var row in activeArmyEntities.Values.Where(r=>r.UnitId=="ID_UNIT-DRONE"&&r.OwnerFraction!=shooter.Definition.Fraction))
+        var result=new List<DynamicShotTarget>(DecoyShotTargets(shooter,includeFriendly));
+        result.AddRange(HeavyTurretShotTargets(shooter,includeFriendly));
+        foreach(var row in activeArmyEntities.Values.Where(r=>r.UnitId=="ID_UNIT-DRONE"&&
+            (includeFriendly||r.OwnerFraction!=shooter.Definition.Fraction)))
         {
             var q=row.DroneRotation??throw new InvalidDataException("Drone collision lost its host rotation.");
             foreach(var collider in (droneColliders??throw new InvalidDataException("Drone collider catalog missing."))
@@ -367,9 +382,9 @@ public sealed partial class MatchEngine
         if(vehicles!=null&&groundVehicleWeapons!=null)
         foreach(var vehicle in vehicles.Snapshot())
         {
-            if(vehicle.OwnerPlayerId==shooterId)continue;
+            if(!includeFriendly&&vehicle.OwnerPlayerId==shooterId)continue;
             var owner=Find(vehicle.OwnerPlayerId)??throw new InvalidDataException("Vehicle collision owner disappeared.");
-            if(owner.Definition.Fraction==shooter.Definition.Fraction)continue;
+            if(!includeFriendly&&owner.Definition.Fraction==shooter.Definition.Fraction)continue;
             if(!groundVehicleFacing.TryGetValue(vehicle.EntityId,out var facing))
                 throw new InvalidDataException("Vehicle collision facing disappeared.");
             result.AddRange(groundVehicleWeapons.PlaceBody(vehicle.UnitId,vehicle.EntityId,vehicle.Position,facing));
@@ -394,7 +409,8 @@ public sealed partial class MatchEngine
         }
         foreach(var (entityId,army) in activeArmyEntities.OrderBy(x=>x.Key))
         {
-            if(army.OwnerPlayerId==shooterId||army.OwnerFraction==shooter.Definition.Fraction||
+            if((!includeFriendly&&(army.OwnerPlayerId==shooterId||
+                army.OwnerFraction==shooter.Definition.Fraction))||
                !infantryAnimations.ContainsKey(entityId))continue;
             int layer=army.OwnerFraction==1?23:army.OwnerFraction==2?22:
                 throw new InvalidDataException("Army infantry has unsupported faction.");

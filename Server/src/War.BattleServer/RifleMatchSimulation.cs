@@ -39,12 +39,15 @@ internal sealed class RifleMatchSimulation
     private readonly Func<int,int,int>? runtimeLayer;
     private readonly string mode;
     private Func<string,IReadOnlyList<DynamicShotTarget>>? dynamicTargets;
+    private Func<IReadOnlyList<DynamicShotTarget>>? visibilityTargets;
     private ulong? lastTick;
     private double now;
     internal PlayerAimPose Pose(string id)=>actors.Single(a=>a.Definition.PlayerId==id).Pose;
     internal RiflePoseState Snapshot(string id)=>actors.Single(a=>a.Definition.PlayerId==id).WirePose.Clone();
     internal void ConfigureDynamicTargets(Func<string,IReadOnlyList<DynamicShotTarget>> provider)
     {dynamicTargets=provider??throw new ArgumentNullException(nameof(provider));}
+    internal void ConfigureVisibilityTargets(Func<IReadOnlyList<DynamicShotTarget>> provider)
+    {visibilityTargets=provider??throw new ArgumentNullException(nameof(provider));}
     internal void StartMove(string id)
     {
         var actor=actors.Single(a=>a.Definition.PlayerId==id);
@@ -347,6 +350,30 @@ internal sealed class RifleMatchSimulation
                     if((mask&(1u<<collider.Layer))!=0&&
                         collider.Hitbox.Raycast(ray.Origin,ray.Direction,ray.Range).HasValue)return false;
                 }
+        return true;
+    }
+    internal bool HelicopterCanSee(HelicopterSightRay ray)
+    {
+        if(!PlayerHitbox.Finite(ray.Origin)||!PlayerHitbox.Finite(ray.Direction)||
+           !float.IsFinite(ray.Range)||ray.Range is <=0 or >10000||
+           ray.LayerMask!=HelicopterTurretSightRay.SourceLayerMask)
+            throw new InvalidDataException("Invalid Helicopter visibility ray.");
+        // Unity Physics.Raycast with a zero normalized direction finds no hit.
+        if(ray.Direction==Vector3.Zero)return true;
+        if(Math.Abs(ray.Direction.LengthSquared()-1)>.001f)
+            throw new InvalidDataException("Helicopter visibility ray direction is not normalized.");
+        if(map.Raycast(ray.Origin,ray.Direction,ray.Range,ray.LayerMask,
+            dynamicColliderEnabled,indexedColliderEnabled,runtimeLayer)!=null)return false;
+        if(visibilityTargets==null)
+            throw new InvalidDataException("Helicopter visibility lacks dynamic collider authority.");
+        foreach(var collider in visibilityTargets())
+        {
+            if(collider==null||collider.EntityId==0||collider.Layer is <0 or >31||
+               collider.Hitbox==null)
+                throw new InvalidDataException("Invalid Helicopter visibility collider.");
+            if((ray.LayerMask&(1u<<collider.Layer))!=0&&
+               collider.Hitbox.Raycast(ray.Origin,ray.Direction,ray.Range).HasValue)return false;
+        }
         return true;
     }
     internal Vector3 BazookaMuzzle(string owner,bool secondary)

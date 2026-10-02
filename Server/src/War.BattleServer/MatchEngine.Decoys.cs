@@ -127,13 +127,13 @@ public sealed partial class MatchEngine
         return result;
     }
 
-    private IReadOnlyList<DynamicShotTarget> DecoyShotTargets(Player shooter)
+    private IReadOnlyList<DynamicShotTarget> DecoyShotTargets(Player shooter,bool includeFriendly=false)
     {
         if(decoySource==null)return [];
         var prefab=decoySource.Prefab;var result=new List<DynamicShotTarget>();
         foreach(var row in decoys.Snapshot())
         {
-            if(row.OwnerFraction==shooter.Definition.Fraction)continue;
+            if(!includeFriendly&&row.OwnerFraction==shooter.Definition.Fraction)continue;
             int layer=row.OwnerFraction==1?23:22;
             float yaw=MathF.Atan2(row.Facing.X,row.Facing.Z);
             var rotation=Quaternion.CreateFromAxisAngle(Vector3.UnitY,yaw);

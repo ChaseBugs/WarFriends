@@ -203,13 +203,13 @@ public sealed partial class MatchEngine
     private int Choose(int count)
     {int choice=armyChoice(count);if(choice<0||choice>=count)throw new InvalidDataException("Heavy Turret target selection escaped its source set.");return choice;}
 
-    private IReadOnlyList<DynamicShotTarget> HeavyTurretShotTargets(Player shooter)
+    private IReadOnlyList<DynamicShotTarget> HeavyTurretShotTargets(Player shooter,bool includeFriendly=false)
     {
         if(heavyTurretSource==null)return [];
         var result=new List<DynamicShotTarget>();
         foreach(var row in heavyTurrets.Snapshot())
         {
-            if(row.OwnerFraction==shooter.Definition.Fraction)continue;
+            if(!includeFriendly&&row.OwnerFraction==shooter.Definition.Fraction)continue;
             int layer=row.OwnerFraction==1?23:22;
             foreach(var sourceCollider in heavyTurretSource.Colliders)
             {
