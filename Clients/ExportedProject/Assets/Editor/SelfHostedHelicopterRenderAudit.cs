@@ -24,6 +24,7 @@ public static class SelfHostedHelicopterRenderAudit
             var vertical=Quaternion.Euler(-12,80,0);
             var row=new BattleArmyEntityState{EntityKey=4294967297,UnitId="ID_UNIT-HELICOPTER",
                 X=2,Y=3,Z=4,HelicopterRotation=Q(body),
+                SpawnTick=60,PositionTick=75,
                 HelicopterTurretHorizontalLocal=Q(yaw),
                 HelicopterTurretVerticalWorld=Q(vertical)};
             presenter.Apply(new List<BattleArmyEntityState>{row});
@@ -43,6 +44,21 @@ public static class SelfHostedHelicopterRenderAudit
             var turret=reference.GetComponent<Helicopter>().turret;
             turret.jontHorizontal.localRotation=yaw;
             turret.jointVertical.rotation=vertical;
+            int rotorChecks=0;
+            foreach(var tween in reference.GetComponentsInChildren<TweenRotationSpecial>(true))
+            {
+                if(tween.gameObject.name!="propeller_front"&&
+                    tween.gameObject.name!="propeller_front (1)"&&
+                    tween.gameObject.name!="propeller_tail")continue;
+                float factor=(.5f/tween.duration)%1f;
+                tween.Sample(factor,false);
+                var visualRotor=visual.GetComponentsInChildren<Transform>(true)
+                    .Single(x=>x.name==tween.gameObject.name);
+                Require(Quaternion.Angle(visualRotor.localRotation,tween.transform.localRotation)<.001f,
+                    "source rotor tween at host sample time: "+tween.gameObject.name);
+                rotorChecks++;
+            }
+            Require(rotorChecks==3,"three recovered rotor tweens");
             var sourceMuzzle=turret.batchedWeapon.weapon.spawnPoint;
             var visualMuzzle=visual.GetComponentsInChildren<Transform>(true)
                 .Single(x=>x.name==sourceMuzzle.name);
@@ -52,7 +68,8 @@ public static class SelfHostedHelicopterRenderAudit
             Require(GameObject.Find("SelfHostedHelicopter_4294967297")==null,
                 "roster absence removes the visual");
             Debug.Log("UNITY_HELICOPTER_RENDER_PASSED meshes="+
-                prefab.GetComponentsInChildren<MeshFilter>(true).Length+" turret=True removal=True");
+                prefab.GetComponentsInChildren<MeshFilter>(true).Length+
+                " turret=True rotors="+rotorChecks+" removal=True");
             EditorApplication.Exit(0);
         }
         catch(Exception error){Debug.LogError(error);EditorApplication.Exit(1);}

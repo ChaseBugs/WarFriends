@@ -12,6 +12,14 @@ public sealed class SelfHostedHelicopterPresenter : MonoBehaviour
         public GameObject Root;
         public Transform Horizontal;
         public Transform Vertical;
+        public Rotor[] Rotors;
+        public float RotorSeconds;
+        public float SampledAt;
+    }
+    private sealed class Rotor
+    {
+        public Transform Target;
+        public TweenRotationSpecial Source;
     }
 
     private readonly Dictionary<ulong,Visual> active=new Dictionary<ulong,Visual>();
@@ -40,6 +48,11 @@ public sealed class SelfHostedHelicopterPresenter : MonoBehaviour
             visual.Root.transform.rotation=Rotation(row.HelicopterRotation);
             visual.Horizontal.localRotation=Rotation(row.HelicopterTurretHorizontalLocal);
             visual.Vertical.rotation=Rotation(row.HelicopterTurretVerticalWorld);
+            if(row.PositionTick<row.SpawnTick)
+                throw new InvalidOperationException("Helicopter visual tick predates spawn.");
+            visual.RotorSeconds=(row.PositionTick-row.SpawnTick)/30f;
+            visual.SampledAt=Time.unscaledTime;
+            SampleRotors(visual,visual.RotorSeconds);
         }
         var stale=new List<ulong>();
         foreach(var pair in active)if(!present.Contains(pair.Key))stale.Add(pair.Key);
@@ -54,8 +67,43 @@ public sealed class SelfHostedHelicopterPresenter : MonoBehaviour
         var root=new GameObject("SelfHostedHelicopter_"+key);
         var map=new Dictionary<Transform,Transform>();
         Copy(source.transform,root.transform,true,map);
+        var tweens=source.GetComponentsInChildren<TweenRotationSpecial>(true);
+        var rotors=new List<Rotor>();
+        foreach(var tween in tweens)
+        {
+            string name=tween.gameObject.name;
+            if(name!="propeller_front"&&name!="propeller_front (1)"&&
+                name!="propeller_tail")continue;
+            if(tween.style!=UITweener.Style.Loop||tween.method!=UITweener.Method.Linear||
+                tween.duration<=0||tween.animationCurve==null)
+                throw new InvalidOperationException("Recovered Helicopter rotor tween changed.");
+            rotors.Add(new Rotor{Target=map[tween.transform],Source=tween});
+        }
+        if(rotors.Count!=3)
+            throw new InvalidOperationException("Recovered Helicopter requires three rotor tweens.");
         return new Visual{Root=root,Horizontal=map[source.turret.jontHorizontal],
-            Vertical=map[source.turret.jointVertical]};
+            Vertical=map[source.turret.jointVertical],Rotors=rotors.ToArray()};
+    }
+
+    private static void SampleRotors(Visual visual,float seconds)
+    {
+        foreach(var rotor in visual.Rotors)
+        {
+            var tween=rotor.Source;
+            float phase=seconds/tween.duration;
+            phase-=Mathf.Floor(phase);
+            float factor=tween.animationCurve.Evaluate(phase);
+            float angle=tween.from*(1f-factor)+tween.to*factor;
+            rotor.Target.localRotation=Quaternion.AngleAxis(angle,tween.rotationAxis)*
+                Quaternion.Euler(tween.baseRotation);
+        }
+    }
+
+    private void Update()
+    {
+        foreach(var visual in active.Values)
+            SampleRotors(visual,visual.RotorSeconds+
+                Mathf.Max(0f,Time.unscaledTime-visual.SampledAt));
     }
 
     private static Quaternion Rotation(BattleJointRotation value)
