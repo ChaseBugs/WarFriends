@@ -6,7 +6,8 @@ namespace War.BattleServer;
 public sealed partial class MatchEngine
 {
     private sealed record HelicopterHostProjectile(string Owner,BulletFlight? Real,
-        HelicopterFakeProjectileFlight? Fake,float Damage,float PlayerRatio,float OvertimeRatio);
+        HelicopterFakeProjectileFlight? Fake,Vector3 Velocity,float Damage,
+        float PlayerRatio,float OvertimeRatio);
     private readonly Dictionary<ulong,HelicopterTurretWeaponState> armyHelicopterWeapons=[];
     private readonly Dictionary<ulong,HelicopterHostProjectile> helicopterProjectiles=[];
     internal int PendingHelicopterProjectiles=>helicopterProjectiles.Count;
@@ -65,13 +66,18 @@ public sealed partial class MatchEngine
             pose.MuzzlePosition);
         if(round==null)return;
         ulong id=checked(projectileId+1);
+        float shotSpeed=round.Batch.IsFake?stats.ShotSpeed*1.5f:stats.ShotSpeed;
         try
         {
+            Vector3 delta=round.Batch.Target-round.Muzzle;
+            if(!PlayerHitbox.Finite(delta)||delta.LengthSquared()<1e-10f)
+                throw new ProjectileTargetException();
+            Vector3 velocity=Vector3.Normalize(delta)*shotSpeed;
             if(round.Batch.IsFake)
             {
                 var fake=new HelicopterFakeProjectileFlight(round.Muzzle,round.Batch.Target,
                     stats.ShotSpeed,tick);
-                helicopterProjectiles.Add(id,new(row.OwnerPlayerId,null,fake,0,0,0));
+                helicopterProjectiles.Add(id,new(row.OwnerPlayerId,null,fake,velocity,0,0,0));
             }
             else
             {
@@ -82,7 +88,7 @@ public sealed partial class MatchEngine
                 var flight=new BulletFlight(id,row.OwnerPlayerId,
                     new(stats.ShotSpeed,.5f,false),round.Muzzle,round.Batch.Target,tick,
                     (origin,direction,range)=>TraceHeavyTurretShot(row.OwnerPlayerId,origin,direction,range));
-                helicopterProjectiles.Add(id,new(row.OwnerPlayerId,flight,null,damage,
+                helicopterProjectiles.Add(id,new(row.OwnerPlayerId,flight,null,velocity,damage,
                     policy.PlayerDamageRatio,policy.OvertimePlayerDamageRatio));
             }
         }
@@ -97,7 +103,7 @@ public sealed partial class MatchEngine
         {
             ArmyEntityKey=key,MuzzleX=round.Muzzle.X,MuzzleY=round.Muzzle.Y,
             MuzzleZ=round.Muzzle.Z,
-            Speed=round.Batch.IsFake?stats.ShotSpeed*1.5f:stats.ShotSpeed,
+            Speed=shotSpeed,
             Fake=round.Batch.IsFake,Shield=round.Shield
         };
         if(round.Batch.EndsBatch)acquisition.Reset(tick);

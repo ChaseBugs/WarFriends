@@ -3774,11 +3774,16 @@ internal static class CombatContentTests
             DeployArmy=new(){OptionIndex=2}});
         fakeHelicopterMatch.Advance(61);
         bool observedFakeHelicopterFlight=false;
+        bool observedFakeHelicopterVelocity=false;
         for(ulong fakeTick=62;fakeTick<1200&&!fakeHelicopterMatch.Terminal;fakeTick++)
         {
             fakeHelicopterMatch.Advance(fakeTick);
             observedFakeHelicopterFlight|=fakeHelicopterMatch.Snapshot().Projectiles
                 .Any(x=>x.Kind=="helicopter-fake-bullet"&&x.OwnerPlayerId==helicopterOwner);
+            observedFakeHelicopterVelocity|=fakeHelicopterMatch.Snapshot().Projectiles
+                .Any(x=>x.Kind=="helicopter-fake-bullet"&&
+                    MathF.Abs(MathF.Sqrt(x.VelocityX*x.VelocityX+x.VelocityY*x.VelocityY+
+                        x.VelocityZ*x.VelocityZ)-18f)<.001f);
         }
         ulong fakeCursor=0;int fakeRounds=0,fakeImpacts=0;
         bool fakeSpeedMatches=false;
@@ -3793,7 +3798,8 @@ internal static class CombatContentTests
             fakeImpacts+=page.Events.Count(e=>e.Kind==MatchEventKind.Impact&&e.Reason=="helicopter");
             fakeCursor=page.Events.Last().EventId;
         }
-        Check(fakeRounds>0&&fakeSpeedMatches&&observedFakeHelicopterFlight&&fakeImpacts==0,
+        Check(fakeRounds>0&&fakeSpeedMatches&&observedFakeHelicopterFlight&&
+              observedFakeHelicopterVelocity&&fakeImpacts==0,
               "deployed fake Helicopter rounds publish visual flights without collision impacts");
         var forgedHelicopterEvent=firstHelicopterFired!.Clone();
         forgedHelicopterEvent.EventId=1;forgedHelicopterEvent.HelicopterShot=null;

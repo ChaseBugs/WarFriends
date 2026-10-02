@@ -2016,7 +2016,9 @@ public sealed partial class MatchEngine
                 Kind=x.Value.Fake==null?"helicopter-bullet":"helicopter-fake-bullet",
                 X=(x.Value.Real?.Position??x.Value.Fake!.Position).X,
                 Y=(x.Value.Real?.Position??x.Value.Fake!.Position).Y,
-                Z=(x.Value.Real?.Position??x.Value.Fake!.Position).Z
+                Z=(x.Value.Real?.Position??x.Value.Fake!.Position).Z,
+                VelocityX=x.Value.Velocity.X,VelocityY=x.Value.Velocity.Y,
+                VelocityZ=x.Value.Velocity.Z
             }));
         snapshot.Projectiles.AddRange(droneProjectiles.OrderBy(x=>x.Key).Select(x=>
         {
