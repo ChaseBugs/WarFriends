@@ -3473,6 +3473,11 @@ internal static class CombatContentTests
               helicopterEntity.HelicopterCrewCount==2&&helicopterEntity.HelicopterCrewDropMask==0&&
               helicopterEntity.HelicopterRotation is { } helicopterRotation&&
               War.Client.MatchConnection.ValidHelicopterTurretPose(helicopterEntity)&&
+              War.Client.MatchConnection.ValidHelicopterGunner(helicopterEntity)&&
+              helicopterEntity.HelicopterGunnerMaxHealth==621f&&
+              helicopterEntity.HelicopterGunnerHealth==621f&&
+              helicopterEntity.HelicopterGunnerSpawnTick==helicopterEntity.SpawnTick&&
+              helicopterEntity.HelicopterGunnerRespawnTick==0&&
               Math.Abs(helicopterRotation.X*helicopterRotation.X+
                   helicopterRotation.Y*helicopterRotation.Y+
                   helicopterRotation.Z*helicopterRotation.Z+
@@ -3589,6 +3594,9 @@ internal static class CombatContentTests
         Check(War.Client.MatchConnection.ValidHelicopterTurretPose(turretWire.Entities
                   .Single(x=>x.EntityKey==helicopterEntity.EntityKey)),
               "Helicopter turret joints survive the paged protobuf roster round trip");
+        Check(War.Client.MatchConnection.ValidHelicopterGunner(turretWire.Entities
+                  .Single(x=>x.EntityKey==helicopterEntity.EntityKey)),
+              "Helicopter gunner health and clock survive the paged protobuf roster round trip");
         Check(War.Client.MatchConnection.ValidHelicopterCrew(helicopterEntity),
               "SDK accepts host Helicopter crew before its stop callback");
         var forgedTurret=helicopterEntity.Clone();
@@ -3599,6 +3607,12 @@ internal static class CombatContentTests
         forgedTurret.HelicopterTurretHorizontalLocal!.W=2;
         Check(!War.Client.MatchConnection.ValidHelicopterTurretPose(forgedTurret),
               "SDK rejects non-unit Helicopter turret joint rotation");
+        var forgedGunner=helicopterEntity.Clone();forgedGunner.HelicopterGunnerHealth=0;
+        Check(!War.Client.MatchConnection.ValidHelicopterGunner(forgedGunner),
+              "SDK rejects a dead gunner without a respawn deadline");
+        forgedGunner=helicopterEntity.Clone();forgedGunner.HelicopterGunnerSpawnTick=ulong.MaxValue;
+        Check(!War.Client.MatchConnection.ValidHelicopterGunner(forgedGunner),
+              "SDK rejects a gunner spawned after its roster sample");
         var forgedCrew=helicopterEntity.Clone();forgedCrew.HelicopterCrewCount=7;
         Check(!War.Client.MatchConnection.ValidHelicopterCrew(forgedCrew),
               "SDK rejects crew beyond six source slots");
@@ -3960,9 +3974,14 @@ internal static class CombatContentTests
               "friendly and non-source-weight gunner hits cannot change combat authority");
         crewMatch.ApplyHelicopterGunnerProjectileImpact(soldierOwner,sourceHelicopter,621f,
             crewGunnerHit!.PartWeight);
+        var deadGunnerRow=crewMatch.ArmyEntityBatch(soldierOwner,0,0).Entities
+            .Single(x=>x.EntityKey==sourceHelicopter);
         Check(crewMatch.Snapshot().Players.Single(x=>x.PlayerId==soldierOwner)
                   .ConfirmedEnemyHits==gunnerHitsBefore+1&&
               crewMatch.Snapshot().StateRevision>gunnerRevisionBefore&&
+              deadGunnerRow.HelicopterGunnerHealth==0&&
+              deadGunnerRow.HelicopterGunnerRespawnTick>deadGunnerRow.PositionTick&&
+              War.Client.MatchConnection.ValidHelicopterGunner(deadGunnerRow)&&
               crewMatch.HelicopterGunner(sourceHelicopter) is {Health:0,TurretEnabled:false}&&
               !crewMatch.GroundVehicleShotTargets(soldierOwner)
                   .Any(x=>x.EntityId==sourceHelicopter&&x.HelicopterGunner)&&
@@ -4007,6 +4026,9 @@ internal static class CombatContentTests
         Check(crewMatch.HelicopterGunner(sourceHelicopter) is
                   {Health:621f,TurretEnabled:true,RespawnTick:0}&&
               crewMatch.Snapshot().StateRevision>deadGunnerRevision&&
+              crewMatch.ArmyEntityBatch(soldierOwner,0,0).Entities.Single(x=>
+                  x.EntityKey==sourceHelicopter) is {HelicopterGunnerHealth:621f,
+                      HelicopterGunnerRespawnTick:0}&&
               crewMatch.GroundVehicleShotTargets(soldierOwner)
                   .Count(x=>x.EntityId==sourceHelicopter&&x.HelicopterGunner)==3,
               "live Helicopter gunner recovers at the source respawn deadline");

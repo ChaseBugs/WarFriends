@@ -2266,6 +2266,16 @@ public sealed partial class MatchEngine
                 {X=horizontal.X,Y=horizontal.Y,Z=horizontal.Z,W=horizontal.W};
                 entity.HelicopterTurretVerticalWorld=new BattleJointRotation
                 {X=vertical.X,Y=vertical.Y,Z=vertical.Z,W=vertical.W};
+                if(armyHelicopterGunners.TryGetValue(row.Key,out var gunner))
+                {
+                    var state=gunner.Snapshot();
+                    entity.HelicopterGunnerMaxHealth=state.MaximumHealth;
+                    entity.HelicopterGunnerHealth=state.Health;
+                    entity.HelicopterGunnerSpawnTick=state.SpawnTick;
+                    entity.HelicopterGunnerRespawnTick=state.RespawnTick;
+                }
+                else if(armyHelicopterShots.ContainsKey(row.Key))
+                    throw new InvalidDataException("Combat Helicopter roster lacks host gunner authority.");
             }
             result.Entities.Add(entity);
         }

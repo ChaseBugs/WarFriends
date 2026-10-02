@@ -216,6 +216,10 @@ namespace War.Client
                            !ValidHelicopterTurretPose(entity):
                            entity.HelicopterTurretHorizontalLocal!=null||
                            entity.HelicopterTurretVerticalWorld!=null) ||
+                       (entity.UnitId=="ID_UNIT-HELICOPTER"?
+                           !ValidHelicopterGunner(entity):
+                           entity.HelicopterGunnerMaxHealth!=0||entity.HelicopterGunnerHealth!=0||
+                           entity.HelicopterGunnerSpawnTick!=0||entity.HelicopterGunnerRespawnTick!=0) ||
                        (entity.UnitId=="ID_UNIT-HELICOPTER"?!ValidHelicopterCrew(entity):
                            entity.HelicopterStopTick!=0||entity.HelicopterCrewCount!=0||
                            entity.HelicopterCrewDropMask!=0) ||
@@ -261,6 +265,22 @@ namespace War.Client
         internal static bool ValidHelicopterTurretPose(BattleArmyEntityState entity)
             =>ValidUnitRotation(entity.HelicopterTurretHorizontalLocal)&&
               ValidUnitRotation(entity.HelicopterTurretVerticalWorld);
+        internal static bool ValidHelicopterGunner(BattleArmyEntityState entity)
+        {
+            if(entity.HelicopterGunnerMaxHealth==0)
+                return entity.HelicopterGunnerHealth==0&&
+                    entity.HelicopterGunnerSpawnTick==0&&entity.HelicopterGunnerRespawnTick==0;
+            if(!Positive(entity.HelicopterGunnerMaxHealth)||
+               float.IsNaN(entity.HelicopterGunnerHealth)||
+               float.IsInfinity(entity.HelicopterGunnerHealth)||
+               entity.HelicopterGunnerHealth<0||
+               entity.HelicopterGunnerHealth>entity.HelicopterGunnerMaxHealth||
+               entity.HelicopterGunnerSpawnTick<entity.SpawnTick||
+               entity.HelicopterGunnerSpawnTick>entity.PositionTick)return false;
+            return entity.HelicopterGunnerHealth>0?
+                entity.HelicopterGunnerRespawnTick==0:
+                entity.HelicopterGunnerRespawnTick>entity.PositionTick;
+        }
         private static bool ValidUnitRotation(BattleJointRotation q)
         {
             if(q==null||!FiniteCoordinate(q.X)||!FiniteCoordinate(q.Y)||!FiniteCoordinate(q.Z)||!FiniteCoordinate(q.W))return false;

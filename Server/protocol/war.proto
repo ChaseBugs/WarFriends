@@ -267,6 +267,9 @@ message BattleArmyEntityState {
   // Source TurretWeaponBasic joints: horizontal is local, vertical is world rotation.
   BattleJointRotation helicopter_turret_horizontal_local = 24;
   BattleJointRotation helicopter_turret_vertical_world = 25;
+  // Separate EnemyPointVehicle gunner; zero tuple for diagnostic flight-only allocations.
+  float helicopter_gunner_max_health = 26; float helicopter_gunner_health = 27;
+  uint64 helicopter_gunner_spawn_tick = 28; uint64 helicopter_gunner_respawn_tick = 29;
 }
 // Full active-entity projection, paged to remain below the UDP MTU.
 message MatchArmyEntityPoll { uint64 after_entity_key = 1; uint64 expected_revision = 2; }

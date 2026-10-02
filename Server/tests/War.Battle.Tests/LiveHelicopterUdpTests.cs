@@ -91,11 +91,15 @@ internal static class LiveHelicopterUdpTests
             }
             Check(helicopter!=null&&helicopter.OwnerPlayerId==two&&
                   helicopter.HelicopterRotation!=null&&
-                  MatchConnection.ValidHelicopterTurretPose(helicopter),
-                  "opponent receives live Helicopter body and turret joints through paged UDP roster");
+                  MatchConnection.ValidHelicopterTurretPose(helicopter)&&
+                  MatchConnection.ValidHelicopterGunner(helicopter)&&
+                  helicopter.HelicopterGunnerHealth>0,
+                  "opponent receives live Helicopter body, turret and gunner through paged UDP roster");
             var ownerRows=await b.FetchArmyEntitiesAsync(timeout.Token);
             Check(ownerRows.Any(x=>x.EntityKey==helicopter!.EntityKey&&
-                  MatchConnection.ValidHelicopterTurretPose(x)),
+                  MatchConnection.ValidHelicopterTurretPose(x)&&
+                  x.HelicopterGunnerSpawnTick==helicopter.HelicopterGunnerSpawnTick&&
+                  x.HelicopterGunnerHealth==helicopter.HelicopterGunnerHealth),
                   "both clients resolve the same combat-authorized Helicopter entity");
             var leftConsumer=new MatchEventConsumer();
             var rightConsumer=new MatchEventConsumer();
