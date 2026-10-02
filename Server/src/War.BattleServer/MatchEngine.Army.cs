@@ -2107,8 +2107,9 @@ public sealed partial class MatchEngine
             var forward=target.RootPosition-entityPosition;
             var origin=armyWeapons?.RestMuzzleOrigin(army.UnitId,entityPosition,forward)??
                 throw new InvalidDataException("Army flame requires pinned weapon muzzle authority.");
-            var hit=ArmyFlameBurst.ResolvePlayer(origin,forward,target,
-                ArmyDamage(burst.EntityKey)??throw new InvalidDataException("Army flame lacks trusted damage."));
+            float sourceDamage=ArmyDamage(burst.EntityKey)??
+                throw new InvalidDataException("Army flame lacks trusted damage.");
+            var hit=ArmyFlameBurst.ResolvePlayer(origin,forward,target,sourceDamage);
             burst.CommitPulse(tick);
             if(hit!=null&&!victim.Dead)
             {
@@ -2118,6 +2119,21 @@ public sealed partial class MatchEngine
                 Emit(MatchEventKind.Impact,burst.EntityKey.ToString(),victim.Definition.PlayerId,
                     burst.ProjectileId,origin,result?.Health??victim.Health,"army-flame");
             }
+            if(!Terminal)
+                foreach(var targetId in infantryAnimations.Keys.Order().ToArray())
+                {
+                    if(!activeArmyEntities.TryGetValue(targetId,out var infantry))
+                        throw new InvalidDataException("Army flame infantry target disappeared.");
+                    if(infantry.OwnerPlayerId==burst.OwnerPlayerId)continue;
+                    var targetOwner=Find(infantry.OwnerPlayerId)??
+                        throw new InvalidDataException("Army flame infantry lacks an owner.");
+                    if(targetOwner.Definition.Fraction==owner.Definition.Fraction)continue;
+                    var infantryPose=InfantryPose(targetId)??
+                        throw new InvalidDataException("Army flame infantry lacks current collision authority.");
+                    var infantryHit=ArmyFlameBurst.ResolveParts(origin,forward,infantryPose.Parts,sourceDamage);
+                    if(infantryHit!=null&&infantryHit.RawDamage>0)
+                        ApplyArmyHostDamage(targetId,infantryHit.RawDamage);
+                }
             if(burst.Finished)armyFlameBursts.Remove(pair.Key);
             if(Terminal)return;
         }

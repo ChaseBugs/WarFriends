@@ -41,13 +41,21 @@ internal sealed class ArmyFlameBurst
     internal static ArmyFlameHit? ResolvePlayer(Vector3 origin,Vector3 forward,
         PlayerCollisionModel collision,float sourceDamage)
     {
+        if(collision==null)throw new InvalidDataException("Invalid army flame player collision authority.");
+        return ResolveParts(origin,forward,collision.Parts,sourceDamage);
+    }
+
+    internal static ArmyFlameHit? ResolveParts(Vector3 origin,Vector3 forward,
+        IReadOnlyList<PlayerHitbox> parts,float sourceDamage)
+    {
         if(!PlayerHitbox.Finite(origin)||!PlayerHitbox.Finite(forward)||forward.LengthSquared()<1e-10f||
-           collision==null||!float.IsFinite(sourceDamage)||sourceDamage<0||sourceDamage>10_000_000)
+           parts==null||parts.Count==0||parts.Any(p=>p==null)||
+           !float.IsFinite(sourceDamage)||sourceDamage<0||sourceDamage>10_000_000)
             throw new InvalidDataException("Invalid army flame query.");
         forward.Y=0;
         if(forward.LengthSquared()<1e-10f)throw new InvalidDataException("Army flame has no planar direction.");
         forward=Vector3.Normalize(forward);
-        foreach(var part in collision.Parts)
+        foreach(var part in parts)
         {
             if(!part.Enabled||!part.Active||!part.OverlapsSphere(origin,Radius))continue;
             Vector3 offset=part.Center-origin;float distance=offset.Length();

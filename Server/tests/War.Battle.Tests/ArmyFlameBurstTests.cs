@@ -30,6 +30,10 @@ internal static class ArmyFlameBurstTests
         var hit=ArmyFlameBurst.ResolvePlayer(Vector3.Zero,Vector3.UnitZ,pose,60);
         Check(hit is {PartPath:"fixture/player/body"}&&Math.Abs(hit.RawDamage-7)<.0001f,
             "flame cone uses collider center and recovered distance damage interpolation");
+        var infantryHit=ArmyFlameBurst.ResolveParts(Vector3.Zero,Vector3.UnitZ,[body,head],60);
+        Check(infantryHit is {PartPath:"fixture/player/body"}&&
+              Math.Abs(infantryHit.RawDamage-hit!.RawDamage)<.0001f,
+            "deployed infantry parts use the same source flame cone and damage as player parts");
 
         var near=pose.Place(new Vector3(0,0,.29f),Quaternion.Identity);
         Check(ArmyFlameBurst.ResolvePlayer(Vector3.Zero,Vector3.UnitZ,near,60)==null,
@@ -58,6 +62,8 @@ internal static class ArmyFlameBurstTests
         Reject(()=>new ArmyFlameBurst(0,2,owner,0),"zero flame identity accepted");
         Reject(()=>ArmyFlameBurst.ResolvePlayer(Vector3.Zero,Vector3.Zero,pose,60),
             "zero flame direction accepted");
+        Reject(()=>ArmyFlameBurst.ResolveParts(Vector3.Zero,Vector3.UnitZ,[],60),
+            "empty infantry collision authority accepted");
         Reject(()=>new ArmyRusherAttackState(new ArmyBaseShotStats(1,1,1,1,1),shotIntervalTicks:-1),
             "negative flame cadence accepted");
         return checks;
