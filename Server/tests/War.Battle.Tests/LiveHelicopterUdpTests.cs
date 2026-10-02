@@ -18,7 +18,7 @@ internal static class LiveHelicopterUdpTests
         {if(!yes)throw new Exception(name);checks++;}
         var content=BattleCombatContent.Load(Path.Combine(directory,"combat-content-manifest.json"));
         var map=content.Maps.Single(x=>x.Source.EndsWith("Park_Multiplayer.unity",StringComparison.Ordinal));
-        var left=map.Covers.First(x=>x.Main&&x.Fraction==1);
+        var left=map.Covers.First(x=>x.Main&&x.Fraction==1&&x.SourceIndex==2);
         var right=map.Covers.First(x=>x.Main&&x.Fraction==2);
         var rifle=content.Stats.CreateManifest("Google2u.AssaultRifle_AK47",0);
         string one=new('a',32),two=new('b',32);
@@ -68,7 +68,7 @@ internal static class LiveHelicopterUdpTests
         try
         {
             await worker.StartAsync(CancellationToken.None);
-            using var timeout=new CancellationTokenSource(TimeSpan.FromSeconds(55));
+            using var timeout=new CancellationTokenSource(TimeSpan.FromSeconds(75));
             using var a=new MatchConnection(Grant(one,9401));
             using var b=new MatchConnection(Grant(two,9402));
             Check((await a.ConnectAsync(timeout.Token)).Code=="admitted"&&
@@ -109,7 +109,7 @@ internal static class LiveHelicopterUdpTests
                 await Task.Delay(125,timeout.Token);
                 var leftPage=await a.PollEventsAsync(leftConsumer.LastEventId,timeout.Token);
                 leftConsumer.Consume(leftPage);
-                fired=leftPage.Events.FirstOrDefault(x=>x.Kind==MatchEventKind.HelicopterFired&&
+                fired??=leftPage.Events.FirstOrDefault(x=>x.Kind==MatchEventKind.HelicopterFired&&
                     x.HelicopterShot?.ArmyEntityKey==helicopter!.EntityKey);
                 var rightPage=await b.PollEventsAsync(rightConsumer.LastEventId,timeout.Token);
                 rightConsumer.Consume(rightPage);
@@ -129,6 +129,38 @@ internal static class LiveHelicopterUdpTests
                   "player-target real rounds use the recovered half-speed while fake rounds retain setup speed");
             Check(leftSawBullet&&rightSawBullet,
                   "both live UDP snapshots carry an in-flight Helicopter projectile");
+            float initialHealth=state.Snapshot.Players.Single(x=>x.PlayerId==one).Health;
+            int moveCount=0,moveDirection=1;
+            double nextMoveAt=0;
+            ulong? leftHit=null,rightHit=null;
+            float leftHealth=initialHealth,rightHealth=initialHealth;
+            var damageWatch=System.Diagnostics.Stopwatch.StartNew();
+            while(damageWatch.Elapsed<TimeSpan.FromSeconds(35)&&
+                  (leftHit==null||rightHit==null||leftHealth>=initialHealth||rightHealth>=initialHealth))
+            {
+                await Task.Delay(200,timeout.Token);
+                if(damageWatch.Elapsed.TotalSeconds>=nextMoveAt)
+                {
+                    var moved=await a.MoveCoverAsync(moveDirection,timeout.Token);
+                    if(moved.Code=="moving"){moveCount++;moveDirection=-moveDirection;}
+                    nextMoveAt+=1.6;
+                }
+                var leftPage=await a.PollEventsAsync(leftConsumer.LastEventId,timeout.Token);
+                leftConsumer.Consume(leftPage);
+                leftHit??=leftPage.Events.FirstOrDefault(x=>x.Kind==MatchEventKind.Impact&&
+                    x.Reason=="helicopter"&&x.TargetId==one)?.EventId;
+                var rightPage=await b.PollEventsAsync(rightConsumer.LastEventId,timeout.Token);
+                rightConsumer.Consume(rightPage);
+                rightHit??=rightPage.Events.FirstOrDefault(x=>x.Kind==MatchEventKind.Impact&&
+                    x.Reason=="helicopter"&&x.TargetId==one)?.EventId;
+                state=await a.PollAsync(timeout.Token);
+                leftHealth=state.Snapshot.Players.Single(x=>x.PlayerId==one).Health;
+                rightHealth=(await b.PollAsync(timeout.Token)).Snapshot.Players
+                    .Single(x=>x.PlayerId==one).Health;
+            }
+            Check(moveCount>0&&leftHit.HasValue&&leftHit==rightHit&&
+                  leftHealth<initialHealth&&rightHealth<initialHealth,
+                  $"legal cover movement exposes one host-resolved Helicopter player hit to both peers (moves={moveCount}, hits={leftHit}/{rightHit}, health={leftHealth}/{rightHealth}, initial={initialHealth})");
         }
         finally{await worker.StopAsync(CancellationToken.None);File.Delete(manifestFile);}
         return checks;
