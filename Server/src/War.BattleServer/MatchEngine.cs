@@ -722,6 +722,7 @@ public sealed partial class MatchEngine
             airWaypoints=content.AirWaypoints;helicopterCrewPoints=content.HelicopterCrewPoints;
             droneColliders=content.DroneColliders;
             helicopterBodyColliders=content.HelicopterBodyColliders;
+            airShotTargets=content.AirShotTargets;
             droneWeapon=content.DroneWeapon;droneProjectile=content.DroneProjectile;
             armyRusherPoints=content.ArmyRusherPoints;
             armyMinigunnerPoints=content.ArmyMinigunnerPoints;

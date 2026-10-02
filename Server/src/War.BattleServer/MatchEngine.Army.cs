@@ -31,6 +31,7 @@ public sealed partial class MatchEngine
     }
     private readonly Dictionary<ulong,ArmyVitality> armyVitality=[];
     private HelicopterBodyColliderCatalog? helicopterBodyColliders;
+    private AirShotTargetCatalog? airShotTargets;
     private readonly Dictionary<ulong,DroneSpecialState> armyDroneSpecials=[];
     private readonly Dictionary<ulong,DroneWaypointState> armyDronePaths=[];
     private readonly Dictionary<ulong,HelicopterWaypointState> armyHelicopterPaths=[];

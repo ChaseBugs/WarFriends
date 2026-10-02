@@ -156,6 +156,14 @@ public sealed partial class MatchEngine
             if(armyDronePaths.TryGetValue(key,out var drone))
                 return new([new(454360,1,position)],false,position,Vector3.Zero,false,
                     drone.Velocity*MatchManifest.TickRate);
+            if(army.UnitId=="ID_UNIT-HELICOPTER"&&army.HelicopterRotation is { } rotation&&
+               armyHelicopterPaths.TryGetValue(key,out var helicopter)&&airShotTargets!=null)
+            {
+                var airTargets=airShotTargets.PlaceRest(army.UnitId,position,
+                    new(rotation.X,rotation.Y,rotation.Z,rotation.W));
+                return new(airTargets,false,position,Vector3.Zero,false,
+                    helicopter.Velocity*MatchManifest.TickRate);
+            }
             if(vehicles?.TryGet(key,out var vehicle)==true&&vehicle!=null&&groundVehicleWeapons!=null)
             {
                 var rig=groundVehicleWeapons.For(vehicle.UnitId);

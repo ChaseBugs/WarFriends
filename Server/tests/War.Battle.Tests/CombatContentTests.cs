@@ -3473,6 +3473,18 @@ internal static class CombatContentTests
                   new Vector3(helicopterSpawn.X,helicopterSpawn.Y,helicopterSpawn.Z))>0,
               "normal Helicopter deployment publishes host-owned source-route motion after spawn");
         var liveTurretPose=deathMatch.HelicopterTurretPose(helicopterEntity.EntityKey)!;
+        var liveAirAim=deathMatch.ResolveDroneShotTarget(deathMatch.DroneTargetSnapshot()
+            .Single(x=>x.Id=="army:"+helicopterEntity.EntityKey));
+        var heliAimRotation=new Quaternion(helicopterEntity.HelicopterRotation!.X,
+            helicopterEntity.HelicopterRotation.Y,helicopterEntity.HelicopterRotation.Z,
+            helicopterEntity.HelicopterRotation.W);
+        var expectedAirAim=new Vector3(helicopterEntity.X,helicopterEntity.Y,helicopterEntity.Z)+
+            Vector3.Transform(new Vector3(0,0,-.3907919f),heliAimRotation);
+        Check(liveAirAim.Targets.Count==1&&liveAirAim.Targets[0].TransformFileId==414249&&
+              liveAirAim.Targets[0].Type==0&&
+              Vector3.Distance(liveAirAim.Targets[0].Position,expectedAirAim)<.0002f&&
+              PlayerHitbox.Finite(liveAirAim.Velocity),
+              "Drone target resolution binds Helicopter's source shootable to its live flight pose");
         var liveHelicopterBoxes=deathMatch.GroundVehicleShotTargets(soldierOwner)
             .Where(x=>x.EntityId==helicopterEntity.EntityKey).ToArray();
         Check(liveHelicopterBoxes.Length==11&&liveHelicopterBoxes.All(x=>x.Layer==8)&&
