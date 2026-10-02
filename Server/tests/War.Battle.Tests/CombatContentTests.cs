@@ -99,8 +99,10 @@ internal static class CombatContentTests
                 a[2].GetSingle(),a[3].GetSingle());
             foreach(var row in oracle.GetProperty("rows").EnumerateArray())
             {
-                var aimPose=HelicopterTurretAim.FromRest(ArrayVector(row.GetProperty("rootPosition")),
-                    ArrayRotation(row.GetProperty("rootRotation")),ArrayVector(row.GetProperty("target")));
+                var aimRoot=ArrayVector(row.GetProperty("rootPosition"));
+                var aimRootRotation=ArrayRotation(row.GetProperty("rootRotation"));
+                var aimTarget=ArrayVector(row.GetProperty("target"));
+                var aimPose=HelicopterTurretAim.FromRest(aimRoot,aimRootRotation,aimTarget);
                 float horizontalDot=Math.Abs(Quaternion.Dot(aimPose.HorizontalLocalRotation,
                     ArrayRotation(row.GetProperty("horizontalLocalRotation"))));
                 float verticalDot=Math.Abs(Quaternion.Dot(aimPose.VerticalWorldRotation,
@@ -114,6 +116,31 @@ internal static class CombatContentTests
                       Vector3.Distance(aimPose.MuzzlePosition,
                           ArrayVector(row.GetProperty("muzzlePosition")))<.0001f,
                       $"Helicopter turret aim final transform matches Unity oracle row {row.GetProperty("id").GetInt32()}");
+                var tween=new HelicopterTurretTweenState();
+                int turnTicks=tween.Plan(aimRoot,aimRootRotation,aimTarget);
+                Check(Math.Abs(aimPose.VerticalSeconds-row.GetProperty("verticalSeconds").GetSingle())<.0001f&&
+                      turnTicks==(aimPose.Immediate?0:(int)MathF.Ceiling(aimPose.AimSeconds*30))&&
+                      tween.Ready==aimPose.Immediate,
+                      $"Helicopter turret aim retains source horizontal/vertical durations in row {row.GetProperty("id").GetInt32()}");
+                foreach(var sample in row.GetProperty("samples").EnumerateArray())
+                {
+                    int sampleTick=sample.GetProperty("tick").GetInt32();
+                    if(sampleTick>0)tween.AdvanceTick(aimRoot,aimRootRotation);
+                    var sampled=tween.Current(aimRoot,aimRootRotation);
+                    Check(Math.Abs(Quaternion.Dot(sampled.HorizontalLocalRotation,
+                              ArrayRotation(sample.GetProperty("horizontalLocalRotation"))))>.99999f&&
+                          Math.Abs(Quaternion.Dot(sampled.VerticalWorldRotation,
+                              ArrayRotation(sample.GetProperty("verticalWorldRotation"))))>.99999f&&
+                          Vector3.Distance(sampled.SightPosition,
+                              ArrayVector(sample.GetProperty("sightPosition")))<.0002f&&
+                          Vector3.Distance(sampled.MuzzlePosition,
+                              ArrayVector(sample.GetProperty("muzzlePosition")))<.0002f,
+                          $"Helicopter turret TweenRotation.Sample matches Unity row {row.GetProperty("id").GetInt32()} tick {sampleTick}");
+                }
+                Check(tween.Ready==!aimPose.Clipped&&
+                      Vector3.Distance(tween.Current(aimRoot,aimRootRotation).MuzzlePosition,
+                          aimPose.MuzzlePosition)<.0002f,
+                      $"Helicopter turret completed aim preserves source clipped-shot gate in row {row.GetProperty("id").GetInt32()}");
             }
         }
         Reject(()=>HelicopterTurretAim.FromRest(Vector3.Zero,default,-Vector3.UnitX));
@@ -3417,6 +3444,17 @@ internal static class CombatContentTests
               Vector3.Distance(liveAim.MuzzlePosition,expectedAim.MuzzlePosition)<.000001f&&
               Vector3.Distance(liveAim.SightPosition,liveTurretPose.SightRestPosition)>.001f,
               "live Helicopter root resolves a turned source sight and muzzle from its current flight pose");
+        var sideTarget=liveRoot+Vector3.Transform(new Vector3(-5,0,9),liveRootRotation);
+        var sideAim=HelicopterTurretAim.FromRest(liveRoot,liveRootRotation,sideTarget);
+        Check(deathMatch.BeginHelicopterTurretAim(helicopterEntity.EntityKey,sideTarget)==
+                  (int)MathF.Ceiling(sideAim.AimSeconds*30)&&
+              deathMatch.HelicopterTurretCurrentAimPose(helicopterEntity.EntityKey) is
+                  {SightPosition:var currentSight}&&
+              Vector3.Distance(currentSight,liveTurretPose.SightRestPosition)<.00001f&&
+              deathMatch.HelicopterCurrentSightRay(helicopterEntity.EntityKey,
+                  currentSight+Vector3.UnitZ*10,false) is {Range:var currentRange}&&
+              Math.Abs(currentRange-9.45f)<.00001f,
+              "live Helicopter turret starts a host-owned source turn and sight ray from its rest joints");
         Check(War.Client.MatchConnection.ValidHelicopterCrew(helicopterEntity),
               "SDK accepts host Helicopter crew before its stop callback");
         var forgedCrew=helicopterEntity.Clone();forgedCrew.HelicopterCrewCount=7;
@@ -3461,12 +3499,22 @@ internal static class CombatContentTests
         Check(deathMatch.Snapshot().Players[0].ConfirmedArmyLosses==1 &&
               deathMatch.Snapshot().Players[1].ConfirmedArmyLosses==0,
               "replayed fatal damage cannot credit another unit loss");
+        deathMatch.Advance(71);
+        var movingAim=deathMatch.HelicopterTurretCurrentAimPose(helicopterEntity.EntityKey);
+        var movingRest=deathMatch.HelicopterTurretPose(helicopterEntity.EntityKey);
+        Check(movingAim!=null&&movingRest!=null&&
+              Vector3.Distance(movingAim.SightPosition,movingRest.SightRestPosition)>.00001f&&
+              deathMatch.HelicopterCurrentSightRay(helicopterEntity.EntityKey,sideTarget,false) is
+                  {Origin:var movingRayOrigin}&&
+              Vector3.Distance(movingRayOrigin,movingAim.SightPosition)>.04f,
+              "running Helicopter tick advances its moving joint eye before the live sight ray");
         Check(deathMatch.ConfirmArmyDeath(helicopterEntity.EntityKey,true) &&
               !deathMatch.HasHelicopterPath(helicopterEntity.EntityKey) &&
               deathMatch.HelicopterCrewDefinition(helicopterEntity.EntityKey)==null&&
               deathMatch.HelicopterShotDefinition(helicopterEntity.EntityKey)==null&&
               deathMatch.HelicopterGunner(helicopterEntity.EntityKey)==null&&
               deathMatch.HelicopterTurretPose(helicopterEntity.EntityKey)==null&&
+              deathMatch.HelicopterTurretCurrentAimPose(helicopterEntity.EntityKey)==null&&
               deathMatch.HelicopterRestSightRay(helicopterEntity.EntityKey,Vector3.Zero,false)==null&&
               deathMatch.HelicopterCrewMembers(helicopterEntity.EntityKey).Count==0&&
               deathMatch.HelicopterCrewDescents(helicopterEntity.EntityKey).Count==0&&
@@ -3521,6 +3569,8 @@ internal static class CombatContentTests
               crewMatch.HelicopterGunner(sourceHelicopter) is {Health:0,TurretEnabled:false}&&
               !crewMatch.HelicopterTargetInTurretCone(sourceHelicopter,Vector3.Zero)&&
               crewMatch.HelicopterTurretAimFromRest(sourceHelicopter,
+                  heliAimOrigin+heliForward*10)==null&&
+              crewMatch.BeginHelicopterTurretAim(sourceHelicopter,
                   heliAimOrigin+heliForward*10)==null&&
               !crewMatch.DamageHelicopterGunner(sourceHelicopter,1f),
               "host-owned gunner health disables the live Helicopter turret after lethal damage");

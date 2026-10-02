@@ -3,6 +3,7 @@ using System.Numerics;
 namespace War.BattleServer;
 
 internal sealed record HelicopterTurretAimPose(bool Immediate,bool Clipped,float AimSeconds,
+    float VerticalSeconds,
     Quaternion HorizontalLocalRotation,Quaternion VerticalWorldRotation,
     Vector3 SightPosition,Vector3 MuzzlePosition);
 
@@ -20,10 +21,16 @@ internal static class HelicopterTurretAim
 
     internal static HelicopterTurretAimPose FromRest(Vector3 rootPosition,Quaternion rootRotation,
         Vector3 target)
+        =>FromCurrent(rootPosition,rootRotation,target,Quaternion.Identity,
+            Quaternion.Normalize(rootRotation*ParentLocalRotation));
+
+    internal static HelicopterTurretAimPose FromCurrent(Vector3 rootPosition,Quaternion rootRotation,
+        Vector3 target,Quaternion currentHorizontalLocal,Quaternion currentVerticalWorld)
     {
         if(!PlayerHitbox.Finite(rootPosition)||!PlayerHitbox.Finite(target)||
            !float.IsFinite(rootRotation.LengthSquared())||
-           Math.Abs(rootRotation.LengthSquared()-1)>.001f)
+           Math.Abs(rootRotation.LengthSquared()-1)>.001f||
+           !Unit(currentHorizontalLocal)||!Unit(currentVerticalWorld))
             throw new InvalidDataException("Invalid Helicopter turret aim geometry.");
         var parentPosition=rootPosition+Vector3.Transform(ParentOffset,rootRotation);
         var parentRotation=Quaternion.Normalize(rootRotation*ParentLocalRotation);
@@ -36,11 +43,15 @@ internal static class HelicopterTurretAim
         var normalized=Vector3.Normalize(direction);
         float dot=Math.Clamp(Vector3.Dot(forward,normalized),-1f,1f);
         float angle=MathF.Acos(dot)/DegreesToRadians;
-        bool immediate=angle<90f&&angle<2.5f;
+        var currentForward=Vector3.Transform(Vector3.UnitZ,
+            Quaternion.Normalize(parentRotation*currentHorizontalLocal));
+        float currentAngle=MathF.Acos(Math.Clamp(Vector3.Dot(currentForward,normalized),-1f,1f))/
+            DegreesToRadians;
+        bool immediate=angle<90f&&currentAngle<2.5f;
         bool clipped=!immediate&&angle>90f&&angle<270f-90f;
-        Quaternion yaw=Quaternion.Identity;
-        Quaternion vertical=parentRotation;
-        float seconds=0;
+        Quaternion yaw=currentHorizontalLocal;
+        Quaternion vertical=currentVerticalWorld;
+        float seconds=0,verticalSeconds=0;
         if(!immediate)
         {
             var cross=Vector3.Cross(forward,normalized);
@@ -54,10 +65,23 @@ internal static class HelicopterTurretAim
             float yawRadians=MathF.Atan2(2f*(turn.W*turn.Y+turn.X*turn.Z),
                 1f-2f*(turn.X*turn.X+turn.Y*turn.Y));
             yaw=Quaternion.CreateFromAxisAngle(Vector3.UnitY,yawRadians);
-            float yawDegrees=2f*MathF.Acos(Math.Clamp(MathF.Abs(yaw.W),0f,1f))/DegreesToRadians;
-            seconds=MathF.Max(yawDegrees/360f,.1f);
+            float yawDot=Math.Clamp(MathF.Abs(Quaternion.Dot(currentHorizontalLocal,yaw)),0f,1f);
+            float yawDegrees=2f*MathF.Acos(yawDot)/DegreesToRadians;
+            verticalSeconds=yawDegrees/360f;
+            seconds=MathF.Max(verticalSeconds,.1f);
             vertical=HelicopterOrientationState.LookRotation(direction);
         }
+        return Place(rootPosition,rootRotation,yaw,vertical,immediate,clipped,seconds,verticalSeconds);
+    }
+
+    internal static HelicopterTurretAimPose Place(Vector3 rootPosition,Quaternion rootRotation,
+        Quaternion yaw,Quaternion vertical,bool immediate=false,bool clipped=false,
+        float seconds=0,float verticalSeconds=0)
+    {
+        if(!PlayerHitbox.Finite(rootPosition)||!Unit(rootRotation)||!Unit(yaw)||!Unit(vertical))
+            throw new InvalidDataException("Invalid Helicopter turret joint pose.");
+        var parentPosition=rootPosition+Vector3.Transform(ParentOffset,rootRotation);
+        var parentRotation=Quaternion.Normalize(rootRotation*ParentLocalRotation);
         var horizontalRotation=Quaternion.Normalize(parentRotation*yaw);
         var pivot=parentPosition+Vector3.Transform(HorizontalOffset,parentRotation);
         var sight=pivot+Vector3.Transform(VerticalOffset,horizontalRotation);
@@ -65,6 +89,8 @@ internal static class HelicopterTurretAim
         if(!PlayerHitbox.Finite(sight)||!PlayerHitbox.Finite(muzzle)||
            !float.IsFinite(vertical.LengthSquared())||!float.IsFinite(yaw.LengthSquared()))
             throw new InvalidDataException("Helicopter turret aim pose overflow.");
-        return new(immediate,clipped,seconds,yaw,vertical,sight,muzzle);
+        return new(immediate,clipped,seconds,verticalSeconds,yaw,vertical,sight,muzzle);
     }
+    private static bool Unit(Quaternion q)=>float.IsFinite(q.LengthSquared())&&
+        Math.Abs(q.LengthSquared()-1)<.001f;
 }

@@ -45,6 +45,10 @@ public static class UnityHelicopterTurretAimExport
                     Mathf.Abs(angle)<turret.maxShotRotation;
                 bool clipped=false;
                 float seconds=0;
+                float verticalSeconds=0;
+                var samples=new List<object>();
+                Quaternion horizontalRest=turret.jontHorizontal.localRotation;
+                Quaternion verticalRest=turret.jointVertical.localRotation;
                 if(!immediate)
                 {
                     if(angle>turret.maxShotRotation&&angle<360f-turret.maxShotRotation)
@@ -59,16 +63,40 @@ public static class UnityHelicopterTurretAimExport
                     float yawAngle=Quaternion.Angle(turret.jontHorizontal.localRotation,yaw);
                     if(yawAngle>180f)yawAngle=360f-yawAngle;
                     seconds=Mathf.Max(turret.aimTime*Mathf.Abs(yawAngle/360f),.1f);
+                    verticalSeconds=turret.aimTime*Mathf.Abs(yawAngle/360f);
                     Quaternion vertical=Quaternion.LookRotation(vector,Vector3.up);
                     turret.jontHorizontal.rotation=horizontal;
                     turret.jointVertical.rotation=vertical;
                 }
+                Quaternion finalHorizontal=turret.jontHorizontal.localRotation;
+                Quaternion finalVertical=turret.jointVertical.rotation;
+                Vector3 finalSight=turret.seeEnemyTransform.position;
+                Vector3 finalMuzzle=turret.batchedWeapon.weapon.spawnPoint.position;
+                if(!immediate)
+                {
+                    turret.jontHorizontal.localRotation=horizontalRest;
+                    turret.jointVertical.localRotation=verticalRest;
+                    var horizontalTween=TweenRotation.Begin(turret.jontHorizontal.gameObject,seconds,
+                        turret.jontHorizontal.parent.rotation*finalHorizontal,useAbsolute:true);
+                    var verticalTween=TweenRotation.Begin(turret.jointVertical.gameObject,verticalSeconds,
+                        finalVertical,useAbsolute:true);
+                    for(int tick=0;tick<=6;tick++)
+                    {
+                        float elapsed=tick/30f;
+                        horizontalTween.Sample(elapsed/seconds,tick/30f>=seconds);
+                        if(verticalSeconds>0)verticalTween.Sample(elapsed/verticalSeconds,
+                            elapsed>=verticalSeconds);
+                        samples.Add(new{tick,horizontalLocalRotation=Q(turret.jontHorizontal.localRotation),
+                            verticalWorldRotation=Q(turret.jointVertical.rotation),
+                            sightPosition=V(turret.seeEnemyTransform.position),
+                            muzzlePosition=V(turret.batchedWeapon.weapon.spawnPoint.position)});
+                    }
+                }
                 rows.Add(new{id=input.id,rootPosition=V(input.position),rootRotation=Q(input.rotation),
-                    target=V(input.target),immediate,clipped,aimSeconds=seconds,
-                    horizontalLocalRotation=Q(turret.jontHorizontal.localRotation),
-                    verticalWorldRotation=Q(turret.jointVertical.rotation),
-                    sightPosition=V(turret.seeEnemyTransform.position),
-                    muzzlePosition=V(turret.batchedWeapon.weapon.spawnPoint.position)});
+                    target=V(input.target),immediate,clipped,aimSeconds=seconds,verticalSeconds,
+                    horizontalLocalRotation=Q(finalHorizontal),
+                    verticalWorldRotation=Q(finalVertical),
+                    sightPosition=V(finalSight),muzzlePosition=V(finalMuzzle),samples});
             }
             finally{UnityEngine.Object.DestroyImmediate(root);}
         }
