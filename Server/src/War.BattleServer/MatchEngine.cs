@@ -721,6 +721,7 @@ public sealed partial class MatchEngine
             armySelector=new ArmySpawnPointSelector(content.ArmySpawnPoints);
             airWaypoints=content.AirWaypoints;helicopterCrewPoints=content.HelicopterCrewPoints;
             droneColliders=content.DroneColliders;
+            helicopterBodyColliders=content.HelicopterBodyColliders;
             droneWeapon=content.DroneWeapon;droneProjectile=content.DroneProjectile;
             armyRusherPoints=content.ArmyRusherPoints;
             armyMinigunnerPoints=content.ArmyMinigunnerPoints;

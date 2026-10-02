@@ -30,6 +30,7 @@ public sealed partial class MatchEngine
         }
     }
     private readonly Dictionary<ulong,ArmyVitality> armyVitality=[];
+    private HelicopterBodyColliderCatalog? helicopterBodyColliders;
     private readonly Dictionary<ulong,DroneSpecialState> armyDroneSpecials=[];
     private readonly Dictionary<ulong,DroneWaypointState> armyDronePaths=[];
     private readonly Dictionary<ulong,HelicopterWaypointState> armyHelicopterPaths=[];
@@ -379,6 +380,16 @@ public sealed partial class MatchEngine
                 result.Add(new(row.EntityKey,collider.ComponentFileId,
                     collider.RootOwned?(row.OwnerFraction==1?27:26):collider.SerializedLayer,collider.Hitbox));
         }
+        foreach(var row in activeArmyEntities.Values.Where(r=>r.UnitId=="ID_UNIT-HELICOPTER"&&
+            (includeFriendly||r.OwnerFraction!=shooter.Definition.Fraction)))
+        {
+            var q=row.HelicopterRotation??throw new InvalidDataException(
+                "Helicopter collision lost its host rotation.");
+            foreach(var collider in (helicopterBodyColliders??throw new InvalidDataException(
+                "Helicopter collider catalog missing.")).Place(new(row.X,row.Y,row.Z),
+                    new(q.X,q.Y,q.Z,q.W)))
+                result.Add(new(row.EntityKey,collider.ColliderFileId,collider.Layer,collider.Hitbox));
+        }
         if(vehicles!=null&&groundVehicleWeapons!=null)
         foreach(var vehicle in vehicles.Snapshot())
         {
@@ -449,6 +460,18 @@ public sealed partial class MatchEngine
 
     internal void ApplyArmyBodyProjectileImpact(string shooterId,ulong entityId,int partId,float rawDamage)
     {
+        if(activeArmyEntities.TryGetValue(entityId,out var helicopter)&&
+           helicopter.UnitId=="ID_UNIT-HELICOPTER")
+        {
+            var helicopterShooter=Find(shooterId)??throw new InvalidDataException("Helicopter impact shooter disappeared.");
+            if(helicopterShooter.Definition.Fraction==helicopter.OwnerFraction||
+               helicopterBodyColliders==null||!helicopterBodyColliders.HasCollider(partId)||
+               !float.IsFinite(rawDamage)||rawDamage<=0||rawDamage>10_000_000)
+                throw new InvalidDataException("Invalid Helicopter body projectile impact.");
+            if(ApplyArmyHostDamage(entityId,rawDamage))
+                helicopterShooter.ConfirmedEnemyHits=checked(helicopterShooter.ConfirmedEnemyHits+1);
+            return;
+        }
         if(!activeArmyEntities.TryGetValue(entityId,out var row)||row.UnitId!="ID_UNIT-DRONE")
         {ApplyGroundVehicleProjectileImpact(shooterId,entityId,partId,rawDamage);return;}
         var shooter=Find(shooterId)??throw new InvalidDataException("Drone impact shooter disappeared.");

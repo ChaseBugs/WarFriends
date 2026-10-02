@@ -229,7 +229,7 @@ public sealed partial class MatchEngine
         ApplyHeavyTurretHostDamage(shooterId,entityId,rawDamage,"projectile:"+projectileId);
     }
 
-    private ShotCollision? TraceHeavyTurretShot(string owner,Vector3 origin,Vector3 direction,float range,uint mask=uint.MaxValue)
+    internal ShotCollision? TraceHeavyTurretShot(string owner,Vector3 origin,Vector3 direction,float range,uint mask=uint.MaxValue)
     {
         if(map==null)throw new InvalidDataException("Heavy Turret shot lost its map.");
         if(rifleCombat==null)throw new InvalidDataException("Heavy Turret shot lacks host player poses.");

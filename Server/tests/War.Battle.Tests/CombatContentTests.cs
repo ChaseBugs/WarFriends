@@ -17,6 +17,42 @@ internal static class CombatContentTests
         Vector3 Vec(JsonElement value)=>new(value.GetProperty("x").GetSingle(),
             value.GetProperty("y").GetSingle(),value.GetProperty("z").GetSingle());
         var content=BattleCombatContent.Load(Path.Combine(directory,"combat-content-manifest.json"));
+        var heliBoxes=content.HelicopterBodyColliders.Place(Vector3.Zero,Quaternion.Identity);
+        using(var geometryReference=JsonDocument.Parse(File.ReadAllBytes(Path.Combine(directory,
+            "recovered-air-unit-unity-geometry.json"))))
+        {
+            var unityHeli=geometryReference.RootElement.GetProperty("units").EnumerateArray()
+                .Single(x=>x.GetProperty("source").GetString()=="Assets/GameObject/Helicopter.prefab");
+            var unityBoxes=unityHeli.GetProperty("colliders").EnumerateArray().ToArray();
+            Check(content.HelicopterBodyColliders.Count==11&&heliBoxes.Count==11&&
+                  unityBoxes.Length==11&&heliBoxes.Select(x=>x.ColliderFileId)
+                      .SequenceEqual(unityBoxes.Select(x=>x.GetProperty("componentFileId").GetInt32()))&&
+                  heliBoxes.Select(x=>x.PartComponentFileId).Distinct().Count()==11&&
+                  heliBoxes.All(x=>x.Layer==8&&x.Hitbox.Kind==PlayerHitboxKind.Box),
+                  "combat package binds eleven ordered Helicopter boxes to unique damage parts");
+            for(int i=0;i<heliBoxes.Count;i++)
+            {
+                var reference=unityBoxes[i];var center=reference.GetProperty("center");
+                var q=reference.GetProperty("rotation");
+                Check(Vector3.Distance(heliBoxes[i].Hitbox.Center,
+                          new Vector3(center[0].GetSingle(),center[1].GetSingle(),
+                              center[2].GetSingle()))<.0002f&&
+                      Math.Abs(Quaternion.Dot(heliBoxes[i].Hitbox.Rotation,
+                          new Quaternion(q[0].GetSingle(),q[1].GetSingle(),
+                              q[2].GetSingle(),q[3].GetSingle())))>.99999f&&
+                      content.HelicopterBodyColliders.HasCollider(heliBoxes[i].ColliderFileId),
+                      $"Helicopter body box {i} matches independent Unity rest geometry");
+            }
+        }
+        var rotatedHeliBoxes=content.HelicopterBodyColliders.Place(new(3,2,-4),
+            Quaternion.CreateFromAxisAngle(Vector3.UnitY,MathF.PI/2));
+        Check(rotatedHeliBoxes.Count==11&&
+              Vector3.Distance(rotatedHeliBoxes[0].Hitbox.Center,
+                  new Vector3(3,2,-4)+Vector3.Transform(heliBoxes[0].Hitbox.Center,
+                      Quaternion.CreateFromAxisAngle(Vector3.UnitY,MathF.PI/2)))<.00001f&&
+              !content.HelicopterBodyColliders.HasCollider(1),
+              "Helicopter collision follows current host root placement without accepting unknown parts");
+        Reject(()=>content.HelicopterBodyColliders.Place(Vector3.Zero,default));
         Check(content.HelicopterCrewPoints.Slots.Count==6&&
               content.HelicopterCrewPoints.Slots.Select(x=>x.ComponentFileId).SequenceEqual(
                   new[]{11438461,11450766,11481434,11454267,11412170,11411857})&&
@@ -3437,6 +3473,30 @@ internal static class CombatContentTests
                   new Vector3(helicopterSpawn.X,helicopterSpawn.Y,helicopterSpawn.Z))>0,
               "normal Helicopter deployment publishes host-owned source-route motion after spawn");
         var liveTurretPose=deathMatch.HelicopterTurretPose(helicopterEntity.EntityKey)!;
+        var liveHelicopterBoxes=deathMatch.GroundVehicleShotTargets(soldierOwner)
+            .Where(x=>x.EntityId==helicopterEntity.EntityKey).ToArray();
+        Check(liveHelicopterBoxes.Length==11&&liveHelicopterBoxes.All(x=>x.Layer==8)&&
+              liveHelicopterBoxes.Select(x=>x.PartComponentFileId)
+                  .SequenceEqual(heliBoxes.Select(x=>x.ColliderFileId))&&
+              !deathMatch.GroundVehicleShotTargets(helicopterOwner)
+                  .Any(x=>x.EntityId==helicopterEntity.EntityKey),
+              "normal deployed Helicopter contributes its source boxes only to opposing projectile traces");
+        var helicopterBoxAxis=Vector3.Transform(Vector3.UnitX,
+            new Quaternion(helicopterEntity.HelicopterRotation!.X,
+                helicopterEntity.HelicopterRotation.Y,helicopterEntity.HelicopterRotation.Z,
+                helicopterEntity.HelicopterRotation.W));
+        var helicopterBoxCenter=liveHelicopterBoxes[0].Hitbox.Center;
+        var helicopterBodyTrace=deathMatch.TraceHeavyTurretShot(soldierOwner,
+            helicopterBoxCenter-helicopterBoxAxis*.5f,helicopterBoxAxis,2f);
+        Check(helicopterBodyTrace is {DynamicEntityId:ulong tracedHelicopter,
+                  DynamicPartId:int tracedCollider}&&
+              tracedHelicopter==helicopterEntity.EntityKey&&
+              content.HelicopterBodyColliders.HasCollider(tracedCollider),
+              "normal projectile collision trace resolves a live Helicopter source box");
+        Check(!deathMatch.HelicopterVisibilityRay(HelicopterTurretSightRay.ForSelection(
+                  helicopterBoxCenter-helicopterBoxAxis*2,
+                  helicopterBoxCenter+helicopterBoxAxis*2)),
+              "live Helicopter body box blocks the recovered static/destroyable sight mask");
         var liveSelectionSight=deathMatch.HelicopterRestSightRay(helicopterEntity.EntityKey,
             liveTurretPose.SightRestPosition+Vector3.UnitZ*10,false);
         Check(liveSelectionSight is { } liveRay&&Math.Abs(liveRay.Range-9.45f)<.00001f&&
@@ -3519,6 +3579,15 @@ internal static class CombatContentTests
                   {Origin:var movingRayOrigin}&&
               Vector3.Distance(movingRayOrigin,movingAim.SightPosition)>.04f,
               "running Helicopter tick advances its moving joint eye before the live sight ray");
+        float helicopterHealthBefore=deathMatch.ArmyHealth(helicopterEntity.EntityKey)!.Value;
+        uint helicopterHitCountBefore=deathMatch.Snapshot().Players[0].ConfirmedEnemyHits;
+        Reject(()=>deathMatch.ApplyArmyBodyProjectileImpact(soldierOwner,
+            helicopterEntity.EntityKey,1,5f));
+        deathMatch.ApplyArmyBodyProjectileImpact(soldierOwner,helicopterEntity.EntityKey,
+            helicopterBodyTrace!.DynamicPartId!.Value,5f);
+        Check(deathMatch.ArmyHealth(helicopterEntity.EntityKey)==helicopterHealthBefore-5f&&
+              deathMatch.Snapshot().Players[0].ConfirmedEnemyHits==helicopterHitCountBefore+1,
+              "source Helicopter body part routes a valid opposing projectile to shared host health");
         Check(deathMatch.ConfirmArmyDeath(helicopterEntity.EntityKey,true) &&
               !deathMatch.HasHelicopterPath(helicopterEntity.EntityKey) &&
               deathMatch.HelicopterCrewDefinition(helicopterEntity.EntityKey)==null&&
@@ -3526,6 +3595,8 @@ internal static class CombatContentTests
               deathMatch.HelicopterGunner(helicopterEntity.EntityKey)==null&&
               deathMatch.HelicopterTurretPose(helicopterEntity.EntityKey)==null&&
               deathMatch.HelicopterTurretCurrentAimPose(helicopterEntity.EntityKey)==null&&
+              !deathMatch.GroundVehicleShotTargets(soldierOwner)
+                  .Any(x=>x.EntityId==helicopterEntity.EntityKey)&&
               deathMatch.HelicopterRestSightRay(helicopterEntity.EntityKey,Vector3.Zero,false)==null&&
               deathMatch.HelicopterCrewMembers(helicopterEntity.EntityKey).Count==0&&
               deathMatch.HelicopterCrewDescents(helicopterEntity.EntityKey).Count==0&&
