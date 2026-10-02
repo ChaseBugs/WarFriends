@@ -47,6 +47,13 @@ namespace War.Client
                 }
                 else if(item.HelicopterShot!=null)
                     throw new InvalidDataException("Unexpected Helicopter firing metadata.");
+                if(item.Reason=="helicopter-gunner"&&
+                   (item.Kind!=MatchEventKind.Impact||
+                    !Guid.TryParseExact(item.ActorId,"N",out _)||item.ProjectileId==0||
+                    !item.TargetId.StartsWith("army:",StringComparison.Ordinal)||
+                    !ulong.TryParse(item.TargetId.Substring(5),out var gunnerKey)||gunnerKey==0||
+                    item.TargetId!="army:"+gunnerKey.ToString(System.Globalization.CultureInfo.InvariantCulture)))
+                    throw new InvalidDataException("Invalid Helicopter gunner impact event.");
                 if (item.Kind == MatchEventKind.ArenaSettled &&
                     (!Guid.TryParseExact(item.ActorId, "N", out _) ||
                      !item.Reason.EndsWith(":won", StringComparison.Ordinal) &&

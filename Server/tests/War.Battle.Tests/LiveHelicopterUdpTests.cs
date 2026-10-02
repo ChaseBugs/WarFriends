@@ -25,7 +25,7 @@ internal static class LiveHelicopterUdpTests
         string one=new('a',32),two=new('b',32);
         var manifest=MatchManifest.Validate(new MatchManifest("helicopter-live-udp","local-1",
             "Park_Multiplayer",map.SourceHash,content.Revision,
-            MatchManifest.RifleCombatMode,10,180,120,
+            MatchManifest.RifleCombatMode,10,90,90,
             [new(one,rifle,1,left.SourceIndex,1,new(1000),0,0,0)
                 {EquippedArmyUnitIds=["ID_UNIT-ASSAULT"],ArmyNormalUpgradeIndexes=[0],
                  ArmySpecialUpgradeIndexes=[-1],ArmyEliteUpgradeIndexes=[-1],
@@ -217,6 +217,24 @@ internal static class LiveHelicopterUdpTests
                   (await a.PollAsync(timeout.Token)).Snapshot.Players.Single(x=>x.PlayerId==one)
                       .ConfirmedEnemyHits>gunnerHitsBefore,
                   $"opposing UDP rifle fire kills the source gunner with a host respawn deadline (shots={acceptedGunnerShots})");
+            async Task<ulong?> GunnerImpact(MatchConnection peer,MatchEventConsumer consumer)
+            {
+                ulong? result=null;
+                while(true)
+                {
+                    var page=await peer.PollEventsAsync(consumer.LastEventId,timeout.Token);
+                    consumer.Consume(page);
+                    result??=page.Events.FirstOrDefault(x=>x.Kind==MatchEventKind.Impact&&
+                        x.Reason=="helicopter-gunner"&&x.ActorId==one&&
+                        x.TargetId=="army:"+helicopter!.EntityKey)?.EventId;
+                    if(page.Events.Count==0)break;
+                }
+                return result;
+            }
+            ulong? leftGunnerImpact=await GunnerImpact(a,leftConsumer);
+            ulong? rightGunnerImpact=await GunnerImpact(b,rightConsumer);
+            Check(leftGunnerImpact.HasValue&&leftGunnerImpact==rightGunnerImpact,
+                  "both peers replay the same source-bound gunner impact identity");
             var ownerDead=(await b.FetchArmyEntitiesAsync(timeout.Token)).Single(x=>
                 x.EntityKey==helicopter.EntityKey);
             Check(ownerDead.HelicopterGunnerHealth==0&&

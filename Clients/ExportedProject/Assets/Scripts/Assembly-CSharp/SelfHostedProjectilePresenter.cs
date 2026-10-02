@@ -92,7 +92,7 @@ public sealed class SelfHostedProjectilePresenter : MonoBehaviour
             return;
         }
 		if (item == null || item.Kind != MatchEventKind.Impact ||
-			(item.Reason != "grenade" && item.Reason != "grenade-molotov" && item.Reason != "heavy-turret" && item.Reason != "drone" && item.Reason != "helicopter")) return;
+			(item.Reason != "grenade" && item.Reason != "grenade-molotov" && item.Reason != "heavy-turret" && item.Reason != "drone" && item.Reason != "helicopter" && item.Reason != "helicopter-gunner")) return;
         if (item.Reason == "drone" || item.Reason == "helicopter")
         {
             Visual droneVisual;
@@ -105,7 +105,8 @@ public sealed class SelfHostedProjectilePresenter : MonoBehaviour
             }
         }
 		Remove(item.ProjectileId);
-		if (item.Reason == "heavy-turret" || item.Reason == "drone" || item.Reason == "helicopter") return;
+		if (item.Reason == "heavy-turret" || item.Reason == "drone" || item.Reason == "helicopter" ||
+			item.Reason == "helicopter-gunner") return;
 		Explosion.PlayEffects(item.Reason == "grenade-molotov" ? Explosion.ExplosionType.Molotov : Explosion.ExplosionType.Medium,
 			new Vector3(item.X, item.Y, item.Z));
 	}

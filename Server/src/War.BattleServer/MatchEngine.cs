@@ -1215,8 +1215,17 @@ public sealed partial class MatchEngine
             try { impact = pair.Value.Flight.Advance(tick); }
             catch (InvalidDataException) { End("invalid-projectile-authority", "", false); break; }
             if (pair.Value.Flight.Finished) projectiles.Remove(pair.Key);
-            if (impact!=null) Emit(MatchEventKind.Impact,impact.OwnerId,impact.Hit.PlayerId??"",
-                impact.ProjectileId,impact.Hit.Position,0,"");
+            if (impact!=null)
+            {
+                if(impact.Hit.DynamicHelicopterGunner&&impact.Hit.DynamicEntityId is not ulong)
+                {End("invalid-projectile-authority","",false);break;}
+                Emit(MatchEventKind.Impact,impact.OwnerId,
+                    impact.Hit.DynamicHelicopterGunner?
+                        "army:"+impact.Hit.DynamicEntityId!.Value.ToString(System.Globalization.CultureInfo.InvariantCulture):
+                        impact.Hit.PlayerId??"",
+                    impact.ProjectileId,impact.Hit.Position,0,
+                    impact.Hit.DynamicHelicopterGunner?"helicopter-gunner":"");
+            }
             if(impact?.Hit.DynamicOwner!=null && shields!=null)
             {
                 try

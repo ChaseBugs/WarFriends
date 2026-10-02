@@ -2423,6 +2423,15 @@ internal static class CombatContentTests
                   "Client event consumer dispatches contiguous authoritative pages");
             Reject(()=>consumer.Consume(new MatchEventBatch{Code="events",LatestEventId=3,Events={new MatchEvent{EventId=4,Tick=3,Kind=MatchEventKind.Shot}}}));
             string warperOwner=Guid.NewGuid().ToString("N");
+            var gunnerImpactPage=new MatchEventBatch{Code="events",LatestEventId=1};
+            gunnerImpactPage.Events.Add(new MatchEvent{EventId=1,Tick=3,
+                Kind=MatchEventKind.Impact,ActorId=warperOwner,TargetId="army:4294967297",
+                ProjectileId=9,Reason="helicopter-gunner"});
+            Check(new War.Client.MatchEventConsumer().Consume(gunnerImpactPage)==1,
+                  "Client event consumer accepts source-bound Helicopter gunner impacts");
+            var invalidGunnerImpact=gunnerImpactPage.Clone();
+            invalidGunnerImpact.Events[0].TargetId="army:0004294967297";
+            Reject(()=>new War.Client.MatchEventConsumer().Consume(invalidGunnerImpact));
             var warperConsumer=new War.Client.MatchEventConsumer();
             var warperPage=new MatchEventBatch{Code="events",LatestEventId=1};
             warperPage.Events.Add(new MatchEvent{EventId=1,Tick=3,Kind=MatchEventKind.WarperWarpStarted,
