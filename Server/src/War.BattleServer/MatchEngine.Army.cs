@@ -2119,24 +2119,42 @@ public sealed partial class MatchEngine
                 Emit(MatchEventKind.Impact,burst.EntityKey.ToString(),victim.Definition.PlayerId,
                     burst.ProjectileId,origin,result?.Health??victim.Health,"army-flame");
             }
-            if(!Terminal)
-                foreach(var targetId in infantryAnimations.Keys.Order().ToArray())
-                {
-                    if(!activeArmyEntities.TryGetValue(targetId,out var infantry))
-                        throw new InvalidDataException("Army flame infantry target disappeared.");
-                    if(infantry.OwnerPlayerId==burst.OwnerPlayerId)continue;
-                    var targetOwner=Find(infantry.OwnerPlayerId)??
-                        throw new InvalidDataException("Army flame infantry lacks an owner.");
-                    if(targetOwner.Definition.Fraction==owner.Definition.Fraction)continue;
-                    var infantryPose=InfantryPose(targetId)??
-                        throw new InvalidDataException("Army flame infantry lacks current collision authority.");
-                    var infantryHit=ArmyFlameBurst.ResolveParts(origin,forward,infantryPose.Parts,sourceDamage);
-                    if(infantryHit!=null&&infantryHit.RawDamage>0)
-                        ApplyArmyHostDamage(targetId,infantryHit.RawDamage);
-                }
+            if(!Terminal)ApplyArmyFlameInfantryPulse(burst.EntityKey,origin,forward);
             if(burst.Finished)armyFlameBursts.Remove(pair.Key);
             if(Terminal)return;
         }
+    }
+
+    // The live burst supplies its sampled weapon muzzle and facing. Keeping this
+    // transition separate also lets host tests place real spawned infantry at a
+    // deterministic cone boundary without altering the recovered scene.
+    internal int ApplyArmyFlameInfantryPulse(ulong sourceEntityKey,Vector3 origin,Vector3 forward)
+    {
+        if(phase!=BattlePhase.Running||!activeArmyEntities.TryGetValue(sourceEntityKey,out var source)||
+           source.UnitId!="ID_UNIT-FLAMETHROWER"||!PlayerHitbox.Finite(origin)||
+           !PlayerHitbox.Finite(forward)||forward.LengthSquared()<1e-10f)
+            throw new InvalidDataException("Invalid army flame infantry pulse authority.");
+        var sourceOwner=Find(source.OwnerPlayerId)??
+            throw new InvalidDataException("Army flame source lacks an owner.");
+        float sourceDamage=ArmyDamage(sourceEntityKey)??
+            throw new InvalidDataException("Army flame lacks trusted damage.");
+        if(!float.IsFinite(sourceDamage)||sourceDamage<0||sourceDamage>10_000_000)
+            throw new InvalidDataException("Invalid army flame source damage.");
+        int hits=0;
+        foreach(var targetId in infantryAnimations.Keys.Order().ToArray())
+        {
+            if(!activeArmyEntities.TryGetValue(targetId,out var infantry))
+                throw new InvalidDataException("Army flame infantry target disappeared.");
+            if(infantry.OwnerPlayerId==source.OwnerPlayerId)continue;
+            var targetOwner=Find(infantry.OwnerPlayerId)??
+                throw new InvalidDataException("Army flame infantry lacks an owner.");
+            if(targetOwner.Definition.Fraction==sourceOwner.Definition.Fraction)continue;
+            var infantryPose=InfantryPose(targetId)??
+                throw new InvalidDataException("Army flame infantry lacks current collision authority.");
+            var hit=ArmyFlameBurst.ResolveParts(origin,forward,infantryPose.Parts,sourceDamage);
+            if(hit!=null&&hit.RawDamage>0&&ApplyArmyHostDamage(targetId,hit.RawDamage))hits++;
+        }
+        return hits;
     }
 
     // A route from the host entity's current position to its reserved source

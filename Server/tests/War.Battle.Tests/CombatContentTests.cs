@@ -3460,6 +3460,43 @@ internal static class CombatContentTests
               "trusted perk accuracy scales the fully composed source real-shot probability");
         var deathMatch=new MatchEngine(detached,content:content);
         string soldierOwner=detached.Players[0].PlayerId,helicopterOwner=detached.Players[1].PlayerId;
+        var flameManifest=detached with{MatchId="army-flame-infantry",Players=detached.Players.Select(p=>p with
+        {
+            EquippedArmyUnitIds=["ID_UNIT-FLAMETHROWER"],ArmyNormalUpgradeIndexes=[0],
+            ArmySpecialUpgradeIndexes=[-1],ArmyEliteUpgradeIndexes=[-1],
+            ArmyHealthFactors=[new(1f,1f)],ArmyDamageScales=[1f],
+            ArmySpeedCoefficients=[1f],ArmyAccuracyCoefficients=[1f]
+        }).ToArray()};
+        content.ValidateAllocation(flameManifest);
+        var flameInfantryMatch=new MatchEngine(flameManifest,content:content,armyChoice:_=>0);
+        flameInfantryMatch.Admit(soldierOwner);flameInfantryMatch.Admit(helicopterOwner);
+        flameInfantryMatch.Command(soldierOwner,new(){CommandId=1,Ready=new(){ManifestHash=flameInfantryMatch.ManifestHash}});
+        flameInfantryMatch.Command(helicopterOwner,new(){CommandId=1,Ready=new(){ManifestHash=flameInfantryMatch.ManifestHash}});
+        flameInfantryMatch.Advance(60);
+        int flameOptionA=flameInfantryMatch.ArmyBatch(soldierOwner).OptionIndexes[0];
+        int flameOptionB=flameInfantryMatch.ArmyBatch(helicopterOwner).OptionIndexes[0];
+        Check(flameInfantryMatch.Command(soldierOwner,new(){CommandId=2,DeployArmy=new(){OptionIndex=flameOptionA}}).Code=="army-deploying"&&
+              flameInfantryMatch.Command(helicopterOwner,new(){CommandId=2,DeployArmy=new(){OptionIndex=flameOptionB}}).Code=="army-deploying",
+            "both factions deploy source-backed flamethrower infantry for host damage proof");
+        for(ulong flameTick=61;flameTick<=75;flameTick++)flameInfantryMatch.Advance(flameTick);
+        var flameRows=flameInfantryMatch.ArmyEntityBatch(soldierOwner,0,0).Entities;
+        var flameSource=flameRows.First(x=>x.OwnerPlayerId==soldierOwner);
+        var flameTarget=flameRows.First(x=>x.OwnerPlayerId==helicopterOwner);
+        var flamePart=flameInfantryMatch.InfantryPose(flameTarget.EntityKey)!.Parts[0];
+        float flameTargetBefore=flameInfantryMatch.ArmyHealth(flameTarget.EntityKey)!.Value;
+        float flameSourceBefore=flameInfantryMatch.ArmyHealth(flameSource.EntityKey)!.Value;
+        int flameHits=flameInfantryMatch.ApplyArmyFlameInfantryPulse(flameSource.EntityKey,
+            flamePart.Center-Vector3.UnitZ,Vector3.UnitZ);
+        Check(flameHits>=1&&flameInfantryMatch.ArmyHealth(flameTarget.EntityKey)<flameTargetBefore&&
+              flameInfantryMatch.ArmyHealth(flameSource.EntityKey)==flameSourceBefore,
+            "source flame cone mutates opposing spawned infantry vitality while excluding allied infantry");
+        var flameAllyPart=flameInfantryMatch.InfantryPose(flameSource.EntityKey)!.Parts[0];
+        flameInfantryMatch.ApplyArmyFlameInfantryPulse(flameSource.EntityKey,
+            flameAllyPart.Center-Vector3.UnitZ,Vector3.UnitZ);
+        Check(flameInfantryMatch.ArmyHealth(flameSource.EntityKey)==flameSourceBefore,
+            "army flame cone does not damage its owning deployed infantry collider");
+        Reject(()=>flameInfantryMatch.ApplyArmyFlameInfantryPulse(ulong.MaxValue,
+            flamePart.Center-Vector3.UnitZ,Vector3.UnitZ));
         deathMatch.Admit(soldierOwner);deathMatch.Admit(helicopterOwner);
         deathMatch.Command(soldierOwner,new MatchCommand{CommandId=1,
             Ready=new ReadyCommand{ManifestHash=deathMatch.ManifestHash}});
