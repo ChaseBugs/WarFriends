@@ -1963,11 +1963,15 @@ public sealed partial class MatchEngine
             if(behavior=="SoldierBehaviourFlamethrower")
             {
                 if(PendingProjectileCount>=MaximumProjectiles||!EventCapacityForShot())continue;
+                var flameEntityPosition=new Vector3(army.X,army.Y,army.Z);
+                var flameOrigin=armyWeapons?.RestMuzzleOrigin(army.UnitId,flameEntityPosition,
+                    intent.TargetPosition-flameEntityPosition)??
+                    throw new InvalidDataException("Army flame shot lacks pinned weapon muzzle authority.");
                 if(projectileId==ulong.MaxValue)throw new InvalidDataException("Army flame identity exhausted.");
                 ulong flameId=++projectileId;
                 armyFlameBursts.Add(flameId,new ArmyFlameBurst(flameId,intent.EntityKey,intent.OwnerPlayerId,tick));
                 Emit(MatchEventKind.Shot,intent.OwnerPlayerId,intent.TargetPlayerId,
-                    flameId,new Vector3(army.X,army.Y,army.Z),0,"army-flame");
+                    flameId,flameOrigin,0,"army-flame");
                 continue;
             }
             float? projectileSpeed=behavior switch

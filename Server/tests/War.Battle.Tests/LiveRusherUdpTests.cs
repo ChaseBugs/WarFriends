@@ -99,7 +99,8 @@ internal static class LiveRusherUdpTests
                       (x.X!=y.X || x.Y!=y.Y || x.Z!=y.Z))) &&
                   movedA.Entities.Select(x=>x.EntityKey).SequenceEqual(movedB.Entities.Select(x=>x.EntityKey)),
                   "both UDP peers see advancing Rusher positions without reconnect revision churn");
-            ulong cursor=0;bool flameShot=false,flameImpact=false,damaged=false;
+            ulong cursor=0;bool flameShot=false,flameImpact=false,damaged=false;float? flameShotY=null;
+            MatchArmyEntityBatch? flameShotEntities=null;
             while(!damaged)
             {
                 await Task.Delay(100,timeout.Token);
@@ -109,12 +110,19 @@ internal static class LiveRusherUdpTests
                 foreach(var row in events.Events)
                 {
                     cursor=row.EventId;
-                    if(row.Kind==MatchEventKind.Shot&&row.Reason=="army-flame")flameShot=true;
+                    if(row.Kind==MatchEventKind.Shot&&row.Reason=="army-flame")
+                    {flameShot=true;flameShotY??=row.Y;}
                     if(row.Kind==MatchEventKind.Impact&&row.Reason=="army-flame")flameImpact=true;
                 }
+                if(flameShotY.HasValue&&flameShotEntities==null)
+                    flameShotEntities=await b.PollArmyEntitiesAsync(0,0,timeout.Token);
             }
             Check(flameShot&&flameImpact&&damaged,
                   "live Flamethrower navigation produces authoritative shot, pulse impact, and player health loss");
+            Check(flameShotY.HasValue&&flameShotEntities!=null&&flameShotEntities.Entities.Any(entity=>
+                    Math.Abs(flameShotY.Value-entity.Y-
+                        content.ArmyWeapons.Muzzle("ID_UNIT-FLAMETHROWER").RestPosition.Y)<.08f),
+                  $"live flame shot event starts at the recovered weapon muzzle above its host unit root: shotY={flameShotY}, roots={string.Join(',',flameShotEntities?.Entities.Select(x=>x.Y)??[])}");
             var opposingHand=await b.PollArmyAsync(timeout.Token);
             int opposingOption=opposingHand.OptionIndexes.OrderByDescending(x=>
                 content.Army.Option(x).Count).First();
