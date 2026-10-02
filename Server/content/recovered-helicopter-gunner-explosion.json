@@ -1,0 +1,1969 @@
+{
+  "version": 1,
+  "client": "1.4.0",
+  "source": "Assets/GameObject/enemy.prefab",
+  "sha256": "64b4db85d1c9a0bd46a690a86102a22f66feeab8d4157a4c87824ac3d5dbeb54",
+  "clip": {
+    "source": "Assets/AnimationClip/idle_1.anim",
+    "guid": "879d0cc21df0fe24e953d2ce4185c761",
+    "fileId": 7400000,
+    "sha256": "fc75d82afa2e12a7119e53ddad5db550273f71e513f487cd17b5bca1d8518b04",
+    "length": 1.0
+  },
+  "sampleRate": 30,
+  "frames": [
+    {
+      "tick": 0,
+      "seconds": 0.0,
+      "parts": [
+        {
+          "role": "body-box",
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "transformPosition": [
+            -0.0075671454,
+            0.0884352848,
+            -0.003251938
+          ],
+          "boundsMin": [
+            -0.121836051,
+            0.07488067,
+            -0.104847759
+          ],
+          "boundsMax": [
+            0.115310073,
+            0.272823155,
+            0.0950397551
+          ]
+        },
+        {
+          "role": "body-sphere",
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "transformPosition": [
+            -0.0075671454,
+            0.0884352848,
+            -0.003251938
+          ],
+          "boundsMin": [
+            -0.107567161,
+            -0.0115647316,
+            -0.103251956
+          ],
+          "boundsMax": [
+            0.09243287,
+            0.1884353,
+            0.09674808
+          ]
+        },
+        {
+          "role": "head",
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "transformPosition": [
+            -0.00500935037,
+            0.3977056,
+            0.027155729
+          ],
+          "boundsMin": [
+            -0.134734988,
+            0.277646065,
+            -0.101791352
+          ],
+          "boundsMax": [
+            0.125265419,
+            0.537646532,
+            0.158209056
+          ]
+        }
+      ]
+    },
+    {
+      "tick": 1,
+      "seconds": 0.0333333351,
+      "parts": [
+        {
+          "role": "body-box",
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "transformPosition": [
+            -0.00756721245,
+            0.08848428,
+            -0.003252519
+          ],
+          "boundsMin": [
+            -0.121836111,
+            0.0749296546,
+            -0.104848348
+          ],
+          "boundsMax": [
+            0.115310013,
+            0.27287215,
+            0.09503917
+          ]
+        },
+        {
+          "role": "body-sphere",
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "transformPosition": [
+            -0.00756721245,
+            0.08848428,
+            -0.003252519
+          ],
+          "boundsMin": [
+            -0.107567228,
+            -0.0115157366,
+            -0.103252538
+          ],
+          "boundsMax": [
+            0.0924328044,
+            0.1884843,
+            0.0967474952
+          ]
+        },
+        {
+          "role": "head",
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "transformPosition": [
+            -0.005013592,
+            0.397757679,
+            0.0271287579
+          ],
+          "boundsMin": [
+            -0.134739384,
+            0.2776981,
+            -0.101816908
+          ],
+          "boundsMax": [
+            0.125261053,
+            0.5376985,
+            0.15818353
+          ]
+        }
+      ]
+    },
+    {
+      "tick": 2,
+      "seconds": 0.06666667,
+      "parts": [
+        {
+          "role": "body-box",
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "transformPosition": [
+            -0.007567304,
+            0.0885516554,
+            -0.00325333863
+          ],
+          "boundsMin": [
+            -0.1218362,
+            0.0749970153,
+            -0.104849152
+          ],
+          "boundsMax": [
+            0.115309924,
+            0.2729395,
+            0.09503836
+          ]
+        },
+        {
+          "role": "body-sphere",
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "transformPosition": [
+            -0.007567304,
+            0.0885516554,
+            -0.00325333863
+          ],
+          "boundsMin": [
+            -0.107567318,
+            -0.0114483535,
+            -0.103253357
+          ],
+          "boundsMax": [
+            0.092432715,
+            0.188551664,
+            0.0967466757
+          ]
+        },
+        {
+          "role": "head",
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "transformPosition": [
+            -0.005022689,
+            0.397830456,
+            0.02708316
+          ],
+          "boundsMin": [
+            -0.134748831,
+            0.277770519,
+            -0.101860553
+          ],
+          "boundsMax": [
+            0.125251517,
+            0.537770867,
+            0.1581398
+          ]
+        }
+      ]
+    },
+    {
+      "tick": 3,
+      "seconds": 0.1,
+      "parts": [
+        {
+          "role": "body-box",
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "transformPosition": [
+            -0.00756741548,
+            0.0886339545,
+            -0.00325432955
+          ],
+          "boundsMin": [
+            -0.12183632,
+            0.07507932,
+            -0.104850143
+          ],
+          "boundsMax": [
+            0.115309805,
+            0.273021817,
+            0.09503737
+          ]
+        },
+        {
+          "role": "body-sphere",
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "transformPosition": [
+            -0.00756741548,
+            0.0886339545,
+            -0.00325432955
+          ],
+          "boundsMin": [
+            -0.10756743,
+            -0.0113660693,
+            -0.103254348
+          ],
+          "boundsMax": [
+            0.0924326,
+            0.188633978,
+            0.0967456847
+          ]
+        },
+        {
+          "role": "head",
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "transformPosition": [
+            -0.005036079,
+            0.397919923,
+            0.027022006
+          ],
+          "boundsMin": [
+            -0.134762734,
+            0.2778598,
+            -0.101919293
+          ],
+          "boundsMax": [
+            0.125237614,
+            0.537860155,
+            0.158081055
+          ]
+        }
+      ]
+    },
+    {
+      "tick": 4,
+      "seconds": 0.13333334,
+      "parts": [
+        {
+          "role": "body-box",
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "transformPosition": [
+            -0.00756754261,
+            0.08872771,
+            -0.003255462
+          ],
+          "boundsMin": [
+            -0.121836446,
+            0.07517309,
+            -0.104851283
+          ],
+          "boundsMax": [
+            0.115309678,
+            0.273115575,
+            0.09503623
+          ]
+        },
+        {
+          "role": "body-sphere",
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "transformPosition": [
+            -0.00756754261,
+            0.08872771,
+            -0.003255462
+          ],
+          "boundsMin": [
+            -0.107567564,
+            -0.0112723112,
+            -0.103255481
+          ],
+          "boundsMax": [
+            0.09243247,
+            0.188727736,
+            0.09674455
+          ]
+        },
+        {
+          "role": "head",
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "transformPosition": [
+            -0.00505311135,
+            0.3980223,
+            0.0269485731
+          ],
+          "boundsMin": [
+            -0.134780526,
+            0.27796185,
+            -0.101989925
+          ],
+          "boundsMax": [
+            0.125219882,
+            0.537962258,
+            0.158010483
+          ]
+        }
+      ]
+    },
+    {
+      "tick": 5,
+      "seconds": 0.166666672,
+      "parts": [
+        {
+          "role": "body-box",
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "transformPosition": [
+            -0.00756768,
+            0.0888294652,
+            -0.00325669139
+          ],
+          "boundsMin": [
+            -0.12183658,
+            0.0752748251,
+            -0.1048525
+          ],
+          "boundsMax": [
+            0.115309544,
+            0.27321732,
+            0.09503502
+          ]
+        },
+        {
+          "role": "body-sphere",
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "transformPosition": [
+            -0.00756768,
+            0.0888294652,
+            -0.00325669139
+          ],
+          "boundsMin": [
+            -0.1075677,
+            -0.0111705512,
+            -0.10325671
+          ],
+          "boundsMax": [
+            0.092432335,
+            0.188829482,
+            0.09674332
+          ]
+        },
+        {
+          "role": "head",
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "transformPosition": [
+            -0.005073188,
+            0.3981335,
+            0.02686608
+          ],
+          "boundsMin": [
+            -0.1348014,
+            0.278072834,
+            -0.102069318
+          ],
+          "boundsMax": [
+            0.125198945,
+            0.5380732,
+            0.15793103
+          ]
+        }
+      ]
+    },
+    {
+      "tick": 6,
+      "seconds": 0.2,
+      "parts": [
+        {
+          "role": "body-box",
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "transformPosition": [
+            -0.007567824,
+            0.08893575,
+            -0.00325796544
+          ],
+          "boundsMin": [
+            -0.121836729,
+            0.07538111,
+            -0.104853779
+          ],
+          "boundsMax": [
+            0.115309395,
+            0.2733236,
+            0.095033735
+          ]
+        },
+        {
+          "role": "body-sphere",
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "transformPosition": [
+            -0.007567824,
+            0.08893575,
+            -0.00325796544
+          ],
+          "boundsMin": [
+            -0.107567839,
+            -0.0110642612,
+            -0.103257984
+          ],
+          "boundsMax": [
+            0.09243219,
+            0.188935757,
+            0.09674205
+          ]
+        },
+        {
+          "role": "head",
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "transformPosition": [
+            -0.00509568863,
+            0.3982499,
+            0.0267776567
+          ],
+          "boundsMin": [
+            -0.1348249,
+            0.278188825,
+            -0.102154493
+          ],
+          "boundsMax": [
+            0.125175565,
+            0.5381893,
+            0.157845974
+          ]
+        }
+      ]
+    },
+    {
+      "tick": 7,
+      "seconds": 0.233333334,
+      "parts": [
+        {
+          "role": "body-box",
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "transformPosition": [
+            -0.00756796869,
+            0.0890430957,
+            -0.00325926184
+          ],
+          "boundsMin": [
+            -0.121836871,
+            0.07548845,
+            -0.104855075
+          ],
+          "boundsMax": [
+            0.115309253,
+            0.273430943,
+            0.09503244
+          ]
+        },
+        {
+          "role": "body-sphere",
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "transformPosition": [
+            -0.00756796869,
+            0.0890430957,
+            -0.00325926184
+          ],
+          "boundsMin": [
+            -0.107567988,
+            -0.0109569132,
+            -0.10325928
+          ],
+          "boundsMax": [
+            0.0924320444,
+            0.1890431,
+            0.09674075
+          ]
+        },
+        {
+          "role": "head",
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "transformPosition": [
+            -0.00511999149,
+            0.398367435,
+            0.026686551
+          ],
+          "boundsMin": [
+            -0.134850129,
+            0.278306127,
+            -0.102242142
+          ],
+          "boundsMax": [
+            0.125150159,
+            0.5383065,
+            0.157758147
+          ]
+        }
+      ]
+    },
+    {
+      "tick": 8,
+      "seconds": 0.266666681,
+      "parts": [
+        {
+          "role": "body-box",
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "transformPosition": [
+            -0.007568111,
+            0.0891480446,
+            -0.00326052844
+          ],
+          "boundsMin": [
+            -0.121837012,
+            0.07559341,
+            -0.10485635
+          ],
+          "boundsMax": [
+            0.115309112,
+            0.2735359,
+            0.0950311646
+          ]
+        },
+        {
+          "role": "body-sphere",
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "transformPosition": [
+            -0.007568111,
+            0.0891480446,
+            -0.00326052844
+          ],
+          "boundsMin": [
+            -0.10756813,
+            -0.0108519793,
+            -0.103260547
+          ],
+          "boundsMax": [
+            0.0924319,
+            0.189148068,
+            0.0967394859
+          ]
+        },
+        {
+          "role": "head",
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "transformPosition": [
+            -0.005145476,
+            0.398482442,
+            0.0265958924
+          ],
+          "boundsMin": [
+            -0.134876683,
+            0.2784208,
+            -0.102329314
+          ],
+          "boundsMax": [
+            0.1251236,
+            0.538421035,
+            0.157670975
+          ]
+        }
+      ]
+    },
+    {
+      "tick": 9,
+      "seconds": 0.3,
+      "parts": [
+        {
+          "role": "body-box",
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "transformPosition": [
+            -0.007568245,
+            0.08924713,
+            -0.00326172053
+          ],
+          "boundsMin": [
+            -0.121837154,
+            0.07569253,
+            -0.104857534
+          ],
+          "boundsMax": [
+            0.11530897,
+            0.27363503,
+            0.09502998
+          ]
+        },
+        {
+          "role": "body-sphere",
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "transformPosition": [
+            -0.007568245,
+            0.08924713,
+            -0.00326172053
+          ],
+          "boundsMin": [
+            -0.107568264,
+            -0.0107528865,
+            -0.103261739
+          ],
+          "boundsMax": [
+            0.09243177,
+            0.189247146,
+            0.0967382938
+          ]
+        },
+        {
+          "role": "head",
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "transformPosition": [
+            -0.00517152064,
+            0.398590922,
+            0.0265089
+          ],
+          "boundsMin": [
+            -0.134903923,
+            0.2785288,
+            -0.102412954
+          ],
+          "boundsMax": [
+            0.125096515,
+            0.5385293,
+            0.157587484
+          ]
+        }
+      ]
+    },
+    {
+      "tick": 10,
+      "seconds": 0.333333343,
+      "parts": [
+        {
+          "role": "body-box",
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "transformPosition": [
+            -0.007568366,
+            0.08933689,
+            -0.00326280086
+          ],
+          "boundsMin": [
+            -0.121837273,
+            0.07578227,
+            -0.104858622
+          ],
+          "boundsMax": [
+            0.115308851,
+            0.273724765,
+            0.09502889
+          ]
+        },
+        {
+          "role": "body-sphere",
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "transformPosition": [
+            -0.007568366,
+            0.08933689,
+            -0.00326280086
+          ],
+          "boundsMin": [
+            -0.107568383,
+            -0.0106631219,
+            -0.103262819
+          ],
+          "boundsMax": [
+            0.09243165,
+            0.1893369,
+            0.09673721
+          ]
+        },
+        {
+          "role": "head",
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "transformPosition": [
+            -0.005197532,
+            0.39868924,
+            0.02642879
+          ],
+          "boundsMin": [
+            -0.134930983,
+            0.278626919,
+            -0.10248965
+          ],
+          "boundsMax": [
+            0.125069335,
+            0.5386272,
+            0.157510668
+          ]
+        }
+      ]
+    },
+    {
+      "tick": 11,
+      "seconds": 0.366666675,
+      "parts": [
+        {
+          "role": "body-box",
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "transformPosition": [
+            -0.00756847,
+            0.08941387,
+            -0.00326372474
+          ],
+          "boundsMin": [
+            -0.12183737,
+            0.07585924,
+            -0.104859546
+          ],
+          "boundsMax": [
+            0.115308754,
+            0.273801744,
+            0.09502797
+          ]
+        },
+        {
+          "role": "body-sphere",
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "transformPosition": [
+            -0.00756847,
+            0.08941387,
+            -0.00326372474
+          ],
+          "boundsMin": [
+            -0.107568488,
+            -0.0105861425,
+            -0.103263743
+          ],
+          "boundsMax": [
+            0.0924315453,
+            0.189413875,
+            0.09673629
+          ]
+        },
+        {
+          "role": "head",
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "transformPosition": [
+            -0.00522289146,
+            0.398773521,
+            0.0263587851
+          ],
+          "boundsMin": [
+            -0.134957388,
+            0.278710783,
+            -0.1025566
+          ],
+          "boundsMax": [
+            0.12504293,
+            0.5387111,
+            0.157443717
+          ]
+        }
+      ]
+    },
+    {
+      "tick": 12,
+      "seconds": 0.4,
+      "parts": [
+        {
+          "role": "body-box",
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "transformPosition": [
+            -0.00756855262,
+            0.0894745737,
+            -0.003264455
+          ],
+          "boundsMin": [
+            -0.121837452,
+            0.075919956,
+            -0.104860276
+          ],
+          "boundsMax": [
+            0.115308672,
+            0.273862451,
+            0.09502724
+          ]
+        },
+        {
+          "role": "body-sphere",
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "transformPosition": [
+            -0.00756855262,
+            0.0894745737,
+            -0.003264455
+          ],
+          "boundsMin": [
+            -0.107568569,
+            -0.0105254352,
+            -0.103264473
+          ],
+          "boundsMax": [
+            0.09243146,
+            0.189474583,
+            0.09673556
+          ]
+        },
+        {
+          "role": "head",
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "transformPosition": [
+            -0.005246952,
+            0.398839951,
+            0.0263020117
+          ],
+          "boundsMin": [
+            -0.134982541,
+            0.278776944,
+            -0.102610588
+          ],
+          "boundsMax": [
+            0.125017866,
+            0.538777351,
+            0.15738982
+          ]
+        }
+      ]
+    },
+    {
+      "tick": 13,
+      "seconds": 0.433333337,
+      "parts": [
+        {
+          "role": "body-box",
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "transformPosition": [
+            -0.0075686085,
+            0.08951557,
+            -0.003264954
+          ],
+          "boundsMin": [
+            -0.121837512,
+            0.0759609342,
+            -0.104860768
+          ],
+          "boundsMax": [
+            0.115308613,
+            0.27390343,
+            0.09502675
+          ]
+        },
+        {
+          "role": "body-sphere",
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "transformPosition": [
+            -0.0075686085,
+            0.08951557,
+            -0.003264954
+          ],
+          "boundsMin": [
+            -0.107568622,
+            -0.010484457,
+            -0.103264973
+          ],
+          "boundsMax": [
+            0.09243141,
+            0.189515591,
+            0.09673506
+          ]
+        },
+        {
+          "role": "head",
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "transformPosition": [
+            -0.00526912045,
+            0.398884863,
+            0.0262617189
+          ],
+          "boundsMin": [
+            -0.135005623,
+            0.2788217,
+            -0.102648333
+          ],
+          "boundsMax": [
+            0.124994695,
+            0.538822055,
+            0.157351986
+          ]
+        }
+      ]
+    },
+    {
+      "tick": 14,
+      "seconds": 0.466666669,
+      "parts": [
+        {
+          "role": "body-box",
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "transformPosition": [
+            -0.007568633,
+            0.08953336,
+            -0.00326517015
+          ],
+          "boundsMin": [
+            -0.121837534,
+            0.07597875,
+            -0.104860984
+          ],
+          "boundsMax": [
+            0.11530859,
+            0.273921251,
+            0.09502653
+          ]
+        },
+        {
+          "role": "body-sphere",
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "transformPosition": [
+            -0.007568633,
+            0.08953336,
+            -0.00326517015
+          ],
+          "boundsMin": [
+            -0.107568651,
+            -0.010466665,
+            -0.103265189
+          ],
+          "boundsMax": [
+            0.09243138,
+            0.189533383,
+            0.0967348441
+          ]
+        },
+        {
+          "role": "head",
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "transformPosition": [
+            -0.00528878253,
+            0.398904473,
+            0.0262410957
+          ],
+          "boundsMin": [
+            -0.135026142,
+            0.278841078,
+            -0.102666944
+          ],
+          "boundsMax": [
+            0.124974206,
+            0.5388414,
+            0.1573334
+          ]
+        }
+      ]
+    },
+    {
+      "tick": 15,
+      "seconds": 0.5,
+      "parts": [
+        {
+          "role": "body-box",
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "transformPosition": [
+            -0.00756862154,
+            0.08952452,
+            -0.00326505839
+          ],
+          "boundsMin": [
+            -0.121837534,
+            0.0759787261,
+            -0.104860984
+          ],
+          "boundsMax": [
+            0.11530859,
+            0.273921221,
+            0.09502653
+          ]
+        },
+        {
+          "role": "body-sphere",
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "transformPosition": [
+            -0.00756862154,
+            0.08952452,
+            -0.00326505839
+          ],
+          "boundsMin": [
+            -0.107568651,
+            -0.010466665,
+            -0.103265189
+          ],
+          "boundsMax": [
+            0.09243138,
+            0.189533383,
+            0.0967348441
+          ]
+        },
+        {
+          "role": "head",
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "transformPosition": [
+            -0.00530531351,
+            0.398894876,
+            0.02624339
+          ],
+          "boundsMin": [
+            -0.135043427,
+            0.278831363,
+            -0.102663159
+          ],
+          "boundsMax": [
+            0.12495698,
+            0.5388317,
+            0.157337248
+          ]
+        }
+      ]
+    },
+    {
+      "tick": 16,
+      "seconds": 0.533333361,
+      "parts": [
+        {
+          "role": "body-box",
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "transformPosition": [
+            -0.00756857032,
+            0.08948556,
+            -0.003264589
+          ],
+          "boundsMin": [
+            -0.121837474,
+            0.07593095,
+            -0.10486041
+          ],
+          "boundsMax": [
+            0.11530865,
+            0.273873448,
+            0.095027104
+          ]
+        },
+        {
+          "role": "body-sphere",
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "transformPosition": [
+            -0.00756857032,
+            0.08948556,
+            -0.003264589
+          ],
+          "boundsMin": [
+            -0.107568584,
+            -0.0105144531,
+            -0.103264607
+          ],
+          "boundsMax": [
+            0.09243145,
+            0.18948558,
+            0.0967354253
+          ]
+        },
+        {
+          "role": "head",
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "transformPosition": [
+            -0.00531810056,
+            0.398852378,
+            0.0262717027
+          ],
+          "boundsMin": [
+            -0.1350568,
+            0.2787887,
+            -0.102633923
+          ],
+          "boundsMax": [
+            0.124943614,
+            0.538789153,
+            0.157366484
+          ]
+        }
+      ]
+    },
+    {
+      "tick": 17,
+      "seconds": 0.566666663,
+      "parts": [
+        {
+          "role": "body-box",
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "transformPosition": [
+            -0.00756847346,
+            0.08941303,
+            -0.00326371728
+          ],
+          "boundsMin": [
+            -0.121837378,
+            0.07585841,
+            -0.104859531
+          ],
+          "boundsMax": [
+            0.115308747,
+            0.2738009,
+            0.09502798
+          ]
+        },
+        {
+          "role": "body-sphere",
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "transformPosition": [
+            -0.00756847346,
+            0.08941303,
+            -0.00326371728
+          ],
+          "boundsMin": [
+            -0.107568488,
+            -0.010586977,
+            -0.103263736
+          ],
+          "boundsMax": [
+            0.0924315453,
+            0.189413041,
+            0.0967363
+          ]
+        },
+        {
+          "role": "head",
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "transformPosition": [
+            -0.005326521,
+            0.3987733,
+            0.02632937
+          ],
+          "boundsMin": [
+            -0.135065585,
+            0.27870965,
+            -0.102576017
+          ],
+          "boundsMax": [
+            0.124934763,
+            0.53871,
+            0.157424331
+          ]
+        }
+      ]
+    },
+    {
+      "tick": 18,
+      "seconds": 0.6,
+      "parts": [
+        {
+          "role": "body-box",
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "transformPosition": [
+            -0.007568327,
+            0.08930345,
+            -0.00326239853
+          ],
+          "boundsMin": [
+            -0.121837221,
+            0.0757488,
+            -0.104858227
+          ],
+          "boundsMax": [
+            0.1153089,
+            0.2736913,
+            0.09502929
+          ]
+        },
+        {
+          "role": "body-sphere",
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "transformPosition": [
+            -0.007568327,
+            0.08930345,
+            -0.00326239853
+          ],
+          "boundsMin": [
+            -0.107568339,
+            -0.01069656,
+            -0.103262417
+          ],
+          "boundsMax": [
+            0.0924316943,
+            0.189303458,
+            0.0967376158
+          ]
+        },
+        {
+          "role": "head",
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "transformPosition": [
+            -0.005329985,
+            0.398653567,
+            0.0264194328
+          ],
+          "boundsMin": [
+            -0.135069221,
+            0.278589964,
+            -0.102486461
+          ],
+          "boundsMax": [
+            0.124931067,
+            0.5385903,
+            0.157513827
+          ]
+        }
+      ]
+    },
+    {
+      "tick": 19,
+      "seconds": 0.6333333,
+      "parts": [
+        {
+          "role": "body-box",
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "transformPosition": [
+            -0.00756814936,
+            0.08917478,
+            -0.00326084881
+          ],
+          "boundsMin": [
+            -0.121837057,
+            0.0756201744,
+            -0.10485667
+          ],
+          "boundsMax": [
+            0.115309067,
+            0.27356267,
+            0.0950308442
+          ]
+        },
+        {
+          "role": "body-sphere",
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "transformPosition": [
+            -0.00756814936,
+            0.08917478,
+            -0.00326084881
+          ],
+          "boundsMin": [
+            -0.107568167,
+            -0.0108252466,
+            -0.103260867
+          ],
+          "boundsMax": [
+            0.0924318656,
+            0.1891748,
+            0.0967391655
+          ]
+        },
+        {
+          "role": "head",
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "transformPosition": [
+            -0.00532785151,
+            0.398510873,
+            0.0265446622
+          ],
+          "boundsMin": [
+            -0.135067061,
+            0.278447449,
+            -0.102362618
+          ],
+          "boundsMax": [
+            0.124933258,
+            0.538447738,
+            0.1576377
+          ]
+        }
+      ]
+    },
+    {
+      "tick": 20,
+      "seconds": 0.6666667,
+      "parts": [
+        {
+          "role": "body-box",
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "transformPosition": [
+            -0.0075679766,
+            0.08904884,
+            -0.003259329
+          ],
+          "boundsMin": [
+            -0.121836878,
+            0.07549422,
+            -0.10485515
+          ],
+          "boundsMax": [
+            0.115309246,
+            0.273436725,
+            0.0950323641
+          ]
+        },
+        {
+          "role": "body-sphere",
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "transformPosition": [
+            -0.0075679766,
+            0.08904884,
+            -0.003259329
+          ],
+          "boundsMin": [
+            -0.107567996,
+            -0.0109511763,
+            -0.103259347
+          ],
+          "boundsMax": [
+            0.09243204,
+            0.189048856,
+            0.0967406854
+          ]
+        },
+        {
+          "role": "head",
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "transformPosition": [
+            -0.00531524932,
+            0.398370564,
+            0.0266737361
+          ],
+          "boundsMin": [
+            -0.135054,
+            0.278307378,
+            -0.102236092
+          ],
+          "boundsMax": [
+            0.1249464,
+            0.5383078,
+            0.157764316
+          ]
+        }
+      ]
+    },
+    {
+      "tick": 21,
+      "seconds": 0.7,
+      "parts": [
+        {
+          "role": "body-box",
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "transformPosition": [
+            -0.00756781176,
+            0.0889278948,
+            -0.003257876
+          ],
+          "boundsMin": [
+            -0.121836714,
+            0.07537326,
+            -0.10485369
+          ],
+          "boundsMax": [
+            0.11530941,
+            0.273315758,
+            0.0950338244
+          ]
+        },
+        {
+          "role": "body-sphere",
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "transformPosition": [
+            -0.00756781176,
+            0.0889278948,
+            -0.003257876
+          ],
+          "boundsMin": [
+            -0.107567832,
+            -0.011072129,
+            -0.103257895
+          ],
+          "boundsMax": [
+            0.0924322,
+            0.188927919,
+            0.09674214
+          ]
+        },
+        {
+          "role": "head",
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "transformPosition": [
+            -0.00529111642,
+            0.3982375,
+            0.0267849285
+          ],
+          "boundsMin": [
+            -0.135028824,
+            0.278174639,
+            -0.102128446
+          ],
+          "boundsMax": [
+            0.124971464,
+            0.538174868,
+            0.157871842
+          ]
+        }
+      ]
+    },
+    {
+      "tick": 22,
+      "seconds": 0.733333349,
+      "parts": [
+        {
+          "role": "body-box",
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "transformPosition": [
+            -0.007567656,
+            0.0888141841,
+            -0.00325650512
+          ],
+          "boundsMin": [
+            -0.121836558,
+            0.07525956,
+            -0.104852319
+          ],
+          "boundsMax": [
+            0.115309566,
+            0.273202062,
+            0.0950351954
+          ]
+        },
+        {
+          "role": "body-sphere",
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "transformPosition": [
+            -0.007567656,
+            0.0888141841,
+            -0.00325650512
+          ],
+          "boundsMin": [
+            -0.107567675,
+            -0.0111858249,
+            -0.103256524
+          ],
+          "boundsMax": [
+            0.09243236,
+            0.1888142,
+            0.09674351
+          ]
+        },
+        {
+          "role": "head",
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "transformPosition": [
+            -0.00525820162,
+            0.398113549,
+            0.0268793125
+          ],
+          "boundsMin": [
+            -0.134994552,
+            0.278051257,
+            -0.1020385
+          ],
+          "boundsMax": [
+            0.125005856,
+            0.5380516,
+            0.1579619
+          ]
+        }
+      ]
+    },
+    {
+      "tick": 23,
+      "seconds": 0.766666651,
+      "parts": [
+        {
+          "role": "body-box",
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "transformPosition": [
+            -0.007567515,
+            0.0887099653,
+            -0.003255246
+          ],
+          "boundsMin": [
+            -0.121836416,
+            0.07515535,
+            -0.104851067
+          ],
+          "boundsMax": [
+            0.115309708,
+            0.273097843,
+            0.09503645
+          ]
+        },
+        {
+          "role": "body-sphere",
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "transformPosition": [
+            -0.007567515,
+            0.0887099653,
+            -0.003255246
+          ],
+          "boundsMin": [
+            -0.107567534,
+            -0.0112900436,
+            -0.103255264
+          ],
+          "boundsMax": [
+            0.0924325,
+            0.188709974,
+            0.09674477
+          ]
+        },
+        {
+          "role": "head",
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "transformPosition": [
+            -0.00521922344,
+            0.398000926,
+            0.0269578714
+          ],
+          "boundsMin": [
+            -0.134953871,
+            0.277939141,
+            -0.101964682
+          ],
+          "boundsMax": [
+            0.125046387,
+            0.53793937,
+            0.158035576
+          ]
+        }
+      ]
+    },
+    {
+      "tick": 24,
+      "seconds": 0.8,
+      "parts": [
+        {
+          "role": "body-box",
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "transformPosition": [
+            -0.00756739,
+            0.0886174738,
+            -0.00325413584
+          ],
+          "boundsMin": [
+            -0.12183629,
+            0.07506284,
+            -0.104849949
+          ],
+          "boundsMax": [
+            0.115309834,
+            0.273005337,
+            0.0950375646
+          ]
+        },
+        {
+          "role": "body-sphere",
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "transformPosition": [
+            -0.00756739,
+            0.0886174738,
+            -0.00325413584
+          ],
+          "boundsMin": [
+            -0.107567407,
+            -0.01138255,
+            -0.103254154
+          ],
+          "boundsMax": [
+            0.0924326256,
+            0.1886175,
+            0.09674588
+          ]
+        },
+        {
+          "role": "head",
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "transformPosition": [
+            -0.00517699448,
+            0.3979017,
+            0.0270217378
+          ],
+          "boundsMin": [
+            -0.134909838,
+            0.277840257,
+            -0.101905957
+          ],
+          "boundsMax": [
+            0.12509048,
+            0.5378406,
+            0.158094361
+          ]
+        }
+      ]
+    },
+    {
+      "tick": 25,
+      "seconds": 0.8333333,
+      "parts": [
+        {
+          "role": "body-box",
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "transformPosition": [
+            -0.007567284,
+            0.08853899,
+            -0.00325318961
+          ],
+          "boundsMin": [
+            -0.121836185,
+            0.0749843642,
+            -0.104849018
+          ],
+          "boundsMax": [
+            0.115309939,
+            0.272926867,
+            0.095038496
+          ]
+        },
+        {
+          "role": "body-sphere",
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "transformPosition": [
+            -0.007567284,
+            0.08853899,
+            -0.00325318961
+          ],
+          "boundsMin": [
+            -0.1075673,
+            -0.0114610195,
+            -0.103253208
+          ],
+          "boundsMax": [
+            0.09243273,
+            0.188539,
+            0.0967468247
+          ]
+        },
+        {
+          "role": "head",
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "transformPosition": [
+            -0.005134267,
+            0.39781794,
+            0.0270719547
+          ],
+          "boundsMin": [
+            -0.134865269,
+            0.277757049,
+            -0.101860791
+          ],
+          "boundsMax": [
+            0.125135079,
+            0.5377574,
+            0.158139557
+          ]
+        }
+      ]
+    },
+    {
+      "tick": 26,
+      "seconds": 0.8666667,
+      "parts": [
+        {
+          "role": "body-box",
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "transformPosition": [
+            -0.00756720034,
+            0.0884767547,
+            -0.003252437
+          ],
+          "boundsMin": [
+            -0.1218361,
+            0.07492209,
+            -0.104848258
+          ],
+          "boundsMax": [
+            0.115310021,
+            0.27286458,
+            0.0950392559
+          ]
+        },
+        {
+          "role": "body-sphere",
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "transformPosition": [
+            -0.00756720034,
+            0.0884767547,
+            -0.003252437
+          ],
+          "boundsMin": [
+            -0.107567213,
+            -0.0115232617,
+            -0.103252456
+          ],
+          "boundsMax": [
+            0.09243282,
+            0.188476771,
+            0.09674758
+          ]
+        },
+        {
+          "role": "head",
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "transformPosition": [
+            -0.00509373844,
+            0.397751749,
+            0.0271096248
+          ],
+          "boundsMin": [
+            -0.134823054,
+            0.277691245,
+            -0.10182786
+          ],
+          "boundsMax": [
+            0.125177354,
+            0.5376916,
+            0.158172548
+          ]
+        }
+      ]
+    },
+    {
+      "tick": 27,
+      "seconds": 0.9,
+      "parts": [
+        {
+          "role": "body-box",
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "transformPosition": [
+            -0.00756714167,
+            0.0884330049,
+            -0.00325191556
+          ],
+          "boundsMin": [
+            -0.121836044,
+            0.0748783648,
+            -0.104847729
+          ],
+          "boundsMax": [
+            0.11531008,
+            0.27282086,
+            0.0950397849
+          ]
+        },
+        {
+          "role": "body-sphere",
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "transformPosition": [
+            -0.00756714167,
+            0.0884330049,
+            -0.00325191556
+          ],
+          "boundsMin": [
+            -0.107567154,
+            -0.0115670115,
+            -0.103251934
+          ],
+          "boundsMax": [
+            0.09243288,
+            0.188433021,
+            0.0967481
+          ]
+        },
+        {
+          "role": "head",
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "transformPosition": [
+            -0.005058253,
+            0.3977053,
+            0.0271357615
+          ],
+          "boundsMin": [
+            -0.13478604,
+            0.2776451,
+            -0.101805806
+          ],
+          "boundsMax": [
+            0.125214428,
+            0.5376456,
+            0.158194661
+          ]
+        }
+      ]
+    },
+    {
+      "tick": 28,
+      "seconds": 0.933333337,
+      "parts": [
+        {
+          "role": "body-box",
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "transformPosition": [
+            -0.007567111,
+            0.08841001,
+            -0.00325163244
+          ],
+          "boundsMin": [
+            -0.121836014,
+            0.07485539,
+            -0.104847446
+          ],
+          "boundsMax": [
+            0.11531011,
+            0.272797883,
+            0.09504007
+          ]
+        },
+        {
+          "role": "body-sphere",
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "transformPosition": [
+            -0.007567111,
+            0.08841001,
+            -0.00325163244
+          ],
+          "boundsMin": [
+            -0.107567124,
+            -0.011590004,
+            -0.103251651
+          ],
+          "boundsMax": [
+            0.09243291,
+            0.188410029,
+            0.09674838
+          ]
+        },
+        {
+          "role": "head",
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "transformPosition": [
+            -0.00503051,
+            0.3976807,
+            0.0271514077
+          ],
+          "boundsMin": [
+            -0.134757057,
+            0.2776208,
+            -0.10179323
+          ],
+          "boundsMax": [
+            0.125243351,
+            0.53762126,
+            0.158207178
+          ]
+        }
+      ]
+    },
+    {
+      "tick": 29,
+      "seconds": 0.966666639,
+      "parts": [
+        {
+          "role": "body-box",
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "transformPosition": [
+            -0.007567111,
+            0.08841002,
+            -0.00325163244
+          ],
+          "boundsMin": [
+            -0.121836014,
+            0.07485538,
+            -0.104847446
+          ],
+          "boundsMax": [
+            0.11531011,
+            0.272797883,
+            0.09504007
+          ]
+        },
+        {
+          "role": "body-sphere",
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "transformPosition": [
+            -0.007567111,
+            0.08841002,
+            -0.00325163244
+          ],
+          "boundsMin": [
+            -0.107567124,
+            -0.011590004,
+            -0.103251651
+          ],
+          "boundsMax": [
+            0.09243291,
+            0.188410029,
+            0.09674838
+          ]
+        },
+        {
+          "role": "head",
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "transformPosition": [
+            -0.005013269,
+            0.397680134,
+            0.0271577556
+          ],
+          "boundsMin": [
+            -0.134739056,
+            0.2776205,
+            -0.101788804
+          ],
+          "boundsMax": [
+            0.125261262,
+            0.5376208,
+            0.158211514
+          ]
+        }
+      ]
+    },
+    {
+      "tick": 30,
+      "seconds": 1.0,
+      "parts": [
+        {
+          "role": "body-box",
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "transformPosition": [
+            -0.0075671454,
+            0.0884352848,
+            -0.003251938
+          ],
+          "boundsMin": [
+            -0.121836051,
+            0.07488067,
+            -0.104847759
+          ],
+          "boundsMax": [
+            0.115310073,
+            0.272823155,
+            0.0950397551
+          ]
+        },
+        {
+          "role": "body-sphere",
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001",
+          "transformPosition": [
+            -0.0075671454,
+            0.0884352848,
+            -0.003251938
+          ],
+          "boundsMin": [
+            -0.107567161,
+            -0.0115647316,
+            -0.103251956
+          ],
+          "boundsMax": [
+            0.09243287,
+            0.1884353,
+            0.09674808
+          ]
+        },
+        {
+          "role": "head",
+          "path": "enemy/character_assault_1/global_move/cartoon_guyHub001/cartoon_guySpineCATRigSpine1/cartoon_guySpine2/cartoon_guyHub002/cartoon_guySpine/cartoon_guyHub003",
+          "transformPosition": [
+            -0.00500935037,
+            0.3977056,
+            0.027155729
+          ],
+          "boundsMin": [
+            -0.134734988,
+            0.277646065,
+            -0.101791352
+          ],
+          "boundsMax": [
+            0.125265419,
+            0.537646532,
+            0.158209056
+          ]
+        }
+      ]
+    }
+  ]
+}
