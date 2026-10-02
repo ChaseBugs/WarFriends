@@ -61,6 +61,17 @@ if(args is ["--helicopter-shotgun-only"])
     return;
 }
 
+if(args is ["--helicopter-bazooka-only"])
+{
+    var root=new DirectoryInfo(AppContext.BaseDirectory);
+    while(root!=null&&!File.Exists(Path.Combine(root.FullName,"content/combat-content-manifest.json")))root=root.Parent;
+    if(root==null)throw new Exception("Recovered battle content artifact not found.");
+    int focused=HelicopterBazookaTests.Run(Path.Combine(root.FullName,"content"));
+    focused+=await HelicopterBazookaTests.RunUdp(Path.Combine(root.FullName,"content"));
+    Console.WriteLine($"PASS: {focused} focused Helicopter bazooka assertions");
+    return;
+}
+
 if(args is ["--rusher-only"])
 {
     var root=new DirectoryInfo(AppContext.BaseDirectory);
@@ -1520,6 +1531,8 @@ checks += await GrenadeCatalogTests.RunUdp(Path.Combine(contentRoot.FullName,"co
 checks += ArmyFlameBurstTests.Run();
 checks += CombatContentTests.Run(Path.Combine(contentRoot.FullName,"content"));
 checks += HelicopterShotgunTests.Run(Path.Combine(contentRoot.FullName,"content"));
+checks += HelicopterBazookaTests.Run(Path.Combine(contentRoot.FullName,"content"));
+checks += await HelicopterBazookaTests.RunUdp(Path.Combine(contentRoot.FullName,"content"));
 checks += BarrelOverlapReferenceTests.Run(Path.Combine(contentRoot.FullName,"content"));
 checks += BarrelChainTests.Run(Path.Combine(contentRoot.FullName,"content"));
 checks += PlayerExplosionOverlapReferenceTests.Run(Path.Combine(contentRoot.FullName,"content"));
