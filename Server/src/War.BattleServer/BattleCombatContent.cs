@@ -35,6 +35,7 @@ public sealed class BattleCombatContent
     public string? BazookaRevision { get; }
     public GrenadeCatalog? Grenades { get; }
     public string? GrenadeRevision { get; }
+    internal GrenadeShotTargetCatalog? GrenadeShotTargets { get; private init; }
     public IReadOnlyList<RecoveredBattleMap> Maps { get; }
     public BarrelSceneCatalog Barrels { get; }
     public ArmyDeploymentCatalog Army { get; }
@@ -186,16 +187,20 @@ public sealed class BattleCombatContent
             bazookas=BazookaCatalog.Load(bazookaManifestPath);if(bazookas.SceneRevision!=manifest.SceneRevision)throw new InvalidDataException("Bazooka package does not bind the live scene.");
             poses.AttachBazookaMuzzles(bazookas);bazookaRevision=Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes("WarFriends/bazooka-combat/v1\n"+revision+"\n"+bazookas.PackageRevision)));
         }
-        GrenadeCatalog? grenades=null;string? grenadeRevision=null;
+        GrenadeCatalog? grenades=null;GrenadeShotTargetCatalog? grenadeShotTargets=null;
+        string? grenadeRevision=null;
         if(grenadeManifestPath!=null)
         {
             grenades=GrenadeCatalog.Load(grenadeManifestPath);if(grenades.SceneRevision!=manifest.SceneRevision)throw new InvalidDataException("Grenade package does not bind the live scene.");
-            poses.AttachGrenadeMuzzles(grenades);grenadeRevision=Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes("WarFriends/grenade-combat/v1\n"+revision+"\n"+grenades.PackageRevision)));
+            grenadeShotTargets=GrenadeShotTargetCatalog.Load(Path.Combine(Path.GetDirectoryName(Path.GetFullPath(grenadeManifestPath))!,
+                "recovered-grenade-shot-targets.json"),manifest.SceneRevision,playerShotTargets,grenades.Poses);
+            poses.AttachGrenadeMuzzles(grenades);grenadeRevision=Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes("WarFriends/grenade-combat/v2\n"+revision+"\n"+grenades.PackageRevision+"\n"+GrenadeShotTargetCatalog.VerifiedRevision)));
         }
         string? mixedRevision=shotguns!=null&&smgs!=null&&pistols!=null&&lmgs!=null&&minigun!=null&&snipers!=null ? Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(
             "WarFriends/mixed-combat/v5\n"+revision+"\n"+shotguns.PackageRevision+"\n"+smgs.PackageRevision+"\n"+pistols.PackageRevision+"\n"+lmgs.PackageRevision+"\n"+minigun.PackageRevision+"\n"+snipers.PackageRevision))) : null;
         return new BattleCombatContent(stats,bindings,allWeaponBindings,poses,revision,maps,shotguns,shotgunRevision,smgs,smgRevision,pistols,pistolRevision,lmgs,lmgRevision,minigun,minigunRevision,snipers,sniperRevision,bazookas,bazookaRevision,grenades,grenadeRevision,mixedRevision,shields,barrels,barrelPolicy,explosions,barrelOverlap,army,armyWeapons,groundVehicleWeapons,enemyPoses,decoys,landMines,heavyTurrets,armySpawnPoints,armyRusherPoints,armyMinigunnerPoints,playerShotTargets,armyNavMeshes,armyNavMeshGeometry,armyNavMeshPaths,armyNavMeshConnectivity,airWaypoints,droneWeapon,droneColliders,helicopterBodyColliders,airShotTargets,helicopterCrewPoints,droneProjectile,enemyShotTargets)
-        {HelicopterGunnerExplosions=helicopterGunnerExplosions};
+        {HelicopterGunnerExplosions=helicopterGunnerExplosions,
+            GrenadeShotTargets=grenadeShotTargets};
     }
     public void ValidateAllocation(MatchManifest manifest)
     {

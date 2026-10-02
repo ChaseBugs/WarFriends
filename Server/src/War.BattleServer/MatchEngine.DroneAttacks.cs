@@ -132,11 +132,12 @@ public sealed partial class MatchEngine
         if(target.Id.StartsWith("player:",StringComparison.Ordinal))
         {
             string id=target.Id[7..];var player=Find(id)??throw new InvalidDataException("Drone player target disappeared.");
-            if(rifleCombat==null||playerShotTargets==null||map==null)
+            if((rifleCombat==null&&grenadeCombat==null)||playerShotTargets==null||map==null)
                 throw new InvalidDataException("Drone player target lacks source poses.");
-            var pose=rifleCombat.Pose(id);
-            var rows=playerShotTargets.Gameplay.Select(t=>new DroneShotTarget(t.TransformFileId,t.Type,
-                pose.BodyTarget(t.TransformFileId).Position)).ToArray();
+            var grenadePositions=grenadeCombat?.PlayerShotTargets(id);
+            var rows=playerShotTargets.Gameplay.Select((t,index)=>new DroneShotTarget(t.TransformFileId,t.Type,
+                grenadePositions==null?rifleCombat!.Pose(id).BodyTarget(t.TransformFileId).Position:
+                    grenadePositions[index])).ToArray();
             return new(Array.AsReadOnly(rows),true,player.Position,
                 -Vector3.Transform(Vector3.UnitZ,map.Covers[player.Cover].Rotation),player.Route==null,Vector3.Zero);
         }

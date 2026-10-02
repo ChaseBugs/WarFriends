@@ -117,8 +117,9 @@ public sealed partial class MatchEngine
             HelicopterTurretSightRay.ForSelection(pose.SightPosition,target);
     }
     internal bool HelicopterVisibilityRay(HelicopterSightRay ray)
-        =>(rifleCombat??throw new InvalidDataException("Helicopter visibility needs host collision poses."))
-            .HelicopterCanSee(ray);
+        =>rifleCombat!=null?rifleCombat.HelicopterCanSee(ray):
+            (grenadeCombat??throw new InvalidDataException("Helicopter visibility needs host collision poses."))
+                .HelicopterCanSee(ray);
     internal bool HelicopterTargetVisibleInCone(ulong key,Vector3 shotTarget)
     {
         if(!HelicopterTargetInTurretCone(key,shotTarget))return false;

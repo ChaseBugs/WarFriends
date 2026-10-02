@@ -768,6 +768,9 @@ public sealed partial class MatchEngine
                     shields==null?null:shields.ColliderEnabled,barrels==null?null:barrels.ColliderEnabled,
                 barrels==null?null:barrels.RuntimeLayer);damageRoll=this.combatRandom;
                 grenadeCombat.ConfigureDynamicTargets(GroundVehicleShotTargets);
+                grenadeCombat.ConfigureVisibilityTargets(HelicopterVisibilityTargets);
+                grenadeCombat.ConfigureShotTargets(content.GrenadeShotTargets??
+                    throw new InvalidDataException("Grenade shot-target source is absent."));
             }
             else
             {
@@ -1745,7 +1748,7 @@ public sealed partial class MatchEngine
         var binding=bazookaCatalog.Binding(launch.WeaponSourceId);
         var stage=bazookaCatalog.Stage(launch.WeaponSourceId,launch.Upgrade);
         var origin=rifleCombat.BazookaMuzzle(launch.Owner,launch.Secondary)+binding.ShootOffset;
-        uint mask=owner.Definition.Fraction==1?bazookaCatalog.AlliesBulletMask:bazookaCatalog.EnemiesBulletMask;
+        uint mask=owner.Definition.Fraction==1?bazookaCatalog.EnemiesBulletMask:bazookaCatalog.AlliesBulletMask;
         int curveSign=(++bazookaCurveCounter&1)==0?-1:1;
         var flight=new BazookaMissileFlight(++projectileId,launch.Owner,binding,origin,launch.Target,tick,
             launch.Fake,combatRandom(),combatRandom(),curveSign,
@@ -1819,7 +1822,7 @@ public sealed partial class MatchEngine
         if(projectileId==ulong.MaxValue)throw new InvalidDataException("Grenade projectile identity exhausted.");
         var binding=grenadeCatalog.Binding(launch.WeaponSourceId);var stage=grenadeCatalog.Stage(launch.WeaponSourceId,launch.Upgrade);
         var origin=grenadeCombat.Muzzle(launch)+binding.ShootOffset;
-        uint mask=owner.Definition.Fraction==1?grenadeCatalog.AlliesBulletMask:grenadeCatalog.EnemiesBulletMask;
+        uint mask=owner.Definition.Fraction==1?grenadeCatalog.EnemiesBulletMask:grenadeCatalog.AlliesBulletMask;
         var flight=new GrenadeFlight(++projectileId,launch.Owner,binding,origin,launch.Target,tick,
             (from,direction,range)=>grenadeCombat.Trace(launch.Owner,from,direction,range,mask));
         grenadeProjectiles.Add(projectileId,new(flight,stage,binding,launch.WeaponSourceId));

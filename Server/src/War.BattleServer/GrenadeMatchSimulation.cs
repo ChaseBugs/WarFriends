@@ -23,8 +23,22 @@ internal sealed class GrenadeMatchSimulation
     private readonly Func<string,bool>? dynamicColliderEnabled;private readonly Func<int,bool>? indexedColliderEnabled;
     private readonly Func<int,int,int>? runtimeLayer;private ulong? lastTick;
     private Func<string,IReadOnlyList<DynamicShotTarget>>? dynamicTargets;
+    private Func<IReadOnlyList<DynamicShotTarget>>? visibilityTargets;
+    private GrenadeShotTargetCatalog? shotTargets;
     internal void ConfigureDynamicTargets(Func<string,IReadOnlyList<DynamicShotTarget>> provider)
         =>dynamicTargets=provider??throw new ArgumentNullException(nameof(provider));
+    internal void ConfigureVisibilityTargets(Func<IReadOnlyList<DynamicShotTarget>> provider)
+        =>visibilityTargets=provider??throw new ArgumentNullException(nameof(provider));
+    internal void ConfigureShotTargets(GrenadeShotTargetCatalog catalog)
+        =>shotTargets=catalog??throw new ArgumentNullException(nameof(catalog));
+    internal IReadOnlyList<Vector3> PlayerShotTargets(string id)
+    {
+        var actor=ActorOf(id);
+        if(shotTargets==null||lastTick==null||lastTick.Value<actor.ClipStarted)
+            throw new InvalidDataException("Grenade target pose clock is unavailable.");
+        double seconds=(lastTick.Value-actor.ClipStarted)/(double)MatchManifest.TickRate;
+        return shotTargets.Place(actor.Clip,seconds,Loops(actor.Clip),actor.Position,actor.Rotation);
+    }
     internal GrenadeMatchSimulation(MatchManifest manifest,RecoveredBattleMap map,GrenadeCatalog catalog,
         Func<string,bool>? dynamicColliderEnabled=null,Func<int,bool>? indexedColliderEnabled=null,Func<int,int,int>? runtimeLayer=null)
     {
@@ -92,6 +106,28 @@ internal sealed class GrenadeMatchSimulation
     }
     internal ShotCollision? Trace(string owner,Vector3 origin,Vector3 direction,float range,uint mask)
     {var world=new ShotCollisionWorld(map,actors.Select(x=>new CollisionPlayer(x.Definition.PlayerId,x.Pose.Collision)),dynamicColliderEnabled,indexedColliderEnabled,runtimeLayer,dynamicTargets);return world.Raycast(owner,origin,direction,range,mask);}
+    internal bool HelicopterCanSee(HelicopterSightRay ray)
+    {
+        if(!PlayerHitbox.Finite(ray.Origin)||!PlayerHitbox.Finite(ray.Direction)||
+           !float.IsFinite(ray.Range)||ray.Range is <=0 or >10000||
+           ray.LayerMask!=HelicopterTurretSightRay.SourceLayerMask)
+            throw new InvalidDataException("Invalid grenade-mode Helicopter sight ray.");
+        if(ray.Direction==Vector3.Zero)return true;
+        if(Math.Abs(ray.Direction.LengthSquared()-1)>.001f)
+            throw new InvalidDataException("Grenade-mode Helicopter sight direction is not normalized.");
+        if(map.Raycast(ray.Origin,ray.Direction,ray.Range,ray.LayerMask,
+            dynamicColliderEnabled,indexedColliderEnabled,runtimeLayer)!=null)return false;
+        if(visibilityTargets==null)
+            throw new InvalidDataException("Grenade-mode Helicopter visibility lacks host targets.");
+        foreach(var collider in visibilityTargets())
+        {
+            if(collider==null||collider.EntityId==0||collider.Layer is <0 or >31||collider.Hitbox==null)
+                throw new InvalidDataException("Invalid grenade-mode Helicopter blocker.");
+            if((ray.LayerMask&(1u<<collider.Layer))!=0&&
+               collider.Hitbox.Raycast(ray.Origin,ray.Direction,ray.Range).HasValue)return false;
+        }
+        return true;
+    }
     private Actor ActorOf(string id)=>actors.Single(x=>x.Definition.PlayerId==id);
     private static bool Loops(string clip)=>clip is "grenade_idle" or "grenade_run" or "grenadelauncher_idle" or "run_grenadelauncher";
     private static bool Zero(float value)=>BitConverter.SingleToInt32Bits(value)==0;

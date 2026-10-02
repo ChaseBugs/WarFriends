@@ -232,8 +232,9 @@ public sealed partial class MatchEngine
     internal ShotCollision? TraceHeavyTurretShot(string owner,Vector3 origin,Vector3 direction,float range,uint mask=uint.MaxValue)
     {
         if(map==null)throw new InvalidDataException("Heavy Turret shot lost its map.");
-        if(rifleCombat==null)throw new InvalidDataException("Heavy Turret shot lacks host player poses.");
-        return rifleCombat.TraceForBazooka(owner,origin,direction,range,mask);
+        if(rifleCombat!=null)return rifleCombat.TraceForBazooka(owner,origin,direction,range,mask);
+        if(grenadeCombat!=null)return grenadeCombat.Trace(owner,origin,direction,range,mask);
+        throw new InvalidDataException("Heavy Turret shot lacks host player poses.");
     }
     private bool HeavyTurretCanSee(HeavyTurretMatchEntity turret,HeavyTurretTarget target)
     {

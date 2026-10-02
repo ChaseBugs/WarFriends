@@ -85,6 +85,11 @@ internal static class GrenadeCatalogTests
             grenadeManifestPath:Path.Combine(directory,"grenade-content-manifest.json"));
         Check(combat.Grenades?.WeaponCount==8&&combat.GrenadeRevision is {Length:64},
             "grenade package binds the pinned scene and equipped weapon muzzles");
+        var posedTargets=combat.GrenadeShotTargets!.Place("grenadelauncher_idle",0,true,
+            new(100,0,100),new Quaternion(0,-.7071068f,0,.7071068f));
+        Check(posedTargets.Count==5&&posedTargets.Take(3).Select((position,index)=>
+                Vector3.Distance(position,combat.PlayerShotTargets.Gameplay[index].ReferencePosition)<.0001f).All(x=>x),
+            "Unity-sampled grenade target array preserves serialized root-child target positions");
         var expected=new Dictionary<string,(int Count,int Index,bool Swipe)>
         {
             ["Google2u.GrenadeLauncher_M320"]=(36,19,false),["Google2u.Grenade_FLASH"]=(36,7,true),
