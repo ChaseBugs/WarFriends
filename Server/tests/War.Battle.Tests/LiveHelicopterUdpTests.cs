@@ -100,9 +100,11 @@ internal static class LiveHelicopterUdpTests
             var leftConsumer=new MatchEventConsumer();
             var rightConsumer=new MatchEventConsumer();
             MatchEvent? fired=null;
-            bool sawBullet=false;
+            MatchEvent? otherFired=null;
+            bool leftSawBullet=false,rightSawBullet=false;
             var fireWatch=System.Diagnostics.Stopwatch.StartNew();
-            while(fireWatch.Elapsed<TimeSpan.FromSeconds(34)&&fired==null)
+            while(fireWatch.Elapsed<TimeSpan.FromSeconds(34)&&
+                  (fired==null||otherFired==null||!leftSawBullet||!rightSawBullet))
             {
                 await Task.Delay(125,timeout.Token);
                 var leftPage=await a.PollEventsAsync(leftConsumer.LastEventId,timeout.Token);
@@ -111,13 +113,20 @@ internal static class LiveHelicopterUdpTests
                     x.HelicopterShot?.ArmyEntityKey==helicopter!.EntityKey);
                 var rightPage=await b.PollEventsAsync(rightConsumer.LastEventId,timeout.Token);
                 rightConsumer.Consume(rightPage);
-                sawBullet|=(await a.PollAsync(timeout.Token)).Snapshot.Projectiles.Any(x=>
+                otherFired??=rightPage.Events.FirstOrDefault(x=>x.Kind==MatchEventKind.HelicopterFired&&
+                    x.HelicopterShot?.ArmyEntityKey==helicopter!.EntityKey);
+                leftSawBullet|=(await a.PollAsync(timeout.Token)).Snapshot.Projectiles.Any(x=>
+                    x.OwnerPlayerId==two&&(x.Kind=="helicopter-bullet"||x.Kind=="helicopter-fake-bullet"));
+                rightSawBullet|=(await b.PollAsync(timeout.Token)).Snapshot.Projectiles.Any(x=>
                     x.OwnerPlayerId==two&&(x.Kind=="helicopter-bullet"||x.Kind=="helicopter-fake-bullet"));
             }
             Check(fired!=null&&fired.ActorId==two&&fired.TargetId=="player:"+one&&
                   fired.HelicopterShot is {ArmyEntityKey:>0,Speed:>0},
                   "real Worker emits source-backed Helicopter fire through authenticated UDP and SDK replay");
-            Check(sawBullet,"live UDP snapshot carries an in-flight Helicopter projectile");
+            Check(otherFired!=null&&otherFired.EventId==fired!.EventId,
+                  "both authenticated clients consume the same Helicopter fire event");
+            Check(leftSawBullet&&rightSawBullet,
+                  "both live UDP snapshots carry an in-flight Helicopter projectile");
         }
         finally{await worker.StopAsync(CancellationToken.None);File.Delete(manifestFile);}
         return checks;
