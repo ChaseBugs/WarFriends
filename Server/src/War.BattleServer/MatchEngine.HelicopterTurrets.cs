@@ -66,7 +66,13 @@ public sealed partial class MatchEngine
             pose.MuzzlePosition);
         if(round==null)return;
         ulong id=checked(projectileId+1);
-        float shotSpeed=round.Batch.IsFake?stats.ShotSpeed*1.5f:stats.ShotSpeed;
+        // TurretWeaponBasic.PickTarget sets BulletSetup.speedMultiplayer to 0.5
+        // for a player when useUnitTarget is enabled on the Helicopter prefab.
+        // BulletSetup.fakeSpeed ignores that multiplier.
+        bool playerTarget=acquisition.TargetId?.StartsWith("player:",
+            StringComparison.Ordinal)==true;
+        float realSpeed=stats.ShotSpeed*(playerTarget ? 0.5f : 1f);
+        float shotSpeed=round.Batch.IsFake?stats.ShotSpeed*1.5f:realSpeed;
         try
         {
             Vector3 delta=round.Batch.Target-round.Muzzle;
@@ -86,7 +92,7 @@ public sealed partial class MatchEngine
                 var policy=(armyCatalog??throw new InvalidDataException("Helicopter player damage policy absent."))
                     .PlayerDamagePolicy(row.UnitId);
                 var flight=new BulletFlight(id,row.OwnerPlayerId,
-                    new(stats.ShotSpeed,.5f,false),round.Muzzle,round.Batch.Target,tick,
+                    new(realSpeed,.5f,false),round.Muzzle,round.Batch.Target,tick,
                     (origin,direction,range)=>TraceHeavyTurretShot(row.OwnerPlayerId,origin,direction,range));
                 helicopterProjectiles.Add(id,new(row.OwnerPlayerId,flight,null,velocity,damage,
                     policy.PlayerDamageRatio,policy.OvertimePlayerDamageRatio));

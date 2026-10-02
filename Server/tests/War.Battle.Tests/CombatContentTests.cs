@@ -3745,12 +3745,16 @@ internal static class CombatContentTests
         autonomousHelicopterMatch.Advance(61);
         var autonomousHelicopter=autonomousHelicopterMatch.ArmyEntityBatch(soldierOwner,0,0)
             .Entities.Single(x=>x.UnitId=="ID_UNIT-HELICOPTER");
-        bool observedHelicopterFlight=false;
+        bool observedHelicopterFlight=false,observedPlayerTargetSpeed=false;
         for(ulong airFireTick=62;airFireTick<1200&&!autonomousHelicopterMatch.Terminal;airFireTick++)
         {
             autonomousHelicopterMatch.Advance(airFireTick);
             observedHelicopterFlight|=autonomousHelicopterMatch.Snapshot().Projectiles
                 .Any(x=>x.Kind=="helicopter-bullet"&&x.OwnerPlayerId==helicopterOwner);
+            observedPlayerTargetSpeed|=autonomousHelicopterMatch.Snapshot().Projectiles
+                .Any(x=>x.Kind=="helicopter-bullet"&&x.OwnerPlayerId==helicopterOwner&&
+                    MathF.Abs(MathF.Sqrt(x.VelocityX*x.VelocityX+x.VelocityY*x.VelocityY+
+                        x.VelocityZ*x.VelocityZ)-6f)<.001f);
         }
         ulong helicopterEventCursor=0;int helicopterRealFired=0,helicopterImpacts=0;
         MatchEvent? firstHelicopterFired=null;
@@ -3773,7 +3777,8 @@ internal static class CombatContentTests
             helicopterEventCursor=batch.Events.Last().EventId;
         }
         Check(helicopterRealFired>=4&&helicopterImpacts>0&&observedHelicopterFlight&&
-              firstHelicopterFired is {HelicopterShot:{Speed:12,Fake:false}}&&
+              observedPlayerTargetSpeed&&
+              firstHelicopterFired is {HelicopterShot:{Speed:6,Fake:false}}&&
               helicopterFireTicks.Count>=4&&
               helicopterFireTicks.Take(4).Skip(1)
                   .Select((shot,i)=>shot-helicopterFireTicks[i]).All(delta=>delta is >=6 and <=8)&&

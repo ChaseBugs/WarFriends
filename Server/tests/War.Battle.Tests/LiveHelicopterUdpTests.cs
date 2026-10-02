@@ -125,6 +125,8 @@ internal static class LiveHelicopterUdpTests
                   "real Worker emits source-backed Helicopter fire through authenticated UDP and SDK replay");
             Check(otherFired!=null&&otherFired.EventId==fired!.EventId,
                   "both authenticated clients consume the same Helicopter fire event");
+            Check(fired!.HelicopterShot!.Speed==(fired.HelicopterShot.Fake?18f:6f),
+                  "player-target real rounds use the recovered half-speed while fake rounds retain setup speed");
             Check(leftSawBullet&&rightSawBullet,
                   "both live UDP snapshots carry an in-flight Helicopter projectile");
         }
