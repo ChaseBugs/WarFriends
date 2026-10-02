@@ -60,7 +60,13 @@ public sealed class SelfHostedDeathMatchBridge : MonoBehaviour
 		dronePresenter.Configure(Singleton<ObjectPoolDatabase>.instance == null ? null : Singleton<ObjectPoolDatabase>.instance.drone);
 		client.ArmyEntitiesReceived += dronePresenter.Apply;
 		helicopterPresenter = gameObject.AddComponent<SelfHostedHelicopterPresenter>();
-		helicopterPresenter.Configure(Singleton<ObjectPoolDatabase>.instance == null ? null : Singleton<ObjectPoolDatabase>.instance.helicopter);
+		ObjectPoolDatabase pool = Singleton<ObjectPoolDatabase>.instance;
+		LevelBehaviourManager behaviourManager = Singleton<LevelBehaviourManager>.instance;
+		helicopterPresenter.Configure(pool == null ? null : pool.helicopter,
+			pool == null ? null : pool.enemy,
+			behaviourManager == null || behaviourManager.levelBehaviours == null ||
+			behaviourManager.levelBehaviours.Count == 0 ? null :
+			behaviourManager.levelBehaviours[0].behaviour as SoldierBehaviour);
 		client.ArmyEntitiesReceived += helicopterPresenter.Apply;
 		client.StateReceived += Apply;
 		client.CombatEventReceived += ApplyEvent;

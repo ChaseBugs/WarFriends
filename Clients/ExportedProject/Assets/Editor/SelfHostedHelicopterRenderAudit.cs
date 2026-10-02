@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
+using UnityEditor.SceneManagement;
 using UnityEngine;
 using War.Protocol;
 
@@ -9,16 +10,20 @@ public static class SelfHostedHelicopterRenderAudit
 {
     public static void Run()
     {
+        var previous=EditorSceneManager.GetSceneManagerSetup();
         GameObject owner=null,reference=null;
         try
         {
+            var scene=EditorSceneManager.OpenScene("Assets/Scenes/MainScene.unity");
+            var pool=scene.GetRootGameObjects().SelectMany(x=>x.GetComponentsInChildren<ObjectPoolDatabase>(true)).Single();
+            var manager=scene.GetRootGameObjects().SelectMany(x=>x.GetComponentsInChildren<LevelBehaviourManager>(true)).Single();
             var prefab=AssetDatabase.LoadAssetAtPath<GameObject>("Assets/GameObject/Helicopter.prefab");
             var source=prefab==null?null:prefab.GetComponent<Helicopter>();
             Require(source!=null&&source.turret!=null&&source.turret.batchedWeapon!=null,
                 "recovered Helicopter prefab");
             owner=new GameObject("SelfHostedHelicopterRenderAudit");
             var presenter=owner.AddComponent<SelfHostedHelicopterPresenter>();
-            presenter.Configure(source);
+            presenter.Configure(source,pool.enemy,manager.levelBehaviours[0].behaviour as SoldierBehaviour);
             var body=Quaternion.Euler(8,35,-6);
             var yaw=Quaternion.Euler(0,23,0);
             var vertical=Quaternion.Euler(-12,80,0);
@@ -64,12 +69,36 @@ public static class SelfHostedHelicopterRenderAudit
                 .Single(x=>x.name==sourceMuzzle.name);
             Require(Vector3.Distance(sourceMuzzle.position,visualMuzzle.position)<.0002f,
                 "recovered turret joints place the visual muzzle");
+            row.HelicopterGunnerMaxHealth=621;
+            row.HelicopterGunnerHealth=621;
+            row.HelicopterGunnerSpawnTick=60;
+            presenter.Apply(new List<BattleArmyEntityState>{row});
+            var gunner=visual.GetComponentsInChildren<Transform>(true).Single(x=>x.name=="SelfHostedGunner");
+            var bodySkin=gunner.GetComponentInChildren<SkinnedMeshRenderer>(true);
+            Require(bodySkin!=null&&bodySkin.sharedMesh!=null&&bodySkin.sharedMesh.name=="camo_assault"&&
+                bodySkin.bones.Length==20&&bodySkin.bones.All(x=>x!=null),"recovered gunner skin and skeleton");
+            Require(gunner.GetComponentsInChildren<MeshFilter>(true).Count(x=>x.sharedMesh!=null&&
+                x.sharedMesh.name=="assault_helm")>=1,"recovered gunner helmet");
+            Require(gunner.GetComponentsInChildren<MonoBehaviour>(true).Length==0&&
+                gunner.GetComponentsInChildren<Collider>(true).Length==0&&
+                gunner.GetComponentsInChildren<Rigidbody>(true).Length==0,
+                "gunner visual has no gameplay or collision components");
+            row.HelicopterGunnerHealth=0;
+            row.HelicopterGunnerRespawnTick=100;
+            presenter.Apply(new List<BattleArmyEntityState>{row});
+            Require(!gunner.gameObject.activeSelf,"host gunner death hides visual");
+            row.PositionTick=100;
+            row.HelicopterGunnerSpawnTick=100;
+            row.HelicopterGunnerRespawnTick=0;
+            row.HelicopterGunnerHealth=621;
+            presenter.Apply(new List<BattleArmyEntityState>{row});
+            Require(gunner.gameObject.activeSelf,"host gunner respawn restores visual");
             presenter.Apply(new List<BattleArmyEntityState>());
             Require(GameObject.Find("SelfHostedHelicopter_4294967297")==null,
                 "roster absence removes the visual");
             Debug.Log("UNITY_HELICOPTER_RENDER_PASSED meshes="+
                 prefab.GetComponentsInChildren<MeshFilter>(true).Length+
-                " turret=True rotors="+rotorChecks+" removal=True");
+                " turret=True rotors="+rotorChecks+" gunner=True removal=True");
             EditorApplication.Exit(0);
         }
         catch(Exception error){Debug.LogError(error);EditorApplication.Exit(1);}
@@ -77,6 +106,9 @@ public static class SelfHostedHelicopterRenderAudit
         {
             if(reference!=null)UnityEngine.Object.DestroyImmediate(reference);
             if(owner!=null)UnityEngine.Object.DestroyImmediate(owner);
+            if(previous.Any(x=>x.isActive&&x.isLoaded)&&previous.All(x=>!string.IsNullOrEmpty(x.path)))
+                EditorSceneManager.RestoreSceneManagerSetup(previous);
+            else EditorSceneManager.NewScene(NewSceneSetup.EmptyScene);
         }
     }
 
