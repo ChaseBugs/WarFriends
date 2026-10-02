@@ -203,6 +203,18 @@ internal static class CombatContentTests
               "Helicopter turret retains source decoy, primary, secondary, fallback and random-list order");
         Reject(()=>HelicopterTurretTargetPolicy.Select(1,turretCandidates[..3],
             _=>true,n=>n));
+        var turretAcquisition=new HelicopterTurretAcquisitionState(61,
+            new ArmyVehicleShotStats(12,.75f,4,5,1,5,2),()=>0);
+        Check(turretAcquisition.NextPickTick==91&&!turretAcquisition.Due(91)&&
+              turretAcquisition.Due(92),
+              "Helicopter source minimum cooldown and strict Update time gate use host ticks");
+        turretAcquisition.Acquired(92,"player:test");
+        Check(turretAcquisition.TargetId=="player:test"&&
+              turretAcquisition.NextPickTick==392,
+              "target acquisition retains the source twice-maximum guard until shooting is connected");
+        turretAcquisition.Disable();turretAcquisition.Reset(400);
+        Check(turretAcquisition.TargetId==null&&turretAcquisition.NextPickTick==430,
+              "gunner respawn resets target and samples a fresh shoot-time delay");
         var translatedCrew=content.HelicopterCrewPoints.PlaceAttached(new(10,5,20),Quaternion.Identity,2);
         Check(Vector3.Distance(translatedCrew[0].Position,
                   new Vector3(10.21307182f,4.8822651f,19.82723331f))<.00001f,
@@ -3641,7 +3653,11 @@ internal static class CombatContentTests
         var shotHelicopter=helicopterShotMatch.ArmyEntityBatch(soldierOwner,0,0).Entities
             .Single(x=>x.OwnerPlayerId==helicopterOwner&&x.UnitId=="ID_UNIT-HELICOPTER");
         float initialHelicopterShotHealth=shotHelicopter.Health;
+        Check(helicopterShotMatch.SelectHelicopterTurretTarget(shotHelicopter.EntityKey)?.Id==
+              "player:"+soldierOwner,
+              "live Helicopter selector finds the opponent through its source first-target sight gate");
         ulong helicopterFireCommand=2;bool playerShotDamagedHelicopter=false;
+        bool automaticHelicopterAim=false;
         for(ulong shotTick=62;shotTick<5000&&!helicopterShotMatch.Terminal;shotTick++)
         {
             if(shotTick%12==0)
@@ -3657,6 +3673,8 @@ internal static class CombatContentTests
                     Fire=new(){TargetX=aim.X,TargetY=aim.Y,TargetZ=aim.Z}});
             }
             helicopterShotMatch.Advance(shotTick);
+            automaticHelicopterAim|=helicopterShotMatch.HelicopterSelectedTarget(
+                shotHelicopter.EntityKey)=="player:"+soldierOwner;
             if(helicopterShotMatch.ArmyHealth(shotHelicopter.EntityKey) is not float health||
                 health<initialHelicopterShotHealth)
             {playerShotDamagedHelicopter=true;break;}
@@ -3665,6 +3683,18 @@ internal static class CombatContentTests
               helicopterShotMatch.Snapshot().Players.Single(p=>p.PlayerId==soldierOwner)
                   .ConfirmedEnemyHits>0,
               "normal player Fire traverses live Helicopter body collision into host-owned health");
+        ulong helicopterAimStart=helicopterShotMatch.Snapshot().ServerTick;
+        for(ulong aimTick=helicopterAimStart+1;
+            aimTick<helicopterAimStart+600&&!automaticHelicopterAim&&
+            !helicopterShotMatch.Terminal;aimTick++)
+        {
+            helicopterShotMatch.Advance(aimTick);
+            automaticHelicopterAim=helicopterShotMatch.HelicopterSelectedTarget(
+                shotHelicopter.EntityKey)=="player:"+soldierOwner;
+        }
+        Check(automaticHelicopterAim&&
+              helicopterShotMatch.HelicopterTurretCurrentAimPose(shotHelicopter.EntityKey)!=null,
+              "normal Helicopter ticks acquire the visible opponent and advance live turret joints");
         var droneHelicopterManifest=detached with
         {
             MatchId="drone-projectile-helicopter",DurationSeconds=180,IdleSeconds=120,
@@ -3756,6 +3786,7 @@ internal static class CombatContentTests
               "live Helicopter target cone follows the authoritative flight rotation");
         Check(crewMatch.DamageHelicopterGunner(sourceHelicopter,621f)&&
               crewMatch.HelicopterGunner(sourceHelicopter) is {Health:0,TurretEnabled:false}&&
+              crewMatch.HelicopterSelectedTarget(sourceHelicopter)==null&&
               !crewMatch.HelicopterTargetInTurretCone(sourceHelicopter,Vector3.Zero)&&
               crewMatch.HelicopterTurretAimFromRest(sourceHelicopter,
                   heliAimOrigin+heliForward*10)==null&&

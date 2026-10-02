@@ -63,6 +63,9 @@ public sealed partial class MatchEngine
     private readonly Dictionary<ulong,ArmyVehicleShotStats> armyHelicopterShots=[];
     private readonly Dictionary<ulong,HelicopterGunnerState> armyHelicopterGunners=[];
     private readonly Dictionary<ulong,HelicopterTurretTweenState> armyHelicopterTurrets=[];
+    private readonly Dictionary<ulong,HelicopterTurretAcquisitionState> armyHelicopterAcquisitions=[];
+    internal string? HelicopterSelectedTarget(ulong key)
+        =>armyHelicopterAcquisitions.GetValueOrDefault(key)?.TargetId;
     internal ArmyVehicleShotStats? DroneShotDefinition(ulong key)=>armyDroneShots.GetValueOrDefault(key);
     internal ArmyVehicleShotStats? HelicopterShotDefinition(ulong key)=>armyHelicopterShots.GetValueOrDefault(key);
     internal HelicopterGunnerSnapshot? HelicopterGunner(ulong key)
@@ -122,6 +125,18 @@ public sealed partial class MatchEngine
         var ray=HelicopterCurrentSightRay(key,shotTarget,false);
         return ray!=null&&HelicopterVisibilityRay(ray.Value);
     }
+    internal DroneTargetCandidate? SelectHelicopterTurretTarget(ulong key)
+    {
+        if(phase!=BattlePhase.Running||!activeArmyEntities.TryGetValue(key,out var row)||
+           row.UnitId!="ID_UNIT-HELICOPTER"||!armyHelicopterGunners.TryGetValue(key,out var gunner)||
+           !gunner.Snapshot().TurretEnabled)return null;
+        return HelicopterTurretTargetPolicy.Select(row.OwnerFraction,DroneTargetSnapshot(),target=>
+        {
+            var shot=ResolveDroneShotTarget(target).Targets.FirstOrDefault(x=>
+                (x.Type&0xFFFFFB)==x.Type);
+            return shot!=null&&HelicopterTargetVisibleInCone(key,shot.Position);
+        },armyChoice);
+    }
     internal bool HelicopterTargetInTurretCone(ulong key,Vector3 target)
     {
         if(phase!=BattlePhase.Running||!armyHelicopterGunners.TryGetValue(key,out var gunner)||
@@ -135,7 +150,10 @@ public sealed partial class MatchEngine
     {
         if(phase!=BattlePhase.Running||!activeArmyEntities.TryGetValue(key,out var row)||
            row.UnitId!="ID_UNIT-HELICOPTER"||!armyHelicopterGunners.TryGetValue(key,out var gunner))return false;
-        return gunner.Damage(amount,tick);
+        if(!gunner.Damage(amount,tick))return false;
+        if(!gunner.Snapshot().TurretEnabled&&armyHelicopterAcquisitions.TryGetValue(key,out var acquisition))
+            acquisition.Disable();
+        return true;
     }
 
     private void InitializeDronePath(ulong key,ArmyDeploymentFamily family,ArmySpawnPoint spawn)
@@ -309,6 +327,21 @@ public sealed partial class MatchEngine
             if(!armyHelicopterTurrets.TryGetValue(key,out var turret))
                 throw new InvalidDataException("Helicopter path lost its turret joints.");
             turret.AdvanceTick(path.Position,q);
+            if(!armyHelicopterAcquisitions.TryGetValue(key,out var acquisition))
+                throw new InvalidDataException("Helicopter path lost turret acquisition state.");
+            if(!gunner.Snapshot().TurretEnabled)
+                acquisition.Disable();
+            else
+            {
+                if(acquisition.Disabled)acquisition.Reset(tick);
+                if(acquisition.Due(tick))
+                {
+                    var selected=SelectHelicopterTurretTarget(key);
+                    acquisition.Acquired(tick,selected?.Id);
+                    if(selected!=null&&BeginHelicopterTurretAim(key,selected.Position)==null)
+                        throw new InvalidDataException("Helicopter selected a target without live aim authority.");
+                }
+            }
             if(armyHelicopterSchedules.TryGetValue(key,out var schedule))
             {
                 if(!armyHelicopterCrewMembers.TryGetValue(key,out var crew))
@@ -659,6 +692,8 @@ public sealed partial class MatchEngine
                 helicopterCrewPoints!.TurretPointComponentFileId,crew.SoldierHealth,
                 armyCatalog.VehiclePassengerRespawnTicks(unitId),tick));
             armyHelicopterTurrets.Add(entityKey,new HelicopterTurretTweenState());
+            armyHelicopterAcquisitions.Add(entityKey,new HelicopterTurretAcquisitionState(tick,
+                armyHelicopterShots[entityKey],NextArmyFloat));
         }
         if(family.VehicleShot!=null&&!family.IsAir&&!family.IsSoldier)
             armyVehicleShots.Add(entityKey,armyCatalog.ComposeVehicleShot(unitId,
@@ -2185,6 +2220,7 @@ public sealed partial class MatchEngine
         armyHelicopterShots.Remove(entityKey);
         armyHelicopterGunners.Remove(entityKey);
         armyHelicopterTurrets.Remove(entityKey);
+        armyHelicopterAcquisitions.Remove(entityKey);
         droneAttacks.Remove(entityKey);
         droneLastIntents.Remove(entityKey);
         armyDamage.Remove(entityKey);
