@@ -3752,6 +3752,49 @@ internal static class CombatContentTests
                   .Select((shot,i)=>shot-helicopterFireTicks[i]).All(delta=>delta is >=6 and <=8)&&
               helicopterConsumer.LastEventId==helicopterEventCursor,
               "normal Helicopter batches publish source-speed rounds, fly, collide and replay through SDK events");
+        var fakeHelicopterFlight=new HelicopterFakeProjectileFlight(Vector3.Zero,
+            new Vector3(0,0,10),12,100);
+        fakeHelicopterFlight.Advance(115);
+        Check(!fakeHelicopterFlight.Finished&&
+              Vector3.Distance(fakeHelicopterFlight.Position,new Vector3(0,0,9))<.001f,
+              "fake Helicopter BulletSlow follows the source doubled-distance tween at upgrade-backed fake speed");
+        fakeHelicopterFlight.Advance(135);
+        Check(fakeHelicopterFlight.Finished&&
+              Vector3.Distance(fakeHelicopterFlight.Position,new Vector3(0,0,20))<.001f,
+              "fake Helicopter BulletSlow expires at its doubled endpoint without collision authority");
+        var fakeHelicopterMatch=new MatchEngine(autonomousHelicopterManifest with
+            {MatchId="autonomous-helicopter-fake-fire"},content:content,armyChoice:n=>n-1);
+        fakeHelicopterMatch.Admit(soldierOwner);fakeHelicopterMatch.Admit(helicopterOwner);
+        foreach(var owner in new[]{soldierOwner,helicopterOwner})
+            fakeHelicopterMatch.Command(owner,new(){CommandId=1,
+                Ready=new(){ManifestHash=fakeHelicopterMatch.ManifestHash}});
+        fakeHelicopterMatch.Advance(60);
+        fakeHelicopterMatch.ArmyBatch(helicopterOwner);
+        fakeHelicopterMatch.Command(helicopterOwner,new(){CommandId=2,
+            DeployArmy=new(){OptionIndex=2}});
+        fakeHelicopterMatch.Advance(61);
+        bool observedFakeHelicopterFlight=false;
+        for(ulong fakeTick=62;fakeTick<1200&&!fakeHelicopterMatch.Terminal;fakeTick++)
+        {
+            fakeHelicopterMatch.Advance(fakeTick);
+            observedFakeHelicopterFlight|=fakeHelicopterMatch.Snapshot().Projectiles
+                .Any(x=>x.Kind=="helicopter-fake-bullet"&&x.OwnerPlayerId==helicopterOwner);
+        }
+        ulong fakeCursor=0;int fakeRounds=0,fakeImpacts=0;
+        bool fakeSpeedMatches=false;
+        while(true)
+        {
+            var page=fakeHelicopterMatch.EventBatch(helicopterOwner,fakeCursor);
+            if(page.Events.Count==0)break;
+            fakeRounds+=page.Events.Count(e=>e.Kind==MatchEventKind.HelicopterFired&&
+                e.HelicopterShot is {Fake:true});
+            fakeSpeedMatches|=page.Events.Any(e=>e.Kind==MatchEventKind.HelicopterFired&&
+                e.HelicopterShot is {Fake:true,Speed:18});
+            fakeImpacts+=page.Events.Count(e=>e.Kind==MatchEventKind.Impact&&e.Reason=="helicopter");
+            fakeCursor=page.Events.Last().EventId;
+        }
+        Check(fakeRounds>0&&fakeSpeedMatches&&observedFakeHelicopterFlight&&fakeImpacts==0,
+              "deployed fake Helicopter rounds publish visual flights without collision impacts");
         var forgedHelicopterEvent=firstHelicopterFired!.Clone();
         forgedHelicopterEvent.EventId=1;forgedHelicopterEvent.HelicopterShot=null;
         Reject(()=>new War.Client.MatchEventConsumer().Consume(new MatchEventBatch

@@ -5,8 +5,8 @@ namespace War.BattleServer;
 
 public sealed partial class MatchEngine
 {
-    private sealed record HelicopterHostProjectile(BulletFlight Flight,float Damage,
-        float PlayerRatio,float OvertimeRatio);
+    private sealed record HelicopterHostProjectile(string Owner,BulletFlight? Real,
+        HelicopterFakeProjectileFlight? Fake,float Damage,float PlayerRatio,float OvertimeRatio);
     private readonly Dictionary<ulong,HelicopterTurretWeaponState> armyHelicopterWeapons=[];
     private readonly Dictionary<ulong,HelicopterHostProjectile> helicopterProjectiles=[];
     internal int PendingHelicopterProjectiles=>helicopterProjectiles.Count;
@@ -65,24 +65,30 @@ public sealed partial class MatchEngine
             pose.MuzzlePosition);
         if(round==null)return;
         ulong id=checked(projectileId+1);
-        if(!round.Batch.IsFake)
+        try
         {
-            if(!armyDamage.TryGetValue(key,out float damage)||!float.IsFinite(damage)||damage<=0)
-                throw new InvalidDataException("Helicopter shot lacks source damage authority.");
-            var policy=(armyCatalog??throw new InvalidDataException("Helicopter player damage policy absent."))
-                .PlayerDamagePolicy(row.UnitId);
-            try
+            if(round.Batch.IsFake)
             {
+                var fake=new HelicopterFakeProjectileFlight(round.Muzzle,round.Batch.Target,
+                    stats.ShotSpeed,tick);
+                helicopterProjectiles.Add(id,new(row.OwnerPlayerId,null,fake,0,0,0));
+            }
+            else
+            {
+                if(!armyDamage.TryGetValue(key,out float damage)||!float.IsFinite(damage)||damage<=0)
+                    throw new InvalidDataException("Helicopter shot lacks source damage authority.");
+                var policy=(armyCatalog??throw new InvalidDataException("Helicopter player damage policy absent."))
+                    .PlayerDamagePolicy(row.UnitId);
                 var flight=new BulletFlight(id,row.OwnerPlayerId,
                     new(stats.ShotSpeed,.5f,false),round.Muzzle,round.Batch.Target,tick,
                     (origin,direction,range)=>TraceHeavyTurretShot(row.OwnerPlayerId,origin,direction,range));
-                helicopterProjectiles.Add(id,new(flight,damage,policy.PlayerDamageRatio,
-                    policy.OvertimePlayerDamageRatio));
+                helicopterProjectiles.Add(id,new(row.OwnerPlayerId,flight,null,damage,
+                    policy.PlayerDamageRatio,policy.OvertimePlayerDamageRatio));
             }
-            catch(ProjectileTargetException)
-            {
-                weapon.Reset();acquisition.Reset(tick);return;
-            }
+        }
+        catch(ProjectileTargetException)
+        {
+            weapon.Reset();acquisition.Reset(tick);return;
         }
         projectileId=id;stateRevision++;
         Emit(MatchEventKind.HelicopterFired,row.OwnerPlayerId,acquisition.TargetId??"",id,
@@ -90,7 +96,8 @@ public sealed partial class MatchEngine
         events[^1].HelicopterShot=new HelicopterShotPresentation
         {
             ArmyEntityKey=key,MuzzleX=round.Muzzle.X,MuzzleY=round.Muzzle.Y,
-            MuzzleZ=round.Muzzle.Z,Speed=stats.ShotSpeed,
+            MuzzleZ=round.Muzzle.Z,
+            Speed=round.Batch.IsFake?stats.ShotSpeed*1.5f:stats.ShotSpeed,
             Fake=round.Batch.IsFake,Shield=round.Shield
         };
         if(round.Batch.EndsBatch)acquisition.Reset(tick);
@@ -101,8 +108,15 @@ public sealed partial class MatchEngine
         foreach(var pair in helicopterProjectiles.OrderBy(x=>x.Key).ToArray())
         {
             var projectile=pair.Value;
-            var impact=projectile.Flight.Advance(tick);
-            if(projectile.Flight.Finished)helicopterProjectiles.Remove(pair.Key);
+            if(projectile.Fake is { } fake)
+            {
+                fake.Advance(tick);
+                if(fake.Finished)helicopterProjectiles.Remove(pair.Key);
+                continue;
+            }
+            var flight=projectile.Real??throw new InvalidDataException("Helicopter projectile lacks flight authority.");
+            var impact=flight.Advance(tick);
+            if(flight.Finished)helicopterProjectiles.Remove(pair.Key);
             if(impact==null)continue;
             stateRevision++;
             Emit(MatchEventKind.Impact,impact.OwnerId,impact.Hit.PlayerId??"",
