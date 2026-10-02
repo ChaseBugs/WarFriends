@@ -14,6 +14,9 @@ public sealed class SelfHostedHelicopterPresenter : MonoBehaviour
         public Transform Vertical;
         public Rotor[] Rotors;
         public GameObject Gunner;
+        public GameObject GunnerAnimationRoot;
+        public AnimationClip GunnerIdle;
+        public float GunnerSeconds;
         public float RotorSeconds;
         public float SampledAt;
     }
@@ -54,8 +57,13 @@ public sealed class SelfHostedHelicopterPresenter : MonoBehaviour
             visual.Vertical.rotation=Rotation(row.HelicopterTurretVerticalWorld);
             if(row.HelicopterGunnerMaxHealth>0)
             {
-                if(visual.Gunner==null)visual.Gunner=CreateGunner(visual.Root.transform);
+                if(visual.Gunner==null)visual.Gunner=CreateGunner(visual);
                 visual.Gunner.SetActive(row.HelicopterGunnerHealth>0);
+                if(row.HelicopterGunnerHealth>0)
+                {
+                    visual.GunnerSeconds=(row.PositionTick-row.HelicopterGunnerSpawnTick)/30f;
+                    SampleGunner(visual,visual.GunnerSeconds);
+                }
             }
             else if(visual.Gunner!=null)visual.Gunner.SetActive(false);
             if(row.PositionTick<row.SpawnTick)
@@ -95,7 +103,7 @@ public sealed class SelfHostedHelicopterPresenter : MonoBehaviour
             Vertical=map[source.turret.jointVertical],Rotors=rotors.ToArray()};
     }
 
-    private GameObject CreateGunner(Transform helicopterRoot)
+    private GameObject CreateGunner(Visual visual)
     {
         if(enemySource==null||enemySource.meshChanger==null||gunnerBehaviour==null||
             gunnerBehaviour.cardSoldierVisuals==null||gunnerBehaviour.cardSoldierVisuals.Count!=1||
@@ -106,7 +114,7 @@ public sealed class SelfHostedHelicopterPresenter : MonoBehaviour
         if(style.modelMeshRenderer==null||style.modelMeshRenderer.sharedMesh==null||
             style.helmetMesh==null)
             throw new InvalidOperationException("Recovered Assaulter gunner meshes are absent.");
-        var seat=helicopterRoot.GetComponentsInChildren<Transform>(true);
+        var seat=visual.Root.GetComponentsInChildren<Transform>(true);
         Transform seatCopy=null;
         foreach(var part in seat)
             if(part.name==source.enemyPointVehicle.transform.name){seatCopy=part;break;}
@@ -143,7 +151,19 @@ public sealed class SelfHostedHelicopterPresenter : MonoBehaviour
             map[enemySource.meshChanger.powerband.transform].gameObject.SetActive(false);
         if(enemySource.soldierParts!=null&&enemySource.soldierParts.shadow!=null)
             map[enemySource.soldierParts.shadow.transform].gameObject.SetActive(false);
+        var animation=enemySource.GetComponentInChildren<Animation>(true);
+        if(animation==null||animation.GetClip("idle_1")==null)
+            throw new InvalidOperationException("Recovered gunner idle clip is absent.");
+        visual.GunnerIdle=animation.GetClip("idle_1");
+        visual.GunnerAnimationRoot=map[animation.transform].gameObject;
         return root;
+    }
+
+    private static void SampleGunner(Visual visual,float seconds)
+    {
+        if(visual.Gunner==null||!visual.Gunner.activeSelf||visual.GunnerIdle==null)return;
+        visual.GunnerIdle.SampleAnimation(visual.GunnerAnimationRoot,
+            Mathf.Repeat(seconds,visual.GunnerIdle.length));
     }
 
     private static void SampleRotors(Visual visual,float seconds)
@@ -163,8 +183,12 @@ public sealed class SelfHostedHelicopterPresenter : MonoBehaviour
     private void Update()
     {
         foreach(var visual in active.Values)
+        {
             SampleRotors(visual,visual.RotorSeconds+
                 Mathf.Max(0f,Time.unscaledTime-visual.SampledAt));
+            SampleGunner(visual,visual.GunnerSeconds+
+                Mathf.Max(0f,Time.unscaledTime-visual.SampledAt));
+        }
     }
 
     private static Quaternion Rotation(BattleJointRotation value)

@@ -83,6 +83,13 @@ public static class SelfHostedHelicopterRenderAudit
                 gunner.GetComponentsInChildren<Collider>(true).Length==0&&
                 gunner.GetComponentsInChildren<Rigidbody>(true).Length==0,
                 "gunner visual has no gameplay or collision components");
+            var halfPose=bodySkin.bones.Select(x=>x.localRotation).ToArray();
+            row.PositionTick=60;
+            presenter.Apply(new List<BattleArmyEntityState>{row});
+            var startPose=bodySkin.bones.Select(x=>x.localRotation).ToArray();
+            Require(startPose.Where((x,i)=>Quaternion.Angle(x,halfPose[i])>.01f).Any(),
+                "source gunner idle clip changes the copied skeleton");
+            row.PositionTick=75;
             row.HelicopterGunnerHealth=0;
             row.HelicopterGunnerRespawnTick=100;
             presenter.Apply(new List<BattleArmyEntityState>{row});
@@ -93,6 +100,8 @@ public static class SelfHostedHelicopterRenderAudit
             row.HelicopterGunnerHealth=621;
             presenter.Apply(new List<BattleArmyEntityState>{row});
             Require(gunner.gameObject.activeSelf,"host gunner respawn restores visual");
+            Require(bodySkin.bones.Select((x,i)=>Quaternion.Angle(x.localRotation,startPose[i])).All(x=>x<.01f),
+                "respawn resets the source idle pose");
             presenter.Apply(new List<BattleArmyEntityState>());
             Require(GameObject.Find("SelfHostedHelicopter_4294967297")==null,
                 "roster absence removes the visual");
