@@ -1156,7 +1156,7 @@ public sealed partial class MatchEngine
         }
         if(advanced&&phase==BattlePhase.Running&&grenadeCombat!=null)
         {
-            try{foreach(var launch in grenadeCombat.Advance(tick))StartGrenadeProjectile(launch);}
+            try{foreach(var launch in grenadeCombat.Advance(tick,id=>{var actor=Find(id)!;return new(actor.Position,actor.Cover,actor.Route!=null);}))StartGrenadeProjectile(launch);}
             catch(InvalidDataException){End("invalid-projectile-authority","",false);return;}
         }
         if(advanced&&phase==BattlePhase.Running&&landMines.Snapshot().Count>0)

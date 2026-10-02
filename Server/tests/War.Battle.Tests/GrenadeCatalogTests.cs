@@ -183,6 +183,46 @@ internal static class GrenadeCatalogTests
         var launcherWeapon=catalog.CreateManifest("Google2u.GrenadeLauncher_M320",0);
         var launcherAllocation=allocation with{MatchId="grenade-launcher-kernel",Players=
             [allocation.Players[0] with{Weapon=launcherWeapon},allocation.Players[1] with{Weapon=launcherWeapon}]};
+        var movingCover=map.Covers.First(x=>x.Fraction==1&&x.SourceIndex!=covers[0].SourceIndex&&
+            Vector3.DistanceSquared(x.Position,covers[0].Position)>1);
+        var movingSimulation=new GrenadeMatchSimulation(launcherAllocation,map,catalog);
+        Vector3 halfway=Vector3.Lerp(covers[0].Position,movingCover.Position,.5f);
+        movingSimulation.Advance(1,id=>id==one?new(halfway,covers[0].SourceIndex,true):
+            new(covers[1].Position,covers[1].SourceIndex,false));
+        Check(Vector3.Distance(movingSimulation.Collision(one).RootPosition,halfway)<.01f&&
+              movingSimulation.Snapshot(one,1).Layers[0].Clip==
+              RiflePoseProjection.Create(1,[new(new("run_grenadelauncher",0,1,true),1)],
+                  Quaternion.Identity,Quaternion.Identity,null).Layers[0].Clip,
+            "moving launcher collision and snapshot use recovered run clip at host position");
+        movingSimulation.Advance(2,id=>id==one?new(movingCover.Position,movingCover.SourceIndex,false):
+            new(covers[1].Position,covers[1].SourceIndex,false));
+        Check(Vector3.Distance(movingSimulation.Collision(one).RootPosition,movingCover.Position)<.01f,
+            "launcher idle collision follows authoritative arrival cover");
+        var movedLaunch=movingSimulation.Begin(one,new GrenadeThrowCommand{TargetX=covers[1].Position.X,
+            TargetY=covers[1].Position.Y,TargetZ=covers[1].Position.Z},2);
+        Check(movedLaunch!=null&&Vector3.Distance(movingSimulation.Collision(one).RootPosition,movingCover.Position)<.01f,
+            "post-move launcher gesture uses arrived player pose");
+        int moveDirection=new[]{-1,1}.First(direction=>map.Adjacent(covers[0].SourceIndex,direction,1)>=0);
+        int adjacent=map.Adjacent(covers[0].SourceIndex,moveDirection,1);
+        var walkingGrenade=new MatchEngine(launcherAllocation with{MatchId="grenade-walking"},map,combat);
+        walkingGrenade.Admit(one);walkingGrenade.Admit(two);
+        walkingGrenade.Command(one,new(){CommandId=1,Ready=new(){ManifestHash=walkingGrenade.ManifestHash}});
+        walkingGrenade.Command(two,new(){CommandId=1,Ready=new(){ManifestHash=walkingGrenade.ManifestHash}});
+        walkingGrenade.Advance(60);
+        var moveGrenade=walkingGrenade.Command(one,new(){CommandId=2,MoveCover=new(){Direction=moveDirection}});
+        Check(moveGrenade.Code=="moving","grenade launcher enters recovered adjacent-cover route");
+        bool sawMovingGrenade=false;
+        for(ulong step=61;step<=moveGrenade.Snapshot.Players[0].MoveEndTick;step++)
+        {
+            walkingGrenade.Advance(step);
+            var current=walkingGrenade.Snapshot().Players[0];
+            if(current.Moving&&Vector3.Distance(new(current.PositionX,current.PositionY,current.PositionZ),covers[0].Position)>.01f)
+            {Check((int)current.RiflePose.Layers[0].Clip==70,"moving launcher publishes source run animation");sawMovingGrenade=true;}
+        }
+        var arrived=walkingGrenade.Snapshot().Players[0];
+        Check(sawMovingGrenade&&!arrived.Moving&&arrived.CoverIndex==adjacent&&
+              (int)arrived.RiflePose.Layers[0].Clip==71,
+            "grenade host movement and pose settle at the same cover");
         var launcherSimulation=new GrenadeMatchSimulation(launcherAllocation,map,catalog);
         Vector3 launcherTarget=covers[1].Position;
         var launcherScheduled=launcherSimulation.Begin(one,new GrenadeThrowCommand{TargetX=launcherTarget.X,

@@ -14,6 +14,7 @@ internal sealed class GrenadeMatchSimulation
     {
         internal readonly ParticipantManifest Definition;internal readonly GrenadeBinding Binding;
         internal Vector3 Position;internal Quaternion Rotation;internal string Clip;internal ulong ClipStarted;
+        internal bool Moving;
         internal ScheduledGrenadeLaunch? Pending;internal GrenadePoseFrame Pose;
         internal Actor(ParticipantManifest definition,CoverNode cover,GrenadeBinding binding,GrenadePoseCatalog poses)
         {Definition=definition;Binding=binding;Position=cover.Position;Rotation=cover.Rotation;
@@ -82,12 +83,33 @@ internal sealed class GrenadeMatchSimulation
         actor.ClipStarted=tick;actor.Pending=new(id,target,right,launchTick,actor.Definition.Weapon.SourceId,actor.Definition.WeaponUpgrade!.Value);
         actor.Pose=Place(catalog.Poses.Sample(actor.Clip,0,false),actor.Position,actor.Rotation);return actor.Pending;
     }
-    internal IReadOnlyList<ScheduledGrenadeLaunch> Advance(ulong tick)
+    internal IReadOnlyList<ScheduledGrenadeLaunch> Advance(ulong tick,Func<string,RifleActorLocation>? locate=null)
     {
         if(lastTick.HasValue&&tick!=lastTick.Value+1)throw new InvalidDataException("Grenade animation requires consecutive ticks.");lastTick=tick;
         var due=new List<ScheduledGrenadeLaunch>();
         foreach(var actor in actors)
         {
+            if(locate!=null)
+            {
+                var state=locate(actor.Definition.PlayerId);
+                if(!PlayerHitbox.Finite(state.Position)||state.CoverIndex<0||state.CoverIndex>=map.Covers.Count||
+                   map.Covers[state.CoverIndex].Fraction!=actor.Definition.Fraction||state.Moving&&actor.Pending!=null)
+                    throw new InvalidDataException("Invalid moving grenade player authority.");
+                if(state.Moving)
+                {
+                    var direction=state.Position-actor.Position;direction.Y=0;
+                    if(direction.LengthSquared()>1e-10f)
+                        actor.Rotation=Quaternion.CreateFromAxisAngle(Vector3.UnitY,MathF.Atan2(direction.X,direction.Z));
+                    if(!actor.Moving)
+                    {actor.Clip=actor.Binding.Swipe?"grenade_run":"run_grenadelauncher";actor.ClipStarted=tick;}
+                }
+                else if(actor.Moving)
+                {actor.Clip=actor.Binding.Swipe?"grenade_idle":"grenadelauncher_idle";actor.ClipStarted=tick;
+                 actor.Rotation=map.Covers[state.CoverIndex].Rotation;}
+                else if(actor.Pending==null&&Loops(actor.Clip))
+                    actor.Rotation=map.Covers[state.CoverIndex].Rotation;
+                actor.Moving=state.Moving;actor.Position=state.Position;
+            }
             bool loop=Loops(actor.Clip);double seconds=(tick-actor.ClipStarted)/(double)MatchManifest.TickRate;
             actor.Pose=Place(catalog.Poses.Sample(actor.Clip,seconds,loop),actor.Position,actor.Rotation);
             if(actor.Pending is { } pending&&pending.LaunchTick<=tick)
@@ -95,7 +117,7 @@ internal sealed class GrenadeMatchSimulation
                 due.Add(pending);actor.Pending=null;
                 if(!actor.Binding.Swipe){actor.Clip=pending.Right?"player_fire_left_grenadelauncher":"player_fire_right_grenadelauncher";actor.ClipStarted=tick;}
             }
-            else if(actor.Pending==null&&seconds>=catalog.Poses.Duration(actor.Clip))
+            else if(actor.Pending==null&&!loop&&seconds>=catalog.Poses.Duration(actor.Clip))
             {actor.Clip=actor.Binding.Swipe?"grenade_idle":"grenadelauncher_idle";actor.ClipStarted=tick;actor.Pose=Place(catalog.Poses.Sample(actor.Clip,0,true),actor.Position,actor.Rotation);}
         }
         return due;
