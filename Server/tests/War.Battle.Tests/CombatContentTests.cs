@@ -3612,6 +3612,47 @@ internal static class CombatContentTests
         Check(deathMatch.Snapshot().Players[1].ConfirmedArmyLosses==1,
               "trusted self-destruction credits the owning player exactly one loss");
         deathMatch.AbortForHostShutdown();
+        var helicopterShotManifest=detached with {MatchId="player-projectile-helicopter",
+            DurationSeconds=180,IdleSeconds=120};
+        var helicopterShotMatch=new MatchEngine(helicopterShotManifest,content:content,armyChoice:_=>0);
+        helicopterShotMatch.Admit(soldierOwner);helicopterShotMatch.Admit(helicopterOwner);
+        helicopterShotMatch.Command(soldierOwner,new(){CommandId=1,
+            Ready=new(){ManifestHash=helicopterShotMatch.ManifestHash}});
+        helicopterShotMatch.Command(helicopterOwner,new(){CommandId=1,
+            Ready=new(){ManifestHash=helicopterShotMatch.ManifestHash}});
+        helicopterShotMatch.Advance(60);
+        var helicopterShotOption=helicopterShotMatch.ArmyBatch(helicopterOwner).OptionIndexes
+            .First(x=>x==2);
+        helicopterShotMatch.Command(helicopterOwner,new(){CommandId=2,
+            DeployArmy=new(){OptionIndex=helicopterShotOption}});
+        helicopterShotMatch.Advance(61);
+        var shotHelicopter=helicopterShotMatch.ArmyEntityBatch(soldierOwner,0,0).Entities
+            .Single(x=>x.OwnerPlayerId==helicopterOwner&&x.UnitId=="ID_UNIT-HELICOPTER");
+        float initialHelicopterShotHealth=shotHelicopter.Health;
+        ulong helicopterFireCommand=2;bool playerShotDamagedHelicopter=false;
+        for(ulong shotTick=62;shotTick<5000&&!helicopterShotMatch.Terminal;shotTick++)
+        {
+            if(shotTick%12==0)
+            {
+                var current=helicopterShotMatch.ArmyEntityBatch(soldierOwner,0,0).Entities
+                    .SingleOrDefault(x=>x.EntityKey==shotHelicopter.EntityKey);
+                if(current==null)break;
+                var boxes=helicopterShotMatch.GroundVehicleShotTargets(soldierOwner)
+                    .Where(x=>x.EntityId==shotHelicopter.EntityKey).ToArray();
+                if(boxes.Length==0)break;
+                var aim=boxes[0].Hitbox.Center;
+                helicopterShotMatch.Command(soldierOwner,new(){CommandId=helicopterFireCommand++,
+                    Fire=new(){TargetX=aim.X,TargetY=aim.Y,TargetZ=aim.Z}});
+            }
+            helicopterShotMatch.Advance(shotTick);
+            if(helicopterShotMatch.ArmyHealth(shotHelicopter.EntityKey) is not float health||
+                health<initialHelicopterShotHealth)
+            {playerShotDamagedHelicopter=true;break;}
+        }
+        Check(playerShotDamagedHelicopter&&
+              helicopterShotMatch.Snapshot().Players.Single(p=>p.PlayerId==soldierOwner)
+                  .ConfirmedEnemyHits>0,
+              "normal player Fire traverses live Helicopter body collision into host-owned health");
         var crewManifest=detached with {MatchId="helicopter-crew-phase",DurationSeconds=180,IdleSeconds=120};
         var crewMatch=new MatchEngine(crewManifest,content:content);
         crewMatch.Admit(soldierOwner);crewMatch.Admit(helicopterOwner);
