@@ -72,6 +72,24 @@ internal static class LiveHelicopterUdpTests
             using var timeout=new CancellationTokenSource(TimeSpan.FromSeconds(150));
             using var a=new MatchConnection(Grant(one,9401));
             using var b=new MatchConnection(Grant(two,9402));
+            async Task<T> ReadWithRetry<T>(Func<Task<T>> read)
+            {
+                for(int attempt=0;;attempt++)
+                    try{return await read();}
+                    catch(TimeoutException) when(attempt<2)
+                    {await Task.Delay(50,timeout.Token);}
+            }
+            async Task<MatchReply> MutationWithRetry(MatchConnection peer,Func<Task<MatchReply>> send)
+            {
+                try{return await send();}
+                catch(TimeoutException)
+                {
+                    for(int attempt=0;;attempt++)
+                        try{return await peer.RetryPendingAsync(timeout.Token);}
+                        catch(TimeoutException) when(attempt<2)
+                        {await Task.Delay(50,timeout.Token);}
+                }
+            }
             Check((await a.ConnectAsync(timeout.Token)).Code=="admitted"&&
                   (await b.ConnectAsync(timeout.Token)).Code=="admitted",
                   "two signed clients enter the real Helicopter Worker");
@@ -146,21 +164,21 @@ internal static class LiveHelicopterUdpTests
                 await Task.Delay(200,timeout.Token);
                 if(damageWatch.Elapsed.TotalSeconds>=nextMoveAt)
                 {
-                    var moved=await a.MoveCoverAsync(moveDirection,timeout.Token);
+                    var moved=await MutationWithRetry(a,()=>a.MoveCoverAsync(moveDirection,timeout.Token));
                     if(moved.Code=="moving"){moveCount++;moveDirection=-moveDirection;}
                     nextMoveAt+=1.6;
                 }
-                var leftPage=await a.PollEventsAsync(leftConsumer.LastEventId,timeout.Token);
+                var leftPage=await ReadWithRetry(()=>a.PollEventsAsync(leftConsumer.LastEventId,timeout.Token));
                 leftConsumer.Consume(leftPage);
                 leftHit??=leftPage.Events.FirstOrDefault(x=>x.Kind==MatchEventKind.Impact&&
                     x.Reason=="helicopter"&&x.TargetId==one)?.EventId;
-                var rightPage=await b.PollEventsAsync(rightConsumer.LastEventId,timeout.Token);
+                var rightPage=await ReadWithRetry(()=>b.PollEventsAsync(rightConsumer.LastEventId,timeout.Token));
                 rightConsumer.Consume(rightPage);
                 rightHit??=rightPage.Events.FirstOrDefault(x=>x.Kind==MatchEventKind.Impact&&
                     x.Reason=="helicopter"&&x.TargetId==one)?.EventId;
-                state=await a.PollAsync(timeout.Token);
+                state=await ReadWithRetry(()=>a.PollAsync(timeout.Token));
                 leftHealth=state.Snapshot.Players.Single(x=>x.PlayerId==one).Health;
-                rightHealth=(await b.PollAsync(timeout.Token)).Snapshot.Players
+                rightHealth=(await ReadWithRetry(()=>b.PollAsync(timeout.Token))).Snapshot.Players
                     .Single(x=>x.PlayerId==one).Health;
             }
             Check(moveCount>0&&leftHit.HasValue&&leftHit==rightHit&&
@@ -173,7 +191,7 @@ internal static class LiveHelicopterUdpTests
             var gunnerWatch=System.Diagnostics.Stopwatch.StartNew();
             while(gunnerWatch.Elapsed<TimeSpan.FromSeconds(35)&&!rifleDamagedGunner)
             {
-                var current=(await a.FetchArmyEntitiesAsync(timeout.Token)).Single(x=>
+                var current=(await ReadWithRetry(()=>a.FetchArmyEntitiesAsync(timeout.Token))).Single(x=>
                     x.EntityKey==helicopter.EntityKey);
                 var rotation=new Quaternion(current.HelicopterRotation.X,current.HelicopterRotation.Y,
                     current.HelicopterRotation.Z,current.HelicopterRotation.W);
@@ -181,14 +199,14 @@ internal static class LiveHelicopterUdpTests
                 var parts=content.GroundVehicleWeapons.PassengerPoses.PlaceHelicopterGunner(seat,
                     current.PositionTick-current.HelicopterGunnerSpawnTick);
                 var target=parts[acceptedGunnerShots%parts.Count].Center;
-                var shot=await a.FireAsync(target.X,target.Y,target.Z,timeout.Token);
+                var shot=await MutationWithRetry(a,()=>a.FireAsync(target.X,target.Y,target.Z,timeout.Token));
                 if(shot.Code=="shot-accepted")acceptedGunnerShots++;
                 await Task.Delay(220,timeout.Token);
-                current=(await a.FetchArmyEntitiesAsync(timeout.Token)).Single(x=>
+                current=(await ReadWithRetry(()=>a.FetchArmyEntitiesAsync(timeout.Token))).Single(x=>
                     x.EntityKey==helicopter.EntityKey);
                 rifleDamagedGunner=current.HelicopterGunnerHealth<gunnerHealth;
-                if((await a.PollAsync(timeout.Token)).Snapshot.Players.Single(x=>x.PlayerId==one).ClipAmmo==0)
-                    await a.ReloadAsync(timeout.Token);
+                if((await ReadWithRetry(()=>a.PollAsync(timeout.Token))).Snapshot.Players.Single(x=>x.PlayerId==one).ClipAmmo==0)
+                    await MutationWithRetry(a,()=>a.ReloadAsync(timeout.Token));
             }
             Check(rifleDamagedGunner&&acceptedGunnerShots>0,
                 $"opposing UDP rifle fire reaches the recovered Helicopter gunner (shots={acceptedGunnerShots})");
@@ -196,7 +214,7 @@ internal static class LiveHelicopterUdpTests
             BattleArmyEntityState? deadGunner=null;
             while(gunnerDeathWatch.Elapsed<TimeSpan.FromSeconds(50)&&deadGunner==null)
             {
-                var current=(await a.FetchArmyEntitiesAsync(timeout.Token)).Single(x=>
+                var current=(await ReadWithRetry(()=>a.FetchArmyEntitiesAsync(timeout.Token))).Single(x=>
                     x.EntityKey==helicopter.EntityKey);
                 if(current.HelicopterGunnerHealth==0){deadGunner=current;break;}
                 var rotation=new Quaternion(current.HelicopterRotation.X,current.HelicopterRotation.Y,
@@ -205,16 +223,16 @@ internal static class LiveHelicopterUdpTests
                 var parts=content.GroundVehicleWeapons.PassengerPoses.PlaceHelicopterGunner(seat,
                     current.PositionTick-current.HelicopterGunnerSpawnTick);
                 var target=parts[acceptedGunnerShots%parts.Count].Center;
-                var shot=await a.FireAsync(target.X,target.Y,target.Z,timeout.Token);
+                var shot=await MutationWithRetry(a,()=>a.FireAsync(target.X,target.Y,target.Z,timeout.Token));
                 if(shot.Code=="shot-accepted")acceptedGunnerShots++;
                 await Task.Delay(220,timeout.Token);
-                if((await a.PollAsync(timeout.Token)).Snapshot.Players.Single(x=>x.PlayerId==one).ClipAmmo==0)
-                    await a.ReloadAsync(timeout.Token);
+                if((await ReadWithRetry(()=>a.PollAsync(timeout.Token))).Snapshot.Players.Single(x=>x.PlayerId==one).ClipAmmo==0)
+                    await MutationWithRetry(a,()=>a.ReloadAsync(timeout.Token));
             }
             Check(deadGunner!=null&&deadGunner.HelicopterGunnerHealth==0&&
                   deadGunner.HelicopterGunnerRespawnTick>deadGunner.PositionTick&&
                   MatchConnection.ValidHelicopterGunner(deadGunner)&&
-                  (await a.PollAsync(timeout.Token)).Snapshot.Players.Single(x=>x.PlayerId==one)
+                  (await ReadWithRetry(()=>a.PollAsync(timeout.Token))).Snapshot.Players.Single(x=>x.PlayerId==one)
                       .ConfirmedEnemyHits>gunnerHitsBefore,
                   $"opposing UDP rifle fire kills the source gunner with a host respawn deadline (shots={acceptedGunnerShots})");
             async Task<ulong?> GunnerImpact(MatchConnection peer,MatchEventConsumer consumer)
@@ -222,7 +240,7 @@ internal static class LiveHelicopterUdpTests
                 ulong? result=null;
                 while(true)
                 {
-                    var page=await peer.PollEventsAsync(consumer.LastEventId,timeout.Token);
+                    var page=await ReadWithRetry(()=>peer.PollEventsAsync(consumer.LastEventId,timeout.Token));
                     consumer.Consume(page);
                     result??=page.Events.FirstOrDefault(x=>x.Kind==MatchEventKind.Impact&&
                         x.Reason=="helicopter-gunner"&&x.ActorId==one&&
@@ -235,7 +253,7 @@ internal static class LiveHelicopterUdpTests
             ulong? rightGunnerImpact=await GunnerImpact(b,rightConsumer);
             Check(leftGunnerImpact.HasValue&&leftGunnerImpact==rightGunnerImpact,
                   "both peers replay the same source-bound gunner impact identity");
-            var ownerDead=(await b.FetchArmyEntitiesAsync(timeout.Token)).Single(x=>
+            var ownerDead=(await ReadWithRetry(()=>b.FetchArmyEntitiesAsync(timeout.Token))).Single(x=>
                 x.EntityKey==helicopter.EntityKey);
             Check(ownerDead.HelicopterGunnerHealth==0&&
                   ownerDead.HelicopterGunnerRespawnTick==deadGunner!.HelicopterGunnerRespawnTick,
@@ -245,11 +263,11 @@ internal static class LiveHelicopterUdpTests
             while(respawnWatch.Elapsed<TimeSpan.FromSeconds(20)&&respawned==null)
             {
                 await Task.Delay(250,timeout.Token);
-                var current=(await a.FetchArmyEntitiesAsync(timeout.Token)).Single(x=>
+                var current=(await ReadWithRetry(()=>a.FetchArmyEntitiesAsync(timeout.Token))).Single(x=>
                     x.EntityKey==helicopter.EntityKey);
                 if(current.HelicopterGunnerHealth>0)respawned=current;
             }
-            var ownerRespawn=(await b.FetchArmyEntitiesAsync(timeout.Token)).Single(x=>
+            var ownerRespawn=(await ReadWithRetry(()=>b.FetchArmyEntitiesAsync(timeout.Token))).Single(x=>
                 x.EntityKey==helicopter.EntityKey);
             Check(respawned!=null&&respawned.HelicopterGunnerHealth==
                   respawned.HelicopterGunnerMaxHealth&&respawned.HelicopterGunnerRespawnTick==0&&

@@ -51,6 +51,16 @@ if(args is ["--helicopter-only"])
     return;
 }
 
+if(args is ["--helicopter-shotgun-only"])
+{
+    var root=new DirectoryInfo(AppContext.BaseDirectory);
+    while(root!=null&&!File.Exists(Path.Combine(root.FullName,"content/combat-content-manifest.json")))root=root.Parent;
+    if(root==null)throw new Exception("Recovered battle content artifact not found.");
+    int focused=HelicopterShotgunTests.Run(Path.Combine(root.FullName,"content"));
+    Console.WriteLine($"PASS: {focused} focused Helicopter shotgun assertions");
+    return;
+}
+
 if(args is ["--rusher-only"])
 {
     var root=new DirectoryInfo(AppContext.BaseDirectory);
@@ -1509,6 +1519,7 @@ checks += GrenadeCatalogTests.Run(Path.Combine(contentRoot.FullName,"content"));
 checks += await GrenadeCatalogTests.RunUdp(Path.Combine(contentRoot.FullName,"content"));
 checks += ArmyFlameBurstTests.Run();
 checks += CombatContentTests.Run(Path.Combine(contentRoot.FullName,"content"));
+checks += HelicopterShotgunTests.Run(Path.Combine(contentRoot.FullName,"content"));
 checks += BarrelOverlapReferenceTests.Run(Path.Combine(contentRoot.FullName,"content"));
 checks += BarrelChainTests.Run(Path.Combine(contentRoot.FullName,"content"));
 checks += PlayerExplosionOverlapReferenceTests.Run(Path.Combine(contentRoot.FullName,"content"));
