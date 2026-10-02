@@ -29,6 +29,7 @@ public sealed class SelfHostedDeathMatchBridge : MonoBehaviour
 	private SelfHostedLandMinePresenter landMinePresenter;
 	private SelfHostedHeavyTurretPresenter heavyTurretPresenter;
 	private SelfHostedDronePresenter dronePresenter;
+	private SelfHostedHelicopterPresenter helicopterPresenter;
 
 	public void Configure(SelfHostedBattleClient owner, PlayerController localPlayer, PlayerController otherPlayer)
 	{
@@ -58,6 +59,9 @@ public sealed class SelfHostedDeathMatchBridge : MonoBehaviour
 		dronePresenter = gameObject.AddComponent<SelfHostedDronePresenter>();
 		dronePresenter.Configure(Singleton<ObjectPoolDatabase>.instance == null ? null : Singleton<ObjectPoolDatabase>.instance.drone);
 		client.ArmyEntitiesReceived += dronePresenter.Apply;
+		helicopterPresenter = gameObject.AddComponent<SelfHostedHelicopterPresenter>();
+		helicopterPresenter.Configure(Singleton<ObjectPoolDatabase>.instance == null ? null : Singleton<ObjectPoolDatabase>.instance.helicopter);
+		client.ArmyEntitiesReceived += helicopterPresenter.Apply;
 		client.StateReceived += Apply;
 		client.CombatEventReceived += ApplyEvent;
 		if (client.State != null) Apply(client.State);
@@ -310,6 +314,7 @@ public sealed class SelfHostedDeathMatchBridge : MonoBehaviour
 		client.StateReceived -= Apply;
 		client.CombatEventReceived -= ApplyEvent;
 		if (dronePresenter != null) client.ArmyEntitiesReceived -= dronePresenter.Apply;
+		if (helicopterPresenter != null) client.ArmyEntitiesReceived -= helicopterPresenter.Apply;
 		if (local != null && local.playerProperties != null) client.UnbindRifleView(local.playerProperties.playerID);
 		if (other != null && other.playerProperties != null) client.UnbindRifleView(other.playerProperties.playerID);
 	}

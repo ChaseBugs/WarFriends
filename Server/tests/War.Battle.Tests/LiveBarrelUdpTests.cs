@@ -178,7 +178,8 @@ internal static class LiveBarrelUdpTests
             Check(firstPage.Code=="entities" && firstPage.Entities.Count==4 && firstPage.HasMore &&
                   secondPage.Code=="entities" && secondPage.Entities.Count==1 && !secondPage.HasMore &&
                   completeArmy.Count==5 && completeArmy.Any(x=>x.OwnerPlayerId==two &&
-                      x.UnitId=="ID_UNIT-HELICOPTER" && x.ReservationFileId>0),
+                      x.UnitId=="ID_UNIT-HELICOPTER" && x.ReservationFileId>0 &&
+                      MatchConnection.ValidHelicopterTurretPose(x)),
                   "five active units page below the UDP MTU with the helicopter route bound");
             Check(allSpawnStats.Players[0].ConfirmedArmySpawns==expectedSoldiers &&
                   allSpawnStats.Players[1].ConfirmedArmySpawns==1,

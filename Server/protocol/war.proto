@@ -264,6 +264,9 @@ message BattleArmyEntityState {
   uint32 helicopter_crew_count = 21; uint32 helicopter_crew_drop_mask = 22;
   // Host heading/bank after recovered Helicopter.Update math; presentation pose.
   BattleJointRotation helicopter_rotation = 23;
+  // Source TurretWeaponBasic joints: horizontal is local, vertical is world rotation.
+  BattleJointRotation helicopter_turret_horizontal_local = 24;
+  BattleJointRotation helicopter_turret_vertical_world = 25;
 }
 // Full active-entity projection, paged to remain below the UDP MTU.
 message MatchArmyEntityPoll { uint64 after_entity_key = 1; uint64 expected_revision = 2; }

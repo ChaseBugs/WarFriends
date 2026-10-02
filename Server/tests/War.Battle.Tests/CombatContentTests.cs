@@ -3472,6 +3472,7 @@ internal static class CombatContentTests
               helicopterEntity.HelicopterStopTick==0&&
               helicopterEntity.HelicopterCrewCount==2&&helicopterEntity.HelicopterCrewDropMask==0&&
               helicopterEntity.HelicopterRotation is { } helicopterRotation&&
+              War.Client.MatchConnection.ValidHelicopterTurretPose(helicopterEntity)&&
               Math.Abs(helicopterRotation.X*helicopterRotation.X+
                   helicopterRotation.Y*helicopterRotation.Y+
                   helicopterRotation.Z*helicopterRotation.Z+
@@ -3558,8 +3559,34 @@ internal static class CombatContentTests
                   currentSight+Vector3.UnitZ*10,false) is {Range:var currentRange}&&
               Math.Abs(currentRange-9.45f)<.00001f,
               "live Helicopter turret starts a host-owned source turn and sight ray from its rest joints");
+        var projectedTurret=deathMatch.ArmyEntityBatch(soldierOwner,0,0).Entities
+            .Single(x=>x.EntityKey==helicopterEntity.EntityKey);
+        var hostTurret=deathMatch.HelicopterTurretCurrentAimPose(helicopterEntity.EntityKey)!;
+        Check(projectedTurret.HelicopterTurretHorizontalLocal is { } projectedHorizontal&&
+              projectedTurret.HelicopterTurretVerticalWorld is { } projectedVertical&&
+              Math.Abs(Quaternion.Dot(new Quaternion(projectedHorizontal.X,projectedHorizontal.Y,
+                  projectedHorizontal.Z,projectedHorizontal.W),
+                  hostTurret.HorizontalLocalRotation))>.99999f&&
+              Math.Abs(Quaternion.Dot(new Quaternion(projectedVertical.X,projectedVertical.Y,
+                  projectedVertical.Z,projectedVertical.W),
+              hostTurret.VerticalWorldRotation))>.99999f,
+              "Helicopter roster projects the host's current local yaw and world vertical joint");
+        var turretWire=MatchArmyEntityBatch.Parser.ParseFrom(
+            Google.Protobuf.MessageExtensions.ToByteArray(
+                deathMatch.ArmyEntityBatch(soldierOwner,0,0)));
+        Check(War.Client.MatchConnection.ValidHelicopterTurretPose(turretWire.Entities
+                  .Single(x=>x.EntityKey==helicopterEntity.EntityKey)),
+              "Helicopter turret joints survive the paged protobuf roster round trip");
         Check(War.Client.MatchConnection.ValidHelicopterCrew(helicopterEntity),
               "SDK accepts host Helicopter crew before its stop callback");
+        var forgedTurret=helicopterEntity.Clone();
+        forgedTurret.HelicopterTurretVerticalWorld=null;
+        Check(!War.Client.MatchConnection.ValidHelicopterTurretPose(forgedTurret),
+              "SDK rejects incomplete Helicopter turret pose");
+        forgedTurret=helicopterEntity.Clone();
+        forgedTurret.HelicopterTurretHorizontalLocal!.W=2;
+        Check(!War.Client.MatchConnection.ValidHelicopterTurretPose(forgedTurret),
+              "SDK rejects non-unit Helicopter turret joint rotation");
         var forgedCrew=helicopterEntity.Clone();forgedCrew.HelicopterCrewCount=7;
         Check(!War.Client.MatchConnection.ValidHelicopterCrew(forgedCrew),
               "SDK rejects crew beyond six source slots");

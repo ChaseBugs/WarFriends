@@ -30,6 +30,10 @@ internal static class HelicopterTurretAim
         return position;
     }
 
+    internal static HelicopterTurretAimPose Rest(Vector3 rootPosition,Quaternion rootRotation)
+        =>Place(rootPosition,rootRotation,Quaternion.Identity,
+            Quaternion.Normalize(rootRotation*ParentLocalRotation));
+
     internal static HelicopterTurretAimPose FromRest(Vector3 rootPosition,Quaternion rootRotation,
         Vector3 target)
         =>FromCurrent(rootPosition,rootRotation,target,Quaternion.Identity,

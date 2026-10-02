@@ -2242,7 +2242,30 @@ public sealed partial class MatchEngine
         if(after!=0 && (activeArmyEntities.Count==0 || after>activeArmyEntities.Keys.Max()))
         {result.Code="invalid-cursor";return result;}
         var remaining=activeArmyEntities.Where(pair=>pair.Key>after).OrderBy(pair=>pair.Key).ToArray();
-        foreach(var row in remaining.Take(4))result.Entities.Add(row.Value.Clone());
+        foreach(var row in remaining.Take(4))
+        {
+            var entity=row.Value.Clone();
+            if(entity.UnitId=="ID_UNIT-HELICOPTER")
+            {
+                var root=new Vector3(entity.X,entity.Y,entity.Z);
+                var body=entity.HelicopterRotation??
+                    throw new InvalidDataException("Helicopter roster lacks host body rotation.");
+                var rootRotation=new Quaternion(body.X,body.Y,body.Z,body.W);
+                // Legacy/diagnostic allocations may have a flight path but no
+                // trusted upgrade lanes, and therefore no combat turret state.
+                var pose=HelicopterTurretCurrentAimPose(row.Key);
+                if(pose==null&&armyHelicopterShots.ContainsKey(row.Key))
+                    throw new InvalidDataException("Combat Helicopter roster lacks host turret pose.");
+                pose??=HelicopterTurretAim.Rest(root,rootRotation);
+                var horizontal=pose.HorizontalLocalRotation;
+                var vertical=pose.VerticalWorldRotation;
+                entity.HelicopterTurretHorizontalLocal=new BattleJointRotation
+                {X=horizontal.X,Y=horizontal.Y,Z=horizontal.Z,W=horizontal.W};
+                entity.HelicopterTurretVerticalWorld=new BattleJointRotation
+                {X=vertical.X,Y=vertical.Y,Z=vertical.Z,W=vertical.W};
+            }
+            result.Entities.Add(entity);
+        }
         result.HasMore=remaining.Length>result.Entities.Count;
         result.Code="entities";
         player.LastSeen=hostTick;

@@ -212,6 +212,10 @@ namespace War.Client
                        (entity.UnitId=="ID_UNIT-DRONE"?!ValidUnitRotation(entity.DroneRotation):entity.DroneRotation!=null) ||
                        (entity.UnitId=="ID_UNIT-HELICOPTER"?!ValidUnitRotation(entity.HelicopterRotation):
                            entity.HelicopterRotation!=null) ||
+                       (entity.UnitId=="ID_UNIT-HELICOPTER"?
+                           !ValidHelicopterTurretPose(entity):
+                           entity.HelicopterTurretHorizontalLocal!=null||
+                           entity.HelicopterTurretVerticalWorld!=null) ||
                        (entity.UnitId=="ID_UNIT-HELICOPTER"?!ValidHelicopterCrew(entity):
                            entity.HelicopterStopTick!=0||entity.HelicopterCrewCount!=0||
                            entity.HelicopterCrewDropMask!=0) ||
@@ -254,6 +258,9 @@ namespace War.Client
                     expected|=1u<<slot;
             return entity.HelicopterCrewDropMask==expected;
         }
+        internal static bool ValidHelicopterTurretPose(BattleArmyEntityState entity)
+            =>ValidUnitRotation(entity.HelicopterTurretHorizontalLocal)&&
+              ValidUnitRotation(entity.HelicopterTurretVerticalWorld);
         private static bool ValidUnitRotation(BattleJointRotation q)
         {
             if(q==null||!FiniteCoordinate(q.X)||!FiniteCoordinate(q.Y)||!FiniteCoordinate(q.Z)||!FiniteCoordinate(q.W))return false;
