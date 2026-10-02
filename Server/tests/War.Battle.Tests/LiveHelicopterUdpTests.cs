@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Sockets;
+using System.Numerics;
 using System.Security.Cryptography;
 using System.Text.Json;
 using Google.Protobuf;
@@ -24,7 +25,7 @@ internal static class LiveHelicopterUdpTests
         string one=new('a',32),two=new('b',32);
         var manifest=MatchManifest.Validate(new MatchManifest("helicopter-live-udp","local-1",
             "Park_Multiplayer",map.SourceHash,content.Revision,
-            MatchManifest.RifleCombatMode,10,90,90,
+            MatchManifest.RifleCombatMode,10,180,120,
             [new(one,rifle,1,left.SourceIndex,1,new(1000),0,0,0)
                 {EquippedArmyUnitIds=["ID_UNIT-ASSAULT"],ArmyNormalUpgradeIndexes=[0],
                  ArmySpecialUpgradeIndexes=[-1],ArmyEliteUpgradeIndexes=[-1],
@@ -68,7 +69,7 @@ internal static class LiveHelicopterUdpTests
         try
         {
             await worker.StartAsync(CancellationToken.None);
-            using var timeout=new CancellationTokenSource(TimeSpan.FromSeconds(75));
+            using var timeout=new CancellationTokenSource(TimeSpan.FromSeconds(150));
             using var a=new MatchConnection(Grant(one,9401));
             using var b=new MatchConnection(Grant(two,9402));
             Check((await a.ConnectAsync(timeout.Token)).Code=="admitted"&&
@@ -165,6 +166,79 @@ internal static class LiveHelicopterUdpTests
             Check(moveCount>0&&leftHit.HasValue&&leftHit==rightHit&&
                   leftHealth<initialHealth&&rightHealth<initialHealth,
                   $"legal cover movement exposes one host-resolved Helicopter player hit to both peers (moves={moveCount}, hits={leftHit}/{rightHit}, health={leftHealth}/{rightHealth}, initial={initialHealth})");
+            float gunnerHealth=helicopter!.HelicopterGunnerHealth;
+            uint gunnerHitsBefore=state.Snapshot.Players.Single(x=>x.PlayerId==one).ConfirmedEnemyHits;
+            bool rifleDamagedGunner=false;
+            int acceptedGunnerShots=0;
+            var gunnerWatch=System.Diagnostics.Stopwatch.StartNew();
+            while(gunnerWatch.Elapsed<TimeSpan.FromSeconds(35)&&!rifleDamagedGunner)
+            {
+                var current=(await a.FetchArmyEntitiesAsync(timeout.Token)).Single(x=>
+                    x.EntityKey==helicopter.EntityKey);
+                var rotation=new Quaternion(current.HelicopterRotation.X,current.HelicopterRotation.Y,
+                    current.HelicopterRotation.Z,current.HelicopterRotation.W);
+                var seat=content.HelicopterCrewPoints.PlaceTurret(new(current.X,current.Y,current.Z),rotation);
+                var parts=content.GroundVehicleWeapons.PassengerPoses.PlaceHelicopterGunner(seat,
+                    current.PositionTick-current.HelicopterGunnerSpawnTick);
+                var target=parts[acceptedGunnerShots%parts.Count].Center;
+                var shot=await a.FireAsync(target.X,target.Y,target.Z,timeout.Token);
+                if(shot.Code=="shot-accepted")acceptedGunnerShots++;
+                await Task.Delay(220,timeout.Token);
+                current=(await a.FetchArmyEntitiesAsync(timeout.Token)).Single(x=>
+                    x.EntityKey==helicopter.EntityKey);
+                rifleDamagedGunner=current.HelicopterGunnerHealth<gunnerHealth;
+                if((await a.PollAsync(timeout.Token)).Snapshot.Players.Single(x=>x.PlayerId==one).ClipAmmo==0)
+                    await a.ReloadAsync(timeout.Token);
+            }
+            Check(rifleDamagedGunner&&acceptedGunnerShots>0,
+                $"opposing UDP rifle fire reaches the recovered Helicopter gunner (shots={acceptedGunnerShots})");
+            var gunnerDeathWatch=System.Diagnostics.Stopwatch.StartNew();
+            BattleArmyEntityState? deadGunner=null;
+            while(gunnerDeathWatch.Elapsed<TimeSpan.FromSeconds(50)&&deadGunner==null)
+            {
+                var current=(await a.FetchArmyEntitiesAsync(timeout.Token)).Single(x=>
+                    x.EntityKey==helicopter.EntityKey);
+                if(current.HelicopterGunnerHealth==0){deadGunner=current;break;}
+                var rotation=new Quaternion(current.HelicopterRotation.X,current.HelicopterRotation.Y,
+                    current.HelicopterRotation.Z,current.HelicopterRotation.W);
+                var seat=content.HelicopterCrewPoints.PlaceTurret(new(current.X,current.Y,current.Z),rotation);
+                var parts=content.GroundVehicleWeapons.PassengerPoses.PlaceHelicopterGunner(seat,
+                    current.PositionTick-current.HelicopterGunnerSpawnTick);
+                var target=parts[acceptedGunnerShots%parts.Count].Center;
+                var shot=await a.FireAsync(target.X,target.Y,target.Z,timeout.Token);
+                if(shot.Code=="shot-accepted")acceptedGunnerShots++;
+                await Task.Delay(220,timeout.Token);
+                if((await a.PollAsync(timeout.Token)).Snapshot.Players.Single(x=>x.PlayerId==one).ClipAmmo==0)
+                    await a.ReloadAsync(timeout.Token);
+            }
+            Check(deadGunner!=null&&deadGunner.HelicopterGunnerHealth==0&&
+                  deadGunner.HelicopterGunnerRespawnTick>deadGunner.PositionTick&&
+                  MatchConnection.ValidHelicopterGunner(deadGunner)&&
+                  (await a.PollAsync(timeout.Token)).Snapshot.Players.Single(x=>x.PlayerId==one)
+                      .ConfirmedEnemyHits>gunnerHitsBefore,
+                  $"opposing UDP rifle fire kills the source gunner with a host respawn deadline (shots={acceptedGunnerShots})");
+            var ownerDead=(await b.FetchArmyEntitiesAsync(timeout.Token)).Single(x=>
+                x.EntityKey==helicopter.EntityKey);
+            Check(ownerDead.HelicopterGunnerHealth==0&&
+                  ownerDead.HelicopterGunnerRespawnTick==deadGunner!.HelicopterGunnerRespawnTick,
+                  "both peers observe the same authoritative gunner death and respawn deadline");
+            BattleArmyEntityState? respawned=null;
+            var respawnWatch=System.Diagnostics.Stopwatch.StartNew();
+            while(respawnWatch.Elapsed<TimeSpan.FromSeconds(20)&&respawned==null)
+            {
+                await Task.Delay(250,timeout.Token);
+                var current=(await a.FetchArmyEntitiesAsync(timeout.Token)).Single(x=>
+                    x.EntityKey==helicopter.EntityKey);
+                if(current.HelicopterGunnerHealth>0)respawned=current;
+            }
+            var ownerRespawn=(await b.FetchArmyEntitiesAsync(timeout.Token)).Single(x=>
+                x.EntityKey==helicopter.EntityKey);
+            Check(respawned!=null&&respawned.HelicopterGunnerHealth==
+                  respawned.HelicopterGunnerMaxHealth&&respawned.HelicopterGunnerRespawnTick==0&&
+                  respawned.HelicopterGunnerSpawnTick>=deadGunner!.HelicopterGunnerRespawnTick&&
+                  ownerRespawn.HelicopterGunnerHealth==respawned.HelicopterGunnerHealth&&
+                  ownerRespawn.HelicopterGunnerSpawnTick==respawned.HelicopterGunnerSpawnTick,
+                  "both UDP peers observe the source-deadline gunner respawn");
         }
         finally{await worker.StopAsync(CancellationToken.None);File.Delete(manifestFile);}
         return checks;
