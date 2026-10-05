@@ -1,5 +1,5 @@
 {
-  "version": 8,
+  "version": 9,
   "armoredVehicleShotCoefficient": 0.33,
   "passengerPoseRevision": "37bc1d8c256a21767a01d1d1016caa93c785b719bbc6c0d73eed58f70926a343",
   "repairDronePrefab": {
@@ -183,6 +183,11 @@
         {
           "partComponentFileId": 11405360,
           "transformFileId": 419666,
+          "position": [
+            0.32568717,
+            0.08128777122,
+            -0.4845745
+          ],
           "layer": 8,
           "weight": 1.0,
           "colliders": [
@@ -219,6 +224,11 @@
         {
           "partComponentFileId": 11411975,
           "transformFileId": 454267,
+          "position": [
+            1.381004e-07,
+            0.3898734,
+            0.44891927
+          ],
           "layer": 8,
           "weight": 1.0,
           "colliders": [
@@ -255,6 +265,11 @@
         {
           "partComponentFileId": 11413056,
           "transformFileId": 479834,
+          "position": [
+            0.0,
+            0.4694463,
+            0.0
+          ],
           "layer": 8,
           "weight": 1.0,
           "colliders": [
@@ -291,6 +306,11 @@
         {
           "partComponentFileId": 11446705,
           "transformFileId": 433933,
+          "position": [
+            -0.3283469,
+            0.08128777122,
+            -0.48457387
+          ],
           "layer": 8,
           "weight": 1.0,
           "colliders": [
@@ -327,6 +347,11 @@
         {
           "partComponentFileId": 11450766,
           "transformFileId": 438461,
+          "position": [
+            0.0,
+            0.2,
+            0.0
+          ],
           "layer": 8,
           "weight": 1.0,
           "colliders": [
@@ -363,6 +388,11 @@
         {
           "partComponentFileId": 11481936,
           "transformFileId": 400539,
+          "position": [
+            0.32568678,
+            0.08128777122,
+            0.5247915
+          ],
           "layer": 8,
           "weight": 1.0,
           "colliders": [
@@ -399,6 +429,11 @@
         {
           "partComponentFileId": 11486581,
           "transformFileId": 406555,
+          "position": [
+            -0.32834637,
+            0.08128777122,
+            0.5247921
+          ],
           "layer": 8,
           "weight": 1.0,
           "colliders": [
@@ -435,6 +470,11 @@
         {
           "partComponentFileId": 11488901,
           "transformFileId": 452723,
+          "position": [
+            0.0,
+            0.60367927122,
+            -0.10376434
+          ],
           "layer": 8,
           "weight": 1.0,
           "colliders": [
@@ -469,6 +509,7 @@
           ]
         }
       ],
+      "flamePartCoefficient": 0.4,
       "repairDronePaths": [],
       "shotTargets": [
         {
@@ -646,6 +687,11 @@
         {
           "partComponentFileId": 11410782,
           "transformFileId": 461818,
+          "position": [
+            0.0,
+            0.26088572,
+            0.0
+          ],
           "layer": 0,
           "weight": 1.0,
           "colliders": [
@@ -710,6 +756,11 @@
         {
           "partComponentFileId": 11416363,
           "transformFileId": 498932,
+          "position": [
+            0.0,
+            0.35256838999999995,
+            0.0
+          ],
           "layer": 0,
           "weight": 1.0,
           "colliders": [
@@ -746,6 +797,11 @@
         {
           "partComponentFileId": 11419193,
           "transformFileId": 423964,
+          "position": [
+            0.0,
+            0.46273554,
+            0.49759293
+          ],
           "layer": 0,
           "weight": 1.0,
           "colliders": [
@@ -782,6 +838,11 @@
         {
           "partComponentFileId": 11430250,
           "transformFileId": 439935,
+          "position": [
+            0.0,
+            0.6372872599999999,
+            0.0
+          ],
           "layer": 0,
           "weight": 1.0,
           "colliders": [
@@ -818,6 +879,11 @@
         {
           "partComponentFileId": 11432491,
           "transformFileId": 479075,
+          "position": [
+            0.0,
+            0.45688572,
+            -0.954
+          ],
           "layer": 0,
           "weight": 1.0,
           "colliders": [
@@ -854,6 +920,11 @@
         {
           "partComponentFileId": 11433370,
           "transformFileId": 414717,
+          "position": [
+            0.0,
+            0.35788571999999996,
+            1.026
+          ],
           "layer": 0,
           "weight": 1.0,
           "colliders": [
@@ -890,6 +961,11 @@
         {
           "partComponentFileId": 11438371,
           "transformFileId": 406061,
+          "position": [
+            0.0,
+            0.35256800499999996,
+            0.6917179
+          ],
           "layer": 0,
           "weight": 1.0,
           "colliders": [
@@ -926,6 +1002,11 @@
         {
           "partComponentFileId": 11467608,
           "transformFileId": 494303,
+          "position": [
+            0.0,
+            0.9059919740000001,
+            0.0
+          ],
           "layer": 0,
           "weight": 1.0,
           "colliders": [
@@ -962,6 +1043,11 @@
         {
           "partComponentFileId": 11476772,
           "transformFileId": 448018,
+          "position": [
+            0.0,
+            0.9059919740000001,
+            0.0
+          ],
           "layer": 0,
           "weight": 1.0,
           "colliders": [
@@ -998,6 +1084,11 @@
         {
           "partComponentFileId": 11480563,
           "transformFileId": 434459,
+          "position": [
+            0.0,
+            1.1431875200000001,
+            -0.038910717
+          ],
           "layer": 0,
           "weight": 1.0,
           "colliders": [
@@ -1034,6 +1125,11 @@
         {
           "partComponentFileId": 11491853,
           "transformFileId": 471338,
+          "position": [
+            0.0,
+            0.90599156,
+            0.0
+          ],
           "layer": 0,
           "weight": 1.0,
           "colliders": [
@@ -1070,6 +1166,11 @@
         {
           "partComponentFileId": 11496482,
           "transformFileId": 444191,
+          "position": [
+            0.0,
+            0.9059919740000001,
+            0.0
+          ],
           "layer": 0,
           "weight": 1.0,
           "colliders": [
@@ -1104,6 +1205,7 @@
           ]
         }
       ],
+      "flamePartCoefficient": 0.4,
       "repairDronePaths": [],
       "shotTargets": [
         {
@@ -1366,6 +1468,11 @@
         {
           "partComponentFileId": 11419193,
           "transformFileId": 423964,
+          "position": [
+            0.00073703757,
+            0.296353068922035,
+            -0.10350504
+          ],
           "layer": 8,
           "weight": 1.0,
           "colliders": [
@@ -1402,6 +1509,11 @@
         {
           "partComponentFileId": 11419666,
           "transformFileId": 454546,
+          "position": [
+            0.36542642,
+            0.1561136,
+            -0.5742332
+          ],
           "layer": 8,
           "weight": 1.0,
           "colliders": [
@@ -1438,6 +1550,11 @@
         {
           "partComponentFileId": 11432491,
           "transformFileId": 479075,
+          "position": [
+            0.0024584608316699998,
+            0.284635747987545,
+            0.46635159456594005
+          ],
           "layer": 8,
           "weight": 1.0,
           "colliders": [
@@ -1474,6 +1591,11 @@
         {
           "partComponentFileId": 11433370,
           "transformFileId": 414717,
+          "position": [
+            0.00073703757,
+            0.70215704125755,
+            -0.10350504
+          ],
           "layer": 8,
           "weight": 1.0,
           "colliders": [
@@ -1510,6 +1632,11 @@
         {
           "partComponentFileId": 11438371,
           "transformFileId": 406061,
+          "position": [
+            0.0038022799332879994,
+            0.2597108880033,
+            -0.533968903182645
+          ],
           "layer": 8,
           "weight": 1.0,
           "colliders": [
@@ -1546,6 +1673,11 @@
         {
           "partComponentFileId": 11454731,
           "transformFileId": 486581,
+          "position": [
+            -0.3630714,
+            0.15611362,
+            0.61023146
+          ],
           "layer": 8,
           "weight": 1.0,
           "colliders": [
@@ -1582,6 +1714,11 @@
         {
           "partComponentFileId": 11481936,
           "transformFileId": 468464,
+          "position": [
+            0.36541963,
+            0.1561136,
+            0.6102245
+          ],
           "layer": 8,
           "weight": 1.0,
           "colliders": [
@@ -1618,6 +1755,11 @@
         {
           "partComponentFileId": 11493469,
           "transformFileId": 433933,
+          "position": [
+            -0.36306462,
+            0.15611362,
+            -0.5742332
+          ],
           "layer": 8,
           "weight": 1.0,
           "colliders": [
@@ -1652,6 +1794,7 @@
           ]
         }
       ],
+      "flamePartCoefficient": 0.4,
       "repairDronePaths": [],
       "shotTargets": [
         {
@@ -1755,6 +1898,11 @@
         {
           "partComponentFileId": 11404338,
           "transformFileId": 410782,
+          "position": [
+            -0.422,
+            0.156,
+            0.61
+          ],
           "layer": 8,
           "weight": 1.0,
           "colliders": [
@@ -1791,6 +1939,11 @@
         {
           "partComponentFileId": 11411808,
           "transformFileId": 467608,
+          "position": [
+            0.0024584608316699998,
+            0.284635747987545,
+            0.46635159456594005
+          ],
           "layer": 8,
           "weight": 1.0,
           "colliders": [
@@ -1827,6 +1980,11 @@
         {
           "partComponentFileId": 11414717,
           "transformFileId": 458777,
+          "position": [
+            0.43,
+            0.156,
+            -0.202
+          ],
           "layer": 8,
           "weight": 1.0,
           "colliders": [
@@ -1863,6 +2021,11 @@
         {
           "partComponentFileId": 11419193,
           "transformFileId": 423964,
+          "position": [
+            -0.422,
+            0.156,
+            -0.202
+          ],
           "layer": 8,
           "weight": 1.0,
           "colliders": [
@@ -1899,6 +2062,11 @@
         {
           "partComponentFileId": 11420344,
           "transformFileId": 491853,
+          "position": [
+            0.00073703757,
+            0.296353068922035,
+            -0.10350504
+          ],
           "layer": 8,
           "weight": 1.0,
           "colliders": [
@@ -1935,6 +2103,11 @@
         {
           "partComponentFileId": 11471191,
           "transformFileId": 476772,
+          "position": [
+            0.00073703757,
+            0.401179854,
+            -0.10350504
+          ],
           "layer": 8,
           "weight": 1.0,
           "colliders": [
@@ -1971,6 +2144,11 @@
         {
           "partComponentFileId": 11480656,
           "transformFileId": 473880,
+          "position": [
+            0.00073703757,
+            0.70215704125755,
+            -0.10350504
+          ],
           "layer": 8,
           "weight": 1.0,
           "colliders": [
@@ -2007,6 +2185,11 @@
         {
           "partComponentFileId": 11485106,
           "transformFileId": 496482,
+          "position": [
+            0.00073703757,
+            0.5332137299999999,
+            -0.10350504
+          ],
           "layer": 8,
           "weight": 1.0,
           "colliders": [
@@ -2043,6 +2226,11 @@
         {
           "partComponentFileId": 11487586,
           "transformFileId": 400119,
+          "position": [
+            0.43,
+            0.156,
+            0.61
+          ],
           "layer": 8,
           "weight": 1.0,
           "colliders": [
@@ -2079,6 +2267,11 @@
         {
           "partComponentFileId": 11490945,
           "transformFileId": 446705,
+          "position": [
+            0.43,
+            0.156,
+            -0.574
+          ],
           "layer": 8,
           "weight": 1.0,
           "colliders": [
@@ -2115,6 +2308,11 @@
         {
           "partComponentFileId": 11491429,
           "transformFileId": 481733,
+          "position": [
+            0.0038022799332879994,
+            0.2597108880033,
+            -0.533968903182645
+          ],
           "layer": 8,
           "weight": 1.0,
           "colliders": [
@@ -2151,6 +2349,11 @@
         {
           "partComponentFileId": 11496281,
           "transformFileId": 410883,
+          "position": [
+            -0.422,
+            0.156,
+            -0.574
+          ],
           "layer": 8,
           "weight": 1.0,
           "colliders": [
@@ -2185,6 +2388,7 @@
           ]
         }
       ],
+      "flamePartCoefficient": 0.4,
       "repairDronePaths": [
         {
           "componentFileId": 11441888,

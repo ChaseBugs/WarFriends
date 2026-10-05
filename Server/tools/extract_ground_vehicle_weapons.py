@@ -154,8 +154,20 @@ def vehicle_body_parts(blocks,scripts):
    collider_ids.append(row)
   if not collider_ids: raise ValueError(f'vehicle destroyable part {part_id} has no supported collider')
   rows.append({'partComponentFileId':part_id,'transformFileId':transform_ids[0],
-   'layer':layer,'weight':weight,'colliders':collider_ids})
+   'position':pos,'layer':layer,'weight':weight,'colliders':collider_ids})
  return rows
+
+def vehicle_flame_coefficient(blocks,scripts):
+ roots=[i for i,n in scripts.items() if n=='DestroyableObjectMultipleParts']
+ if len(roots)!=1: raise ValueError('vehicle body has no unique damage root')
+ root_id=roots[0]
+ coefficient=number(blocks[root_id][1],'shotCoeficient')
+ if coefficient!=.4: raise ValueError('vehicle awake-time Flame coefficient changed')
+ for part_id,name in scripts.items():
+  if name!='DestroyableObjectpart': continue
+  owner=ref(blocks[part_id][1],'ownerDestroyableObject')
+  if owner not in (0,root_id): raise ValueError('vehicle damage part belongs to another root')
+ return coefficient
 
 def vehicle_shot_targets(blocks):
  rows=[]
@@ -251,10 +263,11 @@ def main():
   drones=repair_drone_paths(blocks,scripts,root) if unit=='ID_UNIT-TRANSPORTER' else []
   out.append({'unitId':unit,'prefab':'Assets/GameObject/'+prefab_name,
    'sha256':hashlib.sha256(raw).hexdigest(),'behaviorType':root_type,'roles':role_rows,
-   'passengers':passengers,'bodyParts':vehicle_body_parts(blocks,scripts),'repairDronePaths':drones,
+   'passengers':passengers,'bodyParts':vehicle_body_parts(blocks,scripts),
+   'flamePartCoefficient':vehicle_flame_coefficient(blocks,scripts),'repairDronePaths':drones,
    'shotTargets':vehicle_shot_targets(blocks)})
  if not PASSENGER_POSES.exists(): raise ValueError('missing Unity passenger pose artifact')
- artifact={'version':8,'armoredVehicleShotCoefficient':0.33,
+ artifact={'version':9,'armoredVehicleShotCoefficient':0.33,
   'passengerPoseRevision':hashlib.sha256(PASSENGER_POSES.read_bytes()).hexdigest(),
   'repairDronePrefab':repair_drone_prefab(guid_to_name),'vehicles':out}
  serialized=json.dumps(artifact,indent=2)+'\n'

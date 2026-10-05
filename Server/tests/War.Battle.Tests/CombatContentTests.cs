@@ -1262,8 +1262,16 @@ internal static class CombatContentTests
             Reject(()=>EnemyPoseCatalog.Load(enemyPoseTemp,damagedEnemyPoseHash));
             Reject(()=>GroundVehicleWeaponCatalog.Load(vehicleWeaponPath,new string('0',64)));
             foreach(var unit in new[]{"ID_UNIT-HUMVEE","ID_UNIT-TANK","ID_UNIT-BUGGY","ID_UNIT-TRANSPORTER"})
+                Check(content.GroundVehicleWeapons.For(unit).FlamePartCoefficient==.4f,
+                    "source Awake-time vehicle Flame coefficient: "+unit);
+            foreach(var unit in new[]{"ID_UNIT-HUMVEE","ID_UNIT-TANK","ID_UNIT-BUGGY","ID_UNIT-TRANSPORTER"})
                 Check(content.GroundVehicleWeapons.For(unit).ShotTarget==new Vector3(0,unit=="ID_UNIT-TANK"?.289806f:.51933026f,0),
                     "source vehicle Body aim target: "+unit);
+            var changedFlame=JsonNode.Parse(File.ReadAllText(vehicleWeaponPath))!;
+            changedFlame["vehicles"]![0]!["flamePartCoefficient"]=.33f;
+            File.WriteAllText(vehicleWeaponTemp,changedFlame.ToJsonString());
+            Reject(()=>GroundVehicleWeaponCatalog.Load(vehicleWeaponTemp,
+                Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(vehicleWeaponTemp)))));
             var changedTarget=JsonNode.Parse(File.ReadAllText(vehicleWeaponPath))!;
             changedTarget["vehicles"]![0]!["shotTargets"]![0]!["position"]![1]=0;
             File.WriteAllText(vehicleWeaponTemp,changedTarget.ToJsonString());
@@ -3517,6 +3525,68 @@ internal static class CombatContentTests
               Math.Abs(flameShieldBefore[flameShieldCover.SourceIndex]-
                   flameShieldAfter[flameShieldCover.SourceIndex]-expectedFlameShield)<.001f,
             "one Flame pulse damages both source-overlapping enemy shields without the unit bullet coefficient or allied damage");
+        var flameVehicleManifest=flameManifest with {MatchId="army-flame-vehicle",
+            Players=[flameManifest.Players[0],flameManifest.Players[1] with
+            {
+                EquippedArmyUnitIds=["ID_UNIT-HUMVEE"],ArmyNormalUpgradeIndexes=[0],
+                ArmySpecialUpgradeIndexes=[-1],ArmyEliteUpgradeIndexes=[-1],
+                ArmyHealthFactors=[new(1f,1f)],ArmyDamageScales=[1f],
+                ArmySpeedCoefficients=[1f],ArmyAccuracyCoefficients=[1f]
+            }]};
+        content.ValidateAllocation(flameVehicleManifest);
+        var flameVehicleMatch=new MatchEngine(flameVehicleManifest,content:content,armyChoice:_=>0);
+        flameVehicleMatch.Admit(soldierOwner);flameVehicleMatch.Admit(helicopterOwner);
+        flameVehicleMatch.Command(soldierOwner,new(){CommandId=1,
+            Ready=new(){ManifestHash=flameVehicleMatch.ManifestHash}});
+        flameVehicleMatch.Command(helicopterOwner,new(){CommandId=1,
+            Ready=new(){ManifestHash=flameVehicleMatch.ManifestHash}});
+        flameVehicleMatch.Advance(60);
+        Check(flameVehicleMatch.Command(soldierOwner,new(){CommandId=2,DeployArmy=new()
+            {OptionIndex=flameVehicleMatch.ArmyBatch(soldierOwner).OptionIndexes[0]}}).Code=="army-deploying"&&
+              flameVehicleMatch.Command(helicopterOwner,new(){CommandId=2,DeployArmy=new()
+            {OptionIndex=flameVehicleMatch.ArmyBatch(helicopterOwner).OptionIndexes[0]}}).Code=="army-deploying",
+            "opposing Flamethrower and Humvee deploy from trusted allocation");
+        for(ulong vehicleTick=61;vehicleTick<=75;vehicleTick++)flameVehicleMatch.Advance(vehicleTick);
+        var flameVehicleRows=flameVehicleMatch.ArmyEntityBatch(soldierOwner,0,0).Entities;
+        var flameVehicleSource=flameVehicleRows.Single(x=>x.OwnerPlayerId==soldierOwner);
+        var flameVehicleTarget=flameVehicleRows.Single(x=>x.OwnerPlayerId==helicopterOwner);
+        var flameVehicleColliders=flameVehicleMatch.GroundVehicleShotTargets(soldierOwner)
+            .Where(x=>x.EntityId==flameVehicleTarget.EntityKey&&x.PartComponentFileId!=0).ToArray();
+        var flameVehicleCollider=flameVehicleColliders[0];
+        Vector3 flameVehicleOrigin=flameVehicleCollider.Hitbox.Center-Vector3.UnitZ;
+        float vehicleBefore=flameVehicleMatch.ArmyHealth(flameVehicleTarget.EntityKey)!.Value;
+        var flameVehicleRig=content.GroundVehicleWeapons.For(flameVehicleTarget.UnitId);
+        var flameVehicleFacing=flameVehicleMatch.GroundVehicleFacing(flameVehicleTarget.EntityKey)!.Value;
+        var flameVehicleRotation=Quaternion.CreateFromAxisAngle(Vector3.UnitY,
+            MathF.Atan2(flameVehicleFacing.X,flameVehicleFacing.Z));
+        float vehicleExpected=0;
+        foreach(var candidate in flameVehicleColliders)
+        {
+            if(!candidate.Hitbox.OverlapsSphere(flameVehicleOrigin,ArmyFlameBurst.Radius))continue;
+            var part=flameVehicleRig.BodyParts.Single(x=>x.PartComponentFileId==candidate.PartComponentFileId);
+            var colliderSource=part.Colliders.Single(x=>candidate.Hitbox.SourcePath.EndsWith(
+                "/"+x.ColliderFileId,StringComparison.Ordinal));
+            var center=colliderSource.Kind==PlayerHitboxKind.Capsule?
+                new Vector3(flameVehicleTarget.X,flameVehicleTarget.Y,flameVehicleTarget.Z)+
+                Vector3.Transform(part.Position,flameVehicleRotation):candidate.Hitbox.Center;
+            var hit=ArmyFlameBurst.ResolveCenter(flameVehicleOrigin,Vector3.UnitZ,center,
+                flameVehicleMatch.ArmyDamage(flameVehicleSource.EntityKey)!.Value,candidate.Hitbox.SourcePath);
+            if(hit==null||hit.RawDamage<=0)continue;
+            vehicleExpected=hit.RawDamage*part.Weight*flameVehicleRig.FlamePartCoefficient;
+            break;
+        }
+        Check(flameVehicleMatch.ApplyArmyFlameVehiclePulse(flameVehicleSource.EntityKey,
+                  flameVehicleOrigin,Vector3.UnitZ)==1&&
+              Math.Abs(vehicleBefore-flameVehicleMatch.ArmyHealth(flameVehicleTarget.EntityKey)!.Value-
+                  vehicleExpected)<.001f&&
+              Math.Abs(flameVehicleMatch.Snapshot().Vehicles.Single(x=>x.EntityId==flameVehicleTarget.EntityKey).Health-
+                  flameVehicleMatch.ArmyHealth(flameVehicleTarget.EntityKey)!.Value)<.001f,
+            "one Flame pulse applies prefab Awake-time 0.4 body coefficient once and synchronizes vehicle health");
+        float vehicleAfter=flameVehicleMatch.ArmyHealth(flameVehicleTarget.EntityKey)!.Value;
+        flameVehicleMatch.ApplyArmyFlameVehiclePulse(flameVehicleSource.EntityKey,
+            flameVehicleOrigin,-Vector3.UnitZ);
+        Check(flameVehicleMatch.ArmyHealth(flameVehicleTarget.EntityKey)==vehicleAfter,
+            "vehicle Flame rejects a rear-facing cone before changing shared health");
         deathMatch.Admit(soldierOwner);deathMatch.Admit(helicopterOwner);
         deathMatch.Command(soldierOwner,new MatchCommand{CommandId=1,
             Ready=new ReadyCommand{ManifestHash=deathMatch.ManifestHash}});

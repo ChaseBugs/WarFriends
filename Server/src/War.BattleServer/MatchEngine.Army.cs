@@ -2120,6 +2120,7 @@ public sealed partial class MatchEngine
                     burst.ProjectileId,origin,result?.Health??victim.Health,"army-flame");
             }
             if(!Terminal)ApplyArmyFlameInfantryPulse(burst.EntityKey,origin,forward);
+            if(!Terminal)ApplyArmyFlameVehiclePulse(burst.EntityKey,origin,forward);
             if(!Terminal)ApplyArmyFlameShieldPulse(burst.EntityKey,origin,forward,burst.ProjectileId);
             if(burst.Finished)armyFlameBursts.Remove(pair.Key);
             if(Terminal)return;
@@ -2154,6 +2155,75 @@ public sealed partial class MatchEngine
                 throw new InvalidDataException("Army flame infantry lacks current collision authority.");
             var hit=ArmyFlameBurst.ResolveParts(origin,forward,infantryPose.Parts,sourceDamage);
             if(hit!=null&&hit.RawDamage>0&&ApplyArmyHostDamage(targetId,hit.RawDamage))hits++;
+        }
+        return hits;
+    }
+
+    internal int ApplyArmyFlameVehiclePulse(ulong sourceEntityKey,Vector3 origin,Vector3 forward)
+    {
+        if(phase!=BattlePhase.Running||!activeArmyEntities.TryGetValue(sourceEntityKey,out var source)||
+           source.UnitId!="ID_UNIT-FLAMETHROWER"||!PlayerHitbox.Finite(origin)||
+           !PlayerHitbox.Finite(forward)||forward.LengthSquared()<1e-10f)
+            throw new InvalidDataException("Invalid army flame vehicle pulse authority.");
+        if(vehicles==null||groundVehicleWeapons==null)return 0;
+        var sourceOwner=Find(source.OwnerPlayerId)??
+            throw new InvalidDataException("Army flame source lacks an owner.");
+        float sourceDamage=ArmyDamage(sourceEntityKey)??
+            throw new InvalidDataException("Army flame lacks trusted damage.");
+        if(!float.IsFinite(sourceDamage)||sourceDamage<0||sourceDamage>10_000_000)
+            throw new InvalidDataException("Invalid army flame source damage.");
+        int hits=0;
+        foreach(var vehicle in vehicles.Snapshot().OrderBy(x=>x.EntityId))
+        {
+            if(vehicle.OwnerPlayerId==source.OwnerPlayerId)continue;
+            var owner=Find(vehicle.OwnerPlayerId)??
+                throw new InvalidDataException("Flame vehicle owner disappeared.");
+            if(owner.Definition.Fraction==sourceOwner.Definition.Fraction)continue;
+            if(!activeArmyEntities.TryGetValue(vehicle.EntityId,out var army)||
+               army.UnitId!=vehicle.UnitId||army.OwnerPlayerId!=vehicle.OwnerPlayerId||
+               !groundVehicleFacing.TryGetValue(vehicle.EntityId,out var facing))
+                throw new InvalidDataException("Flame vehicle lacks shared pose authority.");
+            var rig=groundVehicleWeapons.For(vehicle.UnitId);
+            var planarFacing=facing with {Y=0};
+            if(planarFacing.LengthSquared()<1e-10f)
+                throw new InvalidDataException("Flame vehicle has no planar facing.");
+            float yaw=MathF.Atan2(planarFacing.X,planarFacing.Z);
+            var rotation=Quaternion.CreateFromAxisAngle(Vector3.UnitY,yaw);
+            // FlameAmmo de-duplicates all child colliders by their damage root.
+            // Use serialized part order as the deterministic overlap order.
+            foreach(var collider in groundVehicleWeapons.PlaceBody(vehicle.UnitId,vehicle.EntityId,
+                vehicle.Position,facing))
+            {
+                var part=rig.BodyParts.Single(x=>x.PartComponentFileId==collider.PartComponentFileId);
+                var sourceCollider=part.Colliders.Single(x=>collider.Hitbox.SourcePath.EndsWith(
+                    "/"+x.ColliderFileId,StringComparison.Ordinal));
+                if(!collider.Hitbox.Enabled||!collider.Hitbox.Active||
+                   !collider.Hitbox.OverlapsSphere(origin,ArmyFlameBurst.Radius))continue;
+                // FlameAmmo reads the transform origin for capsules, and the
+                // transformed local collider center only for boxes/spheres.
+                Vector3 center=sourceCollider.Kind==PlayerHitboxKind.Capsule?
+                    vehicle.Position+Vector3.Transform(part.Position,rotation):collider.Hitbox.Center;
+                var hit=ArmyFlameBurst.ResolveCenter(origin,forward,center,sourceDamage,
+                    collider.Hitbox.SourcePath);
+                if(hit==null||hit.RawDamage<=0)continue;
+                float damage=hit.RawDamage*part.Weight*rig.FlamePartCoefficient;
+                if(!float.IsFinite(damage)||damage<=0||damage>10_000_000)
+                    throw new InvalidDataException("Vehicle Flame damage is outside host bounds.");
+                float before=ArmyHealth(vehicle.EntityId)??
+                    throw new InvalidDataException("Flame vehicle lacks shared health authority.");
+                if(!ApplyArmyHostDamage(vehicle.EntityId,damage))break;
+                hits++;
+                if(activeArmyEntities.ContainsKey(vehicle.EntityId))
+                {
+                    float after=ArmyHealth(vehicle.EntityId)??
+                        throw new InvalidDataException("Vehicle health disappeared after Flame impact.");
+                    float healthDamage=before-after;
+                    if(healthDamage>0&&(!vehicles.TryDamage(vehicle.EntityId,healthDamage,
+                       out var applied,out var destroyed)||destroyed||Math.Abs(applied-healthDamage)>.001f))
+                        throw new InvalidDataException("Vehicle registry health diverged from Flame vitality.");
+                }
+                break;
+            }
         }
         return hits;
     }
