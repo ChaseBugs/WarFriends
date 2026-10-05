@@ -1917,6 +1917,32 @@ internal static class CombatContentTests
                     }
                 }
             }
+            var shotgunTurretAim=new HeavyTurretAimState();
+            shotgunTurretAim.Plan(Vector3.Zero,Vector3.UnitZ);shotgunTurretAim.Complete();
+            var turretOverlapTargets=heavyTurrets.Colliders.Select(shape=>
+            {
+                var placed=shotgunTurretAim.Collider(heavyTurrets,shape);
+                return new DynamicShotTarget(91,placed.ComponentFileId,23,
+                    new PlayerHitbox(heavyTurrets.PrefabRevision+"#"+placed.ComponentFileId,
+                        PlayerHitboxKind.Box,1,placed.Center,placed.Size,placed.Rotation,0,
+                        Vector3.Zero,0),HeavyTurret:true);
+            }).ToArray();
+            var turretOverlapWorld=new ShotCollisionWorld(null,
+            [
+                new(bodyShooter,referencePose.Place(new(100,0,100),Quaternion.Identity).Collision),
+                new(bodyOpponent,referencePose.Place(new(110,0,100),Quaternion.Identity).Collision)
+            ],dynamicTargets:_=>turretOverlapTargets);
+            var turretOrigin=turretOverlapTargets[0].Hitbox.Center-Vector3.UnitZ*2;
+            var turretOverlap=turretOverlapWorld.OverlapEnemy(bodyShooter,turretOrigin,4,1u<<23);
+            Check(turretOverlap.Any(x=>x.MainEntityId=="heavy-turret:91")&&
+                  !turretOverlapWorld.OverlapEnemy(bodyShooter,turretOrigin,4,0)
+                      .Any(x=>x.MainEntityId=="heavy-turret:91"),
+                  "source Heavy Turret damage boxes enter shotgun overlap on the opponent layer");
+            var turretShot=ShotgunShotPlanner.Plan(new ShotgunRule(50,3,10,10,100,false,false),
+                turretOrigin,turretOverlapTargets[0].Hitbox.Center+Vector3.UnitX*.5f,turretOverlap);
+            Check(turretShot.RealPellets.Count(x=>turretOverlap.Any(y=>
+                      y.MainEntityId=="heavy-turret:91"&&y.EntityId==x.EntityId)) is >=1 and <=2,
+                  "source shotgun limits Heavy Turret damage parts to two extra pellets per root");
             var turretAim=new HeavyTurretAimState();
             using(var tweenOracle=JsonDocument.Parse(File.ReadAllBytes(Path.Combine(directory,"recovered-heavy-turret-aim-samples.json"))))
             foreach(var sample in tweenOracle.RootElement.GetProperty("tweenSamples").EnumerateArray())
@@ -3931,6 +3957,26 @@ internal static class CombatContentTests
         var helicopterFlameBoxes=flameHelicopterMatch.GroundVehicleShotTargets(soldierOwner)
             .Where(x=>x.EntityId==flameHelicopterTarget.EntityKey&&!x.HelicopterGunner)
             .Select(x=>x.Hitbox).ToArray();
+        var helicopterShotWorld=new ShotCollisionWorld(null,
+        [
+            new(soldierOwner,flameHelicopterMatch.CombatPose(soldierOwner).Collision),
+            new(helicopterOwner,flameHelicopterMatch.CombatPose(helicopterOwner).Collision)
+        ],dynamicTargets:flameHelicopterMatch.GroundVehicleShotTargets);
+        var helicopterShotOrigin=helicopterFlameBoxes[0].Center-Vector3.UnitZ*2;
+        var helicopterOverlap=helicopterShotWorld.OverlapEnemy(soldierOwner,
+            helicopterShotOrigin,4,1u<<8);
+        Check(helicopterOverlap.Any(x=>x.MainEntityId==
+                  "helicopter:"+flameHelicopterTarget.EntityKey)&&
+              !helicopterShotWorld.OverlapEnemy(soldierOwner,helicopterShotOrigin,4,0)
+                  .Any(x=>x.MainEntityId=="helicopter:"+flameHelicopterTarget.EntityKey),
+              "live source-pinned Helicopter body enters shotgun overlap on layer eight");
+        var helicopterPlan=ShotgunShotPlanner.Plan(new ShotgunRule(50,3,10,10,100,false,false),
+            helicopterShotOrigin,helicopterFlameBoxes[0].Center+Vector3.UnitX*.5f,
+            helicopterOverlap);
+        Check(helicopterPlan.RealPellets.Count(x=>helicopterOverlap.Any(y=>
+                  y.MainEntityId=="helicopter:"+flameHelicopterTarget.EntityKey&&
+                  y.EntityId==x.EntityId)) is >=1 and <=2,
+              "live Helicopter's eleven damage parts share the shotgun two-extra root limit");
         Vector3 helicopterFlameOrigin=helicopterFlameBoxes[0].Center-Vector3.UnitZ;
         float helicopterFlameExpected=ArmyFlameBurst.ResolveParts(helicopterFlameOrigin,Vector3.UnitZ,
             helicopterFlameBoxes,flameHelicopterMatch.ArmyDamage(flameHelicopterSource.EntityKey)!.Value)!.RawDamage*

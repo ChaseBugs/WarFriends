@@ -6,7 +6,7 @@ namespace War.BattleServer;
 
 internal sealed record CollisionPlayer(string PlayerId, PlayerCollisionModel Pose);
 internal sealed record DynamicShotTarget(ulong EntityId,int PartComponentFileId,int Layer,PlayerHitbox Hitbox,
-    string? PassengerRole=null,int? RepairDronePathIndex=null,bool ArmyInfantry=false,bool Decoy=false,bool HeavyTurret=false,bool HelicopterGunner=false,bool GroundVehicleBody=false);
+    string? PassengerRole=null,int? RepairDronePathIndex=null,bool ArmyInfantry=false,bool Decoy=false,bool HeavyTurret=false,bool HelicopterGunner=false,bool GroundVehicleBody=false,bool HelicopterBody=false);
 internal sealed record ShotCollision(float Distance, Vector3 Position, string SourcePath, string? PlayerId, float PartWeight, bool Static = false,string? DynamicOwner=null,int? ColliderIndex=null,ulong? DynamicEntityId=null,int? DynamicPartId=null,string? DynamicPassengerRole=null,int? DynamicRepairDronePathIndex=null,bool DynamicArmyInfantry=false,bool DynamicDecoy=false,bool DynamicHeavyTurret=false,bool DynamicHelicopterGunner=false);
 
 // Input poses come exclusively from host animation/pose authority. This class has
@@ -96,27 +96,36 @@ internal sealed class ShotCollisionWorld
             {
                 if(target==null||target.EntityId==0||target.Layer is <0 or >31||target.Hitbox==null)
                     throw new InvalidDataException("Invalid shotgun dynamic overlap authority.");
-                // Source vehicle bodies, repair-drone roots, Decoys, and infantry
-                // own opposing DestroyableObject colliders. Other roles differ.
+                // Source vehicle bodies, repair-drone roots, Heavy Turrets,
+                // Decoys, and infantry own opposing DestroyableObject colliders.
                 bool vehicleBody=target.GroundVehicleBody&&target.PartComponentFileId>0&&
-                    !target.HeavyTurret&&!target.Decoy&&!target.ArmyInfantry&&
+                    !target.HeavyTurret&&!target.Decoy&&!target.ArmyInfantry&&!target.HelicopterBody&&
                     target.PassengerRole==null&&target.RepairDronePathIndex==null&&
                     !target.HelicopterGunner;
                 bool repairDrone=target.RepairDronePathIndex is 0 or 1&&
                     target.PartComponentFileId==0&&target.PassengerRole==null&&
                     !target.Decoy&&!target.ArmyInfantry&&!target.HeavyTurret&&
-                    !target.HelicopterGunner&&!target.GroundVehicleBody;
+                    !target.HelicopterGunner&&!target.GroundVehicleBody&&!target.HelicopterBody;
                 bool passenger=target.PassengerRole is {Length:>0 and <=32}&&
                     !target.PassengerRole.Any(char.IsControl)&&target.PartComponentFileId==0&&
                     target.RepairDronePathIndex==null&&!target.Decoy&&!target.ArmyInfantry&&
-                    !target.HeavyTurret&&!target.HelicopterGunner&&!target.GroundVehicleBody;
-                if(!(target.Decoy||target.ArmyInfantry||vehicleBody||repairDrone||passenger)||
+                    !target.HeavyTurret&&!target.HelicopterGunner&&!target.GroundVehicleBody&&!target.HelicopterBody;
+                bool heavyTurret=target.HeavyTurret&&target.PartComponentFileId>0&&
+                    target.PassengerRole==null&&target.RepairDronePathIndex==null&&
+                    !target.Decoy&&!target.ArmyInfantry&&!target.HelicopterGunner&&
+                    !target.GroundVehicleBody&&!target.HelicopterBody;
+                bool helicopterBody=target.HelicopterBody&&target.PartComponentFileId>0&&
+                    target.PassengerRole==null&&target.RepairDronePathIndex==null&&
+                    !target.Decoy&&!target.ArmyInfantry&&!target.HeavyTurret&&
+                    !target.HelicopterGunner&&!target.GroundVehicleBody;
+                if(!(target.Decoy||target.ArmyInfantry||vehicleBody||repairDrone||passenger||heavyTurret||helicopterBody)||
                    (layerMask&(1u<<target.Layer))==0||
                    !target.Hitbox.OverlapsSphere(origin,radius))continue;
                 string identity=repairDrone?"repair-drone:"+target.EntityId+":"+
                     target.RepairDronePathIndex:passenger?
                     "passenger:"+target.EntityId+":"+target.PassengerRole:
-                    (target.Decoy?"decoy:":target.ArmyInfantry?"infantry:":"vehicle:")+target.EntityId;
+                    (target.Decoy?"decoy:":target.ArmyInfantry?"infantry:":
+                     heavyTurret?"heavy-turret:":helicopterBody?"helicopter:":"vehicle:")+target.EntityId;
                 string collider=identity+":"+target.Hitbox.SourcePath;
                 int ordinal=dynamicColliderOrdinals.GetValueOrDefault(collider);
                 dynamicColliderOrdinals[collider]=checked(ordinal+1);
