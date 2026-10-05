@@ -3660,6 +3660,27 @@ internal static class CombatContentTests
             flameVehicleOrigin,-Vector3.UnitZ);
         Check(flameVehicleMatch.ArmyHealth(flameVehicleTarget.EntityKey)==vehicleAfter,
             "vehicle Flame rejects a rear-facing cone before changing shared health");
+        Vector3 vehicleMineOrigin=flameVehicleCollider.Hitbox.Center;
+        var mineVehiclePart=flameVehicleColliders.Where(x=>x.Hitbox.OverlapsSphere(
+                vehicleMineOrigin,content.LandMines.HurtRadius))
+            .OrderBy(x=>x.Hitbox.BoundsDistanceToPoint(vehicleMineOrigin))
+            .ThenBy(x=>x.PartComponentFileId)
+            .ThenBy(x=>x.Hitbox.SourcePath,StringComparer.Ordinal).First();
+        float mineVehicleWeight=flameVehicleRig.BodyParts.Single(x=>
+            x.PartComponentFileId==mineVehiclePart.PartComponentFileId).Weight;
+        float vehicleBeforeMine=flameVehicleMatch.ArmyHealth(flameVehicleTarget.EntityKey)!.Value;
+        Check(flameVehicleMatch.ApplyLandMineVehicleExplosion(soldierOwner,vehicleMineOrigin,10)==1&&
+              Math.Abs(vehicleBeforeMine-flameVehicleMatch.ArmyHealth(flameVehicleTarget.EntityKey)!.Value-
+                  10*mineVehicleWeight)<.001f&&
+              Math.Abs(flameVehicleMatch.Snapshot().Vehicles.Single(x=>x.EntityId==flameVehicleTarget.EntityKey).Health-
+                  flameVehicleMatch.ArmyHealth(flameVehicleTarget.EntityKey)!.Value)<.001f,
+            "host Land Mine blast chooses one nearest Humvee damage part without bullet armor coefficient");
+        float vehicleBeforeFriendlyMine=flameVehicleMatch.ArmyHealth(flameVehicleTarget.EntityKey)!.Value;
+        Check(flameVehicleMatch.ApplyLandMineVehicleExplosion(helicopterOwner,vehicleMineOrigin,10)==1&&
+              Math.Abs(vehicleBeforeFriendlyMine-flameVehicleMatch.ArmyHealth(flameVehicleTarget.EntityKey)!.Value-
+                  5*mineVehicleWeight)<.001f,
+            "recovered friend-damage coefficient halves a Land Mine blast against an allied vehicle");
+        Reject(()=>flameVehicleMatch.ApplyLandMineVehicleExplosion(soldierOwner,vehicleMineOrigin,float.NaN));
         var flameRepairManifest=flameManifest with {MatchId="army-flame-repair-drone",
             Players=[flameManifest.Players[0],flameManifest.Players[1] with
             {

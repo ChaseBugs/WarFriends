@@ -119,6 +119,7 @@ public sealed partial class MatchEngine
                     }
                 }
             }
+            ApplyLandMineVehicleExplosion(mine.OwnerPlayerId,mine.Position,mine.Damage);
             foreach(var army in activeArmyEntities.Values.Where(x=>x.OwnerFraction!=mine.OwnerFraction&&
                         infantryAnimations.ContainsKey(x.EntityKey)).OrderBy(x=>x.EntityKey).ToArray())
             {
@@ -140,5 +141,54 @@ public sealed partial class MatchEngine
                 if(Terminal)return;
             }
         }
+    }
+
+    // Called only by a consumed host mine or a deterministic host simulation
+    // proof. A client command cannot choose an explosion center or victim.
+    internal int ApplyLandMineVehicleExplosion(string ownerId,Vector3 position,float damage)
+    {
+        if(phase!=BattlePhase.Running||landMineSource==null||groundVehicleWeapons==null||
+           explosionPolicy==null||!PlayerHitbox.Finite(position)||!float.IsFinite(damage)||
+           damage<=0||damage>10_000_000)
+            throw new InvalidDataException("Land Mine vehicle blast lacks trusted source authority.");
+        var attacker=Find(ownerId)??throw new InvalidDataException("Land Mine vehicle owner disappeared.");
+        if(vehicles==null)return 0;
+        int hits=0;
+        foreach(var target in vehicles.Snapshot().OrderBy(x=>x.EntityId).ToArray())
+        {
+            if(!activeArmyEntities.TryGetValue(target.EntityId,out var army)||
+               army.UnitId!=target.UnitId||army.OwnerPlayerId!=target.OwnerPlayerId||
+               !groundVehicleFacing.TryGetValue(target.EntityId,out var facing))
+                throw new InvalidDataException("Land Mine vehicle lacks shared host pose.");
+            var selected=groundVehicleWeapons.PlaceBody(target.UnitId,target.EntityId,target.Position,facing)
+                .Where(x=>x.Hitbox.Enabled&&x.Hitbox.Active&&
+                    x.Hitbox.OverlapsSphere(position,landMineSource.HurtRadius))
+                .OrderBy(x=>x.Hitbox.BoundsDistanceToPoint(position))
+                .ThenBy(x=>x.PartComponentFileId)
+                .ThenBy(x=>x.Hitbox.SourcePath,StringComparer.Ordinal).FirstOrDefault();
+            if(selected==null)continue;
+            var part=groundVehicleWeapons.For(target.UnitId).BodyParts.Single(x=>
+                x.PartComponentFileId==selected.PartComponentFileId);
+            var targetOwner=Find(target.OwnerPlayerId)??
+                throw new InvalidDataException("Land Mine vehicle owner disappeared.");
+            float amount=damage*part.Weight*(targetOwner.Definition.Fraction==attacker.Definition.Fraction?
+                explosionPolicy.Friendly:1f);
+            if(!float.IsFinite(amount)||amount<=0||amount>10_000_000)
+                throw new InvalidDataException("Land Mine vehicle damage exceeded host bounds.");
+            float before=ArmyHealth(target.EntityId)??
+                throw new InvalidDataException("Land Mine vehicle lacks shared vitality.");
+            if(!ApplyArmyHostDamage(target.EntityId,amount))continue;
+            hits++;
+            if(activeArmyEntities.ContainsKey(target.EntityId))
+            {
+                float after=ArmyHealth(target.EntityId)??
+                    throw new InvalidDataException("Land Mine vehicle lost surviving vitality.");
+                float applied=before-after;
+                if(applied>0&&(!vehicles.TryDamage(target.EntityId,applied,out float registryApplied,
+                    out bool destroyed)||destroyed||Math.Abs(applied-registryApplied)>.001f))
+                    throw new InvalidDataException("Land Mine vehicle vitality diverged from registry.");
+            }
+        }
+        return hits;
     }
 }
