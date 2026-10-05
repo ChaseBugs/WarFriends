@@ -342,6 +342,7 @@ public sealed class TerminalOutbox
         var players=snapshot.Players.ToDictionary(x=>x.PlayerId,StringComparer.Ordinal);
         var byAttacker=players.Keys.ToDictionary(x=>x,_=>0UL,StringComparer.Ordinal);
         var byVictim=players.Keys.ToDictionary(x=>x,_=>0UL,StringComparer.Ordinal);
+        var byVictimUnit=new Dictionary<(string PlayerId,string UnitId),ulong>();
         var identities=new HashSet<ulong>();
         ulong previousTick=0,previousEntity=0;
         foreach(var row in snapshot.DirectArmyKills)
@@ -359,10 +360,15 @@ public sealed class TerminalOutbox
                 throw new InvalidDataException("Invalid direct player army kill evidence.");
             byAttacker[row.AttackerPlayerId]++;
             byVictim[row.VictimOwnerPlayerId]++;
+            var victimUnit=(row.VictimOwnerPlayerId,row.UnitId);
+            byVictimUnit.TryGetValue(victimUnit,out ulong directKills);
+            byVictimUnit[victimUnit]=directKills+1;
             previousTick=row.Tick;previousEntity=row.EntityKey;
         }
         if(players.Values.Any(p=>byAttacker[p.PlayerId]>p.ConfirmedPlayerBulletHits||
-            byVictim[p.PlayerId]>p.ConfirmedArmyLosses))
+            byVictim[p.PlayerId]>p.ConfirmedArmyLosses)||
+           byVictimUnit.Any(pair=>pair.Value>(ulong)players[pair.Key.PlayerId].ArmyUsage
+               .Where(x=>x.UnitId==pair.Key.UnitId).Sum(x=>x.ConfirmedSpawns)))
             throw new InvalidDataException("Direct army kill evidence exceeds confirmed host contacts or losses.");
     }
     private static bool ValidTerminalPlayer(BattlePlayerState p,ulong serverTick)

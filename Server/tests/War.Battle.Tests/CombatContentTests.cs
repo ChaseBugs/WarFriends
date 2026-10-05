@@ -3521,6 +3521,20 @@ internal static class CombatContentTests
         forgedKillBytes=Google.Protobuf.MessageExtensions.ToByteArray(forgedKill);
         Reject(()=>TerminalOutbox.ValidatePayload(forgedKillBytes,droneShotMatch.MatchId,
             War.Shared.TerminalResultDigest.Compute(forgedKillBytes)));
+        forgedKill=droneShotMatch.TerminalEvidenceSnapshot();
+        var forgedVictim=forgedKill.Players.Single(p=>p.PlayerId==decoyPlayer);
+        var forgedAttacker=forgedKill.Players.Single(p=>p.PlayerId==decoyOpponent);
+        forgedVictim.ArmyUsage.Insert(0,new BattleArmyUsage
+            {OptionIndex=2,UnitId="ID_UNIT-HELICOPTER",Deployments=1,PlannedSpawns=1,ConfirmedSpawns=1});
+        forgedVictim.ConfirmedArmySpawns++;
+        forgedVictim.ConfirmedArmyLosses++;
+        forgedAttacker.ConfirmedPlayerBulletHits++;
+        var extraDroneKill=forgedKill.DirectArmyKills[0].Clone();
+        extraDroneKill.EntityKey++;
+        forgedKill.DirectArmyKills.Add(extraDroneKill);
+        forgedKillBytes=Google.Protobuf.MessageExtensions.ToByteArray(forgedKill);
+        Reject(()=>TerminalOutbox.ValidatePayload(forgedKillBytes,droneShotMatch.MatchId,
+            War.Shared.TerminalResultDigest.Compute(forgedKillBytes)));
         Check(droneProjectileLaunched&&droneProjectileDrained,
             "deployed Drone host observation launches source flight and retires it through tick traversal");
         while(droneEventCursor<droneShotMatch.EventBatch(decoyPlayer,droneEventCursor).LatestEventId)
