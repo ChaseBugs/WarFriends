@@ -322,6 +322,35 @@ internal static class GrenadeCatalogTests
                   War.Shared.TerminalResultDigest.Compute(infantryBytes))
                   .Single(x=>x.PlayerId==one) is {DirectBulletKills:0,DirectGrenadeKills:>0},
             "grenade infantry death persists private cause without inflating direct-bullet statistics");
+        var friendlyAllocation=infantryAllocation with {MatchId="grenade-friendly-infantry"};
+        var friendlyMatch=new MatchEngine(friendlyAllocation,map,combat,armyChoice:_=>0);
+        friendlyMatch.Admit(one);friendlyMatch.Admit(two);
+        friendlyMatch.Command(one,new(){CommandId=1,Ready=new(){ManifestHash=friendlyMatch.ManifestHash}});
+        friendlyMatch.Command(two,new(){CommandId=1,Ready=new(){ManifestHash=friendlyMatch.ManifestHash}});
+        friendlyMatch.Advance(60);
+        int friendlyOption=friendlyMatch.ArmyBatch(one).OptionIndexes.First();
+        Check(friendlyMatch.Command(one,new(){CommandId=2,DeployArmy=new(){OptionIndex=friendlyOption}})
+            .Code=="army-deploying","grenade owner deploys friendly infantry through host authority");
+        ulong friendlyTick=60;
+        while(friendlyTick<300&&friendlyMatch.ArmyEntityBatch(one,0,0).Entities.Count==0)
+            friendlyMatch.Advance(++friendlyTick);
+        var friendlyVictim=friendlyMatch.ArmyEntityBatch(one,0,0).Entities.First();
+        var friendlyPose=friendlyMatch.InfantryPose(friendlyVictim.EntityKey)!;
+        var friendlyOrigin=friendlyPose.Parts[0].Center;
+        var friendlyStage=combat.Grenades!.Stage("Google2u.Grenade_FRAG",0);
+        var friendlyEffect=GrenadeExplosion.ResolveArmy(friendlyOrigin,
+            new(friendlyVictim.X,friendlyVictim.Y,friendlyVictim.Z),friendlyPose.Parts,friendlyStage)!;
+        float friendlyAmount=friendlyEffect.RawDamage*combat.Explosions.Friendly;
+        float friendlyBefore=friendlyVictim.Health;
+        friendlyMatch.ApplyPlayerGrenadeInfantryExplosion(one,friendlyOrigin,friendlyStage);
+        float? friendlyAfter=friendlyMatch.ArmyHealth(friendlyVictim.EntityKey);
+        float expectedHealth=friendlyBefore-Math.Max(0,friendlyAmount-friendlyVictim.Kevlar);
+        Check((expectedHealth<=0?friendlyAfter==null:
+              friendlyAfter!=null&&Math.Abs(friendlyAfter.Value-expectedHealth)<.01f),
+            "friendly grenade infantry damage uses the recovered half-damage coefficient");
+        friendlyMatch.Command(one,new(){CommandId=3,Forfeit=new()});
+        Check(friendlyMatch.TerminalEvidenceSnapshot().DirectArmyKills.Count==0,
+            "friendly infantry grenade death cannot claim direct-player kill credit");
         Console.WriteLine($"PASS: {checks} grenade catalog assertions");return checks;
         static string fragBindingPath(GrenadeCatalog value)=>value.Binding("Google2u.Grenade_FRAG").SwipeInput!.LeftMuzzlePath;
     }
