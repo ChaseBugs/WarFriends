@@ -3298,6 +3298,30 @@ internal static class CombatContentTests
             !deployedDroneMatch.ApplyArmyHostDamage(deployedDrone.EntityKey,droneHealth)&&
             deployedDroneMatch.ArmyHealth(deployedDrone.EntityKey)==droneHealth,
             "trusted special stage protects normal deployed Drone health against host damage");
+        var immortalWorld=new ShotCollisionWorld(content.Maps.Single(m=>
+            Path.GetFileNameWithoutExtension(m.Source)==deployedDroneManifest.MapId),
+            [new(decoyOpponent,deployedDroneMatch.CombatPose(decoyOpponent).Collision,22,2),
+             new(decoyPlayer,deployedDroneMatch.CombatPose(decoyPlayer).Collision,23,1)],
+            dynamicTargets:deployedDroneMatch.GroundVehicleShotTargets);
+        var immortalMuzzle=deployedDroneMatch.CombatPose(decoyOpponent)
+            .Muzzle(deployedDroneManifest.Players[1].Weapon.SourceId).Position;
+        var immortalRoot=deployedDroneMatch.GroundVehicleShotTargets(decoyOpponent)
+            .Single(x=>x.EntityId==deployedDrone.EntityKey&&x.DroneRoot);
+        var centerDirection=Vector3.Normalize(immortalRoot.Hitbox.Center-immortalMuzzle);
+        var centerHit=immortalWorld.Raycast(decoyOpponent,immortalMuzzle,centerDirection,50,
+            content.Bindings.BulletMask(2));
+        Check(centerHit?.DynamicEntityId==deployedDrone.EntityKey&&
+              centerHit.DynamicPartId==13511718&&!centerHit.SourceDestroyable,
+            "player muzzle ray toward immortal Drone center first meets its non-destroyable child sphere");
+        Check(new[]{-.8f,-.5f,-.25f,0,.25f,.5f,.8f}.Any(offset=>
+        {
+            var direction=Vector3.Normalize(immortalRoot.Hitbox.Center+
+                new Vector3(offset,0,0)-immortalMuzzle);
+            var hit=immortalWorld.Raycast(decoyOpponent,immortalMuzzle,direction,50,
+                content.Bindings.BulletMask(2));
+            return hit?.DynamicEntityId==deployedDrone.EntityKey&&
+                hit.DynamicPartId==6544804&&hit.SourceDestroyable;
+        }),"an exposed immortal Drone root ray retains same-collider destroyable provenance");
         for(ulong t=213;t<=256;t++)deployedDroneMatch.Advance(t);
         var observedDroneIntent=deployedDroneMatch.LastDroneIntent(deployedDrone.EntityKey);
         Check(deployedDroneMatch.DroneAttackDeadline(deployedDrone.EntityKey)>61f/MatchManifest.TickRate+2,
