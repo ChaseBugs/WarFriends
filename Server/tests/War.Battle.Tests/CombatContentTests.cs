@@ -3239,6 +3239,19 @@ internal static class CombatContentTests
             shotgunDroneRoot.Hitbox.Center-Vector3.UnitZ*2,Vector3.UnitZ,4,1u<<27);
         Check(droneRootRay?.DynamicEntityId==deployedDrone.EntityKey&&droneRootRay.ColliderLayer==27,
             "deployed Drone bullet impact keeps its exact flying-faction collider layer");
+        Check(droneRootRay?.SourceDestroyable==true,
+            "deployed Drone root owns the source DestroyableObject for player bullet hit credit");
+        var droneChild=droneCollisionTargets.Single(x=>!x.DroneRoot);
+        var droneChildWorld=new ShotCollisionWorld(null,
+        [
+            new(decoyOpponent,deployedDroneMatch.CombatPose(decoyOpponent).Collision),
+            new(decoyPlayer,deployedDroneMatch.CombatPose(decoyPlayer).Collision)
+        ],dynamicTargets:_=>[droneChild]);
+        var droneChildRay=droneChildWorld.Raycast(decoyOpponent,
+            droneChild.Hitbox.Center-Vector3.UnitZ*2,Vector3.UnitZ,4,1u<<8);
+        Check(droneChildRay?.DynamicEntityId==deployedDrone.EntityKey&&
+              droneChildRay.ColliderLayer==8&&!droneChildRay.SourceDestroyable,
+            "Drone child sphere can collide but has no same-GameObject DestroyableObject hit credit");
         var shotgunDroneOrigin=shotgunDroneRoot.Hitbox.Center-Vector3.UnitZ*2;
         var shotgunDroneOverlap=shotgunDroneWorld.OverlapEnemy(decoyOpponent,
             shotgunDroneOrigin,4,1u<<27);

@@ -7,7 +7,7 @@ namespace War.BattleServer;
 internal sealed record CollisionPlayer(string PlayerId, PlayerCollisionModel Pose,int Layer=-1,int Fraction=0);
 internal sealed record DynamicShotTarget(ulong EntityId,int PartComponentFileId,int Layer,PlayerHitbox Hitbox,
     string? PassengerRole=null,int? RepairDronePathIndex=null,bool ArmyInfantry=false,bool Decoy=false,bool HeavyTurret=false,bool HelicopterGunner=false,bool GroundVehicleBody=false,bool HelicopterBody=false,bool DroneRoot=false);
-internal sealed record ShotCollision(float Distance, Vector3 Position, string SourcePath, string? PlayerId, float PartWeight, bool Static = false,string? DynamicOwner=null,int? ColliderIndex=null,ulong? DynamicEntityId=null,int? DynamicPartId=null,string? DynamicPassengerRole=null,int? DynamicRepairDronePathIndex=null,bool DynamicArmyInfantry=false,bool DynamicDecoy=false,bool DynamicHeavyTurret=false,bool DynamicHelicopterGunner=false,int? ColliderLayer=null);
+internal sealed record ShotCollision(float Distance, Vector3 Position, string SourcePath, string? PlayerId, float PartWeight, bool Static = false,string? DynamicOwner=null,int? ColliderIndex=null,ulong? DynamicEntityId=null,int? DynamicPartId=null,string? DynamicPassengerRole=null,int? DynamicRepairDronePathIndex=null,bool DynamicArmyInfantry=false,bool DynamicDecoy=false,bool DynamicHeavyTurret=false,bool DynamicHelicopterGunner=false,int? ColliderLayer=null,bool SourceDestroyable=false);
 
 // Input poses come exclusively from host animation/pose authority. This class has
 // no network adapter and no client-submitted target player or damage parameter.
@@ -41,7 +41,8 @@ internal sealed class ShotCollisionWorld
         // an overlapping player. Disabled reference colliders are never promoted.
         direction = Vector3.Normalize(direction);
         var geometry = map?.Raycast(origin, direction, range, mapLayerMask,dynamicEnabled,colliderEnabled,runtimeLayer);
-        ShotCollision? nearest = geometry == null ? null : new(geometry.Distance, geometry.Position, geometry.SourcePath, null, 0, geometry.Layer is 13 or 30,geometry.DynamicOwner,geometry.ColliderIndex,ColliderLayer:geometry.Layer);
+        ShotCollision? nearest = geometry == null ? null : new(geometry.Distance, geometry.Position, geometry.SourcePath, null, 0, geometry.Layer is 13 or 30,geometry.DynamicOwner,geometry.ColliderIndex,ColliderLayer:geometry.Layer,
+            SourceDestroyable:geometry.Layer==24&&geometry.DynamicOwner!=null);
         foreach (var player in players)
         {
             if (player.PlayerId == shooterId) continue;
@@ -49,7 +50,8 @@ internal sealed class ShotCollisionWorld
             var hit = player.Pose.Raycast(origin, direction, range);
             if (hit != null && (nearest == null || hit.Distance < nearest.Distance))
                 nearest = new(hit.Distance, hit.Position, hit.PartPath, player.PlayerId, hit.Weight,
-                    ColliderLayer:player.Layer>=0?player.Layer:null);
+                    ColliderLayer:player.Layer>=0?player.Layer:null,
+                    SourceDestroyable:player.Layer is 22 or 23);
         }
         if(dynamicTargets!=null)
             foreach(var target in dynamicTargets(shooterId))
@@ -76,7 +78,11 @@ internal sealed class ShotCollisionWorld
                         DynamicRepairDronePathIndex:target.RepairDronePathIndex,
                         DynamicArmyInfantry:target.ArmyInfantry,DynamicDecoy:target.Decoy,
                         DynamicHeavyTurret:target.HeavyTurret,DynamicHelicopterGunner:target.HelicopterGunner,
-                        ColliderLayer:target.Layer);
+                        ColliderLayer:target.Layer,
+                        SourceDestroyable:target.Layer is 8 or 22 or 23 or 24 or 26 or 27 &&
+                            (target.DroneRoot||target.GroundVehicleBody||target.HelicopterBody||
+                             target.PassengerRole!=null||target.RepairDronePathIndex!=null||
+                             target.ArmyInfantry||target.Decoy||target.HeavyTurret||target.HelicopterGunner));
             }
         return nearest;
     }

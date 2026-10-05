@@ -1262,7 +1262,8 @@ public sealed partial class MatchEngine
                     if(enemyShieldHit)
                     {
                         shooter.ConfirmedEnemyHits=checked(shooter.ConfirmedEnemyHits+1);
-                        CreditPlayerBulletHit(shooter,ref creditedBulletHit);
+                        if(impact.Hit.SourceDestroyable)
+                            CreditPlayerBulletHit(shooter,ref creditedBulletHit);
                     }
                     if(shield!=null)
                     {
@@ -1307,7 +1308,7 @@ public sealed partial class MatchEngine
                     else if(impact.Hit.DynamicPartId is int partId)
                         ApplyArmyBodyProjectileImpact(impact.OwnerId,vehicleId,partId,pair.Value.Damage.Amount);
                     else throw new InvalidDataException("Dynamic collision omitted its source target.");
-                    if(shooter.ConfirmedEnemyHits>enemyHitsBefore)
+                    if(shooter.ConfirmedEnemyHits>enemyHitsBefore&&impact.Hit.SourceDestroyable)
                         CreditPlayerBulletHit(shooter,ref creditedBulletHit);
                 }
                 catch(InvalidDataException){End("invalid-dynamic-impact-authority","",false);break;}
@@ -1318,7 +1319,8 @@ public sealed partial class MatchEngine
                 try
                 {
                     ApplyResolvedPlayerDamage(impact.OwnerId, impact.Hit.PlayerId,
-                        pair.Value.Damage with { PartWeight = impact.Hit.PartWeight }, damageRoll!(),true,true);
+                        pair.Value.Damage with { PartWeight = impact.Hit.PartWeight }, damageRoll!(),true,
+                        impact.Hit.SourceDestroyable);
                 }
                 catch (InvalidDataException) { End("invalid-combat-authority", "", false); }
                 if (Terminal) break;

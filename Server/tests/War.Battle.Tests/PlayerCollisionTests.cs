@@ -58,6 +58,8 @@ internal static class PlayerCollisionTests
         var layeredWorld = new ShotCollisionWorld(null, [new(a, gameplay, 23, 1), new(b, target, 22, 2)]);
         Check(layeredWorld.Raycast(a, movedOrigin, Vector3.Transform(-Vector3.UnitX, delta), 10)?.ColliderLayer == 22 &&
               hitPlayer?.ColliderLayer == null, "hit keeps the exact host player collider layer or an explicit unknown");
+        Check(layeredWorld.Raycast(a, movedOrigin, Vector3.Transform(-Vector3.UnitX, delta), 10)?.SourceDestroyable == true &&
+              hitPlayer?.SourceDestroyable == false, "player bullet credit needs a source-backed destroyable layer");
         Reject(() => new ShotCollisionWorld(null, [new(a, models.Single(m => m.Role == "preview")), new(b, target)]));
         Reject(() => world.Raycast(new string('c',32), movedOrigin, -Vector3.UnitX, 10));
         Reject(() => world.Raycast(a, movedOrigin, -Vector3.UnitX, float.NaN));
