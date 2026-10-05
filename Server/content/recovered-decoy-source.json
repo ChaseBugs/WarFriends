@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "client": "1.4.0",
   "spawnCount": 3,
   "health": {
@@ -11,6 +11,8 @@
     "sha256": "b04629c9831eabf5cf3592ece6da638c4f3c5faafaa0d10040f09990e482bdb3",
     "rootTransformFileId": 461526,
     "shootableComponentFileId": 11431434,
+    "damageComponentFileId": 11484216,
+    "flameCoefficient": 1.0,
     "targets": [
       {
         "transformFileId": 469566,

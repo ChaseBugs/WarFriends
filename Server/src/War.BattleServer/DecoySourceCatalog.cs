@@ -8,7 +8,8 @@ public sealed record DecoyObstacleSlot(int Order,int ComponentFileId,int GameObj
     int StartTransformFileId,int EndTransformFileId,Vector3 Start,Vector3 End,Vector3 InitialMidpoint);
 public sealed record DecoyPrefabSource(string Source,string Sha256,int RootTransformFileId,
     int ShootableComponentFileId,int TargetTransformFileId,Vector3 TargetLocalPosition,
-    int ColliderComponentFileId,Vector3 ColliderCenter,Vector3 ColliderSize);
+    int ColliderComponentFileId,Vector3 ColliderCenter,Vector3 ColliderSize,
+    int DamageComponentFileId,float FlameCoefficient);
 
 /// <summary>Recovered Decoy card constants, prefab target/collider, and source obstacle slots.</summary>
 public sealed class DecoySourceCatalog
@@ -61,7 +62,7 @@ public sealed class DecoySourceCatalog
             throw new InvalidDataException("Decoy source revision mismatch.");
         using var document=JsonDocument.Parse(bytes,new JsonDocumentOptions{MaxDepth=10});
         var root=document.RootElement;Exact(root,"version","client","spawnCount","health","prefab","maps");
-        if(root.GetProperty("version").GetInt32()!=1||root.GetProperty("client").GetString()!="1.4.0"||
+        if(root.GetProperty("version").GetInt32()!=2||root.GetProperty("client").GetString()!="1.4.0"||
            root.GetProperty("spawnCount").GetInt32()!=3||sourceMaps.Count!=5)
             throw new InvalidDataException("Unknown Decoy source package.");
         var health=root.GetProperty("health");Exact(health,"minimum","maximum");
@@ -108,12 +109,16 @@ public sealed class DecoySourceCatalog
 
     private static DecoyPrefabSource ParsePrefab(JsonElement row)
     {
-        Exact(row,"source","sha256","rootTransformFileId","shootableComponentFileId","targets","collider");
+        Exact(row,"source","sha256","rootTransformFileId","shootableComponentFileId",
+            "damageComponentFileId","flameCoefficient","targets","collider");
         string source=row.GetProperty("source").GetString()??"",sha=row.GetProperty("sha256").GetString()??"";
         int root=row.GetProperty("rootTransformFileId").GetInt32(),shootable=row.GetProperty("shootableComponentFileId").GetInt32();
         var targets=row.GetProperty("targets");
+        int damageId=row.GetProperty("damageComponentFileId").GetInt32();
+        float flameCoefficient=Number(row,"flameCoefficient");
         if(source!="Assets/GameObject/Decoy.prefab"||sha!="b04629c9831eabf5cf3592ece6da638c4f3c5faafaa0d10040f09990e482bdb3"||
-           root!=461526||shootable!=11431434||targets.GetArrayLength()!=1)
+           root!=461526||shootable!=11431434||damageId!=11484216||
+           flameCoefficient!=1||targets.GetArrayLength()!=1)
             throw new InvalidDataException("Decoy prefab identity changed.");
         var target=targets[0];Exact(target,"transformFileId","type","localPosition");
         int targetId=target.GetProperty("transformFileId").GetInt32();var targetPosition=Vector(target.GetProperty("localPosition"));
@@ -124,7 +129,8 @@ public sealed class DecoySourceCatalog
            colliderId!=6519550||!collider.GetProperty("enabled").GetBoolean()||collider.GetProperty("trigger").GetBoolean()||
            center!=new Vector3(0,.2503818f,-.05564286f)||size!=new Vector3(.2825435f,.5701809f,.1112857f))
             throw new InvalidDataException("Decoy target or collider changed.");
-        return new(source,sha,root,shootable,targetId,targetPosition,colliderId,center,size);
+        return new(source,sha,root,shootable,targetId,targetPosition,colliderId,center,size,
+            damageId,flameCoefficient);
     }
 
     private static float Number(JsonElement row,string name)

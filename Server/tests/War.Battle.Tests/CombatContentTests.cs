@@ -1726,6 +1726,7 @@ internal static class CombatContentTests
             Check(decoys.SpawnCount==3&&decoys.MinimumHealth==62.5f&&decoys.MaximumHealth==1090f&&
                   decoys.Prefab.TargetLocalPosition==new Vector3(0,.431f,0)&&
                   decoys.Prefab.ColliderSize==new Vector3(.2825435f,.5701809f,.1112857f)&&
+                  decoys.Prefab.DamageComponentFileId==11484216&&decoys.Prefab.FlameCoefficient==1&&
                   parkDecoys.Count==13&&selectedDecoys.Count==3&&
                   selectedDecoys.All(x=>x.Fraction==1)&&selectedDecoys.Select(x=>x.ComponentFileId).Distinct().Count()==3&&
                   Math.Abs(decoys.Health(22,44)-576.25f)<.001f,
@@ -1758,6 +1759,11 @@ internal static class CombatContentTests
             {
                 var changed=JsonNode.Parse(File.ReadAllText(decoyArtifact))!;
                 changed["maps"]![0]!["slots"]![0]!["initialMidpoint"]![0]=999;
+                File.WriteAllText(decoyTemp,changed.ToJsonString());
+                Reject(()=>DecoySourceCatalog.Load(decoyTemp,
+                    Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(decoyTemp))),content.Maps));
+                changed=JsonNode.Parse(File.ReadAllText(decoyArtifact))!;
+                changed["prefab"]!["flameCoefficient"]=.5f;
                 File.WriteAllText(decoyTemp,changed.ToJsonString());
                 Reject(()=>DecoySourceCatalog.Load(decoyTemp,
                     Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(decoyTemp))),content.Maps));
@@ -3587,6 +3593,74 @@ internal static class CombatContentTests
             flameVehicleOrigin,-Vector3.UnitZ);
         Check(flameVehicleMatch.ArmyHealth(flameVehicleTarget.EntityKey)==vehicleAfter,
             "vehicle Flame rejects a rear-facing cone before changing shared health");
+        var flameDecoyManifest=flameManifest with {MatchId="army-flame-decoy",
+            SceneMasterPlayerId=soldierOwner,
+            Players=flameManifest.Players.Select(p=>p with {PlayerLevel=22}).ToArray()};
+        content.ValidateAllocation(flameDecoyManifest);
+        var flameDecoyMatch=new MatchEngine(flameDecoyManifest,content:content,armyChoice:_=>0);
+        flameDecoyMatch.ConfigureBattleAllocations([
+            new(soldierOwner,["CardDecoy"],[],[0],[-1],[-1]),
+            new(helicopterOwner,["CardDecoy"],[],[0],[-1],[-1])]);
+        flameDecoyMatch.Admit(soldierOwner);flameDecoyMatch.Admit(helicopterOwner);
+        MatchCommand FlameDecoyCards()=>new(){CommandId=1,SelectCards=new()
+            {CardIds={"CardDecoy"},NormalUpgradeIndexes={0},
+             SpecialUpgradeIndexes={-1},EliteUpgradeIndexes={-1}}};
+        Check(flameDecoyMatch.Command(soldierOwner,FlameDecoyCards()).Code=="cards-selected"&&
+              flameDecoyMatch.Command(helicopterOwner,FlameDecoyCards()).Code=="cards-selected",
+            "Flame-versus-Decoy match binds both source cards before admission");
+        flameDecoyMatch.Command(soldierOwner,new(){CommandId=2,
+            Ready=new(){ManifestHash=flameDecoyMatch.ManifestHash}});
+        flameDecoyMatch.Command(helicopterOwner,new(){CommandId=2,
+            Ready=new(){ManifestHash=flameDecoyMatch.ManifestHash}});
+        flameDecoyMatch.Advance(60);
+        Check(flameDecoyMatch.Command(soldierOwner,new(){CommandId=3,DeployArmy=new()
+            {OptionIndex=flameDecoyMatch.ArmyBatch(soldierOwner).OptionIndexes[0]}}).Code=="army-deploying"&&
+              flameDecoyMatch.Command(soldierOwner,new(){CommandId=4,UseDecoy=new()
+            {RequestId=new string('a',32)}}).Code=="decoy-spawned"&&
+              flameDecoyMatch.Command(helicopterOwner,new(){CommandId=3,UseDecoy=new()
+            {RequestId=new string('b',32)}}).Code=="decoy-spawned",
+            "deployed Flame infantry and both factions' Decoys coexist under host ownership");
+        for(ulong flameDecoyTick=61;flameDecoyTick<=75;flameDecoyTick++)
+            flameDecoyMatch.Advance(flameDecoyTick);
+        var flameDecoySource=flameDecoyMatch.ArmyEntityBatch(soldierOwner,0,0).Entities
+            .Single(x=>x.OwnerPlayerId==soldierOwner);
+        var enemyDecoy=flameDecoyMatch.Snapshot().Decoys.First(x=>x.OwnerPlayerId==helicopterOwner);
+        var allyDecoy=flameDecoyMatch.Snapshot().Decoys.First(x=>x.OwnerPlayerId==soldierOwner);
+        var enemyDecoyBox=flameDecoyMatch.GroundVehicleShotTargets(soldierOwner)
+            .Single(x=>x.Decoy&&x.EntityId==enemyDecoy.EntityId).Hitbox;
+        var decoyPulseOrigin=enemyDecoyBox.Center-Vector3.UnitZ;
+        float decoyExpected=ArmyFlameBurst.ResolveParts(decoyPulseOrigin,Vector3.UnitZ,
+            [enemyDecoyBox],flameDecoyMatch.ArmyDamage(flameDecoySource.EntityKey)!.Value)!.RawDamage*
+            content.Decoys.Prefab.FlameCoefficient;
+        float decoyBefore=flameDecoyMatch.DecoyHealth(enemyDecoy.EntityId)!.Value;
+        float allyDecoyBefore=flameDecoyMatch.DecoyHealth(allyDecoy.EntityId)!.Value;
+        Check(flameDecoyMatch.ApplyArmyFlameDecoyPulse(flameDecoySource.EntityKey,
+                  decoyPulseOrigin,Vector3.UnitZ)>=1&&
+              Math.Abs(decoyBefore-flameDecoyMatch.DecoyHealth(enemyDecoy.EntityId)!.Value-
+                  decoyExpected)<.001f&&
+              flameDecoyMatch.DecoyHealth(allyDecoy.EntityId)==allyDecoyBefore,
+            "one Flame pulse applies the prefab's coefficient-one damage to an enemy Decoy only");
+        int remainingDecoyPulses=checked((int)Math.Ceiling(decoyBefore/decoyExpected)+1);
+        Check(remainingDecoyPulses is >0 and <10000,
+            "source Flame damage reaches a Decoy within bounded host pulses");
+        for(int flameDecoyPulse=0;flameDecoyPulse<remainingDecoyPulses&&
+            flameDecoyMatch.DecoyHealth(enemyDecoy.EntityId)!=null;flameDecoyPulse++)
+            flameDecoyMatch.ApplyArmyFlameDecoyPulse(flameDecoySource.EntityKey,
+                decoyPulseOrigin,Vector3.UnitZ);
+        var flameDecoyEvents=new List<MatchEvent>();ulong flameDecoyCursor=0,flameDecoyLatest;
+        do
+        {
+            var page=flameDecoyMatch.EventBatch(soldierOwner,flameDecoyCursor);
+            flameDecoyLatest=page.LatestEventId;flameDecoyEvents.AddRange(page.Events);
+            if(page.Events.Count>0)flameDecoyCursor=page.Events[^1].EventId;
+        }while(flameDecoyCursor<flameDecoyLatest);
+        Check(flameDecoyMatch.DecoyHealth(enemyDecoy.EntityId)==null&&
+              !flameDecoyMatch.DecoyObstacleOccupied(enemyDecoy.ObstacleComponentFileId)&&
+              flameDecoyMatch.DroneTargetSnapshot().All(x=>x.Id!="decoy:"+enemyDecoy.EntityId)&&
+              flameDecoyEvents.Any(x=>
+                  x.Kind==MatchEventKind.DecoyDestroyed&&x.ProjectileId==enemyDecoy.EntityId)&&
+              flameDecoyMatch.DecoyHealth(allyDecoy.EntityId)==allyDecoyBefore,
+            "lethal Flame damage releases Decoy obstacle and drone authority without touching an allied Decoy");
         deathMatch.Admit(soldierOwner);deathMatch.Admit(helicopterOwner);
         deathMatch.Command(soldierOwner,new MatchCommand{CommandId=1,
             Ready=new ReadyCommand{ManifestHash=deathMatch.ManifestHash}});

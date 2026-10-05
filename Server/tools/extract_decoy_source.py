@@ -15,6 +15,7 @@ MAP_GUID = "f8e8488fbe21f6c02c9eef456d27a3b9"
 COLLECTION_GUID = "d9d8bf95b76e06b83a10740c1390212a"
 OBSTACLE_GUID = "16b7423177a72a3f59048b96d341591a"
 SHOOTABLE_GUID = "3cf4d7761af3ce98d7a08bebfe4e8861"
+DESTROYABLE_GUID = "a503568e23092a0b9255b6fcb6b62be2"
 
 
 def blocks(text):
@@ -116,8 +117,10 @@ def extract_prefab():
     roots = [i for i, (kind, block) in source.items() if kind == 4 and ref(block, "m_Father") == 0]
     shootables = [(i, block) for i, (kind, block) in source.items()
                   if kind == 114 and f"guid: {SHOOTABLE_GUID}" in block]
+    damage_roots = [(i, block) for i, (kind, block) in source.items()
+                    if kind == 114 and f"guid: {DESTROYABLE_GUID}" in block]
     colliders = [(i, block) for i, (kind, block) in source.items() if kind == 65]
-    if len(roots) != 1 or len(shootables) != 1 or len(colliders) != 1:
+    if len(roots) != 1 or len(shootables) != 1 or len(colliders) != 1 or len(damage_roots) != 1:
         raise ValueError("Decoy prefab graph changed")
     target_text = shootables[0][1].split("  targets:\n", 1)[1].split("  visible:", 1)[0]
     targets = [{"transformFileId": int(transform), "type": int(kind),
@@ -125,8 +128,12 @@ def extract_prefab():
                for transform, kind in re.findall(
                    r"  - transform: \{fileID: (\d+)\}\r?\n    type: (\d+)", target_text)]
     collider_id, collider = colliders[0]
+    damage_id, damage_root = damage_roots[0]
+    if ref(damage_root, "m_GameObject") != ref(collider, "m_GameObject"):
+        raise ValueError("Decoy damage root and collider diverged")
     return {"source": "Assets/GameObject/Decoy.prefab", "sha256": digest(path),
             "rootTransformFileId": roots[0], "shootableComponentFileId": shootables[0][0],
+            "damageComponentFileId": damage_id, "flameCoefficient": float(field(damage_root, "shotCoeficient")),
             "targets": targets, "collider": {"componentFileId": collider_id,
                 "enabled": bool(int(field(collider, "m_Enabled"))),
                 "trigger": bool(int(field(collider, "m_IsTrigger"))),
@@ -142,7 +149,7 @@ def main():
                 constants[row["DBKEY"]] = row["FLOATVALUE"]
     if constants.keys() != {"DecoyHpMin", "DecoyHpMax"}:
         raise ValueError("missing Decoy health constants")
-    artifact = {"version": 1, "client": "1.4.0", "spawnCount": 3,
+    artifact = {"version": 2, "client": "1.4.0", "spawnCount": 3,
                 "health": {"minimum": constants["DecoyHpMin"], "maximum": constants["DecoyHpMax"]},
                 "prefab": extract_prefab(), "maps": [extract_map(row) for row in content["maps"]]}
     serialized = json.dumps(artifact, indent=2, ensure_ascii=False) + "\n"

@@ -146,6 +146,43 @@ public sealed partial class MatchEngine
         return result;
     }
 
+    internal int ApplyArmyFlameDecoyPulse(ulong sourceEntityKey,Vector3 origin,Vector3 forward)
+    {
+        if(phase!=BattlePhase.Running||!activeArmyEntities.TryGetValue(sourceEntityKey,out var source)||
+           source.UnitId!="ID_UNIT-FLAMETHROWER"||!PlayerHitbox.Finite(origin)||
+           !PlayerHitbox.Finite(forward)||forward.LengthSquared()<1e-10f)
+            throw new InvalidDataException("Invalid army flame Decoy pulse authority.");
+        if(decoySource==null)return 0;
+        var sourceOwner=Find(source.OwnerPlayerId)??
+            throw new InvalidDataException("Army flame Decoy source lacks an owner.");
+        float sourceDamage=ArmyDamage(sourceEntityKey)??
+            throw new InvalidDataException("Army flame lacks trusted damage.");
+        if(!float.IsFinite(sourceDamage)||sourceDamage<0||sourceDamage>10_000_000)
+            throw new InvalidDataException("Invalid army flame source damage.");
+        int hits=0;
+        foreach(var collider in DecoyShotTargets(sourceOwner))
+        {
+            if(!collider.Decoy)throw new InvalidDataException("Flame Decoy collision type changed.");
+            if(!collider.Hitbox.OverlapsSphere(origin,ArmyFlameBurst.Radius))continue;
+            var hit=ArmyFlameBurst.ResolveCenter(origin,forward,collider.Hitbox.Center,
+                sourceDamage,collider.Hitbox.SourcePath);
+            if(hit==null||hit.RawDamage<=0)continue;
+            float damage=hit.RawDamage*decoySource.Prefab.FlameCoefficient;
+            if(!float.IsFinite(damage)||damage<=0||damage>10_000_000)
+                throw new InvalidDataException("Decoy Flame damage escaped host bounds.");
+            if(!decoys.TryDamage(collider.EntityId,damage,out var before,out bool destroyed)||before==null)
+                throw new InvalidDataException("Flame Decoy collision lost its health authority.");
+            stateRevision++;hits++;
+            if(destroyed)
+            {
+                droneTargets.Disable(DroneDecoyId(collider.EntityId));
+                Emit(MatchEventKind.DecoyDestroyed,source.OwnerPlayerId,before.OwnerPlayerId,
+                    collider.EntityId,before.Position,0,"flame");
+            }
+        }
+        return hits;
+    }
+
     private void ApplyDecoyProjectileImpact(string shooterId,ulong entityId,float rawDamage,
         float partWeight,ulong projectileId)
     {
