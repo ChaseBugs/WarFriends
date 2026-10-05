@@ -321,7 +321,10 @@ message MatchSnapshot {
   bool projectiles_truncated = 30;
   // Observed Running transition; may follow scheduled start_tick after a host tick jump.
   uint64 performance_start_tick = 31;
+  // Terminal-only aggregate of accepted owner/card receipts; buddy filtering is separate.
+  repeated BattleCardUsage card_usage = 32;
 }
+message BattleCardUsage { string owner_player_id = 1; string card_id = 2; uint32 count = 3; }
 message BattleDecoyState {
   uint64 entity_id = 1; string request_id = 2; string owner_player_id = 3;
   int32 owner_fraction = 4; int32 obstacle_component_file_id = 5;

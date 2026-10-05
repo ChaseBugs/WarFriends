@@ -297,6 +297,25 @@ public sealed class TerminalOutbox
         }
         if(snapshot.Players.Aggregate(0UL,(sum,player)=>sum+player.ConfirmedCardsPlayed)!=snapshot.CardActivations)
             throw new InvalidDataException("Terminal card ownership does not conserve activations.");
+        if(snapshot.CardUsage.Count>WarCardEffectCatalog.All.Count*2)
+            throw new InvalidDataException("Terminal card usage exceeds its source catalog.");
+        var usageByOwner=snapshot.Players.ToDictionary(p=>p.PlayerId,_=>0UL,StringComparer.Ordinal);
+        string previousOwner="",previousCard="";
+        ulong usageTotal=0;
+        foreach(var usage in snapshot.CardUsage)
+        {
+            if(!usageByOwner.ContainsKey(usage.OwnerPlayerId) ||
+               !WarCardEffectCatalog.TryGet(usage.CardId,out _) || usage.Count is <1 or >4096 ||
+               (previousOwner.Length!=0 && (string.CompareOrdinal(usage.OwnerPlayerId,previousOwner)<0 ||
+                   (usage.OwnerPlayerId==previousOwner && string.CompareOrdinal(usage.CardId,previousCard)<=0))))
+                throw new InvalidDataException("Invalid terminal card usage row.");
+            usageByOwner[usage.OwnerPlayerId]+=usage.Count;
+            usageTotal+=usage.Count;
+            previousOwner=usage.OwnerPlayerId;previousCard=usage.CardId;
+        }
+        if(usageTotal!=snapshot.CardActivations ||
+           snapshot.Players.Any(p=>usageByOwner[p.PlayerId]!=p.ConfirmedCardsPlayed))
+            throw new InvalidDataException("Terminal card usage does not conserve player credits.");
         if(hits>uint.MaxValue || kills>uint.MaxValue || spawns>uint.MaxValue || losses>uint.MaxValue ||
            snapshot.CardActivations>int.MaxValue || snapshot.ObjectiveCredits>int.MaxValue)
             throw new InvalidDataException("Terminal performance counters exceed their durable contract.");

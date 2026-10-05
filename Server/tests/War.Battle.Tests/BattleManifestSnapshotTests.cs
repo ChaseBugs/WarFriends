@@ -69,6 +69,13 @@ internal static class BattleManifestSnapshotTests
                 new Action<MatchSnapshot>(x=>x.CardActivations=4097),
                 new Action<MatchSnapshot>(x=>{x.CardActivations=1;x.Players[0].ConfirmedCardsPlayed=0;}),
                 new Action<MatchSnapshot>(x=>x.Players[0].ConfirmedCardsPlayed=1),
+                new Action<MatchSnapshot>(x=>x.CardUsage.Add(new BattleCardUsage
+                    {OwnerPlayerId=players[0],CardId="CardHeavyTurret",Count=1})),
+                new Action<MatchSnapshot>(x=>{x.CardActivations=1;x.Players[0].ConfirmedCardsPlayed=1;
+                    x.CardUsage.Add(new BattleCardUsage{OwnerPlayerId=players[0],CardId="CardUnknown",Count=1});}),
+                new Action<MatchSnapshot>(x=>{x.CardActivations=2;x.Players[0].ConfirmedCardsPlayed=2;
+                    x.CardUsage.Add(new BattleCardUsage{OwnerPlayerId=players[0],CardId="CardDecoy",Count=1});
+                    x.CardUsage.Add(new BattleCardUsage{OwnerPlayerId=players[0],CardId="CardDecoy",Count=1});}),
                 new Action<MatchSnapshot>(x=>{x.RibbonIds.Add("R1");x.RibbonIds.Add("R1");}),
                 new Action<MatchSnapshot>(x=>x.PerformanceDurationTicks=10_000_001),
                 new Action<MatchSnapshot>(x=>x.PerformanceDurationTicks=1),

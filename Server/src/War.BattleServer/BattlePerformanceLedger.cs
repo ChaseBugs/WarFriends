@@ -2,8 +2,9 @@ namespace War.BattleServer;
 
 public sealed class BattlePerformanceLedger
 {
+    public sealed record CardUsage(string OwnerPlayerId,string CardId,int Count);
     private readonly int capacity;
-    private readonly Dictionary<string,string> cards = new(StringComparer.Ordinal);
+    private readonly Dictionary<string,(string OwnerPlayerId,string CardId)> cards = new(StringComparer.Ordinal);
     private readonly HashSet<string> objectives = new();
     public ulong StartTick { get; private set; }
     public ulong EndTick { get; private set; }
@@ -27,26 +28,36 @@ public sealed class BattlePerformanceLedger
         EndTick = tick;
     }
     public bool RecordCard(string eventId) => RecordCard(eventId,"");
-    public bool RecordCard(string eventId,string ownerPlayerId)
+    public bool RecordCard(string eventId,string ownerPlayerId) => RecordCard(eventId,ownerPlayerId,"");
+    public bool RecordCard(string eventId,string ownerPlayerId,string cardId)
     {
         if(ownerPlayerId.Length!=0 && !Guid.TryParseExact(ownerPlayerId,"N",out _))
             throw new InvalidDataException("Invalid card activation owner.");
+        if(cardId.Length!=0 && (ownerPlayerId.Length==0 || !WarCardEffectCatalog.TryGet(cardId,out _)))
+            throw new InvalidDataException("Invalid card activation identity.");
         if(!Guid.TryParseExact(eventId,"N",out _))
             throw new InvalidDataException("Invalid performance event ID.");
-        if(cards.TryGetValue(eventId,out var owner))
+        if(cards.TryGetValue(eventId,out var existing))
         {
-            if(owner!=ownerPlayerId)throw new InvalidDataException("Card activation owner changed on replay.");
+            if(existing.OwnerPlayerId!=ownerPlayerId || existing.CardId!=cardId)
+                throw new InvalidDataException("Card activation owner or identity changed on replay.");
             return false;
         }
         if(cards.Count+objectives.Count>=capacity)throw new InvalidDataException("Performance ledger capacity exceeded.");
-        cards.Add(eventId,ownerPlayerId);
+        cards.Add(eventId,(ownerPlayerId,cardId));
         return true;
     }
     public int CardActivationsFor(string ownerPlayerId)
     {
         if(!Guid.TryParseExact(ownerPlayerId,"N",out _))throw new InvalidDataException("Invalid card activation owner.");
-        return cards.Values.Count(owner=>owner==ownerPlayerId);
+        return cards.Values.Count(row=>row.OwnerPlayerId==ownerPlayerId);
     }
+    public IReadOnlyList<CardUsage> CardUsageSnapshot() => cards.Values
+        .Where(row=>row.OwnerPlayerId.Length!=0 && row.CardId.Length!=0)
+        .GroupBy(row=>row)
+        .Select(group=>new CardUsage(group.Key.OwnerPlayerId,group.Key.CardId,group.Count()))
+        .OrderBy(row=>row.OwnerPlayerId,StringComparer.Ordinal)
+        .ThenBy(row=>row.CardId,StringComparer.Ordinal).ToArray();
     public bool CanRecordCard(string eventId)
     {
         if(!Guid.TryParseExact(eventId,"N",out _))return false;
