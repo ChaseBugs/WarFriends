@@ -4166,12 +4166,12 @@ internal static class CombatContentTests
         ],dynamicTargets:flameHelicopterMatch.GroundVehicleShotTargets);
         var helicopterShotOrigin=helicopterFlameBoxes[0].Center-Vector3.UnitZ*2;
         var helicopterOverlap=helicopterShotWorld.OverlapEnemy(soldierOwner,
-            helicopterShotOrigin,4,1u<<8);
+            helicopterShotOrigin,4,1u<<26);
         Check(helicopterOverlap.Any(x=>x.MainEntityId==
                   "helicopter:"+flameHelicopterTarget.EntityKey)&&
-              !helicopterShotWorld.OverlapEnemy(soldierOwner,helicopterShotOrigin,4,0)
+              !helicopterShotWorld.OverlapEnemy(soldierOwner,helicopterShotOrigin,4,1u<<8)
                   .Any(x=>x.MainEntityId=="helicopter:"+flameHelicopterTarget.EntityKey),
-              "live source-pinned Helicopter body enters shotgun overlap on layer eight");
+              "live source-pinned Helicopter body enters shotgun overlap on its faction mech layer");
         var helicopterPlan=ShotgunShotPlanner.Plan(new ShotgunRule(50,3,10,10,100,false,false),
             helicopterShotOrigin,helicopterFlameBoxes[0].Center+Vector3.UnitX*.5f,
             helicopterOverlap);
@@ -4397,14 +4397,14 @@ internal static class CombatContentTests
             .Where(x=>x.EntityId==helicopterEntity.EntityKey).ToArray();
         var liveHelicopterBodyBoxes=liveHelicopterBoxes.Where(x=>!x.HelicopterGunner).ToArray();
         var liveGunnerBoxes=liveHelicopterBoxes.Where(x=>x.HelicopterGunner).ToArray();
-        Check(liveHelicopterBodyBoxes.Length==11&&liveHelicopterBodyBoxes.All(x=>x.Layer==8)&&
+        Check(liveHelicopterBodyBoxes.Length==11&&liveHelicopterBodyBoxes.All(x=>x.Layer==26)&&
               liveHelicopterBodyBoxes.Select(x=>x.PartComponentFileId)
                   .SequenceEqual(heliBoxes.Select(x=>x.ColliderFileId))&&
               liveGunnerBoxes.Length==3&&liveGunnerBoxes.All(x=>x.Layer==22&&
                   x.PartComponentFileId==0&&x.Hitbox.SourcePath.StartsWith("helicopter-gunner/"))&&
               !deathMatch.GroundVehicleShotTargets(helicopterOwner)
                   .Any(x=>x.EntityId==helicopterEntity.EntityKey),
-              "normal deployed Helicopter contributes its source boxes only to opposing projectile traces");
+              "normal deployed Helicopter contributes its source boxes on the runtime mech layer only to opposing projectile traces");
         var gunnerShotWorld=new ShotCollisionWorld(null,
         [
             new(soldierOwner,deathMatch.CombatPose(soldierOwner).Collision),

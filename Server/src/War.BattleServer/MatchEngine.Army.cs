@@ -475,7 +475,9 @@ public sealed partial class MatchEngine
             var rotation=new Quaternion(q.X,q.Y,q.Z,q.W);
             foreach(var collider in (helicopterBodyColliders??throw new InvalidDataException(
                 "Helicopter collider catalog missing.")).Place(root,rotation))
-                result.Add(new(row.EntityKey,collider.ColliderFileId,collider.Layer,collider.Hitbox,
+                result.Add(new(row.EntityKey,collider.ColliderFileId,
+                    row.OwnerFraction==1?27:row.OwnerFraction==2?26:
+                        throw new InvalidDataException("Helicopter body has unsupported faction."),collider.Hitbox,
                     HelicopterBody:true));
             if(armyHelicopterGunners.TryGetValue(row.EntityKey,out var gunner))
             {
