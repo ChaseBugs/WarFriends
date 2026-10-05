@@ -11,6 +11,9 @@ internal sealed record HelicopterBodyCollider(int ColliderFileId,int PartCompone
 // Their source DestroyableObjectpart components route damage to the same root.
 internal sealed class HelicopterBodyColliderCatalog
 {
+    // Helicopter.prefab's root and child parts serialize shotCoeficient: 1.
+    // UpgradesLoaded later changes only the root to 0.33; Burn does not refresh children.
+    internal const float FlamePartCoefficient=1f;
     private sealed record Source(int ColliderFileId,int PartComponentFileId,int Layer,
         Vector3 Center,Quaternion Rotation,Vector3 Size);
     private static readonly int[] SourceOrder=[6580903,6571354,6564753,6533468,6593588,
@@ -34,6 +37,11 @@ internal sealed class HelicopterBodyColliderCatalog
                "e91c07c1552988601ada89c769056354ebd5d94ea88356eeacc5fa3f3fb76408"||
            unit.GetProperty("rootTransformFileId").GetInt32()!=499539)
             throw new InvalidDataException("Helicopter collider prefab identity mismatch.");
+        var rootDamage=unit.GetProperty("components").EnumerateArray().Single(x=>
+            x.GetProperty("scriptType").GetString()=="DestroyableObjectMultipleParts");
+        if(rootDamage.GetProperty("componentFileId").GetInt32()!=11414637||
+           rootDamage.GetProperty("gameObjectFileId").GetInt32()!=147589)
+            throw new InvalidDataException("Helicopter Flame damage root changed.");
         var parts=unit.GetProperty("components").EnumerateArray().Where(x=>
             x.GetProperty("scriptType").GetString()=="DestroyableObjectpart").ToArray();
         var colliders=unit.GetProperty("colliders");

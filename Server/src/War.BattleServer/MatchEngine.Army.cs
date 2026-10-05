@@ -2121,6 +2121,7 @@ public sealed partial class MatchEngine
             }
             if(!Terminal)ApplyArmyFlameInfantryPulse(burst.EntityKey,origin,forward);
             if(!Terminal)ApplyArmyFlameDronePulse(burst.EntityKey,origin,forward);
+            if(!Terminal)ApplyArmyFlameHelicopterPulse(burst.EntityKey,origin,forward);
             if(!Terminal)ApplyArmyFlameVehiclePulse(burst.EntityKey,origin,forward);
             if(!Terminal)ApplyArmyFlameDecoyPulse(burst.EntityKey,origin,forward);
             if(!Terminal)ApplyArmyFlameHeavyTurretPulse(burst.EntityKey,origin,forward);
@@ -2189,6 +2190,37 @@ public sealed partial class MatchEngine
             if(hit!=null&&hit.RawDamage>0&&
                ApplyArmyHostDamage(drone.EntityKey,hit.RawDamage*DroneColliderCatalog.FlameCoefficient))
                 hits++;
+        }
+        return hits;
+    }
+
+    internal int ApplyArmyFlameHelicopterPulse(ulong sourceEntityKey,Vector3 origin,Vector3 forward)
+    {
+        if(phase!=BattlePhase.Running||!activeArmyEntities.TryGetValue(sourceEntityKey,out var source)||
+           source.UnitId!="ID_UNIT-FLAMETHROWER"||!PlayerHitbox.Finite(origin)||
+           !PlayerHitbox.Finite(forward)||forward.LengthSquared()<1e-10f)
+            throw new InvalidDataException("Invalid army Flame Helicopter pulse authority.");
+        if(helicopterBodyColliders==null)return 0;
+        var owner=Find(source.OwnerPlayerId)??
+            throw new InvalidDataException("Army Flame Helicopter source lacks an owner.");
+        float sourceDamage=ArmyDamage(sourceEntityKey)??
+            throw new InvalidDataException("Army Flame lacks trusted damage.");
+        if(!float.IsFinite(sourceDamage)||sourceDamage<0||sourceDamage>10_000_000)
+            throw new InvalidDataException("Invalid army Flame source damage.");
+        int hits=0;
+        foreach(var helicopter in activeArmyEntities.Values.Where(x=>x.UnitId=="ID_UNIT-HELICOPTER")
+            .OrderBy(x=>x.EntityKey).ToArray())
+        {
+            if(helicopter.OwnerPlayerId==source.OwnerPlayerId||
+               helicopter.OwnerFraction==owner.Definition.Fraction)continue;
+            var q=helicopter.HelicopterRotation??
+                throw new InvalidDataException("Flame Helicopter lost its host rotation.");
+            var boxes=helicopterBodyColliders.Place(new(helicopter.X,helicopter.Y,helicopter.Z),
+                new(q.X,q.Y,q.Z,q.W));
+            var hit=ArmyFlameBurst.ResolveParts(origin,forward,
+                boxes.Select(x=>x.Hitbox).ToArray(),sourceDamage);
+            if(hit!=null&&hit.RawDamage>0&&ApplyArmyHostDamage(helicopter.EntityKey,
+               hit.RawDamage*HelicopterBodyColliderCatalog.FlamePartCoefficient))hits++;
         }
         return hits;
     }

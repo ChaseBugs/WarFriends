@@ -3642,6 +3642,50 @@ internal static class CombatContentTests
               Math.Abs(droneBefore-flameDroneMatch.ArmyHealth(flameDroneTarget.EntityKey)!.Value-
                   droneExpected)<.001f,
             "one Flame pulse damages the opposing Drone root by its source coefficient-one amount");
+        var flameHelicopterManifest=flameManifest with {MatchId="army-flame-helicopter",
+            Players=[flameManifest.Players[0],flameManifest.Players[1] with
+            {
+                EquippedArmyUnitIds=["ID_UNIT-HELICOPTER"],ArmyNormalUpgradeIndexes=[0],
+                ArmySpecialUpgradeIndexes=[-1],ArmyEliteUpgradeIndexes=[-1],
+                ArmyHealthFactors=[new(1f,1f)],ArmyDamageScales=[1f],
+                ArmySpeedCoefficients=[1f],ArmyAccuracyCoefficients=[1f]
+            }]};
+        content.ValidateAllocation(flameHelicopterManifest);
+        var flameHelicopterMatch=new MatchEngine(flameHelicopterManifest,content:content,armyChoice:_=>0);
+        flameHelicopterMatch.Admit(soldierOwner);flameHelicopterMatch.Admit(helicopterOwner);
+        flameHelicopterMatch.Command(soldierOwner,new(){CommandId=1,
+            Ready=new(){ManifestHash=flameHelicopterMatch.ManifestHash}});
+        flameHelicopterMatch.Command(helicopterOwner,new(){CommandId=1,
+            Ready=new(){ManifestHash=flameHelicopterMatch.ManifestHash}});
+        flameHelicopterMatch.Advance(60);
+        Check(flameHelicopterMatch.Command(soldierOwner,new(){CommandId=2,DeployArmy=new()
+            {OptionIndex=flameHelicopterMatch.ArmyBatch(soldierOwner).OptionIndexes[0]}}).Code=="army-deploying"&&
+              flameHelicopterMatch.Command(helicopterOwner,new(){CommandId=2,DeployArmy=new()
+            {OptionIndex=flameHelicopterMatch.ArmyBatch(helicopterOwner).OptionIndexes[0]}}).Code=="army-deploying",
+            "opposing Flamethrower and Helicopter deploy from trusted allocations");
+        for(ulong flameHelicopterTick=61;flameHelicopterTick<=75;flameHelicopterTick++)
+            flameHelicopterMatch.Advance(flameHelicopterTick);
+        var flameHelicopterRows=flameHelicopterMatch.ArmyEntityBatch(soldierOwner,0,0).Entities;
+        var flameHelicopterSource=flameHelicopterRows.Single(x=>x.OwnerPlayerId==soldierOwner);
+        var flameHelicopterTarget=flameHelicopterRows.Single(x=>x.OwnerPlayerId==helicopterOwner);
+        var helicopterFlameBoxes=flameHelicopterMatch.GroundVehicleShotTargets(soldierOwner)
+            .Where(x=>x.EntityId==flameHelicopterTarget.EntityKey&&!x.HelicopterGunner)
+            .Select(x=>x.Hitbox).ToArray();
+        Vector3 helicopterFlameOrigin=helicopterFlameBoxes[0].Center-Vector3.UnitZ;
+        float helicopterFlameExpected=ArmyFlameBurst.ResolveParts(helicopterFlameOrigin,Vector3.UnitZ,
+            helicopterFlameBoxes,flameHelicopterMatch.ArmyDamage(flameHelicopterSource.EntityKey)!.Value)!.RawDamage*
+            HelicopterBodyColliderCatalog.FlamePartCoefficient;
+        float helicopterFlameBefore=flameHelicopterMatch.ArmyHealth(flameHelicopterTarget.EntityKey)!.Value;
+        float helicopterGunnerBefore=flameHelicopterTarget.HelicopterGunnerHealth;
+        Check(helicopterFlameBoxes.Length==11&&
+              flameHelicopterMatch.ApplyArmyFlameHelicopterPulse(flameHelicopterSource.EntityKey,
+                  helicopterFlameOrigin,Vector3.UnitZ)==1&&
+              Math.Abs(helicopterFlameBefore-
+                  flameHelicopterMatch.ArmyHealth(flameHelicopterTarget.EntityKey)!.Value-
+                  helicopterFlameExpected)<.001f&&
+              flameHelicopterMatch.ArmyEntityBatch(soldierOwner,0,0).Entities
+                  .Single(x=>x.EntityKey==flameHelicopterTarget.EntityKey).HelicopterGunnerHealth==helicopterGunnerBefore,
+            "one Flame pulse damages the Helicopter body once without promoting gunner colliders");
         var flameDecoyManifest=flameManifest with {MatchId="army-flame-decoy",
             SceneMasterPlayerId=soldierOwner,
             Players=flameManifest.Players.Select(p=>p with {PlayerLevel=22}).ToArray()};
