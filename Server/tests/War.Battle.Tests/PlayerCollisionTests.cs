@@ -55,6 +55,9 @@ internal static class PlayerCollisionTests
         var world = new ShotCollisionWorld(null, [new(a, gameplay), new(b, target)]);
         var hitPlayer = world.Raycast(a, movedOrigin, Vector3.Transform(-Vector3.UnitX, delta), 10);
         Check(hitPlayer?.PlayerId == b && hitPlayer.PartWeight == placedPart.Weight, "host resolves target identity and part weight");
+        var layeredWorld = new ShotCollisionWorld(null, [new(a, gameplay, 23, 1), new(b, target, 22, 2)]);
+        Check(layeredWorld.Raycast(a, movedOrigin, Vector3.Transform(-Vector3.UnitX, delta), 10)?.ColliderLayer == 22 &&
+              hitPlayer?.ColliderLayer == null, "hit keeps the exact host player collider layer or an explicit unknown");
         Reject(() => new ShotCollisionWorld(null, [new(a, models.Single(m => m.Role == "preview")), new(b, target)]));
         Reject(() => world.Raycast(new string('c',32), movedOrigin, -Vector3.UnitX, 10));
         Reject(() => world.Raycast(a, movedOrigin, -Vector3.UnitX, float.NaN));
@@ -68,7 +71,8 @@ internal static class PlayerCollisionTests
               "oriented repair-drone trigger overlaps recovered triangle/convex geometry without an AABB false positive");
         var behind = gameplay.Place(ground.Position-Vector3.UnitY*3, Quaternion.Identity);
         var blocked = new ShotCollisionWorld(map, [new(a, gameplay), new(b, behind)]).Raycast(a, groundOrigin, -Vector3.UnitY, 100);
-        Check(blocked != null && blocked.PlayerId == null && blocked.SourcePath == ground.SourcePath, "map occludes player behind geometry");
+        Check(blocked != null && blocked.PlayerId == null && blocked.SourcePath == ground.SourcePath &&
+              blocked.ColliderLayer == ground.Layer, "map occludes player behind geometry with its actual collider layer");
 
         var json = JsonNode.Parse(File.ReadAllText(path))!;
         string temp = System.IO.Path.GetTempFileName();

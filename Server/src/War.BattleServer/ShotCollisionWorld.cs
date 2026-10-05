@@ -7,7 +7,7 @@ namespace War.BattleServer;
 internal sealed record CollisionPlayer(string PlayerId, PlayerCollisionModel Pose,int Layer=-1,int Fraction=0);
 internal sealed record DynamicShotTarget(ulong EntityId,int PartComponentFileId,int Layer,PlayerHitbox Hitbox,
     string? PassengerRole=null,int? RepairDronePathIndex=null,bool ArmyInfantry=false,bool Decoy=false,bool HeavyTurret=false,bool HelicopterGunner=false,bool GroundVehicleBody=false,bool HelicopterBody=false,bool DroneRoot=false);
-internal sealed record ShotCollision(float Distance, Vector3 Position, string SourcePath, string? PlayerId, float PartWeight, bool Static = false,string? DynamicOwner=null,int? ColliderIndex=null,ulong? DynamicEntityId=null,int? DynamicPartId=null,string? DynamicPassengerRole=null,int? DynamicRepairDronePathIndex=null,bool DynamicArmyInfantry=false,bool DynamicDecoy=false,bool DynamicHeavyTurret=false,bool DynamicHelicopterGunner=false);
+internal sealed record ShotCollision(float Distance, Vector3 Position, string SourcePath, string? PlayerId, float PartWeight, bool Static = false,string? DynamicOwner=null,int? ColliderIndex=null,ulong? DynamicEntityId=null,int? DynamicPartId=null,string? DynamicPassengerRole=null,int? DynamicRepairDronePathIndex=null,bool DynamicArmyInfantry=false,bool DynamicDecoy=false,bool DynamicHeavyTurret=false,bool DynamicHelicopterGunner=false,int? ColliderLayer=null);
 
 // Input poses come exclusively from host animation/pose authority. This class has
 // no network adapter and no client-submitted target player or damage parameter.
@@ -41,14 +41,15 @@ internal sealed class ShotCollisionWorld
         // an overlapping player. Disabled reference colliders are never promoted.
         direction = Vector3.Normalize(direction);
         var geometry = map?.Raycast(origin, direction, range, mapLayerMask,dynamicEnabled,colliderEnabled,runtimeLayer);
-        ShotCollision? nearest = geometry == null ? null : new(geometry.Distance, geometry.Position, geometry.SourcePath, null, 0, geometry.Layer is 13 or 30,geometry.DynamicOwner,geometry.ColliderIndex);
+        ShotCollision? nearest = geometry == null ? null : new(geometry.Distance, geometry.Position, geometry.SourcePath, null, 0, geometry.Layer is 13 or 30,geometry.DynamicOwner,geometry.ColliderIndex,ColliderLayer:geometry.Layer);
         foreach (var player in players)
         {
             if (player.PlayerId == shooterId) continue;
             if(player.Layer>=0&&(mapLayerMask&(1u<<player.Layer))==0)continue;
             var hit = player.Pose.Raycast(origin, direction, range);
             if (hit != null && (nearest == null || hit.Distance < nearest.Distance))
-                nearest = new(hit.Distance, hit.Position, hit.PartPath, player.PlayerId, hit.Weight);
+                nearest = new(hit.Distance, hit.Position, hit.PartPath, player.PlayerId, hit.Weight,
+                    ColliderLayer:player.Layer>=0?player.Layer:null);
         }
         if(dynamicTargets!=null)
             foreach(var target in dynamicTargets(shooterId))
@@ -74,7 +75,8 @@ internal sealed class ShotCollisionWorld
                         DynamicPassengerRole:target.PassengerRole,
                         DynamicRepairDronePathIndex:target.RepairDronePathIndex,
                         DynamicArmyInfantry:target.ArmyInfantry,DynamicDecoy:target.Decoy,
-                        DynamicHeavyTurret:target.HeavyTurret,DynamicHelicopterGunner:target.HelicopterGunner);
+                        DynamicHeavyTurret:target.HeavyTurret,DynamicHelicopterGunner:target.HelicopterGunner,
+                        ColliderLayer:target.Layer);
             }
         return nearest;
     }

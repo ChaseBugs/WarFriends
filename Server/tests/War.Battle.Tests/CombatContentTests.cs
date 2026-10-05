@@ -3235,6 +3235,10 @@ internal static class CombatContentTests
             new(decoyOpponent,deployedDroneMatch.CombatPose(decoyOpponent).Collision),
             new(decoyPlayer,deployedDroneMatch.CombatPose(decoyPlayer).Collision)
         ],dynamicTargets:deployedDroneMatch.GroundVehicleShotTargets);
+        var droneRootRay=shotgunDroneWorld.Raycast(decoyOpponent,
+            shotgunDroneRoot.Hitbox.Center-Vector3.UnitZ*2,Vector3.UnitZ,4,1u<<27);
+        Check(droneRootRay?.DynamicEntityId==deployedDrone.EntityKey&&droneRootRay.ColliderLayer==27,
+            "deployed Drone bullet impact keeps its exact flying-faction collider layer");
         var shotgunDroneOrigin=shotgunDroneRoot.Hitbox.Center-Vector3.UnitZ*2;
         var shotgunDroneOverlap=shotgunDroneWorld.OverlapEnemy(decoyOpponent,
             shotgunDroneOrigin,4,1u<<27);
