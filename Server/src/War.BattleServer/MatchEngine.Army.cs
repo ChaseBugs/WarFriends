@@ -628,6 +628,40 @@ public sealed partial class MatchEngine
         }
     }
 
+    internal void ApplyPlayerGrenadeAirBodyExplosion(string shooterId,Vector3 origin,GrenadeStage stage)
+    {
+        if(phase!=BattlePhase.Running||grenadeCatalog==null||explosionPolicy==null||
+           droneColliders==null||helicopterBodyColliders==null||stage==null||
+           !ReferenceEquals(grenadeCatalog.Stage(stage.SourceId,stage.Index),stage)||
+           !PlayerHitbox.Finite(origin))
+            throw new InvalidDataException("Grenade air-body blast lacks trusted source authority.");
+        var shooter=Find(shooterId)??throw new InvalidDataException("Grenade owner disappeared.");
+        var groups=GroundVehicleShotTargets(shooterId,true)
+            .Where(x=>x.DroneRoot||x.HelicopterBody)
+            .GroupBy(x=>x.EntityId).OrderBy(x=>x.Key).ToArray();
+        foreach(var group in groups)
+        {
+            if(!activeArmyEntities.TryGetValue(group.Key,out var army)||
+               army.UnitId is not ("ID_UNIT-DRONE" or "ID_UNIT-HELICOPTER")||
+               group.Any(x=>army.UnitId=="ID_UNIT-DRONE"?!x.DroneRoot:x.DroneRoot))
+                throw new InvalidDataException("Grenade air body lost source entity authority.");
+            var effect=GrenadeExplosion.ResolveArmy(origin,new(army.X,army.Y,army.Z),
+                group.Select(x=>x.Hitbox).ToArray(),stage);
+            if(effect==null)continue;
+            bool friendly=army.OwnerFraction==shooter.Definition.Fraction;
+            float amount=effect.RawDamage*(friendly?explosionPolicy.Friendly:1f);
+            if(!float.IsFinite(amount)||amount<=0||amount>10_000_000)
+                throw new InvalidDataException("Grenade air-body damage exceeded host bounds.");
+            ApplyArmyHostDamage(group.Key,amount);
+            if(Terminal)return;
+            if(activeArmyEntities.ContainsKey(group.Key)||friendly)continue;
+            if(directArmyKills.Count>=256)
+            {End("source-kill-backpressure","",false);return;}
+            directArmyKills.Add((group.Key,army.UnitId,army.OwnerPlayerId,
+                shooter.Definition.PlayerId,"player-grenade",tick));
+        }
+    }
+
     internal void ApplyHelicopterGunnerProjectileImpact(string shooterId,ulong entityId,
         float rawDamage,float partWeight)
     {

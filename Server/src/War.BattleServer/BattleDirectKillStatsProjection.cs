@@ -1,6 +1,6 @@
 namespace War.BattleServer;
 
-/// <summary>Source-shaped subset from direct player-bullet army kills only.</summary>
+/// <summary>Source-shaped subset from confirmed direct player-owned army deaths.</summary>
 public sealed record BattleDirectKillStats(string PlayerId,int DirectBulletKills,
     int DirectBulletVehiclesDestroyed,int DirectBulletTanksDestroyed,int DirectGrenadeKills,
     int DirectGrenadeVehiclesDestroyed,int DirectGrenadeTanksDestroyed);
@@ -22,9 +22,11 @@ public static class BattleDirectKillStatsProjection
     };
     private static readonly HashSet<string> GroundVehicles=new(StringComparer.Ordinal)
     {"ID_UNIT-HUMVEE","ID_UNIT-TANK","ID_UNIT-BUGGY","ID_UNIT-TRANSPORTER"};
+    private static readonly HashSet<string> GrenadeVehicles=new(GroundVehicles,StringComparer.Ordinal)
+    {"ID_UNIT-DRONE","ID_UNIT-HELICOPTER"};
 
     internal static bool SupportsGrenadeVictim(string unitId)=>
-        Soldiers.Contains(unitId)||GroundVehicles.Contains(unitId);
+        Soldiers.Contains(unitId)||GrenadeVehicles.Contains(unitId);
 
     public static IReadOnlyList<BattleDirectKillStats> FromPayload(
         byte[] payload,string matchId,string digest)
@@ -44,7 +46,7 @@ public static class BattleDirectKillStatsProjection
             return new BattleDirectKillStats(player.PlayerId,kills.Length,
                 kills.Count(x=>Vehicles.Contains(x.UnitId)),
                 kills.Count(x=>x.UnitId=="ID_UNIT-TANK"),grenadeKills.Length,
-                grenadeKills.Count(x=>GroundVehicles.Contains(x.UnitId)),
+                grenadeKills.Count(x=>GrenadeVehicles.Contains(x.UnitId)),
                 grenadeKills.Count(x=>x.UnitId=="ID_UNIT-TANK"));
         }).ToArray();
     }

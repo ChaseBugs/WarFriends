@@ -3558,6 +3558,12 @@ internal static class CombatContentTests
             War.Shared.TerminalResultDigest.Compute(forgedKillBytes)));
         forgedKill=droneShotMatch.TerminalEvidenceSnapshot();
         forgedKill.DirectArmyKills[0].Cause="player-grenade";
+        forgedKill.DirectArmyKills[0].UnitId="ID_UNIT-ASSAULTHELI";
+        var unsupportedGrenadeUsage=forgedKill.Players.Single(p=>p.PlayerId==decoyPlayer)
+            .ArmyUsage.Single();
+        unsupportedGrenadeUsage.OptionIndex=30;
+        unsupportedGrenadeUsage.UnitId="ID_UNIT-ASSAULTHELI";
+        unsupportedGrenadeUsage.PlannedSpawns=1;
         forgedKillBytes=Google.Protobuf.MessageExtensions.ToByteArray(forgedKill);
         Reject(()=>TerminalOutbox.ValidatePayload(forgedKillBytes,droneShotMatch.MatchId,
             War.Shared.TerminalResultDigest.Compute(forgedKillBytes)));

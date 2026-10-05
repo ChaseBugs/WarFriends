@@ -1948,6 +1948,8 @@ public sealed partial class MatchEngine
         if(Terminal)return;
         ApplyPlayerGrenadeGroundVehicleExplosion(impact.OwnerId,impact.Position,projectile.Stage);
         if(Terminal)return;
+        ApplyPlayerGrenadeAirBodyExplosion(impact.OwnerId,impact.Position,projectile.Stage);
+        if(Terminal)return;
         foreach(var victim in players.Where(x=>!x.Dead).ToArray())
         {
             float roll=damageRoll();var effect=GrenadeExplosion.ResolvePlayer(impact.Position,

@@ -412,6 +412,65 @@ internal static class GrenadeCatalogTests
                   {DirectBulletKills:0,DirectGrenadeKills:1,
                    DirectGrenadeVehiclesDestroyed:1,DirectGrenadeTanksDestroyed:1},
             "opposing Tank grenade death projects one cause-preserving vehicle and Tank kill candidate");
+        foreach(string airUnit in new[]{"ID_UNIT-DRONE","ID_UNIT-HELICOPTER"})
+        {
+            var airAllocation=infantryAllocation with {MatchId="grenade-air-"+airUnit[8..].ToLowerInvariant(),
+                Players=[infantryAllocation.Players[0],infantryAllocation.Players[1] with
+                    {EquippedArmyUnitIds=[airUnit]}]};
+            combat.ValidateAllocation(airAllocation);
+            var airMatch=new MatchEngine(airAllocation,map,combat,armyChoice:_=>0);
+            airMatch.Admit(one);airMatch.Admit(two);
+            airMatch.Command(one,new(){CommandId=1,Ready=new(){ManifestHash=airMatch.ManifestHash}});
+            airMatch.Command(two,new(){CommandId=1,Ready=new(){ManifestHash=airMatch.ManifestHash}});
+            airMatch.Advance(60);
+            int airOption=airMatch.ArmyBatch(two).OptionIndexes.First();
+            Check(airMatch.Command(two,new(){CommandId=2,DeployArmy=new(){OptionIndex=airOption}})
+                .Code=="army-deploying","grenade opponent deploys source air body "+airUnit);
+            ulong airTick=60;
+            while(airTick<300&&airMatch.ArmyEntityBatch(one,0,0).Entities.Count==0)
+                airMatch.Advance(++airTick);
+            var airVictim=airMatch.ArmyEntityBatch(one,0,0).Entities.First();
+            var airBodies=airMatch.GroundVehicleShotTargets(one)
+                .Where(x=>x.EntityId==airVictim.EntityKey&&
+                    (airUnit=="ID_UNIT-DRONE"?x.DroneRoot:x.HelicopterBody)).ToArray();
+            var airOrigin=airBodies.First().Hitbox.Center;
+            var airStage=combat.Grenades!.Stage("Google2u.Grenade_FRAG",0);
+            var airEffect=GrenadeExplosion.ResolveArmy(airOrigin,
+                new(airVictim.X,airVictim.Y,airVictim.Z),airBodies.Select(x=>x.Hitbox).ToArray(),airStage)!;
+            float airBefore=airVictim.Health;
+            airMatch.ApplyPlayerGrenadeAirBodyExplosion(one,airOrigin,airStage);
+            float? airAfter=airMatch.ArmyHealth(airVictim.EntityKey);
+            float expectedAir=airBefore-Math.Max(0,airEffect.RawDamage-airVictim.Kevlar);
+            Check((expectedAir<=0?airAfter==null:
+                  airAfter!=null&&Math.Abs(airAfter.Value-expectedAir)<.01f),
+                "grenade damages selected source air body without child or gunner duplication: "+airUnit);
+            if(airAfter!=null)
+            {
+                var friendlyAirBefore=airMatch.ArmyEntityBatch(one,0,0).Entities
+                    .Single(x=>x.EntityKey==airVictim.EntityKey);
+                airMatch.ApplyPlayerGrenadeAirBodyExplosion(two,airOrigin,airStage);
+                float? friendlyAirAfter=airMatch.ArmyHealth(airVictim.EntityKey);
+                float expectedFriendlyAir=friendlyAirBefore.Health-
+                    Math.Max(0,airEffect.RawDamage*combat.Explosions.Friendly-friendlyAirBefore.Kevlar);
+                Check((expectedFriendlyAir<=0?friendlyAirAfter==null:
+                      friendlyAirAfter!=null&&Math.Abs(friendlyAirAfter.Value-expectedFriendlyAir)<.01f),
+                    "friendly air-body grenade blast applies source half damage: "+airUnit);
+            }
+            for(int blast=0;blast<100&&airMatch.ArmyHealth(airVictim.EntityKey)!=null;blast++)
+                airMatch.ApplyPlayerGrenadeAirBodyExplosion(one,airOrigin,airStage);
+            Check(airMatch.ArmyHealth(airVictim.EntityKey)==null,
+                "trusted grenade blasts retire shared air vitality: "+airUnit);
+            airMatch.Command(one,new(){CommandId=2,Forfeit=new()});
+            var airTerminal=airMatch.TerminalEvidenceSnapshot();
+            var airBytes=airTerminal.ToByteArray();
+            Check(airTerminal.DirectArmyKills.Single(x=>x.EntityKey==airVictim.EntityKey) is
+                  {Cause:"player-grenade",AttackerPlayerId:var airAttacker}&&airAttacker==one&&
+                  BattleDirectKillStatsProjection.FromPayload(airBytes,airMatch.MatchId,
+                      War.Shared.TerminalResultDigest.Compute(airBytes)).Single(x=>x.PlayerId==one) is
+                      {DirectBulletKills:0,DirectGrenadeKills:1,
+                       DirectGrenadeVehiclesDestroyed:1,DirectGrenadeTanksDestroyed:0},
+                "source air-body grenade death projects one validated vehicle candidate: "+airUnit);
+        }
         Console.WriteLine($"PASS: {checks} grenade catalog assertions");return checks;
         static string fragBindingPath(GrenadeCatalog value)=>value.Binding("Google2u.Grenade_FRAG").SwipeInput!.LeftMuzzlePath;
     }
