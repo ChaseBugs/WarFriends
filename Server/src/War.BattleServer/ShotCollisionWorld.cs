@@ -4,7 +4,7 @@ using System.Text;
 
 namespace War.BattleServer;
 
-internal sealed record CollisionPlayer(string PlayerId, PlayerCollisionModel Pose);
+internal sealed record CollisionPlayer(string PlayerId, PlayerCollisionModel Pose,int Layer=-1);
 internal sealed record DynamicShotTarget(ulong EntityId,int PartComponentFileId,int Layer,PlayerHitbox Hitbox,
     string? PassengerRole=null,int? RepairDronePathIndex=null,bool ArmyInfantry=false,bool Decoy=false,bool HeavyTurret=false,bool HelicopterGunner=false,bool GroundVehicleBody=false,bool HelicopterBody=false,bool DroneRoot=false);
 internal sealed record ShotCollision(float Distance, Vector3 Position, string SourcePath, string? PlayerId, float PartWeight, bool Static = false,string? DynamicOwner=null,int? ColliderIndex=null,ulong? DynamicEntityId=null,int? DynamicPartId=null,string? DynamicPassengerRole=null,int? DynamicRepairDronePathIndex=null,bool DynamicArmyInfantry=false,bool DynamicDecoy=false,bool DynamicHeavyTurret=false,bool DynamicHelicopterGunner=false);
@@ -27,7 +27,8 @@ internal sealed class ShotCollisionWorld
         this.runtimeLayer=runtimeLayer;this.dynamicTargets=dynamicTargets;
         this.players = players.Take(3).ToArray();
         if (this.players.Length != 2 || this.players.Any(p => p == null || p.Pose == null || p.Pose.Role != "gameplay" ||
-            !Guid.TryParseExact(p.PlayerId, "N", out _) || p.PlayerId != p.PlayerId.ToLowerInvariant()) ||
+            !Guid.TryParseExact(p.PlayerId, "N", out _) || p.PlayerId != p.PlayerId.ToLowerInvariant() ||
+            p.Layer is not (-1 or 22 or 23)) ||
             this.players[0].PlayerId == this.players[1].PlayerId)
             throw new InvalidDataException("Expected two distinct host-owned gameplay collision poses.");
     }
@@ -44,6 +45,7 @@ internal sealed class ShotCollisionWorld
         foreach (var player in players)
         {
             if (player.PlayerId == shooterId) continue;
+            if(player.Layer>=0&&(mapLayerMask&(1u<<player.Layer))==0)continue;
             var hit = player.Pose.Raycast(origin, direction, range);
             if (hit != null && (nearest == null || hit.Distance < nearest.Distance))
                 nearest = new(hit.Distance, hit.Position, hit.PartPath, player.PlayerId, hit.Weight);
@@ -87,7 +89,8 @@ internal sealed class ShotCollisionWorld
         var enemy=players.Single(p=>p.PlayerId!=shooterId);
         if(shooter.Pose.PoseKind=="serialized-reference-only" || enemy.Pose.PoseKind=="serialized-reference-only")
             throw new InvalidDataException("Shotgun overlap needs current host player poses.");
-        var result=enemy.Pose.Parts.Where(p=>p.OverlapsSphere(origin,radius))
+        var result=enemy.Pose.Parts.Where(p=>(enemy.Layer<0||(layerMask&(1u<<enemy.Layer))!=0)&&
+                p.OverlapsSphere(origin,radius))
             .Select(p=>new ShotgunCollider(Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(p.SourcePath))),
                 enemy.PlayerId,p.Center,true)).ToList();
         var dynamicColliderOrdinals=new Dictionary<string,int>(StringComparer.Ordinal);

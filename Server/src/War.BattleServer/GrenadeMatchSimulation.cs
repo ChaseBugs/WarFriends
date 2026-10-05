@@ -127,7 +127,8 @@ internal sealed class GrenadeMatchSimulation
         var actor=ActorOf(launch.Owner);return launch.Right&&actor.Binding.Swipe?actor.Pose.Left.Position:actor.Pose.Right[launch.WeaponSourceId].Position;
     }
     internal ShotCollision? Trace(string owner,Vector3 origin,Vector3 direction,float range,uint mask)
-    {var world=new ShotCollisionWorld(map,actors.Select(x=>new CollisionPlayer(x.Definition.PlayerId,x.Pose.Collision)),dynamicColliderEnabled,indexedColliderEnabled,runtimeLayer,dynamicTargets);return world.Raycast(owner,origin,direction,range,mask);}
+    {var world=new ShotCollisionWorld(map,actors.Select(x=>new CollisionPlayer(x.Definition.PlayerId,x.Pose.Collision,
+        x.Definition.Fraction==1?23:22)),dynamicColliderEnabled,indexedColliderEnabled,runtimeLayer,dynamicTargets);return world.Raycast(owner,origin,direction,range,mask);}
     internal bool HelicopterCanSee(HelicopterSightRay ray)
     {
         if(!PlayerHitbox.Finite(ray.Origin)||!PlayerHitbox.Finite(ray.Direction)||

@@ -21,10 +21,15 @@ internal static class ShotgunOverlapTests
             Quaternion.Identity,[box,head]);
         var distant=pose.Place(new Vector3(100,0,0),Quaternion.Identity);
         string a=new('a',32),b=new('b',32);
-        var world=new ShotCollisionWorld(null,[new(a,distant),new(b,pose)]);
+        var world=new ShotCollisionWorld(null,[new(a,distant,22),new(b,pose,23)]);
         var hits=world.OverlapEnemy(a,Vector3.Zero,4.5f);
         Check(hits.Count==1 && hits[0].MainEntityId==b && hits[0].Center==box.Center &&
               hits[0].EntityId.Length==64,"current enemy collider supplies bounded stable part identity");
+        Check(world.OverlapEnemy(a,Vector3.Zero,4.5f,1u<<22).Count==0&&
+              world.OverlapEnemy(a,Vector3.Zero,4.5f,1u<<23).Count==1&&
+              world.Raycast(a,Vector3.Zero,Vector3.UnitZ,6,1u<<22)==null&&
+              world.Raycast(a,Vector3.Zero,Vector3.UnitZ,6,1u<<23) is {PlayerId:var player}&&player==b,
+              "recovered player ragdoll faction layer gates both shotgun sphere and projectile ray");
         var shot=ShotgunShotPlanner.Plan(new ShotgunRule(50,3,10,10,100,false,false),
             Vector3.Zero,new Vector3(0,0,6),hits);
         Check(shot.RealPellets.Count==2 && shot.RealPellets[1].EntityId==hits[0].EntityId,

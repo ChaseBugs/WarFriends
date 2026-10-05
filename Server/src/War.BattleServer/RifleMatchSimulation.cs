@@ -279,7 +279,8 @@ internal sealed class RifleMatchSimulation
     internal IReadOnlyList<PreparedProjectile> PrepareVolley(ulong id,string owner,Vector3 target,ulong tick)
     {
         var a=actors.Single(p=>p.Definition.PlayerId==owner);
-        var world=new ShotCollisionWorld(map,actors.Select(p=>new CollisionPlayer(p.Definition.PlayerId,p.Pose.Collision)),
+        var world=new ShotCollisionWorld(map,actors.Select(p=>new CollisionPlayer(p.Definition.PlayerId,p.Pose.Collision,
+            p.Definition.Fraction==1?23:22)),
             dynamicColliderEnabled,indexedColliderEnabled,runtimeLayer,dynamicTargets);
         var muzzle=a.Pose.Muzzle(a.Weapon.SourceId).Position;
         uint bulletMask=a.WeaponClass==LiveWeaponClass.Smg ? (a.Definition.Fraction==1?content.Smgs!.AlliesBulletMask:content.Smgs!.EnemiesBulletMask) :
@@ -320,14 +321,16 @@ internal sealed class RifleMatchSimulation
     {
         var actor=actors.Single(a=>a.Definition.PlayerId==owner);
         var world=new ShotCollisionWorld(map,
-            actors.Select(p=>new CollisionPlayer(p.Definition.PlayerId,p.Pose.Collision)),
+            actors.Select(p=>new CollisionPlayer(p.Definition.PlayerId,p.Pose.Collision,
+                p.Definition.Fraction==1?23:22)),
             dynamicColliderEnabled,indexedColliderEnabled,runtimeLayer,dynamicTargets);
         return world.Raycast(owner,origin,direction,range,
             content.Bindings.BulletMask(actor.Definition.Fraction));
     }
     internal ShotCollision? TraceForBazooka(string owner,Vector3 origin,Vector3 direction,float range,uint mask)
     {
-        var world=new ShotCollisionWorld(map,actors.Select(p=>new CollisionPlayer(p.Definition.PlayerId,p.Pose.Collision)),
+        var world=new ShotCollisionWorld(map,actors.Select(p=>new CollisionPlayer(p.Definition.PlayerId,p.Pose.Collision,
+            p.Definition.Fraction==1?23:22)),
             dynamicColliderEnabled,indexedColliderEnabled,runtimeLayer,dynamicTargets);
         return world.Raycast(owner,origin,direction,range,mask);
     }
