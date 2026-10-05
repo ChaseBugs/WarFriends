@@ -26,6 +26,7 @@ internal sealed class BulletFlight
     private bool checkAtEnd;
     private ShotCollision? cachedHit;
     public Vector3 Position { get; private set; }
+    internal Vector3 Velocity => duration>0 ? (segmentTo-segmentFrom)/duration : Vector3.Zero;
     public bool Finished => stage == Stage.Done;
     internal ulong Id => id;
     internal string OwnerId => owner;

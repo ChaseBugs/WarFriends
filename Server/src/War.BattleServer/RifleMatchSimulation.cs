@@ -310,6 +310,25 @@ internal sealed class RifleMatchSimulation
             Random.Shared.NextSingle,trace);
     }
 
+    internal PreparedVolley PrepareVisualVolley(ulong id,string owner,Vector3 target,ulong tick,
+        Func<float> spreadRoll)
+    {
+        var actor=actors.Single(p=>p.Definition.PlayerId==owner);
+        if(actor.WeaponClass!=LiveWeaponClass.Shotgun)
+            return new(PrepareVolley(id,owner,target,tick),[]);
+        var world=new ShotCollisionWorld(map,actors.Select(p=>new CollisionPlayer(
+            p.Definition.PlayerId,p.Pose.Collision,p.Definition.Fraction==1?23:22)),
+            dynamicColliderEnabled,indexedColliderEnabled,runtimeLayer,dynamicTargets);
+        var binding=content.Shotguns!.Binding(actor.Weapon.SourceId);
+        var stage=content.Shotguns.Stage(actor.Weapon.SourceId,actor.WeaponUpgrade);
+        var muzzle=actor.Pose.Muzzle(actor.Weapon.SourceId).Position;
+        uint bulletMask=content.Bindings.BulletMask(actor.Definition.Fraction);
+        return ShotgunVolleyFactory.PrepareWithVisuals(binding,stage,id,owner,muzzle,target,tick,
+            world.OverlapEnemy(owner,muzzle+binding.ShotOffset,binding.Geometry.Radius,bulletMask),
+            Random.Shared.NextSingle,spreadRoll,(from,direction,range)=>
+                world.Raycast(owner,from,direction,range,bulletMask));
+    }
+
     private IBurstStage BurstStage(Actor actor)=>actor.WeaponClass switch
     {
         LiveWeaponClass.Smg=>content.Smgs!.Stage(actor.Weapon.SourceId,actor.WeaponUpgrade),

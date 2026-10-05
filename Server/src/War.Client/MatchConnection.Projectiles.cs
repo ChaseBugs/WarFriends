@@ -113,7 +113,8 @@ namespace War.Client
                        row.Kind!="grenade"&&row.Kind!="grenade-molotov"&&
                        row.Kind!="heavy-turret-bullet"&&row.Kind!="helicopter-bullet"&&
                        row.Kind!="helicopter-fake-bullet"&&row.Kind!="drone-bullet"&&
-                       row.Kind!="drone-fake-bullet"||
+                       row.Kind!="drone-fake-bullet"&&row.Kind!="shotgun-bullet"&&
+                       row.Kind!="shotgun-fake-bullet"||
                        !FiniteCoordinate(row.X)||!FiniteCoordinate(row.Y)||!FiniteCoordinate(row.Z)||
                        !FiniteCoordinate(row.VelocityX)||!FiniteCoordinate(row.VelocityY)||
                        !FiniteCoordinate(row.VelocityZ))

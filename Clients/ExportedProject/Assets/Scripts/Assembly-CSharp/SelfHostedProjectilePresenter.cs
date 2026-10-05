@@ -35,7 +35,8 @@ public sealed class SelfHostedProjectilePresenter : MonoBehaviour
 		{
 			if (state.Kind != "grenade" && state.Kind != "grenade-molotov" && state.Kind != "heavy-turret-bullet" &&
                 state.Kind != "drone-bullet" && state.Kind != "drone-fake-bullet" &&
-                state.Kind != "helicopter-bullet" && state.Kind != "helicopter-fake-bullet") continue;
+                state.Kind != "helicopter-bullet" && state.Kind != "helicopter-fake-bullet" &&
+                state.Kind != "shotgun-bullet" && state.Kind != "shotgun-fake-bullet") continue;
 			present.Add(state.ProjectileId);
 			Visual visual;
 			if (!active.TryGetValue(state.ProjectileId, out visual))
@@ -46,11 +47,14 @@ public sealed class SelfHostedProjectilePresenter : MonoBehaviour
 			visual.Root.transform.position = new Vector3(state.X, state.Y, state.Z);
 			Vector3 velocity = new Vector3(state.VelocityX, state.VelocityY, state.VelocityZ);
 			if (velocity.sqrMagnitude > 0.000001f && visual.Trail == null)
-                visual.Root.transform.rotation = IsAirShot(state.Kind) ?
+                visual.Root.transform.rotation = IsAirShot(state.Kind) || IsShotgunShot(state.Kind) ?
                     Quaternion.LookRotation(-velocity.normalized) * Quaternion.AngleAxis(-90f, Vector3.up) : Quaternion.LookRotation(velocity.normalized);
 			if (IsAirShot(state.Kind) && visual.Trail == null && velocity.sqrMagnitude > 0.000001f)
                 ConfigureAirTrail(visual, state.Kind.StartsWith("helicopter-"),
                     state.Kind.EndsWith("fake-bullet"), false, velocity.magnitude);
+            if (IsShotgunShot(state.Kind) && visual.Trail == null && velocity.sqrMagnitude > 0.000001f)
+                ConfigureShotgunTrail(visual, state.OwnerPlayerId,
+                    state.Kind == "shotgun-fake-bullet", velocity.magnitude);
 		}
 		// An MTU-bounded snapshot may omit still-flying presentation rounds.
 		// Impact events can retire them immediately; absence is authoritative
@@ -145,6 +149,52 @@ public sealed class SelfHostedProjectilePresenter : MonoBehaviour
         return kind.StartsWith("drone-") || kind.StartsWith("helicopter-");
     }
 
+    private static bool IsShotgunShot(string kind)
+    {
+        return kind == "shotgun-bullet" || kind == "shotgun-fake-bullet";
+    }
+
+    private Weapon ResolveShotgun(string ownerId)
+    {
+        PlayerController owner = local != null && local.playerProperties != null &&
+            local.playerProperties.playerID == ownerId ? local : other;
+		WeaponInventory inventory = owner == null ? null : owner.ResolveSelfHostedInventory();
+		if (inventory == null) return null;
+		PlayerWeapon current = CurrentWeaponOrNull(inventory);
+		if (current != null && current.weapon != null &&
+		    current.weapon.bulletPrefab is BulletShotGun)
+		    return current.weapon;
+        foreach (PlayerWeapon item in inventory.allWeapons)
+        {
+            Weapon weapon = item == null ? null : item.GetComponent<Weapon>();
+            if (weapon != null && weapon.bulletPrefab is BulletShotGun) return weapon;
+        }
+		return null;
+    }
+
+    private static PlayerWeapon CurrentWeaponOrNull(WeaponInventory inventory)
+    {
+        return inventory == null || inventory.usedWeapons == null ||
+            inventory.weaponIndex < 0 || inventory.weaponIndex >= inventory.usedWeapons.Count
+            ? null : inventory.currentWeapon;
+    }
+
+    private void ConfigureShotgunTrail(Visual visual, string ownerId, bool fake, float speed)
+    {
+        Weapon weapon = ResolveShotgun(ownerId);
+        ShotGunBulletSetup setup = weapon == null ? null : weapon.ammoSetup as ShotGunBulletSetup;
+        if (setup == null || speed <= 0 || Camera.main == null ||
+            visual.Root.GetComponent<MeshFilter>() == null)
+            throw new System.InvalidOperationException("Shotgun pellet trail lacks recovered setup, camera or mesh.");
+        visual.Trail = visual.Root.AddComponent<LineTrailRenderer>();
+        if (Application.isPlaying) visual.Trail.Reset();
+        visual.Trail.SetWidth(fake ? setup.GetTrailFakeWidth() : setup.GetTrailWidth());
+        visual.Trail.trailLength = setup.GetTrailSize() * (fake ? 1f : 2f);
+        visual.Trail.disapearTime = setup.GetTrailSize() / speed;
+        string sprite = fake ? setup.fakeShotTexture : setup.realShotTexture;
+        if (Application.isPlaying && !string.IsNullOrEmpty(sprite)) visual.Trail.SetSprite(sprite);
+    }
+
     private static void ConfigureAirTrail(Visual visual, bool helicopter, bool fake, bool shield, float speed)
     {
         ObjectPoolDatabase pool = Singleton<ObjectPoolDatabase>.instance;
@@ -168,9 +218,16 @@ public sealed class SelfHostedProjectilePresenter : MonoBehaviour
 	{
 		PlayerController owner = local != null && local.playerProperties != null && local.playerProperties.playerID == ownerId ? local : other;
 		WeaponInventory inventory = owner == null ? null : owner.ResolveSelfHostedInventory();
-		Weapon weapon = inventory == null || inventory.currentWeapon == null ? null : inventory.currentWeapon.weapon;
+		PlayerWeapon current = CurrentWeaponOrNull(inventory);
+		Weapon weapon = current == null ? null : current.weapon;
 		GameObject root = new GameObject("SelfHostedProjectile_" + projectileId);
 		GameObject bullet = weapon == null || weapon.bulletPrefab == null ? null : weapon.bulletPrefab.gameObject;
+		if (IsShotgunShot(kind))
+		{
+            Weapon shotgun = ResolveShotgun(ownerId);
+            BulletShotGun main = shotgun == null ? null : shotgun.bulletPrefab as BulletShotGun;
+            bullet = main == null || main.bulletPrefab == null ? null : main.bulletPrefab.gameObject;
+        }
 		if (kind == "heavy-turret-bullet")
 		{
 			HeavyTurret turret = Singleton<ObjectPoolDatabase>.instance == null ? null : Singleton<ObjectPoolDatabase>.instance.heavyTurret;

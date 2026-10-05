@@ -56,6 +56,17 @@ if(args is ["--shotgun-catalog-only"])
     return;
 }
 
+if(args is ["--shotgun-udp-only"])
+{
+    var root=new DirectoryInfo(AppContext.BaseDirectory);
+    while(root!=null&&!File.Exists(Path.Combine(root.FullName,"content/shotgun-content-manifest.json")))
+        root=root.Parent;
+    if(root==null)throw new FileNotFoundException("Shotgun content root missing.");
+    int focused=await LiveShotgunTests.RunUdp(Path.Combine(root.FullName,"content"));
+    Console.WriteLine($"PASS: {focused} focused live shotgun UDP assertions");
+    return;
+}
+
 if(args is ["--shotgun-only"])
 {
     var root=new DirectoryInfo(AppContext.BaseDirectory);

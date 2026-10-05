@@ -37,6 +37,16 @@ internal static class ShotgunCatalogTests
         Check(volley[0].Damage.PlayerCoefficient==stage.PlayerDamageRatio &&
               volley[1].Damage.FriendKill==binding.FriendKill,
               "pellets carry server-owned damage coefficients and fraction rule");
+        int spreadDraws=0;
+        var visualVolley=ShotgunVolleyFactory.PrepareWithVisuals(binding,stage,41,
+            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",Vector3.Zero,new Vector3(0,0,5),10,
+            [new ShotgunCollider("target","enemy",new Vector3(0,0,4),true)],
+            ()=>1,()=>{spreadDraws++;return .5f;},(_,_,_)=>null);
+        Check(visualVolley.Real.Count==2&&visualVolley.Fake.Count==3&&spreadDraws==6&&
+              visualVolley.Fake.Select(x=>x.Id).SequenceEqual([43UL,44UL,45UL])&&
+              visualVolley.Fake.All(x=>x.OwnerId=="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"&&
+                  Math.Abs(x.Velocity.Length()-binding.FakeSpeed)<.0001f),
+              "source fake count gets consecutive host IDs and serialized fake speed without damage authority");
         try
         {
             _=ShotgunVolleyFactory.Prepare(binding,stage,50,"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",

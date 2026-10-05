@@ -132,6 +132,7 @@ internal static class LiveShotgunTests
             var eventsA=await ThroughImpact(a);
             var eventsB=await ThroughImpact(b);
             Check(eventsA.SequenceEqual(eventsB) && eventsA.Any(e=>e.Kind==MatchEventKind.Shot) &&
+                  eventsA.Any(e=>e.Kind==MatchEventKind.Shot&&e.Reason=="shotgun-fake")&&
                   eventsA.Any(e=>e.Kind==MatchEventKind.Impact) &&
                   eventsA.Any(e=>e.Kind==MatchEventKind.ShieldDamaged && e.ShieldCoverIndex==right.SourceIndex),
                   "both UDP peers receive identical shotgun shot, impact and shield events");
@@ -287,10 +288,15 @@ internal static class LiveShotgunTests
         Check(cleared?.PlayerId==two,"cleared shield ray reaches the opposing player: "+cleared);
         Check(state.Players[0].ShotsFired==1 && state.Players[0].ClipAmmo==weapon.ClipSize-1 &&
               match.PendingProjectileCount>0,"delayed shotgun volley spends exactly one shell");
+        Check(state.Projectiles.Any(x=>x.Kind=="shotgun-fake-bullet"&&x.OwnerPlayerId==one)&&
+              state.Projectiles.Any(x=>x.Kind=="shotgun-bullet"&&x.OwnerPlayerId==one),
+              "live shotgun snapshot carries both damage-bearing and visual-only pellets");
         Check(state.Players[0].RiflePose.Layers.Any(l=>(int)l.Clip is >=20 and <26),
             "source weapon type seven selects shotgun cover clips");
         var firstEvents=match.EventBatch(one,0);
-        Check(firstEvents.Events.Any(e=>e.Kind==MatchEventKind.Shot),"live shotgun volley emits host shot events");
+        Check(firstEvents.Events.Any(e=>e.Kind==MatchEventKind.Shot)&&
+              firstEvents.Events.Any(e=>e.Kind==MatchEventKind.Shot&&e.Reason=="shotgun-fake"),
+              "live shotgun volley emits replayable real and fake shot events");
         ulong nextCommand=3;
         ulong peerCommand=2;
         for(ulong tick=65;tick<=240 && !match.Terminal;tick++)

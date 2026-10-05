@@ -99,6 +99,7 @@ public class LineTrailRenderer : Core_BaseScript
 	{
 		mIsReset = true;
 		mDisappearTimeProgress = 0f;
+		if (mTransform == null) mTransform = transform;
 		mTransform.localScale = new Vector3(0f, 0f, 1f);
 	}
 }

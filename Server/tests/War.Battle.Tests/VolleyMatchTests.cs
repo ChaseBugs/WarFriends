@@ -48,6 +48,31 @@ internal static class VolleyMatchTests
         Start(oversized,a,b);
         Check(oversized.Command(a,fire).Code=="match-aborted" && oversized.PendingProjectileCount==0 &&
               oversized.Snapshot().Players[0].ClipAmmo==9,"volley size is bounded before admission");
+        var visual=new MatchEngine(duel);
+        visual.ConfigureVisualVolley((id,owner,target,tick)=>new(
+            [Pellet(id,owner,target,tick,10),Pellet(id+1,owner,target,tick,20)],
+            [new ShotgunFakePelletFlight(id+2,owner,Vector3.Zero,target,30,tick),
+             new ShotgunFakePelletFlight(id+3,owner,Vector3.Zero,target+Vector3.UnitX*.1f,30,tick)]),()=>1);
+        Start(visual,a,b);
+        Check(visual.Command(a,fire).Code=="shot-accepted"&&visual.PendingProjectileCount==4&&
+              visual.Snapshot().Players[0].ClipAmmo==8&&
+              visual.Snapshot().Projectiles.Count(x=>x.Kind=="shotgun-fake-bullet")==2&&
+              visual.EventBatch(a,0).Events.Count(x=>x.Reason=="shotgun-fake")==2,
+              "one click admits real and visual fake pellets with consecutive IDs and one shell");
+        Check(visual.Command(a,fire).Code=="shot-accepted"&&visual.PendingProjectileCount==4,
+              "retry cannot duplicate visual fake pellets");
+        for(ulong t=61;t<=71;t++)visual.Advance(t);
+        Check(visual.Snapshot().Projectiles.All(x=>x.Kind!="shotgun-fake-bullet")&&
+              visual.Snapshot().Players[1].Health==100,
+              "fake pellets expire on host time without producing damage");
+        var badVisual=new MatchEngine(duel);
+        badVisual.ConfigureVisualVolley((id,owner,target,tick)=>new(
+            [Pellet(id,owner,target,tick,10)],
+            [new ShotgunFakePelletFlight(id+2,owner,Vector3.Zero,target,30,tick)]),()=>1);
+        Start(badVisual,a,b);
+        Check(badVisual.Command(a,fire).Code=="match-aborted"&&
+              badVisual.PendingProjectileCount==0&&badVisual.Snapshot().Players[0].ClipAmmo==9,
+              "invalid fake identity aborts the entire volley before shell consumption");
         return checks;
     }
 }

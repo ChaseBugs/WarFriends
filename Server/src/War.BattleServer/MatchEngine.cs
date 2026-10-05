@@ -23,6 +23,7 @@ public sealed partial class MatchEngine
     private string winner = "";
     private string terminalReason = "";
     private readonly Dictionary<ulong, PreparedProjectile> projectiles = [];
+    private readonly Dictionary<ulong, ShotgunFakePelletFlight> shotgunFakeProjectiles = [];
     private sealed record BazookaProjectile(BazookaMissileFlight Flight,BazookaStage Stage,BazookaBinding Binding,string WeaponSourceId,bool HalfDamage);
     private sealed record ScheduledBazooka(string Owner,Vector3 Target,ulong LaunchTick,bool Fake,bool Secondary,bool HalfDamage,string WeaponSourceId,int Upgrade);
     private readonly Dictionary<ulong,BazookaProjectile> bazookaProjectiles=[];
@@ -48,7 +49,7 @@ public sealed partial class MatchEngine
         ulong? ArmyEntityId=null,ulong? DecoyEntityId=null);
     private readonly Dictionary<ulong, VehicleShotTarget> vehicleShotTargets = [];
     private Func<ulong, float>? vehicleDamage;
-    private Func<ulong, string, Vector3, ulong, IReadOnlyList<PreparedProjectile>>? prepareVolley;
+    private Func<ulong, string, Vector3, ulong, PreparedVolley>? prepareVolley;
     private Func<float>? damageRoll;
     private readonly RifleMatchSimulation? rifleCombat;
     private readonly ShieldMatchSimulation? shields;
@@ -100,7 +101,8 @@ public sealed partial class MatchEngine
     private ulong armyEntityRevision;
     private ulong projectileId;
     internal const int MaximumProjectiles = 128;
-    internal int PendingProjectileCount => checked(projectiles.Count+armyProjectiles.Count+armyFlameBursts.Count+
+    internal int PendingProjectileCount => checked(projectiles.Count+shotgunFakeProjectiles.Count+
+        armyProjectiles.Count+armyFlameBursts.Count+
         vehicleProjectiles.Count+scheduledTransporterShots.Count+buggyProjectiles.Count+tankProjectiles.Count+
         scheduledBazookas.Count+grenadeProjectiles.Count+heavyTurretProjectiles.Count+
         droneProjectiles.Count+helicopterProjectiles.Count);
@@ -609,6 +611,13 @@ public sealed partial class MatchEngine
 
     internal void ConfigureVolley(Func<ulong,string,Vector3,ulong,IReadOnlyList<PreparedProjectile>> prepare,Func<float> roll)
     {
+        ArgumentNullException.ThrowIfNull(prepare);
+        ConfigureVisualVolley((id,owner,target,tick)=>new(prepare(id,owner,target,tick),[]),roll);
+    }
+
+    internal void ConfigureVisualVolley(Func<ulong,string,Vector3,ulong,PreparedVolley> prepare,
+        Func<float> roll)
+    {
         if (phase != BattlePhase.Waiting || players.Any(p => p.Admitted) || prepareVolley != null)
             throw new InvalidOperationException("Projectile authority must be bound once before admission.");
         ArgumentNullException.ThrowIfNull(prepare);
@@ -780,7 +789,8 @@ public sealed partial class MatchEngine
                     barrels==null?null:barrels.RuntimeLayer);
                 rifleCombat.ConfigureDynamicTargets(GroundVehicleShotTargets);
                 rifleCombat.ConfigureVisibilityTargets(HelicopterVisibilityTargets);
-                ConfigureVolley(rifleCombat.PrepareVolley,this.combatRandom);
+                ConfigureVisualVolley((id,owner,target,at)=>rifleCombat.PrepareVisualVolley(
+                    id,owner,target,at,this.combatRandom),this.combatRandom);
                 bazookaCatalog=content.Bazookas;
             }
         }
@@ -842,7 +852,7 @@ public sealed partial class MatchEngine
             return;
         }
         ulong simulationTick=checked(tick+elapsed);
-        if ((projectiles.Count != 0||bazookaProjectiles.Count!=0||scheduledBazookas.Count!=0||grenadeProjectiles.Count!=0) && simulationTick > tick+1) throw new InvalidOperationException("Active projectiles require every simulation tick.");
+        if ((projectiles.Count != 0||shotgunFakeProjectiles.Count!=0||bazookaProjectiles.Count!=0||scheduledBazookas.Count!=0||grenadeProjectiles.Count!=0) && simulationTick > tick+1) throw new InvalidOperationException("Active projectiles require every simulation tick.");
         if ((rifleCombat!=null||grenadeCombat!=null) && phase==BattlePhase.Running && simulationTick>tick+1) throw new InvalidOperationException("Live combat playback requires every simulation tick.");
         bool advanced=simulationTick!=tick;
         if (advanced) stateRevision++;
@@ -1301,6 +1311,13 @@ public sealed partial class MatchEngine
                 if (Terminal) break;
             }
         }
+        if(Terminal)return;
+        foreach(var pair in shotgunFakeProjectiles.ToArray())
+        {
+            try { pair.Value.Advance(tick); }
+            catch(InvalidDataException){End("invalid-projectile-authority","",false);break;}
+            if(pair.Value.Finished)shotgunFakeProjectiles.Remove(pair.Key);
+        }
     }
 
     private void RemoveOwnedDeployables(string ownerPlayerId)
@@ -1662,7 +1679,7 @@ public sealed partial class MatchEngine
         if (tick<p.NextFire) return "cooldown";
         if (p.Clip==0) { rifleCombat?.StopShooting(p.Definition.PlayerId); return "no-ammo"; }
         if(rifleCombat?.IsBazooka(p.Definition.PlayerId)==true)return FireBazooka(p,target);
-        IReadOnlyList<PreparedProjectile>? prepared = null;
+        PreparedVolley? prepared = null;
         if (prepareVolley != null)
         {
             if (PendingProjectileCount >= MaximumProjectiles) return "projectile-capacity";
@@ -1671,21 +1688,32 @@ public sealed partial class MatchEngine
             {
                 prepared = prepareVolley(projectileId+1, p.Definition.PlayerId,
                     target,tick);
-                if(prepared==null || prepared.Count is <1 or >8 ||
-                    projectileId>ulong.MaxValue-(ulong)prepared.Count)
+                if(prepared?.Real==null||prepared.Fake==null||
+                    prepared.Real.Count is <1 or >8||prepared.Fake.Count>4||
+                    prepared.Real.Count+prepared.Fake.Count>8||
+                    projectileId>ulong.MaxValue-(ulong)(prepared.Real.Count+prepared.Fake.Count))
                     throw new InvalidDataException("Host returned invalid projectile count.");
-                if(prepared.Count>MaximumProjectiles-PendingProjectileCount)return "projectile-capacity";
-                if(!EventCapacityForShot(prepared.Count))return "event-backpressure";
-                prepared=prepared.ToArray(); // Detach a mutable host list before validation and insertion.
-                for(int i=0;i<prepared.Count;i++)
+                int total=prepared.Real.Count+prepared.Fake.Count;
+                if(total>MaximumProjectiles-PendingProjectileCount)return "projectile-capacity";
+                if(!EventCapacityForShot(total))return "event-backpressure";
+                prepared=new(prepared.Real.ToArray(),prepared.Fake.ToArray());
+                for(int i=0;i<prepared.Real.Count;i++)
                 {
-                    var pellet=prepared[i];
+                    var pellet=prepared.Real[i];
                     if(pellet?.Flight==null || pellet.Flight.Id!=projectileId+(ulong)i+1 ||
                         pellet.Flight.OwnerId!=p.Definition.PlayerId || pellet.Damage==null ||
                         pellet.Damage.Type!=CombatDamageType.Shot || !pellet.Damage.HasWeapon || pellet.Damage.Amount<0)
                         throw new InvalidDataException("Host returned invalid projectile authority.");
                     // Validate every pellet before ammo or any identity is consumed.
                     PlayerDamage.Resolve(new PlayerCombatManifest(1),1,pellet.Damage,false,false,1);
+                }
+                for(int i=0;i<prepared.Fake.Count;i++)
+                {
+                    var fake=prepared.Fake[i];
+                    if(fake==null||fake.Id!=projectileId+(ulong)prepared.Real.Count+(ulong)i+1||
+                       fake.OwnerId!=p.Definition.PlayerId||fake.Finished||
+                       !PlayerHitbox.Finite(fake.Position)||!PlayerHitbox.Finite(fake.Velocity))
+                        throw new InvalidDataException("Host returned invalid fake-pellet authority.");
                 }
             }
             catch (ProjectileTargetException) { return "invalid-target"; }
@@ -1696,10 +1724,16 @@ public sealed partial class MatchEngine
         rifleCombat?.ShotAccepted(p.Definition.PlayerId,target,tick);
         if (prepared != null)
         {
-            foreach(var pellet in prepared)
+            foreach(var pellet in prepared.Real)
             {
                 projectiles.Add(++projectileId,pellet);
                 Emit(MatchEventKind.Shot,p.Definition.PlayerId,"",projectileId,pellet.Flight.Position,0,"");
+            }
+            foreach(var fake in prepared.Fake)
+            {
+                shotgunFakeProjectiles.Add(++projectileId,fake);
+                Emit(MatchEventKind.Shot,p.Definition.PlayerId,"",projectileId,fake.Position,0,
+                    "shotgun-fake");
             }
         }
         if (map != null && rifleCombat==null)
@@ -1972,6 +2006,7 @@ public sealed partial class MatchEngine
         if (performance.StartTick != 0 && performance.EndTick == 0)
             performance.End(tick);
         projectiles.Clear();
+        shotgunFakeProjectiles.Clear();
         armyProjectiles.Clear();
         armyFlameBursts.Clear();
         bazookaProjectiles.Clear();
@@ -2028,6 +2063,23 @@ public sealed partial class MatchEngine
             X=x.Value.Flight.Position.X,Y=x.Value.Flight.Position.Y,Z=x.Value.Flight.Position.Z,
             VelocityX=x.Value.Flight.Velocity.X,VelocityY=x.Value.Flight.Velocity.Y,VelocityZ=x.Value.Flight.Velocity.Z
         }));
+        snapshot.Projectiles.AddRange(projectiles.OrderBy(x=>x.Key)
+            .Where(x=>x.Value.WeaponSourceId.StartsWith("Google2u.Shotgun_",StringComparison.Ordinal))
+            .Select(x=>new BattleProjectileState
+            {
+                ProjectileId=x.Key,OwnerPlayerId=x.Value.Flight.OwnerId,Kind="shotgun-bullet",
+                X=x.Value.Flight.Position.X,Y=x.Value.Flight.Position.Y,Z=x.Value.Flight.Position.Z,
+                VelocityX=x.Value.Flight.Velocity.X,VelocityY=x.Value.Flight.Velocity.Y,
+                VelocityZ=x.Value.Flight.Velocity.Z
+            }));
+        snapshot.Projectiles.AddRange(shotgunFakeProjectiles.OrderBy(x=>x.Key)
+            .Select(x=>new BattleProjectileState
+            {
+                ProjectileId=x.Key,OwnerPlayerId=x.Value.OwnerId,Kind="shotgun-fake-bullet",
+                X=x.Value.Position.X,Y=x.Value.Position.Y,Z=x.Value.Position.Z,
+                VelocityX=x.Value.Velocity.X,VelocityY=x.Value.Velocity.Y,
+                VelocityZ=x.Value.Velocity.Z
+            }));
         snapshot.Projectiles.AddRange(heavyTurretProjectiles.OrderBy(x=>x.Key).Select(x=>new BattleProjectileState
         {
             ProjectileId=x.Key,OwnerPlayerId=x.Value.Flight.OwnerId,Kind="heavy-turret-bullet",

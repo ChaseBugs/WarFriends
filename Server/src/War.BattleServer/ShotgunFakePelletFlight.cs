@@ -10,7 +10,10 @@ internal sealed class ShotgunFakePelletFlight
     private readonly float duration;
     private readonly ulong start;
     private ulong observed;
+    internal ulong Id { get; }
+    internal string OwnerId { get; }
     internal Vector3 Position { get; private set; }
+    internal Vector3 Velocity { get; }
     internal bool Finished { get; private set; }
 
     internal static Vector3 SpreadTarget(Vector3 from,Vector3 aim,Vector3 unitSphere)
@@ -28,9 +31,11 @@ internal sealed class ShotgunFakePelletFlight
         return target;
     }
 
-    internal ShotgunFakePelletFlight(Vector3 from,Vector3 target,float fakeSpeed,ulong tick)
+    internal ShotgunFakePelletFlight(ulong id,string owner,Vector3 from,Vector3 target,
+        float fakeSpeed,ulong tick)
     {
-        if(!PlayerHitbox.Finite(from)||!PlayerHitbox.Finite(target)||
+        if(id==0||!Guid.TryParseExact(owner,"N",out _)||owner!=owner.ToLowerInvariant()||
+           !PlayerHitbox.Finite(from)||!PlayerHitbox.Finite(target)||
            !float.IsFinite(fakeSpeed)||fakeSpeed is <.01f or >10000||tick>10000000)
             throw new InvalidDataException("Invalid shotgun fake-pellet launch.");
         Vector3 delta=target-from;
@@ -41,6 +46,7 @@ internal sealed class ShotgunFakePelletFlight
         origin=from;end=from+delta*2;duration=distance/fakeSpeed*2;
         if(!PlayerHitbox.Finite(end)||!float.IsFinite(duration)||duration<=0||duration>1800)
             throw new InvalidDataException("Shotgun fake-pellet flight overflow.");
+        Id=id;OwnerId=owner;Velocity=(end-origin)/duration;
         start=observed=tick;Position=from;
     }
 
