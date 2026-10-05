@@ -2120,6 +2120,7 @@ public sealed partial class MatchEngine
                     burst.ProjectileId,origin,result?.Health??victim.Health,"army-flame");
             }
             if(!Terminal)ApplyArmyFlameInfantryPulse(burst.EntityKey,origin,forward);
+            if(!Terminal)ApplyArmyFlameShieldPulse(burst.EntityKey,origin,forward,burst.ProjectileId);
             if(burst.Finished)armyFlameBursts.Remove(pair.Key);
             if(Terminal)return;
         }
@@ -2153,6 +2154,38 @@ public sealed partial class MatchEngine
                 throw new InvalidDataException("Army flame infantry lacks current collision authority.");
             var hit=ArmyFlameBurst.ResolveParts(origin,forward,infantryPose.Parts,sourceDamage);
             if(hit!=null&&hit.RawDamage>0&&ApplyArmyHostDamage(targetId,hit.RawDamage))hits++;
+        }
+        return hits;
+    }
+
+    internal int ApplyArmyFlameShieldPulse(ulong sourceEntityKey,Vector3 origin,Vector3 forward,ulong projectile)
+    {
+        if(phase!=BattlePhase.Running||!activeArmyEntities.TryGetValue(sourceEntityKey,out var source)||
+           source.UnitId!="ID_UNIT-FLAMETHROWER"||projectile==0||
+           !PlayerHitbox.Finite(origin)||!PlayerHitbox.Finite(forward)||forward.LengthSquared()<1e-10f)
+            throw new InvalidDataException("Invalid army flame shield pulse authority.");
+        if(shields==null||map==null)return 0;
+        float sourceDamage=ArmyDamage(sourceEntityKey)??
+            throw new InvalidDataException("Army flame lacks trusted damage.");
+        if(!float.IsFinite(sourceDamage)||sourceDamage<0||sourceDamage>10_000_000)
+            throw new InvalidDataException("Invalid army flame source damage.");
+        var seen=new HashSet<string>(StringComparer.Ordinal);
+        int hits=0;
+        foreach(var collider in map.DynamicSphereOverlaps(origin,ArmyFlameBurst.Radius,
+            uint.MaxValue,barrels==null?null:index=>barrels.ColliderEnabled(index),
+            barrels==null?null:(index,layer)=>barrels.RuntimeLayer(index,layer)))
+        {
+            if(!shields.IsLiveEnemyShield(collider.DynamicOwner,source.OwnerFraction)||
+               !seen.Add(collider.DynamicOwner))continue;
+            Vector3 center=(collider.BoundsMin+collider.BoundsMax)*.5f;
+            var hit=ArmyFlameBurst.ResolveCenter(origin,forward,center,sourceDamage,collider.SourcePath);
+            if(hit==null||hit.RawDamage<=0)continue;
+            var shield=shields.ApplyUnitFlame(collider.DynamicOwner,source.OwnerFraction,hit.RawDamage,tick);
+            if(shield==null)continue;
+            stateRevision++;
+            EmitShield(shield.Destroyed?MatchEventKind.ShieldDestroyed:MatchEventKind.ShieldDamaged,
+                source.OwnerPlayerId,shield,projectile);
+            hits++;
         }
         return hits;
     }

@@ -34,6 +34,11 @@ internal static class ArmyFlameBurstTests
         Check(infantryHit is {PartPath:"fixture/player/body"}&&
               Math.Abs(infantryHit.RawDamage-hit!.RawDamage)<.0001f,
             "deployed infantry parts use the same source flame cone and damage as player parts");
+        var shieldHit=ArmyFlameBurst.ResolveCenter(Vector3.Zero,Vector3.UnitZ,
+            new Vector3(0,0,1),60,"fixture/shield");
+        Check(shieldHit is {PartPath:"fixture/shield"}&&
+              Math.Abs(shieldHit.RawDamage-hit!.RawDamage)<.0001f,
+            "overlapped shield centers use the source Flame cone without a bullet multiplier");
 
         var near=pose.Place(new Vector3(0,0,.29f),Quaternion.Identity);
         Check(ArmyFlameBurst.ResolvePlayer(Vector3.Zero,Vector3.UnitZ,near,60)==null,

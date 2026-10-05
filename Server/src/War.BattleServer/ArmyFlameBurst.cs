@@ -58,18 +58,34 @@ internal sealed class ArmyFlameBurst
         foreach(var part in parts)
         {
             if(!part.Enabled||!part.Active||!part.OverlapsSphere(origin,Radius))continue;
-            Vector3 offset=part.Center-origin;float distance=offset.Length();
-            if(distance<MinimumDistance||distance==0)continue;
-            float angle=MathF.Acos(Math.Clamp(Vector3.Dot(forward,Vector3.Normalize(offset)),-1,1))*180/MathF.PI;
-            float allowed=HalfAngleNear+(HalfAngle-HalfAngleNear)*MathF.Pow(distance,.25f);
-            if(!(MathF.Abs(angle)<allowed))continue;
-            float fraction=1-distance/Radius;
-            float minimum=sourceDamage*.1f/HitsPerShot;
-            float maximum=sourceDamage/HitsPerShot;
-            float damage=minimum+(maximum-minimum)*fraction;
-            if(!float.IsFinite(damage)||damage<0)throw new InvalidDataException("Army flame damage escaped its source domain.");
-            return new(distance,damage,part.SourcePath);
+            var hit=ResolveCenter(origin,forward,part.Center,sourceDamage,part.SourcePath);
+            if(hit!=null)return hit;
         }
         return null;
+    }
+
+    // FlameAmmo.CheckHit uses the collider's transformed center after its
+    // overlap query. Map shields supply that center independently of player rigs.
+    internal static ArmyFlameHit? ResolveCenter(Vector3 origin,Vector3 forward,
+        Vector3 center,float sourceDamage,string sourcePath)
+    {
+        if(!PlayerHitbox.Finite(origin)||!PlayerHitbox.Finite(forward)||!PlayerHitbox.Finite(center)||
+           forward.LengthSquared()<1e-10f||!float.IsFinite(sourceDamage)||
+           sourceDamage<0||sourceDamage>10_000_000||string.IsNullOrEmpty(sourcePath))
+            throw new InvalidDataException("Invalid army flame collider center.");
+        forward.Y=0;
+        if(forward.LengthSquared()<1e-10f)throw new InvalidDataException("Army flame has no planar direction.");
+        forward=Vector3.Normalize(forward);
+        Vector3 offset=center-origin;float distance=offset.Length();
+        if(distance<MinimumDistance||distance==0)return null;
+        float angle=MathF.Acos(Math.Clamp(Vector3.Dot(forward,Vector3.Normalize(offset)),-1,1))*180/MathF.PI;
+        float allowed=HalfAngleNear+(HalfAngle-HalfAngleNear)*MathF.Pow(distance,.25f);
+        if(!(MathF.Abs(angle)<allowed))return null;
+        float fraction=1-distance/Radius;
+        float minimum=sourceDamage*.1f/HitsPerShot;
+        float maximum=sourceDamage/HitsPerShot;
+        float damage=minimum+(maximum-minimum)*fraction;
+        if(!float.IsFinite(damage)||damage<0)throw new InvalidDataException("Army flame damage escaped its source domain.");
+        return new(distance,damage,sourcePath);
     }
 }

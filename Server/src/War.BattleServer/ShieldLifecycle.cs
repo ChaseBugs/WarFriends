@@ -49,6 +49,17 @@ internal sealed class ShieldLifecycle
         Health-=amount;
         if(Health<=0){Health=0;Destroyed=true;destroyedTick=tick;}
     }
+    internal void ApplyUnitFlame(float sourceDamage,ulong tick)
+    {
+        Time(tick);
+        if(!float.IsFinite(sourceDamage)||sourceDamage<0||sourceDamage>100000000)
+            throw new InvalidDataException("Invalid host unit flame damage.");
+        if(Destroyed||sourceDamage==0)return;
+        // Shield.DoDamage applies UnitToShieldCoef only for DamageType.Shot.
+        // FlameAmmo calls Burn, whose DamageType is Flame.
+        Health-=sourceDamage;
+        if(Health<=0){Health=0;Destroyed=true;destroyedTick=tick;}
+    }
     internal void ApplyUnitExplosion(float sourceDamage,float multiplier,ulong tick)
     {
         if(!float.IsFinite(multiplier)||multiplier<0||multiplier>100)

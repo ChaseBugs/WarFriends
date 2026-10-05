@@ -3465,7 +3465,7 @@ internal static class CombatContentTests
             EquippedArmyUnitIds=["ID_UNIT-FLAMETHROWER"],ArmyNormalUpgradeIndexes=[0],
             ArmySpecialUpgradeIndexes=[-1],ArmyEliteUpgradeIndexes=[-1],
             ArmyHealthFactors=[new(1f,1f)],ArmyDamageScales=[1f],
-            ArmySpeedCoefficients=[1f],ArmyAccuracyCoefficients=[1f]
+            ArmySpeedCoefficients=[1f],ArmyAccuracyCoefficients=[1f],ShieldLevel=0
         }).ToArray()};
         content.ValidateAllocation(flameManifest);
         var flameInfantryMatch=new MatchEngine(flameManifest,content:content,armyChoice:_=>0);
@@ -3497,6 +3497,26 @@ internal static class CombatContentTests
             "army flame cone does not damage its owning deployed infantry collider");
         Reject(()=>flameInfantryMatch.ApplyArmyFlameInfantryPulse(ulong.MaxValue,
             flamePart.Center-Vector3.UnitZ,Vector3.UnitZ));
+        var flameShieldCover=park.Covers.First(x=>x.Fraction==2);
+        string flameShieldOwner=flameShieldCover.SourcePath+"/riot_shield";
+        var flameShieldCollider=park.DynamicColliders.First(x=>x.DynamicOwner==flameShieldOwner);
+        var flameShieldCenter=(flameShieldCollider.BoundsMin+flameShieldCollider.BoundsMax)*.5f;
+        var flameShieldOrigin=flameShieldCenter-Vector3.UnitZ;
+        var flameShieldBefore=flameInfantryMatch.Snapshot().Shields
+            .ToDictionary(x=>x.CoverIndex,x=>x.Health);
+        float expectedFlameShield=ArmyFlameBurst.ResolveCenter(flameShieldOrigin,Vector3.UnitZ,
+            flameShieldCenter,flameInfantryMatch.ArmyDamage(flameSource.EntityKey)!.Value,
+            flameShieldCollider.SourcePath)!.RawDamage;
+        int flameShieldHits=flameInfantryMatch.ApplyArmyFlameShieldPulse(flameSource.EntityKey,
+            flameShieldOrigin,Vector3.UnitZ,1);
+        var flameShieldAfter=flameInfantryMatch.Snapshot().Shields
+            .ToDictionary(x=>x.CoverIndex,x=>x.Health);
+        Check(flameShieldHits==2&&
+              park.Covers.Count(x=>x.Fraction==2&&flameShieldAfter[x.SourceIndex]<flameShieldBefore[x.SourceIndex])==2&&
+              park.Covers.Where(x=>x.Fraction==1).All(x=>flameShieldAfter[x.SourceIndex]==flameShieldBefore[x.SourceIndex])&&
+              Math.Abs(flameShieldBefore[flameShieldCover.SourceIndex]-
+                  flameShieldAfter[flameShieldCover.SourceIndex]-expectedFlameShield)<.001f,
+            "one Flame pulse damages both source-overlapping enemy shields without the unit bullet coefficient or allied damage");
         deathMatch.Admit(soldierOwner);deathMatch.Admit(helicopterOwner);
         deathMatch.Command(soldierOwner,new MatchCommand{CommandId=1,
             Ready=new ReadyCommand{ManifestHash=deathMatch.ManifestHash}});
