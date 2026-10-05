@@ -28,7 +28,8 @@ public sealed record RepairDroneWaypoint(int ComponentFileId,int TransformFileId
 public sealed record RepairDronePath(int ComponentFileId,int TransformFileId,Vector3 Position,Quaternion Rotation,float Radius,
     IReadOnlyList<RepairDroneWaypoint> Waypoints);
 public sealed record RepairDronePrefabBinding(string Prefab,string Sha256,int ComponentFileId,
-    int SteeringComponentFileId,float BreakDistance,float BreakSpeed,bool InitialForward,bool Loop,
+    int SteeringComponentFileId,int DamageComponentFileId,float FlameCoefficient,
+    float BreakDistance,float BreakSpeed,bool InitialForward,bool Loop,
     float Mass,float Multiplier,float Speed,float CornerDelayTime,float HealIntervalSeconds,
     float RespawnMinimumSeconds,float RespawnMaximumSeconds,float DeadRadius,float HurtRadius,
     float ExplosionDamageRatio,float SplashDamageRatio,int ColliderFileId,Vector3 ColliderCenter,
@@ -56,6 +57,7 @@ public sealed class GroundVehicleWeaponCatalog
         public int Type{get;set;}public float[] Position{get;set;}=[];}
     private sealed class RepairDronePrefabDto {public string Prefab{get;set;}="";public string Sha256{get;set;}="";
         public int ComponentFileId{get;set;}public int SteeringComponentFileId{get;set;}
+        public int DamageComponentFileId{get;set;}public float FlameCoefficient{get;set;}
         public float BreakDistance{get;set;}public float BreakSpeed{get;set;}public bool InitialForward{get;set;}
         public bool Loop{get;set;}public float Mass{get;set;}public float Multiplier{get;set;}public float Speed{get;set;}
         public float CornerDelayTime{get;set;}public float HealIntervalSeconds{get;set;}
@@ -184,13 +186,14 @@ public sealed class GroundVehicleWeaponCatalog
             {PropertyNameCaseInsensitive=true,UnmappedMemberHandling=JsonUnmappedMemberHandling.Disallow})??
             throw new InvalidDataException("Missing ground vehicle weapon artifact.");}
         catch(JsonException e){throw new InvalidDataException("Malformed ground vehicle weapon artifact.",e);}
-        if(root.Version!=9||root.ArmoredVehicleShotCoefficient!=.33f||
+        if(root.Version!=10||root.ArmoredVehicleShotCoefficient!=.33f||
            !Regex.IsMatch(root.PassengerPoseRevision,@"\A[0-9a-f]{64}\z")||root.Vehicles.Length!=Expected.Length)
             throw new InvalidDataException("Incomplete ground vehicle weapon artifact.");
         var drone=root.RepairDronePrefab;
         if(drone.Prefab!="Assets/GameObject/miniDrone.prefab"||
            !Regex.IsMatch(drone.Sha256,@"\A[0-9a-f]{64}\z")||drone.ComponentFileId<=0||
-           drone.SteeringComponentFileId<=0||drone.BreakDistance!=.4f||drone.BreakSpeed!=.5f||
+           drone.SteeringComponentFileId<=0||drone.DamageComponentFileId!=11470521||
+           drone.FlameCoefficient!=1||drone.BreakDistance!=.4f||drone.BreakSpeed!=.5f||
            !drone.InitialForward||!drone.Loop||drone.Mass!=30||drone.Multiplier!=150000||
            drone.Speed!=.4f||drone.CornerDelayTime!=.3f||drone.HealIntervalSeconds!=1||
            drone.RespawnMinimumSeconds!=35||drone.RespawnMaximumSeconds!=45||
@@ -200,7 +203,8 @@ public sealed class GroundVehicleWeaponCatalog
            Vector(drone.ColliderSize)!=new Vector3(.22f,.27f,.29f))
             throw new InvalidDataException("Recovered repair-drone prefab contract changed.");
         var repairDronePrefab=new RepairDronePrefabBinding(drone.Prefab,drone.Sha256,drone.ComponentFileId,
-            drone.SteeringComponentFileId,drone.BreakDistance,drone.BreakSpeed,drone.InitialForward,
+            drone.SteeringComponentFileId,drone.DamageComponentFileId,drone.FlameCoefficient,
+            drone.BreakDistance,drone.BreakSpeed,drone.InitialForward,
             drone.Loop,drone.Mass,drone.Multiplier,drone.Speed,drone.CornerDelayTime,
             drone.HealIntervalSeconds,drone.RespawnMinimumSeconds,drone.RespawnMaximumSeconds,
             drone.DeadRadius,drone.HurtRadius,drone.ExplosionDamageRatio,drone.SplashDamageRatio,

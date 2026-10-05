@@ -1086,7 +1086,8 @@ internal static class CombatContentTests
                   x.Waypoints.Where(p=>p.StayTime>0).Select(p=>p.Index).SequenceEqual([1,3,5]))&&
               content.GroundVehicleWeapons.RepairDronePrefab is
                   {Speed:.4f,Mass:30f,BreakDistance:.4f,BreakSpeed:.5f,Loop:true,
-                   HealIntervalSeconds:1f,RespawnMinimumSeconds:35f,RespawnMaximumSeconds:45f}&&
+                   HealIntervalSeconds:1f,RespawnMinimumSeconds:35f,RespawnMaximumSeconds:45f,
+                   DamageComponentFileId:11470521,FlameCoefficient:1f}&&
               new[]{humveeRig,tankRig,buggyRig,transporterRig}.Sum(x=>x.Passengers.Count)==6&&
               content.GroundVehicleWeapons.ArmoredVehicleShotCoefficient==.33f&&
               humveeRig.BodyParts.Count==8&&tankRig.BodyParts.Count==12&&
@@ -1289,6 +1290,11 @@ internal static class CombatContentTests
             Reject(()=>GroundVehicleWeaponCatalog.Load(vehicleWeaponTemp,damagedHash));
             damaged=JsonNode.Parse(File.ReadAllText(vehicleWeaponPath))!;
             damaged["repairDronePrefab"]!["speed"]=.8f;
+            File.WriteAllText(vehicleWeaponTemp,damaged.ToJsonString());
+            damagedHash=Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(vehicleWeaponTemp)));
+            Reject(()=>GroundVehicleWeaponCatalog.Load(vehicleWeaponTemp,damagedHash));
+            damaged=JsonNode.Parse(File.ReadAllText(vehicleWeaponPath))!;
+            damaged["repairDronePrefab"]!["flameCoefficient"]=.5f;
             File.WriteAllText(vehicleWeaponTemp,damaged.ToJsonString());
             damagedHash=Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(vehicleWeaponTemp)));
             Reject(()=>GroundVehicleWeaponCatalog.Load(vehicleWeaponTemp,damagedHash));
@@ -3600,6 +3606,63 @@ internal static class CombatContentTests
             flameVehicleOrigin,-Vector3.UnitZ);
         Check(flameVehicleMatch.ArmyHealth(flameVehicleTarget.EntityKey)==vehicleAfter,
             "vehicle Flame rejects a rear-facing cone before changing shared health");
+        var flameRepairManifest=flameManifest with {MatchId="army-flame-repair-drone",
+            Players=[flameManifest.Players[0],flameManifest.Players[1] with
+            {
+                EquippedArmyUnitIds=["ID_UNIT-TRANSPORTER"],ArmyNormalUpgradeIndexes=[0],
+                ArmySpecialUpgradeIndexes=[71],ArmyEliteUpgradeIndexes=[-1],
+                ArmyHealthFactors=[new(1f,1f)],ArmyDamageScales=[1f],
+                ArmySpeedCoefficients=[1f],ArmyAccuracyCoefficients=[1f]
+            }]};
+        content.ValidateAllocation(flameRepairManifest);
+        var flameRepairMatch=new MatchEngine(flameRepairManifest,content:content,armyChoice:_=>0);
+        flameRepairMatch.Admit(soldierOwner);flameRepairMatch.Admit(helicopterOwner);
+        flameRepairMatch.Command(soldierOwner,new(){CommandId=1,
+            Ready=new(){ManifestHash=flameRepairMatch.ManifestHash}});
+        flameRepairMatch.Command(helicopterOwner,new(){CommandId=1,
+            Ready=new(){ManifestHash=flameRepairMatch.ManifestHash}});
+        flameRepairMatch.Advance(60);
+        Check(flameRepairMatch.Command(soldierOwner,new(){CommandId=2,DeployArmy=new()
+            {OptionIndex=flameRepairMatch.ArmyBatch(soldierOwner).OptionIndexes[0]}}).Code=="army-deploying"&&
+              flameRepairMatch.Command(helicopterOwner,new(){CommandId=2,DeployArmy=new()
+            {OptionIndex=flameRepairMatch.ArmyBatch(helicopterOwner).OptionIndexes[0]}}).Code=="army-deploying",
+            "opposing Flamethrower and special Transporter deploy from trusted allocations");
+        for(ulong flameRepairTick=61;flameRepairTick<=75;flameRepairTick++)
+            flameRepairMatch.Advance(flameRepairTick);
+        var flameRepairRows=flameRepairMatch.ArmyEntityBatch(soldierOwner,0,0).Entities;
+        var flameRepairSource=flameRepairRows.Single(x=>x.OwnerPlayerId==soldierOwner);
+        var flameRepairTransporter=flameRepairRows.Single(x=>x.OwnerPlayerId==helicopterOwner);
+        var flameRepairDrones=flameRepairMatch.TransporterRepairDrones(flameRepairTransporter.EntityKey);
+        var flameRepairBox=flameRepairMatch.GroundVehicleShotTargets(soldierOwner)
+            .Single(x=>x.EntityId==flameRepairTransporter.EntityKey&&x.RepairDronePathIndex==0).Hitbox;
+        Vector3 flameRepairOrigin=flameRepairBox.Center-Vector3.UnitZ;
+        float repairExpected=ArmyFlameBurst.ResolveParts(flameRepairOrigin,Vector3.UnitZ,
+            [flameRepairBox],flameRepairMatch.ArmyDamage(flameRepairSource.EntityKey)!.Value)!.RawDamage*
+            content.GroundVehicleWeapons.RepairDronePrefab.FlameCoefficient;
+        Check(flameRepairDrones.Count==2&&flameRepairDrones[0].Active&&
+              content.GroundVehicleWeapons.RepairDronePrefab.DamageComponentFileId==11470521&&
+              flameRepairMatch.ApplyArmyFlameRepairDronePulse(flameRepairSource.EntityKey,
+                  flameRepairOrigin,Vector3.UnitZ)>=1&&
+              Math.Abs(flameRepairDrones[0].Health-
+                  flameRepairMatch.TransporterRepairDrones(flameRepairTransporter.EntityKey)[0].Health-
+                  repairExpected)<.001f,
+            "one Flame pulse applies the pinned coefficient-one root damage to a live repair mini-drone");
+        ulong repairFlameEventCursor=flameRepairMatch.EventBatch(soldierOwner,0).LatestEventId;
+        int repairFlamePulses=checked((int)Math.Ceiling(flameRepairDrones[0].Health/repairExpected)+1);
+        Check(repairFlamePulses is >0 and <10000,
+            "source Flame damage downs the repair mini-drone within bounded host pulses");
+        for(int repairFlamePulse=0;repairFlamePulse<repairFlamePulses&&
+            flameRepairMatch.TransporterRepairDrones(flameRepairTransporter.EntityKey)[0].Active;
+            repairFlamePulse++)
+            flameRepairMatch.ApplyArmyFlameRepairDronePulse(flameRepairSource.EntityKey,
+                flameRepairOrigin,Vector3.UnitZ);
+        Check(!flameRepairMatch.TransporterRepairDrones(flameRepairTransporter.EntityKey)[0].Active&&
+              flameRepairMatch.GroundVehicleShotTargets(soldierOwner).All(x=>
+                  x.EntityId!=flameRepairTransporter.EntityKey||x.RepairDronePathIndex!=0)&&
+              flameRepairMatch.EventBatch(soldierOwner,repairFlameEventCursor).Events.Any(x=>
+                  x.Kind==MatchEventKind.VehicleRepairDroneDown&&
+                  x.ProjectileId==flameRepairTransporter.EntityKey),
+            "lethal Flame removes repair-drone collision and publishes its source down event");
         var flameDroneManifest=flameManifest with {MatchId="army-flame-drone",
             Players=[flameManifest.Players[0],flameManifest.Players[1] with
             {

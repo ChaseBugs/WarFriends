@@ -99,14 +99,20 @@ def repair_drone_prefab(guid_to_name):
  scripts={i:guid_to_name.get(re.search(r'guid: ([0-9a-f]{32})',b).group(1),'') for i,(k,b) in blocks.items() if k==114 and 'guid:' in b}
  steering_ids=[i for i,n in scripts.items() if n=='DroneSteering']
  mini_ids=[i for i,n in scripts.items() if n=='MiniDrone']
- if len(steering_ids)!=1 or len(mini_ids)!=1: raise ValueError('miniDrone behavior topology changed')
+ damage_ids=[i for i,n in scripts.items() if n=='DestroyableObject']
+ if len(steering_ids)!=1 or len(mini_ids)!=1 or len(damage_ids)!=1:
+  raise ValueError('miniDrone behavior or damage topology changed')
  steering=blocks[steering_ids[0]][1]
  root_game=ref(blocks[mini_ids[0]][1],'m_GameObject')
+ damage=blocks[damage_ids[0]][1]
+ if ref(damage,'m_GameObject')!=root_game or number(damage,'shotCoeficient')!=1:
+  raise ValueError('miniDrone Flame damage root changed')
  box_ids=[i for i,(kind,b) in blocks.items() if kind==65 and ref(b,'m_GameObject')==root_game and direct(b,'m_Enabled')=='1']
  if len(box_ids)!=1: raise ValueError('miniDrone root collider changed')
  box=blocks[box_ids[0]][1]
  return {'prefab':'Assets/GameObject/miniDrone.prefab','sha256':hashlib.sha256(raw).hexdigest(),
   'componentFileId':mini_ids[0],'steeringComponentFileId':steering_ids[0],
+  'damageComponentFileId':damage_ids[0],'flameCoefficient':number(damage,'shotCoeficient'),
   'breakDistance':number(steering,'breakDistance'),'breakSpeed':number(steering,'breakSpeed'),
   'initialForward':direct(steering,'dir')=='1','loop':direct(steering,'loop')=='1',
   'mass':number(steering,'mass'),'multiplier':number(steering,'multiplier'),
@@ -267,7 +273,7 @@ def main():
    'flamePartCoefficient':vehicle_flame_coefficient(blocks,scripts),'repairDronePaths':drones,
    'shotTargets':vehicle_shot_targets(blocks)})
  if not PASSENGER_POSES.exists(): raise ValueError('missing Unity passenger pose artifact')
- artifact={'version':9,'armoredVehicleShotCoefficient':0.33,
+ artifact={'version':10,'armoredVehicleShotCoefficient':0.33,
   'passengerPoseRevision':hashlib.sha256(PASSENGER_POSES.read_bytes()).hexdigest(),
   'repairDronePrefab':repair_drone_prefab(guid_to_name),'vehicles':out}
  serialized=json.dumps(artifact,indent=2)+'\n'

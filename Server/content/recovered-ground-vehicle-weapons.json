@@ -1,5 +1,5 @@
 {
-  "version": 9,
+  "version": 10,
   "armoredVehicleShotCoefficient": 0.33,
   "passengerPoseRevision": "37bc1d8c256a21767a01d1d1016caa93c785b719bbc6c0d73eed58f70926a343",
   "repairDronePrefab": {
@@ -7,6 +7,8 @@
     "sha256": "fe6800eca81fe69478fe54884b53631fa96d36114d4a60b962b4946089f9bb26",
     "componentFileId": 11431434,
     "steeringComponentFileId": 11469143,
+    "damageComponentFileId": 11470521,
+    "flameCoefficient": 1.0,
     "breakDistance": 0.4,
     "breakSpeed": 0.5,
     "initialForward": true,

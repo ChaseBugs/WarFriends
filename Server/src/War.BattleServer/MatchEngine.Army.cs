@@ -2123,6 +2123,7 @@ public sealed partial class MatchEngine
             if(!Terminal)ApplyArmyFlameDronePulse(burst.EntityKey,origin,forward);
             if(!Terminal)ApplyArmyFlameHelicopterPulse(burst.EntityKey,origin,forward);
             if(!Terminal)ApplyArmyFlameVehiclePulse(burst.EntityKey,origin,forward);
+            if(!Terminal)ApplyArmyFlameRepairDronePulse(burst.EntityKey,origin,forward);
             if(!Terminal)ApplyArmyFlameDecoyPulse(burst.EntityKey,origin,forward);
             if(!Terminal)ApplyArmyFlameHeavyTurretPulse(burst.EntityKey,origin,forward);
             if(!Terminal)ApplyArmyFlameShieldPulse(burst.EntityKey,origin,forward,burst.ProjectileId);
@@ -2289,6 +2290,50 @@ public sealed partial class MatchEngine
                         throw new InvalidDataException("Vehicle registry health diverged from Flame vitality.");
                 }
                 break;
+            }
+        }
+        return hits;
+    }
+
+    internal int ApplyArmyFlameRepairDronePulse(ulong sourceEntityKey,Vector3 origin,Vector3 forward)
+    {
+        if(phase!=BattlePhase.Running||!activeArmyEntities.TryGetValue(sourceEntityKey,out var source)||
+           source.UnitId!="ID_UNIT-FLAMETHROWER"||!PlayerHitbox.Finite(origin)||
+           !PlayerHitbox.Finite(forward)||forward.LengthSquared()<1e-10f)
+            throw new InvalidDataException("Invalid army Flame repair-drone pulse authority.");
+        if(vehicles==null||groundVehicleWeapons==null)return 0;
+        var sourceOwner=Find(source.OwnerPlayerId)??
+            throw new InvalidDataException("Army Flame repair-drone source lacks an owner.");
+        float sourceDamage=ArmyDamage(sourceEntityKey)??
+            throw new InvalidDataException("Army Flame lacks trusted damage.");
+        if(!float.IsFinite(sourceDamage)||sourceDamage<0||sourceDamage>10_000_000)
+            throw new InvalidDataException("Invalid army Flame source damage.");
+        int hits=0;
+        foreach(var vehicle in vehicles.Snapshot().Where(x=>x.UnitId=="ID_UNIT-TRANSPORTER")
+            .OrderBy(x=>x.EntityId))
+        {
+            if(vehicle.OwnerPlayerId==source.OwnerPlayerId)continue;
+            var owner=Find(vehicle.OwnerPlayerId)??
+                throw new InvalidDataException("Repair-drone Flame owner disappeared.");
+            if(owner.Definition.Fraction==sourceOwner.Definition.Fraction)continue;
+            if(!transporterRepairDrones.TryGetValue(vehicle.EntityId,out var drones))continue;
+            if(drones.Count!=2)throw new InvalidDataException("Repair-drone Flame path count changed.");
+            int layer=owner.Definition.Fraction==1?23:22;
+            foreach(var drone in drones.OrderBy(x=>x.PathIndex))
+            {
+                if(!drone.Active)continue;
+                var collider=groundVehicleWeapons.PlaceRepairDrone(vehicle.EntityId,drone.PathIndex,
+                    layer,drone.Snapshot());
+                var hit=ArmyFlameBurst.ResolveParts(origin,forward,[collider.Hitbox],sourceDamage);
+                if(hit==null||hit.RawDamage<=0)continue;
+                float damage=hit.RawDamage*groundVehicleWeapons.RepairDronePrefab.FlameCoefficient;
+                if(!float.IsFinite(damage)||damage<=0||damage>10_000_000)
+                    throw new InvalidDataException("Repair-drone Flame damage escaped host bounds.");
+                if(!ApplyTransporterRepairDroneHostDamage(vehicle.EntityId,drone.PathIndex,damage))continue;
+                hits++;
+                if(!drone.Active)
+                    Emit(MatchEventKind.VehicleRepairDroneDown,vehicle.OwnerPlayerId,"",vehicle.EntityId,
+                        drone.Position,0,"vehicle-repair-drone-down:"+drone.PathIndex);
             }
         }
         return hits;
