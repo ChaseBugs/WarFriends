@@ -42,23 +42,55 @@ public sealed class BattleGrantStore
         catch(MongoWriteException e) when(e.WriteError.Category==ServerErrorCategory.DuplicateKey)
         {
             var prior=await grants.Find(x=>x.MatchId==matchId).FirstOrDefaultAsync(ct);
-            return prior!=null && Same(prior,doc)?"already-published":"conflict";
+            if(prior==null)return "conflict";
+            _=ValidateDocument(prior);
+            return Same(prior,doc)?"already-published":"conflict";
         }
     }
     public async Task<MatchConnectionGrant?> GetForPlayer(string matchId,string playerId,long unixNow,CancellationToken ct)
     {
-        if(!ValidMatch(matchId) || !Guid.TryParseExact(playerId,"N",out _) || playerId!=playerId.ToLowerInvariant() || unixNow<0)
+        if(!ValidMatch(matchId) || !Guid.TryParseExact(playerId,"N",out _) ||
+           playerId!=playerId.ToLowerInvariant() || unixNow is <0 or >253402300799)
             throw new InvalidDataException("Invalid battle grant lookup.");
-        var row=await grants.Find(x=>x.MatchId==matchId && (x.PlayerA==playerId || x.PlayerB==playerId)).FirstOrDefaultAsync(ct);
+        var row=await grants.Find(x=>x.MatchId==matchId).FirstOrDefaultAsync(ct);
         if(row==null)return null;
-        byte[] bytes=row.PlayerA==playerId?row.GrantA:row.GrantB;
-        MatchConnectionGrant grant;
-        try {grant=MatchConnectionGrant.Parser.ParseFrom(bytes);}catch(InvalidProtocolBufferException e){throw new InvalidDataException("Invalid persisted battle grant.",e);}
-        grant=Validate(grant);
-        if(grant.MatchId!=row.MatchId || grant.ManifestHash!=row.ManifestHash || grant.PlayerId!=playerId ||
-            grant.ExpiresUnixSeconds<=unixNow || row.ExpiresUtc!=DateTimeOffset.FromUnixTimeSeconds(grant.ExpiresUnixSeconds).UtcDateTime)
-            throw new InvalidDataException("Persisted battle grant authority differs from its index.");
-        return grant.Clone();
+        var (first,second)=ValidateDocument(row);
+        if(first.ExpiresUnixSeconds<=unixNow)
+            throw new InvalidDataException("Persisted battle grant has expired.");
+        return playerId==row.PlayerA?first:playerId==row.PlayerB?second:null;
+    }
+    private static (MatchConnectionGrant First,MatchConnectionGrant Second) ValidateDocument(BattleGrantDocument row)
+    {
+        if(row==null || !Guid.TryParseExact(row.Id,"N",out _) || row.Id!=row.Id.ToLowerInvariant() ||
+           !ValidMatch(row.MatchId) ||
+           !System.Text.RegularExpressions.Regex.IsMatch(row.ManifestHash??"",@"\A[0-9a-f]{64}\z") ||
+           !Guid.TryParseExact(row.PlayerA,"N",out _) || row.PlayerA!=row.PlayerA.ToLowerInvariant() ||
+           !Guid.TryParseExact(row.PlayerB,"N",out _) || row.PlayerB!=row.PlayerB.ToLowerInvariant() ||
+           row.PlayerA==row.PlayerB || row.GrantA is not {Length:>0 and <=16384} ||
+           row.GrantB is not {Length:>0 and <=16384} ||
+           row.ExpiresUtc.Kind!=DateTimeKind.Utc || row.ExpiresUtc<DateTime.UnixEpoch)
+            throw new InvalidDataException("Invalid persisted battle grant assignment.");
+        MatchConnectionGrant first,second;
+        try {first=MatchConnectionGrant.Parser.ParseFrom(row.GrantA);
+             second=MatchConnectionGrant.Parser.ParseFrom(row.GrantB);}
+        catch(InvalidProtocolBufferException e){throw new InvalidDataException("Invalid persisted battle grant protobuf.",e);}
+        if(!first.ToByteArray().AsSpan().SequenceEqual(row.GrantA) ||
+           !second.ToByteArray().AsSpan().SequenceEqual(row.GrantB))
+            throw new InvalidDataException("Noncanonical persisted battle grant bytes.");
+        first=Validate(first);second=Validate(second);
+        var roster=new[]{row.PlayerA,row.PlayerB};
+        if(first.MatchId!=row.MatchId || second.MatchId!=row.MatchId ||
+           first.ManifestHash!=row.ManifestHash || second.ManifestHash!=row.ManifestHash ||
+           first.PlayerId!=row.PlayerA || second.PlayerId!=row.PlayerB ||
+           first.SessionId==second.SessionId ||
+           first.ExpiresUnixSeconds!=second.ExpiresUnixSeconds ||
+           row.ExpiresUtc!=DateTimeOffset.FromUnixTimeSeconds(first.ExpiresUnixSeconds).UtcDateTime ||
+           first.PlayerViews.Count!=2 || second.PlayerViews.Count!=2 ||
+           !first.PlayerViews.Select(x=>x.PlayerId).SequenceEqual(roster,StringComparer.Ordinal) ||
+           !second.PlayerViews.Select(x=>x.PlayerId).SequenceEqual(roster,StringComparer.Ordinal) ||
+           !first.PlayerViews.SequenceEqual(second.PlayerViews))
+            throw new InvalidDataException("Persisted battle grant assignment differs from its roster authority.");
+        return (first,second);
     }
     private static MatchConnectionGrant Validate(MatchConnectionGrant value)
     {

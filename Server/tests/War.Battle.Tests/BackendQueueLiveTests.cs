@@ -120,6 +120,19 @@ internal static class BackendQueueLiveTests
                grants[0].Ticket!=registered.Grants[0].Ticket ||
                grants[1].Ticket!=registered.Grants[1].Ticket)
                 throw new Exception("Live queue returned inconsistent player-only grants.");
+            var grantRows=mongo.GetDatabase(database).GetCollection<BattleGrantDocument>("battle_grants");
+            var persistedGrant=await grantRows.Find(x=>x.MatchId==frozenPair.MatchId).FirstAsync(deadline.Token);
+            await grantRows.UpdateOneAsync(x=>x.MatchId==frozenPair.MatchId,
+                Builders<BattleGrantDocument>.Update.Set(x=>x.GrantB,new byte[]{1,2,3}),cancellationToken:deadline.Token);
+            try
+            {
+                await new BattleGrantStore(mongoUri,database).GetForPlayer(frozenPair.MatchId,ids[0],
+                    DateTimeOffset.UtcNow.ToUnixTimeSeconds(),deadline.Token);
+                throw new Exception("Corrupt opposite-player grant was ignored on durable replay.");
+            }
+            catch(InvalidDataException){}
+            await grantRows.UpdateOneAsync(x=>x.MatchId==frozenPair.MatchId,
+                Builders<BattleGrantDocument>.Update.Set(x=>x.GrantB,persistedGrant.GrantB),cancellationToken:deadline.Token);
             var replay=await left.FindMatchAsync(tokens[0],TimeSpan.FromSeconds(25),deadline.Token);
             if(replay.MatchId!=grants[0].MatchId || replay.SessionId!=grants[0].SessionId ||
                replay.Ticket!=grants[0].Ticket || !replay.SessionKey.Equals(grants[0].SessionKey))
