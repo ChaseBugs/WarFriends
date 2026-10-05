@@ -49,6 +49,7 @@ public sealed class BattleMatchQueueStore
         if(existingPair!=null)return Result("paired",existingPair);
         var ticket=new BattleQueueTicketDocument{Id=Guid.NewGuid().ToString("N"),PlayerId=playerId,
             CompatibilityKey=compatibilityKey,JoinedUtc=now.UtcDateTime,ExpiresUtc=now.AddSeconds(120).UtcDateTime};
+        string activeTicketId=ticket.Id;
         try {await tickets.InsertOneAsync(ticket,cancellationToken:ct);}
         catch(MongoWriteException e) when(e.WriteError.Category==ServerErrorCategory.DuplicateKey)
         {
@@ -62,6 +63,7 @@ public sealed class BattleMatchQueueStore
             }
             if(prior.JoinedUtc>now.UtcDateTime || prior.ExpiresUtc!=prior.JoinedUtc.AddSeconds(120))
                 throw new InvalidDataException("Existing matchmaking ticket has invalid lifetime authority.");
+            activeTicketId=prior.Id;
         }
         for(int attempt=0;attempt<16;attempt++)
         {
@@ -71,14 +73,14 @@ public sealed class BattleMatchQueueStore
                 .SortBy(x=>x.JoinedUtc).ThenBy(x=>x.PlayerId).FirstOrDefaultAsync(ct);
             if(candidate==null)return new("waiting",null,null);
             var candidatePair=await PairFor(candidate.PlayerId,ct);
-            if(candidatePair!=null){await tickets.DeleteOneAsync(x=>x.PlayerId==candidate.PlayerId,ct);continue;}
+            if(candidatePair!=null){await tickets.DeleteOneAsync(x=>x.Id==candidate.Id,ct);continue;}
             string matchId="m"+Guid.NewGuid().ToString("N");
             var pair=new BattlePairDocument{Id=Guid.NewGuid().ToString("N"),MatchId=matchId,
                 CompatibilityKey=compatibilityKey,Players=[candidate.PlayerId,playerId],CreatedUtc=now.UtcDateTime};
             try
             {
                 await pairs.InsertOneAsync(pair,cancellationToken:ct);
-                await tickets.DeleteManyAsync(Builders<BattleQueueTicketDocument>.Filter.In(x=>x.PlayerId,pair.Players),ct);
+                await tickets.DeleteManyAsync(Builders<BattleQueueTicketDocument>.Filter.In(x=>x.Id,new[]{candidate.Id,activeTicketId}),ct);
                 return Result("paired",pair);
             }
             catch(MongoWriteException e) when(e.WriteError.Category==ServerErrorCategory.DuplicateKey){continue;}

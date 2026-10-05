@@ -75,6 +75,18 @@ internal static class BattleManifestSnapshotTests
             var rematch=await queue.Join(players[1],"mixed.fixture",DateTimeOffset.UtcNow,CancellationToken.None);
             if(rematch.Code!="paired"||rematch.MatchId==match)
                 throw new Exception("Released players could not form a new match.");
+            var otherQueue=new BattleMatchQueueStore(uri,database);
+            string[] contenders=Enumerable.Range(1,12).Select(i=>i.ToString("x32")).ToArray();
+            var admissions=await Task.WhenAll(contenders.Select((id,i)=>(i%2==0?queue:otherQueue)
+                .Join(id,"concurrent.fixture",DateTimeOffset.UtcNow,CancellationToken.None)));
+            if(admissions.Any(x=>x.Code is not ("waiting" or "paired")))
+                throw new Exception("Concurrent queue admission returned an invalid state.");
+            var durablePairs=await mongo.GetDatabase(database).GetCollection<BattlePairDocument>("battle_pairs")
+                .Find(x=>x.CompatibilityKey=="concurrent.fixture").ToListAsync();
+            var roster=durablePairs.SelectMany(x=>x.Players).ToArray();
+            if(roster.Length!=roster.Distinct(StringComparer.Ordinal).Count() ||
+               roster.Any(x=>!contenders.Contains(x,StringComparer.Ordinal)))
+                throw new Exception("Concurrent Backend stores assigned one player to conflicting pairs.");
             Console.WriteLine("PASS: Mongo paired snapshot survives restart; proven terminal releases players for a distinct rematch");
         }
         finally {await mongo.DropDatabaseAsync(database);}
