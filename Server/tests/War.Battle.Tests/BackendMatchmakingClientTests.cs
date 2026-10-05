@@ -18,8 +18,10 @@ internal static class BackendMatchmakingClientTests
             if(request.Headers.Authorization?.Scheme!="Bearer" || request.Headers.Authorization.Parameter!="token")throw new Exception("matchmaking auth");
             calls++;
             if(calls==1)return Proto(new MatchQueueReply{Code="waiting"});
-            if(calls==2){var paired=new MatchQueueReply{Code="paired",MatchId=match};paired.PlayerIds.Add(one);paired.PlayerIds.Add(two);return Proto(paired);}
-            if(calls==3 && request.RequestUri!.AbsolutePath.EndsWith("/v1/battle/grant",StringComparison.Ordinal))
+            if(calls==2)return new HttpResponseMessage(HttpStatusCode.ServiceUnavailable)
+                {Content=new ByteArrayContent(new ErrorResponse{Code="match_provision_deferred"}.ToByteArray())};
+            if(calls==3){var paired=new MatchQueueReply{Code="paired",MatchId=match};paired.PlayerIds.Add(one);paired.PlayerIds.Add(two);return Proto(paired);}
+            if(calls==4 && request.RequestUri!.AbsolutePath.EndsWith("/v1/battle/grant",StringComparison.Ordinal))
             {
                 var grant=new MatchConnectionGrant{Host="127.0.0.1",Port=30000,Ticket=new string('t',10),SessionKey=ByteString.CopyFrom(new byte[32]),
                     SessionId=1,MatchId=match,PlayerId=one,ManifestHash=new string('b',64),ExpiresUnixSeconds=2000};
@@ -29,7 +31,21 @@ internal static class BackendMatchmakingClientTests
         });
         using var backend=new BackendClient(new Uri("http://127.0.0.1:8080/"),handler,true);
         var grant=await backend.FindMatchAsync("token",TimeSpan.FromSeconds(5),CancellationToken.None);
-        if(grant.MatchId!=match || grant.PlayerId!=one || calls!=3)throw new Exception("matchmaking grant flow");
+        if(grant.MatchId!=match || grant.PlayerId!=one || calls!=4)throw new Exception("deferred matchmaking grant flow");
+        checks++;
+        int disabledCalls=0;
+        using(var disabled=new BackendClient(new Uri("http://127.0.0.1:8080/"),new Handler(_=>
+        {
+            disabledCalls++;
+            return new HttpResponseMessage(HttpStatusCode.ServiceUnavailable)
+                {Content=new ByteArrayContent(new ErrorResponse{Code="matchmaking_disabled"}.ToByteArray())};
+        }),true))
+        {
+            try {await disabled.FindMatchAsync("token",TimeSpan.FromSeconds(5),CancellationToken.None);
+                throw new Exception("Disabled matchmaking was retried as deferred provisioning.");}
+            catch(HttpRequestException){}
+        }
+        if(disabledCalls!=1)throw new Exception("Non-provisioning 503 was retried.");
         checks++;
         var malformed=grant.Clone();malformed.PlayerViews[0].VisualIds.Clear();
         try {BattlePlayerViewProjection.Validate(malformed);throw new Exception("malformed battle view accepted");}

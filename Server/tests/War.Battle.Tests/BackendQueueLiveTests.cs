@@ -54,7 +54,7 @@ internal static class BackendQueueLiveTests
                 await legacy.Insert(player,LegacyPlayerStore.NewPassword(),CancellationToken.None);
                 await allocations.Put(new BattleAllocationProjection(ids[i],[],[],[],[],[]),CancellationToken.None);
             }
-            worker=Start(workerDll,run,"Worker",new Dictionary<string,string>
+            var workerEnvironment=new Dictionary<string,string>
             {
                 ["Battle__SigningKey"]=signing,["Battle__ControlKey"]=control,
                 ["Battle__ServerId"]="local-1",["Battle__PublicHost"]="127.0.0.1",["Battle__BindAddress"]="127.0.0.1",
@@ -62,9 +62,8 @@ internal static class BackendQueueLiveTests
                 ["Battle__CombatContentManifestPath"]=Path.Combine(content,"combat-content-manifest.json"),
                 ["Battle__ResultOutboxPath"]=Path.Combine(run,"outbox"),
                 ["Battle__BackendResultEndpoint"]=backendUrl+"internal/battle/results/accept"
-            });
-            await Ready($"http://127.0.0.1:{controlPort}/health/ready",worker);
-            backend=Start(backendDll,run,"Backend",new Dictionary<string,string>
+            };
+            var backendEnvironment=new Dictionary<string,string>
             {
                 ["ASPNETCORE_ENVIRONMENT"]="Development",["ASPNETCORE_URLS"]=backendUrl,
                 ["Mongo__Uri"]=mongoUri,["Mongo__Database"]=database,
@@ -75,17 +74,41 @@ internal static class BackendQueueLiveTests
                 ["Battle__MatchmakingCompatibilityKey"]="unscored-rifle.fixture",
                 ["Battle__MatchManifestTemplatePath"]=Path.Combine(content,"local-rifle-match-template.json"),
                 ["Battle__CombatContentManifestPath"]=Path.Combine(content,"combat-content-manifest.json")
-            });
+            };
+            backend=Start(backendDll,run,"Backend",backendEnvironment);
             await Ready(backendUrl+"health/ready",backend);
             using var left=new BackendClient(new Uri(backendUrl),true);
             using var right=new BackendClient(new Uri(backendUrl),true);
-            using var deadline=new CancellationTokenSource(TimeSpan.FromSeconds(30));
+            using var deadline=new CancellationTokenSource(TimeSpan.FromSeconds(45));
+            var firstWaiting=await left.JoinMatchQueueAsync(tokens[0],deadline.Token);
+            if(firstWaiting.Code!="waiting")throw new Exception("First player did not enter the durable queue.");
+            try {await right.JoinMatchQueueAsync(tokens[1],deadline.Token);
+                throw new Exception("Queue pairing succeeded while the Worker was unavailable.");}
+            catch(HttpRequestException e) when(e.Message.Contains("Backend status 503",StringComparison.Ordinal)){}
+            var queued=new BattleMatchQueueStore(mongoUri,database);
+            var frozenPair=await queued.Existing(ids[0],deadline.Token);
+            if(frozenPair?.Players==null || frozenPair.MatchId==null ||
+               !frozenPair.Players.SequenceEqual(ids,StringComparer.Ordinal) ||
+               (await new BattleManifestSnapshotStore(mongoUri,database).Get(frozenPair.MatchId,ids,deadline.Token))==null ||
+               (await new BattleGrantStore(mongoUri,database).GetForPlayer(frozenPair.MatchId,ids[0],
+                   DateTimeOffset.UtcNow.ToUnixTimeSeconds(),deadline.Token))!=null)
+                throw new Exception("Deferred provisioning did not retain one frozen, ungranted pair.");
+            worker=Start(workerDll,run,"Worker",workerEnvironment);
+            await Ready($"http://127.0.0.1:{controlPort}/health/ready",worker);
+            Stop(backend);
+            backend=Start(backendDll,run,"BackendRestart",backendEnvironment);
+            await Ready(backendUrl+"health/ready",backend);
             var first=left.FindMatchAsync(tokens[0],TimeSpan.FromSeconds(25),deadline.Token);
             var second=right.FindMatchAsync(tokens[1],TimeSpan.FromSeconds(25),deadline.Token);
             var grants=await Task.WhenAll(first,second);
-            if(grants[0].MatchId!=grants[1].MatchId||grants[0].PlayerId!=ids[0]||grants[1].PlayerId!=ids[1]||
+            if(grants[0].MatchId!=frozenPair.MatchId||grants[0].MatchId!=grants[1].MatchId||
+               grants[0].PlayerId!=ids[0]||grants[1].PlayerId!=ids[1]||
                grants.Any(x=>x.PlayerViews.Count!=2)||grants[0].ManifestHash!=grants[1].ManifestHash)
                 throw new Exception("Live queue returned inconsistent player-only grants.");
+            var replay=await left.FindMatchAsync(tokens[0],TimeSpan.FromSeconds(25),deadline.Token);
+            if(replay.MatchId!=grants[0].MatchId || replay.SessionId!=grants[0].SessionId ||
+               replay.Ticket!=grants[0].Ticket || !replay.SessionKey.Equals(grants[0].SessionKey))
+                throw new Exception("Dropped Client response changed the durable player-only grant.");
             using var peerA=new MatchConnection(grants[0]);using var peerB=new MatchConnection(grants[1]);
             if((await peerA.ConnectAsync(deadline.Token)).Code!="admitted" ||
                (await peerB.ConnectAsync(deadline.Token)).Code!="admitted")
@@ -110,7 +133,7 @@ internal static class BackendQueueLiveTests
             var rematch=await right.JoinMatchQueueAsync(tokens[1],deadline.Token);
             if(waiting.Code!="waiting"||rematch.Code!="paired"||rematch.MatchId==grants[0].MatchId)
                 throw new Exception("Live clients could not form a distinct rematch.");
-            Console.WriteLine("PASS: two recovered-session Clients queued, joined Worker UDP, completed, and rematched over live Backend/Mongo");
+            Console.WriteLine("PASS: deferred pair survived Backend restart, issued replay-stable grants, completed live Worker UDP, and rematched");
         }
         finally
         {

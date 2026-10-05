@@ -58,6 +58,11 @@ if(args is ["--verify-queue-requires-replica-set",var standaloneUri])
         return;
     }
 }
+if(args is ["--matchmaking-client-only"])
+{
+    Console.WriteLine("PASS: "+await BackendMatchmakingClientTests.Run()+" portable matchmaking Client checks");
+    return;
+}
 
 if(args is ["--queue-live",var queueMongoUri])
 {await BackendQueueLiveTests.Run(queueMongoUri);return;}

@@ -12,6 +12,14 @@ namespace War.Client
     // Portable .NET Standard 2.0; no Unity or Photon dependency.
     public sealed class BackendClient : IDisposable
     {
+        private sealed class BackendStatusException : HttpRequestException
+        {
+            public int StatusCode { get; }
+            public string Code { get; }
+            public BackendStatusException(int statusCode, string code)
+                : base("Backend status " + statusCode + (string.IsNullOrEmpty(code) ? "" : " (" + code + ")"))
+            { StatusCode = statusCode; Code = code; }
+        }
         private readonly HttpClient http;
         public BackendClient(Uri endpoint, bool allowLocalHttp = false)
             : this(endpoint, new HttpClientHandler(), allowLocalHttp) { }
@@ -38,7 +46,13 @@ namespace War.Client
                 deadline.CancelAfter(timeout);
                 while (true)
                 {
-                    var reply = await JoinMatchQueueAsync(token, deadline.Token).ConfigureAwait(false);
+                    MatchQueueReply reply;
+                    try { reply = await JoinMatchQueueAsync(token, deadline.Token).ConfigureAwait(false); }
+                    catch (BackendStatusException e) when (e.StatusCode == 503 && e.Code == "match_provision_deferred")
+                    {
+                        await Task.Delay(500, deadline.Token).ConfigureAwait(false);
+                        continue;
+                    }
                     if (reply.Code == "waiting")
                     {
                         if (reply.MatchId.Length != 0 || reply.PlayerIds.Count != 0)
@@ -69,8 +83,15 @@ namespace War.Client
                 if (token != null) request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
                 using (var response = await http.SendAsync(request, ct).ConfigureAwait(false))
                 {
-                    if (!response.IsSuccessStatusCode) throw new HttpRequestException("Backend status " + (int)response.StatusCode);
-                    return parser.ParseFrom(await response.Content.ReadAsByteArrayAsync().ConfigureAwait(false));
+                    var bytes = await response.Content.ReadAsByteArrayAsync().ConfigureAwait(false);
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        string code = "";
+                        try { code = ErrorResponse.Parser.ParseFrom(bytes).Code; }
+                        catch (InvalidProtocolBufferException) { }
+                        throw new BackendStatusException((int)response.StatusCode, code);
+                    }
+                    return parser.ParseFrom(bytes);
                 }
             }
         }
