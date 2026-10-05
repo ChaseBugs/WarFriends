@@ -574,6 +574,8 @@ namespace War.Client
                 Packet response = PacketCodec.ReadUntrusted(bytes);
                 if (response == null || response.SessionId != grant.SessionId || response.Ack < firstSequence || response.Ack > sequence ||
                     response.MatchReply == null || response.MatchReply.CommandId != (hello ? 0 : command.CommandId) || !replay.Accept(response.Sequence)) continue;
+                if(response.MatchReply.TransferId!=0)
+                    response.MatchReply=ResolveReplyTransfer(response.MatchReply,ct);
                 var snapshot = response.MatchReply.Snapshot;
                 if (snapshot == null || snapshot.MatchId != grant.MatchId || snapshot.ManifestHash != grant.ManifestHash || snapshot.Players.Count != 2)
                     throw new InvalidOperationException("Battle host returned an incompatible snapshot.");

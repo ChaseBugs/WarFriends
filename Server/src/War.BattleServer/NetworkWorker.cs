@@ -361,6 +361,11 @@ public sealed class NetworkWorker : BackgroundService
                 logger.LogWarning("Oversized match reply dropped for session {SessionId}",packet.SessionId);
                 return;
             }
+            catch(InvalidDataException e) when(e.Message=="Match reply transfer exceeds its bounded size.")
+            {
+                logger.LogWarning("Match reply exceeded transfer cap for session {SessionId}",packet.SessionId);
+                return;
+            }
             if(packet.BodyCase==Packet.BodyOneofCase.MatchHello && response!=null)
                 Volatile.Write(ref activeMatchEndpoints,match.ActiveSessionEndpoints());
             PersistTerminals();
@@ -402,7 +407,8 @@ public sealed class NetworkWorker : BackgroundService
             Packet.BodyOneofCase.MatchBarrelPoll or Packet.BodyOneofCase.MatchBarrelBatch or
             Packet.BodyOneofCase.MatchArmyPoll or Packet.BodyOneofCase.MatchArmyBatch or
             Packet.BodyOneofCase.MatchArmyEntityPoll or Packet.BodyOneofCase.MatchArmyEntityBatch or
-            Packet.BodyOneofCase.MatchProjectilePoll or Packet.BodyOneofCase.MatchProjectileBatch;
+            Packet.BodyOneofCase.MatchProjectilePoll or Packet.BodyOneofCase.MatchProjectileBatch or
+            Packet.BodyOneofCase.MatchReplyChunkPoll or Packet.BodyOneofCase.MatchReplyChunkBatch;
     private static bool ValidProbeBody(Packet packet)
     {
         switch(packet.BodyCase)

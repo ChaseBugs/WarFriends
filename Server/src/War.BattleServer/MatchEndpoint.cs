@@ -29,6 +29,8 @@ public sealed class MatchEndpoint
         public ulong BudgetTick;
         public int UsedBudget;
         public ProjectileScan? Projectiles;
+        public readonly List<MatchReplyTransfer> Transfers=[];
+        public ulong NextTransferId;
     }
     private sealed record ProjectileScan(ulong Id,ulong CreatedHostTick,ulong SnapshotTick,
         BattleProjectileState[] Rows);
@@ -110,10 +112,33 @@ public sealed class MatchEndpoint
             case Packet.BodyOneofCase.MatchProjectilePoll:
                 reply.MatchProjectileBatch=ProjectileBatch(session,packet.MatchProjectilePoll,reply);
                 break;
+            case Packet.BodyOneofCase.MatchReplyChunkPoll:
+                reply.MatchReplyChunkBatch=ReplyChunk(session,packet.MatchReplyChunkPoll);
+                break;
             default: return null;
         }
+        MatchReply? complete=reply.MatchReply!=null &&
+            reply.CalculateSize()+PacketCodec.MacBytes>PacketCodec.MaximumDatagramBytes
+            ?reply.MatchReply.Clone():null;
         FitSnapshotDatagram(reply);
+        if(reply.MatchReply!=null &&
+           reply.CalculateSize()+PacketCodec.MacBytes>PacketCodec.MaximumDatagramBytes)
+        {
+            session.Transfers.RemoveAll(x=>tick-x.CreatedHostTick>MatchReplyTransfer.LifetimeHostTicks);
+            ulong id=checked(++session.NextTransferId);
+            var transfer=new MatchReplyTransfer(id,tick,complete!);
+            session.Transfers.Add(transfer);
+            if(session.Transfers.Count>4)session.Transfers.RemoveAt(0);
+            reply.MatchReply=transfer.Stub(complete!);
+        }
         return PacketCodec.Encode(reply,session.Key);
+    }
+    private MatchReplyChunkBatch ReplyChunk(Session session,MatchReplyChunkPoll poll)
+    {
+        session.Transfers.RemoveAll(x=>tick-x.CreatedHostTick>MatchReplyTransfer.LifetimeHostTicks);
+        var transfer=session.Transfers.FirstOrDefault(x=>x.Id==poll.TransferId);
+        return transfer?.Page(poll.Index)??new MatchReplyChunkBatch
+            {TransferId=poll.TransferId,Code="expired"};
     }
     internal static void FitSnapshotDatagram(Packet reply)
     {
@@ -279,6 +304,11 @@ public sealed class MatchEndpoint
                 return packet.MatchProjectilePoll.CalculateSize()==new MatchProjectilePoll
                     {ScanId=packet.MatchProjectilePoll.ScanId,
                      AfterProjectileId=packet.MatchProjectilePoll.AfterProjectileId}.CalculateSize();
+            case Packet.BodyOneofCase.MatchReplyChunkPoll:
+                return packet.MatchReplyChunkPoll.TransferId!=0 &&
+                    packet.MatchReplyChunkPoll.CalculateSize()==new MatchReplyChunkPoll
+                    {TransferId=packet.MatchReplyChunkPoll.TransferId,
+                     Index=packet.MatchReplyChunkPoll.Index}.CalculateSize();
             default:return false;
         }
     }

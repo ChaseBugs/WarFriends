@@ -41,6 +41,8 @@ message Packet {
     MatchArmyEntityBatch match_army_entity_batch = 30;
     MatchProjectilePoll match_projectile_poll = 31;
     MatchProjectileBatch match_projectile_batch = 32;
+    MatchReplyChunkPoll match_reply_chunk_poll = 33;
+    MatchReplyChunkBatch match_reply_chunk_batch = 34;
   }
 }
 
@@ -408,6 +410,14 @@ message BattleCoopState {
 }
 message MatchReply {
   uint64 command_id = 1; string code = 2; MatchSnapshot snapshot = 3;
+  // When snapshot cannot fit one datagram, these describe a frozen serialized
+  // MatchReply. The SDK must reassemble and verify it before publishing state.
+  uint64 transfer_id = 4; uint32 transfer_size = 5; bytes transfer_sha256 = 6;
+}
+message MatchReplyChunkPoll { uint64 transfer_id = 1; uint32 index = 2; }
+message MatchReplyChunkBatch {
+  uint64 transfer_id = 1; uint32 index = 2; uint32 chunk_count = 3;
+  uint32 total_size = 4; bytes data = 5; string code = 6;
 }
 // Separate from the maximum-width state snapshot. A cursor acknowledges only
 // events this participant has already processed; replay is match-owned.

@@ -24,6 +24,13 @@ if(args is ["--client-matchmaking-only"])
     return;
 }
 
+if(args is ["--reply-transfer-only"])
+{
+    int focused=MatchReplyTransferTests.Run()+await LiveReplyTransferUdpTests.Run();
+    Console.WriteLine($"PASS: {focused} focused reply transfer assertions");
+    return;
+}
+
 if(args is ["--flame-only"])
 {
     int focused=ArmyFlameBurstTests.Run();
@@ -224,6 +231,8 @@ if(args is ["--combat-content-only"])
 }
 
 int checks = 0;
+checks += MatchReplyTransferTests.Run();
+checks += await LiveReplyTransferUdpTests.Run();
 checks += await BackendAllocationClientTests.Run();
 void Check(bool ok, string name) { if (!ok) throw new Exception(name); checks++; }
 void Reject(Action f, string name)
