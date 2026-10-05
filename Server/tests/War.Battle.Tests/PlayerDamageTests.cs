@@ -70,6 +70,24 @@ internal static class PlayerDamageTests
         Check(snapshot.Phase == BattlePhase.Ended && snapshot.WinnerPlayerId == a && snapshot.TerminalReason == "player-killed" && snapshot.Players[1].Dead && !snapshot.RewardEligible, "unscored death terminal");
         Check(engine.ApplyResolvedPlayerDamage(a, b, lethal, 1) == null && engine.Snapshot().Equals(snapshot), "terminal cannot damage twice");
         Check(PacketCodec.Encode(new Packet { Version = 1, SessionId = 1, Sequence = 1, MatchReply = engine.Reply(0, "state") }, new byte[32]).Length <= 1200, "health snapshot fits MTU");
+        var noDamagePlayers = players.Select((p, i) => i == 1
+            ? p with { Combat = body with { NoDamageChance = 1 } } : p).ToArray();
+        var noDamageMatch = new MatchEngine(fixture with
+            { MatchId = "source-zero-damage-player-contact", Players = noDamagePlayers });
+        noDamageMatch.Admit(a); noDamageMatch.Admit(b);
+        foreach (string id in new[] { a, b })
+            noDamageMatch.Command(id, new MatchCommand { CommandId = 1,
+                Ready = new ReadyCommand { ManifestHash = noDamageMatch.ManifestHash } });
+        noDamageMatch.Advance(60);
+        var noDamageResult = noDamageMatch.ApplyResolvedPlayerDamage(a, b, shot, 0,
+            confirmedProjectileImpact:true,sourcePlayerBullet:true);
+        noDamageMatch.Command(b, new MatchCommand { CommandId = 2, Forfeit = new ForfeitCommand() });
+        var noDamageState = noDamageMatch.TerminalEvidenceSnapshot();
+        Check(noDamageResult is { Applied:true, Damage:0, Health:100 } &&
+              noDamageState.Players[1].Health == 100 &&
+              noDamageState.Players[0].ConfirmedPlayerBulletHits == 1 &&
+              noDamageState.Players[0].ConfirmedEnemyHits == 1,
+            "source-backed opposing player bullet contact counts despite a complete damage refund");
         return checks;
     }
 }
