@@ -95,11 +95,11 @@ internal sealed class ShotCollisionWorld
             {
                 if(target==null||target.EntityId==0||target.Layer is <0 or >31||target.Hitbox==null)
                     throw new InvalidDataException("Invalid shotgun dynamic overlap authority.");
-                // Decoy owns a live DestroyableObject with the opposing fraction.
+                // Decoys and animated infantry own opposing DestroyableObject colliders.
                 // Other dynamic families need their own source collider/owner proof.
-                if(!target.Decoy||(layerMask&(1u<<target.Layer))==0||
+                if(!(target.Decoy||target.ArmyInfantry)||(layerMask&(1u<<target.Layer))==0||
                    !target.Hitbox.OverlapsSphere(origin,radius))continue;
-                string identity="decoy:"+target.EntityId;
+                string identity=(target.Decoy?"decoy:":"infantry:")+target.EntityId;
                 string collider=identity+":"+target.Hitbox.SourcePath;
                 result.Add(new ShotgunCollider(Convert.ToHexStringLower(SHA256.HashData(
                     Encoding.UTF8.GetBytes(collider))),identity,target.Hitbox.Center,true));

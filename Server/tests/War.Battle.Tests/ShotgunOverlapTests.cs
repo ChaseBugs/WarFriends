@@ -42,6 +42,20 @@ internal static class ShotgunOverlapTests
             Vector3.Zero,new Vector3(0,0,6),withDecoy);
         Check(decoyShot.RealPellets.Count==3&&decoyShot.RealPellets[2].EntityId==withDecoy[1].EntityId,
               "source cone schedules a separate host-owned extra pellet toward the Decoy collider");
+        var infantryBox=new PlayerHitbox("fixture/infantry/body",PlayerHitboxKind.Box,1,
+            new Vector3(-.8f,0,5),new Vector3(1,2,1),Quaternion.Identity,0,Vector3.Zero,0);
+        var infantryWorld=new ShotCollisionWorld(null,[new(a,distant),new(b,pose)],
+            dynamicTargets:_=>[new DynamicShotTarget(73,0,23,infantryBox,ArmyInfantry:true)]);
+        var withInfantry=infantryWorld.OverlapEnemy(a,Vector3.Zero,5,1u<<23);
+        Check(withInfantry.Any(x=>x.MainEntityId=="infantry:73"&&x.Center==infantryBox.Center)&&
+              !infantryWorld.OverlapEnemy(a,Vector3.Zero,5,1u<<22)
+                  .Any(x=>x.MainEntityId=="infantry:73"),
+              "opposing animated infantry enters shotgun overlap only through its source faction layer");
+        var infantryShot=ShotgunShotPlanner.Plan(new ShotgunRule(50,3,10,10,100,false,false),
+            Vector3.Zero,new Vector3(0,0,6),withInfantry);
+        Check(infantryShot.RealPellets.Any(x=>x.EntityId==withInfantry.First(y=>
+                  y.MainEntityId=="infantry:73").EntityId),
+              "source cone schedules a real pellet toward the host-owned infantry collider");
         Check(new ShotCollisionWorld(null,[new(a,pose),new(b,distant)]).OverlapEnemy(a,Vector3.Zero,4.5f).Count==0,
               "moving enemy pose removes old overlap candidates");
         try { _=world.OverlapEnemy(new string('c',32),Vector3.Zero,4.5f); throw new Exception("Unknown shooter accepted."); }
