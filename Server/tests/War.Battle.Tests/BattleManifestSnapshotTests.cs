@@ -197,7 +197,15 @@ internal static class BattleManifestSnapshotTests
             try {await queue.Join(changing,"policy-third.fixture",expiryNow,CancellationToken.None);
                 throw new Exception("Active queue ticket accepted a different server compatibility key.");}
             catch(InvalidDataException){}
-            Console.WriteLine("PASS: Mongo pair/retry/expiry/cancellation authority survives concurrent stores and restart");
+            var scoring=await Task.WhenAll(Enumerable.Range(0,8).Select(_=>
+                new BattleResultStore(uri,database).ReconcileScored(rematch.MatchId!,rematchDigest,CancellationToken.None)));
+            if(scoring.Count(x=>x=="scored")!=1 || scoring.Count(x=>x=="already-scored")!=7)
+                throw new Exception("Concurrent result scoring did not retain one durable winner.");
+            if(await resultStore.Prune(DateTimeOffset.UtcNow.AddDays(31),TimeSpan.FromDays(30),CancellationToken.None)!=2 ||
+               await resultStore.Get(match,CancellationToken.None)!=null ||
+               await resultStore.Get(rematch.MatchId!,CancellationToken.None)!=null)
+                throw new Exception("Validated result archival did not remove the exact due rows.");
+            Console.WriteLine("PASS: Mongo queue authority and exact-result scoring/archival survive concurrent stores and restart");
         }
         finally {await mongo.DropDatabaseAsync(database);}
     }

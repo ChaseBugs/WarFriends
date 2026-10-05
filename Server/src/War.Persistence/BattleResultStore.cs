@@ -80,9 +80,15 @@ public sealed class BattleResultStore
         foreach (var row in candidates)
             Validate(row,row.MatchId,now.UtcDateTime);
         if (candidates.Count == 0) return 0;
-        var ids = candidates.Select(x => x.Id).ToArray();
-        var deleted = await results.DeleteManyAsync(Builders<BattleResultDocument>.Filter.In(x => x.Id, ids), ct);
-        return deleted.DeletedCount;
+        long removed=0;
+        foreach(var row in candidates)
+        {
+            var deleted=await results.DeleteOneAsync(Exact(row),ct);
+            if(deleted.DeletedCount!=1)
+                throw new InvalidDataException("Battle result changed during archival; retry remaining rows.");
+            removed++;
+        }
+        return removed;
     }
     public async Task<string> ReconcileScored(string matchId, string digest, CancellationToken ct)
     {
@@ -94,8 +100,21 @@ public sealed class BattleResultStore
         if (!string.Equals(row.Digest, digest, StringComparison.Ordinal)) return "conflict";
         if (row.Scored) return "already-scored";
         var update = Builders<BattleResultDocument>.Update.Set(x => x.Scored, true).Set(x => x.ScoredUtc, DateTime.UtcNow);
-        var result = await results.UpdateOneAsync(x => x.MatchId == matchId && x.Digest == digest && !x.Scored, update, cancellationToken: ct);
-        return result.ModifiedCount == 1 ? "scored" : "already-scored";
+        var result = await results.UpdateOneAsync(Exact(row), update, cancellationToken: ct);
+        if(result.ModifiedCount==1)return "scored";
+        var latest=await Get(matchId!,ct);
+        if(latest==null)return "missing";
+        if(latest.Digest!=digest)return "conflict";
+        if(latest.Scored)return "already-scored";
+        throw new InvalidDataException("Battle result changed during scoring.");
+    }
+    private static FilterDefinition<BattleResultDocument> Exact(BattleResultDocument row)
+    {
+        var f=Builders<BattleResultDocument>.Filter;
+        return f.Eq(x=>x.Id,row.Id) & f.Eq(x=>x.MatchId,row.MatchId) &
+            f.Eq(x=>x.Digest,row.Digest) & f.Eq(x=>x.Snapshot,row.Snapshot) &
+            f.Eq(x=>x.AcceptedUtc,row.AcceptedUtc) & f.Eq(x=>x.Scored,row.Scored) &
+            f.Eq(x=>x.ScoredUtc,row.ScoredUtc);
     }
     private static void Validate(BattleResultDocument row,string? matchId,DateTime now)
     {
