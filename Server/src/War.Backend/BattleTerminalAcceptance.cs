@@ -30,8 +30,13 @@ public sealed class BattleTerminalAcceptance
                 throw new InvalidDataException("Terminal proof differs from frozen match authority.");
         }
         string code=await results.Accept(matchId,digest,payload,ct);
-        if(code!="conflict" && pair!=null)
-            _=await queue.Release(matchId,pair.Players!,ct);
+        if(code!="conflict")
+        {
+            var stored=await results.Get(matchId,ct);
+            if(stored==null || stored.Digest!=digest || !stored.Snapshot.AsSpan().SequenceEqual(payload))
+                throw new InvalidDataException("Persisted terminal evidence differs from the validated Worker payload.");
+            if(pair!=null)_=await queue.Release(matchId,pair.Players!,ct);
+        }
         return code;
     }
 }

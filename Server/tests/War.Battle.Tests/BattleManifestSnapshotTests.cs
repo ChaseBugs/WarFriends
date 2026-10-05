@@ -65,16 +65,44 @@ internal static class BattleManifestSnapshotTests
                 throw new Exception("Rejected terminal result changed queue ownership.");
             terminal.Players[1].PlayerId=players[1];
             (byte[] payload,string digest)=Evidence(terminal);
-            if(await acceptance.Accept(match,digest,payload,CancellationToken.None)!="accepted" ||
+            if(await resultStore.Accept(match,digest,payload,CancellationToken.None)!="accepted" ||
+               (await queue.Existing(players[0],CancellationToken.None))?.MatchId!=match)
+                throw new Exception("Result storage unexpectedly released an unreconciled queue pair.");
+            var resumedAcceptance=new BattleTerminalAcceptance(new BattleResultStore(uri,database),
+                new BattleMatchQueueStore(uri,database),new BattleManifestSnapshotStore(uri,database));
+            if(await resumedAcceptance.Accept(match,digest,payload,CancellationToken.None)!="already-accepted" ||
                await queue.Existing(players[0],CancellationToken.None)!=null ||
                await queue.Existing(players[1],CancellationToken.None)!=null ||
                await acceptance.Accept(match,digest,payload,CancellationToken.None)!="already-accepted")
-                throw new Exception("Accepted terminal result did not release and replay safely.");
+                throw new Exception("Stored terminal result did not release the pair after Backend restart.");
             if((await queue.Join(players[0],"mixed.fixture",DateTimeOffset.UtcNow,CancellationToken.None)).Code!="waiting")
                 throw new Exception("Released player could not queue again.");
             var rematch=await queue.Join(players[1],"mixed.fixture",DateTimeOffset.UtcNow,CancellationToken.None);
             if(rematch.Code!="paired"||rematch.MatchId==match)
                 throw new Exception("Released players could not form a new match.");
+            var rematchTemplate=JsonNode.Parse(first)!.AsObject();
+            rematchTemplate["MatchId"]=rematch.MatchId;
+            byte[] rematchManifest=System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(rematchTemplate);
+            await store.GetOrCreate(rematch.MatchId!,players,()=>Task.FromResult(rematchManifest),CancellationToken.None);
+            var rematchTerminal=new MatchSnapshot{MatchId=rematch.MatchId,ManifestHash=MatchManifest.Parse(rematchManifest).Digest(),
+                Phase=BattlePhase.Aborted,TerminalReason="host-shutdown"};
+            rematchTerminal.Players.Add(new BattlePlayerState{PlayerId=players[0]});
+            rematchTerminal.Players.Add(new BattlePlayerState{PlayerId=players[1]});
+            (byte[] rematchPayload,string rematchDigest)=Evidence(rematchTerminal);
+            await resultStore.Accept(rematch.MatchId!,rematchDigest,rematchPayload,CancellationToken.None);
+            var resultRows=mongo.GetDatabase(database).GetCollection<BattleResultDocument>("battle_results");
+            await resultRows.UpdateOneAsync(x=>x.MatchId==rematch.MatchId,
+                Builders<BattleResultDocument>.Update.Set(x=>x.Snapshot,new byte[]{1,2,3}));
+            try {await resumedAcceptance.Accept(rematch.MatchId!,rematchDigest,rematchPayload,CancellationToken.None);
+                throw new Exception("Damaged persisted terminal payload released its pair.");}
+            catch(InvalidDataException){}
+            if((await queue.Existing(players[0],CancellationToken.None))?.MatchId!=rematch.MatchId)
+                throw new Exception("Rejected persisted terminal payload changed pair ownership.");
+            await resultRows.UpdateOneAsync(x=>x.MatchId==rematch.MatchId,
+                Builders<BattleResultDocument>.Update.Set(x=>x.Snapshot,rematchPayload));
+            if(await resumedAcceptance.Accept(rematch.MatchId!,rematchDigest,rematchPayload,CancellationToken.None)!="already-accepted" ||
+               await queue.Existing(players[0],CancellationToken.None)!=null)
+                throw new Exception("Repaired terminal payload did not release the pair.");
             var otherQueue=new BattleMatchQueueStore(uri,database);
             string[] contenders=Enumerable.Range(1,12).Select(i=>i.ToString("x32")).ToArray();
             var admissions=await Task.WhenAll(contenders.Select((id,i)=>(i%2==0?queue:otherQueue)
