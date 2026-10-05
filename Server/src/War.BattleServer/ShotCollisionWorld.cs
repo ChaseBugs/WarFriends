@@ -4,7 +4,7 @@ using System.Text;
 
 namespace War.BattleServer;
 
-internal sealed record CollisionPlayer(string PlayerId, PlayerCollisionModel Pose,int Layer=-1);
+internal sealed record CollisionPlayer(string PlayerId, PlayerCollisionModel Pose,int Layer=-1,int Fraction=0);
 internal sealed record DynamicShotTarget(ulong EntityId,int PartComponentFileId,int Layer,PlayerHitbox Hitbox,
     string? PassengerRole=null,int? RepairDronePathIndex=null,bool ArmyInfantry=false,bool Decoy=false,bool HeavyTurret=false,bool HelicopterGunner=false,bool GroundVehicleBody=false,bool HelicopterBody=false,bool DroneRoot=false);
 internal sealed record ShotCollision(float Distance, Vector3 Position, string SourcePath, string? PlayerId, float PartWeight, bool Static = false,string? DynamicOwner=null,int? ColliderIndex=null,ulong? DynamicEntityId=null,int? DynamicPartId=null,string? DynamicPassengerRole=null,int? DynamicRepairDronePathIndex=null,bool DynamicArmyInfantry=false,bool DynamicDecoy=false,bool DynamicHeavyTurret=false,bool DynamicHelicopterGunner=false);
@@ -28,7 +28,7 @@ internal sealed class ShotCollisionWorld
         this.players = players.Take(3).ToArray();
         if (this.players.Length != 2 || this.players.Any(p => p == null || p.Pose == null || p.Pose.Role != "gameplay" ||
             !Guid.TryParseExact(p.PlayerId, "N", out _) || p.PlayerId != p.PlayerId.ToLowerInvariant() ||
-            p.Layer is not (-1 or 22 or 23)) ||
+            p.Layer is not (-1 or 22 or 23) || p.Fraction is <0 or >2) ||
             this.players[0].PlayerId == this.players[1].PlayerId)
             throw new InvalidDataException("Expected two distinct host-owned gameplay collision poses.");
     }
@@ -93,6 +93,22 @@ internal sealed class ShotCollisionWorld
                 p.OverlapsSphere(origin,radius))
             .Select(p=>new ShotgunCollider(Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(p.SourcePath))),
                 enemy.PlayerId,p.Center,true)).ToList();
+        if(map!=null&&dynamicEnabled!=null&&shooter.Fraction is 1 or 2)
+        {
+            var opposingShields=map.Covers.Where(c=>c.Fraction!=shooter.Fraction)
+                .ToDictionary(c=>c.SourcePath+"/riot_shield",StringComparer.Ordinal);
+            foreach(var shield in map.DynamicSphereOverlaps(origin,radius,layerMask,colliderEnabled,runtimeLayer))
+            {
+                if(shield.Layer!=24||!opposingShields.ContainsKey(shield.DynamicOwner)||
+                   !dynamicEnabled(shield.DynamicOwner))continue;
+                var center=(shield.BoundsMin+shield.BoundsMax)*.5f;
+                string identity="shield:"+opposingShields[shield.DynamicOwner].SourceIndex;
+                string collider=identity+":"+shield.ColliderIndex;
+                result.Add(new ShotgunCollider(Convert.ToHexStringLower(SHA256.HashData(
+                    Encoding.UTF8.GetBytes(collider))),identity,center,true));
+                if(result.Count>128)throw new InvalidDataException("Shotgun overlap exceeded source candidate bound.");
+            }
+        }
         var dynamicColliderOrdinals=new Dictionary<string,int>(StringComparer.Ordinal);
         if(dynamicTargets!=null)
             foreach(var target in dynamicTargets(shooterId))

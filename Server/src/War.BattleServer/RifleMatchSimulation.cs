@@ -280,7 +280,7 @@ internal sealed class RifleMatchSimulation
     {
         var a=actors.Single(p=>p.Definition.PlayerId==owner);
         var world=new ShotCollisionWorld(map,actors.Select(p=>new CollisionPlayer(p.Definition.PlayerId,p.Pose.Collision,
-            p.Definition.Fraction==1?23:22)),
+            p.Definition.Fraction==1?23:22,p.Definition.Fraction)),
             dynamicColliderEnabled,indexedColliderEnabled,runtimeLayer,dynamicTargets);
         var muzzle=a.Pose.Muzzle(a.Weapon.SourceId).Position;
         uint bulletMask=a.WeaponClass==LiveWeaponClass.Smg ? (a.Definition.Fraction==1?content.Smgs!.AlliesBulletMask:content.Smgs!.EnemiesBulletMask) :
@@ -317,7 +317,7 @@ internal sealed class RifleMatchSimulation
         if(actor.WeaponClass!=LiveWeaponClass.Shotgun)
             return new(PrepareVolley(id,owner,target,tick),[]);
         var world=new ShotCollisionWorld(map,actors.Select(p=>new CollisionPlayer(
-            p.Definition.PlayerId,p.Pose.Collision,p.Definition.Fraction==1?23:22)),
+            p.Definition.PlayerId,p.Pose.Collision,p.Definition.Fraction==1?23:22,p.Definition.Fraction)),
             dynamicColliderEnabled,indexedColliderEnabled,runtimeLayer,dynamicTargets);
         var binding=content.Shotguns!.Binding(actor.Weapon.SourceId);
         var stage=content.Shotguns.Stage(actor.Weapon.SourceId,actor.WeaponUpgrade);

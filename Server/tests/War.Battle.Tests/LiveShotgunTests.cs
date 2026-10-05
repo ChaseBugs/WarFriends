@@ -238,6 +238,31 @@ internal static class LiveShotgunTests
         var right=map.Covers.First(c=>c.Main&&c.Fraction==2);
         string one=new('a',32),two=new('b',32);
         string source="Google2u.Shotgun_SPAS";
+        var leftPose=content.Poses.SampleBlended("idle",0,true,"idle",0,true,0)
+            .Place(left.Position,left.Rotation).Collision;
+        var rightPose=content.Poses.SampleBlended("idle",0,true,"idle",0,true,0)
+            .Place(right.Position,right.Rotation).Collision;
+        var enemyShield=map.DynamicColliders.Single(c=>
+            c.DynamicOwner==right.SourcePath+"/riot_shield");
+        var shieldCenter=(enemyShield.BoundsMin+enemyShield.BoundsMax)*.5f;
+        var shieldWorld=new ShotCollisionWorld(map,
+            [new(one,leftPose,23,1),new(two,rightPose,22,2)],dynamicEnabled:_=>true);
+        Check(shieldWorld.OverlapEnemy(one,shieldCenter,1,1u<<24)
+                  .Any(c=>c.MainEntityId=="shield:"+right.SourceIndex&&c.Center==shieldCenter),
+            "live opposing source shield enters shotgun overlap on its layer-24 BoxCollider");
+        Check(!shieldWorld.OverlapEnemy(one,shieldCenter,1,1u<<23)
+                  .Any(c=>c.MainEntityId=="shield:"+right.SourceIndex)&&
+              !new ShotCollisionWorld(map,[new(one,leftPose,23,1),new(two,rightPose,22,2)],
+                  dynamicEnabled:_=>false).OverlapEnemy(one,shieldCenter,1,1u<<24)
+                  .Any(c=>c.MainEntityId=="shield:"+right.SourceIndex)&&
+              !new ShotCollisionWorld(map,[new(one,leftPose,23,1),new(two,rightPose,22,2)])
+                  .OverlapEnemy(one,shieldCenter,1,1u<<24)
+                  .Any(c=>c.MainEntityId=="shield:"+right.SourceIndex),
+            "shotgun shield extras require source layer and trusted live shield authority");
+        var ownShield=map.DynamicColliders.Single(c=>c.DynamicOwner==left.SourcePath+"/riot_shield");
+        Check(!shieldWorld.OverlapEnemy(one,(ownShield.BoundsMin+ownShield.BoundsMax)*.5f,1,1u<<24)
+                  .Any(c=>c.MainEntityId=="shield:"+left.SourceIndex),
+            "friendly cover shield cannot become an extra real pellet target");
         var weapon=content.Shotguns!.CreateManifest(source,0);
         var manifest=new MatchManifest("shotgun-live","local-1",Path.GetFileNameWithoutExtension(map.Source),map.SourceHash,
             content.ShotgunRevision!,MatchManifest.ShotgunCombatMode,10,60,120,
