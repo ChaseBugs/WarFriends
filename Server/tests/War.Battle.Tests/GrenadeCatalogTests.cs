@@ -280,6 +280,52 @@ internal static class GrenadeCatalogTests
         for(ulong t=61;t<550&&!barrelMatch.Terminal&&barrelMatch.BarrelState.All(x=>x.Revision==0);t++)barrelMatch.Advance(t);
         Check(barrelMatch.BarrelState.Any(x=>x.Revision>0),
             "live MatchEngine M320 explosion mutates the authoritative barrel chain");
+        var decoyAllocation=allocation with {MatchId="grenade-decoy",SceneMasterPlayerId=one,
+            Players=[allocation.Players[0] with {PlayerLevel=0},
+                     allocation.Players[1] with {PlayerLevel=0}]};
+        var decoyMatch=new MatchEngine(decoyAllocation,map,combat);
+        decoyMatch.ConfigureBattleAllocations([
+            new(one,["CardDecoy"],[],[0],[-1],[-1]),
+            new(two,["CardDecoy"],[],[0],[-1],[-1])]);
+        decoyMatch.Admit(one);
+        decoyMatch.Admit(two);
+        MatchCommand SelectDecoy()=>new(){CommandId=1,SelectCards=new()
+            {CardIds={"CardDecoy"}}};
+        var firstDecoySelection=decoyMatch.Command(one,SelectDecoy()).Code;
+        var secondDecoySelection=decoyMatch.Command(two,SelectDecoy()).Code;
+        Check(firstDecoySelection=="cards-selected"&&secondDecoySelection=="cards-selected",
+            "grenade match selects recovered Decoy cards from trusted allocations: "+
+            firstDecoySelection+", "+secondDecoySelection);
+        decoyMatch.Command(one,new(){CommandId=2,Ready=new(){ManifestHash=decoyMatch.ManifestHash}});
+        decoyMatch.Command(two,new(){CommandId=2,Ready=new(){ManifestHash=decoyMatch.ManifestHash}});
+        decoyMatch.Advance(60);
+        Check(decoyMatch.Command(two,new(){CommandId=3,UseDecoy=new()
+            {RequestId=new string('d',32)}}).Code=="decoy-spawned",
+            "opponent deploys host-owned Decoys before grenade damage");
+        var decoyVictim=decoyMatch.Snapshot().Decoys.First(value=>value.OwnerPlayerId==two);
+        var decoyOrigin=new Vector3(decoyVictim.X,decoyVictim.Y,decoyVictim.Z);
+        var decoyStage=combat.Grenades!.Stage("Google2u.Grenade_FRAG",0);
+        decoyMatch.ApplyPlayerGrenadeDecoyExplosion(one,decoyOrigin,decoyStage);
+        var damagedDecoy=decoyMatch.Snapshot().Decoys
+            .SingleOrDefault(value=>value.EntityId==decoyVictim.EntityId);
+        Check((damagedDecoy==null?decoyStage.ExplosionDamage>=decoyVictim.Health:
+              Math.Abs(damagedDecoy.Health-Math.Max(0,decoyVictim.Health-decoyStage.ExplosionDamage))<.01f),
+            "player grenade damages each overlapping Decoy through its source root collider");
+        Check(decoyMatch.Command(one,new(){CommandId=3,UseDecoy=new()
+            {RequestId=new string('e',32)}}).Code=="decoy-spawned",
+            "grenade owner deploys a separate friendly Decoy");
+        var friendlyDecoy=decoyMatch.Snapshot().Decoys.First(value=>value.OwnerPlayerId==one);
+        var friendlyDecoyOrigin=new Vector3(friendlyDecoy.X,friendlyDecoy.Y,friendlyDecoy.Z);
+        decoyMatch.ApplyPlayerGrenadeDecoyExplosion(one,friendlyDecoyOrigin,decoyStage);
+        var friendlyDecoyAfter=decoyMatch.Snapshot().Decoys
+            .SingleOrDefault(value=>value.EntityId==friendlyDecoy.EntityId);
+        float friendlyDecoyDamage=decoyStage.ExplosionDamage*combat.Explosions.Friendly;
+        Check((friendlyDecoyAfter==null?friendlyDecoyDamage>=friendlyDecoy.Health:
+              Math.Abs(friendlyDecoyAfter.Health-Math.Max(0,friendlyDecoy.Health-friendlyDecoyDamage))<.01f),
+            "friendly Decoy blast uses the recovered half-damage coefficient");
+        Reject(()=>decoyMatch.ApplyPlayerGrenadeDecoyExplosion(one,decoyOrigin,
+            decoyStage with {ExplosionDamage=1}),
+            "forged grenade stage cannot damage a Decoy");
         var infantryAllocation=allocation with {MatchId="grenade-infantry-kill",Players=[
             allocation.Players[0] with
             {EquippedArmyUnitIds=["ID_UNIT-ASSAULT"],ArmyNormalUpgradeIndexes=[0],

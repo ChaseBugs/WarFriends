@@ -146,6 +146,38 @@ public sealed partial class MatchEngine
         return result;
     }
 
+    internal void ApplyPlayerGrenadeDecoyExplosion(string shooterId,Vector3 origin,GrenadeStage stage)
+    {
+        if(phase!=BattlePhase.Running||grenadeCatalog==null||decoySource==null||
+           explosionPolicy==null||stage==null||
+           !ReferenceEquals(grenadeCatalog.Stage(stage.SourceId,stage.Index),stage)||
+           !PlayerHitbox.Finite(origin))
+            throw new InvalidDataException("Grenade Decoy blast lacks trusted source authority.");
+
+        var shooter=Find(shooterId)??throw new InvalidDataException("Grenade owner disappeared.");
+        foreach(var collider in DecoyShotTargets(shooter,includeFriendly:true))
+        {
+            var target=decoys.Snapshot().SingleOrDefault(value=>value.EntityId==collider.EntityId)??
+                throw new InvalidDataException("Grenade Decoy lost host health authority.");
+            var effect=GrenadeExplosion.ResolveArmy(origin,target.Position,[collider.Hitbox],stage);
+            if(effect==null)continue;
+
+            bool friendly=target.OwnerFraction==shooter.Definition.Fraction;
+            float damage=effect.RawDamage*(friendly?explosionPolicy.Friendly:1f);
+            if(!float.IsFinite(damage)||damage<=0||damage>10_000_000||
+               !decoys.TryDamage(target.EntityId,damage,out var before,out bool destroyed)||before==null)
+                throw new InvalidDataException("Grenade Decoy damage escaped host bounds.");
+
+            stateRevision++;
+            if(destroyed)
+            {
+                droneTargets.Disable(DroneDecoyId(target.EntityId));
+                Emit(MatchEventKind.DecoyDestroyed,shooterId,before.OwnerPlayerId,
+                    target.EntityId,before.Position,0,"player-grenade");
+            }
+        }
+    }
+
     internal int ApplyArmyFlameDecoyPulse(ulong sourceEntityKey,Vector3 origin,Vector3 forward)
     {
         if(phase!=BattlePhase.Running||!activeArmyEntities.TryGetValue(sourceEntityKey,out var source)||
