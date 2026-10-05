@@ -581,6 +581,53 @@ public sealed partial class MatchEngine
         }
     }
 
+    internal void ApplyPlayerGrenadeGroundVehicleExplosion(string shooterId,Vector3 origin,GrenadeStage stage)
+    {
+        if(phase!=BattlePhase.Running||grenadeCatalog==null||groundVehicleWeapons==null||
+           explosionPolicy==null||stage==null||
+           !ReferenceEquals(grenadeCatalog.Stage(stage.SourceId,stage.Index),stage)||
+           !PlayerHitbox.Finite(origin))
+            throw new InvalidDataException("Grenade vehicle blast lacks trusted source authority.");
+        var shooter=Find(shooterId)??throw new InvalidDataException("Grenade owner disappeared.");
+        if(vehicles==null)return;
+        foreach(var vehicle in vehicles.Snapshot().OrderBy(x=>x.EntityId).ToArray())
+        {
+            if(!activeArmyEntities.TryGetValue(vehicle.EntityId,out var army)||
+               army.UnitId!=vehicle.UnitId||army.OwnerPlayerId!=vehicle.OwnerPlayerId||
+               !groundVehicleFacing.TryGetValue(vehicle.EntityId,out var facing))
+                throw new InvalidDataException("Grenade vehicle lost shared host authority.");
+            var owner=Find(vehicle.OwnerPlayerId)??throw new InvalidDataException("Grenade vehicle owner disappeared.");
+            var bodies=groundVehicleWeapons.PlaceBody(vehicle.UnitId,vehicle.EntityId,
+                vehicle.Position,facing,owner.Definition.Fraction);
+            var effect=GrenadeExplosion.ResolveArmy(origin,vehicle.Position,
+                bodies.Select(x=>x.Hitbox).ToArray(),stage);
+            if(effect==null)continue;
+            bool friendly=owner.Definition.Fraction==shooter.Definition.Fraction;
+            float amount=effect.RawDamage*(friendly?explosionPolicy.Friendly:1f);
+            if(!float.IsFinite(amount)||amount<=0||amount>10_000_000)
+                throw new InvalidDataException("Grenade vehicle damage exceeded host bounds.");
+            float before=ArmyHealth(vehicle.EntityId)??
+                throw new InvalidDataException("Grenade vehicle lacks shared vitality.");
+            ApplyArmyHostDamage(vehicle.EntityId,amount);
+            if(Terminal)return;
+            if(!activeArmyEntities.ContainsKey(vehicle.EntityId))
+            {
+                if(friendly)continue;
+                if(directArmyKills.Count>=256)
+                {End("source-kill-backpressure","",false);return;}
+                directArmyKills.Add((vehicle.EntityId,vehicle.UnitId,vehicle.OwnerPlayerId,
+                    shooter.Definition.PlayerId,"player-grenade",tick));
+                continue;
+            }
+            float after=ArmyHealth(vehicle.EntityId)??
+                throw new InvalidDataException("Grenade vehicle vitality disappeared after nonlethal blast.");
+            float applied=before-after;
+            if(applied>0&&(!vehicles.TryDamage(vehicle.EntityId,applied,out float registryApplied,
+                out bool destroyed)||destroyed||Math.Abs(applied-registryApplied)>.001f))
+                throw new InvalidDataException("Grenade vehicle vitality diverged from registry.");
+        }
+    }
+
     internal void ApplyHelicopterGunnerProjectileImpact(string shooterId,ulong entityId,
         float rawDamage,float partWeight)
     {

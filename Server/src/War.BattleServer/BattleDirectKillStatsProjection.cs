@@ -2,7 +2,8 @@ namespace War.BattleServer;
 
 /// <summary>Source-shaped subset from direct player-bullet army kills only.</summary>
 public sealed record BattleDirectKillStats(string PlayerId,int DirectBulletKills,
-    int DirectBulletVehiclesDestroyed,int DirectBulletTanksDestroyed,int DirectGrenadeKills);
+    int DirectBulletVehiclesDestroyed,int DirectBulletTanksDestroyed,int DirectGrenadeKills,
+    int DirectGrenadeVehiclesDestroyed,int DirectGrenadeTanksDestroyed);
 
 public static class BattleDirectKillStatsProjection
 {
@@ -19,8 +20,11 @@ public static class BattleDirectKillStatsProjection
         "ID_UNIT-HELICOPTER","ID_UNIT-HUMVEE","ID_UNIT-DRONE","ID_UNIT-TANK",
         "ID_UNIT-BUGGY","ID_UNIT-ASSAULTHELI","ID_UNIT-TRANSPORTER","ID_UNIT-MECH"
     };
+    private static readonly HashSet<string> GroundVehicles=new(StringComparer.Ordinal)
+    {"ID_UNIT-HUMVEE","ID_UNIT-TANK","ID_UNIT-BUGGY","ID_UNIT-TRANSPORTER"};
 
-    internal static bool SupportsGrenadeVictim(string unitId)=>Soldiers.Contains(unitId);
+    internal static bool SupportsGrenadeVictim(string unitId)=>
+        Soldiers.Contains(unitId)||GroundVehicles.Contains(unitId);
 
     public static IReadOnlyList<BattleDirectKillStats> FromPayload(
         byte[] payload,string matchId,string digest)
@@ -35,11 +39,13 @@ public static class BattleDirectKillStatsProjection
         {
             var kills=terminal.DirectArmyKills.Where(x=>x.AttackerPlayerId==player.PlayerId&&
                 x.Cause=="player-bullet").ToArray();
-            int grenadeKills=terminal.DirectArmyKills.Count(x=>x.AttackerPlayerId==player.PlayerId&&
-                x.Cause=="player-grenade");
+            var grenadeKills=terminal.DirectArmyKills.Where(x=>x.AttackerPlayerId==player.PlayerId&&
+                x.Cause=="player-grenade").ToArray();
             return new BattleDirectKillStats(player.PlayerId,kills.Length,
                 kills.Count(x=>Vehicles.Contains(x.UnitId)),
-                kills.Count(x=>x.UnitId=="ID_UNIT-TANK"),grenadeKills);
+                kills.Count(x=>x.UnitId=="ID_UNIT-TANK"),grenadeKills.Length,
+                grenadeKills.Count(x=>GroundVehicles.Contains(x.UnitId)),
+                grenadeKills.Count(x=>x.UnitId=="ID_UNIT-TANK"));
         }).ToArray();
     }
 }

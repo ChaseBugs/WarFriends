@@ -320,7 +320,9 @@ internal static class GrenadeCatalogTests
                   x.VictimOwnerPlayerId==two&&x.Cause=="player-grenade")&&
               BattleDirectKillStatsProjection.FromPayload(infantryBytes,infantryMatch.MatchId,
                   War.Shared.TerminalResultDigest.Compute(infantryBytes))
-                  .Single(x=>x.PlayerId==one) is {DirectBulletKills:0,DirectGrenadeKills:>0},
+                  .Single(x=>x.PlayerId==one) is
+                  {DirectBulletKills:0,DirectGrenadeKills:>0,
+                   DirectGrenadeVehiclesDestroyed:0,DirectGrenadeTanksDestroyed:0},
             "grenade infantry death persists private cause without inflating direct-bullet statistics");
         var friendlyAllocation=infantryAllocation with {MatchId="grenade-friendly-infantry"};
         var friendlyMatch=new MatchEngine(friendlyAllocation,map,combat,armyChoice:_=>0);
@@ -351,6 +353,65 @@ internal static class GrenadeCatalogTests
         friendlyMatch.Command(one,new(){CommandId=3,Forfeit=new()});
         Check(friendlyMatch.TerminalEvidenceSnapshot().DirectArmyKills.Count==0,
             "friendly infantry grenade death cannot claim direct-player kill credit");
+        var tankAllocation=infantryAllocation with {MatchId="grenade-tank-kill",Players=[
+            infantryAllocation.Players[0],infantryAllocation.Players[1] with
+            {EquippedArmyUnitIds=["ID_UNIT-TANK"]}]};
+        combat.ValidateAllocation(tankAllocation);
+        var tankMatch=new MatchEngine(tankAllocation,map,combat,armyChoice:_=>0);
+        tankMatch.Admit(one);tankMatch.Admit(two);
+        tankMatch.Command(one,new(){CommandId=1,Ready=new(){ManifestHash=tankMatch.ManifestHash}});
+        tankMatch.Command(two,new(){CommandId=1,Ready=new(){ManifestHash=tankMatch.ManifestHash}});
+        tankMatch.Advance(60);
+        int tankOption=tankMatch.ArmyBatch(two).OptionIndexes.First();
+        Check(tankMatch.Command(two,new(){CommandId=2,DeployArmy=new(){OptionIndex=tankOption}})
+            .Code=="army-deploying","grenade opponent deploys source Tank through host authority");
+        ulong tankTick=60;
+        while(tankTick<300&&tankMatch.ArmyEntityBatch(one,0,0).Entities.Count==0)
+            tankMatch.Advance(++tankTick);
+        var tankVictim=tankMatch.ArmyEntityBatch(one,0,0).Entities.First();
+        var tankBodies=tankMatch.GroundVehicleShotTargets(one)
+            .Where(x=>x.GroundVehicleBody&&x.EntityId==tankVictim.EntityKey).ToArray();
+        var tankOrigin=tankBodies.First().Hitbox.Center;
+        var tankStage=combat.Grenades!.Stage("Google2u.Grenade_FRAG",0);
+        var tankEffect=GrenadeExplosion.ResolveArmy(tankOrigin,
+            new(tankVictim.X,tankVictim.Y,tankVictim.Z),tankBodies.Select(x=>x.Hitbox).ToArray(),tankStage)!;
+        float tankBefore=tankVictim.Health;
+        tankMatch.ApplyPlayerGrenadeGroundVehicleExplosion(one,tankOrigin,tankStage);
+        float? tankAfter=tankMatch.ArmyHealth(tankVictim.EntityKey);
+        float expectedTank=tankBefore-Math.Max(0,tankEffect.RawDamage-tankVictim.Kevlar);
+        Check((expectedTank<=0?tankAfter==null:
+              tankAfter!=null&&Math.Abs(tankAfter.Value-expectedTank)<.01f&&
+              Math.Abs(tankMatch.Snapshot().Vehicles.Single(x=>x.EntityId==tankVictim.EntityKey)
+                  .Health-tankAfter.Value)<.01f),
+            "grenade selects one shared Tank body and conserves host and registry vitality");
+        if(tankAfter!=null)
+        {
+            var friendlyTankBefore=tankMatch.ArmyEntityBatch(one,0,0).Entities
+                .Single(x=>x.EntityKey==tankVictim.EntityKey);
+            tankMatch.ApplyPlayerGrenadeGroundVehicleExplosion(two,tankOrigin,tankStage);
+            float? friendlyTankAfter=tankMatch.ArmyHealth(tankVictim.EntityKey);
+            float expectedFriendlyTank=friendlyTankBefore.Health-
+                Math.Max(0,tankEffect.RawDamage*combat.Explosions.Friendly-friendlyTankBefore.Kevlar);
+            Check((expectedFriendlyTank<=0?friendlyTankAfter==null:
+                  friendlyTankAfter!=null&&Math.Abs(friendlyTankAfter.Value-expectedFriendlyTank)<.01f)&&
+                  tankMatch.Snapshot().DirectArmyKills.Count==0,
+                "friendly Tank grenade blast applies half damage without direct kill credit");
+        }
+        for(int blast=0;blast<50&&tankMatch.ArmyHealth(tankVictim.EntityKey)!=null;blast++)
+            tankMatch.ApplyPlayerGrenadeGroundVehicleExplosion(one,tankOrigin,tankStage);
+        Check(tankMatch.ArmyHealth(tankVictim.EntityKey)==null&&
+              tankMatch.Snapshot().Vehicles.All(x=>x.EntityId!=tankVictim.EntityKey),
+            "repeated trusted grenade blasts remove Tank from shared army and vehicle authority");
+        tankMatch.Command(one,new(){CommandId=2,Forfeit=new()});
+        var tankTerminal=tankMatch.TerminalEvidenceSnapshot();
+        var tankBytes=tankTerminal.ToByteArray();
+        Check(tankTerminal.DirectArmyKills.Single(x=>x.EntityKey==tankVictim.EntityKey) is
+              {UnitId:"ID_UNIT-TANK",Cause:"player-grenade"}&&
+              BattleDirectKillStatsProjection.FromPayload(tankBytes,tankMatch.MatchId,
+                  War.Shared.TerminalResultDigest.Compute(tankBytes)).Single(x=>x.PlayerId==one) is
+                  {DirectBulletKills:0,DirectGrenadeKills:1,
+                   DirectGrenadeVehiclesDestroyed:1,DirectGrenadeTanksDestroyed:1},
+            "opposing Tank grenade death projects one cause-preserving vehicle and Tank kill candidate");
         Console.WriteLine($"PASS: {checks} grenade catalog assertions");return checks;
         static string fragBindingPath(GrenadeCatalog value)=>value.Binding("Google2u.Grenade_FRAG").SwipeInput!.LeftMuzzlePath;
     }

@@ -3539,9 +3539,11 @@ internal static class CombatContentTests
                   attackerStats.DirectBulletVehiclesDestroyed==(family.IsSoldier?0:1)&&
                   attackerStats.DirectBulletTanksDestroyed==(family.UnitId=="ID_UNIT-TANK"?1:0)&&
                   attackerStats.DirectGrenadeKills==0&&
+                  attackerStats.DirectGrenadeVehiclesDestroyed==0&&
+                  attackerStats.DirectGrenadeTanksDestroyed==0&&
                   stats.Single(x=>x.PlayerId==decoyPlayer) is
                   {DirectBulletKills:0,DirectBulletVehiclesDestroyed:0,DirectBulletTanksDestroyed:0,
-                   DirectGrenadeKills:0},
+                   DirectGrenadeKills:0,DirectGrenadeVehiclesDestroyed:0,DirectGrenadeTanksDestroyed:0},
                 $"direct bullet kill candidates classify source army family {family.UnitId}");
         }
         var forgedKill=droneShotMatch.TerminalEvidenceSnapshot();
