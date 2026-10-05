@@ -4,6 +4,7 @@ using System.Net.Sockets;
 using System.Security.Cryptography;
 using War.Backend.Legacy;
 using War.Client;
+using War.Infrastructure;
 using War.Persistence;
 using War.Protocol;
 using War.Shared;
@@ -87,14 +88,24 @@ internal static class BackendQueueLiveTests
             catch(HttpRequestException e) when(e.Message.Contains("Backend status 503",StringComparison.Ordinal)){}
             var queued=new BattleMatchQueueStore(mongoUri,database);
             var frozenPair=await queued.Existing(ids[0],deadline.Token);
+            var frozen=frozenPair?.MatchId==null?null:
+                await new BattleManifestSnapshotStore(mongoUri,database).Get(frozenPair.MatchId,ids,deadline.Token);
             if(frozenPair?.Players==null || frozenPair.MatchId==null ||
                !frozenPair.Players.SequenceEqual(ids,StringComparer.Ordinal) ||
-               (await new BattleManifestSnapshotStore(mongoUri,database).Get(frozenPair.MatchId,ids,deadline.Token))==null ||
+               frozen==null ||
                (await new BattleGrantStore(mongoUri,database).GetForPlayer(frozenPair.MatchId,ids[0],
                    DateTimeOffset.UtcNow.ToUnixTimeSeconds(),deadline.Token))!=null)
                 throw new Exception("Deferred provisioning did not retain one frozen, ungranted pair.");
             worker=Start(workerDll,run,"Worker",workerEnvironment);
             await Ready($"http://127.0.0.1:{controlPort}/health/ready",worker);
+            using var controlHttp=new HttpClient();
+            var registered=await new BattleMatchControlClient(controlHttp,Convert.FromBase64String(control))
+                .RegisterAsync(new Uri($"http://127.0.0.1:{controlPort}/internal/matches"),frozen,
+                    frozenPair.MatchId,ids,deadline.Token);
+            if(registered.Code!="registered" ||
+               (await new BattleGrantStore(mongoUri,database).GetForPlayer(frozenPair.MatchId,ids[0],
+                   DateTimeOffset.UtcNow.ToUnixTimeSeconds(),deadline.Token))!=null)
+                throw new Exception("Worker registration unexpectedly published a Backend player grant.");
             Stop(backend);
             backend=Start(backendDll,run,"BackendRestart",backendEnvironment);
             await Ready(backendUrl+"health/ready",backend);
@@ -103,7 +114,11 @@ internal static class BackendQueueLiveTests
             var grants=await Task.WhenAll(first,second);
             if(grants[0].MatchId!=frozenPair.MatchId||grants[0].MatchId!=grants[1].MatchId||
                grants[0].PlayerId!=ids[0]||grants[1].PlayerId!=ids[1]||
-               grants.Any(x=>x.PlayerViews.Count!=2)||grants[0].ManifestHash!=grants[1].ManifestHash)
+               grants.Any(x=>x.PlayerViews.Count!=2)||grants[0].ManifestHash!=grants[1].ManifestHash ||
+               grants[0].SessionId!=registered.Grants[0].SessionId ||
+               grants[1].SessionId!=registered.Grants[1].SessionId ||
+               grants[0].Ticket!=registered.Grants[0].Ticket ||
+               grants[1].Ticket!=registered.Grants[1].Ticket)
                 throw new Exception("Live queue returned inconsistent player-only grants.");
             var replay=await left.FindMatchAsync(tokens[0],TimeSpan.FromSeconds(25),deadline.Token);
             if(replay.MatchId!=grants[0].MatchId || replay.SessionId!=grants[0].SessionId ||
