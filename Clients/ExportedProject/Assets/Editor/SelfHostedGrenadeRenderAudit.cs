@@ -48,6 +48,14 @@ public static class SelfHostedGrenadeRenderAudit
             if(projectile==null||projectile.GetComponentsInChildren<MeshFilter>(true).All(x=>x.sharedMesh==null)||
                Vector3.Distance(projectile.transform.position,new Vector3(1,2,3))>.0001f)
                 throw new InvalidOperationException("Authoritative grenade snapshot did not create its recovered projectile mesh.");
+            checks++;
+            presenter.Apply(new MatchSnapshot{ProjectilesTruncated=true});
+            if(GameObject.Find("SelfHostedProjectile_77")==null)
+                throw new InvalidOperationException("Truncated projectile snapshot retired a still-flying grenade visual.");
+            checks++;
+            presenter.Apply(new MatchSnapshot());
+            if(GameObject.Find("SelfHostedProjectile_77")!=null)
+                throw new InvalidOperationException("Complete projectile snapshot retained an absent grenade visual.");
             checks++;UnityEngine.Object.DestroyImmediate(presentationRoot);
             if(checks<850)throw new InvalidOperationException("Incomplete grenade render fixture.");
             Debug.Log("GRENADE_RENDER_AUDIT_PASSED checks="+checks);EditorApplication.Exit(0);

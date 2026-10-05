@@ -52,10 +52,16 @@ public sealed class SelfHostedProjectilePresenter : MonoBehaviour
                 ConfigureAirTrail(visual, state.Kind.StartsWith("helicopter-"),
                     state.Kind.EndsWith("fake-bullet"), false, velocity.magnitude);
 		}
-		List<ulong> stale = new List<ulong>();
-		foreach (KeyValuePair<ulong, Visual> pair in active)
-			if (!present.Contains(pair.Key) && !pair.Value.AirShotEvent) stale.Add(pair.Key);
-		foreach (ulong id in stale) Remove(id);
+		// An MTU-bounded snapshot may omit still-flying presentation rounds.
+		// Impact events can retire them immediately; absence is authoritative
+		// only when the host sent a complete projectile projection.
+		if (!snapshot.ProjectilesTruncated)
+		{
+			List<ulong> stale = new List<ulong>();
+			foreach (KeyValuePair<ulong, Visual> pair in active)
+				if (!present.Contains(pair.Key) && !pair.Value.AirShotEvent) stale.Add(pair.Key);
+			foreach (ulong id in stale) Remove(id);
+		}
 	}
 
 	public void ApplyEvent(MatchEvent item)
