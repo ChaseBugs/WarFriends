@@ -110,6 +110,15 @@ internal static class BattleManifestSnapshotTests
             try {await queue.Existing(new string('2',32),CancellationToken.None);
                 throw new Exception("Malformed durable pair was replayed.");}
             catch(InvalidDataException){}
+            string cancelling=new string('4',32),opponent=new string('5',32);
+            if((await queue.Join(cancelling,"cancel.fixture",DateTimeOffset.UtcNow,CancellationToken.None)).Code!="waiting" ||
+               await queue.Cancel(cancelling,DateTimeOffset.UtcNow,CancellationToken.None)!="cancelled" ||
+               await queue.Cancel(cancelling,DateTimeOffset.UtcNow,CancellationToken.None)!="not-queued")
+                throw new Exception("Unpaired cancellation did not consume only its current ticket.");
+            await queue.Join(cancelling,"cancel.fixture",DateTimeOffset.UtcNow,CancellationToken.None);
+            var cancelPair=await queue.Join(opponent,"cancel.fixture",DateTimeOffset.UtcNow,CancellationToken.None);
+            if(cancelPair.Code!="paired" || await queue.Cancel(cancelling,DateTimeOffset.UtcNow,CancellationToken.None)!="already-paired")
+                throw new Exception("Cancellation dissolved a durable pair.");
             Console.WriteLine("PASS: Mongo paired snapshot survives restart; proven terminal releases players for a distinct rematch");
         }
         finally {await mongo.DropDatabaseAsync(database);}

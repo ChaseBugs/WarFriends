@@ -67,6 +67,8 @@ Queue pairing now deletes only the exact ticket IDs it observed, so cleanup afte
 
 The queue now validates complete ticket identity and exact 120-second lifetime before retry reuse or candidate pairing, and validates durable pair IDs, roster IDs, key, match ID, and creation time before replay. Candidate selection uses the captured request's half-open joined/expires window, so a concurrent request's slightly later timestamp cannot spuriously mark a valid ticket corrupt. Mongo tests reject a malformed lifetime and pair row and confirm a future-dated candidate is not paired early. These checks protect persisted authority but do not close the cancellation/expiry ownership race above.
 
+Cancellation now reads and deletes one exact ticket ID, rechecks whether a durable pair won the race, and leaves a newer ticket for the same player untouched. Pairing requires both observed ticket IDs to be consumed; if cancellation or expiry removed one, it rolls back that newly inserted pair and retries. Mongo tests cover idempotent unpaired cancellation and refusal to cancel an established pair. Pair insertion, ticket consumption, and pair visibility still are separate Mongo writes, so a pending-state or transactional publication protocol remains necessary before calling cross-process cancellation and crash recovery complete.
+
 1. Continue B07-B09 with the next recovered weapon projectile family and its normal Unity presentation. Keep results unscored until authority and Client presentation are complete.
 2. Expand weapon variants and world/entity destruction (B09-B12), then army/AI/vehicles/cards/objectives (B13-B19).
 3. Complete mode rules, statistics and durable result/control contracts (B20-B26), with Backend integration limited to those boundaries.

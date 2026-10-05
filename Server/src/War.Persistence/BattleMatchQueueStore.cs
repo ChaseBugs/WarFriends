@@ -81,7 +81,12 @@ public sealed class BattleMatchQueueStore
             try
             {
                 await pairs.InsertOneAsync(pair,cancellationToken:ct);
-                await tickets.DeleteManyAsync(Builders<BattleQueueTicketDocument>.Filter.In(x=>x.Id,new[]{candidate.Id,activeTicketId}),ct);
+                var consumed=await tickets.DeleteManyAsync(Builders<BattleQueueTicketDocument>.Filter.In(x=>x.Id,new[]{candidate.Id,activeTicketId}),ct);
+                if(consumed.DeletedCount!=2)
+                {
+                    await pairs.DeleteOneAsync(x=>x.Id==pair.Id,ct);
+                    continue;
+                }
                 return Result("paired",pair);
             }
             catch(MongoWriteException e) when(e.WriteError.Category==ServerErrorCategory.DuplicateKey){continue;}
@@ -121,7 +126,11 @@ public sealed class BattleMatchQueueStore
     {
         Validate(playerId,"cancel",now);
         if(await PairFor(playerId,ct)!=null)return "already-paired";
-        var deleted=await tickets.DeleteOneAsync(x=>x.PlayerId==playerId,ct);
+        var ticket=await tickets.Find(x=>x.PlayerId==playerId).FirstOrDefaultAsync(ct);
+        if(ticket==null)return await PairFor(playerId,ct)==null?"not-queued":"already-paired";
+        ValidateTicket(ticket);
+        var deleted=await tickets.DeleteOneAsync(x=>x.Id==ticket.Id && x.PlayerId==playerId,ct);
+        if(await PairFor(playerId,ct)!=null)return "already-paired";
         return deleted.DeletedCount==1?"cancelled":"not-queued";
     }
     private async Task<BattlePairDocument?> PairFor(string playerId,CancellationToken ct)=>
