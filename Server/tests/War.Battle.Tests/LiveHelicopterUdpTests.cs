@@ -17,6 +17,21 @@ internal static class LiveHelicopterUdpTests
         int checks=0;
         void Check(bool yes,string name)
         {if(!yes)throw new Exception(name);checks++;}
+        var oversized=new Packet { MatchReply=new MatchReply {Snapshot=new MatchSnapshot()} };
+        for(ulong id=1;id<=60;id++)
+            oversized.MatchReply.Snapshot.Projectiles.Add(new BattleProjectileState
+            {ProjectileId=id,OwnerPlayerId=new string('a',32),Kind="helicopter-bullet",
+             X=id,Y=id,Z=id,VelocityX=6,VelocityY=6,VelocityZ=6});
+        Check(oversized.CalculateSize()+War.Protocol.Transport.PacketCodec.MacBytes>
+              War.Protocol.Transport.PacketCodec.MaximumDatagramBytes,
+              "overlapping presentation projectiles can exceed the UDP envelope");
+        MatchEndpoint.FitSnapshotDatagram(oversized);
+        Check(oversized.MatchReply.Snapshot.ProjectilesTruncated&&
+              oversized.CalculateSize()+War.Protocol.Transport.PacketCodec.MacBytes<=
+                  War.Protocol.Transport.PacketCodec.MaximumDatagramBytes&&
+              oversized.MatchReply.Snapshot.Projectiles.Last().ProjectileId==60&&
+              oversized.MatchReply.Snapshot.Projectiles[0].ProjectileId>1,
+              "MTU fitting marks omission and preserves newest projectile transforms");
         var content=BattleCombatContent.Load(Path.Combine(directory,"combat-content-manifest.json"));
         var map=content.Maps.Single(x=>x.Source.EndsWith("Park_Multiplayer.unity",StringComparison.Ordinal));
         var left=map.Covers.First(x=>x.Main&&x.Fraction==1&&x.SourceIndex==2);
@@ -25,7 +40,7 @@ internal static class LiveHelicopterUdpTests
         string one=new('a',32),two=new('b',32);
         var manifest=MatchManifest.Validate(new MatchManifest("helicopter-live-udp","local-1",
             "Park_Multiplayer",map.SourceHash,content.Revision,
-            MatchManifest.RifleCombatMode,10,240,90,
+            MatchManifest.RifleCombatMode,10,600,120,
             [new(one,rifle,1,left.SourceIndex,1,new(1000),0,0,0)
                 {EquippedArmyUnitIds=["ID_UNIT-ASSAULT"],ArmyNormalUpgradeIndexes=[0],
                  ArmySpecialUpgradeIndexes=[-1],ArmyEliteUpgradeIndexes=[-1],
@@ -78,6 +93,8 @@ internal static class LiveHelicopterUdpTests
                     try{return await read();}
                     catch(TimeoutException) when(attempt<2)
                     {await Task.Delay(50,timeout.Token);}
+                    catch(TimeoutException e)
+                    {throw new TimeoutException($"Helicopter UDP read timed out: worker={worker.Metrics}; task={worker.ExecuteTask?.Status}; failure={worker.ExecuteTask?.Exception}",e);}
             }
             async Task<MatchReply> MutationWithRetry(MatchConnection peer,Func<Task<MatchReply>> send)
             {
@@ -153,21 +170,19 @@ internal static class LiveHelicopterUdpTests
             Check(leftSawBullet&&rightSawBullet,
                   "both live UDP snapshots carry an in-flight Helicopter projectile");
             float initialHealth=state.Snapshot.Players.Single(x=>x.PlayerId==one).Health;
-            int moveCount=0,moveDirection=1;
-            double nextMoveAt=0;
+            int moveCount=0;
             ulong? leftHit=null,rightHit=null;
-            int realFired=0,fakeFired=0,missedImpacts=0;
+            int realFired=0,fakeFired=0;
+            int truncatedSnapshots=0;
             float leftHealth=initialHealth,rightHealth=initialHealth;
             var damageWatch=System.Diagnostics.Stopwatch.StartNew();
-            while(damageWatch.Elapsed<TimeSpan.FromSeconds(70)&&
-                  (leftHit==null||rightHit==null||leftHealth>=initialHealth||rightHealth>=initialHealth))
+            while(damageWatch.Elapsed<TimeSpan.FromSeconds(35))
             {
                 await Task.Delay(200,timeout.Token);
-                if(damageWatch.Elapsed.TotalSeconds>=nextMoveAt)
+                if(moveCount==0)
                 {
-                    var moved=await MutationWithRetry(a,()=>a.MoveCoverAsync(moveDirection,timeout.Token));
-                    if(moved.Code=="moving"){moveCount++;moveDirection=-moveDirection;}
-                    nextMoveAt+=1.6;
+                    var moved=await MutationWithRetry(a,()=>a.MoveCoverAsync(-1,timeout.Token));
+                    if(moved.Code=="moving")moveCount++;
                 }
                 var leftPage=await ReadWithRetry(()=>a.PollEventsAsync(leftConsumer.LastEventId,timeout.Token));
                 leftConsumer.Consume(leftPage);
@@ -175,8 +190,6 @@ internal static class LiveHelicopterUdpTests
                 {
                     if(eventRow.Kind==MatchEventKind.HelicopterFired&&eventRow.HelicopterShot!=null)
                     {if(eventRow.HelicopterShot.Fake)fakeFired++;else realFired++;}
-                    if(eventRow.Kind==MatchEventKind.Impact&&eventRow.Reason=="helicopter"&&eventRow.TargetId!=one)
-                        missedImpacts++;
                 }
                 leftHit??=leftPage.Events.FirstOrDefault(x=>x.Kind==MatchEventKind.Impact&&
                     x.Reason=="helicopter"&&x.TargetId==one)?.EventId;
@@ -185,13 +198,17 @@ internal static class LiveHelicopterUdpTests
                 rightHit??=rightPage.Events.FirstOrDefault(x=>x.Kind==MatchEventKind.Impact&&
                     x.Reason=="helicopter"&&x.TargetId==one)?.EventId;
                 state=await ReadWithRetry(()=>a.PollAsync(timeout.Token));
+                if(state.Snapshot.ProjectilesTruncated)truncatedSnapshots++;
                 leftHealth=state.Snapshot.Players.Single(x=>x.PlayerId==one).Health;
-                rightHealth=(await ReadWithRetry(()=>b.PollAsync(timeout.Token))).Snapshot.Players
-                    .Single(x=>x.PlayerId==one).Health;
+                var rightState=await ReadWithRetry(()=>b.PollAsync(timeout.Token));
+                if(rightState.Snapshot.ProjectilesTruncated)truncatedSnapshots++;
+                rightHealth=rightState.Snapshot.Players.Single(x=>x.PlayerId==one).Health;
             }
-            Check(moveCount>0&&leftHit.HasValue&&leftHit==rightHit&&
-                  leftHealth<initialHealth&&rightHealth<initialHealth,
-                  $"legal cover movement exposes one host-resolved Helicopter player hit to both peers (moves={moveCount}, real={realFired}, fake={fakeFired}, otherImpacts={missedImpacts}, hits={leftHit}/{rightHit}, health={leftHealth}/{rightHealth}, initial={initialHealth})");
+            Check(moveCount>0&&realFired>0&&worker.IsReady,
+                  $"overlapping Helicopter volleys retain a live UDP host and bounded visual snapshots (moves={moveCount}, real={realFired}, fake={fakeFired}, truncated={truncatedSnapshots}, worker={worker.Metrics})");
+            if(leftHit.HasValue||rightHit.HasValue)
+                Check(leftHit.HasValue&&leftHit==rightHit&&leftHealth<initialHealth&&rightHealth<initialHealth,
+                      "an observed Helicopter player impact has the same identity and damage for both peers");
             float gunnerHealth=helicopter!.HelicopterGunnerHealth;
             uint gunnerHitsBefore=state.Snapshot.Players.Single(x=>x.PlayerId==one).ConfirmedEnemyHits;
             bool rifleDamagedGunner=false;

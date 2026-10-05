@@ -309,6 +309,10 @@ message MatchSnapshot {
   repeated BattleDecoyState decoys = 27;
   repeated BattleLandMineState land_mines = 28;
   repeated BattleHeavyTurretState heavy_turrets = 29;
+  // True when live projectile transforms exceed this UDP snapshot's MTU budget.
+  // Combat authority remains on the host; clients must not infer that omitted
+  // presentation projectiles ceased to exist.
+  bool projectiles_truncated = 30;
 }
 message BattleDecoyState {
   uint64 entity_id = 1; string request_id = 2; string owner_player_id = 3;

@@ -354,7 +354,13 @@ public sealed class NetworkWorker : BackgroundService
             // Connectivity sessions cannot become match participants, even with
             // colliding IDs. Match keys and tickets use a separate signing domain.
             if (sessions.ContainsKey(packet.SessionId) || closed.ContainsKey(packet.SessionId)) return;
-            byte[]? response = match.Handle(packet, d.Bytes, d.Endpoint, now);
+            byte[]? response;
+            try { response = match.Handle(packet, d.Bytes, d.Endpoint, now); }
+            catch(ArgumentException e) when(e.Message=="Datagram exceeds MTU budget.")
+            {
+                logger.LogWarning("Oversized match reply dropped for session {SessionId}",packet.SessionId);
+                return;
+            }
             if(packet.BodyCase==Packet.BodyOneofCase.MatchHello && response!=null)
                 Volatile.Write(ref activeMatchEndpoints,match.ActiveSessionEndpoints());
             PersistTerminals();

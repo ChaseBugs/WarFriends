@@ -106,7 +106,27 @@ public sealed class MatchEndpoint
                 break;
             default: return null;
         }
+        FitSnapshotDatagram(reply);
         return PacketCodec.Encode(reply,session.Key);
+    }
+    internal static void FitSnapshotDatagram(Packet reply)
+    {
+        if(reply.MatchReply?.Snapshot is { } snapshot)
+        {
+            // Presentation projectiles can overlap in large volleys. Preserve the
+            // newest transforms without allowing a growing visual list to kill
+            // the authoritative UDP worker or alter collision/damage state.
+            while(reply.CalculateSize()+PacketCodec.MacBytes>PacketCodec.MaximumDatagramBytes &&
+                  snapshot.Projectiles.Count>0)
+            {
+                int oldest=0;
+                for(int i=1;i<snapshot.Projectiles.Count;i++)
+                    if(snapshot.Projectiles[i].ProjectileId<snapshot.Projectiles[oldest].ProjectileId)
+                        oldest=i;
+                snapshot.Projectiles.RemoveAt(oldest);
+                snapshot.ProjectilesTruncated=true;
+            }
+        }
     }
     private static bool ValidClientBody(Packet packet)
     {
