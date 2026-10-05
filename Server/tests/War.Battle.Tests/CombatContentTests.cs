@@ -3016,6 +3016,17 @@ internal static class CombatContentTests
         Reject(()=>MatchManifest.Validate(shotPerkManifest with {Players=[shotPerkManifest.Players[0] with {ArmyShotSpeedCoefficients=[float.NaN]},shotPerkManifest.Players[1]]}));
         Reject(()=>MatchManifest.Validate(shotPerkManifest with {Players=[shotPerkManifest.Players[0] with {ArmyShotSpeedCoefficients=[]},shotPerkManifest.Players[1]]}));
         string decoyPlayer=armyManifest.Players[0].PlayerId,decoyOpponent=armyManifest.Players[1].PlayerId;
+        int criticalDraws=0;
+        var criticalRifle=new RifleMatchSimulation(armyManifest,park,content,
+            sourceRandom:()=>{criticalDraws++;return 0;});
+        var ordinaryRifle=new RifleMatchSimulation(armyManifest,park,content,sourceRandom:()=>1);
+        var rifleAim=park.Covers[coverTwo.SourceIndex].Position+Vector3.UnitY;
+        var criticalRound=criticalRifle.PrepareVolley(1,decoyPlayer,rifleAim,60).Single();
+        var ordinaryRound=ordinaryRifle.PrepareVolley(1,decoyPlayer,rifleAim,60).Single();
+        Check(criticalDraws==1&&
+              criticalRound.Damage.Amount==ordinaryRound.Damage.Amount*
+                  content.Bindings.Get(weapon.SourceId).CriticalMultiplier,
+            "live rifle projectile consumes injected host critical roll rather than a global random draw");
         var decoyManifest=armyManifest with
         {
             MatchId="decoy-match",SceneMasterPlayerId=decoyPlayer,

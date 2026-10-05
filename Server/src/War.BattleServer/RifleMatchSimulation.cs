@@ -37,6 +37,7 @@ internal sealed class RifleMatchSimulation
     private readonly Func<string,bool>? dynamicColliderEnabled;
     private readonly Func<int,bool>? indexedColliderEnabled;
     private readonly Func<int,int,int>? runtimeLayer;
+    private readonly Func<float> sourceRandom;
     private readonly string mode;
     private Func<string,IReadOnlyList<DynamicShotTarget>>? dynamicTargets;
     private Func<IReadOnlyList<DynamicShotTarget>>? visibilityTargets;
@@ -119,11 +120,12 @@ internal sealed class RifleMatchSimulation
     }
     internal RifleMatchSimulation(MatchManifest manifest,RecoveredBattleMap map,BattleCombatContent content,
         Func<string,bool>? dynamicColliderEnabled=null,Func<int,bool>? indexedColliderEnabled=null,
-        Func<int,int,int>? runtimeLayer=null)
+        Func<int,int,int>? runtimeLayer=null,Func<float>? sourceRandom=null)
     {
         this.content=content;this.map=map;this.dynamicColliderEnabled=dynamicColliderEnabled;
         this.indexedColliderEnabled=indexedColliderEnabled;
         this.runtimeLayer=runtimeLayer;
+        this.sourceRandom=sourceRandom??Random.Shared.NextSingle;
         mode=manifest.Mode;
         int FamilyOf(ParticipantManifest p)=>Family(p.Weapon.SourceId,Class(p.Weapon.SourceId));
         if (manifest.Players.Any(p=>p.Combat==null || !p.WeaponUpgrade.HasValue ||
@@ -292,22 +294,22 @@ internal sealed class RifleMatchSimulation
         var trace=new Func<Vector3,Vector3,float,ShotCollision?>((from,direction,range)=>
             world.Raycast(owner,from,direction,range,bulletMask));
         if(a.WeaponClass==LiveWeaponClass.Smg)return [content.Smgs!.Prepare(a.Weapon.SourceId,a.WeaponUpgrade,id,owner,muzzle,target,tick,
-            Random.Shared.NextSingle(),trace)];
+            sourceRandom(),trace)];
         if(a.WeaponClass==LiveWeaponClass.Pistol)return [content.Pistols!.Prepare(a.Weapon.SourceId,a.WeaponUpgrade,id,owner,muzzle,target,tick,
-            Random.Shared.NextSingle(),trace)];
+            sourceRandom(),trace)];
         if(a.WeaponClass==LiveWeaponClass.Lmg)return [content.Lmgs!.Prepare(a.Weapon.SourceId,a.WeaponUpgrade,id,owner,muzzle,target,tick,
-            Random.Shared.NextSingle(),trace)];
+            sourceRandom(),trace)];
         if(a.WeaponClass==LiveWeaponClass.Minigun)return [content.Minigun!.Prepare(a.WeaponUpgrade,id,owner,muzzle,target,tick,
-            Random.Shared.NextSingle(),trace)];
+            sourceRandom(),trace)];
         if(a.WeaponClass==LiveWeaponClass.Sniper)return [content.Snipers!.Prepare(a.Weapon.SourceId,a.WeaponUpgrade,id,owner,muzzle,target,tick,
-            Random.Shared.NextSingle(),trace)];
+            sourceRandom(),trace)];
         if(a.WeaponClass==LiveWeaponClass.Rifle)return [content.Bindings.Prepare(content.Stats,a.Weapon.SourceId,
-            a.WeaponUpgrade,id,owner,muzzle,target,tick,Random.Shared.NextSingle(),trace)];
+            a.WeaponUpgrade,id,owner,muzzle,target,tick,sourceRandom(),trace)];
         var binding=content.Shotguns!.Binding(a.Weapon.SourceId);
         var stage=content.Shotguns.Stage(a.Weapon.SourceId,a.WeaponUpgrade);
         return ShotgunVolleyFactory.Prepare(binding,stage,id,owner,muzzle,target,tick,
             world.OverlapEnemy(owner,muzzle+binding.ShotOffset,binding.Geometry.Radius,bulletMask),
-            Random.Shared.NextSingle,trace);
+            sourceRandom,trace);
     }
 
     internal PreparedVolley PrepareVisualVolley(ulong id,string owner,Vector3 target,ulong tick,
@@ -325,7 +327,7 @@ internal sealed class RifleMatchSimulation
         uint bulletMask=content.Bindings.BulletMask(actor.Definition.Fraction);
         return ShotgunVolleyFactory.PrepareWithVisuals(binding,stage,id,owner,muzzle,target,tick,
             world.OverlapEnemy(owner,muzzle+binding.ShotOffset,binding.Geometry.Radius,bulletMask),
-            Random.Shared.NextSingle,spreadRoll,(from,direction,range)=>
+            sourceRandom,spreadRoll,(from,direction,range)=>
                 world.Raycast(owner,from,direction,range,bulletMask));
     }
 

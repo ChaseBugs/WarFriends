@@ -789,7 +789,7 @@ public sealed partial class MatchEngine
                 rifleCombat=new RifleMatchSimulation(manifest,map,content,
                     shields==null?null:shields.ColliderEnabled,
                     barrels==null?null:barrels.ColliderEnabled,
-                    barrels==null?null:barrels.RuntimeLayer);
+                    barrels==null?null:barrels.RuntimeLayer,this.combatRandom);
                 rifleCombat.ConfigureDynamicTargets(GroundVehicleShotTargets);
                 rifleCombat.ConfigureVisibilityTargets(HelicopterVisibilityTargets);
                 ConfigureVisualVolley((id,owner,target,at)=>rifleCombat.PrepareVisualVolley(
