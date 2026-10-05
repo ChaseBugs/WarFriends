@@ -119,6 +119,7 @@ public sealed partial class MatchEngine
                     }
                 }
             }
+            ApplyLandMinePassengerExplosion(mine.OwnerPlayerId,mine.Position,mine.Damage);
             ApplyLandMineVehicleExplosion(mine.OwnerPlayerId,mine.Position,mine.Damage);
             foreach(var army in activeArmyEntities.Values.Where(x=>x.OwnerFraction!=mine.OwnerFraction&&
                         infantryAnimations.ContainsKey(x.EntityKey)).OrderBy(x=>x.EntityKey).ToArray())
@@ -187,6 +188,51 @@ public sealed partial class MatchEngine
                 if(applied>0&&(!vehicles.TryDamage(target.EntityId,applied,out float registryApplied,
                     out bool destroyed)||destroyed||Math.Abs(applied-registryApplied)>.001f))
                     throw new InvalidDataException("Land Mine vehicle vitality diverged from registry.");
+            }
+        }
+        return hits;
+    }
+
+    internal int ApplyLandMinePassengerExplosion(string ownerId,Vector3 position,float damage)
+    {
+        if(phase!=BattlePhase.Running||landMineSource==null||groundVehicleWeapons==null||
+           explosionPolicy==null||!PlayerHitbox.Finite(position)||!float.IsFinite(damage)||
+           damage<=0||damage>10_000_000)
+            throw new InvalidDataException("Land Mine passenger blast lacks trusted source authority.");
+        var attacker=Find(ownerId)??throw new InvalidDataException("Land Mine passenger owner disappeared.");
+        if(vehicles==null)return 0;
+        int hits=0;
+        foreach(var vehicle in vehicles.Snapshot().OrderBy(x=>x.EntityId).ToArray())
+        {
+            if(!activeArmyEntities.TryGetValue(vehicle.EntityId,out var army)||
+               army.UnitId!=vehicle.UnitId||army.OwnerPlayerId!=vehicle.OwnerPlayerId||
+               !groundVehicleFacing.TryGetValue(vehicle.EntityId,out var facing)||
+               !vehiclePassengers.TryGetValue(vehicle.EntityId,out var passengers))
+                throw new InvalidDataException("Land Mine passenger lacks shared host pose.");
+            var targetOwner=Find(vehicle.OwnerPlayerId)??
+                throw new InvalidDataException("Land Mine passenger owner disappeared.");
+            foreach(var passenger in passengers.Values.OrderBy(x=>x.Binding.PointComponentFileId))
+            {
+                if(!passenger.Active)continue;
+                if(passenger.AnimationStartTick>tick)
+                    throw new InvalidDataException("Land Mine passenger animation starts in the future.");
+                var selected=groundVehicleWeapons.PassengerPoses.Place(vehicle.UnitId,passenger.Binding,
+                        vehicle.Position,facing,tick-passenger.AnimationStartTick)
+                    .Where(x=>x.Enabled&&x.Active&&x.OverlapsSphere(position,landMineSource.HurtRadius))
+                    .OrderBy(x=>x.BoundsDistanceToPoint(position))
+                    .ThenBy(x=>x.SourcePath,StringComparer.Ordinal).FirstOrDefault();
+                if(selected==null)continue;
+                float amount=damage*selected.Weight*
+                    (targetOwner.Definition.Fraction==attacker.Definition.Fraction?
+                        explosionPolicy.Friendly:1f);
+                if(!float.IsFinite(amount)||amount<=0||amount>10_000_000)
+                    throw new InvalidDataException("Land Mine passenger damage exceeded host bounds.");
+                if(ApplyVehiclePassengerHostDamage(vehicle.EntityId,passenger.Binding.Role,amount))
+                {
+                    hits++;
+                    if(targetOwner.Definition.Fraction!=attacker.Definition.Fraction)
+                        attacker.ConfirmedEnemyHits=checked(attacker.ConfirmedEnemyHits+1);
+                }
             }
         }
         return hits;
