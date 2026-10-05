@@ -3569,6 +3569,20 @@ internal static class CombatContentTests
         Check(duelStats.Count==2&&duelStats.All(row=>row.CardsPlayed==1&&
               row.CardsPlayedSeparately.Count==1&&row.CardsPlayedSeparately["HEAVYTURRET"]==1),
               "validated terminal evidence projects source MatchStats card fields for both players");
+        var outcomeStats=BattleOutcomeStatsProjection.FromPayload(duelPayload,duelTerminal.MatchId,
+            War.Shared.TerminalResultDigest.Compute(duelPayload));
+        bool outcomeForfeit=duelTerminal.TerminalReason is "forfeit" or "opponent-disconnected";
+        Check(outcomeStats.Count==2&&outcomeStats.Select(x=>x.PlayerId)
+                  .SequenceEqual(duelTerminal.Players.Select(x=>x.PlayerId))&&
+              outcomeStats.Single(x=>x.PlayerId==duelTerminal.WinnerPlayerId) is
+                  {BattlesWon:1,BattlesLost:0,BattlesLostInRowDelta:-1}&&
+              outcomeStats.Single(x=>x.PlayerId!=duelTerminal.WinnerPlayerId) is
+                  {BattlesWon:0,BattlesLost:1,BattlesLostInRowDelta:1}&&
+              outcomeStats.Single(x=>x.PlayerId==duelTerminal.WinnerPlayerId).GameEndReason==
+                  (outcomeForfeit?"WinByForfeit":"Win")&&
+              outcomeStats.Single(x=>x.PlayerId!=duelTerminal.WinnerPlayerId).GameEndReason==
+                  (outcomeForfeit?"Forfeit":"Killed"),
+              "validated scored terminal evidence projects the recovered per-player win/loss reasons");
         var detached=MatchManifest.Validate(armyManifest);
         equipped[0]="ID_UNIT-UNKNOWN";
         armyStages[0]=101;

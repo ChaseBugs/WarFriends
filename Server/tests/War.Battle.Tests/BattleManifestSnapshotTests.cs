@@ -55,7 +55,7 @@ internal static class BattleManifestSnapshotTests
             await resultStore.Initialize(CancellationToken.None);
             var acceptance=new BattleTerminalAcceptance(resultStore,queue,restarted);
             var terminal=new MatchSnapshot{MatchId=match,ManifestHash=MatchManifest.Parse(first).Digest(),
-                Phase=BattlePhase.Aborted,TerminalReason="host-shutdown"};
+                Phase=BattlePhase.Ended,TerminalReason="forfeit",WinnerPlayerId=players[0]};
             terminal.Players.Add(new BattlePlayerState{PlayerId=players[0]});
             terminal.Players.Add(new BattlePlayerState{PlayerId=new string('c',32)});
             (byte[] badPayload,string badDigest)=Evidence(terminal);
@@ -113,6 +113,11 @@ internal static class BattleManifestSnapshotTests
             var armyStats=await resultStore.GetArmyStats(match,CancellationToken.None);
             if(armyStats==null || armyStats.Count!=2 || armyStats.Any(x=>x.Units.Count!=0))
                 throw new Exception("Durable result read did not project validated source army statistics.");
+            var outcomeStats=await resultStore.GetOutcomeStats(match,CancellationToken.None);
+            if(outcomeStats==null || outcomeStats.Count!=2 ||
+               outcomeStats[0] is not {GameEndReason:"WinByForfeit",BattlesWon:1,BattlesLost:0} ||
+               outcomeStats[1] is not {GameEndReason:"Forfeit",BattlesWon:0,BattlesLost:1})
+                throw new Exception("Durable result read did not project source win/loss statistics.");
             var resumedAcceptance=new BattleTerminalAcceptance(new BattleResultStore(uri,database),
                 new BattleMatchQueueStore(uri,database),new BattleManifestSnapshotStore(uri,database));
             if(await resumedAcceptance.Accept(match,digest,payload,CancellationToken.None)!="already-accepted" ||
@@ -147,6 +152,9 @@ internal static class BattleManifestSnapshotTests
             if(await resultStore.Get(rematch.MatchId!,CancellationToken.None)!=null)
                 throw new Exception("Invalid direct result-store payload was persisted.");
             await resultStore.Accept(rematch.MatchId!,rematchDigest,rematchPayload,CancellationToken.None);
+            try {await resultStore.GetOutcomeStats(rematch.MatchId!,CancellationToken.None);
+                throw new Exception("Aborted terminal result projected a Client win or loss.");}
+            catch(InvalidDataException){}
             var resultRows=mongo.GetDatabase(database).GetCollection<BattleResultDocument>("battle_results");
             await resultRows.UpdateOneAsync(x=>x.MatchId==rematch.MatchId,
                 Builders<BattleResultDocument>.Update.Set(x=>x.Snapshot,new byte[]{1,2,3}));
