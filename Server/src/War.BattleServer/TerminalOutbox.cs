@@ -259,7 +259,7 @@ public sealed class TerminalOutbox
             "admission-timeout" or "prestart-disconnect" or "both-disconnected" or "duration-limit" or
             "simultaneous-barrel-death" or "invalid-shield-authority" or "invalid-combat-authority" or
             "invalid-projectile-authority" or "invalid-barrel-authority" or "invalid-army-authority" or
-            "army-event-backpressure" or "overtime-event-backpressure";
+            "army-event-backpressure" or "source-kill-backpressure" or "overtime-event-backpressure";
         if(!Regex.IsMatch(snapshot.MatchId,@"\A[a-zA-Z0-9_-]{1,64}\z") ||
            !Regex.IsMatch(snapshot.ManifestHash,@"\A[0-9a-f]{64}\z") ||
            snapshot.Phase is not (BattlePhase.Ended or BattlePhase.Aborted) ||
@@ -298,6 +298,7 @@ public sealed class TerminalOutbox
         }
         if(snapshot.Players.Aggregate(0UL,(sum,player)=>sum+player.ConfirmedCardsPlayed)!=snapshot.CardActivations)
             throw new InvalidDataException("Terminal card ownership does not conserve activations.");
+        ValidateDirectArmyKills(snapshot);
         if(snapshot.CardUsage.Count>WarCardEffectCatalog.All.Count*2)
             throw new InvalidDataException("Terminal card usage exceeds its source catalog.");
         var usageByOwner=snapshot.Players.ToDictionary(p=>p.PlayerId,_=>0UL,StringComparer.Ordinal);
@@ -332,6 +333,38 @@ public sealed class TerminalOutbox
             (int)snapshot.CardActivations,(int)snapshot.ObjectiveCredits));
     }
 
+    private static void ValidateDirectArmyKills(MatchSnapshot snapshot)
+    {
+        if(snapshot.DirectArmyKills.Count>256)
+            throw new InvalidDataException("Terminal direct army kill evidence exceeds host capacity.");
+        var knownUnits=ArmyOptionIdentityCatalog.All.Select(x=>x.UnitId)
+            .ToHashSet(StringComparer.Ordinal);
+        var players=snapshot.Players.ToDictionary(x=>x.PlayerId,StringComparer.Ordinal);
+        var byAttacker=players.Keys.ToDictionary(x=>x,_=>0UL,StringComparer.Ordinal);
+        var byVictim=players.Keys.ToDictionary(x=>x,_=>0UL,StringComparer.Ordinal);
+        var identities=new HashSet<ulong>();
+        ulong previousTick=0,previousEntity=0;
+        foreach(var row in snapshot.DirectArmyKills)
+        {
+            if(row.EntityKey==0||row.EntityKey>>32 is not (1 or 2)||
+               (uint)row.EntityKey==0||!identities.Add(row.EntityKey)||
+               !knownUnits.Contains(row.UnitId)||row.Cause!="player-bullet"||
+               snapshot.StartTick==0||row.Tick<snapshot.StartTick||row.Tick>snapshot.EndTick||
+               (previousTick!=0&&(row.Tick<previousTick||
+                   (row.Tick==previousTick&&row.EntityKey<=previousEntity)))||
+               !players.TryGetValue(row.AttackerPlayerId,out var attacker)||
+               !players.TryGetValue(row.VictimOwnerPlayerId,out var victim)||
+               attacker.PlayerId==victim.PlayerId||
+               !victim.ArmyUsage.Any(x=>x.UnitId==row.UnitId&&x.ConfirmedSpawns>0))
+                throw new InvalidDataException("Invalid direct player army kill evidence.");
+            byAttacker[row.AttackerPlayerId]++;
+            byVictim[row.VictimOwnerPlayerId]++;
+            previousTick=row.Tick;previousEntity=row.EntityKey;
+        }
+        if(players.Values.Any(p=>byAttacker[p.PlayerId]>p.ConfirmedPlayerBulletHits||
+            byVictim[p.PlayerId]>p.ConfirmedArmyLosses))
+            throw new InvalidDataException("Direct army kill evidence exceeds confirmed host contacts or losses.");
+    }
     private static bool ValidTerminalPlayer(BattlePlayerState p,ulong serverTick)
     {
         if(p.Ready && !p.Admitted || p.Reconnecting || p.ReconnectDeadlineHostTick!=0 ||

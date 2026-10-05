@@ -333,6 +333,14 @@ message MatchSnapshot {
   uint64 performance_start_tick = 31;
   // Terminal-only aggregate of accepted owner/card receipts; buddy filtering is separate.
   repeated BattleCardUsage card_usage = 32;
+  // Private terminal evidence for direct player-owned bullet kills of source
+  // army entities. Not a complete Client MatchStats.kills projection.
+  repeated BattleArmyKillEvidence direct_army_kills = 33;
+}
+message BattleArmyKillEvidence {
+  uint64 entity_key = 1; string unit_id = 2;
+  string victim_owner_player_id = 3; string attacker_player_id = 4;
+  string cause = 5; uint64 tick = 6;
 }
 message BattleCardUsage {
   string owner_player_id = 1; string card_id = 2; uint32 count = 3;

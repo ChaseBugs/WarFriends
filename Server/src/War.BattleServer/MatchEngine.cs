@@ -23,6 +23,7 @@ public sealed partial class MatchEngine
     private string winner = "";
     private string terminalReason = "";
     private readonly Dictionary<ulong, PreparedProjectile> projectiles = [];
+    private readonly List<(ulong EntityKey,string UnitId,string VictimOwnerId,string AttackerId,ulong Tick)> directArmyKills=[];
     private readonly Dictionary<ulong, ShotgunFakePelletFlight> shotgunFakeProjectiles = [];
     private sealed record BazookaProjectile(BazookaMissileFlight Flight,BazookaStage Stage,BazookaBinding Binding,string WeaponSourceId,bool HalfDamage);
     private sealed record ScheduledBazooka(string Owner,Vector3 Target,ulong LaunchTick,bool Fake,bool Secondary,bool HalfDamage,string WeaponSourceId,int Upgrade);
@@ -1287,6 +1288,7 @@ public sealed partial class MatchEngine
                 {
                     var shooter=Find(impact.OwnerId)??throw new InvalidDataException("Bullet owner disappeared.");
                     uint enemyHitsBefore=shooter.ConfirmedEnemyHits;
+                    activeArmyEntities.TryGetValue(vehicleId,out var armyBeforeImpact);
                     bool immortalDroneRootContact=impact.Hit.SourceDestroyable&&
                         impact.Hit.DynamicPartId==6544804&&
                         activeArmyEntities.TryGetValue(vehicleId,out var contactedDrone)&&
@@ -1322,6 +1324,15 @@ public sealed partial class MatchEngine
                         // DestroyableObject even when immortality refunds HP.
                         shooter.ConfirmedEnemyHits=checked(shooter.ConfirmedEnemyHits+1);
                         CreditPlayerBulletHit(shooter,ref creditedBulletHit);
+                    }
+                    if(impact.Hit.SourceDestroyable&&armyBeforeImpact!=null&&
+                       !activeArmyEntities.ContainsKey(vehicleId)&&
+                       armyBeforeImpact.OwnerFraction!=shooter.Definition.Fraction)
+                    {
+                        if(directArmyKills.Count>=256)
+                        {End("source-kill-backpressure","",false);break;}
+                        directArmyKills.Add((vehicleId,armyBeforeImpact.UnitId,
+                            armyBeforeImpact.OwnerPlayerId,shooter.Definition.PlayerId,tick));
                     }
                 }
                 catch(InvalidDataException){End("invalid-dynamic-impact-authority","",false);break;}
@@ -2111,6 +2122,15 @@ public sealed partial class MatchEngine
         snapshot.PerformanceDurationTicks = performance.DurationTicks;
         if(Terminal) snapshot.CardUsage.AddRange(performance.CardUsageSnapshot().Select(row=>new BattleCardUsage
         {OwnerPlayerId=row.OwnerPlayerId,CardId=row.CardId,SourceCardId=row.SourceCardId,Count=(uint)row.Count}));
+        if(includeTerminalEvidence)
+            snapshot.DirectArmyKills.AddRange(directArmyKills
+                .OrderBy(row=>row.Tick).ThenBy(row=>row.EntityKey)
+                .Select(row=>new BattleArmyKillEvidence
+                {
+                    EntityKey=row.EntityKey,UnitId=row.UnitId,
+                    VictimOwnerPlayerId=row.VictimOwnerId,AttackerPlayerId=row.AttackerId,
+                    Cause="player-bullet",Tick=row.Tick
+                }));
         snapshot.Projectiles.AddRange(grenadeProjectiles.OrderBy(x=>x.Key).Select(x=>new BattleProjectileState
         {
             ProjectileId=x.Key,OwnerPlayerId=x.Value.Flight.OwnerId,

@@ -3494,11 +3494,33 @@ internal static class CombatContentTests
               droneShotMatch.TerminalEvidenceSnapshot().Players.Single(p=>p.PlayerId==decoyOpponent)
                   .ConfirmedPlayerBulletHits>0,
             "player-owned bullet contacts enter private terminal evidence without expanding UDP snapshots");
+        Check(droneShotMatch.Snapshot().DirectArmyKills.Count==0&&
+              droneShotMatch.TerminalEvidenceSnapshot().DirectArmyKills.Single() is
+              {UnitId:"ID_UNIT-DRONE",Cause:"player-bullet"} directDroneKill&&
+              directDroneKill.EntityKey==shotDrone.EntityKey&&
+              directDroneKill.AttackerPlayerId==decoyOpponent&&
+              directDroneKill.VictimOwnerPlayerId==decoyPlayer,
+            "lethal player bullet retains one private source-identity Drone kill rather than a generic army loss");
         var bulletResult=Google.Protobuf.MessageExtensions.ToByteArray(droneShotMatch.TerminalEvidenceSnapshot());
         Check(TerminalOutbox.ValidatePayload(bulletResult,droneShotMatch.MatchId,
                   War.Shared.TerminalResultDigest.Compute(bulletResult)).Players
                   .Single(p=>p.PlayerId==decoyOpponent).ConfirmedPlayerBulletHits>0,
             "terminal outbox accepts the private player-bullet evidence absent from UDP replies");
+        Check(BattleDirectArmyKillEvidenceProjection.FromPayload(bulletResult,droneShotMatch.MatchId,
+                  War.Shared.TerminalResultDigest.Compute(bulletResult)).Single() is
+              {UnitId:"ID_UNIT-DRONE",Cause:"player-bullet",AttackerPlayerId:var directAttacker}&&
+              directAttacker==decoyOpponent,
+            "validated terminal projection retains direct player-bullet army kill attribution");
+        var forgedKill=droneShotMatch.TerminalEvidenceSnapshot();
+        forgedKill.DirectArmyKills[0].Cause="army-projectile";
+        var forgedKillBytes=Google.Protobuf.MessageExtensions.ToByteArray(forgedKill);
+        Reject(()=>TerminalOutbox.ValidatePayload(forgedKillBytes,droneShotMatch.MatchId,
+            War.Shared.TerminalResultDigest.Compute(forgedKillBytes)));
+        forgedKill=droneShotMatch.TerminalEvidenceSnapshot();
+        forgedKill.DirectArmyKills.Add(forgedKill.DirectArmyKills[0].Clone());
+        forgedKillBytes=Google.Protobuf.MessageExtensions.ToByteArray(forgedKill);
+        Reject(()=>TerminalOutbox.ValidatePayload(forgedKillBytes,droneShotMatch.MatchId,
+            War.Shared.TerminalResultDigest.Compute(forgedKillBytes)));
         Check(droneProjectileLaunched&&droneProjectileDrained,
             "deployed Drone host observation launches source flight and retires it through tick traversal");
         while(droneEventCursor<droneShotMatch.EventBatch(decoyPlayer,droneEventCursor).LatestEventId)
