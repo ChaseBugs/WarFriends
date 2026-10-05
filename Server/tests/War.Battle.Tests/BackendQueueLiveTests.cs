@@ -120,6 +120,15 @@ internal static class BackendQueueLiveTests
                grants[0].Ticket!=registered.Grants[0].Ticket ||
                grants[1].Ticket!=registered.Grants[1].Ticket)
                 throw new Exception("Live queue returned inconsistent player-only grants.");
+            var inconsistent=grants.Select(x=>x.Clone()).ToArray();
+            inconsistent[1].PlayerViews[0].DisplayName+="forged";
+            try
+            {
+                await new BattleGrantStore(mongoUri,database).Publish(frozenPair.MatchId,
+                    grants[0].ManifestHash,inconsistent,deadline.Token);
+                throw new Exception("Mismatched grant views were accepted at publication.");
+            }
+            catch(InvalidDataException){}
             var grantRows=mongo.GetDatabase(database).GetCollection<BattleGrantDocument>("battle_grants");
             var persistedGrant=await grantRows.Find(x=>x.MatchId==frozenPair.MatchId).FirstAsync(deadline.Token);
             await grantRows.UpdateOneAsync(x=>x.MatchId==frozenPair.MatchId,

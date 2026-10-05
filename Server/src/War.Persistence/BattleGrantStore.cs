@@ -38,6 +38,7 @@ public sealed class BattleGrantStore
         var doc=new BattleGrantDocument{Id=Guid.NewGuid().ToString("N"),MatchId=matchId,ManifestHash=manifestHash,
             PlayerA=rows[0].PlayerId,PlayerB=rows[1].PlayerId,GrantA=rows[0].ToByteArray(),GrantB=rows[1].ToByteArray(),
             ExpiresUtc=DateTimeOffset.FromUnixTimeSeconds(rows[0].ExpiresUnixSeconds).UtcDateTime};
+        _=ValidateDocument(doc);
         try {await grants.InsertOneAsync(doc,cancellationToken:ct);return "published";}
         catch(MongoWriteException e) when(e.WriteError.Category==ServerErrorCategory.DuplicateKey)
         {
