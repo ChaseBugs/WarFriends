@@ -129,15 +129,34 @@ internal static class BackendQueueLiveTests
                 throw new Exception("Mismatched grant views were accepted at publication.");
             }
             catch(InvalidDataException){}
+            var sameFraction=grants.Select(x=>x.Clone()).ToArray();
+            foreach(var grant in sameFraction)
+                grant.PlayerViews[1].Fraction=grant.PlayerViews[0].Fraction;
+            try
+            {
+                await new BattleGrantStore(mongoUri,database).Publish(frozenPair.MatchId,
+                    grants[0].ManifestHash,sameFraction,deadline.Token);
+                throw new Exception("One-fraction roster was accepted at grant publication.");
+            }
+            catch(InvalidDataException){}
             var grantRows=mongo.GetDatabase(database).GetCollection<BattleGrantDocument>("battle_grants");
             var persistedGrant=await grantRows.Find(x=>x.MatchId==frozenPair.MatchId).FirstAsync(deadline.Token);
+            var grantStore=new BattleGrantStore(mongoUri,database);
+            if(await grantStore.Publish(frozenPair.MatchId,grants[0].ManifestHash,grants,deadline.Token)!="already-published")
+                throw new Exception("Grant publication retry did not recognize the complete durable assignment.");
             await grantRows.UpdateOneAsync(x=>x.MatchId==frozenPair.MatchId,
                 Builders<BattleGrantDocument>.Update.Set(x=>x.GrantB,new byte[]{1,2,3}),cancellationToken:deadline.Token);
             try
             {
-                await new BattleGrantStore(mongoUri,database).GetForPlayer(frozenPair.MatchId,ids[0],
+                await grantStore.GetForPlayer(frozenPair.MatchId,ids[0],
                     DateTimeOffset.UtcNow.ToUnixTimeSeconds(),deadline.Token);
                 throw new Exception("Corrupt opposite-player grant was ignored on durable replay.");
+            }
+            catch(InvalidDataException){}
+            try
+            {
+                await grantStore.Publish(frozenPair.MatchId,grants[0].ManifestHash,grants,deadline.Token);
+                throw new Exception("Corrupt durable grant was accepted as a publication retry.");
             }
             catch(InvalidDataException){}
             await grantRows.UpdateOneAsync(x=>x.MatchId==frozenPair.MatchId,

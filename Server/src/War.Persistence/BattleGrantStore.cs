@@ -89,6 +89,7 @@ public sealed class BattleGrantStore
            first.PlayerViews.Count!=2 || second.PlayerViews.Count!=2 ||
            !first.PlayerViews.Select(x=>x.PlayerId).SequenceEqual(roster,StringComparer.Ordinal) ||
            !second.PlayerViews.Select(x=>x.PlayerId).SequenceEqual(roster,StringComparer.Ordinal) ||
+           first.PlayerViews[0].Fraction==first.PlayerViews[1].Fraction ||
            !first.PlayerViews.SequenceEqual(second.PlayerViews))
             throw new InvalidDataException("Persisted battle grant assignment differs from its roster authority.");
         return (first,second);
