@@ -2056,6 +2056,8 @@ public sealed partial class MatchEngine
             ObjectiveCredits = (uint)performance.ObjectiveCredits
         };
         snapshot.RibbonIds.AddRange(ribbons.Snapshot());
+        // Terminal evidence only; live snapshots retain their authenticated MTU budget.
+        if (Terminal) snapshot.PerformanceStartTick = performance.StartTick;
         snapshot.PerformanceDurationTicks = performance.DurationTicks;
         snapshot.Projectiles.AddRange(grenadeProjectiles.OrderBy(x=>x.Key).Select(x=>new BattleProjectileState
         {

@@ -1080,6 +1080,10 @@ var timer = new MatchEngine(definition with { DurationSeconds = 5, IdleSeconds =
 timer.Admit(a); timer.Admit(b); timer.Command(a, Ready(1, timer.ManifestHash)); timer.Command(b, Ready(1, timer.ManifestHash));
 timer.Advance(210);
 Check(timer.Snapshot().TerminalReason == "duration-limit" && !timer.Snapshot().RewardEligible, "duration expires without fake outcome");
+Check(timer.Snapshot().PerformanceStartTick>=timer.Snapshot().StartTick &&
+      timer.Snapshot().PerformanceStartTick<=timer.Snapshot().EndTick &&
+      timer.Snapshot().PerformanceDurationTicks==timer.Snapshot().EndTick-timer.Snapshot().PerformanceStartTick,
+    "terminal result binds performance duration to the observed running transition");
 byte[] frozenTerminal=timer.Snapshot().ToByteArray();
 timer.Advance(300);
 Check(timer.Command(a,new MatchCommand {CommandId=2,Reload=new ReloadCommand()}).Code=="match-terminal" &&

@@ -69,7 +69,8 @@ internal static class BattleManifestSnapshotTests
                 new Action<MatchSnapshot>(x=>x.CardActivations=4097),
                 new Action<MatchSnapshot>(x=>{x.RibbonIds.Add("R1");x.RibbonIds.Add("R1");}),
                 new Action<MatchSnapshot>(x=>x.PerformanceDurationTicks=10_000_001),
-                new Action<MatchSnapshot>(x=>x.PerformanceDurationTicks=1)})
+                new Action<MatchSnapshot>(x=>x.PerformanceDurationTicks=1),
+                new Action<MatchSnapshot>(x=>{x.StartTick=1;x.EndTick=x.ServerTick=2;x.PerformanceStartTick=1;x.PerformanceDurationTicks=0;})})
             {
                 var forged=terminal.Clone();invalid(forged);
                 (byte[] forgedPayload,string forgedDigest)=Evidence(forged);
