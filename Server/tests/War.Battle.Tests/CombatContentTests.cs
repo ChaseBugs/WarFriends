@@ -3403,6 +3403,18 @@ internal static class CombatContentTests
               Math.Abs(heavyTurretMatch.HeavyTurretHealth(liveHeavyTurretId)!.Value-(liveHeavyTurretHealth-1))<.001f&&
               heavyTurretMatch.EventBatch(decoyPlayer,heavyTurretEventCursor).Events.Any(x=>x.Kind==MatchEventKind.HeavyTurretDamaged&&x.ProjectileId==liveHeavyTurretId),
               "trusted opposing damage mutates Heavy Turret health and publishes authoritative damage state");
+        Vector3 mineTurretOrigin=liveHeavyTurretColliders[0].Hitbox.Center;
+        float mineTurretBefore=heavyTurretMatch.HeavyTurretHealth(liveHeavyTurretId)!.Value;
+        Check(heavyTurretMatch.ApplyLandMineHeavyTurretExplosion(decoyOpponent,mineTurretOrigin,10,81)==1&&
+              Math.Abs(heavyTurretMatch.HeavyTurretHealth(liveHeavyTurretId)!.Value-
+                  (mineTurretBefore-10))<.001f,
+            "Land Mine blast selects one current Heavy Turret box and applies one opposing hit");
+        float friendlyMineTurretBefore=heavyTurretMatch.HeavyTurretHealth(liveHeavyTurretId)!.Value;
+        Check(heavyTurretMatch.ApplyLandMineHeavyTurretExplosion(decoyPlayer,mineTurretOrigin,10,82)==1&&
+              Math.Abs(heavyTurretMatch.HeavyTurretHealth(liveHeavyTurretId)!.Value-
+                  (friendlyMineTurretBefore-5))<.001f,
+            "allied Land Mine blast applies recovered half damage to Heavy Turret");
+        Reject(()=>heavyTurretMatch.ApplyLandMineHeavyTurretExplosion(decoyOpponent,mineTurretOrigin,float.NaN,83));
         heavyTurretEventCursor=heavyTurretMatch.EventBatch(decoyPlayer,0).LatestEventId;
         Check(heavyTurretMatch.ApplyHeavyTurretHostDamage(decoyOpponent,liveHeavyTurretId,10_000_000,"focused-lethal")&&
               heavyTurretMatch.HeavyTurretHealth(liveHeavyTurretId)==null&&

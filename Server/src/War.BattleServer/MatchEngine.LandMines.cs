@@ -120,6 +120,7 @@ public sealed partial class MatchEngine
                 }
             }
             ApplyLandMineDecoyExplosion(mine.OwnerPlayerId,mine.Position,mine.Damage,mine.EntityId);
+            ApplyLandMineHeavyTurretExplosion(mine.OwnerPlayerId,mine.Position,mine.Damage,mine.EntityId);
             ApplyLandMinePassengerExplosion(mine.OwnerPlayerId,mine.Position,mine.Damage);
             ApplyLandMineVehicleExplosion(mine.OwnerPlayerId,mine.Position,mine.Damage);
             foreach(var army in activeArmyEntities.Values.Where(x=>x.OwnerFraction!=mine.OwnerFraction&&
@@ -268,6 +269,39 @@ public sealed partial class MatchEngine
                 Emit(MatchEventKind.DecoyDestroyed,ownerId,before.OwnerPlayerId,
                     target.EntityId,before.Position,0,"land-mine:"+mineId);
             }
+        }
+        return hits;
+    }
+
+    internal int ApplyLandMineHeavyTurretExplosion(string ownerId,Vector3 position,float damage,
+        ulong mineId)
+    {
+        if(phase!=BattlePhase.Running||landMineSource==null||heavyTurretSource==null||
+           explosionPolicy==null||!PlayerHitbox.Finite(position)||!float.IsFinite(damage)||
+           damage<=0||damage>10_000_000||mineId==0)
+            throw new InvalidDataException("Land Mine Heavy Turret blast lacks trusted source authority.");
+        var attacker=Find(ownerId)??throw new InvalidDataException("Land Mine turret owner disappeared.");
+        int hits=0;
+        foreach(var group in HeavyTurretShotTargets(attacker,includeFriendly:true).GroupBy(x=>x.EntityId))
+        {
+            var selected=group.Where(x=>x.HeavyTurret&&x.Hitbox.Enabled&&x.Hitbox.Active&&
+                    x.Hitbox.OverlapsSphere(position,landMineSource.HurtRadius))
+                .OrderBy(x=>x.Hitbox.BoundsDistanceToPoint(position))
+                .ThenBy(x=>x.PartComponentFileId).FirstOrDefault();
+            if(selected==null)continue;
+            var target=heavyTurrets.Snapshot().SingleOrDefault(x=>x.EntityId==group.Key)??
+                throw new InvalidDataException("Land Mine turret lost its health authority.");
+            var part=heavyTurretSource.Colliders.Single(x=>x.ComponentFileId==selected.PartComponentFileId);
+            float amount=damage*part.FlameWeight*
+                (target.OwnerFraction==attacker.Definition.Fraction?explosionPolicy.Friendly:1f);
+            if(!float.IsFinite(amount)||amount<=0||amount>10_000_000||
+               !heavyTurrets.TryDamage(group.Key,amount,out var changed,out bool destroyed)||changed==null)
+                throw new InvalidDataException("Land Mine turret damage escaped host bounds.");
+            hits++;stateRevision++;
+            if(target.OwnerFraction!=attacker.Definition.Fraction)
+                attacker.ConfirmedEnemyHits=checked(attacker.ConfirmedEnemyHits+1);
+            Emit(destroyed?MatchEventKind.HeavyTurretDestroyed:MatchEventKind.HeavyTurretDamaged,
+                ownerId,changed.OwnerPlayerId,group.Key,changed.Position,changed.Health,"land-mine:"+mineId);
         }
         return hits;
     }
