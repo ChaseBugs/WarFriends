@@ -87,6 +87,29 @@ internal static class BattleManifestSnapshotTests
             if(roster.Length!=roster.Distinct(StringComparer.Ordinal).Count() ||
                roster.Any(x=>!contenders.Contains(x,StringComparer.Ordinal)))
                 throw new Exception("Concurrent Backend stores assigned one player to conflicting pairs.");
+            var ticketRows=mongo.GetDatabase(database).GetCollection<BattleQueueTicketDocument>("battle_queue_tickets");
+            var corruptPlayer=new string('d',32);
+            var future=DateTime.UtcNow.AddMinutes(1);
+            await ticketRows.InsertOneAsync(new BattleQueueTicketDocument{Id=Guid.NewGuid().ToString("N"),
+                PlayerId=corruptPlayer,CompatibilityKey="corrupt.fixture",JoinedUtc=future,ExpiresUtc=future.AddSeconds(120)});
+            if((await queue.Join(new string('e',32),"corrupt.fixture",DateTimeOffset.UtcNow,CancellationToken.None)).Code!="waiting")
+                throw new Exception("Future-dated candidate entered a durable pair.");
+            if(await queue.Existing(corruptPlayer,CancellationToken.None)!=null)
+                throw new Exception("Rejected candidate acquired a durable pair.");
+            var badJoined=DateTime.UtcNow.AddSeconds(-1);
+            await ticketRows.InsertOneAsync(new BattleQueueTicketDocument{Id=Guid.NewGuid().ToString("N"),
+                PlayerId=new string('f',32),CompatibilityKey="bad-lifetime.fixture",JoinedUtc=badJoined,
+                ExpiresUtc=badJoined.AddSeconds(121)});
+            try {await queue.Join(new string('1',32),"bad-lifetime.fixture",DateTimeOffset.UtcNow,CancellationToken.None);
+                throw new Exception("Malformed candidate lifetime entered a durable pair.");}
+            catch(InvalidDataException){}
+            await mongo.GetDatabase(database).GetCollection<BattlePairDocument>("battle_pairs").InsertOneAsync(
+                new BattlePairDocument{Id="bad-pair-id",MatchId="m"+Guid.NewGuid().ToString("N"),
+                    CompatibilityKey="corrupt-pair.fixture",Players=[new string('2',32),new string('3',32)],
+                    CreatedUtc=DateTime.UtcNow});
+            try {await queue.Existing(new string('2',32),CancellationToken.None);
+                throw new Exception("Malformed durable pair was replayed.");}
+            catch(InvalidDataException){}
             Console.WriteLine("PASS: Mongo paired snapshot survives restart; proven terminal releases players for a distinct rematch");
         }
         finally {await mongo.DropDatabaseAsync(database);}

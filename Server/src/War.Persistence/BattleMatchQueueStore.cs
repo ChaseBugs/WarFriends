@@ -55,23 +55,24 @@ public sealed class BattleMatchQueueStore
         {
             var prior=await tickets.Find(x=>x.PlayerId==playerId).FirstOrDefaultAsync(ct);
             if(prior==null)throw;
+            ValidateTicket(prior);
             if(prior.CompatibilityKey!=compatibilityKey)throw new InvalidDataException("Player already has a different matchmaking ticket.");
             if(prior.ExpiresUtc<=now.UtcDateTime)
             {
                 await tickets.DeleteOneAsync(x=>x.Id==prior.Id && x.ExpiresUtc==prior.ExpiresUtc,ct);
                 return await Join(playerId,compatibilityKey,now,ct);
             }
-            if(prior.JoinedUtc>now.UtcDateTime || prior.ExpiresUtc!=prior.JoinedUtc.AddSeconds(120))
-                throw new InvalidDataException("Existing matchmaking ticket has invalid lifetime authority.");
             activeTicketId=prior.Id;
         }
         for(int attempt=0;attempt<16;attempt++)
         {
             existingPair=await PairFor(playerId,ct);
             if(existingPair!=null)return Result("paired",existingPair);
-            var candidate=await tickets.Find(x=>x.CompatibilityKey==compatibilityKey && x.PlayerId!=playerId && x.ExpiresUtc>now.UtcDateTime)
+            var candidate=await tickets.Find(x=>x.CompatibilityKey==compatibilityKey && x.PlayerId!=playerId &&
+                x.JoinedUtc<=now.UtcDateTime && x.ExpiresUtc>now.UtcDateTime)
                 .SortBy(x=>x.JoinedUtc).ThenBy(x=>x.PlayerId).FirstOrDefaultAsync(ct);
             if(candidate==null)return new("waiting",null,null);
+            ValidateTicket(candidate);
             var candidatePair=await PairFor(candidate.PlayerId,ct);
             if(candidatePair!=null){await tickets.DeleteOneAsync(x=>x.Id==candidate.Id,ct);continue;}
             string matchId="m"+Guid.NewGuid().ToString("N");
@@ -127,16 +128,28 @@ public sealed class BattleMatchQueueStore
         await pairs.Find(Builders<BattlePairDocument>.Filter.AnyEq(x=>x.Players,playerId)).FirstOrDefaultAsync(ct);
     private static BattlePairingResult Result(string code,BattlePairDocument pair)
     {
-        if(pair.Players is not {Length:2} || pair.Players.Distinct(StringComparer.Ordinal).Count()!=2 ||
-            !ValidKey(pair.CompatibilityKey) || !System.Text.RegularExpressions.Regex.IsMatch(pair.MatchId??"",@"\Am[0-9a-f]{32}\z"))
+        if(!ValidId(pair.Id) || pair.Players is not {Length:2} ||
+            pair.Players.Any(x=>!ValidId(x)) || pair.Players.Distinct(StringComparer.Ordinal).Count()!=2 ||
+            !ValidKey(pair.CompatibilityKey) || !System.Text.RegularExpressions.Regex.IsMatch(pair.MatchId??"",@"\Am[0-9a-f]{32}\z") ||
+            pair.CreatedUtc.Kind!=DateTimeKind.Utc || pair.CreatedUtc<DateTime.UnixEpoch)
             throw new InvalidDataException("Invalid durable battle pairing.");
         return new(code,pair.MatchId,Array.AsReadOnly(pair.Players.ToArray()));
     }
+    private static void ValidateTicket(BattleQueueTicketDocument ticket)
+    {
+        if(!ValidId(ticket.Id) || !ValidId(ticket.PlayerId) || !ValidKey(ticket.CompatibilityKey) ||
+            ticket.JoinedUtc.Kind!=DateTimeKind.Utc || ticket.JoinedUtc<DateTime.UnixEpoch ||
+            ticket.JoinedUtc>DateTime.MaxValue.AddSeconds(-120) ||
+            ticket.ExpiresUtc.Kind!=DateTimeKind.Utc ||
+            ticket.ExpiresUtc!=ticket.JoinedUtc.AddSeconds(120))
+            throw new InvalidDataException("Invalid durable matchmaking ticket.");
+    }
     private static void Validate(string playerId,string key,DateTimeOffset now)
     {
-        if(!Guid.TryParseExact(playerId,"N",out _) || playerId!=playerId.ToLowerInvariant() || !ValidKey(key) ||
-            now<DateTimeOffset.UnixEpoch || now.ToUnixTimeSeconds()>253402300799)
+        if(!ValidId(playerId) || !ValidKey(key) ||
+            now<DateTimeOffset.UnixEpoch || now.ToUnixTimeSeconds()>253402300679)
             throw new InvalidDataException("Invalid matchmaking admission.");
     }
+    private static bool ValidId(string? value)=>Guid.TryParseExact(value,"N",out _) && value==value.ToLowerInvariant();
     private static bool ValidKey(string? value)=>System.Text.RegularExpressions.Regex.IsMatch(value??"",@"\A[a-zA-Z0-9_.:-]{1,128}\z");
 }

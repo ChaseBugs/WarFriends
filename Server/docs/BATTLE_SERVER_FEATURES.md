@@ -65,6 +65,8 @@ The `--queue-live` smoke now starts separate Backend and Worker processes agains
 
 Queue pairing now deletes only the exact ticket IDs it observed, so cleanup after a completed pair cannot erase a newer ticket for the same player after release/rejoin. The Mongo snapshot test also admits twelve contenders concurrently through two independent queue-store instances and checks that no player appears in conflicting durable pairs. Full cross-process cancellation, expiry, and simultaneous join/release behavior still needs a transactional ownership protocol; the unique player index alone does not prove those races closed.
 
+The queue now validates complete ticket identity and exact 120-second lifetime before retry reuse or candidate pairing, and validates durable pair IDs, roster IDs, key, match ID, and creation time before replay. Candidate selection uses the captured request's half-open joined/expires window, so a concurrent request's slightly later timestamp cannot spuriously mark a valid ticket corrupt. Mongo tests reject a malformed lifetime and pair row and confirm a future-dated candidate is not paired early. These checks protect persisted authority but do not close the cancellation/expiry ownership race above.
+
 1. Continue B07-B09 with the next recovered weapon projectile family and its normal Unity presentation. Keep results unscored until authority and Client presentation are complete.
 2. Expand weapon variants and world/entity destruction (B09-B12), then army/AI/vehicles/cards/objectives (B13-B19).
 3. Complete mode rules, statistics and durable result/control contracts (B20-B26), with Backend integration limited to those boundaries.
