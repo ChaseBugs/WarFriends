@@ -121,6 +121,7 @@ public sealed partial class MatchEngine
             }
             ApplyLandMineDecoyExplosion(mine.OwnerPlayerId,mine.Position,mine.Damage,mine.EntityId);
             ApplyLandMineHeavyTurretExplosion(mine.OwnerPlayerId,mine.Position,mine.Damage,mine.EntityId);
+            ApplyLandMineDroneExplosion(mine.OwnerPlayerId,mine.Position,mine.Damage);
             ApplyLandMinePassengerExplosion(mine.OwnerPlayerId,mine.Position,mine.Damage);
             ApplyLandMineVehicleExplosion(mine.OwnerPlayerId,mine.Position,mine.Damage);
             foreach(var army in activeArmyEntities.Values.Where(x=>x.OwnerFraction!=mine.OwnerFraction&&
@@ -302,6 +303,36 @@ public sealed partial class MatchEngine
                 attacker.ConfirmedEnemyHits=checked(attacker.ConfirmedEnemyHits+1);
             Emit(destroyed?MatchEventKind.HeavyTurretDestroyed:MatchEventKind.HeavyTurretDamaged,
                 ownerId,changed.OwnerPlayerId,group.Key,changed.Position,changed.Health,"land-mine:"+mineId);
+        }
+        return hits;
+    }
+
+    internal int ApplyLandMineDroneExplosion(string ownerId,Vector3 position,float damage)
+    {
+        if(phase!=BattlePhase.Running||landMineSource==null||droneColliders==null||
+           explosionPolicy==null||!PlayerHitbox.Finite(position)||!float.IsFinite(damage)||
+           damage<=0||damage>10_000_000)
+            throw new InvalidDataException("Land Mine Drone blast lacks trusted source authority.");
+        var attacker=Find(ownerId)??throw new InvalidDataException("Land Mine Drone owner disappeared.");
+        int hits=0;
+        foreach(var drone in activeArmyEntities.Values.Where(x=>x.UnitId=="ID_UNIT-DRONE")
+            .OrderBy(x=>x.EntityKey).ToArray())
+        {
+            var q=drone.DroneRotation??
+                throw new InvalidDataException("Land Mine Drone lost its host rotation.");
+            var root=droneColliders.Place(new(drone.X,drone.Y,drone.Z),
+                    new(q.X,q.Y,q.Z,q.W))
+                .Single(x=>x.RootOwned&&x.ComponentFileId==6544804);
+            // The child sphere shares a destroyable layer but no damage component.
+            if(!root.Hitbox.OverlapsSphere(position,landMineSource.HurtRadius))continue;
+            float amount=damage*(drone.OwnerFraction==attacker.Definition.Fraction?
+                explosionPolicy.Friendly:1f);
+            if(!float.IsFinite(amount)||amount<=0||amount>10_000_000)
+                throw new InvalidDataException("Land Mine Drone damage escaped host bounds.");
+            if(!ApplyArmyHostDamage(drone.EntityKey,amount))continue;
+            hits++;
+            if(drone.OwnerFraction!=attacker.Definition.Fraction)
+                attacker.ConfirmedEnemyHits=checked(attacker.ConfirmedEnemyHits+1);
         }
         return hits;
     }

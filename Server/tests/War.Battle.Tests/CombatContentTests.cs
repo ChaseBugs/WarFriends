@@ -3845,6 +3845,18 @@ internal static class CombatContentTests
               Math.Abs(droneBefore-flameDroneMatch.ArmyHealth(flameDroneTarget.EntityKey)!.Value-
                   droneExpected)<.001f,
             "one Flame pulse damages the opposing Drone root by its source coefficient-one amount");
+        Vector3 droneMineOrigin=flameDroneRoot.Hitbox.Center;
+        float droneBeforeMine=flameDroneMatch.ArmyHealth(flameDroneTarget.EntityKey)!.Value;
+        Check(flameDroneMatch.ApplyLandMineDroneExplosion(soldierOwner,droneMineOrigin,10)==1&&
+              Math.Abs(flameDroneMatch.ArmyHealth(flameDroneTarget.EntityKey)!.Value-
+                  (droneBeforeMine-10))<.001f,
+            "Land Mine blast damages only the deployed Drone root damage box");
+        float droneBeforeFriendlyMine=flameDroneMatch.ArmyHealth(flameDroneTarget.EntityKey)!.Value;
+        Check(flameDroneMatch.ApplyLandMineDroneExplosion(helicopterOwner,droneMineOrigin,10)==1&&
+              Math.Abs(flameDroneMatch.ArmyHealth(flameDroneTarget.EntityKey)!.Value-
+                  (droneBeforeFriendlyMine-5))<.001f,
+            "allied Land Mine blast uses recovered half damage on a Drone");
+        Reject(()=>flameDroneMatch.ApplyLandMineDroneExplosion(soldierOwner,droneMineOrigin,float.NaN));
         var flameHelicopterManifest=flameManifest with {MatchId="army-flame-helicopter",
             Players=[flameManifest.Players[0],flameManifest.Players[1] with
             {
