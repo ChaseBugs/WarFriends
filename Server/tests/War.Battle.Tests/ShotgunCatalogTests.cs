@@ -16,7 +16,7 @@ internal static class ShotgunCatalogTests
               Math.Abs(stage.CadenceSeconds-.5f)<.0001f,"SPAS stage-zero ammo and timing");
         Check(Math.Abs(stage.MinDamage-22.62f)<.0001f && Math.Abs(stage.MaxDamage-101.8f)<.0001f,
               "SPAS stage-zero damage from upgrade sheet");
-        Check(binding.Speed==30 && binding.Geometry.NearHalfAngle==50 && binding.Geometry.FarHalfAngle==3 &&
+        Check(binding.Speed==30 && binding.FakeSpeed==30 && binding.Geometry.NearHalfAngle==50 && binding.Geometry.FarHalfAngle==3 &&
               binding.Geometry.Radius==10,"runtime base definition overrides stale serialized pellet setup");
         var shot=ShotgunShotPlanner.Plan(binding.Rule(stage),Vector3.Zero,new Vector3(0,0,5),
             [new ShotgunCollider("target","enemy",new Vector3(0,0,4),true)]);
@@ -48,7 +48,8 @@ internal static class ShotgunCatalogTests
                      ("Blackhand",76),("SawnOff",56),("StrikerElite",56),("AA12",66),("SaigaElite",46)})
         {
             string source="Google2u.Shotgun_"+name;
-            Check(catalog.Stage(source,count-1).Index==count-1 && catalog.Binding(source).SourceId==source,
+            Check(catalog.Stage(source,count-1).Index==count-1 && catalog.Binding(source).SourceId==source&&
+                  catalog.Binding(source).FakeSpeed==catalog.Binding(source).Speed,
                   "full ordered shotgun lane: "+name);
             try { _=catalog.Stage(source,count);throw new Exception("Past-end shotgun level accepted: "+name); }
             catch(InvalidDataException) { checks++; }

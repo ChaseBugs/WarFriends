@@ -45,6 +45,17 @@ if(args is ["--shotgun-planner-only"])
     return;
 }
 
+if(args is ["--shotgun-catalog-only"])
+{
+    var root=new DirectoryInfo(AppContext.BaseDirectory);
+    while(root!=null&&!File.Exists(Path.Combine(root.FullName,"content/shotgun-content-manifest.json")))
+        root=root.Parent;
+    if(root==null)throw new FileNotFoundException("Shotgun content root missing.");
+    int focused=ShotgunCatalogTests.Run(Path.Combine(root.FullName,"content"));
+    Console.WriteLine($"PASS: {focused} focused shotgun catalog assertions");
+    return;
+}
+
 if(args is ["--shotgun-only"])
 {
     var root=new DirectoryInfo(AppContext.BaseDirectory);

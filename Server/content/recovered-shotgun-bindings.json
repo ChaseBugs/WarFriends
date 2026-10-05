@@ -53,6 +53,7 @@
         "flatY": false,
         "shotOnlyMainBullet": false,
         "bulletSpeed": 10.0,
+        "fakeSpeedFactor": 1.0,
         "checkDistance": 1.0,
         "speedMultiplier": 1.0,
         "criticalMultiplier": 2.0
@@ -113,6 +114,7 @@
         "flatY": false,
         "shotOnlyMainBullet": false,
         "bulletSpeed": 10.0,
+        "fakeSpeedFactor": 1.0,
         "checkDistance": 1.0,
         "speedMultiplier": 1.0,
         "criticalMultiplier": 2.0
@@ -173,6 +175,7 @@
         "flatY": false,
         "shotOnlyMainBullet": false,
         "bulletSpeed": 10.0,
+        "fakeSpeedFactor": 1.0,
         "checkDistance": 1.0,
         "speedMultiplier": 1.0,
         "criticalMultiplier": 2.0
@@ -233,6 +236,7 @@
         "flatY": false,
         "shotOnlyMainBullet": false,
         "bulletSpeed": 10.0,
+        "fakeSpeedFactor": 1.0,
         "checkDistance": 1.0,
         "speedMultiplier": 1.0,
         "criticalMultiplier": 2.0
@@ -293,6 +297,7 @@
         "flatY": false,
         "shotOnlyMainBullet": false,
         "bulletSpeed": 10.0,
+        "fakeSpeedFactor": 1.0,
         "checkDistance": 1.0,
         "speedMultiplier": 1.0,
         "criticalMultiplier": 2.0
@@ -353,6 +358,7 @@
         "flatY": false,
         "shotOnlyMainBullet": false,
         "bulletSpeed": 10.0,
+        "fakeSpeedFactor": 1.0,
         "checkDistance": 1.0,
         "speedMultiplier": 1.0,
         "criticalMultiplier": 2.0
@@ -413,6 +419,7 @@
         "flatY": false,
         "shotOnlyMainBullet": false,
         "bulletSpeed": 10.0,
+        "fakeSpeedFactor": 1.0,
         "checkDistance": 1.0,
         "speedMultiplier": 1.0,
         "criticalMultiplier": 2.0
@@ -473,6 +480,7 @@
         "flatY": false,
         "shotOnlyMainBullet": false,
         "bulletSpeed": 10.0,
+        "fakeSpeedFactor": 1.0,
         "checkDistance": 1.0,
         "speedMultiplier": 1.0,
         "criticalMultiplier": 2.0
@@ -533,6 +541,7 @@
         "flatY": false,
         "shotOnlyMainBullet": false,
         "bulletSpeed": 10.0,
+        "fakeSpeedFactor": 1.0,
         "checkDistance": 1.0,
         "speedMultiplier": 1.0,
         "criticalMultiplier": 2.0

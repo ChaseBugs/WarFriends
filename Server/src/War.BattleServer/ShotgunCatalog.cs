@@ -10,7 +10,7 @@ internal sealed record ShotgunStage(string SourceId,int Index,int ClipSize,int R
     float ReloadSeconds,float MinDamage,float MaxDamage,float CadenceSeconds,
     float CriticalProbability,float PlayerDamageRatio,float OvertimePlayerDamageRatio);
 internal sealed record ShotgunBinding(string SourceId,int InventoryIndex,string MuzzlePath,
-    Vector3 ReferenceMuzzlePosition,Vector3 ShotOffset,float Speed,float CheckDistance,float CriticalMultiplier,
+    Vector3 ReferenceMuzzlePosition,Vector3 ShotOffset,float Speed,float FakeSpeed,float CheckDistance,float CriticalMultiplier,
     float HitForceMax,bool FriendKill,int AnimationFamily,ShotgunRule Geometry)
 {
     internal ShotgunRule Rule(ShotgunStage stage) => Geometry with {MinDamage=stage.MinDamage,MaxDamage=stage.MaxDamage};
@@ -123,13 +123,15 @@ internal sealed class ShotgunCatalog
                 _=Number(setup,"shotHalfAngleNear",.01f,180);_=Number(setup,"shotHalfAngle",.01f,180);
                 _=Number(setup,"radius",.01f,100);_=Number(setup,"minDamage",0,1_000_000);_=Number(setup,"maxDamage",0,1_000_000);
                 _=Number(setup,"bulletSpeed",.01f,10000);
+                float fakeSpeedFactor=Number(setup,"fakeSpeedFactor",1,1);
                 if(Number(setup,"speedMultiplier",1,1)!=1)throw new InvalidDataException("Unsupported shotgun speed multiplier.");
                 int animation=Integer(row,"animationFamily",0,17);
                 if(animation is not (0 or 7 or 13))throw new InvalidDataException("Unsupported shotgun animation family.");
                 var geometry=new ShotgunRule(near,far,radius,0,0,
                     setup.GetProperty("flatY").GetBoolean(),setup.GetProperty("shotOnlyMainBullet").GetBoolean());
                 var binding=new ShotgunBinding(id,Integer(row,"inventoryIndex",0,255),muzzlePath,
-                    Vector(row.GetProperty("muzzlePosition")),Vector(row.GetProperty("shotOffset")),speed,Number(setup,"checkDistance",0,50),
+                    Vector(row.GetProperty("muzzlePosition")),Vector(row.GetProperty("shotOffset")),speed,
+                    speed*fakeSpeedFactor,Number(setup,"checkDistance",0,50),
                     Number(setup,"criticalMultiplier",1,100),Number(setup,"hitForceMax",0,100000),
                     row.GetProperty("friendKill").GetBoolean(),animation,geometry);
                 if(!bindings.TryAdd(id,binding))throw new InvalidDataException("Duplicate shotgun binding.");

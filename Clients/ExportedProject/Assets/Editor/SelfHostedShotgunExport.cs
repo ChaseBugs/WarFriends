@@ -53,7 +53,8 @@ public static class SelfHostedShotgunExport
                         definition.minDamage,definition.maxDamage,definition.speed},
                     setup=new {shotgun.shotHalfAngle,shotgun.shotHalfAngleNear,shotgun.radius,
                         shotgun.minDamage,shotgun.maxDamage,shotgun.hitForceMax,shotgun.flatY,
-                        shotgun.shotOnlyMainBullet,shotgun.bulletSpeed,shotgun.checkDistance,
+                        shotgun.shotOnlyMainBullet,shotgun.bulletSpeed,shotgun.fakeSpeedFactor,
+                        shotgun.checkDistance,
                         speedMultiplier=shotgun.speedMultiplayer,criticalMultiplier=(float)shotgun.criticalAmount},
                     mainBulletType=mainBullet.GetType().FullName,mainBulletSource=mainPath,mainBulletSha256=Hash(mainPath),
                     pelletType=mainBullet.bulletPrefab.GetType().FullName,pelletSource=pelletPath,pelletSha256=Hash(pelletPath)});
