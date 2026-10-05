@@ -3522,6 +3522,26 @@ internal static class CombatContentTests
               {UnitId:"ID_UNIT-DRONE",Cause:"player-bullet",AttackerPlayerId:var directAttacker}&&
               directAttacker==decoyOpponent,
             "validated terminal projection retains direct player-bullet army kill attribution");
+        foreach(var family in content.Army.Families)
+        {
+            var unitResult=droneShotMatch.TerminalEvidenceSnapshot();
+            var option=ArmyOptionIdentityCatalog.All.First(x=>x.UnitId==family.UnitId);
+            var unitUsage=unitResult.Players.Single(p=>p.PlayerId==decoyPlayer).ArmyUsage.Single();
+            unitUsage.OptionIndex=option.Index;
+            unitUsage.UnitId=family.UnitId;
+            unitUsage.PlannedSpawns=(uint)option.SpawnCount;
+            unitResult.DirectArmyKills[0].UnitId=family.UnitId;
+            var unitBytes=Google.Protobuf.MessageExtensions.ToByteArray(unitResult);
+            var stats=BattleDirectKillStatsProjection.FromPayload(unitBytes,droneShotMatch.MatchId,
+                War.Shared.TerminalResultDigest.Compute(unitBytes));
+            Check(stats.Single(x=>x.PlayerId==decoyOpponent) is
+                  {DirectBulletKills:1} attackerStats&&
+                  attackerStats.DirectBulletVehiclesDestroyed==(family.IsSoldier?0:1)&&
+                  attackerStats.DirectBulletTanksDestroyed==(family.UnitId=="ID_UNIT-TANK"?1:0)&&
+                  stats.Single(x=>x.PlayerId==decoyPlayer) is
+                  {DirectBulletKills:0,DirectBulletVehiclesDestroyed:0,DirectBulletTanksDestroyed:0},
+                $"direct bullet kill candidates classify source army family {family.UnitId}");
+        }
         var forgedKill=droneShotMatch.TerminalEvidenceSnapshot();
         forgedKill.DirectArmyKills[0].Cause="army-projectile";
         var forgedKillBytes=Google.Protobuf.MessageExtensions.ToByteArray(forgedKill);
