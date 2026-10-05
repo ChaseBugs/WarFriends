@@ -122,6 +122,7 @@ public sealed partial class MatchEngine
             ApplyLandMineDecoyExplosion(mine.OwnerPlayerId,mine.Position,mine.Damage,mine.EntityId);
             ApplyLandMineHeavyTurretExplosion(mine.OwnerPlayerId,mine.Position,mine.Damage,mine.EntityId);
             ApplyLandMineDroneExplosion(mine.OwnerPlayerId,mine.Position,mine.Damage);
+            ApplyLandMineHelicopterBodyExplosion(mine.OwnerPlayerId,mine.Position,mine.Damage);
             ApplyLandMinePassengerExplosion(mine.OwnerPlayerId,mine.Position,mine.Damage);
             ApplyLandMineVehicleExplosion(mine.OwnerPlayerId,mine.Position,mine.Damage);
             foreach(var army in activeArmyEntities.Values.Where(x=>x.OwnerFraction!=mine.OwnerFraction&&
@@ -332,6 +333,39 @@ public sealed partial class MatchEngine
             if(!ApplyArmyHostDamage(drone.EntityKey,amount))continue;
             hits++;
             if(drone.OwnerFraction!=attacker.Definition.Fraction)
+                attacker.ConfirmedEnemyHits=checked(attacker.ConfirmedEnemyHits+1);
+        }
+        return hits;
+    }
+
+    internal int ApplyLandMineHelicopterBodyExplosion(string ownerId,Vector3 position,float damage)
+    {
+        if(phase!=BattlePhase.Running||landMineSource==null||helicopterBodyColliders==null||
+           explosionPolicy==null||!PlayerHitbox.Finite(position)||!float.IsFinite(damage)||
+           damage<=0||damage>10_000_000)
+            throw new InvalidDataException("Land Mine Helicopter blast lacks trusted source authority.");
+        var attacker=Find(ownerId)??throw new InvalidDataException("Land Mine Helicopter owner disappeared.");
+        int hits=0;
+        foreach(var helicopter in activeArmyEntities.Values.Where(x=>x.UnitId=="ID_UNIT-HELICOPTER")
+            .OrderBy(x=>x.EntityKey).ToArray())
+        {
+            var q=helicopter.HelicopterRotation??
+                throw new InvalidDataException("Land Mine Helicopter lost its host rotation.");
+            var selected=helicopterBodyColliders.Place(new(helicopter.X,helicopter.Y,helicopter.Z),
+                    new(q.X,q.Y,q.Z,q.W))
+                .Where(x=>x.Hitbox.Enabled&&x.Hitbox.Active&&
+                    x.Hitbox.OverlapsSphere(position,landMineSource.HurtRadius))
+                .OrderBy(x=>x.Hitbox.BoundsDistanceToPoint(position))
+                .ThenBy(x=>x.ColliderFileId).FirstOrDefault();
+            if(selected==null)continue;
+            float amount=damage*selected.Hitbox.Weight*
+                (helicopter.OwnerFraction==attacker.Definition.Fraction?
+                    explosionPolicy.Friendly:1f);
+            if(!float.IsFinite(amount)||amount<=0||amount>10_000_000)
+                throw new InvalidDataException("Land Mine Helicopter damage escaped host bounds.");
+            if(!ApplyArmyHostDamage(helicopter.EntityKey,amount))continue;
+            hits++;
+            if(helicopter.OwnerFraction!=attacker.Definition.Fraction)
                 attacker.ConfirmedEnemyHits=checked(attacker.ConfirmedEnemyHits+1);
         }
         return hits;

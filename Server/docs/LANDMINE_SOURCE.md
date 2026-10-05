@@ -20,4 +20,6 @@ The Heavy Turret prefab has one multipart damage root and three source BoxCollid
 
 The Drone prefab's root BoxCollider shares its `DestroyableObject`; its child sphere does not. The mine blast therefore queries only the current rotated root box, applies the card amount without the bullet-only shot coefficient, and uses the same allied half-damage rule. A deployed Drone host test proves one opposing hit and one allied hit at the root while preserving the Drone's existing special-immortality gate. Natural mine-triggered air contact remains unverified.
 
+The Helicopter prefab's eleven active child body boxes share one multipart damage root, while its gunner has separate health. The mine blast now selects the closest overlapping body box by current world bounds, applies its source weight of one without the bullet-only 0.33 root coefficient, and uses the allied half-damage rule. A deployed Helicopter host test proves one opposing body hit, an allied half hit, and unchanged gunner health. Gunner blast damage and natural mine-triggered Helicopter contact remain unverified.
+
 Explosion interaction with other spawned `DestroyableObject` implementations still needs source-specific authority. A real two-process/device play proof is also still required before calling the complete card production-verified.

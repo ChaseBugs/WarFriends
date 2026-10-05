@@ -3901,6 +3901,23 @@ internal static class CombatContentTests
               flameHelicopterMatch.ArmyEntityBatch(soldierOwner,0,0).Entities
                   .Single(x=>x.EntityKey==flameHelicopterTarget.EntityKey).HelicopterGunnerHealth==helicopterGunnerBefore,
             "one Flame pulse damages the Helicopter body once without promoting gunner colliders");
+        Vector3 helicopterMineOrigin=helicopterFlameBoxes[0].Center;
+        float helicopterBeforeMine=flameHelicopterMatch.ArmyHealth(flameHelicopterTarget.EntityKey)!.Value;
+        Check(flameHelicopterMatch.ApplyLandMineHelicopterBodyExplosion(soldierOwner,
+                  helicopterMineOrigin,10)==1&&
+              Math.Abs(flameHelicopterMatch.ArmyHealth(flameHelicopterTarget.EntityKey)!.Value-
+                  (helicopterBeforeMine-10))<.001f&&
+              flameHelicopterMatch.ArmyEntityBatch(soldierOwner,0,0).Entities
+                  .Single(x=>x.EntityKey==flameHelicopterTarget.EntityKey).HelicopterGunnerHealth==helicopterGunnerBefore,
+            "Land Mine blast selects one current Helicopter body box without merging gunner health");
+        float helicopterBeforeFriendlyMine=flameHelicopterMatch.ArmyHealth(flameHelicopterTarget.EntityKey)!.Value;
+        Check(flameHelicopterMatch.ApplyLandMineHelicopterBodyExplosion(helicopterOwner,
+                  helicopterMineOrigin,10)==1&&
+              Math.Abs(flameHelicopterMatch.ArmyHealth(flameHelicopterTarget.EntityKey)!.Value-
+                  (helicopterBeforeFriendlyMine-5))<.001f,
+            "allied Land Mine blast uses recovered half damage on Helicopter body");
+        Reject(()=>flameHelicopterMatch.ApplyLandMineHelicopterBodyExplosion(soldierOwner,
+            helicopterMineOrigin,float.NaN));
         var flameDecoyManifest=flameManifest with {MatchId="army-flame-decoy",
             SceneMasterPlayerId=soldierOwner,
             Players=flameManifest.Players.Select(p=>p with {PlayerLevel=22}).ToArray()};
