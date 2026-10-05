@@ -7,6 +7,7 @@ using War.Backend;
 using War.BattleServer;
 using War.Persistence;
 using War.Protocol;
+using War.Shared;
 
 internal static class BattleManifestSnapshotTests
 {
@@ -65,6 +66,11 @@ internal static class BattleManifestSnapshotTests
                 throw new Exception("Rejected terminal result changed queue ownership.");
             terminal.Players[1].PlayerId=players[1];
             (byte[] payload,string digest)=Evidence(terminal);
+            if(TerminalResultDigest.Compute(payload)!=digest)
+                throw new Exception("Shared terminal digest differs from the Worker's framed record.");
+            try {await resultStore.Accept(match,new string('f',64),payload,CancellationToken.None);
+                throw new Exception("Direct durable result acceptance trusted a false digest.");}
+            catch(InvalidDataException){}
             if(await resultStore.Accept(match,digest,payload,CancellationToken.None)!="accepted" ||
                (await queue.Existing(players[0],CancellationToken.None))?.MatchId!=match)
                 throw new Exception("Result storage unexpectedly released an unreconciled queue pair.");
@@ -75,6 +81,10 @@ internal static class BattleManifestSnapshotTests
                await queue.Existing(players[1],CancellationToken.None)!=null ||
                await acceptance.Accept(match,digest,payload,CancellationToken.None)!="already-accepted")
                 throw new Exception("Stored terminal result did not release the pair after Backend restart.");
+            if(await resultStore.ReconcileScored(match,digest,CancellationToken.None)!="scored" ||
+               await resultStore.ReconcileScored(match,digest,CancellationToken.None)!="already-scored" ||
+               (await resultStore.Get(match,CancellationToken.None))?.ScoredUtc==null)
+                throw new Exception("Validated terminal result did not retain its idempotent score marker.");
             if((await queue.Join(players[0],"mixed.fixture",DateTimeOffset.UtcNow,CancellationToken.None)).Code!="waiting")
                 throw new Exception("Released player could not queue again.");
             var rematch=await queue.Join(players[1],"mixed.fixture",DateTimeOffset.UtcNow,CancellationToken.None);
@@ -95,6 +105,15 @@ internal static class BattleManifestSnapshotTests
                 Builders<BattleResultDocument>.Update.Set(x=>x.Snapshot,new byte[]{1,2,3}));
             try {await resumedAcceptance.Accept(rematch.MatchId!,rematchDigest,rematchPayload,CancellationToken.None);
                 throw new Exception("Damaged persisted terminal payload released its pair.");}
+            catch(InvalidDataException){}
+            try {await resultStore.Get(rematch.MatchId!,CancellationToken.None);
+                throw new Exception("Damaged result was returned to a scoring reader.");}
+            catch(InvalidDataException){}
+            try {await resultStore.ReconcileScored(rematch.MatchId!,rematchDigest,CancellationToken.None);
+                throw new Exception("Damaged result was marked scored.");}
+            catch(InvalidDataException){}
+            try {await resultStore.Prune(DateTimeOffset.UtcNow.AddDays(31),TimeSpan.FromDays(30),CancellationToken.None);
+                throw new Exception("Archival removed a damaged result row.");}
             catch(InvalidDataException){}
             if((await queue.Existing(players[0],CancellationToken.None))?.MatchId!=rematch.MatchId)
                 throw new Exception("Rejected persisted terminal payload changed pair ownership.");

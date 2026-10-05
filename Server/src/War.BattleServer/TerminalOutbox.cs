@@ -168,11 +168,7 @@ public sealed class TerminalOutbox
            !Regex.IsMatch(matchId??"",@"\A[a-zA-Z0-9_-]{1,64}\z") ||
            !Regex.IsMatch(digest??"",@"\A[0-9a-f]{64}\z"))
             throw new InvalidDataException("Invalid terminal result envelope.");
-        var prefix=new byte[8+payload.Length];
-        Magic.CopyTo(prefix,0);
-        System.Buffers.Binary.BinaryPrimitives.WriteInt32LittleEndian(prefix.AsSpan(4,4),payload.Length);
-        payload.CopyTo(prefix,8);
-        if(Convert.ToHexStringLower(SHA256.HashData(prefix))!=digest)
+        if(War.Shared.TerminalResultDigest.Compute(payload)!=digest)
             throw new InvalidDataException("Terminal result digest mismatch.");
         MatchSnapshot snapshot;
         try {snapshot=MatchSnapshot.Parser.ParseFrom(payload);}

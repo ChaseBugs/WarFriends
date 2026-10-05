@@ -1,4 +1,5 @@
 using MongoDB.Driver;
+using War.Shared;
 
 namespace War.Persistence;
 
@@ -37,18 +38,26 @@ public sealed class BattleResultStore
         var checkedDigest = digest ?? throw new InvalidDataException("Missing battle result digest.");
         if (!System.Text.RegularExpressions.Regex.IsMatch(checkedMatchId, @"\A[a-zA-Z0-9_-]{1,64}\z") ||
             !System.Text.RegularExpressions.Regex.IsMatch(checkedDigest, @"\A[0-9a-f]{64}\z") ||
-            checkedSnapshot.Length is < 1 or > 65536)
+            checkedSnapshot.Length is < 1 or > TerminalResultDigest.MaximumPayloadBytes ||
+            TerminalResultDigest.Compute(checkedSnapshot)!=checkedDigest)
             throw new InvalidDataException("Invalid battle result envelope.");
         var prior = await results.Find(x => x.MatchId == checkedMatchId).FirstOrDefaultAsync(ct);
         if (prior != null)
-            return string.Equals(prior.Digest, checkedDigest, StringComparison.Ordinal) ? "already-accepted" : "conflict";
+        {
+            Validate(prior,checkedMatchId,DateTime.UtcNow);
+            return prior.Digest==checkedDigest && prior.Snapshot.AsSpan().SequenceEqual(checkedSnapshot)
+                ? "already-accepted" : "conflict";
+        }
         var doc = new BattleResultDocument { Id = Guid.NewGuid().ToString("N"), MatchId = checkedMatchId,
             Digest = checkedDigest, Snapshot = checkedSnapshot.ToArray(), AcceptedUtc = DateTime.UtcNow };
         try { await results.InsertOneAsync(doc, cancellationToken: ct); return "accepted"; }
         catch (MongoWriteException e) when (e.WriteError.Category == ServerErrorCategory.DuplicateKey)
         {
             prior = await results.Find(x => x.MatchId == checkedMatchId).FirstOrDefaultAsync(ct);
-            return prior != null && prior.Digest == checkedDigest ? "already-accepted" : "conflict";
+            if(prior==null)return "conflict";
+            Validate(prior,checkedMatchId,DateTime.UtcNow);
+            return prior.Digest==checkedDigest && prior.Snapshot.AsSpan().SequenceEqual(checkedSnapshot)
+                ? "already-accepted" : "conflict";
         }
     }
     public async Task<BattleResultDocument?> Get(string matchId, CancellationToken ct)
@@ -57,9 +66,7 @@ public sealed class BattleResultStore
             throw new InvalidDataException("Invalid battle result ID.");
         var result = await results.Find(x => x.MatchId == matchId).FirstOrDefaultAsync(ct);
         if (result == null) return null;
-        if (!System.Text.RegularExpressions.Regex.IsMatch(result.Digest ?? "", @"\A[0-9a-f]{64}\z") ||
-            result.Snapshot is not { Length: > 0 and <= 65536 })
-            throw new InvalidDataException("Invalid persisted battle result.");
+        Validate(result,matchId,DateTime.UtcNow);
         result.Snapshot = result.Snapshot.ToArray();
         return result;
     }
@@ -71,12 +78,7 @@ public sealed class BattleResultStore
         var candidates = await results.Find(Builders<BattleResultDocument>.Filter.Lt(x => x.AcceptedUtc, cutoff.UtcDateTime)).Limit(10001).ToListAsync(ct);
         if (candidates.Count > 10000) throw new InvalidDataException("Battle result archival batch exceeds capacity.");
         foreach (var row in candidates)
-        {
-            if (!System.Text.RegularExpressions.Regex.IsMatch(row.MatchId ?? "", @"\A[a-zA-Z0-9_-]{1,64}\z") ||
-                !System.Text.RegularExpressions.Regex.IsMatch(row.Digest ?? "", @"\A[0-9a-f]{64}\z") ||
-                row.AcceptedUtc > now.UtcDateTime || row.Snapshot is not { Length: > 0 and <= 65536 })
-                throw new InvalidDataException("Malformed battle result archival authority.");
-        }
+            Validate(row,row.MatchId,now.UtcDateTime);
         if (candidates.Count == 0) return 0;
         var ids = candidates.Select(x => x.Id).ToArray();
         var deleted = await results.DeleteManyAsync(Builders<BattleResultDocument>.Filter.In(x => x.Id, ids), ct);
@@ -94,5 +96,17 @@ public sealed class BattleResultStore
         var update = Builders<BattleResultDocument>.Update.Set(x => x.Scored, true).Set(x => x.ScoredUtc, DateTime.UtcNow);
         var result = await results.UpdateOneAsync(x => x.MatchId == matchId && x.Digest == digest && !x.Scored, update, cancellationToken: ct);
         return result.ModifiedCount == 1 ? "scored" : "already-scored";
+    }
+    private static void Validate(BattleResultDocument row,string? matchId,DateTime now)
+    {
+        if(row==null || !Guid.TryParseExact(row.Id,"N",out _) || row.Id!=row.Id.ToLowerInvariant() ||
+            row.MatchId!=matchId || !System.Text.RegularExpressions.Regex.IsMatch(row.MatchId??"",@"\A[a-zA-Z0-9_-]{1,64}\z") ||
+            !System.Text.RegularExpressions.Regex.IsMatch(row.Digest??"",@"\A[0-9a-f]{64}\z") ||
+            row.Snapshot is not {Length:>0 and <= TerminalResultDigest.MaximumPayloadBytes} ||
+            row.AcceptedUtc.Kind!=DateTimeKind.Utc || row.AcceptedUtc<DateTime.UnixEpoch || row.AcceptedUtc>now ||
+            (row.Scored ? row.ScoredUtc is not { } scored || scored.Kind!=DateTimeKind.Utc ||
+                scored<row.AcceptedUtc || scored>now : row.ScoredUtc!=null) ||
+            TerminalResultDigest.Compute(row.Snapshot)!=row.Digest)
+            throw new InvalidDataException("Invalid persisted battle result.");
     }
 }
