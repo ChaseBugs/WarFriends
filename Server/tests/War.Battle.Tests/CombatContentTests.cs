@@ -3041,6 +3041,45 @@ internal static class CombatContentTests
         Check(mineShieldAfter.Health<mineShieldBefore.Health&&
               mineShieldAfter.Revision>mineShieldBefore.Revision,
               "Land Mine blast mutates the nearby recovered shield through host explosion authority");
+        var snowMineMap=content.Maps.Single(m=>m.Source.EndsWith("Snow_Multiplayer.unity",StringComparison.Ordinal));
+        var snowVictimCover=snowMineMap.Covers.Single(c=>c.SourceIndex==2&&c.Fraction==1);
+        var snowBarrelCover=snowMineMap.Covers.Single(c=>c.SourceIndex==3&&c.Fraction==1);
+        var snowOwnerCover=snowMineMap.Covers.First(c=>c.Main&&c.Fraction==2);
+        var snowMineManifest=landMineManifest with {MatchId="snow-mine-barrel",MapId="Snow_Multiplayer",
+            MapRevision=snowMineMap.SourceHash,Players=[
+                landMineManifest.Players[0] with {StartCover=snowVictimCover.SourceIndex},
+                landMineManifest.Players[1] with {StartCover=snowOwnerCover.SourceIndex}]};
+        var snowMineMatch=new MatchEngine(snowMineManifest,content:content,armyChoice:_=>0);
+        snowMineMatch.Admit(decoyPlayer);snowMineMatch.Admit(decoyOpponent);
+        snowMineMatch.Command(decoyPlayer,new(){CommandId=1,Ready=new(){ManifestHash=snowMineMatch.ManifestHash}});
+        snowMineMatch.Command(decoyOpponent,new(){CommandId=1,Ready=new(){ManifestHash=snowMineMatch.ManifestHash}});
+        snowMineMatch.Advance(60);
+        Check(snowMineMatch.Command(decoyPlayer,new(){CommandId=2,MoveCover=new(){Direction=1}}).Code=="moving",
+            "Snow player takes source cover path toward barrel contact");
+        for(ulong snowTick=61;snowTick<=180;snowTick++)snowMineMatch.Advance(snowTick);
+        var snowBarrelBefore=snowMineMatch.BarrelState.Single(b=>b.ColliderIndex==182);
+        var snowBarrelCollider=snowMineMap.DynamicColliders.Single(c=>c.ColliderIndex==182);
+        var snowVictim=snowMineMatch.Snapshot().Players.Single(p=>p.PlayerId==decoyPlayer);
+        var snowVictimPosition=new Vector3(snowVictim.PositionX,snowVictim.PositionY,snowVictim.PositionZ);
+        Check(Vector3.Distance(snowVictimPosition,snowBarrelCover.Position)<.25f,
+            "Snow player reaches the source cover adjacent to the barrel");
+        var towardBarrel=Vector3.Normalize(snowBarrelCollider.TransformPosition-snowVictimPosition);
+        var snowMinePosition=snowVictimPosition+towardBarrel*.15f;
+        ulong snowMineEventCursor=snowMineMatch.EventBatch(decoyOpponent,0).LatestEventId;
+        Check(snowMineMatch.TryRegisterLandMine(new string('3',32),decoyOpponent,snowMinePosition,10),
+            "host-only Snow Land Mine seed binds source scene barrel contact");
+        ulong snowMineId=snowMineMatch.Snapshot().LandMines.Single().EntityId;
+        snowMineMatch.Advance(181);
+        var snowBarrelAfter=snowMineMatch.BarrelState.Single(b=>b.ColliderIndex==182);
+        var firstMineEvents=snowMineMatch.EventBatch(decoyOpponent,snowMineEventCursor);
+        var nextMineEvents=snowMineMatch.EventBatch(decoyOpponent,firstMineEvents.Events.Last().EventId);
+        Check(Math.Abs(snowBarrelAfter.Health-(snowBarrelBefore.Health-10))<.001f&&
+              snowBarrelAfter.Revision>snowBarrelBefore.Revision&&
+              snowMineMatch.Snapshot().LandMines.Count==0&&
+              nextMineEvents.Events.Any(e=>
+                  e.Kind==MatchEventKind.BarrelDamaged&&e.ProjectileId==snowMineId&&
+                  e.BarrelColliderIndex==182),
+              "player-triggered Land Mine damages a live Snow barrel through ordered chain authority");
         var heavyTurretManifest=decoyManifest with {MatchId="heavy-turret-match",SceneMasterPlayerId=decoyPlayer,
             Players=decoyManifest.Players.Select(p=>p with {ShieldLevel=0}).ToArray()};
         var deployedDroneManifest=armyManifest with {MatchId="deployed-drone-special",Players=[
