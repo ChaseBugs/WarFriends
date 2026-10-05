@@ -54,23 +54,36 @@ public sealed class BattleMatchQueueStore
         Validate(playerId,compatibilityKey,now);
         var existingPair=await PairFor(playerId,ct);
         if(existingPair!=null)return Result("paired",existingPair);
-        var ticket=new BattleQueueTicketDocument{Id=Guid.NewGuid().ToString("N"),PlayerId=playerId,
-            CompatibilityKey=compatibilityKey,JoinedUtc=now.UtcDateTime,ExpiresUtc=now.AddSeconds(120).UtcDateTime};
-        string activeTicketId=ticket.Id;
-        try {await tickets.InsertOneAsync(ticket,cancellationToken:ct);}
-        catch(MongoWriteException e) when(e.WriteError.Category==ServerErrorCategory.DuplicateKey)
+        string? activeTicketId=null;
+        for(int admission=0;admission<16 && activeTicketId==null;admission++)
         {
-            var prior=await tickets.Find(x=>x.PlayerId==playerId).FirstOrDefaultAsync(ct);
-            if(prior==null)throw;
-            ValidateTicket(prior);
-            if(prior.CompatibilityKey!=compatibilityKey)throw new InvalidDataException("Player already has a different matchmaking ticket.");
-            if(prior.ExpiresUtc<=now.UtcDateTime)
+            var ticket=new BattleQueueTicketDocument{Id=Guid.NewGuid().ToString("N"),PlayerId=playerId,
+                CompatibilityKey=compatibilityKey,JoinedUtc=now.UtcDateTime,ExpiresUtc=now.AddSeconds(120).UtcDateTime};
+            try
             {
-                await tickets.DeleteOneAsync(x=>x.Id==prior.Id && x.ExpiresUtc==prior.ExpiresUtc,ct);
-                return await Join(playerId,compatibilityKey,now,ct);
+                await tickets.InsertOneAsync(ticket,cancellationToken:ct);
+                activeTicketId=ticket.Id;
             }
-            activeTicketId=prior.Id;
+            catch(MongoWriteException e) when(e.WriteError.Category==ServerErrorCategory.DuplicateKey)
+            {
+                var prior=await tickets.Find(x=>x.PlayerId==playerId).FirstOrDefaultAsync(ct);
+                if(prior==null)
+                {
+                    existingPair=await PairFor(playerId,ct);
+                    if(existingPair!=null)return Result("paired",existingPair);
+                    continue;
+                }
+                ValidateTicket(prior);
+                if(prior.ExpiresUtc<=now.UtcDateTime)
+                {
+                    await tickets.DeleteOneAsync(x=>x.Id==prior.Id && x.ExpiresUtc==prior.ExpiresUtc,ct);
+                    continue;
+                }
+                if(prior.CompatibilityKey!=compatibilityKey)throw new InvalidDataException("Player already has a different matchmaking ticket.");
+                activeTicketId=prior.Id;
+            }
         }
+        if(activeTicketId==null)throw new InvalidDataException("Matchmaking ticket admission changed repeatedly; retry the request.");
         for(int attempt=0;attempt<16;attempt++)
         {
             using var session=await client.StartSessionAsync(cancellationToken:ct);
@@ -79,7 +92,11 @@ public sealed class BattleMatchQueueStore
                 var result=await session.WithTransactionAsync(async (s,token)=>
                 {
                     var ownPair=await PairFor(s,playerId,token);
-                    if(ownPair!=null)return Result("paired",ownPair);
+                    if(ownPair!=null)
+                    {
+                        await tickets.DeleteOneAsync(s,x=>x.Id==activeTicketId,null,token);
+                        return Result("paired",ownPair);
+                    }
                     var candidate=await tickets.Find(s,x=>x.CompatibilityKey==compatibilityKey && x.PlayerId!=playerId &&
                         x.JoinedUtc<=now.UtcDateTime && x.ExpiresUtc>now.UtcDateTime)
                         .SortBy(x=>x.JoinedUtc).ThenBy(x=>x.PlayerId).FirstOrDefaultAsync(token);

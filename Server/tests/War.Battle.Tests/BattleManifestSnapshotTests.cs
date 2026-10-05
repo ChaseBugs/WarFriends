@@ -132,7 +132,25 @@ internal static class BattleManifestSnapshotTests
                    cancel.Result is not ("cancelled" or "already-paired"))
                     throw new Exception("Concurrent cancellation and pairing did not commit one ownership outcome.");
             }
-            Console.WriteLine("PASS: Mongo paired snapshot survives restart; proven terminal releases players for a distinct rematch");
+            var expiryNow=DateTimeOffset.FromUnixTimeMilliseconds(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
+            string expiring=(3000).ToString("x32"),waiting=(3001).ToString("x32");
+            if((await queue.Join(expiring,"expiry.fixture",expiryNow.AddSeconds(-120),CancellationToken.None)).Code!="waiting" ||
+               (await otherQueue.Join(waiting,"expiry.fixture",expiryNow,CancellationToken.None)).Code!="waiting")
+                throw new Exception("Half-open expiry admitted a stale queue ticket.");
+            var renewed=await queue.Join(expiring,"expiry.fixture",expiryNow,CancellationToken.None);
+            var retry=await otherQueue.Join(waiting,"expiry.fixture",expiryNow,CancellationToken.None);
+            if(renewed.Code!="paired" || retry.MatchId!=renewed.MatchId ||
+               (await queue.Existing(expiring,CancellationToken.None))?.MatchId!=renewed.MatchId)
+                throw new Exception("Expired ticket renewal or paired retry lost durable match authority.");
+            string changing=(3002).ToString("x32");
+            await queue.Join(changing,"policy-old.fixture",expiryNow.AddSeconds(-120),CancellationToken.None);
+            if((await queue.Join(changing,"policy-new.fixture",expiryNow,CancellationToken.None)).Code!="waiting" ||
+               (await ticketRows.Find(x=>x.PlayerId==changing).FirstAsync()).CompatibilityKey!="policy-new.fixture")
+                throw new Exception("Expired ticket retained an obsolete server compatibility key.");
+            try {await queue.Join(changing,"policy-third.fixture",expiryNow,CancellationToken.None);
+                throw new Exception("Active queue ticket accepted a different server compatibility key.");}
+            catch(InvalidDataException){}
+            Console.WriteLine("PASS: Mongo pair/retry/expiry/cancellation authority survives concurrent stores and restart");
         }
         finally {await mongo.DropDatabaseAsync(database);}
     }
