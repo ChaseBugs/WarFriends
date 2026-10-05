@@ -266,6 +266,8 @@ public sealed class TerminalOutbox
            snapshot.RewardEligible || snapshot.TerminalReason.Length is <1 or >64 ||
            snapshot.ServerTick>10000000 || snapshot.EndTick!=snapshot.ServerTick ||
            snapshot.StartTick>10000000 ||
+           snapshot.PerformanceDurationTicks > (snapshot.StartTick!=0 &&
+               snapshot.EndTick>=snapshot.StartTick ? snapshot.EndTick-snapshot.StartTick : 0) ||
            (snapshot.Phase==BattlePhase.Ended && (!completedReason || snapshot.WinnerPlayerId.Length==0)) ||
            (snapshot.Phase==BattlePhase.Aborted && (!abortedReason || snapshot.WinnerPlayerId.Length!=0)) ||
            snapshot.Players.Count!=2 || snapshot.Players[0].PlayerId==snapshot.Players[1].PlayerId ||

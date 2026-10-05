@@ -87,6 +87,8 @@ Scoring and archival now write only against the exact validated Mongo result row
 
 `TerminalOutbox.ValidatePayload` now reconstructs the same bounded `CompleteBattleEvidence` from the terminal protobuf that `MatchEngine.BuildCompleteBattleEvidence()` produces: conserved aggregate hit/kill and army-spawn/loss counts, performance duration, unique ribbons, and bounded card/objective credits. It applies that validation on Worker publication/recovery and Backend acceptance, before a malformed snapshot can become a durable result. The replica-set test rejects excessive card activations, duplicate ribbons, and oversized duration without inserting a result or releasing its pair. The full 113,904-assertion Battle executable and live Backend/Worker terminal smoke pass; source-complete statistics and economy settlement remain open.
 
+Terminal acceptance also bounds reported performance duration by the actual scheduled-start-to-terminal tick interval (or zero before a match starts). A host can jump over countdown ticks, so this is an upper bound rather than an equality assertion. The replica-set test now rejects an invented one-tick duration on a prestart abort before insertion or pair release; exact running-start provenance remains a B24/B26 gap.
+
 1. Continue B07-B09 with the next recovered weapon projectile family and its normal Unity presentation. Keep results unscored until authority and Client presentation are complete.
 2. Expand weapon variants and world/entity destruction (B09-B12), then army/AI/vehicles/cards/objectives (B13-B19).
 3. Complete mode rules, statistics and durable result/control contracts (B20-B26), with Backend integration limited to those boundaries.

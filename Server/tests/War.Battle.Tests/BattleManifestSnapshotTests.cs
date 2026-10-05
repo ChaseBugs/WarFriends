@@ -68,7 +68,8 @@ internal static class BattleManifestSnapshotTests
             foreach(var invalid in new[]{
                 new Action<MatchSnapshot>(x=>x.CardActivations=4097),
                 new Action<MatchSnapshot>(x=>{x.RibbonIds.Add("R1");x.RibbonIds.Add("R1");}),
-                new Action<MatchSnapshot>(x=>x.PerformanceDurationTicks=10_000_001)})
+                new Action<MatchSnapshot>(x=>x.PerformanceDurationTicks=10_000_001),
+                new Action<MatchSnapshot>(x=>x.PerformanceDurationTicks=1)})
             {
                 var forged=terminal.Clone();invalid(forged);
                 (byte[] forgedPayload,string forgedDigest)=Evidence(forged);
