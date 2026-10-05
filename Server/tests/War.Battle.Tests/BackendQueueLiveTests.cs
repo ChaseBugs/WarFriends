@@ -144,11 +144,35 @@ internal static class BackendQueueLiveTests
                 await Task.Delay(100,deadline.Token);
                 if(attempt==99)throw new Exception("Worker terminal result did not release the durable pair.");
             }
+            try {await left.MatchGrantAsync(grants[0].MatchId,tokens[0],deadline.Token);
+                throw new Exception("Terminal match still delivered a stale player grant.");}
+            catch(HttpRequestException e) when(e.Message.Contains("Backend status 404",StringComparison.Ordinal)){}
             var waiting=await left.JoinMatchQueueAsync(tokens[0],deadline.Token);
             var rematch=await right.JoinMatchQueueAsync(tokens[1],deadline.Token);
             if(waiting.Code!="waiting"||rematch.Code!="paired"||rematch.MatchId==grants[0].MatchId)
                 throw new Exception("Live clients could not form a distinct rematch.");
-            Console.WriteLine("PASS: deferred pair survived Backend restart, issued replay-stable grants, completed live Worker UDP, and rematched");
+            if((await left.MatchGrantAsync(rematch.MatchId,tokens[0],deadline.Token)).MatchId!=rematch.MatchId)
+                throw new Exception("Active rematch grant was not available to its owner.");
+            Stop(worker);
+            worker=Start(workerDll,run,"WorkerRestart",workerEnvironment);
+            await Ready($"http://127.0.0.1:{controlPort}/health/ready",worker);
+            for(int attempt=0;attempt<100;attempt++)
+            {
+                if(await results.Get(rematch.MatchId,deadline.Token)!=null &&
+                   await queue.Existing(ids[0],deadline.Token)==null &&
+                   await queue.Existing(ids[1],deadline.Token)==null)break;
+                await Task.Delay(100,deadline.Token);
+                if(attempt==99)throw new Exception("Worker crash did not release its durable paired roster.");
+            }
+            try {await left.MatchGrantAsync(rematch.MatchId,tokens[0],deadline.Token);
+                throw new Exception("Host-crash match still delivered a stale player grant.");}
+            catch(HttpRequestException e) when(e.Message.Contains("Backend status 404",StringComparison.Ordinal)){}
+            var afterCrashWait=await left.JoinMatchQueueAsync(tokens[0],deadline.Token);
+            var afterCrashPair=await right.JoinMatchQueueAsync(tokens[1],deadline.Token);
+            if(afterCrashWait.Code!="waiting" || afterCrashPair.Code!="paired" ||
+               afterCrashPair.MatchId==rematch.MatchId)
+                throw new Exception("Players could not requeue after Worker crash settlement.");
+            Console.WriteLine("PASS: deferred pair, stable grants, terminal revocation, Worker crash recovery and rematch");
         }
         finally
         {

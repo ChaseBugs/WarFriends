@@ -77,6 +77,8 @@ The two-process queue-live smoke now starts the Backend with the Worker delibera
 
 The portable `BackendClient.FindMatchAsync` now treats only the protobuf `match_provision_deferred` 503 as a bounded polling retry; `matchmaking_disabled` and other errors still fail immediately. Its focused fake-transport test covers waiting, deferred provisioning, paired grant delivery, and the distinct disabled response. The full Windows Battle executable passes 113,905 assertions after this change. Normal Unity scene and Android behavior remain separate verification gates.
 
+The authenticated `/v1/battle/grant` route now requires the exact active durable pair and validates that the persisted grant views match its ordered roster; a retained pre-expiry grant row is no longer delivered after terminal pair release. The queue-live smoke proves both normal terminal revocation and force-killed Worker recovery: an allocated rematch is journaled, the Worker is killed and restarted with the same outbox, its `host-crash` result is accepted, both pair reservations are released, the old grant route returns 404, and both clients form a distinct match. This covers the local single-node replica set and separate processes, not production failover, Android, or a full normal Unity match.
+
 1. Continue B07-B09 with the next recovered weapon projectile family and its normal Unity presentation. Keep results unscored until authority and Client presentation are complete.
 2. Expand weapon variants and world/entity destruction (B09-B12), then army/AI/vehicles/cards/objectives (B13-B19).
 3. Complete mode rules, statistics and durable result/control contracts (B20-B26), with Backend integration limited to those boundaries.

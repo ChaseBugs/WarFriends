@@ -176,13 +176,22 @@ api.MapPost("/network/connect", async (HttpContext ctx, AccountStore store, Batt
     var claims = new TicketClaims { PlayerId = player.PlayerId, ServerId = serverId, SessionId = sessionId, IssuedUnixSeconds = now, ExpiresUnixSeconds = now + BattleTickets.LifetimeSeconds, Purpose = "connectivity-probe" };
     return Proto(new ConnectionGrant { Host = publicHost, Port = (uint)battlePort, Ticket = tickets.Sign(claims), SessionKey = ByteString.CopyFrom(tickets.SessionKey(sessionId)), SessionId = sessionId, ExpiresUnixSeconds = claims.ExpiresUnixSeconds });
 });
-api.MapPost("/battle/grant", async (HttpContext ctx, AccountStore accounts, LegacyPlayerStore legacy, BattleGrantStore grants) =>
+api.MapPost("/battle/grant", async (HttpContext ctx, AccountStore accounts, LegacyPlayerStore legacy,
+    BattleGrantStore grants, BattleMatchQueueStore queue) =>
 {
     string? playerId = await BattlePlayerId(ctx, accounts, legacy);
     if (playerId == null) return Error(401, "unauthorized", "Authentication required.");
     var request = await Read(ctx, MatchGrantRequest.Parser);
     MatchConnectionGrant? grant;
-    try { grant = await grants.GetForPlayer(request.MatchId, playerId, DateTimeOffset.UtcNow.ToUnixTimeSeconds(), ctx.RequestAborted); }
+    try
+    {
+        var pair=await queue.ForMatch(request.MatchId,ctx.RequestAborted);
+        if(pair?.Players==null || !pair.Players.Contains(playerId,StringComparer.Ordinal))
+            return Error(404,"match_grant_missing","No active match grant is assigned to this player.");
+        grant=await grants.GetForPlayer(request.MatchId,playerId,DateTimeOffset.UtcNow.ToUnixTimeSeconds(),ctx.RequestAborted);
+        if(grant!=null && !grant.PlayerViews.Select(x=>x.PlayerId).SequenceEqual(pair.Players,StringComparer.Ordinal))
+            throw new InvalidDataException("Battle grant roster differs from the active pair.");
+    }
     catch (InvalidDataException) { return Error(400, "invalid_match_grant", "Match grant is invalid or expired."); }
     return grant == null ? Error(404, "match_grant_missing", "No match grant is assigned to this player.") : Proto(grant);
 });
