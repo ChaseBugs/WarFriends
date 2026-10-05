@@ -334,7 +334,7 @@ public sealed class TerminalOutbox
     private static bool ValidTerminalPlayer(BattlePlayerState p,ulong serverTick)
     {
         if(p.Ready && !p.Admitted || p.Reconnecting || p.ReconnectDeadlineHostTick!=0 ||
-            p.ClipAmmo<0 || p.ReserveAmmo<0 || p.CoverIndex is <-1 or >1000 ||
+            p.ShotsFired>int.MaxValue || p.ClipAmmo<0 || p.ReserveAmmo<0 || p.CoverIndex is <-1 or >1000 ||
            !float.IsFinite(p.PositionX) || !float.IsFinite(p.PositionY) || !float.IsFinite(p.PositionZ) ||
            p.LastCommandId>100000 || p.ConfirmedPlayerKills>p.ConfirmedPlayerHits ||
            !ValidArmyUsage(p) ||
