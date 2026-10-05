@@ -28,10 +28,12 @@ internal static class LiveSmgTests
         var lmg=content.Lmgs!.CreateManifest("Google2u.LMG_M249",0);
         var minigun=content.Minigun!.CreateManifest(0);
         var sniper=content.Snipers!.CreateManifest("Google2u.SniperRifle_M24",0);
+        var shotgun=content.Shotguns!.CreateManifest("Google2u.Shotgun_SPAS",0);
         ParticipantManifest Player(string id,int fraction,CoverNode cover)=>new(id,rifle,fraction,cover.SourceIndex,1,new(1000),0)
         {WeaponSlots=[new WeaponSlotManifest(0,11,rifle,0),new WeaponSlotManifest(1,18,cpw,0),
             new WeaponSlotManifest(2,35,p90,0),new WeaponSlotManifest(3,0,pistol,0),new WeaponSlotManifest(4,16,lmg,0),
-            new WeaponSlotManifest(5,25,minigun,0),new WeaponSlotManifest(6,2,sniper,0)]};
+            new WeaponSlotManifest(5,25,minigun,0),new WeaponSlotManifest(6,2,sniper,0),
+            new WeaponSlotManifest(7,4,shotgun,0)]};
         var manifest=new MatchManifest("smg-unity","local-1",Path.GetFileNameWithoutExtension(map.Source),map.SourceHash,
             content.MixedRevision!,MatchManifest.MixedCombatMode,120,60,120,
             [Player(ids[0],1,covers[0]),Player(ids[1],2,covers[1])]);
@@ -51,7 +53,8 @@ internal static class LiveSmgTests
             view.Weapons.Add(new BattleWeaponView{Slot=3,WeaponIndex=0,SourceId="Google2u.Pistol_DesertEagle",UpgradeIndex=0});
             view.Weapons.Add(new BattleWeaponView{Slot=4,WeaponIndex=16,SourceId="Google2u.LMG_M249",UpgradeIndex=0});
             view.Weapons.Add(new BattleWeaponView{Slot=5,WeaponIndex=25,SourceId="Google2u.LMG_Minigun",UpgradeIndex=0});
-            view.Weapons.Add(new BattleWeaponView{Slot=6,WeaponIndex=2,SourceId="Google2u.SniperRifle_M24",UpgradeIndex=0});return view;
+            view.Weapons.Add(new BattleWeaponView{Slot=6,WeaponIndex=2,SourceId="Google2u.SniperRifle_M24",UpgradeIndex=0});
+            view.Weapons.Add(new BattleWeaponView{Slot=7,WeaponIndex=4,SourceId="Google2u.Shotgun_SPAS",UpgradeIndex=0});return view;
         }
         MatchConnectionGrant Grant(string id,ulong session)
         {

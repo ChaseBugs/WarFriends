@@ -148,7 +148,34 @@ public static class SelfHostedLiveSmgAudit
                 if(sniper.SniperAiming||sniper.SniperScopeVisible||sniper.ShotsFired!=beforeSniper+1||sniper.ClipAmmo!=sniperClip-1||
                    lp.weaponInventory.currentWeapon.weapon.ammoLeftInClip!=sniper.ClipAmmo)
                     throw new InvalidOperationException("Recovered sniper release/ammunition was not projected from host authority.");
-                Debug.Log("UNITY_LIVE_SMG_PASSED crossClass=True cpwBurst=3 pistolPose=True p90Run=True pistolShot=True lmgBurst=2 minigunHold=True sniperRelease=True ammo="+sniper.ClipAmmo);
+                await adapter.SwitchWeapon(7);
+                var shotgun=adapter.State.Players.Single(p=>p.PlayerId==local.PlayerId);
+                if(shotgun.ActiveWeaponSlot!=7||lp.weaponInventory.weaponIndex!=7||
+                   !(lp.weaponInventory.currentWeapon.weapon.bulletPrefab is BulletShotGun))
+                    throw new InvalidOperationException("Authoritative SPAS selection did not reach the recovered inventory.");
+                ulong beforeShotgun=shotgun.ShotsFired;int shotgunClip=shotgun.ClipAmmo;
+                bool pelletSnapshot=false,pelletVisual=false;
+                await adapter.Fire(Head(rp));
+                for(int i=0;i<55;i++)
+                {
+                    await Task.Delay(30,ct.Token);await adapter.Refresh();
+                    shotgun=adapter.State.Players.Single(p=>p.PlayerId==local.PlayerId);
+                    foreach(var pellet in adapter.State.Projectiles.Where(p=>
+                        p.OwnerPlayerId==local.PlayerId&&p.Kind.StartsWith("shotgun-")))
+                    {
+                        if(pellet.WeaponSourceId!="Google2u.Shotgun_SPAS")
+                            throw new InvalidOperationException("Shotgun pellet lost its source identity.");
+                        pelletSnapshot=true;
+                        if(GameObject.Find("SelfHostedProjectile_"+pellet.ProjectileId)!=null)
+                            pelletVisual=true;
+                    }
+                    if(shotgun.ShotsFired>beforeShotgun&&pelletVisual)break;
+                }
+                if(shotgun.ShotsFired!=beforeShotgun+1||shotgun.ClipAmmo!=shotgunClip-1||
+                   lp.weaponInventory.currentWeapon.weapon.ammoLeftInClip!=shotgun.ClipAmmo||
+                   !pelletSnapshot||!pelletVisual)
+                    throw new InvalidOperationException("Recovered SPAS shot, ammo or pellet visual was not projected from host authority.");
+                Debug.Log("UNITY_LIVE_SMG_PASSED crossClass=True cpwBurst=3 pistolPose=True p90Run=True pistolShot=True lmgBurst=2 minigunHold=True sniperRelease=True shotgun=True ammo="+shotgun.ClipAmmo);
             }
         }
         finally
