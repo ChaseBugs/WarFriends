@@ -46,7 +46,6 @@ public sealed class BattleAllocationStore
             .Set(x => x.NormalUpgradeIndexes, document.NormalUpgradeIndexes)
             .Set(x => x.SpecialUpgradeIndexes, document.SpecialUpgradeIndexes)
             .Set(x => x.EliteUpgradeIndexes, document.EliteUpgradeIndexes)
-            .SetOnInsert(x => x.Revision, 0L)
             .Inc(x => x.Revision, 1L);
         await allocations.UpdateOneAsync(x => x.PlayerId == value.PlayerId, update,
             new UpdateOptions { IsUpsert = true }, ct);

@@ -17,6 +17,9 @@ using War.Protocol.Transport;
 using War.Shared;
 using War.Persistence;
 
+if(args is ["--queue-live",var queueMongoUri])
+{await BackendQueueLiveTests.Run(queueMongoUri);return;}
+
 if(args is ["--manifest-snapshot-only",var snapshotMongoUri])
 {await BattleManifestSnapshotTests.Run(snapshotMongoUri);return;}
 
