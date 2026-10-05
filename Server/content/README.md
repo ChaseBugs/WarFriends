@@ -7,6 +7,7 @@ dotnet run --project Server/tests/War.Battle.Tests/War.Battle.Tests.csproj -c Re
 ```
 
 The generator validates the manifest and recovered combat allocation before writing. Backend matchmaking replaces only match/player identities and trusted Mongo allocation projections; the Worker validates the resulting complete manifest again.
+For this rifle-only template, every durable equipped slot must be one of the eleven recovered assault rifles with its exact MainScene inventory index and upgrade stage. Queue admission rejects mixed or wrongly indexed loadouts before forming a pair; use the mixed template for ordinary mixed equipment.
 
 `recovered-player-poses.json` contains initialized single-clip samples for the gameplay player: 32 clips, 490 frames and 2,940 Unity collider-ray comparisons across all four recovered assault-rifle cover/run animation families. Clip assets retain their own source hashes and original names. See [player poses](../docs/PLAYER_POSES.md) for sampling and animation-blending boundaries.
 

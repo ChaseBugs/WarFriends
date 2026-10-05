@@ -85,7 +85,7 @@ if(args is ["--allocator-shotgun-only"])
     var mixedView=BattlePlayerPresentation.Validate(new BattlePlayerPresentation(new string('a',32),"Alpha",1,100,10,5,1,"1-local","US",false,
         new[]{"CAMO_DEFAULT","HELMET_DEFAULT","HEAD_DEFAULT","BANDS_DEFAULT"},
         new[]{new BattleWeaponPresentation(0,4,"Google2u.Shotgun_SPAS",0),
-              new BattleWeaponPresentation(1,1,"Google2u.AssaultRifle_Famas",0)},
+              new BattleWeaponPresentation(1,26,"Google2u.AssaultRifle_Famas",0)},
         Array.Empty<BattleUnitPresentation>()));
     string before=participant.ToJsonString();
     try { shotgun.Bind(participant,mixedView); throw new Exception("Mixed loadout was admitted."); }
@@ -497,7 +497,7 @@ Reject(()=>BattlePlayerPresentation.Validate(new BattlePlayerPresentation(a,"Alp
     new[]{"only-one"},new[]{new BattleWeaponPresentation(0,0,"Google2u.AssaultRifle_AK47",0)},Array.Empty<BattleUnitPresentation>())),
     "player presentation rejects incomplete visuals");
 Reject(()=>BattlePlayerPresentation.Validate(new BattlePlayerPresentation(a,"Alpha",1,100,10,5,1,"1-local","US",false,
-    new[]{"v0","v1","v2","v3"},new[]{new BattleWeaponPresentation(2,1,"Google2u.AssaultRifle_Famas",0),
+    new[]{"v0","v1","v2","v3"},new[]{new BattleWeaponPresentation(2,26,"Google2u.AssaultRifle_Famas",0),
         new BattleWeaponPresentation(0,0,"Google2u.AssaultRifle_AK47",0)},Array.Empty<BattleUnitPresentation>())),
     "player presentation rejects noncanonical weapon slot order");
 Reject(()=>MatchManifest.Validate(manifestWithAllocation with {Presentations=new[]{Presentation(a,"Alpha"),Presentation(a,"Duplicate")} }),
@@ -1701,13 +1701,29 @@ allocatorRifles.ValidateTemplate(allocatorTemplate);
 var allocatorParticipant=allocatorTemplate["Players"]![0]!.AsObject();
 var famasView=BattlePlayerPresentation.Validate(new BattlePlayerPresentation(a,"Alpha",1,100,10,5,1,"1-local","US",false,
     new[]{"CAMO_DEFAULT","HELMET_DEFAULT","HEAD_DEFAULT","BANDS_DEFAULT"},
-    new[]{new BattleWeaponPresentation(0,1,"Google2u.AssaultRifle_Famas",55)},
+    new[]{new BattleWeaponPresentation(0,26,"Google2u.AssaultRifle_Famas",55)},
     new[]{new BattleUnitPresentation("Google2u.DBUpgradeSlotsRifleman",0,-1,-1,0)}));
 allocatorRifles.Bind(allocatorParticipant,famasView);
 var allocatedWeapon=JsonSerializer.Deserialize<WeaponManifest>(allocatorParticipant["Weapon"]!.ToJsonString())!;
 Check(allocatedWeapon==workerRifles.Stats.CreateManifest("Google2u.AssaultRifle_Famas",55) &&
       allocatorParticipant["WeaponUpgrade"]!.GetValue<int>()==55,
       "backend allocator and Worker derive the same durable equipped rifle stage");
+string rifleBefore=allocatorParticipant.ToJsonString();
+var mixedRifleView=BattlePlayerPresentation.Validate(new BattlePlayerPresentation(a,"Alpha",1,100,10,5,1,"1-local","US",false,
+    new[]{"CAMO_DEFAULT","HELMET_DEFAULT","HEAD_DEFAULT","BANDS_DEFAULT"},
+    new[]{new BattleWeaponPresentation(0,26,"Google2u.AssaultRifle_Famas",55),
+          new BattleWeaponPresentation(1,4,"Google2u.Shotgun_SPAS",0)},Array.Empty<BattleUnitPresentation>()));
+Reject(()=>allocatorRifles.Bind(allocatorParticipant,mixedRifleView),
+    "rifle-only allocator rejects unsupported secondary equipped slots");
+Check(allocatorParticipant.ToJsonString()==rifleBefore,
+    "rejected rifle loadout leaves participant manifest unchanged");
+var wrongRifleIndex=BattlePlayerPresentation.Validate(new BattlePlayerPresentation(a,"Alpha",1,100,10,5,1,"1-local","US",false,
+    new[]{"CAMO_DEFAULT","HELMET_DEFAULT","HEAD_DEFAULT","BANDS_DEFAULT"},
+    new[]{new BattleWeaponPresentation(0,11,"Google2u.AssaultRifle_Famas",55)},Array.Empty<BattleUnitPresentation>()));
+Reject(()=>allocatorRifles.Bind(allocatorParticipant,wrongRifleIndex),
+    "rifle allocator rejects an inventory index different from the recovered scene binding");
+Check(allocatorParticipant.ToJsonString()==rifleBefore,
+    "wrong rifle inventory index leaves participant manifest unchanged");
 Reject(()=>allocatorRifles.Bind(allocatorParticipant,BattlePlayerPresentation.Validate(new BattlePlayerPresentation(a,"Alpha",1,100,10,5,1,"1-local","US",false,
     new[]{"CAMO_DEFAULT","HELMET_DEFAULT","HEAD_DEFAULT","BANDS_DEFAULT"},
     new[]{new BattleWeaponPresentation(0,1,"Google2u.Shotgun_SPAS",0)},Array.Empty<BattleUnitPresentation>()))),
@@ -1763,7 +1779,7 @@ Reject(()=>allocatorShotguns.Bind(shotgunTemplate["Players"]![0]!.AsObject(),
     BattlePlayerPresentation.Validate(new BattlePlayerPresentation(a,"Alpha",1,100,10,5,1,"1-local","US",false,
         new[]{"CAMO_DEFAULT","HELMET_DEFAULT","HEAD_DEFAULT","BANDS_DEFAULT"},
         new[]{new BattleWeaponPresentation(0,4,"Google2u.Shotgun_SPAS",0),
-              new BattleWeaponPresentation(1,1,"Google2u.AssaultRifle_Famas",0)},
+              new BattleWeaponPresentation(1,26,"Google2u.AssaultRifle_Famas",0)},
         Array.Empty<BattleUnitPresentation>()))),
     "shotgun-only allocator refuses mixed Client slots it cannot simulate");
 Reject(()=>allocatorShotguns.Bind(shotgunTemplate["Players"]![0]!.AsObject(),

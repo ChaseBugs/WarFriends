@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
+using War.BattleServer;
 using War.Shared;
 
 namespace War.Backend;
@@ -24,13 +25,14 @@ public sealed class BattleRifleManifestCatalog : IBattleWeaponManifestCatalog
         string ArmyNavMeshSourcesRevision,string ArmyNavMeshTriangulationRevision,string ArmyNavMeshPathsRevision,string AirWaypointRoutesRevision,string DroneWeaponRevision,string AirGeometryRevision,string HelicopterCrewPointsRevision,string DroneProjectileRevision,string EnemyShotTargetsRevision);
     private sealed record Stage(string SourceId,int UpgradeIndex,int ClipSize,int ReserveAmmo,double CadenceSeconds,double ReloadSeconds);
     private readonly IReadOnlyDictionary<string,Stage[]> stages;
+    private readonly WeaponBindingGraphCatalog bindings;
     public string PackageRevision { get; }
     public string SceneRevision { get; }
     public string StatsRevision { get; }
 
-    private BattleRifleManifestCatalog(Dictionary<string,Stage[]> stages,string packageRevision,
+    private BattleRifleManifestCatalog(Dictionary<string,Stage[]> stages,WeaponBindingGraphCatalog bindings,string packageRevision,
         string sceneRevision,string statsRevision)
-    {this.stages=stages;PackageRevision=packageRevision;SceneRevision=sceneRevision;StatsRevision=statsRevision;}
+    {this.stages=stages;this.bindings=bindings;PackageRevision=packageRevision;SceneRevision=sceneRevision;StatsRevision=statsRevision;}
 
     public static BattleRifleManifestCatalog Load(string manifestPath)
     {
@@ -61,6 +63,8 @@ public sealed class BattleRifleManifestCatalog : IBattleWeaponManifestCatalog
         byte[] crew=ReadBounded(crewPath,100,10_000,"Helicopter crew source");
         if(Convert.ToHexStringLower(SHA256.HashData(crew))!=manifest.HelicopterCrewPointsRevision)
             throw new InvalidDataException("Helicopter crew source revision mismatch.");
+        var bindings=WeaponBindingGraphCatalog.Load(Path.Combine(Path.GetDirectoryName(Path.GetFullPath(manifestPath))!,
+            "recovered-all-weapon-bindings.json"),manifest.AllWeaponBindingsRevision,manifest.SceneRevision,contentPath);
         try
         {
             using var document=JsonDocument.Parse(content);
@@ -93,7 +97,7 @@ public sealed class BattleRifleManifestCatalog : IBattleWeaponManifestCatalog
             }
             string packageRevision=Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(
                 "WarFriends/combat-content/v7\n"+string.Join("\n",hashes))));
-            return new(result,packageRevision,manifest.SceneRevision,manifest.StatsRevision);
+            return new(result,bindings,packageRevision,manifest.SceneRevision,manifest.StatsRevision);
         }
         catch(Exception e) when(e is JsonException or KeyNotFoundException or InvalidOperationException or FormatException or OverflowException or ArgumentException)
         {throw new InvalidDataException("Malformed rifle source catalog.",e);}
@@ -102,24 +106,22 @@ public sealed class BattleRifleManifestCatalog : IBattleWeaponManifestCatalog
     public void Bind(JsonObject participant,BattlePlayerPresentation view)
     {
         view=BattlePlayerPresentation.Validate(view);
-        BattleWeaponPresentation equipped=view.Weapons.OrderBy(x=>x.Slot).First();
-        Stage row=Resolve(equipped);
-        participant["Weapon"]=Weapon(row);
-        participant["WeaponUpgrade"]=row.UpgradeIndex;
+        var resolved=view.Weapons.Select(equipped=>(Equipped:equipped,Stage:Resolve(equipped))).ToArray();
         var slots=new JsonArray();
-        foreach(var weapon in view.Weapons.OrderBy(x=>x.Slot))
+        foreach(var row in resolved)
         {
-            if(!stages.ContainsKey(weapon.SourceId))continue;
-            Stage stage=Resolve(weapon);
-            slots.Add(new JsonObject { ["Slot"]=weapon.Slot,["WeaponIndex"]=weapon.WeaponIndex,
-                ["Weapon"]=Weapon(stage),["WeaponUpgrade"]=stage.UpgradeIndex });
+            slots.Add(new JsonObject { ["Slot"]=row.Equipped.Slot,["WeaponIndex"]=row.Equipped.WeaponIndex,
+                ["Weapon"]=Weapon(row.Stage),["WeaponUpgrade"]=row.Stage.UpgradeIndex });
         }
+        participant["Weapon"]=Weapon(resolved[0].Stage);
+        participant["WeaponUpgrade"]=resolved[0].Stage.UpgradeIndex;
         participant["WeaponSlots"]=slots;
     }
 
     private Stage Resolve(BattleWeaponPresentation weapon)
     {
-        if(!stages.TryGetValue(weapon.SourceId,out Stage[]? lane) || weapon.UpgradeIndex<0 || weapon.UpgradeIndex>=lane.Length)
+        if(!stages.TryGetValue(weapon.SourceId,out Stage[]? lane) || weapon.UpgradeIndex<0 || weapon.UpgradeIndex>=lane.Length ||
+           bindings.Get(weapon.SourceId).InventoryIndex!=weapon.WeaponIndex)
             throw new InvalidDataException("Durable equipped weapon is not in the recovered rifle combat catalog.");
         return lane[weapon.UpgradeIndex];
     }
