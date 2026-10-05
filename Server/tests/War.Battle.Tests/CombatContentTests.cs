@@ -3324,16 +3324,45 @@ internal static class CombatContentTests
         Check(centerHit?.DynamicEntityId==deployedDrone.EntityKey&&
               centerHit.DynamicPartId==13511718&&!centerHit.SourceDestroyable,
             "player muzzle ray toward immortal Drone center first meets its non-destroyable child sphere");
-        Check(new[]{-.8f,-.5f,-.25f,0,.25f,.5f,.8f}.Any(offset=>
+        var bulletOrigin=immortalMuzzle+content.Bindings.Get(
+            deployedDroneManifest.Players[1].Weapon.SourceId).ShotOffset;
+        Vector3? exposedRootAim=null;
+        foreach(var offset in new[]{-.8f,-.5f,-.25f,0,.25f,.5f,.8f})
         {
-            var direction=Vector3.Normalize(immortalRoot.Hitbox.Center+
-                new Vector3(offset,0,0)-immortalMuzzle);
-            var hit=immortalWorld.Raycast(decoyOpponent,immortalMuzzle,direction,50,
+            var aim=immortalRoot.Hitbox.Center+new Vector3(offset,0,0);
+            var direction=Vector3.Normalize(aim-bulletOrigin);
+            var hit=immortalWorld.Raycast(decoyOpponent,bulletOrigin,direction,50,
                 content.Bindings.BulletMask(2));
-            return hit?.DynamicEntityId==deployedDrone.EntityKey&&
-                hit.DynamicPartId==6544804&&hit.SourceDestroyable;
-        }),"an exposed immortal Drone root ray retains same-collider destroyable provenance");
-        for(ulong t=213;t<=256;t++)deployedDroneMatch.Advance(t);
+            if(hit?.DynamicEntityId==deployedDrone.EntityKey&&
+               hit.DynamicPartId==6544804&&hit.SourceDestroyable)
+            {exposedRootAim=aim;break;}
+        }
+        Check(exposedRootAim.HasValue,
+            "an exposed immortal Drone root ray retains same-collider destroyable provenance");
+        // Seed one controlled host flight into the private queue so this checks
+        // the actual impact path without depending on a moving target or aim RNG.
+        const ulong immortalProbeId=900001;
+        var immortalFlight=new BulletFlight(immortalProbeId,decoyOpponent,
+            new BulletFlightDefinition(10000,0,true),bulletOrigin,exposedRootAim!.Value,212,
+            (from,direction,range)=>immortalWorld.Raycast(decoyOpponent,from,direction,range,
+                content.Bindings.BulletMask(2)));
+        var projectileField=typeof(MatchEngine).GetField("projectiles",
+            System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic)
+            ??throw new Exception("Host projectile queue field changed.");
+        var projectileQueue=(Dictionary<ulong,PreparedProjectile>?)projectileField.GetValue(deployedDroneMatch)
+            ??throw new Exception("Host projectile queue unavailable.");
+        uint immortalHitsBefore=deployedDroneMatch.Snapshot().Players
+            .Single(p=>p.PlayerId==decoyOpponent).ConfirmedEnemyHits;
+        projectileQueue.Add(immortalProbeId,new PreparedProjectile(immortalFlight,
+            new ResolvedPlayerDamage(10,CombatDamageType.Shot),
+            deployedDroneManifest.Players[1].Weapon.SourceId));
+        deployedDroneMatch.Advance(213);
+        Check(deployedDroneMatch.ArmyDroneImmortal(deployedDrone.EntityKey)&&
+              deployedDroneMatch.ArmyHealth(deployedDrone.EntityKey)==droneHealth&&
+              deployedDroneMatch.Snapshot().Players.Single(p=>p.PlayerId==decoyOpponent)
+                  .ConfirmedEnemyHits==immortalHitsBefore+1,
+            "controlled player flight into immortal Drone root credits contact without reducing health");
+        for(ulong t=214;t<=256;t++)deployedDroneMatch.Advance(t);
         var observedDroneIntent=deployedDroneMatch.LastDroneIntent(deployedDrone.EntityKey);
         Check(deployedDroneMatch.DroneAttackDeadline(deployedDrone.EntityKey)>61f/MatchManifest.TickRate+2,
             "live host observation resolves source registry and advances attack deadline");
@@ -3366,6 +3395,10 @@ internal static class CombatContentTests
         deployedDroneMatch.Advance(257);
         Check(deployedDroneMatch.ArmyEntityBatch(decoyPlayer,0,0).Entities.Count==0,
             "deployed Drone death releases route traversal before subsequent motion tick");
+        deployedDroneMatch.Command(decoyPlayer,new(){CommandId=3,Forfeit=new()});
+        Check(deployedDroneMatch.TerminalEvidenceSnapshot().Players
+                  .Single(p=>p.PlayerId==decoyOpponent).ConfirmedPlayerBulletHits==1,
+            "controlled immortal-root contact survives as one private terminal bullet hit");
         var droneShotManifest=deployedDroneManifest with {MatchId="player-projectile-drone",DurationSeconds=180,
             Players=[deployedDroneManifest.Players[0] with {ArmySpecialUpgradeIndexes=[-1]},deployedDroneManifest.Players[1]]};
         var droneShotMatch=new MatchEngine(droneShotManifest,content:content,armyChoice:_=>0);

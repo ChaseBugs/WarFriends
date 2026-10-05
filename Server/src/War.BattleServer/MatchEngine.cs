@@ -1287,6 +1287,12 @@ public sealed partial class MatchEngine
                 {
                     var shooter=Find(impact.OwnerId)??throw new InvalidDataException("Bullet owner disappeared.");
                     uint enemyHitsBefore=shooter.ConfirmedEnemyHits;
+                    bool immortalDroneRootContact=impact.Hit.SourceDestroyable&&
+                        impact.Hit.DynamicPartId==6544804&&
+                        activeArmyEntities.TryGetValue(vehicleId,out var contactedDrone)&&
+                        contactedDrone.UnitId=="ID_UNIT-DRONE"&&
+                        contactedDrone.OwnerFraction!=shooter.Definition.Fraction&&
+                        ArmyDroneImmortal(vehicleId);
                     if(impact.Hit.DynamicDecoy)
                         ApplyDecoyProjectileImpact(impact.OwnerId,vehicleId,pair.Value.Damage.Amount,
                             impact.Hit.PartWeight,impact.ProjectileId);
@@ -1310,6 +1316,13 @@ public sealed partial class MatchEngine
                     else throw new InvalidDataException("Dynamic collision omitted its source target.");
                     if(shooter.ConfirmedEnemyHits>enemyHitsBefore&&impact.Hit.SourceDestroyable)
                         CreditPlayerBulletHit(shooter,ref creditedBulletHit);
+                    else if(immortalDroneRootContact&&shooter.ConfirmedEnemyHits==enemyHitsBefore)
+                    {
+                        // The source callback retains the opposing root
+                        // DestroyableObject even when immortality refunds HP.
+                        shooter.ConfirmedEnemyHits=checked(shooter.ConfirmedEnemyHits+1);
+                        CreditPlayerBulletHit(shooter,ref creditedBulletHit);
+                    }
                 }
                 catch(InvalidDataException){End("invalid-dynamic-impact-authority","",false);break;}
                 if(Terminal)break;
