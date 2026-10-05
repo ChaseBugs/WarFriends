@@ -463,7 +463,8 @@ public sealed partial class MatchEngine
             foreach(var collider in (droneColliders??throw new InvalidDataException("Drone collider catalog missing."))
                 .Place(new(row.X,row.Y,row.Z),new(q.X,q.Y,q.Z,q.W)))
                 result.Add(new(row.EntityKey,collider.ComponentFileId,
-                    collider.RootOwned?(row.OwnerFraction==1?27:26):collider.SerializedLayer,collider.Hitbox));
+                    collider.RootOwned?(row.OwnerFraction==1?27:26):collider.SerializedLayer,
+                    collider.Hitbox,DroneRoot:collider.RootOwned));
         }
         foreach(var row in activeArmyEntities.Values.Where(r=>r.UnitId=="ID_UNIT-HELICOPTER"&&
             (includeFriendly||r.OwnerFraction!=shooter.Definition.Fraction)))

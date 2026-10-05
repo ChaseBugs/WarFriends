@@ -3211,6 +3211,25 @@ internal static class CombatContentTests
         Check(deployedDroneMatch.DroneShotDefinition(deployedDrone.EntityKey) is {ShotSpeed:18,ProbabilityOfRealShot:.7f},"normal Drone deployment binds trusted shot-speed perk into composed firing authority");
         var droneCollisionTargets=deployedDroneMatch.GroundVehicleShotTargets(decoyOpponent).Where(r=>r.EntityId==deployedDrone.EntityKey).ToArray();
         Check(droneCollisionTargets.Length==2&&droneCollisionTargets.Any(r=>r.PartComponentFileId==6544804&&r.Layer==27)&&droneCollisionTargets.Any(r=>r.PartComponentFileId==13511718&&r.Layer==8),"normal Drone projectile targets retain root flying and child layers");
+        var shotgunDroneRoot=droneCollisionTargets.Single(x=>x.DroneRoot);
+        var shotgunDroneWorld=new ShotCollisionWorld(null,
+        [
+            new(decoyOpponent,deployedDroneMatch.CombatPose(decoyOpponent).Collision),
+            new(decoyPlayer,deployedDroneMatch.CombatPose(decoyPlayer).Collision)
+        ],dynamicTargets:deployedDroneMatch.GroundVehicleShotTargets);
+        var shotgunDroneOrigin=shotgunDroneRoot.Hitbox.Center-Vector3.UnitZ*2;
+        var shotgunDroneOverlap=shotgunDroneWorld.OverlapEnemy(decoyOpponent,
+            shotgunDroneOrigin,4,1u<<27);
+        Check(shotgunDroneOverlap.Any(x=>x.MainEntityId=="drone:"+deployedDrone.EntityKey)&&
+              !shotgunDroneWorld.OverlapEnemy(decoyOpponent,shotgunDroneOrigin,4,1u<<8)
+                  .Any(x=>x.MainEntityId=="drone:"+deployedDrone.EntityKey),
+              "deployed Drone root DestroyableObject enters shotgun overlap on its flying faction layer, not child layer eight");
+        var shotgunDronePlan=ShotgunShotPlanner.Plan(new ShotgunRule(50,3,10,10,100,false,false),
+            shotgunDroneOrigin,shotgunDroneRoot.Hitbox.Center+Vector3.UnitX*.5f,
+            shotgunDroneOverlap);
+        Check(shotgunDronePlan.RealPellets.Any(x=>shotgunDroneOverlap.Any(y=>
+                  y.MainEntityId=="drone:"+deployedDrone.EntityKey&&y.EntityId==x.EntityId)),
+              "live Drone root schedules a real shotgun extra while its unowned child sphere cannot");
         deployedDroneMatch.ApplyArmyBodyProjectileImpact(decoyOpponent,deployedDrone.EntityKey,13511718,10);
         Check(deployedDroneMatch.ArmyHealth(deployedDrone.EntityKey)==droneHealth,"child sphere impact cannot promote parent health damage");
         deployedDroneMatch.ApplyArmyBodyProjectileImpact(decoyOpponent,deployedDrone.EntityKey,6544804,10);
@@ -4203,6 +4222,24 @@ internal static class CombatContentTests
               !deathMatch.GroundVehicleShotTargets(helicopterOwner)
                   .Any(x=>x.EntityId==helicopterEntity.EntityKey),
               "normal deployed Helicopter contributes its source boxes only to opposing projectile traces");
+        var gunnerShotWorld=new ShotCollisionWorld(null,
+        [
+            new(soldierOwner,deathMatch.CombatPose(soldierOwner).Collision),
+            new(helicopterOwner,deathMatch.CombatPose(helicopterOwner).Collision)
+        ],dynamicTargets:deathMatch.GroundVehicleShotTargets);
+        var gunnerShotOrigin=liveGunnerBoxes[0].Hitbox.Center-Vector3.UnitZ*2;
+        var gunnerOverlap=gunnerShotWorld.OverlapEnemy(soldierOwner,gunnerShotOrigin,4,1u<<22);
+        Check(gunnerOverlap.Count(x=>x.MainEntityId==
+                  "helicopter-gunner:"+helicopterEntity.EntityKey)==3&&
+              !gunnerShotWorld.OverlapEnemy(soldierOwner,gunnerShotOrigin,4,1u<<8)
+                  .Any(x=>x.MainEntityId=="helicopter-gunner:"+helicopterEntity.EntityKey),
+              "live Helicopter gunner body/head enter shotgun overlap only on the opposing soldier layer");
+        var gunnerPlan=ShotgunShotPlanner.Plan(new ShotgunRule(50,3,10,10,100,false,false),
+            gunnerShotOrigin,liveGunnerBoxes[0].Hitbox.Center+Vector3.UnitX*.5f,gunnerOverlap);
+        Check(gunnerPlan.RealPellets.Count(x=>gunnerOverlap.Any(y=>
+                  y.MainEntityId=="helicopter-gunner:"+helicopterEntity.EntityKey&&
+                  y.EntityId==x.EntityId)) is >=1 and <=2,
+              "sampled Helicopter gunner parts share the source two-extra shotgun limit");
         var gunnerDirections=new[]{Vector3.UnitX,-Vector3.UnitX,Vector3.UnitY,-Vector3.UnitY,
             Vector3.UnitZ,-Vector3.UnitZ};
         var gunnerRay=liveGunnerBoxes.SelectMany(box=>gunnerDirections.Select(direction=>
