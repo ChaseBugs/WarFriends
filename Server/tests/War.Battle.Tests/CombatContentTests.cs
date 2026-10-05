@@ -1142,6 +1142,18 @@ internal static class CombatContentTests
                   DynamicPassengerRole:null,PartWeight:1}&&
               repairHit.SourcePath.Contains("miniDrone.prefab",StringComparison.Ordinal),
               "player projectile ray selects the source-pinned repair-drone root BoxCollider");
+        var repairShotOrigin=repairTarget.Hitbox.Center-Vector3.UnitZ*2;
+        var repairOverlap=repairWorld.OverlapEnemy("cccccccccccccccccccccccccccccccc",
+            repairShotOrigin,4,1u<<repairTarget.Layer);
+        Check(repairOverlap.Any(x=>x.MainEntityId=="repair-drone:78:0")&&
+              !repairWorld.OverlapEnemy("cccccccccccccccccccccccccccccccc",
+                  repairShotOrigin,4,0).Any(x=>x.MainEntityId=="repair-drone:78:0"),
+              "source mini-drone root enters shotgun overlap only through its live faction layer");
+        var repairPlan=ShotgunShotPlanner.Plan(new ShotgunRule(50,3,10,10,100,false,false),
+            repairShotOrigin,repairTarget.Hitbox.Center+Vector3.UnitX*.5f,repairOverlap);
+        Check(repairPlan.RealPellets.Any(x=>repairOverlap.Any(y=>
+                  y.MainEntityId=="repair-drone:78:0"&&y.EntityId==x.EntityId)),
+              "source shotgun cone schedules a real pellet toward the active mini-drone root");
         var placedHumvee=content.GroundVehicleWeapons.PlaceBody("ID_UNIT-HUMVEE",77,
             Vector3.Zero,Vector3.UnitZ);
         var bodyTarget=placedHumvee.First(x=>x.Hitbox.Kind==PlayerHitboxKind.Box);
@@ -1182,6 +1194,27 @@ internal static class CombatContentTests
               Vector3.Distance(idlePassenger[0].Center,breathingPassenger[0].Center)>.00001f&&
               Vector3.Distance(buggyPassengerStart[0].Center,buggyPassengerEnd[0].Center)>.05f,
               "Unity-sampled passenger catalog preserves looping idle and clamped Buggy sitting hit geometry");
+        string passengerRole=humveeRig.Passengers[0].Role;
+        var passengerTargets=idlePassenger.Select(hitbox=>new DynamicShotTarget(77,0,23,
+            hitbox,PassengerRole:passengerRole)).ToArray();
+        var passengerWorld=new ShotCollisionWorld(null,
+        [
+            new(bodyShooter,referencePose.Place(new(100,0,100),Quaternion.Identity).Collision),
+            new(bodyOpponent,referencePose.Place(new(110,0,100),Quaternion.Identity).Collision)
+        ],dynamicTargets:_=>passengerTargets);
+        var passengerOrigin=idlePassenger[0].Center-Vector3.UnitZ*2;
+        var passengerOverlap=passengerWorld.OverlapEnemy(bodyShooter,passengerOrigin,4,1u<<23);
+        Check(passengerOverlap.Count(x=>x.MainEntityId=="passenger:77:"+passengerRole)==3&&
+              !passengerWorld.OverlapEnemy(bodyShooter,passengerOrigin,4,0)
+                  .Any(x=>x.MainEntityId=="passenger:77:"+passengerRole),
+              "sampled Humvee passenger body/head share one shotgun object on the opponent layer");
+        var passengerPlan=ShotgunShotPlanner.Plan(new ShotgunRule(50,3,10,10,100,false,false),
+            passengerOrigin,idlePassenger[0].Center+Vector3.UnitX*.5f,passengerOverlap);
+        Check(passengerPlan.RealPellets.Count(x=>passengerOverlap.Any(y=>
+                  y.MainEntityId=="passenger:77:"+passengerRole&&y.EntityId==x.EntityId))<=2&&
+              passengerPlan.RealPellets.Any(x=>passengerOverlap.Any(y=>
+                  y.MainEntityId=="passenger:77:"+passengerRole&&y.EntityId==x.EntityId)),
+              "shotgun limits a passenger's sampled body/head to two extra real pellets");
         Check(Vector3.Distance(humveeRig.Roles[0].Weapons[0].MuzzlePosition,
                   new Vector3(-.10999999f,.68667924f,.14323565f))<.00001f&&
               Vector3.Distance(content.GroundVehicleWeapons.RestMuzzleOrigin("ID_UNIT-HUMVEE","primary",0,

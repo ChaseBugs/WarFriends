@@ -90,22 +90,37 @@ internal sealed class ShotCollisionWorld
         var result=enemy.Pose.Parts.Where(p=>p.OverlapsSphere(origin,radius))
             .Select(p=>new ShotgunCollider(Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(p.SourcePath))),
                 enemy.PlayerId,p.Center,true)).ToList();
+        var dynamicColliderOrdinals=new Dictionary<string,int>(StringComparer.Ordinal);
         if(dynamicTargets!=null)
             foreach(var target in dynamicTargets(shooterId))
             {
                 if(target==null||target.EntityId==0||target.Layer is <0 or >31||target.Hitbox==null)
                     throw new InvalidDataException("Invalid shotgun dynamic overlap authority.");
-                // Source vehicle body parts, Decoys, and infantry own opposing
-                // DestroyableObject colliders. Passenger/drone/body roles differ.
+                // Source vehicle bodies, repair-drone roots, Decoys, and infantry
+                // own opposing DestroyableObject colliders. Other roles differ.
                 bool vehicleBody=target.GroundVehicleBody&&target.PartComponentFileId>0&&
                     !target.HeavyTurret&&!target.Decoy&&!target.ArmyInfantry&&
                     target.PassengerRole==null&&target.RepairDronePathIndex==null&&
                     !target.HelicopterGunner;
-                if(!(target.Decoy||target.ArmyInfantry||vehicleBody)||
+                bool repairDrone=target.RepairDronePathIndex is 0 or 1&&
+                    target.PartComponentFileId==0&&target.PassengerRole==null&&
+                    !target.Decoy&&!target.ArmyInfantry&&!target.HeavyTurret&&
+                    !target.HelicopterGunner&&!target.GroundVehicleBody;
+                bool passenger=target.PassengerRole is {Length:>0 and <=32}&&
+                    !target.PassengerRole.Any(char.IsControl)&&target.PartComponentFileId==0&&
+                    target.RepairDronePathIndex==null&&!target.Decoy&&!target.ArmyInfantry&&
+                    !target.HeavyTurret&&!target.HelicopterGunner&&!target.GroundVehicleBody;
+                if(!(target.Decoy||target.ArmyInfantry||vehicleBody||repairDrone||passenger)||
                    (layerMask&(1u<<target.Layer))==0||
                    !target.Hitbox.OverlapsSphere(origin,radius))continue;
-                string identity=(target.Decoy?"decoy:":target.ArmyInfantry?"infantry:":"vehicle:")+target.EntityId;
+                string identity=repairDrone?"repair-drone:"+target.EntityId+":"+
+                    target.RepairDronePathIndex:passenger?
+                    "passenger:"+target.EntityId+":"+target.PassengerRole:
+                    (target.Decoy?"decoy:":target.ArmyInfantry?"infantry:":"vehicle:")+target.EntityId;
                 string collider=identity+":"+target.Hitbox.SourcePath;
+                int ordinal=dynamicColliderOrdinals.GetValueOrDefault(collider);
+                dynamicColliderOrdinals[collider]=checked(ordinal+1);
+                if(ordinal>0)collider+="#"+ordinal;
                 result.Add(new ShotgunCollider(Convert.ToHexStringLower(SHA256.HashData(
                     Encoding.UTF8.GetBytes(collider))),identity,target.Hitbox.Center,true));
                 if(result.Count>128)throw new InvalidDataException("Shotgun overlap exceeded source candidate bound.");
