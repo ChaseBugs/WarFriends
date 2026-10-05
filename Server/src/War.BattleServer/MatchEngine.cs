@@ -1329,6 +1329,13 @@ public sealed partial class MatchEngine
                        !activeArmyEntities.ContainsKey(vehicleId)&&
                        armyBeforeImpact.OwnerFraction!=shooter.Definition.Fraction)
                     {
+                        // ConfirmArmyDeath removes a lethal target and returns false;
+                        // Weapon.ReportShotHit still receives that exact collider.
+                        if(shooter.ConfirmedEnemyHits==enemyHitsBefore)
+                        {
+                            shooter.ConfirmedEnemyHits=checked(shooter.ConfirmedEnemyHits+1);
+                            CreditPlayerBulletHit(shooter,ref creditedBulletHit);
+                        }
                         if(directArmyKills.Count>=256)
                         {End("source-kill-backpressure","",false);break;}
                         directArmyKills.Add((vehicleId,armyBeforeImpact.UnitId,

@@ -3441,6 +3441,7 @@ internal static class CombatContentTests
         droneShotMatch.Advance(61);var shotDrone=droneShotMatch.ArmyEntityBatch(decoyPlayer,0,0).Entities.Single();
         float initialShotHealth=shotDrone.Health;bool playerShotDamagedDrone=false;ulong droneFireCommand=2;
         bool droneProjectileLaunched=false,droneProjectileDrained=false;
+        bool lethalDroneBulletCredited=false;
         ulong droneEventCursor=0;bool droneProjectileImpactSeen=false;
         bool droneFiringEventSeen=false;
         for(ulong shotTick=62;shotTick<5000&&!droneShotMatch.Terminal;shotTick++)
@@ -3459,6 +3460,8 @@ internal static class CombatContentTests
                     content.Bindings.Get(droneShotManifest.Players[1].Weapon.SourceId).Speed+.1f);
                 droneShotMatch.Command(decoyOpponent,new(){CommandId=droneFireCommand++,Fire=new(){TargetX=aim.X,TargetY=aim.Y,TargetZ=aim.Z}});
             }
+            uint enemyHitsBeforeAdvance=droneShotMatch.Snapshot().Players
+                .Single(p=>p.PlayerId==decoyOpponent).ConfirmedEnemyHits;
             droneShotMatch.Advance(shotTick);
             if(shotTick%30==0)
             {
@@ -3482,9 +3485,17 @@ internal static class CombatContentTests
             }
             if(droneProjectileLaunched&&droneShotMatch.PendingDroneProjectiles==0)droneProjectileDrained=true;
             if(droneShotMatch.ArmyHealth(shotDrone.EntityKey) is not float health||health<initialShotHealth)
-            {playerShotDamagedDrone=true;if(droneShotMatch.ArmyHealth(shotDrone.EntityKey)==null)break;}
+            {
+                playerShotDamagedDrone=true;
+                if(droneShotMatch.ArmyHealth(shotDrone.EntityKey)==null)
+                {
+                    lethalDroneBulletCredited=droneShotMatch.Snapshot().Players
+                        .Single(p=>p.PlayerId==decoyOpponent).ConfirmedEnemyHits>enemyHitsBeforeAdvance;
+                    break;
+                }
+            }
         }
-        Check(playerShotDamagedDrone&&
+        Check(playerShotDamagedDrone&&lethalDroneBulletCredited&&
               droneShotMatch.Snapshot().Players.Single(p=>p.PlayerId==decoyOpponent).ConfirmedEnemyHits>0&&
               droneShotMatch.Snapshot().Players.Single(p=>p.PlayerId==decoyOpponent).ConfirmedPlayerBulletHits==0,
             "normal player Fire command advances projectile collision into deployed Drone root damage");
