@@ -17,6 +17,48 @@ using War.Protocol.Transport;
 using War.Shared;
 using War.Persistence;
 
+if(args is ["--allocator-mixed-only"])
+{
+    var root=new DirectoryInfo(AppContext.BaseDirectory);
+    while(root!=null&&!File.Exists(Path.Combine(root.FullName,"content/combat-content-manifest.json")))root=root.Parent;
+    if(root==null)throw new FileNotFoundException("Battle content root missing.");
+    string directory=Path.Combine(root.FullName,"content");
+    var content=BattleCombatContent.Load(Path.Combine(directory,"combat-content-manifest.json"),
+        Path.Combine(directory,"shotgun-content-manifest.json"),Path.Combine(directory,"smg-content-manifest.json"),
+        Path.Combine(directory,"pistol-content-manifest.json"),Path.Combine(directory,"lmg-content-manifest.json"),
+        Path.Combine(directory,"minigun-content-manifest.json"),Path.Combine(directory,"sniper-content-manifest.json"),
+        Path.Combine(directory,"bazooka-content-manifest.json"));
+    var catalog=new BattleMixedManifestCatalog(content);
+    var factory=new BattleManifestFactory(File.ReadAllBytes(Path.Combine(directory,"local-mixed-match-template.json")),null!,null!,catalog);
+    var weapons=new[]{
+        new BattleWeaponPresentation(0,11,"Google2u.AssaultRifle_AK47",0),
+        new BattleWeaponPresentation(1,18,"Google2u.SMG_CPW",0),
+        new BattleWeaponPresentation(2,35,"Google2u.SMG_P90",0),
+        new BattleWeaponPresentation(3,0,"Google2u.Pistol_DesertEagle",0),
+        new BattleWeaponPresentation(4,16,"Google2u.LMG_M249",0),
+        new BattleWeaponPresentation(5,25,"Google2u.LMG_Minigun",0),
+        new BattleWeaponPresentation(6,2,"Google2u.SniperRifle_M24",0),
+        new BattleWeaponPresentation(7,4,"Google2u.Shotgun_SPAS",0)};
+    var view=new BattlePlayerPresentation(new string('a',32),"Alpha",1,100,10,5,1,"1-local","US",false,
+        ["CAMO_DEFAULT","HELMET_DEFAULT","HEAD_DEFAULT","BANDS_DEFAULT"],weapons,[]);
+    var participant=new JsonObject();catalog.Bind(participant,view);
+    factory.ValidatePresentation(view);
+    var slots=participant["WeaponSlots"]!.AsArray();
+    for(int i=0;i<weapons.Length;i++)
+        if(JsonSerializer.Deserialize<WeaponManifest>(slots[i]!["Weapon"]!.ToJsonString())!=
+           content.CreateMixedWeaponManifest(weapons[i].SourceId,0))throw new Exception("Mixed allocator/Worker stage mismatch.");
+    string before=participant.ToJsonString();
+    var bad=weapons.ToArray();bad[7]=new BattleWeaponPresentation(7,5,"Google2u.Shotgun_SPAS",0);
+    var badView=new BattlePlayerPresentation(view.PlayerId,view.DisplayName,view.Level,view.ArmyPower,
+        view.Skill,view.LeagueMedals,view.BeginnersLeague,view.LeagueId,view.Country,view.IsVip,view.VisualIds,bad,view.Units);
+    try {factory.ValidatePresentation(badView);throw new Exception("Wrong mixed binding reached queue admission.");}
+    catch(InvalidDataException){}
+    try {catalog.Bind(participant,badView);
+        throw new Exception("Wrong mixed binding was admitted.");}
+    catch(InvalidDataException){if(participant.ToJsonString()!=before)throw new Exception("Rejected mixed loadout mutated participant.");}
+    Console.WriteLine("PASS: mixed allocator binds eight source-backed slots atomically");return;
+}
+
 if(args is ["--allocator-shotgun-only"])
 {
     var root=new DirectoryInfo(AppContext.BaseDirectory);
@@ -324,6 +366,36 @@ if(args is ["--write-shotgun-template",var shotgunOutputPath])
     await File.WriteAllTextAsync(shotgunOutputPath,JsonSerializer.Serialize(template));
     Console.WriteLine("PASS: wrote source-validated local shotgun match template");
     return;
+}
+
+if(args is ["--write-mixed-template",var mixedOutputPath])
+{
+    var root=new DirectoryInfo(AppContext.BaseDirectory);
+    while(root!=null&&!File.Exists(Path.Combine(root.FullName,"content/combat-content-manifest.json")))root=root.Parent;
+    if(root==null)throw new FileNotFoundException("Battle content root missing.");
+    string directory=Path.Combine(root.FullName,"content");
+    var content=BattleCombatContent.Load(Path.Combine(directory,"combat-content-manifest.json"),
+        Path.Combine(directory,"shotgun-content-manifest.json"),Path.Combine(directory,"smg-content-manifest.json"),
+        Path.Combine(directory,"pistol-content-manifest.json"),Path.Combine(directory,"lmg-content-manifest.json"),
+        Path.Combine(directory,"minigun-content-manifest.json"),Path.Combine(directory,"sniper-content-manifest.json"),
+        Path.Combine(directory,"bazooka-content-manifest.json"));
+    var map=content.Maps.Single(m=>m.Source.Contains("City_Multiplayer",StringComparison.Ordinal));
+    var covers=new[]{map.Covers.First(c=>c.Main&&c.Fraction==1),map.Covers.First(c=>c.Main&&c.Fraction==2)};
+    string[] sources=["Google2u.AssaultRifle_AK47","Google2u.SMG_CPW","Google2u.SMG_P90",
+        "Google2u.Pistol_DesertEagle","Google2u.LMG_M249","Google2u.LMG_Minigun",
+        "Google2u.SniperRifle_M24","Google2u.Shotgun_SPAS"];
+    var slots=sources.Select((id,slot)=>new WeaponSlotManifest(slot,content.AllWeaponBindings.Get(id).InventoryIndex,
+        content.CreateMixedWeaponManifest(id,0),0)).ToArray();
+    ParticipantManifest Player(string id,int fraction,CoverNode cover)=>
+        new(id,slots[0].Weapon,fraction,cover.SourceIndex,1,new(1000),0){WeaponSlots=slots};
+    var template=MatchManifest.Validate(new MatchManifest("m"+new string('0',32),"local-1",
+        Path.GetFileNameWithoutExtension(map.Source),map.SourceHash,content.MixedRevision!,MatchManifest.MixedCombatMode,
+        10,60,120,[Player(new string('a',32),1,covers[0]),Player(new string('b',32),2,covers[1])]));
+    content.ValidateAllocation(template);
+    new BattleMixedManifestCatalog(content).ValidateTemplate((JsonObject)JsonSerializer.SerializeToNode(template)!);
+    Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(mixedOutputPath))!);
+    await File.WriteAllTextAsync(mixedOutputPath,JsonSerializer.Serialize(template));
+    Console.WriteLine("PASS: wrote source-validated local mixed match template");return;
 }
 
 if(args is ["--combat-content-only"])

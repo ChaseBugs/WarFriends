@@ -53,6 +53,7 @@
       "war.backend": {
         "type": "Project",
         "dependencies": {
+          "War.BattleServer": "[1.0.0, )",
           "War.Infrastructure": "[1.0.0, )",
           "War.Persistence": "[1.0.0, )",
           "War.Shared": "[1.0.0, )"

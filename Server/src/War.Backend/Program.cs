@@ -5,6 +5,7 @@ using Google.Protobuf;
 using Microsoft.AspNetCore.RateLimiting;
 using War.Backend;
 using War.Backend.Legacy;
+using War.BattleServer;
 using War.Infrastructure;
 using War.Persistence;
 using War.Protocol;
@@ -69,6 +70,15 @@ if (!string.IsNullOrWhiteSpace(battleManifestTemplatePath))
             builder.Configuration["Battle:ShotgunContentManifestPath"]??
                 throw new InvalidOperationException("Set Battle__ShotgunContentManifestPath for a shotgun template."),
             battleRifles),
+        MatchManifest.MixedCombatMode=>new BattleMixedManifestCatalog(BattleCombatContent.Load(
+            battleContentManifestPath,
+            builder.Configuration["Battle:ShotgunContentManifestPath"]??throw new InvalidOperationException("Set Battle__ShotgunContentManifestPath for a mixed template."),
+            builder.Configuration["Battle:SmgContentManifestPath"]??throw new InvalidOperationException("Set Battle__SmgContentManifestPath for a mixed template."),
+            builder.Configuration["Battle:PistolContentManifestPath"]??throw new InvalidOperationException("Set Battle__PistolContentManifestPath for a mixed template."),
+            builder.Configuration["Battle:LmgContentManifestPath"]??throw new InvalidOperationException("Set Battle__LmgContentManifestPath for a mixed template."),
+            builder.Configuration["Battle:MinigunContentManifestPath"]??throw new InvalidOperationException("Set Battle__MinigunContentManifestPath for a mixed template."),
+            builder.Configuration["Battle:SniperContentManifestPath"]??throw new InvalidOperationException("Set Battle__SniperContentManifestPath for a mixed template."),
+            builder.Configuration["Battle:BazookaContentManifestPath"])),
         _=>throw new InvalidOperationException("Unsupported battle manifest template mode.")
     };
     builder.Services.AddSingleton(battleWeapons);
@@ -187,7 +197,11 @@ api.MapPost("/battle/queue/join", async (HttpContext ctx, AccountStore accounts,
             return Error(409, "battle_allocation_missing", "A trusted battle allocation is required before matchmaking.");
     }
     catch (InvalidDataException) { return Error(409, "battle_allocation_invalid", "The trusted battle allocation is invalid."); }
-    try { _ = await presentations.Get(playerId, ctx.RequestAborted); }
+    try
+    {
+        var view=await presentations.Get(playerId, ctx.RequestAborted);
+        services.GetService<BattleManifestFactory>()?.ValidatePresentation(view);
+    }
     catch (InvalidDataException) { return Error(409, "battle_presentation_invalid", "A complete durable player presentation is required before matchmaking."); }
     BattlePairingResult result;
     try { result = await queue.Join(playerId, matchmakingCompatibilityKey, DateTimeOffset.UtcNow, ctx.RequestAborted); }

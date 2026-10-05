@@ -51,6 +51,8 @@ The B27/B29/B32 transport slice has an authenticated, MTU-sized, per-session fro
 
 ## Current execution order and close-out rule
 
+The B05 allocator now also accepts the reviewed `content/local-mixed-match-template.json`. Backend loads the same pinned mixed catalog assembly as the separate Worker process and binds all ordered durable weapon slots, including exact source inventory indexes and upgrade stages. The eight-slot rifle/SMG/pistol/LMG/minigun/sniper/shotgun fixture passes a cross-component check; a wrong index fails before participant mutation. This removes the mixed-loadout template gap, while durable pairing/retry, full Client loading, and other B05 items remain open.
+
 1. Continue B07-B09 with the next recovered weapon projectile family and its normal Unity presentation. Keep results unscored until authority and Client presentation are complete.
 2. Expand weapon variants and world/entity destruction (B09-B12), then army/AI/vehicles/cards/objectives (B13-B19).
 3. Complete mode rules, statistics and durable result/control contracts (B20-B26), with Backend integration limited to those boundaries.

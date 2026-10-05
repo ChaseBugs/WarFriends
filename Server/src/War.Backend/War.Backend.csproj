@@ -4,6 +4,7 @@
     <ProjectReference Include="..\War.Shared\War.Shared.csproj" />
     <ProjectReference Include="..\War.Persistence\War.Persistence.csproj" />
     <ProjectReference Include="..\War.Infrastructure\War.Infrastructure.csproj" />
+    <ProjectReference Include="..\War.BattleServer\War.BattleServer.csproj" />
   </ItemGroup>
 
   <PropertyGroup>

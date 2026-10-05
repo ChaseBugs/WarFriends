@@ -230,15 +230,7 @@ public sealed class BattleCombatContent
             if(bazooka)return Bazookas!.CreateManifest(id,upgrade);
             if(grenade)return Grenades!.CreateManifest(id,upgrade);
             if(!mixed)return Stats.CreateManifest(id,upgrade);
-            if(id.StartsWith("Google2u.AssaultRifle_",StringComparison.Ordinal))return Stats.CreateManifest(id,upgrade);
-            if(id.StartsWith("Google2u.Shotgun_",StringComparison.Ordinal))return Shotguns!.CreateManifest(id,upgrade);
-            if(id.StartsWith("Google2u.SMG_",StringComparison.Ordinal))return Smgs!.CreateManifest(id,upgrade);
-            if(id.StartsWith("Google2u.Pistol_",StringComparison.Ordinal))return Pistols!.CreateManifest(id,upgrade);
-            if(id==MinigunCatalog.SourceId)return Minigun!.CreateManifest(upgrade);
-            if(id.StartsWith("Google2u.SniperRifle_",StringComparison.Ordinal))return Snipers!.CreateManifest(id,upgrade);
-            if(id.StartsWith("Google2u.Bazooka_",StringComparison.Ordinal))return Bazookas!.CreateManifest(id,upgrade);
-            if(id.StartsWith("Google2u.LMG_",StringComparison.Ordinal))return Lmgs!.CreateManifest(id,upgrade);
-            throw new InvalidDataException("Mixed match equips an unsupported weapon class.");
+            return CreateMixedWeaponManifest(id,upgrade);
         }
         void Binding(string id)
         {
@@ -310,5 +302,21 @@ public sealed class BattleCombatContent
                 throw new InvalidDataException("Source encounter requires the recovered default player speed.");
             Binding(p.Weapon.SourceId);
         }
+    }
+
+    // Shared with the Backend allocator. This loads a stage from the same pinned
+    // catalog that the Worker uses to reject an invalid match allocation.
+    public WeaponManifest CreateMixedWeaponManifest(string id,int upgrade)
+    {
+        if(MixedRevision==null)throw new InvalidDataException("Mixed combat package is incomplete.");
+        if(id.StartsWith("Google2u.AssaultRifle_",StringComparison.Ordinal))return Stats.CreateManifest(id,upgrade);
+        if(id.StartsWith("Google2u.Shotgun_",StringComparison.Ordinal))return Shotguns!.CreateManifest(id,upgrade);
+        if(id.StartsWith("Google2u.SMG_",StringComparison.Ordinal))return Smgs!.CreateManifest(id,upgrade);
+        if(id.StartsWith("Google2u.Pistol_",StringComparison.Ordinal))return Pistols!.CreateManifest(id,upgrade);
+        if(id==MinigunCatalog.SourceId)return Minigun!.CreateManifest(upgrade);
+        if(id.StartsWith("Google2u.SniperRifle_",StringComparison.Ordinal))return Snipers!.CreateManifest(id,upgrade);
+        if(id.StartsWith("Google2u.Bazooka_",StringComparison.Ordinal))return Bazookas?.CreateManifest(id,upgrade)??throw new InvalidDataException("Bazooka content is not configured.");
+        if(id.StartsWith("Google2u.LMG_",StringComparison.Ordinal))return Lmgs!.CreateManifest(id,upgrade);
+        throw new InvalidDataException("Mixed match equips an unsupported weapon class.");
     }
 }

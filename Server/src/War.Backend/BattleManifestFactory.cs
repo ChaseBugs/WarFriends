@@ -49,4 +49,12 @@ public sealed class BattleManifestFactory
         return bytes;
     }
 
+    // Queue admission must reject unsupported durable loadouts before a pair is
+    // committed; otherwise repeated provisioning can never make that pair usable.
+    public void ValidatePresentation(BattlePlayerPresentation view)
+    {
+        var participant=new JsonObject();
+        weapons.Bind(participant,view);
+    }
+
 }
