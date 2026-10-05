@@ -65,6 +65,20 @@ internal static class BattleManifestSnapshotTests
             if((await queue.Existing(players[0],CancellationToken.None))?.MatchId!=match)
                 throw new Exception("Rejected terminal result changed queue ownership.");
             terminal.Players[1].PlayerId=players[1];
+            foreach(var invalid in new[]{
+                new Action<MatchSnapshot>(x=>x.CardActivations=4097),
+                new Action<MatchSnapshot>(x=>{x.RibbonIds.Add("R1");x.RibbonIds.Add("R1");}),
+                new Action<MatchSnapshot>(x=>x.PerformanceDurationTicks=10_000_001)})
+            {
+                var forged=terminal.Clone();invalid(forged);
+                (byte[] forgedPayload,string forgedDigest)=Evidence(forged);
+                try {await acceptance.Accept(match,forgedDigest,forgedPayload,CancellationToken.None);
+                    throw new Exception("Incomplete performance authority entered terminal result storage.");}
+                catch(InvalidDataException){}
+            }
+            if(await resultStore.Get(match,CancellationToken.None)!=null ||
+               (await queue.Existing(players[0],CancellationToken.None))?.MatchId!=match)
+                throw new Exception("Rejected performance evidence changed durable result or pair authority.");
             (byte[] payload,string digest)=Evidence(terminal);
             if(TerminalResultDigest.Compute(payload)!=digest)
                 throw new Exception("Shared terminal digest differs from the Worker's framed record.");

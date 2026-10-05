@@ -283,6 +283,19 @@ public sealed class TerminalOutbox
            (snapshot.Phase==BattlePhase.Ended && snapshot.TerminalReason is ("forfeit" or "opponent-disconnected") &&
                snapshot.Players.Any(p=>p.Dead)))
             throw new InvalidDataException("Invalid unscored terminal evidence.");
+        ulong hits=0,kills=0,spawns=0,losses=0;
+        foreach(var player in snapshot.Players)
+        {
+            hits+=player.ConfirmedPlayerHits;kills+=player.ConfirmedPlayerKills;
+            spawns+=player.ConfirmedArmySpawns;losses+=player.ConfirmedArmyLosses;
+        }
+        if(hits>uint.MaxValue || kills>uint.MaxValue || spawns>uint.MaxValue || losses>uint.MaxValue ||
+           snapshot.CardActivations>int.MaxValue || snapshot.ObjectiveCredits>int.MaxValue)
+            throw new InvalidDataException("Terminal performance counters exceed their durable contract.");
+        CompleteBattleEvidenceValidator.Validate(new CompleteBattleEvidence(snapshot.MatchId,snapshot.ManifestHash,
+            new BattleStatistics((uint)hits,(uint)kills,(uint)spawns,(uint)losses),
+            snapshot.PerformanceDurationTicks,snapshot.RibbonIds.ToArray(),
+            (int)snapshot.CardActivations,(int)snapshot.ObjectiveCredits));
     }
 
     private static bool ValidTerminalPlayer(BattlePlayerState p,ulong serverTick)
