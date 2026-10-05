@@ -12,6 +12,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\War.Shared\War.Shared.csproj" />
+    <ProjectReference Include="..\War.BattleServer\War.BattleServer.csproj" />
   </ItemGroup>
 
 </Project>

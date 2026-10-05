@@ -1,4 +1,5 @@
 using MongoDB.Driver;
+using War.BattleServer;
 using War.Shared;
 
 namespace War.Persistence;
@@ -41,6 +42,7 @@ public sealed class BattleResultStore
             checkedSnapshot.Length is < 1 or > TerminalResultDigest.MaximumPayloadBytes ||
             TerminalResultDigest.Compute(checkedSnapshot)!=checkedDigest)
             throw new InvalidDataException("Invalid battle result envelope.");
+        TerminalOutbox.ValidatePayload(checkedSnapshot,checkedMatchId,checkedDigest);
         var prior = await results.Find(x => x.MatchId == checkedMatchId).FirstOrDefaultAsync(ct);
         if (prior != null)
         {
@@ -127,5 +129,6 @@ public sealed class BattleResultStore
                 scored<row.AcceptedUtc || scored>now : row.ScoredUtc!=null) ||
             TerminalResultDigest.Compute(row.Snapshot)!=row.Digest)
             throw new InvalidDataException("Invalid persisted battle result.");
+        TerminalOutbox.ValidatePayload(row.Snapshot,row.MatchId!,row.Digest!);
     }
 }

@@ -115,6 +115,14 @@ internal static class BattleManifestSnapshotTests
             rematchTerminal.Players.Add(new BattlePlayerState{PlayerId=players[0]});
             rematchTerminal.Players.Add(new BattlePlayerState{PlayerId=players[1]});
             (byte[] rematchPayload,string rematchDigest)=Evidence(rematchTerminal);
+            var malformedTerminal=rematchTerminal.Clone();
+            malformedTerminal.TerminalReason="forged-result";
+            (byte[] malformedPayload,string malformedDigest)=Evidence(malformedTerminal);
+            try {await resultStore.Accept(rematch.MatchId!,malformedDigest,malformedPayload,CancellationToken.None);
+                throw new Exception("Direct result-store acceptance trusted a digest over invalid terminal evidence.");}
+            catch(InvalidDataException){}
+            if(await resultStore.Get(rematch.MatchId!,CancellationToken.None)!=null)
+                throw new Exception("Invalid direct result-store payload was persisted.");
             await resultStore.Accept(rematch.MatchId!,rematchDigest,rematchPayload,CancellationToken.None);
             var resultRows=mongo.GetDatabase(database).GetCollection<BattleResultDocument>("battle_results");
             await resultRows.UpdateOneAsync(x=>x.MatchId==rematch.MatchId,
@@ -134,7 +142,12 @@ internal static class BattleManifestSnapshotTests
             if((await queue.Existing(players[0],CancellationToken.None))?.MatchId!=rematch.MatchId)
                 throw new Exception("Rejected persisted terminal payload changed pair ownership.");
             await resultRows.UpdateOneAsync(x=>x.MatchId==rematch.MatchId,
-                Builders<BattleResultDocument>.Update.Set(x=>x.Snapshot,rematchPayload));
+                Builders<BattleResultDocument>.Update.Set(x=>x.Snapshot,malformedPayload).Set(x=>x.Digest,malformedDigest));
+            try {await resultStore.ReconcileScored(rematch.MatchId!,malformedDigest,CancellationToken.None);
+                throw new Exception("Self-consistent invalid terminal evidence was marked scored.");}
+            catch(InvalidDataException){}
+            await resultRows.UpdateOneAsync(x=>x.MatchId==rematch.MatchId,
+                Builders<BattleResultDocument>.Update.Set(x=>x.Snapshot,rematchPayload).Set(x=>x.Digest,rematchDigest));
             if(await resumedAcceptance.Accept(rematch.MatchId!,rematchDigest,rematchPayload,CancellationToken.None)!="already-accepted" ||
                await queue.Existing(players[0],CancellationToken.None)!=null)
                 throw new Exception("Repaired terminal payload did not release the pair.");

@@ -61,6 +61,7 @@
         "type": "Project",
         "dependencies": {
           "MongoDB.Driver": "[3.12.0, )",
+          "War.BattleServer": "[1.0.0, )",
           "War.Shared": "[1.0.0, )"
         }
       },
