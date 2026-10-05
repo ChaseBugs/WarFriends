@@ -1712,6 +1712,7 @@ public sealed partial class MatchEngine
                     var fake=prepared.Fake[i];
                     if(fake==null||fake.Id!=projectileId+(ulong)prepared.Real.Count+(ulong)i+1||
                        fake.OwnerId!=p.Definition.PlayerId||fake.Finished||
+                       fake.WeaponSourceId!=p.Weapon.SourceId||
                        !PlayerHitbox.Finite(fake.Position)||!PlayerHitbox.Finite(fake.Velocity))
                         throw new InvalidDataException("Host returned invalid fake-pellet authority.");
                 }
@@ -2068,6 +2069,7 @@ public sealed partial class MatchEngine
             .Select(x=>new BattleProjectileState
             {
                 ProjectileId=x.Key,OwnerPlayerId=x.Value.Flight.OwnerId,Kind="shotgun-bullet",
+                WeaponSourceId=x.Value.WeaponSourceId,
                 X=x.Value.Flight.Position.X,Y=x.Value.Flight.Position.Y,Z=x.Value.Flight.Position.Z,
                 VelocityX=x.Value.Flight.Velocity.X,VelocityY=x.Value.Flight.Velocity.Y,
                 VelocityZ=x.Value.Flight.Velocity.Z
@@ -2076,6 +2078,7 @@ public sealed partial class MatchEngine
             .Select(x=>new BattleProjectileState
             {
                 ProjectileId=x.Key,OwnerPlayerId=x.Value.OwnerId,Kind="shotgun-fake-bullet",
+                WeaponSourceId=x.Value.WeaponSourceId,
                 X=x.Value.Position.X,Y=x.Value.Position.Y,Z=x.Value.Position.Z,
                 VelocityX=x.Value.Velocity.X,VelocityY=x.Value.Velocity.Y,
                 VelocityZ=x.Value.Velocity.Z

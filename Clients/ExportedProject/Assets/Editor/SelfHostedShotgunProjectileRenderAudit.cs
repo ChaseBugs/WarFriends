@@ -22,6 +22,11 @@ public static class SelfHostedShotgunProjectileRenderAudit
             var main=(BulletShotGun)shotgun.bulletPrefab;
             if(main.bulletPrefab==null||!(shotgun.ammoSetup is ShotGunBulletSetup))
                 throw new InvalidOperationException("Recovered shotgun pellet setup missing.");
+            var benelli=inventory.allWeapons[22].weapon;
+            var benelliSetup=benelli.ammoSetup as ShotGunBulletSetup;
+            Require(benelli.bulletPrefab is BulletShotGun&&benelliSetup!=null,
+                "source Benelli identity is missing");
+            benelliSetup.trailSize=3.25f;
             player.playerProperties.playerID=new string('a',32);
             host=new GameObject("SelfHostedShotgunProjectileRenderAudit");
             var presenter=host.AddComponent<SelfHostedProjectilePresenter>();
@@ -29,12 +34,18 @@ public static class SelfHostedShotgunProjectileRenderAudit
             var snapshot=new MatchSnapshot();
             snapshot.Projectiles.Add(new BattleProjectileState{ProjectileId=71,
                 OwnerPlayerId=player.playerProperties.playerID,Kind="shotgun-bullet",
+                WeaponSourceId="Google2u.Shotgun_SPAS",
                 X=1,Y=2,Z=3,VelocityZ=30});
             snapshot.Projectiles.Add(new BattleProjectileState{ProjectileId=72,
                 OwnerPlayerId=player.playerProperties.playerID,Kind="shotgun-fake-bullet",
+                WeaponSourceId="Google2u.Shotgun_SPAS",
                 X=2,Y=3,Z=4,VelocityZ=30});
+            snapshot.Projectiles.Add(new BattleProjectileState{ProjectileId=73,
+                OwnerPlayerId=player.playerProperties.playerID,Kind="shotgun-bullet",
+                WeaponSourceId="Google2u.Shotgun_Benelli",
+                X=3,Y=4,Z=5,VelocityZ=30});
             presenter.Apply(snapshot);
-            foreach(var id in new ulong[]{71,72})
+            foreach(var id in new ulong[]{71,72,73})
             {
                 var visual=GameObject.Find("SelfHostedProjectile_"+id);
                 Require(visual!=null,"missing pellet visual "+id);
@@ -47,16 +58,20 @@ public static class SelfHostedShotgunProjectileRenderAudit
                     "pellet visual has no damage or collision authority "+id);
                 Require(visual.GetComponent<LineTrailRenderer>()!=null,
                     "source shotgun trail missing "+id);
+                if(id==73)Require(Mathf.Abs(visual.GetComponent<LineTrailRenderer>().trailLength-6.5f)<0.001f,
+                    "switched Benelli pellet used another shotgun setup");
             }
             presenter.Apply(new MatchSnapshot{ProjectilesTruncated=true});
             Require(GameObject.Find("SelfHostedProjectile_71")!=null&&
-                GameObject.Find("SelfHostedProjectile_72")!=null,
+                GameObject.Find("SelfHostedProjectile_72")!=null&&
+                GameObject.Find("SelfHostedProjectile_73")!=null,
                 "truncated snapshot removed live pellets");
             presenter.Apply(new MatchSnapshot());
             Require(GameObject.Find("SelfHostedProjectile_71")==null&&
-                GameObject.Find("SelfHostedProjectile_72")==null,
+                GameObject.Find("SelfHostedProjectile_72")==null&&
+                GameObject.Find("SelfHostedProjectile_73")==null,
                 "complete snapshot retained expired pellets");
-            Debug.Log("UNITY_SHOTGUN_PROJECTILE_RENDER_PASSED real=True fake=True mesh=True trail=True removal=True");
+            Debug.Log("UNITY_SHOTGUN_PROJECTILE_RENDER_PASSED real=True fake=True mesh=True sourceSwitch=True trail=True removal=True");
             EditorApplication.Exit(0);
         }
         catch(Exception error){Debug.LogError(error);EditorApplication.Exit(1);}

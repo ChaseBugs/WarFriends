@@ -51,8 +51,8 @@ internal static class VolleyMatchTests
         var visual=new MatchEngine(duel);
         visual.ConfigureVisualVolley((id,owner,target,tick)=>new(
             [Pellet(id,owner,target,tick,10),Pellet(id+1,owner,target,tick,20)],
-            [new ShotgunFakePelletFlight(id+2,owner,Vector3.Zero,target,30,tick),
-             new ShotgunFakePelletFlight(id+3,owner,Vector3.Zero,target+Vector3.UnitX*.1f,30,tick)]),()=>1);
+            [new ShotgunFakePelletFlight(id+2,owner,duel.Players[0].Weapon.SourceId,Vector3.Zero,target,30,tick),
+             new ShotgunFakePelletFlight(id+3,owner,duel.Players[0].Weapon.SourceId,Vector3.Zero,target+Vector3.UnitX*.1f,30,tick)]),()=>1);
         Start(visual,a,b);
         Check(visual.Command(a,fire).Code=="shot-accepted"&&visual.PendingProjectileCount==4&&
               visual.Snapshot().Players[0].ClipAmmo==8&&
@@ -68,11 +68,20 @@ internal static class VolleyMatchTests
         var badVisual=new MatchEngine(duel);
         badVisual.ConfigureVisualVolley((id,owner,target,tick)=>new(
             [Pellet(id,owner,target,tick,10)],
-            [new ShotgunFakePelletFlight(id+2,owner,Vector3.Zero,target,30,tick)]),()=>1);
+            [new ShotgunFakePelletFlight(id+2,owner,duel.Players[0].Weapon.SourceId,Vector3.Zero,target,30,tick)]),()=>1);
         Start(badVisual,a,b);
         Check(badVisual.Command(a,fire).Code=="match-aborted"&&
               badVisual.PendingProjectileCount==0&&badVisual.Snapshot().Players[0].ClipAmmo==9,
               "invalid fake identity aborts the entire volley before shell consumption");
+        var wrongSource=new MatchEngine(duel);
+        wrongSource.ConfigureVisualVolley((id,owner,target,tick)=>new(
+            [Pellet(id,owner,target,tick,10)],
+            [new ShotgunFakePelletFlight(id+1,owner,"Google2u.Shotgun_Benelli",
+                Vector3.Zero,target,30,tick)]),()=>1);
+        Start(wrongSource,a,b);
+        Check(wrongSource.Command(a,fire).Code=="match-aborted"&&
+              wrongSource.PendingProjectileCount==0&&wrongSource.Snapshot().Players[0].ClipAmmo==9,
+              "forged fake-pellet weapon identity cannot consume a shell or publish a flight");
         return checks;
     }
 }

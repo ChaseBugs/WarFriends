@@ -41,7 +41,7 @@ public sealed class SelfHostedProjectilePresenter : MonoBehaviour
 			Visual visual;
 			if (!active.TryGetValue(state.ProjectileId, out visual))
 			{
-				visual = Create(state.OwnerPlayerId, state.ProjectileId, state.Kind);
+				visual = Create(state.OwnerPlayerId, state.ProjectileId, state.Kind, state.WeaponSourceId);
 				active.Add(state.ProjectileId, visual);
 			}
 			visual.Root.transform.position = new Vector3(state.X, state.Y, state.Z);
@@ -53,7 +53,7 @@ public sealed class SelfHostedProjectilePresenter : MonoBehaviour
                 ConfigureAirTrail(visual, state.Kind.StartsWith("helicopter-"),
                     state.Kind.EndsWith("fake-bullet"), false, velocity.magnitude);
             if (IsShotgunShot(state.Kind) && visual.Trail == null && velocity.sqrMagnitude > 0.000001f)
-                ConfigureShotgunTrail(visual, state.OwnerPlayerId,
+                ConfigureShotgunTrail(visual, state.OwnerPlayerId, state.WeaponSourceId,
                     state.Kind == "shotgun-fake-bullet", velocity.magnitude);
 		}
 		// An MTU-bounded snapshot may omit still-flying presentation rounds.
@@ -154,18 +154,34 @@ public sealed class SelfHostedProjectilePresenter : MonoBehaviour
         return kind == "shotgun-bullet" || kind == "shotgun-fake-bullet";
     }
 
-    private Weapon ResolveShotgun(string ownerId)
+    private static string ShotgunSourceAt(int index)
+    {
+        switch (index)
+        {
+            case 4: return "Google2u.Shotgun_SPAS";
+            case 22: return "Google2u.Shotgun_Benelli";
+            case 27: return "Google2u.Shotgun_Saiga";
+            case 33: return "Google2u.Shotgun_Striker";
+            case 50: return "Google2u.Shotgun_Blackhand";
+            case 51: return "Google2u.Shotgun_SawnOff";
+            case 54: return "Google2u.Shotgun_StrikerElite";
+            case 55: return "Google2u.Shotgun_AA12";
+            case 63: return "Google2u.Shotgun_SaigaElite";
+            default: return null;
+        }
+    }
+
+    private Weapon ResolveShotgun(string ownerId, string sourceId)
     {
         PlayerController owner = local != null && local.playerProperties != null &&
             local.playerProperties.playerID == ownerId ? local : other;
 		WeaponInventory inventory = owner == null ? null : owner.ResolveSelfHostedInventory();
 		if (inventory == null) return null;
-		PlayerWeapon current = CurrentWeaponOrNull(inventory);
-		if (current != null && current.weapon != null &&
-		    current.weapon.bulletPrefab is BulletShotGun)
-		    return current.weapon;
-        foreach (PlayerWeapon item in inventory.allWeapons)
+        if (string.IsNullOrEmpty(sourceId) || inventory.allWeapons == null) return null;
+        for (int i = 0; i < inventory.allWeapons.Count; i++)
         {
+            if (ShotgunSourceAt(i) != sourceId) continue;
+            PlayerWeapon item = inventory.allWeapons[i];
             Weapon weapon = item == null ? null : item.GetComponent<Weapon>();
             if (weapon != null && weapon.bulletPrefab is BulletShotGun) return weapon;
         }
@@ -179,9 +195,10 @@ public sealed class SelfHostedProjectilePresenter : MonoBehaviour
             ? null : inventory.currentWeapon;
     }
 
-    private void ConfigureShotgunTrail(Visual visual, string ownerId, bool fake, float speed)
+    private void ConfigureShotgunTrail(Visual visual, string ownerId, string sourceId,
+        bool fake, float speed)
     {
-        Weapon weapon = ResolveShotgun(ownerId);
+		Weapon weapon = ResolveShotgun(ownerId, sourceId);
         ShotGunBulletSetup setup = weapon == null ? null : weapon.ammoSetup as ShotGunBulletSetup;
         if (setup == null || speed <= 0 || Camera.main == null ||
             visual.Root.GetComponent<MeshFilter>() == null)
@@ -214,7 +231,8 @@ public sealed class SelfHostedProjectilePresenter : MonoBehaviour
         if (!string.IsNullOrEmpty(sprite)) visual.Trail.SetSprite(sprite);
     }
 
-	private Visual Create(string ownerId, ulong projectileId, string kind)
+	private Visual Create(string ownerId, ulong projectileId, string kind,
+        string sourceId = null)
 	{
 		PlayerController owner = local != null && local.playerProperties != null && local.playerProperties.playerID == ownerId ? local : other;
 		WeaponInventory inventory = owner == null ? null : owner.ResolveSelfHostedInventory();
@@ -224,7 +242,7 @@ public sealed class SelfHostedProjectilePresenter : MonoBehaviour
 		GameObject bullet = weapon == null || weapon.bulletPrefab == null ? null : weapon.bulletPrefab.gameObject;
 		if (IsShotgunShot(kind))
 		{
-            Weapon shotgun = ResolveShotgun(ownerId);
+            Weapon shotgun = ResolveShotgun(ownerId, sourceId);
             BulletShotGun main = shotgun == null ? null : shotgun.bulletPrefab as BulletShotGun;
             bullet = main == null || main.bulletPrefab == null ? null : main.bulletPrefab.gameObject;
         }

@@ -115,6 +115,10 @@ namespace War.Client
                        row.Kind!="helicopter-fake-bullet"&&row.Kind!="drone-bullet"&&
                        row.Kind!="drone-fake-bullet"&&row.Kind!="shotgun-bullet"&&
                        row.Kind!="shotgun-fake-bullet"||
+                       (row.Kind=="shotgun-bullet"||row.Kind=="shotgun-fake-bullet")&&
+                       !ValidShotgunSource(row.WeaponSourceId)||
+                       row.Kind!="shotgun-bullet"&&row.Kind!="shotgun-fake-bullet"&&
+                       row.WeaponSourceId.Length!=0||
                        !FiniteCoordinate(row.X)||!FiniteCoordinate(row.Y)||!FiniteCoordinate(row.Z)||
                        !FiniteCoordinate(row.VelocityX)||!FiniteCoordinate(row.VelocityY)||
                        !FiniteCoordinate(row.VelocityZ))
@@ -125,5 +129,11 @@ namespace War.Client
             }
             throw new TimeoutException("Battle host did not acknowledge projectile scan. Retry the read.");
         }
+        private static bool ValidShotgunSource(string value) =>
+            value=="Google2u.Shotgun_SPAS" || value=="Google2u.Shotgun_Benelli" ||
+            value=="Google2u.Shotgun_Saiga" || value=="Google2u.Shotgun_Striker" ||
+            value=="Google2u.Shotgun_Blackhand" || value=="Google2u.Shotgun_SawnOff" ||
+            value=="Google2u.Shotgun_StrikerElite" || value=="Google2u.Shotgun_AA12" ||
+            value=="Google2u.Shotgun_SaigaElite";
     }
 }

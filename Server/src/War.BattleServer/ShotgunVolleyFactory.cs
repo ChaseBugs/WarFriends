@@ -28,7 +28,7 @@ internal static class ShotgunVolleyFactory
             var sphere=new Vector3(planar*MathF.Cos(angle),planar*MathF.Sin(angle),z);
             Vector3 target=ShotgunFakePelletFlight.SpreadTarget(from,aim,sphere);
             fake[i]=new ShotgunFakePelletFlight(firstId+(ulong)real.Count+(ulong)i,
-                owner,from,target,binding.FakeSpeed,tick);
+                owner,binding.SourceId,from,target,binding.FakeSpeed,tick);
         }
         return new(real,Array.AsReadOnly(fake));
     }

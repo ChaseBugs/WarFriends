@@ -288,8 +288,10 @@ internal static class LiveShotgunTests
         Check(cleared?.PlayerId==two,"cleared shield ray reaches the opposing player: "+cleared);
         Check(state.Players[0].ShotsFired==1 && state.Players[0].ClipAmmo==weapon.ClipSize-1 &&
               match.PendingProjectileCount>0,"delayed shotgun volley spends exactly one shell");
-        Check(state.Projectiles.Any(x=>x.Kind=="shotgun-fake-bullet"&&x.OwnerPlayerId==one)&&
-              state.Projectiles.Any(x=>x.Kind=="shotgun-bullet"&&x.OwnerPlayerId==one),
+        Check(state.Projectiles.Any(x=>x.Kind=="shotgun-fake-bullet"&&x.OwnerPlayerId==one&&
+                  x.WeaponSourceId=="Google2u.Shotgun_SPAS")&&
+              state.Projectiles.Any(x=>x.Kind=="shotgun-bullet"&&x.OwnerPlayerId==one&&
+                  x.WeaponSourceId=="Google2u.Shotgun_SPAS"),
               "live shotgun snapshot carries both damage-bearing and visual-only pellets");
         Check(state.Players[0].RiflePose.Layers.Any(l=>(int)l.Clip is >=20 and <26),
             "source weapon type seven selects shotgun cover clips");
