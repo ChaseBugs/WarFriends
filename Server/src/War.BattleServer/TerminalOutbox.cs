@@ -337,6 +337,7 @@ public sealed class TerminalOutbox
             p.ClipAmmo<0 || p.ReserveAmmo<0 || p.CoverIndex is <-1 or >1000 ||
            !float.IsFinite(p.PositionX) || !float.IsFinite(p.PositionY) || !float.IsFinite(p.PositionZ) ||
            p.LastCommandId>100000 || p.ConfirmedPlayerKills>p.ConfirmedPlayerHits ||
+           !ValidArmyUsage(p) ||
            p.RiflePose!=null && !RiflePoseProjection.ValidWire(p.RiflePose,serverTick) ||
            p.LastGeometryHit.Length!=0 && !Regex.IsMatch(p.LastGeometryHit,@"\A[0-9a-f]{64}\z"))
              return false;
@@ -345,6 +346,26 @@ public sealed class TerminalOutbox
         return float.IsFinite(p.Health) && float.IsFinite(p.MaxHealth) &&
             p.MaxHealth is >0 and <=100000000 && p.Health<=p.MaxHealth &&
             p.Dead==(p.Health<=0);
+    }
+    private static bool ValidArmyUsage(BattlePlayerState player)
+    {
+        if(player.ArmyUsage.Count>48)return false;
+        int previous=-1;
+        ulong confirmed=0;
+        foreach(var row in player.ArmyUsage)
+        {
+            ArmyOptionIdentity option;
+            try {option=ArmyOptionIdentityCatalog.Get(row.OptionIndex);}
+            catch(InvalidDataException){return false;}
+            if(row.OptionIndex<=previous || row.UnitId!=option.UnitId ||
+               row.Deployments is <1 or >100_000 ||
+               (ulong)row.Deployments*(uint)option.SpawnCount!=row.PlannedSpawns ||
+               row.PlannedSpawns>100_000 || row.ConfirmedSpawns>row.PlannedSpawns)
+                return false;
+            confirmed+=row.ConfirmedSpawns;
+            previous=row.OptionIndex;
+        }
+        return confirmed==player.ConfirmedArmySpawns;
     }
 
     private static bool ValidTerminalShields(Google.Protobuf.Collections.RepeatedField<BattleShieldState> shields)

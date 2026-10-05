@@ -4796,6 +4796,16 @@ internal static class CombatContentTests
               deathMatch.Snapshot().Players[1].ConfirmedArmySpawns==1 &&
               deathMatch.Snapshot().Players[1].ConfirmedArmyLosses==1,
               "unscored terminal evidence freezes confirmed army transitions");
+        var armyTerminal=deathMatch.Snapshot();
+        Check(armyTerminal.Players[0].ArmyUsage.Single() is
+                  {OptionIndex:0,UnitId:"ID_UNIT-ASSAULT",Deployments:1,PlannedSpawns:2,ConfirmedSpawns:2}&&
+              armyTerminal.Players[1].ArmyUsage.Single() is
+                  {OptionIndex:2,UnitId:"ID_UNIT-HELICOPTER",Deployments:1,PlannedSpawns:1,ConfirmedSpawns:1},
+              "terminal army ledger separates accepted source options from realized unit spawns");
+        var armyTerminalPayload=Google.Protobuf.MessageExtensions.ToByteArray(armyTerminal);
+        Check(TerminalOutbox.ValidatePayload(armyTerminalPayload,armyTerminal.MatchId,
+            War.Shared.TerminalResultDigest.Compute(armyTerminalPayload)).Players[0].ArmyUsage.Count==1,
+            "durable terminal validator accepts real two-owner army deployment and spawn evidence");
         var paratrooperManifest=detached with {MatchId="paratrooper-kevlar",Players=detached.Players.Select((p,i)=>p with
         {
             EquippedArmyUnitIds=["ID_UNIT-PARATROOPER"],NewArmyUnitIds=null,

@@ -676,6 +676,7 @@ public sealed partial class MatchEngine
         public uint ConfirmedPlayerKills;
         public uint ConfirmedArmySpawns;
         public uint ConfirmedArmyLosses;
+        public readonly ArmyDeploymentStatsLedger ArmyStats=new();
         public ulong EventAck;
         public readonly StatusEffectState Status = new();
         public readonly Dictionary<ulong, (byte[] Payload, MatchReply Reply)> Receipts = [];
@@ -1069,6 +1070,7 @@ public sealed partial class MatchEngine
                         InitializeDronePath(entityKey,family,point);
                         InitializeHelicopterPath(entityKey,family,point);
                         RegisterDroneArmyTarget(entityKey,family);
+                        p.ArmyStats.RecordSpawn(spawned.OptionIndex,spawned.UnitId);
                         p.ConfirmedArmySpawns=checked(p.ConfirmedArmySpawns+1);
                         armyEntityRevision++;
                         Emit(MatchEventKind.ArmySpawned,p.Definition.PlayerId,"",0,point.Position,0,"");
@@ -1636,10 +1638,16 @@ public sealed partial class MatchEngine
             if(!p.Army.OfferedOptions.Contains(index))return "army-not-offered";
             var family=armyCatalog!.Families.Single(f=>f.Options.Any(o=>o.Index==index));
             var option=armyCatalog.Option(index);
+            var identity=ArmyOptionIdentityCatalog.Get(index);
+            if(identity.UnitId!=family.UnitId || identity.SpawnCount!=option.Count)
+                throw new InvalidDataException("Army option differs from the recovered source identity.");
+            if(!p.ArmyStats.CanRecordAccepted(index))return "army-stats-capacity";
             var availability=ArmyAvailabilityError(p,family,option);
             if(availability!=null){p.Army.InvalidateOffers();return availability;}
             if(!EventCapacityForArmy(option.Count))return "event-backpressure";
-            return p.Army.TryDeploy(index,tick);
+            string deployment=p.Army.TryDeploy(index,tick);
+            if(deployment=="army-deploying")p.ArmyStats.RecordAccepted(index);
+            return deployment;
         }
         if (c.IntentCase == MatchCommand.IntentOneofCase.VehicleAttack)
         {
@@ -2197,6 +2205,12 @@ public sealed partial class MatchEngine
             ,SniperAiming = rifleCombat?.SniperAiming(p.Definition.PlayerId) ?? false
             ,SniperScopeVisible = rifleCombat?.SniperScopeVisible(p.Definition.PlayerId,tick) ?? false
         }));
+        if(Terminal)
+            foreach(var (player,row) in players.SelectMany(p=>p.ArmyStats.Snapshot()
+                .Select(row=>(p.Definition.PlayerId,row))))
+                snapshot.Players.Single(p=>p.PlayerId==player).ArmyUsage.Add(new BattleArmyUsage
+                {OptionIndex=row.OptionIndex,UnitId=row.UnitId,Deployments=(uint)row.Deployments,
+                    PlannedSpawns=(uint)row.PlannedSpawns,ConfirmedSpawns=(uint)row.ConfirmedSpawns});
         foreach (var row in snapshot.Players)
         {
             var source = players.Single(p => p.Definition.PlayerId == row.PlayerId);

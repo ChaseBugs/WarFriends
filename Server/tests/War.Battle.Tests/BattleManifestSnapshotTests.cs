@@ -70,6 +70,10 @@ internal static class BattleManifestSnapshotTests
                 new Action<MatchSnapshot>(x=>{x.CardActivations=1;x.Players[0].ConfirmedCardsPlayed=0;}),
                 new Action<MatchSnapshot>(x=>x.Players[0].ConfirmedCardsPlayed=1),
                 new Action<MatchSnapshot>(x=>x.Players[0].ConfirmedEnemyHits=1_000_001),
+                new Action<MatchSnapshot>(x=>x.Players[0].ArmyUsage.Add(new BattleArmyUsage
+                    {OptionIndex=0,UnitId="ID_UNIT-ASSAULT",Deployments=1,PlannedSpawns=2,ConfirmedSpawns=1})),
+                new Action<MatchSnapshot>(x=>x.Players[0].ArmyUsage.Add(new BattleArmyUsage
+                    {OptionIndex=0,UnitId="ID_UNIT-HELICOPTER",Deployments=1,PlannedSpawns=2})),
                 new Action<MatchSnapshot>(x=>x.CardUsage.Add(new BattleCardUsage
                     {OwnerPlayerId=players[0],CardId="CardHeavyTurret",SourceCardId="HEAVYTURRET",Count=1})),
                 new Action<MatchSnapshot>(x=>{x.CardActivations=1;x.Players[0].ConfirmedCardsPlayed=1;
