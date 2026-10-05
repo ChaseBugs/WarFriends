@@ -32,6 +32,22 @@ internal static class ShotgunPlannerTests
         var capped=ShotgunShotPlanner.Plan(rule,from,aim,seven);
         Check(capped.RealPellets.Count==8 && capped.FakePellets==0,
             "source stops after seventh successful extra pellet");
+        Vector3 fakeTarget=ShotgunFakePelletFlight.SpreadTarget(from,aim,Vector3.UnitX);
+        Check(Vector3.Distance(fakeTarget,aim+Vector3.UnitX*.25f)<.00001f&&
+              Vector3.Distance(ShotgunFakePelletFlight.SpreadTarget(from,
+                  new Vector3(0,0,1),Vector3.UnitX),new Vector3(.125f,0,1))<.00001f,
+              "source fake-pellet spread scales with aim distance then caps at a quarter unit");
+        var fake=new ShotgunFakePelletFlight(from,fakeTarget,45,0);
+        fake.Advance(3);
+        Check(!fake.Finished&&fake.Position.Z>0&&fake.Position.Z<10,
+              "visual fake pellet advances without a collision or damage result");
+        fake.Advance(20);
+        Check(fake.Finished&&Vector3.Distance(fake.Position,fakeTarget*2)<.00001f,
+              "fast fake BulletSlow animates twice the first-leg displacement at fake speed");
+        var longFake=new ShotgunFakePelletFlight(from,new Vector3(0,0,100),45,0);
+        longFake.Advance(100);
+        Check(longFake.Finished&&Vector3.Distance(longFake.Position,new Vector3(0,0,100))<.00001f,
+              "source 50-unit first-leg cap limits fake visual flight to 100 units");
         var angled=new[] {new ShotgunCollider("angle","enemy",new(.5f,0,1),true)};
         Check(ShotgunShotPlanner.Plan(rule,from,new(0,0,1),angled).RealPellets.Count==1,
             "distance-weighted cone rejects a far-angle candidate");
@@ -46,6 +62,8 @@ internal static class ShotgunPlannerTests
         Reject(()=>ShotgunShotPlanner.Plan(rule,from,from,targets));
         Reject(()=>ShotgunShotPlanner.Plan(rule,from,aim,[targets[0],targets[0]]));
         Reject(()=>ShotgunShotPlanner.Plan(rule,from,aim,[targets[0] with {Center=new(float.NaN,0,0)}]));
+        Reject(()=>ShotgunFakePelletFlight.SpreadTarget(from,aim,new(.5f,0,0)));
+        Reject(()=>new ShotgunFakePelletFlight(from,aim,float.NaN,0));
         return checks;
     }
 }

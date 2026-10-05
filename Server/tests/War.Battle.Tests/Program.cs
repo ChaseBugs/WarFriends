@@ -38,6 +38,13 @@ if(args is ["--shotgun-overlap-only"])
     return;
 }
 
+if(args is ["--shotgun-planner-only"])
+{
+    int focused=ShotgunPlannerTests.Run();
+    Console.WriteLine($"PASS: {focused} focused shotgun planner assertions");
+    return;
+}
+
 if(args is ["--shotgun-only"])
 {
     var root=new DirectoryInfo(AppContext.BaseDirectory);
