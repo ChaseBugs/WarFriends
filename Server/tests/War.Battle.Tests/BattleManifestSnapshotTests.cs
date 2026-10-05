@@ -66,8 +66,11 @@ internal static class BattleManifestSnapshotTests
                 throw new Exception("Rejected terminal result changed queue ownership.");
             terminal.Players[1].PlayerId=players[1];
             terminal.Players[0].ShotsFired=3;
+            terminal.Players[0].ConfirmedEnemyHits=1;
+            terminal.Players[0].ConfirmedPlayerBulletHits=1;
             foreach(var invalid in new[]{
                 new Action<MatchSnapshot>(x=>x.Players[0].ShotsFired=(ulong)int.MaxValue+1),
+                new Action<MatchSnapshot>(x=>x.Players[0].ConfirmedPlayerBulletHits=2),
                 new Action<MatchSnapshot>(x=>x.CardActivations=4097),
                 new Action<MatchSnapshot>(x=>{x.CardActivations=1;x.Players[0].ConfirmedCardsPlayed=0;}),
                 new Action<MatchSnapshot>(x=>x.Players[0].ConfirmedCardsPlayed=1),
@@ -124,6 +127,10 @@ internal static class BattleManifestSnapshotTests
             if(shotEvidence==null || shotEvidence.Count!=2 ||
                shotEvidence[0] is not {AcceptedShots:3} || shotEvidence[1] is not {AcceptedShots:0})
                 throw new Exception("Durable result read lost bounded per-player shot evidence.");
+            var bulletHits=await resultStore.GetBulletHitEvidence(match,CancellationToken.None);
+            if(bulletHits==null || bulletHits.Count!=2 ||
+               bulletHits[0] is not {ConfirmedBulletHits:1} || bulletHits[1] is not {ConfirmedBulletHits:0})
+                throw new Exception("Durable result read lost player-owned bullet contact evidence.");
             var resumedAcceptance=new BattleTerminalAcceptance(new BattleResultStore(uri,database),
                 new BattleMatchQueueStore(uri,database),new BattleManifestSnapshotStore(uri,database));
             if(await resumedAcceptance.Accept(match,digest,payload,CancellationToken.None)!="already-accepted" ||

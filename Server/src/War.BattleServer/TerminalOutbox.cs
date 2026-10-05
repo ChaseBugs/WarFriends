@@ -276,6 +276,7 @@ public sealed class TerminalOutbox
            snapshot.Players.Count!=2 || snapshot.Players[0].PlayerId==snapshot.Players[1].PlayerId ||
            snapshot.Players.Any(p=>p.ConfirmedArmyLosses>p.ConfirmedArmySpawns ||
                p.ConfirmedPlayerHits>p.ConfirmedEnemyHits ||
+               p.ConfirmedPlayerBulletHits>p.ConfirmedEnemyHits ||
                p.ConfirmedCardsPlayed>4096 ||
                p.ConfirmedEnemyHits>1_000_000) ||
            snapshot.Players.Any(p=>!Guid.TryParseExact(p.PlayerId,"N",out _)) ||

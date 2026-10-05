@@ -673,6 +673,7 @@ public sealed partial class MatchEngine
         public ulong DamageRevision;
         public uint ConfirmedPlayerHits;
         public uint ConfirmedEnemyHits;
+        public uint ConfirmedPlayerBulletHits;
         public uint ConfirmedPlayerKills;
         public uint ConfirmedArmySpawns;
         public uint ConfirmedArmyLosses;
@@ -1231,6 +1232,7 @@ public sealed partial class MatchEngine
         foreach (var pair in projectiles.ToArray())
         {
             BulletImpact? impact;
+            bool creditedBulletHit=false;
             try { impact = pair.Value.Flight.Advance(tick); }
             catch (InvalidDataException) { End("invalid-projectile-authority", "", false); break; }
             if (pair.Value.Flight.Finished) projectiles.Remove(pair.Key);
@@ -1257,7 +1259,11 @@ public sealed partial class MatchEngine
                         weaponSource,pair.Value.Damage.Amount,tick);
                     // Ammo.DoDamage supplies Weapon.ReportShotHit with the enemy
                     // destroyable even when a valid shot changes no shield HP.
-                    if(enemyShieldHit)shooter.ConfirmedEnemyHits=checked(shooter.ConfirmedEnemyHits+1);
+                    if(enemyShieldHit)
+                    {
+                        shooter.ConfirmedEnemyHits=checked(shooter.ConfirmedEnemyHits+1);
+                        CreditPlayerBulletHit(shooter,ref creditedBulletHit);
+                    }
                     if(shield!=null)
                     {
                         stateRevision++;
@@ -1278,6 +1284,8 @@ public sealed partial class MatchEngine
             {
                 try
                 {
+                    var shooter=Find(impact.OwnerId)??throw new InvalidDataException("Bullet owner disappeared.");
+                    uint enemyHitsBefore=shooter.ConfirmedEnemyHits;
                     if(impact.Hit.DynamicDecoy)
                         ApplyDecoyProjectileImpact(impact.OwnerId,vehicleId,pair.Value.Damage.Amount,
                             impact.Hit.PartWeight,impact.ProjectileId);
@@ -1299,6 +1307,8 @@ public sealed partial class MatchEngine
                     else if(impact.Hit.DynamicPartId is int partId)
                         ApplyArmyBodyProjectileImpact(impact.OwnerId,vehicleId,partId,pair.Value.Damage.Amount);
                     else throw new InvalidDataException("Dynamic collision omitted its source target.");
+                    if(shooter.ConfirmedEnemyHits>enemyHitsBefore)
+                        CreditPlayerBulletHit(shooter,ref creditedBulletHit);
                 }
                 catch(InvalidDataException){End("invalid-dynamic-impact-authority","",false);break;}
                 if(Terminal)break;
@@ -1308,7 +1318,7 @@ public sealed partial class MatchEngine
                 try
                 {
                     ApplyResolvedPlayerDamage(impact.OwnerId, impact.Hit.PlayerId,
-                        pair.Value.Damage with { PartWeight = impact.Hit.PartWeight }, damageRoll!(),true);
+                        pair.Value.Damage with { PartWeight = impact.Hit.PartWeight }, damageRoll!(),true,true);
                 }
                 catch (InvalidDataException) { End("invalid-combat-authority", "", false); }
                 if (Terminal) break;
@@ -1920,7 +1930,7 @@ public sealed partial class MatchEngine
     // Only the host's projectile/hitbox simulation may call this. It is
     // deliberately absent from MatchCommand and cannot be used as an RPC relay.
     internal PlayerDamageResult? ApplyResolvedPlayerDamage(string attackerId, string victimId,
-        ResolvedPlayerDamage hit, float randomRoll,bool confirmedProjectileImpact=false)
+        ResolvedPlayerDamage hit, float randomRoll,bool confirmedProjectileImpact=false,bool sourcePlayerBullet=false)
     {
         if (phase != BattlePhase.Running) return null;
         var attacker = Find(attackerId);
@@ -1936,6 +1946,7 @@ public sealed partial class MatchEngine
             // trusted damage helpers cannot manufacture combat statistics.
             attacker.ConfirmedPlayerHits = checked(attacker.ConfirmedPlayerHits + 1);
             attacker.ConfirmedEnemyHits = checked(attacker.ConfirmedEnemyHits + 1);
+            if(sourcePlayerBullet)attacker.ConfirmedPlayerBulletHits=checked(attacker.ConfirmedPlayerBulletHits+1);
             if (result.Dead) attacker.ConfirmedPlayerKills = checked(attacker.ConfirmedPlayerKills + 1);
         }
         victim.Health = result.Health;
@@ -1951,6 +1962,12 @@ public sealed partial class MatchEngine
             End("player-killed", players.Single(p => p != victim).Definition.PlayerId, true);
         }
         return result;
+    }
+    private static void CreditPlayerBulletHit(Player shooter,ref bool alreadyCredited)
+    {
+        if(alreadyCredited)return;
+        shooter.ConfirmedPlayerBulletHits=checked(shooter.ConfirmedPlayerBulletHits+1);
+        alreadyCredited=true;
     }
     private static bool Coordinate(float n) => float.IsFinite(n) && Math.Abs(n) <= 10000;
     private void AdvanceMovement(Player p)
@@ -2053,8 +2070,17 @@ public sealed partial class MatchEngine
         BattleResultHandoffValidator.Validate(handoff);
         return handoff;
     }
-    public MatchSnapshot Snapshot()
+    // Durable outbox only. Gameplay UDP replies use Snapshot() to stay within MTU.
+    internal MatchSnapshot TerminalEvidenceSnapshot()
     {
+        if(!Terminal)throw new InvalidOperationException("Battle is not terminal.");
+        return BuildSnapshot(includeTerminalEvidence:true);
+    }
+    public MatchSnapshot Snapshot()=>BuildSnapshot(includeTerminalEvidence:false);
+    private MatchSnapshot BuildSnapshot(bool includeTerminalEvidence)
+    {
+        if(includeTerminalEvidence&&!Terminal)
+            throw new InvalidOperationException("Battle result evidence requires a terminal match.");
         var snapshot = new MatchSnapshot
         {
             MatchId = MatchId, ManifestHash = ManifestHash, Phase = phase,
@@ -2194,6 +2220,7 @@ public sealed partial class MatchEngine
             MaxHealth = p.Definition.Combat?.MaxHealth ?? 0, Dead = p.Dead, DamageRevision = p.DamageRevision,
             ConfirmedPlayerHits = p.ConfirmedPlayerHits, ConfirmedPlayerKills = p.ConfirmedPlayerKills,
             ConfirmedEnemyHits = p.ConfirmedEnemyHits,
+            ConfirmedPlayerBulletHits=includeTerminalEvidence ? p.ConfirmedPlayerBulletHits : 0,
             Reconnecting=p.Reconnecting,ReconnectAttempts=p.ReconnectAttempts,
             ReconnectDeadlineHostTick=p.ReconnectDeadlineHostTick,
             ConfirmedArmySpawns=p.ConfirmedArmySpawns,ConfirmedArmyLosses=p.ConfirmedArmyLosses,

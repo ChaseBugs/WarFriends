@@ -3368,8 +3368,21 @@ internal static class CombatContentTests
             if(droneShotMatch.ArmyHealth(shotDrone.EntityKey) is not float health||health<initialShotHealth)
             {playerShotDamagedDrone=true;if(droneShotMatch.ArmyHealth(shotDrone.EntityKey)==null)break;}
         }
-        Check(playerShotDamagedDrone&&droneShotMatch.Snapshot().Players.Single(p=>p.PlayerId==decoyOpponent).ConfirmedEnemyHits>0,
+        Check(playerShotDamagedDrone&&
+              droneShotMatch.Snapshot().Players.Single(p=>p.PlayerId==decoyOpponent).ConfirmedEnemyHits>0&&
+              droneShotMatch.Snapshot().Players.Single(p=>p.PlayerId==decoyOpponent).ConfirmedPlayerBulletHits==0,
             "normal player Fire command advances projectile collision into deployed Drone root damage");
+        if(!droneShotMatch.Terminal)droneShotMatch.Command(decoyOpponent,new()
+            {CommandId=droneFireCommand++,Forfeit=new()});
+        Check(droneShotMatch.Snapshot().Players.Single(p=>p.PlayerId==decoyOpponent).ConfirmedPlayerBulletHits==0&&
+              droneShotMatch.TerminalEvidenceSnapshot().Players.Single(p=>p.PlayerId==decoyOpponent)
+                  .ConfirmedPlayerBulletHits>0,
+            "player-owned bullet contacts enter private terminal evidence without expanding UDP snapshots");
+        var bulletResult=Google.Protobuf.MessageExtensions.ToByteArray(droneShotMatch.TerminalEvidenceSnapshot());
+        Check(TerminalOutbox.ValidatePayload(bulletResult,droneShotMatch.MatchId,
+                  War.Shared.TerminalResultDigest.Compute(bulletResult)).Players
+                  .Single(p=>p.PlayerId==decoyOpponent).ConfirmedPlayerBulletHits>0,
+            "terminal outbox accepts the private player-bullet evidence absent from UDP replies");
         Check(droneProjectileLaunched&&droneProjectileDrained,
             "deployed Drone host observation launches source flight and retires it through tick traversal");
         while(droneEventCursor<droneShotMatch.EventBatch(decoyPlayer,droneEventCursor).LatestEventId)
@@ -3379,7 +3392,9 @@ internal static class CombatContentTests
             droneProjectileImpactSeen|=droneEvents.Events.Any(e=>e.Kind==MatchEventKind.Impact&&e.Reason=="drone");
             droneEventCursor=droneEvents.Events.Last().EventId;
         }
-        Check(droneProjectileImpactSeen,"normal host ticks dispatch real Drone collision and publish impact event");
+        Check(droneProjectileImpactSeen&&
+              droneShotMatch.Snapshot().Players.Single(p=>p.PlayerId==decoyPlayer).ConfirmedPlayerBulletHits==0,
+              "normal host Drone impacts cannot claim player-owned bullet hit credit");
         Check(droneFiringEventSeen,"Drone launch emits distinct source-bound firing presentation metadata");
         Console.WriteLine($"Drone shot trace initial {initialShotHealth}, remaining {droneShotMatch.ArmyHealth(shotDrone.EntityKey)}, hits {droneShotMatch.Snapshot().Players.Single(p=>p.PlayerId==decoyOpponent).ConfirmedEnemyHits}, terminal {droneShotMatch.Terminal}, phase {droneShotMatch.Snapshot().Phase}");
         Check(droneShotMatch.ArmyHealth(shotDrone.EntityKey)==null&&
@@ -3871,11 +3886,15 @@ internal static class CombatContentTests
             .Single(x=>x.Role=="gunner").Health;
         uint enemyHitsBeforeMine=flameVehicleMatch.Snapshot().Players
             .Single(x=>x.PlayerId==soldierOwner).ConfirmedEnemyHits;
+        uint bulletHitsBeforeMine=flameVehicleMatch.Snapshot().Players
+            .Single(x=>x.PlayerId==soldierOwner).ConfirmedPlayerBulletHits;
         Check(flameVehicleMatch.ApplyLandMinePassengerExplosion(soldierOwner,passengerMineOrigin,10)==1&&
               Math.Abs(passengerBeforeMine-flameVehicleMatch.VehiclePassengers(flameVehicleTarget.EntityKey)
                   .Single(x=>x.Role=="gunner").Health-10*selectedMinePassengerPart.Hitbox.Weight)<.001f&&
               flameVehicleMatch.Snapshot().Players.Single(x=>x.PlayerId==soldierOwner)
-                  .ConfirmedEnemyHits==enemyHitsBeforeMine+1,
+                  .ConfirmedEnemyHits==enemyHitsBeforeMine+1&&
+              flameVehicleMatch.Snapshot().Players.Single(x=>x.PlayerId==soldierOwner)
+                  .ConfirmedPlayerBulletHits==bulletHitsBeforeMine,
             "Land Mine blast selects one current Humvee gunner part and updates separate passenger health");
         float passengerBeforeFriendlyMine=flameVehicleMatch.VehiclePassengers(flameVehicleTarget.EntityKey)
             .Single(x=>x.Role=="gunner").Health;

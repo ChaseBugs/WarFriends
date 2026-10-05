@@ -225,6 +225,10 @@ message BattlePlayerState {
   uint32 confirmed_cards_played = 43;
   // Terminal-only accepted deployment options and realized source spawns.
   repeated BattleArmyUsage army_usage = 44;
+  // Durable terminal-result-only player-owned BulletBase-style flight contacts;
+  // UDP gameplay snapshots leave this zero. Excludes army fire,
+  // deployables, fake pellets, and area explosions. Not yet Client MatchStats.hits.
+  uint32 confirmed_player_bullet_hits = 45;
 }
 message BattleArmyUsage {
   int32 option_index = 1; string unit_id = 2; uint32 deployments = 3;

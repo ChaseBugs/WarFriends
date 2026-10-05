@@ -17,7 +17,7 @@ public sealed class MatchEndpoint
     private readonly Dictionary<string, ulong> generations = new(StringComparer.Ordinal);
     public string MatchId => match.MatchId;
     public string ManifestHash => match.ManifestHash;
-    public MatchSnapshot? TerminalSnapshot => match.Terminal ? match.Snapshot() : null;
+    public MatchSnapshot? TerminalSnapshot => match.Terminal ? match.TerminalEvidenceSnapshot() : null;
     public bool Expired => terminalTick.HasValue && tick - terminalTick.Value > 120 * MatchManifest.TickRate;
     private sealed class Session(string playerId, IPEndPoint endpoint, byte[] key)
     {
