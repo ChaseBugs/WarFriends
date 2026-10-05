@@ -2,7 +2,7 @@ namespace War.BattleServer;
 
 /// <summary>Source-shaped subset from direct player-bullet army kills only.</summary>
 public sealed record BattleDirectKillStats(string PlayerId,int DirectBulletKills,
-    int DirectBulletVehiclesDestroyed,int DirectBulletTanksDestroyed);
+    int DirectBulletVehiclesDestroyed,int DirectBulletTanksDestroyed,int DirectGrenadeKills);
 
 public static class BattleDirectKillStatsProjection
 {
@@ -20,6 +20,8 @@ public static class BattleDirectKillStatsProjection
         "ID_UNIT-BUGGY","ID_UNIT-ASSAULTHELI","ID_UNIT-TRANSPORTER","ID_UNIT-MECH"
     };
 
+    internal static bool SupportsGrenadeVictim(string unitId)=>Soldiers.Contains(unitId);
+
     public static IReadOnlyList<BattleDirectKillStats> FromPayload(
         byte[] payload,string matchId,string digest)
     {
@@ -31,10 +33,13 @@ public static class BattleDirectKillStatsProjection
             throw new InvalidDataException("Recovered direct-kill source families changed.");
         return terminal.Players.Select(player=>
         {
-            var kills=terminal.DirectArmyKills.Where(x=>x.AttackerPlayerId==player.PlayerId).ToArray();
+            var kills=terminal.DirectArmyKills.Where(x=>x.AttackerPlayerId==player.PlayerId&&
+                x.Cause=="player-bullet").ToArray();
+            int grenadeKills=terminal.DirectArmyKills.Count(x=>x.AttackerPlayerId==player.PlayerId&&
+                x.Cause=="player-grenade");
             return new BattleDirectKillStats(player.PlayerId,kills.Length,
                 kills.Count(x=>Vehicles.Contains(x.UnitId)),
-                kills.Count(x=>x.UnitId=="ID_UNIT-TANK"));
+                kills.Count(x=>x.UnitId=="ID_UNIT-TANK"),grenadeKills);
         }).ToArray();
     }
 }

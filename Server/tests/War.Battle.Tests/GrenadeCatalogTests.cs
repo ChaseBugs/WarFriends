@@ -150,6 +150,10 @@ internal static class GrenadeCatalogTests
         Check(outer.Kind==CombatDamageType.Shiver&&outer.RawDamage>=frag.MinimumDamage&&outer.RawDamage<frag.ExplosionDamage,
             "grenade outer radius applies quadratic dynamic falloff");
         var idlePose=catalog.Poses.Sample("grenade_idle",0,true).Collision.Place(Vector3.Zero,Quaternion.Identity);var body=idlePose.Parts[0];
+        var armyInner=GrenadeExplosion.ResolveArmy(body.Center,idlePose.RootPosition,[body],frag);
+        Check(armyInner is {Kind:CombatDamageType.Explosion}&&armyInner.RawDamage==frag.ExplosionDamage&&
+              GrenadeExplosion.ResolveArmy(body.Center+new Vector3(20,0,0),idlePose.RootPosition,[body],frag)==null,
+            "source grenade overlaps a nearest infantry destroyable once and omits distant entities");
         var playerInner=GrenadeExplosion.ResolvePlayer(body.Center,idlePose,idlePose.RootPosition,new(1000),1000,frag,false,false,false,false,.5f);
         Check(playerInner is {Kind:CombatDamageType.Explosion}&&Math.Abs(playerInner.RawDamage-frag.ExplosionDamage)<.001f&&
               Math.Abs(playerInner.Result.Damage-frag.ExplosionDamage*frag.PlayerDamageRatio)<.01f,
@@ -276,6 +280,48 @@ internal static class GrenadeCatalogTests
         for(ulong t=61;t<550&&!barrelMatch.Terminal&&barrelMatch.BarrelState.All(x=>x.Revision==0);t++)barrelMatch.Advance(t);
         Check(barrelMatch.BarrelState.Any(x=>x.Revision>0),
             "live MatchEngine M320 explosion mutates the authoritative barrel chain");
+        var infantryAllocation=allocation with {MatchId="grenade-infantry-kill",Players=[
+            allocation.Players[0] with
+            {EquippedArmyUnitIds=["ID_UNIT-ASSAULT"],ArmyNormalUpgradeIndexes=[0],
+             ArmySpecialUpgradeIndexes=[-1],ArmyEliteUpgradeIndexes=[-1],
+             ArmyHealthFactors=[new ArmyHealthFactors(1,1)],ArmyDamageScales=[1],
+             ArmySpeedCoefficients=[1],ArmyAccuracyCoefficients=[1]},allocation.Players[1] with
+            {EquippedArmyUnitIds=["ID_UNIT-ASSAULT"],ArmyNormalUpgradeIndexes=[0],
+             ArmySpecialUpgradeIndexes=[-1],ArmyEliteUpgradeIndexes=[-1],
+             ArmyHealthFactors=[new ArmyHealthFactors(1,1)],ArmyDamageScales=[1],
+             ArmySpeedCoefficients=[1],ArmyAccuracyCoefficients=[1]}]};
+        combat.ValidateAllocation(infantryAllocation);
+        var infantryMatch=new MatchEngine(infantryAllocation,map,combat,armyChoice:_=>0);
+        infantryMatch.Admit(one);infantryMatch.Admit(two);
+        infantryMatch.Command(one,new(){CommandId=1,Ready=new(){ManifestHash=infantryMatch.ManifestHash}});
+        infantryMatch.Command(two,new(){CommandId=1,Ready=new(){ManifestHash=infantryMatch.ManifestHash}});
+        infantryMatch.Advance(60);
+        var infantryOption=infantryMatch.ArmyBatch(two).OptionIndexes.First();
+        var infantryDeploy=infantryMatch.Command(two,new(){CommandId=2,DeployArmy=new(){OptionIndex=infantryOption}}).Code;
+        Check(infantryDeploy=="army-deploying",
+            "grenade opponent deploys recovered Assault infantry through host authority: "+infantryDeploy);
+        ulong infantryTick=60;
+        while(infantryTick<300&&infantryMatch.ArmyEntityBatch(one,0,0).Entities.Count==0)
+            infantryMatch.Advance(++infantryTick);
+        var infantryVictim=infantryMatch.ArmyEntityBatch(one,0,0).Entities.First();
+        var infantryBlast=infantryMatch.GroundVehicleShotTargets(one)
+            .First(x=>x.ArmyInfantry&&x.EntityId==infantryVictim.EntityKey).Hitbox.Center;
+        for(int blast=0;blast<12&&infantryMatch.ArmyHealth(infantryVictim.EntityKey)!=null;blast++)
+            infantryMatch.ApplyPlayerGrenadeInfantryExplosion(one,infantryBlast,
+                combat.Grenades!.Stage("Google2u.Grenade_FRAG",0));
+        Check(infantryMatch.ArmyHealth(infantryVictim.EntityKey)==null,
+            "trusted source grenade blast removes one opposed infantry entity through shared vitality");
+        infantryMatch.Command(one,new(){CommandId=2,Forfeit=new()});
+        var infantryTerminal=infantryMatch.TerminalEvidenceSnapshot();
+        var infantryBytes=infantryTerminal.ToByteArray();
+        Check(infantryMatch.Snapshot().DirectArmyKills.Count==0&&
+              infantryTerminal.DirectArmyKills.Any(x=>x.EntityKey==infantryVictim.EntityKey&&
+                  x.UnitId=="ID_UNIT-ASSAULT"&&x.AttackerPlayerId==one&&
+                  x.VictimOwnerPlayerId==two&&x.Cause=="player-grenade")&&
+              BattleDirectKillStatsProjection.FromPayload(infantryBytes,infantryMatch.MatchId,
+                  War.Shared.TerminalResultDigest.Compute(infantryBytes))
+                  .Single(x=>x.PlayerId==one) is {DirectBulletKills:0,DirectGrenadeKills:>0},
+            "grenade infantry death persists private cause without inflating direct-bullet statistics");
         Console.WriteLine($"PASS: {checks} grenade catalog assertions");return checks;
         static string fragBindingPath(GrenadeCatalog value)=>value.Binding("Google2u.Grenade_FRAG").SwipeInput!.LeftMuzzlePath;
     }

@@ -349,7 +349,9 @@ public sealed class TerminalOutbox
         {
             if(row.EntityKey==0||row.EntityKey>>32 is not (1 or 2)||
                (uint)row.EntityKey==0||!identities.Add(row.EntityKey)||
-               !knownUnits.Contains(row.UnitId)||row.Cause!="player-bullet"||
+               !knownUnits.Contains(row.UnitId)||row.Cause is not ("player-bullet" or "player-grenade")||
+               (row.Cause=="player-grenade"&&
+                   !BattleDirectKillStatsProjection.SupportsGrenadeVictim(row.UnitId))||
                snapshot.StartTick==0||row.Tick<snapshot.StartTick||row.Tick>snapshot.EndTick||
                (previousTick!=0&&(row.Tick<previousTick||
                    (row.Tick==previousTick&&row.EntityKey<=previousEntity)))||
@@ -358,7 +360,7 @@ public sealed class TerminalOutbox
                attacker.PlayerId==victim.PlayerId||
                !victim.ArmyUsage.Any(x=>x.UnitId==row.UnitId&&x.ConfirmedSpawns>0))
                 throw new InvalidDataException("Invalid direct player army kill evidence.");
-            byAttacker[row.AttackerPlayerId]++;
+            if(row.Cause=="player-bullet")byAttacker[row.AttackerPlayerId]++;
             byVictim[row.VictimOwnerPlayerId]++;
             var victimUnit=(row.VictimOwnerPlayerId,row.UnitId);
             byVictimUnit.TryGetValue(victimUnit,out ulong directKills);

@@ -3538,8 +3538,10 @@ internal static class CombatContentTests
                   {DirectBulletKills:1} attackerStats&&
                   attackerStats.DirectBulletVehiclesDestroyed==(family.IsSoldier?0:1)&&
                   attackerStats.DirectBulletTanksDestroyed==(family.UnitId=="ID_UNIT-TANK"?1:0)&&
+                  attackerStats.DirectGrenadeKills==0&&
                   stats.Single(x=>x.PlayerId==decoyPlayer) is
-                  {DirectBulletKills:0,DirectBulletVehiclesDestroyed:0,DirectBulletTanksDestroyed:0},
+                  {DirectBulletKills:0,DirectBulletVehiclesDestroyed:0,DirectBulletTanksDestroyed:0,
+                   DirectGrenadeKills:0},
                 $"direct bullet kill candidates classify source army family {family.UnitId}");
         }
         var forgedKill=droneShotMatch.TerminalEvidenceSnapshot();
@@ -3549,6 +3551,11 @@ internal static class CombatContentTests
             War.Shared.TerminalResultDigest.Compute(forgedKillBytes)));
         forgedKill=droneShotMatch.TerminalEvidenceSnapshot();
         forgedKill.DirectArmyKills.Add(forgedKill.DirectArmyKills[0].Clone());
+        forgedKillBytes=Google.Protobuf.MessageExtensions.ToByteArray(forgedKill);
+        Reject(()=>TerminalOutbox.ValidatePayload(forgedKillBytes,droneShotMatch.MatchId,
+            War.Shared.TerminalResultDigest.Compute(forgedKillBytes)));
+        forgedKill=droneShotMatch.TerminalEvidenceSnapshot();
+        forgedKill.DirectArmyKills[0].Cause="player-grenade";
         forgedKillBytes=Google.Protobuf.MessageExtensions.ToByteArray(forgedKill);
         Reject(()=>TerminalOutbox.ValidatePayload(forgedKillBytes,droneShotMatch.MatchId,
             War.Shared.TerminalResultDigest.Compute(forgedKillBytes)));

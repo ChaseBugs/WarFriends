@@ -550,6 +550,35 @@ public sealed partial class MatchEngine
             shooter.ConfirmedEnemyHits=checked(shooter.ConfirmedEnemyHits+1);
     }
 
+    internal void ApplyPlayerGrenadeInfantryExplosion(string shooterId,Vector3 origin,GrenadeStage stage)
+    {
+        if(phase!=BattlePhase.Running||grenadeCatalog==null||stage==null||
+           !ReferenceEquals(grenadeCatalog.Stage(stage.SourceId,stage.Index),stage)||
+           !PlayerHitbox.Finite(origin))
+            throw new InvalidDataException("Grenade infantry blast lacks trusted source authority.");
+        var shooter=Find(shooterId)??throw new InvalidDataException("Grenade owner disappeared.");
+        var targets=GroundVehicleShotTargets(shooterId).Where(x=>x.ArmyInfantry)
+            .GroupBy(x=>x.EntityId).OrderBy(x=>x.Key).ToArray();
+        foreach(var group in targets)
+        {
+            if(!activeArmyEntities.TryGetValue(group.Key,out var army)||
+               army.OwnerFraction==shooter.Definition.Fraction||!infantryAnimations.ContainsKey(group.Key))
+                throw new InvalidDataException("Grenade infantry target lost host authority.");
+            var effect=GrenadeExplosion.ResolveArmy(origin,new(army.X,army.Y,army.Z),
+                group.Select(x=>x.Hitbox).ToArray(),stage);
+            if(effect==null)continue;
+            if(!float.IsFinite(effect.RawDamage)||effect.RawDamage<=0||effect.RawDamage>10_000_000)
+                throw new InvalidDataException("Grenade infantry damage exceeded host bounds.");
+            ApplyArmyHostDamage(group.Key,effect.RawDamage);
+            if(Terminal)return;
+            if(activeArmyEntities.ContainsKey(group.Key))continue;
+            if(directArmyKills.Count>=256)
+            {End("source-kill-backpressure","",false);return;}
+            directArmyKills.Add((group.Key,army.UnitId,army.OwnerPlayerId,
+                shooter.Definition.PlayerId,"player-grenade",tick));
+        }
+    }
+
     internal void ApplyHelicopterGunnerProjectileImpact(string shooterId,ulong entityId,
         float rawDamage,float partWeight)
     {

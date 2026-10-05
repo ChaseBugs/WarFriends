@@ -27,6 +27,25 @@ internal static class GrenadeExplosion
             stage.MinimumDamage+(stage.ExplosionDamage-stage.MinimumDamage)*(fraction*fraction));
     }
 
+    internal static GrenadeDynamicExplosion? ResolveArmy(Vector3 origin,Vector3 root,
+        IReadOnlyList<PlayerHitbox> parts,GrenadeStage stage)
+    {
+        if(!PlayerHitbox.Finite(origin)||!PlayerHitbox.Finite(root)||parts==null||stage==null||
+           stage.HurtRadius<=stage.DeadRadius||stage.DeadRadius<=0)
+            throw new InvalidDataException("Grenade army explosion requires current host authority.");
+        var selected=parts.Where(x=>x.Enabled&&x.Active&&x.OverlapsSphere(origin,stage.HurtRadius))
+            .OrderBy(x=>x.BoundsDistanceToPoint(origin))
+            .ThenBy(x=>x.SourcePath,StringComparer.Ordinal).FirstOrDefault();
+        if(selected==null)return null;
+        float distance=selected.BoundsDistanceToPoint(origin);
+        if(distance<stage.DeadRadius)
+            return new(CombatDamageType.Explosion,stage.ExplosionDamage);
+        float fraction=Math.Clamp(1-((Vector3.Distance(root,origin)-stage.DeadRadius)/
+            (stage.HurtRadius-stage.DeadRadius)),0,1);
+        return new(CombatDamageType.Shiver,
+            stage.MinimumDamage+(stage.ExplosionDamage-stage.MinimumDamage)*fraction*fraction);
+    }
+
     internal static GrenadePlayerExplosion? ResolvePlayer(Vector3 origin,PlayerCollisionModel pose,
         Vector3 playerRoot,PlayerCombatManifest victim,float health,GrenadeStage stage,bool shieldBetween,
         bool overtime,bool sameFraction,bool self,float randomRoll)

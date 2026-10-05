@@ -23,7 +23,7 @@ public sealed partial class MatchEngine
     private string winner = "";
     private string terminalReason = "";
     private readonly Dictionary<ulong, PreparedProjectile> projectiles = [];
-    private readonly List<(ulong EntityKey,string UnitId,string VictimOwnerId,string AttackerId,ulong Tick)> directArmyKills=[];
+    private readonly List<(ulong EntityKey,string UnitId,string VictimOwnerId,string AttackerId,string Cause,ulong Tick)> directArmyKills=[];
     private readonly Dictionary<ulong, ShotgunFakePelletFlight> shotgunFakeProjectiles = [];
     private sealed record BazookaProjectile(BazookaMissileFlight Flight,BazookaStage Stage,BazookaBinding Binding,string WeaponSourceId,bool HalfDamage);
     private sealed record ScheduledBazooka(string Owner,Vector3 Target,ulong LaunchTick,bool Fake,bool Secondary,bool HalfDamage,string WeaponSourceId,int Upgrade);
@@ -1339,7 +1339,7 @@ public sealed partial class MatchEngine
                         if(directArmyKills.Count>=256)
                         {End("source-kill-backpressure","",false);break;}
                         directArmyKills.Add((vehicleId,armyBeforeImpact.UnitId,
-                            armyBeforeImpact.OwnerPlayerId,shooter.Definition.PlayerId,tick));
+                            armyBeforeImpact.OwnerPlayerId,shooter.Definition.PlayerId,"player-bullet",tick));
                     }
                 }
                 catch(InvalidDataException){End("invalid-dynamic-impact-authority","",false);break;}
@@ -1944,6 +1944,8 @@ public sealed partial class MatchEngine
                 if(Terminal)return;
             }
         }
+        ApplyPlayerGrenadeInfantryExplosion(impact.OwnerId,impact.Position,projectile.Stage);
+        if(Terminal)return;
         foreach(var victim in players.Where(x=>!x.Dead).ToArray())
         {
             float roll=damageRoll();var effect=GrenadeExplosion.ResolvePlayer(impact.Position,
@@ -2136,7 +2138,7 @@ public sealed partial class MatchEngine
                 {
                     EntityKey=row.EntityKey,UnitId=row.UnitId,
                     VictimOwnerPlayerId=row.VictimOwnerId,AttackerPlayerId=row.AttackerId,
-                    Cause="player-bullet",Tick=row.Tick
+                    Cause=row.Cause,Tick=row.Tick
                 }));
         snapshot.Projectiles.AddRange(grenadeProjectiles.OrderBy(x=>x.Key).Select(x=>new BattleProjectileState
         {
