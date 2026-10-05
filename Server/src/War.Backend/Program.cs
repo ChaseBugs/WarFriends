@@ -59,11 +59,22 @@ if (!string.IsNullOrWhiteSpace(battleManifestTemplatePath))
     string battleContentManifestPath=builder.Configuration["Battle:CombatContentManifestPath"] ??
         throw new InvalidOperationException("Set Battle__CombatContentManifestPath when matchmaking provisioning is enabled.");
     var battleRifles=BattleRifleManifestCatalog.Load(battleContentManifestPath);
-    builder.Services.AddSingleton(battleRifles);
     byte[] templateBytes = File.ReadAllBytes(battleManifestTemplatePath);
+    using var templateDocument=JsonDocument.Parse(templateBytes);
+    string? templateMode=templateDocument.RootElement.GetProperty("Mode").GetString();
+    IBattleWeaponManifestCatalog battleWeapons=templateMode switch
+    {
+        "unscored-rifle-combat"=>battleRifles,
+        "unscored-shotgun-combat"=>BattleShotgunManifestCatalog.Load(
+            builder.Configuration["Battle:ShotgunContentManifestPath"]??
+                throw new InvalidOperationException("Set Battle__ShotgunContentManifestPath for a shotgun template."),
+            battleRifles),
+        _=>throw new InvalidOperationException("Unsupported battle manifest template mode.")
+    };
+    builder.Services.AddSingleton(battleWeapons);
     builder.Services.AddSingleton(services => new BattleManifestFactory(templateBytes,
         services.GetRequiredService<BattleAllocationStore>(),services.GetRequiredService<BattlePlayerPresentationSource>(),
-        services.GetRequiredService<BattleRifleManifestCatalog>()));
+        services.GetRequiredService<IBattleWeaponManifestCatalog>()));
 }
 // Limits are configurable (RateLimiting:Api/Auth:PermitLimit/WindowSeconds) so an isolated test
 // harness sharing one IP across a long, fast, sequential script — e.g. LegacySmoke.ps1, which only

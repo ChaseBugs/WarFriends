@@ -17,6 +17,39 @@ using War.Protocol.Transport;
 using War.Shared;
 using War.Persistence;
 
+if(args is ["--allocator-shotgun-only"])
+{
+    var root=new DirectoryInfo(AppContext.BaseDirectory);
+    while(root!=null&&!File.Exists(Path.Combine(root.FullName,"content/combat-content-manifest.json")))root=root.Parent;
+    if(root==null)throw new FileNotFoundException("Battle content root missing.");
+    var directory=Path.Combine(root.FullName,"content");
+    var rifle=BattleRifleManifestCatalog.Load(Path.Combine(directory,"combat-content-manifest.json"));
+    var shotgun=BattleShotgunManifestCatalog.Load(Path.Combine(directory,"shotgun-content-manifest.json"),rifle);
+    var shotgunWorkerCatalog=BattleCombatContent.Load(Path.Combine(directory,"combat-content-manifest.json"),
+        Path.Combine(directory,"shotgun-content-manifest.json"));
+    if(shotgun.PackageRevision!=shotgunWorkerCatalog.ShotgunRevision)throw new Exception("Allocator/Worker shotgun revision mismatch.");
+    var view=BattlePlayerPresentation.Validate(new BattlePlayerPresentation(new string('a',32),"Alpha",1,100,10,5,1,"1-local","US",false,
+        new[]{"CAMO_DEFAULT","HELMET_DEFAULT","HEAD_DEFAULT","BANDS_DEFAULT"},
+        new[]{new BattleWeaponPresentation(0,4,"Google2u.Shotgun_SPAS",35)},Array.Empty<BattleUnitPresentation>()));
+    var participant=new JsonObject();shotgun.Bind(participant,view);
+    if(JsonSerializer.Deserialize<WeaponManifest>(participant["Weapon"]!.ToJsonString())!=
+       shotgunWorkerCatalog.Shotguns!.CreateManifest("Google2u.Shotgun_SPAS",35))
+        throw new Exception("Allocator/Worker SPAS stage mismatch.");
+    _=new BattleManifestFactory(File.ReadAllBytes(Path.Combine(directory,
+        "local-shotgun-match-template.json")),null!,null!,shotgun);
+    var mixedView=BattlePlayerPresentation.Validate(new BattlePlayerPresentation(new string('a',32),"Alpha",1,100,10,5,1,"1-local","US",false,
+        new[]{"CAMO_DEFAULT","HELMET_DEFAULT","HEAD_DEFAULT","BANDS_DEFAULT"},
+        new[]{new BattleWeaponPresentation(0,4,"Google2u.Shotgun_SPAS",0),
+              new BattleWeaponPresentation(1,1,"Google2u.AssaultRifle_Famas",0)},
+        Array.Empty<BattleUnitPresentation>()));
+    string before=participant.ToJsonString();
+    try { shotgun.Bind(participant,mixedView); throw new Exception("Mixed loadout was admitted."); }
+    catch(InvalidDataException) { if(participant.ToJsonString()!=before)
+        throw new Exception("Rejected mixed loadout mutated the manifest participant."); }
+    Console.WriteLine("PASS: allocator/Worker shotgun revision and source stage");
+    return;
+}
+
 if(args is ["--client-matchmaking-only"])
 {
     int focused=await BackendMatchmakingClientTests.Run();
@@ -263,6 +296,33 @@ if(args is ["--write-rifle-template",var outputPath])
     Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(outputPath))!);
     await File.WriteAllTextAsync(outputPath,JsonSerializer.Serialize(template));
     Console.WriteLine("PASS: wrote source-validated local rifle match template");
+    return;
+}
+
+if(args is ["--write-shotgun-template",var shotgunOutputPath])
+{
+    var root=new DirectoryInfo(AppContext.BaseDirectory);
+    while(root!=null&&!File.Exists(Path.Combine(root.FullName,"content/shotgun-content-manifest.json")))root=root.Parent;
+    if(root==null)throw new Exception("Recovered shotgun content artifact not found.");
+    var directory=Path.Combine(root.FullName,"content");
+    var content=BattleCombatContent.Load(Path.Combine(directory,"combat-content-manifest.json"),
+        Path.Combine(directory,"shotgun-content-manifest.json"));
+    var map=content.Maps.Single(m=>m.Source.Contains("City_Multiplayer",StringComparison.Ordinal));
+    var covers=new[]{map.Covers.First(c=>c.Main&&c.Fraction==1),map.Covers.First(c=>c.Main&&c.Fraction==2)};
+    var weapon=content.Shotguns!.CreateManifest("Google2u.Shotgun_SPAS",0);
+    string[] ids={new string('a',32),new string('b',32)};
+    var template=MatchManifest.Validate(new MatchManifest("m"+new string('0',32),"local-1",
+        Path.GetFileNameWithoutExtension(map.Source),map.SourceHash,content.ShotgunRevision!,
+        MatchManifest.ShotgunCombatMode,10,60,120,
+        [new(ids[0],weapon,1,covers[0].SourceIndex,1,new(1000),0),
+         new(ids[1],weapon,2,covers[1].SourceIndex,1,new(1000),0)]));
+    content.ValidateAllocation(template);
+    var allocator=BattleShotgunManifestCatalog.Load(Path.Combine(directory,"shotgun-content-manifest.json"),
+        BattleRifleManifestCatalog.Load(Path.Combine(directory,"combat-content-manifest.json")));
+    allocator.ValidateTemplate((JsonObject)JsonSerializer.SerializeToNode(template)!);
+    Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(shotgunOutputPath))!);
+    await File.WriteAllTextAsync(shotgunOutputPath,JsonSerializer.Serialize(template));
+    Console.WriteLine("PASS: wrote source-validated local shotgun match template");
     return;
 }
 
@@ -1579,6 +1639,68 @@ Reject(()=>allocatorRifles.Bind(allocatorParticipant,BattlePlayerPresentation.Va
     "rifle allocator rejects unsupported equipped weapon");
 var wrongRevision=(JsonObject)allocatorTemplate.DeepClone();wrongRevision["CatalogRevision"]=new string('0',64);
 Reject(()=>allocatorRifles.ValidateTemplate(wrongRevision),"rifle allocator rejects template package mismatch");
+string shotgunManifestFile=Path.Combine(contentRoot.FullName,"content/shotgun-content-manifest.json");
+var allocatorShotguns=BattleShotgunManifestCatalog.Load(shotgunManifestFile,allocatorRifles);
+var workerShotguns=BattleCombatContent.Load(combatManifestFile,shotgunManifestFile);
+Check(allocatorShotguns.PackageRevision==workerShotguns.ShotgunRevision,
+    "Backend and Worker derive one complete source-pinned shotgun package revision");
+var shotgunTemplate=(JsonObject)allocatorTemplate.DeepClone();
+shotgunTemplate["Mode"]=MatchManifest.ShotgunCombatMode;
+shotgunTemplate["CatalogRevision"]=allocatorShotguns.PackageRevision;
+allocatorShotguns.ValidateTemplate(shotgunTemplate);
+var reviewedShotgunTemplate=(JsonObject)JsonNode.Parse(await File.ReadAllTextAsync(
+    Path.Combine(contentRoot.FullName,"content/local-shotgun-match-template.json")))!;
+allocatorShotguns.ValidateTemplate(reviewedShotgunTemplate);
+workerShotguns.ValidateAllocation(MatchManifest.Validate(JsonSerializer.Deserialize<MatchManifest>(
+    reviewedShotgunTemplate.ToJsonString())!));
+Check(reviewedShotgunTemplate["Players"]![0]!["Weapon"]!["SourceId"]!.GetValue<string>()==
+      "Google2u.Shotgun_SPAS","reviewed local shotgun template binds source SPAS stage zero");
+int shotgunStages=0;
+foreach(var binding in workerShotguns.Shotguns!.Bindings)
+{
+    int count=binding.SourceId switch
+    {
+        "Google2u.Shotgun_SPAS"=>36,"Google2u.Shotgun_Benelli"=>26,
+        "Google2u.Shotgun_Saiga"=>46,"Google2u.Shotgun_Striker"=>56,
+        "Google2u.Shotgun_Blackhand"=>76,"Google2u.Shotgun_SawnOff"=>56,
+        "Google2u.Shotgun_StrikerElite"=>56,"Google2u.Shotgun_AA12"=>66,
+        "Google2u.Shotgun_SaigaElite"=>46,_=>throw new Exception("Unknown shotgun stage lane.")
+    };
+    for(int stage=0;stage<count;stage++)
+    {
+        var view=BattlePlayerPresentation.Validate(new BattlePlayerPresentation(a,"Alpha",1,100,10,5,1,"1-local","US",false,
+            new[]{"CAMO_DEFAULT","HELMET_DEFAULT","HEAD_DEFAULT","BANDS_DEFAULT"},
+            new[]{new BattleWeaponPresentation(0,binding.InventoryIndex,binding.SourceId,stage)},
+            Array.Empty<BattleUnitPresentation>()));
+        var participant=shotgunTemplate["Players"]![0]!.AsObject();
+        allocatorShotguns.Bind(participant,view);
+        var selected=JsonSerializer.Deserialize<WeaponManifest>(participant["Weapon"]!.ToJsonString())!;
+        Check(selected==workerShotguns.Shotguns.CreateManifest(binding.SourceId,stage)&&
+              participant["WeaponUpgrade"]!.GetValue<int>()==stage,
+            "Backend shotgun projection matches the Worker source stage");
+        shotgunStages++;
+    }
+}
+Check(shotgunStages==464,"all recovered shotgun stages were compared across allocator and Worker");
+Reject(()=>allocatorShotguns.Bind(shotgunTemplate["Players"]![0]!.AsObject(),famasView),
+    "shotgun allocator rejects an unsupported durable rifle selection");
+Reject(()=>allocatorShotguns.Bind(shotgunTemplate["Players"]![0]!.AsObject(),
+    BattlePlayerPresentation.Validate(new BattlePlayerPresentation(a,"Alpha",1,100,10,5,1,"1-local","US",false,
+        new[]{"CAMO_DEFAULT","HELMET_DEFAULT","HEAD_DEFAULT","BANDS_DEFAULT"},
+        new[]{new BattleWeaponPresentation(0,4,"Google2u.Shotgun_SPAS",0),
+              new BattleWeaponPresentation(1,1,"Google2u.AssaultRifle_Famas",0)},
+        Array.Empty<BattleUnitPresentation>()))),
+    "shotgun-only allocator refuses mixed Client slots it cannot simulate");
+Reject(()=>allocatorShotguns.Bind(shotgunTemplate["Players"]![0]!.AsObject(),
+    BattlePlayerPresentation.Validate(new BattlePlayerPresentation(a,"Alpha",1,100,10,5,1,"1-local","US",false,
+        new[]{"CAMO_DEFAULT","HELMET_DEFAULT","HEAD_DEFAULT","BANDS_DEFAULT"},
+        new[]{new BattleWeaponPresentation(0,22,"Google2u.Shotgun_SPAS",0)},
+        Array.Empty<BattleUnitPresentation>()))),
+    "shotgun allocator rejects a durable inventory index from another shotgun");
+var wrongShotgun=(JsonObject)shotgunTemplate.DeepClone();
+wrongShotgun["CatalogRevision"]=new string('0',64);
+Reject(()=>allocatorShotguns.ValidateTemplate(wrongShotgun),
+    "shotgun allocator rejects a template package mismatch");
 checks += ShieldLifecycleTests.Run(Path.Combine(contentRoot.FullName,"content"));
 checks += ShotgunCatalogTests.Run(Path.Combine(contentRoot.FullName,"content"));
 checks += SmgCatalogTests.Run(Path.Combine(contentRoot.FullName,"content"));

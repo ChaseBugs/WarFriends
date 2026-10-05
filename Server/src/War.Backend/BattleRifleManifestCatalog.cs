@@ -9,7 +9,7 @@ namespace War.Backend;
 
 /// <summary>Allocator-side projection of the same immutable rifle rows the
 /// Worker validates. This never accepts weapon numbers from a Client.</summary>
-public sealed class BattleRifleManifestCatalog
+public sealed class BattleRifleManifestCatalog : IBattleWeaponManifestCatalog
 {
     private static readonly (string Name,int Count)[] Expected=
     [
@@ -25,9 +25,12 @@ public sealed class BattleRifleManifestCatalog
     private sealed record Stage(string SourceId,int UpgradeIndex,int ClipSize,int ReserveAmmo,double CadenceSeconds,double ReloadSeconds);
     private readonly IReadOnlyDictionary<string,Stage[]> stages;
     public string PackageRevision { get; }
+    public string SceneRevision { get; }
+    public string StatsRevision { get; }
 
-    private BattleRifleManifestCatalog(Dictionary<string,Stage[]> stages,string packageRevision)
-    {this.stages=stages;PackageRevision=packageRevision;}
+    private BattleRifleManifestCatalog(Dictionary<string,Stage[]> stages,string packageRevision,
+        string sceneRevision,string statsRevision)
+    {this.stages=stages;PackageRevision=packageRevision;SceneRevision=sceneRevision;StatsRevision=statsRevision;}
 
     public static BattleRifleManifestCatalog Load(string manifestPath)
     {
@@ -90,7 +93,7 @@ public sealed class BattleRifleManifestCatalog
             }
             string packageRevision=Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(
                 "WarFriends/combat-content/v7\n"+string.Join("\n",hashes))));
-            return new(result,packageRevision);
+            return new(result,packageRevision,manifest.SceneRevision,manifest.StatsRevision);
         }
         catch(Exception e) when(e is JsonException or KeyNotFoundException or InvalidOperationException or FormatException or OverflowException or ArgumentException)
         {throw new InvalidDataException("Malformed rifle source catalog.",e);}

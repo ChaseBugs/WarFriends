@@ -55,3 +55,11 @@ Run `dotnet run --project Server/tests/War.Battle.Tests` to validate the five ma
 - `recovered-all-weapon-bindings.json`: Unity-exported identity/component/projectile graph for all 66 recovered player weapon families; pinned by the combat manifest and validated at Worker startup.
 
 `recovered-ground-vehicle-weapons.json` is the version-7 extracted graph for four runtime ground-vehicle prefabs. It binds turret and projectile paths, all source body colliders, six passenger seats, the Transporter mini-drone prefab, root hit collider, and both seven-point repair paths, and the companion passenger-pose revision. `recovered-vehicle-passenger-poses.json` contains Unity-sampled `idle` and `buggy_idle` body/head collision geometry from the recovered enemy prefab. The Worker validates both artifacts together before admitting combat.
+
+`local-shotgun-match-template.json` is the corresponding reviewed City/SPAS stage-zero queue template. Regenerate and validate it with:
+
+```powershell
+dotnet run --project Server/tests/War.Battle.Tests/War.Battle.Tests.csproj -c Release -- --write-shotgun-template Server/content/local-shotgun-match-template.json
+```
+
+Set `Battle__MatchManifestTemplatePath` to this file and configure both Backend and Worker with the pinned shotgun content manifest for local shotgun-only matchmaking. The allocator rejects any participant whose equipped slots include a non-shotgun weapon; a mixed-mode allocator is still needed for ordinary mixed loadouts.

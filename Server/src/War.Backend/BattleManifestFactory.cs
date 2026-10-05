@@ -11,19 +11,19 @@ public sealed class BattleManifestFactory
     private readonly JsonObject template;
     private readonly BattleAllocationStore allocations;
     private readonly BattlePlayerPresentationSource presentations;
-    private readonly BattleRifleManifestCatalog rifles;
+    private readonly IBattleWeaponManifestCatalog weapons;
     public BattleManifestFactory(byte[] templateBytes,BattleAllocationStore allocations,BattlePlayerPresentationSource presentations,
-        BattleRifleManifestCatalog rifles)
+        IBattleWeaponManifestCatalog weapons)
     {
         if(templateBytes is not {Length:>1 and <=65536})throw new InvalidDataException("Invalid battle manifest template size.");
         try {template=JsonNode.Parse(templateBytes)?.AsObject()??throw new InvalidDataException("Null battle manifest template.");}
         catch(JsonException e){throw new InvalidDataException("Invalid battle manifest template JSON.",e);}
         if(template["Players"] is not JsonArray {Count:2} || template.ContainsKey("Allocations"))
             throw new InvalidDataException("Battle manifest template must have two players and no embedded allocation authority.");
-        rifles.ValidateTemplate(template);
+        weapons.ValidateTemplate(template);
         this.allocations=allocations;
         this.presentations=presentations;
-        this.rifles=rifles;
+        this.weapons=weapons;
     }
     public async Task<byte[]> Create(string matchId,IReadOnlyList<string> playerIds,CancellationToken ct)
     {
@@ -38,7 +38,7 @@ public sealed class BattleManifestFactory
         for(int i=0;i<2;i++)
         {
             var participant=players[i]?.AsObject()??throw new InvalidDataException("Battle manifest participant is missing.");
-            rifles.Bind(participant,views[i]);
+            weapons.Bind(participant,views[i]);
             participant["PlayerId"]=playerIds[i];
         }
         if(root.ContainsKey("SceneMasterPlayerId"))root["SceneMasterPlayerId"]=playerIds[0];
