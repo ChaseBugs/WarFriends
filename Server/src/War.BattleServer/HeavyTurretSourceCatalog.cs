@@ -11,7 +11,8 @@ public sealed record HeavyTurretCover(int Order,int PointComponentFileId,int Fra
     IReadOnlyList<HeavyTurretPlacement> Slots);
 public sealed record HeavyTurretStats(float Health,float Damage,int BatchMinimum,int BatchMaximum,
     float ShootMinimum,float ShootMaximum,float RealShotProbability);
-public sealed record HeavyTurretCollider(int ComponentFileId,int TransformFileId,Vector3 Center,Vector3 Size,Quaternion Rotation);
+public sealed record HeavyTurretCollider(int ComponentFileId,int TransformFileId,Vector3 Center,Vector3 Size,
+    Quaternion Rotation,int DamagePartComponentFileId,float FlameWeight);
 
 /// <summary>Strict recovered CardHeavyTurret placement, prefab and card-level combat authority.</summary>
 public sealed class HeavyTurretSourceCatalog
@@ -38,11 +39,13 @@ public sealed class HeavyTurretSourceCatalog
         public float[] MuzzlePosition{get;set;}=[];public float BulletDefaultSpeed{get;set;}public float BulletCheckDistance{get;set;}
         public string BulletSource{get;set;}="";public string BulletSha256{get;set;}="";}
     private sealed class Prefab {public string Source{get;set;}="";public string Sha256{get;set;}="";public int RootTransformFileId{get;set;}
+        public int FlameRootComponentFileId{get;set;}public float FlameCoefficient{get;set;}
         public int HeavyTurretComponentFileId{get;set;}public int TurretWeaponComponentFileId{get;set;}public Turret Turret{get;set;}=new();
         public ShotTarget ShotTarget{get;set;}=new();
         public int[] MeshComponentFileIds{get;set;}=[];public Collider[] Colliders{get;set;}=[];}
     private sealed class Collider {public int ComponentFileId{get;set;}public int TransformFileId{get;set;}
-        public float[] Center{get;set;}=[];public float[] Size{get;set;}=[];public float[] Rotation{get;set;}=[];}
+        public float[] Center{get;set;}=[];public float[] Size{get;set;}=[];public float[] Rotation{get;set;}=[];
+        public int DamagePartComponentFileId{get;set;}public float FlameWeight{get;set;}}
     private sealed class Slot {public int Order{get;set;}public int ComponentFileId{get;set;}public int GameObjectFileId{get;set;}
         public int TransformFileId{get;set;}public float[] SourcePosition{get;set;}=[];}
     private sealed class Cover {public int Order{get;set;}public int PointComponentFileId{get;set;}public int Fraction{get;set;}
@@ -53,6 +56,7 @@ public sealed class HeavyTurretSourceCatalog
     private readonly HeavyTurretStats minimum,maximum;
     public string Revision{get;}public int SpawnCount=>1;public float NavMeshSampleRadius=>10;public int NavMeshAreaMask=>1;
     public int MaxDisplayLevel=>44;public string PrefabRevision{get;}public float EffectiveRealShotProbability=>1;
+    public float FlameCoefficient=>1;
     public Vector3 MuzzleOffset{get;}public float EffectiveBulletSpeed=>25;public float BulletCheckDistance=>.6f;
     // Exact hierarchy coordinates in the SHA-pinned identity-root prefab.
     public Vector3 HorizontalPivot=>new(.001302576f,.108870514f,-.02562468806f);
@@ -99,7 +103,7 @@ public sealed class HeavyTurretSourceCatalog
             throw new InvalidDataException("Heavy Turret source revision mismatch.");
         var root=JsonSerializer.Deserialize<Root>(bytes,new JsonSerializerOptions{PropertyNameCaseInsensitive=true,UnmappedMemberHandling=JsonUnmappedMemberHandling.Disallow})??
             throw new InvalidDataException("Missing Heavy Turret package.");
-        if(root.Version!=4||root.Client!="1.4.0"||root.SpawnCount!=1||root.NavMeshSampleRadius!=10||
+        if(root.Version!=5||root.Client!="1.4.0"||root.SpawnCount!=1||root.NavMeshSampleRadius!=10||
            root.NavMeshAreaMask!=1||root.MaxDisplayLevel!=44||root.Stats.Length!=2||root.Maps.Length!=5||sourceMaps.Count!=5)
             throw new InvalidDataException("Unknown Heavy Turret package.");
         HeavyTurretStats ParseStat(Stat x)
@@ -124,6 +128,7 @@ public sealed class HeavyTurretSourceCatalog
             throw new InvalidDataException("Heavy Turret army policy changed.");
         if(p.Source!="Assets/GameObject/HeavyTurret.prefab"||p.Sha256!="237be8eb3d033154e081ac4a83930cd1a6e3d709e6fa6c4bae1dd6be12a2785f"||
            p.RootTransformFileId!=424449||p.HeavyTurretComponentFileId!=11491323||p.TurretWeaponComponentFileId!=11459786||
+           p.FlameRootComponentFileId!=11469143||p.FlameCoefficient!=1||
            t.AimTime!=1||t.BatchSizeMin!=1||t.BatchSizeMax!=5||t.MinShootTime!=1||t.MaxShootTime!=5||t.MaxShotRotation!=360||
            !t.PredictPosition||t.PrimaryTarget!=3||!t.UseUnitTarget||t.RealShotProbability!=1||t.BatchedWeaponComponentFileId!=11444804||
            t.SecondaryTargets==null||!t.SecondaryTargets.SequenceEqual([0,2,1])||t.PrimTarget!=2||t.PrimaryTargetOnly!=false||
@@ -131,7 +136,9 @@ public sealed class HeavyTurretSourceCatalog
            t.WeaponComponentFileId!=11455190||t.BulletDefaultSpeed!=5||t.BulletCheckDistance!=.6f||
            t.BulletSource!="Assets/GameObject/BulletSlow.prefab"||t.BulletSha256!="5379f6aba1560b8eb3d7d386d1349454b97ea133163ade9a313e2bc34d1adfae"||
            !p.MeshComponentFileIds.SequenceEqual([3327192,3335660,3361517,3339548])||
-           p.Colliders.Length!=3||!p.Colliders.Select(x=>x.ComponentFileId).SequenceEqual([6525385,6572182,6582579]))
+           p.Colliders.Length!=3||!p.Colliders.Select(x=>x.ComponentFileId).SequenceEqual([6525385,6572182,6582579])||
+           !p.Colliders.Select(x=>x.DamagePartComponentFileId).SequenceEqual([11484583,11488432,11462687])||
+           p.Colliders.Any(x=>x.FlameWeight!=1))
             throw new InvalidDataException("Heavy Turret prefab graph changed.");
         var colliders=p.Colliders.Select(x=>
         {
@@ -141,7 +148,8 @@ public sealed class HeavyTurretSourceCatalog
             var rotation=new Quaternion(x.Rotation[0],x.Rotation[1],x.Rotation[2],x.Rotation[3]);
             if(!float.IsFinite(rotation.X)||!float.IsFinite(rotation.Y)||!float.IsFinite(rotation.Z)||!float.IsFinite(rotation.W)||
                Math.Abs(rotation.LengthSquared()-1)>.001f)throw new InvalidDataException("Invalid Heavy Turret collider rotation.");
-            return new HeavyTurretCollider(x.ComponentFileId,x.TransformFileId,center,size,Quaternion.Normalize(rotation));
+            return new HeavyTurretCollider(x.ComponentFileId,x.TransformFileId,center,size,
+                Quaternion.Normalize(rotation),x.DamagePartComponentFileId,x.FlameWeight);
         }).ToArray();
         var result=new Dictionary<string,IReadOnlyList<HeavyTurretCover>>(StringComparer.Ordinal);var ids=new HashSet<int>();int total=0;
         for(int m=0;m<5;m++)

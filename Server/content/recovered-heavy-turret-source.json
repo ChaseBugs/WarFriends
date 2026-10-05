@@ -1,5 +1,5 @@
 {
-  "version": 4,
+  "version": 5,
   "client": "1.4.0",
   "spawnCount": 1,
   "navMeshSampleRadius": 10.0,
@@ -44,6 +44,8 @@
     "source": "Assets/GameObject/HeavyTurret.prefab",
     "sha256": "237be8eb3d033154e081ac4a83930cd1a6e3d709e6fa6c4bae1dd6be12a2785f",
     "rootTransformFileId": 424449,
+    "flameRootComponentFileId": 11469143,
+    "flameCoefficient": 1.0,
     "heavyTurretComponentFileId": 11491323,
     "turretWeaponComponentFileId": 11459786,
     "shotTarget": {
@@ -114,7 +116,9 @@
           0.7071068,
           0.0,
           0.7071067
-        ]
+        ],
+        "damagePartComponentFileId": 11484583,
+        "flameWeight": 1.0
       },
       {
         "componentFileId": 6572182,
@@ -134,7 +138,9 @@
           0.7071068,
           0.0,
           0.7071067
-        ]
+        ],
+        "damagePartComponentFileId": 11488432,
+        "flameWeight": 1.0
       },
       {
         "componentFileId": 6582579,
@@ -154,7 +160,9 @@
           0.7071068,
           0.0,
           0.7071067
-        ]
+        ],
+        "damagePartComponentFileId": 11462687,
+        "flameWeight": 1.0
       }
     ]
   },

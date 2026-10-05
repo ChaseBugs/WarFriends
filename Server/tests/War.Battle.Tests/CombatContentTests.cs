@@ -1960,7 +1960,9 @@ internal static class CombatContentTests
                   PlayerHitbox.Finite(heavyTurrets.MuzzleOffset)&&
                   heavyTurrets.Colliders.Count==3&&heavyTurrets.Colliders.Select(x=>x.ComponentFileId)
                       .SequenceEqual(new[]{6525385,6572182,6582579})&&
-                  heavyTurrets.Colliders.All(x=>x.Size.X>0&&x.Size.Y>0&&x.Size.Z>0)&&
+                  heavyTurrets.Colliders.All(x=>x.Size.X>0&&x.Size.Y>0&&x.Size.Z>0&&
+                      x.DamagePartComponentFileId>0&&x.FlameWeight==1)&&
+                  heavyTurrets.FlameCoefficient==1&&
                   nearestTurret==firstTurretCover.Slots[0],
                   "Heavy Turret source pins 80 slots, prefab graph and source card-level interpolation");
             string heavyTurretTemp=Path.Combine(Path.GetTempPath(),"war-heavy-turret-"+Guid.NewGuid().ToString("N")+".json");
@@ -1968,6 +1970,11 @@ internal static class CombatContentTests
             {
                 var changed=JsonNode.Parse(File.ReadAllText(heavyTurretArtifact))!;
                 changed["prefab"]!["turret"]!["maxShotRotation"]=359;
+                File.WriteAllText(heavyTurretTemp,changed.ToJsonString());
+                Reject(()=>HeavyTurretSourceCatalog.Load(heavyTurretTemp,
+                    Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(heavyTurretTemp))),content.Maps));
+                changed=JsonNode.Parse(File.ReadAllText(heavyTurretArtifact))!;
+                changed["prefab"]!["colliders"]![0]!["flameWeight"]=.5f;
                 File.WriteAllText(heavyTurretTemp,changed.ToJsonString());
                 Reject(()=>HeavyTurretSourceCatalog.Load(heavyTurretTemp,
                     Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(heavyTurretTemp))),content.Maps));
@@ -3661,6 +3668,54 @@ internal static class CombatContentTests
                   x.Kind==MatchEventKind.DecoyDestroyed&&x.ProjectileId==enemyDecoy.EntityId)&&
               flameDecoyMatch.DecoyHealth(allyDecoy.EntityId)==allyDecoyBefore,
             "lethal Flame damage releases Decoy obstacle and drone authority without touching an allied Decoy");
+        var flameTurretManifest=flameDecoyManifest with {MatchId="army-flame-heavy-turret"};
+        var flameTurretMatch=new MatchEngine(flameTurretManifest,content:content,armyChoice:_=>0);
+        flameTurretMatch.ConfigureBattleAllocations([
+            new(soldierOwner,["CardHeavyTurret"],[],[0],[-1],[-1]),
+            new(helicopterOwner,["CardHeavyTurret"],[],[0],[-1],[-1])]);
+        flameTurretMatch.Admit(soldierOwner);flameTurretMatch.Admit(helicopterOwner);
+        MatchCommand FlameTurretCards()=>new(){CommandId=1,SelectCards=new()
+            {CardIds={"CardHeavyTurret"},NormalUpgradeIndexes={0},
+             SpecialUpgradeIndexes={-1},EliteUpgradeIndexes={-1}}};
+        Check(flameTurretMatch.Command(soldierOwner,FlameTurretCards()).Code=="cards-selected"&&
+              flameTurretMatch.Command(helicopterOwner,FlameTurretCards()).Code=="cards-selected",
+            "Flame-versus-Heavy-Turret match binds both trusted cards");
+        flameTurretMatch.Command(soldierOwner,new(){CommandId=2,
+            Ready=new(){ManifestHash=flameTurretMatch.ManifestHash}});
+        flameTurretMatch.Command(helicopterOwner,new(){CommandId=2,
+            Ready=new(){ManifestHash=flameTurretMatch.ManifestHash}});
+        flameTurretMatch.Advance(60);
+        Check(flameTurretMatch.Command(soldierOwner,new(){CommandId=3,DeployArmy=new()
+            {OptionIndex=flameTurretMatch.ArmyBatch(soldierOwner).OptionIndexes[0]}}).Code=="army-deploying"&&
+              flameTurretMatch.Command(soldierOwner,new(){CommandId=4,UseHeavyTurret=new()
+            {RequestId=new string('a',32)}}).Code=="heavy-turret-spawned"&&
+              flameTurretMatch.Command(helicopterOwner,new(){CommandId=3,UseHeavyTurret=new()
+            {RequestId=new string('b',32)}}).Code=="heavy-turret-spawned",
+            "host deploys one Flamethrower and both factions' Heavy Turrets");
+        for(ulong flameTurretTick=61;flameTurretTick<=75;flameTurretTick++)
+            flameTurretMatch.Advance(flameTurretTick);
+        var flameTurretSource=flameTurretMatch.ArmyEntityBatch(soldierOwner,0,0).Entities
+            .Single(x=>x.OwnerPlayerId==soldierOwner);
+        var opposingTurret=flameTurretMatch.Snapshot().HeavyTurrets.Single(x=>x.OwnerPlayerId==helicopterOwner);
+        var alliedTurret=flameTurretMatch.Snapshot().HeavyTurrets.Single(x=>x.OwnerPlayerId==soldierOwner);
+        var turretBoxes=flameTurretMatch.GroundVehicleShotTargets(soldierOwner)
+            .Where(x=>x.HeavyTurret&&x.EntityId==opposingTurret.EntityId).ToArray();
+        Vector3 turretFlameOrigin=turretBoxes[0].Hitbox.Center-Vector3.UnitZ;
+        var turretHit=ArmyFlameBurst.ResolveParts(turretFlameOrigin,Vector3.UnitZ,
+            turretBoxes.Select(x=>x.Hitbox).ToArray(),
+            flameTurretMatch.ArmyDamage(flameTurretSource.EntityKey)!.Value)!;
+        var turretPart=turretBoxes.Single(x=>x.Hitbox.SourcePath==turretHit.PartPath);
+        float expectedTurretFlame=turretHit.RawDamage*content.HeavyTurrets.Colliders
+            .Single(x=>x.ComponentFileId==turretPart.PartComponentFileId).FlameWeight*
+            content.HeavyTurrets.FlameCoefficient;
+        float turretBefore=flameTurretMatch.HeavyTurretHealth(opposingTurret.EntityId)!.Value;
+        float alliedTurretBefore=flameTurretMatch.HeavyTurretHealth(alliedTurret.EntityId)!.Value;
+        Check(flameTurretMatch.ApplyArmyFlameHeavyTurretPulse(flameTurretSource.EntityKey,
+                  turretFlameOrigin,Vector3.UnitZ)==1&&
+              Math.Abs(turretBefore-flameTurretMatch.HeavyTurretHealth(opposingTurret.EntityId)!.Value-
+                  expectedTurretFlame)<.001f&&
+              flameTurretMatch.HeavyTurretHealth(alliedTurret.EntityId)==alliedTurretBefore,
+            "one Flame pulse applies one source-part hit to an opposing Heavy Turret only");
         deathMatch.Admit(soldierOwner);deathMatch.Admit(helicopterOwner);
         deathMatch.Command(soldierOwner,new MatchCommand{CommandId=1,
             Ready=new ReadyCommand{ManifestHash=deathMatch.ManifestHash}});

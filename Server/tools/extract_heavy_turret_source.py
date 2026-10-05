@@ -80,7 +80,11 @@ def extract_prefab():
     roots=[i for i,(k,b) in source.items() if k==4 and ref(b,"m_Father")==0]
     meshes=[(i,b) for i,(k,b) in source.items() if k==33 and "fileID: 4300000" in field(b,"m_Mesh")]
     colliders=[(i,b) for i,(k,b) in source.items() if k in (65,136)]
+    damage_roots=[(i,b) for i,(k,b) in source.items() if k==114 and 'guid: d94d9d4266081e75df24b8687850c33d' in b]
+    damage_parts=[(i,b) for i,(k,b) in source.items() if k==114 and 'guid: 2b87d014f018a182ff3631ab01ac442e' in b]
     if len(heavy)!=1 or len(turret)!=1 or len(roots)!=1 or not meshes or not colliders: raise ValueError("HeavyTurret graph changed")
+    if len(damage_roots)!=1 or len(damage_parts)!=3 or float(field(damage_roots[0][1],'shotCoeficient'))!=1:
+        raise ValueError('HeavyTurret Flame root changed')
     heavy_id,h=heavy[0];turret_id,t=turret[0]
     shootable=[(i,b) for i,(k,b) in source.items() if k==114 and 'guid: 3cf4d7761af3ce98d7a08bebfe4e8861' in b]
     if len(shootable)!=1: raise ValueError('Heavy Turret shootable graph changed')
@@ -118,12 +122,18 @@ def extract_prefab():
     collider_rows=[]
     for component_id,c in colliders:
         go=ref(c,"m_GameObject");transform=game_object_transform(source,go);p,q,s=world_trs(source,transform)
+        matching=[(i,b) for i,b in damage_parts if ref(b,'m_GameObject')==go]
+        if len(matching)!=1 or ref(matching[0][1],'ownerDestroyableObject') not in (0,damage_roots[0][0]):
+            raise ValueError('HeavyTurret collider lost its damage part')
         center=vec(field(c,"m_Center"));size=vec(field(c,"m_Size"))
         center=[a+b for a,b in zip(p,rotate(q,[a*b for a,b in zip(center,s)]))]
         size=[abs(a*b) for a,b in zip(size,s)]
         collider_rows.append({"componentFileId":component_id,"transformFileId":transform,
-                              "center":center,"size":size,"rotation":q})
+                              "center":center,"size":size,"rotation":q,
+                              "damagePartComponentFileId":matching[0][0],
+                              "flameWeight":float(field(matching[0][1],'weight'))})
     return {"source":"Assets/GameObject/HeavyTurret.prefab","sha256":digest(path),"rootTransformFileId":roots[0],
+            "flameRootComponentFileId":damage_roots[0][0],"flameCoefficient":float(field(damage_roots[0][1],'shotCoeficient')),
             "heavyTurretComponentFileId":heavy_id,"turretWeaponComponentFileId":turret_id,
             "shotTarget":{"componentFileId":shootable_id,"transformFileId":400463,"type":1,"position":world_trs(source,400463)[0]},
             "turret":{"aimTime":float(field(t,"aimTime")),"batchSizeMin":int(field(t,"batchSizeMin")),
@@ -151,7 +161,7 @@ def main():
     main_path=ASSETS/'Scenes/MainScene.unity';main_blocks=blocks(main_path.read_text(encoding='utf-8-sig'))
     behaviors=[(i,b) for i,(k,b) in main_blocks.items() if k==114 and 'guid: fd71049152d87b95a9002e247514a2c9' in b]
     if len(behaviors)!=1 or int(field(behaviors[0][1],'unitType'))!=0: raise ValueError('Heavy Turret source target group changed')
-    artifact={"version":4,"client":"1.4.0","spawnCount":1,"navMeshSampleRadius":10.0,"navMeshAreaMask":1,
+    artifact={"version":5,"client":"1.4.0","spawnCount":1,"navMeshSampleRadius":10.0,"navMeshAreaMask":1,
               "behavior":{"source":"Assets/Scenes/MainScene.unity","sha256":digest(main_path),"componentFileId":behaviors[0][0],"unitType":0},
               "maxDisplayLevel":44,"stats":rows,
               "armyPolicy":{"bulletSpeed":army["BULLETSPEED"],"playerDamageRatio":army["PLAYERDAMAGERATIO"],

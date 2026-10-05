@@ -223,6 +223,38 @@ public sealed partial class MatchEngine
         return result;
     }
 
+    internal int ApplyArmyFlameHeavyTurretPulse(ulong sourceEntityKey,Vector3 origin,Vector3 forward)
+    {
+        if(phase!=BattlePhase.Running||!activeArmyEntities.TryGetValue(sourceEntityKey,out var source)||
+           source.UnitId!="ID_UNIT-FLAMETHROWER"||!PlayerHitbox.Finite(origin)||
+           !PlayerHitbox.Finite(forward)||forward.LengthSquared()<1e-10f)
+            throw new InvalidDataException("Invalid army Flame Heavy Turret pulse authority.");
+        if(heavyTurretSource==null)return 0;
+        var owner=Find(source.OwnerPlayerId)??
+            throw new InvalidDataException("Army Flame Heavy Turret source lacks an owner.");
+        float sourceDamage=ArmyDamage(sourceEntityKey)??
+            throw new InvalidDataException("Army Flame lacks trusted damage.");
+        if(!float.IsFinite(sourceDamage)||sourceDamage<0||sourceDamage>10_000_000)
+            throw new InvalidDataException("Invalid army Flame source damage.");
+        int hits=0;
+        foreach(var group in HeavyTurretShotTargets(owner).GroupBy(x=>x.EntityId))
+        {
+            var targets=group.ToArray();
+            if(targets.Any(x=>!x.HeavyTurret))
+                throw new InvalidDataException("Flame Heavy Turret collision type changed.");
+            var hit=ArmyFlameBurst.ResolveParts(origin,forward,
+                targets.Select(x=>x.Hitbox).ToArray(),sourceDamage);
+            if(hit==null||hit.RawDamage<=0)continue;
+            var selected=targets.Single(x=>x.Hitbox.SourcePath==hit.PartPath);
+            var collider=heavyTurretSource.Colliders.Single(x=>x.ComponentFileId==selected.PartComponentFileId);
+            float damage=hit.RawDamage*collider.FlameWeight*heavyTurretSource.FlameCoefficient;
+            if(!float.IsFinite(damage)||damage<=0||damage>10_000_000)
+                throw new InvalidDataException("Heavy Turret Flame damage escaped host bounds.");
+            if(ApplyHeavyTurretHostDamage(owner.Definition.PlayerId,group.Key,damage,"army-flame"))hits++;
+        }
+        return hits;
+    }
+
     private void ApplyHeavyTurretProjectileImpact(string shooterId,ulong entityId,float rawDamage,float partWeight,ulong projectileId)
     {
         if(partWeight!=1)throw new InvalidDataException("Invalid Heavy Turret projectile part weight.");

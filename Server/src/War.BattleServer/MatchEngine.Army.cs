@@ -2122,6 +2122,7 @@ public sealed partial class MatchEngine
             if(!Terminal)ApplyArmyFlameInfantryPulse(burst.EntityKey,origin,forward);
             if(!Terminal)ApplyArmyFlameVehiclePulse(burst.EntityKey,origin,forward);
             if(!Terminal)ApplyArmyFlameDecoyPulse(burst.EntityKey,origin,forward);
+            if(!Terminal)ApplyArmyFlameHeavyTurretPulse(burst.EntityKey,origin,forward);
             if(!Terminal)ApplyArmyFlameShieldPulse(burst.EntityKey,origin,forward,burst.ProjectileId);
             if(burst.Finished)armyFlameBursts.Remove(pair.Key);
             if(Terminal)return;
