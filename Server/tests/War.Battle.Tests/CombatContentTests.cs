@@ -1158,6 +1158,18 @@ internal static class CombatContentTests
         Check(bodyHit is {DynamicEntityId:77,DynamicPartId:var sourcePart,PlayerId:null}&&
               sourcePart==bodyTarget.PartComponentFileId&&bodyHit.SourcePath==bodyTarget.Hitbox.SourcePath,
               "player projectile ray selects the nearest source-pinned vehicle body collider");
+        var shotgunOrigin=bodyTarget.Hitbox.Center-Vector3.UnitZ*2;
+        var bodyOverlap=bodyWorld.OverlapEnemy(bodyShooter,shotgunOrigin,4,
+            1u<<bodyTarget.Layer);
+        Check(bodyOverlap.Any(x=>x.MainEntityId=="vehicle:77")&&
+              !bodyWorld.OverlapEnemy(bodyShooter,shotgunOrigin,4,0)
+                  .Any(x=>x.MainEntityId=="vehicle:77"),
+              "source-pinned opposing vehicle body enters shotgun sphere only through its prefab layer");
+        var bodyPlan=ShotgunShotPlanner.Plan(new ShotgunRule(50,3,10,10,100,false,false),
+            shotgunOrigin,bodyTarget.Hitbox.Center+Vector3.UnitX*.5f,bodyOverlap);
+        Check(bodyPlan.RealPellets.Any(x=>bodyOverlap.Any(y=>y.MainEntityId=="vehicle:77"&&
+              y.EntityId==x.EntityId)),
+              "source shotgun cone schedules a real pellet toward the placed vehicle body");
         var idlePassenger=content.GroundVehicleWeapons.PassengerPoses.Place("ID_UNIT-HUMVEE",
             humveeRig.Passengers[0],Vector3.Zero,Vector3.UnitZ,0);
         var breathingPassenger=content.GroundVehicleWeapons.PassengerPoses.Place("ID_UNIT-HUMVEE",

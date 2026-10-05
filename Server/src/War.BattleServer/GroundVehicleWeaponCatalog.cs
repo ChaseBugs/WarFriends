@@ -158,7 +158,8 @@ public sealed class GroundVehicleWeaponCatalog
             var axis=c.Axis==Vector3.Zero?Vector3.Zero:Vector3.Normalize(Vector3.Transform(c.Axis,facing));
             var hitbox=new PlayerHitbox($"{For(unitId).Prefab}#{part.PartComponentFileId}/{c.ColliderFileId}",
                 c.Kind,part.Weight,center,c.Size,rotation,c.Radius,axis,c.HalfSegment,true,true);
-            return new DynamicShotTarget(entityId,part.PartComponentFileId,part.Layer,hitbox);
+            return new DynamicShotTarget(entityId,part.PartComponentFileId,part.Layer,hitbox,
+                GroundVehicleBody:true);
         })).ToArray();
     }
 

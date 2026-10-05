@@ -6,7 +6,7 @@ namespace War.BattleServer;
 
 internal sealed record CollisionPlayer(string PlayerId, PlayerCollisionModel Pose);
 internal sealed record DynamicShotTarget(ulong EntityId,int PartComponentFileId,int Layer,PlayerHitbox Hitbox,
-    string? PassengerRole=null,int? RepairDronePathIndex=null,bool ArmyInfantry=false,bool Decoy=false,bool HeavyTurret=false,bool HelicopterGunner=false);
+    string? PassengerRole=null,int? RepairDronePathIndex=null,bool ArmyInfantry=false,bool Decoy=false,bool HeavyTurret=false,bool HelicopterGunner=false,bool GroundVehicleBody=false);
 internal sealed record ShotCollision(float Distance, Vector3 Position, string SourcePath, string? PlayerId, float PartWeight, bool Static = false,string? DynamicOwner=null,int? ColliderIndex=null,ulong? DynamicEntityId=null,int? DynamicPartId=null,string? DynamicPassengerRole=null,int? DynamicRepairDronePathIndex=null,bool DynamicArmyInfantry=false,bool DynamicDecoy=false,bool DynamicHeavyTurret=false,bool DynamicHelicopterGunner=false);
 
 // Input poses come exclusively from host animation/pose authority. This class has
@@ -95,11 +95,16 @@ internal sealed class ShotCollisionWorld
             {
                 if(target==null||target.EntityId==0||target.Layer is <0 or >31||target.Hitbox==null)
                     throw new InvalidDataException("Invalid shotgun dynamic overlap authority.");
-                // Decoys and animated infantry own opposing DestroyableObject colliders.
-                // Other dynamic families need their own source collider/owner proof.
-                if(!(target.Decoy||target.ArmyInfantry)||(layerMask&(1u<<target.Layer))==0||
+                // Source vehicle body parts, Decoys, and infantry own opposing
+                // DestroyableObject colliders. Passenger/drone/body roles differ.
+                bool vehicleBody=target.GroundVehicleBody&&target.PartComponentFileId>0&&
+                    !target.HeavyTurret&&!target.Decoy&&!target.ArmyInfantry&&
+                    target.PassengerRole==null&&target.RepairDronePathIndex==null&&
+                    !target.HelicopterGunner;
+                if(!(target.Decoy||target.ArmyInfantry||vehicleBody)||
+                   (layerMask&(1u<<target.Layer))==0||
                    !target.Hitbox.OverlapsSphere(origin,radius))continue;
-                string identity=(target.Decoy?"decoy:":"infantry:")+target.EntityId;
+                string identity=(target.Decoy?"decoy:":target.ArmyInfantry?"infantry:":"vehicle:")+target.EntityId;
                 string collider=identity+":"+target.Hitbox.SourcePath;
                 result.Add(new ShotgunCollider(Convert.ToHexStringLower(SHA256.HashData(
                     Encoding.UTF8.GetBytes(collider))),identity,target.Hitbox.Center,true));
