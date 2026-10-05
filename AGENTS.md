@@ -2,6 +2,8 @@
 
 ## Current server rebuild — 2026-09-19
 
+- The owner wants BattleServer code to be understandable to beginners. For new or edited Server code, prefer descriptive names, short methods, explicit steps and ordinary control flow over compressed one-line statements. Explain recovered Client rules at the point where they affect server authority. Keep tests readable enough to show the setup, action, and expected result without decoding dense expressions.
+
 - The owner explicitly authorized Battle Server **with Client implementation**. This permits deliberate Photon-replacement integration in the active 1.4.0 Client. Preserve existing gameplay/asset identities and concurrent library changes. The new `SelfHostedBattleClient` adapter and SDK are not yet connected to normal battle controllers; do not describe SDK tests as full gameplay verification. See `Server/docs/BATTLE_SERVER.md` for the current verified boundary.
 
 - The owner confirms Client recovery is complete. Current work is Server reconstruction from the recovered Client, not further Client recovery. Treat the active Client's gameplay logic, data, request builders, response parsers, callback order, and rollback behavior as the behavioral specification; inspect that evidence before implementing each Server feature. Preserve server authority over outcomes and economy, document genuinely absent server-only rules explicitly, and do not change Client behavior merely to fit a new Server design. Historical recovery observations below are provenance, not an active recovery backlog.

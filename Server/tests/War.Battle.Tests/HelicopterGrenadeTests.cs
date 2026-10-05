@@ -106,7 +106,8 @@ internal static class HelicopterGrenadeTests
             }
             Check(helicopter is {HelicopterStopTick:>0,HelicopterGunnerHealth:>0},
                 "UDP roster carries live source gunner after Helicopter stop");
-            float initial=helicopter!.HelicopterGunnerHealth;
+            float initialGunnerHealth=helicopter!.HelicopterGunnerHealth;
+            float initialBodyHealth=helicopter.Health;
             var q=helicopter.HelicopterRotation!;
             var seat=content.HelicopterCrewPoints.PlaceTurret(new(helicopter.X,helicopter.Y,helicopter.Z),
                 new Quaternion(q.X,q.Y,q.Z,q.W));
@@ -115,20 +116,36 @@ internal static class HelicopterGrenadeTests
                 .Single(x=>x.Weight==1.5f).Center+new Vector3(0,1.5f,0);
             Check((await Mutate(a,()=>a.GrenadeLauncherThrowAsync(target.X,target.Y,target.Z,timeout.Token)))
                 .Code=="grenade-throwing","authenticated M320 click targets current gunner");
-            float leftHealth=initial,rightHealth=initial;uint hits=0;
+            float firstPeerGunnerHealth=initialGunnerHealth;
+            float secondPeerGunnerHealth=initialGunnerHealth;
+            float firstPeerBodyHealth=initialBodyHealth;
+            float secondPeerBodyHealth=initialBodyHealth;
+            uint hits=0;
             var damageWatch=System.Diagnostics.Stopwatch.StartNew();
-            while(damageWatch.Elapsed<TimeSpan.FromSeconds(30)&&leftHealth>=initial)
+            while(damageWatch.Elapsed<TimeSpan.FromSeconds(30)&&
+                  firstPeerGunnerHealth>=initialGunnerHealth)
             {
                 await Task.Delay(150,timeout.Token);
                 var rows=await Read(()=>a.FetchArmyEntitiesAsync(timeout.Token));
-                leftHealth=rows.Single(x=>x.EntityKey==helicopter.EntityKey).HelicopterGunnerHealth;
+                var observed=rows.Single(x=>x.EntityKey==helicopter.EntityKey);
+                firstPeerGunnerHealth=observed.HelicopterGunnerHealth;
+                firstPeerBodyHealth=observed.Health;
             }
-            rightHealth=(await Read(()=>b.FetchArmyEntitiesAsync(timeout.Token)))
-                .Single(x=>x.EntityKey==helicopter.EntityKey).HelicopterGunnerHealth;
+            var secondPeerState=(await Read(()=>b.FetchArmyEntitiesAsync(timeout.Token)))
+                .Single(x=>x.EntityKey==helicopter.EntityKey);
+            secondPeerGunnerHealth=secondPeerState.HelicopterGunnerHealth;
+            secondPeerBodyHealth=secondPeerState.Health;
             hits=(await Read(()=>a.PollAsync(timeout.Token))).Snapshot.Players
                 .Single(x=>x.PlayerId==one).ConfirmedEnemyHits;
-            Check(leftHealth<initial&&rightHealth<initial&&hits>0,
-                $"real UDP M320 impact damages one source gunner for both peers ({leftHealth}/{rightHealth}/{initial}, hits={hits})");
+            float expectedBodyDamage=content.Grenades.Stage("Google2u.GrenadeLauncher_M320",0)
+                .ExplosionDamage;
+            bool bothPeersSawGunnerDamage=firstPeerGunnerHealth<initialGunnerHealth&&
+                secondPeerGunnerHealth<initialGunnerHealth;
+            bool bothPeersAgreeOnBodyHealth=Math.Abs(firstPeerBodyHealth-secondPeerBodyHealth)<.001f;
+            bool bodyTookOneExplosion=Math.Abs(
+                initialBodyHealth-firstPeerBodyHealth-expectedBodyDamage)<.01f;
+            Check(bothPeersSawGunnerDamage&&bothPeersAgreeOnBodyHealth&&bodyTookOneExplosion&&hits>0,
+                $"real UDP M320 impact damages one source gunner and body for both peers (gunner={firstPeerGunnerHealth}/{secondPeerGunnerHealth}/{initialGunnerHealth}, body={firstPeerBodyHealth}/{secondPeerBodyHealth}/{initialBodyHealth}, hits={hits})");
             async Task<ulong?> Impact(MatchConnection peer)
             {
                 var consumer=new MatchEventConsumer();ulong? found=null;
@@ -199,7 +216,8 @@ internal static class HelicopterGrenadeTests
         }
         Check(helicopter is {HelicopterStopTick:>0,HelicopterGunnerHealth:>0},
             "live Helicopter gunner remains available after source stop");
-        float initial=helicopter!.HelicopterGunnerHealth;
+        float initialGunnerHealth=helicopter!.HelicopterGunnerHealth;
+        float initialBodyHealth=helicopter.Health;
         var q=helicopter.HelicopterRotation!;
         var seat=content.HelicopterCrewPoints.PlaceTurret(new(helicopter.X,helicopter.Y,helicopter.Z),
             new Quaternion(q.X,q.Y,q.Z,q.W));
@@ -214,7 +232,7 @@ internal static class HelicopterGrenadeTests
         {
             match.Advance(++tick);
             helicopter=match.ArmyEntityBatch(one,0,0).Entities.Single(x=>x.EntityKey==helicopter.EntityKey);
-            damaged=helicopter.HelicopterGunnerHealth<initial;
+            damaged=helicopter.HelicopterGunnerHealth<initialGunnerHealth;
         }
         ulong cursor=0;var finalEvents=new List<string>();
         while(true)
@@ -228,8 +246,13 @@ internal static class HelicopterGrenadeTests
             if(page.Events.Count==0||page.Events[^1].EventId==page.LatestEventId)break;
             cursor=page.Events[^1].EventId;
         }
-        Check(impact&&damaged&&match.Snapshot().Players.Single(x=>x.PlayerId==one).ConfirmedEnemyHits>0,
-            $"real host M320 flight explodes near gunner and changes authoritative health: impact={impact} damaged={damaged} terminal={match.Terminal} health={helicopter.HelicopterGunnerHealth}/{initial} shots={match.Snapshot().Players.Single(x=>x.PlayerId==one).ShotsFired} events={string.Join(';',finalEvents)} target={target}");
+        float expectedBodyDamage=content.Grenades.Stage("Google2u.GrenadeLauncher_M320",0)
+            .ExplosionDamage;
+        bool bodyTookOneExplosion=Math.Abs(
+            initialBodyHealth-helicopter.Health-expectedBodyDamage)<.01f;
+        Check(impact&&damaged&&bodyTookOneExplosion&&
+              match.Snapshot().Players.Single(x=>x.PlayerId==one).ConfirmedEnemyHits>0,
+            $"real host M320 flight explodes near gunner and changes authoritative health: impact={impact} damaged={damaged} terminal={match.Terminal} health={helicopter.HelicopterGunnerHealth}/{initialGunnerHealth} body={helicopter.Health}/{initialBodyHealth} shots={match.Snapshot().Players.Single(x=>x.PlayerId==one).ShotsFired} events={string.Join(';',finalEvents)} target={target}");
         return checks;
     }
 }
