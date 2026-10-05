@@ -197,7 +197,8 @@ public sealed class BattleCombatContent
             poses.AttachGrenadeMuzzles(grenades);grenadeRevision=Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes("WarFriends/grenade-combat/v2\n"+revision+"\n"+grenades.PackageRevision+"\n"+GrenadeShotTargetCatalog.VerifiedRevision)));
         }
         string? mixedRevision=shotguns!=null&&smgs!=null&&pistols!=null&&lmgs!=null&&minigun!=null&&snipers!=null ? Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(
-            "WarFriends/mixed-combat/v5\n"+revision+"\n"+shotguns.PackageRevision+"\n"+smgs.PackageRevision+"\n"+pistols.PackageRevision+"\n"+lmgs.PackageRevision+"\n"+minigun.PackageRevision+"\n"+snipers.PackageRevision))) : null;
+            (bazookas==null?"WarFriends/mixed-combat/v5\n":"WarFriends/mixed-combat/v6\n")+revision+"\n"+shotguns.PackageRevision+"\n"+smgs.PackageRevision+"\n"+pistols.PackageRevision+"\n"+lmgs.PackageRevision+"\n"+minigun.PackageRevision+"\n"+snipers.PackageRevision+
+            (bazookas==null?"":"\n"+bazookas.PackageRevision)))) : null;
         return new BattleCombatContent(stats,bindings,allWeaponBindings,poses,revision,maps,shotguns,shotgunRevision,smgs,smgRevision,pistols,pistolRevision,lmgs,lmgRevision,minigun,minigunRevision,snipers,sniperRevision,bazookas,bazookaRevision,grenades,grenadeRevision,mixedRevision,shields,barrels,barrelPolicy,explosions,barrelOverlap,army,armyWeapons,groundVehicleWeapons,enemyPoses,decoys,landMines,heavyTurrets,armySpawnPoints,armyRusherPoints,armyMinigunnerPoints,playerShotTargets,armyNavMeshes,armyNavMeshGeometry,armyNavMeshPaths,armyNavMeshConnectivity,airWaypoints,droneWeapon,droneColliders,helicopterBodyColliders,airShotTargets,helicopterCrewPoints,droneProjectile,enemyShotTargets)
         {HelicopterGunnerExplosions=helicopterGunnerExplosions,
             GrenadeShotTargets=grenadeShotTargets};

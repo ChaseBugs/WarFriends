@@ -65,11 +65,11 @@ dotnet run --project Server/tests/War.Battle.Tests/War.Battle.Tests.csproj -c Re
 
 Set `Battle__MatchManifestTemplatePath` to this file and configure both Backend and Worker with the pinned shotgun content manifest for local shotgun-only matchmaking. The allocator rejects any participant whose equipped slots include a non-shotgun weapon.
 
-`local-mixed-match-template.json` is a reviewed City template with eight source-backed slots spanning rifles, SMGs, pistols, LMGs, minigun, sniper, and shotgun. Regenerate and validate it with:
+`local-mixed-match-template.json` is a reviewed City template with eight source-backed slots spanning rifle, SMG, bazooka, pistol, LMG, minigun, sniper, and shotgun. Regenerate and validate it with:
 
 ```powershell
 dotnet run --project Server/tests/War.Battle.Tests/War.Battle.Tests.csproj -c Release -- --write-mixed-template Server/content/local-mixed-match-template.json
 dotnet run --project Server/tests/War.Battle.Tests/War.Battle.Tests.csproj -c Release -- --allocator-mixed-only
 ```
 
-Set `Battle__MatchManifestTemplatePath` to this file and configure both Backend and Worker with the pinned shotgun, SMG, pistol, LMG, minigun, and sniper content manifests. Bazooka content is optional for mixed allocation and required if either durable loadout equips one. The Backend uses the Worker's pinned catalog library to derive every durable slot, rejecting an unknown source, wrong recovered inventory index, or invalid upgrade before changing the participant manifest. Backend and Worker remain separate processes. These checks do not prove a complete normal Client match.
+Set `Battle__MatchManifestTemplatePath` to this file and configure both Backend and Worker with the pinned shotgun, SMG, pistol, LMG, minigun, sniper, and bazooka content manifests. The bazooka package now changes the mixed revision, so a Worker without it rejects this template before admission. The Backend uses the Worker's pinned catalog library to derive every durable slot, rejecting an unknown source, wrong recovered inventory index, or invalid upgrade before changing the participant manifest. Backend and Worker remain separate processes. These checks do not prove a complete normal Client match.

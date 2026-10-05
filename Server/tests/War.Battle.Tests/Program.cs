@@ -34,12 +34,38 @@ if(args is ["--allocator-mixed-only"])
         Path.Combine(directory,"pistol-content-manifest.json"),Path.Combine(directory,"lmg-content-manifest.json"),
         Path.Combine(directory,"minigun-content-manifest.json"),Path.Combine(directory,"sniper-content-manifest.json"),
         Path.Combine(directory,"bazooka-content-manifest.json"));
+    var withoutBazooka=BattleCombatContent.Load(Path.Combine(directory,"combat-content-manifest.json"),
+        Path.Combine(directory,"shotgun-content-manifest.json"),Path.Combine(directory,"smg-content-manifest.json"),
+        Path.Combine(directory,"pistol-content-manifest.json"),Path.Combine(directory,"lmg-content-manifest.json"),
+        Path.Combine(directory,"minigun-content-manifest.json"),Path.Combine(directory,"sniper-content-manifest.json"));
+    if(content.MixedRevision==withoutBazooka.MixedRevision)
+        throw new Exception("Optional bazooka authority did not change the mixed package revision.");
     var catalog=new BattleMixedManifestCatalog(content);
     var factory=new BattleManifestFactory(File.ReadAllBytes(Path.Combine(directory,"local-mixed-match-template.json")),null!,null!,catalog);
+    try {withoutBazooka.ValidateAllocation(MatchManifest.Read(Path.Combine(directory,"local-mixed-match-template.json")));
+        throw new Exception("Mixed bazooka template was admitted without its source package.");}
+    catch(InvalidDataException){}
+    var allocation=MatchManifest.Read(Path.Combine(directory,"local-mixed-match-template.json"));
+    var city=content.Maps.Single(x=>x.SourceHash==allocation.MapRevision);
+    var live=new MatchEngine(allocation,city,content);
+    foreach(var player in allocation.Players)if(!live.Admit(player.PlayerId))throw new Exception("Mixed bazooka player was not admitted.");
+    foreach(var player in allocation.Players)
+        if(live.Command(player.PlayerId,new MatchCommand{CommandId=1,Ready=new ReadyCommand{ManifestHash=live.ManifestHash}}).Code!="ready")
+            throw new Exception("Mixed bazooka player was not ready.");
+    live.Advance(60);
+    if(live.Command(allocation.Players[0].PlayerId,new MatchCommand{CommandId=2,
+        SwitchWeapon=new SwitchWeaponCommand{Slot=2}}).Code!="weapon-selected")
+        throw new Exception("Mixed RPG-7 slot could not be selected.");
+    var aim=live.CombatPose(allocation.Players[1].PlayerId).Collision.Parts[1].Center;
+    if(live.Command(allocation.Players[0].PlayerId,new MatchCommand{CommandId=3,BazookaHold=new BazookaHoldCommand
+        {Pressed=true,TargetX=aim.X,TargetY=aim.Y,TargetZ=aim.Z}}).Code!="bazooka-targeting")
+        throw new Exception("Mixed RPG-7 did not enter its source hold mode.");
+    for(ulong tick=61;tick<160&&!live.Terminal&&live.Snapshot().Players[0].ShotsFired==0;tick++)live.Advance(tick);
+    if(live.Snapshot().Players[0].ShotsFired!=1)throw new Exception("Mixed RPG-7 did not launch a host-owned missile.");
     var weapons=new[]{
         new BattleWeaponPresentation(0,11,"Google2u.AssaultRifle_AK47",0),
         new BattleWeaponPresentation(1,18,"Google2u.SMG_CPW",0),
-        new BattleWeaponPresentation(2,35,"Google2u.SMG_P90",0),
+        new BattleWeaponPresentation(2,3,"Google2u.Bazooka_RPG7",0),
         new BattleWeaponPresentation(3,0,"Google2u.Pistol_DesertEagle",0),
         new BattleWeaponPresentation(4,16,"Google2u.LMG_M249",0),
         new BattleWeaponPresentation(5,25,"Google2u.LMG_Minigun",0),
@@ -387,7 +413,7 @@ if(args is ["--write-mixed-template",var mixedOutputPath])
         Path.Combine(directory,"bazooka-content-manifest.json"));
     var map=content.Maps.Single(m=>m.Source.Contains("City_Multiplayer",StringComparison.Ordinal));
     var covers=new[]{map.Covers.First(c=>c.Main&&c.Fraction==1),map.Covers.First(c=>c.Main&&c.Fraction==2)};
-    string[] sources=["Google2u.AssaultRifle_AK47","Google2u.SMG_CPW","Google2u.SMG_P90",
+    string[] sources=["Google2u.AssaultRifle_AK47","Google2u.SMG_CPW","Google2u.Bazooka_RPG7",
         "Google2u.Pistol_DesertEagle","Google2u.LMG_M249","Google2u.LMG_Minigun",
         "Google2u.SniperRifle_M24","Google2u.Shotgun_SPAS"];
     var slots=sources.Select((id,slot)=>new WeaponSlotManifest(slot,content.AllWeaponBindings.Get(id).InventoryIndex,
