@@ -300,18 +300,24 @@ public sealed class TerminalOutbox
         if(snapshot.CardUsage.Count>WarCardEffectCatalog.All.Count*2)
             throw new InvalidDataException("Terminal card usage exceeds its source catalog.");
         var usageByOwner=snapshot.Players.ToDictionary(p=>p.PlayerId,_=>0UL,StringComparer.Ordinal);
-        string previousOwner="",previousCard="";
+        string previousOwner="",previousCard="",previousSource="";
         ulong usageTotal=0;
         foreach(var usage in snapshot.CardUsage)
         {
-            if(!usageByOwner.ContainsKey(usage.OwnerPlayerId) ||
+            bool validSource;
+            try {validSource=WarCardSourceIdentityCatalog.Resolve(usage.CardId,usage.SourceCardId)==usage.SourceCardId;}
+            catch(InvalidDataException){validSource=false;}
+            if(!usageByOwner.ContainsKey(usage.OwnerPlayerId) || !validSource ||
                !WarCardEffectCatalog.TryGet(usage.CardId,out _) || usage.Count is <1 or >4096 ||
                (previousOwner.Length!=0 && (string.CompareOrdinal(usage.OwnerPlayerId,previousOwner)<0 ||
-                   (usage.OwnerPlayerId==previousOwner && string.CompareOrdinal(usage.CardId,previousCard)<=0))))
+                   (usage.OwnerPlayerId==previousOwner &&
+                    (string.CompareOrdinal(usage.CardId,previousCard)<0 ||
+                     (usage.CardId==previousCard &&
+                      string.CompareOrdinal(usage.SourceCardId,previousSource)<=0))))))
                 throw new InvalidDataException("Invalid terminal card usage row.");
             usageByOwner[usage.OwnerPlayerId]+=usage.Count;
             usageTotal+=usage.Count;
-            previousOwner=usage.OwnerPlayerId;previousCard=usage.CardId;
+            previousOwner=usage.OwnerPlayerId;previousCard=usage.CardId;previousSource=usage.SourceCardId;
         }
         if(usageTotal!=snapshot.CardActivations ||
            snapshot.Players.Any(p=>usageByOwner[p.PlayerId]!=p.ConfirmedCardsPlayed))

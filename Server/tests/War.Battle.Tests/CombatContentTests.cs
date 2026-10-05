@@ -2347,10 +2347,16 @@ internal static class CombatContentTests
                   !ownedCards.RecordCard(cardReceipt,firstCardOwner,"CardDecoy")&&
                   ownedCards.CardActivationsFor(firstCardOwner)==1&&
                   ownedCards.CardActivationsFor(secondCardOwner)==0&&
-                  ownedCards.CardUsageSnapshot().Single()==new BattlePerformanceLedger.CardUsage(firstCardOwner,"CardDecoy",1),
+                  ownedCards.CardUsageSnapshot().Single()==new BattlePerformanceLedger.CardUsage(firstCardOwner,"CardDecoy","DECOY",1),
                   "accepted card activation retains its player owner on replay");
             Reject(()=>ownedCards.RecordCard(cardReceipt,secondCardOwner,"CardDecoy"));
             Reject(()=>ownedCards.RecordCard(cardReceipt,firstCardOwner,"CardLandmine"));
+            Check(WarCardSourceIdentityCatalog.All.Count==23&&
+                  WarCardSourceIdentityCatalog.Resolve("CardHeavyTurret")=="HEAVYTURRET"&&
+                  WarCardSourceIdentityCatalog.Resolve("CardSpawnUnit","ELITEPARA")=="ELITEPARA",
+                  "recovered card class and serialized source identities stay distinct");
+            Reject(()=>WarCardSourceIdentityCatalog.Resolve("CardSpawnUnit"));
+            Reject(()=>WarCardSourceIdentityCatalog.Resolve("CardSpawnUnit","DECOY"));
             var boundedPerformance=new BattlePerformanceLedger(1);
             boundedPerformance.RecordCard("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb");
             Reject(()=>boundedPerformance.RecordObjective("cccccccccccccccccccccccccccccccc"));
@@ -3553,7 +3559,8 @@ internal static class CombatContentTests
         Check(turretDuel.Terminal&&duelTerminal.CardActivations==2&&
               duelTerminal.Players.All(p=>p.ConfirmedCardsPlayed==1)&&
               duelTerminal.CardUsage.Count==2&&
-              duelTerminal.CardUsage.All(row=>row.CardId=="CardHeavyTurret"&&row.Count==1&&
+              duelTerminal.CardUsage.All(row=>row.CardId=="CardHeavyTurret"&&
+                  row.SourceCardId=="HEAVYTURRET"&&row.Count==1&&
                   duelTerminal.Players.Any(p=>p.PlayerId==row.OwnerPlayerId)),
               "terminal card statistics retain one accepted activation for each authenticated player");
         var detached=MatchManifest.Validate(armyManifest);

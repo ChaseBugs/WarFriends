@@ -2,7 +2,8 @@ using System.Numerics;
 
 namespace War.BattleServer;
 
-public readonly record struct WarCardEffectRequest(string CardId,Vector3 Target,float DurationSeconds,int Parameter);
+public readonly record struct WarCardEffectRequest(string CardId,Vector3 Target,float DurationSeconds,int Parameter,
+    string? SourceCardId=null);
 
 public static class WarCardEffectRequestValidator
 {
@@ -15,6 +16,7 @@ public static class WarCardEffectRequestValidator
            definition.Kind is WarCardEffectKind.Status or WarCardEffectKind.Modifier && request.DurationSeconds<=0||
            definition.RequiresTarget&&request.Target==Vector3.Zero)
             throw new InvalidDataException("Invalid War Card effect request.");
+        WarCardSourceIdentityCatalog.Resolve(request.CardId,request.SourceCardId);
         return definition;
     }
 }

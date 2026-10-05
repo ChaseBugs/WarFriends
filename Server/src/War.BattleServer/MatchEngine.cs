@@ -169,7 +169,7 @@ public sealed partial class MatchEngine
             if (reserved) cardReservations!.TryRelease(effectId,ownerPlayerId);
             return false;
         }
-        performance.RecordCard(effectId,ownerPlayerId,request.CardId);
+        performance.RecordCard(effectId,ownerPlayerId,request.CardId,request.SourceCardId);
         stateRevision++;
         Emit(MatchEventKind.CardEffectApplied, ownerPlayerId, request.CardId, 0,
             request.Target, 0, effectId);
@@ -2061,7 +2061,7 @@ public sealed partial class MatchEngine
         if (Terminal) snapshot.PerformanceStartTick = performance.StartTick;
         snapshot.PerformanceDurationTicks = performance.DurationTicks;
         if(Terminal) snapshot.CardUsage.AddRange(performance.CardUsageSnapshot().Select(row=>new BattleCardUsage
-        {OwnerPlayerId=row.OwnerPlayerId,CardId=row.CardId,Count=(uint)row.Count}));
+        {OwnerPlayerId=row.OwnerPlayerId,CardId=row.CardId,SourceCardId=row.SourceCardId,Count=(uint)row.Count}));
         snapshot.Projectiles.AddRange(grenadeProjectiles.OrderBy(x=>x.Key).Select(x=>new BattleProjectileState
         {
             ProjectileId=x.Key,OwnerPlayerId=x.Value.Flight.OwnerId,
