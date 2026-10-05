@@ -2120,6 +2120,7 @@ public sealed partial class MatchEngine
                     burst.ProjectileId,origin,result?.Health??victim.Health,"army-flame");
             }
             if(!Terminal)ApplyArmyFlameInfantryPulse(burst.EntityKey,origin,forward);
+            if(!Terminal)ApplyArmyFlameDronePulse(burst.EntityKey,origin,forward);
             if(!Terminal)ApplyArmyFlameVehiclePulse(burst.EntityKey,origin,forward);
             if(!Terminal)ApplyArmyFlameDecoyPulse(burst.EntityKey,origin,forward);
             if(!Terminal)ApplyArmyFlameHeavyTurretPulse(burst.EntityKey,origin,forward);
@@ -2157,6 +2158,37 @@ public sealed partial class MatchEngine
                 throw new InvalidDataException("Army flame infantry lacks current collision authority.");
             var hit=ArmyFlameBurst.ResolveParts(origin,forward,infantryPose.Parts,sourceDamage);
             if(hit!=null&&hit.RawDamage>0&&ApplyArmyHostDamage(targetId,hit.RawDamage))hits++;
+        }
+        return hits;
+    }
+
+    internal int ApplyArmyFlameDronePulse(ulong sourceEntityKey,Vector3 origin,Vector3 forward)
+    {
+        if(phase!=BattlePhase.Running||!activeArmyEntities.TryGetValue(sourceEntityKey,out var source)||
+           source.UnitId!="ID_UNIT-FLAMETHROWER"||!PlayerHitbox.Finite(origin)||
+           !PlayerHitbox.Finite(forward)||forward.LengthSquared()<1e-10f)
+            throw new InvalidDataException("Invalid army Flame Drone pulse authority.");
+        if(droneColliders==null)return 0;
+        var owner=Find(source.OwnerPlayerId)??
+            throw new InvalidDataException("Army Flame Drone source lacks an owner.");
+        float sourceDamage=ArmyDamage(sourceEntityKey)??
+            throw new InvalidDataException("Army Flame lacks trusted damage.");
+        if(!float.IsFinite(sourceDamage)||sourceDamage<0||sourceDamage>10_000_000)
+            throw new InvalidDataException("Invalid army Flame source damage.");
+        int hits=0;
+        foreach(var drone in activeArmyEntities.Values.Where(x=>x.UnitId=="ID_UNIT-DRONE")
+            .OrderBy(x=>x.EntityKey).ToArray())
+        {
+            if(drone.OwnerPlayerId==source.OwnerPlayerId||drone.OwnerFraction==owner.Definition.Fraction)continue;
+            var q=drone.DroneRotation??
+                throw new InvalidDataException("Flame Drone lost its host rotation.");
+            var colliders=droneColliders.Place(new(drone.X,drone.Y,drone.Z),
+                new(q.X,q.Y,q.Z,q.W));
+            var root=colliders.Single(x=>x.RootOwned&&x.ComponentFileId==6544804);
+            var hit=ArmyFlameBurst.ResolveParts(origin,forward,[root.Hitbox],sourceDamage);
+            if(hit!=null&&hit.RawDamage>0&&
+               ApplyArmyHostDamage(drone.EntityKey,hit.RawDamage*DroneColliderCatalog.FlameCoefficient))
+                hits++;
         }
         return hits;
     }

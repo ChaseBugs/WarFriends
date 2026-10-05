@@ -7,6 +7,8 @@ public sealed record DroneCollider(int ComponentFileId,int SerializedLayer,bool 
 public sealed class DroneColliderCatalog
 {
     public const string VerifiedInventoryRevision="c88fd3e31e56261e094799fafb306be1bf2838b0d513753221afa2adaeaba319";
+    // dronePrototype.prefab root DestroyableObject serializes shotCoeficient: 1.
+    public const float FlameCoefficient=1f;
     public string Revision=>VerifiedInventoryRevision;
     private readonly Vector3 center,size;
     private readonly float radius;
@@ -22,7 +24,15 @@ public sealed class DroneColliderCatalog
         var unit=doc.RootElement.GetProperty("units").EnumerateArray().Single(u=>u.GetProperty("unitId").GetString()=="ID_UNIT-DRONE");
         if(unit.GetProperty("sha256").GetString()!="c2afc19487462e6163ad107267ef1b35c9c86fb34fa80898135b1d25f4a872a3")
             throw new InvalidDataException("Drone collider prefab identity mismatch.");
+        var damageRoot=unit.GetProperty("components").EnumerateArray()
+            .Single(c=>c.GetProperty("scriptType").GetString()=="DestroyableObject");
+        if(damageRoot.GetProperty("componentFileId").GetInt32()!=11434467||
+           damageRoot.GetProperty("gameObjectFileId").GetInt32()!=147589)
+            throw new InvalidDataException("Drone Flame damage root changed.");
         var box=unit.GetProperty("colliders")[0];var sphere=unit.GetProperty("colliders")[1];
+        if(box.GetProperty("gameObjectFileId").GetInt32()!=147589||
+           sphere.GetProperty("gameObjectFileId").GetInt32()==147589)
+            throw new InvalidDataException("Drone Flame collider ownership changed.");
         Vector3 V(JsonElement v)=>new(v[0].GetSingle(),v[1].GetSingle(),v[2].GetSingle());
         return new(V(box.GetProperty("restCenter")),V(box.GetProperty("localSize")),sphere.GetProperty("localRadius").GetSingle());
     }

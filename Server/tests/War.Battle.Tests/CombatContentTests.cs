@@ -3600,6 +3600,48 @@ internal static class CombatContentTests
             flameVehicleOrigin,-Vector3.UnitZ);
         Check(flameVehicleMatch.ArmyHealth(flameVehicleTarget.EntityKey)==vehicleAfter,
             "vehicle Flame rejects a rear-facing cone before changing shared health");
+        var flameDroneManifest=flameManifest with {MatchId="army-flame-drone",
+            Players=[flameManifest.Players[0],flameManifest.Players[1] with
+            {
+                EquippedArmyUnitIds=["ID_UNIT-DRONE"],ArmyNormalUpgradeIndexes=[0],
+                ArmySpecialUpgradeIndexes=[-1],ArmyEliteUpgradeIndexes=[-1],
+                ArmyHealthFactors=[new(1f,1f)],ArmyDamageScales=[1f],
+                ArmySpeedCoefficients=[1f],ArmyAccuracyCoefficients=[1f]
+            }]};
+        content.ValidateAllocation(flameDroneManifest);
+        var flameDroneMatch=new MatchEngine(flameDroneManifest,content:content,armyChoice:_=>0);
+        flameDroneMatch.Admit(soldierOwner);flameDroneMatch.Admit(helicopterOwner);
+        flameDroneMatch.Command(soldierOwner,new(){CommandId=1,
+            Ready=new(){ManifestHash=flameDroneMatch.ManifestHash}});
+        flameDroneMatch.Command(helicopterOwner,new(){CommandId=1,
+            Ready=new(){ManifestHash=flameDroneMatch.ManifestHash}});
+        flameDroneMatch.Advance(60);
+        Check(flameDroneMatch.Command(soldierOwner,new(){CommandId=2,DeployArmy=new()
+            {OptionIndex=flameDroneMatch.ArmyBatch(soldierOwner).OptionIndexes[0]}}).Code=="army-deploying"&&
+              flameDroneMatch.Command(helicopterOwner,new(){CommandId=2,DeployArmy=new()
+            {OptionIndex=flameDroneMatch.ArmyBatch(helicopterOwner).OptionIndexes[0]}}).Code=="army-deploying",
+            "opposing Flamethrower and Drone deploy from trusted allocations");
+        for(ulong flameDroneTick=61;flameDroneTick<=75;flameDroneTick++)
+            flameDroneMatch.Advance(flameDroneTick);
+        var flameDroneRows=flameDroneMatch.ArmyEntityBatch(soldierOwner,0,0).Entities;
+        var flameDroneSource=flameDroneRows.Single(x=>x.OwnerPlayerId==soldierOwner);
+        var flameDroneTarget=flameDroneRows.Single(x=>x.OwnerPlayerId==helicopterOwner);
+        var flameDroneBoxes=flameDroneMatch.GroundVehicleShotTargets(soldierOwner)
+            .Where(x=>x.EntityId==flameDroneTarget.EntityKey).ToArray();
+        var flameDroneRoot=flameDroneBoxes.Single(x=>x.PartComponentFileId==6544804);
+        Check(flameDroneBoxes.Length==2&&
+              flameDroneBoxes.Single(x=>x.PartComponentFileId==13511718).Layer==8&&
+              DroneColliderCatalog.FlameCoefficient==1,
+            "source Drone Flame authority belongs to the root box, not its child sphere");
+        Vector3 flameDroneOrigin=flameDroneRoot.Hitbox.Center-Vector3.UnitZ;
+        float droneExpected=ArmyFlameBurst.ResolveParts(flameDroneOrigin,Vector3.UnitZ,
+            [flameDroneRoot.Hitbox],flameDroneMatch.ArmyDamage(flameDroneSource.EntityKey)!.Value)!.RawDamage;
+        float droneBefore=flameDroneMatch.ArmyHealth(flameDroneTarget.EntityKey)!.Value;
+        Check(flameDroneMatch.ApplyArmyFlameDronePulse(flameDroneSource.EntityKey,
+                  flameDroneOrigin,Vector3.UnitZ)==1&&
+              Math.Abs(droneBefore-flameDroneMatch.ArmyHealth(flameDroneTarget.EntityKey)!.Value-
+                  droneExpected)<.001f,
+            "one Flame pulse damages the opposing Drone root by its source coefficient-one amount");
         var flameDecoyManifest=flameManifest with {MatchId="army-flame-decoy",
             SceneMasterPlayerId=soldierOwner,
             Players=flameManifest.Players.Select(p=>p with {PlayerLevel=22}).ToArray()};
