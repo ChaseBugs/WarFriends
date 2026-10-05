@@ -17,6 +17,9 @@ using War.Protocol.Transport;
 using War.Shared;
 using War.Persistence;
 
+if(args is ["--manifest-snapshot-only",var snapshotMongoUri])
+{await BattleManifestSnapshotTests.Run(snapshotMongoUri);return;}
+
 if(args is ["--allocator-mixed-only"])
 {
     var root=new DirectoryInfo(AppContext.BaseDirectory);

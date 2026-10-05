@@ -86,6 +86,13 @@ public sealed class BattleMatchQueueStore
         existingPair=await PairFor(playerId,ct);
         return existingPair==null?new("waiting",null,null):Result("paired",existingPair);
     }
+    public async Task<BattlePairingResult?> Existing(string playerId,CancellationToken ct)
+    {
+        if(!Guid.TryParseExact(playerId,"N",out _) || playerId!=playerId.ToLowerInvariant())
+            throw new InvalidDataException("Invalid matchmaking player identity.");
+        var pair=await PairFor(playerId,ct);
+        return pair==null?null:Result("paired",pair);
+    }
     public async Task<string> Cancel(string playerId,DateTimeOffset now,CancellationToken ct)
     {
         Validate(playerId,"cancel",now);

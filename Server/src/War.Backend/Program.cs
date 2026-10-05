@@ -19,6 +19,7 @@ builder.Services.AddSingleton(new AccountStore(mongoUri, mongoDatabase));
 builder.Services.AddSingleton(new BattleAllocationStore(mongoUri, mongoDatabase));
 builder.Services.AddSingleton(new BattleGrantStore(mongoUri, mongoDatabase));
 builder.Services.AddSingleton(new BattleMatchQueueStore(mongoUri, mongoDatabase));
+builder.Services.AddSingleton(new BattleManifestSnapshotStore(mongoUri, mongoDatabase));
 builder.Services.AddSingleton(new BattleResultStore(mongoUri, mongoDatabase));
 builder.Services.AddSingleton(new LegacyPlayerStore(mongoUri, mongoDatabase));
 builder.Services.AddSingleton<BattlePlayerPresentationSource>();
@@ -54,6 +55,8 @@ builder.Services.AddSingleton(new BattleMatchControlClient(new HttpClient { Time
 builder.Services.AddSingleton(services => new BattleMatchProvisioner(services.GetRequiredService<BattleMatchControlClient>(),
     services.GetRequiredService<BattleGrantStore>(), battleControlEndpoint));
 string? battleManifestTemplatePath = builder.Configuration["Battle:MatchManifestTemplatePath"];
+if(matchmakingCompatibilityKey!=null && string.IsNullOrWhiteSpace(battleManifestTemplatePath))
+    throw new InvalidOperationException("Set Battle__MatchManifestTemplatePath when matchmaking is enabled.");
 if (!string.IsNullOrWhiteSpace(battleManifestTemplatePath))
 {
     if (!File.Exists(battleManifestTemplatePath)) throw new InvalidOperationException("Battle manifest template file does not exist.");
@@ -184,31 +187,44 @@ api.MapPost("/battle/grant", async (HttpContext ctx, AccountStore accounts, Lega
 });
 api.MapPost("/battle/queue/join", async (HttpContext ctx, AccountStore accounts, LegacyPlayerStore legacy,
     BattleAllocationStore allocations, BattlePlayerPresentationSource presentations, BattleMatchQueueStore queue,
-    IServiceProvider services, BattleMatchProvisioner provisioner) =>
+    BattleManifestSnapshotStore snapshots,IServiceProvider services, BattleMatchProvisioner provisioner) =>
 {
     string? playerId = await BattlePlayerId(ctx, accounts, legacy);
     if (playerId == null) return Error(401, "unauthorized", "Authentication required.");
     var request = await Read(ctx, MatchQueueRequest.Parser);
     if (request.CalculateSize() != 0) return Error(400, "invalid_matchmaking_request", "Matchmaking request must be empty.");
     if (matchmakingCompatibilityKey == null) return Error(503, "matchmaking_disabled", "Matchmaking policy is not configured.");
-    try
-    {
-        if (await allocations.Get(playerId, ctx.RequestAborted) == null)
-            return Error(409, "battle_allocation_missing", "A trusted battle allocation is required before matchmaking.");
-    }
-    catch (InvalidDataException) { return Error(409, "battle_allocation_invalid", "The trusted battle allocation is invalid."); }
-    try
-    {
-        var view=await presentations.Get(playerId, ctx.RequestAborted);
-        services.GetService<BattleManifestFactory>()?.ValidatePresentation(view);
-    }
-    catch (InvalidDataException) { return Error(409, "battle_presentation_invalid", "A complete durable player presentation is required before matchmaking."); }
     BattlePairingResult result;
-    try { result = await queue.Join(playerId, matchmakingCompatibilityKey, DateTimeOffset.UtcNow, ctx.RequestAborted); }
+    try
+    {
+        var existing=await queue.Existing(playerId,ctx.RequestAborted);
+        if(existing!=null)result=existing;
+        else
+        {
+            try
+            {
+                if(await allocations.Get(playerId,ctx.RequestAborted)==null)
+                    return Error(409,"battle_allocation_missing","A trusted battle allocation is required before matchmaking.");
+            }
+            catch(InvalidDataException){return Error(409,"battle_allocation_invalid","The trusted battle allocation is invalid.");}
+            try
+            {
+                var view=await presentations.Get(playerId,ctx.RequestAborted);
+                services.GetRequiredService<BattleManifestFactory>().ValidatePresentation(view);
+            }
+            catch(InvalidDataException){return Error(409,"battle_presentation_invalid","A complete durable player presentation is required before matchmaking.");}
+            result=await queue.Join(playerId,matchmakingCompatibilityKey,DateTimeOffset.UtcNow,ctx.RequestAborted);
+        }
+    }
     catch (InvalidDataException) { return Error(409, "matchmaking_conflict", "Player has incompatible matchmaking authority."); }
     if (result.Code == "paired" && result.MatchId != null && result.Players != null && services.GetService<BattleManifestFactory>() is { } factory)
     {
-        try { await provisioner.Provision(await factory.Create(result.MatchId, result.Players, ctx.RequestAborted), ctx.RequestAborted); }
+        try
+        {
+            byte[] frozen=await snapshots.GetOrCreate(result.MatchId,result.Players,
+                ()=>factory.Create(result.MatchId,result.Players,ctx.RequestAborted),ctx.RequestAborted);
+            await provisioner.Provision(frozen,ctx.RequestAborted);
+        }
         catch (Exception e) when (e is InvalidDataException or HttpRequestException)
         { return Error(503, "match_provision_deferred", "Match is paired but provisioning must be retried."); }
     }
