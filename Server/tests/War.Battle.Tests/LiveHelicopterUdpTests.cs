@@ -32,6 +32,27 @@ internal static class LiveHelicopterUdpTests
               oversized.MatchReply.Snapshot.Projectiles.Last().ProjectileId==60&&
               oversized.MatchReply.Snapshot.Projectiles[0].ProjectileId>1,
               "MTU fitting marks omission and preserves newest projectile transforms");
+        var sourceRows=Enumerable.Range(1,60).Select(id=>new BattleProjectileState
+        {ProjectileId=(ulong)id,OwnerPlayerId=new string('a',32),Kind="helicopter-bullet",
+         X=id,Y=id,Z=id,VelocityX=6,VelocityY=6,VelocityZ=6}).ToArray();
+        var projected=new List<ulong>();ulong pageCursor=0;int pageCount=0;
+        while(true)
+        {
+            var envelope=new Packet {Version=1,SessionId=9401,Sequence=(ulong)pageCount+1,
+                Ack=(ulong)pageCount+1};
+            var batch=MatchEndpoint.PageProjectiles(new MatchProjectileBatch
+                {MatchId="helicopter-live-udp",ManifestHash=new string('a',64)},
+                77,500,sourceRows,pageCursor,envelope);
+            Check(envelope.CalculateSize()+War.Protocol.Transport.PacketCodec.MacBytes<=
+                  War.Protocol.Transport.PacketCodec.MaximumDatagramBytes,
+                  "each frozen projectile scan page fits the UDP envelope");
+            projected.AddRange(batch.Projectiles.Select(x=>x.ProjectileId));
+            pageCount++;
+            if(!batch.HasMore)break;
+            pageCursor=batch.Projectiles.Last().ProjectileId;
+        }
+        Check(pageCount>1&&projected.SequenceEqual(Enumerable.Range(1,60).Select(x=>(ulong)x)),
+              "bounded pages reconstruct every projectile exactly once in identity order");
         var content=BattleCombatContent.Load(Path.Combine(directory,"combat-content-manifest.json"));
         var map=content.Maps.Single(x=>x.Source.EndsWith("Park_Multiplayer.unity",StringComparison.Ordinal));
         var left=map.Covers.First(x=>x.Main&&x.Fraction==1&&x.SourceIndex==2);
@@ -142,6 +163,8 @@ internal static class LiveHelicopterUdpTests
             MatchEvent? fired=null;
             MatchEvent? otherFired=null;
             bool leftSawBullet=false,rightSawBullet=false;
+            MatchProjectileBatch? liveProjectileScan=null;
+            bool frozenScanReplayed=false;
             var fireWatch=System.Diagnostics.Stopwatch.StartNew();
             while(fireWatch.Elapsed<TimeSpan.FromSeconds(34)&&
                   (fired==null||otherFired==null||!leftSawBullet||!rightSawBullet))
@@ -157,6 +180,16 @@ internal static class LiveHelicopterUdpTests
                     x.HelicopterShot?.ArmyEntityKey==helicopter!.EntityKey);
                 leftSawBullet|=(await a.PollAsync(timeout.Token)).Snapshot.Projectiles.Any(x=>
                     x.OwnerPlayerId==two&&(x.Kind=="helicopter-bullet"||x.Kind=="helicopter-fake-bullet"));
+                if(leftSawBullet&&liveProjectileScan==null)
+                {
+                    ulong scanId=BitConverter.ToUInt64(Guid.NewGuid().ToByteArray(),0);
+                    if(scanId==0)scanId=1;
+                    var first=await a.PollProjectilesAsync(scanId,0,timeout.Token);
+                    var replayed=await a.PollProjectilesAsync(scanId,0,timeout.Token);
+                    frozenScanReplayed=first.Code=="projectiles"&&
+                        first.Projectiles.Count>0&&first.ToByteArray().SequenceEqual(replayed.ToByteArray());
+                    liveProjectileScan=await ReadWithRetry(()=>a.FetchProjectilesAsync(timeout.Token));
+                }
                 rightSawBullet|=(await b.PollAsync(timeout.Token)).Snapshot.Projectiles.Any(x=>
                     x.OwnerPlayerId==two&&(x.Kind=="helicopter-bullet"||x.Kind=="helicopter-fake-bullet"));
             }
@@ -169,6 +202,12 @@ internal static class LiveHelicopterUdpTests
                   "player-target real rounds use the recovered half-speed while fake rounds retain setup speed");
             Check(leftSawBullet&&rightSawBullet,
                   "both live UDP snapshots carry an in-flight Helicopter projectile");
+            Check(liveProjectileScan!=null&&liveProjectileScan.Code=="projectiles"&&
+                  liveProjectileScan.Projectiles.Any(x=>x.OwnerPlayerId==two&&
+                      (x.Kind=="helicopter-bullet"||x.Kind=="helicopter-fake-bullet")),
+                  "authenticated UDP projectile scan supplies in-flight Helicopter rows to the portable SDK");
+            Check(frozenScanReplayed,
+                  "retried projectile scan start replays the same frozen rows despite later Worker ticks");
             float initialHealth=state.Snapshot.Players.Single(x=>x.PlayerId==one).Health;
             int moveCount=0;
             ulong? leftHit=null,rightHit=null;

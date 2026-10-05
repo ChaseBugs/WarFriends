@@ -49,6 +49,8 @@ namespace War.Protocol.Transport
                     case Packet.BodyOneofCase.MatchArmyBatch: clean.MatchArmyBatch = packet.MatchArmyBatch; break;
                     case Packet.BodyOneofCase.MatchArmyEntityPoll: clean.MatchArmyEntityPoll = packet.MatchArmyEntityPoll; break;
                     case Packet.BodyOneofCase.MatchArmyEntityBatch: clean.MatchArmyEntityBatch = packet.MatchArmyEntityBatch; break;
+                    case Packet.BodyOneofCase.MatchProjectilePoll: clean.MatchProjectilePoll = packet.MatchProjectilePoll; break;
+                    case Packet.BodyOneofCase.MatchProjectileBatch: clean.MatchProjectileBatch = packet.MatchProjectileBatch; break;
                     default: return null;
                 }
                 return clean.ToByteArray().AsSpan().SequenceEqual(bytes.AsSpan(0, bytes.Length - MacBytes))

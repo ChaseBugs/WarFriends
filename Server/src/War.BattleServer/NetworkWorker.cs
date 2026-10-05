@@ -401,7 +401,8 @@ public sealed class NetworkWorker : BackgroundService
             Packet.BodyOneofCase.MatchReply or Packet.BodyOneofCase.MatchEventPoll or Packet.BodyOneofCase.MatchEventBatch or
             Packet.BodyOneofCase.MatchBarrelPoll or Packet.BodyOneofCase.MatchBarrelBatch or
             Packet.BodyOneofCase.MatchArmyPoll or Packet.BodyOneofCase.MatchArmyBatch or
-            Packet.BodyOneofCase.MatchArmyEntityPoll or Packet.BodyOneofCase.MatchArmyEntityBatch;
+            Packet.BodyOneofCase.MatchArmyEntityPoll or Packet.BodyOneofCase.MatchArmyEntityBatch or
+            Packet.BodyOneofCase.MatchProjectilePoll or Packet.BodyOneofCase.MatchProjectileBatch;
     private static bool ValidProbeBody(Packet packet)
     {
         switch(packet.BodyCase)

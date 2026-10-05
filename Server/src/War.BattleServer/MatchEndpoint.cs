@@ -28,7 +28,10 @@ public sealed class MatchEndpoint
         public ulong Outgoing;
         public ulong BudgetTick;
         public int UsedBudget;
+        public ProjectileScan? Projectiles;
     }
+    private sealed record ProjectileScan(ulong Id,ulong CreatedHostTick,ulong SnapshotTick,
+        BattleProjectileState[] Rows);
     private ulong tick;
     private ulong? terminalTick;
     public MatchEndpoint(MatchManifest manifest, string signingKey, RecoveredBattleMap? map = null,
@@ -104,6 +107,9 @@ public sealed class MatchEndpoint
                 reply.MatchArmyEntityBatch=match.ArmyEntityBatch(session.PlayerId,
                     packet.MatchArmyEntityPoll.AfterEntityKey,packet.MatchArmyEntityPoll.ExpectedRevision);
                 break;
+            case Packet.BodyOneofCase.MatchProjectilePoll:
+                reply.MatchProjectileBatch=ProjectileBatch(session,packet.MatchProjectilePoll,reply);
+                break;
             default: return null;
         }
         FitSnapshotDatagram(reply);
@@ -127,6 +133,62 @@ public sealed class MatchEndpoint
                 snapshot.ProjectilesTruncated=true;
             }
         }
+    }
+    private MatchProjectileBatch ProjectileBatch(Session session,MatchProjectilePoll poll,Packet envelope)
+    {
+        MatchProjectileBatch batch=new()
+        {MatchId=match.MatchId,ManifestHash=match.ManifestHash,Code="invalid-cursor"};
+        if(poll.ScanId==0)return batch;
+        if(poll.AfterProjectileId==0 && session.Projectiles?.Id!=poll.ScanId)
+        {
+            var snapshot=match.Snapshot();
+            var rows=snapshot.Projectiles.OrderBy(x=>x.ProjectileId).Select(x=>x.Clone()).ToArray();
+            if(rows.Length>MatchEngine.MaximumProjectiles||rows.Any(x=>x.ProjectileId==0)||rows.Zip(rows.Skip(1),
+                   (a,b)=>a.ProjectileId>=b.ProjectileId).Any(x=>x))
+                throw new InvalidDataException("Projectile scan exceeds host authority bounds.");
+            session.Projectiles=new ProjectileScan(poll.ScanId,tick,snapshot.ServerTick,rows);
+        }
+        var scan=session.Projectiles;
+        if(scan==null||scan.Id!=poll.ScanId)
+            return batch;
+        if(tick-scan.CreatedHostTick>90)
+        {
+            session.Projectiles=null;
+            batch.Code="scan-expired";
+            return batch;
+        }
+        if(poll.AfterProjectileId!=0 && !scan.Rows.Any(x=>x.ProjectileId==poll.AfterProjectileId))
+            return batch;
+        return PageProjectiles(batch,scan.Id,scan.SnapshotTick,scan.Rows,
+            poll.AfterProjectileId,envelope);
+    }
+    internal static MatchProjectileBatch PageProjectiles(MatchProjectileBatch batch,ulong scanId,
+        ulong snapshotTick,IReadOnlyList<BattleProjectileState> rows,ulong after,Packet envelope)
+    {
+        if(scanId==0||rows.Count>MatchEngine.MaximumProjectiles||
+           rows.Any(x=>x.ProjectileId==0)||rows.Zip(rows.Skip(1),
+               (a,b)=>a.ProjectileId>=b.ProjectileId).Any(x=>x))
+            throw new InvalidDataException("Invalid host projectile scan rows.");
+        batch.ScanId=scanId;
+        batch.SnapshotTick=snapshotTick;
+        batch.ActiveCount=checked((uint)rows.Count);
+        batch.Code="projectiles";
+        batch.HasMore=true; // Reserve the continuation bit while sizing pages.
+        foreach(var row in rows.Where(x=>x.ProjectileId>after))
+        {
+            batch.Projectiles.Add(row);
+            envelope.MatchProjectileBatch=batch;
+            if(envelope.CalculateSize()+PacketCodec.MacBytes>PacketCodec.MaximumDatagramBytes)
+            {
+                batch.Projectiles.RemoveAt(batch.Projectiles.Count-1);
+                break;
+            }
+        }
+        if(rows.Any(x=>x.ProjectileId>after) && batch.Projectiles.Count==0)
+            throw new InvalidDataException("One projectile row exceeds the UDP page budget.");
+        ulong last=batch.Projectiles.Count==0?after:batch.Projectiles[^1].ProjectileId;
+        batch.HasMore=rows.Any(x=>x.ProjectileId>last);
+        return batch;
     }
     private static bool ValidClientBody(Packet packet)
     {
@@ -213,6 +275,10 @@ public sealed class MatchEndpoint
                 return packet.MatchArmyEntityPoll.CalculateSize()==new MatchArmyEntityPoll
                     {AfterEntityKey=packet.MatchArmyEntityPoll.AfterEntityKey,
                      ExpectedRevision=packet.MatchArmyEntityPoll.ExpectedRevision}.CalculateSize();
+            case Packet.BodyOneofCase.MatchProjectilePoll:
+                return packet.MatchProjectilePoll.CalculateSize()==new MatchProjectilePoll
+                    {ScanId=packet.MatchProjectilePoll.ScanId,
+                     AfterProjectileId=packet.MatchProjectilePoll.AfterProjectileId}.CalculateSize();
             default:return false;
         }
     }

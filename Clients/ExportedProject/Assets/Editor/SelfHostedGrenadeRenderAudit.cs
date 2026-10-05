@@ -53,9 +53,17 @@ public static class SelfHostedGrenadeRenderAudit
             if(GameObject.Find("SelfHostedProjectile_77")==null)
                 throw new InvalidOperationException("Truncated projectile snapshot retired a still-flying grenade visual.");
             checks++;
-            presenter.Apply(new MatchSnapshot());
+            var fullScan=new MatchProjectileBatch{Code="projectiles",ScanId=1,SnapshotTick=10,ActiveCount=1};
+            fullScan.Projectiles.Add(new BattleProjectileState
+            {ProjectileId=77,OwnerPlayerId=player.playerProperties.playerID,Kind="grenade",X=2,Y=3,Z=4});
+            presenter.ApplyScan(fullScan);
+            projectile=GameObject.Find("SelfHostedProjectile_77");
+            if(projectile==null||Vector3.Distance(projectile.transform.position,new Vector3(2,3,4))>.0001f)
+                throw new InvalidOperationException("Paged projectile scan did not restore complete visual position.");
+            checks++;
+            presenter.ApplyScan(new MatchProjectileBatch{Code="projectiles",ScanId=2,SnapshotTick=11});
             if(GameObject.Find("SelfHostedProjectile_77")!=null)
-                throw new InvalidOperationException("Complete projectile snapshot retained an absent grenade visual.");
+                throw new InvalidOperationException("Complete projectile scan retained an absent grenade visual.");
             checks++;UnityEngine.Object.DestroyImmediate(presentationRoot);
             if(checks<850)throw new InvalidOperationException("Incomplete grenade render fixture.");
             Debug.Log("GRENADE_RENDER_AUDIT_PASSED checks="+checks);EditorApplication.Exit(0);

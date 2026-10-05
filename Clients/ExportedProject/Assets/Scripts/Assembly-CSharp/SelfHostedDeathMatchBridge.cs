@@ -69,6 +69,7 @@ public sealed class SelfHostedDeathMatchBridge : MonoBehaviour
 			behaviourManager.levelBehaviours[0].behaviour as SoldierBehaviour);
 		client.ArmyEntitiesReceived += helicopterPresenter.Apply;
 		client.StateReceived += Apply;
+		client.ProjectileScanReceived += projectilePresenter.ApplyScan;
 		client.CombatEventReceived += ApplyEvent;
 		if (client.State != null) Apply(client.State);
 	}
@@ -318,6 +319,7 @@ public sealed class SelfHostedDeathMatchBridge : MonoBehaviour
 		if (sniperScopeVisible) ApplySniperScope(false);
 		if (bazookaTargetVisible) ApplyBazookaTarget(false);
 		client.StateReceived -= Apply;
+		if (projectilePresenter != null) client.ProjectileScanReceived -= projectilePresenter.ApplyScan;
 		client.CombatEventReceived -= ApplyEvent;
 		if (dronePresenter != null) client.ArmyEntitiesReceived -= dronePresenter.Apply;
 		if (helicopterPresenter != null) client.ArmyEntitiesReceived -= helicopterPresenter.Apply;

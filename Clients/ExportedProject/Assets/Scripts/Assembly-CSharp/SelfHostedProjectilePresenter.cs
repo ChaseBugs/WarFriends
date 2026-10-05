@@ -64,6 +64,16 @@ public sealed class SelfHostedProjectilePresenter : MonoBehaviour
 		}
 	}
 
+	public void ApplyScan(MatchProjectileBatch batch)
+	{
+		if (batch == null || batch.Code != "projectiles" || batch.HasMore ||
+			batch.Projectiles.Count != batch.ActiveCount)
+			throw new System.InvalidOperationException("Projectile scan is incomplete.");
+		var complete = new MatchSnapshot();
+		complete.Projectiles.Add(batch.Projectiles);
+		Apply(complete);
+	}
+
 	public void ApplyEvent(MatchEvent item)
 	{
 		if (item != null &&

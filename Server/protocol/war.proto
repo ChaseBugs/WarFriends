@@ -39,6 +39,8 @@ message Packet {
     MatchArmyPoll match_army_poll = 27; MatchArmyBatch match_army_batch = 28;
     MatchArmyEntityPoll match_army_entity_poll = 29;
     MatchArmyEntityBatch match_army_entity_batch = 30;
+    MatchProjectilePoll match_projectile_poll = 31;
+    MatchProjectileBatch match_projectile_batch = 32;
   }
 }
 
@@ -343,6 +345,16 @@ message BattleProjectileState {
   uint64 projectile_id = 1; string owner_player_id = 2; string kind = 3;
   float x = 4; float y = 5; float z = 6;
   float velocity_x = 7; float velocity_y = 8; float velocity_z = 9;
+}
+// A scan starts with a new nonzero client-generated scan_id and zero cursor.
+// Retried starts reuse the same frozen host rows; later pages do not race
+// projectile movement/death.
+message MatchProjectilePoll { uint64 scan_id = 1; uint64 after_projectile_id = 2; }
+message MatchProjectileBatch {
+  string match_id = 1; string manifest_hash = 2;
+  uint64 scan_id = 3; uint64 snapshot_tick = 4;
+  string code = 5; uint32 active_count = 6; bool has_more = 7;
+  repeated BattleProjectileState projectiles = 8;
 }
 message BattleAirEntityState {
   uint64 entity_key = 1; string owner_player_id = 2;

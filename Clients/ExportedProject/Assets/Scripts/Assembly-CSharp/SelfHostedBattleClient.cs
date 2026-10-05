@@ -24,6 +24,7 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
     public event Action<IReadOnlyList<BarrelViewState>> BarrelStateReceived;
     public event Action<MatchArmyBatch> ArmyOffersReceived;
     public event Action<IReadOnlyList<BattleArmyEntityState>> ArmyEntitiesReceived;
+    public event Action<MatchProjectileBatch> ProjectileScanReceived;
     public event Action<string> ConnectionError;
     public event Action<SelfHostedRoomPhase> RoomPhaseChanged;
     public event Action CardsSelectedByBoth;
@@ -44,6 +45,7 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
     private float nextBarrelPoll;
     private float nextArmyPoll;
     private float nextArmyEntityPoll;
+    private float nextProjectileScan;
     private bool destroyed;
     private bool cardsSelectedByBothRaised;
     private readonly SemaphoreSlim eventDelivery = new SemaphoreSlim(1, 1);
@@ -385,6 +387,14 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
         {
             Apply(await connection.PollAsync(lifetime.Token));
             if (CombatEventReceived != null) await DispatchEvents();
+            if (ProjectileScanReceived != null && State != null && State.ProjectilesTruncated &&
+                Time.realtimeSinceStartup >= nextProjectileScan)
+            {
+                nextProjectileScan = Time.realtimeSinceStartup + 0.5f;
+                var scan = await connection.FetchProjectilesAsync(lifetime.Token);
+                if (State != null && scan.SnapshotTick >= State.ServerTick)
+                    ProjectileScanReceived(scan);
+            }
             if (barrelTracker != null && Time.realtimeSinceStartup >= nextBarrelPoll)
             {
                 nextBarrelPoll = Time.realtimeSinceStartup + 0.5f;

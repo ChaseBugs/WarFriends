@@ -14,7 +14,7 @@ namespace War.Client
 {
     /// <summary>Portable Unity-compatible match transport. One in-flight mutation;
     /// its identity survives a timeout until RetryPendingAsync resolves it.</summary>
-    public sealed class MatchConnection : IDisposable
+    public sealed partial class MatchConnection : IDisposable
     {
         private readonly Socket socket;
         private readonly MatchConnectionGrant grant;
