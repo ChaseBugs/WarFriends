@@ -628,6 +628,53 @@ public sealed partial class MatchEngine
         }
     }
 
+    internal void ApplyPlayerGrenadePassengerExplosion(string shooterId,Vector3 origin,GrenadeStage stage)
+    {
+        if(phase!=BattlePhase.Running||grenadeCatalog==null||groundVehicleWeapons==null||
+           explosionPolicy==null||stage==null||
+           !ReferenceEquals(grenadeCatalog.Stage(stage.SourceId,stage.Index),stage)||
+           !PlayerHitbox.Finite(origin))
+            throw new InvalidDataException("Grenade passenger blast lacks trusted source authority.");
+
+        var shooter=Find(shooterId)??throw new InvalidDataException("Grenade owner disappeared.");
+        if(vehicles==null)return;
+
+        foreach(var vehicle in vehicles.Snapshot().OrderBy(vehicle=>vehicle.EntityId))
+        {
+            if(!activeArmyEntities.TryGetValue(vehicle.EntityId,out var army)||
+               army.UnitId!=vehicle.UnitId||army.OwnerPlayerId!=vehicle.OwnerPlayerId||
+               !groundVehicleFacing.TryGetValue(vehicle.EntityId,out var facing)||
+               !vehiclePassengers.TryGetValue(vehicle.EntityId,out var passengers))
+                throw new InvalidDataException("Grenade passenger lost shared host authority.");
+
+            var owner=Find(vehicle.OwnerPlayerId)??
+                throw new InvalidDataException("Grenade passenger owner disappeared.");
+            bool friendly=owner.Definition.Fraction==shooter.Definition.Fraction;
+
+            foreach(var passenger in passengers.Values.OrderBy(value=>value.Binding.PointComponentFileId))
+            {
+                if(!passenger.Active)continue;
+                if(passenger.AnimationStartTick>tick)
+                    throw new InvalidDataException("Grenade passenger animation starts after the match tick.");
+
+                ulong animationTick=tick-passenger.AnimationStartTick;
+                var hitboxes=groundVehicleWeapons.PassengerPoses.Place(vehicle.UnitId,
+                    passenger.Binding,vehicle.Position,facing,animationTick);
+                var passengerPosition=PassengerWorldPosition(vehicle.EntityId,passenger.Binding);
+                var effect=GrenadeExplosion.ResolveArmy(origin,passengerPosition,hitboxes,stage);
+                if(effect==null)continue;
+
+                // Explosion.MissileExplode selects the closest collider for each
+                // ownerDestroyableObject, then damages that owner once. The part's
+                // bullet weight is not an explosion damage multiplier.
+                float amount=effect.RawDamage*(friendly?explosionPolicy.Friendly:1f);
+                if(!float.IsFinite(amount)||amount<=0||amount>10_000_000)
+                    throw new InvalidDataException("Grenade passenger damage exceeded host bounds.");
+                ApplyVehiclePassengerHostDamage(vehicle.EntityId,passenger.Binding.Role,amount);
+            }
+        }
+    }
+
     internal void ApplyPlayerGrenadeAirBodyExplosion(string shooterId,Vector3 origin,GrenadeStage stage)
     {
         if(phase!=BattlePhase.Running||grenadeCatalog==null||explosionPolicy==null||

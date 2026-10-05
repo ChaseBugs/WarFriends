@@ -369,6 +369,21 @@ internal static class GrenadeCatalogTests
         while(tankTick<300&&tankMatch.ArmyEntityBatch(one,0,0).Entities.Count==0)
             tankMatch.Advance(++tankTick);
         var tankVictim=tankMatch.ArmyEntityBatch(one,0,0).Entities.First();
+        var tankPassenger=tankMatch.VehiclePassengers(tankVictim.EntityKey)
+            .First(passenger=>passenger.Active);
+        var passengerHitbox=tankMatch.GroundVehicleShotTargets(one)
+            .First(target=>target.EntityId==tankVictim.EntityKey&&
+                target.PassengerRole==tankPassenger.Role).Hitbox;
+        var passengerOrigin=passengerHitbox.Center;
+        var passengerStage=combat.Grenades!.Stage("Google2u.Grenade_FRAG",0);
+        float passengerBefore=tankPassenger.Health;
+        float bodyBeforePassengerBlast=tankMatch.ArmyHealth(tankVictim.EntityKey)!.Value;
+        tankMatch.ApplyPlayerGrenadePassengerExplosion(one,passengerOrigin,passengerStage);
+        float passengerAfter=tankMatch.VehiclePassengers(tankVictim.EntityKey)
+            .Single(passenger=>passenger.Role==tankPassenger.Role).Health;
+        Check(Math.Abs(passengerAfter-Math.Max(0,passengerBefore-passengerStage.ExplosionDamage))<.01f&&
+              Math.Abs(tankMatch.ArmyHealth(tankVictim.EntityKey)!.Value-bodyBeforePassengerBlast)<.01f,
+            "player grenade damages a Tank passenger once without damaging its separate body");
         var tankBodies=tankMatch.GroundVehicleShotTargets(one)
             .Where(x=>x.GroundVehicleBody&&x.EntityId==tankVictim.EntityKey).ToArray();
         var tankOrigin=tankBodies.First().Hitbox.Center;
