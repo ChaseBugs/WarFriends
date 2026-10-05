@@ -1797,6 +1797,15 @@ internal static class CombatContentTests
             ]);
             var centeredMine=-landMines.Prefab.TriggerCenter;
             var mineExplosion=LandMineExplosion.Resolve(centeredMine,57.625f,landMines,MinePose(Vector3.Zero),Vector3.Zero);
+            var mineDynamic=new MapDynamicCollider(1,"mine-shield","shield",8,
+                new Vector3(1.6f,0,0),new Vector3(1.4f,-.2f,-.2f),new Vector3(1.8f,.2f,.2f));
+            var nearMineDynamic=LandMineExplosion.ResolveDynamic(Vector3.Zero,57.625f,landMines,
+                mineDynamic with {TransformPosition=new(.5f,0,0),BoundsMin=new(.3f,-.2f,-.2f),
+                    BoundsMax=new(.7f,.2f,.2f)});
+            var outerMineDynamic=LandMineExplosion.ResolveDynamic(Vector3.Zero,57.625f,landMines,mineDynamic);
+            Check(nearMineDynamic is {Kind:CombatDamageType.Explosion,RawDamage:57.625f}&&
+                  outerMineDynamic is {Kind:CombatDamageType.Shiver,RawDamage:57.625f},
+                  "Land Mine scene blast retains recovered dead/hurt types and equal card damage");
             var rotatedBody=new PlayerHitbox("rotated-body",PlayerHitboxKind.Box,1,Vector3.Zero,new(.4f,.4f,2),
                 Quaternion.CreateFromAxisAngle(Vector3.UnitY,MathF.PI/4),0,Vector3.Zero,0);
             var capsuleBody=new PlayerHitbox("capsule-body",PlayerHitboxKind.Capsule,1,Vector3.Zero,Vector3.Zero,
@@ -2982,7 +2991,8 @@ internal static class CombatContentTests
               "Helicopter static/dynamic sight query preserves clear and zero-direction rays");
         Reject(()=>decoyMatch.HelicopterVisibilityRay(new HelicopterSightRay(
             Vector3.Zero,Vector3.UnitX,10,uint.MaxValue)));
-        var landMineManifest=decoyManifest with {MatchId="land-mine-match"};
+        var landMineManifest=decoyManifest with {MatchId="land-mine-match",
+            Players=decoyManifest.Players.Select(p=>p with {ShieldLevel=0}).ToArray()};
         var landMineMatch=new MatchEngine(landMineManifest,content:content,armyChoice:_=>0);
         landMineMatch.ConfigureBattleAllocations([
             new(decoyPlayer,["CardLandmine"],[],[0],[133],[-1]),
@@ -3015,17 +3025,22 @@ internal static class CombatContentTests
               "Land Mine request replay creates no duplicate and exhausted inventory cannot create partial state");
         var beforeMineTrigger=landMineMatch.Snapshot();
         var mineVictimBefore=beforeMineTrigger.Players.Single(x=>x.PlayerId==decoyOpponent);
+        var mineShieldBefore=beforeMineTrigger.Shields.Single(x=>x.CoverIndex==coverTwo.SourceIndex);
         var triggerPosition=new Vector3(mineVictimBefore.PositionX,mineVictimBefore.PositionY,mineVictimBefore.PositionZ);
         Check(landMineMatch.TryRegisterLandMine(new string('4',32),decoyPlayer,triggerPosition,25),
             "host-only Land Mine simulation seed accepts a bounded authoritative position");
         landMineMatch.Advance(61);
         var afterMineTrigger=landMineMatch.Snapshot();
         var mineVictimAfter=afterMineTrigger.Players.Single(x=>x.PlayerId==decoyOpponent);
+        var mineShieldAfter=afterMineTrigger.Shields.Single(x=>x.CoverIndex==coverTwo.SourceIndex);
         Check(afterMineTrigger.LandMines.Count==3&&mineVictimAfter.Health<mineVictimBefore.Health&&
               mineVictimAfter.DamageRevision==mineVictimBefore.DamageRevision+1&&
               mineVictimAfter.ConfirmedPlayerHits==mineVictimBefore.ConfirmedPlayerHits&&
               afterMineTrigger.Players.Single(x=>x.PlayerId==decoyPlayer).ConfirmedPlayerHits==1,
               "authoritative tick consumes a source-box Land Mine and applies host explosion damage once");
+        Check(mineShieldAfter.Health<mineShieldBefore.Health&&
+              mineShieldAfter.Revision>mineShieldBefore.Revision,
+              "Land Mine blast mutates the nearby recovered shield through host explosion authority");
         var heavyTurretManifest=decoyManifest with {MatchId="heavy-turret-match",SceneMasterPlayerId=decoyPlayer,
             Players=decoyManifest.Players.Select(p=>p with {ShieldLevel=0}).ToArray()};
         var deployedDroneManifest=armyManifest with {MatchId="deployed-drone-special",Players=[

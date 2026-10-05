@@ -92,6 +92,33 @@ public sealed partial class MatchEngine
             Emit(MatchEventKind.LandMineTriggered,mine.OwnerPlayerId,target,
                 mine.EntityId,mine.Position,mine.Damage,reason);
             var attacker=Find(mine.OwnerPlayerId)??throw new InvalidDataException("Land Mine owner disappeared.");
+            if(map!=null)
+            {
+                Func<int,bool>? enabled=barrels==null?null:index=>barrels.ColliderEnabled(index);
+                Func<int,int,int>? layer=barrels==null?null:(index,source)=>barrels.RuntimeLayer(index,source);
+                foreach(var collider in map.DynamicSphereOverlaps(mine.Position,landMineSource.HurtRadius,
+                            uint.MaxValue,enabled,layer))
+                {
+                    if(shields?.IsLiveShield(collider.DynamicOwner)!=true&&
+                       barrels?.Contains(collider.ColliderIndex)!=true)continue;
+                    var effect=LandMineExplosion.ResolveDynamic(mine.Position,mine.Damage,landMineSource,collider);
+                    if(shields?.IsLiveShield(collider.DynamicOwner)==true)
+                    {
+                        var shield=shields.ApplyUnitExplosion(collider.DynamicOwner,
+                            attacker.Definition.Fraction,effect.RawDamage,tick);
+                        if(shield!=null){stateRevision++;EmitShield(shield.Destroyed?
+                            MatchEventKind.ShieldDestroyed:MatchEventKind.ShieldDamaged,
+                            mine.OwnerPlayerId,shield,mine.EntityId);}
+                    }
+                    else if(barrels?.Contains(collider.ColliderIndex)==true)
+                    {
+                        ApplyBarrelDamage(mine.OwnerPlayerId,mine.EntityId,collider.ColliderIndex,
+                            effect.RawDamage,effect.Kind==CombatDamageType.Explosion?
+                                BarrelChainCause.Explosion:BarrelChainCause.Shiver);
+                        if(Terminal)return;
+                    }
+                }
+            }
             foreach(var army in activeArmyEntities.Values.Where(x=>x.OwnerFraction!=mine.OwnerFraction&&
                         infantryAnimations.ContainsKey(x.EntityKey)).OrderBy(x=>x.EntityKey).ToArray())
             {

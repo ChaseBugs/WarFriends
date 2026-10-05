@@ -3,9 +3,25 @@ using System.Numerics;
 namespace War.BattleServer;
 
 internal sealed record LandMinePlayerExplosion(string PartPath,CombatDamageType Kind,float RawDamage);
+internal sealed record LandMineDynamicExplosion(CombatDamageType Kind,float RawDamage);
 
 internal static class LandMineExplosion
 {
+    internal static LandMineDynamicExplosion ResolveDynamic(Vector3 origin,float damage,
+        LandMineSourceCatalog source,MapDynamicCollider collider)
+    {
+        if(!PlayerHitbox.Finite(origin)||!float.IsFinite(damage)||damage<=0||damage>10_000_000||
+           source==null||collider==null||source.HurtRadius<=source.DeadRadius||
+           !PlayerHitbox.Finite(collider.TransformPosition)||!PlayerHitbox.Finite(collider.BoundsMin)||
+           !PlayerHitbox.Finite(collider.BoundsMax))
+            throw new InvalidDataException("Land Mine dynamic explosion requires source authority.");
+        float closest=Vector3.Distance(origin,Vector3.Clamp(origin,collider.BoundsMin,collider.BoundsMax));
+        if(closest<source.DeadRadius)return new(CombatDamageType.Explosion,damage);
+        // The recovered card writes equal damageAmount and explodeDamageAmount.
+        // MissileExplode still takes its outer Shiver branch, but its falloff
+        // interpolates between those equal values.
+        return new(CombatDamageType.Shiver,damage);
+    }
     internal static bool Triggered(Vector3 minePosition,LandMinePrefabSource prefab,PlayerCollisionModel pose)
     {
         if(!PlayerHitbox.Finite(minePosition)||prefab==null||pose==null||pose.Role!="gameplay"||
