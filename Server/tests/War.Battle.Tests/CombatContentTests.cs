@@ -1155,7 +1155,21 @@ internal static class CombatContentTests
                   y.MainEntityId=="repair-drone:78:0"&&y.EntityId==x.EntityId)),
               "source shotgun cone schedules a real pellet toward the active mini-drone root");
         var placedHumvee=content.GroundVehicleWeapons.PlaceBody("ID_UNIT-HUMVEE",77,
-            Vector3.Zero,Vector3.UnitZ);
+            Vector3.Zero,Vector3.UnitZ,1);
+        Check(content.GroundVehicleWeapons.For("ID_UNIT-TANK").BodyParts.All(p=>p.Layer==0)&&
+              content.GroundVehicleWeapons.For("ID_UNIT-HUMVEE").BodyParts.All(p=>p.Layer==8)&&
+              content.GroundVehicleWeapons.PlaceBody("ID_UNIT-TANK",79,Vector3.Zero,Vector3.UnitZ,1)
+                  .All(p=>p.Layer==23)&&
+              content.GroundVehicleWeapons.PlaceBody("ID_UNIT-TANK",80,Vector3.Zero,Vector3.UnitZ,2)
+                  .All(p=>p.Layer==22)&&
+              new[]{"ID_UNIT-HUMVEE","ID_UNIT-BUGGY","ID_UNIT-TRANSPORTER"}.All(unit=>
+                  content.GroundVehicleWeapons.PlaceBody(unit,81,Vector3.Zero,Vector3.UnitZ,1)
+                      .All(p=>p.Layer==27)&&
+                  content.GroundVehicleWeapons.PlaceBody(unit,82,Vector3.Zero,Vector3.UnitZ,2)
+                      .All(p=>p.Layer==26)),
+            "ground vehicle body collisions use faction runtime layers after source ChangeLayer, not prefab layers");
+        Reject(()=>content.GroundVehicleWeapons.PlaceBody("ID_UNIT-TANK",80,
+            Vector3.Zero,Vector3.UnitZ,0));
         var bodyTarget=placedHumvee.First(x=>x.Hitbox.Kind==PlayerHitboxKind.Box);
         var rayOrigin=bodyTarget.Hitbox.Center+Vector3.Transform(Vector3.UnitX,
             bodyTarget.Hitbox.Rotation)*10;
@@ -1168,15 +1182,32 @@ internal static class CombatContentTests
         ],dynamicTargets:_=>placedHumvee);
         var bodyHit=bodyWorld.Raycast(bodyShooter,rayOrigin,bodyTarget.Hitbox.Center-rayOrigin,20,uint.MaxValue);
         Check(bodyHit is {DynamicEntityId:77,DynamicPartId:var sourcePart,PlayerId:null}&&
-              sourcePart==bodyTarget.PartComponentFileId&&bodyHit.SourcePath==bodyTarget.Hitbox.SourcePath,
+              sourcePart==bodyTarget.PartComponentFileId&&bodyHit.SourcePath==bodyTarget.Hitbox.SourcePath&&
+              bodyHit.ColliderLayer==27&&bodyHit.SourceDestroyable,
               "player projectile ray selects the nearest source-pinned vehicle body collider");
+        var tankTargets=content.GroundVehicleWeapons.PlaceBody("ID_UNIT-TANK",79,
+            Vector3.Zero,Vector3.UnitZ,1);
+        var tankPart=tankTargets.First(x=>x.Hitbox.Kind==PlayerHitboxKind.Box);
+        var tankRayOrigin=tankPart.Hitbox.Center+Vector3.Transform(Vector3.UnitX,
+            tankPart.Hitbox.Rotation)*10;
+        var tankWorld=new ShotCollisionWorld(null,
+        [
+            new(bodyShooter,referencePose.Place(new(100,0,100),Quaternion.Identity).Collision),
+            new(bodyOpponent,referencePose.Place(new(110,0,100),Quaternion.Identity).Collision)
+        ],dynamicTargets:_=>tankTargets);
+        var tankHit=tankWorld.Raycast(bodyShooter,tankRayOrigin,
+            tankPart.Hitbox.Center-tankRayOrigin,20,1u<<23);
+        Check(tankHit?.DynamicEntityId==79&&tankHit.ColliderLayer==23&&tankHit.SourceDestroyable&&
+              tankWorld.Raycast(bodyShooter,tankRayOrigin,tankPart.Hitbox.Center-tankRayOrigin,
+                  20,1u<<0)==null,
+            "Tank body uses its live faction destroyable layer, never prefab layer zero, in bullet masks");
         var shotgunOrigin=bodyTarget.Hitbox.Center-Vector3.UnitZ*2;
         var bodyOverlap=bodyWorld.OverlapEnemy(bodyShooter,shotgunOrigin,4,
             1u<<bodyTarget.Layer);
         Check(bodyOverlap.Any(x=>x.MainEntityId=="vehicle:77")&&
               !bodyWorld.OverlapEnemy(bodyShooter,shotgunOrigin,4,0)
                   .Any(x=>x.MainEntityId=="vehicle:77"),
-              "source-pinned opposing vehicle body enters shotgun sphere only through its prefab layer");
+              "source-pinned opposing vehicle body enters shotgun sphere only through its runtime layer");
         var bodyPlan=ShotgunShotPlanner.Plan(new ShotgunRule(50,3,10,10,100,false,false),
             shotgunOrigin,bodyTarget.Hitbox.Center+Vector3.UnitX*.5f,bodyOverlap);
         Check(bodyPlan.RealPellets.Any(x=>bodyOverlap.Any(y=>y.MainEntityId=="vehicle:77"&&

@@ -165,7 +165,10 @@ public sealed partial class MatchEngine
                army.UnitId!=target.UnitId||army.OwnerPlayerId!=target.OwnerPlayerId||
                !groundVehicleFacing.TryGetValue(target.EntityId,out var facing))
                 throw new InvalidDataException("Land Mine vehicle lacks shared host pose.");
-            var selected=groundVehicleWeapons.PlaceBody(target.UnitId,target.EntityId,target.Position,facing)
+            var targetOwner=Find(target.OwnerPlayerId)??
+                throw new InvalidDataException("Land Mine vehicle owner disappeared.");
+            var selected=groundVehicleWeapons.PlaceBody(target.UnitId,target.EntityId,target.Position,facing,
+                    targetOwner.Definition.Fraction)
                 .Where(x=>x.Hitbox.Enabled&&x.Hitbox.Active&&
                     x.Hitbox.OverlapsSphere(position,landMineSource.HurtRadius))
                 .OrderBy(x=>x.Hitbox.BoundsDistanceToPoint(position))
@@ -174,8 +177,6 @@ public sealed partial class MatchEngine
             if(selected==null)continue;
             var part=groundVehicleWeapons.For(target.UnitId).BodyParts.Single(x=>
                 x.PartComponentFileId==selected.PartComponentFileId);
-            var targetOwner=Find(target.OwnerPlayerId)??
-                throw new InvalidDataException("Land Mine vehicle owner disappeared.");
             float amount=damage*part.Weight*(targetOwner.Definition.Fraction==attacker.Definition.Fraction?
                 explosionPolicy.Friendly:1f);
             if(!float.IsFinite(amount)||amount<=0||amount>10_000_000)

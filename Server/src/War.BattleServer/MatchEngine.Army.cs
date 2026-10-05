@@ -502,7 +502,8 @@ public sealed partial class MatchEngine
             if(!includeFriendly&&owner.Definition.Fraction==shooter.Definition.Fraction)continue;
             if(!groundVehicleFacing.TryGetValue(vehicle.EntityId,out var facing))
                 throw new InvalidDataException("Vehicle collision facing disappeared.");
-            result.AddRange(groundVehicleWeapons.PlaceBody(vehicle.UnitId,vehicle.EntityId,vehicle.Position,facing));
+            result.AddRange(groundVehicleWeapons.PlaceBody(vehicle.UnitId,vehicle.EntityId,vehicle.Position,facing,
+                owner.Definition.Fraction));
             if(!vehiclePassengers.TryGetValue(vehicle.EntityId,out var passengers))
                 throw new InvalidDataException("Vehicle collision passengers disappeared.");
             int passengerLayer=owner.Definition.Fraction==1?23:owner.Definition.Fraction==2?22:
@@ -1479,7 +1480,10 @@ public sealed partial class MatchEngine
             {
                 if(!activeArmyEntities.ContainsKey(target.EntityId)||
                    !groundVehicleFacing.TryGetValue(target.EntityId,out var facing))continue;
-                var parts=groundVehicleWeapons.PlaceBody(target.UnitId,target.EntityId,target.Position,facing)
+                var targetOwner=Find(target.OwnerPlayerId)??throw new InvalidDataException(
+                    "Repair-drone explosion vehicle owner disappeared.");
+                var parts=groundVehicleWeapons.PlaceBody(target.UnitId,target.EntityId,target.Position,facing,
+                        targetOwner.Definition.Fraction)
                     .Where(x=>x.Hitbox.OverlapsSphere(drone.Position,binding.HurtRadius))
                     .OrderBy(x=>x.Hitbox.DistanceToPoint(drone.Position))
                     .ThenBy(x=>x.PartComponentFileId).ToArray();
@@ -2261,7 +2265,7 @@ public sealed partial class MatchEngine
             // FlameAmmo de-duplicates all child colliders by their damage root.
             // Use serialized part order as the deterministic overlap order.
             foreach(var collider in groundVehicleWeapons.PlaceBody(vehicle.UnitId,vehicle.EntityId,
-                vehicle.Position,facing))
+                vehicle.Position,facing,owner.Definition.Fraction))
             {
                 var part=rig.BodyParts.Single(x=>x.PartComponentFileId==collider.PartComponentFileId);
                 var sourceCollider=part.Colliders.Single(x=>collider.Hitbox.SourcePath.EndsWith(

@@ -143,14 +143,21 @@ public sealed class GroundVehicleWeaponCatalog
     }
 
     internal IReadOnlyList<DynamicShotTarget> PlaceBody(string unitId,ulong entityId,
-        Vector3 entityPosition,Vector3 planarForward)
+        Vector3 entityPosition,Vector3 planarForward,int ownerFraction)
     {
-        if(entityId==0||!PlayerHitbox.Finite(entityPosition)||!PlayerHitbox.Finite(planarForward))
+        if(entityId==0||ownerFraction is not (1 or 2)||
+           !PlayerHitbox.Finite(entityPosition)||!PlayerHitbox.Finite(planarForward))
             throw new InvalidDataException("Invalid ground vehicle body placement.");
         planarForward.Y=0;
         if(planarForward.LengthSquared()<1e-10f)throw new InvalidDataException("Ground vehicle body has no planar facing.");
         float yaw=MathF.Atan2(planarForward.X,planarForward.Z);
         var facing=Quaternion.CreateFromAxisAngle(Vector3.UnitY,yaw);
+        // AIObject uses the ground faction layer; AICarBase overrides
+        // SetupCollisionLayers with the flying/mech faction layer. Both call
+        // DestroyableObjectMultipleParts.ChangeLayer on every child part.
+        int runtimeLayer=unitId=="ID_UNIT-TANK"
+            ?ownerFraction==1?23:22
+            :ownerFraction==1?27:26;
         return For(unitId).BodyParts.SelectMany(part=>part.Colliders.Select(c=>
         {
             var center=entityPosition+Vector3.Transform(c.Center,facing);
@@ -158,7 +165,7 @@ public sealed class GroundVehicleWeaponCatalog
             var axis=c.Axis==Vector3.Zero?Vector3.Zero:Vector3.Normalize(Vector3.Transform(c.Axis,facing));
             var hitbox=new PlayerHitbox($"{For(unitId).Prefab}#{part.PartComponentFileId}/{c.ColliderFileId}",
                 c.Kind,part.Weight,center,c.Size,rotation,c.Radius,axis,c.HalfSegment,true,true);
-            return new DynamicShotTarget(entityId,part.PartComponentFileId,part.Layer,hitbox,
+            return new DynamicShotTarget(entityId,part.PartComponentFileId,runtimeLayer,hitbox,
                 GroundVehicleBody:true);
         })).ToArray();
     }
