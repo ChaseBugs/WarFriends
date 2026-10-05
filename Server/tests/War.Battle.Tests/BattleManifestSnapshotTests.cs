@@ -119,6 +119,19 @@ internal static class BattleManifestSnapshotTests
             var cancelPair=await queue.Join(opponent,"cancel.fixture",DateTimeOffset.UtcNow,CancellationToken.None);
             if(cancelPair.Code!="paired" || await queue.Cancel(cancelling,DateTimeOffset.UtcNow,CancellationToken.None)!="already-paired")
                 throw new Exception("Cancellation dissolved a durable pair.");
+            for(int i=0;i<32;i++)
+            {
+                string firstId=(1000+i).ToString("x32"),secondId=(2000+i).ToString("x32"),key="cancel-race."+i;
+                await queue.Join(firstId,key,DateTimeOffset.UtcNow,CancellationToken.None);
+                var join=otherQueue.Join(secondId,key,DateTimeOffset.UtcNow,CancellationToken.None);
+                var cancel=queue.Cancel(firstId,DateTimeOffset.UtcNow,CancellationToken.None);
+                await Task.WhenAll(join,cancel);
+                var current=await queue.Existing(firstId,CancellationToken.None);
+                if((cancel.Result=="cancelled" && current!=null) ||
+                   (cancel.Result=="already-paired" && current?.MatchId!=join.Result.MatchId) ||
+                   cancel.Result is not ("cancelled" or "already-paired"))
+                    throw new Exception("Concurrent cancellation and pairing did not commit one ownership outcome.");
+            }
             Console.WriteLine("PASS: Mongo paired snapshot survives restart; proven terminal releases players for a distinct rematch");
         }
         finally {await mongo.DropDatabaseAsync(database);}

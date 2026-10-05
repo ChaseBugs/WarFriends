@@ -118,12 +118,12 @@ foreach (var grant in grants)
     await udp.SendAsync(bytes);
     Check(await IsSilent(udp), "closed ticket cannot reopen session");
 }
-string? signingText=Environment.GetEnvironmentVariable("Battle__SigningKey");
+string? controlText=Environment.GetEnvironmentVariable("Battle__ControlKey");
 string? controlPortText=Environment.GetEnvironmentVariable("Battle__ControlPort");
 string? udpPortText=Environment.GetEnvironmentVariable("Battle__Port");
-if(signingText!=null && controlPortText!=null && udpPortText!=null)
+if(controlText!=null && controlPortText!=null && udpPortText!=null)
 {
-    byte[] signingKey=Convert.FromBase64String(signingText);
+    byte[] controlKey=Convert.FromBase64String(controlText);
     int controlPort=int.Parse(controlPortText,CultureInfo.InvariantCulture);
     int udpPort=int.Parse(udpPortText,CultureInfo.InvariantCulture);
     string matchId="smoke-allocated-"+Guid.NewGuid().ToString("N")[..8];
@@ -147,7 +147,7 @@ if(signingText!=null && controlPortText!=null && udpPortText!=null)
     request.Content=new ByteArrayContent(body);
     request.Content.Headers.ContentType=new MediaTypeHeaderValue("application/json");
     request.Headers.Add("X-War-Control-Time",timestamp);
-    request.Headers.Add("X-War-Control-Mac",Convert.ToHexString(Mac(signingKey,
+    request.Headers.Add("X-War-Control-Mac",Convert.ToHexString(Mac(controlKey,
         "war/match/control/v1/",Encoding.UTF8.GetBytes(timestamp+"\n").Concat(body).ToArray())));
     using var allocated=await control.SendAsync(request);
     Check(allocated.StatusCode==HttpStatusCode.Created,"live worker accepted account-bound runtime match");
@@ -186,7 +186,7 @@ if(signingText!=null && controlPortText!=null && udpPortText!=null)
     reconnectRequest.Content=new ByteArrayContent(reconnectBody);
     reconnectRequest.Content.Headers.ContentType=new MediaTypeHeaderValue("application/json");
     reconnectRequest.Headers.Add("X-War-Control-Time",timestamp);
-    reconnectRequest.Headers.Add("X-War-Control-Mac",Convert.ToHexString(Mac(signingKey,
+    reconnectRequest.Headers.Add("X-War-Control-Mac",Convert.ToHexString(Mac(controlKey,
         "war/match/control/v1/",Encoding.UTF8.GetBytes(timestamp+"\n").Concat(reconnectBody).ToArray())));
     using var reconnectResponse=await control.SendAsync(reconnectRequest);
     Check(reconnectResponse.StatusCode==HttpStatusCode.OK,"authenticated reconnect grant issued");
@@ -202,7 +202,7 @@ if(signingText!=null && controlPortText!=null && udpPortText!=null)
     retryRequest.Content=new ByteArrayContent(reconnectBody);
     retryRequest.Content.Headers.ContentType=new MediaTypeHeaderValue("application/json");
     retryRequest.Headers.Add("X-War-Control-Time",timestamp);
-    retryRequest.Headers.Add("X-War-Control-Mac",Convert.ToHexString(Mac(signingKey,
+    retryRequest.Headers.Add("X-War-Control-Mac",Convert.ToHexString(Mac(controlKey,
         "war/match/control/v1/",Encoding.UTF8.GetBytes(timestamp+"\n").Concat(reconnectBody).ToArray())));
     using var retryResponse=await control.SendAsync(retryRequest);
     using var retryReceipt=JsonDocument.Parse(await retryResponse.Content.ReadAsByteArrayAsync());
@@ -249,7 +249,7 @@ if(signingText!=null && controlPortText!=null && udpPortText!=null)
     secondReconnectRequest.Content=new ByteArrayContent(secondReconnectBody);
     secondReconnectRequest.Content.Headers.ContentType=new MediaTypeHeaderValue("application/json");
     secondReconnectRequest.Headers.Add("X-War-Control-Time",secondStamp);
-    secondReconnectRequest.Headers.Add("X-War-Control-Mac",Convert.ToHexString(Mac(signingKey,
+    secondReconnectRequest.Headers.Add("X-War-Control-Mac",Convert.ToHexString(Mac(controlKey,
         "war/match/control/v1/",Encoding.UTF8.GetBytes(secondStamp+"\n").Concat(secondReconnectBody).ToArray())));
     using var secondReconnectResponse=await control.SendAsync(secondReconnectRequest);
     Check(secondReconnectResponse.StatusCode==HttpStatusCode.OK,"live idle player receives trusted reconnect grant");
@@ -280,7 +280,7 @@ if(signingText!=null && controlPortText!=null && udpPortText!=null)
     pollRequest.Content=new ByteArrayContent(pollBody);
     pollRequest.Content.Headers.ContentType=new MediaTypeHeaderValue("application/json");
     pollRequest.Headers.Add("X-War-Control-Time",resultStamp);
-    pollRequest.Headers.Add("X-War-Control-Mac",Convert.ToHexString(Mac(signingKey,
+    pollRequest.Headers.Add("X-War-Control-Mac",Convert.ToHexString(Mac(controlKey,
         "war/result/poll/v1/",Encoding.UTF8.GetBytes(resultStamp+"\n").Concat(pollBody).ToArray())));
     using var resultResponse=await control.SendAsync(pollRequest);
     Check(resultResponse.IsSuccessStatusCode,"battle host exposes authenticated terminal evidence");

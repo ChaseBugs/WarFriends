@@ -1,3 +1,4 @@
+using MongoDB.Bson;
 using MongoDB.Driver;
 
 namespace War.Persistence;
@@ -23,17 +24,23 @@ public sealed record BattlePairingResult(string Code,string? MatchId,IReadOnlyLi
 /// <summary>Durable allocator pairing primitive. Compatibility keys are server policy, never client assertions.</summary>
 public sealed class BattleMatchQueueStore
 {
+    private static readonly TransactionOptions QueueTransaction=new(readConcern:ReadConcern.Snapshot,writeConcern:WriteConcern.WMajority);
+    private readonly MongoClient client;
     private readonly IMongoCollection<BattleQueueTicketDocument> tickets;
     private readonly IMongoCollection<BattlePairDocument> pairs;
     public BattleMatchQueueStore(string uri,string databaseName)
     {
         var settings=MongoClientSettings.FromConnectionString(uri);settings.ServerSelectionTimeout=TimeSpan.FromSeconds(5);
-        var db=new MongoClient(settings).GetDatabase(databaseName);
+        client=new MongoClient(settings);
+        var db=client.GetDatabase(databaseName);
         tickets=db.GetCollection<BattleQueueTicketDocument>("battle_queue_tickets");
         pairs=db.GetCollection<BattlePairDocument>("battle_pairs");
     }
     public async Task Initialize(CancellationToken ct)
     {
+        var hello=await client.GetDatabase("admin").RunCommandAsync<BsonDocument>(new BsonDocument("hello",1),cancellationToken:ct);
+        if(!hello.TryGetValue("setName",out var replicaName) || !replicaName.IsString || string.IsNullOrWhiteSpace(replicaName.AsString))
+            throw new InvalidOperationException("Battle matchmaking requires a MongoDB replica set for atomic pair publication and cancellation.");
         await tickets.Indexes.CreateManyAsync([
             new CreateIndexModel<BattleQueueTicketDocument>(Builders<BattleQueueTicketDocument>.IndexKeys.Ascending(x=>x.PlayerId),new CreateIndexOptions{Unique=true}),
             new CreateIndexModel<BattleQueueTicketDocument>(Builders<BattleQueueTicketDocument>.IndexKeys.Ascending(x=>x.CompatibilityKey).Ascending(x=>x.JoinedUtc).Ascending(x=>x.PlayerId)),
@@ -66,29 +73,34 @@ public sealed class BattleMatchQueueStore
         }
         for(int attempt=0;attempt<16;attempt++)
         {
-            existingPair=await PairFor(playerId,ct);
-            if(existingPair!=null)return Result("paired",existingPair);
-            var candidate=await tickets.Find(x=>x.CompatibilityKey==compatibilityKey && x.PlayerId!=playerId &&
-                x.JoinedUtc<=now.UtcDateTime && x.ExpiresUtc>now.UtcDateTime)
-                .SortBy(x=>x.JoinedUtc).ThenBy(x=>x.PlayerId).FirstOrDefaultAsync(ct);
-            if(candidate==null)return new("waiting",null,null);
-            ValidateTicket(candidate);
-            var candidatePair=await PairFor(candidate.PlayerId,ct);
-            if(candidatePair!=null){await tickets.DeleteOneAsync(x=>x.Id==candidate.Id,ct);continue;}
-            string matchId="m"+Guid.NewGuid().ToString("N");
-            var pair=new BattlePairDocument{Id=Guid.NewGuid().ToString("N"),MatchId=matchId,
-                CompatibilityKey=compatibilityKey,Players=[candidate.PlayerId,playerId],CreatedUtc=now.UtcDateTime};
+            using var session=await client.StartSessionAsync(cancellationToken:ct);
             try
             {
-                await pairs.InsertOneAsync(pair,cancellationToken:ct);
-                var consumed=await tickets.DeleteManyAsync(Builders<BattleQueueTicketDocument>.Filter.In(x=>x.Id,new[]{candidate.Id,activeTicketId}),ct);
-                if(consumed.DeletedCount!=2)
+                var result=await session.WithTransactionAsync(async (s,token)=>
                 {
-                    await pairs.DeleteOneAsync(x=>x.Id==pair.Id,ct);
-                    continue;
-                }
-                return Result("paired",pair);
+                    var ownPair=await PairFor(s,playerId,token);
+                    if(ownPair!=null)return Result("paired",ownPair);
+                    var candidate=await tickets.Find(s,x=>x.CompatibilityKey==compatibilityKey && x.PlayerId!=playerId &&
+                        x.JoinedUtc<=now.UtcDateTime && x.ExpiresUtc>now.UtcDateTime)
+                        .SortBy(x=>x.JoinedUtc).ThenBy(x=>x.PlayerId).FirstOrDefaultAsync(token);
+                    if(candidate==null)return new BattlePairingResult("waiting",null,null);
+                    ValidateTicket(candidate);
+                    if(await PairFor(s,candidate.PlayerId,token)!=null)
+                    {
+                        await tickets.DeleteOneAsync(s,x=>x.Id==candidate.Id,null,token);
+                        return new BattlePairingResult("retry",null,null);
+                    }
+                    var pair=new BattlePairDocument{Id=Guid.NewGuid().ToString("N"),MatchId="m"+Guid.NewGuid().ToString("N"),
+                        CompatibilityKey=compatibilityKey,Players=[candidate.PlayerId,playerId],CreatedUtc=now.UtcDateTime};
+                    await pairs.InsertOneAsync(s,pair,cancellationToken:token);
+                    var consumed=await tickets.DeleteManyAsync(s,
+                        Builders<BattleQueueTicketDocument>.Filter.In(x=>x.Id,new[]{candidate.Id,activeTicketId}),null,token);
+                    if(consumed.DeletedCount!=2)throw new PairingRetryException();
+                    return Result("paired",pair);
+                },QueueTransaction,ct);
+                if(result.Code!="retry")return result;
             }
+            catch(PairingRetryException){continue;}
             catch(MongoWriteException e) when(e.WriteError.Category==ServerErrorCategory.DuplicateKey){continue;}
         }
         existingPair=await PairFor(playerId,ct);
@@ -125,16 +137,22 @@ public sealed class BattleMatchQueueStore
     public async Task<string> Cancel(string playerId,DateTimeOffset now,CancellationToken ct)
     {
         Validate(playerId,"cancel",now);
-        if(await PairFor(playerId,ct)!=null)return "already-paired";
-        var ticket=await tickets.Find(x=>x.PlayerId==playerId).FirstOrDefaultAsync(ct);
-        if(ticket==null)return await PairFor(playerId,ct)==null?"not-queued":"already-paired";
-        ValidateTicket(ticket);
-        var deleted=await tickets.DeleteOneAsync(x=>x.Id==ticket.Id && x.PlayerId==playerId,ct);
-        if(await PairFor(playerId,ct)!=null)return "already-paired";
-        return deleted.DeletedCount==1?"cancelled":"not-queued";
+        using var session=await client.StartSessionAsync(cancellationToken:ct);
+        return await session.WithTransactionAsync(async (s,token)=>
+        {
+            if(await PairFor(s,playerId,token)!=null)return "already-paired";
+            var ticket=await tickets.Find(s,x=>x.PlayerId==playerId).FirstOrDefaultAsync(token);
+            if(ticket==null)return "not-queued";
+            ValidateTicket(ticket);
+            var deleted=await tickets.DeleteOneAsync(s,x=>x.Id==ticket.Id && x.PlayerId==playerId,null,token);
+            return deleted.DeletedCount==1?"cancelled":"not-queued";
+        },QueueTransaction,ct);
     }
     private async Task<BattlePairDocument?> PairFor(string playerId,CancellationToken ct)=>
         await pairs.Find(Builders<BattlePairDocument>.Filter.AnyEq(x=>x.Players,playerId)).FirstOrDefaultAsync(ct);
+    private async Task<BattlePairDocument?> PairFor(IClientSessionHandle session,string playerId,CancellationToken ct)=>
+        await pairs.Find(session,Builders<BattlePairDocument>.Filter.AnyEq(x=>x.Players,playerId)).FirstOrDefaultAsync(ct);
+    private sealed class PairingRetryException:Exception;
     private static BattlePairingResult Result(string code,BattlePairDocument pair)
     {
         if(!ValidId(pair.Id) || pair.Players is not {Length:2} ||

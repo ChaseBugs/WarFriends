@@ -22,6 +22,11 @@ function Restart-BattleProcess($current,[string]$label,[string]$root,[string]$ru
     if(!$ready) { throw "BattleServer was not ready after $label restart" }
     return $next
 }
+function Get-MacHex([byte[]]$bytes) {
+    $algorithm=[Security.Cryptography.HMACSHA256]::new($controlKeyBytes)
+    try { return ([BitConverter]::ToString($algorithm.ComputeHash($bytes))).Replace('-','').ToLowerInvariant() }
+    finally { $algorithm.Dispose() }
+}
 try {
     dotnet build (Join-Path $serverRoot 'WarFriendsServer.sln') --nologo -v minimal
     if($LASTEXITCODE -ne 0) { throw 'Build failed' }
@@ -37,7 +42,7 @@ try {
     $env:Battle__ControlKey=[Convert]::ToBase64String($controlKeyBytes)
     $env:ASPNETCORE_ENVIRONMENT='Development'
     $env:ASPNETCORE_URLS="http://127.0.0.1:$HttpPort"
-    $env:Mongo__Uri="mongodb://127.0.0.1:$MongoPort"
+    $env:Mongo__Uri="mongodb://127.0.0.1:$MongoPort/?replicaSet=wfSmoke"
     $env:Mongo__Database='warfriends_smoke'
     $env:Battle__Port="$UdpPort"
     $env:Battle__ControlPort="$($UdpPort+1)"
@@ -48,8 +53,11 @@ try {
     $mongoCommand=Get-Command $MongoExecutable -CommandType Application -ErrorAction SilentlyContinue
     if($null -eq $mongoCommand) { throw "MongoDB executable '$MongoExecutable' was not found. Install mongod or pass -MongoExecutable with its full path." }
     $MongoExecutable=if($mongoCommand.Path) { $mongoCommand.Path } else { $mongoCommand.Source }
-    $mongoArgs=@('--dbpath',('"'+(Join-Path $runRoot 'mongo')+'"'),'--bind_ip','127.0.0.1','--port',"$MongoPort",'--logpath',('"'+(Join-Path $runRoot 'mongo.log')+'"'))
+    $mongoArgs=@('--dbpath',('"'+(Join-Path $runRoot 'mongo')+'"'),'--bind_ip','127.0.0.1','--port',"$MongoPort",'--replSet','wfSmoke','--logpath',('"'+(Join-Path $runRoot 'mongo.log')+'"'))
     $processes+=Start-Process $MongoExecutable -ArgumentList $mongoArgs -PassThru -WindowStyle Hidden
+    $testDll=Join-Path $serverRoot 'tests/War.Battle.Tests/bin/Debug/net10.0/War.Battle.Tests.dll'
+    & dotnet $testDll --init-mongo-replica-set "mongodb://127.0.0.1:$MongoPort/?directConnection=true" wfSmoke "127.0.0.1:$MongoPort"
+    if($LASTEXITCODE -ne 0) { throw 'MongoDB replica-set initiation failed' }
     foreach($project in @('War.Backend','War.BattleServer')) {
         $dll=Join-Path $serverRoot "src/$project/bin/Debug/net10.0/$project.dll"
         $processes+=Start-Process dotnet -ArgumentList ('"'+$dll+'"') -WorkingDirectory (Join-Path $serverRoot "src/$project") -RedirectStandardOutput (Join-Path $runRoot "$project.log") -RedirectStandardError (Join-Path $runRoot "$project.error.log") -PassThru -WindowStyle Hidden
@@ -91,7 +99,7 @@ try {
     if($unsignedStatus -ne 401) { throw "Unsigned match publication returned $unsignedStatus" }
     $stamp=[DateTimeOffset]::UtcNow.ToUnixTimeSeconds().ToString([Globalization.CultureInfo]::InvariantCulture)
     $macBytes=[Text.Encoding]::UTF8.GetBytes("war/match/control/v1/$stamp`n$body")
-    $signature=[Convert]::ToHexString([Security.Cryptography.HMACSHA256]::HashData($controlKeyBytes,$macBytes))
+    $signature=Get-MacHex $macBytes
     $headers=@{'X-War-Control-Time'=$stamp;'X-War-Control-Mac'=$signature}
     $registered=Invoke-WebRequest $controlUrl -Method Post -Body $body -ContentType 'application/json' -Headers $headers -UseBasicParsing
     $registration=$registered.Content | ConvertFrom-Json
@@ -106,21 +114,21 @@ try {
     $changed.AdmissionSeconds=11
     $changedBody=ConvertTo-Json $changed -Depth 8 -Compress
     $changedBytes=[Text.Encoding]::UTF8.GetBytes("war/match/control/v1/$stamp`n$changedBody")
-    $changedHeaders=@{'X-War-Control-Time'=$stamp;'X-War-Control-Mac'=[Convert]::ToHexString([Security.Cryptography.HMACSHA256]::HashData($controlKeyBytes,$changedBytes))}
+    $changedHeaders=@{'X-War-Control-Time'=$stamp;'X-War-Control-Mac'=(Get-MacHex $changedBytes)}
     $duplicateStatus=0
     try { $null=Invoke-WebRequest $controlUrl -Method Post -Body $changedBody -ContentType 'application/json' -Headers $changedHeaders -UseBasicParsing }
     catch { $duplicateStatus=[int]$_.Exception.Response.StatusCode }
     if($duplicateStatus -ne 409) { throw "Conflicting match publication returned $duplicateStatus" }
     $malformed='{}'
     $malformedBytes=[Text.Encoding]::UTF8.GetBytes("war/match/control/v1/$stamp`n$malformed")
-    $malformedHeaders=@{'X-War-Control-Time'=$stamp;'X-War-Control-Mac'=[Convert]::ToHexString([Security.Cryptography.HMACSHA256]::HashData($controlKeyBytes,$malformedBytes))}
+    $malformedHeaders=@{'X-War-Control-Time'=$stamp;'X-War-Control-Mac'=(Get-MacHex $malformedBytes)}
     $malformedStatus=0
     try { $null=Invoke-WebRequest $controlUrl -Method Post -Body $malformed -ContentType 'application/json' -Headers $malformedHeaders -UseBasicParsing }
     catch { $malformedStatus=[int]$_.Exception.Response.StatusCode }
     if($malformedStatus -ne 400) { throw "Signed malformed match returned $malformedStatus" }
     $oldStamp=([long]$stamp-60).ToString([Globalization.CultureInfo]::InvariantCulture)
     $oldBytes=[Text.Encoding]::UTF8.GetBytes("war/match/control/v1/$oldStamp`n$body")
-    $oldHeaders=@{'X-War-Control-Time'=$oldStamp;'X-War-Control-Mac'=[Convert]::ToHexString([Security.Cryptography.HMACSHA256]::HashData($controlKeyBytes,$oldBytes))}
+    $oldHeaders=@{'X-War-Control-Time'=$oldStamp;'X-War-Control-Mac'=(Get-MacHex $oldBytes)}
     $staleStatus=0
     try { $null=Invoke-WebRequest $controlUrl -Method Post -Body $body -ContentType 'application/json' -Headers $oldHeaders -UseBasicParsing }
     catch { $staleStatus=[int]$_.Exception.Response.StatusCode }
@@ -132,7 +140,7 @@ try {
     catch { $unsignedReconnect=[int]$_.Exception.Response.StatusCode }
     if($unsignedReconnect -ne 401) { throw "Unsigned reconnect returned $unsignedReconnect" }
     $reconnectBytes=[Text.Encoding]::UTF8.GetBytes("war/match/control/v1/$stamp`n$reconnectBody")
-    $reconnectHeaders=@{'X-War-Control-Time'=$stamp;'X-War-Control-Mac'=[Convert]::ToHexString([Security.Cryptography.HMACSHA256]::HashData($controlKeyBytes,$reconnectBytes))}
+    $reconnectHeaders=@{'X-War-Control-Time'=$stamp;'X-War-Control-Mac'=(Get-MacHex $reconnectBytes)}
     $prematureReconnect=0
     try { $null=Invoke-WebRequest $reconnectUrl -Method Post -Body $reconnectBody -ContentType 'application/json' -Headers $reconnectHeaders -UseBasicParsing }
     catch { $prematureReconnect=[int]$_.Exception.Response.StatusCode }
@@ -144,7 +152,7 @@ try {
     catch { $unsignedCancel=[int]$_.Exception.Response.StatusCode }
     if($unsignedCancel -ne 401) { throw "Unsigned match cancellation returned $unsignedCancel" }
     $cancelBytes=[Text.Encoding]::UTF8.GetBytes("war/match/control/v1/$stamp`n$cancelBody")
-    $cancelHeaders=@{'X-War-Control-Time'=$stamp;'X-War-Control-Mac'=[Convert]::ToHexString([Security.Cryptography.HMACSHA256]::HashData($controlKeyBytes,$cancelBytes))}
+    $cancelHeaders=@{'X-War-Control-Time'=$stamp;'X-War-Control-Mac'=(Get-MacHex $cancelBytes)}
     $cancelled=(Invoke-WebRequest $cancelUrl -Method Post -Body $cancelBody -ContentType 'application/json' -Headers $cancelHeaders -UseBasicParsing).Content | ConvertFrom-Json
     $cancelRetry=(Invoke-WebRequest $cancelUrl -Method Post -Body $cancelBody -ContentType 'application/json' -Headers $cancelHeaders -UseBasicParsing).Content | ConvertFrom-Json
     if($cancelled.code -ne 'cancelled-before-start' -or $cancelRetry.code -ne 'already-cancelled') { throw 'Prestart cancellation did not replay safely' }
@@ -159,7 +167,7 @@ try {
     $crashBody=ConvertTo-Json $crashManifest -Depth 8 -Compress
     $crashStamp=[DateTimeOffset]::UtcNow.ToUnixTimeSeconds().ToString([Globalization.CultureInfo]::InvariantCulture)
     $crashBytes=[Text.Encoding]::UTF8.GetBytes("war/match/control/v1/$crashStamp`n$crashBody")
-    $crashHeaders=@{'X-War-Control-Time'=$crashStamp;'X-War-Control-Mac'=[Convert]::ToHexString([Security.Cryptography.HMACSHA256]::HashData($controlKeyBytes,$crashBytes))}
+    $crashHeaders=@{'X-War-Control-Time'=$crashStamp;'X-War-Control-Mac'=(Get-MacHex $crashBytes)}
     $crashRegistered=Invoke-WebRequest $controlUrl -Method Post -Body $crashBody -ContentType 'application/json' -Headers $crashHeaders -UseBasicParsing
     if([int]$crashRegistered.StatusCode -ne 201 -or !(Test-Path -LiteralPath (Join-Path $env:Battle__ResultOutboxPath 'active/smoke-crash-match.active'))) { throw 'Runtime allocation was returned before its crash marker was durable' }
     $terminalFiles=@(Get-ChildItem -LiteralPath $env:Battle__ResultOutboxPath -Filter 'smoke-allocated-*.wfr' -File)
@@ -170,7 +178,7 @@ try {
        (Test-Path -LiteralPath (Join-Path $env:Battle__ResultOutboxPath 'active/smoke-crash-match.active'))) { throw 'Forced host restart did not publish abandoned runtime allocation' }
     $reuseStamp=[DateTimeOffset]::UtcNow.ToUnixTimeSeconds().ToString([Globalization.CultureInfo]::InvariantCulture)
     $reuseBytes=[Text.Encoding]::UTF8.GetBytes("war/match/control/v1/$reuseStamp`n$crashBody")
-    $reuseHeaders=@{'X-War-Control-Time'=$reuseStamp;'X-War-Control-Mac'=[Convert]::ToHexString([Security.Cryptography.HMACSHA256]::HashData($controlKeyBytes,$reuseBytes))}
+    $reuseHeaders=@{'X-War-Control-Time'=$reuseStamp;'X-War-Control-Mac'=(Get-MacHex $reuseBytes)}
     $reuseStatus=0
     try { $null=Invoke-WebRequest $controlUrl -Method Post -Body $crashBody -ContentType 'application/json' -Headers $reuseHeaders -UseBasicParsing }
     catch { $reuseStatus=[int]$_.Exception.Response.StatusCode }
@@ -178,14 +186,14 @@ try {
     $resultStamp=[DateTimeOffset]::UtcNow.ToUnixTimeSeconds().ToString([Globalization.CultureInfo]::InvariantCulture)
     $pollBody='{}'
     $pollBytes=[Text.Encoding]::UTF8.GetBytes("war/result/poll/v1/$resultStamp`n$pollBody")
-    $pollHeaders=@{'X-War-Control-Time'=$resultStamp;'X-War-Control-Mac'=[Convert]::ToHexString([Security.Cryptography.HMACSHA256]::HashData($controlKeyBytes,$pollBytes))}
+    $pollHeaders=@{'X-War-Control-Time'=$resultStamp;'X-War-Control-Mac'=(Get-MacHex $pollBytes)}
     $pollUrl="http://127.0.0.1:$($UdpPort+1)/internal/results/poll"
     $unsignedPoll=0
     try { $null=Invoke-WebRequest $pollUrl -Method Post -Body $pollBody -ContentType 'application/json' -UseBasicParsing }
     catch { $unsignedPoll=[int]$_.Exception.Response.StatusCode }
     if($unsignedPoll -ne 401) { throw "Unsigned result fetch returned $unsignedPoll" }
     $wrongDomainBytes=[Text.Encoding]::UTF8.GetBytes("war/match/control/v1/$resultStamp`n$pollBody")
-    $wrongDomainHeaders=@{'X-War-Control-Time'=$resultStamp;'X-War-Control-Mac'=[Convert]::ToHexString([Security.Cryptography.HMACSHA256]::HashData($controlKeyBytes,$wrongDomainBytes))}
+    $wrongDomainHeaders=@{'X-War-Control-Time'=$resultStamp;'X-War-Control-Mac'=(Get-MacHex $wrongDomainBytes)}
     $wrongDomainStatus=0
     try { $null=Invoke-WebRequest $pollUrl -Method Post -Body $pollBody -ContentType 'application/json' -Headers $wrongDomainHeaders -UseBasicParsing }
     catch { $wrongDomainStatus=[int]$_.Exception.Response.StatusCode }
@@ -197,25 +205,25 @@ try {
     $ackUrl="http://127.0.0.1:$($UdpPort+1)/internal/results/ack"
     $wrongBody=ConvertTo-Json @{matchId=$result[0].matchId;digest=('0'*64)} -Compress
     $wrongBytes=[Text.Encoding]::UTF8.GetBytes("war/result/ack/v1/$resultStamp`n$wrongBody")
-    $wrongHeaders=@{'X-War-Control-Time'=$resultStamp;'X-War-Control-Mac'=[Convert]::ToHexString([Security.Cryptography.HMACSHA256]::HashData($controlKeyBytes,$wrongBytes))}
+    $wrongHeaders=@{'X-War-Control-Time'=$resultStamp;'X-War-Control-Mac'=(Get-MacHex $wrongBytes)}
     $wrongStatus=0
     try { $null=Invoke-WebRequest $ackUrl -Method Post -Body $wrongBody -ContentType 'application/json' -Headers $wrongHeaders -UseBasicParsing }
     catch { $wrongStatus=[int]$_.Exception.Response.StatusCode }
     if($wrongStatus -ne 409) { throw "Wrong result digest returned $wrongStatus" }
     $ackBody=ConvertTo-Json @{matchId=$result[0].matchId;digest=$result[0].digest} -Compress
     $ackBytes=[Text.Encoding]::UTF8.GetBytes("war/result/ack/v1/$resultStamp`n$ackBody")
-    $ackHeaders=@{'X-War-Control-Time'=$resultStamp;'X-War-Control-Mac'=[Convert]::ToHexString([Security.Cryptography.HMACSHA256]::HashData($controlKeyBytes,$ackBytes))}
+    $ackHeaders=@{'X-War-Control-Time'=$resultStamp;'X-War-Control-Mac'=(Get-MacHex $ackBytes)}
     $firstAck=Invoke-WebRequest $ackUrl -Method Post -Body $ackBody -ContentType 'application/json' -Headers $ackHeaders -UseBasicParsing
     $battleProcess=Restart-BattleProcess $battleProcess 'acknowledged' $serverRoot $runRoot $UdpPort
     $processes+=$battleProcess
     $replayStamp=[DateTimeOffset]::UtcNow.ToUnixTimeSeconds().ToString([Globalization.CultureInfo]::InvariantCulture)
     $replayAckBytes=[Text.Encoding]::UTF8.GetBytes("war/result/ack/v1/$replayStamp`n$ackBody")
-    $replayAckHeaders=@{'X-War-Control-Time'=$replayStamp;'X-War-Control-Mac'=[Convert]::ToHexString([Security.Cryptography.HMACSHA256]::HashData($controlKeyBytes,$replayAckBytes))}
+    $replayAckHeaders=@{'X-War-Control-Time'=$replayStamp;'X-War-Control-Mac'=(Get-MacHex $replayAckBytes)}
     $secondAck=Invoke-WebRequest $ackUrl -Method Post -Body $ackBody -ContentType 'application/json' -Headers $replayAckHeaders -UseBasicParsing
     if(($firstAck.Content | ConvertFrom-Json).code -ne 'acknowledged' -or ($secondAck.Content | ConvertFrom-Json).code -ne 'already-acknowledged') { throw 'Result acknowledgement replay failed' }
     if(@(Get-ChildItem -LiteralPath $env:Battle__ResultOutboxPath -Filter 'smoke-allocated-*.ack' -File).Count -ne 1) { throw 'Result acknowledgement was not durable' }
     $replayPollBytes=[Text.Encoding]::UTF8.GetBytes("war/result/poll/v1/$replayStamp`n$pollBody")
-    $replayPollHeaders=@{'X-War-Control-Time'=$replayStamp;'X-War-Control-Mac'=[Convert]::ToHexString([Security.Cryptography.HMACSHA256]::HashData($controlKeyBytes,$replayPollBytes))}
+    $replayPollHeaders=@{'X-War-Control-Time'=$replayStamp;'X-War-Control-Mac'=(Get-MacHex $replayPollBytes)}
     $afterAck=(Invoke-WebRequest $pollUrl -Method Post -Body $pollBody -ContentType 'application/json' -Headers $replayPollHeaders -UseBasicParsing).Content | ConvertFrom-Json
     if(@($afterAck.results | Where-Object { $_.matchId -eq $result[0].matchId }).Count -ne 0) { throw 'Acknowledged result remained pending' }
     Write-Host 'PASS: pending evidence and acknowledged tombstone survive BattleServer restarts; digest-checked ack is idempotent'

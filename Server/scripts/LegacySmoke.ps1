@@ -45,11 +45,13 @@ try {
     $rng.Dispose()
     $env:Battle__SigningKey = [Convert]::ToBase64String($keyBytes)
     $controlBytes = New-Object byte[] 32
-    [Security.Cryptography.RandomNumberGenerator]::Fill($controlBytes)
+    $controlRng = [Security.Cryptography.RandomNumberGenerator]::Create()
+    try { $controlRng.GetBytes($controlBytes) }
+    finally { $controlRng.Dispose() }
     $env:Battle__ControlKey = [Convert]::ToBase64String($controlBytes)
     $env:ASPNETCORE_ENVIRONMENT = 'Development'
     $env:ASPNETCORE_URLS = "http://127.0.0.1:$HttpPort"
-    $env:Mongo__Uri = "mongodb://127.0.0.1:$MongoPort"
+    $env:Mongo__Uri = "mongodb://127.0.0.1:$MongoPort/?replicaSet=wfLegacy"
     $env:Mongo__Database = 'warfriends_legacy_smoke'
     # This script is a single fast sequential client sharing one IP; the production default
     # (120/min, unaffected here) would otherwise 429 once assertion count grows past it.
@@ -59,8 +61,11 @@ try {
     # the same graceful-degradation path Program.cs takes when Legacy:ContentPath is unset.
     $catalogLoaded = Test-Path $ContentPath
     if ($catalogLoaded) { $env:Legacy__ContentPath = $ContentPath } else { Write-Host "Catalog not found at $ContentPath; pricing assertions will check the refusal path instead." }
-    $mongoArgs = @('--dbpath', ('"' + (Join-Path $runRoot 'mongo') + '"'), '--bind_ip', '127.0.0.1', '--port', "$MongoPort", '--logpath', ('"' + (Join-Path $runRoot 'mongo.log') + '"'))
+    $mongoArgs = @('--dbpath', ('"' + (Join-Path $runRoot 'mongo') + '"'), '--bind_ip', '127.0.0.1', '--port', "$MongoPort", '--replSet', 'wfLegacy', '--logpath', ('"' + (Join-Path $runRoot 'mongo.log') + '"'))
     $processes += Start-Process $MongoExecutable -ArgumentList $mongoArgs -PassThru -WindowStyle Hidden
+    $testDll = Join-Path $serverRoot 'tests/War.Battle.Tests/bin/Debug/net10.0/War.Battle.Tests.dll'
+    & dotnet $testDll --init-mongo-replica-set "mongodb://127.0.0.1:$MongoPort/?directConnection=true" wfLegacy "127.0.0.1:$MongoPort"
+    if ($LASTEXITCODE -ne 0) { throw 'MongoDB replica-set initiation failed' }
     $dll = Join-Path $serverRoot 'src/War.Backend/bin/Debug/net10.0/War.Backend.dll'
     $processes += Start-Process dotnet -ArgumentList ('"' + $dll + '"') -WorkingDirectory (Join-Path $serverRoot 'src/War.Backend') `
         -RedirectStandardOutput (Join-Path $runRoot 'backend.log') -RedirectStandardError (Join-Path $runRoot 'backend.error.log') -PassThru -WindowStyle Hidden

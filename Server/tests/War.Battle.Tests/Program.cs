@@ -16,6 +16,48 @@ using War.Protocol;
 using War.Protocol.Transport;
 using War.Shared;
 using War.Persistence;
+using MongoDB.Bson;
+using MongoDB.Driver;
+
+if(args is ["--init-mongo-replica-set",var bootstrapUri,var replicaName,var memberHost])
+{
+    var bootstrapClient=new MongoClient(bootstrapUri);
+    using var startup=new CancellationTokenSource(TimeSpan.FromSeconds(30));
+    var initiate=new BsonDocument
+    {
+        {"replSetInitiate",new BsonDocument
+            {{"_id",replicaName},{"members",new BsonArray {new BsonDocument {{"_id",0},{"host",memberHost}}}}}}
+    };
+    while(true)
+    {
+        startup.Token.ThrowIfCancellationRequested();
+        try {await bootstrapClient.GetDatabase("admin").RunCommandAsync<BsonDocument>(initiate,cancellationToken:startup.Token);break;}
+        catch(MongoConnectionException){await Task.Delay(200,startup.Token);}
+        catch(TimeoutException){await Task.Delay(200,startup.Token);}
+    }
+    while(true)
+    {
+        startup.Token.ThrowIfCancellationRequested();
+        var replicaHello=await bootstrapClient.GetDatabase("admin").RunCommandAsync<BsonDocument>(new BsonDocument("hello",1));
+        if(replicaHello.TryGetValue("isWritablePrimary",out var primary) && primary.ToBoolean())break;
+        await Task.Delay(200,startup.Token);
+    }
+    Console.WriteLine("PASS: isolated MongoDB replica set elected its primary");
+    return;
+}
+if(args is ["--verify-queue-requires-replica-set",var standaloneUri])
+{
+    try
+    {
+        await new BattleMatchQueueStore(standaloneUri,"war_queue_topology_probe").Initialize(CancellationToken.None);
+        throw new Exception("Standalone MongoDB was accepted for transactional matchmaking.");
+    }
+    catch(InvalidOperationException e) when(e.Message.Contains("requires a MongoDB replica set",StringComparison.Ordinal))
+    {
+        Console.WriteLine("PASS: standalone MongoDB is rejected before matchmaking traffic");
+        return;
+    }
+}
 
 if(args is ["--queue-live",var queueMongoUri])
 {await BackendQueueLiveTests.Run(queueMongoUri);return;}
