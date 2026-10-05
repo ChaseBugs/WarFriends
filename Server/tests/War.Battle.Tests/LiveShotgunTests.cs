@@ -570,6 +570,51 @@ internal static class LiveShotgunTests
         }
         Check(foundRepair,
               "source repair publishes a replayable owner-bound shield event");
+        var decoyManifest=manifest with {MatchId="shotgun-decoy-overlap",SceneMasterPlayerId=one,
+            Players=[manifest.Players[0] with {PlayerLevel=22},manifest.Players[1] with {PlayerLevel=22}]};
+        var decoyMatch=new MatchEngine(decoyManifest,map,content,armyChoice:_=>0);
+        decoyMatch.ConfigureBattleAllocations([
+            new(one,["CardDecoy"],[],[],[],[]),new(two,[],[],[],[],[])]);
+        decoyMatch.Admit(one);decoyMatch.Admit(two);
+        Check(decoyMatch.Command(one,new(){CommandId=1,
+                  SelectCards=new SelectCardsCommand{CardIds={"CardDecoy"}}}).Code=="cards-selected"&&
+              decoyMatch.Command(two,new(){CommandId=1,
+                  SelectCards=new SelectCardsCommand()}).Code=="cards-selected",
+              "shotgun opponent and Decoy owner accept only their trusted card allocations");
+        foreach(var id in new[]{one,two})decoyMatch.Command(id,new(){CommandId=2,
+            Ready=new(){ManifestHash=decoyMatch.ManifestHash}});
+        decoyMatch.Advance(60);
+        Check(decoyMatch.Command(one,new(){CommandId=3,
+                  UseDecoy=new(){RequestId=new string('d',32)}}).Code=="decoy-spawned",
+              "source Decoy card creates enemy-owned DestroyableObject colliders during shotgun play");
+        var decoyTarget=decoyMatch.GroundVehicleShotTargets(two).First(x=>x.Decoy);
+        var decoyWorld=new ShotCollisionWorld(map,
+            [new(two,decoyMatch.CombatPose(two).Collision),
+             new(one,decoyMatch.CombatPose(one).Collision)],
+            dynamicTargets:decoyMatch.GroundVehicleShotTargets);
+        Vector3 decoyOrigin=decoyTarget.Hitbox.Center-Vector3.UnitZ*2;
+        var decoyOverlap=decoyWorld.OverlapEnemy(two,decoyOrigin,4,
+            1u<<decoyTarget.Layer);
+        Check(decoyOverlap.Any(x=>x.MainEntityId=="decoy:"+decoyTarget.EntityId),
+              "live enemy Decoy collider enters the shotgun source sphere through its fraction layer");
+        var decoyPlan=ShotgunShotPlanner.Plan(content.Shotguns.Binding(source).Rule(
+                content.Shotguns.Stage(source,0)),
+            decoyOrigin,decoyOrigin+Vector3.UnitZ*3,decoyOverlap);
+        Check(decoyPlan.RealPellets.Any(x=>x.EntityId==decoyOverlap.First(y=>
+                  y.MainEntityId=="decoy:"+decoyTarget.EntityId).EntityId),
+              "live source shotgun cone selects an extra real pellet toward the Decoy");
+        var liveMuzzle=decoyMatch.CombatPose(two).Muzzle(source).Position+
+            content.Shotguns.Binding(source).ShotOffset;
+        var liveAim=decoyTarget.Hitbox.Center+Vector3.UnitX*.5f;
+        var liveOverlap=decoyWorld.OverlapEnemy(two,liveMuzzle,10,content.Bindings.BulletMask(2));
+        var livePlan=ShotgunShotPlanner.Plan(content.Shotguns.Binding(source).Rule(
+                content.Shotguns.Stage(source,0)),liveMuzzle,liveAim,liveOverlap);
+        var liveTrace=decoyWorld.Raycast(two,liveMuzzle,Vector3.Normalize(decoyTarget.Hitbox.Center-liveMuzzle),
+            Vector3.Distance(decoyTarget.Hitbox.Center,liveMuzzle),content.Bindings.BulletMask(2));
+        var liveDecoyPart=liveOverlap.First(y=>y.MainEntityId=="decoy:"+decoyTarget.EntityId);
+        Check(livePlan.RealPellets.Any(x=>x.EntityId==liveDecoyPart.EntityId)&&
+              liveTrace?.DynamicDecoy!=true,
+              "actual covered muzzle selects a Decoy extra but retains source shield/geometry collision blocking");
         return checks;
     }
 }

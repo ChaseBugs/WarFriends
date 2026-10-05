@@ -31,6 +31,24 @@ if(args is ["--reply-transfer-only"])
     return;
 }
 
+if(args is ["--shotgun-overlap-only"])
+{
+    int focused=ShotgunOverlapTests.Run();
+    Console.WriteLine($"PASS: {focused} focused shotgun overlap assertions");
+    return;
+}
+
+if(args is ["--shotgun-only"])
+{
+    var root=new DirectoryInfo(AppContext.BaseDirectory);
+    while(root!=null&&!File.Exists(Path.Combine(root.FullName,"content/combat-content-manifest.json")))
+        root=root.Parent;
+    if(root==null)throw new Exception("Recovered battle content artifact not found.");
+    int focused=LiveShotgunTests.Run(Path.Combine(root.FullName,"content"));
+    Console.WriteLine($"PASS: {focused} focused live shotgun assertions");
+    return;
+}
+
 if(args is ["--flame-only"])
 {
     int focused=ArmyFlameBurstTests.Run();

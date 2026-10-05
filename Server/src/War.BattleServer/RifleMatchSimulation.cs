@@ -305,7 +305,7 @@ internal sealed class RifleMatchSimulation
         var binding=content.Shotguns!.Binding(a.Weapon.SourceId);
         var stage=content.Shotguns.Stage(a.Weapon.SourceId,a.WeaponUpgrade);
         return ShotgunVolleyFactory.Prepare(binding,stage,id,owner,muzzle,target,tick,
-            world.OverlapEnemy(owner,muzzle+binding.ShotOffset,binding.Geometry.Radius),
+            world.OverlapEnemy(owner,muzzle+binding.ShotOffset,binding.Geometry.Radius,bulletMask),
             Random.Shared.NextSingle,trace);
     }
 

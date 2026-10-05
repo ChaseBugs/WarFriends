@@ -29,6 +29,19 @@ internal static class ShotgunOverlapTests
             Vector3.Zero,new Vector3(0,0,6),hits);
         Check(shot.RealPellets.Count==2 && shot.RealPellets[1].EntityId==hits[0].EntityId,
               "host overlap feeds one extra real pellet");
+        var decoyBox=new PlayerHitbox("fixture/decoy/body",PlayerHitboxKind.Box,1,
+            new Vector3(.8f,0,5),new Vector3(2,2,2),Quaternion.Identity,0,Vector3.Zero,0);
+        var decoyWorld=new ShotCollisionWorld(null,[new(a,distant),new(b,pose)],
+            dynamicTargets:_=>[new DynamicShotTarget(72,0,23,decoyBox,Decoy:true)]);
+        var withDecoy=decoyWorld.OverlapEnemy(a,Vector3.Zero,4.5f,1u<<23);
+        Check(withDecoy.Count==2&&withDecoy[1].MainEntityId=="decoy:72"&&
+              withDecoy[1].Center==decoyBox.Center&&withDecoy[1].EntityId.Length==64&&
+              decoyWorld.OverlapEnemy(a,Vector3.Zero,4.5f,1u<<22).Count==1,
+              "enemy Decoy DestroyableObject enters shotgun overlap only through its live source layer");
+        var decoyShot=ShotgunShotPlanner.Plan(new ShotgunRule(50,3,10,10,100,false,false),
+            Vector3.Zero,new Vector3(0,0,6),withDecoy);
+        Check(decoyShot.RealPellets.Count==3&&decoyShot.RealPellets[2].EntityId==withDecoy[1].EntityId,
+              "source cone schedules a separate host-owned extra pellet toward the Decoy collider");
         Check(new ShotCollisionWorld(null,[new(a,pose),new(b,distant)]).OverlapEnemy(a,Vector3.Zero,4.5f).Count==0,
               "moving enemy pose removes old overlap candidates");
         try { _=world.OverlapEnemy(new string('c',32),Vector3.Zero,4.5f); throw new Exception("Unknown shooter accepted."); }

@@ -76,7 +76,8 @@ internal sealed class ShotCollisionWorld
             }
         return nearest;
     }
-    internal IReadOnlyList<ShotgunCollider> OverlapEnemy(string shooterId,Vector3 origin,float radius)
+    internal IReadOnlyList<ShotgunCollider> OverlapEnemy(string shooterId,Vector3 origin,float radius,
+        uint layerMask=uint.MaxValue)
     {
         if(!PlayerHitbox.Finite(origin) || !float.IsFinite(radius) || radius is <=0 or >100)
             throw new InvalidDataException("Invalid shotgun overlap query.");
@@ -86,8 +87,24 @@ internal sealed class ShotCollisionWorld
         var enemy=players.Single(p=>p.PlayerId!=shooterId);
         if(shooter.Pose.PoseKind=="serialized-reference-only" || enemy.Pose.PoseKind=="serialized-reference-only")
             throw new InvalidDataException("Shotgun overlap needs current host player poses.");
-        return Array.AsReadOnly(enemy.Pose.Parts.Where(p=>p.OverlapsSphere(origin,radius))
+        var result=enemy.Pose.Parts.Where(p=>p.OverlapsSphere(origin,radius))
             .Select(p=>new ShotgunCollider(Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(p.SourcePath))),
-                enemy.PlayerId,p.Center,true)).ToArray());
+                enemy.PlayerId,p.Center,true)).ToList();
+        if(dynamicTargets!=null)
+            foreach(var target in dynamicTargets(shooterId))
+            {
+                if(target==null||target.EntityId==0||target.Layer is <0 or >31||target.Hitbox==null)
+                    throw new InvalidDataException("Invalid shotgun dynamic overlap authority.");
+                // Decoy owns a live DestroyableObject with the opposing fraction.
+                // Other dynamic families need their own source collider/owner proof.
+                if(!target.Decoy||(layerMask&(1u<<target.Layer))==0||
+                   !target.Hitbox.OverlapsSphere(origin,radius))continue;
+                string identity="decoy:"+target.EntityId;
+                string collider=identity+":"+target.Hitbox.SourcePath;
+                result.Add(new ShotgunCollider(Convert.ToHexStringLower(SHA256.HashData(
+                    Encoding.UTF8.GetBytes(collider))),identity,target.Hitbox.Center,true));
+                if(result.Count>128)throw new InvalidDataException("Shotgun overlap exceeded source candidate bound.");
+            }
+        return result.AsReadOnly();
     }
 }
