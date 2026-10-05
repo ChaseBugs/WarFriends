@@ -1101,9 +1101,10 @@ try
     Reject(()=>outbox.Publish(impossibleArmy),
         "terminal result cannot claim an army loss without a host-confirmed spawn");
     var impossibleHits=timer.Snapshot().Clone();
-    impossibleHits.Players[0].ConfirmedEnemyHits=1;
+    impossibleHits.Players[0].ConfirmedEnemyHits=1_000_001;
     Reject(()=>outbox.Publish(impossibleHits),
-        "terminal result cannot claim an enemy hit without a host-created projectile");
+        "terminal result bounds all host-confirmed enemy hits independently of player weapon shots");
+    impossibleHits.Players[0].ConfirmedEnemyHits=1;
     impossibleHits.Players[0].ShotsFired=1;
     impossibleHits.Players[0].ConfirmedPlayerHits=2;
     Reject(()=>outbox.Publish(impossibleHits),

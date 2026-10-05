@@ -3563,6 +3563,12 @@ internal static class CombatContentTests
                   row.SourceCardId=="HEAVYTURRET"&&row.Count==1&&
                   duelTerminal.Players.Any(p=>p.PlayerId==row.OwnerPlayerId)),
               "terminal card statistics retain one accepted activation for each authenticated player");
+        var duelPayload=Google.Protobuf.MessageExtensions.ToByteArray(duelTerminal);
+        var duelStats=BattleCardStatsProjection.FromPayload(duelPayload,duelTerminal.MatchId,
+            War.Shared.TerminalResultDigest.Compute(duelPayload));
+        Check(duelStats.Count==2&&duelStats.All(row=>row.CardsPlayed==1&&
+              row.CardsPlayedSeparately.Count==1&&row.CardsPlayedSeparately["HEAVYTURRET"]==1),
+              "validated terminal evidence projects source MatchStats card fields for both players");
         var detached=MatchManifest.Validate(armyManifest);
         equipped[0]="ID_UNIT-UNKNOWN";
         armyStages[0]=101;

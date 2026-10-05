@@ -69,6 +69,7 @@ internal static class BattleManifestSnapshotTests
                 new Action<MatchSnapshot>(x=>x.CardActivations=4097),
                 new Action<MatchSnapshot>(x=>{x.CardActivations=1;x.Players[0].ConfirmedCardsPlayed=0;}),
                 new Action<MatchSnapshot>(x=>x.Players[0].ConfirmedCardsPlayed=1),
+                new Action<MatchSnapshot>(x=>x.Players[0].ConfirmedEnemyHits=1_000_001),
                 new Action<MatchSnapshot>(x=>x.CardUsage.Add(new BattleCardUsage
                     {OwnerPlayerId=players[0],CardId="CardHeavyTurret",SourceCardId="HEAVYTURRET",Count=1})),
                 new Action<MatchSnapshot>(x=>{x.CardActivations=1;x.Players[0].ConfirmedCardsPlayed=1;
@@ -101,6 +102,10 @@ internal static class BattleManifestSnapshotTests
             if(await resultStore.Accept(match,digest,payload,CancellationToken.None)!="accepted" ||
                (await queue.Existing(players[0],CancellationToken.None))?.MatchId!=match)
                 throw new Exception("Result storage unexpectedly released an unreconciled queue pair.");
+            var cardStats=await resultStore.GetCardStats(match,CancellationToken.None);
+            if(cardStats==null || cardStats.Count!=2 || cardStats.Any(x=>x.CardsPlayed!=0 ||
+                x.CardsPlayedSeparately.Count!=0))
+                throw new Exception("Durable result read did not project validated source card statistics.");
             var resumedAcceptance=new BattleTerminalAcceptance(new BattleResultStore(uri,database),
                 new BattleMatchQueueStore(uri,database),new BattleManifestSnapshotStore(uri,database));
             if(await resumedAcceptance.Accept(match,digest,payload,CancellationToken.None)!="already-accepted" ||

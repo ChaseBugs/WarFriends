@@ -277,7 +277,7 @@ public sealed class TerminalOutbox
            snapshot.Players.Any(p=>p.ConfirmedArmyLosses>p.ConfirmedArmySpawns ||
                p.ConfirmedPlayerHits>p.ConfirmedEnemyHits ||
                p.ConfirmedCardsPlayed>4096 ||
-               (p.ShotsFired<=uint.MaxValue/8 && p.ConfirmedEnemyHits>p.ShotsFired*8)) ||
+               p.ConfirmedEnemyHits>1_000_000) ||
            snapshot.Players.Any(p=>!Guid.TryParseExact(p.PlayerId,"N",out _)) ||
            snapshot.PauseHostTick!=0 || snapshot.Players.Any(p=>!ValidTerminalPlayer(p,snapshot.ServerTick)) ||
            !ValidTerminalShields(snapshot.Shields) ||
