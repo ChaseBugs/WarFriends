@@ -21,6 +21,7 @@ builder.Services.AddSingleton(new BattleGrantStore(mongoUri, mongoDatabase));
 builder.Services.AddSingleton(new BattleMatchQueueStore(mongoUri, mongoDatabase));
 builder.Services.AddSingleton(new BattleManifestSnapshotStore(mongoUri, mongoDatabase));
 builder.Services.AddSingleton(new BattleResultStore(mongoUri, mongoDatabase));
+builder.Services.AddSingleton<BattleTerminalAcceptance>();
 builder.Services.AddSingleton(new LegacyPlayerStore(mongoUri, mongoDatabase));
 builder.Services.AddSingleton<BattlePlayerPresentationSource>();
 builder.Services.AddSingleton(new LegacyBufferStore(mongoUri, mongoDatabase));
@@ -256,7 +257,7 @@ app.MapPost("/internal/battle/matches/provision", async (HttpContext ctx, Battle
     catch (InvalidDataException) { return Results.BadRequest(new { code = "invalid-match-provision" }); }
     catch (HttpRequestException) { return Results.StatusCode(503); }
 });
-app.MapPost("/internal/battle/results/accept", async (HttpContext ctx, BattleResultStore store) =>
+app.MapPost("/internal/battle/results/accept", async (HttpContext ctx, BattleTerminalAcceptance acceptance) =>
 {
     if (ctx.Request.ContentLength is > 65536) return Results.StatusCode(404);
     using var stream = new MemoryStream(); await ctx.Request.Body.CopyToAsync(stream, ctx.RequestAborted);
@@ -273,7 +274,7 @@ app.MapPost("/internal/battle/results/accept", async (HttpContext ctx, BattleRes
             !root.TryGetProperty("snapshot", out var snapshot) || snapshot.ValueKind != JsonValueKind.String)
             return Results.BadRequest(new { code = "invalid-result" });
         byte[] payload = Convert.FromBase64String(snapshot.GetString()!);
-        string code = await store.Accept(match.GetString()!, digest.GetString()!, payload, ctx.RequestAborted);
+        string code = await acceptance.Accept(match.GetString()!, digest.GetString()!, payload, ctx.RequestAborted);
         return code == "conflict" ? Results.Conflict(new { code }) : Results.Ok(new { code });
     }
     catch (Exception e) when (e is FormatException or JsonException or InvalidDataException)

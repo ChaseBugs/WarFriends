@@ -43,6 +43,13 @@ public sealed class BattleManifestSnapshotStore
         }
     }
 
+    public async Task<byte[]?> Get(string matchId,IReadOnlyList<string> players,CancellationToken ct)
+    {
+        ValidateIdentity(matchId,players);
+        var row=await snapshots.Find(x=>x.Id==matchId).FirstOrDefaultAsync(ct);
+        return row==null?null:Validate(row,matchId,players);
+    }
+
     public static byte[] Validate(BattleManifestSnapshotDocument document,string matchId,IReadOnlyList<string> players)
     {
         ValidateIdentity(matchId,players);

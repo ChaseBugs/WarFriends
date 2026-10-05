@@ -1,6 +1,12 @@
 using System.Text.Json.Nodes;
+using System.Security.Cryptography;
+using System.Buffers.Binary;
+using Google.Protobuf;
 using MongoDB.Driver;
+using War.Backend;
+using War.BattleServer;
 using War.Persistence;
+using War.Protocol;
 
 internal static class BattleManifestSnapshotTests
 {
@@ -43,8 +49,43 @@ internal static class BattleManifestSnapshotTests
             try {await restarted.GetOrCreate(match,players,()=>Task.FromResult(first),CancellationToken.None);
                 throw new Exception("Corrupt manifest snapshot replayed.");}
             catch(InvalidDataException){}
-            Console.WriteLine("PASS: Mongo manifest snapshot survives restart, ignores changing profile data, and rejects tampering");
+            await collection.UpdateOneAsync(x=>x.Id==match,Builders<BattleManifestSnapshotDocument>.Update.Set(x=>x.Manifest,first));
+            var resultStore=new BattleResultStore(uri,database);
+            await resultStore.Initialize(CancellationToken.None);
+            var acceptance=new BattleTerminalAcceptance(resultStore,queue,restarted);
+            var terminal=new MatchSnapshot{MatchId=match,ManifestHash=MatchManifest.Parse(first).Digest(),
+                Phase=BattlePhase.Aborted,TerminalReason="host-shutdown"};
+            terminal.Players.Add(new BattlePlayerState{PlayerId=players[0]});
+            terminal.Players.Add(new BattlePlayerState{PlayerId=new string('c',32)});
+            (byte[] badPayload,string badDigest)=Evidence(terminal);
+            try {await acceptance.Accept(match,badDigest,badPayload,CancellationToken.None);
+                throw new Exception("Wrong terminal roster released the pair.");}
+            catch(InvalidDataException){}
+            if((await queue.Existing(players[0],CancellationToken.None))?.MatchId!=match)
+                throw new Exception("Rejected terminal result changed queue ownership.");
+            terminal.Players[1].PlayerId=players[1];
+            (byte[] payload,string digest)=Evidence(terminal);
+            if(await acceptance.Accept(match,digest,payload,CancellationToken.None)!="accepted" ||
+               await queue.Existing(players[0],CancellationToken.None)!=null ||
+               await queue.Existing(players[1],CancellationToken.None)!=null ||
+               await acceptance.Accept(match,digest,payload,CancellationToken.None)!="already-accepted")
+                throw new Exception("Accepted terminal result did not release and replay safely.");
+            if((await queue.Join(players[0],"mixed.fixture",DateTimeOffset.UtcNow,CancellationToken.None)).Code!="waiting")
+                throw new Exception("Released player could not queue again.");
+            var rematch=await queue.Join(players[1],"mixed.fixture",DateTimeOffset.UtcNow,CancellationToken.None);
+            if(rematch.Code!="paired"||rematch.MatchId==match)
+                throw new Exception("Released players could not form a new match.");
+            Console.WriteLine("PASS: Mongo paired snapshot survives restart; proven terminal releases players for a distinct rematch");
         }
         finally {await mongo.DropDatabaseAsync(database);}
+    }
+    private static (byte[] Payload,string Digest) Evidence(MatchSnapshot snapshot)
+    {
+        byte[] payload=snapshot.ToByteArray();
+        var framed=new byte[payload.Length+8];
+        "WFR1"u8.CopyTo(framed);
+        BinaryPrimitives.WriteInt32LittleEndian(framed.AsSpan(4,4),payload.Length);
+        payload.CopyTo(framed,8);
+        return (payload,Convert.ToHexStringLower(SHA256.HashData(framed)));
     }
 }

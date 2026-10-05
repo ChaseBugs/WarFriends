@@ -93,6 +93,27 @@ public sealed class BattleMatchQueueStore
         var pair=await PairFor(playerId,ct);
         return pair==null?null:Result("paired",pair);
     }
+    public async Task<BattlePairingResult?> ForMatch(string matchId,CancellationToken ct)
+    {
+        if(!System.Text.RegularExpressions.Regex.IsMatch(matchId??"",@"\Am[0-9a-f]{32}\z"))
+            throw new InvalidDataException("Invalid allocator match identity.");
+        var pair=await pairs.Find(x=>x.MatchId==matchId).FirstOrDefaultAsync(ct);
+        return pair==null?null:Result("paired",pair);
+    }
+    public async Task<bool> Release(string matchId,IReadOnlyList<string> playerIds,CancellationToken ct)
+    {
+        if(!System.Text.RegularExpressions.Regex.IsMatch(matchId??"",@"\Am[0-9a-f]{32}\z") ||
+            playerIds is not {Count:2} || playerIds.Any(x=>!Guid.TryParseExact(x,"N",out _) || x!=x.ToLowerInvariant()) ||
+            playerIds[0]==playerIds[1])
+            throw new InvalidDataException("Invalid allocator release identity.");
+        var row=await pairs.Find(x=>x.MatchId==matchId).FirstOrDefaultAsync(ct);
+        if(row==null)return false;
+        var checkedRow=Result("paired",row);
+        if(!checkedRow.Players!.SequenceEqual(playerIds,StringComparer.Ordinal))
+            throw new InvalidDataException("Terminal roster differs from durable pair.");
+        var deleted=await pairs.DeleteOneAsync(x=>x.Id==row.Id && x.MatchId==matchId && x.Players==playerIds.ToArray(),ct);
+        return deleted.DeletedCount==1;
+    }
     public async Task<string> Cancel(string playerId,DateTimeOffset now,CancellationToken ct)
     {
         Validate(playerId,"cancel",now);

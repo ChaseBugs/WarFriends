@@ -162,6 +162,26 @@ public sealed class TerminalOutbox
     }
     private static string Digest(byte[] record)
         =>Convert.ToHexString(record.AsSpan(record.Length-32,32)).ToLowerInvariant();
+    public static MatchSnapshot ValidatePayload(byte[] payload,string matchId,string digest)
+    {
+        if(payload is not {Length:>0 and <=65536} ||
+           !Regex.IsMatch(matchId??"",@"\A[a-zA-Z0-9_-]{1,64}\z") ||
+           !Regex.IsMatch(digest??"",@"\A[0-9a-f]{64}\z"))
+            throw new InvalidDataException("Invalid terminal result envelope.");
+        var prefix=new byte[8+payload.Length];
+        Magic.CopyTo(prefix,0);
+        System.Buffers.Binary.BinaryPrimitives.WriteInt32LittleEndian(prefix.AsSpan(4,4),payload.Length);
+        payload.CopyTo(prefix,8);
+        if(Convert.ToHexStringLower(SHA256.HashData(prefix))!=digest)
+            throw new InvalidDataException("Terminal result digest mismatch.");
+        MatchSnapshot snapshot;
+        try {snapshot=MatchSnapshot.Parser.ParseFrom(payload);}
+        catch(InvalidProtocolBufferException e){throw new InvalidDataException("Invalid terminal result protobuf.",e);}
+        if(!snapshot.ToByteArray().AsSpan().SequenceEqual(payload) || snapshot.MatchId!=matchId)
+            throw new InvalidDataException("Terminal result identity or canonical bytes differ.");
+        Validate(snapshot);
+        return snapshot;
+    }
     public bool Publish(MatchSnapshot snapshot)
     {
         lock(gate)return PublishLocked(snapshot);
