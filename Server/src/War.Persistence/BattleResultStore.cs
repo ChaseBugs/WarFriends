@@ -77,6 +77,11 @@ public sealed class BattleResultStore
         var result=await Get(matchId,ct);
         return result==null ? null : BattleCardStatsProjection.FromPayload(result.Snapshot,result.MatchId,result.Digest);
     }
+    public async Task<IReadOnlyList<BattlePlayerArmyStats>?> GetArmyStats(string matchId,CancellationToken ct)
+    {
+        var result=await Get(matchId,ct);
+        return result==null ? null : BattleArmyStatsProjection.FromPayload(result.Snapshot,result.MatchId,result.Digest);
+    }
     public async Task<long> Prune(DateTimeOffset now, TimeSpan retention, CancellationToken ct)
     {
         if (now < DateTimeOffset.UnixEpoch || retention < TimeSpan.FromDays(30) || retention > TimeSpan.FromDays(3650))

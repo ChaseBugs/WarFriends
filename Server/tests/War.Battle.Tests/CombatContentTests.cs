@@ -4806,6 +4806,11 @@ internal static class CombatContentTests
         Check(TerminalOutbox.ValidatePayload(armyTerminalPayload,armyTerminal.MatchId,
             War.Shared.TerminalResultDigest.Compute(armyTerminalPayload)).Players[0].ArmyUsage.Count==1,
             "durable terminal validator accepts real two-owner army deployment and spawn evidence");
+        var armyStats=BattleArmyStatsProjection.FromPayload(armyTerminalPayload,armyTerminal.MatchId,
+            War.Shared.TerminalResultDigest.Compute(armyTerminalPayload));
+        Check(armyStats[0].Units.Single()==new BattleArmyUnitStats("ID_UNIT-ASSAULT",1,2,2)&&
+              armyStats[1].Units.Single()==new BattleArmyUnitStats("ID_UNIT-HELICOPTER",1,1,1),
+              "validated terminal result projects accepted, planned and realized counts by source unit ID");
         var paratrooperManifest=detached with {MatchId="paratrooper-kevlar",Players=detached.Players.Select((p,i)=>p with
         {
             EquippedArmyUnitIds=["ID_UNIT-PARATROOPER"],NewArmyUnitIds=null,

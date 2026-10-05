@@ -110,6 +110,9 @@ internal static class BattleManifestSnapshotTests
             if(cardStats==null || cardStats.Count!=2 || cardStats.Any(x=>x.CardsPlayed!=0 ||
                 x.CardsPlayedSeparately.Count!=0))
                 throw new Exception("Durable result read did not project validated source card statistics.");
+            var armyStats=await resultStore.GetArmyStats(match,CancellationToken.None);
+            if(armyStats==null || armyStats.Count!=2 || armyStats.Any(x=>x.Units.Count!=0))
+                throw new Exception("Durable result read did not project validated source army statistics.");
             var resumedAcceptance=new BattleTerminalAcceptance(new BattleResultStore(uri,database),
                 new BattleMatchQueueStore(uri,database),new BattleManifestSnapshotStore(uri,database));
             if(await resumedAcceptance.Accept(match,digest,payload,CancellationToken.None)!="already-accepted" ||
