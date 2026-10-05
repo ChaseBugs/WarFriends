@@ -83,6 +83,8 @@ Durable grant publication, reads, and duplicate publication now validate the ent
 
 The durable grant boundary now also requires complementary roster fractions, matching the provisioner's two-sided scene placement rule. The live MongoDB test rejects a direct one-fraction publication, proves a complete assignment returns `already-published` on retry, and refuses to treat a corrupted persisted assignment as a successful duplicate write.
 
+The same assignment now requires one shared host/port and separate tickets and 256-bit session keys for the two players. The replica-set smoke rejects a split-host roster and a reused key before publication, then still completes the normal two-client UDP match.
+
 Terminal acceptance now re-reads the persisted result after both first acceptance and digest-idempotent replay and compares its exact bytes to the validated Worker payload before releasing a queue pair. A Mongo test stores the result without releasing the pair, recreates Backend acceptance after restart, and confirms replay completes release; a second match with a damaged stored snapshot is refused without changing pair ownership until the bytes are repaired. The separate Backend/Worker live queue smoke still passes.
 
 B26 now shares one `WFR1` framed SHA-256 calculation between the Worker and Mongo result store. Direct acceptance requires the supplied digest to match the payload; every durable read and duplicate acceptance validates the stored identity, timestamps, exact scored-marker shape, and recomputed digest. Scoring and archival reuse that validation before their first write, rejecting preexisting damaged snapshots. The Mongo corruption test, full 113,904-assertion Battle executable, and live queue/Worker-crash smoke pass.

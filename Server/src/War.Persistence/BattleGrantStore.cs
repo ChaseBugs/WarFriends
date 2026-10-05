@@ -84,6 +84,8 @@ public sealed class BattleGrantStore
            first.ManifestHash!=row.ManifestHash || second.ManifestHash!=row.ManifestHash ||
            first.PlayerId!=row.PlayerA || second.PlayerId!=row.PlayerB ||
            first.SessionId==second.SessionId ||
+           first.Host!=second.Host || first.Port!=second.Port ||
+           first.Ticket==second.Ticket || first.SessionKey.Equals(second.SessionKey) ||
            first.ExpiresUnixSeconds!=second.ExpiresUnixSeconds ||
            row.ExpiresUtc!=DateTimeOffset.FromUnixTimeSeconds(first.ExpiresUnixSeconds).UtcDateTime ||
            first.PlayerViews.Count!=2 || second.PlayerViews.Count!=2 ||

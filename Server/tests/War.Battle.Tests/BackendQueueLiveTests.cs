@@ -139,6 +139,24 @@ internal static class BackendQueueLiveTests
                 throw new Exception("One-fraction roster was accepted at grant publication.");
             }
             catch(InvalidDataException){}
+            var splitHost=grants.Select(x=>x.Clone()).ToArray();
+            splitHost[1].Host="127.0.0.2";
+            try
+            {
+                await new BattleGrantStore(mongoUri,database).Publish(frozenPair.MatchId,
+                    grants[0].ManifestHash,splitHost,deadline.Token);
+                throw new Exception("One roster was assigned two battle hosts.");
+            }
+            catch(InvalidDataException){}
+            var sharedKey=grants.Select(x=>x.Clone()).ToArray();
+            sharedKey[1].SessionKey=sharedKey[0].SessionKey;
+            try
+            {
+                await new BattleGrantStore(mongoUri,database).Publish(frozenPair.MatchId,
+                    grants[0].ManifestHash,sharedKey,deadline.Token);
+                throw new Exception("Two players were assigned one session key.");
+            }
+            catch(InvalidDataException){}
             var grantRows=mongo.GetDatabase(database).GetCollection<BattleGrantDocument>("battle_grants");
             var persistedGrant=await grantRows.Find(x=>x.MatchId==frozenPair.MatchId).FirstAsync(deadline.Token);
             var grantStore=new BattleGrantStore(mongoUri,database);
