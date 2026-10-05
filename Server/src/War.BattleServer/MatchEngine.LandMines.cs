@@ -50,7 +50,7 @@ public sealed partial class MatchEngine
             float damage=landMineSource.Damage(level,decoyMaxDisplayLevel);
             if(!landMines.TrySpawn(requestId,owner.Definition.PlayerId,owner.Definition.Fraction,damage,placements,out var spawned))
             {cardReservations.TryRelease(requestId,owner.Definition.PlayerId);return "land-mine-placement-unavailable";}
-            performance.RecordCard(requestId);
+            performance.RecordCard(requestId,owner.Definition.PlayerId);
             foreach(var row in spawned)
             {
                 stateRevision++;

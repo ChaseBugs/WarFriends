@@ -276,6 +276,7 @@ public sealed class TerminalOutbox
            snapshot.Players.Count!=2 || snapshot.Players[0].PlayerId==snapshot.Players[1].PlayerId ||
            snapshot.Players.Any(p=>p.ConfirmedArmyLosses>p.ConfirmedArmySpawns ||
                p.ConfirmedPlayerHits>p.ConfirmedEnemyHits ||
+               p.ConfirmedCardsPlayed>4096 ||
                (p.ShotsFired<=uint.MaxValue/8 && p.ConfirmedEnemyHits>p.ShotsFired*8)) ||
            snapshot.Players.Any(p=>!Guid.TryParseExact(p.PlayerId,"N",out _)) ||
            snapshot.PauseHostTick!=0 || snapshot.Players.Any(p=>!ValidTerminalPlayer(p,snapshot.ServerTick)) ||
@@ -294,6 +295,8 @@ public sealed class TerminalOutbox
             hits+=player.ConfirmedPlayerHits;kills+=player.ConfirmedPlayerKills;
             spawns+=player.ConfirmedArmySpawns;losses+=player.ConfirmedArmyLosses;
         }
+        if(snapshot.Players.Aggregate(0UL,(sum,player)=>sum+player.ConfirmedCardsPlayed)!=snapshot.CardActivations)
+            throw new InvalidDataException("Terminal card ownership does not conserve activations.");
         if(hits>uint.MaxValue || kills>uint.MaxValue || spawns>uint.MaxValue || losses>uint.MaxValue ||
            snapshot.CardActivations>int.MaxValue || snapshot.ObjectiveCredits>int.MaxValue)
             throw new InvalidDataException("Terminal performance counters exceed their durable contract.");

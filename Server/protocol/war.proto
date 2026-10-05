@@ -221,6 +221,8 @@ message BattlePlayerState {
   bool sniper_aiming = 40;
   bool sniper_scope_visible = 41;
   bool bazooka_targeting = 42;
+  // Terminal-only source MatchStats.cardsPlayed count, owned by accepted card actions.
+  uint32 confirmed_cards_played = 43;
 }
 message BattleShieldState {
   int32 cover_index = 1; int32 owner_fraction = 2;

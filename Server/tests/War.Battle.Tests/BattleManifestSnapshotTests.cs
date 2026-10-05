@@ -67,6 +67,8 @@ internal static class BattleManifestSnapshotTests
             terminal.Players[1].PlayerId=players[1];
             foreach(var invalid in new[]{
                 new Action<MatchSnapshot>(x=>x.CardActivations=4097),
+                new Action<MatchSnapshot>(x=>{x.CardActivations=1;x.Players[0].ConfirmedCardsPlayed=0;}),
+                new Action<MatchSnapshot>(x=>x.Players[0].ConfirmedCardsPlayed=1),
                 new Action<MatchSnapshot>(x=>{x.RibbonIds.Add("R1");x.RibbonIds.Add("R1");}),
                 new Action<MatchSnapshot>(x=>x.PerformanceDurationTicks=10_000_001),
                 new Action<MatchSnapshot>(x=>x.PerformanceDurationTicks=1),

@@ -96,7 +96,7 @@ public sealed partial class MatchEngine
             {
                 cardReservations.TryRelease(requestId,owner.Definition.PlayerId);return "decoy-placement-unavailable";
             }
-            performance.RecordCard(requestId);
+            performance.RecordCard(requestId,owner.Definition.PlayerId);
             foreach(var row in spawned)
             {
                 var targetId=DroneDecoyId(row.EntityId);

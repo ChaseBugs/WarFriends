@@ -158,7 +158,8 @@ public sealed partial class MatchEngine
 
     internal bool TryApplyCardEffect(string effectId, string ownerPlayerId, WarCardEffectRequest request)
     {
-        if (Find(ownerPlayerId)?.Admitted != true || phase is not (BattlePhase.Countdown or BattlePhase.Running)) return false;
+        if (Find(ownerPlayerId)?.Admitted != true || phase is not (BattlePhase.Countdown or BattlePhase.Running) ||
+            !performance.CanRecordCard(effectId)) return false;
         try { WarCardEffectRequestValidator.Validate(request); }
         catch (InvalidDataException) { return false; }
         var reserved = cardReservations != null;
@@ -168,7 +169,7 @@ public sealed partial class MatchEngine
             if (reserved) cardReservations!.TryRelease(effectId,ownerPlayerId);
             return false;
         }
-        if (Guid.TryParseExact(effectId, "N", out _)) performance.RecordCard(effectId);
+        performance.RecordCard(effectId,ownerPlayerId);
         stateRevision++;
         Emit(MatchEventKind.CardEffectApplied, ownerPlayerId, request.CardId, 0,
             request.Target, 0, effectId);
@@ -2186,6 +2187,7 @@ public sealed partial class MatchEngine
             Reconnecting=p.Reconnecting,ReconnectAttempts=p.ReconnectAttempts,
             ReconnectDeadlineHostTick=p.ReconnectDeadlineHostTick,
             ConfirmedArmySpawns=p.ConfirmedArmySpawns,ConfirmedArmyLosses=p.ConfirmedArmyLosses,
+            ConfirmedCardsPlayed=Terminal ? (uint)performance.CardActivationsFor(p.Definition.PlayerId) : 0,
             CardsSelected = p.CardsSelected,
             RiflePose = rifleCombat?.Snapshot(p.Definition.PlayerId) ?? grenadeCombat?.Snapshot(p.Definition.PlayerId,tick)
             ,MinigunHeld = rifleCombat?.MinigunHeld(p.Definition.PlayerId) ?? false

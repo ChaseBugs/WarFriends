@@ -2339,6 +2339,16 @@ internal static class CombatContentTests
             performance.End(40);
             Check(performance.DurationTicks==30&&performance.CardActivations==1&&performance.ObjectiveCredits==1,
                   "battle performance ledger records authoritative terminal duration");
+            var ownedCards=new BattlePerformanceLedger();
+            const string firstCardOwner="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+            const string secondCardOwner="bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
+            const string cardReceipt="cccccccccccccccccccccccccccccccc";
+            Check(ownedCards.RecordCard(cardReceipt,firstCardOwner)&&
+                  !ownedCards.RecordCard(cardReceipt,firstCardOwner)&&
+                  ownedCards.CardActivationsFor(firstCardOwner)==1&&
+                  ownedCards.CardActivationsFor(secondCardOwner)==0,
+                  "accepted card activation retains its player owner on replay");
+            Reject(()=>ownedCards.RecordCard(cardReceipt,secondCardOwner));
             var boundedPerformance=new BattlePerformanceLedger(1);
             boundedPerformance.RecordCard("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb");
             Reject(()=>boundedPerformance.RecordObjective("cccccccccccccccccccccccccccccccc"));
@@ -3535,6 +3545,12 @@ internal static class CombatContentTests
                     duelAcquisition.Add(row.OwnerPlayerId);
         }
         Check(duelAcquisition.Count==2,"each live turret acquires the opposing source Defender before player fallback");
+        if(!turretDuel.Terminal)
+            turretDuel.Command(decoyPlayer,new(){CommandId=4,Forfeit=new()});
+        var duelTerminal=turretDuel.Snapshot();
+        Check(turretDuel.Terminal&&duelTerminal.CardActivations==2&&
+              duelTerminal.Players.All(p=>p.ConfirmedCardsPlayed==1),
+              "terminal card statistics retain one accepted activation for each authenticated player");
         var detached=MatchManifest.Validate(armyManifest);
         equipped[0]="ID_UNIT-UNKNOWN";
         armyStages[0]=101;

@@ -28,7 +28,7 @@ public sealed partial class MatchEngine
             if(!heavyTurrets.TrySpawn(requestId,owner.Definition.PlayerId,owner.Definition.Fraction,slot,position.Value,stats,
                 heavyTurretSource.EffectiveRealShotProbability,NextArmyFloat,out var spawned)||spawned==null)
             {cardReservations.TryRelease(requestId,owner.Definition.PlayerId);return "heavy-turret-placement-unavailable";}
-            performance.RecordCard(requestId);stateRevision++;
+            performance.RecordCard(requestId,owner.Definition.PlayerId);stateRevision++;
             Emit(MatchEventKind.HeavyTurretSpawned,spawned.OwnerPlayerId,"CardHeavyTurret",spawned.EntityId,
                 spawned.Position,spawned.Health,spawned.SlotComponentFileId.ToString());
             return "heavy-turret-spawned";
