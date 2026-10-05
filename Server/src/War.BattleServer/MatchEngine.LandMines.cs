@@ -119,6 +119,7 @@ public sealed partial class MatchEngine
                     }
                 }
             }
+            ApplyLandMineDecoyExplosion(mine.OwnerPlayerId,mine.Position,mine.Damage,mine.EntityId);
             ApplyLandMinePassengerExplosion(mine.OwnerPlayerId,mine.Position,mine.Damage);
             ApplyLandMineVehicleExplosion(mine.OwnerPlayerId,mine.Position,mine.Damage);
             foreach(var army in activeArmyEntities.Values.Where(x=>x.OwnerFraction!=mine.OwnerFraction&&
@@ -233,6 +234,39 @@ public sealed partial class MatchEngine
                     if(targetOwner.Definition.Fraction!=attacker.Definition.Fraction)
                         attacker.ConfirmedEnemyHits=checked(attacker.ConfirmedEnemyHits+1);
                 }
+            }
+        }
+        return hits;
+    }
+
+    internal int ApplyLandMineDecoyExplosion(string ownerId,Vector3 position,float damage,
+        ulong mineId)
+    {
+        if(phase!=BattlePhase.Running||landMineSource==null||decoySource==null||
+           explosionPolicy==null||!PlayerHitbox.Finite(position)||!float.IsFinite(damage)||
+           damage<=0||damage>10_000_000||mineId==0)
+            throw new InvalidDataException("Land Mine Decoy blast lacks trusted source authority.");
+        var attacker=Find(ownerId)??throw new InvalidDataException("Land Mine Decoy owner disappeared.");
+        int hits=0;
+        foreach(var collider in DecoyShotTargets(attacker,includeFriendly:true))
+        {
+            if(!collider.Decoy)throw new InvalidDataException("Land Mine Decoy collision type changed.");
+            if(!collider.Hitbox.OverlapsSphere(position,landMineSource.HurtRadius))continue;
+            var target=decoys.Snapshot().SingleOrDefault(x=>x.EntityId==collider.EntityId)??
+                throw new InvalidDataException("Land Mine Decoy lost its health authority.");
+            float amount=damage*(target.OwnerFraction==attacker.Definition.Fraction?
+                explosionPolicy.Friendly:1f);
+            if(!float.IsFinite(amount)||amount<=0||amount>10_000_000||
+               !decoys.TryDamage(target.EntityId,amount,out var before,out bool destroyed)||before==null)
+                throw new InvalidDataException("Land Mine Decoy damage escaped host bounds.");
+            hits++;stateRevision++;
+            if(target.OwnerFraction!=attacker.Definition.Fraction)
+                attacker.ConfirmedEnemyHits=checked(attacker.ConfirmedEnemyHits+1);
+            if(destroyed)
+            {
+                droneTargets.Disable(DroneDecoyId(target.EntityId));
+                Emit(MatchEventKind.DecoyDestroyed,ownerId,before.OwnerPlayerId,
+                    target.EntityId,before.Position,0,"land-mine:"+mineId);
             }
         }
         return hits;

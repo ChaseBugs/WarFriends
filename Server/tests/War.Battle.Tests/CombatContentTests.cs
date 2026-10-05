@@ -2991,6 +2991,35 @@ internal static class CombatContentTests
               "Helicopter static/dynamic sight query preserves clear and zero-direction rays");
         Reject(()=>decoyMatch.HelicopterVisibilityRay(new HelicopterSightRay(
             Vector3.Zero,Vector3.UnitX,10,uint.MaxValue)));
+        var mineDecoyBefore=decoyMatch.Snapshot().Decoys.First(x=>x.OwnerPlayerId==decoyPlayer);
+        var mineDecoyPosition=new Vector3(mineDecoyBefore.X,mineDecoyBefore.Y,mineDecoyBefore.Z);
+        uint mineDecoyEnemyHits=decoyMatch.Snapshot().Players.Single(x=>x.PlayerId==decoyOpponent)
+            .ConfirmedEnemyHits;
+        Check(decoyMatch.ApplyLandMineDecoyExplosion(decoyOpponent,mineDecoyPosition,10,71)>0&&
+              Math.Abs(decoyMatch.Snapshot().Decoys.Single(x=>x.EntityId==mineDecoyBefore.EntityId).Health-
+                  (mineDecoyBefore.Health-10))<.001f&&
+              decoyMatch.Snapshot().Players.Single(x=>x.PlayerId==decoyOpponent)
+                  .ConfirmedEnemyHits>mineDecoyEnemyHits,
+            "Land Mine blast damages the recovered Decoy root box and credits an enemy hit");
+        float mineDecoyFriendlyBefore=decoyMatch.Snapshot().Decoys
+            .Single(x=>x.EntityId==mineDecoyBefore.EntityId).Health;
+        Check(decoyMatch.ApplyLandMineDecoyExplosion(decoyPlayer,mineDecoyPosition,10,72)>0&&
+              Math.Abs(decoyMatch.Snapshot().Decoys.Single(x=>x.EntityId==mineDecoyBefore.EntityId).Health-
+                  (mineDecoyFriendlyBefore-5))<.001f,
+            "allied Land Mine blast applies recovered half damage to a Decoy");
+        Reject(()=>decoyMatch.ApplyLandMineDecoyExplosion(decoyOpponent,mineDecoyPosition,float.NaN,73));
+        ulong mineDecoyCursor=decoyMatch.EventBatch(decoyOpponent,0).LatestEventId;
+        float mineDecoyRemaining=decoyMatch.Snapshot().Decoys
+            .Single(x=>x.EntityId==mineDecoyBefore.EntityId).Health;
+        int lethalMineDecoyHits=decoyMatch.ApplyLandMineDecoyExplosion(decoyOpponent,mineDecoyPosition,
+            mineDecoyRemaining+1,74);
+        Check(lethalMineDecoyHits>0&&
+              decoyMatch.Snapshot().Decoys.All(x=>x.EntityId!=mineDecoyBefore.EntityId)&&
+              decoyMatch.DroneTargetSnapshot().All(x=>x.Id!="decoy:"+mineDecoyBefore.EntityId)&&
+              decoyMatch.EventBatch(decoyOpponent,mineDecoyCursor).Events.Any(x=>
+                  x.Kind==MatchEventKind.DecoyDestroyed&&x.ProjectileId==mineDecoyBefore.EntityId&&
+                  x.Reason=="land-mine:74"),
+            "lethal Land Mine blast releases Decoy collision authority and publishes its destruction event");
         var landMineManifest=decoyManifest with {MatchId="land-mine-match",
             Players=decoyManifest.Players.Select(p=>p with {ShieldLevel=0}).ToArray()};
         var landMineMatch=new MatchEngine(landMineManifest,content:content,armyChoice:_=>0);
