@@ -198,31 +198,35 @@ internal static class BazookaCatalogTests
             }
             catch(InvalidDataException){checks++;}
         }
-        var (naturalDroneMatch,naturalDroneTarget,_)=AirTarget(
-            "bazooka-natural-drone","ID_UNIT-DRONE");
-        float naturalDroneHealth=naturalDroneTarget.Health;
-        bool naturalDroneHit=false;
-        ulong naturalDroneTick=naturalDroneMatch.Snapshot().ServerTick;
-        ulong naturalDroneCommand=2;
-        for(;naturalDroneTick<2500&&!naturalDroneMatch.Terminal;)
+        foreach(var airUnit in new[]{"ID_UNIT-DRONE","ID_UNIT-HELICOPTER"})
         {
-            if(naturalDroneTick%240==0)
+            var (flightMatch,flightTarget,_)=AirTarget(
+                "bazooka-natural-"+airUnit[8..].ToLowerInvariant(),airUnit);
+            float startingHealth=flightTarget.Health;
+            bool hit=false;
+            ulong flightTick=flightMatch.Snapshot().ServerTick;
+            ulong commandId=2;
+            for(;flightTick<2500&&!flightMatch.Terminal;)
             {
-                var collider=naturalDroneMatch.GroundVehicleShotTargets(one).FirstOrDefault(value=>
-                    value.DroneRoot&&value.EntityId==naturalDroneTarget.EntityKey);
-                if(collider==null)break;
-                Vector3 aim=collider.Hitbox.Center;
-                naturalDroneMatch.Command(one,new(){CommandId=naturalDroneCommand++,BazookaHold=new()
-                    {Pressed=true,TargetX=aim.X,TargetY=aim.Y,TargetZ=aim.Z}});
+                if(flightTick%240==0)
+                {
+                    var collider=flightMatch.GroundVehicleShotTargets(one).FirstOrDefault(value=>
+                        value.EntityId==flightTarget.EntityKey&&
+                        (airUnit=="ID_UNIT-DRONE"?value.DroneRoot:value.HelicopterBody));
+                    if(collider==null)break;
+                    Vector3 aim=collider.Hitbox.Center;
+                    flightMatch.Command(one,new(){CommandId=commandId++,BazookaHold=new()
+                        {Pressed=true,TargetX=aim.X,TargetY=aim.Y,TargetZ=aim.Z}});
+                }
+                flightMatch.Advance(++flightTick);
+                float? current=flightMatch.ArmyHealth(flightTarget.EntityKey);
+                if(current==null||current<startingHealth)
+                {hit=true;break;}
             }
-            naturalDroneMatch.Advance(++naturalDroneTick);
-            float? current=naturalDroneMatch.ArmyHealth(naturalDroneTarget.EntityKey);
-            if(current==null||current<naturalDroneHealth)
-            {naturalDroneHit=true;break;}
+            Check(hit&&flightMatch.Snapshot().Players
+                      .Single(value=>value.PlayerId==one).ShotsFired>0,
+                "normal Bazooka hold, missile flight and impact damage source air body: "+airUnit);
         }
-        Check(naturalDroneHit&&naturalDroneMatch.Snapshot().Players
-                  .Single(value=>value.PlayerId==one).ShotsFired>0,
-            "normal Bazooka hold, missile flight and impact damage a live Drone root");
         var infantryAllocation=repairAllocation with {MatchId="bazooka-infantry-blast"};
         var infantryMatch=new MatchEngine(infantryAllocation,map,content,armyChoice:_=>0);
         infantryMatch.Admit(one);infantryMatch.Admit(two);
