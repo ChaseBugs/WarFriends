@@ -5810,6 +5810,52 @@ internal static class CombatContentTests
             turretAcquiredVehicle|=turretVehicleMatch.Snapshot().HeavyTurrets.Any(x=>x.TargetId.StartsWith("army:",StringComparison.Ordinal));
         }
         Check(turretAcquiredVehicle&&turretFiredAtVehicle,"Heavy Turret acquires and launches at source Body target of live opposing Humvee");
+        foreach(string airUnit in new[]{"ID_UNIT-DRONE","ID_UNIT-HELICOPTER"})
+        {
+            var turretAirManifest=humveeDecoyManifest with
+            {
+                MatchId="turret-air-priority-"+airUnit,
+                Players=[humveeDecoyManifest.Players[0] with
+                    {EquippedArmyUnitIds=[airUnit]},humveeDecoyManifest.Players[1]]
+            };
+            content.ValidateAllocation(turretAirManifest);
+            var turretAirMatch=new MatchEngine(turretAirManifest,content:content,
+                armyChoice:_=>0,combatRandom:()=>0);
+            turretAirMatch.ConfigureBattleAllocations([
+                new(soldierOwner,[],[],[0],[-1],[-1]),
+                new(helicopterOwner,["CardHeavyTurret"],[],[0],[-1],[-1])]);
+            turretAirMatch.Admit(soldierOwner);turretAirMatch.Admit(helicopterOwner);
+            Check(turretAirMatch.Command(soldierOwner,emptyHumveeCards).Code=="cards-selected"&&
+                  turretAirMatch.Command(helicopterOwner,new(){CommandId=1,SelectCards=new()
+                    {CardIds={"CardHeavyTurret"},NormalUpgradeIndexes={0},
+                     SpecialUpgradeIndexes={-1},EliteUpgradeIndexes={-1}}}).Code=="cards-selected",
+                airUnit+" target fixture binds both trusted card selections");
+            turretAirMatch.Command(soldierOwner,new(){CommandId=2,
+                Ready=new(){ManifestHash=turretAirMatch.ManifestHash}});
+            turretAirMatch.Command(helicopterOwner,new(){CommandId=2,
+                Ready=new(){ManifestHash=turretAirMatch.ManifestHash}});
+            turretAirMatch.Advance(60);
+            Check(turretAirMatch.Command(helicopterOwner,new(){CommandId=3,
+                UseHeavyTurret=new(){RequestId=new string('c',32)}}).Code=="heavy-turret-spawned"&&
+                  turretAirMatch.Command(soldierOwner,new(){CommandId=3,DeployArmy=new()
+                    {OptionIndex=turretAirMatch.ArmyBatch(soldierOwner).OptionIndexes[0]}}).Code=="army-deploying",
+                airUnit+" and opposing Heavy Turret deploy in a live match");
+            bool acquiredAir=false,firedAtAir=false;ulong airTurretCursor=0;
+            for(ulong airTurretTick=61;airTurretTick<=1200&&!turretAirMatch.Terminal;airTurretTick++)
+            {
+                turretAirMatch.Advance(airTurretTick);
+                var batch=turretAirMatch.EventBatch(helicopterOwner,airTurretCursor);
+                turretAirMatch.EventBatch(soldierOwner,0);
+                if(batch.Events.Count>0)airTurretCursor=batch.Events[^1].EventId;
+                firedAtAir|=batch.Events.Any(x=>x.Kind==MatchEventKind.HeavyTurretFired&&
+                    x.Reason=="air:real");
+                acquiredAir|=turretAirMatch.Snapshot().HeavyTurrets.Any(x=>
+                    x.TargetId.StartsWith("army:",StringComparison.Ordinal));
+                if(acquiredAir&&firedAtAir)break;
+            }
+            Check(acquiredAir&&firedAtAir,
+                "Heavy Turret acquires and fires at live opposing "+airUnit+" source target");
+        }
         var transporterManifest=detached with {MatchId="transporter-split-fire",Players=[detached.Players[0] with
         {
             EquippedArmyUnitIds=["ID_UNIT-TRANSPORTER"],NewArmyUnitIds=null,

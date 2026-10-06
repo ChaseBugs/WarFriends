@@ -107,11 +107,14 @@ public sealed partial class MatchEngine
         var decoyRows=decoys.Snapshot().Where(x=>x.OwnerFraction!=turret.OwnerFraction).OrderBy(x=>x.EntityId).ToArray();
         if(decoyRows.Length>0){var row=decoyRows[Choose(decoyRows.Length)];return new("decoy:"+row.EntityId,row.Position,"decoy",row.EntityId);}
         var candidates=activeArmyEntities.Values.Where(x=>x.OwnerFraction!=turret.OwnerFraction&&
-            (infantryAnimations.ContainsKey(x.EntityKey)||(vehicles?.TryGet(x.EntityKey,out _)==true))).ToArray();
+            (infantryAnimations.ContainsKey(x.EntityKey)||
+             x.UnitId is "ID_UNIT-DRONE" or "ID_UNIT-HELICOPTER"||
+             vehicles?.TryGet(x.EntityKey,out _)==true)).ToArray();
         var rushers=candidates.Where(x=>armyCatalog!.Families.Single(f=>f.UnitId==x.UnitId).UnitType==3)
             .OrderBy(x=>x.EntityKey).ToArray();
         HeavyTurretTarget ArmyTarget(BattleArmyEntityState row)=>new("army:"+row.EntityKey,new(row.X,row.Y,row.Z),
-            infantryAnimations.ContainsKey(row.EntityKey)?"army":"vehicle",row.EntityKey);
+            infantryAnimations.ContainsKey(row.EntityKey)?"army":
+                row.UnitId is "ID_UNIT-DRONE" or "ID_UNIT-HELICOPTER"?"air":"vehicle",row.EntityKey);
         if(rushers.Length>0)return ArmyTarget(rushers[Choose(rushers.Length)]);
         var pool=new List<HeavyTurretTarget>();
         foreach(int group in heavyTurretSource!.SecondaryTargetGroups)
@@ -138,6 +141,18 @@ public sealed partial class MatchEngine
            activeArmyEntities.TryGetValue(armyId,out var army)&&army.OwnerFraction!=turret.OwnerFraction)
         {
             if(infantryAnimations.ContainsKey(armyId))return new(id,new(army.X,army.Y,army.Z),"army",armyId);
+            if(army.UnitId is "ID_UNIT-DRONE" or "ID_UNIT-HELICOPTER")
+            {
+                Vector3 root=new(army.X,army.Y,army.Z);
+                if(!selectShotTarget)return new(id,root,"air",armyId);
+                var (shot,velocity)=HeavyTurretAirShotTarget(army);
+                var origin=turret.Position+turret.Aim.SightOffset(heavyTurretSource!);
+                Vector3 predicted=shot+velocity*(Vector3.Distance(origin,shot)/
+                    HeavyTurretBulletSpeed("air")+.1f);
+                if(!PlayerHitbox.Finite(predicted))
+                    throw new InvalidDataException("Heavy Turret air prediction escaped scene bounds.");
+                return new(id,predicted,"air",armyId);
+            }
             if(vehicles?.TryGet(armyId,out var vehicle)==true&&vehicle!=null)
             {
                 var position=vehicle.Position;
@@ -221,6 +236,21 @@ public sealed partial class MatchEngine
             }
         }
         return result;
+    }
+    private (Vector3 Position,Vector3 Velocity) HeavyTurretAirShotTarget(BattleArmyEntityState army)
+    {
+        Vector3 root=new(army.X,army.Y,army.Z);
+        if(army.UnitId=="ID_UNIT-DRONE"&&armyDronePaths.TryGetValue(army.EntityKey,out var drone))
+            return (root,drone.Velocity*MatchManifest.TickRate);
+        if(army.UnitId=="ID_UNIT-HELICOPTER"&&armyHelicopterPaths.TryGetValue(army.EntityKey,out var helicopter)&&
+           army.HelicopterRotation is { } rotation&&airShotTargets!=null)
+        {
+            var targets=airShotTargets.PlaceRest(army.UnitId,root,
+                new(rotation.X,rotation.Y,rotation.Z,rotation.W));
+            if(targets.Count!=1)throw new InvalidDataException("Helicopter shot target source is ambiguous.");
+            return (targets[0].Position,helicopter.Velocity*MatchManifest.TickRate);
+        }
+        throw new InvalidDataException("Heavy Turret air target lost its live source binding.");
     }
 
     internal void ApplyPlayerGrenadeHeavyTurretExplosion(string shooterId,Vector3 origin,GrenadeStage stage)
@@ -377,6 +407,11 @@ public sealed partial class MatchEngine
         }
         if(target.Kind=="vehicle"&&activeArmyEntities.TryGetValue(target.EntityId,out var vehicleArmy))
             sightPosition+=groundVehicleWeapons!.For(vehicleArmy.UnitId).ShotTarget;
+        if(target.Kind=="air")
+        {
+            if(!activeArmyEntities.TryGetValue(target.EntityId,out var airArmy))return false;
+            sightPosition=HeavyTurretAirShotTarget(airArmy).Position;
+        }
         if(target.Kind=="player")
         {
             // TurretSeesEnemy checks GetShotTargets(AllIn)[0], independently
