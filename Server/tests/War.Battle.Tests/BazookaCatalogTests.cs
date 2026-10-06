@@ -175,6 +175,40 @@ internal static class BazookaCatalogTests
             throw new Exception("FAIL: forged bazooka repair-drone stage");
         }
         catch(InvalidDataException){checks++;}
+        var naturalRepairAllocation=repairAllocation with {MatchId="bazooka-natural-repair-drone"};
+        var naturalRepair=new MatchEngine(naturalRepairAllocation,map,content,armyChoice:_=>0);
+        naturalRepair.Admit(one);naturalRepair.Admit(two);
+        naturalRepair.Command(one,new(){CommandId=1,Ready=new(){ManifestHash=naturalRepair.ManifestHash}});
+        naturalRepair.Command(two,new(){CommandId=1,Ready=new(){ManifestHash=naturalRepair.ManifestHash}});
+        naturalRepair.Advance(60);
+        int naturalOption=naturalRepair.ArmyBatch(two).OptionIndexes.First();
+        Check(naturalRepair.Command(two,new(){CommandId=2,
+            DeployArmy=new(){OptionIndex=naturalOption}}).Code=="army-deploying",
+            "normal bazooka match deploys source Transporter");
+        ulong naturalTick=60;
+        while(naturalTick<700&&naturalRepair.ArmyEntityBatch(one,0,0).Entities.Count==0)
+            naturalRepair.Advance(++naturalTick);
+        var naturalVehicle=naturalRepair.ArmyEntityBatch(one,0,0).Entities.Single();
+        float naturalDroneBefore=naturalRepair.TransporterRepairDrones(naturalVehicle.EntityKey)[0].Health;
+        bool naturalDroneDamaged=false;
+        ulong bazookaCommand=2;
+        for(;naturalTick<2500&&!naturalRepair.Terminal;)
+        {
+            if(naturalTick%240==0)
+            {
+                var droneTarget=naturalRepair.GroundVehicleShotTargets(one).FirstOrDefault(x=>
+                    x.EntityId==naturalVehicle.EntityKey&&x.RepairDronePathIndex==0);
+                if(droneTarget==null)break;
+                Vector3 aim=droneTarget.Hitbox.Center;
+                naturalRepair.Command(one,new(){CommandId=bazookaCommand++,BazookaHold=new()
+                    {Pressed=true,TargetX=aim.X,TargetY=aim.Y,TargetZ=aim.Z}});
+            }
+            naturalRepair.Advance(++naturalTick);
+            if(naturalRepair.TransporterRepairDrones(naturalVehicle.EntityKey)[0].Health<naturalDroneBefore)
+            {naturalDroneDamaged=true;break;}
+        }
+        Check(naturalDroneDamaged&&naturalRepair.Snapshot().Players.Single(x=>x.PlayerId==one).ShotsFired>0,
+            "normal bazooka hold, missile flight and impact damage a moving repair drone");
         var shieldAllocation=allocation with {MatchId="bazooka-shield",Players=
             [allocation.Players[0] with {ShieldLevel=0},allocation.Players[1] with {ShieldLevel=0}]};
         var shieldSimulation=new ShieldMatchSimulation(map,content.Shields,shieldAllocation);
