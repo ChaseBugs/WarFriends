@@ -54,21 +54,26 @@ internal static class HelicopterShotgunTests
         Check(explosionParts.Length==3,"explosion sees one complete live gunner rig");
         float beforeExplosion=helicopter!.HelicopterGunnerHealth;
         var head=explosionParts.Single(x=>x.Hitbox.Weight==1.5f).Hitbox.Center;
+        var selectedExplosionPart=explosionParts.Select((part,index)=>(part,index))
+            .Where(value=>value.part.Hitbox.OverlapsSphere(head,2))
+            .OrderBy(value=>value.part.Hitbox.BoundsDistanceToPoint(head))
+            .ThenBy(value=>value.index).First().part;
+        Check(selectedExplosionPart.Hitbox.Weight==1.5f,
+            "gunner head collider is the selected explosion part for this damage proof");
         match.ApplyHelicopterGunnerExplosion(one,head+new Vector3(50,0,0),.25f,2,1,2,false);
         Check(match.ArmyEntityBatch(one,0,0).Entities.Single(x=>x.EntityKey==helicopter.EntityKey)
             .HelicopterGunnerHealth==beforeExplosion,"non-overlapping explosion cannot damage gunner");
         match.ApplyHelicopterGunnerExplosion(two,head,.25f,2,1,2,false);
         float afterFriendly=match.ArmyEntityBatch(one,0,0).Entities.Single(x=>x.EntityKey==helicopter.EntityKey)
             .HelicopterGunnerHealth;
-        Check(afterFriendly<beforeExplosion&&
+        Check(Math.Abs(beforeExplosion-afterFriendly-1)<.0001f&&
               match.Snapshot().Players.Single(x=>x.PlayerId==two).ConfirmedEnemyHits==0,
-              "source friendly explosion damages gunner without enemy-hit credit");
+              "source friendly explosion halves owner damage without bullet part weight or enemy-hit credit");
         match.ApplyHelicopterGunnerExplosion(one,head,.25f,2,1,2,false);
         helicopter=match.ArmyEntityBatch(one,0,0).Entities.Single(x=>x.EntityKey==helicopter.EntityKey);
-        Check(Math.Abs((afterFriendly-helicopter.HelicopterGunnerHealth)-
-              2*(beforeExplosion-afterFriendly))<.0001f&&
+        Check(Math.Abs((afterFriendly-helicopter.HelicopterGunnerHealth)-2)<.0001f&&
               match.Snapshot().Players.Single(x=>x.PlayerId==one).ConfirmedEnemyHits==1,
-              "opposing explosion applies twice the source-friendly damage and one hit credit");
+              "opposing explosion applies source owner damage once and one hit credit");
         float initial=helicopter!.HelicopterGunnerHealth;
         ulong commandId=2;bool damaged=false;int accepted=0;
         for(int attempt=0;attempt<35&&!damaged&&!match.Terminal;attempt++)

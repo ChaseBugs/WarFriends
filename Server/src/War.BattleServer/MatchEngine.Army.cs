@@ -200,7 +200,9 @@ public sealed partial class MatchEngine
                 raw=minimumDamage+(explosionDamage-minimumDamage)*fraction*fraction;
             }
             float friendly=shooter.Definition.Fraction==row.OwnerFraction?explosionPolicy.Friendly:1;
-            float amount=raw*selected.part.Weight*friendly*(halfDamage?.5f:1);
+            // MissileExplode uses the selected part to find the gunner owner.
+            // Its bullet head/body weight does not multiply explosion damage.
+            float amount=raw*friendly*(halfDamage?.5f:1);
             if(DamageHelicopterGunner(row.EntityKey,amount)&&friendly==1)
                 shooter.ConfirmedEnemyHits=checked(shooter.ConfirmedEnemyHits+1);
         }
