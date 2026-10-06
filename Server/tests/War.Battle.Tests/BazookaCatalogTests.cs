@@ -144,6 +144,30 @@ internal static class BazookaCatalogTests
         var repairVehicle=repairMatch.ArmyEntityBatch(one,0,0).Entities.Single();
         var trustedRpg=content.Bazookas!.Stage("Google2u.Bazooka_RPG7",0);
         var trustedStraight=content.Bazookas.Binding("Google2u.Bazooka_RPG7");
+        var passenger=repairMatch.VehiclePassengers(repairVehicle.EntityKey).First(x=>x.Active);
+        var passengerBox=repairMatch.GroundVehicleShotTargets(one).First(x=>
+            x.EntityId==repairVehicle.EntityKey&&x.PassengerRole==passenger.Role).Hitbox;
+        float passengerBodyBefore=repairMatch.ArmyHealth(repairVehicle.EntityKey)!.Value;
+        repairMatch.ApplyPlayerBazookaPassengerExplosion(two,passengerBox.Center,
+            trustedRpg,trustedStraight,true);
+        float passengerFriendlyHealth=repairMatch.VehiclePassengers(repairVehicle.EntityKey)
+            .Single(x=>x.Role==passenger.Role).Health;
+        Check(Math.Abs(passengerFriendlyHealth-(passenger.Health-rpg.ExplosionDamage*.25f))<.01f,
+            "half-damage Bazooka blast applies the friendly coefficient once to an attached passenger");
+        repairMatch.ApplyPlayerBazookaPassengerExplosion(one,passengerBox.Center,
+            trustedRpg,trustedStraight,false);
+        float passengerEnemyHealth=repairMatch.VehiclePassengers(repairVehicle.EntityKey)
+            .Single(x=>x.Role==passenger.Role).Health;
+        Check(Math.Abs(passengerEnemyHealth-(passengerFriendlyHealth-rpg.ExplosionDamage))<.01f&&
+              Math.Abs(repairMatch.ArmyHealth(repairVehicle.EntityKey)!.Value-passengerBodyBefore)<.01f,
+            "opposing Bazooka blast damages the passenger independently of the Transporter body");
+        try
+        {
+            repairMatch.ApplyPlayerBazookaPassengerExplosion(one,passengerBox.Center,
+                trustedRpg with {ExplosionDamage=1},trustedStraight,false);
+            throw new Exception("FAIL: forged bazooka passenger stage");
+        }
+        catch(InvalidDataException){checks++;}
         var repairDrone=repairMatch.TransporterRepairDrones(repairVehicle.EntityKey)[0];
         var repairBox=repairMatch.GroundVehicleShotTargets(one).Single(x=>
             x.EntityId==repairVehicle.EntityKey&&x.RepairDronePathIndex==0).Hitbox;

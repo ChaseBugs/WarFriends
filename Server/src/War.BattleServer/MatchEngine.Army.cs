@@ -782,6 +782,51 @@ public sealed partial class MatchEngine
         }
     }
 
+    internal void ApplyPlayerBazookaPassengerExplosion(string shooterId,Vector3 origin,
+        BazookaStage stage,BazookaBinding binding,bool halfDamage)
+    {
+        if(phase!=BattlePhase.Running||bazookaCatalog==null||
+           explosionPolicy==null||stage==null||binding==null||
+           !ReferenceEquals(bazookaCatalog.Stage(stage.SourceId,stage.Index),stage)||
+           !ReferenceEquals(bazookaCatalog.Binding(stage.SourceId),binding)||
+           !PlayerHitbox.Finite(origin))
+            throw new InvalidDataException("Bazooka passenger blast lacks trusted source authority.");
+
+        var shooter=Find(shooterId)??throw new InvalidDataException("Bazooka owner disappeared.");
+        if(vehicles==null)return;
+        var targets=vehicles.Snapshot().OrderBy(value=>value.EntityId).ToArray();
+        if(targets.Length==0)return;
+        if(groundVehicleWeapons==null)
+            throw new InvalidDataException("Bazooka passenger blast lacks ground-vehicle source authority.");
+        foreach(var vehicle in targets)
+        {
+            if(!activeArmyEntities.TryGetValue(vehicle.EntityId,out var army)||
+               army.UnitId!=vehicle.UnitId||army.OwnerPlayerId!=vehicle.OwnerPlayerId||
+               !groundVehicleFacing.TryGetValue(vehicle.EntityId,out var facing)||
+               !vehiclePassengers.TryGetValue(vehicle.EntityId,out var passengers))
+                throw new InvalidDataException("Bazooka passenger lost shared host authority.");
+            var owner=Find(vehicle.OwnerPlayerId)??
+                throw new InvalidDataException("Bazooka passenger owner disappeared.");
+            bool friendly=owner.Definition.Fraction==shooter.Definition.Fraction;
+            foreach(var passenger in passengers.Values.OrderBy(value=>value.Binding.PointComponentFileId))
+            {
+                if(!passenger.Active)continue;
+                if(passenger.AnimationStartTick>tick)
+                    throw new InvalidDataException("Bazooka passenger animation starts after match time.");
+                var hitboxes=groundVehicleWeapons.PassengerPoses.Place(vehicle.UnitId,
+                    passenger.Binding,vehicle.Position,facing,tick-passenger.AnimationStartTick);
+                var position=PassengerWorldPosition(vehicle.EntityId,passenger.Binding);
+                var effect=BazookaExplosion.ResolveArmy(origin,position,hitboxes,
+                    stage,binding,halfDamage);
+                if(effect==null)continue;
+                float amount=effect.RawDamage*(friendly?explosionPolicy.Friendly:1f);
+                if(!float.IsFinite(amount)||amount<=0||amount>10_000_000)
+                    throw new InvalidDataException("Bazooka passenger damage exceeded host bounds.");
+                ApplyVehiclePassengerHostDamage(vehicle.EntityId,passenger.Binding.Role,amount);
+            }
+        }
+    }
+
     internal void ApplyGroundVehicleMissileRepairDroneExplosion(string shooterId,string unitId,
         float damage,GroundVehicleMissileBinding binding,Vector3 origin)
     {
