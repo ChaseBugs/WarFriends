@@ -531,6 +531,63 @@ internal static class GrenadeCatalogTests
                   {DirectBulletKills:0,DirectGrenadeKills:1,
                    DirectGrenadeVehiclesDestroyed:1,DirectGrenadeTanksDestroyed:1},
             "opposing Tank grenade death projects one cause-preserving vehicle and Tank kill candidate");
+        var naturalTankAllocation=tankAllocation with {MatchId="grenade-natural-tank",
+            Players=[tankAllocation.Players[0] with {Weapon=launcherWeapon},
+                     tankAllocation.Players[1]]};
+        combat.ValidateAllocation(naturalTankAllocation);
+        var naturalTankMatch=new MatchEngine(naturalTankAllocation,map,combat,armyChoice:_=>0);
+        naturalTankMatch.Admit(one);
+        naturalTankMatch.Admit(two);
+        naturalTankMatch.Command(one,new(){CommandId=1,Ready=new()
+            {ManifestHash=naturalTankMatch.ManifestHash}});
+        naturalTankMatch.Command(two,new(){CommandId=1,Ready=new()
+            {ManifestHash=naturalTankMatch.ManifestHash}});
+        naturalTankMatch.Advance(60);
+        int naturalTankOption=naturalTankMatch.ArmyBatch(two).OptionIndexes.First();
+        Check(naturalTankMatch.Command(two,new(){CommandId=2,DeployArmy=new()
+            {OptionIndex=naturalTankOption}}).Code=="army-deploying",
+            "opponent deploys a Tank for normal M320 projectile flight");
+        ulong naturalTankTick=60;
+        while(naturalTankTick<700&&naturalTankMatch.ArmyEntityBatch(one,0,0).Entities.Count==0)
+            naturalTankMatch.Advance(++naturalTankTick);
+        var naturalTank=naturalTankMatch.ArmyEntityBatch(one,0,0).Entities.Single();
+        Vector3 priorTankPosition=new(naturalTank.X,naturalTank.Y,naturalTank.Z);
+        int stableTankTicks=0;
+        while(naturalTankTick<900&&stableTankTicks<12)
+        {
+            naturalTankMatch.Advance(++naturalTankTick);
+            var currentTank=naturalTankMatch.ArmyEntityBatch(one,0,0).Entities
+                .Single(value=>value.EntityKey==naturalTank.EntityKey);
+            var currentPosition=new Vector3(currentTank.X,currentTank.Y,currentTank.Z);
+            stableTankTicks=Vector3.Distance(currentPosition,priorTankPosition)<.001f?
+                stableTankTicks+1:0;
+            priorTankPosition=currentPosition;
+        }
+        Check(stableTankTicks==12,"Tank completes its host-owned route before M320 aiming");
+        var naturalTankBody=naturalTankMatch.GroundVehicleShotTargets(one)
+            .First(target=>target.GroundVehicleBody&&target.EntityId==naturalTank.EntityKey);
+        var naturalTankAim=naturalTankBody.Hitbox.Center;
+        float naturalTankBefore=naturalTankMatch.ArmyHealth(naturalTank.EntityKey)!.Value;
+        Check(naturalTankMatch.Command(one,new(){CommandId=2,GrenadeThrow=new()
+            {TargetX=naturalTankAim.X,TargetY=naturalTankAim.Y,TargetZ=naturalTankAim.Z}})
+            .Code=="grenade-throwing","normal M320 command targets the live Tank collider");
+        for(int flightTicks=0;flightTicks<300&&!naturalTankMatch.Terminal;flightTicks++)
+        {
+            naturalTankMatch.Advance(++naturalTankTick);
+            if(naturalTankMatch.Snapshot().Players.Single(value=>value.PlayerId==one).ShotsFired>0&&
+               naturalTankMatch.PendingProjectileCount==0)break;
+        }
+        float? naturalTankAfter=naturalTankMatch.ArmyHealth(naturalTank.EntityKey);
+        bool m320Launched=naturalTankMatch.Snapshot().Players
+            .Single(value=>value.PlayerId==one).ShotsFired==1;
+        bool tankBodySynchronized=naturalTankAfter==null||
+            Math.Abs(naturalTankMatch.Snapshot().Vehicles
+                .Single(value=>value.EntityId==naturalTank.EntityKey).Health-
+                naturalTankAfter.Value)<.01f;
+        Check(m320Launched&&naturalTankMatch.PendingProjectileCount==0&&
+              (naturalTankAfter==null||naturalTankAfter<naturalTankBefore)&&
+              tankBodySynchronized,
+            "normal M320 flight reaches the deployed Tank's host damage path");
         var transporterAllocation=tankAllocation with {MatchId="grenade-repair-drone",
             Players=[tankAllocation.Players[0],tankAllocation.Players[1] with
             {EquippedArmyUnitIds=["ID_UNIT-TRANSPORTER"],ArmySpecialUpgradeIndexes=[71]}]};
