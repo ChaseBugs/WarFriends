@@ -1948,6 +1948,8 @@ public sealed partial class MatchEngine
         if(Terminal)return;
         ApplyPlayerGrenadeDecoyExplosion(impact.OwnerId,impact.Position,projectile.Stage);
         if(Terminal)return;
+        ApplyPlayerGrenadeHeavyTurretExplosion(impact.OwnerId,impact.Position,projectile.Stage);
+        if(Terminal)return;
         ApplyPlayerGrenadePassengerExplosion(impact.OwnerId,impact.Position,projectile.Stage);
         if(Terminal)return;
         ApplyPlayerGrenadeGroundVehicleExplosion(impact.OwnerId,impact.Position,projectile.Stage);

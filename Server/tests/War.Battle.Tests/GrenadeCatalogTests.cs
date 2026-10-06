@@ -326,6 +326,64 @@ internal static class GrenadeCatalogTests
         Reject(()=>decoyMatch.ApplyPlayerGrenadeDecoyExplosion(one,decoyOrigin,
             decoyStage with {ExplosionDamage=1}),
             "forged grenade stage cannot damage a Decoy");
+        var turretAllocation=decoyAllocation with {MatchId="grenade-heavy-turret",
+            Players=[decoyAllocation.Players[0] with {PlayerLevel=22},
+                     decoyAllocation.Players[1] with {PlayerLevel=22}]};
+        var turretMatch=new MatchEngine(turretAllocation,map,combat);
+        turretMatch.ConfigureBattleAllocations([
+            new(one,["CardHeavyTurret"],[],[0],[-1],[-1]),
+            new(two,["CardHeavyTurret"],[],[0],[-1],[-1])]);
+        turretMatch.Admit(one);
+        turretMatch.Admit(two);
+        MatchCommand SelectTurret()=>new(){CommandId=1,SelectCards=new()
+            {CardIds={"CardHeavyTurret"}}};
+        Check(turretMatch.Command(one,SelectTurret()).Code=="cards-selected"&&
+              turretMatch.Command(two,SelectTurret()).Code=="cards-selected",
+            "grenade match selects source Heavy Turret cards");
+        turretMatch.Command(one,new(){CommandId=2,Ready=new(){ManifestHash=turretMatch.ManifestHash}});
+        turretMatch.Command(two,new(){CommandId=2,Ready=new(){ManifestHash=turretMatch.ManifestHash}});
+        turretMatch.Advance(60);
+        Check(turretMatch.Command(two,new(){CommandId=3,UseHeavyTurret=new()
+            {RequestId=new string('a',32)}}).Code=="heavy-turret-spawned",
+            "opponent deploys a host-owned Heavy Turret before grenade damage");
+        var opposingTurret=turretMatch.Snapshot().HeavyTurrets.Single();
+        var turretHitboxes=turretMatch.GroundVehicleShotTargets(one)
+            .Where(target=>target.HeavyTurret&&target.EntityId==opposingTurret.EntityId)
+            .Select(target=>target.Hitbox).ToArray();
+        var turretOrigin=turretHitboxes[0].Center;
+        var turretRoot=new Vector3(opposingTurret.X,opposingTurret.Y,opposingTurret.Z);
+        var turretEffect=GrenadeExplosion.ResolveArmy(turretOrigin,turretRoot,
+            turretHitboxes,decoyStage)!;
+        turretMatch.ApplyPlayerGrenadeHeavyTurretExplosion(one,turretOrigin,decoyStage);
+        var opposingTurretAfter=turretMatch.Snapshot().HeavyTurrets
+            .SingleOrDefault(value=>value.EntityId==opposingTurret.EntityId);
+        Check((opposingTurretAfter==null?turretEffect.RawDamage>=opposingTurret.Health:
+              Math.Abs(opposingTurretAfter.Health-
+                  Math.Max(0,opposingTurret.Health-turretEffect.RawDamage))<.01f),
+            "player grenade damages one Heavy Turret owner despite its three part colliders");
+        Check(turretMatch.Command(one,new(){CommandId=3,UseHeavyTurret=new()
+            {RequestId=new string('b',32)}}).Code=="heavy-turret-spawned",
+            "grenade owner deploys a separate friendly Heavy Turret");
+        var friendlyTurret=turretMatch.Snapshot().HeavyTurrets
+            .Single(value=>value.OwnerPlayerId==one);
+        var friendlyTurretHitboxes=turretMatch.GroundVehicleShotTargets(two)
+            .Where(target=>target.HeavyTurret&&target.EntityId==friendlyTurret.EntityId)
+            .Select(target=>target.Hitbox).ToArray();
+        var friendlyTurretOrigin=friendlyTurretHitboxes[0].Center;
+        var friendlyTurretRoot=new Vector3(friendlyTurret.X,friendlyTurret.Y,friendlyTurret.Z);
+        var friendlyTurretEffect=GrenadeExplosion.ResolveArmy(friendlyTurretOrigin,
+            friendlyTurretRoot,friendlyTurretHitboxes,decoyStage)!;
+        turretMatch.ApplyPlayerGrenadeHeavyTurretExplosion(one,friendlyTurretOrigin,decoyStage);
+        var friendlyTurretAfter=turretMatch.Snapshot().HeavyTurrets
+            .SingleOrDefault(value=>value.EntityId==friendlyTurret.EntityId);
+        float expectedFriendlyTurretDamage=friendlyTurretEffect.RawDamage*combat.Explosions.Friendly;
+        Check((friendlyTurretAfter==null?expectedFriendlyTurretDamage>=friendlyTurret.Health:
+              Math.Abs(friendlyTurretAfter.Health-
+                  Math.Max(0,friendlyTurret.Health-expectedFriendlyTurretDamage))<.01f),
+            "friendly Heavy Turret grenade blast applies the recovered half-damage coefficient");
+        Reject(()=>turretMatch.ApplyPlayerGrenadeHeavyTurretExplosion(one,turretOrigin,
+            decoyStage with {ExplosionDamage=1}),
+            "forged grenade stage cannot damage a Heavy Turret");
         var infantryAllocation=allocation with {MatchId="grenade-infantry-kill",Players=[
             allocation.Players[0] with
             {EquippedArmyUnitIds=["ID_UNIT-ASSAULT"],ArmyNormalUpgradeIndexes=[0],

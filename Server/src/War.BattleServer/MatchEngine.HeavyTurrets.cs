@@ -223,6 +223,39 @@ public sealed partial class MatchEngine
         return result;
     }
 
+    internal void ApplyPlayerGrenadeHeavyTurretExplosion(string shooterId,Vector3 origin,GrenadeStage stage)
+    {
+        if(phase!=BattlePhase.Running||grenadeCatalog==null||heavyTurretSource==null||
+           explosionPolicy==null||stage==null||
+           !ReferenceEquals(grenadeCatalog.Stage(stage.SourceId,stage.Index),stage)||
+           !PlayerHitbox.Finite(origin))
+            throw new InvalidDataException("Grenade Heavy Turret blast lacks trusted source authority.");
+
+        var shooter=Find(shooterId)??throw new InvalidDataException("Grenade owner disappeared.");
+        var colliders=HeavyTurretShotTargets(shooter,includeFriendly:true);
+        foreach(var group in colliders.GroupBy(collider=>collider.EntityId).OrderBy(group=>group.Key))
+        {
+            var turret=heavyTurrets.Snapshot().SingleOrDefault(value=>value.EntityId==group.Key)??
+                throw new InvalidDataException("Grenade Heavy Turret lost host health authority.");
+            var hitboxes=group.Select(collider=>collider.Hitbox).ToArray();
+            var effect=GrenadeExplosion.ResolveArmy(origin,turret.Position,hitboxes,stage);
+            if(effect==null)continue;
+
+            // The recovered explosion groups DestroyableObjectpart colliders by
+            // their shared owner. It damages the turret once, without the part's
+            // bullet or Flame weight.
+            bool friendly=turret.OwnerFraction==shooter.Definition.Fraction;
+            float damage=effect.RawDamage*(friendly?explosionPolicy.Friendly:1f);
+            if(!float.IsFinite(damage)||damage<=0||damage>10_000_000||
+               !heavyTurrets.TryDamage(group.Key,damage,out var changed,out bool destroyed)||changed==null)
+                throw new InvalidDataException("Grenade Heavy Turret damage escaped host bounds.");
+
+            stateRevision++;
+            Emit(destroyed?MatchEventKind.HeavyTurretDestroyed:MatchEventKind.HeavyTurretDamaged,
+                shooterId,changed.OwnerPlayerId,group.Key,changed.Position,changed.Health,"player-grenade");
+        }
+    }
+
     internal int ApplyArmyFlameHeavyTurretPulse(ulong sourceEntityKey,Vector3 origin,Vector3 forward)
     {
         if(phase!=BattlePhase.Running||!activeArmyEntities.TryGetValue(sourceEntityKey,out var source)||
