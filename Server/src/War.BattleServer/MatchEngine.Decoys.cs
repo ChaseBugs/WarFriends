@@ -213,6 +213,39 @@ public sealed partial class MatchEngine
         }
     }
 
+    internal void ApplyGroundVehicleMissileDecoyExplosion(string shooterId,string unitId,
+        float damage,GroundVehicleMissileBinding binding,Vector3 origin)
+    {
+        if(phase!=BattlePhase.Running||groundVehicleWeapons==null||explosionPolicy==null||
+           !PlayerHitbox.Finite(origin)||!float.IsFinite(damage)||damage<=0||damage>10_000_000||
+           binding==null||unitId is not ("ID_UNIT-TANK" or "ID_UNIT-BUGGY"))
+            throw new InvalidDataException("Vehicle missile Decoy blast lacks trusted source authority.");
+        var sourceWeapon=GroundVehicleMissileSourceWeapon(unitId,binding);
+        var shooter=Find(shooterId)??throw new InvalidDataException("Vehicle missile owner disappeared.");
+        if(decoySource==null)return;
+        foreach(var collider in DecoyShotTargets(shooter,includeFriendly:true))
+        {
+            var target=decoys.Snapshot().SingleOrDefault(value=>value.EntityId==collider.EntityId)??
+                throw new InvalidDataException("Vehicle missile Decoy lost host health authority.");
+            bool friendly=target.OwnerFraction==shooter.Definition.Fraction;
+            if(friendly&&!sourceWeapon.FriendKill)continue;
+            var effect=BuggyExplosion.ResolveArmy(origin,target.Position,[collider.Hitbox],
+                damage,binding);
+            if(effect==null)continue;
+            float amount=effect.RawDamage*(friendly?explosionPolicy.Friendly:1f);
+            if(!float.IsFinite(amount)||amount<=0||amount>10_000_000||
+               !decoys.TryDamage(target.EntityId,amount,out var before,out bool destroyed)||before==null)
+                throw new InvalidDataException("Vehicle missile Decoy damage escaped host bounds.");
+            stateRevision++;
+            if(destroyed)
+            {
+                droneTargets.Disable(DroneDecoyId(target.EntityId));
+                Emit(MatchEventKind.DecoyDestroyed,shooterId,before.OwnerPlayerId,
+                    target.EntityId,before.Position,0,"vehicle-missile");
+            }
+        }
+    }
+
     internal int ApplyArmyFlameDecoyPulse(ulong sourceEntityKey,Vector3 origin,Vector3 forward)
     {
         if(phase!=BattlePhase.Running||!activeArmyEntities.TryGetValue(sourceEntityKey,out var source)||

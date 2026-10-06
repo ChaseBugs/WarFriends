@@ -3089,6 +3089,7 @@ internal static class CombatContentTests
             MatchId="decoy-match",SceneMasterPlayerId=decoyPlayer,
             Players=[armyManifest.Players[0] with {PlayerLevel=22},armyManifest.Players[1] with {PlayerLevel=22}]
         };
+        var missileDecoySource=MatchManifest.Validate(decoyManifest);
         var decoyMatch=new MatchEngine(decoyManifest,content:content,armyChoice:_=>0);
         decoyMatch.ConfigureBattleAllocations([
             new(decoyPlayer,["CardDecoy"],[],[0],[133],[-1]),
@@ -5908,6 +5909,61 @@ internal static class CombatContentTests
                   friendlyMissileHealth)<.01f,
             "Buggy primary friendKill=false prevents damage to a friendly repair drone");
         var buggySecondaryBinding=buggyRig.Roles.Single(r=>r.Role=="cannon").Weapons[1].Missile!;
+        var missileDecoyManifest=missileDecoySource with {MatchId="vehicle-missile-decoy-blast"};
+        var missileDecoyMatch=new MatchEngine(missileDecoyManifest,content:content,armyChoice:_=>0);
+        missileDecoyMatch.ConfigureBattleAllocations([
+            new(decoyPlayer,["CardDecoy"],[],[0],[133],[-1]),
+            new(decoyOpponent,["CardDecoy"],[],[0],[-1],[-1])]);
+        missileDecoyMatch.Admit(decoyPlayer);missileDecoyMatch.Admit(decoyOpponent);
+        Check(missileDecoyMatch.Command(decoyPlayer,SelectDecoy(1)).Code=="cards-selected"&&
+              missileDecoyMatch.Command(decoyOpponent,opponentSelection).Code=="cards-selected",
+            "vehicle missile Decoy match accepts both trusted card selections");
+        missileDecoyMatch.Command(decoyPlayer,new(){CommandId=2,
+            Ready=new(){ManifestHash=missileDecoyMatch.ManifestHash}});
+        missileDecoyMatch.Command(decoyOpponent,new(){CommandId=2,
+            Ready=new(){ManifestHash=missileDecoyMatch.ManifestHash}});
+        missileDecoyMatch.Advance(60);
+        Check(missileDecoyMatch.Command(decoyPlayer,new(){CommandId=3,UseDecoy=new()
+            {RequestId=new string('a',32)}}).Code=="decoy-spawned"&&
+              missileDecoyMatch.Command(decoyOpponent,new(){CommandId=3,UseDecoy=new()
+            {RequestId=new string('b',32)}}).Code=="decoy-spawned",
+            "both factions deploy source Decoys for vehicle missile blasts");
+        var friendlyMissileDecoy=missileDecoyMatch.Snapshot().Decoys
+            .First(value=>value.OwnerPlayerId==decoyPlayer);
+        var friendlyMissileBox=missileDecoyMatch.GroundVehicleShotTargets(decoyOpponent)
+            .First(value=>value.Decoy&&value.EntityId==friendlyMissileDecoy.EntityId).Hitbox;
+        Vector3 friendlyDecoyCenter=friendlyMissileBox.Center;
+        missileDecoyMatch.ApplyGroundVehicleMissileDecoyExplosion(decoyPlayer,
+            "ID_UNIT-TANK",21,tankMissileBinding,friendlyDecoyCenter);
+        missileDecoyMatch.ApplyGroundVehicleMissileDecoyExplosion(decoyPlayer,
+            "ID_UNIT-BUGGY",21,buggyMissileBinding,friendlyDecoyCenter);
+        Check(Math.Abs(missileDecoyMatch.DecoyHealth(friendlyMissileDecoy.EntityId)!.Value-
+                  friendlyMissileDecoy.Health)<.01f,
+            "Tank and Buggy primary friendKill=false skip friendly Decoys");
+        missileDecoyMatch.ApplyGroundVehicleMissileDecoyExplosion(decoyPlayer,
+            "ID_UNIT-BUGGY",21,buggySecondaryBinding,friendlyDecoyCenter);
+        Check(Math.Abs(missileDecoyMatch.DecoyHealth(friendlyMissileDecoy.EntityId)!.Value-
+                  (friendlyMissileDecoy.Health-10.5f))<.01f,
+            "Buggy secondary missile applies half friendly blast damage to Decoy");
+        var enemyMissileDecoy=missileDecoyMatch.Snapshot().Decoys
+            .First(value=>value.OwnerPlayerId==decoyOpponent);
+        var enemyMissileBox=missileDecoyMatch.GroundVehicleShotTargets(decoyPlayer)
+            .First(value=>value.Decoy&&value.EntityId==enemyMissileDecoy.EntityId).Hitbox;
+        Vector3 enemyDecoyCenter=enemyMissileBox.Center;
+        missileDecoyMatch.ApplyGroundVehicleMissileDecoyExplosion(decoyPlayer,
+            "ID_UNIT-TANK",21,tankMissileBinding,enemyDecoyCenter);
+        Check(Math.Abs(missileDecoyMatch.DecoyHealth(enemyMissileDecoy.EntityId)!.Value-
+                  (enemyMissileDecoy.Health-21))<.01f,
+            "opposing Tank missile damages independent Decoy host health");
+        Reject(()=>missileDecoyMatch.ApplyGroundVehicleMissileDecoyExplosion(decoyPlayer,
+            "ID_UNIT-TANK",21,tankMissileBinding with {MinimumDamage=1},enemyDecoyCenter));
+        for(int blast=0;blast<30&&missileDecoyMatch.DecoyHealth(enemyMissileDecoy.EntityId)!=null;blast++)
+            missileDecoyMatch.ApplyGroundVehicleMissileDecoyExplosion(decoyPlayer,
+                "ID_UNIT-TANK",21,tankMissileBinding,enemyDecoyCenter);
+        Check(missileDecoyMatch.DecoyHealth(enemyMissileDecoy.EntityId)==null&&
+              missileDecoyMatch.DroneTargetSnapshot().All(value=>
+                  value.Id!="decoy:"+enemyMissileDecoy.EntityId),
+            "lethal vehicle missile blast removes Decoy health and Drone target authority");
         transporterMatch.ApplyGroundVehicleMissileRepairDroneExplosion(soldierOwner,
             "ID_UNIT-BUGGY",21,buggySecondaryBinding,missileDroneCenter);
         float friendlyBuggyHealth=transporterMatch.TransporterRepairDrones(transporterEntity.EntityKey)[1].Health;
