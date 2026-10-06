@@ -1,5 +1,5 @@
 {
-  "version": 10,
+  "version": 11,
   "armoredVehicleShotCoefficient": 0.33,
   "passengerPoseRevision": "37bc1d8c256a21767a01d1d1016caa93c785b719bbc6c0d73eed58f70926a343",
   "repairDronePrefab": {
@@ -79,6 +79,7 @@
               "projectileFileId": 11409266,
               "projectileGuid": "855689762fa6e774aaee190652b08c6f",
               "forcedFake": false,
+              "friendKill": true,
               "missile": null
             }
           ]
@@ -118,6 +119,7 @@
               "projectileFileId": 11431434,
               "projectileGuid": "60be7eeb14f5a354c99c9ce23dbc5554",
               "forcedFake": false,
+              "friendKill": true,
               "missile": {
                 "setupComponentFileId": 11464471,
                 "speed": 12.0,
@@ -567,6 +569,7 @@
               "projectileFileId": 11409266,
               "projectileGuid": "855689762fa6e774aaee190652b08c6f",
               "forcedFake": false,
+              "friendKill": false,
               "missile": null
             }
           ]
@@ -606,6 +609,7 @@
               "projectileFileId": 11431434,
               "projectileGuid": "60be7eeb14f5a354c99c9ce23dbc5554",
               "forcedFake": false,
+              "friendKill": false,
               "missile": {
                 "setupComponentFileId": 11450066,
                 "speed": 8.0,
@@ -1263,6 +1267,7 @@
               "projectileFileId": 11409266,
               "projectileGuid": "855689762fa6e774aaee190652b08c6f",
               "forcedFake": false,
+              "friendKill": true,
               "missile": null
             }
           ]
@@ -1302,6 +1307,7 @@
               "projectileFileId": 11431434,
               "projectileGuid": "60be7eeb14f5a354c99c9ce23dbc5554",
               "forcedFake": false,
+              "friendKill": false,
               "missile": {
                 "setupComponentFileId": 11401929,
                 "speed": 6.0,
@@ -1375,6 +1381,7 @@
               "projectileFileId": 11431434,
               "projectileGuid": "60be7eeb14f5a354c99c9ce23dbc5554",
               "forcedFake": false,
+              "friendKill": true,
               "missile": {
                 "setupComponentFileId": 11481733,
                 "speed": 6.0,
@@ -1852,6 +1859,7 @@
               "projectileFileId": 11409266,
               "projectileGuid": "855689762fa6e774aaee190652b08c6f",
               "forcedFake": false,
+              "friendKill": false,
               "missile": null
             },
             {
@@ -1873,6 +1881,7 @@
               "projectileFileId": 11409266,
               "projectileGuid": "855689762fa6e774aaee190652b08c6f",
               "forcedFake": false,
+              "friendKill": false,
               "missile": null
             }
           ]

@@ -8,7 +8,7 @@ namespace War.BattleServer;
 
 public sealed record GroundVehicleWeapon(int BatchedComponentFileId,int WeaponComponentFileId,
     string WeaponType,float Cadence,int SpawnTransformFileId,Vector3 MuzzlePosition,Vector3 ShotOffset,
-    int ProjectileFileId,string ProjectileGuid,bool ForcedFake,GroundVehicleMissileBinding? Missile);
+    int ProjectileFileId,string ProjectileGuid,bool ForcedFake,bool FriendKill,GroundVehicleMissileBinding? Missile);
 public sealed record GroundVehicleMissileBinding(int SetupComponentFileId,float Speed,float MinimumDamage,float HurtRadius,
     float DeadRadius,Vector3 ExplosionCoefficient,float AdditionalUpForce,float StopTime,int MissileType,
     bool CurvedTrajectory,Vector2 RotationRange,IReadOnlyList<BazookaCurveKey> RotationProfile,
@@ -82,7 +82,8 @@ public sealed class GroundVehicleWeaponCatalog
     private sealed class WeaponDto {public int BatchedComponentFileId{get;set;}public int WeaponComponentFileId{get;set;}
         public string WeaponType{get;set;}="";public float Cadence{get;set;}public int SpawnTransformFileId{get;set;}
         public float[] MuzzlePosition{get;set;}=[];public float[] ShotOffset{get;set;}=[];public int ProjectileFileId{get;set;}
-        public string ProjectileGuid{get;set;}="";public bool ForcedFake{get;set;}public MissileDto? Missile{get;set;}}
+        public string ProjectileGuid{get;set;}="";public bool ForcedFake{get;set;}
+        public bool? FriendKill{get;set;}public MissileDto? Missile{get;set;}}
     private sealed class MissileDto {public int SetupComponentFileId{get;set;}public float Speed{get;set;}
         public float MinimumDamage{get;set;}
         public float HurtRadius{get;set;}public float DeadRadius{get;set;}public float[] ExplosionCoefficient{get;set;}=[];
@@ -104,6 +105,14 @@ public sealed class GroundVehicleWeaponCatalog
         ("ID_UNIT-BUGGY","Assets/GameObject/Buggy.prefab","AICarBuggy",2),
         ("ID_UNIT-TRANSPORTER","Assets/GameObject/Transporter.prefab","AICarTransporter",1)
     ];
+    private static readonly IReadOnlyDictionary<int,bool> ExpectedFriendKill=
+        new Dictionary<int,bool>
+        {
+            [11471354]=true,[11477090]=true,
+            [11473880]=false,[11474264]=false,
+            [11433379]=true,[11422290]=false,[11408667]=true,
+            [11434459]=false,[11419936]=false
+        };
     private static readonly IReadOnlyDictionary<string,string[]> ExpectedPassengers=
         new Dictionary<string,string[]>(StringComparer.Ordinal)
         {
@@ -194,7 +203,7 @@ public sealed class GroundVehicleWeaponCatalog
             {PropertyNameCaseInsensitive=true,UnmappedMemberHandling=JsonUnmappedMemberHandling.Disallow})??
             throw new InvalidDataException("Missing ground vehicle weapon artifact.");}
         catch(JsonException e){throw new InvalidDataException("Malformed ground vehicle weapon artifact.",e);}
-        if(root.Version!=10||root.ArmoredVehicleShotCoefficient!=.33f||
+        if(root.Version!=11||root.ArmoredVehicleShotCoefficient!=.33f||
            !Regex.IsMatch(root.PassengerPoseRevision,@"\A[0-9a-f]{64}\z")||root.Vehicles.Length!=Expected.Length)
             throw new InvalidDataException("Incomplete ground vehicle weapon artifact.");
         var drone=root.RepairDronePrefab;
@@ -247,6 +256,9 @@ public sealed class GroundVehicleWeaponCatalog
                        weapon.WeaponComponentFileId<=0||weapon.WeaponType is not ("Gun" or "AutomaticRifle" or "Bazooka")||
                        !float.IsFinite(weapon.Cadence)||weapon.Cadence<=0||weapon.Cadence>10||
                        weapon.SpawnTransformFileId<=0||weapon.ProjectileFileId<=0||
+                       weapon.FriendKill==null||
+                       !ExpectedFriendKill.TryGetValue(weapon.WeaponComponentFileId,out bool friendKill)||
+                       weapon.FriendKill.Value!=friendKill||
                        !Regex.IsMatch(weapon.ProjectileGuid,@"\A[0-9a-f]{32}\z"))
                         throw new InvalidDataException("Invalid ground vehicle weapon contract.");
                     GroundVehicleMissileBinding? missile=null;
@@ -283,7 +295,8 @@ public sealed class GroundVehicleWeaponCatalog
                     else if(weapon.Missile!=null)throw new InvalidDataException("Gun has missile setup.");
                     weapons[w]=new(weapon.BatchedComponentFileId,weapon.WeaponComponentFileId,weapon.WeaponType,
                         weapon.Cadence,weapon.SpawnTransformFileId,Vector(weapon.MuzzlePosition),Vector(weapon.ShotOffset),
-                        weapon.ProjectileFileId,weapon.ProjectileGuid,weapon.ForcedFake,missile);
+                        weapon.ProjectileFileId,weapon.ProjectileGuid,weapon.ForcedFake,
+                        weapon.FriendKill.Value,missile);
                 }
                 roles[r]=new(turret.Role,turret.TurretComponentFileId,turret.TurretType,turret.AimTime,
                     turret.MaxShotRotation,turret.UseUnitTarget,turret.PrimaryTargetOnly,turret.NeedToSeePrimaryTarget,

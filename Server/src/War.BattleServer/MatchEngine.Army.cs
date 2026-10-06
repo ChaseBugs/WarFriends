@@ -787,10 +787,12 @@ public sealed partial class MatchEngine
     {
         if(phase!=BattlePhase.Running||groundVehicleWeapons==null||explosionPolicy==null||
            !PlayerHitbox.Finite(origin)||!float.IsFinite(damage)||damage<=0||damage>10_000_000||
-           binding==null||unitId is not ("ID_UNIT-TANK" or "ID_UNIT-BUGGY")||
-           !groundVehicleWeapons.For(unitId).Roles.SelectMany(role=>role.Weapons)
-               .Any(weapon=>ReferenceEquals(weapon.Missile,binding)))
+           binding==null||unitId is not ("ID_UNIT-TANK" or "ID_UNIT-BUGGY"))
             throw new InvalidDataException("Ground-vehicle missile lacks trusted repair-drone blast authority.");
+        var sourceWeapon=groundVehicleWeapons.For(unitId).Roles.SelectMany(role=>role.Weapons)
+            .SingleOrDefault(weapon=>ReferenceEquals(weapon.Missile,binding));
+        if(sourceWeapon==null)
+            throw new InvalidDataException("Ground-vehicle missile binding is not a source weapon.");
         var shooter=Find(shooterId)??throw new InvalidDataException("Vehicle missile owner disappeared.");
         if(vehicles==null)return;
         foreach(var vehicle in vehicles.Snapshot().Where(value=>value.UnitId=="ID_UNIT-TRANSPORTER")
@@ -803,6 +805,7 @@ public sealed partial class MatchEngine
             var owner=Find(vehicle.OwnerPlayerId)??
                 throw new InvalidDataException("Vehicle missile repair-drone owner disappeared.");
             bool friendly=owner.Definition.Fraction==shooter.Definition.Fraction;
+            if(friendly&&!sourceWeapon.FriendKill)continue;
             int layer=owner.Definition.Fraction==1?23:owner.Definition.Fraction==2?22:
                 throw new InvalidDataException("Vehicle missile repair drone has unsupported faction.");
             foreach(var drone in drones.OrderBy(value=>value.PathIndex))

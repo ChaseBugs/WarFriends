@@ -250,6 +250,7 @@ def main():
       'weaponType':weapon_type,'cadence':cadence,'spawnTransformFileId':spawn,
       'muzzlePosition':muzzle,'shotOffset':shot_offset,'projectileFileId':int(projectile.group(1)),
       'projectileGuid':projectile.group(2),'forcedFake':fake_every>0 and index>0 and index%fake_every==0,
+      'friendKill':direct(weapon,'friendKill')=='1',
       'missile':missile})
    role_rows.append({'role':role,'turretComponentFileId':turret_id,'turretType':turret_type,
     'aimTime':number(turret,'aimTime'),'maxShotRotation':number(turret,'maxShotRotation'),
@@ -273,7 +274,7 @@ def main():
    'flamePartCoefficient':vehicle_flame_coefficient(blocks,scripts),'repairDronePaths':drones,
    'shotTargets':vehicle_shot_targets(blocks)})
  if not PASSENGER_POSES.exists(): raise ValueError('missing Unity passenger pose artifact')
- artifact={'version':10,'armoredVehicleShotCoefficient':0.33,
+ artifact={'version':11,'armoredVehicleShotCoefficient':0.33,
   'passengerPoseRevision':hashlib.sha256(PASSENGER_POSES.read_bytes()).hexdigest(),
   'repairDronePrefab':repair_drone_prefab(guid_to_name),'vehicles':out}
  serialized=json.dumps(artifact,indent=2)+'\n'

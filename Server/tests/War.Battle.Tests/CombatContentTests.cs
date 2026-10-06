@@ -1265,6 +1265,10 @@ internal static class CombatContentTests
         Check(buggyFlight.Finished&&buggyTerminal is {Collision:null}&&buggyCurveDeviation>.01f,
               "Buggy missile executes its five-key curved flight on contiguous host ticks");
         var tankMissileBinding=tankRig.Roles.Single(r=>r.Role=="cannon").Weapons.Single().Missile!;
+        Check(!tankRig.Roles.Single(r=>r.Role=="cannon").Weapons.Single().FriendKill&&
+              !buggyRig.Roles.Single(r=>r.Role=="cannon").Weapons[0].FriendKill&&
+              buggyRig.Roles.Single(r=>r.Role=="cannon").Weapons[1].FriendKill,
+              "recovered Tank and Buggy cannon weapons retain their distinct friendKill flags");
         Vector3 tankTarget=new(0,0,8);int tankTraceCount=0;
         var tankFlight=new TankMissileFlight(81,82,tankMissileBinding,Vector3.Zero,()=>tankTarget,0,
             (origin,direction,range)=>
@@ -1347,6 +1351,16 @@ internal static class CombatContentTests
             var changedFlame=JsonNode.Parse(File.ReadAllText(vehicleWeaponPath))!;
             changedFlame["vehicles"]![0]!["flamePartCoefficient"]=.33f;
             File.WriteAllText(vehicleWeaponTemp,changedFlame.ToJsonString());
+            Reject(()=>GroundVehicleWeaponCatalog.Load(vehicleWeaponTemp,
+                Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(vehicleWeaponTemp)))));
+            var changedFriendKill=JsonNode.Parse(File.ReadAllText(vehicleWeaponPath))!;
+            changedFriendKill["vehicles"]![1]!["roles"]![1]!["weapons"]![0]!["friendKill"]=true;
+            File.WriteAllText(vehicleWeaponTemp,changedFriendKill.ToJsonString());
+            Reject(()=>GroundVehicleWeaponCatalog.Load(vehicleWeaponTemp,
+                Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(vehicleWeaponTemp)))));
+            var missingFriendKill=JsonNode.Parse(File.ReadAllText(vehicleWeaponPath))!;
+            ((JsonObject)missingFriendKill["vehicles"]![2]!["roles"]![1]!["weapons"]![1]!).Remove("friendKill");
+            File.WriteAllText(vehicleWeaponTemp,missingFriendKill.ToJsonString());
             Reject(()=>GroundVehicleWeaponCatalog.Load(vehicleWeaponTemp,
                 Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(vehicleWeaponTemp)))));
             var changedTarget=JsonNode.Parse(File.ReadAllText(vehicleWeaponPath))!;
@@ -5845,17 +5859,35 @@ internal static class CombatContentTests
         transporterMatch.ApplyGroundVehicleMissileRepairDroneExplosion(soldierOwner,
             "ID_UNIT-TANK",21,tankMissileBinding,missileDroneCenter);
         float friendlyMissileHealth=transporterMatch.TransporterRepairDrones(transporterEntity.EntityKey)[1].Health;
-        Check(Math.Abs(friendlyMissileHealth-(missileDrone.Health-10.5f))<.01f&&
+        Check(Math.Abs(friendlyMissileHealth-missileDrone.Health)<.01f&&
               Math.Abs(transporterMatch.ArmyHealth(transporterEntity.EntityKey)!.Value-
                   missileVehicleHealth)<.01f,
-            "friendly Tank missile blast halves repair-drone damage without mutating vehicle body");
+            "Tank cannon friendKill=false prevents damage to a friendly repair drone");
+        transporterMatch.ApplyGroundVehicleMissileRepairDroneExplosion(soldierOwner,
+            "ID_UNIT-BUGGY",21,buggyMissileBinding,missileDroneCenter);
+        Check(Math.Abs(transporterMatch.TransporterRepairDrones(transporterEntity.EntityKey)[1].Health-
+                  friendlyMissileHealth)<.01f,
+            "Buggy primary friendKill=false prevents damage to a friendly repair drone");
+        var buggySecondaryBinding=buggyRig.Roles.Single(r=>r.Role=="cannon").Weapons[1].Missile!;
+        transporterMatch.ApplyGroundVehicleMissileRepairDroneExplosion(soldierOwner,
+            "ID_UNIT-BUGGY",21,buggySecondaryBinding,missileDroneCenter);
+        float friendlyBuggyHealth=transporterMatch.TransporterRepairDrones(transporterEntity.EntityKey)[1].Health;
+        Check(Math.Abs(friendlyBuggyHealth-(friendlyMissileHealth-10.5f))<.01f&&
+              Math.Abs(transporterMatch.ArmyHealth(transporterEntity.EntityKey)!.Value-
+                  missileVehicleHealth)<.01f,
+            "Buggy secondary friendKill=true permits half-damage to a friendly repair drone");
         transporterMatch.ApplyGroundVehicleMissileRepairDroneExplosion(helicopterOwner,
             "ID_UNIT-BUGGY",21,buggyMissileBinding,missileDroneCenter);
         float opposingMissileHealth=transporterMatch.TransporterRepairDrones(transporterEntity.EntityKey)[1].Health;
-        Check(Math.Abs(opposingMissileHealth-Math.Max(0,friendlyMissileHealth-21))<.01f&&
+        Check(Math.Abs(opposingMissileHealth-Math.Max(0,friendlyBuggyHealth-21))<.01f&&
               Math.Abs(transporterMatch.ArmyHealth(transporterEntity.EntityKey)!.Value-
                   missileVehicleHealth)<.01f,
             "opposing Buggy missile blast damages the same independent repair-drone health");
+        transporterMatch.ApplyGroundVehicleMissileRepairDroneExplosion(helicopterOwner,
+            "ID_UNIT-TANK",21,tankMissileBinding,missileDroneCenter);
+        Check(Math.Abs(transporterMatch.TransporterRepairDrones(transporterEntity.EntityKey)[1].Health-
+                  Math.Max(0,opposingMissileHealth-21))<.01f,
+            "opposing Tank cannon blast damages the same independent repair-drone health");
         Reject(()=>transporterMatch.ApplyGroundVehicleMissileRepairDroneExplosion(helicopterOwner,
             "ID_UNIT-BUGGY",21,buggyMissileBinding with {MinimumDamage=1},missileDroneCenter));
         var repairShotManifest=transporterManifest with {MatchId="player-shot-repair-drone",
