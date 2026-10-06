@@ -557,6 +557,26 @@ internal static class GrenadeCatalogTests
         var repairEffect=GrenadeExplosion.ResolveArmy(repairOrigin,repairDrone.Position,
             [repairCollider.Hitbox],tankStage)!;
         float transporterHealthBefore=transporterMatch.ArmyHealth(transporter.EntityKey)!.Value;
+        Check(transporterMatch.ApplyLandMineRepairDroneExplosion(two,repairOrigin,1)>0&&
+              Math.Abs(transporterMatch.TransporterRepairDrones(transporter.EntityKey)
+                  .Single(value=>value.PathIndex==repairDrone.PathIndex).Health-
+                  (repairDrone.Health-.5f))<.01f,
+            "friendly Land Mine blast damages a repair-drone root at half strength");
+        repairDrone=transporterMatch.TransporterRepairDrones(transporter.EntityKey)
+            .Single(value=>value.PathIndex==repairDrone.PathIndex);
+        uint enemyHitsBeforeMine=transporterMatch.Snapshot().Players
+            .Single(value=>value.PlayerId==one).ConfirmedEnemyHits;
+        Check(transporterMatch.ApplyLandMineRepairDroneExplosion(one,repairOrigin,1)>0&&
+              Math.Abs(transporterMatch.TransporterRepairDrones(transporter.EntityKey)
+                  .Single(value=>value.PathIndex==repairDrone.PathIndex).Health-
+                  (repairDrone.Health-1))<.01f&&
+              transporterMatch.Snapshot().Players.Single(value=>value.PlayerId==one)
+                  .ConfirmedEnemyHits>enemyHitsBeforeMine,
+            "opposing Land Mine blast damages the repair drone and credits a host hit");
+        repairDrone=transporterMatch.TransporterRepairDrones(transporter.EntityKey)
+            .Single(value=>value.PathIndex==repairDrone.PathIndex);
+        Reject(()=>transporterMatch.ApplyLandMineRepairDroneExplosion(one,repairOrigin,float.NaN),
+            "invalid Land Mine damage cannot reach a repair drone");
         transporterMatch.ApplyPlayerGrenadeRepairDroneExplosion(two,repairOrigin,tankStage);
         var friendlyRepairAfter=transporterMatch.TransporterRepairDrones(transporter.EntityKey)
             .Single(value=>value.PathIndex==repairDrone.PathIndex);

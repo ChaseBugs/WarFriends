@@ -123,6 +123,7 @@ public sealed partial class MatchEngine
             ApplyLandMineHeavyTurretExplosion(mine.OwnerPlayerId,mine.Position,mine.Damage,mine.EntityId);
             ApplyLandMineDroneExplosion(mine.OwnerPlayerId,mine.Position,mine.Damage);
             ApplyLandMineHelicopterBodyExplosion(mine.OwnerPlayerId,mine.Position,mine.Damage);
+            ApplyLandMineRepairDroneExplosion(mine.OwnerPlayerId,mine.Position,mine.Damage);
             ApplyLandMinePassengerExplosion(mine.OwnerPlayerId,mine.Position,mine.Damage);
             ApplyLandMineVehicleExplosion(mine.OwnerPlayerId,mine.Position,mine.Damage);
             foreach(var army in activeArmyEntities.Values.Where(x=>x.OwnerFraction!=mine.OwnerFraction&&
@@ -238,6 +239,54 @@ public sealed partial class MatchEngine
                     if(targetOwner.Definition.Fraction!=attacker.Definition.Fraction)
                         attacker.ConfirmedEnemyHits=checked(attacker.ConfirmedEnemyHits+1);
                 }
+            }
+        }
+        return hits;
+    }
+
+    internal int ApplyLandMineRepairDroneExplosion(string ownerId,Vector3 position,float damage)
+    {
+        if(phase!=BattlePhase.Running||landMineSource==null||groundVehicleWeapons==null||
+           explosionPolicy==null||!PlayerHitbox.Finite(position)||!float.IsFinite(damage)||
+           damage<=0||damage>10_000_000)
+            throw new InvalidDataException("Land Mine repair-drone blast lacks trusted source authority.");
+
+        var attacker=Find(ownerId)??throw new InvalidDataException("Land Mine owner disappeared.");
+        if(vehicles==null)return 0;
+        int hits=0;
+
+        foreach(var vehicle in vehicles.Snapshot().Where(value=>value.UnitId=="ID_UNIT-TRANSPORTER")
+            .OrderBy(value=>value.EntityId))
+        {
+            if(!activeArmyEntities.TryGetValue(vehicle.EntityId,out var army)||
+               army.UnitId!=vehicle.UnitId||army.OwnerPlayerId!=vehicle.OwnerPlayerId||
+               !transporterRepairDrones.TryGetValue(vehicle.EntityId,out var drones))
+                throw new InvalidDataException("Land Mine repair drone lost shared host authority.");
+
+            var owner=Find(vehicle.OwnerPlayerId)??
+                throw new InvalidDataException("Land Mine repair-drone owner disappeared.");
+            bool friendly=owner.Definition.Fraction==attacker.Definition.Fraction;
+            int layer=owner.Definition.Fraction==1?23:owner.Definition.Fraction==2?22:
+                throw new InvalidDataException("Land Mine repair drone has unsupported faction.");
+
+            foreach(var drone in drones.OrderBy(value=>value.PathIndex))
+            {
+                if(!drone.Active)continue;
+                var collider=groundVehicleWeapons.PlaceRepairDrone(vehicle.EntityId,
+                    drone.PathIndex,layer,drone.Snapshot());
+                if(!collider.Hitbox.OverlapsSphere(position,landMineSource.HurtRadius))continue;
+
+                float amount=damage*(friendly?explosionPolicy.Friendly:1f);
+                if(!float.IsFinite(amount)||amount<=0||amount>10_000_000||
+                   !ApplyTransporterRepairDroneHostDamage(vehicle.EntityId,drone.PathIndex,amount))
+                    throw new InvalidDataException("Land Mine repair-drone damage escaped host bounds.");
+
+                hits++;
+                if(!friendly)attacker.ConfirmedEnemyHits=checked(attacker.ConfirmedEnemyHits+1);
+                if(!drone.Active)
+                    Emit(MatchEventKind.VehicleRepairDroneDown,vehicle.OwnerPlayerId,"",
+                        vehicle.EntityId,drone.Position,0,
+                        "vehicle-repair-drone-down:"+drone.PathIndex);
             }
         }
         return hits;
