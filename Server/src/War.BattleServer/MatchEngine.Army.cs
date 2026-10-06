@@ -902,6 +902,39 @@ public sealed partial class MatchEngine
         }
     }
 
+    internal void ApplyPlayerBazookaAirBodyExplosion(string shooterId,Vector3 origin,
+        BazookaStage stage,BazookaBinding binding,bool halfDamage)
+    {
+        if(phase!=BattlePhase.Running||bazookaCatalog==null||explosionPolicy==null||
+           stage==null||binding==null||
+           !ReferenceEquals(bazookaCatalog.Stage(stage.SourceId,stage.Index),stage)||
+           !ReferenceEquals(bazookaCatalog.Binding(stage.SourceId),binding)||
+           !PlayerHitbox.Finite(origin))
+            throw new InvalidDataException("Bazooka air-body blast lacks trusted source authority.");
+        var shooter=Find(shooterId)??throw new InvalidDataException("Bazooka owner disappeared.");
+        var groups=GroundVehicleShotTargets(shooterId,true)
+            .Where(value=>value.DroneRoot||value.HelicopterBody)
+            .GroupBy(value=>value.EntityId).OrderBy(group=>group.Key).ToArray();
+        if(groups.Length>0&&(droneColliders==null||helicopterBodyColliders==null))
+            throw new InvalidDataException("Bazooka air-body blast lacks collider source authority.");
+        foreach(var group in groups)
+        {
+            if(!activeArmyEntities.TryGetValue(group.Key,out var army)||
+               army.UnitId is not ("ID_UNIT-DRONE" or "ID_UNIT-HELICOPTER")||
+               group.Any(value=>army.UnitId=="ID_UNIT-DRONE"?!value.DroneRoot:value.DroneRoot))
+                throw new InvalidDataException("Bazooka air body lost source entity authority.");
+            var effect=BazookaExplosion.ResolveArmy(origin,new(army.X,army.Y,army.Z),
+                group.Select(value=>value.Hitbox).ToArray(),stage,binding,halfDamage);
+            if(effect==null)continue;
+            bool friendly=army.OwnerFraction==shooter.Definition.Fraction;
+            float amount=effect.RawDamage*(friendly?explosionPolicy.Friendly:1f);
+            if(!float.IsFinite(amount)||amount<=0||amount>10_000_000)
+                throw new InvalidDataException("Bazooka air-body damage exceeded host bounds.");
+            ApplyArmyHostDamage(group.Key,amount);
+            if(Terminal)return;
+        }
+    }
+
     internal void ApplyGroundVehicleMissileRepairDroneExplosion(string shooterId,string unitId,
         float damage,GroundVehicleMissileBinding binding,Vector3 origin)
     {

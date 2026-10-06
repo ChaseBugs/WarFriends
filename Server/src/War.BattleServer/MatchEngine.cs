@@ -1891,6 +1891,9 @@ public sealed partial class MatchEngine
         ApplyPlayerBazookaInfantryExplosion(impact.OwnerId,impact.Position,
             projectile.Stage,projectile.Binding,projectile.HalfDamage);
         if(Terminal)return;
+        ApplyPlayerBazookaAirBodyExplosion(impact.OwnerId,impact.Position,
+            projectile.Stage,projectile.Binding,projectile.HalfDamage);
+        if(Terminal)return;
         foreach(var victim in players.Where(x=>!x.Dead).ToArray())
         {
             var pose=rifleCombat.Pose(victim.Definition.PlayerId).Collision;

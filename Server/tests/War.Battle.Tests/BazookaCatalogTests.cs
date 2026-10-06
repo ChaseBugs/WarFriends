@@ -130,6 +130,74 @@ internal static class BazookaCatalogTests
              ArmyHealthFactors=[new ArmyHealthFactors(1,1)],ArmyDamageScales=[1],
              ArmySpeedCoefficients=[1],ArmyAccuracyCoefficients=[1]}]};
         content.ValidateAllocation(repairAllocation);
+        (MatchEngine Match,BattleArmyEntityState Victim,DynamicShotTarget[] Bodies) AirTarget(
+            string matchId,string unit)
+        {
+            var manifest=repairAllocation with {MatchId=matchId,Players=
+                [repairAllocation.Players[0],repairAllocation.Players[1] with
+                    {EquippedArmyUnitIds=[unit],ArmySpecialUpgradeIndexes=[-1]}]};
+            content.ValidateAllocation(manifest);
+            var match=new MatchEngine(manifest,map,content,armyChoice:_=>0);
+            match.Admit(one);match.Admit(two);
+            match.Command(one,new(){CommandId=1,Ready=new(){ManifestHash=match.ManifestHash}});
+            match.Command(two,new(){CommandId=1,Ready=new(){ManifestHash=match.ManifestHash}});
+            match.Advance(60);
+            Check(match.Command(two,new(){CommandId=2,
+                DeployArmy=new(){OptionIndex=match.ArmyBatch(two).OptionIndexes.First()}})
+                .Code=="army-deploying","source air unit deploys for Bazooka blast: "+unit);
+            ulong next=60;
+            while(next<300&&match.ArmyEntityBatch(one,0,0).Entities.Count==0)
+                match.Advance(++next);
+            var victim=match.ArmyEntityBatch(one,0,0).Entities.Single();
+            var bodies=match.GroundVehicleShotTargets(one).Where(value=>
+                value.EntityId==victim.EntityKey&&
+                (unit=="ID_UNIT-DRONE"?value.DroneRoot:value.HelicopterBody)).ToArray();
+            Check(victim.UnitId==unit&&bodies.Length>0,
+                "deployed air unit has source body collision: "+unit);
+            return(match,victim,bodies);
+        }
+        var airRpg=content.Bazookas!.Stage("Google2u.Bazooka_RPG7",0);
+        var airBinding=content.Bazookas.Binding("Google2u.Bazooka_RPG7");
+        foreach(var airUnit in new[]{"ID_UNIT-DRONE","ID_UNIT-HELICOPTER"})
+        {
+            var (friendlyMatch,friendlyVictim,friendlyBodies)=AirTarget(
+                "bazooka-air-friendly-"+airUnit[8..].ToLowerInvariant(),airUnit);
+            Vector3 friendlyOrigin=friendlyBodies[0].Hitbox.Center;
+            var friendlyEffect=BazookaExplosion.ResolveArmy(friendlyOrigin,
+                new(friendlyVictim.X,friendlyVictim.Y,friendlyVictim.Z),
+                friendlyBodies.Select(value=>value.Hitbox).ToArray(),airRpg,airBinding,true)!;
+            friendlyMatch.ApplyPlayerBazookaAirBodyExplosion(two,friendlyOrigin,airRpg,airBinding,true);
+            float? friendlyAirAfter=friendlyMatch.ArmyHealth(friendlyVictim.EntityKey);
+            float expectedFriendly=friendlyVictim.Health-
+                Math.Max(0,friendlyEffect.RawDamage*content.Explosions.Friendly-friendlyVictim.Kevlar);
+            Check(expectedFriendly<=0?friendlyAirAfter==null:
+                  friendlyAirAfter!=null&&Math.Abs(friendlyAirAfter.Value-expectedFriendly)<.01f,
+                "friendly half-damage Bazooka blast uses one air-body owner: "+airUnit);
+
+            var (enemyMatch,enemyVictim,enemyBodies)=AirTarget(
+                "bazooka-air-enemy-"+airUnit[8..].ToLowerInvariant(),airUnit);
+            Vector3 enemyOrigin=enemyBodies[0].Hitbox.Center;
+            var enemyEffect=BazookaExplosion.ResolveArmy(enemyOrigin,
+                new(enemyVictim.X,enemyVictim.Y,enemyVictim.Z),
+                enemyBodies.Select(value=>value.Hitbox).ToArray(),airRpg,airBinding,false)!;
+            Check(enemyEffect.Kind==CombatDamageType.Explosion&&
+                  Math.Abs(enemyEffect.RawDamage-rpg.ExplosionDamage)<.01f,
+                "Bazooka air blast selects one nearest body collider without bullet weight: "+airUnit);
+            enemyMatch.ApplyPlayerBazookaAirBodyExplosion(one,enemyOrigin,airRpg,airBinding,false);
+            float? enemyAfter=enemyMatch.ArmyHealth(enemyVictim.EntityKey);
+            float expectedEnemy=enemyVictim.Health-
+                Math.Max(0,enemyEffect.RawDamage-enemyVictim.Kevlar);
+            Check(expectedEnemy<=0?enemyAfter==null:
+                  enemyAfter!=null&&Math.Abs(enemyAfter.Value-expectedEnemy)<.01f,
+                "opposing Bazooka blast damages source air-body vitality: "+airUnit);
+            try
+            {
+                enemyMatch.ApplyPlayerBazookaAirBodyExplosion(one,enemyOrigin,
+                    airRpg with {ExplosionDamage=1},airBinding,false);
+                throw new Exception("FAIL: forged Bazooka air-body stage: "+airUnit);
+            }
+            catch(InvalidDataException){checks++;}
+        }
         var infantryAllocation=repairAllocation with {MatchId="bazooka-infantry-blast"};
         var infantryMatch=new MatchEngine(infantryAllocation,map,content,armyChoice:_=>0);
         infantryMatch.Admit(one);infantryMatch.Admit(two);
