@@ -5833,6 +5833,45 @@ internal static class CombatContentTests
                   x.ProjectileId==transporterEntity.EntityKey&&
                   x.Reason=="vehicle-repair-drone-exploded:0"),
               "live dead repair drone falls into recovered scene geometry and publishes its terminal crash");
+        var repairShotManifest=transporterManifest with {MatchId="player-shot-repair-drone",
+            DurationSeconds=180};
+        var repairShotMatch=new MatchEngine(repairShotManifest,content:content,armyChoice:_=>0);
+        repairShotMatch.Admit(soldierOwner);repairShotMatch.Admit(helicopterOwner);
+        repairShotMatch.Command(soldierOwner,new(){CommandId=1,
+            Ready=new(){ManifestHash=repairShotMatch.ManifestHash}});
+        repairShotMatch.Command(helicopterOwner,new(){CommandId=1,
+            Ready=new(){ManifestHash=repairShotMatch.ManifestHash}});
+        repairShotMatch.Advance(60);
+        int repairShotOption=repairShotMatch.ArmyBatch(soldierOwner).OptionIndexes.First();
+        Check(repairShotMatch.Command(soldierOwner,new(){CommandId=2,
+            DeployArmy=new(){OptionIndex=repairShotOption}}).Code=="army-deploying",
+            "special-lane Transporter deploys for natural player bullet collision");
+        ulong repairShotTick=60;
+        while(repairShotTick<700&&repairShotMatch.ArmyEntityBatch(helicopterOwner,0,0).Entities.Count==0)
+            repairShotMatch.Advance(++repairShotTick);
+        var shotTransporter=repairShotMatch.ArmyEntityBatch(helicopterOwner,0,0).Entities.Single();
+        float initialRepairHealth=repairShotMatch.TransporterRepairDrones(shotTransporter.EntityKey)[0].Health;
+        bool repairBulletHit=false;
+        ulong repairFireCommand=2;
+        for(;repairShotTick<3000&&!repairShotMatch.Terminal;)
+        {
+            if(repairShotTick%12==0)
+            {
+                var target=repairShotMatch.GroundVehicleShotTargets(helicopterOwner)
+                    .FirstOrDefault(x=>x.EntityId==shotTransporter.EntityKey&&
+                        x.RepairDronePathIndex==0);
+                if(target==null)break;
+                Vector3 aim=target.Hitbox.Center;
+                repairShotMatch.Command(helicopterOwner,new(){CommandId=repairFireCommand++,
+                    Fire=new(){TargetX=aim.X,TargetY=aim.Y,TargetZ=aim.Z}});
+            }
+            repairShotMatch.Advance(++repairShotTick);
+            if(repairShotMatch.TransporterRepairDrones(shotTransporter.EntityKey)[0].Health<initialRepairHealth)
+            {repairBulletHit=true;break;}
+        }
+        Check(repairBulletHit&&repairShotMatch.Snapshot().Players
+                  .Single(x=>x.PlayerId==helicopterOwner).ConfirmedEnemyHits>0,
+            "normal player Fire projectile reaches the moving Transporter repair-drone root");
         var destroyedVehicle=parkedVehicles[0];
         Check(staleMatch.ApplyArmyHostDamage(destroyedVehicle.EntityKey,destroyedVehicle.MaxHealth)&&
               staleMatch.VehicleRouteMotion(destroyedVehicle.EntityKey)==null&&
