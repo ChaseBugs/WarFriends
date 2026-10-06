@@ -31,6 +31,7 @@ public sealed class SelfHostedDeathMatchBridge : MonoBehaviour
 	private SelfHostedDronePresenter dronePresenter;
 	private SelfHostedHelicopterPresenter helicopterPresenter;
 	private SelfHostedGroundVehiclePresenter groundVehiclePresenter;
+	private SelfHostedRepairDronePresenter repairDronePresenter;
 
 	public void Configure(SelfHostedBattleClient owner, PlayerController localPlayer, PlayerController otherPlayer)
 	{
@@ -71,6 +72,8 @@ public sealed class SelfHostedDeathMatchBridge : MonoBehaviour
 		client.ArmyEntitiesReceived += helicopterPresenter.Apply;
 		groundVehiclePresenter = gameObject.AddComponent<SelfHostedGroundVehiclePresenter>();
 		groundVehiclePresenter.Configure(pool);
+		repairDronePresenter = gameObject.AddComponent<SelfHostedRepairDronePresenter>();
+		repairDronePresenter.Configure(pool);
 		client.StateReceived += Apply;
 		client.ProjectileScanReceived += projectilePresenter.ApplyScan;
 		client.CombatEventReceived += ApplyEvent;
@@ -258,6 +261,7 @@ public sealed class SelfHostedDeathMatchBridge : MonoBehaviour
 		if (landMinePresenter != null) landMinePresenter.Apply(snapshot);
 		if (heavyTurretPresenter != null) heavyTurretPresenter.Apply(snapshot);
 		if (groundVehiclePresenter != null) groundVehiclePresenter.Apply(snapshot);
+		if (repairDronePresenter != null) repairDronePresenter.Apply(snapshot);
 		if (!terminalPresented && snapshot.Phase == BattlePhase.Ended)
 		{
 			ClientGameEndReason reason = MatchOutcomeProjection.ForPlayer(snapshot, client.LocalPlayerId);
