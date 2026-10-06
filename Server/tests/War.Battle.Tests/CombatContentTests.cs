@@ -3984,6 +3984,33 @@ internal static class CombatContentTests
             "army flame cone does not damage its owning deployed infantry collider");
         Reject(()=>flameInfantryMatch.ApplyArmyFlameInfantryPulse(ulong.MaxValue,
             flamePart.Center-Vector3.UnitZ,Vector3.UnitZ));
+        float friendlyInfantryBefore=flameInfantryMatch.ArmyHealth(flameSource.EntityKey)!.Value;
+        var friendlyInfantryBox=flameInfantryMatch.InfantryPose(flameSource.EntityKey)!.Parts[0];
+        flameInfantryMatch.ApplyGroundVehicleMissileInfantryExplosion(soldierOwner,
+            "ID_UNIT-TANK",21,tankMissileBinding,friendlyInfantryBox.Center);
+        flameInfantryMatch.ApplyGroundVehicleMissileInfantryExplosion(soldierOwner,
+            "ID_UNIT-BUGGY",21,buggyMissileBinding,friendlyInfantryBox.Center);
+        Check(Math.Abs(flameInfantryMatch.ArmyHealth(flameSource.EntityKey)!.Value-
+                  friendlyInfantryBefore)<.01f,
+            "Tank and Buggy primary friendKill=false prevent friendly infantry missile damage");
+        var friendlyBuggyMissile=buggyRig.Roles.Single(role=>role.Role=="cannon").Weapons[1].Missile!;
+        flameInfantryMatch.ApplyGroundVehicleMissileInfantryExplosion(soldierOwner,
+            "ID_UNIT-BUGGY",21,friendlyBuggyMissile,friendlyInfantryBox.Center);
+        float friendlyInfantryAfter=flameInfantryMatch.ArmyHealth(flameSource.EntityKey)!.Value;
+        Check(friendlyInfantryAfter<friendlyInfantryBefore&&
+              Math.Abs(friendlyInfantryAfter-(friendlyInfantryBefore-
+                  Math.Max(0,10.5f-flameSource.Kevlar)))<.01f,
+            "Buggy secondary friendKill=true applies half blast damage to allied infantry");
+        float opposingInfantryBefore=flameInfantryMatch.ArmyHealth(flameTarget.EntityKey)!.Value;
+        flameInfantryMatch.ApplyGroundVehicleMissileInfantryExplosion(soldierOwner,
+            "ID_UNIT-TANK",21,tankMissileBinding,flamePart.Center);
+        float opposingInfantryAfter=flameInfantryMatch.ArmyHealth(flameTarget.EntityKey)!.Value;
+        Check(opposingInfantryAfter<opposingInfantryBefore&&
+              Math.Abs(opposingInfantryAfter-(opposingInfantryBefore-
+                  Math.Max(0,21-flameTarget.Kevlar)))<.01f,
+            "opposing Tank missile damages spawned infantry once without bullet part weight");
+        Reject(()=>flameInfantryMatch.ApplyGroundVehicleMissileInfantryExplosion(soldierOwner,
+            "ID_UNIT-TANK",21,tankMissileBinding with {MinimumDamage=1},flamePart.Center));
         var flameShieldCover=park.Covers.First(x=>x.Fraction==2);
         string flameShieldOwner=flameShieldCover.SourcePath+"/riot_shield";
         var flameShieldCollider=park.DynamicColliders.First(x=>x.DynamicOwner==flameShieldOwner);
