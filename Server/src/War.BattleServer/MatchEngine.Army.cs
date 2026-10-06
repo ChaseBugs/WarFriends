@@ -418,11 +418,14 @@ public sealed partial class MatchEngine
         return new(animation.Clip,animation.StartTick,animation.Facing,parts);
     }
 
-    internal int ApplyTransporterRepairDroneInfantryExplosion(Vector3 center,float maximumHealth)
+    internal int ApplyTransporterRepairDroneInfantryExplosion(string ownerId,Vector3 center,
+        float maximumHealth)
     {
         if(phase!=BattlePhase.Running||groundVehicleWeapons==null||enemyPoses==null||
-           !PlayerHitbox.Finite(center)||!float.IsFinite(maximumHealth)||maximumHealth<=0||maximumHealth>10_000_000)
+           explosionPolicy==null||!PlayerHitbox.Finite(center)||!float.IsFinite(maximumHealth)||
+           maximumHealth<=0||maximumHealth>10_000_000)
             throw new InvalidDataException("Invalid repair-drone infantry explosion authority.");
+        var owner=Find(ownerId)??throw new InvalidDataException("Repair-drone explosion owner disappeared.");
         var binding=groundVehicleWeapons.RepairDronePrefab;
         float full=maximumHealth*binding.ExplosionDamageRatio;
         float minimum=maximumHealth*binding.SplashDamageRatio;
@@ -442,6 +445,10 @@ public sealed partial class MatchEngine
                     (binding.HurtRadius-binding.DeadRadius),0,1);
                 amount=minimum+(full-minimum)*fraction*fraction;
             }
+            // MiniDrone passes itself as ExplosionInfo.owner with no weapon.
+            // DestroyableObject.DoDamage halves same-faction explosion damage.
+            if(target.OwnerFraction==owner.Definition.Fraction)
+                amount*=explosionPolicy.Friendly;
             if(ApplyArmyHostDamage(targetId,amount))hits++;
         }
         return hits;
@@ -1636,7 +1643,7 @@ public sealed partial class MatchEngine
     private void ApplyTransporterRepairDroneExplosion(string ownerId,ulong vehicleId,
         TransporterRepairDroneState drone)
     {
-        if(rifleCombat==null||damageRoll==null||groundVehicleWeapons==null)
+        if(rifleCombat==null||damageRoll==null||groundVehicleWeapons==null||explosionPolicy==null)
             throw new InvalidDataException("Missing repair-drone explosion authority.");
         var attacker=Find(ownerId)??throw new InvalidDataException("Repair-drone owner disappeared.");
         var binding=groundVehicleWeapons.RepairDronePrefab;
@@ -1700,6 +1707,8 @@ public sealed partial class MatchEngine
                     .ThenBy(x=>x.PartComponentFileId).ToArray();
                 if(parts.Length==0)continue;
                 float amount=Damage(Vector3.Distance(parts[0].Hitbox.TransformPosition,drone.Position),out _);
+                if(targetOwner.Definition.Fraction==attacker.Definition.Fraction)
+                    amount*=explosionPolicy.Friendly;
                 float before=ArmyHealth(target.EntityId)??
                     throw new InvalidDataException("Repair-drone explosion vehicle lacks shared vitality.");
                 if(!ApplyArmyHostDamage(target.EntityId,amount))continue;
@@ -1713,13 +1722,14 @@ public sealed partial class MatchEngine
                         throw new InvalidDataException("Repair-drone explosion diverged from vehicle health.");
                 }
             }
-        ApplyTransporterRepairDroneInfantryExplosion(drone.Position,drone.MaximumHealth);
+        ApplyTransporterRepairDroneInfantryExplosion(ownerId,drone.Position,drone.MaximumHealth);
         if(transporterRepairDrones.TryGetValue(vehicleId,out var siblings))
             foreach(var sibling in siblings.Where(x=>x!=drone&&x.Active).ToArray())
             {
                 var hitbox=groundVehicleWeapons.PlaceRepairDrone(vehicleId,sibling.PathIndex,23,sibling.Snapshot()).Hitbox;
                 if(!hitbox.OverlapsSphere(drone.Position,binding.HurtRadius))continue;
-                float amount=Damage(Vector3.Distance(sibling.Position,drone.Position),out _);
+                float amount=Damage(Vector3.Distance(sibling.Position,drone.Position),out _)*
+                    explosionPolicy.Friendly;
                 bool wasActive=sibling.Active;
                 if(sibling.ApplyDamage(amount,tick,NextArmyFloat)&&wasActive&&!sibling.Active)
                     Emit(MatchEventKind.VehicleRepairDroneDown,ownerId,"",vehicleId,sibling.Position,0,

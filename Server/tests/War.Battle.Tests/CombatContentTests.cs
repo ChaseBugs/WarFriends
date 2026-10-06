@@ -5119,10 +5119,19 @@ internal static class CombatContentTests
         float walkingHealthBefore=walkingShotgunnerMatch.ArmyHealth(walkingLive.EntityKey)!.Value;
         float sourceDroneHealth=content.Army.ComposeTransporterRepairDrone(0,71,null,new(1,1)).MaximumHealth;
         int infantryBlastHits=walkingShotgunnerMatch.ApplyTransporterRepairDroneInfantryExplosion(
-            new(walkingLive.X,walkingLive.Y,walkingLive.Z),sourceDroneHealth);
+            helicopterOwner,new(walkingLive.X,walkingLive.Y,walkingLive.Z),sourceDroneHealth);
         Check(infantryBlastHits==1&&Math.Abs(walkingShotgunnerMatch.ArmyHealth(walkingLive.EntityKey)!.Value-
                   (walkingHealthBefore-sourceDroneHealth*content.GroundVehicleWeapons.RepairDronePrefab.ExplosionDamageRatio))<.001f,
               "repair-drone blast selects the live animated Shotgunner body and applies source full-radius damage");
+        float friendlyBlastBefore=walkingShotgunnerMatch.ArmyHealth(walkingLive.EntityKey)!.Value;
+        int friendlyBlastHits=walkingShotgunnerMatch.ApplyTransporterRepairDroneInfantryExplosion(
+            soldierOwner,new(walkingLive.X,walkingLive.Y,walkingLive.Z),sourceDroneHealth);
+        Check(friendlyBlastHits==1&&
+              Math.Abs(walkingShotgunnerMatch.ArmyHealth(walkingLive.EntityKey)!.Value-
+                  (friendlyBlastBefore-sourceDroneHealth*
+                      content.GroundVehicleWeapons.RepairDronePrefab.ExplosionDamageRatio*
+                      content.Explosions.Friendly))<.001f,
+            "friendly repair-drone crash blast halves damage to its own infantry faction");
         var infantryTargets=walkingShotgunnerMatch.GroundVehicleShotTargets(helicopterOwner)
             .Where(x=>x.EntityId==walkingLive.EntityKey&&x.ArmyInfantry).ToArray();
         var infantryHead=infantryTargets.Single(x=>x.Hitbox.Weight==1.5f);
