@@ -1851,6 +1851,8 @@ public sealed partial class MatchEngine
         if(Terminal)return;
         ApplyGroundVehicleMissileDecoyExplosion(owner,unitId,damage,binding,position);
         if(Terminal)return;
+        ApplyGroundVehicleMissileHeavyTurretExplosion(owner,unitId,damage,binding,position);
+        if(Terminal)return;
         ApplyGroundVehicleMissilePassengerExplosion(owner,unitId,damage,binding,position);
         if(Terminal)return;
         ApplyGroundVehicleMissileVehicleExplosion(owner,unitId,damage,binding,position);

@@ -5964,6 +5964,68 @@ internal static class CombatContentTests
               missileDecoyMatch.DroneTargetSnapshot().All(value=>
                   value.Id!="decoy:"+enemyMissileDecoy.EntityId),
             "lethal vehicle missile blast removes Decoy health and Drone target authority");
+        var missileTurretManifest=missileDecoySource with {MatchId="vehicle-missile-turret-blast",
+            Players=missileDecoySource.Players.Select(value=>value with {ShieldLevel=0}).ToArray()};
+        var missileTurretMatch=new MatchEngine(missileTurretManifest,content:content,armyChoice:_=>0);
+        missileTurretMatch.ConfigureBattleAllocations([
+            new(decoyPlayer,["CardHeavyTurret"],[],[0],[133],[-1]),
+            new(decoyOpponent,["CardHeavyTurret"],[],[0],[-1],[-1])]);
+        missileTurretMatch.Admit(decoyPlayer);missileTurretMatch.Admit(decoyOpponent);
+        Check(missileTurretMatch.Command(decoyPlayer,new(){CommandId=1,SelectCards=new()
+            {CardIds={"CardHeavyTurret"},NormalUpgradeIndexes={0},
+             SpecialUpgradeIndexes={133},EliteUpgradeIndexes={-1}}}).Code=="cards-selected"&&
+              missileTurretMatch.Command(decoyOpponent,new(){CommandId=1,SelectCards=new()
+            {CardIds={"CardHeavyTurret"},NormalUpgradeIndexes={0},
+             SpecialUpgradeIndexes={-1},EliteUpgradeIndexes={-1}}}).Code=="cards-selected",
+            "vehicle missile Heavy Turret match accepts trusted card selections");
+        missileTurretMatch.Command(decoyPlayer,new(){CommandId=2,
+            Ready=new(){ManifestHash=missileTurretMatch.ManifestHash}});
+        missileTurretMatch.Command(decoyOpponent,new(){CommandId=2,
+            Ready=new(){ManifestHash=missileTurretMatch.ManifestHash}});
+        missileTurretMatch.Advance(60);
+        Check(missileTurretMatch.Command(decoyPlayer,new(){CommandId=3,UseHeavyTurret=new()
+            {RequestId=new string('a',32)}}).Code=="heavy-turret-spawned"&&
+              missileTurretMatch.Command(decoyOpponent,new(){CommandId=3,UseHeavyTurret=new()
+            {RequestId=new string('b',32)}}).Code=="heavy-turret-spawned",
+            "both factions deploy Heavy Turrets for vehicle missile blasts");
+        var friendlyMissileTurret=missileTurretMatch.Snapshot().HeavyTurrets
+            .Single(value=>value.OwnerPlayerId==decoyPlayer);
+        var friendlyMissileTurretBoxes=missileTurretMatch.GroundVehicleShotTargets(decoyOpponent)
+            .Where(value=>value.HeavyTurret&&value.EntityId==friendlyMissileTurret.EntityId)
+            .Select(value=>value.Hitbox).ToArray();
+        Vector3 friendlyTurretCenter=friendlyMissileTurretBoxes[0].Center;
+        missileTurretMatch.ApplyGroundVehicleMissileHeavyTurretExplosion(decoyPlayer,
+            "ID_UNIT-TANK",21,tankMissileBinding,friendlyTurretCenter);
+        missileTurretMatch.ApplyGroundVehicleMissileHeavyTurretExplosion(decoyPlayer,
+            "ID_UNIT-BUGGY",21,buggyMissileBinding,friendlyTurretCenter);
+        Check(friendlyMissileTurretBoxes.Length==3&&
+              Math.Abs(missileTurretMatch.HeavyTurretHealth(friendlyMissileTurret.EntityId)!.Value-
+                  friendlyMissileTurret.Health)<.01f,
+            "Tank and Buggy primary missiles skip a friendly Heavy Turret");
+        missileTurretMatch.ApplyGroundVehicleMissileHeavyTurretExplosion(decoyPlayer,
+            "ID_UNIT-BUGGY",21,buggySecondaryBinding,friendlyTurretCenter);
+        Check(Math.Abs(missileTurretMatch.HeavyTurretHealth(friendlyMissileTurret.EntityId)!.Value-
+                  (friendlyMissileTurret.Health-10.5f))<.01f,
+            "Buggy secondary missile damages one friendly Heavy Turret at half strength");
+        var enemyMissileTurret=missileTurretMatch.Snapshot().HeavyTurrets
+            .Single(value=>value.OwnerPlayerId==decoyOpponent);
+        var enemyMissileTurretBox=missileTurretMatch.GroundVehicleShotTargets(decoyPlayer)
+            .First(value=>value.HeavyTurret&&value.EntityId==enemyMissileTurret.EntityId).Hitbox;
+        Vector3 enemyTurretCenter=enemyMissileTurretBox.Center;
+        missileTurretMatch.ApplyGroundVehicleMissileHeavyTurretExplosion(decoyPlayer,
+            "ID_UNIT-TANK",21,tankMissileBinding,enemyTurretCenter);
+        Check(Math.Abs(missileTurretMatch.HeavyTurretHealth(enemyMissileTurret.EntityId)!.Value-
+                  (enemyMissileTurret.Health-21))<.01f,
+            "opposing Tank missile damages one Heavy Turret owner across three colliders");
+        Reject(()=>missileTurretMatch.ApplyGroundVehicleMissileHeavyTurretExplosion(decoyPlayer,
+            "ID_UNIT-TANK",21,tankMissileBinding with {MinimumDamage=1},enemyTurretCenter));
+        for(int blast=0;blast<200&&missileTurretMatch.HeavyTurretHealth(enemyMissileTurret.EntityId)!=null;blast++)
+            missileTurretMatch.ApplyGroundVehicleMissileHeavyTurretExplosion(decoyPlayer,
+                "ID_UNIT-TANK",21,tankMissileBinding,enemyTurretCenter);
+        Check(missileTurretMatch.HeavyTurretHealth(enemyMissileTurret.EntityId)==null&&
+              missileTurretMatch.GroundVehicleShotTargets(decoyPlayer)
+                  .All(value=>value.EntityId!=enemyMissileTurret.EntityId),
+            "lethal vehicle missile blast removes Heavy Turret health and joint collision authority");
         transporterMatch.ApplyGroundVehicleMissileRepairDroneExplosion(soldierOwner,
             "ID_UNIT-BUGGY",21,buggySecondaryBinding,missileDroneCenter);
         float friendlyBuggyHealth=transporterMatch.TransporterRepairDrones(transporterEntity.EntityKey)[1].Health;

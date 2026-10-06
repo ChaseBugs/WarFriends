@@ -289,6 +289,37 @@ public sealed partial class MatchEngine
         }
     }
 
+    internal void ApplyGroundVehicleMissileHeavyTurretExplosion(string shooterId,string unitId,
+        float damage,GroundVehicleMissileBinding binding,Vector3 origin)
+    {
+        if(phase!=BattlePhase.Running||groundVehicleWeapons==null||explosionPolicy==null||
+           !PlayerHitbox.Finite(origin)||!float.IsFinite(damage)||damage<=0||damage>10_000_000||
+           binding==null||unitId is not ("ID_UNIT-TANK" or "ID_UNIT-BUGGY"))
+            throw new InvalidDataException("Vehicle missile Heavy Turret blast lacks trusted source authority.");
+        var sourceWeapon=GroundVehicleMissileSourceWeapon(unitId,binding);
+        var shooter=Find(shooterId)??throw new InvalidDataException("Vehicle missile owner disappeared.");
+        if(heavyTurretSource==null)return;
+        var colliders=HeavyTurretShotTargets(shooter,includeFriendly:true);
+        foreach(var group in colliders.GroupBy(value=>value.EntityId).OrderBy(group=>group.Key))
+        {
+            var turret=heavyTurrets.Snapshot().SingleOrDefault(value=>value.EntityId==group.Key)??
+                throw new InvalidDataException("Vehicle missile Heavy Turret lost host health authority.");
+            bool friendly=turret.OwnerFraction==shooter.Definition.Fraction;
+            if(friendly&&!sourceWeapon.FriendKill)continue;
+            var hitboxes=group.Select(value=>value.Hitbox).ToArray();
+            var effect=BuggyExplosion.ResolveArmy(origin,turret.Position,hitboxes,
+                damage,binding);
+            if(effect==null)continue;
+            float amount=effect.RawDamage*(friendly?explosionPolicy.Friendly:1f);
+            if(!float.IsFinite(amount)||amount<=0||amount>10_000_000||
+               !heavyTurrets.TryDamage(group.Key,amount,out var changed,out bool destroyed)||changed==null)
+                throw new InvalidDataException("Vehicle missile Heavy Turret damage escaped host bounds.");
+            stateRevision++;
+            Emit(destroyed?MatchEventKind.HeavyTurretDestroyed:MatchEventKind.HeavyTurretDamaged,
+                shooterId,changed.OwnerPlayerId,group.Key,changed.Position,changed.Health,"vehicle-missile");
+        }
+    }
+
     internal int ApplyArmyFlameHeavyTurretPulse(ulong sourceEntityKey,Vector3 origin,Vector3 forward)
     {
         if(phase!=BattlePhase.Running||!activeArmyEntities.TryGetValue(sourceEntityKey,out var source)||
