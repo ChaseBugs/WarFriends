@@ -115,7 +115,7 @@ The recovered `MineAmmo.Explode` calls `Explosion.MissileExplode`, which groups 
 
 The same `MissileExplode` owner rule now governs Helicopter gunner blast damage from player grenades and bazookas. Its selected head collider remains a valid overlap target, but its 1.5 bullet weight no longer amplifies the blast. Exact friendly/opposing damage checks and the focused live grenade and bazooka integrations pass; other projectile and callback parity remains open.
 
-The M320-to-ground-vehicle path now has a normal MatchEngine flight proof: a player command fires at a host-deployed Tank after its route finishes, the projectile resolves, and shared Army/vehicle health decreases consistently. This verifies the command, flight, blast, and body-damage connection beyond direct helper tests; two-peer UDP and Unity presentation of that contact remain open.
+The M320-to-ground-vehicle path has normal MatchEngine and real two-peer UDP flight proofs: the defender deploys a Tank, the attacker fires after its route finishes, and both peers receive the same reduced Army and vehicle health. This verifies command admission, projectile flight, blast, body damage, and protobuf synchronization beyond direct helper tests; Unity presentation of that contact remains open.
 
 `BattleDirectKillStatsProjection` now maps those validated rows into per-player direct-bullet Kill, VehicleDestroyed and TankDestroyed candidate counts using an exact partition of the 24 recovered unit families. Focused tests compare all 24 classifications with the source deployment catalog, and `BattleResultStore.GetDirectKillStats` exposes the read-only result. These remain a subset of Client skill-shot counters, not durable statistics or reward authority.
 

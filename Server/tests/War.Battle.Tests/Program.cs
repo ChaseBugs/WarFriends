@@ -389,6 +389,7 @@ if(args is ["--grenade-only"])
     if(root==null)throw new Exception("Recovered grenade content artifact not found.");
     int focused=GrenadeCatalogTests.Run(Path.Combine(root.FullName,"content"));
     focused+=await GrenadeCatalogTests.RunUdp(Path.Combine(root.FullName,"content"));
+    focused+=await GrenadeCatalogTests.RunTankUdp(Path.Combine(root.FullName,"content"));
     Console.WriteLine($"PASS: {focused} focused grenade assertions");return;
 }
 
@@ -1889,6 +1890,7 @@ checks += BazookaCatalogTests.Run(Path.Combine(contentRoot.FullName,"content"));
 checks += await BazookaCatalogTests.RunUdp(Path.Combine(contentRoot.FullName,"content"));
 checks += GrenadeCatalogTests.Run(Path.Combine(contentRoot.FullName,"content"));
 checks += await GrenadeCatalogTests.RunUdp(Path.Combine(contentRoot.FullName,"content"));
+checks += await GrenadeCatalogTests.RunTankUdp(Path.Combine(contentRoot.FullName,"content"));
 checks += ArmyFlameBurstTests.Run();
 checks += CombatContentTests.Run(Path.Combine(contentRoot.FullName,"content"));
 checks += HelicopterShotgunTests.Run(Path.Combine(contentRoot.FullName,"content"));

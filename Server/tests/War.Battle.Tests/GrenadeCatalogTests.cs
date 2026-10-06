@@ -68,6 +68,145 @@ internal static class GrenadeCatalogTests
         finally{await worker.StopAsync(CancellationToken.None);File.Delete(file);if(Directory.Exists(outbox))Directory.Delete(outbox,true);}
         Console.WriteLine($"PASS: {checks} live grenade UDP assertions");return checks;
     }
+
+    internal static async Task<int> RunTankUdp(string directory)
+    {
+        int checks=0;
+        void Check(bool condition,string name)
+        {
+            if(!condition)throw new Exception("FAIL: "+name);
+            checks++;
+        }
+
+        var content=BattleCombatContent.Load(Path.Combine(directory,"combat-content-manifest.json"),
+            grenadeManifestPath:Path.Combine(directory,"grenade-content-manifest.json"));
+        var map=content.Maps.Single(value=>value.Source.Contains("City_Multiplayer",StringComparison.Ordinal));
+        var coverOne=map.Covers.First(value=>value.Main&&value.Fraction==1);
+        var coverTwo=map.Covers.First(value=>value.Main&&value.Fraction==2);
+        string one=new('a',32),two=new('b',32);
+        var weapon=content.Grenades!.CreateManifest("Google2u.GrenadeLauncher_M320",0);
+        var manifest=MatchManifest.Validate(new MatchManifest("grenade-tank-udp","local-1",
+            Path.GetFileNameWithoutExtension(map.Source),map.SourceHash,content.GrenadeRevision!,
+            MatchManifest.GrenadeCombatMode,10,180,120,
+            [new(one,weapon,1,coverOne.SourceIndex,1,new(1_000_000),0,0,0)
+                {EquippedArmyUnitIds=["ID_UNIT-ASSAULT"],ArmyNormalUpgradeIndexes=[0],
+                 ArmySpecialUpgradeIndexes=[-1],ArmyEliteUpgradeIndexes=[-1],
+                 ArmyHealthFactors=[new ArmyHealthFactors(1,1)],ArmyDamageScales=[1],
+                 ArmySpeedCoefficients=[1],ArmyAccuracyCoefficients=[1]},
+             new(two,weapon,2,coverTwo.SourceIndex,1,new(1_000_000),0,0,0)
+                {EquippedArmyUnitIds=["ID_UNIT-TANK"],ArmyNormalUpgradeIndexes=[0],
+                 ArmySpecialUpgradeIndexes=[-1],ArmyEliteUpgradeIndexes=[-1],
+                 ArmyHealthFactors=[new ArmyHealthFactors(1,1)],ArmyDamageScales=[1],
+                 ArmySpeedCoefficients=[1],ArmyAccuracyCoefficients=[1]}])
+            {SceneMasterPlayerId=one});
+        content.ValidateAllocation(manifest);
+
+        string manifestFile=Path.Combine(Path.GetTempPath(),
+            "war-grenade-tank-"+Guid.NewGuid().ToString("N")+".json");
+        string outbox=Path.Combine(Path.GetTempPath(),
+            "war-grenade-tank-outbox-"+Guid.NewGuid().ToString("N"));
+        File.WriteAllText(manifestFile,JsonSerializer.Serialize(manifest));
+        using var probe=new UdpClient(new IPEndPoint(IPAddress.Loopback,0));
+        int port=((IPEndPoint)probe.Client.LocalEndPoint!).Port;
+        probe.Close();
+        string key=Convert.ToBase64String(RandomNumberGenerator.GetBytes(32));
+        var tokens=new MatchTokens(key);
+        var configuration=new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string,string?>
+        {
+            ["Battle:SigningKey"]=key,["Battle:ServerId"]=manifest.ServerId,
+            ["Battle:Port"]=port.ToString(),["Battle:MatchManifestPath"]=manifestFile,
+            ["Battle:ResultOutboxPath"]=outbox,
+            ["Battle:CombatContentManifestPath"]=Path.Combine(directory,"combat-content-manifest.json"),
+            ["Battle:GrenadeContentManifestPath"]=Path.Combine(directory,"grenade-content-manifest.json")
+        }).Build();
+        MatchConnectionGrant Grant(string playerId,ulong sessionId)
+        {
+            long now=DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            var admission=new MatchAdmission{MatchId=manifest.MatchId,ServerId=manifest.ServerId,
+                PlayerId=playerId,SessionId=sessionId,ManifestHash=manifest.Digest(),
+                IssuedUnixSeconds=now,ExpiresUnixSeconds=now+120};
+            return new(){Host="127.0.0.1",Port=(uint)port,PlayerId=playerId,
+                SessionId=sessionId,MatchId=manifest.MatchId,ManifestHash=admission.ManifestHash,
+                ExpiresUnixSeconds=admission.ExpiresUnixSeconds,Ticket=tokens.Sign(admission),
+                SessionKey=ByteString.CopyFrom(tokens.SessionKey(admission))};
+        }
+
+        using var worker=new NetworkWorker(configuration,NullLogger<NetworkWorker>.Instance);
+        try
+        {
+            await worker.StartAsync(CancellationToken.None);
+            using var timeout=new CancellationTokenSource(TimeSpan.FromSeconds(90));
+            using var attacker=new MatchConnection(Grant(one,9601));
+            using var defender=new MatchConnection(Grant(two,9602));
+            Check((await attacker.ConnectAsync(timeout.Token)).Code=="admitted"&&
+                  (await defender.ConnectAsync(timeout.Token)).Code=="admitted",
+                "two signed UDP peers join a Tank grenade match");
+            await attacker.ReadyAsync(timeout.Token);
+            await defender.ReadyAsync(timeout.Token);
+            MatchReply state;
+            do
+            {
+                await Task.Delay(100,timeout.Token);
+                state=await attacker.PollAsync(timeout.Token);
+            }while(state.Snapshot.Phase!=BattlePhase.Running);
+
+            var options=await defender.PollArmyAsync(timeout.Token);
+            int tankOption=options.OptionIndexes.First();
+            Check((await defender.DeployArmyAsync(tankOption,timeout.Token)).Code=="army-deploying",
+                "defending peer deploys its source Tank");
+
+            BattleArmyEntityState? tank=null;
+            Vector3 previousPosition=Vector3.Zero;
+            int stableSamples=0;
+            var deploymentWatch=System.Diagnostics.Stopwatch.StartNew();
+            while(deploymentWatch.Elapsed<TimeSpan.FromSeconds(40)&&stableSamples<5)
+            {
+                await Task.Delay(120,timeout.Token);
+                tank=(await attacker.FetchArmyEntitiesAsync(timeout.Token))
+                    .SingleOrDefault(value=>value.UnitId=="ID_UNIT-TANK");
+                if(tank==null)continue;
+                var position=new Vector3(tank.X,tank.Y,tank.Z);
+                stableSamples=Vector3.Distance(position,previousPosition)<.001f?
+                    stableSamples+1:0;
+                previousPosition=position;
+            }
+            Check(tank!=null&&stableSamples==5,"both peers observe the Tank after its route stops");
+
+            float initialHealth=tank!.Health;
+            var aim=new Vector3(tank.X,tank.Y+1,tank.Z);
+            Check((await attacker.GrenadeLauncherThrowAsync(aim.X,aim.Y,aim.Z,timeout.Token))
+                .Code=="grenade-throwing","attacking peer fires M320 at the live Tank");
+
+            float attackerHealth=initialHealth;
+            var damageWatch=System.Diagnostics.Stopwatch.StartNew();
+            while(damageWatch.Elapsed<TimeSpan.FromSeconds(25)&&attackerHealth>=initialHealth)
+            {
+                await Task.Delay(150,timeout.Token);
+                var observed=(await attacker.FetchArmyEntitiesAsync(timeout.Token))
+                    .Single(value=>value.EntityKey==tank.EntityKey);
+                attackerHealth=observed.Health;
+            }
+            var defenderTank=(await defender.FetchArmyEntitiesAsync(timeout.Token))
+                .Single(value=>value.EntityKey==tank.EntityKey);
+            var attackerVehicle=(await attacker.PollAsync(timeout.Token)).Snapshot.Vehicles
+                .Single(value=>value.EntityId==tank.EntityKey);
+            var defenderVehicle=(await defender.PollAsync(timeout.Token)).Snapshot.Vehicles
+                .Single(value=>value.EntityId==tank.EntityKey);
+            Check(attackerHealth<initialHealth&&
+                  Math.Abs(attackerHealth-defenderTank.Health)<.01f&&
+                  Math.Abs(attackerVehicle.Health-attackerHealth)<.01f&&
+                  Math.Abs(defenderVehicle.Health-attackerHealth)<.01f,
+                "both UDP peers receive the same M320-damaged Tank and vehicle health");
+        }
+        finally
+        {
+            await worker.StopAsync(CancellationToken.None);
+            File.Delete(manifestFile);
+            if(Directory.Exists(outbox))Directory.Delete(outbox,true);
+        }
+        Console.WriteLine($"PASS: {checks} live Tank grenade UDP assertions");
+        return checks;
+    }
     internal static int Run(string directory)
     {
         int checks=0;void Check(bool ok,string name){checks++;if(!ok)throw new Exception("FAIL: "+name);}
