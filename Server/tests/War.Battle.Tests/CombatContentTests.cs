@@ -1288,6 +1288,18 @@ internal static class CombatContentTests
                   CurvedTrajectory:false,RotationRange:{X:.8f,Y:1.6f},RotationProfile.Count:3,
                   BaseRotationMagnitude:.45f},
               "Tank cannon follows the live target with its source straight missile and collision delay");
+        var passengerMissileCenter=idlePassenger[0].Center;
+        var passengerMissileOrigin=passengerMissileCenter-Vector3.UnitZ*5;
+        var passengerMissileTarget=passengerMissileCenter+Vector3.UnitZ*5;
+        var passengerMissileFlight=new TankMissileFlight(83,84,tankMissileBinding,
+            passengerMissileOrigin,()=>passengerMissileTarget,0,
+            (from,direction,range)=>passengerWorld.Raycast(bodyShooter,from,direction,range,uint.MaxValue));
+        TankMissileImpact? passengerMissileImpact=null;
+        for(ulong flightTick=1;flightTick<=200&&!passengerMissileFlight.Finished;flightTick++)
+            passengerMissileImpact=passengerMissileFlight.Advance(flightTick)??passengerMissileImpact;
+        Check(passengerMissileImpact?.Collision is {DynamicEntityId:77,
+                  DynamicPassengerRole:var missileRole}&&missileRole==passengerRole,
+              "Tank missile flight traces into one live source-pose passenger hitbox");
         var buggyPose=referencePose.Place(Vector3.Zero,Quaternion.Identity).Collision;
         var buggyBody=buggyPose.Parts[0];
         var tankPolicy=content.Army.PlayerDamagePolicy("ID_UNIT-TANK");
