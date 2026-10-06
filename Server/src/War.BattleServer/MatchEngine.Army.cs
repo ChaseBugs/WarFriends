@@ -732,6 +732,56 @@ public sealed partial class MatchEngine
         }
     }
 
+    internal void ApplyPlayerBazookaRepairDroneExplosion(string shooterId,Vector3 origin,
+        BazookaStage stage,BazookaBinding binding,bool halfDamage)
+    {
+        if(phase!=BattlePhase.Running||bazookaCatalog==null||
+           explosionPolicy==null||stage==null||binding==null||
+           !ReferenceEquals(bazookaCatalog.Stage(stage.SourceId,stage.Index),stage)||
+           !ReferenceEquals(bazookaCatalog.Binding(stage.SourceId),binding)||
+           !PlayerHitbox.Finite(origin))
+            throw new InvalidDataException("Bazooka repair-drone blast lacks trusted source authority.");
+
+        var shooter=Find(shooterId)??throw new InvalidDataException("Bazooka owner disappeared.");
+        if(vehicles==null)return;
+        var transporters=vehicles.Snapshot().Where(value=>value.UnitId=="ID_UNIT-TRANSPORTER")
+            .OrderBy(value=>value.EntityId).ToArray();
+        if(transporters.Length==0)return;
+        if(groundVehicleWeapons==null)
+            throw new InvalidDataException("Bazooka repair-drone blast lacks ground-vehicle source authority.");
+        foreach(var vehicle in transporters)
+        {
+            if(!activeArmyEntities.TryGetValue(vehicle.EntityId,out var army)||
+               army.UnitId!=vehicle.UnitId||army.OwnerPlayerId!=vehicle.OwnerPlayerId||
+               !transporterRepairDrones.TryGetValue(vehicle.EntityId,out var drones))
+                throw new InvalidDataException("Bazooka repair drone lost shared host authority.");
+            var owner=Find(vehicle.OwnerPlayerId)??
+                throw new InvalidDataException("Bazooka repair-drone owner disappeared.");
+            bool friendly=owner.Definition.Fraction==shooter.Definition.Fraction;
+            int layer=owner.Definition.Fraction==1?23:owner.Definition.Fraction==2?22:
+                throw new InvalidDataException("Bazooka repair drone has unsupported faction.");
+            foreach(var drone in drones.OrderBy(value=>value.PathIndex))
+            {
+                if(!drone.Active)continue;
+                var snapshot=drone.Snapshot();
+                var collider=groundVehicleWeapons.PlaceRepairDrone(vehicle.EntityId,
+                    drone.PathIndex,layer,snapshot);
+                var effect=BazookaExplosion.ResolveArmy(origin,snapshot.Position,
+                    [collider.Hitbox],stage,binding,halfDamage);
+                if(effect==null)continue;
+                float damage=effect.RawDamage*(friendly?explosionPolicy.Friendly:1f);
+                if(!float.IsFinite(damage)||damage<=0||damage>10_000_000)
+                    throw new InvalidDataException("Bazooka repair-drone damage exceeded host bounds.");
+                if(!ApplyTransporterRepairDroneHostDamage(vehicle.EntityId,drone.PathIndex,damage))
+                    throw new InvalidDataException("Bazooka repair-drone health disappeared.");
+                if(!drone.Active)
+                    Emit(MatchEventKind.VehicleRepairDroneDown,vehicle.OwnerPlayerId,"",
+                        vehicle.EntityId,drone.Position,0,
+                        "vehicle-repair-drone-down:"+drone.PathIndex);
+            }
+        }
+    }
+
     internal void ApplyPlayerGrenadeAirBodyExplosion(string shooterId,Vector3 origin,GrenadeStage stage)
     {
         if(phase!=BattlePhase.Running||grenadeCatalog==null||explosionPolicy==null||

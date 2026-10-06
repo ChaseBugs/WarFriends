@@ -8,6 +8,26 @@ internal sealed record BazookaDynamicExplosion(CombatDamageType Kind,float RawDa
 
 internal static class BazookaExplosion
 {
+    internal static BazookaDynamicExplosion? ResolveArmy(Vector3 origin,Vector3 root,
+        IReadOnlyList<PlayerHitbox> parts,BazookaStage stage,BazookaBinding binding,bool halfDamage)
+    {
+        if(!PlayerHitbox.Finite(origin)||!PlayerHitbox.Finite(root)||parts==null||stage==null||
+           binding==null||binding.DeadRadius<=0||binding.HurtRadius<=binding.DeadRadius)
+            throw new InvalidDataException("Bazooka army explosion requires current host authority.");
+        var selected=parts.Where(x=>x.Enabled&&x.Active&&x.OverlapsSphere(origin,binding.HurtRadius))
+            .OrderBy(x=>x.BoundsDistanceToPoint(origin))
+            .ThenBy(x=>x.SourcePath,StringComparer.Ordinal).FirstOrDefault();
+        if(selected==null)return null;
+        float multiplier=halfDamage?.5f:1f;
+        float distance=selected.BoundsDistanceToPoint(origin);
+        if(distance<binding.DeadRadius)
+            return new(CombatDamageType.Explosion,stage.ExplosionDamage*multiplier);
+        float fraction=Math.Clamp(1-(Vector3.Distance(root,origin)-binding.DeadRadius)/
+            (binding.HurtRadius-binding.DeadRadius),0,1);
+        return new(CombatDamageType.Shiver,
+            (stage.MinimumDamage+(stage.ExplosionDamage-stage.MinimumDamage)*fraction*fraction)*multiplier);
+    }
+
     internal static BazookaDynamicExplosion ResolveDynamic(Vector3 origin,MapDynamicCollider collider,
         BazookaStage stage,BazookaBinding binding,bool halfDamage)
     {

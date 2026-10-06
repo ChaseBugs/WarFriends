@@ -119,6 +119,62 @@ internal static class BazookaCatalogTests
         var allocation=new MatchManifest("bazooka-validation","local-1",Path.GetFileNameWithoutExtension(map.Source),map.SourceHash,
             content.BazookaRevision!,MatchManifest.BazookaCombatMode,10,60,120,[new(one,weapon,1,covers[0].SourceIndex,1,new(1000),0),new(two,weapon,2,covers[1].SourceIndex,1,new(1000),0)]);
         content.ValidateAllocation(allocation);checks++;
+        var repairAllocation=allocation with {MatchId="bazooka-repair-drone",Players=
+            [allocation.Players[0] with
+            {EquippedArmyUnitIds=["ID_UNIT-ASSAULT"],ArmyNormalUpgradeIndexes=[0],
+             ArmySpecialUpgradeIndexes=[-1],ArmyEliteUpgradeIndexes=[-1],
+             ArmyHealthFactors=[new ArmyHealthFactors(1,1)],ArmyDamageScales=[1],
+             ArmySpeedCoefficients=[1],ArmyAccuracyCoefficients=[1]},allocation.Players[1] with
+            {EquippedArmyUnitIds=["ID_UNIT-TRANSPORTER"],ArmyNormalUpgradeIndexes=[0],
+             ArmySpecialUpgradeIndexes=[71],ArmyEliteUpgradeIndexes=[-1],
+             ArmyHealthFactors=[new ArmyHealthFactors(1,1)],ArmyDamageScales=[1],
+             ArmySpeedCoefficients=[1],ArmyAccuracyCoefficients=[1]}]};
+        content.ValidateAllocation(repairAllocation);
+        var repairMatch=new MatchEngine(repairAllocation,map,content,armyChoice:_=>0);
+        repairMatch.Admit(one);repairMatch.Admit(two);
+        repairMatch.Command(one,new(){CommandId=1,Ready=new(){ManifestHash=repairMatch.ManifestHash}});
+        repairMatch.Command(two,new(){CommandId=1,Ready=new(){ManifestHash=repairMatch.ManifestHash}});
+        repairMatch.Advance(60);
+        int repairOption=repairMatch.ArmyBatch(two).OptionIndexes.First();
+        Check(repairMatch.Command(two,new(){CommandId=2,DeployArmy=new(){OptionIndex=repairOption}})
+            .Code=="army-deploying","source Transporter deploys for bazooka repair-drone blast");
+        ulong repairTick=60;
+        while(repairTick<700&&repairMatch.ArmyEntityBatch(one,0,0).Entities.Count==0)
+            repairMatch.Advance(++repairTick);
+        var repairVehicle=repairMatch.ArmyEntityBatch(one,0,0).Entities.Single();
+        var trustedRpg=content.Bazookas!.Stage("Google2u.Bazooka_RPG7",0);
+        var trustedStraight=content.Bazookas.Binding("Google2u.Bazooka_RPG7");
+        var repairDrone=repairMatch.TransporterRepairDrones(repairVehicle.EntityKey)[0];
+        var repairBox=repairMatch.GroundVehicleShotTargets(one).Single(x=>
+            x.EntityId==repairVehicle.EntityKey&&x.RepairDronePathIndex==0).Hitbox;
+        Vector3 repairCenter=repairBox.Center;
+        var repairEffect=BazookaExplosion.ResolveArmy(repairCenter,repairDrone.Position,
+            [repairBox],trustedRpg,trustedStraight,false);
+        Check(repairEffect is {Kind:CombatDamageType.Explosion}&&
+              Math.Abs(repairEffect.RawDamage-rpg.ExplosionDamage)<.001f,
+            "bazooka blast selects the MiniDrone root without a part multiplier");
+        float repairBefore=repairDrone.Health;
+        float vehicleBefore=repairMatch.ArmyHealth(repairVehicle.EntityKey)!.Value;
+        repairMatch.ApplyPlayerBazookaRepairDroneExplosion(two,repairCenter,trustedRpg,trustedStraight,true);
+        float friendlyAfter=repairMatch.TransporterRepairDrones(repairVehicle.EntityKey)[0].Health;
+        Check(Math.Abs(friendlyAfter-Math.Max(0,repairBefore-rpg.ExplosionDamage*.25f))<.01f&&
+              Math.Abs(repairMatch.ArmyHealth(repairVehicle.EntityKey)!.Value-vehicleBefore)<.01f,
+            "half-damage bazooka missile and same-faction coefficient both apply to repair drone");
+        if(repairMatch.TransporterRepairDrones(repairVehicle.EntityKey)[0].Active)
+        {
+            repairMatch.ApplyPlayerBazookaRepairDroneExplosion(one,repairCenter,trustedRpg,trustedStraight,false);
+            float opposingAfter=repairMatch.TransporterRepairDrones(repairVehicle.EntityKey)[0].Health;
+            Check(Math.Abs(opposingAfter-Math.Max(0,friendlyAfter-rpg.ExplosionDamage))<.01f&&
+                  Math.Abs(repairMatch.ArmyHealth(repairVehicle.EntityKey)!.Value-vehicleBefore)<.01f,
+                "opposing bazooka blast damages only the host-owned repair-drone health");
+        }
+        try
+        {
+            repairMatch.ApplyPlayerBazookaRepairDroneExplosion(one,repairCenter,
+                trustedRpg with {ExplosionDamage=1},trustedStraight,false);
+            throw new Exception("FAIL: forged bazooka repair-drone stage");
+        }
+        catch(InvalidDataException){checks++;}
         var shieldAllocation=allocation with {MatchId="bazooka-shield",Players=
             [allocation.Players[0] with {ShieldLevel=0},allocation.Players[1] with {ShieldLevel=0}]};
         var shieldSimulation=new ShieldMatchSimulation(map,content.Shields,shieldAllocation);
@@ -180,7 +236,10 @@ internal static class BazookaCatalogTests
             "bazooka pose family crosses protobuf boundary");
         for(ulong t=85;t<500&&!match.Terminal&&match.Snapshot().Players[1].Health==initialHealth;t++)match.Advance(t);
         Check(match.Snapshot().Players[1].Health<initialHealth&&match.PendingProjectileCount==0,
-            "host missile collision applies radial bazooka damage to current animated hitbox");
+            "host missile collision applies radial bazooka damage to current animated hitbox: before="+
+            initialHealth+" after="+match.Snapshot().Players[1].Health+" pending="+
+            match.PendingProjectileCount+" phase="+match.Snapshot().Phase+" reason="+
+            match.Snapshot().TerminalReason);
         var fangsWeapon=catalog.CreateManifest("Google2u.Bazooka_M202",0);
         var fangsManifest=allocation with {MatchId="bazooka-fangs",Players=
             [allocation.Players[0] with {Weapon=fangsWeapon},allocation.Players[1] with {Weapon=fangsWeapon}]};
