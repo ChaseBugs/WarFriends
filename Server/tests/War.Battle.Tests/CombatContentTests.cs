@@ -5840,10 +5840,11 @@ internal static class CombatContentTests
                   turretAirMatch.Command(soldierOwner,new(){CommandId=3,DeployArmy=new()
                     {OptionIndex=turretAirMatch.ArmyBatch(soldierOwner).OptionIndexes[0]}}).Code=="army-deploying",
                 airUnit+" and opposing Heavy Turret deploy in a live match");
-            bool acquiredAir=false,firedAtAir=false;ulong airTurretCursor=0;
+            bool acquiredAir=false,firedAtAir=false;ulong airTurretCursor=0,lastAirTurretTick=60;
             for(ulong airTurretTick=61;airTurretTick<=1200&&!turretAirMatch.Terminal;airTurretTick++)
             {
                 turretAirMatch.Advance(airTurretTick);
+                lastAirTurretTick=airTurretTick;
                 var batch=turretAirMatch.EventBatch(helicopterOwner,airTurretCursor);
                 turretAirMatch.EventBatch(soldierOwner,0);
                 if(batch.Events.Count>0)airTurretCursor=batch.Events[^1].EventId;
@@ -5855,6 +5856,19 @@ internal static class CombatContentTests
             }
             Check(acquiredAir&&firedAtAir,
                 "Heavy Turret acquires and fires at live opposing "+airUnit+" source target");
+            var airTargetId=turretAirMatch.ArmyEntityBatch(soldierOwner,0,0).Entities
+                .Single(entity=>entity.UnitId==airUnit).EntityKey;
+            float? airBefore=turretAirMatch.ArmyHealth(airTargetId);
+            for(ulong airTick=lastAirTurretTick+1;airTick<=1800&&!turretAirMatch.Terminal;airTick++)
+            {
+                turretAirMatch.Advance(airTick);
+                if(turretAirMatch.ArmyHealth(airTargetId)!=airBefore)break;
+            }
+            float? airAfter=turretAirMatch.ArmyHealth(airTargetId);
+            var airImpactEvents=turretAirMatch.EventBatch(helicopterOwner,airTurretCursor).Events;
+            Check(airBefore>0&&airAfter>=0&&airAfter<airBefore&&
+                  airImpactEvents.Any(x=>x.Kind==MatchEventKind.Impact&&x.Reason=="heavy-turret"),
+                "Heavy Turret real projectile hits and damages live opposing "+airUnit);
         }
         var transporterManifest=detached with {MatchId="transporter-split-fire",Players=[detached.Players[0] with
         {
