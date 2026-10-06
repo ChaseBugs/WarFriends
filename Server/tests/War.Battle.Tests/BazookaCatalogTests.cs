@@ -414,6 +414,49 @@ internal static class BazookaCatalogTests
               turretMatch.GroundVehicleShotTargets(one)
                   .All(value=>value.EntityId!=enemyTurret.EntityId),
             "lethal Bazooka blast removes Heavy Turret health and joint collision authority");
+        var naturalTurretAllocation=turretAllocation with {MatchId="bazooka-natural-heavy-turret"};
+        var naturalTurret=new MatchEngine(naturalTurretAllocation,map,content);
+        naturalTurret.ConfigureBattleAllocations([
+            new(one,["CardHeavyTurret"],[],[0],[-1],[-1]),
+            new(two,["CardHeavyTurret"],[],[0],[71],[-1])]);
+        naturalTurret.Admit(one);naturalTurret.Admit(two);
+        foreach(var player in new[]{one,two})
+        {
+            int special=player==one?-1:71;
+            Check(naturalTurret.Command(player,new(){CommandId=1,SelectCards=new()
+                {CardIds={"CardHeavyTurret"},NormalUpgradeIndexes={0},
+                 SpecialUpgradeIndexes={special},EliteUpgradeIndexes={-1}}}).Code=="cards-selected",
+                "normal Bazooka/Heavy Turret match accepts trusted card selection");
+            naturalTurret.Command(player,new(){CommandId=2,
+                Ready=new(){ManifestHash=naturalTurret.ManifestHash}});
+        }
+        naturalTurret.Advance(60);
+        Check(naturalTurret.Command(two,new(){CommandId=3,UseHeavyTurret=new()
+            {RequestId=new string('8',32)}}).Code=="heavy-turret-spawned",
+            "normal Bazooka match deploys opposing Heavy Turret");
+        var naturalTurretTarget=naturalTurret.Snapshot().HeavyTurrets.Single();
+        float naturalTurretBefore=naturalTurretTarget.Health;
+        bool naturalTurretDamaged=false;
+        ulong naturalTurretTick=60,naturalTurretCommand=3;
+        for(;naturalTurretTick<2500&&!naturalTurret.Terminal;)
+        {
+            if(naturalTurretTick%240==0)
+            {
+                var collider=naturalTurret.GroundVehicleShotTargets(one).FirstOrDefault(value=>
+                    value.HeavyTurret&&value.EntityId==naturalTurretTarget.EntityId);
+                if(collider==null)break;
+                Vector3 aim=collider.Hitbox.Center;
+                naturalTurret.Command(one,new(){CommandId=naturalTurretCommand++,BazookaHold=new()
+                    {Pressed=true,TargetX=aim.X,TargetY=aim.Y,TargetZ=aim.Z}});
+            }
+            naturalTurret.Advance(++naturalTurretTick);
+            float? current=naturalTurret.HeavyTurretHealth(naturalTurretTarget.EntityId);
+            if(current==null||current<naturalTurretBefore)
+            {naturalTurretDamaged=true;break;}
+        }
+        Check(naturalTurretDamaged&&naturalTurret.Snapshot().Players
+                  .Single(value=>value.PlayerId==one).ShotsFired>0,
+            "normal Bazooka hold, missile flight and impact damage a deployed Heavy Turret");
         var repairMatch=new MatchEngine(repairAllocation,map,content,armyChoice:_=>0);
         repairMatch.Admit(one);repairMatch.Admit(two);
         repairMatch.Command(one,new(){CommandId=1,Ready=new(){ManifestHash=repairMatch.ManifestHash}});
