@@ -298,6 +298,50 @@ internal static class BazookaCatalogTests
               decoyMatch.DroneTargetSnapshot().All(value=>
                   value.Id!="decoy:"+enemyDecoy.EntityId),
             "lethal Bazooka blast removes Decoy health and Drone target authority");
+        var naturalDecoyAllocation=decoyAllocation with {MatchId="bazooka-natural-decoy"};
+        var naturalDecoy=new MatchEngine(naturalDecoyAllocation,map,content);
+        naturalDecoy.ConfigureBattleAllocations([
+            new(one,["CardDecoy"],[],[0],[-1],[-1]),
+            new(two,["CardDecoy"],[],[0],[71],[-1])]);
+        naturalDecoy.Admit(one);naturalDecoy.Admit(two);
+        foreach(var player in new[]{one,two})
+        {
+            int special=player==one?-1:71;
+            Check(naturalDecoy.Command(player,new(){CommandId=1,SelectCards=new()
+                {CardIds={"CardDecoy"},NormalUpgradeIndexes={0},
+                 SpecialUpgradeIndexes={special},EliteUpgradeIndexes={-1}}}).Code=="cards-selected",
+                "normal Bazooka/Decoy match accepts trusted card selection");
+            naturalDecoy.Command(player,new(){CommandId=2,
+                Ready=new(){ManifestHash=naturalDecoy.ManifestHash}});
+        }
+        naturalDecoy.Advance(60);
+        Check(naturalDecoy.Command(two,new(){CommandId=3,UseDecoy=new()
+            {RequestId=new string('9',32)}}).Code=="decoy-spawned",
+            "normal Bazooka match deploys opposing Decoys");
+        var naturalDecoyTarget=naturalDecoy.Snapshot().Decoys
+            .First(value=>value.OwnerPlayerId==two);
+        float naturalDecoyBefore=naturalDecoyTarget.Health;
+        bool naturalDecoyDamaged=false;
+        ulong naturalDecoyTick=60,naturalDecoyCommand=3;
+        for(;naturalDecoyTick<2500&&!naturalDecoy.Terminal;)
+        {
+            if(naturalDecoyTick%240==0)
+            {
+                var collider=naturalDecoy.GroundVehicleShotTargets(one).FirstOrDefault(value=>
+                    value.Decoy&&value.EntityId==naturalDecoyTarget.EntityId);
+                if(collider==null)break;
+                Vector3 aim=collider.Hitbox.Center;
+                naturalDecoy.Command(one,new(){CommandId=naturalDecoyCommand++,BazookaHold=new()
+                    {Pressed=true,TargetX=aim.X,TargetY=aim.Y,TargetZ=aim.Z}});
+            }
+            naturalDecoy.Advance(++naturalDecoyTick);
+            float? current=naturalDecoy.DecoyHealth(naturalDecoyTarget.EntityId);
+            if(current==null||current<naturalDecoyBefore)
+            {naturalDecoyDamaged=true;break;}
+        }
+        Check(naturalDecoyDamaged&&naturalDecoy.Snapshot().Players
+                  .Single(value=>value.PlayerId==one).ShotsFired>0,
+            "normal Bazooka hold, missile flight and impact damage a deployed Decoy");
         var turretAllocation=decoyAllocation with {MatchId="bazooka-heavy-turret-blast",Players=
             [decoyAllocation.Players[0] with {PlayerLevel=22},
              decoyAllocation.Players[1] with {PlayerLevel=22}]};
