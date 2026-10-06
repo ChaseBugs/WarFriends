@@ -5917,6 +5917,51 @@ internal static class CombatContentTests
             "opposing Tank cannon blast damages the same independent repair-drone health");
         Reject(()=>transporterMatch.ApplyGroundVehicleMissileRepairDroneExplosion(helicopterOwner,
             "ID_UNIT-BUGGY",21,buggyMissileBinding with {MinimumDamage=1},missileDroneCenter));
+        var missileBody=transporterMatch.GroundVehicleShotTargets(helicopterOwner)
+            .First(target=>target.EntityId==transporterEntity.EntityKey&&target.GroundVehicleBody).Hitbox;
+        Vector3 missileBodyCenter=missileBody.Center;
+        float vehicleHealthBeforeMissile=transporterMatch.ArmyHealth(transporterEntity.EntityKey)!.Value;
+        float vehicleKevlarBeforeMissile=transporterMatch.ArmyKevlar(transporterEntity.EntityKey)!.Value;
+        float bodyMissileDamage=vehicleKevlarBeforeMissile+21;
+        var vehicleBeforeMissile=transporterMatch.Snapshot().Vehicles.Single();
+        var bodyEffect=BuggyExplosion.ResolveArmy(missileBodyCenter,
+            new Vector3(vehicleBeforeMissile.X,vehicleBeforeMissile.Y,vehicleBeforeMissile.Z),[missileBody],
+            bodyMissileDamage,tankMissileBinding);
+        Check(bodyEffect is {Kind:CombatDamageType.Explosion}&&
+              Math.Abs(bodyEffect.RawDamage-bodyMissileDamage)<.01f,
+            "Tank blast selects one nearest Transporter body collider without shot-part weight");
+        transporterMatch.ApplyGroundVehicleMissileVehicleExplosion(helicopterOwner,
+            "ID_UNIT-TANK",bodyMissileDamage,tankMissileBinding,missileBodyCenter);
+        float vehicleAfterEnemyMissile=transporterMatch.ArmyHealth(transporterEntity.EntityKey)!.Value;
+        Check(Math.Abs(vehicleAfterEnemyMissile-(vehicleHealthBeforeMissile-21))<.01f&&
+              Math.Abs(transporterMatch.Snapshot().Vehicles.Single().Health-
+                  vehicleAfterEnemyMissile)<.01f,
+            "opposing Tank blast keeps Army and vehicle-registry health synchronized");
+        transporterMatch.ApplyGroundVehicleMissileVehicleExplosion(soldierOwner,
+            "ID_UNIT-TANK",21,tankMissileBinding,missileBodyCenter);
+        transporterMatch.ApplyGroundVehicleMissileVehicleExplosion(soldierOwner,
+            "ID_UNIT-BUGGY",21,buggyMissileBinding,missileBodyCenter);
+        Check(Math.Abs(transporterMatch.ArmyHealth(transporterEntity.EntityKey)!.Value-
+                  vehicleAfterEnemyMissile)<.01f,
+            "Tank and Buggy primary friendKill=false prevent allied vehicle blast damage");
+        transporterMatch.ApplyGroundVehicleMissileVehicleExplosion(soldierOwner,
+            "ID_UNIT-BUGGY",21,buggySecondaryBinding,missileBodyCenter);
+        float vehicleAfterFriendlyMissile=transporterMatch.ArmyHealth(transporterEntity.EntityKey)!.Value;
+        Check(Math.Abs(vehicleAfterFriendlyMissile-(vehicleAfterEnemyMissile-10.5f))<.01f&&
+              Math.Abs(transporterMatch.Snapshot().Vehicles.Single().Health-
+                  vehicleAfterFriendlyMissile)<.01f,
+            "Buggy secondary permits half-damage to allied ground vehicle with synchronized health");
+        Reject(()=>transporterMatch.ApplyGroundVehicleMissileVehicleExplosion(helicopterOwner,
+            "ID_UNIT-TANK",21,tankMissileBinding with {MinimumDamage=1},missileBodyCenter));
+        float lethalMissileDamage=transporterMatch.ArmyHealth(transporterEntity.EntityKey)!.Value+
+            transporterMatch.ArmyKevlar(transporterEntity.EntityKey)!.Value+1;
+        transporterMatch.ApplyGroundVehicleMissileVehicleExplosion(helicopterOwner,
+            "ID_UNIT-TANK",lethalMissileDamage,tankMissileBinding,missileBodyCenter);
+        Check(transporterMatch.ArmyHealth(transporterEntity.EntityKey)==null&&
+              transporterMatch.Snapshot().Vehicles.All(value=>value.EntityId!=transporterEntity.EntityKey)&&
+              transporterMatch.GroundVehicleShotTargets(helicopterOwner).All(value=>
+                  value.EntityId!=transporterEntity.EntityKey),
+            "lethal Tank blast removes vehicle, shared vitality, and collision authority together");
         var repairShotManifest=transporterManifest with {MatchId="player-shot-repair-drone",
             DurationSeconds=180};
         var repairShotMatch=new MatchEngine(repairShotManifest,content:content,armyChoice:_=>0);

@@ -865,6 +865,48 @@ public sealed partial class MatchEngine
         }
     }
 
+    internal void ApplyGroundVehicleMissileVehicleExplosion(string shooterId,string unitId,
+        float damage,GroundVehicleMissileBinding binding,Vector3 origin)
+    {
+        if(phase!=BattlePhase.Running||groundVehicleWeapons==null||explosionPolicy==null||
+           !PlayerHitbox.Finite(origin)||!float.IsFinite(damage)||damage<=0||damage>10_000_000||
+           binding==null||unitId is not ("ID_UNIT-TANK" or "ID_UNIT-BUGGY"))
+            throw new InvalidDataException("Ground-vehicle missile lacks trusted vehicle blast authority.");
+        var sourceWeapon=GroundVehicleMissileSourceWeapon(unitId,binding);
+        var shooter=Find(shooterId)??throw new InvalidDataException("Vehicle missile owner disappeared.");
+        if(vehicles==null)return;
+        foreach(var vehicle in vehicles.Snapshot().OrderBy(value=>value.EntityId).ToArray())
+        {
+            if(!activeArmyEntities.TryGetValue(vehicle.EntityId,out var army)||
+               army.UnitId!=vehicle.UnitId||army.OwnerPlayerId!=vehicle.OwnerPlayerId||
+               !groundVehicleFacing.TryGetValue(vehicle.EntityId,out var facing))
+                throw new InvalidDataException("Vehicle missile target lost shared host authority.");
+            var owner=Find(vehicle.OwnerPlayerId)??
+                throw new InvalidDataException("Vehicle missile target owner disappeared.");
+            bool friendly=owner.Definition.Fraction==shooter.Definition.Fraction;
+            if(friendly&&!sourceWeapon.FriendKill)continue;
+            var bodies=groundVehicleWeapons.PlaceBody(vehicle.UnitId,vehicle.EntityId,
+                vehicle.Position,facing,owner.Definition.Fraction);
+            var effect=BuggyExplosion.ResolveArmy(origin,vehicle.Position,
+                bodies.Select(part=>part.Hitbox).ToArray(),damage,binding);
+            if(effect==null)continue;
+            float amount=effect.RawDamage*(friendly?explosionPolicy.Friendly:1f);
+            if(!float.IsFinite(amount)||amount<=0||amount>10_000_000)
+                throw new InvalidDataException("Vehicle missile target damage exceeded host bounds.");
+            float before=ArmyHealth(vehicle.EntityId)??
+                throw new InvalidDataException("Vehicle missile target lacks shared vitality.");
+            ApplyArmyHostDamage(vehicle.EntityId,amount);
+            if(Terminal)return;
+            if(!activeArmyEntities.ContainsKey(vehicle.EntityId))continue;
+            float after=ArmyHealth(vehicle.EntityId)??
+                throw new InvalidDataException("Vehicle missile target vitality disappeared.");
+            float applied=before-after;
+            if(applied>0&&(!vehicles.TryDamage(vehicle.EntityId,applied,out float registryApplied,
+                out bool destroyed)||destroyed||Math.Abs(applied-registryApplied)>.001f))
+                throw new InvalidDataException("Vehicle missile target vitality diverged from registry.");
+        }
+    }
+
     internal void ApplyPlayerGrenadeAirBodyExplosion(string shooterId,Vector3 origin,GrenadeStage stage)
     {
         if(phase!=BattlePhase.Running||grenadeCatalog==null||explosionPolicy==null||
@@ -1612,6 +1654,8 @@ public sealed partial class MatchEngine
         ApplyGroundVehicleMissileInfantryExplosion(owner,unitId,damage,binding,position);
         if(Terminal)return;
         ApplyGroundVehicleMissileRepairDroneExplosion(owner,unitId,damage,binding,position);
+        if(Terminal)return;
+        ApplyGroundVehicleMissileVehicleExplosion(owner,unitId,damage,binding,position);
         if(Terminal)return;
         foreach(var victim in players.Where(x=>!x.Dead).ToArray())
         {
