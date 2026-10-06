@@ -587,6 +587,11 @@ namespace War.Client
                         vehicle.OwnerPlayerId != vehicle.OwnerPlayerId.ToLowerInvariant() ||
                         string.IsNullOrWhiteSpace(vehicle.UnitId) || vehicle.UnitId.Length > 64 ||
                         !FiniteCoordinate(vehicle.X) || !FiniteCoordinate(vehicle.Y) || !FiniteCoordinate(vehicle.Z) ||
+                        !FiniteCoordinate(vehicle.FacingX) || !FiniteCoordinate(vehicle.FacingY) ||
+                        !FiniteCoordinate(vehicle.FacingZ) || Math.Abs(vehicle.FacingY) > .001f ||
+                        Math.Abs(vehicle.FacingX * vehicle.FacingX+
+                            vehicle.FacingY * vehicle.FacingY+
+                            vehicle.FacingZ * vehicle.FacingZ-1) > .001f ||
                         vehicle.AttackPhase < 0 || vehicle.AttackPhase > 3 || vehicle.CooldownTicks < 0 || vehicle.CooldownTicks > 10_000_000 ||
                         float.IsNaN(vehicle.MaxHealth) || float.IsInfinity(vehicle.MaxHealth) || vehicle.MaxHealth < 0 || vehicle.MaxHealth > 10_000_000 ||
                         float.IsNaN(vehicle.Health) || float.IsInfinity(vehicle.Health) || vehicle.Health < 0 || vehicle.Health > vehicle.MaxHealth)

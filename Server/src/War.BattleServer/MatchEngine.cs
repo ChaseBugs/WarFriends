@@ -2234,9 +2234,14 @@ public sealed partial class MatchEngine
             snapshot.Vehicles.AddRange(vehicles.Snapshot().Select(v =>
             {
                 vehicles.TryGetAttack(v.EntityId, out var attack);
+                if(!groundVehicleFacing.TryGetValue(v.EntityId,out var facing)||
+                   !PlayerHitbox.Finite(facing)||Math.Abs(facing.Y)>.001f||
+                   Math.Abs(facing.LengthSquared()-1)>.001f)
+                    throw new InvalidDataException("Vehicle snapshot lost its normalized host facing.");
                 var row = new BattleVehicleState
                 { EntityId=v.EntityId, UnitId=v.UnitId, OwnerPlayerId=v.OwnerPlayerId, Generation=v.Generation,
                   X=v.Position.X, Y=v.Position.Y, Z=v.Position.Z,
+                  FacingX=facing.X,FacingY=facing.Y,FacingZ=facing.Z,
                   AttackPhase=attack == null ? (int)ArmyAirAttackPhase.Ready : (int)attack.Phase,
                   CooldownTicks=attack?.CooldownTicksRemaining ?? 0,
                   Health=vehicles.TryGetHealth(v.EntityId, out var health) && health != null ? health.Current : 0,

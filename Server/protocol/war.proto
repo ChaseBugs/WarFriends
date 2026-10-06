@@ -400,6 +400,7 @@ message BattleVehicleState {
   float health = 10; float max_health = 11;
   repeated BattleVehiclePartState parts = 12;
   repeated BattleRepairDroneState repair_drones = 13;
+  float facing_x = 14; float facing_y = 15; float facing_z = 16;
 }
 message BattleRepairDroneState {
   int32 path_index = 1; float x = 2; float y = 3; float z = 4;

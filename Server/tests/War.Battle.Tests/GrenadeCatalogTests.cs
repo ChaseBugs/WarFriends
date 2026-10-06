@@ -192,11 +192,17 @@ internal static class GrenadeCatalogTests
                 .Single(value=>value.EntityId==tank.EntityKey);
             var defenderVehicle=(await defender.PollAsync(timeout.Token)).Snapshot.Vehicles
                 .Single(value=>value.EntityId==tank.EntityKey);
+            var attackerFacing=new Vector3(attackerVehicle.FacingX,attackerVehicle.FacingY,
+                attackerVehicle.FacingZ);
+            var defenderFacing=new Vector3(defenderVehicle.FacingX,defenderVehicle.FacingY,
+                defenderVehicle.FacingZ);
             Check(attackerHealth<initialHealth&&
                   Math.Abs(attackerHealth-defenderTank.Health)<.01f&&
                   Math.Abs(attackerVehicle.Health-attackerHealth)<.01f&&
-                  Math.Abs(defenderVehicle.Health-attackerHealth)<.01f,
-                "both UDP peers receive the same M320-damaged Tank and vehicle health");
+                  Math.Abs(defenderVehicle.Health-attackerHealth)<.01f&&
+                  Math.Abs(attackerFacing.Length()-1)<.001f&&
+                  Vector3.Distance(attackerFacing,defenderFacing)<.001f,
+                "both UDP peers receive the same M320-damaged Tank, health, and host facing");
         }
         finally
         {
