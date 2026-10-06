@@ -130,6 +130,47 @@ internal static class BazookaCatalogTests
              ArmyHealthFactors=[new ArmyHealthFactors(1,1)],ArmyDamageScales=[1],
              ArmySpeedCoefficients=[1],ArmyAccuracyCoefficients=[1]}]};
         content.ValidateAllocation(repairAllocation);
+        var infantryAllocation=repairAllocation with {MatchId="bazooka-infantry-blast"};
+        var infantryMatch=new MatchEngine(infantryAllocation,map,content,armyChoice:_=>0);
+        infantryMatch.Admit(one);infantryMatch.Admit(two);
+        infantryMatch.Command(one,new(){CommandId=1,Ready=new(){ManifestHash=infantryMatch.ManifestHash}});
+        infantryMatch.Command(two,new(){CommandId=1,Ready=new(){ManifestHash=infantryMatch.ManifestHash}});
+        infantryMatch.Advance(60);
+        Check(infantryMatch.Command(one,new(){CommandId=2,
+            DeployArmy=new(){OptionIndex=infantryMatch.ArmyBatch(one).OptionIndexes.First()}})
+            .Code=="army-deploying","source Assault infantry deploys for Bazooka blast");
+        ulong infantryTick=60;
+        while(infantryTick<700&&infantryMatch.ArmyEntityBatch(one,0,0).Entities.Count==0)
+            infantryMatch.Advance(++infantryTick);
+        var infantry=infantryMatch.ArmyEntityBatch(one,0,0).Entities.Single();
+        var infantryBox=infantryMatch.GroundVehicleShotTargets(two)
+            .First(x=>x.EntityId==infantry.EntityKey&&x.ArmyInfantry).Hitbox;
+        var infantryRpg=content.Bazookas!.Stage("Google2u.Bazooka_RPG7",0);
+        var infantryBinding=content.Bazookas.Binding("Google2u.Bazooka_RPG7");
+        var infantryBlast=BazookaExplosion.ResolveArmy(infantryBox.Center,
+            new(infantry.X,infantry.Y,infantry.Z),[infantryBox],infantryRpg,infantryBinding,false);
+        Check(infantryBlast is {Kind:CombatDamageType.Explosion}&&
+              Math.Abs(infantryBlast.RawDamage-rpg.ExplosionDamage)<.01f,
+            "Bazooka selects one infantry collider without bullet part weight");
+        infantryMatch.ApplyPlayerBazookaInfantryExplosion(one,infantryBox.Center,
+            infantryRpg,infantryBinding,true);
+        float friendlyInfantry=infantryMatch.ArmyHealth(infantry.EntityKey)!.Value;
+        Check(Math.Abs(infantry.Health-friendlyInfantry-rpg.ExplosionDamage*.25f)<.01f,
+            "half-damage Bazooka blast applies friendly coefficient to one animated infantry owner");
+        infantryMatch.ApplyPlayerBazookaInfantryExplosion(two,infantryBox.Center,
+            infantryRpg,infantryBinding,false);
+        Check(friendlyInfantry<rpg.ExplosionDamage&&
+              infantryMatch.ArmyHealth(infantry.EntityKey)==null&&
+              infantryMatch.GroundVehicleShotTargets(two)
+                  .All(x=>x.EntityId!=infantry.EntityKey),
+            "opposing Bazooka blast removes lethal infantry and its collision authority");
+        try
+        {
+            infantryMatch.ApplyPlayerBazookaInfantryExplosion(two,infantryBox.Center,
+                infantryRpg with {ExplosionDamage=1},infantryBinding,false);
+            throw new Exception("FAIL: forged bazooka infantry stage");
+        }
+        catch(InvalidDataException){checks++;}
         var repairMatch=new MatchEngine(repairAllocation,map,content,armyChoice:_=>0);
         repairMatch.Admit(one);repairMatch.Admit(two);
         repairMatch.Command(one,new(){CommandId=1,Ready=new(){ManifestHash=repairMatch.ManifestHash}});

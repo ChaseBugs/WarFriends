@@ -873,6 +873,35 @@ public sealed partial class MatchEngine
         }
     }
 
+    internal void ApplyPlayerBazookaInfantryExplosion(string shooterId,Vector3 origin,
+        BazookaStage stage,BazookaBinding binding,bool halfDamage)
+    {
+        if(phase!=BattlePhase.Running||bazookaCatalog==null||explosionPolicy==null||
+           stage==null||binding==null||
+           !ReferenceEquals(bazookaCatalog.Stage(stage.SourceId,stage.Index),stage)||
+           !ReferenceEquals(bazookaCatalog.Binding(stage.SourceId),binding)||
+           !PlayerHitbox.Finite(origin))
+            throw new InvalidDataException("Bazooka infantry blast lacks trusted source authority.");
+        var shooter=Find(shooterId)??throw new InvalidDataException("Bazooka owner disappeared.");
+        var targets=GroundVehicleShotTargets(shooterId,true).Where(value=>value.ArmyInfantry)
+            .GroupBy(value=>value.EntityId).OrderBy(group=>group.Key).ToArray();
+        foreach(var group in targets)
+        {
+            if(!activeArmyEntities.TryGetValue(group.Key,out var army)||
+               !infantryAnimations.ContainsKey(group.Key))
+                throw new InvalidDataException("Bazooka infantry target lost host authority.");
+            var effect=BazookaExplosion.ResolveArmy(origin,new(army.X,army.Y,army.Z),
+                group.Select(value=>value.Hitbox).ToArray(),stage,binding,halfDamage);
+            if(effect==null)continue;
+            bool friendly=army.OwnerFraction==shooter.Definition.Fraction;
+            float amount=effect.RawDamage*(friendly?explosionPolicy.Friendly:1f);
+            if(!float.IsFinite(amount)||amount<=0||amount>10_000_000)
+                throw new InvalidDataException("Bazooka infantry damage exceeded host bounds.");
+            ApplyArmyHostDamage(group.Key,amount);
+            if(Terminal)return;
+        }
+    }
+
     internal void ApplyGroundVehicleMissileRepairDroneExplosion(string shooterId,string unitId,
         float damage,GroundVehicleMissileBinding binding,Vector3 origin)
     {
