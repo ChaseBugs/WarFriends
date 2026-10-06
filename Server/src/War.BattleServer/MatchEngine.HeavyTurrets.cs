@@ -256,6 +256,39 @@ public sealed partial class MatchEngine
         }
     }
 
+    internal void ApplyPlayerBazookaHeavyTurretExplosion(string shooterId,Vector3 origin,
+        BazookaStage stage,BazookaBinding binding,bool halfDamage)
+    {
+        if(phase!=BattlePhase.Running||bazookaCatalog==null||explosionPolicy==null||
+           stage==null||binding==null||
+           !ReferenceEquals(bazookaCatalog.Stage(stage.SourceId,stage.Index),stage)||
+           !ReferenceEquals(bazookaCatalog.Binding(stage.SourceId),binding)||
+           !PlayerHitbox.Finite(origin))
+            throw new InvalidDataException("Bazooka Heavy Turret blast lacks trusted source authority.");
+
+        var shooter=Find(shooterId)??throw new InvalidDataException("Bazooka owner disappeared.");
+        if(heavyTurretSource==null)return;
+        var colliders=HeavyTurretShotTargets(shooter,includeFriendly:true);
+        foreach(var group in colliders.GroupBy(value=>value.EntityId).OrderBy(group=>group.Key))
+        {
+            var turret=heavyTurrets.Snapshot().SingleOrDefault(value=>value.EntityId==group.Key)??
+                throw new InvalidDataException("Bazooka Heavy Turret lost host health authority.");
+            var hitboxes=group.Select(value=>value.Hitbox).ToArray();
+            var effect=BazookaExplosion.ResolveArmy(origin,turret.Position,hitboxes,
+                stage,binding,halfDamage);
+            if(effect==null)continue;
+
+            bool friendly=turret.OwnerFraction==shooter.Definition.Fraction;
+            float damage=effect.RawDamage*(friendly?explosionPolicy.Friendly:1f);
+            if(!float.IsFinite(damage)||damage<=0||damage>10_000_000||
+               !heavyTurrets.TryDamage(group.Key,damage,out var changed,out bool destroyed)||changed==null)
+                throw new InvalidDataException("Bazooka Heavy Turret damage escaped host bounds.");
+            stateRevision++;
+            Emit(destroyed?MatchEventKind.HeavyTurretDestroyed:MatchEventKind.HeavyTurretDamaged,
+                shooterId,changed.OwnerPlayerId,group.Key,changed.Position,changed.Health,"player-bazooka");
+        }
+    }
+
     internal int ApplyArmyFlameHeavyTurretPulse(ulong sourceEntityKey,Vector3 origin,Vector3 forward)
     {
         if(phase!=BattlePhase.Running||!activeArmyEntities.TryGetValue(sourceEntityKey,out var source)||

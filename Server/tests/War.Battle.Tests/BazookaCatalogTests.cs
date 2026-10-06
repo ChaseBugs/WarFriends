@@ -298,6 +298,78 @@ internal static class BazookaCatalogTests
               decoyMatch.DroneTargetSnapshot().All(value=>
                   value.Id!="decoy:"+enemyDecoy.EntityId),
             "lethal Bazooka blast removes Decoy health and Drone target authority");
+        var turretAllocation=decoyAllocation with {MatchId="bazooka-heavy-turret-blast",Players=
+            [decoyAllocation.Players[0] with {PlayerLevel=22},
+             decoyAllocation.Players[1] with {PlayerLevel=22}]};
+        var turretMatch=new MatchEngine(turretAllocation,map,content);
+        turretMatch.ConfigureBattleAllocations([
+            new(one,["CardHeavyTurret"],[],[0],[-1],[-1]),
+            new(two,["CardHeavyTurret"],[],[0],[71],[-1])]);
+        turretMatch.Admit(one);turretMatch.Admit(two);
+        foreach(var player in new[]{one,two})
+        {
+            int special=player==one?-1:71;
+            Check(turretMatch.Command(player,new(){CommandId=1,SelectCards=new()
+                {CardIds={"CardHeavyTurret"},NormalUpgradeIndexes={0},
+                 SpecialUpgradeIndexes={special},EliteUpgradeIndexes={-1}}}).Code=="cards-selected",
+                "Bazooka match accepts source Heavy Turret inventory");
+            turretMatch.Command(player,new(){CommandId=2,
+                Ready=new(){ManifestHash=turretMatch.ManifestHash}});
+        }
+        turretMatch.Advance(60);
+        Check(turretMatch.Command(two,new(){CommandId=3,UseHeavyTurret=new()
+            {RequestId=new string('c',32)}}).Code=="heavy-turret-spawned",
+            "opponent deploys Heavy Turret for Bazooka blast");
+        var enemyTurret=turretMatch.Snapshot().HeavyTurrets.Single();
+        var enemyTurretBoxes=turretMatch.GroundVehicleShotTargets(one)
+            .Where(value=>value.HeavyTurret&&value.EntityId==enemyTurret.EntityId)
+            .Select(value=>value.Hitbox).ToArray();
+        Vector3 enemyTurretOrigin=enemyTurretBoxes[0].Center;
+        var enemyTurretEffect=BazookaExplosion.ResolveArmy(enemyTurretOrigin,
+            new(enemyTurret.X,enemyTurret.Y,enemyTurret.Z),enemyTurretBoxes,
+            airRpg,airBinding,false)!;
+        turretMatch.ApplyPlayerBazookaHeavyTurretExplosion(one,enemyTurretOrigin,
+            airRpg,airBinding,false);
+        float? enemyTurretAfter=turretMatch.HeavyTurretHealth(enemyTurret.EntityId);
+        float expectedEnemyTurret=enemyTurret.Health-enemyTurretEffect.RawDamage;
+        Check(enemyTurretBoxes.Length==3&&
+              (expectedEnemyTurret<=0?enemyTurretAfter==null:
+               enemyTurretAfter!=null&&Math.Abs(enemyTurretAfter.Value-expectedEnemyTurret)<.01f),
+            "Bazooka blast damages one Heavy Turret owner across three joint colliders");
+        Check(turretMatch.Command(one,new(){CommandId=3,UseHeavyTurret=new()
+            {RequestId=new string('f',32)}}).Code=="heavy-turret-spawned",
+            "Bazooka owner deploys a separate friendly Heavy Turret");
+        var friendlyTurret=turretMatch.Snapshot().HeavyTurrets
+            .Single(value=>value.OwnerPlayerId==one);
+        var friendlyTurretBoxes=turretMatch.GroundVehicleShotTargets(two)
+            .Where(value=>value.HeavyTurret&&value.EntityId==friendlyTurret.EntityId)
+            .Select(value=>value.Hitbox).ToArray();
+        Vector3 friendlyTurretOrigin=friendlyTurretBoxes[0].Center;
+        var friendlyTurretEffect=BazookaExplosion.ResolveArmy(friendlyTurretOrigin,
+            new(friendlyTurret.X,friendlyTurret.Y,friendlyTurret.Z),friendlyTurretBoxes,
+            airRpg,airBinding,true)!;
+        turretMatch.ApplyPlayerBazookaHeavyTurretExplosion(one,friendlyTurretOrigin,
+            airRpg,airBinding,true);
+        float? friendlyTurretAfter=turretMatch.HeavyTurretHealth(friendlyTurret.EntityId);
+        float expectedFriendlyTurret=friendlyTurret.Health-
+            friendlyTurretEffect.RawDamage*content.Explosions.Friendly;
+        Check(expectedFriendlyTurret<=0?friendlyTurretAfter==null:
+              friendlyTurretAfter!=null&&Math.Abs(friendlyTurretAfter.Value-expectedFriendlyTurret)<.01f,
+            "half-damage Bazooka missile applies friendly coefficient to Heavy Turret once");
+        try
+        {
+            turretMatch.ApplyPlayerBazookaHeavyTurretExplosion(one,enemyTurretOrigin,
+                airRpg with {ExplosionDamage=1},airBinding,false);
+            throw new Exception("FAIL: forged Bazooka Heavy Turret stage");
+        }
+        catch(InvalidDataException){checks++;}
+        for(int blast=0;blast<30&&turretMatch.HeavyTurretHealth(enemyTurret.EntityId)!=null;blast++)
+            turretMatch.ApplyPlayerBazookaHeavyTurretExplosion(one,enemyTurretOrigin,
+                airRpg,airBinding,false);
+        Check(turretMatch.HeavyTurretHealth(enemyTurret.EntityId)==null&&
+              turretMatch.GroundVehicleShotTargets(one)
+                  .All(value=>value.EntityId!=enemyTurret.EntityId),
+            "lethal Bazooka blast removes Heavy Turret health and joint collision authority");
         var repairMatch=new MatchEngine(repairAllocation,map,content,armyChoice:_=>0);
         repairMatch.Admit(one);repairMatch.Admit(two);
         repairMatch.Command(one,new(){CommandId=1,Ready=new(){ManifestHash=repairMatch.ManifestHash}});

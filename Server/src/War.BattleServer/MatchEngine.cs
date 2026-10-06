@@ -1882,6 +1882,9 @@ public sealed partial class MatchEngine
         ApplyPlayerBazookaDecoyExplosion(impact.OwnerId,impact.Position,
             projectile.Stage,projectile.Binding,projectile.HalfDamage);
         if(Terminal)return;
+        ApplyPlayerBazookaHeavyTurretExplosion(impact.OwnerId,impact.Position,
+            projectile.Stage,projectile.Binding,projectile.HalfDamage);
+        if(Terminal)return;
         ApplyPlayerBazookaRepairDroneExplosion(impact.OwnerId,impact.Position,
             projectile.Stage,projectile.Binding,projectile.HalfDamage);
         if(Terminal)return;
