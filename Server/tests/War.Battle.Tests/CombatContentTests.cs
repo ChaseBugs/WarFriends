@@ -4053,29 +4053,23 @@ internal static class CombatContentTests
         Check(flameVehicleMatch.ArmyHealth(flameVehicleTarget.EntityKey)==vehicleAfter,
             "vehicle Flame rejects a rear-facing cone before changing shared health");
         Vector3 vehicleMineOrigin=flameVehicleCollider.Hitbox.Center;
-        var mineVehiclePart=flameVehicleColliders.Where(x=>x.Hitbox.OverlapsSphere(
-                vehicleMineOrigin,content.LandMines.HurtRadius))
-            .OrderBy(x=>x.Hitbox.BoundsDistanceToPoint(vehicleMineOrigin))
-            .ThenBy(x=>x.PartComponentFileId)
-            .ThenBy(x=>x.Hitbox.SourcePath,StringComparer.Ordinal).First();
-        float mineVehicleWeight=flameVehicleRig.BodyParts.Single(x=>
-            x.PartComponentFileId==mineVehiclePart.PartComponentFileId).Weight;
         float vehicleBeforeMine=flameVehicleMatch.ArmyHealth(flameVehicleTarget.EntityKey)!.Value;
         Check(flameVehicleMatch.ApplyLandMineVehicleExplosion(soldierOwner,vehicleMineOrigin,10)==1&&
               Math.Abs(vehicleBeforeMine-flameVehicleMatch.ArmyHealth(flameVehicleTarget.EntityKey)!.Value-
-                  10*mineVehicleWeight)<.001f&&
+                  10)<.001f&&
               Math.Abs(flameVehicleMatch.Snapshot().Vehicles.Single(x=>x.EntityId==flameVehicleTarget.EntityKey).Health-
                   flameVehicleMatch.ArmyHealth(flameVehicleTarget.EntityKey)!.Value)<.001f,
             "host Land Mine blast chooses one nearest Humvee damage part without bullet armor coefficient");
         float vehicleBeforeFriendlyMine=flameVehicleMatch.ArmyHealth(flameVehicleTarget.EntityKey)!.Value;
         Check(flameVehicleMatch.ApplyLandMineVehicleExplosion(helicopterOwner,vehicleMineOrigin,10)==1&&
               Math.Abs(vehicleBeforeFriendlyMine-flameVehicleMatch.ArmyHealth(flameVehicleTarget.EntityKey)!.Value-
-                  5*mineVehicleWeight)<.001f,
+                  5)<.001f,
             "recovered friend-damage coefficient halves a Land Mine blast against an allied vehicle");
         Reject(()=>flameVehicleMatch.ApplyLandMineVehicleExplosion(soldierOwner,vehicleMineOrigin,float.NaN));
         var minePassengerParts=flameVehicleMatch.GroundVehicleShotTargets(soldierOwner)
             .Where(x=>x.EntityId==flameVehicleTarget.EntityKey&&x.PassengerRole=="gunner").ToArray();
-        Vector3 passengerMineOrigin=minePassengerParts[0].Hitbox.Center;
+        Vector3 passengerMineOrigin=minePassengerParts.First(x=>x.Hitbox.Weight==1.5f)
+            .Hitbox.Center+Vector3.UnitY*.15f;
         var selectedMinePassengerPart=minePassengerParts.Where(x=>x.Hitbox.OverlapsSphere(
                 passengerMineOrigin,content.LandMines.HurtRadius))
             .OrderBy(x=>x.Hitbox.BoundsDistanceToPoint(passengerMineOrigin))
@@ -4086,19 +4080,20 @@ internal static class CombatContentTests
             .Single(x=>x.PlayerId==soldierOwner).ConfirmedEnemyHits;
         uint bulletHitsBeforeMine=flameVehicleMatch.Snapshot().Players
             .Single(x=>x.PlayerId==soldierOwner).ConfirmedPlayerBulletHits;
-        Check(flameVehicleMatch.ApplyLandMinePassengerExplosion(soldierOwner,passengerMineOrigin,10)==1&&
+        Check(selectedMinePassengerPart.Hitbox.Weight==1.5f&&
+              flameVehicleMatch.ApplyLandMinePassengerExplosion(soldierOwner,passengerMineOrigin,10)==1&&
               Math.Abs(passengerBeforeMine-flameVehicleMatch.VehiclePassengers(flameVehicleTarget.EntityKey)
-                  .Single(x=>x.Role=="gunner").Health-10*selectedMinePassengerPart.Hitbox.Weight)<.001f&&
+                  .Single(x=>x.Role=="gunner").Health-10)<.001f&&
               flameVehicleMatch.Snapshot().Players.Single(x=>x.PlayerId==soldierOwner)
                   .ConfirmedEnemyHits==enemyHitsBeforeMine+1&&
               flameVehicleMatch.Snapshot().Players.Single(x=>x.PlayerId==soldierOwner)
                   .ConfirmedPlayerBulletHits==bulletHitsBeforeMine,
-            "Land Mine blast selects one current Humvee gunner part and updates separate passenger health");
+            "Land Mine head contact damages its passenger owner once without bullet head weight");
         float passengerBeforeFriendlyMine=flameVehicleMatch.VehiclePassengers(flameVehicleTarget.EntityKey)
             .Single(x=>x.Role=="gunner").Health;
         Check(flameVehicleMatch.ApplyLandMinePassengerExplosion(helicopterOwner,passengerMineOrigin,10)==1&&
               Math.Abs(passengerBeforeFriendlyMine-flameVehicleMatch.VehiclePassengers(flameVehicleTarget.EntityKey)
-                  .Single(x=>x.Role=="gunner").Health-5*selectedMinePassengerPart.Hitbox.Weight)<.001f,
+                  .Single(x=>x.Role=="gunner").Health-5)<.001f,
             "recovered friend-damage coefficient also applies to a vehicle passenger mine blast");
         Reject(()=>flameVehicleMatch.ApplyLandMinePassengerExplosion(soldierOwner,passengerMineOrigin,float.NaN));
         var flameRepairManifest=flameManifest with {MatchId="army-flame-repair-drone",

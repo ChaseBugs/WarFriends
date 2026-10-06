@@ -176,9 +176,7 @@ public sealed partial class MatchEngine
                 .ThenBy(x=>x.PartComponentFileId)
                 .ThenBy(x=>x.Hitbox.SourcePath,StringComparer.Ordinal).FirstOrDefault();
             if(selected==null)continue;
-            var part=groundVehicleWeapons.For(target.UnitId).BodyParts.Single(x=>
-                x.PartComponentFileId==selected.PartComponentFileId);
-            float amount=damage*part.Weight*(targetOwner.Definition.Fraction==attacker.Definition.Fraction?
+            float amount=damage*(targetOwner.Definition.Fraction==attacker.Definition.Fraction?
                 explosionPolicy.Friendly:1f);
             if(!float.IsFinite(amount)||amount<=0||amount>10_000_000)
                 throw new InvalidDataException("Land Mine vehicle damage exceeded host bounds.");
@@ -228,7 +226,9 @@ public sealed partial class MatchEngine
                     .OrderBy(x=>x.BoundsDistanceToPoint(position))
                     .ThenBy(x=>x.SourcePath,StringComparer.Ordinal).FirstOrDefault();
                 if(selected==null)continue;
-                float amount=damage*selected.Weight*
+                // MineAmmo calls Explosion.MissileExplode: a part collider chooses
+                // its damage owner, but its bullet head/body weight is not used.
+                float amount=damage*
                     (targetOwner.Definition.Fraction==attacker.Definition.Fraction?
                         explosionPolicy.Friendly:1f);
                 if(!float.IsFinite(amount)||amount<=0||amount>10_000_000)
@@ -343,8 +343,7 @@ public sealed partial class MatchEngine
             if(selected==null)continue;
             var target=heavyTurrets.Snapshot().SingleOrDefault(x=>x.EntityId==group.Key)??
                 throw new InvalidDataException("Land Mine turret lost its health authority.");
-            var part=heavyTurretSource.Colliders.Single(x=>x.ComponentFileId==selected.PartComponentFileId);
-            float amount=damage*part.FlameWeight*
+            float amount=damage*
                 (target.OwnerFraction==attacker.Definition.Fraction?explosionPolicy.Friendly:1f);
             if(!float.IsFinite(amount)||amount<=0||amount>10_000_000||
                !heavyTurrets.TryDamage(group.Key,amount,out var changed,out bool destroyed)||changed==null)
@@ -408,7 +407,7 @@ public sealed partial class MatchEngine
                 .OrderBy(x=>x.Hitbox.BoundsDistanceToPoint(position))
                 .ThenBy(x=>x.ColliderFileId).FirstOrDefault();
             if(selected==null)continue;
-            float amount=damage*selected.Hitbox.Weight*
+            float amount=damage*
                 (helicopter.OwnerFraction==attacker.Definition.Fraction?
                     explosionPolicy.Friendly:1f);
             if(!float.IsFinite(amount)||amount<=0||amount>10_000_000)
