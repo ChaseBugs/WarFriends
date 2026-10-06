@@ -581,6 +581,33 @@ internal static class BazookaCatalogTests
         Check(naturalBodyDamaged&&naturalBodySynchronized&&
               naturalRepair.Snapshot().Players.Single(value=>value.PlayerId==one).ShotsFired>=2,
             "normal Bazooka missile blast reduces shared Transporter body health");
+        Check(naturalRepair.ArmyHealth(naturalVehicle.EntityKey)!=null,
+            "Transporter survives the body shot for attached-passenger flight proof");
+        var naturalPassenger=naturalRepair.VehiclePassengers(naturalVehicle.EntityKey)
+            .First(value=>value.Active);
+        float naturalPassengerBefore=naturalPassenger.Health;
+        bool naturalPassengerDamaged=false;
+        for(;naturalTick<3000&&!naturalRepair.Terminal;)
+        {
+            if(naturalTick%240==0)
+            {
+                var passengerTarget=naturalRepair.GroundVehicleShotTargets(one).FirstOrDefault(value=>
+                    value.EntityId==naturalVehicle.EntityKey&&
+                    value.PassengerRole==naturalPassenger.Role);
+                if(passengerTarget==null)break;
+                Vector3 aim=passengerTarget.Hitbox.Center;
+                naturalRepair.Command(one,new(){CommandId=bazookaCommand++,BazookaHold=new()
+                    {Pressed=true,TargetX=aim.X,TargetY=aim.Y,TargetZ=aim.Z}});
+            }
+            naturalRepair.Advance(++naturalTick);
+            if(naturalRepair.ArmyHealth(naturalVehicle.EntityKey)==null)break;
+            float current=naturalRepair.VehiclePassengers(naturalVehicle.EntityKey)
+                .Single(value=>value.Role==naturalPassenger.Role).Health;
+            if(current<naturalPassengerBefore-.01f){naturalPassengerDamaged=true;break;}
+        }
+        Check(naturalPassengerDamaged&&naturalRepair.Snapshot().Players
+                  .Single(value=>value.PlayerId==one).ShotsFired>=3,
+            "normal Bazooka missile blast reduces an attached Transporter passenger's health");
         var shieldAllocation=allocation with {MatchId="bazooka-shield",Players=
             [allocation.Players[0] with {ShieldLevel=0},allocation.Players[1] with {ShieldLevel=0}]};
         var shieldSimulation=new ShieldMatchSimulation(map,content.Shields,shieldAllocation);
