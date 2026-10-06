@@ -5738,6 +5738,54 @@ internal static class CombatContentTests
                   x.Kind==MatchEventKind.DecoyDestroyed&&x.ProjectileId==selectedDecoyId),
               "live Humvee projectile destroys its typed Decoy target and releases the exact obstacle slot");
         Check(humveeDecoyMatch.DroneTargetSnapshot().All(r=>r.Id!="decoy:"+selectedDecoyId),"confirmed Decoy death removes Drone target authority");
+        foreach(string cannonUnit in new[]{"ID_UNIT-TANK","ID_UNIT-BUGGY"})
+        {
+            var cannonDecoyManifest=humveeDecoyManifest with
+            {
+                MatchId="cannon-decoy-priority-"+cannonUnit,
+                Players=[humveeDecoyManifest.Players[0] with
+                    {EquippedArmyUnitIds=[cannonUnit]},humveeDecoyManifest.Players[1]]
+            };
+            content.ValidateAllocation(cannonDecoyManifest);
+            var cannonDecoyMatch=new MatchEngine(cannonDecoyManifest,content:content,
+                armyChoice:_=>0,combatRandom:()=>0);
+            cannonDecoyMatch.ConfigureBattleAllocations([
+                new(soldierOwner,[],[],[0],[-1],[-1]),
+                new(helicopterOwner,["CardDecoy"],[],[0],[-1],[-1])]);
+            cannonDecoyMatch.Admit(soldierOwner);cannonDecoyMatch.Admit(helicopterOwner);
+            Check(cannonDecoyMatch.Command(soldierOwner,emptyHumveeCards).Code=="cards-selected"&&
+                  cannonDecoyMatch.Command(helicopterOwner,opposingDecoyCards).Code=="cards-selected",
+                cannonUnit+" match binds trusted Decoy card selection");
+            cannonDecoyMatch.Command(soldierOwner,new(){CommandId=2,
+                Ready=new(){ManifestHash=cannonDecoyMatch.ManifestHash}});
+            cannonDecoyMatch.Command(helicopterOwner,new(){CommandId=2,
+                Ready=new(){ManifestHash=cannonDecoyMatch.ManifestHash}});
+            cannonDecoyMatch.Advance(60);
+            Check(cannonDecoyMatch.Command(helicopterOwner,new(){CommandId=3,
+                UseDecoy=new(){RequestId=new string('8',32)}}).Code=="decoy-spawned"&&
+                  cannonDecoyMatch.Command(soldierOwner,new(){CommandId=3,DeployArmy=new()
+                    {OptionIndex=cannonDecoyMatch.ArmyBatch(soldierOwner).OptionIndexes[0]}}).Code=="army-deploying",
+                cannonUnit+" and opposing Decoy deploy in a live match");
+            ulong cannonEntityId=0,cannonDecoyId=0,cannonTick=61;
+            for(;cannonTick<1800&&cannonDecoyId==0&&!cannonDecoyMatch.Terminal;cannonTick++)
+            {
+                cannonDecoyMatch.Advance(cannonTick);
+                cannonEntityId=cannonDecoyMatch.ArmyEntityBatch(soldierOwner,0,0).Entities
+                    .SingleOrDefault(entity=>entity.UnitId==cannonUnit)?.EntityKey??0;
+                cannonDecoyId=cannonEntityId==0?0:
+                    cannonDecoyMatch.GroundVehicleCannonDecoyTarget(cannonEntityId)??0;
+            }
+            Check(cannonEntityId!=0&&cannonDecoyId!=0&&
+                  cannonDecoyMatch.DecoyHealth(cannonDecoyId)>0,
+                cannonUnit+" cannon selects a live opposing Decoy before player fallback");
+            float initialCannonDecoyHealth=cannonDecoyMatch.DecoyHealth(cannonDecoyId)!.Value;
+            while(cannonTick<2400&&!cannonDecoyMatch.Terminal&&
+                  cannonDecoyMatch.DecoyHealth(cannonDecoyId)==initialCannonDecoyHealth)
+                cannonDecoyMatch.Advance(cannonTick++);
+            Check(cannonDecoyMatch.DecoyHealth(cannonDecoyId)<initialCannonDecoyHealth||
+                  cannonDecoyMatch.DecoyHealth(cannonDecoyId)==null,
+                cannonUnit+" normal missile flight damages its selected Decoy");
+        }
         var turretVehicleManifest=humveeDecoyManifest with {MatchId="turret-ground-vehicle-priority"};
         var turretVehicleMatch=new MatchEngine(turretVehicleManifest,content:content,armyChoice:_=>0,combatRandom:()=>0);
         turretVehicleMatch.ConfigureBattleAllocations([

@@ -1274,8 +1274,13 @@ public sealed partial class MatchEngine
     private readonly Dictionary<ulong,float> tankCannonDamage=[];
     private readonly Dictionary<ulong,IReadOnlyDictionary<string,VehiclePassengerState>> vehiclePassengers=[];
     private readonly Dictionary<ulong,IReadOnlyList<TransporterRepairDroneState>> transporterRepairDrones=[];
-    private readonly Dictionary<ulong,(string Owner,string Target,Vector3 Position)> buggyCannonTargets=[];
-    private readonly Dictionary<ulong,(string Owner,string Target)> tankCannonTargets=[];
+    private readonly Dictionary<ulong,(string Owner,string Target,Vector3 Position,ulong? DecoyId)> buggyCannonTargets=[];
+    private readonly Dictionary<ulong,(string Owner,string Target,Vector3 Position,ulong? DecoyId)> tankCannonTargets=[];
+    internal ulong? GroundVehicleCannonDecoyTarget(ulong entityKey)
+    {
+        if(tankCannonTargets.TryGetValue(entityKey,out var tank))return tank.DecoyId;
+        return buggyCannonTargets.TryGetValue(entityKey,out var buggy)?buggy.DecoyId:null;
+    }
     private ulong buggyCurveCounter;
 
     private string? ArmyAvailabilityError(Player player,ArmyDeploymentFamily family,
@@ -1691,6 +1696,31 @@ public sealed partial class MatchEngine
         return pose.BodyTarget(body.TransformFileId).Position;
     }
 
+    private (Vector3 Position,GroundVehicleAim Aim,ulong EntityId,string Owner)?
+        SelectCannonDecoy(int ownerFraction,Vector3 vehiclePosition,
+            Vector3 facing,GroundVehicleTurret turret,out bool decoyPresent)
+    {
+        var opposing=decoys.Snapshot().Where(decoy=>decoy.OwnerFraction!=ownerFraction)
+            .OrderBy(decoy=>decoy.EntityId).ToArray();
+        decoyPresent=opposing.Length>0;
+        if(!decoyPresent)return null;
+        int index=armyChoice(opposing.Length);
+        if(index<0||index>=opposing.Length)
+            throw new InvalidDataException("Army random selector returned an invalid cannon Decoy target.");
+        var selected=opposing[index];
+        float yaw=MathF.Atan2(selected.Facing.X,selected.Facing.Z);
+        Vector3 position=selected.Position+Vector3.Transform(
+            (decoySource??throw new InvalidDataException("Cannon Decoy target source disappeared."))
+                .Prefab.TargetLocalPosition,Quaternion.CreateFromAxisAngle(Vector3.UnitY,yaw));
+        try
+        {
+            var aim=GroundVehicleAimPolicy.Resolve(vehiclePosition,facing,position,
+                turret.MaxShotRotation,turret.AimTime);
+            return (position,aim,selected.EntityId,selected.OwnerPlayerId);
+        }
+        catch(InvalidDataException){return null;}
+    }
+
     private void AdvanceTankCannon(ulong entityKey)
     {
         if(!tankCannonAttacks.TryGetValue(entityKey,out var attack)||vehicles==null||rifleCombat==null||
@@ -1703,14 +1733,24 @@ public sealed partial class MatchEngine
         {
             var owner=Find(army.OwnerPlayerId)??throw new InvalidDataException("Tank owner disappeared.");
             var opponent=players.Single(p=>p!=owner);if(!opponent.Admitted||opponent.Dead)return;
-            Vector3 target=CurrentPlayerBodyPosition(opponent.Definition.PlayerId,vehicle.Position);
-            GroundVehicleAim aim;try {aim=GroundVehicleAimPolicy.Resolve(vehicle.Position,facing,target,
+            var decoy=SelectCannonDecoy(owner.Definition.Fraction,vehicle.Position,facing,turret,
+                out bool decoyPresent);
+            if(decoyPresent&&decoy==null)return;
+            Vector3 target=decoy?.Position??CurrentPlayerBodyPosition(opponent.Definition.PlayerId,vehicle.Position);
+            GroundVehicleAim aim;
+            if(decoy!=null)aim=decoy.Value.Aim;
+            else try {aim=GroundVehicleAimPolicy.Resolve(vehicle.Position,facing,target,
                 turret.MaxShotRotation,turret.AimTime);}catch(InvalidDataException){return;}
             var muzzle=groundVehicleWeapons.RestMuzzleOrigin(army.UnitId,"cannon",0,vehicle.Position,aim.Direction);
             var delta=target-muzzle;float range=delta.Length();if(!float.IsFinite(range)||range<.001f)return;
-            var visible=rifleCombat.TraceForArmy(army.OwnerPlayerId,muzzle,delta/range,range+.05f);
-            if(visible?.PlayerId!=opponent.Definition.PlayerId&&visible?.DynamicOwner!=opponent.Definition.PlayerId)return;
-            tankCannonTargets[entityKey]=(army.OwnerPlayerId,opponent.Definition.PlayerId);
+            if(decoy==null)
+            {
+                var visible=rifleCombat.TraceForArmy(army.OwnerPlayerId,muzzle,delta/range,range+.05f);
+                if(visible?.PlayerId!=opponent.Definition.PlayerId&&
+                   visible?.DynamicOwner!=opponent.Definition.PlayerId)return;
+            }
+            tankCannonTargets[entityKey]=(army.OwnerPlayerId,decoy?.Owner??opponent.Definition.PlayerId,
+                target,decoy?.EntityId);
             attack.TryBegin(true,aim.AimTicks);
         }
         attack.AdvanceTick();
@@ -1725,7 +1765,8 @@ public sealed partial class MatchEngine
            !tankCannonDamage.TryGetValue(entityKey,out float damage))return;
         var weapon=groundVehicleWeapons.For(army.UnitId).Roles.Single(r=>r.Role=="cannon").Weapons.Single();
         var binding=weapon.Missile??throw new InvalidDataException("Tank cannon lacks missile binding.");
-        Vector3 CurrentTarget()=>CurrentPlayerBodyPosition(target.Target,vehicle.Position);
+        Vector3 CurrentTarget()=>target.DecoyId!=null?target.Position:
+            CurrentPlayerBodyPosition(target.Target,vehicle.Position);
         Vector3 position=CurrentTarget();
         var origin=groundVehicleWeapons.RestMuzzleOrigin(army.UnitId,"cannon",0,vehicle.Position,
             position-vehicle.Position);
@@ -1771,22 +1812,36 @@ public sealed partial class MatchEngine
         {
             var owner=Find(army.OwnerPlayerId)??throw new InvalidDataException("Buggy owner disappeared.");
             var opponent=players.Single(p=>p!=owner);if(!opponent.Admitted||opponent.Dead)return;
-            var pose=rifleCombat.Pose(opponent.Definition.PlayerId);
+            var decoy=SelectCannonDecoy(owner.Definition.Fraction,vehicle.Position,facing,turret,
+                out bool decoyPresent);
+            if(decoyPresent&&decoy==null)return;
             Vector3 target;
-            if(opponent.Route!=null&&pose.MovingTarget!=null)target=pose.MovingTarget.Position;
+            if(decoy!=null)target=decoy.Value.Position;
             else
             {
-                var body=playerShotTargets.Nearest(1,vehicle.Position,
-                    row=>pose.BodyTarget(row.TransformFileId).Position);
-                target=pose.BodyTarget(body.TransformFileId).Position;
+                var pose=rifleCombat.Pose(opponent.Definition.PlayerId);
+                if(opponent.Route!=null&&pose.MovingTarget!=null)target=pose.MovingTarget.Position;
+                else
+                {
+                    var body=playerShotTargets.Nearest(1,vehicle.Position,
+                        row=>pose.BodyTarget(row.TransformFileId).Position);
+                    target=pose.BodyTarget(body.TransformFileId).Position;
+                }
             }
-            GroundVehicleAim aim;try {aim=GroundVehicleAimPolicy.Resolve(vehicle.Position,facing,target,
+            GroundVehicleAim aim;
+            if(decoy!=null)aim=decoy.Value.Aim;
+            else try {aim=GroundVehicleAimPolicy.Resolve(vehicle.Position,facing,target,
                 turret.MaxShotRotation,turret.AimTime);}catch(InvalidDataException){return;}
             var muzzle=groundVehicleWeapons.RestMuzzleOrigin(army.UnitId,"cannon",0,vehicle.Position,aim.Direction);
             var delta=target-muzzle;float range=delta.Length();if(!float.IsFinite(range)||range<.001f)return;
-            var visible=rifleCombat.TraceForArmy(army.OwnerPlayerId,muzzle,delta/range,range+.05f);
-            if(visible?.PlayerId!=opponent.Definition.PlayerId&&visible?.DynamicOwner!=opponent.Definition.PlayerId)return;
-            buggyCannonTargets[entityKey]=(army.OwnerPlayerId,opponent.Definition.PlayerId,target);
+            if(decoy==null)
+            {
+                var visible=rifleCombat.TraceForArmy(army.OwnerPlayerId,muzzle,delta/range,range+.05f);
+                if(visible?.PlayerId!=opponent.Definition.PlayerId&&
+                   visible?.DynamicOwner!=opponent.Definition.PlayerId)return;
+            }
+            buggyCannonTargets[entityKey]=(army.OwnerPlayerId,decoy?.Owner??opponent.Definition.PlayerId,
+                target,decoy?.EntityId);
             attack.TryBegin(aim.AimTicks);
         }
         attack.AdvanceTick();
