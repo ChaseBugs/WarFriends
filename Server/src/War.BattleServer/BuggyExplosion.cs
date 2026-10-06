@@ -9,6 +9,25 @@ internal sealed record BuggyDynamicExplosion(CombatDamageType Kind,float RawDama
 /// <summary>Recovered MissileExplode falloff for AICarBuggy's paired cannon missiles.</summary>
 internal static class BuggyExplosion
 {
+    internal static BuggyDynamicExplosion? ResolveArmy(Vector3 origin,Vector3 root,
+        IReadOnlyList<PlayerHitbox> parts,float explosionDamage,GroundVehicleMissileBinding binding)
+    {
+        Validate(origin,explosionDamage,binding);
+        if(!PlayerHitbox.Finite(root)||parts==null)
+            throw new InvalidDataException("Vehicle missile army explosion requires current host authority.");
+        var selected=parts.Where(x=>x.Enabled&&x.Active&&x.OverlapsSphere(origin,binding.HurtRadius))
+            .OrderBy(x=>x.BoundsDistanceToPoint(origin))
+            .ThenBy(x=>x.SourcePath,StringComparer.Ordinal).FirstOrDefault();
+        if(selected==null)return null;
+        float distance=selected.BoundsDistanceToPoint(origin);
+        if(distance<binding.DeadRadius)
+            return new(CombatDamageType.Explosion,explosionDamage);
+        float fraction=Math.Clamp(1-(Vector3.Distance(root,origin)-binding.DeadRadius)/
+            (binding.HurtRadius-binding.DeadRadius),0,1);
+        return new(CombatDamageType.Shiver,binding.MinimumDamage+
+            (explosionDamage-binding.MinimumDamage)*fraction*fraction);
+    }
+
     internal static BuggyDynamicExplosion ResolveDynamic(Vector3 origin,MapDynamicCollider collider,
         float explosionDamage,GroundVehicleMissileBinding binding)
     {

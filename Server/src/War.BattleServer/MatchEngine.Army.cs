@@ -782,6 +782,51 @@ public sealed partial class MatchEngine
         }
     }
 
+    internal void ApplyGroundVehicleMissileRepairDroneExplosion(string shooterId,string unitId,
+        float damage,GroundVehicleMissileBinding binding,Vector3 origin)
+    {
+        if(phase!=BattlePhase.Running||groundVehicleWeapons==null||explosionPolicy==null||
+           !PlayerHitbox.Finite(origin)||!float.IsFinite(damage)||damage<=0||damage>10_000_000||
+           binding==null||unitId is not ("ID_UNIT-TANK" or "ID_UNIT-BUGGY")||
+           !groundVehicleWeapons.For(unitId).Roles.SelectMany(role=>role.Weapons)
+               .Any(weapon=>ReferenceEquals(weapon.Missile,binding)))
+            throw new InvalidDataException("Ground-vehicle missile lacks trusted repair-drone blast authority.");
+        var shooter=Find(shooterId)??throw new InvalidDataException("Vehicle missile owner disappeared.");
+        if(vehicles==null)return;
+        foreach(var vehicle in vehicles.Snapshot().Where(value=>value.UnitId=="ID_UNIT-TRANSPORTER")
+            .OrderBy(value=>value.EntityId))
+        {
+            if(!activeArmyEntities.TryGetValue(vehicle.EntityId,out var army)||
+               army.UnitId!=vehicle.UnitId||army.OwnerPlayerId!=vehicle.OwnerPlayerId||
+               !transporterRepairDrones.TryGetValue(vehicle.EntityId,out var drones))
+                throw new InvalidDataException("Vehicle missile repair drone lost shared host authority.");
+            var owner=Find(vehicle.OwnerPlayerId)??
+                throw new InvalidDataException("Vehicle missile repair-drone owner disappeared.");
+            bool friendly=owner.Definition.Fraction==shooter.Definition.Fraction;
+            int layer=owner.Definition.Fraction==1?23:owner.Definition.Fraction==2?22:
+                throw new InvalidDataException("Vehicle missile repair drone has unsupported faction.");
+            foreach(var drone in drones.OrderBy(value=>value.PathIndex))
+            {
+                if(!drone.Active)continue;
+                var snapshot=drone.Snapshot();
+                var collider=groundVehicleWeapons.PlaceRepairDrone(vehicle.EntityId,
+                    drone.PathIndex,layer,snapshot);
+                var effect=BuggyExplosion.ResolveArmy(origin,snapshot.Position,
+                    [collider.Hitbox],damage,binding);
+                if(effect==null)continue;
+                float amount=effect.RawDamage*(friendly?explosionPolicy.Friendly:1f);
+                if(!float.IsFinite(amount)||amount<=0||amount>10_000_000)
+                    throw new InvalidDataException("Vehicle missile repair-drone damage exceeded host bounds.");
+                if(!ApplyTransporterRepairDroneHostDamage(vehicle.EntityId,drone.PathIndex,amount))
+                    throw new InvalidDataException("Vehicle missile repair-drone health disappeared.");
+                if(!drone.Active)
+                    Emit(MatchEventKind.VehicleRepairDroneDown,vehicle.OwnerPlayerId,"",
+                        vehicle.EntityId,drone.Position,0,
+                        "vehicle-repair-drone-down:"+drone.PathIndex);
+            }
+        }
+    }
+
     internal void ApplyPlayerGrenadeAirBodyExplosion(string shooterId,Vector3 origin,GrenadeStage stage)
     {
         if(phase!=BattlePhase.Running||grenadeCatalog==null||explosionPolicy==null||
@@ -1526,6 +1571,8 @@ public sealed partial class MatchEngine
                 if(Terminal)return;
             }
         }
+        ApplyGroundVehicleMissileRepairDroneExplosion(owner,unitId,damage,binding,position);
+        if(Terminal)return;
         foreach(var victim in players.Where(x=>!x.Dead).ToArray())
         {
             float roll=damageRoll();

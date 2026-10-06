@@ -5833,6 +5833,31 @@ internal static class CombatContentTests
                   x.ProjectileId==transporterEntity.EntityKey&&
                   x.Reason=="vehicle-repair-drone-exploded:0"),
               "live dead repair drone falls into recovered scene geometry and publishes its terminal crash");
+        var missileDrone=transporterMatch.TransporterRepairDrones(transporterEntity.EntityKey)[1];
+        var missileDroneBox=transporterMatch.GroundVehicleShotTargets(helicopterOwner)
+            .Single(x=>x.EntityId==transporterEntity.EntityKey&&x.RepairDronePathIndex==1).Hitbox;
+        Vector3 missileDroneCenter=missileDroneBox.Center;
+        var tankDroneEffect=BuggyExplosion.ResolveArmy(missileDroneCenter,missileDrone.Position,
+            [missileDroneBox],21,tankMissileBinding);
+        Check(tankDroneEffect is {Kind:CombatDamageType.Explosion,RawDamage:21},
+            "Tank missile selects one MiniDrone root collider without bullet part weight");
+        float missileVehicleHealth=transporterMatch.ArmyHealth(transporterEntity.EntityKey)!.Value;
+        transporterMatch.ApplyGroundVehicleMissileRepairDroneExplosion(soldierOwner,
+            "ID_UNIT-TANK",21,tankMissileBinding,missileDroneCenter);
+        float friendlyMissileHealth=transporterMatch.TransporterRepairDrones(transporterEntity.EntityKey)[1].Health;
+        Check(Math.Abs(friendlyMissileHealth-(missileDrone.Health-10.5f))<.01f&&
+              Math.Abs(transporterMatch.ArmyHealth(transporterEntity.EntityKey)!.Value-
+                  missileVehicleHealth)<.01f,
+            "friendly Tank missile blast halves repair-drone damage without mutating vehicle body");
+        transporterMatch.ApplyGroundVehicleMissileRepairDroneExplosion(helicopterOwner,
+            "ID_UNIT-BUGGY",21,buggyMissileBinding,missileDroneCenter);
+        float opposingMissileHealth=transporterMatch.TransporterRepairDrones(transporterEntity.EntityKey)[1].Health;
+        Check(Math.Abs(opposingMissileHealth-Math.Max(0,friendlyMissileHealth-21))<.01f&&
+              Math.Abs(transporterMatch.ArmyHealth(transporterEntity.EntityKey)!.Value-
+                  missileVehicleHealth)<.01f,
+            "opposing Buggy missile blast damages the same independent repair-drone health");
+        Reject(()=>transporterMatch.ApplyGroundVehicleMissileRepairDroneExplosion(helicopterOwner,
+            "ID_UNIT-BUGGY",21,buggyMissileBinding with {MinimumDamage=1},missileDroneCenter));
         var repairShotManifest=transporterManifest with {MatchId="player-shot-repair-drone",
             DurationSeconds=180};
         var repairShotMatch=new MatchEngine(repairShotManifest,content:content,armyChoice:_=>0);
