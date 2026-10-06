@@ -531,6 +531,55 @@ internal static class GrenadeCatalogTests
                   {DirectBulletKills:0,DirectGrenadeKills:1,
                    DirectGrenadeVehiclesDestroyed:1,DirectGrenadeTanksDestroyed:1},
             "opposing Tank grenade death projects one cause-preserving vehicle and Tank kill candidate");
+        var transporterAllocation=tankAllocation with {MatchId="grenade-repair-drone",
+            Players=[tankAllocation.Players[0],tankAllocation.Players[1] with
+            {EquippedArmyUnitIds=["ID_UNIT-TRANSPORTER"],ArmySpecialUpgradeIndexes=[71]}]};
+        combat.ValidateAllocation(transporterAllocation);
+        var transporterMatch=new MatchEngine(transporterAllocation,map,combat,armyChoice:_=>0);
+        transporterMatch.Admit(one);
+        transporterMatch.Admit(two);
+        transporterMatch.Command(one,new(){CommandId=1,Ready=new(){ManifestHash=transporterMatch.ManifestHash}});
+        transporterMatch.Command(two,new(){CommandId=1,Ready=new(){ManifestHash=transporterMatch.ManifestHash}});
+        transporterMatch.Advance(60);
+        int transporterOption=transporterMatch.ArmyBatch(two).OptionIndexes.First();
+        Check(transporterMatch.Command(two,new(){CommandId=2,DeployArmy=new()
+            {OptionIndex=transporterOption}}).Code=="army-deploying",
+            "grenade opponent deploys a special-lane Transporter");
+        ulong transporterTick=60;
+        while(transporterTick<300&&transporterMatch.ArmyEntityBatch(one,0,0).Entities.Count==0)
+            transporterMatch.Advance(++transporterTick);
+        var transporter=transporterMatch.ArmyEntityBatch(one,0,0).Entities.Single();
+        var repairDrone=transporterMatch.TransporterRepairDrones(transporter.EntityKey).First();
+        var repairCollider=transporterMatch.GroundVehicleShotTargets(one)
+            .Single(target=>target.EntityId==transporter.EntityKey&&
+                target.RepairDronePathIndex==repairDrone.PathIndex);
+        var repairOrigin=repairCollider.Hitbox.Center;
+        var repairEffect=GrenadeExplosion.ResolveArmy(repairOrigin,repairDrone.Position,
+            [repairCollider.Hitbox],tankStage)!;
+        float transporterHealthBefore=transporterMatch.ArmyHealth(transporter.EntityKey)!.Value;
+        transporterMatch.ApplyPlayerGrenadeRepairDroneExplosion(two,repairOrigin,tankStage);
+        var friendlyRepairAfter=transporterMatch.TransporterRepairDrones(transporter.EntityKey)
+            .Single(value=>value.PathIndex==repairDrone.PathIndex);
+        float friendlyRepairDamage=repairEffect.RawDamage*combat.Explosions.Friendly;
+        Check(Math.Abs(friendlyRepairAfter.Health-
+                  Math.Max(0,repairDrone.Health-friendlyRepairDamage))<.01f&&
+              Math.Abs(transporterMatch.ArmyHealth(transporter.EntityKey)!.Value-
+                  transporterHealthBefore)<.01f,
+            "friendly grenade damages the repair-drone root at half strength without damaging Transporter body");
+        if(friendlyRepairAfter.Active)
+        {
+            transporterMatch.ApplyPlayerGrenadeRepairDroneExplosion(one,repairOrigin,tankStage);
+            var enemyRepairAfter=transporterMatch.TransporterRepairDrones(transporter.EntityKey)
+                .Single(value=>value.PathIndex==repairDrone.PathIndex);
+            Check(Math.Abs(enemyRepairAfter.Health-
+                      Math.Max(0,friendlyRepairAfter.Health-repairEffect.RawDamage))<.01f&&
+                  Math.Abs(transporterMatch.ArmyHealth(transporter.EntityKey)!.Value-
+                      transporterHealthBefore)<.01f,
+                "opposing grenade damages one repair drone without changing the vehicle body");
+        }
+        Reject(()=>transporterMatch.ApplyPlayerGrenadeRepairDroneExplosion(one,repairOrigin,
+            tankStage with {ExplosionDamage=1}),
+            "forged grenade stage cannot damage a Transporter repair drone");
         foreach(string airUnit in new[]{"ID_UNIT-DRONE","ID_UNIT-HELICOPTER"})
         {
             var airAllocation=infantryAllocation with {MatchId="grenade-air-"+airUnit[8..].ToLowerInvariant(),

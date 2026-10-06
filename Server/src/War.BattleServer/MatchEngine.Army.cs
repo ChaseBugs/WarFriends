@@ -675,6 +675,54 @@ public sealed partial class MatchEngine
         }
     }
 
+    internal void ApplyPlayerGrenadeRepairDroneExplosion(string shooterId,Vector3 origin,GrenadeStage stage)
+    {
+        if(phase!=BattlePhase.Running||grenadeCatalog==null||groundVehicleWeapons==null||
+           explosionPolicy==null||stage==null||
+           !ReferenceEquals(grenadeCatalog.Stage(stage.SourceId,stage.Index),stage)||
+           !PlayerHitbox.Finite(origin))
+            throw new InvalidDataException("Grenade repair-drone blast lacks trusted source authority.");
+
+        var shooter=Find(shooterId)??throw new InvalidDataException("Grenade owner disappeared.");
+        if(vehicles==null)return;
+
+        foreach(var vehicle in vehicles.Snapshot().Where(value=>value.UnitId=="ID_UNIT-TRANSPORTER")
+            .OrderBy(value=>value.EntityId))
+        {
+            if(!activeArmyEntities.TryGetValue(vehicle.EntityId,out var army)||
+               army.UnitId!=vehicle.UnitId||army.OwnerPlayerId!=vehicle.OwnerPlayerId||
+               !transporterRepairDrones.TryGetValue(vehicle.EntityId,out var drones))
+                throw new InvalidDataException("Grenade repair drone lost shared host authority.");
+
+            var owner=Find(vehicle.OwnerPlayerId)??
+                throw new InvalidDataException("Grenade repair-drone owner disappeared.");
+            bool friendly=owner.Definition.Fraction==shooter.Definition.Fraction;
+            int layer=owner.Definition.Fraction==1?23:owner.Definition.Fraction==2?22:
+                throw new InvalidDataException("Grenade repair drone has unsupported faction.");
+
+            foreach(var drone in drones.OrderBy(value=>value.PathIndex))
+            {
+                if(!drone.Active)continue;
+                var snapshot=drone.Snapshot();
+                var collider=groundVehicleWeapons.PlaceRepairDrone(vehicle.EntityId,
+                    drone.PathIndex,layer,snapshot);
+                var effect=GrenadeExplosion.ResolveArmy(origin,snapshot.Position,
+                    [collider.Hitbox],stage);
+                if(effect==null)continue;
+
+                float damage=effect.RawDamage*(friendly?explosionPolicy.Friendly:1f);
+                if(!float.IsFinite(damage)||damage<=0||damage>10_000_000)
+                    throw new InvalidDataException("Grenade repair-drone damage exceeded host bounds.");
+                if(!ApplyTransporterRepairDroneHostDamage(vehicle.EntityId,drone.PathIndex,damage))
+                    throw new InvalidDataException("Grenade repair-drone health disappeared.");
+                if(!drone.Active)
+                    Emit(MatchEventKind.VehicleRepairDroneDown,vehicle.OwnerPlayerId,"",
+                        vehicle.EntityId,drone.Position,0,
+                        "vehicle-repair-drone-down:"+drone.PathIndex);
+            }
+        }
+    }
+
     internal void ApplyPlayerGrenadeAirBodyExplosion(string shooterId,Vector3 origin,GrenadeStage stage)
     {
         if(phase!=BattlePhase.Running||grenadeCatalog==null||explosionPolicy==null||
