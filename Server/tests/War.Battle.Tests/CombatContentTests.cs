@@ -5917,6 +5917,40 @@ internal static class CombatContentTests
             "opposing Tank cannon blast damages the same independent repair-drone health");
         Reject(()=>transporterMatch.ApplyGroundVehicleMissileRepairDroneExplosion(helicopterOwner,
             "ID_UNIT-BUGGY",21,buggyMissileBinding with {MinimumDamage=1},missileDroneCenter));
+        var missilePassenger=transporterMatch.VehiclePassengers(transporterEntity.EntityKey)
+            .First(value=>value.Active);
+        var missilePassengerBox=transporterMatch.GroundVehicleShotTargets(helicopterOwner)
+            .First(target=>target.EntityId==transporterEntity.EntityKey&&
+                target.PassengerRole==missilePassenger.Role).Hitbox;
+        Vector3 missilePassengerCenter=missilePassengerBox.Center;
+        float bodyBeforePassengerMissile=transporterMatch.ArmyHealth(transporterEntity.EntityKey)!.Value;
+        transporterMatch.ApplyGroundVehicleMissilePassengerExplosion(soldierOwner,
+            "ID_UNIT-TANK",21,tankMissileBinding,missilePassengerCenter);
+        transporterMatch.ApplyGroundVehicleMissilePassengerExplosion(soldierOwner,
+            "ID_UNIT-BUGGY",21,buggyMissileBinding,missilePassengerCenter);
+        float passengerAfterPrimaryMissiles=transporterMatch.VehiclePassengers(transporterEntity.EntityKey)
+            .Single(value=>value.Role==missilePassenger.Role).Health;
+        Check(Math.Abs(passengerAfterPrimaryMissiles-missilePassenger.Health)<.01f,
+            "Tank and Buggy primary missiles skip a friendly attached passenger");
+        transporterMatch.ApplyGroundVehicleMissilePassengerExplosion(soldierOwner,
+            "ID_UNIT-BUGGY",21,buggySecondaryBinding,missilePassengerCenter);
+        float passengerAfterFriendlyMissile=transporterMatch.VehiclePassengers(transporterEntity.EntityKey)
+            .Single(value=>value.Role==missilePassenger.Role).Health;
+        Check(Math.Abs(passengerAfterFriendlyMissile-
+                  Math.Max(0,missilePassenger.Health-10.5f))<.01f,
+            "Buggy secondary missile applies half blast damage to a friendly passenger");
+        Check(passengerAfterFriendlyMissile>21,
+            "Transporter passenger survives long enough to verify opposing missile damage");
+        transporterMatch.ApplyGroundVehicleMissilePassengerExplosion(helicopterOwner,
+            "ID_UNIT-TANK",21,tankMissileBinding,missilePassengerCenter);
+        float passengerAfterEnemyMissile=transporterMatch.VehiclePassengers(transporterEntity.EntityKey)
+            .Single(value=>value.Role==missilePassenger.Role).Health;
+        Check(Math.Abs(passengerAfterEnemyMissile-(passengerAfterFriendlyMissile-21))<.01f&&
+              Math.Abs(transporterMatch.ArmyHealth(transporterEntity.EntityKey)!.Value-
+                  bodyBeforePassengerMissile)<.01f,
+            "opposing Tank blast damages passenger separately from Transporter body");
+        Reject(()=>transporterMatch.ApplyGroundVehicleMissilePassengerExplosion(helicopterOwner,
+            "ID_UNIT-TANK",21,tankMissileBinding with {MinimumDamage=1},missilePassengerCenter));
         var missileBody=transporterMatch.GroundVehicleShotTargets(helicopterOwner)
             .First(target=>target.EntityId==transporterEntity.EntityKey&&target.GroundVehicleBody).Hitbox;
         Vector3 missileBodyCenter=missileBody.Center;

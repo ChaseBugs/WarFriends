@@ -907,6 +907,47 @@ public sealed partial class MatchEngine
         }
     }
 
+    internal void ApplyGroundVehicleMissilePassengerExplosion(string shooterId,string unitId,
+        float damage,GroundVehicleMissileBinding binding,Vector3 origin)
+    {
+        if(phase!=BattlePhase.Running||groundVehicleWeapons==null||explosionPolicy==null||
+           !PlayerHitbox.Finite(origin)||!float.IsFinite(damage)||damage<=0||damage>10_000_000||
+           binding==null||unitId is not ("ID_UNIT-TANK" or "ID_UNIT-BUGGY"))
+            throw new InvalidDataException("Ground-vehicle missile lacks trusted passenger blast authority.");
+        var sourceWeapon=GroundVehicleMissileSourceWeapon(unitId,binding);
+        var shooter=Find(shooterId)??throw new InvalidDataException("Vehicle missile owner disappeared.");
+        if(vehicles==null)return;
+        foreach(var vehicle in vehicles.Snapshot().OrderBy(value=>value.EntityId))
+        {
+            if(!activeArmyEntities.TryGetValue(vehicle.EntityId,out var army)||
+               army.UnitId!=vehicle.UnitId||army.OwnerPlayerId!=vehicle.OwnerPlayerId||
+               !groundVehicleFacing.TryGetValue(vehicle.EntityId,out var facing)||
+               !vehiclePassengers.TryGetValue(vehicle.EntityId,out var passengers))
+                throw new InvalidDataException("Vehicle missile passenger lost shared host authority.");
+            var owner=Find(vehicle.OwnerPlayerId)??
+                throw new InvalidDataException("Vehicle missile passenger owner disappeared.");
+            bool friendly=owner.Definition.Fraction==shooter.Definition.Fraction;
+            if(friendly&&!sourceWeapon.FriendKill)continue;
+            foreach(var passenger in passengers.Values.OrderBy(value=>value.Binding.PointComponentFileId))
+            {
+                if(!passenger.Active)continue;
+                if(passenger.AnimationStartTick>tick)
+                    throw new InvalidDataException("Vehicle missile passenger animation starts after match time.");
+                ulong animationTick=tick-passenger.AnimationStartTick;
+                var hitboxes=groundVehicleWeapons.PassengerPoses.Place(vehicle.UnitId,
+                    passenger.Binding,vehicle.Position,facing,animationTick);
+                var passengerPosition=PassengerWorldPosition(vehicle.EntityId,passenger.Binding);
+                var effect=BuggyExplosion.ResolveArmy(origin,passengerPosition,hitboxes,
+                    damage,binding);
+                if(effect==null)continue;
+                float amount=effect.RawDamage*(friendly?explosionPolicy.Friendly:1f);
+                if(!float.IsFinite(amount)||amount<=0||amount>10_000_000)
+                    throw new InvalidDataException("Vehicle missile passenger damage exceeded host bounds.");
+                ApplyVehiclePassengerHostDamage(vehicle.EntityId,passenger.Binding.Role,amount);
+            }
+        }
+    }
+
     internal void ApplyPlayerGrenadeAirBodyExplosion(string shooterId,Vector3 origin,GrenadeStage stage)
     {
         if(phase!=BattlePhase.Running||grenadeCatalog==null||explosionPolicy==null||
@@ -1654,6 +1695,8 @@ public sealed partial class MatchEngine
         ApplyGroundVehicleMissileInfantryExplosion(owner,unitId,damage,binding,position);
         if(Terminal)return;
         ApplyGroundVehicleMissileRepairDroneExplosion(owner,unitId,damage,binding,position);
+        if(Terminal)return;
+        ApplyGroundVehicleMissilePassengerExplosion(owner,unitId,damage,binding,position);
         if(Terminal)return;
         ApplyGroundVehicleMissileVehicleExplosion(owner,unitId,damage,binding,position);
         if(Terminal)return;
