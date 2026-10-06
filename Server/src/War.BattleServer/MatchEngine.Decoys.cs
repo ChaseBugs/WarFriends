@@ -178,6 +178,41 @@ public sealed partial class MatchEngine
         }
     }
 
+    internal void ApplyPlayerBazookaDecoyExplosion(string shooterId,Vector3 origin,
+        BazookaStage stage,BazookaBinding binding,bool halfDamage)
+    {
+        if(phase!=BattlePhase.Running||bazookaCatalog==null||explosionPolicy==null||
+           stage==null||binding==null||
+           !ReferenceEquals(bazookaCatalog.Stage(stage.SourceId,stage.Index),stage)||
+           !ReferenceEquals(bazookaCatalog.Binding(stage.SourceId),binding)||
+           !PlayerHitbox.Finite(origin))
+            throw new InvalidDataException("Bazooka Decoy blast lacks trusted source authority.");
+
+        var shooter=Find(shooterId)??throw new InvalidDataException("Bazooka owner disappeared.");
+        if(decoySource==null)return;
+        foreach(var collider in DecoyShotTargets(shooter,includeFriendly:true))
+        {
+            var target=decoys.Snapshot().SingleOrDefault(value=>value.EntityId==collider.EntityId)??
+                throw new InvalidDataException("Bazooka Decoy lost host health authority.");
+            var effect=BazookaExplosion.ResolveArmy(origin,target.Position,[collider.Hitbox],
+                stage,binding,halfDamage);
+            if(effect==null)continue;
+
+            bool friendly=target.OwnerFraction==shooter.Definition.Fraction;
+            float damage=effect.RawDamage*(friendly?explosionPolicy.Friendly:1f);
+            if(!float.IsFinite(damage)||damage<=0||damage>10_000_000||
+               !decoys.TryDamage(target.EntityId,damage,out var before,out bool destroyed)||before==null)
+                throw new InvalidDataException("Bazooka Decoy damage escaped host bounds.");
+            stateRevision++;
+            if(destroyed)
+            {
+                droneTargets.Disable(DroneDecoyId(target.EntityId));
+                Emit(MatchEventKind.DecoyDestroyed,shooterId,before.OwnerPlayerId,
+                    target.EntityId,before.Position,0,"player-bazooka");
+            }
+        }
+    }
+
     internal int ApplyArmyFlameDecoyPulse(ulong sourceEntityKey,Vector3 origin,Vector3 forward)
     {
         if(phase!=BattlePhase.Running||!activeArmyEntities.TryGetValue(sourceEntityKey,out var source)||

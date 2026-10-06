@@ -239,6 +239,65 @@ internal static class BazookaCatalogTests
             throw new Exception("FAIL: forged bazooka infantry stage");
         }
         catch(InvalidDataException){checks++;}
+        var decoyAllocation=repairAllocation with {MatchId="bazooka-decoy-blast",
+            SceneMasterPlayerId=one,Players=
+            [repairAllocation.Players[0] with {PlayerLevel=0},
+             repairAllocation.Players[1] with {PlayerLevel=0}]};
+        var decoyMatch=new MatchEngine(decoyAllocation,map,content);
+        decoyMatch.ConfigureBattleAllocations([
+            new(one,["CardDecoy"],[],[0],[-1],[-1]),
+            new(two,["CardDecoy"],[],[0],[71],[-1])]);
+        decoyMatch.Admit(one);decoyMatch.Admit(two);
+        foreach(var player in new[]{one,two})
+        {
+            int special=player==one?-1:71;
+            string selection=decoyMatch.Command(player,new(){CommandId=1,SelectCards=new()
+                {CardIds={"CardDecoy"},NormalUpgradeIndexes={0},
+                 SpecialUpgradeIndexes={special},EliteUpgradeIndexes={-1}}}).Code;
+            Check(selection=="cards-selected",
+                "Bazooka match accepts source Decoy inventory: "+selection);
+            decoyMatch.Command(player,new(){CommandId=2,
+                Ready=new(){ManifestHash=decoyMatch.ManifestHash}});
+        }
+        decoyMatch.Advance(60);
+        string enemyDecoyResult=decoyMatch.Command(two,new(){CommandId=3,UseDecoy=new()
+            {RequestId=new string('d',32)}}).Code;
+        Check(enemyDecoyResult=="decoy-spawned",
+            "opponent deploys Decoys for Bazooka blast: "+enemyDecoyResult);
+        var enemyDecoy=decoyMatch.Snapshot().Decoys.First(value=>value.OwnerPlayerId==two);
+        Vector3 enemyDecoyOrigin=new(enemyDecoy.X,enemyDecoy.Y,enemyDecoy.Z);
+        decoyMatch.ApplyPlayerBazookaDecoyExplosion(one,enemyDecoyOrigin,airRpg,airBinding,false);
+        float? enemyDecoyAfter=decoyMatch.DecoyHealth(enemyDecoy.EntityId);
+        float expectedEnemyDecoy=enemyDecoy.Health-airRpg.ExplosionDamage;
+        Check(expectedEnemyDecoy<=0?enemyDecoyAfter==null:
+              enemyDecoyAfter!=null&&Math.Abs(enemyDecoyAfter.Value-expectedEnemyDecoy)<.01f,
+            "opposing Bazooka blast damages one Decoy root using source damage");
+        Check(decoyMatch.Command(one,new(){CommandId=3,UseDecoy=new()
+            {RequestId=new string('e',32)}}).Code=="decoy-spawned",
+            "Bazooka owner deploys a separate friendly Decoy");
+        var friendlyDecoy=decoyMatch.Snapshot().Decoys.First(value=>value.OwnerPlayerId==one);
+        Vector3 friendlyDecoyOrigin=new(friendlyDecoy.X,friendlyDecoy.Y,friendlyDecoy.Z);
+        decoyMatch.ApplyPlayerBazookaDecoyExplosion(one,friendlyDecoyOrigin,airRpg,airBinding,true);
+        float? friendlyDecoyAfter=decoyMatch.DecoyHealth(friendlyDecoy.EntityId);
+        float expectedFriendlyDecoy=friendlyDecoy.Health-
+            airRpg.ExplosionDamage*.5f*content.Explosions.Friendly;
+        Check(expectedFriendlyDecoy<=0?friendlyDecoyAfter==null:
+              friendlyDecoyAfter!=null&&Math.Abs(friendlyDecoyAfter.Value-expectedFriendlyDecoy)<.01f,
+            "half-damage Bazooka projectile and friendly coefficient both apply to Decoy");
+        try
+        {
+            decoyMatch.ApplyPlayerBazookaDecoyExplosion(one,enemyDecoyOrigin,
+                airRpg with {ExplosionDamage=1},airBinding,false);
+            throw new Exception("FAIL: forged Bazooka Decoy stage");
+        }
+        catch(InvalidDataException){checks++;}
+        for(int blast=0;blast<30&&decoyMatch.DecoyHealth(enemyDecoy.EntityId)!=null;blast++)
+            decoyMatch.ApplyPlayerBazookaDecoyExplosion(one,enemyDecoyOrigin,
+                airRpg,airBinding,false);
+        Check(decoyMatch.DecoyHealth(enemyDecoy.EntityId)==null&&
+              decoyMatch.DroneTargetSnapshot().All(value=>
+                  value.Id!="decoy:"+enemyDecoy.EntityId),
+            "lethal Bazooka blast removes Decoy health and Drone target authority");
         var repairMatch=new MatchEngine(repairAllocation,map,content,armyChoice:_=>0);
         repairMatch.Admit(one);repairMatch.Admit(two);
         repairMatch.Command(one,new(){CommandId=1,Ready=new(){ManifestHash=repairMatch.ManifestHash}});
