@@ -168,6 +168,31 @@ internal static class BazookaCatalogTests
             throw new Exception("FAIL: forged bazooka passenger stage");
         }
         catch(InvalidDataException){checks++;}
+        var bodyBox=repairMatch.GroundVehicleShotTargets(one).First(x=>
+            x.EntityId==repairVehicle.EntityKey&&x.GroundVehicleBody).Hitbox;
+        float bodyBeforeBlast=repairMatch.ArmyHealth(repairVehicle.EntityKey)!.Value;
+        float passengerBeforeBodyBlast=repairMatch.VehiclePassengers(repairVehicle.EntityKey)
+            .Single(x=>x.Role==passenger.Role).Health;
+        repairMatch.ApplyPlayerBazookaGroundVehicleExplosion(two,bodyBox.Center,
+            trustedRpg,trustedStraight,true);
+        float bodyAfterFriendlyBlast=repairMatch.ArmyHealth(repairVehicle.EntityKey)!.Value;
+        Check(Math.Abs(bodyBeforeBlast-bodyAfterFriendlyBlast-rpg.ExplosionDamage*.25f)<.01f&&
+              Math.Abs(repairMatch.Snapshot().Vehicles.Single().Health-bodyAfterFriendlyBlast)<.01f,
+            "friendly half-damage Bazooka blast synchronizes Transporter body and vehicle registry");
+        repairMatch.ApplyPlayerBazookaGroundVehicleExplosion(one,bodyBox.Center,
+            trustedRpg,trustedStraight,false);
+        float bodyAfterEnemyBlast=repairMatch.ArmyHealth(repairVehicle.EntityKey)!.Value;
+        Check(Math.Abs(bodyAfterFriendlyBlast-bodyAfterEnemyBlast-rpg.ExplosionDamage)<.01f&&
+              Math.Abs(repairMatch.VehiclePassengers(repairVehicle.EntityKey)
+                  .Single(x=>x.Role==passenger.Role).Health-passengerBeforeBodyBlast)<.01f,
+            "opposing Bazooka body blast leaves independently damaged passenger health unchanged");
+        try
+        {
+            repairMatch.ApplyPlayerBazookaGroundVehicleExplosion(one,bodyBox.Center,
+                trustedRpg with {ExplosionDamage=1},trustedStraight,false);
+            throw new Exception("FAIL: forged bazooka vehicle stage");
+        }
+        catch(InvalidDataException){checks++;}
         var repairDrone=repairMatch.TransporterRepairDrones(repairVehicle.EntityKey)[0];
         var repairBox=repairMatch.GroundVehicleShotTargets(one).Single(x=>
             x.EntityId==repairVehicle.EntityKey&&x.RepairDronePathIndex==0).Hitbox;
@@ -199,6 +224,13 @@ internal static class BazookaCatalogTests
             throw new Exception("FAIL: forged bazooka repair-drone stage");
         }
         catch(InvalidDataException){checks++;}
+        for(int blast=0;blast<30&&repairMatch.ArmyHealth(repairVehicle.EntityKey)!=null;blast++)
+            repairMatch.ApplyPlayerBazookaGroundVehicleExplosion(one,bodyBox.Center,
+                trustedRpg,trustedStraight,false);
+        Check(repairMatch.ArmyHealth(repairVehicle.EntityKey)==null&&
+              repairMatch.Snapshot().Vehicles.All(x=>x.EntityId!=repairVehicle.EntityKey)&&
+              repairMatch.GroundVehicleShotTargets(one).All(x=>x.EntityId!=repairVehicle.EntityKey),
+            "lethal Bazooka body blast removes shared vehicle, passenger, and collision authority");
         var naturalRepairAllocation=repairAllocation with {MatchId="bazooka-natural-repair-drone"};
         var naturalRepair=new MatchEngine(naturalRepairAllocation,map,content,armyChoice:_=>0);
         naturalRepair.Admit(one);naturalRepair.Admit(two);

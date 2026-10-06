@@ -827,6 +827,52 @@ public sealed partial class MatchEngine
         }
     }
 
+    internal void ApplyPlayerBazookaGroundVehicleExplosion(string shooterId,Vector3 origin,
+        BazookaStage stage,BazookaBinding binding,bool halfDamage)
+    {
+        if(phase!=BattlePhase.Running||bazookaCatalog==null||explosionPolicy==null||
+           stage==null||binding==null||
+           !ReferenceEquals(bazookaCatalog.Stage(stage.SourceId,stage.Index),stage)||
+           !ReferenceEquals(bazookaCatalog.Binding(stage.SourceId),binding)||
+           !PlayerHitbox.Finite(origin))
+            throw new InvalidDataException("Bazooka vehicle blast lacks trusted source authority.");
+        var shooter=Find(shooterId)??throw new InvalidDataException("Bazooka owner disappeared.");
+        if(vehicles==null)return;
+        var targets=vehicles.Snapshot().OrderBy(value=>value.EntityId).ToArray();
+        if(targets.Length==0)return;
+        if(groundVehicleWeapons==null)
+            throw new InvalidDataException("Bazooka vehicle blast lacks ground-vehicle source authority.");
+        foreach(var vehicle in targets)
+        {
+            if(!activeArmyEntities.TryGetValue(vehicle.EntityId,out var army)||
+               army.UnitId!=vehicle.UnitId||army.OwnerPlayerId!=vehicle.OwnerPlayerId||
+               !groundVehicleFacing.TryGetValue(vehicle.EntityId,out var facing))
+                throw new InvalidDataException("Bazooka vehicle lost shared host authority.");
+            var owner=Find(vehicle.OwnerPlayerId)??
+                throw new InvalidDataException("Bazooka vehicle owner disappeared.");
+            var bodies=groundVehicleWeapons.PlaceBody(vehicle.UnitId,vehicle.EntityId,
+                vehicle.Position,facing,owner.Definition.Fraction);
+            var effect=BazookaExplosion.ResolveArmy(origin,vehicle.Position,
+                bodies.Select(value=>value.Hitbox).ToArray(),stage,binding,halfDamage);
+            if(effect==null)continue;
+            bool friendly=owner.Definition.Fraction==shooter.Definition.Fraction;
+            float amount=effect.RawDamage*(friendly?explosionPolicy.Friendly:1f);
+            if(!float.IsFinite(amount)||amount<=0||amount>10_000_000)
+                throw new InvalidDataException("Bazooka vehicle damage exceeded host bounds.");
+            float before=ArmyHealth(vehicle.EntityId)??
+                throw new InvalidDataException("Bazooka vehicle lacks shared vitality.");
+            ApplyArmyHostDamage(vehicle.EntityId,amount);
+            if(Terminal)return;
+            if(!activeArmyEntities.ContainsKey(vehicle.EntityId))continue;
+            float after=ArmyHealth(vehicle.EntityId)??
+                throw new InvalidDataException("Bazooka vehicle vitality disappeared after nonlethal blast.");
+            float applied=before-after;
+            if(applied>0&&(!vehicles.TryDamage(vehicle.EntityId,applied,out float registryApplied,
+                out bool destroyed)||destroyed||Math.Abs(applied-registryApplied)>.001f))
+                throw new InvalidDataException("Bazooka vehicle vitality diverged from registry.");
+        }
+    }
+
     internal void ApplyGroundVehicleMissileRepairDroneExplosion(string shooterId,string unitId,
         float damage,GroundVehicleMissileBinding binding,Vector3 origin)
     {
