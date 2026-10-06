@@ -1018,6 +1018,37 @@ public sealed partial class MatchEngine
         }
     }
 
+    internal void ApplyGroundVehicleMissileAirBodyExplosion(string shooterId,string unitId,
+        float damage,GroundVehicleMissileBinding binding,Vector3 origin)
+    {
+        if(phase!=BattlePhase.Running||groundVehicleWeapons==null||explosionPolicy==null||
+           !PlayerHitbox.Finite(origin)||!float.IsFinite(damage)||damage<=0||damage>10_000_000||
+           binding==null||unitId is not ("ID_UNIT-TANK" or "ID_UNIT-BUGGY"))
+            throw new InvalidDataException("Ground-vehicle missile lacks trusted air-body blast authority.");
+        var sourceWeapon=GroundVehicleMissileSourceWeapon(unitId,binding);
+        var shooter=Find(shooterId)??throw new InvalidDataException("Vehicle missile owner disappeared.");
+        var groups=GroundVehicleShotTargets(shooterId,true)
+            .Where(target=>target.DroneRoot||target.HelicopterBody)
+            .GroupBy(target=>target.EntityId).OrderBy(group=>group.Key).ToArray();
+        foreach(var group in groups)
+        {
+            if(!activeArmyEntities.TryGetValue(group.Key,out var army)||
+               army.UnitId is not ("ID_UNIT-DRONE" or "ID_UNIT-HELICOPTER")||
+               group.Any(target=>army.UnitId=="ID_UNIT-DRONE"?!target.DroneRoot:!target.HelicopterBody))
+                throw new InvalidDataException("Vehicle missile air body lost source entity authority.");
+            bool friendly=army.OwnerFraction==shooter.Definition.Fraction;
+            if(friendly&&!sourceWeapon.FriendKill)continue;
+            var effect=BuggyExplosion.ResolveArmy(origin,new(army.X,army.Y,army.Z),
+                group.Select(target=>target.Hitbox).ToArray(),damage,binding);
+            if(effect==null)continue;
+            float amount=effect.RawDamage*(friendly?explosionPolicy.Friendly:1f);
+            if(!float.IsFinite(amount)||amount<=0||amount>10_000_000)
+                throw new InvalidDataException("Vehicle missile air-body damage exceeded host bounds.");
+            ApplyArmyHostDamage(group.Key,amount);
+            if(Terminal)return;
+        }
+    }
+
     internal void ApplyGroundVehicleMissileVehicleExplosion(string shooterId,string unitId,
         float damage,GroundVehicleMissileBinding binding,Vector3 origin)
     {
@@ -1846,6 +1877,8 @@ public sealed partial class MatchEngine
             }
         }
         ApplyGroundVehicleMissileInfantryExplosion(owner,unitId,damage,binding,position);
+        if(Terminal)return;
+        ApplyGroundVehicleMissileAirBodyExplosion(owner,unitId,damage,binding,position);
         if(Terminal)return;
         ApplyGroundVehicleMissileRepairDroneExplosion(owner,unitId,damage,binding,position);
         if(Terminal)return;

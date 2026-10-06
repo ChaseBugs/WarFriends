@@ -6026,6 +6026,50 @@ internal static class CombatContentTests
               missileTurretMatch.GroundVehicleShotTargets(decoyPlayer)
                   .All(value=>value.EntityId!=enemyMissileTurret.EntityId),
             "lethal vehicle missile blast removes Heavy Turret health and joint collision authority");
+        var missileAirManifest=flameHelicopterManifest with {MatchId="vehicle-missile-air-blast",
+            Players=[flameHelicopterManifest.Players[0] with
+            {EquippedArmyUnitIds=["ID_UNIT-DRONE"]},flameHelicopterManifest.Players[1]]};
+        content.ValidateAllocation(missileAirManifest);
+        var missileAirMatch=new MatchEngine(missileAirManifest,content:content,armyChoice:_=>0);
+        missileAirMatch.Admit(soldierOwner);missileAirMatch.Admit(helicopterOwner);
+        missileAirMatch.Command(soldierOwner,new(){CommandId=1,
+            Ready=new(){ManifestHash=missileAirMatch.ManifestHash}});
+        missileAirMatch.Command(helicopterOwner,new(){CommandId=1,
+            Ready=new(){ManifestHash=missileAirMatch.ManifestHash}});
+        missileAirMatch.Advance(60);
+        Check(missileAirMatch.Command(soldierOwner,new(){CommandId=2,DeployArmy=new()
+            {OptionIndex=missileAirMatch.ArmyBatch(soldierOwner).OptionIndexes[0]}}).Code=="army-deploying"&&
+              missileAirMatch.Command(helicopterOwner,new(){CommandId=2,DeployArmy=new()
+            {OptionIndex=missileAirMatch.ArmyBatch(helicopterOwner).OptionIndexes[0]}}).Code=="army-deploying",
+            "vehicle missile air-body proof deploys both recovered air families");
+        for(ulong airTick=61;airTick<=75;airTick++)missileAirMatch.Advance(airTick);
+        var missileAirRows=missileAirMatch.ArmyEntityBatch(soldierOwner,0,0).Entities;
+        var airMissileDrone=missileAirRows.Single(row=>row.UnitId=="ID_UNIT-DRONE");
+        var missileHelicopter=missileAirRows.Single(row=>row.UnitId=="ID_UNIT-HELICOPTER");
+        var droneBody=missileAirMatch.GroundVehicleShotTargets(helicopterOwner)
+            .Single(target=>target.EntityId==airMissileDrone.EntityKey&&target.DroneRoot).Hitbox.Center;
+        var helicopterBody=missileAirMatch.GroundVehicleShotTargets(soldierOwner)
+            .First(target=>target.EntityId==missileHelicopter.EntityKey&&target.HelicopterBody).Hitbox.Center;
+        float friendlyDroneHealth=missileAirMatch.ArmyHealth(airMissileDrone.EntityKey)!.Value;
+        missileAirMatch.ApplyGroundVehicleMissileAirBodyExplosion(soldierOwner,
+            "ID_UNIT-TANK",21,tankMissileBinding,droneBody);
+        missileAirMatch.ApplyGroundVehicleMissileAirBodyExplosion(soldierOwner,
+            "ID_UNIT-BUGGY",21,buggyMissileBinding,droneBody);
+        Check(missileAirMatch.ArmyHealth(airMissileDrone.EntityKey)==friendlyDroneHealth,
+            "Tank and Buggy primary missiles cannot damage a friendly Drone body");
+        missileAirMatch.ApplyGroundVehicleMissileAirBodyExplosion(soldierOwner,
+            "ID_UNIT-BUGGY",21,buggySecondaryBinding,droneBody);
+        Check(Math.Abs(missileAirMatch.ArmyHealth(airMissileDrone.EntityKey)!.Value-
+                  (friendlyDroneHealth-10.5f))<.01f,
+            "Buggy secondary missile applies recovered half friendly damage to Drone root");
+        float enemyHelicopterHealth=missileAirMatch.ArmyHealth(missileHelicopter.EntityKey)!.Value;
+        missileAirMatch.ApplyGroundVehicleMissileAirBodyExplosion(soldierOwner,
+            "ID_UNIT-TANK",21,tankMissileBinding,helicopterBody);
+        Check(Math.Abs(missileAirMatch.ArmyHealth(missileHelicopter.EntityKey)!.Value-
+                  (enemyHelicopterHealth-21))<.01f,
+            "Tank missile explosion damages one opposing Helicopter body once");
+        Reject(()=>missileAirMatch.ApplyGroundVehicleMissileAirBodyExplosion(soldierOwner,
+            "ID_UNIT-TANK",21,tankMissileBinding with {MinimumDamage=1},helicopterBody));
         transporterMatch.ApplyGroundVehicleMissileRepairDroneExplosion(soldierOwner,
             "ID_UNIT-BUGGY",21,buggySecondaryBinding,missileDroneCenter);
         float friendlyBuggyHealth=transporterMatch.TransporterRepairDrones(transporterEntity.EntityKey)[1].Health;
