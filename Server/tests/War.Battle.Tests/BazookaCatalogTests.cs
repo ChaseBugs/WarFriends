@@ -549,6 +549,38 @@ internal static class BazookaCatalogTests
         }
         Check(naturalDroneDamaged&&naturalRepair.Snapshot().Players.Single(x=>x.PlayerId==one).ShotsFired>0,
             "normal bazooka hold, missile flight and impact damage a moving repair drone");
+        float naturalBodyBefore=naturalRepair.ArmyHealth(naturalVehicle.EntityKey)!.Value;
+        bool naturalBodyDamaged=false,naturalBodySynchronized=false;
+        for(;naturalTick<3000&&!naturalRepair.Terminal;)
+        {
+            if(naturalTick%240==0)
+            {
+                var bodyTarget=naturalRepair.GroundVehicleShotTargets(one).FirstOrDefault(value=>
+                    value.EntityId==naturalVehicle.EntityKey&&value.GroundVehicleBody);
+                if(bodyTarget==null)break;
+                Vector3 aim=bodyTarget.Hitbox.Center;
+                naturalRepair.Command(one,new(){CommandId=bazookaCommand++,BazookaHold=new()
+                    {Pressed=true,TargetX=aim.X,TargetY=aim.Y,TargetZ=aim.Z}});
+            }
+            naturalRepair.Advance(++naturalTick);
+            float? bodyHealth=naturalRepair.ArmyHealth(naturalVehicle.EntityKey);
+            if(bodyHealth is null)
+            {
+                naturalBodyDamaged=true;
+                naturalBodySynchronized=naturalRepair.Snapshot().Vehicles
+                    .All(value=>value.EntityId!=naturalVehicle.EntityKey);
+                break;
+            }
+            if(bodyHealth.Value>=naturalBodyBefore-.01f)continue;
+            naturalBodyDamaged=true;
+            var registryVehicle=naturalRepair.Snapshot().Vehicles
+                .Single(value=>value.EntityId==naturalVehicle.EntityKey);
+            naturalBodySynchronized=Math.Abs(registryVehicle.Health-bodyHealth.Value)<.01f;
+            break;
+        }
+        Check(naturalBodyDamaged&&naturalBodySynchronized&&
+              naturalRepair.Snapshot().Players.Single(value=>value.PlayerId==one).ShotsFired>=2,
+            "normal Bazooka missile blast reduces shared Transporter body health");
         var shieldAllocation=allocation with {MatchId="bazooka-shield",Players=
             [allocation.Players[0] with {ShieldLevel=0},allocation.Players[1] with {ShieldLevel=0}]};
         var shieldSimulation=new ShieldMatchSimulation(map,content.Shields,shieldAllocation);
