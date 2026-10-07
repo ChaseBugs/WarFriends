@@ -1,9 +1,10 @@
 namespace War.BattleServer;
 
-/// <summary>Source-shaped subset from confirmed direct player-owned army deaths.</summary>
+/// <summary>Read-only source-shaped candidates from confirmed player-owned army deaths.</summary>
 public sealed record BattleDirectKillStats(string PlayerId,int DirectBulletKills,
     int DirectBulletVehiclesDestroyed,int DirectBulletTanksDestroyed,int DirectGrenadeKills,
-    int DirectGrenadeVehiclesDestroyed,int DirectGrenadeTanksDestroyed);
+    int DirectGrenadeVehiclesDestroyed,int DirectGrenadeTanksDestroyed,
+    int DirectMineKills,int DirectMineVehiclesDestroyed,int DirectMineTanksDestroyed);
 
 public static class BattleDirectKillStatsProjection
 {
@@ -24,9 +25,17 @@ public static class BattleDirectKillStatsProjection
     {"ID_UNIT-HUMVEE","ID_UNIT-TANK","ID_UNIT-BUGGY","ID_UNIT-TRANSPORTER"};
     private static readonly HashSet<string> GrenadeVehicles=new(GroundVehicles,StringComparer.Ordinal)
     {"ID_UNIT-DRONE","ID_UNIT-HELICOPTER"};
+    // The Mech has no host Land Mine body-blast path yet.
+    private static readonly HashSet<string> MineVehicles=new(StringComparer.Ordinal)
+    {
+        "ID_UNIT-HUMVEE","ID_UNIT-TANK","ID_UNIT-BUGGY","ID_UNIT-TRANSPORTER",
+        "ID_UNIT-DRONE","ID_UNIT-HELICOPTER","ID_UNIT-ASSAULTHELI"
+    };
 
     internal static bool SupportsGrenadeVictim(string unitId)=>
         Soldiers.Contains(unitId)||GrenadeVehicles.Contains(unitId);
+    internal static bool SupportsMineVictim(string unitId)=>
+        Soldiers.Contains(unitId)||MineVehicles.Contains(unitId);
 
     public static IReadOnlyList<BattleDirectKillStats> FromPayload(
         byte[] payload,string matchId,string digest)
@@ -43,11 +52,15 @@ public static class BattleDirectKillStatsProjection
                 x.Cause=="player-bullet").ToArray();
             var grenadeKills=terminal.DirectArmyKills.Where(x=>x.AttackerPlayerId==player.PlayerId&&
                 x.Cause=="player-grenade").ToArray();
+            var mineKills=terminal.DirectArmyKills.Where(x=>x.AttackerPlayerId==player.PlayerId&&
+                x.Cause=="player-mine").ToArray();
             return new BattleDirectKillStats(player.PlayerId,kills.Length,
                 kills.Count(x=>Vehicles.Contains(x.UnitId)),
                 kills.Count(x=>x.UnitId=="ID_UNIT-TANK"),grenadeKills.Length,
                 grenadeKills.Count(x=>GrenadeVehicles.Contains(x.UnitId)),
-                grenadeKills.Count(x=>x.UnitId=="ID_UNIT-TANK"));
+                grenadeKills.Count(x=>x.UnitId=="ID_UNIT-TANK"),mineKills.Length,
+                mineKills.Count(x=>MineVehicles.Contains(x.UnitId)),
+                mineKills.Count(x=>x.UnitId=="ID_UNIT-TANK"));
         }).ToArray();
     }
 }

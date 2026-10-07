@@ -5162,8 +5162,21 @@ internal static class CombatContentTests
                   mineTerminalDigest).DirectArmyKills.Single().Cause=="player-mine"&&
               BattleDirectKillStatsProjection.FromPayload(mineTerminalBytes,
                   flameHelicopterMatch.MatchId,mineTerminalDigest)
-                  .Single(row=>row.PlayerId==soldierOwner).DirectBulletKills==0,
-            "durable mine cause validates without claiming unproved bullet-stat credit");
+                  .Single(row=>row.PlayerId==soldierOwner) is
+                  {DirectBulletKills:0,DirectGrenadeKills:0,DirectMineKills:1,
+                   DirectMineVehiclesDestroyed:1,DirectMineTanksDestroyed:0},
+            "validated mine kill projects its separate source Kill and VehicleDestroyed candidates");
+        var unsupportedMineResult=flameHelicopterMatch.TerminalEvidenceSnapshot();
+        var mechOption=ArmyOptionIdentityCatalog.All.First(option=>option.UnitId=="ID_UNIT-MECH");
+        var unsupportedMineUsage=unsupportedMineResult.Players
+            .Single(player=>player.PlayerId==helicopterOwner).ArmyUsage.Single();
+        unsupportedMineUsage.OptionIndex=mechOption.Index;
+        unsupportedMineUsage.UnitId=mechOption.UnitId;
+        unsupportedMineUsage.PlannedSpawns=(uint)mechOption.SpawnCount;
+        unsupportedMineResult.DirectArmyKills.Single().UnitId=mechOption.UnitId;
+        var unsupportedMineBytes=Google.Protobuf.MessageExtensions.ToByteArray(unsupportedMineResult);
+        Reject(()=>TerminalOutbox.ValidatePayload(unsupportedMineBytes,
+            flameHelicopterMatch.MatchId,War.Shared.TerminalResultDigest.Compute(unsupportedMineBytes)));
         var flameDecoyManifest=flameManifest with {MatchId="army-flame-decoy",
             SceneMasterPlayerId=soldierOwner,
             Players=flameManifest.Players.Select(p=>p with {PlayerLevel=22}).ToArray()};

@@ -353,6 +353,8 @@ public sealed class TerminalOutbox
                row.Cause is not ("player-bullet" or "player-grenade" or "player-mine")||
                (row.Cause=="player-grenade"&&
                    !BattleDirectKillStatsProjection.SupportsGrenadeVictim(row.UnitId))||
+               (row.Cause=="player-mine"&&
+                   !BattleDirectKillStatsProjection.SupportsMineVictim(row.UnitId))||
                snapshot.StartTick==0||row.Tick<snapshot.StartTick||row.Tick>snapshot.EndTick||
                (previousTick!=0&&(row.Tick<previousTick||
                    (row.Tick==previousTick&&row.EntityKey<=previousEntity)))||
