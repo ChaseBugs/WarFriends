@@ -12,6 +12,7 @@ public sealed class SelfHostedProjectilePresenter : MonoBehaviour
 		public readonly GameObject Root;
         public LineTrailRenderer Trail;
         public bool AirShotEvent;
+        public int AssaultGunIndex;
         public Vector3 End;
         public float Speed;
 		public Visual(GameObject root) { Root = root; }
@@ -36,6 +37,7 @@ public sealed class SelfHostedProjectilePresenter : MonoBehaviour
 			if (state.Kind != "grenade" && state.Kind != "grenade-molotov" && state.Kind != "heavy-turret-bullet" &&
                 state.Kind != "drone-bullet" && state.Kind != "drone-fake-bullet" &&
                 state.Kind != "helicopter-bullet" && state.Kind != "helicopter-fake-bullet" &&
+                state.Kind != "assault-helicopter-bullet" && state.Kind != "assault-helicopter-fake-bullet" &&
                 state.Kind != "shotgun-bullet" && state.Kind != "shotgun-fake-bullet") continue;
 			present.Add(state.ProjectileId);
 			Visual visual;
@@ -50,7 +52,7 @@ public sealed class SelfHostedProjectilePresenter : MonoBehaviour
                 visual.Root.transform.rotation = IsAirShot(state.Kind) || IsShotgunShot(state.Kind) ?
                     Quaternion.LookRotation(-velocity.normalized) * Quaternion.AngleAxis(-90f, Vector3.up) : Quaternion.LookRotation(velocity.normalized);
 			if (IsAirShot(state.Kind) && visual.Trail == null && velocity.sqrMagnitude > 0.000001f)
-                ConfigureAirTrail(visual, state.Kind.StartsWith("helicopter-"),
+                ConfigureAirTrail(visual, state.Kind, visual.AssaultGunIndex,
                     state.Kind.EndsWith("fake-bullet"), false, velocity.magnitude);
             if (IsShotgunShot(state.Kind) && visual.Trail == null && velocity.sqrMagnitude > 0.000001f)
                 ConfigureShotgunTrail(visual, state.OwnerPlayerId, state.WeaponSourceId,
@@ -82,17 +84,43 @@ public sealed class SelfHostedProjectilePresenter : MonoBehaviour
 	{
 		if (item != null &&
             ((item.Kind == MatchEventKind.DroneFired && item.DroneShot != null) ||
-             (item.Kind == MatchEventKind.HelicopterFired && item.HelicopterShot != null)))
+             (item.Kind == MatchEventKind.HelicopterFired && item.HelicopterShot != null) ||
+             (item.Kind == MatchEventKind.AssaultHelicopterFired && item.AssaultHelicopterShot != null)))
         {
-            bool helicopter = item.Kind == MatchEventKind.HelicopterFired;
-            bool fake = helicopter ? item.HelicopterShot.Fake : item.DroneShot.Fake;
-            bool shield = helicopter ? item.HelicopterShot.Shield : item.DroneShot.Shield;
-            float speed = helicopter ? item.HelicopterShot.Speed : item.DroneShot.Speed;
-            Vector3 muzzle = helicopter
-                ? new Vector3(item.HelicopterShot.MuzzleX, item.HelicopterShot.MuzzleY, item.HelicopterShot.MuzzleZ)
-                : new Vector3(item.DroneShot.MuzzleX, item.DroneShot.MuzzleY, item.DroneShot.MuzzleZ);
-            string kind = helicopter ? (fake ? "helicopter-fake-bullet" : "helicopter-bullet")
-                : (fake ? "drone-fake-bullet" : "drone-bullet");
+            bool fake;
+            bool shield;
+            float speed;
+            Vector3 muzzle;
+            string kind;
+            int gunIndex = 0;
+            if (item.Kind == MatchEventKind.AssaultHelicopterFired)
+            {
+                var shot = item.AssaultHelicopterShot;
+                fake = shot.Fake;
+                shield = shot.Shield;
+                speed = shot.Speed;
+                muzzle = new Vector3(shot.MuzzleX, shot.MuzzleY, shot.MuzzleZ);
+                gunIndex = (int)shot.GunIndex;
+                kind = fake ? "assault-helicopter-fake-bullet" : "assault-helicopter-bullet";
+            }
+            else if (item.Kind == MatchEventKind.HelicopterFired)
+            {
+                var shot = item.HelicopterShot;
+                fake = shot.Fake;
+                shield = shot.Shield;
+                speed = shot.Speed;
+                muzzle = new Vector3(shot.MuzzleX, shot.MuzzleY, shot.MuzzleZ);
+                kind = fake ? "helicopter-fake-bullet" : "helicopter-bullet";
+            }
+            else
+            {
+                var shot = item.DroneShot;
+                fake = shot.Fake;
+                shield = shot.Shield;
+                speed = shot.Speed;
+                muzzle = new Vector3(shot.MuzzleX, shot.MuzzleY, shot.MuzzleZ);
+                kind = fake ? "drone-fake-bullet" : "drone-bullet";
+            }
             Visual visual;
             if (!active.TryGetValue(item.ProjectileId, out visual))
             {
@@ -103,7 +131,8 @@ public sealed class SelfHostedProjectilePresenter : MonoBehaviour
                 if (direction.sqrMagnitude > 0.000001f)
                     visual.Root.transform.rotation = Quaternion.LookRotation(direction) * Quaternion.AngleAxis(-90f, Vector3.up);
             }
-            ConfigureAirTrail(visual, helicopter, fake, shield, speed);
+            visual.AssaultGunIndex = gunIndex;
+            ConfigureAirTrail(visual, kind, visual.AssaultGunIndex, fake, shield, speed);
             Vector3 delta = new Vector3(item.X, item.Y, item.Z) - muzzle;
             if (delta.magnitude > 50f) delta = delta.normalized * 50f;
             visual.AirShotEvent = true;
@@ -112,8 +141,8 @@ public sealed class SelfHostedProjectilePresenter : MonoBehaviour
             return;
         }
 		if (item == null || item.Kind != MatchEventKind.Impact ||
-			(item.Reason != "grenade" && item.Reason != "grenade-molotov" && item.Reason != "heavy-turret" && item.Reason != "drone" && item.Reason != "helicopter" && item.Reason != "helicopter-gunner")) return;
-        if (item.Reason == "drone" || item.Reason == "helicopter")
+            (item.Reason != "grenade" && item.Reason != "grenade-molotov" && item.Reason != "heavy-turret" && item.Reason != "drone" && item.Reason != "helicopter" && item.Reason != "assault-helicopter" && item.Reason != "helicopter-gunner")) return;
+        if (item.Reason == "drone" || item.Reason == "helicopter" || item.Reason == "assault-helicopter")
         {
             Visual droneVisual;
             if (active.TryGetValue(item.ProjectileId, out droneVisual) && droneVisual.AirShotEvent)
@@ -125,7 +154,8 @@ public sealed class SelfHostedProjectilePresenter : MonoBehaviour
             }
         }
 		Remove(item.ProjectileId);
-		if (item.Reason == "heavy-turret" || item.Reason == "drone" || item.Reason == "helicopter" ||
+        if (item.Reason == "heavy-turret" || item.Reason == "drone" || item.Reason == "helicopter" ||
+            item.Reason == "assault-helicopter" ||
 			item.Reason == "helicopter-gunner") return;
 		Explosion.PlayEffects(item.Reason == "grenade-molotov" ? Explosion.ExplosionType.Molotov : Explosion.ExplosionType.Medium,
 			new Vector3(item.X, item.Y, item.Z));
@@ -146,7 +176,8 @@ public sealed class SelfHostedProjectilePresenter : MonoBehaviour
     }
     private static bool IsAirShot(string kind)
     {
-        return kind.StartsWith("drone-") || kind.StartsWith("helicopter-");
+        return kind.StartsWith("drone-") || kind.StartsWith("helicopter-") ||
+            kind.StartsWith("assault-helicopter-");
     }
 
     private static bool IsShotgunShot(string kind)
@@ -212,14 +243,30 @@ public sealed class SelfHostedProjectilePresenter : MonoBehaviour
         if (Application.isPlaying && !string.IsNullOrEmpty(sprite)) visual.Trail.SetSprite(sprite);
     }
 
-    private static void ConfigureAirTrail(Visual visual, bool helicopter, bool fake, bool shield, float speed)
+    private static void ConfigureAirTrail(Visual visual, string kind, int assaultGunIndex,
+        bool fake, bool shield, float speed)
     {
         ObjectPoolDatabase pool = Singleton<ObjectPoolDatabase>.instance;
         Drone drone = pool == null ? null : pool.drone;
         Helicopter air = pool == null ? null : pool.helicopter;
-        Weapon weapon = helicopter ? (air == null || air.turret == null || air.turret.batchedWeapon == null
-                ? null : air.turret.batchedWeapon.weapon)
-            : (drone == null || drone.weapon == null ? null : drone.weapon.weapon);
+        AssaultHelicopter assault = pool == null ? null : pool.assaultHelicopter;
+        Weapon weapon;
+        if (kind.StartsWith("assault-helicopter-"))
+        {
+            weapon = assault == null || assault.weapons == null ||
+                assaultGunIndex < 0 || assaultGunIndex >= assault.weapons.Count ||
+                assault.weapons[assaultGunIndex] == null ? null :
+                assault.weapons[assaultGunIndex].weapon;
+        }
+        else if (kind.StartsWith("helicopter-"))
+        {
+            weapon = air == null || air.turret == null || air.turret.batchedWeapon == null ?
+                null : air.turret.batchedWeapon.weapon;
+        }
+        else
+        {
+            weapon = drone == null || drone.weapon == null ? null : drone.weapon.weapon;
+        }
         BulletSetup setup = weapon == null ? null : weapon.ammoSetup as BulletSetup;
         if (setup == null || speed <= 0 || Camera.main == null || visual.Root.GetComponent<MeshFilter>() == null)
             throw new System.InvalidOperationException("Air shot trail lacks recovered setup, camera or mesh.");
@@ -264,6 +311,14 @@ public sealed class SelfHostedProjectilePresenter : MonoBehaviour
 			Helicopter air = Singleton<ObjectPoolDatabase>.instance == null ? null : Singleton<ObjectPoolDatabase>.instance.helicopter;
 			Weapon airWeapon = air == null || air.turret == null || air.turret.batchedWeapon == null
 				? null : air.turret.batchedWeapon.weapon;
+			bullet = airWeapon == null || airWeapon.bulletPrefab == null ? null : airWeapon.bulletPrefab.gameObject;
+		}
+		if (kind == "assault-helicopter-bullet" || kind == "assault-helicopter-fake-bullet")
+		{
+			AssaultHelicopter air = Singleton<ObjectPoolDatabase>.instance == null ? null :
+				Singleton<ObjectPoolDatabase>.instance.assaultHelicopter;
+			Weapon airWeapon = air == null || air.weapons == null || air.weapons.Count == 0 ||
+				air.weapons[0] == null ? null : air.weapons[0].weapon;
 			bullet = airWeapon == null || airWeapon.bulletPrefab == null ? null : airWeapon.bulletPrefab.gameObject;
 		}
 		if (bullet != null) CopyVisual(bullet.transform, root.transform, true);
