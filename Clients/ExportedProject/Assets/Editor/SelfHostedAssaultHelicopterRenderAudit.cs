@@ -30,6 +30,7 @@ public static class SelfHostedAssaultHelicopterRenderAudit
                 EntityKey = 4294967297,
                 UnitId = "ID_UNIT-ASSAULTHELI",
                 X = 2f, Y = 3f, Z = 4f,
+                PositionTick = 60,
                 AssaultRotation = new BattleJointRotation
                 {
                     X = rotation.x, Y = rotation.y, Z = rotation.z, W = rotation.w
@@ -47,6 +48,28 @@ public static class SelfHostedAssaultHelicopterRenderAudit
                 visual.GetComponentsInChildren<Collider>(true).Length == 0 &&
                 visual.GetComponentsInChildren<Rigidbody>(true).Length == 0,
                 "visual copy contains no gameplay or collision components");
+
+            var nextRotation = Quaternion.Euler(9f, 61f, -4f);
+            row.X = 6f;
+            row.PositionTick = 66;
+            row.AssaultRotation = new BattleJointRotation
+            {
+                X = nextRotation.x, Y = nextRotation.y,
+                Z = nextRotation.z, W = nextRotation.w
+            };
+            presenter.Apply(new List<BattleArmyEntityState> { row });
+            Require(Mathf.Abs(visual.transform.position.x - 2f) < .001f,
+                "moving aircraft keeps its prior visual pose until render time");
+            presenter.RenderAt(Time.realtimeSinceStartup + .12f, .016f);
+            Require(Mathf.Abs(visual.transform.position.x - 3.6f) < .1f &&
+                Quaternion.Angle(visual.transform.rotation,
+                    Quaternion.Slerp(rotation, nextRotation, .4f)) < 1f,
+                "remote aircraft interpolates its host-tick position and root rotation: x="+
+                visual.transform.position.x+" angle="+Quaternion.Angle(visual.transform.rotation,
+                    Quaternion.Slerp(rotation, nextRotation, .4f)));
+            presenter.RenderAt(Time.realtimeSinceStartup + 1.4f, .016f);
+            Require(Mathf.Abs(visual.transform.position.x - 6f) < .01f,
+                "aircraft visual settles at the latest host pose");
 
             var filters = new List<MeshFilter>();
             foreach (var sourceGlass in source.glass)

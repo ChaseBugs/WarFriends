@@ -18,6 +18,7 @@ public sealed class SelfHostedAssaultHelicopterPresenter : MonoBehaviour
     {
         public GameObject Root;
         public GlassVisual[] Glass;
+        public SelfHostedRemoteTransformBuffer Transform;
     }
 
     private readonly Dictionary<ulong,Visual> active = new Dictionary<ulong,Visual>();
@@ -47,9 +48,16 @@ public sealed class SelfHostedAssaultHelicopterPresenter : MonoBehaviour
                 visual = Create(row.EntityKey);
                 active.Add(row.EntityKey, visual);
             }
-            visual.Root.transform.position = new Vector3(row.X, row.Y, row.Z);
-            visual.Root.transform.rotation = new Quaternion(row.AssaultRotation.X,
+            var hostPosition = new Vector3(row.X, row.Y, row.Z);
+            var hostRotation = new Quaternion(row.AssaultRotation.X,
                 row.AssaultRotation.Y, row.AssaultRotation.Z, row.AssaultRotation.W);
+            visual.Transform.Add(row.PositionTick, hostPosition, hostRotation,
+                Time.realtimeSinceStartup);
+            if (visual.Transform.Count == 1)
+            {
+                visual.Root.transform.position = hostPosition;
+                visual.Root.transform.rotation = hostRotation;
+            }
             bool broken = row.AssaultGlassHealth == 0f;
             foreach (var glass in visual.Glass)
                 glass.Filter.sharedMesh = broken ? glass.BrokenMesh : glass.IntactMesh;
@@ -63,6 +71,19 @@ public sealed class SelfHostedAssaultHelicopterPresenter : MonoBehaviour
             DestroyVisual(active[entityKey].Root);
             active.Remove(entityKey);
         }
+    }
+
+    private void Update()
+    {
+        RenderAt(Time.realtimeSinceStartup, Time.deltaTime);
+    }
+
+    // The recovered AssaultHelicopter updates PhotonTransform only on a
+    // remote kinematic copy. Rendering never changes Worker collision or health.
+    public void RenderAt(float realtime, float frameSeconds)
+    {
+        foreach (var visual in active.Values)
+            visual.Transform.Render(visual.Root.transform, realtime, frameSeconds);
     }
 
     private Visual Create(ulong entityKey)
@@ -91,7 +112,12 @@ public sealed class SelfHostedAssaultHelicopterPresenter : MonoBehaviour
                 BrokenMesh = glass.brokenGlassMesh
             };
         }
-        return new Visual { Root = root, Glass = glassVisuals };
+        return new Visual
+        {
+            Root = root,
+            Glass = glassVisuals,
+            Transform = new SelfHostedRemoteTransformBuffer()
+        };
     }
 
     private static bool ValidGlassHealth(BattleArmyEntityState row)
