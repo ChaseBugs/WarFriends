@@ -557,14 +557,14 @@ namespace War.Client
                 if (hello)
                 {
                     if (reply.Code != "admitted") throw new InvalidOperationException("Admission rejected: " + reply.Code);
+                    commandId = MatchCommandAcknowledgement.AdmissionCursor(reply.Snapshot, grant.PlayerId);
                     admitted = true;
-                    foreach (var player in reply.Snapshot.Players)
-                        if (player.PlayerId == grant.PlayerId) commandId = player.LastCommandId;
                 }
                 else if (!poll)
                 {
                     if (reply.Code == "command-conflict" || reply.Code == "command-order" || reply.Code == "invalid-command" || reply.Code == "not-admitted")
                         throw new InvalidOperationException("Match command stream rejected: " + reply.Code);
+                    MatchCommandAcknowledgement.RequireConsumed(reply, grant.PlayerId, command.CommandId);
                     commandId = command.CommandId;
                     pending = null;
                 }

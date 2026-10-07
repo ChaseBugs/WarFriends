@@ -360,6 +360,12 @@ if(args is ["--projectile-rows-only"])
     return;
 }
 
+if(args is ["--command-ack-only"])
+{
+    Console.WriteLine($"PASS: {MatchCommandAcknowledgementTests.Run()} command acknowledgement assertions");
+    return;
+}
+
 if(args is ["--unity-rifle-only",var unityExecutable,var unityProject])
 {
     var root=new DirectoryInfo(AppContext.BaseDirectory);
