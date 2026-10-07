@@ -675,6 +675,57 @@ internal static class CombatContentTests
             !udpRuntime.Snapshot().Players[0].Admitted)
             throw new Exception("A signed co-op hello must reach its isolated runtime.");
 
+        MatchAdmission secondClaims = claims.Clone();
+        secondClaims.PlayerId = secondPlayer;
+        secondClaims.SessionId = 902;
+        byte[] firstKey = tokens.SessionKey(claims);
+        byte[] secondKey = tokens.SessionKey(secondClaims);
+        var secondPeer = new IPEndPoint(IPAddress.Loopback, 40112);
+        Packet Send(MatchAdmission admission, byte[] key, IPEndPoint sender,
+            ulong sequence, MatchCommand? command)
+        {
+            var request = new Packet
+            {
+                Version = 1,
+                SessionId = admission.SessionId,
+                Sequence = sequence
+            };
+            if (command == null)
+                request.MatchHello = new MatchHello { Ticket = tokens.Sign(admission) };
+            else
+                request.MatchCommand = command;
+            byte[]? response = udpEndpoint.Handle(request,
+                PacketCodec.Encode(request, key), sender, 11);
+            if (response == null || !PacketCodec.Authenticate(response, key))
+                throw new Exception("An authenticated co-op UDP command had no valid reply.");
+            return PacketCodec.ReadUntrusted(response) ??
+                throw new Exception("An authenticated co-op UDP reply was malformed.");
+        }
+        if (Send(secondClaims, secondKey, secondPeer, 1, null).MatchReply.Code != "admitted")
+            throw new Exception("The second signed ally must join the same co-op endpoint.");
+        var udpReady = new MatchCommand { CommandId = 1,
+            Ready = new ReadyCommand { ManifestHash = udpRuntime.ManifestHash } };
+        if (Send(claims, firstKey, peer, 2, udpReady).MatchReply.Code != "ready" ||
+            Send(secondClaims, secondKey, secondPeer, 2, udpReady).MatchReply.Code != "ready")
+            throw new Exception("Both UDP allies must make the co-op mission ready.");
+        var udpMove = new MatchCommand { CommandId = 2,
+            MoveCover = new MoveCoverCommand { Direction = 1 } };
+        if (Send(claims, firstKey, peer, 3, udpMove).MatchReply.Code != "moving" ||
+            Send(secondClaims, secondKey, secondPeer, 3, udpMove).MatchReply.Code !=
+                "cover-unavailable")
+            throw new Exception("UDP co-op movement must reserve one authoritative shield.");
+        udpEndpoint.Advance(2);
+        var poll = new MatchCommand { Poll = new PollMatch() };
+        MatchSnapshot firstView = Send(claims, firstKey, peer, 4, poll)
+            .MatchReply.Snapshot;
+        MatchSnapshot secondView = Send(secondClaims, secondKey, secondPeer, 4, poll)
+            .MatchReply.Snapshot;
+        if (!firstView.ToByteArray().AsSpan().SequenceEqual(secondView.ToByteArray()) ||
+            firstView.Players.Single(player => player.PlayerId == firstPlayer).PositionZ <=
+                mainAnchors[0].Position.Z ||
+            firstView.Players.Single(player => player.PlayerId == secondPlayer).Moving)
+            throw new Exception("Both UDP allies must observe the same host-owned movement.");
+
         var earlyForfeit = new CoopMatchRuntime(coop, catalog, spawnPoints, routes, enemyCombat);
         earlyForfeit.Admit(firstPlayer);
         earlyForfeit.Command(firstPlayer, new MatchCommand
@@ -682,7 +733,7 @@ internal static class CombatContentTests
         if (!earlyForfeit.Terminal || !earlyForfeit.Snapshot().Coop.Failed ||
             earlyForfeit.Snapshot().RewardEligible)
             throw new Exception("A pre-start forfeit must close without reward eligibility.");
-        return 41;
+        return 47;
     }
 
     private static int VerifyCoopNavMeshRoutes(string directory, MissionCatalog missions)
