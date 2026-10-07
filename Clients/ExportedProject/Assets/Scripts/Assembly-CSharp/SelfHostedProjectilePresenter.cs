@@ -32,6 +32,16 @@ public sealed class SelfHostedProjectilePresenter : MonoBehaviour
 		other = otherPlayer;
 	}
 
+	// A reconnect snapshot is a new presentation baseline. Air-shot event
+	// trails are local cosmetics and can outlive their host projectile, so
+	// discard them before applying the Worker's current projectile list.
+	public void ResetForFullSnapshot()
+	{
+		foreach (Visual visual in active.Values)
+			if (visual.Root != null) DestroyObject(visual.Root);
+		active.Clear();
+	}
+
 	public void Apply(MatchSnapshot snapshot)
 	{
 		if (snapshot == null) return;

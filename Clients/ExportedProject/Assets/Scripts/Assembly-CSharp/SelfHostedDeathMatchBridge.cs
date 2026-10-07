@@ -83,6 +83,7 @@ public sealed class SelfHostedDeathMatchBridge : MonoBehaviour
 		repairDronePresenter = gameObject.AddComponent<SelfHostedRepairDronePresenter>();
 		repairDronePresenter.Configure(pool);
 		client.StateReceived += Apply;
+		client.FullSnapshotRebuild += ResetTransientEffects;
 		client.ProjectileScanReceived += projectilePresenter.ApplyScan;
 		client.CombatEventReceived += ApplyEvent;
 		if (client.State != null) Apply(client.State);
@@ -318,6 +319,12 @@ public sealed class SelfHostedDeathMatchBridge : MonoBehaviour
 		}
 	}
 
+	private void ResetTransientEffects()
+	{
+		if (projectilePresenter != null)
+			projectilePresenter.ResetForFullSnapshot();
+	}
+
 	private void ApplyBazookaTarget(bool visible)
 	{
 		if (visible == bazookaTargetVisible) return;
@@ -363,6 +370,7 @@ public sealed class SelfHostedDeathMatchBridge : MonoBehaviour
 		if (sniperScopeVisible) ApplySniperScope(false);
 		if (bazookaTargetVisible) ApplyBazookaTarget(false);
 		client.StateReceived -= Apply;
+		client.FullSnapshotRebuild -= ResetTransientEffects;
 		if (projectilePresenter != null) client.ProjectileScanReceived -= projectilePresenter.ApplyScan;
 		client.CombatEventReceived -= ApplyEvent;
 		if (dronePresenter != null) client.ArmyEntitiesReceived -= dronePresenter.Apply;

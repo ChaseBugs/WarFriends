@@ -273,7 +273,23 @@ public static class SelfHostedLiveRifleAudit
 				catch(MatchEventCursorExpiredException) {expired=true;}
                 if(!expired)
                     throw new InvalidOperationException("Unity adapter did not observe its expired event cursor.");
-                allowSnapshotGap=true;
+				var projectilePresenter=owner.GetComponent<SelfHostedProjectilePresenter>();
+				if(projectilePresenter==null)
+					throw new InvalidOperationException("Production projectile presenter is missing.");
+				const ulong staleVisualId=ulong.MaxValue;
+				var staleProjection=new MatchSnapshot {ProjectilesTruncated=true};
+				staleProjection.Projectiles.Add(new BattleProjectileState
+				{
+					ProjectileId=staleVisualId,OwnerPlayerId=local.PlayerId,
+					Kind="heavy-turret-bullet"
+				});
+				projectilePresenter.Apply(staleProjection);
+				var activeField=typeof(SelfHostedProjectilePresenter).GetField("active",
+					System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+				var activeVisuals=(System.Collections.IDictionary)activeField.GetValue(projectilePresenter);
+				var staleVisual=activeVisuals[staleVisualId];
+				staleVisual.GetType().GetField("AirShotEvent").SetValue(staleVisual,true);
+				allowSnapshotGap=true;
                 failReconnectPresentationOnce=true;
 				var update=typeof(SelfHostedBattleClient).GetMethod("Update",
 					System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
@@ -294,6 +310,7 @@ public static class SelfHostedLiveRifleAudit
 				var finalGrant=(MatchConnectionGrant)grantField.GetValue(finalTransport);
 				if(!recoveryObserved || failReconnectPresentationOnce || !adapter.IsConnected ||
 					finalGrant.SessionId!=retrySession ||
+					activeVisuals.Contains(staleVisualId) ||
                     adapter.ProcessedEventId<latestBeforeExpiry ||
 					adapter.ProcessedEventId<adapter.State.LatestEventId ||
 					Vector3.Distance(left.transform.position,Position(adapter.State,local.PlayerId))>.0001f ||
@@ -309,7 +326,7 @@ public static class SelfHostedLiveRifleAudit
 						" connected="+adapter.IsConnected+" reconnecting="+adapter.IsReconnecting+
 						" cursor="+adapter.ProcessedEventId+" snapshot="+adapter.State.LatestEventId+
 						" injected="+failReconnectPresentationOnce);
-                Debug.Log("UNITY_LIVE_RIFLE_PASSED renderedRigs=2 automaticExpiredEventRecovery=True freshRetryGeneration=True movingRun=True walkingShot=True frames="+frames+" health="+
+				Debug.Log("UNITY_LIVE_RIFLE_PASSED renderedRigs=2 automaticExpiredEventRecovery=True freshRetryGeneration=True staleVisualCleared=True movingRun=True walkingShot=True frames="+frames+" health="+
 					string.Join(",",adapter.State.Players.Select(p=>p.Health.ToString("F2"))));
 	}
         }

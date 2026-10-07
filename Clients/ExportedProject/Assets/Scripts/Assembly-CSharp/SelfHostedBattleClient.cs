@@ -18,6 +18,7 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
     [SerializeField] private bool allowLocalHttp = true;
     public static SelfHostedBattleClient Active { get; private set; }
     public event Action<MatchSnapshot> StateReceived;
+    public event Action FullSnapshotRebuild;
     // Handlers run on Unity's synchronization context. Failed handlers cause
     // the same event ID to be fetched again; side effects must be idempotent.
     public event Action<MatchEvent> CombatEventReceived;
@@ -379,6 +380,7 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
                 foreach (var renderer in rifleViews.Values) renderer.ResetRemote();
                 IsConnected = true;
                 installed = true;
+                if (FullSnapshotRebuild != null) FullSnapshotRebuild();
                 Apply(current);
                 if (refreshedBarrels != null && BarrelStateReceived != null)
                     BarrelStateReceived(refreshedBarrels.Snapshot());
