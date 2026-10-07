@@ -633,7 +633,7 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
         if (polling || Time.realtimeSinceStartup < nextPoll) return;
         polling = true;
         nextPoll = Time.realtimeSinceStartup + 0.1f;
-        bool timedOut = false;
+        bool recoveryRequired = false;
         try
         {
             var active = connection;
@@ -667,13 +667,14 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
             }
         }
         catch (OperationCanceledException) { }
-        catch (TimeoutException) { timedOut = true; }
+        catch (TimeoutException) { recoveryRequired = true; }
+        catch (MatchEventCursorExpiredException) { recoveryRequired = true; }
         catch (Exception e)
         {
             if (IsConnected && ConnectionError != null) ConnectionError(e.Message);
         }
         finally { polling = false; }
-        if (timedOut && IsConnected && !destroyed)
+        if (recoveryRequired && IsConnected && !destroyed)
         {
             try { await ReconnectWithRecoveredSession(); }
             catch (Exception e)

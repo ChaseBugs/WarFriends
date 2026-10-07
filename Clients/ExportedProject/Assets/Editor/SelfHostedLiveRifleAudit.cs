@@ -252,10 +252,10 @@ public static class SelfHostedLiveRifleAudit
 				await AcknowledgeAll(localTransport,committedBeforeExpiry,ct.Token);
 				await AcknowledgeAll(other,0,ct.Token);
 				bool expired=false;
-				try {await localTransport.PollEventsAsync(committedBeforeExpiry,ct.Token);}
+				try {await adapter.DispatchEvents();}
 				catch(MatchEventCursorExpiredException) {expired=true;}
 				if(!expired)
-					throw new InvalidOperationException("Worker retained events that both players acknowledged.");
+					throw new InvalidOperationException("Unity adapter did not observe its expired event cursor.");
 				allowSnapshotGap=true;
 				await adapter.Reconnect(replacement);
 				if(!adapter.IsConnected || adapter.ProcessedEventId<latestBeforeExpiry ||
