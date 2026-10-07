@@ -4988,7 +4988,11 @@ internal static class CombatContentTests
             "host-only mine placement overlaps the opposing Drone root");
         ulong metalDroneMineId=flameDroneMatch.Snapshot().LandMines.Single().EntityId;
         flameDroneMatch.Advance(76);
-        Check(flameDroneMatch.Snapshot().LandMines.Any(mine=>
+        var movedMetalDroneRoot=flameDroneMatch.GroundVehicleShotTargets(soldierOwner)
+            .Single(target=>target.EntityId==flameDroneTarget.EntityKey&&target.DroneRoot).Hitbox;
+        Check(LandMineExplosion.Triggered(droneMineOrigin,content.LandMines.Prefab,
+                  new[]{movedMetalDroneRoot})&&
+              flameDroneMatch.Snapshot().LandMines.Any(mine=>
                   mine.EntityId==metalDroneMineId),
             "Drone's source metal root does not trigger a Land Mine on the normal host tick");
         var flameHelicopterManifest=flameManifest with {MatchId="army-flame-helicopter",
@@ -6733,6 +6737,39 @@ internal static class CombatContentTests
               initialDroneProjection.All(x=>x.Active&&x.Health==x.MaxHealth&&x.RespawnTick==0&&
                   x.WaypointIndex is >=0 and <=6),
               "protobuf vehicle snapshot publishes both ordered authoritative repair drones");
+        // Reuse this allocation seed so the Transporter keeps source option 32.
+        var repairMineMatch=new MatchEngine(transporterManifest,content:content);
+        repairMineMatch.Admit(soldierOwner);
+        repairMineMatch.Admit(helicopterOwner);
+        repairMineMatch.Command(soldierOwner,new MatchCommand{CommandId=1,
+            Ready=new ReadyCommand{ManifestHash=repairMineMatch.ManifestHash}});
+        repairMineMatch.Command(helicopterOwner,new MatchCommand{CommandId=1,
+            Ready=new ReadyCommand{ManifestHash=repairMineMatch.ManifestHash}});
+        repairMineMatch.Advance(60);
+        Check(repairMineMatch.ArmyBatch(soldierOwner).OptionIndexes.Contains(32),
+            "metal repair-drone proof receives its source Transporter allocation");
+        Check(repairMineMatch.Command(soldierOwner,new MatchCommand{CommandId=2,
+                  DeployArmy=new DeployArmyCommand{OptionIndex=32}}).Code=="army-deploying",
+            "metal repair-drone mine proof deploys its source Transporter");
+        ulong repairSpawnTick=repairMineMatch.ArmyBatch(soldierOwner).NextDeployTick;
+        for(ulong repairTick=61;repairTick<=repairSpawnTick;repairTick++)
+            repairMineMatch.Advance(repairTick);
+        var repairVehicle=repairMineMatch.ArmyEntityBatch(soldierOwner,0,0).Entities.Single();
+        var repairRoot=repairMineMatch.GroundVehicleShotTargets(helicopterOwner)
+            .Single(target=>target.EntityId==repairVehicle.EntityKey&&
+                target.RepairDronePathIndex==0).Hitbox;
+        Check(repairMineMatch.TryRegisterLandMine(new string('9',32),helicopterOwner,
+                  repairRoot.Center,10f),
+            "host-only mine placement overlaps the opposing repair-drone root");
+        ulong repairMineId=repairMineMatch.Snapshot().LandMines.Single().EntityId;
+        repairMineMatch.Advance(repairSpawnTick+1);
+        var movedRepairRoot=repairMineMatch.GroundVehicleShotTargets(helicopterOwner)
+            .Single(target=>target.EntityId==repairVehicle.EntityKey&&
+                target.RepairDronePathIndex==0).Hitbox;
+        Check(LandMineExplosion.Triggered(repairRoot.Center,content.LandMines.Prefab,
+                  new[]{movedRepairRoot})&&
+              repairMineMatch.Snapshot().LandMines.Any(mine=>mine.EntityId==repairMineId),
+            "metal MiniDrone root does not trigger a Land Mine on the normal host tick");
         ulong transporterTick=transporterSpawnTick;
         while(transporterMatch.GroundVehicleAttack(transporterEntity.EntityKey)?.Phase!=ArmyAirAttackPhase.Ready&&
               transporterTick<transporterSpawnTick+200)
