@@ -2481,6 +2481,13 @@ internal static class CombatContentTests
             count++;
             Reject(()=>BattleTerminalPolicy.Validate("death","11111111111111111111111111111111",true,true));
             Reject(()=>BattleTerminalPolicy.Validate("player-killed","11111111111111111111111111111111",true,true));
+            Reject(()=>BattleTerminalPolicy.Validate("simultaneous-barrel-death",
+                "11111111111111111111111111111111",true,false));
+            Reject(()=>BattleTerminalPolicy.Validate("both-disconnected",
+                "11111111111111111111111111111111",false,false));
+            Reject(()=>BattleTerminalPolicy.Validate("forfeit","",false,false));
+            Reject(()=>BattleTerminalPolicy.Validate("forfeit",
+                "11111111111111111111111111111111",true,true));
             Reject(()=>BattleTerminalPolicy.Validate("unknown","11111111111111111111111111111111",false,false));
             Check(WeaponFireModePolicy.Validate(WeaponFireMode.Click,true)==WeaponFireMode.Click&&
                   WeaponFireModePolicy.Validate(WeaponFireMode.Burst,true)==WeaponFireMode.Burst,
