@@ -146,6 +146,34 @@ internal static class LiveAssaultGlassUdpTests
                 "opponent receives separate full glass health in the paged UDP roster");
             float initialGlass = aircraft!.AssaultGlassHealth;
 
+            var ownerEvents = new MatchEventConsumer();
+            var shooterEvents = new MatchEventConsumer();
+            MatchEvent? ownerShot = null;
+            MatchEvent? shooterShot = null;
+            var aircraftFireWatch = System.Diagnostics.Stopwatch.StartNew();
+            while (aircraftFireWatch.Elapsed < TimeSpan.FromSeconds(30) &&
+                   (ownerShot == null || shooterShot == null))
+            {
+                await Task.Delay(125, timeout.Token);
+                var ownerPage = await ownerPeer.PollEventsAsync(ownerEvents.LastEventId,
+                    timeout.Token);
+                ownerEvents.Consume(ownerPage);
+                ownerShot ??= ownerPage.Events.FirstOrDefault(item =>
+                    item.Kind == MatchEventKind.AssaultHelicopterFired &&
+                    item.AssaultHelicopterShot?.ArmyEntityKey == aircraft.EntityKey);
+
+                var shooterPage = await shooterPeer.PollEventsAsync(shooterEvents.LastEventId,
+                    timeout.Token);
+                shooterEvents.Consume(shooterPage);
+                shooterShot ??= shooterPage.Events.FirstOrDefault(item =>
+                    item.Kind == MatchEventKind.AssaultHelicopterFired &&
+                    item.AssaultHelicopterShot?.ArmyEntityKey == aircraft.EntityKey);
+            }
+            Check(ownerShot?.AssaultHelicopterShot is { Speed: > 0, GunIndex: < 2 } &&
+                  ownerShot.ActorId == aircraftOwner &&
+                  shooterShot?.EventId == ownerShot.EventId,
+                "both signed UDP peers receive the same source-bound Assault Helicopter shot");
+
             BattleArmyEntityState? damaged = null;
             int acceptedShots = 0;
             var fireWatch = System.Diagnostics.Stopwatch.StartNew();
