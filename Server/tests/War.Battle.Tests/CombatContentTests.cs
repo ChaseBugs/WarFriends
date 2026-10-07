@@ -34,6 +34,7 @@ internal static class CombatContentTests
         int allocationAssertions = VerifyCoopAllocation(
             directory, catalog, army, contentRevision);
         int mapAssertions = VerifyCoopSpawnCatalog(directory, catalog);
+        int navMeshAssertions = VerifyCoopNavMeshSources(directory, catalog);
 
         string temporaryPath = Path.Combine(Path.GetTempPath(),
             $"war-mission-catalog-{Guid.NewGuid():N}.json");
@@ -52,7 +53,7 @@ internal static class CombatContentTests
                 "An event beyond the source mission timer was accepted.");
             return 4 + objectiveAssertions + scoreAssertions +
                 spawnAssertions + eventAssertions + coopAssertions +
-                allocationAssertions + mapAssertions;
+                allocationAssertions + mapAssertions + navMeshAssertions;
         }
         finally
         {
@@ -631,6 +632,54 @@ internal static class CombatContentTests
             earlyForfeit.Snapshot().RewardEligible)
             throw new Exception("A pre-start forfeit must close without reward eligibility.");
         return 29;
+    }
+
+    private static int VerifyCoopNavMeshSources(string directory, MissionCatalog missions)
+    {
+        string manifestPath = Path.Combine(directory,
+            "recovered-coop-navmesh-sources.json");
+        CoopNavMeshSourceCatalog navigation =
+            CoopNavMeshSourceCatalog.Load(manifestPath, missions);
+        if (navigation.Maps.Count != 5 ||
+            navigation.MapForMission(missions, 0).Scene != "Desert_New" ||
+            navigation.MapForMission(missions, 74).Scene != "Park_Single" ||
+            navigation.Maps.Count(map => map.Format == "unity-binary-2018") != 4 ||
+            navigation.Maps.Count(map => map.Format == "unity-yaml-navmesh-tiles") != 1)
+            throw new Exception("Co-op NavMesh package does not match the source scenes.");
+
+        string temporaryDirectory = Path.Combine(Path.GetTempPath(),
+            $"war-coop-navigation-{Guid.NewGuid():N}");
+        string temporaryAssets = Path.Combine(temporaryDirectory, "coop-navmesh");
+        Directory.CreateDirectory(temporaryAssets);
+        try
+        {
+            File.Copy(manifestPath, Path.Combine(temporaryDirectory,
+                Path.GetFileName(manifestPath)));
+            foreach (CoopNavMeshSource map in navigation.Maps)
+            {
+                File.Copy(Path.Combine(directory, "coop-navmesh", map.PackagedAsset),
+                    Path.Combine(temporaryAssets, map.PackagedAsset));
+            }
+            string copiedAsset = Path.Combine(temporaryAssets,
+                navigation.Maps[0].PackagedAsset);
+            byte[] bytes = File.ReadAllBytes(copiedAsset);
+            bytes[^1] ^= 1;
+            File.WriteAllBytes(copiedAsset, bytes);
+            try
+            {
+                _ = CoopNavMeshSourceCatalog.Load(Path.Combine(temporaryDirectory,
+                    Path.GetFileName(manifestPath)), missions);
+                throw new Exception("A damaged co-op NavMesh asset was accepted.");
+            }
+            catch (InvalidDataException)
+            {
+                return 5;
+            }
+        }
+        finally
+        {
+            Directory.Delete(temporaryDirectory, recursive: true);
+        }
     }
 
     private static int VerifyCoopSpawnCatalog(string directory, MissionCatalog missions)
