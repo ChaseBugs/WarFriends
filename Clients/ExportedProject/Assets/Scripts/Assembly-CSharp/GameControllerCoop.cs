@@ -355,6 +355,13 @@ public class GameControllerCoop : GameControllerOnline
 
 	protected override void CheckForReconnect()
 	{
+		if (PhotonConnectionManager.IsSelfHostedActive)
+		{
+			// The Worker owns disconnect deadlines and the terminal outcome.
+			// The legacy co-op branch below can award a local forfeit.
+			base.CheckForReconnect();
+			return;
+		}
 		CheckPlayersReconnectStates();
 		if (gameIsRunning && (MatchManager.isReconnect || !MatchManager.allPlayersFinishetStartAnimation))
 		{
