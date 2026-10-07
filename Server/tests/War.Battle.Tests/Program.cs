@@ -1744,6 +1744,8 @@ int reorderPoll=0;
 byte[]? delayedPollReply=null;
 bool injectUnconsumedReply=false;
 bool injectedUnconsumedReply=false;
+bool dropCommandFourReplies=false;
+bool sawDroppedCommandFour=false;
 Task relay = Task.Run(async () =>
 {
     IPEndPoint? client = null;
@@ -1756,6 +1758,8 @@ Task relay = Task.Run(async () =>
             {
                 var packet = PacketCodec.ReadUntrusted(datagram.Buffer);
                 if (!dropped && packet?.MatchReply?.Code == "shot-accepted") { dropped = true; continue; }
+                if(dropCommandFourReplies && packet?.MatchReply?.CommandId==4)
+                { sawDroppedCommandFour=true; continue; }
                 if(injectUnconsumedReply && !injectedUnconsumedReply &&
                    packet?.MatchReply?.CommandId==3 && packet.MatchReply.Snapshot!=null)
                 {
@@ -1828,6 +1832,29 @@ try
     Check(recoveredReload.CommandId==3&&
           recoveredReload.Snapshot.Players.Single(player=>player.PlayerId==a).LastCommandId==3,
         "SDK retries the same command ID and accepts the server's original receipt");
+    dropCommandFourReplies=true;
+    bool timedOutAfterConsumption=false;
+    try { await sdkA.SwitchWeaponAsync(0,CancellationToken.None); }
+    catch(TimeoutException) { timedOutAfterConsumption=true; }
+    Check(sawDroppedCommandFour&&timedOutAfterConsumption,
+        "Worker consumed command 4 while its replies were lost");
+    var reconnectResult=await sdkWorker.RegisterReconnect(definition.MatchId,a,
+        new string('2',32),CancellationToken.None);
+    var reconnectGrant=reconnectResult.Grants?.SingleOrDefault();
+    Check(reconnectResult.Code=="reconnect-issued"&&reconnectGrant!=null,
+        "Worker issues one fresh signed reconnect capability");
+    using(var resumedSdkA=new MatchConnection(reconnectGrant!))
+    {
+        var resumedAdmission=await resumedSdkA.ConnectAsync(CancellationToken.None);
+        Check(resumedAdmission.Snapshot.Players.Single(player=>player.PlayerId==a)
+              .LastCommandId==4,
+            "reconnected SDK receives the Worker-consumed command cursor");
+        var nextMutation=await resumedSdkA.ReadyAsync(CancellationToken.None);
+        Check(nextMutation.CommandId==5&&
+              nextMutation.Snapshot.Players.Single(player=>player.PlayerId==a)
+                .LastCommandId==5,
+            "first post-reconnect mutation uses the next command identity");
+    }
     Check((await sdkB.ForfeitAsync(CancellationToken.None)).Snapshot.WinnerPlayerId == a, "SDK terminal projection");
 }
 finally
