@@ -2834,6 +2834,33 @@ internal static class CombatContentTests
             page.Events.Add(new MatchEvent{EventId=2,Tick=2,Kind=MatchEventKind.Impact,X=2,Y=0,Z=0});
             Check(consumer.Consume(page)==2&&consumer.LastEventId==2&&received==2,
                   "Client event consumer dispatches contiguous authoritative pages");
+            var retryConsumer = new War.Client.MatchEventConsumer();
+            var appliedEvents = new List<ulong>();
+            bool rejectSecondEvent = true;
+            retryConsumer.EventReceived += item =>
+            {
+                if (item.EventId == 2 && rejectSecondEvent)
+                    throw new InvalidOperationException("Presenter is temporarily unavailable.");
+                appliedEvents.Add(item.EventId);
+            };
+            try
+            {
+                retryConsumer.Consume(page);
+                throw new Exception("Presenter callback failure was not propagated.");
+            }
+            catch (InvalidOperationException error) when (
+                error.Message == "Presenter is temporarily unavailable.")
+            {
+                count++;
+            }
+            Check(retryConsumer.LastEventId == 1 && appliedEvents.SequenceEqual(new ulong[] { 1 }),
+                  "a failed presenter callback preserves the last successfully applied event cursor");
+            rejectSecondEvent = false;
+            var retryPage = new MatchEventBatch { Code = "events", LatestEventId = 2 };
+            retryPage.Events.Add(page.Events[1].Clone());
+            Check(retryConsumer.Consume(retryPage) == 1 && retryConsumer.LastEventId == 2 &&
+                  appliedEvents.SequenceEqual(new ulong[] { 1, 2 }),
+                  "event retry resumes at the failed callback without replaying an earlier event");
             Reject(()=>consumer.Consume(new MatchEventBatch{Code="events",LatestEventId=3,Events={new MatchEvent{EventId=4,Tick=3,Kind=MatchEventKind.Shot}}}));
             string warperOwner=Guid.NewGuid().ToString("N");
             var gunnerImpactPage=new MatchEventBatch{Code="events",LatestEventId=1};

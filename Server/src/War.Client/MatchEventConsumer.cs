@@ -101,8 +101,14 @@ namespace War.Client
             }
             if (batch.Events.Count > 0 && batch.Events[batch.Events.Count - 1].EventId > batch.LatestEventId)
                 throw new InvalidDataException("Event page exceeds its latest cursor.");
-            foreach (var item in batch.Events) EventReceived?.Invoke(item);
-            if (batch.Events.Count > 0) LastEventId = batch.Events[batch.Events.Count - 1].EventId;
+            foreach (var item in batch.Events)
+            {
+                // A Unity presenter can throw while applying one event. Commit only
+                // events whose callbacks returned, so a retry starts at the failed
+                // event instead of repeating earlier, successfully applied events.
+                EventReceived?.Invoke(item);
+                LastEventId = item.EventId;
+            }
             return batch.Events.Count;
         }
     }
