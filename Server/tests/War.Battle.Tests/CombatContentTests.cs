@@ -1028,6 +1028,23 @@ internal static class CombatContentTests
               assaultHelicopterShot.MaxShootTime>=assaultHelicopterShot.MinShootTime&&
               assaultHelicopterShot.FireBatchSizeMax>0,
               "Assault Helicopter firing cadence comes from its selected source upgrade row");
+        var assaultVolley = AssaultHelicopterVolleyPlanner.Plan(
+            new ArmyVehicleShotStats(5, .75f, 4, 7, 2, 4, 0),
+            span => span - 1);
+        Check(assaultVolley == new AssaultHelicopterVolleyPlanner.Volley(3, 3, .13f),
+            "Assault Helicopter excludes the batch upper bound and divides six shots equally");
+        var oddAssaultVolley = AssaultHelicopterVolleyPlanner.Plan(
+            new ArmyVehicleShotStats(5, .75f, 5, 5, 2, 4, 0),
+            _ => throw new Exception("fixed batch consumed a random index"));
+        Check(oddAssaultVolley == new AssaultHelicopterVolleyPlanner.Volley(2, 3, .13f),
+            "Assault Helicopter gives the second gun the extra shot in an odd fixed batch");
+        var realShotSamples = new Queue<float>([.2f, .75f, .8f]);
+        Check(AssaultHelicopterVolleyPlanner.SampleRealShots(3, .75f,
+                  () => realShotSamples.Dequeue()).SequenceEqual([true, false, false]) &&
+              realShotSamples.Count == 0,
+            "each Assault Helicopter round receives its own strict real-shot probability sample");
+        Reject(() => AssaultHelicopterVolleyPlanner.Plan(
+            new ArmyVehicleShotStats(5, .75f, 4, 7, 2, 4, 0), _ => 3));
         Reject(()=>content.Army.ComposeHelicopterShot(0,null,null,float.NaN));
         Reject(()=>content.Army.ComposeAssaultHelicopterShot(0,null,null,float.NaN));
         var tankShot=content.Army.ComposeVehicleShot("ID_UNIT-TANK",0,null,null);
@@ -3357,6 +3374,16 @@ internal static class CombatContentTests
         Check(assaultHelicopterMatch.AssaultHelicopterTargetPlayer(
                   assaultHelicopterSpawn.EntityKey) == decoyOpponent,
             "normal Assault Helicopter ticks select the opposing player after the source deadline");
+        var preparedAssaultVolley = assaultHelicopterMatch.AssaultHelicopterVolley(
+            assaultHelicopterSpawn.EntityKey);
+        Check(preparedAssaultVolley != null &&
+              preparedAssaultVolley.SelectionTick == 122 &&
+              preparedAssaultVolley.Plan.FirstGunCount +
+                  preparedAssaultVolley.Plan.SecondGunCount ==
+                  assaultHelicopterShot.FireBatchSizeMin &&
+              preparedAssaultVolley.FirstGunRealShots.Count ==
+                  preparedAssaultVolley.Plan.FirstGunCount,
+            "live Assault Helicopter selection prepares the source-split first gun before cooldown sampling");
         var deployedDroneMatch=new MatchEngine(deployedDroneManifest,content:content,armyChoice:_=>0);
         deployedDroneMatch.Admit(decoyPlayer);deployedDroneMatch.Admit(decoyOpponent);
         deployedDroneMatch.Command(decoyPlayer,new(){CommandId=1,Ready=new(){ManifestHash=deployedDroneMatch.ManifestHash}});

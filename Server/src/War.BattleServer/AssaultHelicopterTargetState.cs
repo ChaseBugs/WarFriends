@@ -26,7 +26,8 @@ internal sealed class AssaultHelicopterTargetState
 
     internal void Advance(float time, ArmyVehicleShotStats shot,
         IReadOnlyList<DecoyMatchEntity> opposingDecoys, string opposingPlayerId,
-        Func<int, int> chooseIndex, Func<float> nextRandom)
+        Func<int, int> chooseIndex, Func<float> nextRandom,
+        Action? onTargetSelected = null)
     {
         if (!float.IsFinite(time) || time < 0 || opposingDecoys == null ||
             !Guid.TryParseExact(opposingPlayerId, "N", out _) ||
@@ -50,6 +51,9 @@ internal sealed class AssaultHelicopterTargetState
             targetPlayerId = opposingPlayerId;
         }
 
+        // StartShooting prepares the first gun before Movement samples the
+        // next cooldown. The caller can retain that exact random-call order.
+        onTargetSelected?.Invoke();
         float sample = nextRandom();
         if (!float.IsFinite(sample) || sample < 0 || sample > 1)
             throw new InvalidDataException("Invalid Assault Helicopter shot interval sample.");
