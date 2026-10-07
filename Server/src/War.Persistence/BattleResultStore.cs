@@ -34,11 +34,13 @@ public sealed class BattleResultStore
         await results.Indexes.CreateManyAsync(new[]
         {
             new CreateIndexModel<BattleResultDocument>(Builders<BattleResultDocument>.IndexKeys.Ascending(x => x.MatchId), new CreateIndexOptions { Unique = true }),
-            new CreateIndexModel<BattleResultDocument>(Builders<BattleResultDocument>.IndexKeys.Ascending(x => x.AcceptedUtc)),
+            new CreateIndexModel<BattleResultDocument>(Builders<BattleResultDocument>.IndexKeys
+                .Ascending(x => x.AcceptedUtc).Ascending(x => x.Id)),
             new CreateIndexModel<BattleResultDocument>(Builders<BattleResultDocument>.IndexKeys
                 .Ascending(x => x.TerminalPhase).Ascending(x => x.AcceptedUtc)),
             new CreateIndexModel<BattleResultDocument>(Builders<BattleResultDocument>.IndexKeys
-                .Ascending(x => x.Settled).Ascending(x => x.AcceptedUtc))
+                .Ascending(x => x.Settled).Ascending(x => x.TerminalPhase)
+                .Ascending(x => x.AcceptedUtc).Ascending(x => x.Id))
         }, ct);
     }
     public async Task<string> Accept(string matchId, string digest, byte[] snapshot, CancellationToken ct)
@@ -81,6 +83,50 @@ public sealed class BattleResultStore
         Validate(result,matchId,DateTime.UtcNow);
         result.Snapshot = result.Snapshot.ToArray();
         return result;
+    }
+    /// <summary>
+    /// Reads one bounded page of completed, unsettled terminal evidence.
+    /// The next cursor advances past every inspected row, including older
+    /// aborted rows that have no stored phase yet.
+    /// </summary>
+    public async Task<BattlePendingResultPage> ReadPendingSettlementPage(
+        BattleResultCursor? after, CancellationToken ct)
+    {
+        DateTime now = DateTime.UtcNow;
+        if (after != null && (after.AcceptedUtc.Kind != DateTimeKind.Utc ||
+            after.AcceptedUtc < DateTime.UnixEpoch || after.AcceptedUtc > now ||
+            !Guid.TryParseExact(after.Id, "N", out _) || after.Id != after.Id.ToLowerInvariant()))
+            throw new InvalidDataException("Invalid pending battle result cursor.");
+
+        var filter = Builders<BattleResultDocument>.Filter;
+        var pending = filter.Ne(x => x.Settled, true) &
+            (filter.Eq(x => x.TerminalPhase, BattlePhase.Ended) |
+             filter.Eq(x => x.TerminalPhase, null));
+        if (after != null)
+        {
+            var laterDate = filter.Gt(x => x.AcceptedUtc, after.AcceptedUtc);
+            var laterId = filter.Eq(x => x.AcceptedUtc, after.AcceptedUtc) &
+                filter.Gt(x => x.Id, after.Id);
+            pending &= laterDate | laterId;
+        }
+
+        var rows = await results.Find(pending)
+            .SortBy(x => x.AcceptedUtc).ThenBy(x => x.Id)
+            .Limit(ArchivalPageSize).ToListAsync(ct);
+        var completed = new List<BattleResultDocument>();
+        foreach (var row in rows)
+        {
+            Validate(row, row.MatchId, now);
+            var terminal = TerminalOutbox.ValidatePayload(row.Snapshot, row.MatchId, row.Digest);
+            if (terminal.Phase != BattlePhase.Ended)
+                continue;
+            row.Snapshot = row.Snapshot.ToArray();
+            completed.Add(row);
+        }
+
+        BattleResultCursor? next = rows.Count == 0 ? null :
+            new BattleResultCursor(rows[^1].AcceptedUtc, rows[^1].Id);
+        return new BattlePendingResultPage(completed, rows.Count, next);
     }
     public async Task<IReadOnlyList<BattleCardMatchStats>?> GetCardStats(string matchId,CancellationToken ct)
     {
@@ -223,3 +269,6 @@ public sealed class BattleResultStore
 }
 
 public readonly record struct BattleResultPrunePage(int Inspected, long Removed);
+public sealed record BattleResultCursor(DateTime AcceptedUtc, string Id);
+public sealed record BattlePendingResultPage(IReadOnlyList<BattleResultDocument> Results,
+    int Inspected, BattleResultCursor? NextCursor);

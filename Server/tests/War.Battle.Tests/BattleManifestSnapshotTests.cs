@@ -353,6 +353,27 @@ internal static class BattleManifestSnapshotTests
                 });
             }
             await resultRows.InsertManyAsync(unsettledBacklog);
+            var firstPending=await resultStore.ReadPendingSettlementPage(null,CancellationToken.None);
+            var secondPending=await resultStore.ReadPendingSettlementPage(firstPending.NextCursor,CancellationToken.None);
+            if(firstPending.Inspected!=BattleResultStore.ArchivalPageSize ||
+               secondPending.Inspected!=BattleResultStore.ArchivalPageSize ||
+               firstPending.Results.Count==0 || secondPending.Results.Count==0 ||
+               firstPending.Results.Select(x=>x.MatchId).Intersect(
+                   secondPending.Results.Select(x=>x.MatchId)).Any())
+                throw new Exception("Pending settlement pages were not bounded and disjoint.");
+            var damagedPending=firstPending.Results[0];
+            await resultRows.UpdateOneAsync(x=>x.MatchId==damagedPending.MatchId,
+                Builders<BattleResultDocument>.Update.Set(x=>x.Snapshot,new byte[]{1,2,3}));
+            try {await resultStore.ReadPendingSettlementPage(null,CancellationToken.None);
+                throw new Exception("Pending settlement scan trusted damaged terminal evidence.");}
+            catch(InvalidDataException){}
+            await resultRows.UpdateOneAsync(x=>x.MatchId==damagedPending.MatchId,
+                Builders<BattleResultDocument>.Update.Set(x=>x.Snapshot,damagedPending.Snapshot));
+            try {await resultStore.ReadPendingSettlementPage(
+                new BattleResultCursor(DateTime.SpecifyKind(DateTime.UnixEpoch,DateTimeKind.Local),
+                    firstPending.NextCursor!.Id),CancellationToken.None);
+                throw new Exception("Pending settlement accepted a non-UTC cursor.");}
+            catch(InvalidDataException){}
             if(await resultStore.Prune(DateTimeOffset.UtcNow.AddDays(31),TimeSpan.FromDays(30),CancellationToken.None)!=1 ||
                (await resultStore.Get(match,CancellationToken.None))?.Settled!=false ||
                await resultStore.Get(rematch.MatchId!,CancellationToken.None)!=null ||
