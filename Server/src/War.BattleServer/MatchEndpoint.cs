@@ -9,7 +9,7 @@ namespace War.BattleServer;
 // creation API. Two bounded sessions; no DB, rewards or production allocation.
 public sealed class MatchEndpoint
 {
-    private readonly MatchEngine match;
+    private readonly IMatchRuntime match;
     private readonly MatchTokens tokens;
     private readonly string serverId;
     private readonly ulong originTick;
@@ -38,8 +38,18 @@ public sealed class MatchEndpoint
     private ulong? terminalTick;
     public MatchEndpoint(MatchManifest manifest, string signingKey, RecoveredBattleMap? map = null,
         BattleCombatContent? content=null,ulong originTick=0)
+        : this(manifest, signingKey, new MatchEngine(manifest, map, content), originTick)
     {
-        match = new MatchEngine(manifest, map,content);
+    }
+
+    internal MatchEndpoint(MatchManifest manifest, string signingKey,
+        IMatchRuntime runtime, ulong originTick)
+    {
+        MatchManifest.Validate(manifest);
+        if (runtime.MatchId != manifest.MatchId ||
+            runtime.ManifestHash != manifest.Digest())
+            throw new InvalidDataException("Battle runtime does not match its signed manifest.");
+        match = runtime;
         serverId = manifest.ServerId;
         tokens = new MatchTokens(signingKey);
         this.originTick=originTick;

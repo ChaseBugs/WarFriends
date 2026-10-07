@@ -25,6 +25,9 @@ public sealed class MatchTokens
         return Convert.ToBase64String(bytes) + "." + Convert.ToBase64String(Mac("war/match/ticket/v1/", bytes));
     }
     public MatchAdmission? Validate(string ticket, MatchEngine match, string serverId, long now)
+        => Validate(ticket, (IMatchRuntime)match, serverId, now);
+
+    internal MatchAdmission? Validate(string ticket, IMatchRuntime match, string serverId, long now)
     {
         if (ticket.Length is < 10 or > 1024 || now is <0 or >MaximumUnixSecond) return null;
         try

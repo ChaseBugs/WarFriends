@@ -7,8 +7,11 @@ using War.Shared;
 namespace War.BattleServer;
 
 // Single writer: NetworkWorker's tick thread. Does not call Unity, Mongo or HTTP.
-public sealed partial class MatchEngine
+public sealed partial class MatchEngine : IMatchRuntime
 {
+    bool IMatchRuntime.CancelBeforeStart() => CancelBeforeStart();
+    bool IMatchRuntime.AbortForHostShutdown() => AbortForHostShutdown();
+    MatchSnapshot IMatchRuntime.TerminalEvidenceSnapshot() => TerminalEvidenceSnapshot();
     private readonly MatchManifest manifest;
     private readonly Player[] players;
     private readonly ulong admissionDeadline;
