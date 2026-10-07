@@ -7,7 +7,13 @@ using War.Protocol;
 // Its old Photon, steering, damage and collision components are never copied.
 public sealed class SelfHostedRepairDronePresenter : MonoBehaviour
 {
-    private readonly Dictionary<string, GameObject> active = new Dictionary<string, GameObject>();
+    private sealed class Visual
+    {
+        public GameObject Root;
+        public SelfHostedRemoteTransformBuffer Transform;
+    }
+
+    private readonly Dictionary<string, Visual> active = new Dictionary<string, Visual>();
     private Transform prefab;
 
     public void Configure(ObjectPoolDatabase pool)
@@ -40,14 +46,23 @@ public sealed class SelfHostedRepairDronePresenter : MonoBehaviour
                 if (!present.Add(id))
                     throw new InvalidOperationException("Duplicate repair-drone identity: " + id);
 
-                GameObject visual;
+                Visual visual;
                 if (!active.TryGetValue(id, out visual))
                 {
-                    visual = Create(prefab, id);
+                    visual = new Visual
+                    {
+                        Root = Create(prefab, id),
+                        Transform = new SelfHostedRemoteTransformBuffer()
+                    };
                     active.Add(id, visual);
                 }
-                visual.transform.position = new Vector3(drone.X, drone.Y, drone.Z);
-                visual.transform.rotation = rotation;
+                Vector3 position = new Vector3(drone.X, drone.Y, drone.Z);
+                visual.Transform.Add(snapshot.ServerTick, position, rotation, Time.realtimeSinceStartup);
+                if (visual.Transform.Count == 1)
+                {
+                    visual.Root.transform.position = position;
+                    visual.Root.transform.rotation = rotation;
+                }
             }
         }
 
@@ -56,9 +71,20 @@ public sealed class SelfHostedRepairDronePresenter : MonoBehaviour
             if (!present.Contains(pair.Key)) removed.Add(pair.Key);
         foreach (string id in removed)
         {
-            DestroyVisual(active[id]);
+            DestroyVisual(active[id].Root);
             active.Remove(id);
         }
+    }
+
+    private void Update()
+    {
+        RenderAt(Time.realtimeSinceStartup, Time.deltaTime);
+    }
+
+    public void RenderAt(float realtime, float frameSeconds)
+    {
+        foreach (Visual visual in active.Values)
+            visual.Transform.Render(visual.Root.transform, realtime, frameSeconds);
     }
 
     private static GameObject Create(Transform source, string id)
@@ -101,7 +127,7 @@ public sealed class SelfHostedRepairDronePresenter : MonoBehaviour
 
     private void OnDestroy()
     {
-        foreach (GameObject visual in active.Values) DestroyVisual(visual);
+        foreach (Visual visual in active.Values) DestroyVisual(visual.Root);
         active.Clear();
     }
 

@@ -16,7 +16,7 @@ public static class SelfHostedRepairDroneRenderAudit
             var presenter = owner.AddComponent<SelfHostedRepairDronePresenter>();
             presenter.Configure(source.transform);
 
-            var snapshot = new MatchSnapshot();
+            var snapshot = new MatchSnapshot { ServerTick = 60 };
             var vehicle = new BattleVehicleState { EntityId = 52, UnitId = "ID_UNIT-TRANSPORTER" };
             var drone = new BattleRepairDroneState
             {
@@ -40,6 +40,23 @@ public static class SelfHostedRepairDroneRenderAudit
             Require(visual.GetComponentsInChildren<MonoBehaviour>(true).Length == 0 &&
                 visual.GetComponentsInChildren<Collider>(true).Length == 0, "visual-only copy");
 
+            snapshot.ServerTick = 66;
+            drone.X = 7;
+            drone.RotationY = 0;
+            drone.RotationW = 1;
+            presenter.Apply(snapshot);
+            Require(Mathf.Abs(visual.transform.position.x - 3) < .0001f,
+                "new repair-drone pose waits in the remote visual buffer");
+            presenter.RenderAt(Time.realtimeSinceStartup + .12f, .016f);
+            Require(Mathf.Abs(visual.transform.position.x - 4.6f) < .1f &&
+                Vector3.Dot(visual.transform.forward, Vector3.right) < .999f &&
+                Vector3.Dot(visual.transform.forward, Vector3.forward) < .999f,
+                "host-tick repair-drone position and rotation interpolate");
+            presenter.RenderAt(Time.realtimeSinceStartup + 1.4f, .016f);
+            Require(Vector3.Distance(visual.transform.position, new Vector3(7, 4, 5)) < .01f &&
+                Vector3.Dot(visual.transform.forward, Vector3.forward) > .999f,
+                "repair-drone visual settles on the host pose");
+
             drone.Active = false;
             drone.Falling = true;
             presenter.Apply(snapshot);
@@ -55,7 +72,7 @@ public static class SelfHostedRepairDroneRenderAudit
             presenter.Apply(new MatchSnapshot());
             Require(GameObject.Find("SelfHostedRepairDrone_52_1") == null, "absent removed");
 
-            Debug.Log("UNITY_REPAIR_DRONE_RENDER_PASSED meshIdentity=True pose=True lifecycle=True scriptFree=True");
+            Debug.Log("UNITY_REPAIR_DRONE_RENDER_PASSED meshIdentity=True pose=True interpolation=True lifecycle=True scriptFree=True");
             EditorApplication.Exit(0);
         }
         catch (Exception exception)
