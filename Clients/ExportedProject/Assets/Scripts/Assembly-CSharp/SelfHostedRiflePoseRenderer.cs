@@ -36,9 +36,11 @@ public sealed class SelfHostedRiflePoseRenderer
     private readonly Local[] baseline;
     private readonly Local[][] samples;
     private readonly Local[] upperSample;
+    private readonly SelfHostedRemoteTransformBuffer remoteTransform;
     private struct Local { public Vector3 Position, Scale; public Quaternion Rotation; }
 
-    public SelfHostedRiflePoseRenderer(Transform playerRoot, SoldierAnimationController animator)
+    public SelfHostedRiflePoseRenderer(Transform playerRoot, SoldierAnimationController animator,
+        bool remotePlayer = false)
     {
         if (playerRoot == null || animator == null || !animator.transform.IsChildOf(playerRoot) || animator.upperBody == null)
             throw new ArgumentException("A complete player animation rig is required.");
@@ -52,6 +54,7 @@ public sealed class SelfHostedRiflePoseRenderer
         baseline = new Local[nodes.Length]; samples = new Local[4][]; upperSample = new Local[nodes.Length];
         Capture(baseline);
         for (int i = 0; i < samples.Length; i++) samples[i] = new Local[nodes.Length];
+        if (remotePlayer) remoteTransform = new SelfHostedRemoteTransformBuffer();
     }
 
     public void Apply(BattlePlayerState player)
@@ -60,6 +63,8 @@ public sealed class SelfHostedRiflePoseRenderer
         var pose = player.RiflePose;
         if (pose.Layers.Count < 1 || pose.Layers.Count > 4 || !Finite(player.PositionX) || !Finite(player.PositionY) || !Finite(player.PositionZ))
             throw new ArgumentException("Invalid rifle pose.");
+        Vector3 visualPosition = root.position;
+        Quaternion visualRotation = root.rotation;
         Quaternion rotation = Rotation(pose.RootRotation), body = Rotation(pose.BodyLocalRotation);
         Quaternion? upper = pose.UpperLocalRotation == null ? (Quaternion?)null : Rotation(pose.UpperLocalRotation);
         float total = 0;
@@ -122,9 +127,43 @@ public sealed class SelfHostedRiflePoseRenderer
                     nodes[n].localScale = Vector3.Lerp(nodes[n].localScale, upperSample[n].Scale, overlay.Weight);
                     nodes[n].localRotation = Quaternion.Lerp(nodes[n].localRotation, upperSample[n].Rotation, overlay.Weight).normalized;
                 }
-        root.position = new Vector3(player.PositionX, player.PositionY, player.PositionZ); root.rotation = rotation;
+        var hostPosition = new Vector3(player.PositionX, player.PositionY, player.PositionZ);
+        if (remoteTransform == null)
+        {
+            root.position = hostPosition;
+            root.rotation = rotation;
+        }
+        else
+        {
+            // Recovered PlayerController updates PhotonTransform only for the
+            // remote player. Keep the host pose as the animation authority and
+            // buffer only its visual root transform.
+            remoteTransform.Add(pose.SampledTick, hostPosition, rotation, Time.realtimeSinceStartup);
+            if (remoteTransform.Count == 1)
+            {
+                root.position = hostPosition;
+                root.rotation = rotation;
+            }
+            else
+            {
+                // Sampling the recovered Animation temporarily restores the
+                // prefab's root transform. Keep the interpolated visual pose
+                // until the next per-frame remote render.
+                root.position = visualPosition;
+                root.rotation = visualRotation;
+            }
+        }
         controller.transform.localRotation = body;
         if (upper.HasValue) controller.upperBody.localRotation = upper.Value;
+    }
+    public void RenderRemote(float now, float frameSeconds)
+    {
+        if (remoteTransform != null)
+            remoteTransform.Render(root, now, frameSeconds);
+    }
+    public void ResetRemote()
+    {
+        if (remoteTransform != null) remoteTransform.Clear();
     }
     private void Sample(string name, float seconds)
     {
@@ -146,5 +185,111 @@ public sealed class SelfHostedRiflePoseRenderer
         if (q == null || !Finite(q.X) || !Finite(q.Y) || !Finite(q.Z) || !Finite(q.W) || Math.Abs(q.X*q.X+q.Y*q.Y+q.Z*q.Z+q.W*q.W-1) > .0001f)
             throw new ArgumentException("Invalid pose rotation.");
         return new Quaternion(q.X,q.Y,q.Z,q.W);
+    }
+}
+
+// Visual timing follows recovered PhotonTransform: ten samples, 0.18 seconds
+// behind the newest host pose, with at most 0.2 seconds of extrapolation.
+// No interpolated position is sent back as gameplay authority.
+public sealed class SelfHostedRemoteTransformBuffer
+{
+    private struct Sample
+    {
+        public ulong Tick;
+        public Vector3 Position;
+        public Quaternion Rotation;
+    }
+
+    private const int Capacity = 10;
+    private const double TickSeconds = 1.0 / 60.0;
+    private readonly Sample[] samples = new Sample[Capacity]; // Newest first.
+    private int count;
+    private float receivedAt;
+
+    public int Count { get { return count; } }
+
+    public void Clear()
+    {
+        count = 0;
+    }
+
+    public void Add(ulong tick, Vector3 position, Quaternion rotation, float realtime)
+    {
+        if (tick > 10000000 || !Finite(position.x) || !Finite(position.y) || !Finite(position.z) ||
+            !Finite(rotation.x) || !Finite(rotation.y) || !Finite(rotation.z) || !Finite(rotation.w) ||
+            Mathf.Abs(Quaternion.Dot(rotation, rotation) - 1f) > .0001f ||
+            !Finite(realtime) || realtime < 0)
+            throw new ArgumentException("Invalid remote transform sample.");
+        if (count > 0 && tick < samples[0].Tick)
+            throw new InvalidOperationException("Remote transform sample moved backward in host time.");
+        // Match admission can replace the recovered scene's placeholder rig
+        // position with a distant server cover in the same match phase. That
+        // is a spawn correction, not movement to interpolate across the map.
+        if (count > 0 && Vector3.Distance(samples[0].Position, position) > 5f)
+            Clear();
+        if (count > 0 && tick == samples[0].Tick)
+        {
+            if (samples[0].Position == position && samples[0].Rotation == rotation)
+                return; // Duplicate command responses do not restart visual time.
+            samples[0] = new Sample { Tick = tick, Position = position, Rotation = rotation };
+            receivedAt = realtime;
+            return;
+        }
+
+        for (int i = Mathf.Min(count, Capacity - 1); i > 0; i--)
+            samples[i] = samples[i - 1];
+        samples[0] = new Sample { Tick = tick, Position = position, Rotation = rotation };
+        count = Mathf.Min(count + 1, Capacity);
+        receivedAt = realtime;
+    }
+
+    public void Render(Transform root, float realtime, float frameSeconds)
+    {
+        if (root == null || count == 0) return;
+        if (!Finite(realtime) || !Finite(frameSeconds) || frameSeconds < 0)
+            throw new ArgumentException("Invalid remote render time.");
+
+        double elapsed = Math.Max(0, realtime - receivedAt);
+        double renderTime = samples[0].Tick * TickSeconds + elapsed - .18;
+        if (renderTime <= samples[count - 1].Tick * TickSeconds)
+        {
+            root.position = samples[count - 1].Position;
+            root.rotation = samples[count - 1].Rotation;
+            return;
+        }
+
+        for (int i = 1; i < count; i++)
+        {
+            double newerTime = samples[i - 1].Tick * TickSeconds;
+            double olderTime = samples[i].Tick * TickSeconds;
+            if (renderTime > newerTime || renderTime < olderTime) continue;
+            float fraction = (float)((renderTime - olderTime) / (newerTime - olderTime));
+            root.position = Vector3.Lerp(samples[i].Position, samples[i - 1].Position, fraction);
+            root.rotation = Quaternion.Slerp(samples[i].Rotation, samples[i - 1].Rotation, fraction);
+            return;
+        }
+
+        var latest = samples[0];
+        double excess = renderTime - latest.Tick * TickSeconds;
+        if (count > 1 && excess >= 0 && excess < .2)
+        {
+            double interval = Math.Max(.08, (latest.Tick - samples[1].Tick) * TickSeconds);
+            root.position = latest.Position +
+                (latest.Position - samples[1].Position) * (float)(excess / interval);
+        }
+        else if (count > 1 && excess >= .2 && excess < 1)
+        {
+            root.position = Vector3.Lerp(root.position, latest.Position, frameSeconds * 2f);
+        }
+        else
+        {
+            root.position = latest.Position;
+        }
+        root.rotation = latest.Rotation;
+    }
+
+    private static bool Finite(float value)
+    {
+        return !float.IsNaN(value) && !float.IsInfinity(value);
     }
 }

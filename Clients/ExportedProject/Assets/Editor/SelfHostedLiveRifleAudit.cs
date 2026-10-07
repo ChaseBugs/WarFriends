@@ -32,6 +32,7 @@ public static class SelfHostedLiveRifleAudit
         GameObject owner=null,left=null,right=null;
         try
         {
+            VerifyRemoteInterpolation();
             var scene=EditorSceneManager.OpenScene("Assets/Scenes/MainScene.unity");
             var original=scene.GetRootGameObjects().SelectMany(g=>g.GetComponentsInChildren<GameController>(true)).Single().mainPlayerController;
             bool wasActive=original.gameObject.activeSelf;
@@ -96,7 +97,12 @@ public static class SelfHostedLiveRifleAudit
                     if(snapshot.Players.Any(p=>p.RiflePose==null))throw new InvalidOperationException("Missing live rifle pose.");
                     if(Vector3.Distance(left.transform.position,Position(snapshot,local.PlayerId))>.0001f ||
                         Vector3.Distance(right.transform.position,Position(snapshot,peer.PlayerId))>.0001f)
-                        throw new InvalidOperationException("Rendered rig identity/cover mismatch.");
+                        throw new InvalidOperationException("Rendered rig identity/cover mismatch: left="+
+                            Vector3.Distance(left.transform.position,Position(snapshot,local.PlayerId))+" right="+
+                            Vector3.Distance(right.transform.position,Position(snapshot,peer.PlayerId))+
+                            " rightPosition="+right.transform.position+" hostPosition="+
+                            Position(snapshot,peer.PlayerId)+" phase="+snapshot.Phase+
+                            " tick="+snapshot.ServerTick);
                     frames++;
                 };
                 ulong? firstTick=null;
@@ -195,6 +201,36 @@ public static class SelfHostedLiveRifleAudit
             // restoration from this async continuation recursively enters the
             // Unity 2018 PlayerLoop and can crash the editor before Run exits.
         }
+    }
+
+    private static void VerifyRemoteInterpolation()
+    {
+        var probe = new GameObject("RemoteTransformProbe");
+        try
+        {
+            var buffer = new SelfHostedRemoteTransformBuffer();
+            buffer.Add(60, Vector3.zero, Quaternion.identity, 0f);
+            buffer.Add(66, new Vector3(4, 0, 0), Quaternion.Euler(0, 90, 0), .1f);
+            buffer.Add(66, new Vector3(4, 0, 0), Quaternion.Euler(0, 90, 0), .5f);
+            buffer.Render(probe.transform, .22f, .016f);
+            if (Mathf.Abs(probe.transform.position.x - 1.6f) > .01f ||
+                Mathf.Abs(Quaternion.Angle(probe.transform.rotation, Quaternion.Euler(0, 36, 0))) > .1f)
+                throw new InvalidOperationException("Remote transform did not interpolate 0.18 seconds behind the host.");
+            buffer.Render(probe.transform, .31f, .016f);
+            if (Mathf.Abs(probe.transform.position.x - 5.2f) > .01f)
+                throw new InvalidOperationException("Remote transform did not use bounded source extrapolation.");
+            buffer.Render(probe.transform, 1.4f, .016f);
+            if (Mathf.Abs(probe.transform.position.x - 4f) > .01f)
+                throw new InvalidOperationException("Remote transform did not return to the latest host pose.");
+            buffer.Add(72, new Vector3(40, 0, 0), Quaternion.identity, 1.5f);
+            if (buffer.Count != 1)
+                throw new InvalidOperationException("Remote spawn correction was interpolated across the map.");
+            bool rejected = false;
+            try { buffer.Add(65, Vector3.zero, Quaternion.identity, 1.4f); }
+            catch (InvalidOperationException) { rejected = true; }
+            if (!rejected) throw new InvalidOperationException("Remote transform accepted a backward host tick.");
+        }
+        finally { UnityEngine.Object.DestroyImmediate(probe); }
     }
     private static Vector3 Position(MatchSnapshot snapshot,string id)
     {var p=snapshot.Players.Single(x=>x.PlayerId==id);return new Vector3(p.PositionX,p.PositionY,p.PositionZ);}

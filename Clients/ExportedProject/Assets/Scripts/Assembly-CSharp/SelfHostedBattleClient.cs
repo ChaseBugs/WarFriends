@@ -146,7 +146,8 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
         var originalController = root == null ? null : root.GetComponent<PlayerController>();
         if (animator != null && animator.enabled || originalController != null && originalController.enabled)
             throw new InvalidOperationException("Disable original player and animation writers before binding the server pose view.");
-        var renderer = new SelfHostedRiflePoseRenderer(root, animator);
+        var renderer = new SelfHostedRiflePoseRenderer(root, animator,
+            playerId != LocalPlayerId);
         BattlePlayerState current = null;
         if (State != null) foreach (var player in State.Players) if (player.PlayerId == playerId) { current = player; break; }
         if (current != null && current.RiflePose != null) renderer.Apply(current);
@@ -380,7 +381,18 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
 
     private async void Update()
     {
-        if (!IsConnected || polling || Time.realtimeSinceStartup < nextPoll) return;
+        if (!IsConnected) return;
+        try
+        {
+            foreach (var renderer in rifleViews.Values)
+                renderer.RenderRemote(Time.realtimeSinceStartup, Time.deltaTime);
+        }
+        catch (Exception e)
+        {
+            if (ConnectionError != null) ConnectionError(e.Message);
+            return;
+        }
+        if (polling || Time.realtimeSinceStartup < nextPoll) return;
         polling = true;
         nextPoll = Time.realtimeSinceStartup + 0.1f;
         try
@@ -427,6 +439,9 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
         if (State != null && (reply.Snapshot.ServerTick < State.ServerTick ||
             reply.Snapshot.StateRevision < State.StateRevision)) return;
         var next = reply.Snapshot.Clone();
+        if (State != null && State.Phase != next.Phase)
+            foreach (var renderer in rifleViews.Values)
+                renderer.ResetRemote();
         foreach (var player in next.Players)
         {
             SelfHostedRiflePoseRenderer renderer;
