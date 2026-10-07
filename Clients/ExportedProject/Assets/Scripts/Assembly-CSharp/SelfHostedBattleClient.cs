@@ -67,7 +67,7 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
     public bool OwnsMatch { get { return connection != null; } }
     public bool ReconnectFailed { get { return reconnectFailureReported; } }
     public bool IsReconnecting { get { return reconnectTask != null || reconnecting ||
-        connection != null && !IsConnected && reconnectRequestId != null; } }
+        connection != null && !IsConnected && (reconnectRequestId != null || reconnectAttempts > 0); } }
 
     // The simulation tick stops during a disconnect. PauseHostTick keeps moving,
     // so it is the only clock that can measure the Worker's grace deadline.
@@ -265,6 +265,7 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
 
     private async Task ReconnectWithToken(string accessToken)
     {
+        bool grantReturned = false;
         try
         {
             IsConnected = false; // Stop new scene input while the Backend issues a grant.
@@ -273,6 +274,7 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
             {
                 var grant = await backend.ReconnectMatchAsync(matchId, reconnectRequestId,
                     accessToken, CancellationToken.None);
+                grantReturned = true;
                 await Reconnect(grant);
                 reconnectRequestId = null;
                 reconnectAttempts = 0;
@@ -281,6 +283,13 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
         }
         catch
         {
+            if (grantReturned)
+            {
+                // The Worker may already have admitted this grant. A new
+                // request ID asks it for a higher session generation.
+                reconnectRequestId = null;
+                IsConnected = false;
+            }
             reconnectAttempts++;
             nextReconnectAttempt = Time.realtimeSinceStartup + Mathf.Min(2f * reconnectAttempts, 5f);
             throw;
@@ -601,7 +610,7 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
     {
         if (!IsConnected)
         {
-            if (!destroyed && reconnectRequestId != null && reconnectTask == null &&
+            if (!destroyed && reconnectTask == null &&
                 reconnectAttempts > 0 && reconnectAttempts < 3 &&
                 Time.realtimeSinceStartup >= nextReconnectAttempt)
             {

@@ -21,16 +21,19 @@ public static class SelfHostedLiveRifleAudit
         if(string.IsNullOrEmpty(path))throw new InvalidOperationException("Set WAR_RIFLE_LIVE_GRANTS_FILE.");
         string backendUrl=Environment.GetEnvironmentVariable("WAR_RIFLE_LIVE_BACKEND");
         if(string.IsNullOrEmpty(backendUrl))throw new InvalidOperationException("Set WAR_RIFLE_LIVE_BACKEND.");
+        ulong retrySession;
+        if(!ulong.TryParse(Environment.GetEnvironmentVariable("WAR_RIFLE_RETRY_SESSION"),out retrySession))
+            throw new InvalidOperationException("Set WAR_RIFLE_RETRY_SESSION.");
         string[] lines=File.ReadAllLines(path);
 		if(lines.Length!=2)throw new InvalidOperationException("Expected two initial grants.");
 		var first=JsonParser.Default.Parse<MatchConnectionGrant>(lines[0]);
 		var second=JsonParser.Default.Parse<MatchConnectionGrant>(lines[1]);
 		deadline=EditorApplication.timeSinceStartup+65;
-		audit=Check(first,second,backendUrl);
+		audit=Check(first,second,backendUrl,retrySession);
         EditorApplication.update+=Update;
     }
 	private static async Task Check(MatchConnectionGrant local,MatchConnectionGrant peer,
-		string backendUrl)
+		string backendUrl,ulong retrySession)
     {
         GameObject owner=null,left=null,right=null;
         try
@@ -103,6 +106,7 @@ public static class SelfHostedLiveRifleAudit
                     throw new InvalidOperationException("Authoritative weapon switch did not select the recovered FAMAS rig.");
                 int frames=0;
                 bool remoteMoveActive=false;
+                bool failReconnectPresentationOnce=false;
                 adapter.StateReceived+=snapshot=>
                 {
                     if(snapshot.Players.Any(p=>p.RiflePose==null))throw new InvalidOperationException("Missing live rifle pose.");
@@ -114,6 +118,11 @@ public static class SelfHostedLiveRifleAudit
                             " rightPosition="+right.transform.position+" hostPosition="+
                             Position(snapshot,peer.PlayerId)+" phase="+snapshot.Phase+
                             " tick="+snapshot.ServerTick);
+                    if(failReconnectPresentationOnce && adapter.IsReconnecting)
+                    {
+                        failReconnectPresentationOnce=false;
+                        throw new InvalidOperationException("Injected post-admission presentation failure.");
+                    }
                     frames++;
                 };
                 ulong? firstTick=null;
@@ -262,10 +271,13 @@ public static class SelfHostedLiveRifleAudit
 				bool expired=false;
 				try {await adapter.DispatchEvents();}
 				catch(MatchEventCursorExpiredException) {expired=true;}
-				if(!expired)
-					throw new InvalidOperationException("Unity adapter did not observe its expired event cursor.");
-				allowSnapshotGap=true;
+                if(!expired)
+                    throw new InvalidOperationException("Unity adapter did not observe its expired event cursor.");
+                allowSnapshotGap=true;
+                failReconnectPresentationOnce=true;
 				var update=typeof(SelfHostedBattleClient).GetMethod("Update",
+					System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+				var grantField=typeof(MatchConnection).GetField("grant",
 					System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
 				bool recoveryObserved=false;
 				for(int attempt=0;attempt<100;attempt++)
@@ -273,9 +285,16 @@ public static class SelfHostedLiveRifleAudit
 					update.Invoke(adapter,null);
 					await Task.Delay(100,ct.Token);
 					if(adapter.IsReconnecting)recoveryObserved=true;
-					if(recoveryObserved && adapter.IsConnected && !adapter.IsReconnecting)break;
+					var activeTransport=(MatchConnection)connectionField.GetValue(adapter);
+					var activeGrant=(MatchConnectionGrant)grantField.GetValue(activeTransport);
+					if(recoveryObserved && adapter.IsConnected && !adapter.IsReconnecting &&
+						activeGrant.SessionId==retrySession)break;
 				}
-				if(!recoveryObserved || !adapter.IsConnected || adapter.ProcessedEventId<latestBeforeExpiry ||
+				var finalTransport=(MatchConnection)connectionField.GetValue(adapter);
+				var finalGrant=(MatchConnectionGrant)grantField.GetValue(finalTransport);
+				if(!recoveryObserved || failReconnectPresentationOnce || !adapter.IsConnected ||
+					finalGrant.SessionId!=retrySession ||
+                    adapter.ProcessedEventId<latestBeforeExpiry ||
 					adapter.ProcessedEventId<adapter.State.LatestEventId ||
 					Vector3.Distance(left.transform.position,Position(adapter.State,local.PlayerId))>.0001f ||
 					Vector3.Distance(right.transform.position,Position(adapter.State,peer.PlayerId))>.15f ||
@@ -285,8 +304,12 @@ public static class SelfHostedLiveRifleAudit
 						adapter.State.Players.Single(p=>p.PlayerId==peer.PlayerId).Health)>.001f ||
 					leftPlayer.weaponInventory.currentWeapon.weapon.ammoLeftInClip!=
 						adapter.State.Players.Single(p=>p.PlayerId==local.PlayerId).ClipAmmo)
-					throw new InvalidOperationException("Expired event history did not restore the rendered Unity rigs.");
-				Debug.Log("UNITY_LIVE_RIFLE_PASSED renderedRigs=2 automaticExpiredEventRecovery=True movingRun=True walkingShot=True frames="+frames+" health="+
+					throw new InvalidOperationException("Expired event history did not restore the rendered Unity rigs: " +
+						"session="+finalGrant.SessionId+" expected="+retrySession+
+						" connected="+adapter.IsConnected+" reconnecting="+adapter.IsReconnecting+
+						" cursor="+adapter.ProcessedEventId+" snapshot="+adapter.State.LatestEventId+
+						" injected="+failReconnectPresentationOnce);
+                Debug.Log("UNITY_LIVE_RIFLE_PASSED renderedRigs=2 automaticExpiredEventRecovery=True freshRetryGeneration=True movingRun=True walkingShot=True frames="+frames+" health="+
 					string.Join(",",adapter.State.Players.Select(p=>p.Health.ToString("F2"))));
 	}
         }

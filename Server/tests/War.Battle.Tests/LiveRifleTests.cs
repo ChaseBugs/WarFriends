@@ -60,7 +60,9 @@ internal static class LiveRifleTests
             view.Weapons.Add(new BattleWeaponView {Slot=2,WeaponIndex=26,SourceId="Google2u.AssaultRifle_Famas",UpgradeIndex=0});
             return view;
         }
-        var replacementGrant=Grant(ids[0],803,1);
+        var firstReplacement=Grant(ids[0],803,1);
+        var secondReplacement=Grant(ids[0],804,2);
+        var issuedRequests=new Dictionary<string,MatchConnectionGrant>(StringComparer.Ordinal);
         await File.WriteAllLinesAsync(grantsFile,
             [JsonFormatter.Default.Format(Grant(ids[0],801)),
              JsonFormatter.Default.Format(Grant(ids[1],802))]);
@@ -83,8 +85,19 @@ internal static class LiveRifleTests
             if(context.Request.Headers.Authorization!="Bearer rifle-audit-token" ||
                 request.MatchId!=manifest.MatchId || request.RequestId.Length!=32)
             {context.Response.StatusCode=400;return;}
+            MatchConnectionGrant replacement;
+            lock(issuedRequests)
+            {
+                if(!issuedRequests.TryGetValue(request.RequestId,out replacement!))
+                {
+                    if(issuedRequests.Count>=2)
+                    {context.Response.StatusCode=409;return;}
+                    replacement=issuedRequests.Count==0?firstReplacement:secondReplacement;
+                    issuedRequests.Add(request.RequestId,replacement);
+                }
+            }
             context.Response.ContentType="application/x-protobuf";
-            await context.Response.Body.WriteAsync(replacementGrant.ToByteArray());
+            await context.Response.Body.WriteAsync(replacement.ToByteArray());
         });
         System.Diagnostics.Process? editor=null;
         try
@@ -97,11 +110,15 @@ internal static class LiveRifleTests
                 start.ArgumentList.Add(arg);
             start.Environment["WAR_RIFLE_LIVE_GRANTS_FILE"]=grantsFile;
             start.Environment["WAR_RIFLE_LIVE_BACKEND"]=backend.Urls.Single()+"/";
+            start.Environment["WAR_RIFLE_RETRY_SESSION"]=secondReplacement.SessionId.ToString();
             editor=System.Diagnostics.Process.Start(start)??throw new Exception("Unity did not start.");
             using var timeout=new CancellationTokenSource(TimeSpan.FromSeconds(105));
             await editor.WaitForExitAsync(timeout.Token);
             if(editor.ExitCode!=0 || !(await File.ReadAllTextAsync(unityLog)).Contains("UNITY_LIVE_RIFLE_PASSED"))
                 throw new Exception("Unity live rifle audit failed; inspect "+unityLog);
+            if(issuedRequests.Count!=2 ||
+                issuedRequests.Values.Select(grant=>grant.SessionId).Distinct().Count()!=2)
+                throw new Exception("Unity did not request a fresh reconnect generation after an admitted callback failure.");
             Console.WriteLine("PASS: two rendered recovered Unity rigs over live UDP; "+unityLog);
         }
         finally
