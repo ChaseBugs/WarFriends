@@ -1,6 +1,6 @@
 {
   "project": "Clients\\ExportedProject",
-  "photonReferences": 257,
+  "photonReferences": 255,
   "forbiddenRuntimeCalls": [
     {
       "file": "Assets/Scripts/Assembly-CSharp/PhotonConnectionManager.cs",

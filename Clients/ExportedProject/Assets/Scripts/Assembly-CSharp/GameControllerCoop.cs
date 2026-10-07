@@ -405,7 +405,7 @@ public class GameControllerCoop : GameControllerOnline
 			mPhotonView.RPC("FinishGameMultiplayerRPC", PhotonTargets.Others, (byte)5);
 			TimeManager.Resume();
 		}
-		if (Time.realtimeSinceStartup > MatchManager.matchStartTime && mBothPlayersConnected && !mCardsChoosen && PhotonNetwork.inRoom && Singleton<GameController>.instance.isCoopBot)
+		if (Time.realtimeSinceStartup > MatchManager.matchStartTime && mBothPlayersConnected && !mCardsChoosen && PhotonConnectionManager.isInRoom && Singleton<GameController>.instance.isCoopBot)
 		{
 			FinishChoosingCards();
 		}

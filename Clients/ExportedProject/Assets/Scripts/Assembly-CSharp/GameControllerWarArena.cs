@@ -216,7 +216,7 @@ public class GameControllerWarArena : GameControllerPVP
 			mTotalMatchesInfoShown = false;
 			mMatchesInfoTime = float.PositiveInfinity;
 		}
-		if (Time.realtimeSinceStartup > MatchManager.matchStartTime && mBothPlayersConnected && !mCardsChoosen && PhotonNetwork.inRoom)
+		if (Time.realtimeSinceStartup > MatchManager.matchStartTime && mBothPlayersConnected && !mCardsChoosen && PhotonConnectionManager.isInRoom)
 		{
 			FinishChoosingCards();
 		}

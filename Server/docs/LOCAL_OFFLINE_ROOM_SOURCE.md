@@ -20,12 +20,18 @@ implementation proves these are distinct steps:
 
 `GameControllerOnline.OnJoinedRoom` reads the room name, local player, and
 player list; it only advances the two-player connected path when the room has
-two players. `GameControllerCoop.Update` tests `PhotonNetwork.inRoom` when a
-co-op bot is choosing cards. Other shared gameplay scripts also read
+two players. `GameControllerCoop.Update` checks room ownership when a co-op
+bot is choosing cards. Other shared gameplay scripts still read
 `PhotonNetwork.offlineMode`, `room`, or player count. A local-room replacement
 must provide those values and callback order before these three remaining
 direct calls can be removed. Replacing only `CreateRoom` with a Boolean flag
 would leave the recovered controllers with no room object or join callback.
+
+The co-op bot and War Arena card-readiness guards now use
+`PhotonConnectionManager.isInRoom`; this reports either an owned self-hosted
+match or the existing Photon room. The co-op shield lock still reads the
+Photon room and sends a Photon RPC when two players are present, so its guard
+must move together with server-owned lock arbitration rather than alone.
 
 The next implementation slice is a Client-owned local room state and callback
 bridge, followed by call-site migration for the four solo entry points and
