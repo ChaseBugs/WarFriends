@@ -47,6 +47,20 @@ namespace War.Client
                 }
                 else if(item.HelicopterShot!=null)
                     throw new InvalidDataException("Unexpected Helicopter firing metadata.");
+                if(item.Kind==MatchEventKind.AssaultHelicopterFired)
+                {
+                    var shot=item.AssaultHelicopterShot;
+                    if(shot==null||shot.ArmyEntityKey==0||shot.GunIndex>1||item.ProjectileId==0||
+                       !Guid.TryParseExact(item.ActorId,"N",out _)||item.Reason!="assault-helicopter"||
+                       float.IsNaN(shot.MuzzleX)||float.IsInfinity(shot.MuzzleX)||
+                       float.IsNaN(shot.MuzzleY)||float.IsInfinity(shot.MuzzleY)||
+                       float.IsNaN(shot.MuzzleZ)||float.IsInfinity(shot.MuzzleZ)||
+                       float.IsNaN(shot.Speed)||float.IsInfinity(shot.Speed)||
+                       shot.Speed<=0||shot.Speed>1500)
+                        throw new InvalidDataException("Invalid Assault Helicopter firing event.");
+                }
+                else if(item.AssaultHelicopterShot!=null)
+                    throw new InvalidDataException("Unexpected Assault Helicopter firing metadata.");
                 if(item.Reason=="helicopter-gunner"&&
                    (item.Kind!=MatchEventKind.Impact||
                     !Guid.TryParseExact(item.ActorId,"N",out _)||item.ProjectileId==0||

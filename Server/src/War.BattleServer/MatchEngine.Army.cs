@@ -287,6 +287,8 @@ public sealed partial class MatchEngine
                 assaultHelicopterWeapons ??
                     throw new InvalidDataException("Assault Helicopter gun source disappeared."),
                 NextArmyFloat);
+            LaunchAssaultHelicopterRounds(unit,
+                armyAssaultHelicopterRoundIntents[entityId], shot);
         }
     }
 

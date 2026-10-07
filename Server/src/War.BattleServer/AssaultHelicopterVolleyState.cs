@@ -20,25 +20,31 @@ internal sealed class AssaultHelicopterVolleyState
         ulong SelectionTick,
         float SecondGunDueTime);
     internal sealed record RoundIntent(int GunIndex, int RoundIndex,
-        bool IsReal, Vector3 Muzzle, Vector3 Target, float Time);
+        bool IsReal, Vector3 Muzzle, Vector3 Target, float Time,
+        string TargetId, bool Shield);
 
     private sealed class GunClock
     {
         private IReadOnlyList<bool>? realShots;
         private Vector3 target;
+        private string targetId = "";
+        private bool shield;
         private int nextRoundIndex;
         private float lastShotTime;
 
-        internal void Replace(IReadOnlyList<bool> shots, Vector3 aimPoint)
+        internal void Replace(IReadOnlyList<bool> shots, Vector3 aimPoint,
+            string selectedTargetId, bool targetsShield)
         {
             if (!PlayerHitbox.Finite(aimPoint))
                 throw new InvalidDataException("Invalid Assault Helicopter gun aim point.");
             realShots = shots;
             target = aimPoint;
+            targetId = selectedTargetId;
+            shield = targetsShield;
             nextRoundIndex = 0;
         }
 
-        internal (int Index, bool IsReal, Vector3 Target)? TakeDueRound(
+        internal (int Index, bool IsReal, Vector3 Target, string TargetId, bool Shield)? TakeDueRound(
             float time, Vector3 gunPosition, Func<float> nextRandom)
         {
             if (realShots == null || nextRoundIndex >= realShots.Count ||
@@ -50,7 +56,7 @@ internal sealed class AssaultHelicopterVolleyState
             bool isReal = realShots[index];
             Vector3 aimPoint = isReal ? target : FakeAimPoint(gunPosition,
                 target, nextRandom);
-            return (index, isReal, aimPoint);
+            return (index, isReal, aimPoint, targetId, shield);
         }
     }
 
@@ -81,7 +87,8 @@ internal sealed class AssaultHelicopterVolleyState
             capturedVelocity, firstAimPoint, null, firstGunShots,
             null, tick, dueTime);
         waitingForSecondGun.Enqueue(prepared);
-        firstGun.Replace(firstGunShots, firstAimPoint);
+        firstGun.Replace(firstGunShots, firstAimPoint, targetId,
+            targetChoice.First.Type == 2);
         Latest = prepared;
     }
 
@@ -109,7 +116,8 @@ internal sealed class AssaultHelicopterVolleyState
                 pending.TargetChoice.First.Type == 2);
             var secondGunShots = AssaultHelicopterVolleyPlanner.SampleRealShots(
                 pending.Plan.SecondGunCount, shot.ProbabilityOfRealShot, nextRandom);
-            secondGun.Replace(secondGunShots, secondAim);
+            secondGun.Replace(secondGunShots, secondAim, pending.TargetId,
+                pending.TargetChoice.Second.Type == 2);
             if (ReferenceEquals(Latest, pending))
                 Latest = pending with
                 {
@@ -143,7 +151,8 @@ internal sealed class AssaultHelicopterVolleyState
         var due = gun.TakeDueRound(time, muzzle, nextRandom);
         if (due.HasValue)
             rounds.Add(new(gunIndex, due.Value.Index, due.Value.IsReal,
-                muzzle, due.Value.Target, time));
+                muzzle, due.Value.Target, time, due.Value.TargetId,
+                due.Value.Shield));
     }
 
     private static Vector3 FakeAimPoint(Vector3 gunPosition, Vector3 aimPoint,

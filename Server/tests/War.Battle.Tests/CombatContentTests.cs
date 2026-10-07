@@ -3515,8 +3515,16 @@ internal static class CombatContentTests
         Check(firstLiveAssaultRound.Count == 1 &&
               firstLiveAssaultRound[0].GunIndex == 0 &&
               firstLiveAssaultRound[0].RoundIndex == 0 &&
-              firstLiveAssaultRound[0].Target == preparedAssaultVolley?.FirstAimPoint,
+              firstLiveAssaultRound[0].Target == preparedAssaultVolley?.FirstAimPoint &&
+              firstLiveAssaultRound[0].TargetId == preparedAssaultVolley?.TargetId,
             "normal Assault Helicopter tick schedules its first source gun round");
+        var firstAssaultShot = assaultHelicopterMatch.EventBatch(decoyPlayer, 0).Events
+            .SingleOrDefault(row => row.Kind == MatchEventKind.AssaultHelicopterFired);
+        Check(firstAssaultShot?.AssaultHelicopterShot is { GunIndex: 0 } firstGunShot &&
+              firstGunShot.ArmyEntityKey == assaultHelicopterSpawn.EntityKey &&
+              firstAssaultShot.TargetId == preparedAssaultVolley?.TargetId &&
+              assaultHelicopterMatch.PendingAssaultHelicopterProjectiles > 0,
+            "first Assault Helicopter gun publishes a distinct shot and host flight");
         for (ulong routeTick = 123; routeTick <= 126; routeTick++)
             assaultHelicopterMatch.Advance(routeTick);
         var secondAssaultVolley = assaultHelicopterMatch.AssaultHelicopterVolley(
@@ -3530,8 +3538,13 @@ internal static class CombatContentTests
         Check(secondLiveAssaultRound.Count == 1 &&
               secondLiveAssaultRound[0].GunIndex == 1 &&
               secondLiveAssaultRound[0].RoundIndex == 0 &&
-              secondLiveAssaultRound[0].Target == secondAssaultVolley?.SecondAimPoint,
+              secondLiveAssaultRound[0].Target == secondAssaultVolley?.SecondAimPoint &&
+              secondLiveAssaultRound[0].TargetId == secondAssaultVolley?.TargetId,
             "normal Assault Helicopter tick schedules its delayed second source gun round");
+        Check(assaultHelicopterMatch.EventBatch(decoyPlayer, 0).Events.Any(row =>
+                  row.Kind == MatchEventKind.AssaultHelicopterFired &&
+                  row.AssaultHelicopterShot?.GunIndex == 1),
+            "second Assault Helicopter gun publishes its own muzzle identity");
         var deployedDroneMatch=new MatchEngine(deployedDroneManifest,content:content,armyChoice:_=>0);
         deployedDroneMatch.Admit(decoyPlayer);deployedDroneMatch.Admit(decoyOpponent);
         deployedDroneMatch.Command(decoyPlayer,new(){CommandId=1,Ready=new(){ManifestHash=deployedDroneMatch.ManifestHash}});
