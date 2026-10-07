@@ -18,6 +18,7 @@ internal static class CombatContentTests
             catalog.Get(0).Objective != 10 ||
             catalog.Get(74).MissionType != "KillOpponent")
             throw new Exception("Recovered mission rules did not load in source order.");
+        int objectiveAssertions = VerifyMissionObjectives(catalog);
 
         string temporaryPath = Path.Combine(Path.GetTempPath(),
             $"war-mission-catalog-{Guid.NewGuid():N}.json");
@@ -33,13 +34,58 @@ internal static class CombatContentTests
             }
             catch (InvalidDataException)
             {
-                return 2;
+                return 2 + objectiveAssertions;
             }
         }
         finally
         {
             File.Delete(temporaryPath);
         }
+    }
+
+    private static int VerifyMissionObjectives(MissionCatalog catalog)
+    {
+        const string firstEvent = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+        const string secondEvent = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
+        MissionRule killRule = catalog.Missions.First(mission => mission.MissionType == "KillXEnemies");
+        MissionObjectiveState killMission = catalog.CreateObjectiveState(killRule.Index);
+        if (killMission.RecordEnemyKill(firstEvent, 0) || !killMission.Start(100) ||
+            !killMission.RecordEnemyKill(firstEvent, 100) ||
+            killMission.RecordEnemyKill(firstEvent, 100) || killMission.EnemyKills != 1)
+            throw new Exception("Enemy kills must be confirmed after start and counted once.");
+
+        MissionRule scoreRule = catalog.Missions.First(mission => mission.MissionType == "Score");
+        MissionObjectiveState scoreMission = catalog.CreateObjectiveState(scoreRule.Index);
+        scoreMission.Start(100);
+        if (!scoreMission.RecordScore(firstEvent, scoreRule.Objective!.Value, 100) ||
+            scoreMission.Outcome != MissionOutcome.Succeeded ||
+            scoreMission.RecordScore(secondEvent, 1, 101))
+            throw new Exception("Confirmed score reaches the source target exactly once.");
+
+        MissionRule survivalRule = catalog.Missions.First(mission => mission.MissionType == "SurviveXSeconds");
+        MissionObjectiveState survivalMission = catalog.CreateObjectiveState(survivalRule.Index);
+        survivalMission.Start(100);
+        ulong survivalDeadline = survivalMission.DeadlineTick!.Value;
+        if (survivalMission.AdvanceClock(survivalDeadline - 1) ||
+            !survivalMission.AdvanceClock(survivalDeadline) ||
+            survivalMission.Outcome != MissionOutcome.Succeeded)
+            throw new Exception("Survival succeeds only when its source timer expires.");
+
+        MissionRule bossRule = catalog.Missions.First(mission => mission.MissionType == "KillOpponent");
+        MissionObjectiveState bossMission = catalog.CreateObjectiveState(bossRule.Index);
+        bossMission.Start(100);
+        if (!bossMission.RecordBossKilled(firstEvent, 100) ||
+            bossMission.Outcome != MissionOutcome.Succeeded ||
+            bossMission.RecordBossKilled(secondEvent, 101))
+            throw new Exception("A confirmed boss death ends its mission once.");
+
+        MissionObjectiveState timedKillMission = catalog.CreateObjectiveState(killRule.Index);
+        timedKillMission.Start(100);
+        timedKillMission.AdvanceClock(timedKillMission.DeadlineTick!.Value);
+        if (timedKillMission.Outcome != MissionOutcome.Failed ||
+            timedKillMission.RecordEnemyKill(firstEvent, timedKillMission.DeadlineTick.Value))
+            throw new Exception("Unfinished kill missions fail at the source deadline.");
+        return 5;
     }
 
     internal static int Run(string directory)

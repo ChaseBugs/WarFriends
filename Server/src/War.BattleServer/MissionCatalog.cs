@@ -39,6 +39,11 @@ public sealed class MissionCatalog
         return Missions[missionIndex];
     }
 
+    public MissionObjectiveState CreateObjectiveState(int missionIndex)
+    {
+        return new MissionObjectiveState(Get(missionIndex));
+    }
+
     public static MissionCatalog Load(string path)
     {
         using var document = JsonDocument.Parse(File.ReadAllText(path));
