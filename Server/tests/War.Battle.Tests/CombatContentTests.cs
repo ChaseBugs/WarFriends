@@ -923,6 +923,9 @@ internal static class CombatContentTests
             attackPath, missions, bots);
         if (attacks.Missions.Count != 15 ||
             attacks.ForMission(4).ConfigIndex != 1 ||
+            attacks.ForMission(4).PrimaryCategory != "AssaultRifle " ||
+            attacks.ForMission(24).SecondaryCategory != "Shotgun" ||
+            attacks.ForMission(74).ExplosiveCategory != "RocketLauncher" ||
             attacks.ForMission(4).ShootFrequencyMinSeconds != 3.25f ||
             attacks.ForMission(74).ConfigIndex != 12 ||
             attacks.ForMission(74).ShootAccuracy != 0.565f)

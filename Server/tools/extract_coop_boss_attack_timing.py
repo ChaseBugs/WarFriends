@@ -38,6 +38,20 @@ def finite_decimal(row, field):
     return float(raw)
 
 
+def weapon_category(row, field, accepted):
+    raw = row[field]
+    # MainScene quotes AssaultRifle because its source value has a trailing
+    # space. Enum.Parse accepts that space; keep the original bytes here.
+    if raw.startswith("'") and raw.endswith("'"):
+        value = raw[1:-1].replace("''", "'")
+    else:
+        value = raw
+    has_unexpected_space = value != value.strip() and value != "AssaultRifle "
+    if value.strip() not in accepted or has_unexpected_space:
+        raise ValueError(f"unexpected boss {field} category: {value!r}")
+    return value
+
+
 def main():
     if sys.argv[1:] not in ([], ["--check"]):
         raise SystemExit("usage: extract_coop_boss_attack_timing.py [--check]")
@@ -79,6 +93,13 @@ def main():
             "sourceDifficulty": source_difficulty,
             "playerBotsRow": selected["NUMBER"],
             "configIndex": config_index,
+            "primaryCategory": weapon_category(selected, "PRIMARY",
+                {"AssaultRifle", "SMG", "LMG"}),
+            "secondaryCategory": weapon_category(selected, "SECONDARY",
+                {"SniperRifle", "Shotgun"}),
+            "explosiveCategory": weapon_category(selected, "EXPLOSIVES",
+                {"Grenade", "RocketLauncher"}),
+            "pistolCategory": "Pistol",
             "shootFrequencyMinSeconds": minimum_frequency,
             "shootFrequencyMaxSeconds": maximum_frequency,
             "shootingLengthMinSeconds": minimum_length,

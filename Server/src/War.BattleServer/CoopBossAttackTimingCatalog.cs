@@ -6,6 +6,8 @@ namespace War.BattleServer;
 
 public sealed record CoopBossAttackTiming(
     int MissionIndex, int SourceDifficulty, int PlayerBotsRow, int ConfigIndex,
+    string PrimaryCategory, string SecondaryCategory,
+    string ExplosiveCategory, string PistolCategory,
     float ShootFrequencyMinSeconds, float ShootFrequencyMaxSeconds,
     float ShootingLengthMinSeconds, float ShootingLengthMaxSeconds,
     float ShootAccuracy, float OpponentOffense,
@@ -18,7 +20,7 @@ public sealed record CoopBossAttackTiming(
 public sealed class CoopBossAttackTimingCatalog
 {
     private const string ReviewedArtifactSha256 =
-        "de8f62b33d5d7ab933aee8be7dbf39e641e6be19ff26b943889f05b4676df198";
+        "6954734200bc126fa1e286afde96262b0e2a691e95fe0266e8ee42eea1184c39";
 
     public IReadOnlyList<CoopBossAttackTiming> Missions { get; }
 
@@ -65,7 +67,9 @@ public sealed class CoopBossAttackTimingCatalog
         {
             JsonElement entry = entries[index];
             RequireFields(entry, "missionIndex", "sourceDifficulty",
-                "playerBotsRow", "configIndex", "shootFrequencyMinSeconds",
+                "playerBotsRow", "configIndex", "primaryCategory",
+                "secondaryCategory", "explosiveCategory", "pistolCategory",
+                "shootFrequencyMinSeconds",
                 "shootFrequencyMaxSeconds", "shootingLengthMinSeconds",
                 "shootingLengthMaxSeconds", "shootAccuracy", "opponentOffense",
                 "opponentOffenseReactionSeconds");
@@ -74,6 +78,10 @@ public sealed class CoopBossAttackTimingCatalog
             int sourceDifficulty = entry.GetProperty("sourceDifficulty").GetInt32();
             int playerBotsRow = entry.GetProperty("playerBotsRow").GetInt32();
             int configIndex = entry.GetProperty("configIndex").GetInt32();
+            string primary = entry.GetProperty("primaryCategory").GetString() ?? "";
+            string secondary = entry.GetProperty("secondaryCategory").GetString() ?? "";
+            string explosive = entry.GetProperty("explosiveCategory").GetString() ?? "";
+            string pistol = entry.GetProperty("pistolCategory").GetString() ?? "";
             float frequencyMin = Positive(entry, "shootFrequencyMinSeconds");
             float frequencyMax = Positive(entry, "shootFrequencyMaxSeconds");
             float lengthMin = Positive(entry, "shootingLengthMinSeconds");
@@ -86,10 +94,15 @@ public sealed class CoopBossAttackTimingCatalog
                 sourceDifficulty != bot.Difficulty ||
                 playerBotsRow != sourceDifficulty ||
                 configIndex is < 0 or > 31 ||
+                primary != "AssaultRifle " ||
+                secondary is not ("SniperRifle" or "Shotgun") ||
+                explosive is not ("Grenade" or "RocketLauncher") ||
+                pistol != "Pistol" ||
                 frequencyMin > frequencyMax || lengthMin > lengthMax)
                 throw new InvalidDataException("Boss shooting row differs from its mission.");
             rows[index] = new CoopBossAttackTiming(missionIndex,
                 sourceDifficulty, playerBotsRow, configIndex,
+                primary, secondary, explosive, pistol,
                 frequencyMin, frequencyMax, lengthMin, lengthMax,
                 accuracy, offense, reaction);
         }
