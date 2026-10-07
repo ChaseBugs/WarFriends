@@ -4808,6 +4808,58 @@ internal static class CombatContentTests
               !vehicleTriggerMatch.EventBatch(helicopterOwner,0).Events.Any(row=>
                   row.Kind==MatchEventKind.LandMineTriggered&&row.ProjectileId==alliedMineId),
             "allied Humvee contact does not trigger its own faction's Land Mine");
+        var passengerTriggerManifest=vehicleTriggerManifest with
+        {
+            MatchId="land-mine-passenger-trigger"
+        };
+        var passengerTriggerMatch=new MatchEngine(passengerTriggerManifest,content:content,
+            armyChoice:_=>0);
+        passengerTriggerMatch.Admit(soldierOwner);
+        passengerTriggerMatch.Admit(helicopterOwner);
+        passengerTriggerMatch.Command(soldierOwner,new(){CommandId=1,
+            Ready=new(){ManifestHash=passengerTriggerMatch.ManifestHash}});
+        passengerTriggerMatch.Command(helicopterOwner,new(){CommandId=1,
+            Ready=new(){ManifestHash=passengerTriggerMatch.ManifestHash}});
+        passengerTriggerMatch.Advance(60);
+        int passengerHumveeOption=passengerTriggerMatch.ArmyBatch(helicopterOwner).OptionIndexes[0];
+        Check(passengerTriggerMatch.Command(helicopterOwner,new(){CommandId=2,
+            DeployArmy=new(){OptionIndex=passengerHumveeOption}}).Code=="army-deploying",
+            "passenger mine fixture deploys an opposing source Humvee");
+        passengerTriggerMatch.Advance(61);
+        var minePassengerVehicle=passengerTriggerMatch.ArmyEntityBatch(soldierOwner,0,0).Entities
+            .Single(row=>row.UnitId=="ID_UNIT-HUMVEE");
+        var minePassengerTargets=passengerTriggerMatch.GroundVehicleShotTargets(soldierOwner)
+            .Where(row=>row.EntityId==minePassengerVehicle.EntityKey).ToArray();
+        var passengerBodyParts=minePassengerTargets.Where(row=>row.GroundVehicleBody)
+            .Select(row=>row.Hitbox).ToArray();
+        Vector3? passengerOnlyContact=null;
+        foreach(var part in minePassengerTargets.Where(row=>row.PassengerRole=="gunner"))
+        {
+            foreach(float lift in new[]{0f,.1f,.2f,.3f,.4f,.5f})
+            {
+                var candidate=part.Hitbox.Center+Vector3.UnitY*lift;
+                if(!LandMineExplosion.Triggered(candidate,content.LandMines.Prefab,
+                       new[]{part.Hitbox})||
+                   LandMineExplosion.Triggered(candidate,content.LandMines.Prefab,
+                       passengerBodyParts))continue;
+                passengerOnlyContact=candidate;
+                break;
+            }
+            if(passengerOnlyContact.HasValue)break;
+        }
+        Check(passengerOnlyContact.HasValue,
+            "a current Humvee gunner pose has a trigger contact outside the vehicle body");
+        Check(passengerTriggerMatch.TryRegisterLandMine(new string('8',32),soldierOwner,
+            passengerOnlyContact!.Value,10f),
+            "host-only mine placement binds a passenger-only trigger contact");
+        ulong passengerTriggerMineId=passengerTriggerMatch.Snapshot().LandMines.Single().EntityId;
+        passengerTriggerMatch.Advance(62);
+        Check(passengerTriggerMatch.Snapshot().LandMines.Count==0&&
+              passengerTriggerMatch.EventBatch(soldierOwner,0).Events.Any(row=>
+                  row.Kind==MatchEventKind.LandMineTriggered&&
+                  row.ProjectileId==passengerTriggerMineId&&
+                  row.Reason=="vehicle-passenger-trigger:"+minePassengerVehicle.EntityKey+":gunner"),
+            "a current non-metal Humvee gunner collider naturally triggers the Land Mine");
         var flameRepairManifest=flameManifest with {MatchId="army-flame-repair-drone",
             Players=[flameManifest.Players[0],flameManifest.Players[1] with
             {

@@ -5,6 +5,8 @@ namespace War.BattleServer;
 
 public sealed partial class MatchEngine
 {
+    private sealed record LandMinePassengerTrigger(VehicleEntity Vehicle,string Role);
+
     // Host-only insertion used by deterministic simulation proofs and future
     // server-authored scene mechanics. No UDP command can choose a position.
     internal bool TryRegisterLandMine(string requestId,string ownerPlayerId,Vector3 position,float damage)
@@ -86,15 +88,37 @@ public sealed partial class MatchEngine
             VehicleEntity? vehicleTrigger=null;
             if(playerTrigger==null&&armyTrigger==null)
                 vehicleTrigger=FindLandMineVehicleTrigger(mine);
-            if(playerTrigger==null&&armyTrigger==null&&vehicleTrigger==null)continue;
+            LandMinePassengerTrigger? passengerTrigger=null;
+            if(playerTrigger==null&&armyTrigger==null&&vehicleTrigger==null)
+                passengerTrigger=FindLandMinePassengerTrigger(mine);
+            if(playerTrigger==null&&armyTrigger==null&&vehicleTrigger==null&&passengerTrigger==null)
+                continue;
             if(!landMines.TryRemove(mine.EntityId,out var removed)||removed!=mine)
                 throw new InvalidDataException("Land Mine trigger compare-and-remove failed.");
             stateRevision++;
-            string target=playerTrigger?.Definition.PlayerId??armyTrigger?.OwnerPlayerId??
-                vehicleTrigger!.OwnerPlayerId;
-            string reason=playerTrigger!=null?"player-trigger":armyTrigger!=null?
-                "army-trigger:"+armyTrigger.EntityKey:
-                "vehicle-trigger:"+vehicleTrigger!.EntityId;
+            string target;
+            string reason;
+            if(playerTrigger!=null)
+            {
+                target=playerTrigger.Definition.PlayerId;
+                reason="player-trigger";
+            }
+            else if(armyTrigger!=null)
+            {
+                target=armyTrigger.OwnerPlayerId;
+                reason="army-trigger:"+armyTrigger.EntityKey;
+            }
+            else if(vehicleTrigger!=null)
+            {
+                target=vehicleTrigger.OwnerPlayerId;
+                reason="vehicle-trigger:"+vehicleTrigger.EntityId;
+            }
+            else
+            {
+                target=passengerTrigger!.Vehicle.OwnerPlayerId;
+                reason="vehicle-passenger-trigger:"+passengerTrigger.Vehicle.EntityId+":"+
+                    passengerTrigger.Role;
+            }
             Emit(MatchEventKind.LandMineTriggered,mine.OwnerPlayerId,target,
                 mine.EntityId,mine.Position,mine.Damage,reason);
             var attacker=Find(mine.OwnerPlayerId)??throw new InvalidDataException("Land Mine owner disappeared.");
@@ -180,6 +204,36 @@ public sealed partial class MatchEngine
                 .Select(part=>part.Hitbox).ToArray();
             if(LandMineExplosion.Triggered(mine.Position,landMineSource.Prefab,bodyParts))
                 return vehicle;
+        }
+        return null;
+    }
+
+    private LandMinePassengerTrigger? FindLandMinePassengerTrigger(LandMineMatchEntity mine)
+    {
+        if(vehicles==null)return null;
+        if(groundVehicleWeapons==null||landMineSource==null)
+            throw new InvalidDataException("Land Mine passenger trigger lacks source geometry.");
+
+        foreach(var vehicle in vehicles.Snapshot().OrderBy(row=>row.EntityId))
+        {
+            if(!activeArmyEntities.TryGetValue(vehicle.EntityId,out var army)||
+               army.UnitId!=vehicle.UnitId||army.OwnerPlayerId!=vehicle.OwnerPlayerId||
+               !groundVehicleFacing.TryGetValue(vehicle.EntityId,out var facing)||
+               !vehiclePassengers.TryGetValue(vehicle.EntityId,out var passengers))
+                throw new InvalidDataException("Land Mine passenger trigger lost host authority.");
+            if(army.OwnerFraction==mine.OwnerFraction)continue;
+
+            foreach(var passenger in passengers.Values
+                .OrderBy(row=>row.Binding.PointComponentFileId))
+            {
+                if(!passenger.Active)continue;
+                if(passenger.AnimationStartTick>tick)
+                    throw new InvalidDataException("Land Mine passenger animation starts in the future.");
+                var parts=groundVehicleWeapons.PassengerPoses.Place(vehicle.UnitId,
+                    passenger.Binding,vehicle.Position,facing,tick-passenger.AnimationStartTick);
+                if(LandMineExplosion.Triggered(mine.Position,landMineSource.Prefab,parts))
+                    return new(vehicle,passenger.Binding.Role);
+            }
         }
         return null;
     }
