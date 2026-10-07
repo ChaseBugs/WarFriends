@@ -831,6 +831,43 @@ internal static class GrenadeCatalogTests
             var airStage=combat.Grenades!.Stage("Google2u.Grenade_FRAG",0);
             var airEffect=GrenadeExplosion.ResolveArmy(airOrigin,
                 new(airVictim.X,airVictim.Y,airVictim.Z),airBodies.Select(x=>x.Hitbox).ToArray(),airStage)!;
+            if(airUnit=="ID_UNIT-ASSAULTHELI")
+            {
+                var frontGlass=airMatch.GroundVehicleShotTargets(one)
+                    .Single(target=>target.EntityId==airVictim.EntityKey&&target.AssaultGlass);
+                float bodyBeforeGlass=airMatch.ArmyHealth(airVictim.EntityKey)!.Value;
+                float glassBefore=airMatch.AssaultGlassHealth(airVictim.EntityKey)!.Value;
+                var glassEffect=GrenadeExplosion.ResolveArmy(frontGlass.Hitbox.Center,
+                    frontGlass.Hitbox.Center,new[]{frontGlass.Hitbox},airStage)!;
+                Reject(()=>airMatch.ApplyPlayerGrenadeAssaultGlassExplosion(one,
+                    frontGlass.Hitbox.Center,airStage with {ExplosionDamage=1}),
+                    "forged grenade stage cannot damage Assault Helicopter glass");
+                Check(airMatch.ApplyPlayerGrenadeAssaultGlassExplosion(two,
+                          frontGlass.Hitbox.Center,airStage)==1&&
+                      Math.Abs(airMatch.AssaultGlassHealth(airVictim.EntityKey)!.Value-
+                          Math.Max(0,glassBefore-glassEffect.RawDamage*
+                              combat.Explosions.Friendly))<.01f&&
+                      airMatch.ArmyHealth(airVictim.EntityKey)==bodyBeforeGlass,
+                    "friendly grenade damages Assault Helicopter glass without body damage");
+                if(airMatch.AssaultGlassHealth(airVictim.EntityKey)>0)
+                {
+                    float opposingGlassBefore=airMatch.AssaultGlassHealth(airVictim.EntityKey)!.Value;
+                    Check(airMatch.ApplyPlayerGrenadeAssaultGlassExplosion(one,
+                              frontGlass.Hitbox.Center,airStage)==1&&
+                          Math.Abs(airMatch.AssaultGlassHealth(airVictim.EntityKey)!.Value-
+                              Math.Max(0,opposingGlassBefore-glassEffect.RawDamage))<.01f,
+                        "opposing grenade applies full source damage to separate front glass");
+                }
+                for(int glassBlast=0;glassBlast<100&&
+                    airMatch.AssaultGlassHealth(airVictim.EntityKey)>0;glassBlast++)
+                    airMatch.ApplyPlayerGrenadeAssaultGlassExplosion(one,
+                        frontGlass.Hitbox.Center,airStage);
+                Check(airMatch.AssaultGlassHealth(airVictim.EntityKey)==0&&
+                      airMatch.ApplyPlayerGrenadeAssaultGlassExplosion(one,
+                          frontGlass.Hitbox.Center,airStage)==0&&
+                      airMatch.ArmyHealth(airVictim.EntityKey)==bodyBeforeGlass,
+                    "broken front glass stops later grenade glass hits without killing aircraft body");
+            }
             float airBefore=airVictim.Health;
             airMatch.ApplyPlayerGrenadeAirBodyExplosion(one,airOrigin,airStage);
             float? airAfter=airMatch.ArmyHealth(airVictim.EntityKey);

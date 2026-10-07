@@ -1326,6 +1326,45 @@ public sealed partial class MatchEngine
         }
     }
 
+    internal int ApplyPlayerGrenadeAssaultGlassExplosion(string shooterId,Vector3 origin,
+        GrenadeStage stage)
+    {
+        if(phase!=BattlePhase.Running||grenadeCatalog==null||
+           assaultHelicopterMeshColliders==null||explosionPolicy==null||stage==null||
+           !ReferenceEquals(grenadeCatalog.Stage(stage.SourceId,stage.Index),stage)||
+           !PlayerHitbox.Finite(origin))
+            throw new InvalidDataException("Grenade glass blast lacks trusted source authority.");
+
+        var shooter=Find(shooterId)??throw new InvalidDataException("Grenade owner disappeared.");
+        int hits=0;
+        foreach(var aircraft in activeArmyEntities.Values
+            .Where(row=>row.UnitId=="ID_UNIT-ASSAULTHELI")
+            .OrderBy(row=>row.EntityKey).ToArray())
+        {
+            if(!armyAssaultHelicopterPaths.TryGetValue(aircraft.EntityKey,out var path)||
+               !armyAssaultGlass.TryGetValue(aircraft.EntityKey,out var glass))
+                throw new InvalidDataException("Grenade glass lost its aircraft authority.");
+            if(glass.Current<=0)continue;
+
+            var front=assaultHelicopterMeshColliders.PlaceFrontGlass(
+                new(aircraft.X,aircraft.Y,aircraft.Z),path.Rotation);
+            // Front glass has its own DestroyableObject damage owner. Resolve
+            // its splash independently from the aircraft's multipart body.
+            var effect=GrenadeExplosion.ResolveArmy(origin,front.Hitbox.Center,
+                new[]{front.Hitbox},stage);
+            if(effect==null)continue;
+
+            bool friendly=aircraft.OwnerFraction==shooter.Definition.Fraction;
+            float amount=effect.RawDamage*(friendly?explosionPolicy.Friendly:1f);
+            if(!float.IsFinite(amount)||amount<=0||amount>10_000_000)
+                throw new InvalidDataException("Grenade glass damage exceeded host bounds.");
+            if(!ApplyAssaultGlassDamage(aircraft.EntityKey,amount))continue;
+            hits++;
+            if(!friendly)shooter.ConfirmedEnemyHits=checked(shooter.ConfirmedEnemyHits+1);
+        }
+        return hits;
+    }
+
     internal void ApplyHelicopterGunnerProjectileImpact(string shooterId,ulong entityId,
         float rawDamage,float partWeight)
     {
