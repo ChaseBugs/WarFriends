@@ -104,6 +104,14 @@ internal static class BattleManifestSnapshotTests
                (await queue.Existing(players[0],CancellationToken.None))?.MatchId!=match)
                 throw new Exception("Rejected performance evidence changed durable result or pair authority.");
             (byte[] payload,string digest)=Evidence(terminal);
+            var orphan=terminal.Clone();
+            orphan.MatchId="m"+Guid.NewGuid().ToString("N");
+            (byte[] orphanPayload,string orphanDigest)=Evidence(orphan);
+            try {await acceptance.Accept(orphan.MatchId,orphanDigest,orphanPayload,CancellationToken.None);
+                throw new Exception("An unpaired Backend match result was accepted.");}
+            catch(InvalidDataException){}
+            if(await resultStore.Get(orphan.MatchId,CancellationToken.None)!=null)
+                throw new Exception("An unpaired Backend result was persisted.");
             if(TerminalResultDigest.Compute(payload)!=digest)
                 throw new Exception("Shared terminal digest differs from the Worker's framed record.");
             try {await resultStore.Accept(match,new string('f',64),payload,CancellationToken.None);
@@ -139,6 +147,11 @@ internal static class BattleManifestSnapshotTests
                await queue.Existing(players[1],CancellationToken.None)!=null ||
                await acceptance.Accept(match,digest,payload,CancellationToken.None)!="already-accepted")
                 throw new Exception("Stored terminal result did not release the pair after Backend restart.");
+            var conflictingReplay=terminal.Clone();
+            conflictingReplay.Players[0].ShotsFired++;
+            (byte[] conflictingPayload,string conflictingDigest)=Evidence(conflictingReplay);
+            if(await resumedAcceptance.Accept(match,conflictingDigest,conflictingPayload,CancellationToken.None)!="conflict")
+                throw new Exception("A changed terminal result replaced accepted evidence after pair release.");
             if(await resultStore.ReconcileScored(match,digest,CancellationToken.None)!="scored" ||
                await resultStore.ReconcileScored(match,digest,CancellationToken.None)!="already-scored" ||
                (await resultStore.Get(match,CancellationToken.None))?.ScoredUtc==null)

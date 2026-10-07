@@ -16,8 +16,20 @@ public sealed class BattleTerminalAcceptance
     {
         var terminal=TerminalOutbox.ValidatePayload(payload,matchId,digest);
         BattlePairingResult? pair=null;
-        if(System.Text.RegularExpressions.Regex.IsMatch(matchId,@"\Am[0-9a-f]{32}\z"))
+        bool allocatedByBackend=System.Text.RegularExpressions.Regex.IsMatch(matchId,@"\Am[0-9a-f]{32}\z");
+        if(allocatedByBackend)
             pair=await queue.ForMatch(matchId,ct);
+        if(allocatedByBackend && pair==null)
+        {
+            // The pair is released after the first accepted result. An exact
+            // replay remains safe, but a new result cannot enter without its
+            // durable roster and frozen manifest proof.
+            var previous=await results.Get(matchId,ct);
+            if(previous==null)
+                throw new InvalidDataException("Backend-allocated result has no durable pair.");
+            return previous.Digest==digest && previous.Snapshot.AsSpan().SequenceEqual(payload)
+                ? "already-accepted" : "conflict";
+        }
         if(pair!=null)
         {
             if(!terminal.Players.Select(x=>x.PlayerId).SequenceEqual(pair.Players!,StringComparer.Ordinal))
