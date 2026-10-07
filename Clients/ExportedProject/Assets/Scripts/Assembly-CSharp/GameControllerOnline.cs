@@ -1027,7 +1027,8 @@ public abstract class GameControllerOnline : IGameController
 			else if (mSelfHostedReconnectDialog)
 			{
 				TimeManager.Resume();
-				GuiElementSingle<ReconnectDialog>.instance.HideDialog();
+				ReconnectDialog dialog = GuiElementSingle<ReconnectDialog>.instance;
+				if (dialog != null) dialog.HideDialog();
 				mSelfHostedReconnectDialog = false;
 			}
 			return;
@@ -1458,7 +1459,7 @@ public abstract class GameControllerOnline : IGameController
 	protected virtual void UpdatePause()
 	{
 		if (gameIsRunning && TimeManager.instance.isPaused && TimeManager.pauseTimeLeft <= 0f && !MatchManager.isReconnect &&
-			!mSelfHostedReconnectDialog)
+			!(SelfHostedBattleClient.Active != null && SelfHostedBattleClient.Active.OwnsMatch))
 		{
 			if (TimeManager.instance.pauseStatus == TimeManager.PauseStatus.PausedRemote)
 			{

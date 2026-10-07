@@ -40,6 +40,21 @@ public static class SelfHostedLiveRifleAudit
         {
             VerifyRemoteInterpolation();
             var scene=EditorSceneManager.OpenScene("Assets/Scenes/MainScene.unity");
+            var reconnectDialog=scene.GetRootGameObjects()
+                .SelectMany(root=>root.GetComponentsInChildren<ReconnectDialog>(true)).Single();
+            if(reconnectDialog.background==null || reconnectDialog.title==null ||
+                reconnectDialog.waitText==null || reconnectDialog.hintText==null ||
+                reconnectDialog.forfeitButton==null)
+                throw new InvalidOperationException("Recovered reconnect dialog has missing scene bindings.");
+            reconnectDialog.SetWaitTime(10f);
+            if(string.IsNullOrEmpty(reconnectDialog.waitText.text))
+                throw new InvalidOperationException("Recovered reconnect countdown cannot render.");
+            reconnectDialog.SetCause(ReconnectState.Me,true);
+            if(!reconnectDialog.forfeitButton.activeSelf)
+                throw new InvalidOperationException("Recovered local reconnect cause is not bound.");
+            reconnectDialog.SetCause(ReconnectState.Other,true);
+            if(reconnectDialog.forfeitButton.activeSelf)
+                throw new InvalidOperationException("Recovered opponent reconnect cause still offers a local forfeit.");
             var original=scene.GetRootGameObjects().SelectMany(g=>g.GetComponentsInChildren<GameController>(true)).Single().mainPlayerController;
             bool wasActive=original.gameObject.activeSelf;
             original.gameObject.SetActive(false);
