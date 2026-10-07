@@ -18,6 +18,10 @@ internal static class CombatContentTests
             catalog.Get(0).Objective != 10 ||
             catalog.Get(74).MissionType != "KillOpponent")
             throw new Exception("Recovered mission rules did not load in source order.");
+        int behaviourCount = catalog.Missions.Sum(mission => mission.Behaviours.Count);
+        int eventCount = catalog.Missions.Sum(mission => mission.Events.Count);
+        if (behaviourCount != 343 || eventCount != 363)
+            throw new Exception("Recovered mission unit and timed-event rows are incomplete.");
         int objectiveAssertions = VerifyMissionObjectives(catalog);
         int scoreAssertions = VerifyMissionScoring(catalog);
 
@@ -27,21 +31,36 @@ internal static class CombatContentTests
         {
             JsonNode document = JsonNode.Parse(File.ReadAllText(path))!;
             document["missions"]![0]!["rewardGold"] = -1;
-            File.WriteAllText(temporaryPath, document.ToJsonString());
-            try
-            {
-                _ = MissionCatalog.Load(temporaryPath);
-                throw new Exception("A corrupt mission reward was accepted.");
-            }
-            catch (InvalidDataException)
-            {
-                return 2 + objectiveAssertions + scoreAssertions;
-            }
+            RejectMissionCatalog(temporaryPath, document,
+                "A corrupt mission reward was accepted.");
+
+            document = JsonNode.Parse(File.ReadAllText(path))!;
+            JsonNode firstMission = document["missions"]![0]!;
+            firstMission["events"]![0]!["time"] =
+                firstMission["timeSeconds"]!.GetValue<int>() + 1;
+            RejectMissionCatalog(temporaryPath, document,
+                "An event beyond the source mission timer was accepted.");
+            return 4 + objectiveAssertions + scoreAssertions;
         }
         finally
         {
             File.Delete(temporaryPath);
         }
+    }
+
+    private static void RejectMissionCatalog(
+        string path, JsonNode document, string failureMessage)
+    {
+        File.WriteAllText(path, document.ToJsonString());
+        try
+        {
+            _ = MissionCatalog.Load(path);
+        }
+        catch (InvalidDataException)
+        {
+            return;
+        }
+        throw new Exception(failureMessage);
     }
 
     private static int VerifyMissionObjectives(MissionCatalog catalog)

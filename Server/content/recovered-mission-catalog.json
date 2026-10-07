@@ -19,6 +19,54 @@
       "healthTargetFraction": 0.75,
       "timeTargetFraction": 0.5,
       "recommendedArmyPower": 7100,
+      "behaviours": [
+        {
+          "name": "Assaulter",
+          "level": 0,
+          "sceneLimit": 0,
+          "missionLimit": 3
+        },
+        {
+          "name": "MachineGunner",
+          "level": 1,
+          "sceneLimit": 2,
+          "missionLimit": 3
+        }
+      ],
+      "events": [
+        {
+          "time": 10.0,
+          "behaviour": "Shotgunner",
+          "level": 0,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 20.0,
+          "behaviour": "Shotgunner",
+          "level": 0,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 15.0,
+          "behaviour": "Grenadier",
+          "level": 0,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 25.0,
+          "behaviour": "Grenadier",
+          "level": 0,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        }
+      ],
       "sceneDataSha256": "944a2e064449f84c425536f814e2357c3327a7fbb3d89f3c1b19d76850866cc6"
     },
     {
@@ -38,6 +86,62 @@
       "healthTargetFraction": 0.75,
       "timeTargetFraction": 0.5,
       "recommendedArmyPower": 7300,
+      "behaviours": [
+        {
+          "name": "Assaulter",
+          "level": 0,
+          "sceneLimit": 0,
+          "missionLimit": 6
+        },
+        {
+          "name": "MachineGunner",
+          "level": 1,
+          "sceneLimit": 5,
+          "missionLimit": 0
+        }
+      ],
+      "events": [
+        {
+          "time": 15.0,
+          "behaviour": "Shotgunner",
+          "level": 0,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 30.0,
+          "behaviour": "Shotgunner",
+          "level": 0,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 45.0,
+          "behaviour": "Shotgunner",
+          "level": 0,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 10.0,
+          "behaviour": "Grenadier",
+          "level": 0,
+          "isCardUnit": false,
+          "count": 3,
+          "card": ""
+        },
+        {
+          "time": 40.0,
+          "behaviour": "Grenadier",
+          "level": 0,
+          "isCardUnit": false,
+          "count": 3,
+          "card": ""
+        }
+      ],
       "sceneDataSha256": "31cab71480ef62f9cbefe56d6c7c8019db332907b9f44f8870d75764fa7d9c99"
     },
     {
@@ -57,6 +161,42 @@
       "healthTargetFraction": 0.75,
       "timeTargetFraction": 0.5,
       "recommendedArmyPower": 7600,
+      "behaviours": [
+        {
+          "name": "Assaulter",
+          "level": 1,
+          "sceneLimit": 0,
+          "missionLimit": 2
+        },
+        {
+          "name": "Grenadier",
+          "level": 1,
+          "sceneLimit": 3,
+          "missionLimit": 2
+        },
+        {
+          "name": "MachineGunner",
+          "level": 1,
+          "sceneLimit": 2,
+          "missionLimit": 3
+        },
+        {
+          "name": "Shotgunner",
+          "level": 1,
+          "sceneLimit": 2,
+          "missionLimit": 2
+        }
+      ],
+      "events": [
+        {
+          "time": 25.0,
+          "behaviour": "Grenadier",
+          "level": 0,
+          "isCardUnit": true,
+          "count": 1,
+          "card": ""
+        }
+      ],
       "sceneDataSha256": "bbacc81966f119832ba39ab29d9fa91309eeb80e988d1407ee32eaa3f303b9bb"
     },
     {
@@ -76,6 +216,86 @@
       "healthTargetFraction": 0.75,
       "timeTargetFraction": 0.2,
       "recommendedArmyPower": 8000,
+      "behaviours": [
+        {
+          "name": "Assaulter",
+          "level": 1,
+          "sceneLimit": 0,
+          "missionLimit": 0
+        },
+        {
+          "name": "MachineGunner",
+          "level": 1,
+          "sceneLimit": 3,
+          "missionLimit": 6
+        }
+      ],
+      "events": [
+        {
+          "time": 20.0,
+          "behaviour": "Shotgunner",
+          "level": 1,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 40.0,
+          "behaviour": "Shotgunner",
+          "level": 1,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 60.0,
+          "behaviour": "Shotgunner",
+          "level": 1,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 80.0,
+          "behaviour": "Shotgunner",
+          "level": 1,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 100.0,
+          "behaviour": "Shotgunner",
+          "level": 1,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 30.0,
+          "behaviour": "Grenadier",
+          "level": 1,
+          "isCardUnit": false,
+          "count": 3,
+          "card": ""
+        },
+        {
+          "time": 60.0,
+          "behaviour": "Grenadier",
+          "level": 1,
+          "isCardUnit": false,
+          "count": 3,
+          "card": ""
+        },
+        {
+          "time": 90.0,
+          "behaviour": "Grenadier",
+          "level": 1,
+          "isCardUnit": false,
+          "count": 3,
+          "card": ""
+        }
+      ],
       "sceneDataSha256": "97ee762b9e1450ad64a0dabb3d9e6bd4a98fcc4455811e0a3aec53227a167073"
     },
     {
@@ -95,6 +315,33 @@
       "healthTargetFraction": 0.5,
       "timeTargetFraction": 0.5,
       "recommendedArmyPower": 8400,
+      "behaviours": [
+        {
+          "name": "Assaulter",
+          "level": 2,
+          "sceneLimit": 0,
+          "missionLimit": 0
+        },
+        {
+          "name": "Grenadier",
+          "level": 2,
+          "sceneLimit": 0,
+          "missionLimit": 0
+        },
+        {
+          "name": "MachineGunner",
+          "level": 2,
+          "sceneLimit": 0,
+          "missionLimit": 0
+        },
+        {
+          "name": "Shotgunner",
+          "level": 2,
+          "sceneLimit": 0,
+          "missionLimit": 0
+        }
+      ],
+      "events": [],
       "sceneDataSha256": "7f550d45fb19e196e31815361c70642141a8540434c6d6fdfba8067c9dc71aeb"
     },
     {
@@ -114,6 +361,54 @@
       "healthTargetFraction": 0.75,
       "timeTargetFraction": 0.5,
       "recommendedArmyPower": 8800,
+      "behaviours": [
+        {
+          "name": "Assaulter",
+          "level": 2,
+          "sceneLimit": 3,
+          "missionLimit": 8
+        },
+        {
+          "name": "MachineGunner",
+          "level": 2,
+          "sceneLimit": 5,
+          "missionLimit": 0
+        }
+      ],
+      "events": [
+        {
+          "time": 10.0,
+          "behaviour": "Shotgunner",
+          "level": 2,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 25.0,
+          "behaviour": "Shotgunner",
+          "level": 2,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 40.0,
+          "behaviour": "Shotgunner",
+          "level": 2,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 35.0,
+          "behaviour": "Grenadier",
+          "level": 2,
+          "isCardUnit": false,
+          "count": 4,
+          "card": ""
+        }
+      ],
       "sceneDataSha256": "3295ea638588c6c8f4f65ae689d61ac2414b5d3431a3d5c1a02d9a4326b62543"
     },
     {
@@ -133,6 +428,57 @@
       "healthTargetFraction": 0.75,
       "timeTargetFraction": 0.5,
       "recommendedArmyPower": 9300,
+      "behaviours": [],
+      "events": [
+        {
+          "time": 0.0,
+          "behaviour": "Assaulter",
+          "level": 3,
+          "isCardUnit": false,
+          "count": 4,
+          "card": ""
+        },
+        {
+          "time": 10.0,
+          "behaviour": "MachineGunner",
+          "level": 3,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 15.0,
+          "behaviour": "MachineGunner",
+          "level": 3,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 20.0,
+          "behaviour": "Assaulter",
+          "level": 3,
+          "isCardUnit": false,
+          "count": 4,
+          "card": ""
+        },
+        {
+          "time": 30.0,
+          "behaviour": "Shotgunner",
+          "level": 3,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 30.0,
+          "behaviour": "MachineGunner",
+          "level": 3,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        }
+      ],
       "sceneDataSha256": "492ef9176f0fa9a520e9019059bcccf5eb95534d32dfd10c3bdaf759b338cd58"
     },
     {
@@ -152,6 +498,80 @@
       "healthTargetFraction": 0.75,
       "timeTargetFraction": 0.5,
       "recommendedArmyPower": 9800,
+      "behaviours": [
+        {
+          "name": "Grenadier",
+          "level": 3,
+          "sceneLimit": 4,
+          "missionLimit": 0
+        }
+      ],
+      "events": [
+        {
+          "time": 0.0,
+          "behaviour": "Assaulter",
+          "level": 3,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 20.0,
+          "behaviour": "Assaulter",
+          "level": 3,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 40.0,
+          "behaviour": "Assaulter",
+          "level": 3,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 60.0,
+          "behaviour": "Assaulter",
+          "level": 3,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 10.0,
+          "behaviour": "MachineGunner",
+          "level": 3,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 30.0,
+          "behaviour": "MachineGunner",
+          "level": 3,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 50.0,
+          "behaviour": "MachineGunner",
+          "level": 3,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 70.0,
+          "behaviour": "MachineGunner",
+          "level": 3,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        }
+      ],
       "sceneDataSha256": "e4d6733e1f78fa86d2700305dea27c7f45a2cd8be2f91eeaa1dc67eb02304866"
     },
     {
@@ -171,6 +591,42 @@
       "healthTargetFraction": 0.75,
       "timeTargetFraction": 0.2,
       "recommendedArmyPower": 10300,
+      "behaviours": [
+        {
+          "name": "Assaulter",
+          "level": 4,
+          "sceneLimit": 0,
+          "missionLimit": 8
+        },
+        {
+          "name": "Grenadier",
+          "level": 4,
+          "sceneLimit": 2,
+          "missionLimit": 6
+        },
+        {
+          "name": "MachineGunner",
+          "level": 4,
+          "sceneLimit": 3,
+          "missionLimit": 0
+        },
+        {
+          "name": "Shotgunner",
+          "level": 4,
+          "sceneLimit": 1,
+          "missionLimit": 8
+        }
+      ],
+      "events": [
+        {
+          "time": 10.0,
+          "behaviour": "Grenadier",
+          "level": 6,
+          "isCardUnit": true,
+          "count": 0,
+          "card": ""
+        }
+      ],
       "sceneDataSha256": "c6f1cd0c7008fd9691314f0516e2d6fd18c5a117051dd4fa1c18b2741fdddf96"
     },
     {
@@ -190,6 +646,50 @@
       "healthTargetFraction": 0.5,
       "timeTargetFraction": 0.5,
       "recommendedArmyPower": 10900,
+      "behaviours": [
+        {
+          "name": "Assaulter",
+          "level": 4,
+          "sceneLimit": 0,
+          "missionLimit": 0
+        },
+        {
+          "name": "Grenadier",
+          "level": 4,
+          "sceneLimit": 4,
+          "missionLimit": 0
+        },
+        {
+          "name": "MachineGunner",
+          "level": 4,
+          "sceneLimit": 5,
+          "missionLimit": 0
+        },
+        {
+          "name": "Shotgunner",
+          "level": 4,
+          "sceneLimit": 2,
+          "missionLimit": 0
+        }
+      ],
+      "events": [
+        {
+          "time": 30.0,
+          "behaviour": "Grenadier",
+          "level": 4,
+          "isCardUnit": true,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 90.0,
+          "behaviour": "Grenadier",
+          "level": 4,
+          "isCardUnit": true,
+          "count": 1,
+          "card": ""
+        }
+      ],
       "sceneDataSha256": "84d211e7bc02989858140efaeb2eb1167d66a69063b73b3b1e6c4ba8038ff2d7"
     },
     {
@@ -209,6 +709,68 @@
       "healthTargetFraction": 0.75,
       "timeTargetFraction": 0.5,
       "recommendedArmyPower": 11500,
+      "behaviours": [
+        {
+          "name": "Assaulter",
+          "level": 5,
+          "sceneLimit": 1,
+          "missionLimit": 4
+        },
+        {
+          "name": "Grenadier",
+          "level": 5,
+          "sceneLimit": 1,
+          "missionLimit": 4
+        },
+        {
+          "name": "MachineGunner",
+          "level": 5,
+          "sceneLimit": 2,
+          "missionLimit": 4
+        }
+      ],
+      "events": [
+        {
+          "time": 15.0,
+          "behaviour": "Sniper",
+          "level": 0,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 30.0,
+          "behaviour": "Sniper",
+          "level": 0,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 20.0,
+          "behaviour": "Grenadier",
+          "level": 5,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 35.0,
+          "behaviour": "Grenadier",
+          "level": 5,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 40.0,
+          "behaviour": "Sniper",
+          "level": 0,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        }
+      ],
       "sceneDataSha256": "385694b2f673392be66c0d3946512f69355a37fc0b9c206363a9ea3e51a74924"
     },
     {
@@ -228,6 +790,78 @@
       "healthTargetFraction": 0.75,
       "timeTargetFraction": 0.5,
       "recommendedArmyPower": 12100,
+      "behaviours": [
+        {
+          "name": "Assaulter",
+          "level": 6,
+          "sceneLimit": 2,
+          "missionLimit": 0
+        },
+        {
+          "name": "MachineGunner",
+          "level": 6,
+          "sceneLimit": 2,
+          "missionLimit": 4
+        }
+      ],
+      "events": [
+        {
+          "time": 0.0,
+          "behaviour": "Sniper",
+          "level": 1,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 20.0,
+          "behaviour": "Sniper",
+          "level": 1,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 60.0,
+          "behaviour": "Sniper",
+          "level": 1,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 80.0,
+          "behaviour": "Sniper",
+          "level": 1,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 20.0,
+          "behaviour": "Shotgunner",
+          "level": 6,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 80.0,
+          "behaviour": "Shotgunner",
+          "level": 6,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 90.0,
+          "behaviour": "RocketLauncher",
+          "level": 1,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        }
+      ],
       "sceneDataSha256": "39982f83e74913bf9370d25b94955903caf3aaee8714199eaaaa5771a5271a0e"
     },
     {
@@ -247,6 +881,54 @@
       "healthTargetFraction": 0.75,
       "timeTargetFraction": 0.5,
       "recommendedArmyPower": 12700,
+      "behaviours": [
+        {
+          "name": "MachineGunner",
+          "level": 6,
+          "sceneLimit": 2,
+          "missionLimit": 6
+        },
+        {
+          "name": "Assaulter",
+          "level": 6,
+          "sceneLimit": 2,
+          "missionLimit": 0
+        }
+      ],
+      "events": [
+        {
+          "time": 0.0,
+          "behaviour": "Sniper",
+          "level": 6,
+          "isCardUnit": true,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 60.0,
+          "behaviour": "Drone",
+          "level": 1,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 80.0,
+          "behaviour": "RocketLauncher",
+          "level": 1,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 110.0,
+          "behaviour": "Grenadier",
+          "level": 7,
+          "isCardUnit": true,
+          "count": 1,
+          "card": ""
+        }
+      ],
       "sceneDataSha256": "6ff4983149a207b4983616b1a10b01a77c2431f4bb74fba07cc44566b85dd177"
     },
     {
@@ -266,6 +948,84 @@
       "healthTargetFraction": 0.75,
       "timeTargetFraction": 0.2,
       "recommendedArmyPower": 13300,
+      "behaviours": [
+        {
+          "name": "Grenadier",
+          "level": 7,
+          "sceneLimit": 1,
+          "missionLimit": 10
+        },
+        {
+          "name": "RocketLauncher",
+          "level": 2,
+          "sceneLimit": 1,
+          "missionLimit": 5
+        },
+        {
+          "name": "Assaulter",
+          "level": 7,
+          "sceneLimit": 1,
+          "missionLimit": 0
+        }
+      ],
+      "events": [
+        {
+          "time": 0.0,
+          "behaviour": "Sniper",
+          "level": 2,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 5.0,
+          "behaviour": "Sniper",
+          "level": 2,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 10.0,
+          "behaviour": "Grenadier",
+          "level": 5,
+          "isCardUnit": true,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 20.0,
+          "behaviour": "Parachuter",
+          "level": 2,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 30.0,
+          "behaviour": "Drone",
+          "level": 2,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 40.0,
+          "behaviour": "Sniper",
+          "level": 6,
+          "isCardUnit": true,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 60.0,
+          "behaviour": "MachineGunner",
+          "level": 7,
+          "isCardUnit": false,
+          "count": 3,
+          "card": ""
+        }
+      ],
       "sceneDataSha256": "6cd89b83d4529bf6ed04b53b7c1ffa5b6abd634d1350c0531f930e4b93cdc0a8"
     },
     {
@@ -285,6 +1045,74 @@
       "healthTargetFraction": 0.5,
       "timeTargetFraction": 0.5,
       "recommendedArmyPower": 13900,
+      "behaviours": [
+        {
+          "name": "Assaulter",
+          "level": 8,
+          "sceneLimit": 0,
+          "missionLimit": 0
+        },
+        {
+          "name": "Grenadier",
+          "level": 8,
+          "sceneLimit": 4,
+          "missionLimit": 0
+        },
+        {
+          "name": "MachineGunner",
+          "level": 8,
+          "sceneLimit": 5,
+          "missionLimit": 0
+        },
+        {
+          "name": "Shotgunner",
+          "level": 8,
+          "sceneLimit": 2,
+          "missionLimit": 0
+        },
+        {
+          "name": "Sniper",
+          "level": 3,
+          "sceneLimit": 4,
+          "missionLimit": 0
+        },
+        {
+          "name": "RocketLauncher",
+          "level": 3,
+          "sceneLimit": 4,
+          "missionLimit": 0
+        },
+        {
+          "name": "Drone",
+          "level": 3,
+          "sceneLimit": 4,
+          "missionLimit": 0
+        },
+        {
+          "name": "Parachuter",
+          "level": 3,
+          "sceneLimit": 4,
+          "missionLimit": 0
+        }
+      ],
+      "events": [
+        {
+          "time": 30.0,
+          "behaviour": "Sniper",
+          "level": 7,
+          "isCardUnit": true,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 90.0,
+          "behaviour": "Drone",
+          "level": 7,
+          "isCardUnit": true,
+          "count": 2,
+          "card": ""
+        }
+      ],
       "sceneDataSha256": "452063c80079cf69e076699338f4f8741f447db9f50ad969cbf96bfb745dbf7c"
     },
     {
@@ -304,6 +1132,86 @@
       "healthTargetFraction": 0.75,
       "timeTargetFraction": 0.5,
       "recommendedArmyPower": 14600,
+      "behaviours": [
+        {
+          "name": "Assaulter",
+          "level": 8,
+          "sceneLimit": 2,
+          "missionLimit": 0
+        },
+        {
+          "name": "Sniper",
+          "level": 3,
+          "sceneLimit": 2,
+          "missionLimit": 10
+        }
+      ],
+      "events": [
+        {
+          "time": 0.0,
+          "behaviour": "Grenadier",
+          "level": 8,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 10.0,
+          "behaviour": "MachineGunner",
+          "level": 8,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 20.0,
+          "behaviour": "Shotgunner",
+          "level": 8,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 30.0,
+          "behaviour": "RocketLauncher",
+          "level": 3,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 40.0,
+          "behaviour": "Drone",
+          "level": 3,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 50.0,
+          "behaviour": "Parachuter",
+          "level": 3,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 60.0,
+          "behaviour": "Sniper",
+          "level": 7,
+          "isCardUnit": true,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 80.0,
+          "behaviour": "Grenadier",
+          "level": 7,
+          "isCardUnit": true,
+          "count": 1,
+          "card": ""
+        }
+      ],
       "sceneDataSha256": "cb7e87989645b6814ba86ab1bfaf01b75e6376d6238616d59e95cf069b417cd8"
     },
     {
@@ -323,6 +1231,78 @@
       "healthTargetFraction": 0.75,
       "timeTargetFraction": 0.5,
       "recommendedArmyPower": 15300,
+      "behaviours": [
+        {
+          "name": "Assaulter",
+          "level": 9,
+          "sceneLimit": 2,
+          "missionLimit": 0
+        },
+        {
+          "name": "MachineGunner",
+          "level": 9,
+          "sceneLimit": 1,
+          "missionLimit": 0
+        }
+      ],
+      "events": [
+        {
+          "time": 0.0,
+          "behaviour": "MachineGunner",
+          "level": 9,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 5.0,
+          "behaviour": "Parachuter",
+          "level": 4,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 20.0,
+          "behaviour": "Sniper",
+          "level": 4,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 35.0,
+          "behaviour": "Assaulter",
+          "level": 9,
+          "isCardUnit": false,
+          "count": 3,
+          "card": ""
+        },
+        {
+          "time": 55.0,
+          "behaviour": "Sniper",
+          "level": 4,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 60.0,
+          "behaviour": "Drone",
+          "level": 4,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 70.0,
+          "behaviour": "Minigunner",
+          "level": 8,
+          "isCardUnit": true,
+          "count": 1,
+          "card": ""
+        }
+      ],
       "sceneDataSha256": "a308fc82f715ac6949c354b4bf375a24822f53768d80b59df406c4d72e5a4e76"
     },
     {
@@ -342,6 +1322,86 @@
       "healthTargetFraction": 0.75,
       "timeTargetFraction": 0.5,
       "recommendedArmyPower": 16000,
+      "behaviours": [
+        {
+          "name": "Assaulter",
+          "level": 10,
+          "sceneLimit": 3,
+          "missionLimit": 0
+        },
+        {
+          "name": "MachineGunner",
+          "level": 10,
+          "sceneLimit": 2,
+          "missionLimit": 0
+        }
+      ],
+      "events": [
+        {
+          "time": 0.0,
+          "behaviour": "Grenadier",
+          "level": 10,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 30.0,
+          "behaviour": "Grenadier",
+          "level": 10,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 60.0,
+          "behaviour": "Grenadier",
+          "level": 10,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 90.0,
+          "behaviour": "Sniper",
+          "level": 8,
+          "isCardUnit": true,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 15.0,
+          "behaviour": "RocketLauncher",
+          "level": 5,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 45.0,
+          "behaviour": "RocketLauncher",
+          "level": 5,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 75.0,
+          "behaviour": "RocketLauncher",
+          "level": 5,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 95.0,
+          "behaviour": "Drone",
+          "level": 8,
+          "isCardUnit": true,
+          "count": 1,
+          "card": ""
+        }
+      ],
       "sceneDataSha256": "634dc24a2f117ffe8822ca5bc8f7ace5a0b81ce3c4da766e60d29ef40e7f385f"
     },
     {
@@ -361,6 +1421,52 @@
       "healthTargetFraction": 0.75,
       "timeTargetFraction": 0.2,
       "recommendedArmyPower": 16700,
+      "behaviours": [
+        {
+          "name": "MachineGunner",
+          "level": 11,
+          "sceneLimit": 2,
+          "missionLimit": 0
+        },
+        {
+          "name": "Sniper",
+          "level": 6,
+          "sceneLimit": 1,
+          "missionLimit": 0
+        },
+        {
+          "name": "Parachuter",
+          "level": 6,
+          "sceneLimit": 1,
+          "missionLimit": 3
+        }
+      ],
+      "events": [
+        {
+          "time": 40.0,
+          "behaviour": "Grenadier",
+          "level": 11,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 80.0,
+          "behaviour": "RocketLauncher",
+          "level": 6,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 110.0,
+          "behaviour": "Sniper",
+          "level": 9,
+          "isCardUnit": true,
+          "count": 2,
+          "card": ""
+        }
+      ],
       "sceneDataSha256": "e29d0c946949250e7370b382d39498e493dafd395c7f40f245fe52254bb84d51"
     },
     {
@@ -380,6 +1486,57 @@
       "healthTargetFraction": 0.5,
       "timeTargetFraction": 0.5,
       "recommendedArmyPower": 17400,
+      "behaviours": [
+        {
+          "name": "Assaulter",
+          "level": 11,
+          "sceneLimit": 0,
+          "missionLimit": 0
+        },
+        {
+          "name": "Grenadier",
+          "level": 11,
+          "sceneLimit": 4,
+          "missionLimit": 0
+        },
+        {
+          "name": "Shotgunner",
+          "level": 11,
+          "sceneLimit": 2,
+          "missionLimit": 0
+        },
+        {
+          "name": "RocketLauncher",
+          "level": 6,
+          "sceneLimit": 2,
+          "missionLimit": 0
+        },
+        {
+          "name": "Sniper",
+          "level": 6,
+          "sceneLimit": 4,
+          "missionLimit": 0
+        },
+        {
+          "name": "Drone",
+          "level": 6,
+          "sceneLimit": 4,
+          "missionLimit": 0
+        },
+        {
+          "name": "Machinegunner",
+          "level": 11,
+          "sceneLimit": 4,
+          "missionLimit": 0
+        },
+        {
+          "name": "Parachuter",
+          "level": 6,
+          "sceneLimit": 4,
+          "missionLimit": 0
+        }
+      ],
+      "events": [],
       "sceneDataSha256": "10403d05a4b51e72efbc79d431278167458b609264272babf8dfab750ab0dc8a"
     },
     {
@@ -399,6 +1556,97 @@
       "healthTargetFraction": 0.75,
       "timeTargetFraction": 0.5,
       "recommendedArmyPower": 18200,
+      "behaviours": [],
+      "events": [
+        {
+          "time": 0.0,
+          "behaviour": "Parachuter",
+          "level": 7,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 5.0,
+          "behaviour": "Shotgunner",
+          "level": 12,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 10.0,
+          "behaviour": "Assaulter",
+          "level": 12,
+          "isCardUnit": false,
+          "count": 6,
+          "card": ""
+        },
+        {
+          "time": 20.0,
+          "behaviour": "Machinegunner",
+          "level": 12,
+          "isCardUnit": false,
+          "count": 4,
+          "card": ""
+        },
+        {
+          "time": 35.0,
+          "behaviour": "Drone",
+          "level": 7,
+          "isCardUnit": true,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 40.0,
+          "behaviour": "RocketLauncher",
+          "level": 7,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 55.0,
+          "behaviour": "Machinegunner",
+          "level": 7,
+          "isCardUnit": false,
+          "count": 5,
+          "card": ""
+        },
+        {
+          "time": 60.0,
+          "behaviour": "Sniper",
+          "level": 7,
+          "isCardUnit": true,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 70.0,
+          "behaviour": "Assaulter",
+          "level": 12,
+          "isCardUnit": false,
+          "count": 6,
+          "card": ""
+        },
+        {
+          "time": 90.0,
+          "behaviour": "Sniper",
+          "level": 7,
+          "isCardUnit": true,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 100.0,
+          "behaviour": "Machinegunner",
+          "level": 12,
+          "isCardUnit": false,
+          "count": 3,
+          "card": ""
+        }
+      ],
       "sceneDataSha256": "ccc2912d8ec4585ac3187797b05871bc2760708302da8a051f504352bf1cc5ed"
     },
     {
@@ -418,6 +1666,54 @@
       "healthTargetFraction": 0.75,
       "timeTargetFraction": 0.5,
       "recommendedArmyPower": 18900,
+      "behaviours": [
+        {
+          "name": "Grenadier",
+          "level": 13,
+          "sceneLimit": 1,
+          "missionLimit": 4
+        },
+        {
+          "name": "MachineGunner",
+          "level": 13,
+          "sceneLimit": 4,
+          "missionLimit": 8
+        },
+        {
+          "name": "Shotgunner",
+          "level": 13,
+          "sceneLimit": 1,
+          "missionLimit": 4
+        },
+        {
+          "name": "Drone",
+          "level": 8,
+          "sceneLimit": 1,
+          "missionLimit": 1
+        },
+        {
+          "name": "RocketLauncher",
+          "level": 8,
+          "sceneLimit": 1,
+          "missionLimit": 1
+        },
+        {
+          "name": "Sniper",
+          "level": 8,
+          "sceneLimit": 1,
+          "missionLimit": 0
+        }
+      ],
+      "events": [
+        {
+          "time": 100.0,
+          "behaviour": "RocketLauncher",
+          "level": 10,
+          "isCardUnit": true,
+          "count": 1,
+          "card": ""
+        }
+      ],
       "sceneDataSha256": "0fca7c447a56621cdd932fd0c092bb6e01f219bc07c6d5a97534eb4e3d9923c8"
     },
     {
@@ -437,6 +1733,88 @@
       "healthTargetFraction": 0.75,
       "timeTargetFraction": 0.5,
       "recommendedArmyPower": 19700,
+      "behaviours": [
+        {
+          "name": "Assaulter",
+          "level": 14,
+          "sceneLimit": 2,
+          "missionLimit": 0
+        }
+      ],
+      "events": [
+        {
+          "time": 0.0,
+          "behaviour": "Parachuter",
+          "level": 9,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 15.0,
+          "behaviour": "Grenadier",
+          "level": 14,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 25.0,
+          "behaviour": "RocketLauncher",
+          "level": 9,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 45.0,
+          "behaviour": "Drone",
+          "level": 6,
+          "isCardUnit": true,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 65.0,
+          "behaviour": "Machinegunner",
+          "level": 14,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 80.0,
+          "behaviour": "Assaulter",
+          "level": 14,
+          "isCardUnit": true,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 85.0,
+          "behaviour": "Drone",
+          "level": 9,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 100.0,
+          "behaviour": "Sniper",
+          "level": 9,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 120.0,
+          "behaviour": "Minigunner",
+          "level": 10,
+          "isCardUnit": true,
+          "count": 1,
+          "card": ""
+        }
+      ],
       "sceneDataSha256": "609720929ed6e3567154f00fb5b9475f4d2afb99613e46735f7673c3886a64cd"
     },
     {
@@ -456,6 +1834,54 @@
       "healthTargetFraction": 0.75,
       "timeTargetFraction": 0.2,
       "recommendedArmyPower": 20400,
+      "behaviours": [
+        {
+          "name": "Assaulter",
+          "level": 15,
+          "sceneLimit": 2,
+          "missionLimit": 0
+        },
+        {
+          "name": "MachineGunner",
+          "level": 15,
+          "sceneLimit": 2,
+          "missionLimit": 0
+        }
+      ],
+      "events": [
+        {
+          "time": 0.0,
+          "behaviour": "Helicopter",
+          "level": 0,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 45.0,
+          "behaviour": "RocketLauncher",
+          "level": 10,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 80.0,
+          "behaviour": "Sniper",
+          "level": 10,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 120.0,
+          "behaviour": "MachineGunner",
+          "level": 15,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        }
+      ],
       "sceneDataSha256": "0ce2a6a8e67c72585038d891e0f7fe57e56335137fcd29091091d8b0ad46fe40"
     },
     {
@@ -475,6 +1901,60 @@
       "healthTargetFraction": 0.5,
       "timeTargetFraction": 0.5,
       "recommendedArmyPower": 21200,
+      "behaviours": [
+        {
+          "name": "Assaulter",
+          "level": 15,
+          "sceneLimit": 0,
+          "missionLimit": 0
+        },
+        {
+          "name": "Shotgunner",
+          "level": 15,
+          "sceneLimit": 0,
+          "missionLimit": 0
+        },
+        {
+          "name": "Grenadier",
+          "level": 15,
+          "sceneLimit": 0,
+          "missionLimit": 0
+        },
+        {
+          "name": "Machinegunner",
+          "level": 15,
+          "sceneLimit": 0,
+          "missionLimit": 0
+        },
+        {
+          "name": "Helicopter",
+          "level": 0,
+          "sceneLimit": 0,
+          "missionLimit": 0
+        },
+        {
+          "name": "Drone",
+          "level": 10,
+          "sceneLimit": 0,
+          "missionLimit": 0
+        },
+        {
+          "name": "Parachuter",
+          "level": 10,
+          "sceneLimit": 0,
+          "missionLimit": 0
+        }
+      ],
+      "events": [
+        {
+          "time": 30.0,
+          "behaviour": "Buggy",
+          "level": 0,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        }
+      ],
       "sceneDataSha256": "40f16b529057d33864fab311f392bde01ac8de32909698eae12ec5703e57d4b9"
     },
     {
@@ -494,6 +1974,86 @@
       "healthTargetFraction": 0.75,
       "timeTargetFraction": 0.5,
       "recommendedArmyPower": 22000,
+      "behaviours": [
+        {
+          "name": "Assaulter",
+          "level": 17,
+          "sceneLimit": 1,
+          "missionLimit": 0
+        },
+        {
+          "name": "MachineGunner",
+          "level": 17,
+          "sceneLimit": 1,
+          "missionLimit": 10
+        }
+      ],
+      "events": [
+        {
+          "time": 0.0,
+          "behaviour": "Parachuter",
+          "level": 11,
+          "isCardUnit": true,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 0.0,
+          "behaviour": "Parachuter",
+          "level": 12,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 15.0,
+          "behaviour": "Buggy",
+          "level": 2,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 110.0,
+          "behaviour": "Helicopter",
+          "level": 2,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 40.0,
+          "behaviour": "Sniper",
+          "level": 12,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 55.0,
+          "behaviour": "RocketLauncher",
+          "level": 12,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 70.0,
+          "behaviour": "Shotgunner",
+          "level": 17,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 90.0,
+          "behaviour": "Drone",
+          "level": 12,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        }
+      ],
       "sceneDataSha256": "34f1a62d2368e54eec201efc3f3585bc4ffe89db43b1a04471a783170b25f3e8"
     },
     {
@@ -513,6 +2073,60 @@
       "healthTargetFraction": 0.75,
       "timeTargetFraction": 0.5,
       "recommendedArmyPower": 22800,
+      "behaviours": [
+        {
+          "name": "Grenadier",
+          "level": 18,
+          "sceneLimit": 1,
+          "missionLimit": 10
+        },
+        {
+          "name": "RocketLauncher",
+          "level": 13,
+          "sceneLimit": 1,
+          "missionLimit": 10
+        },
+        {
+          "name": "Assaulter",
+          "level": 17,
+          "sceneLimit": 3,
+          "missionLimit": 10
+        }
+      ],
+      "events": [
+        {
+          "time": 0.0,
+          "behaviour": "Parachuter",
+          "level": 13,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 30.0,
+          "behaviour": "Shotgunner",
+          "level": 18,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 60.0,
+          "behaviour": "Parachuter",
+          "level": 14,
+          "isCardUnit": true,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 90.0,
+          "behaviour": "Parachuter",
+          "level": 14,
+          "isCardUnit": true,
+          "count": 1,
+          "card": ""
+        }
+      ],
       "sceneDataSha256": "bed266ecc63dd446245813ff1cbcd798074dcffef1de01b6cf9d29f832cfe9bc"
     },
     {
@@ -532,6 +2146,78 @@
       "healthTargetFraction": 0.5,
       "timeTargetFraction": 0.5,
       "recommendedArmyPower": 23700,
+      "behaviours": [
+        {
+          "name": "Shotgunner",
+          "level": 19,
+          "sceneLimit": 1,
+          "missionLimit": 10
+        },
+        {
+          "name": "MachineGunner",
+          "level": 19,
+          "sceneLimit": 2,
+          "missionLimit": 16
+        }
+      ],
+      "events": [
+        {
+          "time": 20.0,
+          "behaviour": "Engineer",
+          "level": 4,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 50.0,
+          "behaviour": "Buggy",
+          "level": 4,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 85.0,
+          "behaviour": "Parachuter",
+          "level": 14,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 100.0,
+          "behaviour": "Engineer",
+          "level": 4,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 120.0,
+          "behaviour": "Sniper",
+          "level": 14,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 120.0,
+          "behaviour": "Shotgunner",
+          "level": 19,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 35.0,
+          "behaviour": "Shotgunner",
+          "level": 19,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        }
+      ],
       "sceneDataSha256": "2838b982c28280fe655ab09943f9effdcb15b66301ecfafe0ed4f715eafb0566"
     },
     {
@@ -551,6 +2237,68 @@
       "healthTargetFraction": 0.75,
       "timeTargetFraction": 0.2,
       "recommendedArmyPower": 24500,
+      "behaviours": [
+        {
+          "name": "Assaulter",
+          "level": 20,
+          "sceneLimit": 2,
+          "missionLimit": 30
+        },
+        {
+          "name": "Sniper",
+          "level": 15,
+          "sceneLimit": 1,
+          "missionLimit": 12
+        },
+        {
+          "name": "MachineGunner",
+          "level": 20,
+          "sceneLimit": 1,
+          "missionLimit": 8
+        }
+      ],
+      "events": [
+        {
+          "time": 0.0,
+          "behaviour": "Swat",
+          "level": 5,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 65.0,
+          "behaviour": "Assaulter",
+          "level": 20,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 75.0,
+          "behaviour": "Swat",
+          "level": 5,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 95.0,
+          "behaviour": "Machinegunner",
+          "level": 20,
+          "isCardUnit": false,
+          "count": 5,
+          "card": ""
+        },
+        {
+          "time": 120.0,
+          "behaviour": "Drone",
+          "level": 15,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        }
+      ],
       "sceneDataSha256": "9688b0087881016885d57f13cd530d5c9e145eb1c95f2f6b63e344dd1f604a06"
     },
     {
@@ -570,6 +2318,57 @@
       "healthTargetFraction": 0.5,
       "timeTargetFraction": 0.5,
       "recommendedArmyPower": 25300,
+      "behaviours": [
+        {
+          "name": "Assaulter",
+          "level": 21,
+          "sceneLimit": 0,
+          "missionLimit": 0
+        },
+        {
+          "name": "Drone",
+          "level": 16,
+          "sceneLimit": 5,
+          "missionLimit": 0
+        },
+        {
+          "name": "Parachuter",
+          "level": 16,
+          "sceneLimit": 2,
+          "missionLimit": 0
+        },
+        {
+          "name": "RocketLauncher",
+          "level": 16,
+          "sceneLimit": 2,
+          "missionLimit": 0
+        },
+        {
+          "name": "Sniper",
+          "level": 16,
+          "sceneLimit": 4,
+          "missionLimit": 0
+        },
+        {
+          "name": "Swat",
+          "level": 6,
+          "sceneLimit": 4,
+          "missionLimit": 0
+        },
+        {
+          "name": "Helicopter",
+          "level": 6,
+          "sceneLimit": 1,
+          "missionLimit": 0
+        },
+        {
+          "name": "Buggy",
+          "level": 6,
+          "sceneLimit": 1,
+          "missionLimit": 0
+        }
+      ],
+      "events": [],
       "sceneDataSha256": "34b1dafabf497c81ec6ebf992e8a65603904fe3ffc1ea6e03522b533abd7c6ca"
     },
     {
@@ -589,6 +2388,78 @@
       "healthTargetFraction": 0.75,
       "timeTargetFraction": 0.5,
       "recommendedArmyPower": 26200,
+      "behaviours": [
+        {
+          "name": "Grenadier",
+          "level": 22,
+          "sceneLimit": 3,
+          "missionLimit": 14
+        },
+        {
+          "name": "MachineGunner",
+          "level": 22,
+          "sceneLimit": 2,
+          "missionLimit": 20
+        }
+      ],
+      "events": [
+        {
+          "time": 0.0,
+          "behaviour": "Drone",
+          "level": 17,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 60.0,
+          "behaviour": "Drone",
+          "level": 17,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 30.0,
+          "behaviour": "Helicopter",
+          "level": 7,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 10.0,
+          "behaviour": "Sniper",
+          "level": 17,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 40.0,
+          "behaviour": "Sniper",
+          "level": 17,
+          "isCardUnit": false,
+          "count": 3,
+          "card": ""
+        },
+        {
+          "time": 80.0,
+          "behaviour": "Sniper",
+          "level": 17,
+          "isCardUnit": false,
+          "count": 4,
+          "card": ""
+        },
+        {
+          "time": 100.0,
+          "behaviour": "Sniper",
+          "level": 17,
+          "isCardUnit": true,
+          "count": 1,
+          "card": ""
+        }
+      ],
       "sceneDataSha256": "817cec11582d38b6cf198a72a614b3930a3847163b04738839320193a4476ef7"
     },
     {
@@ -608,6 +2479,92 @@
       "healthTargetFraction": 0.75,
       "timeTargetFraction": 0.5,
       "recommendedArmyPower": 27000,
+      "behaviours": [
+        {
+          "name": "Assaulter",
+          "level": 23,
+          "sceneLimit": 1,
+          "missionLimit": 0
+        },
+        {
+          "name": "MachineGunner",
+          "level": 23,
+          "sceneLimit": 1,
+          "missionLimit": 10
+        },
+        {
+          "name": "Sniper",
+          "level": 18,
+          "sceneLimit": 1,
+          "missionLimit": 6
+        }
+      ],
+      "events": [
+        {
+          "time": 0.0,
+          "behaviour": "Parachuter",
+          "level": 18,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 45.0,
+          "behaviour": "Parachuter",
+          "level": 18,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 20.0,
+          "behaviour": "RocketLauncher",
+          "level": 18,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 55.0,
+          "behaviour": "RocketLauncher",
+          "level": 18,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 60.0,
+          "behaviour": "Engineer",
+          "level": 8,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 80.0,
+          "behaviour": "Engineer",
+          "level": 8,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 120.0,
+          "behaviour": "Helicopter",
+          "level": 8,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 130.0,
+          "behaviour": "Drone",
+          "level": 18,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        }
+      ],
       "sceneDataSha256": "a7d22fd514f9d6237667e83a1eb7bd3adc050fe3a3750cd2082d88e06b78e222"
     },
     {
@@ -627,6 +2584,74 @@
       "healthTargetFraction": 0.5,
       "timeTargetFraction": 0.5,
       "recommendedArmyPower": 27900,
+      "behaviours": [
+        {
+          "name": "Assaulter",
+          "level": 24,
+          "sceneLimit": 2,
+          "missionLimit": 10
+        },
+        {
+          "name": "Grenadier",
+          "level": 24,
+          "sceneLimit": 2,
+          "missionLimit": 8
+        },
+        {
+          "name": "MachineGunner",
+          "level": 24,
+          "sceneLimit": 3,
+          "missionLimit": 8
+        },
+        {
+          "name": "Shotgunner",
+          "level": 24,
+          "sceneLimit": 1,
+          "missionLimit": 5
+        }
+      ],
+      "events": [
+        {
+          "time": 0.0,
+          "behaviour": "Drone",
+          "level": 19,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 30.0,
+          "behaviour": "Drone",
+          "level": 19,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 15.0,
+          "behaviour": "Sniper",
+          "level": 19,
+          "isCardUnit": false,
+          "count": 3,
+          "card": ""
+        },
+        {
+          "time": 45.0,
+          "behaviour": "Sniper",
+          "level": 19,
+          "isCardUnit": false,
+          "count": 3,
+          "card": ""
+        },
+        {
+          "time": 70.0,
+          "behaviour": "Buggy",
+          "level": 9,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        }
+      ],
       "sceneDataSha256": "144120f401df9eb48c41e420aa70b8e1b4305234bf0e8194c0fef656415f0389"
     },
     {
@@ -646,6 +2671,74 @@
       "healthTargetFraction": 0.75,
       "timeTargetFraction": 0.2,
       "recommendedArmyPower": 28800,
+      "behaviours": [
+        {
+          "name": "Assaulter",
+          "level": 25,
+          "sceneLimit": 2,
+          "missionLimit": 16
+        },
+        {
+          "name": "MachineGunner",
+          "level": 25,
+          "sceneLimit": 2,
+          "missionLimit": 0
+        },
+        {
+          "name": "Shotgunner",
+          "level": 25,
+          "sceneLimit": 1,
+          "missionLimit": 4
+        },
+        {
+          "name": "Sniper",
+          "level": 20,
+          "sceneLimit": 2,
+          "missionLimit": 4
+        }
+      ],
+      "events": [
+        {
+          "time": 45.0,
+          "behaviour": "Helicopter",
+          "level": 10,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 120.0,
+          "behaviour": "RocketLauncher",
+          "level": 20,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 160.0,
+          "behaviour": "RocketLauncher",
+          "level": 20,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 120.0,
+          "behaviour": "Buggy",
+          "level": 10,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 15.0,
+          "behaviour": "Grenadier",
+          "level": 25,
+          "isCardUnit": false,
+          "count": 3,
+          "card": ""
+        }
+      ],
       "sceneDataSha256": "a0c2c36b3d6afd01f0f0548a4f95fad6e5a3c797e276a45ad29d083cb9134029"
     },
     {
@@ -665,6 +2758,80 @@
       "healthTargetFraction": 0.5,
       "timeTargetFraction": 0.5,
       "recommendedArmyPower": 29700,
+      "behaviours": [
+        {
+          "name": "Assaulter",
+          "level": 26,
+          "sceneLimit": 4,
+          "missionLimit": 0
+        },
+        {
+          "name": "MachineGunner",
+          "level": 26,
+          "sceneLimit": 5,
+          "missionLimit": 0
+        },
+        {
+          "name": "Shotgunner",
+          "level": 26,
+          "sceneLimit": 2,
+          "missionLimit": 0
+        },
+        {
+          "name": "Drone",
+          "level": 21,
+          "sceneLimit": 2,
+          "missionLimit": 0
+        },
+        {
+          "name": "RocketLauncher",
+          "level": 21,
+          "sceneLimit": 2,
+          "missionLimit": 0
+        },
+        {
+          "name": "Sniper",
+          "level": 21,
+          "sceneLimit": 4,
+          "missionLimit": 0
+        },
+        {
+          "name": "Parachuter",
+          "level": 21,
+          "sceneLimit": 4,
+          "missionLimit": 0
+        },
+        {
+          "name": "Buggy",
+          "level": 11,
+          "sceneLimit": 1,
+          "missionLimit": 0
+        },
+        {
+          "name": "Helicopter",
+          "level": 11,
+          "sceneLimit": 1,
+          "missionLimit": 0
+        }
+      ],
+      "events": [
+        {
+          "time": 30.0,
+          "behaviour": "Sniper",
+          "level": 0,
+          "isCardUnit": true,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 120.0,
+          "behaviour": "Drone",
+          "level": 0,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        }
+      ],
       "sceneDataSha256": "139b75d1991842a73f26395eb15cd66ee489bf1bb90cd0ea65db37ff234129be"
     },
     {
@@ -684,6 +2851,76 @@
       "healthTargetFraction": 0.75,
       "timeTargetFraction": 0.5,
       "recommendedArmyPower": 30600,
+      "behaviours": [
+        {
+          "name": "Assaulter",
+          "level": 27,
+          "sceneLimit": 1,
+          "missionLimit": 15
+        },
+        {
+          "name": "Grenadier",
+          "level": 27,
+          "sceneLimit": 1,
+          "missionLimit": 6
+        },
+        {
+          "name": "MachineGunner",
+          "level": 27,
+          "sceneLimit": 3,
+          "missionLimit": 0
+        }
+      ],
+      "events": [
+        {
+          "time": 100.0,
+          "behaviour": "Swat",
+          "level": 0,
+          "isCardUnit": true,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 0.0,
+          "behaviour": "Helicopter",
+          "level": 12,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 35.0,
+          "behaviour": "Engineer",
+          "level": 12,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 60.0,
+          "behaviour": "RocketLauncher",
+          "level": 22,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 80.0,
+          "behaviour": "Sniper",
+          "level": 22,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 120.0,
+          "behaviour": "Drone",
+          "level": 22,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        }
+      ],
       "sceneDataSha256": "34e0315d14930c537798b57f8f68e5681ee6ce772064bca8f0d96ec7d99cb80d"
     },
     {
@@ -703,6 +2940,82 @@
       "healthTargetFraction": 0.75,
       "timeTargetFraction": 0.5,
       "recommendedArmyPower": 31500,
+      "behaviours": [
+        {
+          "name": "Assaulter",
+          "level": 28,
+          "sceneLimit": 1,
+          "missionLimit": 20
+        },
+        {
+          "name": "Grenadier",
+          "level": 28,
+          "sceneLimit": 1,
+          "missionLimit": 3
+        },
+        {
+          "name": "MachineGunner",
+          "level": 28,
+          "sceneLimit": 1,
+          "missionLimit": 18
+        },
+        {
+          "name": "Shotgunner",
+          "level": 28,
+          "sceneLimit": 1,
+          "missionLimit": 4
+        }
+      ],
+      "events": [
+        {
+          "time": 0.0,
+          "behaviour": "Buggy",
+          "level": 13,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 35.0,
+          "behaviour": "Engineer",
+          "level": 13,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 45.0,
+          "behaviour": "Parachuter",
+          "level": 23,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 70.0,
+          "behaviour": "Sniper",
+          "level": 23,
+          "isCardUnit": false,
+          "count": 4,
+          "card": ""
+        },
+        {
+          "time": 90.0,
+          "behaviour": "Drone",
+          "level": 23,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 120.0,
+          "behaviour": "Sniper",
+          "level": 21,
+          "isCardUnit": true,
+          "count": 3,
+          "card": ""
+        }
+      ],
       "sceneDataSha256": "bebeb8e64a4288df0269cc2b6c72b96d283f3c126226246627c3189b225cb42f"
     },
     {
@@ -722,6 +3035,94 @@
       "healthTargetFraction": 0.5,
       "timeTargetFraction": 0.5,
       "recommendedArmyPower": 32400,
+      "behaviours": [
+        {
+          "name": "Assaulter",
+          "level": 29,
+          "sceneLimit": 2,
+          "missionLimit": 0
+        },
+        {
+          "name": "Grenadier",
+          "level": 29,
+          "sceneLimit": 1,
+          "missionLimit": 4
+        },
+        {
+          "name": "Shotgunner",
+          "level": 29,
+          "sceneLimit": 1,
+          "missionLimit": 4
+        },
+        {
+          "name": "Sniper",
+          "level": 24,
+          "sceneLimit": 1,
+          "missionLimit": 4
+        },
+        {
+          "name": "Parachuter",
+          "level": 14,
+          "sceneLimit": 1,
+          "missionLimit": 2
+        },
+        {
+          "name": "Engineer",
+          "level": 14,
+          "sceneLimit": 1,
+          "missionLimit": 1
+        }
+      ],
+      "events": [
+        {
+          "time": 135.0,
+          "behaviour": "RocketLauncher",
+          "level": 0,
+          "isCardUnit": true,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 120.0,
+          "behaviour": "Sniper",
+          "level": 0,
+          "isCardUnit": true,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 45.0,
+          "behaviour": "Buggy",
+          "level": 14,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 90.0,
+          "behaviour": "Helicopter",
+          "level": 14,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 15.0,
+          "behaviour": "Drone",
+          "level": 24,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 160.0,
+          "behaviour": "Drone",
+          "level": 24,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        }
+      ],
       "sceneDataSha256": "98ef648dd5836b74f6b8af7ee62990f416cbf74a571df50c809ebd5185cd6af9"
     },
     {
@@ -741,6 +3142,58 @@
       "healthTargetFraction": 0.75,
       "timeTargetFraction": 0.2,
       "recommendedArmyPower": 33300,
+      "behaviours": [
+        {
+          "name": "Grenadier",
+          "level": 30,
+          "sceneLimit": 1,
+          "missionLimit": 6
+        },
+        {
+          "name": "MachineGunner",
+          "level": 30,
+          "sceneLimit": 8,
+          "missionLimit": 0
+        },
+        {
+          "name": "Shotgunner",
+          "level": 30,
+          "sceneLimit": 1,
+          "missionLimit": 4
+        },
+        {
+          "name": "Sniper",
+          "level": 25,
+          "sceneLimit": 2,
+          "missionLimit": 8
+        }
+      ],
+      "events": [
+        {
+          "time": 100.0,
+          "behaviour": "RocketLauncher",
+          "level": 0,
+          "isCardUnit": true,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 140.0,
+          "behaviour": "Sniper",
+          "level": 0,
+          "isCardUnit": true,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 180.0,
+          "behaviour": "Buggy",
+          "level": 15,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        }
+      ],
       "sceneDataSha256": "d7ec15f92f8faaf607fea2a35f2b00424fb5d21869d9d897f551f09799904209"
     },
     {
@@ -760,6 +3213,98 @@
       "healthTargetFraction": 0.5,
       "timeTargetFraction": 0.5,
       "recommendedArmyPower": 34300,
+      "behaviours": [
+        {
+          "name": "Assaulter",
+          "level": 31,
+          "sceneLimit": 0,
+          "missionLimit": 0
+        },
+        {
+          "name": "Grenadier",
+          "level": 31,
+          "sceneLimit": 4,
+          "missionLimit": 0
+        },
+        {
+          "name": "MachineGunner",
+          "level": 5,
+          "sceneLimit": 5,
+          "missionLimit": 0
+        },
+        {
+          "name": "Shotgunner",
+          "level": 31,
+          "sceneLimit": 2,
+          "missionLimit": 0
+        },
+        {
+          "name": "Drone",
+          "level": 26,
+          "sceneLimit": 2,
+          "missionLimit": 0
+        },
+        {
+          "name": "RocketLauncher",
+          "level": 26,
+          "sceneLimit": 2,
+          "missionLimit": 0
+        },
+        {
+          "name": "Sniper",
+          "level": 26,
+          "sceneLimit": 4,
+          "missionLimit": 0
+        },
+        {
+          "name": "Parachuter",
+          "level": 26,
+          "sceneLimit": 4,
+          "missionLimit": 0
+        },
+        {
+          "name": "Engineer",
+          "level": 16,
+          "sceneLimit": 2,
+          "missionLimit": 0
+        },
+        {
+          "name": "Buggy",
+          "level": 16,
+          "sceneLimit": 1,
+          "missionLimit": 0
+        },
+        {
+          "name": "DeployHeli",
+          "level": 1,
+          "sceneLimit": 1,
+          "missionLimit": 1
+        },
+        {
+          "name": "Swat",
+          "level": 16,
+          "sceneLimit": 2,
+          "missionLimit": 0
+        }
+      ],
+      "events": [
+        {
+          "time": 60.0,
+          "behaviour": "Drone",
+          "level": 0,
+          "isCardUnit": true,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 100.0,
+          "behaviour": "RocketLauncher",
+          "level": 0,
+          "isCardUnit": true,
+          "count": 1,
+          "card": ""
+        }
+      ],
       "sceneDataSha256": "2c9a07f268e3cef51ec39d617089077f00ad5e28366bd5f1f6c459ed5dbd562f"
     },
     {
@@ -779,6 +3324,90 @@
       "healthTargetFraction": 0.75,
       "timeTargetFraction": 0.5,
       "recommendedArmyPower": 35200,
+      "behaviours": [
+        {
+          "name": "Assaulter",
+          "level": 32,
+          "sceneLimit": 4,
+          "missionLimit": 0
+        },
+        {
+          "name": "Grenadier",
+          "level": 32,
+          "sceneLimit": 1,
+          "missionLimit": 4
+        },
+        {
+          "name": "MachineGunner",
+          "level": 32,
+          "sceneLimit": 2,
+          "missionLimit": 10
+        },
+        {
+          "name": "RocketLauncher",
+          "level": 27,
+          "sceneLimit": 2,
+          "missionLimit": 4
+        },
+        {
+          "name": "Sniper",
+          "level": 27,
+          "sceneLimit": 2,
+          "missionLimit": 4
+        },
+        {
+          "name": "Parachuter",
+          "level": 27,
+          "sceneLimit": 1,
+          "missionLimit": 4
+        },
+        {
+          "name": "SciFi",
+          "level": 2,
+          "sceneLimit": 1,
+          "missionLimit": 1
+        },
+        {
+          "name": "Swat",
+          "level": 17,
+          "sceneLimit": 2,
+          "missionLimit": 3
+        }
+      ],
+      "events": [
+        {
+          "time": 60.0,
+          "behaviour": "Sniper",
+          "level": 0,
+          "isCardUnit": true,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 100.0,
+          "behaviour": "Swat",
+          "level": 0,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 10.0,
+          "behaviour": "Drone",
+          "level": 27,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 130.0,
+          "behaviour": "Drone",
+          "level": 27,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        }
+      ],
       "sceneDataSha256": "d7af3c5d3d2e34979bf3f718339fa88eed21c74fecf4f1423418419b2b6dd30b"
     },
     {
@@ -798,6 +3427,78 @@
       "healthTargetFraction": 0.75,
       "timeTargetFraction": 0.5,
       "recommendedArmyPower": 36200,
+      "behaviours": [
+        {
+          "name": "Grenadier",
+          "level": 33,
+          "sceneLimit": 1,
+          "missionLimit": 4
+        },
+        {
+          "name": "MachineGunner",
+          "level": 33,
+          "sceneLimit": 3,
+          "missionLimit": 0
+        },
+        {
+          "name": "RocketLauncher",
+          "level": 28,
+          "sceneLimit": 1,
+          "missionLimit": 4
+        },
+        {
+          "name": "Sniper",
+          "level": 28,
+          "sceneLimit": 2,
+          "missionLimit": 10
+        },
+        {
+          "name": "Parachuter",
+          "level": 28,
+          "sceneLimit": 1,
+          "missionLimit": 4
+        },
+        {
+          "name": "DeployHeli",
+          "level": 3,
+          "sceneLimit": 1,
+          "missionLimit": 1
+        }
+      ],
+      "events": [
+        {
+          "time": 120.0,
+          "behaviour": "Grenadier",
+          "level": 0,
+          "isCardUnit": true,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 140.0,
+          "behaviour": "Drone",
+          "level": 0,
+          "isCardUnit": true,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 60.0,
+          "behaviour": "Buggy",
+          "level": 18,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 0.0,
+          "behaviour": "Deployheli",
+          "level": 3,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        }
+      ],
       "sceneDataSha256": "e789fccae4288342c0b75ad423657e544d1359df242ae1e6fc9651879cba9e18"
     },
     {
@@ -817,6 +3518,80 @@
       "healthTargetFraction": 0.75,
       "timeTargetFraction": 0.5,
       "recommendedArmyPower": 37100,
+      "behaviours": [
+        {
+          "name": "Assaulter",
+          "level": 34,
+          "sceneLimit": 3,
+          "missionLimit": 0
+        },
+        {
+          "name": "Grenadier",
+          "level": 34,
+          "sceneLimit": 1,
+          "missionLimit": 2
+        },
+        {
+          "name": "MachineGunner",
+          "level": 34,
+          "sceneLimit": 2,
+          "missionLimit": 6
+        },
+        {
+          "name": "Sniper",
+          "level": 29,
+          "sceneLimit": 1,
+          "missionLimit": 6
+        },
+        {
+          "name": "Parachuter",
+          "level": 29,
+          "sceneLimit": 1,
+          "missionLimit": 3
+        }
+      ],
+      "events": [
+        {
+          "time": 0.0,
+          "behaviour": "Helicopter",
+          "level": 19,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 60.0,
+          "behaviour": "Transporter",
+          "level": 4,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 110.0,
+          "behaviour": "Drone",
+          "level": 29,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 140.0,
+          "behaviour": "Drone",
+          "level": 29,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 180.0,
+          "behaviour": "Drone",
+          "level": 0,
+          "isCardUnit": true,
+          "count": 1,
+          "card": ""
+        }
+      ],
       "sceneDataSha256": "243d0a03150ddfe241a6ccb7841adcb6bd09c2ca2a47716cd0f1fd1914cd2042"
     },
     {
@@ -836,6 +3611,80 @@
       "healthTargetFraction": 0.75,
       "timeTargetFraction": 0.2,
       "recommendedArmyPower": 38100,
+      "behaviours": [
+        {
+          "name": "Assaulter",
+          "level": 35,
+          "sceneLimit": 4,
+          "missionLimit": 0
+        },
+        {
+          "name": "MachineGunner",
+          "level": 35,
+          "sceneLimit": 2,
+          "missionLimit": 12
+        },
+        {
+          "name": "Shotgunner",
+          "level": 35,
+          "sceneLimit": 1,
+          "missionLimit": 4
+        },
+        {
+          "name": "RocketLauncher",
+          "level": 30,
+          "sceneLimit": 1,
+          "missionLimit": 4
+        },
+        {
+          "name": "Sniper",
+          "level": 30,
+          "sceneLimit": 1,
+          "missionLimit": 6
+        }
+      ],
+      "events": [
+        {
+          "time": 0.0,
+          "behaviour": "Drone",
+          "level": 30,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 60.0,
+          "behaviour": "Drone",
+          "level": 30,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 90.0,
+          "behaviour": "Helicopter",
+          "level": 20,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 120.0,
+          "behaviour": "Transporter",
+          "level": 5,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 180.0,
+          "behaviour": "Drone",
+          "level": 0,
+          "isCardUnit": true,
+          "count": 1,
+          "card": ""
+        }
+      ],
       "sceneDataSha256": "2b1e3af480cf1c6bf662c72519a18a713f2bf56149823e48a6b62b0fbefc4434"
     },
     {
@@ -855,6 +3704,66 @@
       "healthTargetFraction": 0.5,
       "timeTargetFraction": 0.5,
       "recommendedArmyPower": 39100,
+      "behaviours": [
+        {
+          "name": "Grenadier",
+          "level": 36,
+          "sceneLimit": 4,
+          "missionLimit": 0
+        },
+        {
+          "name": "MachineGunner",
+          "level": 36,
+          "sceneLimit": 2,
+          "missionLimit": 0
+        },
+        {
+          "name": "Drone",
+          "level": 31,
+          "sceneLimit": 2,
+          "missionLimit": 0
+        },
+        {
+          "name": "Sniper",
+          "level": 31,
+          "sceneLimit": 4,
+          "missionLimit": 0
+        },
+        {
+          "name": "Parachuter",
+          "level": 31,
+          "sceneLimit": 4,
+          "missionLimit": 0
+        },
+        {
+          "name": "Buggy",
+          "level": 21,
+          "sceneLimit": 1,
+          "missionLimit": 0
+        },
+        {
+          "name": "DeployHeli",
+          "level": 6,
+          "sceneLimit": 1,
+          "missionLimit": 0
+        },
+        {
+          "name": "Commando",
+          "level": 6,
+          "sceneLimit": 2,
+          "missionLimit": 0
+        }
+      ],
+      "events": [
+        {
+          "time": 80.0,
+          "behaviour": "Swat",
+          "level": 0,
+          "isCardUnit": true,
+          "count": 1,
+          "card": ""
+        }
+      ],
       "sceneDataSha256": "960c205ba45aa6be30a58a13aa6e9538d92f7ce1e68dff8875dff3e5d5adacaa"
     },
     {
@@ -874,6 +3783,82 @@
       "healthTargetFraction": 0.75,
       "timeTargetFraction": 0.5,
       "recommendedArmyPower": 40100,
+      "behaviours": [
+        {
+          "name": "MachineGunner",
+          "level": 37,
+          "sceneLimit": 2,
+          "missionLimit": 0
+        },
+        {
+          "name": "Shotgunner",
+          "level": 37,
+          "sceneLimit": 2,
+          "missionLimit": 1
+        },
+        {
+          "name": "RocketLauncher",
+          "level": 32,
+          "sceneLimit": 1,
+          "missionLimit": 10
+        },
+        {
+          "name": "Sniper",
+          "level": 32,
+          "sceneLimit": 2,
+          "missionLimit": 40
+        }
+      ],
+      "events": [
+        {
+          "time": 25.0,
+          "behaviour": "Parachuter",
+          "level": 32,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 45.0,
+          "behaviour": "Engineer",
+          "level": 22,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 80.0,
+          "behaviour": "Helicopter",
+          "level": 22,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 110.0,
+          "behaviour": "Commando",
+          "level": 7,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 140.0,
+          "behaviour": "SciFi",
+          "level": 7,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 160.0,
+          "behaviour": "Drone",
+          "level": 32,
+          "isCardUnit": true,
+          "count": 1,
+          "card": ""
+        }
+      ],
       "sceneDataSha256": "8ebbda74200df214c57f907599816809b1e1011c42ebd7003ec9ebdc8b0f1c28"
     },
     {
@@ -893,6 +3878,70 @@
       "healthTargetFraction": 0.75,
       "timeTargetFraction": 0.5,
       "recommendedArmyPower": 41100,
+      "behaviours": [
+        {
+          "name": "Assaulter",
+          "level": 38,
+          "sceneLimit": 3,
+          "missionLimit": 0
+        },
+        {
+          "name": "Sniper",
+          "level": 33,
+          "sceneLimit": 2,
+          "missionLimit": 15
+        }
+      ],
+      "events": [
+        {
+          "time": 10.0,
+          "behaviour": "DeployHeli",
+          "level": 8,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 170.0,
+          "behaviour": "Transporter",
+          "level": 8,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 40.0,
+          "behaviour": "RocketLauncher",
+          "level": 33,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 65.0,
+          "behaviour": "Engineer",
+          "level": 23,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 85.0,
+          "behaviour": "Swat",
+          "level": 23,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 140.0,
+          "behaviour": "RocketLauncher",
+          "level": 33,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        }
+      ],
       "sceneDataSha256": "fd328add00826ebac5750910e79d3d9ea6cedb6387d1e7e6bd9d7002244c6c49"
     },
     {
@@ -912,6 +3961,68 @@
       "healthTargetFraction": 0.75,
       "timeTargetFraction": 0.5,
       "recommendedArmyPower": 42100,
+      "behaviours": [
+        {
+          "name": "Assaulter",
+          "level": 39,
+          "sceneLimit": 3,
+          "missionLimit": 0
+        },
+        {
+          "name": "MachineGunner",
+          "level": 39,
+          "sceneLimit": 2,
+          "missionLimit": 12
+        },
+        {
+          "name": "RocketLauncher",
+          "level": 34,
+          "sceneLimit": 1,
+          "missionLimit": 6
+        }
+      ],
+      "events": [
+        {
+          "time": 20.0,
+          "behaviour": "SciFi",
+          "level": 9,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 40.0,
+          "behaviour": "Transporter",
+          "level": 9,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 100.0,
+          "behaviour": "DeployHeli",
+          "level": 9,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 140.0,
+          "behaviour": "Drone",
+          "level": 34,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 160.0,
+          "behaviour": "Parachuter",
+          "level": 34,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        }
+      ],
       "sceneDataSha256": "307e70ac97d83db709e52a4e2408d7fd84f7670460979b7c02a3bd92769b4caf"
     },
     {
@@ -931,6 +4042,92 @@
       "healthTargetFraction": 0.75,
       "timeTargetFraction": 0.2,
       "recommendedArmyPower": 43100,
+      "behaviours": [
+        {
+          "name": "Grenadier",
+          "level": 40,
+          "sceneLimit": 1,
+          "missionLimit": 8
+        },
+        {
+          "name": "MachineGunner",
+          "level": 40,
+          "sceneLimit": 1,
+          "missionLimit": 8
+        },
+        {
+          "name": "Sniper",
+          "level": 35,
+          "sceneLimit": 3,
+          "missionLimit": 0
+        }
+      ],
+      "events": [
+        {
+          "time": 60.0,
+          "behaviour": "Swat",
+          "level": 25,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 15.0,
+          "behaviour": "Transporter",
+          "level": 10,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 120.0,
+          "behaviour": "Helicopter",
+          "level": 25,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 190.0,
+          "behaviour": "Drone",
+          "level": 35,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 70.0,
+          "behaviour": "Drone",
+          "level": 35,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 160.0,
+          "behaviour": "SciFi",
+          "level": 10,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 160.0,
+          "behaviour": "Engineer",
+          "level": 25,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 100.0,
+          "behaviour": "Parachuter",
+          "level": 35,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        }
+      ],
       "sceneDataSha256": "6366da35ec9e4709a0b094eb71a71a88fbe6fe8dc62f4e44c1010d54edee38a4"
     },
     {
@@ -950,6 +4147,105 @@
       "healthTargetFraction": 0.5,
       "timeTargetFraction": 0.5,
       "recommendedArmyPower": 44100,
+      "behaviours": [
+        {
+          "name": "Assaulter",
+          "level": 41,
+          "sceneLimit": 0,
+          "missionLimit": 0
+        },
+        {
+          "name": "Grenadier",
+          "level": 41,
+          "sceneLimit": 4,
+          "missionLimit": 0
+        },
+        {
+          "name": "MachineGunner",
+          "level": 41,
+          "sceneLimit": 5,
+          "missionLimit": 0
+        },
+        {
+          "name": "Shotgunner",
+          "level": 41,
+          "sceneLimit": 2,
+          "missionLimit": 0
+        },
+        {
+          "name": "Drone",
+          "level": 36,
+          "sceneLimit": 2,
+          "missionLimit": 0
+        },
+        {
+          "name": "RocketLauncher",
+          "level": 36,
+          "sceneLimit": 2,
+          "missionLimit": 0
+        },
+        {
+          "name": "Sniper",
+          "level": 36,
+          "sceneLimit": 4,
+          "missionLimit": 0
+        },
+        {
+          "name": "Parachuter",
+          "level": 36,
+          "sceneLimit": 4,
+          "missionLimit": 0
+        },
+        {
+          "name": "Engineer",
+          "level": 26,
+          "sceneLimit": 2,
+          "missionLimit": 0
+        },
+        {
+          "name": "Buggy",
+          "level": 26,
+          "sceneLimit": 1,
+          "missionLimit": 0
+        },
+        {
+          "name": "Helicopter",
+          "level": 26,
+          "sceneLimit": 1,
+          "missionLimit": 0
+        },
+        {
+          "name": "Swat",
+          "level": 26,
+          "sceneLimit": 2,
+          "missionLimit": 0
+        },
+        {
+          "name": "DeployHeli",
+          "level": 11,
+          "sceneLimit": 1,
+          "missionLimit": 0
+        },
+        {
+          "name": "SciFi",
+          "level": 11,
+          "sceneLimit": 3,
+          "missionLimit": 0
+        },
+        {
+          "name": "Transporter",
+          "level": 11,
+          "sceneLimit": 1,
+          "missionLimit": 0
+        },
+        {
+          "name": "Commando",
+          "level": 11,
+          "sceneLimit": 2,
+          "missionLimit": 0
+        }
+      ],
+      "events": [],
       "sceneDataSha256": "0d91386485c8faf4a343a494b29bd3adf460e4f7627844e6b1e72f9fe041ee96"
     },
     {
@@ -969,6 +4265,92 @@
       "healthTargetFraction": 0.75,
       "timeTargetFraction": 0.5,
       "recommendedArmyPower": 45100,
+      "behaviours": [
+        {
+          "name": "Assaulter",
+          "level": 42,
+          "sceneLimit": 2,
+          "missionLimit": 20
+        },
+        {
+          "name": "Grenadier",
+          "level": 42,
+          "sceneLimit": 1,
+          "missionLimit": 6
+        },
+        {
+          "name": "MachineGunner",
+          "level": 42,
+          "sceneLimit": 2,
+          "missionLimit": 0
+        }
+      ],
+      "events": [
+        {
+          "time": 20.0,
+          "behaviour": "Buggy",
+          "level": 27,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 10.0,
+          "behaviour": "Engineer",
+          "level": 27,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 80.0,
+          "behaviour": "Drone",
+          "level": 27,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 150.0,
+          "behaviour": "Drone",
+          "level": 27,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 120.0,
+          "behaviour": "Commando",
+          "level": 12,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 60.0,
+          "behaviour": "SciFi",
+          "level": 12,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 180.0,
+          "behaviour": "Swat",
+          "level": 27,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 200.0,
+          "behaviour": "Engineer",
+          "level": 27,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        }
+      ],
       "sceneDataSha256": "dd98287c27ed50305f8fd002b631bc7736b6a9299dbd72ccfff88eb398bcd294"
     },
     {
@@ -988,6 +4370,82 @@
       "healthTargetFraction": 0.75,
       "timeTargetFraction": 0.5,
       "recommendedArmyPower": 46100,
+      "behaviours": [
+        {
+          "name": "Assaulter",
+          "level": 43,
+          "sceneLimit": 2,
+          "missionLimit": 15
+        },
+        {
+          "name": "MachineGunner",
+          "level": 43,
+          "sceneLimit": 2,
+          "missionLimit": 0
+        },
+        {
+          "name": "RocketLauncher",
+          "level": 38,
+          "sceneLimit": 2,
+          "missionLimit": 8
+        },
+        {
+          "name": "Sniper",
+          "level": 38,
+          "sceneLimit": 2,
+          "missionLimit": 16
+        }
+      ],
+      "events": [
+        {
+          "time": 15.0,
+          "behaviour": "Helicopter",
+          "level": 28,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 75.0,
+          "behaviour": "Buggy",
+          "level": 28,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 110.0,
+          "behaviour": "Parachuter",
+          "level": 38,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 185.0,
+          "behaviour": "Parachuter",
+          "level": 38,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 140.0,
+          "behaviour": "SciFi",
+          "level": 13,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 165.0,
+          "behaviour": "Commando",
+          "level": 13,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        }
+      ],
       "sceneDataSha256": "676c9f7f38c47fe3c5b392f60e5c553b6ae248b7e5c801bb65e13189ef6b0f75"
     },
     {
@@ -1007,6 +4465,68 @@
       "healthTargetFraction": 0.75,
       "timeTargetFraction": 0.5,
       "recommendedArmyPower": 47200,
+      "behaviours": [
+        {
+          "name": "Assaulter",
+          "level": 44,
+          "sceneLimit": 2,
+          "missionLimit": 0
+        },
+        {
+          "name": "MachineGunner",
+          "level": 44,
+          "sceneLimit": 3,
+          "missionLimit": 15
+        },
+        {
+          "name": "Sniper",
+          "level": 39,
+          "sceneLimit": 1,
+          "missionLimit": 12
+        }
+      ],
+      "events": [
+        {
+          "time": 35.0,
+          "behaviour": "Drone",
+          "level": 39,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 150.0,
+          "behaviour": "DeployHeli",
+          "level": 14,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 55.0,
+          "behaviour": "Commando",
+          "level": 14,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 180.0,
+          "behaviour": "SciFi",
+          "level": 14,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 20.0,
+          "behaviour": "Engineer",
+          "level": 29,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        }
+      ],
       "sceneDataSha256": "58347d37baa467de8fc6ad2ccf1f40be880b73a609f6d0deb015c6d181975c3b"
     },
     {
@@ -1026,6 +4546,70 @@
       "healthTargetFraction": 0.75,
       "timeTargetFraction": 0.2,
       "recommendedArmyPower": 48200,
+      "behaviours": [
+        {
+          "name": "Assaulter",
+          "level": 45,
+          "sceneLimit": 3,
+          "missionLimit": 0
+        },
+        {
+          "name": "MachineGunner",
+          "level": 45,
+          "sceneLimit": 2,
+          "missionLimit": 0
+        }
+      ],
+      "events": [
+        {
+          "time": 80.0,
+          "behaviour": "Transporter",
+          "level": 15,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 180.0,
+          "behaviour": "DeployHeli",
+          "level": 15,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 10.0,
+          "behaviour": "RocketLauncher",
+          "level": 40,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 220.0,
+          "behaviour": "RocketLauncher",
+          "level": 40,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 30.0,
+          "behaviour": "Drone",
+          "level": 40,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 160.0,
+          "behaviour": "Drone",
+          "level": 40,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        }
+      ],
       "sceneDataSha256": "01131c3ffa34b6ac41ec3c3b47462443582e3dead146f25af3eac292ee6ea8c5"
     },
     {
@@ -1045,6 +4629,57 @@
       "healthTargetFraction": 0.5,
       "timeTargetFraction": 0.5,
       "recommendedArmyPower": 49300,
+      "behaviours": [
+        {
+          "name": "MachineGunner",
+          "level": 46,
+          "sceneLimit": 5,
+          "missionLimit": 0
+        },
+        {
+          "name": "Drone",
+          "level": 41,
+          "sceneLimit": 2,
+          "missionLimit": 0
+        },
+        {
+          "name": "Buggy",
+          "level": 31,
+          "sceneLimit": 1,
+          "missionLimit": 0
+        },
+        {
+          "name": "Swat",
+          "level": 31,
+          "sceneLimit": 2,
+          "missionLimit": 0
+        },
+        {
+          "name": "DeployHeli",
+          "level": 16,
+          "sceneLimit": 1,
+          "missionLimit": 0
+        },
+        {
+          "name": "SciFi",
+          "level": 16,
+          "sceneLimit": 3,
+          "missionLimit": 0
+        },
+        {
+          "name": "Transporter",
+          "level": 16,
+          "sceneLimit": 1,
+          "missionLimit": 0
+        },
+        {
+          "name": "Commando",
+          "level": 16,
+          "sceneLimit": 2,
+          "missionLimit": 0
+        }
+      ],
+      "events": [],
       "sceneDataSha256": "2d344147332bd2a5677af36750c6d8a3ca691a1ef557a0acafb5e29848b777a5"
     },
     {
@@ -1064,6 +4699,88 @@
       "healthTargetFraction": 0.75,
       "timeTargetFraction": 0.5,
       "recommendedArmyPower": 50300,
+      "behaviours": [
+        {
+          "name": "Grenadier",
+          "level": 47,
+          "sceneLimit": 1,
+          "missionLimit": 3
+        },
+        {
+          "name": "MachineGunner",
+          "level": 47,
+          "sceneLimit": 3,
+          "missionLimit": 0
+        },
+        {
+          "name": "RocketLauncher",
+          "level": 42,
+          "sceneLimit": 1,
+          "missionLimit": 4
+        },
+        {
+          "name": "Parachuter",
+          "level": 42,
+          "sceneLimit": 1,
+          "missionLimit": 4
+        },
+        {
+          "name": "SciFi",
+          "level": 17,
+          "sceneLimit": 1,
+          "missionLimit": 3
+        }
+      ],
+      "events": [
+        {
+          "time": 140.0,
+          "behaviour": "Buggy",
+          "level": 32,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 60.0,
+          "behaviour": "Helicopter",
+          "level": 32,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 80.0,
+          "behaviour": "Drone",
+          "level": 42,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 170.0,
+          "behaviour": "Commando",
+          "level": 17,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 190.0,
+          "behaviour": "SciFi",
+          "level": 17,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 220.0,
+          "behaviour": "SciFi",
+          "level": 17,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        }
+      ],
       "sceneDataSha256": "a46e4acabc41050486afe7563019b40db8dac78fe4e3cbc3d0edc22fe30bb28f"
     },
     {
@@ -1083,6 +4800,84 @@
       "healthTargetFraction": 0.75,
       "timeTargetFraction": 0.5,
       "recommendedArmyPower": 51400,
+      "behaviours": [
+        {
+          "name": "Assaulter",
+          "level": 48,
+          "sceneLimit": 3,
+          "missionLimit": 0
+        },
+        {
+          "name": "Parachuter",
+          "level": 43,
+          "sceneLimit": 1,
+          "missionLimit": 6
+        },
+        {
+          "name": "SciFi",
+          "level": 18,
+          "sceneLimit": 1,
+          "missionLimit": 2
+        }
+      ],
+      "events": [
+        {
+          "time": 30.0,
+          "behaviour": "Commando",
+          "level": 18,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 80.0,
+          "behaviour": "Transporter",
+          "level": 18,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 140.0,
+          "behaviour": "Helicopter",
+          "level": 33,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 45.0,
+          "behaviour": "SciFi",
+          "level": 18,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 0.0,
+          "behaviour": "Assaulter",
+          "level": 48,
+          "isCardUnit": false,
+          "count": 4,
+          "card": ""
+        },
+        {
+          "time": 165.0,
+          "behaviour": "Sniper",
+          "level": 48,
+          "isCardUnit": false,
+          "count": 4,
+          "card": ""
+        },
+        {
+          "time": 190.0,
+          "behaviour": "MachineGunner",
+          "level": 48,
+          "isCardUnit": false,
+          "count": 4,
+          "card": ""
+        }
+      ],
       "sceneDataSha256": "c168a2886aaf48d56acbbf101b14759bb754da07976fa5f168e69807a51f32ef"
     },
     {
@@ -1102,6 +4897,74 @@
       "healthTargetFraction": 0.75,
       "timeTargetFraction": 0.5,
       "recommendedArmyPower": 52400,
+      "behaviours": [
+        {
+          "name": "MachineGunner",
+          "level": 49,
+          "sceneLimit": 4,
+          "missionLimit": 0
+        },
+        {
+          "name": "RocketLauncher",
+          "level": 44,
+          "sceneLimit": 1,
+          "missionLimit": 4
+        },
+        {
+          "name": "Sniper",
+          "level": 44,
+          "sceneLimit": 2,
+          "missionLimit": 0
+        },
+        {
+          "name": "SciFi",
+          "level": 19,
+          "sceneLimit": 1,
+          "missionLimit": 4
+        }
+      ],
+      "events": [
+        {
+          "time": 75.0,
+          "behaviour": "Helicopter",
+          "level": 34,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 130.0,
+          "behaviour": "Transporter",
+          "level": 19,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 40.0,
+          "behaviour": "SciFi",
+          "level": 19,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 160.0,
+          "behaviour": "SciFi",
+          "level": 19,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 190.0,
+          "behaviour": "SciFi",
+          "level": 19,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        }
+      ],
       "sceneDataSha256": "b929a5d3d4ea56120c3053463647773355bc0e6fbd5d5400656c0e6ca605ab44"
     },
     {
@@ -1121,6 +4984,106 @@
       "healthTargetFraction": 0.75,
       "timeTargetFraction": 0.2,
       "recommendedArmyPower": 53500,
+      "behaviours": [
+        {
+          "name": "Assaulter",
+          "level": 50,
+          "sceneLimit": 3,
+          "missionLimit": 0
+        },
+        {
+          "name": "MachineGunner",
+          "level": 50,
+          "sceneLimit": 1,
+          "missionLimit": 10
+        },
+        {
+          "name": "Sniper",
+          "level": 45,
+          "sceneLimit": 1,
+          "missionLimit": 0
+        },
+        {
+          "name": "SciFi",
+          "level": 19,
+          "sceneLimit": 1,
+          "missionLimit": 2
+        }
+      ],
+      "events": [
+        {
+          "time": 80.0,
+          "behaviour": "Humvee",
+          "level": 0,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 20.0,
+          "behaviour": "FlameThrower",
+          "level": 0,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 40.0,
+          "behaviour": "FlameThrower",
+          "level": 0,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 60.0,
+          "behaviour": "FlameThrower",
+          "level": 0,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 120.0,
+          "behaviour": "Commando",
+          "level": 19,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 170.0,
+          "behaviour": "Commando",
+          "level": 19,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 200.0,
+          "behaviour": "Commando",
+          "level": 19,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 240.0,
+          "behaviour": "Commando",
+          "level": 19,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 270.0,
+          "behaviour": "Commando",
+          "level": 19,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        }
+      ],
       "sceneDataSha256": "8eca9c085c1e8b20412cbb18a71c46157212101327757eabf20ef8c2b540f633"
     },
     {
@@ -1140,6 +5103,123 @@
       "healthTargetFraction": 0.5,
       "timeTargetFraction": 0.5,
       "recommendedArmyPower": 54600,
+      "behaviours": [
+        {
+          "name": "Assaulter",
+          "level": 50,
+          "sceneLimit": 0,
+          "missionLimit": 0
+        },
+        {
+          "name": "Grenadier",
+          "level": 50,
+          "sceneLimit": 4,
+          "missionLimit": 0
+        },
+        {
+          "name": "MachineGunner",
+          "level": 50,
+          "sceneLimit": 5,
+          "missionLimit": 0
+        },
+        {
+          "name": "Shotgunner",
+          "level": 50,
+          "sceneLimit": 2,
+          "missionLimit": 0
+        },
+        {
+          "name": "Drone",
+          "level": 45,
+          "sceneLimit": 2,
+          "missionLimit": 0
+        },
+        {
+          "name": "RocketLauncher",
+          "level": 45,
+          "sceneLimit": 2,
+          "missionLimit": 0
+        },
+        {
+          "name": "Sniper",
+          "level": 45,
+          "sceneLimit": 4,
+          "missionLimit": 0
+        },
+        {
+          "name": "Parachuter",
+          "level": 45,
+          "sceneLimit": 4,
+          "missionLimit": 0
+        },
+        {
+          "name": "Engineer",
+          "level": 35,
+          "sceneLimit": 2,
+          "missionLimit": 0
+        },
+        {
+          "name": "Buggy",
+          "level": 35,
+          "sceneLimit": 1,
+          "missionLimit": 0
+        },
+        {
+          "name": "Helicopter",
+          "level": 35,
+          "sceneLimit": 1,
+          "missionLimit": 0
+        },
+        {
+          "name": "Swat",
+          "level": 35,
+          "sceneLimit": 2,
+          "missionLimit": 0
+        },
+        {
+          "name": "DeployHeli",
+          "level": 20,
+          "sceneLimit": 1,
+          "missionLimit": 0
+        },
+        {
+          "name": "SciFi",
+          "level": 20,
+          "sceneLimit": 3,
+          "missionLimit": 0
+        },
+        {
+          "name": "Commando",
+          "level": 20,
+          "sceneLimit": 2,
+          "missionLimit": 0
+        },
+        {
+          "name": "Humvee",
+          "level": 0,
+          "sceneLimit": 1,
+          "missionLimit": 0
+        },
+        {
+          "name": "Tank",
+          "level": 0,
+          "sceneLimit": 1,
+          "missionLimit": 0
+        },
+        {
+          "name": "Minigunner",
+          "level": 0,
+          "sceneLimit": 2,
+          "missionLimit": 0
+        },
+        {
+          "name": "Flamethrower",
+          "level": 0,
+          "sceneLimit": 2,
+          "missionLimit": 0
+        }
+      ],
+      "events": [],
       "sceneDataSha256": "dbe9833fb7ad6da3f1fb858e45856ba68eb1d32f76634e3578c0eb497bd9b8bf"
     },
     {
@@ -1159,6 +5239,82 @@
       "healthTargetFraction": 0.75,
       "timeTargetFraction": 0.5,
       "recommendedArmyPower": 85400,
+      "behaviours": [
+        {
+          "name": "Gunslinger",
+          "level": 0,
+          "sceneLimit": 2,
+          "missionLimit": 0
+        },
+        {
+          "name": "Shotgunner",
+          "level": 37,
+          "sceneLimit": 2,
+          "missionLimit": 1
+        },
+        {
+          "name": "RocketLauncher",
+          "level": 32,
+          "sceneLimit": 1,
+          "missionLimit": 10
+        },
+        {
+          "name": "Sniper",
+          "level": 32,
+          "sceneLimit": 2,
+          "missionLimit": 40
+        }
+      ],
+      "events": [
+        {
+          "time": 25.0,
+          "behaviour": "Parachuter",
+          "level": 32,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 45.0,
+          "behaviour": "Engineer",
+          "level": 22,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 80.0,
+          "behaviour": "Helicopter",
+          "level": 22,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 110.0,
+          "behaviour": "Commando",
+          "level": 7,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 140.0,
+          "behaviour": "SciFi",
+          "level": 7,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 160.0,
+          "behaviour": "Drone",
+          "level": 32,
+          "isCardUnit": true,
+          "count": 1,
+          "card": ""
+        }
+      ],
       "sceneDataSha256": "05fc7eaaa5fa7c565a0af6c73be7450df62fd51dcbd88db2b663adc92757c9f0"
     },
     {
@@ -1178,6 +5334,70 @@
       "healthTargetFraction": 0.75,
       "timeTargetFraction": 0.5,
       "recommendedArmyPower": 86800,
+      "behaviours": [
+        {
+          "name": "Assaulter",
+          "level": 38,
+          "sceneLimit": 4,
+          "missionLimit": 0
+        },
+        {
+          "name": "Warper",
+          "level": 0,
+          "sceneLimit": 1,
+          "missionLimit": 15
+        }
+      ],
+      "events": [
+        {
+          "time": 10.0,
+          "behaviour": "DeployHeli",
+          "level": 8,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 170.0,
+          "behaviour": "Transporter",
+          "level": 8,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 40.0,
+          "behaviour": "RocketLauncher",
+          "level": 33,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 65.0,
+          "behaviour": "Engineer",
+          "level": 23,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 85.0,
+          "behaviour": "Swat",
+          "level": 23,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 140.0,
+          "behaviour": "RocketLauncher",
+          "level": 33,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        }
+      ],
       "sceneDataSha256": "075354b22fe9e0fa38545493f9314278d7e520f21605fd33bfab9e5906146f0b"
     },
     {
@@ -1197,6 +5417,68 @@
       "healthTargetFraction": 0.75,
       "timeTargetFraction": 0.5,
       "recommendedArmyPower": 88200,
+      "behaviours": [
+        {
+          "name": "Assaulter",
+          "level": 39,
+          "sceneLimit": 3,
+          "missionLimit": 0
+        },
+        {
+          "name": "MachineGunner",
+          "level": 39,
+          "sceneLimit": 2,
+          "missionLimit": 12
+        },
+        {
+          "name": "Gunslinger",
+          "level": 0,
+          "sceneLimit": 2,
+          "missionLimit": 0
+        }
+      ],
+      "events": [
+        {
+          "time": 20.0,
+          "behaviour": "SciFi",
+          "level": 9,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 40.0,
+          "behaviour": "Transporter",
+          "level": 9,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 100.0,
+          "behaviour": "DeployHeli",
+          "level": 9,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 140.0,
+          "behaviour": "Drone",
+          "level": 34,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 160.0,
+          "behaviour": "Parachuter",
+          "level": 34,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        }
+      ],
       "sceneDataSha256": "3c10b96075a325bfab499ea3b6471e66e68bf88dba6d6b485d51cfc8e52c6dce"
     },
     {
@@ -1216,6 +5498,92 @@
       "healthTargetFraction": 0.75,
       "timeTargetFraction": 0.2,
       "recommendedArmyPower": 89600,
+      "behaviours": [
+        {
+          "name": "Mortar",
+          "level": 0,
+          "sceneLimit": 1,
+          "missionLimit": 8
+        },
+        {
+          "name": "MachineGunner",
+          "level": 40,
+          "sceneLimit": 1,
+          "missionLimit": 8
+        },
+        {
+          "name": "Sniper",
+          "level": 35,
+          "sceneLimit": 3,
+          "missionLimit": 0
+        }
+      ],
+      "events": [
+        {
+          "time": 60.0,
+          "behaviour": "Swat",
+          "level": 25,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 15.0,
+          "behaviour": "Transporter",
+          "level": 10,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 120.0,
+          "behaviour": "Helicopter",
+          "level": 25,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 190.0,
+          "behaviour": "Drone",
+          "level": 35,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 70.0,
+          "behaviour": "Drone",
+          "level": 35,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 160.0,
+          "behaviour": "SciFi",
+          "level": 10,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 160.0,
+          "behaviour": "Engineer",
+          "level": 25,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 100.0,
+          "behaviour": "Parachuter",
+          "level": 35,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        }
+      ],
       "sceneDataSha256": "9b9e41c120749d54275e2914d95797669a7118358ac342605225439565b4edab"
     },
     {
@@ -1235,6 +5603,105 @@
       "healthTargetFraction": 0.5,
       "timeTargetFraction": 0.5,
       "recommendedArmyPower": 91000,
+      "behaviours": [
+        {
+          "name": "Assaulter",
+          "level": 41,
+          "sceneLimit": 0,
+          "missionLimit": 0
+        },
+        {
+          "name": "Grenadier",
+          "level": 41,
+          "sceneLimit": 4,
+          "missionLimit": 0
+        },
+        {
+          "name": "MachineGunner",
+          "level": 41,
+          "sceneLimit": 5,
+          "missionLimit": 0
+        },
+        {
+          "name": "Gunslinger",
+          "level": 0,
+          "sceneLimit": 2,
+          "missionLimit": 0
+        },
+        {
+          "name": "Drone",
+          "level": 36,
+          "sceneLimit": 2,
+          "missionLimit": 0
+        },
+        {
+          "name": "RocketLauncher",
+          "level": 36,
+          "sceneLimit": 2,
+          "missionLimit": 0
+        },
+        {
+          "name": "Sniper",
+          "level": 36,
+          "sceneLimit": 4,
+          "missionLimit": 0
+        },
+        {
+          "name": "Parachuter",
+          "level": 36,
+          "sceneLimit": 4,
+          "missionLimit": 0
+        },
+        {
+          "name": "Engineer",
+          "level": 26,
+          "sceneLimit": 2,
+          "missionLimit": 0
+        },
+        {
+          "name": "Buggy",
+          "level": 26,
+          "sceneLimit": 1,
+          "missionLimit": 0
+        },
+        {
+          "name": "Helicopter",
+          "level": 26,
+          "sceneLimit": 1,
+          "missionLimit": 0
+        },
+        {
+          "name": "Swat",
+          "level": 26,
+          "sceneLimit": 2,
+          "missionLimit": 0
+        },
+        {
+          "name": "Mech",
+          "level": 0,
+          "sceneLimit": 4,
+          "missionLimit": 0
+        },
+        {
+          "name": "SciFi",
+          "level": 11,
+          "sceneLimit": 3,
+          "missionLimit": 0
+        },
+        {
+          "name": "Transporter",
+          "level": 11,
+          "sceneLimit": 1,
+          "missionLimit": 0
+        },
+        {
+          "name": "Warper",
+          "level": 0,
+          "sceneLimit": 4,
+          "missionLimit": 0
+        }
+      ],
+      "events": [],
       "sceneDataSha256": "0c9958fd0372d90b955d6c7cf0a66701712f782796d9180475b72ecc99575fa9"
     },
     {
@@ -1254,6 +5721,92 @@
       "healthTargetFraction": 0.75,
       "timeTargetFraction": 0.5,
       "recommendedArmyPower": 92400,
+      "behaviours": [
+        {
+          "name": "Assaulter",
+          "level": 42,
+          "sceneLimit": 2,
+          "missionLimit": 20
+        },
+        {
+          "name": "Mortar",
+          "level": 0,
+          "sceneLimit": 1,
+          "missionLimit": 8
+        },
+        {
+          "name": "MachineGunner",
+          "level": 42,
+          "sceneLimit": 2,
+          "missionLimit": 0
+        }
+      ],
+      "events": [
+        {
+          "time": 20.0,
+          "behaviour": "Buggy",
+          "level": 27,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 10.0,
+          "behaviour": "Engineer",
+          "level": 27,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 80.0,
+          "behaviour": "Drone",
+          "level": 27,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 150.0,
+          "behaviour": "Drone",
+          "level": 27,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 120.0,
+          "behaviour": "Commando",
+          "level": 12,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 60.0,
+          "behaviour": "SciFi",
+          "level": 12,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 180.0,
+          "behaviour": "Swat",
+          "level": 27,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 200.0,
+          "behaviour": "Engineer",
+          "level": 27,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        }
+      ],
       "sceneDataSha256": "e034954a9499979bdd22cd024a13bafafc382f9689d9b75e8ee4935d23eea5d3"
     },
     {
@@ -1273,6 +5826,82 @@
       "healthTargetFraction": 0.75,
       "timeTargetFraction": 0.5,
       "recommendedArmyPower": 93800,
+      "behaviours": [
+        {
+          "name": "Gunslinger",
+          "level": 0,
+          "sceneLimit": 3,
+          "missionLimit": 15
+        },
+        {
+          "name": "MachineGunner",
+          "level": 43,
+          "sceneLimit": 2,
+          "missionLimit": 0
+        },
+        {
+          "name": "RocketLauncher",
+          "level": 38,
+          "sceneLimit": 2,
+          "missionLimit": 8
+        },
+        {
+          "name": "Sniper",
+          "level": 38,
+          "sceneLimit": 2,
+          "missionLimit": 16
+        }
+      ],
+      "events": [
+        {
+          "time": 15.0,
+          "behaviour": "Helicopter",
+          "level": 28,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 75.0,
+          "behaviour": "Buggy",
+          "level": 28,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 110.0,
+          "behaviour": "Parachuter",
+          "level": 38,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 185.0,
+          "behaviour": "Parachuter",
+          "level": 38,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 140.0,
+          "behaviour": "SciFi",
+          "level": 13,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 165.0,
+          "behaviour": "Commando",
+          "level": 13,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        }
+      ],
       "sceneDataSha256": "bb766402ab9b7542e5e0dba6bc78e12acda7493b437a78e02de80e2ba854d8f8"
     },
     {
@@ -1292,6 +5921,68 @@
       "healthTargetFraction": 0.75,
       "timeTargetFraction": 0.5,
       "recommendedArmyPower": 95200,
+      "behaviours": [
+        {
+          "name": "Assaulter",
+          "level": 44,
+          "sceneLimit": 2,
+          "missionLimit": 0
+        },
+        {
+          "name": "MachineGunner",
+          "level": 44,
+          "sceneLimit": 3,
+          "missionLimit": 15
+        },
+        {
+          "name": "Mech",
+          "level": 0,
+          "sceneLimit": 1,
+          "missionLimit": 2
+        }
+      ],
+      "events": [
+        {
+          "time": 35.0,
+          "behaviour": "Drone",
+          "level": 39,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 150.0,
+          "behaviour": "DeployHeli",
+          "level": 14,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 55.0,
+          "behaviour": "Commando",
+          "level": 14,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 180.0,
+          "behaviour": "SciFi",
+          "level": 14,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 20.0,
+          "behaviour": "Engineer",
+          "level": 29,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        }
+      ],
       "sceneDataSha256": "4b738c8d1f5b67531034796ab4fbc0099c28f539d9dad9b40b60c274023304e9"
     },
     {
@@ -1311,6 +6002,70 @@
       "healthTargetFraction": 0.75,
       "timeTargetFraction": 0.2,
       "recommendedArmyPower": 96600,
+      "behaviours": [
+        {
+          "name": "Assaulter",
+          "level": 45,
+          "sceneLimit": 4,
+          "missionLimit": 0
+        },
+        {
+          "name": "Warper",
+          "level": 0,
+          "sceneLimit": 1,
+          "missionLimit": 0
+        }
+      ],
+      "events": [
+        {
+          "time": 80.0,
+          "behaviour": "Transporter",
+          "level": 15,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 180.0,
+          "behaviour": "DeployHeli",
+          "level": 15,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 10.0,
+          "behaviour": "RocketLauncher",
+          "level": 40,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 220.0,
+          "behaviour": "RocketLauncher",
+          "level": 40,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 30.0,
+          "behaviour": "Drone",
+          "level": 40,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 160.0,
+          "behaviour": "Drone",
+          "level": 40,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        }
+      ],
       "sceneDataSha256": "ef4be74527633f01a30d6b233c42ec69d9fa69e217cf81f57bbcfc6a77b4eebb"
     },
     {
@@ -1330,6 +6085,57 @@
       "healthTargetFraction": 0.5,
       "timeTargetFraction": 0.5,
       "recommendedArmyPower": 98000,
+      "behaviours": [
+        {
+          "name": "MachineGunner",
+          "level": 46,
+          "sceneLimit": 5,
+          "missionLimit": 0
+        },
+        {
+          "name": "Drone",
+          "level": 41,
+          "sceneLimit": 2,
+          "missionLimit": 0
+        },
+        {
+          "name": "Mech",
+          "level": 0,
+          "sceneLimit": 1,
+          "missionLimit": 2
+        },
+        {
+          "name": "Swat",
+          "level": 31,
+          "sceneLimit": 2,
+          "missionLimit": 0
+        },
+        {
+          "name": "DeployHeli",
+          "level": 16,
+          "sceneLimit": 1,
+          "missionLimit": 0
+        },
+        {
+          "name": "Warper",
+          "level": 0,
+          "sceneLimit": 1,
+          "missionLimit": 0
+        },
+        {
+          "name": "Transporter",
+          "level": 16,
+          "sceneLimit": 1,
+          "missionLimit": 0
+        },
+        {
+          "name": "Commando",
+          "level": 16,
+          "sceneLimit": 3,
+          "missionLimit": 0
+        }
+      ],
+      "events": [],
       "sceneDataSha256": "26d9b834185c0d2223e643da6993ec66141136e66523495182733832c3a3cde0"
     },
     {
@@ -1349,6 +6155,88 @@
       "healthTargetFraction": 0.75,
       "timeTargetFraction": 0.5,
       "recommendedArmyPower": 99400,
+      "behaviours": [
+        {
+          "name": "Gunslinger",
+          "level": 0,
+          "sceneLimit": 3,
+          "missionLimit": 0
+        },
+        {
+          "name": "MachineGunner",
+          "level": 47,
+          "sceneLimit": 3,
+          "missionLimit": 0
+        },
+        {
+          "name": "Mortar",
+          "level": 0,
+          "sceneLimit": 1,
+          "missionLimit": 4
+        },
+        {
+          "name": "Parachuter",
+          "level": 42,
+          "sceneLimit": 1,
+          "missionLimit": 4
+        },
+        {
+          "name": "Mech",
+          "level": 0,
+          "sceneLimit": 1,
+          "missionLimit": 2
+        }
+      ],
+      "events": [
+        {
+          "time": 140.0,
+          "behaviour": "Buggy",
+          "level": 32,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 60.0,
+          "behaviour": "Helicopter",
+          "level": 32,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 80.0,
+          "behaviour": "Drone",
+          "level": 42,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 170.0,
+          "behaviour": "Commando",
+          "level": 17,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 190.0,
+          "behaviour": "SciFi",
+          "level": 17,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 220.0,
+          "behaviour": "SciFi",
+          "level": 17,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        }
+      ],
       "sceneDataSha256": "1a85512670abb595184c2bc6bc320682596810a420c6e256672f8f3fa636d377"
     },
     {
@@ -1368,6 +6256,84 @@
       "healthTargetFraction": 0.75,
       "timeTargetFraction": 0.5,
       "recommendedArmyPower": 100800,
+      "behaviours": [
+        {
+          "name": "Assaulter",
+          "level": 48,
+          "sceneLimit": 3,
+          "missionLimit": 0
+        },
+        {
+          "name": "Warper",
+          "level": 0,
+          "sceneLimit": 1,
+          "missionLimit": 0
+        },
+        {
+          "name": "SciFi",
+          "level": 18,
+          "sceneLimit": 1,
+          "missionLimit": 2
+        }
+      ],
+      "events": [
+        {
+          "time": 30.0,
+          "behaviour": "Commando",
+          "level": 18,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 80.0,
+          "behaviour": "Transporter",
+          "level": 18,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 140.0,
+          "behaviour": "Helicopter",
+          "level": 33,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 45.0,
+          "behaviour": "SciFi",
+          "level": 18,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 0.0,
+          "behaviour": "Assaulter",
+          "level": 48,
+          "isCardUnit": false,
+          "count": 4,
+          "card": ""
+        },
+        {
+          "time": 165.0,
+          "behaviour": "Sniper",
+          "level": 48,
+          "isCardUnit": false,
+          "count": 4,
+          "card": ""
+        },
+        {
+          "time": 190.0,
+          "behaviour": "MachineGunner",
+          "level": 48,
+          "isCardUnit": false,
+          "count": 4,
+          "card": ""
+        }
+      ],
       "sceneDataSha256": "45a8fc2420e3347f36ba833adc95d7107331c55f74d7e8aed35f03e52c322904"
     },
     {
@@ -1387,6 +6353,74 @@
       "healthTargetFraction": 0.75,
       "timeTargetFraction": 0.5,
       "recommendedArmyPower": 102200,
+      "behaviours": [
+        {
+          "name": "MachineGunner",
+          "level": 49,
+          "sceneLimit": 4,
+          "missionLimit": 0
+        },
+        {
+          "name": "RocketLauncher",
+          "level": 44,
+          "sceneLimit": 1,
+          "missionLimit": 4
+        },
+        {
+          "name": "Gunslinger",
+          "level": 0,
+          "sceneLimit": 2,
+          "missionLimit": 0
+        },
+        {
+          "name": "SciFi",
+          "level": 19,
+          "sceneLimit": 1,
+          "missionLimit": 4
+        }
+      ],
+      "events": [
+        {
+          "time": 75.0,
+          "behaviour": "Helicopter",
+          "level": 34,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 130.0,
+          "behaviour": "Transporter",
+          "level": 19,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 40.0,
+          "behaviour": "SciFi",
+          "level": 19,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 160.0,
+          "behaviour": "SciFi",
+          "level": 19,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 190.0,
+          "behaviour": "SciFi",
+          "level": 19,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        }
+      ],
       "sceneDataSha256": "e3cbe9fab15e90646ee6a0a2e029841785cc60ee0d939b507aa6b428f7f6217f"
     },
     {
@@ -1406,6 +6440,106 @@
       "healthTargetFraction": 0.75,
       "timeTargetFraction": 0.2,
       "recommendedArmyPower": 103600,
+      "behaviours": [
+        {
+          "name": "Assaulter",
+          "level": 50,
+          "sceneLimit": 3,
+          "missionLimit": 0
+        },
+        {
+          "name": "MachineGunner",
+          "level": 50,
+          "sceneLimit": 1,
+          "missionLimit": 10
+        },
+        {
+          "name": "Sniper",
+          "level": 45,
+          "sceneLimit": 1,
+          "missionLimit": 0
+        },
+        {
+          "name": "Gunslinger",
+          "level": 0,
+          "sceneLimit": 1,
+          "missionLimit": 0
+        }
+      ],
+      "events": [
+        {
+          "time": 80.0,
+          "behaviour": "Humvee",
+          "level": 0,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 20.0,
+          "behaviour": "FlameThrower",
+          "level": 0,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 40.0,
+          "behaviour": "FlameThrower",
+          "level": 0,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 60.0,
+          "behaviour": "FlameThrower",
+          "level": 0,
+          "isCardUnit": false,
+          "count": 1,
+          "card": ""
+        },
+        {
+          "time": 120.0,
+          "behaviour": "Commando",
+          "level": 19,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 170.0,
+          "behaviour": "Commando",
+          "level": 19,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 200.0,
+          "behaviour": "Commando",
+          "level": 19,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 240.0,
+          "behaviour": "Commando",
+          "level": 19,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        },
+        {
+          "time": 270.0,
+          "behaviour": "Commando",
+          "level": 19,
+          "isCardUnit": false,
+          "count": 2,
+          "card": ""
+        }
+      ],
       "sceneDataSha256": "e6eea6859fc7b891b3c5624267d91b620c4a5cb5993a3f02030db462186e913b"
     },
     {
@@ -1425,6 +6559,123 @@
       "healthTargetFraction": 0.5,
       "timeTargetFraction": 0.5,
       "recommendedArmyPower": 105000,
+      "behaviours": [
+        {
+          "name": "Assaulter",
+          "level": 50,
+          "sceneLimit": 4,
+          "missionLimit": 0
+        },
+        {
+          "name": "Grenadier",
+          "level": 50,
+          "sceneLimit": 4,
+          "missionLimit": 0
+        },
+        {
+          "name": "MachineGunner",
+          "level": 50,
+          "sceneLimit": 5,
+          "missionLimit": 0
+        },
+        {
+          "name": "Shotgunner",
+          "level": 50,
+          "sceneLimit": 2,
+          "missionLimit": 0
+        },
+        {
+          "name": "Mech",
+          "level": 0,
+          "sceneLimit": 1,
+          "missionLimit": 0
+        },
+        {
+          "name": "RocketLauncher",
+          "level": 45,
+          "sceneLimit": 2,
+          "missionLimit": 0
+        },
+        {
+          "name": "Sniper",
+          "level": 45,
+          "sceneLimit": 4,
+          "missionLimit": 0
+        },
+        {
+          "name": "Parachuter",
+          "level": 45,
+          "sceneLimit": 4,
+          "missionLimit": 0
+        },
+        {
+          "name": "Engineer",
+          "level": 35,
+          "sceneLimit": 2,
+          "missionLimit": 0
+        },
+        {
+          "name": "Buggy",
+          "level": 35,
+          "sceneLimit": 1,
+          "missionLimit": 0
+        },
+        {
+          "name": "Warper",
+          "level": 0,
+          "sceneLimit": 4,
+          "missionLimit": 0
+        },
+        {
+          "name": "Swat",
+          "level": 35,
+          "sceneLimit": 2,
+          "missionLimit": 0
+        },
+        {
+          "name": "DeployHeli",
+          "level": 20,
+          "sceneLimit": 1,
+          "missionLimit": 0
+        },
+        {
+          "name": "SciFi",
+          "level": 20,
+          "sceneLimit": 3,
+          "missionLimit": 0
+        },
+        {
+          "name": "Commando",
+          "level": 20,
+          "sceneLimit": 2,
+          "missionLimit": 0
+        },
+        {
+          "name": "Humvee",
+          "level": 0,
+          "sceneLimit": 1,
+          "missionLimit": 0
+        },
+        {
+          "name": "Tank",
+          "level": 0,
+          "sceneLimit": 1,
+          "missionLimit": 0
+        },
+        {
+          "name": "Minigunner",
+          "level": 0,
+          "sceneLimit": 2,
+          "missionLimit": 0
+        },
+        {
+          "name": "Flamethrower",
+          "level": 0,
+          "sceneLimit": 2,
+          "missionLimit": 0
+        }
+      ],
+      "events": [],
       "sceneDataSha256": "16c3fd9a8fb16f86250888020c456535ba54303bc0fe9bc58bc8cb1676f438a8"
     }
   ]

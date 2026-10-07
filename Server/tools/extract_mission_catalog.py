@@ -83,7 +83,9 @@ def parse_rows(lines):
             scene_data = json.loads(source_data)
         else:
             raise ValueError(f"Missing scene data for mission {index}")
-        json.loads(scene_data)
+        parsed_scene = json.loads(scene_data)
+        mission["behaviours"] = parsed_scene["behaviours"]
+        mission["events"] = parsed_scene["events"]
         mission["sceneDataSha256"] = hashlib.sha256(
             scene_data.encode("utf-8")
         ).hexdigest()
