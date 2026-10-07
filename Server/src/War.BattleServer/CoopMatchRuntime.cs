@@ -30,14 +30,16 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
     private readonly MatchManifest manifest;
     private readonly CoopMissionEngine mission;
     private readonly MissionRule missionRule;
-    private readonly CoopAiSpawnSelector spawnSelector;
+    private readonly Func<string, IReadOnlyList<CoopSpawnPoint>> spawnCandidates;
     private readonly CoopEnemyCombatCatalog combat;
     private readonly Func<int, int> chooseSpawnPoint;
     private readonly List<BattleCoopEnemySpawn> enemySpawns = [];
     private readonly Dictionary<string, Participant> participants;
     private readonly IReadOnlyDictionary<string, CoopPlayerAnchor> playerStarts;
-    private readonly CoopMapSpawnPoints sourceMap;
-    private readonly CoopMapRoutes sourceRoutes;
+    private readonly IReadOnlyList<CoopPlayerAnchor> playerPositions;
+    private readonly Func<int, int, CoopDefendRoute> routeBetween;
+    private readonly int alliedFirstCover;
+    private readonly int alliedLastCover;
     private ulong nextEnemyId = 1;
     private BattlePhase phase = BattlePhase.Waiting;
     private ulong tick;
@@ -53,6 +55,17 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         CoopEnemyCombatCatalog combat,
         Func<int, int>? chooseBehaviour = null,
         Func<int, int>? choosePoint = null)
+        : this(allocation, catalog, spawnPoints, paths, combat,
+            null, null, null, null, chooseBehaviour, choosePoint)
+    {
+    }
+
+    internal CoopMatchRuntime(MatchManifest allocation, MissionCatalog catalog,
+        CoopSpawnPointCatalog spawnPoints, CoopNavMeshPathCatalog paths,
+        CoopEnemyCombatCatalog combat, CoopBossAnchorCatalog? bossAnchors,
+        CoopBossPathCatalog? bossPaths, ArmySpawnPointCatalog? armySpawns,
+        RecoveredBattleMap? bossMap, Func<int, int>? chooseBehaviour,
+        Func<int, int>? choosePoint)
     {
         ArgumentNullException.ThrowIfNull(catalog);
         manifest = MatchManifest.Validate(allocation);
@@ -69,12 +82,43 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         ManifestHash = manifest.Digest();
         missionRule = catalog.Get(missionIndex);
         ArgumentNullException.ThrowIfNull(spawnPoints);
-        CoopMapSpawnPoints map = spawnPoints.MapForMission(catalog, missionIndex);
-        sourceMap = map;
-        sourceRoutes = (paths ?? throw new ArgumentNullException(nameof(paths)))
-            .MapForMission(catalog, missionIndex);
-        CoopPlayerAnchor[] mainPositions = map.PlayerPositions
-            .Where(position => position.Main)
+        ArgumentNullException.ThrowIfNull(paths);
+        if (missionRule.MissionType == "KillOpponent")
+        {
+            if (bossAnchors == null || bossPaths == null ||
+                armySpawns == null || bossMap == null)
+                throw new InvalidDataException("Boss mission needs multiplayer geometry.");
+            CoopBossMapAnchors map = bossAnchors.MapForMission(catalog, missionIndex);
+            CoopBossMapRoutes routes = bossPaths.MapForMission(catalog, missionIndex);
+            var selector = new CoopBossAiSpawnSelector(catalog,
+                armySpawns, bossMap, missionIndex);
+            playerPositions = map.PlayerPositions.Select(anchor =>
+                new CoopPlayerAnchor(anchor.Index, anchor.ComponentFileId,
+                    anchor.GameObjectFileId, anchor.TransformFileId,
+                    anchor.Main, anchor.Position)).ToArray();
+            routeBetween = routes.Between;
+            alliedFirstCover = 4;
+            alliedLastCover = 7;
+            spawnCandidates = behaviour => selector.Candidates(behaviour)
+                .Select(point => new CoopSpawnPoint(point.Collection, point.Order,
+                    point.ComponentFileId, point.ComponentType, point.Fraction,
+                    point.GameObjectFileId, point.TransformFileId, point.Position))
+                .ToArray();
+        }
+        else
+        {
+            CoopMapSpawnPoints map = spawnPoints.MapForMission(catalog, missionIndex);
+            CoopMapRoutes routes = paths.MapForMission(catalog, missionIndex);
+            var selector = new CoopAiSpawnSelector(catalog, spawnPoints, missionIndex);
+            playerPositions = map.PlayerPositions;
+            routeBetween = routes.Between;
+            alliedFirstCover = 0;
+            alliedLastCover = 3;
+            spawnCandidates = selector.Candidates;
+        }
+        CoopPlayerAnchor[] mainPositions = playerPositions
+            .Where(position => position.Main &&
+                position.Index >= alliedFirstCover && position.Index <= alliedLastCover)
             .OrderBy(position => position.Index)
             .ToArray();
         if (mainPositions.Length != manifest.Players.Length)
@@ -85,7 +129,6 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             .Select((player, index) => (player.PlayerId, Position: mainPositions[index]))
             .ToDictionary(entry => entry.PlayerId, entry => entry.Position,
                 StringComparer.Ordinal);
-        spawnSelector = new CoopAiSpawnSelector(catalog, spawnPoints, missionIndex);
         this.combat = combat ?? throw new ArgumentNullException(nameof(combat));
         chooseSpawnPoint = choosePoint ?? Random.Shared.Next;
         mission = new CoopMissionEngine(catalog, missionIndex, chooseBehaviour);
@@ -200,7 +243,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
     private BattleCoopEnemySpawn CreateEnemy(
         string behaviour, int level, bool timedEvent, bool cardUnit)
     {
-        IReadOnlyList<CoopSpawnPoint> candidates = spawnSelector.Candidates(behaviour);
+        IReadOnlyList<CoopSpawnPoint> candidates = spawnCandidates(behaviour);
         int selectedIndex = chooseSpawnPoint(candidates.Count);
         if (selectedIndex < 0 || selectedIndex >= candidates.Count)
             throw new InvalidDataException("Co-op spawn choice is outside the source collection.");
@@ -342,17 +385,17 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         // The host also reserves an in-flight destination so simultaneous
         // requests cannot both acquire the same shield.
         int target = participant.CoverIndex + direction;
-        while (target >= 0 && target < sourceMap.PlayerPositions.Count)
+        while (target >= alliedFirstCover && target <= alliedLastCover)
         {
             if (!participants.Values.Any(other => other != participant &&
                     (other.CoverIndex == target || other.DestinationIndex == target)))
                 break;
             target += direction;
         }
-        if (target < 0 || target >= sourceMap.PlayerPositions.Count)
+        if (target < alliedFirstCover || target > alliedLastCover)
             return "cover-unavailable";
 
-        CoopDefendRoute route = sourceRoutes.Between(participant.CoverIndex, target);
+        CoopDefendRoute route = routeBetween(participant.CoverIndex, target);
         double length = 0;
         for (int index = 1; index < route.Corners.Count; index++)
             length += Vector3.Distance(route.Corners[index - 1], route.Corners[index]);
@@ -377,7 +420,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         if (tick >= participant.MoveEndTick)
         {
             participant.CoverIndex = participant.DestinationIndex;
-            participant.Position = sourceMap.PlayerPositions[participant.CoverIndex].Position;
+            participant.Position = playerPositions[participant.CoverIndex].Position;
             participant.DestinationIndex = -1;
             participant.Route = null;
             stateRevision++;

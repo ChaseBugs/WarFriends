@@ -35,7 +35,7 @@ internal static class CombatContentTests
         int eventAssertions = VerifyMissionTimedEvents(catalog);
         int coopAssertions = VerifyCoopMissionEngine(catalog);
         int allocationAssertions = VerifyCoopAllocation(
-            directory, catalog, content.Army, content.Stats.Revision);
+            directory, catalog, content);
         int mapAssertions = VerifyCoopSpawnCatalog(directory, catalog);
         int navMeshAssertions = VerifyCoopNavMeshSources(directory, catalog);
         int routeAssertions = VerifyCoopNavMeshRoutes(directory, catalog);
@@ -332,9 +332,10 @@ internal static class CombatContentTests
     }
 
     private static int VerifyCoopAllocation(
-        string directory, MissionCatalog catalog, ArmyDeploymentCatalog army,
-        string contentRevision)
+        string directory, MissionCatalog catalog, BattleCombatContent content)
     {
+        ArmyDeploymentCatalog army = content.Army;
+        string contentRevision = content.Stats.Revision;
         CoopSpawnPointCatalog spawnPoints = CoopSpawnPointCatalog.Load(
             Path.Combine(directory, "recovered-coop-spawn-points.json"), catalog);
         CoopNavMeshSourceCatalog navMeshSources = CoopNavMeshSourceCatalog.Load(
@@ -451,6 +452,71 @@ internal static class CombatContentTests
         catch (InvalidDataException)
         {
         }
+
+        CoopBossAnchorCatalog bossAnchors = CoopBossAnchorCatalog.Load(Path.Combine(
+            directory, "recovered-coop-boss-anchors.json"), catalog);
+        CoopBossPathCatalog bossPaths = CoopBossPathCatalog.Load(Path.Combine(
+            directory, "recovered-coop-boss-paths.json"), catalog,
+            bossAnchors, content.ArmyNavMeshes);
+        RecoveredBattleMap bossScene = content.Maps.Single(map =>
+            map.Source == "Assets/Scenes/" + bossMap.Scene + ".unity");
+        var bossRuntime = new CoopMatchRuntime(bossAllocation, catalog,
+            spawnPoints, routes, enemyCombat, bossAnchors, bossPaths,
+            content.ArmySpawnPoints, bossScene, _ => 0, _ => 0);
+        string bossFirstPlayer = bossAllocation.Players[0].PlayerId;
+        string bossSecondPlayer = bossAllocation.Players[1].PlayerId;
+        if (!bossRuntime.Admit(bossFirstPlayer) ||
+            !bossRuntime.Admit(bossSecondPlayer))
+            throw new Exception("Boss runtime rejected the signed allied roster.");
+        foreach (string playerId in new[] { bossFirstPlayer, bossSecondPlayer })
+        {
+            MatchReply ready = bossRuntime.Command(playerId, new MatchCommand
+            {
+                CommandId = 1,
+                Ready = new ReadyCommand { ManifestHash = bossRuntime.ManifestHash }
+            });
+            if (ready.Code != "ready")
+                throw new Exception("Boss allies could not start the isolated runtime.");
+        }
+        MatchSnapshot bossStart = bossRuntime.Snapshot();
+        if (bossStart.Phase != BattlePhase.Running ||
+            bossStart.Coop.ParticipantStarts[0].DefendComponentFileId !=
+                bossAnchors.Maps[0].AlliedStarts[0].ComponentFileId ||
+            bossStart.Coop.ParticipantStarts[1].DefendComponentFileId !=
+                bossAnchors.Maps[0].AlliedStarts[1].ComponentFileId ||
+            bossStart.Players.Single(player => player.PlayerId == bossFirstPlayer)
+                .CoverIndex != 5)
+            throw new Exception("Boss allies started outside multiplayer fraction two.");
+        MatchReply bossMove = bossRuntime.Command(bossFirstPlayer, new MatchCommand
+        {
+            CommandId = 2,
+            MoveCover = new MoveCoverCommand { Direction = 1 }
+        });
+        if (bossMove.Code != "moving" ||
+            bossMove.Snapshot.Players.Single(player =>
+                player.PlayerId == bossFirstPlayer).CoverIndex != 5 ||
+            bossRuntime.Command(bossSecondPlayer, new MatchCommand
+            {
+                CommandId = 2,
+                MoveCover = new MoveCoverCommand { Direction = 1 }
+            }).Code != "cover-unavailable")
+            throw new Exception("Boss movement must skip occupied allied shields.");
+        bossRuntime.Advance(8);
+        MatchSnapshot bossAfterSpawn = bossRuntime.Snapshot();
+        if (bossAfterSpawn.Coop.EnemySpawns.Count == 0 ||
+            bossAfterSpawn.Coop.EnemySpawns.Any(enemy =>
+            !content.ArmySpawnPoints.ForMap(bossScene).Any(point =>
+                point.Fraction == 1 &&
+                point.ComponentFileId == enemy.SpawnComponentFileId)))
+            throw new Exception("Boss mission spawned an AI outside enemy fraction one.");
+        bossRuntime.Advance(200);
+        BattlePlayerState movedBossAlly = bossRuntime.Snapshot().Players.Single(
+            player => player.PlayerId == bossFirstPlayer);
+        if (movedBossAlly.Moving || movedBossAlly.CoverIndex != 7 ||
+            Vector3.Distance(new Vector3(movedBossAlly.PositionX,
+                movedBossAlly.PositionY, movedBossAlly.PositionZ),
+                bossAnchors.Maps[0].PlayerPositions[7].Position) > 0.0001f)
+            throw new Exception("Boss ally did not reach the skipped multiplayer shield.");
 
         var runtime = new CoopMatchRuntime(coop, catalog, spawnPoints, routes, enemyCombat,
             chooseBehaviour: _ => 0, choosePoint: _ => 0);
