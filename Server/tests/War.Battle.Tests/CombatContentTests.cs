@@ -30,6 +30,7 @@ internal static class CombatContentTests
         int eventAssertions = VerifyMissionTimedEvents(catalog);
         int coopAssertions = VerifyCoopMissionEngine(catalog);
         int allocationAssertions = VerifyCoopAllocation(directory, catalog);
+        int mapAssertions = VerifyCoopSpawnCatalog(directory, catalog);
 
         string temporaryPath = Path.Combine(Path.GetTempPath(),
             $"war-mission-catalog-{Guid.NewGuid():N}.json");
@@ -48,7 +49,7 @@ internal static class CombatContentTests
                 "An event beyond the source mission timer was accepted.");
             return 4 + objectiveAssertions + scoreAssertions +
                 spawnAssertions + eventAssertions + coopAssertions +
-                allocationAssertions;
+                allocationAssertions + mapAssertions;
         }
         finally
         {
@@ -434,6 +435,47 @@ internal static class CombatContentTests
             earlyForfeit.Snapshot().RewardEligible)
             throw new Exception("A pre-start forfeit must close without reward eligibility.");
         return 12;
+    }
+
+    private static int VerifyCoopSpawnCatalog(string directory, MissionCatalog missions)
+    {
+        string path = Path.Combine(directory, "recovered-coop-spawn-points.json");
+        CoopSpawnPointCatalog spawns = CoopSpawnPointCatalog.Load(path, missions);
+        CoopMapSpawnPoints desert = spawns.MapForMission(missions, 0);
+        if (spawns.Maps.Count != 5 ||
+            spawns.Maps.Sum(map => map.SpawnPoints.Count) != 59 ||
+            spawns.Maps.Sum(map => map.PlayerPositions.Count) != 20 ||
+            desert.Scene != "Desert_New" || desert.EnemySpawnPoints.Count != 13 ||
+            desert.SpawnPoints.Any(point =>
+                point.Collection == "spawnPointsCollectionAssaultHelis"))
+            throw new Exception("Co-op spawn anchors do not match the five source scenes.");
+
+        CoopMapSpawnPoints snow = spawns.Maps[1];
+        if (snow.SpawnPoints.Count(point => point.Fraction == 2) != 4 ||
+            snow.EnemySpawnPoints.Any(point => point.Fraction != 1))
+            throw new Exception("Allied source spawns must not become enemy AI anchors.");
+
+        string temporaryPath = Path.Combine(Path.GetTempPath(),
+            $"war-coop-spawns-{Guid.NewGuid():N}.json");
+        try
+        {
+            JsonNode document = JsonNode.Parse(File.ReadAllText(path))!;
+            document["maps"]![0]!["spawnPoints"]![0]!["fraction"] = 0;
+            File.WriteAllText(temporaryPath, document.ToJsonString());
+            try
+            {
+                _ = CoopSpawnPointCatalog.Load(temporaryPath, missions);
+                throw new Exception("A corrupt co-op spawn fraction was accepted.");
+            }
+            catch (InvalidDataException)
+            {
+                return 3;
+            }
+        }
+        finally
+        {
+            File.Delete(temporaryPath);
+        }
     }
 
     internal static int Run(string directory)

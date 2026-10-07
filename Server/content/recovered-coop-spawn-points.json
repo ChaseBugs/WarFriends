@@ -1,0 +1,1121 @@
+{
+  "version": 1,
+  "maps": [
+    {
+      "stage": 1,
+      "scene": "Desert_New",
+      "sceneSha256": "e5e2ad6c9f602125d1da7c1949e0f002e8ee229a4c1fc16bf703ae96000f40c5",
+      "mapDefinitionFileId": 1721,
+      "playerPositions": [
+        {
+          "index": 0,
+          "componentFileId": 1910,
+          "gameObjectFileId": 47,
+          "transformFileId": 961,
+          "main": false,
+          "worldPosition": [
+            -17.485004474,
+            -2.442856,
+            -10.6406937
+          ]
+        },
+        {
+          "index": 1,
+          "componentFileId": 1657,
+          "gameObjectFileId": 28,
+          "transformFileId": 631,
+          "main": true,
+          "worldPosition": [
+            -17.485004474,
+            -2.442856,
+            -8.9625158
+          ]
+        },
+        {
+          "index": 2,
+          "componentFileId": 1867,
+          "gameObjectFileId": 78,
+          "transformFileId": 915,
+          "main": true,
+          "worldPosition": [
+            -17.485004474,
+            -2.442856,
+            -7.3452039000000005
+          ]
+        },
+        {
+          "index": 3,
+          "componentFileId": 1772,
+          "gameObjectFileId": 113,
+          "transformFileId": 785,
+          "main": false,
+          "worldPosition": [
+            -17.485004474,
+            -2.442856,
+            -5.765691800000001
+          ]
+        }
+      ],
+      "spawnPoints": [
+        {
+          "collection": "spawnPointsCollection",
+          "order": 0,
+          "componentFileId": 1707,
+          "componentType": "SpawnPointParachute",
+          "fraction": 1,
+          "gameObjectFileId": 231,
+          "transformFileId": 694,
+          "worldPosition": [
+            -47.162467,
+            5.3955515,
+            -5.595978000000001
+          ]
+        },
+        {
+          "collection": "spawnPointsCollection",
+          "order": 1,
+          "componentFileId": 1646,
+          "componentType": "SpawnPoint",
+          "fraction": 1,
+          "gameObjectFileId": 153,
+          "transformFileId": 610,
+          "worldPosition": [
+            -23.0333575,
+            -2.27217933,
+            -17.381344
+          ]
+        },
+        {
+          "collection": "spawnPointsCollection",
+          "order": 2,
+          "componentFileId": 1896,
+          "componentType": "SpawnPoint",
+          "fraction": 1,
+          "gameObjectFileId": 463,
+          "transformFileId": 944,
+          "worldPosition": [
+            -21.8740977,
+            -2.1549708499999998,
+            -0.9727075000000003
+          ]
+        },
+        {
+          "collection": "spawnPointsCollection",
+          "order": 3,
+          "componentFileId": 1694,
+          "componentType": "SpawnPoint",
+          "fraction": 1,
+          "gameObjectFileId": 215,
+          "transformFileId": 678,
+          "worldPosition": [
+            -34.283083,
+            -2.1312331799999997,
+            -13.991791
+          ]
+        },
+        {
+          "collection": "spawnPointsCollection",
+          "order": 4,
+          "componentFileId": 1712,
+          "componentType": "SpawnPoint",
+          "fraction": 1,
+          "gameObjectFileId": 246,
+          "transformFileId": 709,
+          "worldPosition": [
+            -28.260473,
+            -2.13123294,
+            -14.168272
+          ]
+        },
+        {
+          "collection": "spawnPointsCollection",
+          "order": 5,
+          "componentFileId": 1814,
+          "componentType": "SpawnPoint",
+          "fraction": 1,
+          "gameObjectFileId": 371,
+          "transformFileId": 843,
+          "worldPosition": [
+            -29.304645,
+            -2.12814018,
+            -2.8262255000000005
+          ]
+        },
+        {
+          "collection": "spawnPointsCollection",
+          "order": 6,
+          "componentFileId": 1648,
+          "componentType": "SpawnPoint",
+          "fraction": 1,
+          "gameObjectFileId": 156,
+          "transformFileId": 613,
+          "worldPosition": [
+            -29.608083,
+            -2.12813994,
+            -3.5677910000000006
+          ]
+        },
+        {
+          "collection": "spawnPointsCollectionDrones",
+          "order": 0,
+          "componentFileId": 1857,
+          "componentType": "SpawnPointDrone",
+          "fraction": 1,
+          "gameObjectFileId": 421,
+          "transformFileId": 899,
+          "worldPosition": [
+            -21.954441,
+            -0.032944900000000166,
+            -16.203241
+          ]
+        },
+        {
+          "collection": "spawnPointsCollectionDrones",
+          "order": 1,
+          "componentFileId": 1779,
+          "componentType": "SpawnPointDrone",
+          "fraction": 1,
+          "gameObjectFileId": 331,
+          "transformFileId": 798,
+          "worldPosition": [
+            -21.7464865,
+            2.3451403999999996,
+            0.6991479999999992
+          ]
+        },
+        {
+          "collection": "spawnPointsCollectionDrones",
+          "order": 2,
+          "componentFileId": 1639,
+          "componentType": "SpawnPointDrone",
+          "fraction": 1,
+          "gameObjectFileId": 143,
+          "transformFileId": 599,
+          "worldPosition": [
+            -26.19564,
+            -0.5335584,
+            -1.8929226000000003
+          ]
+        },
+        {
+          "collection": "spawnPointsCollectionDrones",
+          "order": 3,
+          "componentFileId": 1758,
+          "componentType": "SpawnPointDrone",
+          "fraction": 1,
+          "gameObjectFileId": 299,
+          "transformFileId": 764,
+          "worldPosition": [
+            -21.5247134,
+            -0.533558,
+            -14.5893104
+          ]
+        },
+        {
+          "collection": "spawnPointsCollectionCars",
+          "order": 0,
+          "componentFileId": 1899,
+          "componentType": "SpawnPointCar",
+          "fraction": 1,
+          "gameObjectFileId": 467,
+          "transformFileId": 948,
+          "worldPosition": [
+            -36.482013,
+            -2.2194774,
+            1.2149769999999993
+          ]
+        },
+        {
+          "collection": "spawnPointsCollectionHelicopters",
+          "order": 0,
+          "componentFileId": 1786,
+          "componentType": "SpawnPointHelicopter",
+          "fraction": 1,
+          "gameObjectFileId": 338,
+          "transformFileId": 805,
+          "worldPosition": [
+            -28.900505000000003,
+            1.9584997999999998,
+            -25.475690999999998
+          ]
+        }
+      ]
+    },
+    {
+      "stage": 2,
+      "scene": "Snow_Single",
+      "sceneSha256": "a797c945ccc4e4307ad55611e16db086d3ace63f31a535388f7e5bbb461daf27",
+      "mapDefinitionFileId": 1905,
+      "playerPositions": [
+        {
+          "index": 0,
+          "componentFileId": 1885,
+          "gameObjectFileId": 89,
+          "transformFileId": 736,
+          "main": false,
+          "worldPosition": [
+            4.9601983,
+            0.21729793299999983,
+            -2.4994114500000006
+          ]
+        },
+        {
+          "index": 1,
+          "componentFileId": 2001,
+          "gameObjectFileId": 158,
+          "transformFileId": 944,
+          "main": true,
+          "worldPosition": [
+            4.9601983,
+            0.20329793299999985,
+            -0.8212335500000008
+          ]
+        },
+        {
+          "index": 2,
+          "componentFileId": 1878,
+          "gameObjectFileId": 56,
+          "transformFileId": 727,
+          "main": true,
+          "worldPosition": [
+            4.9601983,
+            0.19829793299999987,
+            0.7960779499999993
+          ]
+        },
+        {
+          "index": 3,
+          "componentFileId": 2032,
+          "gameObjectFileId": 105,
+          "transformFileId": 1004,
+          "main": false,
+          "worldPosition": [
+            4.9601983,
+            0.20429793299999985,
+            2.375590549999999
+          ]
+        }
+      ],
+      "spawnPoints": [
+        {
+          "collection": "spawnPointsCollection",
+          "order": 0,
+          "componentFileId": 2012,
+          "componentType": "SpawnPointParachute",
+          "fraction": 1,
+          "gameObjectFileId": 457,
+          "transformFileId": 969,
+          "worldPosition": [
+            -21.49438,
+            8.0150774,
+            -1.341392230000001
+          ]
+        },
+        {
+          "collection": "spawnPointsCollection",
+          "order": 1,
+          "componentFileId": 2007,
+          "componentType": "SpawnPoint",
+          "fraction": 1,
+          "gameObjectFileId": 447,
+          "transformFileId": 957,
+          "worldPosition": [
+            -3.8859399999999997,
+            0.2834156,
+            -6.425190600000001
+          ]
+        },
+        {
+          "collection": "spawnPointsCollection",
+          "order": 2,
+          "componentFileId": 1899,
+          "componentType": "SpawnPoint",
+          "fraction": 1,
+          "gameObjectFileId": 255,
+          "transformFileId": 760,
+          "worldPosition": [
+            -7.898894,
+            0.2322689,
+            6.252927999999999
+          ]
+        },
+        {
+          "collection": "spawnPointsCollection",
+          "order": 3,
+          "componentFileId": 1892,
+          "componentType": "SpawnPoint",
+          "fraction": 1,
+          "gameObjectFileId": 243,
+          "transformFileId": 745,
+          "worldPosition": [
+            -1.5636419999999998,
+            0.45107396,
+            9.748309999999998
+          ]
+        },
+        {
+          "collection": "spawnPointsCollection",
+          "order": 4,
+          "componentFileId": 1858,
+          "componentType": "SpawnPointParachute",
+          "fraction": 2,
+          "gameObjectFileId": 192,
+          "transformFileId": 692,
+          "worldPosition": [
+            21.5683788,
+            7.7955828,
+            1.580431299999999
+          ]
+        },
+        {
+          "collection": "spawnPointsCollection",
+          "order": 5,
+          "componentFileId": 1942,
+          "componentType": "SpawnPoint",
+          "fraction": 2,
+          "gameObjectFileId": 343,
+          "transformFileId": 847,
+          "worldPosition": [
+            7.899304000000001,
+            0.48829395999999997,
+            -6.352547400000001
+          ]
+        },
+        {
+          "collection": "spawnPointsCollection",
+          "order": 6,
+          "componentFileId": 1943,
+          "componentType": "SpawnPoint",
+          "fraction": 2,
+          "gameObjectFileId": 345,
+          "transformFileId": 849,
+          "worldPosition": [
+            2.0930180000000007,
+            0.2502573,
+            -7.962529000000001
+          ]
+        },
+        {
+          "collection": "spawnPointsCollection",
+          "order": 7,
+          "componentFileId": 2003,
+          "componentType": "SpawnPoint",
+          "fraction": 2,
+          "gameObjectFileId": 440,
+          "transformFileId": 947,
+          "worldPosition": [
+            4.359097,
+            0.33343656,
+            6.284231499999999
+          ]
+        },
+        {
+          "collection": "spawnPointsCollectionDrones",
+          "order": 0,
+          "componentFileId": 1880,
+          "componentType": "SpawnPointDrone",
+          "fraction": 1,
+          "gameObjectFileId": 232,
+          "transformFileId": 732,
+          "worldPosition": [
+            -2.346685000000001,
+            1.4630036999999998,
+            7.428731999999998
+          ]
+        },
+        {
+          "collection": "spawnPointsCollectionDrones",
+          "order": 1,
+          "componentFileId": 1959,
+          "componentType": "SpawnPointDrone",
+          "fraction": 1,
+          "gameObjectFileId": 366,
+          "transformFileId": 870,
+          "worldPosition": [
+            -0.5421600000000009,
+            1.7203073999999998,
+            -6.827664000000001
+          ]
+        },
+        {
+          "collection": "spawnPointsCollectionAssaultHelis",
+          "order": 0,
+          "componentFileId": 1909,
+          "componentType": "SpawnPointDrone",
+          "fraction": 1,
+          "gameObjectFileId": 280,
+          "transformFileId": 784,
+          "worldPosition": [
+            -7.400966,
+            4.3603511,
+            6.692647999999999
+          ]
+        },
+        {
+          "collection": "spawnPointsCollectionCars",
+          "order": 0,
+          "componentFileId": 1917,
+          "componentType": "SpawnPointCar",
+          "fraction": 1,
+          "gameObjectFileId": 297,
+          "transformFileId": 801,
+          "worldPosition": [
+            -11.592001999999999,
+            0.4000494999999998,
+            9.066756
+          ]
+        },
+        {
+          "collection": "spawnPointsCollectionHelicopters",
+          "order": 0,
+          "componentFileId": 1922,
+          "componentType": "SpawnPointHelicopter",
+          "fraction": 1,
+          "gameObjectFileId": 300,
+          "transformFileId": 804,
+          "worldPosition": [
+            -6.158525000000001,
+            3.5234103599999997,
+            -14.371209
+          ]
+        }
+      ]
+    },
+    {
+      "stage": 3,
+      "scene": "City_Single",
+      "sceneSha256": "99a24a690a023c8f9c2f1195b727ecdcc22740a6f0479f6148909a22db3f5127",
+      "mapDefinitionFileId": 2693,
+      "playerPositions": [
+        {
+          "index": 0,
+          "componentFileId": 2720,
+          "gameObjectFileId": 89,
+          "transformFileId": 1361,
+          "main": false,
+          "worldPosition": [
+            4.572315800000001,
+            0.004000000000000217,
+            -1.978124149999998
+          ]
+        },
+        {
+          "index": 1,
+          "componentFileId": 2735,
+          "gameObjectFileId": 68,
+          "transformFileId": 1399,
+          "main": true,
+          "worldPosition": [
+            4.585315800000001,
+            0.014000000000000217,
+            -0.46612414999999807
+          ]
+        },
+        {
+          "index": 2,
+          "componentFileId": 2458,
+          "gameObjectFileId": 324,
+          "transformFileId": 980,
+          "main": true,
+          "worldPosition": [
+            4.603315800000001,
+            0.010100000000000216,
+            1.0438758500000018
+          ]
+        },
+        {
+          "index": 3,
+          "componentFileId": 2736,
+          "gameObjectFileId": 34,
+          "transformFileId": 1402,
+          "main": false,
+          "worldPosition": [
+            4.603315800000001,
+            0.004000000000000217,
+            2.563875850000002
+          ]
+        }
+      ],
+      "spawnPoints": [
+        {
+          "collection": "spawnPointsCollection",
+          "order": 0,
+          "componentFileId": 2723,
+          "componentType": "SpawnPointParachute",
+          "fraction": 1,
+          "gameObjectFileId": 666,
+          "transformFileId": 1364,
+          "worldPosition": [
+            -17.047083,
+            6.5788779,
+            -1.4977909999999999
+          ]
+        },
+        {
+          "collection": "spawnPointsCollection",
+          "order": 1,
+          "componentFileId": 2467,
+          "componentType": "SpawnPoint",
+          "fraction": 1,
+          "gameObjectFileId": 376,
+          "transformFileId": 1007,
+          "worldPosition": [
+            -3.237083000000002,
+            0.39887790000000023,
+            -9.627791
+          ]
+        },
+        {
+          "collection": "spawnPointsCollection",
+          "order": 2,
+          "componentFileId": 2483,
+          "componentType": "SpawnPoint",
+          "fraction": 1,
+          "gameObjectFileId": 418,
+          "transformFileId": 1047,
+          "worldPosition": [
+            -1.5170830000000013,
+            0.21887790000000024,
+            8.397209
+          ]
+        },
+        {
+          "collection": "spawnPointsCollectionDrones",
+          "order": 0,
+          "componentFileId": 2572,
+          "componentType": "SpawnPointDrone",
+          "fraction": 1,
+          "gameObjectFileId": 491,
+          "transformFileId": 1143,
+          "worldPosition": [
+            -2.3022440000000017,
+            1.2414768,
+            6.8370774
+          ]
+        },
+        {
+          "collection": "spawnPointsCollectionDrones",
+          "order": 1,
+          "componentFileId": 2682,
+          "componentType": "SpawnPointDrone",
+          "fraction": 1,
+          "gameObjectFileId": 588,
+          "transformFileId": 1257,
+          "worldPosition": [
+            -0.3970430000000018,
+            1.7884413000000001,
+            -5.4855177
+          ]
+        },
+        {
+          "collection": "spawnPointsCollectionAssaultHelis",
+          "order": 0,
+          "componentFileId": 2681,
+          "componentType": "SpawnPointDrone",
+          "fraction": 1,
+          "gameObjectFileId": 585,
+          "transformFileId": 1255,
+          "worldPosition": [
+            -7.357083000000001,
+            4.658878,
+            -4.527791
+          ]
+        },
+        {
+          "collection": "spawnPointsCollectionCars",
+          "order": 0,
+          "componentFileId": 2747,
+          "componentType": "SpawnPointCar",
+          "fraction": 1,
+          "gameObjectFileId": 709,
+          "transformFileId": 1433,
+          "worldPosition": [
+            -10.927083000000001,
+            0.17887800000000004,
+            -7.507791
+          ]
+        },
+        {
+          "collection": "spawnPointsCollectionCars",
+          "order": 1,
+          "componentFileId": 2470,
+          "componentType": "SpawnPointCar",
+          "fraction": 1,
+          "gameObjectFileId": 383,
+          "transformFileId": 1013,
+          "worldPosition": [
+            -9.863761700000001,
+            0.4480000000000002,
+            10.442273
+          ]
+        },
+        {
+          "collection": "spawnPointsCollectionHelicopters",
+          "order": 0,
+          "componentFileId": 2578,
+          "componentType": "SpawnPointHelicopter",
+          "fraction": 1,
+          "gameObjectFileId": 509,
+          "transformFileId": 1169,
+          "worldPosition": [
+            -6.529,
+            6.178,
+            16.36
+          ]
+        }
+      ]
+    },
+    {
+      "stage": 4,
+      "scene": "Aztec_Single",
+      "sceneSha256": "5fbfe89a6ff35e0769d4fcdbd9a80e6c31baec653a3bd78c53b81211cd8b9e17",
+      "mapDefinitionFileId": 1876,
+      "playerPositions": [
+        {
+          "index": 0,
+          "componentFileId": 1877,
+          "gameObjectFileId": 120,
+          "transformFileId": 950,
+          "main": false,
+          "worldPosition": [
+            4.9601983,
+            0.019771032999999924,
+            -2.4994114500000006
+          ]
+        },
+        {
+          "index": 1,
+          "componentFileId": 1853,
+          "gameObjectFileId": 47,
+          "transformFileId": 883,
+          "main": true,
+          "worldPosition": [
+            4.9601983,
+            -0.0022289670000000816,
+            -0.8212335500000008
+          ]
+        },
+        {
+          "index": 2,
+          "componentFileId": 1744,
+          "gameObjectFileId": 213,
+          "transformFileId": 647,
+          "main": true,
+          "worldPosition": [
+            4.9601983,
+            0.027771032999999917,
+            0.7960779499999993
+          ]
+        },
+        {
+          "index": 3,
+          "componentFileId": 1871,
+          "gameObjectFileId": 185,
+          "transformFileId": 938,
+          "main": false,
+          "worldPosition": [
+            4.9601983,
+            0.054771032999999913,
+            2.375590549999999
+          ]
+        }
+      ],
+      "spawnPoints": [
+        {
+          "collection": "spawnPointsCollection",
+          "order": 0,
+          "componentFileId": 1875,
+          "componentType": "SpawnPointParachute",
+          "fraction": 1,
+          "gameObjectFileId": 465,
+          "transformFileId": 945,
+          "worldPosition": [
+            -22.0822,
+            7.830877900000001,
+            1.101769999999999
+          ]
+        },
+        {
+          "collection": "spawnPointsCollection",
+          "order": 1,
+          "componentFileId": 1883,
+          "componentType": "SpawnPoint",
+          "fraction": 1,
+          "gameObjectFileId": 475,
+          "transformFileId": 962,
+          "worldPosition": [
+            -3.8859399999999997,
+            0.34726070000000003,
+            -8.414618
+          ]
+        },
+        {
+          "collection": "spawnPointsCollection",
+          "order": 2,
+          "componentFileId": 1894,
+          "componentType": "SpawnPoint",
+          "fraction": 1,
+          "gameObjectFileId": 494,
+          "transformFileId": 987,
+          "worldPosition": [
+            -8.123109999999999,
+            0.31168268000000005,
+            8.514354999999998
+          ]
+        },
+        {
+          "collection": "spawnPointsCollection",
+          "order": 3,
+          "componentFileId": 1831,
+          "componentType": "SpawnPoint",
+          "fraction": 1,
+          "gameObjectFileId": 400,
+          "transformFileId": 828,
+          "worldPosition": [
+            -1.7526209999999995,
+            0.76576636,
+            9.748309999999998
+          ]
+        },
+        {
+          "collection": "spawnPointsCollection",
+          "order": 4,
+          "componentFileId": 1712,
+          "componentType": "SpawnPointParachute",
+          "fraction": 2,
+          "gameObjectFileId": 232,
+          "transformFileId": 576,
+          "worldPosition": [
+            21.5683797,
+            7.616055899999999,
+            -1.341396050000001
+          ]
+        },
+        {
+          "collection": "spawnPointsCollection",
+          "order": 5,
+          "componentFileId": 1771,
+          "componentType": "SpawnPoint",
+          "fraction": 2,
+          "gameObjectFileId": 309,
+          "transformFileId": 687,
+          "worldPosition": [
+            8.074100000000001,
+            0.30876706000000004,
+            -6.352547400000001
+          ]
+        },
+        {
+          "collection": "spawnPointsCollection",
+          "order": 6,
+          "componentFileId": 1721,
+          "componentType": "SpawnPoint",
+          "fraction": 2,
+          "gameObjectFileId": 242,
+          "transformFileId": 592,
+          "worldPosition": [
+            2.0930180000000007,
+            0.38944266000000005,
+            -8.131188000000002
+          ]
+        },
+        {
+          "collection": "spawnPointsCollection",
+          "order": 7,
+          "componentFileId": 1766,
+          "componentType": "SpawnPoint",
+          "fraction": 2,
+          "gameObjectFileId": 296,
+          "transformFileId": 670,
+          "worldPosition": [
+            2.219628,
+            0.7387594940000001,
+            7.912880999999999
+          ]
+        },
+        {
+          "collection": "spawnPointsCollectionDrones",
+          "order": 0,
+          "componentFileId": 1763,
+          "componentType": "SpawnPointDrone",
+          "fraction": 1,
+          "gameObjectFileId": 294,
+          "transformFileId": 667,
+          "worldPosition": [
+            -1.9321359999999999,
+            1.2834767999999999,
+            7.764787999999999
+          ]
+        },
+        {
+          "collection": "spawnPointsCollectionDrones",
+          "order": 1,
+          "componentFileId": 1844,
+          "componentType": "SpawnPointDrone",
+          "fraction": 1,
+          "gameObjectFileId": 420,
+          "transformFileId": 867,
+          "worldPosition": [
+            -1.3406640000000003,
+            1.5407804999999999,
+            -6.827664000000001
+          ]
+        },
+        {
+          "collection": "spawnPointsCollectionDrones",
+          "order": 2,
+          "componentFileId": 1824,
+          "componentType": "SpawnPointDrone",
+          "fraction": 1,
+          "gameObjectFileId": 382,
+          "transformFileId": 803,
+          "worldPosition": [
+            -1.3406640000000003,
+            1.5407804999999999,
+            -6.827664000000001
+          ]
+        },
+        {
+          "collection": "spawnPointsCollectionAssaultHelis",
+          "order": 0,
+          "componentFileId": 1759,
+          "componentType": "SpawnPointDrone",
+          "fraction": 1,
+          "gameObjectFileId": 289,
+          "transformFileId": 661,
+          "worldPosition": [
+            -7.400966,
+            4.360351,
+            6.692647999999999
+          ]
+        },
+        {
+          "collection": "spawnPointsCollectionCars",
+          "order": 0,
+          "componentFileId": 1839,
+          "componentType": "SpawnPointCar",
+          "fraction": 1,
+          "gameObjectFileId": 410,
+          "transformFileId": 847,
+          "worldPosition": [
+            -15.86069,
+            1.6732975999999997,
+            -5.868248700000001
+          ]
+        },
+        {
+          "collection": "spawnPointsCollectionHelicopters",
+          "order": 0,
+          "componentFileId": 1812,
+          "componentType": "SpawnPointHelicopter",
+          "fraction": 1,
+          "gameObjectFileId": 365,
+          "transformFileId": 772,
+          "worldPosition": [
+            -6.158525000000001,
+            7.59,
+            16.919561
+          ]
+        }
+      ]
+    },
+    {
+      "stage": 5,
+      "scene": "Park_Single",
+      "sceneSha256": "0f816c262e021a36bc347d62734504f9b86d2031d11a55cdf3c377bf4990ba83",
+      "mapDefinitionFileId": 2683,
+      "playerPositions": [
+        {
+          "index": 0,
+          "componentFileId": 2519,
+          "gameObjectFileId": 187,
+          "transformFileId": 908,
+          "main": false,
+          "worldPosition": [
+            4.5773171999999995,
+            0.004000028999999962,
+            -2.1211241999999992
+          ]
+        },
+        {
+          "index": 1,
+          "componentFileId": 2599,
+          "gameObjectFileId": 143,
+          "transformFileId": 985,
+          "main": true,
+          "worldPosition": [
+            4.5773171999999995,
+            0.011000028999999963,
+            -0.6061241999999993
+          ]
+        },
+        {
+          "index": 2,
+          "componentFileId": 2650,
+          "gameObjectFileId": 88,
+          "transformFileId": 1115,
+          "main": true,
+          "worldPosition": [
+            4.5773171999999995,
+            0.005000028999999962,
+            0.9008758000000007
+          ]
+        },
+        {
+          "index": 3,
+          "componentFileId": 2418,
+          "gameObjectFileId": 220,
+          "transformFileId": 859,
+          "main": false,
+          "worldPosition": [
+            4.5773171999999995,
+            0.004000028999999962,
+            2.4208758000000006
+          ]
+        }
+      ],
+      "spawnPoints": [
+        {
+          "collection": "spawnPointsCollection",
+          "order": 0,
+          "componentFileId": 2456,
+          "componentType": "SpawnPoint",
+          "fraction": 1,
+          "gameObjectFileId": 377,
+          "transformFileId": 890,
+          "worldPosition": [
+            -3.9460815500000024,
+            0.22087792899999997,
+            -6.270791070000001
+          ]
+        },
+        {
+          "collection": "spawnPointsCollection",
+          "order": 1,
+          "componentFileId": 2617,
+          "componentType": "SpawnPoint",
+          "fraction": 1,
+          "gameObjectFileId": 473,
+          "transformFileId": 1031,
+          "worldPosition": [
+            -6.9060815500000015,
+            0.28185984899999994,
+            6.235208929999999
+          ]
+        },
+        {
+          "collection": "spawnPointsCollection",
+          "order": 2,
+          "componentFileId": 2672,
+          "componentType": "SpawnPointParachute",
+          "fraction": 1,
+          "gameObjectFileId": 575,
+          "transformFileId": 1176,
+          "worldPosition": [
+            -14.633081550000002,
+            5.500877929,
+            -1.270790770000001
+          ]
+        },
+        {
+          "collection": "spawnPointsCollectionDrones",
+          "order": 0,
+          "componentFileId": 2382,
+          "componentType": "SpawnPointDrone",
+          "fraction": 1,
+          "gameObjectFileId": 291,
+          "transformFileId": 770,
+          "worldPosition": [
+            -2.3282425500000024,
+            1.2534768289999998,
+            6.694077329999999
+          ]
+        },
+        {
+          "collection": "spawnPointsCollectionDrones",
+          "order": 1,
+          "componentFileId": 2402,
+          "componentType": "SpawnPointDrone",
+          "fraction": 1,
+          "gameObjectFileId": 330,
+          "transformFileId": 830,
+          "worldPosition": [
+            -0.42304155000000243,
+            1.8004413289999999,
+            -5.628517770000001
+          ]
+        },
+        {
+          "collection": "spawnPointsCollectionDrones",
+          "order": 2,
+          "componentFileId": 2450,
+          "componentType": "SpawnPointDrone",
+          "fraction": 1,
+          "gameObjectFileId": 364,
+          "transformFileId": 873,
+          "worldPosition": [
+            -0.42304155000000243,
+            1.8004413289999999,
+            -5.628517770000001
+          ]
+        },
+        {
+          "collection": "spawnPointsCollectionAssaultHelis",
+          "order": 0,
+          "componentFileId": 2692,
+          "componentType": "SpawnPointDrone",
+          "fraction": 1,
+          "gameObjectFileId": 619,
+          "transformFileId": 1245,
+          "worldPosition": [
+            -7.383081550000002,
+            4.420878029,
+            6.689208929999999
+          ]
+        },
+        {
+          "collection": "spawnPointsCollectionCars",
+          "order": 0,
+          "componentFileId": 2674,
+          "componentType": "SpawnPointCar",
+          "fraction": 1,
+          "gameObjectFileId": 578,
+          "transformFileId": 1182,
+          "worldPosition": [
+            -11.383081550000002,
+            0.19052262899999978,
+            7.799208929999999
+          ]
+        },
+        {
+          "collection": "spawnPointsCollectionCars",
+          "order": 1,
+          "componentFileId": 2640,
+          "componentType": "SpawnPointCar",
+          "fraction": 1,
+          "gameObjectFileId": 515,
+          "transformFileId": 1081,
+          "worldPosition": [
+            -6.359760250000001,
+            0.4600000289999999,
+            -8.18072707
+          ]
+        },
+        {
+          "collection": "spawnPointsCollectionHelicopters",
+          "order": 0,
+          "componentFileId": 2642,
+          "componentType": "SpawnPointHelicopter",
+          "fraction": 1,
+          "gameObjectFileId": 519,
+          "transformFileId": 1087,
+          "worldPosition": [
+            -3.8411455500000002,
+            3.3138834889999997,
+            16.948544929999997
+          ]
+        }
+      ]
+    }
+  ]
+}
