@@ -3313,6 +3313,12 @@ internal static class CombatContentTests
         Check(Vector3.Distance(assaultSpawnPosition, assaultRoutePosition) > 0.1f &&
               movingAssaultHelicopter.PositionTick == 100 && !assaultHelicopterMatch.Terminal,
             "deployed Assault Helicopter follows its reserved route on normal host ticks");
+        var assaultRotation = assaultHelicopterMatch.AssaultHelicopterRotation(
+            assaultHelicopterSpawn.EntityKey);
+        Check(assaultRotation.HasValue &&
+              Math.Abs(assaultRotation.Value.LengthSquared() - 1) < 0.001f &&
+              Quaternion.Dot(assaultRotation.Value, Quaternion.Identity) < 0.999f,
+            "normal Assault Helicopter movement owns a finite source-based root orientation");
         var deployedDroneMatch=new MatchEngine(deployedDroneManifest,content:content,armyChoice:_=>0);
         deployedDroneMatch.Admit(decoyPlayer);deployedDroneMatch.Admit(decoyOpponent);
         deployedDroneMatch.Command(decoyPlayer,new(){CommandId=1,Ready=new(){ManifestHash=deployedDroneMatch.ManifestHash}});

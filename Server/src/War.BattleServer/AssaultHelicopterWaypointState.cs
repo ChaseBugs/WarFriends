@@ -14,9 +14,11 @@ internal sealed class AssaultHelicopterWaypointState
     private readonly Func<float> nextRandom;
     private float lastTime;
     private float pointReachedTime;
+    private Quaternion flightHeading;
 
     internal Vector3 Position { get; private set; }
     internal Vector3 Velocity { get; private set; }
+    internal Quaternion Rotation { get; private set; } = Quaternion.Identity;
     internal int TargetIndex { get; private set; }
     internal bool Forward { get; private set; } = true;
     internal bool UsingWaypoints { get; private set; } = true;
@@ -43,12 +45,16 @@ internal sealed class AssaultHelicopterWaypointState
         this.nextRandom = nextRandom ?? throw new ArgumentNullException(nameof(nextRandom));
         TargetIndex = route.JoinIndex;
         Position = spawnPosition;
+        // Spawn assigns mFlyRot toward the join point. The prefab's root
+        // transform itself remains at its serialized identity rotation.
+        flightHeading = PlanarHeading(waypoints[TargetIndex].Position - Position);
     }
 
-    internal void Advance(float time, float deltaTime)
+    internal void Advance(float time, float deltaTime, Vector3? lookTarget = null)
     {
         if (!float.IsFinite(time) || time < lastTime || time < 0 ||
-            !float.IsFinite(deltaTime) || deltaTime <= 0 || deltaTime > 0.2f)
+            !float.IsFinite(deltaTime) || deltaTime <= 0 || deltaTime > 0.2f ||
+            (lookTarget.HasValue && !PlayerHitbox.Finite(lookTarget.Value)))
             throw new InvalidDataException("Invalid Assault Helicopter traversal clock.");
 
         if (!UsingWaypoints)
@@ -90,6 +96,42 @@ internal sealed class AssaultHelicopterWaypointState
         Position = steering.Position + Velocity;
         if (!PlayerHitbox.Finite(Position))
             throw new InvalidDataException("Assault Helicopter route escaped scene bounds.");
+        if (lookTarget.HasValue)
+            flightHeading = PlanarHeading(lookTarget.Value - Position);
+        Quaternion desiredRotation = ComputeRotation(Velocity, flightHeading);
+        Rotation = Quaternion.Normalize(Quaternion.Slerp(Rotation, desiredRotation,
+            Math.Clamp(deltaTime * 3f, 0, 1)));
+        if (!float.IsFinite(Rotation.LengthSquared()) ||
+            Math.Abs(Rotation.LengthSquared() - 1) > 0.001f)
+            throw new InvalidDataException("Assault Helicopter rotation lost its source bounds.");
         lastTime = time;
+    }
+
+    private static Quaternion PlanarHeading(Vector3 direction)
+    {
+        direction.Y = 0;
+        if (direction.LengthSquared() < 1e-10f) return Quaternion.Identity;
+        return Quaternion.CreateFromAxisAngle(Vector3.UnitY,
+            MathF.Atan2(direction.X, direction.Z));
+    }
+
+    private static Quaternion ComputeRotation(Vector3 velocity, Quaternion heading)
+    {
+        if (velocity.LengthSquared() < 1e-10f) return heading;
+        float verticalCosine = Vector3.Dot(Vector3.UnitY, Vector3.Normalize(velocity));
+        float angleFromUp = MathF.Acos(Math.Clamp(verticalCosine, -1, 1)) * 180f / MathF.PI;
+        if (angleFromUp < 70f || angleFromUp > 110f) return heading;
+
+        Vector3 forward = new(velocity.X, 0, velocity.Z);
+        if (forward.LengthSquared() < 1e-10f) return heading;
+        forward = Vector3.Normalize(forward);
+        Vector3 headingForward = Vector3.Transform(Vector3.UnitZ, heading);
+        headingForward.Y = 0;
+        float signedAngle = MathF.Atan2(
+            Vector3.Dot(Vector3.UnitY, Vector3.Cross(forward, headingForward)),
+            Vector3.Dot(forward, headingForward));
+        Vector3 pitchedForward = new(forward.X, -0.3f, forward.Z);
+        return Quaternion.Normalize(HelicopterOrientationState.LookRotation(pitchedForward) *
+            Quaternion.CreateFromAxisAngle(Vector3.UnitY, signedAngle));
     }
 }

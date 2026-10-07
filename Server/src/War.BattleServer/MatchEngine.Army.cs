@@ -36,6 +36,8 @@ public sealed partial class MatchEngine
     private readonly Dictionary<ulong,DroneWaypointState> armyDronePaths=[];
     private readonly Dictionary<ulong,HelicopterWaypointState> armyHelicopterPaths=[];
     private readonly Dictionary<ulong,AssaultHelicopterWaypointState> armyAssaultHelicopterPaths=[];
+    internal Quaternion? AssaultHelicopterRotation(ulong entityId)
+        => armyAssaultHelicopterPaths.TryGetValue(entityId, out var path) ? path.Rotation : null;
     private readonly Dictionary<ulong,HelicopterOrientationState> armyHelicopterOrientations=[];
     private readonly Dictionary<ulong,ArmyHelicopterCrewStats> armyHelicopterCrew=[];
     private readonly Dictionary<ulong,HelicopterCrewState> armyHelicopterCrewMembers=[];

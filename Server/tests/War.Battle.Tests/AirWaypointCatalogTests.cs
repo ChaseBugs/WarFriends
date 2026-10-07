@@ -41,6 +41,12 @@ internal static class AirWaypointCatalogTests
             Math.Abs(movingAssaultHelicopter.Velocity.X - 0.02f) > 0.00001f)
             throw new Exception("Assault Helicopter lost its clamped speed or double root movement.");
         count++;
+        Vector3 firstForward = Vector3.Transform(Vector3.UnitZ,
+            movingAssaultHelicopter.Rotation);
+        if (firstForward.X <= 0 || firstForward.Y >= 0 ||
+            Math.Abs(movingAssaultHelicopter.Rotation.LengthSquared() - 1) > 0.0001f)
+            throw new Exception("Assault Helicopter lost its source forward tilt or unit rotation.");
+        count++;
 
         var reversingAssaultHelicopter = new AssaultHelicopterWaypointState(
             sourceRoute with { Radius = 0.2f }, new Vector3(1, 0, 0), 0.6f, () => 0);
