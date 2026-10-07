@@ -5088,6 +5088,10 @@ internal static class CombatContentTests
                   row.ProjectileId==helicopterTriggerMineId&&
                   row.Reason=="air-trigger:"+flameHelicopterTarget.EntityKey),
             "a non-metal Helicopter body child triggers a mine on the normal host tick");
+        Check(flameHelicopterMatch.HelicopterGunner(flameHelicopterTarget.EntityKey) is
+                  {Health: var gunnerAfterMine}&&
+              Math.Abs(gunnerAfterMine-(helicopterGunnerBefore-10f))<.001f,
+            "triggered Land Mine blast damages the Helicopter gunner once at source strength");
         var flameDecoyManifest=flameManifest with {MatchId="army-flame-decoy",
             SceneMasterPlayerId=soldierOwner,
             Players=flameManifest.Players.Select(p=>p with {PlayerLevel=22}).ToArray()};

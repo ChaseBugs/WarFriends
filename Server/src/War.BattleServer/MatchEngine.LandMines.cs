@@ -180,6 +180,12 @@ public sealed partial class MatchEngine
             ApplyLandMineHeavyTurretExplosion(mine.OwnerPlayerId,mine.Position,mine.Damage,mine.EntityId);
             ApplyLandMineDroneExplosion(mine.OwnerPlayerId,mine.Position,mine.Damage);
             ApplyLandMineHelicopterBodyExplosion(mine.OwnerPlayerId,mine.Position,mine.Damage);
+            // The mounted gunner owns separate health. MissileExplode selects
+            // one of its current pose parts and uses the mine's equal inner
+            // and outer damage values, without bullet part weights.
+            ApplyHelicopterGunnerExplosion(mine.OwnerPlayerId,mine.Position,
+                landMineSource.DeadRadius,landMineSource.HurtRadius,
+                mine.Damage,mine.Damage,false);
             ApplyLandMineAssaultHelicopterBodyExplosion(mine.OwnerPlayerId,mine.Position,mine.Damage);
             ApplyLandMineAssaultHelicopterGlassExplosion(mine.OwnerPlayerId,mine.Position,mine.Damage);
             ApplyLandMineRepairDroneExplosion(mine.OwnerPlayerId,mine.Position,mine.Damage);
