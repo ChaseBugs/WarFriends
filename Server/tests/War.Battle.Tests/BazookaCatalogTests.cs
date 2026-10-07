@@ -158,10 +158,27 @@ internal static class BazookaCatalogTests
         }
         var airRpg=content.Bazookas!.Stage("Google2u.Bazooka_RPG7",0);
         var airBinding=content.Bazookas.Binding("Google2u.Bazooka_RPG7");
-        foreach(var airUnit in new[]{"ID_UNIT-DRONE","ID_UNIT-HELICOPTER"})
+        foreach(var airUnit in new[]{"ID_UNIT-DRONE","ID_UNIT-HELICOPTER","ID_UNIT-ASSAULTHELI"})
         {
             var (friendlyMatch,friendlyVictim,friendlyBodies)=AirTarget(
                 "bazooka-air-friendly-"+airUnit[8..].ToLowerInvariant(),airUnit);
+            if(airUnit=="ID_UNIT-ASSAULTHELI")
+            {
+                var friendlyGlass=friendlyMatch.GroundVehicleShotTargets(one)
+                    .Single(target=>target.EntityId==friendlyVictim.EntityKey&&target.AssaultGlass);
+                var glassOrigin=friendlyGlass.Hitbox.Center;
+                var glassEffect=BazookaExplosion.ResolveArmy(glassOrigin,glassOrigin,
+                    new[]{friendlyGlass.Hitbox},airRpg,airBinding,true)!;
+                float glassBefore=friendlyMatch.AssaultGlassHealth(friendlyVictim.EntityKey)!.Value;
+                float bodyBefore=friendlyMatch.ArmyHealth(friendlyVictim.EntityKey)!.Value;
+                Check(friendlyMatch.ApplyPlayerBazookaAssaultGlassExplosion(two,glassOrigin,
+                          airRpg,airBinding,true)==1&&
+                      Math.Abs(friendlyMatch.AssaultGlassHealth(friendlyVictim.EntityKey)!.Value-
+                          Math.Max(0,glassBefore-glassEffect.RawDamage*
+                              content.Explosions.Friendly))<.01f&&
+                      friendlyMatch.ArmyHealth(friendlyVictim.EntityKey)==bodyBefore,
+                    "friendly Bazooka splash damages separate front glass at source coefficients");
+            }
             Vector3 friendlyOrigin=friendlyBodies[0].Hitbox.Center;
             var friendlyEffect=BazookaExplosion.ResolveArmy(friendlyOrigin,
                 new(friendlyVictim.X,friendlyVictim.Y,friendlyVictim.Z),
@@ -176,6 +193,38 @@ internal static class BazookaCatalogTests
 
             var (enemyMatch,enemyVictim,enemyBodies)=AirTarget(
                 "bazooka-air-enemy-"+airUnit[8..].ToLowerInvariant(),airUnit);
+            if(airUnit=="ID_UNIT-ASSAULTHELI")
+            {
+                var opposingGlass=enemyMatch.GroundVehicleShotTargets(one)
+                    .Single(target=>target.EntityId==enemyVictim.EntityKey&&target.AssaultGlass);
+                var glassOrigin=opposingGlass.Hitbox.Center;
+                float glassBefore=enemyMatch.AssaultGlassHealth(enemyVictim.EntityKey)!.Value;
+                float bodyBefore=enemyMatch.ArmyHealth(enemyVictim.EntityKey)!.Value;
+                var glassEffect=BazookaExplosion.ResolveArmy(glassOrigin,glassOrigin,
+                    new[]{opposingGlass.Hitbox},airRpg,airBinding,false)!;
+                Check(enemyMatch.ApplyPlayerBazookaAssaultGlassExplosion(one,glassOrigin,
+                          airRpg,airBinding,false)==1&&
+                      Math.Abs(enemyMatch.AssaultGlassHealth(enemyVictim.EntityKey)!.Value-
+                          Math.Max(0,glassBefore-glassEffect.RawDamage))<.01f&&
+                      enemyMatch.ArmyHealth(enemyVictim.EntityKey)==bodyBefore,
+                    "opposing Bazooka splash damages front glass without body damage");
+                try
+                {
+                    enemyMatch.ApplyPlayerBazookaAssaultGlassExplosion(one,glassOrigin,
+                        airRpg with {ExplosionDamage=1},airBinding,false);
+                    throw new Exception("FAIL: forged Bazooka glass stage");
+                }
+                catch(InvalidDataException){checks++;}
+                for(int blast=0;blast<100&&
+                    enemyMatch.AssaultGlassHealth(enemyVictim.EntityKey)>0;blast++)
+                    enemyMatch.ApplyPlayerBazookaAssaultGlassExplosion(one,glassOrigin,
+                        airRpg,airBinding,false);
+                Check(enemyMatch.AssaultGlassHealth(enemyVictim.EntityKey)==0&&
+                      enemyMatch.ApplyPlayerBazookaAssaultGlassExplosion(one,glassOrigin,
+                          airRpg,airBinding,false)==0&&
+                      enemyMatch.ArmyHealth(enemyVictim.EntityKey)==bodyBefore,
+                    "broken Assault Helicopter glass excludes later Bazooka splash");
+            }
             Vector3 enemyOrigin=enemyBodies[0].Hitbox.Center;
             var enemyEffect=BazookaExplosion.ResolveArmy(enemyOrigin,
                 new(enemyVictim.X,enemyVictim.Y,enemyVictim.Z),

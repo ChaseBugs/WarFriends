@@ -1095,6 +1095,48 @@ public sealed partial class MatchEngine
         }
     }
 
+    internal int ApplyPlayerBazookaAssaultGlassExplosion(string shooterId,Vector3 origin,
+        BazookaStage stage,BazookaBinding binding,bool halfDamage)
+    {
+        if(phase!=BattlePhase.Running||bazookaCatalog==null||explosionPolicy==null||
+           stage==null||binding==null||
+           !ReferenceEquals(bazookaCatalog.Stage(stage.SourceId,stage.Index),stage)||
+           !ReferenceEquals(bazookaCatalog.Binding(stage.SourceId),binding)||
+           !PlayerHitbox.Finite(origin))
+            throw new InvalidDataException("Bazooka glass blast lacks trusted source authority.");
+
+        var shooter=Find(shooterId)??throw new InvalidDataException("Bazooka owner disappeared.");
+        var aircraftTargets=activeArmyEntities.Values
+            .Where(row=>row.UnitId=="ID_UNIT-ASSAULTHELI")
+            .OrderBy(row=>row.EntityKey).ToArray();
+        if(aircraftTargets.Length==0)return 0;
+        if(assaultHelicopterMeshColliders==null)
+            throw new InvalidDataException("Bazooka glass lacks its source mesh catalog.");
+        int hits=0;
+        foreach(var aircraft in aircraftTargets)
+        {
+            if(!armyAssaultHelicopterPaths.TryGetValue(aircraft.EntityKey,out var path)||
+               !armyAssaultGlass.TryGetValue(aircraft.EntityKey,out var glass))
+                throw new InvalidDataException("Bazooka glass lost its aircraft authority.");
+            if(glass.Current<=0)continue;
+
+            var front=assaultHelicopterMeshColliders.PlaceFrontGlass(
+                new(aircraft.X,aircraft.Y,aircraft.Z),path.Rotation);
+            var effect=BazookaExplosion.ResolveArmy(origin,front.Hitbox.Center,
+                new[]{front.Hitbox},stage,binding,halfDamage);
+            if(effect==null)continue;
+
+            bool friendly=aircraft.OwnerFraction==shooter.Definition.Fraction;
+            float amount=effect.RawDamage*(friendly?explosionPolicy.Friendly:1f);
+            if(!float.IsFinite(amount)||amount<=0||amount>10_000_000)
+                throw new InvalidDataException("Bazooka glass damage exceeded host bounds.");
+            if(!ApplyAssaultGlassDamage(aircraft.EntityKey,amount))continue;
+            hits++;
+            if(!friendly)shooter.ConfirmedEnemyHits=checked(shooter.ConfirmedEnemyHits+1);
+        }
+        return hits;
+    }
+
     internal void ApplyGroundVehicleMissileRepairDroneExplosion(string shooterId,string unitId,
         float damage,GroundVehicleMissileBinding binding,Vector3 origin)
     {
@@ -1212,8 +1254,7 @@ public sealed partial class MatchEngine
     internal int ApplyGroundVehicleMissileAssaultGlassExplosion(string shooterId,string unitId,
         float damage,GroundVehicleMissileBinding binding,Vector3 origin)
     {
-        if(phase!=BattlePhase.Running||groundVehicleWeapons==null||
-           assaultHelicopterMeshColliders==null||explosionPolicy==null||
+        if(phase!=BattlePhase.Running||groundVehicleWeapons==null||explosionPolicy==null||
            !PlayerHitbox.Finite(origin)||!float.IsFinite(damage)||
            damage<=0||damage>10_000_000||binding==null||
            unitId is not ("ID_UNIT-TANK" or "ID_UNIT-BUGGY"))
@@ -1221,10 +1262,14 @@ public sealed partial class MatchEngine
 
         var sourceWeapon=GroundVehicleMissileSourceWeapon(unitId,binding);
         var shooter=Find(shooterId)??throw new InvalidDataException("Vehicle missile owner disappeared.");
-        int hits=0;
-        foreach(var aircraft in activeArmyEntities.Values
+        var aircraftTargets=activeArmyEntities.Values
             .Where(row=>row.UnitId=="ID_UNIT-ASSAULTHELI")
-            .OrderBy(row=>row.EntityKey).ToArray())
+            .OrderBy(row=>row.EntityKey).ToArray();
+        if(aircraftTargets.Length==0)return 0;
+        if(assaultHelicopterMeshColliders==null)
+            throw new InvalidDataException("Vehicle missile glass lacks its source mesh catalog.");
+        int hits=0;
+        foreach(var aircraft in aircraftTargets)
         {
             if(!armyAssaultHelicopterPaths.TryGetValue(aircraft.EntityKey,out var path)||
                !armyAssaultGlass.TryGetValue(aircraft.EntityKey,out var glass))
@@ -1370,16 +1415,20 @@ public sealed partial class MatchEngine
         GrenadeStage stage)
     {
         if(phase!=BattlePhase.Running||grenadeCatalog==null||
-           assaultHelicopterMeshColliders==null||explosionPolicy==null||stage==null||
+           explosionPolicy==null||stage==null||
            !ReferenceEquals(grenadeCatalog.Stage(stage.SourceId,stage.Index),stage)||
            !PlayerHitbox.Finite(origin))
             throw new InvalidDataException("Grenade glass blast lacks trusted source authority.");
 
         var shooter=Find(shooterId)??throw new InvalidDataException("Grenade owner disappeared.");
-        int hits=0;
-        foreach(var aircraft in activeArmyEntities.Values
+        var aircraftTargets=activeArmyEntities.Values
             .Where(row=>row.UnitId=="ID_UNIT-ASSAULTHELI")
-            .OrderBy(row=>row.EntityKey).ToArray())
+            .OrderBy(row=>row.EntityKey).ToArray();
+        if(aircraftTargets.Length==0)return 0;
+        if(assaultHelicopterMeshColliders==null)
+            throw new InvalidDataException("Grenade glass lacks its source mesh catalog.");
+        int hits=0;
+        foreach(var aircraft in aircraftTargets)
         {
             if(!armyAssaultHelicopterPaths.TryGetValue(aircraft.EntityKey,out var path)||
                !armyAssaultGlass.TryGetValue(aircraft.EntityKey,out var glass))
