@@ -194,6 +194,39 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         };
     }
 
+    /// <summary>
+    /// Applies damage already established by host hit simulation. No client
+    /// packet routes here: player fire, impact, and ownership still need their
+    /// co-op validators before this can become live combat authority.
+    /// </summary>
+    internal bool ApplyHostEnemyDamage(ulong entityId, float damage, ulong impactTick)
+    {
+        if (phase != BattlePhase.Running || impactTick != tick ||
+            impactTick >= mission.DeadlineTick ||
+            !float.IsFinite(damage) || damage <= 0 || damage > 10_000_000)
+            return false;
+
+        BattleCoopEnemySpawn? enemy = enemySpawns.FirstOrDefault(
+            spawned => spawned.EntityId == entityId);
+        if (enemy == null || enemy.SpawnTick > impactTick ||
+            enemy.Health <= 0 || enemy.DeathTick != 0)
+            return false;
+
+        float remaining = MathF.Max(0, enemy.Health - damage);
+        if (remaining == 0 && !mission.ConfirmAiDeath(entityId, impactTick))
+            return false;
+
+        enemy.Health = remaining;
+        if (remaining == 0)
+        {
+            enemy.DeathTick = impactTick;
+            if (mission.Outcome == MissionOutcome.Succeeded)
+                End(BattlePhase.Ended, "mission-success");
+        }
+        stateRevision++;
+        return true;
+    }
+
     public void ConfigureBattleAllocations(IEnumerable<BattleAllocationProjection> allocations)
     {
         if (allocations.Any())
@@ -295,7 +328,8 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         };
         snapshot.Coop.ParticipantIds.AddRange(
             mission.Participants.OrderBy(id => id, StringComparer.Ordinal));
-        snapshot.Coop.EnemySpawns.AddRange(enemySpawns);
+        snapshot.Coop.EnemySpawns.AddRange(
+            enemySpawns.Select(enemy => enemy.Clone()));
         foreach (Participant participant in participants.Values)
         {
             snapshot.Players.Add(new BattlePlayerState

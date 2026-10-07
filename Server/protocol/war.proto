@@ -464,6 +464,8 @@ message BattleCoopEnemySpawn {
   bool card_unit = 10; float card_progress = 11;
   // Server-authored from ordinary or card upgrade rows and co-op HP scale.
   float max_health = 12; float health = 13;
+  // Set only after the host confirms lethal damage; zero otherwise.
+  uint64 death_tick = 14;
 }
 message MatchReply {
   uint64 command_id = 1; string code = 2; MatchSnapshot snapshot = 3;

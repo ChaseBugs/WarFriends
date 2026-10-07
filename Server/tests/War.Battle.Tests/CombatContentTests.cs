@@ -459,6 +459,62 @@ internal static class CombatContentTests
                 point.ComponentFileId == firstEnemy.SpawnComponentFileId &&
                 point.Position == new Vector3(firstEnemy.X, firstEnemy.Y, firstEnemy.Z)))
             throw new Exception("A due co-op AI must be created at an enemy source anchor.");
+
+        var damagedRuntime = new CoopMatchRuntime(coop, catalog, spawnPoints, enemyCombat,
+            chooseBehaviour: _ => 0, choosePoint: _ => 0);
+        damagedRuntime.Admit(firstPlayer);
+        damagedRuntime.Admit(secondPlayer);
+        var damageReady = new MatchCommand
+        {
+            CommandId = 1,
+            Ready = new ReadyCommand { ManifestHash = damagedRuntime.ManifestHash }
+        };
+        damagedRuntime.Command(firstPlayer, damageReady);
+        damagedRuntime.Command(secondPlayer, damageReady);
+        damagedRuntime.Advance(8);
+        BattleCoopEnemySpawn undamaged = damagedRuntime.Snapshot().Coop.EnemySpawns.Single();
+        undamaged.Health = 0;
+        if (damagedRuntime.Snapshot().Coop.EnemySpawns[0].Health != undamaged.MaxHealth)
+            throw new Exception("A caller must not mutate host health through a snapshot.");
+        if (damagedRuntime.ApplyHostEnemyDamage(undamaged.EntityId, float.NaN, 8) ||
+            damagedRuntime.ApplyHostEnemyDamage(undamaged.EntityId, float.PositiveInfinity, 8) ||
+            damagedRuntime.ApplyHostEnemyDamage(undamaged.EntityId, 0, 8) ||
+            damagedRuntime.ApplyHostEnemyDamage(undamaged.EntityId, 1, 9) ||
+            damagedRuntime.ApplyHostEnemyDamage(999, 1, 8))
+            throw new Exception("Invalid host impacts must not alter co-op enemy health.");
+        float partialDamage = undamaged.MaxHealth / 4f;
+        if (!damagedRuntime.ApplyHostEnemyDamage(undamaged.EntityId, partialDamage, 8) ||
+            MathF.Abs(damagedRuntime.Snapshot().Coop.EnemySpawns[0].Health -
+                (undamaged.MaxHealth - partialDamage)) > .0001f ||
+            damagedRuntime.Snapshot().Coop.EnemyKills != 0)
+            throw new Exception("A nonlethal host impact must change only health.");
+        if (!damagedRuntime.ApplyHostEnemyDamage(undamaged.EntityId,
+                undamaged.MaxHealth, 8) ||
+            damagedRuntime.ApplyHostEnemyDamage(undamaged.EntityId, 1, 8) ||
+            damagedRuntime.Snapshot().Coop.EnemySpawns[0].Health != 0 ||
+            damagedRuntime.Snapshot().Coop.EnemySpawns[0].DeathTick != 8 ||
+            damagedRuntime.Snapshot().Coop.EnemyKills != 1 ||
+            damagedRuntime.Snapshot().RewardEligible)
+            throw new Exception("One lethal host impact must count one mission kill.");
+        for (ulong step = 9;
+             step < (ulong)coop.DurationSeconds * MatchManifest.TickRate &&
+             !damagedRuntime.Terminal;
+             step++)
+        {
+            damagedRuntime.Advance(step);
+            foreach (BattleCoopEnemySpawn enemy in damagedRuntime.Snapshot()
+                .Coop.EnemySpawns.Where(spawn => spawn.DeathTick == 0))
+            {
+                if (!damagedRuntime.ApplyHostEnemyDamage(
+                        enemy.EntityId, enemy.Health, step))
+                    throw new Exception("A live host enemy rejected its lethal impact.");
+            }
+        }
+        if (!damagedRuntime.Terminal ||
+            damagedRuntime.Snapshot().TerminalReason != "mission-success" ||
+            damagedRuntime.Snapshot().Coop.EnemyKills != catalog.Get(0).Objective ||
+            damagedRuntime.Snapshot().RewardEligible)
+            throw new Exception("Ten confirmed source enemy deaths must finish mission zero.");
         runtime.Advance(9);
         if (runtime.Snapshot().Coop.EnemySpawns.Count != 1)
             throw new Exception("Co-op AI cadence must not spawn on the next tick.");
@@ -557,7 +613,7 @@ internal static class CombatContentTests
         if (!earlyForfeit.Terminal || !earlyForfeit.Snapshot().Coop.Failed ||
             earlyForfeit.Snapshot().RewardEligible)
             throw new Exception("A pre-start forfeit must close without reward eligibility.");
-        return 22;
+        return 27;
     }
 
     private static int VerifyCoopSpawnCatalog(string directory, MissionCatalog missions)
