@@ -12,6 +12,12 @@ using War.Protocol;
 internal static class LiveAssaultGlassUdpTests
 {
     internal static async Task<int> Run(string contentDirectory)
+        => await RunScenario(contentDirectory, false);
+
+    internal static async Task<int> RunBazooka(string contentDirectory)
+        => await RunScenario(contentDirectory, true);
+
+    private static async Task<int> RunScenario(string contentDirectory, bool useBazooka)
     {
         int checks = 0;
         void Check(bool condition, string message)
@@ -20,21 +26,30 @@ internal static class LiveAssaultGlassUdpTests
             checks++;
         }
 
-        var content = BattleCombatContent.Load(Path.Combine(contentDirectory,
-            "combat-content-manifest.json"));
+        string? bazookaContentPath = useBazooka
+            ? Path.Combine(contentDirectory, "bazooka-content-manifest.json")
+            : null;
+        var content = BattleCombatContent.Load(
+            Path.Combine(contentDirectory, "combat-content-manifest.json"),
+            null, null, null, null, null, null, bazookaContentPath);
         var map = content.Maps.Single(item =>
             item.Source.EndsWith("Park_Multiplayer.unity", StringComparison.Ordinal));
         var leftCover = map.Covers.First(item => item.Main && item.Fraction == 1 &&
             item.SourceIndex == 2);
         var rightCover = map.Covers.First(item => item.Main && item.Fraction == 2);
-        var rifle = content.Stats.CreateManifest("Google2u.AssaultRifle_AK47", 0);
+        var weapon = useBazooka
+            ? content.Bazookas!.CreateManifest("Google2u.Bazooka_RPG7", 0)
+            : content.Stats.CreateManifest("Google2u.AssaultRifle_AK47", 0);
         string aircraftOwner = new('a', 32);
         string shooter = new('b', 32);
         var manifest = MatchManifest.Validate(new MatchManifest(
-            "assault-glass-live-udp", "local-1", "Park_Multiplayer", map.SourceHash,
-            content.Revision, MatchManifest.RifleCombatMode, 10, 180, 120,
+            useBazooka ? "assault-glass-bazooka-udp" : "assault-glass-live-udp",
+            "local-1", "Park_Multiplayer", map.SourceHash,
+            useBazooka ? content.BazookaRevision! : content.Revision,
+            useBazooka ? MatchManifest.BazookaCombatMode : MatchManifest.RifleCombatMode,
+            10, 180, 120,
             [
-                new(aircraftOwner, rifle, 1, leftCover.SourceIndex, 1, new(1000), 0, 0, 0)
+                new(aircraftOwner, weapon, 1, leftCover.SourceIndex, 1, new(1000), 0, 0, 0)
                 {
                     EquippedArmyUnitIds = ["ID_UNIT-ASSAULTHELI"],
                     ArmyNormalUpgradeIndexes = [0],
@@ -45,7 +60,7 @@ internal static class LiveAssaultGlassUdpTests
                     ArmySpeedCoefficients = [1],
                     ArmyAccuracyCoefficients = [1]
                 },
-                new(shooter, rifle, 2, rightCover.SourceIndex, 1, new(1000), 0, 0, 0)
+                new(shooter, weapon, 2, rightCover.SourceIndex, 1, new(1000), 0, 0, 0)
                 {
                     EquippedArmyUnitIds = ["ID_UNIT-ASSAULT"],
                     ArmyNormalUpgradeIndexes = [0],
@@ -77,7 +92,9 @@ internal static class LiveAssaultGlassUdpTests
                 ["Battle:ResultOutboxPath"] = Path.Combine(Path.GetTempPath(),
                     "war-assault-glass-outbox-" + Guid.NewGuid().ToString("N")),
                 ["Battle:CombatContentManifestPath"] = Path.Combine(contentDirectory,
-                    "combat-content-manifest.json")
+                    "combat-content-manifest.json"),
+                ["Battle:BazookaContentManifestPath"] = Path.Combine(contentDirectory,
+                    "bazooka-content-manifest.json")
             }).Build();
         using var worker = new NetworkWorker(config, NullLogger<NetworkWorker>.Instance);
 
@@ -111,7 +128,8 @@ internal static class LiveAssaultGlassUdpTests
         try
         {
             await worker.StartAsync(CancellationToken.None);
-            using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(100));
+            using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(
+                useBazooka ? 150 : 100));
             using var ownerPeer = new MatchConnection(Grant(aircraftOwner, 9501));
             using var shooterPeer = new MatchConnection(Grant(shooter, 9502));
             Check((await ownerPeer.ConnectAsync(timeout.Token)).Code == "admitted" &&
@@ -177,20 +195,29 @@ internal static class LiveAssaultGlassUdpTests
             BattleArmyEntityState? damaged = null;
             int acceptedShots = 0;
             var fireWatch = System.Diagnostics.Stopwatch.StartNew();
-            while (fireWatch.Elapsed < TimeSpan.FromSeconds(45) && damaged == null)
+            TimeSpan lastBazookaAim = TimeSpan.FromSeconds(-10);
+            TimeSpan fireLimit = TimeSpan.FromSeconds(useBazooka ? 100 : 45);
+            while (fireWatch.Elapsed < fireLimit && damaged == null)
             {
                 var current = (await shooterPeer.FetchArmyEntitiesAsync(timeout.Token))
                     .SingleOrDefault(entity => entity.EntityKey == aircraft.EntityKey);
                 if (current == null) break;
                 var rotation = current.AssaultRotation;
-                if (rotation != null)
+                bool canAimBazookaAgain = fireWatch.Elapsed - lastBazookaAim >=
+                    TimeSpan.FromSeconds(4);
+                if (rotation != null && (!useBazooka || canAimBazookaAgain))
                 {
                     var glass = content.AssaultHelicopterMeshColliders.PlaceFrontGlass(
                         new(current.X, current.Y, current.Z),
                         new(rotation.X, rotation.Y, rotation.Z, rotation.W));
                     var aim = glass.Hitbox.Center;
-                    var reply = await shooterPeer.FireAsync(aim.X, aim.Y, aim.Z, timeout.Token);
-                    if (reply.Code is "shot-scheduled" or "shot-accepted") acceptedShots++;
+                    var reply = useBazooka
+                        ? await shooterPeer.BazookaHoldAsync(true, aim.X, aim.Y, aim.Z, timeout.Token)
+                        : await shooterPeer.FireAsync(aim.X, aim.Y, aim.Z, timeout.Token);
+                    if (reply.Code is "shot-scheduled" or "shot-accepted" or "bazooka-targeting")
+                        acceptedShots++;
+                    if (useBazooka)
+                        lastBazookaAim = fireWatch.Elapsed;
                 }
                 await Task.Delay(220, timeout.Token);
                 current = (await shooterPeer.FetchArmyEntitiesAsync(timeout.Token))
@@ -198,14 +225,14 @@ internal static class LiveAssaultGlassUdpTests
                 if (current != null && current.AssaultGlassHealth < initialGlass)
                     damaged = current;
                 var shooterState = await shooterPeer.PollAsync(timeout.Token);
-                if (shooterState.Snapshot.Players.Single(player => player.PlayerId == shooter)
-                    .ClipAmmo == 0)
+                if (!useBazooka && shooterState.Snapshot.Players
+                    .Single(player => player.PlayerId == shooter).ClipAmmo == 0)
                     await shooterPeer.ReloadAsync(timeout.Token);
             }
             Check(damaged != null && acceptedShots > 0 &&
                   damaged.AssaultGlassHealth < initialGlass &&
                   MatchConnection.ValidAssaultGlass(damaged),
-                $"signed UDP rifle fire damages the source front glass (shots={acceptedShots}, " +
+                $"signed UDP {(useBazooka ? "Bazooka" : "rifle")} fire damages front glass (aims={acceptedShots}, " +
                 $"health={damaged?.AssaultGlassHealth}/{initialGlass})");
             BattleArmyEntityState? ownerView = null;
             BattleArmyEntityState? shooterView = null;
