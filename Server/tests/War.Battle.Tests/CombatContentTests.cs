@@ -3,6 +3,7 @@ using System.Text.Json.Nodes;
 using System.Security.Cryptography;
 using System.Numerics;
 using System.Net;
+using Google.Protobuf;
 using War.BattleServer;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -419,10 +420,28 @@ internal static class CombatContentTests
             !sourceMapSpawns.EnemySpawnPoints.Any(point =>
                 point.ComponentFileId == timedEnemy.SpawnComponentFileId))
             throw new Exception("A source-timed co-op event must create a distinct host enemy.");
+
+        var steppedRuntime = new CoopMatchRuntime(coop, catalog, spawnPoints,
+            chooseBehaviour: _ => 0, choosePoint: _ => 0);
+        steppedRuntime.Admit(firstPlayer);
+        steppedRuntime.Admit(secondPlayer);
+        steppedRuntime.Command(firstPlayer, firstReady);
+        steppedRuntime.Command(secondPlayer, firstReady);
+        for (ulong step = 1; step <= 10 * MatchManifest.TickRate; step++)
+            steppedRuntime.Advance(step);
+        if (!runtime.Snapshot().Coop.ToByteArray().AsSpan().SequenceEqual(
+                steppedRuntime.Snapshot().Coop.ToByteArray()))
+            throw new Exception("A catch-up jump must replay every co-op spawn tick.");
+
         runtime.Advance((ulong)coop.DurationSeconds * MatchManifest.TickRate);
         if (!runtime.Terminal || runtime.Snapshot().TerminalReason != "mission-failed" ||
             runtime.TerminalEvidenceSnapshot().RewardEligible)
             throw new Exception("A timed-out kill mission remains unscored and terminal.");
+        ulong terminalTick = runtime.Snapshot().EndTick;
+        runtime.Advance(ulong.MaxValue);
+        if (runtime.Snapshot().EndTick != terminalTick ||
+            terminalTick != (ulong)coop.DurationSeconds * MatchManifest.TickRate)
+            throw new Exception("A terminal co-op match must freeze at its source deadline.");
 
         string signingKey = Convert.ToBase64String(new byte[32]);
         var udpRuntime = new CoopMatchRuntime(coop, catalog, spawnPoints);
@@ -458,7 +477,7 @@ internal static class CombatContentTests
         if (!earlyForfeit.Terminal || !earlyForfeit.Snapshot().Coop.Failed ||
             earlyForfeit.Snapshot().RewardEligible)
             throw new Exception("A pre-start forfeit must close without reward eligibility.");
-        return 15;
+        return 17;
     }
 
     private static int VerifyCoopSpawnCatalog(string directory, MissionCatalog missions)

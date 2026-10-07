@@ -102,23 +102,30 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
     {
         if (nextTick < tick)
             throw new InvalidOperationException("Co-op match tick moved backwards.");
-        tick = nextTick;
         if (Terminal)
             return;
 
-        if (phase == BattlePhase.Waiting &&
-            tick >= (ulong)manifest.AdmissionSeconds * MatchManifest.TickRate)
+        if (phase == BattlePhase.Waiting)
         {
-            End(BattlePhase.Aborted, "admission-timeout");
+            ulong admissionDeadline =
+                (ulong)manifest.AdmissionSeconds * MatchManifest.TickRate;
+            tick = Math.Min(nextTick, admissionDeadline);
+            if (nextTick >= admissionDeadline)
+                End(BattlePhase.Aborted, "admission-timeout");
             return;
         }
-        if (phase == BattlePhase.Running)
+
+        // A Worker normally advances one tick at a time. Replay and catch-up
+        // may jump ahead; each omitted fixed step still owns its timed events
+        // and WaveManager's automatic spawn opportunity.
+        while (tick < nextTick && phase == BattlePhase.Running)
         {
+            tick++;
             if (mission.AdvanceTick(tick))
             {
                 End(BattlePhase.Ended, mission.Outcome == MissionOutcome.Succeeded
                     ? "mission-success" : "mission-failed");
-                return;
+                break;
             }
             SpawnDueEnemies();
         }
