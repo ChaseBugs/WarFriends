@@ -37,8 +37,9 @@ internal static class BattleEventTests
             if(accepted>512)throw new Exception("Event limit did not apply.");
             match.Advance(++tick);
         }
-        Check(accepted>=500 && match.EventBatch(a,0).LatestEventId==(ulong)accepted,
-            "event log backpressure preserves the full acknowledged prefix");
+        Check(accepted>=500 && match.EventBatch(a,0).LatestEventId==(ulong)accepted &&
+            match.Snapshot().LatestEventId==(ulong)accepted,
+            "authoritative snapshot and event log share the same cursor");
         ulong cursorA=0,cursorB=0;
         foreach(string player in new[] {a,b})
         {
@@ -53,7 +54,9 @@ internal static class BattleEventTests
             }
             if(player==a)cursorA=cursor;else cursorB=cursor;
         }
-        Check(cursorA==(ulong)accepted && cursorB==cursorA && match.EventBatch(a,0).Code=="cursor-expired",
+        var expired=match.EventBatch(a,0);
+        Check(cursorA==(ulong)accepted && cursorB==cursorA && expired.Code=="cursor-expired" &&
+            expired.LatestEventId==match.Snapshot().LatestEventId,
             "both cursors release history without silently accepting a stale reconnect");
         var resumed=match.Command(a,new() {CommandId=command,Fire=new() {TargetX=1}});
         Check(resumed.Code=="shot-accepted" && resumed.Snapshot.Players[0].ClipAmmo==ammo-1,

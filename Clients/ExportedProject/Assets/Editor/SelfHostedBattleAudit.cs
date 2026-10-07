@@ -30,6 +30,7 @@ public static class SelfHostedBattleAudit
         var b = JsonParser.Default.Parse<MatchConnectionGrant>(lines[1]);
         CheckSnapshotOrdering();
         CheckReconnectClock();
+        CheckEventSnapshotBoundary();
         CheckAnimationAliases();
         deadline = EditorApplication.timeSinceStartup + 50;
         audit = Check(a, b, reconnectPath, backendUrl, dropPollPath);
@@ -159,6 +160,20 @@ public static class SelfHostedBattleAudit
         snapshot.Players[1].Reconnecting = false;
         Require(!SelfHostedBattleClient.TryGetOpponentReconnectSeconds(snapshot, "local", out seconds),
             "resumed opponent hides the reconnect countdown");
+    }
+    private static void CheckEventSnapshotBoundary()
+    {
+        var snapshot = new MatchSnapshot { LatestEventId = 12 };
+        Require(SelfHostedBattleClient.ValidateSnapshotEventBoundary(snapshot, 7, 14) == 12,
+            "expired event cursor resumes after an authoritative snapshot");
+        bool rejected = false;
+        try { SelfHostedBattleClient.ValidateSnapshotEventBoundary(snapshot, 13, 14); }
+        catch (InvalidOperationException) { rejected = true; }
+        Require(rejected, "snapshot cannot rewind an already presented event");
+        rejected = false;
+        try { SelfHostedBattleClient.ValidateSnapshotEventBoundary(snapshot, 7, 11); }
+        catch (InvalidOperationException) { rejected = true; }
+        Require(rejected, "snapshot cannot claim events beyond the host response");
     }
     private static void Require(bool value, string name) { if (!value) throw new InvalidOperationException("Battle SDK audit failed: " + name); }
     private static void Update()

@@ -341,6 +341,9 @@ message MatchSnapshot {
   // Private terminal evidence for direct player-owned bullet kills of source
   // army entities. Not a complete Client MatchStats.kills projection.
   repeated BattleArmyKillEvidence direct_army_kills = 33;
+  // Event cursor captured with this authoritative state. A reconnecting
+  // client may start after it only when rebuilding all scene projections.
+  uint64 latest_event_id = 34;
 }
 message BattleArmyKillEvidence {
   uint64 entity_key = 1; string unit_id = 2;

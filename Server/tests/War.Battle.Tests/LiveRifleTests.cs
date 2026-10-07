@@ -410,8 +410,28 @@ internal static class LiveRifleTests
         }
         var maximumPacket=new Packet {Version=1,SessionId=ulong.MaxValue,Sequence=ulong.MaxValue,Ack=ulong.MaxValue,AckBits=uint.MaxValue,
             MatchReply=new() {CommandId=ulong.MaxValue,Code="moving-combat-not-supported",Snapshot=largest}};
-        Check(War.Protocol.Transport.PacketCodec.Encode(maximumPacket,new byte[32]).Length<=1200,
-            "four-layer plus upper-body two-player worst-width pose envelope fits MTU: "+maximumPacket.CalculateSize());
+        if(maximumPacket.CalculateSize()+War.Protocol.Transport.PacketCodec.MacBytes<=1200)
+            Check(War.Protocol.Transport.PacketCodec.Encode(maximumPacket,new byte[32]).Length<=1200,
+                "worst-width pose and event boundary fit the UDP datagram");
+        else
+        {
+            // The snapshot event boundary may push a maximum-width reply over
+            // one datagram. The host then uses its digest-checked chunk path.
+            var transfer=new MatchReplyTransfer(1,1,maximumPacket.MatchReply);
+            var pieces=new List<byte>();
+            for(uint index=0;index<transfer.ChunkCount;index++)
+            {
+                var page=transfer.Page(index);
+                var packet=new Packet {Version=1,SessionId=1,Sequence=index+1,
+                    MatchReplyChunkBatch=page};
+                Check(War.Protocol.Transport.PacketCodec.Encode(packet,new byte[32]).Length<=1200,
+                    "worst-width snapshot chunk fits the UDP datagram");
+                pieces.AddRange(page.Data);
+            }
+            Check(MatchConnection.VerifyReplyTransfer(transfer.Stub(maximumPacket.MatchReply),
+                pieces.ToArray()).Equals(maximumPacket.MatchReply),
+                "worst-width snapshot and event boundary survive verified chunk transfer");
+        }
         var maximumBarrels=new MatchBarrelBatch {MatchId=new string('m',64),
             ManifestHash=new string('a',64),StateRevision=ulong.MaxValue,SourceCount=10,MaxHealth=56};
         for(int i=0;i<10;i++)maximumBarrels.Changed.Add(new BattleBarrelState

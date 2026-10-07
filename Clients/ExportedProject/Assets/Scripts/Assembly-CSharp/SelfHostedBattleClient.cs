@@ -341,8 +341,19 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
                     await nextConnection.PollArmyAsync(nextLifetime.Token);
                 var projectiles = ProjectileScanReceived == null || !current.Snapshot.ProjectilesTruncated ? null :
                     await nextConnection.FetchProjectilesAsync(nextLifetime.Token);
+                ulong? snapshotEventBaseline = null;
                 if (CombatEventReceived != null)
-                    await nextConnection.PollEventsAsync(ProcessedEventId, nextLifetime.Token);
+                {
+                    try { await nextConnection.PollEventsAsync(ProcessedEventId, nextLifetime.Token); }
+                    catch (MatchEventCursorExpiredException expired)
+                    {
+                        // All presenters below receive fresh authoritative state.
+                        // Only after they succeed may we skip events older than
+                        // that snapshot. Later events still replay normally.
+                        snapshotEventBaseline = ValidateSnapshotEventBoundary(current.Snapshot,
+                            ProcessedEventId, expired.LatestEventId);
+                    }
+                }
 
                 if (destroyed) throw new ObjectDisposedException(nameof(SelfHostedBattleClient));
                 oldLifecycle.PhaseChanged -= OnRoomPhaseChanged;
@@ -368,6 +379,8 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
                     ArmyOffersReceived(offers.Clone());
                 if (projectiles != null && ProjectileScanReceived != null)
                     ProjectileScanReceived(projectiles);
+                if (snapshotEventBaseline.HasValue)
+                    ProcessedEventId = snapshotEventBaseline.Value;
                 if (CombatEventReceived != null) await DispatchEvents();
                 nextPoll = Time.realtimeSinceStartup + 0.1f;
             }
@@ -381,6 +394,16 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
             }
         }
         finally { reconnecting = false; }
+    }
+
+    /// <summary>Keep lost events behind the same state boundary used to rebuild the scene.</summary>
+    public static ulong ValidateSnapshotEventBoundary(MatchSnapshot snapshot,
+        ulong processedEventId, ulong hostLatestEventId)
+    {
+        if (snapshot == null || snapshot.LatestEventId < processedEventId ||
+            snapshot.LatestEventId > hostLatestEventId)
+            throw new InvalidOperationException("The full snapshot has no valid event boundary.");
+        return snapshot.LatestEventId;
     }
 
     private static bool SamePlayerViews(IReadOnlyList<BattlePlayerView> oldViews,

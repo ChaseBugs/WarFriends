@@ -453,6 +453,12 @@ namespace War.Client
                 if(batch.MatchId!=grant.MatchId || batch.ManifestHash!=grant.ManifestHash || batch.Events.Count>4 ||
                     batch.LatestEventId<afterEventId && batch.Code=="events")
                     throw new InvalidOperationException("Battle host returned an incompatible event batch.");
+                if(batch.Code=="cursor-expired")
+                {
+                    if(batch.Events.Count!=0 || batch.LatestEventId<afterEventId)
+                        throw new InvalidOperationException("Battle host returned an invalid expired cursor.");
+                    throw new MatchEventCursorExpiredException(batch.LatestEventId);
+                }
                 if(batch.Code!="events")throw new InvalidOperationException("Battle event cursor rejected: "+batch.Code);
                 ulong expected=afterEventId;
                 foreach(var row in batch.Events)

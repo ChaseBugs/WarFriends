@@ -2185,7 +2185,8 @@ public sealed partial class MatchEngine
             MatchId = MatchId, ManifestHash = ManifestHash, Phase = phase,
             ServerTick = tick, StartTick = startTick, EndTick = endTick,
             WinnerPlayerId = winner, TerminalReason = terminalReason, RewardEligible = false,
-            StateRevision = stateRevision, Overtime = overtime
+            StateRevision = stateRevision, Overtime = overtime,
+            LatestEventId = lastEventId
             ,CardActivations = (uint)performance.CardActivations,
             ObjectiveCredits = (uint)performance.ObjectiveCredits
         };
