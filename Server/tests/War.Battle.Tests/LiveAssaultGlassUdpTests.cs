@@ -251,6 +251,34 @@ internal static class LiveAssaultGlassUdpTests
                   ownerView.AssaultGlassHealth < initialGlass &&
                   ownerView.AssaultGlassMaxHealth == shooterView.AssaultGlassMaxHealth,
                 "both signed clients receive the same authoritative glass damage");
+
+            if (useBazooka)
+            {
+                async Task<MatchEvent?> ReadBazookaImpact(
+                    MatchConnection peer, MatchEventConsumer consumer)
+                {
+                    var watch = System.Diagnostics.Stopwatch.StartNew();
+                    while (watch.Elapsed < TimeSpan.FromSeconds(5))
+                    {
+                        var page = await peer.PollEventsAsync(consumer.LastEventId, timeout.Token);
+                        consumer.Consume(page);
+                        var impact = page.Events.FirstOrDefault(item =>
+                            item.Kind == MatchEventKind.Impact &&
+                            item.ActorId == shooter && item.Reason == "bazooka");
+                        if (impact != null)
+                            return impact;
+                        await Task.Delay(100, timeout.Token);
+                    }
+                    return null;
+                }
+
+                var ownerImpact = await ReadBazookaImpact(ownerPeer, ownerEvents);
+                var shooterImpact = await ReadBazookaImpact(shooterPeer, shooterEvents);
+                Check(ownerImpact is { ProjectileId: > 0 } &&
+                      shooterImpact?.EventId == ownerImpact.EventId &&
+                      shooterImpact.ProjectileId == ownerImpact.ProjectileId,
+                    "both signed clients replay the same host-owned Bazooka impact");
+            }
         }
         finally
         {
