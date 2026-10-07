@@ -1209,6 +1209,46 @@ public sealed partial class MatchEngine
         }
     }
 
+    internal int ApplyGroundVehicleMissileAssaultGlassExplosion(string shooterId,string unitId,
+        float damage,GroundVehicleMissileBinding binding,Vector3 origin)
+    {
+        if(phase!=BattlePhase.Running||groundVehicleWeapons==null||
+           assaultHelicopterMeshColliders==null||explosionPolicy==null||
+           !PlayerHitbox.Finite(origin)||!float.IsFinite(damage)||
+           damage<=0||damage>10_000_000||binding==null||
+           unitId is not ("ID_UNIT-TANK" or "ID_UNIT-BUGGY"))
+            throw new InvalidDataException("Vehicle missile glass blast lacks trusted source authority.");
+
+        var sourceWeapon=GroundVehicleMissileSourceWeapon(unitId,binding);
+        var shooter=Find(shooterId)??throw new InvalidDataException("Vehicle missile owner disappeared.");
+        int hits=0;
+        foreach(var aircraft in activeArmyEntities.Values
+            .Where(row=>row.UnitId=="ID_UNIT-ASSAULTHELI")
+            .OrderBy(row=>row.EntityKey).ToArray())
+        {
+            if(!armyAssaultHelicopterPaths.TryGetValue(aircraft.EntityKey,out var path)||
+               !armyAssaultGlass.TryGetValue(aircraft.EntityKey,out var glass))
+                throw new InvalidDataException("Vehicle missile glass lost its aircraft authority.");
+            if(glass.Current<=0)continue;
+
+            bool friendly=aircraft.OwnerFraction==shooter.Definition.Fraction;
+            if(friendly&&!sourceWeapon.FriendKill)continue;
+            var front=assaultHelicopterMeshColliders.PlaceFrontGlass(
+                new(aircraft.X,aircraft.Y,aircraft.Z),path.Rotation);
+            var effect=BuggyExplosion.ResolveArmy(origin,front.Hitbox.Center,
+                new[]{front.Hitbox},damage,binding);
+            if(effect==null)continue;
+
+            float amount=effect.RawDamage*(friendly?explosionPolicy.Friendly:1f);
+            if(!float.IsFinite(amount)||amount<=0||amount>10_000_000)
+                throw new InvalidDataException("Vehicle missile glass damage exceeded host bounds.");
+            if(!ApplyAssaultGlassDamage(aircraft.EntityKey,amount))continue;
+            hits++;
+            if(!friendly)shooter.ConfirmedEnemyHits=checked(shooter.ConfirmedEnemyHits+1);
+        }
+        return hits;
+    }
+
     internal void ApplyGroundVehicleMissileVehicleExplosion(string shooterId,string unitId,
         float damage,GroundVehicleMissileBinding binding,Vector3 origin)
     {
@@ -2181,6 +2221,8 @@ public sealed partial class MatchEngine
             }
         }
         ApplyGroundVehicleMissileInfantryExplosion(owner,unitId,damage,binding,position);
+        if(Terminal)return;
+        ApplyGroundVehicleMissileAssaultGlassExplosion(owner,unitId,damage,binding,position);
         if(Terminal)return;
         ApplyGroundVehicleMissileAirBodyExplosion(owner,unitId,damage,binding,position);
         if(Terminal)return;

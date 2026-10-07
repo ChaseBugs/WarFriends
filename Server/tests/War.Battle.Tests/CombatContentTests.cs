@@ -7131,6 +7131,61 @@ internal static class CombatContentTests
             "Tank missile explosion damages one opposing Helicopter body once");
         Reject(()=>missileAirMatch.ApplyGroundVehicleMissileAirBodyExplosion(soldierOwner,
             "ID_UNIT-TANK",21,tankMissileBinding with {MinimumDamage=1},helicopterBody));
+        var missileGlassManifest=flameHelicopterManifest with
+        {
+            MatchId="vehicle-missile-assault-glass",
+            Players=[flameHelicopterManifest.Players[0],
+                flameHelicopterManifest.Players[1] with
+                {EquippedArmyUnitIds=["ID_UNIT-ASSAULTHELI"]}]
+        };
+        content.ValidateAllocation(missileGlassManifest);
+        var missileGlassMatch=new MatchEngine(missileGlassManifest,content:content,armyChoice:_=>0);
+        missileGlassMatch.Admit(soldierOwner);
+        missileGlassMatch.Admit(helicopterOwner);
+        missileGlassMatch.Command(soldierOwner,new(){CommandId=1,
+            Ready=new(){ManifestHash=missileGlassMatch.ManifestHash}});
+        missileGlassMatch.Command(helicopterOwner,new(){CommandId=1,
+            Ready=new(){ManifestHash=missileGlassMatch.ManifestHash}});
+        missileGlassMatch.Advance(60);
+        Check(missileGlassMatch.Command(helicopterOwner,new(){CommandId=2,DeployArmy=new()
+            {OptionIndex=missileGlassMatch.ArmyBatch(helicopterOwner).OptionIndexes[0]}})
+            .Code=="army-deploying",
+            "vehicle missile glass proof deploys a trusted opposing Assault Helicopter");
+        for(ulong glassTick=61;glassTick<=75;glassTick++)missileGlassMatch.Advance(glassTick);
+        var missileGlassAircraft=missileGlassMatch.ArmyEntityBatch(soldierOwner,0,0).Entities
+            .Single(row=>row.UnitId=="ID_UNIT-ASSAULTHELI");
+        var missileFrontGlass=missileGlassMatch.GroundVehicleShotTargets(soldierOwner)
+            .Single(target=>target.EntityId==missileGlassAircraft.EntityKey&&target.AssaultGlass);
+        var missileGlassOrigin=missileFrontGlass.Hitbox.Center;
+        float missileGlassBefore=missileGlassMatch.AssaultGlassHealth(missileGlassAircraft.EntityKey)!.Value;
+        float missileBodyBefore=missileGlassMatch.ArmyHealth(missileGlassAircraft.EntityKey)!.Value;
+        Check(missileGlassMatch.ApplyGroundVehicleMissileAssaultGlassExplosion(helicopterOwner,
+                  "ID_UNIT-TANK",21,tankMissileBinding,missileGlassOrigin)==0&&
+              missileGlassMatch.ApplyGroundVehicleMissileAssaultGlassExplosion(helicopterOwner,
+                  "ID_UNIT-BUGGY",21,buggyMissileBinding,missileGlassOrigin)==0&&
+              missileGlassMatch.AssaultGlassHealth(missileGlassAircraft.EntityKey)==missileGlassBefore,
+            "Tank and Buggy primary missiles skip allied Assault Helicopter glass");
+        Check(missileGlassMatch.ApplyGroundVehicleMissileAssaultGlassExplosion(helicopterOwner,
+                  "ID_UNIT-BUGGY",21,buggySecondaryBinding,missileGlassOrigin)==1&&
+              Math.Abs(missileGlassMatch.AssaultGlassHealth(missileGlassAircraft.EntityKey)!.Value-
+                  (missileGlassBefore-10.5f))<.01f&&
+              missileGlassMatch.ArmyHealth(missileGlassAircraft.EntityKey)==missileBodyBefore,
+            "Buggy secondary missile applies allied half damage only to front glass");
+        float missileEnemyGlassBefore=missileGlassMatch.AssaultGlassHealth(missileGlassAircraft.EntityKey)!.Value;
+        Check(missileGlassMatch.ApplyGroundVehicleMissileAssaultGlassExplosion(soldierOwner,
+                  "ID_UNIT-TANK",21,tankMissileBinding,missileGlassOrigin)==1&&
+              Math.Abs(missileGlassMatch.AssaultGlassHealth(missileGlassAircraft.EntityKey)!.Value-
+                  (missileEnemyGlassBefore-21f))<.01f,
+            "opposing Tank missile damages front glass at full source strength");
+        Reject(()=>missileGlassMatch.ApplyGroundVehicleMissileAssaultGlassExplosion(soldierOwner,
+            "ID_UNIT-TANK",21,tankMissileBinding with {MinimumDamage=1},missileGlassOrigin));
+        Check(missileGlassMatch.ApplyGroundVehicleMissileAssaultGlassExplosion(soldierOwner,
+                  "ID_UNIT-TANK",10_000,tankMissileBinding,missileGlassOrigin)==1&&
+              missileGlassMatch.AssaultGlassHealth(missileGlassAircraft.EntityKey)==0&&
+              missileGlassMatch.ApplyGroundVehicleMissileAssaultGlassExplosion(soldierOwner,
+                  "ID_UNIT-TANK",21,tankMissileBinding,missileGlassOrigin)==0&&
+              missileGlassMatch.ArmyHealth(missileGlassAircraft.EntityKey)==missileBodyBefore,
+            "broken missile-hit front glass no longer receives splash or changes body health");
         transporterMatch.ApplyGroundVehicleMissileRepairDroneExplosion(soldierOwner,
             "ID_UNIT-BUGGY",21,buggySecondaryBinding,missileDroneCenter);
         float friendlyBuggyHealth=transporterMatch.TransporterRepairDrones(transporterEntity.EntityKey)[1].Health;
