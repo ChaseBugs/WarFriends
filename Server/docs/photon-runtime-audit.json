@@ -1,12 +1,7 @@
 {
   "project": "Clients\\ExportedProject",
-  "photonReferences": 266,
+  "photonReferences": 265,
   "forbiddenRuntimeCalls": [
-    {
-      "file": "Assets/Scripts/Assembly-CSharp/GameController.cs",
-      "line": 650,
-      "text": "PhotonNetwork.Disconnect();"
-    },
     {
       "file": "Assets/Scripts/Assembly-CSharp/PhotonConnectionManager.cs",
       "line": 207,

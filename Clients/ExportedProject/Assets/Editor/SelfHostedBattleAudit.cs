@@ -91,8 +91,9 @@ public static class SelfHostedBattleAudit
                 if (first.IsReconnecting)
                 {
                     sawRecovery = true;
-                    Require(ReferenceEquals(ownedClient.Invoke(null, null), first),
-                        "lost transport keeps self-hosted room ownership");
+                    Require(ReferenceEquals(ownedClient.Invoke(null, null), first) &&
+                        PhotonConnectionManager.IsSelfHostedActive && PhotonConnectionManager.isInRoom,
+                        "lost transport keeps self-hosted room ownership and scene guards");
                 }
                 if (sawRecovery && first.IsConnected && !first.IsReconnecting) break;
             }
@@ -119,7 +120,8 @@ public static class SelfHostedBattleAudit
             Require(state.Snapshot.Phase == BattlePhase.Ended && updates >= 5,
                 "both participants observe the authoritative forfeit");
             first.LeaveMatch();
-            Require(!first.OwnsMatch && !first.IsConnected && SelfHostedBattleClient.Active == null,
+            Require(!first.OwnsMatch && !first.IsConnected && SelfHostedBattleClient.Active == null &&
+                !PhotonConnectionManager.IsSelfHostedActive,
                 "leaving clears the self-hosted room and transport together");
         }
         }
