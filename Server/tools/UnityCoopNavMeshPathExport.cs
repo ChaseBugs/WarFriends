@@ -1,5 +1,5 @@
 // Execute only in a disposable Unity 2018.3 project containing the recovered
-// co-op NavMesh assets. No Client scene or prefab is modified.
+// single-player or multiplayer NavMesh assets. No Client asset is modified.
 using System;
 using System.IO;
 using UnityEditor;
@@ -52,7 +52,8 @@ public static class UnityCoopNavMeshPathExport
         for (int mapIndex = 0; mapIndex < input.maps.Length; mapIndex++)
         {
             MapInput source = input.maps[mapIndex];
-            if (source.positions == null || source.positions.Length != 4 ||
+            if (source.positions == null ||
+                (source.positions.Length != 4 && source.positions.Length != 8) ||
                 !source.asset.StartsWith("Assets/NavMeshData/", StringComparison.Ordinal))
                 throw new InvalidDataException("Invalid co-op map route input.");
             NavMeshData data = AssetDatabase.LoadAssetAtPath<NavMeshData>(source.asset);
@@ -63,12 +64,14 @@ public static class UnityCoopNavMeshPathExport
                 throw new InvalidDataException("Unity rejected " + source.asset);
             try
             {
-                var routes = new Route[12];
+                int pointCount = source.positions.Length;
+                var routes = new Route[pointCount == 4 ? 12 : 24];
                 int routeIndex = 0;
-                for (int from = 0; from < 4; from++)
-                for (int to = 0; to < 4; to++)
+                for (int from = 0; from < pointCount; from++)
+                for (int to = 0; to < pointCount; to++)
                 {
-                    if (from == to) continue;
+                    if (from == to || pointCount == 8 &&
+                        (from < 4) != (to < 4)) continue;
                     var route = new Route { from = from, to = to,
                         corners = new Vector3[0], status = "SampleFailed" };
                     NavMeshHit startHit;

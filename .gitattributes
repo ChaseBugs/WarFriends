@@ -37,4 +37,5 @@ Server/content/recovered-coop-navmesh-paths.json text eol=lf
 Server/content/recovered-coop-bot-rules.json text eol=lf
 Server/content/recovered-coop-bot-health.json text eol=lf
 Server/content/recovered-coop-boss-anchors.json text eol=lf
+Server/content/recovered-coop-boss-paths.json text eol=lf
 Server/content/coop-navmesh/*.asset binary

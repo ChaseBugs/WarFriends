@@ -39,7 +39,7 @@ internal static class CombatContentTests
         int mapAssertions = VerifyCoopSpawnCatalog(directory, catalog);
         int navMeshAssertions = VerifyCoopNavMeshSources(directory, catalog);
         int routeAssertions = VerifyCoopNavMeshRoutes(directory, catalog);
-        int botAssertions = VerifyCoopBotRules(directory, catalog);
+        int botAssertions = VerifyCoopBotRules(directory, catalog, content);
         int bossSpawnAssertions = VerifyCoopBossAiSpawns(catalog,
             content.ArmySpawnPoints, content.Maps);
 
@@ -804,7 +804,8 @@ internal static class CombatContentTests
         }
     }
 
-    private static int VerifyCoopBotRules(string directory, MissionCatalog missions)
+    private static int VerifyCoopBotRules(string directory, MissionCatalog missions,
+        BattleCombatContent content)
     {
         string path = Path.Combine(directory, "recovered-coop-bot-rules.json");
         CoopBotRuleCatalog bots = CoopBotRuleCatalog.Load(path, missions);
@@ -839,6 +840,24 @@ internal static class CombatContentTests
                     missions.Get(index * 5 + 4).MapStage))
             throw new Exception("Boss anchors differ from the multiplayer source maps.");
         int combatAssertions = VerifyCoopBossCombat(missions, health, anchors);
+        CoopBossPathCatalog bossPaths = CoopBossPathCatalog.Load(Path.Combine(
+            directory, "recovered-coop-boss-paths.json"), missions, anchors,
+            content.ArmyNavMeshes);
+        if (bossPaths.Maps.Count != 5 ||
+            bossPaths.Maps.Any(map => map.Routes.Count != 24 ||
+                map.Between(5, 7).Corners.Count < 2) ||
+            Enumerable.Range(0, 15).Any(index =>
+                bossPaths.MapForMission(missions, index * 5 + 4).Stage !=
+                    missions.Get(index * 5 + 4).MapStage))
+            throw new Exception("Boss routes differ from source multiplayer maps.");
+        try
+        {
+            _ = bossPaths.Maps[0].Between(1, 5);
+            throw new Exception("A cross-faction boss route was accepted.");
+        }
+        catch (ArgumentOutOfRangeException)
+        {
+        }
 
         string temporaryPath = Path.Combine(Path.GetTempPath(),
             $"war-coop-bots-{Guid.NewGuid():N}.json");
@@ -867,7 +886,7 @@ internal static class CombatContentTests
             }
             catch (InvalidDataException)
             {
-                return 15 + combatAssertions;
+                return 18 + combatAssertions;
             }
         }
         finally
