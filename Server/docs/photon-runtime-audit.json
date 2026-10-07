@@ -1,40 +1,20 @@
 {
   "project": "Clients\\ExportedProject",
-  "photonReferences": 265,
+  "photonReferences": 257,
   "forbiddenRuntimeCalls": [
     {
       "file": "Assets/Scripts/Assembly-CSharp/PhotonConnectionManager.cs",
-      "line": 207,
-      "text": "PhotonNetwork.JoinRoom(mRoomName);"
-    },
-    {
-      "file": "Assets/Scripts/Assembly-CSharp/PhotonConnectionManager.cs",
-      "line": 252,
-      "text": "PhotonNetwork.JoinRoom(roomName);"
-    },
-    {
-      "file": "Assets/Scripts/Assembly-CSharp/PhotonConnectionManager.cs",
-      "line": 268,
-      "text": "PhotonNetwork.JoinRandomRoom(null, 2, MatchmakingMode.FillRoom, lobby, sqlFilter);"
-    },
-    {
-      "file": "Assets/Scripts/Assembly-CSharp/PhotonConnectionManager.cs",
-      "line": 290,
-      "text": "PhotonNetwork.JoinOrCreateRoom(mRoomName, roomOptions, lobby);"
-    },
-    {
-      "file": "Assets/Scripts/Assembly-CSharp/PhotonConnectionManager.cs",
-      "line": 306,
+      "line": 242,
       "text": "PhotonNetwork.LeaveRoom();"
     },
     {
       "file": "Assets/Scripts/Assembly-CSharp/PhotonConnectionManager.cs",
-      "line": 307,
+      "line": 243,
       "text": "PhotonNetwork.CreateRoom(\"OfflineRoom\");"
     },
     {
       "file": "Assets/Scripts/Assembly-CSharp/PhotonConnectionManager.cs",
-      "line": 320,
+      "line": 256,
       "text": "PhotonNetwork.Disconnect();"
     }
   ],

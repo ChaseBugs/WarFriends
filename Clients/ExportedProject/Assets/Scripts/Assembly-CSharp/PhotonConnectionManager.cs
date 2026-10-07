@@ -177,35 +177,9 @@ public class PhotonConnectionManager : Singleton<PhotonConnectionManager>
 
 	private void OnConnectedToMaster()
 	{
-		if (PhotonNetwork.offlineMode)
-		{
-			return;
-		}
-		Debug.Log("OnConnectedToMaster");
-		PhotonNetwork.player.name = GameLoginManager.currentPlayer.name;
-		PhotonNetwork.player.SetCustomProperties(PlayerProperties.photonPlayerProperties);
-		if (mCurrentRoomConnection != null)
-		{
-			if (mCurrentRoomConnection.isRandom)
-			{
-				if (mShouldCreateRoom)
-				{
-					CreateRoom();
-				}
-				else
-				{
-					TryRandomConnect();
-				}
-			}
-			else
-			{
-				CreateOrJoinRoom();
-			}
-		}
-		else if (MatchManager.isReconnect)
-		{
-			PhotonNetwork.JoinRoom(mRoomName);
-		}
+		// Cloud connection callbacks can still arrive from retained Photon scene
+		// components. They must never open a room in the offline build.
+		Debug.LogError("Photon Cloud room admission is unavailable; use the self-hosted battle grant.");
 	}
 
 	private void OnJoinedRoom()
@@ -241,36 +215,9 @@ public class PhotonConnectionManager : Singleton<PhotonConnectionManager>
 		SendOnJoinedNewRoom();
 	}
 
-	private void CreateOrJoinRoom()
-	{
-		if (PhotonNetwork.connectionState == ConnectionState.Connected)
-		{
-			if (isClient)
-			{
-				string roomName = mRoomName;
-				Debug.Log("Try Joining room " + mRoomName);
-				PhotonNetwork.JoinRoom(roomName);
-			}
-			else
-			{
-				CreateRoom();
-			}
-		}
-	}
-
 	private void TryRandomConnect()
 	{
-		if (mCurrentRoomConnection != null)
-		{
-			MatchManager.matchState = MatchState.WaitingForOpponent;
-			TypedLobby lobby = mCurrentRoomConnection.lobby;
-			string sqlFilter = mCurrentRoomConnection.GetSqlFilter(mJoinAttemtCounter);
-			PhotonNetwork.JoinRandomRoom(null, 2, MatchmakingMode.FillRoom, lobby, sqlFilter);
-			if (bestRegionsSorted != null && bestRegionsSorted.Count > 0 && bestRegion == bestRegionsSorted[0].Value1)
-			{
-				Debug.Log("Try random connect " + sqlFilter);
-			}
-		}
+		Debug.LogError("Photon random matchmaking is unavailable; use the self-hosted Backend queue.");
 	}
 
 	public string GetNewRoomName()
@@ -278,17 +225,6 @@ public class PhotonConnectionManager : Singleton<PhotonConnectionManager>
 		string text = GameLoginManager.currentPlayer.id + "r" + UnityEngine.Random.Range(10000, 999999);
 		Debug.Log($"Will connect to rooom: {text}");
 		return text;
-	}
-
-	private void CreateRoom()
-	{
-		isClient = false;
-		if (mCurrentRoomConnection != null)
-		{
-			RoomOptions roomOptions = mCurrentRoomConnection.roomOptions;
-			TypedLobby lobby = mCurrentRoomConnection.lobby;
-			PhotonNetwork.JoinOrCreateRoom(mRoomName, roomOptions, lobby);
-		}
 	}
 
 	public static void JoinOfflineGame()
