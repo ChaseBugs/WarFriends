@@ -124,7 +124,7 @@ internal static class LiveRifleTests
         try
         {
             await worker.StartAsync(CancellationToken.None);
-            using var ct=new CancellationTokenSource(TimeSpan.FromSeconds(15));
+            using var ct=new CancellationTokenSource(TimeSpan.FromSeconds(25));
             using var peerA=new MatchConnection(Grant(one,701));using var peerB=new MatchConnection(Grant(two,702));
             Check((await peerA.ConnectAsync(ct.Token)).Code=="admitted","rifle UDP admission A");
             Check((await peerB.ConnectAsync(ct.Token)).Code=="admitted","rifle UDP admission B");
@@ -213,6 +213,44 @@ internal static class LiveRifleTests
                 Check(restoredEvents.Count>0 && restoredEvents[0]==processed+1 &&
                       restoredEvents.SequenceEqual(restoredEvents.Distinct()),
                     "fresh SDK dispatches later host events once from its restored cursor");
+
+                // Let both players acknowledge the complete history. The
+                // Worker may then discard it, leaving cursor zero unusable.
+                async Task<ulong> AcknowledgeAll(MatchConnection peer)
+                {
+                    ulong cursor=0;
+                    for(int pageNumber=0;pageNumber<256;pageNumber++)
+                    {
+                        var page=await peer.PollEventsAsync(cursor,ct.Token);
+                        if(page.Events.Count==0)
+                        {
+                            Check(cursor==page.LatestEventId,"all live event pages acknowledged");
+                            return cursor;
+                        }
+                        cursor=page.Events[page.Events.Count-1].EventId;
+                    }
+                    throw new Exception("Live event history exceeded the bounded audit.");
+                }
+                ulong latestA=await AcknowledgeAll(resumed);
+                ulong latestB=await AcknowledgeAll(peerB);
+                Check(latestA==latestB && latestA>processed,
+                    "both live players released the same retained event history");
+                MatchEventCursorExpiredException? expired=null;
+                try {await resumed.PollEventsAsync(0,ct.Token);}
+                catch(MatchEventCursorExpiredException error) {expired=error;}
+                Check(expired!=null && expired.LatestEventId==latestA,
+                    "portable SDK distinguishes an expired event cursor from malformed replay");
+
+                using var rebased=new MatchConnection(Grant(one,704,2));
+                Check((await rebased.ConnectAsync(ct.Token)).Code=="admitted",
+                    "fresh generation admits after event history expires");
+                var baseline=await rebased.PollAsync(ct.Token);
+                Check(baseline.Snapshot.LatestEventId>=latestA,
+                    "new session receives an authoritative snapshot event boundary");
+                var afterBaseline=await rebased.PollEventsAsync(
+                    baseline.Snapshot.LatestEventId,ct.Token);
+                Check(afterBaseline.Events.All(item=>item.EventId>baseline.Snapshot.LatestEventId),
+                    "event replay after full baseline cannot repeat lost pre-snapshot effects");
             }
             Check(!state.Snapshot.RewardEligible,"UDP rifle mode remains unscored");
         }
