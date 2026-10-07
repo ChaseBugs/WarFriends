@@ -52,6 +52,7 @@ public sealed class BattleCombatContent
     public DroneColliderCatalog DroneColliders { get; }
     internal HelicopterBodyColliderCatalog HelicopterBodyColliders { get; }
     internal AssaultHelicopterBoxColliderCatalog AssaultHelicopterBoxCollider { get; private init; }=null!;
+    internal AssaultHelicopterMeshColliderCatalog AssaultHelicopterMeshColliders { get; private init; }=null!;
     internal AssaultHelicopterWeaponCatalog AssaultHelicopterWeapons { get; private init; }=null!;
     internal AirShotTargetCatalog AirShotTargets { get; }
     public HelicopterCrewPointCatalog HelicopterCrewPoints { get; }
@@ -117,6 +118,9 @@ public sealed class BattleCombatContent
             "recovered-air-unit-geometry.json"));
         var assaultHelicopterBoxCollider=AssaultHelicopterBoxColliderCatalog.Load(
             Path.Combine(directory,"recovered-air-unit-geometry.json"));
+        var assaultHelicopterMeshColliders=AssaultHelicopterMeshColliderCatalog.Load(
+            Path.Combine(directory,"recovered-air-unit-geometry.json"),
+            Path.Combine(directory,"recovered-air-unit-unity-geometry.json"));
         var assaultHelicopterWeapons=AssaultHelicopterWeaponCatalog.Load(Path.Combine(directory,
             "recovered-air-unit-geometry.json"));
         var airShotTargets=AirShotTargetCatalog.Load(Path.Combine(directory,
@@ -209,6 +213,7 @@ public sealed class BattleCombatContent
         {HelicopterGunnerExplosions=helicopterGunnerExplosions,
             AssaultHelicopterWeapons=assaultHelicopterWeapons,
             AssaultHelicopterBoxCollider=assaultHelicopterBoxCollider,
+            AssaultHelicopterMeshColliders=assaultHelicopterMeshColliders,
             GrenadeShotTargets=grenadeShotTargets};
     }
     public void ValidateAllocation(MatchManifest manifest)

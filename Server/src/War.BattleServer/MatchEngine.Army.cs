@@ -32,6 +32,7 @@ public sealed partial class MatchEngine
     private readonly Dictionary<ulong,ArmyVitality> armyVitality=[];
     private HelicopterBodyColliderCatalog? helicopterBodyColliders;
     private AssaultHelicopterBoxColliderCatalog? assaultHelicopterBoxCollider;
+    private AssaultHelicopterMeshColliderCatalog? assaultHelicopterMeshColliders;
     private AirShotTargetCatalog? airShotTargets;
     private readonly Dictionary<ulong,DroneSpecialState> armyDroneSpecials=[];
     private readonly Dictionary<ulong,DroneWaypointState> armyDronePaths=[];
@@ -644,6 +645,11 @@ public sealed partial class MatchEngine
                 throw new InvalidDataException("Assault Helicopter body has unsupported faction.");
             result.Add(new(row.EntityKey,AssaultHelicopterBoxColliderCatalog.ColliderFileId,
                 layer,box,HelicopterBody:true));
+            foreach(var mesh in (assaultHelicopterMeshColliders??throw new InvalidDataException(
+                "Assault Helicopter body mesh source missing.")).Place(
+                    new(row.X,row.Y,row.Z),path.Rotation))
+                result.Add(new(row.EntityKey,mesh.ColliderFileId,layer,mesh.Hitbox,
+                    HelicopterBody:true));
         }
         if(vehicles!=null&&groundVehicleWeapons!=null)
         foreach(var vehicle in vehicles.Snapshot())
@@ -1357,8 +1363,9 @@ public sealed partial class MatchEngine
             var assaultShooter=Find(shooterId)??throw new InvalidDataException(
                 "Assault Helicopter impact shooter disappeared.");
             if(assaultShooter.Definition.Fraction==assaultHelicopter.OwnerFraction||
-               assaultHelicopterBoxCollider==null||
-               partId!=AssaultHelicopterBoxColliderCatalog.ColliderFileId||
+               assaultHelicopterBoxCollider==null||assaultHelicopterMeshColliders==null||
+               partId!=AssaultHelicopterBoxColliderCatalog.ColliderFileId&&
+                   !assaultHelicopterMeshColliders.HasCollider(partId)||
                !float.IsFinite(rawDamage)||rawDamage<=0||rawDamage>10_000_000)
                 throw new InvalidDataException("Invalid Assault Helicopter body projectile impact.");
             if(ApplyArmyHostDamage(entityId,rawDamage))

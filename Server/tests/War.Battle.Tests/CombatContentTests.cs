@@ -39,6 +39,31 @@ internal static class CombatContentTests
               assaultBodyBox.Size == new Vector3(.50202096f, .542398f, .27047324f),
             "pinned Assault Helicopter body box retains its source center and size");
         Reject(() => content.AssaultHelicopterBoxCollider.Place(Vector3.Zero, default));
+        var tetrahedron = new TriangleMeshGeometry(
+            [Vector3.Zero, Vector3.UnitX, Vector3.UnitY, Vector3.UnitZ],
+            [0, 2, 1, 0, 1, 3, 0, 3, 2, 1, 2, 3]);
+        var tetrahedronHitbox = new PlayerHitbox("test-convex-mesh", 1,
+            Vector3.Zero, Quaternion.Identity, tetrahedron, Vector3.Zero);
+        Check(tetrahedronHitbox.Raycast(new Vector3(2, .2f, .2f), -Vector3.UnitX, 3f)
+                  is > 1f and < 2f &&
+              tetrahedronHitbox.Raycast(new Vector3(.1f, .1f, .1f), Vector3.UnitX, 3f) == null &&
+              tetrahedronHitbox.OverlapsSphere(new Vector3(.1f, .1f, .1f), .01f) &&
+              tetrahedronHitbox.DistanceToPoint(new Vector3(.1f, .1f, .1f)) == 0,
+            "convex mesh queries preserve exterior rays and interior overlap semantics");
+        var assaultBodyMeshes = content.AssaultHelicopterMeshColliders.Place(
+            Vector3.Zero, Quaternion.Identity);
+        Check(content.AssaultHelicopterMeshColliders.Count == 5 &&
+              assaultBodyMeshes.Count == 5 &&
+              assaultBodyMeshes.Select(mesh => mesh.ColliderFileId).Distinct().Count() == 5 &&
+              assaultBodyMeshes.All(mesh => mesh.Hitbox.Kind == PlayerHitboxKind.Mesh &&
+                  content.AssaultHelicopterMeshColliders.HasCollider(mesh.ColliderFileId)),
+            "independent Unity triangle export binds five distinct Assault Helicopter body parts");
+        Check(assaultBodyMeshes.All(mesh =>
+                  mesh.Hitbox.Raycast(mesh.Hitbox.Center + Vector3.UnitX * 5,
+                      -Vector3.UnitX, 10f).HasValue &&
+                  mesh.Hitbox.Raycast(mesh.Hitbox.Center + Vector3.UnitX * 5,
+                      Vector3.UnitX, 10f) == null),
+            "Assault Helicopter body meshes use their triangles for hit and miss rays");
         var heliBoxes=content.HelicopterBodyColliders.Place(Vector3.Zero,Quaternion.Identity);
         using(var geometryReference=JsonDocument.Parse(File.ReadAllBytes(Path.Combine(directory,
             "recovered-air-unit-unity-geometry.json"))))
@@ -3483,13 +3508,33 @@ internal static class CombatContentTests
         Check(liveAssaultBody.Layer == 27 && liveAssaultBody.HelicopterBody &&
               Vector3.Distance(liveAssaultBody.Hitbox.Center, assaultRoutePosition) < 1f,
             "opposing projectiles see the source body box at the live Assault Helicopter pose");
+        var liveAssaultMeshes = assaultHelicopterMatch.GroundVehicleShotTargets(decoyOpponent)
+            .Where(target => target.EntityId == assaultHelicopterSpawn.EntityKey &&
+                target.Hitbox.Kind == PlayerHitboxKind.Mesh).ToArray();
+        Check(liveAssaultMeshes.Length == 5 &&
+              liveAssaultMeshes.All(target => target.Layer == 27 && target.HelicopterBody),
+            "all assigned body meshes follow the deployed Assault Helicopter");
         var assaultBodyTrace = assaultHelicopterMatch.TraceHeavyTurretShot(decoyOpponent,
             liveAssaultBody.Hitbox.Center + Vector3.UnitY,
             -Vector3.UnitY, 2f);
         Check(assaultBodyTrace is { DynamicEntityId: ulong assaultHitEntity,
-                  DynamicPartId: AssaultHelicopterBoxColliderCatalog.ColliderFileId } &&
-              assaultHitEntity == assaultHelicopterSpawn.EntityKey,
-            "normal projectile ray identifies the deployed Assault Helicopter body box");
+                  DynamicPartId: int assaultHitPart } &&
+              assaultHitEntity == assaultHelicopterSpawn.EntityKey &&
+              (assaultHitPart == AssaultHelicopterBoxColliderCatalog.ColliderFileId ||
+               content.AssaultHelicopterMeshColliders.HasCollider(assaultHitPart)),
+            "normal projectile ray identifies the deployed Assault Helicopter body");
+        var meshDirections = new[] { Vector3.UnitX, -Vector3.UnitX,
+            Vector3.UnitY, -Vector3.UnitY, Vector3.UnitZ, -Vector3.UnitZ };
+        var liveMeshTrace = liveAssaultMeshes.SelectMany(mesh => meshDirections.Select(axis =>
+            assaultHelicopterMatch.TraceHeavyTurretShot(decoyOpponent,
+                mesh.Hitbox.Center + axis * 2f, -axis, 4f)))
+            .FirstOrDefault(hit => hit is { DynamicEntityId: ulong entityId,
+                DynamicPartId: int partId } &&
+                entityId == assaultHelicopterSpawn.EntityKey &&
+                content.AssaultHelicopterMeshColliders.HasCollider(partId));
+        Check(liveMeshTrace?.DynamicPartId is int liveMeshPart &&
+              content.AssaultHelicopterMeshColliders.HasCollider(liveMeshPart),
+            "normal projectile ray resolves a source triangle body mesh");
         float assaultHealthBeforeHit = assaultHelicopterMatch.ArmyHealth(
             assaultHelicopterSpawn.EntityKey)!.Value;
         assaultHelicopterMatch.ApplyArmyBodyProjectileImpact(decoyOpponent,
@@ -3498,6 +3543,11 @@ internal static class CombatContentTests
         Check(assaultHelicopterMatch.ArmyHealth(assaultHelicopterSpawn.EntityKey) ==
                   assaultHealthBeforeHit - 10f,
             "source body box routes a verified opposing hit to Assault Helicopter vitality");
+        assaultHelicopterMatch.ApplyArmyBodyProjectileImpact(decoyOpponent,
+            assaultHelicopterSpawn.EntityKey, liveMeshTrace!.DynamicPartId!.Value, 7f);
+        Check(assaultHelicopterMatch.ArmyHealth(assaultHelicopterSpawn.EntityKey) ==
+                  assaultHealthBeforeHit - 17f,
+            "source triangle mesh routes opposing damage to the same body vitality");
         Reject(() => assaultHelicopterMatch.ApplyArmyBodyProjectileImpact(decoyPlayer,
             assaultHelicopterSpawn.EntityKey,
             AssaultHelicopterBoxColliderCatalog.ColliderFileId, 10f));

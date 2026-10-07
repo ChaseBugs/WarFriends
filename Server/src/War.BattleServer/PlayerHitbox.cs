@@ -2,7 +2,7 @@ using System.Numerics;
 
 namespace War.BattleServer;
 
-public enum PlayerHitboxKind { Box, Sphere, Capsule }
+public enum PlayerHitboxKind { Box, Sphere, Capsule, Mesh }
 public sealed record PlayerHitbox
 {
     public string SourcePath { get; }
@@ -17,6 +17,8 @@ public sealed record PlayerHitbox
     public float HalfSegment { get; }
     public bool Enabled { get; }
     public bool Active { get; }
+    private readonly TriangleMeshGeometry? mesh;
+    private readonly Vector3 meshOrigin;
 
     public PlayerHitbox(string sourcePath, PlayerHitboxKind kind, float weight, Vector3 center,
         Vector3 size, Quaternion rotation, float radius, Vector3 axis, float halfSegment, bool enabled = true, bool active = true,
@@ -27,6 +29,7 @@ public sealed record PlayerHitbox
             (transformPosition.HasValue && !Finite(transformPosition.Value)) || !Finite(size) || !Finite(axis) ||
             !float.IsFinite(rotation.LengthSquared()) || Math.Abs(rotation.LengthSquared()-1) > 0.0001f ||
             !float.IsFinite(radius) || !float.IsFinite(halfSegment) || radius is < 0 or > 100 || halfSegment is < 0 or > 100 ||
+            kind == PlayerHitboxKind.Mesh ||
             (kind == PlayerHitboxKind.Box && (size.X <= 0 || size.Y <= 0 || size.Z <= 0 || size.X > 100 || size.Y > 100 || size.Z > 100 || radius != 0 || halfSegment != 0 || axis != Vector3.Zero)) ||
             (kind != PlayerHitboxKind.Box && (radius <= 0 || size != Vector3.Zero)) ||
             (kind == PlayerHitboxKind.Sphere && (halfSegment != 0 || axis != Vector3.Zero)) ||
@@ -39,6 +42,18 @@ public sealed record PlayerHitbox
         Enabled = enabled; Active = active;
     }
 
+    internal PlayerHitbox(string sourcePath, float weight, Vector3 origin,
+        Quaternion rotation, TriangleMeshGeometry geometry, Vector3 rootPosition)
+        : this(sourcePath, PlayerHitboxKind.Box, weight,
+            origin + Vector3.Transform(geometry.BoundsCenter, rotation),
+            geometry.BoundsSize, rotation, 0, Vector3.Zero, 0,
+            transformPosition: rootPosition)
+    {
+        Kind = PlayerHitboxKind.Mesh;
+        mesh = geometry;
+        meshOrigin = origin;
+    }
+
     internal static bool Finite(Vector3 v) => float.IsFinite(v.X) && float.IsFinite(v.Y) && float.IsFinite(v.Z) && Math.Abs(v.X) <= 10000 && Math.Abs(v.Y) <= 10000 && Math.Abs(v.Z) <= 10000;
     // Unity Physics.OverlapSphere tests the collider volume, not just its center.
     internal bool OverlapsSphere(Vector3 center,float radius)
@@ -46,6 +61,12 @@ public sealed record PlayerHitbox
         if(!Finite(center) || !float.IsFinite(radius) || radius is <=0 or >100)
             throw new InvalidDataException("Invalid host overlap sphere.");
         if(!Enabled || !Active)return false;
+        if (mesh != null)
+        {
+            Vector3 local = Vector3.Transform(center - meshOrigin,
+                Quaternion.Conjugate(Rotation));
+            return mesh.Contains(local) || mesh.DistanceToSurface(local) <= radius;
+        }
         Vector3 offset=center-Center;
         if(Kind==PlayerHitboxKind.Box)
         {
@@ -69,6 +90,8 @@ public sealed record PlayerHitbox
            Math.Abs(rotation.LengthSquared()-1)>.0001f)
             throw new InvalidDataException("Invalid host overlap box.");
         if(!Enabled||!Active)return false;
+        if (mesh != null)
+            throw new InvalidDataException("Mesh and box overlap requires a source-specific policy.");
         rotation=Quaternion.Normalize(rotation);var inverse=Quaternion.Conjugate(rotation);var half=size*.5f;
         if(Kind==PlayerHitboxKind.Sphere)
         {
@@ -112,6 +135,12 @@ public sealed record PlayerHitbox
     internal float DistanceToPoint(Vector3 point)
     {
         if(!Finite(point))throw new InvalidDataException("Invalid hitbox distance point.");
+        if (mesh != null)
+        {
+            Vector3 local = Vector3.Transform(point - meshOrigin,
+                Quaternion.Conjugate(Rotation));
+            return mesh.Contains(local) ? 0 : mesh.DistanceToSurface(local);
+        }
         Vector3 offset=point-Center;
         if(Kind==PlayerHitboxKind.Box)
         {
@@ -127,6 +156,11 @@ public sealed record PlayerHitbox
     internal float BoundsDistanceToPoint(Vector3 point)
     {
         if(!Finite(point))throw new InvalidDataException("Invalid hitbox bounds point.");
+        if (mesh != null)
+        {
+            var bounds = mesh.WorldBounds(meshOrigin, Rotation);
+            return Vector3.Distance(point, Vector3.Clamp(point, bounds.Min, bounds.Max));
+        }
         Vector3 half;
         if(Kind==PlayerHitboxKind.Box)
         {
@@ -150,6 +184,14 @@ public sealed record PlayerHitbox
         if (!Finite(origin) || !Finite(direction) || direction.LengthSquared() < 1e-12f || !float.IsFinite(maxDistance) || maxDistance is <= 0 or > 10000)
             throw new ArgumentOutOfRangeException(nameof(direction));
         Vector3 ray = Vector3.Normalize(direction), relative = origin-Center;
+        if (mesh != null)
+        {
+            Vector3 local = Vector3.Transform(origin - meshOrigin,
+                Quaternion.Conjugate(Rotation));
+            if (mesh.Contains(local)) return null;
+            return mesh.Raycast(local,
+                Vector3.Transform(ray, Quaternion.Conjugate(Rotation)), maxDistance);
+        }
         if (Kind == PlayerHitboxKind.Box)
         {
             var inverse = Quaternion.Conjugate(Rotation);
