@@ -3840,6 +3840,18 @@ internal static class CombatContentTests
             "friendly Land Mine applies the source half-damage coefficient to the aircraft body");
         Reject(() => assaultHelicopterMatch.ApplyLandMineAssaultHelicopterBodyExplosion(
             decoyOpponent, mineBody.Center, float.NaN));
+        ulong assaultTriggerCursor=assaultHelicopterMatch.EventBatch(decoyOpponent,0).LatestEventId;
+        Check(assaultHelicopterMatch.TryRegisterLandMine(new string('6',32),decoyOpponent,
+                  mineBody.Center,10f),
+            "host-only mine placement binds the current Assault Helicopter body part");
+        ulong assaultTriggerMineId=assaultHelicopterMatch.Snapshot().LandMines.Single().EntityId;
+        assaultHelicopterMatch.Advance(127);
+        Check(assaultHelicopterMatch.Snapshot().LandMines.Count==0&&
+              assaultHelicopterMatch.EventBatch(decoyOpponent,assaultTriggerCursor).Events.Any(row=>
+                  row.Kind==MatchEventKind.LandMineTriggered&&
+                  row.ProjectileId==assaultTriggerMineId&&
+                  row.Reason=="air-trigger:"+mineTarget.EntityKey),
+            "a non-metal Assault Helicopter body child triggers a mine on the normal host tick");
 
         var mineGlassManifest = assaultHelicopterManifest with
         {
@@ -5052,6 +5064,18 @@ internal static class CombatContentTests
             "allied Land Mine blast uses recovered half damage on Helicopter body");
         Reject(()=>flameHelicopterMatch.ApplyLandMineHelicopterBodyExplosion(soldierOwner,
             helicopterMineOrigin,float.NaN));
+        ulong helicopterTriggerCursor=flameHelicopterMatch.EventBatch(soldierOwner,0).LatestEventId;
+        Check(flameHelicopterMatch.TryRegisterLandMine(new string('6',32),soldierOwner,
+                  helicopterMineOrigin,10f),
+            "host-only mine placement binds a current Helicopter body child");
+        ulong helicopterTriggerMineId=flameHelicopterMatch.Snapshot().LandMines.Single().EntityId;
+        flameHelicopterMatch.Advance(76);
+        Check(flameHelicopterMatch.Snapshot().LandMines.Count==0&&
+              flameHelicopterMatch.EventBatch(soldierOwner,helicopterTriggerCursor).Events.Any(row=>
+                  row.Kind==MatchEventKind.LandMineTriggered&&
+                  row.ProjectileId==helicopterTriggerMineId&&
+                  row.Reason=="air-trigger:"+flameHelicopterTarget.EntityKey),
+            "a non-metal Helicopter body child triggers a mine on the normal host tick");
         var flameDecoyManifest=flameManifest with {MatchId="army-flame-decoy",
             SceneMasterPlayerId=soldierOwner,
             Players=flameManifest.Players.Select(p=>p with {PlayerLevel=22}).ToArray()};

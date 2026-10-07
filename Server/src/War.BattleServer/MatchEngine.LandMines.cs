@@ -98,8 +98,12 @@ public sealed partial class MatchEngine
             if(playerTrigger==null&&armyTrigger==null&&vehicleTrigger==null&&
                passengerTrigger==null&&decoyTrigger==null)
                 turretTrigger=FindLandMineHeavyTurretTrigger(mine);
+            BattleArmyEntityState? aircraftTrigger=null;
             if(playerTrigger==null&&armyTrigger==null&&vehicleTrigger==null&&
                passengerTrigger==null&&decoyTrigger==null&&turretTrigger==null)
+                aircraftTrigger=FindLandMineAircraftTrigger(mine);
+            if(playerTrigger==null&&armyTrigger==null&&vehicleTrigger==null&&
+               passengerTrigger==null&&decoyTrigger==null&&turretTrigger==null&&aircraftTrigger==null)
                 continue;
             if(!landMines.TryRemove(mine.EntityId,out var removed)||removed!=mine)
                 throw new InvalidDataException("Land Mine trigger compare-and-remove failed.");
@@ -132,10 +136,15 @@ public sealed partial class MatchEngine
                 target=decoyTrigger.OwnerPlayerId;
                 reason="decoy-trigger:"+decoyTrigger.EntityId;
             }
+            else if(turretTrigger!=null)
+            {
+                target=turretTrigger.OwnerPlayerId;
+                reason="heavy-turret-trigger:"+turretTrigger.EntityId;
+            }
             else
             {
-                target=turretTrigger!.OwnerPlayerId;
-                reason="heavy-turret-trigger:"+turretTrigger.EntityId;
+                target=aircraftTrigger!.OwnerPlayerId;
+                reason="air-trigger:"+aircraftTrigger.EntityKey;
             }
             Emit(MatchEventKind.LandMineTriggered,mine.OwnerPlayerId,target,
                 mine.EntityId,mine.Position,mine.Damage,reason);
@@ -293,6 +302,35 @@ public sealed partial class MatchEngine
             if(!LandMineExplosion.Triggered(mine.Position,landMineSource.Prefab,
                    new[]{collider.Hitbox}))continue;
             return heavyTurrets.Snapshot().Single(row=>row.EntityId==collider.EntityId);
+        }
+        return null;
+    }
+
+    private BattleArmyEntityState? FindLandMineAircraftTrigger(LandMineMatchEntity mine)
+    {
+        var owner=Find(mine.OwnerPlayerId)??
+            throw new InvalidDataException("Land Mine aircraft trigger owner disappeared.");
+        if(landMineSource==null)
+            throw new InvalidDataException("Land Mine aircraft trigger lacks source geometry.");
+
+        // Drone's only damageable root collider is marked metal at Awake.
+        // Helicopter uses non-metal child boxes. Assault Helicopter's body box
+        // is also non-metal, while its mesh colliders have no recovered mesh
+        // data and cannot support a trusted overlap test.
+        foreach(var collider in GroundVehicleShotTargets(owner.Definition.PlayerId)
+            .Where(row=>row.HelicopterBody)
+            .OrderBy(row=>row.EntityId).ThenBy(row=>row.PartComponentFileId))
+        {
+            if(!activeArmyEntities.TryGetValue(collider.EntityId,out var aircraft))
+                throw new InvalidDataException("Land Mine aircraft trigger lost its host entity.");
+            if(aircraft.UnitId=="ID_UNIT-ASSAULTHELI"&&
+               collider.PartComponentFileId!=AssaultHelicopterBoxColliderCatalog.ColliderFileId)
+                continue;
+            if(aircraft.UnitId is not ("ID_UNIT-HELICOPTER" or "ID_UNIT-ASSAULTHELI"))
+                throw new InvalidDataException("Land Mine aircraft trigger has an unsupported unit.");
+            if(!LandMineExplosion.Triggered(mine.Position,landMineSource.Prefab,
+                   new[]{collider.Hitbox}))continue;
+            return aircraft;
         }
         return null;
     }
