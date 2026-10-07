@@ -4763,6 +4763,51 @@ internal static class CombatContentTests
                   .Single(x=>x.Role=="gunner").Health-5)<.001f,
             "recovered friend-damage coefficient also applies to a vehicle passenger mine blast");
         Reject(()=>flameVehicleMatch.ApplyLandMinePassengerExplosion(soldierOwner,passengerMineOrigin,float.NaN));
+        var vehicleTriggerManifest=flameVehicleManifest with
+        {
+            MatchId="land-mine-vehicle-trigger"
+        };
+        var vehicleTriggerMatch=new MatchEngine(vehicleTriggerManifest,content:content,armyChoice:_=>0);
+        vehicleTriggerMatch.Admit(soldierOwner);
+        vehicleTriggerMatch.Admit(helicopterOwner);
+        vehicleTriggerMatch.Command(soldierOwner,new(){CommandId=1,
+            Ready=new(){ManifestHash=vehicleTriggerMatch.ManifestHash}});
+        vehicleTriggerMatch.Command(helicopterOwner,new(){CommandId=1,
+            Ready=new(){ManifestHash=vehicleTriggerMatch.ManifestHash}});
+        vehicleTriggerMatch.Advance(60);
+        int triggerHumveeOption=vehicleTriggerMatch.ArmyBatch(helicopterOwner).OptionIndexes[0];
+        Check(vehicleTriggerMatch.Command(helicopterOwner,new(){CommandId=2,
+            DeployArmy=new(){OptionIndex=triggerHumveeOption}}).Code=="army-deploying",
+            "mine trigger fixture deploys an opposing source Humvee");
+        vehicleTriggerMatch.Advance(61);
+        var triggerVehicle=vehicleTriggerMatch.ArmyEntityBatch(soldierOwner,0,0).Entities
+            .Single(row=>row.UnitId=="ID_UNIT-HUMVEE");
+        var triggerBody=vehicleTriggerMatch.GroundVehicleShotTargets(soldierOwner)
+            .First(part=>part.EntityId==triggerVehicle.EntityKey&&part.GroundVehicleBody);
+        Vector3 contact=triggerBody.Hitbox.Center;
+        float triggerHealth=vehicleTriggerMatch.ArmyHealth(triggerVehicle.EntityKey)!.Value;
+        Check(vehicleTriggerMatch.TryRegisterLandMine(new string('6',32),soldierOwner,
+            contact,10f),"host-only mine placement binds a current vehicle body contact");
+        ulong triggerMineId=vehicleTriggerMatch.Snapshot().LandMines.Single().EntityId;
+        vehicleTriggerMatch.Advance(62);
+        var triggerEvents=vehicleTriggerMatch.EventBatch(soldierOwner,0).Events;
+        Check(vehicleTriggerMatch.Snapshot().LandMines.Count==0&&
+              triggerEvents.Any(row=>row.Kind==MatchEventKind.LandMineTriggered&&
+                  row.ProjectileId==triggerMineId&&
+                  row.Reason=="vehicle-trigger:"+triggerVehicle.EntityKey)&&
+              vehicleTriggerMatch.ArmyHealth(triggerVehicle.EntityKey)<triggerHealth,
+            "a current opposing Humvee body naturally triggers and consumes a Land Mine");
+        var friendlyBody=vehicleTriggerMatch.GroundVehicleShotTargets(soldierOwner)
+            .First(part=>part.EntityId==triggerVehicle.EntityKey&&part.GroundVehicleBody);
+        Check(vehicleTriggerMatch.TryRegisterLandMine(new string('7',32),helicopterOwner,
+            friendlyBody.Hitbox.Center,10f),
+            "host-only allied mine placement uses the same current Humvee contact");
+        ulong alliedMineId=vehicleTriggerMatch.Snapshot().LandMines.Single().EntityId;
+        vehicleTriggerMatch.Advance(63);
+        Check(vehicleTriggerMatch.Snapshot().LandMines.Any(row=>row.EntityId==alliedMineId)&&
+              !vehicleTriggerMatch.EventBatch(helicopterOwner,0).Events.Any(row=>
+                  row.Kind==MatchEventKind.LandMineTriggered&&row.ProjectileId==alliedMineId),
+            "allied Humvee contact does not trigger its own faction's Land Mine");
         var flameRepairManifest=flameManifest with {MatchId="army-flame-repair-drone",
             Players=[flameManifest.Players[0],flameManifest.Players[1] with
             {

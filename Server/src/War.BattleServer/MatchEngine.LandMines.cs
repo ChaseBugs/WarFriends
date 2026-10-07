@@ -83,12 +83,18 @@ public sealed partial class MatchEngine
                     infantryAnimations.ContainsKey(x.EntityKey)).OrderBy(x=>x.EntityKey)
                 .FirstOrDefault(x=>LandMineExplosion.Triggered(mine.Position,landMineSource.Prefab,
                     (InfantryPose(x.EntityKey)??throw new InvalidDataException("Land Mine trigger lost infantry pose.")).Parts));
-            if(playerTrigger==null&&armyTrigger==null)continue;
+            VehicleEntity? vehicleTrigger=null;
+            if(playerTrigger==null&&armyTrigger==null)
+                vehicleTrigger=FindLandMineVehicleTrigger(mine);
+            if(playerTrigger==null&&armyTrigger==null&&vehicleTrigger==null)continue;
             if(!landMines.TryRemove(mine.EntityId,out var removed)||removed!=mine)
                 throw new InvalidDataException("Land Mine trigger compare-and-remove failed.");
             stateRevision++;
-            string target=playerTrigger?.Definition.PlayerId??armyTrigger!.OwnerPlayerId;
-            string reason=playerTrigger!=null?"player-trigger":"army-trigger:"+armyTrigger!.EntityKey;
+            string target=playerTrigger?.Definition.PlayerId??armyTrigger?.OwnerPlayerId??
+                vehicleTrigger!.OwnerPlayerId;
+            string reason=playerTrigger!=null?"player-trigger":armyTrigger!=null?
+                "army-trigger:"+armyTrigger.EntityKey:
+                "vehicle-trigger:"+vehicleTrigger!.EntityId;
             Emit(MatchEventKind.LandMineTriggered,mine.OwnerPlayerId,target,
                 mine.EntityId,mine.Position,mine.Damage,reason);
             var attacker=Find(mine.OwnerPlayerId)??throw new InvalidDataException("Land Mine owner disappeared.");
@@ -149,6 +155,33 @@ public sealed partial class MatchEngine
                 if(Terminal)return;
             }
         }
+    }
+
+    private VehicleEntity? FindLandMineVehicleTrigger(LandMineMatchEntity mine)
+    {
+        if(vehicles==null)return null;
+        if(groundVehicleWeapons==null||landMineSource==null)
+            throw new InvalidDataException("Land Mine vehicle trigger lacks source geometry.");
+
+        foreach(var vehicle in vehicles.Snapshot().OrderBy(row=>row.EntityId))
+        {
+            if(!activeArmyEntities.TryGetValue(vehicle.EntityId,out var army)||
+               army.UnitId!=vehicle.UnitId||army.OwnerPlayerId!=vehicle.OwnerPlayerId||
+               !groundVehicleFacing.TryGetValue(vehicle.EntityId,out var facing))
+                throw new InvalidDataException("Land Mine vehicle trigger lost shared host pose.");
+            if(army.OwnerFraction==mine.OwnerFraction)continue;
+
+            // MineAmmo's trigger accepts a non-metal DestroyableObject on the
+            // exact collider GameObject. The recovered vehicle body parts meet
+            // that rule; their current poses come from the host vehicle registry.
+            var bodyParts=groundVehicleWeapons.PlaceBody(vehicle.UnitId,vehicle.EntityId,
+                    vehicle.Position,facing,army.OwnerFraction)
+                .Where(part=>part.Hitbox.Enabled&&part.Hitbox.Active)
+                .Select(part=>part.Hitbox).ToArray();
+            if(LandMineExplosion.Triggered(mine.Position,landMineSource.Prefab,bodyParts))
+                return vehicle;
+        }
+        return null;
     }
 
     // Called only by a consumed host mine or a deterministic host simulation
