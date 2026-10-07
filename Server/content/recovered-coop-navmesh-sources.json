@@ -1,0 +1,61 @@
+{
+  "version": 1,
+  "missionSourceSha256": "d46f81ff8c3e12bf17f34a1f53dd601bd799102c9f984818031441dfb7a5de43",
+  "maps": [
+    {
+      "stage": 1,
+      "scene": "Desert_New",
+      "sceneSha256": "e5e2ad6c9f602125d1da7c1949e0f002e8ee229a4c1fc16bf703ae96000f40c5",
+      "navMeshGuid": "f2cb40bb751a5ab4cb097a1e6a8341af",
+      "sourceAsset": "Assets/NavMeshData/NavMesh_7.asset",
+      "packagedAsset": "NavMesh_7.asset",
+      "format": "unity-binary-2018",
+      "bytes": 141464,
+      "sha256": "1dbb45220c0177624d46ba646b4c65af9ecd24b9d4684aab983bd9062913544d"
+    },
+    {
+      "stage": 2,
+      "scene": "Snow_Single",
+      "sceneSha256": "a797c945ccc4e4307ad55611e16db086d3ace63f31a535388f7e5bbb461daf27",
+      "navMeshGuid": "266d84f5bfb29694da0ad6dbc9996b02",
+      "sourceAsset": "Assets/NavMeshData/NavMesh_1.asset",
+      "packagedAsset": "NavMesh_1.asset",
+      "format": "unity-binary-2018",
+      "bytes": 272988,
+      "sha256": "4415c4a08f1811bb8a6515c29d863a6c174a7796c09edc4bfa7fcc36c93c3a8b"
+    },
+    {
+      "stage": 3,
+      "scene": "City_Single",
+      "sceneSha256": "99a24a690a023c8f9c2f1195b727ecdcc22740a6f0479f6148909a22db3f5127",
+      "navMeshGuid": "4723a277b64fedd4bbc0c66445c20683",
+      "sourceAsset": "Assets/NavMeshData/NavMesh.asset",
+      "packagedAsset": "NavMesh.asset",
+      "format": "unity-yaml-navmesh-tiles",
+      "bytes": 280482,
+      "sha256": "0ab907c62296712ad3d62d504d37fd64a132f1f161c1887c7673e705329a634a"
+    },
+    {
+      "stage": 4,
+      "scene": "Aztec_Single",
+      "sceneSha256": "5fbfe89a6ff35e0769d4fcdbd9a80e6c31baec653a3bd78c53b81211cd8b9e17",
+      "navMeshGuid": "0820585b03e222e43b784406cfde7cce",
+      "sourceAsset": "Assets/NavMeshData/NavMesh_0.asset",
+      "packagedAsset": "NavMesh_0.asset",
+      "format": "unity-binary-2018",
+      "bytes": 284348,
+      "sha256": "28ad9bd4d67b5a7f3dfe2ae1d07d7eafb3d9eb43d62ce1b11cd550cc2efbcecc"
+    },
+    {
+      "stage": 5,
+      "scene": "Park_Single",
+      "sceneSha256": "0f816c262e021a36bc347d62734504f9b86d2031d11a55cdf3c377bf4990ba83",
+      "navMeshGuid": "95db23a718443d94487987baa5622b35",
+      "sourceAsset": "Assets/NavMeshData/NavMesh_3.asset",
+      "packagedAsset": "NavMesh_3.asset",
+      "format": "unity-binary-2018",
+      "bytes": 161624,
+      "sha256": "5a638bfc7566c5b76f985ef482520f32a7024d372e144b4399ee60557b9ab4f7"
+    }
+  ]
+}
