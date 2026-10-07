@@ -250,6 +250,11 @@ public class GameControllerCoop : GameControllerOnline
 
 	protected override void UpdatePause()
 	{
+		if (PhotonConnectionManager.IsSelfHostedActive)
+		{
+			base.UpdatePause();
+			return;
+		}
 		if (!gameIsRunning || !TimeManager.instance.isPaused || !(TimeManager.pauseTimeLeft <= 0f) || MatchManager.isReconnect)
 		{
 			return;
@@ -273,6 +278,12 @@ public class GameControllerCoop : GameControllerOnline
 
 	public override void Forfeit()
 	{
+		if (PhotonConnectionManager.IsSelfHostedActive)
+		{
+			// Base sends the Worker intent and waits for its terminal result.
+			base.Forfeit();
+			return;
+		}
 		base.Forfeit();
 		MissionsManager.instance.currentMission.EndMission();
 		if (Singleton<PhotonConnectionManager>.instance.isClient)
@@ -291,13 +302,12 @@ public class GameControllerCoop : GameControllerOnline
 		if (gameIsRunning)
 		{
 			Singleton<MatchManager>.instance.matchTime = time;
-			if (Singleton<PhotonConnectionManager>.instance.isMasterClient)
+			if (!PhotonConnectionManager.IsSelfHostedActive)
 			{
-				mPhotonView.RPC("FinishGameMultiplayerRPC", PhotonTargets.Others, (byte)Singleton<GameController>.instance.gameEndReason);
-			}
-			else
-			{
-				mPhotonView.RPC("FinishGameCoopClient", PhotonTargets.Others, (byte)Singleton<GameController>.instance.gameEndReason, PhotonNetwork.player.ID);
+				if (Singleton<PhotonConnectionManager>.instance.isMasterClient)
+					mPhotonView.RPC("FinishGameMultiplayerRPC", PhotonTargets.Others, (byte)Singleton<GameController>.instance.gameEndReason);
+				else
+					mPhotonView.RPC("FinishGameCoopClient", PhotonTargets.Others, (byte)Singleton<GameController>.instance.gameEndReason, PhotonNetwork.player.ID);
 			}
 			SetStateToAllPlayers(PlayerNetworkStatus.MatchState.GameFinished);
 			MatchManager.matchState = MatchState.GameFinished;
@@ -407,7 +417,9 @@ public class GameControllerCoop : GameControllerOnline
 			return;
 		base.Update();
 		Mission currentMission = MissionsManager.instance.currentMission;
-		if (gameIsRunning && TimeManager.instance.pauseStatus == TimeManager.PauseStatus.PausedRemote && TimeManager.pauseTimeLeft <= 0f && Singleton<PhotonConnectionManager>.instance.isMasterClient)
+		if (!PhotonConnectionManager.IsSelfHostedActive && gameIsRunning &&
+			TimeManager.instance.pauseStatus == TimeManager.PauseStatus.PausedRemote &&
+			TimeManager.pauseTimeLeft <= 0f && Singleton<PhotonConnectionManager>.instance.isMasterClient)
 		{
 			mPhotonView.RPC("FinishGameMultiplayerRPC", PhotonTargets.Others, (byte)5);
 			TimeManager.Resume();
