@@ -334,8 +334,29 @@ internal static class BattleManifestSnapshotTests
                await resultStore.Get(rematch.MatchId!,CancellationToken.None)!=null ||
                await resultStore.Get(scoringTerminal.MatchId,CancellationToken.None)!=null ||
                (await resultStore.Get(unsettledTerminal.MatchId,CancellationToken.None))?.Scored!=false ||
+               (await resultStore.Get(unsettledTerminal.MatchId,CancellationToken.None))?.TerminalPhase!=BattlePhase.Ended ||
                (await resultStore.Get(unsettledBacklog[^1].MatchId,CancellationToken.None))?.Scored!=false)
                 throw new Exception("Archival removed unsettled combat evidence or retained a settled row.");
+            var abortedBacklog=new List<BattleResultDocument>();
+            for(int index=0;index<300;index++)
+            {
+                var aborted=rematchTerminal.Clone();
+                aborted.MatchId="archivable-"+index.ToString("D3");
+                (byte[] abortedPayload,string abortedDigest)=Evidence(aborted);
+                abortedBacklog.Add(new BattleResultDocument
+                {
+                    Id=Guid.NewGuid().ToString("N"),MatchId=aborted.MatchId,
+                    Digest=abortedDigest,Snapshot=abortedPayload,AcceptedUtc=DateTime.UtcNow,
+                    TerminalPhase=BattlePhase.Aborted
+                });
+            }
+            await resultRows.InsertManyAsync(abortedBacklog);
+            var archiveTime=DateTimeOffset.UtcNow.AddDays(31);
+            long firstPage=await resultStore.Prune(archiveTime,TimeSpan.FromDays(30),CancellationToken.None);
+            long secondPage=await resultStore.Prune(archiveTime,TimeSpan.FromDays(30),CancellationToken.None);
+            if(firstPage!=256 || secondPage!=44 ||
+               await resultStore.Get(abortedBacklog[^1].MatchId,CancellationToken.None)!=null)
+                throw new Exception("Archival did not advance through bounded eligible pages.");
             Console.WriteLine("PASS: Mongo queue authority and exact-result scoring/archival survive concurrent stores and restart");
         }
         finally {await mongo.DropDatabaseAsync(database);}

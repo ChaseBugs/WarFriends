@@ -19,6 +19,7 @@ public sealed class BattleResultDocument
 
 public sealed class BattleResultStore
 {
+    private const int ArchivalPageSize = 256;
     private readonly IMongoCollection<BattleResultDocument> results;
     public BattleResultStore(string uri, string databaseName)
     {
@@ -126,8 +127,11 @@ public sealed class BattleResultStore
         var eligible=filter.Eq(x=>x.Scored,true) |
             filter.Eq(x=>x.TerminalPhase,BattlePhase.Aborted) |
             filter.Eq(x=>x.TerminalPhase,null); // Inspect older rows without a phase mirror.
-        var candidates=await results.Find(due & eligible).Limit(10001).ToListAsync(ct);
-        if (candidates.Count > 10000) throw new InvalidDataException("Battle result archival batch exceeds capacity.");
+        // A single maintenance pass has a fixed upper bound. Repeated passes
+        // advance through old rows without loading the entire collection.
+        var candidates=await results.Find(due & eligible)
+            .SortBy(x=>x.AcceptedUtc).ThenBy(x=>x.Id)
+            .Limit(ArchivalPageSize).ToListAsync(ct);
         foreach (var row in candidates)
             Validate(row,row.MatchId,now.UtcDateTime);
         if (candidates.Count == 0) return 0;
@@ -135,6 +139,17 @@ public sealed class BattleResultStore
         foreach(var row in candidates)
         {
             var terminal=TerminalOutbox.ValidatePayload(row.Snapshot,row.MatchId,row.Digest);
+            if(row.TerminalPhase==null)
+            {
+                // Older rows did not store an indexed phase. Only the validated
+                // terminal payload can supply that phase for future scans.
+                var phaseUpdate=Builders<BattleResultDocument>.Update
+                    .Set(x=>x.TerminalPhase,terminal.Phase);
+                var updated=await results.UpdateOneAsync(Exact(row),phaseUpdate,cancellationToken:ct);
+                if(updated.ModifiedCount!=1)
+                    throw new InvalidDataException("Battle result changed during phase migration; retry archival.");
+                row.TerminalPhase=terminal.Phase;
+            }
             if(terminal.Phase==BattlePhase.Ended && !row.Scored)
                 continue; // Keep completed evidence until a settlement consumer confirms it.
             var deleted=await results.DeleteOneAsync(Exact(row),ct);
