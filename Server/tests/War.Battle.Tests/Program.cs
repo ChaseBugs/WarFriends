@@ -1746,6 +1746,8 @@ bool injectUnconsumedReply=false;
 bool injectedUnconsumedReply=false;
 bool dropCommandFourReplies=false;
 bool sawDroppedCommandFour=false;
+bool dropCommandSixRequests=false;
+bool sawDroppedCommandSix=false;
 Task relay = Task.Run(async () =>
 {
     IPEndPoint? client = null;
@@ -1787,7 +1789,14 @@ Task relay = Task.Run(async () =>
                 }
                 if (client != null) await proxy.SendAsync(datagram.Buffer, client, proxyStop.Token);
             }
-            else { client = datagram.RemoteEndPoint; await proxy.SendAsync(datagram.Buffer, sdkServer, proxyStop.Token); }
+            else
+            {
+                client = datagram.RemoteEndPoint;
+                var request=PacketCodec.ReadUntrusted(datagram.Buffer);
+                if(dropCommandSixRequests && request?.MatchCommand?.CommandId==6)
+                {sawDroppedCommandSix=true;continue;}
+                await proxy.SendAsync(datagram.Buffer, sdkServer, proxyStop.Token);
+            }
         }
     }
     catch (OperationCanceledException) when (proxyStop.IsCancellationRequested) { }
@@ -1838,22 +1847,63 @@ try
     catch(TimeoutException) { timedOutAfterConsumption=true; }
     Check(sawDroppedCommandFour&&timedOutAfterConsumption,
         "Worker consumed command 4 while its replies were lost");
+    dropCommandFourReplies=false;
+    var carriedCommand=await sdkA.CapturePendingAsync(CancellationToken.None);
+    Check(carriedCommand.CommandId==4,
+        "timed-out SDK keeps an immutable copy of the unresolved mutation");
+    bool rejectedOtherPlayerPending=false;
+    try {await sdkB.RestorePendingAsync(carriedCommand,CancellationToken.None);}
+    catch(InvalidOperationException) {rejectedOtherPlayerPending=true;}
+    Check(rejectedOtherPlayerPending,
+        "another admitted player cannot import the unresolved mutation");
     var reconnectResult=await sdkWorker.RegisterReconnect(definition.MatchId,a,
         new string('2',32),CancellationToken.None);
     var reconnectGrant=reconnectResult.Grants?.SingleOrDefault();
     Check(reconnectResult.Code=="reconnect-issued"&&reconnectGrant!=null,
         "Worker issues one fresh signed reconnect capability");
-    using(var resumedSdkA=new MatchConnection(reconnectGrant!))
+    var proxiedReconnectGrant=reconnectGrant!.Clone();
+    proxiedReconnectGrant.Port=(uint)proxyPort;
+    using(var resumedSdkA=new MatchConnection(proxiedReconnectGrant))
     {
         var resumedAdmission=await resumedSdkA.ConnectAsync(CancellationToken.None);
         Check(resumedAdmission.Snapshot.Players.Single(player=>player.PlayerId==a)
               .LastCommandId==4,
             "reconnected SDK receives the Worker-consumed command cursor");
+        await resumedSdkA.RestorePendingAsync(carriedCommand,CancellationToken.None);
+        var recoveredSwitch=await resumedSdkA.RetryPendingAsync(CancellationToken.None);
+        Check(recoveredSwitch.CommandId==4 &&
+              recoveredSwitch.Snapshot.Players.Single(player=>player.PlayerId==a)
+                .LastCommandId==4,
+            "fresh SDK retrieves the original receipt for the consumed mutation");
         var nextMutation=await resumedSdkA.ReadyAsync(CancellationToken.None);
         Check(nextMutation.CommandId==5&&
               nextMutation.Snapshot.Players.Single(player=>player.PlayerId==a)
                 .LastCommandId==5,
             "first post-reconnect mutation uses the next command identity");
+        dropCommandSixRequests=true;
+        bool timedOutBeforeConsumption=false;
+        try {await resumedSdkA.SwitchWeaponAsync(0,CancellationToken.None);}
+        catch(TimeoutException) {timedOutBeforeConsumption=true;}
+        Check(sawDroppedCommandSix&&timedOutBeforeConsumption,
+            "UDP proxy lost command 6 before the Worker consumed it");
+        var stillPending=await resumedSdkA.CapturePendingAsync(CancellationToken.None);
+        var secondReconnect=await sdkWorker.RegisterReconnect(definition.MatchId,a,
+            new string('3',32),CancellationToken.None);
+        Check(secondReconnect.Code=="reconnect-issued"&&secondReconnect.Grants?.Count==1,
+            "Worker issues a second player-bound replacement capability");
+        using(var twiceResumed=new MatchConnection(secondReconnect.Grants!.Single()))
+        {
+            var twiceAdmission=await twiceResumed.ConnectAsync(CancellationToken.None);
+            Check(twiceAdmission.Snapshot.Players.Single(player=>player.PlayerId==a)
+                  .LastCommandId==5,
+                "new admission sees that the lost mutation was not consumed");
+            await twiceResumed.RestorePendingAsync(stillPending,CancellationToken.None);
+            var replayed=await twiceResumed.RetryPendingAsync(CancellationToken.None);
+            Check(replayed.CommandId==6 &&
+                  replayed.Snapshot.Players.Single(player=>player.PlayerId==a)
+                    .LastCommandId==6,
+                "fresh SDK submits the original unconsumed mutation under its original ID");
+        }
     }
     Check((await sdkB.ForfeitAsync(CancellationToken.None)).Snapshot.WinnerPlayerId == a, "SDK terminal projection");
 }

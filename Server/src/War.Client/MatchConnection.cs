@@ -79,6 +79,44 @@ namespace War.Client
         public Task<MatchReply> DeployArmyAsync(int optionIndex, CancellationToken ct) => Run(new MatchCommand { DeployArmy = new DeployArmyCommand { OptionIndex = optionIndex } }, false, false, ct);
         public Task<MatchReply> RetryPendingAsync(CancellationToken ct) => Run(null, false, true, ct);
 
+        /// <summary>Copies an unresolved mutation before replacing this UDP session.</summary>
+        public async Task<MatchPendingCommand> CapturePendingAsync(CancellationToken ct)
+        {
+            await gate.WaitAsync(ct).ConfigureAwait(false);
+            try
+            {
+                if (disposed) throw new ObjectDisposedException(nameof(MatchConnection));
+                if (pending == null) throw new InvalidOperationException("No unresolved command to carry into reconnect.");
+                return new MatchPendingCommand(grant.MatchId, grant.ManifestHash,
+                    grant.PlayerId, pending);
+            }
+            finally { gate.Release(); }
+        }
+
+        /// <summary>
+        /// Restores the exact command after fresh admission. The host may already
+        /// have consumed it, or may still expect its ID; retry obtains the same
+        /// receipt in either case before another mutation is allowed.
+        /// </summary>
+        public async Task RestorePendingAsync(MatchPendingCommand saved, CancellationToken ct)
+        {
+            if (saved == null) throw new ArgumentNullException(nameof(saved));
+            await gate.WaitAsync(ct).ConfigureAwait(false);
+            try
+            {
+                if (disposed) throw new ObjectDisposedException(nameof(MatchConnection));
+                if (!admitted || pending != null || saved.MatchId != grant.MatchId ||
+                    saved.ManifestHash != grant.ManifestHash || saved.PlayerId != grant.PlayerId ||
+                    saved.CommandId == 0 || saved.CommandId > 100000 ||
+                    saved.Command.IntentCase == MatchCommand.IntentOneofCase.None ||
+                    saved.Command.IntentCase == MatchCommand.IntentOneofCase.Poll ||
+                    (saved.CommandId != commandId && saved.CommandId != commandId + 1))
+                    throw new InvalidOperationException("Pending command does not match the admitted player cursor.");
+                pending = saved.Command.Clone();
+            }
+            finally { gate.Release(); }
+        }
+
         // The caller advances this cursor only after consuming the returned
         // events. A new connection may resume from the same processed cursor.
         public async Task<MatchEventBatch> PollEventsAsync(ulong afterEventId, CancellationToken ct)
