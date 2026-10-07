@@ -104,29 +104,70 @@ public sealed partial class MatchEngine
     }
     private HeavyTurretTarget? SelectHeavyTurretTarget(HeavyTurretMatchEntity turret)
     {
-        var decoyRows=decoys.Snapshot().Where(x=>x.OwnerFraction!=turret.OwnerFraction).OrderBy(x=>x.EntityId).ToArray();
-        if(decoyRows.Length>0){var row=decoyRows[Choose(decoyRows.Length)];return new("decoy:"+row.EntityId,row.Position,"decoy",row.EntityId);}
-        var candidates=activeArmyEntities.Values.Where(x=>x.OwnerFraction!=turret.OwnerFraction&&
-            (infantryAnimations.ContainsKey(x.EntityKey)||
-             x.UnitId is "ID_UNIT-DRONE" or "ID_UNIT-HELICOPTER"||
-             vehicles?.TryGet(x.EntityKey,out _)==true)).ToArray();
-        var rushers=candidates.Where(x=>armyCatalog!.Families.Single(f=>f.UnitId==x.UnitId).UnitType==3)
-            .OrderBy(x=>x.EntityKey).ToArray();
-        HeavyTurretTarget ArmyTarget(BattleArmyEntityState row)=>new("army:"+row.EntityKey,new(row.X,row.Y,row.Z),
-            infantryAnimations.ContainsKey(row.EntityKey)?"army":
-                row.UnitId is "ID_UNIT-DRONE" or "ID_UNIT-HELICOPTER"?"air":"vehicle",row.EntityKey);
-        if(rushers.Length>0)return ArmyTarget(rushers[Choose(rushers.Length)]);
-        var pool=new List<HeavyTurretTarget>();
-        foreach(int group in heavyTurretSource!.SecondaryTargetGroups)
+        var opposingDecoys=decoys.Snapshot()
+            .Where(decoy=>decoy.OwnerFraction!=turret.OwnerFraction)
+            .OrderBy(decoy=>decoy.EntityId).ToArray();
+        if(opposingDecoys.Length>0)
         {
-            pool.AddRange(candidates.Where(x=>armyCatalog!.Families.Single(f=>f.UnitId==x.UnitId).UnitType==group)
-                .OrderBy(x=>x.EntityKey).Select(ArmyTarget));
-            if(group==0)pool.AddRange(heavyTurrets.Snapshot().Where(x=>x.OwnerFraction!=turret.OwnerFraction)
-                .OrderBy(x=>x.EntityId).Select(x=>new HeavyTurretTarget("turret:"+x.EntityId,x.Position,"turret",x.EntityId)));
+            var selected=opposingDecoys[Choose(opposingDecoys.Length)];
+            return new("decoy:"+selected.EntityId,selected.Position,"decoy",selected.EntityId);
         }
-        if(pool.Count>0)return pool[Choose(pool.Count)];
-        var opponent=players.SingleOrDefault(x=>x.Definition.Fraction!=turret.OwnerFraction&&x.Health>0&&!x.Reconnecting);
-        return opponent==null?null:new(opponent.Definition.PlayerId,opponent.Position,"player");
+
+        var opposingUnits=SourceBoundHeavyTurretArmyCandidates(turret.OwnerFraction);
+        var rushers=opposingUnits.Where(unit=>ArmyUnitType(unit)==3).ToArray();
+        if(rushers.Length>0)
+            return HeavyTurretArmyTarget(rushers[Choose(rushers.Length)]);
+
+        // TurretWeaponBasic asks for all three secondary UnitTypes together.
+        // Keep that source group order before choosing one target at random.
+        var secondaryTargets=new List<HeavyTurretTarget>();
+        foreach(int unitType in heavyTurretSource!.SecondaryTargetGroups)
+        {
+            secondaryTargets.AddRange(opposingUnits.Where(unit=>ArmyUnitType(unit)==unitType)
+                .Select(HeavyTurretArmyTarget));
+            if(unitType==0)
+            {
+                secondaryTargets.AddRange(heavyTurrets.Snapshot()
+                    .Where(other=>other.OwnerFraction!=turret.OwnerFraction)
+                    .OrderBy(other=>other.EntityId)
+                    .Select(other=>new HeavyTurretTarget("turret:"+other.EntityId,
+                        other.Position,"turret",other.EntityId)));
+            }
+        }
+        if(secondaryTargets.Count>0)
+            return secondaryTargets[Choose(secondaryTargets.Count)];
+
+        // For the implemented target families, the final untyped opponent is the player.
+        // Assault Helicopter and Mech still need normal host collision before this
+        // branch can claim the recovered GetOpponents(all) behavior.
+        var opposingPlayer=players.SingleOrDefault(player=>
+            player.Definition.Fraction!=turret.OwnerFraction&&player.Health>0&&!player.Reconnecting);
+        return opposingPlayer==null?null:new(opposingPlayer.Definition.PlayerId,
+            opposingPlayer.Position,"player");
+    }
+
+    private BattleArmyEntityState[] SourceBoundHeavyTurretArmyCandidates(int ownerFraction)
+    {
+        return activeArmyEntities.Values
+            .Where(unit=>unit.OwnerFraction!=ownerFraction&&
+                (infantryAnimations.ContainsKey(unit.EntityKey)||
+                 unit.UnitId is "ID_UNIT-DRONE" or "ID_UNIT-HELICOPTER"||
+                 vehicles?.TryGet(unit.EntityKey,out _)==true))
+            .OrderBy(unit=>unit.EntityKey).ToArray();
+    }
+
+    private int ArmyUnitType(BattleArmyEntityState unit)
+    {
+        return armyCatalog!.Families.Single(family=>family.UnitId==unit.UnitId).UnitType;
+    }
+
+    private HeavyTurretTarget HeavyTurretArmyTarget(BattleArmyEntityState unit)
+    {
+        string targetKind;
+        if(infantryAnimations.ContainsKey(unit.EntityKey))targetKind="army";
+        else if(unit.UnitId is "ID_UNIT-DRONE" or "ID_UNIT-HELICOPTER")targetKind="air";
+        else targetKind="vehicle";
+        return new("army:"+unit.EntityKey,new(unit.X,unit.Y,unit.Z),targetKind,unit.EntityKey);
     }
     private HeavyTurretTarget? ResolveHeavyTurretTarget(HeavyTurretMatchEntity turret,string id,bool selectShotTarget)
     {
