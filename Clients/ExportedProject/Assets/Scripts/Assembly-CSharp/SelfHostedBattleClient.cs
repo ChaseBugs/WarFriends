@@ -65,8 +65,32 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
     private SelfHostedDeathMatchBridge deathMatchBridge;
     public bool IsMatchmaking { get { return matchmaking != null; } }
     public bool OwnsMatch { get { return connection != null; } }
+    public bool ReconnectFailed { get { return reconnectFailureReported; } }
     public bool IsReconnecting { get { return reconnectTask != null || reconnecting ||
         connection != null && !IsConnected && reconnectRequestId != null; } }
+
+    // The simulation tick stops during a disconnect. PauseHostTick keeps moving,
+    // so it is the only clock that can measure the Worker's grace deadline.
+    public bool TryGetOpponentReconnectSeconds(out float seconds)
+    {
+        if (!IsConnected) { seconds = 0f; return false; }
+        return TryGetOpponentReconnectSeconds(State, LocalPlayerId, out seconds);
+    }
+
+    public static bool TryGetOpponentReconnectSeconds(MatchSnapshot snapshot,
+        string localPlayerId, out float seconds)
+    {
+        seconds = 0f;
+        if (snapshot == null || snapshot.PauseHostTick == 0 || string.IsNullOrEmpty(localPlayerId)) return false;
+        foreach (var player in snapshot.Players)
+        {
+            if (player.PlayerId == localPlayerId || !player.Reconnecting) continue;
+            if (player.ReconnectDeadlineHostTick <= snapshot.PauseHostTick) return true;
+            seconds = (float)(player.ReconnectDeadlineHostTick - snapshot.PauseHostTick) / 30f;
+            return true;
+        }
+        return false;
+    }
 
     public static SelfHostedBattleClient GetOrCreate()
     {

@@ -29,6 +29,7 @@ public static class SelfHostedBattleAudit
         var a = JsonParser.Default.Parse<MatchConnectionGrant>(lines[0]);
         var b = JsonParser.Default.Parse<MatchConnectionGrant>(lines[1]);
         CheckSnapshotOrdering();
+        CheckReconnectClock();
         CheckAnimationAliases();
         deadline = EditorApplication.timeSinceStartup + 50;
         audit = Check(a, b, reconnectPath, backendUrl, dropPollPath);
@@ -142,6 +143,22 @@ public static class SelfHostedBattleAudit
             Require(animation.GetClip("idle") == null, "ambiguous aliases never guessed");
         }
         finally { UnityEngine.Object.DestroyImmediate(owner); UnityEngine.Object.DestroyImmediate(original); UnityEngine.Object.DestroyImmediate(other); }
+    }
+    private static void CheckReconnectClock()
+    {
+        var snapshot = new MatchSnapshot { PauseHostTick = 300 };
+        snapshot.Players.Add(new BattlePlayerState { PlayerId = "local" });
+        snapshot.Players.Add(new BattlePlayerState { PlayerId = "other", Reconnecting = true,
+            ReconnectDeadlineHostTick = 600 });
+        float seconds;
+        Require(SelfHostedBattleClient.TryGetOpponentReconnectSeconds(snapshot, "local", out seconds) &&
+            seconds == 10f, "opponent grace uses host tick, not paused simulation tick");
+        snapshot.PauseHostTick = 600;
+        Require(SelfHostedBattleClient.TryGetOpponentReconnectSeconds(snapshot, "local", out seconds) &&
+            seconds == 0f, "expired host deadline cannot become a local victory");
+        snapshot.Players[1].Reconnecting = false;
+        Require(!SelfHostedBattleClient.TryGetOpponentReconnectSeconds(snapshot, "local", out seconds),
+            "resumed opponent hides the reconnect countdown");
     }
     private static void Require(bool value, string name) { if (!value) throw new InvalidOperationException("Battle SDK audit failed: " + name); }
     private static void Update()

@@ -37,6 +37,7 @@ public abstract class GameControllerOnline : IGameController
 	private int mSelfHostedOtherStartCover = -1;
 	private SelfHostedBattleClient mSelfHostedClient;
 	private bool mSelfHostedReconnectDialog;
+	private ReconnectState mSelfHostedReconnectCause;
 
 	protected bool mMapIdSet;
 
@@ -991,29 +992,39 @@ public abstract class GameControllerOnline : IGameController
 	protected virtual void CheckForReconnect()
 	{
 		SelfHostedBattleClient selfHosted = SelfHostedBattleClient.Active;
-		if (selfHosted != null && selfHosted.OwnsMatch &&
-			(selfHosted.IsReconnecting || mSelfHostedReconnectDialog))
+		if (selfHosted != null && selfHosted.OwnsMatch)
 		{
-			if (gameIsRunning && selfHosted.IsReconnecting)
+			float opponentSeconds;
+			bool opponentReconnecting = selfHosted.TryGetOpponentReconnectSeconds(out opponentSeconds);
+			bool showReconnect = gameIsRunning && !selfHosted.ReconnectFailed &&
+				(selfHosted.IsReconnecting || opponentReconnecting);
+			if (showReconnect)
 			{
 				ReconnectDialog dialog = GuiElementSingle<ReconnectDialog>.instance;
 				if (dialog != null)
 				{
-					if (!dialog.isShowed)
+					ReconnectState cause = selfHosted.IsReconnecting ? ReconnectState.Me : ReconnectState.Other;
+					bool newlyShown = !dialog.isShowed;
+					bool firstSelfHostedFrame = !mSelfHostedReconnectDialog;
+					if (newlyShown)
 					{
 						if (TimeManager.instance.isPaused)
 							GuiElementSingle<PauseScreen>.instance.HideDialog();
 						TimeManager.Pause(focusLost: false);
 						Singleton<GuiManager>.instance.ShowDialogInstant(dialog);
-						dialog.SetCause(ReconnectState.Me, true);
-						mSelfHostedReconnectDialog = true;
 					}
-					// The Worker owns the actual grace deadline. A stale local
-					// snapshot cannot supply an authoritative countdown.
-					dialog.SetWaitTime(-1f);
+					mSelfHostedReconnectDialog = true;
+					if (firstSelfHostedFrame || mSelfHostedReconnectCause != cause)
+					{
+						dialog.SetCause(cause, true);
+						mSelfHostedReconnectCause = cause;
+					}
+					// Our own disconnected snapshot is stale; only a connected
+					// opponent view has the Worker's advancing pause clock.
+					dialog.SetWaitTime(opponentReconnecting && cause == ReconnectState.Other ? opponentSeconds : -1f);
 				}
 			}
-			else if (selfHosted.IsConnected && GuiElementSingle<ReconnectDialog>.instance.isShowed)
+			else if (mSelfHostedReconnectDialog)
 			{
 				TimeManager.Resume();
 				GuiElementSingle<ReconnectDialog>.instance.HideDialog();
@@ -1447,7 +1458,7 @@ public abstract class GameControllerOnline : IGameController
 	protected virtual void UpdatePause()
 	{
 		if (gameIsRunning && TimeManager.instance.isPaused && TimeManager.pauseTimeLeft <= 0f && !MatchManager.isReconnect &&
-			!(SelfHostedBattleClient.Active != null && SelfHostedBattleClient.Active.IsReconnecting))
+			!mSelfHostedReconnectDialog)
 		{
 			if (TimeManager.instance.pauseStatus == TimeManager.PauseStatus.PausedRemote)
 			{
