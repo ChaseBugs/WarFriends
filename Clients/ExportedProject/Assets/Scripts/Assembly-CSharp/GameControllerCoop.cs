@@ -107,6 +107,22 @@ public class GameControllerCoop : GameControllerOnline
 		}
 		if (list.Count > 1)
 		{
+			if (PhotonConnectionManager.IsSelfHostedActive)
+			{
+				// The self-hosted roster carries the ordered allied slot. The
+				// old PhotonPlayer argument is deliberately null on this path.
+				if (ind >= 0 && ind < 2)
+				{
+					return list[ind];
+				}
+				throw new System.InvalidOperationException(
+					"Invalid self-hosted co-op defend position: " + ind);
+			}
+			if (player == null)
+			{
+				Debug.LogError("Missing Photon co-op player for defend position");
+				return null;
+			}
 			if (player.isMasterClient)
 			{
 				return list[0];

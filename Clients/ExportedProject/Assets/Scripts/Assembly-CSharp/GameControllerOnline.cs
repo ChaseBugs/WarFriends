@@ -175,11 +175,14 @@ public abstract class GameControllerOnline : IGameController
 	public override IEnumerator StartGame()
 	{
 		mShowWaitingForPlayer = false;
-		Debug.Log("ResumeMessageQueue");
-		PhotonNetwork.ResumeMessageQueue();
+		bool selfHostedMode = PhotonConnectionManager.IsSelfHostedActive;
+		if (!selfHostedMode)
+		{
+			Debug.Log("ResumeMessageQueue");
+			PhotonNetwork.ResumeMessageQueue();
+		}
 		mMatchStart = double.PositiveInfinity;
 		Fractions fr = mMainPlayerController.fraction;
-		bool selfHostedMode = PhotonConnectionManager.IsSelfHostedActive;
 		int ind = selfHostedMode ? mSelfHostedLocalStartCover : (int)PhotonNetwork.player.customProperties["defendPosition"];
 		MapDefinition.DefendPosition defendPosition = GetMainPlayerPoint(fr, ind, selfHostedMode ? null : PhotonNetwork.player);
 		mMainPlayerController.MoveTo(defendPosition.point.transform.position, defendPosition.point.transform.rotation);
