@@ -82,11 +82,18 @@ public static class SelfHostedBattleAudit
             var update = typeof(SelfHostedBattleClient).GetMethod("Update",
                 System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
             bool sawRecovery = false;
+            var ownedClient = typeof(PhotonConnectionManager).GetMethod("GetOwnedSelfHostedClient",
+                System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic);
             for (int attempt = 0; attempt < 200; attempt++)
             {
                 update.Invoke(first, null);
                 await Task.Delay(100, ct.Token);
-                if (first.IsReconnecting) sawRecovery = true;
+                if (first.IsReconnecting)
+                {
+                    sawRecovery = true;
+                    Require(ReferenceEquals(ownedClient.Invoke(null, null), first),
+                        "lost transport keeps self-hosted room ownership");
+                }
                 if (sawRecovery && first.IsConnected && !first.IsReconnecting) break;
             }
             Require(sawRecovery, "lost UDP polls trigger automatic reconnect");
@@ -111,6 +118,9 @@ public static class SelfHostedBattleAudit
             var state = await second.PollAsync(ct.Token);
             Require(state.Snapshot.Phase == BattlePhase.Ended && updates >= 5,
                 "both participants observe the authoritative forfeit");
+            first.LeaveMatch();
+            Require(!first.OwnsMatch && !first.IsConnected && SelfHostedBattleClient.Active == null,
+                "leaving clears the self-hosted room and transport together");
         }
         }
         finally { UnityEngine.Object.DestroyImmediate(owner); }

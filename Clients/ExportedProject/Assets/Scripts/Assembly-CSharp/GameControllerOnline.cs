@@ -1133,6 +1133,14 @@ public abstract class GameControllerOnline : IGameController
 	protected void JoinRoomFailedAfterReconnect(int message)
 	{
 		Debug.LogError($"JoinRoomFailedAfterReconnect: {message} GameIsRunning: {gameIsRunning}");
+		SelfHostedBattleClient selfHosted = SelfHostedBattleClient.Active;
+		if (selfHosted != null && selfHosted.OwnsMatch)
+		{
+			// The self-hosted adapter retries through a fresh Backend grant. A
+			// legacy Photon room failure must not close its recoverable UDP session.
+			Singleton<PhotonConnectionManager>.instance.ReconnectToRoom();
+			return;
+		}
 		if (message == 32758 || message == 32764)
 		{
 			ReconnectFailed();

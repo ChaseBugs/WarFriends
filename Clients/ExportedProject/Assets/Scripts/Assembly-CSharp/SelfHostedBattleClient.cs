@@ -764,6 +764,7 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
     }
 
     private void OnDestroy() { destroyed = true; Close(); }
+    public void LeaveMatch() { Close(); }
     private void OnRoomPhaseChanged(SelfHostedRoomPhase phase)
     {
         if (!destroyed && RoomPhaseChanged != null) RoomPhaseChanged(phase);

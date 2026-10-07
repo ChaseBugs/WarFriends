@@ -14,6 +14,12 @@ public class PhotonConnectionManager : Singleton<PhotonConnectionManager>
 		return client != null && client.PhotonCompatibility != null && client.PhotonCompatibility.IsConnected ? client : null;
 	}
 
+	private static SelfHostedBattleClient GetOwnedSelfHostedClient()
+	{
+		SelfHostedBattleClient client = UnityEngine.Object.FindObjectOfType<SelfHostedBattleClient>();
+		return client != null && client.OwnsMatch ? client : null;
+	}
+
 	public static bool IsSelfHostedActive => GetActiveSelfHostedClient() != null;
 
 	public static double GetNetworkTime()
@@ -304,10 +310,10 @@ public class PhotonConnectionManager : Singleton<PhotonConnectionManager>
 	public static void Disconnect()
 	{
 		Debug.Log("PhotonConnectionManager: Disconnect");
-		SelfHostedBattleClient selfHosted = GetActiveSelfHostedClient();
+		SelfHostedBattleClient selfHosted = GetOwnedSelfHostedClient();
 		if (selfHosted != null)
 		{
-			selfHosted.PhotonCompatibility.Disconnect();
+			selfHosted.LeaveMatch();
 			return;
 		}
 		Singleton<PhotonConnectionManager>.instance.StopAllCoroutines();
@@ -386,15 +392,20 @@ public class PhotonConnectionManager : Singleton<PhotonConnectionManager>
 		}, connectionDelay);
 	}
 
-	public void ReconnectToRoom()
+	public async void ReconnectToRoom()
 	{
 		Debug.Log($"Reconnect to room: {mRoomName}");
-		if (GetActiveSelfHostedClient() != null)
+		SelfHostedBattleClient selfHosted = GetOwnedSelfHostedClient();
+		if (selfHosted != null)
 		{
-			Debug.Log("PhotonConnectionManager: self-hosted room owns reconnect");
+			if (!selfHosted.IsConnected)
+			{
+				try { await selfHosted.ReconnectWithRecoveredSession(); }
+				catch (Exception failure) { Debug.LogError("Self-hosted room reconnect failed: " + failure); }
+			}
 			return;
 		}
-		PhotonNetwork.JoinRoom(mRoomName);
+		Debug.LogError("A self-hosted match is required to reconnect to a room.");
 	}
 
 	private void OnPhotonRandomJoinFailed()
