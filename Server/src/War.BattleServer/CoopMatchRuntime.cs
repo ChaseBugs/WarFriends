@@ -139,7 +139,8 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         {
             MissionTimedEvent timedEvent = missionRule.Events[eventIndex];
             BattleCoopEnemySpawn enemy = CreateEnemy(
-                timedEvent.Behaviour, timedEvent.Level, true);
+                timedEvent.Behaviour, timedEvent.Level, true,
+                timedEvent.IsCardUnit);
             if (!mission.ConfirmTimedEventSpawn(eventIndex, enemy.EntityId, tick))
                 throw new InvalidDataException("A due co-op event rejected its host-created enemy.");
             enemySpawns.Add(enemy);
@@ -151,14 +152,15 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             return;
         MissionSpawnBehaviour behaviour = missionRule.Behaviours[selectedIndex];
         BattleCoopEnemySpawn automaticEnemy = CreateEnemy(
-            behaviour.Name, behaviour.Level, false);
+            behaviour.Name, behaviour.Level, false, false);
         if (!mission.ConfirmAutomaticSpawn(selectedIndex, automaticEnemy.EntityId, tick))
             throw new InvalidDataException("A due co-op spawn rejected its host-created enemy.");
         enemySpawns.Add(automaticEnemy);
         stateRevision++;
     }
 
-    private BattleCoopEnemySpawn CreateEnemy(string behaviour, int level, bool timedEvent)
+    private BattleCoopEnemySpawn CreateEnemy(
+        string behaviour, int level, bool timedEvent, bool cardUnit)
     {
         IReadOnlyList<CoopSpawnPoint> candidates = spawnSelector.Candidates(behaviour);
         int selectedIndex = chooseSpawnPoint(candidates.Count);
@@ -175,7 +177,9 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             Y = point.Position.Y,
             Z = point.Position.Z,
             SpawnTick = tick,
-            TimedEvent = timedEvent
+            TimedEvent = timedEvent,
+            CardUnit = cardUnit,
+            CardProgress = cardUnit ? Math.Clamp(level / 25f, 0f, 1f) : 0f
         };
     }
 

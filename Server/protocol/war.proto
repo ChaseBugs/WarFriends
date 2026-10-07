@@ -459,6 +459,9 @@ message BattleCoopEnemySpawn {
   int32 spawn_component_file_id = 4;
   float x = 5; float y = 6; float z = 7; uint64 spawn_tick = 8;
   bool timed_event = 9;
+  // Mission.UpdateMission sends card events through SpawnForCard. The Client
+  // passes clamp01(level / 25f) to SpawnByCard instead of normal upgrades.
+  bool card_unit = 10; float card_progress = 11;
 }
 message MatchReply {
   uint64 command_id = 1; string code = 2; MatchSnapshot snapshot = 3;

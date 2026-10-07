@@ -443,6 +443,32 @@ internal static class CombatContentTests
             terminalTick != (ulong)coop.DurationSeconds * MatchManifest.TickRate)
             throw new Exception("A terminal co-op match must freeze at its source deadline.");
 
+        MissionRule cardMission = catalog.Get(12);
+        MissionMapRule cardMap = catalog.MapForMission(12);
+        MatchManifest cardAllocation = coop with
+        {
+            MissionIndex = 12,
+            MapId = cardMap.Scene,
+            MapRevision = cardMap.SceneSha256,
+            DurationSeconds = cardMission.TimeSeconds
+        };
+        var cardRuntime = new CoopMatchRuntime(cardAllocation, catalog, spawnPoints,
+            chooseBehaviour: _ => 0, choosePoint: _ => 0);
+        cardRuntime.Admit(firstPlayer);
+        cardRuntime.Admit(secondPlayer);
+        cardRuntime.Command(firstPlayer, new MatchCommand
+            { CommandId = 1, Ready = new ReadyCommand
+                { ManifestHash = cardRuntime.ManifestHash } });
+        cardRuntime.Command(secondPlayer, new MatchCommand
+            { CommandId = 1, Ready = new ReadyCommand
+                { ManifestHash = cardRuntime.ManifestHash } });
+        cardRuntime.Advance(1);
+        BattleCoopEnemySpawn cardEnemy = cardRuntime.Snapshot().Coop.EnemySpawns.Single();
+        if (!cardEnemy.TimedEvent || !cardEnemy.CardUnit ||
+            cardEnemy.Behaviour != "Sniper" || cardEnemy.Level != 6 ||
+            MathF.Abs(cardEnemy.CardProgress - 6f / 25f) > .000001f)
+            throw new Exception("A source card event must preserve its card upgrade progress.");
+
         string signingKey = Convert.ToBase64String(new byte[32]);
         var udpRuntime = new CoopMatchRuntime(coop, catalog, spawnPoints);
         var udpEndpoint = new MatchEndpoint(coop, signingKey, udpRuntime, 0);
@@ -477,7 +503,7 @@ internal static class CombatContentTests
         if (!earlyForfeit.Terminal || !earlyForfeit.Snapshot().Coop.Failed ||
             earlyForfeit.Snapshot().RewardEligible)
             throw new Exception("A pre-start forfeit must close without reward eligibility.");
-        return 17;
+        return 18;
     }
 
     private static int VerifyCoopSpawnCatalog(string directory, MissionCatalog missions)
