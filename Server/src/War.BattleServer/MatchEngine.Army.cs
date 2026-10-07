@@ -272,8 +272,8 @@ public sealed partial class MatchEngine
             if (path.UsingWaypoints)
                 targetState.Advance(time, shot, opposingDecoys,
                     opponent.Definition.PlayerId, armyChoice, NextArmyFloat,
-                    () => volleyState.PrepareFirstGun(time, tick, shot,
-                        armyChoice, NextArmyFloat));
+                    () => PrepareAssaultHelicopterAim(unit, path, opponent,
+                        targetState, volleyState, shot, time));
             Vector3? lookTarget = targetState.LookTarget(opposingDecoys,
                 opponent.Definition.PlayerId, opponent.Position);
             path.Advance(time, 1f / MatchManifest.TickRate, lookTarget);
@@ -286,6 +286,30 @@ public sealed partial class MatchEngine
                 assaultHelicopterWeapons ??
                     throw new InvalidDataException("Assault Helicopter gun source disappeared."));
         }
+    }
+
+    private void PrepareAssaultHelicopterAim(BattleArmyEntityState unit,
+        AssaultHelicopterWaypointState path, Player opponent,
+        AssaultHelicopterTargetState targetState,
+        AssaultHelicopterVolleyState volleyState, ArmyVehicleShotStats shot,
+        float time)
+    {
+        string targetId = targetState.TargetDecoyId is ulong decoyId
+            ? DroneDecoyId(decoyId)
+            : "player:" + (targetState.TargetPlayerId ??
+                throw new InvalidDataException("Assault Helicopter selected no target."));
+        var candidate = DroneTargetSnapshot().SingleOrDefault(target =>
+            target.Id == targetId && target.Fraction != unit.OwnerFraction &&
+            target.Alive);
+        if (candidate == null)
+            throw new InvalidDataException("Assault Helicopter target disappeared before aim.");
+
+        var details = ResolveDroneShotTarget(candidate);
+        var choice = AssaultHelicopterShotTargetPolicy.Select(path.Position,
+            details, details.IsPlayer && opponent.Route != null,
+            shot.ShieldHitProbability, NextArmyFloat);
+        volleyState.PrepareFirstGun(time, tick, shot, choice,
+            armyChoice, NextArmyFloat);
     }
 
     private void AdvanceDronePaths()

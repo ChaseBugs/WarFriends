@@ -52,6 +52,7 @@ public sealed class ArmyDeploymentCatalog
     private IReadOnlyDictionary<string,int>? eliteLaneStarts;
     private float? droneBulletSpeed;
     private float? droneShieldProbability;
+    private float? assaultHelicopterShieldProbability;
     private IReadOnlyDictionary<string,float>? runtimeBulletSpeeds;
     private ArmyDeploymentCatalog(string revision,float maxEnergy,float baseCooldown,ArmyAgentConfig infantryAgent,
         IReadOnlyList<ArmyDeploymentFamily> families,Dictionary<int,ArmyDeploymentOption> options)
@@ -253,8 +254,12 @@ public sealed class ArmyDeploymentCatalog
            !float.IsFinite(minTime)||!float.IsFinite(maxTime)||minTime<0||maxTime<minTime||maxTime>180||
            (maximum==0&&(minimum!=0||minTime!=0||maxTime!=0)))
             throw new InvalidDataException("Composed vehicle shot stats are outside the recovered combat domain.");
+        float shieldProbability=unitId=="ID_UNIT-ASSAULTHELI"
+            ? assaultHelicopterShieldProbability??
+                throw new InvalidDataException("Assault Helicopter shield policy is unavailable.")
+            : 0;
         return new(effectiveSpeed,probability,minimum,maximum,minTime,maxTime,
-            family.VehicleShot.Crew);
+            family.VehicleShot.Crew,shieldProbability);
     }
 
     /// <summary>Buggy LoadDefinitionFromXLS adds cannon damage and timing from every selected lane.</summary>
@@ -417,6 +422,7 @@ public sealed class ArmyDeploymentCatalog
         var acceptedEliteStarts=new Dictionary<string,int>(StringComparer.Ordinal);
         float? acceptedDroneBulletSpeed=null;
         float? acceptedDroneShieldProbability=null;
+        float? acceptedAssaultHelicopterShieldProbability=null;
         var acceptedBulletSpeeds=new Dictionary<string,float>(StringComparer.Ordinal);
         foreach(var family in Families)
         {
@@ -442,6 +448,13 @@ public sealed class ArmyDeploymentCatalog
                 if(!float.IsFinite(shield)||shield< -1||shield>1)
                     throw new InvalidDataException("Invalid Drone ArmyUpgrades shield probability.");
                 acceptedDroneShieldProbability=shield;
+            }
+            if(family.UnitId=="ID_UNIT-ASSAULTHELI")
+            {
+                float shield=row.GetProperty("HITSHIELDPROB").GetSingle();
+                if(!float.IsFinite(shield)||shield< -1||shield>1)
+                    throw new InvalidDataException("Invalid Assault Helicopter shield probability.");
+                acceptedAssaultHelicopterShieldProbability=shield;
             }
             float behindShield=row.GetProperty("PLAYERBEHINDSHIELDDMGRATIO").GetSingle();
             float playerDamage=row.GetProperty("PLAYERDAMAGERATIO").GetSingle();
@@ -564,6 +577,8 @@ public sealed class ArmyDeploymentCatalog
         runtimeBulletSpeeds=acceptedBulletSpeeds;
         droneBulletSpeed=acceptedDroneBulletSpeed??throw new InvalidDataException("Drone bullet speed authority absent.");
         droneShieldProbability=acceptedDroneShieldProbability??throw new InvalidDataException("Drone shield probability authority absent.");
+        assaultHelicopterShieldProbability=acceptedAssaultHelicopterShieldProbability??
+            throw new InvalidDataException("Assault Helicopter shield probability authority absent.");
     }
 
     public static ArmyDeploymentCatalog Load(string path,string expectedRevision,string expectedSceneRevision)

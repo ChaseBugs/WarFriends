@@ -10,6 +10,7 @@ internal sealed class AssaultHelicopterVolleyState
 {
     internal sealed record PreparedVolley(
         AssaultHelicopterVolleyPlanner.Volley Plan,
+        AssaultHelicopterShotTargetPolicy.Choice TargetChoice,
         IReadOnlyList<bool> FirstGunRealShots,
         IReadOnlyList<bool>? SecondGunRealShots,
         ulong SelectionTick,
@@ -47,9 +48,11 @@ internal sealed class AssaultHelicopterVolleyState
     internal PreparedVolley? Latest { get; private set; }
 
     internal void PrepareFirstGun(float time, ulong tick, ArmyVehicleShotStats shot,
+        AssaultHelicopterShotTargetPolicy.Choice targetChoice,
         Func<int, int> chooseIndex, Func<float> nextRandom)
     {
-        if (!float.IsFinite(time) || time < 0 || waitingForSecondGun.Count >= 8)
+        if (!float.IsFinite(time) || time < 0 || waitingForSecondGun.Count >= 8 ||
+            targetChoice == null)
             throw new InvalidDataException("Invalid Assault Helicopter volley queue authority.");
 
         var plan = AssaultHelicopterVolleyPlanner.Plan(shot, chooseIndex);
@@ -59,7 +62,8 @@ internal sealed class AssaultHelicopterVolleyState
         if (!float.IsFinite(dueTime) || dueTime <= time)
             throw new InvalidDataException("Assault Helicopter second-gun deadline overflowed.");
 
-        var prepared = new PreparedVolley(plan, firstGunShots, null, tick, dueTime);
+        var prepared = new PreparedVolley(plan, targetChoice, firstGunShots,
+            null, tick, dueTime);
         waitingForSecondGun.Enqueue(prepared);
         firstGun.Replace(firstGunShots);
         Latest = prepared;

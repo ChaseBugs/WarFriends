@@ -1040,8 +1040,48 @@ internal static class CombatContentTests
               "Helicopter turret binds selected source shot stages apart from attached crew count");
         Check(assaultHelicopterShot.MinShootTime>0&&
               assaultHelicopterShot.MaxShootTime>=assaultHelicopterShot.MinShootTime&&
-              assaultHelicopterShot.FireBatchSizeMax>0,
-              "Assault Helicopter firing cadence comes from its selected source upgrade row");
+              assaultHelicopterShot.FireBatchSizeMax>0 &&
+              assaultHelicopterShot.ShieldHitProbability == 0,
+              "Assault Helicopter firing cadence and shield policy come from source upgrade rows");
+        var assaultPlayerTargets = new DroneTargetDetails(
+            [new(11, 1, new Vector3(0, 0, 2)),
+             new(12, 1, new Vector3(1, 0, 2)),
+             new(13, 2, new Vector3(0, 1, 1)),
+             new(14, 16, new Vector3(0, 0, 1)),
+             new(15, 8, new Vector3(0, 2, 2))],
+            true, Vector3.Zero, Vector3.UnitZ, true, Vector3.Zero);
+        var assaultBodyPair = AssaultHelicopterShotTargetPolicy.Select(
+            new Vector3(0, 0, 3), assaultPlayerTargets, false,
+            assaultHelicopterShot.ShieldHitProbability, () => .5f);
+        Check(assaultBodyPair.First.TransformFileId == 12 &&
+              assaultBodyPair.Second.TransformFileId == 11 && !assaultBodyPair.Shield,
+            "shield miss gives Assault Helicopter guns the second and first ordered body targets");
+        var assaultShieldPair = AssaultHelicopterShotTargetPolicy.Select(
+            new Vector3(0, 0, 3), assaultPlayerTargets, false, .6f, () => .2f);
+        Check(assaultShieldPair.First.TransformFileId == 13 &&
+              assaultShieldPair.Second.TransformFileId == 13 && assaultShieldPair.Shield,
+            "shield hit gives both Assault Helicopter guns the same shield target");
+        var assaultWalkingTarget = AssaultHelicopterShotTargetPolicy.Select(
+            new Vector3(0, 0, 3), assaultPlayerTargets with { Hiding = false },
+            true, 0, () => throw new Exception("walking aim consumed a shield draw"));
+        Check(assaultWalkingTarget.First.TransformFileId == 14 &&
+              assaultWalkingTarget.Second.TransformFileId == 14,
+            "walking player aim chooses the recovered Moving target for both guns");
+        var assaultBehindPlayer = AssaultHelicopterShotTargetPolicy.Select(
+            new Vector3(0, 0, -3), assaultPlayerTargets, false, .6f,
+            () => throw new Exception("rear aim consumed a shield draw"));
+        Check(assaultBehindPlayer.First.TransformFileId == 11 &&
+              assaultBehindPlayer.Second.TransformFileId == 11,
+            "Assault Helicopter rear aim selects the nearest whole-body target");
+        var assaultDecoyAim = AssaultHelicopterShotTargetPolicy.Select(
+            Vector3.Zero, assaultPlayerTargets with
+            {
+                IsPlayer = false,
+                Targets = [new(21, 1, new Vector3(2, 0, 0))]
+            }, false, 0, () => throw new Exception("Decoy aim consumed a shield draw"));
+        Check(assaultDecoyAim.First.TransformFileId == 21 &&
+              assaultDecoyAim.Second.TransformFileId == 21,
+            "Assault Helicopter uses the same nearest AllIn Decoy target for both guns");
         var assaultVolley = AssaultHelicopterVolleyPlanner.Plan(
             new ArmyVehicleShotStats(5, .75f, 4, 7, 2, 4, 0),
             span => span - 1);
@@ -1062,8 +1102,10 @@ internal static class CombatContentTests
         int sampledAssaultRounds = 0;
         float NextAssaultRound() { sampledAssaultRounds++; return .5f; }
         overlappingVolleys.PrepareFirstGun(2f, 60, fixedAssaultShot,
+            assaultBodyPair,
             _ => 0, NextAssaultRound);
         overlappingVolleys.PrepareFirstGun(2.05f, 62, fixedAssaultShot,
+            assaultBodyPair,
             _ => 0, NextAssaultRound);
         overlappingVolleys.PrepareDueSecondGuns(2.12f, fixedAssaultShot,
             NextAssaultRound);
@@ -3427,6 +3469,8 @@ internal static class CombatContentTests
             assaultHelicopterSpawn.EntityKey);
         Check(preparedAssaultVolley != null &&
               preparedAssaultVolley.SelectionTick == 122 &&
+              preparedAssaultVolley.TargetChoice.First.TransformFileId > 0 &&
+              preparedAssaultVolley.TargetChoice.Second.TransformFileId > 0 &&
               preparedAssaultVolley.Plan.FirstGunCount +
                   preparedAssaultVolley.Plan.SecondGunCount ==
                   assaultHelicopterShot.FireBatchSizeMin &&
