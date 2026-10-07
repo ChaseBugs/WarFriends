@@ -33,6 +33,38 @@
       "sceneSha256": "0f816c262e021a36bc347d62734504f9b86d2031d11a55cdf3c377bf4990ba83"
     }
   ],
+  "bossMaps": [
+    {
+      "stage": 1,
+      "name": "Desert",
+      "scene": "Desert_Multiplayer",
+      "sceneSha256": "d2acaeb238fb2dfdcfb0e1bb69a52628798498f7b6992ecf9418a727360368c1"
+    },
+    {
+      "stage": 2,
+      "name": "Snow",
+      "scene": "Snow_Multiplayer",
+      "sceneSha256": "67291457da28646c9ce377f3812d1bf0fa5332bfe664f58a4430a823744e6f21"
+    },
+    {
+      "stage": 3,
+      "name": "California",
+      "scene": "City_Multiplayer",
+      "sceneSha256": "acaf878b188dbc17fca6795b5db7e9c7797b91dee0fcb6fb02d5e85d7cc11c4f"
+    },
+    {
+      "stage": 4,
+      "name": "Jungle",
+      "scene": "Aztec_Multiplayer",
+      "sceneSha256": "50b3077f1898189cbf40c2232771175b85eec0f03737901373da377faf95291e"
+    },
+    {
+      "stage": 5,
+      "name": "Park",
+      "scene": "Park_Multiplayer",
+      "sceneSha256": "09b2c084ef5da6707fbebd4261a60baa0f12e24fef31efc4c6d4671b721e70ed"
+    }
+  ],
   "missions": [
     {
       "index": 0,

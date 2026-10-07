@@ -47,16 +47,34 @@ public sealed class MissionCatalog
         };
     private static readonly string[] ExpectedMapScenes =
         ["Desert_New", "Snow_Single", "City_Single", "Aztec_Single", "Park_Single"];
+    private static readonly string[] ExpectedBossMapScenes =
+        ["Desert_Multiplayer", "Snow_Multiplayer", "City_Multiplayer",
+         "Aztec_Multiplayer", "Park_Multiplayer"];
+    private static readonly string[] ExpectedMapHashes =
+        ["e5e2ad6c9f602125d1da7c1949e0f002e8ee229a4c1fc16bf703ae96000f40c5",
+         "a797c945ccc4e4307ad55611e16db086d3ace63f31a535388f7e5bbb461daf27",
+         "99a24a690a023c8f9c2f1195b727ecdcc22740a6f0479f6148909a22db3f5127",
+         "5fbfe89a6ff35e0769d4fcdbd9a80e6c31baec653a3bd78c53b81211cd8b9e17",
+         "0f816c262e021a36bc347d62734504f9b86d2031d11a55cdf3c377bf4990ba83"];
+    private static readonly string[] ExpectedBossMapHashes =
+        ["d2acaeb238fb2dfdcfb0e1bb69a52628798498f7b6992ecf9418a727360368c1",
+         "67291457da28646c9ce377f3812d1bf0fa5332bfe664f58a4430a823744e6f21",
+         "acaf878b188dbc17fca6795b5db7e9c7797b91dee0fcb6fb02d5e85d7cc11c4f",
+         "50b3077f1898189cbf40c2232771175b85eec0f03737901373da377faf95291e",
+         "09b2c084ef5da6707fbebd4261a60baa0f12e24fef31efc4c6d4671b721e70ed"];
 
     public string SourceSha256 { get; }
     public IReadOnlyList<MissionRule> Missions { get; }
     public IReadOnlyList<MissionMapRule> Maps { get; }
+    public IReadOnlyList<MissionMapRule> BossMaps { get; }
 
-    private MissionCatalog(string sourceSha256, MissionRule[] missions, MissionMapRule[] maps)
+    private MissionCatalog(string sourceSha256, MissionRule[] missions,
+        MissionMapRule[] maps, MissionMapRule[] bossMaps)
     {
         SourceSha256 = sourceSha256;
         Missions = new ReadOnlyCollection<MissionRule>(missions);
         Maps = new ReadOnlyCollection<MissionMapRule>(maps);
+        BossMaps = new ReadOnlyCollection<MissionMapRule>(bossMaps);
     }
 
     public MissionRule Get(int missionIndex)
@@ -69,7 +87,10 @@ public sealed class MissionCatalog
     public MissionMapRule MapForMission(int missionIndex)
     {
         MissionRule mission = Get(missionIndex);
-        return Maps[mission.MapStage - 1];
+        // MapManager.MapEntry.sceneName uses levelPVPName for BotMission:
+        // GameController.isCoop/isCampaign explicitly exclude that subtype.
+        return mission.MissionType == "KillOpponent"
+            ? BossMaps[mission.MapStage - 1] : Maps[mission.MapStage - 1];
     }
 
     public MissionObjectiveState CreateObjectiveState(int missionIndex)
@@ -87,14 +108,17 @@ public sealed class MissionCatalog
     {
         using var document = JsonDocument.Parse(File.ReadAllText(path));
         JsonElement root = document.RootElement;
-        RequireProperties(root, "source", "sourceSha256", "maps", "missions");
+        RequireProperties(root, "source", "sourceSha256", "maps", "bossMaps", "missions");
         if (root.GetProperty("source").GetString() != SourcePath)
             throw new InvalidDataException("Mission catalog has unexpected source provenance.");
 
         string sourceHash = ReadHash(root, "sourceSha256");
         if (sourceHash != SourceRevision)
             throw new InvalidDataException("Mission catalog is from an unreviewed MainScene.");
-        MissionMapRule[] maps = ReadMaps(root.GetProperty("maps"));
+        MissionMapRule[] maps = ReadMaps(root.GetProperty("maps"),
+            ExpectedMapScenes, ExpectedMapHashes);
+        MissionMapRule[] bossMaps = ReadMaps(root.GetProperty("bossMaps"),
+            ExpectedBossMapScenes, ExpectedBossMapHashes);
         JsonElement entries = root.GetProperty("missions");
         if (entries.ValueKind != JsonValueKind.Array || entries.GetArrayLength() != 75)
             throw new InvalidDataException("Mission catalog must contain all 75 source rows.");
@@ -115,16 +139,17 @@ public sealed class MissionCatalog
             if (typeCounts.GetValueOrDefault(expected.Key) != expected.Value)
                 throw new InvalidDataException("Mission objective types differ from the recovered source.");
         }
-        return new MissionCatalog(sourceHash, missions, maps);
+        return new MissionCatalog(sourceHash, missions, maps, bossMaps);
     }
 
-    private static MissionMapRule[] ReadMaps(JsonElement entries)
+    private static MissionMapRule[] ReadMaps(JsonElement entries,
+        string[] expectedScenes, string[] expectedHashes)
     {
         if (entries.ValueKind != JsonValueKind.Array ||
-            entries.GetArrayLength() != ExpectedMapScenes.Length)
+            entries.GetArrayLength() != expectedScenes.Length)
             throw new InvalidDataException("Mission map catalog must contain five source stages.");
 
-        var maps = new MissionMapRule[ExpectedMapScenes.Length];
+        var maps = new MissionMapRule[expectedScenes.Length];
         for (int index = 0; index < maps.Length; index++)
         {
             JsonElement entry = entries[index];
@@ -132,11 +157,12 @@ public sealed class MissionCatalog
             int stage = ReadInt(entry, "stage", 1, maps.Length);
             string name = entry.GetProperty("name").GetString() ?? "";
             string scene = entry.GetProperty("scene").GetString() ?? "";
-            if (stage != index + 1 || scene != ExpectedMapScenes[index] ||
+            string hash = ReadHash(entry, "sceneSha256");
+            if (stage != index + 1 || scene != expectedScenes[index] ||
+                hash != expectedHashes[index] ||
                 name.Length is < 1 or > 40 || name.Any(char.IsControl))
                 throw new InvalidDataException("Mission map order or identity differs from the source.");
-            maps[index] = new MissionMapRule(stage, name, scene,
-                ReadHash(entry, "sceneSha256"));
+            maps[index] = new MissionMapRule(stage, name, scene, hash);
         }
         return maps;
     }

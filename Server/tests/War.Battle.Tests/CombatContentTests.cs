@@ -20,7 +20,10 @@ internal static class CombatContentTests
         if (catalog.Missions.Count != 75 ||
             catalog.Get(0).MissionType != "KillXEnemies" ||
             catalog.Get(0).Objective != 10 ||
-            catalog.Get(74).MissionType != "KillOpponent")
+            catalog.Get(74).MissionType != "KillOpponent" ||
+            catalog.MapForMission(0).Scene != "Desert_New" ||
+            catalog.MapForMission(4).Scene != "Desert_Multiplayer" ||
+            catalog.MapForMission(74).Scene != "Park_Multiplayer")
             throw new Exception("Recovered mission rules did not load in source order.");
         int behaviourCount = catalog.Missions.Sum(mission => mission.Behaviours.Count);
         int eventCount = catalog.Missions.Sum(mission => mission.Events.Count);
@@ -53,7 +56,12 @@ internal static class CombatContentTests
                 firstMission["timeSeconds"]!.GetValue<int>() + 1;
             RejectMissionCatalog(temporaryPath, document,
                 "An event beyond the source mission timer was accepted.");
-            return 4 + objectiveAssertions + scoreAssertions +
+
+            document = JsonNode.Parse(File.ReadAllText(path))!;
+            document["bossMaps"]![0]!["sceneSha256"] = new string('0', 64);
+            RejectMissionCatalog(temporaryPath, document,
+                "A changed boss scene hash was accepted.");
+            return 5 + objectiveAssertions + scoreAssertions +
                 spawnAssertions + eventAssertions + coopAssertions +
                 allocationAssertions + mapAssertions + navMeshAssertions +
                 routeAssertions + botAssertions;
@@ -423,6 +431,25 @@ internal static class CombatContentTests
         {
         }
 
+        MissionMapRule bossMap = catalog.MapForMission(4);
+        MatchManifest bossAllocation = coop with
+        {
+            MissionIndex = 4,
+            MapId = bossMap.Scene,
+            MapRevision = bossMap.SceneSha256,
+            DurationSeconds = catalog.Get(4).TimeSeconds
+        };
+        MatchManifest.Validate(bossAllocation);
+        try
+        {
+            _ = new CoopMatchRuntime(bossAllocation, catalog,
+                spawnPoints, routes, enemyCombat);
+            throw new Exception("A boss mission used single-player co-op geometry.");
+        }
+        catch (InvalidDataException)
+        {
+        }
+
         var runtime = new CoopMatchRuntime(coop, catalog, spawnPoints, routes, enemyCombat,
             chooseBehaviour: _ => 0, choosePoint: _ => 0);
         string firstPlayer = coop.Players[0].PlayerId;
@@ -735,7 +762,7 @@ internal static class CombatContentTests
         if (!earlyForfeit.Terminal || !earlyForfeit.Snapshot().Coop.Failed ||
             earlyForfeit.Snapshot().RewardEligible)
             throw new Exception("A pre-start forfeit must close without reward eligibility.");
-        return 47;
+        return 48;
     }
 
     private static int VerifyCoopBotRules(string directory, MissionCatalog missions)
@@ -793,7 +820,7 @@ internal static class CombatContentTests
         if (routes.Maps.Count != 5 ||
             routes.Maps.Sum(map => map.Routes.Count) != 60 ||
             routes.MapForMission(missions, 0).Between(1, 0).To != 0 ||
-            routes.MapForMission(missions, 74).Between(2, 3).From != 2 ||
+            routes.MapForMission(missions, 70).Between(2, 3).From != 2 ||
             routes.Maps[2].Routes.All(route => route.Corners.Count != 3))
             throw new Exception("Co-op defend routes differ from Unity's source paths.");
 
@@ -836,7 +863,7 @@ internal static class CombatContentTests
             CoopNavMeshSourceCatalog.Load(manifestPath, missions);
         if (navigation.Maps.Count != 5 ||
             navigation.MapForMission(missions, 0).Scene != "Desert_New" ||
-            navigation.MapForMission(missions, 74).Scene != "Park_Single" ||
+            navigation.MapForMission(missions, 70).Scene != "Park_Single" ||
             navigation.Maps.Count(map => map.Format == "unity-binary-2018") != 4 ||
             navigation.Maps.Count(map => map.Format == "unity-yaml-navmesh-tiles") != 1)
             throw new Exception("Co-op NavMesh package does not match the source scenes.");
@@ -894,8 +921,17 @@ internal static class CombatContentTests
             snow.EnemySpawnPoints.Any(point => point.Fraction != 1))
             throw new Exception("Allied source spawns must not become enemy AI anchors.");
 
-        foreach (MissionRule mission in missions.Missions)
+        foreach (MissionRule mission in missions.Missions.Where(
+                     mission => mission.MissionType != "KillOpponent"))
             _ = new CoopAiSpawnSelector(missions, spawns, mission.Index);
+        try
+        {
+            _ = new CoopAiSpawnSelector(missions, spawns, 4);
+            throw new Exception("A boss mission used single-player AI spawn anchors.");
+        }
+        catch (InvalidDataException)
+        {
+        }
         CoopAiSpawnSelector desertSelector = new(missions, spawns, 0);
         if (desertSelector.Candidates("Drone").Any(point =>
                 point.Collection != "spawnPointsCollectionDrones" || point.Fraction != 1) ||
