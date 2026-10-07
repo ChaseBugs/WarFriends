@@ -299,6 +299,16 @@ internal static class BattleManifestSnapshotTests
                     scoringDigest,CancellationToken.None)));
             if(scoring.Count(x=>x=="scored")!=1 || scoring.Count(x=>x=="already-scored")!=7)
                 throw new Exception("Concurrent result scoring did not retain one durable winner.");
+            await resultRows.UpdateOneAsync(x=>x.MatchId==scoringTerminal.MatchId,
+                Builders<BattleResultDocument>.Update.Set(x=>x.Settled,true));
+            try {await resultStore.Get(scoringTerminal.MatchId,CancellationToken.None);
+                throw new Exception("A settlement marker without a timestamp was trusted.");}
+            catch(InvalidDataException){}
+            try {await resultStore.Prune(DateTimeOffset.UtcNow.AddDays(31),TimeSpan.FromDays(30),CancellationToken.None);
+                throw new Exception("Archival deleted a result with a malformed settlement marker.");}
+            catch(InvalidDataException){}
+            await resultRows.UpdateOneAsync(x=>x.MatchId==scoringTerminal.MatchId,
+                Builders<BattleResultDocument>.Update.Set(x=>x.Settled,false));
             var unsettledTerminal=scoringTerminal.Clone();
             unsettledTerminal.MatchId="unsettled-"+Guid.NewGuid().ToString("N");
             (byte[] unsettledPayload,string unsettledDigest)=Evidence(unsettledTerminal);
@@ -330,14 +340,15 @@ internal static class BattleManifestSnapshotTests
                 });
             }
             await resultRows.InsertManyAsync(unsettledBacklog);
-            if(await resultStore.Prune(DateTimeOffset.UtcNow.AddDays(31),TimeSpan.FromDays(30),CancellationToken.None)!=3 ||
-               await resultStore.Get(match,CancellationToken.None)!=null ||
+            if(await resultStore.Prune(DateTimeOffset.UtcNow.AddDays(31),TimeSpan.FromDays(30),CancellationToken.None)!=1 ||
+               (await resultStore.Get(match,CancellationToken.None))?.Settled!=false ||
                await resultStore.Get(rematch.MatchId!,CancellationToken.None)!=null ||
-               await resultStore.Get(scoringTerminal.MatchId,CancellationToken.None)!=null ||
+               (await resultStore.Get(scoringTerminal.MatchId,CancellationToken.None))?.Scored!=true ||
+               (await resultStore.Get(scoringTerminal.MatchId,CancellationToken.None))?.Settled!=false ||
                (await resultStore.Get(unsettledTerminal.MatchId,CancellationToken.None))?.Scored!=false ||
                (await resultStore.Get(unsettledTerminal.MatchId,CancellationToken.None))?.TerminalPhase!=BattlePhase.Ended ||
                (await resultStore.Get(unsettledBacklog[^1].MatchId,CancellationToken.None))?.Scored!=false)
-                throw new Exception("Archival removed unsettled combat evidence or retained a settled row.");
+                throw new Exception("Archival removed a scored-but-unsettled result or retained an abort.");
             var abortedBacklog=new List<BattleResultDocument>();
             for(int index=0;index<300;index++)
             {

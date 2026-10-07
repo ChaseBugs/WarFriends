@@ -15,6 +15,8 @@ public sealed class BattleResultDocument
     public BattlePhase? TerminalPhase { get; set; }
     public bool Scored { get; set; }
     public DateTime? ScoredUtc { get; set; }
+    public bool Settled { get; set; }
+    public DateTime? SettledUtc { get; set; }
 }
 
 public sealed class BattleResultStore
@@ -36,7 +38,7 @@ public sealed class BattleResultStore
             new CreateIndexModel<BattleResultDocument>(Builders<BattleResultDocument>.IndexKeys
                 .Ascending(x => x.TerminalPhase).Ascending(x => x.AcceptedUtc)),
             new CreateIndexModel<BattleResultDocument>(Builders<BattleResultDocument>.IndexKeys
-                .Ascending(x => x.Scored).Ascending(x => x.AcceptedUtc))
+                .Ascending(x => x.Settled).Ascending(x => x.AcceptedUtc))
         }, ct);
     }
     public async Task<string> Accept(string matchId, string digest, byte[] snapshot, CancellationToken ct)
@@ -129,7 +131,7 @@ public sealed class BattleResultStore
         var cutoff = now - retention;
         var filter=Builders<BattleResultDocument>.Filter;
         var due=filter.Lt(x=>x.AcceptedUtc,cutoff.UtcDateTime);
-        var eligible=filter.Eq(x=>x.Scored,true) |
+        var eligible=filter.Eq(x=>x.Settled,true) |
             filter.Eq(x=>x.TerminalPhase,BattlePhase.Aborted) |
             filter.Eq(x=>x.TerminalPhase,null); // Inspect older rows without a phase mirror.
         // A single maintenance pass has a fixed upper bound. Repeated passes
@@ -155,8 +157,8 @@ public sealed class BattleResultStore
                     throw new InvalidDataException("Battle result changed during phase migration; retry archival.");
                 row.TerminalPhase=terminal.Phase;
             }
-            if(terminal.Phase==BattlePhase.Ended && !row.Scored)
-                continue; // Keep completed evidence until a settlement consumer confirms it.
+            if(terminal.Phase==BattlePhase.Ended && !row.Settled)
+                continue; // A score marker alone does not transact account rewards.
             var deleted=await results.DeleteOneAsync(Exact(row),ct);
             if(deleted.DeletedCount!=1)
                 throw new InvalidDataException("Battle result changed during archival; retry remaining rows.");
@@ -191,7 +193,8 @@ public sealed class BattleResultStore
             f.Eq(x=>x.Digest,row.Digest) & f.Eq(x=>x.Snapshot,row.Snapshot) &
             f.Eq(x=>x.AcceptedUtc,row.AcceptedUtc) &
             f.Eq(x=>x.TerminalPhase,row.TerminalPhase) & f.Eq(x=>x.Scored,row.Scored) &
-            f.Eq(x=>x.ScoredUtc,row.ScoredUtc);
+            f.Eq(x=>x.ScoredUtc,row.ScoredUtc) & f.Eq(x=>x.Settled,row.Settled) &
+            f.Eq(x=>x.SettledUtc,row.SettledUtc);
     }
     private static void Validate(BattleResultDocument row,string? matchId,DateTime now)
     {
@@ -202,6 +205,8 @@ public sealed class BattleResultStore
             row.AcceptedUtc.Kind!=DateTimeKind.Utc || row.AcceptedUtc<DateTime.UnixEpoch || row.AcceptedUtc>now ||
             (row.Scored ? row.ScoredUtc is not { } scored || scored.Kind!=DateTimeKind.Utc ||
                 scored<row.AcceptedUtc || scored>now : row.ScoredUtc!=null) ||
+            (row.Settled ? !row.Scored || row.SettledUtc is not { } settled ||
+                settled.Kind!=DateTimeKind.Utc || settled<row.ScoredUtc || settled>now : row.SettledUtc!=null) ||
             TerminalResultDigest.Compute(row.Snapshot)!=row.Digest)
             throw new InvalidDataException("Invalid persisted battle result.");
         var terminal=TerminalOutbox.ValidatePayload(row.Snapshot,row.MatchId!,row.Digest!);
