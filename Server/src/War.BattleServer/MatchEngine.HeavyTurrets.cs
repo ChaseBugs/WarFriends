@@ -137,9 +137,8 @@ public sealed partial class MatchEngine
         if(secondaryTargets.Count>0)
             return secondaryTargets[Choose(secondaryTargets.Count)];
 
-        // For the implemented target families, the final untyped opponent is the player.
-        // Assault Helicopter and Mech still need normal host collision before this
-        // branch can claim the recovered GetOpponents(all) behavior.
+        // The final untyped opponent is the player. Mech still needs normal
+        // host collision before this fully matches GetOpponents(all).
         var opposingPlayer=players.SingleOrDefault(player=>
             player.Definition.Fraction!=turret.OwnerFraction&&player.Health>0&&!player.Reconnecting);
         return opposingPlayer==null?null:new(opposingPlayer.Definition.PlayerId,
@@ -151,7 +150,7 @@ public sealed partial class MatchEngine
         return activeArmyEntities.Values
             .Where(unit=>unit.OwnerFraction!=ownerFraction&&
                 (infantryAnimations.ContainsKey(unit.EntityKey)||
-                 unit.UnitId is "ID_UNIT-DRONE" or "ID_UNIT-HELICOPTER"||
+                 unit.UnitId is "ID_UNIT-DRONE" or "ID_UNIT-HELICOPTER" or "ID_UNIT-ASSAULTHELI"||
                  vehicles?.TryGet(unit.EntityKey,out _)==true))
             .OrderBy(unit=>unit.EntityKey).ToArray();
     }
@@ -165,7 +164,7 @@ public sealed partial class MatchEngine
     {
         string targetKind;
         if(infantryAnimations.ContainsKey(unit.EntityKey))targetKind="army";
-        else if(unit.UnitId is "ID_UNIT-DRONE" or "ID_UNIT-HELICOPTER")targetKind="air";
+        else if(unit.UnitId is "ID_UNIT-DRONE" or "ID_UNIT-HELICOPTER" or "ID_UNIT-ASSAULTHELI")targetKind="air";
         else targetKind="vehicle";
         return new("army:"+unit.EntityKey,new(unit.X,unit.Y,unit.Z),targetKind,unit.EntityKey);
     }
@@ -182,7 +181,7 @@ public sealed partial class MatchEngine
            activeArmyEntities.TryGetValue(armyId,out var army)&&army.OwnerFraction!=turret.OwnerFraction)
         {
             if(infantryAnimations.ContainsKey(armyId))return new(id,new(army.X,army.Y,army.Z),"army",armyId);
-            if(army.UnitId is "ID_UNIT-DRONE" or "ID_UNIT-HELICOPTER")
+            if(army.UnitId is "ID_UNIT-DRONE" or "ID_UNIT-HELICOPTER" or "ID_UNIT-ASSAULTHELI")
             {
                 Vector3 root=new(army.X,army.Y,army.Z);
                 if(!selectShotTarget)return new(id,root,"air",armyId);
@@ -290,6 +289,15 @@ public sealed partial class MatchEngine
                 new(rotation.X,rotation.Y,rotation.Z,rotation.W));
             if(targets.Count!=1)throw new InvalidDataException("Helicopter shot target source is ambiguous.");
             return (targets[0].Position,helicopter.Velocity*MatchManifest.TickRate);
+        }
+        if(army.UnitId=="ID_UNIT-ASSAULTHELI"&&
+           armyAssaultHelicopterPaths.TryGetValue(army.EntityKey,out var assault)&&
+           army.AssaultRotation is { } assaultRotation&&airShotTargets!=null)
+        {
+            var targets=airShotTargets.PlaceRest(army.UnitId,root,
+                new(assaultRotation.X,assaultRotation.Y,assaultRotation.Z,assaultRotation.W));
+            if(targets.Count!=1)throw new InvalidDataException("Assault Helicopter shot target source is ambiguous.");
+            return (targets[0].Position,assault.Velocity*MatchManifest.TickRate);
         }
         throw new InvalidDataException("Heavy Turret air target lost its live source binding.");
     }

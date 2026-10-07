@@ -6384,7 +6384,8 @@ internal static class CombatContentTests
         Check(turretHitMovingVehicle&&latestVehicleHealth.HasValue&&
               Math.Abs(sharedVehicleHealth-latestVehicleHealth.Value)<.01f,
             "Heavy Turret damages a moving Humvee and synchronizes its shared vehicle health");
-        foreach(string airUnit in new[]{"ID_UNIT-DRONE","ID_UNIT-HELICOPTER"})
+        foreach(string airUnit in new[]{"ID_UNIT-DRONE","ID_UNIT-HELICOPTER",
+            "ID_UNIT-ASSAULTHELI"})
         {
             var turretAirManifest=humveeDecoyManifest with
             {
