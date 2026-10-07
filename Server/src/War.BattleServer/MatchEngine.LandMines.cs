@@ -91,7 +91,11 @@ public sealed partial class MatchEngine
             LandMinePassengerTrigger? passengerTrigger=null;
             if(playerTrigger==null&&armyTrigger==null&&vehicleTrigger==null)
                 passengerTrigger=FindLandMinePassengerTrigger(mine);
+            DecoyMatchEntity? decoyTrigger=null;
             if(playerTrigger==null&&armyTrigger==null&&vehicleTrigger==null&&passengerTrigger==null)
+                decoyTrigger=FindLandMineDecoyTrigger(mine);
+            if(playerTrigger==null&&armyTrigger==null&&vehicleTrigger==null&&
+               passengerTrigger==null&&decoyTrigger==null)
                 continue;
             if(!landMines.TryRemove(mine.EntityId,out var removed)||removed!=mine)
                 throw new InvalidDataException("Land Mine trigger compare-and-remove failed.");
@@ -113,11 +117,16 @@ public sealed partial class MatchEngine
                 target=vehicleTrigger.OwnerPlayerId;
                 reason="vehicle-trigger:"+vehicleTrigger.EntityId;
             }
-            else
+            else if(passengerTrigger!=null)
             {
-                target=passengerTrigger!.Vehicle.OwnerPlayerId;
+                target=passengerTrigger.Vehicle.OwnerPlayerId;
                 reason="vehicle-passenger-trigger:"+passengerTrigger.Vehicle.EntityId+":"+
                     passengerTrigger.Role;
+            }
+            else
+            {
+                target=decoyTrigger!.OwnerPlayerId;
+                reason="decoy-trigger:"+decoyTrigger.EntityId;
             }
             Emit(MatchEventKind.LandMineTriggered,mine.OwnerPlayerId,target,
                 mine.EntityId,mine.Position,mine.Damage,reason);
@@ -234,6 +243,25 @@ public sealed partial class MatchEngine
                 if(LandMineExplosion.Triggered(mine.Position,landMineSource.Prefab,parts))
                     return new(vehicle,passenger.Binding.Role);
             }
+        }
+        return null;
+    }
+
+    private DecoyMatchEntity? FindLandMineDecoyTrigger(LandMineMatchEntity mine)
+    {
+        if(decoys.Snapshot().Count==0)return null;
+        if(decoySource==null||landMineSource==null)
+            throw new InvalidDataException("Land Mine Decoy trigger lacks source geometry.");
+        var owner=Find(mine.OwnerPlayerId)??
+            throw new InvalidDataException("Land Mine Decoy trigger owner disappeared.");
+
+        foreach(var collider in DecoyShotTargets(owner).OrderBy(row=>row.EntityId))
+        {
+            if(!collider.Decoy)
+                throw new InvalidDataException("Land Mine Decoy trigger changed collision kind.");
+            if(!LandMineExplosion.Triggered(mine.Position,landMineSource.Prefab,
+                   new[]{collider.Hitbox}))continue;
+            return decoys.Snapshot().Single(row=>row.EntityId==collider.EntityId);
         }
         return null;
     }

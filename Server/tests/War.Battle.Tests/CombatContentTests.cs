@@ -5120,6 +5120,33 @@ internal static class CombatContentTests
                   x.Kind==MatchEventKind.DecoyDestroyed&&x.ProjectileId==enemyDecoy.EntityId)&&
               flameDecoyMatch.DecoyHealth(allyDecoy.EntityId)==allyDecoyBefore,
             "lethal Flame damage releases Decoy obstacle and drone authority without touching an allied Decoy");
+        var mineDecoyBox=flameDecoyMatch.GroundVehicleShotTargets(helicopterOwner)
+            .Single(row=>row.Decoy&&row.EntityId==allyDecoy.EntityId).Hitbox;
+        ulong decoyTriggerCursor=flameDecoyMatch.EventBatch(helicopterOwner,0).LatestEventId;
+        Check(flameDecoyMatch.TryRegisterLandMine(new string('c',32),helicopterOwner,
+                  mineDecoyBox.Center,10f),
+            "host-only mine placement binds an opposing non-metal Decoy root");
+        ulong decoyTriggerMineId=flameDecoyMatch.Snapshot().LandMines.Single().EntityId;
+        flameDecoyMatch.Advance(76);
+        Check(flameDecoyMatch.Snapshot().LandMines.Count==0&&
+              flameDecoyMatch.EventBatch(helicopterOwner,decoyTriggerCursor).Events.Any(row=>
+                  row.Kind==MatchEventKind.LandMineTriggered&&
+                  row.ProjectileId==decoyTriggerMineId&&
+                  row.Reason=="decoy-trigger:"+allyDecoy.EntityId)&&
+              flameDecoyMatch.DecoyHealth(allyDecoy.EntityId)<allyDecoyBefore,
+            "an opposing Decoy root naturally triggers a mine and takes host blast damage");
+        var alliedDecoyBox=flameDecoyMatch.GroundVehicleShotTargets(helicopterOwner)
+            .Single(row=>row.Decoy&&row.EntityId==allyDecoy.EntityId).Hitbox;
+        Check(flameDecoyMatch.TryRegisterLandMine(new string('d',32),soldierOwner,
+                  alliedDecoyBox.Center,10f),
+            "host-only allied mine placement uses the same source Decoy root");
+        ulong alliedDecoyMineId=flameDecoyMatch.Snapshot().LandMines.Single().EntityId;
+        flameDecoyMatch.Advance(77);
+        Check(flameDecoyMatch.Snapshot().LandMines.Any(row=>row.EntityId==alliedDecoyMineId)&&
+              !flameDecoyMatch.EventBatch(soldierOwner,decoyTriggerCursor).Events.Any(row=>
+                  row.Kind==MatchEventKind.LandMineTriggered&&
+                  row.ProjectileId==alliedDecoyMineId),
+            "an allied Decoy root does not trigger its faction's Land Mine");
         var flameTurretManifest=flameDecoyManifest with {MatchId="army-flame-heavy-turret"};
         var flameTurretMatch=new MatchEngine(flameTurretManifest,content:content,armyChoice:_=>0);
         flameTurretMatch.ConfigureBattleAllocations([
