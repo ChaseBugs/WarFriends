@@ -139,37 +139,52 @@ internal static class CombatContentTests
     private static int VerifyMissionAutomaticSpawns(MissionCatalog catalog)
     {
         MissionRule firstMission = catalog.Get(0);
-        var spawns = catalog.CreateAutomaticSpawnState(firstMission.Index);
+        var spawns = catalog.CreateAutomaticSpawnState(firstMission.Index, _ => 0);
         if (spawns.EligibleBehaviourIndexes(100).Count != 0 ||
             !spawns.Start(100) || spawns.Start(100) ||
-            spawns.DueAutomaticBehaviours(107).Count != 0 ||
+            spawns.SelectAutomaticBehaviour(107) != null ||
             spawns.ConfirmSpawn(0, 101, 107))
             throw new Exception("Automatic units need a started mission and an eighth-tick opportunity.");
 
         bool SpawnAt(int index, ulong entityId, ulong tick)
         {
-            return spawns.DueAutomaticBehaviours(tick).Contains(index) &&
+            return spawns.SelectAutomaticBehaviour(tick) == index &&
                 spawns.ConfirmSpawn(index, entityId, tick);
         }
 
-        if (!SpawnAt(0, 101, 108) || spawns.ConfirmSpawn(0, 102, 108) ||
-            spawns.DueAutomaticBehaviours(108).Count != 0 ||
+        if (spawns.SelectAutomaticBehaviour(108) != 0 ||
+            spawns.ConfirmSpawn(1, 999, 108) ||
+            !spawns.ConfirmSpawn(0, 101, 108) ||
+            spawns.ConfirmSpawn(0, 102, 108) ||
+            spawns.SelectAutomaticBehaviour(108) != null ||
             !SpawnAt(0, 102, 116) || !SpawnAt(0, 103, 124) ||
-            spawns.DueAutomaticBehaviours(132).Contains(0) ||
+            spawns.SelectAutomaticBehaviour(132) != 1 ||
             spawns.ConfirmSpawn(0, 104, 132))
             throw new Exception("One unit may spawn per opportunity and the source lifetime limit holds.");
 
         if (!SpawnAt(1, 201, 140) || !SpawnAt(1, 202, 148) ||
             spawns.LiveCount != firstMission.MaxUnitsAtOnce ||
-            spawns.DueAutomaticBehaviours(156).Count != 0)
+            spawns.SelectAutomaticBehaviour(156) != null)
             throw new Exception("Source scene and global limits cap living AI.");
 
         if (!spawns.ConfirmDeath(201) || spawns.ConfirmDeath(201) ||
             !SpawnAt(1, 203, 164) ||
-            spawns.DueAutomaticBehaviours(172).Contains(1) ||
+            spawns.SelectAutomaticBehaviour(172) != null ||
             spawns.ConfirmSpawn(1, 204, 172))
             throw new Exception("A death reopens live capacity without resetting lifetime totals.");
-        return 4;
+
+        var invalidChoice = catalog.CreateAutomaticSpawnState(firstMission.Index,
+            count => count);
+        invalidChoice.Start(0);
+        try
+        {
+            invalidChoice.SelectAutomaticBehaviour(8);
+            throw new Exception("An invalid server random choice was accepted.");
+        }
+        catch (InvalidDataException)
+        {
+            return 5;
+        }
     }
 
     private static int VerifyMissionTimedEvents(MissionCatalog catalog)

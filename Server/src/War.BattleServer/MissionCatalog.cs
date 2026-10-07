@@ -64,9 +64,10 @@ public sealed class MissionCatalog
         return new MissionObjectiveState(Get(missionIndex));
     }
 
-    public MissionAutomaticSpawnState CreateAutomaticSpawnState(int missionIndex)
+    public MissionAutomaticSpawnState CreateAutomaticSpawnState(
+        int missionIndex, Func<int, int>? chooseBehaviour = null)
     {
-        return new MissionAutomaticSpawnState(Get(missionIndex));
+        return new MissionAutomaticSpawnState(Get(missionIndex), chooseBehaviour);
     }
 
     public static MissionCatalog Load(string path)

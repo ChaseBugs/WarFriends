@@ -8,6 +8,7 @@ namespace War.BattleServer;
 public sealed class MissionAutomaticSpawnState
 {
     private readonly MissionRule mission;
+    private readonly Func<int, int> chooseBehaviour;
     private readonly int[] generated;
     private readonly int[] eventUnits;
     private readonly int[] killed;
@@ -18,15 +19,17 @@ public sealed class MissionAutomaticSpawnState
     private ulong? lastEventSecond;
     private ulong nextAutomaticTick;
     private ulong? pendingAutomaticTick;
+    private int? pendingAutomaticBehaviour;
     private bool finished;
 
     // WaveManager checks realTimeWithoutPauses > lastGenTime + 0.25f.
     // At the Worker's 30 Hz fixed step, the first later tick is tick eight.
     private const ulong AutomaticIntervalTicks = MatchManifest.TickRate / 4 + 1;
 
-    internal MissionAutomaticSpawnState(MissionRule mission)
+    internal MissionAutomaticSpawnState(MissionRule mission, Func<int, int>? choice)
     {
         this.mission = mission;
+        chooseBehaviour = choice ?? Random.Shared.Next;
         generated = new int[mission.Behaviours.Count];
         eventUnits = new int[mission.Behaviours.Count];
         killed = new int[mission.Behaviours.Count];
@@ -49,6 +52,7 @@ public sealed class MissionAutomaticSpawnState
         finished = true;
         pendingEvents.Clear();
         pendingAutomaticTick = null;
+        pendingAutomaticBehaviour = null;
     }
 
     public IReadOnlyList<int> EligibleBehaviourIndexes(ulong tick)
@@ -75,26 +79,36 @@ public sealed class MissionAutomaticSpawnState
     {
         if (entityId == 0 || liveEntities.ContainsKey(entityId) ||
             pendingAutomaticTick != tick ||
+            pendingAutomaticBehaviour != behaviourIndex ||
             !EligibleBehaviourIndexes(tick).Contains(behaviourIndex))
             return false;
 
         pendingAutomaticTick = null;
+        pendingAutomaticBehaviour = null;
         generated[behaviourIndex] = checked(generated[behaviourIndex] + 1);
         liveEntities.Add(entityId, behaviourIndex);
         return true;
     }
 
-    public IReadOnlyList<int> DueAutomaticBehaviours(ulong tick)
+    public int? SelectAutomaticBehaviour(ulong tick)
     {
         if (!ActiveAt(tick) || tick < nextAutomaticTick)
-            return [];
+            return null;
+
+        IReadOnlyList<int> eligible = EligibleBehaviourIndexes(tick);
+        int? selected = null;
+        if (eligible.Count > 0)
+        {
+            int choiceIndex = chooseBehaviour(eligible.Count);
+            if (choiceIndex < 0 || choiceIndex >= eligible.Count)
+                throw new InvalidDataException("Mission spawn choice is outside the eligible list.");
+            selected = eligible[choiceIndex];
+        }
 
         nextAutomaticTick = checked(tick + AutomaticIntervalTicks);
-        pendingAutomaticTick = tick;
-        IReadOnlyList<int> eligible = EligibleBehaviourIndexes(tick);
-        if (eligible.Count == 0)
-            pendingAutomaticTick = null;
-        return eligible;
+        pendingAutomaticTick = selected.HasValue ? tick : null;
+        pendingAutomaticBehaviour = selected;
+        return selected;
     }
 
     public IReadOnlyList<int> DueTimedEvents(ulong tick)
