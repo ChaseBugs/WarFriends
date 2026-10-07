@@ -186,6 +186,10 @@ public sealed partial class MatchEngine
                     }
                 }
             }
+            // Capture only entities still alive after environmental barrel
+            // chains. A later disappearance in this block belongs to this
+            // mine's own source-backed blast, not to the barrel chain.
+            var armyBeforeBlast=activeArmyEntities.Values.ToArray();
             ApplyLandMineDecoyExplosion(mine.OwnerPlayerId,mine.Position,mine.Damage,mine.EntityId);
             ApplyLandMineHeavyTurretExplosion(mine.OwnerPlayerId,mine.Position,mine.Damage,mine.EntityId);
             ApplyLandMineDroneExplosion(mine.OwnerPlayerId,mine.Position,mine.Damage);
@@ -210,6 +214,18 @@ public sealed partial class MatchEngine
                 if(effect!=null&&ApplyArmyHostDamage(army.EntityKey,effect.RawDamage))
                     attacker.ConfirmedEnemyHits=checked(attacker.ConfirmedEnemyHits+1);
             }
+            var enemyArmyKilledByMine=armyBeforeBlast
+                .Where(army=>army.OwnerFraction!=mine.OwnerFraction&&
+                    !activeArmyEntities.ContainsKey(army.EntityKey))
+                .OrderBy(army=>army.EntityKey).ToArray();
+            if(directArmyKills.Count+enemyArmyKilledByMine.Length>256)
+            {
+                End("source-kill-backpressure","",false);
+                return;
+            }
+            foreach(var army in enemyArmyKilledByMine)
+                directArmyKills.Add((army.EntityKey,army.UnitId,army.OwnerPlayerId,
+                    mine.OwnerPlayerId,"player-mine",tick));
             foreach(var victim in players.Where(x=>!x.Dead).ToArray())
             {
                 var effect=LandMineExplosion.Resolve(mine.Position,mine.Damage,landMineSource,

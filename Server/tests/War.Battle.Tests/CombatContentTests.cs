@@ -5138,6 +5138,32 @@ internal static class CombatContentTests
               flameHelicopterMatch.Snapshot().LandMines.Any(mine=>
                   mine.EntityId==alliedGunnerMineId),
             "same-faction Helicopter gunner contact leaves the mine armed");
+        var lethalHelicopterBody=flameHelicopterMatch.GroundVehicleShotTargets(soldierOwner)
+            .First(row=>row.EntityId==flameHelicopterTarget.EntityKey&&row.HelicopterBody);
+        float lethalMineDamage=flameHelicopterMatch.ArmyHealth(flameHelicopterTarget.EntityKey)!.Value+100f;
+        Check(flameHelicopterMatch.TryRegisterLandMine(new string('9',32),soldierOwner,
+                  lethalHelicopterBody.Hitbox.Center,lethalMineDamage),
+            "host-only lethal mine binds the current opposing Helicopter body");
+        flameHelicopterMatch.Advance(79);
+        Check(flameHelicopterMatch.ArmyHealth(flameHelicopterTarget.EntityKey)==null,
+            "source-scaled mine blast destroys the opposing Helicopter on a normal tick");
+        if(!flameHelicopterMatch.Terminal)
+            flameHelicopterMatch.Command(soldierOwner,new(){CommandId=3,Forfeit=new()});
+        Check(flameHelicopterMatch.TerminalEvidenceSnapshot().DirectArmyKills.Single(row=>
+                  row.EntityKey==flameHelicopterTarget.EntityKey) is
+                  {Cause:"player-mine",AttackerPlayerId:var mineAttacker,
+                   VictimOwnerPlayerId:var mineVictim}&&
+              mineAttacker==soldierOwner&&mineVictim==helicopterOwner,
+            "terminal evidence keeps the authenticated mine owner and exact destroyed unit");
+        var mineTerminalBytes=Google.Protobuf.MessageExtensions.ToByteArray(
+            flameHelicopterMatch.TerminalEvidenceSnapshot());
+        var mineTerminalDigest=War.Shared.TerminalResultDigest.Compute(mineTerminalBytes);
+        Check(TerminalOutbox.ValidatePayload(mineTerminalBytes,flameHelicopterMatch.MatchId,
+                  mineTerminalDigest).DirectArmyKills.Single().Cause=="player-mine"&&
+              BattleDirectKillStatsProjection.FromPayload(mineTerminalBytes,
+                  flameHelicopterMatch.MatchId,mineTerminalDigest)
+                  .Single(row=>row.PlayerId==soldierOwner).DirectBulletKills==0,
+            "durable mine cause validates without claiming unproved bullet-stat credit");
         var flameDecoyManifest=flameManifest with {MatchId="army-flame-decoy",
             SceneMasterPlayerId=soldierOwner,
             Players=flameManifest.Players.Select(p=>p with {PlayerLevel=22}).ToArray()};

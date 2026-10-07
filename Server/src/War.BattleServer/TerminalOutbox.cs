@@ -349,7 +349,8 @@ public sealed class TerminalOutbox
         {
             if(row.EntityKey==0||row.EntityKey>>32 is not (1 or 2)||
                (uint)row.EntityKey==0||!identities.Add(row.EntityKey)||
-               !knownUnits.Contains(row.UnitId)||row.Cause is not ("player-bullet" or "player-grenade")||
+               !knownUnits.Contains(row.UnitId)||
+               row.Cause is not ("player-bullet" or "player-grenade" or "player-mine")||
                (row.Cause=="player-grenade"&&
                    !BattleDirectKillStatsProjection.SupportsGrenadeVictim(row.UnitId))||
                snapshot.StartTick==0||row.Tick<snapshot.StartTick||row.Tick>snapshot.EndTick||
