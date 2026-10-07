@@ -24,6 +24,7 @@ internal static class CombatContentTests
             throw new Exception("Recovered mission unit and timed-event rows are incomplete.");
         int objectiveAssertions = VerifyMissionObjectives(catalog);
         int scoreAssertions = VerifyMissionScoring(catalog);
+        int spawnAssertions = VerifyMissionAutomaticSpawns(catalog);
 
         string temporaryPath = Path.Combine(Path.GetTempPath(),
             $"war-mission-catalog-{Guid.NewGuid():N}.json");
@@ -40,7 +41,7 @@ internal static class CombatContentTests
                 firstMission["timeSeconds"]!.GetValue<int>() + 1;
             RejectMissionCatalog(temporaryPath, document,
                 "An event beyond the source mission timer was accepted.");
-            return 4 + objectiveAssertions + scoreAssertions;
+            return 4 + objectiveAssertions + scoreAssertions + spawnAssertions;
         }
         finally
         {
@@ -131,6 +132,29 @@ internal static class CombatContentTests
         {
             return 3;
         }
+    }
+
+    private static int VerifyMissionAutomaticSpawns(MissionCatalog catalog)
+    {
+        MissionRule firstMission = catalog.Get(0);
+        var spawns = catalog.CreateAutomaticSpawnState(firstMission.Index);
+        if (spawns.EligibleBehaviourIndexes().Count != 2 ||
+            !spawns.ConfirmSpawn(0, 101) ||
+            !spawns.ConfirmSpawn(0, 102) ||
+            !spawns.ConfirmSpawn(0, 103) ||
+            spawns.ConfirmSpawn(0, 104))
+            throw new Exception("The source mission limit counts all generated units.");
+
+        if (!spawns.ConfirmSpawn(1, 201) || !spawns.ConfirmSpawn(1, 202) ||
+            spawns.LiveCount != firstMission.MaxUnitsAtOnce ||
+            spawns.ConfirmSpawn(1, 203))
+            throw new Exception("The source scene and global limits cap living AI.");
+
+        if (!spawns.ConfirmDeath(201) || spawns.ConfirmDeath(201) ||
+            !spawns.ConfirmSpawn(1, 203) || spawns.ConfirmSpawn(1, 204) ||
+            spawns.ConfirmSpawn(0, 101))
+            throw new Exception("Confirmed deaths reopen scene capacity without resetting mission totals.");
+        return 3;
     }
 
     internal static int Run(string directory)

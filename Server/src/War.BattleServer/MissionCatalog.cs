@@ -64,6 +64,11 @@ public sealed class MissionCatalog
         return new MissionObjectiveState(Get(missionIndex));
     }
 
+    public MissionAutomaticSpawnState CreateAutomaticSpawnState(int missionIndex)
+    {
+        return new MissionAutomaticSpawnState(Get(missionIndex));
+    }
+
     public static MissionCatalog Load(string path)
     {
         using var document = JsonDocument.Parse(File.ReadAllText(path));
