@@ -18,6 +18,6 @@ recovered = {
     option["index"]: (family["unitId"], option["count"])
     for family in catalog["families"] for option in family["options"]
 }
-assert set(compiled) == set(range(48))
+assert set(compiled) == set(range(45))
 assert compiled == recovered, ("Army option identities differ", compiled, recovered)
-print("PASS: 48 compiled army options match 24 recovered deployment families")
+print("PASS: 45 compiled army options match 24 recovered deployment families")

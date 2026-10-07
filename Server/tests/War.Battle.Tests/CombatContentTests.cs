@@ -1074,7 +1074,7 @@ internal static class CombatContentTests
         Check(assaultHelicopterShot.MinShootTime>0&&
               assaultHelicopterShot.MaxShootTime>=assaultHelicopterShot.MinShootTime&&
               assaultHelicopterShot.FireBatchSizeMax>0 &&
-              assaultHelicopterShot.ShieldHitProbability == 0,
+              assaultHelicopterShot.ShieldHitProbability == .3f,
               "Assault Helicopter firing cadence and shield policy come from source upgrade rows");
         var assaultPlayerTargets = new DroneTargetDetails(
             [new(11, 1, new Vector3(0, 0, 2)),
@@ -1636,7 +1636,7 @@ internal static class CombatContentTests
                   "spawn transforms are pinned into the live combat revision");
         }
         finally {if(File.Exists(spawnTemp))File.Delete(spawnTemp);}
-        Check(content.Army.Families.Count==24 && content.Army.Families.Sum(f=>f.Options.Count)==48 &&
+        Check(content.Army.Families.Count==24 && content.Army.Families.Sum(f=>f.Options.Count)==45 &&
               content.Army.Option(0).Count==2 && content.Army.Option(1).Count==4 &&
               content.Army.MaxEnergy==8 && content.Army.BaseCooldown==1,
               "deathmatch runtime options replace scene preview counts and bind source constants");
@@ -1670,7 +1670,7 @@ internal static class CombatContentTests
               content.ArmyWeapons.CadenceTicks("ID_UNIT-WARPER")==7,
               "Rusher batches enforce each strict source weapon cadence at 30 Hz");
         var minigunnerFamily=content.Army.Families.Single(x=>x.UnitId=="ID_UNIT-MINIGUNNER");
-        Check(minigunnerFamily.SheetRow=="Google2u.DBUpgradeSlotsShotgunner"&&
+        Check(minigunnerFamily.SheetRow=="Google2u.DBUpgradeSlotsMinigunner"&&
               minigunnerFamily.BaseShot is {ProbabilityOfRealShot:1f,FireBatchSizeMin:1,
                   FireBatchSizeMax:4,MinShootTime:2f,MaxShootTime:5f}&&
               content.ArmyWeapons.MuzzleCount("ID_UNIT-MINIGUNNER")==1&&
@@ -1678,7 +1678,7 @@ internal static class CombatContentTests
                   "MiniGun/HK416/MachinegunMuzzleFlash"&&
               content.ArmyWeapons.WindupTicks("ID_UNIT-MINIGUNNER")==30&&
               content.ArmyWeapons.CadenceTicks("ID_UNIT-MINIGUNNER")==6,
-              "Minigunner pins the original generic-sheet mismatch, base batch, shield windup, muzzle, and strict cadence");
+              "Minigunner uses its attached scene sheet, base batch, shield windup, muzzle, and strict cadence");
         Check(content.ArmyWeapons.CommandoPoison is {DurationSeconds:5f,PulseIntervalSeconds:1f,PulseCount:5,
                   ConstantsSheet:"Google2u.UnitsContants",ConstantsRow:2}&&
               content.ArmyWeapons.CommandoPoison.BehaviorSource.EndsWith("SoldierBehaviourCommando.cs")&&
@@ -1691,9 +1691,9 @@ internal static class CombatContentTests
               content.ArmyWeapons.ShotgunFalloff("ID_UNIT-COMMANDO")==null,
               "Shotgunner and Warper bind the recovered one-target radial shotgun setup");
         Check(content.ArmyWeapons.SwatSpecialSpeed.Source.EndsWith("SoldierBehaviourSwat.cs")&&
-              content.Army.EffectiveSpeed("ID_UNIT-SWAT",1f,0,null,null)==1f&&
-              content.Army.ComposeSpecial("ID_UNIT-SWAT",0,101,null)==.2f&&
-              content.Army.EffectiveSpeed("ID_UNIT-SWAT",1f,0,101,null)==1.2f&&
+              content.Army.EffectiveSpeed("ID_UNIT-SWAT",1f,0,null,null)==.8f&&
+              content.Army.ComposeSpecial("ID_UNIT-SWAT",0,86,null)==.05f&&
+              Math.Abs(content.Army.EffectiveSpeed("ID_UNIT-SWAT",1f,0,86,null)-.84f)<.00001f&&
               content.Army.EffectiveSpeed("ID_UNIT-SHOTGUNNER",1f,0,101,null)==1f,
               "only SWAT with a selected special lane multiplies runtime speed by one plus composed SPECIAL");
         Check(content.ArmyWeapons.ParatrooperKevlar.BehaviorSource.EndsWith("SoldierBehaviourParachuter.cs")&&
@@ -1936,9 +1936,9 @@ internal static class CombatContentTests
                   content.Army.Families.All(f=>float.IsFinite(f.BaseSpeed) && f.BaseSpeed>0 && f.BaseSpeed<=1) &&
                   content.Army.Families.Single(f=>f.BehaviorType=="SoldierBehaviourShotgunner").BaseSpeed==1f &&
                   content.Army.Families.Single(f=>f.BehaviorType=="SoldierBehaviourSwat").BaseSpeed==.9f &&
-                  content.Army.Families.Single(f=>f.BehaviorType=="SoldierBehaviourSwat").MovementSpeed==1f &&
+                  content.Army.Families.Single(f=>f.BehaviorType=="SoldierBehaviourSwat").MovementSpeed==.8f &&
                   content.Army.Families.Single(f=>f.BehaviorType=="HelicopterBehaviour").MovementSpeed==3f &&
-                  content.Army.EffectiveSpeed("ID_UNIT-SWAT",1.25f)==1.25f &&
+                  content.Army.EffectiveSpeed("ID_UNIT-SWAT",1.25f)==1f &&
                   content.Army.InfantryAgent.Radius==.17f &&
                   content.Army.InfantryAgent.Acceleration==10f &&
                   content.Army.InfantryAgent.AngularSpeed==600f,
@@ -4207,9 +4207,9 @@ internal static class CombatContentTests
         miniMatch.Command(miniOpponent,new MatchCommand{CommandId=1,
             Ready=new ReadyCommand{ManifestHash=miniMatch.ManifestHash}});
         miniMatch.Advance(60);
-        Check(miniMatch.ArmyBatch(miniOwner).OptionIndexes.Contains(20) &&
+        Check(miniMatch.ArmyBatch(miniOwner).OptionIndexes.Contains(21) &&
               miniMatch.Command(miniOwner,new MatchCommand{CommandId=2,
-                  DeployArmy=new DeployArmyCommand{OptionIndex=20}}).Code=="army-deploying",
+                  DeployArmy=new DeployArmyCommand{OptionIndex=21}}).Code=="army-deploying",
               "Minigunner is offered and accepted in a source-bound live match");
         miniMatch.Advance(61);
         var miniEntity=miniMatch.ArmyEntityBatch(miniOwner,0,0).Entities.Single();
@@ -4261,9 +4261,9 @@ internal static class CombatContentTests
         miniPair.Command(miniOpponent,new MatchCommand{CommandId=1,
             Ready=new ReadyCommand{ManifestHash=miniPair.ManifestHash}});
         miniPair.Advance(60);
-        Check(miniPair.ArmyBatch(miniOwner).OptionIndexes.Contains(21)&&
+        Check(miniPair.ArmyBatch(miniOwner).OptionIndexes.Contains(22)&&
               miniPair.Command(miniOwner,new MatchCommand{CommandId=2,
-                  DeployArmy=new DeployArmyCommand{OptionIndex=21}}).Code=="army-deploying",
+                  DeployArmy=new DeployArmyCommand{OptionIndex=22}}).Code=="army-deploying",
               "two-unit Minigunner source option enters the live spawn schedule");
         float miniPairMinimum=float.MaxValue,miniPairMatureMinimum=float.MaxValue,
             miniPairSpawnDistance=float.NaN,miniPairMaxSteering=0f;
@@ -5468,7 +5468,7 @@ internal static class CombatContentTests
         for(ulong paratrooperTick=61;paratrooperTick<=70;paratrooperTick++)paratrooperMatch.Advance(paratrooperTick);
         var paratrooper=paratrooperMatch.ArmyEntityBatch(soldierOwner,0,0).Entities.Single();
         float paratrooperHealth=paratrooper.MaxHealth,paratrooperKevlar=paratrooper.MaxKevlar;
-        Check(paratrooperKevlar==paratrooperHealth*.2f&&paratrooper.Kevlar==paratrooperKevlar&&
+        Check(paratrooperKevlar==paratrooperHealth*.37f&&paratrooper.Kevlar==paratrooperKevlar&&
               paratrooperMatch.ArmyKevlar(paratrooper.EntityKey)==paratrooperKevlar,
               "selected Paratrooper special projects composed-ratio kevlar from authoritative max health");
         Check(paratrooperMatch.ApplyArmyHostDamage(paratrooper.EntityKey,paratrooperKevlar/2)&&
@@ -5952,7 +5952,7 @@ internal static class CombatContentTests
                   .All(x=>x.EntityId!=firstCar.EntityKey||x.PassengerRole!="gunner"),
               "live Humvee gunner death publishes source seat identity and exact respawn deadline");
         Check(staleMatch.Command(soldierOwner,new MatchCommand{CommandId=3,
-                  DeployArmy=new DeployArmyCommand{OptionIndex=19}}).Code=="army-deploying" &&
+                  DeployArmy=new DeployArmyCommand{OptionIndex=20}}).Code=="army-deploying" &&
               staleMatch.ArmyBatch(soldierOwner).Code=="army-unavailable" &&
               staleMatch.Command(soldierOwner,new MatchCommand{CommandId=4,
                   DeployArmy=new DeployArmyCommand{OptionIndex=29}}).Code=="army-not-offered",

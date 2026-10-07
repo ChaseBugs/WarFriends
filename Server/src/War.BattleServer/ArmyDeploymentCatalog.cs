@@ -713,13 +713,13 @@ public sealed class ArmyDeploymentCatalog
                 soldier,entry.GetProperty("isAir").GetBoolean(),
                 Array.AsReadOnly(familyOptions),baseShot,vehicleShot);
         }
-        if(byOption.Count!=48 || rusherCount!=6)
+        if(byOption.Count!=45 || rusherCount!=6)
             throw new InvalidDataException("Incomplete runtime army options or Rusher definitions.");
         var vehicleSpeeds=new Dictionary<string,float>(StringComparer.Ordinal)
         {
             ["ID_UNIT-HELICOPTER"]=3f,["ID_UNIT-HUMVEE"]=1.7f,
             ["ID_UNIT-DRONE"]=.87f,["ID_UNIT-TANK"]=1f,
-            ["ID_UNIT-BUGGY"]=1.7f,["ID_UNIT-ASSAULTHELI"]=.87f,
+            ["ID_UNIT-BUGGY"]=1.7f,["ID_UNIT-ASSAULTHELI"]=2.5f,
             ["ID_UNIT-TRANSPORTER"]=1.7f
         };
         foreach(var (unit,speed) in vehicleSpeeds)

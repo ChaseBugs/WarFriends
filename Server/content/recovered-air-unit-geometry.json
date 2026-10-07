@@ -4752,7 +4752,7 @@
   ],
   "deploymentSource": {
     "source": "Server/content/recovered-army-deployment.json",
-    "sha256": "1fb773694970fdb40508009118eb07e91987d04b3a67532dc76eb033c49b06db",
+    "sha256": "2b3a2801011d71caffe27cb9c24d9675c5196af4af675c7be4e53fa25084a941",
     "families": [
       {
         "unitId": "ID_UNIT-HELICOPTER",

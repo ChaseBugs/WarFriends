@@ -7,7 +7,7 @@
   "PosesRevision": "03034c32917ae69b28be43de712606db7a6d5864c13a26a883ddb48885f7deb5",
   "BarrelBindingsRevision": "583a69f313cf3f34f151c0518a5ef640bff286ad8e4fe7f0b65782b6599b0706",
   "BarrelOverlapRevision": "98189b087b0c93f6b75570afc91fbfb43c6b361e3edefd9ed35d8373a0e9d561",
-  "ArmyDeploymentRevision": "1fb773694970fdb40508009118eb07e91987d04b3a67532dc76eb033c49b06db",
+  "ArmyDeploymentRevision": "2b3a2801011d71caffe27cb9c24d9675c5196af4af675c7be4e53fa25084a941",
   "ArmyWeaponBindingsRevision": "62667cd52d0a76c48c7aa47ceefa7e27efa15caf268d7f8c1adf09bfca214aad",
   "GroundVehicleWeaponsRevision": "15279fd270a9a2a54245a3c46b672a2bb11f098ff04736976a61d8df3e51299c",
   "EnemyPosesRevision": "09d434da66351cfeb23219177904448704fa3108646302b66e6e55edff82fcee",
@@ -23,7 +23,7 @@
   "ArmyNavMeshPathsRevision": "01b639934246803fb9f2afddd4a4852725bf54c2ad9d87327cea8abc94c2c550",
   "AirWaypointRoutesRevision": "8d7012b3e6f5f1e4c8ac255558211e1768dc225b0d79f2c22fe477105136a8df",
   "DroneWeaponRevision": "e5fcfca438e133a33d5766e8606a8dab40f566e495decd8267031084c94c7ef3",
-  "AirGeometryRevision": "c88fd3e31e56261e094799fafb306be1bf2838b0d513753221afa2adaeaba319",
+  "AirGeometryRevision": "c4db78dd2bca17f2ed36dca3512d374ec685cd2909ec9d3eae5950a9920f43cd",
   "HelicopterCrewPointsRevision": "ef23b0a47858d1ac794d799876ae6cc4822dc501bdbc361edd458ce60b920379",
   "DroneProjectileRevision": "0cb91aaeb1b7e928bb6063c17edbde56eeefff4cf0e38a6c0f084428090f2402",
   "EnemyShotTargetsRevision": "05412a6b997771f365c656e512093347eb717ffcf582c4e347985f513d361e54"

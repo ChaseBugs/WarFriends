@@ -391,7 +391,7 @@ public sealed class TerminalOutbox
     }
     private static bool ValidArmyUsage(BattlePlayerState player)
     {
-        if(player.ArmyUsage.Count>48)return false;
+        if(player.ArmyUsage.Count>45)return false;
         int previous=-1;
         ulong confirmed=0;
         foreach(var row in player.ArmyUsage)

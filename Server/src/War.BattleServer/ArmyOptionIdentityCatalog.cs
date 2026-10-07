@@ -13,15 +13,15 @@ public static class ArmyOptionIdentityCatalog
             ("ID_UNIT-ASSAULT","0:2,1:4"),("ID_UNIT-HELICOPTER","2:1"),
             ("ID_UNIT-HUMVEE","3:1"),("ID_UNIT-SNIPER","4:1,5:2,6:4"),
             ("ID_UNIT-ROCKETSOLDIER","7:1,8:2"),("ID_UNIT-DRONE","9:1,10:2"),
-            ("ID_UNIT-SHOTGUNNER","11:1,12:2"),("ID_UNIT-GRENADIER","13:1,14:2"),
-            ("ID_UNIT-PARATROOPER","15:1,16:2"),("ID_UNIT-SWAT","17:1,18:2"),
-            ("ID_UNIT-TANK","19:1"),("ID_UNIT-MINIGUNNER","20:1,21:2"),
-            ("ID_UNIT-ENGINEER","22:1,23:2"),("ID_UNIT-MACHINEGUNNER","24:1,25:2,26:3"),
-            ("ID_UNIT-SCIFI","27:1,28:2"),("ID_UNIT-BUGGY","29:1"),
-            ("ID_UNIT-ASSAULTHELI","30:1,31:2"),("ID_UNIT-TRANSPORTER","32:1"),
+            ("ID_UNIT-SHOTGUNNER","11:1,12:2"),("ID_UNIT-GRENADIER","13:1,14:2,15:3"),
+            ("ID_UNIT-PARATROOPER","16:1,17:2"),("ID_UNIT-SWAT","18:1,19:2"),
+            ("ID_UNIT-TANK","20:1"),("ID_UNIT-MINIGUNNER","21:1,22:2"),
+            ("ID_UNIT-ENGINEER","23:1,24:2"),("ID_UNIT-MACHINEGUNNER","25:1,26:2,27:3"),
+            ("ID_UNIT-SCIFI","28:1,29:2"),("ID_UNIT-BUGGY","30:1"),
+            ("ID_UNIT-ASSAULTHELI","31:1"),("ID_UNIT-TRANSPORTER","32:1"),
             ("ID_UNIT-FLAMETHROWER","33:1,34:2"),("ID_UNIT-COMMANDO","35:1,36:2"),
-            ("ID_UNIT-GUNSLINGER","37:1,38:2,39:3"),("ID_UNIT-MORTAR","40:1,41:2,42:3"),
-            ("ID_UNIT-WARPER","43:1,44:2,45:3"),("ID_UNIT-MECH","46:1,47:2")
+            ("ID_UNIT-GUNSLINGER","37:1,38:2"),("ID_UNIT-MORTAR","39:1,40:2"),
+            ("ID_UNIT-WARPER","41:1,42:2"),("ID_UNIT-MECH","43:1,44:2")
         };
         var rows=new Dictionary<int,ArmyOptionIdentity>();
         foreach(var family in families)
@@ -33,7 +33,7 @@ public static class ArmyOptionIdentityCatalog
                 if(!rows.TryAdd(index,new ArmyOptionIdentity(index,family.UnitId,count)))
                     throw new InvalidDataException("Duplicate recovered army option.");
             }
-        if(rows.Count!=48 || Enumerable.Range(0,48).Any(index=>!rows.ContainsKey(index)))
+        if(rows.Count!=45 || Enumerable.Range(0,45).Any(index=>!rows.ContainsKey(index)))
             throw new InvalidDataException("Recovered army option map is incomplete.");
         return rows;
     }

@@ -43,10 +43,11 @@ def main():
     if "guid: 433abe88ac22c67e9443ddb8be94375b" not in manager:
         raise ValueError("deathmatch spawning component changed")
     meta = {}
-    for path in (ASSETS / "Scripts").rglob("*.cs.meta"):
-        match = re.search(r"^guid: ([0-9a-f]{32})$", path.read_text(encoding="utf-8-sig"), re.M)
-        if match:
-            meta[match.group(1)] = path.with_suffix("")
+    for folder in ("Scripts", "Plugins"):
+        for path in (ASSETS / folder).rglob("*.cs.meta"):
+            match = re.search(r"^guid: ([0-9a-f]{32})$", path.read_text(encoding="utf-8-sig"), re.M)
+            if match:
+                meta[match.group(1)] = path.with_suffix("")
     families = []
     start = manager.index("  armyDefinitions:\n")
     end = manager.find("\n  baseCoolDown:", start)
@@ -69,7 +70,26 @@ def main():
         slot_type = re.search(r"UpgradeSlots\w*<\s*(DBUpgradeSlots\w+)\s*>", script_text)
         if not slot_type:
             raise ValueError(f"unknown upgrade slot type {script}")
-        row_name = "Google2u." + slot_type.group(1)
+        # The concrete Google2u component on the same scene GameObject owns
+        # the rows read by UpgradeSlots.excel. The generic type is misleading
+        # for AssaultHelicopter: it says Drone, but the attached sheet is
+        # DBUpgradeSlotsAssaultHeli (component 37897 beside slot 37896).
+        slot_game_object = int(re.search(r"fileID: (\d+)", field(slots, "m_GameObject")).group(1))
+        component_ids = [int(value) for value in re.findall(
+            r"- 114: \{fileID: (\d+)\}", blocks[slot_game_object])]
+        sheet_types = []
+        for component_id in component_ids:
+            component_guid = re.search(r"guid: ([0-9a-f]{32})",
+                                       field(blocks[component_id], "m_Script")).group(1)
+            component_type = meta[component_guid].stem
+            if component_type.startswith("DBUpgradeSlots"):
+                sheet_types.append(component_type)
+        if len(sheet_types) != 1:
+            raise ValueError(f"missing unique attached upgrade sheet for {behavior_type}")
+        if sheet_types[0] != slot_type.group(1):
+            print(f"scene sheet overrides generic: {behavior_type}: "
+                  f"{slot_type.group(1)} -> {sheet_types[0]}")
+        row_name = "Google2u." + sheet_types[0]
         row = rows[row_name]
         mask = re.search(r"^  spawnPointType: (\d+)$", behavior, re.M)
         base_speed = re.search(r"^  base(?:Definition|VehicleDefinititon):\r?\n(?:^    .*\r?\n)*?^    speed: ([0-9]+(?:\.[0-9]+)?)$", behavior, re.M)

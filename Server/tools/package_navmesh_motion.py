@@ -33,7 +33,7 @@ def validate():
     deployment = load(CONTENT / "recovered-army-deployment.json")
     infantry_speeds = {row["movementSpeed"] for row in deployment["families"]
                        if row["isSoldier"] and not row["isAir"]}
-    if infantry_speeds != {.8, .9, 1.0}:
+    if infantry_speeds != {.8, .85, .9, 1.0}:
         raise ValueError("unexpected source infantry speed set")
     if route_manifest["unityVersion"] != "2018.3.0f2" or len(route_manifest["maps"]) != 5:
         raise ValueError("unexpected Unity path export")

@@ -42,7 +42,7 @@ def validate():
             [row["id"] for row in trace["cases"]] != list(IDS):
         raise ValueError("crowd trace identity differs from pinned Park cases")
     if set(row["movementSpeed"] for row in settings["families"]
-           if row["isSoldier"] and not row["isAir"]) != {.8, .9, 1.0}:
+           if row["isSoldier"] and not row["isAir"]) != {.8, .85, .9, 1.0}:
         raise ValueError("source infantry speed set changed")
     for intended, observed in zip(config["cases"], trace["cases"]):
         route = next(row for row in paths["cases"] if row["id"] == intended["id"])
