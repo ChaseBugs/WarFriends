@@ -13,7 +13,7 @@ using War.Protocol.Transport;
 internal static class CombatContentTests
 {
     private static int VerifyMissionCatalog(
-        string directory, ArmyDeploymentCatalog army, string contentRevision)
+        string directory, BattleCombatContent content)
     {
         string path = Path.Combine(directory, "recovered-mission-catalog.json");
         MissionCatalog catalog = MissionCatalog.Load(path);
@@ -35,11 +35,13 @@ internal static class CombatContentTests
         int eventAssertions = VerifyMissionTimedEvents(catalog);
         int coopAssertions = VerifyCoopMissionEngine(catalog);
         int allocationAssertions = VerifyCoopAllocation(
-            directory, catalog, army, contentRevision);
+            directory, catalog, content.Army, content.Stats.Revision);
         int mapAssertions = VerifyCoopSpawnCatalog(directory, catalog);
         int navMeshAssertions = VerifyCoopNavMeshSources(directory, catalog);
         int routeAssertions = VerifyCoopNavMeshRoutes(directory, catalog);
         int botAssertions = VerifyCoopBotRules(directory, catalog);
+        int bossSpawnAssertions = VerifyCoopBossAiSpawns(catalog,
+            content.ArmySpawnPoints, content.Maps);
 
         string temporaryPath = Path.Combine(Path.GetTempPath(),
             $"war-mission-catalog-{Guid.NewGuid():N}.json");
@@ -64,7 +66,7 @@ internal static class CombatContentTests
             return 5 + objectiveAssertions + scoreAssertions +
                 spawnAssertions + eventAssertions + coopAssertions +
                 allocationAssertions + mapAssertions + navMeshAssertions +
-                routeAssertions + botAssertions;
+                routeAssertions + botAssertions + bossSpawnAssertions;
         }
         finally
         {
@@ -765,6 +767,43 @@ internal static class CombatContentTests
         return 48;
     }
 
+    private static int VerifyCoopBossAiSpawns(MissionCatalog missions,
+        ArmySpawnPointCatalog spawns, IReadOnlyList<RecoveredBattleMap> maps)
+    {
+        int checkedMissions = 0;
+        foreach (MissionRule mission in missions.Missions.Where(
+                     rule => rule.MissionType == "KillOpponent"))
+        {
+            MissionMapRule source = missions.MapForMission(mission.Index);
+            RecoveredBattleMap map = maps.Single(candidate =>
+                candidate.Source == "Assets/Scenes/" + source.Scene + ".unity");
+            var selector = new CoopBossAiSpawnSelector(
+                missions, spawns, map, mission.Index);
+            foreach (string behaviour in mission.Behaviours.Select(item => item.Name)
+                         .Concat(mission.Events.Select(item => item.Behaviour)).Distinct())
+            {
+                if (selector.Candidates(behaviour).Any(point =>
+                        point.Fraction != 1 || point.ComponentFileId <= 0))
+                    throw new Exception("Boss AI selected an allied or invalid spawn.");
+            }
+            checkedMissions++;
+        }
+        if (checkedMissions != 15)
+            throw new Exception("Every source boss mission needs a validated AI spawn map.");
+
+        RecoveredBattleMap wrongMap = maps.Single(map =>
+            map.Source == "Assets/Scenes/Snow_Multiplayer.unity");
+        try
+        {
+            _ = new CoopBossAiSpawnSelector(missions, spawns, wrongMap, 4);
+            throw new Exception("A boss mission accepted the wrong multiplayer map.");
+        }
+        catch (InvalidDataException)
+        {
+            return 16;
+        }
+    }
+
     private static int VerifyCoopBotRules(string directory, MissionCatalog missions)
     {
         string path = Path.Combine(directory, "recovered-coop-bot-rules.json");
@@ -1068,8 +1107,7 @@ internal static class CombatContentTests
     {
         int count=0;
         var content=BattleCombatContent.Load(Path.Combine(directory,"combat-content-manifest.json"));
-        count += VerifyMissionCatalog(directory, content.Army,
-            content.Stats.Revision);
+        count += VerifyMissionCatalog(directory, content);
         void Check(bool ok,string name) { if (!ok) throw new Exception(name);count++; }
         void Reject(Action action) { try { action(); } catch (InvalidDataException) { count++;return; } throw new Exception("Invalid combat allocation accepted."); }
         Vector3 Vec(JsonElement value)=>new(value.GetProperty("x").GetSingle(),

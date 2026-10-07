@@ -43,7 +43,7 @@ public sealed class CoopAiSpawnSelector
                 $"Co-op scene {map.Scene} has no enemy spawn for {behaviour}.");
     }
 
-    private static string CollectionFor(string behaviour)
+    internal static string CollectionFor(string behaviour)
     {
         return behaviour.ToLowerInvariant() switch
         {
