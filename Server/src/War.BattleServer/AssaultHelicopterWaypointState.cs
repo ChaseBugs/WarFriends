@@ -93,11 +93,14 @@ internal sealed class AssaultHelicopterWaypointState
             cornerDelayTime: 0.1f, speed: speed, mass: 1f,
             breakDistance: 1f, breakSpeed: speed);
         Velocity = steering.Velocity;
+        // The Client faces its target after the first transform step, then
+        // applies the same velocity to the root a second time.
+        Vector3 firstStepPosition = steering.Position;
+        if (lookTarget.HasValue)
+            flightHeading = PlanarHeading(lookTarget.Value - firstStepPosition);
         Position = steering.Position + Velocity;
         if (!PlayerHitbox.Finite(Position))
             throw new InvalidDataException("Assault Helicopter route escaped scene bounds.");
-        if (lookTarget.HasValue)
-            flightHeading = PlanarHeading(lookTarget.Value - Position);
         Quaternion desiredRotation = ComputeRotation(Velocity, flightHeading);
         Rotation = Quaternion.Normalize(Quaternion.Slerp(Rotation, desiredRotation,
             Math.Clamp(deltaTime * 3f, 0, 1)));

@@ -48,6 +48,17 @@ internal static class AirWaypointCatalogTests
             throw new Exception("Assault Helicopter lost its source forward tilt or unit rotation.");
         count++;
 
+        var untargetedHelicopter = new AssaultHelicopterWaypointState(
+            sourceRoute, Vector3.Zero, 0.87f, () => 0.5f);
+        untargetedHelicopter.Advance(2, 1f / 30);
+        untargetedHelicopter.Advance(2 + 1f / 30, 1f / 30);
+        movingAssaultHelicopter.Advance(2 + 1f / 30, 1f / 30,
+            new Vector3(-1, 0, 0));
+        if (Math.Abs(Quaternion.Dot(untargetedHelicopter.Rotation,
+                movingAssaultHelicopter.Rotation)) >= 0.999f)
+            throw new Exception("Assault Helicopter did not turn toward its selected target root.");
+        count++;
+
         var reversingAssaultHelicopter = new AssaultHelicopterWaypointState(
             sourceRoute with { Radius = 0.2f }, new Vector3(1, 0, 0), 0.6f, () => 0);
         reversingAssaultHelicopter.Advance(2, 1f / 30);

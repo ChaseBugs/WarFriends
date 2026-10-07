@@ -37,10 +37,15 @@ public sealed partial class MatchEngine
     private readonly Dictionary<ulong,HelicopterWaypointState> armyHelicopterPaths=[];
     private readonly Dictionary<ulong,AssaultHelicopterWaypointState> armyAssaultHelicopterPaths=[];
     private readonly Dictionary<ulong,ArmyVehicleShotStats> armyAssaultHelicopterShots=[];
+    private readonly Dictionary<ulong,AssaultHelicopterTargetState> armyAssaultHelicopterTargets=[];
     internal Quaternion? AssaultHelicopterRotation(ulong entityId)
         => armyAssaultHelicopterPaths.TryGetValue(entityId, out var path) ? path.Rotation : null;
     internal ArmyVehicleShotStats? AssaultHelicopterShot(ulong entityId)
         => armyAssaultHelicopterShots.GetValueOrDefault(entityId);
+    internal ulong? AssaultHelicopterTargetDecoy(ulong entityId)
+        => armyAssaultHelicopterTargets.GetValueOrDefault(entityId)?.TargetDecoyId;
+    internal string? AssaultHelicopterTargetPlayer(ulong entityId)
+        => armyAssaultHelicopterTargets.GetValueOrDefault(entityId)?.TargetPlayerId;
     private readonly Dictionary<ulong,HelicopterOrientationState> armyHelicopterOrientations=[];
     private readonly Dictionary<ulong,ArmyHelicopterCrewStats> armyHelicopterCrew=[];
     private readonly Dictionary<ulong,HelicopterCrewState> armyHelicopterCrewMembers=[];
@@ -232,6 +237,8 @@ public sealed partial class MatchEngine
         var route = airWaypoints!.ForSpawn(map!, spawn.ComponentFileId);
         armyAssaultHelicopterPaths.Add(entityId,
             new AssaultHelicopterWaypointState(route, spawn.Position, sourceSpeed, NextArmyFloat));
+        armyAssaultHelicopterTargets.Add(entityId,
+            new AssaultHelicopterTargetState((float)((double)tick / MatchManifest.TickRate)));
     }
 
     private void AdvanceAssaultHelicopterPaths()
@@ -243,7 +250,20 @@ public sealed partial class MatchEngine
                 unit.UnitId != "ID_UNIT-ASSAULTHELI")
                 throw new InvalidDataException("Assault Helicopter path lost its host entity.");
 
-            path.Advance(time, 1f / MatchManifest.TickRate);
+            if (!armyAssaultHelicopterShots.TryGetValue(entityId, out var shot) ||
+                !armyAssaultHelicopterTargets.TryGetValue(entityId, out var targetState))
+                throw new InvalidDataException("Assault Helicopter target authority disappeared.");
+            var owner = Find(unit.OwnerPlayerId) ??
+                throw new InvalidDataException("Assault Helicopter owner disappeared.");
+            var opponent = players.Single(player => player != owner);
+            var opposingDecoys = decoys.Snapshot()
+                .Where(decoy => decoy.OwnerFraction != owner.Definition.Fraction).ToArray();
+            if (path.UsingWaypoints)
+                targetState.Advance(time, shot, opposingDecoys,
+                    opponent.Definition.PlayerId, armyChoice, NextArmyFloat);
+            Vector3? lookTarget = targetState.LookTarget(opposingDecoys,
+                opponent.Definition.PlayerId, opponent.Position);
+            path.Advance(time, 1f / MatchManifest.TickRate, lookTarget);
             unit.X = path.Position.X;
             unit.Y = path.Position.Y;
             unit.Z = path.Position.Z;
@@ -3284,6 +3304,7 @@ public sealed partial class MatchEngine
         armyHelicopterPaths.Remove(entityKey);
         armyAssaultHelicopterPaths.Remove(entityKey);
         armyAssaultHelicopterShots.Remove(entityKey);
+        armyAssaultHelicopterTargets.Remove(entityKey);
         armyHelicopterOrientations.Remove(entityKey);
         armyHelicopterCrew.Remove(entityKey);
         armyHelicopterCrewMembers.Remove(entityKey);

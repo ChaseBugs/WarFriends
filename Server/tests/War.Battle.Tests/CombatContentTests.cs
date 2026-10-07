@@ -3328,6 +3328,35 @@ internal static class CombatContentTests
               Math.Abs(assaultRotation.Value.LengthSquared() - 1) < 0.001f &&
               Quaternion.Dot(assaultRotation.Value, Quaternion.Identity) < 0.999f,
             "normal Assault Helicopter movement owns a finite source-based root orientation");
+        var targetClock = new AssaultHelicopterTargetState(0);
+        var targetDecoys = new[]
+        {
+            new DecoyMatchEntity(71, Guid.NewGuid().ToString("N"), decoyOpponent,
+                2, 1, new Vector3(1, 0, 2), Vector3.UnitZ, 100, 100),
+            new DecoyMatchEntity(72, Guid.NewGuid().ToString("N"), decoyOpponent,
+                2, 2, new Vector3(3, 0, 4), Vector3.UnitZ, 100, 100)
+        };
+        targetClock.Advance(2f, assaultHelicopterShot, targetDecoys, decoyOpponent,
+            _ => 1, () => 0f);
+        Check(targetClock.TargetDecoyId == null && targetClock.TargetPlayerId == null,
+            "Assault Helicopter waits strictly past its two-second first target deadline");
+        targetClock.Advance(2.01f, assaultHelicopterShot, targetDecoys, decoyOpponent,
+            _ => 1, () => 0f);
+        Check(targetClock.TargetDecoyId == 72 && targetClock.TargetPlayerId == null &&
+              targetClock.LookTarget(targetDecoys, decoyOpponent, Vector3.Zero) ==
+                  targetDecoys[1].Position,
+            "Assault Helicopter chooses an opposing Decoy root before the player");
+        Check(targetClock.LookTarget([], decoyOpponent, Vector3.Zero) == null,
+            "a destroyed Decoy does not silently retarget before the next selection");
+        targetClock.Advance(targetClock.NextSelectionTime + .01f, assaultHelicopterShot,
+            [], decoyOpponent, _ => 0, () => 0f);
+        Check(targetClock.TargetDecoyId == null && targetClock.TargetPlayerId == decoyOpponent,
+            "Assault Helicopter falls back to the opposing player on its next selection");
+        for (ulong routeTick = 101; routeTick <= 122; routeTick++)
+            assaultHelicopterMatch.Advance(routeTick);
+        Check(assaultHelicopterMatch.AssaultHelicopterTargetPlayer(
+                  assaultHelicopterSpawn.EntityKey) == decoyOpponent,
+            "normal Assault Helicopter ticks select the opposing player after the source deadline");
         var deployedDroneMatch=new MatchEngine(deployedDroneManifest,content:content,armyChoice:_=>0);
         deployedDroneMatch.Admit(decoyPlayer);deployedDroneMatch.Admit(decoyOpponent);
         deployedDroneMatch.Command(decoyPlayer,new(){CommandId=1,Ready=new(){ManifestHash=deployedDroneMatch.ManifestHash}});
