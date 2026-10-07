@@ -33,6 +33,10 @@ public sealed class SelfHostedDeathMatchBridge : MonoBehaviour
 	private SelfHostedAssaultHelicopterPresenter assaultHelicopterPresenter;
 	private SelfHostedGroundVehiclePresenter groundVehiclePresenter;
 	private SelfHostedRepairDronePresenter repairDronePresenter;
+	private ulong projectileEventId;
+	private ulong decoyEventId;
+	private ulong landMineEventId;
+	private ulong heavyTurretEventId;
 
 	public void Configure(SelfHostedBattleClient owner, PlayerController localPlayer, PlayerController otherPlayer)
 	{
@@ -280,10 +284,29 @@ public sealed class SelfHostedDeathMatchBridge : MonoBehaviour
 
 	private void ApplyEvent(MatchEvent item)
 	{
-		if (projectilePresenter != null) projectilePresenter.ApplyEvent(item);
-		if (decoyPresenter != null) decoyPresenter.ApplyEvent(item);
-		if (landMinePresenter != null) landMinePresenter.ApplyEvent(item);
-		if (heavyTurretPresenter != null) heavyTurretPresenter.ApplyEvent(item);
+		// The client acknowledges an event only after every callback returns.
+		// Keep each presenter's own cursor so a later callback failure retries
+		// only presenters that did not finish applying this event.
+		if (projectilePresenter != null && item.EventId > projectileEventId)
+		{
+			projectilePresenter.ApplyEvent(item);
+			projectileEventId = item.EventId;
+		}
+		if (decoyPresenter != null && item.EventId > decoyEventId)
+		{
+			decoyPresenter.ApplyEvent(item);
+			decoyEventId = item.EventId;
+		}
+		if (landMinePresenter != null && item.EventId > landMineEventId)
+		{
+			landMinePresenter.ApplyEvent(item);
+			landMineEventId = item.EventId;
+		}
+		if (heavyTurretPresenter != null && item.EventId > heavyTurretEventId)
+		{
+			heavyTurretPresenter.ApplyEvent(item);
+			heavyTurretEventId = item.EventId;
+		}
 	}
 
 	private void ApplyBazookaTarget(bool visible)

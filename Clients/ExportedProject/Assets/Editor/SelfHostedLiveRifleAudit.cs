@@ -127,7 +127,11 @@ public static class SelfHostedLiveRifleAudit
                 bool failOnce=true;var handledEvents=new System.Collections.Generic.List<ulong>();
                 adapter.CombatEventReceived+=item=>
                 {
-                    if(failOnce){failOnce=false;throw new InvalidOperationException("Injected presentation failure.");}
+                    if(item.EventId==2 && failOnce)
+                    {
+                        failOnce=false;
+                        throw new InvalidOperationException("Injected presentation failure.");
+                    }
                     if(handledEvents.Count>0 && item.EventId!=handledEvents[handledEvents.Count-1]+1)
                         throw new InvalidOperationException("Unity event callback skipped an ID.");
                     handledEvents.Add(item.EventId);
@@ -135,10 +139,20 @@ public static class SelfHostedLiveRifleAudit
                 bool retried=false;
                 try{await adapter.DispatchEvents();}catch(InvalidOperationException e)
                 {retried=e.Message=="Injected presentation failure.";}
-                if(!retried || adapter.ProcessedEventId!=0)
-                    throw new InvalidOperationException("Failed presentation handler acknowledged an event.");
+                if(!retried || adapter.ProcessedEventId!=1 || handledEvents.Count!=1 || handledEvents[0]!=1)
+                    throw new InvalidOperationException("Interrupted Unity callback lost the last successful event cursor.");
+                var bridge = owner.GetComponent<SelfHostedDeathMatchBridge>();
+                if (bridge == null) throw new InvalidOperationException("Production event bridge is missing.");
+                foreach (string fieldName in new[] { "projectileEventId", "decoyEventId",
+                    "landMineEventId", "heavyTurretEventId" })
+                {
+                    var field = typeof(SelfHostedDeathMatchBridge).GetField(fieldName,
+                        System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+                    if (field == null || (ulong)field.GetValue(bridge) != 2)
+                        throw new InvalidOperationException("Presenter did not retain its delivered event cursor: " + fieldName);
+                }
                 for(int page=0;page<32;page++)if(await adapter.DispatchEvents()==0)break;
-                if(handledEvents.Count==0 || handledEvents[0]!=1 ||
+                if(handledEvents.Count<2 || handledEvents[0]!=1 || handledEvents[1]!=2 ||
                     adapter.ProcessedEventId!=handledEvents[handledEvents.Count-1])
                     throw new InvalidOperationException("Unity adapter did not replay and deliver host-owned events.");
                 ulong beforeMoveEvents=adapter.ProcessedEventId;
