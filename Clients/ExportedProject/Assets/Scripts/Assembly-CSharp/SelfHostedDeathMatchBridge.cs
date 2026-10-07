@@ -30,6 +30,7 @@ public sealed class SelfHostedDeathMatchBridge : MonoBehaviour
 	private SelfHostedHeavyTurretPresenter heavyTurretPresenter;
 	private SelfHostedDronePresenter dronePresenter;
 	private SelfHostedHelicopterPresenter helicopterPresenter;
+	private SelfHostedAssaultHelicopterPresenter assaultHelicopterPresenter;
 	private SelfHostedGroundVehiclePresenter groundVehiclePresenter;
 	private SelfHostedRepairDronePresenter repairDronePresenter;
 
@@ -70,6 +71,9 @@ public sealed class SelfHostedDeathMatchBridge : MonoBehaviour
 			behaviourManager.levelBehaviours.Count == 0 ? null :
 			behaviourManager.levelBehaviours[0].behaviour as SoldierBehaviour);
 		client.ArmyEntitiesReceived += helicopterPresenter.Apply;
+		assaultHelicopterPresenter = gameObject.AddComponent<SelfHostedAssaultHelicopterPresenter>();
+		assaultHelicopterPresenter.Configure(pool == null ? null : pool.assaultHelicopter);
+		client.ArmyEntitiesReceived += assaultHelicopterPresenter.Apply;
 		groundVehiclePresenter = gameObject.AddComponent<SelfHostedGroundVehiclePresenter>();
 		groundVehiclePresenter.Configure(pool);
 		repairDronePresenter = gameObject.AddComponent<SelfHostedRepairDronePresenter>();
@@ -331,6 +335,7 @@ public sealed class SelfHostedDeathMatchBridge : MonoBehaviour
 		client.CombatEventReceived -= ApplyEvent;
 		if (dronePresenter != null) client.ArmyEntitiesReceived -= dronePresenter.Apply;
 		if (helicopterPresenter != null) client.ArmyEntitiesReceived -= helicopterPresenter.Apply;
+		if (assaultHelicopterPresenter != null) client.ArmyEntitiesReceived -= assaultHelicopterPresenter.Apply;
 		if (local != null && local.playerProperties != null) client.UnbindRifleView(local.playerProperties.playerID);
 		if (other != null && other.playerProperties != null) client.UnbindRifleView(other.playerProperties.playerID);
 	}
