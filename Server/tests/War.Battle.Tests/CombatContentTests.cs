@@ -1043,6 +1043,27 @@ internal static class CombatContentTests
                   () => realShotSamples.Dequeue()).SequenceEqual([true, false, false]) &&
               realShotSamples.Count == 0,
             "each Assault Helicopter round receives its own strict real-shot probability sample");
+        var overlappingVolleys = new AssaultHelicopterVolleyState();
+        var fixedAssaultShot = new ArmyVehicleShotStats(5, .75f, 4, 4, 2, 4, 0);
+        int sampledAssaultRounds = 0;
+        float NextAssaultRound() { sampledAssaultRounds++; return .5f; }
+        overlappingVolleys.PrepareFirstGun(2f, 60, fixedAssaultShot,
+            _ => 0, NextAssaultRound);
+        overlappingVolleys.PrepareFirstGun(2.05f, 62, fixedAssaultShot,
+            _ => 0, NextAssaultRound);
+        overlappingVolleys.PrepareDueSecondGuns(2.12f, fixedAssaultShot,
+            NextAssaultRound);
+        Check(overlappingVolleys.Latest?.SecondGunRealShots == null &&
+              sampledAssaultRounds == 4,
+            "Assault Helicopter does not sample the delayed gun before its callback deadline");
+        overlappingVolleys.PrepareDueSecondGuns(2.13f, fixedAssaultShot,
+            NextAssaultRound);
+        overlappingVolleys.PrepareDueSecondGuns(2.18f, fixedAssaultShot,
+            NextAssaultRound);
+        Check(overlappingVolleys.Latest?.SelectionTick == 62 &&
+              overlappingVolleys.Latest.SecondGunRealShots?.SequenceEqual([true, true]) == true &&
+              sampledAssaultRounds == 8,
+            "overlapping Assault Helicopter callbacks preserve both second-gun masks in order");
         Reject(() => AssaultHelicopterVolleyPlanner.Plan(
             new ArmyVehicleShotStats(5, .75f, 4, 7, 2, 4, 0), _ => 3));
         Reject(()=>content.Army.ComposeHelicopterShot(0,null,null,float.NaN));
@@ -3384,6 +3405,14 @@ internal static class CombatContentTests
               preparedAssaultVolley.FirstGunRealShots.Count ==
                   preparedAssaultVolley.Plan.FirstGunCount,
             "live Assault Helicopter selection prepares the source-split first gun before cooldown sampling");
+        for (ulong routeTick = 123; routeTick <= 126; routeTick++)
+            assaultHelicopterMatch.Advance(routeTick);
+        var secondAssaultVolley = assaultHelicopterMatch.AssaultHelicopterVolley(
+            assaultHelicopterSpawn.EntityKey);
+        Check(secondAssaultVolley?.SecondGunRealShots?.Count ==
+                  secondAssaultVolley?.Plan.SecondGunCount &&
+              secondAssaultVolley?.SelectionTick == 122,
+            "normal Assault Helicopter ticks prepare the second gun after half-cadence delay");
         var deployedDroneMatch=new MatchEngine(deployedDroneManifest,content:content,armyChoice:_=>0);
         deployedDroneMatch.Admit(decoyPlayer);deployedDroneMatch.Admit(decoyOpponent);
         deployedDroneMatch.Command(decoyPlayer,new(){CommandId=1,Ready=new(){ManifestHash=deployedDroneMatch.ManifestHash}});

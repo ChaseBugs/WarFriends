@@ -5,9 +5,6 @@ namespace War.BattleServer;
 
 public sealed partial class MatchEngine
 {
-    internal sealed record AssaultHelicopterPreparedVolley(
-        AssaultHelicopterVolleyPlanner.Volley Plan,
-        IReadOnlyList<bool> FirstGunRealShots, ulong SelectionTick);
     internal sealed record ArmyInfantryPoseSnapshot(string Clip,ulong StartTick,Vector3 Facing,
         IReadOnlyList<PlayerHitbox> Parts);
     internal sealed record ArmyRusherTarget(ulong EntityKey,string PlayerId,int TargetFileId,
@@ -41,7 +38,7 @@ public sealed partial class MatchEngine
     private readonly Dictionary<ulong,AssaultHelicopterWaypointState> armyAssaultHelicopterPaths=[];
     private readonly Dictionary<ulong,ArmyVehicleShotStats> armyAssaultHelicopterShots=[];
     private readonly Dictionary<ulong,AssaultHelicopterTargetState> armyAssaultHelicopterTargets=[];
-    private readonly Dictionary<ulong,AssaultHelicopterPreparedVolley> armyAssaultHelicopterVolleys=[];
+    private readonly Dictionary<ulong,AssaultHelicopterVolleyState> armyAssaultHelicopterVolleys=[];
     internal Quaternion? AssaultHelicopterRotation(ulong entityId)
         => armyAssaultHelicopterPaths.TryGetValue(entityId, out var path) ? path.Rotation : null;
     internal ArmyVehicleShotStats? AssaultHelicopterShot(ulong entityId)
@@ -50,8 +47,8 @@ public sealed partial class MatchEngine
         => armyAssaultHelicopterTargets.GetValueOrDefault(entityId)?.TargetDecoyId;
     internal string? AssaultHelicopterTargetPlayer(ulong entityId)
         => armyAssaultHelicopterTargets.GetValueOrDefault(entityId)?.TargetPlayerId;
-    internal AssaultHelicopterPreparedVolley? AssaultHelicopterVolley(ulong entityId)
-        => armyAssaultHelicopterVolleys.GetValueOrDefault(entityId);
+    internal AssaultHelicopterVolleyState.PreparedVolley? AssaultHelicopterVolley(ulong entityId)
+        => armyAssaultHelicopterVolleys.GetValueOrDefault(entityId)?.Latest;
     private readonly Dictionary<ulong,HelicopterOrientationState> armyHelicopterOrientations=[];
     private readonly Dictionary<ulong,ArmyHelicopterCrewStats> armyHelicopterCrew=[];
     private readonly Dictionary<ulong,HelicopterCrewState> armyHelicopterCrewMembers=[];
@@ -245,6 +242,7 @@ public sealed partial class MatchEngine
             new AssaultHelicopterWaypointState(route, spawn.Position, sourceSpeed, NextArmyFloat));
         armyAssaultHelicopterTargets.Add(entityId,
             new AssaultHelicopterTargetState((float)((double)tick / MatchManifest.TickRate)));
+        armyAssaultHelicopterVolleys.Add(entityId, new AssaultHelicopterVolleyState());
     }
 
     private void AdvanceAssaultHelicopterPaths()
@@ -257,17 +255,20 @@ public sealed partial class MatchEngine
                 throw new InvalidDataException("Assault Helicopter path lost its host entity.");
 
             if (!armyAssaultHelicopterShots.TryGetValue(entityId, out var shot) ||
-                !armyAssaultHelicopterTargets.TryGetValue(entityId, out var targetState))
+                !armyAssaultHelicopterTargets.TryGetValue(entityId, out var targetState) ||
+                !armyAssaultHelicopterVolleys.TryGetValue(entityId, out var volleyState))
                 throw new InvalidDataException("Assault Helicopter target authority disappeared.");
             var owner = Find(unit.OwnerPlayerId) ??
                 throw new InvalidDataException("Assault Helicopter owner disappeared.");
             var opponent = players.Single(player => player != owner);
             var opposingDecoys = decoys.Snapshot()
                 .Where(decoy => decoy.OwnerFraction != owner.Definition.Fraction).ToArray();
+            volleyState.PrepareDueSecondGuns(time, shot, NextArmyFloat);
             if (path.UsingWaypoints)
                 targetState.Advance(time, shot, opposingDecoys,
                     opponent.Definition.PlayerId, armyChoice, NextArmyFloat,
-                    () => PrepareAssaultHelicopterVolley(entityId, shot));
+                    () => volleyState.PrepareFirstGun(time, tick, shot,
+                        armyChoice, NextArmyFloat));
             Vector3? lookTarget = targetState.LookTarget(opposingDecoys,
                 opponent.Definition.PlayerId, opponent.Position);
             path.Advance(time, 1f / MatchManifest.TickRate, lookTarget);
@@ -278,13 +279,6 @@ public sealed partial class MatchEngine
         }
     }
 
-    private void PrepareAssaultHelicopterVolley(ulong entityId, ArmyVehicleShotStats shot)
-    {
-        var plan = AssaultHelicopterVolleyPlanner.Plan(shot, armyChoice);
-        var firstGunShots = AssaultHelicopterVolleyPlanner.SampleRealShots(
-            plan.FirstGunCount, shot.ProbabilityOfRealShot, NextArmyFloat);
-        armyAssaultHelicopterVolleys[entityId] = new(plan, firstGunShots, tick);
-    }
     private void AdvanceDronePaths()
     {
         foreach(var (key,path) in armyDronePaths.OrderBy(x=>x.Key))
