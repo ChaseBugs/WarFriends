@@ -1181,6 +1181,19 @@ string outboxPath=Path.Combine(Path.GetTempPath(),"war-terminal-test-"+Guid.NewG
 try
 {
     var outbox=new TerminalOutbox(outboxPath);
+    foreach (string reason in new[] {
+        "invalid-assault-helicopter-projectile-authority",
+        "invalid-assault-helicopter-route-authority",
+        "source-kill-backpressure", "host-crash" })
+    {
+        var abortedEvidence=timer.Snapshot().Clone();
+        abortedEvidence.TerminalReason=reason;
+        byte[] payload=abortedEvidence.ToByteArray();
+        string digest=War.Shared.TerminalResultDigest.Compute(payload);
+        Check(TerminalOutbox.ValidatePayload(payload,abortedEvidence.MatchId,digest)
+            .TerminalReason==reason,
+            "Worker abort reason survives canonical durable-result validation: "+reason);
+    }
     var forgedDoubleDeath=timer.Snapshot().Clone();
     forgedDoubleDeath.TerminalReason="simultaneous-barrel-death";
     Reject(()=>outbox.Publish(forgedDoubleDeath),

@@ -2472,14 +2472,15 @@ internal static class CombatContentTests
                   "allocator loadouts resolve War Card identities against the recovered effect catalog");
             Reject(()=>BattleLoadoutPolicy.ValidateCardIds(new[]{"CardUnknown"},cardCatalog));
             Reject(()=>WarCardEffectRequestValidator.Validate(new WarCardEffectRequest("CardAirstrike",new(1,0,1),1,0)));
-            BattleTerminalPolicy.Validate("death","11111111111111111111111111111111",true,false);
+            BattleTerminalPolicy.Validate("player-killed","11111111111111111111111111111111",true,false);
             foreach(var reason in new[]{"invalid-army-flame-authority","invalid-buggy-projectile-authority",
                 "invalid-drone-route-authority","invalid-helicopter-route-authority",
                 "invalid-land-mine-authority","invalid-tank-projectile-authority",
-                "invalid-vehicle-route-authority"})
+                "invalid-vehicle-route-authority","invalid-assault-helicopter-projectile-authority",
+                "invalid-assault-helicopter-route-authority","source-kill-backpressure","host-crash"})
                 BattleTerminalPolicy.Validate(reason,"",false,false);
             count++;
-            Reject(()=>BattleTerminalPolicy.Validate("death","11111111111111111111111111111111",true,true));
+            Reject(()=>BattleTerminalPolicy.Validate("death","11111111111111111111111111111111",true,false));
             Reject(()=>BattleTerminalPolicy.Validate("player-killed","11111111111111111111111111111111",true,true));
             Reject(()=>BattleTerminalPolicy.Validate("simultaneous-barrel-death",
                 "11111111111111111111111111111111",true,false));

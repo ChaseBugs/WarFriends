@@ -254,12 +254,8 @@ public sealed class TerminalOutbox
             BattleStatisticsValidator.Validate(new BattleStatistics(
                 player.ConfirmedPlayerHits,player.ConfirmedPlayerKills,
                 player.ConfirmedArmySpawns,player.ConfirmedArmyLosses));
-        bool completedReason=snapshot.TerminalReason is "forfeit" or "opponent-disconnected" or "player-killed";
-        bool abortedReason=snapshot.TerminalReason is "cancelled-before-start" or "host-shutdown" or "host-crash" or
-            "admission-timeout" or "prestart-disconnect" or "both-disconnected" or "duration-limit" or
-            "simultaneous-barrel-death" or "invalid-shield-authority" or "invalid-combat-authority" or
-            "invalid-projectile-authority" or "invalid-barrel-authority" or "invalid-army-authority" or
-            "army-event-backpressure" or "source-kill-backpressure" or "overtime-event-backpressure";
+        bool completedReason=BattleTerminalPolicy.IsScoredReason(snapshot.TerminalReason);
+        bool abortedReason=BattleTerminalPolicy.IsAbortedReason(snapshot.TerminalReason);
         if(!Regex.IsMatch(snapshot.MatchId,@"\A[a-zA-Z0-9_-]{1,64}\z") ||
            !Regex.IsMatch(snapshot.ManifestHash,@"\A[0-9a-f]{64}\z") ||
            snapshot.Phase is not (BattlePhase.Ended or BattlePhase.Aborted) ||
