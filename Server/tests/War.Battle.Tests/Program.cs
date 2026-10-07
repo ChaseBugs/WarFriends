@@ -282,6 +282,19 @@ if(args is ["--assault-bazooka-glass-udp-only"])
     return;
 }
 
+if(args is ["--rifle-udp-only"])
+{
+    var root = new DirectoryInfo(AppContext.BaseDirectory);
+    while (root != null && !File.Exists(Path.Combine(root.FullName, "content/combat-content-manifest.json")))
+        root = root.Parent;
+    if (root == null)
+        throw new Exception("Recovered battle content artifact not found.");
+
+    int focused = await LiveRifleTests.RunUdp(Path.Combine(root.FullName, "content"));
+    Console.WriteLine($"PASS: {focused} focused live rifle UDP assertions");
+    return;
+}
+
 if(args is ["--helicopter-shotgun-only"])
 {
     var root=new DirectoryInfo(AppContext.BaseDirectory);

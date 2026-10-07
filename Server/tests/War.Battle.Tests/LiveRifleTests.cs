@@ -154,6 +154,45 @@ internal static class LiveRifleTests
                 eventA.Events.SequenceEqual(eventReplay.Events) && eventA.Events.SequenceEqual(eventB.Events),
                 "two UDP clients receive identical replayable combat event pages");
             Check(eventA.Events.Any(e=>e.Kind==MatchEventKind.Shot),"live UDP page includes host shot event");
+            Check(eventA.Events.Count >= 2,
+                "live UDP has multiple events for interrupted callback replay");
+            var interruptedConsumer = new MatchEventConsumer();
+            var appliedEvents = new List<ulong>();
+            ulong interruptedEventId = eventA.Events[1].EventId;
+            bool interruptOnce = true;
+            interruptedConsumer.EventReceived += item =>
+            {
+                if (item.EventId == interruptedEventId && interruptOnce)
+                {
+                    interruptOnce = false;
+                    throw new InvalidOperationException("Unity presentation interrupted.");
+                }
+                appliedEvents.Add(item.EventId);
+            };
+            try
+            {
+                await peerA.PollAndConsumeEventsAsync(interruptedConsumer, ct.Token);
+                throw new Exception("Interrupted UDP event callback was not propagated.");
+            }
+            catch (InvalidOperationException error) when (
+                error.Message == "Unity presentation interrupted.")
+            {
+                count++;
+            }
+            Check(interruptedConsumer.LastEventId == eventA.Events[0].EventId &&
+                  appliedEvents.SequenceEqual(new[] { eventA.Events[0].EventId }),
+                "UDP consumer acknowledges only the event delivered before callback failure");
+            var replayAfterFailure = await peerA.PollEventsAsync(
+                interruptedConsumer.LastEventId, ct.Token);
+            Check(replayAfterFailure.Events.Count > 0 &&
+                  replayAfterFailure.Events[0].EventId == interruptedEventId,
+                "host replays the failed event from the acknowledged cursor");
+            await peerA.PollAndConsumeEventsAsync(interruptedConsumer, ct.Token);
+            Check(appliedEvents.Count >= 2 &&
+                  appliedEvents[0] == eventA.Events[0].EventId &&
+                  appliedEvents[1] == interruptedEventId &&
+                  appliedEvents.Count(id => id == eventA.Events[0].EventId) == 1,
+                "UDP retry delivers the failed callback without repeating the earlier event");
             ulong processed=eventA.Events[^1].EventId;
             await peerA.PollEventsAsync(processed,ct.Token);
             using(var resumed=new MatchConnection(Grant(one,703,1)))
