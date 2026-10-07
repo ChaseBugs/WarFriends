@@ -2,6 +2,7 @@ using System.Text.Json.Nodes;
 using System.Security.Cryptography;
 using System.Buffers.Binary;
 using Google.Protobuf;
+using Microsoft.Extensions.Logging.Abstractions;
 using MongoDB.Driver;
 using War.Backend;
 using War.BattleServer;
@@ -352,11 +353,35 @@ internal static class BattleManifestSnapshotTests
             }
             await resultRows.InsertManyAsync(abortedBacklog);
             var archiveTime=DateTimeOffset.UtcNow.AddDays(31);
-            long firstPage=await resultStore.Prune(archiveTime,TimeSpan.FromDays(30),CancellationToken.None);
-            long secondPage=await resultStore.Prune(archiveTime,TimeSpan.FromDays(30),CancellationToken.None);
-            if(firstPage!=256 || secondPage!=44 ||
+            var firstPage=await resultStore.PrunePage(archiveTime,TimeSpan.FromDays(30),CancellationToken.None);
+            var secondPage=await resultStore.PrunePage(archiveTime,TimeSpan.FromDays(30),CancellationToken.None);
+            if(firstPage.Inspected!=256 || firstPage.Removed!=256 ||
+               secondPage.Inspected!=44 || secondPage.Removed!=44 ||
                await resultStore.Get(abortedBacklog[^1].MatchId,CancellationToken.None)!=null)
                 throw new Exception("Archival did not advance through bounded eligible pages.");
+            var scheduledResult=rematchTerminal.Clone();
+            scheduledResult.MatchId="scheduled-"+Guid.NewGuid().ToString("N");
+            (byte[] scheduledPayload,string scheduledDigest)=Evidence(scheduledResult);
+            await resultRows.InsertOneAsync(new BattleResultDocument
+            {
+                Id=Guid.NewGuid().ToString("N"),MatchId=scheduledResult.MatchId,
+                Digest=scheduledDigest,Snapshot=scheduledPayload,
+                AcceptedUtc=DateTime.UtcNow.AddDays(-31),TerminalPhase=BattlePhase.Aborted
+            });
+            using(var archiver=new BattleResultArchivalService(resultStore,
+                NullLogger<BattleResultArchivalService>.Instance))
+            {
+                await archiver.StartAsync(CancellationToken.None);
+                try
+                {
+                    using var timeout=new CancellationTokenSource(TimeSpan.FromSeconds(10));
+                    while(await resultStore.Get(scheduledResult.MatchId,CancellationToken.None)!=null)
+                    {
+                        await Task.Delay(50,timeout.Token);
+                    }
+                }
+                finally {await archiver.StopAsync(CancellationToken.None);}
+            }
             Console.WriteLine("PASS: Mongo queue authority and exact-result scoring/archival survive concurrent stores and restart");
         }
         finally {await mongo.DropDatabaseAsync(database);}

@@ -21,6 +21,7 @@ builder.Services.AddSingleton(new BattleGrantStore(mongoUri, mongoDatabase));
 builder.Services.AddSingleton(new BattleMatchQueueStore(mongoUri, mongoDatabase));
 builder.Services.AddSingleton(new BattleManifestSnapshotStore(mongoUri, mongoDatabase));
 builder.Services.AddSingleton(new BattleResultStore(mongoUri, mongoDatabase));
+builder.Services.AddHostedService<BattleResultArchivalService>();
 builder.Services.AddSingleton<BattleTerminalAcceptance>();
 builder.Services.AddSingleton(new LegacyPlayerStore(mongoUri, mongoDatabase));
 builder.Services.AddSingleton<BattlePlayerPresentationSource>();
@@ -114,7 +115,6 @@ await app.Services.GetRequiredService<BattleAllocationStore>().Initialize(app.Li
 await app.Services.GetRequiredService<BattleGrantStore>().Initialize(app.Lifetime.ApplicationStopping);
 await app.Services.GetRequiredService<BattleMatchQueueStore>().Initialize(app.Lifetime.ApplicationStopping);
 await app.Services.GetRequiredService<BattleResultStore>().Initialize(app.Lifetime.ApplicationStopping);
-await app.Services.GetRequiredService<BattleResultStore>().Prune(DateTimeOffset.UtcNow, TimeSpan.FromDays(30), app.Lifetime.ApplicationStopping);
 await app.Services.GetRequiredService<LegacyPlayerStore>().Initialize(app.Lifetime.ApplicationStopping);
 await app.Services.GetRequiredService<LegacyBufferStore>().Initialize(app.Lifetime.ApplicationStopping);
 await app.Services.GetRequiredService<LegacySquadStore>().Initialize(app.Lifetime.ApplicationStopping);

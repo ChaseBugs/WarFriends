@@ -19,7 +19,7 @@ public sealed class BattleResultDocument
 
 public sealed class BattleResultStore
 {
-    private const int ArchivalPageSize = 256;
+    public const int ArchivalPageSize = 256;
     private readonly IMongoCollection<BattleResultDocument> results;
     public BattleResultStore(string uri, string databaseName)
     {
@@ -119,6 +119,11 @@ public sealed class BattleResultStore
     }
     public async Task<long> Prune(DateTimeOffset now, TimeSpan retention, CancellationToken ct)
     {
+        var page = await PrunePage(now, retention, ct);
+        return page.Removed;
+    }
+    public async Task<BattleResultPrunePage> PrunePage(DateTimeOffset now, TimeSpan retention, CancellationToken ct)
+    {
         if (now < DateTimeOffset.UnixEpoch || retention < TimeSpan.FromDays(30) || retention > TimeSpan.FromDays(3650))
             throw new ArgumentOutOfRangeException(nameof(retention));
         var cutoff = now - retention;
@@ -134,7 +139,7 @@ public sealed class BattleResultStore
             .Limit(ArchivalPageSize).ToListAsync(ct);
         foreach (var row in candidates)
             Validate(row,row.MatchId,now.UtcDateTime);
-        if (candidates.Count == 0) return 0;
+        if (candidates.Count == 0) return new BattleResultPrunePage(0, 0);
         long removed=0;
         foreach(var row in candidates)
         {
@@ -157,7 +162,7 @@ public sealed class BattleResultStore
                 throw new InvalidDataException("Battle result changed during archival; retry remaining rows.");
             removed++;
         }
-        return removed;
+        return new BattleResultPrunePage(candidates.Count, removed);
     }
     public async Task<string> ReconcileScored(string matchId, string digest, CancellationToken ct)
     {
@@ -206,3 +211,5 @@ public sealed class BattleResultStore
             throw new InvalidDataException("An aborted battle has a scored marker.");
     }
 }
+
+public readonly record struct BattleResultPrunePage(int Inspected, long Removed);
