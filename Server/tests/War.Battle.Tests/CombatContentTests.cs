@@ -36,6 +36,7 @@ internal static class CombatContentTests
         int mapAssertions = VerifyCoopSpawnCatalog(directory, catalog);
         int navMeshAssertions = VerifyCoopNavMeshSources(directory, catalog);
         int routeAssertions = VerifyCoopNavMeshRoutes(directory, catalog);
+        int botAssertions = VerifyCoopBotRules(directory, catalog);
 
         string temporaryPath = Path.Combine(Path.GetTempPath(),
             $"war-mission-catalog-{Guid.NewGuid():N}.json");
@@ -54,7 +55,8 @@ internal static class CombatContentTests
                 "An event beyond the source mission timer was accepted.");
             return 4 + objectiveAssertions + scoreAssertions +
                 spawnAssertions + eventAssertions + coopAssertions +
-                allocationAssertions + mapAssertions + navMeshAssertions + routeAssertions;
+                allocationAssertions + mapAssertions + navMeshAssertions +
+                routeAssertions + botAssertions;
         }
         finally
         {
@@ -734,6 +736,41 @@ internal static class CombatContentTests
             earlyForfeit.Snapshot().RewardEligible)
             throw new Exception("A pre-start forfeit must close without reward eligibility.");
         return 47;
+    }
+
+    private static int VerifyCoopBotRules(string directory, MissionCatalog missions)
+    {
+        string path = Path.Combine(directory, "recovered-coop-bot-rules.json");
+        CoopBotRuleCatalog bots = CoopBotRuleCatalog.Load(path, missions);
+        CoopBotRule first = bots.ForMission(4);
+        if (bots.Bots.Count != 15 ||
+            bots.Bots.Count(bot => bot.HealthMultiplier == 0) != 6 ||
+            first.Name != "Private Pink" || first.Level != 2 ||
+            first.HealthMultiplier != 0.8f || first.Cards.Count != 5 ||
+            bots.ForMission(74).Name != "General Bad")
+            throw new Exception("Source boss missions lost their bot definitions.");
+
+        string temporaryPath = Path.Combine(Path.GetTempPath(),
+            $"war-coop-bots-{Guid.NewGuid():N}.json");
+        try
+        {
+            JsonNode altered = JsonNode.Parse(File.ReadAllText(path))!;
+            altered["bots"]![0]!["bot"]!["hpReduction"] = 1;
+            File.WriteAllText(temporaryPath, altered.ToJsonString());
+            try
+            {
+                _ = CoopBotRuleCatalog.Load(temporaryPath, missions);
+                throw new Exception("Altered boss vitality was accepted.");
+            }
+            catch (InvalidDataException)
+            {
+                return 6;
+            }
+        }
+        finally
+        {
+            File.Delete(temporaryPath);
+        }
     }
 
     private static int VerifyCoopNavMeshRoutes(string directory, MissionCatalog missions)

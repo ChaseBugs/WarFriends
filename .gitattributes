@@ -34,4 +34,5 @@ Server/content/recovered-helicopter-turret-aim.json text eol=lf
 Server/content/recovered-coop-card-rows.json text eol=lf
 Server/content/recovered-coop-navmesh-sources.json text eol=lf
 Server/content/recovered-coop-navmesh-paths.json text eol=lf
+Server/content/recovered-coop-bot-rules.json text eol=lf
 Server/content/coop-navmesh/*.asset binary

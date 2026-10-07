@@ -1,0 +1,252 @@
+{
+  "version": 1,
+  "missionSourceSha256": "d46f81ff8c3e12bf17f34a1f53dd601bd799102c9f984818031441dfb7a5de43",
+  "bots": [
+    {
+      "missionIndex": 4,
+      "sceneDataSha256": "7f550d45fb19e196e31815361c70642141a8540434c6d6fdfba8067c9dc71aeb",
+      "bot": {
+        "name": "Private Pink",
+        "difficulty": 1,
+        "level": 2,
+        "hpReduction": 0.8,
+        "camo": "CAMOS_PARA",
+        "headAccesory": "HEAD_LENNON",
+        "helmet": "HELMETS_DEFAULT",
+        "powerBand": "BANDS_EMPTY",
+        "useDefinedCards": true,
+        "cards": [
+          "HEADAHEAD",
+          "KEVLARUP",
+          "MEDKIT",
+          "AIRSTRIKE",
+          "AIRSTRIKE"
+        ]
+      }
+    },
+    {
+      "missionIndex": 9,
+      "sceneDataSha256": "84d211e7bc02989858140efaeb2eb1167d66a69063b73b3b1e6c4ba8038ff2d7",
+      "bot": {
+        "name": "Corporal Ren",
+        "difficulty": 2,
+        "level": 6,
+        "hpReduction": 0.8,
+        "camo": "CAMOS_OREN",
+        "headAccesory": "HEAD_EMPTY",
+        "helmet": "HELMETS_JASON",
+        "powerBand": "BANDS_EMPTY",
+        "useDefinedCards": false,
+        "cards": []
+      }
+    },
+    {
+      "missionIndex": 14,
+      "sceneDataSha256": "452063c80079cf69e076699338f4f8741f447db9f50ad969cbf96bfb745dbf7c",
+      "bot": {
+        "name": "Sergeant Pi",
+        "difficulty": 4,
+        "level": 7,
+        "hpReduction": 0.6,
+        "camo": "CAMOS_ASSAULT",
+        "headAccesory": "HEAD_CIGAR",
+        "helmet": "HELMETS_MADMAX",
+        "powerBand": "BANDS_EMPTY",
+        "useDefinedCards": false,
+        "cards": []
+      }
+    },
+    {
+      "missionIndex": 19,
+      "sceneDataSha256": "10403d05a4b51e72efbc79d431278167458b609264272babf8dfab750ab0dc8a",
+      "bot": {
+        "name": "Mr. Bot",
+        "difficulty": 6,
+        "level": 10,
+        "hpReduction": 0.6,
+        "camo": "CAMOS_ELITEENGINEER",
+        "headAccesory": "HEAD_EMPTY",
+        "helmet": "HELMETS_SWATELITE",
+        "powerBand": "BANDS_EMPTY",
+        "useDefinedCards": true,
+        "cards": []
+      }
+    },
+    {
+      "missionIndex": 24,
+      "sceneDataSha256": "40f16b529057d33864fab311f392bde01ac8de32909698eae12ec5703e57d4b9",
+      "bot": {
+        "name": "Chief Doom",
+        "difficulty": 8,
+        "level": 14,
+        "hpReduction": 0.55,
+        "camo": "CAMOS_ROCKETLAUNCHER",
+        "headAccesory": "HEAD_SCIFIGRENADIERMASK",
+        "helmet": "HELMETS_EAGLE",
+        "powerBand": "BANDS_EMPTY",
+        "useDefinedCards": false,
+        "cards": []
+      }
+    },
+    {
+      "missionIndex": 29,
+      "sceneDataSha256": "34b1dafabf497c81ec6ebf992e8a65603904fe3ffc1ea6e03522b533abd7c6ca",
+      "bot": {
+        "name": "Captain Rig",
+        "difficulty": 8,
+        "level": 15,
+        "hpReduction": 0.7,
+        "camo": "CAMOS_MADMAX",
+        "headAccesory": "HEAD_BB_GLASSES",
+        "helmet": "HELMETS_FOOTBALL",
+        "powerBand": "HEAD_EMPTY",
+        "useDefinedCards": false,
+        "cards": []
+      }
+    },
+    {
+      "missionIndex": 34,
+      "sceneDataSha256": "139b75d1991842a73f26395eb15cd66ee489bf1bb90cd0ea65db37ff234129be",
+      "bot": {
+        "name": "Major Harry",
+        "difficulty": 12,
+        "level": 16,
+        "hpReduction": 0.85,
+        "camo": "CAMOS_DUSTY",
+        "headAccesory": "HEAD_EYE_PATCH",
+        "helmet": "HELMETS_HAT",
+        "powerBand": "HEAD_EMPTY",
+        "useDefinedCards": false,
+        "cards": []
+      }
+    },
+    {
+      "missionIndex": 39,
+      "sceneDataSha256": "2c9a07f268e3cef51ec39d617089077f00ad5e28366bd5f1f6c459ed5dbd562f",
+      "bot": {
+        "name": "Zerro",
+        "difficulty": 14,
+        "level": 19,
+        "hpReduction": 0.9,
+        "camo": "CAMOS_SUITGUY",
+        "headAccesory": "HEAD_BAND",
+        "helmet": "HELMETS_COWBOYHAT",
+        "powerBand": "BANDS_EMPTY",
+        "useDefinedCards": false,
+        "cards": []
+      }
+    },
+    {
+      "missionIndex": 44,
+      "sceneDataSha256": "960c205ba45aa6be30a58a13aa6e9538d92f7ce1e68dff8875dff3e5d5adacaa",
+      "bot": {
+        "name": "Colonel Ray",
+        "difficulty": 16,
+        "level": 22,
+        "hpReduction": 0.95,
+        "camo": "CAMOS_SPECOPS",
+        "headAccesory": "HEAD_GRENADIERELITEMASK",
+        "helmet": "HELMETS_BLUEBARRET",
+        "powerBand": "BANDS_EMPTY",
+        "useDefinedCards": false,
+        "cards": []
+      }
+    },
+    {
+      "missionIndex": 49,
+      "sceneDataSha256": "0d91386485c8faf4a343a494b29bd3adf460e4f7627844e6b1e72f9fe041ee96",
+      "bot": {
+        "name": "TX-853",
+        "difficulty": 18,
+        "level": 26,
+        "hpReduction": 0.0,
+        "camo": "CAMOS_COMMANDO",
+        "headAccesory": "HEAD_EMPTY",
+        "helmet": "HELMETS_SCIFIMINIGUNNER",
+        "powerBand": "BANDS_EMPTY",
+        "useDefinedCards": false,
+        "cards": []
+      }
+    },
+    {
+      "missionIndex": 54,
+      "sceneDataSha256": "2d344147332bd2a5677af36750c6d8a3ca691a1ef557a0acafb5e29848b777a5",
+      "bot": {
+        "name": "Boss Bruce",
+        "difficulty": 20,
+        "level": 31,
+        "hpReduction": 0.0,
+        "camo": "CAMOS_RAMBO",
+        "headAccesory": "HEAD_SUNGLASSES",
+        "helmet": "HELMETS_HORNS",
+        "powerBand": "BANDS_EMPTY",
+        "useDefinedCards": false,
+        "cards": []
+      }
+    },
+    {
+      "missionIndex": 59,
+      "sceneDataSha256": "dbe9833fb7ad6da3f1fb858e45856ba68eb1d32f76634e3578c0eb497bd9b8bf",
+      "bot": {
+        "name": "General Bad",
+        "difficulty": 22,
+        "level": 35,
+        "hpReduction": 0.0,
+        "camo": "CAMOS_ALIEN",
+        "headAccesory": "HEAD_EMPTY",
+        "helmet": "HELMETS_SKULL",
+        "powerBand": "BANDS_EMPTY",
+        "useDefinedCards": false,
+        "cards": []
+      }
+    },
+    {
+      "missionIndex": 64,
+      "sceneDataSha256": "0c9958fd0372d90b955d6c7cf0a66701712f782796d9180475b72ecc99575fa9",
+      "bot": {
+        "name": "TX-853",
+        "difficulty": 18,
+        "level": 26,
+        "hpReduction": 0.0,
+        "camo": "CAMOS_COMMANDO",
+        "headAccesory": "HEAD_EMPTY",
+        "helmet": "HELMETS_SCIFIMINIGUNNER",
+        "powerBand": "BANDS_EMPTY",
+        "useDefinedCards": false,
+        "cards": []
+      }
+    },
+    {
+      "missionIndex": 69,
+      "sceneDataSha256": "26d9b834185c0d2223e643da6993ec66141136e66523495182733832c3a3cde0",
+      "bot": {
+        "name": "Boss Bruce",
+        "difficulty": 20,
+        "level": 31,
+        "hpReduction": 0.0,
+        "camo": "CAMOS_RAMBO",
+        "headAccesory": "HEAD_SUNGLASSES",
+        "helmet": "HELMETS_HORNS",
+        "powerBand": "BANDS_EMPTY",
+        "useDefinedCards": false,
+        "cards": []
+      }
+    },
+    {
+      "missionIndex": 74,
+      "sceneDataSha256": "16c3fd9a8fb16f86250888020c456535ba54303bc0fe9bc58bc8cb1676f438a8",
+      "bot": {
+        "name": "General Bad",
+        "difficulty": 22,
+        "level": 35,
+        "hpReduction": 0.0,
+        "camo": "CAMOS_ALIEN",
+        "headAccesory": "HEAD_EMPTY",
+        "helmet": "HELMETS_SKULL",
+        "powerBand": "BANDS_EMPTY",
+        "useDefinedCards": false,
+        "cards": []
+      }
+    }
+  ]
+}
