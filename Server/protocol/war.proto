@@ -466,6 +466,10 @@ message BattleCoopBossState {
   float rotation_z = 8; float rotation_w = 9;
   float max_health = 10; float health = 11;
   uint64 spawn_tick = 12; uint64 death_tick = 13;
+  repeated BattleCoopBossWeaponSlot weapons = 14;
+}
+message BattleCoopBossWeaponSlot {
+  int32 slot = 1; int32 inventory_index = 2; string source_id = 3;
 }
 message BattleCoopParticipantStart {
   string player_id = 1; int32 defend_component_file_id = 2;

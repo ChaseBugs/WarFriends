@@ -1,0 +1,1056 @@
+{
+  "version": 1,
+  "sceneSha256": "d46f81ff8c3e12bf17f34a1f53dd601bd799102c9f984818031441dfb7a5de43",
+  "obbSha256": "078cd1c4ebaeef4a39646274a54d35ce05741bc15a2e13d95ae55340711b5125",
+  "attackSourceSha256": "6954734200bc126fa1e286afde96262b0e2a691e95fe0266e8ee42eea1184c39",
+  "levelManagerComponentFileId": 45847,
+  "weaponUpgradesComponentFileId": 45843,
+  "weapons": [
+    {
+      "levelManagerIndex": 0,
+      "componentFileId": 49675,
+      "gameObjectFileId": 4814,
+      "sheetName": "Google2u.AssaultRifle_M16",
+      "category": 1,
+      "inventoryIndex": 1,
+      "unlockLevelIndex": 8
+    },
+    {
+      "levelManagerIndex": 1,
+      "componentFileId": 41995,
+      "gameObjectFileId": 4838,
+      "sheetName": "Google2u.AssaultRifle_AK47",
+      "category": 1,
+      "inventoryIndex": 11,
+      "unlockLevelIndex": 0
+    },
+    {
+      "levelManagerIndex": 2,
+      "componentFileId": 49795,
+      "gameObjectFileId": 4837,
+      "sheetName": "Google2u.AssaultRifle_Famas",
+      "category": 1,
+      "inventoryIndex": 26,
+      "unlockLevelIndex": 16
+    },
+    {
+      "levelManagerIndex": 3,
+      "componentFileId": 41639,
+      "gameObjectFileId": 4882,
+      "sheetName": "Google2u.SniperRifle_M24",
+      "category": 8,
+      "inventoryIndex": 2,
+      "unlockLevelIndex": 0
+    },
+    {
+      "levelManagerIndex": 4,
+      "componentFileId": 36082,
+      "gameObjectFileId": 4823,
+      "sheetName": "Google2u.Bazooka_RPG7",
+      "category": 16,
+      "inventoryIndex": 3,
+      "unlockLevelIndex": 3
+    },
+    {
+      "levelManagerIndex": 5,
+      "componentFileId": 43659,
+      "gameObjectFileId": 4825,
+      "sheetName": "Google2u.Shotgun_Saiga",
+      "category": 32,
+      "inventoryIndex": 27,
+      "unlockLevelIndex": 21
+    },
+    {
+      "levelManagerIndex": 6,
+      "componentFileId": 40841,
+      "gameObjectFileId": 4842,
+      "sheetName": "Google2u.Grenade_FRAG",
+      "category": 64,
+      "inventoryIndex": 5,
+      "unlockLevelIndex": 1
+    },
+    {
+      "levelManagerIndex": 7,
+      "componentFileId": 37327,
+      "gameObjectFileId": 4877,
+      "sheetName": "Google2u.Grenade_SMOKE",
+      "category": 64,
+      "inventoryIndex": 6,
+      "unlockLevelIndex": 23
+    },
+    {
+      "levelManagerIndex": 8,
+      "componentFileId": 45561,
+      "gameObjectFileId": 4891,
+      "sheetName": "Google2u.Grenade_FLASH",
+      "category": 64,
+      "inventoryIndex": 7,
+      "unlockLevelIndex": 10
+    },
+    {
+      "levelManagerIndex": 9,
+      "componentFileId": 46991,
+      "gameObjectFileId": 4881,
+      "sheetName": "Google2u.Grenade_POISON",
+      "category": 64,
+      "inventoryIndex": 8,
+      "unlockLevelIndex": 17
+    },
+    {
+      "levelManagerIndex": 10,
+      "componentFileId": 39462,
+      "gameObjectFileId": 4819,
+      "sheetName": "Google2u.SMG_UMP45",
+      "category": 2,
+      "inventoryIndex": 9,
+      "unlockLevelIndex": 20
+    },
+    {
+      "levelManagerIndex": 11,
+      "componentFileId": 37202,
+      "gameObjectFileId": 4809,
+      "sheetName": "Google2u.SniperRifle_M110",
+      "category": 8,
+      "inventoryIndex": 10,
+      "unlockLevelIndex": 25
+    },
+    {
+      "levelManagerIndex": 12,
+      "componentFileId": 45745,
+      "gameObjectFileId": 4874,
+      "sheetName": "Google2u.Pistol_DesertEagle",
+      "category": 128,
+      "inventoryIndex": 0,
+      "unlockLevelIndex": 32
+    },
+    {
+      "levelManagerIndex": 13,
+      "componentFileId": 44630,
+      "gameObjectFileId": 4811,
+      "sheetName": "Google2u.Pistol_Remmington51",
+      "category": 128,
+      "inventoryIndex": 12,
+      "unlockLevelIndex": 0
+    },
+    {
+      "levelManagerIndex": 14,
+      "componentFileId": 48570,
+      "gameObjectFileId": 4880,
+      "sheetName": "Google2u.Pistol_Berreta",
+      "category": 128,
+      "inventoryIndex": 13,
+      "unlockLevelIndex": 12
+    },
+    {
+      "levelManagerIndex": 15,
+      "componentFileId": 45459,
+      "gameObjectFileId": 4852,
+      "sheetName": "Google2u.Pistol_M1911",
+      "category": 128,
+      "inventoryIndex": 29,
+      "unlockLevelIndex": 19
+    },
+    {
+      "levelManagerIndex": 16,
+      "componentFileId": 40603,
+      "gameObjectFileId": 4867,
+      "sheetName": "Google2u.SniperRifle_Dragunov",
+      "category": 8,
+      "inventoryIndex": 14,
+      "unlockLevelIndex": 9
+    },
+    {
+      "levelManagerIndex": 17,
+      "componentFileId": 38960,
+      "gameObjectFileId": 4832,
+      "sheetName": "Google2u.LMG_PKMachinegun",
+      "category": 4,
+      "inventoryIndex": 15,
+      "unlockLevelIndex": 4
+    },
+    {
+      "levelManagerIndex": 18,
+      "componentFileId": 39183,
+      "gameObjectFileId": 4820,
+      "sheetName": "Google2u.LMG_M249",
+      "category": 4,
+      "inventoryIndex": 16,
+      "unlockLevelIndex": 10
+    },
+    {
+      "levelManagerIndex": 19,
+      "componentFileId": 36787,
+      "gameObjectFileId": 4836,
+      "sheetName": "Google2u.LMG_MG4",
+      "category": 4,
+      "inventoryIndex": 23,
+      "unlockLevelIndex": 26
+    },
+    {
+      "levelManagerIndex": 20,
+      "componentFileId": 39259,
+      "gameObjectFileId": 4857,
+      "sheetName": "Google2u.LMG_SA80",
+      "category": 4,
+      "inventoryIndex": 24,
+      "unlockLevelIndex": 18
+    },
+    {
+      "levelManagerIndex": 21,
+      "componentFileId": 48313,
+      "gameObjectFileId": 4884,
+      "sheetName": "Google2u.LMG_Minigun",
+      "category": 256,
+      "inventoryIndex": 25,
+      "unlockLevelIndex": 0
+    },
+    {
+      "levelManagerIndex": 22,
+      "componentFileId": 44548,
+      "gameObjectFileId": 4878,
+      "sheetName": "Google2u.SMG_MP5",
+      "category": 2,
+      "inventoryIndex": 17,
+      "unlockLevelIndex": 6
+    },
+    {
+      "levelManagerIndex": 23,
+      "componentFileId": 48991,
+      "gameObjectFileId": 4866,
+      "sheetName": "Google2u.SMG_MP7",
+      "category": 2,
+      "inventoryIndex": 28,
+      "unlockLevelIndex": 24
+    },
+    {
+      "levelManagerIndex": 24,
+      "componentFileId": 40797,
+      "gameObjectFileId": 4806,
+      "sheetName": "Google2u.SMG_CPW",
+      "category": 2,
+      "inventoryIndex": 18,
+      "unlockLevelIndex": 14
+    },
+    {
+      "levelManagerIndex": 25,
+      "componentFileId": 40795,
+      "gameObjectFileId": 4817,
+      "sheetName": "Google2u.GrenadeLauncher_M320",
+      "category": 512,
+      "inventoryIndex": 19,
+      "unlockLevelIndex": 6
+    },
+    {
+      "levelManagerIndex": 26,
+      "componentFileId": 45647,
+      "gameObjectFileId": 4893,
+      "sheetName": "Google2u.AssaultRifle_QBZ95",
+      "category": 1,
+      "inventoryIndex": 30,
+      "unlockLevelIndex": 12
+    },
+    {
+      "levelManagerIndex": 27,
+      "componentFileId": 44830,
+      "gameObjectFileId": 4840,
+      "sheetName": "Google2u.Shotgun_Benelli",
+      "category": 32,
+      "inventoryIndex": 22,
+      "unlockLevelIndex": 5
+    },
+    {
+      "levelManagerIndex": 28,
+      "componentFileId": 46017,
+      "gameObjectFileId": 4897,
+      "sheetName": "Google2u.SniperRifle_AWMF",
+      "category": 8,
+      "inventoryIndex": 21,
+      "unlockLevelIndex": 17
+    },
+    {
+      "levelManagerIndex": 29,
+      "componentFileId": 40088,
+      "gameObjectFileId": 4856,
+      "sheetName": "Google2u.AssaultRifle_G36",
+      "category": 1,
+      "inventoryIndex": 31,
+      "unlockLevelIndex": 31
+    },
+    {
+      "levelManagerIndex": 30,
+      "componentFileId": 48143,
+      "gameObjectFileId": 4835,
+      "sheetName": "Google2u.SniperRifle_M90",
+      "category": 8,
+      "inventoryIndex": 32,
+      "unlockLevelIndex": 32
+    },
+    {
+      "levelManagerIndex": 31,
+      "componentFileId": 44879,
+      "gameObjectFileId": 4868,
+      "sheetName": "Google2u.Shotgun_Striker",
+      "category": 32,
+      "inventoryIndex": 33,
+      "unlockLevelIndex": 29
+    },
+    {
+      "levelManagerIndex": 32,
+      "componentFileId": 46643,
+      "gameObjectFileId": 4869,
+      "sheetName": "Google2u.AssaultRifle_SteyrAUG",
+      "category": 1,
+      "inventoryIndex": 34,
+      "unlockLevelIndex": 22
+    },
+    {
+      "levelManagerIndex": 33,
+      "componentFileId": 44195,
+      "gameObjectFileId": 4855,
+      "sheetName": "Google2u.SMG_P90",
+      "category": 2,
+      "inventoryIndex": 35,
+      "unlockLevelIndex": 28
+    },
+    {
+      "levelManagerIndex": 34,
+      "componentFileId": 45784,
+      "gameObjectFileId": 4847,
+      "sheetName": "Google2u.LMG_M60",
+      "category": 4,
+      "inventoryIndex": 36,
+      "unlockLevelIndex": 34
+    },
+    {
+      "levelManagerIndex": 35,
+      "componentFileId": 48829,
+      "gameObjectFileId": 4888,
+      "sheetName": "Google2u.Bazooka_FGM",
+      "category": 16,
+      "inventoryIndex": 37,
+      "unlockLevelIndex": 27
+    },
+    {
+      "levelManagerIndex": 36,
+      "componentFileId": 38829,
+      "gameObjectFileId": 4824,
+      "sheetName": "Google2u.Bazooka_HMV",
+      "category": 16,
+      "inventoryIndex": 38,
+      "unlockLevelIndex": 14
+    },
+    {
+      "levelManagerIndex": 37,
+      "componentFileId": 37307,
+      "gameObjectFileId": 4844,
+      "sheetName": "Google2u.Pistol_Magnum357",
+      "category": 128,
+      "inventoryIndex": 39,
+      "unlockLevelIndex": 24
+    },
+    {
+      "levelManagerIndex": 38,
+      "componentFileId": 41382,
+      "gameObjectFileId": 4803,
+      "sheetName": "Google2u.Shotgun_SPAS",
+      "category": 32,
+      "inventoryIndex": 4,
+      "unlockLevelIndex": 13
+    },
+    {
+      "levelManagerIndex": 39,
+      "componentFileId": 42637,
+      "gameObjectFileId": 4859,
+      "sheetName": "Google2u.Grenade_Molotov",
+      "category": 64,
+      "inventoryIndex": 40,
+      "unlockLevelIndex": 30
+    },
+    {
+      "levelManagerIndex": 40,
+      "componentFileId": 41770,
+      "gameObjectFileId": 4853,
+      "sheetName": "Google2u.Bazooka_Panzerfaust",
+      "category": 16,
+      "inventoryIndex": 41,
+      "unlockLevelIndex": 20
+    },
+    {
+      "levelManagerIndex": 41,
+      "componentFileId": 40735,
+      "gameObjectFileId": 4829,
+      "sheetName": "Google2u.Bazooka_M202",
+      "category": 16,
+      "inventoryIndex": 42,
+      "unlockLevelIndex": 34
+    },
+    {
+      "levelManagerIndex": 42,
+      "componentFileId": 46922,
+      "gameObjectFileId": 4863,
+      "sheetName": "Google2u.SMG_MP5_elite",
+      "category": 2,
+      "inventoryIndex": 43,
+      "unlockLevelIndex": 6
+    },
+    {
+      "levelManagerIndex": 43,
+      "componentFileId": 49117,
+      "gameObjectFileId": 4841,
+      "sheetName": "Google2u.AssaultRifle_AKS47U",
+      "category": 1,
+      "inventoryIndex": 44,
+      "unlockLevelIndex": 38
+    },
+    {
+      "levelManagerIndex": 44,
+      "componentFileId": 41477,
+      "gameObjectFileId": 4896,
+      "sheetName": "Google2u.AssaultRifle_G36Elite",
+      "category": 1,
+      "inventoryIndex": 45,
+      "unlockLevelIndex": 31
+    },
+    {
+      "levelManagerIndex": 45,
+      "componentFileId": 39079,
+      "gameObjectFileId": 4805,
+      "sheetName": "Google2u.SniperRifle_M90Elite",
+      "category": 8,
+      "inventoryIndex": 46,
+      "unlockLevelIndex": 32
+    },
+    {
+      "levelManagerIndex": 46,
+      "componentFileId": 45088,
+      "gameObjectFileId": 4848,
+      "sheetName": "Google2u.LMG_M60Elite",
+      "category": 4,
+      "inventoryIndex": 47,
+      "unlockLevelIndex": 34
+    },
+    {
+      "levelManagerIndex": 47,
+      "componentFileId": 45636,
+      "gameObjectFileId": 4886,
+      "sheetName": "Google2u.LMG_M249Elite",
+      "category": 4,
+      "inventoryIndex": 48,
+      "unlockLevelIndex": 40
+    },
+    {
+      "levelManagerIndex": 48,
+      "componentFileId": 41379,
+      "gameObjectFileId": 4873,
+      "sheetName": "Google2u.SMG_P90Elite",
+      "category": 2,
+      "inventoryIndex": 49,
+      "unlockLevelIndex": 28
+    },
+    {
+      "levelManagerIndex": 49,
+      "componentFileId": 47002,
+      "gameObjectFileId": 4818,
+      "sheetName": "Google2u.Shotgun_Blackhand",
+      "category": 32,
+      "inventoryIndex": 50,
+      "unlockLevelIndex": 42
+    },
+    {
+      "levelManagerIndex": 50,
+      "componentFileId": 44996,
+      "gameObjectFileId": 4854,
+      "sheetName": "Google2u.Shotgun_SawnOff",
+      "category": 32,
+      "inventoryIndex": 51,
+      "unlockLevelIndex": 24
+    },
+    {
+      "levelManagerIndex": 51,
+      "componentFileId": 35821,
+      "gameObjectFileId": 4890,
+      "sheetName": "Google2u.Pistol_Jester",
+      "category": 128,
+      "inventoryIndex": 52,
+      "unlockLevelIndex": 41
+    },
+    {
+      "levelManagerIndex": 52,
+      "componentFileId": 47615,
+      "gameObjectFileId": 4839,
+      "sheetName": "Google2u.Grenade_M84",
+      "category": 64,
+      "inventoryIndex": 53,
+      "unlockLevelIndex": 37
+    },
+    {
+      "levelManagerIndex": 53,
+      "componentFileId": 48135,
+      "gameObjectFileId": 4876,
+      "sheetName": "Google2u.Shotgun_StrikerElite",
+      "category": 32,
+      "inventoryIndex": 54,
+      "unlockLevelIndex": 29
+    },
+    {
+      "levelManagerIndex": 54,
+      "componentFileId": 37179,
+      "gameObjectFileId": 4894,
+      "sheetName": "Google2u.Shotgun_AA12",
+      "category": 32,
+      "inventoryIndex": 55,
+      "unlockLevelIndex": 35
+    },
+    {
+      "levelManagerIndex": 55,
+      "componentFileId": 42644,
+      "gameObjectFileId": 4895,
+      "sheetName": "Google2u.SMG_Vector",
+      "category": 2,
+      "inventoryIndex": 56,
+      "unlockLevelIndex": 36
+    },
+    {
+      "levelManagerIndex": 56,
+      "componentFileId": 48966,
+      "gameObjectFileId": 4813,
+      "sheetName": "Google2u.Bazooka_FGMElite",
+      "category": 16,
+      "inventoryIndex": 57,
+      "unlockLevelIndex": 27
+    },
+    {
+      "levelManagerIndex": 57,
+      "componentFileId": 48436,
+      "gameObjectFileId": 4850,
+      "sheetName": "Google2u.Bazooka_Hater",
+      "category": 16,
+      "inventoryIndex": 58,
+      "unlockLevelIndex": 39
+    },
+    {
+      "levelManagerIndex": 58,
+      "componentFileId": 43290,
+      "gameObjectFileId": 4864,
+      "sheetName": "Google2u.SniperRifle_MSR",
+      "category": 8,
+      "inventoryIndex": 59,
+      "unlockLevelIndex": 38
+    },
+    {
+      "levelManagerIndex": 59,
+      "componentFileId": 48259,
+      "gameObjectFileId": 4826,
+      "sheetName": "Google2u.AssaultRifle_FamasElite",
+      "category": 1,
+      "inventoryIndex": 60,
+      "unlockLevelIndex": 16
+    },
+    {
+      "levelManagerIndex": 60,
+      "componentFileId": 40174,
+      "gameObjectFileId": 4831,
+      "sheetName": "Google2u.AssaultRifle_QBZ95Elite",
+      "category": 1,
+      "inventoryIndex": 61,
+      "unlockLevelIndex": 12
+    },
+    {
+      "levelManagerIndex": 61,
+      "componentFileId": 46166,
+      "gameObjectFileId": 4860,
+      "sheetName": "Google2u.Grenade_SMOKEElite",
+      "category": 64,
+      "inventoryIndex": 62,
+      "unlockLevelIndex": 23
+    },
+    {
+      "levelManagerIndex": 62,
+      "componentFileId": 44118,
+      "gameObjectFileId": 4843,
+      "sheetName": "Google2u.Shotgun_SaigaElite",
+      "category": 32,
+      "inventoryIndex": 63,
+      "unlockLevelIndex": 21
+    },
+    {
+      "levelManagerIndex": 63,
+      "componentFileId": 47866,
+      "gameObjectFileId": 4883,
+      "sheetName": "Google2u.SniperRifle_M110Elite",
+      "category": 8,
+      "inventoryIndex": 64,
+      "unlockLevelIndex": 25
+    },
+    {
+      "levelManagerIndex": 64,
+      "componentFileId": 46282,
+      "gameObjectFileId": 4861,
+      "sheetName": "Google2u.AssaultRifle_AK47Elite",
+      "category": 1,
+      "inventoryIndex": 65,
+      "unlockLevelIndex": 6
+    },
+    {
+      "levelManagerIndex": 65,
+      "componentFileId": 42471,
+      "gameObjectFileId": 4828,
+      "sheetName": "Google2u.LMG_PKMachinegunElite",
+      "category": 4,
+      "inventoryIndex": 66,
+      "unlockLevelIndex": 4
+    }
+  ],
+  "missions": [
+    {
+      "missionIndex": 4,
+      "level": 2,
+      "slots": [
+        {
+          "sourceCategory": "AssaultRifle ",
+          "levelManagerIndex": 1,
+          "inventoryIndex": 11,
+          "sheetName": "Google2u.AssaultRifle_AK47"
+        },
+        {
+          "sourceCategory": "SniperRifle",
+          "levelManagerIndex": 3,
+          "inventoryIndex": 2,
+          "sheetName": "Google2u.SniperRifle_M24"
+        },
+        {
+          "sourceCategory": "Grenade",
+          "levelManagerIndex": 6,
+          "inventoryIndex": 5,
+          "sheetName": "Google2u.Grenade_FRAG"
+        },
+        {
+          "sourceCategory": "Pistol",
+          "levelManagerIndex": 13,
+          "inventoryIndex": 12,
+          "sheetName": "Google2u.Pistol_Remmington51"
+        }
+      ]
+    },
+    {
+      "missionIndex": 9,
+      "level": 6,
+      "slots": [
+        {
+          "sourceCategory": "AssaultRifle ",
+          "levelManagerIndex": 64,
+          "inventoryIndex": 65,
+          "sheetName": "Google2u.AssaultRifle_AK47Elite"
+        },
+        {
+          "sourceCategory": "SniperRifle",
+          "levelManagerIndex": 3,
+          "inventoryIndex": 2,
+          "sheetName": "Google2u.SniperRifle_M24"
+        },
+        {
+          "sourceCategory": "Grenade",
+          "levelManagerIndex": 6,
+          "inventoryIndex": 5,
+          "sheetName": "Google2u.Grenade_FRAG"
+        },
+        {
+          "sourceCategory": "Pistol",
+          "levelManagerIndex": 13,
+          "inventoryIndex": 12,
+          "sheetName": "Google2u.Pistol_Remmington51"
+        }
+      ]
+    },
+    {
+      "missionIndex": 14,
+      "level": 7,
+      "slots": [
+        {
+          "sourceCategory": "AssaultRifle ",
+          "levelManagerIndex": 64,
+          "inventoryIndex": 65,
+          "sheetName": "Google2u.AssaultRifle_AK47Elite"
+        },
+        {
+          "sourceCategory": "SniperRifle",
+          "levelManagerIndex": 3,
+          "inventoryIndex": 2,
+          "sheetName": "Google2u.SniperRifle_M24"
+        },
+        {
+          "sourceCategory": "Grenade",
+          "levelManagerIndex": 6,
+          "inventoryIndex": 5,
+          "sheetName": "Google2u.Grenade_FRAG"
+        },
+        {
+          "sourceCategory": "Pistol",
+          "levelManagerIndex": 13,
+          "inventoryIndex": 12,
+          "sheetName": "Google2u.Pistol_Remmington51"
+        }
+      ]
+    },
+    {
+      "missionIndex": 19,
+      "level": 10,
+      "slots": [
+        {
+          "sourceCategory": "AssaultRifle ",
+          "levelManagerIndex": 0,
+          "inventoryIndex": 1,
+          "sheetName": "Google2u.AssaultRifle_M16"
+        },
+        {
+          "sourceCategory": "SniperRifle",
+          "levelManagerIndex": 16,
+          "inventoryIndex": 14,
+          "sheetName": "Google2u.SniperRifle_Dragunov"
+        },
+        {
+          "sourceCategory": "RocketLauncher",
+          "levelManagerIndex": 4,
+          "inventoryIndex": 3,
+          "sheetName": "Google2u.Bazooka_RPG7"
+        },
+        {
+          "sourceCategory": "Pistol",
+          "levelManagerIndex": 13,
+          "inventoryIndex": 12,
+          "sheetName": "Google2u.Pistol_Remmington51"
+        }
+      ]
+    },
+    {
+      "missionIndex": 24,
+      "level": 14,
+      "slots": [
+        {
+          "sourceCategory": "AssaultRifle ",
+          "levelManagerIndex": 26,
+          "inventoryIndex": 30,
+          "sheetName": "Google2u.AssaultRifle_QBZ95"
+        },
+        {
+          "sourceCategory": "Shotgun",
+          "levelManagerIndex": 38,
+          "inventoryIndex": 4,
+          "sheetName": "Google2u.Shotgun_SPAS"
+        },
+        {
+          "sourceCategory": "Grenade",
+          "levelManagerIndex": 8,
+          "inventoryIndex": 7,
+          "sheetName": "Google2u.Grenade_FLASH"
+        },
+        {
+          "sourceCategory": "Pistol",
+          "levelManagerIndex": 14,
+          "inventoryIndex": 13,
+          "sheetName": "Google2u.Pistol_Berreta"
+        }
+      ]
+    },
+    {
+      "missionIndex": 29,
+      "level": 15,
+      "slots": [
+        {
+          "sourceCategory": "AssaultRifle ",
+          "levelManagerIndex": 26,
+          "inventoryIndex": 30,
+          "sheetName": "Google2u.AssaultRifle_QBZ95"
+        },
+        {
+          "sourceCategory": "Shotgun",
+          "levelManagerIndex": 38,
+          "inventoryIndex": 4,
+          "sheetName": "Google2u.Shotgun_SPAS"
+        },
+        {
+          "sourceCategory": "Grenade",
+          "levelManagerIndex": 8,
+          "inventoryIndex": 7,
+          "sheetName": "Google2u.Grenade_FLASH"
+        },
+        {
+          "sourceCategory": "Pistol",
+          "levelManagerIndex": 14,
+          "inventoryIndex": 13,
+          "sheetName": "Google2u.Pistol_Berreta"
+        }
+      ]
+    },
+    {
+      "missionIndex": 34,
+      "level": 16,
+      "slots": [
+        {
+          "sourceCategory": "AssaultRifle ",
+          "levelManagerIndex": 2,
+          "inventoryIndex": 26,
+          "sheetName": "Google2u.AssaultRifle_Famas"
+        },
+        {
+          "sourceCategory": "Shotgun",
+          "levelManagerIndex": 38,
+          "inventoryIndex": 4,
+          "sheetName": "Google2u.Shotgun_SPAS"
+        },
+        {
+          "sourceCategory": "Grenade",
+          "levelManagerIndex": 8,
+          "inventoryIndex": 7,
+          "sheetName": "Google2u.Grenade_FLASH"
+        },
+        {
+          "sourceCategory": "Pistol",
+          "levelManagerIndex": 14,
+          "inventoryIndex": 13,
+          "sheetName": "Google2u.Pistol_Berreta"
+        }
+      ]
+    },
+    {
+      "missionIndex": 39,
+      "level": 19,
+      "slots": [
+        {
+          "sourceCategory": "AssaultRifle ",
+          "levelManagerIndex": 2,
+          "inventoryIndex": 26,
+          "sheetName": "Google2u.AssaultRifle_Famas"
+        },
+        {
+          "sourceCategory": "SniperRifle",
+          "levelManagerIndex": 28,
+          "inventoryIndex": 21,
+          "sheetName": "Google2u.SniperRifle_AWMF"
+        },
+        {
+          "sourceCategory": "RocketLauncher",
+          "levelManagerIndex": 36,
+          "inventoryIndex": 38,
+          "sheetName": "Google2u.Bazooka_HMV"
+        },
+        {
+          "sourceCategory": "Pistol",
+          "levelManagerIndex": 15,
+          "inventoryIndex": 29,
+          "sheetName": "Google2u.Pistol_M1911"
+        }
+      ]
+    },
+    {
+      "missionIndex": 44,
+      "level": 22,
+      "slots": [
+        {
+          "sourceCategory": "AssaultRifle ",
+          "levelManagerIndex": 32,
+          "inventoryIndex": 34,
+          "sheetName": "Google2u.AssaultRifle_SteyrAUG"
+        },
+        {
+          "sourceCategory": "SniperRifle",
+          "levelManagerIndex": 28,
+          "inventoryIndex": 21,
+          "sheetName": "Google2u.SniperRifle_AWMF"
+        },
+        {
+          "sourceCategory": "RocketLauncher",
+          "levelManagerIndex": 40,
+          "inventoryIndex": 41,
+          "sheetName": "Google2u.Bazooka_Panzerfaust"
+        },
+        {
+          "sourceCategory": "Pistol",
+          "levelManagerIndex": 15,
+          "inventoryIndex": 29,
+          "sheetName": "Google2u.Pistol_M1911"
+        }
+      ]
+    },
+    {
+      "missionIndex": 49,
+      "level": 26,
+      "slots": [
+        {
+          "sourceCategory": "AssaultRifle ",
+          "levelManagerIndex": 32,
+          "inventoryIndex": 34,
+          "sheetName": "Google2u.AssaultRifle_SteyrAUG"
+        },
+        {
+          "sourceCategory": "Shotgun",
+          "levelManagerIndex": 50,
+          "inventoryIndex": 51,
+          "sheetName": "Google2u.Shotgun_SawnOff"
+        },
+        {
+          "sourceCategory": "Grenade",
+          "levelManagerIndex": 7,
+          "inventoryIndex": 6,
+          "sheetName": "Google2u.Grenade_SMOKE"
+        },
+        {
+          "sourceCategory": "Pistol",
+          "levelManagerIndex": 37,
+          "inventoryIndex": 39,
+          "sheetName": "Google2u.Pistol_Magnum357"
+        }
+      ]
+    },
+    {
+      "missionIndex": 54,
+      "level": 31,
+      "slots": [
+        {
+          "sourceCategory": "AssaultRifle ",
+          "levelManagerIndex": 29,
+          "inventoryIndex": 31,
+          "sheetName": "Google2u.AssaultRifle_G36"
+        },
+        {
+          "sourceCategory": "SniperRifle",
+          "levelManagerIndex": 11,
+          "inventoryIndex": 10,
+          "sheetName": "Google2u.SniperRifle_M110"
+        },
+        {
+          "sourceCategory": "RocketLauncher",
+          "levelManagerIndex": 35,
+          "inventoryIndex": 37,
+          "sheetName": "Google2u.Bazooka_FGM"
+        },
+        {
+          "sourceCategory": "Pistol",
+          "levelManagerIndex": 37,
+          "inventoryIndex": 39,
+          "sheetName": "Google2u.Pistol_Magnum357"
+        }
+      ]
+    },
+    {
+      "missionIndex": 59,
+      "level": 35,
+      "slots": [
+        {
+          "sourceCategory": "AssaultRifle ",
+          "levelManagerIndex": 29,
+          "inventoryIndex": 31,
+          "sheetName": "Google2u.AssaultRifle_G36"
+        },
+        {
+          "sourceCategory": "SniperRifle",
+          "levelManagerIndex": 30,
+          "inventoryIndex": 32,
+          "sheetName": "Google2u.SniperRifle_M90"
+        },
+        {
+          "sourceCategory": "RocketLauncher",
+          "levelManagerIndex": 41,
+          "inventoryIndex": 42,
+          "sheetName": "Google2u.Bazooka_M202"
+        },
+        {
+          "sourceCategory": "Pistol",
+          "levelManagerIndex": 12,
+          "inventoryIndex": 0,
+          "sheetName": "Google2u.Pistol_DesertEagle"
+        }
+      ]
+    },
+    {
+      "missionIndex": 64,
+      "level": 26,
+      "slots": [
+        {
+          "sourceCategory": "AssaultRifle ",
+          "levelManagerIndex": 32,
+          "inventoryIndex": 34,
+          "sheetName": "Google2u.AssaultRifle_SteyrAUG"
+        },
+        {
+          "sourceCategory": "Shotgun",
+          "levelManagerIndex": 50,
+          "inventoryIndex": 51,
+          "sheetName": "Google2u.Shotgun_SawnOff"
+        },
+        {
+          "sourceCategory": "Grenade",
+          "levelManagerIndex": 7,
+          "inventoryIndex": 6,
+          "sheetName": "Google2u.Grenade_SMOKE"
+        },
+        {
+          "sourceCategory": "Pistol",
+          "levelManagerIndex": 37,
+          "inventoryIndex": 39,
+          "sheetName": "Google2u.Pistol_Magnum357"
+        }
+      ]
+    },
+    {
+      "missionIndex": 69,
+      "level": 31,
+      "slots": [
+        {
+          "sourceCategory": "AssaultRifle ",
+          "levelManagerIndex": 29,
+          "inventoryIndex": 31,
+          "sheetName": "Google2u.AssaultRifle_G36"
+        },
+        {
+          "sourceCategory": "SniperRifle",
+          "levelManagerIndex": 11,
+          "inventoryIndex": 10,
+          "sheetName": "Google2u.SniperRifle_M110"
+        },
+        {
+          "sourceCategory": "RocketLauncher",
+          "levelManagerIndex": 35,
+          "inventoryIndex": 37,
+          "sheetName": "Google2u.Bazooka_FGM"
+        },
+        {
+          "sourceCategory": "Pistol",
+          "levelManagerIndex": 37,
+          "inventoryIndex": 39,
+          "sheetName": "Google2u.Pistol_Magnum357"
+        }
+      ]
+    },
+    {
+      "missionIndex": 74,
+      "level": 35,
+      "slots": [
+        {
+          "sourceCategory": "AssaultRifle ",
+          "levelManagerIndex": 29,
+          "inventoryIndex": 31,
+          "sheetName": "Google2u.AssaultRifle_G36"
+        },
+        {
+          "sourceCategory": "SniperRifle",
+          "levelManagerIndex": 30,
+          "inventoryIndex": 32,
+          "sheetName": "Google2u.SniperRifle_M90"
+        },
+        {
+          "sourceCategory": "RocketLauncher",
+          "levelManagerIndex": 41,
+          "inventoryIndex": 42,
+          "sheetName": "Google2u.Bazooka_M202"
+        },
+        {
+          "sourceCategory": "Pistol",
+          "levelManagerIndex": 12,
+          "inventoryIndex": 0,
+          "sheetName": "Google2u.Pistol_DesertEagle"
+        }
+      ]
+    }
+  ]
+}

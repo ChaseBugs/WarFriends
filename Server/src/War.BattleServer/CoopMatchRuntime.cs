@@ -43,6 +43,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
     private readonly CoopBossMapAnchors? bossAnchors;
     private readonly CoopBotHealth? bossHealth;
     private readonly CoopBossAttackTiming? bossAttackTiming;
+    internal CoopBossLoadout? BossLoadout { get; }
     private readonly Func<float>? chooseAttackFraction;
     private CoopBossCombatState? boss;
     internal CoopBossAttackCadence? BossAttackCadence { get; private set; }
@@ -62,7 +63,8 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         Func<int, int>? chooseBehaviour = null,
         Func<int, int>? choosePoint = null)
         : this(allocation, catalog, spawnPoints, paths, combat,
-            null, null, null, null, null, null, chooseBehaviour, choosePoint)
+            null, null, null, null, null, null, null,
+            chooseBehaviour, choosePoint)
     {
     }
 
@@ -72,6 +74,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         CoopBossPathCatalog? bossPaths, ArmySpawnPointCatalog? armySpawns,
         RecoveredBattleMap? bossMap, CoopBotHealthCatalog? bossHealth,
         CoopBossAttackTimingCatalog? bossAttackTimings,
+        CoopBossLoadoutCatalog? bossLoadouts,
         Func<int, int>? chooseBehaviour, Func<int, int>? choosePoint,
         Func<float>? chooseAttackFraction = null)
     {
@@ -95,13 +98,14 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         {
             if (bossAnchors == null || bossPaths == null ||
                 armySpawns == null || bossMap == null || bossHealth == null ||
-                bossAttackTimings == null)
-                throw new InvalidDataException("Boss mission needs multiplayer geometry, vitality, and attack timing.");
+                bossAttackTimings == null || bossLoadouts == null)
+                throw new InvalidDataException("Boss mission needs geometry, vitality, timing, and weapons.");
             CoopBossMapAnchors map = bossAnchors.MapForMission(catalog, missionIndex);
             CoopBossMapRoutes routes = bossPaths.MapForMission(catalog, missionIndex);
             this.bossAnchors = map;
             this.bossHealth = bossHealth.ForMission(missionIndex);
             bossAttackTiming = bossAttackTimings.ForMission(missionIndex);
+            BossLoadout = bossLoadouts.ForMission(missionIndex);
             this.chooseAttackFraction = chooseAttackFraction;
             var selector = new CoopBossAiSpawnSelector(catalog,
                 armySpawns, bossMap, missionIndex);
@@ -541,6 +545,16 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
                 SpawnTick = boss.SpawnTick,
                 DeathTick = boss.DeathTick ?? 0
             };
+            for (int slot = 0; slot < BossLoadout!.Slots.Count; slot++)
+            {
+                CoopBossWeaponSlot weapon = BossLoadout.Slots[slot];
+                snapshot.Coop.Boss.Weapons.Add(new BattleCoopBossWeaponSlot
+                {
+                    Slot = slot,
+                    InventoryIndex = weapon.InventoryIndex,
+                    SourceId = weapon.SheetName
+                });
+            }
         }
         foreach (ParticipantManifest rosterPlayer in manifest.Players)
         {

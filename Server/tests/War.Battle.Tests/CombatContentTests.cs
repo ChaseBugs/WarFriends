@@ -465,12 +465,15 @@ internal static class CombatContentTests
         CoopBossAttackTimingCatalog bossAttackTimings =
             CoopBossAttackTimingCatalog.Load(Path.Combine(directory,
                 "recovered-coop-boss-attack-timing.json"), catalog, bossRules);
+        CoopBossLoadoutCatalog bossLoadouts = CoopBossLoadoutCatalog.Load(
+            Path.Combine(directory, "recovered-coop-boss-loadouts.json"),
+            catalog, bossRules, bossAttackTimings, content.AllWeaponBindings);
         RecoveredBattleMap bossScene = content.Maps.Single(map =>
             map.Source == "Assets/Scenes/" + bossMap.Scene + ".unity");
         var bossRuntime = new CoopMatchRuntime(bossAllocation, catalog,
             spawnPoints, routes, enemyCombat, bossAnchors, bossPaths,
             content.ArmySpawnPoints, bossScene, bossHealth, bossAttackTimings,
-            _ => 0, _ => 0, () => 0f);
+            bossLoadouts, _ => 0, _ => 0, () => 0f);
         string bossFirstPlayer = bossAllocation.Players[0].PlayerId;
         string bossSecondPlayer = bossAllocation.Players[1].PlayerId;
         if (!bossRuntime.Admit(bossFirstPlayer) ||
@@ -496,6 +499,9 @@ internal static class CombatContentTests
             bossStart.Coop.Boss?.EntityId != CoopMissionEngine.BossEntityId ||
             transmittedBoss?.EntityId != CoopMissionEngine.BossEntityId ||
             transmittedBoss.MaxHealth != bossStart.Coop.Boss.MaxHealth ||
+            transmittedBoss.Weapons.Count != 4 ||
+            transmittedBoss.Weapons.Select(weapon => weapon.InventoryIndex)
+                .SequenceEqual([11, 2, 5, 12]) == false ||
             bossStart.Coop.Boss.DefendComponentFileId !=
                 bossAnchors.Maps[0].BossStart.ComponentFileId ||
             bossStart.Coop.Boss.MaxHealth != bossHealth.ForMission(4).MaximumHealth ||
@@ -921,6 +927,16 @@ internal static class CombatContentTests
             "recovered-coop-boss-attack-timing.json");
         CoopBossAttackTimingCatalog attacks = CoopBossAttackTimingCatalog.Load(
             attackPath, missions, bots);
+        CoopBossLoadoutCatalog loadouts = CoopBossLoadoutCatalog.Load(Path.Combine(
+            directory, "recovered-coop-boss-loadouts.json"), missions, bots,
+            attacks, content.AllWeaponBindings);
+        if (loadouts.Weapons.Count != 66 || loadouts.Missions.Count != 15 ||
+            loadouts.ForMission(4).Slots.Select(slot => slot.InventoryIndex)
+                .SequenceEqual([11, 2, 5, 12]) == false ||
+            loadouts.ForMission(74).Slots.Select(slot => slot.InventoryIndex)
+                .SequenceEqual([31, 32, 42, 0]) == false ||
+            loadouts.Weapons[0].SheetName != "Google2u.AssaultRifle_M16")
+            throw new Exception("Boss weapons differ from the original OBB order.");
         if (attacks.Missions.Count != 15 ||
             attacks.ForMission(4).ConfigIndex != 1 ||
             attacks.ForMission(4).PrimaryCategory != "AssaultRifle " ||
@@ -995,8 +1011,23 @@ internal static class CombatContentTests
             $"war-coop-boss-anchors-{Guid.NewGuid():N}.json");
         string changedAttackPath = Path.Combine(Path.GetTempPath(),
             $"war-coop-boss-attacks-{Guid.NewGuid():N}.json");
+        string changedLoadoutPath = Path.Combine(Path.GetTempPath(),
+            $"war-coop-boss-loadouts-{Guid.NewGuid():N}.json");
         try
         {
+            JsonNode changedLoadout = JsonNode.Parse(File.ReadAllText(Path.Combine(
+                directory, "recovered-coop-boss-loadouts.json")))!;
+            changedLoadout["weapons"]![0]!["levelManagerIndex"] = 1;
+            File.WriteAllText(changedLoadoutPath, changedLoadout.ToJsonString());
+            try
+            {
+                _ = CoopBossLoadoutCatalog.Load(changedLoadoutPath,
+                    missions, bots, attacks, content.AllWeaponBindings);
+                throw new Exception("Altered OBB weapon order was accepted.");
+            }
+            catch (InvalidDataException)
+            {
+            }
             JsonNode changedAttack = JsonNode.Parse(File.ReadAllText(attackPath))!;
             changedAttack["missions"]![0]!["shootFrequencyMinSeconds"] = 0;
             File.WriteAllText(changedAttackPath, changedAttack.ToJsonString());
@@ -1029,7 +1060,7 @@ internal static class CombatContentTests
             }
             catch (InvalidDataException)
             {
-                return 29 + combatAssertions;
+                return 35 + combatAssertions;
             }
         }
         finally
@@ -1037,6 +1068,7 @@ internal static class CombatContentTests
             File.Delete(temporaryPath);
             File.Delete(changedAnchorPath);
             File.Delete(changedAttackPath);
+            File.Delete(changedLoadoutPath);
         }
     }
 
