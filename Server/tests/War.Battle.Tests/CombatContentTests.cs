@@ -799,6 +799,7 @@ internal static class CombatContentTests
                 anchors.MapForMission(missions, index * 5 + 4).Stage !=
                     missions.Get(index * 5 + 4).MapStage))
             throw new Exception("Boss anchors differ from the multiplayer source maps.");
+        int combatAssertions = VerifyCoopBossCombat(missions, health, anchors);
 
         string temporaryPath = Path.Combine(Path.GetTempPath(),
             $"war-coop-bots-{Guid.NewGuid():N}.json");
@@ -827,7 +828,7 @@ internal static class CombatContentTests
             }
             catch (InvalidDataException)
             {
-                return 15;
+                return 15 + combatAssertions;
             }
         }
         finally
@@ -835,6 +836,76 @@ internal static class CombatContentTests
             File.Delete(temporaryPath);
             File.Delete(changedAnchorPath);
         }
+    }
+
+    private static int VerifyCoopBossCombat(MissionCatalog missions,
+        CoopBotHealthCatalog health, CoopBossAnchorCatalog anchors)
+    {
+        const string firstPlayer = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+        const string secondPlayer = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
+        var mission = new CoopMissionEngine(missions, 4);
+        if (mission.RegisterBoss(CoopMissionEngine.BossEntityId, 0))
+            throw new Exception("A boss cannot spawn before both allies are ready.");
+        mission.Admit(firstPlayer);
+        mission.Admit(secondPlayer);
+        mission.MarkReady(firstPlayer, 0);
+        mission.MarkReady(secondPlayer, 0);
+        var boss = new CoopBossCombatState(mission, health.ForMission(4),
+            anchors.MapForMission(missions, 4), 0);
+        if (boss.EntityId != CoopMissionEngine.BossEntityId ||
+            boss.DefendComponentFileId != anchors.Maps[0].BossStart.ComponentFileId ||
+            boss.Position != anchors.Maps[0].BossStart.Position ||
+            boss.MaximumHealth != 312f * 0.8f ||
+            mission.ConfirmAiDeath(boss.EntityId, 0))
+            throw new Exception("Only the source enemy player can own boss vitality.");
+        if (boss.ApplyHostDamage(float.NaN, 0) ||
+            boss.ApplyHostDamage(float.PositiveInfinity, 0) ||
+            boss.ApplyHostDamage(0, 0) ||
+            boss.ApplyHostDamage(1, 1) ||
+            boss.ApplyHostDamage(1, mission.DeadlineTick) ||
+            mission.ConfirmBossDeath(1, 0))
+            throw new Exception("Malformed or unconfirmed boss hits must not end a mission.");
+        float partial = boss.MaximumHealth / 2;
+        boss.Advance(1);
+        if (!boss.ApplyHostDamage(partial, 1) ||
+            boss.Health <= 0 || mission.Outcome != MissionOutcome.InProgress)
+            throw new Exception("A partial host hit must retain boss vitality.");
+        boss.Advance(2);
+        if (boss.ApplyHostDamage(1, 1) ||
+            !boss.ApplyHostDamage(boss.Health, 2) ||
+            boss.DeathTick != 2 || mission.Outcome != MissionOutcome.Succeeded ||
+            boss.ApplyHostDamage(1, 2) ||
+            mission.ConfirmBossDeath(boss.EntityId, 2))
+            throw new Exception("A host-confirmed boss death must finish once.");
+
+        var zeroHealthMission = new CoopMissionEngine(missions, 49);
+        zeroHealthMission.Admit(firstPlayer);
+        zeroHealthMission.Admit(secondPlayer);
+        zeroHealthMission.MarkReady(firstPlayer, 0);
+        zeroHealthMission.MarkReady(secondPlayer, 0);
+        var zeroHealthBoss = new CoopBossCombatState(zeroHealthMission,
+            health.ForMission(49), anchors.MapForMission(missions, 49), 0);
+        zeroHealthBoss.Advance(1);
+        if (zeroHealthBoss.MaximumHealth != 0 || zeroHealthBoss.DeathTick.HasValue ||
+            zeroHealthMission.Outcome != MissionOutcome.InProgress ||
+            !zeroHealthBoss.ApplyHostDamage(1, 1) ||
+            zeroHealthBoss.DeathTick != 1 ||
+            zeroHealthMission.Outcome != MissionOutcome.Succeeded)
+            throw new Exception("A source zero-health boss needs a confirmed hostile hit.");
+
+        var timeoutMission = new CoopMissionEngine(missions, 4);
+        timeoutMission.Admit(firstPlayer);
+        timeoutMission.Admit(secondPlayer);
+        timeoutMission.MarkReady(firstPlayer, 0);
+        timeoutMission.MarkReady(secondPlayer, 0);
+        var timedOutBoss = new CoopBossCombatState(timeoutMission,
+            health.ForMission(4), anchors.MapForMission(missions, 4), 0);
+        timedOutBoss.Advance(timeoutMission.DeadlineTick);
+        if (timeoutMission.Outcome != MissionOutcome.Failed ||
+            timedOutBoss.ApplyHostDamage(timedOutBoss.Health,
+                timeoutMission.DeadlineTick))
+            throw new Exception("A boss hit at the deadline cannot revive a failed mission.");
+        return 16;
     }
 
     private static int VerifyCoopNavMeshRoutes(string directory, MissionCatalog missions)

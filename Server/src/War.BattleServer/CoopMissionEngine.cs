@@ -15,8 +15,14 @@ public sealed class CoopMissionEngine
     private readonly MissionAutomaticSpawnState spawns;
     private readonly string missionType;
     private ulong? lastReadyTick;
+    private bool bossRegistered;
+
+    // AI spawns use small per-match IDs. The boss has a separate host-owned
+    // identity so an ordinary AI death cannot satisfy KillOpponent.
+    internal const ulong BossEntityId = 1UL << 63;
 
     public int MissionIndex => objective.MissionIndex;
+    public int MapStage { get; }
     public string MissionType => missionType;
     public int ObjectiveTarget { get; }
     public bool Started => objective.StartTick.HasValue;
@@ -31,6 +37,7 @@ public sealed class CoopMissionEngine
     {
         ArgumentNullException.ThrowIfNull(catalog);
         MissionRule rule = catalog.Get(missionIndex);
+        MapStage = rule.MapStage;
         missionType = rule.MissionType;
         ObjectiveTarget = rule.Objective ?? 0;
         objective = catalog.CreateObjectiveState(missionIndex);
@@ -121,6 +128,28 @@ public sealed class CoopMissionEngine
             if (Outcome != MissionOutcome.InProgress)
                 spawns.Finish();
         }
+        return true;
+    }
+
+    internal bool RegisterBoss(ulong entityId, ulong tick)
+    {
+        if (missionType != "KillOpponent" || !Started ||
+            Outcome != MissionOutcome.InProgress || bossRegistered ||
+            entityId != BossEntityId || tick < StartTick || tick >= DeadlineTick)
+            return false;
+        bossRegistered = true;
+        return true;
+    }
+
+    internal bool ConfirmBossDeath(ulong entityId, ulong tick)
+    {
+        if (missionType != "KillOpponent" || !bossRegistered ||
+            entityId != BossEntityId || Outcome != MissionOutcome.InProgress)
+            return false;
+        string eventId = KillEventId(MissionIndex, entityId);
+        if (!objective.RecordBossKilled(eventId, tick))
+            return false;
+        spawns.Finish();
         return true;
     }
 
