@@ -35,6 +35,9 @@ namespace War.Client
         public Task<PlayerProfile> PlayerAsync(string token, CancellationToken ct) => Send("v1/player", null, token, PlayerProfile.Parser, ct);
         public Task<ConnectionGrant> ConnectAsync(string token, CancellationToken ct) => Send("v1/network/connect", new ConnectionRequest { Protocol = "war.v1" }, token, ConnectionGrant.Parser, ct);
         public Task<MatchConnectionGrant> MatchGrantAsync(string matchId, string token, CancellationToken ct) => Send("v1/battle/grant", new MatchGrantRequest { MatchId = matchId }, token, MatchConnectionGrant.Parser, ct);
+        public Task<MatchConnectionGrant> ReconnectMatchAsync(string matchId, string requestId, string token, CancellationToken ct) =>
+            Send("v1/battle/reconnect", new MatchReconnectRequest { MatchId = matchId, RequestId = requestId },
+                token, MatchConnectionGrant.Parser, ct);
         public Task<MatchQueueReply> JoinMatchQueueAsync(string token, CancellationToken ct) => Send("v1/battle/queue/join", new MatchQueueRequest(), token, MatchQueueReply.Parser, ct);
         public Task<MatchQueueReply> CancelMatchQueueAsync(string token, CancellationToken ct) => Send("v1/battle/queue/cancel", new MatchQueueRequest(), token, MatchQueueReply.Parser, ct);
         public async Task<MatchConnectionGrant> FindMatchAsync(string token, TimeSpan timeout, CancellationToken ct)

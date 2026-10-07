@@ -195,6 +195,47 @@ api.MapPost("/battle/grant", async (HttpContext ctx, AccountStore accounts, Lega
     catch (InvalidDataException) { return Error(400, "invalid_match_grant", "Match grant is invalid or expired."); }
     return grant == null ? Error(404, "match_grant_missing", "No match grant is assigned to this player.") : Proto(grant);
 });
+api.MapPost("/battle/reconnect", async (HttpContext ctx, AccountStore accounts, LegacyPlayerStore legacy,
+    BattleGrantStore grants, BattleMatchQueueStore queue, BattleMatchControlClient control) =>
+{
+    string? playerId=await BattlePlayerId(ctx,accounts,legacy);
+    if(playerId==null)return Error(401,"unauthorized","Authentication required.");
+    var request=await Read(ctx,MatchReconnectRequest.Parser);
+    string matchId=request.MatchId??"";
+    if(!System.Text.RegularExpressions.Regex.IsMatch(matchId,@"\Am[0-9a-f]{32}\z") ||
+       !Guid.TryParseExact(request.RequestId,"N",out _) ||
+       request.RequestId!=request.RequestId.ToLowerInvariant())
+        return Error(400,"invalid_reconnect","A canonical match and request ID are required.");
+    var pair=await queue.ForMatch(matchId,ctx.RequestAborted);
+    if(pair?.Players==null || !pair.Players.Contains(playerId,StringComparer.Ordinal))
+        return Error(404,"match_grant_missing","No match is assigned to this player.");
+    MatchConnectionGrant? prior;
+    long now=DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+    try
+    {
+        prior=await grants.GetAssignmentForPlayer(matchId,playerId,now,ctx.RequestAborted);
+        if(prior!=null && !prior.PlayerViews.Select(x=>x.PlayerId).SequenceEqual(pair.Players,StringComparer.Ordinal))
+            throw new InvalidDataException("Reconnect roster differs from durable pair.");
+    }
+    catch(InvalidDataException)
+    {return Error(409,"invalid_match_grant","Durable battle grant assignment is invalid.");}
+    if(prior==null)return Error(404,"match_grant_missing","No retained battle assignment is available.");
+    try
+    {
+        var endpoint=new Uri(battleControlEndpoint.AbsoluteUri.TrimEnd('/')+"/reconnect");
+        var replacement=await control.ReconnectAsync(endpoint,matchId,playerId,
+            request.RequestId,ctx.RequestAborted);
+        var published=await grants.ReplaceForPlayer(matchId,playerId,replacement,
+            DateTimeOffset.UtcNow.ToUnixTimeSeconds(),ctx.RequestAborted);
+        return Proto(published);
+    }
+    catch(HttpRequestException error) when(error.StatusCode==System.Net.HttpStatusCode.Conflict)
+    {return Error(409,"battle_reconnect_unavailable","The running match cannot reconnect this player.");}
+    catch(HttpRequestException)
+    {return Error(503,"battle_reconnect_unavailable","The battle host did not issue a reconnect grant.");}
+    catch(InvalidDataException)
+    {return Error(409,"battle_reconnect_conflict","The reconnect grant conflicts with durable match authority.");}
+});
 api.MapPost("/battle/queue/join", async (HttpContext ctx, AccountStore accounts, LegacyPlayerStore legacy,
     BattleAllocationStore allocations, BattlePlayerPresentationSource presentations, BattleMatchQueueStore queue,
     BattleManifestSnapshotStore snapshots,IServiceProvider services, BattleMatchProvisioner provisioner) =>

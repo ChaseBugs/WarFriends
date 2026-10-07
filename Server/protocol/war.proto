@@ -10,6 +10,7 @@ message AccountSession { string access_token = 1; int64 expires_unix_seconds = 2
 message ErrorResponse { string code = 1; string message = 2; }
 message ConnectionRequest { string protocol = 1; }
 message MatchGrantRequest { string match_id = 1; }
+message MatchReconnectRequest { string match_id = 1; string request_id = 2; }
 message MatchQueueRequest {}
 message MatchQueueReply { string code = 1; string match_id = 2; repeated string player_ids = 3; }
 message ConnectionGrant {

@@ -47,7 +47,7 @@ dotnet run --project Server/src/War.Backend --no-launch-profile
 dotnet run --project Server/src/War.BattleServer --no-launch-profile
 ```
 
-The BattleServer also listens on a loopback-only match-control port (default UDP port + 1, configurable with `Battle__ControlPort`). Its HMAC-authenticated `/internal/matches` registration contract is documented in [BattleServer provisioning](docs/BATTLE_SERVER.md). It returns two roster-bound player grants, including retry-stable tickets and session keys. Backend matchmaking, trusted loadout projection, grant delivery, and normal Client integration remain open.
+The BattleServer also listens on a loopback-only match-control port (default UDP port + 1, configurable with `Battle__ControlPort`). Its HMAC-authenticated `/internal/matches` registration and reconnect contracts are documented in [BattleServer provisioning](docs/BATTLE_SERVER.md). The Backend delivers roster-bound grants through authenticated matchmaking and `POST /v1/battle/reconnect` rotates one player's grant during a running match. Normal Unity two-client integration remains open.
 
 Protobuf endpoints: POST `/v1/accounts/register`, POST `/v1/accounts/login`, GET `/v1/player`, POST `/v1/network/connect`. Use `Content-Type: application/x-protobuf`; authenticated calls require `Authorization: Bearer <token>`. See `protocol/war.proto` and `War.Client`. These endpoints do not implement the stock client's legacy PHP/JSON contracts or its full PlayerData.
 

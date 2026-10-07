@@ -79,7 +79,8 @@ public sealed class BattleMatchControlClient
         request.Headers.Add("X-War-Control-Mac",Convert.ToHexString(HMACSHA256.HashData(key,signed)));
         using var response=await http.SendAsync(request,HttpCompletionOption.ResponseHeadersRead,ct);
         if(!response.IsSuccessStatusCode)
-            throw new HttpRequestException("Battle reconnect failed: "+(int)response.StatusCode);
+            throw new HttpRequestException("Battle reconnect failed: "+(int)response.StatusCode,
+                null,response.StatusCode);
         using var document=JsonDocument.Parse(await response.Content.ReadAsByteArrayAsync(ct));
         var root=document.RootElement;
         if(root.ValueKind!=JsonValueKind.Object || root.EnumerateObject().Count()!=2 ||

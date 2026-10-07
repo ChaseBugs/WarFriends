@@ -191,6 +191,40 @@ internal static class BackendQueueLiveTests
             MatchReply state;
             do {await Task.Delay(100,deadline.Token);state=await peerA.PollAsync(deadline.Token);}
             while(state.Snapshot.Phase!=BattlePhase.Running);
+            long afterInitialTicket=grants[0].ExpiresUnixSeconds+1;
+            var retained=await grantStore.GetAssignmentForPlayer(grants[0].MatchId,ids[0],
+                afterInitialTicket,deadline.Token);
+            if(retained?.SessionId!=grants[0].SessionId)
+                throw new Exception("Battle assignment disappeared with its first 120-second ticket.");
+            try
+            {
+                await grantStore.GetForPlayer(grants[0].MatchId,ids[0],afterInitialTicket,deadline.Token);
+                throw new Exception("Expired initial ticket was delivered as a live grant.");
+            }
+            catch(InvalidDataException){}
+            string reconnectRequestId=Guid.NewGuid().ToString("N");
+            var resumedGrant=await left.ReconnectMatchAsync(grants[0].MatchId,
+                reconnectRequestId,tokens[0],deadline.Token);
+            var resumedRetry=await left.ReconnectMatchAsync(grants[0].MatchId,
+                reconnectRequestId,tokens[0],deadline.Token);
+            if(resumedGrant.SessionId==grants[0].SessionId ||
+               resumedGrant.SessionId!=resumedRetry.SessionId ||
+               resumedGrant.PlayerViews.Count!=2 ||
+               !resumedGrant.PlayerViews.SequenceEqual(grants[0].PlayerViews) ||
+               (await grantStore.GetForPlayer(grants[0].MatchId,ids[0],
+                   DateTimeOffset.UtcNow.ToUnixTimeSeconds(),deadline.Token))?.SessionId!=resumedGrant.SessionId ||
+               (await grantStore.GetForPlayer(grants[0].MatchId,ids[1],
+                   DateTimeOffset.UtcNow.ToUnixTimeSeconds(),deadline.Token))?.SessionId!=grants[1].SessionId)
+                throw new Exception("Backend reconnect did not durably rotate only the requesting player's grant.");
+            if(await grantStore.Publish(grants[0].MatchId,grants[0].ManifestHash,
+                [resumedGrant,grants[1]],deadline.Token)!="already-published")
+                throw new Exception("Provisioning retry rejected a valid mixed-generation grant assignment.");
+            using(var resumedPeer=new MatchConnection(resumedGrant))
+            {
+                var admission=await resumedPeer.ConnectAsync(deadline.Token);
+                if(admission.Code!="admitted" || admission.Snapshot.Phase!=BattlePhase.Running)
+                    throw new Exception("Backend-delivered replacement grant did not rejoin the running Worker match.");
+            }
             if((await peerB.ForfeitAsync(deadline.Token)).Snapshot.Phase!=BattlePhase.Ended)
                 throw new Exception("Live match did not publish terminal evidence.");
             var results=new BattleResultStore(mongoUri,database);
