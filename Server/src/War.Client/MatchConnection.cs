@@ -606,6 +606,7 @@ namespace War.Client
                 var snapshot = response.MatchReply.Snapshot;
                 if (snapshot == null || snapshot.MatchId != grant.MatchId || snapshot.ManifestHash != grant.ManifestHash || snapshot.Players.Count != 2)
                     throw new InvalidOperationException("Battle host returned an incompatible snapshot.");
+                BattleProjectileRowPolicy.ValidateSnapshot(snapshot);
                 ulong priorVehicle = 0;
                 foreach (var vehicle in snapshot.Vehicles)
                 {

@@ -354,6 +354,12 @@ if(args is ["--combat-only"])
     return;
 }
 
+if(args is ["--projectile-rows-only"])
+{
+    Console.WriteLine($"PASS: {BattleProjectileRowPolicyTests.Run()} projectile row assertions");
+    return;
+}
+
 if(args is ["--unity-rifle-only",var unityExecutable,var unityProject])
 {
     var root=new DirectoryInfo(AppContext.BaseDirectory);
