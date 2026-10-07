@@ -92,14 +92,15 @@ public static class SelfHostedLiveRifleAudit
                    leftPlayer.weaponInventory.currentWeapon!=leftPlayer.weaponInventory.usedWeapons[1])
                     throw new InvalidOperationException("Authoritative weapon switch did not select the recovered FAMAS rig.");
                 int frames=0;
+                bool remoteMoveActive=false;
                 adapter.StateReceived+=snapshot=>
                 {
                     if(snapshot.Players.Any(p=>p.RiflePose==null))throw new InvalidOperationException("Missing live rifle pose.");
-                    if(Vector3.Distance(left.transform.position,Position(snapshot,local.PlayerId))>.0001f ||
-                        Vector3.Distance(right.transform.position,Position(snapshot,peer.PlayerId))>.0001f)
+                    float localDifference=Vector3.Distance(left.transform.position,Position(snapshot,local.PlayerId));
+                    float remoteDifference=Vector3.Distance(right.transform.position,Position(snapshot,peer.PlayerId));
+                    if(localDifference>.0001f || remoteDifference>(remoteMoveActive?2f:.0001f))
                         throw new InvalidOperationException("Rendered rig identity/cover mismatch: left="+
-                            Vector3.Distance(left.transform.position,Position(snapshot,local.PlayerId))+" right="+
-                            Vector3.Distance(right.transform.position,Position(snapshot,peer.PlayerId))+
+                            localDifference+" right="+remoteDifference+
                             " rightPosition="+right.transform.position+" hostPosition="+
                             Position(snapshot,peer.PlayerId)+" phase="+snapshot.Phase+
                             " tick="+snapshot.ServerTick);
@@ -188,6 +189,46 @@ public static class SelfHostedLiveRifleAudit
                 if(!observedRun || !observedWalkingShot || Vector3.Distance(origin,left.transform.position)<.1f ||
                     adapter.ProcessedEventId<=beforeMoveEvents)
                     throw new InvalidOperationException("Live moving rig did not deliver its walking shot event.");
+                var viewField=typeof(SelfHostedBattleClient).GetField("rifleViews",
+                    System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+                var views=viewField==null?null:viewField.GetValue(adapter) as
+                    System.Collections.Generic.Dictionary<string,SelfHostedRiflePoseRenderer>;
+                if(views==null || !views.ContainsKey(peer.PlayerId))
+                    throw new InvalidOperationException("Remote self-hosted pose renderer is not bound.");
+                var remoteRenderer=views[peer.PlayerId];
+                Vector3 remoteOrigin=right.transform.position;
+                remoteMoveActive=true;
+                var remoteMove=await other.MoveCoverAsync(1,ct.Token);
+                if(remoteMove.Code!="moving")remoteMove=await other.MoveCoverAsync(-1,ct.Token);
+                if(remoteMove.Code!="moving")
+                    throw new InvalidOperationException("Remote cover move was not admitted: "+remoteMove.Code);
+                bool movedVisual=false,observedDelay=false;
+                for(int frame=0;frame<100;frame++)
+                {
+                    await Task.Delay(100,ct.Token);
+                    await adapter.Refresh();
+                    Vector3 hostPosition=Position(adapter.State,peer.PlayerId);
+                    remoteRenderer.RenderRemote(Time.realtimeSinceStartup,.1f);
+                    float hostDistance=Vector3.Distance(remoteOrigin,hostPosition);
+                    float visualDistance=Vector3.Distance(remoteOrigin,right.transform.position);
+                    if(visualDistance>.02f)movedVisual=true;
+                    if(hostDistance>.15f && visualDistance>.02f &&
+                        Vector3.Distance(hostPosition,right.transform.position)>.02f)
+                        observedDelay=true;
+                    if(!adapter.State.Players.Single(p=>p.PlayerId==peer.PlayerId).Moving)
+                        break;
+                }
+                if(!movedVisual || !observedDelay ||
+                    Vector3.Distance(remoteOrigin,Position(adapter.State,peer.PlayerId))<.1f)
+                    throw new InvalidOperationException("Live remote rig did not interpolate a host-owned cover move.");
+                for(int frame=0;frame<12;frame++)
+                {
+                    await Task.Delay(100,ct.Token);
+                    await adapter.Refresh();
+                    remoteRenderer.RenderRemote(Time.realtimeSinceStartup,.1f);
+                }
+                if(Vector3.Distance(right.transform.position,Position(adapter.State,peer.PlayerId))>.15f)
+                    throw new InvalidOperationException("Remote visual root did not settle at the host destination.");
                 Debug.Log("UNITY_LIVE_RIFLE_PASSED renderedRigs=2 movingRun=True walkingShot=True frames="+frames+" health="+
                     string.Join(",",adapter.State.Players.Select(p=>p.Health.ToString("F2"))));
             }
