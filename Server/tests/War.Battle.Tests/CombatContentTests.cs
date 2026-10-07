@@ -19,6 +19,7 @@ internal static class CombatContentTests
             catalog.Get(74).MissionType != "KillOpponent")
             throw new Exception("Recovered mission rules did not load in source order.");
         int objectiveAssertions = VerifyMissionObjectives(catalog);
+        int scoreAssertions = VerifyMissionScoring(catalog);
 
         string temporaryPath = Path.Combine(Path.GetTempPath(),
             $"war-mission-catalog-{Guid.NewGuid():N}.json");
@@ -34,7 +35,7 @@ internal static class CombatContentTests
             }
             catch (InvalidDataException)
             {
-                return 2 + objectiveAssertions;
+                return 2 + objectiveAssertions + scoreAssertions;
             }
         }
         finally
@@ -86,6 +87,31 @@ internal static class CombatContentTests
             timedKillMission.RecordEnemyKill(firstEvent, timedKillMission.DeadlineTick.Value))
             throw new Exception("Unfinished kill missions fail at the source deadline.");
         return 5;
+    }
+
+    private static int VerifyMissionScoring(MissionCatalog catalog)
+    {
+        MissionRule killRule = catalog.Get(0);
+        MissionScoreResult healthyKill = MissionScoreCalculator.Calculate(
+            killRule, killRule.HealthTargetFraction, 0);
+        if (healthyKill.Score != killRule.ScoreThreeStars || healthyKill.Stars != 3)
+            throw new Exception("Kill mission score must follow the source health bonus.");
+
+        MissionRule bossRule = catalog.Missions.First(mission => mission.MissionType == "KillOpponent");
+        MissionScoreResult targetBoss = MissionScoreCalculator.Calculate(
+            bossRule, bossRule.HealthTargetFraction, bossRule.TimeTargetFraction);
+        if (targetBoss.Score != bossRule.ScoreThreeStars || targetBoss.Stars != 3)
+            throw new Exception("Boss mission score must combine source health and time targets.");
+
+        try
+        {
+            _ = MissionScoreCalculator.Calculate(bossRule, float.NaN, 0);
+            throw new Exception("Non-finite health was accepted for mission scoring.");
+        }
+        catch (ArgumentOutOfRangeException)
+        {
+            return 3;
+        }
     }
 
     internal static int Run(string directory)

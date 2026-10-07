@@ -27,6 +27,9 @@ RULE_FIELDS = {
     "REWARD_WARBUCKS": "rewardWarbucks",
     "REWARD_GOLD": "rewardGold",
     "REWARD_XP": "rewardXp",
+    "HPTARGET": "healthTargetFraction",
+    "TIMETARGET": "timeTargetFraction",
+    "RECOMMENDEDARMYPOWER": "recommendedArmyPower",
 }
 
 
@@ -69,6 +72,8 @@ def parse_rows(lines):
                 mission[output_name] = value
             elif source_name == "OBJECTIVE" and value == "' '":
                 mission[output_name] = None
+            elif source_name in ("HPTARGET", "TIMETARGET"):
+                mission[output_name] = float(value)
             else:
                 mission[output_name] = int(value)
         source_data = row.get("DATA", "")

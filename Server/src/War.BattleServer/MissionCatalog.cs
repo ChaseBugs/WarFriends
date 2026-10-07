@@ -8,7 +8,8 @@ public sealed record MissionRule(
     int Index, int Level, int MapStage, string MissionType, int? Objective,
     int TimeSeconds, int ScoreOneStar, int ScoreTwoStars, int ScoreThreeStars,
     int MaxUnitsAtOnce, int RewardWarbucks, int RewardGold, int RewardXp,
-    string SceneDataSha256);
+    float HealthTargetFraction, float TimeTargetFraction,
+    int RecommendedArmyPower, string SceneDataSha256);
 
 /// <summary>Validated, immutable mission rules extracted from the 1.4.0 MainScene.</summary>
 public sealed class MissionCatalog
@@ -80,7 +81,9 @@ public sealed class MissionCatalog
     {
         RequireProperties(entry, "index", "level", "mapStage", "missionType", "objective",
             "timeSeconds", "scoreOneStar", "scoreTwoStars", "scoreThreeStars",
-            "maxUnitsAtOnce", "rewardWarbucks", "rewardGold", "rewardXp", "sceneDataSha256");
+            "maxUnitsAtOnce", "rewardWarbucks", "rewardGold", "rewardXp",
+            "healthTargetFraction", "timeTargetFraction", "recommendedArmyPower",
+            "sceneDataSha256");
 
         string type = entry.GetProperty("missionType").GetString() ?? "";
         if (!ExpectedTypes.ContainsKey(type))
@@ -103,11 +106,22 @@ public sealed class MissionCatalog
             ReadInt(entry, "rewardWarbucks", 0, 1_000_000),
             ReadInt(entry, "rewardGold", 0, 1_000_000),
             ReadInt(entry, "rewardXp", 0, 1_000_000),
+            ReadFraction(entry, "healthTargetFraction"),
+            ReadFraction(entry, "timeTargetFraction"),
+            ReadInt(entry, "recommendedArmyPower", 0, 1_000_000),
             ReadHash(entry, "sceneDataSha256"));
         if (mission.ScoreOneStar > mission.ScoreTwoStars ||
             mission.ScoreTwoStars > mission.ScoreThreeStars)
             throw new InvalidDataException("Mission star thresholds are out of order.");
         return mission;
+    }
+
+    private static float ReadFraction(JsonElement entry, string name)
+    {
+        float value = entry.GetProperty(name).GetSingle();
+        if (!float.IsFinite(value) || value <= 0 || value > 1)
+            throw new InvalidDataException($"Mission {name} is outside the recovered domain.");
+        return value;
     }
 
     private static int ReadInt(JsonElement entry, string name, int minimum, int maximum)
