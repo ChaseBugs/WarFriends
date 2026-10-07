@@ -456,6 +456,16 @@ message BattleCoopState {
   // The signed roster's first player takes the source master position;
   // the second takes the other main allied defend position.
   repeated BattleCoopParticipantStart participant_starts = 16;
+  // BotMission's source boss is separate from ordinary AI spawn records.
+  BattleCoopBossState boss = 17;
+}
+message BattleCoopBossState {
+  uint64 entity_id = 1; int32 defend_component_file_id = 2;
+  float x = 3; float y = 4; float z = 5;
+  float rotation_x = 6; float rotation_y = 7;
+  float rotation_z = 8; float rotation_w = 9;
+  float max_health = 10; float health = 11;
+  uint64 spawn_tick = 12; uint64 death_tick = 13;
 }
 message BattleCoopParticipantStart {
   string player_id = 1; int32 defend_component_file_id = 2;

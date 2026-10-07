@@ -458,15 +458,21 @@ internal static class CombatContentTests
         CoopBossPathCatalog bossPaths = CoopBossPathCatalog.Load(Path.Combine(
             directory, "recovered-coop-boss-paths.json"), catalog,
             bossAnchors, content.ArmyNavMeshes);
+        CoopBotRuleCatalog bossRules = CoopBotRuleCatalog.Load(Path.Combine(
+            directory, "recovered-coop-bot-rules.json"), catalog);
+        CoopBotHealthCatalog bossHealth = CoopBotHealthCatalog.Load(Path.Combine(
+            directory, "recovered-coop-bot-health.json"), catalog, bossRules);
         RecoveredBattleMap bossScene = content.Maps.Single(map =>
             map.Source == "Assets/Scenes/" + bossMap.Scene + ".unity");
         var bossRuntime = new CoopMatchRuntime(bossAllocation, catalog,
             spawnPoints, routes, enemyCombat, bossAnchors, bossPaths,
-            content.ArmySpawnPoints, bossScene, _ => 0, _ => 0);
+            content.ArmySpawnPoints, bossScene, bossHealth, _ => 0, _ => 0);
         string bossFirstPlayer = bossAllocation.Players[0].PlayerId;
         string bossSecondPlayer = bossAllocation.Players[1].PlayerId;
         if (!bossRuntime.Admit(bossFirstPlayer) ||
-            !bossRuntime.Admit(bossSecondPlayer))
+            !bossRuntime.Admit(bossSecondPlayer) ||
+            bossRuntime.Snapshot().Coop.Boss != null ||
+            bossRuntime.ApplyHostBossDamage(1, 0))
             throw new Exception("Boss runtime rejected the signed allied roster.");
         foreach (string playerId in new[] { bossFirstPlayer, bossSecondPlayer })
         {
@@ -479,7 +485,15 @@ internal static class CombatContentTests
                 throw new Exception("Boss allies could not start the isolated runtime.");
         }
         MatchSnapshot bossStart = bossRuntime.Snapshot();
+        BattleCoopBossState? transmittedBoss = MatchSnapshot.Parser
+            .ParseFrom(bossStart.ToByteArray()).Coop.Boss;
         if (bossStart.Phase != BattlePhase.Running ||
+            bossStart.Coop.Boss?.EntityId != CoopMissionEngine.BossEntityId ||
+            transmittedBoss?.EntityId != CoopMissionEngine.BossEntityId ||
+            transmittedBoss.MaxHealth != bossStart.Coop.Boss.MaxHealth ||
+            bossStart.Coop.Boss.DefendComponentFileId !=
+                bossAnchors.Maps[0].BossStart.ComponentFileId ||
+            bossStart.Coop.Boss.MaxHealth != bossHealth.ForMission(4).MaximumHealth ||
             bossStart.Coop.ParticipantStarts[0].DefendComponentFileId !=
                 bossAnchors.Maps[0].AlliedStarts[0].ComponentFileId ||
             bossStart.Coop.ParticipantStarts[1].DefendComponentFileId !=
@@ -517,6 +531,15 @@ internal static class CombatContentTests
                 movedBossAlly.PositionY, movedBossAlly.PositionZ),
                 bossAnchors.Maps[0].PlayerPositions[7].Position) > 0.0001f)
             throw new Exception("Boss ally did not reach the skipped multiplayer shield.");
+        if (!bossRuntime.ApplyHostBossDamage(100, 200) ||
+            bossRuntime.Snapshot().Coop.Boss?.Health !=
+                bossHealth.ForMission(4).MaximumHealth - 100 ||
+            bossRuntime.Snapshot().Phase != BattlePhase.Running ||
+            !bossRuntime.ApplyHostBossDamage(1000, 200) ||
+            bossRuntime.Snapshot().Phase != BattlePhase.Ended ||
+            !bossRuntime.Snapshot().Coop.Completed ||
+            bossRuntime.ApplyHostBossDamage(1000, 200))
+            throw new Exception("Boss damage must be host-owned and settle only once.");
 
         var runtime = new CoopMatchRuntime(coop, catalog, spawnPoints, routes, enemyCombat,
             chooseBehaviour: _ => 0, choosePoint: _ => 0);

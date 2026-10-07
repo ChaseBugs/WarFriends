@@ -40,6 +40,9 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
     private readonly Func<int, int, CoopDefendRoute> routeBetween;
     private readonly int alliedFirstCover;
     private readonly int alliedLastCover;
+    private readonly CoopBossMapAnchors? bossAnchors;
+    private readonly CoopBotHealth? bossHealth;
+    private CoopBossCombatState? boss;
     private ulong nextEnemyId = 1;
     private BattlePhase phase = BattlePhase.Waiting;
     private ulong tick;
@@ -56,7 +59,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         Func<int, int>? chooseBehaviour = null,
         Func<int, int>? choosePoint = null)
         : this(allocation, catalog, spawnPoints, paths, combat,
-            null, null, null, null, chooseBehaviour, choosePoint)
+            null, null, null, null, null, chooseBehaviour, choosePoint)
     {
     }
 
@@ -64,7 +67,8 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         CoopSpawnPointCatalog spawnPoints, CoopNavMeshPathCatalog paths,
         CoopEnemyCombatCatalog combat, CoopBossAnchorCatalog? bossAnchors,
         CoopBossPathCatalog? bossPaths, ArmySpawnPointCatalog? armySpawns,
-        RecoveredBattleMap? bossMap, Func<int, int>? chooseBehaviour,
+        RecoveredBattleMap? bossMap, CoopBotHealthCatalog? bossHealth,
+        Func<int, int>? chooseBehaviour,
         Func<int, int>? choosePoint)
     {
         ArgumentNullException.ThrowIfNull(catalog);
@@ -86,10 +90,12 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         if (missionRule.MissionType == "KillOpponent")
         {
             if (bossAnchors == null || bossPaths == null ||
-                armySpawns == null || bossMap == null)
-                throw new InvalidDataException("Boss mission needs multiplayer geometry.");
+                armySpawns == null || bossMap == null || bossHealth == null)
+                throw new InvalidDataException("Boss mission needs multiplayer geometry and vitality.");
             CoopBossMapAnchors map = bossAnchors.MapForMission(catalog, missionIndex);
             CoopBossMapRoutes routes = bossPaths.MapForMission(catalog, missionIndex);
+            this.bossAnchors = map;
+            this.bossHealth = bossHealth.ForMission(missionIndex);
             var selector = new CoopBossAiSpawnSelector(catalog,
                 armySpawns, bossMap, missionIndex);
             playerPositions = map.PlayerPositions.Select(anchor =>
@@ -202,7 +208,8 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             tick++;
             foreach (Participant participant in participants.Values)
                 AdvancePlayerMovement(participant);
-            if (mission.AdvanceTick(tick))
+            bool missionEnded = boss?.Advance(tick) ?? mission.AdvanceTick(tick);
+            if (missionEnded)
             {
                 End(BattlePhase.Ended, mission.Outcome == MissionOutcome.Succeeded
                     ? "mission-success" : "mission-failed");
@@ -306,6 +313,18 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         return true;
     }
 
+    /// <summary>Only a validated host impact may call this; packets cannot.</summary>
+    internal bool ApplyHostBossDamage(float damage, ulong impactTick)
+    {
+        if (phase != BattlePhase.Running || boss == null ||
+            !boss.ApplyHostDamage(damage, impactTick))
+            return false;
+        stateRevision++;
+        if (mission.Outcome == MissionOutcome.Succeeded)
+            End(BattlePhase.Ended, "mission-success");
+        return true;
+    }
+
     public void ConfigureBattleAllocations(IEnumerable<BattleAllocationProjection> allocations)
     {
         if (allocations.Any())
@@ -357,7 +376,12 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
                 return "ready-unavailable";
             participant.Ready = true;
             if (mission.Started)
+            {
+                if (bossAnchors != null && bossHealth != null)
+                    boss = new CoopBossCombatState(mission, bossHealth,
+                        bossAnchors, tick);
                 phase = BattlePhase.Running;
+            }
             return "ready";
         }
         if (command.IntentCase == MatchCommand.IntentOneofCase.Forfeit)
@@ -487,6 +511,25 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             mission.Participants.OrderBy(id => id, StringComparer.Ordinal));
         snapshot.Coop.EnemySpawns.AddRange(
             enemySpawns.Select(enemy => enemy.Clone()));
+        if (boss != null)
+        {
+            snapshot.Coop.Boss = new BattleCoopBossState
+            {
+                EntityId = boss.EntityId,
+                DefendComponentFileId = boss.DefendComponentFileId,
+                X = boss.Position.X,
+                Y = boss.Position.Y,
+                Z = boss.Position.Z,
+                RotationX = boss.Rotation.X,
+                RotationY = boss.Rotation.Y,
+                RotationZ = boss.Rotation.Z,
+                RotationW = boss.Rotation.W,
+                MaxHealth = boss.MaximumHealth,
+                Health = boss.Health,
+                SpawnTick = boss.SpawnTick,
+                DeathTick = boss.DeathTick ?? 0
+            };
+        }
         foreach (ParticipantManifest rosterPlayer in manifest.Players)
         {
             CoopPlayerAnchor anchor = playerStarts[rosterPlayer.PlayerId];

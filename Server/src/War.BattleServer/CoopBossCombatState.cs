@@ -48,12 +48,12 @@ internal sealed class CoopBossCombatState
         CurrentTick = spawnTick;
     }
 
-    public void Advance(ulong nextTick)
+    public bool Advance(ulong nextTick)
     {
         if (nextTick < CurrentTick)
             throw new InvalidOperationException("Boss combat tick moved backward.");
         CurrentTick = nextTick;
-        mission.AdvanceTick(nextTick);
+        return mission.AdvanceTick(nextTick);
     }
 
     internal bool ApplyHostDamage(float damage, ulong impactTick)
