@@ -844,17 +844,26 @@ public sealed partial class MatchEngine
         ulong elapsed=nextTick-hostTick;
         hostTick=nextTick;
         if (Terminal) return; // Preserve the exact terminal tick and result projection.
-        if(phase==BattlePhase.Running && players.Any(p=>p.Reconnecting))
+        if (phase == BattlePhase.Running && players.Any(player => player.Reconnecting))
         {
-            if(elapsed>0)stateRevision++;
-            var expired=players.Where(p=>p.Reconnecting && hostTick>=p.ReconnectDeadlineHostTick).ToArray();
-            if(expired.Length>0)
+            if (elapsed > 0) stateRevision++;
+            var expiredPlayers = players.Where(player => player.Reconnecting &&
+                hostTick >= player.ReconnectDeadlineHostTick).ToArray();
+            if (expiredPlayers.Length > 0)
             {
-                var active=players.Where(p=>!p.Reconnecting &&
-                    hostTick-p.LastSeen<(ulong)manifest.IdleSeconds*MatchManifest.TickRate).ToArray();
-                End(expired.Length==1 && active.Length==1?"opponent-disconnected":"both-disconnected",
-                    active.Length==1 && expired.Length==1?active[0].Definition.PlayerId:"",
-                    active.Length==1 && expired.Length==1);
+                var activePlayers = players.Where(player => !player.Reconnecting &&
+                    hostTick - player.LastSeen <
+                    (ulong)manifest.IdleSeconds * MatchManifest.TickRate).ToArray();
+                if (expiredPlayers.Length == 1 && activePlayers.Length == 1)
+                {
+                    End("opponent-disconnected", activePlayers[0].Definition.PlayerId, true);
+                }
+                else
+                {
+                    // A second silent peer cannot win by the first peer's grace expiry.
+                    // The recovered Client has no authoritative reward for that case.
+                    End("both-disconnected", "", false);
+                }
             }
             return;
         }

@@ -825,6 +825,32 @@ Check(both.Snapshot().Phase == BattlePhase.Aborted && both.Snapshot().WinnerPlay
 Check(MatchOutcomeProjection.ForPlayer(both.Snapshot(),a)==ClientGameEndReason.None &&
       MatchOutcomeProjection.ForPlayer(both.Snapshot(),b)==ClientGameEndReason.None,
       "aborted match cannot manufacture a Client victory or loss");
+var overlappingLoss = new MatchEngine(definition with { IdleSeconds = 2 });
+overlappingLoss.Admit(a);
+overlappingLoss.Admit(b);
+overlappingLoss.Command(a, Ready(1, overlappingLoss.ManifestHash));
+overlappingLoss.Command(b, Ready(1, overlappingLoss.ManifestHash));
+overlappingLoss.Advance(59);
+overlappingLoss.Command(a, Poll());
+overlappingLoss.Command(b, Poll());
+overlappingLoss.Advance(60); // Both players have entered the running match.
+overlappingLoss.Advance(118);
+overlappingLoss.Command(a, Poll()); // Only A remains active when B first times out.
+overlappingLoss.Advance(119);
+Check(overlappingLoss.Snapshot().Players[1] is
+      { Reconnecting: true, ReconnectDeadlineHostTick: 1019 },
+      "first peer gets the recovered 30-second reconnect window");
+overlappingLoss.Advance(1018); // A has also gone silent during B's grace window.
+Check(overlappingLoss.Snapshot().Phase == BattlePhase.Running &&
+      overlappingLoss.Snapshot().ServerTick == 119,
+      "overlapping disconnects keep simulation paused until the host deadline");
+overlappingLoss.Advance(1019);
+Check(overlappingLoss.Snapshot() is
+      { Phase: BattlePhase.Aborted, TerminalReason: "both-disconnected",
+        WinnerPlayerId: "", RewardEligible: false } &&
+      MatchOutcomeProjection.ForPlayer(overlappingLoss.Snapshot(), a) == ClientGameEndReason.None &&
+      MatchOutcomeProjection.ForPlayer(overlappingLoss.Snapshot(), b) == ClientGameEndReason.None,
+      "a second silent peer cannot win by the first peer's grace expiry");
 var staged=new MatchEngine(definition with {IdleSeconds=2});
 staged.Admit(a);staged.Admit(b);
 staged.Command(a,Ready(1,staged.ManifestHash));staged.Command(b,Ready(1,staged.ManifestHash));
