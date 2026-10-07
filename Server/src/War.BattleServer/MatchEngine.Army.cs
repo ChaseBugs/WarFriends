@@ -3561,6 +3561,26 @@ public sealed partial class MatchEngine
         return true;
     }
 
+    private void RecordPlayerExplosionArmyKills(IReadOnlyList<BattleArmyEntityState> beforeBlast,
+        string attackerPlayerId,int attackerFraction,string cause)
+    {
+        if(cause is not ("player-mine" or "player-bazooka"))
+            throw new InvalidDataException("Unsupported direct player explosion cause.");
+
+        var enemyDeaths=beforeBlast
+            .Where(army=>army.OwnerFraction!=attackerFraction&&
+                !activeArmyEntities.ContainsKey(army.EntityKey))
+            .OrderBy(army=>army.EntityKey).ToArray();
+        if(directArmyKills.Count+enemyDeaths.Length>256)
+        {
+            End("source-kill-backpressure","",false);
+            return;
+        }
+        foreach(var army in enemyDeaths)
+            directArmyKills.Add((army.EntityKey,army.UnitId,army.OwnerPlayerId,
+                attackerPlayerId,cause,tick));
+    }
+
     // Called only after host combat/AI establishes a death. There is no UDP
     // command capable of naming an entity, selecting a cause, or granting energy.
     internal bool ConfirmArmyDeath(ulong entityKey,bool suicide)

@@ -214,18 +214,9 @@ public sealed partial class MatchEngine
                 if(effect!=null&&ApplyArmyHostDamage(army.EntityKey,effect.RawDamage))
                     attacker.ConfirmedEnemyHits=checked(attacker.ConfirmedEnemyHits+1);
             }
-            var enemyArmyKilledByMine=armyBeforeBlast
-                .Where(army=>army.OwnerFraction!=mine.OwnerFraction&&
-                    !activeArmyEntities.ContainsKey(army.EntityKey))
-                .OrderBy(army=>army.EntityKey).ToArray();
-            if(directArmyKills.Count+enemyArmyKilledByMine.Length>256)
-            {
-                End("source-kill-backpressure","",false);
-                return;
-            }
-            foreach(var army in enemyArmyKilledByMine)
-                directArmyKills.Add((army.EntityKey,army.UnitId,army.OwnerPlayerId,
-                    mine.OwnerPlayerId,"player-mine",tick));
+            RecordPlayerExplosionArmyKills(armyBeforeBlast,mine.OwnerPlayerId,
+                mine.OwnerFraction,"player-mine");
+            if(Terminal)return;
             foreach(var victim in players.Where(x=>!x.Dead).ToArray())
             {
                 var effect=LandMineExplosion.Resolve(mine.Position,mine.Damage,landMineSource,

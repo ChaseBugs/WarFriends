@@ -4,7 +4,8 @@ namespace War.BattleServer;
 public sealed record BattleDirectKillStats(string PlayerId,int DirectBulletKills,
     int DirectBulletVehiclesDestroyed,int DirectBulletTanksDestroyed,int DirectGrenadeKills,
     int DirectGrenadeVehiclesDestroyed,int DirectGrenadeTanksDestroyed,
-    int DirectMineKills,int DirectMineVehiclesDestroyed,int DirectMineTanksDestroyed);
+    int DirectMineKills,int DirectMineVehiclesDestroyed,int DirectMineTanksDestroyed,
+    int DirectBazookaKills,int DirectBazookaVehiclesDestroyed,int DirectBazookaTanksDestroyed);
 
 public static class BattleDirectKillStatsProjection
 {
@@ -25,8 +26,8 @@ public static class BattleDirectKillStatsProjection
     {"ID_UNIT-HUMVEE","ID_UNIT-TANK","ID_UNIT-BUGGY","ID_UNIT-TRANSPORTER"};
     private static readonly HashSet<string> GrenadeVehicles=new(GroundVehicles,StringComparer.Ordinal)
     {"ID_UNIT-DRONE","ID_UNIT-HELICOPTER","ID_UNIT-ASSAULTHELI"};
-    // The Mech has no host Land Mine body-blast path yet.
-    private static readonly HashSet<string> MineVehicles=new(StringComparer.Ordinal)
+    // The Mech has no host Land Mine or player Bazooka body-blast path yet.
+    private static readonly HashSet<string> ExplosiveVehicles=new(StringComparer.Ordinal)
     {
         "ID_UNIT-HUMVEE","ID_UNIT-TANK","ID_UNIT-BUGGY","ID_UNIT-TRANSPORTER",
         "ID_UNIT-DRONE","ID_UNIT-HELICOPTER","ID_UNIT-ASSAULTHELI"
@@ -35,7 +36,9 @@ public static class BattleDirectKillStatsProjection
     internal static bool SupportsGrenadeVictim(string unitId)=>
         Soldiers.Contains(unitId)||GrenadeVehicles.Contains(unitId);
     internal static bool SupportsMineVictim(string unitId)=>
-        Soldiers.Contains(unitId)||MineVehicles.Contains(unitId);
+        Soldiers.Contains(unitId)||ExplosiveVehicles.Contains(unitId);
+    internal static bool SupportsBazookaVictim(string unitId)=>
+        Soldiers.Contains(unitId)||ExplosiveVehicles.Contains(unitId);
 
     public static IReadOnlyList<BattleDirectKillStats> FromPayload(
         byte[] payload,string matchId,string digest)
@@ -54,13 +57,17 @@ public static class BattleDirectKillStatsProjection
                 x.Cause=="player-grenade").ToArray();
             var mineKills=terminal.DirectArmyKills.Where(x=>x.AttackerPlayerId==player.PlayerId&&
                 x.Cause=="player-mine").ToArray();
+            var bazookaKills=terminal.DirectArmyKills.Where(x=>x.AttackerPlayerId==player.PlayerId&&
+                x.Cause=="player-bazooka").ToArray();
             return new BattleDirectKillStats(player.PlayerId,kills.Length,
                 kills.Count(x=>Vehicles.Contains(x.UnitId)),
                 kills.Count(x=>x.UnitId=="ID_UNIT-TANK"),grenadeKills.Length,
                 grenadeKills.Count(x=>GrenadeVehicles.Contains(x.UnitId)),
                 grenadeKills.Count(x=>x.UnitId=="ID_UNIT-TANK"),mineKills.Length,
-                mineKills.Count(x=>MineVehicles.Contains(x.UnitId)),
-                mineKills.Count(x=>x.UnitId=="ID_UNIT-TANK"));
+                mineKills.Count(x=>ExplosiveVehicles.Contains(x.UnitId)),
+                mineKills.Count(x=>x.UnitId=="ID_UNIT-TANK"),bazookaKills.Length,
+                bazookaKills.Count(x=>ExplosiveVehicles.Contains(x.UnitId)),
+                bazookaKills.Count(x=>x.UnitId=="ID_UNIT-TANK"));
         }).ToArray();
     }
 }

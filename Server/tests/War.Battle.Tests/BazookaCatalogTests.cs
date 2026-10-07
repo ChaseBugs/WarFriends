@@ -251,7 +251,16 @@ internal static class BazookaCatalogTests
         {
             var (flightMatch,flightTarget,_)=AirTarget(
                 "bazooka-natural-"+airUnit[8..].ToLowerInvariant(),airUnit);
-            float startingHealth=flightTarget.Health;
+            if(airUnit=="ID_UNIT-HELICOPTER")
+            {
+                float health=flightMatch.ArmyHealth(flightTarget.EntityKey)!.Value;
+                float kevlar=flightMatch.ArmyKevlar(flightTarget.EntityKey)!.Value;
+                Check(flightMatch.ApplyArmyHostDamage(flightTarget.EntityKey,
+                          health+kevlar-1f)&&
+                      Math.Abs(flightMatch.ArmyHealth(flightTarget.EntityKey)!.Value-1f)<.01f,
+                    "trusted fixture leaves the Helicopter one hit from a real Bazooka death");
+            }
+            float startingHealth=flightMatch.ArmyHealth(flightTarget.EntityKey)!.Value;
             bool hit=false;
             ulong flightTick=flightMatch.Snapshot().ServerTick;
             ulong commandId=2;
@@ -275,6 +284,42 @@ internal static class BazookaCatalogTests
             Check(hit&&flightMatch.Snapshot().Players
                       .Single(value=>value.PlayerId==one).ShotsFired>0,
                 "normal Bazooka hold, missile flight and impact damage source air body: "+airUnit);
+            if(airUnit=="ID_UNIT-HELICOPTER")
+            {
+                Check(flightMatch.ArmyHealth(flightTarget.EntityKey)==null,
+                    "normal player Bazooka blast destroys the low-health opposing Helicopter");
+                if(!flightMatch.Terminal)
+                    flightMatch.Command(one,new(){CommandId=commandId++,Forfeit=new()});
+                var terminal=flightMatch.TerminalEvidenceSnapshot();
+                var bytes=terminal.ToByteArray();
+                var digest=War.Shared.TerminalResultDigest.Compute(bytes);
+                Check(TerminalOutbox.ValidatePayload(bytes,flightMatch.MatchId,digest)
+                          .DirectArmyKills.Single(row=>row.EntityKey==flightTarget.EntityKey) is
+                          {Cause:"player-bazooka",AttackerPlayerId:var attackerId}&&
+                      attackerId==one&&
+                      BattleDirectKillStatsProjection.FromPayload(bytes,flightMatch.MatchId,digest)
+                          .Single(row=>row.PlayerId==one) is
+                          {DirectBazookaKills:1,DirectBazookaVehiclesDestroyed:1,
+                           DirectBazookaTanksDestroyed:0,DirectBulletKills:0},
+                    "validated terminal result keeps Bazooka owner and separate vehicle-kill candidate");
+                var unsupported=terminal.Clone();
+                var mechOption=ArmyOptionIdentityCatalog.All
+                    .First(option=>option.UnitId=="ID_UNIT-MECH");
+                var victimUsage=unsupported.Players.Single(player=>player.PlayerId==two)
+                    .ArmyUsage.Single();
+                victimUsage.OptionIndex=mechOption.Index;
+                victimUsage.UnitId=mechOption.UnitId;
+                victimUsage.PlannedSpawns=(uint)mechOption.SpawnCount;
+                unsupported.DirectArmyKills.Single().UnitId=mechOption.UnitId;
+                var unsupportedBytes=unsupported.ToByteArray();
+                try
+                {
+                    TerminalOutbox.ValidatePayload(unsupportedBytes,flightMatch.MatchId,
+                        War.Shared.TerminalResultDigest.Compute(unsupportedBytes));
+                    throw new Exception("FAIL: unsupported Mech Bazooka death");
+                }
+                catch(InvalidDataException){checks++;}
+            }
         }
         var infantryAllocation=repairAllocation with {MatchId="bazooka-infantry-blast"};
         var infantryMatch=new MatchEngine(infantryAllocation,map,content,armyChoice:_=>0);

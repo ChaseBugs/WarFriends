@@ -1899,6 +1899,9 @@ public sealed partial class MatchEngine
                 if(Terminal)return;
             }
         }
+        // Barrels may produce their own deaths. Snapshot after those chains so
+        // this ledger records only the player's bazooka blast transitions.
+        var armyBeforeBazookaBlast=activeArmyEntities.Values.ToArray();
         ApplyPlayerBazookaDecoyExplosion(impact.OwnerId,impact.Position,
             projectile.Stage,projectile.Binding,projectile.HalfDamage);
         if(Terminal)return;
@@ -1922,6 +1925,9 @@ public sealed partial class MatchEngine
         if(Terminal)return;
         ApplyPlayerBazookaAirBodyExplosion(impact.OwnerId,impact.Position,
             projectile.Stage,projectile.Binding,projectile.HalfDamage);
+        if(Terminal)return;
+        RecordPlayerExplosionArmyKills(armyBeforeBazookaBlast,impact.OwnerId,
+            attacker.Definition.Fraction,"player-bazooka");
         if(Terminal)return;
         foreach(var victim in players.Where(x=>!x.Dead).ToArray())
         {
