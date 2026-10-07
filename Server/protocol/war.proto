@@ -450,9 +450,16 @@ message BattleCoopState {
   // mission_type is empty for the older generic wave prototype.
   int32 mission_index = 11; string mission_type = 12;
   int32 objective_target = 13; int32 enemy_kills = 14;
-  // Host-created enemy identity and initial source-scene placement. Movement,
-  // health, and kill authority require later co-op combat integration.
+  // Host-created enemy identity, source-scene placement, and vitality.
+  // Movement and validated player-hit routing require later integration.
   repeated BattleCoopEnemySpawn enemy_spawns = 15;
+  // The signed roster's first player takes the source master position;
+  // the second takes the other main allied defend position.
+  repeated BattleCoopParticipantStart participant_starts = 16;
+}
+message BattleCoopParticipantStart {
+  string player_id = 1; int32 defend_component_file_id = 2;
+  float x = 3; float y = 4; float z = 5;
 }
 message BattleCoopEnemySpawn {
   uint64 entity_id = 1; string behaviour = 2; int32 level = 3;

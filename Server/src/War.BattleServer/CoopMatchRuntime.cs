@@ -28,6 +28,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
     private readonly Func<int, int> chooseSpawnPoint;
     private readonly List<BattleCoopEnemySpawn> enemySpawns = [];
     private readonly Dictionary<string, Participant> participants;
+    private readonly IReadOnlyDictionary<string, CoopPlayerAnchor> playerStarts;
     private ulong nextEnemyId = 1;
     private BattlePhase phase = BattlePhase.Waiting;
     private ulong tick;
@@ -57,6 +58,20 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
 
         ManifestHash = manifest.Digest();
         missionRule = catalog.Get(missionIndex);
+        ArgumentNullException.ThrowIfNull(spawnPoints);
+        CoopMapSpawnPoints map = spawnPoints.MapForMission(catalog, missionIndex);
+        CoopPlayerAnchor[] mainPositions = map.PlayerPositions
+            .Where(position => position.Main)
+            .OrderBy(position => position.Index)
+            .ToArray();
+        if (mainPositions.Length != manifest.Players.Length)
+            throw new InvalidDataException("Co-op scene lacks both allied main positions.");
+        // Photon master used mainPositions[0]. In the self-hosted match, the
+        // signed roster order replaces that room-owned assignment.
+        playerStarts = manifest.Players
+            .Select((player, index) => (player.PlayerId, Position: mainPositions[index]))
+            .ToDictionary(entry => entry.PlayerId, entry => entry.Position,
+                StringComparer.Ordinal);
         spawnSelector = new CoopAiSpawnSelector(catalog, spawnPoints, missionIndex);
         this.combat = combat ?? throw new ArgumentNullException(nameof(combat));
         chooseSpawnPoint = choosePoint ?? Random.Shared.Next;
@@ -330,15 +345,31 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             mission.Participants.OrderBy(id => id, StringComparer.Ordinal));
         snapshot.Coop.EnemySpawns.AddRange(
             enemySpawns.Select(enemy => enemy.Clone()));
+        foreach (ParticipantManifest rosterPlayer in manifest.Players)
+        {
+            CoopPlayerAnchor anchor = playerStarts[rosterPlayer.PlayerId];
+            snapshot.Coop.ParticipantStarts.Add(new BattleCoopParticipantStart
+            {
+                PlayerId = rosterPlayer.PlayerId,
+                DefendComponentFileId = anchor.ComponentFileId,
+                X = anchor.Position.X,
+                Y = anchor.Position.Y,
+                Z = anchor.Position.Z
+            });
+        }
         foreach (Participant participant in participants.Values)
         {
+            CoopPlayerAnchor anchor = playerStarts[participant.PlayerId];
             snapshot.Players.Add(new BattlePlayerState
             {
                 PlayerId = participant.PlayerId,
                 Admitted = participant.Admitted,
                 Ready = participant.Ready,
                 LastCommandId = participant.LastCommandId,
-                CombatEnabled = false
+                CombatEnabled = false,
+                PositionX = anchor.Position.X,
+                PositionY = anchor.Position.Y,
+                PositionZ = anchor.Position.Z
             });
         }
         return snapshot;

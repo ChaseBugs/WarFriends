@@ -439,6 +439,24 @@ internal static class CombatContentTests
             runtime.Snapshot().Phase != BattlePhase.Running ||
             runtime.Snapshot().Coop.MissionIndex != 0)
             throw new Exception("Two allied ready commands must start the source mission.");
+        CoopMapSpawnPoints sourceMapSpawns = spawnPoints.MapForMission(catalog, 0);
+        CoopPlayerAnchor[] mainAnchors = sourceMapSpawns.PlayerPositions
+            .Where(anchor => anchor.Main).OrderBy(anchor => anchor.Index).ToArray();
+        MatchSnapshot startingState = runtime.Snapshot();
+        if (startingState.Coop.ParticipantStarts.Count != 2 ||
+            startingState.Coop.ParticipantStarts[0].PlayerId != firstPlayer ||
+            startingState.Coop.ParticipantStarts[1].PlayerId != secondPlayer ||
+            startingState.Coop.ParticipantStarts[0].DefendComponentFileId !=
+                mainAnchors[0].ComponentFileId ||
+            startingState.Coop.ParticipantStarts[1].DefendComponentFileId !=
+                mainAnchors[1].ComponentFileId ||
+            startingState.Players.Any(player =>
+                !mainAnchors.Any(anchor => anchor.Position == new Vector3(
+                    player.PositionX, player.PositionY, player.PositionZ))))
+            throw new Exception("Signed co-op roster order must bind both source allied starts.");
+        startingState.Coop.ParticipantStarts[0].X = 999;
+        if (runtime.Snapshot().Coop.ParticipantStarts[0].X != mainAnchors[0].Position.X)
+            throw new Exception("A client snapshot must not mutate an allied start anchor.");
 
         var unsupported = new MatchCommand
         {
@@ -450,7 +468,6 @@ internal static class CombatContentTests
             throw new Exception("Unimplemented co-op combat commands must not create authority.");
         runtime.Advance(8);
         BattleCoopEnemySpawn firstEnemy = runtime.Snapshot().Coop.EnemySpawns.Single();
-        CoopMapSpawnPoints sourceMapSpawns = spawnPoints.MapForMission(catalog, 0);
         if (firstEnemy.EntityId != 1 || firstEnemy.Behaviour != "Assaulter" ||
             firstEnemy.SpawnTick != 8 || firstEnemy.TimedEvent ||
             firstEnemy.MaxHealth != ordinary.Health ||
@@ -613,7 +630,7 @@ internal static class CombatContentTests
         if (!earlyForfeit.Terminal || !earlyForfeit.Snapshot().Coop.Failed ||
             earlyForfeit.Snapshot().RewardEligible)
             throw new Exception("A pre-start forfeit must close without reward eligibility.");
-        return 27;
+        return 29;
     }
 
     private static int VerifyCoopSpawnCatalog(string directory, MissionCatalog missions)
