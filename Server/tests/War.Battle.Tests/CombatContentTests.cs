@@ -2,10 +2,12 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Security.Cryptography;
 using System.Numerics;
+using System.Net;
 using War.BattleServer;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging.Abstractions;
 using War.Protocol;
+using War.Protocol.Transport;
 
 internal static class CombatContentTests
 {
@@ -27,7 +29,7 @@ internal static class CombatContentTests
         int spawnAssertions = VerifyMissionAutomaticSpawns(catalog);
         int eventAssertions = VerifyMissionTimedEvents(catalog);
         int coopAssertions = VerifyCoopMissionEngine(catalog);
-        int allocationAssertions = VerifyCoopAllocation(directory);
+        int allocationAssertions = VerifyCoopAllocation(directory, catalog);
 
         string temporaryPath = Path.Combine(Path.GetTempPath(),
             $"war-mission-catalog-{Guid.NewGuid():N}.json");
@@ -311,7 +313,7 @@ internal static class CombatContentTests
         return 6;
     }
 
-    private static int VerifyCoopAllocation(string directory)
+    private static int VerifyCoopAllocation(string directory, MissionCatalog catalog)
     {
         MatchManifest duel = MatchManifest.Read(
             Path.Combine(directory, "local-rifle-match-template.json"));
@@ -320,6 +322,7 @@ internal static class CombatContentTests
             Mode = MatchManifest.CoopMissionMode,
             MissionIndex = 0,
             CatalogRevision = MissionCatalog.SourceRevision,
+            DurationSeconds = catalog.Get(0).TimeSeconds,
             Players = duel.Players.Select(player => player with { Fraction = 1 }).ToArray()
         };
         MatchManifest.Validate(coop);
@@ -345,7 +348,80 @@ internal static class CombatContentTests
         Reject(coop with { MissionIndex = -1 });
         Reject(coop with { CatalogRevision = new string('0', 64) });
         Reject(duel with { MissionIndex = 0 });
-        return 4;
+
+        var runtime = new CoopMatchRuntime(coop, catalog);
+        string firstPlayer = coop.Players[0].PlayerId;
+        string secondPlayer = coop.Players[1].PlayerId;
+        if (!runtime.Admit(firstPlayer) || !runtime.Admit(secondPlayer))
+            throw new Exception("Co-op runtime rejected its signed allied roster.");
+        var endpoint = new MatchEndpoint(coop,
+            Convert.ToBase64String(new byte[32]), runtime, 0);
+        if (endpoint.ManifestHash != coop.Digest())
+            throw new Exception("Co-op transport bound a different allocation.");
+
+        var firstReady = new MatchCommand
+        {
+            CommandId = 1,
+            Ready = new ReadyCommand { ManifestHash = runtime.ManifestHash }
+        };
+        if (runtime.Command(firstPlayer, firstReady).Code != "ready" ||
+            runtime.Command(firstPlayer, firstReady).Code != "ready" ||
+            runtime.Command(firstPlayer, new MatchCommand
+                { CommandId = 1, Forfeit = new ForfeitCommand() }).Code != "command-conflict")
+            throw new Exception("Co-op ready command replay must be exact and idempotent.");
+        if (runtime.Command(secondPlayer, firstReady).Code != "ready" ||
+            runtime.Snapshot().Phase != BattlePhase.Running ||
+            runtime.Snapshot().Coop.MissionIndex != 0)
+            throw new Exception("Two allied ready commands must start the source mission.");
+
+        var unsupported = new MatchCommand
+        {
+            CommandId = 2,
+            Fire = new FireCommand { TargetX = 1 }
+        };
+        if (runtime.Command(firstPlayer, unsupported).Code != "coop-command-unavailable" ||
+            runtime.Snapshot().RewardEligible || runtime.Snapshot().Coop.EnemyKills != 0)
+            throw new Exception("Unimplemented co-op combat commands must not create authority.");
+        runtime.Advance((ulong)coop.DurationSeconds * MatchManifest.TickRate);
+        if (!runtime.Terminal || runtime.Snapshot().TerminalReason != "mission-failed" ||
+            runtime.TerminalEvidenceSnapshot().RewardEligible)
+            throw new Exception("A timed-out kill mission remains unscored and terminal.");
+
+        string signingKey = Convert.ToBase64String(new byte[32]);
+        var udpRuntime = new CoopMatchRuntime(coop, catalog);
+        var udpEndpoint = new MatchEndpoint(coop, signingKey, udpRuntime, 0);
+        var tokens = new MatchTokens(signingKey);
+        var claims = new MatchAdmission
+        {
+            MatchId = coop.MatchId,
+            ServerId = coop.ServerId,
+            PlayerId = firstPlayer,
+            ManifestHash = udpRuntime.ManifestHash,
+            SessionId = 901,
+            IssuedUnixSeconds = 10,
+            ExpiresUnixSeconds = 100
+        };
+        var hello = new Packet
+        {
+            Version = 1,
+            SessionId = claims.SessionId,
+            Sequence = 1,
+            MatchHello = new MatchHello { Ticket = tokens.Sign(claims) }
+        };
+        byte[] authenticatedHello = PacketCodec.Encode(hello, tokens.SessionKey(claims));
+        var peer = new IPEndPoint(IPAddress.Loopback, 40111);
+        if (udpEndpoint.Handle(hello, authenticatedHello, peer, 11) == null ||
+            !udpRuntime.Snapshot().Players[0].Admitted)
+            throw new Exception("A signed co-op hello must reach its isolated runtime.");
+
+        var earlyForfeit = new CoopMatchRuntime(coop, catalog);
+        earlyForfeit.Admit(firstPlayer);
+        earlyForfeit.Command(firstPlayer, new MatchCommand
+            { CommandId = 1, Forfeit = new ForfeitCommand() });
+        if (!earlyForfeit.Terminal || !earlyForfeit.Snapshot().Coop.Failed ||
+            earlyForfeit.Snapshot().RewardEligible)
+            throw new Exception("A pre-start forfeit must close without reward eligibility.");
+        return 11;
     }
 
     internal static int Run(string directory)

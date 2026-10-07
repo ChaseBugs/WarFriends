@@ -446,6 +446,10 @@ message BattleCoopState {
   bool started = 4; bool failed = 5; bool completed = 6;
   repeated string participant_ids = 7;
   bool heroic = 8; bool enemies_enraged = 9; bool no_respawn = 10;
+  // Source-backed mission runtime. Zero mission_index is the first mission;
+  // mission_type is empty for the older generic wave prototype.
+  int32 mission_index = 11; string mission_type = 12;
+  int32 objective_target = 13; int32 enemy_kills = 14;
 }
 message MatchReply {
   uint64 command_id = 1; string code = 2; MatchSnapshot snapshot = 3;

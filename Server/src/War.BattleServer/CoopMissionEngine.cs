@@ -17,7 +17,11 @@ public sealed class CoopMissionEngine
     private ulong? lastReadyTick;
 
     public int MissionIndex => objective.MissionIndex;
+    public string MissionType => missionType;
+    public int ObjectiveTarget { get; }
     public bool Started => objective.StartTick.HasValue;
+    public ulong StartTick => objective.StartTick ?? 0;
+    public ulong DeadlineTick => objective.DeadlineTick ?? 0;
     public MissionOutcome Outcome => objective.Outcome;
     public IReadOnlyCollection<string> Participants => participants.ToArray();
     public int EnemyKills => objective.EnemyKills;
@@ -28,6 +32,7 @@ public sealed class CoopMissionEngine
         ArgumentNullException.ThrowIfNull(catalog);
         MissionRule rule = catalog.Get(missionIndex);
         missionType = rule.MissionType;
+        ObjectiveTarget = rule.Objective ?? 0;
         objective = catalog.CreateObjectiveState(missionIndex);
         spawns = catalog.CreateAutomaticSpawnState(missionIndex, chooseBehaviour);
     }
