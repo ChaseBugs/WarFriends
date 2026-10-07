@@ -20,14 +20,16 @@ public static class SelfHostedLiveRifleAudit
         string path=Environment.GetEnvironmentVariable("WAR_RIFLE_LIVE_GRANTS_FILE");
         if(string.IsNullOrEmpty(path))throw new InvalidOperationException("Set WAR_RIFLE_LIVE_GRANTS_FILE.");
         string[] lines=File.ReadAllLines(path);
-        if(lines.Length!=2)throw new InvalidOperationException("Expected two signed grants.");
-        var first=JsonParser.Default.Parse<MatchConnectionGrant>(lines[0]);
-        var second=JsonParser.Default.Parse<MatchConnectionGrant>(lines[1]);
-        deadline=EditorApplication.timeSinceStartup+65;
-        audit=Check(first,second);
+		if(lines.Length!=3)throw new InvalidOperationException("Expected two initial grants and one replacement grant.");
+		var first=JsonParser.Default.Parse<MatchConnectionGrant>(lines[0]);
+		var second=JsonParser.Default.Parse<MatchConnectionGrant>(lines[1]);
+		var replacement=JsonParser.Default.Parse<MatchConnectionGrant>(lines[2]);
+		deadline=EditorApplication.timeSinceStartup+65;
+		audit=Check(first,second,replacement);
         EditorApplication.update+=Update;
     }
-    private static async Task Check(MatchConnectionGrant local,MatchConnectionGrant peer)
+	private static async Task Check(MatchConnectionGrant local,MatchConnectionGrant peer,
+		MatchConnectionGrant replacement)
     {
         GameObject owner=null,left=null,right=null;
         try
@@ -50,7 +52,7 @@ public static class SelfHostedLiveRifleAudit
             var leftPlayer=left.GetComponent<PlayerController>();var rightPlayer=right.GetComponent<PlayerController>();
             var leftAnimator=left.GetComponentInChildren<SoldierAnimationController>(true);
             var rightAnimator=right.GetComponentInChildren<SoldierAnimationController>(true);
-            using(var ct=new CancellationTokenSource(TimeSpan.FromSeconds(45)))
+			using(var ct=new CancellationTokenSource(TimeSpan.FromSeconds(55)))
             using(var other=new MatchConnection(peer))
             {
                 await adapter.Connect(local);
@@ -130,17 +132,20 @@ public static class SelfHostedLiveRifleAudit
                     throw new InvalidOperationException("Production bridge did not project authoritative ammunition: actual="+
                         (leftPlayer.weaponInventory==null?"inventory-null":leftPlayer.weaponInventory.currentWeapon.weapon.ammoLeftInClip+"/"+
                         leftPlayer.weaponInventory.currentWeapon.weapon.ammoLeft)+" expected="+leftState.ClipAmmo+"/"+leftState.ReserveAmmo);
-                adapter.enabled=false;
-                bool failOnce=true;var handledEvents=new System.Collections.Generic.List<ulong>();
-                adapter.CombatEventReceived+=item=>
-                {
+				adapter.enabled=false;
+				bool failOnce=true;var handledEvents=new System.Collections.Generic.List<ulong>();
+				bool allowSnapshotGap=false;
+				adapter.CombatEventReceived+=item=>
+				{
                     if(item.EventId==2 && failOnce)
                     {
                         failOnce=false;
                         throw new InvalidOperationException("Injected presentation failure.");
                     }
-                    if(handledEvents.Count>0 && item.EventId!=handledEvents[handledEvents.Count-1]+1)
-                        throw new InvalidOperationException("Unity event callback skipped an ID.");
+					if(handledEvents.Count>0 && item.EventId!=handledEvents[handledEvents.Count-1]+1 &&
+						!allowSnapshotGap)
+						throw new InvalidOperationException("Unity event callback skipped an ID.");
+					allowSnapshotGap=false;
                     handledEvents.Add(item.EventId);
                 };
                 bool retried=false;
@@ -227,11 +232,46 @@ public static class SelfHostedLiveRifleAudit
                     await adapter.Refresh();
                     remoteRenderer.RenderRemote(Time.realtimeSinceStartup,.1f);
                 }
-                if(Vector3.Distance(right.transform.position,Position(adapter.State,peer.PlayerId))>.15f)
-                    throw new InvalidOperationException("Remote visual root did not settle at the host destination.");
-                Debug.Log("UNITY_LIVE_RIFLE_PASSED renderedRigs=2 movingRun=True walkingShot=True frames="+frames+" health="+
-                    string.Join(",",adapter.State.Players.Select(p=>p.Health.ToString("F2"))));
-            }
+				if(Vector3.Distance(right.transform.position,Position(adapter.State,peer.PlayerId))>.15f)
+					throw new InvalidOperationException("Remote visual root did not settle at the host destination.");
+				adapter.enabled=false;
+				ulong committedBeforeExpiry=adapter.ProcessedEventId;
+				var connectionField=typeof(SelfHostedBattleClient).GetField("connection",
+					System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+				var localTransport=(MatchConnection)connectionField.GetValue(adapter);
+				ulong latestBeforeExpiry=committedBeforeExpiry;
+				for(int attempt=0;attempt<8 && latestBeforeExpiry==committedBeforeExpiry;attempt++)
+				{
+					await adapter.Fire(Head(rightPlayer));
+					await Task.Delay(250,ct.Token);
+					latestBeforeExpiry=(await localTransport.PollEventsAsync(
+						committedBeforeExpiry,ct.Token)).LatestEventId;
+				}
+				if(latestBeforeExpiry<=committedBeforeExpiry)
+					throw new InvalidOperationException("Live rifle did not publish a new event for expiry recovery.");
+				await AcknowledgeAll(localTransport,committedBeforeExpiry,ct.Token);
+				await AcknowledgeAll(other,0,ct.Token);
+				bool expired=false;
+				try {await localTransport.PollEventsAsync(committedBeforeExpiry,ct.Token);}
+				catch(MatchEventCursorExpiredException) {expired=true;}
+				if(!expired)
+					throw new InvalidOperationException("Worker retained events that both players acknowledged.");
+				allowSnapshotGap=true;
+				await adapter.Reconnect(replacement);
+				if(!adapter.IsConnected || adapter.ProcessedEventId<latestBeforeExpiry ||
+					adapter.ProcessedEventId<adapter.State.LatestEventId ||
+					Vector3.Distance(left.transform.position,Position(adapter.State,local.PlayerId))>.0001f ||
+					Vector3.Distance(right.transform.position,Position(adapter.State,peer.PlayerId))>.15f ||
+					Math.Abs(leftPlayer.destroyableParts.health-
+						adapter.State.Players.Single(p=>p.PlayerId==local.PlayerId).Health)>.001f ||
+					Math.Abs(rightPlayer.destroyableParts.health-
+						adapter.State.Players.Single(p=>p.PlayerId==peer.PlayerId).Health)>.001f ||
+					leftPlayer.weaponInventory.currentWeapon.weapon.ammoLeftInClip!=
+						adapter.State.Players.Single(p=>p.PlayerId==local.PlayerId).ClipAmmo)
+					throw new InvalidOperationException("Expired event history did not restore the rendered Unity rigs.");
+				Debug.Log("UNITY_LIVE_RIFLE_PASSED renderedRigs=2 expiredEventRecovery=True movingRun=True walkingShot=True frames="+frames+" health="+
+					string.Join(",",adapter.State.Players.Select(p=>p.Health.ToString("F2"))));
+	}
         }
         finally
         {
@@ -243,6 +283,22 @@ public static class SelfHostedLiveRifleAudit
             // Unity 2018 PlayerLoop and can crash the editor before Run exits.
         }
     }
+	private static async Task AcknowledgeAll(MatchConnection connection,ulong cursor,
+		CancellationToken cancellation)
+	{
+		for(int pageNumber=0;pageNumber<256;pageNumber++)
+		{
+			var page=await connection.PollEventsAsync(cursor,cancellation);
+			if(page.Events.Count==0)
+			{
+				if(cursor!=page.LatestEventId)
+					throw new InvalidOperationException("A reliable event page was incomplete.");
+				return;
+			}
+			cursor=page.Events[page.Events.Count-1].EventId;
+		}
+		throw new InvalidOperationException("Reliable event history exceeded the audit bound.");
+	}
 
     private static void VerifyRemoteInterpolation()
     {

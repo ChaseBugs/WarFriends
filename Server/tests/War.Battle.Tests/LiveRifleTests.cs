@@ -36,11 +36,12 @@ internal static class LiveRifleTests
         using var portProbe=new UdpClient(new IPEndPoint(IPAddress.Loopback,0));
         int port=((IPEndPoint)portProbe.Client.LocalEndPoint!).Port;portProbe.Close();
         string key=Convert.ToBase64String(RandomNumberGenerator.GetBytes(32));var tokens=new MatchTokens(key);
-        MatchConnectionGrant Grant(string id,ulong session)
+        MatchConnectionGrant Grant(string id,ulong session,ulong generation=0)
         {
             long now=DateTimeOffset.UtcNow.ToUnixTimeSeconds();
             var claim=new MatchAdmission {MatchId=manifest.MatchId,ServerId=manifest.ServerId,PlayerId=id,SessionId=session,
-                ManifestHash=manifest.Digest(),IssuedUnixSeconds=now,ExpiresUnixSeconds=now+120};
+                ManifestHash=manifest.Digest(),IssuedUnixSeconds=now,ExpiresUnixSeconds=now+120,
+                ConnectionGeneration=generation};
             var grant=new MatchConnectionGrant {Host="127.0.0.1",Port=(uint)port,PlayerId=id,SessionId=session,MatchId=claim.MatchId,
                 ManifestHash=claim.ManifestHash,ExpiresUnixSeconds=claim.ExpiresUnixSeconds,
                 Ticket=tokens.Sign(claim),SessionKey=ByteString.CopyFrom(tokens.SessionKey(claim))};
@@ -55,7 +56,10 @@ internal static class LiveRifleTests
             view.Weapons.Add(new BattleWeaponView {Slot=2,WeaponIndex=26,SourceId="Google2u.AssaultRifle_Famas",UpgradeIndex=0});
             return view;
         }
-        await File.WriteAllLinesAsync(grantsFile,[JsonFormatter.Default.Format(Grant(ids[0],801)),JsonFormatter.Default.Format(Grant(ids[1],802))]);
+        await File.WriteAllLinesAsync(grantsFile,
+            [JsonFormatter.Default.Format(Grant(ids[0],801)),
+             JsonFormatter.Default.Format(Grant(ids[1],802)),
+             JsonFormatter.Default.Format(Grant(ids[0],803,1))]);
         var config=new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string,string?>
         {
             ["Battle:SigningKey"]=key,["Battle:ServerId"]=manifest.ServerId,["Battle:Port"]=port.ToString(),
