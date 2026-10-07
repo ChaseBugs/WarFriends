@@ -16,7 +16,13 @@ public sealed class MissionAutomaticSpawnState
     private readonly HashSet<int> pendingEvents = [];
     private ulong? startTick;
     private ulong? lastEventSecond;
+    private ulong nextAutomaticTick;
+    private ulong? pendingAutomaticTick;
     private bool finished;
+
+    // WaveManager checks realTimeWithoutPauses > lastGenTime + 0.25f.
+    // At the Worker's 30 Hz fixed step, the first later tick is tick eight.
+    private const ulong AutomaticIntervalTicks = MatchManifest.TickRate / 4 + 1;
 
     internal MissionAutomaticSpawnState(MissionRule mission)
     {
@@ -34,6 +40,7 @@ public sealed class MissionAutomaticSpawnState
         if (startTick.HasValue || finished)
             return false;
         startTick = tick;
+        nextAutomaticTick = checked(tick + AutomaticIntervalTicks);
         return true;
     }
 
@@ -41,6 +48,7 @@ public sealed class MissionAutomaticSpawnState
     {
         finished = true;
         pendingEvents.Clear();
+        pendingAutomaticTick = null;
     }
 
     public IReadOnlyList<int> EligibleBehaviourIndexes(ulong tick)
@@ -66,12 +74,27 @@ public sealed class MissionAutomaticSpawnState
     public bool ConfirmSpawn(int behaviourIndex, ulong entityId, ulong tick)
     {
         if (entityId == 0 || liveEntities.ContainsKey(entityId) ||
+            pendingAutomaticTick != tick ||
             !EligibleBehaviourIndexes(tick).Contains(behaviourIndex))
             return false;
 
+        pendingAutomaticTick = null;
         generated[behaviourIndex] = checked(generated[behaviourIndex] + 1);
         liveEntities.Add(entityId, behaviourIndex);
         return true;
+    }
+
+    public IReadOnlyList<int> DueAutomaticBehaviours(ulong tick)
+    {
+        if (!ActiveAt(tick) || tick < nextAutomaticTick)
+            return [];
+
+        nextAutomaticTick = checked(tick + AutomaticIntervalTicks);
+        pendingAutomaticTick = tick;
+        IReadOnlyList<int> eligible = EligibleBehaviourIndexes(tick);
+        if (eligible.Count == 0)
+            pendingAutomaticTick = null;
+        return eligible;
     }
 
     public IReadOnlyList<int> DueTimedEvents(ulong tick)

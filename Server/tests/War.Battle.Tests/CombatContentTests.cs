@@ -142,23 +142,34 @@ internal static class CombatContentTests
         var spawns = catalog.CreateAutomaticSpawnState(firstMission.Index);
         if (spawns.EligibleBehaviourIndexes(100).Count != 0 ||
             !spawns.Start(100) || spawns.Start(100) ||
-            spawns.EligibleBehaviourIndexes(100).Count != 2 ||
-            !spawns.ConfirmSpawn(0, 101, 100) ||
-            !spawns.ConfirmSpawn(0, 102, 100) ||
-            !spawns.ConfirmSpawn(0, 103, 100) ||
-            spawns.ConfirmSpawn(0, 104, 100))
-            throw new Exception("The source mission limit counts all generated units.");
+            spawns.DueAutomaticBehaviours(107).Count != 0 ||
+            spawns.ConfirmSpawn(0, 101, 107))
+            throw new Exception("Automatic units need a started mission and an eighth-tick opportunity.");
 
-        if (!spawns.ConfirmSpawn(1, 201, 100) || !spawns.ConfirmSpawn(1, 202, 100) ||
+        bool SpawnAt(int index, ulong entityId, ulong tick)
+        {
+            return spawns.DueAutomaticBehaviours(tick).Contains(index) &&
+                spawns.ConfirmSpawn(index, entityId, tick);
+        }
+
+        if (!SpawnAt(0, 101, 108) || spawns.ConfirmSpawn(0, 102, 108) ||
+            spawns.DueAutomaticBehaviours(108).Count != 0 ||
+            !SpawnAt(0, 102, 116) || !SpawnAt(0, 103, 124) ||
+            spawns.DueAutomaticBehaviours(132).Contains(0) ||
+            spawns.ConfirmSpawn(0, 104, 132))
+            throw new Exception("One unit may spawn per opportunity and the source lifetime limit holds.");
+
+        if (!SpawnAt(1, 201, 140) || !SpawnAt(1, 202, 148) ||
             spawns.LiveCount != firstMission.MaxUnitsAtOnce ||
-            spawns.ConfirmSpawn(1, 203, 100))
-            throw new Exception("The source scene and global limits cap living AI.");
+            spawns.DueAutomaticBehaviours(156).Count != 0)
+            throw new Exception("Source scene and global limits cap living AI.");
 
         if (!spawns.ConfirmDeath(201) || spawns.ConfirmDeath(201) ||
-            !spawns.ConfirmSpawn(1, 203, 100) || spawns.ConfirmSpawn(1, 204, 100) ||
-            spawns.ConfirmSpawn(0, 101, 100))
-            throw new Exception("Confirmed deaths reopen scene capacity without resetting mission totals.");
-        return 3;
+            !SpawnAt(1, 203, 164) ||
+            spawns.DueAutomaticBehaviours(172).Contains(1) ||
+            spawns.ConfirmSpawn(1, 204, 172))
+            throw new Exception("A death reopens live capacity without resetting lifetime totals.");
+        return 4;
     }
 
     private static int VerifyMissionTimedEvents(MissionCatalog catalog)
