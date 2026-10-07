@@ -248,6 +248,7 @@ public sealed partial class MatchEngine
         var route = airWaypoints!.ForSpawn(map!, spawn.ComponentFileId);
         armyAssaultHelicopterPaths.Add(entityId,
             new AssaultHelicopterWaypointState(route, spawn.Position, sourceSpeed, NextArmyFloat));
+        activeArmyEntities[entityId].AssaultRotation = new BattleJointRotation { W = 1 };
         armyAssaultHelicopterTargets.Add(entityId,
             new AssaultHelicopterTargetState((float)((double)tick / MatchManifest.TickRate)));
         armyAssaultHelicopterVolleys.Add(entityId, new AssaultHelicopterVolleyState());
@@ -285,6 +286,11 @@ public sealed partial class MatchEngine
             unit.Y = path.Position.Y;
             unit.Z = path.Position.Z;
             unit.PositionTick = tick;
+            var rotation = path.Rotation;
+            unit.AssaultRotation = new BattleJointRotation
+            {
+                X = rotation.X, Y = rotation.Y, Z = rotation.Z, W = rotation.W
+            };
             armyAssaultHelicopterRoundIntents[entityId] = volleyState.DueRoundIntents(
                 time, path.Position, path.Rotation,
                 assaultHelicopterWeapons ??

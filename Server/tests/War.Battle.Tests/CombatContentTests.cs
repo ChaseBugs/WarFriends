@@ -3553,8 +3553,12 @@ internal static class CombatContentTests
             assaultHelicopterSpawn.EntityKey);
         Check(assaultRotation.HasValue &&
               Math.Abs(assaultRotation.Value.LengthSquared() - 1) < 0.001f &&
-              Quaternion.Dot(assaultRotation.Value, Quaternion.Identity) < 0.999f,
-            "normal Assault Helicopter movement owns a finite source-based root orientation");
+              Quaternion.Dot(assaultRotation.Value, Quaternion.Identity) < 0.999f &&
+              movingAssaultHelicopter.AssaultRotation is { } publishedAssaultRotation &&
+              Math.Abs(Quaternion.Dot(assaultRotation.Value,
+                  new Quaternion(publishedAssaultRotation.X,publishedAssaultRotation.Y,
+                      publishedAssaultRotation.Z,publishedAssaultRotation.W))) > .99999f,
+            "normal Assault Helicopter movement publishes its source-based root orientation");
         var liveAssaultBody = assaultHelicopterMatch.GroundVehicleShotTargets(decoyOpponent)
             .Single(target => target.EntityId == assaultHelicopterSpawn.EntityKey &&
                 target.PartComponentFileId == AssaultHelicopterBoxColliderCatalog.ColliderFileId);
@@ -3573,6 +3577,47 @@ internal static class CombatContentTests
         Check(liveFrontGlass.AssaultGlass && liveFrontGlass.Layer == 8 &&
               liveFrontGlass.Hitbox.Kind == PlayerHitboxKind.Mesh,
             "front glass retains its separate source layer and damage owner");
+        using (var frontReference = JsonDocument.Parse(File.ReadAllBytes(Path.Combine(directory,
+            "recovered-air-unit-unity-geometry.json"))))
+        {
+            var frontSource = frontReference.RootElement.GetProperty("meshes")
+                .GetProperty("799a7c85c474ee0449daf0e57600399c:4300000");
+            var sourceVertices = frontSource.GetProperty("vertices").EnumerateArray()
+                .Select(point => new Vector3(point[0].GetSingle(), point[1].GetSingle(),
+                    point[2].GetSingle())).ToArray();
+            var sourceTriangles = frontSource.GetProperty("triangles").EnumerateArray()
+                .Select(index => index.GetInt32()).ToArray();
+            Vector3 boundsCenter = (sourceVertices.Aggregate(Vector3.Min) +
+                sourceVertices.Aggregate(Vector3.Max)) / 2f;
+            Vector3 meshOrigin = liveFrontGlass.Hitbox.Center -
+                Vector3.Transform(boundsCenter, liveFrontGlass.Hitbox.Rotation);
+            bool glassRayFound = false;
+            for (int triangleIndex = 0; triangleIndex < sourceTriangles.Length; triangleIndex += 3)
+            {
+                Vector3 a = sourceVertices[sourceTriangles[triangleIndex]];
+                Vector3 b = sourceVertices[sourceTriangles[triangleIndex + 1]];
+                Vector3 c = sourceVertices[sourceTriangles[triangleIndex + 2]];
+                Vector3 localNormal = Vector3.Normalize(Vector3.Cross(b - a, c - a));
+                Vector3 point = meshOrigin + Vector3.Transform((a + b + c) / 3f,
+                    liveFrontGlass.Hitbox.Rotation);
+                Vector3 frontNormal = Vector3.Transform(localNormal, liveFrontGlass.Hitbox.Rotation);
+                foreach (int side in new[] { -1, 1 })
+                {
+                    var glassTrace = assaultHelicopterMatch.TraceHeavyTurretShot(decoyOpponent,
+                        point + frontNormal * side * .2f, -frontNormal * side, .4f);
+                    if (glassTrace?.DynamicEntityId == assaultHelicopterSpawn.EntityKey &&
+                        glassTrace.DynamicPartId ==
+                            AssaultHelicopterMeshColliderCatalog.FrontGlassColliderFileId)
+                    {
+                        glassRayFound = true;
+                        break;
+                    }
+                }
+                if (glassRayFound) break;
+            }
+            Check(glassRayFound,
+                "live match ray resolves the separate front glass collider before the aircraft body");
+        }
         var assaultBodyTrace = assaultHelicopterMatch.TraceHeavyTurretShot(decoyOpponent,
             liveAssaultBody.Hitbox.Center + Vector3.UnitY,
             -Vector3.UnitY, 2f);
@@ -3632,6 +3677,62 @@ internal static class CombatContentTests
         Reject(() => assaultHelicopterMatch.ApplyArmyBodyProjectileImpact(decoyPlayer,
             assaultHelicopterSpawn.EntityKey,
             AssaultHelicopterBoxColliderCatalog.ColliderFileId, 10f));
+        var frontGlassFireManifest = assaultHelicopterManifest with
+        {
+            MatchId = "player-projectile-assault-front-glass",
+            DurationSeconds = 180,
+            IdleSeconds = 120
+        };
+        var frontGlassFireMatch = new MatchEngine(frontGlassFireManifest,
+            content: content, armyChoice: _ => 0, combatRandom: () => .5f);
+        frontGlassFireMatch.Admit(decoyPlayer);
+        frontGlassFireMatch.Admit(decoyOpponent);
+        frontGlassFireMatch.Command(decoyPlayer, new() { CommandId = 1,
+            Ready = new() { ManifestHash = frontGlassFireMatch.ManifestHash } });
+        frontGlassFireMatch.Command(decoyOpponent, new() { CommandId = 1,
+            Ready = new() { ManifestHash = frontGlassFireMatch.ManifestHash } });
+        frontGlassFireMatch.Advance(60);
+        int glassFireOption = frontGlassFireMatch.ArmyBatch(decoyPlayer).OptionIndexes[0];
+        frontGlassFireMatch.Command(decoyPlayer, new() { CommandId = 2,
+            DeployArmy = new() { OptionIndex = glassFireOption } });
+        frontGlassFireMatch.Advance(61);
+        var glassFireAircraft = frontGlassFireMatch.ArmyEntityBatch(decoyOpponent, 0, 0)
+            .Entities.Single(entity => entity.UnitId == "ID_UNIT-ASSAULTHELI");
+        float glassBeforeFire = glassFireAircraft.AssaultGlassHealth;
+        ulong glassFireCommand = 2;
+        bool playerFireDamagedGlass = false;
+        bool bodyUnaffectedByGlassHit = false;
+        float? bodyBeforeGlassImpact = null;
+        for (ulong fireTick = 62; fireTick < 900 && !frontGlassFireMatch.Terminal; fireTick++)
+        {
+            if (fireTick % 12 == 0)
+            {
+                var liveGlass = frontGlassFireMatch.GroundVehicleShotTargets(decoyOpponent)
+                    .FirstOrDefault(target => target.EntityId == glassFireAircraft.EntityKey &&
+                        target.AssaultGlass);
+                if (liveGlass == null) break;
+                Vector3 aim = liveGlass.Hitbox.Center;
+                frontGlassFireMatch.Command(decoyOpponent, new() { CommandId = glassFireCommand++,
+                    Fire = new() { TargetX = aim.X, TargetY = aim.Y, TargetZ = aim.Z } });
+            }
+            float? bodyBeforeAdvance = frontGlassFireMatch.ArmyHealth(glassFireAircraft.EntityKey);
+            frontGlassFireMatch.Advance(fireTick);
+            if (frontGlassFireMatch.AssaultGlassHealth(glassFireAircraft.EntityKey) is float health &&
+                health < glassBeforeFire)
+            {
+                playerFireDamagedGlass = true;
+                bodyBeforeGlassImpact = bodyBeforeAdvance;
+                bodyUnaffectedByGlassHit =
+                    frontGlassFireMatch.ArmyHealth(glassFireAircraft.EntityKey) == bodyBeforeAdvance;
+                break;
+            }
+        }
+        Check(playerFireDamagedGlass && bodyUnaffectedByGlassHit,
+            $"admitted player Fire reaches front glass without damaging aircraft body: " +
+            $"glass={frontGlassFireMatch.AssaultGlassHealth(glassFireAircraft.EntityKey)}/{glassBeforeFire}, " +
+            $"body={frontGlassFireMatch.ArmyHealth(glassFireAircraft.EntityKey)}/{bodyBeforeGlassImpact}, " +
+            $"shots={frontGlassFireMatch.Snapshot().Players.Single(p => p.PlayerId == decoyOpponent).ShotsFired}, " +
+            $"terminal={frontGlassFireMatch.Terminal}");
         var targetClock = new AssaultHelicopterTargetState(0);
         var targetDecoys = new[]
         {

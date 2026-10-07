@@ -288,6 +288,8 @@ message BattleArmyEntityState {
   uint64 helicopter_gunner_spawn_tick = 28; uint64 helicopter_gunner_respawn_tick = 29;
   // Assault Helicopter glass has its own DestroyableObject; zero health means broken.
   float assault_glass_max_health = 30; float assault_glass_health = 31;
+  // Source root heading and bank for glass/body placement and Client presentation.
+  BattleJointRotation assault_rotation = 32;
 }
 // Full active-entity projection, paged to remain below the UDP MTU.
 message MatchArmyEntityPoll { uint64 after_entity_key = 1; uint64 expected_revision = 2; }

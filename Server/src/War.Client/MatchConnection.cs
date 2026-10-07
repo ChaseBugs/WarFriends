@@ -212,6 +212,9 @@ namespace War.Client
                        (entity.UnitId=="ID_UNIT-DRONE"?!ValidUnitRotation(entity.DroneRotation):entity.DroneRotation!=null) ||
                        (entity.UnitId=="ID_UNIT-HELICOPTER"?!ValidUnitRotation(entity.HelicopterRotation):
                            entity.HelicopterRotation!=null) ||
+                       (entity.UnitId=="ID_UNIT-ASSAULTHELI"?
+                           entity.AssaultRotation!=null&&!ValidUnitRotation(entity.AssaultRotation):
+                           entity.AssaultRotation!=null) ||
                        (entity.UnitId=="ID_UNIT-HELICOPTER"?
                            !ValidHelicopterTurretPose(entity):
                            entity.HelicopterTurretHorizontalLocal!=null||

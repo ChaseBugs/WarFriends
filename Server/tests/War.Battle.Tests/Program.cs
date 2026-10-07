@@ -259,6 +259,16 @@ if(args is ["--helicopter-only"])
     return;
 }
 
+if(args is ["--assault-glass-udp-only"])
+{
+    var root=new DirectoryInfo(AppContext.BaseDirectory);
+    while(root!=null&&!File.Exists(Path.Combine(root.FullName,"content/combat-content-manifest.json")))root=root.Parent;
+    if(root==null)throw new Exception("Recovered battle content artifact not found.");
+    int focused=await LiveAssaultGlassUdpTests.Run(Path.Combine(root.FullName,"content"));
+    Console.WriteLine($"PASS: {focused} focused Assault Helicopter glass UDP assertions");
+    return;
+}
+
 if(args is ["--helicopter-shotgun-only"])
 {
     var root=new DirectoryInfo(AppContext.BaseDirectory);
@@ -1906,6 +1916,7 @@ checks += await LiveShotgunTests.RunUdp(Path.Combine(contentRoot.FullName,"conte
 checks += await LiveShotgunTests.RunOvertimeUdp(Path.Combine(contentRoot.FullName,"content"));
 checks += await LiveBarrelUdpTests.Run(Path.Combine(contentRoot.FullName,"content"));
 checks += await LiveHelicopterUdpTests.Run(Path.Combine(contentRoot.FullName,"content"));
+checks += await LiveAssaultGlassUdpTests.Run(Path.Combine(contentRoot.FullName,"content"));
 checks += await LiveRusherUdpTests.Run(Path.Combine(contentRoot.FullName,"content"));
 checks += LiveRifleTests.Run(Path.Combine(contentRoot.FullName,"content"));
 checks += await LiveRifleTests.RunUdp(Path.Combine(contentRoot.FullName,"content"));
