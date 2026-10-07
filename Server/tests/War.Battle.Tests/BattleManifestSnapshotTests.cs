@@ -304,11 +304,37 @@ internal static class BattleManifestSnapshotTests
             if(await resultStore.Accept(unsettledTerminal.MatchId,unsettledDigest,unsettledPayload,
                 CancellationToken.None)!="accepted")
                 throw new Exception("Unsettled completed result was not persisted.");
+            await resultRows.UpdateOneAsync(x=>x.MatchId==unsettledTerminal.MatchId,
+                Builders<BattleResultDocument>.Update.Set(x=>x.TerminalPhase,BattlePhase.Aborted));
+            try {await resultStore.Get(unsettledTerminal.MatchId,CancellationToken.None);
+                throw new Exception("Corrupt result phase mirror was trusted.");}
+            catch(InvalidDataException){}
+            // Older accepted rows have no phase mirror. They remain readable and
+            // must still be inspected, but never deleted while unsettled.
+            await resultRows.UpdateOneAsync(x=>x.MatchId==unsettledTerminal.MatchId,
+                Builders<BattleResultDocument>.Update.Unset(x=>x.TerminalPhase));
+            if((await resultStore.Get(unsettledTerminal.MatchId,CancellationToken.None))?.TerminalPhase!=null)
+                throw new Exception("Legacy result without a phase mirror was not readable.");
+            var unsettledBacklog=new List<BattleResultDocument>();
+            for(int index=0;index<10001;index++)
+            {
+                var pending=scoringTerminal.Clone();
+                pending.MatchId="pending-"+index.ToString("D5");
+                (byte[] pendingPayload,string pendingDigest)=Evidence(pending);
+                unsettledBacklog.Add(new BattleResultDocument
+                {
+                    Id=Guid.NewGuid().ToString("N"),MatchId=pending.MatchId,
+                    Digest=pendingDigest,Snapshot=pendingPayload,AcceptedUtc=DateTime.UtcNow,
+                    TerminalPhase=BattlePhase.Ended
+                });
+            }
+            await resultRows.InsertManyAsync(unsettledBacklog);
             if(await resultStore.Prune(DateTimeOffset.UtcNow.AddDays(31),TimeSpan.FromDays(30),CancellationToken.None)!=3 ||
                await resultStore.Get(match,CancellationToken.None)!=null ||
                await resultStore.Get(rematch.MatchId!,CancellationToken.None)!=null ||
                await resultStore.Get(scoringTerminal.MatchId,CancellationToken.None)!=null ||
-               (await resultStore.Get(unsettledTerminal.MatchId,CancellationToken.None))?.Scored!=false)
+               (await resultStore.Get(unsettledTerminal.MatchId,CancellationToken.None))?.Scored!=false ||
+               (await resultStore.Get(unsettledBacklog[^1].MatchId,CancellationToken.None))?.Scored!=false)
                 throw new Exception("Archival removed unsettled combat evidence or retained a settled row.");
             Console.WriteLine("PASS: Mongo queue authority and exact-result scoring/archival survive concurrent stores and restart");
         }

@@ -12,6 +12,7 @@ public sealed class BattleResultDocument
     public string Digest { get; set; } = "";
     public byte[] Snapshot { get; set; } = Array.Empty<byte>();
     public DateTime AcceptedUtc { get; set; }
+    public BattlePhase? TerminalPhase { get; set; }
     public bool Scored { get; set; }
     public DateTime? ScoredUtc { get; set; }
 }
@@ -30,7 +31,11 @@ public sealed class BattleResultStore
         await results.Indexes.CreateManyAsync(new[]
         {
             new CreateIndexModel<BattleResultDocument>(Builders<BattleResultDocument>.IndexKeys.Ascending(x => x.MatchId), new CreateIndexOptions { Unique = true }),
-            new CreateIndexModel<BattleResultDocument>(Builders<BattleResultDocument>.IndexKeys.Ascending(x => x.AcceptedUtc))
+            new CreateIndexModel<BattleResultDocument>(Builders<BattleResultDocument>.IndexKeys.Ascending(x => x.AcceptedUtc)),
+            new CreateIndexModel<BattleResultDocument>(Builders<BattleResultDocument>.IndexKeys
+                .Ascending(x => x.TerminalPhase).Ascending(x => x.AcceptedUtc)),
+            new CreateIndexModel<BattleResultDocument>(Builders<BattleResultDocument>.IndexKeys
+                .Ascending(x => x.Scored).Ascending(x => x.AcceptedUtc))
         }, ct);
     }
     public async Task<string> Accept(string matchId, string digest, byte[] snapshot, CancellationToken ct)
@@ -43,7 +48,7 @@ public sealed class BattleResultStore
             checkedSnapshot.Length is < 1 or > TerminalResultDigest.MaximumPayloadBytes ||
             TerminalResultDigest.Compute(checkedSnapshot)!=checkedDigest)
             throw new InvalidDataException("Invalid battle result envelope.");
-        TerminalOutbox.ValidatePayload(checkedSnapshot,checkedMatchId,checkedDigest);
+        var terminal=TerminalOutbox.ValidatePayload(checkedSnapshot,checkedMatchId,checkedDigest);
         var prior = await results.Find(x => x.MatchId == checkedMatchId).FirstOrDefaultAsync(ct);
         if (prior != null)
         {
@@ -52,7 +57,8 @@ public sealed class BattleResultStore
                 ? "already-accepted" : "conflict";
         }
         var doc = new BattleResultDocument { Id = Guid.NewGuid().ToString("N"), MatchId = checkedMatchId,
-            Digest = checkedDigest, Snapshot = checkedSnapshot.ToArray(), AcceptedUtc = DateTime.UtcNow };
+            Digest = checkedDigest, Snapshot = checkedSnapshot.ToArray(), AcceptedUtc = DateTime.UtcNow,
+            TerminalPhase = terminal.Phase };
         try { await results.InsertOneAsync(doc, cancellationToken: ct); return "accepted"; }
         catch (MongoWriteException e) when (e.WriteError.Category == ServerErrorCategory.DuplicateKey)
         {
@@ -115,7 +121,12 @@ public sealed class BattleResultStore
         if (now < DateTimeOffset.UnixEpoch || retention < TimeSpan.FromDays(30) || retention > TimeSpan.FromDays(3650))
             throw new ArgumentOutOfRangeException(nameof(retention));
         var cutoff = now - retention;
-        var candidates = await results.Find(Builders<BattleResultDocument>.Filter.Lt(x => x.AcceptedUtc, cutoff.UtcDateTime)).Limit(10001).ToListAsync(ct);
+        var filter=Builders<BattleResultDocument>.Filter;
+        var due=filter.Lt(x=>x.AcceptedUtc,cutoff.UtcDateTime);
+        var eligible=filter.Eq(x=>x.Scored,true) |
+            filter.Eq(x=>x.TerminalPhase,BattlePhase.Aborted) |
+            filter.Eq(x=>x.TerminalPhase,null); // Inspect older rows without a phase mirror.
+        var candidates=await results.Find(due & eligible).Limit(10001).ToListAsync(ct);
         if (candidates.Count > 10000) throw new InvalidDataException("Battle result archival batch exceeds capacity.");
         foreach (var row in candidates)
             Validate(row,row.MatchId,now.UtcDateTime);
@@ -158,7 +169,8 @@ public sealed class BattleResultStore
         var f=Builders<BattleResultDocument>.Filter;
         return f.Eq(x=>x.Id,row.Id) & f.Eq(x=>x.MatchId,row.MatchId) &
             f.Eq(x=>x.Digest,row.Digest) & f.Eq(x=>x.Snapshot,row.Snapshot) &
-            f.Eq(x=>x.AcceptedUtc,row.AcceptedUtc) & f.Eq(x=>x.Scored,row.Scored) &
+            f.Eq(x=>x.AcceptedUtc,row.AcceptedUtc) &
+            f.Eq(x=>x.TerminalPhase,row.TerminalPhase) & f.Eq(x=>x.Scored,row.Scored) &
             f.Eq(x=>x.ScoredUtc,row.ScoredUtc);
     }
     private static void Validate(BattleResultDocument row,string? matchId,DateTime now)
@@ -173,6 +185,8 @@ public sealed class BattleResultStore
             TerminalResultDigest.Compute(row.Snapshot)!=row.Digest)
             throw new InvalidDataException("Invalid persisted battle result.");
         var terminal=TerminalOutbox.ValidatePayload(row.Snapshot,row.MatchId!,row.Digest!);
+        if(row.TerminalPhase is { } phase && phase!=terminal.Phase)
+            throw new InvalidDataException("Persisted battle phase differs from terminal evidence.");
         if(row.Scored && terminal.Phase!=BattlePhase.Ended)
             throw new InvalidDataException("An aborted battle has a scored marker.");
     }
