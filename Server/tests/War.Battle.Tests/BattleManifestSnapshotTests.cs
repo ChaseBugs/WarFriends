@@ -368,7 +368,26 @@ internal static class BattleManifestSnapshotTests
                 Digest=scheduledDigest,Snapshot=scheduledPayload,
                 AcceptedUtc=DateTime.UtcNow.AddDays(-31),TerminalPhase=BattlePhase.Aborted
             });
-            using(var archiver=new BattleResultArchivalService(resultStore,
+            var leaseStore=new BattleResultArchivalLeaseStore(uri,database);
+            string firstOwner=Guid.NewGuid().ToString("N");
+            string secondOwner=Guid.NewGuid().ToString("N");
+            DateTime leaseNow=DateTime.UtcNow;
+            var leaseAttempts=await Task.WhenAll(
+                leaseStore.TryAcquire(firstOwner,leaseNow,TimeSpan.FromMinutes(2),CancellationToken.None),
+                leaseStore.TryAcquire(secondOwner,leaseNow,TimeSpan.FromMinutes(2),CancellationToken.None));
+            if(leaseAttempts.Count(acquired=>acquired)!=1)
+                throw new Exception("Concurrent archival owners were both admitted.");
+            string winner=leaseAttempts[0]?firstOwner:secondOwner;
+            string loser=leaseAttempts[0]?secondOwner:firstOwner;
+            await leaseStore.Release(loser,CancellationToken.None);
+            if(await leaseStore.TryAcquire(loser,leaseNow.AddMinutes(1),TimeSpan.FromMinutes(2),CancellationToken.None) ||
+               !await leaseStore.TryAcquire(loser,leaseNow.AddMinutes(3),TimeSpan.FromMinutes(2),CancellationToken.None))
+                throw new Exception("Archival lease did not enforce expiry takeover.");
+            await leaseStore.Release(winner,CancellationToken.None);
+            if(!await leaseStore.TryAcquire(loser,leaseNow.AddMinutes(3),TimeSpan.FromMinutes(2),CancellationToken.None))
+                throw new Exception("Stale archival owner released another owner's lease.");
+            await leaseStore.Release(loser,CancellationToken.None);
+            using(var archiver=new BattleResultArchivalService(resultStore,leaseStore,
                 NullLogger<BattleResultArchivalService>.Instance))
             {
                 await archiver.StartAsync(CancellationToken.None);
