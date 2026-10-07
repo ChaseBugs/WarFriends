@@ -1069,6 +1069,11 @@ internal static class CombatContentTests
         var humveeShot=content.Army.ComposeVehicleShot("ID_UNIT-HUMVEE",0,null,null);
         var helicopterShot=content.Army.ComposeHelicopterShot(0,null,null);
         var assaultHelicopterShot=content.Army.ComposeAssaultHelicopterShot(0,null,null);
+        Check(content.Army.EffectiveAssaultHelicopterGlassHealth(0,null,null,new(1f,1f))==72.33f,
+              "Assault Helicopter glass uses its attached sheet and separate source health");
+        Check(content.Army.EffectiveAssaultHelicopterGlassHealth(0,null,null,new(1f,2f))==144.66f,
+              "Assault Helicopter glass scales by upgrade scale, independently of body health");
+        Reject(()=>content.Army.EffectiveAssaultHelicopterGlassHealth(0,null,null,new(1f,float.NaN)));
         Check(helicopterShot==new ArmyVehicleShotStats(12f,.75f,4,5,2f,4f,0),
               "Helicopter turret binds selected source shot stages apart from attached crew count");
         Check(assaultHelicopterShot.MinShootTime>0&&

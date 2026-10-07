@@ -45,6 +45,7 @@ public sealed class ArmyDeploymentCatalog
     private IReadOnlyDictionary<string,IReadOnlyList<float>>? vehiclePassengerHealth;
     private IReadOnlyList<int>? helicopterSeats;
     private IReadOnlyList<float>? helicopterSoldierHealth;
+    private IReadOnlyList<float>? assaultHelicopterGlassHealth;
     private IReadOnlyDictionary<string,float>? vehiclePassengerRespawnSeconds;
     private IReadOnlyDictionary<string,IReadOnlyList<ArmyVehicleCannonStats>>? vehicleCannonStages;
     private IReadOnlyDictionary<string,ArmyPlayerDamagePolicy>? playerDamagePolicies;
@@ -217,11 +218,31 @@ public sealed class ArmyDeploymentCatalog
         =>ComposeVehicleShotCore("ID_UNIT-HELICOPTER",normalIndex,specialIndex,eliteIndex,
             1f,shotSpeedCoefficient,"HelicopterBehaviour");
 
-    /// <summary>AssaultHelicopter.UpgradesLoaded takes firing cadence from its selected drone upgrade rows.</summary>
+    /// <summary>AssaultHelicopter.UpgradesLoaded takes firing cadence from its attached AssaultHeli upgrade sheet.</summary>
     public ArmyVehicleShotStats ComposeAssaultHelicopterShot(int normalIndex,int? specialIndex,
         int? eliteIndex,float shotSpeedCoefficient=1f)
         =>ComposeVehicleShotCore("ID_UNIT-ASSAULTHELI",normalIndex,specialIndex,eliteIndex,
             1f,shotSpeedCoefficient,"AssaultHelicopterBehaviour");
+
+    /// <summary>The Client gives glass its own DestroyableObject and adds GLASSHP from each selected lane.</summary>
+    public float EffectiveAssaultHelicopterGlassHealth(int normalIndex,int? specialIndex,
+        int? eliteIndex,ArmyHealthFactors factors)
+    {
+        ArgumentNullException.ThrowIfNull(factors);
+        _=BaseStats("ID_UNIT-ASSAULTHELI",normalIndex);
+        var stages=assaultHelicopterGlassHealth??
+            throw new InvalidDataException("Assault Helicopter glass upgrade authority is unavailable.");
+        ValidateOptionalLanes("ID_UNIT-ASSAULTHELI",stages.Count,specialIndex,eliteIndex);
+        if(!float.IsFinite(factors.UpgradeScale)||factors.UpgradeScale<=0||factors.UpgradeScale>100)
+            throw new InvalidDataException("Invalid trusted Assault Helicopter glass health scale.");
+        float health=stages[normalIndex];
+        if(specialIndex.HasValue)health+=stages[specialIndex.Value];
+        if(eliteIndex.HasValue)health+=stages[eliteIndex.Value];
+        health*=factors.UpgradeScale;
+        if(!float.IsFinite(health)||health<=0||health>10_000_000)
+            throw new InvalidDataException("Assault Helicopter glass health is outside host bounds.");
+        return health;
+    }
 
     private ArmyVehicleShotStats ComposeVehicleShotCore(string unitId,int normalIndex,int? specialIndex,
         int? eliteIndex,float accuracyCoefficient,float shotSpeedCoefficient,string? requiredAirBehavior)
@@ -414,6 +435,7 @@ public sealed class ArmyDeploymentCatalog
         var acceptedShots=new Dictionary<string,IReadOnlyList<ArmyUpgradeShotStats>>(StringComparer.Ordinal);
         var acceptedSpecials=new Dictionary<string,IReadOnlyList<float>>(StringComparer.Ordinal);
         IReadOnlyList<float>? acceptedRepairBotHealth=null;
+        IReadOnlyList<float>? acceptedAssaultGlassHealth=null;
         var acceptedPassengerHealth=new Dictionary<string,IReadOnlyList<float>>(StringComparer.Ordinal);
         var acceptedPassengerRespawn=new Dictionary<string,float>(StringComparer.Ordinal);
         var acceptedPlayerDamage=new Dictionary<string,ArmyPlayerDamagePolicy>(StringComparer.Ordinal);
@@ -500,6 +522,7 @@ public sealed class ArmyDeploymentCatalog
             var crewSeats=family.UnitId=="ID_UNIT-HELICOPTER"?new int[stageRows.GetArrayLength()]:null;
             var crewHealth=crewSeats==null?null:new float[stageRows.GetArrayLength()];
             var repairBotHealth=family.UnitId=="ID_UNIT-TRANSPORTER"?new float[stageRows.GetArrayLength()]:null;
+            var glassHealth=family.UnitId=="ID_UNIT-ASSAULTHELI"?new float[stageRows.GetArrayLength()]:null;
             var cannons=family.UnitId is "ID_UNIT-BUGGY" or "ID_UNIT-TANK"?
                 new ArmyVehicleCannonStats[stageRows.GetArrayLength()]:null;
             for(int i=0;i<stages.Length;i++)
@@ -517,6 +540,7 @@ public sealed class ArmyDeploymentCatalog
                 int helicopterSeatCount=crewSeats==null?0:stage.GetProperty("SEATS").GetInt32();
                 float helicopterHp=crewHealth==null?0:stage.GetProperty("SOLDIERHP").GetSingle();
                 float repairBotHp=repairBotHealth==null?0:stage.GetProperty("REPAIRBOTHP").GetSingle();
+                float glassHp=glassHealth==null?0:stage.GetProperty("GLASSHP").GetSingle();
                 // Recovered tables contain zeroed upgrade-lane sentinel rows between
                 // normal and elite ranges; never turn one into a live combat entity.
                 if(!float.IsFinite(hp) || hp<0 || !float.IsFinite(damage) || damage<0 ||
@@ -534,12 +558,16 @@ public sealed class ArmyDeploymentCatalog
                     throw new InvalidDataException("Helicopter crew row is outside its source point/health domain.");
                 if(repairBotHealth!=null&&(!float.IsFinite(repairBotHp)||repairBotHp<0||repairBotHp>10))
                     throw new InvalidDataException("Transporter repair-drone health row is invalid.");
+                if(glassHealth!=null&&(!float.IsFinite(glassHp)||glassHp<0||glassHp>10_000_000||
+                   (i<normalLaneEnd&&glassHp<=0)))
+                    throw new InvalidDataException("Assault Helicopter glass health row is invalid.");
                 stages[i]=new ArmyBaseCombatStats(hp,damage);
                 shots[i]=new ArmyUpgradeShotStats(probability,batchMin,batchMax,frequencyMin,frequencyMax);
                 specials[i]=specialValue;
                 if(passengerHealth!=null)passengerHealth[i]=soldierHp;
                 if(crewSeats!=null){crewSeats[i]=helicopterSeatCount;crewHealth![i]=helicopterHp;}
                 if(repairBotHealth!=null)repairBotHealth[i]=repairBotHp;
+                if(glassHealth!=null)glassHealth[i]=glassHp;
                 if(cannons!=null)
                 {
                     float cannonDamage=stage.GetProperty("CANNONDAMAGE").GetSingle();
@@ -559,6 +587,7 @@ public sealed class ArmyDeploymentCatalog
             if(crewSeats!=null)
             {helicopterSeats=Array.AsReadOnly(crewSeats);helicopterSoldierHealth=Array.AsReadOnly(crewHealth!);}
             if(repairBotHealth!=null)acceptedRepairBotHealth=Array.AsReadOnly(repairBotHealth);
+            if(glassHealth!=null)acceptedAssaultGlassHealth=Array.AsReadOnly(glassHealth);
             acceptedLaneEnds.Add(family.UnitId,normalLaneEnd);
             acceptedEliteStarts.Add(family.UnitId,eliteLaneStart);
             if(cannons!=null)acceptedVehicleCannons.Add(family.UnitId,Array.AsReadOnly(cannons));
@@ -569,6 +598,8 @@ public sealed class ArmyDeploymentCatalog
         specialValues=acceptedSpecials;
         transporterRepairBotHealth=acceptedRepairBotHealth??
             throw new InvalidDataException("Transporter repair-drone health authority is absent.");
+        assaultHelicopterGlassHealth=acceptedAssaultGlassHealth??
+            throw new InvalidDataException("Assault Helicopter glass health authority is absent.");
         playerDamagePolicies=acceptedPlayerDamage;
         vehiclePassengerHealth=acceptedPassengerHealth;
         vehiclePassengerRespawnSeconds=acceptedPassengerRespawn;
