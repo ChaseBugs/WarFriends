@@ -207,7 +207,7 @@ namespace War.Client
                            (((ulong)entity.OwnerFraction<<32)|(uint)entity.LocalEntityId) ||
                        !Guid.TryParseExact(entity.OwnerPlayerId,"N",out _) ||
                        entity.OwnerPlayerId!=entity.OwnerPlayerId.ToLowerInvariant() ||
-                       entity.OptionIndex<0 || entity.OptionIndex>=48 ||
+                       entity.OptionIndex<0 || entity.OptionIndex>=45 ||
                        (entity.DroneTransparent&&entity.UnitId!="ID_UNIT-DRONE") ||
                        (entity.UnitId=="ID_UNIT-DRONE"?!ValidUnitRotation(entity.DroneRotation):entity.DroneRotation!=null) ||
                        (entity.UnitId=="ID_UNIT-HELICOPTER"?!ValidUnitRotation(entity.HelicopterRotation):
@@ -223,6 +223,8 @@ namespace War.Client
                        (entity.UnitId=="ID_UNIT-HELICOPTER"?!ValidHelicopterCrew(entity):
                            entity.HelicopterStopTick!=0||entity.HelicopterCrewCount!=0||
                            entity.HelicopterCrewDropMask!=0) ||
+                       (entity.UnitId=="ID_UNIT-ASSAULTHELI"?!ValidAssaultGlass(entity):
+                           entity.AssaultGlassMaxHealth!=0||entity.AssaultGlassHealth!=0) ||
                        !System.Text.RegularExpressions.Regex.IsMatch(entity.UnitId,@"\AID_UNIT-[A-Z0-9-]{1,50}\z") ||
                        entity.SpawnComponentFileId<=0 || entity.ReservationFileId<0 ||
                        !FiniteCoordinate(entity.X) || !FiniteCoordinate(entity.Y) || !FiniteCoordinate(entity.Z) ||
@@ -261,6 +263,15 @@ namespace War.Client
                 if(entity.PositionTick>=entity.HelicopterStopTick+150UL+60UL*(uint)slot)
                     expected|=1u<<slot;
             return entity.HelicopterCrewDropMask==expected;
+        }
+        internal static bool ValidAssaultGlass(BattleArmyEntityState entity)
+        {
+            if(entity.AssaultGlassMaxHealth==0)return entity.AssaultGlassHealth==0;
+            return Positive(entity.AssaultGlassMaxHealth)&&
+                   !float.IsNaN(entity.AssaultGlassHealth)&&
+                   !float.IsInfinity(entity.AssaultGlassHealth)&&
+                   entity.AssaultGlassHealth>=0&&
+                   entity.AssaultGlassHealth<=entity.AssaultGlassMaxHealth;
         }
         internal static bool ValidHelicopterTurretPose(BattleArmyEntityState entity)
             =>ValidUnitRotation(entity.HelicopterTurretHorizontalLocal)&&
@@ -319,7 +330,7 @@ namespace War.Client
                    batch.Code!="army-offers" && batch.Code!="army-unavailable" &&
                    batch.Code!="army-not-running" && batch.Code!="army-disabled" ||
                    batch.OptionIndexes.Count!=(batch.Code=="army-offers"?3:0) ||
-                   batch.OptionIndexes.Any(index=>index<0 || index>=48) ||
+                   batch.OptionIndexes.Any(index=>index<0 || index>=45) ||
                    batch.Energy<0 || batch.Energy>16 || batch.ActiveCount<0 || batch.ActiveCount>10000 ||
                    batch.PendingCount<0 || batch.PendingCount>100 || batch.NextDeployTick>10001000)
                     throw new InvalidOperationException("Battle host returned invalid army authority.");
@@ -408,7 +419,7 @@ namespace War.Client
                        row.Kind==MatchEventKind.Unspecified ||
                        (row.Kind==MatchEventKind.ArmySpawned || row.Kind==MatchEventKind.ArmyDied ||
                         row.Kind==MatchEventKind.WarperWarpStarted || row.Kind==MatchEventKind.WarperWarpEnded) &&
-                       (row.ArmyEntityId<=0 || row.ArmyOptionIndex<0 || row.ArmyOptionIndex>=48 ||
+                       (row.ArmyEntityId<=0 || row.ArmyOptionIndex<0 || row.ArmyOptionIndex>=45 ||
                         row.ArmySpawnComponentFileId<=0 || row.ArmyReservationFileId<0 ||
                         (row.Kind==MatchEventKind.ArmySpawned ?
                             !Guid.TryParseExact(row.ActorId,"N",out _) || row.ArmyEnergyRecipientId!="" :

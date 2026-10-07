@@ -30,6 +30,7 @@ public sealed partial class MatchEngine
         }
     }
     private readonly Dictionary<ulong,ArmyVitality> armyVitality=[];
+    private readonly Dictionary<ulong,ArmyVitality> armyAssaultGlass=[];
     private HelicopterBodyColliderCatalog? helicopterBodyColliders;
     private AssaultHelicopterBoxColliderCatalog? assaultHelicopterBoxCollider;
     private AssaultHelicopterMeshColliderCatalog? assaultHelicopterMeshColliders;
@@ -650,6 +651,13 @@ public sealed partial class MatchEngine
                     new(row.X,row.Y,row.Z),path.Rotation))
                 result.Add(new(row.EntityKey,mesh.ColliderFileId,layer,mesh.Hitbox,
                     HelicopterBody:true));
+            if(armyAssaultGlass.TryGetValue(row.EntityKey,out var glass)&&glass.Current>0)
+            {
+                var front=assaultHelicopterMeshColliders.PlaceFrontGlass(
+                    new(row.X,row.Y,row.Z),path.Rotation);
+                result.Add(new(row.EntityKey,front.ColliderFileId,8,front.Hitbox,
+                    AssaultGlass:true));
+            }
         }
         if(vehicles!=null&&groundVehicleWeapons!=null)
         foreach(var vehicle in vehicles.Snapshot())
@@ -1365,9 +1373,16 @@ public sealed partial class MatchEngine
             if(assaultShooter.Definition.Fraction==assaultHelicopter.OwnerFraction||
                assaultHelicopterBoxCollider==null||assaultHelicopterMeshColliders==null||
                partId!=AssaultHelicopterBoxColliderCatalog.ColliderFileId&&
-                   !assaultHelicopterMeshColliders.HasCollider(partId)||
+                   !assaultHelicopterMeshColliders.HasCollider(partId)&&
+                   partId!=AssaultHelicopterMeshColliderCatalog.FrontGlassColliderFileId||
                !float.IsFinite(rawDamage)||rawDamage<=0||rawDamage>10_000_000)
                 throw new InvalidDataException("Invalid Assault Helicopter body projectile impact.");
+            if(partId==AssaultHelicopterMeshColliderCatalog.FrontGlassColliderFileId)
+            {
+                if(ApplyAssaultGlassDamage(entityId,rawDamage))
+                    assaultShooter.ConfirmedEnemyHits=checked(assaultShooter.ConfirmedEnemyHits+1);
+                return;
+            }
             if(ApplyArmyHostDamage(entityId,rawDamage))
                 assaultShooter.ConfirmedEnemyHits=checked(assaultShooter.ConfirmedEnemyHits+1);
             return;
@@ -1518,6 +1533,12 @@ public sealed partial class MatchEngine
                     throw new InvalidDataException("Paratrooper kevlar is outside host vitality bounds.");
             }
             armyVitality.Add(entityKey,new ArmyVitality(maximum,kevlar));
+            if(family.BehaviorType=="AssaultHelicopterBehaviour")
+            {
+                float glassMaximum=armyCatalog.EffectiveAssaultHelicopterGlassHealth(
+                    owner.ArmyNormalUpgradeIndexes[index],special,elite,healthFactors[index]);
+                armyAssaultGlass.Add(entityKey,new ArmyVitality(glassMaximum));
+            }
         }
         if(owner.ArmyDamageScales is { } damageScales)
             armyDamage.Add(entityKey,armyCatalog!.EffectiveDamage(unitId,
@@ -1579,6 +1600,24 @@ public sealed partial class MatchEngine
 
     internal float? ArmyHealth(ulong entityKey)
         =>armyVitality.TryGetValue(entityKey,out var row) ? row.Current : null;
+    internal float? AssaultGlassHealth(ulong entityKey)
+        =>armyAssaultGlass.TryGetValue(entityKey,out var row) ? row.Current : null;
+    internal float? AssaultGlassMaximum(ulong entityKey)
+        =>armyAssaultGlass.TryGetValue(entityKey,out var row) ? row.Maximum : null;
+
+    private bool ApplyAssaultGlassDamage(ulong entityKey,float damage)
+    {
+        if(phase!=BattlePhase.Running || !activeArmyEntities.TryGetValue(entityKey,out var aircraft)||
+           aircraft.UnitId!="ID_UNIT-ASSAULTHELI"||
+           !armyAssaultGlass.TryGetValue(entityKey,out var glass)||glass.Current<=0)return false;
+        if(!float.IsFinite(damage)||damage<=0||damage>10_000_000)
+            throw new InvalidDataException("Invalid Assault Helicopter glass impact damage.");
+        glass.Current=Math.Max(0,glass.Current-damage);
+        aircraft.AssaultGlassHealth=glass.Current;
+        armyEntityRevision++;
+        stateRevision++;
+        return true;
+    }
     internal bool ArmyDroneImmortal(ulong entityKey)
         =>armyDroneSpecials.TryGetValue(entityKey,out var row)&&row.IsImmortal;
     internal float? ArmyKevlar(ulong entityKey)
@@ -3406,6 +3445,7 @@ public sealed partial class MatchEngine
            !armyReservations!.Release(entityKey) || !activeArmyEntities.Remove(entityKey))
             throw new InvalidDataException("Army death compare-and-remove failed.");
         armyVitality.Remove(entityKey);
+        armyAssaultGlass.Remove(entityKey);
         if(droneArmyTargets.Remove(entityKey))droneTargets.Disable(DroneArmyId(entityKey));
         armyDroneSpecials.Remove(entityKey);
         armyDronePaths.Remove(entityKey);

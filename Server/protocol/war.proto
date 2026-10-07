@@ -286,6 +286,8 @@ message BattleArmyEntityState {
   // Separate EnemyPointVehicle gunner; zero tuple for diagnostic flight-only allocations.
   float helicopter_gunner_max_health = 26; float helicopter_gunner_health = 27;
   uint64 helicopter_gunner_spawn_tick = 28; uint64 helicopter_gunner_respawn_tick = 29;
+  // Assault Helicopter glass has its own DestroyableObject; zero health means broken.
+  float assault_glass_max_health = 30; float assault_glass_health = 31;
 }
 // Full active-entity projection, paged to remain below the UDP MTU.
 message MatchArmyEntityPoll { uint64 after_entity_key = 1; uint64 expected_revision = 2; }

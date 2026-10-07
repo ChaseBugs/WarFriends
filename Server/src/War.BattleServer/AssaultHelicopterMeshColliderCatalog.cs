@@ -6,13 +6,17 @@ namespace War.BattleServer;
 
 internal sealed record AssaultHelicopterBodyMesh(int ColliderFileId,
     int PartComponentFileId, PlayerHitbox Hitbox);
+internal sealed record AssaultHelicopterGlassMesh(int ColliderFileId,
+    int PartComponentFileId, PlayerHitbox Hitbox);
 
 /// <summary>
-/// The five assigned convex body meshes from the independent Unity export.
-/// Glass has a separate damage owner and is deliberately excluded here.
+/// The assigned convex body meshes and front glass mesh from the Unity export.
+/// Glass has a separate damage owner. The two side meshes have null source refs.
 /// </summary>
 internal sealed class AssaultHelicopterMeshColliderCatalog
 {
+    internal const int FrontGlassColliderFileId = 6468680;
+    internal const int FrontGlassPartComponentFileId = 11485712;
     private sealed record Source(int ColliderFileId, int PartComponentFileId,
         Vector3 Center, Quaternion Rotation, TriangleMeshGeometry Geometry);
     private static readonly (int Collider, int Part, string Mesh)[] BodySources =
@@ -24,8 +28,13 @@ internal sealed class AssaultHelicopterMeshColliderCatalog
         (6454546, 11488901, "ad736291141fa8f42b743a98921886a8:4300000")
     ];
     private readonly Source[] sources;
+    private readonly Source frontGlass;
 
-    private AssaultHelicopterMeshColliderCatalog(Source[] sources) => this.sources = sources;
+    private AssaultHelicopterMeshColliderCatalog(Source[] sources, Source frontGlass)
+    {
+        this.sources = sources;
+        this.frontGlass = frontGlass;
+    }
     internal int Count => sources.Length;
     internal bool HasCollider(int fileId) => sources.Any(source => source.ColliderFileId == fileId);
 
@@ -101,7 +110,45 @@ internal sealed class AssaultHelicopterMeshColliderCatalog
             sources[index] = new(expected.Collider, expected.Part, center,
                 Quaternion.Normalize(rotation), new TriangleMeshGeometry(vertices, triangles));
         }
-        return new(sources);
+        const string frontMeshId = "799a7c85c474ee0449daf0e57600399c:4300000";
+        var frontCollider = unit.GetProperty("colliders").EnumerateArray().Single(row =>
+            row.GetProperty("colliderFileId").GetInt32() == FrontGlassColliderFileId);
+        var frontPart = unit.GetProperty("components").EnumerateArray().Single(row =>
+            row.GetProperty("componentFileId").GetInt32() == FrontGlassPartComponentFileId);
+        var frontExport = exportedUnit.GetProperty("colliders").EnumerateArray().Single(row =>
+            row.GetProperty("componentFileId").GetInt32() == FrontGlassColliderFileId);
+        if (frontCollider.GetProperty("type").GetString() != "Mesh" ||
+            !frontCollider.GetProperty("enabled").GetBoolean() ||
+            !frontCollider.GetProperty("convex").GetBoolean() ||
+            frontCollider.GetProperty("trigger").GetBoolean() ||
+            frontCollider.GetProperty("serializedLayer").GetInt32() != 0 ||
+            !frontCollider.GetProperty("activeAncestors").GetBoolean() ||
+            frontCollider.GetProperty("gameObjectFileId").GetInt32() != 105782 ||
+            frontPart.GetProperty("gameObjectFileId").GetInt32() != 105782 ||
+            frontPart.GetProperty("ownerDestroyableObject").GetInt32() != 11400463 ||
+            frontPart.GetProperty("weight").GetSingle() != 1f ||
+            frontExport.GetProperty("meshId").GetString() != frontMeshId)
+            throw new InvalidDataException("Assault Helicopter front glass source binding changed.");
+        var frontMesh = geometry.RootElement.GetProperty("meshes").GetProperty(frontMeshId);
+        var glassVertices = frontMesh.GetProperty("vertices").EnumerateArray().Select(Vector).ToArray();
+        var glassTriangles = frontMesh.GetProperty("triangles").EnumerateArray()
+            .Select(value => value.GetInt32()).ToArray();
+        var frontGlass = new Source(FrontGlassColliderFileId, FrontGlassPartComponentFileId,
+            Vector(frontCollider.GetProperty("restCenter")),
+            Quaternion.Normalize(QuaternionValue(frontCollider.GetProperty("restRotation"))),
+            new TriangleMeshGeometry(glassVertices, glassTriangles));
+        foreach (int sideColliderId in new[] { 6467758, 6414637 })
+        {
+            var side = unit.GetProperty("colliders").EnumerateArray().Single(row =>
+                row.GetProperty("colliderFileId").GetInt32() == sideColliderId);
+            var exportedSide = exportedUnit.GetProperty("colliders").EnumerateArray().Single(row =>
+                row.GetProperty("componentFileId").GetInt32() == sideColliderId);
+            if (side.GetProperty("meshReference").GetString() != "{fileID: 0}" ||
+                side.GetProperty("hasSerializedMesh").GetBoolean() ||
+                exportedSide.GetProperty("meshId").ValueKind != JsonValueKind.Null)
+                throw new InvalidDataException("Assault Helicopter side glass now needs explicit geometry review.");
+        }
+        return new(sources, frontGlass);
     }
 
     internal IReadOnlyList<AssaultHelicopterBodyMesh> Place(Vector3 position,
@@ -122,6 +169,20 @@ internal sealed class AssaultHelicopterMeshColliderCatalog
             placed[index] = new(source.ColliderFileId, source.PartComponentFileId, hitbox);
         }
         return Array.AsReadOnly(placed);
+    }
+
+    internal AssaultHelicopterGlassMesh PlaceFrontGlass(Vector3 position,
+        Quaternion rootRotation)
+    {
+        if (!PlayerHitbox.Finite(position) || !float.IsFinite(rootRotation.LengthSquared()) ||
+            Math.Abs(rootRotation.LengthSquared() - 1f) > .001f)
+            throw new InvalidDataException("Invalid Assault Helicopter glass root pose.");
+        Vector3 origin = position + Vector3.Transform(frontGlass.Center, rootRotation);
+        Quaternion rotation = Quaternion.Normalize(rootRotation * frontGlass.Rotation);
+        var hitbox = new PlayerHitbox(
+            "Assets/GameObject/assaultHelicopter.prefab#" + frontGlass.ColliderFileId,
+            1, origin, rotation, frontGlass.Geometry, position);
+        return new(frontGlass.ColliderFileId, frontGlass.PartComponentFileId, hitbox);
     }
 
     private static Vector3 Vector(JsonElement value) =>

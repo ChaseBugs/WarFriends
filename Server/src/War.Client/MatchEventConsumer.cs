@@ -94,7 +94,7 @@ namespace War.Client
                     throw new InvalidDataException("Invalid vehicle repair-drone lifecycle event.");
                 if ((item.Kind == MatchEventKind.WarperWarpStarted || item.Kind == MatchEventKind.WarperWarpEnded) &&
                     (!Guid.TryParseExact(item.ActorId, "N", out _) || item.TargetId != "" || item.ProjectileId != 0 ||
-                     item.ArmyEntityId <= 0 || item.ArmyOptionIndex < 0 || item.ArmyOptionIndex >= 48 ||
+                     item.ArmyEntityId <= 0 || item.ArmyOptionIndex < 0 || item.ArmyOptionIndex >= 45 ||
                      item.ArmyUnitId != "ID_UNIT-WARPER" || item.ArmySpawnComponentFileId <= 0 ||
                      item.ArmyReservationFileId < 0 || item.ArmyEnergyRecipientId != "" || item.Reason != "warper"))
                     throw new InvalidDataException("Invalid Warper presentation event.");

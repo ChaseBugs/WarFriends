@@ -1064,7 +1064,9 @@ public sealed partial class MatchEngine
                             HelicopterCrewCount=(uint)(armyHelicopterCrew.GetValueOrDefault(entityKey)?.Seats??0),
                             HelicopterRotation=spawned.UnitId=="ID_UNIT-HELICOPTER"?new BattleJointRotation{W=1}:null,
                             DroneRotation=spawned.UnitId=="ID_UNIT-DRONE"?new BattleJointRotation{W=1}:null,
-                            MaxHealth=ArmyHealth(entityKey)??0,Health=ArmyHealth(entityKey)??0});
+                            MaxHealth=ArmyHealth(entityKey)??0,Health=ArmyHealth(entityKey)??0,
+                            AssaultGlassMaxHealth=AssaultGlassMaximum(entityKey)??0,
+                            AssaultGlassHealth=AssaultGlassHealth(entityKey)??0});
                         var vitality=armyVitality.GetValueOrDefault(entityKey);
                         if(vitality!=null)
                         {

@@ -64,6 +64,46 @@ internal static class CombatContentTests
                   mesh.Hitbox.Raycast(mesh.Hitbox.Center + Vector3.UnitX * 5,
                       Vector3.UnitX, 10f) == null),
             "Assault Helicopter body meshes use their triangles for hit and miss rays");
+        var frontGlass = content.AssaultHelicopterMeshColliders.PlaceFrontGlass(
+            Vector3.Zero, Quaternion.Identity);
+        Check(frontGlass.ColliderFileId == 6468680 &&
+              frontGlass.PartComponentFileId == 11485712 &&
+              frontGlass.Hitbox.Kind == PlayerHitboxKind.Mesh &&
+              frontGlass.Hitbox.OverlapsSphere(frontGlass.Hitbox.Center, .5f),
+            "front glass uses its own damage part and assigned Unity mesh triangles");
+        using (var glassGeometry = JsonDocument.Parse(File.ReadAllBytes(Path.Combine(directory,
+            "recovered-air-unit-unity-geometry.json"))))
+        {
+            var sourceMesh = glassGeometry.RootElement.GetProperty("meshes")
+                .GetProperty("799a7c85c474ee0449daf0e57600399c:4300000");
+            var vertices = sourceMesh.GetProperty("vertices");
+            var triangle = sourceMesh.GetProperty("triangles");
+            Vector3 Point(JsonElement point) => new(point[0].GetSingle(),
+                point[1].GetSingle(), point[2].GetSingle());
+            Vector3 Vertex(int index)
+            {
+                var point = vertices[triangle[index].GetInt32()];
+                return Point(point);
+            }
+            Vector3 first = Vertex(0), second = Vertex(1), third = Vertex(2);
+            Vector3 glassTriangleMidpoint = (first + second + third) / 3f;
+            Vector3 glassTriangleNormal = Vector3.Normalize(Vector3.Cross(second - first, third - first));
+            var allGlassVertices = vertices.EnumerateArray().Select(Point).ToArray();
+            Vector3 glassBoundsCenter = (allGlassVertices.Aggregate(Vector3.Min) +
+                allGlassVertices.Aggregate(Vector3.Max)) / 2f;
+            Vector3 glassOrigin = frontGlass.Hitbox.Center -
+                Vector3.Transform(glassBoundsCenter, frontGlass.Hitbox.Rotation);
+            Vector3 worldMidpoint = glassOrigin +
+                Vector3.Transform(glassTriangleMidpoint, frontGlass.Hitbox.Rotation);
+            Vector3 worldNormal = Vector3.Transform(glassTriangleNormal, frontGlass.Hitbox.Rotation);
+            Check(frontGlass.Hitbox.Raycast(worldMidpoint + worldNormal, -worldNormal, 2f)
+                      is > .9f and < 1.1f ||
+                  frontGlass.Hitbox.Raycast(worldMidpoint - worldNormal, worldNormal, 2f)
+                      is > .9f and < 1.1f,
+                "a ray aimed at a recovered front glass triangle intersects its live hitbox");
+        }
+        Reject(() => content.AssaultHelicopterMeshColliders.PlaceFrontGlass(
+            Vector3.Zero, default));
         var heliBoxes=content.HelicopterBodyColliders.Place(Vector3.Zero,Quaternion.Identity);
         using(var geometryReference=JsonDocument.Parse(File.ReadAllBytes(Path.Combine(directory,
             "recovered-air-unit-unity-geometry.json"))))
@@ -3487,6 +3527,14 @@ internal static class CombatContentTests
         assaultHelicopterMatch.Advance(61);
         var assaultHelicopterSpawn = assaultHelicopterMatch.ArmyEntityBatch(decoyPlayer, 0, 0)
             .Entities.Single(entity => entity.UnitId == "ID_UNIT-ASSAULTHELI");
+        Check(assaultHelicopterSpawn.AssaultGlassMaxHealth > 0 &&
+              assaultHelicopterSpawn.AssaultGlassHealth == assaultHelicopterSpawn.AssaultGlassMaxHealth &&
+              War.Client.MatchConnection.ValidAssaultGlass(assaultHelicopterSpawn),
+            "normal Assault Helicopter spawn publishes a separate full glass health record");
+        var forgedGlass = assaultHelicopterSpawn.Clone();
+        forgedGlass.AssaultGlassHealth = forgedGlass.AssaultGlassMaxHealth + 1f;
+        Check(!War.Client.MatchConnection.ValidAssaultGlass(forgedGlass),
+            "replacement SDK rejects glass health greater than its host maximum");
         Check(assaultHelicopterMatch.AssaultHelicopterShot(assaultHelicopterSpawn.EntityKey) ==
               assaultHelicopterShot,
             "normal Assault Helicopter deployment binds selected source firing stats to its entity");
@@ -3515,10 +3563,16 @@ internal static class CombatContentTests
             "opposing projectiles see the source body box at the live Assault Helicopter pose");
         var liveAssaultMeshes = assaultHelicopterMatch.GroundVehicleShotTargets(decoyOpponent)
             .Where(target => target.EntityId == assaultHelicopterSpawn.EntityKey &&
-                target.Hitbox.Kind == PlayerHitboxKind.Mesh).ToArray();
+                target.HelicopterBody && target.Hitbox.Kind == PlayerHitboxKind.Mesh).ToArray();
         Check(liveAssaultMeshes.Length == 5 &&
               liveAssaultMeshes.All(target => target.Layer == 27 && target.HelicopterBody),
             "all assigned body meshes follow the deployed Assault Helicopter");
+        var liveFrontGlass = assaultHelicopterMatch.GroundVehicleShotTargets(decoyOpponent)
+            .Single(target => target.EntityId == assaultHelicopterSpawn.EntityKey &&
+                target.PartComponentFileId == 6468680);
+        Check(liveFrontGlass.AssaultGlass && liveFrontGlass.Layer == 8 &&
+              liveFrontGlass.Hitbox.Kind == PlayerHitboxKind.Mesh,
+            "front glass retains its separate source layer and damage owner");
         var assaultBodyTrace = assaultHelicopterMatch.TraceHeavyTurretShot(decoyOpponent,
             liveAssaultBody.Hitbox.Center + Vector3.UnitY,
             -Vector3.UnitY, 2f);
@@ -3553,6 +3607,28 @@ internal static class CombatContentTests
         Check(assaultHelicopterMatch.ArmyHealth(assaultHelicopterSpawn.EntityKey) ==
                   assaultHealthBeforeHit - 17f,
             "source triangle mesh routes opposing damage to the same body vitality");
+        assaultHelicopterMatch.ApplyArmyBodyProjectileImpact(decoyOpponent,
+            assaultHelicopterSpawn.EntityKey, 6468680, 20f);
+        Check(assaultHelicopterMatch.AssaultGlassHealth(assaultHelicopterSpawn.EntityKey) ==
+                  assaultHelicopterSpawn.AssaultGlassMaxHealth - 20f &&
+              assaultHelicopterMatch.ArmyHealth(assaultHelicopterSpawn.EntityKey) ==
+                  assaultHealthBeforeHit - 17f,
+            "front glass damage leaves the aircraft body health unchanged");
+        assaultHelicopterMatch.ApplyArmyBodyProjectileImpact(decoyOpponent,
+            assaultHelicopterSpawn.EntityKey, 6468680, 10_000f);
+        var brokenGlassRow = assaultHelicopterMatch.ArmyEntityBatch(decoyPlayer, 0, 0)
+            .Entities.Single(entity => entity.EntityKey == assaultHelicopterSpawn.EntityKey);
+        Check(brokenGlassRow.AssaultGlassHealth == 0 &&
+              assaultHelicopterMatch.GroundVehicleShotTargets(decoyOpponent)
+                  .All(target => target.EntityId != assaultHelicopterSpawn.EntityKey ||
+                      target.PartComponentFileId != 6468680),
+            "lethal glass damage publishes broken state and removes its live front collider");
+        assaultHelicopterMatch.ApplyArmyBodyProjectileImpact(decoyOpponent,
+            assaultHelicopterSpawn.EntityKey, 6468680, 5f);
+        Check(assaultHelicopterMatch.AssaultGlassHealth(assaultHelicopterSpawn.EntityKey) == 0 &&
+              assaultHelicopterMatch.ArmyHealth(assaultHelicopterSpawn.EntityKey) ==
+                  assaultHealthBeforeHit - 17f,
+            "a broken glass part cannot reopen or redirect later damage to the body");
         Reject(() => assaultHelicopterMatch.ApplyArmyBodyProjectileImpact(decoyPlayer,
             assaultHelicopterSpawn.EntityKey,
             AssaultHelicopterBoxColliderCatalog.ColliderFileId, 10f));
