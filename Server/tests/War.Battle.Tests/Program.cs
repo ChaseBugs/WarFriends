@@ -1181,6 +1181,10 @@ string outboxPath=Path.Combine(Path.GetTempPath(),"war-terminal-test-"+Guid.NewG
 try
 {
     var outbox=new TerminalOutbox(outboxPath);
+    var forgedDoubleDeath=timer.Snapshot().Clone();
+    forgedDoubleDeath.TerminalReason="simultaneous-barrel-death";
+    Reject(()=>outbox.Publish(forgedDoubleDeath),
+        "barrel double-death evidence requires both players to be dead");
     var impossibleArmy=timer.Snapshot().Clone();
     impossibleArmy.Players[0].ConfirmedArmyLosses=1;
     Reject(()=>outbox.Publish(impossibleArmy),

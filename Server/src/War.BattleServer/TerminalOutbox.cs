@@ -283,6 +283,8 @@ public sealed class TerminalOutbox
            snapshot.PauseHostTick!=0 || snapshot.Players.Any(p=>!ValidTerminalPlayer(p,snapshot.ServerTick)) ||
            !ValidTerminalShields(snapshot.Shields) ||
            (snapshot.Phase==BattlePhase.Aborted && snapshot.WinnerPlayerId.Length!=0) ||
+           (snapshot.TerminalReason=="simultaneous-barrel-death" &&
+               snapshot.Players.Any(player=>!player.Dead)) ||
            (snapshot.WinnerPlayerId.Length!=0 && snapshot.Players.All(p=>p.PlayerId!=snapshot.WinnerPlayerId)) ||
            (snapshot.Phase==BattlePhase.Ended && snapshot.TerminalReason=="player-killed" &&
                (snapshot.Players.Single(p=>p.PlayerId==snapshot.WinnerPlayerId).Dead ||

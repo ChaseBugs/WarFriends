@@ -36,6 +36,13 @@ internal static class PlayerDamageTests
         Check(!dodge.Dead && dodge.Health == 100 && dodge.Damage == 0, "damage callback refunds before lethal check");
         Check(PlayerDamage.Resolve(body with { NoDamageChance = 0.5f }, 100, lethal, false, false, 0.5f).Dead, "dodge comparison is strict");
         Check(PlayerDamage.Resolve(body, 100, lethal, true, true, 1).Health == 100, "self damage refund");
+        var selfBlast = new ResolvedPlayerDamage(150, CombatDamageType.Explosion,
+            HasWeapon: true, FriendKill: true);
+        var ownerAfterBlast = PlayerDamage.Resolve(body, 100, selfBlast, true, true, 1);
+        var opponentAfterBlast = PlayerDamage.Resolve(body, 100, selfBlast, false, false, 1);
+        Check(!ownerAfterBlast.Dead && ownerAfterBlast.Health == 100 &&
+            opponentAfterBlast.Dead,
+            "one player-owned explosion cannot kill its owner and opponent together");
         Check(PlayerDamage.Resolve(body with { TutorialProtection = true }, 100, lethal, false, false, 1).Health == 100, "tutorial lethal refund");
         Check(PlayerDamage.Resolve(body with { TutorialProtection = true }, 100, lethal with { Amount = 80 }, false, false, 1).Health == 20, "tutorial threshold is below twenty percent");
         var heal = new ResolvedPlayerDamage(-50, CombatDamageType.Heal, HasWeapon: false);
