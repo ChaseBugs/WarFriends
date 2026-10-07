@@ -1,13 +1,14 @@
 {
   "source": "Clients/ExportedProject",
   "calls": [
-    {"file":"Assets/Scripts/Assembly-CSharp/GameController.cs","line":644,"call":"PhotonNetwork.Disconnect()","replacement":"SelfHostedRoomLifecycle.Close","status":"open"},
-    {"file":"Assets/Scripts/Assembly-CSharp/PhotonConnectionManager.cs","line":164,"call":"PhotonServerSettings.AppID assignment","replacement":"BackendClient connection grant; no app ID","status":"open"},
-    {"file":"Assets/Scripts/Assembly-CSharp/PhotonConnectionManager.cs","line":167,"call":"PhotonServerSettings.AppID assignment","replacement":"BackendClient connection grant; no app ID","status":"open"},
-    {"file":"Assets/Scripts/Assembly-CSharp/PhotonConnectionManager.cs","line":170,"call":"PhotonServerSettings.AppID assignment","replacement":"BackendClient connection grant; no app ID","status":"open"},
-    {"file":"Assets/Scripts/Assembly-CSharp/PhotonConnectionManager.cs","line":173,"call":"PhotonServerSettings.AppID assignment","replacement":"BackendClient connection grant; no app ID","status":"open"},
-    {"file":"Assets/Scripts/Assembly-CSharp/PhotonConnectionManager.cs","line":180,"call":"PhotonNetwork.Disconnect()","replacement":"SelfHostedRoomLifecycle.Close","status":"open"},
-    {"file":"Assets/Scripts/Assembly-CSharp/PhotonConnectionManager.cs","line":355,"call":"PhotonNetwork.Disconnect()","replacement":"SelfHostedRoomLifecycle.Close","status":"open"},
-    {"file":"Assets/Scripts/Assembly-CSharp/PhotonConnectionManager.cs","line":566,"call":"PhotonNetwork.Disconnect()","replacement":"SelfHostedRoomLifecycle.Close","status":"open"}
+    {"file":"Assets/Scripts/Assembly-CSharp/GameController.cs","line":650,"call":"PhotonNetwork.Disconnect()","replacement":"SelfHostedRoomLifecycle.Close for active battles; retire the remaining offline test fallback","status":"open"},
+    {"file":"Assets/Scripts/Assembly-CSharp/PhotonConnectionManager.cs","line":201,"call":"PhotonNetwork.JoinRoom()","replacement":"Self-hosted room admission by player-bound grant","status":"open"},
+    {"file":"Assets/Scripts/Assembly-CSharp/PhotonConnectionManager.cs","line":246,"call":"PhotonNetwork.JoinRoom()","replacement":"Self-hosted room admission by player-bound grant","status":"open"},
+    {"file":"Assets/Scripts/Assembly-CSharp/PhotonConnectionManager.cs","line":262,"call":"PhotonNetwork.JoinRandomRoom()","replacement":"Backend queue pairing and player-only grant","status":"open"},
+    {"file":"Assets/Scripts/Assembly-CSharp/PhotonConnectionManager.cs","line":284,"call":"PhotonNetwork.JoinOrCreateRoom()","replacement":"Backend queue pairing and Worker admission","status":"open"},
+    {"file":"Assets/Scripts/Assembly-CSharp/PhotonConnectionManager.cs","line":300,"call":"PhotonNetwork.LeaveRoom()","replacement":"Local campaign room lifecycle without Photon runtime","status":"open"},
+    {"file":"Assets/Scripts/Assembly-CSharp/PhotonConnectionManager.cs","line":301,"call":"PhotonNetwork.CreateRoom()","replacement":"Local campaign room lifecycle without Photon runtime","status":"open"},
+    {"file":"Assets/Scripts/Assembly-CSharp/PhotonConnectionManager.cs","line":314,"call":"PhotonNetwork.Disconnect()","replacement":"SelfHostedRoomLifecycle.Close for active battles; migrate remaining local room teardown","status":"open"},
+    {"file":"Assets/Scripts/Assembly-CSharp/PhotonConnectionManager.cs","line":397,"call":"PhotonNetwork.JoinRoom()","replacement":"Fresh self-hosted reconnect grant and admission","status":"open"}
   ]
 }

@@ -13,8 +13,10 @@ import re
 from pathlib import Path
 
 FORBIDDEN = re.compile(
-    r"\b(?:PhotonNetwork\.(?:Connect|ConnectUsingSettings|Join|Create|Leave|Disconnect|JoinRandom|JoinOrCreate|Instantiate|RaiseEvent)|"
-    r"PhotonServerSettings|CloudRegionCode|LoadBalancingClient\.Connect|OpJoin|OpCreateRoom|OpRaiseEvent)\b"
+    r"\b(?:PhotonNetwork\.(?:Connect\w*|Join\w*|CreateRoom|LeaveRoom|Disconnect|"
+    r"Instantiate|RaiseEvent)\s*\(|PhotonNetwork\.PhotonServerSettings|"
+    r"LoadBalancingClient\.Connect\s*\(|OpJoin\w*\s*\(|"
+    r"OpCreateRoom\s*\(|OpRaiseEvent\s*\()"
 )
 PHOTON = re.compile(r"\bPhoton(?:Network|View|TransformView|RigidbodyView|AnimatorView|ServerSettings|Peer|Realtime|Pun|HashTable)\b|Photon3Unity3D")
 

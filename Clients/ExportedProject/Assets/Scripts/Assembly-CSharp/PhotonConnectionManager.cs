@@ -49,7 +49,6 @@ public class PhotonConnectionManager : Singleton<PhotonConnectionManager>
 
 	private int mLastCheck;
 
-	private float mPingsFoundTime = float.MinValue;
 
 	private string mRoomName;
 
@@ -59,35 +58,10 @@ public class PhotonConnectionManager : Singleton<PhotonConnectionManager>
 
 	private int mTempTotalMatchesInRegions;
 
-	private bool mIsPinging;
 
 	public bool isClient { get; private set; }
 
 	public bool isMasterClient => !isClient;
-
-	private bool hasTimeoutToSomeRegion
-	{
-		get
-		{
-			foreach (KeyValuePair<CloudRegionCode, int> bestRegion in bestRegions)
-			{
-				if (bestRegion.Value > 3500)
-				{
-					return true;
-				}
-			}
-			return false;
-		}
-	}
-
-	private bool hasBadPing
-	{
-		get
-		{
-			ObscuredFloat fLOATVALUE = Singleton<GameVariables>.instance.constants.GetRow(Constants.rowIds.MaxPingToConnectRegion).FLOATVALUE;
-			return (float)pingToBestRegion > (float)fLOATVALUE && hasTimeoutToSomeRegion;
-		}
-	}
 
 	public static bool isInRoom
 	{
@@ -167,36 +141,14 @@ public class PhotonConnectionManager : Singleton<PhotonConnectionManager>
 
 	public void CheckIfShouldPing()
 	{
-		if (Singleton<BeanstalkServerManager>.instance.isPlayerDataLoaded && GameLoginManager.currentPlayer != null)
-		{
-			bool flag = GameLoginManager.currentPlayer.connectionType != connection;
-			float num = Time.realtimeSinceStartup - mPingsFoundTime;
-			if (Singleton<GameController>.instance.gameState == GameController.GameState.Menu && !mIsPinging && Singleton<GuiManager>.instance.currentScreen != GuiScreenSingle<CardSelectionScreen>.instance && Singleton<GuiManager>.instance.currentScreen != GuiScreenSingle<EndScreen>.instance && (flag || num > 300f || (hasBadPing && num > 60f)))
-			{
-				Debug.Log($"PhotonConnectionManager: Find pings found before: {num} Connection changed {flag}");
-				StartCoroutine(FindPingsCoroutine());
-			}
-		}
+		// The self-hosted allocator chooses the battle endpoint. A Photon Cloud
+		// region probe would contact a retired online service from the menu.
 	}
 
 	private void PlayerDataLoaded()
 	{
 		bestRegions = GameLoginManager.currentPlayer.bestRegions;
 		CheckIfShouldPing();
-	}
-
-	private static void SetAuthenticationValues()
-	{
-		AuthenticationValues authenticationValues = new AuthenticationValues();
-		authenticationValues.UserId = GameLoginManager.currentPlayer.id;
-		AuthenticationValues authenticationValues2 = authenticationValues;
-		authenticationValues2.AuthType = CustomAuthenticationType.Custom;
-		authenticationValues2.AddAuthParameter("userId", GameLoginManager.currentPlayer.id);
-		authenticationValues2.AddAuthParameter("version", Singleton<CurrentBundleVersion>.instance.version);
-		authenticationValues2.AddAuthParameter("pass", GameLoginManager.instance.data.playerAccount.passwordByAccount);
-		authenticationValues2.AddAuthParameter("account", GameLoginManager.instance.data.playerAccount.accountType.ToString());
-		Debug.Log(authenticationValues2.ToString());
-		PhotonNetwork.AuthValues = authenticationValues2;
 	}
 
 	public static void ConnectToPhotonSafe(CloudRegionCode? region = null)
@@ -207,80 +159,14 @@ public class PhotonConnectionManager : Singleton<PhotonConnectionManager>
 			Debug.Log("PhotonConnectionManager: self-hosted room already owns the connection");
 			return;
 		}
-		switch (Singleton<BeanstalkServerManager>.instance.environment)
-		{
-		case DatabaseEnvironment.Production:
-			PhotonNetwork.PhotonServerSettings.AppID = "74379913-3b64-482e-bda1-8a8d90c0f3f9";
-			break;
-		case DatabaseEnvironment.QA:
-			PhotonNetwork.PhotonServerSettings.AppID = "6519f781-1ea7-421f-85d0-c9bb516e923d";
-			break;
-		case DatabaseEnvironment.DevelopmentSvk:
-			PhotonNetwork.PhotonServerSettings.AppID = "ab5d043a-2edb-431f-a4a0-0571589ee058";
-			break;
-		default:
-			PhotonNetwork.PhotonServerSettings.AppID = "bd18592b-6778-40f5-9327-0aba2d2f1e64";
-			break;
-		}
-		Debug.Log("PhotonConnectionManager: ConnectToPhotonSafe " + ((!region.HasValue) ? "null" : region.Value.ToString()));
-		Singleton<PhotonConnectionManager>.instance.StopAllCoroutines();
-		PhotonNetwork.offlineMode = false;
-		PhotonNetwork.networkingPeer.LeftRoomCleanup();
-		PhotonNetwork.Disconnect();
-		if (region.HasValue)
-		{
-			PhotonNetwork.OverrideBestCloudServer(region.Value);
-			Debug.Log("====== Connecting to region: " + region);
-		}
-		else
-		{
-			region = bestRegion;
-		}
-		bestRegion = region.Value;
-		SetAuthenticationValues();
-		Singleton<PhotonConnectionManager>.instance.StartCoroutine(ConnectToRegion(region.Value));
-	}
-
-	private static IEnumerator ConnectToRegion(CloudRegionCode region)
-	{
-		int counter = 0;
-		while (PhotonNetwork.networkingPeer.State != ClientState.Disconnected && PhotonNetwork.networkingPeer.State != ClientState.PeerCreated)
-		{
-			int num;
-			counter = (num = counter + 1);
-			if (num % 10 == 0)
-			{
-				Debug.Log("====== Waiting to connect to photon: " + PhotonNetwork.networkingPeer.State);
-			}
-			yield return null;
-		}
-		PhotonNetwork.ConnectToBestCloudServer("1.0" + Singleton<BeanstalkServerManager>.instance.environmentName + Singleton<CurrentBundleVersion>.instance.photonVersion, region);
+		Debug.LogError("Photon Cloud rooms are unavailable in the offline build; use self-hosted matchmaking.");
 	}
 
 	public IEnumerator TryRecconnectToPhotonCoroutine()
 	{
-		Debug.LogError("TryRecconnectToPhotonCoroutine started");
-		Debug.LogError("TryRecconnect TryRecconnectToPhotonCoroutine going to reconnect");
-		for (int i = 0; i < 40; i++)
-		{
-			if (i % 5 == 0)
-			{
-				Debug.Log("Peer state: " + PhotonNetwork.networkingPeer.PeerState);
-			}
-			yield return new WaitForRealSeconds(1f);
-			if (PhotonNetwork.networkingPeer.PeerState == PeerStateValue.Connected)
-			{
-				yield break;
-			}
-			if (PhotonNetwork.networkingPeer.PeerState == PeerStateValue.Disconnected)
-			{
-				Debug.Log("RE-CONNECTING CALLED " + PhotonNetwork.networkingPeer.PeerState);
-				SetAuthenticationValues();
-				PhotonNetwork.ConnectToBestCloudServer("1.0" + Singleton<BeanstalkServerManager>.instance.environmentName + Singleton<CurrentBundleVersion>.instance.photonVersion, bestRegion);
-			}
-		}
-		Disconnect();
+		Debug.LogError("Photon Cloud reconnect is unavailable in the offline build.");
 		Singleton<GameController>.instance.BroadcastMessage("OnFailedToReconnect", SendMessageOptions.DontRequireReceiver);
+		yield break;
 	}
 
 	private void OnConnectedToMaster()
@@ -430,10 +316,7 @@ public class PhotonConnectionManager : Singleton<PhotonConnectionManager>
 
 	public void CheckPingsNow()
 	{
-		if (!mIsPinging)
-		{
-			mPingsFoundTime = float.MinValue;
-		}
+		// Retained for recovered UI callers; the self-hosted allocator owns routing.
 	}
 
 	public string ConnectToRoom(CloudRegionCode best, float connectionDelay)
@@ -603,65 +486,6 @@ public class PhotonConnectionManager : Singleton<PhotonConnectionManager>
 	public static void TryRecconnectToPhoton()
 	{
 		Singleton<PhotonConnectionManager>.instance.StartCoroutine(RadicalRoutine.Run(Singleton<PhotonConnectionManager>.instance.TryRecconnectToPhotonCoroutine()));
-	}
-
-	private IEnumerator FindPingsCoroutine()
-	{
-		mIsPinging = true;
-		if (PhotonNetwork.networkingPeer.AvailableRegions == null || PhotonNetwork.networkingPeer.AvailableRegions.Count == 0)
-		{
-			yield return new WaitForSeconds(3f);
-			PhotonNetwork.offlineMode = false;
-			Debug.Log("Pings: ConnectToNameServer");
-			PhotonNetwork.ConnectToNameServer(string.Concat("1.0", Singleton<BeanstalkServerManager>.instance.environment, Singleton<CurrentBundleVersion>.instance.photonVersion));
-			while (PhotonNetwork.networkingPeer.State != ClientState.ConnectedToNameServer)
-			{
-				yield return null;
-			}
-			while (PhotonNetwork.networkingPeer.AvailableRegions == null)
-			{
-				if (PhotonNetwork.connectionStateDetailed != ClientState.ConnectingToNameServer && PhotonNetwork.connectionStateDetailed != ClientState.ConnectedToNameServer)
-				{
-					Debug.LogError("Call ConnectToNameServer to ping available regions.");
-					yield break;
-				}
-				yield return new WaitForSeconds(0.25f);
-			}
-		}
-		PhotonPingManager pingManager = new PhotonPingManager();
-		Region[] regs = PhotonNetwork.networkingPeer.AvailableRegions.ToArray();
-		Region[] array = regs;
-		foreach (Region region in array)
-		{
-			StartCoroutine(pingManager.PingSocket(region));
-		}
-		while (!pingManager.Done)
-		{
-			yield return new WaitForSeconds(0.1f);
-		}
-		Dictionary<CloudRegionCode, int> regions = new Dictionary<CloudRegionCode, int>();
-		string debugStr = "============PINGS===========\n";
-		Region[] array2 = regs;
-		foreach (Region region2 in array2)
-		{
-			if (region2.Code != CloudRegionCode.none)
-			{
-				regions[region2.Code] = region2.Ping;
-			}
-			debugStr += $"Region: {region2.Code} with ping {region2.Ping}, IP: {region2} \n";
-		}
-		Debug.Log(debugStr);
-		bestRegions = regions;
-		if (GameLoginManager.currentPlayer != null)
-		{
-			GameLoginManager.currentPlayer.bestRegions = regions;
-			GameLoginManager.currentPlayer.connectionType = connection;
-			Singleton<BeanstalkServerManager>.instance.UpdateRegionPings(regions, connection);
-		}
-		PhotonNetwork.Disconnect();
-		PhotonNetwork.offlineMode = true;
-		mPingsFoundTime = Time.realtimeSinceStartup;
-		mIsPinging = false;
 	}
 
 	public static CloudRegionCode GetBestAllowedRegion(List<CloudRegionCode> allowed)
