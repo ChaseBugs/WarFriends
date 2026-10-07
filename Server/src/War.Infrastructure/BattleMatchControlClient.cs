@@ -58,6 +58,41 @@ public sealed class BattleMatchControlClient
             throw new InvalidDataException("Battle registration grants share a session identity.");
         return new BattleMatchRegistration(codeNode.GetString()!,expectedMatchId,hash,Array.AsReadOnly(grants));
     }
+
+    /// <summary>Requests one player-bound replacement capability from the trusted Worker.</summary>
+    public async Task<MatchConnectionGrant> ReconnectAsync(Uri endpoint,string matchId,
+        string playerId,string requestId,CancellationToken ct)
+    {
+        if(endpoint==null || !endpoint.IsAbsoluteUri || endpoint.Scheme is not ("http" or "https") ||
+           !ValidMatchId(matchId) || !CanonicalGuid(playerId) || !CanonicalGuid(requestId))
+            throw new InvalidDataException("Invalid battle reconnect request.");
+        byte[] body=JsonSerializer.SerializeToUtf8Bytes(new {matchId,playerId,requestId});
+        string timestamp=DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString(System.Globalization.CultureInfo.InvariantCulture);
+        byte[] prefix=Encoding.UTF8.GetBytes("war/match/control/v1/"+timestamp+"\n");
+        byte[] signed=new byte[prefix.Length+body.Length];
+        prefix.CopyTo(signed,0);
+        body.CopyTo(signed,prefix.Length);
+        using var request=new HttpRequestMessage(HttpMethod.Post,endpoint)
+            {Content=new ByteArrayContent(body)};
+        request.Content.Headers.ContentType=new System.Net.Http.Headers.MediaTypeHeaderValue("application/json");
+        request.Headers.Add("X-War-Control-Time",timestamp);
+        request.Headers.Add("X-War-Control-Mac",Convert.ToHexString(HMACSHA256.HashData(key,signed)));
+        using var response=await http.SendAsync(request,HttpCompletionOption.ResponseHeadersRead,ct);
+        if(!response.IsSuccessStatusCode)
+            throw new HttpRequestException("Battle reconnect failed: "+(int)response.StatusCode);
+        using var document=JsonDocument.Parse(await response.Content.ReadAsByteArrayAsync(ct));
+        var root=document.RootElement;
+        if(root.ValueKind!=JsonValueKind.Object || root.EnumerateObject().Count()!=2 ||
+           !root.TryGetProperty("code",out var code) || code.ValueKind!=JsonValueKind.String ||
+           code.GetString() is not ("reconnect-issued" or "reconnect-existing") ||
+           !root.TryGetProperty("grant",out var grantNode))
+            throw new InvalidDataException("Invalid battle reconnect response.");
+        var grant=ParseGrant(grantNode);
+        if(grant.MatchId!=matchId || grant.PlayerId!=playerId ||
+           grant.ExpiresUnixSeconds<=DateTimeOffset.UtcNow.ToUnixTimeSeconds())
+            throw new InvalidDataException("Battle reconnect grant differs from its requested identity or has expired.");
+        return grant;
+    }
     private static MatchConnectionGrant ParseGrant(JsonElement row)
     {
         if(row.ValueKind!=JsonValueKind.Object || row.EnumerateObject().Count()!=9)throw new InvalidDataException("Invalid battle grant shape.");
@@ -83,4 +118,6 @@ public sealed class BattleMatchControlClient
         {throw new InvalidDataException("Invalid battle grant encoding.",e);}
     }
     private static bool ValidMatchId(string? value)=>System.Text.RegularExpressions.Regex.IsMatch(value??"",@"\A[a-zA-Z0-9_-]{1,64}\z");
+    private static bool CanonicalGuid(string? value)=>Guid.TryParseExact(value,"N",out _) &&
+        value==value.ToLowerInvariant();
 }
