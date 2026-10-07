@@ -462,6 +462,8 @@ message BattleCoopEnemySpawn {
   // Mission.UpdateMission sends card events through SpawnForCard. The Client
   // passes clamp01(level / 25f) to SpawnByCard instead of normal upgrades.
   bool card_unit = 10; float card_progress = 11;
+  // Zero for card variants until their CARDS_MIN/MAX interpolation is bound.
+  float max_health = 12; float health = 13;
 }
 message MatchReply {
   uint64 command_id = 1; string code = 2; MatchSnapshot snapshot = 3;

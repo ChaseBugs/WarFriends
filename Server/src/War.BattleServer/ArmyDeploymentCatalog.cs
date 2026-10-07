@@ -5,6 +5,8 @@ namespace War.BattleServer;
 
 public sealed record ArmyDeploymentOption(int Index,int Count,int Power,float Cooldown);
 public sealed record ArmyBaseCombatStats(float Health,float Damage);
+public sealed record ArmyCoopCombatScale(
+    float Health, float Damage, float HeroicHealth, float HeroicDamage);
 public sealed record ArmyUpgradeShotStats(float ProbabilityOfRealShot,int FireBatchSizeMin,
     int FireBatchSizeMax,float MinShootTime,float MaxShootTime);
 public sealed record ArmyBaseShotStats(float ProbabilityOfRealShot,int FireBatchSizeMin,
@@ -49,6 +51,7 @@ public sealed class ArmyDeploymentCatalog
     private IReadOnlyDictionary<string,float>? vehiclePassengerRespawnSeconds;
     private IReadOnlyDictionary<string,IReadOnlyList<ArmyVehicleCannonStats>>? vehicleCannonStages;
     private IReadOnlyDictionary<string,ArmyPlayerDamagePolicy>? playerDamagePolicies;
+    private IReadOnlyDictionary<string,ArmyCoopCombatScale>? coopCombatScales;
     private IReadOnlyDictionary<string,int>? normalLaneEnds;
     private IReadOnlyDictionary<string,int>? eliteLaneStarts;
     private float? droneBulletSpeed;
@@ -72,6 +75,26 @@ public sealed class ArmyDeploymentCatalog
         var value=stages[normalUpgradeIndex];
         if(value.Health<=0)throw new InvalidDataException("Army upgrade stage is an unplayable source sentinel.");
         return value;
+    }
+
+    /// <summary>
+    /// Mission enemies use their normal upgrade row, then the source
+    /// ArmyUpgrades COOPHP/COOPDAMAGE pair. Heroic mode selects its own pair.
+    /// Card units follow CARDS_MIN/MAX interpolation and do not use this method.
+    /// </summary>
+    public ArmyBaseCombatStats CoopStats(
+        string unitId, int normalUpgradeIndex, bool heroic)
+    {
+        ArmyBaseCombatStats source = BaseStats(unitId, normalUpgradeIndex);
+        if (coopCombatScales == null ||
+            !coopCombatScales.TryGetValue(unitId, out ArmyCoopCombatScale? scale))
+            throw new InvalidDataException("Co-op combat scale is unavailable.");
+        float health = source.Health * (heroic ? scale.HeroicHealth : scale.Health);
+        float damage = source.Damage * (heroic ? scale.HeroicDamage : scale.Damage);
+        if (!float.IsFinite(health) || health <= 0 || health > 10_000_000 ||
+            !float.IsFinite(damage) || damage < 0 || damage > 10_000_000)
+            throw new InvalidDataException("Co-op enemy combat stats exceed source bounds.");
+        return new ArmyBaseCombatStats(health, damage);
     }
 
     /// <summary>UpgradeSlotsHelicopter adds Seats across selected lanes; GetSoldierHpInMechanic reads only the normal row.</summary>
@@ -439,6 +462,7 @@ public sealed class ArmyDeploymentCatalog
         var acceptedPassengerHealth=new Dictionary<string,IReadOnlyList<float>>(StringComparer.Ordinal);
         var acceptedPassengerRespawn=new Dictionary<string,float>(StringComparer.Ordinal);
         var acceptedPlayerDamage=new Dictionary<string,ArmyPlayerDamagePolicy>(StringComparer.Ordinal);
+        var acceptedCoopScales=new Dictionary<string,ArmyCoopCombatScale>(StringComparer.Ordinal);
         var acceptedVehicleCannons=new Dictionary<string,IReadOnlyList<ArmyVehicleCannonStats>>(StringComparer.Ordinal);
         var acceptedLaneEnds=new Dictionary<string,int>(StringComparer.Ordinal);
         var acceptedEliteStarts=new Dictionary<string,int>(StringComparer.Ordinal);
@@ -457,6 +481,17 @@ public sealed class ArmyDeploymentCatalog
             float cooldown=row.GetProperty("COOLDOWN").GetSingle();
             float movementSpeed=row.GetProperty("MOVEMENTSPEED").GetSingle();
             float runtimeBulletSpeed=row.GetProperty("BULLETSPEED").GetSingle();
+            float coopHealth=row.GetProperty("COOPHP").GetSingle();
+            float coopDamage=row.GetProperty("COOPDAMAGE").GetSingle();
+            float heroicCoopHealth=row.GetProperty("HEROICCOOPHP").GetSingle();
+            float heroicCoopDamage=row.GetProperty("HEROICCOOPDAMAGE").GetSingle();
+            if (!ValidCoopScale(coopHealth) || !ValidCoopScale(coopDamage) ||
+                !ValidCoopScale(heroicCoopHealth) ||
+                !ValidCoopScale(heroicCoopDamage))
+                throw new InvalidDataException("Invalid source co-op combat scale.");
+            acceptedCoopScales.Add(family.UnitId,
+                new ArmyCoopCombatScale(coopHealth, coopDamage,
+                    heroicCoopHealth, heroicCoopDamage));
             if(!float.IsFinite(runtimeBulletSpeed)||runtimeBulletSpeed<=0||runtimeBulletSpeed>1000)
                 throw new InvalidDataException("Invalid ArmyUpgrades runtime bullet speed.");
             acceptedBulletSpeeds.Add(family.UnitId,runtimeBulletSpeed);
@@ -601,6 +636,7 @@ public sealed class ArmyDeploymentCatalog
         assaultHelicopterGlassHealth=acceptedAssaultGlassHealth??
             throw new InvalidDataException("Assault Helicopter glass health authority is absent.");
         playerDamagePolicies=acceptedPlayerDamage;
+        coopCombatScales=acceptedCoopScales;
         vehiclePassengerHealth=acceptedPassengerHealth;
         vehiclePassengerRespawnSeconds=acceptedPassengerRespawn;
         normalLaneEnds=acceptedLaneEnds;
@@ -610,6 +646,11 @@ public sealed class ArmyDeploymentCatalog
         droneShieldProbability=acceptedDroneShieldProbability??throw new InvalidDataException("Drone shield probability authority absent.");
         assaultHelicopterShieldProbability=acceptedAssaultHelicopterShieldProbability??
             throw new InvalidDataException("Assault Helicopter shield probability authority absent.");
+    }
+
+    private static bool ValidCoopScale(float scale)
+    {
+        return float.IsFinite(scale) && scale > 0 && scale <= 100;
     }
 
     public static ArmyDeploymentCatalog Load(string path,string expectedRevision,string expectedSceneRevision)

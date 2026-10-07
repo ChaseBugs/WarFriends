@@ -12,7 +12,8 @@ using War.Protocol.Transport;
 
 internal static class CombatContentTests
 {
-    private static int VerifyMissionCatalog(string directory)
+    private static int VerifyMissionCatalog(
+        string directory, ArmyDeploymentCatalog army)
     {
         string path = Path.Combine(directory, "recovered-mission-catalog.json");
         MissionCatalog catalog = MissionCatalog.Load(path);
@@ -30,7 +31,7 @@ internal static class CombatContentTests
         int spawnAssertions = VerifyMissionAutomaticSpawns(catalog);
         int eventAssertions = VerifyMissionTimedEvents(catalog);
         int coopAssertions = VerifyCoopMissionEngine(catalog);
-        int allocationAssertions = VerifyCoopAllocation(directory, catalog);
+        int allocationAssertions = VerifyCoopAllocation(directory, catalog, army);
         int mapAssertions = VerifyCoopSpawnCatalog(directory, catalog);
 
         string temporaryPath = Path.Combine(Path.GetTempPath(),
@@ -315,10 +316,18 @@ internal static class CombatContentTests
         return 6;
     }
 
-    private static int VerifyCoopAllocation(string directory, MissionCatalog catalog)
+    private static int VerifyCoopAllocation(
+        string directory, MissionCatalog catalog, ArmyDeploymentCatalog army)
     {
         CoopSpawnPointCatalog spawnPoints = CoopSpawnPointCatalog.Load(
             Path.Combine(directory, "recovered-coop-spawn-points.json"), catalog);
+        var enemyCombat = new CoopEnemyCombatCatalog(catalog, army);
+        ArmyBaseCombatStats ordinary = enemyCombat.OrdinaryStats("Assaulter", 0);
+        ArmyBaseCombatStats heroic = enemyCombat.OrdinaryStats("Assaulter", 0, heroic: true);
+        if (MathF.Abs(ordinary.Health - 140f * 2.34f) > .0001f ||
+            MathF.Abs(ordinary.Damage - 29.6f * 1.6f) > .0001f ||
+            MathF.Abs(heroic.Health - 140f * 3.37f) > .0001f)
+            throw new Exception("Recovered co-op scales must multiply the selected upgrade row.");
         MatchManifest duel = MatchManifest.Read(
             Path.Combine(directory, "local-rifle-match-template.json"));
         MissionMapRule sourceMap = catalog.MapForMission(0);
@@ -360,14 +369,15 @@ internal static class CombatContentTests
 
         try
         {
-            _ = new CoopMatchRuntime(coop with { MapId = duel.MapId }, catalog, spawnPoints);
+            _ = new CoopMatchRuntime(coop with { MapId = duel.MapId },
+                catalog, spawnPoints, enemyCombat);
             throw new Exception("A PvP map was accepted for a source co-op mission.");
         }
         catch (InvalidDataException)
         {
         }
 
-        var runtime = new CoopMatchRuntime(coop, catalog, spawnPoints,
+        var runtime = new CoopMatchRuntime(coop, catalog, spawnPoints, enemyCombat,
             chooseBehaviour: _ => 0, choosePoint: _ => 0);
         string firstPlayer = coop.Players[0].PlayerId;
         string secondPlayer = coop.Players[1].PlayerId;
@@ -406,6 +416,8 @@ internal static class CombatContentTests
         CoopMapSpawnPoints sourceMapSpawns = spawnPoints.MapForMission(catalog, 0);
         if (firstEnemy.EntityId != 1 || firstEnemy.Behaviour != "Assaulter" ||
             firstEnemy.SpawnTick != 8 || firstEnemy.TimedEvent ||
+            firstEnemy.MaxHealth != ordinary.Health ||
+            firstEnemy.Health != ordinary.Health ||
             !sourceMapSpawns.EnemySpawnPoints.Any(point =>
                 point.ComponentFileId == firstEnemy.SpawnComponentFileId &&
                 point.Position == new Vector3(firstEnemy.X, firstEnemy.Y, firstEnemy.Z)))
@@ -423,7 +435,7 @@ internal static class CombatContentTests
                 point.ComponentFileId == timedEnemy.SpawnComponentFileId))
             throw new Exception("A source-timed co-op event must create a distinct host enemy.");
 
-        var steppedRuntime = new CoopMatchRuntime(coop, catalog, spawnPoints,
+        var steppedRuntime = new CoopMatchRuntime(coop, catalog, spawnPoints, enemyCombat,
             chooseBehaviour: _ => 0, choosePoint: _ => 0);
         steppedRuntime.Admit(firstPlayer);
         steppedRuntime.Admit(secondPlayer);
@@ -454,7 +466,8 @@ internal static class CombatContentTests
             MapRevision = cardMap.SceneSha256,
             DurationSeconds = cardMission.TimeSeconds
         };
-        var cardRuntime = new CoopMatchRuntime(cardAllocation, catalog, spawnPoints,
+        var cardRuntime = new CoopMatchRuntime(cardAllocation, catalog,
+            spawnPoints, enemyCombat,
             chooseBehaviour: _ => 0, choosePoint: _ => 0);
         cardRuntime.Admit(firstPlayer);
         cardRuntime.Admit(secondPlayer);
@@ -468,11 +481,12 @@ internal static class CombatContentTests
         BattleCoopEnemySpawn cardEnemy = cardRuntime.Snapshot().Coop.EnemySpawns.Single();
         if (!cardEnemy.TimedEvent || !cardEnemy.CardUnit ||
             cardEnemy.Behaviour != "Sniper" || cardEnemy.Level != 6 ||
+            cardEnemy.MaxHealth != 0 || cardEnemy.Health != 0 ||
             MathF.Abs(cardEnemy.CardProgress - 6f / 25f) > .000001f)
             throw new Exception("A source card event must preserve its card upgrade progress.");
 
         string signingKey = Convert.ToBase64String(new byte[32]);
-        var udpRuntime = new CoopMatchRuntime(coop, catalog, spawnPoints);
+        var udpRuntime = new CoopMatchRuntime(coop, catalog, spawnPoints, enemyCombat);
         var udpEndpoint = new MatchEndpoint(coop, signingKey, udpRuntime, 0);
         var tokens = new MatchTokens(signingKey);
         var claims = new MatchAdmission
@@ -498,14 +512,14 @@ internal static class CombatContentTests
             !udpRuntime.Snapshot().Players[0].Admitted)
             throw new Exception("A signed co-op hello must reach its isolated runtime.");
 
-        var earlyForfeit = new CoopMatchRuntime(coop, catalog, spawnPoints);
+        var earlyForfeit = new CoopMatchRuntime(coop, catalog, spawnPoints, enemyCombat);
         earlyForfeit.Admit(firstPlayer);
         earlyForfeit.Command(firstPlayer, new MatchCommand
             { CommandId = 1, Forfeit = new ForfeitCommand() });
         if (!earlyForfeit.Terminal || !earlyForfeit.Snapshot().Coop.Failed ||
             earlyForfeit.Snapshot().RewardEligible)
             throw new Exception("A pre-start forfeit must close without reward eligibility.");
-        return 19;
+        return 20;
     }
 
     private static int VerifyCoopSpawnCatalog(string directory, MissionCatalog missions)
@@ -563,12 +577,12 @@ internal static class CombatContentTests
     internal static int Run(string directory)
     {
         int count=0;
-        count += VerifyMissionCatalog(directory);
+        var content=BattleCombatContent.Load(Path.Combine(directory,"combat-content-manifest.json"));
+        count += VerifyMissionCatalog(directory, content.Army);
         void Check(bool ok,string name) { if (!ok) throw new Exception(name);count++; }
         void Reject(Action action) { try { action(); } catch (InvalidDataException) { count++;return; } throw new Exception("Invalid combat allocation accepted."); }
         Vector3 Vec(JsonElement value)=>new(value.GetProperty("x").GetSingle(),
             value.GetProperty("y").GetSingle(),value.GetProperty("z").GetSingle());
-        var content=BattleCombatContent.Load(Path.Combine(directory,"combat-content-manifest.json"));
         var firstAssaultMuzzle = content.AssaultHelicopterWeapons.Muzzle(
             0, Vector3.Zero, Quaternion.Identity);
         var secondAssaultMuzzle = content.AssaultHelicopterWeapons.Muzzle(

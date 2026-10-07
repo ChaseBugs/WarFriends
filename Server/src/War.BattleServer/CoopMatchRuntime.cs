@@ -24,6 +24,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
     private readonly CoopMissionEngine mission;
     private readonly MissionRule missionRule;
     private readonly CoopAiSpawnSelector spawnSelector;
+    private readonly CoopEnemyCombatCatalog combat;
     private readonly Func<int, int> chooseSpawnPoint;
     private readonly List<BattleCoopEnemySpawn> enemySpawns = [];
     private readonly Dictionary<string, Participant> participants;
@@ -38,7 +39,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
     public bool Terminal => phase is BattlePhase.Ended or BattlePhase.Aborted;
 
     internal CoopMatchRuntime(MatchManifest allocation, MissionCatalog catalog,
-        CoopSpawnPointCatalog spawnPoints,
+        CoopSpawnPointCatalog spawnPoints, CoopEnemyCombatCatalog combat,
         Func<int, int>? chooseBehaviour = null,
         Func<int, int>? choosePoint = null)
     {
@@ -57,6 +58,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         ManifestHash = manifest.Digest();
         missionRule = catalog.Get(missionIndex);
         spawnSelector = new CoopAiSpawnSelector(catalog, spawnPoints, missionIndex);
+        this.combat = combat ?? throw new ArgumentNullException(nameof(combat));
         chooseSpawnPoint = choosePoint ?? Random.Shared.Next;
         mission = new CoopMissionEngine(catalog, missionIndex, chooseBehaviour);
         participants = manifest.Players.ToDictionary(player => player.PlayerId,
@@ -167,6 +169,11 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         if (selectedIndex < 0 || selectedIndex >= candidates.Count)
             throw new InvalidDataException("Co-op spawn choice is outside the source collection.");
         CoopSpawnPoint point = candidates[selectedIndex];
+        // The Client's co-op controller scales an ordinary enemy's selected
+        // normal upgrade row with ArmyUpgrades.COOPHP. Card units take the
+        // separate CARDS_MIN/MAX interpolation path, not a normal-level HP.
+        float maximumHealth = cardUnit ? 0f :
+            combat.OrdinaryStats(behaviour, level).Health;
         return new BattleCoopEnemySpawn
         {
             EntityId = nextEnemyId++,
@@ -179,7 +186,9 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             SpawnTick = tick,
             TimedEvent = timedEvent,
             CardUnit = cardUnit,
-            CardProgress = cardUnit ? Math.Clamp(level / 25f, 0f, 1f) : 0f
+            CardProgress = cardUnit ? Math.Clamp(level / 25f, 0f, 1f) : 0f,
+            MaxHealth = maximumHealth,
+            Health = maximumHealth
         };
     }
 
