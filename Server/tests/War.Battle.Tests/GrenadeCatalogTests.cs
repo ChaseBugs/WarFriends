@@ -802,7 +802,7 @@ internal static class GrenadeCatalogTests
         Reject(()=>transporterMatch.ApplyPlayerGrenadeRepairDroneExplosion(one,repairOrigin,
             tankStage with {ExplosionDamage=1}),
             "forged grenade stage cannot damage a Transporter repair drone");
-        foreach(string airUnit in new[]{"ID_UNIT-DRONE","ID_UNIT-HELICOPTER"})
+        foreach(string airUnit in new[]{"ID_UNIT-DRONE","ID_UNIT-HELICOPTER","ID_UNIT-ASSAULTHELI"})
         {
             var airAllocation=infantryAllocation with {MatchId="grenade-air-"+airUnit[8..].ToLowerInvariant(),
                 Players=[infantryAllocation.Players[0],infantryAllocation.Players[1] with
@@ -823,6 +823,10 @@ internal static class GrenadeCatalogTests
             var airBodies=airMatch.GroundVehicleShotTargets(one)
                 .Where(x=>x.EntityId==airVictim.EntityKey&&
                     (airUnit=="ID_UNIT-DRONE"?x.DroneRoot:x.HelicopterBody)).ToArray();
+            if(airUnit=="ID_UNIT-ASSAULTHELI")
+                Check(airBodies.Count(body=>body.Hitbox.Kind==PlayerHitboxKind.Mesh)==5&&
+                      airBodies.Count(body=>body.Hitbox.Kind==PlayerHitboxKind.Box)==1,
+                    "Assault Helicopter grenade keeps five source meshes with its shared body box");
             var airOrigin=airBodies.First().Hitbox.Center;
             var airStage=combat.Grenades!.Stage("Google2u.Grenade_FRAG",0);
             var airEffect=GrenadeExplosion.ResolveArmy(airOrigin,

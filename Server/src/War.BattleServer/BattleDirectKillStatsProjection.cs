@@ -24,7 +24,7 @@ public static class BattleDirectKillStatsProjection
     private static readonly HashSet<string> GroundVehicles=new(StringComparer.Ordinal)
     {"ID_UNIT-HUMVEE","ID_UNIT-TANK","ID_UNIT-BUGGY","ID_UNIT-TRANSPORTER"};
     private static readonly HashSet<string> GrenadeVehicles=new(GroundVehicles,StringComparer.Ordinal)
-    {"ID_UNIT-DRONE","ID_UNIT-HELICOPTER"};
+    {"ID_UNIT-DRONE","ID_UNIT-HELICOPTER","ID_UNIT-ASSAULTHELI"};
     // The Mech has no host Land Mine body-blast path yet.
     private static readonly HashSet<string> MineVehicles=new(StringComparer.Ordinal)
     {
