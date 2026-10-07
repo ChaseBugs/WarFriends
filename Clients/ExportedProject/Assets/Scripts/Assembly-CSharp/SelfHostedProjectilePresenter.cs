@@ -15,6 +15,10 @@ public sealed class SelfHostedProjectilePresenter : MonoBehaviour
         public int AssaultGunIndex;
         public Vector3 End;
         public float Speed;
+        public Vector3 HostPosition;
+        public Vector3 HostVelocity;
+        public float HostReceivedAt;
+        public bool HasHostPose;
 		public Visual(GameObject root) { Root = root; }
 	}
 
@@ -39,6 +43,10 @@ public sealed class SelfHostedProjectilePresenter : MonoBehaviour
                 state.Kind != "helicopter-bullet" && state.Kind != "helicopter-fake-bullet" &&
                 state.Kind != "assault-helicopter-bullet" && state.Kind != "assault-helicopter-fake-bullet" &&
                 state.Kind != "shotgun-bullet" && state.Kind != "shotgun-fake-bullet") continue;
+			if (!ValidCoordinate(state.X) || !ValidCoordinate(state.Y) || !ValidCoordinate(state.Z) ||
+                !ValidCoordinate(state.VelocityX) || !ValidCoordinate(state.VelocityY) ||
+                !ValidCoordinate(state.VelocityZ))
+                throw new System.InvalidOperationException("Authoritative projectile pose is invalid.");
 			present.Add(state.ProjectileId);
 			Visual visual;
 			if (!active.TryGetValue(state.ProjectileId, out visual))
@@ -46,8 +54,16 @@ public sealed class SelfHostedProjectilePresenter : MonoBehaviour
 				visual = Create(state.OwnerPlayerId, state.ProjectileId, state.Kind, state.WeaponSourceId);
 				active.Add(state.ProjectileId, visual);
 			}
-			visual.Root.transform.position = new Vector3(state.X, state.Y, state.Z);
+			Vector3 hostPosition = new Vector3(state.X, state.Y, state.Z);
 			Vector3 velocity = new Vector3(state.VelocityX, state.VelocityY, state.VelocityZ);
+			if (!visual.AirShotEvent)
+            {
+                visual.HostPosition = hostPosition;
+                visual.HostVelocity = velocity;
+                visual.HostReceivedAt = Time.realtimeSinceStartup;
+                visual.HasHostPose = true;
+                visual.Root.transform.position = hostPosition;
+            }
 			if (velocity.sqrMagnitude > 0.000001f && visual.Trail == null)
                 visual.Root.transform.rotation = IsAirShot(state.Kind) || IsShotgunShot(state.Kind) ?
                     Quaternion.LookRotation(-velocity.normalized) * Quaternion.AngleAxis(-90f, Vector3.up) : Quaternion.LookRotation(velocity.normalized);
@@ -162,6 +178,7 @@ public sealed class SelfHostedProjectilePresenter : MonoBehaviour
 	}
     private void Update()
     {
+        RenderAt(Time.realtimeSinceStartup);
         var finished = new List<ulong>();
         foreach (var pair in active)
         {
@@ -173,6 +190,25 @@ public sealed class SelfHostedProjectilePresenter : MonoBehaviour
             if (visual.Root.transform.position == visual.End) finished.Add(pair.Key);
         }
         foreach (ulong id in finished) Remove(id);
+    }
+
+    public void RenderAt(float realtime)
+    {
+        if (float.IsNaN(realtime) || float.IsInfinity(realtime) || realtime < 0f)
+            throw new System.ArgumentException("Invalid projectile render time.");
+        foreach (Visual visual in active.Values)
+        {
+            if (!visual.HasHostPose || visual.AirShotEvent) continue;
+            // A snapshot's velocity is host-authored in units per second.
+            // Show at most one poll interval of motion; never predict a hit.
+            float elapsed = Mathf.Clamp(realtime - visual.HostReceivedAt, 0f, .1f);
+            visual.Root.transform.position = visual.HostPosition + visual.HostVelocity * elapsed;
+        }
+    }
+
+    private static bool ValidCoordinate(float value)
+    {
+        return !float.IsNaN(value) && !float.IsInfinity(value) && Mathf.Abs(value) <= 10000f;
     }
     private static bool IsAirShot(string kind)
     {
