@@ -10,6 +10,10 @@ using System.Text.Json;
 using Google.Protobuf;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Logging;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 
 internal static class LiveRifleTests
 {
@@ -56,10 +60,10 @@ internal static class LiveRifleTests
             view.Weapons.Add(new BattleWeaponView {Slot=2,WeaponIndex=26,SourceId="Google2u.AssaultRifle_Famas",UpgradeIndex=0});
             return view;
         }
+        var replacementGrant=Grant(ids[0],803,1);
         await File.WriteAllLinesAsync(grantsFile,
             [JsonFormatter.Default.Format(Grant(ids[0],801)),
-             JsonFormatter.Default.Format(Grant(ids[1],802)),
-             JsonFormatter.Default.Format(Grant(ids[0],803,1))]);
+             JsonFormatter.Default.Format(Grant(ids[1],802))]);
         var config=new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string,string?>
         {
             ["Battle:SigningKey"]=key,["Battle:ServerId"]=manifest.ServerId,["Battle:Port"]=port.ToString(),
@@ -67,15 +71,32 @@ internal static class LiveRifleTests
             ["Battle:ResultOutboxPath"]=Path.Combine(Path.GetTempPath(),"war-rifle-unity-outbox-"+Guid.NewGuid().ToString("N"))
         }).Build();
         using var worker=new NetworkWorker(config,NullLogger<NetworkWorker>.Instance);
+        var backendBuilder=WebApplication.CreateBuilder();
+        backendBuilder.WebHost.UseUrls("http://127.0.0.1:0");
+        backendBuilder.Logging.ClearProviders();
+        var backend=backendBuilder.Build();
+        backend.MapPost("/v1/battle/reconnect",async (HttpContext context)=>
+        {
+            using var body=new MemoryStream();
+            await context.Request.Body.CopyToAsync(body);
+            var request=MatchReconnectRequest.Parser.ParseFrom(body.ToArray());
+            if(context.Request.Headers.Authorization!="Bearer rifle-audit-token" ||
+                request.MatchId!=manifest.MatchId || request.RequestId.Length!=32)
+            {context.Response.StatusCode=400;return;}
+            context.Response.ContentType="application/x-protobuf";
+            await context.Response.Body.WriteAsync(replacementGrant.ToByteArray());
+        });
         System.Diagnostics.Process? editor=null;
         try
         {
             await worker.StartAsync(CancellationToken.None);
+            await backend.StartAsync();
             var start=new System.Diagnostics.ProcessStartInfo(unityExe)
             {UseShellExecute=false,CreateNoWindow=true,WindowStyle=System.Diagnostics.ProcessWindowStyle.Hidden};
             foreach(var arg in new[] {"-batchmode","-nographics","-projectPath",projectPath,"-executeMethod","SelfHostedLiveRifleAudit.Run","-logFile",unityLog})
                 start.ArgumentList.Add(arg);
             start.Environment["WAR_RIFLE_LIVE_GRANTS_FILE"]=grantsFile;
+            start.Environment["WAR_RIFLE_LIVE_BACKEND"]=backend.Urls.Single()+"/";
             editor=System.Diagnostics.Process.Start(start)??throw new Exception("Unity did not start.");
             using var timeout=new CancellationTokenSource(TimeSpan.FromSeconds(105));
             await editor.WaitForExitAsync(timeout.Token);
@@ -86,6 +107,8 @@ internal static class LiveRifleTests
         finally
         {
             if(editor!=null){if(!editor.HasExited)editor.Kill(true);editor.Dispose();}
+            await backend.StopAsync();
+            await backend.DisposeAsync();
             await worker.StopAsync(CancellationToken.None);
             File.Delete(grantsFile);File.Delete(manifestFile);
         }

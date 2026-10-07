@@ -19,17 +19,18 @@ public static class SelfHostedLiveRifleAudit
     {
         string path=Environment.GetEnvironmentVariable("WAR_RIFLE_LIVE_GRANTS_FILE");
         if(string.IsNullOrEmpty(path))throw new InvalidOperationException("Set WAR_RIFLE_LIVE_GRANTS_FILE.");
+        string backendUrl=Environment.GetEnvironmentVariable("WAR_RIFLE_LIVE_BACKEND");
+        if(string.IsNullOrEmpty(backendUrl))throw new InvalidOperationException("Set WAR_RIFLE_LIVE_BACKEND.");
         string[] lines=File.ReadAllLines(path);
-		if(lines.Length!=3)throw new InvalidOperationException("Expected two initial grants and one replacement grant.");
+		if(lines.Length!=2)throw new InvalidOperationException("Expected two initial grants.");
 		var first=JsonParser.Default.Parse<MatchConnectionGrant>(lines[0]);
 		var second=JsonParser.Default.Parse<MatchConnectionGrant>(lines[1]);
-		var replacement=JsonParser.Default.Parse<MatchConnectionGrant>(lines[2]);
 		deadline=EditorApplication.timeSinceStartup+65;
-		audit=Check(first,second,replacement);
+		audit=Check(first,second,backendUrl);
         EditorApplication.update+=Update;
     }
 	private static async Task Check(MatchConnectionGrant local,MatchConnectionGrant peer,
-		MatchConnectionGrant replacement)
+		string backendUrl)
     {
         GameObject owner=null,left=null,right=null;
         try
@@ -49,6 +50,13 @@ public static class SelfHostedLiveRifleAudit
             original.gameObject.SetActive(wasActive);
             owner=new GameObject("SelfHostedLiveRifleAudit");
             var adapter=owner.AddComponent<SelfHostedBattleClient>();
+            var login=owner.AddComponent<GameLoginManager>();
+            typeof(GameLoginManager).GetField("loginAccessToken",
+                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)
+                .SetValue(login,"rifle-audit-token");
+            typeof(SelfHostedBattleClient).GetField("backendEndpoint",
+                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)
+                .SetValue(adapter,backendUrl);
             var leftPlayer=left.GetComponent<PlayerController>();var rightPlayer=right.GetComponent<PlayerController>();
             var leftAnimator=left.GetComponentInChildren<SoldierAnimationController>(true);
             var rightAnimator=right.GetComponentInChildren<SoldierAnimationController>(true);
@@ -257,8 +265,17 @@ public static class SelfHostedLiveRifleAudit
 				if(!expired)
 					throw new InvalidOperationException("Unity adapter did not observe its expired event cursor.");
 				allowSnapshotGap=true;
-				await adapter.Reconnect(replacement);
-				if(!adapter.IsConnected || adapter.ProcessedEventId<latestBeforeExpiry ||
+				var update=typeof(SelfHostedBattleClient).GetMethod("Update",
+					System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+				bool recoveryObserved=false;
+				for(int attempt=0;attempt<100;attempt++)
+				{
+					update.Invoke(adapter,null);
+					await Task.Delay(100,ct.Token);
+					if(adapter.IsReconnecting)recoveryObserved=true;
+					if(recoveryObserved && adapter.IsConnected && !adapter.IsReconnecting)break;
+				}
+				if(!recoveryObserved || !adapter.IsConnected || adapter.ProcessedEventId<latestBeforeExpiry ||
 					adapter.ProcessedEventId<adapter.State.LatestEventId ||
 					Vector3.Distance(left.transform.position,Position(adapter.State,local.PlayerId))>.0001f ||
 					Vector3.Distance(right.transform.position,Position(adapter.State,peer.PlayerId))>.15f ||
@@ -269,7 +286,7 @@ public static class SelfHostedLiveRifleAudit
 					leftPlayer.weaponInventory.currentWeapon.weapon.ammoLeftInClip!=
 						adapter.State.Players.Single(p=>p.PlayerId==local.PlayerId).ClipAmmo)
 					throw new InvalidOperationException("Expired event history did not restore the rendered Unity rigs.");
-				Debug.Log("UNITY_LIVE_RIFLE_PASSED renderedRigs=2 expiredEventRecovery=True movingRun=True walkingShot=True frames="+frames+" health="+
+				Debug.Log("UNITY_LIVE_RIFLE_PASSED renderedRigs=2 automaticExpiredEventRecovery=True movingRun=True walkingShot=True frames="+frames+" health="+
 					string.Join(",",adapter.State.Players.Select(p=>p.Health.ToString("F2"))));
 	}
         }
