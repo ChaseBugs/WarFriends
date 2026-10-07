@@ -234,6 +234,15 @@ public sealed class SelfHostedDeathMatchBridge : MonoBehaviour
 	{
 		commandPending = true;
 		try { await operation; }
+		catch (TimeoutException)
+		{
+			try { await client.ReconnectWithRecoveredSession(); }
+			catch (Exception exception)
+			{
+				Debug.LogError("Self-hosted reconnect failed: " + exception.GetType().Name);
+			}
+		}
+		catch (OperationCanceledException) when (client != null && (client.IsReconnecting || client.IsConnected)) { }
 		catch (Exception exception)
 		{
 			Debug.LogError("Self-hosted battle intent failed: " + exception.GetType().Name);

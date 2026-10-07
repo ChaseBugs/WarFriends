@@ -5,6 +5,9 @@ using System.Numerics;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using Google.Protobuf;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using War.BattleServer;
@@ -2187,8 +2190,37 @@ if (args.Length == 3 && args[0] == "--unity")
     await File.WriteAllTextAsync(manifestFile, JsonSerializer.Serialize(unityDefinition));
     string grantsFile = Path.Combine(Path.GetTempPath(), "war-grants-" + Guid.NewGuid().ToString("N") + ".jsonl");
     string reconnectFile = Path.Combine(Path.GetTempPath(), "war-reconnect-" + Guid.NewGuid().ToString("N") + ".json");
+    string dropPollFile = Path.Combine(Path.GetTempPath(), "war-drop-poll-" + Guid.NewGuid().ToString("N"));
     string unityLog = Path.GetFullPath("Server/.local/unity-battle-sdk.log");
     Directory.CreateDirectory(Path.GetDirectoryName(unityLog)!);
+    using var unityProxy = new UdpClient(new IPEndPoint(IPAddress.Loopback,0));
+    using var unityProxyStop = new CancellationTokenSource();
+    int unityProxyPort = ((IPEndPoint)unityProxy.Client.LocalEndPoint!).Port;
+    var unityWorkerEndpoint = new IPEndPoint(IPAddress.Loopback,port);
+    Task unityRelay = Task.Run(async () =>
+    {
+        IPEndPoint? unityClient = null;
+        try
+        {
+            while (!unityProxyStop.IsCancellationRequested)
+            {
+                var datagram = await unityProxy.ReceiveAsync(unityProxyStop.Token);
+                if (datagram.RemoteEndPoint.Equals(unityWorkerEndpoint))
+                {
+                    var packet = PacketCodec.ReadUntrusted(datagram.Buffer);
+                    if (File.Exists(dropPollFile) && packet?.MatchReply?.Code == "state") continue;
+                    if (unityClient != null)
+                        await unityProxy.SendAsync(datagram.Buffer,unityClient,unityProxyStop.Token);
+                }
+                else
+                {
+                    unityClient = datagram.RemoteEndPoint;
+                    await unityProxy.SendAsync(datagram.Buffer,unityWorkerEndpoint,unityProxyStop.Token);
+                }
+            }
+        }
+        catch (OperationCanceledException) when (unityProxyStop.IsCancellationRequested) { }
+    });
     MatchConnectionGrant UnityGrant(string id, ulong session)
     {
         var claims = Claims(id, session);
@@ -2197,13 +2229,36 @@ if (args.Length == 3 && args[0] == "--unity")
         claims.ExpiresUnixSeconds = claims.IssuedUnixSeconds + 120;
         return Grant(claims, port);
     }
-    await File.WriteAllLinesAsync(grantsFile, [JsonFormatter.Default.Format(UnityGrant(a, 201)), JsonFormatter.Default.Format(UnityGrant(b, 202))]);
+    var unityFirstGrant = UnityGrant(a,201);
+    unityFirstGrant.Port = (uint)unityProxyPort;
+    await File.WriteAllLinesAsync(grantsFile,
+        [JsonFormatter.Default.Format(unityFirstGrant),JsonFormatter.Default.Format(UnityGrant(b,202))]);
     string unityOutboxPath=Path.Combine(Path.GetTempPath(),"war-unity-outbox-"+Guid.NewGuid().ToString("N"));
     using var unityWorker = new NetworkWorker(OutboxConfig(unityOutboxPath), logs.CreateLogger<NetworkWorker>());
+    var backendBuilder = WebApplication.CreateBuilder();
+    backendBuilder.WebHost.UseUrls("http://127.0.0.1:0");
+    backendBuilder.Logging.ClearProviders();
+    var auditBackend = backendBuilder.Build();
+    auditBackend.MapPost("/v1/battle/reconnect", async (HttpContext context) =>
+    {
+        using var body = new MemoryStream();
+        await context.Request.Body.CopyToAsync(body);
+        var request = MatchReconnectRequest.Parser.ParseFrom(body.ToArray());
+        if (context.Request.Headers.Authorization != "Bearer audit-token" ||
+            request.MatchId != unityDefinition.MatchId || request.RequestId.Length != 32)
+        {context.Response.StatusCode=400;return;}
+        while (!File.Exists(reconnectFile))
+            await Task.Delay(50,context.RequestAborted);
+        var replacement = JsonParser.Default.Parse<MatchConnectionGrant>(
+            await File.ReadAllTextAsync(reconnectFile));
+        context.Response.ContentType = "application/x-protobuf";
+        await context.Response.Body.WriteAsync(replacement.ToByteArray());
+    });
     System.Diagnostics.Process? editor = null;
     try
     {
         await unityWorker.StartAsync(CancellationToken.None);
+        await auditBackend.StartAsync();
         var deliverReconnect = Task.Run(async () =>
         {
             for (int attempt = 0; attempt < 200; attempt++)
@@ -2231,6 +2286,8 @@ if (args.Length == 3 && args[0] == "--unity")
         foreach (var argument in new[] { "-batchmode", "-nographics", "-projectPath", args[2], "-executeMethod", "SelfHostedBattleAudit.Run", "-logFile", unityLog }) start.ArgumentList.Add(argument);
         start.Environment["WAR_BATTLE_GRANTS_FILE"] = grantsFile;
         start.Environment["WAR_BATTLE_RECONNECT_FILE"] = reconnectFile;
+        start.Environment["WAR_BATTLE_AUTO_BACKEND"] = auditBackend.Urls.Single() + "/";
+        start.Environment["WAR_BATTLE_DROP_POLL_FILE"] = dropPollFile;
         editor = System.Diagnostics.Process.Start(start) ?? throw new Exception("Unity did not start.");
         using var unityTimeout = new CancellationTokenSource(TimeSpan.FromSeconds(110));
         await editor.WaitForExitAsync(unityTimeout.Token);
@@ -2241,9 +2298,12 @@ if (args.Length == 3 && args[0] == "--unity")
     finally
     {
         if (editor != null) { if (!editor.HasExited) editor.Kill(true); editor.Dispose(); }
+        await auditBackend.StopAsync();
+        await auditBackend.DisposeAsync();
+        unityProxyStop.Cancel(); await unityRelay;
         await unityWorker.StopAsync(CancellationToken.None);
         File.Delete(grantsFile); File.Delete(reconnectFile);
-        File.Delete(reconnectFile + ".tmp"); File.Delete(manifestFile);
+        File.Delete(reconnectFile + ".tmp"); File.Delete(dropPollFile); File.Delete(manifestFile);
         Directory.Delete(unityOutboxPath,true);
     }
 }

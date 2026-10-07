@@ -36,6 +36,7 @@ public abstract class GameControllerOnline : IGameController
 	private int mSelfHostedLocalStartCover = -1;
 	private int mSelfHostedOtherStartCover = -1;
 	private SelfHostedBattleClient mSelfHostedClient;
+	private bool mSelfHostedReconnectDialog;
 
 	protected bool mMapIdSet;
 
@@ -989,6 +990,37 @@ public abstract class GameControllerOnline : IGameController
 
 	protected virtual void CheckForReconnect()
 	{
+		SelfHostedBattleClient selfHosted = SelfHostedBattleClient.Active;
+		if (selfHosted != null && selfHosted.OwnsMatch &&
+			(selfHosted.IsReconnecting || mSelfHostedReconnectDialog))
+		{
+			if (gameIsRunning && selfHosted.IsReconnecting)
+			{
+				ReconnectDialog dialog = GuiElementSingle<ReconnectDialog>.instance;
+				if (dialog != null)
+				{
+					if (!dialog.isShowed)
+					{
+						if (TimeManager.instance.isPaused)
+							GuiElementSingle<PauseScreen>.instance.HideDialog();
+						TimeManager.Pause(focusLost: false);
+						Singleton<GuiManager>.instance.ShowDialogInstant(dialog);
+						dialog.SetCause(ReconnectState.Me, true);
+						mSelfHostedReconnectDialog = true;
+					}
+					// The Worker owns the actual grace deadline. A stale local
+					// snapshot cannot supply an authoritative countdown.
+					dialog.SetWaitTime(-1f);
+				}
+			}
+			else if (selfHosted.IsConnected && GuiElementSingle<ReconnectDialog>.instance.isShowed)
+			{
+				TimeManager.Resume();
+				GuiElementSingle<ReconnectDialog>.instance.HideDialog();
+				mSelfHostedReconnectDialog = false;
+			}
+			return;
+		}
 		CheckPlayersReconnectStates();
 		if (gameIsRunning && (MatchManager.isReconnect || !MatchManager.allPlayersFinishetStartAnimation))
 		{
@@ -1414,7 +1446,8 @@ public abstract class GameControllerOnline : IGameController
 
 	protected virtual void UpdatePause()
 	{
-		if (gameIsRunning && TimeManager.instance.isPaused && TimeManager.pauseTimeLeft <= 0f && !MatchManager.isReconnect)
+		if (gameIsRunning && TimeManager.instance.isPaused && TimeManager.pauseTimeLeft <= 0f && !MatchManager.isReconnect &&
+			!(SelfHostedBattleClient.Active != null && SelfHostedBattleClient.Active.IsReconnecting))
 		{
 			if (TimeManager.instance.pauseStatus == TimeManager.PauseStatus.PausedRemote)
 			{

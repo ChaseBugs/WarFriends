@@ -18,22 +18,36 @@ public static class SelfHostedBattleAudit
     {
         string path = Environment.GetEnvironmentVariable("WAR_BATTLE_GRANTS_FILE");
         string reconnectPath = Environment.GetEnvironmentVariable("WAR_BATTLE_RECONNECT_FILE");
+        string backendUrl = Environment.GetEnvironmentVariable("WAR_BATTLE_AUTO_BACKEND");
+        string dropPollPath = Environment.GetEnvironmentVariable("WAR_BATTLE_DROP_POLL_FILE");
         if (string.IsNullOrEmpty(path)) throw new InvalidOperationException("Set WAR_BATTLE_GRANTS_FILE.");
         if (string.IsNullOrEmpty(reconnectPath)) throw new InvalidOperationException("Set WAR_BATTLE_RECONNECT_FILE.");
+        if (string.IsNullOrEmpty(backendUrl) || string.IsNullOrEmpty(dropPollPath))
+            throw new InvalidOperationException("Set automatic reconnect audit endpoints.");
         string[] lines = File.ReadAllLines(path);
         if (lines.Length != 2) throw new InvalidOperationException("Expected two protobuf-JSON grants.");
         var a = JsonParser.Default.Parse<MatchConnectionGrant>(lines[0]);
         var b = JsonParser.Default.Parse<MatchConnectionGrant>(lines[1]);
         CheckSnapshotOrdering();
         CheckAnimationAliases();
-        deadline = EditorApplication.timeSinceStartup + 40;
-        audit = Check(a, b, reconnectPath);
+        deadline = EditorApplication.timeSinceStartup + 50;
+        audit = Check(a, b, reconnectPath, backendUrl, dropPollPath);
         EditorApplication.update += Update;
     }
-    private static async Task Check(MatchConnectionGrant a, MatchConnectionGrant b, string reconnectPath)
+    private static async Task Check(MatchConnectionGrant a, MatchConnectionGrant b,
+        string reconnectPath, string backendUrl, string dropPollPath)
     {
         var owner = new GameObject("SelfHostedBattleAudit");
         var first = owner.AddComponent<SelfHostedBattleClient>();
+        // Create the login component explicitly: Singleton<T> calls DontDestroyOnLoad,
+        // which Unity permits only in Play Mode, not this batch-mode Editor audit.
+        var login = owner.AddComponent<GameLoginManager>();
+        typeof(GameLoginManager).GetField("loginAccessToken",
+            System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)
+            .SetValue(login, "audit-token");
+        typeof(SelfHostedBattleClient).GetField("backendEndpoint",
+            System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)
+            .SetValue(first, backendUrl);
         int mainThread = Thread.CurrentThread.ManagedThreadId;
         int updates = 0;
         first.StateReceived += state =>
@@ -58,10 +72,20 @@ public static class SelfHostedBattleAudit
             await first.Fire(new Vector3(1, 2, 3));
             Require(first.State.Players[0].ShotsFired == 1, "adapter fire");
             while (!File.Exists(reconnectPath)) await Task.Delay(100, ct.Token);
-            var replacement = JsonParser.Default.Parse<MatchConnectionGrant>(File.ReadAllText(reconnectPath));
             int beforeReconnect = updates;
             ulong processedBeforeReconnect = first.ProcessedEventId;
-            await first.Reconnect(replacement);
+            File.WriteAllText(dropPollPath, "drop");
+            var update = typeof(SelfHostedBattleClient).GetMethod("Update",
+                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+            bool sawRecovery = false;
+            for (int attempt = 0; attempt < 200; attempt++)
+            {
+                update.Invoke(first, null);
+                await Task.Delay(100, ct.Token);
+                if (first.IsReconnecting) sawRecovery = true;
+                if (sawRecovery && first.IsConnected && !first.IsReconnecting) break;
+            }
+            Require(sawRecovery, "lost UDP polls trigger automatic reconnect");
             Require(first.IsConnected && first.State.Phase == BattlePhase.Running &&
                 first.ProcessedEventId == processedBeforeReconnect && updates > beforeReconnect,
                 "same Unity adapter resumes its running snapshot and event cursor");
@@ -126,7 +150,7 @@ public static class SelfHostedBattleAudit
         EditorApplication.update -= Update;
         if (audit.IsCompleted && !audit.IsFaulted && !audit.IsCanceled)
         {
-            Debug.Log("UNITY_BATTLE_SDK_PASSED two participants, ready, fire, reconnect, forfeit; Unity " + Application.unityVersion);
+            Debug.Log("UNITY_BATTLE_SDK_PASSED two participants, ready, fire, automatic reconnect, forfeit; Unity " + Application.unityVersion);
             EditorApplication.Exit(0);
         }
         else

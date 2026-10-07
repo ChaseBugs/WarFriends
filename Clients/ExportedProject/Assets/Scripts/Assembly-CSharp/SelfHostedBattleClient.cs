@@ -49,6 +49,10 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
     private bool destroyed;
     private bool reconnecting;
     private string reconnectRequestId;
+    private Task reconnectTask;
+    private int reconnectAttempts;
+    private float nextReconnectAttempt;
+    private bool reconnectFailureReported;
     private bool cardsSelectedByBothRaised;
     private readonly SemaphoreSlim eventDelivery = new SemaphoreSlim(1, 1);
     private readonly Dictionary<string, SelfHostedRiflePoseRenderer> rifleViews = new Dictionary<string, SelfHostedRiflePoseRenderer>(StringComparer.Ordinal);
@@ -60,6 +64,9 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
     private SpawningManagerDeathMatch armyManager;
     private SelfHostedDeathMatchBridge deathMatchBridge;
     public bool IsMatchmaking { get { return matchmaking != null; } }
+    public bool OwnsMatch { get { return connection != null; } }
+    public bool IsReconnecting { get { return reconnectTask != null || reconnecting ||
+        connection != null && !IsConnected && reconnectRequestId != null; } }
 
     public static SelfHostedBattleClient GetOrCreate()
     {
@@ -217,21 +224,44 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
     }
 
     /// <summary>Ask the Backend for a fresh capability using the recovered login session.</summary>
-    public async Task ReconnectWithRecoveredSession()
+    public Task ReconnectWithRecoveredSession()
     {
+        if (reconnectTask != null) return reconnectTask;
+        if (destroyed) throw new ObjectDisposedException(nameof(SelfHostedBattleClient));
+        if (connection == null || string.IsNullOrEmpty(matchId))
+            throw new InvalidOperationException("There is no self-hosted match to reconnect.");
         GameLoginManager login = Singleton<GameLoginManager>.instance;
         if (login == null || string.IsNullOrEmpty(login.accessToken))
             throw new InvalidOperationException("The recovered Backend session is not available.");
-        if (connection == null || string.IsNullOrEmpty(matchId))
-            throw new InvalidOperationException("There is no self-hosted match to reconnect.");
-        if (reconnectRequestId == null) reconnectRequestId = Guid.NewGuid().ToString("N");
-        using (var backend = new BackendClient(new Uri(backendEndpoint), allowLocalHttp))
+        Task attempt = ReconnectWithToken(login.accessToken);
+        if (attempt.IsCompleted) return attempt;
+        reconnectTask = attempt;
+        return attempt;
+    }
+
+    private async Task ReconnectWithToken(string accessToken)
+    {
+        try
         {
-            var grant = await backend.ReconnectMatchAsync(matchId, reconnectRequestId,
-                login.accessToken, CancellationToken.None);
-            await Reconnect(grant);
-            reconnectRequestId = null;
+            IsConnected = false; // Stop new scene input while the Backend issues a grant.
+            if (reconnectRequestId == null) reconnectRequestId = Guid.NewGuid().ToString("N");
+            using (var backend = new BackendClient(new Uri(backendEndpoint), allowLocalHttp))
+            {
+                var grant = await backend.ReconnectMatchAsync(matchId, reconnectRequestId,
+                    accessToken, CancellationToken.None);
+                await Reconnect(grant);
+                reconnectRequestId = null;
+                reconnectAttempts = 0;
+                reconnectFailureReported = false;
+            }
         }
+        catch
+        {
+            reconnectAttempts++;
+            nextReconnectAttempt = Time.realtimeSinceStartup + Mathf.Min(2f * reconnectAttempts, 5f);
+            throw;
+        }
+        finally { reconnectTask = null; }
     }
 
     /// <summary>
@@ -522,7 +552,27 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
 
     private async void Update()
     {
-        if (!IsConnected) return;
+        if (!IsConnected)
+        {
+            if (!destroyed && reconnectRequestId != null && reconnectTask == null &&
+                reconnectAttempts > 0 && reconnectAttempts < 3 &&
+                Time.realtimeSinceStartup >= nextReconnectAttempt)
+            {
+                try { await ReconnectWithRecoveredSession(); }
+                catch (Exception e)
+                {
+                    Debug.LogError("Self-hosted reconnect retry failed: " + e);
+                    if (ConnectionError != null) ConnectionError(e.Message);
+                }
+            }
+            if (reconnectAttempts >= 3 && !reconnectFailureReported)
+            {
+                reconnectFailureReported = true;
+                MatchManager.matchState = MatchState.GameCancelled;
+                if (ConnectionError != null) ConnectionError("The battle session could not reconnect.");
+            }
+            return;
+        }
         try
         {
             foreach (var renderer in rifleViews.Values)
@@ -536,6 +586,7 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
         if (polling || Time.realtimeSinceStartup < nextPoll) return;
         polling = true;
         nextPoll = Time.realtimeSinceStartup + 0.1f;
+        bool timedOut = false;
         try
         {
             var active = connection;
@@ -569,11 +620,21 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
             }
         }
         catch (OperationCanceledException) { }
+        catch (TimeoutException) { timedOut = true; }
         catch (Exception e)
         {
             if (IsConnected && ConnectionError != null) ConnectionError(e.Message);
         }
         finally { polling = false; }
+        if (timedOut && IsConnected && !destroyed)
+        {
+            try { await ReconnectWithRecoveredSession(); }
+            catch (Exception e)
+            {
+                Debug.LogError("Self-hosted reconnect failed: " + e);
+                if (ConnectionError != null) ConnectionError(e.Message);
+            }
+        }
     }
 
     private void Apply(MatchReply reply)
@@ -612,6 +673,7 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
         IsConnected = false;
         if (matchmaking != null) matchmaking.Cancel();
         reconnectRequestId = null;
+        reconnectAttempts = 0;
         if (armyManager != null) { armyManager.UnbindSelfHosted(this); armyManager = null; }
         if (lifetime != null) { lifetime.Cancel(); lifetime.Dispose(); lifetime = null; }
         if (roomLifecycle != null)
