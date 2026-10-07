@@ -4983,6 +4983,14 @@ internal static class CombatContentTests
                   (droneBeforeFriendlyMine-5))<.001f,
             "allied Land Mine blast uses recovered half damage on a Drone");
         Reject(()=>flameDroneMatch.ApplyLandMineDroneExplosion(soldierOwner,droneMineOrigin,float.NaN));
+        Check(flameDroneMatch.TryRegisterLandMine(new string('8',32),soldierOwner,
+                  droneMineOrigin,10f),
+            "host-only mine placement overlaps the opposing Drone root");
+        ulong metalDroneMineId=flameDroneMatch.Snapshot().LandMines.Single().EntityId;
+        flameDroneMatch.Advance(76);
+        Check(flameDroneMatch.Snapshot().LandMines.Any(mine=>
+                  mine.EntityId==metalDroneMineId),
+            "Drone's source metal root does not trigger a Land Mine on the normal host tick");
         var flameHelicopterManifest=flameManifest with {MatchId="army-flame-helicopter",
             Players=[flameManifest.Players[0],flameManifest.Players[1] with
             {
