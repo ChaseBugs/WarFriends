@@ -12,7 +12,8 @@ public sealed class SnapshotChunkAssembler
 
     public SnapshotChunkAssembler(ulong revision, int expectedCount, int maxEntities = 4096)
     {
-        if (revision == 0 || expectedCount is < 1 or > 512 || maxEntities is < 1 or > 4096)
+        if (revision == 0 || revision > 10_000_000 || expectedCount is < 0 or > 512 ||
+            maxEntities is < 1 or > 4096)
             throw new InvalidDataException("Invalid snapshot chunk contract.");
         this.revision = revision;
         this.expectedCount = expectedCount;

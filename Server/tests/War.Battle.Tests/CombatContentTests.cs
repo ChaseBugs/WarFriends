@@ -2925,6 +2925,20 @@ internal static class CombatContentTests
             Reject(()=>baseline.Apply(4,new[]{new SnapshotEntity(2,Vector3.Zero,4),new SnapshotEntity(2,Vector3.One,4)}));
             Check(baseline.Apply(4,new[]{new SnapshotEntity(2,Vector3.Zero,4)}).Count==1,
                   "invalid snapshot rows do not partially mutate the baseline revision");
+            Check(baseline.RemovedEntityIds.SequenceEqual(new ulong[]{1})&&
+                  baseline.Entities.Select(row=>row.EntityId).SequenceEqual(new ulong[]{2}),
+                  "complete replacement removes entities absent from the newer revision");
+            Reject(()=>baseline.Apply(5,new[]{new SnapshotEntity(2,Vector3.Zero,5),
+                new SnapshotEntity(2,Vector3.One,5)}));
+            Check(baseline.Revision==4&&baseline.RemovedEntityIds.SequenceEqual(new ulong[]{1})&&
+                  baseline.Entities.Single().Revision==4,
+                  "invalid replacement preserves the previous roster and removal report");
+            Check(baseline.Apply(5,new[]{new SnapshotEntity(2,Vector3.Zero,5)}).Count==0&&
+                  baseline.RemovedEntityIds.Count==0&&baseline.Entities.Single().Revision==5,
+                  "unchanged positions still advance the complete roster revision");
+            Check(baseline.Apply(6,Array.Empty<SnapshotEntity>()).Count==0&&
+                  baseline.RemovedEntityIds.SequenceEqual(new ulong[]{2})&&baseline.Entities.Count==0,
+                  "an empty complete snapshot clears the roster");
             Check(SnapshotInterestFilter.Within(new[]{new SnapshotEntity(2,new(1,0,0),1),new SnapshotEntity(1,Vector3.Zero,1)},Vector3.Zero,2)
                   .Select(x=>x.EntityId).SequenceEqual(new ulong[]{1,2}),
                   "snapshot interest filtering returns only bounded nearby entities");
@@ -2939,7 +2953,18 @@ internal static class CombatContentTests
             var chunks=SnapshotChunker.Chunk(new[]{new SnapshotEntity(3,Vector3.Zero,1),new SnapshotEntity(1,Vector3.Zero,1),new SnapshotEntity(2,Vector3.Zero,1)},2);
             Check(chunks.Count==2&&chunks[0][0].EntityId==1&&chunks[1].Count==1,
                   "snapshot chunking produces bounded deterministic entity batches");
+            Check(SnapshotChunker.Chunk(Array.Empty<SnapshotEntity>()).Count==0,
+                  "an empty complete roster has no entity chunks");
             Reject(()=>SnapshotChunker.Chunk(Array.Empty<SnapshotEntity>(),0));
+            Reject(()=>SnapshotChunker.Chunk(new[]{new SnapshotEntity(1,Vector3.Zero,1),
+                new SnapshotEntity(1,Vector3.One,1)}));
+            Reject(()=>SnapshotChunker.Chunk(new[]{new SnapshotEntity(1,Vector3.Zero,1),
+                new SnapshotEntity(2,Vector3.One,2)}));
+            Reject(()=>SnapshotChunker.Chunk(new[]{new SnapshotEntity(1,
+                new Vector3(float.NaN,0,0),1)}));
+            Reject(()=>SnapshotChunker.Chunk(Enumerable.Range(1,513)
+                .Select(index=>new SnapshotEntity((ulong)index,Vector3.Zero,1)),1));
+            Check(true,"snapshot producer rejects duplicate, mixed, malformed and over-chunked rosters");
             var assembled=new SnapshotChunkAssembler(7,2);
             assembled.Add(1,new[]{new SnapshotEntity(2,new(2,0,0),7)});
             Check(!assembled.IsComplete&&assembled.ReceivedChunks==1,"snapshot assembler keeps incomplete revisions bounded");
@@ -2948,6 +2973,11 @@ internal static class CombatContentTests
                   "snapshot assembler reorders complete chunks into deterministic entity order");
             var assembledBaseline=new SnapshotBaseline();
             Check(assembled.ApplyTo(assembledBaseline).Count==2,"complete snapshot chunks apply atomically to a baseline");
+            var emptyAssembler=new SnapshotChunkAssembler(8,0);
+            Check(emptyAssembler.IsComplete&&emptyAssembler.ApplyTo(assembledBaseline).Count==0&&
+                  assembledBaseline.Entities.Count==0&&
+                  assembledBaseline.RemovedEntityIds.SequenceEqual(new ulong[]{1,2}),
+                  "zero-chunk complete revision removes all previously active entities");
             var incompleteAssembler=new SnapshotChunkAssembler(10,2);
             incompleteAssembler.Add(0,new[]{new SnapshotEntity(1,Vector3.Zero,10)});
             Reject(()=>incompleteAssembler.ApplyTo(new SnapshotBaseline()));
