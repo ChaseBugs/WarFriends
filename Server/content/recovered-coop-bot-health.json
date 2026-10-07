@@ -1,0 +1,158 @@
+{
+  "version": 1,
+  "sceneSha256": "d46f81ff8c3e12bf17f34a1f53dd601bd799102c9f984818031441dfb7a5de43",
+  "botRulesSha256": "b0a713650355cad6ea8ccaeec64a3ca89e035e0fe8793f58714db78005bc7048",
+  "playerHealthByLevel": [
+    280.0,
+    293.0,
+    312.0,
+    336.0,
+    362.0,
+    391.0,
+    422.0,
+    455.0,
+    490.0,
+    526.0,
+    580.0,
+    637.0,
+    698.0,
+    762.0,
+    831.0,
+    903.0,
+    979.0,
+    1034.0,
+    1090.0,
+    1147.0,
+    1205.0,
+    1264.0,
+    1324.0,
+    1386.0,
+    1447.0,
+    1511.0,
+    1574.0,
+    1639.0,
+    1704.0,
+    1771.0,
+    1838.0,
+    1906.0,
+    1975.0,
+    2044.0,
+    2115.0,
+    2185.0,
+    2258.0,
+    2330.0,
+    2404.0,
+    2476.0,
+    2551.0,
+    2627.0,
+    2702.0,
+    2778.0
+  ],
+  "bossHealth": [
+    {
+      "missionIndex": 4,
+      "level": 2,
+      "baseHealth": 312.0,
+      "healthMultiplier": 0.800000011920929,
+      "maximumHealth": 249.60000610351562
+    },
+    {
+      "missionIndex": 9,
+      "level": 6,
+      "baseHealth": 422.0,
+      "healthMultiplier": 0.800000011920929,
+      "maximumHealth": 337.6000061035156
+    },
+    {
+      "missionIndex": 14,
+      "level": 7,
+      "baseHealth": 455.0,
+      "healthMultiplier": 0.6000000238418579,
+      "maximumHealth": 273.0
+    },
+    {
+      "missionIndex": 19,
+      "level": 10,
+      "baseHealth": 580.0,
+      "healthMultiplier": 0.6000000238418579,
+      "maximumHealth": 348.0
+    },
+    {
+      "missionIndex": 24,
+      "level": 14,
+      "baseHealth": 831.0,
+      "healthMultiplier": 0.550000011920929,
+      "maximumHealth": 457.0500183105469
+    },
+    {
+      "missionIndex": 29,
+      "level": 15,
+      "baseHealth": 903.0,
+      "healthMultiplier": 0.699999988079071,
+      "maximumHealth": 632.0999755859375
+    },
+    {
+      "missionIndex": 34,
+      "level": 16,
+      "baseHealth": 979.0,
+      "healthMultiplier": 0.8500000238418579,
+      "maximumHealth": 832.1500244140625
+    },
+    {
+      "missionIndex": 39,
+      "level": 19,
+      "baseHealth": 1147.0,
+      "healthMultiplier": 0.8999999761581421,
+      "maximumHealth": 1032.2999267578125
+    },
+    {
+      "missionIndex": 44,
+      "level": 22,
+      "baseHealth": 1324.0,
+      "healthMultiplier": 0.949999988079071,
+      "maximumHealth": 1257.7999267578125
+    },
+    {
+      "missionIndex": 49,
+      "level": 26,
+      "baseHealth": 1574.0,
+      "healthMultiplier": 0.0,
+      "maximumHealth": 0.0
+    },
+    {
+      "missionIndex": 54,
+      "level": 31,
+      "baseHealth": 1906.0,
+      "healthMultiplier": 0.0,
+      "maximumHealth": 0.0
+    },
+    {
+      "missionIndex": 59,
+      "level": 35,
+      "baseHealth": 2185.0,
+      "healthMultiplier": 0.0,
+      "maximumHealth": 0.0
+    },
+    {
+      "missionIndex": 64,
+      "level": 26,
+      "baseHealth": 1574.0,
+      "healthMultiplier": 0.0,
+      "maximumHealth": 0.0
+    },
+    {
+      "missionIndex": 69,
+      "level": 31,
+      "baseHealth": 1906.0,
+      "healthMultiplier": 0.0,
+      "maximumHealth": 0.0
+    },
+    {
+      "missionIndex": 74,
+      "level": 35,
+      "baseHealth": 2185.0,
+      "healthMultiplier": 0.0,
+      "maximumHealth": 0.0
+    }
+  ]
+}

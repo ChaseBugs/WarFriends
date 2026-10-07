@@ -749,6 +749,14 @@ internal static class CombatContentTests
             first.HealthMultiplier != 0.8f || first.Cards.Count != 5 ||
             bots.ForMission(74).Name != "General Bad")
             throw new Exception("Source boss missions lost their bot definitions.");
+        CoopBotHealthCatalog health = CoopBotHealthCatalog.Load(Path.Combine(
+            directory, "recovered-coop-bot-health.json"), missions, bots);
+        if (health.PlayerHealthByLevel.Count != 44 ||
+            health.PlayerHealthByLevel[0] != 280f ||
+            health.ForMission(4).MaximumHealth != 312f * 0.8f ||
+            health.ForMission(74).BaseHealth != 2185f ||
+            health.Bosses.Count(row => row.MaximumHealth == 0) != 6)
+            throw new Exception("Decoded boss health differs from the Client balance table.");
 
         string temporaryPath = Path.Combine(Path.GetTempPath(),
             $"war-coop-bots-{Guid.NewGuid():N}.json");
@@ -764,7 +772,7 @@ internal static class CombatContentTests
             }
             catch (InvalidDataException)
             {
-                return 6;
+                return 10;
             }
         }
         finally
