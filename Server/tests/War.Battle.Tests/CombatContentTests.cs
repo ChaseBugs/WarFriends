@@ -5799,17 +5799,46 @@ internal static class CombatContentTests
         Check(turretVehicleMatch.Command(helicopterOwner,new(){CommandId=3,UseHeavyTurret=new(){RequestId=new string('b',32)}}).Code=="heavy-turret-spawned"&&
               turretVehicleMatch.Command(soldierOwner,new(){CommandId=3,DeployArmy=new(){OptionIndex=turretVehicleMatch.ArmyBatch(soldierOwner).OptionIndexes.First()}}).Code=="army-deploying",
               "live opposing turret and ground vehicle activate from trusted allocations");
-        bool turretAcquiredVehicle=false,turretFiredAtVehicle=false;ulong turretVehicleCursor=0;
-        for(ulong t=61;t<=900&&!turretVehicleMatch.Terminal;t++)
+        bool turretAcquiredVehicle=false;
+        bool turretFiredAtVehicle=false;
+        ulong turretVehicleCursor=0;
+        float? initialVehicleHealth=null;
+        float? latestVehicleHealth=null;
+        int turretVehicleImpacts=0;
+        bool turretHitMovingVehicle=false;
+        for(ulong battleTick=61;battleTick<=900&&!turretVehicleMatch.Terminal;battleTick++)
         {
-            turretVehicleMatch.Advance(t);
-            var batch=turretVehicleMatch.EventBatch(helicopterOwner,turretVehicleCursor);
+            turretVehicleMatch.Advance(battleTick);
+            var eventBatch=turretVehicleMatch.EventBatch(helicopterOwner,turretVehicleCursor);
             turretVehicleMatch.EventBatch(soldierOwner,0);
-            if(batch.Events.Count>0)turretVehicleCursor=batch.Events[^1].EventId;
-            turretFiredAtVehicle|=batch.Events.Any(x=>x.Kind==MatchEventKind.HeavyTurretFired&&x.Reason=="vehicle:real");
-            turretAcquiredVehicle|=turretVehicleMatch.Snapshot().HeavyTurrets.Any(x=>x.TargetId.StartsWith("army:",StringComparison.Ordinal));
+            if(eventBatch.Events.Count>0)
+                turretVehicleCursor=eventBatch.Events[^1].EventId;
+            turretFiredAtVehicle|=eventBatch.Events.Any(eventRow=>
+                eventRow.Kind==MatchEventKind.HeavyTurretFired&&eventRow.Reason=="vehicle:real");
+            turretVehicleImpacts+=eventBatch.Events.Count(eventRow=>
+                eventRow.Kind==MatchEventKind.Impact&&eventRow.Reason=="heavy-turret");
+            turretAcquiredVehicle|=turretVehicleMatch.Snapshot().HeavyTurrets.Any(turret=>
+                turret.TargetId.StartsWith("army:",StringComparison.Ordinal));
+            var vehicle=turretVehicleMatch.ArmyEntityBatch(soldierOwner,0,0).Entities
+                .SingleOrDefault(entity=>entity.UnitId=="ID_UNIT-HUMVEE");
+            if(vehicle!=null)
+            {
+                initialVehicleHealth??=vehicle.Health;
+                if(latestVehicleHealth>vehicle.Health&&
+                   turretVehicleMatch.VehicleRouteMotion(vehicle.EntityKey)!=null)
+                    turretHitMovingVehicle=true;
+                latestVehicleHealth=vehicle.Health;
+            }
         }
         Check(turretAcquiredVehicle&&turretFiredAtVehicle,"Heavy Turret acquires and launches at source Body target of live opposing Humvee");
+        Check(turretVehicleImpacts>0&&initialVehicleHealth>0&&
+              latestVehicleHealth<initialVehicleHealth,
+            "normal Heavy Turret projectiles hit and damage the opposing Humvee");
+        var sharedVehicleHealth=turretVehicleMatch.Snapshot().Vehicles
+            .Single(vehicle=>vehicle.UnitId=="ID_UNIT-HUMVEE").Health;
+        Check(turretHitMovingVehicle&&latestVehicleHealth.HasValue&&
+              Math.Abs(sharedVehicleHealth-latestVehicleHealth.Value)<.01f,
+            "Heavy Turret damages a moving Humvee and synchronizes its shared vehicle health");
         foreach(string airUnit in new[]{"ID_UNIT-DRONE","ID_UNIT-HELICOPTER"})
         {
             var turretAirManifest=humveeDecoyManifest with
