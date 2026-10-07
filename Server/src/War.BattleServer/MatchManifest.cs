@@ -196,7 +196,9 @@ public sealed record MatchManifest(string MatchId, string ServerId, string MapId
         {
             if (m.MissionIndex is < 0 or > 74 || !m.MissionIndex.HasValue ||
                 m.CatalogRevision != MissionCatalog.SourceRevision ||
-                m.Players.Any(player => player.Fraction != 1 || player.Combat == null))
+                // Fractions.Enemies is 1; recovered co-op player positions and
+                // GameControllerOnline.GetPlayerFraction use Fractions.Allies (2).
+                m.Players.Any(player => player.Fraction != 2 || player.Combat == null))
                 throw new InvalidDataException("Co-op allocation needs a source mission and two allied combat players.");
         }
         else if (m.MissionIndex.HasValue)

@@ -330,7 +330,7 @@ internal static class CombatContentTests
             MapId = sourceMap.Scene,
             MapRevision = sourceMap.SceneSha256,
             DurationSeconds = catalog.Get(0).TimeSeconds,
-            Players = duel.Players.Select(player => player with { Fraction = 1 }).ToArray()
+            Players = duel.Players.Select(player => player with { Fraction = 2 }).ToArray()
         };
         MatchManifest.Validate(coop);
 
@@ -354,6 +354,8 @@ internal static class CombatContentTests
 
         Reject(coop with { MissionIndex = -1 });
         Reject(coop with { CatalogRevision = new string('0', 64) });
+        Reject(coop with { Players = coop.Players.Select(player =>
+            player with { Fraction = 1 }).ToArray() });
         Reject(duel with { MissionIndex = 0 });
 
         try
@@ -503,7 +505,7 @@ internal static class CombatContentTests
         if (!earlyForfeit.Terminal || !earlyForfeit.Snapshot().Coop.Failed ||
             earlyForfeit.Snapshot().RewardEligible)
             throw new Exception("A pre-start forfeit must close without reward eligibility.");
-        return 18;
+        return 19;
     }
 
     private static int VerifyCoopSpawnCatalog(string directory, MissionCatalog missions)
