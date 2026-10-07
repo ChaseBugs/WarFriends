@@ -124,7 +124,7 @@ public static class SelfHostedHelicopterRenderAudit
             Require(Mathf.Abs(visual.transform.position.x-2)<.0001f,
                 "a new host pose waits in the remote visual buffer");
             presenter.RenderAt(Time.realtimeSinceStartup+.12f,.016f);
-            Require(Mathf.Abs(visual.transform.position.x-3.6f)<.1f&&
+            Require(Mathf.Abs(visual.transform.position.x-4.8f)<.1f&&
                 Quaternion.Angle(visual.transform.rotation,body)>1f&&
                 Quaternion.Angle(visual.transform.rotation,nextBody)>1f,
                 "host-tick flight position and rotation interpolate");

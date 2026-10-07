@@ -48,7 +48,7 @@ public static class SelfHostedRepairDroneRenderAudit
             Require(Mathf.Abs(visual.transform.position.x - 3) < .0001f,
                 "new repair-drone pose waits in the remote visual buffer");
             presenter.RenderAt(Time.realtimeSinceStartup + .12f, .016f);
-            Require(Mathf.Abs(visual.transform.position.x - 4.6f) < .1f &&
+            Require(Mathf.Abs(visual.transform.position.x - 5.8f) < .1f &&
                 Vector3.Dot(visual.transform.forward, Vector3.right) < .999f &&
                 Vector3.Dot(visual.transform.forward, Vector3.forward) < .999f,
                 "host-tick repair-drone position and rotation interpolate");

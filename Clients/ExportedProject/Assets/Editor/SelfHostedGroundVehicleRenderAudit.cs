@@ -45,7 +45,7 @@ public static class SelfHostedGroundVehicleRenderAudit
             presenter.RenderAt(Time.realtimeSinceStartup+.12f,.016f);
             for(int index=0;index<snapshot.Vehicles.Count;index++)
                 Require(Mathf.Abs(GameObject.Find("SelfHostedVehicle_"+(ulong)(41+index))
-                    .transform.position.x-(index+2.6f))<.1f,
+                    .transform.position.x-(index+3.8f))<.1f,
                     "host-tick vehicle position interpolates: "+index);
             Require(Vector3.Dot(moving.transform.forward,Vector3.right)<.999f&&
                 Vector3.Dot(moving.transform.forward,Vector3.forward)<.999f,

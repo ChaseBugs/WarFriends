@@ -254,11 +254,11 @@ public static class SelfHostedLiveRifleAudit
             buffer.Add(66, new Vector3(4, 0, 0), Quaternion.Euler(0, 90, 0), .1f);
             buffer.Add(66, new Vector3(4, 0, 0), Quaternion.Euler(0, 90, 0), .5f);
             buffer.Render(probe.transform, .22f, .016f);
-            if (Mathf.Abs(probe.transform.position.x - 1.6f) > .01f ||
-                Mathf.Abs(Quaternion.Angle(probe.transform.rotation, Quaternion.Euler(0, 36, 0))) > .1f)
+            if (Mathf.Abs(probe.transform.position.x - 2.8f) > .01f ||
+                Mathf.Abs(Quaternion.Angle(probe.transform.rotation, Quaternion.Euler(0, 63, 0))) > .1f)
                 throw new InvalidOperationException("Remote transform did not interpolate 0.18 seconds behind the host.");
             buffer.Render(probe.transform, .31f, .016f);
-            if (Mathf.Abs(probe.transform.position.x - 5.2f) > .01f)
+            if (Mathf.Abs(probe.transform.position.x - 4.6f) > .01f)
                 throw new InvalidOperationException("Remote transform did not use bounded source extrapolation.");
             buffer.Render(probe.transform, 1.4f, .016f);
             if (Mathf.Abs(probe.transform.position.x - 4f) > .01f)

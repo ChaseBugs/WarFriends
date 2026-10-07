@@ -61,12 +61,12 @@ public static class SelfHostedAssaultHelicopterRenderAudit
             Require(Mathf.Abs(visual.transform.position.x - 2f) < .001f,
                 "moving aircraft keeps its prior visual pose until render time");
             presenter.RenderAt(Time.realtimeSinceStartup + .12f, .016f);
-            Require(Mathf.Abs(visual.transform.position.x - 3.6f) < .1f &&
+            Require(Mathf.Abs(visual.transform.position.x - 4.8f) < .1f &&
                 Quaternion.Angle(visual.transform.rotation,
-                    Quaternion.Slerp(rotation, nextRotation, .4f)) < 1f,
+                    Quaternion.Slerp(rotation, nextRotation, .7f)) < 1f,
                 "remote aircraft interpolates its host-tick position and root rotation: x="+
                 visual.transform.position.x+" angle="+Quaternion.Angle(visual.transform.rotation,
-                    Quaternion.Slerp(rotation, nextRotation, .4f)));
+                    Quaternion.Slerp(rotation, nextRotation, .7f)));
             presenter.RenderAt(Time.realtimeSinceStartup + 1.4f, .016f);
             Require(Mathf.Abs(visual.transform.position.x - 6f) < .01f,
                 "aircraft visual settles at the latest host pose");

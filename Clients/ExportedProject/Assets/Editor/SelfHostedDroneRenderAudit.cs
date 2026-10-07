@@ -50,7 +50,7 @@ public static class SelfHostedDroneRenderAudit
                 targets.All(x=>x.sharedMaterial==source.transparentMaterial),
                 "new pose waits while host transparency applies immediately");
             presenter.RenderAt(Time.realtimeSinceStartup+.12f,.016f);
-            Require(Mathf.Abs(visual.transform.position.x-3.6f)<.1f&&
+            Require(Mathf.Abs(visual.transform.position.x-4.8f)<.1f&&
                 Quaternion.Angle(visual.transform.rotation,expectedRotation)>1f&&
                 Quaternion.Angle(visual.transform.rotation,nextRotation)>1f,
                 "host-tick Drone position and rotation interpolate");

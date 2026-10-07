@@ -201,7 +201,10 @@ public sealed class SelfHostedRemoteTransformBuffer
     }
 
     private const int Capacity = 10;
-    private const double TickSeconds = 1.0 / 60.0;
+    // The self-hosted Worker advances exactly 30 simulation ticks per second.
+    // Photon used timestamps in seconds; convert host ticks before applying
+    // its recovered 0.18-second visual delay.
+    private const double TickSeconds = 1.0 / 30.0;
     private readonly Sample[] samples = new Sample[Capacity]; // Newest first.
     private int count;
     private float receivedAt;
