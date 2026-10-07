@@ -27,6 +27,7 @@ internal static class CombatContentTests
         int spawnAssertions = VerifyMissionAutomaticSpawns(catalog);
         int eventAssertions = VerifyMissionTimedEvents(catalog);
         int coopAssertions = VerifyCoopMissionEngine(catalog);
+        int allocationAssertions = VerifyCoopAllocation(directory);
 
         string temporaryPath = Path.Combine(Path.GetTempPath(),
             $"war-mission-catalog-{Guid.NewGuid():N}.json");
@@ -44,7 +45,8 @@ internal static class CombatContentTests
             RejectMissionCatalog(temporaryPath, document,
                 "An event beyond the source mission timer was accepted.");
             return 4 + objectiveAssertions + scoreAssertions +
-                spawnAssertions + eventAssertions + coopAssertions;
+                spawnAssertions + eventAssertions + coopAssertions +
+                allocationAssertions;
         }
         finally
         {
@@ -307,6 +309,43 @@ internal static class CombatContentTests
             abandoned.SelectAutomaticBehaviour(8) != null)
             throw new Exception("A participant departure fails and closes an active mission.");
         return 6;
+    }
+
+    private static int VerifyCoopAllocation(string directory)
+    {
+        MatchManifest duel = MatchManifest.Read(
+            Path.Combine(directory, "local-rifle-match-template.json"));
+        MatchManifest coop = duel with
+        {
+            Mode = MatchManifest.CoopMissionMode,
+            MissionIndex = 0,
+            CatalogRevision = MissionCatalog.SourceRevision,
+            Players = duel.Players.Select(player => player with { Fraction = 1 }).ToArray()
+        };
+        MatchManifest.Validate(coop);
+
+        var router = new MatchRouter([], coop.ServerId,
+            Convert.ToBase64String(new byte[32]));
+        if (router.Register(coop).Code != "mode-unavailable" || router.Count != 0)
+            throw new Exception("Co-op allocations must stay closed until runtime routing exists.");
+
+        void Reject(MatchManifest invalid)
+        {
+            try
+            {
+                MatchManifest.Validate(invalid);
+            }
+            catch (InvalidDataException)
+            {
+                return;
+            }
+            throw new Exception("Invalid co-op allocation was accepted.");
+        }
+
+        Reject(coop with { MissionIndex = -1 });
+        Reject(coop with { CatalogRevision = new string('0', 64) });
+        Reject(duel with { MissionIndex = 0 });
+        return 4;
     }
 
     internal static int Run(string directory)

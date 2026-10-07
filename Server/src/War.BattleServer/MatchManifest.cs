@@ -51,6 +51,9 @@ public sealed record MatchManifest(string MatchId, string ServerId, string MapId
     string CatalogRevision, string Mode, int AdmissionSeconds, int DurationSeconds,
     int IdleSeconds, ParticipantManifest[] Players)
 {
+    // Only the recovered 1.4.0 mission index. PvP allocations must omit it.
+    [JsonIgnore(Condition=JsonIgnoreCondition.WhenWritingNull)]
+    public int? MissionIndex { get; init; }
     [JsonIgnore(Condition=JsonIgnoreCondition.WhenWritingNull)]
     public string? SceneMasterPlayerId { get; init; }
     // Optional Backend-owned selection projection, consumed before admission.
@@ -71,6 +74,7 @@ public sealed record MatchManifest(string MatchId, string ServerId, string MapId
     public const string SniperCombatMode = "unscored-sniper-combat";
     public const string BazookaCombatMode = "unscored-bazooka-combat";
     public const string GrenadeCombatMode = "unscored-grenade-combat";
+    public const string CoopMissionMode = "unscored-coop-mission";
     private static readonly JsonSerializerOptions Json = new() { UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow };
 
     public static MatchManifest Read(string path)
@@ -97,7 +101,8 @@ public sealed record MatchManifest(string MatchId, string ServerId, string MapId
         static bool WeaponId(string? x) => Id(x) || (x != null && Regex.IsMatch(x, @"\AGoogle2u\.[A-Za-z0-9_]{1,55}\z"));
         static bool Hash(string? x) => x != null && Regex.IsMatch(x, @"\A[0-9a-f]{64}\z");
         if (!Id(m.MatchId) || !Id(m.ServerId) || !Id(m.MapId) || !Hash(m.MapRevision) || !Hash(m.CatalogRevision) ||
-            !IsSupportedMode(m.Mode) || m.AdmissionSeconds is < 5 or > 120 || m.DurationSeconds is < 5 or > 1800 ||
+            !(IsSupportedMode(m.Mode) || m.Mode == CoopMissionMode) ||
+            m.AdmissionSeconds is < 5 or > 120 || m.DurationSeconds is < 5 or > 1800 ||
             m.IdleSeconds is < 2 or > 120 || m.Players == null || m.Players.Length != 2)
             throw new InvalidDataException("Invalid/unsupported match manifest.");
         var ids = new HashSet<string>(StringComparer.Ordinal);
@@ -184,8 +189,18 @@ public sealed record MatchManifest(string MatchId, string ServerId, string MapId
             }
         }
         if (m.Players.Any(p => p.Combat != null) &&
-            (m.Players.Any(p => p.Combat == null) || m.Players[0].Fraction == m.Players[1].Fraction))
+            (m.Players.Any(p => p.Combat == null) ||
+             m.Mode != CoopMissionMode && m.Players[0].Fraction == m.Players[1].Fraction))
             throw new InvalidDataException("A combat duel requires two defined opposing players.");
+        if (m.Mode == CoopMissionMode)
+        {
+            if (m.MissionIndex is < 0 or > 74 || !m.MissionIndex.HasValue ||
+                m.CatalogRevision != MissionCatalog.SourceRevision ||
+                m.Players.Any(player => player.Fraction != 1 || player.Combat == null))
+                throw new InvalidDataException("Co-op allocation needs a source mission and two allied combat players.");
+        }
+        else if (m.MissionIndex.HasValue)
+            throw new InvalidDataException("Only a co-op allocation may select a mission.");
         if(m.Players.Any(p=>p.ShieldLevel.HasValue) &&
             (m.Mode==PrototypeMode || m.Players.Any(p=>!p.ShieldLevel.HasValue || p.Combat==null)))
             throw new InvalidDataException("Shield authority requires both live participants and ranks.");

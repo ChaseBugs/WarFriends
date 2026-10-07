@@ -58,6 +58,8 @@ public sealed class MatchRouter
     public MatchRegistrationResult Register(MatchManifest source,long? unixNow=null)
     {
         var manifest=MatchManifest.Validate(source);
+        if (manifest.Mode == MatchManifest.CoopMissionMode)
+            return new("mode-unavailable", "");
         long now=unixNow??DateTimeOffset.UtcNow.ToUnixTimeSeconds();
         if(now is <0 or >MatchTokens.MaximumUnixSecond)throw new InvalidDataException("Invalid match grant time.");
         if(manifest.ServerId!=serverId)return new("wrong-host","");

@@ -25,7 +25,7 @@ public sealed record MissionRule(
 public sealed class MissionCatalog
 {
     private const string SourcePath = "Clients/ExportedProject/Assets/Scenes/MainScene.unity";
-    private const string SourceHash = "d46f81ff8c3e12bf17f34a1f53dd601bd799102c9f984818031441dfb7a5de43";
+    public const string SourceRevision = "d46f81ff8c3e12bf17f34a1f53dd601bd799102c9f984818031441dfb7a5de43";
     private static readonly HashSet<string> KnownBehaviours = new(StringComparer.OrdinalIgnoreCase)
     {
         "Assaulter", "Sniper", "Grenadier", "Shotgunner", "Parachuter",
@@ -79,7 +79,7 @@ public sealed class MissionCatalog
             throw new InvalidDataException("Mission catalog has unexpected source provenance.");
 
         string sourceHash = ReadHash(root, "sourceSha256");
-        if (sourceHash != SourceHash)
+        if (sourceHash != SourceRevision)
             throw new InvalidDataException("Mission catalog is from an unreviewed MainScene.");
         JsonElement entries = root.GetProperty("missions");
         if (entries.ValueKind != JsonValueKind.Array || entries.GetArrayLength() != 75)
