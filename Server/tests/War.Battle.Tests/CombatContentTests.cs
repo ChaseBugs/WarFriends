@@ -462,16 +462,21 @@ internal static class CombatContentTests
             directory, "recovered-coop-bot-rules.json"), catalog);
         CoopBotHealthCatalog bossHealth = CoopBotHealthCatalog.Load(Path.Combine(
             directory, "recovered-coop-bot-health.json"), catalog, bossRules);
+        CoopBossAttackTimingCatalog bossAttackTimings =
+            CoopBossAttackTimingCatalog.Load(Path.Combine(directory,
+                "recovered-coop-boss-attack-timing.json"), catalog, bossRules);
         RecoveredBattleMap bossScene = content.Maps.Single(map =>
             map.Source == "Assets/Scenes/" + bossMap.Scene + ".unity");
         var bossRuntime = new CoopMatchRuntime(bossAllocation, catalog,
             spawnPoints, routes, enemyCombat, bossAnchors, bossPaths,
-            content.ArmySpawnPoints, bossScene, bossHealth, _ => 0, _ => 0);
+            content.ArmySpawnPoints, bossScene, bossHealth, bossAttackTimings,
+            _ => 0, _ => 0, () => 0f);
         string bossFirstPlayer = bossAllocation.Players[0].PlayerId;
         string bossSecondPlayer = bossAllocation.Players[1].PlayerId;
         if (!bossRuntime.Admit(bossFirstPlayer) ||
             !bossRuntime.Admit(bossSecondPlayer) ||
             bossRuntime.Snapshot().Coop.Boss != null ||
+            bossRuntime.BossAttackCadence != null ||
             bossRuntime.ApplyHostBossDamage(1, 0))
             throw new Exception("Boss runtime rejected the signed allied roster.");
         foreach (string playerId in new[] { bossFirstPlayer, bossSecondPlayer })
@@ -494,6 +499,7 @@ internal static class CombatContentTests
             bossStart.Coop.Boss.DefendComponentFileId !=
                 bossAnchors.Maps[0].BossStart.ComponentFileId ||
             bossStart.Coop.Boss.MaxHealth != bossHealth.ForMission(4).MaximumHealth ||
+            bossRuntime.BossAttackCadence?.NextWindowTick != 61 ||
             bossStart.Coop.ParticipantStarts[0].DefendComponentFileId !=
                 bossAnchors.Maps[0].AlliedStarts[0].ComponentFileId ||
             bossStart.Coop.ParticipantStarts[1].DefendComponentFileId !=
@@ -518,12 +524,16 @@ internal static class CombatContentTests
         bossRuntime.Advance(8);
         MatchSnapshot bossAfterSpawn = bossRuntime.Snapshot();
         if (bossAfterSpawn.Coop.EnemySpawns.Count == 0 ||
+            bossRuntime.BossAttackCadence?.WindowCount != 0 ||
             bossAfterSpawn.Coop.EnemySpawns.Any(enemy =>
             !content.ArmySpawnPoints.ForMap(bossScene).Any(point =>
                 point.Fraction == 1 &&
                 point.ComponentFileId == enemy.SpawnComponentFileId)))
             throw new Exception("Boss mission spawned an AI outside enemy fraction one.");
         bossRuntime.Advance(200);
+        if (bossRuntime.BossAttackCadence?.WindowCount != 2 ||
+            bossRuntime.BossAttackCadence.WindowOpen != true)
+            throw new Exception("Boss attack windows lost source shooting timing.");
         BattlePlayerState movedBossAlly = bossRuntime.Snapshot().Players.Single(
             player => player.PlayerId == bossFirstPlayer);
         if (movedBossAlly.Moving || movedBossAlly.CoverIndex != 7 ||
@@ -907,6 +917,34 @@ internal static class CombatContentTests
             throw new Exception("Source boss missions lost their bot definitions.");
         CoopBotHealthCatalog health = CoopBotHealthCatalog.Load(Path.Combine(
             directory, "recovered-coop-bot-health.json"), missions, bots);
+        string attackPath = Path.Combine(directory,
+            "recovered-coop-boss-attack-timing.json");
+        CoopBossAttackTimingCatalog attacks = CoopBossAttackTimingCatalog.Load(
+            attackPath, missions, bots);
+        if (attacks.Missions.Count != 15 ||
+            attacks.ForMission(4).ConfigIndex != 1 ||
+            attacks.ForMission(4).ShootFrequencyMinSeconds != 3.25f ||
+            attacks.ForMission(74).ConfigIndex != 12 ||
+            attacks.ForMission(74).ShootAccuracy != 0.565f)
+            throw new Exception("Boss attack timing differs from source bot sheets.");
+        var firstAttackClock = new CoopBossAttackCadence(
+            attacks.ForMission(4), 0, () => 0f);
+        if (firstAttackClock.Advance(60) || firstAttackClock.WindowOpen ||
+            !firstAttackClock.Advance(61) || !firstAttackClock.WindowOpen ||
+            firstAttackClock.WindowEndTick != 85 ||
+            !firstAttackClock.Advance(85) || firstAttackClock.WindowOpen ||
+            firstAttackClock.NextWindowTick != 183)
+            throw new Exception("Boss shot windows differ from source timing bounds.");
+        try
+        {
+            var invalidAttackClock = new CoopBossAttackCadence(
+                attacks.ForMission(4), 0, () => 1f);
+            invalidAttackClock.Advance(61);
+            throw new Exception("An invalid boss attack random draw was accepted.");
+        }
+        catch (InvalidDataException)
+        {
+        }
         if (health.PlayerHealthByLevel.Count != 44 ||
             health.PlayerHealthByLevel[0] != 280f ||
             health.ForMission(4).MaximumHealth != 312f * 0.8f ||
@@ -952,8 +990,21 @@ internal static class CombatContentTests
             $"war-coop-bots-{Guid.NewGuid():N}.json");
         string changedAnchorPath = Path.Combine(Path.GetTempPath(),
             $"war-coop-boss-anchors-{Guid.NewGuid():N}.json");
+        string changedAttackPath = Path.Combine(Path.GetTempPath(),
+            $"war-coop-boss-attacks-{Guid.NewGuid():N}.json");
         try
         {
+            JsonNode changedAttack = JsonNode.Parse(File.ReadAllText(attackPath))!;
+            changedAttack["missions"]![0]!["shootFrequencyMinSeconds"] = 0;
+            File.WriteAllText(changedAttackPath, changedAttack.ToJsonString());
+            try
+            {
+                _ = CoopBossAttackTimingCatalog.Load(changedAttackPath, missions, bots);
+                throw new Exception("Altered boss attack timing was accepted.");
+            }
+            catch (InvalidDataException)
+            {
+            }
             JsonNode altered = JsonNode.Parse(File.ReadAllText(path))!;
             altered["bots"]![0]!["bot"]!["hpReduction"] = 1;
             File.WriteAllText(temporaryPath, altered.ToJsonString());
@@ -975,13 +1026,14 @@ internal static class CombatContentTests
             }
             catch (InvalidDataException)
             {
-                return 18 + combatAssertions;
+                return 29 + combatAssertions;
             }
         }
         finally
         {
             File.Delete(temporaryPath);
             File.Delete(changedAnchorPath);
+            File.Delete(changedAttackPath);
         }
     }
 

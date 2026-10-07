@@ -42,7 +42,10 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
     private readonly int alliedLastCover;
     private readonly CoopBossMapAnchors? bossAnchors;
     private readonly CoopBotHealth? bossHealth;
+    private readonly CoopBossAttackTiming? bossAttackTiming;
+    private readonly Func<float>? chooseAttackFraction;
     private CoopBossCombatState? boss;
+    internal CoopBossAttackCadence? BossAttackCadence { get; private set; }
     private ulong nextEnemyId = 1;
     private BattlePhase phase = BattlePhase.Waiting;
     private ulong tick;
@@ -59,7 +62,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         Func<int, int>? chooseBehaviour = null,
         Func<int, int>? choosePoint = null)
         : this(allocation, catalog, spawnPoints, paths, combat,
-            null, null, null, null, null, chooseBehaviour, choosePoint)
+            null, null, null, null, null, null, chooseBehaviour, choosePoint)
     {
     }
 
@@ -68,8 +71,9 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         CoopEnemyCombatCatalog combat, CoopBossAnchorCatalog? bossAnchors,
         CoopBossPathCatalog? bossPaths, ArmySpawnPointCatalog? armySpawns,
         RecoveredBattleMap? bossMap, CoopBotHealthCatalog? bossHealth,
-        Func<int, int>? chooseBehaviour,
-        Func<int, int>? choosePoint)
+        CoopBossAttackTimingCatalog? bossAttackTimings,
+        Func<int, int>? chooseBehaviour, Func<int, int>? choosePoint,
+        Func<float>? chooseAttackFraction = null)
     {
         ArgumentNullException.ThrowIfNull(catalog);
         manifest = MatchManifest.Validate(allocation);
@@ -90,12 +94,15 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         if (missionRule.MissionType == "KillOpponent")
         {
             if (bossAnchors == null || bossPaths == null ||
-                armySpawns == null || bossMap == null || bossHealth == null)
-                throw new InvalidDataException("Boss mission needs multiplayer geometry and vitality.");
+                armySpawns == null || bossMap == null || bossHealth == null ||
+                bossAttackTimings == null)
+                throw new InvalidDataException("Boss mission needs multiplayer geometry, vitality, and attack timing.");
             CoopBossMapAnchors map = bossAnchors.MapForMission(catalog, missionIndex);
             CoopBossMapRoutes routes = bossPaths.MapForMission(catalog, missionIndex);
             this.bossAnchors = map;
             this.bossHealth = bossHealth.ForMission(missionIndex);
+            bossAttackTiming = bossAttackTimings.ForMission(missionIndex);
+            this.chooseAttackFraction = chooseAttackFraction;
             var selector = new CoopBossAiSpawnSelector(catalog,
                 armySpawns, bossMap, missionIndex);
             playerPositions = map.PlayerPositions.Select(anchor =>
@@ -215,6 +222,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
                     ? "mission-success" : "mission-failed");
                 break;
             }
+            BossAttackCadence?.Advance(tick);
             SpawnDueEnemies();
         }
     }
@@ -378,8 +386,12 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             if (mission.Started)
             {
                 if (bossAnchors != null && bossHealth != null)
+                {
                     boss = new CoopBossCombatState(mission, bossHealth,
                         bossAnchors, tick);
+                    BossAttackCadence = new CoopBossAttackCadence(
+                        bossAttackTiming!, tick, chooseAttackFraction);
+                }
                 phase = BattlePhase.Running;
             }
             return "ready";
