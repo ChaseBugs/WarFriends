@@ -86,7 +86,7 @@ namespace War.Client
             try
             {
                 if (disposed) throw new ObjectDisposedException(nameof(MatchConnection));
-                if (pending == null) throw new InvalidOperationException("No unresolved command to carry into reconnect.");
+                if (pending == null) return null;
                 return new MatchPendingCommand(grant.MatchId, grant.ManifestHash,
                     grant.PlayerId, pending);
             }

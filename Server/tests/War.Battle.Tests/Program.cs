@@ -2186,6 +2186,7 @@ if (args.Length == 3 && args[0] == "--unity")
     var unityDefinition = definition with { AdmissionSeconds = 120 };
     await File.WriteAllTextAsync(manifestFile, JsonSerializer.Serialize(unityDefinition));
     string grantsFile = Path.Combine(Path.GetTempPath(), "war-grants-" + Guid.NewGuid().ToString("N") + ".jsonl");
+    string reconnectFile = Path.Combine(Path.GetTempPath(), "war-reconnect-" + Guid.NewGuid().ToString("N") + ".json");
     string unityLog = Path.GetFullPath("Server/.local/unity-battle-sdk.log");
     Directory.CreateDirectory(Path.GetDirectoryName(unityLog)!);
     MatchConnectionGrant UnityGrant(string id, ulong session)
@@ -2203,15 +2204,37 @@ if (args.Length == 3 && args[0] == "--unity")
     try
     {
         await unityWorker.StartAsync(CancellationToken.None);
+        var deliverReconnect = Task.Run(async () =>
+        {
+            for (int attempt = 0; attempt < 200; attempt++)
+            {
+                var result = await unityWorker.RegisterReconnect(unityDefinition.MatchId, a,
+                    new string('4', 32), CancellationToken.None);
+                if (result.Code == "reconnect-issued")
+                {
+                    string pendingFile = reconnectFile + ".tmp";
+                    await File.WriteAllTextAsync(pendingFile,
+                        JsonFormatter.Default.Format(result.Grants!.Single()));
+                    File.Move(pendingFile, reconnectFile);
+                    return;
+                }
+                if (result.Code != "reconnect-unavailable")
+                    throw new Exception("Unity reconnect grant failed: " + result.Code);
+                await Task.Delay(100);
+            }
+            throw new Exception("Unity participant was not admitted for reconnect.");
+        });
         var start = new System.Diagnostics.ProcessStartInfo(args[1])
         {
             UseShellExecute = false, CreateNoWindow = true, WindowStyle = System.Diagnostics.ProcessWindowStyle.Hidden
         };
         foreach (var argument in new[] { "-batchmode", "-nographics", "-projectPath", args[2], "-executeMethod", "SelfHostedBattleAudit.Run", "-logFile", unityLog }) start.ArgumentList.Add(argument);
         start.Environment["WAR_BATTLE_GRANTS_FILE"] = grantsFile;
+        start.Environment["WAR_BATTLE_RECONNECT_FILE"] = reconnectFile;
         editor = System.Diagnostics.Process.Start(start) ?? throw new Exception("Unity did not start.");
         using var unityTimeout = new CancellationTokenSource(TimeSpan.FromSeconds(110));
         await editor.WaitForExitAsync(unityTimeout.Token);
+        await deliverReconnect;
         Check(editor.ExitCode == 0 && (await File.ReadAllTextAsync(unityLog)).Contains("UNITY_BATTLE_SDK_PASSED"), "actual Unity Mono SDK audit");
         Console.WriteLine("PASS: actual Unity Mono battle SDK; log " + unityLog);
     }
@@ -2219,7 +2242,8 @@ if (args.Length == 3 && args[0] == "--unity")
     {
         if (editor != null) { if (!editor.HasExited) editor.Kill(true); editor.Dispose(); }
         await unityWorker.StopAsync(CancellationToken.None);
-        File.Delete(grantsFile); File.Delete(manifestFile);
+        File.Delete(grantsFile); File.Delete(reconnectFile);
+        File.Delete(reconnectFile + ".tmp"); File.Delete(manifestFile);
         Directory.Delete(unityOutboxPath,true);
     }
 }

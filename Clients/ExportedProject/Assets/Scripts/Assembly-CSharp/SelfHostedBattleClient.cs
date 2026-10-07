@@ -47,6 +47,8 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
     private float nextArmyEntityPoll;
     private float nextProjectileScan;
     private bool destroyed;
+    private bool reconnecting;
+    private string reconnectRequestId;
     private bool cardsSelectedByBothRaised;
     private readonly SemaphoreSlim eventDelivery = new SemaphoreSlim(1, 1);
     private readonly Dictionary<string, SelfHostedRiflePoseRenderer> rifleViews = new Dictionary<string, SelfHostedRiflePoseRenderer>(StringComparer.Ordinal);
@@ -214,6 +216,128 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
         }
     }
 
+    /// <summary>Ask the Backend for a fresh capability using the recovered login session.</summary>
+    public async Task ReconnectWithRecoveredSession()
+    {
+        GameLoginManager login = Singleton<GameLoginManager>.instance;
+        if (login == null || string.IsNullOrEmpty(login.accessToken))
+            throw new InvalidOperationException("The recovered Backend session is not available.");
+        if (connection == null || string.IsNullOrEmpty(matchId))
+            throw new InvalidOperationException("There is no self-hosted match to reconnect.");
+        if (reconnectRequestId == null) reconnectRequestId = Guid.NewGuid().ToString("N");
+        using (var backend = new BackendClient(new Uri(backendEndpoint), allowLocalHttp))
+        {
+            var grant = await backend.ReconnectMatchAsync(matchId, reconnectRequestId,
+                login.accessToken, CancellationToken.None);
+            await Reconnect(grant);
+            reconnectRequestId = null;
+        }
+    }
+
+    /// <summary>
+    /// Replace the transport while keeping the current scene, presenters and
+    /// callback-committed event cursor. A local test may pass a trusted grant.
+    /// </summary>
+    public async Task Reconnect(MatchConnectionGrant grant)
+    {
+        if (destroyed) throw new ObjectDisposedException(nameof(SelfHostedBattleClient));
+        if (reconnecting || connection == null || lifetime == null ||
+            State == null || State.Phase == BattlePhase.Ended || State.Phase == BattlePhase.Aborted)
+            throw new InvalidOperationException("A running self-hosted match is required for reconnect.");
+        if (grant == null || grant.MatchId != matchId || grant.PlayerId != LocalPlayerId ||
+            grant.ManifestHash != manifestHash)
+            throw new InvalidOperationException("Replacement grant differs from the active match.");
+
+        reconnecting = true;
+        IsConnected = false;
+        var oldConnection = connection;
+        var oldLifecycle = roomLifecycle;
+        var oldLifetime = lifetime;
+        oldLifetime.Cancel();
+        try
+        {
+            // Stop an old poll before replacing the scene's transport fields.
+            while (polling) await Task.Yield();
+            await eventDelivery.WaitAsync();
+            eventDelivery.Release();
+            MatchPendingCommand unresolved = await oldConnection.CapturePendingAsync(CancellationToken.None);
+
+            var nextConnection = new MatchConnection(grant);
+            var nextLifecycle = new SelfHostedRoomLifecycle(nextConnection);
+            var nextLifetime = new CancellationTokenSource();
+            bool installed = false;
+            try
+            {
+                if (!SamePlayerViews(PlayerViews, nextConnection.PlayerViews))
+                    throw new InvalidOperationException("Replacement grant changed the match roster view.");
+                await nextLifecycle.ConnectAsync(nextLifetime.Token);
+                if (unresolved != null)
+                {
+                    await nextConnection.RestorePendingAsync(unresolved, nextLifetime.Token);
+                    await nextConnection.RetryPendingAsync(nextLifetime.Token);
+                }
+                var current = await nextConnection.PollAsync(nextLifetime.Token);
+                var refreshedBarrels = barrelCatalog == null ? null :
+                    new BarrelStateTracker(matchId, manifestHash, barrelCatalog);
+                if (refreshedBarrels != null)
+                    refreshedBarrels.Apply(await nextConnection.PollBarrelsAsync(nextLifetime.Token));
+                IReadOnlyList<BattleArmyEntityState> entities = ArmyEntitiesReceived == null ? null :
+                    await nextConnection.FetchArmyEntitiesAsync(nextLifetime.Token);
+                var offers = ArmyOffersReceived == null ? null :
+                    await nextConnection.PollArmyAsync(nextLifetime.Token);
+                var projectiles = ProjectileScanReceived == null || !current.Snapshot.ProjectilesTruncated ? null :
+                    await nextConnection.FetchProjectilesAsync(nextLifetime.Token);
+                if (CombatEventReceived != null)
+                    await nextConnection.PollEventsAsync(ProcessedEventId, nextLifetime.Token);
+
+                if (destroyed) throw new ObjectDisposedException(nameof(SelfHostedBattleClient));
+                oldLifecycle.PhaseChanged -= OnRoomPhaseChanged;
+                oldLifecycle.Close();
+                oldLifetime.Dispose();
+                connection = nextConnection;
+                roomLifecycle = nextLifecycle;
+                lifetime = nextLifetime;
+                PhotonCompatibility = new SelfHostedPhotonCompatibility(nextLifecycle);
+                PlayerViews = nextConnection.PlayerViews;
+                barrelTracker = refreshedBarrels;
+                nextLifecycle.PhaseChanged += OnRoomPhaseChanged;
+                State = null;
+                foreach (var renderer in rifleViews.Values) renderer.ResetRemote();
+                IsConnected = true;
+                installed = true;
+                Apply(current);
+                if (refreshedBarrels != null && BarrelStateReceived != null)
+                    BarrelStateReceived(refreshedBarrels.Snapshot());
+                if (entities != null && ArmyEntitiesReceived != null)
+                    ArmyEntitiesReceived(entities);
+                if (offers != null && ArmyOffersReceived != null)
+                    ArmyOffersReceived(offers.Clone());
+                if (projectiles != null && ProjectileScanReceived != null)
+                    ProjectileScanReceived(projectiles);
+                if (CombatEventReceived != null) await DispatchEvents();
+                nextPoll = Time.realtimeSinceStartup + 0.1f;
+            }
+            finally
+            {
+                if (!installed)
+                {
+                    nextLifecycle.Close();
+                    nextLifetime.Dispose();
+                }
+            }
+        }
+        finally { reconnecting = false; }
+    }
+
+    private static bool SamePlayerViews(IReadOnlyList<BattlePlayerView> oldViews,
+        IReadOnlyList<BattlePlayerView> newViews)
+    {
+        if (oldViews == null || newViews == null || oldViews.Count != newViews.Count) return false;
+        for (int i = 0; i < oldViews.Count; i++)
+            if (!oldViews[i].Equals(newViews[i])) return false;
+        return true;
+    }
+
     public Task Ready() { return ExecuteReady(); }
     public Task ReadyAsync() { return Ready(); }
     public bool DispatchRpc(string method, params object[] arguments)
@@ -224,7 +348,9 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
     private async Task ExecuteReady()
     {
         if (!IsConnected || roomLifecycle == null) throw new InvalidOperationException("No self-hosted room is connected.");
-        Apply(await roomLifecycle.MarkReadyAsync(lifetime.Token));
+        var active = connection;
+        var reply = await roomLifecycle.MarkReadyAsync(lifetime.Token);
+        if (IsConnected && active == connection) Apply(reply);
     }
     public Task Fire(Vector3 target) { return Execute(c => c.FireAsync(target.x, target.y, target.z, lifetime.Token)); }
     public Task MinigunHold(bool pressed,Vector3 target) { return Execute(c => c.MinigunHoldAsync(pressed,target.x,target.y,target.z,lifetime.Token)); }
@@ -310,9 +436,13 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
     {
         if (!IsConnected || connection == null || barrelTracker == null)
             throw new InvalidOperationException("Bind a source barrel catalog and connect first.");
-        var batch = await connection.PollBarrelsAsync(lifetime.Token);
-        barrelTracker.Apply(batch);
-        var state = barrelTracker.Snapshot();
+        var active = connection;
+        var tracker = barrelTracker;
+        var batch = await active.PollBarrelsAsync(lifetime.Token);
+        if (!IsConnected || active != connection || tracker != barrelTracker)
+            throw new OperationCanceledException("The battle session changed during the barrel scan.");
+        tracker.Apply(batch);
+        var state = tracker.Snapshot();
         if (BarrelStateReceived != null) BarrelStateReceived(state);
         return state.Count;
     }
@@ -321,7 +451,10 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
     {
         if (!IsConnected || connection == null)
             throw new InvalidOperationException("Connect to a self-hosted match first.");
-        var batch = await connection.PollArmyAsync(lifetime.Token);
+        var active = connection;
+        var batch = await active.PollArmyAsync(lifetime.Token);
+        if (!IsConnected || active != connection)
+            throw new OperationCanceledException("The battle session changed during the army scan.");
         if (ArmyOffersReceived != null) ArmyOffersReceived(batch.Clone());
         return batch;
     }
@@ -330,7 +463,10 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
     {
         if (!IsConnected || connection == null)
             throw new InvalidOperationException("Connect to a self-hosted match first.");
-        var rows = await connection.FetchArmyEntitiesAsync(lifetime.Token);
+        var active = connection;
+        var rows = await active.FetchArmyEntitiesAsync(lifetime.Token);
+        if (!IsConnected || active != connection)
+            throw new OperationCanceledException("The battle session changed during the entity scan.");
         nextArmyEntityPoll = Time.realtimeSinceStartup + 0.5f;
         var copy = new List<BattleArmyEntityState>(rows.Count);
         foreach (var row in rows) copy.Add(row.Clone());
@@ -345,7 +481,10 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
         await eventDelivery.WaitAsync(lifetime.Token);
         try
         {
-            var batch = await connection.PollEventsAsync(ProcessedEventId, lifetime.Token);
+            var active = connection;
+            var batch = await active.PollEventsAsync(ProcessedEventId, lifetime.Token);
+            if (!IsConnected || active != connection)
+                throw new OperationCanceledException("The battle session changed during event delivery.");
             int delivered = 0;
             foreach (var item in batch.Events)
             {
@@ -376,7 +515,9 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
     private async Task Execute(Func<MatchConnection, Task<MatchReply>> operation)
     {
         if (!IsConnected || connection == null) throw new InvalidOperationException("No self-hosted match is connected.");
-        Apply(await operation(connection)); // Unity synchronization context owns state/events.
+        var active = connection;
+        var reply = await operation(active);
+        if (IsConnected && active == connection) Apply(reply); // Unity synchronization context owns state/events.
     }
 
     private async void Update()
@@ -397,13 +538,17 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
         nextPoll = Time.realtimeSinceStartup + 0.1f;
         try
         {
-            Apply(await connection.PollAsync(lifetime.Token));
+            var active = connection;
+            var reply = await active.PollAsync(lifetime.Token);
+            if (!IsConnected || active != connection) return;
+            Apply(reply);
             if (CombatEventReceived != null) await DispatchEvents();
             if (ProjectileScanReceived != null && State != null && State.ProjectilesTruncated &&
                 Time.realtimeSinceStartup >= nextProjectileScan)
             {
                 nextProjectileScan = Time.realtimeSinceStartup + 0.5f;
-                var scan = await connection.FetchProjectilesAsync(lifetime.Token);
+                var scan = await active.FetchProjectilesAsync(lifetime.Token);
+                if (!IsConnected || active != connection) return;
                 if (State != null && scan.SnapshotTick >= State.ServerTick)
                     ProjectileScanReceived(scan);
             }
@@ -466,6 +611,7 @@ public sealed class SelfHostedBattleClient : MonoBehaviour, SelfHostedBattleClie
     {
         IsConnected = false;
         if (matchmaking != null) matchmaking.Cancel();
+        reconnectRequestId = null;
         if (armyManager != null) { armyManager.UnbindSelfHosted(this); armyManager = null; }
         if (lifetime != null) { lifetime.Cancel(); lifetime.Dispose(); lifetime = null; }
         if (roomLifecycle != null)
