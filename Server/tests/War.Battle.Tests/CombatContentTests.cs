@@ -31,6 +31,14 @@ internal static class CombatContentTests
             "Assault Helicopter gun muzzle follows the host root rotation");
         Reject(() => content.AssaultHelicopterWeapons.Muzzle(2,
             Vector3.Zero, Quaternion.Identity));
+        var assaultBodyBox = content.AssaultHelicopterBoxCollider.Place(
+            Vector3.Zero, Quaternion.Identity);
+        Check(assaultBodyBox.Kind == PlayerHitboxKind.Box &&
+              Vector3.Distance(assaultBodyBox.Center,
+                  new Vector3(.0043849445f, .0405483f, .03434353f)) < .00001f &&
+              assaultBodyBox.Size == new Vector3(.50202096f, .542398f, .27047324f),
+            "pinned Assault Helicopter body box retains its source center and size");
+        Reject(() => content.AssaultHelicopterBoxCollider.Place(Vector3.Zero, default));
         var heliBoxes=content.HelicopterBodyColliders.Place(Vector3.Zero,Quaternion.Identity);
         using(var geometryReference=JsonDocument.Parse(File.ReadAllBytes(Path.Combine(directory,
             "recovered-air-unit-unity-geometry.json"))))
@@ -3469,6 +3477,30 @@ internal static class CombatContentTests
               Math.Abs(assaultRotation.Value.LengthSquared() - 1) < 0.001f &&
               Quaternion.Dot(assaultRotation.Value, Quaternion.Identity) < 0.999f,
             "normal Assault Helicopter movement owns a finite source-based root orientation");
+        var liveAssaultBody = assaultHelicopterMatch.GroundVehicleShotTargets(decoyOpponent)
+            .Single(target => target.EntityId == assaultHelicopterSpawn.EntityKey &&
+                target.PartComponentFileId == AssaultHelicopterBoxColliderCatalog.ColliderFileId);
+        Check(liveAssaultBody.Layer == 27 && liveAssaultBody.HelicopterBody &&
+              Vector3.Distance(liveAssaultBody.Hitbox.Center, assaultRoutePosition) < 1f,
+            "opposing projectiles see the source body box at the live Assault Helicopter pose");
+        var assaultBodyTrace = assaultHelicopterMatch.TraceHeavyTurretShot(decoyOpponent,
+            liveAssaultBody.Hitbox.Center + Vector3.UnitY,
+            -Vector3.UnitY, 2f);
+        Check(assaultBodyTrace is { DynamicEntityId: ulong assaultHitEntity,
+                  DynamicPartId: AssaultHelicopterBoxColliderCatalog.ColliderFileId } &&
+              assaultHitEntity == assaultHelicopterSpawn.EntityKey,
+            "normal projectile ray identifies the deployed Assault Helicopter body box");
+        float assaultHealthBeforeHit = assaultHelicopterMatch.ArmyHealth(
+            assaultHelicopterSpawn.EntityKey)!.Value;
+        assaultHelicopterMatch.ApplyArmyBodyProjectileImpact(decoyOpponent,
+            assaultHelicopterSpawn.EntityKey,
+            AssaultHelicopterBoxColliderCatalog.ColliderFileId, 10f);
+        Check(assaultHelicopterMatch.ArmyHealth(assaultHelicopterSpawn.EntityKey) ==
+                  assaultHealthBeforeHit - 10f,
+            "source body box routes a verified opposing hit to Assault Helicopter vitality");
+        Reject(() => assaultHelicopterMatch.ApplyArmyBodyProjectileImpact(decoyPlayer,
+            assaultHelicopterSpawn.EntityKey,
+            AssaultHelicopterBoxColliderCatalog.ColliderFileId, 10f));
         var targetClock = new AssaultHelicopterTargetState(0);
         var targetDecoys = new[]
         {

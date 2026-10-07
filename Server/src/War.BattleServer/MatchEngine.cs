@@ -738,6 +738,7 @@ public sealed partial class MatchEngine
             helicopterGunnerExplosions=content.HelicopterGunnerExplosions;
             droneColliders=content.DroneColliders;
             helicopterBodyColliders=content.HelicopterBodyColliders;
+            assaultHelicopterBoxCollider=content.AssaultHelicopterBoxCollider;
             airShotTargets=content.AirShotTargets;
             assaultHelicopterWeapons=content.AssaultHelicopterWeapons;
             droneWeapon=content.DroneWeapon;droneProjectile=content.DroneProjectile;
