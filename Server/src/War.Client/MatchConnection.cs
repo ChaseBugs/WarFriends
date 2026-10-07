@@ -142,22 +142,21 @@ namespace War.Client
         {
             for(int attempt=0;attempt<3;attempt++)
             {
-                var rows=new List<BattleArmyEntityState>();ulong cursor=0,revision=0;
+                var roster = new ArmyEntityPageAccumulator();
                 while(true)
                 {
-                    var batch=await PollArmyEntitiesAsync(cursor,revision,ct).ConfigureAwait(false);
+                    var batch=await PollArmyEntitiesAsync(roster.Cursor,roster.Revision,ct)
+                        .ConfigureAwait(false);
                     if(batch.Code=="revision-changed")break;
-                    if(batch.Code=="army-disabled")return rows.AsReadOnly();
-                    if(batch.Code!="entities")throw new InvalidOperationException("Army entity cursor rejected: "+batch.Code);
-                    if(revision==0)revision=batch.Revision;
-                    rows.AddRange(batch.Entities.Select(x=>x.Clone()));
-                    if(rows.Count>10000)throw new InvalidOperationException("Army entity projection exceeded its bound.");
-                    if(!batch.HasMore)
+                    if(batch.Code=="army-disabled")
                     {
-                        if(rows.Count!=batch.ActiveCount)throw new InvalidOperationException("Incomplete army entity projection.");
-                        return rows.AsReadOnly();
+                        if(roster.Cursor!=0)
+                            throw new InvalidOperationException("Army authority disappeared during a roster scan.");
+                        return Array.Empty<BattleArmyEntityState>();
                     }
-                    cursor=batch.Entities[batch.Entities.Count-1].EntityKey;
+                    if(batch.Code!="entities")throw new InvalidOperationException("Army entity cursor rejected: "+batch.Code);
+                    roster.Add(batch);
+                    if(roster.Complete)return roster.Snapshot();
                 }
             }
             throw new InvalidOperationException("Army entities changed during three reconnect scans.");

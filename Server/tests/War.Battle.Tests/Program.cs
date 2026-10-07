@@ -295,6 +295,13 @@ if(args is ["--rifle-udp-only"])
     return;
 }
 
+if(args is ["--army-pages-only"])
+{
+    int focused = ArmyEntityPageTests.Run();
+    Console.WriteLine($"PASS: {focused} focused army roster page assertions");
+    return;
+}
+
 if(args is ["--helicopter-shotgun-only"])
 {
     var root=new DirectoryInfo(AppContext.BaseDirectory);
@@ -1929,6 +1936,7 @@ checks += await GrenadeCatalogTests.RunUdp(Path.Combine(contentRoot.FullName,"co
 checks += await GrenadeCatalogTests.RunTankUdp(Path.Combine(contentRoot.FullName,"content"));
 checks += ArmyFlameBurstTests.Run();
 checks += CombatContentTests.Run(Path.Combine(contentRoot.FullName,"content"));
+checks += ArmyEntityPageTests.Run();
 checks += HelicopterShotgunTests.Run(Path.Combine(contentRoot.FullName,"content"));
 checks += HelicopterBazookaTests.Run(Path.Combine(contentRoot.FullName,"content"));
 checks += await HelicopterBazookaTests.RunUdp(Path.Combine(contentRoot.FullName,"content"));
