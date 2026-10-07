@@ -2,7 +2,7 @@
   "version": 1,
   "sceneSha256": "d46f81ff8c3e12bf17f34a1f53dd601bd799102c9f984818031441dfb7a5de43",
   "obbSha256": "078cd1c4ebaeef4a39646274a54d35ce05741bc15a2e13d95ae55340711b5125",
-  "attackSourceSha256": "6954734200bc126fa1e286afde96262b0e2a691e95fe0266e8ee42eea1184c39",
+  "attackSourceSha256": "dc284fe64fc7a2d4430c1c2c554887ed7322da19c8cbfc8a01ad6d8e792367b0",
   "levelManagerComponentFileId": 45847,
   "weaponUpgradesComponentFileId": 45843,
   "weapons": [

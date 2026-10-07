@@ -470,6 +470,8 @@ message BattleCoopBossState {
 }
 message BattleCoopBossWeaponSlot {
   int32 slot = 1; int32 inventory_index = 2; string source_id = 3;
+  // BotManager writes this index into EquippedWeapon.weaponId.
+  int32 level_manager_index = 4;
 }
 message BattleCoopParticipantStart {
   string player_id = 1; int32 defend_component_file_id = 2;

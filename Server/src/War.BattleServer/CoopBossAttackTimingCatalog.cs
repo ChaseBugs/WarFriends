@@ -10,7 +10,7 @@ public sealed record CoopBossAttackTiming(
     string ExplosiveCategory, string PistolCategory,
     float ShootFrequencyMinSeconds, float ShootFrequencyMaxSeconds,
     float ShootingLengthMinSeconds, float ShootingLengthMaxSeconds,
-    float ShootAccuracy, float OpponentOffense,
+    float ShootAccuracy, float ExplosiveSwitchProbability, float OpponentOffense,
     float OpponentOffenseReactionSeconds);
 
 /// <summary>
@@ -20,7 +20,7 @@ public sealed record CoopBossAttackTiming(
 public sealed class CoopBossAttackTimingCatalog
 {
     private const string ReviewedArtifactSha256 =
-        "6954734200bc126fa1e286afde96262b0e2a691e95fe0266e8ee42eea1184c39";
+        "dc284fe64fc7a2d4430c1c2c554887ed7322da19c8cbfc8a01ad6d8e792367b0";
 
     public IReadOnlyList<CoopBossAttackTiming> Missions { get; }
 
@@ -71,7 +71,8 @@ public sealed class CoopBossAttackTimingCatalog
                 "secondaryCategory", "explosiveCategory", "pistolCategory",
                 "shootFrequencyMinSeconds",
                 "shootFrequencyMaxSeconds", "shootingLengthMinSeconds",
-                "shootingLengthMaxSeconds", "shootAccuracy", "opponentOffense",
+                "shootingLengthMaxSeconds", "shootAccuracy",
+                "explosiveSwitchProbability", "opponentOffense",
                 "opponentOffenseReactionSeconds");
             int missionIndex = index * 5 + 4;
             CoopBotRule bot = bots.ForMission(missionIndex);
@@ -87,6 +88,8 @@ public sealed class CoopBossAttackTimingCatalog
             float lengthMin = Positive(entry, "shootingLengthMinSeconds");
             float lengthMax = Positive(entry, "shootingLengthMaxSeconds");
             float accuracy = Probability(entry, "shootAccuracy");
+            float explosiveSwitch = Probability(entry,
+                "explosiveSwitchProbability");
             float offense = Probability(entry, "opponentOffense");
             float reaction = Positive(entry, "opponentOffenseReactionSeconds");
             if (entry.GetProperty("missionIndex").GetInt32() != missionIndex ||
@@ -104,7 +107,7 @@ public sealed class CoopBossAttackTimingCatalog
                 sourceDifficulty, playerBotsRow, configIndex,
                 primary, secondary, explosive, pistol,
                 frequencyMin, frequencyMax, lengthMin, lengthMax,
-                accuracy, offense, reaction);
+                accuracy, explosiveSwitch, offense, reaction);
         }
         return new CoopBossAttackTimingCatalog(rows);
     }

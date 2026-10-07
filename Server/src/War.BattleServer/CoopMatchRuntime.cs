@@ -551,6 +551,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
                 snapshot.Coop.Boss.Weapons.Add(new BattleCoopBossWeaponSlot
                 {
                     Slot = slot,
+                    LevelManagerIndex = weapon.LevelManagerIndex,
                     InventoryIndex = weapon.InventoryIndex,
                     SourceId = weapon.SheetName
                 });

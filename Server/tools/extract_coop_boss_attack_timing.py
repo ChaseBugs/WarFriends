@@ -83,10 +83,15 @@ def main():
         minimum_length = finite_decimal(config, "SHOOTINGLENGTHMIN")
         maximum_length = finite_decimal(config, "SHOOTINGLENGTHMAX")
         accuracy = finite_decimal(config, "SHOOTACCURACY")
+        explosive_switch = finite_decimal(config,
+            "SWITCHGRENADEBAZOOKAPROBABILITY")
         offense = finite_decimal(config, "OPPONENTOFFENSE")
         reaction = finite_decimal(config, "OPPONENTOFFENCEREACTIONTIME")
-        if minimum_frequency > maximum_frequency or minimum_length > maximum_length \
-                or not 0 <= accuracy <= 1 or not 0 <= offense <= 1:
+        if (minimum_frequency > maximum_frequency
+                or minimum_length > maximum_length
+                or not 0 <= accuracy <= 1
+                or not 0 <= explosive_switch <= 1
+                or not 0 <= offense <= 1):
             raise ValueError(f"mission {mission_index} has invalid shooting bounds")
         mission_rows.append({
             "missionIndex": mission_index,
@@ -105,6 +110,7 @@ def main():
             "shootingLengthMinSeconds": minimum_length,
             "shootingLengthMaxSeconds": maximum_length,
             "shootAccuracy": accuracy,
+            "explosiveSwitchProbability": explosive_switch,
             "opponentOffense": offense,
             "opponentOffenseReactionSeconds": reaction,
         })

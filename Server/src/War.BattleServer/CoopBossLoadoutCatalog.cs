@@ -30,7 +30,7 @@ public sealed class CoopBossLoadout
 public sealed class CoopBossLoadoutCatalog
 {
     private const string ReviewedArtifactSha256 =
-        "bc76f947cb265a94f9376ae899315eade7b58a77330caa746cacc075817c7185";
+        "e4b1f2278e21f9c8d2eb0dbdd3a9aef8cbe445006a4632efdffb541bb2efe261";
     private const string MatchingObbSha256 =
         "078cd1c4ebaeef4a39646274a54d35ce05741bc15a2e13d95ae55340711b5125";
 

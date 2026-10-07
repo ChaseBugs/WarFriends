@@ -500,6 +500,8 @@ internal static class CombatContentTests
             transmittedBoss?.EntityId != CoopMissionEngine.BossEntityId ||
             transmittedBoss.MaxHealth != bossStart.Coop.Boss.MaxHealth ||
             transmittedBoss.Weapons.Count != 4 ||
+            transmittedBoss.Weapons.Select(weapon => weapon.LevelManagerIndex)
+                .SequenceEqual([1, 3, 6, 13]) == false ||
             transmittedBoss.Weapons.Select(weapon => weapon.InventoryIndex)
                 .SequenceEqual([11, 2, 5, 12]) == false ||
             bossStart.Coop.Boss.DefendComponentFileId !=
@@ -943,9 +945,35 @@ internal static class CombatContentTests
             attacks.ForMission(24).SecondaryCategory != "Shotgun" ||
             attacks.ForMission(74).ExplosiveCategory != "RocketLauncher" ||
             attacks.ForMission(4).ShootFrequencyMinSeconds != 3.25f ||
+            attacks.ForMission(4).ExplosiveSwitchProbability != 0.05f ||
             attacks.ForMission(74).ConfigIndex != 12 ||
             attacks.ForMission(74).ShootAccuracy != 0.565f)
             throw new Exception("Boss attack timing differs from source bot sheets.");
+        var readyWeapon = new CoopBossWeaponReadiness(false, false, true, 10);
+        var emptyWeapon = new CoopBossWeaponReadiness(true, false, false, 0);
+        CoopBossAttackTiming firstTiming = attacks.ForMission(4);
+        if (CoopBossWeaponChoice.ForOrdinaryPlayerTarget(firstTiming, false,
+                readyWeapon, readyWeapon, readyWeapon, 0.01f, 0.8f) !=
+                    CoopBossWeaponSlotKind.Explosive ||
+            CoopBossWeaponChoice.ForOrdinaryPlayerTarget(firstTiming, true,
+                readyWeapon, readyWeapon, readyWeapon, 0.01f, 0.8f) !=
+                    CoopBossWeaponSlotKind.Secondary ||
+            CoopBossWeaponChoice.ForOrdinaryPlayerTarget(firstTiming, false,
+                emptyWeapon, readyWeapon, emptyWeapon, 0.5f, 0f) !=
+                    CoopBossWeaponSlotKind.Secondary ||
+            CoopBossWeaponChoice.ForOrdinaryPlayerTarget(firstTiming, false,
+                emptyWeapon, emptyWeapon, emptyWeapon, 0.5f, 0f) !=
+                    CoopBossWeaponSlotKind.Pistol)
+            throw new Exception("Boss ordinary player-target weapon choice changed.");
+        try
+        {
+            _ = CoopBossWeaponChoice.ForOrdinaryPlayerTarget(firstTiming, false,
+                readyWeapon, readyWeapon, readyWeapon, float.NaN, 0f);
+            throw new Exception("Invalid boss weapon random evidence was accepted.");
+        }
+        catch (InvalidDataException)
+        {
+        }
         var firstAttackClock = new CoopBossAttackCadence(
             attacks.ForMission(4), 0, () => 0f);
         if (firstAttackClock.Advance(60) || firstAttackClock.WindowOpen ||
@@ -1060,7 +1088,7 @@ internal static class CombatContentTests
             }
             catch (InvalidDataException)
             {
-                return 35 + combatAssertions;
+                return 41 + combatAssertions;
             }
         }
         finally

@@ -19,6 +19,7 @@
       "shootingLengthMinSeconds": 0.775,
       "shootingLengthMaxSeconds": 0.95,
       "shootAccuracy": 0.35,
+      "explosiveSwitchProbability": 0.05,
       "opponentOffense": 0.0,
       "opponentOffenseReactionSeconds": 3.43
     },
@@ -36,6 +37,7 @@
       "shootingLengthMinSeconds": 0.775,
       "shootingLengthMaxSeconds": 0.95,
       "shootAccuracy": 0.35,
+      "explosiveSwitchProbability": 0.05,
       "opponentOffense": 0.0,
       "opponentOffenseReactionSeconds": 3.43
     },
@@ -53,6 +55,7 @@
       "shootingLengthMinSeconds": 0.725,
       "shootingLengthMaxSeconds": 1.0,
       "shootAccuracy": 0.45,
+      "explosiveSwitchProbability": 0.025,
       "opponentOffense": 0.1,
       "opponentOffenseReactionSeconds": 3.0
     },
@@ -70,6 +73,7 @@
       "shootingLengthMinSeconds": 0.706,
       "shootingLengthMaxSeconds": 1.0,
       "shootAccuracy": 0.5,
+      "explosiveSwitchProbability": 0.028,
       "opponentOffense": 0.1205,
       "opponentOffenseReactionSeconds": 2.75
     },
@@ -87,6 +91,7 @@
       "shootingLengthMinSeconds": 0.687,
       "shootingLengthMaxSeconds": 1.0,
       "shootAccuracy": 0.506,
+      "explosiveSwitchProbability": 0.031,
       "opponentOffense": 0.141,
       "opponentOffenseReactionSeconds": 2.5
     },
@@ -104,6 +109,7 @@
       "shootingLengthMinSeconds": 0.687,
       "shootingLengthMaxSeconds": 1.0,
       "shootAccuracy": 0.506,
+      "explosiveSwitchProbability": 0.031,
       "opponentOffense": 0.141,
       "opponentOffenseReactionSeconds": 2.5
     },
@@ -121,6 +127,7 @@
       "shootingLengthMinSeconds": 0.649,
       "shootingLengthMaxSeconds": 1.0,
       "shootAccuracy": 0.518,
+      "explosiveSwitchProbability": 0.037,
       "opponentOffense": 0.182,
       "opponentOffenseReactionSeconds": 2.09
     },
@@ -138,6 +145,7 @@
       "shootingLengthMinSeconds": 0.63,
       "shootingLengthMaxSeconds": 1.1,
       "shootAccuracy": 0.525,
+      "explosiveSwitchProbability": 0.04,
       "opponentOffense": 0.2025,
       "opponentOffenseReactionSeconds": 1.98
     },
@@ -155,6 +163,7 @@
       "shootingLengthMinSeconds": 0.611,
       "shootingLengthMaxSeconds": 1.15,
       "shootAccuracy": 0.534,
+      "explosiveSwitchProbability": 0.043,
       "opponentOffense": 0.223,
       "opponentOffenseReactionSeconds": 1.89
     },
@@ -172,6 +181,7 @@
       "shootingLengthMinSeconds": 0.592,
       "shootingLengthMaxSeconds": 1.2,
       "shootAccuracy": 0.544,
+      "explosiveSwitchProbability": 0.046,
       "opponentOffense": 0.2435,
       "opponentOffenseReactionSeconds": 1.81
     },
@@ -189,6 +199,7 @@
       "shootingLengthMinSeconds": 0.573,
       "shootingLengthMaxSeconds": 1.25,
       "shootAccuracy": 0.554,
+      "explosiveSwitchProbability": 0.049,
       "opponentOffense": 0.264,
       "opponentOffenseReactionSeconds": 1.73
     },
@@ -206,6 +217,7 @@
       "shootingLengthMinSeconds": 0.554,
       "shootingLengthMaxSeconds": 1.3,
       "shootAccuracy": 0.565,
+      "explosiveSwitchProbability": 0.052,
       "opponentOffense": 0.2845,
       "opponentOffenseReactionSeconds": 1.67
     },
@@ -223,6 +235,7 @@
       "shootingLengthMinSeconds": 0.592,
       "shootingLengthMaxSeconds": 1.2,
       "shootAccuracy": 0.544,
+      "explosiveSwitchProbability": 0.046,
       "opponentOffense": 0.2435,
       "opponentOffenseReactionSeconds": 1.81
     },
@@ -240,6 +253,7 @@
       "shootingLengthMinSeconds": 0.573,
       "shootingLengthMaxSeconds": 1.25,
       "shootAccuracy": 0.554,
+      "explosiveSwitchProbability": 0.049,
       "opponentOffense": 0.264,
       "opponentOffenseReactionSeconds": 1.73
     },
@@ -257,6 +271,7 @@
       "shootingLengthMinSeconds": 0.554,
       "shootingLengthMaxSeconds": 1.3,
       "shootAccuracy": 0.565,
+      "explosiveSwitchProbability": 0.052,
       "opponentOffense": 0.2845,
       "opponentOffenseReactionSeconds": 1.67
     }
