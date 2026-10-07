@@ -268,7 +268,8 @@ public sealed partial class MatchEngine
             var opponent = players.Single(player => player != owner);
             var opposingDecoys = decoys.Snapshot()
                 .Where(decoy => decoy.OwnerFraction != owner.Definition.Fraction).ToArray();
-            volleyState.PrepareDueSecondGuns(time, shot, NextArmyFloat);
+            volleyState.PrepareDueSecondGuns(time, shot, NextArmyFloat,
+                pending => RefreshAssaultHelicopterAim(unit, path, pending));
             if (path.UsingWaypoints)
                 targetState.Advance(time, shot, opposingDecoys,
                     opponent.Definition.PlayerId, armyChoice, NextArmyFloat,
@@ -284,7 +285,8 @@ public sealed partial class MatchEngine
             armyAssaultHelicopterRoundIntents[entityId] = volleyState.DueRoundIntents(
                 time, path.Position, path.Rotation,
                 assaultHelicopterWeapons ??
-                    throw new InvalidDataException("Assault Helicopter gun source disappeared."));
+                    throw new InvalidDataException("Assault Helicopter gun source disappeared."),
+                NextArmyFloat);
         }
     }
 
@@ -308,8 +310,35 @@ public sealed partial class MatchEngine
         var choice = AssaultHelicopterShotTargetPolicy.Select(path.Position,
             details, details.IsPlayer && opponent.Route != null,
             shot.ShieldHitProbability, NextArmyFloat);
-        volleyState.PrepareFirstGun(time, tick, shot, choice,
+        Vector3 capturedVelocity = details.IsPlayer
+            ? HeavyTurretPlayerVelocity(opponent) : Vector3.Zero;
+        Vector3 firstMuzzle = (assaultHelicopterWeapons ??
+            throw new InvalidDataException("Assault Helicopter gun source disappeared."))
+            .Muzzle(0, path.Position, path.Rotation);
+        Vector3 firstAim = AssaultHelicopterAimPolicy.First(firstMuzzle,
+            choice.First.Position, capturedVelocity, shot.ShotSpeed);
+        volleyState.PrepareFirstGun(time, tick, shot, targetId, choice,
+            capturedVelocity, firstAim,
             armyChoice, NextArmyFloat);
+    }
+
+    private (Vector3 Target, Vector3 FirstGunMuzzle)? RefreshAssaultHelicopterAim(
+        BattleArmyEntityState unit, AssaultHelicopterWaypointState path,
+        AssaultHelicopterVolleyState.PreparedVolley pending)
+    {
+        var candidate = DroneTargetSnapshot().SingleOrDefault(target =>
+            target.Id == pending.TargetId && target.Fraction != unit.OwnerFraction &&
+            target.Alive);
+        if (candidate == null) return null;
+
+        var details = ResolveDroneShotTarget(candidate);
+        var secondTarget = details.Targets.SingleOrDefault(target =>
+            target.TransformFileId == pending.TargetChoice.Second.TransformFileId);
+        if (secondTarget == null) return null;
+        Vector3 firstMuzzle = (assaultHelicopterWeapons ??
+            throw new InvalidDataException("Assault Helicopter gun source disappeared."))
+            .Muzzle(0, path.Position, path.Rotation);
+        return (secondTarget.Position, firstMuzzle);
     }
 
     private void AdvanceDronePaths()
