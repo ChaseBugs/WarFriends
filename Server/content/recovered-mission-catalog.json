@@ -1,6 +1,38 @@
 {
   "source": "Clients/ExportedProject/Assets/Scenes/MainScene.unity",
   "sourceSha256": "d46f81ff8c3e12bf17f34a1f53dd601bd799102c9f984818031441dfb7a5de43",
+  "maps": [
+    {
+      "stage": 1,
+      "name": "Desert",
+      "scene": "Desert_New",
+      "sceneSha256": "e5e2ad6c9f602125d1da7c1949e0f002e8ee229a4c1fc16bf703ae96000f40c5"
+    },
+    {
+      "stage": 2,
+      "name": "Snow",
+      "scene": "Snow_Single",
+      "sceneSha256": "a797c945ccc4e4307ad55611e16db086d3ace63f31a535388f7e5bbb461daf27"
+    },
+    {
+      "stage": 3,
+      "name": "California",
+      "scene": "City_Single",
+      "sceneSha256": "99a24a690a023c8f9c2f1195b727ecdcc22740a6f0479f6148909a22db3f5127"
+    },
+    {
+      "stage": 4,
+      "name": "Jungle",
+      "scene": "Aztec_Single",
+      "sceneSha256": "5fbfe89a6ff35e0769d4fcdbd9a80e6c31baec653a3bd78c53b81211cd8b9e17"
+    },
+    {
+      "stage": 5,
+      "name": "Park",
+      "scene": "Park_Single",
+      "sceneSha256": "0f816c262e021a36bc347d62734504f9b86d2031d11a55cdf3c377bf4990ba83"
+    }
+  ],
   "missions": [
     {
       "index": 0,

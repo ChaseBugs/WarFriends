@@ -317,11 +317,14 @@ internal static class CombatContentTests
     {
         MatchManifest duel = MatchManifest.Read(
             Path.Combine(directory, "local-rifle-match-template.json"));
+        MissionMapRule sourceMap = catalog.MapForMission(0);
         MatchManifest coop = duel with
         {
             Mode = MatchManifest.CoopMissionMode,
             MissionIndex = 0,
             CatalogRevision = MissionCatalog.SourceRevision,
+            MapId = sourceMap.Scene,
+            MapRevision = sourceMap.SceneSha256,
             DurationSeconds = catalog.Get(0).TimeSeconds,
             Players = duel.Players.Select(player => player with { Fraction = 1 }).ToArray()
         };
@@ -348,6 +351,15 @@ internal static class CombatContentTests
         Reject(coop with { MissionIndex = -1 });
         Reject(coop with { CatalogRevision = new string('0', 64) });
         Reject(duel with { MissionIndex = 0 });
+
+        try
+        {
+            _ = new CoopMatchRuntime(coop with { MapId = duel.MapId }, catalog);
+            throw new Exception("A PvP map was accepted for a source co-op mission.");
+        }
+        catch (InvalidDataException)
+        {
+        }
 
         var runtime = new CoopMatchRuntime(coop, catalog);
         string firstPlayer = coop.Players[0].PlayerId;
@@ -421,7 +433,7 @@ internal static class CombatContentTests
         if (!earlyForfeit.Terminal || !earlyForfeit.Snapshot().Coop.Failed ||
             earlyForfeit.Snapshot().RewardEligible)
             throw new Exception("A pre-start forfeit must close without reward eligibility.");
-        return 11;
+        return 12;
     }
 
     internal static int Run(string directory)

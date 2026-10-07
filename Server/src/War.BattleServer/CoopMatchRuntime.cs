@@ -36,9 +36,13 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
     {
         ArgumentNullException.ThrowIfNull(catalog);
         manifest = MatchManifest.Validate(allocation);
+        MissionMapRule? sourceMap = manifest.MissionIndex is int selectedMission
+            ? catalog.MapForMission(selectedMission) : null;
         if (manifest.Mode != MatchManifest.CoopMissionMode ||
             manifest.MissionIndex is not int missionIndex ||
             catalog.SourceSha256 != manifest.CatalogRevision ||
+            sourceMap == null || manifest.MapId != sourceMap.Scene ||
+            manifest.MapRevision != sourceMap.SceneSha256 ||
             manifest.DurationSeconds != catalog.Get(missionIndex).TimeSeconds)
             throw new InvalidDataException("Co-op allocation differs from source mission authority.");
 

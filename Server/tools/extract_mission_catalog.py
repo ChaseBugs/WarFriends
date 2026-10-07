@@ -15,6 +15,7 @@ ROOT = Path(__file__).resolve().parents[2]
 SCENE = ROOT / "Clients/ExportedProject/Assets/Scenes/MainScene.unity"
 OUTPUT = ROOT / "Server/content/recovered-mission-catalog.json"
 SCRIPT_GUID = "0d5786f466603d141908ebb295fba2ce"
+MAP_SCRIPT_GUID = "c14938fcf6fbe9ff500498cac2802223"
 RULE_FIELDS = {
     "MAP_STAGE": "mapStage",
     "MISSIONTYPE": "missionType",
@@ -93,13 +94,54 @@ def parse_rows(lines):
     return result
 
 
+def parse_maps(scene_lines):
+    script_line = next(
+        index for index, line in enumerate(scene_lines)
+        if MAP_SCRIPT_GUID in line and "m_Script:" in line
+    )
+    start = next(
+        index for index in range(script_line, len(scene_lines))
+        if scene_lines[index] == "  mapEntries:"
+    )
+    end = next(
+        index for index in range(start + 1, len(scene_lines))
+        if scene_lines[index].startswith("--- !u!")
+    )
+    maps = []
+    for line in scene_lines[start + 1:end]:
+        if line.startswith("  - id:"):
+            maps.append({"id": int(line.split(":", 1)[1].strip())})
+        elif maps:
+            match = re.fullmatch(r"    ([A-Za-z]+): (.*)", line)
+            if match:
+                maps[-1][match.group(1)] = match.group(2)
+    if len(maps) != 5:
+        raise ValueError(f"Expected five source mission maps, found {len(maps)}")
+
+    result = []
+    for stage, entry in enumerate(maps, 1):
+        if entry["id"] != stage - 1:
+            raise ValueError("Recovered mission maps are out of order")
+        scene_name = entry["levelSingleName"]
+        scene_path = SCENE.parent / (scene_name + ".unity")
+        result.append({
+            "stage": stage,
+            "name": entry["name"],
+            "scene": scene_name,
+            "sceneSha256": hashlib.sha256(scene_path.read_bytes()).hexdigest(),
+        })
+    return result
+
+
 def main():
     scene_bytes = SCENE.read_bytes()
     scene_lines = scene_bytes.decode("utf-8-sig").splitlines()
     missions = parse_rows(component_lines(scene_lines))
+    maps = parse_maps(scene_lines)
     document = {
         "source": "Clients/ExportedProject/Assets/Scenes/MainScene.unity",
         "sourceSha256": hashlib.sha256(scene_bytes).hexdigest(),
+        "maps": maps,
         "missions": missions,
     }
     expected_text = json.dumps(document, indent=2) + "\n"

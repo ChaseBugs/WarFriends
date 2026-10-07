@@ -10,6 +10,9 @@ public sealed record MissionTimedEvent(
     float TimeSeconds, string Behaviour, int Level, bool IsCardUnit,
     int Count, string Card);
 
+public sealed record MissionMapRule(
+    int Stage, string Name, string Scene, string SceneSha256);
+
 /// <summary>A single recovered campaign mission's server-owned configuration.</summary>
 public sealed record MissionRule(
     int Index, int Level, int MapStage, string MissionType, int? Objective,
@@ -42,14 +45,18 @@ public sealed class MissionCatalog
             ["Score"] = 15,
             ["KillOpponent"] = 15
         };
+    private static readonly string[] ExpectedMapScenes =
+        ["Desert_New", "Snow_Single", "City_Single", "Aztec_Single", "Park_Single"];
 
     public string SourceSha256 { get; }
     public IReadOnlyList<MissionRule> Missions { get; }
+    public IReadOnlyList<MissionMapRule> Maps { get; }
 
-    private MissionCatalog(string sourceSha256, MissionRule[] missions)
+    private MissionCatalog(string sourceSha256, MissionRule[] missions, MissionMapRule[] maps)
     {
         SourceSha256 = sourceSha256;
         Missions = new ReadOnlyCollection<MissionRule>(missions);
+        Maps = new ReadOnlyCollection<MissionMapRule>(maps);
     }
 
     public MissionRule Get(int missionIndex)
@@ -57,6 +64,12 @@ public sealed class MissionCatalog
         if (missionIndex < 0 || missionIndex >= Missions.Count)
             throw new ArgumentOutOfRangeException(nameof(missionIndex));
         return Missions[missionIndex];
+    }
+
+    public MissionMapRule MapForMission(int missionIndex)
+    {
+        MissionRule mission = Get(missionIndex);
+        return Maps[mission.MapStage - 1];
     }
 
     public MissionObjectiveState CreateObjectiveState(int missionIndex)
@@ -74,13 +87,14 @@ public sealed class MissionCatalog
     {
         using var document = JsonDocument.Parse(File.ReadAllText(path));
         JsonElement root = document.RootElement;
-        RequireProperties(root, "source", "sourceSha256", "missions");
+        RequireProperties(root, "source", "sourceSha256", "maps", "missions");
         if (root.GetProperty("source").GetString() != SourcePath)
             throw new InvalidDataException("Mission catalog has unexpected source provenance.");
 
         string sourceHash = ReadHash(root, "sourceSha256");
         if (sourceHash != SourceRevision)
             throw new InvalidDataException("Mission catalog is from an unreviewed MainScene.");
+        MissionMapRule[] maps = ReadMaps(root.GetProperty("maps"));
         JsonElement entries = root.GetProperty("missions");
         if (entries.ValueKind != JsonValueKind.Array || entries.GetArrayLength() != 75)
             throw new InvalidDataException("Mission catalog must contain all 75 source rows.");
@@ -101,7 +115,30 @@ public sealed class MissionCatalog
             if (typeCounts.GetValueOrDefault(expected.Key) != expected.Value)
                 throw new InvalidDataException("Mission objective types differ from the recovered source.");
         }
-        return new MissionCatalog(sourceHash, missions);
+        return new MissionCatalog(sourceHash, missions, maps);
+    }
+
+    private static MissionMapRule[] ReadMaps(JsonElement entries)
+    {
+        if (entries.ValueKind != JsonValueKind.Array ||
+            entries.GetArrayLength() != ExpectedMapScenes.Length)
+            throw new InvalidDataException("Mission map catalog must contain five source stages.");
+
+        var maps = new MissionMapRule[ExpectedMapScenes.Length];
+        for (int index = 0; index < maps.Length; index++)
+        {
+            JsonElement entry = entries[index];
+            RequireProperties(entry, "stage", "name", "scene", "sceneSha256");
+            int stage = ReadInt(entry, "stage", 1, maps.Length);
+            string name = entry.GetProperty("name").GetString() ?? "";
+            string scene = entry.GetProperty("scene").GetString() ?? "";
+            if (stage != index + 1 || scene != ExpectedMapScenes[index] ||
+                name.Length is < 1 or > 40 || name.Any(char.IsControl))
+                throw new InvalidDataException("Mission map order or identity differs from the source.");
+            maps[index] = new MissionMapRule(stage, name, scene,
+                ReadHash(entry, "sceneSha256"));
+        }
+        return maps;
     }
 
     private static MissionRule ReadMission(JsonElement entry)
@@ -124,7 +161,7 @@ public sealed class MissionCatalog
 
         var mission = new MissionRule(
             ReadInt(entry, "index", 0, 74), ReadInt(entry, "level", 1, 75),
-            ReadInt(entry, "mapStage", 1, 100), type, objective,
+            ReadInt(entry, "mapStage", 1, 5), type, objective,
             ReadInt(entry, "timeSeconds", 1, 3600),
             ReadInt(entry, "scoreOneStar", 0, 1_000_000),
             ReadInt(entry, "scoreTwoStars", 0, 1_000_000),
