@@ -123,6 +123,9 @@ public sealed class BattleResultStore
         long removed=0;
         foreach(var row in candidates)
         {
+            var terminal=TerminalOutbox.ValidatePayload(row.Snapshot,row.MatchId,row.Digest);
+            if(terminal.Phase==BattlePhase.Ended && !row.Scored)
+                continue; // Keep completed evidence until a settlement consumer confirms it.
             var deleted=await results.DeleteOneAsync(Exact(row),ct);
             if(deleted.DeletedCount!=1)
                 throw new InvalidDataException("Battle result changed during archival; retry remaining rows.");

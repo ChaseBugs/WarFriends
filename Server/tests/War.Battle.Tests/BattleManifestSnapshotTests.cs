@@ -298,11 +298,18 @@ internal static class BattleManifestSnapshotTests
                     scoringDigest,CancellationToken.None)));
             if(scoring.Count(x=>x=="scored")!=1 || scoring.Count(x=>x=="already-scored")!=7)
                 throw new Exception("Concurrent result scoring did not retain one durable winner.");
+            var unsettledTerminal=scoringTerminal.Clone();
+            unsettledTerminal.MatchId="unsettled-"+Guid.NewGuid().ToString("N");
+            (byte[] unsettledPayload,string unsettledDigest)=Evidence(unsettledTerminal);
+            if(await resultStore.Accept(unsettledTerminal.MatchId,unsettledDigest,unsettledPayload,
+                CancellationToken.None)!="accepted")
+                throw new Exception("Unsettled completed result was not persisted.");
             if(await resultStore.Prune(DateTimeOffset.UtcNow.AddDays(31),TimeSpan.FromDays(30),CancellationToken.None)!=3 ||
                await resultStore.Get(match,CancellationToken.None)!=null ||
                await resultStore.Get(rematch.MatchId!,CancellationToken.None)!=null ||
-               await resultStore.Get(scoringTerminal.MatchId,CancellationToken.None)!=null)
-                throw new Exception("Validated result archival did not remove the exact due rows.");
+               await resultStore.Get(scoringTerminal.MatchId,CancellationToken.None)!=null ||
+               (await resultStore.Get(unsettledTerminal.MatchId,CancellationToken.None))?.Scored!=false)
+                throw new Exception("Archival removed unsettled combat evidence or retained a settled row.");
             Console.WriteLine("PASS: Mongo queue authority and exact-result scoring/archival survive concurrent stores and restart");
         }
         finally {await mongo.DropDatabaseAsync(database);}
