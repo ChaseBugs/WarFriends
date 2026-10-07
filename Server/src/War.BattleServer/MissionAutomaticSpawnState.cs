@@ -14,6 +14,7 @@ public sealed class MissionAutomaticSpawnState
     private readonly int[] killed;
     private readonly int[] eventSpawned;
     private readonly Dictionary<ulong, int> liveEntities = [];
+    private readonly HashSet<ulong> seenEntityIds = [];
     private readonly HashSet<int> pendingEvents = [];
     private ulong? startTick;
     private ulong? lastEventSecond;
@@ -77,7 +78,7 @@ public sealed class MissionAutomaticSpawnState
 
     public bool ConfirmSpawn(int behaviourIndex, ulong entityId, ulong tick)
     {
-        if (entityId == 0 || liveEntities.ContainsKey(entityId) ||
+        if (entityId == 0 || seenEntityIds.Contains(entityId) ||
             pendingAutomaticTick != tick ||
             pendingAutomaticBehaviour != behaviourIndex ||
             !EligibleBehaviourIndexes(tick).Contains(behaviourIndex))
@@ -87,6 +88,7 @@ public sealed class MissionAutomaticSpawnState
         pendingAutomaticBehaviour = null;
         generated[behaviourIndex] = checked(generated[behaviourIndex] + 1);
         liveEntities.Add(entityId, behaviourIndex);
+        seenEntityIds.Add(entityId);
         return true;
     }
 
@@ -136,7 +138,7 @@ public sealed class MissionAutomaticSpawnState
 
     public bool ConfirmTimedEventSpawn(int eventIndex, ulong entityId, ulong tick)
     {
-        if (entityId == 0 || liveEntities.ContainsKey(entityId) ||
+        if (entityId == 0 || seenEntityIds.Contains(entityId) ||
             !pendingEvents.Contains(eventIndex) || !ActiveAt(tick) ||
             lastEventSecond != (tick - startTick!.Value) / MatchManifest.TickRate)
             return false;
@@ -155,6 +157,7 @@ public sealed class MissionAutomaticSpawnState
         }
         // -1 means the timed behavior was absent from WaveManager's list.
         liveEntities.Add(entityId, behaviourIndex);
+        seenEntityIds.Add(entityId);
         return true;
     }
 

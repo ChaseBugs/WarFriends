@@ -26,6 +26,7 @@ internal static class CombatContentTests
         int scoreAssertions = VerifyMissionScoring(catalog);
         int spawnAssertions = VerifyMissionAutomaticSpawns(catalog);
         int eventAssertions = VerifyMissionTimedEvents(catalog);
+        int coopAssertions = VerifyCoopMissionEngine(catalog);
 
         string temporaryPath = Path.Combine(Path.GetTempPath(),
             $"war-mission-catalog-{Guid.NewGuid():N}.json");
@@ -43,7 +44,7 @@ internal static class CombatContentTests
             RejectMissionCatalog(temporaryPath, document,
                 "An event beyond the source mission timer was accepted.");
             return 4 + objectiveAssertions + scoreAssertions +
-                spawnAssertions + eventAssertions;
+                spawnAssertions + eventAssertions + coopAssertions;
         }
         finally
         {
@@ -236,6 +237,76 @@ internal static class CombatContentTests
             expiredEvents.ConfirmSpawn(0, 502, sourceDeadline))
             throw new Exception("A mission cannot confirm a spawn after its source deadline.");
         return 5;
+    }
+
+    private static int VerifyCoopMissionEngine(MissionCatalog catalog)
+    {
+        const string firstPlayer = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+        const string secondPlayer = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
+        var mission = new CoopMissionEngine(catalog, 0, _ => 0);
+        if (!mission.Admit(firstPlayer) || !mission.Admit(secondPlayer) ||
+            mission.Admit("cccccccccccccccccccccccccccccccc") ||
+            !mission.MarkReady(firstPlayer, 0) || mission.Started ||
+            !mission.MarkReady(secondPlayer, 0) || !mission.Started)
+            throw new Exception("Two allied participants must be admitted and ready before mission start.");
+
+        ulong[] automaticTicks = [8, 16, 24, 32, 40, 48];
+        for (int index = 0; index < automaticTicks.Length; index++)
+        {
+            ulong tick = automaticTicks[index];
+            int expectedBehaviour = index < 3 ? 0 : 1;
+            ulong entityId = (ulong)(index + 1);
+            if (mission.SelectAutomaticBehaviour(tick) != expectedBehaviour ||
+                !mission.ConfirmAutomaticSpawn(expectedBehaviour, entityId, tick) ||
+                !mission.ConfirmAiDeath(entityId, tick) ||
+                mission.ConfirmAiDeath(entityId, tick))
+                throw new Exception("Each confirmed automatic AI death counts once toward the kill mission.");
+        }
+
+        int[] eventIndexes = [0, 2, 1, 3];
+        for (int index = 0; index < eventIndexes.Length; index++)
+        {
+            int eventIndex = eventIndexes[index];
+            ulong tick = (ulong)catalog.Get(0).Events[eventIndex].TimeSeconds *
+                MatchManifest.TickRate;
+            ulong entityId = (ulong)(100 + index);
+            if (!mission.DueTimedEvents(tick).Contains(eventIndex) ||
+                !mission.ConfirmTimedEventSpawn(eventIndex, entityId, tick) ||
+                !mission.ConfirmAiDeath(entityId, tick))
+                throw new Exception("A confirmed timed AI death advances the shared objective.");
+        }
+
+        if (mission.EnemyKills != 10 || mission.Outcome != MissionOutcome.Succeeded ||
+            mission.SelectAutomaticBehaviour(800) != null ||
+            mission.ConfirmAiDeath(103, 800))
+            throw new Exception("The source kill target ends the shared mission exactly once.");
+
+        MissionRule survivalRule = catalog.Missions.First(rule =>
+            rule.MissionType == "SurviveXSeconds");
+        var survival = new CoopMissionEngine(catalog, survivalRule.Index);
+        survival.Admit(firstPlayer);
+        survival.Admit(secondPlayer);
+        survival.MarkReady(firstPlayer, 100);
+        if (survival.MarkReady(secondPlayer, 99) ||
+            !survival.MarkReady(secondPlayer, 100))
+            throw new Exception("Ready callbacks cannot move the mission start backward in time.");
+        ulong deadline = 100 + (ulong)survivalRule.TimeSeconds *
+            MatchManifest.TickRate;
+        if (survival.AdvanceTick(deadline - 1) ||
+            !survival.AdvanceTick(deadline) ||
+            survival.Outcome != MissionOutcome.Succeeded)
+            throw new Exception("The shared survival mission succeeds at its source deadline.");
+
+        var abandoned = new CoopMissionEngine(catalog, 0);
+        abandoned.Admit(firstPlayer);
+        abandoned.Admit(secondPlayer);
+        abandoned.MarkReady(firstPlayer, 0);
+        abandoned.MarkReady(secondPlayer, 0);
+        if (!abandoned.Leave(firstPlayer) ||
+            abandoned.Outcome != MissionOutcome.Failed ||
+            abandoned.SelectAutomaticBehaviour(8) != null)
+            throw new Exception("A participant departure fails and closes an active mission.");
+        return 6;
     }
 
     internal static int Run(string directory)
