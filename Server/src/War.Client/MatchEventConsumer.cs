@@ -11,6 +11,18 @@ namespace War.Client
         public ulong LastEventId { get; private set; }
         public event Action<MatchEvent> EventReceived;
 
+        /// <summary>
+        /// Restores the cursor after reconnect. Pass only the ID of an event whose
+        /// presentation callback completed; the host checks that it can replay
+        /// from this position when the next page is requested.
+        /// </summary>
+        public MatchEventConsumer(ulong lastProcessedEventId = 0)
+        {
+            if (lastProcessedEventId == ulong.MaxValue)
+                throw new ArgumentOutOfRangeException(nameof(lastProcessedEventId));
+            LastEventId = lastProcessedEventId;
+        }
+
         public int Consume(MatchEventBatch batch)
         {
             if (batch == null || batch.Code != "events" || batch.LatestEventId < LastEventId || batch.Events.Count > 4)

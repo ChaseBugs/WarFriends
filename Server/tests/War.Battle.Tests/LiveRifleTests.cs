@@ -193,14 +193,26 @@ internal static class LiveRifleTests
                   appliedEvents[1] == interruptedEventId &&
                   appliedEvents.Count(id => id == eventA.Events[0].EventId) == 1,
                 "UDP retry delivers the failed callback without repeating the earlier event");
-            ulong processed=eventA.Events[^1].EventId;
+            ulong processed=interruptedConsumer.LastEventId;
             await peerA.PollEventsAsync(processed,ct.Token);
             using(var resumed=new MatchConnection(Grant(one,703,1)))
             {
                 Check((await resumed.ConnectAsync(ct.Token)).Code=="admitted","new signed generation resumes live match");
-                var restored=await resumed.PollEventsAsync(processed,ct.Token);
-                Check(restored.Code=="events" && restored.Events.All(e=>e.EventId>processed),
-                    "reconnected SDK resumes from the exact processed event cursor");
+                var restoredConsumer=new MatchEventConsumer(processed);
+                var restoredEvents=new List<ulong>();
+                restoredConsumer.EventReceived+=item=>restoredEvents.Add(item.EventId);
+                await resumed.PollAndConsumeEventsAsync(restoredConsumer,ct.Token);
+                Check(restoredEvents.All(id=>id>processed),
+                    "reconnected SDK does not repeat callbacks already applied before disconnect");
+                await resumed.FireAsync(targetA.X,targetA.Y,targetA.Z,ct.Token);
+                for(int attempt=0;attempt<20 && restoredEvents.Count==0;attempt++)
+                {
+                    await Task.Delay(100,ct.Token);
+                    await resumed.PollAndConsumeEventsAsync(restoredConsumer,ct.Token);
+                }
+                Check(restoredEvents.Count>0 && restoredEvents[0]==processed+1 &&
+                      restoredEvents.SequenceEqual(restoredEvents.Distinct()),
+                    "fresh SDK dispatches later host events once from its restored cursor");
             }
             Check(!state.Snapshot.RewardEligible,"UDP rifle mode remains unscored");
         }
