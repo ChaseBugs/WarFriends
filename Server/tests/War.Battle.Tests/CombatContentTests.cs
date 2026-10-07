@@ -316,6 +316,8 @@ internal static class CombatContentTests
 
     private static int VerifyCoopAllocation(string directory, MissionCatalog catalog)
     {
+        CoopSpawnPointCatalog spawnPoints = CoopSpawnPointCatalog.Load(
+            Path.Combine(directory, "recovered-coop-spawn-points.json"), catalog);
         MatchManifest duel = MatchManifest.Read(
             Path.Combine(directory, "local-rifle-match-template.json"));
         MissionMapRule sourceMap = catalog.MapForMission(0);
@@ -355,14 +357,15 @@ internal static class CombatContentTests
 
         try
         {
-            _ = new CoopMatchRuntime(coop with { MapId = duel.MapId }, catalog);
+            _ = new CoopMatchRuntime(coop with { MapId = duel.MapId }, catalog, spawnPoints);
             throw new Exception("A PvP map was accepted for a source co-op mission.");
         }
         catch (InvalidDataException)
         {
         }
 
-        var runtime = new CoopMatchRuntime(coop, catalog);
+        var runtime = new CoopMatchRuntime(coop, catalog, spawnPoints,
+            chooseBehaviour: _ => 0, choosePoint: _ => 0);
         string firstPlayer = coop.Players[0].PlayerId;
         string secondPlayer = coop.Players[1].PlayerId;
         if (!runtime.Admit(firstPlayer) || !runtime.Admit(secondPlayer))
@@ -395,13 +398,34 @@ internal static class CombatContentTests
         if (runtime.Command(firstPlayer, unsupported).Code != "coop-command-unavailable" ||
             runtime.Snapshot().RewardEligible || runtime.Snapshot().Coop.EnemyKills != 0)
             throw new Exception("Unimplemented co-op combat commands must not create authority.");
+        runtime.Advance(8);
+        BattleCoopEnemySpawn firstEnemy = runtime.Snapshot().Coop.EnemySpawns.Single();
+        CoopMapSpawnPoints sourceMapSpawns = spawnPoints.MapForMission(catalog, 0);
+        if (firstEnemy.EntityId != 1 || firstEnemy.Behaviour != "Assaulter" ||
+            firstEnemy.SpawnTick != 8 || firstEnemy.TimedEvent ||
+            !sourceMapSpawns.EnemySpawnPoints.Any(point =>
+                point.ComponentFileId == firstEnemy.SpawnComponentFileId &&
+                point.Position == new Vector3(firstEnemy.X, firstEnemy.Y, firstEnemy.Z)))
+            throw new Exception("A due co-op AI must be created at an enemy source anchor.");
+        runtime.Advance(9);
+        if (runtime.Snapshot().Coop.EnemySpawns.Count != 1)
+            throw new Exception("Co-op AI cadence must not spawn on the next tick.");
+        runtime.Advance(10 * MatchManifest.TickRate);
+        BattleCoopEnemySpawn timedEnemy = runtime.Snapshot().Coop.EnemySpawns
+            .Single(enemy => enemy.TimedEvent);
+        if (timedEnemy.Behaviour != "Shotgunner" ||
+            timedEnemy.SpawnTick != 10 * MatchManifest.TickRate ||
+            timedEnemy.EntityId == firstEnemy.EntityId ||
+            !sourceMapSpawns.EnemySpawnPoints.Any(point =>
+                point.ComponentFileId == timedEnemy.SpawnComponentFileId))
+            throw new Exception("A source-timed co-op event must create a distinct host enemy.");
         runtime.Advance((ulong)coop.DurationSeconds * MatchManifest.TickRate);
         if (!runtime.Terminal || runtime.Snapshot().TerminalReason != "mission-failed" ||
             runtime.TerminalEvidenceSnapshot().RewardEligible)
             throw new Exception("A timed-out kill mission remains unscored and terminal.");
 
         string signingKey = Convert.ToBase64String(new byte[32]);
-        var udpRuntime = new CoopMatchRuntime(coop, catalog);
+        var udpRuntime = new CoopMatchRuntime(coop, catalog, spawnPoints);
         var udpEndpoint = new MatchEndpoint(coop, signingKey, udpRuntime, 0);
         var tokens = new MatchTokens(signingKey);
         var claims = new MatchAdmission
@@ -427,14 +451,14 @@ internal static class CombatContentTests
             !udpRuntime.Snapshot().Players[0].Admitted)
             throw new Exception("A signed co-op hello must reach its isolated runtime.");
 
-        var earlyForfeit = new CoopMatchRuntime(coop, catalog);
+        var earlyForfeit = new CoopMatchRuntime(coop, catalog, spawnPoints);
         earlyForfeit.Admit(firstPlayer);
         earlyForfeit.Command(firstPlayer, new MatchCommand
             { CommandId = 1, Forfeit = new ForfeitCommand() });
         if (!earlyForfeit.Terminal || !earlyForfeit.Snapshot().Coop.Failed ||
             earlyForfeit.Snapshot().RewardEligible)
             throw new Exception("A pre-start forfeit must close without reward eligibility.");
-        return 12;
+        return 15;
     }
 
     private static int VerifyCoopSpawnCatalog(string directory, MissionCatalog missions)

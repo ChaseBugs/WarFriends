@@ -22,7 +22,12 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
 
     private readonly MatchManifest manifest;
     private readonly CoopMissionEngine mission;
+    private readonly MissionRule missionRule;
+    private readonly CoopAiSpawnSelector spawnSelector;
+    private readonly Func<int, int> chooseSpawnPoint;
+    private readonly List<BattleCoopEnemySpawn> enemySpawns = [];
     private readonly Dictionary<string, Participant> participants;
+    private ulong nextEnemyId = 1;
     private BattlePhase phase = BattlePhase.Waiting;
     private ulong tick;
     private ulong stateRevision;
@@ -32,7 +37,10 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
     public string ManifestHash { get; }
     public bool Terminal => phase is BattlePhase.Ended or BattlePhase.Aborted;
 
-    internal CoopMatchRuntime(MatchManifest allocation, MissionCatalog catalog)
+    internal CoopMatchRuntime(MatchManifest allocation, MissionCatalog catalog,
+        CoopSpawnPointCatalog spawnPoints,
+        Func<int, int>? chooseBehaviour = null,
+        Func<int, int>? choosePoint = null)
     {
         ArgumentNullException.ThrowIfNull(catalog);
         manifest = MatchManifest.Validate(allocation);
@@ -47,7 +55,10 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             throw new InvalidDataException("Co-op allocation differs from source mission authority.");
 
         ManifestHash = manifest.Digest();
-        mission = new CoopMissionEngine(catalog, missionIndex);
+        missionRule = catalog.Get(missionIndex);
+        spawnSelector = new CoopAiSpawnSelector(catalog, spawnPoints, missionIndex);
+        chooseSpawnPoint = choosePoint ?? Random.Shared.Next;
+        mission = new CoopMissionEngine(catalog, missionIndex, chooseBehaviour);
         participants = manifest.Players.ToDictionary(player => player.PlayerId,
             player => new Participant(player.PlayerId), StringComparer.Ordinal);
     }
@@ -101,9 +112,64 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
             End(BattlePhase.Aborted, "admission-timeout");
             return;
         }
-        if (phase == BattlePhase.Running && mission.AdvanceTick(tick))
-            End(BattlePhase.Ended, mission.Outcome == MissionOutcome.Succeeded
-                ? "mission-success" : "mission-failed");
+        if (phase == BattlePhase.Running)
+        {
+            if (mission.AdvanceTick(tick))
+            {
+                End(BattlePhase.Ended, mission.Outcome == MissionOutcome.Succeeded
+                    ? "mission-success" : "mission-failed");
+                return;
+            }
+            SpawnDueEnemies();
+        }
+    }
+
+    private void SpawnDueEnemies()
+    {
+        // Mission.UpdateMission creates timed units; WaveManager also tries one
+        // automatic creation when its quarter-second cadence has elapsed.
+        foreach (int eventIndex in mission.DueTimedEvents(tick))
+        {
+            MissionTimedEvent timedEvent = missionRule.Events[eventIndex];
+            BattleCoopEnemySpawn enemy = CreateEnemy(
+                timedEvent.Behaviour, timedEvent.Level, true);
+            if (!mission.ConfirmTimedEventSpawn(eventIndex, enemy.EntityId, tick))
+                throw new InvalidDataException("A due co-op event rejected its host-created enemy.");
+            enemySpawns.Add(enemy);
+            stateRevision++;
+        }
+
+        int? behaviourIndex = mission.SelectAutomaticBehaviour(tick);
+        if (behaviourIndex is not int selectedIndex)
+            return;
+        MissionSpawnBehaviour behaviour = missionRule.Behaviours[selectedIndex];
+        BattleCoopEnemySpawn automaticEnemy = CreateEnemy(
+            behaviour.Name, behaviour.Level, false);
+        if (!mission.ConfirmAutomaticSpawn(selectedIndex, automaticEnemy.EntityId, tick))
+            throw new InvalidDataException("A due co-op spawn rejected its host-created enemy.");
+        enemySpawns.Add(automaticEnemy);
+        stateRevision++;
+    }
+
+    private BattleCoopEnemySpawn CreateEnemy(string behaviour, int level, bool timedEvent)
+    {
+        IReadOnlyList<CoopSpawnPoint> candidates = spawnSelector.Candidates(behaviour);
+        int selectedIndex = chooseSpawnPoint(candidates.Count);
+        if (selectedIndex < 0 || selectedIndex >= candidates.Count)
+            throw new InvalidDataException("Co-op spawn choice is outside the source collection.");
+        CoopSpawnPoint point = candidates[selectedIndex];
+        return new BattleCoopEnemySpawn
+        {
+            EntityId = nextEnemyId++,
+            Behaviour = behaviour,
+            Level = level,
+            SpawnComponentFileId = point.ComponentFileId,
+            X = point.Position.X,
+            Y = point.Position.Y,
+            Z = point.Position.Z,
+            SpawnTick = tick,
+            TimedEvent = timedEvent
+        };
     }
 
     public void ConfigureBattleAllocations(IEnumerable<BattleAllocationProjection> allocations)
@@ -207,6 +273,7 @@ internal sealed class CoopMatchRuntime : IMatchRuntime
         };
         snapshot.Coop.ParticipantIds.AddRange(
             mission.Participants.OrderBy(id => id, StringComparer.Ordinal));
+        snapshot.Coop.EnemySpawns.AddRange(enemySpawns);
         foreach (Participant participant in participants.Values)
         {
             snapshot.Players.Add(new BattlePlayerState
