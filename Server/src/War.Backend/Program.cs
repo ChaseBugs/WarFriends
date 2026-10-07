@@ -331,32 +331,6 @@ app.MapPost("/internal/battle/results/accept", async (HttpContext ctx, BattleTer
     catch (Exception e) when (e is FormatException or JsonException or InvalidDataException)
     { return Results.BadRequest(new { code = "invalid-result" }); }
 });
-app.MapPost("/internal/battle/results/score", async (HttpContext ctx, BattleResultStore store) =>
-{
-    if (ctx.Request.ContentLength is > 2048) return Results.StatusCode(404);
-    using var stream = new MemoryStream(); await ctx.Request.Body.CopyToAsync(stream, ctx.RequestAborted);
-    byte[] body = stream.ToArray();
-    if (!AuthorizeBattleControl(ctx, body, battleControlKey, "war/result/score/v1/")) return Results.Unauthorized();
-    try
-    {
-        using var json = JsonDocument.Parse(body); var root = json.RootElement;
-        if (root.ValueKind != JsonValueKind.Object || root.EnumerateObject().Count() != 3 ||
-            !root.TryGetProperty("serverId", out var host) || host.ValueKind != JsonValueKind.String || host.GetString() != serverId ||
-            !root.TryGetProperty("matchId", out var match) || match.ValueKind != JsonValueKind.String ||
-            !root.TryGetProperty("digest", out var digest) || digest.ValueKind != JsonValueKind.String)
-            return Results.BadRequest(new { code = "invalid-score" });
-        string code = await store.ReconcileScored(match.GetString()!, digest.GetString()!, ctx.RequestAborted);
-        return code switch
-        {
-            "scored" or "already-scored" => Results.Ok(new { code }),
-            "missing" => Results.NotFound(new { code }),
-            "conflict" => Results.Conflict(new { code }),
-            _ => Results.BadRequest(new { code })
-        };
-    }
-    catch (Exception e) when (e is JsonException or InvalidDataException)
-    { return Results.BadRequest(new { code = "invalid-score" }); }
-});
 app.MapPost("/internal/battle/allocations/read", async (HttpContext ctx, BattleAllocationStore store) =>
 {
     if (ctx.Request.ContentLength is > 2048) return Results.StatusCode(404);

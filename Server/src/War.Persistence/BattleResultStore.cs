@@ -166,6 +166,11 @@ public sealed class BattleResultStore
         }
         return new BattleResultPrunePage(candidates.Count, removed);
     }
+    /// <summary>
+    /// Records an exact-result reconciliation marker. This does not apply rewards,
+    /// statistics, or a settlement receipt. No HTTP route exposes it while the
+    /// active battle manifests remain unscored prototypes.
+    /// </summary>
     public async Task<string> ReconcileScored(string matchId, string digest, CancellationToken ct)
     {
         if (!System.Text.RegularExpressions.Regex.IsMatch(matchId ?? "", @"\A[a-zA-Z0-9_-]{1,64}\z") ||
