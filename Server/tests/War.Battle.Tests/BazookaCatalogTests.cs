@@ -247,7 +247,7 @@ internal static class BazookaCatalogTests
             }
             catch(InvalidDataException){checks++;}
         }
-        foreach(var airUnit in new[]{"ID_UNIT-DRONE","ID_UNIT-HELICOPTER"})
+        foreach(var airUnit in new[]{"ID_UNIT-DRONE","ID_UNIT-HELICOPTER","ID_UNIT-ASSAULTHELI"})
         {
             var (flightMatch,flightTarget,_)=AirTarget(
                 "bazooka-natural-"+airUnit[8..].ToLowerInvariant(),airUnit);
@@ -261,6 +261,7 @@ internal static class BazookaCatalogTests
                     "trusted fixture leaves the Helicopter one hit from a real Bazooka death");
             }
             float startingHealth=flightMatch.ArmyHealth(flightTarget.EntityKey)!.Value;
+            float? startingGlass=flightMatch.AssaultGlassHealth(flightTarget.EntityKey);
             bool hit=false;
             ulong flightTick=flightMatch.Snapshot().ServerTick;
             ulong commandId=2;
@@ -270,7 +271,8 @@ internal static class BazookaCatalogTests
                 {
                     var collider=flightMatch.GroundVehicleShotTargets(one).FirstOrDefault(value=>
                         value.EntityId==flightTarget.EntityKey&&
-                        (airUnit=="ID_UNIT-DRONE"?value.DroneRoot:value.HelicopterBody));
+                        (airUnit=="ID_UNIT-DRONE"?value.DroneRoot:
+                         airUnit=="ID_UNIT-ASSAULTHELI"?value.AssaultGlass:value.HelicopterBody));
                     if(collider==null)break;
                     Vector3 aim=collider.Hitbox.Center;
                     flightMatch.Command(one,new(){CommandId=commandId++,BazookaHold=new()
@@ -278,12 +280,20 @@ internal static class BazookaCatalogTests
                 }
                 flightMatch.Advance(++flightTick);
                 float? current=flightMatch.ArmyHealth(flightTarget.EntityKey);
-                if(current==null||current<startingHealth)
+                float? currentGlass=flightMatch.AssaultGlassHealth(flightTarget.EntityKey);
+                if(airUnit=="ID_UNIT-ASSAULTHELI"?
+                    currentGlass<startingGlass:current==null||current<startingHealth)
                 {hit=true;break;}
             }
             Check(hit&&flightMatch.Snapshot().Players
                       .Single(value=>value.PlayerId==one).ShotsFired>0,
                 "normal Bazooka hold, missile flight and impact damage source air body: "+airUnit);
+            if(airUnit=="ID_UNIT-ASSAULTHELI")
+                Check(flightMatch.AssaultGlassHealth(flightTarget.EntityKey)<startingGlass&&
+                      flightMatch.ArmyEntityBatch(one,0,0).Entities.Single(row=>
+                          row.EntityKey==flightTarget.EntityKey).AssaultGlassHealth==
+                      flightMatch.AssaultGlassHealth(flightTarget.EntityKey),
+                    "normal Bazooka flight damages moving front glass and publishes its health");
             if(airUnit=="ID_UNIT-HELICOPTER")
             {
                 Check(flightMatch.ArmyHealth(flightTarget.EntityKey)==null,
